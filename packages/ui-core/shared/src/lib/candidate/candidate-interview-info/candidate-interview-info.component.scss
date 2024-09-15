@@ -11,6 +11,7 @@
   align-items: center;
   padding: 0 10px;
   border: none;
+  background-color: nb-theme(gauzy-card-1);
 }
 
 .card-info {
@@ -67,7 +68,7 @@
 }
 
 :host .interview-data {
-  color: black;
+  color: nb-theme(gauzy-text-color-1);
   @include nb-ltr(padding-left, 30px);
   @include nb-rtl(padding-right, 30px);
   margin-top: -15px;

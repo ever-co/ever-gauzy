@@ -1,7 +1,7 @@
 <div class="custom-card">
 	<div class="filters mt-1 mb-3">
 		<ngx-gauzy-filters
-			[isTimeformat]="true"
+			[isTimeFormat]="true"
 			[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 			(filtersChange)="filtersChange($event)"
 		></ngx-gauzy-filters>
@@ -29,7 +29,7 @@
 						<div class="row grid-container">
 							<div *ngFor="let timeSlot of hourSlot.timeSlots">
 								<ngx-screenshots-item
-									[timeformat]="filters?.timeFormat"
+									[timeFormat]="filters?.timeFormat"
 									[timezone]="filters?.timeZone"
 									[employees]="timeSlot?.employees"
 									[timeSlot]="timeSlot"

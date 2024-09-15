@@ -6,9 +6,15 @@ import { filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { IPipeline, IContact, IOrganization, IDeal, IPagination } from '@gauzy/contracts';
-import { distinctUntilChange, Store } from '@gauzy/ui-core/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { DealsService, ErrorHandlingService, OrganizationContactService, ToastrService } from '@gauzy/ui-core/core';
+import {
+	DealsService,
+	ErrorHandlingService,
+	OrganizationContactService,
+	Store,
+	ToastrService
+} from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

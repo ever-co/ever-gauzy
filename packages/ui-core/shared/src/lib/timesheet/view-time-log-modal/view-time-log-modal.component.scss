@@ -2,8 +2,8 @@
 @import 'gauzy/_gauzy-dialogs';
 
 :host {
-    display: flex;
-      justify-content: center;
+  display: flex;
+  justify-content: center;
 
   .close-button {
     position: absolute;
@@ -24,7 +24,7 @@
     flex-direction: column;
     flex-direction: flex-start;
 
-    >.subtitle {
+    > .subtitle {
       font-size: 11px;
       font-weight: 600;
       line-height: 13px;
@@ -50,6 +50,9 @@
   .subtitle,
   .date {
     color: rgba(126, 126, 143, 1);
+  }
+  .date {
+    margin-top: 5%;
   }
 
   ngx-label {
@@ -97,12 +100,20 @@
       line-height: 10px;
       letter-spacing: 0em;
       text-align: center;
-
     }
   }
-
 }
 
 .actions {
   width: fit-content;
+}
+.avatar-log {
+  display: flex;
+  justify-content: space-between;
+}
+.row {
+  .source-version {
+    display: flex;
+    gap: 10%;
+  }
 }

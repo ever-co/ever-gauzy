@@ -1,8 +1,4 @@
-<nb-card
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
->
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="card-customer-header pb-0">
 		<div class="card-header-title">
 			<h4>
@@ -20,11 +16,7 @@
 			</h4>
 			<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_EDIT']">
 				<ng-template [ngIf]="!isDefaultProject">
-					<button
-						size="small"
-						nbButton
-						(click)="openTasksSettings(selectedProject)"
-					>
+					<button size="small" nbButton (click)="openTasksSettings(selectedProject)">
 						<nb-icon icon="settings-2-outline"></nb-icon>
 					</button>
 				</ng-template>
@@ -45,10 +37,7 @@
 		<ng-container [ngSwitch]="viewMode">
 			<ng-template [ngxPermissionsOnly]="['ALL_ORG_VIEW', 'ORG_TASK_VIEW']">
 				<ng-template [ngSwitchCase]="taskListTypeEnum.GRID">
-					<ng-template
-						[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-						[ngIfElse]="gridLayout"
-					>
+					<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="gridLayout">
 						<div class="table-scroll-container">
 							<angular2-smart-table
 								style="cursor: pointer"
@@ -104,14 +93,14 @@
 <ng-template #paginationTemplate let-pagination="pagination">
 	<div class="pagination-container">
 		<ng-container *ngIf="smartTableSource">
-			<ngx-pagination
-				[source]="smartTableSource"
-			></ngx-pagination>
+			<ngx-pagination [source]="smartTableSource"></ngx-pagination>
 		</ng-container>
 	</div>
 </ng-template>
 <ng-template #actionButtons>
-	<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ALL_ORG_VIEW', 'ORG_TASK_VIEW', 'ORG_TASK_EDIT', 'ORG_TASK_DELETE']">
+	<ng-template
+		[ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ALL_ORG_VIEW', 'ORG_TASK_VIEW', 'ORG_TASK_EDIT', 'ORG_TASK_DELETE']"
+	>
 		<div class="btn-group actions">
 			<ng-template [ngxPermissionsOnly]="['ALL_ORG_VIEW', 'ORG_TASK_VIEW']">
 				<button
@@ -160,7 +149,7 @@
 					[disabled]="disableButton"
 					class="action"
 					size="small"
-					[nbToolTip]="'BUTTONS.DELETE' | translate"
+					[nbTooltip]="'BUTTONS.DELETE' | translate"
 				>
 					<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
 				</button>
@@ -170,12 +159,7 @@
 </ng-template>
 <ng-template #visibleButton>
 	<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_TASK_ADD']">
-		<button
-			nbButton
-			status="success"
-			(click)="createTaskDialog()"
-			size="small"
-		>
+		<button nbButton status="success" (click)="createTaskDialog()" size="small">
 			<nb-icon icon="plus-outline"></nb-icon>
 			{{ 'BUTTONS.ADD' | translate }}
 		</button>

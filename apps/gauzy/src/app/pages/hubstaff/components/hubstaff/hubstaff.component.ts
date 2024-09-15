@@ -9,8 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ID, IHubstaffOrganization, IHubstaffProject, IOrganization } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { ErrorHandlingService, HubstaffService, ToastrService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { ErrorHandlingService, HubstaffService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { SettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -98,12 +97,12 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 				name: {
 					title: this.getTranslation('SM_TABLE.NAME'),
 					type: 'string',
-					filter: false
+					isFilterable: false
 				},
 				description: {
 					title: this.getTranslation('SM_TABLE.DESCRIPTION'),
 					type: 'string',
-					filter: false
+					isFilterable: false
 				},
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),

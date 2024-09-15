@@ -19,7 +19,7 @@ import { EditTimeLogModalComponent } from '@gauzy/ui-core/shared';
 	templateUrl: './view.component.html',
 	styleUrls: ['../../daily/daily/daily.component.scss', './view.component.scss']
 })
-export class GithubViewComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+export class TimesheetViewComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	PermissionsEnum = PermissionsEnum;
 	TimesheetStatus = TimesheetStatus;
 	timeLogs: any;

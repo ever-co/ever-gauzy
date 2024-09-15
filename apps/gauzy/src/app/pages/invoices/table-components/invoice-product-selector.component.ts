@@ -4,8 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DefaultEditor } from 'angular2-smart-table';
 import { IOrganization, IProduct, IProductTranslatable } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/common';
-import { ProductService, TranslatableService } from '@gauzy/ui-core/core';
+import { ProductService, Store, TranslatableService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

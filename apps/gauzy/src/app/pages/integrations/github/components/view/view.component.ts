@@ -22,8 +22,14 @@ import {
 	SYNC_TAG_GAUZY,
 	TaskStatusEnum
 } from '@gauzy/contracts';
-import { ErrorHandlingService, GithubService, OrganizationProjectsService, ToastrService } from '@gauzy/ui-core/core';
-import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import {
+	ErrorHandlingService,
+	GithubService,
+	OrganizationProjectsService,
+	Store,
+	ToastrService
+} from '@gauzy/ui-core/core';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	ClickableLinkComponent,
 	ProjectComponent,
@@ -357,7 +363,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 				repository: {
 					title: this.getTranslation('SM_TABLE.GITHUB_REPOSITORY'), // Set column title based on translation
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: GithubRepositoryComponent,
 					componentInitFunction: (instance: GithubRepositoryComponent, cell: Cell) => {
 						// Set properties on the ProjectComponent instance
@@ -369,7 +375,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 				project: {
 					title: this.getTranslation('SM_TABLE.PROJECT'), // Set column title based on translation
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: ProjectComponent,
 					valuePrepareFunction: (_: any, cell: Cell) => ({
 						project: cell.getRow().getData()
@@ -383,11 +389,11 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 				issuesCount: {
 					title: this.getTranslation('SM_TABLE.ISSUES_SYNC'), // Set column title based on translation
 					type: 'number',
-					filter: false,
+					isFilterable: false,
 					valuePrepareFunction: (_: any, cell: Cell) => {
 						// Get the data of the entire row
 						const row = cell.getRow().getData();
-						const count = row.customFields.repository.issuesCount; // Get repository synced issues count
+						const count = row.customFields?.repository?.issuesCount; // Get repository synced issues count
 						// Prepare the value for the cell by using translation and the 'issuesCount' property from the row
 						return this.getTranslation('SM_TABLE.ISSUES_SYNC_COUNT', { count });
 					}
@@ -395,7 +401,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 				hasSyncEnabled: {
 					title: this.getTranslation('SM_TABLE.ENABLED_DISABLED_SYNC'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: ToggleSwitchComponent,
 					componentInitFunction: (instance: ToggleSwitchComponent, cell: Cell) => {
 						// Get the data of the entire row
@@ -423,7 +429,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 				resync: {
 					title: this.getTranslation('SM_TABLE.RESYNC_ISSUES'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: ResyncButtonComponent,
 					componentInitFunction: (instance: ResyncButtonComponent, cell: Cell) => {
 						// Get the data of the entire row
@@ -450,15 +456,15 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'), // Set column title based on translation
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: StatusBadgeComponent,
 					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
 						// Get the data of the entire row
 						const row = cell.getRow().getData();
-						const repository: IOrganizationGithubRepository = row.customFields.repository;
-
-						// Transform the column data using 'this.statusMapper'
-						instance.value = this.statusMapper(repository);
+						// Get repository object
+						const repository: IOrganizationGithubRepository = row.customFields?.repository;
+						// Transform the column data using 'this.statusMapper' only if repository is not null
+						instance.value = repository ? this.statusMapper(repository) : null;
 					}
 				}
 			}
@@ -471,7 +477,9 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 	 * @param hasSyncEnabled - A boolean indicating whether sync is enabled.
 	 */
 	private updateGithubRepository(project: IOrganizationProject, hasSyncEnabled: boolean) {
-		const repository = project.customFields['repository'];
+		// Get the repository object from the project
+		const repository = project.customFields?.repository;
+		// Check if the repository object exists
 		if (!repository) {
 			return;
 		}

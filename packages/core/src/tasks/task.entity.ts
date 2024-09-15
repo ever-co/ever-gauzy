@@ -4,10 +4,12 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	IActivity,
+	ID,
 	IDailyPlan,
 	IEmployee,
 	IInvoiceItem,
 	IOrganizationProject,
+	IOrganizationProjectModule,
 	IOrganizationSprint,
 	IOrganizationTeam,
 	ITag,
@@ -28,6 +30,7 @@ import {
 	Employee,
 	InvoiceItem,
 	OrganizationProject,
+	OrganizationProjectModule,
 	OrganizationSprint,
 	OrganizationTeam,
 	OrganizationTeamEmployee,
@@ -146,6 +149,12 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@MultiORMColumn({ nullable: true })
 	version?: string;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ nullable: true, default: false })
+	isDraft?: boolean;
+
 	/** Additional virtual columns */
 	@VirtualMultiOrmColumn()
 	taskNumber?: string;
@@ -174,7 +183,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsOptional()
 	@IsUUID()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	parentId?: Task['id'];
+	parentId?: ID;
 
 	/**
 	 * Organization Project
@@ -197,7 +206,30 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@RelationId((it: Task) => it.project)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	projectId?: IOrganizationProject['id'];
+	projectId?: ID;
+
+	/**
+	 * Organization Project Module
+	 */
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@IsObject()
+	@MultiORMManyToOne(() => OrganizationProjectModule, (it) => it.tasks, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
+		onDelete: 'CASCADE'
+	})
+	projectModule?: IOrganizationProjectModule;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: Task) => it.projectModule)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	projectModuleId?: ID;
 
 	/**
 	 * Creator
@@ -212,7 +244,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@RelationId((it: Task) => it.creator)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	creatorId?: IUser['id'];
+	creatorId?: ID;
 
 	/**
 	 * Organization Sprint
@@ -230,7 +262,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@RelationId((it: Task) => it.organizationSprint)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	organizationSprintId?: IOrganizationSprint['id'];
+	organizationSprintId?: ID;
 
 	/**
 	 * Task Status
@@ -250,7 +282,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@RelationId((it: Task) => it.taskStatus)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, type: 'varchar', relationId: true })
-	taskStatusId?: ITaskStatus['id'];
+	taskStatusId?: ID;
 
 	/**
 	 * Task Size
@@ -270,7 +302,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@RelationId((it: Task) => it.taskSize)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, type: 'varchar', relationId: true })
-	taskSizeId?: ITaskSize['id'];
+	taskSizeId?: ID;
 
 	/**
 	 * Task Priority
@@ -290,7 +322,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@RelationId((it: Task) => it.taskPriority)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, type: 'varchar', relationId: true })
-	taskPriorityId?: ITaskPriority['id'];
+	taskPriorityId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------

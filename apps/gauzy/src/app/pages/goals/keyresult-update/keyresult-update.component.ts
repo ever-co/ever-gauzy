@@ -12,7 +12,7 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { GoalSettingsService, KeyResultUpdateService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 
 @Component({
 	selector: 'ga-keyresult-update',

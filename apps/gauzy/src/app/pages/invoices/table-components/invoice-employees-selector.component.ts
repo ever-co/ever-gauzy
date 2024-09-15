@@ -3,8 +3,8 @@ import { DefaultEditor } from 'angular2-smart-table';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IEmployee, IOrganization } from '@gauzy/contracts';
-import { Store, isNotEmpty } from '@gauzy/ui-core/common';
-import { DateRangePickerBuilderService, EmployeesService } from '@gauzy/ui-core/core';
+import { isNotEmpty } from '@gauzy/ui-core/common';
+import { DateRangePickerBuilderService, EmployeesService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

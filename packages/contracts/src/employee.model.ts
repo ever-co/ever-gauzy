@@ -12,7 +12,7 @@ import { IOrganizationPosition } from './organization-positions.model';
 import { IOrganizationTeam } from './organization-team.model';
 import { IRequestApprovalEmployee } from './request-approval-employee.model';
 import { ISkill } from './skill-entity.model';
-import { ITag } from './tag.model';
+import { ITaggable } from './tag.model';
 import { IUser, IUserFindInput } from './user.model';
 import { IOrganizationContact } from './organization-contact.model';
 import { IOrganizationProject } from './organization-projects.model';
@@ -22,44 +22,51 @@ import { ITimesheet, ITimeSlot } from './timesheet.model';
 import { ITask } from './task.model';
 import { ICandidate } from './candidate.model';
 import { IEmployeeAward } from './employee-award.model';
+import { IOrganizationProjectModule } from './organization-project-module.model';
+import { CurrenciesEnum } from './currency.model';
+import { IFavorite } from './favorite.model';
+import { IComment } from './comment.model';
 
 export interface IFindMembersInput extends IBasePerTenantAndOrganizationEntityModel {
 	organizationTeamId: ID;
 	organizationProjectId: ID;
 }
 
+/**
+ * Interface for inputs related to employee mutations, such as creating, updating, or partially updating an employee.
+ */
 export interface IEmployeeEntityMutationInput {
-	employeeId?: IEmployee['id'];
-	employee?: Pick<IEmployee, 'id'>;
+	employeeId?: ID; // ID of the employee to be mutated.
+	employee?: Partial<IEmployee>; // Employee object with partial details for mutation.
 }
 
-export interface IRelationalEmployee {
-	readonly employee?: IEmployee;
-	readonly employeeId?: IEmployee['id'];
+export interface IEmployeeEntityInput {
+	employeeId?: ID; // ID of the employee, if available.
+	employee?: IEmployee;
 }
 
-export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
+export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel, ITaggable {
 	[x: string]: any;
 	endWork?: Date;
 	startedWorkOn?: Date;
 	user: IUser;
-	userId: string;
+	userId: ID;
 	valueDate?: Date;
 	short_description?: string;
 	description?: string;
 	teams?: IOrganizationTeam[];
-	payPeriod?: string;
+	payPeriod?: PayPeriodEnum;
 	billRateValue?: number;
-	billRateCurrency?: string;
+	billRateCurrency?: CurrenciesEnum;
 	minimumBillingRate?: number;
 	reWeeklyLimit?: number;
 	organizationDepartments?: IOrganizationDepartment[];
 	organizationContacts?: IOrganizationContact[];
 	projects?: IOrganizationProject[];
 	organizationPosition?: IOrganizationPosition;
-	tags?: ITag[];
 	skills?: ISkill[];
 	awards?: IEmployeeAward[];
+	favorites?: IFavorite[];
 	offerDate?: Date;
 	acceptDate?: Date;
 	rejectDate?: Date;
@@ -71,6 +78,8 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	expenses?: IExpense[];
 	timesheets?: ITimesheet[];
 	tasks?: ITask[];
+	modules?: IOrganizationProjectModule[];
+	assignedComments?: IComment[];
 	timeSlots?: ITimeSlot[];
 	contact?: IContact;
 	candidate?: ICandidate;
@@ -120,16 +129,14 @@ export interface UpdateEmployeeJobsStatistics extends IBasePerTenantAndOrganizat
 	isJobSearchActive?: boolean;
 }
 
-export interface IEmployeeFindInput {
-	id?: string;
+export interface IEmployeeFindInput extends ITaggable {
+	id?: ID;
 	organization?: IOrganizationFindInput;
 	user?: IUserFindInput;
-	userId?: IUser['id'];
+	userId?: ID;
 	valueDate?: Date;
-	organizationId?: string;
-	tenantId?: string;
-	tags?: ITag[];
-	skills?: ISkill[];
+	organizationId?: ID;
+	tenantId?: ID;
 	profile_link?: string;
 	/** Employee status (Online/Offline) */
 	isOnline?: boolean;
@@ -139,11 +146,11 @@ export interface IEmployeeFindInput {
 	isAway?: boolean;
 }
 
-export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
-	payPeriod?: string;
+export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntityModel, ITaggable {
+	payPeriod?: PayPeriodEnum;
 	billRateValue?: number;
 	minimumBillingRate?: number;
-	billRateCurrency?: string;
+	billRateCurrency?: CurrenciesEnum;
 	reWeeklyLimit?: number;
 	organizationDepartment?: IOrganizationDepartment;
 	organizationPosition?: IOrganizationPosition;
@@ -179,15 +186,14 @@ export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntit
 	isAway?: boolean;
 }
 
-export interface IEmployeeCreateInput extends IBasePerTenantAndOrganizationEntityMutationInput {
+export interface IEmployeeCreateInput extends IBasePerTenantAndOrganizationEntityMutationInput, ITaggable {
 	user?: IUser;
-	userId?: IUser['id'];
+	userId?: ID;
 	password?: string;
 	offerDate?: Date;
 	acceptDate?: Date;
 	rejectDate?: Date;
 	members?: IEmployee[];
-	tags?: ITag[];
 	skills?: ISkill[];
 	startedWorkOn?: Date;
 	short_description?: string;
@@ -206,19 +212,18 @@ export interface IEmployeeCreateInput extends IBasePerTenantAndOrganizationEntit
 	isAway?: boolean;
 }
 
-export interface ISelectedEmployee {
-	id: string;
+export interface ISelectedEmployee extends ITaggable {
+	id: ID;
 	firstName: string;
 	lastName: string;
 	fullName?: string;
 	imageUrl: string;
 	shortDescription?: string;
 	employeeLevel?: string;
-	billRateCurrency?: string;
+	billRateCurrency?: CurrenciesEnum;
 	billRateValue?: number;
 	minimumBillingRate?: number;
 	defaultType?: DEFAULT_TYPE;
-	tags?: ITag[];
 	skills?: ISkill[];
 	timeZone?: string;
 	timeFormat?: TimeFormatEnum;
@@ -236,23 +241,21 @@ export enum PayPeriodEnum {
 	TWICE_PER_MONTH = 'TWICE_PER_MONTH',
 	MONTHLY = 'MONTHLY'
 }
-export interface IEmployeeLevel extends IBasePerTenantAndOrganizationEntityModel {
+export interface IEmployeeLevel extends IBasePerTenantAndOrganizationEntityModel, ITaggable {
 	level: string;
-	tag?: ITag[];
 	skills?: ISkill[];
 }
 
-export interface IEmployeeLevelInput extends IBasePerTenantAndOrganizationEntityModel {
+export interface IEmployeeLevelInput extends IBasePerTenantAndOrganizationEntityModel, ITaggable {
 	level: string;
-	tags?: ITag[];
 	skills?: ISkill[];
 }
 
 export interface IEmployeeLevelFindInput {
-	organizationId?: string;
-	tenantId: string;
+	organizationId?: ID;
+	tenantId: ID;
 }
-export interface EmployeeViewModel {
+export interface EmployeeViewModel extends ITaggable {
 	fullName: string;
 	email: string;
 	bonus?: number;
@@ -267,7 +270,6 @@ export interface EmployeeViewModel {
 	isActive?: boolean;
 	isTrackingEnabled: boolean;
 	isDeleted?: boolean;
-	tags?: ITag[];
 }
 
 export interface IEmployeeStoreState {

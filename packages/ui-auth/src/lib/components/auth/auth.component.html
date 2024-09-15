@@ -1,0 +1,22 @@
+<nb-layout>
+	<nb-layout-column class="wrapper">
+		<nb-card class="card">
+			<nb-card-header class="header" [ngClass]="{ register: isRegister }">
+				<nav [ngClass]="{ 'hide-go-back': !(queryParams$ | async)?.returnUrl }" class="navigation">
+					<a (click)="goBack()" class="link back-link" aria-label="Back">
+						<nb-icon icon="arrow-back"></nb-icon>
+					</a>
+				</nav>
+				<gauzy-switch-theme class="theme-switch" [hasText]="false"></gauzy-switch-theme>
+			</nb-card-header>
+			<nb-card-body class="body" [ngClass]="{ register: isRegister }">
+				<nb-auth-block class="auth-block">
+					<router-outlet></router-outlet>
+				</nb-auth-block>
+				<!-- <div class="message-us-wrapper">
+					<nb-icon icon="message-square-outline"></nb-icon>
+				</div> -->
+			</nb-card-body>
+		</nb-card>
+	</nb-layout-column>
+</nb-layout>

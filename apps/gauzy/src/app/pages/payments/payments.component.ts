@@ -12,9 +12,10 @@ import {
 	DateRangePickerBuilderService,
 	ErrorHandlingService,
 	ServerDataSource,
+	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, toUTC } from '@gauzy/ui-core/common';
+import { API_PREFIX, ComponentEnum, distinctUntilChange, toUTC } from '@gauzy/ui-core/common';
 import { environment as ENV } from '@gauzy/ui-config';
 import {
 	IPayment,
@@ -498,14 +499,14 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 				invoiceNumber: {
 					title: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'text',
-					filter: false,
+					isFilterable: false,
 					width: '8%',
 					sort: false
 				},
 				paymentDate: {
 					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_DATE'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					width: '10%',
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
@@ -515,7 +516,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 				amount: {
 					title: this.getTranslation('PAYMENTS_PAGE.AMOUNT'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					width: '8%',
 					renderComponent: IncomeExpenseAmountComponent,
 					componentInitFunction: (instance: IncomeExpenseAmountComponent, cell: Cell) => {
@@ -527,7 +528,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_METHOD'),
 					type: 'text',
 					width: '10%',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: PaymentMethodFilterComponent
 					},
@@ -538,7 +539,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 				recordedByName: {
 					title: this.getTranslation('PAYMENTS_PAGE.RECORDED_BY'),
 					type: 'text',
-					filter: false,
+					isFilterable: false,
 					width: '10%',
 					sort: false
 				},
@@ -546,7 +547,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 					title: this.getTranslation('PAYMENTS_PAGE.NOTE'),
 					type: 'text',
 					width: '10%',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -561,7 +562,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 					componentInitFunction: (instance: ContactLinksComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: OrganizationContactFilterComponent
 					},
@@ -574,14 +575,14 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 					title: this.getTranslation('PAYMENTS_PAGE.PROJECT'),
 					type: 'text',
 					width: '12%',
-					filter: false,
+					isFilterable: false,
 					sort: false
 				},
 				overdue: {
 					title: this.getTranslation('PAYMENTS_PAGE.STATUS'),
 					type: 'custom',
 					width: '8%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: StatusBadgeComponent,
 					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();
@@ -596,7 +597,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: TagsColorFilterComponent
 					},

@@ -7,11 +7,11 @@ import { NbRouteTab } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IEmployee, IEmployeeUpdateInput, IUserUpdateInput, PermissionsEnum } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store } from '@gauzy/ui-core/common';
 import {
 	EmployeesService,
 	EmployeeStore,
 	ErrorHandlingService,
+	Store,
 	ToastrService,
 	UsersService
 } from '@gauzy/ui-core/core';
@@ -30,18 +30,17 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 	tabs: NbRouteTab[] = [];
 	subject$: Subject<any> = new Subject();
 
-	@Output()
-	updatedImage = new EventEmitter<any>();
+	@Output() updatedImage = new EventEmitter<any>();
 
 	constructor(
-		private readonly route: ActivatedRoute,
-		private readonly employeeService: EmployeesService,
-		private readonly userService: UsersService,
-		private readonly toastrService: ToastrService,
-		private readonly employeeStore: EmployeeStore,
-		private readonly errorHandler: ErrorHandlingService,
 		public readonly translateService: TranslateService,
-		private readonly store: Store
+		private readonly _route: ActivatedRoute,
+		private readonly _employeeService: EmployeesService,
+		private readonly _userService: UsersService,
+		private readonly _toastrService: ToastrService,
+		private readonly _employeeStore: EmployeeStore,
+		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _store: Store
 	) {
 		super(translateService);
 	}
@@ -54,7 +53,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.route.params
+		this._route.params
 			.pipe(
 				filter((params) => !!params),
 				tap((params) => (this.routeParams = params)),
@@ -63,7 +62,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.employeeStore.userForm$
+		this._employeeStore.userForm$
 			.pipe(
 				tap((value: IUserUpdateInput) => {
 					this.submitUserForm(value);
@@ -71,7 +70,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.employeeStore.employeeForm$
+		this._employeeStore.employeeForm$
 			.pipe(
 				tap((value: IEmployeeUpdateInput) => {
 					this.submitEmployeeForm(value);
@@ -127,7 +126,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 				responsive: true,
 				route: this.getRoute('rates')
 			},
-			...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW)
+			...(this._store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW)
 				? [
 						{
 							title: this.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.PROJECTS'),
@@ -165,18 +164,19 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 				 * But employee can not update whole profile except some of the fields provided by UI
 				 * We will define later, which fields allow to employee to update from the form
 				 */
-				if (this.store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT)) {
-					await this.employeeService.update(this.selectedEmployee.id, value);
+				if (this._store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT)) {
+					await this._employeeService.update(this.selectedEmployee.id, value);
 				} else {
 					// Update only allowed fields if user does not have full edit permission
-					await this.employeeService.updateProfile(this.selectedEmployee.id, value);
+					await this._employeeService.updateProfile(this.selectedEmployee.id, value);
 				}
 
 				// Show success message on successful update
-				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE', { name: this.employeeName });
+				this._toastrService.success('TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE', { name: this.employeeName });
 			} catch (error) {
 				// Handle and log errors
-				this.errorHandler.handleError(error);
+				console.log('Error while updating employee profile:', error);
+				this._errorHandlingService.handleError(error);
 			} finally {
 				// Notify subscribers that form submission is complete
 				this.subject$.next(true);
@@ -193,7 +193,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 		if (user) {
 			try {
 				// Update the user using userService
-				await this.userService.update(this.selectedEmployee.user.id, user);
+				await this._userService.update(this.selectedEmployee.user.id, user);
 
 				if (!!user.image) {
 					// Emit event for updated image (assuming this emits an event when the image is updated)
@@ -202,13 +202,14 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 
 				// Show success message based on whether email was updated or not
 				if (!user.email) {
-					this.toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
+					this._toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
 				} else {
-					this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE', { name: this.employeeName });
+					this._toastrService.success('TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE', { name: this.employeeName });
 				}
 			} catch (error) {
 				// Handle and log errors
-				this.errorHandler.handleError(error);
+				console.log('Error while updating user profile:', error);
+				this._errorHandlingService.handleError(error);
 			} finally {
 				// Notify subscribers that form submission is complete
 				this.subject$.next(true);
@@ -228,7 +229,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 
 			// Fetch employee data from the service
 			const employee = await firstValueFrom(
-				this.employeeService.getEmployeeById(id, [
+				this._employeeService.getEmployeeById(id, [
 					'user',
 					'organizationDepartments',
 					'organizationPosition',
@@ -240,14 +241,14 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 			);
 
 			// Set the selected employee in the store and component
-			this.employeeStore.selectedEmployee = this.selectedEmployee = employee;
+			this._employeeStore.selectedEmployee = this.selectedEmployee = employee;
 
 			// Set the employee name for display
 			this.employeeName = employee?.user?.name || employee?.user?.username || 'Unknown Employee';
 		} catch (error) {
 			// Handle errors gracefully
 			console.error('Error fetching employee profile:', error);
-			// Optionally, navigate to a fallback route or show an error message
+			this._errorHandlingService.handleError(error);
 		}
 	}
 

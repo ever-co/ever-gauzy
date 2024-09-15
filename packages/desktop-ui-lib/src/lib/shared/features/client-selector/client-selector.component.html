@@ -1,0 +1,18 @@
+<gauzy-select
+	class="w-100"
+	label="CONTEXT_MENU.CLIENT"
+	[selectedItem]="(selected$ | async)?.id"
+	[items]="data$ | async"
+	bindLabel="name"
+	bindValue="id"
+	tooltipText="TIMER_TRACKER.STOP_TIMER_CHANGE_CLIENT"
+	placeholder="TIMER_TRACKER.SELECT_CLIENT"
+	[canAddTag]="hasPermission$ | async"
+	(clear)="refresh()"
+	(modelChange)="change($event)"
+	[addTag]="addContact"
+	addTagText="TIMER_TRACKER.ADD_CONTACT"
+	[isLoading]="isLoading$ | async"
+	[disabled]="disabled$ | async"
+	[hasError]="error$ | async"
+></gauzy-select>

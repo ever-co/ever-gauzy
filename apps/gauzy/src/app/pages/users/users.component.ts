@@ -6,7 +6,7 @@ import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { filter, tap } from 'rxjs/operators';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ErrorHandlingService, ToastrService, UsersOrganizationsService, monthNames } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, Store, ToastrService, UsersOrganizationsService, monthNames } from '@gauzy/ui-core/core';
 import {
 	InvitationTypeEnum,
 	PermissionsEnum,
@@ -21,7 +21,7 @@ import {
 	ITag,
 	IEmployee
 } from '@gauzy/contracts';
-import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	DeleteConfirmationComponent,
 	EmailComponent,
@@ -462,7 +462,7 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: TagsColorFilterComponent
 					},

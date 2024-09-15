@@ -16,15 +16,16 @@ import { combineLatest, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import moment from 'moment';
+import * as moment from 'moment';
 import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, employeeMapper, toUTC } from '@gauzy/ui-core/common';
+import { API_PREFIX, ComponentEnum, distinctUntilChange, employeeMapper, toUTC } from '@gauzy/ui-core/common';
 import {
 	DateRangePickerBuilderService,
 	ErrorHandlingService,
 	ExpensesService,
 	ServerDataSource,
+	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
 import {
@@ -249,7 +250,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 					title: this.getTranslation('SM_TABLE.DATE'),
 					type: 'custom',
 					width: '10%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -259,7 +260,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 				vendorName: {
 					title: this.getTranslation('SM_TABLE.VENDOR'),
 					type: 'string',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: VendorFilterComponent
 					},
@@ -271,7 +272,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 				categoryName: {
 					title: this.getTranslation('SM_TABLE.CATEGORY'),
 					type: 'string',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: ExpenseCategoryFilterComponent
 					},
@@ -282,7 +283,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 				},
 				employee: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
-					filter: false,
+					isFilterable: false,
 					type: 'custom',
 					sort: false,
 					renderComponent: EmployeeLinksComponent,
@@ -294,14 +295,14 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 				projectName: {
 					title: this.getTranslation('SM_TABLE.PROJECT'),
 					type: 'string',
-					filter: false,
+					isFilterable: false,
 					sort: false
 				},
 				amount: {
 					title: this.getTranslation('SM_TABLE.VALUE'),
 					type: 'custom',
 					width: '10%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: IncomeExpenseAmountComponent,
 					componentInitFunction: (instance: IncomeExpenseAmountComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -312,7 +313,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 					title: this.getTranslation('SM_TABLE.NOTES'),
 					type: 'text',
 					class: 'align-row',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -324,7 +325,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 					title: this.getTranslation('POP_UPS.PURPOSE'),
 					type: 'string',
 					class: 'align-row',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -336,7 +337,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					width: '5%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: StatusBadgeComponent,
 					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();

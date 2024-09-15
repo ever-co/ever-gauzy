@@ -10,18 +10,22 @@ import {
 	WhereExpressionBuilder,
 	In,
 	UpdateResult,
-	DeleteResult
+	DeleteResult,
+	MoreThan
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from 'jsonwebtoken';
+import * as moment from 'moment';
 import {
 	ComponentLayoutStyleEnum,
+	ID,
 	IEmployee,
 	IFindMeUser,
 	IUser,
 	LanguagesEnum,
 	PermissionsEnum,
-	RolesEnum
+	RolesEnum,
+	UserStats
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { ConfigService, environment as env } from '@gauzy/config';
@@ -44,6 +48,49 @@ export class UserService extends TenantAwareCrudService<User> {
 		private readonly _taskService: TaskService
 	) {
 		super(typeOrmUserRepository, mikroOrmUserRepository);
+	}
+
+	/**
+	 * Get the count of users and the number of users who logged in during the last 30 days.
+	 *
+	 * @returns {Promise<UserStats>} - A promise that resolves to an object containing user statistics.
+	 */
+	async getUserStats(): Promise<UserStats> {
+		try {
+			const [count, lastMonthActiveUsers] = await Promise.all([
+				this.count(), // Get the total number of users
+				this.getMonthlyActiveUsers() // Get the number of users active in the last 30 days
+			]);
+
+			return {
+				count, // The total number of users
+				lastMonthActiveUsers // The number of active users in the last month
+			};
+		} catch (error) {
+			console.error('Error fetching user stats:', error);
+			throw new Error(`Failed to retrieve user statistics: ${error.message}`);
+		}
+	}
+
+	/**
+	 * Get the count of users who logged in during the last 30 days.
+	 *
+	 * @returns {Promise<number>} - The count of active users
+	 */
+	async getMonthlyActiveUsers(): Promise<number> {
+		try {
+			// Calculate the date 30 days ago
+			const lastLoginAt = moment().subtract(30, 'days').toDate();
+
+			// Use the count method to fetch the count of users with lastLoginAt within the last 30 days
+			return await super.count({
+				where: { lastLoginAt: MoreThan(lastLoginAt) }
+			});
+		} catch (error) {
+			// Handle error, log it, or throw a custom exception
+			console.error('Error fetching monthly active users:', error);
+			throw new Error('Unable to retrieve monthly active users count.');
+		}
 	}
 
 	/**
@@ -382,6 +429,32 @@ export class UserService extends TenantAwareCrudService<User> {
 			}
 		} catch (error) {
 			console.log('Error while logout device', error);
+		}
+	}
+
+	/**
+	 * Update the last login time after user logged in
+	 * @param {string} userId - The ID of the user for whom to set the last login time
+	 * @return - A promise that resolves once the last login time is set
+	 * @memberof UserService
+	 */
+	async setUserLastLoginTimestamp(userId: ID): Promise<UpdateResult> {
+		try {
+			const lastLoginAt = new Date(); // Define the last login time
+			const id = userId; // Define the user ID
+
+			// Update the last login time
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					const updatedRow = await this.mikroOrmRepository.nativeUpdate({ id }, { lastLoginAt });
+					return { affected: updatedRow } as UpdateResult;
+				case MultiORMEnum.TypeORM:
+					return await this.typeOrmRepository.update({ id }, { lastLoginAt });
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
+			}
+		} catch (error) {
+			console.log('Error while updating last login time', error);
 		}
 	}
 

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { IDailyActivity } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, combineLatest, concatMap, map, Observable } from 'rxjs';
@@ -14,7 +14,7 @@ import { RequestQuery } from '../../../+state/request/request.query';
 	styleUrls: ['./activity-report.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ActivityReportComponent {
+export class ActivityReportComponent implements OnInit {
 	public isLoading$ = new BehaviorSubject<boolean>(false);
 	constructor(
 		private readonly recapQuery: RecapQuery,
@@ -33,9 +33,7 @@ export class ActivityReportComponent {
 	}
 
 	public async load(): Promise<void> {
-		this.isLoading$.next(true);
 		await this.service.getDailyReport();
-		this.isLoading$.next(false);
 	}
 
 	public get dailyActivities$(): Observable<IDailyActivity[]> {

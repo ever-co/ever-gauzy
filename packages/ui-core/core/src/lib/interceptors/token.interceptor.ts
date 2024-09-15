@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '../services/store';
 
 @Injectable()
 export class TokenInterceptor implements HttpInterceptor {

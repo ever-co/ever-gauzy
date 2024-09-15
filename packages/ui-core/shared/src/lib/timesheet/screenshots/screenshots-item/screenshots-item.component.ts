@@ -4,8 +4,8 @@ import { NbDialogService } from '@nebular/theme';
 import { filter, take, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { sortBy } from 'underscore';
-import { DEFAULT_SVG, Store, distinctUntilChange, isNotEmpty, progressStatus } from '@gauzy/ui-core/common';
-import { ErrorHandlingService, TimesheetService, ToastrService } from '@gauzy/ui-core/core';
+import { DEFAULT_SVG, distinctUntilChange, isNotEmpty, progressStatus } from '@gauzy/ui-core/common';
+import { ErrorHandlingService, Store, TimesheetService, ToastrService } from '@gauzy/ui-core/core';
 import { GalleryItem } from '../../../gallery/gallery.directive';
 import { ViewScreenshotsModalComponent } from '../view-screenshots-modal/view-screenshots-modal.component';
 import { GalleryService } from '../../../gallery/gallery.service';
@@ -105,7 +105,7 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	}
 
 	@Input() timezone: string = this.timeZoneService.currentTimeZone;
-	@Input() timeformat: TimeFormatEnum = TimeFormatEnum.FORMAT_12_HOURS;
+	@Input() timeFormat: TimeFormatEnum = TimeFormatEnum.FORMAT_12_HOURS;
 
 	constructor(
 		private readonly nbDialogService: NbDialogService,

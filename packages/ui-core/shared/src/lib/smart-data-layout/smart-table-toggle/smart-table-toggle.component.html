@@ -1,1 +1,3 @@
-<nb-toggle [checked]="checked$ | async" (checkedChange)="onCheckedChange($event)"></nb-toggle>
+<div>
+	<nb-toggle [checked]="checked$ | async" (checkedChange)="onCheckedChange($event)" triggerParentClick></nb-toggle>
+</div>

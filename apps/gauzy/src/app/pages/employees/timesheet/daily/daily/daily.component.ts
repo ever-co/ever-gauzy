@@ -1,23 +1,24 @@
 // tslint:disable: nx-enforce-module-boundaries
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
-import { TimeTrackerService, distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { filter, map, debounceTime, tap } from 'rxjs/operators';
 import { BehaviorSubject, Observable, catchError, finalize, firstValueFrom, from, of, switchMap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pick } from 'underscore';
-import moment from 'moment';
+import * as moment from 'moment';
 import { IGetTimeLogInput, ITimeLog, PermissionsEnum, ITimeLogFilters, TimeLogSourceEnum } from '@gauzy/contracts';
 import {
 	DateRangePickerBuilderService,
 	ErrorHandlingService,
+	Store,
+	TimeTrackerService,
 	TimesheetFilterService,
 	TimesheetService,
 	ToastrService
 } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
 import {
 	BaseSelectorFilterComponent,
 	ConfirmComponent,

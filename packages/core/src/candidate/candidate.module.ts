@@ -1,6 +1,5 @@
 import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
-import { RouterModule } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { CandidateController } from './candidate.controller';
@@ -17,7 +16,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/candidate', module: CandidateModule }]),
 		TypeOrmModule.forFeature([Candidate]),
 		MikroOrmModule.forFeature([Candidate]),
 		EmailSendModule,
@@ -33,4 +31,4 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 	providers: [CandidateService, ...CommandHandlers],
 	exports: [TypeOrmModule, MikroOrmModule, CandidateService]
 })
-export class CandidateModule { }
+export class CandidateModule {}

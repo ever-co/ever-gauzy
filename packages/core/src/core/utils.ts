@@ -627,6 +627,9 @@ export function processFindOperator<T>(operator: FindOperator<T>) {
 		case 'moreThanOrEqual': {
 			return { $gte: operator.value };
 		}
+		case 'moreThan': {
+			return { $gt: operator.value };
+		}
 		// Add additional cases for other operator types if needed
 		default: {
 			// Handle unknown or unimplemented operator types

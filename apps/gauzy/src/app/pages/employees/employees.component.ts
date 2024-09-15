@@ -12,6 +12,7 @@ import {
 	EmployeesService,
 	ErrorHandlingService,
 	ServerDataSource,
+	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
 import {
@@ -24,7 +25,7 @@ import {
 	ITag,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	AllowScreenshotCaptureComponent,
 	CardGridComponent,
@@ -55,18 +56,22 @@ import {
 	styleUrls: ['./employees.component.scss']
 })
 export class EmployeesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-	settingsSmartTable: object;
-	smartTableSource: ServerDataSource;
-	selectedEmployee: EmployeeViewModel;
-	employees: EmployeeViewModel[] = [];
-	viewComponentName: ComponentEnum = ComponentEnum.EMPLOYEES;
-	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-	bonusForSelectedMonth = 0;
-	disableButton: boolean = true;
-	includeDeleted: boolean = false;
-	loading: boolean = false;
-	organizationInvitesAllowed: boolean = false;
+	public settingsSmartTable: object;
+	public smartTableSource: ServerDataSource;
+	public selectedEmployee: EmployeeViewModel;
+	public employees: EmployeeViewModel[] = [];
+	public viewComponentName: ComponentEnum = ComponentEnum.EMPLOYEES;
+	public PermissionsEnum = PermissionsEnum;
+	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+	public bonusForSelectedMonth = 0;
+	public disableButton: boolean = true;
+	public includeDeleted: boolean = false;
+	public loading: boolean = false;
+	public organizationInvitesAllowed: boolean = false;
+	public organization: IOrganization;
+	public refresh$: Subject<any> = new Subject();
+	public employees$: Subject<any> = this.subject$;
 
 	private _grid: CardGridComponent;
 	@ViewChild('grid') set grid(content: CardGridComponent) {
@@ -78,24 +83,19 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	/*
 	 * Actions Buttons directive
 	 */
-	@ViewChild('actionButtons', { static: true })
-	actionButtons: TemplateRef<any>;
-
-	public organization: IOrganization;
-	public refresh$: Subject<any> = new Subject();
-	public employees$: Subject<any> = this.subject$;
+	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
 
 	constructor(
 		public readonly translateService: TranslateService,
-		private readonly employeesService: EmployeesService,
-		private readonly dialogService: NbDialogService,
-		private readonly store: Store,
-		private readonly router: Router,
-		private readonly toastrService: ToastrService,
-		private readonly route: ActivatedRoute,
-		private readonly errorHandler: ErrorHandlingService,
+		private readonly _employeesService: EmployeesService,
+		private readonly _dialogService: NbDialogService,
+		private readonly _store: Store,
+		private readonly _router: Router,
+		private readonly _toastrService: ToastrService,
+		private readonly _route: ActivatedRoute,
+		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly _employeeStore: EmployeeStore,
-		private readonly http: HttpClient,
+		private readonly _httpClient: HttpClient,
 		private readonly _dateFormatPipe: DateFormatPipe
 	) {
 		super(translateService);
@@ -122,7 +122,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.store.selectedOrganization$
+		this._store.selectedOrganization$
 			.pipe(
 				debounceTime(100),
 				distinctUntilChange(),
@@ -135,7 +135,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.route.queryParamMap
+		this._route.queryParamMap
 			.pipe(
 				filter((params: ParamMap) => !!params),
 				filter((params: ParamMap) => params.get('openAddDialog') === 'true'),
@@ -159,14 +159,14 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 * @returns A boolean indicating whether the user has the required permissions.
 	 */
 	haveBtnActionPermissions(): boolean {
-		return !this.store.hasAllPermissions(PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.ORG_INVITE_EDIT);
+		return !this._store.hasAllPermissions(PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.ORG_INVITE_EDIT);
 	}
 
 	/**
 	 *
 	 */
 	setView() {
-		this.store
+		this._store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
@@ -215,22 +215,22 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			return;
 		}
 
+		const { name } = this.organization;
+
+		// Open employee mutation dialog
+		const dialog = this._dialogService.open(EmployeeMutationComponent);
+
 		try {
-			const { name } = this.organization;
-
-			// Open employee mutation dialog
-			const dialog = this.dialogService.open(EmployeeMutationComponent);
-
 			// Wait for dialog response
-			const response = await firstValueFrom(dialog.onClose);
+			const employees = await firstValueFrom(dialog.onClose);
 
 			// Process response if available
-			if (response) {
-				response.forEach((employee: IEmployee) => {
+			if (employees) {
+				employees.forEach((employee: IEmployee) => {
 					const { firstName, lastName } = employee.user;
-					const fullName = firstName && lastName ? `${firstName} ${lastName}` : 'Employee';
+					const fullName = firstName && lastName ? `${firstName} ${lastName}` : 'Unknown Employee';
 
-					this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ADDED', {
+					this._toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ADDED', {
 						name: fullName,
 						organization: name
 					});
@@ -238,7 +238,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			}
 		} catch (error) {
 			// Handle errors
-			this.errorHandler.handleError(error);
+			console.log('Error while adding employee', error);
+			this._errorHandlingService.handleError(error);
 		} finally {
 			// Refresh UI
 			this.refresh$.next(true);
@@ -258,10 +259,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				data: selectedItem
 			});
 			// Navigate to edit page for the selected employee
-			this.router.navigate(['/pages/employees/edit', selectedItem.id]);
+			this._router.navigate(['/pages/employees/edit', selectedItem.id]);
 		} else if (this.selectedEmployee) {
 			// Navigate to edit page for the currently selected employee
-			this.router.navigate(['/pages/employees/edit', this.selectedEmployee.id]);
+			this._router.navigate(['/pages/employees/edit', this.selectedEmployee.id]);
 		}
 	}
 
@@ -271,13 +272,14 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 */
 	async invite(): Promise<void> {
 		try {
-			const dialog = this.dialogService.open(InviteMutationComponent, {
+			const dialog = this._dialogService.open(InviteMutationComponent, {
 				context: { invitationType: InvitationTypeEnum.EMPLOYEE }
 			});
 			await firstValueFrom(dialog.onClose);
 			// Optionally handle any post-invitation logic here
 		} catch (error) {
-			this.errorHandler.handleError(error);
+			console.log('Error while inviting employee', error);
+			this._errorHandlingService.handleError(error);
 		}
 	}
 
@@ -287,10 +289,6 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 * @param selectedItem The employee view model to delete.
 	 */
 	async delete(selectedItem?: EmployeeViewModel): Promise<void> {
-		if (!this.organization) {
-			return;
-		}
-
 		if (selectedItem) {
 			this.selectEmployee({
 				isSelected: true,
@@ -298,36 +296,43 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			});
 		}
 
-		try {
-			const confirmationDialog = this.dialogService.open(DeleteConfirmationComponent, {
-				context: {
-					recordType: `${this.selectedEmployee.fullName} ${this.getTranslation(
-						'FORM.DELETE_CONFIRMATION.EMPLOYEE'
-					)}`
-				}
-			});
+		if (!this.organization || !this.selectedEmployee) {
+			return;
+		}
 
-			confirmationDialog.onClose.pipe(untilDestroyed(this)).subscribe(async (result) => {
-				if (result) {
-					const { id: organizationId, tenantId } = this.organization;
+		const { id: organizationId, tenantId } = this.organization;
+		const { fullName, id: employeeId } = this.selectedEmployee;
 
-					await this.employeesService.softRemove(this.selectedEmployee.id, { organizationId, tenantId });
+		// Open the delete confirmation dialog
+		const confirmationDialog = this._dialogService.open(DeleteConfirmationComponent, {
+			context: { recordType: `${fullName} ${this.getTranslation('FORM.DELETE_CONFIRMATION.EMPLOYEE')}` }
+		});
+
+		// Wait for the dialog to close
+		confirmationDialog.onClose.pipe(untilDestroyed(this)).subscribe(async (result) => {
+			if (result) {
+				try {
+					await this._employeesService.softRemove(employeeId, { organizationId, tenantId });
 
 					this._employeeStore.employeeAction = {
 						action: CrudActionEnum.DELETED,
 						employees: [this.selectedEmployee as any]
 					};
 
+					// Get the full name of the selected employee
 					const name = this.selectedEmployee.fullName.trim() || 'Unknown Employee';
-					this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_INACTIVE', { name });
+
+					// Display a success toast message
+					this._toastrService.success('TOASTR.MESSAGE.EMPLOYEE_INACTIVE', { name });
+				} catch (error) {
+					console.log('Error while deleting employee', error);
+					this._errorHandlingService.handleError(error);
+				} finally {
+					this.refresh$.next(true);
+					this.employees$.next(true);
 				}
-			});
-		} catch (error) {
-			this.errorHandler.handleError(error);
-		} finally {
-			this.refresh$.next(true);
-			this.employees$.next(true);
-		}
+			}
+		});
 	}
 
 	/**
@@ -336,10 +341,6 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 * @param selectedItem The employee view model for which work is ended.
 	 */
 	async endWork(selectedItem?: EmployeeViewModel): Promise<void> {
-		if (!this.organization) {
-			return;
-		}
-
 		if (selectedItem) {
 			this.selectEmployee({
 				isSelected: true,
@@ -347,30 +348,40 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			});
 		}
 
-		try {
-			const { id: organizationId, tenantId } = this.organization;
-			const dialog = this.dialogService.open(EmployeeEndWorkComponent, {
-				context: {
-					endWorkValue: this.selectedEmployee.endWork,
-					employeeFullName: this.selectedEmployee.fullName
-				}
-			});
+		if (!this.organization || !this.selectedEmployee) {
+			return;
+		}
 
+		const { id: organizationId, tenantId } = this.organization;
+
+		// Open the end work dialog
+		const dialog = this._dialogService.open(EmployeeEndWorkComponent, {
+			context: {
+				endWorkValue: this.selectedEmployee.endWork,
+				employeeFullName: this.selectedEmployee.fullName
+			}
+		});
+
+		try {
 			const data = await firstValueFrom(dialog.onClose);
 
-			if (data) {
-				await this.employeesService.setEmployeeEndWork(this.selectedEmployee.id, data, {
-					organizationId,
-					tenantId
-				});
-
-				const name = this.selectedEmployee.fullName.trim() || 'Unknown Employee';
-				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_INACTIVE', {
-					name
-				});
+			if (!data) {
+				return;
 			}
+
+			// Update the employee's endWork property
+			await this._employeesService.setEmployeeEndWork(this.selectedEmployee.id, data, {
+				organizationId,
+				tenantId
+			});
+
+			// Get the full name of the selected employee
+			const name = this.selectedEmployee.fullName.trim() || 'Unknown Employee';
+			// Show a success toastr message
+			this._toastrService.success('TOASTR.MESSAGE.EMPLOYEE_INACTIVE', { name });
 		} catch (error) {
-			this.errorHandler.handleError(error);
+			console.log('Error while ending employee work', error);
+			this._errorHandlingService.handleError(error);
 		} finally {
 			this.refresh$.next(true);
 			this.employees$.next(true);
@@ -383,10 +394,6 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 * @param selectedItem The employee view model for which work is resumed.
 	 */
 	async backToWork(selectedItem?: EmployeeViewModel): Promise<void> {
-		if (!this.organization) {
-			return;
-		}
-
 		if (selectedItem) {
 			this.selectEmployee({
 				isSelected: true,
@@ -394,30 +401,41 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			});
 		}
 
+		if (!this.organization || !this.selectedEmployee) {
+			return;
+		}
+
+		const { id: organizationId, tenantId } = this.organization;
+
+		// Open the end work dialog
+		const dialog = this._dialogService.open(EmployeeEndWorkComponent, {
+			context: {
+				backToWork: true,
+				employeeFullName: this.selectedEmployee.fullName
+			}
+		});
+
+		const data = await firstValueFrom(dialog.onClose);
+
+		if (!data) {
+			return;
+		}
+
 		try {
-			const { id: organizationId, tenantId } = this.organization;
-			const dialog = this.dialogService.open(EmployeeEndWorkComponent, {
-				context: {
-					backToWork: true,
-					employeeFullName: this.selectedEmployee.fullName
-				}
+			// Update the employee's endWork property
+			await this._employeesService.setEmployeeEndWork(this.selectedEmployee.id, null, {
+				organizationId,
+				tenantId
 			});
 
-			const data = await firstValueFrom(dialog.onClose);
+			// Get the full name of the selected employee
+			const name = this.selectedEmployee.fullName.trim() || 'Unknown Employee';
 
-			if (data) {
-				await this.employeesService.setEmployeeEndWork(this.selectedEmployee.id, null, {
-					organizationId,
-					tenantId
-				});
-
-				const name = this.selectedEmployee.fullName.trim() || 'Unknown Employee';
-				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ACTIVE', {
-					name
-				});
-			}
+			// Display a success toast message
+			this._toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ACTIVE', { name });
 		} catch (error) {
-			this.errorHandler.handleError(error);
+			console.log('Error while backing employee work', error);
+			this._errorHandlingService.handleError(error);
 		} finally {
 			this.refresh$.next(true);
 			this.employees$.next(true);
@@ -430,29 +448,30 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 * @param selectedItem The employee view model to restore.
 	 */
 	async restoreToWork(selectedItem?: EmployeeViewModel): Promise<void> {
-		if (!this.organization || !selectedItem) {
-			return;
-		}
-
 		this.selectEmployee({
 			isSelected: true,
 			data: selectedItem
 		});
 
+		if (!this.organization || !this.selectedEmployee) {
+			return;
+		}
+
 		try {
 			const { id: organizationId, tenantId } = this.organization;
 
-			await this.employeesService.softRecover(this.selectedEmployee.id, {
+			await this._employeesService.softRecover(this.selectedEmployee.id, {
 				organizationId,
 				tenantId
 			});
 
+			// Get the full name of the selected employee
 			const name = this.selectedEmployee.fullName.trim() || 'Unknown Employee';
-			this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ACTIVE', {
-				name
-			});
+
+			// Display a success toast message
+			this._toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ACTIVE', { name });
 		} catch (error) {
-			this.errorHandler.handleError(error);
+			this._errorHandlingService.handleError(error);
 		} finally {
 			this.refresh$.next(true);
 			this.employees$.next(true);
@@ -465,22 +484,24 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 * @param selectedItem The employee view model to perform time tracking action on.
 	 */
 	async timeTrackingAction(selectedItem?: EmployeeViewModel): Promise<void> {
-		if (!selectedItem || !this.organization) {
-			return;
-		}
-
 		this.selectEmployee({
 			isSelected: true,
 			data: selectedItem
 		});
 
+		if (!this.organization || !this.selectedEmployee) {
+			return;
+		}
+
 		try {
 			const { id: organizationId, tenantId } = this.organization;
 			const { isTrackingEnabled } = this.selectedEmployee;
 
-			const fullName = this.selectedEmployee.fullName.trim() || 'Unknown Employee';
+			// // Get the full name of the selected employee
+			const name = this.selectedEmployee.fullName.trim() || 'Unknown Employee';
 
-			await this.employeesService.setEmployeeTimeTrackingStatus(this.selectedEmployee.id, !isTrackingEnabled, {
+			// Update the employee's timeTrackingEnabled property
+			await this._employeesService.setEmployeeTimeTrackingStatus(this.selectedEmployee.id, !isTrackingEnabled, {
 				organizationId,
 				tenantId
 			});
@@ -489,9 +510,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				? 'TOASTR.MESSAGE.EMPLOYEE_TIME_TRACKING_DISABLED'
 				: 'TOASTR.MESSAGE.EMPLOYEE_TIME_TRACKING_ENABLED';
 
-			this.toastrService.success(toastMessageKey, { name: fullName });
+			this._toastrService.success(toastMessageKey, { name });
 		} catch (error) {
-			this.errorHandler.handleError(error);
+			console.log('Error while enabling/disabling time tracking', error);
+			this._errorHandlingService.handleError(error);
 		} finally {
 			this.refresh$.next(true);
 			this.employees$.next(true);
@@ -510,7 +532,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			this.loading = true; // Indicate loading state
 			const { id: organizationId, tenantId } = this.organization;
 
-			this.smartTableSource = new ServerDataSource(this.http, {
+			this.smartTableSource = new ServerDataSource(this._httpClient, {
 				endPoint: `${API_PREFIX}/employee/pagination`,
 				relations: ['user', 'tags'],
 				withDeleted: this.includeDeleted, // Include soft-deleted records if flag is true
@@ -559,6 +581,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 
 			// Configure pagination
 			const { activePage, itemsPerPage } = this.getPagination();
+
+			// Set paging
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 
 			// Fetch elements based on layout style
@@ -567,7 +591,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				this.employees.push(...this.smartTableSource.getData());
 			}
 		} catch (error) {
-			this.errorHandler.handleError(error); // Example: Use your error handling service or method here
+			console.log('Error while fetching employees', error);
+			this._errorHandlingService.handleError(error); // Example: Use your error handling service or method here
 		}
 	}
 
@@ -597,7 +622,6 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		const start = this._dateFormatPipe.transform(startedWorkOn, null, 'LL');
 		const end = this._dateFormatPipe.transform(endWork, null, 'LL');
 		const workStatus = [start, end].filter(Boolean).join(' - ');
-
 		return {
 			fullName: `${user.name}`,
 			email: user.email,
@@ -644,7 +668,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getRawValue();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -657,7 +681,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					type: 'email',
 					class: 'email-column',
 					width: '20%',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -668,7 +692,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				averageIncome: {
 					title: this.getTranslation('SM_TABLE.INCOME'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					class: 'text-center',
 					width: '5%',
 					renderComponent: EmployeeAverageIncomeComponent,
@@ -679,7 +703,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				averageExpenses: {
 					title: this.getTranslation('SM_TABLE.EXPENSES'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					class: 'text-center',
 					width: '5%',
 					renderComponent: EmployeeAverageExpensesComponent,
@@ -690,7 +714,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				averageBonus: {
 					title: this.getTranslation('SM_TABLE.BONUS_AVG'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					class: 'text-center',
 					width: '5%',
 					renderComponent: EmployeeAverageBonusComponent,
@@ -707,7 +731,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					componentInitFunction: (instance: EmployeeTimeTrackingStatusComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: ToggleFilterComponent
 					},
@@ -727,7 +751,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: TagsColorFilterComponent
 					},
@@ -749,7 +773,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					componentInitFunction: (instance: EmployeeWorkStatusComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: ToggleFilterComponent
 					},
@@ -785,7 +809,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				addable: false,
 				notShownField: true,
 				// Configure custom filter for the column
-				filter: {
+				isFilterable: {
 					type: 'custom',
 					component: ToggleFilterComponent
 				},
@@ -831,17 +855,20 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	private async _updateAllowScreenshotCapture(employee: IEmployee, isAllowed: boolean): Promise<void> {
 		try {
 			const { id: organizationId, tenantId } = this.organization;
+
+			// Get the full name of the employee
 			const name = employee.fullName.trim() || 'Unknown Employee';
 
-			await this.employeesService.update(employee.id, {
+			await this._employeesService.update(employee.id, {
 				allowScreenshotCapture: isAllowed,
 				organizationId,
 				tenantId
 			}); // Await the update operation
 
-			this.toastrService.success('TOASTR.MESSAGE.SCREEN_CAPTURE_CHANGED', { name });
+			this._toastrService.success('TOASTR.MESSAGE.SCREEN_CAPTURE_CHANGED', { name });
 		} catch (error) {
-			this.errorHandler.handleError(error); // Handle errors using your error handling service or method
+			// Handle errors using your error handling service or method
+			this._errorHandlingService.handleError(error);
 		}
 	}
 
@@ -883,24 +910,39 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 * Start employee's work process.
 	 */
 	async startEmployeeWork() {
+		if (!this.organization || !this.selectedEmployee) {
+			return;
+		}
+
+		const { id: organizationId, tenantId } = this.organization;
+
+		// Get the full name of the selected employee
+		const name = this.selectedEmployee.fullName.trim() || 'Unknown Employee';
+
+		// Open the start work dialog
+		const dialog = this._dialogService.open(EmployeeStartWorkComponent, {
+			context: { employeeFullName: name }
+		});
+
+		// Wait for the dialog to close
+		const data = await firstValueFrom(dialog.onClose);
+
+		if (!data) {
+			return;
+		}
+
 		try {
-			const { id: organizationId, tenantId } = this.organization;
-			const name = this.selectedEmployee.fullName.trim() || 'Unknown Employee';
-
-			const dialog = this.dialogService.open(EmployeeStartWorkComponent, {
-				context: { employeeFullName: name }
+			// Update the employee's startWork property
+			await this._employeesService.setEmployeeStartWork(this.selectedEmployee.id, data, {
+				organizationId,
+				tenantId
 			});
-			const data = await firstValueFrom(dialog.onClose);
-			if (data) {
-				await this.employeesService.setEmployeeStartWork(this.selectedEmployee.id, data, {
-					organizationId,
-					tenantId
-				});
 
-				this.toastrService.success('TOASTR.MESSAGE.AUTHORIZED_TO_WORK', { name });
-			}
+			// Get the full name of the selected employee
+			this._toastrService.success('TOASTR.MESSAGE.AUTHORIZED_TO_WORK', { name });
 		} catch (error) {
-			this.errorHandler.handleError(error);
+			console.log('Error while starting employee work', error);
+			this._errorHandlingService.handleError(error);
 		} finally {
 			this.refresh$.next(true);
 			this.employees$.next(true);

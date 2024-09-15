@@ -3,7 +3,7 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { IRole } from './role.model';
-import { IBasePerTenantEntityModel, IBaseRelationsEntityModel } from './base-entity.model';
+import { IBasePerTenantEntityModel, IBaseRelationsEntityModel, ID } from './base-entity.model';
 import { ITag } from './tag.model';
 import { IEmployee } from './employee.model';
 import { IPayment } from './payment.model';
@@ -11,8 +11,15 @@ import { IUserOrganization } from './user-organization.model';
 import { IInvite } from './invite.model';
 import { ICandidate } from './candidate.model';
 import { IRelationalImageAsset } from './image-asset.model';
-import { TimeFormatEnum } from './organization.model';
+import { IOrganization, TimeFormatEnum } from './organization.model';
 import { ISocialAccount } from './social-account.model';
+import { IOrganizationTeam } from './organization-team.model';
+
+// Define the UserStats type
+export interface UserStats {
+	count: number; // Total number of users
+	lastMonthActiveUsers: number; // Number of users who were active in the last 30 days
+}
 
 // Interface for options to be passed to the findMeUser method.
 export interface IFindMeUser extends IBaseRelationsEntityModel {
@@ -43,6 +50,14 @@ export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset 
 	employeeId?: IEmployee['id'];
 	candidate?: ICandidate;
 	candidateId?: ICandidate['id'];
+	defaultTeam?: IOrganizationTeam;
+	defaultTeamId?: ID;
+	lastTeam?: IOrganizationTeam;
+	lastTeamId?: ID;
+	defaultOrganization?: IOrganization;
+	defaultOrganizationId?: ID;
+	lastOrganization?: IOrganization;
+	lastOrganizationId?: ID;
 	tags?: ITag[];
 	preferredLanguage?: string;
 	payments?: IPayment[];
@@ -54,6 +69,7 @@ export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset 
 	code?: string;
 	codeExpireAt?: Date;
 	emailVerifiedAt?: Date;
+	lastLoginAt?: Date;
 	isEmailVerified?: boolean;
 	emailToken?: string;
 	invites?: IInvite[];
@@ -111,6 +127,26 @@ export interface IUserCodeInput {
 
 export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput {}
 
+export interface IDefaultTeam {
+	defaultTeamId?: ID;
+}
+
+export interface IDefaultUserOrganization {
+	defaultOrganizationId?: ID;
+}
+
+export interface ILastTeam {
+	lastTeamId?: ID;
+}
+
+export interface ILastOrganization {
+	lastOrganizationId?: ID;
+}
+
+export interface ILastLoginAtInput {
+	lastLoginAt?: Date;
+}
+
 export interface IWorkspaceResponse extends IUserTokenInput {
 	user: IUser;
 }
@@ -120,6 +156,10 @@ export interface IUserSigninWorkspaceResponse {
 	confirmed_email: string;
 	show_popup: boolean;
 	total_workspaces: number;
+	defaultTeamId?: ID;
+	defaultOrganizationId?: ID;
+	lastTeamId?: ID;
+	lastOrganizationId?: ID;
 }
 
 export interface IAuthResponse {
@@ -142,6 +182,14 @@ export interface IUserCreateInput extends IRelationalImageAsset {
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
 	timeZone?: string;
 	timeFormat?: TimeFormatEnum;
+	defaultTeam?: IOrganizationTeam;
+	defaultTeamId?: ID;
+	lastTeam?: IOrganizationTeam;
+	lastTeamId?: ID;
+	defaultOrganization?: IOrganization;
+	defaultOrganizationId?: ID;
+	lasOrganization?: IOrganization;
+	lastOrganizationId?: ID;
 }
 
 export interface IUserUpdateInput extends IUserCreateInput {

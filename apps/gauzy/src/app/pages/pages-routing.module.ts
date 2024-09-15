@@ -2,9 +2,8 @@ import { RouterModule, Routes } from '@angular/router';
 import { NgModule } from '@angular/core';
 import { PermissionsGuard, UserResolver } from '@gauzy/ui-core/core';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { DateRangePickerResolver } from '@gauzy/ui-core/shared';
+import { DateRangePickerResolver, NotFoundComponent } from '@gauzy/ui-core/shared';
 import { PagesComponent } from './pages.component';
-import { NotFoundComponent } from './miscellaneous/not-found/not-found.component';
 
 const routes: Routes = [
 	{
@@ -110,7 +109,7 @@ const routes: Routes = [
 				children: [
 					{
 						path: 'proposals',
-						loadChildren: () => import('./proposals/proposals.module').then((m) => m.ProposalsModule)
+						loadChildren: () => import('@gauzy/plugin-job-proposal-ui').then((m) => m.JobProposalModule)
 					},
 					{
 						path: 'estimates',
@@ -632,11 +631,14 @@ const routes: Routes = [
 			},
 			{
 				path: 'legal',
-				loadChildren: () => import('./legal/legal.module').then((m) => m.PageLegalModule)
+				loadChildren: () => import('@gauzy/plugin-legal-ui').then((m) => m.PageLegalModule)
 			},
 			{
 				path: '**',
-				component: NotFoundComponent
+				component: NotFoundComponent,
+				data: {
+					selectors: false
+				}
 			}
 		]
 	}

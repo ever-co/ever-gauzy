@@ -4,8 +4,7 @@ import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { NbSidebarService } from '@nebular/theme';
 import { IUser } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/common';
-import { JitsuAnalyticsEvents, JitsuAnalyticsEventsEnum, JitsuService } from '../../../../../services';
+import { JitsuAnalyticsEvents, JitsuAnalyticsEventsEnum, JitsuService, Store } from '../../../../../services';
 import { IMenuItem } from '../../interface/menu-item.interface';
 
 @Component({

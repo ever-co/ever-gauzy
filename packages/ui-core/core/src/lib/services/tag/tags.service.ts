@@ -5,7 +5,7 @@ import { IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 import { CrudService } from '../crud/crud.service';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class TagsService extends CrudService<ITag> {
 	static readonly API_URL = `${API_PREFIX}/tags`;
 

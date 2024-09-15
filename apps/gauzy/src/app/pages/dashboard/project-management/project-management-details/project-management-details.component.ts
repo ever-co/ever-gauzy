@@ -1,14 +1,14 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { combineLatest, debounceTime, filter, first, firstValueFrom, Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { pluck } from 'underscore';
 import { NbDialogService } from '@nebular/theme';
-import { ErrorHandlingService, ServerDataSource, TasksService } from '@gauzy/ui-core/core';
+import { pluck } from 'underscore';
 import {
+	ID,
 	IOrganization,
 	IOrganizationProject,
 	ISelectedEmployee,
@@ -16,7 +16,8 @@ import {
 	PermissionsEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
-import { API_PREFIX, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { ErrorHandlingService, ServerDataSource, Store, TasksService } from '@gauzy/ui-core/core';
+import { API_PREFIX, distinctUntilChange } from '@gauzy/ui-core/common';
 import { AddTaskDialogComponent, PaginationFilterBaseComponent } from '@gauzy/ui-core/shared';
 import { MyTaskDialogComponent } from '../../../tasks/components/my-task-dialog/my-task-dialog.component';
 
@@ -30,8 +31,8 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 	private _smartTableSource: ServerDataSource;
 	private _tasks: ITask[] = [];
 	private _selectedEmployee: ISelectedEmployee;
-	public selectedEmployeeId: ISelectedEmployee['id'];
-	private selectedProjectId: IOrganizationProject['id'];
+	public selectedEmployeeId: ID;
+	private selectedProjectId: ID;
 	private _organization: IOrganization;
 	private _task$: Subject<boolean> = this.subject$;
 	private _projects: IOrganizationProject[] = [];
@@ -101,26 +102,14 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 
 		this._smartTableSource = new ServerDataSource(this._httpClient, {
 			...(this.selectedEmployeeId
-				? {
-						endPoint: `${API_PREFIX}/tasks/employee`
-				  }
-				: {
-						endPoint: `${API_PREFIX}/tasks/pagination`
-				  }),
+				? { endPoint: `${API_PREFIX}/tasks/employee` }
+				: { endPoint: `${API_PREFIX}/tasks/pagination` }),
 			relations: ['project', 'tags'],
 			where: {
 				organizationId,
 				tenantId,
-				...(this.selectedEmployeeId
-					? {
-							employeeId: this.selectedEmployeeId
-					  }
-					: {}),
-				...(this.selectedProjectId
-					? {
-							projectId: this.selectedProjectId
-					  }
-					: {}),
+				...(this.selectedEmployeeId ? { employeeId: this.selectedEmployeeId } : {}),
+				...(this.selectedProjectId ? { projectId: this.selectedProjectId } : {}),
 				...(this.filters.where ? this.filters.where : {})
 			}
 		});

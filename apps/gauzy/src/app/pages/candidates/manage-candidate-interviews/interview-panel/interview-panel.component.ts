@@ -15,7 +15,7 @@ import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
-import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { InterviewStarRatingComponent } from './table-components/rating/rating.component';
 import { ComponentEnum } from '@gauzy/ui-core/common';
 import {
@@ -25,6 +25,7 @@ import {
 	CandidateStore,
 	EmployeesService,
 	ErrorHandlingService,
+	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
 import {
@@ -341,7 +342,7 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.DATE'),
 					type: 'custom',
 					width: '120px',
-					filter: false,
+					isFilterable: false,
 					renderComponent: InterviewDateTableComponent,
 					componentInitFunction: (instance: InterviewDateTableComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -350,7 +351,7 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 				rating: {
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.RATING'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: InterviewStarRatingComponent,
 					componentInitFunction: (instance: InterviewStarRatingComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -360,7 +361,7 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.INTERVIEWERS'),
 					type: 'custom',
 					width: '155px',
-					filter: false,
+					isFilterable: false,
 					renderComponent: InterviewersTableComponent,
 					componentInitFunction: (instance: InterviewersTableComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -369,7 +370,7 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 				criterions: {
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.CRITERIONS'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: InterviewCriterionsTableComponent,
 					componentInitFunction: (instance: InterviewCriterionsTableComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -382,13 +383,13 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 				note: {
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.NOTES'),
 					type: 'string',
-					filter: false
+					isFilterable: false
 				},
 				actions: {
 					title: this.getTranslation('SM_TABLE.LAST_UPDATED'),
 					width: '10%',
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: InterviewActionsTableComponent,
 					componentInitFunction: (instance: InterviewActionsTableComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();

@@ -7,17 +7,18 @@ import {
 	ContactType,
 	IOrganization,
 	OrganizationContactBudgetTypeEnum,
-	IOrganizationContact
+	IOrganizationContact,
+	IImageAsset
 } from '@gauzy/contracts';
 import { NbStepperComponent } from '@nebular/theme';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { LatLng } from 'leaflet';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { FilterArrayPipe, FormHelpers, LeafletMapComponent, LocationFormComponent } from '@gauzy/ui-core/shared';
-import { ErrorHandlingService, OrganizationProjectsService, ToastrService } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, OrganizationProjectsService, Store, ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -101,6 +102,7 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 	public contMainForm: UntypedFormGroup = ContactMutationComponent.buildMainForm(this.fb);
 	static buildMainForm(formBuilder: UntypedFormBuilder): UntypedFormGroup {
 		const form = formBuilder.group({
+			imageId: [null],
 			imageUrl: [null],
 			tags: [],
 			name: ['', [Validators.required]],
@@ -217,6 +219,7 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 		const orgContact = this.organizationContact;
 		//
 		this.contMainForm.patchValue({
+			imageId: orgContact?.imageId ?? null,
 			imageUrl: orgContact?.imageUrl ?? null,
 			tags: orgContact?.tags ?? [],
 			name: orgContact?.name ?? null,
@@ -268,7 +271,19 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 	}
 
 	handleImageUploadError(error) {
-		this.toastrService.danger(error);
+		this.errorHandler.handleError(error);
+	}
+	/**
+	 * Upload employee image/avatar
+	 *
+	 * @param image
+	 */
+	async updateImageAsset(image: IImageAsset) {
+		if (image) {
+			this.contMainForm.get('imageId').setValue(image.id);
+			this.contMainForm.get('imageUrl').setValue(image.fullUrl);
+		}
+		this.contMainForm.updateValueAndValidity();
 	}
 
 	/**
@@ -376,7 +391,7 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 	}
 
 	/**
-	 * Updates the 'tags' field in 'contMainForm' with the selected tags and revalidates the form.
+	 * Updates the 'tags' field in 'contMainForm' with the selected tags and validate the form.
 	 * @param tags An array of selected tag objects.
 	 */
 	selectedTagsEvent(tags: ITag[]) {

@@ -6,8 +6,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { IImageAsset, IOrganization } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { ImageAssetService, InventoryStore, ProductService, ToastrService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { ImageAssetService, InventoryStore, ProductService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { GalleryComponent, GalleryService, ImageAssetComponent, SelectAssetComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
@@ -179,6 +178,7 @@ export class ProductGalleryComponent extends TranslationBaseComponent implements
 	onViewGalleryClick() {
 		const mappedImages = this.gallery.map((image) => {
 			return {
+				id: image.id,
 				thumbUrl: image.fullUrl,
 				fullUrl: image.fullUrl
 			};

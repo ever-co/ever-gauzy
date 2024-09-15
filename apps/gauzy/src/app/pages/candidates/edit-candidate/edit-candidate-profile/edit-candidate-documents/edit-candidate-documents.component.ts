@@ -5,8 +5,8 @@ import { tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LocalDataSource } from 'angular2-smart-table';
 import { ICandidateDocument, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
-import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
-import { CandidateDocumentsService, CandidateStore, ToastrService } from '@gauzy/ui-core/core';
+import { ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
+import { CandidateDocumentsService, CandidateStore, Store, ToastrService } from '@gauzy/ui-core/core';
 import {
 	CandidateCvComponent,
 	DocumentDateTableComponent,

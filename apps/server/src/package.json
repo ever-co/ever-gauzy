@@ -30,6 +30,7 @@
 			"../../../packages/config",
 			"../../../packages/contracts",
 			"../../../packages/ui-config",
+			"../../../packages/ui-core",
 			"../../../packages/plugin",
 			"../../../packages/plugins/integration-ai",
 			"../../../packages/plugins/integration-hubstaff",
@@ -45,7 +46,12 @@
 			"../../../packages/plugins/job-proposal",
 			"../../../packages/plugins/job-employee-ui",
 			"../../../packages/plugins/job-matching-ui",
-			"../../../packages/plugins/job-search-ui"
+			"../../../packages/plugins/job-proposal-ui",
+			"../../../packages/plugins/job-search-ui",
+			"../../../packages/plugins/legal-ui",
+			"../../../packages/plugins/maintenance-ui",
+			"../../../packages/plugins/onboarding-ui",
+			"../../../packages/plugins/public-layout-ui"
 		]
 	},
 	"build": {
@@ -191,7 +197,8 @@
 		"tslib": "^2.6.2",
 		"twing": "^5.0.2",
 		"underscore": "^1.13.3",
-		"undici": "^6.10.2"
+		"undici": "^6.10.2",
+		"custom-electron-titlebar": "^4.2.8"
 	},
 	"optionalDependencies": {
 		"node-linux": "^0.1.12",

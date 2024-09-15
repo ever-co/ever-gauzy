@@ -19,14 +19,14 @@ import {
 	ExpenseStatusesEnum
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
-import { Store, compareDate, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
+import { compareDate, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
 import { LocalDataSource } from 'angular2-smart-table';
 import { Observable, firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
-import { ToastrService } from '@gauzy/ui-core/core';
+import { Store, ToastrService } from '@gauzy/ui-core/core';
 import {
 	ExpensesService,
 	InvoiceEstimateHistoryService,
@@ -306,7 +306,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			price = {
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.HOURLY_RATE'),
 				type: 'text',
-				filter: false,
+				isFilterable: false,
 				width: '13%',
 				valuePrepareFunction: (cell, row) => {
 					return `${this.currency.value} ${cell}`;
@@ -315,7 +315,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			quantity = {
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.HOURS_WORKED'),
 				type: 'text',
-				filter: false,
+				isFilterable: false,
 				width: '13%'
 			};
 		} else if (
@@ -326,9 +326,9 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			price = {
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.PRICE'),
 				type: 'text',
-				filter: false,
+				isFilterable: false,
 				width: '13%',
-				valuePrepareFunction: (cell, row) => {
+				valuePrepareFunction: (cell) => {
 					return `${this.currency.value} ${cell}`;
 				}
 			};
@@ -336,7 +336,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.QUANTITY'),
 				type: 'text',
 				width: '13%',
-				filter: false
+				isFilterable: false
 			};
 		}
 		this.settingsSmartTable['columns']['description'] = {
@@ -351,10 +351,10 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			type: 'text',
 			addable: false,
 			editable: false,
-			valuePrepareFunction: (cell, row) => {
-				return `${this.currency.value} ${row.quantity * row.price}`;
+			valuePrepareFunction: (cell) => {
+				return `${this.currency.value} ${cell}`;
 			},
-			filter: false,
+			isFilterable: false,
 			width: '13%'
 		};
 		if (this.organization.separateInvoiceItemTaxAndDiscount) {
@@ -364,7 +364,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 					type: 'custom',
 					component: InvoiceApplyTaxDiscountComponent
 				},
-				filter: false,
+				isFilterable: false,
 				width: '10%',
 				valuePrepareFunction: (cell) => {
 					if (cell) {
@@ -380,7 +380,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 					type: 'custom',
 					component: InvoiceApplyTaxDiscountComponent
 				},
-				filter: false,
+				isFilterable: false,
 				width: '10%',
 				valuePrepareFunction: (cell) => {
 					if (cell) {

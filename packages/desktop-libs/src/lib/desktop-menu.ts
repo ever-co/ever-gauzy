@@ -1,16 +1,21 @@
+import { createAboutWindow, createSettingsWindow } from '@gauzy/desktop-window';
 import { BrowserWindow, Menu, MenuItemConstructorOptions, shell } from 'electron';
 import { LocalStore } from './desktop-store';
-import { createSettingsWindow, createAboutWindow } from '@gauzy/desktop-window';
-import { TranslateService } from './translation';
 import { TimerService } from './offline';
+import { PluginManager } from './plugin-system/data-access/plugin-manager';
+import { PluginEventManager } from './plugin-system/events/plugin-event.manager';
+import { TranslateService } from './translation';
 
 export class AppMenu {
 	public menu: MenuItemConstructorOptions[] = [];
+	private readonly pluginManager = PluginManager.getInstance();
+	private readonly pluginEventManager = PluginEventManager.getInstance();
+
 	constructor(timeTrackerWindow, settingsWindow, updaterWindow, knex, windowPath, serverWindow?, isZoomVisible?) {
 		const isZoomEnabled = isZoomVisible;
 		this.menu = [
 			{
-				label: process.env.DESCRIPTION || 'Gauzy',
+				label: 'Gauzy',
 				submenu: [
 					{
 						id: 'gauzy-about',
@@ -21,7 +26,6 @@ export class AppMenu {
 							window.show();
 						}
 					},
-					{ type: 'separator' },
 					{
 						label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 						async click() {
@@ -33,7 +37,50 @@ export class AppMenu {
 							settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 						}
 					},
-					{ type: 'separator' },
+					{
+						type: 'separator'
+					},
+					{
+						label: TranslateService.instant('TIMER_TRACKER.MENU.LEARN_MORE'),
+						click() {
+							shell.openExternal(process.env.COMPANY_SITE_LINK || 'https://gauzy.co/');
+						}
+					},
+					{
+						type: 'separator'
+					},
+					{
+						id: 'devtools-setting',
+						label: TranslateService.instant('TIMER_TRACKER.MENU.SETTING_DEV_MODE'),
+						enabled: true,
+						async click() {
+							if (!settingsWindow) {
+								settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
+							}
+							settingsWindow.webContents.toggleDevTools();
+						}
+					},
+					{
+						id: 'devtools-time-tracker',
+						label: TranslateService.instant('TIMER_TRACKER.MENU.TIMER_DEV_MODE'),
+						enabled: true,
+						visible: timeTrackerWindow ? true : false,
+						click() {
+							if (timeTrackerWindow) timeTrackerWindow.webContents.toggleDevTools();
+						}
+					},
+					{
+						id: 'devtools-server',
+						label: TranslateService.instant('TIMER_TRACKER.MENU.SERVER_DEV_MODE'),
+						enabled: true,
+						visible: serverWindow ? true : false,
+						click() {
+							if (serverWindow) serverWindow.webContents.toggleDevTools();
+						}
+					},
+					{
+						type: 'separator'
+					},
 					{
 						role: 'quit',
 						label: TranslateService.instant('BUTTONS.EXIT')
@@ -65,15 +112,17 @@ export class AppMenu {
 						enabled: true,
 						async click() {
 							if (!settingsWindow) {
-								settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
+								settingsWindow = await createSettingsWindow(
+									settingsWindow,
+									windowPath.timeTrackerUi,
+									windowPath.preloadPath
+								);
 							}
 							settingsWindow.show();
 							settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 							settingsWindow.webContents.send(timeTrackerWindow ? 'goto_top_menu' : 'goto_update');
+							settingsWindow.webContents.send('refresh_menu');
 						}
-					},
-					{
-						type: 'separator'
 					},
 					{
 						label: TranslateService.instant('TIMER_TRACKER.MENU.ZOOM_IN'),
@@ -112,51 +161,49 @@ export class AppMenu {
 					}
 				]
 			},
-			{
-				label: TranslateService.instant('TIMER_TRACKER.MENU.HELP'),
-				submenu: [
-					{
-						label: TranslateService.instant('TIMER_TRACKER.MENU.LEARN_MORE'),
-						click() {
-							shell.openExternal(process.env.COMPANY_SITE_LINK || 'https://gauzy.co/');
-						}
-					},
-					{
-						id: 'devtools-setting',
-						label: TranslateService.instant('TIMER_TRACKER.MENU.SETTING_DEV_MODE'),
-						enabled: true,
-						async click() {
-							if (!settingsWindow) {
-								settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
-							}
-							settingsWindow.webContents.toggleDevTools();
-						}
-					},
-					{
-						id: 'devtools-time-tracker',
-						label: TranslateService.instant('TIMER_TRACKER.MENU.TIMER_DEV_MODE'),
-						enabled: true,
-						visible: timeTrackerWindow ? true : false,
-						click() {
-							if (timeTrackerWindow) timeTrackerWindow.webContents.toggleDevTools();
-						}
-					},
-					{
-						id: 'devtools-server',
-						label: TranslateService.instant('TIMER_TRACKER.MENU.SERVER_DEV_MODE'),
-						enabled: true,
-						visible: serverWindow ? true : false,
-						click() {
-							if (serverWindow) serverWindow.webContents.toggleDevTools();
-						}
-					}
-				]
-			}
+			this.pluginMenu
 		];
 		this.build();
+		if (timeTrackerWindow) {
+			timeTrackerWindow.webContents.send('refresh_menu');
+		}
+		if (settingsWindow) {
+			settingsWindow.webContents.send('refresh_menu');
+		}
+		if (updaterWindow) {
+			updaterWindow.webContents.send('refresh_menu');
+		}
+
+		this.pluginEventManager.listen(() => {
+			// Determine if the updated menu
+			const updatedMenu = this.menu.map((menu) => (menu.id === 'plugin-menu' ? this.pluginMenu : menu));
+			// Only rebuild the menu if there was an actual change
+			if (!this.deepArrayEqual(this.menu, updatedMenu)) {
+				this.menu = updatedMenu;
+				this.build();
+				console.log('Menu rebuilt after plugin update.');
+			} else {
+				console.log('Plugin update detected, but no changes were made to the menu.');
+			}
+		});
 	}
 
 	public build(): void {
 		Menu.setApplicationMenu(Menu.buildFromTemplate([...this.menu]));
+	}
+
+	public get pluginMenu(): MenuItemConstructorOptions {
+		const submenu = this.pluginManager.getMenuPlugins();
+
+		return {
+			id: 'plugin-menu',
+			label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGIN'),
+			visible: submenu.length > 0,
+			submenu
+		} as MenuItemConstructorOptions;
+	}
+
+	private deepArrayEqual<T>(arr1: T, arr2: T) {
+		return JSON.stringify(arr1) === JSON.stringify(arr2);
 	}
 }

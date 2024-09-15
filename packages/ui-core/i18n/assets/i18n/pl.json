@@ -33,6 +33,7 @@
 		"INVITE": "Zaproś",
 		"SELECT_ALL": "Zaznacz wszystko",
 		"COPY_LINK": "Skopiuj link",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "Zarządzaj rozmowami kwalifikacyjnymi",
 		"MANAGE_INVITES": "Zarządzaj zaproszeniami",
 		"MANAGE_SPRINTS": "Zarządzaj sprintami",
@@ -156,7 +157,14 @@
 		"PASTE": "Wklej",
 		"FORWARD_PORTS": "Przekieruj porty",
 		"REPORT": "Raport",
-		"IGNORE": "Ignoruj"
+		"IGNORE": "Ignoruj",
+		"INSTALL": "Zainstaluj",
+		"UNINSTALL": "Odinstaluj",
+		"DEACTIVATE": "Dezaktywuj",
+		"ACTIVATE": "Aktywuj",
+		"ADD_PLUGIN": "Dodaj wtyczkę",
+		"LOAD_PLUGIN": "Załaduj wtyczkę",
+		"FROM_CDN": "Z CDN"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -179,6 +187,7 @@
 			"APPROVAL_REQUEST": "Nie utworzyłeś żadnego wniosku o zatwierdzenie",
 			"APPROVAL_POLICY": "Nie utworzyłeś żadnej polityki zatwierdzania",
 			"TIME_OFF": "Nie utworzyłeś żadnego urlopu",
+			"TIME_OFF_POLICY": "Nie utworzyłeś żadnych polityk urlopowych.",
 			"CANDIDATE": "Nie utworzyłeś żadnego kandydata",
 			"INTERVIEW": "Nie stworzyłeś żadnego wywiadu",
 			"EQUIPMENT": "Nie utworzyłeś żadnego wyposażenia",
@@ -1102,7 +1111,8 @@
 		"TABLE": "Tabela",
 		"CARDS_GRID": "Siatka kart",
 		"SPRINT_VIEW": "Widok sprintu",
-		"QUICK_SETTINGS": "Szybkie ustawienia"
+		"QUICK_SETTINGS": "Szybkie ustawienia",
+		"NO_LAYOUT": "Brak dostępnego układu danych"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Co nowego?",
@@ -1626,6 +1636,7 @@
 		"APPLIED": "Zastosowany",
 		"HIRED": "Zatrudniony",
 		"REJECTED": "Odrzucone",
+		"SHOW_REJECTED": "Pokaz odrzucony",
 		"DELETED": "Usunięte",
 		"ARCHIVED": "Zarchiwizowane",
 		"SELECT_EMPLOYEE_MSG": "Proszę wybrać pracownika z menu powyżej",
@@ -1694,6 +1705,7 @@
 				"PREVIOUS": "Poprzedni",
 				"SAVE": "Zapisz",
 				"CREATE_CRITERIONS": "Utwórz kryteria",
+				"CLOSE_CRITERIONS": "Zamknij kryteria",
 				"EMAIL_NOTIFICATION": "Powiadomienie e-mailowe",
 				"DELETE_INTERVIEW": "Usuń wywiad",
 				"DELETE_FEEDBACK": "Usuń opinię",
@@ -1992,7 +2004,6 @@
 			"ORG_PROPOSALS_VIEW": "Zobacz stronę z propozycjami",
 			"ORG_PROPOSAL_TEMPLATES_VIEW": "Zobacz stronę szablonów propozycji",
 			"ORG_PROPOSAL_TEMPLATES_EDIT": "Twórz/Modyfikuj/Usuń szablony propozycji",
-			"ORG_TIME_OFF_VIEW": "Zobacz stronę Time Off",
 			"ORG_EMPLOYEES_VIEW": "Wyświetl pracowników organizacji",
 			"ORG_EMPLOYEES_EDIT": "Twórz/edytuj/usuń pracowników organizacji",
 			"ORG_CANDIDATES_VIEW": "Wyświetl kandydatów organizacji",
@@ -2013,8 +2024,10 @@
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "Utwórz/edytuj/usuń informacje zwrotne kandydata",
 			"ALL_ORG_VIEW": "Wyświetl wszystkie organizacje",
 			"ALL_ORG_EDIT": "Stwórz/edytuj/usuń wszystkie organizacje",
-			"POLICY_VIEW": "Zobacz Politykę urlopów",
-			"POLICY_EDIT": "Edytuj politykę urlopową",
+			"TIME_OFF_POLICY_ADD": "Dodaj Politykę Urlopową",
+			"TIME_OFF_POLICY_VIEW": "Zobacz Politykę Urlopową",
+			"TIME_OFF_POLICY_EDIT": "Edytuj Politykę Urlopową",
+			"TIME_OFF_POLICY_DELETE": "Usuń Politykę Urlopową",
 			"CHANGE_SELECTED_EMPLOYEE": "Zmień wybranego pracownika",
 			"CHANGE_SELECTED_CANDIDATE": "Zmień wybranego kandydata",
 			"CHANGE_SELECTED_ORGANIZATION": "Zmień wybraną organizację",
@@ -2039,7 +2052,10 @@
 			"PUBLIC_PAGE_EDIT": "Edytuj publiczną stronę organizacji",
 			"CAN_APPROVE_TIMESHEET": "Zatwierdź kartę czasu pracy",
 			"EVENT_TYPES_VIEW": "Wyświetl typy wydarzeń",
-			"TIME_OFF_EDIT": "Edytuj czas wolny",
+			"TIME_OFF_ADD": "Dodaj Urlop",
+			"TIME_OFF_VIEW": "Zobacz Urlop",
+			"TIME_OFF_EDIT": "Edytuj Urlop",
+			"TIME_OFF_DELETE": "Usuń Urlop",
 			"ORG_INVENTORY_VIEW": "Wyświetl inwentarz organizacji",
 			"INVENTORY_GALLERY_VIEW": "Zobacz galerię inwentarza",
 			"INVENTORY_GALLERY_EDIT": "Edytuj galerię inwentarza",
@@ -2047,6 +2063,10 @@
 			"MEDIA_GALLERY_VIEW": "Zobacz galerię mediów",
 			"MEDIA_GALLERY_EDIT": "Edytuj galerię mediów",
 			"MEDIA_GALLERY_DELETE": "Usuń galerię mediów",
+			"EQUIPMENT_SHARING_POLICY_ADD": "Dodaj politykę udostępniania sprzętu",
+			"EQUIPMENT_SHARING_POLICY_VIEW": "Wyświetl politykę udostępniania sprzętu",
+			"EQUIPMENT_SHARING_POLICY_EDIT": "Edytuj politykę udostępniania sprzętu",
+			"EQUIPMENT_SHARING_POLICY_DELETE": "Usuń politykę udostępniania sprzętu",
 			"ORG_EQUIPMENT_VIEW": "Wyświetl sprzęt organizacji",
 			"ORG_EQUIPMENT_EDIT": "Edytuj wyposażenie organizacji",
 			"ORG_EQUIPMENT_SHARING_VIEW": "Wyświetl udostępnianie sprzętu organizacji",
@@ -2072,6 +2092,10 @@
 			"ORG_PROJECT_DELETE": "Usuń Projekty",
 			"ORG_CONTACT_EDIT": "Utwórz/edytuj kontakty",
 			"ORG_CONTACT_VIEW": "Wyświetl kontakty",
+			"PROJECT_MODULE_CREATE": "Utwórz moduły projektu",
+			"PROJECT_MODULE_READ": "Zobacz moduły projektu",
+			"PROJECT_MODULE_UPDATE": "Aktualizuj moduły projektu",
+			"PROJECT_MODULE_DELETE": "Usuń moduły projektu",
 			"ORG_TEAM_ADD": "Dodaj zespoły",
 			"ORG_TEAM_VIEW": "Wyświetl zespoły",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "Edytuj aktywne zadania",
@@ -2184,7 +2208,6 @@
 		},
 		"PROPOSAL_DETAILS": {
 			"PROPOSAL_DETAILS": "Szczegóły propozycji",
-			"EDIT": "Edytuj",
 			"AUTHOR": "Autor",
 			"JOB_POST_URL": "Adres URL ogłoszenia o pracę",
 			"PROPOSAL_SENT_ON": "Propozycja wysłana dnia",
@@ -3042,7 +3065,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "Generuj publiczny link",
 			"GENERATE": "Wygeneruj link do {{ text }}, który będzie można przeglądać przez każdą osobę posiadającą link",
-			"ACCESS": "Każda osoba mająca dostęp do tego linku może zobaczyć {{ text }}"
+			"ACCESS": "Każda osoba mająca dostęp do tego linku może zobaczyć {{ text }}",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -3073,7 +3097,7 @@
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Strona nie znaleziona",
 		"TAKE_ME_HOME": "Zabierz mnie do domu",
-		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "Strona, której szukałeś, nie istnieje",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "Strona, której szukałeś, nie istnieje",
 		"REDIRECT_TO_HOME": "Za chwilę zostaniesz przekierowany na stronę główną"
 	},
 	"HELP_PAGE": {
@@ -3808,7 +3832,9 @@
 			"DB_PORT": "Port bazy danych",
 			"USER": "Użytkownik",
 			"PASSWORD": "Hasło",
-			"UI_HOSTNAME": "Nazwa hosta interfejsu użytkownika / Adres IP"
+			"UI_HOSTNAME": "Nazwa hosta interfejsu użytkownika / Adres IP",
+			"TITLE_SERVER_API": "Kreator instalacji serwera API Ever Gauzy",
+			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App zapewnia pełną funkcjonalność platformy Gauzy dostępną bezpośrednio na komputerze stacjonarnym lub laptopie. Ponadto umożliwia śledzenie czasu pracy, rejestrowanie aktywności i możliwość otrzymywania przypomnień/powiadomień o śledzeniu."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Zrzut ekranu",
@@ -3902,6 +3928,9 @@
 			"WIDGET": "Widget",
 			"PLUGINS": "Wtyczki",
 			"PLUGIN_DESCRIPTION": "Wtyczki",
+			"VERSION": "Wersja",
+			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "Zainstaluj wtyczki z lokalnych plików lub CDN. Lokalne dla niestandardowych/prywatnych wtyczek, CDN dla publicznych. Wybierz zgodnie z potrzebami.",
+			"ADD_PLUGIN_CDN_DESCRIPTION": "Instalacja z CDN umożliwia łatwy dostęp do publicznie dostępnych wtyczek.",
 			"PLUGIN": "Wtyczka",
 			"WIDGET_LABEL": "To okno odzwierciedla stan timera, wskazując, czy jest uruchomiony czy zatrzymany, i działa jako przycisk.",
 			"SSL": {
@@ -3997,11 +4026,16 @@
 			"HELP": "Pomoc",
 			"LEARN_MORE": "Dowiedz się więcej",
 			"OPEN_MAIN_WINDOW": "Otwórz główne okno",
-			"DAILY_RECAP": "Podsumowanie Dziennie"
+			"DAILY_RECAP": "Podsumowanie Dziennie",
+			"WEEKLY_RECAP": "Cotygodniowe Podsumowanie",
+			"MONTHLY_RECAP": "Miesięczne Podsumowanie"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Śledzenie czasu według godzin",
-			"HOURLY_TIME_TRACKING_DATA": "Dane dotyczące śledzenia czasu według godzin"
+			"HOURLY_TIME_TRACKING_DATA": "Dane dotyczące śledzenia czasu według godzin",
+			"NO_MONTHLY_ACTIVITY": "Nie masz śledzonego czasu i aktywności na ten miesiąc.",
+			"WORKED_FOR_MONTH": "Pracowano w tym miesiącu",
+			"ACTIVITY_FOR_MONTH": "Miesięczna Aktywność"
 		}
 	},
 	"SERVER": "Serwer",
@@ -4136,7 +4170,8 @@
 			"UPWORK": "Upwork",
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "Rozszerzenie przeglądarki",
-			"TEAMS": "Zespoły"
+			"TEAMS": "Zespoły",
+			"CLOC": "Cloc"
 		},
 		"LAST_WORKED": "Ostatnia praca:",
 		"TIME_ZONE": "Time Zone",
@@ -4167,8 +4202,9 @@
 		"NO_RECORD_FOUND": "Nie znaleziono żadnych rekordów. Proszę wybrać zakres daty, pracownika lub projekt"
 	},
 	"ONBOARDING": {
-		"FIRST_ORGANIZATION": "Utwórzmy Twoją pierwszą organizację",
-		"COMPLETE": "Wszystko gotowe!"
+		"FIRST_ORGANIZATION": "Let's create your first organization",
+		"COMPLETE_TITLE": "You're all set!",
+		"COMPLETE_SUB_TITLE": "Where would you like to go now?"
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "To pole jest wymagane!",
@@ -4236,7 +4272,8 @@
 		"SELECT_EMPLOYEE_ERROR": "Proszę wybrać pracownika",
 		"EXPIRED_OR_CANCELLED": "To spotkanie wygasło lub zostało anulowane",
 		"EMAIL_SENT": "E-mail został wysłany do organizatora oraz wszystkich uczestników tego spotkania",
-		"NO_ACTIVE_EVENT_TYpES": "Nie ma aktywnych typów wydarzeń"
+		"NO_ACTIVE_EVENT_TYPES": "Nie ma aktywnych typów wydarzeń",
+		"CLICK_HERE": "Click Here"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "Szablony wiadomości e-mail",
@@ -4276,7 +4313,8 @@
 			"employee-join": "Dołącz jako pracownik",
 			"email-reset": "Resetuj Email",
 			"organization-team-join-request": "Wniosek o dołączenie do zespołu organizacji",
-			"payment-receipt": "Wysłać potwierdzenie płatności"
+			"payment-receipt": "Wysłać potwierdzenie płatności",
+			"reject-candidate": "Odrzuć Kandydata"
 		},
 		"HTML_EDITOR": "Edytor HTML"
 	},

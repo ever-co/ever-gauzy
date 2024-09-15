@@ -6,8 +6,9 @@ import { debounceTime } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -35,6 +36,14 @@ export class EditOrganizationComponent extends TranslationBaseComponent implemen
 				distinctUntilChange(),
 				filter((data: Data) => !!data && !!data.organization),
 				map(({ organization }) => organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.store.selectedOrganization$
+			.pipe(
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)

@@ -1,24 +1,25 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
-import { IPipeline, ComponentLayoutStyleEnum, IOrganization, PipelineTabsEnum } from '@gauzy/contracts';
 import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { Subject, firstValueFrom, BehaviorSubject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { IPipeline, ComponentLayoutStyleEnum, IOrganization, PipelineTabsEnum } from '@gauzy/contracts';
 import {
 	AtLeastOneFieldValidator,
 	ErrorHandlingService,
 	PipelinesService,
 	ServerDataSource,
+	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
 import {
 	API_PREFIX,
 	ComponentEnum,
-	Store,
 	distinctUntilChange,
 	isNotEmpty,
 	isNotNullOrUndefined
@@ -30,7 +31,6 @@ import {
 	PaginationFilterBaseComponent,
 	StatusBadgeComponent
 } from '@gauzy/ui-core/shared';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 import { StageComponent } from './stage/stage.component';
 
@@ -232,7 +232,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 					type: 'string',
 					title: this.getTranslation('SM_TABLE.NAME'),
 					width: '30%',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -244,7 +244,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 					type: 'string',
 					title: this.getTranslation('SM_TABLE.DESCRIPTION'),
 					width: '30%',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},

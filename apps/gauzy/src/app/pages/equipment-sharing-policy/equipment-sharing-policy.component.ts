@@ -7,8 +7,8 @@ import { filter, tap } from 'rxjs/operators';
 import { firstValueFrom, Subject, debounceTime } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IEquipmentSharing, ComponentLayoutStyleEnum, IEquipmentSharingPolicy, IOrganization } from '@gauzy/contracts';
-import { EquipmentSharingPolicyService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { EquipmentSharingPolicyService, ServerDataSource, Store, ToastrService } from '@gauzy/ui-core/core';
+import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	DeleteConfirmationComponent,
 	EquipmentSharingPolicyMutationComponent,
@@ -120,7 +120,7 @@ export class EquipmentSharingPolicyComponent extends PaginationFilterBaseCompone
 				name: {
 					title: this.getTranslation('EQUIPMENT_SHARING_POLICY_PAGE.EQUIPMENT_SHARING_POLICY_NAME'),
 					type: 'string',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -131,7 +131,7 @@ export class EquipmentSharingPolicyComponent extends PaginationFilterBaseCompone
 				description: {
 					title: this.getTranslation('EQUIPMENT_SHARING_POLICY_PAGE.EQUIPMENT_SHARING_POLICY_DESCRIPTION'),
 					type: 'string',
-					filter: false
+					isFilterable: false
 				}
 			}
 		};
@@ -199,7 +199,7 @@ export class EquipmentSharingPolicyComponent extends PaginationFilterBaseCompone
 		this.loading = true;
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/equipment-sharing-policy/pagination`,
-			relations: ['organization'],
+			relations: [],
 			where: {
 				...{ organizationId, tenantId },
 				...this.filters.where

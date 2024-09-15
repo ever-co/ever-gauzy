@@ -1,12 +1,11 @@
 import { IUser } from './user.model';
-import { IEmployee, IRelationalEmployee } from './employee.model';
+import { IEmployee, IEmployeeEntityInput } from './employee.model';
 import { ITask } from './task.model';
 import { ITimeSlot, ITimeLog, ITimeLogFilters, ITimeLogTodayFilters } from './timesheet.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IRelationalOrganizationTeam } from './organization-team.model';
 
-export interface IGetTimeSlotStatistics
-	extends ITimeLogFilters {
+export interface IGetTimeSlotStatistics extends ITimeLogFilters {
 	employeeId?: string;
 	projectId?: string | string[];
 	onlyMe?: boolean;
@@ -20,8 +19,7 @@ export interface ITimeSlotStatistics extends IEmployee {
 	user: Pick<IUser, 'name' | 'imageUrl'>;
 }
 
-export interface IGetActivitiesStatistics
-	extends ITimeLogFilters {
+export interface IGetActivitiesStatistics extends ITimeLogFilters {
 	employeeId?: string;
 	projectId?: string | string[];
 	onlyMe?: boolean;
@@ -34,8 +32,7 @@ export interface IActivitiesStatistics {
 	sessions?: number;
 }
 
-export interface IGetProjectsStatistics
-	extends ITimeLogFilters {
+export interface IGetProjectsStatistics extends ITimeLogFilters {
 	employeeId?: string;
 	projectId?: string | string[];
 	onlyMe?: boolean;
@@ -46,7 +43,11 @@ export interface IProjectsStatistics extends IOrganizationProject {
 	durationPercentage?: number;
 }
 
-export interface IGetTasksStatistics extends ITimeLogFilters, ITimeLogTodayFilters, Pick<IRelationalOrganizationTeam, 'organizationTeamId'>, Pick<IRelationalEmployee, 'employeeId'> {
+export interface IGetTasksStatistics
+	extends ITimeLogFilters,
+		ITimeLogTodayFilters,
+		Pick<IRelationalOrganizationTeam, 'organizationTeamId'>,
+		Pick<IEmployeeEntityInput, 'employeeId'> {
 	projectId?: string | string[];
 	onlyMe?: boolean;
 	take?: number;
@@ -57,8 +58,7 @@ export interface ITasksStatistics extends ITask {
 	durationPercentage?: number;
 }
 
-export interface IGetManualTimesStatistics
-	extends ITimeLogFilters {
+export interface IGetManualTimesStatistics extends ITimeLogFilters {
 	employeeId?: string;
 	projectId?: string | string[];
 	onlyMe?: boolean;

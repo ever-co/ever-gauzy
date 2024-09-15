@@ -361,6 +361,42 @@
 				}
 			}
 		},
+		"plugin-job-proposal-ui": {
+			"projectType": "library",
+			"root": "packages/plugins/job-proposal-ui",
+			"sourceRoot": "packages/plugins/job-proposal-ui",
+			"prefix": "lib",
+			"architect": {
+				"build": {
+					"builder": "@angular-devkit/build-angular:ng-packagr",
+					"options": {
+						"project": "packages/plugins/job-proposal-ui/ng-package.json"
+					},
+					"configurations": {
+						"production": {
+							"tsConfig": "packages/plugins/job-proposal-ui/tsconfig.lib.prod.json"
+						},
+						"development": {
+							"tsConfig": "packages/plugins/job-proposal-ui/tsconfig.lib.json"
+						}
+					},
+					"defaultConfiguration": "production"
+				},
+				"test": {
+					"builder": "@angular-devkit/build-angular:karma",
+					"options": {
+						"tsConfig": "packages/plugins/job-proposal-ui/tsconfig.spec.json",
+						"polyfills": ["zone.js", "zone.js/testing"]
+					}
+				}
+			},
+			"schematics": {
+				"@nrwl/angular:component": {
+					"prefix": "ngx",
+					"style": "scss"
+				}
+			}
+		},
 		"plugin-job-search-ui": {
 			"projectType": "library",
 			"root": "packages/plugins/job-search-ui",
@@ -393,6 +429,150 @@
 			"schematics": {
 				"@nrwl/angular:component": {
 					"prefix": "ngx",
+					"style": "scss"
+				}
+			}
+		},
+		"plugin-legal-ui": {
+			"projectType": "library",
+			"root": "packages/plugins/legal-ui",
+			"sourceRoot": "packages/plugins/legal-ui",
+			"prefix": "lib",
+			"architect": {
+				"build": {
+					"builder": "@angular-devkit/build-angular:ng-packagr",
+					"options": {
+						"project": "packages/plugins/legal-ui/ng-package.json"
+					},
+					"configurations": {
+						"production": {
+							"tsConfig": "packages/plugins/legal-ui/tsconfig.lib.prod.json"
+						},
+						"development": {
+							"tsConfig": "packages/plugins/legal-ui/tsconfig.lib.json"
+						}
+					},
+					"defaultConfiguration": "production"
+				},
+				"test": {
+					"builder": "@angular-devkit/build-angular:karma",
+					"options": {
+						"tsConfig": "packages/plugins/legal-ui/tsconfig.spec.json",
+						"polyfills": ["zone.js", "zone.js/testing"]
+					}
+				}
+			},
+			"schematics": {
+				"@nrwl/angular:component": {
+					"prefix": "ngx",
+					"style": "scss"
+				}
+			}
+		},
+		"plugin-maintenance-ui": {
+			"projectType": "library",
+			"root": "packages/plugins/maintenance-ui",
+			"sourceRoot": "packages/plugins/maintenance-ui",
+			"prefix": "lib",
+			"architect": {
+				"build": {
+					"builder": "@angular-devkit/build-angular:ng-packagr",
+					"options": {
+						"project": "packages/plugins/maintenance-ui/ng-package.json"
+					},
+					"configurations": {
+						"production": {
+							"tsConfig": "packages/plugins/maintenance-ui/tsconfig.lib.prod.json"
+						},
+						"development": {
+							"tsConfig": "packages/plugins/maintenance-ui/tsconfig.lib.json"
+						}
+					},
+					"defaultConfiguration": "production"
+				},
+				"test": {
+					"builder": "@nrwl/jest:jest",
+					"options": {
+						"jestConfig": "packages/plugins/maintenance-ui/jest.config.js",
+						"passWithNoTests": true
+					}
+				}
+			},
+			"schematics": {
+				"@nrwl/angular:component": {
+					"prefix": "ngx",
+					"style": "scss"
+				}
+			}
+		},
+		"plugin-onboarding-ui": {
+			"projectType": "library",
+			"root": "packages/plugins/onboarding-ui",
+			"sourceRoot": "packages/plugins/onboarding-ui",
+			"prefix": "lib",
+			"architect": {
+				"build": {
+					"builder": "@angular-devkit/build-angular:ng-packagr",
+					"options": {
+						"project": "packages/plugins/onboarding-ui/ng-package.json"
+					},
+					"configurations": {
+						"production": {
+							"tsConfig": "packages/plugins/onboarding-ui/tsconfig.lib.prod.json"
+						},
+						"development": {
+							"tsConfig": "packages/plugins/onboarding-ui/tsconfig.lib.json"
+						}
+					},
+					"defaultConfiguration": "production"
+				},
+				"test": {
+					"builder": "@angular-devkit/build-angular:karma",
+					"options": {
+						"tsConfig": "packages/plugins/onboarding-ui/tsconfig.spec.json",
+						"polyfills": ["zone.js", "zone.js/testing"]
+					}
+				}
+			},
+			"schematics": {
+				"@nrwl/angular:component": {
+					"prefix": "ngx",
+					"style": "scss"
+				}
+			}
+		},
+		"plugin-public-layout-ui": {
+			"projectType": "library",
+			"root": "packages/plugins/public-layout-ui",
+			"sourceRoot": "packages/plugins/public-layout-ui/src",
+			"prefix": "lib",
+			"architect": {
+				"build": {
+					"builder": "@angular-devkit/build-angular:ng-packagr",
+					"options": {
+						"project": "packages/plugins/public-layout-ui/ng-package.json"
+					},
+					"configurations": {
+						"production": {
+							"tsConfig": "packages/plugins/public-layout-ui/tsconfig.lib.prod.json"
+						},
+						"development": {
+							"tsConfig": "packages/plugins/public-layout-ui/tsconfig.lib.json"
+						}
+					},
+					"defaultConfiguration": "production"
+				},
+				"test": {
+					"builder": "@angular-devkit/build-angular:karma",
+					"options": {
+						"tsConfig": "packages/plugins/public-layout-ui/tsconfig.spec.json",
+						"polyfills": ["zone.js", "zone.js/testing"]
+					}
+				}
+			},
+			"schematics": {
+				"@nrwl/angular:component": {
+					"prefix": "gz",
 					"style": "scss"
 				}
 			}

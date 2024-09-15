@@ -1,38 +1,38 @@
-import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
-import { catchError, from, of } from 'rxjs';
-import { Observable } from 'rxjs/internal/Observable';
+import { inject } from '@angular/core';
+import { ResolveFn } from '@angular/router';
+import { Observable, catchError, from, of } from 'rxjs';
 import { IDeal } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/common';
-import { DealsService, ErrorHandlingService } from '@gauzy/ui-core/core';
+import { DealsService, ErrorHandlingService, Store } from '@gauzy/ui-core/core';
 
-@Injectable()
-export class DealResolver implements Resolve<Observable<IDeal | Observable<never>>> {
-	constructor(
-		private readonly _store: Store,
-		private readonly _dealsService: DealsService,
-		private readonly _errorHandlingService: ErrorHandlingService
-	) {}
+/**
+ * Resolver function to fetch a deal by its ID.
+ *
+ * @param route The activated route snapshot containing the route parameters.
+ * @returns An observable of IDeal or null if no dealId is present.
+ */
+export const DealResolver: ResolveFn<Observable<IDeal>> = (route) => {
+	const store = inject(Store);
+	const dealsService = inject(DealsService);
+	const errorHandlingService = inject(ErrorHandlingService);
 
-	/**
-	 * Resolve method to fetch a deal by its ID.
-	 *
-	 * @param route The activated route snapshot containing the route parameters.
-	 * @returns An observable of IDeal or null if no dealId is present.
-	 */
-	resolve(route: ActivatedRouteSnapshot): Observable<IDeal> {
-		const dealId = route.params['dealId'];
-		if (!dealId) {
-			return of(null);
-		}
+	// Extract deal ID from route parameters
+	const dealId = route.params['dealId'];
 
-		const { id: organizationId, tenantId } = this._store.selectedOrganization;
-		return from(this._dealsService.getById(dealId, { organizationId, tenantId }, ['client'])).pipe(
-			catchError((error) => {
-				// Handle and log errors
-				this._errorHandlingService.handleError(error);
-				return of(error);
-			})
-		);
+	// If deal ID is not present, return null
+	if (!dealId) {
+		return of(null);
 	}
-}
+
+	// Extract organization ID and tenant ID from store
+	const { id: organizationId, tenantId } = store.selectedOrganization;
+
+	// Fetch deal by ID from the service
+	return from(dealsService.getById(dealId, { organizationId, tenantId }, ['client'])).pipe(
+		catchError((error) => {
+			// Handle and log errors
+			errorHandlingService.handleError(error);
+			// Return null on error
+			return of(error);
+		})
+	);
+};

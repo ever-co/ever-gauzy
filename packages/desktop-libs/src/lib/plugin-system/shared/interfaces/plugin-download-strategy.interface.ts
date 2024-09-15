@@ -11,4 +11,7 @@ export interface IPluginDownloadStrategy {
 
 export interface ICdnDownloadConfig {
 	url: string;
+	pluginPath: string;
 }
+
+export type ILocalDownloadConfig = Pick<ICdnDownloadConfig, 'pluginPath'>;

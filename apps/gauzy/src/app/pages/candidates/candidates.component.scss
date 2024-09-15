@@ -1,6 +1,6 @@
 @import 'gauzy/_gauzy-table';
 @import 'gauzy/_gauzy-cards';
-@import '../payments/payments.component.scss';
+@import '@shared/_pg-card';
 
 .manage-btn {
   display: flex;

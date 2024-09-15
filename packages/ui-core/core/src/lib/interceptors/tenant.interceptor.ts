@@ -3,7 +3,7 @@ import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor } from '@angular/c
 import { Observable, combineLatest, switchMap, take, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { RequestMethodEnum } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '../services/store';
 
 @UntilDestroy()
 @Injectable()

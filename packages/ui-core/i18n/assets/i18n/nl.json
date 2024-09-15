@@ -33,6 +33,7 @@
 		"INVITE": "Uitnodigen",
 		"SELECT_ALL": "Alles selecteren",
 		"COPY_LINK": "Kopieer Link",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "Beheren van interviews",
 		"MANAGE_INVITES": "Beheer uitnodigingen",
 		"MANAGE_SPRINTS": "Beheer Sprints",
@@ -156,7 +157,14 @@
 		"PASTE": "Plakken",
 		"FORWARD_PORTS": "Poorten doorsturen",
 		"REPORT": "Rapport",
-		"IGNORE": "Negeren"
+		"IGNORE": "Negeren",
+		"INSTALL": "Installeren",
+		"UNINSTALL": "Deïnstalleren",
+		"DEACTIVATE": "Deactiveren",
+		"ACTIVATE": "Activeren",
+		"ADD_PLUGIN": "Plugin toevoegen",
+		"LOAD_PLUGIN": "Plugin laden",
+		"FROM_CDN": "Van CDN"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -179,6 +187,7 @@
 			"APPROVAL_REQUEST": "Je hebt geen goedkeuringsverzoek aangemaakt.",
 			"APPROVAL_POLICY": "U heeft geen goedkeuringsbeleid aangemaakt.",
 			"TIME_OFF": "U heeft geen verlof aangemaakt.",
+			"TIME_OFF_POLICY": "U heeft nog geen verlofbeleid aangemaakt.",
 			"CANDIDATE": "Je hebt nog geen kandidaat aangemaakt.",
 			"INTERVIEW": "Je hebt nog geen enkel interview aangemaakt.",
 			"EQUIPMENT": "Je hebt geen apparatuur gemaakt.",
@@ -1102,7 +1111,8 @@
 		"TABLE": "Tafel",
 		"CARDS_GRID": "Kaartenraster",
 		"SPRINT_VIEW": "Sprintweergave",
-		"QUICK_SETTINGS": "Snelle instellingen"
+		"QUICK_SETTINGS": "Snelle instellingen",
+		"NO_LAYOUT": "Geen gegevenslay-out beschikbaar"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Wat is er nieuw?",
@@ -1626,6 +1636,7 @@
 		"APPLIED": "Toegepast",
 		"HIRED": "Aangenomen",
 		"REJECTED": "Afgewezen",
+		"SHOW_REJECTED": "Toon afgewezen",
 		"DELETED": "Verwijderd",
 		"ARCHIVED": "Gearchiveerd",
 		"SELECT_EMPLOYEE_MSG": "Selecteer alstublieft een medewerker uit het bovenstaande menu.",
@@ -1694,6 +1705,7 @@
 				"PREVIOUS": "Vorige",
 				"SAVE": "Opslaan",
 				"CREATE_CRITERIONS": "Maak criteria",
+				"CLOSE_CRITERIONS": "Sluit criteria",
 				"EMAIL_NOTIFICATION": "E-mailmelding",
 				"DELETE_INTERVIEW": "Verwijder interview",
 				"DELETE_FEEDBACK": "Verwijder feedback",
@@ -1992,7 +2004,6 @@
 			"ORG_PROPOSALS_VIEW": "Bekijk voorstellenpagina",
 			"ORG_PROPOSAL_TEMPLATES_VIEW": "Bekijk de pagina met voorstelsjablonen",
 			"ORG_PROPOSAL_TEMPLATES_EDIT": "Maak/bewerk/verwijder sjablonen voor voorstellen",
-			"ORG_TIME_OFF_VIEW": "Bekijk Verlofpagina",
 			"ORG_EMPLOYEES_VIEW": "Bekijk organisatiemedewerkers",
 			"ORG_EMPLOYEES_EDIT": "Maak/Bewerk/Verwijder Organisatiemedewerkers",
 			"ORG_CANDIDATES_VIEW": "Bekijk kandidaten van de organisatie",
@@ -2013,8 +2024,10 @@
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "Maak/Bewerk/Verwijder Kandidaat Feedback",
 			"ALL_ORG_VIEW": "Bekijk alle organisaties",
 			"ALL_ORG_EDIT": "Maak/Bewerk/Verwijder Alle Organisaties",
-			"POLICY_VIEW": "Bekijk verlofbeleid",
-			"POLICY_EDIT": "Bewerk Verlofbeleid",
+			"TIME_OFF_POLICY_ADD": "Voeg Verlofbeleid Toe",
+			"TIME_OFF_POLICY_VIEW": "Bekijk Verlofbeleid",
+			"TIME_OFF_POLICY_EDIT": "Bewerk Verlofbeleid",
+			"TIME_OFF_POLICY_DELETE": "Verwijder Verlofbeleid",
 			"CHANGE_SELECTED_EMPLOYEE": "Wijzig geselecteerde werknemer",
 			"CHANGE_SELECTED_CANDIDATE": "Geselecteerde kandidaat wijzigen",
 			"CHANGE_SELECTED_ORGANIZATION": "Verander Geselecteerde Organisatie",
@@ -2039,7 +2052,10 @@
 			"PUBLIC_PAGE_EDIT": "Pagina van organisatie bewerken",
 			"CAN_APPROVE_TIMESHEET": "Goedkeuren tijdschema",
 			"EVENT_TYPES_VIEW": "Bekijk evenementtypes",
-			"TIME_OFF_EDIT": "Bewerk Verlof",
+			"TIME_OFF_ADD": "Verlof Toevoegen",
+			"TIME_OFF_VIEW": "Verlof Bekijken",
+			"TIME_OFF_EDIT": "Verlof Bewerken",
+			"TIME_OFF_DELETE": "Verlof Verwijderen",
 			"ORG_INVENTORY_VIEW": "Bekijk Organisatievoorraad",
 			"INVENTORY_GALLERY_VIEW": "Bekijk inventarisgalerij",
 			"INVENTORY_GALLERY_EDIT": "Bewerk voorraadgalerij",
@@ -2047,6 +2063,10 @@
 			"MEDIA_GALLERY_VIEW": "Bekijk mediagalerij",
 			"MEDIA_GALLERY_EDIT": "Bewerk mediagalerij",
 			"MEDIA_GALLERY_DELETE": "Verwijder mediagalerij",
+			"EQUIPMENT_SHARING_POLICY_ADD": "Apparatuurdeelbeleid toevoegen",
+			"EQUIPMENT_SHARING_POLICY_VIEW": "Apparatuurdeelbeleid bekijken",
+			"EQUIPMENT_SHARING_POLICY_EDIT": "Apparatuurdeelbeleid bewerken",
+			"EQUIPMENT_SHARING_POLICY_DELETE": "Apparatuurdeelbeleid verwijderen",
 			"ORG_EQUIPMENT_VIEW": "Bekijk organisatieapparatuur",
 			"ORG_EQUIPMENT_EDIT": "Bewerk Organisatie Apparatuur",
 			"ORG_EQUIPMENT_SHARING_VIEW": "Bekijk het delen van organisatie-uitrusting.",
@@ -2072,6 +2092,10 @@
 			"ORG_PROJECT_DELETE": "Verwijder Projecten",
 			"ORG_CONTACT_EDIT": "Maak/bewerk contacten",
 			"ORG_CONTACT_VIEW": "Bekijk contacten",
+			"PROJECT_MODULE_CREATE": "Projectmodules aanmaken",
+			"PROJECT_MODULE_READ": "Projectmodules bekijken",
+			"PROJECT_MODULE_UPDATE": "Projectmodules bijwerken",
+			"PROJECT_MODULE_DELETE": "Projectmodules verwijderen",
 			"ORG_TEAM_ADD": "Voeg Teams toe",
 			"ORG_TEAM_VIEW": "Bekijk Teams",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "Bewerk actieve taken",
@@ -2184,7 +2208,6 @@
 		},
 		"PROPOSAL_DETAILS": {
 			"PROPOSAL_DETAILS": "Details van het voorstel",
-			"EDIT": "Bewerken",
 			"AUTHOR": "Auteur",
 			"JOB_POST_URL": "Vacature URL",
 			"PROPOSAL_SENT_ON": "Voorstel verzonden op",
@@ -3042,7 +3065,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "Genereer openbare link",
 			"GENERATE": "Genereer een link naar de {{ text }} waar iedereen met de link het kan bekijken.",
-			"ACCESS": "Iedereen met toegang tot deze link kan de {{ text }} bekijken."
+			"ACCESS": "Iedereen met toegang tot deze link kan de {{ text }} bekijken.",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -3073,7 +3097,7 @@
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Pagina niet gevonden",
 		"TAKE_ME_HOME": "Breng me naar huis.",
-		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "De pagina die je zocht bestaat niet",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "De pagina die je zocht bestaat niet",
 		"REDIRECT_TO_HOME": "U wordt binnenkort doorgestuurd naar de startpagina"
 	},
 	"HELP_PAGE": {
@@ -3808,7 +3832,9 @@
 			"DB_PORT": "Databasepoort",
 			"USER": "Gebruiker",
 			"PASSWORD": "Wachtwoord",
-			"UI_HOSTNAME": "UI Hostnaam / IP-adres"
+			"UI_HOSTNAME": "UI Hostnaam / IP-adres",
+			"TITLE_SERVER_API": "Ever Gauzy API Server-installatiewizard",
+			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App biedt de volledige functionaliteit van het Gauzy Platform direct beschikbaar op uw desktopcomputer of laptop. Daarnaast kunt u hiermee werktijd bijhouden, activiteiten registreren en trackingherinneringen/meldingen ontvangen."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Schermopname",
@@ -3902,6 +3928,9 @@
 			"WIDGET": "Widget",
 			"PLUGINS": "Plugins",
 			"PLUGIN_DESCRIPTION": "Plugins",
+			"VERSION": "Versie",
+			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "Installeer plugins van lokale bestanden of CDN. Lokaal voor aangepaste/prive-plugins, CDN voor openbare. Kies op basis van uw behoeften.",
+			"ADD_PLUGIN_CDN_DESCRIPTION": "Installatie vanaf CDN biedt gemakkelijk toegang tot publiek beschikbare plugins.",
 			"PLUGIN": "Plugin",
 			"WIDGET_LABEL": "Dit venster weerspiegelt de status van de timer en geeft aan of deze actief is of gestopt en functioneert als een knop.",
 			"SSL": {
@@ -3997,11 +4026,16 @@
 			"HELP": "Help",
 			"LEARN_MORE": "Meer informatie leren",
 			"OPEN_MAIN_WINDOW": "Open hoofdvenster",
-			"DAILY_RECAP": "Dagelijkse Samenvatting"
+			"DAILY_RECAP": "Dagelijkse Samenvatting",
+			"WEEKLY_RECAP": "Wekelijks Overzicht",
+			"MONTHLY_RECAP": "Maandelijks Overzicht"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Uurlijkse tijdregistratie",
-			"HOURLY_TIME_TRACKING_DATA": "Uurlijkse tijdregistratiegegevens"
+			"HOURLY_TIME_TRACKING_DATA": "Uurlijkse tijdregistratiegegevens",
+			"NO_MONTHLY_ACTIVITY": "Je hebt deze maand geen tijd of activiteit bijgehouden.",
+			"WORKED_FOR_MONTH": "Gewerkt deze maand",
+			"ACTIVITY_FOR_MONTH": "Maandelijkse Activiteit"
 		}
 	},
 	"SERVER": "Server",
@@ -4136,7 +4170,8 @@
 			"UPWORK": "Upwork",
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "Browser-extensie",
-			"TEAMS": "Teams"
+			"TEAMS": "Teams",
+			"CLOC": "Cloc"
 		},
 		"LAST_WORKED": "Laatst gewerkt:",
 		"TIME_ZONE": "Time Zone",
@@ -4167,8 +4202,9 @@
 		"NO_RECORD_FOUND": "Geen gegevens gevonden. Selecteer alstublieft een datumbereik, medewerker of project."
 	},
 	"ONBOARDING": {
-		"FIRST_ORGANIZATION": "Laten we je eerste organisatie aanmaken.",
-		"COMPLETE": "Je bent helemaal klaar!"
+		"FIRST_ORGANIZATION": "Laten we je eerste organisatie maken",
+		"COMPLETE_TITLE": "Je bent klaar!",
+		"COMPLETE_SUB_TITLE": "Waar wil je nu heen?"
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "Dit veld is verplicht!",
@@ -4236,7 +4272,8 @@
 		"SELECT_EMPLOYEE_ERROR": "Selecteer alstublieft een medewerker.",
 		"EXPIRED_OR_CANCELLED": "Deze afspraak is verlopen of geannuleerd.",
 		"EMAIL_SENT": "Er is een e-mail verzonden naar de gastheer en naar alle deelnemers voor deze vergadering.",
-		"NO_ACTIVE_EVENT_TYpES": "Er zijn geen actieve gebeurtenistypen."
+		"NO_ACTIVE_EVENT_TYPES": "Er zijn geen actieve gebeurtenistypen.",
+		"CLICK_HERE": "Click Here"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "E-mailsjablonen",
@@ -4276,7 +4313,8 @@
 			"employee-join": "Medewerker toetreden",
 			"email-reset": "Email herstellen",
 			"organization-team-join-request": "Verzoek tot toetreding tot het organisatieteam",
-			"payment-receipt": "Betalingsbewijs"
+			"payment-receipt": "Betalingsbewijs",
+			"reject-candidate": "Kandidaat Afwijzen"
 		},
 		"HTML_EDITOR": "HTML-editor"
 	},

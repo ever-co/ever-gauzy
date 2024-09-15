@@ -1,12 +1,10 @@
 <nb-card>
 	<nb-card-header class="card-header-title">
 		<h4>
-			<ngx-header-title>
-				{{ title | translate }}
-			</ngx-header-title>
+			<ngx-header-title> {{ title | translate }} </ngx-header-title>
 		</h4>
 	</nb-card-header>
 	<nb-card-body class="p-0">
-		<nb-route-tabset [tabs]="tabs"></nb-route-tabset>
+		<gz-dynamic-tabs [tabsetId]="tabsetId"></gz-dynamic-tabs>
 	</nb-card-body>
 </nb-card>

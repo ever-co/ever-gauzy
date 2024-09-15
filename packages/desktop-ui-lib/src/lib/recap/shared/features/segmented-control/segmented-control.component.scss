@@ -1,0 +1,73 @@
+// Define reusable variables for common properties
+$font-size-small: 15px;
+$padding-small: 0.25rem;
+$gap-small: 0.25rem;
+$border-radius: var(--border-radius);
+$shadow-inset: var(--gauzy-shadow) inset;
+$color-primary: var(--color-primary-default);
+$text-color: var(--gauzy-text-color-2);
+
+// Mixin for flex container
+@mixin flex-center($gap: 0.5rem) {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: $gap;
+}
+
+// Mixin for transition
+@mixin transition($properties: all, $duration: 0.2s, $easing: ease-in-out) {
+	transition: $properties $duration $easing;
+}
+
+// Base segment styles
+.segment-base {
+	@include flex-center($gap-small);
+	padding: $padding-small;
+	box-shadow: $shadow-inset;
+	background-color: var(--gauzy-card-1);
+	color: $text-color;
+	font-weight: 500;
+	font-size: $font-size-small;
+	cursor: pointer;
+	border-radius: calc($border-radius * 2 / 3);
+}
+
+// Segment component styles
+.segment {
+	@include flex-center($gap-small);
+	padding: 0 $padding-small;
+
+	span {
+		display: none;
+
+		&:hover {
+			display: flex;
+			@include transition();
+		}
+	}
+
+	nb-icon {
+		font-size: $font-size-small !important;
+	}
+
+	&.selected {
+		display: flex;
+		border-radius: calc($border-radius / 2);
+		color: white;
+		background-color: $color-primary;
+		box-shadow: var(--gauzy-shadow);
+		font-weight: 600;
+
+		span {
+			display: flex;
+		}
+
+		@include transition();
+	}
+}
+
+// Apply base segment styles
+.segment-container {
+	@extend .segment-base;
+}

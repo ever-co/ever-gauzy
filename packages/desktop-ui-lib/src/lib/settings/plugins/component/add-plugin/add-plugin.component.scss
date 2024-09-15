@@ -1,13 +1,13 @@
 .error {
 	color: red;
-    font-weight: 500;
-    font-size: 13px;
-    padding: 8px;
-    background-color: rgb(255 0 0 / 10%);
+	font-weight: 500;
+	font-size: 13px;
+	padding: 8px;
+	background-color: rgb(255 0 0 / 10%);
 	border-radius: 4px;
-    text-wrap: pretty;
-    overflow: hidden;
-    text-overflow: ellipsis;
+	text-wrap: pretty;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 nb-card {
@@ -18,9 +18,6 @@ nb-card {
 nb-card-body {
 	background-color: var(--gauzy-card-2);
 	border-radius: var(--border-radius);
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
 }
 
 h4 {
@@ -48,7 +45,30 @@ nb-card-header {
 
 .cancel {
 	position: absolute;
-    right: 0.75rem;
-    top: 0.25rem;
+	right: 0.75rem;
+	top: 0.25rem;
 	cursor: pointer;
+}
+
+.form {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.load-button {
+	display: flex;
+	gap: 0.5rem;
+	justify-content: center;
+	align-items: center;
+}
+
+.description {
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--gauzy-text-color-2);
+}
+
+.return {
+	padding: 4px 2px !important;
 }

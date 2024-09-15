@@ -257,7 +257,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		log.info('Update Synced Timer');
 		try {
 			if (!arg.id) {
-				const lastCapture = await timerService.findLastCapture();
+				const lastCapture = await timerService.findLastOne();
 
 				if (lastCapture && lastCapture.id) {
 					const { id } = lastCapture;
@@ -355,6 +355,10 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		} catch (error) {
 			log.error('Error on finish synced timer', error);
 		}
+	});
+
+	ipcMain.handle('SAVED_THEME', () => {
+		return LocalStore.getStore('appSetting').theme;
 	});
 
 	pluginListeners();
@@ -715,9 +719,8 @@ export function ipcTimer(
 					await offlineMode.connectivity();
 
 					if (offlineMode.enabled) {
-						console.log('Offline Mode: Timer might not stop correctly');
-						timeTrackerWindow.webContents.send('emergency_stop');
-
+						console.log('Offline Mode: Mark as stopped offline');
+						await markLastTimerAsStoppedOffline();
 						// We may want to show some notification to user that timer might not stop correctly, but not with Error, more like notification popup
 						// throw new Error('Cannot establish connection to API during Timer Stop');
 					} else {
@@ -830,6 +833,7 @@ export function ipcTimer(
 	ipcMain.on('show_image', (event, arg) => {
 		imageView.show();
 		imageView.webContents.send('show_image', arg);
+		imageView.webContents.send('refresh_menu');
 	});
 
 	ipcMain.on('close_image_view', () => {
@@ -855,7 +859,7 @@ export function ipcTimer(
 		const addSetting = LocalStore.getStore('additionalSetting');
 
 		if (!settingWindow) {
-			settingWindow = await createSettingsWindow(settingWindow, windowPath.timeTrackerUi);
+			settingWindow = await createSettingsWindow(settingWindow, windowPath.timeTrackerUi, windowPath.preloadPath);
 		}
 
 		settingWindow.show();
@@ -1100,6 +1104,47 @@ export function ipcTimer(
 	ipcMain.on('ao_time_update', (event, arg) => {
 		alwaysOn.browserWindow.webContents.send('ao_time_update', arg);
 	});
+
+	ipcMain.handle('MARK_AS_STOPPED_OFFLINE', async () => {
+		await markLastTimerAsStoppedOffline();
+	});
+
+	ipcMain.handle('CURRENT_TIMER', () => {
+		return timerService.findLastOne();
+	});
+
+	ipcMain.handle('LAST_SYNCED_INTERVAL', () => {
+		return intervalService.findLastInterval();
+	});
+
+	ipcMain.handle('UPDATE_SELECTOR', async (_, args) => {
+		try {
+			// Destructure args for cleaner access
+			const { taskId, timerId, projectId, description, organizationTeamId, organizationContactId, startedAt } =
+				args;
+
+			const config = {
+				taskId,
+				projectId,
+				note: description,
+				organizationTeamId,
+				organizationContactId
+			};
+
+			// Update the local store configuration
+			LocalStore.updateConfigProject(config);
+
+			// Update last timeslot moment
+			timerHandler.timeSlotStart = moment(startedAt);
+
+			// Update timer with new config
+			await timerService.update(new Timer({ id: timerId, description, startedAt, ...config }));
+
+			console.log('update selector', '✔️ Done');
+		} catch (error) {
+			console.error('Failed to update selector:', error);
+		}
+	});
 }
 
 export function removeMainListener() {
@@ -1159,7 +1204,16 @@ export function removeAllHandlers() {
 }
 
 export function removeTimerHandlers() {
-	const channels = ['START_TIMER', 'STOP_TIMER', 'LOGOUT_STOP', 'DELETE_TIME_SLOT'];
+	const channels = [
+		'START_TIMER',
+		'STOP_TIMER',
+		'LOGOUT_STOP',
+		'DELETE_TIME_SLOT',
+		'MARK_AS_STOPPED_OFFLINE',
+		'CURRENT_TIMER',
+		'LAST_SYNCED_INTERVAL',
+		'UPDATE_SELECTOR'
+	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
 	});
@@ -1313,4 +1367,22 @@ export async function checkAuthenticatedUser(timeTrackerWindow: BrowserWindow): 
 	}
 
 	return false;
+}
+
+export async function markLastTimerAsStoppedOffline(): Promise<void> {
+	try {
+		// Retrieve the last timer if not provided
+		const lastTimer = await timerService.findLastOne();
+
+		// Check if a timer was found or provided
+		if (!lastTimer || !lastTimer.id) {
+			throw new Error('No valid timer found.');
+		}
+
+		// Update the timer's state to "stopped offline"
+		await timerService.update(new Timer({ ...lastTimer, isStoppedOffline: true }));
+	} catch (error) {
+		// Throw a more descriptive error message with context
+		log.error(`Failed to mark the last timer as stopped offline: ${error.message}`);
+	}
 }

@@ -4,12 +4,6 @@ import { combineLatest, debounceTime, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import {
-	DateRangePickerBuilderService,
-	OrganizationTeamsService,
-	TimesheetService,
-	TimesheetStatisticsService
-} from '@gauzy/ui-core/core';
-import {
 	IGetCountsStatistics,
 	IGetTimeLogReportInput,
 	IOrganizationTeam,
@@ -18,7 +12,14 @@ import {
 	ITimeLog,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/common';
+import {
+	DateRangePickerBuilderService,
+	ErrorHandlingService,
+	OrganizationTeamsService,
+	Store,
+	TimesheetService,
+	TimesheetStatisticsService
+} from '@gauzy/ui-core/core';
 import { BaseSelectorFilterComponent, TimeZoneService } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
@@ -35,13 +36,14 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 	private _selectedOrganizationTeam: IOrganizationTeam;
 
 	constructor(
-		private readonly _organizationTeamsService: OrganizationTeamsService,
-		private readonly _timesheetStatisticsService: TimesheetStatisticsService,
-		private readonly _timesheetService: TimesheetService,
 		protected readonly translateService: TranslateService,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		protected readonly store: Store,
-		protected readonly timeZoneService: TimeZoneService
+		protected readonly timeZoneService: TimeZoneService,
+		private readonly _organizationTeamsService: OrganizationTeamsService,
+		private readonly _timesheetStatisticsService: TimesheetStatisticsService,
+		private readonly _timesheetService: TimesheetService,
+		private readonly _errorHandlingService: ErrorHandlingService
 	) {
 		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 		this._selectedTeam = {
@@ -160,8 +162,8 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 		if (!this.organization) {
 			return;
 		}
-		const { id: organizationId } = this.organization;
-		const { tenantId } = this.store.user;
+		const { id: organizationId, tenantId } = this.organization;
+
 		this.isLoading = true;
 		this._organizationTeamsService
 			.getAll(['members', 'members.role', 'members.employee', 'members.employee.user'], {
@@ -188,8 +190,8 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 			this._dailyLogs = await this._timesheetService.getDailyReport(request);
 			await this.teamMapper();
 		} catch (error) {
-			console.log(error);
-		} finally {
+			console.log('Error while loading logs', error);
+			this._errorHandlingService.handleError(error);
 		}
 	}
 

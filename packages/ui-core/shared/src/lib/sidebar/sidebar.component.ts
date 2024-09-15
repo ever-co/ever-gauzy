@@ -10,7 +10,7 @@ import { filter, tap } from 'rxjs/operators';
 import { DeleteCategoryComponent } from './delete-category/delete-category.component';
 import { DeleteBaseComponent } from './delete-base/delete-base.component';
 import { HelpCenterService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { KnowledgeBaseComponent } from './knowledeg-base/knowledeg-base.component';
 import { firstValueFrom } from 'rxjs';

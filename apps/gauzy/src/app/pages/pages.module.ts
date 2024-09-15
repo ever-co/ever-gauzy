@@ -3,23 +3,22 @@ import { CommonModule } from '@angular/common';
 import { NbMenuModule, NbToastrModule, NbSpinnerModule, NbIconModule } from '@nebular/theme';
 import { FeatureToggleModule as NgxFeatureToggleModule } from 'ngx-feature-toggle';
 import { AuthService, CommonNavModule, RoleGuard } from '@gauzy/ui-core/core';
+import { MiscellaneousModule } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
-import { MiscellaneousModule } from './miscellaneous/miscellaneous.module';
 import { PagesComponent } from './pages.component';
 import { PagesRoutingModule } from './pages-routing.module';
+
+const NB_MODULES = [NbMenuModule, NbToastrModule.forRoot(), NbSpinnerModule, NbIconModule];
 
 @NgModule({
 	imports: [
 		CommonModule,
-		NbIconModule,
-		NbMenuModule,
-		NbSpinnerModule,
-		NbToastrModule.forRoot(),
+		...NB_MODULES,
 		NgxFeatureToggleModule,
-		ThemeModule,
 		PagesRoutingModule,
-		MiscellaneousModule,
-		CommonNavModule
+		ThemeModule,
+		CommonNavModule,
+		MiscellaneousModule
 	],
 	declarations: [PagesComponent],
 	providers: [AuthService, RoleGuard]

@@ -1,0 +1,28 @@
+@import '@shared/_pg-card';
+
+.statistics {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem 0.5625rem 0.8125rem;
+  background: rgba(0, 136, 254, 0.05);
+  border-radius: nb-theme(border-radius);
+  margin-top: 1rem;
+  .custom-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 40%;
+    > div > span {
+      &:last-child {
+        font-size: 1.0625rem;
+      }
+    }
+  }
+}
+
+:host {
+  nb-card-body {
+    height: calc(100vh - 21.5rem) !important;
+  }
+}

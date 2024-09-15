@@ -8,8 +8,8 @@ import { NbDialogService } from '@nebular/theme';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { EquipmentService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { EquipmentService, ServerDataSource, Store, ToastrService } from '@gauzy/ui-core/core';
+import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	DeleteConfirmationComponent,
 	EquipmentMutationComponent,
@@ -134,7 +134,7 @@ export class EquipmentComponent extends PaginationFilterBaseComponent implements
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
 					width: '79px',
-					filter: false,
+					isFilterable: false,
 					type: 'custom',
 					renderComponent: ImageRowComponent,
 					componentInitFunction: (instance: ImageRowComponent, cell: Cell) => {
@@ -150,7 +150,7 @@ export class EquipmentComponent extends PaginationFilterBaseComponent implements
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getRawValue();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -161,7 +161,7 @@ export class EquipmentComponent extends PaginationFilterBaseComponent implements
 				type: {
 					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_TYPE'),
 					type: 'string',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -172,7 +172,7 @@ export class EquipmentComponent extends PaginationFilterBaseComponent implements
 				serialNumber: {
 					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_SN'),
 					type: 'string',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -183,27 +183,27 @@ export class EquipmentComponent extends PaginationFilterBaseComponent implements
 				manufacturedYear: {
 					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_MANUFACTURED_YEAR'),
 					type: 'number',
-					filter: false
+					isFilterable: false
 				},
 				initialCost: {
 					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_INITIAL_COST'),
 					type: 'number',
-					filter: false
+					isFilterable: false
 				},
 				currency: {
 					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_CURRENCY'),
 					type: 'string',
-					filter: false
+					isFilterable: false
 				},
 				maxSharePeriod: {
 					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_MAX_SHARE_PERIOD'),
 					type: 'number',
-					filter: false
+					isFilterable: false
 				},
 				autoApproveShare: {
 					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_AUTO_APPROVE'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: AutoApproveComponent,
 					componentInitFunction: (instance: AutoApproveComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -212,7 +212,7 @@ export class EquipmentComponent extends PaginationFilterBaseComponent implements
 				tags: {
 					title: this.getTranslation('SM_TABLE.TAGS'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: TagsOnlyComponent,
 					componentInitFunction: (instance: TagsOnlyComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();

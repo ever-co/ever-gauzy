@@ -33,6 +33,7 @@
 		"INVITE": "Einladen",
 		"SELECT_ALL": "Alle auswählen",
 		"COPY_LINK": "Kopiere Link",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "Verwalten von Vorstellungsgesprächen",
 		"MANAGE_INVITES": "Einladungen verwalten",
 		"MANAGE_SPRINTS": "Verwalten Sie Sprints",
@@ -156,7 +157,14 @@
 		"PASTE": "Einfügen",
 		"FORWARD_PORTS": "Weiterleitung von Ports",
 		"REPORT": "Bericht",
-		"IGNORE": "Ignorieren"
+		"IGNORE": "Ignorieren",
+		"INSTALL": "Installieren",
+		"UNINSTALL": "Deinstallieren",
+		"DEACTIVATE": "Deaktivieren",
+		"ACTIVATE": "Aktivieren",
+		"ADD_PLUGIN": "Plugin hinzufügen",
+		"LOAD_PLUGIN": "Plugin laden",
+		"FROM_CDN": "Von CDN"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -179,6 +187,7 @@
 			"APPROVAL_REQUEST": "Sie haben keine Genehmigungsanfrage erstellt.",
 			"APPROVAL_POLICY": "Sie haben keine Genehmigungsrichtlinie erstellt.",
 			"TIME_OFF": "Du hast keinen Urlaub erstellt.",
+			"TIME_OFF_POLICY": "Sie haben keine Urlaubsrichtlinien erstellt.",
 			"CANDIDATE": "Sie haben keinen Kandidaten erstellt.",
 			"INTERVIEW": "Sie haben kein Interview erstellt.",
 			"EQUIPMENT": "Du hast keine Ausrüstung erstellt.",
@@ -1102,7 +1111,8 @@
 		"TABLE": "Tisch",
 		"CARDS_GRID": "Kartenraster",
 		"SPRINT_VIEW": "Sprint-Ansicht",
-		"QUICK_SETTINGS": "Schnelleinstellungen"
+		"QUICK_SETTINGS": "Schnelleinstellungen",
+		"NO_LAYOUT": "Kein Datenlayout verfügbar"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Was gibt es Neues?",
@@ -1626,6 +1636,7 @@
 		"APPLIED": "Angewendet",
 		"HIRED": "Angestellt",
 		"REJECTED": "Abgelehnt",
+		"SHOW_REJECTED": "Anzeige abgelehnt",
 		"DELETED": "Gelöscht",
 		"ARCHIVED": "Archiviert",
 		"SELECT_EMPLOYEE_MSG": "Bitte wählen Sie einen Mitarbeiter aus dem Menü oben aus.",
@@ -1694,6 +1705,7 @@
 				"PREVIOUS": "Vorherig/ Früher/ Vorangegangen",
 				"SAVE": "Speichern",
 				"CREATE_CRITERIONS": "Erstellen Sie Kriterien",
+				"CLOSE_CRITERIONS": "Kriterien schließen",
 				"EMAIL_NOTIFICATION": "E-Mail-Benachrichtigung",
 				"DELETE_INTERVIEW": "Interview löschen",
 				"DELETE_FEEDBACK": "Lösche das Feedback.",
@@ -1988,7 +2000,6 @@
 			"ORG_PROPOSALS_VIEW": "Seite \"Vorschläge anzeigen\" anzeigen",
 			"ORG_PROPOSAL_TEMPLATES_VIEW": "Seite mit Vorschlagvorlagen anzeigen",
 			"ORG_PROPOSAL_TEMPLATES_EDIT": "Erstellen/Bearbeiten/Löschen von Vorschlagsvorlagen",
-			"ORG_TIME_OFF_VIEW": "Seite für Freizeit anzeigen",
 			"ORG_EMPLOYEES_VIEW": "Anzeigen von Mitarbeitern der Organisation",
 			"ORG_EMPLOYEES_EDIT": "Erstellen/Bearbeiten/Löschen von Organisation-Mitarbeitern",
 			"ORG_CANDIDATES_VIEW": "Organisationskandidaten anzeigen",
@@ -2009,8 +2020,10 @@
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "Kandidatenfeedback erstellen/bearbeiten/löschen.",
 			"ALL_ORG_VIEW": "Alle Organisationen anzeigen",
 			"ALL_ORG_EDIT": "Erstellen/Bearbeiten/Löschen aller Organisationen",
-			"POLICY_VIEW": "Sehen Sie sich die Urlaubsrichtlinie an",
-			"POLICY_EDIT": "Bearbeiten Sie die Urlaubsrichtlinie.",
+			"TIME_OFF_POLICY_ADD": "Urlaubsrichtlinie Hinzufügen",
+			"TIME_OFF_POLICY_VIEW": "Urlaubsrichtlinie Anzeigen",
+			"TIME_OFF_POLICY_EDIT": "Urlaubsrichtlinie Bearbeiten",
+			"TIME_OFF_POLICY_DELETE": "Urlaubsrichtlinie Löschen",
 			"CHANGE_SELECTED_EMPLOYEE": "Ausgewählten Mitarbeiter ändern",
 			"CHANGE_SELECTED_CANDIDATE": "Ändern Sie ausgewählten Kandidaten",
 			"CHANGE_SELECTED_ORGANIZATION": "Ändere die ausgewählte Organisation.",
@@ -2035,7 +2048,10 @@
 			"PUBLIC_PAGE_EDIT": "Editieren der öffentlichen Seite der Organisation",
 			"CAN_APPROVE_TIMESHEET": "Zeitplan genehmigen",
 			"EVENT_TYPES_VIEW": "Ansicht der Veranstaltungstypen.",
-			"TIME_OFF_EDIT": "Bearbeiten Sie die Freizeit.",
+			"TIME_OFF_ADD": "Urlaub Hinzufügen",
+			"TIME_OFF_VIEW": "Urlaub Anzeigen",
+			"TIME_OFF_EDIT": "Urlaub Bearbeiten",
+			"TIME_OFF_DELETE": "Urlaub Löschen",
 			"ORG_INVENTORY_VIEW": "Organisationsinventar anzeigen",
 			"INVENTORY_GALLERY_VIEW": "\"Inventargalerie anzeigen\"",
 			"INVENTORY_GALLERY_EDIT": "Galerie Inventar bearbeiten",
@@ -2043,6 +2059,10 @@
 			"MEDIA_GALLERY_VIEW": "Mediengalerie anzeigen",
 			"MEDIA_GALLERY_EDIT": "Mediengalerie bearbeiten",
 			"MEDIA_GALLERY_DELETE": "Löschen Sie die Medienbibliothek.",
+			"EQUIPMENT_SHARING_POLICY_ADD": "Ausrüstungsverleihrichtlinie hinzufügen",
+			"EQUIPMENT_SHARING_POLICY_VIEW": "Ausrüstungsverleihrichtlinie anzeigen",
+			"EQUIPMENT_SHARING_POLICY_EDIT": "Ausrüstungsverleihrichtlinie bearbeiten",
+			"EQUIPMENT_SHARING_POLICY_DELETE": "Ausrüstungsverleihrichtlinie löschen",
 			"ORG_EQUIPMENT_VIEW": "Organisationsausrüstung anzeigen",
 			"ORG_EQUIPMENT_EDIT": "Ausrüstung der Organisation bearbeiten",
 			"ORG_EQUIPMENT_SHARING_VIEW": "Organisations-Ausrüstungsaustausch anzeigen",
@@ -2068,6 +2088,10 @@
 			"ORG_PROJECT_DELETE": "Projekte löschen",
 			"ORG_CONTACT_EDIT": "Kontakte erstellen/bearbeiten",
 			"ORG_CONTACT_VIEW": "Kontakte anzeigen",
+			"PROJECT_MODULE_CREATE": "Projekmodule erstellen",
+			"PROJECT_MODULE_READ": "Projekmodule anzeigen",
+			"PROJECT_MODULE_UPDATE": "Projekmodule aktualisieren",
+			"PROJECT_MODULE_DELETE": "Projekmodule löschen",
 			"ORG_TEAM_ADD": "Teams hinzufügen",
 			"ORG_TEAM_VIEW": "Teams anzeigen",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "Aktive Aufgaben bearbeiten",
@@ -2180,7 +2204,6 @@
 		},
 		"PROPOSAL_DETAILS": {
 			"PROPOSAL_DETAILS": "Details des Vorschlags",
-			"EDIT": "Bearbeiten",
 			"AUTHOR": "Autor",
 			"JOB_POST_URL": "Stellenanzeigen-URL",
 			"PROPOSAL_SENT_ON": "Vorschlag gesendet am",
@@ -3038,7 +3061,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "Generiere öffentlichen Link",
 			"GENERATE": "Erstellen Sie einen Link zu dem {{Text}}, den jeder mit dem Link sehen kann.",
-			"ACCESS": "Jeder, der Zugriff auf diesen Link hat, kann den {{ Text }} anzeigen."
+			"ACCESS": "Jeder, der Zugriff auf diesen Link hat, kann den {{ Text }} anzeigen.",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -3069,7 +3093,7 @@
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Seite nicht gefunden",
 		"TAKE_ME_HOME": "Bring mich nach Hause",
-		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "Die Seite, nach der du gesucht hast, existiert nicht.",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "Die Seite, nach der du gesucht hast, existiert nicht.",
 		"REDIRECT_TO_HOME": "Sie werden bald zur Startseite weitergeleitet"
 	},
 	"HELP_PAGE": {
@@ -3804,7 +3828,9 @@
 			"DB_PORT": "Datenbankport",
 			"USER": "Benutzer",
 			"PASSWORD": "Passwort",
-			"UI_HOSTNAME": "UI Hostname / IP-Adresse"
+			"UI_HOSTNAME": "UI Hostname / IP-Adresse",
+			"TITLE_SERVER_API": "Ever Gauzy API Server Installation Wizard",
+			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App giver den fulde funktionalitet af Gauzy Platform tilgængelig direkte på din stationære computer eller en bærbar computer. Derudover tillader det sporing af arbejdstid, aktivitetsregistrering og mulighed for at modtage sporingspåmindelser/notifikationer."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Bildschirmaufnahme",
@@ -3898,6 +3924,9 @@
 			"WIDGET": "Widget",
 			"PLUGINS": "Plugins",
 			"PLUGIN_DESCRIPTION": "Plugins",
+			"VERSION": "Version",
+			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "Installieren Sie Plugins aus lokalen Dateien oder dem CDN. Lokal für benutzerdefinierte/private Plugins, CDN für öffentliche. Wählen Sie je nach Bedarf.",
+			"ADD_PLUGIN_CDN_DESCRIPTION": "Die CDN-Installation ermöglicht einen einfachen Zugang zu öffentlich verfügbaren Plugins.",
 			"PLUGIN": "Plugin",
 			"WIDGET_LABEL": "Dieses Fenster spiegelt den Status des Timers wider, indem es anzeigt, ob er läuft oder angehalten ist, und dient als Schaltfläche.",
 			"SSL": {
@@ -3993,11 +4022,16 @@
 			"HELP": "Hilfe",
 			"LEARN_MORE": "Erfahren Sie mehr",
 			"OPEN_MAIN_WINDOW": "Öffne das Hauptfenster",
-			"DAILY_RECAP": "Tägliche Zusammenfassung"
+			"DAILY_RECAP": "Tägliche Zusammenfassung",
+			"WEEKLY_RECAP": "Wöchentliche Zusammenfassung",
+			"MONTHLY_RECAP": "Monatliche Zusammenfassung"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Stündliche Zeiterfassung",
-			"HOURLY_TIME_TRACKING_DATA": "Daten zur stündlichen Zeiterfassung"
+			"HOURLY_TIME_TRACKING_DATA": "Daten zur stündlichen Zeiterfassung",
+			"NO_MONTHLY_ACTIVITY": "Sie haben in diesem Monat keine Zeit oder Aktivität verfolgt.",
+			"WORKED_FOR_MONTH": "In diesem Monat gearbeitet",
+			"ACTIVITY_FOR_MONTH": "Monatliche Aktivität"
 		}
 	},
 	"SERVER": "Server",
@@ -4132,7 +4166,8 @@
 			"UPWORK": "Upwork",
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "Browser-Erweiterung",
-			"TEAMS": "Teams"
+			"TEAMS": "Teams",
+			"CLOC": "Cloc"
 		},
 		"LAST_WORKED": "Zuletzt gearbeitet:",
 		"TIME_ZONE": "Time Zone",
@@ -4163,8 +4198,9 @@
 		"NO_RECORD_FOUND": "Keine Einträge gefunden. Bitte wählen Sie einen Datumsbereich, einen Mitarbeiter oder ein Projekt aus."
 	},
 	"ONBOARDING": {
-		"FIRST_ORGANIZATION": "Lassen Sie uns Ihre erste Organisation erstellen.",
-		"COMPLETE": "Du bist fertig!"
+		"FIRST_ORGANIZATION": "Lass uns deine erste Organisation erstellen",
+		"COMPLETE_TITLE": "Alles bereit!",
+		"COMPLETE_SUB_TITLE": "Wohin möchtest du jetzt gehen?"
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "Dieses Feld ist erforderlich!",
@@ -4232,7 +4268,8 @@
 		"SELECT_EMPLOYEE_ERROR": "Bitte wählen Sie einen Mitarbeiter aus.",
 		"EXPIRED_OR_CANCELLED": "Dieser Termin ist abgelaufen oder wurde abgesagt.",
 		"EMAIL_SENT": "Eine E-Mail wurde an den Gastgeber sowie an alle Teilnehmer für dieses Treffen gesendet.",
-		"NO_ACTIVE_EVENT_TYpES": "Es gibt keine aktiven Ereignistypen."
+		"NO_ACTIVE_EVENT_TYPES": "Es gibt keine aktiven Ereignistypen.",
+		"CLICK_HERE": "Click Here"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "E-Mail-Vorlagen",
@@ -4272,7 +4309,8 @@
 			"employee-join": "Mitarbeiter beitreten",
 			"email-reset": "E-Mail zurücksetzen.",
 			"organization-team-join-request": "Organisationsteam beitreten Anfrage",
-			"payment-receipt": "Zahlungseingang"
+			"payment-receipt": "Zahlungseingang",
+			"reject-candidate": "Kandidat ablehnen"
 		},
 		"HTML_EDITOR": "HTML-Editor"
 	},

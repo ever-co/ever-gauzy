@@ -15,6 +15,7 @@ import {
 	ErrorHandlingService,
 	ProposalTemplateService,
 	ServerDataSource,
+	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
 import {
@@ -44,7 +45,7 @@ import {
 	PaginationFilterBaseComponent,
 	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-core/shared';
-import { API_PREFIX, Store, distinctUntilChange, isNotEmpty, toUTC } from '@gauzy/ui-core/common';
+import { API_PREFIX, distinctUntilChange, isNotEmpty, toUTC } from '@gauzy/ui-core/common';
 import { ApplyJobManuallyComponent } from '../apply-job-manually/apply-job-manually.component';
 import { JobTitleDescriptionDetailsComponent } from '../job-title-description-details/job-title-description-details.component';
 
@@ -646,7 +647,7 @@ export class JobSearchComponent extends PaginationFilterBaseComponent implements
 					: {
 							employee: {
 								title: this.getTranslation('JOBS.EMPLOYEE'),
-								filter: false,
+								isFilterable: false,
 								width: '15%',
 								type: 'custom',
 								sort: false,
@@ -669,7 +670,7 @@ export class JobSearchComponent extends PaginationFilterBaseComponent implements
 					title: this.getTranslation('JOBS.JOB_DETAILS'),
 					width: '85%',
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					sort: false,
 					renderComponent: JobTitleDescriptionDetailsComponent,
 					componentInitFunction(instance: JobTitleDescriptionDetailsComponent, cell: Cell) {

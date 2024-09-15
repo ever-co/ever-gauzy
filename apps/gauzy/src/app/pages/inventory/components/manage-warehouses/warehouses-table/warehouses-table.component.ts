@@ -8,8 +8,8 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ComponentLayoutStyleEnum, IOrganization, IWarehouse, PermissionsEnum } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
-import { ServerDataSource, ToastrService, WarehouseService } from '@gauzy/ui-core/core';
+import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
+import { ServerDataSource, Store, ToastrService, WarehouseService } from '@gauzy/ui-core/core';
 import {
 	DeleteConfirmationComponent,
 	IPaginationBase,
@@ -141,7 +141,7 @@ export class WarehousesTableComponent
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -152,7 +152,7 @@ export class WarehousesTableComponent
 				email: {
 					title: this.getTranslation('INVENTORY_PAGE.EMAIL'),
 					type: 'string',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -163,12 +163,12 @@ export class WarehousesTableComponent
 				code: {
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),
 					type: 'string',
-					filter: false
+					isFilterable: false
 				},
 				contact: {
 					title: this.getTranslation('INVENTORY_PAGE.CONTACT'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: ContactRowComponent,
 					componentInitFunction: (instance: ContactRowComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();
@@ -177,7 +177,7 @@ export class WarehousesTableComponent
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DescriptionComponent,
 					componentInitFunction: (instance: DescriptionComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -186,7 +186,7 @@ export class WarehousesTableComponent
 				active: {
 					title: this.getTranslation('INVENTORY_PAGE.ACTIVE'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: EnabledStatusComponent,
 					componentInitFunction: (instance: EnabledStatusComponent, cell: Cell) => {
 						instance.value = cell.getValue();

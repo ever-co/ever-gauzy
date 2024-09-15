@@ -6,7 +6,7 @@ import { filter, map, tap } from 'rxjs/operators';
 import { IOrganizationSprint, IOrganizationProject, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { SprintStoreService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { ItemActionType } from '../editable-grid/gauzy-editable-grid.component';
 
 @UntilDestroy()

@@ -1,0 +1,32 @@
+<mjml>
+	<mj-body background-color="#fff">
+		<mj-section>
+			<mj-column>
+				<mj-image width="100px" src="{{appLogo}}"></mj-image>
+				<mj-divider border-color="#1B005D" border-width="1px"></mj-divider>
+				<mj-text font-size="20px" font-family="helvetica">Обновление заявки</mj-text>
+				<mj-text font-size="16px" font-family="helvetica">
+					<p>Уважаемый(ая) {{candidateName}},</p>
+					<p>
+						Благодарим вас за подачу заявки на должность {{jobTitle}} в компании {{organizationName}}. После
+						тщательного рассмотрения, к сожалению, мы сообщаем вам, что приняли решение продолжить с другими
+						кандидатами, которые лучше соответствуют нашим текущим требованиям.
+					</p>
+					<p>
+						Мы рекомендуем вам подавать заявки на будущие вакансии, которые соответствуют вашим навыкам и
+						опыту. Мы ценим ваш интерес к нашей компании и желаем вам успехов в поиске работы.
+					</p>
+				</mj-text>
+				<mj-text font-size="16px" font-family="helvetica">
+					<p>С наилучшими пожеланиями,</p>
+					<p>Команда {{organizationName}}</p>
+				</mj-text>
+				<mj-divider border-color="#1B005D" border-width="1px"></mj-divider>
+				<mj-text align="center" font-size="12px" font-family="helvetica">
+					© 2019, <a href="{{appLink}}" style="color: #598bff">{{appName}}</a> от
+					<a href="{{companyLink}}" style="color: #598bff">{{organizationName}}</a> Все права защищены.
+				</mj-text>
+			</mj-column>
+		</mj-section>
+	</mj-body>
+</mjml>

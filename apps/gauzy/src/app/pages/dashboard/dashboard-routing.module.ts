@@ -14,6 +14,7 @@ const routes: Routes = [
 	{
 		path: '',
 		component: DashboardComponent,
+		data: { tabsetId: 'dashboard' },
 		children: [
 			{
 				path: '',
@@ -65,9 +66,13 @@ const routes: Routes = [
 			{
 				path: 'project-management',
 				component: ProjectManagementComponent,
+				canActivate: [PermissionsGuard],
 				data: {
 					datePicker: {
 						unitOfTime: 'month'
+					},
+					permissions: {
+						only: [PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.PROJECT_MANAGEMENT_DASHBOARD]
 					}
 				},
 				resolve: {
@@ -90,7 +95,7 @@ const routes: Routes = [
 						employee: true
 					},
 					permissions: {
-						only: [PermissionsEnum.ALL_ORG_VIEW]
+						only: [PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TEAM_DASHBOARD]
 					}
 				},
 				resolve: {

@@ -5,18 +5,19 @@ import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 
-import * as path from 'path';
 import {
 	app,
 	BrowserWindow,
 	ipcMain,
-	Tray,
-	nativeImage,
 	Menu,
-	shell,
 	MenuItemConstructorOptions,
-	screen
+	nativeImage,
+	nativeTheme,
+	screen,
+	shell,
+	Tray
 } from 'electron';
+import * as path from 'path';
 
 import { environment } from './environments/environment';
 
@@ -30,39 +31,41 @@ app.setName(process.env.NAME);
 
 console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
 
+import * as remoteMain from '@electron/remote/main';
 import {
-	LocalStore,
-	DesktopServer,
+	AppError,
 	AppMenu,
-	DesktopUpdater,
-	TranslateLoader,
-	TranslateService,
-	IPathWindow,
-	ServerConfig,
-	IServerConfig,
-	ILocalServer,
-	ReverseProxy,
 	DesktopDialog,
+	DesktopServer,
+	DesktopThemeListener,
+	DesktopUpdater,
+	DialogErrorHandler,
+	DialogOpenFile,
 	DialogStopServerExitConfirmation,
 	ErrorEventManager,
 	ErrorReport,
 	ErrorReportRepository,
-	DialogErrorHandler,
-	AppError,
-	DialogOpenFile,
-	ReverseUiProxy
+	ILocalServer,
+	IPathWindow,
+	IServerConfig,
+	LocalStore,
+	ReverseProxy,
+	ReverseUiProxy,
+	ServerConfig,
+	TranslateLoader,
+	TranslateService
 } from '@gauzy/desktop-libs';
 import {
-	createSetupWindow,
+	createAboutWindow,
 	createServerWindow,
 	createSettingsWindow,
-	SplashScreen,
-	createAboutWindow
+	createSetupWindow,
+	SplashScreen
 } from '@gauzy/desktop-window';
-import { initSentry } from './sentry';
-import * as remoteMain from '@electron/remote/main';
-import { autoUpdater } from 'electron-updater';
 import * as Sentry from '@sentry/electron';
+import { setupTitlebar } from 'custom-electron-titlebar/main';
+import { autoUpdater } from 'electron-updater';
+import { initSentry } from './sentry';
 
 remoteMain.initialize();
 
@@ -92,6 +95,8 @@ let tray: Tray;
 let isServerRun: boolean;
 let willQuit = false;
 
+setupTitlebar();
+
 const updater = new DesktopUpdater({
 	repository: process.env.REPO_NAME,
 	owner: process.env.REPO_OWNER,
@@ -112,8 +117,14 @@ const pathWindow: IPathWindow = {
 	ui: uiPath,
 	dir: dirPath,
 	timeTrackerUi: timeTrackerUIPath,
-	gauzyUi: ''
+	gauzyUi: '',
+	preloadPath: path.join(__dirname, 'preload/preload.js')
 };
+
+ipcMain.handle('SAVED_THEME', () => {
+	return LocalStore.getStore('appSetting').theme;
+});
+
 
 
 
@@ -149,6 +160,18 @@ ipcMain.setMaxListeners(0);
 
 /* Remove handler if exist */
 ipcMain.removeHandler('PREFERRED_LANGUAGE');
+
+ipcMain.handle('PREFERRED_THEME', () => {
+	const setting = LocalStore.getStore('appSetting');
+	if (!setting) {
+		LocalStore.setDefaultApplicationSetting();
+		const theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+		LocalStore.updateApplicationSetting({ theme });
+		return theme;
+	} else {
+		return setting.theme;
+	}
+});
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 log.catchErrors({
@@ -242,7 +265,7 @@ const appState = async () => {
 };
 
 const runMainWindow = async () => {
-	serverWindow = await createServerWindow(serverWindow, null, pathWindow.ui);
+	serverWindow = await createServerWindow(serverWindow, null, pathWindow.ui, pathWindow.preloadPath);
 
 	serverWindow.show();
 
@@ -263,6 +286,12 @@ const runMainWindow = async () => {
 	serverWindow.webContents.send('dashboard_ready', {
 		setting: serverConfig.setting
 	});
+
+	new DesktopThemeListener({
+		settingsWindow,
+		splashScreenWindow: splashScreen.browserWindow,
+		serverWindow
+	}).listen();
 };
 
 const initializeConfig = async (val) => {
@@ -444,7 +473,7 @@ app.on('ready', async () => {
 		};
 
 		if (!settingsWindow) {
-			settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.ui);
+			settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.ui, pathWindow.preloadPath);
 		}
 
 		await appState();
@@ -780,3 +809,5 @@ ipcMain.on('save_encrypted_file', (event, value) => {
 		console.error(error);
 	}
 });
+
+ipcMain.handle('get-app-path', () => app.getAppPath());

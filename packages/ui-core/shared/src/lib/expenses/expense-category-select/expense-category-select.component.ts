@@ -5,7 +5,8 @@ import { Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ErrorHandlingService, OrganizationExpenseCategoriesService, ToastrService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
+import { removeDuplicatesByProperty } from '@gauzy/ui-core/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -129,7 +130,8 @@ export class ExpenseCategorySelectComponent implements OnInit, OnDestroy {
 			organizationId,
 			tenantId
 		});
-		this.categories = items;
+
+		this.categories = removeDuplicatesByProperty(items, 'name');
 	}
 
 	writeValue(value: IOrganizationVendor) {

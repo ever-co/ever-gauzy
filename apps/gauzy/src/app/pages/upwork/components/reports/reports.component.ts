@@ -4,12 +4,11 @@ import { Observable, Subject } from 'rxjs';
 import { tap } from 'rxjs/internal/operators/tap';
 import { debounceTime, filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import moment from 'moment';
+import * as moment from 'moment';
 import { Cell } from 'angular2-smart-table';
 import { IncomeTypeEnum, IOrganization, IUpworkDateRange } from '@gauzy/contracts';
-import { UpworkStoreService } from '@gauzy/ui-core/core';
+import { Store, UpworkStoreService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store } from '@gauzy/ui-core/common';
 import { DateViewComponent, IncomeExpenseAmountComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
@@ -83,7 +82,7 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 					title: this.getTranslation('SM_TABLE.DATE'),
 					type: 'custom',
 					width: '10%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -92,7 +91,7 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 				type: {
 					title: this.getTranslation('SM_TABLE.TRANSACTION_TYPE'),
 					type: 'string',
-					filter: false,
+					isFilterable: false,
 					valuePrepareFunction: (value, item) => {
 						if (item.hasOwnProperty('category')) {
 							return item.category ? item.category.name : null;
@@ -114,7 +113,7 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 					title: this.getTranslation('SM_TABLE.AMOUNT'),
 					type: 'custom',
 					width: '15%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: IncomeExpenseAmountComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -128,7 +127,7 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 				employee: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 					type: 'string',
-					filter: true,
+					isFilterable: true,
 					valuePrepareFunction: (item) => {
 						const user = item.user || null;
 						if (user) {
@@ -165,7 +164,7 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 	}
 
 	/*
-	 * Set 1 month default daterange for filter
+	 * Set 1 month default date range for filter
 	 */
 	private _setDefaultRange(): void {
 		this.defaultDateRange$ = this._upworkStoreService.dateRangeActivity$.pipe(

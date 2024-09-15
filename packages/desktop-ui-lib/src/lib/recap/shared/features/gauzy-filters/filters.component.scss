@@ -118,6 +118,10 @@ button.activity-level-filter.text-capitalize.appearance-outline.size-medium.shap
 
 		.filter-item {
 			width: 100%;
+
+			::ng-deep nb-select.appearance-outline.status-basic .select-button {
+				height: 2rem !important;
+			}
 		}
 	}
 }

@@ -33,6 +33,7 @@
 		"INVITE": "Invitation",
 		"SELECT_ALL": "Sélectionner tout",
 		"COPY_LINK": "Copier le lien",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "Gérer les entretiens",
 		"MANAGE_INVITES": "Gérer les invitations",
 		"MANAGE_SPRINTS": "Gérer les sprints",
@@ -156,7 +157,14 @@
 		"PASTE": "Coller",
 		"FORWARD_PORTS": "Transférez les ports",
 		"REPORT": "Rapport",
-		"IGNORE": "Ignorer"
+		"IGNORE": "Ignorer",
+		"INSTALL": "Installer",
+		"UNINSTALL": "Désinstaller",
+		"DEACTIVATE": "Désactiver",
+		"ACTIVATE": "Activer",
+		"ADD_PLUGIN": "Ajouter",
+		"LOAD_PLUGIN": "Charger Plugin",
+		"FROM_CDN": "Depuis CDN"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -179,6 +187,7 @@
 			"APPROVAL_REQUEST": "Vous n'avez créé aucune demande d'approbation.",
 			"APPROVAL_POLICY": "Vous n'avez créé aucune politique d'approbation.",
 			"TIME_OFF": "Vous n'avez créé aucun congé.",
+			"TIME_OFF_POLICY": "Vous n'avez créé aucune politique de congé.",
 			"CANDIDATE": "Vous n'avez créé aucun candidat.",
 			"INTERVIEW": "Vous n'avez créé aucune interview.",
 			"EQUIPMENT": "Vous n'avez créé aucun équipement.",
@@ -1103,7 +1112,8 @@
 		"TABLE": "Table",
 		"CARDS_GRID": "Grille de cartes",
 		"SPRINT_VIEW": "Vue Sprint",
-		"QUICK_SETTINGS": "Paramètres rapides"
+		"QUICK_SETTINGS": "Paramètres rapides",
+		"NO_LAYOUT": "Aucun modèle de données disponible"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Quoi de neuf?",
@@ -1627,6 +1637,7 @@
 		"APPLIED": "Appliqué",
 		"HIRED": "Engagé",
 		"REJECTED": "Rejeté",
+		"SHOW_REJECTED": "Voir rejeté",
 		"DELETED": "Supprimé",
 		"ARCHIVED": "Archivé",
 		"SELECT_EMPLOYEE_MSG": "Veuillez sélectionner un employé dans le menu ci-dessus.",
@@ -1695,6 +1706,7 @@
 				"PREVIOUS": "Précédent",
 				"SAVE": "Sauvegarder",
 				"CREATE_CRITERIONS": "Créer des critères",
+				"CLOSE_CRITERIONS": "Fermer les critères",
 				"EMAIL_NOTIFICATION": "Notification par email",
 				"DELETE_INTERVIEW": "Supprimer l'interview",
 				"DELETE_FEEDBACK": "Supprimer les commentaires.",
@@ -1993,7 +2005,6 @@
 			"ORG_PROPOSALS_VIEW": "Voir la page des propositions",
 			"ORG_PROPOSAL_TEMPLATES_VIEW": "Afficher la page des modèles de proposition.",
 			"ORG_PROPOSAL_TEMPLATES_EDIT": "Créer/Modifier/Supprimer des modèles de proposition",
-			"ORG_TIME_OFF_VIEW": "Afficher la page des congés.",
 			"ORG_EMPLOYEES_VIEW": "Voir les employés de l'organisation",
 			"ORG_EMPLOYEES_EDIT": "Créer/Modifier/Supprimer les employés de l'organisation",
 			"ORG_CANDIDATES_VIEW": "Voir les candidats de l'organisation.",
@@ -2014,8 +2025,10 @@
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "Créer/Modifier/Supprimer des retours de candidats",
 			"ALL_ORG_VIEW": "Voir toutes les organisations",
 			"ALL_ORG_EDIT": "Créer/Modifier/Supprimer Toutes les Organisations",
-			"POLICY_VIEW": "Consulter la politique de congé.",
-			"POLICY_EDIT": "Modifier la politique de congé",
+			"TIME_OFF_POLICY_ADD": "Ajouter une Politique de Congé",
+			"TIME_OFF_POLICY_VIEW": "Voir la Politique de Congé",
+			"TIME_OFF_POLICY_EDIT": "Modifier la Politique de Congé",
+			"TIME_OFF_POLICY_DELETE": "Supprimer la Politique de Congé",
 			"CHANGE_SELECTED_EMPLOYEE": "Changer l'employé sélectionné",
 			"CHANGE_SELECTED_CANDIDATE": "Changer le candidat sélectionné",
 			"CHANGE_SELECTED_ORGANIZATION": "Changer l'organisation sélectionnée",
@@ -2040,7 +2053,10 @@
 			"PUBLIC_PAGE_EDIT": "Modifier la page publique de l'organisation",
 			"CAN_APPROVE_TIMESHEET": "Approuver la feuille de temps",
 			"EVENT_TYPES_VIEW": "Afficher les types d'événements",
-			"TIME_OFF_EDIT": "Modifier les congés",
+			"TIME_OFF_ADD": "Ajouter Congé",
+			"TIME_OFF_VIEW": "Voir Congé",
+			"TIME_OFF_EDIT": "Modifier Congé",
+			"TIME_OFF_DELETE": "Supprimer Congé",
 			"ORG_INVENTORY_VIEW": "Voir l'inventaire de l'organisation",
 			"INVENTORY_GALLERY_VIEW": "Voir la galerie de l'inventaire",
 			"INVENTORY_GALLERY_EDIT": "Modifier la galerie d'inventaire",
@@ -2048,6 +2064,10 @@
 			"MEDIA_GALLERY_VIEW": "Voir la galerie multimédia",
 			"MEDIA_GALLERY_EDIT": "Modifier la galerie multimédia",
 			"MEDIA_GALLERY_DELETE": "Supprimer la galerie multimédia",
+			"EQUIPMENT_SHARING_POLICY_ADD": "Ajouter une politique de partage d'équipement",
+			"EQUIPMENT_SHARING_POLICY_VIEW": "Voir la politique de partage d'équipement",
+			"EQUIPMENT_SHARING_POLICY_EDIT": "Modifier la politique de partage d'équipement",
+			"EQUIPMENT_SHARING_POLICY_DELETE": "Supprimer la politique de partage d'équipement",
 			"ORG_EQUIPMENT_VIEW": "Voir l'équipement de l'organisation",
 			"ORG_EQUIPMENT_EDIT": "Modifier l'équipement de l'organisation",
 			"ORG_EQUIPMENT_SHARING_VIEW": "Voir partage d'équipement organisationnel.",
@@ -2073,6 +2093,10 @@
 			"ORG_PROJECT_DELETE": "Supprimer les projets",
 			"ORG_CONTACT_EDIT": "Créer/Modifier des contacts",
 			"ORG_CONTACT_VIEW": "Voir les contacts",
+			"PROJECT_MODULE_CREATE": "Créer des modules de projet",
+			"PROJECT_MODULE_READ": "Voir les modules de projet",
+			"PROJECT_MODULE_UPDATE": "Mettre à jour les modules de projet",
+			"PROJECT_MODULE_DELETE": "Supprimer les modules de projet",
 			"ORG_TEAM_ADD": "Ajouter des équipes",
 			"ORG_TEAM_VIEW": "Voir les équipes",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "Modifier les tâches actives",
@@ -2185,7 +2209,6 @@
 		},
 		"PROPOSAL_DETAILS": {
 			"PROPOSAL_DETAILS": "Détails de la proposition",
-			"EDIT": "Modifier",
 			"AUTHOR": "Auteur",
 			"JOB_POST_URL": "URL de l'annonce d'emploi",
 			"PROPOSAL_SENT_ON": "Proposition envoyée le",
@@ -3043,7 +3066,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "Générer un lien public",
 			"GENERATE": "Générer un lien vers le {{ text }} que n'importe qui ayant le lien peut visualiser.",
-			"ACCESS": "Toute personne ayant accès à ce lien peut voir le {{ text }}."
+			"ACCESS": "Toute personne ayant accès à ce lien peut voir le {{ text }}.",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -3074,7 +3098,7 @@
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Page non trouvée",
 		"TAKE_ME_HOME": "Ramené moi à la maison",
-		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "La page que vous recherchiez n'existe pas.",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "La page que vous recherchiez n'existe pas.",
 		"REDIRECT_TO_HOME": "Vous serez bientôt redirigé vers la page d'accueil"
 	},
 	"HELP_PAGE": {
@@ -3809,7 +3833,9 @@
 			"DB_PORT": "Port de base de données",
 			"USER": "Utilisateur",
 			"PASSWORD": "Mot de passe",
-			"UI_HOSTNAME": "Nom d'hôte de l'interface utilisateur / Adresse IP"
+			"UI_HOSTNAME": "Nom d'hôte de l'interface utilisateur / Adresse IP",
+			"TITLE_SERVER_API": "Assistant d'installation du serveur API Ever Gauzy",
+			"LABEL_SERVER_API": "L'application de bureau Ever Gauzy API Server fournit toutes les fonctionnalités de la plateforme Gauzy disponibles directement sur votre ordinateur de bureau ou votre ordinateur portable. De plus, elle permet de suivre le temps de travail, d'enregistrer les activités et de recevoir des rappels/notifications de suivi."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Capture d'écran",
@@ -3903,6 +3929,9 @@
 			"WIDGET": "Widget",
 			"PLUGINS": "Plugins",
 			"PLUGIN_DESCRIPTION": "Plugins",
+			"VERSION": "Version",
+			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "Installez des plugins à partir de fichiers locaux ou de CDN. Local pour les plugins personnalisés/privés, CDN pour les publics. Choisissez en fonction de vos besoins.",
+			"ADD_PLUGIN_CDN_DESCRIPTION": "L'installation via CDN permet un accès facile aux plugins disponibles publiquement.",
 			"PLUGIN": "Plugin",
 			"WIDGET_LABEL": "Cette fenêtre reflète l'état du minuteur, indiquant s'il est en marche ou arrêté, et fonctionne comme un bouton.",
 			"SSL": {
@@ -3998,11 +4027,16 @@
 			"HELP": "Aidez-moi",
 			"LEARN_MORE": "En savoir plus",
 			"OPEN_MAIN_WINDOW": "Ouvrir la fenêtre principale",
-			"DAILY_RECAP": "Récapitulatif"
+			"DAILY_RECAP": "Récapitulatif journalier",
+			"WEEKLY_RECAP": "Récapitulatif Hebdomadaire",
+			"MONTHLY_RECAP": "Récapitulatif Mensuel"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Suivi du temps horaire",
-			"HOURLY_TIME_TRACKING_DATA": "Données de suivi du temps horaire"
+			"HOURLY_TIME_TRACKING_DATA": "Données de suivi du temps horaire",
+			"NO_MONTHLY_ACTIVITY": "Vous n'avez aucune heure ou activité enregistrée pour ce mois.",
+			"WORKED_FOR_MONTH": "Travail de ce mois-ci",
+			"ACTIVITY_FOR_MONTH": "Activité Mensuelle"
 		}
 	},
 	"SERVER": "Serveur",
@@ -4137,7 +4171,8 @@
 			"UPWORK": "Upwork",
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "Extension de navigateur",
-			"TEAMS": "Équipes"
+			"TEAMS": "Équipes",
+			"CLOC": "Cloc"
 		},
 		"LAST_WORKED": "Dernière fois travaillé :",
 		"TIME_ZONE": "Time Zone",
@@ -4168,8 +4203,9 @@
 		"NO_RECORD_FOUND": "Aucun résultat trouvé. Veuillez sélectionner une plage de dates, un employé ou un projet."
 	},
 	"ONBOARDING": {
-		"FIRST_ORGANIZATION": "Créons votre première organisation.",
-		"COMPLETE": "Vous êtes prêt(e) !"
+		"FIRST_ORGANIZATION": "Créons votre première organisation",
+		"COMPLETE_TITLE": "Vous êtes prêt !",
+		"COMPLETE_SUB_TITLE": "Où voulez-vous aller maintenant ?"
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "Ce champ est obligatoire !",
@@ -4237,7 +4273,8 @@
 		"SELECT_EMPLOYEE_ERROR": "Veuillez sélectionner un employé.",
 		"EXPIRED_OR_CANCELLED": "Ce rendez-vous a expiré ou a été annulé.",
 		"EMAIL_SENT": "Un courriel a été envoyé à l'hôte ainsi qu'à tous les participants pour cette réunion.",
-		"NO_ACTIVE_EVENT_TYpES": "Il n'y a pas de types d'événements actifs."
+		"NO_ACTIVE_EVENT_TYPES": "Il n'y a pas de types d'événements actifs.",
+		"CLICK_HERE": "Click Here"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "Modèles d'e-mails",
@@ -4277,7 +4314,8 @@
 			"employee-join": "Employé Rejoindre",
 			"email-reset": "Réinitialisation du courrier électronique",
 			"organization-team-join-request": "Demande de rejoindre l'équipe d'organisation",
-			"payment-receipt": "Reçu de paiement"
+			"payment-receipt": "Reçu de paiement",
+			"reject-candidate": "Rejeter le Candidat"
 		},
 		"HTML_EDITOR": "Éditeur HTML"
 	},

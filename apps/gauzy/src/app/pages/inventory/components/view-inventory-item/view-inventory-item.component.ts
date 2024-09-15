@@ -8,9 +8,9 @@ import { combineLatest } from 'rxjs';
 import { IImageAsset, IProductOptionTranslatable, IProductTranslatable, LanguagesEnum } from '@gauzy/contracts';
 import { ProductService, TranslatableService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { EnabledStatusComponent, ImageRowComponent } from '../inventory-table-components';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { GalleryComponent, GalleryService } from '@gauzy/ui-core/shared';
+import { EnabledStatusComponent, ImageRowComponent } from '../inventory-table-components';
 
 @UntilDestroy()
 @Component({
@@ -113,6 +113,10 @@ export class InventoryItemViewComponent extends TranslationBaseComponent impleme
 	}
 
 	getTranslatedProp(item: any, prop: string) {
+		if (!item) {
+			console.warn('Translatable item object is undefined');
+			return null;
+		}
 		return this.translatableService.getTranslatedProperty(item, prop);
 	}
 
@@ -125,7 +129,7 @@ export class InventoryItemViewComponent extends TranslationBaseComponent impleme
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
 					type: 'custom',
 					renderComponent: ImageRowComponent,
-					filter: false
+					isFilterable: false
 				},
 				options: {
 					title: this.getTranslation('INVENTORY_PAGE.OPTIONS'),
@@ -135,17 +139,17 @@ export class InventoryItemViewComponent extends TranslationBaseComponent impleme
 							? variant.options.map((option) => option.name).join(', ')
 							: this.getTranslation('INVENTORY_PAGE.NO_OPTIONS_LABEL');
 					},
-					filter: false
+					isFilterable: false
 				},
 				internalReference: {
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),
 					type: 'string',
-					filter: false
+					isFilterable: false
 				},
 				quantity: {
 					title: this.getTranslation('INVENTORY_PAGE.QUANTITY'),
 					type: 'string',
-					filter: false
+					isFilterable: false
 				},
 				price: {
 					title: this.getTranslation('INVENTORY_PAGE.PRICE'),
@@ -153,30 +157,30 @@ export class InventoryItemViewComponent extends TranslationBaseComponent impleme
 					valuePrepareFunction: (_, price) => {
 						return `${_.unitCostCurrency} ${_.unitCost}`;
 					},
-					filter: false
+					isFilterable: false
 				},
 				isEquipment: {
 					title: this.getTranslation('INVENTORY_PAGE.IS_EQUIPMENT'),
 					type: 'custom',
 					renderComponent: EnabledStatusComponent,
-					filter: false
+					isFilterable: false
 				},
 				canBePurchased: {
 					title: this.getTranslation('INVENTORY_PAGE.CAN_BE_PURCHASED'),
 					type: 'custom',
 					renderComponent: EnabledStatusComponent,
-					filter: false
+					isFilterable: false
 				},
 				notes: {
 					title: this.getTranslation('INVENTORY_PAGE.NOTES'),
 					type: 'string',
-					filter: false
+					isFilterable: false
 				},
 				enabled: {
 					title: this.getTranslation('INVENTORY_PAGE.ENABLED'),
 					type: 'custom',
 					renderComponent: EnabledStatusComponent,
-					filter: false
+					isFilterable: false
 				}
 			}
 		};

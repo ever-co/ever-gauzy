@@ -7,7 +7,7 @@ import * as moment from 'moment';
 import { firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	IEmployee,
 	IOrganization,
@@ -20,7 +20,7 @@ import {
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { EmployeesService, OrganizationTeamsService, TasksService } from '@gauzy/ui-core/core';
+import { EmployeesService, OrganizationTeamsService, Store, TasksService } from '@gauzy/ui-core/core';
 import { richTextCKEditorConfig } from '../../ckeditor.config';
 
 @UntilDestroy({ checkProperties: true })
@@ -179,6 +179,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 				description,
 				tags,
 				teams: this.selectedTeams,
+				members: this.selectedMembers,
 				taskStatus,
 				taskSize,
 				taskPriority
@@ -188,16 +189,19 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 
 	onSave() {
 		if (this.form.valid) {
-			this.form
-				.get('members')
-				.setValue(
-					(this.selectedMembers || []).map((id) => this.employees.find((e) => e.id === id)).filter((e) => !!e)
+			// Reset both fields to ensure only one is sent based on the selection
+			this.form.get('members').setValue([]);
+			this.form.get('teams').setValue([]);
+
+			if (this.participants === TaskParticipantEnum.EMPLOYEES) {
+				this.form.get('members').setValue(
+					(this.selectedMembers || []).map((id) => this.employees.find((e) => e.id === id)).filter((e) => !!e) // Only valid employees
 				);
-			this.form
-				.get('teams')
-				.setValue(
-					(this.selectedTeams || []).map((id) => this.teams.find((e) => e.id === id)).filter((e) => !!e)
+			} else if (this.participants === TaskParticipantEnum.TEAMS) {
+				this.form.get('teams').setValue(
+					(this.selectedTeams || []).map((id) => this.teams.find((e) => e.id === id)).filter((e) => !!e) // Only valid teams
 				);
+			}
 			this.form.get('status').setValue(this.form.get('taskStatus').value?.name);
 			this.form.get('priority').setValue(this.form.get('taskPriority').value?.name);
 			this.form.get('size').setValue(this.form.get('taskSize').value?.name);
@@ -259,10 +263,6 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	}
 
 	onParticipantsChange(participants: TaskParticipantEnum) {
-		this.selectedMembers = [];
-		this.selectedTeams = [];
-		this.form.get('members').setValue([]);
-		this.form.get('teams').setValue([]);
 		this.participants = participants;
 	}
 

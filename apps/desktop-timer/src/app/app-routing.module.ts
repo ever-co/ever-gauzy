@@ -52,7 +52,8 @@ const routes: Routes = [
 	{
 		path: 'time-tracker',
 		component: TimeTrackerComponent,
-		canActivate: [AppModuleGuard, AuthGuard]
+		canActivate: [AppModuleGuard, AuthGuard],
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.recapRoutes)
 	},
 	{
 		path: 'screen-capture',
@@ -82,10 +83,6 @@ const routes: Routes = [
 	{
 		path: 'server-down',
 		component: ServerDownPage
-	},
-	{
-		path: 'recap',
-		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.recapRoutes)
 	},
 	{
 		path: '',

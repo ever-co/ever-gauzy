@@ -3,7 +3,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { IEmployee, PayPeriodEnum, ICandidate, ICurrency } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { CandidateStore, EmployeeStore } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })

@@ -3,8 +3,7 @@ import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { IOrganization, IUserOrganization, RolesEnum } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store } from '@gauzy/ui-core/common';
-import { UsersOrganizationsService } from '@gauzy/ui-core/core';
+import { Store, UsersOrganizationsService } from '@gauzy/ui-core/core';
 import { BasicInfoFormComponent } from '@gauzy/ui-core/shared';
 
 @Component({

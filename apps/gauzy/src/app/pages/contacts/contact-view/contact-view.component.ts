@@ -7,7 +7,7 @@ import { LatLng } from 'leaflet';
 import { firstValueFrom } from 'rxjs';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { FilterArrayPipe, LeafletMapComponent } from '@gauzy/ui-core/shared';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { EmployeesService, OrganizationContactService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
@@ -99,9 +99,10 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 			name: this.selectedContact.name,
 			organizationId: this.selectedContact.organizationId,
 			id: this.selectedContact.id,
-			members: this.selectedMembers
+			members: this.selectedMembers,
+			contactType: this.selectedContact.contactType
 		};
 
-		await this.organizationContactService.create(organizationContactData);
+		await this.organizationContactService.update(this.selectedContact.id, organizationContactData);
 	}
 }

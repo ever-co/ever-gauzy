@@ -40,7 +40,8 @@ import {
 	TokenInterceptor,
 	UnauthorizedInterceptor,
 	UpdaterModule,
-	serverConnectionFactory
+	serverConnectionFactory,
+	NgxDesktopThemeModule
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import {
@@ -90,7 +91,8 @@ if (environment.SENTRY_DSN) {
 		BrowserModule,
 		BrowserAnimationsModule,
 		AppRoutingModule,
-		NbThemeModule.forRoot({ name: 'gauzy-light' }),
+		NbThemeModule,
+		NgxDesktopThemeModule,
 		NgxLoginModule,
 		SetupModule,
 		TimeTrackerModule,
@@ -196,7 +198,7 @@ if (environment.SENTRY_DSN) {
 		},
 		{
 			provide: APP_INITIALIZER,
-			useFactory: () => () => {},
+			useFactory: () => () => { },
 			deps: [Sentry.TraceService],
 			multi: true
 		},
@@ -212,4 +214,4 @@ if (environment.SENTRY_DSN) {
 	bootstrap: [AppComponent],
 	exports: []
 })
-export class AppModule {}
+export class AppModule { }

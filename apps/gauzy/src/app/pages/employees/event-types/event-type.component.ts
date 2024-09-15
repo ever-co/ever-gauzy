@@ -14,8 +14,8 @@ import {
 	IEventTypeViewModel,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
-import { ErrorHandlingService, EventTypeService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
+import { API_PREFIX, ComponentEnum, distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
+import { ErrorHandlingService, EventTypeService, ServerDataSource, Store, ToastrService } from '@gauzy/ui-core/core';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase,
@@ -312,7 +312,7 @@ export class EventTypeComponent extends PaginationFilterBaseComponent implements
 				employeeName: {
 					title: this.getTranslation('EVENT_TYPE_PAGE.EMPLOYEE'),
 					type: 'string',
-					filter: false,
+					isFilterable: false,
 					sort: false
 				}
 			},

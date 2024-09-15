@@ -1,10 +1,10 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ILanguage, IUser, IUserUpdateInput, LanguagesEnum } from '@gauzy/contracts';
 import { debounceTime, filter, tap, from, concatMap } from 'rxjs';
-import { UsersService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
-import { LanguagesService } from '@gauzy/ui-core/core';
+import { ILanguage, IUser, IUserUpdateInput, LanguagesEnum } from '@gauzy/contracts';
+import { LanguagesService, UsersService } from '@gauzy/ui-core/core';
+import { Store } from '@gauzy/ui-core/core';
+import { I18nService } from '@gauzy/ui-core/i18n';
 import { ThemeLanguageSelectorService } from './theme-language-selector.service';
 
 @UntilDestroy({ checkProperties: true })
@@ -21,8 +21,9 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 		private readonly _store: Store,
 		private readonly _userService: UsersService,
 		private readonly _languagesService: LanguagesService,
-		private readonly cdr: ChangeDetectorRef,
-		private readonly _selectorService: ThemeLanguageSelectorService
+		private readonly _cdr: ChangeDetectorRef,
+		private readonly _selectorService: ThemeLanguageSelectorService,
+		private readonly _i18nService: I18nService
 	) {}
 
 	ngOnInit(): void {
@@ -40,7 +41,7 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 				tap((user: IUser) => (this.user = user)),
 				tap(({ preferredLanguage }: IUser) => {
 					if (!this._store.preferredLanguage) {
-						this._store.preferredLanguage = preferredLanguage || LanguagesEnum.ENGLISH;
+						this._store.preferredLanguage = preferredLanguage || this._i18nService.getBrowserLang();
 					}
 				}),
 				untilDestroyed(this)
@@ -53,28 +54,33 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 		if (!systemLanguages) {
 			from(this._loadLanguages()).subscribe();
 		}
+
 		this._store.preferredLanguage$
 			.pipe(
 				debounceTime(100),
 				filter((preferredLanguage: LanguagesEnum) => !!preferredLanguage),
 				tap((preferredLanguage: LanguagesEnum) => (this.preferredLanguage = preferredLanguage)),
 				tap(() => this._selectorService.setLanguage()),
-				concatMap((preferredLanguage: LanguagesEnum) =>
-					this.changePreferredLanguage({
-						preferredLanguage
-					})
-				),
+				concatMap((preferredLanguage: LanguagesEnum) => this.changePreferredLanguage({ preferredLanguage })),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
+	/**
+	 * Load languages
+	 */
 	private async _loadLanguages() {
 		const { items = [] } = await this._languagesService.getSystemLanguages();
 		this._store.systemLanguages = items.filter((item: ILanguage) => item.is_system) || [];
-		this.cdr.detectChanges();
+		this._cdr.detectChanges();
 	}
 
+	/**
+	 * Get system languages
+	 *
+	 * @param systemLanguages
+	 */
 	getSystemLanguages(systemLanguages: ILanguage[]) {
 		if (systemLanguages && systemLanguages.length > 0) {
 			this.languages = systemLanguages
@@ -98,6 +104,9 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 		}
 	}
 
+	/**
+	 * Switch language
+	 */
 	switchLanguage() {
 		this._store.preferredLanguage = this.preferredLanguage;
 	}
@@ -112,6 +121,7 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 		if (!this.user || !this.user.tenantId) {
 			return;
 		}
+
 		try {
 			await this._userService.updatePreferredLanguage(payload);
 		} catch (error) {
@@ -119,10 +129,16 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 		}
 	}
 
+	/**
+	 * Get preferred language
+	 */
 	public get preferredLanguage(): LanguagesEnum {
 		return this._selectorService.preferredLanguage;
 	}
 
+	/**
+	 * Set preferred language
+	 */
 	public set preferredLanguage(value: LanguagesEnum) {
 		this._selectorService.preferredLanguage = value;
 	}

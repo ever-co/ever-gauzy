@@ -13,7 +13,7 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
 import { ApprovalPolicyService, RequestApprovalService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { RequestApprovalMutationComponent } from './approvals-mutation.component';
 import { EmployeeMultiSelectModule } from '../employee/employee-multi-select/employee-multi-select.module';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';

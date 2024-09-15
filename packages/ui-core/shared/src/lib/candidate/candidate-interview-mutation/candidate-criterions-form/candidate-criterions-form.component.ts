@@ -2,7 +2,7 @@ import { ICandidateTechnologies, ICandidatePersonalQualities, IOrganization } fr
 import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { UntypedFormBuilder } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { CandidatePersonalQualitiesService, CandidateTechnologiesService } from '@gauzy/ui-core/core';
 
 @Component({

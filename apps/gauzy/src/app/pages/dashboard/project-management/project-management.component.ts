@@ -2,10 +2,9 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { combineLatest } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { IDateRangePicker, IOrganization } from '@gauzy/contracts';
-import { DateRangePickerBuilderService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
+import { DateRangePickerBuilderService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -14,8 +13,8 @@ import { Store } from '@gauzy/ui-core/common';
 	styleUrls: ['./project-management.component.scss']
 })
 export class ProjectManagementComponent implements OnInit, OnDestroy {
-	organization: IOrganization;
-	selectedDateRange: IDateRangePicker;
+	public organization: IOrganization;
+	public selectedDateRange: IDateRangePicker;
 
 	constructor(
 		private readonly store: Store,

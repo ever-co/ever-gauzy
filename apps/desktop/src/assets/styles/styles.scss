@@ -44,14 +44,18 @@
 	@include angular-material();
 
 	// framework global styles
-		@include nb-theme-global();
-		@include nb-auth-global();
+	@include nb-theme-global();
+	@include nb-auth-global();
 
 	@include ngx-layout();
-		// loading progress bar
-		@include ngx-pace-theme();
+	// loading progress bar
+	@include ngx-pace-theme();
 
 	@include nb-overrides();
-		@include material-overrides();
-		@include gauzy-overrides();
+	@include material-overrides();
+	@include gauzy-overrides();
+}
+
+::-webkit-scrollbar {
+	display: none;
 }

@@ -15,8 +15,8 @@ import {
 	IOrganization,
 	ITag
 } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
-import { OrganizationDepartmentsService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
+import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
+import { OrganizationDepartmentsService, ServerDataSource, Store, ToastrService } from '@gauzy/ui-core/core';
 import {
 	DeleteConfirmationComponent,
 	EmployeeWithLinksComponent,
@@ -151,7 +151,7 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent implemen
 				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
 					type: 'string',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -162,7 +162,7 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent implemen
 				members: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: EmployeeWithLinksComponent,
 					componentInitFunction: (instance: EmployeeWithLinksComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -178,7 +178,7 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent implemen
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getRawValue();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: TagsColorFilterComponent
 					},

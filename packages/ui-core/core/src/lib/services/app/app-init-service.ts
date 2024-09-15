@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
 import { IUser } from '@gauzy/contracts';
 import { Router } from '@angular/router';
-import { NgxPermissionsService } from 'ngx-permissions';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '../store/store.service';
 import { PermissionsService } from '../permission/permissions.service';
 import { UsersService } from '../users';
 import { AuthStrategy } from '../auth/auth-strategy.service';
@@ -13,7 +12,6 @@ export class AppInitService {
 
 	constructor(
 		private readonly _router: Router,
-		private readonly _ngxPermissionsService: NgxPermissionsService,
 		private readonly _store: Store,
 		private readonly _usersService: UsersService,
 		private readonly _authStrategy: AuthStrategy,
@@ -32,9 +30,7 @@ export class AppInitService {
 				];
 				this.user = await this._usersService.getMe(relations, true);
 
-				//Load permissions
-				this._permissionsService.loadPermissions();
-
+				// Electron authentication
 				this._authStrategy.electronAuthentication({
 					user: this.user,
 					token: this._store.token
@@ -48,6 +44,9 @@ export class AppInitService {
 				}
 
 				this._store.user = this.user;
+
+				//Load permissions
+				this._permissionsService.loadPermissions();
 
 				//tenant enabled/disabled features for relatives organizations
 				const { tenant } = this.user;

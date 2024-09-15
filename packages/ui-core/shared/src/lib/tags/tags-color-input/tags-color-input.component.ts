@@ -18,8 +18,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import * as randomColor from 'randomcolor';
 import { ITag, IOrganization, PermissionsEnum, ITagCreateInput } from '@gauzy/contracts';
-import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
-import { TagsService } from '@gauzy/ui-core/core';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
+import { Store, TagsService } from '@gauzy/ui-core/core';
 import { PictureNameTagsComponent } from '../../table-components';
 
 @UntilDestroy({ checkProperties: true })

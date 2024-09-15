@@ -5,11 +5,13 @@ import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 
-import * as path from 'path';
-import { app, BrowserWindow, ipcMain, shell, Menu, MenuItemConstructorOptions } from 'electron';
-import { environment } from './environments/environment';
-import * as Url from 'url';
+import * as remoteMain from '@electron/remote/main';
 import * as Sentry from '@sentry/electron';
+import { setupTitlebar } from 'custom-electron-titlebar/main';
+import { app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, nativeTheme, shell } from 'electron';
+import * as path from 'path';
+import * as Url from 'url';
+import { environment } from './environments/environment';
 
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
@@ -21,39 +23,39 @@ app.setName(process.env.NAME);
 log.log('Node Modules Path', path.join(__dirname, 'node_modules'));
 
 const Store = require('electron-store');
-import * as remoteMain from '@electron/remote/main';
 remoteMain.initialize();
 
 import {
-	ipcMainHandler,
-	ipcTimer,
-	TrayIcon,
-	LocalStore,
+	AppError,
 	AppMenu,
-	DesktopUpdater,
-	removeMainListener,
-	removeTimerListener,
-	ProviderFactory,
 	DesktopDialog,
+	DesktopThemeListener,
+	DesktopUpdater,
+	DialogErrorHandler,
 	DialogStopTimerExitConfirmation,
-	TranslateService,
-	TranslateLoader,
+	ErrorEventManager,
 	ErrorReport,
 	ErrorReportRepository,
-	ErrorEventManager,
-	DialogErrorHandler,
-	AppError,
+	ipcMainHandler,
+	ipcTimer,
+	LocalStore,
+	ProviderFactory,
+	removeMainListener,
+	removeTimerListener,
+	TranslateLoader,
+	TranslateService,
+	TrayIcon,
 	UIError
 } from '@gauzy/desktop-libs';
 import {
+	AlwaysOn,
+	createImageViewerWindow,
+	createSettingsWindow,
 	createSetupWindow,
 	createTimeTrackerWindow,
-	createSettingsWindow,
 	createUpdaterWindow,
-	createImageViewerWindow,
-	SplashScreen,
-	AlwaysOn,
-	ScreenCaptureNotification
+	ScreenCaptureNotification,
+	SplashScreen
 } from '@gauzy/desktop-window';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
@@ -90,6 +92,18 @@ const report = new ErrorReport(new ErrorReportRepository(process.env.REPO_OWNER,
 const eventErrorManager = ErrorEventManager.instance;
 args.some((val) => val === '--serve');
 
+ipcMain.handle('PREFERRED_THEME', () => {
+	const setting = LocalStore.getStore('appSetting');
+	if (!setting) {
+		LocalStore.setDefaultApplicationSetting();
+		const theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+		LocalStore.updateApplicationSetting({ theme });
+		return theme;
+	} else {
+		return setting.theme;
+	}
+});
+
 let notificationWindow = null;
 let gauzyWindow: BrowserWindow = null;
 let setupWindow: BrowserWindow = null;
@@ -107,10 +121,13 @@ let popupWin: BrowserWindow | null = null;
 let splashScreen: SplashScreen = null;
 let alwaysOn: AlwaysOn = null;
 
+setupTitlebar();
+
 console.log('Time Tracker UI Render Path:', path.join(__dirname, './index.html'));
 
 const pathWindow = {
-	timeTrackerUi: path.join(__dirname, './index.html')
+	timeTrackerUi: path.join(__dirname, './index.html'),
+	preloadPath: path.join(__dirname, 'preload.js')
 };
 
 LocalStore.setFilePath({
@@ -248,7 +265,11 @@ async function startServer(value, restart = false) {
 		setupWindow.hide();
 		try {
 			if (!timeTrackerWindow) {
-				timeTrackerWindow = await createTimeTrackerWindow(timeTrackerWindow, pathWindow.timeTrackerUi);
+				timeTrackerWindow = await createTimeTrackerWindow(
+					timeTrackerWindow,
+					pathWindow.timeTrackerUi,
+					pathWindow.preloadPath
+				);
 			} else {
 				await timeTrackerWindow.loadURL(
 					Url.format({
@@ -268,6 +289,7 @@ async function startServer(value, restart = false) {
 		gauzyWindow.setVisibleOnAllWorkspaces(false);
 		gauzyWindow.show();
 		splashScreen.close();
+		// timeTrackerWindow.webContents.toggleDevTools();
 	}
 	const auth = store.get('auth');
 	new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);
@@ -275,6 +297,8 @@ async function startServer(value, restart = false) {
 	if (tray) {
 		tray.destroy();
 	}
+	console.log('dir name:', __dirname);
+	console.log('app path', app.getAppPath());
 	tray = new TrayIcon(
 		setupWindow,
 		knex,
@@ -385,10 +409,14 @@ app.on('ready', async () => {
 	];
 	Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
 	try {
-		timeTrackerWindow = await createTimeTrackerWindow(timeTrackerWindow, pathWindow.timeTrackerUi);
-		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi);
-		updaterWindow = await createUpdaterWindow(updaterWindow, pathWindow.timeTrackerUi);
-		imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi);
+		timeTrackerWindow = await createTimeTrackerWindow(
+			timeTrackerWindow,
+			pathWindow.timeTrackerUi,
+			pathWindow.preloadPath
+		);
+		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
+		updaterWindow = await createUpdaterWindow(updaterWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
+		imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi, pathWindow.preloadPath);
 		alwaysOn = new AlwaysOn(pathWindow.timeTrackerUi);
 		await alwaysOn.loadURL();
 
@@ -417,6 +445,15 @@ app.on('ready', async () => {
 	}
 	removeMainListener();
 	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
+	new DesktopThemeListener({
+		timeTrackerWindow,
+		settingsWindow,
+		updaterWindow,
+		imageViewerWindow: imageView,
+		gauzyWindow,
+		splashScreenWindow: splashScreen.browserWindow,
+		alwaysOnWindow: alwaysOn.browserWindow
+	}).listen();
 });
 
 app.on('window-all-closed', () => {
@@ -772,3 +809,5 @@ const showPopup = async (url: string, options: Electron.BrowserWindowConstructor
 app.on('browser-window-created', (_, window) => {
 	require('@electron/remote/main').enable(window.webContents);
 });
+
+ipcMain.handle('get-app-path', () => app.getAppPath());

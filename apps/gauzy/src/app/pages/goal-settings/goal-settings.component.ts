@@ -6,8 +6,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { GoalSettingsService, ToastrService } from '@gauzy/ui-core/core';
-import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { GoalSettingsService, Store, ToastrService } from '@gauzy/ui-core/core';
+import { ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	AlertModalComponent,
 	DateViewComponent,
@@ -237,7 +237,7 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 					currentValue: {
 						title: this.getTranslation('SM_TABLE.CURRENT_VALUE'),
 						type: 'custom',
-						filter: false,
+						isFilterable: false,
 						renderComponent: ValueWithUnitComponent,
 						componentInitFunction: (instance: ValueWithUnitComponent, cell: Cell) => {
 							instance.rowData = cell.getRow().getData();
@@ -247,7 +247,7 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 					targetValue: {
 						title: this.getTranslation('SM_TABLE.TARGET_VALUE'),
 						type: 'custom',
-						filter: false,
+						isFilterable: false,
 						renderComponent: ValueWithUnitComponent,
 						componentInitFunction: (instance: ValueWithUnitComponent, cell: Cell) => {
 							instance.rowData = cell.getRow().getData();
@@ -257,7 +257,7 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 					updatedAt: {
 						title: this.getTranslation('SM_TABLE.LAST_UPDATED'),
 						type: 'custom',
-						filter: false,
+						isFilterable: false,
 						renderComponent: DateViewComponent,
 						componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 							instance.rowData = cell.getRow().getData();
@@ -279,7 +279,7 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 					startDate: {
 						title: this.getTranslation('SM_TABLE.START_DATE'),
 						type: 'custom',
-						filter: false,
+						isFilterable: false,
 						renderComponent: DateViewComponent,
 						componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 							instance.rowData = cell.getRow().getData();
@@ -289,7 +289,7 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 					endDate: {
 						title: this.getTranslation('SM_TABLE.END_DATE'),
 						type: 'custom',
-						filter: false,
+						isFilterable: false,
 						renderComponent: DateViewComponent,
 						componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 							instance.rowData = cell.getRow().getData();
@@ -300,7 +300,7 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 						title: this.getTranslation('SM_TABLE.STATUS'),
 						type: 'custom',
 						width: '5%',
-						filter: false,
+						isFilterable: false,
 						renderComponent: StatusBadgeComponent,
 						componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
 							instance.value = cell.getRawValue();

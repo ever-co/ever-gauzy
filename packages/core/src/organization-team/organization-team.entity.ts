@@ -1,10 +1,14 @@
 import { JoinTable, JoinColumn, RelationId } from 'typeorm';
 import {
+	IComment,
+	ID,
+	IDailyPlan,
 	IEquipmentSharing,
 	IGoal,
 	IImageAsset,
 	IIssueType,
 	IOrganizationProject,
+	IOrganizationProjectModule,
 	IOrganizationTeam,
 	IOrganizationTeamEmployee,
 	IRequestApprovalTeam,
@@ -20,11 +24,14 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
+	Comment,
+	DailyPlan,
 	EquipmentSharing,
 	Goal,
 	ImageAsset,
 	IssueType,
 	OrganizationProject,
+	OrganizationProjectModule,
 	OrganizationTeamEmployee,
 	RequestApprovalTeam,
 	Tag,
@@ -166,7 +173,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@RelationId((it: OrganizationTeam) => it.createdBy)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	createdById?: IUser['id'];
+	createdById?: ID;
 
 	/**
 	 * ImageAsset
@@ -190,7 +197,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@RelationId((it: OrganizationTeam) => it.image)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	imageId?: IImageAsset['id'];
+	imageId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -261,6 +268,14 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@MultiORMOneToMany(() => IssueType, (it) => it.organizationTeam)
 	issueTypes?: IIssueType[];
 
+	/**
+	 * Team daily plans
+	 */
+	@MultiORMOneToMany(() => DailyPlan, (dailyPlan) => dailyPlan.organizationTeam, {
+		cascade: true
+	})
+	dailyPlans?: IDailyPlan[];
+
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToMany
@@ -294,6 +309,17 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	tasks?: ITask[];
 
 	/**
+	 * Organization Project Module
+	 */
+	@MultiORMManyToMany(() => OrganizationProjectModule, (it) => it.teams, {
+		/** Defines the database action to perform on update. */
+		onUpdate: 'CASCADE',
+		/** Defines the database cascade action on delete. */
+		onDelete: 'CASCADE'
+	})
+	modules?: IOrganizationProjectModule[];
+
+	/**
 	 * Equipment Sharing
 	 */
 	@MultiORMManyToMany(() => EquipmentSharing, (it) => it.teams, {
@@ -314,4 +340,15 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 		onDelete: 'CASCADE'
 	})
 	projects?: IOrganizationProject[];
+
+	/**
+	 * Comments
+	 */
+	@MultiORMManyToMany(() => Comment, (it) => it.teams, {
+		/** Defines the database action to perform on update. */
+		onUpdate: 'CASCADE',
+		/** Defines the database cascade action on delete. */
+		onDelete: 'CASCADE'
+	})
+	assignedComments?: IComment[];
 }

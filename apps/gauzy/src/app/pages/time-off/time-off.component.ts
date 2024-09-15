@@ -7,10 +7,26 @@ import { combineLatest, Subject } from 'rxjs';
 import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import moment from 'moment';
-import { DateRangePickerBuilderService, ServerDataSource, TimeOffService, ToastrService } from '@gauzy/ui-core/core';
-import { StatusTypesEnum, ITimeOff, ComponentLayoutStyleEnum, IOrganization, IDateRangePicker } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, toUTC } from '@gauzy/ui-core/common';
+import * as moment from 'moment';
+import {
+	DateRangePickerBuilderService,
+	ErrorHandlingService,
+	ServerDataSource,
+	Store,
+	TimeOffService,
+	ToastrService
+} from '@gauzy/ui-core/core';
+import {
+	StatusTypesEnum,
+	ITimeOff,
+	ComponentLayoutStyleEnum,
+	IOrganization,
+	IDateRangePicker,
+	ID,
+	PermissionsEnum,
+	NullableString
+} from '@gauzy/contracts';
+import { API_PREFIX, ComponentEnum, distinctUntilChange, toUTC } from '@gauzy/ui-core/common';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase,
@@ -27,47 +43,46 @@ import { ApprovalPolicyComponent } from '../approvals/table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-time-off',
+	selector: 'ga-time-off-list',
 	templateUrl: './time-off.component.html',
 	styleUrls: ['./time-off.component.scss']
 })
 export class TimeOffComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-	settingsSmartTable: object;
-	selectedEmployeeId: string | null;
-	selectedDateRange: IDateRangePicker;
-	sourceSmartTable: ServerDataSource;
-	timeOffs: ITimeOff[] = [];
-	selectedTimeOffRecord: ITimeOff;
-	timeOffRequest: ITimeOff;
-	viewComponentName: ComponentEnum;
-	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-	rows: Array<any> = [];
-	selectedStatus = StatusTypesEnum.ALL;
-	timeOffStatuses = Object.keys(StatusTypesEnum);
-	loading: boolean;
-	isRecordSelected: boolean = false;
-	displayHolidays: boolean = true;
-	showActions: boolean = false;
-	includeArchived: boolean = false;
-	showFilter: boolean = false;
-
+	public settingsSmartTable: object;
+	public selectedEmployeeId: ID;
+	public selectedDateRange: IDateRangePicker;
+	public sourceSmartTable: ServerDataSource;
+	public timeOffs: ITimeOff[] = [];
+	public selectedTimeOffRecord: ITimeOff;
+	public timeOffRequest: ITimeOff;
+	public PermissionsEnum = PermissionsEnum;
+	public viewComponentName: ComponentEnum;
+	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+	public timeOffStatuses = Object.keys(StatusTypesEnum);
+	public loading: boolean;
+	public disableButton: boolean = true;
+	public displayHolidays: boolean = true;
+	public showActions: boolean = false;
+	public includeArchived: boolean = false;
+	public showFilter: boolean = false;
 	public organization: IOrganization;
 	public timeOff$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
 
 	constructor(
-		private readonly router: Router,
-		private readonly dialogService: NbDialogService,
-		private readonly timeOffService: TimeOffService,
-		private readonly toastrService: ToastrService,
-		private readonly store: Store,
-		private readonly translate: TranslateService,
-		private readonly httpClient: HttpClient,
-		private readonly route: ActivatedRoute,
-		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		readonly translateService: TranslateService,
+		private readonly _router: Router,
+		private readonly _dialogService: NbDialogService,
+		private readonly _timeOffService: TimeOffService,
+		private readonly _toastrService: ToastrService,
+		private readonly _store: Store,
+		private readonly _httpClient: HttpClient,
+		private readonly _route: ActivatedRoute,
+		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
+		private readonly _errorHandlingService: ErrorHandlingService
 	) {
-		super(translate);
+		super(translateService);
 		this.setView();
 	}
 
@@ -90,9 +105,9 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 				untilDestroyed(this)
 			)
 			.subscribe();
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
-		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeOrganization$ = this._store.selectedOrganization$;
+		const selectedDateRange$ = this._dateRangePickerBuilderService.selectedDateRange$;
+		const storeEmployee$ = this._store.selectedEmployee$;
 		combineLatest([storeOrganization$, selectedDateRange$, storeEmployee$])
 			.pipe(
 				debounceTime(200),
@@ -108,7 +123,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.route.queryParamMap
+		this._route.queryParamMap
 			.pipe(
 				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
@@ -128,7 +143,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 
 	setView() {
 		this.viewComponentName = ComponentEnum.TIME_OFF;
-		this.store
+		this._store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
@@ -142,18 +157,18 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 			.subscribe();
 	}
 
-	showAdditionalActions() {
-		this.showActions = !this.showActions;
-	}
-
+	/**
+	 * Change display holidays
+	 *
+	 * @param isHoliday
+	 */
 	changeDisplayHolidays(isHoliday: boolean) {
-		this.isRecordSelected = false;
 		this._refresh$.next(true);
 		this.timeOff$.next(true);
 	}
 
 	private _applyTranslationOnSmartTable() {
-		this.translate.onLangChange
+		this.translateService.onLangChange
 			.pipe(
 				tap(() => this._loadSmartTableSettings()),
 				untilDestroyed(this)
@@ -167,7 +182,6 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 	 * @param status
 	 */
 	detectStatusChange(status: StatusTypesEnum) {
-		this.isRecordSelected = false;
 		switch (status) {
 			case StatusTypesEnum.REQUESTED:
 			case StatusTypesEnum.APPROVED:
@@ -180,18 +194,24 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 		}
 	}
 
-	openTimeOffSettings() {
-		this.router.navigate(['/pages/employees/time-off/settings']);
-	}
-
-	selectRecord({ isSelected, data }) {
-		this.isRecordSelected = isSelected ? true : false;
+	/**
+	 * Select time off record
+	 *
+	 * @param param0
+	 */
+	selectTimeOff({ isSelected, data }) {
+		this.disableButton = !isSelected;
 		this.selectedTimeOffRecord = isSelected ? data : null;
 	}
 
+	/**
+	 * Approves the selected time off request.
+	 *
+	 * @param selectedItem
+	 */
 	approveDaysOff(selectedItem?: ITimeOff) {
 		if (selectedItem) {
-			this.selectRecord({
+			this.selectTimeOff({
 				isSelected: true,
 				data: selectedItem
 			});
@@ -199,19 +219,19 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 		if (this.selectedTimeOffRecord.status !== StatusTypesEnum.APPROVED) {
 			const requestId = this.selectedTimeOffRecord.id;
 			this.selectedTimeOffRecord.status = StatusTypesEnum.APPROVED;
-			this.timeOffService
+			this._timeOffService
 				.updateRequestStatus(requestId, 'approval')
 				.pipe(untilDestroyed(this), first())
 				.subscribe({
 					next: () => {
-						this.toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.STATUS_SET_APPROVED');
+						this._toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.STATUS_SET_APPROVED');
 						this._refresh$.next(true);
 						this.timeOff$.next(true);
 					},
-					error: () => this.toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_SET_STATUS')
+					error: () => this._toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_SET_STATUS')
 				});
 		} else {
-			this.toastrService.success(
+			this._toastrService.success(
 				'TIME_OFF_PAGE.NOTIFICATIONS.APPROVED_NO_CHANGES',
 				'TIME_OFF_PAGE.NOTIFICATIONS.NO_CHANGES'
 			);
@@ -220,9 +240,14 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 		}
 	}
 
+	/**
+	 * Denies the selected time off request.
+	 *
+	 * @param selectedItem
+	 */
 	denyDaysOff(selectedItem?: ITimeOff) {
 		if (selectedItem) {
-			this.selectRecord({
+			this.selectTimeOff({
 				isSelected: true,
 				data: selectedItem
 			});
@@ -230,18 +255,18 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 		if (this.selectedTimeOffRecord.status !== StatusTypesEnum.DENIED) {
 			const requestId = this.selectedTimeOffRecord.id;
 			this.selectedTimeOffRecord.status = StatusTypesEnum.DENIED;
-			this.timeOffService
+			this._timeOffService
 				.updateRequestStatus(requestId, 'denied')
 				.pipe(untilDestroyed(this), first())
 				.subscribe({
 					next: () => {
-						this.toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_DENIED');
+						this._toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_DENIED');
 						this.timeOff$.next(true);
 					},
-					error: () => this.toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_SET_STATUS')
+					error: () => this._toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_SET_STATUS')
 				});
 		} else {
-			this.toastrService.success(
+			this._toastrService.success(
 				'TIME_OFF_PAGE.NOTIFICATIONS.DENIED_NO_CHANGES',
 				'TIME_OFF_PAGE.NOTIFICATIONS.NO_CHANGES'
 			);
@@ -250,14 +275,19 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 		}
 	}
 
+	/**
+	 * Deletes the selected time off request.
+	 *
+	 * @param selectedItem
+	 */
 	deleteRequest(selectedItem?: ITimeOff) {
 		if (selectedItem) {
-			this.selectRecord({
+			this.selectTimeOff({
 				isSelected: true,
 				data: selectedItem
 			});
 		}
-		this.dialogService
+		this._dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
 					recordType: this.getTranslation('TIME_OFF_PAGE.TIME_OFF_REQUEST')
@@ -266,23 +296,26 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 			.onClose.pipe(first())
 			.subscribe((res) => {
 				if (res) {
-					this.timeOffService
+					this._timeOffService
 						.deleteDaysOffRequest(this.selectedTimeOffRecord.id)
 						.pipe(untilDestroyed(this), first())
 						.subscribe({
 							next: () => {
-								this.toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_DELETED');
+								this._toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_DELETED');
 								this._refresh$.next(true);
 								this.timeOff$.next(true);
 							},
-							error: () => this.toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_DELETE_REQUEST')
+							error: () => this._toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_DELETE_REQUEST')
 						});
 				}
 			});
 	}
 
+	/**
+	 * Opens a dialog for requesting time off.
+	 */
 	requestDaysOff() {
-		this.dialogService
+		this._dialogService
 			.open(TimeOffRequestMutationComponent, {
 				context: { type: 'request' }
 			})
@@ -293,8 +326,12 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 			});
 	}
 
+	/**
+	 * Adds holidays to the selected time off request.
+	 * Opens a dialog for adding holidays.
+	 */
 	addHolidays() {
-		this.dialogService
+		this._dialogService
 			.open(TimeOffHolidayMutationComponent)
 			.onClose.pipe(untilDestroyed(this), first())
 			.subscribe((res) => {
@@ -312,7 +349,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 	updateTimeOffRecord() {
 		this._removeDocUrl();
 
-		this.dialogService
+		this._dialogService
 			.open(TimeOffRequestMutationComponent, {
 				context: { timeOff: this.selectedTimeOffRecord }
 			})
@@ -326,6 +363,9 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 			});
 	}
 
+	/**
+	 * Archives the selected time off request.
+	 */
 	archive() {
 		const requestId = this.selectedTimeOffRecord.id;
 		this.selectedTimeOffRecord.isArchived = true;
@@ -333,6 +373,11 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 		this._updateRecord(requestId);
 	}
 
+	/**
+	 * Change include archived
+	 *
+	 * @param $event
+	 */
 	changeIncludeArchived($event) {
 		this._refresh$.next(true);
 		this.timeOff$.next(true);
@@ -343,7 +388,10 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 	 *
 	 */
 	private _loadSmartTableSettings() {
+		// Get pagination settings
 		const pagination: IPaginationBase = this.getPagination();
+
+		// Set up smart table settings
 		this.settingsSmartTable = {
 			actions: false,
 			selectedRowIndex: -1,
@@ -362,7 +410,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -376,7 +424,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 				extendedDescription: {
 					title: this.getTranslation('SM_TABLE.DESCRIPTION'),
 					type: 'html',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -390,9 +438,9 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 					renderComponent: ApprovalPolicyComponent,
 					componentInitFunction: (instance: ApprovalPolicyComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
-						instance.value = cell.getValue();
+						instance.value = cell.getRawValue();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -403,7 +451,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 				start: {
 					title: this.getTranslation('SM_TABLE.START'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.value = cell.getValue();
@@ -412,7 +460,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 				end: {
 					title: this.getTranslation('SM_TABLE.END'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.value = cell.getValue();
@@ -421,7 +469,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 				requestDate: {
 					title: this.getTranslation('SM_TABLE.REQUEST_DATE'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.value = cell.getValue();
@@ -431,7 +479,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					width: '5%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: StatusBadgeComponent,
 					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();
@@ -448,14 +496,14 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 		if (!this.organization) {
 			return;
 		}
-		try {
-			this.loading = true;
 
-			const { tenantId } = this.store.user;
-			const { id: organizationId } = this.organization;
+		this.loading = true;
+
+		try {
+			const { id: organizationId, tenantId } = this.organization;
 			const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
 
-			this.sourceSmartTable = new ServerDataSource(this.httpClient, {
+			this.sourceSmartTable = new ServerDataSource(this._httpClient, {
 				endPoint: `${API_PREFIX}/time-off-request/pagination`,
 				relations: ['policy', 'document', 'employees.user'],
 				join: {
@@ -489,6 +537,9 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 					this.loading = false;
 				}
 			});
+		} catch (error) {
+			console.log('Error while retrieving time off requests: ', error);
+			this._errorHandlingService.handleError(error);
 		} finally {
 			this.loading = false;
 		}
@@ -503,13 +554,20 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 		if (!this.organization) {
 			return;
 		}
-		this.setSmartTableSource();
 		try {
+			// Set up the Smart Table source
+			this.setSmartTableSource();
+
+			// Get pagination settings
 			const { activePage, itemsPerPage } = this.getPagination();
+
+			// Set paging for the Smart Table source
 			this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
+
+			// Load additional data for grid layout, if active
 			this._loadGridLayoutData();
 		} catch (error) {
-			this.toastrService.danger(error, 'TIME_OFF_PAGE.NOTIFICATIONS.ERR_LOAD_RECORDS');
+			this._toastrService.danger(error, 'TIME_OFF_PAGE.NOTIFICATIONS.ERR_LOAD_RECORDS');
 		}
 	}
 
@@ -553,14 +611,16 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 	private _createRecord() {
 		try {
 			if (this.timeOffRequest) {
-				this.timeOffService
+				this._timeOffService
 					.createRequest(this.timeOffRequest)
 					.pipe(
 						untilDestroyed(this),
 						first(),
-						tap(() => this.toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.RECORD_CREATED')),
+						tap(() => this._toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.RECORD_CREATED')),
 						tap(() =>
-							this.dateRangePickerBuilderService.refreshDateRangePicker(moment(this.timeOffRequest.start))
+							this._dateRangePickerBuilderService.refreshDateRangePicker(
+								moment(this.timeOffRequest.start)
+							)
 						),
 						finalize(() => {
 							this._refresh$.next(true);
@@ -570,20 +630,20 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 					.subscribe();
 			}
 		} catch (error) {
-			this.toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_CREATE_RECORD');
+			this._toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_CREATE_RECORD');
 		}
 	}
 
-	private _updateRecord(id: string) {
+	private _updateRecord(id: ID) {
 		try {
-			this.timeOffService
+			this._timeOffService
 				.updateRequest(id, this.timeOffRequest)
 				.pipe(
 					untilDestroyed(this),
 					first(),
-					tap(() => this.toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_UPDATED')),
+					tap(() => this._toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_UPDATED')),
 					tap(() =>
-						this.dateRangePickerBuilderService.refreshDateRangePicker(moment(this.timeOffRequest.start))
+						this._dateRangePickerBuilderService.refreshDateRangePicker(moment(this.timeOffRequest.start))
 					),
 					finalize(() => {
 						this._refresh$.next(true);
@@ -592,7 +652,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 				)
 				.subscribe();
 		} catch (error) {
-			this.toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_UPDATE_RECORD');
+			this._toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_UPDATE_RECORD');
 		}
 	}
 
@@ -608,10 +668,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 	 * Clear selected item
 	 */
 	clearItem() {
-		this.selectRecord({
-			isSelected: false,
-			data: null
-		});
+		this.selectTimeOff({ isSelected: false, data: null });
 	}
 
 	/**
@@ -621,19 +678,28 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 	 */
 	navigateToEmployee(row: ITimeOff) {
 		if (row?.employees.length > 0) {
-			this.router.navigate([`/pages/employees/edit`, row.employees[0].id]);
+			// Extract the first employee from the employees array
+			const [employee] = row.employees;
+			this._router.navigate([`/pages/employees/edit`, employee.id]);
 		}
 	}
 
-	private statusMapper(value: any) {
-		let badgeClass;
-		if (value) {
-			badgeClass = [StatusTypesEnum.APPROVED].includes(value.toUpperCase())
-				? 'success'
-				: [StatusTypesEnum.REQUESTED].includes(value.toUpperCase())
-				? 'warning'
-				: 'danger';
-		}
+	/**
+	 * Maps a status string to its corresponding badge class and returns an object
+	 * containing the original text and the computed class.
+	 *
+	 * @param {NullableString} value - The status string to map, which can be null or undefined.
+	 * @returns {{ text: NullableString, class: string }} An object containing the status text
+	 * and the associated badge class.
+	 */
+	private statusMapper(value: NullableString): { text: NullableString; class: string } {
+		const badgeClass = value
+			? {
+					[StatusTypesEnum.APPROVED]: 'success',
+					[StatusTypesEnum.REQUESTED]: 'warning'
+			  }[value.toUpperCase()] || 'danger'
+			: 'danger';
+
 		return {
 			text: value,
 			class: badgeClass

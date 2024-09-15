@@ -33,6 +33,7 @@
 		"INVITE": "Покана",
 		"SELECT_ALL": "Селектиране на всички",
 		"COPY_LINK": "Копирай линка",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "Управление на интервюта",
 		"MANAGE_INVITES": "Управление на покани",
 		"MANAGE_SPRINTS": "Управление на спринтове",
@@ -155,51 +156,60 @@
 		"PASTE": "Поставяне",
 		"FORWARD_PORTS": "Препращане на портове",
 		"REPORT": "Доклад",
-		"IGNORE": "Игнориране"
+		"IGNORE": "Игнориране",
+		"INSTALL": "Инсталирай",
+		"UNINSTALL": "Деинсталирай",
+		"DEACTIVATE": "Деактивирай",
+		"ACTIVATE": "Активирай",
+		"ADD_PLUGIN": "Добави плъгин",
+		"LOAD_PLUGIN": "Зареди плъгин",
+		"FROM_CDN": "От CDN"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
-			"RECEIVE_ESTIMATE": "Не сте получили никаква оценка.",
-			"INCOME": "Не сте създали никакъв доход.",
-			"EXPENSE_CATEGORY": "Не сте създали никаква категория разходи.",
-			"REPORT": "Не сте създали никакъв отчет.",
-			"CONTRACT": "Не сте създали никакъв договор.",
-			"TEAM": "Не сте създали никакъв екип.",
-			"HISTORY_RECORD": "Не сте създали никакъв запис.",
+			"LOADING": "Зареждане, моля, изчакайте...",
+			"RECEIVE_ESTIMATE": "Не сте получили никакви оценки.",
+			"INCOME": "Не сте създали никакви доходи.",
+			"EXPENSE_CATEGORY": "Не сте създали никакви категории разходи.",
+			"REPORT": "Не сте създали никакви отчети.",
+			"CONTRACT": "Не сте създали никакви договори.",
+			"TEAM": "Не сте създали никакви екипи.",
+			"HISTORY_RECORD": "Не сте създали никакви записи.",
 			"PROFIT_HISTORY": "Не сте създали никаква история на печалбата.",
-			"EMPLOYEE": "Не сте създали никакъв служител.",
-			"EXPENSE": "Не сте създали никакъв разход.",
-			"PAYMENT": "Не сте получили никакво плащане.",
-			"PROPOSAL_TEMPLATE": "Не сте създали никакъв шаблон за предложение.",
-			"PROPOSAL": "Не сте създали никакво предложение.",
-			"PIPELINE": "Не сте създали никакъв тръбопровод.",
-			"TASK": "Не сте създали никаква задача.",
-			"INVITE": "Не сте поканили никакъв потребител.",
-			"APPROVAL_REQUEST": "Не сте създали заявка за одобрение.",
-			"APPROVAL_POLICY": "Не сте създали никаква политика за одобрение.",
+			"EMPLOYEE": "Не сте създали никакви служители.",
+			"EXPENSE": "Не сте създали никакви разходи.",
+			"PAYMENT": "Не сте получили никакви плащания.",
+			"PROPOSAL_TEMPLATE": "Не сте създали никакви шаблони за предложения.",
+			"PROPOSAL": "Не сте създали никакви предложения.",
+			"PIPELINE": "Не сте създали никакви тръбопроводи.",
+			"TASK": "Не сте създали никакви задачи.",
+			"INVITE": "Не сте поканили никакви потребители.",
+			"APPROVAL_REQUEST": "Не сте създали никакви заявки за одобрение.",
+			"APPROVAL_POLICY": "Не сте създали никакви политики за одобрение.",
 			"TIME_OFF": "Не сте създали никакво време за отпуск.",
-			"CANDIDATE": "Не сте създали никакъв кандидат.",
-			"INTERVIEW": "Не сте създали никакво интервю.",
+			"TIME_OFF_POLICY": "Не сте създали политики за отпуск.",
+			"CANDIDATE": "Не сте създали никакви кандидати.",
+			"INTERVIEW": "Не сте създали никакви интервюта.",
 			"EQUIPMENT": "Не сте създали никакво оборудване.",
-			"EQUIPMENT_SHARING": "Не сте създали никакво споделяне на оборудване.",
-			"EQUIPMENT_SHARING_POLICY": "Не сте създали никаква политика за споделяне на оборудване.",
-			"INVENTORY": "Не сте създали никакъв инвентар.",
-			"MERCHANT": "Не сте създали никакъв търговец.",
-			"WAREHOUSE": "Не сте създали никакъв склад.",
-			"WAREHOUSE_PRODUCT": "Няма продукти в склада.",
-			"PRODUCT_CATEGORY": "Не сте създали никаква категория продукти.",
-			"TAGS": "Не сте създали никакъв етикет.",
-			"PROJECT": "Не сте създали никакъв проект.",
-			"DEPARTMENT": "Не сте създали никакъв отдел.",
-			"CONTACT": "Не сте създали никакъв контакт.",
-			"CLIENT": "Не сте създали никакъв клиент.",
-			"LEAD": "Не сте създали никакъв потенциален клиент.",
-			"TIME_FRAME": "Не сте създали никакъв времеви период.",
-			"KPI": "Не сте създали никакъв KPI.",
-			"INVOICE": "Не сте създали никаква фактура.",
-			"ESTIMATE": "Не сте създали никаква оценка.",
-			"EVENT_TYPE": "Не сте създали никакъв тип събитие.",
-			"PRODUCT_TYPE_NO_DATA": "Не сте създали никакъв тип продукт.",
+			"EQUIPMENT_SHARING": "Не сте създали никакви записи за споделяне на оборудване.",
+			"EQUIPMENT_SHARING_POLICY": "Не сте създали никакви политики за споделяне на оборудване.",
+			"INVENTORY": "Не сте създали никакви инвентари.",
+			"MERCHANT": "Не сте създали никакви търговци.",
+			"WAREHOUSE": "Не сте създали никакви складове.",
+			"WAREHOUSE_PRODUCT": "Не сте създали никакви складови продукти.",
+			"PRODUCT_CATEGORY": "Не сте създали никакви категории продукти.",
+			"TAGS": "Не сте създали никакви етикети.",
+			"PROJECT": "Не сте създали никакви проекти.",
+			"DEPARTMENT": "Не сте създали никакви отдели.",
+			"CONTACT": "Не сте създали никакви контакти.",
+			"CLIENT": "Не сте създали никакви клиенти.",
+			"LEAD": "Не сте създали никакви потенциални клиенти.",
+			"TIME_FRAME": "Не сте създали никакви времеви периоди.",
+			"KPI": "Не сте създали никакви КПИ.",
+			"INVOICE": "Не сте създали никакви фактури.",
+			"ESTIMATE": "Не сте създали никакви оценки.",
+			"EVENT_TYPE": "Не сте създали никакви типове събития.",
+			"PRODUCT_TYPE_NO_DATA": "Не сте създали никакви типове продукти.",
 			"TEAM_DASHBOARD": "Нямате никакви екипи.",
 			"PLUGIN": "Не сте инсталирали никакви плъгини."
 		},
@@ -1109,7 +1119,8 @@
 		"TABLE": "Таблица",
 		"CARDS_GRID": "Карти и мрежа",
 		"SPRINT_VIEW": "Визуализация на спринт",
-		"QUICK_SETTINGS": "Бързи настройки"
+		"QUICK_SETTINGS": "Бързи настройки",
+		"NO_LAYOUT": "Няма наличен изглед за данни"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Какво ново?",
@@ -1674,6 +1685,7 @@
 		"APPLIED": "Applied",
 		"HIRED": "Hired",
 		"REJECTED": "Rejected",
+		"SHOW_REJECTED": "Показване отказано",
 		"DELETED": "Изтрит",
 		"ARCHIVED": "Архивирана",
 		"SELECT_EMPLOYEE_MSG": "Моля селектирайте служител от менюто по-долу.",
@@ -1742,6 +1754,7 @@
 				"PREVIOUS": "Previous",
 				"SAVE": "Запази",
 				"CREATE_CRITERIONS": "Create criterions",
+				"CLOSE_CRITERIONS": "Затвори критерии",
 				"EMAIL_NOTIFICATION": "Email notification",
 				"DELETE_INTERVIEW": "Delete interview",
 				"DELETE_FEEDBACK": "Delete feedback",
@@ -2026,7 +2039,6 @@
 			"ORG_PROPOSALS_VIEW": "Виж страницата с кандидатствания",
 			"ORG_PROPOSAL_TEMPLATES_VIEW": "View Proposal Templates Page",
 			"ORG_PROPOSAL_TEMPLATES_EDIT": "Create/Edit/Delete Proposal Templates",
-			"ORG_TIME_OFF_VIEW": "Виж Time Off страницата",
 			"ORG_EMPLOYEES_ADD": "Създаване на служители в организацията",
 			"ORG_EMPLOYEES_VIEW": "Преглед на служители в организацията",
 			"ORG_EMPLOYEES_EDIT": "Редактиране на служители в организацията",
@@ -2049,8 +2061,10 @@
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "Create/Edit/Delete Candidate Feedback",
 			"ALL_ORG_VIEW": "Виж всички организации",
 			"ALL_ORG_EDIT": "Създай/Редактирай/Изтрии всички организации",
-			"POLICY_VIEW": "Виж Time Off политиката",
-			"POLICY_EDIT": "Редактирай Time Off политиката",
+			"TIME_OFF_POLICY_ADD": "Добавяне на Политика за Отпуск",
+			"TIME_OFF_POLICY_VIEW": "Преглед на Политика за Отпуск",
+			"TIME_OFF_POLICY_EDIT": "Редактиране на Политика за Отпуск",
+			"TIME_OFF_POLICY_DELETE": "Изтриване на Политика за Отпуск",
 			"CHANGE_SELECTED_EMPLOYEE": "Промени избрания служител",
 			"CHANGE_SELECTED_CANDIDATE": "Change Selected Candidate",
 			"CHANGE_SELECTED_ORGANIZATION": "Промени избраната организация",
@@ -2075,10 +2089,17 @@
 			"PUBLIC_PAGE_EDIT": "Edit Organization Public Page",
 			"CAN_APPROVE_TIMESHEET": "Approve Timesheet",
 			"EVENT_TYPES_VIEW": "View Event Types",
-			"TIME_OFF_EDIT": "Edit Time Off",
+			"TIME_OFF_ADD": "Добавяне на Отпуск",
+			"TIME_OFF_VIEW": "Преглед на Отпуск",
+			"TIME_OFF_EDIT": "Редактиране на Отпуск",
+			"TIME_OFF_DELETE": "Изтриване на Отпуск",
 			"ORG_INVENTORY_VIEW": "View Organization Inventory",
 			"INVENTORY_GALLERY_VIEW": "View Inventory Gallery",
 			"INVENTORY_GALLERY_EDIT": "Edit Inventory Gallery",
+			"EQUIPMENT_SHARING_POLICY_ADD": "Добавяне на политика за споделяне на оборудване",
+			"EQUIPMENT_SHARING_POLICY_VIEW": "Преглед на политика за споделяне на оборудване",
+			"EQUIPMENT_SHARING_POLICY_EDIT": "Редактиране на политика за споделяне на оборудване",
+			"EQUIPMENT_SHARING_POLICY_DELETE": "Изтриване на политика за споделяне на оборудване",
 			"ORG_EQUIPMENT_VIEW": "View Organization Equipment",
 			"ORG_EQUIPMENT_EDIT": "Edit Organization Equipment",
 			"ORG_EQUIPMENT_SHARING_VIEW": "View Organization Equipment Sharing",
@@ -2101,6 +2122,10 @@
 			"ORG_PROJECT_EDIT": "Create/Edit Projects",
 			"ORG_CONTACT_EDIT": "Create/Edit Contacts",
 			"ORG_CONTACT_VIEW": "View Contacts",
+			"PROJECT_MODULE_CREATE": "Създаване на модули на проекта",
+			"PROJECT_MODULE_READ": "Преглед на модули на проекта",
+			"PROJECT_MODULE_UPDATE": "Актуализиране на модули на проекта",
+			"PROJECT_MODULE_DELETE": "Изтриване на модули на проекта",
 			"ORG_TEAM_ADD": "Add Teams",
 			"ORG_TEAM_VIEW": "View Teams",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "Редактиране на активни задачи",
@@ -2200,40 +2225,39 @@
 		"ACCEPTED_PROPOSALS": "Приети предложения",
 		"TOTAL_PROPOSALS": "Общо предложения",
 		"SUCCESS_RATE": "Успеваемост",
-		"PROPOSALS": "Proposals",
+		"PROPOSALS": "Предложения",
 		"REGISTER": {
-			"REGISTER_PROPOSALS": "Register Proposal",
+			"REGISTER_PROPOSALS": "Регистрирай предложение",
 			"AUTHOR": "Автор",
-			"TEMPLATE": "Template",
-			"JOB_POST_URL": "Job Post URL",
+			"TEMPLATE": "Шаблон",
+			"JOB_POST_URL": "URL на обява за работа",
 			"PICK_A_DATE": "Изберете дата",
-			"PROPOSAL_DATE": "Proposal Date",
-			"JOB_POST_CONTENT": "Job Post Content",
-			"UPLOAD": "Upload",
-			"PROPOSALS_CONTENT": "Proposal Content",
-			"REGISTER_PROPOSALS_BUTTON": "Register Proposal"
+			"PROPOSAL_DATE": "Дата на предложението",
+			"JOB_POST_CONTENT": "Съдържание на обява за работа",
+			"UPLOAD": "Качване",
+			"PROPOSALS_CONTENT": "Съдържание на предложението",
+			"REGISTER_PROPOSALS_BUTTON": "Регистрирай предложение"
 		},
 		"PROPOSAL_DETAILS": {
-			"PROPOSAL_DETAILS": "Proposal Details",
-			"EDIT": "Редактиране",
+			"PROPOSAL_DETAILS": "Детайли на предложението",
 			"AUTHOR": "Автор",
-			"JOB_POST_URL": "Job Post URL",
-			"PROPOSAL_SENT_ON": "Proposal Sent On",
+			"JOB_POST_URL": "URL на обява за работа",
+			"PROPOSAL_SENT_ON": "Предложението е изпратено на",
 			"STATUS": "Статус",
-			"JOB_POST_CONTENT": "Job Post Content",
-			"PROPOSAL_CONTENT": "Proposal Content",
-			"VIEW_JOB_POST": "Преглед на публикация"
+			"JOB_POST_CONTENT": "Съдържание на обява за работа",
+			"PROPOSAL_CONTENT": "Съдържание на предложението",
+			"VIEW_JOB_POST": "Преглед на обява"
 		},
 		"EDIT_PROPOSAL": {
-			"EDIT_PROPOSAL": "Edit Proposal",
+			"EDIT_PROPOSAL": "Редактиране на предложението",
 			"AUTHOR": "Автор",
-			"JOB_POST_URL": "Job Post URL",
-			"PROPOSAL_SENT_ON": "Proposal Sent On",
-			"JOB_POST_CONTENT": "Job Post Content",
-			"PROPOSAL_CONTENT": "Proposal Content",
-			"EDIT_PROPOSAL_BUTTON": "Edit Proposal",
+			"JOB_POST_URL": "URL на обява за работа",
+			"PROPOSAL_SENT_ON": "Предложението е изпратено на",
+			"JOB_POST_CONTENT": "Съдържание на обява за работа",
+			"PROPOSAL_CONTENT": "Съдържание на предложението",
+			"EDIT_PROPOSAL_BUTTON": "Редактиране на предложението",
 			"PLACEHOLDER": {
-				"JOB_POST_URL": "Job Post URL"
+				"JOB_POST_URL": "URL на обява за работа"
 			}
 		}
 	},
@@ -3072,7 +3096,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "Generate Public Link",
 			"GENERATE": "Generate a link to the {{ text }} that anyone with the link can view.",
-			"ACCESS": "Anyone with access to this link can view the {{ text }}."
+			"ACCESS": "Anyone with access to this link can view the {{ text }}.",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -3103,7 +3128,7 @@
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Page Not Found",
 		"TAKE_ME_HOME": "Take me home",
-		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "The page you were looking for doesn't exist",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "The page you were looking for doesn't exist",
 		"REDIRECT_TO_HOME": "You'll be redirected to home page soon"
 	},
 	"HELP_PAGE": {
@@ -3828,7 +3853,9 @@
 			"DB_PORT": "Порт на базата данни",
 			"USER": "Потребител",
 			"PASSWORD": "Парола",
-			"UI_HOSTNAME": "Име на хост на потребителския интерфейс / IP адрес"
+			"UI_HOSTNAME": "Име на хост на потребителския интерфейс / IP адрес",
+			"TITLE_SERVER_API": "Съветник за инсталиране на Ever Gauzy API сървър",
+			"LABEL_SERVER_API": "Приложението Ever Gauzy API Server Desktop предоставя пълната функционалност на платформата Gauzy, достъпна директно на вашия настолен компютър или лаптоп. Освен това позволява проследяване на работното време, записване на дейността и възможност за получаване на напомняния/известия за проследяване"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Захващане на екран",
@@ -3922,6 +3949,9 @@
 			"WIDGET": "Подредба",
 			"PLUGINS": "Плъгини",
 			"PLUGIN_DESCRIPTION": "Плъгини",
+			"VERSION": "Версия",
+			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "Инсталирайте плъгини от локални файлове или CDN. Локално за персонализирани/частни плъгини, CDN за публични. Изберете според вашите нужди.",
+			"ADD_PLUGIN_CDN_DESCRIPTION": "Инсталирането от CDN позволява лесен достъп до публично достъпни плъгини.",
 			"PLUGIN": "Плъгин",
 			"WIDGET_LABEL": "Този прозорец отразява състоянието на таймера, показвайки дали той работи или е спрян, и функционира като бутон",
 			"SSL": {
@@ -4017,11 +4047,16 @@
 			"HELP": "Помощ",
 			"LEARN_MORE": "Научете повече",
 			"OPEN_MAIN_WINDOW": "Отвори главния прозорец",
-			"DAILY_RECAP": "Дневен преглед"
+			"DAILY_RECAP": "Дневен преглед",
+			"WEEKLY_RECAP": "Седмичен обзор",
+			"MONTHLY_RECAP": "Месечен обзор"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Проследяване на времето по часове",
-			"HOURLY_TIME_TRACKING_DATA": "Данни за проследяване на времето по часове"
+			"HOURLY_TIME_TRACKING_DATA": "Данни за проследяване на времето по часове",
+			"NO_MONTHLY_ACTIVITY": "Нямате проследено време и дейност за този месец.",
+			"WORKED_FOR_MONTH": "Работил този месец",
+			"ACTIVITY_FOR_MONTH": "Месечна активност"
 		}
 	},
 	"SERVER": "Сървър",
@@ -4157,7 +4192,8 @@
 			"UPWORK": "Upwork",
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "Разширение за браузър",
-			"TEAMS": "Екипи"
+			"TEAMS": "Екипи",
+			"CLOC": "Cloc"
 		},
 		"LAST_WORKED": "Последно работеше:",
 		"TIME_ZONE": "Часова зона",
@@ -4189,7 +4225,8 @@
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Нека създадем първата ви организация",
-		"COMPLETE": "Готови сте!"
+		"COMPLETE_TITLE": "Всичко е готово!",
+		"COMPLETE_SUB_TITLE": "Къде искате да отидете сега?"
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "This field is required!",
@@ -4257,7 +4294,8 @@
 		"SELECT_EMPLOYEE_ERROR": "Please select an employee.",
 		"EXPIRED_OR_CANCELLED": "**This appointment has expired or has been cancelled.",
 		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting.",
-		"NO_ACTIVE_EVENT_TYpES": "There are no active event types"
+		"NO_ACTIVE_EVENT_TYPES": "There are no active event types",
+		"CLICK_HERE": "Click Here"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "Шаблони на имейли",
@@ -4294,7 +4332,8 @@
 			"employee-join": "Присъединяване на служител",
 			"email-reset": "Възстановяване на имейл",
 			"organization-team-join-request": "Заявка за присъединяване към екипа на организацията",
-			"payment-receipt": "Касова бележка"
+			"payment-receipt": "Касова бележка",
+			"reject-candidate": "Отхвърли кандидат"
 		},
 		"HTML_EDITOR": "HTML редактор"
 	},

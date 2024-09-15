@@ -9,6 +9,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, map, mergeMap, take, tap } from 'rxjs';
 import { pluck, union } from 'underscore';
+import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
+import { environment } from '@gauzy/ui-config';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import {
 	AnalyticsService,
 	DEFAULT_DATE_PICKER_CONFIG,
@@ -19,12 +22,10 @@ import {
 	JitsuService,
 	LanguagesService,
 	SelectorBuilderService,
-	SeoService
+	SeoService,
+	Store
 } from '@gauzy/ui-core/core';
-import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty, Store } from '@gauzy/ui-core/common';
 import { I18nService } from '@gauzy/ui-core/i18n';
-import { environment } from '@gauzy/ui-config';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -97,7 +98,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 			const systemLanguage = systemLanguages.includes(browserLang) ? browserLang : LanguagesEnum.ENGLISH;
 
 			// Set the selected language
-			this._translateService.use(preferredLanguage || systemLanguage);
+			this._i18nService.setLanguage(preferredLanguage || systemLanguage);
 
 			// Observable that emits when theme languages change.
 			this._translateService.onLangChange.subscribe(() => {
@@ -225,7 +226,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 	getPreferredLanguage(): void {
 		this._i18nService.preferredLanguage$
 			.pipe(
-				tap((lang: string) => this._translateService.use(lang)),
+				tap((preferredLanguage: string) => this._translateService.use(preferredLanguage)),
 				untilDestroyed(this)
 			)
 			.subscribe();

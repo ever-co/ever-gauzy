@@ -1,24 +1,16 @@
-import {
-	Component,
-	OnInit,
-	Output,
-	EventEmitter,
-	AfterViewInit,
-	NgZone,
-	Input,
-} from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, NgZone, OnInit, Output } from '@angular/core';
 import { IOrganization, IUser } from '@gauzy/contracts';
 import { uniq } from 'underscore';
-import { UserOrganizationService } from './user-organization.service';
 import { ElectronService } from '../../electron/services';
+import { Store } from '../../services';
+import { UserOrganizationService } from './user-organization.service';
 
 @Component({
 	selector: 'ngx-desktop-timer-organization-selector',
 	templateUrl: './organization-selector.component.html',
-	styleUrls: ['./organization-selector.component.scss'],
+	styleUrls: ['./organization-selector.component.scss']
 })
 export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
-
 	public organizations: IOrganization[] = [];
 	public selectedOrganization: IOrganization;
 
@@ -47,13 +39,16 @@ export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 	constructor(
 		private readonly _userOrganizationService: UserOrganizationService,
 		private readonly _electronService: ElectronService,
+		private readonly _store: Store,
 		private readonly _ngZone: NgZone
 	) {
 		this.organizationChange = new EventEmitter();
 		this._isDisabled = false;
 	}
 
-	ngOnInit() { }
+	ngOnInit() {
+		this.selectOrganization(this._store.selectedOrganization);
+	}
 
 	/**
 	 * Component lifecycle hook for operations after the view initializes.
@@ -91,6 +86,7 @@ export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 
 		// Emit an event indicating the organization has changed
 		if (this.organizationChange) {
+			this._store.selectedOrganization = this.selectedOrganization;
 			this.organizationChange.emit(organization);
 		}
 	}
@@ -125,9 +121,7 @@ export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 
 			if (this.organizations.length > 0) {
 				// Find the default organization
-				const defaultOrganization = this.organizations.find(
-					(organization) => organization.isDefault
-				);
+				const defaultOrganization = this.organizations.find((organization) => organization.isDefault);
 
 				// Select the first organization from the list
 				const [firstOrganization] = this.organizations;
@@ -144,6 +138,8 @@ export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 					// If no specific ID, use default or first organization
 					this.selectedOrganization = defaultOrganization || firstOrganization;
 				}
+
+				this._store.selectedOrganization = this.selectedOrganization;
 			}
 		} catch (error) {
 			console.error('Error loading organizations:', error); // Error handling

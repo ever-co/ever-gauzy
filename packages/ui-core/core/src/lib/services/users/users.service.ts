@@ -59,10 +59,22 @@ export class UsersService {
 		return firstValueFrom(this.http.delete(`${this.API_URL}/reset`));
 	}
 
+	/**
+	 * Update user preferred language
+	 *
+	 * @param input
+	 * @returns
+	 */
 	updatePreferredLanguage(input: IUserUpdateInput) {
 		return firstValueFrom(this.http.put(`${this.API_URL}/preferred-language`, input));
 	}
 
+	/**
+	 * Update user preferred component layout
+	 *
+	 * @param input
+	 * @returns
+	 */
 	updatePreferredComponentLayout(input: IUserUpdateInput) {
 		return firstValueFrom(this.http.put(`${this.API_URL}/preferred-layout`, input));
 	}

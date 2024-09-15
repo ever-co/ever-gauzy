@@ -15,8 +15,14 @@ import { NbDialogService } from '@nebular/theme';
 import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { EquipmentSharingService, ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import {
+	EquipmentSharingService,
+	ErrorHandlingService,
+	ServerDataSource,
+	Store,
+	ToastrService
+} from '@gauzy/ui-core/core';
+import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	DateViewComponent,
 	DeleteConfirmationComponent,
@@ -151,7 +157,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 				equipmentSharingPolicy: {
 					title: this.getTranslation('EQUIPMENT_SHARING_PAGE.EQUIPMENT_SHARING_POLICY'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: EquipmentSharingPolicyTableComponent,
 					componentInitFunction: (instance: EquipmentSharingPolicyTableComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();
@@ -160,7 +166,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 				shareRequestDay: {
 					title: this.getTranslation('EQUIPMENT_SHARING_PAGE.SHARE_REQUEST_DATE'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.value = cell.getValue();
@@ -169,7 +175,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 				shareStartDay: {
 					title: this.getTranslation('EQUIPMENT_SHARING_PAGE.SHARE_START_DATE'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.value = cell.getValue();
@@ -178,7 +184,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 				shareEndDay: {
 					title: this.getTranslation('EQUIPMENT_SHARING_PAGE.SHARE_END_DATE'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.value = cell.getValue();
@@ -192,7 +198,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 					title: this.getTranslation('EQUIPMENT_SHARING_PAGE.STATUS'),
 					type: 'custom',
 					width: '5%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: StatusBadgeComponent,
 					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();
@@ -432,8 +438,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 		this.loading = true;
 
 		// Destructure properties for clarity
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		const { id: organizationId, tenantId } = this.organization;
 
 		// Prepare request object with organization and tenant details
 		const request: any = { organizationId, tenantId };

@@ -1,31 +1,22 @@
 <div gauzyOutside (clickOutside)="onClickOutside($event)">
-<div class="header">
-	<span class="cancel">
-		<i class="fas fa-times" (click)="closeSidebar()"></i>
-	</span>
-	<p>{{ 'SETTINGS_MENU.QUICK_SETTINGS' | translate }}</p>
-</div>
-<nb-list>
-	<nb-list-item>
-		<gauzy-switch-theme
-			class="theme"
-		></gauzy-switch-theme>
-	</nb-list-item>
-	<nb-list-item>
-		<ngx-theme-language-selector
-			class="theme"
-		></ngx-theme-language-selector>
-	</nb-list-item>
-	<nb-list-item>
-		<gauzy-theme-selector
-			[isClassic]="false"
-			class="theme"
-		></gauzy-theme-selector>
-	</nb-list-item>
-	<nb-list-item>
-		<gauzy-layout-selector
-			class="theme"
-		></gauzy-layout-selector>
-	</nb-list-item>
-</nb-list>
+	<div class="header">
+		<span class="cancel">
+			<i class="fas fa-times" (click)="closeSidebar()"></i>
+		</span>
+		<p>{{ 'SETTINGS_MENU.QUICK_SETTINGS' | translate }}</p>
+	</div>
+	<nb-list>
+		<nb-list-item>
+			<gauzy-switch-theme class="theme"></gauzy-switch-theme>
+		</nb-list-item>
+		<nb-list-item>
+			<ngx-theme-language-selector class="theme"></ngx-theme-language-selector>
+		</nb-list-item>
+		<nb-list-item>
+			<gauzy-theme-selector [isClassic]="false" class="theme"></gauzy-theme-selector>
+		</nb-list-item>
+		<nb-list-item>
+			<gauzy-layout-selector class="theme"></gauzy-layout-selector>
+		</nb-list-item>
+	</nb-list>
 </div>

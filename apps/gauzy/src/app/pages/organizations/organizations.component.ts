@@ -7,11 +7,12 @@ import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	ErrorHandlingService,
 	OrganizationEditStore,
 	OrganizationsService,
+	Store,
 	ToastrService,
 	UsersOrganizationsService
 } from '@gauzy/ui-core/core';
@@ -153,7 +154,7 @@ export class OrganizationsComponent extends PaginationFilterBaseComponent implem
 					title: this.getTranslation('SM_TABLE.EMPLOYEES'),
 					type: 'custom',
 					width: '200px',
-					filter: false,
+					isFilterable: false,
 					renderComponent: OrganizationTotalEmployeesCountComponent,
 					componentInitFunction: (instance: OrganizationTotalEmployeesCountComponent, cell: Cell) => {
 						instance.value = cell.getValue();
@@ -172,7 +173,7 @@ export class OrganizationsComponent extends PaginationFilterBaseComponent implem
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					width: '5%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: OrganizationsStatusComponent,
 					componentInitFunction: (instance: OrganizationsStatusComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();

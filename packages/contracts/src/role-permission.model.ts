@@ -1,13 +1,7 @@
-import { IBasePerTenantEntityModel } from './base-entity.model';
+import { IBasePerTenantEntityModel, ID } from './base-entity.model';
 import { IRole } from './role.model';
 
-export interface IRolePermission extends IBasePerTenantEntityModel {
-	roleId: string;
-	permission: string;
-	role: IRole;
-	enabled: boolean;
-	description: string;
-}
+export type IRolePermissions = IRolePermission[];
 
 export interface IRolePermissionMigrateInput extends IBasePerTenantEntityModel {
 	permission: string;
@@ -17,9 +11,17 @@ export interface IRolePermissionMigrateInput extends IBasePerTenantEntityModel {
 	description: string;
 }
 
+export interface IRolePermission extends IBasePerTenantEntityModel {
+	role: IRole;
+	roleId: ID;
+	permission: string;
+	enabled: boolean;
+	description: string;
+}
+
 export interface IRolePermissionCreateInput extends IBasePerTenantEntityModel {
 	role?: IRole;
-	roleId: string;
+	roleId: ID;
 	permission: string;
 	enabled: boolean;
 }
@@ -53,7 +55,6 @@ export enum PermissionsEnum {
 	ORG_TASK_VIEW = 'ORG_TASK_VIEW',
 	ORG_TASK_EDIT = 'ORG_TASK_EDIT',
 	ORG_TASK_DELETE = 'ORG_TASK_DELETE',
-	ORG_TIME_OFF_VIEW = 'ORG_TIME_OFF_VIEW',
 	// Employee CRUD Permissions
 	ORG_EMPLOYEES_ADD = 'ORG_EMPLOYEES_ADD',
 	ORG_EMPLOYEES_VIEW = 'ORG_EMPLOYEES_VIEW',
@@ -80,9 +81,16 @@ export enum PermissionsEnum {
 	ORG_INVITE_EDIT = 'ORG_INVITE_EDIT',
 	ALL_ORG_VIEW = 'ALL_ORG_VIEW',
 	ALL_ORG_EDIT = 'ALL_ORG_EDIT',
-	POLICY_VIEW = 'POLICY_VIEW',
-	POLICY_EDIT = 'POLICY_EDIT',
+	/** Time Off Policy CRUD Permissions */
+	TIME_OFF_POLICY_ADD = 'TIME_OFF_POLICY_ADD',
+	TIME_OFF_POLICY_VIEW = 'TIME_OFF_POLICY_VIEW',
+	TIME_OFF_POLICY_EDIT = 'TIME_OFF_POLICY_EDIT',
+	TIME_OFF_POLICY_DELETE = 'TIME_OFF_POLICY_DELETE',
+	/** Time Off CRUD Permissions */
+	TIME_OFF_ADD = 'TIME_OFF_ADD',
+	TIME_OFF_VIEW = 'TIME_OFF_VIEW',
 	TIME_OFF_EDIT = 'TIME_OFF_EDIT',
+	TIME_OFF_DELETE = 'TIME_OFF_DELETE',
 	REQUEST_APPROVAL_VIEW = 'REQUEST_APPROVAL_VIEW',
 	REQUEST_APPROVAL_EDIT = 'REQUEST_APPROVAL_EDIT',
 	APPROVAL_POLICY_VIEW = 'APPROVALS_POLICY_VIEW',
@@ -165,6 +173,12 @@ export enum PermissionsEnum {
 	ORG_EQUIPMENT_SHARING_EDIT = 'ORG_EQUIPMENT_SHARING_EDIT',
 	EQUIPMENT_MAKE_REQUEST = 'EQUIPMENT_MAKE_REQUEST',
 	EQUIPMENT_APPROVE_REQUEST = 'EQUIPMENT_APPROVE_REQUEST',
+	/** Equipment Sharing Policy CRUD Permissions Start */
+	EQUIPMENT_SHARING_POLICY_ADD = 'EQUIPMENT_SHARING_POLICY_ADD',
+	EQUIPMENT_SHARING_POLICY_VIEW = 'EQUIPMENT_SHARING_POLICY_VIEW',
+	EQUIPMENT_SHARING_POLICY_EDIT = 'EQUIPMENT_SHARING_POLICY_EDIT',
+	EQUIPMENT_SHARING_POLICY_DELETE = 'EQUIPMENT_SHARING_POLICY_DELETE',
+	/** Equipment Sharing Policy CRUD Permissions End */
 	ORG_PRODUCT_TYPES_VIEW = 'ORG_PRODUCT_TYPES_VIEW',
 	ORG_PRODUCT_TYPES_EDIT = 'ORG_PRODUCT_TYPES_EDIT',
 	ORG_PRODUCT_CATEGORIES_VIEW = 'ORG_PRODUCT_CATEGORIES_VIEW',
@@ -182,7 +196,12 @@ export enum PermissionsEnum {
 	DAILY_PLAN_CREATE = 'DAILY_PLAN_CREATE',
 	DAILY_PLAN_READ = 'DAILY_PLAN_READ',
 	DAILY_PLAN_UPDATE = 'DAILY_PLAN_UPDATE',
-	DAILY_PLAN_DELETE = 'DAILY_PLAN_DELETE'
+	DAILY_PLAN_DELETE = 'DAILY_PLAN_DELETE',
+	/** Project Module */
+	PROJECT_MODULE_CREATE = 'PROJECT_MODULE_CREATE',
+	PROJECT_MODULE_READ = 'PROJECT_MODULE_READ',
+	PROJECT_MODULE_UPDATE = 'PROJECT_MODULE_UPDATE',
+	PROJECT_MODULE_DELETE = 'PROJECT_MODULE_DELETE'
 }
 
 export const PermissionGroups = {
@@ -197,14 +216,12 @@ export const PermissionGroups = {
 		PermissionsEnum.CHANGE_SELECTED_EMPLOYEE,
 		PermissionsEnum.CHANGE_SELECTED_CANDIDATE,
 		PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
-
 		/** Integration CRUD Permissions Start */
 		PermissionsEnum.INTEGRATION_ADD,
 		PermissionsEnum.INTEGRATION_VIEW,
 		PermissionsEnum.INTEGRATION_EDIT,
 		PermissionsEnum.INTEGRATION_DELETE,
 		/** Integration CRUD Permissions End */
-
 		/** Jobs Permissions Start */
 		PermissionsEnum.ORG_JOB_APPLY,
 		PermissionsEnum.ORG_JOB_SEARCH,
@@ -212,7 +229,6 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW,
 		PermissionsEnum.ORG_JOB_MATCHING_VIEW,
 		/** Jobs Permissions End */
-
 		PermissionsEnum.PUBLIC_PAGE_EDIT,
 		PermissionsEnum.ORG_PAYMENT_VIEW,
 		PermissionsEnum.ORG_PAYMENT_ADD_EDIT,
@@ -226,26 +242,31 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_PROPOSALS_VIEW,
 		PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW,
 		PermissionsEnum.ORG_PROPOSAL_TEMPLATES_EDIT,
-
 		/** Employee CRUD Permissions Start */
 		PermissionsEnum.ORG_EMPLOYEES_ADD,
 		PermissionsEnum.ORG_EMPLOYEES_VIEW,
 		PermissionsEnum.ORG_EMPLOYEES_DELETE,
 		/** Employee CRUD Permissions End */
-
 		/** Task CRUD Permissions Start */
 		PermissionsEnum.ORG_TASK_ADD,
 		PermissionsEnum.ORG_TASK_VIEW,
 		PermissionsEnum.ORG_TASK_EDIT,
 		PermissionsEnum.ORG_TASK_DELETE,
 		/** Task CRUD Permissions End */
-
-		PermissionsEnum.ORG_TIME_OFF_VIEW,
 		PermissionsEnum.ORG_INVITE_VIEW,
 		PermissionsEnum.ORG_INVITE_EDIT,
-		PermissionsEnum.POLICY_VIEW,
-		PermissionsEnum.POLICY_EDIT,
+		/** Time Off Policy CRUD Permissions Start */
+		PermissionsEnum.TIME_OFF_POLICY_ADD,
+		PermissionsEnum.TIME_OFF_POLICY_VIEW,
+		PermissionsEnum.TIME_OFF_POLICY_EDIT,
+		PermissionsEnum.TIME_OFF_POLICY_DELETE,
+		/** Time Off Policy CRUD Permissions End */
+		/** Time Off Permissions Start */
+		PermissionsEnum.TIME_OFF_ADD,
+		PermissionsEnum.TIME_OFF_VIEW,
 		PermissionsEnum.TIME_OFF_EDIT,
+		PermissionsEnum.TIME_OFF_DELETE,
+		/** Time Off Permissions End */
 		PermissionsEnum.APPROVAL_POLICY_EDIT,
 		PermissionsEnum.APPROVAL_POLICY_VIEW,
 		PermissionsEnum.REQUEST_APPROVAL_EDIT,
@@ -280,14 +301,18 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_PROJECT_DELETE,
 		PermissionsEnum.ORG_CONTACT_EDIT,
 		PermissionsEnum.ORG_CONTACT_VIEW,
-
 		/** Daily Plan Permissions Start */
 		PermissionsEnum.DAILY_PLAN_CREATE,
 		PermissionsEnum.DAILY_PLAN_READ,
 		PermissionsEnum.DAILY_PLAN_UPDATE,
 		PermissionsEnum.DAILY_PLAN_DELETE,
 		/** Daily Plan Permissions End */
-
+		/** Project Module Permissions start */
+		PermissionsEnum.PROJECT_MODULE_CREATE,
+		PermissionsEnum.PROJECT_MODULE_READ,
+		PermissionsEnum.PROJECT_MODULE_UPDATE,
+		PermissionsEnum.PROJECT_MODULE_DELETE,
+		/** Project Module Permissions start */
 		/** Organization Team Permissions Start */
 		PermissionsEnum.ORG_TEAM_ADD,
 		PermissionsEnum.ORG_TEAM_VIEW,
@@ -298,7 +323,6 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_TEAM_JOIN_REQUEST_VIEW,
 		PermissionsEnum.ORG_TEAM_JOIN_REQUEST_EDIT,
 		/** Organization Team Permissions End */
-
 		PermissionsEnum.ORG_TASK_SETTING,
 		PermissionsEnum.ORG_CONTRACT_EDIT,
 		PermissionsEnum.EVENT_TYPES_VIEW,
@@ -315,6 +339,12 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT,
 		PermissionsEnum.EQUIPMENT_MAKE_REQUEST,
 		PermissionsEnum.EQUIPMENT_APPROVE_REQUEST,
+		/**Equipment Sharing Policy Permissions Start */
+		PermissionsEnum.EQUIPMENT_SHARING_POLICY_ADD,
+		PermissionsEnum.EQUIPMENT_SHARING_POLICY_VIEW,
+		PermissionsEnum.EQUIPMENT_SHARING_POLICY_EDIT,
+		PermissionsEnum.EQUIPMENT_SHARING_POLICY_DELETE,
+		/** Equipment Sharing Policy Permissions End */
 		PermissionsEnum.ORG_PRODUCT_TYPES_VIEW,
 		PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW,
 		PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT,

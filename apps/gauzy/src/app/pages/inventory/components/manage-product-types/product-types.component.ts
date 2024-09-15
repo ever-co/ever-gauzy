@@ -7,9 +7,8 @@ import { Subject, combineLatest, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganization, IProductTypeTranslated, ComponentLayoutStyleEnum } from '@gauzy/contracts';
-import { ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
-import { ProductTypeService } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, ProductTypeService, ServerDataSource, Store, ToastrService } from '@gauzy/ui-core/core';
+import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	DeleteConfirmationComponent,
 	IPaginationBase,
@@ -132,7 +131,7 @@ export class ProductTypesComponent extends PaginationFilterBaseComponent impleme
 				icon: {
 					title: this.getTranslation('INVENTORY_PAGE.ICON'),
 					width: '5%',
-					filter: false,
+					isFilterable: false,
 					type: 'custom',
 					renderComponent: IconRowComponent,
 					componentInitFunction: (instance: IconRowComponent, cell: Cell) => {
@@ -143,7 +142,7 @@ export class ProductTypesComponent extends PaginationFilterBaseComponent impleme
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
 					type: 'string',
 					width: '40%',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -154,7 +153,7 @@ export class ProductTypesComponent extends PaginationFilterBaseComponent impleme
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
 					type: 'string',
-					filter: false
+					isFilterable: false
 				}
 			}
 		};

@@ -16,6 +16,9 @@
 @import 'bootstrap/scss/mixins';
 @import 'bootstrap/scss/grid';
 
+@import './spinner'; // loading spinner
+@import './chat-woot'; // chat woot widget
+
 @import './material/angular-material';
 
 // loading progress bar theme

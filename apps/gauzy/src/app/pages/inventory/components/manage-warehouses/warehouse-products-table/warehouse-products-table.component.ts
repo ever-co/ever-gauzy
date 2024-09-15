@@ -1,13 +1,13 @@
 import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
 import { IWarehouse, IOrganization } from '@gauzy/contracts';
-import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { filter, firstValueFrom, Subject } from 'rxjs';
 import { debounceTime, tap } from 'rxjs/operators';
-import { InventoryStore, WarehouseService } from '@gauzy/ui-core/core';
+import { InventoryStore, Store, WarehouseService } from '@gauzy/ui-core/core';
 import { SelectProductComponent } from '../select-product-form/select-product-form.component';
 import { ImageRowComponent } from '../../inventory-table-components/image-row.component';
 import { ManageQuantityComponent } from '../manage-quantity/manage-quantity.component';
@@ -97,7 +97,7 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: ImageRowComponent,
 					componentInitFunction: (instance: ImageRowComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();

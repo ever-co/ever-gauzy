@@ -7,7 +7,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { IEmployeeStatisticsHistory, IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { PaginationFilterBaseComponent } from '../../smart-data-layout/pagination/pagination-filter-base.component';
 import { ExpenseTableComponent } from './table-components/expense-table.component';
 import { IncomeTableComponent } from './table-components/income-table.component';
@@ -122,7 +122,7 @@ export class ProfitHistoryComponent extends PaginationFilterBaseComponent implem
 					type: 'custom',
 					width: '25%',
 					sortDirection: 'desc',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();

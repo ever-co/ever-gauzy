@@ -36,6 +36,7 @@
 		"INVITE": "Invite",
 		"SELECT_ALL": "Select All",
 		"COPY_LINK": "Copy Link",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "Manage Interviews",
 		"MANAGE_INVITES": "Manage Invites",
 		"MANAGE_SPRINTS": "Manage Sprints",
@@ -165,52 +166,61 @@
 		"IGNORE": "Ignore",
 		"ENABLED": "Enabled",
 		"DISABLED": "Disabled",
-		"RESYNC": "Resync"
+		"RESYNC": "Resync",
+		"INSTALL": "Install",
+		"UNINSTALL": "Uninstall",
+		"DEACTIVATE": "Deactivate",
+		"ACTIVATE": "Activate",
+		"ADD_PLUGIN": "Add Plugin",
+		"LOAD_PLUGIN": "Load Plugin",
+		"FROM_CDN": "From CDN"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
-			"RECEIVE_ESTIMATE": "You have not received any estimate.",
-			"INCOME": "You have not created any income.",
-			"EXPENSE_CATEGORY": "You have not created any expense category.",
-			"REPORT": "You have not created any report.",
-			"CONTRACT": "You have not created any contract.",
-			"TEAM": "You have not created any team.",
-			"HISTORY_RECORD": "You have not created any record.",
-			"PROFIT_HISTORY": "You have not created any profit history.",
-			"EMPLOYEE": "You have not created any employee.",
-			"EXPENSE": "You have not created any expense.",
-			"PAYMENT": "You have not received any payment.",
-			"PROPOSAL_TEMPLATE": "You have not created any proposal template.",
-			"PROPOSAL": "You have not created any proposal.",
-			"PIPELINE": "You have not created any pipeline.",
-			"TASK": "You have not created any task.",
-			"INVITE": "You have not invited any user.",
-			"APPROVAL_REQUEST": "You have not created any approval request.",
-			"APPROVAL_POLICY": "You have not created any approval policy.",
-			"TIME_OFF": "You have not created any time off.",
-			"CANDIDATE": "You have not created any candidate.",
-			"INTERVIEW": "You have not created any interview.",
+			"LOADING": "Loading, Please wait...",
+			"RECEIVE_ESTIMATE": "You have not received any estimates.",
+			"INCOME": "You have not created any incomes.",
+			"EXPENSE_CATEGORY": "You have not created any expense categories.",
+			"REPORT": "You have not created any reports.",
+			"CONTRACT": "You have not created any contracts.",
+			"TEAM": "You have not created any teams.",
+			"HISTORY_RECORD": "You have not created any records.",
+			"PROFIT_HISTORY": "You have not created any profit histories.",
+			"EMPLOYEE": "You have not created any employees.",
+			"EXPENSE": "You have not created any expenses.",
+			"PAYMENT": "You have not received any payments.",
+			"PROPOSAL_TEMPLATE": "You have not created any proposal templates.",
+			"PROPOSAL": "You have not created any proposals.",
+			"PIPELINE": "You have not created any pipelines.",
+			"TASK": "You have not created any tasks.",
+			"INVITE": "You have not invited any users.",
+			"APPROVAL_REQUEST": "You have not created any approval requests.",
+			"APPROVAL_POLICY": "You have not created any approval policies.",
+			"TIME_OFF": "You have not created any time offs.",
+			"TIME_OFF_POLICY": "You have not created any time off policies.",
+			"CANDIDATE": "You have not created any candidates.",
+			"INTERVIEW": "You have not created any interviews.",
 			"EQUIPMENT": "You have not created any equipment.",
-			"EQUIPMENT_SHARING": "You have not created any equipment sharing.",
-			"EQUIPMENT_SHARING_POLICY": "You have not created any equipment sharing policy.",
-			"INVENTORY": "You have not created any inventory.",
-			"MERCHANT": "You have not created any merchant.",
-			"WAREHOUSE": "You have not created any warehouse.",
-			"WAREHOUSE_PRODUCT": "No warehouse products here.",
-			"PRODUCT_CATEGORY": "You have not created any product category.",
-			"TAGS": "You have not created any tag.",
-			"PROJECT": "You have not created any project.",
-			"DEPARTMENT": "You have not created any department.",
-			"CONTACT": "You have not created any contact.",
-			"CLIENT": "You have not created any client.",
-			"LEAD": "You have not created any lead.",
-			"TIME_FRAME": "You have not created any time frame.",
-			"KPI": "You have not created any KPI.",
-			"INVOICE": "You have not created any invoice.",
-			"ESTIMATE": "You have not created any estimate.",
-			"EVENT_TYPE": "You have not created any event type.",
-			"PRODUCT_TYPE_NO_DATA": "You have not created any product type.",
-			"TEAM_DASHBOARD": "You don't have any teams",
+			"EQUIPMENT_SHARING": "You have not created any equipment sharing records.",
+			"EQUIPMENT_SHARING_POLICY": "You have not created any equipment sharing policies.",
+			"INVENTORY": "You have not created any inventories.",
+			"MERCHANT": "You have not created any merchants.",
+			"WAREHOUSE": "You have not created any warehouses.",
+			"WAREHOUSE_PRODUCT": "You have not created any warehouse products.",
+			"PRODUCT_CATEGORY": "You have not created any product categories.",
+			"TAGS": "You have not created any tags.",
+			"PROJECT": "You have not created any projects.",
+			"DEPARTMENT": "You have not created any departments.",
+			"CONTACT": "You have not created any contacts.",
+			"CLIENT": "You have not created any clients.",
+			"LEAD": "You have not created any leads.",
+			"TIME_FRAME": "You have not created any time frames.",
+			"KPI": "You have not created any KPIs.",
+			"INVOICE": "You have not created any invoices.",
+			"ESTIMATE": "You have not created any estimates.",
+			"EVENT_TYPE": "You have not created any event types.",
+			"PRODUCT_TYPE_NO_DATA": "You have not created any product types.",
+			"TEAM_DASHBOARD": "You don't have any teams.",
 			"PLUGIN": "You haven't install any plugin."
 		},
 		"TRANSACTION_TYPE": "Type",
@@ -1140,7 +1150,8 @@
 		"TABLE": "Table",
 		"CARDS_GRID": "Cards Grid",
 		"SPRINT_VIEW": "Sprint View",
-		"QUICK_SETTINGS": "Quick Settings"
+		"QUICK_SETTINGS": "Quick Settings",
+		"NO_LAYOUT": "No data layout available"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "What's new?",
@@ -1716,6 +1727,7 @@
 		"APPLIED": "Applied",
 		"HIRED": "Hired",
 		"REJECTED": "Rejected",
+		"SHOW_REJECTED": "Show rejected",
 		"DELETED": "Deleted",
 		"ARCHIVED": "Archived",
 		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
@@ -1784,6 +1796,7 @@
 				"PREVIOUS": "Previous",
 				"SAVE": "Save",
 				"CREATE_CRITERIONS": "Create criterions",
+				"CLOSE_CRITERIONS": "Close criterions",
 				"EMAIL_NOTIFICATION": "Email notification",
 				"DELETE_INTERVIEW": "Delete interview",
 				"DELETE_FEEDBACK": "Delete feedback",
@@ -2098,7 +2111,6 @@
 			"ORG_PROPOSALS_VIEW": "View Proposals Page",
 			"ORG_PROPOSAL_TEMPLATES_VIEW": "View Proposal Templates Page",
 			"ORG_PROPOSAL_TEMPLATES_EDIT": "Create/Edit/Delete Proposal Templates",
-			"ORG_TIME_OFF_VIEW": "View Time Off Page",
 			"ORG_EMPLOYEES_ADD": "Create Organization Employees",
 			"ORG_EMPLOYEES_VIEW": "View Organization Employees",
 			"ORG_EMPLOYEES_EDIT": "Edit Organization Employees",
@@ -2121,8 +2133,10 @@
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "Create/Edit/Delete Candidate Feedback",
 			"ALL_ORG_VIEW": "View All Organizations",
 			"ALL_ORG_EDIT": "Create/Edit/Delete All Organizations",
-			"POLICY_VIEW": "View Time Off Policy",
-			"POLICY_EDIT": "Edit Time Off Policy",
+			"TIME_OFF_POLICY_ADD": "Add Time Off Policy",
+			"TIME_OFF_POLICY_VIEW": "View Time Off Policy",
+			"TIME_OFF_POLICY_EDIT": "Edit Time Off Policy",
+			"TIME_OFF_POLICY_DELETE": "Delete Time Off Policy",
 			"CHANGE_SELECTED_EMPLOYEE": "Change Selected Employee",
 			"CHANGE_SELECTED_CANDIDATE": "Change Selected Candidate",
 			"CHANGE_SELECTED_ORGANIZATION": "Change Selected Organization",
@@ -2147,7 +2161,10 @@
 			"PUBLIC_PAGE_EDIT": "Edit Organization Public Page",
 			"CAN_APPROVE_TIMESHEET": "Approve Timesheet",
 			"EVENT_TYPES_VIEW": "View Event Types",
+			"TIME_OFF_ADD": "Add Time Off",
+			"TIME_OFF_VIEW": "View Time Off",
 			"TIME_OFF_EDIT": "Edit Time Off",
+			"TIME_OFF_DELETE": "Delete Time Off",
 			"ORG_INVENTORY_VIEW": "View Organization Inventory",
 			"INVENTORY_GALLERY_VIEW": "View Inventory Gallery",
 			"INVENTORY_GALLERY_EDIT": "Edit Inventory Gallery",
@@ -2155,6 +2172,10 @@
 			"MEDIA_GALLERY_VIEW": "View media gallery",
 			"MEDIA_GALLERY_EDIT": "Edit media gallery",
 			"MEDIA_GALLERY_DELETE": "Delete media gallery",
+			"EQUIPMENT_SHARING_POLICY_ADD": "Add Equipment Sharing Policy",
+			"EQUIPMENT_SHARING_POLICY_VIEW": "View Equipment Sharing Policy",
+			"EQUIPMENT_SHARING_POLICY_EDIT": "Edit Equipment Sharing Policy",
+			"EQUIPMENT_SHARING_POLICY_DELETE": "Delete Equipment Sharing Policy",
 			"ORG_EQUIPMENT_VIEW": "View Organization Equipment",
 			"ORG_EQUIPMENT_EDIT": "Edit Organization Equipment",
 			"ORG_EQUIPMENT_SHARING_VIEW": "View Organization Equipment Sharing",
@@ -2184,6 +2205,10 @@
 			"DAILY_PLAN_READ": "View Daily Plans",
 			"DAILY_PLAN_UPDATE": "Update Daily Plans",
 			"DAILY_PLAN_DELETE": "Delete Daily Plans",
+			"PROJECT_MODULE_CREATE": "Create Project Modules",
+			"PROJECT_MODULE_READ": "View Project Modules",
+			"PROJECT_MODULE_UPDATE": "Update Project Modules",
+			"PROJECT_MODULE_DELETE": "Delete Project Modules",
 			"ORG_TEAM_ADD": "Add Teams",
 			"ORG_TEAM_VIEW": "View Teams",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "Edit Active Tasks",
@@ -2306,7 +2331,6 @@
 		},
 		"PROPOSAL_DETAILS": {
 			"PROPOSAL_DETAILS": "Proposal Details",
-			"EDIT": "Edit",
 			"AUTHOR": "Author",
 			"JOB_POST_URL": "Job Post URL",
 			"PROPOSAL_SENT_ON": "Proposal Sent On",
@@ -3164,7 +3188,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "Generate Public Link",
 			"GENERATE": "Generate a link to the {{ text }} that anyone with the link can view.",
-			"ACCESS": "Anyone with access to this link can view the {{ text }}."
+			"ACCESS": "Anyone with access to this link can view the {{ text }}.",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -3195,7 +3220,7 @@
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Page Not Found",
 		"TAKE_ME_HOME": "Take me home",
-		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "The page you were looking for doesn't exist",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "The page you were looking for doesn't exist",
 		"REDIRECT_TO_HOME": "You'll be redirected to home page soon"
 	},
 	"HELP_PAGE": {
@@ -3932,7 +3957,9 @@
 			"DB_PORT": "Database Port",
 			"USER": "User",
 			"PASSWORD": "Password",
-			"UI_HOSTNAME": "UI Hostname / IP Address"
+			"UI_HOSTNAME": "UI Hostname / IP Address",
+			"TITLE_SERVER_API": "Ever Gauzy API Server Installation Wizard",
+			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App provides the full functionality of the Gauzy Platform available directly on your desktop computer or a laptop. In addition, it allows tracking work time, activity recording, and the ability to receive tracking reminders/notifications."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Screen Capture",
@@ -4039,7 +4066,9 @@
 			"PLUGINS": "Plugins",
 			"PLUGIN_DESCRIPTION": "Plugins",
 			"PLUGIN": "Plugin",
-			"VERSION": "Version"
+			"VERSION": "Version",
+			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "Install plugins from local files or CDN. Local for custom/private plugins, CDN for public ones. Choose based on your needs.",
+			"ADD_PLUGIN_CDN_DESCRIPTION": "CDN installation allows for easy access to publicly available plugins."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weekly limit exceeded",
 		"OF_HRS": "Of {{ limit }} hrs",
@@ -4112,9 +4141,9 @@
 		"MENU": {
 			"ZOOM_IN": "Zoom In",
 			"ZOOM_OUT": "Zoom Out",
-			"SETTING_DEV_MODE": "Setting Developer Mode",
+			"SETTING_DEV_MODE": "Setting Dev Mode",
 			"SERVER_DEV_MODE": "Server Dashboard Developer Mode",
-			"TIMER_DEV_MODE": "Time Tracker Developer Mode",
+			"TIMER_DEV_MODE": "Timer Dev Mode",
 			"NOW_TRACKING": "Now tracking time - {{ time }}",
 			"START_TRACKING": "Start Tracking Time",
 			"STOP_TRACKING": "Stop Tracking Time",
@@ -4123,11 +4152,16 @@
 			"HELP": "Help",
 			"LEARN_MORE": "Learn More",
 			"OPEN_MAIN_WINDOW": "Open Main Window",
-			"DAILY_RECAP": "Daily Recap"
+			"DAILY_RECAP": "Daily Recap",
+			"WEEKLY_RECAP": "Weekly Recap",
+			"MONTHLY_RECAP": "Monthly Recap"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Hourly Time Tracking",
-			"HOURLY_TIME_TRACKING_DATA": "Hourly Time Tracking Data"
+			"HOURLY_TIME_TRACKING_DATA": "Hourly Time Tracking Data",
+			"WORKED_FOR_MONTH": "Worked this month",
+			"ACTIVITY_FOR_MONTH": "Monthly Activity",
+			"NO_MONTHLY_ACTIVITY": "You have not any tracked time and activity for this month."
 		}
 	},
 	"SERVER": "Server",
@@ -4263,7 +4297,8 @@
 			"UPWORK": "Upwork",
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "Browser Extension",
-			"TEAMS": "Teams"
+			"TEAMS": "Teams",
+			"CLOC": "Cloc"
 		},
 		"LAST_WORKED": "Last worked:",
 		"TIME_ZONE": "Time Zone",
@@ -4295,7 +4330,8 @@
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
-		"COMPLETE": "You're all set!"
+		"COMPLETE_TITLE": "You're all set!",
+		"COMPLETE_SUB_TITLE": "Where would you like to go now?"
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "This field is required!",
@@ -4363,7 +4399,8 @@
 		"SELECT_EMPLOYEE_ERROR": "Please select an employee.",
 		"EXPIRED_OR_CANCELLED": "**This appointment has expired or has been cancelled.",
 		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting.",
-		"NO_ACTIVE_EVENT_TYpES": "There are no active event types"
+		"NO_ACTIVE_EVENT_TYPES": "There are no active event types",
+		"CLICK_HERE": "Click Here"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "Email Templates",
@@ -4403,7 +4440,8 @@
 			"employee-join": "Employee Join",
 			"email-reset": "Email Reset",
 			"organization-team-join-request": "Organization team join request",
-			"payment-receipt": "Payment Receipt"
+			"payment-receipt": "Payment Receipt",
+			"reject-candidate": "Reject Candidate"
 		},
 		"HTML_EDITOR": "HTML Editor"
 	},

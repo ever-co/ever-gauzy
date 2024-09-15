@@ -122,7 +122,7 @@ export interface IOrganizationFindInput extends IBasePerTenantEntityModel {
 	tags?: ITag[];
 }
 
-export interface IOrganizationCreateInput extends IContact, IRegisterAsEmployee {
+export interface IOrganizationCreateInput extends IContact, IRegisterAsEmployee, IRelationalImageAsset {
 	name: string;
 	isDefault?: boolean;
 	profile_link?: string;

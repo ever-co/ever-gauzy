@@ -4,8 +4,14 @@ import { NbDialogRef, NbStepperComponent, NbTagComponent } from '@nebular/theme'
 import { filter, firstValueFrom, tap } from 'rxjs';
 import { IEmployee, IUser, IEmployeeCreateInput, CrudActionEnum, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, Store } from '@gauzy/ui-core/common';
-import { EmployeeStore, EmployeesService, ErrorHandlingService, OrganizationsService } from '@gauzy/ui-core/core';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
+import {
+	EmployeeStore,
+	EmployeesService,
+	ErrorHandlingService,
+	OrganizationsService,
+	Store
+} from '@gauzy/ui-core/core';
 import { BasicInfoFormComponent } from '../../user/forms';
 
 @UntilDestroy({ checkProperties: true })

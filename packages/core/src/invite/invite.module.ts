@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { AuthModule } from '../auth/auth.module';
 import { CommandHandlers } from './commands/handlers';
@@ -27,9 +26,6 @@ import { TypeOrmInviteRepository } from './repository';
 
 @Module({
 	imports: [
-		RouterModule.register([
-			{ path: '/invite', module: InviteModule }
-		]),
 		TypeOrmModule.forFeature([Invite]),
 		MikroOrmModule.forFeature([Invite]),
 		CqrsModule,
@@ -47,10 +43,10 @@ import { TypeOrmInviteRepository } from './repository';
 		OrganizationTeamModule,
 		OrganizationTeamEmployeeModule,
 		UserOrganizationModule,
-		AuthModule,
+		AuthModule
 	],
 	controllers: [InviteController],
 	providers: [InviteService, TypeOrmInviteRepository, ...CommandHandlers, ...QueryHandlers],
 	exports: [TypeOrmModule, MikroOrmModule, InviteService, TypeOrmInviteRepository]
 })
-export class InviteModule { }
+export class InviteModule {}

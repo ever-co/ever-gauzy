@@ -19,7 +19,7 @@ import {
 	UsersService
 } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { CandidateInterviewInfoComponent } from '@gauzy/ui-core/shared';
 import { firstValueFrom } from 'rxjs';

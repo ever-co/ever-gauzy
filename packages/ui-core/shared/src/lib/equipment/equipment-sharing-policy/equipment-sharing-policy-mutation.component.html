@@ -1,8 +1,6 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex flex-column">
-		<span class="cancel"
-			><i class="fas fa-times" (click)="closeDialog()"></i
-		></span>
+		<span class="cancel"><i class="fas fa-times" (click)="closeDialog()"></i></span>
 		<h5 class="title">
 			{{
 				(equipmentSharingPolicy
@@ -12,74 +10,47 @@
 			}}
 		</h5>
 	</nb-card-header>
+
 	<nb-card-body class="body">
-		<form [formGroup]="form" *ngIf="form">
+		<form [formGroup]="form">
 			<div class="row">
 				<div class="col-sm-12 mb-3">
 					<label for="name" class="label">
-						{{
-							'EQUIPMENT_SHARING_POLICY_PAGE.EQUIPMENT_SHARING_POLICY_NAME'
-								| translate
-						}}
+						{{ 'EQUIPMENT_SHARING_POLICY_PAGE.EQUIPMENT_SHARING_POLICY_NAME' | translate }}
 					</label>
 					<input
 						nbInput
 						type="text"
 						formControlName="name"
 						fullWidth
-						placeholder="{{
-							'EQUIPMENT_SHARING_POLICY_PAGE.EQUIPMENT_SHARING_POLICY_NAME'
-								| translate
-						}}"
+						[placeholder]="'EQUIPMENT_SHARING_POLICY_PAGE.EQUIPMENT_SHARING_POLICY_NAME' | translate"
 						[ngClass]="{
-							'status-danger':
-								form.controls['name'].invalid &&
-								form.controls['name'].dirty,
-							'status-success':
-								form.controls['name'].valid &&
-								form.controls['name'].dirty
+							'status-danger': form.controls['name'].invalid && form.controls['name'].dirty,
+							'status-success': form.controls['name'].valid && form.controls['name'].dirty
 						}"
 					/>
 				</div>
 				<div class="col-sm-12 mb-3">
 					<label for="Description" class="label">
-						{{
-							'EQUIPMENT_SHARING_POLICY_PAGE.EQUIPMENT_SHARING_POLICY_DESCRIPTION'
-								| translate
-						}}
+						{{ 'EQUIPMENT_SHARING_POLICY_PAGE.EQUIPMENT_SHARING_POLICY_DESCRIPTION' | translate }}
 					</label>
 					<input
 						nbInput
 						type="text"
 						formControlName="description"
 						fullWidth
-						placeholder="{{
-							'EQUIPMENT_SHARING_POLICY_PAGE.EQUIPMENT_SHARING_POLICY_DESCRIPTION'
-								| translate
-						}}"
+						[placeholder]="'EQUIPMENT_SHARING_POLICY_PAGE.EQUIPMENT_SHARING_POLICY_DESCRIPTION' | translate"
 					/>
 				</div>
 			</div>
-			<input type="hidden" formControlName="id" />
 		</form>
 	</nb-card-body>
 
 	<nb-card-footer class="text-left">
-		<button
-			class="delete mr-3"
-			(click)="dialogRef.close()"
-			nbButton
-			status="basic"
-			outline
-		>
+		<button class="delete mr-3" (click)="closeDialog()" nbButton status="basic" outline>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button
-			[disabled]="form.invalid"
-			(click)="saveEquipmentSharingPolicy()"
-			status="success"
-			nbButton
-		>
+		<button [disabled]="form.invalid" (click)="saveEquipmentSharingPolicy()" status="success" nbButton>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>

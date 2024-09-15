@@ -13,7 +13,8 @@ import {
 	IOrganizationProject,
 	IOrganizationContact,
 	ITimeSlot,
-	IOrganizationTeam
+	IOrganizationTeam,
+	ID
 } from '@gauzy/contracts';
 import { isMySQL } from '@gauzy/config';
 import {
@@ -26,12 +27,18 @@ import {
 	Timesheet,
 	TimeSlot
 } from './../../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, VirtualMultiOrmColumn } from '../../core/decorators/entity';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne,
+	VirtualMultiOrmColumn
+} from '../../core/decorators/entity';
 import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repository';
 
 @MultiORMEntity('time_log', { mikroOrmRepository: () => MikroOrmTimeLogRepository })
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
-
 	@ApiProperty({ type: () => 'timestamptz' })
 	@IsDateString()
 	@ColumnIndex()
@@ -134,7 +141,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@RelationId((it: TimeLog) => it.employee)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	employeeId: IEmployee['id'];
+	employeeId: ID;
 
 	/**
 	 * Timesheet relationship
@@ -155,7 +162,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@RelationId((it: TimeLog) => it.timesheet)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	timesheetId?: ITimesheet['id'];
+	timesheetId?: ID;
 
 	/**
 	 * Organization Project Relationship
@@ -165,7 +172,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 		nullable: true,
 
 		/** Defines the database cascade action on delete. */
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	project?: IOrganizationProject;
@@ -179,7 +186,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@RelationId((it: TimeLog) => it.project)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	projectId?: IOrganizationProject['id'];
+	projectId?: ID;
 
 	/**
 	 * Task
@@ -189,7 +196,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 		nullable: true,
 
 		/** Defines the database cascade action on delete. */
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	task?: ITask;
@@ -200,7 +207,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@RelationId((it: TimeLog) => it.task)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	taskId?: ITask['id'];
+	taskId?: ID;
 
 	/**
 	 * OrganizationContact
@@ -210,7 +217,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 		nullable: true,
 
 		/** Defines the database cascade action on delete. */
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	organizationContact?: IOrganizationContact;
@@ -221,7 +228,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@RelationId((it: TimeLog) => it.organizationContact)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	organizationContactId?: IOrganizationContact['id'];
+	organizationContactId?: ID;
 
 	/**
 	 * Organization Team
@@ -231,7 +238,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 		nullable: true,
 
 		/** Defines the database cascade action on delete. */
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	organizationTeam?: IOrganizationTeam;
@@ -242,7 +249,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@RelationId((it: TimeLog) => it.organizationTeam)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	organizationTeamId?: IOrganizationTeam['id'];
+	organizationTeamId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -253,7 +260,6 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	/**
 	 * TimeSlot
 	 */
-	@ApiProperty({ type: () => TimeSlot, isArray: true })
 	@MultiORMManyToMany(() => TimeSlot, (it) => it.timeLogs, {
 		/** Database cascade action on update. */
 		onUpdate: 'CASCADE',

@@ -33,6 +33,7 @@
 		"INVITE": "دعوة",
 		"SELECT_ALL": "حدد الكل",
 		"COPY_LINK": "نسخ الرابط",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "إدارة المقابلات",
 		"MANAGE_INVITES": "إدارة الدعوات",
 		"MANAGE_SPRINTS": "إدارة السبرنت",
@@ -156,7 +157,14 @@
 		"PASTE": "لصق",
 		"FORWARD_PORTS": "إعادة توجيه المنافذ",
 		"REPORT": "التقرير",
-		"IGNORE": "تجاهل"
+		"IGNORE": "تجاهل",
+		"INSTALL": "تثبيت",
+		"UNINSTALL": "إلغاء التثبيت",
+		"DEACTIVATE": "تعطيل",
+		"ACTIVATE": "تفعيل",
+		"ADD_PLUGIN": "إضافة ملحق",
+		"LOAD_PLUGIN": "تحميل المكون الإضافي",
+		"FROM_CDN": "من CDN"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1102,7 +1110,8 @@
 		"TABLE": "الطاولة",
 		"CARDS_GRID": "شبكة البطاقات",
 		"SPRINT_VIEW": "عرض السبرينت",
-		"QUICK_SETTINGS": "الإعدادات السريعة"
+		"QUICK_SETTINGS": "الإعدادات السريعة",
+		"NO_LAYOUT": "No data layout available"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "ما الجديد؟",
@@ -1626,6 +1635,7 @@
 		"APPLIED": "تم التطبيق",
 		"HIRED": "تم التوظيف",
 		"REJECTED": "مرفوض",
+		"SHOW_REJECTED": "عرض مرفوض",
 		"DELETED": "تم الحذف",
 		"ARCHIVED": "مؤرشف",
 		"SELECT_EMPLOYEE_MSG": "يرجى اختيار موظف من القائمة أعلاه.",
@@ -1694,6 +1704,7 @@
 				"PREVIOUS": "السابق",
 				"SAVE": "حفظ",
 				"CREATE_CRITERIONS": "إنشاء معايير",
+				"CLOSE_CRITERIONS": "إغلاق المعايير",
 				"EMAIL_NOTIFICATION": "إشعار بالبريد الإلكتروني",
 				"DELETE_INTERVIEW": "حذف المقابلة",
 				"DELETE_FEEDBACK": "حذف التعليقات",
@@ -1991,7 +2002,6 @@
 			"ORG_PROPOSALS_VIEW": "عرض صفحة العروض",
 			"ORG_PROPOSAL_TEMPLATES_VIEW": "عرض صفحة قوالب الاقتراحات",
 			"ORG_PROPOSAL_TEMPLATES_EDIT": "إنشاء/تعديل/حذف قوالب الاقتراحات",
-			"ORG_TIME_OFF_VIEW": "عرض صفحة الإجازات",
 			"ORG_EMPLOYEES_VIEW": "عرض موظفي المؤسسة",
 			"ORG_EMPLOYEES_EDIT": "إنشاء/تعديل/حذف موظفي المنظمة",
 			"ORG_CANDIDATES_VIEW": "عرض مرشحي المنظمة",
@@ -2012,8 +2022,10 @@
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "إنشاء / تحرير / حذف تعليقات المرشح",
 			"ALL_ORG_VIEW": "عرض جميع المؤسسات",
 			"ALL_ORG_EDIT": "إنشاء/تعديل/حذف جميع المؤسسات",
-			"POLICY_VIEW": "عرض سياسة الإجازات",
-			"POLICY_EDIT": "تعديل سياسة الإجازة المدفوعة",
+			"TIME_OFF_POLICY_ADD": "Add Time Off Policy",
+			"TIME_OFF_POLICY_VIEW": "View Time Off Policy",
+			"TIME_OFF_POLICY_EDIT": "Edit Time Off Policy",
+			"TIME_OFF_POLICY_DELETE": "Delete Time Off Policy",
 			"CHANGE_SELECTED_EMPLOYEE": "تغيير الموظف المحدد",
 			"CHANGE_SELECTED_CANDIDATE": "تغيير المرشح المحدد",
 			"CHANGE_SELECTED_ORGANIZATION": "تغيير المنظمة المحددة",
@@ -2038,7 +2050,10 @@
 			"PUBLIC_PAGE_EDIT": "تحرير صفحة المنظمة العامة",
 			"CAN_APPROVE_TIMESHEET": "اعتماد الجدول الزمني",
 			"EVENT_TYPES_VIEW": "عرض أنواع الأحداث",
-			"TIME_OFF_EDIT": "تحرير وقت الراحة",
+			"TIME_OFF_ADD": "Add Time Off",
+			"TIME_OFF_VIEW": "View Time Off",
+			"TIME_OFF_EDIT": "Edit Time Off",
+			"TIME_OFF_DELETE": "Delete Time Off",
 			"ORG_INVENTORY_VIEW": "عرض جرد المنظمة",
 			"INVENTORY_GALLERY_VIEW": "عرض معرض المخزون",
 			"INVENTORY_GALLERY_EDIT": "تعديل معرض المخزون",
@@ -2046,6 +2061,10 @@
 			"MEDIA_GALLERY_VIEW": "عرض معرض الوسائط",
 			"MEDIA_GALLERY_EDIT": "تعديل معرض الوسائط",
 			"MEDIA_GALLERY_DELETE": "حذف معرض الوسائط",
+			"EQUIPMENT_SHARING_POLICY_ADD": "إضافة سياسة مشاركة المعدات",
+			"EQUIPMENT_SHARING_POLICY_VIEW": "عرض سياسة مشاركة المعدات",
+			"EQUIPMENT_SHARING_POLICY_EDIT": "تعديل سياسة مشاركة المعدات",
+			"EQUIPMENT_SHARING_POLICY_DELETE": "حذف سياسة مشاركة المعدات",
 			"ORG_EQUIPMENT_VIEW": "عرض معدات المنظمة",
 			"ORG_EQUIPMENT_EDIT": "تعديل معدات المنظمة",
 			"ORG_EQUIPMENT_SHARING_VIEW": "عرض مشاركة معدات المنظمة",
@@ -2071,6 +2090,10 @@
 			"ORG_PROJECT_DELETE": "حذف المشاريع",
 			"ORG_CONTACT_EDIT": "إنشاء/تعديل جهات الاتصال",
 			"ORG_CONTACT_VIEW": "عرض جهات الاتصال",
+			"PROJECT_MODULE_CREATE": "إنشاء وحدات المشروع",
+			"PROJECT_MODULE_READ": "عرض وحدات المشروع",
+			"PROJECT_MODULE_UPDATE": "تحديث وحدات المشروع",
+			"PROJECT_MODULE_DELETE": "حذف وحدات المشروع",
 			"ORG_TEAM_ADD": "إضافة فِرَق",
 			"ORG_TEAM_VIEW": "عرض الفرق",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "تحرير المهام النشطة",
@@ -2183,7 +2206,6 @@
 		},
 		"PROPOSAL_DETAILS": {
 			"PROPOSAL_DETAILS": "تفاصيل الاقتراح",
-			"EDIT": "تعديل",
 			"AUTHOR": "المؤلف",
 			"JOB_POST_URL": "رابط منشور الوظيفة",
 			"PROPOSAL_SENT_ON": "تم إرسال الاقتراح في",
@@ -3041,7 +3063,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "توليد رابط عام",
 			"GENERATE": "أنشئ رابطًا لـ {{ text }} يمكن لأي شخص يمتلك الرابط رؤيته.",
-			"ACCESS": "أي شخص لديه وصول إلى هذا الرابط يمكنه عرض {{ text }}."
+			"ACCESS": "أي شخص لديه وصول إلى هذا الرابط يمكنه عرض {{ text }}.",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -3072,7 +3095,7 @@
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "الصفحة غير موجودة",
 		"TAKE_ME_HOME": "خذني إلى المنزل",
-		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "الصفحة التي كنت تبحث عنها غير موجودة",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "الصفحة التي كنت تبحث عنها غير موجودة",
 		"REDIRECT_TO_HOME": "سيتم توجيهك إلى الصفحة الرئيسية قريباً"
 	},
 	"HELP_PAGE": {
@@ -3807,7 +3830,9 @@
 			"DB_PORT": "منفذ قاعدة البيانات",
 			"USER": "مستخدم",
 			"PASSWORD": "كلمة المرور",
-			"UI_HOSTNAME": "اسم المضيف أو عنوان IP واجهة المستخدم (UI)"
+			"UI_HOSTNAME": "اسم المضيف أو عنوان IP واجهة المستخدم (UI)",
+			"TITLE_SERVER_API": "معالج تثبيت خادم API الخاص بـ Ever Gauzy",
+			"LABEL_SERVER_API": "يوفر تطبيق سطح المكتب Ever Gauzy API Server الوظائف الكاملة لمنصة Gauzy المتوفرة مباشرة على جهاز الكمبيوتر المكتبي أو الكمبيوتر المحمول. بالإضافة إلى ذلك، فهو يسمح بتتبع وقت العمل وتسجيل النشاط والقدرة على تلقي تذكيرات/إشعارات التتبع"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "التقاط الشاشة",
@@ -3913,7 +3938,10 @@
 				"SSL_CERT_FILE_INFO": "مسار ملف شهادة العميل لـ SSL.",
 				"SECURE": "آمن",
 				"SECURE_INFO": "صحيح إذا كنت ترغب في التحقق من شهادات SSL."
-			}
+			},
+			"VERSION": "الإصدار",
+			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "قم بتثبيت المكونات الإضافية من الملفات المحلية أو CDN. محلي للمكونات الإضافية المخصصة/الخاصة، وCDN للمكونات العامة. اختر بناءً على احتياجاتك.",
+			"ADD_PLUGIN_CDN_DESCRIPTION": "تتيح لك التثبيت من CDN الوصول بسهولة إلى المكونات الإضافية المتاحة علنًا."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "تجاوز الحد الأسبوعي",
 		"OF_HRS": "من {{ limit }} ساعة",
@@ -3996,11 +4024,16 @@
 			"HELP": "مساعدة",
 			"LEARN_MORE": "تعلم المزيد",
 			"OPEN_MAIN_WINDOW": "افتح النافذة الرئيسية",
-			"DAILY_RECAP": "ملخص يومي"
+			"DAILY_RECAP": "ملخص يومي",
+			"WEEKLY_RECAP": "ملخص أسبوعي",
+			"MONTHLY_RECAP": "ملخص شهري"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "تتبع الوقت بالساعة",
-			"HOURLY_TIME_TRACKING_DATA": "بيانات تتبع الوقت بالساعة"
+			"HOURLY_TIME_TRACKING_DATA": "بيانات تتبع الوقت بالساعة",
+			"NO_MONTHLY_ACTIVITY": "لم تقم بتتبع أي وقت أو نشاط لهذا الشهر.",
+			"WORKED_FOR_MONTH": "عملت هذا الشهر",
+			"ACTIVITY_FOR_MONTH": "النشاط الشهري"
 		}
 	},
 	"SERVER": "خادم",
@@ -4135,7 +4168,8 @@
 			"UPWORK": "أبورك",
 			"HUBSTAFF": "هب ستاف",
 			"BROWSER_EXTENSION": "امتداد المتصفح",
-			"TEAMS": "الفِرَق"
+			"TEAMS": "الفِرَق",
+			"CLOC": "Cloc"
 		},
 		"LAST_WORKED": "آخر عملت:",
 		"TIME_ZONE": "Time Zone",
@@ -4166,8 +4200,9 @@
 		"NO_RECORD_FOUND": "لم يتم العثور على سجلات. يرجى تحديد نطاق التاريخ، الموظف، أو المشروع."
 	},
 	"ONBOARDING": {
-		"FIRST_ORGANIZATION": "لنقم بإنشاء منظمتك الأولى",
-		"COMPLETE": "أنت جاهز تماما!"
+		"FIRST_ORGANIZATION": "لنقم بإنشاء مؤسستك الأولى",
+		"COMPLETE_TITLE": "كل شيء جاهز!",
+		"COMPLETE_SUB_TITLE": "إلى أين تريد أن تذهب الآن؟"
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "هذا الحقل مطلوب!",
@@ -4235,7 +4270,8 @@
 		"SELECT_EMPLOYEE_ERROR": "يرجى اختيار موظف.",
 		"EXPIRED_OR_CANCELLED": "تم انتهاء هذا الموعد أو إلغاؤه.",
 		"EMAIL_SENT": "تم إرسال بريد إلكتروني إلى المضيف وإلى جميع المشاركين في هذا الاجتماع.",
-		"NO_ACTIVE_EVENT_TYpES": "لا توجد أنواع فعالة للأحداث"
+		"NO_ACTIVE_EVENT_TYPES": "لا توجد أنواع فعالة للأحداث",
+		"CLICK_HERE": "Click Here"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "قوالب البريد الإلكتروني",
@@ -4275,7 +4311,8 @@
 			"employee-join": "انضمام الموظف",
 			"email-reset": "إعادة تعيين البريد الإلكتروني",
 			"organization-team-join-request": "طلب انضمام فريق المنظمة",
-			"payment-receipt": "إيصال الدفع"
+			"payment-receipt": "إيصال الدفع",
+			"reject-candidate": "رفض المرشح"
 		},
 		"HTML_EDITOR": "محرر HTML"
 	},

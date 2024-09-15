@@ -25,6 +25,7 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { AlwaysOnService } from '../always-on/always-on.service';
+import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 import { ElectronService, LoggerService } from '../electron/services';
 import { ImageViewerModule } from '../image-viewer/image-viewer.module';
 import { ActivityWatchModule } from '../integrations';
@@ -32,6 +33,8 @@ import { LanguageModule } from '../language/language.module';
 import { TimeSlotQueueService } from '../offline-sync';
 import { RecapModule } from '../recap/recap.module';
 import { ErrorHandlerService, NativeNotificationService, Store, ToastrNotificationService } from '../services';
+import { SelectModule } from '../shared/components/ui/select/select.module';
+import { TimeTrackerFormModule } from '../shared/features/time-tracker-form/time-tracker-form.module';
 import { TasksModule } from '../tasks/tasks.module';
 import { CustomRenderComponent } from './custom-render-cell.component';
 import { NoDataMessageModule } from './no-data-message/no-data-message.module';
@@ -43,9 +46,15 @@ import { TaskRenderModule } from './task-render/task-render.module';
 import { TimeTrackerStatusModule } from './time-tracker-status/time-tracker-status.module';
 import { TimeTrackerComponent } from './time-tracker.component';
 import { TimeTrackerService } from './time-tracker.service';
+import { TimerTrackerChangeDialogComponent } from './timer-tracker-change-dialog/timer-tracker-change-dialog.component';
 
 @NgModule({
-	declarations: [TimeTrackerComponent, CustomRenderComponent, OrganizationSelectorComponent],
+	declarations: [
+		TimeTrackerComponent,
+		CustomRenderComponent,
+		OrganizationSelectorComponent,
+		TimerTrackerChangeDialogComponent
+	],
 	imports: [
 		CommonModule,
 		NbLayoutModule,
@@ -79,7 +88,10 @@ import { TimeTrackerService } from './time-tracker.service';
 		NoDataMessageModule,
 		PipeModule,
 		NbTabsetModule,
-		RecapModule
+		RecapModule,
+		TimeTrackerFormModule,
+		SelectModule,
+		DesktopDirectiveModule
 	],
 	providers: [
 		NbSidebarService,

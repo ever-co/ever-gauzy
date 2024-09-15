@@ -42,7 +42,6 @@
 		"@electron/remote": "^2.0.8",
 		"@gauzy/desktop-ui-lib": "^0.1.0",
 		"@gauzy/ui-config": "^0.1.0",
-		"@gauzy/ui-core": "^0.1.0",
 		"@grpc/grpc-js": "^1.6.7",
 		"@nebular/auth": "^12.0.0",
 		"@nebular/bootstrap": "^9.1.0-rc.6",
@@ -88,7 +87,8 @@
 		"squirrelly": "^8.0.8",
 		"twing": "^5.0.2",
 		"typeorm": "^0.3.20",
-		"undici": "^6.10.2"
+		"undici": "^6.10.2",
+		"custom-electron-titlebar": "^4.2.8"
 	},
 	"optionalDependencies": {
 		"node-linux": "^0.1.12",

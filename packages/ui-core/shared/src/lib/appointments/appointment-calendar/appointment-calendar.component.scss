@@ -1,0 +1,36 @@
+@import '@shared/_pg-card';
+
+.main-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.block-info {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 11px;
+  letter-spacing: 0em;
+  text-align: left;
+  margin: 1rem 0;
+}
+
+:host {
+  nb-card,
+  nb-card-body {
+    background-color: var(--gauzy-card-2);
+  }
+  nb-card-body {
+    height: calc(100vh - 16.5rem) !important;
+  }
+  .calendar-container {
+    height: 100%;
+    overflow: auto;
+  }
+  [nbButton].appearance-outline.status-info,
+  [nbButton].appearance-outline.status-warning,
+  [nbButton].appearance-outline.status-primary {
+    border-width: 0;
+    box-shadow: var(--gauzy-shadow);
+  }
+}

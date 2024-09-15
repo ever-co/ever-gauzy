@@ -17,7 +17,7 @@ import { EmployeesService } from '@gauzy/ui-core/core';
 import { NbDialogService } from '@nebular/theme';
 import { CandidateCalendarInfoComponent } from '../../candidate-calendar-info/candidate-calendar-info.component';
 import { firstValueFrom } from 'rxjs';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

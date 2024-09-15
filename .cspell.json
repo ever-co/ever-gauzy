@@ -116,6 +116,7 @@
 		"typeORM",
 		"Fargate",
 		"fastify",
+		"favoritable",
 		"fbstate",
 		"fieldname",
 		"filepond",
@@ -507,7 +508,16 @@
 		"COMMONPROGRAMFILES",
 		"serverapi",
 		"serializables",
-		"drppicker"
+		"drppicker",
+		"titlebar",
+		"raleway",
+		"browserslist",
+		"flexbox",
+		"nbinput",
+		"nbbutton",
+		"xaxis",
+		"wdth",
+		"concate"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

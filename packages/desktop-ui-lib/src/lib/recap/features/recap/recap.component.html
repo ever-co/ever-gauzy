@@ -1,23 +1,16 @@
-<nb-layout>
-	<nb-layout-column class="p-0">
-		<div class="layout-container">
-			<div id="fixed-area">
-				<div id="drag-handle" draggable="true" class="d-flex justify-content-center align-items-center w-100"
-					[ngClass]="{'justify-content-center': isLoading$ | async}">
-					<ng-container *ngIf="isLoading$ | async">
-						<nb-icon class="loader" size="medium" icon="loader-outline"></nb-icon>
-					</ng-container>
-					<ngx-date-range-picker [arrows]="true" [isSingleDatePicker]="true"
-						[isDisableFutureDatePicker]="true" class="ml-auto no-draggable medium"></ngx-date-range-picker>
-					<ngx-filter class="ml-auto no-draggable"></ngx-filter>
-				</div>
-				<ngx-time-tracking-charts class="no-draggable w-100"></ngx-time-tracking-charts>
-			</div>
-			<div id="scrollable-area">
-				<ngx-activities class="no-draggable w-100"></ngx-activities>
-				<ngx-projects class="no-draggable w-100"></ngx-projects>
-				<ngx-tasks class="no-draggable w-100"></ngx-tasks>
-			</div>
+<nb-card class="main-report-wrapper">
+	<nb-card-header class="p-3 main-report-header">
+		<ngx-segmented-control [segments]="segments"></ngx-segmented-control>
+		<ng-container *ngIf="isLoading$ | async">
+			<nb-icon class="loader" size="medium" icon="loader-outline"></nb-icon>
+		</ng-container>
+		<div class="tools">
+			<ngx-date-range-picker [isLockDatePicker]="true" [arrows]="true" [isSingleDatePicker]="true" [isDisableFutureDatePicker]="true"
+				class="medium" (rangeChanges)="onRangeChange($event)"></ngx-date-range-picker>
+			<ngx-filter></ngx-filter>
 		</div>
-	</nb-layout-column>
-</nb-layout>
+	</nb-card-header>
+	<nb-card-body class="main-report-body">
+		<router-outlet></router-outlet>
+	</nb-card-body>
+</nb-card>

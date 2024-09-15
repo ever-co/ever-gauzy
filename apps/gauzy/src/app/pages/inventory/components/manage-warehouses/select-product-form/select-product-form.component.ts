@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { IOrganization, IProductTranslated, LanguagesEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { API_PREFIX } from '@gauzy/ui-core/common';
@@ -8,11 +9,10 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { ImageRowComponent } from '../../inventory-table-components/image-row.component';
 import { NbDialogRef } from '@nebular/theme';
 import { SelectedRowComponent } from '../../inventory-table-components/selected-row.component';
-import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
 import { debounceTime } from 'rxjs';
 import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-core/shared';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 
 export interface SelectedRowEvent {
 	data: IProductTranslated;
@@ -118,7 +118,7 @@ export class SelectProductComponent extends PaginationFilterBaseComponent implem
 				selected: {
 					title: this.getTranslation('INVENTORY_PAGE.SELECTED'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					valuePrepareFunction: (_: any, cell: Cell) => {
 						// ToDo - We need to uncomment below and fix issue.
 						// row.selected = !!this.selectedRows.find(p => p.id == row.id);
@@ -132,7 +132,7 @@ export class SelectProductComponent extends PaginationFilterBaseComponent implem
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: ImageRowComponent,
 					componentInitFunction: (instance: ImageRowComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();

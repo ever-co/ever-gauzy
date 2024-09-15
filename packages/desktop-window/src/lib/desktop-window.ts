@@ -1,6 +1,7 @@
 import * as remoteMain from '@electron/remote/main';
 import { BrowserWindow, ipcMain, screen } from 'electron';
 import * as url from 'url';
+import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 
 import log from 'electron-log';
 import { WindowManager } from './concretes/window.manager';
@@ -11,14 +12,14 @@ Object.assign(console, log.functions);
 const Store = require('electron-store');
 const store = new Store();
 
-export async function createGauzyWindow(gauzyWindow, serve, config, filePath) {
+export async function createGauzyWindow(gauzyWindow, serve, config, filePath, preloadPath?) {
 	log.info('createGauzyWindow started');
 
 	const manager = WindowManager.getInstance();
 
 	let mainWindowSettings: Electron.BrowserWindowConstructorOptions = null;
 
-	mainWindowSettings = windowSetting();
+	mainWindowSettings = windowSetting(preloadPath);
 
 	gauzyWindow = new BrowserWindow(mainWindowSettings);
 
@@ -64,11 +65,15 @@ export async function createGauzyWindow(gauzyWindow, serve, config, filePath) {
 	log.info('createGauzyWindow completed');
 
 	manager.register(RegisteredWindow.MAIN, gauzyWindow);
+	if (preloadPath) {
+		attachTitlebarToWindow(gauzyWindow);
+		gauzyWindow.webContents.send('adjust_view');
+	}
 
 	return gauzyWindow;
 }
 
-const windowSetting = () => {
+const windowSetting = (preloadPath) => {
 	const sizes = screen.getPrimaryDisplay().workAreaSize;
 	const filesPath = store.get('filePath');
 
@@ -91,6 +96,14 @@ const windowSetting = () => {
 		show: false,
 		icon: filesPath.iconPath
 	};
+	if (preloadPath) {
+		mainWindowSettings.webPreferences.preload = preloadPath;
+		mainWindowSettings.titleBarOverlay = true;
+		mainWindowSettings.titleBarStyle = 'hidden';
+		if (process.platform === 'linux') {
+			mainWindowSettings.frame = false;
+		}
+	}
 	return mainWindowSettings;
 };
 

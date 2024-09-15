@@ -18,40 +18,55 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="gridLayout">
-			<div class="table-scroll-container">
-				<angular2-smart-table
-					style="cursor: pointer"
-					[settings]="settingsSmartTable"
-					[source]="smartTableSource"
-					(userRowSelect)="selectInvite($event)"
-				></angular2-smart-table>
-			</div>
-			<div class="pagination-container">
-				<ng-container *ngIf="smartTableSource">
-					<ngx-pagination [source]="smartTableSource"></ngx-pagination>
-				</ng-container>
-			</div>
-		</ng-template>
-		<ng-template #gridLayout>
-			<ga-card-grid
-				[totalItems]="pagination?.totalItems"
-				[settings]="settingsSmartTable"
-				[source]="invites"
-				(onSelectedItem)="selectInvite($event)"
-				(scroll)="onScroll()"
-			></ga-card-grid>
+		<!-- Check if the user has the 'ORG_INVITE_VIEW' permission -->
+		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_INVITE_VIEW]">
+			<ng-container [ngSwitch]="dataLayoutStyle">
+				<!-- Table View -->
+				<ng-template [ngSwitchCase]="componentLayoutStyleEnum.TABLE">
+					<div class="table-scroll-container">
+						<angular2-smart-table
+							style="cursor: pointer"
+							[settings]="settingsSmartTable"
+							[source]="smartTableSource"
+							(userRowSelect)="selectInvite($event)"
+						></angular2-smart-table>
+					</div>
+					<div class="pagination-container">
+						<ng-container *ngIf="smartTableSource">
+							<ngx-pagination [source]="smartTableSource"></ngx-pagination>
+						</ng-container>
+					</div>
+				</ng-template>
+
+				<!-- Card Grid View -->
+				<ng-template [ngSwitchCase]="componentLayoutStyleEnum.CARDS_GRID">
+					<ga-card-grid
+						[totalItems]="pagination?.totalItems"
+						[settings]="settingsSmartTable"
+						[source]="invites"
+						(onSelectedItem)="selectInvite($event)"
+						(scroll)="onScroll()"
+					></ga-card-grid>
+				</ng-template>
+
+				<!-- Optional: Default case if no specific layout matches -->
+				<ng-template *ngSwitchDefault>
+					<p>{{ 'SETTINGS_MENU.NO_LAYOUT' | translate }}</p>
+				</ng-template>
+			</ng-container>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
+
+<!-- Actions Buttons -->
 <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
 	<div class="btn-group actions">
-		<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
+		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_INVITE_EDIT]">
 			<ng-template [ngIf]="selectedInvite?.status === InviteStatusEnum.INVITED">
 				<button
 					nbButton
 					ngxClipboard
-					[disabled]="!selectedItem && disableButton"
+					[disabled]="disableButton"
 					status="basic"
 					class="action success"
 					(click)="copyToClipboard(selectedItem)"
@@ -62,7 +77,7 @@
 				</button>
 				<button
 					nbButton
-					[disabled]="!selectedItem && disableButton"
+					[disabled]="disableButton"
 					status="basic"
 					(click)="resendInvite(selectedItem)"
 					class="action warning"
@@ -74,7 +89,7 @@
 			</ng-template>
 			<button
 				nbButton
-				[disabled]="!selectedItem && disableButton"
+				[disabled]="disableButton"
 				status="basic"
 				(click)="deleteInvite(selectedItem)"
 				class="action"
@@ -86,9 +101,11 @@
 		</ng-template>
 	</div>
 </ng-template>
+
+<!-- Visible button -->
 <ng-template #visibleButton>
-	<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
-		<button nbButton status="success" (click)="invite()" size="small" class="invite-button">
+	<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_INVITE_EDIT]">
+		<button nbButton type="button" size="small" status="success" class="invite-button" (click)="invite()">
 			<i class="fas fa-envelope mr-1"></i>
 			{{ 'BUTTONS.INVITE' | translate }}
 		</button>

@@ -1,10 +1,12 @@
-import {ISleepTracking} from "./i-sleep-tracking";
-import {BrowserWindow} from "electron";
+import { BrowserWindow } from 'electron';
+import { ISleepTracking } from './i-sleep-tracking';
 
 export interface IPowerManager {
 	pauseTracking(): void;
 
 	resumeTracking(): void;
+
+	get isOnBattery(): boolean;
 
 	get trackerStatusActive(): boolean;
 

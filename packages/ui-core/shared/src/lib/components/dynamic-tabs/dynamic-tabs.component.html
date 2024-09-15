@@ -1,0 +1,23 @@
+<!-- NbRouteTabset for the nb tabset -->
+<ng-container *ngIf="isRouterTabset; else staticTabs">
+	<nb-route-tabset [tabs]="tabs"></nb-route-tabset>
+</ng-container>
+
+<!-- Static tabs for the nb tabset -->
+<ng-template #staticTabs>
+	<nb-tabset>
+		<nb-tab
+			*ngFor="let tab of tabs"
+			[tabTitle]="tab?.title"
+			[tabIcon]="tab?.icon"
+			[tabId]="tab?.tabId"
+			[active]="tab?.active"
+			[disabled]="tab?.disabled"
+			[responsive]="tab?.responsive"
+			[route]="tab?.route"
+		>
+			<!-- Placeholder for dynamic content -->
+			<ng-template #tabContent></ng-template>
+		</nb-tab>
+	</nb-tabset>
+</ng-template>

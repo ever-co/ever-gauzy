@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -33,14 +34,23 @@ import { ProjectsComponent } from './features/projects/projects.component';
 import { RecapComponent } from './features/recap/recap.component';
 import { TasksComponent } from './features/tasks/tasks.component';
 import { TimeTrackingChartsComponent } from './features/time-tracking-charts/time-tracking-charts.component';
+import { MonthlyCalendarComponent } from './monthly/features/monthly-calendar/monthly-calendar.component';
+import { MonthlyProgressComponent } from './monthly/features/monthly-progress/monthly-progress.component';
+import { MonthlyRecapComponent } from './monthly/features/monthly-recap/monthly-recap.component';
+import { MonthlyStatisticComponent } from './monthly/features/monthly-statistic/monthly-statistic.component';
 import { ActivityService, TimesheetService, TimesheetStatisticsService } from './services/timesheet';
 import { ActivityReportComponent } from './shared/features/activity-report/activity-report.component';
 import { DateRangePickerModule } from './shared/features/date-range-picker/date-range-picker.module';
 import { GauzyFiltersModule } from './shared/features/gauzy-filters';
+import { SegmentedControlComponent } from './shared/features/segmented-control/segmented-control.component';
 import { AutoRefreshComponent } from './shared/ui/auto-refresh/auto-refresh.component';
 import { ProgressStatusModule } from './shared/ui/progress-status/progress-status.module';
 import { ProjectColumnViewModule } from './shared/ui/project-column-view/project-column-view.module';
 import { StatisticComponent } from './shared/ui/statistic/statistic.component';
+import { WeeklyCalendarComponent } from './weekly/features/weekly-calendar/weekly-calendar.component';
+import { WeeklyProgressComponent } from './weekly/features/weekly-progress/weekly-progress.component';
+import { WeeklyRecapComponent } from './weekly/features/weekly-recap/weekly-recap.component';
+import { WeeklyStatisticComponent } from './weekly/features/weekly-statistic/weekly-statistic.component';
 
 @NgModule({
 	declarations: [
@@ -52,7 +62,16 @@ import { StatisticComponent } from './shared/ui/statistic/statistic.component';
 		FilterComponent,
 		StatisticComponent,
 		AutoRefreshComponent,
-		ActivityReportComponent
+		ActivityReportComponent,
+		SegmentedControlComponent,
+		WeeklyRecapComponent,
+		WeeklyCalendarComponent,
+		WeeklyProgressComponent,
+		WeeklyStatisticComponent,
+		MonthlyRecapComponent,
+		MonthlyCalendarComponent,
+		MonthlyProgressComponent,
+		MonthlyStatisticComponent
 	],
 	imports: [
 		CommonModule,
@@ -75,7 +94,8 @@ import { StatisticComponent } from './shared/ui/statistic/statistic.component';
 		ProjectColumnViewModule,
 		ProgressStatusModule,
 		NbSpinnerModule,
-		LanguageModule.forChild()
+		LanguageModule.forChild(),
+		RouterModule
 	],
 	providers: [
 		RecapQuery,
@@ -91,6 +111,6 @@ import { StatisticComponent } from './shared/ui/statistic/statistic.component';
 		RequestQuery,
 		RequestStore
 	],
-	exports: [ActivityReportComponent]
+	exports: [RecapComponent, WeeklyRecapComponent, MonthlyRecapComponent]
 })
 export class RecapModule {}

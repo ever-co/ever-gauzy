@@ -1,11 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { IEmployee } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { CompareDateValidator } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
-import { EmployeeStore } from '@gauzy/ui-core/core';
+import { IEmployee } from '@gauzy/contracts';
+import { CompareDateValidator, EmployeeStore, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -18,23 +16,19 @@ import { EmployeeStore } from '@gauzy/ui-core/core';
 })
 export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
 	selectedEmployee: IEmployee;
-
-	public form: UntypedFormGroup = EditEmployeeHiringComponent.buildForm(this.fb);
-	static buildForm(formBuilder: UntypedFormBuilder): UntypedFormGroup {
-		return formBuilder.group(
-			{
-				offerDate: [],
-				acceptDate: [],
-				rejectDate: []
-			},
-			{
-				validators: [
-					CompareDateValidator.validateDate('offerDate', 'acceptDate'),
-					CompareDateValidator.validateDate('offerDate', 'rejectDate')
-				]
-			}
-		);
-	}
+	public form: UntypedFormGroup = this.fb.group(
+		{
+			offerDate: [],
+			acceptDate: [],
+			rejectDate: []
+		},
+		{
+			validators: [
+				CompareDateValidator.validateDate('offerDate', 'acceptDate'),
+				CompareDateValidator.validateDate('offerDate', 'rejectDate')
+			]
+		}
+	);
 
 	constructor(
 		private readonly fb: UntypedFormBuilder,
@@ -53,22 +47,40 @@ export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
-	public submitForm() {
-		if (this.form.valid) {
-			const { id: organizationId } = this.store.selectedOrganization;
-			this.employeeStore.employeeForm = {
-				...this.form.getRawValue(),
-				organizationId
-			};
+	/**
+	 * Submits the form if it is valid. Updates the employeeStore with the form values
+	 * and additional information such as organizationId and tenantId.
+	 */
+	public submitForm(): void {
+		if (!this.form.invalid) {
+			return;
 		}
-	}
 
-	private _patchForm(employee: IEmployee) {
-		const { offerDate, acceptDate, rejectDate } = employee;
+		// Extract organizationId and tenantId from the selected organization
+		const { id: organizationId, tenantId } = this.store.selectedOrganization;
+
+		// Update the employee form in the store with the form values and additional info
+		this.employeeStore.employeeForm = {
+			...this.form.value,
+			organizationId,
+			tenantId
+		};
+	}
+	/**
+	 * Patches the form with values from the provided employee object.
+	 * Converts date fields to Date objects if they are present, otherwise sets them to null.
+	 *
+	 * @param employee - The employee object containing data to patch the form.
+	 */
+	private _patchForm(employee: IEmployee): void {
+		// Utility function to convert date string to Date object or null
+		const toDateOrNull = (date?: Date): Date | null => (date ? new Date(date) : null);
+
+		// Patch form with the employee data, converting dates using the utility function
 		this.form.patchValue({
-			offerDate: offerDate ? new Date(offerDate) : null,
-			acceptDate: acceptDate ? new Date(acceptDate) : null,
-			rejectDate: rejectDate ? new Date(rejectDate) : null
+			offerDate: toDateOrNull(employee.offerDate),
+			acceptDate: toDateOrNull(employee.acceptDate),
+			rejectDate: toDateOrNull(employee.rejectDate)
 		});
 	}
 

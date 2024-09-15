@@ -1,6 +1,6 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult } from 'typeorm';
+import { DeleteResult, FindOptionsWhere } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
 import { v4 as uuidv4 } from 'uuid';
@@ -12,14 +12,17 @@ import {
 	ITaskStatus,
 	ITaskStatusCreateInput,
 	ITaskStatusFindInput,
+	ITaskStatusUpdateInput,
 	ITenant
 } from '@gauzy/contracts';
 import { isPostgres } from '@gauzy/config';
-import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
 import { RequestContext } from '../../core/context';
 import { MultiORMEnum } from '../../core/utils';
+import { IPartialEntity } from '../../core/crud/icrud.service';
+import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
 import { TaskStatus } from './status.entity';
 import { DEFAULT_GLOBAL_STATUSES } from './default-global-statuses';
+import { TASK_STATUSES_TEMPLATES } from './standard-statuses-template';
 import { MikroOrmTaskStatusRepository, TypeOrmTaskStatusRepository } from './repository';
 
 @Injectable()
@@ -30,14 +33,33 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 	constructor(
 		@InjectRepository(TaskStatus)
 		readonly typeOrmTaskStatusRepository: TypeOrmTaskStatusRepository,
-
 		readonly mikroOrmTaskStatusRepository: MikroOrmTaskStatusRepository,
-
-		@InjectConnection()
-		readonly knexConnection: KnexConnection
+		@InjectConnection() readonly knexConnection: KnexConnection
 	) {
 		console.log(`TaskStatusService initialized. Unique Service ID: ${uuidv4()} `);
 		super(typeOrmTaskStatusRepository, mikroOrmTaskStatusRepository, knexConnection);
+	}
+
+	/**
+	 * Create task status
+	 *
+	 * @param entity - object that contains the input values and template to be used
+	 * @returns - a promise that resolves after task status created
+	 */
+	public async create(entity: IPartialEntity<TaskStatus>): Promise<ITaskStatus> {
+		try {
+			// Extract the template from the entity
+			const { template, ...partialEntity } = entity;
+
+			// Get the work flow for the template
+			const workFlow = TASK_STATUSES_TEMPLATES[template];
+
+			// Save the entity with the work flow
+			return await this.save({ ...partialEntity, ...workFlow });
+		} catch (error) {
+			// Handle errors and return an appropriate error response
+			throw new HttpException(`Failed to add task status: ${error.message}`, HttpStatus.BAD_REQUEST);
+		}
 	}
 
 	/**
@@ -246,6 +268,54 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 			// Handle errors during reordering
 			this.logger.error('Error during reordering of task statues:', error); // Log the error for debugging
 			throw new BadRequestException('An error occurred while reordering task statues. Please try again.', error); // Return error
+		}
+	}
+
+	/**
+	 * Marks an task status as default and updates other task statuses accordingly.
+	 *
+	 * @param id The ID of the task status to mark as default.
+	 * @param input An object containing input parameters, including organization, team, and project IDs.
+	 * @returns A Promise that resolves to an array of updated task statuses.
+	 */
+	async markAsDefault(id: ID, input: ITaskStatusUpdateInput): Promise<ITaskStatus[]> {
+		try {
+			const { organizationId, organizationTeamId, projectId } = input;
+			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+
+			// Find the task status by ID
+			const taskStatus: ITaskStatus = await this.findOneByIdString(id, { where: { isSystem: false } });
+
+			// Update the task status to mark it as default
+			taskStatus.isDefault = true;
+
+			// Define options to find task statuses to update
+			const findOptions: FindOptionsWhere<TaskStatus> = {
+				...(organizationId ? { organizationId } : {}),
+				...(organizationTeamId ? { organizationTeamId } : {}),
+				...(projectId ? { projectId } : {}),
+				tenantId,
+				isSystem: false
+			};
+
+			// Update other task statuses to mark them as non-default
+			await super.update(findOptions, { isDefault: false });
+
+			// Save the updated issue type
+			await super.save(taskStatus);
+
+			// Fetch and return all task statuses based on the specified parameters
+			const { items = [] } = await super.fetchAll({
+				tenantId,
+				organizationId,
+				organizationTeamId,
+				projectId
+			});
+
+			return items;
+		} catch (error) {
+			// If an error occurs, throw a BadRequestException
+			throw new BadRequestException(error);
 		}
 	}
 }

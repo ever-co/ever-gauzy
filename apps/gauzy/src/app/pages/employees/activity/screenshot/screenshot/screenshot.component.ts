@@ -10,7 +10,7 @@ import moment from 'moment-timezone';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { DateRangePickerBuilderService, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
+import { DateRangePickerBuilderService, Store, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
 import {
 	ITimeLogFilters,
 	ITimeSlot,
@@ -19,7 +19,7 @@ import {
 	IScreenshot,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { isEmpty, distinctUntilChange, isNotEmpty, toTimezone, Store } from '@gauzy/ui-core/common';
+import { isEmpty, distinctUntilChange, isNotEmpty, toTimezone } from '@gauzy/ui-core/common';
 import {
 	BaseSelectorFilterComponent,
 	DeleteConfirmationComponent,
@@ -298,7 +298,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 
 				return timeSlot;
 			})
-			.groupBy((timeSlot) => toTimezone(timeSlot.startedAt, this.filters?.timeZone).format('HH'))
+			.groupBy((timeSlot) => toTimezone(timeSlot?.startedAt, this.filters?.timeZone).format('HH'))
 			.mapObject((hourTimeSlots: ITimeSlot[], hour): IScreenshotMap => {
 				const groupByMinutes = chain(hourTimeSlots)
 					.groupBy((timeSlot) => toTimezone(timeSlot.startedAt, this.filters?.timeZone).format('mm'))
@@ -308,7 +308,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 				 * So, we can display screenshots in UI
 				 */
 				const byMinutes = indexBy(sortBy(hourTimeSlots, 'screenshots'), (timeSlot) =>
-					toTimezone(timeSlot.startedAt, this.filters?.timeZone).format('mm')
+					toTimezone(timeSlot?.startedAt, this.filters?.timeZone).format('mm')
 				);
 				timeSlots = ['00', '10', '20', '30', '40', '50'].map((key) => {
 					/**

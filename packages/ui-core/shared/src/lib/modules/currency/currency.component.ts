@@ -16,8 +16,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { ICurrency, IOrganization } from '@gauzy/contracts';
 import { environment as ENV } from '@gauzy/ui-config';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { CurrencyService } from '@gauzy/ui-core/core';
-import { distinctUntilChange, isNotEmpty, Store } from '@gauzy/ui-core/common';
+import { CurrencyService, Store } from '@gauzy/ui-core/core';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

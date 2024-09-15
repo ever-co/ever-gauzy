@@ -16,10 +16,11 @@ import {
 	NavMenuBuilderService,
 	NavMenuSectionItem,
 	PermissionsService,
+	Store,
 	UsersService
 } from '@gauzy/ui-core/core';
 import { FeatureEnum, IOrganization, IRolePermission, IUser, IntegrationEnum, PermissionsEnum } from '@gauzy/contracts';
-import { Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { ReportService } from './reports/all-report/report.service';
 
 @UntilDestroy({ checkProperties: true })
@@ -143,7 +144,8 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 	 * Executes after the view initialization.
 	 */
 	ngAfterViewInit(): void {
-		merge(
+		// Merge observables to handle changes in job matching entity settings
+		const merge$ = merge(
 			this._integrationEntitySettingServiceStoreService.jobMatchingEntity$.pipe(
 				distinctUntilChange(), // Ensure that only distinct changes are considered
 				filter(({ currentValue }: IJobMatchingEntity) => !!currentValue), // Filter out falsy values
@@ -151,11 +153,10 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 					// Update component properties based on the current job matching entity settings
 					const isEmployeeJobMatchingEntity = !!currentValue.sync && !!currentValue.isActive;
 
-					if (isEmployeeJobMatchingEntity) {
-						this.addJobsNavigationMenuItems();
-					} else {
-						this.removeJobsNavigationMenuItems();
-					}
+					// Add or remove the jobs navigation menu items based on the current job matching entity
+					isEmployeeJobMatchingEntity
+						? this.addJobsNavigationMenuItems()
+						: this.removeJobsNavigationMenuItems();
 				})
 			),
 			this.store.user$.pipe(
@@ -169,9 +170,9 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.addOrganizationManageMenuItem(organization))
 			)
-		)
-			.pipe(untilDestroyed(this))
-			.subscribe();
+		);
+		// Subscribe to the merge$ observable
+		merge$.pipe(untilDestroyed(this)).subscribe();
 	}
 
 	/**
@@ -376,9 +377,6 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 
 		if (!id) return;
 
-		//Load permissions
-		this._permissionsService.loadPermissions();
-
 		const relations = ['role', 'tenant', 'tenant.featureOrganizations', 'tenant.featureOrganizations.feature'];
 		this.user = await this.usersService.getMe(relations, true);
 
@@ -395,6 +393,9 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 		}
 
 		this.store.user = this.user;
+
+		//Load permissions
+		this._permissionsService.loadPermissions();
 
 		//tenant enabled/disabled features for relatives organizations
 		const { tenant } = this.user;

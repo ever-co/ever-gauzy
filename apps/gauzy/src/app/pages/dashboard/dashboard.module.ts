@@ -1,30 +1,45 @@
 import { NgModule } from '@angular/core';
 import {
 	NbAlertModule,
+	NbBadgeModule,
 	NbButtonModule,
 	NbCardModule,
 	NbDialogModule,
 	NbIconModule,
 	NbInputModule,
-	NbSpinnerModule,
-	NbTooltipModule,
-	NbTreeGridModule,
+	NbListModule,
+	NbPopoverModule,
+	NbProgressBarModule,
+	NbRouteTabsetModule,
 	NbSelectModule,
-	NbRouteTabsetModule
+	NbSpinnerModule,
+	NbToggleModule,
+	NbTooltipModule,
+	NbTreeGridModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { TranslateModule } from '@ngx-translate/core';
+import { NgChartsModule } from 'ng2-charts';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { SwiperModule } from 'swiper/angular';
 import {
+	ActivityItemModule,
+	CounterPointModule,
+	DynamicTabsModule,
+	GalleryModule,
 	InfoBlockModule,
 	LineChartModule,
 	NoDataMessageModule,
 	ProfitHistoryModule,
 	RecordsHistoryModule,
+	ScreenshotsItemModule,
 	SharedModule,
 	SingleStatisticModule,
 	TableComponentsModule,
+	TimezoneFilterModule,
+	WidgetLayoutModule,
+	WindowLayoutModule,
 	WorkInProgressModule
 } from '@gauzy/ui-core/shared';
 import { DashboardRoutingModule } from './dashboard-routing.module';
@@ -33,50 +48,90 @@ import { DataEntryShortcutsComponent } from './data-entry-shortcuts/data-entry-s
 import { HumanResourcesComponent } from './human-resources/human-resources.component';
 import { AccountingComponent } from './accounting/accounting.component';
 import { ProjectManagementComponent } from './project-management/project-management.component';
-import { EmployeeChartsModule } from './human-resources/employee-charts/employee-charts.module';
-import { TimeTrackingModule } from './time-tracking/time-tracking.module';
 import { ProjectManagementDetailsComponent } from './project-management/project-management-details/project-management-details.component';
-import { TeamModule } from './team/team.module';
+import { TimeTrackingComponent } from './time-tracking/time-tracking.component';
+import {
+	EmployeeChartsComponent,
+	EmployeeDoughnutChartComponent,
+	EmployeeHorizontalBarChartComponent,
+	EmployeeStackedBarChartComponent
+} from './employee-charts';
+import { AllTeamComponent, ChartComponent, TeamCardComponent, TeamComponent, TeamMemberComponent } from './team';
+
+// NB Modules
+const NB_MODULES = [
+	NbAlertModule,
+	NbBadgeModule,
+	NbButtonModule,
+	NbCardModule,
+	NbDialogModule.forChild(),
+	NbIconModule,
+	NbInputModule,
+	NbListModule,
+	NbPopoverModule,
+	NbProgressBarModule,
+	NbRouteTabsetModule,
+	NbSelectModule,
+	NbSpinnerModule,
+	NbToggleModule,
+	NbTooltipModule,
+	NbTreeGridModule
+];
+
+// Third Party Modules
+const THIRD_PARTY_MODULES = [
+	InfiniteScrollModule,
+	LineChartModule,
+	NgSelectModule,
+	NgxPermissionsModule.forChild(),
+	NgChartsModule,
+	SwiperModule,
+	TranslateModule.forChild()
+];
+
+// Components
+const COMPONENTS = [
+	DashboardComponent,
+	DataEntryShortcutsComponent,
+	AccountingComponent,
+	HumanResourcesComponent,
+	ProjectManagementComponent,
+	ProjectManagementDetailsComponent,
+	TimeTrackingComponent,
+	EmployeeChartsComponent,
+	EmployeeHorizontalBarChartComponent,
+	EmployeeStackedBarChartComponent,
+	EmployeeDoughnutChartComponent,
+	TeamComponent,
+	TeamCardComponent,
+	TeamMemberComponent,
+	ChartComponent,
+	AllTeamComponent
+];
 
 @NgModule({
 	imports: [
 		DashboardRoutingModule,
-		NbCardModule,
-		NgSelectModule,
-		NbButtonModule,
-		NbInputModule,
+		...NB_MODULES,
+		...THIRD_PARTY_MODULES,
+		// Feature Modules
 		RecordsHistoryModule,
-		NbDialogModule.forChild(),
-		NbTreeGridModule,
-		NbIconModule,
-		NbTooltipModule,
-		NbSpinnerModule,
-		NbSelectModule,
-		NbAlertModule,
-		NgxPermissionsModule.forChild(),
 		ProfitHistoryModule,
-		TranslateModule.forChild(),
-		EmployeeChartsModule,
-		NbSpinnerModule,
 		SingleStatisticModule,
 		InfoBlockModule,
-		NbRouteTabsetModule,
-		TimeTrackingModule,
 		SharedModule,
-		LineChartModule,
-		InfiniteScrollModule,
 		TableComponentsModule,
 		NoDataMessageModule,
 		WorkInProgressModule,
-		TeamModule
+		ActivityItemModule,
+		CounterPointModule,
+		DynamicTabsModule,
+		GalleryModule,
+		ScreenshotsItemModule,
+		TimezoneFilterModule,
+		WidgetLayoutModule,
+		WindowLayoutModule
 	],
-	declarations: [
-		DashboardComponent,
-		AccountingComponent,
-		HumanResourcesComponent,
-		DataEntryShortcutsComponent,
-		ProjectManagementComponent,
-		ProjectManagementDetailsComponent
-	]
+	declarations: [...COMPONENTS]
 })
 export class DashboardModule {}

@@ -29,8 +29,8 @@ export function createInitialState(): IRecapState {
 		timeSlots: [],
 		dailyActivities: [],
 		range: {
-			startDate: TimeTrackerDateManager.startToday,
-			endDate: TimeTrackerDateManager.endToday
+			startDate: TimeTrackerDateManager.startCurrentDay,
+			endDate: TimeTrackerDateManager.endCurrentDay
 		},
 		count: {
 			projectsCount: 0,

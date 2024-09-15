@@ -1,3 +1,4 @@
+import { MenuItemConstructorOptions } from 'electron';
 import { IPluginMetadata } from './plugin-metadata.interface';
 
 export interface IPluginManager {
@@ -10,4 +11,5 @@ export interface IPluginManager {
 	uninstallPlugin(name: string): Promise<void>;
 	getAllPlugins(): Promise<IPluginMetadata[]>;
 	getOnePlugin(name: string): Promise<IPluginMetadata>;
+	getMenuPlugins(): MenuItemConstructorOptions[];
 }

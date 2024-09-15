@@ -10,7 +10,7 @@ import {
 	EventEmitter,
 	Output
 } from '@angular/core';
-import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { AbstractControl, ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { debounceTime } from 'rxjs/operators';
@@ -57,11 +57,11 @@ export class PasswordFormFieldComponent
 	/*
 	 * Getter & Setter accessor for dynamic form control
 	 */
-	_ctrl: FormControl = new FormControl();
-	get ctrl(): FormControl {
+	_ctrl: AbstractControl = new FormControl();
+	get ctrl(): AbstractControl {
 		return this._ctrl;
 	}
-	@Input() set ctrl(value: FormControl) {
+	@Input() set ctrl(value: AbstractControl) {
 		this._ctrl = value;
 	}
 
@@ -119,13 +119,13 @@ export class PasswordFormFieldComponent
 	}
 
 	/*
-	 * Getter & Setter for dynamic classList
+	 * Getter & Setter for dynamic class list
 	 */
-	_ngClass: string;
-	get ngClass(): string {
+	_ngClass: any;
+	get ngClass(): any {
 		return this._ngClass;
 	}
-	@Input() set ngClass(value: string) {
+	@Input() set ngClass(value: any) {
 		this._ngClass = value;
 	}
 

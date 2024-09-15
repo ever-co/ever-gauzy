@@ -33,6 +33,7 @@
 		"INVITE": "邀请",
 		"SELECT_ALL": "选择所有",
 		"COPY_LINK": "复制链接",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "管理面试",
 		"MANAGE_INVITES": "管理邀请",
 		"MANAGE_SPRINTS": "管理冲刺",
@@ -156,7 +157,14 @@
 		"PASTE": "粘贴",
 		"FORWARD_PORTS": "转发端口",
 		"REPORT": "报告",
-		"IGNORE": "忽略"
+		"IGNORE": "忽略",
+		"INSTALL": "安装",
+		"UNINSTALL": "卸载",
+		"DEACTIVATE": "停用",
+		"ACTIVATE": "启用",
+		"ADD_PLUGIN": "添加插件",
+		"LOAD_PLUGIN": "加载插件",
+		"FROM_CDN": "来自CDN"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -179,6 +187,7 @@
 			"APPROVAL_REQUEST": "您还没有创建任何审批请求。",
 			"APPROVAL_POLICY": "您还没有创建任何审批策略。",
 			"TIME_OFF": "您还没有创建任何休假。",
+			"TIME_OFF_POLICY": "您尚未创建任何休假政策。",
 			"CANDIDATE": "您还没有创建任何候选人。",
 			"INTERVIEW": "您尚未创建任何面试。",
 			"EQUIPMENT": "你还没有创建任何设备。",
@@ -1102,7 +1111,8 @@
 		"TABLE": "桌子",
 		"CARDS_GRID": "卡片网格",
 		"SPRINT_VIEW": "Sprint View 时事回顾",
-		"QUICK_SETTINGS": "快捷设置"
+		"QUICK_SETTINGS": "快捷设置",
+		"NO_LAYOUT": "没有可用的数据布局"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "有什么新的吗？",
@@ -1626,6 +1636,7 @@
 		"APPLIED": "应用",
 		"HIRED": "雇佣的",
 		"REJECTED": "被拒绝",
+		"SHOW_REJECTED": "显示被拒绝",
 		"DELETED": "已刪除",
 		"ARCHIVED": "存档",
 		"SELECT_EMPLOYEE_MSG": "请从上面的菜单中选择员工。",
@@ -1694,6 +1705,7 @@
 				"PREVIOUS": "以前",
 				"SAVE": "保存",
 				"CREATE_CRITERIONS": "创建标准",
+				"CLOSE_CRITERIONS": "关闭标准",
 				"EMAIL_NOTIFICATION": "电子邮件通知",
 				"DELETE_INTERVIEW": "删除采访",
 				"DELETE_FEEDBACK": "删除反馈",
@@ -1992,7 +2004,6 @@
 			"ORG_PROPOSALS_VIEW": "查看提案页面",
 			"ORG_PROPOSAL_TEMPLATES_VIEW": "查看提案模板页面",
 			"ORG_PROPOSAL_TEMPLATES_EDIT": "创建/编辑/删除提案模板",
-			"ORG_TIME_OFF_VIEW": "查看休假页面",
 			"ORG_EMPLOYEES_VIEW": "查看组织员工",
 			"ORG_EMPLOYEES_EDIT": "创建/编辑/删除组织员工",
 			"ORG_CANDIDATES_VIEW": "查看组织候选人",
@@ -2013,8 +2024,10 @@
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "创建/编辑/删除候选人反馈",
 			"ALL_ORG_VIEW": "查看所有组织",
 			"ALL_ORG_EDIT": "创建/编辑/删除所有组织",
-			"POLICY_VIEW": "查看休假政策",
-			"POLICY_EDIT": "编辑休假政策",
+			"TIME_OFF_POLICY_ADD": "添加休假政策",
+			"TIME_OFF_POLICY_VIEW": "查看休假政策",
+			"TIME_OFF_POLICY_EDIT": "编辑休假政策",
+			"TIME_OFF_POLICY_DELETE": "删除休假政策",
 			"CHANGE_SELECTED_EMPLOYEE": "更改选定的员工",
 			"CHANGE_SELECTED_CANDIDATE": "改变选定的候选人",
 			"CHANGE_SELECTED_ORGANIZATION": "更改所选组织",
@@ -2039,7 +2052,10 @@
 			"PUBLIC_PAGE_EDIT": "编辑组织公共页面",
 			"CAN_APPROVE_TIMESHEET": "批准时间表",
 			"EVENT_TYPES_VIEW": "查看事件类型",
-			"TIME_OFF_EDIT": "修改休假时间",
+			"TIME_OFF_ADD": "添加休假",
+			"TIME_OFF_VIEW": "查看休假",
+			"TIME_OFF_EDIT": "编辑休假",
+			"TIME_OFF_DELETE": "删除休假",
 			"ORG_INVENTORY_VIEW": "查看组织库存",
 			"INVENTORY_GALLERY_VIEW": "查看库存画廊",
 			"INVENTORY_GALLERY_EDIT": "编辑库存画廊",
@@ -2047,6 +2063,10 @@
 			"MEDIA_GALLERY_VIEW": "查看媒体画廊",
 			"MEDIA_GALLERY_EDIT": "编辑媒体库",
 			"MEDIA_GALLERY_DELETE": "删除媒体库",
+			"EQUIPMENT_SHARING_POLICY_ADD": "添加设备共享政策",
+			"EQUIPMENT_SHARING_POLICY_VIEW": "查看设备共享政策",
+			"EQUIPMENT_SHARING_POLICY_EDIT": "编辑设备共享政策",
+			"EQUIPMENT_SHARING_POLICY_DELETE": "删除设备共享政策",
 			"ORG_EQUIPMENT_VIEW": "查看组织设备",
 			"ORG_EQUIPMENT_EDIT": "编辑组织设备",
 			"ORG_EQUIPMENT_SHARING_VIEW": "查看组织设备共享",
@@ -2072,6 +2092,10 @@
 			"ORG_PROJECT_DELETE": "删除项目",
 			"ORG_CONTACT_EDIT": "创建/编辑联系人",
 			"ORG_CONTACT_VIEW": "查看联系人",
+			"PROJECT_MODULE_CREATE": "创建项目模块",
+			"PROJECT_MODULE_READ": "查看项目模块",
+			"PROJECT_MODULE_UPDATE": "更新项目模块",
+			"PROJECT_MODULE_DELETE": "删除项目模块",
 			"ORG_TEAM_ADD": "添加团队",
 			"ORG_TEAM_VIEW": "查看团队",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "编辑活动任务",
@@ -2184,7 +2208,6 @@
 		},
 		"PROPOSAL_DETAILS": {
 			"PROPOSAL_DETAILS": "提案细节",
-			"EDIT": "编辑",
 			"AUTHOR": "作者",
 			"JOB_POST_URL": "職位網址",
 			"PROPOSAL_SENT_ON": "投递日期",
@@ -3042,7 +3065,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "生成公共链接",
 			"GENERATE": "生成一个链接，任何具有链接的人都可以查看{{ text }}。",
-			"ACCESS": "任何有权访问此链接的人都可以查看{{ text }}。"
+			"ACCESS": "任何有权访问此链接的人都可以查看{{ text }}。",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -3073,7 +3097,7 @@
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "页面未找到",
 		"TAKE_ME_HOME": "带我回家",
-		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "您正在寻找的页面不存在。",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "您正在寻找的页面不存在。",
 		"REDIRECT_TO_HOME": "您将很快被重定向到主页"
 	},
 	"HELP_PAGE": {
@@ -3808,7 +3832,9 @@
 			"DB_PORT": "数据库端口",
 			"USER": "用户",
 			"PASSWORD": "密码",
-			"UI_HOSTNAME": "界面主机名/ IP地址"
+			"UI_HOSTNAME": "界面主机名/ IP地址",
+			"TITLE_SERVER_API": "Ever Gauzy API 服务器安装向导",
+			"LABEL_SERVER_API": "Ever Gauzy API Server 桌面应用程序提供 Gauzy 平台的全部功能，可直接在您的台式计算机或笔记本电脑上使用。此外，它还允许跟踪工作时间、活动记录以及接收跟踪提醒/通知的功能。"
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "屏幕捕获",
@@ -3902,6 +3928,9 @@
 			"WIDGET": "小部件",
 			"PLUGINS": "插件",
 			"PLUGIN_DESCRIPTION": "插件",
+			"VERSION": "版本",
+			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "从本地文件或CDN安装插件。 本地适用于自定义/私有插件，CDN适用于公共插件。 根据您的需求选择。",
+			"ADD_PLUGIN_CDN_DESCRIPTION": "CDN安装可以轻松访问公开可用的插件。",
 			"PLUGIN": "插件",
 			"WIDGET_LABEL": "此窗口反映计时器的状态，指示计时器是运行还是停止，并兼做按钮。",
 			"SSL": {
@@ -3997,11 +4026,16 @@
 			"HELP": "帮助",
 			"LEARN_MORE": "了解更多",
 			"OPEN_MAIN_WINDOW": "打开主窗口",
-			"DAILY_RECAP": "每日总结"
+			"DAILY_RECAP": "每日总结",
+			"WEEKLY_RECAP": "每周回顾",
+			"MONTHLY_RECAP": "每月回顾"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "按小时跟踪时间",
-			"HOURLY_TIME_TRACKING_DATA": "按小时跟踪时间数据"
+			"HOURLY_TIME_TRACKING_DATA": "按小时跟踪时间数据",
+			"NO_MONTHLY_ACTIVITY": "您本月没有跟踪的时间和活动。",
+			"WORKED_FOR_MONTH": "本月工作",
+			"ACTIVITY_FOR_MONTH": "每月活动"
 		}
 	},
 	"SERVER": "服务器",
@@ -4136,7 +4170,8 @@
 			"UPWORK": "优才网",
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "浏览器插件",
-			"TEAMS": "团队"
+			"TEAMS": "团队",
+			"CLOC": "克洛克"
 		},
 		"LAST_WORKED": "上一次工作：",
 		"TIME_ZONE": "Time Zone",
@@ -4167,8 +4202,9 @@
 		"NO_RECORD_FOUND": "没有找到记录。请选择日期范围、员工或项目。"
 	},
 	"ONBOARDING": {
-		"FIRST_ORGANIZATION": "让我们创建你的第一个组织。",
-		"COMPLETE": "你已准备妥当！"
+		"FIRST_ORGANIZATION": "让我们创建您的第一个组织",
+		"COMPLETE_TITLE": "你已经准备好了！",
+		"COMPLETE_SUB_TITLE": "现在你想去哪儿？"
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "此字段为必填项！",
@@ -4236,7 +4272,8 @@
 		"SELECT_EMPLOYEE_ERROR": "请选择一个员工。",
 		"EXPIRED_OR_CANCELLED": "该约会已过期或已取消。",
 		"EMAIL_SENT": "已经向主持人和所有参会人员发送了一封电子邮件。",
-		"NO_ACTIVE_EVENT_TYpES": "没有活动类型。"
+		"NO_ACTIVE_EVENT_TYPES": "没有活动类型。",
+		"CLICK_HERE": "Click Here"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "电子邮件模板",
@@ -4276,7 +4313,8 @@
 			"employee-join": "员工加入",
 			"email-reset": "电子邮件重置",
 			"organization-team-join-request": "组织团队加入请求",
-			"payment-receipt": "付款收据"
+			"payment-receipt": "付款收据",
+			"reject-candidate": "拒绝候选人"
 		},
 		"HTML_EDITOR": "HTML编辑器"
 	},

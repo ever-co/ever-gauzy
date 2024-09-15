@@ -1,6 +1,6 @@
 import { JoinColumn, RelationId, JoinTable } from 'typeorm';
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString, IsUUID } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsDateString, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	CurrenciesEnum,
 	IActivity,
@@ -11,6 +11,7 @@ import {
 	IInvoiceItem,
 	IOrganizationContact,
 	IOrganizationProject,
+	IOrganizationProjectModule,
 	IOrganizationSprint,
 	IOrganizationTeam,
 	IPayment,
@@ -25,7 +26,8 @@ import {
 	OrganizationProjectBudgetTypeEnum,
 	ProjectBillingEnum,
 	ProjectOwnerEnum,
-	TaskListTypeEnum
+	TaskListTypeEnum,
+	TaskStatusEnum
 } from '@gauzy/contracts';
 import { isMySQL } from '@gauzy/config';
 import {
@@ -35,6 +37,7 @@ import {
 	ImageAsset,
 	InvoiceItem,
 	OrganizationContact,
+	OrganizationProjectModule,
 	OrganizationSprint,
 	OrganizationTeam,
 	Payment,
@@ -71,59 +74,112 @@ export class OrganizationProject
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationProject, Taggable, HasCustomFields
 {
+	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
 	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
 
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsDateString()
 	@MultiORMColumn({ nullable: true })
 	startDate?: Date;
 
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsDateString()
 	@MultiORMColumn({ nullable: true })
 	endDate?: Date;
 
+	@ApiPropertyOptional({ enum: ProjectBillingEnum, example: ProjectBillingEnum.FLAT_FEE })
+	@IsOptional()
+	@IsEnum(ProjectBillingEnum)
 	@MultiORMColumn({ nullable: true })
-	billing: ProjectBillingEnum;
+	billing?: ProjectBillingEnum;
 
+	@ApiPropertyOptional({ type: () => String, enum: CurrenciesEnum, example: CurrenciesEnum.USD })
+	@IsOptional()
+	@IsEnum(CurrenciesEnum)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
-	currency: CurrenciesEnum;
+	currency?: CurrenciesEnum;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
-	public: boolean;
+	public?: boolean;
 
+	@ApiPropertyOptional({ type: () => String, enum: ProjectOwnerEnum, example: ProjectOwnerEnum.CLIENT })
+	@IsOptional()
+	@IsEnum(ProjectOwnerEnum)
 	@MultiORMColumn({ nullable: true })
-	owner: ProjectOwnerEnum;
+	owner?: ProjectOwnerEnum;
 
+	@ApiProperty({ type: () => String, enum: TaskListTypeEnum, example: TaskListTypeEnum.GRID })
+	@IsEnum(TaskListTypeEnum)
 	@MultiORMColumn({ default: TaskListTypeEnum.GRID })
-	taskListType: TaskListTypeEnum;
+	taskListType?: TaskListTypeEnum;
 
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@MultiORMColumn({ nullable: true })
 	code?: string;
 
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@MultiORMColumn({ nullable: true })
 	description?: string;
 
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@MultiORMColumn({ nullable: true })
 	color?: string;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
 	billable?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
 	billingFlat?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
 	openSource?: boolean;
 
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@MultiORMColumn({ nullable: true })
 	projectUrl?: string;
 
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@MultiORMColumn({ nullable: true })
 	openSourceProjectUrl?: string;
 
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
 	@MultiORMColumn({ nullable: true })
 	budget?: number;
 
+	// Specifies the type of budget for the project, if provided.
+	@ApiPropertyOptional({ type: () => String, enum: OrganizationProjectBudgetTypeEnum })
+	@IsOptional()
+	@IsEnum(OrganizationProjectBudgetTypeEnum)
 	@MultiORMColumn({
 		nullable: true,
 		default: OrganizationProjectBudgetTypeEnum.COST,
@@ -131,12 +187,33 @@ export class OrganizationProject
 	})
 	budgetType?: OrganizationProjectBudgetTypeEnum;
 
+	// Specifies the number of members in the project, if provided.
 	@MultiORMColumn({ nullable: true, default: 0 })
 	membersCount?: number;
 
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@MultiORMColumn({ length: 500, nullable: true })
 	imageUrl?: string;
 
+	// Specifies the icon of the project, if provided.
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true })
+	icon?: string;
+
+	// Specifies the status of the project, if provided.
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsEnum(TaskStatusEnum)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true })
+	status?: TaskStatusEnum;
+
+	// Auto-sync tasks property
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
@@ -144,6 +221,7 @@ export class OrganizationProject
 	@MultiORMColumn({ default: true, nullable: true })
 	isTasksAutoSync?: boolean;
 
+	// Auto-sync on label property
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
@@ -151,12 +229,29 @@ export class OrganizationProject
 	@MultiORMColumn({ default: true, nullable: true })
 	isTasksAutoSyncOnLabel?: boolean;
 
+	// Auto-sync tasks label property
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	syncTag?: string;
+
+	// Defines the number of days after which tasks will be archived automatically, if specified.
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, type: 'decimal' })
+	archiveTasksIn?: number;
+
+	// Specifies the number of days after which tasks will be automatically closed, if provided.
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, type: 'decimal' })
+	closeTasksIn?: number;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -217,6 +312,26 @@ export class OrganizationProject
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: ID;
+
+	/**
+	 * Project Default Assignee
+	 */
+	@MultiORMManyToOne(() => Employee, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
+		onDelete: 'CASCADE'
+	})
+	defaultAssignee?: IEmployee;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: OrganizationProject) => it.defaultAssignee)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	defaultAssigneeId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -296,6 +411,12 @@ export class OrganizationProject
 	@MultiORMOneToMany(() => TaskVersion, (it) => it.project)
 	versions?: ITaskVersion[];
 
+	/**
+	 * Organization modules Relationship
+	 */
+	@MultiORMOneToMany(() => OrganizationProjectModule, (it) => it.project)
+	modules?: IOrganizationProjectModule[];
+
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToMany
@@ -318,7 +439,7 @@ export class OrganizationProject
 	@JoinTable({
 		name: 'tag_organization_project'
 	})
-	tags: ITag[];
+	tags?: ITag[];
 
 	/**
 	 * Project Members Relationship

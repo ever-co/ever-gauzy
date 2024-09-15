@@ -992,6 +992,66 @@ export class EmailService {
 		}
 	}
 
+	/**
+	 *
+	 * @param languageCode
+	 * @param email
+	 * @param candidateName
+	 * @param organization
+	 * @param originUrl
+	 */
+	async sendRejectionEmail(
+		languageCode: LanguagesEnum,
+		email: string,
+		candidateName: string,
+		organization: IOrganization,
+		originUrl: string
+	) {
+		const tenantId = RequestContext.currentTenantId();
+		const { id: organizationId, name: organizationName } = organization;
+		const clientBaseUrl = originUrl || env.clientBaseUrl;
+
+		const sendOptions = {
+			template: EmailTemplateEnum.REJECT_CANDIDATE,
+			message: {
+				to: email
+			},
+			locals: {
+				locale: languageCode,
+				host: clientBaseUrl,
+				candidateName,
+				organizationName,
+				tenantId,
+				organizationId
+			}
+		};
+
+		const body = {
+			templateName: sendOptions.template,
+			email: sendOptions.message.to,
+			languageCode,
+			organization,
+			message: ''
+		};
+
+		const isEmailBlocked = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+		if (!isEmailBlocked) {
+			try {
+				const instance = await this.emailSendService.getEmailInstance({ organizationId, tenantId });
+				const sendResult = await instance.send(sendOptions);
+
+				body.message = sendResult.originalMessage;
+			} catch (error) {
+				console.log(`Error while sending rejection email to ${candidateName}: %s`, error?.message);
+				throw new BadRequestException(
+					`Error while sending rejection email to ${candidateName}: ${error?.message}`
+				);
+			} finally {
+				await this.createEmailRecord(body);
+			}
+		}
+	}
+
 	async resendEmail(input: IResendEmailInput, languageCode: LanguagesEnum) {
 		const { id } = input;
 		const emailHistory: IEmailHistory = await this.typeOrmEmailHistoryRepository.findOne({

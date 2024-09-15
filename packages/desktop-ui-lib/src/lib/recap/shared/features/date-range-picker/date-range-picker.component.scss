@@ -72,7 +72,7 @@ $button-radius: var(--button-rectangle-border-radius);
 			display: flex;
 			flex-direction: row;
 			flex-wrap: nowrap;
-			@include nb-ltr(margin-left, -81.5%);
+			@include nb-ltr(margin-left, -140.5%);
 			@include nb-rtl(margin-right, -81.5%);
 
 			&.double {
@@ -223,5 +223,22 @@ $button-radius: var(--button-rectangle-border-radius);
 
 	[nbInput].status-basic:focus:hover {
 		background-color: unset;
+	}
+}
+
+:host(.right) {
+	::ng-deep {
+		&.md-drppicker {
+			@include nb-ltr(margin-left, -30%);
+			@include nb-rtl(margin-left, -132%);
+		}
+	}
+}
+
+:host(.full) {
+	::ng-deep {
+		&.md-drppicker {
+			@include nb-ltr(margin-left, -155%);
+		}
 	}
 }

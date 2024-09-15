@@ -50,7 +50,7 @@
 		"build:package:plugin:integration-jira": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn --cwd ./packages/plugins/integration-jira build",
 		"build:package:plugin:product-reviews": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn --cwd ./packages/plugins/product-reviews build",
 		"build:package:desktop-window": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn --cwd ./packages/desktop-window build",
-		"postinstall.web": "yarn node ./decorate-angular-cli.js && yarn npx ngcc --properties es2016 browser module main --first-only --create-ivy-entry-points && yarn node tools/web/postinstall"
+		"postinstall.web": "yarn node ./decorate-angular-cli.js && yarn node tools/web/postinstall"
 	},
 	"resolutions": {
 		"@angular-devkit/build-angular": "^16.2.11"
