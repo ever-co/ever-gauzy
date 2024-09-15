@@ -146,6 +146,7 @@ import { FavoriteModule } from './favorite/favorite.module';
 import { GlobalFavoriteModule } from './favorite/global-favorite-service.module';
 import { CommentModule } from './comment/comment.module';
 import { StatsModule } from './stats/stats.module'; // Global Stats Module
+import { ReactionModule } from './reaction/reaction.module';
 
 const { unleashConfig } = environment;
 
@@ -440,8 +441,9 @@ if (environment.THROTTLE_ENABLED) {
 		TaskEstimationModule,
 		FavoriteModule,
 		GlobalFavoriteModule,
-		CommentModule,
-		StatsModule // Global Stats Module
+		StatsModule, // Global Stats Module
+		ReactionModule,
+		CommentModule		
 	],
 	controllers: [AppController],
 	providers: [
