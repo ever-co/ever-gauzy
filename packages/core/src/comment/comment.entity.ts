@@ -37,7 +37,7 @@ export class Comment extends TenantOrganizationBaseEntity implements IComment {
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
-	@MultiORMColumn()
+	@MultiORMColumn({ type: 'text' })
 	comment: string;
 
 	@ApiPropertyOptional({ type: () => String, enum: ActorTypeEnum })
