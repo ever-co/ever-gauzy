@@ -440,8 +440,8 @@ if (environment.THROTTLE_ENABLED) {
 		TaskEstimationModule,
 		FavoriteModule,
 		GlobalFavoriteModule,
-		StatsModule,
-		ReactionModule // Global Stats Module
+		StatsModule, // Global Stats Module
+		ReactionModule
 	],
 	controllers: [AppController],
 	providers: [
