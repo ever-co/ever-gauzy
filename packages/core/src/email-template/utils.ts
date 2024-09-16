@@ -15,7 +15,7 @@ import { prepareSQLQuery as p } from '../database/database.helper';
  * Email templates utils functions.
  */
 export class EmailTemplateUtils {
-	private static readonly suppertedDatabaseTypes = new Set([
+	private static readonly supportedDatabaseTypes = new Set([
 		DatabaseTypeEnum.sqlite,
 		DatabaseTypeEnum.betterSqlite3,
 		DatabaseTypeEnum.postgres,
@@ -232,7 +232,7 @@ export class EmailTemplateUtils {
 	}
 
 	/**
-	 * Upserts an email template based on its existence in the database.
+	 * Upsert an email template based on its existence in the database.
 	 *
 	 * @param queryRunner - The QueryRunner instance for executing queries.
 	 * @param type - The type of the database (e.g., sqlite, mysql).
@@ -276,7 +276,7 @@ export class EmailTemplateUtils {
 				console.log(`✅ Inserted email template: ${name}`);
 			}
 		} catch (error) {
-			console.error(`❌ Error upserting email template "${name}":`, error);
+			console.error(`❌ Error upsert email template "${name}":`, error);
 		}
 	}
 
@@ -342,7 +342,7 @@ export class EmailTemplateUtils {
 	 * @param type
 	 */
 	private static validateDatabaseType(type: DatabaseTypeEnum): void {
-		if (!EmailTemplateUtils.suppertedDatabaseTypes.has(type)) {
+		if (!EmailTemplateUtils.supportedDatabaseTypes.has(type)) {
 			throw new Error(`Unsupported database: ${type}`);
 		}
 	}
