@@ -15,6 +15,12 @@ import { prepareSQLQuery as p } from '../database/database.helper';
  * Email templates utils functions.
  */
 export class EmailTemplateUtils {
+	private static readonly suppertedDatabaseTypes = new Set([
+		DatabaseTypeEnum.sqlite,
+		DatabaseTypeEnum.betterSqlite3,
+		DatabaseTypeEnum.postgres,
+		DatabaseTypeEnum.mysql
+	]);
 	public static globalPath = ['core', 'seeds', 'data', 'default-email-templates'];
 
 	/**
@@ -186,6 +192,9 @@ export class EmailTemplateUtils {
 		// Get the database type
 		const type = queryRunner.connection.options.type as DatabaseTypeEnum;
 
+		// Validate the database type
+		EmailTemplateUtils.validateDatabaseType(queryRunner.connection.options.type as DatabaseTypeEnum);
+
 		// Determine select query based on the database type
 		const selectQuery = this.getSelectQuery(type);
 
@@ -325,5 +334,16 @@ export class EmailTemplateUtils {
 
 		// Replace $ placeholders with ? for mysql, sqlite & better-sqlite3
 		return replacePlaceholders(p(query), type);
+	}
+
+	/**
+	 * Validates the database type.
+	 *
+	 * @param type
+	 */
+	private static validateDatabaseType(type: DatabaseTypeEnum): void {
+		if (!EmailTemplateUtils.suppertedDatabaseTypes.has(type)) {
+			throw new Error(`Unsupported database: ${type}`);
+		}
 	}
 }
