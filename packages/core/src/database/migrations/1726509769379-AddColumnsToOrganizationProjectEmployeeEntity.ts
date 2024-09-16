@@ -2,8 +2,8 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 import { yellow } from 'chalk';
 import { DatabaseTypeEnum } from '@gauzy/config';
 
-export class AddColumnsToOrganizationProjectEmployeeEntity1726406901894 implements MigrationInterface {
-	name = 'AddColumnsToOrganizationProjectEmployeeEntity1726406901894';
+export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implements MigrationInterface {
+	name = 'AddColumnsToOrganizationProjectEmployeeEntity1726509769379';
 
 	/**
 	 * Up Migration
@@ -63,8 +63,6 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726406901894 implemen
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" DROP CONSTRAINT "FK_6b5b0c3d994f59d9c800922257f"`
 		);
-		await queryRunner.query(`DROP INDEX "public"."IDX_a8d924902879f0a3349678c86f"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_b4734abeedbb9c724c980f7f54"`);
 		await queryRunner.query(`ALTER TABLE "organization_project_employee" ADD "deletedAt" TIMESTAMP`);
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" ADD "id" uuid NOT NULL DEFAULT gen_random_uuid()`
@@ -101,8 +99,6 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726406901894 implemen
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" ADD CONSTRAINT "PK_cb8069ff5917c90adbc48139147" PRIMARY KEY ("id")`
 		);
-		await queryRunner.query(`CREATE INDEX "IDX_837468421e96f22a2e12022ef0" ON "favorite" ("entity") `);
-		await queryRunner.query(`CREATE INDEX "IDX_e88acab853ab012582c6d0f3f6" ON "favorite" ("entityId") `);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_f3d1102a8aa6442cdfce5d57c3" ON "organization_project_employee" ("isActive") `
 		);
@@ -169,8 +165,6 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726406901894 implemen
 		await queryRunner.query(`DROP INDEX "public"."IDX_a9abd98013154ec1edfa1ec18c"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_abbe29504bb642647a69959cc0"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_f3d1102a8aa6442cdfce5d57c3"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_e88acab853ab012582c6d0f3f6"`);
-		await queryRunner.query(`DROP INDEX "public"."IDX_837468421e96f22a2e12022ef0"`);
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" DROP CONSTRAINT "PK_cb8069ff5917c90adbc48139147"`
 		);
@@ -201,8 +195,6 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726406901894 implemen
 		);
 		await queryRunner.query(`ALTER TABLE "organization_project_employee" DROP COLUMN "id"`);
 		await queryRunner.query(`ALTER TABLE "organization_project_employee" DROP COLUMN "deletedAt"`);
-		await queryRunner.query(`CREATE INDEX "IDX_b4734abeedbb9c724c980f7f54" ON "favorite" ("entityId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_a8d924902879f0a3349678c86f" ON "favorite" ("entity") `);
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" ADD CONSTRAINT "FK_6b5b0c3d994f59d9c800922257f" FOREIGN KEY ("employeeId") REFERENCES "employee"("id") ON DELETE CASCADE ON UPDATE CASCADE`
 		);
