@@ -9,8 +9,7 @@ import {
 	OrganizationContactBudgetTypeEnum,
 	IOrganizationContact,
 	IImageAsset,
-	IOrganizationProjectEmployee,
-	ID
+	IOrganizationProjectEmployee
 } from '@gauzy/contracts';
 import { NbStepperComponent } from '@nebular/theme';
 import { debounceTime, filter, tap } from 'rxjs/operators';
