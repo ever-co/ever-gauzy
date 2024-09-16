@@ -991,7 +991,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				type: 'custom',
 				width: '12%',
 				isFilterable: false,
-				sort: false,
+				isSortable: false,
 				renderComponent: ContactLinksComponent,
 				componentInitFunction: (instance: ContactLinksComponent, cell: Cell) => {
 					instance.rowData = cell.getRow().getData();

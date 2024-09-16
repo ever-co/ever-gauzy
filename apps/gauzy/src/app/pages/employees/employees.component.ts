@@ -762,7 +762,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 						}
 						this.setFilter({ field: 'tags', search: tagIds });
 					},
-					sort: false
+					isSortable: false
 				},
 				workStatus: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
