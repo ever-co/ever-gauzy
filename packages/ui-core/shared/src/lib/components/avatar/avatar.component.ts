@@ -1,12 +1,13 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { Router } from '@angular/router';
+import { ID } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ngx-avatar',
 	templateUrl: './avatar.component.html',
 	styleUrls: ['./avatar.component.scss']
 })
-export class AvatarComponent implements OnInit {
+export class AvatarComponent {
 	@Input() size: 'lg' | 'sm' | 'md' = 'md';
 	@Input() src: string;
 	@Input() appendCaption: string;
@@ -46,11 +47,14 @@ export class AvatarComponent implements OnInit {
 
 	constructor(private readonly router: Router) {}
 
-	ngOnInit() {}
-
-	edit(id: string) {
+	/**
+	 * Navigates to the employee edit page based on the provided employee ID.
+	 *
+	 * @param id - The ID of the employee to edit.
+	 */
+	edit(id: ID): void {
 		if (id) {
-			this.router.navigate(['/pages/employees/edit/', id]);
+			this.router.navigate([`/pages/employees/edit/${id}`]);
 		}
 	}
 }

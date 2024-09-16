@@ -1,33 +1,29 @@
-<div *ngIf="this.rowData?.members?.length > 0" class="container">
+<div *ngIf="rowData?.members?.length > 0" class="container">
 	<div class="row header">
 		<div class="col">
 			{{ 'ORGANIZATIONS_PAGE.EDIT.MEMBERS' | translate }}
 		</div>
 	</div>
 	<div class="row employee-row">
+		<!-- First Half of Employees -->
 		<div class="col employee-column">
-			<ng-container *ngFor="let employee of employeesFirstHalf">
-				<a class="avatar" (click)="edit(employee?.id)">
-					<img
-						class="img"
-						type="creator"
-						[src]="employee?.user?.imageUrl"
-					/>
-					<span> {{ employee?.fullName }}</span>
-				</a>
+			<ng-container *ngFor="let member of employeesFirstHalf; trackBy: trackByEmployeeId">
+				<ng-container *ngTemplateOutlet="employee; context: { member: member }"> </ng-container>
 			</ng-container>
 		</div>
+		<!-- Second Half of Employees -->
 		<div class="col employee-column">
-			<ng-container *ngFor="let employee of employeesLastHalf">
-				<a class="avatar" (click)="edit(employee?.id)">
-					<img
-						class="img"
-						type="creator"
-						[src]="employee?.user?.imageUrl"
-					/>
-					<span> {{ employee?.fullName }}</span>
-				</a>
+			<ng-container *ngFor="let member of employeesLastHalf; trackBy: trackByEmployeeId">
+				<ng-container *ngTemplateOutlet="employee; context: { member: member }"> </ng-container>
 			</ng-container>
 		</div>
 	</div>
 </div>
+
+<!-- Reusable Employee Template -->
+<ng-template #employee let-member="member">
+	<a class="avatar" (click)="edit(member?.employee?.id)">
+		<img class="img" [src]="member?.employee?.user?.imageUrl" [alt]="member?.employee?.fullName" />
+		<span class="ml-1">{{ member?.employee?.fullName }}</span>
+	</a>
+</ng-template>

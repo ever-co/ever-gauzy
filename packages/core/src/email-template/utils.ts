@@ -248,8 +248,10 @@ export class EmailTemplateUtils {
 			// Update if exists, otherwise insert
 			if (parseInt(template.count, 10) > 0) {
 				await queryRunner.connection.manager.query(updateQuery, [hbs, mjml, name, languageCode]);
+				console.log(`email template updated: ${updateQuery}`);
 			} else {
 				await queryRunner.connection.manager.query(insertQuery, payload);
+				console.log(`email template created: ${insertQuery}`);
 			}
 		}
 	}

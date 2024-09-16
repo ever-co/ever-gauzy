@@ -8,7 +8,9 @@ import {
 	IOrganization,
 	OrganizationContactBudgetTypeEnum,
 	IOrganizationContact,
-	IImageAsset
+	IImageAsset,
+	IOrganizationProjectEmployee,
+	ID
 } from '@gauzy/contracts';
 import { NbStepperComponent } from '@nebular/theme';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -332,18 +334,16 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 		}
 
 		const { id: organizationId, tenantId } = this.organization;
-
 		const data = this.contMainForm.value;
 		const budget = this.budgetForm.value;
-		const location = this.locationFormDirective.getValue();
-		const { fax, fiscalInformation, website } = this.contMainForm.getRawValue();
+		const locationData = this.locationFormDirective.getValue();
+		const { fax, fiscalInformation, website } = this.contMainForm.value;
 
-		const { coordinates } = location['loc'];
-		delete location['loc'];
-
+		// Extract and destructure coordinates
+		const { coordinates, ...location } = locationData.loc;
 		const [latitude, longitude] = coordinates;
 
-		// Combining form data with additional properties
+		// Construct the contact object
 		const contact = {
 			latitude,
 			longitude,
@@ -351,31 +351,74 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 			website,
 			fax,
 			...location,
+			organizationId,
 			organization: { id: organizationId },
 			tenantId,
 			tenant: { id: tenantId },
-			...(this.organizationContact?.contact?.id ? { id: this.organizationContact?.contact?.id } : {})
+			...(this.organizationContact?.contact?.id && { id: this.organizationContact.contact.id })
 		};
 
-		/**
-		 * Constructs an array of member objects from a list of member or selected employee IDs.
-		 * Each ID is mapped to a corresponding employee object, filtering out any non-existent (falsy) members.
-		 */
-		let memberIds = this.members || this.selectedEmployeeIds || [];
-		let members = memberIds.map((id) => this.employees.find((e) => e.id === id)).filter(Boolean);
+		// Consolidate member IDs and retrieve corresponding employees
+		const members = this.getSelectedMembers();
 
-		if (!members.length) members = this.selectedMembers;
+		// Retrieve and process projects with assigned members
+		const projects = this.assignMembersToProjects(data.projects ?? [], members);
 
-		//
-		let projects = data.projects ?? [];
-		projects.forEach((project: IOrganizationProject) => {
-			if (Array.isArray(project.members)) {
-				project.members.push(...members);
-			} else {
-				project.members = [...members];
-			}
+		// Step 5: Emit the consolidated data
+		this.emitConsolidatedData({ budget, data, projects, members, contact });
+	}
+
+	/**
+	 * Retrieves selected members based on member IDs or selected employees.
+	 * @returns An array of IEmployee objects.
+	 */
+	private getSelectedMembers(): IEmployee[] {
+		// Step 1: Get the list of member IDs
+		const memberIds = this.members || this.selectedEmployeeIds || [];
+
+		// Step 2: Find corresponding IEmployee objects and filter out any falsy values
+		const members = memberIds.map((id) => this.employees.find((e) => e.id === id)).filter(Boolean);
+
+		// Fallback to selectedMembers if no members found
+		return members.length ? members : this.selectedMembers;
+	}
+
+	/**
+	 * Assigns selected members to each project by transforming them into IOrganizationProjectEmployee objects.
+	 * @param projects The array of projects to which members will be assigned.
+	 * @param members The array of selected IEmployee objects.
+	 * @returns The updated array of projects with assigned members.
+	 */
+	private assignMembersToProjects(projects: IOrganizationProject[], members: IEmployee[]): IOrganizationProject[] {
+		return projects.map((project: IOrganizationProject) => {
+			// Get the project members and transform them into IOrganizationProjectEmployee objects
+			const projectMembers: IOrganizationProjectEmployee[] = members.map((employee: IEmployee) =>
+				this.transformToProjectEmployee(employee, project, this.organization)
+			);
+
+			return {
+				...project,
+				members: Array.isArray(project.members) ? [...project.members, ...projectMembers] : [...projectMembers]
+			};
 		});
+	}
 
+	/**
+	 * Emits the consolidated data for further processing.
+	 *
+	 * @param payload The data to be emitted.
+	 */
+	private emitConsolidatedData(payload: {
+		budget: any;
+		data: any;
+		projects: IOrganizationProject[];
+		members: IEmployee[];
+		contact: any;
+	}) {
+		const { budget, data, projects, members, contact } = payload;
+		const { id: organizationId, tenantId } = this.organization;
+
+		// Emit the consolidated data
 		this.addOrEditOrganizationContact.emit({
 			...budget,
 			...data,
@@ -386,9 +429,29 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 			organization: { id: organizationId },
 			tenantId,
 			tenant: { id: tenantId },
-			...(this.organizationContact?.id ? { id: this.organizationContact?.id } : {})
+			...(this.organizationContact?.id && { id: this.organizationContact.id })
 		});
 	}
+
+	/**
+	 * Transforms an IEmployee into an IOrganizationProjectEmployee.
+	 *
+	 * @param employee The employee to transform.
+	 * @param project The project to associate with the employee.
+	 * @param organization The organization context.
+	 * @returns The transformed IOrganizationProjectEmployee object.
+	 */
+	private transformToProjectEmployee = (
+		employee: IEmployee,
+		project: IOrganizationProject,
+		organization: IOrganization
+	): IOrganizationProjectEmployee => ({
+		...employee,
+		organizationProject: project, // Assign the current project
+		organizationProjectId: project.id, // Assign the project's ID
+		organizationId: organization.id, // Assign the organization's ID
+		tenantId: organization.tenantId // Assign the organization's tenant ID
+	});
 
 	/**
 	 * Updates the 'tags' field in 'contMainForm' with the selected tags and validate the form.

@@ -33,7 +33,7 @@ export interface IOrganizationProjectBase
 	endDate?: Date;
 	billing?: ProjectBillingEnum;
 	currency?: CurrenciesEnum;
-	members?: IEmployee[];
+	members?: IOrganizationProjectEmployee[];
 	public?: boolean;
 	owner?: ProjectOwnerEnum;
 	tasks?: ITask[];
@@ -102,6 +102,8 @@ export interface IOrganizationProjectEmployee
 		IRelationalRole {
 	organizationProject: IOrganizationProject;
 	organizationProjectId: ID;
+	isManager?: boolean;
+	assignedAt?: Date;
 }
 
 // Task List Type Enum

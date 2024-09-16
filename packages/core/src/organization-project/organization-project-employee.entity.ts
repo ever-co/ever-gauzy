@@ -1,6 +1,6 @@
 import { RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IsBoolean, IsDateString, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { ID, IEmployee, IOrganizationProject, IOrganizationProjectEmployee, IRole } from '@gauzy/contracts';
 import { Employee, OrganizationProject, Role, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
@@ -10,6 +10,22 @@ import { MikroOrmOrganizationProjectEmployeeRepository } from './repository/mikr
 	mikroOrmRepository: () => MikroOrmOrganizationProjectEmployeeRepository
 })
 export class OrganizationProjectEmployee extends TenantOrganizationBaseEntity implements IOrganizationProjectEmployee {
+	// Manager of the organization project
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@ColumnIndex()
+	@MultiORMColumn({ type: Boolean, nullable: true, default: false })
+	isManager?: boolean;
+
+	// Assigned At Manager of the organization project
+	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
+	@IsDateString()
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true })
+	assignedAt?: Date;
+
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne
