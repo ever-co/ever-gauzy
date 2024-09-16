@@ -650,7 +650,7 @@ export class JobSearchComponent extends PaginationFilterBaseComponent implements
 								isFilterable: false,
 								width: '15%',
 								type: 'custom',
-								sort: false,
+								isSortable: false,
 								renderComponent: EmployeeLinksComponent,
 								componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
 									// Get row data
@@ -671,7 +671,7 @@ export class JobSearchComponent extends PaginationFilterBaseComponent implements
 					width: '85%',
 					type: 'custom',
 					isFilterable: false,
-					sort: false,
+					isSortable: false,
 					renderComponent: JobTitleDescriptionDetailsComponent,
 					componentInitFunction(instance: JobTitleDescriptionDetailsComponent, cell: Cell) {
 						// Get row data

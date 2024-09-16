@@ -250,7 +250,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 					isFilterable: false,
 					width: '15%',
 					type: 'custom',
-					sort: false,
+					isSortable: false,
 					renderComponent: EmployeeLinksComponent,
 					componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -302,7 +302,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 						}
 						this.setFilter({ field: 'tags', search: tagIds });
 					},
-					sort: false
+					isSortable: false
 				}
 			}
 		};
