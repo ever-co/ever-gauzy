@@ -80,26 +80,46 @@ export class AlterFavoriteEntityIndexing1726506479984 implements MigrationInterf
 	 *
 	 * @param queryRunner
 	 */
-	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`DROP INDEX "IDX_b4734abeedbb9c724c980f7f54"`);
+		await queryRunner.query(`DROP INDEX "IDX_a8d924902879f0a3349678c86f"`);
+		await queryRunner.query(`CREATE INDEX "IDX_837468421e96f22a2e12022ef0" ON "favorite" ("entity") `);
+		await queryRunner.query(`CREATE INDEX "IDX_e88acab853ab012582c6d0f3f6" ON "favorite" ("entityId") `);
+	}
 
 	/**
 	 * SqliteDB and BetterSQlite3DB Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`DROP INDEX "IDX_e88acab853ab012582c6d0f3f6"`);
+		await queryRunner.query(`DROP INDEX "IDX_837468421e96f22a2e12022ef0"`);
+		await queryRunner.query(`CREATE INDEX "IDX_a8d924902879f0a3349678c86f" ON "favorite" ("entity") `);
+		await queryRunner.query(`CREATE INDEX "IDX_b4734abeedbb9c724c980f7f54" ON "favorite" ("entityId") `);
+	}
 
 	/**
 	 * MySQL Up Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`DROP INDEX \`IDX_a8d924902879f0a3349678c86f\` ON \`favorite\``);
+		await queryRunner.query(`DROP INDEX \`IDX_b4734abeedbb9c724c980f7f54\` ON \`favorite\``);
+		await queryRunner.query(`CREATE INDEX \`IDX_837468421e96f22a2e12022ef0\` ON \`favorite\` (\`entity\`)`);
+		await queryRunner.query(`CREATE INDEX \`IDX_e88acab853ab012582c6d0f3f6\` ON \`favorite\` (\`entityId\`)`);
+	}
 
 	/**
 	 * MySQL Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`DROP INDEX \`IDX_e88acab853ab012582c6d0f3f6\` ON \`favorite\``);
+		await queryRunner.query(`DROP INDEX \`IDX_837468421e96f22a2e12022ef0\` ON \`favorite\``);
+		await queryRunner.query(`CREATE INDEX \`IDX_b4734abeedbb9c724c980f7f54\` ON \`favorite\` (\`entityId\`)`);
+		await queryRunner.query(`CREATE INDEX \`IDX_a8d924902879f0a3349678c86f\` ON \`favorite\` (\`entity\`)`);
+	}
 }
