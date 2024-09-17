@@ -34,7 +34,7 @@ export class OrganizationContactCreateHandler implements ICommandHandler<Organiz
 			if (isEmpty(input.members) && isNotEmpty(input.projects)) {
 				const projectIds = input.projects.map((project: IOrganizationProject) => project.id);
 
-				// Fetch projects with members
+				// Retrieve projects with specified IDs, belonging to the given organization and tenant.
 				const projects = await this._organizationProjectService.find({
 					where: {
 						id: In(projectIds),
@@ -66,7 +66,8 @@ export class OrganizationContactCreateHandler implements ICommandHandler<Organiz
 					...input.contact,
 					organizationId,
 					tenantId,
-					organization: { id: organizationId }
+					organization: { id: organizationId },
+					tenant: { id: tenantId }
 				});
 			} catch (error) {
 				throw new BadRequestException('Failed to create contact details', error.message);
@@ -75,7 +76,10 @@ export class OrganizationContactCreateHandler implements ICommandHandler<Organiz
 			// Create a new organization contact with the modified input
 			return await this._organizationContactService.create({
 				...input,
-				organization: { id: organizationId }
+				organizationId,
+				organization: { id: organizationId },
+				tenantId,
+				tenant: { id: tenantId }
 			});
 		} catch (error) {
 			throw new BadRequestException('Failed to create organization contact', error.message);

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ID } from '@gauzy/contracts';
 
@@ -7,7 +7,7 @@ import { ID } from '@gauzy/contracts';
 	templateUrl: './avatar.component.html',
 	styleUrls: ['./avatar.component.scss']
 })
-export class AvatarComponent {
+export class AvatarComponent implements OnInit {
 	@Input() size: 'lg' | 'sm' | 'md' = 'md';
 	@Input() src: string;
 	@Input() appendCaption: string;
@@ -46,6 +46,8 @@ export class AvatarComponent {
 	}
 
 	constructor(private readonly router: Router) {}
+
+	ngOnInit() {}
 
 	/**
 	 * Navigates to the employee edit page based on the provided employee ID.
