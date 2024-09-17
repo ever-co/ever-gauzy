@@ -478,6 +478,7 @@ export class TimeTrackerService {
 	}
 
 	uploadImages(values, img: any) {
+		const TIMEOUT = 60 * 1000; // Max 60 sec to upload images
 		const formData = new FormData();
 		const contentType = 'image/png';
 		const b64Data = img.b64Img;
@@ -487,8 +488,13 @@ export class TimeTrackerService {
 		formData.append('tenantId', values.tenantId);
 		formData.append('organizationId', values.organizationId);
 		formData.append('recordedAt', moment(values.recordedAt).utc().toISOString());
+
+		const options = {
+			headers: new HttpHeaders({ timeout: TIMEOUT.toString() })
+		};
+
 		return firstValueFrom(
-			this.http.post(`${API_PREFIX}/timesheet/screenshot`, formData).pipe(
+			this.http.post(`${API_PREFIX}/timesheet/screenshot`, formData, options).pipe(
 				catchError((error) => {
 					error.error = {
 						...error.error,

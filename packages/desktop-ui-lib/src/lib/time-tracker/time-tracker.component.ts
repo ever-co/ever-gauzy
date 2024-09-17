@@ -1703,34 +1703,24 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this.electronService.ipcRenderer.send('stop-capture-screen');
 
 			if (this._startMode === TimerStartMode.MANUAL) {
-				console.log('Stopping timer');
-				const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
+				console.log('Taking screen capture');
 
-				this.start$.next(false);
+				const activities = await this.electronService.ipcRenderer.invoke('TAKE_SCREEN_CAPTURE', config);
 
-				this.loading = false;
+				console.log('Sending activities');
 
-				console.log('Toggling timer');
-				await this._toggle(timer, onClick);
-
-				asyncScheduler.schedule(async () => {
-					console.log('Taking screen capture');
-					const activities = await this.electronService.ipcRenderer.invoke('TAKE_SCREEN_CAPTURE', config);
-
-					console.log('Sending activities');
-					await this.sendActivities(activities);
-				}, 1000);
-			} else {
-				console.log('Stopping timer');
-				const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
-
-				this.start$.next(false);
-
-				this.loading = false;
-
-				console.log('Toggling timer');
-				await this._toggle(timer, onClick);
+				await this.sendActivities(activities);
 			}
+
+			console.log('Stopping timer');
+			const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
+
+			console.log('Toggling timer');
+			await this._toggle(timer, onClick);
+
+			this.start$.next(false);
+
+			this.loading = false;
 
 			console.log('Updating Tray stop');
 
@@ -2202,26 +2192,28 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.screenshots$.next([...this.screenshots, this.lastScreenCapture]);
 			}
 
-			// upload screenshot to TimeSlot api
-			try {
-				await Promise.all(
-					screenshotImg.map(async (img) => {
-						return await this.uploadsScreenshot(arg, img, resActivities.id);
-					})
-				);
-			} catch (error) {
-				console.log('ERROR', error);
-			}
+			asapScheduler.schedule(async () => {
+				console.log('upload screenshot to TimeSlot api');
+				try {
+					await Promise.all(
+						screenshotImg.map(async (img) => {
+							return await this.uploadsScreenshot(arg, img, resActivities.id);
+						})
+					);
+				} catch (error) {
+					console.log('ERROR', error);
+				}
+
+				console.log('Get last time slot image');
+				await this.getLastTimeSlotImage({
+					...arg,
+					token: this.token,
+					apiHost: this.apiHost,
+					timeSlotId
+				});
+			});
 
 			const timeSlotId = resActivities.id;
-
-			console.log('Get last time slot image');
-			await this.getLastTimeSlotImage({
-				...arg,
-				token: this.token,
-				apiHost: this.apiHost,
-				timeSlotId
-			});
 
 			console.log('Sending create-synced-interval event...');
 			this.electronService.ipcRenderer.send('create-synced-interval', {
