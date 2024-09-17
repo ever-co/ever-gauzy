@@ -15,6 +15,12 @@ import { prepareSQLQuery as p } from '../database/database.helper';
  * Email templates utils functions.
  */
 export class EmailTemplateUtils {
+	private static readonly supportedDatabaseTypes = new Set([
+		DatabaseTypeEnum.sqlite,
+		DatabaseTypeEnum.betterSqlite3,
+		DatabaseTypeEnum.postgres,
+		DatabaseTypeEnum.mysql
+	]);
 	public static globalPath = ['core', 'seeds', 'data', 'default-email-templates'];
 
 	/**
@@ -186,71 +192,158 @@ export class EmailTemplateUtils {
 		// Get the database type
 		const type = queryRunner.connection.options.type as DatabaseTypeEnum;
 
-		// Prepare the select query - Replace $ placeholders with ? for mysql, sqlite & better-sqlite3
-		const selectQuery = replacePlaceholders(
-			p(`
-				SELECT COUNT(*) as count
-					FROM "email_template"
-				WHERE "name" = $1
-					AND "languageCode" = $2
-					AND "tenantId" IS NULL
-					AND "organizationId" IS NULL
-			`),
-			type
-		);
+		// Validate the database type
+		EmailTemplateUtils.validateDatabaseType(queryRunner.connection.options.type as DatabaseTypeEnum);
 
-		// Prepare the update query - Replace $ placeholders with ? for mysql, sqlite & better-sqlite3
-		const updateQuery = replacePlaceholders(
-			p(`
-				UPDATE "email_template"
-					SET "hbs" = $1, "mjml" = $2
-				WHERE "name" = $3
-					AND "languageCode" = $4
-					AND "tenantId" IS NULL
-					AND "organizationId" IS NULL
-			`),
-			type
-		);
+		// Determine select query based on the database type
+		const selectQuery = this.getSelectQuery(type);
+
+		// Determine update query based on the database type
+		const updateQuery = this.getUpdateQuery(type);
 
 		// Determine insert query based on the database type
-		const insertQuery =
-			type === DatabaseTypeEnum.sqlite || type === DatabaseTypeEnum.betterSqlite3
-				? `INSERT INTO "email_template" ("name", "languageCode", "hbs", "mjml", "id") VALUES(?, ?, ?, ?, ?)`
-				: replacePlaceholders(
-						p(`
-							INSERT INTO "email_template" ("name", "languageCode", "hbs", "mjml") VALUES($1, $2, $3, $4)
-						`),
-						type
-				  );
+		const insertQuery = this.generateInsertQuery(type);
+
+		// Define a set of database types that require the 'id' column in the INSERT query
+		const sqlTypesWithId = new Set([
+			DatabaseTypeEnum.sqlite,
+			DatabaseTypeEnum.betterSqlite3,
+			DatabaseTypeEnum.mysql
+		]);
 
 		// Loop through the templates
-		for (const item of templates) {
-			const { name, languageCode, hbs, mjml = null } = item;
-			const payload = [name, languageCode, hbs, mjml];
+		for (const template of templates) {
+			const payload = sqlTypesWithId.has(type)
+				? [template.name, template.languageCode, template.hbs, template.mjml, uuidV4()]
+				: [template.name, template.languageCode, template.hbs, template.mjml];
 
-			// Switch based on the database type
-			switch (type) {
-				case DatabaseTypeEnum.sqlite:
-				case DatabaseTypeEnum.betterSqlite3:
-					payload.push(uuidV4()); // Add a UUID for sqlite
-					break;
-				case DatabaseTypeEnum.postgres:
-				case DatabaseTypeEnum.mysql:
-					// No additional action needed for these types
-					break;
-				default:
-					throw new Error(`Unsupported database type: ${type}`);
-			}
+			await this.upsertEmailTemplate(
+				queryRunner,
+				selectQuery,
+				updateQuery,
+				insertQuery,
+				template.name,
+				template.languageCode,
+				template.hbs,
+				template.mjml,
+				payload
+			);
+		}
+	}
 
-			// Check if the template exists
-			const [template] = await queryRunner.connection.manager.query(selectQuery, [name, languageCode]);
+	/**
+	 * Upsert an email template based on its existence in the database.
+	 *
+	 * @param queryRunner - The QueryRunner instance for executing queries.
+	 * @param type - The type of the database (e.g., sqlite, mysql).
+	 * @param selectQuery - The SQL query to check if the template exists.
+	 * @param updateQuery - The SQL query to update the template.
+	 * @param insertQuery - The SQL query to insert a new template.
+	 * @param name - The name of the email template.
+	 * @param languageCode - The language code of the email template.
+	 * @param hbs - The Handlebars (hbs) content of the template.
+	 * @param mjml - The MJML content of the template.
+	 * @param payload - The payload for the insert query, including necessary fields.
+	 */
+	static async upsertEmailTemplate(
+		queryRunner: QueryRunner,
+		selectQuery: string,
+		updateQuery: string,
+		insertQuery: string,
+		name: string,
+		languageCode: string,
+		hbs: string,
+		mjml: string,
+		payload: any
+	): Promise<void> {
+		// Get the database manager
+		const manager = queryRunner.connection.manager;
 
-			// Update if exists, otherwise insert
-			if (parseInt(template.count, 10) > 0) {
-				await queryRunner.connection.manager.query(updateQuery, [hbs, mjml, name, languageCode]);
+		try {
+			// Execute the SELECT query to check if the template exists
+			const [template]: any = await manager.query(selectQuery, [name, languageCode]);
+
+			// Safely parse the count value
+			const templateCount = Number(template.count);
+
+			if (templateCount > 0) {
+				// Execute the UPDATE query if the template exists
+				await manager.query(updateQuery, [hbs, mjml, name, languageCode]);
+				console.log(`✅ Updated email template: ${name}`);
 			} else {
-				await queryRunner.connection.manager.query(insertQuery, payload);
+				// Execute the INSERT query if the template does not exist
+				await manager.query(insertQuery, payload);
+				console.log(`✅ Inserted email template: ${name}`);
 			}
+		} catch (error) {
+			console.error(`❌ Error upsert email template "${name}":`, error);
+		}
+	}
+
+	/**
+	 * Generates the appropriate INSERT query based on the database type.
+	 * @param type - The type of the database.
+	 * @returns The INSERT SQL query string.
+	 */
+	public static generateInsertQuery(type: DatabaseTypeEnum): string {
+		// Define a set of database types that require the 'id' column in the INSERT query
+		const sqlTypesWithId = new Set([
+			DatabaseTypeEnum.sqlite,
+			DatabaseTypeEnum.betterSqlite3,
+			DatabaseTypeEnum.mysql
+		]);
+
+		const baseColumns = ['name', 'languageCode', 'hbs', 'mjml'];
+		const requiresId = sqlTypesWithId.has(type);
+		const columns = requiresId ? [...baseColumns, 'id'] : baseColumns;
+
+		const placeholders = requiresId
+			? columns.map(() => '?').join(', ')
+			: columns.map((_, index) => `$${index + 1}`).join(', ');
+
+		const columnsString = columns.map((col) => `"${col}"`).join(', ');
+
+		const query = `INSERT INTO "email_template" (${columnsString}) VALUES(${placeholders})`;
+
+		return replacePlaceholders(p(query), type);
+	}
+
+	/**
+	 * Generates the appropriate SELECT query based on the database type.
+	 *
+	 * @param type - The type of the database.
+	 * @returns The SELECT SQL query string.
+	 */
+	private static getSelectQuery(type: DatabaseTypeEnum): string {
+		// Prepare the select query
+		const query = `SELECT COUNT(*) as count FROM "email_template" WHERE "name" = $1 AND "languageCode" = $2 AND "tenantId" IS NULL AND "organizationId" IS NULL`;
+
+		// Replace $ placeholders with ? for mysql, sqlite & better-sqlite3
+		return replacePlaceholders(p(query), type);
+	}
+
+	/**
+	 * Generates the appropriate UPDATE query based on the database type.
+	 *
+	 * @param type - The type of the database.
+	 * @returns The UPDATE SQL query string.
+	 */
+	private static getUpdateQuery(type: DatabaseTypeEnum): string {
+		// Prepare the select query
+		const query = `UPDATE "email_template" SET "hbs" = $1, "mjml" = $2 WHERE "name" = $3 AND "languageCode" = $4 AND "tenantId" IS NULL AND "organizationId" IS NULL`;
+
+		// Replace $ placeholders with ? for mysql, sqlite & better-sqlite3
+		return replacePlaceholders(p(query), type);
+	}
+
+	/**
+	 * Validates the database type.
+	 *
+	 * @param type
+	 */
+	private static validateDatabaseType(type: DatabaseTypeEnum): void {
+		if (!EmailTemplateUtils.supportedDatabaseTypes.has(type)) {
+			throw new Error(`Unsupported database: ${type}`);
 		}
 	}
 }
