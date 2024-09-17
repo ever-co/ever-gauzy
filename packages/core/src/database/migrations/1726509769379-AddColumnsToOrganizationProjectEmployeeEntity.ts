@@ -290,12 +290,6 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 			`ALTER TABLE \`organization_project_employee\` ADD CONSTRAINT \`FK_a77a507b7402f0adb6a6b41e412\` FOREIGN KEY (\`organizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
 		);
 		await queryRunner.query(
-			`ALTER TABLE \`organization_project_employee\` ADD FOREIGN KEY (\`organizationProjectId\`) REFERENCES \`organization_project\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`organization_project_employee\` ADD FOREIGN KEY (\`employeeId\`) REFERENCES \`employee\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
 			`ALTER TABLE \`organization_project_employee\` ADD CONSTRAINT \`FK_1c5e006185395a6193ede3456c6\` FOREIGN KEY (\`roleId\`) REFERENCES \`role\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
 	}
@@ -356,13 +350,5 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`isManager\``);
 		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`assignedAt\``);
 		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`roleId\``);
-
-		// Add foreign key constraints back
-		await queryRunner.query(
-			`ALTER TABLE \`organization_project_employee\` ADD FOREIGN KEY (\`employeeId\`) REFERENCES \`employee\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`organization_project_employee\` ADD FOREIGN KEY (\`organizationProjectId\`) REFERENCES \`organization_project\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
-		);
 	}
 }
