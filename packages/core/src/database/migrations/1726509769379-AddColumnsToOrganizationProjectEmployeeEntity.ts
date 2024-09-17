@@ -212,9 +212,7 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 		// Step 1: Drop existing indexes to avoid conflicts during migration
 		console.log('Step 1: Dropping existing indexes');
 		await queryRunner.query(`DROP INDEX IF EXISTS "IDX_2ba868f42c2301075b7c141359"`);
-		console.log('Dropped index IDX_2ba868f42c2301075b7c141359');
 		await queryRunner.query(`DROP INDEX IF EXISTS "IDX_6b5b0c3d994f59d9c800922257"`);
-		console.log('Dropped index IDX_6b5b0c3d994f59d9c800922257');
 
 		// Step 2: Create a temporary table with the new schema (without constraints)
 		console.log('Step 2: Creating temporary table with new schema');
@@ -236,7 +234,6 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 				"roleId" VARCHAR
 			)
 		`);
-		console.log('Temporary table temporary_organization_project_employee created');
 
 		// Step 3: Copy data to the temporary table, generating UUIDs for the 'id' column
 		console.log('Step 3: Copying data to temporary table with generated UUIDs for id column');
@@ -256,19 +253,16 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 				LOWER(HEX(RANDOMBLOB(6))) AS "id"
 			FROM "organization_project_employee"
 		`);
-		console.log('Data copied to temporary table with new UUIDs');
 
 		// Step 4: Drop the old table
 		console.log('Step 4: Dropping the old organization_project_employee table');
 		await queryRunner.query(`DROP TABLE "organization_project_employee"`);
-		console.log('Dropped old organization_project_employee table');
 
 		// Step 5: Rename the temporary table to the original table name
 		console.log('Step 5: Renaming temporary table to organization_project_employee');
 		await queryRunner.query(`
 			ALTER TABLE "temporary_organization_project_employee" RENAME TO "organization_project_employee"
 		`);
-		console.log('Renamed temporary table to organization_project_employee');
 
 		// Step 6: Recreate indexes on the new table
 		console.log('Step 6: Recreating indexes on organization_project_employee');
@@ -276,12 +270,10 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 			CREATE INDEX "IDX_2ba868f42c2301075b7c141359"
 			ON "organization_project_employee" ("organizationProjectId")
 		`);
-		console.log('Created index IDX_2ba868f42c2301075b7c141359');
 		await queryRunner.query(`
 			CREATE INDEX "IDX_6b5b0c3d994f59d9c800922257"
 			ON "organization_project_employee" ("employeeId")
 		`);
-		console.log('Created index IDX_6b5b0c3d994f59d9c800922257');
 
 		// Step 7: Create a new temporary table with constraints
 		console.log('Step 7: Creating a new temporary table with constraints');
@@ -313,9 +305,6 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 					REFERENCES "role" ("id") ON DELETE CASCADE
 			)
 		`);
-		console.log(
-			'Created temporary table temporary_organization_project_employee_with_constraints with foreign key constraints'
-		);
 
 		// Step 8: Copy data from the current table into the new temporary table
 		console.log('Step 8: Copying data into the temporary table with constraints');
@@ -331,12 +320,10 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 				"id"
 			FROM "organization_project_employee"
 		`);
-		console.log('Data copied into temporary_organization_project_employee_with_constraints');
 
 		// Step 9: Drop the current table
 		console.log('Step 9: Dropping the organization_project_employee table');
 		await queryRunner.query(`DROP TABLE "organization_project_employee"`);
-		console.log('Dropped organization_project_employee table');
 
 		// Step 10: Rename the temporary table to the original table name
 		console.log(
@@ -345,65 +332,37 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 		await queryRunner.query(`
 			ALTER TABLE "temporary_organization_project_employee_with_constraints" RENAME TO "organization_project_employee"
 		`);
-		console.log(
-			'Renamed temporary_organization_project_employee_with_constraints to organization_project_employee'
-		);
 
 		// Step 11: Recreate indexes on the new table with constraints
 		console.log('Step 11: Recreating indexes on the new table with constraints');
-		await queryRunner.query(`
-			CREATE INDEX "IDX_2ba868f42c2301075b7c141359"
-			ON "organization_project_employee" ("organizationProjectId")
-		`);
-		console.log('Created index IDX_2ba868f42c2301075b7c141359');
-		await queryRunner.query(`
-			CREATE INDEX "IDX_6b5b0c3d994f59d9c800922257"
-			ON "organization_project_employee" ("employeeId")
-		`);
-		console.log('Created index IDX_6b5b0c3d994f59d9c800922257');
-		// Recreate any other indexes you require
-		await queryRunner.query(`
-			CREATE INDEX "IDX_f3d1102a8aa6442cdfce5d57c3"
-			ON "organization_project_employee" ("isActive")
-		`);
-		console.log('Created index IDX_f3d1102a8aa6442cdfce5d57c3');
-
-		await queryRunner.query(`
-			CREATE INDEX "IDX_abbe29504bb642647a69959cc0"
-			ON "organization_project_employee" ("isArchived")
-		`);
-		console.log('Created index IDX_abbe29504bb642647a69959cc0');
-
-		await queryRunner.query(`
-			CREATE INDEX "IDX_a9abd98013154ec1edfa1ec18c"
-			ON "organization_project_employee" ("tenantId")
-		`);
-		console.log('Created index IDX_a9abd98013154ec1edfa1ec18c');
-
-		await queryRunner.query(`
-			CREATE INDEX "IDX_a77a507b7402f0adb6a6b41e41"
-			ON "organization_project_employee" ("organizationId")
-		`);
-		console.log('Created index IDX_a77a507b7402f0adb6a6b41e41');
-
 		await queryRunner.query(
-			` CREATE INDEX "IDX_509be755cdaf837c263ffaa6b6" ON "organization_project_employee" ("isManager") `
+			` CREATE INDEX "IDX_2ba868f42c2301075b7c141359" ON "organization_project_employee" ("organizationProjectId") `
 		);
-		console.log('Created index IDX_509be755cdaf837c263ffaa6b6');
-
-		await queryRunner.query(`
-			CREATE INDEX "IDX_25de67f7f3f030438e3ecb1c0e"
-			ON "organization_project_employee" ("assignedAt")
-		`);
-		console.log('Created index IDX_25de67f7f3f030438e3ecb1c0e');
-
-		await queryRunner.query(`
-			CREATE INDEX "IDX_1c5e006185395a6193ede3456c"
-			ON "organization_project_employee" ("roleId")
-		`);
-		console.log('Created index IDX_1c5e006185395a6193ede3456c');
-
-		console.log('Migration completed successfully.');
+		await queryRunner.query(
+			` CREATE INDEX "IDX_6b5b0c3d994f59d9c800922257" ON "organization_project_employee" ("employeeId") `
+		);
+		// Recreate any other indexes you require
+		await queryRunner.query(
+			`CREATE INDEX "IDX_f3d1102a8aa6442cdfce5d57c3" ON "organization_project_employee" ("isActive")`
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_abbe29504bb642647a69959cc0" ON "organization_project_employee" ("isArchived")`
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_a9abd98013154ec1edfa1ec18c" ON "organization_project_employee" ("tenantId")`
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_a77a507b7402f0adb6a6b41e41" ON "organization_project_employee" ("organizationId")`
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_509be755cdaf837c263ffaa6b6" ON "organization_project_employee" ("isManager")`
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_25de67f7f3f030438e3ecb1c0e" ON "organization_project_employee" ("assignedAt")`
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_1c5e006185395a6193ede3456c" ON "organization_project_employee" ("roleId")`
+		);
 	}
 
 	/**
