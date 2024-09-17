@@ -11,6 +11,7 @@ import { MikroOrmFavoriteRepository } from './repository/mikro-orm-favorite.repo
 export class Favorite extends TenantOrganizationBaseEntity implements IFavorite {
 	[EntityRepositoryType]?: MikroOrmFavoriteRepository;
 
+	// Indicate the entity type
 	@ApiProperty({ type: () => String, enum: FavoriteEntityEnum })
 	@IsNotEmpty()
 	@IsEnum(FavoriteEntityEnum)

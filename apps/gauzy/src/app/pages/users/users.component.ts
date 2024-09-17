@@ -473,7 +473,7 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 						}
 						this.setFilter({ field: 'tags', search: tagIds });
 					},
-					sort: false,
+					isSortable: false,
 					class: 'align-row',
 					width: '10%'
 				},

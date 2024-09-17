@@ -267,7 +267,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 					filterFunction: (value: IOrganizationVendor) => {
 						this.setFilter({ field: 'vendorId', search: value?.id || null });
 					},
-					sort: false
+					isSortable: false
 				},
 				categoryName: {
 					title: this.getTranslation('SM_TABLE.CATEGORY'),
@@ -279,13 +279,13 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 					filterFunction: (value: IExpenseCategory) => {
 						this.setFilter({ field: 'categoryId', search: value?.id || null });
 					},
-					sort: false
+					isSortable: false
 				},
 				employee: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 					isFilterable: false,
 					type: 'custom',
-					sort: false,
+					isSortable: false,
 					renderComponent: EmployeeLinksComponent,
 					componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -296,7 +296,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 					title: this.getTranslation('SM_TABLE.PROJECT'),
 					type: 'string',
 					isFilterable: false,
-					sort: false
+					isSortable: false
 				},
 				amount: {
 					title: this.getTranslation('SM_TABLE.VALUE'),
