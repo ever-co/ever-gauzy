@@ -73,6 +73,7 @@ import { NoteService } from '../shared/features/note/+state/note.service';
 import { ProjectSelectorService } from '../shared/features/project-selector/+state/project-selector.service';
 import { TaskSelectorService } from '../shared/features/task-selector/+state/task-selector.service';
 import { TeamSelectorService } from '../shared/features/team-selector/+state/team-selector.service';
+import { hasAllPermissions } from '../shared/utils/permission.util';
 import { TasksComponent } from '../tasks/tasks.component';
 import { TimeTrackerQuery } from './+state/time-tracker.query';
 import { IgnitionState, TimeTrackerStore } from './+state/time-tracker.store';
@@ -118,6 +119,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _remoteSleepLock = false;
 	private _isReady = false;
 	private _session: moment.Moment = null;
+	private hasActiveTaskPermissions = false;
 	@ViewChild('dialogOpenBtn') btnDialogOpen: ElementRef<HTMLElement>;
 	public start$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	userData: any;
@@ -204,9 +206,23 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.pipe(
 				filter((permissions: any[]) => permissions.length > 0),
 				tap((permissions: any[]) => {
-					this.taskSelectorService.hasPermission = permissions.includes(PermissionsEnum.ORG_TASK_ADD);
-					this.clientSelectorService.hasPermission = permissions.includes(PermissionsEnum.ORG_CONTACT_EDIT);
-					this.projectSelectorService.hasPermission = permissions.includes(PermissionsEnum.ORG_PROJECT_ADD);
+					this.taskSelectorService.hasPermission = hasAllPermissions(
+						permissions,
+						PermissionsEnum.ORG_TASK_ADD
+					);
+					this.clientSelectorService.hasPermission = hasAllPermissions(
+						permissions,
+						PermissionsEnum.ORG_CONTACT_EDIT
+					);
+					this.projectSelectorService.hasPermission = hasAllPermissions(
+						permissions,
+						PermissionsEnum.ORG_PROJECT_ADD
+					);
+					this.hasActiveTaskPermissions = hasAllPermissions(
+						permissions,
+						PermissionsEnum.ORG_TEAM_EDIT_ACTIVE_TASK,
+						PermissionsEnum.ALL_ORG_EDIT
+					);
 				}),
 				untilDestroyed(this)
 			)
@@ -2426,7 +2442,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public async updateOrganizationTeamEmployee(): Promise<void> {
 		try {
-			if (!this.selectedTask || !this.selectedTeam) {
+			if (!this.selectedTask || !this.selectedTeam || !this.hasActiveTaskPermissions) {
 				return;
 			}
 			const organizationTeamId = this.teamSelectorService.selectedId;
