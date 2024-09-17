@@ -344,7 +344,6 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 
 		// Drop the 'id' column
 		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`id\``);
-
 		// Drop other columns added in the Up migration
 		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`deletedAt\``);
 		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`createdAt\``);
@@ -357,14 +356,6 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`isManager\``);
 		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`assignedAt\``);
 		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`roleId\``);
-
-		// Recreate indices on 'employeeId' and 'organizationProjectId'
-		await queryRunner.query(
-			`CREATE INDEX \`IDX_6b5b0c3d994f59d9c800922257\` ON \`organization_project_employee\` (\`employeeId\`)`
-		);
-		await queryRunner.query(
-			`CREATE INDEX \`IDX_2ba868f42c2301075b7c141359\` ON \`organization_project_employee\` (\`organizationProjectId\`)`
-		);
 
 		// Add foreign key constraints back
 		await queryRunner.query(
