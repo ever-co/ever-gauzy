@@ -319,7 +319,6 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 
 		// Drop indices
 		await queryRunner.query(`DROP INDEX \`IDX_1c5e006185395a6193ede3456c\` ON \`organization_project_employee\``);
-		await queryRunner.query(`DROP INDEX \`IDX_6b5b0c3d994f59d9c800922257\` ON \`organization_project_employee\``);
 		await queryRunner.query(`DROP INDEX \`IDX_25de67f7f3f030438e3ecb1c0e\` ON \`organization_project_employee\``);
 		await queryRunner.query(`DROP INDEX \`IDX_509be755cdaf837c263ffaa6b6\` ON \`organization_project_employee\``);
 		await queryRunner.query(`DROP INDEX \`IDX_a77a507b7402f0adb6a6b41e41\` ON \`organization_project_employee\``);
