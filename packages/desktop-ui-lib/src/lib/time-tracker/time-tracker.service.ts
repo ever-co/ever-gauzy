@@ -16,6 +16,7 @@ import {
 	ITaskStatus,
 	ITaskStatusFindInput,
 	ITaskUpdateInput,
+	ITimeLog,
 	TimeLogSourceEnum,
 	TimeLogType
 } from '@gauzy/contracts';
@@ -325,27 +326,56 @@ export class TimeTrackerService {
 	}
 
 	toggleApiStop(values) {
+		const TIMEOUT = 15000;
+		const API_URL = `${API_PREFIX}/timesheet/timer/stop`;
+
+		// Destructuring with defaults
+		const {
+			organizationContactId = null,
+			organizationTeamId = null,
+			manualTimeSlot = null,
+			description = null,
+			projectId = null,
+			version = null,
+			taskId = null,
+			organizationId,
+			tenantId,
+			startedAt,
+			stoppedAt
+		} = values;
+
 		const options = {
-			headers: new HttpHeaders({ timeout: `${15 * 1000}` })
+			headers: new HttpHeaders({ timeout: TIMEOUT.toString() })
 		};
+
 		const body = {
-			description: values.description,
+			description,
 			isBillable: true,
 			logType: TimeLogType.TRACKED,
-			projectId: values.projectId,
-			taskId: values.taskId,
-			manualTimeSlot: values.manualTimeSlot,
-			organizationId: values.organizationId,
-			tenantId: values.tenantId,
-			organizationContactId: values.organizationContactId,
+			source: TimeLogSourceEnum.DESKTOP,
+			projectId,
+			taskId,
+			manualTimeSlot,
+			organizationId,
+			tenantId,
+			organizationContactId,
 			isRunning: false,
-			version: values.version,
-			startedAt: moment(values.startedAt).utc().toISOString(),
-			stoppedAt: moment(values.stoppedAt).utc().toISOString(),
-			organizationTeamId: values.organizationTeamId
+			version,
+			startedAt: moment(startedAt).utc().toISOString(),
+			stoppedAt: moment(stoppedAt).utc().toISOString(),
+			organizationTeamId
 		};
-		this._loggerService.log.info(`Toggle Stop Timer Request: ${moment().format()}`, body);
-		return firstValueFrom(this.http.post(`${API_PREFIX}/timesheet/timer/stop`, { ...body }, options));
+
+		// Log request details
+		this._loggerService.info<any>(`Toggle Stop Timer Request: ${moment().format()}`, body);
+
+		// Perform the API call
+		try {
+			return firstValueFrom(this.http.post<ITimeLog>(API_URL, body, options));
+		} catch (error) {
+			this._loggerService.error<any>(`Error stopping timer: ${moment().format()}`, { error, requestBody: body });
+			throw error;
+		}
 	}
 
 	deleteTimeSlot(values) {
@@ -448,6 +478,7 @@ export class TimeTrackerService {
 	}
 
 	uploadImages(values, img: any) {
+		const TIMEOUT = 60 * 1000; // Max 60 sec to upload images
 		const formData = new FormData();
 		const contentType = 'image/png';
 		const b64Data = img.b64Img;
@@ -457,8 +488,13 @@ export class TimeTrackerService {
 		formData.append('tenantId', values.tenantId);
 		formData.append('organizationId', values.organizationId);
 		formData.append('recordedAt', moment(values.recordedAt).utc().toISOString());
+
+		const options = {
+			headers: new HttpHeaders({ timeout: TIMEOUT.toString() })
+		};
+
 		return firstValueFrom(
-			this.http.post(`${API_PREFIX}/timesheet/screenshot`, formData).pipe(
+			this.http.post(`${API_PREFIX}/timesheet/screenshot`, formData, options).pipe(
 				catchError((error) => {
 					error.error = {
 						...error.error,
@@ -593,7 +629,9 @@ export class TimeTrackerService {
 			organizationTeamId: values.organizationTeamId,
 			tenantId: values.tenantId
 		};
-		return firstValueFrom(this.http.put(`${API_PREFIX}/organization-team-employee/${employeeId}`, params));
+		return firstValueFrom(
+			this.http.put(`${API_PREFIX}/organization-team-employee/${employeeId}/active-task`, params)
+		);
 	}
 
 	public async getTeams(values?: any): Promise<IOrganizationTeam[]> {

@@ -92,7 +92,7 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 							? latest
 							: {
 									...timer,
-									id: status.lastLog.id
+									id: status?.lastLog?.id
 							  },
 						...timer
 					});
