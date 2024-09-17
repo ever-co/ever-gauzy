@@ -305,5 +305,74 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		// Drop foreign key constraints that depend on columns or constraints we're about to modify
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` DROP FOREIGN KEY \`FK_1c5e006185395a6193ede3456c6\``
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` DROP FOREIGN KEY \`FK_a77a507b7402f0adb6a6b41e412\``
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` DROP FOREIGN KEY \`FK_a9abd98013154ec1edfa1ec18cd\``
+		);
+
+		// Drop indices
+		await queryRunner.query(`DROP INDEX \`IDX_1c5e006185395a6193ede3456c\` ON \`organization_project_employee\``);
+		await queryRunner.query(`DROP INDEX \`IDX_6b5b0c3d994f59d9c800922257\` ON \`organization_project_employee\``);
+		await queryRunner.query(`DROP INDEX \`IDX_25de67f7f3f030438e3ecb1c0e\` ON \`organization_project_employee\``);
+		await queryRunner.query(`DROP INDEX \`IDX_509be755cdaf837c263ffaa6b6\` ON \`organization_project_employee\``);
+		await queryRunner.query(`DROP INDEX \`IDX_a77a507b7402f0adb6a6b41e41\` ON \`organization_project_employee\``);
+		await queryRunner.query(`DROP INDEX \`IDX_a9abd98013154ec1edfa1ec18c\` ON \`organization_project_employee\``);
+		await queryRunner.query(`DROP INDEX \`IDX_abbe29504bb642647a69959cc0\` ON \`organization_project_employee\``);
+		await queryRunner.query(`DROP INDEX \`IDX_f3d1102a8aa6442cdfce5d57c3\` ON \`organization_project_employee\``);
+
+		// Drop primary key constraint
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP PRIMARY KEY`);
+
+		// Modify 'employeeId' and 'organizationProjectId' columns back to their original definitions
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` MODIFY \`employeeId\` varchar(36) NOT NULL`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` MODIFY \`organizationProjectId\` varchar(36) NOT NULL`
+		);
+
+		// Add composite primary key
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD PRIMARY KEY (\`employeeId\`, \`organizationProjectId\`)`
+		);
+
+		// Drop the 'id' column
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`id\``);
+
+		// Drop other columns added in the Up migration
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`deletedAt\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`createdAt\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`updatedAt\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`isActive\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`isArchived\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`archivedAt\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`tenantId\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`organizationId\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`isManager\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`assignedAt\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`roleId\``);
+
+		// Recreate indices on 'employeeId' and 'organizationProjectId'
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_6b5b0c3d994f59d9c800922257\` ON \`organization_project_employee\` (\`employeeId\`)`
+		);
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_2ba868f42c2301075b7c141359\` ON \`organization_project_employee\` (\`organizationProjectId\`)`
+		);
+
+		// Add foreign key constraints back
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD CONSTRAINT \`FK_6b5b0c3d994f59d9c800922257f\` FOREIGN KEY (\`employeeId\`) REFERENCES \`employee\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD CONSTRAINT \`FK_2ba868f42c2301075b7c141359e\` FOREIGN KEY (\`organizationProjectId\`) REFERENCES \`organization_project\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
+		);
+	}
 }
