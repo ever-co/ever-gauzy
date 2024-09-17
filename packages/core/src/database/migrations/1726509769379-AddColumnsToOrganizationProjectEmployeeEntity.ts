@@ -204,132 +204,206 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 	}
 
 	/**
-	 * SqliteDB and BetterSQlite3DB Up Migration
+	 * SqliteDB and BetterSQLite3DB Up Migration
 	 *
 	 * @param queryRunner
 	 */
 	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(`DROP INDEX "IDX_2ba868f42c2301075b7c141359"`);
-		await queryRunner.query(`DROP INDEX "IDX_6b5b0c3d994f59d9c800922257"`);
-		await queryRunner.query(
-			`CREATE TABLE "temporary_organization_project_employee" ("employeeId" varchar NOT NULL, "organizationProjectId" varchar NOT NULL, PRIMARY KEY ("employeeId", "organizationProjectId"))`
-		);
-		await queryRunner.query(
-			`INSERT INTO "temporary_organization_project_employee"("employeeId", "organizationProjectId") SELECT "employeeId", "organizationProjectId" FROM "organization_project_employee"`
-		);
+		// Step 1: Drop existing indexes to avoid conflicts during migration
+		console.log('Step 1: Dropping existing indexes');
+		await queryRunner.query(`DROP INDEX IF EXISTS "IDX_2ba868f42c2301075b7c141359"`);
+		console.log('Dropped index IDX_2ba868f42c2301075b7c141359');
+		await queryRunner.query(`DROP INDEX IF EXISTS "IDX_6b5b0c3d994f59d9c800922257"`);
+		console.log('Dropped index IDX_6b5b0c3d994f59d9c800922257');
+
+		// Step 2: Create a temporary table with the new schema (without constraints)
+		console.log('Step 2: Creating temporary table with new schema');
+		await queryRunner.query(`
+			CREATE TABLE "temporary_organization_project_employee" (
+				"employeeId" VARCHAR NOT NULL,
+				"organizationProjectId" VARCHAR NOT NULL,
+				"deletedAt" DATETIME,
+				"id" VARCHAR PRIMARY KEY NOT NULL,
+				"createdAt" DATETIME NOT NULL DEFAULT (DATETIME('now')),
+				"updatedAt" DATETIME NOT NULL DEFAULT (DATETIME('now')),
+				"isActive" BOOLEAN DEFAULT (1),
+				"isArchived" BOOLEAN DEFAULT (0),
+				"archivedAt" DATETIME,
+				"tenantId" VARCHAR,
+				"organizationId" VARCHAR,
+				"isManager" BOOLEAN DEFAULT (0),
+				"assignedAt" DATETIME,
+				"roleId" VARCHAR
+			)
+		`);
+		console.log('Temporary table temporary_organization_project_employee created');
+
+		// Step 3: Copy data to the temporary table, generating UUIDs for the 'id' column
+		console.log('Step 3: Copying data to temporary table with generated UUIDs for id column');
+		await queryRunner.query(`
+			INSERT INTO "temporary_organization_project_employee" (
+				"employeeId",
+				"organizationProjectId",
+				"id"
+			)
+			SELECT
+				"employeeId",
+				"organizationProjectId",
+				LOWER(HEX(RANDOMBLOB(4))) || '-' ||
+				LOWER(HEX(RANDOMBLOB(2))) || '-' ||
+				LOWER(HEX(RANDOMBLOB(2))) || '-' ||
+				LOWER(HEX(RANDOMBLOB(2))) || '-' ||
+				LOWER(HEX(RANDOMBLOB(6))) AS "id"
+			FROM "organization_project_employee"
+		`);
+		console.log('Data copied to temporary table with new UUIDs');
+
+		// Step 4: Drop the old table
+		console.log('Step 4: Dropping the old organization_project_employee table');
 		await queryRunner.query(`DROP TABLE "organization_project_employee"`);
-		await queryRunner.query(
-			`ALTER TABLE "temporary_organization_project_employee" RENAME TO "organization_project_employee"`
+		console.log('Dropped old organization_project_employee table');
+
+		// Step 5: Rename the temporary table to the original table name
+		console.log('Step 5: Renaming temporary table to organization_project_employee');
+		await queryRunner.query(`
+			ALTER TABLE "temporary_organization_project_employee" RENAME TO "organization_project_employee"
+		`);
+		console.log('Renamed temporary table to organization_project_employee');
+
+		// Step 6: Recreate indexes on the new table
+		console.log('Step 6: Recreating indexes on organization_project_employee');
+		await queryRunner.query(`
+			CREATE INDEX "IDX_2ba868f42c2301075b7c141359"
+			ON "organization_project_employee" ("organizationProjectId")
+		`);
+		console.log('Created index IDX_2ba868f42c2301075b7c141359');
+		await queryRunner.query(`
+			CREATE INDEX "IDX_6b5b0c3d994f59d9c800922257"
+			ON "organization_project_employee" ("employeeId")
+		`);
+		console.log('Created index IDX_6b5b0c3d994f59d9c800922257');
+
+		// Step 7: Create a new temporary table with constraints
+		console.log('Step 7: Creating a new temporary table with constraints');
+		await queryRunner.query(`
+			CREATE TABLE "temporary_organization_project_employee_with_constraints" (
+				"employeeId" VARCHAR NOT NULL,
+				"organizationProjectId" VARCHAR NOT NULL,
+				"deletedAt" DATETIME,
+				"id" VARCHAR PRIMARY KEY NOT NULL,
+				"createdAt" DATETIME NOT NULL DEFAULT (DATETIME('now')),
+				"updatedAt" DATETIME NOT NULL DEFAULT (DATETIME('now')),
+				"isActive" BOOLEAN DEFAULT (1),
+				"isArchived" BOOLEAN DEFAULT (0),
+				"archivedAt" DATETIME,
+				"tenantId" VARCHAR,
+				"organizationId" VARCHAR,
+				"isManager" BOOLEAN DEFAULT (0),
+				"assignedAt" DATETIME,
+				"roleId" VARCHAR,
+				CONSTRAINT "FK_employee" FOREIGN KEY ("employeeId")
+					REFERENCES "employee" ("id") ON DELETE CASCADE,
+				CONSTRAINT "FK_organization_project" FOREIGN KEY ("organizationProjectId")
+					REFERENCES "organization_project" ("id") ON DELETE CASCADE,
+				CONSTRAINT "FK_tenant" FOREIGN KEY ("tenantId")
+					REFERENCES "tenant" ("id") ON DELETE CASCADE,
+				CONSTRAINT "FK_organization" FOREIGN KEY ("organizationId")
+					REFERENCES "organization" ("id") ON DELETE CASCADE,
+				CONSTRAINT "FK_role" FOREIGN KEY ("roleId")
+					REFERENCES "role" ("id") ON DELETE CASCADE
+			)
+		`);
+		console.log(
+			'Created temporary table temporary_organization_project_employee_with_constraints with foreign key constraints'
 		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_2ba868f42c2301075b7c141359" ON "organization_project_employee" ("organizationProjectId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_6b5b0c3d994f59d9c800922257" ON "organization_project_employee" ("employeeId") `
-		);
-		await queryRunner.query(`DROP INDEX "IDX_2ba868f42c2301075b7c141359"`);
-		await queryRunner.query(`DROP INDEX "IDX_6b5b0c3d994f59d9c800922257"`);
-		await queryRunner.query(
-			`CREATE TABLE "temporary_organization_project_employee" ("employeeId" varchar NOT NULL, "organizationProjectId" varchar NOT NULL, "deletedAt" datetime, "id" varchar NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "isManager" boolean DEFAULT (0), "assignedAt" datetime, "roleId" varchar, PRIMARY KEY ("employeeId", "organizationProjectId", "id"))`
-		);
-		await queryRunner.query(
-			`INSERT INTO "temporary_organization_project_employee"("employeeId", "organizationProjectId") SELECT "employeeId", "organizationProjectId" FROM "organization_project_employee"`
-		);
+
+		// Step 8: Copy data from the current table into the new temporary table
+		console.log('Step 8: Copying data into the temporary table with constraints');
+		await queryRunner.query(`
+			INSERT INTO "temporary_organization_project_employee_with_constraints" (
+				"employeeId",
+				"organizationProjectId",
+				"id"
+			)
+			SELECT
+				"employeeId",
+				"organizationProjectId",
+				"id"
+			FROM "organization_project_employee"
+		`);
+		console.log('Data copied into temporary_organization_project_employee_with_constraints');
+
+		// Step 9: Drop the current table
+		console.log('Step 9: Dropping the organization_project_employee table');
 		await queryRunner.query(`DROP TABLE "organization_project_employee"`);
-		await queryRunner.query(
-			`ALTER TABLE "temporary_organization_project_employee" RENAME TO "organization_project_employee"`
+		console.log('Dropped organization_project_employee table');
+
+		// Step 10: Rename the temporary table to the original table name
+		console.log(
+			'Step 10: Renaming temporary_organization_project_employee_with_constraints to organization_project_employee'
 		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_2ba868f42c2301075b7c141359" ON "organization_project_employee" ("organizationProjectId") `
+		await queryRunner.query(`
+			ALTER TABLE "temporary_organization_project_employee_with_constraints" RENAME TO "organization_project_employee"
+		`);
+		console.log(
+			'Renamed temporary_organization_project_employee_with_constraints to organization_project_employee'
 		);
+
+		// Step 11: Recreate indexes on the new table with constraints
+		console.log('Step 11: Recreating indexes on the new table with constraints');
+		await queryRunner.query(`
+			CREATE INDEX "IDX_2ba868f42c2301075b7c141359"
+			ON "organization_project_employee" ("organizationProjectId")
+		`);
+		console.log('Created index IDX_2ba868f42c2301075b7c141359');
+		await queryRunner.query(`
+			CREATE INDEX "IDX_6b5b0c3d994f59d9c800922257"
+			ON "organization_project_employee" ("employeeId")
+		`);
+		console.log('Created index IDX_6b5b0c3d994f59d9c800922257');
+		// Recreate any other indexes you require
+		await queryRunner.query(`
+			CREATE INDEX "IDX_f3d1102a8aa6442cdfce5d57c3"
+			ON "organization_project_employee" ("isActive")
+		`);
+		console.log('Created index IDX_f3d1102a8aa6442cdfce5d57c3');
+
+		await queryRunner.query(`
+			CREATE INDEX "IDX_abbe29504bb642647a69959cc0"
+			ON "organization_project_employee" ("isArchived")
+		`);
+		console.log('Created index IDX_abbe29504bb642647a69959cc0');
+
+		await queryRunner.query(`
+			CREATE INDEX "IDX_a9abd98013154ec1edfa1ec18c"
+			ON "organization_project_employee" ("tenantId")
+		`);
+		console.log('Created index IDX_a9abd98013154ec1edfa1ec18c');
+
+		await queryRunner.query(`
+			CREATE INDEX "IDX_a77a507b7402f0adb6a6b41e41"
+			ON "organization_project_employee" ("organizationId")
+		`);
+		console.log('Created index IDX_a77a507b7402f0adb6a6b41e41');
+
 		await queryRunner.query(
-			`CREATE INDEX "IDX_6b5b0c3d994f59d9c800922257" ON "organization_project_employee" ("employeeId") `
+			` CREATE INDEX "IDX_509be755cdaf837c263ffaa6b6" ON "organization_project_employee" ("isManager") `
 		);
-		await queryRunner.query(`DROP INDEX "IDX_2ba868f42c2301075b7c141359"`);
-		await queryRunner.query(`DROP INDEX "IDX_6b5b0c3d994f59d9c800922257"`);
-		await queryRunner.query(
-			`CREATE TABLE "temporary_organization_project_employee" ("employeeId" varchar NOT NULL, "organizationProjectId" varchar NOT NULL, "deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "isManager" boolean DEFAULT (0), "assignedAt" datetime, "roleId" varchar)`
-		);
-		await queryRunner.query(
-			`INSERT INTO "temporary_organization_project_employee"("employeeId", "organizationProjectId", "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "isManager", "assignedAt", "roleId") SELECT "employeeId", "organizationProjectId", "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "isManager", "assignedAt", "roleId" FROM "organization_project_employee"`
-		);
-		await queryRunner.query(`DROP TABLE "organization_project_employee"`);
-		await queryRunner.query(
-			`ALTER TABLE "temporary_organization_project_employee" RENAME TO "organization_project_employee"`
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_2ba868f42c2301075b7c141359" ON "organization_project_employee" ("organizationProjectId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_6b5b0c3d994f59d9c800922257" ON "organization_project_employee" ("employeeId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_f3d1102a8aa6442cdfce5d57c3" ON "organization_project_employee" ("isActive") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_abbe29504bb642647a69959cc0" ON "organization_project_employee" ("isArchived") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_a9abd98013154ec1edfa1ec18c" ON "organization_project_employee" ("tenantId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_a77a507b7402f0adb6a6b41e41" ON "organization_project_employee" ("organizationId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_509be755cdaf837c263ffaa6b6" ON "organization_project_employee" ("isManager") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_25de67f7f3f030438e3ecb1c0e" ON "organization_project_employee" ("assignedAt") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_1c5e006185395a6193ede3456c" ON "organization_project_employee" ("roleId") `
-		);
-		await queryRunner.query(`DROP INDEX "IDX_2ba868f42c2301075b7c141359"`);
-		await queryRunner.query(`DROP INDEX "IDX_6b5b0c3d994f59d9c800922257"`);
-		await queryRunner.query(`DROP INDEX "IDX_f3d1102a8aa6442cdfce5d57c3"`);
-		await queryRunner.query(`DROP INDEX "IDX_abbe29504bb642647a69959cc0"`);
-		await queryRunner.query(`DROP INDEX "IDX_a9abd98013154ec1edfa1ec18c"`);
-		await queryRunner.query(`DROP INDEX "IDX_a77a507b7402f0adb6a6b41e41"`);
-		await queryRunner.query(`DROP INDEX "IDX_509be755cdaf837c263ffaa6b6"`);
-		await queryRunner.query(`DROP INDEX "IDX_25de67f7f3f030438e3ecb1c0e"`);
-		await queryRunner.query(`DROP INDEX "IDX_1c5e006185395a6193ede3456c"`);
-		await queryRunner.query(
-			`CREATE TABLE "temporary_organization_project_employee" ("employeeId" varchar NOT NULL, "organizationProjectId" varchar NOT NULL, "deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "isManager" boolean DEFAULT (0), "assignedAt" datetime, "roleId" varchar, CONSTRAINT "FK_a9abd98013154ec1edfa1ec18cd" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_a77a507b7402f0adb6a6b41e412" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_2ba868f42c2301075b7c141359e" FOREIGN KEY ("organizationProjectId") REFERENCES "organization_project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_6b5b0c3d994f59d9c800922257f" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_1c5e006185395a6193ede3456c6" FOREIGN KEY ("roleId") REFERENCES "role" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
-		);
-		await queryRunner.query(
-			`INSERT INTO "temporary_organization_project_employee"("employeeId", "organizationProjectId", "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "isManager", "assignedAt", "roleId") SELECT "employeeId", "organizationProjectId", "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "isManager", "assignedAt", "roleId" FROM "organization_project_employee"`
-		);
-		await queryRunner.query(`DROP TABLE "organization_project_employee"`);
-		await queryRunner.query(
-			`ALTER TABLE "temporary_organization_project_employee" RENAME TO "organization_project_employee"`
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_2ba868f42c2301075b7c141359" ON "organization_project_employee" ("organizationProjectId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_6b5b0c3d994f59d9c800922257" ON "organization_project_employee" ("employeeId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_f3d1102a8aa6442cdfce5d57c3" ON "organization_project_employee" ("isActive") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_abbe29504bb642647a69959cc0" ON "organization_project_employee" ("isArchived") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_a9abd98013154ec1edfa1ec18c" ON "organization_project_employee" ("tenantId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_a77a507b7402f0adb6a6b41e41" ON "organization_project_employee" ("organizationId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_509be755cdaf837c263ffaa6b6" ON "organization_project_employee" ("isManager") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_25de67f7f3f030438e3ecb1c0e" ON "organization_project_employee" ("assignedAt") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_1c5e006185395a6193ede3456c" ON "organization_project_employee" ("roleId") `
-		);
+		console.log('Created index IDX_509be755cdaf837c263ffaa6b6');
+
+		await queryRunner.query(`
+			CREATE INDEX "IDX_25de67f7f3f030438e3ecb1c0e"
+			ON "organization_project_employee" ("assignedAt")
+		`);
+		console.log('Created index IDX_25de67f7f3f030438e3ecb1c0e');
+
+		await queryRunner.query(`
+			CREATE INDEX "IDX_1c5e006185395a6193ede3456c"
+			ON "organization_project_employee" ("roleId")
+		`);
+		console.log('Created index IDX_1c5e006185395a6193ede3456c');
+
+		console.log('Migration completed successfully.');
 	}
 
 	/**
@@ -337,115 +411,7 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 	 *
 	 * @param queryRunner
 	 */
-	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(`DROP INDEX "IDX_1c5e006185395a6193ede3456c"`);
-		await queryRunner.query(`DROP INDEX "IDX_25de67f7f3f030438e3ecb1c0e"`);
-		await queryRunner.query(`DROP INDEX "IDX_509be755cdaf837c263ffaa6b6"`);
-		await queryRunner.query(`DROP INDEX "IDX_a77a507b7402f0adb6a6b41e41"`);
-		await queryRunner.query(`DROP INDEX "IDX_a9abd98013154ec1edfa1ec18c"`);
-		await queryRunner.query(`DROP INDEX "IDX_abbe29504bb642647a69959cc0"`);
-		await queryRunner.query(`DROP INDEX "IDX_f3d1102a8aa6442cdfce5d57c3"`);
-		await queryRunner.query(`DROP INDEX "IDX_6b5b0c3d994f59d9c800922257"`);
-		await queryRunner.query(`DROP INDEX "IDX_2ba868f42c2301075b7c141359"`);
-		await queryRunner.query(
-			`ALTER TABLE "organization_project_employee" RENAME TO "temporary_organization_project_employee"`
-		);
-		await queryRunner.query(
-			`CREATE TABLE "organization_project_employee" ("employeeId" varchar NOT NULL, "organizationProjectId" varchar NOT NULL, "deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "isManager" boolean DEFAULT (0), "assignedAt" datetime, "roleId" varchar)`
-		);
-		await queryRunner.query(
-			`INSERT INTO "organization_project_employee"("employeeId", "organizationProjectId", "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "isManager", "assignedAt", "roleId") SELECT "employeeId", "organizationProjectId", "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "isManager", "assignedAt", "roleId" FROM "temporary_organization_project_employee"`
-		);
-		await queryRunner.query(`DROP TABLE "temporary_organization_project_employee"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_1c5e006185395a6193ede3456c" ON "organization_project_employee" ("roleId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_25de67f7f3f030438e3ecb1c0e" ON "organization_project_employee" ("assignedAt") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_509be755cdaf837c263ffaa6b6" ON "organization_project_employee" ("isManager") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_a77a507b7402f0adb6a6b41e41" ON "organization_project_employee" ("organizationId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_a9abd98013154ec1edfa1ec18c" ON "organization_project_employee" ("tenantId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_abbe29504bb642647a69959cc0" ON "organization_project_employee" ("isArchived") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_f3d1102a8aa6442cdfce5d57c3" ON "organization_project_employee" ("isActive") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_6b5b0c3d994f59d9c800922257" ON "organization_project_employee" ("employeeId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_2ba868f42c2301075b7c141359" ON "organization_project_employee" ("organizationProjectId") `
-		);
-		await queryRunner.query(`DROP INDEX "IDX_1c5e006185395a6193ede3456c"`);
-		await queryRunner.query(`DROP INDEX "IDX_25de67f7f3f030438e3ecb1c0e"`);
-		await queryRunner.query(`DROP INDEX "IDX_509be755cdaf837c263ffaa6b6"`);
-		await queryRunner.query(`DROP INDEX "IDX_a77a507b7402f0adb6a6b41e41"`);
-		await queryRunner.query(`DROP INDEX "IDX_a9abd98013154ec1edfa1ec18c"`);
-		await queryRunner.query(`DROP INDEX "IDX_abbe29504bb642647a69959cc0"`);
-		await queryRunner.query(`DROP INDEX "IDX_f3d1102a8aa6442cdfce5d57c3"`);
-		await queryRunner.query(`DROP INDEX "IDX_6b5b0c3d994f59d9c800922257"`);
-		await queryRunner.query(`DROP INDEX "IDX_2ba868f42c2301075b7c141359"`);
-		await queryRunner.query(
-			`ALTER TABLE "organization_project_employee" RENAME TO "temporary_organization_project_employee"`
-		);
-		await queryRunner.query(
-			`CREATE TABLE "organization_project_employee" ("employeeId" varchar NOT NULL, "organizationProjectId" varchar NOT NULL, "deletedAt" datetime, "id" varchar NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "isManager" boolean DEFAULT (0), "assignedAt" datetime, "roleId" varchar, PRIMARY KEY ("employeeId", "organizationProjectId", "id"))`
-		);
-		await queryRunner.query(
-			`INSERT INTO "organization_project_employee"("employeeId", "organizationProjectId", "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "isManager", "assignedAt", "roleId") SELECT "employeeId", "organizationProjectId", "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "isManager", "assignedAt", "roleId" FROM "temporary_organization_project_employee"`
-		);
-		await queryRunner.query(`DROP TABLE "temporary_organization_project_employee"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_6b5b0c3d994f59d9c800922257" ON "organization_project_employee" ("employeeId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_2ba868f42c2301075b7c141359" ON "organization_project_employee" ("organizationProjectId") `
-		);
-		await queryRunner.query(`DROP INDEX "IDX_6b5b0c3d994f59d9c800922257"`);
-		await queryRunner.query(`DROP INDEX "IDX_2ba868f42c2301075b7c141359"`);
-		await queryRunner.query(
-			`ALTER TABLE "organization_project_employee" RENAME TO "temporary_organization_project_employee"`
-		);
-		await queryRunner.query(
-			`CREATE TABLE "organization_project_employee" ("employeeId" varchar NOT NULL, "organizationProjectId" varchar NOT NULL, PRIMARY KEY ("employeeId", "organizationProjectId"))`
-		);
-		await queryRunner.query(
-			`INSERT INTO "organization_project_employee"("employeeId", "organizationProjectId") SELECT "employeeId", "organizationProjectId" FROM "temporary_organization_project_employee"`
-		);
-		await queryRunner.query(`DROP TABLE "temporary_organization_project_employee"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_6b5b0c3d994f59d9c800922257" ON "organization_project_employee" ("employeeId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_2ba868f42c2301075b7c141359" ON "organization_project_employee" ("organizationProjectId") `
-		);
-		await queryRunner.query(`DROP INDEX "IDX_6b5b0c3d994f59d9c800922257"`);
-		await queryRunner.query(`DROP INDEX "IDX_2ba868f42c2301075b7c141359"`);
-		await queryRunner.query(
-			`ALTER TABLE "organization_project_employee" RENAME TO "temporary_organization_project_employee"`
-		);
-		await queryRunner.query(
-			`CREATE TABLE "organization_project_employee" ("employeeId" varchar NOT NULL, "organizationProjectId" varchar NOT NULL, CONSTRAINT "FK_2ba868f42c2301075b7c141359e" FOREIGN KEY ("organizationProjectId") REFERENCES "organization_project" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_6b5b0c3d994f59d9c800922257f" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY ("employeeId", "organizationProjectId"))`
-		);
-		await queryRunner.query(
-			`INSERT INTO "organization_project_employee"("employeeId", "organizationProjectId") SELECT "employeeId", "organizationProjectId" FROM "temporary_organization_project_employee"`
-		);
-		await queryRunner.query(`DROP TABLE "temporary_organization_project_employee"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_6b5b0c3d994f59d9c800922257" ON "organization_project_employee" ("employeeId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_2ba868f42c2301075b7c141359" ON "organization_project_employee" ("organizationProjectId") `
-		);
-	}
+	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
 
 	/**
 	 * MySQL Up Migration
