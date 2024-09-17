@@ -223,6 +223,14 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		// Drop existing foreign keys
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` DROP FOREIGN KEY \`FK_2ba868f42c2301075b7c141359e\``
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` DROP FOREIGN KEY \`FK_6b5b0c3d994f59d9c800922257f\``
+		);
+
 		// Add new columns
 		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` ADD \`deletedAt\` datetime(6) NULL`);
 		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` ADD \`id\` varchar(36) NULL`);
@@ -287,6 +295,9 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 			`CREATE INDEX \`IDX_25de67f7f3f030438e3ecb1c0e\` ON \`organization_project_employee\` (\`assignedAt\`)`
 		);
 		await queryRunner.query(
+			`CREATE INDEX \`IDX_2ba868f42c2301075b7c141359\` ON \`organization_project_employee\` (\`organizationProjectId\`)`
+		);
+		await queryRunner.query(
 			`CREATE INDEX \`IDX_6b5b0c3d994f59d9c800922257\` ON \`organization_project_employee\` (\`employeeId\`)`
 		);
 		await queryRunner.query(
@@ -301,6 +312,12 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 			`ALTER TABLE \`organization_project_employee\` ADD CONSTRAINT \`FK_a77a507b7402f0adb6a6b41e412\` FOREIGN KEY (\`organizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
 		);
 		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD CONSTRAINT \`FK_2ba868f42c2301075b7c141359e\` FOREIGN KEY (\`organizationProjectId\`) REFERENCES \`organization_project\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD CONSTRAINT \`FK_6b5b0c3d994f59d9c800922257f\` FOREIGN KEY (\`employeeId\`) REFERENCES \`employee\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
 			`ALTER TABLE \`organization_project_employee\` ADD CONSTRAINT \`FK_1c5e006185395a6193ede3456c6\` FOREIGN KEY (\`roleId\`) REFERENCES \`role\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
 	}
@@ -311,7 +328,7 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 	 * @param queryRunner
 	 */
 	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		// Drop foreign key constraints that depend on columns or constraints we're about to modify
+		// Drop foreign key constraints
 		await queryRunner.query(
 			`ALTER TABLE \`organization_project_employee\` DROP FOREIGN KEY \`FK_1c5e006185395a6193ede3456c6\``
 		);
@@ -331,6 +348,7 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 		// Drop indices
 		await queryRunner.query(`DROP INDEX \`IDX_1c5e006185395a6193ede3456c\` ON \`organization_project_employee\``);
 		await queryRunner.query(`DROP INDEX \`IDX_6b5b0c3d994f59d9c800922257\` ON \`organization_project_employee\``);
+		await queryRunner.query(`DROP INDEX \`IDX_2ba868f42c2301075b7c141359\` ON \`organization_project_employee\``);
 		await queryRunner.query(`DROP INDEX \`IDX_25de67f7f3f030438e3ecb1c0e\` ON \`organization_project_employee\``);
 		await queryRunner.query(`DROP INDEX \`IDX_509be755cdaf837c263ffaa6b6\` ON \`organization_project_employee\``);
 		await queryRunner.query(`DROP INDEX \`IDX_a77a507b7402f0adb6a6b41e41\` ON \`organization_project_employee\``);
@@ -341,12 +359,14 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 		// Drop primary key constraint
 		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP PRIMARY KEY`);
 
-		// Modify 'employeeId' and 'organizationProjectId' columns back to their original definitions
+		// Restore 'employeeId' and 'organizationProjectId' columns
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`employeeId\``);
 		await queryRunner.query(
-			`ALTER TABLE \`organization_project_employee\` MODIFY \`employeeId\` varchar(36) NOT NULL`
+			`ALTER TABLE \`organization_project_employee\` ADD \`employeeId\` varchar(36) NOT NULL`
 		);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`organizationProjectId\``);
 		await queryRunner.query(
-			`ALTER TABLE \`organization_project_employee\` MODIFY \`organizationProjectId\` varchar(36) NOT NULL`
+			`ALTER TABLE \`organization_project_employee\` ADD \`organizationProjectId\` varchar(36) NOT NULL`
 		);
 
 		// Add composite primary key
