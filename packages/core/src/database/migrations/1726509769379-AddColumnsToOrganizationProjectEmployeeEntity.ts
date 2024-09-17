@@ -260,20 +260,18 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 
 		// Step 5: Rename the temporary table to the original table name
 		console.log('Step 5: Renaming temporary table to organization_project_employee');
-		await queryRunner.query(`
-			ALTER TABLE "temporary_organization_project_employee" RENAME TO "organization_project_employee"
-		`);
+		await queryRunner.query(
+			`ALTER TABLE "temporary_organization_project_employee" RENAME TO "organization_project_employee"`
+		);
 
 		// Step 6: Recreate indexes on the new table
 		console.log('Step 6: Recreating indexes on organization_project_employee');
-		await queryRunner.query(`
-			CREATE INDEX "IDX_2ba868f42c2301075b7c141359"
-			ON "organization_project_employee" ("organizationProjectId")
-		`);
-		await queryRunner.query(`
-			CREATE INDEX "IDX_6b5b0c3d994f59d9c800922257"
-			ON "organization_project_employee" ("employeeId")
-		`);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_2ba868f42c2301075b7c141359" ON "organization_project_employee" ("organizationProjectId")`
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_6b5b0c3d994f59d9c800922257" ON "organization_project_employee" ("employeeId")`
+		);
 
 		// Step 7: Create a new temporary table with constraints
 		console.log('Step 7: Creating a new temporary table with constraints');
@@ -336,10 +334,10 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 		// Step 11: Recreate indexes on the new table with constraints
 		console.log('Step 11: Recreating indexes on the new table with constraints');
 		await queryRunner.query(
-			` CREATE INDEX "IDX_2ba868f42c2301075b7c141359" ON "organization_project_employee" ("organizationProjectId") `
+			`CREATE INDEX "IDX_2ba868f42c2301075b7c141359" ON "organization_project_employee" ("organizationProjectId")`
 		);
 		await queryRunner.query(
-			` CREATE INDEX "IDX_6b5b0c3d994f59d9c800922257" ON "organization_project_employee" ("employeeId") `
+			`CREATE INDEX "IDX_6b5b0c3d994f59d9c800922257" ON "organization_project_employee" ("employeeId")`
 		);
 		// Recreate any other indexes you require
 		await queryRunner.query(
@@ -366,11 +364,69 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 	}
 
 	/**
-	 * SqliteDB and BetterSQlite3DB Down Migration
+	 * SqliteDB and BetterSQLite3DB Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		// Step 1: Drop indexes related to new columns
+		console.log('Step 1: Dropping indexes related to new columns');
+		await queryRunner.query(`DROP INDEX IF EXISTS "IDX_1c5e006185395a6193ede3456c"`); // index on "roleId"
+		await queryRunner.query(`DROP INDEX IF EXISTS "IDX_25de67f7f3f030438e3ecb1c0e"`); // index on "assignedAt"
+		await queryRunner.query(`DROP INDEX IF EXISTS "IDX_509be755cdaf837c263ffaa6b6"`); // index on "isManager"
+		await queryRunner.query(`DROP INDEX IF EXISTS "IDX_a77a507b7402f0adb6a6b41e41"`); // index on "organizationId"
+		await queryRunner.query(`DROP INDEX IF EXISTS "IDX_a9abd98013154ec1edfa1ec18c"`); // index on "tenantId"
+		await queryRunner.query(`DROP INDEX IF EXISTS "IDX_abbe29504bb642647a69959cc0"`); // index on "isArchived"
+		await queryRunner.query(`DROP INDEX IF EXISTS "IDX_f3d1102a8aa6442cdfce5d57c3"`); // index on "isActive"
+		await queryRunner.query(`DROP INDEX IF EXISTS "IDX_6b5b0c3d994f59d9c800922257"`); // index on "employeeId"
+		await queryRunner.query(`DROP INDEX IF EXISTS "IDX_2ba868f42c2301075b7c141359"`); // index on "organizationProjectId"
+
+		// Step 2: Create a temporary table with the original schema
+		console.log('Step 2: Creating temporary table with original schema');
+		await queryRunner.query(`
+			CREATE TABLE "temporary_organization_project_employee" (
+				"employeeId" VARCHAR NOT NULL,
+				"organizationProjectId" VARCHAR NOT NULL,
+				CONSTRAINT "FK_2ba868f42c2301075b7c141359e" FOREIGN KEY ("organizationProjectId")
+					REFERENCES "organization_project" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+				CONSTRAINT "FK_6b5b0c3d994f59d9c800922257f" FOREIGN KEY ("employeeId")
+					REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+				PRIMARY KEY ("employeeId", "organizationProjectId")
+			)
+		`);
+
+		// Step 3: Copy data from the current table to the temporary table, selecting only the original columns
+		console.log('Step 3: Copying data to temporary table');
+		await queryRunner.query(`
+			INSERT INTO "temporary_organization_project_employee" (
+				"employeeId",
+				"organizationProjectId"
+			)
+			SELECT
+				"employeeId", "organizationProjectId"
+			FROM
+				"organization_project_employee"
+		`);
+
+		// Step 4: Drop the current table
+		console.log('Step 4: Dropping the current organization_project_employee table');
+		await queryRunner.query(`DROP TABLE "organization_project_employee"`);
+
+		// Step 5: Rename the temporary table to the original table name
+		console.log('Step 5: Renaming temporary table to organization_project_employee');
+		await queryRunner.query(`
+			ALTER TABLE "temporary_organization_project_employee" RENAME TO "organization_project_employee"
+		`);
+
+		// Step 6: Recreate indexes on the original columns
+		console.log('Step 6: Recreating indexes on the original columns');
+		await queryRunner.query(
+			`CREATE INDEX "IDX_6b5b0c3d994f59d9c800922257" ON "organization_project_employee" ("employeeId")`
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_2ba868f42c2301075b7c141359" ON "organization_project_employee" ("organizationProjectId")`
+		);
+	}
 
 	/**
 	 * MySQL Up Migration
@@ -491,9 +547,8 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 			`ALTER TABLE \`organization_project_employee\` ADD PRIMARY KEY (\`employeeId\`, \`organizationProjectId\`)`
 		);
 
-		// Drop the 'id' column
-		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`id\``);
 		// Drop other columns added in the Up migration
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`id\``);
 		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`deletedAt\``);
 		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`createdAt\``);
 		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`updatedAt\``);
