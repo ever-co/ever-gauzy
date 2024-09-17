@@ -15,3 +15,12 @@ export interface ICdnDownloadConfig {
 }
 
 export type ILocalDownloadConfig = Pick<ICdnDownloadConfig, 'pluginPath'>;
+
+export interface INpmDownloadConfig {
+	authToken?: string;
+	pkg: {
+		name: string;
+		version?: string;
+	};
+	pluginPath: string;
+}
