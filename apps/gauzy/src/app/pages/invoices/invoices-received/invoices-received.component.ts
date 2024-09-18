@@ -401,7 +401,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 				title: this.getTranslation('INVOICES_PAGE.SENDER'),
 				type: 'custom',
 				isFilterable: false,
-				sort: false,
+				isSortable: false,
 				renderComponent: ContactLinksComponent,
 				componentInitFunction: (instance: ContactLinksComponent, cell: Cell) => {
 					instance.rowData = cell.getRow().getData();
@@ -439,7 +439,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 					}
 					this.setFilter({ field: 'tags', search: tagIds });
 				},
-				sort: false,
+				isSortable: false,
 				componentInitFunction: (instance: TagsOnlyComponent, cell: Cell) => {
 					instance.rowData = cell.getRow().getData();
 					instance.value = cell.getValue();

@@ -18,12 +18,14 @@ export class MigrateRolePermisisons1679765443208 implements MigrationInterface {
 			case DatabaseTypeEnum.sqlite:
 			case DatabaseTypeEnum.betterSqlite3:
 			case DatabaseTypeEnum.postgres:
-			case DatabaseTypeEnum.mysql:
 				try {
 					await RolePermissionUtils.migrateRolePermissions(queryRunner);
 				} catch (error) {
 					console.log(chalk.red(`Error while migrating missing role permisions: ${error}`));
 				}
+				break;
+			case DatabaseTypeEnum.mysql:
+				console.log('role permission migration is not supported for mysql yet');
 				break;
 			default:
 				throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);

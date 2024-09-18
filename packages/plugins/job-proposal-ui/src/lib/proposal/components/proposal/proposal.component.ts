@@ -529,7 +529,7 @@ export class ProposalComponent extends PaginationFilterBaseComponent implements 
 					}
 					this.setFilter({ field: 'tags', search: tagIds });
 				},
-				sort: false
+				isSortable: false
 			};
 		}
 	}

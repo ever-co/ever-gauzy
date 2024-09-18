@@ -501,7 +501,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 					type: 'text',
 					isFilterable: false,
 					width: '8%',
-					sort: false
+					isSortable: false
 				},
 				paymentDate: {
 					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_DATE'),
@@ -541,7 +541,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 					type: 'text',
 					isFilterable: false,
 					width: '10%',
-					sort: false
+					isSortable: false
 				},
 				note: {
 					title: this.getTranslation('PAYMENTS_PAGE.NOTE'),
@@ -569,14 +569,14 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 					filterFunction: (value: IOrganizationContact | null) => {
 						this.setFilter({ field: 'organizationContactId', search: value?.id || null });
 					},
-					sort: false
+					isSortable: false
 				},
 				projectName: {
 					title: this.getTranslation('PAYMENTS_PAGE.PROJECT'),
 					type: 'text',
 					width: '12%',
 					isFilterable: false,
-					sort: false
+					isSortable: false
 				},
 				overdue: {
 					title: this.getTranslation('PAYMENTS_PAGE.STATUS'),
@@ -608,7 +608,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 						}
 						this.setFilter({ field: 'tags', search: tagIds });
 					},
-					sort: false
+					isSortable: false
 				}
 			}
 		};
