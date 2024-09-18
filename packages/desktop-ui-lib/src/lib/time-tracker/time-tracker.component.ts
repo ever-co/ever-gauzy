@@ -19,6 +19,7 @@ import {
 	ITaskStatus,
 	ITaskUpdateInput,
 	ITimeLog,
+	ITimeSlotTimeLogs,
 	PermissionsEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
@@ -1167,7 +1168,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('prepare_activities_screenshot', (event, arg) =>
 			this._ngZone.run(async () => {
-				await this.sendActivities(arg);
+				await this.takeCaptureAndSendActivities(arg);
 			})
 		);
 
@@ -1659,13 +1660,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			if (this._startMode === TimerStartMode.MANUAL) {
 				console.log('Taking screen capture in startTimer');
 
-				const activities = await this.electronService.ipcRenderer.invoke('TAKE_SCREEN_CAPTURE', {
+				const activities = await this.electronService.ipcRenderer.invoke('COLLECT_ACTIVITIES', {
 					quitApp: this.quitApp
 				});
 
-				console.log('Sending activities', activities);
-
-				await this.sendActivities(activities);
+				asyncScheduler.schedule(async () => {
+					this._loggerService.info('Capturing Screen and Sending Activities Start...', activities);
+					await this.takeCaptureAndSendActivities(activities);
+					this._loggerService.info('Capturing Screen and Sending Activities Done ✔️');
+				}, 1000);
 			}
 
 			console.log('Updating Task Status');
@@ -1705,11 +1708,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			if (this._startMode === TimerStartMode.MANUAL) {
 				console.log('Taking screen capture');
 
-				const activities = await this.electronService.ipcRenderer.invoke('TAKE_SCREEN_CAPTURE', config);
+				const activities = await this.electronService.ipcRenderer.invoke('COLLECT_ACTIVITIES', config);
 
-				console.log('Sending activities');
-
-				await this.sendActivities(activities);
+				asyncScheduler.schedule(async () => {
+					this._loggerService.info('Capturing Screen and Sending Activities Start...', activities);
+					await this.takeCaptureAndSendActivities(activities);
+					this._loggerService.info('Capturing Screen and Sending Activities Done ✔️');
+				}, 1000);
 			}
 
 			console.log('Stopping timer');
@@ -2098,39 +2103,109 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	public async sendActivities(arg): Promise<void> {
-		console.log('sendActivities');
+	public async takeScreenCapture(arg) {
+		let HighResolutionScreenshots = [];
+		let lowResolutionScreenshots = [];
+
+		try {
+			this._loggerService.info('Take screen capture');
+			if (!arg.displays) {
+				HighResolutionScreenshots = await this.getScreenshot(arg, false);
+				lowResolutionScreenshots = await this.getScreenshot(arg, true);
+			} else {
+				HighResolutionScreenshots = arg.displays;
+			}
+
+			this._loggerService.info('Update timer last capture');
+			this.handleLastCapture(HighResolutionScreenshots);
+
+			// notify
+			this._loggerService.info('Notify screen capture to user');
+			this.screenshotNotify(arg, lowResolutionScreenshots);
+
+			return HighResolutionScreenshots;
+		} catch (error) {
+			this._loggerService.error('Error on screenshot', error);
+		}
+	}
+
+	public checkSendActivitiesValidationFail(arg) {
+		this._loggerService.info('sendActivities');
 
 		if (this.isRemoteTimer) {
-			console.log('isRemoteTimer exit from sendActivities');
-			return;
+			this._loggerService.info('isRemoteTimer exit from sendActivities');
+			return true;
 		}
 
 		if (!arg) {
 			this._loggerService.info('No data available to send from sendActivities');
-			return;
+			return true;
 		}
 
-		// screenshot process
-		let screenshotImg = [];
+		return false;
+	}
 
-		let thumbScreenshotImg = [];
+	public async handleLastCapture(screenshots: any[]) {
+		if (!this._isOffline && screenshots.length > 0) {
+			/* Converting the screenshot image to a base64 string. */
+			const original = `data:image/png;base64, ${this.buffToB64(screenshots[0])}`;
+
+			/* Compressing the image to 320x200 */
+			const compressed = await compressImage(original, 320, 200);
+
+			/*  Saving compressed image to the local storage. */
+			await this.localImage(compressed, original);
+
+			/* Update image waiting for server response*/
+			this.updateImageUrl(null);
+
+			/* Adding the last screen capture to the screenshots array. */
+			this.screenshots$.next([...this.screenshots, this.lastScreenCapture]);
+		}
+	}
+
+	public async uploadScreenshots(arg, timeSlotId: string, screenshots: any[]) {
+		this._loggerService.info('Upload screenshot to TimeSlot api');
+		try {
+			await Promise.all(
+				screenshots.map(async (img) => {
+					return await this.uploadsScreenshot(arg, img, timeSlotId);
+				})
+			);
+		} catch (error) {
+			console.log('ERROR', error);
+		}
+
+		this._loggerService.info('Get last time slot image');
+		await this.getLastTimeSlotImage({
+			...arg,
+			token: this.token,
+			apiHost: this.apiHost,
+			timeSlotId
+		});
+	}
+
+	private handleCreateTimeSlotError(error: any, arg, screenshots) {
+		const paramActivity = this.buildParamActivity(arg);
+		this._loggerService.error('Error sending to API timeslot:', error);
 
 		try {
-			if (!arg.displays) {
-				screenshotImg = await this.getScreenshot(arg, false);
-				thumbScreenshotImg = await this.getScreenshot(arg, true);
-			} else {
-				screenshotImg = arg.displays;
-			}
-
-			// notify
-			this.screenshotNotify(arg, thumbScreenshotImg);
-		} catch (error) {
-			this._loggerService.error('Error on screenshot', error);
+			this.electronService.ipcRenderer.send('failed_synced_timeslot', {
+				params: {
+					...paramActivity,
+					b64Imgs: screenshots.map((img) => ({
+						b64img: this.buffToB64(img),
+						fileName: this.fileNameFormat(img)
+					}))
+				}
+			});
+		} catch (e) {
+			this._loggerService.error('Failed to send failed_synced_timeslot event', e);
 		}
+	}
 
-		const paramActivity = {
+	private buildParamActivity(arg) {
+		return {
 			employeeId: arg.employeeId,
 			projectId: arg.projectId,
 			duration: arg.duration,
@@ -2148,23 +2223,26 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			isAw: arg.isAw,
 			isAwConnected: arg.isAwConnected
 		};
+	}
 
+	public async createTimeSlot(arg, screenshots: any[]) {
 		try {
-			const resActivities: any = await this.timeTrackerService.pushToTimeSlot(paramActivity);
-
-			console.log('Result of TimeSlot', resActivities);
-
-			const timeLogs = resActivities.timeLogs;
+			this._loggerService.info('Build Param Activity');
+			const paramActivity = this.buildParamActivity(arg);
+			this._loggerService.info('Create Time Slot');
+			const { timeLogs, id: timeSlotId } = (await this.timeTrackerService.pushToTimeSlot(
+				paramActivity
+			)) as ITimeSlotTimeLogs;
 
 			if (!timeLogs?.length) {
 				// Stop process if there is no time logs associate to activity result.
 				this._loggerService.error('[@SendActivities]', 'No time logs');
-				return;
+				return null;
 			}
-
+			this._loggerService.info('Post Create activities');
 			this.electronService.ipcRenderer.send('return_time_slot', {
 				timerId: arg.timerId,
-				timeSlotId: resActivities.id,
+				timeSlotId,
 				quitApp: arg.quitApp,
 				timeLogs: timeLogs
 			});
@@ -2175,70 +2253,30 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				idsWakatime: arg.idsWakatime
 			});
 
-			if (!this._isOffline && screenshotImg.length > 0) {
-				/* Converting the screenshot image to a base64 string. */
-				const original = `data:image/png;base64, ${this.buffToB64(screenshotImg[0])}`;
-
-				/* Compressing the image to 320x200 */
-				const compressed = await compressImage(original, 320, 200);
-
-				/*  Saving compressed image to the local storage. */
-				await this.localImage(compressed, original);
-
-				/* Update image waiting for server response*/
-				this.updateImageUrl(null);
-
-				/* Adding the last screen capture to the screenshots array. */
-				this.screenshots$.next([...this.screenshots, this.lastScreenCapture]);
-			}
-
-			asapScheduler.schedule(async () => {
-				console.log('upload screenshot to TimeSlot api');
-				try {
-					await Promise.all(
-						screenshotImg.map(async (img) => {
-							return await this.uploadsScreenshot(arg, img, resActivities.id);
-						})
-					);
-				} catch (error) {
-					console.log('ERROR', error);
-				}
-
-				console.log('Get last time slot image');
-				await this.getLastTimeSlotImage({
-					...arg,
-					token: this.token,
-					apiHost: this.apiHost,
-					timeSlotId
-				});
-			});
-
-			const timeSlotId = resActivities.id;
-
-			console.log('Sending create-synced-interval event...');
+			this._loggerService.info('Sending create-synced-interval event...');
 			this.electronService.ipcRenderer.send('create-synced-interval', {
 				...paramActivity,
 				remoteId: timeSlotId,
 				b64Imgs: []
 			});
+
+			return timeSlotId;
 		} catch (error) {
-			this._loggerService.error('Error send to api timeslot::', error);
-			try {
-				console.log('Sending failed_synced_timeslot event...');
-				this.electronService.ipcRenderer.send('failed_synced_timeslot', {
-					params: {
-						...paramActivity,
-						b64Imgs: screenshotImg.map((img) => {
-							return {
-								b64img: this.buffToB64(img),
-								fileName: this.fileNameFormat(img)
-							};
-						})
-					}
-				});
-			} catch (e) {
-				this._loggerService.error('Failed to send failed_synced_timeslot event', e);
-			}
+			this.handleCreateTimeSlotError(error, arg, screenshots);
+			return null;
+		}
+	}
+
+	public async takeCaptureAndSendActivities(activities) {
+		// Check validations
+		if (this.checkSendActivitiesValidationFail(activities)) return;
+		// Take Screenshots
+		const screenshots = await this.takeScreenCapture(activities);
+		// Create time slot and return time slot ID
+		const timeslotId = await this.createTimeSlot(activities, screenshots);
+		// Upload screenshots if available
+		if (timeslotId && screenshots.length > 0) {
+			await this.uploadScreenshots(activities, timeslotId, screenshots);
 		}
 	}
 
