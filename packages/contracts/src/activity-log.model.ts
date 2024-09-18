@@ -47,3 +47,5 @@ export enum ActivityLogEntityEnum {
 	User = 'User'
 	// Add other entities as we can to use them for activity history
 }
+
+export interface IActivityLogCreateInput extends Omit<IActivityLog, 'creatorId' | 'creator'> {}
