@@ -4,7 +4,7 @@ import { IUser } from './user.model';
 export interface IActivityLog extends IBasePerTenantAndOrganizationEntityModel {
 	entity: ActivityLogEntityEnum; // Entity / Table name concerned by activity log
 	entityId: ID; // The ID of the element we are interacting with (a task, an organization, an employee, ...)
-	action: ActivityLogActionEnum;
+	action: ActionTypeEnum;
 	actorType?: ActorTypeEnum;
 	description?: string; // A short sentence describing the action performed. (E.g John Doe created this on 22.09.2024)
 	updatedFields?: string[]; // In case of update actions, which entity fields was modified simultaneously. Avoid multiple records. (E.g For task : ['name', 'members', 'projectId'])
@@ -17,18 +17,10 @@ export interface IActivityLog extends IBasePerTenantAndOrganizationEntityModel {
 	data?: Record<string, any>;
 }
 
-export enum ActivityLogActionEnum {
+export enum ActionTypeEnum {
 	CREATED = 'Created',
 	UPDATED = 'Updated',
-	DELETED = 'Deleted',
-	APPLIED = 'Applied',
-	HIRED = 'Hired',
-	OFFERED = 'Offered',
-	REJECTED = 'Rejected',
-	RATING_UPDATED = 'Rating-updated',
-	INTERVIEW_SCHEDULED = 'Interview-scheduled',
-	INTERVIEW_COMPLETED = 'Interview-completed',
-	PAID = 'Paid'
+	DELETED = 'Deleted'
 }
 
 export interface IActivityLogUpdatedValues {

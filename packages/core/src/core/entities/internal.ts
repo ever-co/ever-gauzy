@@ -6,6 +6,7 @@ export * from './translate-base';
 
 //core entities
 export * from '../../accounting-template/accounting-template.entity';
+export * from '../../activity-log/activity-log.entity';
 export * from '../../appointment-employees/appointment-employees.entity';
 export * from '../../approval-policy/approval-policy.entity';
 export * from '../../availability-slots/availability-slots.entity';

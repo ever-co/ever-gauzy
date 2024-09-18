@@ -3,8 +3,8 @@ import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsArray, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import {
-	ActivityLogActionEnum,
 	ActivityLogEntityEnum,
+	ActionTypeEnum,
 	ActorTypeEnum,
 	IActivityLog,
 	IActivityLogUpdatedValues,
@@ -34,12 +34,12 @@ export class ActivityLog extends TenantOrganizationBaseEntity implements IActivi
 	@MultiORMColumn()
 	entityId: string;
 
-	@ApiProperty({ type: () => String, enum: ActivityLogActionEnum })
+	@ApiProperty({ type: () => String, enum: ActionTypeEnum })
 	@IsNotEmpty()
-	@IsEnum(ActivityLogActionEnum)
+	@IsEnum(ActionTypeEnum)
 	@ColumnIndex()
 	@MultiORMColumn()
-	action: ActivityLogActionEnum;
+	action: ActionTypeEnum;
 
 	@ApiPropertyOptional({ type: () => String, enum: ActorTypeEnum })
 	@IsOptional()

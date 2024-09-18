@@ -1,6 +1,7 @@
 import {
 	AccountingTemplate,
 	Activity,
+	ActivityLog,
 	AppointmentEmployee,
 	ApprovalPolicy,
 	AvailabilitySlot,
@@ -143,6 +144,7 @@ import {
 export const coreEntities = [
 	AccountingTemplate,
 	Activity,
+	ActivityLog,
 	AppointmentEmployee,
 	ApprovalPolicy,
 	AvailabilitySlot,
