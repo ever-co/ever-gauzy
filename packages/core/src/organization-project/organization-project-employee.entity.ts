@@ -45,7 +45,6 @@ export class OrganizationProjectEmployee extends TenantOrganizationBaseEntity im
 	@IsNotEmpty()
 	@IsUUID()
 	@RelationId((it: OrganizationProjectEmployee) => it.organizationProject)
-	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	organizationProjectId: ID;
 
@@ -62,7 +61,6 @@ export class OrganizationProjectEmployee extends TenantOrganizationBaseEntity im
 	@IsNotEmpty()
 	@IsUUID()
 	@RelationId((it: OrganizationProjectEmployee) => it.employee)
-	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	employeeId?: ID;
 
