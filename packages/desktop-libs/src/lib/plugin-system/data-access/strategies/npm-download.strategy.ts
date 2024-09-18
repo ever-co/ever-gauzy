@@ -9,9 +9,16 @@ export class NpmDownloadStrategy implements IPluginDownloadStrategy {
 		return;
 	}
 
-	private async download({ pkg, pluginPath, authToken }: INpmDownloadConfig) {
+	private async download({ pkg, pluginPath, registry }: INpmDownloadConfig) {
 		const { name, version = 'latest' } = pkg;
-		const registryUrl = `https://registry.npmjs.org/${name}`;
+		const { privateURL = null, authToken = null } = registry;
+
+		let registryUrl = `https://registry.npmjs.org/${name}`;
+
+		if (privateURL) {
+			const url = new URL(privateURL);
+			registryUrl = `${url.origin}/${name}`;
+		}
 
 		const options = {
 			headers: {
