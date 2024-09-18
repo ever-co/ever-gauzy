@@ -57,22 +57,33 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 	 * @param queryRunner
 	 */
 	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		// Step 1: Drop existing foreign keys
+		console.log('Step 1: Dropping existing foreign keys...');
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" DROP CONSTRAINT "FK_2ba868f42c2301075b7c141359e"`
 		);
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" DROP CONSTRAINT "FK_6b5b0c3d994f59d9c800922257f"`
 		);
+
+		// Step 2: Add new columns
+		console.log('Step 2: Adding new columns (deletedAt, tenantId, archivedAt, etc.)...');
 		await queryRunner.query(`ALTER TABLE "organization_project_employee" ADD "deletedAt" TIMESTAMP`);
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" ADD "id" uuid NOT NULL DEFAULT gen_random_uuid()`
 		);
+
+		// Step 3: Modify primary keys
+		console.log('Step 3: Modifying primary keys...');
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" DROP CONSTRAINT "PK_5be2464327d74ba4e2b2240aac4"`
 		);
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" ADD CONSTRAINT "PK_ce1fc15962d70f8776be4e19c36" PRIMARY KEY ("employeeId", "organizationProjectId", "id")`
 		);
+
+		// Step 4: Add timestamps and status columns
+		console.log('Step 4: Adding timestamps and status columns...');
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" ADD "createdAt" TIMESTAMP NOT NULL DEFAULT now()`
 		);
@@ -87,6 +98,9 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 		await queryRunner.query(`ALTER TABLE "organization_project_employee" ADD "isManager" boolean DEFAULT false`);
 		await queryRunner.query(`ALTER TABLE "organization_project_employee" ADD "assignedAt" TIMESTAMP`);
 		await queryRunner.query(`ALTER TABLE "organization_project_employee" ADD "roleId" uuid`);
+
+		// Step 5: Modify primary keys again
+		console.log('Step 5: Modifying primary keys again...');
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" DROP CONSTRAINT "PK_ce1fc15962d70f8776be4e19c36"`
 		);
@@ -99,6 +113,9 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" ADD CONSTRAINT "PK_cb8069ff5917c90adbc48139147" PRIMARY KEY ("id")`
 		);
+
+		// Step 6: Create new indexes
+		console.log('Step 6: Creating new indexes...');
 		await queryRunner.query(
 			`CREATE INDEX "IDX_f3d1102a8aa6442cdfce5d57c3" ON "organization_project_employee" ("isActive") `
 		);
@@ -120,6 +137,9 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 		await queryRunner.query(
 			`CREATE INDEX "IDX_1c5e006185395a6193ede3456c" ON "organization_project_employee" ("roleId") `
 		);
+
+		// Step 7: Recreate foreign keys
+		console.log('Step 7: Recreating foreign keys...');
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" ADD CONSTRAINT "FK_a9abd98013154ec1edfa1ec18cd" FOREIGN KEY ("tenantId") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
@@ -135,6 +155,8 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" ADD CONSTRAINT "FK_1c5e006185395a6193ede3456c6" FOREIGN KEY ("roleId") REFERENCES "role"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
+
+		console.log('PostgresDB Up Migration completed.');
 	}
 
 	/**
@@ -143,6 +165,8 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 	 * @param queryRunner
 	 */
 	public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		// Step 1: Drop foreign keys
+		console.log('Step 1: Dropping foreign keys...');
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" DROP CONSTRAINT "FK_1c5e006185395a6193ede3456c6"`
 		);
@@ -158,6 +182,9 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" DROP CONSTRAINT "FK_a9abd98013154ec1edfa1ec18cd"`
 		);
+
+		// Step 2: Drop indexes
+		console.log('Step 2: Dropping indexes...');
 		await queryRunner.query(`DROP INDEX "public"."IDX_1c5e006185395a6193ede3456c"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_25de67f7f3f030438e3ecb1c0e"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_509be755cdaf837c263ffaa6b6"`);
@@ -165,6 +192,9 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 		await queryRunner.query(`DROP INDEX "public"."IDX_a9abd98013154ec1edfa1ec18c"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_abbe29504bb642647a69959cc0"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_f3d1102a8aa6442cdfce5d57c3"`);
+
+		// Step 3: Modify primary keys and constraints
+		console.log('Step 3: Modifying primary keys and constraints...');
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" DROP CONSTRAINT "PK_cb8069ff5917c90adbc48139147"`
 		);
@@ -177,6 +207,9 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" ADD CONSTRAINT "PK_ce1fc15962d70f8776be4e19c36" PRIMARY KEY ("employeeId", "organizationProjectId", "id")`
 		);
+
+		// Step 4: Drop newly added columns
+		console.log('Step 4: Dropping newly added columns...');
 		await queryRunner.query(`ALTER TABLE "organization_project_employee" DROP COLUMN "roleId"`);
 		await queryRunner.query(`ALTER TABLE "organization_project_employee" DROP COLUMN "assignedAt"`);
 		await queryRunner.query(`ALTER TABLE "organization_project_employee" DROP COLUMN "isManager"`);
@@ -187,14 +220,22 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 		await queryRunner.query(`ALTER TABLE "organization_project_employee" DROP COLUMN "isActive"`);
 		await queryRunner.query(`ALTER TABLE "organization_project_employee" DROP COLUMN "updatedAt"`);
 		await queryRunner.query(`ALTER TABLE "organization_project_employee" DROP COLUMN "createdAt"`);
+
+		// Step 5: Restore original primary key constraint
+		console.log('Step 5: Restoring original primary key constraint...');
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" DROP CONSTRAINT "PK_ce1fc15962d70f8776be4e19c36"`
 		);
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" ADD CONSTRAINT "PK_5be2464327d74ba4e2b2240aac4" PRIMARY KEY ("employeeId", "organizationProjectId")`
 		);
+
+		console.log('Step 6: Dropping newly added columns...');
 		await queryRunner.query(`ALTER TABLE "organization_project_employee" DROP COLUMN "id"`);
 		await queryRunner.query(`ALTER TABLE "organization_project_employee" DROP COLUMN "deletedAt"`);
+
+		// Step 6: Recreate original foreign keys
+		console.log('Step 7: Recreating original foreign keys...');
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" ADD CONSTRAINT "FK_6b5b0c3d994f59d9c800922257f" FOREIGN KEY ("employeeId") REFERENCES "employee"("id") ON DELETE CASCADE ON UPDATE CASCADE`
 		);
