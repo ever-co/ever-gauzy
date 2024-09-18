@@ -472,10 +472,6 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 		console.log('Step 4: Adding nullable id column...');
 		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` ADD \`id\` varchar(36) NULL`);
 
-		// Step 5: Generate UUIDs for existing records
-		console.log('Step 5: Generating UUIDs for existing records...');
-		await queryRunner.query(`UPDATE \`organization_project_employee\` SET \`id\` = (UUID()) WHERE \`id\` IS NULL`);
-
 		// Step 5: Generate unique UUIDs for each existing record
 		console.log('Step 5: Generating unique UUIDs for existing records...');
 
@@ -483,7 +479,9 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 		const records = await queryRunner.query(
 			`SELECT \`employeeId\`, \`organizationProjectId\` FROM \`organization_project_employee\` WHERE \`id\` IS NULL`
 		);
-		// Loop through each record and assign a unique UUID
+		console.log('Retrieved records: ', JSON.stringify(records));
+
+		// Loop through each record and assign a unique UUID to the id column
 		for await (const { employeeId, organizationProjectId } of records) {
 			// Update the record with the generated UUID
 			await queryRunner.query(
@@ -492,6 +490,7 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 				WHERE \`employeeId\` = '${employeeId}'
 				AND \`organizationProjectId\` = '${organizationProjectId}'`
 			);
+			console.log(`Assigned UUID to ${employeeId}, ${organizationProjectId}`);
 		}
 
 		// Step 6: Alter 'id' column to NOT NULL after populating with UUIDs
