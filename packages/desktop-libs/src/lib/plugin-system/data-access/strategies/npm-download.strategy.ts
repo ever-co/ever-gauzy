@@ -1,12 +1,35 @@
-import * as fs from 'fs';
+import * as logger from 'electron-log';
+import { createReadStream, createWriteStream } from 'fs';
+import * as fs from 'fs/promises';
 import * as https from 'https';
 import * as path from 'path';
+import { createGunzip } from 'zlib';
 import { INpmDownloadConfig, IPluginDownloadResponse, IPluginDownloadStrategy } from '../../shared';
 
 export class NpmDownloadStrategy implements IPluginDownloadStrategy {
-	public execute<T>(config: T): Promise<IPluginDownloadResponse> {
-		const tgzPath = this.download(config as INpmDownloadConfig);
-		return;
+	public async execute<T>(config: T): Promise<IPluginDownloadResponse> {
+		// Download tarball
+		const tgzPath = await this.download(config as INpmDownloadConfig);
+		// Decompress tarball
+		const pluginDir = await this.decompressTarball(tgzPath);
+		// Read and parse the metadata
+		const metadata = JSON.parse(
+			await fs.readFile(path.join(pluginDir, 'manifest.json'), {
+				encoding: 'utf8'
+			})
+		);
+		logger.info(`✔ Manifest.json has been read and parsed: ${JSON.stringify(metadata)}`);
+		// rename pathDirname
+		const pathDirname = path.join(pluginDir, `${Date.now()}-${metadata.name}`);
+
+		await fs.rename(pluginDir, pathDirname);
+		logger.info(`✔ Plugin directory renamed to: ${pathDirname}`);
+
+		// Remove downloaded .tgz
+		await fs.rm(tgzPath, { recursive: true, force: true, retryDelay: 1000, maxRetries: 3 });
+		logger.info(`✔ Downloaded .tgz file has been removed`);
+
+		return { pathDirname, metadata };
 	}
 
 	private async download({ pkg, pluginPath, registry }: INpmDownloadConfig) {
@@ -29,7 +52,8 @@ export class NpmDownloadStrategy implements IPluginDownloadStrategy {
 		try {
 			const packageInfo = await this.fetchPackageInfo(registryUrl, options);
 			const tarballUrl = this.getTarballUrl(packageInfo, version);
-			const tarballPath = path.join(pluginPath, `${name}-${version}.tgz`);
+			const filename = `${name}-${version}.tgz`;
+			const tarballPath = path.join(pluginPath, filename);
 
 			await this.downloadTarball(tarballUrl, tarballPath);
 			console.log(`Downloaded ${name} to ${tarballPath}`);
@@ -76,7 +100,7 @@ export class NpmDownloadStrategy implements IPluginDownloadStrategy {
 		return new Promise((resolve, reject) => {
 			https
 				.get(tarballUrl, (response) => {
-					const fileStream = fs.createWriteStream(tarballPath);
+					const fileStream = createWriteStream(tarballPath);
 
 					response.pipe(fileStream);
 
@@ -88,6 +112,22 @@ export class NpmDownloadStrategy implements IPluginDownloadStrategy {
 					fileStream.on('error', reject);
 				})
 				.on('error', reject);
+		});
+	}
+
+	private decompressTarball(pathToTarball: string): Promise<string> {
+		return new Promise((resolve, reject) => {
+			const readStream = createReadStream(pathToTarball);
+			const writeStream = createWriteStream(pathToTarball.replace('.tgz', ''));
+			const gunzip = createGunzip();
+
+			readStream.pipe(gunzip).pipe(writeStream);
+
+			writeStream.on('finish', () => {
+				resolve(pathToTarball.replace('.tgz', ''));
+			});
+
+			writeStream.on('error', reject);
 		});
 	}
 }
