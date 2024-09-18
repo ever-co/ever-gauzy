@@ -320,13 +320,13 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		}
 	});
 
-	ipcMain.handle('TAKE_SCREEN_CAPTURE', async (event, { quitApp }) => {
+	ipcMain.handle('COLLECT_ACTIVITIES', async (event, { quitApp }) => {
 		try {
-			log.info('Take Screen Capture');
-			return await timerHandler.makeScreenshot(knex, quitApp);
+			log.info('Collect Activities');
+			return await timerHandler.collectAllActivities(knex, quitApp);
 		} catch (error) {
-			log.error('Error on take screen capture', error);
-			throw new UIError('500', error, 'IPCTKSCAPTURE');
+			log.error('Error collecting activities', error);
+			throw new UIError('500', error, 'HANDLE ACTIVITIES');
 		}
 	});
 
@@ -1195,7 +1195,7 @@ export function removeAllHandlers() {
 		'UPDATE_SYNCED',
 		'DESKTOP_CAPTURER_GET_SOURCES',
 		'FINISH_SYNCED_TIMER',
-		'TAKE_SCREEN_CAPTURE',
+		'COLLECT_ACTIVITIES',
 		'START_SERVER'
 	];
 	channels.forEach((channel: string) => {
