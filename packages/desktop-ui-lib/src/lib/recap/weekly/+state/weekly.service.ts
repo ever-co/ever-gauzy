@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { RequestQuery } from '../../+state/request/request.query';
 import { Store, TimeTrackerDateManager, ToastrNotificationService } from '../../../services';
 import { TimesheetService, TimesheetStatisticsService } from '../../services/timesheet';
+import { moment } from '../../shared/features/date-range-picker';
 import { IDateRangePicker } from '../../shared/features/date-range-picker/date-picker.interface';
 import { WeeklyRecapQuery } from './weekly.query';
 import { IWeeklyRecapState, WeeklyRecapStore } from './weekly.store';
@@ -51,7 +52,7 @@ export class WeeklyRecapService {
 			this.weeklyStore.setLoading(true);
 			const { organizationId, tenantId, user } = this.store;
 			const employeeIds = [user.employee.id];
-			const timeZone = user.timeZone;
+			const timeZone = user.timeZone || moment.tz.guess();
 			const timeFormat = user.timeFormat;
 			const request: IGetTimeLogInput = {
 				...this.requestQuery.request,
