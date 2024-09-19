@@ -1,5 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import { yellow } from 'chalk';
+import { v4 as uuidv4 } from 'uuid';
 import { DatabaseTypeEnum } from '@gauzy/config';
 
 export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implements MigrationInterface {
@@ -530,14 +531,22 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 
 		// Loop through each record and assign a unique UUID to the id column
 		for await (const { employeeId, organizationProjectId } of records) {
+			const uuid = uuidv4();
+
 			// Update the record with the generated UUID
-			await queryRunner.query(
-				`UPDATE \`organization_project_employee\`
-				SET \`id\` = (UUID())
-				WHERE \`employeeId\` = '${employeeId}'
-				AND \`organizationProjectId\` = '${organizationProjectId}'`
-			);
-			console.log(`Assigned UUID to ${employeeId}, ${organizationProjectId}`);
+			await queryRunner.query(`
+				UPDATE \`organization_project_employee\` AS ope
+					JOIN \`organization_project\` AS op ON ope.\`organizationProjectId\` = op.\`id\`
+				SET
+					ope.\`id\` = '${uuid}',
+					ope.\`tenantId\` = op.\`tenantId\`,
+					ope.\`organizationId\` = op.\`organizationId\`
+				WHERE
+					\`employeeId\` = '${employeeId}' AND
+					\`organizationProjectId\` = '${organizationProjectId}'
+			`);
+
+			console.log(`Assigned UUID: ${uuid} to ${employeeId}, ${organizationProjectId}`);
 		}
 
 		// Step 6: Alter 'id' column to NOT NULL after populating with UUIDs
