@@ -556,12 +556,21 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 	}
 
 	/**
-	 * Registers the user as an employee during the initial onboarding process.
+	 * Converts a selected user to an employee on the users page.
 	 *
-	 * @param {IOrganizationCreateInput} organization - The organization input data required for registration.
-	 * @param {IOrganization} createdOrganization - The created organization entity.
+	 * This method registers the selected user as an employee within the currently selected organization,
+	 * provided the user hasn't already been registered as an employee.
+	 *
+	 * Preconditions:
+	 * - A valid user must be selected.
+	 * - The user must not already have an employee ID.
+	 * - The organization details must be available.
+	 *
+	 * @throws {Error} Logs an error if the employee registration process fails.
+	 *
+	 * @returns {Promise<void>} Resolves when the user is successfully registered as an employee or does nothing if preconditions aren't met.
 	 */
-	async registerEmployeeFeature(): Promise<void> {
+	async convertUserToEmployee(): Promise<void> {
 		if (!this.selectedUser || !this.organization || this.selectedUser.employeeId) {
 			return;
 		}
@@ -572,15 +581,18 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 		try {
 			await firstValueFrom(
 				this.employeesService.create({
-					startedWorkOn: null,
+					startedWorkOn: null, // Default start date is null (can be updated later)
 					userId,
 					organizationId,
 					tenantId
 				})
 			);
+			this.toastrService.success('User successfully converted to employee.');
 		} catch (error) {
-			console.error('Error while registering employee:', error);
+			console.error('Error while converting user to employee:', error);
+			this.toastrService.danger(error);
 		}
 	}
+
 	ngOnDestroy() {}
 }
