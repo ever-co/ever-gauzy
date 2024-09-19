@@ -508,6 +508,12 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 		await queryRunner.query(
 			`ALTER TABLE \`organization_project_employee\` ADD \`isArchived\` tinyint NULL DEFAULT 0`
 		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD \`createdAt\` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD \`updatedAt\` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)`
+		);
 
 		// Step 4: Add 'id' column as nullable to allow old records to remain valid
 		console.log('Step 4: Adding nullable id column...');
