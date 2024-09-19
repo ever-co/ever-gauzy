@@ -32,9 +32,9 @@
 		"@gauzy/desktop-window": "^0.1.0",
 		"active-win": "^8.1.0",
 		"better-sqlite3": "^9.4.3",
+		"electron-log": "^4.4.8",
 		"electron-store": "^8.1.0",
 		"electron-util": "^0.17.2",
-		"electron-log": "^4.4.8",
 		"embedded-queue": "^0.0.11",
 		"express": "^4.18.2",
 		"form-data": "^3.0.0",
@@ -51,6 +51,7 @@
 		"screenshot-desktop": "^1.15.0",
 		"sound-play": "1.1.0",
 		"sqlite3": "^5.1.7",
+		"tar": "^7.4.3",
 		"underscore": "^1.13.3",
 		"undici": "^6.10.2",
 		"unzipper": "^0.12.1"
