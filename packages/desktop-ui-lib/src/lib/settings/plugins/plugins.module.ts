@@ -2,7 +2,14 @@ import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { NbBadgeModule, NbButtonModule, NbCardModule, NbIconModule, NbInputModule } from '@nebular/theme';
+import {
+	NbBadgeModule,
+	NbButtonModule,
+	NbCardModule,
+	NbIconModule,
+	NbInputModule,
+	NbToggleModule
+} from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { DesktopDirectiveModule } from '../../directives/desktop-directive.module';
@@ -39,7 +46,8 @@ import { PluginLoaderService } from './services/plugin-loader.service';
 		TranslateModule,
 		RouterModule,
 		NbBadgeModule,
-		FormsModule
+		FormsModule,
+		NbToggleModule
 	],
 	exports: [PluginLayoutComponent],
 	providers: [PluginLoaderService, PluginElectronService]

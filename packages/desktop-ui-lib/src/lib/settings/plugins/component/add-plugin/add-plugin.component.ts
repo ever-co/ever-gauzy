@@ -16,8 +16,9 @@ export class AddPluginComponent implements OnInit {
 	private readonly dialogRef = inject(NbDialogRef<AddPluginComponent>);
 	private readonly ngZone = inject(NgZone);
 	public installing = false;
-	public error = '';
-	public context = '';
+	public error = null;
+	public context = 'local';
+	public private = false;
 
 	ngOnInit(): void {
 		this.pluginElectronService.status
@@ -37,12 +38,11 @@ export class AddPluginComponent implements OnInit {
 		switch (notification.status) {
 			case 'success':
 				this.installing = false;
-				this.context = '';
+				this.context = 'local';
 				this.close();
 				break;
 			case 'error':
 				this.installing = false;
-				this.context = '';
 				this.error = notification.message;
 				break;
 			case 'inProgress':
@@ -70,12 +70,19 @@ export class AddPluginComponent implements OnInit {
 		this.pluginElectronService.downloadAndInstall({ contextType: 'local' });
 	}
 
+	public installPluginFromNPM(config) {
+		this.installing = true;
+		this.context = 'npm';
+		console.log(config);
+		this.pluginElectronService.downloadAndInstall({ ...config, contextType: 'npm' });
+	}
+
 	public close() {
 		this.dialogRef.close();
 	}
 
 	public reset() {
-		this.context = '';
-		this.error = '';
+		this.context = 'local';
+		this.error = null;
 	}
 }

@@ -4,38 +4,150 @@
 		<h4>{{ 'TIMER_TRACKER.SETTINGS.PLUGIN' | translate }}</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-container *ngIf="context !== 'cdn'; else web">
+		<ng-container *ngIf="context === 'local'; else web">
 			<div class="full-width mb-3 description">
 				{{ 'TIMER_TRACKER.SETTINGS.ADD_PLUGIN_INSTALLATION_DESCRIPTION' | translate }}
 			</div>
 			<div class="load-button">
-				<button nbButton [disabled]="installing" class="full-width" status="primary" type="submit"
-					(click)="localPluginInstall()"><nb-icon *gauzySpinnerButton="installing"
-						icon="monitor-outline"></nb-icon>{{ 'BUTTONS.LOAD_PLUGIN' | translate }}</button>
-				<button *ngIf="!context" nbButton [disabled]="installing" class="full-width" status="primary"
-					type="submit" (click)="context = 'cdn'"><nb-icon *gauzySpinnerButton="installing"
-						icon="globe-outline"></nb-icon>{{ 'BUTTONS.FROM_CDN' | translate }}</button>
+				<button
+					nbButton
+					[disabled]="installing"
+					class="full-width button"
+					status="primary"
+					type="submit"
+					(click)="localPluginInstall()"
+				>
+					<nb-icon *gauzySpinnerButton="installing" icon="monitor-outline"></nb-icon
+					>{{ 'BUTTONS.LOAD_PLUGIN' | translate }}
+				</button>
+				<button
+					nbButton
+					[disabled]="installing"
+					class="full-width button"
+					status="info"
+					type="submit"
+					(click)="context = 'cdn'"
+				>
+					<nb-icon icon="globe-outline"></nb-icon>{{ 'BUTTONS.FROM_CDN' | translate }}
+				</button>
+				<button
+					nbButton
+					[disabled]="installing"
+					class="full-width button"
+					status="danger"
+					type="submit"
+					(click)="context = 'npm'"
+				>
+					<i class="fab fa-npm"></i>
+				</button>
 			</div>
 		</ng-container>
 	</nb-card-body>
 </nb-card>
 
 <ng-template #web>
-	<form class="form" (ngSubmit)="installPlugin(input.value)">
-		<label><button (click)="reset()" class="return" status="primary" size="small" outline nbButton><nb-icon
-					icon="arrow-back-outline"></nb-icon></button> {{
-			'BUTTONS.ADD_PLUGIN' |
-			translate }}</label>
-		<div class="description">
-			{{ 'TIMER_TRACKER.SETTINGS.ADD_PLUGIN_CDN_DESCRIPTION' | translate }}
-		</div>
-		<input nbInput #input type="url" [status]="error ? 'danger': 'basic'"
-			placeholder="https://cdn.server.tld/public/plugin.zip">
-		<div class="error" *ngIf="error">
-			{{error}}
-		</div>
-		<button nbButton [disabled]="!input.value || installing" status="primary" type="submit"
-			(click)="installPlugin(input.value)">{{ 'BUTTONS.INSTALL' | translate }}<nb-icon
-				*gauzySpinnerButton="installing" icon="cloud-download-outline"></nb-icon></button>
-	</form>
+	<ng-container *ngIf="context === 'cdn'; else npm">
+		<form class="form" (ngSubmit)="installPlugin(input.value)">
+			<label
+				><button (click)="reset()" class="return" status="primary" size="small" outline nbButton>
+					<nb-icon icon="arrow-back-outline"></nb-icon>
+				</button>
+				{{ 'BUTTONS.ADD_PLUGIN' | translate }}</label
+			>
+			<div class="description">
+				{{ 'TIMER_TRACKER.SETTINGS.ADD_PLUGIN_CDN_DESCRIPTION' | translate }}
+			</div>
+			<input
+				nbInput
+				#input
+				type="url"
+				[status]="error ? 'danger' : 'basic'"
+				placeholder="https://cdn.server.tld/public/plugin.zip"
+			/>
+			<div class="error" *ngIf="error">
+				{{ error }}
+			</div>
+			<button
+				nbButton
+				[disabled]="!input.value || installing"
+				status="primary"
+				type="submit"
+				(click)="installPlugin(input.value)"
+			>
+				{{ 'BUTTONS.INSTALL' | translate
+				}}<nb-icon *gauzySpinnerButton="installing" icon="cloud-download-outline"></nb-icon>
+			</button>
+		</form>
+	</ng-container>
+</ng-template>
+
+<ng-template #npm>
+	<ng-container *ngIf="context === 'npm'">
+		<form
+			class="form"
+			(ngSubmit)="installPluginFromNPM({
+			pkg: {
+			name: pkgName?.value,
+			version: pkgVersion?.value,
+		}, registry: {
+			url: registryURL?.value,
+			authToken: authToken?.value,
+		}})"
+		>
+			<label
+				><button (click)="reset()" class="return" status="primary" size="small" outline nbButton>
+					<nb-icon icon="arrow-back-outline"></nb-icon>
+				</button>
+				{{ 'BUTTONS.ADD_PLUGIN' | translate }}</label
+			>
+			<div class="description">
+				{{ 'TIMER_TRACKER.SETTINGS.ADD_PLUGIN_NPM_DESCRIPTION' | translate }}
+			</div>
+			<input nbInput #pkgName type="text" [status]="error ? 'danger' : 'basic'" placeholder="Package name" />
+			<input
+				nbInput
+				#pkgVersion
+				type="text"
+				[status]="error ? 'danger' : 'basic'"
+				placeholder="Package version"
+			/>
+			<nb-toggle [(ngModel)]="private" status="basic">{{ 'Private' | translate }} </nb-toggle>
+			<ng-container *ngIf="private">
+				<input
+					nbInput
+					#registryURL
+					type="url"
+					[status]="error ? 'danger' : 'basic'"
+					placeholder="Private registry URL"
+				/>
+				<input
+					nbInput
+					#authToken
+					type="text"
+					[status]="error ? 'danger' : 'basic'"
+					placeholder="Authentication Token"
+				/>
+			</ng-container>
+			<div class="error" *ngIf="error">
+				{{ error }}
+			</div>
+			<button
+				nbButton
+				[disabled]="!pkgName.value || installing"
+				status="primary"
+				type="submit"
+				(click)="installPluginFromNPM({
+				pkg: {
+				name: pkgName?.value,
+				version: pkgVersion?.value,
+			}, registry: {
+				url: registryURL?.value,
+				authToken: authToken?.value,
+			}})"
+			>
+				{{ 'BUTTONS.INSTALL' | translate
+				}}<nb-icon *gauzySpinnerButton="installing" icon="cloud-download-outline"></nb-icon>
+			</button>
+		</form>
+	</ng-container>
 </ng-template>
