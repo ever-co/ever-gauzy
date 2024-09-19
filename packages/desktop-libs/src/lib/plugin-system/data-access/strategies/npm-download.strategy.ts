@@ -33,7 +33,6 @@ export class NpmDownloadStrategy implements IPluginDownloadStrategy {
 		return { pathDirname, metadata };
 	}
 
-	/*************  ✨ Codeium Command 🌟  *************/
 	/**
 	 * Downloads a package from the npm registry.
 	 *
@@ -81,7 +80,6 @@ export class NpmDownloadStrategy implements IPluginDownloadStrategy {
 			throw error;
 		}
 	}
-	/******  838cc8b9-8387-499a-9d1b-16f48ea7dfc0  *******/
 
 	/**
 	 * Fetches the package info for a given package name and version.
