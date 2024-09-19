@@ -6,7 +6,14 @@ import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { filter, tap } from 'rxjs/operators';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ErrorHandlingService, Store, ToastrService, UsersOrganizationsService, monthNames } from '@gauzy/ui-core/core';
+import {
+	EmployeesService,
+	ErrorHandlingService,
+	Store,
+	ToastrService,
+	UsersOrganizationsService,
+	monthNames
+} from '@gauzy/ui-core/core';
 import {
 	InvitationTypeEnum,
 	PermissionsEnum,
@@ -70,7 +77,8 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 		private readonly errorHandlingService: ErrorHandlingService,
 		private readonly route: ActivatedRoute,
 		public readonly translateService: TranslateService,
-		private readonly userOrganizationsService: UsersOrganizationsService
+		private readonly userOrganizationsService: UsersOrganizationsService,
+		private readonly employeesService: EmployeesService
 	) {
 		super(translateService);
 		this.setView();
@@ -547,5 +555,32 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 		return `${day} ${month} ${year}`;
 	}
 
+	/**
+	 * Registers the user as an employee during the initial onboarding process.
+	 *
+	 * @param {IOrganizationCreateInput} organization - The organization input data required for registration.
+	 * @param {IOrganization} createdOrganization - The created organization entity.
+	 */
+	async registerEmployeeFeature(): Promise<void> {
+		if (!this.selectedUser || !this.organization || this.selectedUser.employeeId) {
+			return;
+		}
+
+		const { id: organizationId } = this.organization;
+		const { id: userId, tenantId } = this.selectedUser;
+
+		try {
+			await firstValueFrom(
+				this.employeesService.create({
+					startedWorkOn: null,
+					userId,
+					organizationId,
+					tenantId
+				})
+			);
+		} catch (error) {
+			console.error('Error while registering employee:', error);
+		}
+	}
 	ngOnDestroy() {}
 }

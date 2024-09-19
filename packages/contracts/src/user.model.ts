@@ -227,6 +227,7 @@ export enum ProviderEnum {
 export interface IUserViewModel extends IBasePerTenantEntityModel {
 	fullName: string;
 	email: string;
+	employeeId?: string;
 	bonus?: number;
 	endWork?: any;
 	id: string;

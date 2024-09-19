@@ -30,6 +30,20 @@
 					[isDisable]="disableButton"
 				></ngx-gauzy-button-action>
 			</ng-template>
+			<ng-template ngxPermissionsOnly="ORG_USERS_EDIT">
+				<ng-template [ngxPermissionsOnly]="['ORG_INVITE_VIEW', 'ORG_INVITE_EDIT']">
+					<button
+						nbButton
+						class="action"
+						size="small"
+						*ngIf="organizationInvitesAllowed"
+						status="primary"
+						(click)="registerEmployeeFeature()"
+					>
+						Convert to employee
+					</button>
+				</ng-template>
+			</ng-template>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
