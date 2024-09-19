@@ -33,6 +33,7 @@ export class NpmDownloadStrategy implements IPluginDownloadStrategy {
 		return { pathDirname, metadata };
 	}
 
+	/*************  ✨ Codeium Command 🌟  *************/
 	/**
 	 * Downloads a package from the npm registry.
 	 *
@@ -60,15 +61,18 @@ export class NpmDownloadStrategy implements IPluginDownloadStrategy {
 
 		try {
 			// Fetch the package info from the registry
+			logger.info(`Fetching package info from ${registryUrl}`);
 			const packageInfo = await this.fetchPackageInfo(registryUrl, options);
+			logger.info(`Package info: ${JSON.stringify(packageInfo)}`);
 			// Get the URL to the tarball
 			const tarballUrl = this.getTarballUrl(packageInfo, version);
+			logger.info(`Tarball URL: ${tarballUrl}`);
 			// Create the filename for the tarball
 			const filename = `${name}-${version}.tgz`;
 			// Create the path to the tarball
 			const tarballPath = path.join(pluginPath, filename);
-
 			// Download the tarball
+			logger.info(`Downloading tarball to ${tarballPath}`);
 			await this.downloadTarball(tarballUrl, tarballPath);
 			logger.info(`Downloaded ${name} to ${tarballPath}`);
 			return tarballPath;
@@ -77,6 +81,7 @@ export class NpmDownloadStrategy implements IPluginDownloadStrategy {
 			throw error;
 		}
 	}
+	/******  838cc8b9-8387-499a-9d1b-16f48ea7dfc0  *******/
 
 	/**
 	 * Fetches the package info for a given package name and version.
