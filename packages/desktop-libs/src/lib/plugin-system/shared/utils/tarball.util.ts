@@ -95,7 +95,7 @@ export class TarballUtil {
 
 	// Full download and extraction process
 	public async downloadAndExtract(tarballUrl: string, extractDir: string): Promise<string> {
-		const tarballPath = path.join(extractDir, 'downloaded.tgz');
+		const tarballPath = path.join(extractDir, path.basename(tarballUrl));
 
 		// Retry download logic
 		await this.retryDownloadTarball(tarballUrl, tarballPath, 3);

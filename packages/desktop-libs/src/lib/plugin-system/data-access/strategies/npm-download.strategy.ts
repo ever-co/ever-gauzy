@@ -2,24 +2,37 @@ import * as logger from 'electron-log';
 import * as fs from 'fs/promises';
 import * as https from 'https';
 import * as path from 'path';
-import { INpmDownloadConfig, IPluginDownloadResponse, IPluginDownloadStrategy, TarballUtil } from '../../shared';
+import {
+	formatNpmVersion,
+	INpmDownloadConfig,
+	IPluginDownloadResponse,
+	IPluginDownloadStrategy,
+	TarballUtil
+} from '../../shared';
 
 export class NpmDownloadStrategy implements IPluginDownloadStrategy {
 	public async execute<T>(config: T): Promise<IPluginDownloadResponse> {
 		const { pluginPath } = config as INpmDownloadConfig;
-		// Download tarball
+
+		// Download tarball and read metadata
 		const pluginDir = await this.download(config as INpmDownloadConfig);
-		// Read and parse the metadata
-		const metadata = JSON.parse(
-			await fs.readFile(path.join(pluginDir, 'manifest.json'), {
-				encoding: 'utf8'
-			})
-		);
+		const manifestPath = path.join(pluginDir, 'manifest.json');
+
+		const metadata = await this.readJSON(manifestPath);
+		if (!metadata) {
+			throw new Error(
+				`The plugin at ${pluginDir} does not have a valid manifest.json file and therefore is not a compatible plugin`
+			);
+		}
 		logger.info(`✔ Manifest.json has been read and parsed: ${JSON.stringify(metadata)}`);
+
 		// rename pathDirname
 		const pathDirname = path.join(pluginPath, `${Date.now()}-${metadata.name}`);
 		await fs.rename(pluginDir, pathDirname);
 		logger.info(`✔ Plugin directory renamed to: ${pathDirname}`);
+
+		// Install dependencies
+		await this.installDependencies(pathDirname, config as INpmDownloadConfig);
 
 		return { pathDirname, metadata };
 	}
@@ -121,5 +134,79 @@ export class NpmDownloadStrategy implements IPluginDownloadStrategy {
 			throw new Error(`Version ${version} not found`);
 		}
 		return versionInfo.dist.tarball;
+	}
+
+	/**
+	 * Reads and parses a JSON file from the file system.
+	 */
+	private async readJSON(filePath: string): Promise<any> {
+		try {
+			const fileContent = await fs.readFile(filePath, 'utf8');
+			return JSON.parse(fileContent);
+		} catch (error) {
+			logger.error(`Error reading JSON file: ${error.message}`);
+			return null;
+		}
+	}
+
+	/**
+	 * Installs dependencies recursively.
+	 */
+	private async installDependencies(dependencyDir: string, config: INpmDownloadConfig): Promise<void> {
+		const packageJsonPath = path.join(dependencyDir, 'package.json');
+		const packageJson = await this.readJSON(packageJsonPath);
+
+		if (!packageJson) {
+			console.warn(`No package.json found in ${dependencyDir}`);
+			return;
+		}
+
+		// Get dependencies if they exist
+		const dependencies = packageJson?.dependencies as Record<string, string>;
+
+		if (!dependencies || Object.keys(dependencies).length === 0) {
+			console.info(`No dependencies to install in ${dependencyDir}`);
+			return;
+		}
+
+		try {
+			for (const [dependency, version] of Object.entries(dependencies)) {
+				const newConfig = {
+					...config,
+					pkg: { name: dependency, version: formatNpmVersion(version) },
+					pluginPath: path.join(dependencyDir, 'node_modules')
+				};
+				await this.installDependency(newConfig);
+			}
+		} catch (error) {
+			console.error(`Failed to install dependencies for ${dependencyDir}:`, error);
+		}
+	}
+	/**
+	 * Installs a single dependency by downloading and extracting it.
+	 */
+	private async installDependency(config: INpmDownloadConfig): Promise<void> {
+		try {
+			// Ensure directory exists
+			await fs.mkdir(config.pluginPath, { recursive: true });
+			logger.info(`Created or confirmed directory: ${config.pluginPath}`);
+
+			// Download and retrieve the temporary directory path
+			const downloadedDir = await this.download(config);
+			logger.info(`Downloaded package to: ${downloadedDir}`);
+
+			// Define the final dependency directory
+			const depDir = path.join(config.pluginPath, config.pkg.name);
+
+			// Rename the downloaded directory to the final destination
+			await fs.rename(downloadedDir, depDir);
+			logger.info(`✔ Dependency directory renamed to: ${depDir}`);
+
+			// Install dependencies in the renamed directory
+			await this.installDependencies(depDir, config);
+			logger.info(`Dependencies installed successfully for: ${depDir}`);
+		} catch (error) {
+			logger.error(`Failed to install dependency: ${config.pkg.name}`, error);
+		}
 	}
 }
