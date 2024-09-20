@@ -18,7 +18,17 @@ export class AddPluginComponent implements OnInit {
 	public installing = false;
 	public error = null;
 	public context = 'local';
-	public private = false;
+	public showRegistry = false;
+	public npmModel = {
+		pkg: {
+			name: null,
+			version: null
+		},
+		registry: {
+			privateURL: null,
+			authToken: null
+		}
+	};
 
 	ngOnInit(): void {
 		this.pluginElectronService.status
@@ -70,11 +80,11 @@ export class AddPluginComponent implements OnInit {
 		this.pluginElectronService.downloadAndInstall({ contextType: 'local' });
 	}
 
-	public installPluginFromNPM(config) {
+	public installPluginFromNPM() {
 		this.installing = true;
 		this.context = 'npm';
-		console.log(config);
-		this.pluginElectronService.downloadAndInstall({ ...config, contextType: 'npm' });
+		console.log(this.npmModel);
+		this.pluginElectronService.downloadAndInstall({ ...this.npmModel, contextType: 'npm' });
 	}
 
 	public close() {
@@ -84,5 +94,9 @@ export class AddPluginComponent implements OnInit {
 	public reset() {
 		this.context = 'local';
 		this.error = null;
+	}
+
+	public toggleRegistry(enabled: boolean) {
+		this.showRegistry = enabled;
 	}
 }

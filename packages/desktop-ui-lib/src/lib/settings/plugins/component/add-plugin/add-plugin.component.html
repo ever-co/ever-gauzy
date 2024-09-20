@@ -83,70 +83,74 @@
 
 <ng-template #npm>
 	<ng-container *ngIf="context === 'npm'">
-		<form
-			class="form"
-			(ngSubmit)="installPluginFromNPM({
-			pkg: {
-			name: pkgName?.value,
-			version: pkgVersion?.value,
-		}, registry: {
-			url: registryURL?.value,
-			authToken: authToken?.value,
-		}})"
-		>
-			<label
-				><button (click)="reset()" class="return" status="primary" size="small" outline nbButton>
+		<form class="form" (ngSubmit)="installPluginFromNPM()">
+			<label>
+				<button (click)="reset()" class="return" status="primary" size="small" outline nbButton>
 					<nb-icon icon="arrow-back-outline"></nb-icon>
 				</button>
-				{{ 'BUTTONS.ADD_PLUGIN' | translate }}</label
-			>
+				{{ 'BUTTONS.ADD_PLUGIN' | translate }}
+			</label>
+
 			<div class="description">
 				{{ 'TIMER_TRACKER.SETTINGS.ADD_PLUGIN_NPM_DESCRIPTION' | translate }}
 			</div>
-			<input nbInput #pkgName type="text" [status]="error ? 'danger' : 'basic'" placeholder="Package name" />
+
 			<input
 				nbInput
-				#pkgVersion
 				type="text"
+				id="pkgName"
+				name="pkgName"
+				[(ngModel)]="npmModel.pkg.name"
+				required
+				#pkgName="ngModel"
+				[status]="error ? 'danger' : 'basic'"
+				placeholder="Package name"
+			/>
+
+			<input
+				nbInput
+				type="text"
+				id="pkgVersion"
+				name="pkgVersion"
+				[(ngModel)]="npmModel.pkg.version"
 				[status]="error ? 'danger' : 'basic'"
 				placeholder="Package version"
 			/>
-			<nb-toggle [(ngModel)]="private" status="basic">{{ 'Private' | translate }} </nb-toggle>
-			<ng-container *ngIf="private">
+
+			<nb-toggle [checked]="showRegistry" (checkedChange)="toggleRegistry($event)" status="basic">
+				{{ 'Registry' | translate }}
+			</nb-toggle>
+
+			<ng-container *ngIf="showRegistry">
 				<input
 					nbInput
-					#registryURL
-					type="url"
-					[status]="error ? 'danger' : 'basic'"
-					placeholder="Private registry URL"
-				/>
-				<input
-					nbInput
-					#authToken
 					type="text"
+					id="authToken"
+					name="authToken"
+					[(ngModel)]="npmModel.registry.authToken"
 					[status]="error ? 'danger' : 'basic'"
 					placeholder="Authentication Token"
 				/>
+				<input
+					nbInput
+					type="url"
+					id="privateURL"
+					name="privateURL"
+					[(ngModel)]="npmModel.registry.privateURL"
+					pattern="https?://.+"
+					#privateURL="ngModel"
+					[status]="error ? 'danger' : 'basic'"
+					placeholder="Private registry URL"
+				/>
 			</ng-container>
+
 			<div class="error" *ngIf="error">
 				{{ error }}
 			</div>
-			<button
-				nbButton
-				[disabled]="!pkgName.value || installing"
-				status="primary"
-				type="submit"
-				(click)="installPluginFromNPM({
-				pkg: {
-				name: pkgName?.value,
-				version: pkgVersion?.value,
-			}, registry: {
-				url: registryURL?.value,
-				authToken: authToken?.value,
-			}})"
-			>
-				{{ 'BUTTONS.INSTALL' | translate
-				}}<nb-icon *gauzySpinnerButton="installing" icon="cloud-download-outline"></nb-icon>
+
+			<button nbButton [disabled]="!pkgName.value || installing" status="primary" type="submit">
+				{{ 'BUTTONS.INSTALL' | translate }}
+				<nb-icon *gauzySpinnerButton="installing" icon="cloud-download-outline"></nb-icon>
 			</button>
 		</form>
 	</ng-container>

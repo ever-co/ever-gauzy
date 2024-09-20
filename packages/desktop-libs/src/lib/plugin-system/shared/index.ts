@@ -6,3 +6,5 @@ export * from './interfaces/plugin-download-strategy.interface';
 export * from './interfaces/plugin-manager.interface';
 export * from './interfaces/plugin-metadata.interface';
 export * from './interfaces/plugin.interface';
+export * from './lazy-loader';
+export * from './utils/tarball.util';
