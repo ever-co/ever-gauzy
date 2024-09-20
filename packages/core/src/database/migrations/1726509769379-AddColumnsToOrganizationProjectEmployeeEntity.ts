@@ -100,8 +100,20 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 		await queryRunner.query(`ALTER TABLE "organization_project_employee" ADD "assignedAt" TIMESTAMP`);
 		await queryRunner.query(`ALTER TABLE "organization_project_employee" ADD "roleId" uuid`);
 
-		// Step 5: Modify primary keys again
-		console.log('Step 5: Modifying primary keys again...');
+		// Step 5: Setting tenantId and organizationId for existing records in bulk
+		console.log('Step 5: Setting tenantId and organizationId for existing records...');
+		await queryRunner.query(`
+			UPDATE "organization_project_employee" AS ope
+			SET
+				"tenantId" = op."tenantId",
+				"organizationId" = op."organizationId"
+			FROM "organization_project" AS op
+			WHERE
+				ope."organizationProjectId" = op."id";
+		`);
+
+		// Step 6: Modify primary keys again
+		console.log('Step 6: Modifying primary keys again...');
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" DROP CONSTRAINT "PK_ce1fc15962d70f8776be4e19c36"`
 		);
@@ -115,8 +127,8 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 			`ALTER TABLE "organization_project_employee" ADD CONSTRAINT "PK_cb8069ff5917c90adbc48139147" PRIMARY KEY ("id")`
 		);
 
-		// Step 6: Create new indexes
-		console.log('Step 6: Creating new indexes...');
+		// Step 7: Create new indexes
+		console.log('Step 7: Creating new indexes...');
 		await queryRunner.query(
 			`CREATE INDEX "IDX_f3d1102a8aa6442cdfce5d57c3" ON "organization_project_employee" ("isActive") `
 		);
@@ -139,8 +151,8 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 			`CREATE INDEX "IDX_1c5e006185395a6193ede3456c" ON "organization_project_employee" ("roleId") `
 		);
 
-		// Step 7: Recreate foreign keys
-		console.log('Step 7: Recreating foreign keys...');
+		// Step 8: Recreate foreign keys
+		console.log('Step 8: Recreating foreign keys...');
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" ADD CONSTRAINT "FK_a9abd98013154ec1edfa1ec18cd" FOREIGN KEY ("tenantId") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
@@ -283,17 +295,23 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 			INSERT INTO "temporary_organization_project_employee" (
 				"employeeId",
 				"organizationProjectId",
+				"tenantId",
+				"organizationId",
 				"id"
 			)
 			SELECT
-				"employeeId",
-				"organizationProjectId",
-				LOWER(HEX(RANDOMBLOB(4))) || '-' ||
-				LOWER(HEX(RANDOMBLOB(2))) || '-' ||
-				LOWER(HEX(RANDOMBLOB(2))) || '-' ||
-				LOWER(HEX(RANDOMBLOB(2))) || '-' ||
-				LOWER(HEX(RANDOMBLOB(6))) AS "id"
-			FROM "organization_project_employee"
+				ope."employeeId",
+				ope."organizationProjectId",
+				op."tenantId",
+				op."organizationId",
+				LOWER(hex(randomblob(4))) || '-' ||
+				LOWER(hex(randomblob(2))) || '-' ||
+				LOWER(hex(randomblob(2))) || '-' ||
+				LOWER(hex(randomblob(2))) || '-' ||
+				LOWER(hex(randomblob(6))) AS "id"
+			FROM "organization_project_employee" AS ope
+			INNER JOIN "organization_project" AS op ON ope."organizationProjectId" = op."id"
+			WHERE ope."id" IS NULL;
 		`);
 
 		// Step 4: Drop the old table
@@ -352,11 +370,15 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 			INSERT INTO "temporary_organization_project_employee_with_constraints" (
 				"employeeId",
 				"organizationProjectId",
+				"tenantId",
+				"organizationId",
 				"id"
 			)
 			SELECT
 				"employeeId",
 				"organizationProjectId",
+				"tenantId",
+				"organizationId",
 				"id"
 			FROM "organization_project_employee"
 		`);
@@ -524,29 +546,32 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 		console.log('Step 5: Generating unique UUIDs for existing records...');
 
 		// Fetch records where id is null
-		const records = await queryRunner.query(
-			`SELECT \`employeeId\`, \`organizationProjectId\` FROM \`organization_project_employee\` WHERE \`id\` IS NULL`
-		);
-		console.log('Retrieved records: ', JSON.stringify(records));
+		const records = await queryRunner.query(`
+			SELECT \`employeeId\`, \`organizationProjectId\`
+			FROM \`organization_project_employee\`
+			WHERE \`id\` IS NULL;
+		`);
+		console.log(`Retrieved ${records.length} records with NULL id.`);
 
 		// Loop through each record and assign a unique UUID to the id column
-		for await (const { employeeId, organizationProjectId } of records) {
-			const uuid = uuidv4();
-
-			// Update the record with the generated UUID
-			await queryRunner.query(`
+		for (const { employeeId, organizationProjectId } of records) {
+			// Update the record with the generated UUID, tenantId, and organizationId
+			await queryRunner.query(
+				`
 				UPDATE \`organization_project_employee\` AS ope
 					JOIN \`organization_project\` AS op ON ope.\`organizationProjectId\` = op.\`id\`
 				SET
-					ope.\`id\` = '${uuid}',
+					ope.\`id\` = UUID(),
 					ope.\`tenantId\` = op.\`tenantId\`,
 					ope.\`organizationId\` = op.\`organizationId\`
 				WHERE
-					\`employeeId\` = '${employeeId}' AND
-					\`organizationProjectId\` = '${organizationProjectId}'
-			`);
-
-			console.log(`Assigned UUID: ${uuid} to ${employeeId}, ${organizationProjectId}`);
+					ope.\`id\` IS NULL AND
+					ope.\`employeeId\` = ? AND
+					ope.\`organizationProjectId\` = ?;
+				`,
+				[employeeId, organizationProjectId]
+			);
+			console.log(`Assigned UUID to employeeId: ${employeeId}, organizationProjectId: ${organizationProjectId}`);
 		}
 
 		// Step 6: Alter 'id' column to NOT NULL after populating with UUIDs
