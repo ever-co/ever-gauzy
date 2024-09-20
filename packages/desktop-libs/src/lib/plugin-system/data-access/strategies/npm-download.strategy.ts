@@ -169,18 +169,19 @@ export class NpmDownloadStrategy implements IPluginDownloadStrategy {
 			return;
 		}
 
-		try {
-			for (const [dependency, version] of Object.entries(dependencies)) {
-				const newConfig = {
+		// Create the node_modules directory if it doesn't exist
+		await fs.mkdir(path.join(dependencyDir, 'node_modules'), { recursive: true });
+
+		// Install dependencies in parallel
+		await Promise.all(
+			Object.entries(dependencies).map(([dependency, version]) =>
+				this.installDependency({
 					...config,
 					pkg: { name: dependency, version: formatNpmVersion(version) },
 					pluginPath: path.join(dependencyDir, 'node_modules')
-				};
-				await this.installDependency(newConfig);
-			}
-		} catch (error) {
-			console.error(`Failed to install dependencies for ${dependencyDir}:`, error);
-		}
+				})
+			)
+		);
 	}
 	/**
 	 * Installs a single dependency by downloading and extracting it.
