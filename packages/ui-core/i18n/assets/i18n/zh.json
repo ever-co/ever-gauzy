@@ -18,6 +18,7 @@
 		"DELETE": "删除",
 		"REMOVE": "删除",
 		"ADD_EXISTING": "添加现有项目",
+		"CONVERT_TO_EMPLOYEE": "转换为员工",
 		"OK": "好的",
 		"YES": "是的",
 		"NO": "不",
@@ -2705,6 +2706,7 @@
 		"ADD_EXISTING_USER": "添加现有用户",
 		"ADD_EXISTING_ORGANIZATION": "添加现有组织",
 		"ADD_EXISTING_USER_TOOLTIP": "从其他组织添加用户",
+		"CONVERT_USER_TO_EMPLOYEE": "用户已成功转换为员工。",
 		"ROLE": {
 			"SUPER_ADMIN": "超级管理员",
 			"ADMIN": "管理员",

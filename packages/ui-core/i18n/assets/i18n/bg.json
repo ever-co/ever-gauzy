@@ -18,6 +18,7 @@
 		"DELETE": "Изтриване",
 		"REMOVE": "Премахване",
 		"ADD_EXISTING": "Добавяне на съществуващ",
+		"CONVERT_TO_EMPLOYEE": "Преобразуване в служител",
 		"OK": "Да",
 		"YES": "Да",
 		"NO": "Не",
@@ -2731,6 +2732,7 @@
 		"ADD_EXISTING_USER": "Add Existing User",
 		"ADD_EXISTING_ORGANIZATION": "Add Existing Organization",
 		"ADD_EXISTING_USER_TOOLTIP": "Add user from other organization",
+		"CONVERT_USER_TO_EMPLOYEE": "Потребителят беше успешно преобразуван в служител.",
 		"ROLE": {
 			"SUPER_ADMIN": "Super Admin",
 			"ADMIN": "Администратор",

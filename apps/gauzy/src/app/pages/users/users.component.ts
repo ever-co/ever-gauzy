@@ -587,7 +587,7 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 					tenantId
 				})
 			);
-			this.toastrService.success('User successfully converted to employee.');
+			this.toastrService.success('USERS_PAGE.CONVERT_USER_TO_EMPLOYEE');
 		} catch (error) {
 			console.error('Error while converting user to employee:', error);
 			this.toastrService.danger(error);
