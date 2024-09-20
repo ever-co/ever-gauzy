@@ -80,10 +80,13 @@ export class AddPluginComponent implements OnInit {
 		this.pluginElectronService.downloadAndInstall({ contextType: 'local' });
 	}
 
+	public handleUnmaskedValueChange(authToken: string) {
+		this.npmModel.registry.authToken = authToken;
+	}
+
 	public installPluginFromNPM() {
 		this.installing = true;
 		this.context = 'npm';
-		console.log(this.npmModel);
 		this.pluginElectronService.downloadAndInstall({ ...this.npmModel, contextType: 'npm' });
 	}
 

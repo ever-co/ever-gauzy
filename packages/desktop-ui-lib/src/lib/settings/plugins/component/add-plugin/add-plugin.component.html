@@ -124,10 +124,16 @@
 			<ng-container *ngIf="showRegistry">
 				<input
 					nbInput
+					gaTextMask
+					[config]="{
+						text: npmModel.registry.authToken,
+						replacement: 0.75,
+						maskFromLeft: false
+					}"
+					(unmaskedValueChange)="handleUnmaskedValueChange($event)"
 					type="text"
 					id="authToken"
 					name="authToken"
-					[(ngModel)]="npmModel.registry.authToken"
 					[status]="error ? 'danger' : 'basic'"
 					placeholder="Authentication Token"
 				/>
