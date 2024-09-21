@@ -22,7 +22,7 @@ export class TarballUtil {
 				if (attempt === retries) {
 					throw new Error(`Failed to download after ${retries} attempts.`);
 				}
-				await new Promise((resolve) => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
+				await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
 			}
 		}
 	}

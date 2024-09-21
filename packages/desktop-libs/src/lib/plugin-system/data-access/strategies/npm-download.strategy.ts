@@ -70,7 +70,7 @@ export class NpmDownloadStrategy implements IPluginDownloadStrategy {
 			// Get the URL to the tarball
 			const tarballUrl = this.getTarballUrl(packageInfo, version);
 			logger.info(`Tarball URL: ${tarballUrl}`);
-			// Instanciate tarball util
+			// Instantiate tarball utility.
 			const tgzUtil = new TarballUtil(options);
 			// Download and extract the tarball files
 			return tgzUtil.downloadAndExtract(tarballUrl, pluginPath);
