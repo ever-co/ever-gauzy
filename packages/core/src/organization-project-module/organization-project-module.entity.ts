@@ -4,7 +4,7 @@ import { EntityRepositoryType } from '@mikro-orm/core';
 import {
 	IsArray,
 	IsBoolean,
-	IsDate,
+	IsDateString,
 	IsEnum,
 	IsNotEmpty,
 	IsObject,
@@ -12,7 +12,6 @@ import {
 	IsString,
 	IsUUID
 } from 'class-validator';
-import { Type } from 'class-transformer';
 import {
 	ID,
 	IEmployee,
@@ -69,16 +68,14 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	status?: TaskStatusEnum;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@Type(() => Date)
 	@IsOptional()
-	@IsDate()
+	@IsDateString()
 	@MultiORMColumn({ nullable: true })
 	startDate?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@Type(() => Date)
 	@IsOptional()
-	@IsDate()
+	@IsDateString()
 	@MultiORMColumn({ nullable: true })
 	endDate?: Date;
 
@@ -142,6 +139,9 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	/**
 	 * Creator
 	 */
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@IsObject()
 	@MultiORMManyToOne(() => User, {
 		nullable: true,
 		onDelete: 'CASCADE'
@@ -149,6 +149,9 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	@JoinColumn()
 	creator?: IUser;
 
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((it: OrganizationProjectModule) => it.creator)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
@@ -157,6 +160,9 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	/**
 	 * Module manager
 	 */
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@IsObject()
 	@MultiORMManyToOne(() => User, {
 		nullable: true,
 		onDelete: 'CASCADE'
@@ -164,6 +170,9 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	@JoinColumn()
 	manager?: IUser;
 
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((it: OrganizationProjectModule) => it.manager)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
