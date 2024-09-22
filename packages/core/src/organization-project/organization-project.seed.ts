@@ -52,11 +52,6 @@ export const createDefaultOrganizationProjects = async (
 			organizationId
 		});
 
-		if (organizationContacts.length === 0) {
-			console.warn(
-				`No OrganizationContacts found for tenantId: ${tenantId} and organizationId: ${organizationId}`
-			);
-		}
 
 		// Define a mapping between Budget Types and their respective min and max values
 		const budgetRanges: Record<OrganizationProjectBudgetTypeEnum, { min: number; max: number }> = {
@@ -82,12 +77,21 @@ export const createDefaultOrganizationProjects = async (
 			project.name = projectName;
 			project.status = faker.helpers.arrayElement(Object.values(TaskStatusEnum));
 			project.tags = tags;
-			project.organizationContact = faker.helpers.arrayElement(organizationContacts || []);
+			project.organizationContact = faker.helpers.arrayElement(organizationContacts);
 			project.organization = organization;
 			project.tenant = tenant;
 			project.budgetType = budgetType;
 			project.budget = budget;
 			project.taskListType = faker.helpers.arrayElement(Object.values(TaskListTypeEnum));
+
+			// If organizationContacts is not empty, assign a random organization contact
+			if (organizationContacts.length > 0) {
+				project.organizationContact = faker.helpers.arrayElement(organizationContacts);
+			} else {
+				console.warn(
+					`No OrganizationContacts found for tenantId: ${tenantId} and organizationId: ${organizationId}`
+				);
+			}
 
 			// Add project to projects array
 			projects.push(project);
@@ -171,13 +175,23 @@ export const createRandomOrganizationProjects = async (
 				project.tags = [tags[Math.floor(Math.random() * tags.length)]];
 				project.name = faker.company.name();
 				project.status = faker.helpers.arrayElement(Object.values(TaskStatusEnum));
-				project.organizationContact = faker.helpers.arrayElement(organizationContacts);
 				project.organization = organization;
 				project.tenant = tenant;
 				project.budgetType = budgetType;
 				project.budget = budget;
 				project.startDate = faker.date.past({ years: 5 });
 				project.endDate = faker.date.between({ from: project.startDate, to: new Date() });
+
+
+				// If organizationContacts is not empty, assign a random organization contact
+				if (organizationContacts.length > 0) {
+					project.organizationContact = faker.helpers.arrayElement(organizationContacts);
+				} else {
+					console.warn(
+						`No OrganizationContacts found for tenantId: ${tenantId} and organizationId: ${organizationId}`
+					);
+				}
+
 				projects.push(project);
 			}
 
