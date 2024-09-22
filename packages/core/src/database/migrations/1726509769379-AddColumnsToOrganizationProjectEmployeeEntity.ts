@@ -554,23 +554,23 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 
 		// Loop through each record and assign a unique UUID to the id column
 		for (const { employeeId, organizationProjectId } of records) {
+			const uuid = uuidv4();
+
 			// Update the record with the generated UUID, tenantId, and organizationId
-			await queryRunner.query(
-				`
+			await queryRunner.query(`
 				UPDATE \`organization_project_employee\` AS ope
 					JOIN \`organization_project\` AS op ON ope.\`organizationProjectId\` = op.\`id\`
 				SET
-					ope.\`id\` = UUID(),
+					ope.\`id\` = ?,
 					ope.\`tenantId\` = op.\`tenantId\`,
 					ope.\`organizationId\` = op.\`organizationId\`
 				WHERE
-					ope.\`id\` IS NULL AND
 					ope.\`employeeId\` = ? AND
 					ope.\`organizationProjectId\` = ?;
 				`,
-				[employeeId, organizationProjectId]
+				[uuid, employeeId, organizationProjectId]
 			);
-			console.log(`Assigned UUID to employeeId: ${employeeId}, organizationProjectId: ${organizationProjectId}`);
+			console.log(`Assigned UUID: ${uuid} to employeeId: ${employeeId}, organizationProjectId: ${organizationProjectId}`);
 		}
 
 		// Step 6: Alter 'id' column to NOT NULL after populating with UUIDs
