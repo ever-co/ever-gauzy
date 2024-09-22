@@ -78,31 +78,39 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * @throws BadRequestException if there is an error in the creation process.
 	 */
 	async create(input: IOrganizationProjectCreateInput): Promise<IOrganizationProject> {
+		const tenantId = RequestContext.currentTenantId() || input.tenantId;
+		const employeeId = RequestContext.currentEmployeeId();
+		const currentRoleId = RequestContext.currentRoleId();
+
 		const { tags = [], members = [], managers = [], ...entity } = input;
 		const { organizationId } = entity;
+
 		try {
 			// Retrieve members and managers IDs
 			const managerIds = managers.map((manager) => manager.id);
 			const memberIds = members.map((member) => member.id);
 
-			const tenantId = RequestContext.currentTenantId();
-			const employeeId = RequestContext.currentEmployeeId();
-			const currentRoleId = RequestContext.currentRoleId();
-
-			// If, employee create project, default add as a manager
+			// If the employee creates the project, default add as a manager
 			try {
 				// Check if the current role is EMPLOYEE
 				await this.roleService.findOneByIdString(currentRoleId, {
 					where: { name: RolesEnum.EMPLOYEE }
 				});
-				// Check if the employeeId is not already included in the managerIds array
+
+				// Add the current employee to the managerIds if they have the EMPLOYEE role and are not already included
 				if (!managerIds.includes(employeeId)) {
 					// If not included, add the employeeId to the managerIds array
 					managerIds.push(employeeId);
 				}
 			} catch (error) {}
+
 			// Retrieves a collection of employees based on specified criteria.
-			const employees = await this.retrieveEmployees(memberIds, managerIds, organizationId, tenantId);
+			const employees = await this.retrieveEmployees(
+				memberIds,
+				managerIds,
+				organizationId,
+				tenantId
+			);
 
 			// Find the manager role
 			const managerRole = await this.roleService.findOneByWhereOptions({ name: RolesEnum.MANAGER });
@@ -110,29 +118,45 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			// Create a Set for faster membership checks
 			const managerIdsSet = new Set(managerIds);
 
+			// Fetch existing managers for this organization project
+			const existingManagers = await this.typeOrmOrganizationProjectEmployeeRepository.findBy({
+				employee: { id: In(managerIds), organizationId, tenantId },
+				organizationId,
+				tenantId
+			});
+
+			// Create a Map for faster lookups
+			const existingManagersMap = new Map(existingManagers.map((em) => [em.employee.id, em.assignedAt]));
+
 			// Use destructuring to directly extract 'id' from 'employee'
-			const projectMembers = employees.map(
-				({ id: employeeId }) =>
-					new OrganizationProjectEmployee({
-						employee: { id: employeeId },
-						organization: { id: organizationId },
-						tenant: { id: tenantId },
-						role: managerIdsSet.has(employeeId) ? managerRole : null
-					})
-			);
+			const projectMembers = employees.map(({ id: employeeId }) => {
+				// Check if the employee is a manager
+				const isManager = managerIdsSet.has(employeeId);
+
+				// If the employee is a manager, assign the existing manager with the latest assignedAt date
+				return new OrganizationProjectEmployee({
+					employeeId,
+					organizationId,
+					tenantId,
+					isManager,
+					role: isManager ? managerRole : null,
+					assignedAt: isManager && !existingManagersMap.has(employeeId) ? new Date() : existingManagersMap.get(employeeId) || null
+				});
+			});
 
 			// Create the organization team with the prepared members
 			return await super.create({
 				...entity,
-				organization: { id: organizationId },
-				tenant: { id: tenantId },
+				members: projectMembers,
 				tags,
-				members: projectMembers
+				organizationId,
+				tenantId
 			});
 		} catch (error) {
 			throw new BadRequestException(`Failed to create project: ${error}`);
 		}
 	}
+
 
 	/**
 	 * Update an organization project.
@@ -214,7 +238,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 */
 	async deleteMemberByIds(memberIds: ID[]): Promise<void> {
 		// Map member IDs to deletion promises
-		const deletePromises = memberIds.map((memberId: string) =>
+		const deletePromises = memberIds.map((memberId: ID) =>
 			this.typeOrmOrganizationProjectEmployeeRepository.delete(memberId)
 		);
 
