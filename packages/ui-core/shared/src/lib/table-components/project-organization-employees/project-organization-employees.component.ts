@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { IEmployee } from '@gauzy/contracts';
 import { Router } from '@angular/router';
+import { ID, IEmployee } from '@gauzy/contracts';
 
 @Component({
 	selector: 'gauzy-project-organization-employees',
@@ -8,33 +8,51 @@ import { Router } from '@angular/router';
 	styleUrls: ['./project-organization-employees.component.scss']
 })
 export class ProjectOrganizationEmployeesComponent implements OnInit {
-	@Input()
-	value: string | number;
-	@Input()
-	rowData: any;
+	@Input() value: string | number;
+	@Input() rowData: any;
+
 	employeesFirstHalf: IEmployee[] = [];
 	employeesLastHalf: IEmployee[] = [];
 
-	constructor(private readonly router: Router) { }
+	constructor(readonly router: Router) {}
 
+	/**
+	 * Lifecycle hook that is called after data-bound properties are initialized.
+	 * Splits the members into two halves for display.
+	 */
 	ngOnInit(): void {
-		if (this.rowData.members.length > 0) {
-			const size: number = this.rowData.members.length;
-			const half: number = size / 2;
-			for (let i = 0; i < size; i++) {
-				if (i < Math.ceil(half)) {
-					this.employeesFirstHalf[i] = this.rowData.members[i];
-				} else {
-					this.employeesLastHalf[i - Math.ceil(half)] =
-						this.rowData.members[i];
-				}
-			}
+		this.splitEmployeesIntoHalves();
+	}
+
+	/**
+	 * Splits the members array into two halves: first half and last half.
+	 */
+	private splitEmployeesIntoHalves(): void {
+		const members = this.rowData?.members || [];
+		const halfIndex = Math.ceil(members.length / 2);
+
+		this.employeesFirstHalf = members.slice(0, halfIndex);
+		this.employeesLastHalf = members.slice(halfIndex);
+	}
+
+	/**
+	 * Navigates to the employee edit page based on the provided employee ID.
+	 *
+	 * @param id - The ID of the employee to edit.
+	 */
+	edit(id: ID): void {
+		if (id) {
+			this.router.navigate([`/pages/employees/edit/${id}`]);
 		}
 	}
 
-	edit(id: string) {
-		if (id) {
-			this.router.navigate(['/pages/employees/edit/' + id]);
-		}
+	/**
+	 * Tracks employees by their unique ID to optimize ngFor performance.
+	 * @param index - The index of the item in the list.
+	 * @param member - The employee member object.
+	 * @returns The unique ID of the employee.
+	 */
+	trackByEmployeeId(index: number, member: IEmployee): ID {
+		return member.employee?.id;
 	}
 }
