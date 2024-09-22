@@ -310,8 +310,7 @@ export class AddColumnsToOrganizationProjectEmployeeEntity1726509769379 implemen
 				LOWER(hex(randomblob(2))) || '-' ||
 				LOWER(hex(randomblob(6))) AS "id"
 			FROM "organization_project_employee" AS ope
-			INNER JOIN "organization_project" AS op ON ope."organizationProjectId" = op."id"
-			WHERE ope."id" IS NULL;
+			INNER JOIN "organization_project" AS op ON ope."organizationProjectId" = op."id";
 		`);
 
 		// Step 4: Drop the old table
