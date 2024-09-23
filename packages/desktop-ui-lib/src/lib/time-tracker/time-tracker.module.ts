@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import {
 	NbBadgeModule,
@@ -13,6 +14,7 @@ import {
 	NbIconModule,
 	NbInputModule,
 	NbLayoutModule,
+	NbRouteTabsetModule,
 	NbSelectModule,
 	NbSidebarModule,
 	NbSidebarService,
@@ -88,10 +90,10 @@ import { TimerTrackerChangeDialogComponent } from './timer-tracker-change-dialog
 		NoDataMessageModule,
 		PipeModule,
 		NbTabsetModule,
-		RecapModule,
 		TimeTrackerFormModule,
 		SelectModule,
-		DesktopDirectiveModule
+		DesktopDirectiveModule,
+		NbRouteTabsetModule,
 	],
 	providers: [
 		NbSidebarService,
