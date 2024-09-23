@@ -28,23 +28,6 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	}
 
 	/**
-	 * Update the employee's status to online and tracking
-	 *
-	 * @param employeeId - The ID of the employee whose status needs to be updated
-	 */
-	async updateEmployeeTrackingStatus(employeeId: ID): Promise<void> {
-		// Get the tenant ID from the current request context
-		const tenantId = RequestContext.currentTenantId();
-
-		// Update the employee's status to online and tracking
-		await this.typeOrmEmployeeRepository.update(
-			{ id: employeeId, tenantId },
-			{ isOnline: true, isTrackingTime: true }
-		);
-	}
-
-
-	/**
 	 * Finds members based on provided options.
 	 *
 	 * @param options - The options to filter members.
@@ -191,27 +174,33 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 */
 	async findOneByUserId(userId: ID, options?: FindOneOptions<Employee>): Promise<IEmployee | null> {
 		try {
+			// Retrieve the tenant ID from the current context
 			const tenantId = RequestContext.currentTenantId();
 
-			// Construct the where clause based on whether tenantId is available
+			// Define the base where clause
 			const whereClause = {
 				userId,
+				...(tenantId && { tenantId }), // Include tenantId if available
 				isActive: true,
 				isArchived: false,
-				...(tenantId && { tenantId }) // Include tenantId if available
 			};
-			const queryOptions = options ? { ...options } : {};
+
+			// Merge the existing where conditions in options, if any
+			const queryOptions: FindOneOptions<Employee> = {
+				...options,
+				where: {
+					...whereClause,
+					...(options?.where || {}) // Merge with existing where options if present
+				}
+			};
 
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					const { mikroOptions } = parseTypeORMFindToMikroOrm<Employee>(options as FindManyOptions);
-					const item = await this.mikroOrmRepository.findOne(whereClause, mikroOptions);
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<Employee>(queryOptions as FindManyOptions);
+					const item = await this.mikroOrmRepository.findOne(where, mikroOptions);
 					return this.serialize(item as Employee);
 				case MultiORMEnum.TypeORM:
-					return this.typeOrmRepository.findOne({
-						where: whereClause,
-						...queryOptions
-					});
+					return this.typeOrmRepository.findOne(queryOptions);
 				default:
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
@@ -554,7 +543,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		employeeId: ID,
 		params: IBasePerTenantAndOrganizationEntityModel
 	): Promise<Employee> {
-		try {]
+		try {
 			// Obtain the organization ID from the provided parameters
 			const organizationId = params.organizationId;
 
