@@ -11,6 +11,7 @@ import {
 	IInvoiceItem,
 	IOrganizationContact,
 	IOrganizationProject,
+	IOrganizationProjectEmployee,
 	IOrganizationProjectModule,
 	IOrganizationSprint,
 	IOrganizationTeam,
@@ -37,6 +38,7 @@ import {
 	ImageAsset,
 	InvoiceItem,
 	OrganizationContact,
+	OrganizationProjectEmployee,
 	OrganizationProjectModule,
 	OrganizationSprint,
 	OrganizationTeam,
@@ -187,10 +189,6 @@ export class OrganizationProject
 	})
 	budgetType?: OrganizationProjectBudgetTypeEnum;
 
-	// Specifies the number of members in the project, if provided.
-	@MultiORMColumn({ nullable: true, default: 0 })
-	membersCount?: number;
-
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
@@ -252,6 +250,10 @@ export class OrganizationProject
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, type: 'decimal' })
 	closeTasksIn?: number;
+
+	// Specifies the number of members in the project, if provided.
+	@MultiORMColumn({ nullable: true, default: 0 })
+	membersCount?: number;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -338,6 +340,15 @@ export class OrganizationProject
 	| @OneToMany
 	|--------------------------------------------------------------------------
 	*/
+
+	/**
+	 * OrganizationTeamEmployee
+	 */
+	@MultiORMOneToMany(() => OrganizationProjectEmployee, (it) => it.organizationProject, {
+		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
+		cascade: true
+	})
+	members?: IOrganizationProjectEmployee[];
 
 	/**
 	 * Organization Tasks Relationship
@@ -440,17 +451,6 @@ export class OrganizationProject
 		name: 'tag_organization_project'
 	})
 	tags?: ITag[];
-
-	/**
-	 * Project Members Relationship
-	 */
-	@MultiORMManyToMany(() => Employee, (it) => it.projects, {
-		/** Defines the database action to perform on update. */
-		onUpdate: 'CASCADE',
-		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE'
-	})
-	members?: IEmployee[];
 
 	/**
 	 * Organization Teams Relationship
