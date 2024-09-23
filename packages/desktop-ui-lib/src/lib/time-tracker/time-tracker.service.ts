@@ -41,6 +41,7 @@ import {
 	TimeTrackerDateManager
 } from '../services';
 import { UserOrganizationService } from './organization-selector/user-organization.service';
+import { UniqueRequest } from '../utils';
 
 @Injectable({
 	providedIn: 'root'
@@ -301,6 +302,7 @@ export class TimeTrackerService {
 		return firstValueFrom(this.http.get(host, { responseType: 'text' }));
 	}
 
+	@UniqueRequest()
 	toggleApiStart(values) {
 		const options = {
 			headers: new HttpHeaders({ timeout: `${15 * 1000}` })
@@ -325,6 +327,7 @@ export class TimeTrackerService {
 		return firstValueFrom(this.http.post(`${API_PREFIX}/timesheet/timer/start`, { ...body }, options));
 	}
 
+	@UniqueRequest()
 	toggleApiStop(values) {
 		const TIMEOUT = 15000;
 		const API_URL = `${API_PREFIX}/timesheet/timer/stop`;
@@ -442,7 +445,7 @@ export class TimeTrackerService {
 			})
 		);
 	}
-
+	@UniqueRequest()
 	pushToTimeSlot(values) {
 		console.log('✅ - TimeSlot', values);
 		const params = {
@@ -477,6 +480,7 @@ export class TimeTrackerService {
 		);
 	}
 
+	@UniqueRequest()
 	uploadImages(values, img: any) {
 		const TIMEOUT = 60 * 1000; // Max 60 sec to upload images
 		const formData = new FormData();
@@ -552,6 +556,7 @@ export class TimeTrackerService {
 		return firstValueFrom(this.http.get(values.apiHost));
 	}
 
+	@UniqueRequest()
 	saveNewTask(values, payload) {
 		return firstValueFrom(
 			this.http.post(`${API_PREFIX}/tasks`, payload).pipe(
@@ -566,6 +571,7 @@ export class TimeTrackerService {
 		);
 	}
 
+	@UniqueRequest()
 	createNewProject(createInput: IOrganizationProjectCreateInput, data): Promise<IOrganizationProject> {
 		return firstValueFrom(
 			this.http
@@ -574,6 +580,7 @@ export class TimeTrackerService {
 		);
 	}
 
+	@UniqueRequest()
 	createNewContact(input: IOrganizationContactCreateInput, values): Promise<IOrganizationContact> {
 		return firstValueFrom(
 			this.http.post<IOrganizationContact>(`${API_PREFIX}/organization-contact`, input).pipe(
