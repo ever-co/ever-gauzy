@@ -581,7 +581,7 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 	 * @returns {Promise<void>} Resolves when the user is successfully registered as an employee or does nothing if preconditions aren't met.
 	 */
 	async convertUserToEmployee(): Promise<void> {
-		if (!this.selectedUser || !this.organization || this.selectedUser.employeeId) {
+		if (!this.selectedUser || !this.organization || this.isEmployee()) {
 			return;
 		}
 
