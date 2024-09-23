@@ -376,11 +376,12 @@ export class TimerService {
 
 				// Delete conflicting time slots
 				await Promise.all(
-					conflicts.flatMap((timeLog: ITimeLog) =>
-						timeLog.timeSlots.map(async (timeSlot: ITimeSlot) => {
-							await this._commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, timeSlot));
-						})
-					)
+					conflicts.flatMap((timeLog: ITimeLog) => {
+						const { timeSlots = [] } = timeLog;
+						return timeSlots.map((timeSlot: ITimeSlot) =>
+							this._commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, timeSlot))
+						);
+					})
 				);
 			}
 		} catch (error) {
