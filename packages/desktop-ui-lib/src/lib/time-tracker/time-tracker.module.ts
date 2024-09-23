@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import {
 	NbBadgeModule,
@@ -33,7 +32,6 @@ import { ImageViewerModule } from '../image-viewer/image-viewer.module';
 import { ActivityWatchModule } from '../integrations';
 import { LanguageModule } from '../language/language.module';
 import { TimeSlotQueueService } from '../offline-sync';
-import { RecapModule } from '../recap/recap.module';
 import { ErrorHandlerService, NativeNotificationService, Store, ToastrNotificationService } from '../services';
 import { SelectModule } from '../shared/components/ui/select/select.module';
 import { TimeTrackerFormModule } from '../shared/features/time-tracker-form/time-tracker-form.module';
@@ -93,7 +91,7 @@ import { TimerTrackerChangeDialogComponent } from './timer-tracker-change-dialog
 		TimeTrackerFormModule,
 		SelectModule,
 		DesktopDirectiveModule,
-		NbRouteTabsetModule,
+		NbRouteTabsetModule
 	],
 	providers: [
 		NbSidebarService,
