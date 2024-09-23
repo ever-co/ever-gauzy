@@ -65,7 +65,7 @@ import {
 	OrganizationDepartment,
 	OrganizationEmploymentType,
 	OrganizationPosition,
-	OrganizationProject,
+	OrganizationProjectEmployee,
 	OrganizationProjectModule,
 	OrganizationTeamEmployee,
 	RequestApprovalEmployee,
@@ -490,6 +490,12 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	})
 	teams?: IOrganizationTeam[];
 
+	// Employee Project
+	@MultiORMOneToMany(() => OrganizationProjectEmployee, (it) => it.employee, {
+		cascade: true
+	})
+	projects?: IOrganizationProject[];
+
 	/**
 	 * Estimations
 	 */
@@ -585,22 +591,6 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	| @ManyToMany
 	|--------------------------------------------------------------------------
 	*/
-
-	/**
-	 * Employee Organization Projects
-	 */
-	@MultiORMManyToMany(() => OrganizationProject, (it) => it.members, {
-		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
-		owner: true,
-		pivotTable: 'organization_project_employee',
-		joinColumn: 'employeeId',
-		inverseJoinColumn: 'organizationProjectId'
-	})
-	@JoinTable({
-		name: 'organization_project_employee'
-	})
-	projects?: IOrganizationProject[];
 
 	/**
 	 * Employee Tags

@@ -1,6 +1,7 @@
 import {
 	AccountingTemplate,
 	Activity,
+	ActivityLog,
 	AppointmentEmployee,
 	ApprovalPolicy,
 	AvailabilitySlot,
@@ -79,6 +80,7 @@ import {
 	OrganizationLanguage,
 	OrganizationPosition,
 	OrganizationProject,
+	OrganizationProjectEmployee,
 	OrganizationProjectModule,
 	OrganizationRecurringExpense,
 	OrganizationSprint,
@@ -143,6 +145,7 @@ import {
 export const coreEntities = [
 	AccountingTemplate,
 	Activity,
+	ActivityLog,
 	AppointmentEmployee,
 	ApprovalPolicy,
 	AvailabilitySlot,
@@ -221,6 +224,7 @@ export const coreEntities = [
 	OrganizationLanguage,
 	OrganizationPosition,
 	OrganizationProject,
+	OrganizationProjectEmployee,
 	OrganizationProjectModule,
 	OrganizationRecurringExpense,
 	OrganizationSprint,

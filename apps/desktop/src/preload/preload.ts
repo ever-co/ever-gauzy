@@ -51,6 +51,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     overStyle.innerHTML = `
         .cet-container {
             top:0px !important;
+			overflow: unset !important;
         }
         .cet-menubar-menu-container {
             position: absolute;

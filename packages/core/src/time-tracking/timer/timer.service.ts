@@ -13,7 +13,8 @@ import {
 	PermissionsEnum,
 	ITimeSlot,
 	IEmployee,
-	IEmployeeFindInput
+	IEmployeeFindInput,
+	ID
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { TimeLog } from '../../core/entities/internal';
@@ -28,6 +29,7 @@ import {
 	validateDateRange
 } from '../../core/utils';
 import { prepareSQLQuery as p } from '../../database/database.helper';
+import { EmployeeService } from '../../employee/employee.service';
 import {
 	DeleteTimeSpanCommand,
 	IGetConflictTimeLogCommand,
@@ -51,8 +53,9 @@ export class TimerService {
 		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
-		readonly commandBus: CommandBus
-	) {}
+		private readonly _employeeService: EmployeeService,
+		private readonly _commandBus: CommandBus
+	) { }
 
 	/**
 	 * Fetches an employee based on the provided query.
@@ -185,77 +188,66 @@ export class TimerService {
 	}
 
 	/**
-	 * Start time tracking
+	 * Start time tracking for an employee.
 	 *
-	 * @param request
-	 * @returns
+	 * @param request The timer toggle input details.
+	 * @returns A Promise resolving to the created ITimeLog entry.
 	 */
 	async startTimer(request: ITimerToggleInput): Promise<ITimeLog> {
 		console.log(
 			'----------------------------------Started Timer Date----------------------------------',
 			moment.utc(request.startedAt).toDate()
 		);
-		const { organizationId, source, logType } = request;
 
-		/**
-		 * If source or logType is not found in the request, reject the request.
-		 */
-		const c1 = Object.values(TimeLogSourceEnum).includes(source);
-		const c2 = Object.values(TimeLogType).includes(logType);
-
-		if (!c1 || !c2) {
-			throw new BadRequestException();
-		}
-
-		const userId = RequestContext.currentUserId();
+		// Retrieve the tenant ID from the current context or the provided one in the request
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
-		const employee = await this.typeOrmEmployeeRepository.findOneBy({
-			userId,
-			tenantId
-		});
-		if (!employee) {
-			throw new NotFoundException("We couldn't find the employee you were looking for.");
+		// Destructure the necessary parameters from the request
+		const {
+			source,
+			logType,
+			projectId,
+			taskId,
+			organizationContactId,
+			organizationTeamId,
+			description,
+			isBillable,
+			version
+		} = request;
+
+		// Retrieve the employee information
+		const employee = await this.findEmployee();
+
+		// Throw an exception if the employee is not found or tracking is disabled
+		if (!employee.isTrackingEnabled) {
+			throw new ForbiddenException(`The time tracking functionality has been disabled for you.`);
 		}
 
-		const { id: employeeId } = employee;
-		const lastLog = await this.getLastRunningLog(request);
+		// Get the employee ID
+		const { id: employeeId, organizationId } = employee;
 
-		console.log('Start Timer Time Log', { request, lastLog });
+		try {
+			// Retrieve any existing running logs for the employee
+			const logs = await this.getLastRunningLogs();
 
-		if (lastLog) {
-			/**
-			 * If you want to start timer, but employee timer is already started.
-			 * So, we have to first update stop timer entry in database, then create start timer entry.
-			 * It will manage to create proper entires in database
-			 */
-			console.log('Schedule Time Log Entries Command', lastLog);
-			await this.commandBus.execute(new ScheduleTimeLogEntriesCommand(lastLog));
-		}
-
-		await this.typeOrmEmployeeRepository.update(
-			{ id: employeeId },
-			{
-				isOnline: true, // Employee status (Online/Offline)
-				isTrackingTime: true // Employee time tracking status
+			// If there are existing running logs, stop them before starting a new one
+			if (logs.length > 0) {
+				await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId);
 			}
-		);
+		} catch (error) {
+			console.error('Error while getting last running logs', error);
+		}
 
-		// Get the request parameters
-		const { projectId, taskId, organizationContactId, organizationTeamId } = request;
-		const { description, isBillable, version } = request;
+		// Determine the start date and time in UTC
+		const startedAt = request.startedAt ? moment.utc(request.startedAt).toDate() : moment.utc().toDate();
 
-		// Get the current date
-		const now = moment.utc().toDate();
-		const startedAt = request.startedAt ? moment.utc(request.startedAt).toDate() : now;
-
-		// Create the timeLog
-		return await this.commandBus.execute(
+		// Create a new time log entry using the command bus
+		const timeLog = await this._commandBus.execute(
 			new TimeLogCreateCommand({
 				organizationId,
 				tenantId,
 				employeeId,
-				startedAt: startedAt,
+				startedAt,
 				stoppedAt: startedAt,
 				duration: 0,
 				source: source || TimeLogSourceEnum.WEB_TIMER,
@@ -270,13 +262,22 @@ export class TimerService {
 				isRunning: true
 			})
 		);
+
+		// Update the employee's tracking status to reflect they are now tracking time
+		await this._employeeService.update(employeeId, {
+			isOnline: true,
+			isTrackingTime: true
+		});
+
+		// Return the newly created time log entry
+		return timeLog;
 	}
 
 	/**
-	 * Stop time tracking
+	 * Stop time tracking for the current employee.
 	 *
-	 * @param request
-	 * @returns
+	 * @param request The input data for stopping the timer.
+	 * @returns A Promise resolving to the updated ITimeLog entry.
 	 */
 	async stopTimer(request: ITimerToggleInput): Promise<ITimeLog> {
 		console.log(
@@ -284,58 +285,32 @@ export class TimerService {
 			moment.utc(request.stoppedAt).toDate()
 		);
 
-		// Get the user ID
-		const userId = RequestContext.currentUserId();
-		// Get the tenant ID
+		// Retrieve tenant ID
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
-		// Get the employee
-		const employee = await this.typeOrmEmployeeRepository.findOneBy({
-			userId,
-			tenantId
-		});
-		if (!employee) {
-			throw new NotFoundException("We couldn't find the employee you were looking for.");
+		// Fetch the employee details
+		const employee = await this.findEmployee();
+
+		// Check if time tracking is enabled for the employee
+		if (!employee.isTrackingEnabled) {
+			throw new ForbiddenException('The time tracking functionality has been disabled for you.');
 		}
 
-		// Get the employee ID
-		const { id: employeeId } = employee;
-
-		// Update the employee
-		await this.typeOrmEmployeeRepository.update(
-			{ id: employeeId },
-			{
-				isOnline: false, // Employee status (Online/Offline)
-				isTrackingTime: false // Employee time tracking status
-			}
-		);
-
-		let lastLog = await this.getLastRunningLog(request);
+		// Retrieve the last running log or start a new timer if none exist
+		let lastLog = await this.getLastRunningLog();
 		if (!lastLog) {
-			/**
-			 * If you want to stop timer, but employee timer is already stopped.
-			 * So, we have to first create start timer entry in database, then update stop timer entry.
-			 * It will manage to create proper entires in database
-			 */
+			console.log('No running log found. Starting a new timer before stopping it.');
 			lastLog = await this.startTimer(request);
 		}
 
-		// Get the organization ID
-		const organizationId = request.organizationTeamId || employee.organizationId;
+		const organizationId = employee.organizationId ?? lastLog.organizationId;
+		const stoppedAt = moment.utc(request.stoppedAt ?? moment.utc()).toDate();
 
-		// Get the current date and set the initial stoppedAt date
-		const now = moment.utc().toDate();
-		let stoppedAt = moment.utc(request.stoppedAt ?? now).toDate();
+		// Validate the date range
+		validateDateRange(lastLog.startedAt, stoppedAt);
 
-		/** Function that performs the date range validation */
-		try {
-			validateDateRange(lastLog.startedAt, stoppedAt);
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
-
-		// Update the lastLog
-		lastLog = await this.commandBus.execute(
+		// Update the time log entry to mark it as stopped
+		lastLog = await this._commandBus.execute(
 			new TimeLogUpdateCommand(
 				{
 					stoppedAt,
@@ -347,9 +322,33 @@ export class TimerService {
 		);
 		console.log('Stop Timer Time Log', { lastLog });
 
+		// Update the employee's tracking status
+		await this._employeeService.update(employee.id, {
+			isOnline: false, // Employee status (Online/Offline)
+			isTrackingTime: false // Employee time tracking status
+		});
+
+		// Handle conflicting time logs
+		await this.handleConflictingTimeLogs(lastLog, tenantId, organizationId);
+
+		return lastLog;
+	}
+
+	/**
+	 * Handles any conflicting time logs that overlap with the current time log entry.
+	 *
+	 * @param lastLog The last running time log entry.
+	 * @param tenantId The tenant ID.
+	 * @param organizationId The organization ID.
+	 */
+	private async handleConflictingTimeLogs(
+		lastLog: ITimeLog,
+		tenantId: ID,
+		organizationId: ID
+	): Promise<void> {
 		try {
-			// Get conflicts time logs
-			const conflicts = await this.commandBus.execute(
+			// Retrieve conflicting time logs
+			const conflicts = await this._commandBus.execute(
 				new IGetConflictTimeLogCommand({
 					ignoreId: lastLog.id,
 					startDate: lastLog.startedAt,
@@ -360,37 +359,34 @@ export class TimerService {
 				})
 			);
 
-			console.log('Get Conflicts Time Logs', conflicts, {
+			console.log('Conflicting Time Logs:', conflicts, {
 				ignoreId: lastLog.id,
 				startDate: lastLog.startedAt,
 				endDate: lastLog.stoppedAt,
 				employeeId: lastLog.employeeId,
-				organizationId: request.organizationId || lastLog.organizationId,
+				organizationId: organizationId || lastLog.organizationId,
 				tenantId
 			});
 
-			// If there are conflicts, delete them
 			if (isNotEmpty(conflicts)) {
 				const times: IDateRange = {
 					start: new Date(lastLog.startedAt),
 					end: new Date(lastLog.stoppedAt)
 				};
 
-				// Delete conflicts
+				// Delete conflicting time slots
 				await Promise.all(
-					await conflicts.flatMap((timeLog: ITimeLog) => {
+					conflicts.flatMap((timeLog: ITimeLog) => {
 						const { timeSlots = [] } = timeLog;
-						timeSlots.map(async (timeSlot: ITimeSlot) => {
-							await this.commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, timeSlot));
-						});
+						return timeSlots.map((timeSlot: ITimeSlot) =>
+							this._commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, timeSlot))
+						);
 					})
 				);
 			}
 		} catch (error) {
-			console.error('Error while deleting time span during conflicts timelogs', error);
+			console.error('Error while handling conflicts in time logs:', error);
 		}
-
-		return lastLog;
 	}
 
 	/**
@@ -400,7 +396,7 @@ export class TimerService {
 	 * @returns
 	 */
 	async toggleTimeLog(request: ITimerToggleInput): Promise<TimeLog> {
-		const lastLog = await this.getLastRunningLog(request);
+		const lastLog = await this.getLastRunningLog();
 		if (!lastLog) {
 			return this.startTimer(request);
 		} else {
@@ -409,51 +405,104 @@ export class TimerService {
 	}
 
 	/**
-	 * Get employee last running timer
+	 * Stops all previous running timers for the specified employee.
 	 *
-	 * @param request
-	 * @returns
+	 * @param employeeId - The ID of the employee whose timers need to be stopped
+	 * @param organizationId - The ID of the organization to which the employee belongs
+	 * @param tenantId - The ID of the tenant context
 	 */
-	private async getLastRunningLog(request: ITimerToggleInput): Promise<ITimeLog> {
-		const userId = RequestContext.currentUserId();
-		const tenantId = RequestContext.currentTenantId();
-
-		// Replace 'Employee' with your actual Employee entity type
-		const employee = await this.typeOrmEmployeeRepository.findOne({
-			where: { userId, tenantId },
-			relations: { user: true }
-		});
-
-		// If employee is not found, throw a NotFoundException
-		if (!employee) {
-			throw new NotFoundException("We couldn't find the employee you were looking for.");
-		}
-
-		// Employee time tracking status
-		if (!employee.isTrackingEnabled) {
-			throw new ForbiddenException(`The time tracking functionality has been disabled for you.`);
-		}
-
-		// Get the employee ID
-		const { id: employeeId } = employee;
-
-		// Get the organization ID
-		const organizationId = request.organizationTeamId || employee.organizationId;
-
-		// Return the last running log
-		return await this.typeOrmTimeLogRepository.findOne({
-			where: {
-				stoppedAt: Not(IsNull()),
+	async stopPreviousRunningTimers(employeeId: ID, organizationId: ID, tenantId: ID): Promise<void> {
+		try {
+			// Execute the ScheduleTimeLogEntriesCommand to stop all previous running timers
+			await this._commandBus.execute(new ScheduleTimeLogEntriesCommand(
 				employeeId,
-				tenantId,
 				organizationId,
-				isRunning: true
-			},
-			order: {
-				startedAt: 'DESC',
-				createdAt: 'DESC'
-			}
-		});
+				tenantId
+			));
+		} catch (error) {
+			// Log the error or handle it appropriately
+			console.log('Failed to stop previous running timers:', error);
+		}
+	}
+
+	/**
+	 * Retrieves the current employee record based on the user and tenant context.
+	 *
+	 * @returns The employee record if found.
+	 * @throws NotFoundException if the employee record is not found.
+	 */
+	async findEmployee(): Promise<IEmployee> {
+		const userId = RequestContext.currentUserId(); // Get the current user ID
+		const tenantId = RequestContext.currentTenantId(); // Get the current tenant ID
+
+		// Fetch the employee record using userId and tenantId
+		const employee = await this._employeeService.findOneByUserId(userId, { where: { tenantId } });
+
+		if (!employee) {
+			throw new NotFoundException('Employee record not found. Please verify your details and try again.');
+		}
+
+		return employee;
+	}
+
+
+	/**
+	 * Get the last running log or all pending running logs for the current employee
+	 *
+	 * @param fetchAll - Set to `true` to fetch all pending logs, otherwise fetch the last running log
+	 * @returns A single time log if `fetchAll` is `false`, or an array of time logs if `fetchAll` is `true`
+	 */
+	private async getRunningLogs(fetchAll: boolean = false): Promise<ITimeLog | ITimeLog[]> {
+		const tenantId = RequestContext.currentTenantId(); // Retrieve the tenant ID from the current context
+
+		// Extract employeeId and organizationId
+		const { id: employeeId, organizationId } = await this.findEmployee();
+
+		// Define common query conditions
+		const whereClause = {
+			employeeId,
+			tenantId,
+			organizationId,
+			isRunning: true,
+			stoppedAt: Not(IsNull()), // Logs should have a non-null `stoppedAt`
+		};
+
+		// Determine whether to fetch a single log or multiple logs
+		return fetchAll
+			? await this.typeOrmTimeLogRepository.find({
+				where: whereClause,
+				order: { startedAt: 'DESC', createdAt: 'DESC' }
+			})
+			: await this.typeOrmTimeLogRepository.findOne({
+				where: whereClause,
+				order: { startedAt: 'DESC', createdAt: 'DESC' }
+			});
+	}
+
+	/**
+	 * Get the employee's last running timer log
+	 *
+	 * @returns The last running ITimeLog entry for the current employee
+	 */
+	private async getLastRunningLog(): Promise<ITimeLog> {
+		// Retrieve the last running log by using the `getRunningLogs` method with `fetchAll` set to false
+		const lastRunningLog = await this.getRunningLogs();
+
+		// Ensure that the returned log is of type ITimeLog
+		return lastRunningLog as ITimeLog;
+	}
+
+	/**
+	 * Get all pending running logs for the current employee
+	 *
+	 * @returns An array of pending time logs
+	 */
+	private async getLastRunningLogs(): Promise<ITimeLog[]> {
+		// Retrieve the last running log by using the `getRunningLogs` method with `fetchAll` set to false
+		const logs = await this.getRunningLogs(true);
+
+		// Ensure that the returned logs are of type ITimeLog[]
+		return logs as ITimeLog[];
 	}
 
 	/**
@@ -467,7 +516,7 @@ export class TimerService {
 		const { organizationId, organizationTeamId, source } = request;
 
 		// Define the array to store employeeIds
-		let employeeIds: string[] = [];
+		let employeeIds: ID[] = [];
 
 		const permissions = [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE, PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW];
 
