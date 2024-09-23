@@ -11,7 +11,7 @@ import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.rep
 
 @CommandHandler(ScheduleTimeLogEntriesCommand)
 export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTimeLogEntriesCommand> {
-	constructor(private readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository) {}
+	constructor(readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository) {}
 
 	/**
 	 * Schedule TimeLog Entries
@@ -24,8 +24,7 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 		let timeLogs: ITimeLog[] = [];
 
 		// Query the timeLogs
-		const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
-		query.setFindOptions({
+		const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log').setFindOptions({
 			relations: { timeSlots: true }
 		});
 

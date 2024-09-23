@@ -28,6 +28,7 @@ import {
 	validateDateRange
 } from '../../core/utils';
 import { prepareSQLQuery as p } from '../../database/database.helper';
+import { EmployeeService } from '../../employee/employee.service';
 import {
 	DeleteTimeSpanCommand,
 	IGetConflictTimeLogCommand,
@@ -51,7 +52,8 @@ export class TimerService {
 		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
-		readonly commandBus: CommandBus
+		private readonly _employeeService: EmployeeService,
+		private readonly _commandBus: CommandBus
 	) {}
 
 	/**
@@ -195,25 +197,18 @@ export class TimerService {
 			'----------------------------------Started Timer Date----------------------------------',
 			moment.utc(request.startedAt).toDate()
 		);
+
+		// Get the request parameters
 		const { organizationId, source, logType } = request;
-
-		/**
-		 * If source or logType is not found in the request, reject the request.
-		 */
-		const c1 = Object.values(TimeLogSourceEnum).includes(source);
-		const c2 = Object.values(TimeLogType).includes(logType);
-
-		if (!c1 || !c2) {
-			throw new BadRequestException();
-		}
+		const { projectId, taskId, organizationContactId, organizationTeamId } = request;
+		const { description, isBillable, version } = request;
 
 		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
-		const employee = await this.typeOrmEmployeeRepository.findOneBy({
-			userId,
-			tenantId
-		});
+		// Get the employee
+		const employee = await this._employeeService.findOneByUserId(userId);
+		// If not found throw a NotFoundException
 		if (!employee) {
 			throw new NotFoundException("We couldn't find the employee you were looking for.");
 		}
@@ -230,27 +225,18 @@ export class TimerService {
 			 * It will manage to create proper entires in database
 			 */
 			console.log('Schedule Time Log Entries Command', lastLog);
-			await this.commandBus.execute(new ScheduleTimeLogEntriesCommand(lastLog));
+			await this._commandBus.execute(new ScheduleTimeLogEntriesCommand(lastLog));
 		}
 
-		await this.typeOrmEmployeeRepository.update(
-			{ id: employeeId },
-			{
-				isOnline: true, // Employee status (Online/Offline)
-				isTrackingTime: true // Employee time tracking status
-			}
-		);
-
-		// Get the request parameters
-		const { projectId, taskId, organizationContactId, organizationTeamId } = request;
-		const { description, isBillable, version } = request;
+		// Update employee tracking status
+		await this._employeeService.updateEmployeeTrackingStatus(employeeId);
 
 		// Get the current date
 		const now = moment.utc().toDate();
 		const startedAt = request.startedAt ? moment.utc(request.startedAt).toDate() : now;
 
 		// Create the timeLog
-		return await this.commandBus.execute(
+		return await this._commandBus.execute(
 			new TimeLogCreateCommand({
 				organizationId,
 				tenantId,
@@ -290,10 +276,8 @@ export class TimerService {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		// Get the employee
-		const employee = await this.typeOrmEmployeeRepository.findOneBy({
-			userId,
-			tenantId
-		});
+		const employee = await this._employeeService.findOneByUserId(userId);
+		// If not found throw a NotFoundException
 		if (!employee) {
 			throw new NotFoundException("We couldn't find the employee you were looking for.");
 		}
@@ -321,7 +305,7 @@ export class TimerService {
 		}
 
 		// Get the organization ID
-		const organizationId = request.organizationTeamId || employee.organizationId;
+		const organizationId = request.organizationId ?? lastLog.organizationId;
 
 		// Get the current date and set the initial stoppedAt date
 		const now = moment.utc().toDate();
@@ -335,7 +319,7 @@ export class TimerService {
 		}
 
 		// Update the lastLog
-		lastLog = await this.commandBus.execute(
+		lastLog = await this._commandBus.execute(
 			new TimeLogUpdateCommand(
 				{
 					stoppedAt,
@@ -349,7 +333,7 @@ export class TimerService {
 
 		try {
 			// Get conflicts time logs
-			const conflicts = await this.commandBus.execute(
+			const conflicts = await this._commandBus.execute(
 				new IGetConflictTimeLogCommand({
 					ignoreId: lastLog.id,
 					startDate: lastLog.startedAt,
@@ -381,7 +365,7 @@ export class TimerService {
 					await conflicts.flatMap((timeLog: ITimeLog) => {
 						const { timeSlots = [] } = timeLog;
 						timeSlots.map(async (timeSlot: ITimeSlot) => {
-							await this.commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, timeSlot));
+							await this._commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, timeSlot));
 						});
 					})
 				);
@@ -409,6 +393,29 @@ export class TimerService {
 	}
 
 	/**
+	 * Retrieve the current employee record based on the current user and tenant context.
+	 *
+	 * @returns The employee record if found
+	 * @throws NotFoundException if the employee record is not found
+	 */
+	async findEmployee(): Promise<IEmployee> {
+		const userId = RequestContext.currentUserId(); // Retrieve the user ID from the current context
+		const tenantId = RequestContext.currentTenantId(); // Retrieve the tenant ID from the current context
+
+		// Retrieve the employee record using the provided userId and tenantId
+		const employee = await this._employeeService.findOneByUserId(userId, {
+			where: { tenantId }
+		});
+
+		// Throw an exception if the employee is not found
+		if (!employee) {
+			throw new NotFoundException('Employee record not found. Please verify the details and try again.');
+		}
+
+		return employee;
+	}
+
+	/**
 	 * Get employee last running timer
 	 *
 	 * @param request
@@ -419,8 +426,7 @@ export class TimerService {
 		const tenantId = RequestContext.currentTenantId();
 
 		// Replace 'Employee' with your actual Employee entity type
-		const employee = await this.typeOrmEmployeeRepository.findOne({
-			where: { userId, tenantId },
+		const employee = await this._employeeService.findOneByUserId(userId, {
 			relations: { user: true }
 		});
 
@@ -434,11 +440,11 @@ export class TimerService {
 			throw new ForbiddenException(`The time tracking functionality has been disabled for you.`);
 		}
 
-		// Get the employee ID
-		const { id: employeeId } = employee;
-
 		// Get the organization ID
 		const organizationId = request.organizationTeamId || employee.organizationId;
+
+		// Get the employee ID
+		const { id: employeeId } = employee;
 
 		// Return the last running log
 		return await this.typeOrmTimeLogRepository.findOne({
