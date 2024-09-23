@@ -72,6 +72,7 @@
 		</ng-template>
 	</nb-card-body>
 </nb-card>
+
 <ng-template #actionButtons let-selectedItem="selectedItem">
 	<ng-template ngxPermissionsOnly="ORG_USERS_EDIT">
 		<div class="actions">
@@ -97,7 +98,7 @@
 			</button>
 			<button
 				nbButton
-				[disabled]="!selectedItem && disableButton"
+				[disabled]="(!selectedItem && disableButton) || isEmployee()"
 				(click)="convertUserToEmployee()"
 				status="basic"
 				class="action primary"

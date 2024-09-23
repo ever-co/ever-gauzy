@@ -556,6 +556,16 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 	}
 
 	/**
+	 * Checks if the user is an employee.
+	 *
+	 * @param user The user to check.
+	 * @returns True if the user is an employee, otherwise false.
+	 */
+	private isEmployee(): boolean {
+		return !!this.selectedUser.employeeId;
+	}
+
+	/**
 	 * Converts a selected user to an employee on the users page.
 	 *
 	 * This method registers the selected user as an employee within the currently selected organization,
