@@ -415,8 +415,8 @@ export class TimerService {
 	 * Calculates the stoppedAt time based on the last log and request parameters.
 	 * It handles the case for DESKTOP source, considering time slots' durations.
 	 *
-	 * @param request The input request containing timer toggle information
-	 * @param lastLog The last running time log for the employee
+	 * @param request - The input request containing timer toggle information
+	 * @param lastLog - The last running time log for the employee
 	 * @returns The calculated stoppedAt date
 	 */
 	async calculateStoppedAt(request: ITimerToggleInput, lastLog: ITimeLog): Promise<Date> {
@@ -430,6 +430,11 @@ export class TimerService {
 				moment(a.startedAt).isBefore(b.startedAt) ? 1 : -1
 			)[0];
 
+			// Example:
+			// If lastLog.timeSlots = [{ startedAt: "2024-09-24 19:50:00", duration: 600 }, { startedAt: "2024-09-24 19:40:00", duration: 600 }]
+			// The sorted result will be [{ startedAt: "2024-09-24 19:50:00", duration: 600 }, { startedAt: "2024-09-24 19:40:00", duration: 600 }]
+			// Hence, lastTimeSlot will be the one with startedAt = "2024-09-24 19:50:00".
+
 			// Check if the last time slot was created more than 10 minutes ago
 			if (lastTimeSlot) {
 				// Retrieve the last time slot's startedAt date
@@ -438,25 +443,37 @@ export class TimerService {
 				// Retrieve the last time slot's duration
 				const duration = lastTimeSlot.duration;
 
+				// Example:
+				// If lastTimeSlotStartedAt = "2024-09-24 19:50:00" and duration = 600 (10 minutes)
+				// and the current time is "2024-09-24 20:10:00", the difference is 20 minutes, which is more than 10 minutes.
+
 				// Check if the last time slot was created more than 10 minutes ago
 				if (moment.utc().diff(lastTimeSlotStartedAt, 'minutes') > 10) {
 					// Calculate the potential stoppedAt time using the total duration
 					stoppedAt = moment.utc(lastTimeSlot.startedAt).add(duration, 'seconds').toDate();
+					// Example: stoppedAt = "2024-09-24 20:00:00"
 				}
 			} else {
 				// Retrieve the last log's startedAt date
 				const lastLogStartedAt = moment.utc(lastLog.startedAt);
 
+				// Example:
+				// If lastLog.startedAt = "2024-09-24 19:30:00" and there are no time slots,
+				// and the current time is "2024-09-24 20:00:00", the difference is 30 minutes.
+
 				// If no time slots exist and the difference is more than 10 minutes, adjust the stoppedAt
 				if (moment.utc().diff(lastLogStartedAt, 'minutes') > 10) {
 					stoppedAt = moment.utc(lastLog.startedAt).add(10, 'seconds').toDate();
+					// Example: stoppedAt will be "2024-09-24 19:30:10"
 				}
 			}
 		}
 
 		console.log('Last calculated stoppedAt: %s', stoppedAt);
+		// Example log output: "Last calculated stoppedAt: 2024-09-24 20:00:00"
 		return stoppedAt;
 	}
+
 
 	/**
 	 * Toggle time tracking start/stop
