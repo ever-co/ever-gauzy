@@ -21,7 +21,7 @@ import {
 	IOrganizationTeam,
 	ITask,
 	IUser,
-	TaskStatusEnum
+	ProjectModuleStatusEnum
 } from '@gauzy/contracts';
 import {
 	Employee,
@@ -62,10 +62,10 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@IsEnum(TaskStatusEnum)
+	@IsEnum(ProjectModuleStatusEnum)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
-	status?: TaskStatusEnum;
+	status?: ProjectModuleStatusEnum;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
