@@ -435,10 +435,13 @@ export class TimerService {
 				// Retrieve the last time slot's startedAt date
 				const lastTimeSlotStartedAt = moment.utc(lastTimeSlot.startedAt);
 
+				// Retrieve the last time slot's duration
+				const duration = lastTimeSlot.duration;
+
 				// Check if the last time slot was created more than 10 minutes ago
 				if (moment.utc().diff(lastTimeSlotStartedAt, 'minutes') > 10) {
 					// Calculate the potential stoppedAt time using the total duration
-					stoppedAt = moment.utc(lastTimeSlot.startedAt).add(lastTimeSlot.duration, 'seconds').toDate();
+					stoppedAt = moment.utc(lastTimeSlot.startedAt).add(duration, 'seconds').toDate();
 				}
 			} else {
 				// Retrieve the last log's startedAt date

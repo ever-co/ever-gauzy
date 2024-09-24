@@ -2,7 +2,7 @@ import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { isEmpty } from '@gauzy/common';
-import { ID, ITimeLog } from '@gauzy/contracts';
+import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { TimeLog } from './../../time-log.entity';
 import { ScheduleTimeLogEntriesCommand } from '../schedule-time-log-entries.command';
@@ -104,13 +104,13 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 	private async processTimeLogEntry(timeLog: ITimeLog): Promise<void> {
 		const { timeSlots } = timeLog;
 
-		// Calculate the minutes difference since the time log started
-		const minutes = moment().diff(moment.utc(timeLog.startedAt), 'minutes');
-
 		// Handle cases where there are no time slots
 		if (isEmpty(timeSlots)) {
+			// Retrieve the last log's startedAt date
+			const lastLogStartedAt = moment.utc(timeLog.startedAt);
+
 			// If the minutes difference is greater than 10, update the stoppedAt date
-			if (minutes > 10) {
+			if (moment.utc().diff(lastLogStartedAt, 'minutes') > 10) {
 				await this.updateStoppedAtUsingStartedAt(timeLog);
 			}
 		} else {
@@ -146,18 +146,35 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 	 * @param timeLog The time log entry to update
 	 * @param timeSlots The time slots associated with the time log
 	 */
-	private async updateStoppedAtUsingTimeSlots(timeLog: ITimeLog, timeSlots: any[]): Promise<void> {
+	private async updateStoppedAtUsingTimeSlots(timeLog: ITimeLog, timeSlots: ITimeSlot[]): Promise<void> {
 		// Calculate the duration
-		const duration = timeSlots.reduce<number>((sum, { duration }) => sum + duration, 0);
+		const totalDurationInSeconds = timeSlots.reduce<number>((sum, { duration }) => sum + duration, 0);
 
 		// Calculate the stoppedAt date
-		const stoppedAt = moment.utc(timeLog.startedAt).add(duration, 'seconds').toDate();
+		let stoppedAt = moment.utc(timeLog.startedAt).add(totalDurationInSeconds, 'seconds').toDate();
 
-		// Calculate the minutes difference
-		const minutes = moment.utc().diff(moment.utc(stoppedAt), 'minutes');
+		// Retrieve the most recent time slot from the last log
+		const lastTimeSlot: ITimeSlot | undefined = timeSlots?.sort((a: ITimeSlot, b: ITimeSlot) =>
+			moment(a.startedAt).isBefore(b.startedAt) ? 1 : -1
+		)[0];
+
+		// Check if the last time slot was created more than 10 minutes ago
+		if (lastTimeSlot) {
+			// Retrieve the last time slot's startedAt date
+			const lastTimeSlotStartedAt = moment.utc(lastTimeSlot.startedAt);
+			// Retrieve the last time slot's duration
+			const duration = lastTimeSlot.duration;
+
+			// Check if the last time slot was created more than 10 minutes ago
+			if (moment.utc().diff(lastTimeSlotStartedAt, 'minutes') > 10) {
+				// Calculate the potential stoppedAt time using the total duration
+				stoppedAt = moment.utc(lastTimeSlot.startedAt).add(duration, 'seconds').toDate();
+			}
+		}
 
 		// Update the stoppedAt field in the database
-		if (minutes > 10) {
+		if (moment.utc().diff(stoppedAt, 'minutes') > 10) {
+			// Calculate the potential stoppedAt time using the total duration
 			await this.typeOrmTimeLogRepository.save({
 				id: timeLog.id,
 				stoppedAt
