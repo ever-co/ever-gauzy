@@ -229,6 +229,7 @@ export class TimerService {
 		try {
 			// Retrieve any existing running logs for the employee
 			const logs = await this.getLastRunningLogs();
+			console.log('Last Running Logs Count:', logs.length);
 
 			// If there are existing running logs, stop them before starting a new one
 			if (logs.length > 0) {
@@ -329,7 +330,19 @@ export class TimerService {
 				request.manualTimeSlot
 			)
 		);
-		console.log('Stop Timer Time Log', { lastLog });
+
+		try {
+			// Retrieve any existing running logs for the employee
+			const logs = await this.getLastRunningLogs();
+			console.log('Last Running Logs Count:', logs.length);
+
+			// If there are existing running logs, stop them before starting a new one
+			if (logs.length > 0) {
+				await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId);
+			}
+		} catch (error) {
+			console.error('Error while getting last running logs', error);
+		}
 
 		// Update the employee's tracking status
 		await this._employeeService.update(employeeId, {
@@ -412,12 +425,6 @@ export class TimerService {
 
 		// Handle the DESKTOP source case
 		if (request.source === TimeLogSourceEnum.DESKTOP) {
-			// Calculate the total duration of all time slots associated with the last log
-			const totalDurationInSeconds = lastLog.timeSlots?.reduce((sum, slot) => sum + (slot?.duration || 0), 0) || 0;
-
-			// Calculate the potential stoppedAt time using the total duration
-			const calculatedStoppedAt = moment.utc(lastLog.startedAt).add(totalDurationInSeconds, 'seconds').toDate();
-
 			// Retrieve the most recent time slot from the last log
 			const lastTimeSlot: ITimeSlot | undefined = lastLog.timeSlots?.sort((a: ITimeSlot, b: ITimeSlot) =>
 				moment(a.startedAt).isBefore(b.startedAt) ? 1 : -1
@@ -425,14 +432,21 @@ export class TimerService {
 
 			// Check if the last time slot was created more than 10 minutes ago
 			if (lastTimeSlot) {
-				const lastTimeSlotCreatedAt = moment.utc(lastTimeSlot.startedAt);
-				if (moment.utc().diff(lastTimeSlotCreatedAt, 'minutes') > 10) {
-					stoppedAt = calculatedStoppedAt;
+				// Retrieve the last time slot's startedAt date
+				const lastTimeSlotStartedAt = moment.utc(lastTimeSlot.startedAt);
+
+				// Check if the last time slot was created more than 10 minutes ago
+				if (moment.utc().diff(lastTimeSlotStartedAt, 'minutes') > 10) {
+					// Calculate the potential stoppedAt time using the total duration
+					stoppedAt = moment.utc(lastTimeSlot.startedAt).add(lastTimeSlot.duration, 'seconds').toDate();
 				}
 			} else {
+				// Retrieve the last log's startedAt date
+				const lastLogStartedAt = moment.utc(lastLog.startedAt);
+
 				// If no time slots exist and the difference is more than 10 minutes, adjust the stoppedAt
-				if (moment.utc().diff(calculatedStoppedAt, 'minutes') > 10) {
-					stoppedAt = calculatedStoppedAt;
+				if (moment.utc().diff(lastLogStartedAt, 'minutes') > 10) {
+					stoppedAt = moment.utc(lastLogStartedAt).add(10, 'seconds').toDate();
 				}
 			}
 		}
