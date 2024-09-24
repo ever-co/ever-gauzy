@@ -446,7 +446,7 @@ export class TimerService {
 
 				// If no time slots exist and the difference is more than 10 minutes, adjust the stoppedAt
 				if (moment.utc().diff(lastLogStartedAt, 'minutes') > 10) {
-					stoppedAt = moment.utc(lastLogStartedAt).add(10, 'seconds').toDate();
+					stoppedAt = moment.utc(lastLog.startedAt).add(10, 'seconds').toDate();
 				}
 			}
 		}
