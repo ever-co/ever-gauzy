@@ -174,7 +174,7 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 		// then stoppedAt = "2024-09-24 10:15:00"
 
 		// Retrieve the most recent time slot from the last log
-		const lastTimeSlot: ITimeSlot | undefined = timeSlots?.sort((a: ITimeSlot, b: ITimeSlot) =>
+		const lastTimeSlot: ITimeSlot | undefined = timeSlots.sort((a: ITimeSlot, b: ITimeSlot) =>
 			moment(a.startedAt).isBefore(b.startedAt) ? 1 : -1
 		)[0];
 
