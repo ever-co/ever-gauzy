@@ -1,15 +1,7 @@
 <nb-card>
 	<nb-card-body>
-		<img
-			*ngIf="selectedImage"
-			class="img-asset-preview"
-			[src]="selectedImage.url"
-			[alt]="selectedImage.name"
-		/>
-		<div
-			*ngIf="!selectedImage"
-			class="no-img-asset-preview"
-		><i class="fas fa-image"></i></div>
+		<img *ngIf="selectedImage" class="img-asset-preview" [src]="selectedImage.fullUrl" [alt]="selectedImage.name" />
+		<div *ngIf="!selectedImage" class="no-img-asset-preview"><i class="fas fa-image"></i></div>
 	</nb-card-body>
 	<nb-card-footer>
 		<div *ngIf="!selectedImage" class="img-preview-info">
@@ -17,19 +9,15 @@
 		</div>
 		<div *ngIf="selectedImage" class="img-preview-info">
 			<div>
-				<div class="img-desc-text"
-					>{{ 'INVENTORY_PAGE.NAME' | translate }}</div
-				><div class="image-text">{{ selectedImage.name }}</div>
+				<div class="img-desc-text">{{ 'INVENTORY_PAGE.NAME' | translate }}</div>
+				<div class="image-text">{{ selectedImage.name }}</div>
 			</div>
 			<div>
-				<div class="img-desc-text"
-					>{{ 'INVENTORY_PAGE.URL' | translate }}</div
-				><div class="image-text">{{ selectedImage.url }}</div>
+				<div class="img-desc-text">{{ 'INVENTORY_PAGE.URL' | translate }}</div>
+				<div class="image-text">{{ selectedImage.url }}</div>
 			</div>
 			<div>
-				<div class="img-desc-text"
-					>{{ 'INVENTORY_PAGE.DIMENSIONS' | translate }}</div
-				>
+				<div class="img-desc-text">{{ 'INVENTORY_PAGE.DIMENSIONS' | translate }}</div>
 				<div class="image-text dimension">{{ selectedImage.width }}x{{ selectedImage.height }}</div>
 			</div>
 		</div>
