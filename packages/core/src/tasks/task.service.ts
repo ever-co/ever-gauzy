@@ -502,4 +502,112 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			throw new BadRequestException(error);
 		}
 	}
+
+	/**
+	 * GET module tasks
+	 *
+	 * @param options
+	 * @returns A promise that resolves with pagination task items and total
+	 */
+	async findModuleTasks(options: PaginationParams<Task>): Promise<IPagination<ITask>> {
+		try {
+			const { where } = options;
+
+			const { status, modules = [], title, prefix, isDraft, organizationSprintId = null } = where;
+			const { organizationId, projectId, members } = where;
+			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+			query.leftJoin(`${query.alias}.modules`, 'modules');
+
+			/**
+			 * Find options
+			 */
+			if (isNotEmpty(options)) {
+				query.setFindOptions({
+					...(options.select ? { select: options.select } : {}),
+					...(options.relations ? { relations: options.relations } : {}),
+					...(options.order ? { order: options.order } : {})
+				});
+			}
+
+			// Filter options
+			query.andWhere((qb: SelectQueryBuilder<Task>) => {
+				const subQuery = qb.subQuery();
+				subQuery
+					.select(p('"project_module_task"."taskId"'))
+					.from(p('project_module_task'), p('project_module_task'));
+				subQuery.leftJoin(
+					'project_module_employee',
+					'project_module_employee',
+					p(
+						'"project_module_employee"."organizationProjectModuleId" = "project_module_task"."organizationProjectModuleId"'
+					)
+				);
+				// If user have permission to change employee
+				if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+					if (isNotEmpty(members) && isNotEmpty(members['id'])) {
+						const employeeId = members['id'];
+						subQuery.andWhere(p('"project_module_employee"."employeeId" = :employeeId'), { employeeId });
+					}
+				} else {
+					// If employee has login and don't have permission to change employee
+					const employeeId = RequestContext.currentEmployeeId();
+					if (isNotEmpty(employeeId)) {
+						subQuery.andWhere(p('"project_module_employee"."employeeId" = :employeeId'), { employeeId });
+					}
+				}
+				if (isNotEmpty(modules)) {
+					subQuery.andWhere(p(`"${subQuery.alias}"."organizationProjectModuleId" IN (:...modules)`), {
+						modules
+					});
+				}
+				return p(`"project_module_tasks"."taskId" IN `) + subQuery.distinct(true).getQuery();
+			});
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					const tenantId = RequestContext.currentTenantId();
+					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+				})
+			);
+			if (isNotEmpty(projectId) && isNotEmpty(modules)) {
+				query.orWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
+			}
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					if (isNotEmpty(projectId) && isEmpty(modules)) {
+						qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
+					}
+					if (isNotEmpty(status)) {
+						qb.andWhere(p(`"${query.alias}"."status" = :status`), {
+							status
+						});
+					}
+					if (isNotEmpty(isDraft)) {
+						qb.andWhere(p(`"${query.alias}"."isDraft" = :isDraft`), {
+							isDraft
+						});
+					}
+					if (isNotEmpty(title)) {
+						qb.andWhere(p(`"${query.alias}"."title" ${likeOperator} :title`), {
+							title: `%${title}%`
+						});
+					}
+					if (isNotEmpty(title)) {
+						qb.andWhere(p(`"${query.alias}"."prefix" ${likeOperator} :prefix`), {
+							prefix: `%${prefix}%`
+						});
+					}
+					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
+						qb.andWhere(p(`"${query.alias}"."organizationSprintId" IS NULL`));
+					}
+				})
+			);
+			const [items, total] = await query.getManyAndCount();
+			return { items, total };
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
 }
