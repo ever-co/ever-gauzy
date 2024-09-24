@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, NotAcceptableException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { IsNull, Between, Not, In } from 'typeorm';
 import * as moment from 'moment';
@@ -300,13 +300,13 @@ export class TimerService {
 		let lastLog = await this.getLastRunningLog();
 		if (!lastLog) {
 			console.log('No running log found. Starting a new timer before stopping it.');
-			lastLog = await this.startTimer(request);
+			throw new NotAcceptableException('No running log found. Starting a new timer before stopping it.');
 		}
 
-		const organizationId = employee.organizationId ?? lastLog.organizationId;
+		// Retrieve stoppedAt date or use current date if not provided
 		const stoppedAt = moment.utc(request.stoppedAt ?? moment.utc()).toDate();
 
-		// Validate the date range
+		// Validate the date range and check if the timer is running
 		validateDateRange(lastLog.startedAt, stoppedAt);
 
 		// Update the time log entry to mark it as stopped
@@ -322,8 +322,11 @@ export class TimerService {
 		);
 		console.log('Stop Timer Time Log', { lastLog });
 
+		// Retrieve the employee ID and organization ID
+		const { id: employeeId, organizationId } = employee;
+
 		// Update the employee's tracking status
-		await this._employeeService.update(employee.id, {
+		await this._employeeService.update(employeeId, {
 			isOnline: false, // Employee status (Online/Offline)
 			isTrackingTime: false // Employee time tracking status
 		});
@@ -392,11 +395,14 @@ export class TimerService {
 	/**
 	 * Toggle time tracking start/stop
 	 *
-	 * @param request
-	 * @returns
+	 * @param request The timer toggle request input
+	 * @returns The started or stopped TimeLog
 	 */
 	async toggleTimeLog(request: ITimerToggleInput): Promise<TimeLog> {
+		// Retrieve the last running time log
 		const lastLog = await this.getLastRunningLog();
+
+		// Start a new timer if no running log exists, otherwise stop the current timer
 		if (!lastLog) {
 			return this.startTimer(request);
 		} else {
