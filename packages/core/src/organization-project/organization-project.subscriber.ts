@@ -30,7 +30,6 @@ export class OrganizationProjectSubscriber extends BaseEntityEventSubscriber<Org
 		try {
 			// Set imageUrl from the image object's fullUrl, if available. Fall back to existing imageUrl if not.
 			if (Object.prototype.hasOwnProperty.call(entity, 'image')) {
-				console.log('OrganizationProject: Setting imageUrl for organization project ID ' + entity.id);
 				await this.setImageUrl(entity);
 			}
 		} catch (error) {

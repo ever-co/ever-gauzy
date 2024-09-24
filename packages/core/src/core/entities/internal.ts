@@ -83,6 +83,7 @@ export * from '../../organization-employment-type/organization-employment-type.e
 export * from '../../organization-language/organization-language.entity';
 export * from '../../organization-position/organization-position.entity';
 export * from '../../organization-project/organization-project.entity';
+export * from '../../organization-project/organization-project-employee.entity';
 export * from '../../organization-project-module/organization-project-module.entity';
 export * from '../../organization-recurring-expense/organization-recurring-expense.entity';
 export * from '../../organization-sprint/organization-sprint.entity';
