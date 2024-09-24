@@ -15,8 +15,6 @@ import {
 	IOrganization,
 	IOrganizationTeam,
 	ITask,
-	ITasksStatistics,
-	ITaskStatus,
 	ITaskUpdateInput,
 	ITimeLog,
 	ITimeSlotTimeLogs,
@@ -24,10 +22,9 @@ import {
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import { compressImage, distinctUntilChange } from '@gauzy/ui-core/common';
-import { NbDialogRef, NbDialogService, NbIconLibraries, NbToastrService } from '@nebular/theme';
+import { NbDialogRef, NbDialogService, NbIconLibraries, NbRouteTab, NbToastrService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { Angular2SmartTableComponent, Cell, LocalDataSource } from 'angular2-smart-table';
 import * as moment from 'moment';
 import 'moment-duration-format';
 import {
@@ -75,12 +72,8 @@ import { ProjectSelectorService } from '../shared/features/project-selector/+sta
 import { TaskSelectorService } from '../shared/features/task-selector/+state/task-selector.service';
 import { TeamSelectorService } from '../shared/features/team-selector/+state/team-selector.service';
 import { hasAllPermissions } from '../shared/utils/permission.util';
-import { TasksComponent } from '../tasks/tasks.component';
 import { TimeTrackerQuery } from './+state/time-tracker.query';
 import { IgnitionState, TimeTrackerStore } from './+state/time-tracker.store';
-import { TaskDurationComponent, TaskProgressComponent } from './task-render';
-import { TaskRenderCellComponent } from './task-render/task-render-cell/task-render-cell.component';
-import { TaskStatusComponent } from './task-render/task-status/task-status.component';
 import { IRemoteTimer } from './time-tracker-status/interfaces';
 import { TimeTrackerStatusService } from './time-tracker-status/time-tracker-status.service';
 import { TimeTrackerService } from './time-tracker.service';
@@ -165,7 +158,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	smartTableSettings: object;
 	tableData = [];
 	isTrackingEnabled = true;
-	isAddTask = false;
 	sound: any = null;
 
 	constructor(
@@ -238,14 +230,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.subscribe();
 	}
 
-	private get _sourceData(): LocalDataSource {
-		return this._sourceData$.getValue();
-	}
-
-	private get _hasTaskPermission(): boolean {
-		return this.taskSelectorService.hasPermission;
-	}
-
 	private get _isOffline(): boolean {
 		return this._isOffline$.getValue();
 	}
@@ -266,25 +250,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		return this.taskSelectorService.selected;
 	}
 
-	private _taskTable: Angular2SmartTableComponent;
-
-	@ViewChild('taskTable') set taskTable(content: Angular2SmartTableComponent) {
-		if (content) {
-			this._taskTable = content;
-			this._onChangedSource();
-		}
-	}
-
 	private _timeRun$: BehaviorSubject<string> = new BehaviorSubject('00:00:00');
 
 	public get timeRun$(): Observable<string> {
 		return this._timeRun$.asObservable();
-	}
-
-	private _sourceData$: BehaviorSubject<LocalDataSource>;
-
-	public get sourceData$(): Observable<LocalDataSource> {
-		return this._sourceData$.asObservable();
 	}
 
 	private _isOffline$: BehaviorSubject<boolean> = new BehaviorSubject(false);
@@ -367,29 +336,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	private merge(tasks: ITask[], statistics: ITasksStatistics[]): (ITask & ITasksStatistics)[] {
-		let arr: (ITask & ITasksStatistics)[] = [];
-		arr = arr.concat(statistics, tasks);
-		return arr.reduce((result, current) => {
-			const existing = result.find((item: any) => item.id === current.id);
-			if (existing) {
-				const updatedAtMoment = moment(existing?.updatedAt, moment.ISO_8601).utc(true);
-				Object.assign(
-					existing,
-					current,
-					updatedAtMoment.isAfter(current?.updatedAt)
-						? {
-								updatedAt: updatedAtMoment.toISOString()
-						  }
-						: {}
-				);
-			} else {
-				result.push(current);
-			}
-			return result.filter((task) => !!task?.id);
-		}, []);
-	}
-
 	private countDuration(count, isForcedSync?: boolean): void {
 		if (!this.start || isForcedSync) {
 			this._lastTotalWorkedToday$.next(count.todayDuration);
@@ -464,31 +410,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			isPassed = false;
 		} else isPassed = true;
 		return isPassed;
-	}
-
-	private _onChangedSource(): void {
-		this._taskTable.source.onChangedSource
-			.pipe(
-				tap(() => this._clearItem()),
-				tap(() => {
-					if (this.selectedTask) {
-						this._taskTable.grid.dataSet.getRows().map((row) => {
-							if (row.getData().id === this.taskSelectorService.selectedId) {
-								return this._taskTable.grid.dataSet.selectRow(row);
-							}
-						});
-					}
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
-	}
-
-	private _clearItem(): void {
-		if (this._taskTable && this._taskTable.grid) {
-			this._taskTable.grid.dataSet['willSelect'] = 'indexed';
-			this._taskTable.grid.dataSet.deselectAll();
-		}
 	}
 
 	private async _mappingScreenshots(args: any[]): Promise<void> {
@@ -611,97 +532,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	private _loadSmartTableSettings(): void {
-		this.smartTableSettings = {
-			columns: {
-				title: {
-					title: this._translateService.instant('TIMER_TRACKER.TASK'),
-					type: 'custom',
-					renderComponent: TaskRenderCellComponent,
-					width: '40%',
-					componentInitFunction: (instance: TaskRenderCellComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-					}
-				},
-				duration: {
-					title: this._translateService.instant('TIMESHEET.DURATION'),
-					type: 'custom',
-					renderComponent: TaskDurationComponent,
-					componentInitFunction: (instance: TaskDurationComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-					}
-				},
-				taskProgress: {
-					title: this._translateService.instant('MENU.IMPORT_EXPORT.PROGRESS'),
-					type: 'custom',
-					renderComponent: TaskProgressComponent,
-					width: '192px',
-					componentInitFunction: (instance: TaskProgressComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-						instance.updated.subscribe({
-							next: async (estimate: number) => {
-								const { tenantId, organizationId } = this._store;
-								const id = instance.task.id;
-								const title = instance.task.title;
-								const status = instance.task.status;
-								const taskUpdateInput: ITaskUpdateInput = {
-									organizationId,
-									tenantId,
-									estimate,
-									status,
-									title
-								};
-								await this.timeTrackerService.updateTask(id, taskUpdateInput);
-								this._toastrNotifier.success(this._translateService.instant('TOASTR.MESSAGE.UPDATED'));
-								this.refreshTimer();
-							},
-							error: (err: any) => {
-								console.warn(err);
-							}
-						});
-					}
-				},
-				taskStatus: {
-					title: this._translateService.instant('SM_TABLE.STATUS'),
-					type: 'custom',
-					renderComponent: TaskStatusComponent,
-					componentInitFunction: (instance: TaskStatusComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-						instance.updated.subscribe({
-							next: async (taskStatus: ITaskStatus) => {
-								const { tenantId, organizationId } = this._store;
-								const id = instance.task.id;
-								const title = instance.task.title;
-								const status = taskStatus.name as TaskStatusEnum;
-								const taskUpdateInput: ITaskUpdateInput = {
-									organizationId,
-									tenantId,
-									status,
-									title,
-									taskStatus
-								};
-								await this.timeTrackerService.updateTask(id, taskUpdateInput);
-								this._toastrNotifier.success(this._translateService.instant('TOASTR.MESSAGE.UPDATED'));
-								this.refreshTimer();
-							},
-							error: (err: any) => {
-								console.warn(err);
-							}
-						});
-					}
-				}
-			},
-			hideSubHeader: true,
-			actions: false,
-			noDataMessage: this._translateService.instant('SM_TABLE.NO_DATA.TASK'),
-			pager: {
-				display: true,
-				perPage: 10,
-				page: 1
-			}
-		};
-	}
-
 	private async loadStatuses(): Promise<void> {
 		if (!this._store.organizationId && !this._store.tenantId) {
 			return;
@@ -721,21 +551,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	ngOnInit(): void {
-		this._sourceData$ = new BehaviorSubject(new LocalDataSource(this.tableData));
-
-		this._sourceData.setSort([{ field: 'updatedAt', direction: 'desc' }]);
-
-		this.taskSelectorService
-			.getAll$()
-			.pipe(
-				tap(async (tasks) => {
-					this.tableData = tasks;
-					await this._sourceData.load(this.tableData);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
-
 		this._lastTotalWorkedToday$
 			.pipe(
 				tap((todayDuration: number) => {
@@ -927,8 +742,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
-
-		this._loadSmartTableSettings();
 	}
 
 	public xor(a: boolean, b: boolean): boolean {
@@ -1506,7 +1319,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			})
 		);
 
-		this._languageElectronService.initialize(asyncScheduler.schedule(() => this._loadSmartTableSettings(), 150));
+		this._languageElectronService.initialize();
 
 		this.electronService.ipcRenderer.on('sleep_remote_lock', (event, state: boolean) => {
 			this._ngZone.run(async () => {
@@ -1771,8 +1584,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public descriptionChange(e): void {
 		if (e) this.errors.note = false;
-		this.clearSelectedTaskAndRefresh();
-		this._clearItem();
 		this.electronService.ipcRenderer.send('update_project_on', {
 			note: this.noteService.note
 		});
@@ -2001,54 +1812,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	public expand(): void {
 		this.isCollapse$.next(this.isExpand);
 		this.electronService.ipcRenderer.send('expand', !this.isExpand);
-	}
-
-	public handleRowSelection(selectionEvent): void {
-		if (this.isNoRowSelected(selectionEvent)) {
-			this.clearSelectedTaskAndRefresh();
-		} else {
-			const selectedRow = selectionEvent.data;
-			this.handleSelectedTaskChange(selectedRow.id);
-		}
-	}
-
-	private isNoRowSelected({ isSelected }): boolean {
-		return !isSelected;
-	}
-
-	private clearSelectedTaskAndRefresh(): void {
-		this.taskSelectorService.selected = null;
-	}
-
-	private handleSelectedTaskChange(selectedTaskId): void {
-		if (this.isDifferentTask(selectedTaskId)) {
-			this.taskSelectorService.selected = selectedTaskId;
-		}
-	}
-
-	private isDifferentTask(selectedTaskId): boolean {
-		return this.taskSelectorService.selectedId !== selectedTaskId;
-	}
-
-	public onSearch(query: string = ''): void {
-		if (query) {
-			this._sourceData.setFilter(
-				[
-					{
-						field: 'title',
-						search: query
-					},
-					{
-						field: 'taskNumber',
-						search: query
-					}
-				],
-				false
-			);
-		} else {
-			this._sourceData.reset();
-			this._sourceData.refresh();
-		}
 	}
 
 	public async getScreenshot(arg, isThumb: boolean | null = false): Promise<any> {
@@ -2347,52 +2110,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	public addTask(): void {
-		this.isAddTask = !this._isOffline && this._hasTaskPermission;
-		if (!this.isAddTask) {
-			return;
-		}
-		this.dialogService
-			.open(TasksComponent, {
-				context: {
-					employee: this.userData,
-					hasProjectPermission: this.projectSelectorService.hasPermission,
-					selected: {
-						teamId: this.teamSelectorService.selectedId,
-						projectId: this.projectSelectorService.selectedId,
-						contactId: this.clientSelectorService.selectedId
-					},
-					userData: this.argFromMain
-				},
-				backdropClass: 'backdrop-blur'
-			})
-			.onClose.pipe(
-				tap(() => this.closeAddTask()),
-				filter((result) => !!result),
-				tap((result) => this.callbackNewTask(result)),
-				untilDestroyed(this)
-			)
-			.subscribe();
-	}
-
-	public closeAddTask(): void {
-		this.isAddTask = false;
-		this.electronService.ipcRenderer.send('refresh-timer');
-	}
-
-	public callbackNewTask(e): void {
-		if (e.isSuccess) {
-			this.toastrService.show(e.message, `Success`, {
-				status: 'success'
-			});
-			this.electronService.ipcRenderer.send('refresh-timer');
-		} else {
-			this.toastrService.show(e.message, `Warning`, {
-				status: 'danger'
-			});
-		}
-	}
-
 	public showErrorMessage(msg): void {
 		this.toastrService.show(`${msg}`, `Warning`, {
 			status: 'danger'
@@ -2585,4 +2302,29 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		// Return the result of the callback (or void if no callback was provided)
 		return { current, previous, result, params };
 	}
+
+	public tabs$ = new BehaviorSubject<NbRouteTab[]>([
+		{
+			title: this._translateService.instant('MENU.TASKS'),
+			route: ['/', 'time-tracker', 'tasks'],
+			activeLinkOptions: { exact: false },
+			disabled: this._isOffline
+		},
+		{
+			title: this._translateService.instant('TIMER_TRACKER.MENU.DAILY_RECAP'),
+			route: ['/', 'time-tracker', 'daily'],
+			activeLinkOptions: { exact: false },
+			disabled: this._isOffline
+		},
+		{
+			title: this._translateService.instant('TIMER_TRACKER.MENU.WEEKLY_RECAP'),
+			route: ['/', 'time-tracker', 'weekly'],
+			disabled: this._isOffline
+		},
+		{
+			title: this._translateService.instant('TIMER_TRACKER.MENU.MONTHLY_RECAP'),
+			route: ['/', 'time-tracker', 'monthly'],
+			disabled: this._isOffline
+		}
+	]);
 }

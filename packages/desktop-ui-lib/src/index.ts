@@ -12,8 +12,8 @@ export * from './lib/image-viewer/image-viewer.component';
 export * from './lib/image-viewer/image-viewer.module';
 export * from './lib/integrations';
 export * from './lib/interceptors';
-export * from './lib/language/language.module';
 export * from './lib/language/language-electron.service';
+export * from './lib/language/language.module';
 export * from './lib/ngx-translate';
 export * from './lib/recap/recap-routing.module';
 export * from './lib/recap/recap.module';
@@ -31,13 +31,14 @@ export * from './lib/setup/setup.module';
 export * from './lib/setup/setup.service';
 export * from './lib/splash-screen/splash-screen.component';
 export * from './lib/splash-screen/splash-screen.module';
+export * from './lib/theme';
 export * from './lib/time-tracker/organization-selector/user-organization.service';
+export * from './lib/time-tracker/task-table/task-table.module';
 export * from './lib/time-tracker/time-tracker.component';
 export * from './lib/time-tracker/time-tracker.module';
 export * from './lib/time-tracker/time-tracker.service';
 export * from './lib/updater/updater.component';
 export * from './lib/updater/updater.module';
-export * from './lib/theme';
 /**
  * Auth Module
  */

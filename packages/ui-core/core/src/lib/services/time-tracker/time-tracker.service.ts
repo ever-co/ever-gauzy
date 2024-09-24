@@ -17,13 +17,17 @@ import {
 	TimeLogSourceEnum,
 	ITimerStatusInput
 } from '@gauzy/contracts';
-import { toLocal, toParams, toUTC } from '@gauzy/ui-core/common';
-import { API_PREFIX, BACKGROUND_SYNC_INTERVAL } from '@gauzy/ui-core/common';
+import { API_PREFIX, BACKGROUND_SYNC_INTERVAL, toLocal, toParams, toUTC } from '@gauzy/ui-core/common';
 import { Store as AppStore } from '../store/store.service';
 import { ITimerSynced } from './interfaces';
 
+/**
+ * Creates and returns the initial state for the timer.
+ *
+ * @returns The initial TimerState object.
+ */
 export function createInitialTimerState(): TimerState {
-	let timerConfig = {
+	const defaultTimerConfig = {
 		isBillable: true,
 		organizationId: null,
 		tenantId: null,
@@ -33,19 +37,24 @@ export function createInitialTimerState(): TimerState {
 		description: '',
 		logType: TimeLogType.TRACKED,
 		source: TimeLogSourceEnum.WEB_TIMER,
-		tags: [],
 		startedAt: null,
 		stoppedAt: null
 	};
-	try {
-		const config = localStorage.getItem('timerConfig');
-		if (config) {
-			timerConfig = {
-				...timerConfig,
-				...JSON.parse(config)
-			};
+
+	// Retrieve and parse the stored timer configuration, if available
+	const storedConfig = (() => {
+		try {
+			return JSON.parse(localStorage.getItem('timerConfig') || '{}');
+		} catch (error) {
+			console.error('Error parsing timerConfig from localStorage:', error);
+			return {};
 		}
-	} catch (error) {}
+	})();
+
+	// Merge default and stored configurations
+	const timerConfig = { ...defaultTimerConfig, ...storedConfig };
+
+	// Return the complete initial TimerState
 	return {
 		showTimerWindow: false,
 		duration: 0,
@@ -55,6 +64,7 @@ export function createInitialTimerState(): TimerState {
 		timerConfig
 	} as TimerState;
 }
+
 
 @Injectable({ providedIn: 'root' })
 @StoreConfig({ name: 'timer' })
@@ -354,7 +364,6 @@ export class TimeTrackerService implements OnDestroy {
 				organizationContactId: this.timerSynced.lastLog.organizationContactId,
 				description: this.timerSynced.lastLog.description,
 				source: this.timerSynced.source,
-				tags: this.timerSynced.lastLog.tags,
 				startedAt: this.timerSynced.startedAt,
 				stoppedAt: this.timerSynced.stoppedAt
 			};

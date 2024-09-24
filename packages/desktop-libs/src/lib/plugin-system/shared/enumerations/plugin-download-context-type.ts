@@ -1,4 +1,5 @@
 export enum PluginDownloadContextType {
 	CDN = 'cdn',
-	LOCAL = 'local'
+	LOCAL = 'local',
+	NPM = 'npm'
 }

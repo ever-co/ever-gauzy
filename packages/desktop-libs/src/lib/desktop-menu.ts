@@ -1,4 +1,4 @@
-import { createAboutWindow, createSettingsWindow } from '@gauzy/desktop-window';
+import { createAboutWindow, createSettingsWindow, RegisteredWindow, WindowManager } from '@gauzy/desktop-window';
 import { BrowserWindow, Menu, MenuItemConstructorOptions, shell } from 'electron';
 import { LocalStore } from './desktop-store';
 import { TimerService } from './offline';
@@ -10,6 +10,7 @@ export class AppMenu {
 	public menu: MenuItemConstructorOptions[] = [];
 	private readonly pluginManager = PluginManager.getInstance();
 	private readonly pluginEventManager = PluginEventManager.getInstance();
+	private readonly windowManager = WindowManager.getInstance();
 
 	constructor(timeTrackerWindow, settingsWindow, updaterWindow, knex, windowPath, serverWindow?, isZoomVisible?) {
 		const isZoomEnabled = isZoomVisible;
@@ -198,8 +199,19 @@ export class AppMenu {
 		return {
 			id: 'plugin-menu',
 			label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGIN'),
-			visible: submenu.length > 0,
-			submenu
+			submenu: [
+				{
+					label: 'Install Plugin',
+					click: () => {
+						const settingWindow = this.windowManager.getOne(RegisteredWindow.SETTINGS);
+						this.windowManager.show(RegisteredWindow.SETTINGS);
+						this.windowManager
+							.webContents(settingWindow)
+							.send('app_setting', LocalStore.getApplicationConfig());
+					}
+				},
+				...submenu
+			]
 		} as MenuItemConstructorOptions;
 	}
 

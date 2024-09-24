@@ -1,0 +1,40 @@
+@import 'themes';
+
+nb-card {
+	margin: 0 !important;
+	height: calc(100vh - 9rem);
+	background-color: var(--gauzy-card-2);
+	border-top-left-radius: 0;
+
+	nb-card-body {
+		padding: 1rem !important;
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		overflow: unset;
+	}
+}
+
+.grow {
+	flex-grow: 10;
+}
+
+:host .custom-table {
+	height: calc(100vh - 14.375rem);
+	display: flex;
+	flex-direction: column;
+	@include nb-rtl(padding-left, 3px);
+	@include nb-ltr(padding-right, 3px);
+
+	.table-scroll-container {
+		max-height: unset !important;
+		@include nb-rtl(padding-left, 12px !important);
+		@include nb-ltr(padding-right, 12px !important);
+	}
+
+	.pagination-container {
+		margin-top: 12px;
+		@include nb-rtl(padding-left, 1rem);
+		@include nb-ltr(padding-right, 1rem);
+	}
+}

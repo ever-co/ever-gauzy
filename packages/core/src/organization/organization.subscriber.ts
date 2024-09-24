@@ -25,7 +25,6 @@ export class OrganizationSubscriber extends BaseEntityEventSubscriber<Organizati
 		try {
 			// Set imageUrl from the image object's fullUrl, if available. Fall back to existing imageUrl if not.
 			if (Object.prototype.hasOwnProperty.call(entity, 'image')) {
-				console.log('Organization: Setting imageUrl for organization ID ' + entity.id);
 				await this.setImageUrl(entity);
 			} else if (!entity.imageUrl && (entity.name || entity.officialName)) {
 				// If imageUrl is not set and there's a name or officialName, generate a dummy image URL

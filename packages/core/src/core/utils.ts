@@ -306,32 +306,27 @@ export function freshTimestamp(): Date {
 }
 
 /**
- * Function that performs the date range validation
+ * Validates the date range between startedAt and stoppedAt.
  *
- * @param startedAt
- * @param stoppedAt
- * @returns
+ * @param startedAt The start date of the range.
+ * @param stoppedAt The end date of the range.
+ * @throws BadRequestException if the dates are invalid or if the stoppedAt date is before the startedAt date.
  */
 export function validateDateRange(startedAt: Date, stoppedAt: Date): void {
-	try {
-		const start = moment(startedAt);
-		const end = moment(stoppedAt);
+	const start = moment(startedAt);
+	const end = moment(stoppedAt);
 
-		console.log('------ Stopped Timer ------', start.toDate(), end.toDate());
+	console.log('------ Stopped Timer ------', start.toDate(), end.toDate());
 
-		if (!start.isValid() || !end.isValid()) {
-			throw 'Started and Stopped date must be valid date.';
-			// If either start or end date is invalid, return without throwing an exception
-		}
+	if (!start.isValid() || !end.isValid()) {
+		throw new BadRequestException('Started and Stopped date must be valid dates.');
+	}
 
-		if (end.isBefore(start)) {
-			throw 'Stopped date must be greater than started date.';
-		}
-	} catch (error) {
-		// If any error occurs during date validation, throw a BadRequestException
-		throw new BadRequestException(error);
+	if (end.isBefore(start)) {
+		throw new BadRequestException('Stopped date must be greater than the started date.');
 	}
 }
+
 
 /**
  * Function that returns intersection of 2 arrays
@@ -474,8 +469,8 @@ export const flatten = (input: any): any => {
 					const newKey = Array.isArray(value)
 						? key
 						: nestedKeys.length > 0
-						? `${key}.${nestedKeys.join('.')}`
-						: key;
+							? `${key}.${nestedKeys.join('.')}`
+							: key;
 					return acc.concat(newKey);
 				}
 			}, []) || []
