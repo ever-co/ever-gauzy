@@ -1,0 +1,16 @@
+@import 'gauzy/_gauzy-table';
+
+.button-container,
+.button-hide {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 0.25rem;
+}
+
+.button-add,
+.button-hide {
+	padding: 0.25rem;
+	background-color: var(--gauzy-card-2);
+	border-radius: var(--button-rectangle-border-radius);
+}
