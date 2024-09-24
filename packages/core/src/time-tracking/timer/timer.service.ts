@@ -304,7 +304,7 @@ export class TimerService {
 		}
 
 		// Retrieve stoppedAt date or use current date if not provided
-		const stoppedAt = moment.utc(request.stoppedAt ?? moment.utc()).toDate();
+		let stoppedAt = await this.calculateStoppedAt(request, lastLog);
 
 		// Validate the date range and check if the timer is running
 		validateDateRange(lastLog.startedAt, stoppedAt);
@@ -390,6 +390,49 @@ export class TimerService {
 		} catch (error) {
 			console.error('Error while handling conflicts in time logs:', error);
 		}
+	}
+
+	/**
+	 * Calculates the stoppedAt time based on the last log and request parameters.
+	 * It handles the case for DESKTOP source, considering time slots' durations.
+	 *
+	 * @param request The input request containing timer toggle information
+	 * @param lastLog The last running time log for the employee
+	 * @returns The calculated stoppedAt date
+	 */
+	async calculateStoppedAt(request: ITimerToggleInput, lastLog: ITimeLog): Promise<Date> {
+		// Retrieve stoppedAt date or default to the current date if not provided
+		let stoppedAt = moment.utc(request.stoppedAt ?? moment.utc()).toDate();
+
+		// Handle the DESKTOP source case
+		if (request.source === TimeLogSourceEnum.DESKTOP) {
+			// Calculate the total duration of all time slots associated with the last log
+			const totalDurationInSeconds = lastLog?.timeSlots?.reduce((sum, slot) => sum + (slot?.duration || 0), 0) || 0;
+
+			// Calculate the potential stoppedAt time using the total duration
+			const calculatedStoppedAt = moment.utc(lastLog.startedAt).add(totalDurationInSeconds, 'seconds').toDate();
+
+			// Retrieve the most recent time slot from the last log
+			const lastTimeSlot: ITimeSlot | undefined = lastLog?.timeSlots?.sort((a: ITimeSlot, b: ITimeSlot) =>
+				moment(a.startedAt).isBefore(b.startedAt) ? 1 : -1
+			)[0];
+
+			// Check if the last time slot was created more than 10 minutes ago
+			if (lastTimeSlot) {
+				const lastTimeSlotCreatedAt = moment.utc(lastTimeSlot.startedAt);
+				if (moment.utc().diff(lastTimeSlotCreatedAt, 'minutes') > 10) {
+					stoppedAt = calculatedStoppedAt;
+				}
+			} else {
+				// If no time slots exist and the difference is more than 10 minutes, adjust the stoppedAt
+				if (moment.utc().diff(calculatedStoppedAt, 'minutes') > 10) {
+					stoppedAt = calculatedStoppedAt;
+				}
+			}
+		}
+
+		console.log('Last calculated stoppedAt: %s', stoppedAt);
+		return stoppedAt;
 	}
 
 	/**
