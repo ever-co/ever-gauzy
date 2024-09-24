@@ -205,7 +205,7 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
-	@JoinTable()
+	@JoinTable({ name: 'project_module_task' })
 	tasks?: ITask[];
 
 	/**
