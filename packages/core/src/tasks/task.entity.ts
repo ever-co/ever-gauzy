@@ -209,29 +209,6 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	projectId?: ID;
 
 	/**
-	 * Organization Project Module
-	 */
-	@ApiPropertyOptional({ type: () => Object })
-	@IsOptional()
-	@IsObject()
-	@MultiORMManyToOne(() => OrganizationProjectModule, (it) => it.tasks, {
-		/** Indicates if the relation column value can be nullable or not. */
-		nullable: true,
-
-		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE'
-	})
-	projectModule?: IOrganizationProjectModule;
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@IsUUID()
-	@RelationId((it: Task) => it.projectModule)
-	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, relationId: true })
-	projectModuleId?: ID;
-
-	/**
 	 * Creator
 	 */
 	@MultiORMManyToOne(() => User, {
@@ -446,4 +423,23 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 		name: 'task_team'
 	})
 	teams?: IOrganizationTeam[];
+
+	/**
+	 * Project Module
+	 */
+	@ApiPropertyOptional({ type: () => Array, isArray: true })
+	@IsOptional()
+	@IsArray()
+	@MultiORMManyToMany(() => OrganizationProjectModule, (module) => module.tasks, {
+		/** Defines the database action to perform on update. */
+		onUpdate: 'CASCADE',
+		/** Defines the database cascade action on delete. */
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'project_module_task',
+		joinColumn: 'taskId',
+		inverseJoinColumn: 'organizationProjectModuleId'
+	})
+	@JoinTable({ name: 'project_module_task' })
+	modules?: IOrganizationProjectModule[];
 }

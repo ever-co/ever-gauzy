@@ -190,17 +190,23 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	@MultiORMOneToMany(() => OrganizationProjectModule, (module) => module.parent)
 	children?: OrganizationProjectModule[];
 
-	/**
-	 * Organization Tasks Relationship
-	 */
-	@MultiORMOneToMany(() => Task, (it) => it.projectModule)
-	tasks?: ITask[];
-
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToMany
 	|--------------------------------------------------------------------------
 	*/
+
+	/**
+	 * Task
+	 */
+	@MultiORMManyToMany(() => Task, (it) => it.modules, {
+		/** Defines the database action to perform on update. */
+		onUpdate: 'CASCADE',
+		/** Defines the database cascade action on delete. */
+		onDelete: 'CASCADE'
+	})
+	@JoinTable()
+	tasks?: ITask[];
 
 	/**
 	 * Organization Sprint
