@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, NotAcceptableException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { IsNull, Between, Not, In } from 'typeorm';
 import * as moment from 'moment';
@@ -229,6 +229,7 @@ export class TimerService {
 		try {
 			// Retrieve any existing running logs for the employee
 			const logs = await this.getLastRunningLogs();
+			console.log('Last Running Logs Count:', logs.length);
 
 			// If there are existing running logs, stop them before starting a new one
 			if (logs.length > 0) {
@@ -300,13 +301,22 @@ export class TimerService {
 		let lastLog = await this.getLastRunningLog();
 		if (!lastLog) {
 			console.log('No running log found. Starting a new timer before stopping it.');
-			lastLog = await this.startTimer(request);
+			throw new NotAcceptableException('No running log found. Starting a new timer before stopping it.');
 		}
 
-		const organizationId = employee.organizationId ?? lastLog.organizationId;
-		const stoppedAt = moment.utc(request.stoppedAt ?? moment.utc()).toDate();
+		// Retrieve the employee ID and organization ID
+		const { id: employeeId, organizationId } = employee;
 
-		// Validate the date range
+		// Get the lastLog
+		lastLog = await this.typeOrmTimeLogRepository.findOne({
+			where: { id: lastLog.id, tenantId, organizationId, employeeId },
+			relations: { timeSlots: true }
+		});
+
+		// Retrieve stoppedAt date or use current date if not provided
+		let stoppedAt = await this.calculateStoppedAt(request, lastLog);
+
+		// Validate the date range and check if the timer is running
 		validateDateRange(lastLog.startedAt, stoppedAt);
 
 		// Update the time log entry to mark it as stopped
@@ -320,10 +330,22 @@ export class TimerService {
 				request.manualTimeSlot
 			)
 		);
-		console.log('Stop Timer Time Log', { lastLog });
+
+		try {
+			// Retrieve any existing running logs for the employee
+			const logs = await this.getLastRunningLogs();
+			console.log('Last Running Logs Count:', logs.length);
+
+			// If there are existing running logs, stop them before starting a new one
+			if (logs.length > 0) {
+				await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId);
+			}
+		} catch (error) {
+			console.error('Error while getting last running logs', error);
+		}
 
 		// Update the employee's tracking status
-		await this._employeeService.update(employee.id, {
+		await this._employeeService.update(employeeId, {
 			isOnline: false, // Employee status (Online/Offline)
 			isTrackingTime: false // Employee time tracking status
 		});
@@ -390,13 +412,80 @@ export class TimerService {
 	}
 
 	/**
+	 * Calculates the stoppedAt time based on the last log and request parameters.
+	 * It handles the case for DESKTOP source, considering time slots' durations.
+	 *
+	 * @param request - The input request containing timer toggle information
+	 * @param lastLog - The last running time log for the employee
+	 * @returns The calculated stoppedAt date
+	 */
+	async calculateStoppedAt(request: ITimerToggleInput, lastLog: ITimeLog): Promise<Date> {
+		// Retrieve stoppedAt date or default to the current date if not provided
+		let stoppedAt = moment.utc(request.stoppedAt ?? moment.utc()).toDate();
+
+		// Handle the DESKTOP source case
+		if (request.source === TimeLogSourceEnum.DESKTOP) {
+			// Retrieve the most recent time slot from the last log
+			const lastTimeSlot: ITimeSlot | undefined = lastLog.timeSlots?.sort((a: ITimeSlot, b: ITimeSlot) =>
+				moment(a.startedAt).isBefore(b.startedAt) ? 1 : -1
+			)[0];
+
+			// Example:
+			// If lastLog.timeSlots = [{ startedAt: "2024-09-24 19:50:00", duration: 600 }, { startedAt: "2024-09-24 19:40:00", duration: 600 }]
+			// The sorted result will be [{ startedAt: "2024-09-24 19:50:00", duration: 600 }, { startedAt: "2024-09-24 19:40:00", duration: 600 }]
+			// Hence, lastTimeSlot will be the one with startedAt = "2024-09-24 19:50:00".
+
+			// Check if the last time slot was created more than 10 minutes ago
+			if (lastTimeSlot) {
+				// Retrieve the last time slot's startedAt date
+				const lastTimeSlotStartedAt = moment.utc(lastTimeSlot.startedAt);
+
+				// Retrieve the last time slot's duration
+				const duration = lastTimeSlot.duration;
+
+				// Example:
+				// If lastTimeSlotStartedAt = "2024-09-24 19:50:00" and duration = 600 (10 minutes)
+				// and the current time is "2024-09-24 20:10:00", the difference is 20 minutes, which is more than 10 minutes.
+
+				// Check if the last time slot was created more than 10 minutes ago
+				if (moment.utc().diff(lastTimeSlotStartedAt, 'minutes') > 10) {
+					// Calculate the potential stoppedAt time using the total duration
+					stoppedAt = moment.utc(lastTimeSlot.startedAt).add(duration, 'seconds').toDate();
+					// Example: stoppedAt = "2024-09-24 20:00:00"
+				}
+			} else {
+				// Retrieve the last log's startedAt date
+				const lastLogStartedAt = moment.utc(lastLog.startedAt);
+
+				// Example:
+				// If lastLog.startedAt = "2024-09-24 19:30:00" and there are no time slots,
+				// and the current time is "2024-09-24 20:00:00", the difference is 30 minutes.
+
+				// If no time slots exist and the difference is more than 10 minutes, adjust the stoppedAt
+				if (moment.utc().diff(lastLogStartedAt, 'minutes') > 10) {
+					stoppedAt = moment.utc(lastLog.startedAt).add(10, 'seconds').toDate();
+					// Example: stoppedAt will be "2024-09-24 19:30:10"
+				}
+			}
+		}
+
+		console.log('Last calculated stoppedAt: %s', stoppedAt);
+		// Example log output: "Last calculated stoppedAt: 2024-09-24 20:00:00"
+		return stoppedAt;
+	}
+
+
+	/**
 	 * Toggle time tracking start/stop
 	 *
-	 * @param request
-	 * @returns
+	 * @param request The timer toggle request input
+	 * @returns The started or stopped TimeLog
 	 */
 	async toggleTimeLog(request: ITimerToggleInput): Promise<TimeLog> {
+		// Retrieve the last running time log
 		const lastLog = await this.getLastRunningLog();
+
+		// Start a new timer if no running log exists, otherwise stop the current timer
 		if (!lastLog) {
 			return this.startTimer(request);
 		} else {
@@ -486,7 +575,7 @@ export class TimerService {
 	 */
 	private async getLastRunningLog(): Promise<ITimeLog> {
 		// Retrieve the last running log by using the `getRunningLogs` method with `fetchAll` set to false
-		const lastRunningLog = await this.getRunningLogs();
+		const lastRunningLog = await this.getRunningLogs(false);
 
 		// Ensure that the returned log is of type ITimeLog
 		return lastRunningLog as ITimeLog;

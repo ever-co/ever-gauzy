@@ -1,0 +1,19 @@
+<div class="button-container">
+	<div class="button-add">
+		<button (click)="add()" status="success" size="small" nbButton>
+			<nb-icon icon="plus-outline"></nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
+		</button>
+	</div>
+	<div *ngIf="showHiddenButton$ | async" class="button-hide">
+		<button class="action secondary" status="basic" size="small" (click)="view()" nbButton>
+			<nb-icon icon="eye-outline"></nb-icon>{{ 'BUTTONS.VIEW' | translate }}
+		</button>
+		<button size="small" status="basic" class="action primary" (click)="edit()" nbButton>
+			<nb-icon icon="edit-outline"></nb-icon>{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button size="small" class="action danger" status="basic" (click)="delete()" nbButton>
+			<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+		</button>
+	</div>
+</div>

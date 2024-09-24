@@ -22,6 +22,7 @@ import {
 	LanguageInterceptor,
 	LanguageModule,
 	LoggerService,
+	NgxDesktopThemeModule,
 	NgxLoginModule,
 	NoAuthGuard,
 	OrganizationInterceptor,
@@ -34,14 +35,14 @@ import {
 	SetupModule,
 	SplashScreenModule,
 	Store,
+	TaskTableModule,
 	TenantInterceptor,
 	TimeTrackerModule,
 	TimeoutInterceptor,
 	TokenInterceptor,
 	UnauthorizedInterceptor,
 	UpdaterModule,
-	serverConnectionFactory,
-	NgxDesktopThemeModule
+	serverConnectionFactory
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import {
@@ -117,7 +118,8 @@ if (environment.SENTRY_DSN) {
 		NbDatepickerModule.forRoot(),
 		AboutModule,
 		ActivityWatchModule,
-		RecapModule
+		RecapModule,
+		TaskTableModule
 	],
 	providers: [
 		AppService,
@@ -198,7 +200,7 @@ if (environment.SENTRY_DSN) {
 		},
 		{
 			provide: APP_INITIALIZER,
-			useFactory: () => () => { },
+			useFactory: () => () => {},
 			deps: [Sentry.TraceService],
 			multi: true
 		},
@@ -214,4 +216,4 @@ if (environment.SENTRY_DSN) {
 	bootstrap: [AppComponent],
 	exports: []
 })
-export class AppModule { }
+export class AppModule {}

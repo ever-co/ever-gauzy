@@ -41,4 +41,8 @@ export abstract class SelectorService<T> {
 	public get hasPermission$(): Observable<boolean> {
 		return this.selectorQuery.hasPermission$;
 	}
+
+	public get selected$(): Observable<T> {
+		return this.selectorQuery.selected$;
+	}
 }
