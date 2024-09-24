@@ -28,7 +28,8 @@ import {
 	IOrganizationProjectSetting,
 	IIntegrationMapSyncRepository,
 	IOrganizationGithubRepository,
-	SYNC_TAG_GAUZY
+	SYNC_TAG_GAUZY,
+	IOrganizationProjectEmployee
 } from '@gauzy/contracts';
 import {
 	GithubService,
@@ -288,9 +289,11 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 		}
 
 		const project: IOrganizationProject = this.project;
-		this.selectedEmployeeIds = project.members.map((member: IEmployee) => member.id);
 
+		// Selected Members Ids
+		this.selectedEmployeeIds = project.members.map((member: IOrganizationProjectEmployee) => member.employeeId);
 		this.members = this.selectedEmployeeIds;
+
 		this.form.patchValue({
 			imageUrl: project.imageUrl || null,
 			imageId: project.imageId || null,

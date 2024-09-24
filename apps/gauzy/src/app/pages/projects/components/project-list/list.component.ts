@@ -12,9 +12,10 @@ import {
 	PermissionsEnum,
 	ComponentLayoutStyleEnum,
 	CrudActionEnum,
-	IEmployee,
 	ITag,
-	IOrganizationProject
+	IOrganizationProject,
+	ID,
+	IOrganizationProjectEmployee
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
@@ -54,7 +55,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	public viewComponentName: ComponentEnum;
 	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-	public selectedEmployeeId: IEmployee['id'] | null;
+	public selectedEmployeeId: ID | null;
 	public selectedProject: IOrganizationProject;
 	public organization: IOrganization;
 	public smartTableSource: ServerDataSource;
@@ -218,12 +219,12 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 			return;
 		}
 
-		const { tenantId } = this._store.user;
-		const { id: organizationId } = this.organization;
+		// Extract organization ID and tenant ID from the organization object
+		const { id: organizationId, tenantId } = this.organization;
 
 		this.smartTableSource = new ServerDataSource(this._httpClient, {
 			endPoint: `${API_PREFIX}/organization-projects/pagination`,
-			relations: ['organizationContact', 'organization', 'members', 'members.user', 'tags', 'teams'],
+			relations: ['organizationContact', 'members.employee.user', 'tags', 'teams'],
 			join: {
 				alias: 'organization_project',
 				leftJoin: {
@@ -245,7 +246,9 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 			resultMap: (project: IOrganizationProject) => {
 				return Object.assign({}, project, {
 					...this.privatePublicProjectMapper(project),
-					employeesMergedTeams: [project.members]
+					employeesMergedTeams: [
+						project.members.map((member: IOrganizationProjectEmployee) => member.employee)
+					]
 				});
 			},
 			finalize: () => {
@@ -301,6 +304,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 
 	/**
 	 * Maps an organization project based on user permissions and project visibility.
+	 *
 	 * @param project The project to be mapped.
 	 * @returns The mapped project.
 	 */
@@ -316,11 +320,14 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 
 	/**
 	 * Filters project members to include only the ones that match the current user's ID.
+	 *
 	 * @param project The project with members.
 	 * @returns The project with filtered members.
 	 */
 	private filterProjectMembers(project: IOrganizationProject): IOrganizationProject {
-		project.members = project.members.filter((member: IEmployee) => member.id === this._store.userId);
+		project.members = project.members.filter(
+			(member: IOrganizationProjectEmployee) => member.employeeId === this._store.user?.employeeId
+		);
 		return project;
 	}
 
@@ -438,7 +445,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 							}
 							this.setFilter({ field: 'tags', search: tagIds });
 						},
-						sort: false
+						isSortable: false
 					}
 				};
 				break;
