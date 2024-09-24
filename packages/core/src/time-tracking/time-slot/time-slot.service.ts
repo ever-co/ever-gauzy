@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
-import { PermissionsEnum, IGetTimeSlotInput, ITimeSlot } from '@gauzy/contracts';
+import { PermissionsEnum, IGetTimeSlotInput,ID, ITimeSlot } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../../core/crud';
 import { moment } from '../../core/moment-extend';
@@ -187,32 +187,37 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	 */
 	async bulkCreateOrUpdate(
 		slots: ITimeSlot[],
-		employeeId: ITimeSlot['employeeId'],
-		organizationId: ITimeSlot['organizationId']
+		employeeId: ID,
+		organizationId: ID
 	) {
-		return await this.commandBus.execute(new TimeSlotBulkCreateOrUpdateCommand(slots, employeeId, organizationId));
+		return await this.commandBus.execute(
+			new TimeSlotBulkCreateOrUpdateCommand(slots, employeeId, organizationId)
+		);
 	}
 
 	/**
+	 * Bulk create time slots for a given employee and organization
 	 *
-	 * @param slots
-	 * @param employeeId
-	 * @param organizationId
-	 * @returns
+	 * @param slots The array of time slots to be created
+	 * @param employeeId The ID of the employee
+	 * @param organizationId The ID of the organization
+	 * @returns The result of the bulk creation command
 	 */
 	async bulkCreate(
 		slots: ITimeSlot[],
-		employeeId: ITimeSlot['employeeId'],
-		organizationId: ITimeSlot['organizationId']
+		employeeId: ID,
+		organizationId: ID
 	) {
-		return await this.commandBus.execute(new TimeSlotBulkCreateCommand(slots, employeeId, organizationId));
+		return await this.commandBus.execute(
+			new TimeSlotBulkCreateCommand(slots, employeeId, organizationId)
+		);
 	}
 
 	/**
-	 *
-	 * @param start
-	 * @param end
-	 * @returns
+	 * Generates time slots between the start and end times at a given interval.
+	 * @param start The start time of the range
+	 * @param end The end time of the range
+	 * @returns An array of generated time slots
 	 */
 	generateTimeSlots(start: Date, end: Date) {
 		return generateTimeSlots(start, end);
@@ -223,13 +228,17 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	 */
 	async createTimeSlotMinute(request: TimeSlotMinute) {
 		// const { keyboard, mouse, datetime, timeSlot } = request;
-		return await this.commandBus.execute(new CreateTimeSlotMinutesCommand(request));
+		return await this.commandBus.execute(
+			new CreateTimeSlotMinutesCommand(request)
+		);
 	}
 
 	/*
 	 * Update TimeSlot minute activity for specific TimeSlot
 	 */
 	async updateTimeSlotMinute(id: string, request: TimeSlotMinute) {
-		return await this.commandBus.execute(new UpdateTimeSlotMinutesCommand(id, request));
+		return await this.commandBus.execute(
+			new UpdateTimeSlotMinutesCommand(id, request)
+		);
 	}
 }
