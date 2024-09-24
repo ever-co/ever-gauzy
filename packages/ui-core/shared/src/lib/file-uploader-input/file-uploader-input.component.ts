@@ -68,7 +68,7 @@ export class FileUploaderInputComponent extends ImageUploaderBaseComponent imple
 				if (response) {
 					const image: IImageAsset = JSON.parse(response);
 					this.uploadedImageAsset.emit(image);
-
+					this.uploadedImgData.emit(image);
 					this.inputControl.setValue(image.fullUrl);
 					this.inputControl.updateValueAndValidity();
 				}
