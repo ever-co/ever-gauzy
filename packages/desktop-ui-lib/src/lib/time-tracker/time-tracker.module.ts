@@ -13,6 +13,7 @@ import {
 	NbIconModule,
 	NbInputModule,
 	NbLayoutModule,
+	NbRouteTabsetModule,
 	NbSelectModule,
 	NbSidebarModule,
 	NbSidebarService,
@@ -31,7 +32,6 @@ import { ImageViewerModule } from '../image-viewer/image-viewer.module';
 import { ActivityWatchModule } from '../integrations';
 import { LanguageModule } from '../language/language.module';
 import { TimeSlotQueueService } from '../offline-sync';
-import { RecapModule } from '../recap/recap.module';
 import { ErrorHandlerService, NativeNotificationService, Store, ToastrNotificationService } from '../services';
 import { SelectModule } from '../shared/components/ui/select/select.module';
 import { TimeTrackerFormModule } from '../shared/features/time-tracker-form/time-tracker-form.module';
@@ -88,10 +88,10 @@ import { TimerTrackerChangeDialogComponent } from './timer-tracker-change-dialog
 		NoDataMessageModule,
 		PipeModule,
 		NbTabsetModule,
-		RecapModule,
 		TimeTrackerFormModule,
 		SelectModule,
-		DesktopDirectiveModule
+		DesktopDirectiveModule,
+		NbRouteTabsetModule
 	],
 	providers: [
 		NbSidebarService,

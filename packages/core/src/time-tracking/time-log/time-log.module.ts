@@ -11,7 +11,7 @@ import { TimeLog } from './time-log.entity';
 import { TimeLogController } from './time-log.controller';
 import { TimeLogService } from './time-log.service';
 import { TimeSlotModule } from './../time-slot/time-slot.module';
-import { TypeOrmTimeLogRepository } from './repository';
+import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
 
 @Module({
 	controllers: [

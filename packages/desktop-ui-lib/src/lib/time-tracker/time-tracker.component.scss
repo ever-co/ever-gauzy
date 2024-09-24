@@ -720,3 +720,24 @@ img {
     margin: 0;
   }
 }
+
+.content-active {
+	background-color: var(--gauzy-card-2);
+	border-radius: var(--border-radius);
+	padding: 1rem;
+	width: 900px;
+}
+
+::ng-deep nb-route-tabset .route-tab .tab-link {
+	border-radius: var(--border-radius) var(--border-radius) 0 0;
+	svg {
+	  fill: var(--text-primary-color);
+	}
+	span {
+	  display: inline-block;
+	  text-transform: initial;
+	  &:first-letter {
+		text-transform: uppercase;
+	  }
+	}
+}
