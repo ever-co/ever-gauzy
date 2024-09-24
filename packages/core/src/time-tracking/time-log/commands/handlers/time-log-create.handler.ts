@@ -37,7 +37,7 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 		const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
 		// Create timesheet if it doesn't exist
-		const timesheet = await this._commandBus.execute<ITimesheet>(
+		const timesheet = await this._commandBus.execute(
 			new TimesheetFirstOrCreateCommand(startedAt, employeeId, organizationId)
 		);
 
