@@ -303,6 +303,15 @@ export class TimerService {
 			throw new NotAcceptableException('No running log found. Starting a new timer before stopping it.');
 		}
 
+		// Retrieve the employee ID and organization ID
+		const { id: employeeId, organizationId } = employee;
+
+		// Get the lastLog
+		lastLog = await this.typeOrmTimeLogRepository.findOne({
+			where: { id: lastLog.id, tenantId, organizationId, employeeId },
+			relations: { timeSlots: true }
+		});
+
 		// Retrieve stoppedAt date or use current date if not provided
 		let stoppedAt = await this.calculateStoppedAt(request, lastLog);
 
@@ -321,9 +330,6 @@ export class TimerService {
 			)
 		);
 		console.log('Stop Timer Time Log', { lastLog });
-
-		// Retrieve the employee ID and organization ID
-		const { id: employeeId, organizationId } = employee;
 
 		// Update the employee's tracking status
 		await this._employeeService.update(employeeId, {
@@ -407,13 +413,13 @@ export class TimerService {
 		// Handle the DESKTOP source case
 		if (request.source === TimeLogSourceEnum.DESKTOP) {
 			// Calculate the total duration of all time slots associated with the last log
-			const totalDurationInSeconds = lastLog?.timeSlots?.reduce((sum, slot) => sum + (slot?.duration || 0), 0) || 0;
+			const totalDurationInSeconds = lastLog.timeSlots?.reduce((sum, slot) => sum + (slot?.duration || 0), 0) || 0;
 
 			// Calculate the potential stoppedAt time using the total duration
 			const calculatedStoppedAt = moment.utc(lastLog.startedAt).add(totalDurationInSeconds, 'seconds').toDate();
 
 			// Retrieve the most recent time slot from the last log
-			const lastTimeSlot: ITimeSlot | undefined = lastLog?.timeSlots?.sort((a: ITimeSlot, b: ITimeSlot) =>
+			const lastTimeSlot: ITimeSlot | undefined = lastLog.timeSlots?.sort((a: ITimeSlot, b: ITimeSlot) =>
 				moment(a.startedAt).isBefore(b.startedAt) ? 1 : -1
 			)[0];
 
@@ -535,7 +541,7 @@ export class TimerService {
 	 */
 	private async getLastRunningLog(): Promise<ITimeLog> {
 		// Retrieve the last running log by using the `getRunningLogs` method with `fetchAll` set to false
-		const lastRunningLog = await this.getRunningLogs();
+		const lastRunningLog = await this.getRunningLogs(false);
 
 		// Ensure that the returned log is of type ITimeLog
 		return lastRunningLog as ITimeLog;
