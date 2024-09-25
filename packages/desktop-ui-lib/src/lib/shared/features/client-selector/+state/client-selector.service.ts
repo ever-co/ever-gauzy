@@ -61,7 +61,7 @@ export class ClientSelectorService extends SelectorService<IOrganizationContact>
 				}
 			} = this.store;
 			const request = {
-				relations: ['projects.members', 'members.user', 'tags', 'contact'],
+				relations: ['projects.members', 'members.user', 'contact'],
 				join: {
 					alias: 'organization_contact',
 					leftJoin: {
@@ -77,8 +77,8 @@ export class ClientSelectorService extends SelectorService<IOrganizationContact>
 				take: this.selectorQuery.limit,
 				skip: this.selectorQuery.page
 			};
-			const data = await this.timeTrackerService.getClient(request);
-			this.selectorStore.updateData(data);
+			const { items: data, total } = await this.timeTrackerService.getClientWithPagination(request);
+			this.selectorStore.updateInfiniteList({ data, total });
 			this.selectorStore.setError(null);
 		} catch (error) {
 			this.toastrNotifier.error(error.message || 'An error occurred while fetching clients.');
