@@ -21,12 +21,22 @@ export class SelectComponent {
 	private _isLoading: boolean = false;
 	private _addTagText: string = null;
 	private _clearable: boolean = true;
+	private _typeToSearchText: string = 'FORM.PLACEHOLDERS.TYPE_SEARCH_REQUEST';
 	private _typeahead!: Subject<string>;
 	private _addTag!: Function;
 
 	@Output() clear = new EventEmitter<void>();
 	@Output() modelChange = new EventEmitter<any>();
 	@Output() scrollToEnd = new EventEmitter<any>();
+
+	// Getter and Setter for searchTextPlaceholder
+	@Input()
+	public get typeToSearchText(): string {
+		return this._typeToSearchText;
+	}
+	public set typeToSearchText(value: string) {
+		this._typeToSearchText = value;
+	}
 
 	// Getter and Setter for selectedItem
 	@Input()

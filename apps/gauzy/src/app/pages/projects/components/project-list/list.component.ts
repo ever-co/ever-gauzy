@@ -1,15 +1,21 @@
-import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { NbDialogService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { combineLatest, debounceTime, firstValueFrom, Subject } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
+import { Cell } from 'angular2-smart-table';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
+	IOrganization,
+	PermissionsEnum,
 	ComponentLayoutStyleEnum,
 	CrudActionEnum,
-	ID,
-	IOrganization,
-	IOrganizationProject,
-	IOrganizationProjectEmployee,
 	ITag,
-	PermissionsEnum
+	IOrganizationProject,
+	ID,
+	IOrganizationProjectEmployee
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
@@ -35,12 +41,6 @@ import {
 	TagsOnlyComponent,
 	VisibilityComponent
 } from '@gauzy/ui-core/shared';
-import { NbDialogService } from '@nebular/theme';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
-import { Cell } from 'angular2-smart-table';
-import { combineLatest, debounceTime, firstValueFrom, Subject } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
