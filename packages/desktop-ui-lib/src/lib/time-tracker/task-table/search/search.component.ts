@@ -1,6 +1,7 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, ViewChild } from '@angular/core';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime, fromEvent, map, Observable } from 'rxjs';
+import { debounceTime, filter, fromEvent, map, Observable } from 'rxjs';
 import { TimeTrackerQuery } from '../../+state/time-tracker.query';
 import { SearchTermQuery } from './+state/search-term.query';
 import { SearchTermStore } from './+state/search-term.store';
@@ -40,15 +41,14 @@ export class SearchComponent implements AfterViewInit {
 	ngAfterViewInit() {
 		fromEvent(this.search.nativeElement, 'input')
 			.pipe(
-				// Wait 300ms after the last keystroke before emitting
+				map((event: any) => event.target.value),
+				distinctUntilChange(),
 				debounceTime(300),
-				map((event: any) => event.target.value), // Extract the input value
+				filter((term) => term !== this.searchTermQuery.value),
 				untilDestroyed(this)
 			)
 			.subscribe((searchTerm: string) => {
-				// Emit the search term
 				this.onSearch(searchTerm);
-				this.searchTermStore.setLoading(true);
 			});
 	}
 }

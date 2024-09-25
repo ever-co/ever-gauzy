@@ -4,7 +4,7 @@ import { ITask, ITaskStatus, ITaskUpdateInput, TaskStatusEnum } from '@gauzy/con
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
-import { combineLatest, concatMap, filter, Observable, tap } from 'rxjs';
+import { combineLatest, concatMap, Observable, tap } from 'rxjs';
 import { TaskTableStore } from '../+state/task-table.store';
 import { API_PREFIX } from '../../../constants';
 import { ElectronService } from '../../../electron/services';
@@ -86,14 +86,6 @@ export class TaskTableComponent implements OnInit, AfterViewInit {
 
 	private monitorLoadingState(): void {
 		this.loading$ = this.smartTableSource.loading$;
-
-		this.loading$
-			.pipe(
-				filter((isLoading: boolean) => !isLoading),
-				tap(() => this.searchTermStore.setLoading(false)),
-				untilDestroyed(this)
-			)
-			.subscribe();
 	}
 
 	public refreshTimer(): void {

@@ -9,13 +9,4 @@
 		nbInput
 		type="text"
 	/>
-	<!-- Spinner: Conditionally shown when loading -->
-	<nb-icon
-		*ngIf="loading$ | async"
-		icon="loader-outline"
-		nbSuffix
-		[nbSpinner]="true"
-		nbSpinnerStatus="primary"
-		nbSpinnerSize="small"
-	></nb-icon>
 </nb-form-field>
