@@ -64,9 +64,10 @@ export class TaskSelectorService extends SelectorService<ITask> {
 		}
 	}
 
-	public async load(): Promise<void> {
+	public async load(options?: { searchTerm?: string }): Promise<void> {
 		try {
 			this.taskSelectorStore.setLoading(true);
+			const { searchTerm } = options || {};
 			const {
 				organizationId,
 				tenantId,
@@ -77,6 +78,7 @@ export class TaskSelectorService extends SelectorService<ITask> {
 			const request = {
 				organizationId,
 				tenantId,
+				searchTerm,
 				projectId: this.projectSelectorQuery.selectedId,
 				organizationTeamId: this.teamSelectorQuery.selectedId,
 				take: this.taskSelectorQuery.limit,

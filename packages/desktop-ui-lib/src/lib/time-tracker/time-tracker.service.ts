@@ -134,8 +134,18 @@ export class TimeTrackerService {
 		employeeId: string;
 		take: number;
 		skip: number;
+		searchTerm: string;
 	}): Promise<IPagination<ITask>> {
-		const { organizationId, tenantId, projectId, organizationTeamId, employeeId, take, skip } = values;
+		const {
+			organizationId,
+			tenantId,
+			projectId,
+			organizationTeamId,
+			employeeId,
+			take,
+			skip,
+			searchTerm: title
+		} = values;
 
 		const request = {
 			where: {
@@ -143,6 +153,7 @@ export class TimeTrackerService {
 				tenantId,
 				...(projectId && { projectId }),
 				...(organizationTeamId && { teams: [organizationTeamId] }),
+				...(title && { title }),
 				members: { id: employeeId }
 			},
 			relations: [

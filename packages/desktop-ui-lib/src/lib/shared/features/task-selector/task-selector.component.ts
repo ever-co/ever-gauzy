@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ITask } from 'packages/contracts/dist';
-import { filter, Observable, tap } from 'rxjs';
+import { debounceTime, filter, Observable, Subject, switchMap, tap } from 'rxjs';
+import { distinctUntilChanged } from 'rxjs/operators';
 import { ElectronService } from '../../../electron/services';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
 import { TaskSelectorQuery } from './+state/task-selector.query';
@@ -16,6 +17,7 @@ import { TaskSelectorStore } from './+state/task-selector.store';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TaskSelectorComponent implements OnInit {
+	public search$ = new Subject<string>();
 	constructor(
 		private readonly electronService: ElectronService,
 		public readonly taskSelectorStore: TaskSelectorStore,
@@ -25,6 +27,15 @@ export class TaskSelectorComponent implements OnInit {
 	) {}
 
 	public ngOnInit() {
+		this.search$
+			.pipe(
+				debounceTime(300),
+				distinctUntilChanged(),
+				tap(() => this.taskSelectorService.resetPage()),
+				switchMap((searchTerm) => this.taskSelectorService.load({ searchTerm })),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.taskSelectorService
 			.getAll$()
 			.pipe(
