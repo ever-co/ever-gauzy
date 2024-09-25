@@ -107,7 +107,9 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT)
 	@Put('/employee')
 	async updateByEmployee(@Body() body: IEditEntityByMemberInput): Promise<boolean> {
-		return await this.commandBus.execute(new OrganizationProjectEditByEmployeeCommand(body));
+		return await this.commandBus.execute(
+			new OrganizationProjectEditByEmployeeCommand(body)
+		);
 	}
 
 	/**

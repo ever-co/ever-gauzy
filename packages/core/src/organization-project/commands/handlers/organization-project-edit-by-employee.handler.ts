@@ -1,22 +1,26 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateEntityByMembersHandler } from '../../../shared/handlers';
 import { OrganizationProjectService } from '../../organization-project.service';
-import { OrganizationProjectEditByEmployeeCommand } from '../organization-project.edit-by-employee.command';
+import { OrganizationProjectEditByEmployeeCommand } from '../organization-project-edit-by-employee.command';
 
 @CommandHandler(OrganizationProjectEditByEmployeeCommand)
 export class OrganizationProjectEditByEmployeeHandler extends UpdateEntityByMembersHandler
 	implements ICommandHandler<OrganizationProjectEditByEmployeeCommand> {
 
-	constructor(
-		protected readonly organizationProjectService: OrganizationProjectService
-	) {
+	constructor(readonly organizationProjectService: OrganizationProjectService) {
 		super(organizationProjectService);
 	}
 
+	/**
+	 * Executes the organization project edit command by an employee.
+	 *
+	 * @param command - The command containing the input for editing the organization project.
+	 * @returns A promise that resolves with the result of the command execution.
+	 */
 	public async execute(
 		command: OrganizationProjectEditByEmployeeCommand
 	): Promise<any> {
-		const { input } = command;
-		return await this.executeCommand(input);
+		// Extracts the input from the command and executes the command logic
+		return this.executeCommand(command.input);
 	}
 }

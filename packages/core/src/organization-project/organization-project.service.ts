@@ -318,14 +318,18 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	}
 
 	/**
-	 * Find employee assigned projects
+	 * Finds projects assigned to a specific employee based on the provided options.
 	 *
-	 * @param employeeId
-	 * @param options
-	 * @returns
+	 * @param employeeId - The ID of the employee to find projects for.
+	 * @param input - Filter options for finding organization projects.
+	 * @returns A promise that resolves with a list of projects assigned to the employee.
 	 */
-	async findByEmployee(employeeId: ID, options: IOrganizationProjectsFindInput): Promise<IOrganizationProject[]> {
-		const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+	async findByEmployee(employeeId: ID, input: IOrganizationProjectsFindInput): Promise<IOrganizationProject[]> {
+		const tenantId = RequestContext.currentTenantId() || input.tenantId; // Use the current tenant ID or fallback to input tenantId
+		const { organizationId, organizationContactId, organizationTeamId } = input;
+
+		// Create a query to fetch organization projects
+		const query = this.typeOrmRepository.createQueryBuilder(this.tableName)
 		query.setFindOptions({
 			select: {
 				id: true,
@@ -338,65 +342,62 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				taskListType: true
 			}
 		});
-		query.innerJoin(`${query.alias}.members`, 'member');
-		query.leftJoin(`${query.alias}.teams`, 'project_team');
-		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => {
-				const tenantId = RequestContext.currentTenantId();
-				const { organizationId, organizationContactId, organizationTeamId } = options;
+		query
+			.innerJoin(`${query.alias}.members`, 'project_members')
+			.leftJoin(`${query.alias}.teams`, 'project_team');
+		query
+			.where(`project_members.employeeId = :employeeId`, { employeeId })
+			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId })
+			.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
 
-				qb.andWhere(p('member.id = :employeeId'), { employeeId });
-				qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-				qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+		// Apply additional filters if organizationContactId is provided
+		if (isNotEmpty(organizationContactId)) {
+			query.andWhere(`${query.alias}.organizationContactId = :organizationContactId`, { organizationContactId });
+		}
 
-				if (isNotEmpty(organizationContactId)) {
-					qb.andWhere(`${query.alias}.organizationContactId = :organizationContactId`, {
-						organizationContactId
-					});
-				}
+		// Apply additional filters if organizationTeamId is provided
+		if (isNotEmpty(organizationTeamId)) {
+			query.andWhere(`project_team.id = :organizationTeamId`, { organizationTeamId });
+		}
 
-				if (isNotEmpty(organizationTeamId)) {
-					qb.andWhere(`project_team.id = :organizationTeamId`, { organizationTeamId });
-				}
-			})
-		);
-		return await query.getMany();
+		// Get the results
+		return query.getMany();
 	}
 
 	/**
-	 * Organization project override find all method
+	 * Overrides the organization project find all method to handle special cases.
 	 *
-	 * @param filter
-	 * @returns
+	 * @param options - Pagination parameters with optional filters.
+	 * @returns A promise that resolves with the paginated result of organization projects.
 	 */
 	public async findAll(options?: PaginationParams<OrganizationProject>): Promise<IPagination<OrganizationProject>> {
-		if ('where' in options) {
-			const { where } = options;
-			if (where.organizationContactId === 'null') {
-				options.where.organizationContactId = IsNull();
-			}
+		// Check and handle the case where `organizationContactId` is explicitly set to 'null'
+		if (options?.where?.organizationContactId === 'null') {
+			options.where.organizationContactId = IsNull();
 		}
-		return await super.findAll(options);
+
+		// Call the parent class's findAll method with the modified options
+		return super.findAll(options);
 	}
 
 	/**
-	 * Organization project override pagination method
+	 * Overrides the organization project pagination method to handle filtering by tags.
 	 *
-	 * @param filter
-	 * @returns
+	 * @param options - Pagination parameters with optional filters.
+	 * @returns A promise that resolves with the paginated result of organization projects.
 	 */
 	public async pagination(
 		options?: PaginationParams<OrganizationProject>
 	): Promise<IPagination<OrganizationProject>> {
-		if ('where' in options) {
-			const { where } = options;
-			if (where.tags) {
-				options.where.tags = {
-					id: In(where.tags as string[])
-				};
-			}
+		// Check if there is a `where` clause and handle the `tags` filter
+		if (options?.where?.tags) {
+			options.where.tags = {
+				id: In(options.where.tags as string[])
+			};
 		}
-		return await super.paginate(options);
+
+		// Call the parent class's paginate method with the modified options
+		return super.paginate(options);
 	}
 
 	/**
@@ -435,6 +436,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 					isArchived: false
 				}
 			});
+
+			// Return the projects
 			return projects;
 		} catch (error) {
 			return [];
