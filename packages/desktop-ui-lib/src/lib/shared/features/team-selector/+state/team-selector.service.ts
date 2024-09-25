@@ -40,10 +40,12 @@ export class TeamSelectorService extends SelectorService<IOrganizationTeam> {
 				organizationId,
 				tenantId,
 				employeeId,
-				projectId: this.projectSelectorQuery.selectedId
+				projectId: this.projectSelectorQuery.selectedId,
+				take: this.teamSelectorQuery.limit,
+				skip: this.teamSelectorQuery.page
 			};
-			const data = await this.timeTrackerService.getTeams(request);
-			this.teamSelectorStore.updateData(data);
+			const { items: data, total } = await this.timeTrackerService.getPaginatedTeams(request);
+			this.teamSelectorStore.updateInfiniteList({ data, total });
 			this.teamSelectorStore.setError(null);
 		} catch (error) {
 			this.toastrNotifier.error(error.message || 'An error occurred while fetching teams.');

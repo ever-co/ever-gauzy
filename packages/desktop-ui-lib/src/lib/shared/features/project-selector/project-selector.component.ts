@@ -29,6 +29,7 @@ export class ProjectSelectorComponent implements OnInit {
 	) {}
 
 	public ngOnInit(): void {
+		this.projectSelectorService.onScroll$.pipe(untilDestroyed(this)).subscribe();
 		this.projectSelectorQuery.selected$
 			.pipe(
 				filter(Boolean),
@@ -81,5 +82,9 @@ export class ProjectSelectorComponent implements OnInit {
 
 	public get hasPermission$(): Observable<boolean> {
 		return this.projectSelectorService.hasPermission$;
+	}
+
+	public onShowMore(): void {
+		this.projectSelectorService.onScrollToEnd();
 	}
 }

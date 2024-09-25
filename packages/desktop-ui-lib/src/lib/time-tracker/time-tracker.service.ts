@@ -124,7 +124,7 @@ export class TimeTrackerService {
 		return firstValueFrom(tasks$) as Promise<ITask[]>;
 	}
 
-	async getTasksWithPagination(values: {
+	async getPaginatedTasks(values: {
 		organizationId: string;
 		tenantId: string;
 		projectId?: string;
@@ -281,7 +281,46 @@ export class TimeTrackerService {
 				);
 			this._projectCacheService.setValue(projects$, params);
 		}
-		return firstValueFrom(projects$);
+		return firstValueFrom(projects$) as Promise<IOrganizationProject[]>;
+	}
+
+	async getPaginatedProjects(values) {
+		const { organizationId, tenantId, employeeId, organizationTeamId, organizationContactId, skip, take } = values;
+
+		// Prepare the parameters
+		const params = {
+			relations: ['organizationContact', 'members.employee.user', 'tags', 'teams'],
+			join: {
+				alias: 'organization_project',
+				leftJoin: { tags: 'organization_project.tags' }
+			},
+			where: {
+				organizationId,
+				tenantId,
+				...(organizationTeamId && { organizationTeamId }),
+				...(employeeId && { members: { id: employeeId } })
+			},
+			...(organizationContactId && { organizationContactId }),
+			...(organizationTeamId && { organizationTeamId }),
+			skip,
+			take
+		};
+
+		// Check for cached projects
+		let projects$ = this._projectCacheService.getValue(params);
+		if (!projects$) {
+			// If not cached, make HTTP request and cache result
+			projects$ = this.http
+				.get<IPagination<IOrganizationProject>>(`${API_PREFIX}/organization-projects/pagination`, {
+					params: toParams(params)
+				})
+				.pipe(shareReplay(1));
+
+			this._projectCacheService.setValue(projects$, params);
+		}
+
+		// Return the first emitted value from the observable
+		return firstValueFrom(projects$) as Promise<IPagination<IOrganizationProject>>;
 	}
 
 	async getClient(values) {
@@ -303,7 +342,7 @@ export class TimeTrackerService {
 		return firstValueFrom(clients$) as Promise<IOrganizationContact[]>;
 	}
 
-	async getClientWithPagination(values) {
+	async getPaginatedClients(values) {
 		const params = {
 			organizationId: values.organizationId
 		};
@@ -745,7 +784,40 @@ export class TimeTrackerService {
 				);
 			this._teamsCacheService.setValue(teams$, params);
 		}
-		return firstValueFrom(teams$);
+		return firstValueFrom(teams$) as Promise<IOrganizationTeam[]>;
+	}
+
+	public async getPaginatedTeams(values?: any): Promise<IPagination<IOrganizationTeam>> {
+		const { employeeId, projectId, skip, take } = values ?? {};
+
+		// Prepare the query parameters
+		const params = {
+			where: {
+				organizationId: this._store.organizationId,
+				tenantId: this._store.tenantId,
+				...(employeeId && { members: { employeeId } }),
+				...(projectId && { projects: { id: projectId } })
+			},
+			relations: ['projects', 'members.role', 'members.employee.user'],
+			skip,
+			take
+		};
+
+		// Retrieve cached teams if available
+		let teams$ = this._teamsCacheService.getValue(params);
+		if (!teams$) {
+			// If not cached, make HTTP request and cache the result
+			teams$ = this.http
+				.get<IPagination<IOrganizationTeam>>(`${API_PREFIX}/organization-team/pagination`, {
+					params: toParams(params)
+				})
+				.pipe(shareReplay(1));
+
+			this._teamsCacheService.setValue(teams$, params);
+		}
+
+		// Return the first emitted value from the observable
+		return firstValueFrom(teams$) as Promise<IPagination<IOrganizationTeam>>;
 	}
 
 	public async taskSizes(): Promise<ITaskSize[]> {

@@ -69,10 +69,12 @@ export class ProjectSelectorService extends SelectorService<IOrganizationProject
 				tenantId,
 				employeeId,
 				organizationContactId: this.clientSelectorQuery.selectedId,
-				organizationTeamId: this.teamSelectorQuery.selectedId
+				organizationTeamId: this.teamSelectorQuery.selectedId,
+				skip: this.projectSelectorQuery.page,
+				take: this.projectSelectorQuery.limit
 			};
-			const data = await this.timeTrackerService.getProjects(request);
-			this.projectSelectorStore.updateData(data);
+			const { items: data, total } = await this.timeTrackerService.getPaginatedProjects(request);
+			this.projectSelectorStore.updateInfiniteList({ data, total });
 			this.projectSelectorStore.setError(null);
 		} catch (error) {
 			this.toastrNotifier.error(error.message || 'An error occurred while fetching projects.');

@@ -28,6 +28,7 @@ export class TeamSelectorComponent implements OnInit {
 		private readonly teamSelectorService: TeamSelectorService
 	) {}
 	public ngOnInit(): void {
+		this.taskSelectorService.onScroll$.pipe(untilDestroyed(this)).subscribe();
 		this.teamSelectorService
 			.getAll$()
 			.pipe(
@@ -73,5 +74,9 @@ export class TeamSelectorComponent implements OnInit {
 
 	public get disabled$(): Observable<boolean> {
 		return this.timeTrackerQuery.disabled$;
+	}
+
+	public onShowMore(): void {
+		this.teamSelectorService.onScrollToEnd();
 	}
 }

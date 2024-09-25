@@ -83,7 +83,7 @@ export class TaskSelectorService extends SelectorService<ITask> {
 				skip: this.taskSelectorQuery.page,
 				employeeId
 			};
-			const { total, items: tasks } = await this.timeTrackerService.getTasksWithPagination(request);
+			const { total, items: tasks } = await this.timeTrackerService.getPaginatedTasks(request);
 			if (tasks.length) {
 				const statistics = await this.timeTrackerService.getTasksStatistics({
 					...request,

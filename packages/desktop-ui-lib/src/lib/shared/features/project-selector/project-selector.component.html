@@ -15,4 +15,5 @@
 	[isLoading]="isLoading$ | async"
 	[disabled]="disabled$ | async"
 	[hasError]="error$ | async"
+	(scrollToEnd)="onShowMore()"
 ></gauzy-select>

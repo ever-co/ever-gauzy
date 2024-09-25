@@ -87,4 +87,8 @@ export class ClientSelectorComponent implements OnInit {
 	public get hasPermission$(): Observable<boolean> {
 		return this.clientSelectorService.hasPermission$;
 	}
+
+	public onShowMore(): void {
+		this.clientSelectorService.onScrollToEnd();
+	}
 }

@@ -77,7 +77,7 @@ export class ClientSelectorService extends SelectorService<IOrganizationContact>
 				take: this.selectorQuery.limit,
 				skip: this.selectorQuery.page
 			};
-			const { items: data, total } = await this.timeTrackerService.getClientWithPagination(request);
+			const { items: data, total } = await this.timeTrackerService.getPaginatedClients(request);
 			this.selectorStore.updateInfiniteList({ data, total });
 			this.selectorStore.setError(null);
 		} catch (error) {
