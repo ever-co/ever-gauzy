@@ -1,3 +1,3 @@
-import { ActivityLogCreateEventHandler } from './activity-log.create.handler';
+import { ActivityLogEventHandler } from './activity-log.handler';
 
-export const EventHandlers = [ActivityLogCreateEventHandler];
+export const EventHandlers = [ActivityLogEventHandler];

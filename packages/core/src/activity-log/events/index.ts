@@ -1,1 +1,1 @@
-export * from './activity-log.create.event';
+export * from './activity-log.event';

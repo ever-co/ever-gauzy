@@ -3,20 +3,21 @@ import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { CommandHandlers } from './commands/handlers';
-import { EventHandlers } from './events/handlers';
-import { ActivityLogService } from './activity-log.service';
+import { ActivityLogController } from './activity-log.controller';
 import { ActivityLog } from './activity-log.entity';
+import { ActivityLogService } from './activity-log.service';
+import { EventHandlers } from './events/handlers';
 import { TypeOrmActivityLogRepository } from './repository/type-orm-activity-log.repository';
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([ActivityLog]),
 		MikroOrmModule.forFeature([ActivityLog]),
-		RolePermissionModule,
-		CqrsModule
+		CqrsModule,
+		RolePermissionModule
 	],
-	providers: [ActivityLogService, TypeOrmActivityLogRepository, ...CommandHandlers, ...EventHandlers],
-	exports: [ActivityLogService, TypeOrmModule, TypeOrmActivityLogRepository]
+	controllers: [ActivityLogController],
+	providers: [ActivityLogService, TypeOrmActivityLogRepository, ...EventHandlers],
+	exports: [TypeOrmModule, MikroOrmModule, ActivityLogService, TypeOrmActivityLogRepository]
 })
 export class ActivityLogModule {}

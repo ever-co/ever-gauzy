@@ -22,9 +22,8 @@ export class OrganizationProjectCreateHandler
 	): Promise<IOrganizationProject> {
 		try {
 			const { input } = command;
-			const project = await this._organizationProjectService.create(
-				input
-			);
+
+			const project = await this._organizationProjectService.create(input);
 
 			// 1. Create task statuses for relative organization project.
 			this._commandBus.execute(

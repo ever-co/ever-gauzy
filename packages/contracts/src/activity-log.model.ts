@@ -1,6 +1,9 @@
 import { ActorTypeEnum, IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IUser } from './user.model';
 
+/**
+ * Interface representing an activity log entry.
+ */
 export interface IActivityLog extends IBasePerTenantAndOrganizationEntityModel {
 	entity: ActivityLogEntityEnum; // Entity / Table name concerned by activity log
 	entityId: ID; // The ID of the element we are interacting with (a task, an organization, an employee, ...)
@@ -17,16 +20,22 @@ export interface IActivityLog extends IBasePerTenantAndOrganizationEntityModel {
 	data?: Record<string, any>;
 }
 
-export enum ActionTypeEnum {
-	CREATED = 'Created',
-	UPDATED = 'Updated',
-	DELETED = 'Deleted'
-}
-
 export interface IActivityLogUpdatedValues {
-	[x: string]: any;
+	[x: string]: Record<string, any>;
 }
 
+/**
+ * Enum for action types in the activity log.
+ */
+export enum ActionTypeEnum {
+	Created = 'Created',
+	Updated = 'Updated',
+	Deleted = 'Deleted'
+}
+
+/**
+ * Enum for entities that can be involved in activity logs.
+ */
 export enum ActivityLogEntityEnum {
 	Candidate = 'Candidate',
 	Contact = 'Contact',
@@ -45,7 +54,9 @@ export enum ActivityLogEntityEnum {
 	OrganizationSprint = 'OrganizationSprint',
 	Task = 'Task',
 	User = 'User'
-	// Add other entities as we can to use them for activity history
 }
 
-export interface IActivityLogCreateInput extends Omit<IActivityLog, 'creatorId' | 'creator'> {}
+/**
+ * Input type for activity log creation, excluding `creatorId` and `creator`.
+ */
+export interface IActivityLogInput extends Omit<IActivityLog, 'creatorId' | 'creator'> {}
