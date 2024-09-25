@@ -2,7 +2,7 @@ import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { isEmpty } from '@gauzy/common';
-import { ID, ITimeLog } from '@gauzy/contracts';
+import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { TimeLog } from './../../time-log.entity';
 import { ScheduleTimeLogEntriesCommand } from '../schedule-time-log-entries.command';
@@ -104,40 +104,52 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 	private async processTimeLogEntry(timeLog: ITimeLog): Promise<void> {
 		const { timeSlots } = timeLog;
 
-		// Calculate the minutes difference since the time log started
-		const minutes = moment().diff(moment.utc(timeLog.startedAt), 'minutes');
-
 		// Handle cases where there are no time slots
 		if (isEmpty(timeSlots)) {
+			// Retrieve the last log's startedAt date
+			const lastLogStartedAt = moment.utc(timeLog.startedAt);
+
+			// Example:
+			// If timeLog.startedAt = "2024-09-24 20:00:00"
+			// then lastLogStartedAt will be "2024-09-24 20:00:00"
+
 			// If the minutes difference is greater than 10, update the stoppedAt date
-			if (minutes > 10) {
+			// Example:
+			// If the current time is "2024-09-24 20:15:00", the difference is 15 minutes, which is greater than 10
+			if (moment.utc().diff(lastLogStartedAt, 'minutes') > 10) {
 				await this.updateStoppedAtUsingStartedAt(timeLog);
 			}
 		} else {
 			// Handle cases where there are time slots
 			await this.updateStoppedAtUsingTimeSlots(timeLog, timeSlots);
+			// Example: If timeSlots = [{ startedAt: "2024-09-24 20:05:00", duration: 300 }]
 		}
 
 		// Stop the pending time log entry
 		await this.stopTimeLog(timeLog);
 	}
 
-
 	/**
-	 * Update the stoppedAt field using the startedAt value for a time log.
+	 * Updates the stoppedAt field using the startedAt value for a time log.
 	 *
-	 * @param timeLog The time log entry to update
+	 * @param timeLog - The time log entry to update
 	 */
 	private async updateStoppedAtUsingStartedAt(timeLog: ITimeLog): Promise<void> {
-		// Calculate the stoppedAt date
+		// Calculate the stoppedAt date by adding 10 seconds to the startedAt value
 		const stoppedAt = moment.utc(timeLog.startedAt).add(10, 'seconds').toDate();
+
+		// Example:
+		// If timeLog.startedAt = "2024-09-24 21:00:00",
+		// then stoppedAt will be calculated as "2024-09-24 21:00:10" (10 seconds later).
 
 		// Update the stoppedAt field in the database
 		await this.typeOrmTimeLogRepository.save({
 			id: timeLog.id,
 			stoppedAt
 		});
+
 		console.log('Schedule Time Log Entry Updated StoppedAt Using StartedAt', timeLog.startedAt);
+		// Example log output: "Schedule Time Log Entry Updated StoppedAt Using StartedAt 2024-09-24 21:00:00"
 	}
 
 	/**
@@ -146,32 +158,79 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 	 * @param timeLog The time log entry to update
 	 * @param timeSlots The time slots associated with the time log
 	 */
-	private async updateStoppedAtUsingTimeSlots(timeLog: ITimeLog, timeSlots: any[]): Promise<void> {
-		// Calculate the duration
-		const duration = timeSlots.reduce<number>((sum, { duration }) => sum + duration, 0);
+	private async updateStoppedAtUsingTimeSlots(timeLog: ITimeLog, timeSlots: ITimeSlot[]): Promise<void> {
+		// Calculate the total duration in seconds from all time slots
+		const totalDurationInSeconds = timeSlots.reduce<number>((sum, { duration }) => sum + duration, 0);
 
-		// Calculate the stoppedAt date
-		const stoppedAt = moment.utc(timeLog.startedAt).add(duration, 'seconds').toDate();
+		// Example:
+		// If timeSlots = [{ duration: 300 }, { duration: 600 }]
+		// Then totalDurationInSeconds = 300 + 600 = 900 seconds (i.e., 15 minutes)
 
-		// Calculate the minutes difference
-		const minutes = moment.utc().diff(moment.utc(stoppedAt), 'minutes');
+		// Calculate the stoppedAt date by adding the total duration to the startedAt date of the time log
+		let stoppedAt = moment.utc(timeLog.startedAt).add(totalDurationInSeconds, 'seconds').toDate();
+
+		// Example:
+		// If timeLog.startedAt = "2024-09-24 10:00:00" and totalDurationInSeconds = 900,
+		// then stoppedAt = "2024-09-24 10:15:00"
+
+		// Retrieve the most recent time slot from the last log
+		const lastTimeSlot: ITimeSlot | undefined = timeSlots.sort((a: ITimeSlot, b: ITimeSlot) =>
+			moment(b.startedAt).diff(a.startedAt)
+		)[0];
+
+		// Example:
+		// If timeSlots = [{ startedAt: "2024-09-24 10:05:00" }, { startedAt: "2024-09-24 10:10:00" }]
+		// The sorted result will be [{ startedAt: "2024-09-24 10:10:00" }, { startedAt: "2024-09-24 10:05:00" }]
+		// Thus, lastTimeSlot = { startedAt: "2024-09-24 10:10:00" }
+
+		// Check if the last time slot was created more than 10 minutes ago
+		if (lastTimeSlot) {
+			// Retrieve the last time slot's startedAt date
+			const lastTimeSlotStartedAt = moment.utc(lastTimeSlot.startedAt);
+			// Retrieve the last time slot's duration
+			const duration = lastTimeSlot.duration;
+
+			// Retrieve the request stopped moment
+			const requestStoppedAt = moment.utc(stoppedAt);
+
+			// Example:
+			// If lastTimeSlot.startedAt = "2024-09-24 10:00:00" and duration = 300 (i.e., 5 minutes)
+			// then lastTimeSlotStartedAt would be "2024-09-24 10:00:00"
+			// and the stoppedAt time will be calculated as "2024-09-24 10:05:00".
+
+			// Check if the last time slot was created more than 10 minutes ago
+			if (requestStoppedAt.diff(lastTimeSlotStartedAt, 'minutes') > 10) {
+				// Calculate the potential stoppedAt time using the total duration
+				// Example: If the last time slot started at "2024-09-24 10:00:00" and ran for 300 seconds (5 minutes),
+				// then the calculated stoppedAt time would be "2024-09-24 10:05:00".
+				stoppedAt = lastTimeSlotStartedAt.add(duration, 'seconds').toDate();
+			}
+		}
 
 		// Update the stoppedAt field in the database
-		if (minutes > 10) {
+		if (moment.utc().diff(stoppedAt, 'minutes') > 10) {
+			// Example:
+			// If the current time is "2024-09-24 21:30:00" and stoppedAt is "2024-09-24 21:15:00",
+			// the difference would be 15 minutes, which is greater than 10.
+			// In this case, the stoppedAt field will be updated in the database.
+
+			// Calculate the potential stoppedAt time using the total duration
 			await this.typeOrmTimeLogRepository.save({
 				id: timeLog.id,
 				stoppedAt
 			});
 			console.log('Schedule Time Log Entry Updated StoppedAt Using StoppedAt', stoppedAt);
+			// Example log output: "Schedule Time Log Entry Updated StoppedAt Using StoppedAt 2024-09-24 21:15:00"
 		}
 	}
 
 	/**
-	 * Mark the time log as not running (stopped) in the database.
+	 * Marks the time log as not running (stopped) in the database.
 	 *
-	 * @param timeLog The time log entry to stop
+	 * @param timeLog - The time log entry to stop
 	 */
 	private async stopTimeLog(timeLog: ITimeLog): Promise<void> {
+		// Update the isRunning field to false in the database for the given time log
 		await this.typeOrmTimeLogRepository.save({
 			id: timeLog.id,
 			isRunning: false

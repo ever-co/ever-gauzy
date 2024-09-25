@@ -7,16 +7,20 @@ import { OrganizationContactEditByEmployeeCommand } from '../organization-contac
 export class OrganizationContactEditByEmployeeHandler extends UpdateEntityByMembersHandler
 	implements ICommandHandler<OrganizationContactEditByEmployeeCommand> {
 
-	constructor(
-		protected readonly organizationContactService: OrganizationContactService
-	) {
+	constructor(readonly organizationContactService: OrganizationContactService) {
 		super(organizationContactService);
 	}
 
+	/**
+	 * Executes the organization contact edit command by an employee.
+	 *
+	 * @param command - The command containing the input for editing the organization contact.
+	 * @returns A promise that resolves with the result of the command execution.
+	 */
 	public async execute(
 		command: OrganizationContactEditByEmployeeCommand
 	): Promise<any> {
-		const { input } = command;
-		return await this.executeCommand(input);
+		// Extract the input from the command and execute the command logic
+		return this.executeCommand(command.input);
 	}
 }

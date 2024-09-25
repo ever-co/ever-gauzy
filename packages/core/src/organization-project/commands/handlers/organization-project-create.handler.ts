@@ -1,12 +1,12 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IOrganizationProject } from '@gauzy/contracts';
-import { OrganizationProjectCreateCommand } from '../organization-project.create.command';
+import { OrganizationProjectCreateCommand } from '../organization-project-create.command';
 import { OrganizationProjectService } from '../../organization-project.service';
-import { OrganizationProjectStatusBulkCreateCommand } from './../../../tasks/statuses/commands';
-import { OrganizationProjectTaskPriorityBulkCreateCommand } from './../../../tasks/priorities/commands';
-import { OrganizationProjectTaskSizeBulkCreateCommand } from './../../../tasks/sizes/commands';
-import { OrganizationProjectIssueTypeBulkCreateCommand } from './../../../tasks/issue-type/commands';
+import { OrganizationProjectStatusBulkCreateCommand } from '../../../tasks/statuses/commands';
+import { OrganizationProjectTaskPriorityBulkCreateCommand } from '../../../tasks/priorities/commands';
+import { OrganizationProjectTaskSizeBulkCreateCommand } from '../../../tasks/sizes/commands';
+import { OrganizationProjectIssueTypeBulkCreateCommand } from '../../../tasks/issue-type/commands';
 
 @CommandHandler(OrganizationProjectCreateCommand)
 export class OrganizationProjectCreateHandler
@@ -22,9 +22,8 @@ export class OrganizationProjectCreateHandler
 	): Promise<IOrganizationProject> {
 		try {
 			const { input } = command;
-			const project = await this._organizationProjectService.create(
-				input
-			);
+
+			const project = await this._organizationProjectService.create(input);
 
 			// 1. Create task statuses for relative organization project.
 			this._commandBus.execute(

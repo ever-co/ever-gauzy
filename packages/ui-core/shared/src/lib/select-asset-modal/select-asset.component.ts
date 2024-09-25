@@ -108,7 +108,8 @@ export class SelectAssetComponent extends TranslationBaseComponent implements On
 	}
 
 	onImageUploaded(image: IImageAsset) {
-		this.newImageUploadedEvent.next(image);
+		this.gallery.push(image); // Add the uploaded image to the gallery immediately
+		this.activeImage = image; // Set the uploaded image as the active one
 	}
 
 	onImageAssetDeleted(imageDeleted: IImageAsset) {
