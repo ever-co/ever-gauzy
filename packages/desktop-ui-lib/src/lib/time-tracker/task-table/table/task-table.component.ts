@@ -213,16 +213,20 @@ export class TaskTableComponent implements OnInit, AfterViewInit {
 		}
 
 		// Prepare request parameters for filtering
+		const { selectedId: projectId } = this.projectSelectorService;
+		const { selectedId: teamId } = this.teamSelectorService;
+		const { value: searchTerm } = this.searchTermQuery;
+
 		const requestFilters = {
 			tenantId,
 			organizationId,
-			...(this.projectSelectorService.selectedId && { projectId: this.projectSelectorService.selectedId }),
-			...(this.teamSelectorService.selectedId && { teams: [this.teamSelectorService.selectedId] }),
-			members: { id: employeeId },
-			...(this.searchTermQuery.value && {
-				title: this.searchTermQuery.value,
-				prefix: this.searchTermQuery.value
-			})
+			...(projectId && { projectId }),
+			...(teamId && { teams: [teamId] }),
+			...(searchTerm && {
+				title: searchTerm,
+				prefix: searchTerm
+			}),
+			members: { id: employeeId }
 		};
 
 		// Initialize the smart table data source
