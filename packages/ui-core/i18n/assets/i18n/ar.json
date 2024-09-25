@@ -18,6 +18,7 @@
 		"DELETE": "حذف",
 		"REMOVE": "إزالة",
 		"ADD_EXISTING": "إضافة موجودة",
+		"CONVERT_TO_EMPLOYEE": "تحويل إلى موظف",
 		"OK": "حسنًا",
 		"YES": "نعم",
 		"NO": "لا.",
@@ -2703,6 +2704,7 @@
 		"ADD_EXISTING_USER": "إضافة مستخدم موجود",
 		"ADD_EXISTING_ORGANIZATION": "إضافة منظمة موجودة",
 		"ADD_EXISTING_USER_TOOLTIP": "إضافة مستخدم من مؤسسة أخرى",
+		"CONVERT_USER_TO_EMPLOYEE": "تم تحويل المستخدم إلى موظف بنجاح.",
 		"ROLE": {
 			"SUPER_ADMIN": "المشرف العام",
 			"ADMIN": "مشرف",
