@@ -1,8 +1,8 @@
 import { ICommand } from '@nestjs/cqrs';
-import { IEditEntityByMemberInput as IOrganizationProjectEditByEmployeeInput } from '@gauzy/contracts';
+import { IOrganizationProjectEditByEmployeeInput } from '@gauzy/contracts';
 
 export class OrganizationProjectEditByEmployeeCommand implements ICommand {
 	static readonly type = '[OrganizationProject] Edit By Employee';
 
-	constructor( public readonly input: IOrganizationProjectEditByEmployeeInput) {}
+	constructor(public readonly input: IOrganizationProjectEditByEmployeeInput) {}
 }
