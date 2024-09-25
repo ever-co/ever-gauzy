@@ -1033,14 +1033,14 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 	async onCreateConfirm(event) {
 		if (
 			!isNaN(event.newData.quantity) &&
-			!isNaN(event.newData.price) &&
+			!isNaN(extractNumber(event.newData.price)) &&
 			event.newData.quantity &&
 			event.newData.price &&
 			event.newData.description &&
 			(event.newData.selectedItem || this.selectedInvoiceType === InvoiceTypeEnum.DETAILED_ITEMS)
 		) {
-			const newData = event.newData;
-			const itemTotal = +event.newData.quantity * +event.newData.price;
+			const newData = { ...event.newData, price: extractNumber(event.newData.price) };
+			const itemTotal = +event.newData.quantity * +extractNumber(event.newData.price);
 			newData.totalValue = itemTotal;
 			this.subtotal += itemTotal;
 			await event.confirm.resolve(newData);
