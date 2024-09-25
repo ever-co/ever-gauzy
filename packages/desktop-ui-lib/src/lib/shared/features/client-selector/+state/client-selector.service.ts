@@ -50,9 +50,10 @@ export class ClientSelectorService extends SelectorService<IOrganizationContact>
 		}
 	}
 
-	public async load(): Promise<void> {
+	public async load(options?: { searchTerm?: string }): Promise<void> {
 		try {
 			this.selectorStore.setLoading(true);
+			const { searchTerm: name } = options || {};
 			const {
 				organizationId,
 				tenantId,
@@ -72,7 +73,8 @@ export class ClientSelectorService extends SelectorService<IOrganizationContact>
 					organizationId,
 					tenantId,
 					contactType: ContactType.CLIENT,
-					members: [employeeId]
+					members: [employeeId],
+					...(name && { name })
 				},
 				take: this.selectorQuery.limit,
 				skip: this.selectorQuery.page

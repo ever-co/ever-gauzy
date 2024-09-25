@@ -15,5 +15,6 @@
 	[isLoading]="isLoading$ | async"
 	[disabled]="disabled$ | async"
 	[hasError]="error$ | async"
+	[typeahead]="search$"
 	(scrollToEnd)="onShowMore()"
 ></gauzy-select>

@@ -298,7 +298,8 @@ export class TimeTrackerService {
 	}
 
 	async getPaginatedProjects(values) {
-		const { organizationId, tenantId, employeeId, organizationTeamId, organizationContactId, skip, take } = values;
+		const { organizationId, tenantId, employeeId, organizationTeamId, organizationContactId, skip, take, name } =
+			values;
 
 		// Prepare the parameters
 		const params = {
@@ -312,7 +313,8 @@ export class TimeTrackerService {
 				tenantId,
 				...(employeeId && { members: { id: employeeId } }),
 				...(organizationContactId && { organizationContactId }),
-				...(organizationTeamId && { teams: { id: organizationTeamId } })
+				...(organizationTeamId && { teams: { id: organizationTeamId } }),
+				...(name && { name })
 			},
 			skip,
 			take
@@ -795,7 +797,7 @@ export class TimeTrackerService {
 	}
 
 	public async getPaginatedTeams(values?: any): Promise<IPagination<IOrganizationTeam>> {
-		const { employeeId, projectId, skip, take } = values ?? {};
+		const { employeeId, projectId, skip, take, name } = values ?? {};
 
 		// Prepare the query parameters
 		const params = {
@@ -803,7 +805,8 @@ export class TimeTrackerService {
 				organizationId: this._store.organizationId,
 				tenantId: this._store.tenantId,
 				...(employeeId && { members: { employeeId } }),
-				...(projectId && { projects: { id: projectId } })
+				...(projectId && { projects: { id: projectId } }),
+				...(name && { name })
 			},
 			relations: ['projects', 'members.role', 'members.employee.user'],
 			skip,

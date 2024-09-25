@@ -26,9 +26,10 @@ export class TeamSelectorService extends SelectorService<IOrganizationTeam> {
 		return this.teamSelectorQuery.selectedId;
 	}
 
-	public async load(): Promise<void> {
+	public async load(options?: { searchTerm?: string }): Promise<void> {
 		try {
 			this.teamSelectorStore.setLoading(true);
+			const { searchTerm: name } = options || {};
 			const {
 				organizationId,
 				tenantId,
@@ -40,6 +41,7 @@ export class TeamSelectorService extends SelectorService<IOrganizationTeam> {
 				organizationId,
 				tenantId,
 				employeeId,
+				name,
 				projectId: this.projectSelectorQuery.selectedId,
 				take: this.teamSelectorQuery.limit,
 				skip: this.teamSelectorQuery.page

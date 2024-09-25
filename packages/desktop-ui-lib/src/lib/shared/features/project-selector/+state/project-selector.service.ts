@@ -54,9 +54,10 @@ export class ProjectSelectorService extends SelectorService<IOrganizationProject
 		}
 	}
 
-	public async load(): Promise<void> {
+	public async load(options?: { searchTerm?: string }): Promise<void> {
 		try {
 			this.projectSelectorStore.setLoading(true);
+			const { searchTerm: name } = options || {};
 			const {
 				organizationId,
 				tenantId,
@@ -68,6 +69,7 @@ export class ProjectSelectorService extends SelectorService<IOrganizationProject
 				organizationId,
 				tenantId,
 				employeeId,
+				name,
 				organizationContactId: this.clientSelectorQuery.selectedId,
 				organizationTeamId: this.teamSelectorQuery.selectedId,
 				skip: this.projectSelectorQuery.page,

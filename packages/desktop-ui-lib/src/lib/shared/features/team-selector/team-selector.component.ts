@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganizationTeam } from 'packages/contracts/dist';
-import { concatMap, filter, Observable, tap } from 'rxjs';
+import { concatMap, debounceTime, distinctUntilChanged, filter, Observable, Subject, switchMap, tap } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
 import { ProjectSelectorService } from '../project-selector/+state/project-selector.service';
@@ -18,6 +18,8 @@ import { TeamSelectorStore } from './+state/team-selector.store';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TeamSelectorComponent implements OnInit {
+	public search$ = new Subject<string>();
+
 	constructor(
 		private readonly electronService: ElectronService,
 		private readonly teamSelectorStore: TeamSelectorStore,
@@ -44,6 +46,15 @@ export class TeamSelectorComponent implements OnInit {
 				tap(() => this.taskSelectorService.resetPage()),
 				concatMap(() => this.projectSelectorService.load()),
 				concatMap(() => this.taskSelectorService.load()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.search$
+			.pipe(
+				debounceTime(300),
+				distinctUntilChanged(),
+				tap(() => this.teamSelectorService.resetPage()),
+				switchMap((searchTerm) => this.teamSelectorService.load({ searchTerm })),
 				untilDestroyed(this)
 			)
 			.subscribe();
