@@ -35,6 +35,7 @@ import {
 	TaskCacheService,
 	TaskPriorityCacheService,
 	TaskSizeCacheService,
+	TaskStatisticsCacheService,
 	TaskStatusCacheService,
 	TeamsCacheService,
 	TimeLogCacheService,
@@ -55,6 +56,7 @@ export class TimeTrackerService {
 		private readonly http: HttpClient,
 		private readonly _clientCacheService: ClientCacheService,
 		private readonly _taskCacheService: TaskCacheService,
+		private readonly _taskStatisticsCacheService: TaskStatisticsCacheService,
 		private readonly _projectCacheService: ProjectCacheService,
 		private readonly _timeSlotCacheService: TimeSlotCacheService,
 		private readonly _employeeCacheService: EmployeeCacheService,
@@ -210,7 +212,7 @@ export class TimeTrackerService {
 			taskIds: values.taskIds,
 			projectId: values.projectId
 		};
-		let tasksStatistics$ = this._taskCacheService.getValue(cacheReference);
+		let tasksStatistics$ = this._taskStatisticsCacheService.getValue(cacheReference);
 
 		if (!tasksStatistics$) {
 			// Fetch tasks statistics
@@ -222,7 +224,7 @@ export class TimeTrackerService {
 				);
 
 			// Set the tasks statistics in the cache
-			this._taskCacheService.setValue(tasksStatistics$, cacheReference);
+			this._taskStatisticsCacheService.setValue(tasksStatistics$, cacheReference);
 		}
 
 		// Return the tasks statistics
