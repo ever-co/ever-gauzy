@@ -70,7 +70,7 @@
 
 <!-- Actions Button -->
 <ng-template #actionButtons>
-	<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_EDIT', 'ORG_PROJECT_DELETE']">
+	<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT, PermissionsEnum.ORG_PROJECT_DELETE]">
 		<div class="actions">
 			<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_EDIT']">
 				<button
@@ -78,14 +78,14 @@
 					status="basic"
 					class="action primary"
 					size="small"
-					(click)="navigateToEditProject(selectedProject)"
+					(click)="navigateToProject(selectedProject)"
 					[disabled]="disableButton"
 				>
 					<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
 					{{ 'BUTTONS.EDIT' | translate }}
 				</button>
 			</ng-template>
-			<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_DELETE']">
+			<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_DELETE]">
 				<button
 					[nbTooltip]="'BUTTONS.DELETE' | translate"
 					nbButton
@@ -104,7 +104,7 @@
 
 <!-- Visible Button -->
 <ng-template #visibleButton>
-	<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_ADD']">
+	<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_ADD]">
 		<button
 			type="button"
 			nbButton
