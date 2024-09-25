@@ -17,6 +17,8 @@
 		[bindLabel]="bindLabel"
 		[bindValue]="bindValue"
 		nbTooltipStatus="warning"
+		[typeahead]="typeahead"
+		(scrollToEnd)="onScrollToEnd()"
 	>
 		<!-- Option Template -->
 		<ng-template ng-option-tmp let-item="item">

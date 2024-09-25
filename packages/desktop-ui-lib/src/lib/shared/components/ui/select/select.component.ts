@@ -20,10 +20,12 @@ export class SelectComponent {
 	private _isLoading: boolean = false;
 	private _addTagText: string = null;
 	private _clearable: boolean = true;
+	private _typeahead!: string;
 	private _addTag!: Function;
 
 	@Output() clear = new EventEmitter<void>();
 	@Output() modelChange = new EventEmitter<any>();
+	@Output() scrollToEnd = new EventEmitter<any>();
 
 	// Getter and Setter for selectedItem
 	@Input()
@@ -151,6 +153,14 @@ export class SelectComponent {
 		this._addTag = value;
 	}
 
+	// Getter and Setter for selectedItem
+	@Input()
+	public get typeahead(): any {
+		return this._typeahead;
+	}
+	public set typeahead(value: any) {
+		this._typeahead = value;
+	}
 	// Handle clear action
 	public onClear() {
 		this.clear.emit();
@@ -159,5 +169,9 @@ export class SelectComponent {
 	// Emit model change event
 	public onModelChange(event: any) {
 		this.modelChange.emit(event);
+	}
+
+	public onScrollToEnd() {
+		this.scrollToEnd.emit();
 	}
 }
