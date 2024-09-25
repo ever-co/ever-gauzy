@@ -4,7 +4,5 @@ import { IEditEntityByMemberInput as IOrganizationProjectEditByEmployeeInput } f
 export class OrganizationProjectEditByEmployeeCommand implements ICommand {
 	static readonly type = '[OrganizationProject] Edit By Employee';
 
-	constructor(
-		public readonly input: IOrganizationProjectEditByEmployeeInput
-	) {}
+	constructor( public readonly input: IOrganizationProjectEditByEmployeeInput) {}
 }

@@ -70,7 +70,7 @@ const routes: Routes = [
 							relations: [
 								'organizationContact',
 								'organization',
-								'members.user',
+								'members.employee.user',
 								'tags',
 								'teams',
 								'customFields.repository'

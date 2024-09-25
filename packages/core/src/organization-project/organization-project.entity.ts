@@ -204,7 +204,7 @@ export class OrganizationProject
 	icon?: string;
 
 	// Specifies the status of the project, if provided.
-	@ApiPropertyOptional({ type: () => String })
+	@ApiPropertyOptional({ type: () => String, enum: TaskStatusEnum })
 	@IsOptional()
 	@IsEnum(TaskStatusEnum)
 	@ColumnIndex()
