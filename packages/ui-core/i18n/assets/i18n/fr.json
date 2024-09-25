@@ -18,6 +18,7 @@
 		"DELETE": "Supprimer",
 		"REMOVE": "Supprimer",
 		"ADD_EXISTING": "Ajouter existant",
+		"CONVERT_TO_EMPLOYEE": "Convertir en employé",
 		"OK": "D'accord",
 		"YES": "Oui",
 		"NO": "Non",
@@ -2706,6 +2707,7 @@
 		"ADD_EXISTING_USER": "Ajouter un utilisateur existant",
 		"ADD_EXISTING_ORGANIZATION": "Ajouter une organisation existante",
 		"ADD_EXISTING_USER_TOOLTIP": "Ajouter un utilisateur provenant d'une autre organisation",
+		"CONVERT_USER_TO_EMPLOYEE": "Utilisateur converti en employé avec succès.",
 		"ROLE": {
 			"SUPER_ADMIN": "Super Administrateur",
 			"ADMIN": "Administrateur",
