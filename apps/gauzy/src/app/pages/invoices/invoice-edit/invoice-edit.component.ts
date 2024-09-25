@@ -22,7 +22,7 @@ import {
 	IProduct,
 	IExpense
 } from '@gauzy/contracts';
-import { compareDate, distinctUntilChange } from '@gauzy/ui-core/common';
+import { compareDate, distinctUntilChange, extractNumber } from '@gauzy/ui-core/common';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import * as moment from 'moment';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
@@ -873,15 +873,15 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	async onEditConfirm(event) {
 		if (
 			!isNaN(event.newData.quantity) &&
-			!isNaN(event.newData.price) &&
+			!isNaN(extractNumber(event.newData.price)) &&
 			event.newData.quantity &&
 			event.newData.price &&
 			event.newData.description &&
 			(event.newData.selectedItem || this.invoice.invoiceType === InvoiceTypeEnum.DETAILED_ITEMS)
 		) {
-			const newData = event.newData;
+			const newData = { ...event.newData, price: extractNumber(event.newData.price) };
 			const oldValue = +event.data.quantity * +event.data.price;
-			const newValue = +newData.quantity * +event.newData.price;
+			const newValue = +newData.quantity * +extractNumber(event.newData.price);
 			newData.totalValue = newValue;
 			if (newValue > oldValue) {
 				this.subtotal += newValue - oldValue;
