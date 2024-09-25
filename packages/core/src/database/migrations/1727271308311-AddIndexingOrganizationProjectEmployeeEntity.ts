@@ -71,6 +71,7 @@ export class AddIndexingOrganizationProjectEmployeeEntity1727271308311 implement
 	 * @param queryRunner
 	 */
 	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		console.log('Step 1: Dropping existing indexes...');
 		await queryRunner.query(`DROP INDEX "IDX_1c5e006185395a6193ede3456c"`);
 		await queryRunner.query(`DROP INDEX "IDX_25de67f7f3f030438e3ecb1c0e"`);
 		await queryRunner.query(`DROP INDEX "IDX_509be755cdaf837c263ffaa6b6"`);
@@ -80,6 +81,8 @@ export class AddIndexingOrganizationProjectEmployeeEntity1727271308311 implement
 		await queryRunner.query(`DROP INDEX "IDX_f3d1102a8aa6442cdfce5d57c3"`);
 		await queryRunner.query(`DROP INDEX "IDX_6b5b0c3d994f59d9c800922257"`);
 		await queryRunner.query(`DROP INDEX "IDX_2ba868f42c2301075b7c141359"`);
+
+		console.log('Step 2: Creating a temporary table with the new schema without foreign key constraints...');
 		await queryRunner.query(
 			`CREATE TABLE "temporary_organization_project_employee" ("employeeId" varchar NOT NULL, "organizationProjectId" varchar NOT NULL, "deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (DATETIME('now')), "updatedAt" datetime NOT NULL DEFAULT (DATETIME('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "isManager" boolean DEFAULT (0), "assignedAt" datetime, "roleId" varchar)`
 		);
@@ -90,6 +93,8 @@ export class AddIndexingOrganizationProjectEmployeeEntity1727271308311 implement
 		await queryRunner.query(
 			`ALTER TABLE "temporary_organization_project_employee" RENAME TO "organization_project_employee"`
 		);
+
+		console.log('Step 3: Re-creating indexes after dropping foreign key constraints...');
 		await queryRunner.query(
 			`CREATE INDEX "IDX_1c5e006185395a6193ede3456c" ON "organization_project_employee" ("roleId") `
 		);
@@ -117,6 +122,8 @@ export class AddIndexingOrganizationProjectEmployeeEntity1727271308311 implement
 		await queryRunner.query(
 			`CREATE INDEX "IDX_2ba868f42c2301075b7c141359" ON "organization_project_employee" ("organizationProjectId") `
 		);
+
+		console.log('Step 4: Dropping existing indexes...');
 		await queryRunner.query(`DROP INDEX "IDX_1c5e006185395a6193ede3456c"`);
 		await queryRunner.query(`DROP INDEX "IDX_25de67f7f3f030438e3ecb1c0e"`);
 		await queryRunner.query(`DROP INDEX "IDX_509be755cdaf837c263ffaa6b6"`);
@@ -126,6 +133,8 @@ export class AddIndexingOrganizationProjectEmployeeEntity1727271308311 implement
 		await queryRunner.query(`DROP INDEX "IDX_f3d1102a8aa6442cdfce5d57c3"`);
 		await queryRunner.query(`DROP INDEX "IDX_6b5b0c3d994f59d9c800922257"`);
 		await queryRunner.query(`DROP INDEX "IDX_2ba868f42c2301075b7c141359"`);
+
+		console.log('Step 5: Creating a temporary table with the new schema...');
 		await queryRunner.query(
 			`CREATE TABLE "temporary_organization_project_employee" ("employeeId" varchar NOT NULL, "organizationProjectId" varchar NOT NULL, "deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "isManager" boolean DEFAULT (0), "assignedAt" datetime, "roleId" varchar)`
 		);
@@ -136,6 +145,8 @@ export class AddIndexingOrganizationProjectEmployeeEntity1727271308311 implement
 		await queryRunner.query(
 			`ALTER TABLE "temporary_organization_project_employee" RENAME TO "organization_project_employee"`
 		);
+
+		console.log('Step 6: Re-creating indexes...');
 		await queryRunner.query(
 			`CREATE INDEX "IDX_1c5e006185395a6193ede3456c" ON "organization_project_employee" ("roleId") `
 		);
@@ -163,6 +174,8 @@ export class AddIndexingOrganizationProjectEmployeeEntity1727271308311 implement
 		await queryRunner.query(
 			`CREATE INDEX "IDX_2ba868f42c2301075b7c141359" ON "organization_project_employee" ("organizationProjectId") `
 		);
+
+		console.log('Step 7: Dropping existing indexes...');
 		await queryRunner.query(`DROP INDEX "IDX_1c5e006185395a6193ede3456c"`);
 		await queryRunner.query(`DROP INDEX "IDX_25de67f7f3f030438e3ecb1c0e"`);
 		await queryRunner.query(`DROP INDEX "IDX_509be755cdaf837c263ffaa6b6"`);
@@ -172,6 +185,8 @@ export class AddIndexingOrganizationProjectEmployeeEntity1727271308311 implement
 		await queryRunner.query(`DROP INDEX "IDX_f3d1102a8aa6442cdfce5d57c3"`);
 		await queryRunner.query(`DROP INDEX "IDX_6b5b0c3d994f59d9c800922257"`);
 		await queryRunner.query(`DROP INDEX "IDX_2ba868f42c2301075b7c141359"`);
+
+		console.log('Step 8: Creating a temporary table with the new schema...');
 		await queryRunner.query(
 			`CREATE TABLE "temporary_organization_project_employee" ("employeeId" varchar NOT NULL, "organizationProjectId" varchar NOT NULL, "deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "isManager" boolean DEFAULT (0), "assignedAt" datetime, "roleId" varchar, CONSTRAINT "FK_a9abd98013154ec1edfa1ec18cd" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_a77a507b7402f0adb6a6b41e412" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_2ba868f42c2301075b7c141359e" FOREIGN KEY ("organizationProjectId") REFERENCES "organization_project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_6b5b0c3d994f59d9c800922257f" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_1c5e006185395a6193ede3456c6" FOREIGN KEY ("roleId") REFERENCES "role" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
 		);
@@ -182,6 +197,8 @@ export class AddIndexingOrganizationProjectEmployeeEntity1727271308311 implement
 		await queryRunner.query(
 			`ALTER TABLE "temporary_organization_project_employee" RENAME TO "organization_project_employee"`
 		);
+
+		console.log('Step 9: Re-creating indexes...');
 		await queryRunner.query(
 			`CREATE INDEX "IDX_1c5e006185395a6193ede3456c" ON "organization_project_employee" ("roleId") `
 		);
@@ -217,6 +234,7 @@ export class AddIndexingOrganizationProjectEmployeeEntity1727271308311 implement
 	 * @param queryRunner
 	 */
 	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		console.log('Step 1: Dropping existing indexes...');
 		await queryRunner.query(`DROP INDEX "IDX_2ba868f42c2301075b7c141359"`);
 		await queryRunner.query(`DROP INDEX "IDX_6b5b0c3d994f59d9c800922257"`);
 		await queryRunner.query(`DROP INDEX "IDX_f3d1102a8aa6442cdfce5d57c3"`);
@@ -226,6 +244,8 @@ export class AddIndexingOrganizationProjectEmployeeEntity1727271308311 implement
 		await queryRunner.query(`DROP INDEX "IDX_509be755cdaf837c263ffaa6b6"`);
 		await queryRunner.query(`DROP INDEX "IDX_25de67f7f3f030438e3ecb1c0e"`);
 		await queryRunner.query(`DROP INDEX "IDX_1c5e006185395a6193ede3456c"`);
+
+		console.log('Step 2: Creating a temporary table with the new schema...');
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" RENAME TO "temporary_organization_project_employee"`
 		);
@@ -236,6 +256,8 @@ export class AddIndexingOrganizationProjectEmployeeEntity1727271308311 implement
 			`INSERT INTO "organization_project_employee"("employeeId", "organizationProjectId", "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "isManager", "assignedAt", "roleId") SELECT "employeeId", "organizationProjectId", "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "isManager", "assignedAt", "roleId" FROM "temporary_organization_project_employee"`
 		);
 		await queryRunner.query(`DROP TABLE "temporary_organization_project_employee"`);
+
+		console.log('Step 3: Re-creating indexes...');
 		await queryRunner.query(
 			`CREATE INDEX "IDX_2ba868f42c2301075b7c141359" ON "organization_project_employee" ("organizationProjectId") `
 		);
@@ -263,6 +285,8 @@ export class AddIndexingOrganizationProjectEmployeeEntity1727271308311 implement
 		await queryRunner.query(
 			`CREATE INDEX "IDX_1c5e006185395a6193ede3456c" ON "organization_project_employee" ("roleId") `
 		);
+
+		console.log('Step 4: Dropping existing indexes...');
 		await queryRunner.query(`DROP INDEX "IDX_2ba868f42c2301075b7c141359"`);
 		await queryRunner.query(`DROP INDEX "IDX_6b5b0c3d994f59d9c800922257"`);
 		await queryRunner.query(`DROP INDEX "IDX_f3d1102a8aa6442cdfce5d57c3"`);
@@ -272,6 +296,8 @@ export class AddIndexingOrganizationProjectEmployeeEntity1727271308311 implement
 		await queryRunner.query(`DROP INDEX "IDX_509be755cdaf837c263ffaa6b6"`);
 		await queryRunner.query(`DROP INDEX "IDX_25de67f7f3f030438e3ecb1c0e"`);
 		await queryRunner.query(`DROP INDEX "IDX_1c5e006185395a6193ede3456c"`);
+
+		console.log('Step 5: Creating a temporary table with the new schema...');
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" RENAME TO "temporary_organization_project_employee"`
 		);
@@ -282,6 +308,8 @@ export class AddIndexingOrganizationProjectEmployeeEntity1727271308311 implement
 			`INSERT INTO "organization_project_employee"("employeeId", "organizationProjectId", "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "isManager", "assignedAt", "roleId") SELECT "employeeId", "organizationProjectId", "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "isManager", "assignedAt", "roleId" FROM "temporary_organization_project_employee"`
 		);
 		await queryRunner.query(`DROP TABLE "temporary_organization_project_employee"`);
+
+		console.log('Step 6: Re-creating indexes...');
 		await queryRunner.query(
 			`CREATE INDEX "IDX_2ba868f42c2301075b7c141359" ON "organization_project_employee" ("organizationProjectId") `
 		);
@@ -309,6 +337,8 @@ export class AddIndexingOrganizationProjectEmployeeEntity1727271308311 implement
 		await queryRunner.query(
 			`CREATE INDEX "IDX_1c5e006185395a6193ede3456c" ON "organization_project_employee" ("roleId") `
 		);
+
+		console.log('Step 7: Dropping existing indexes...');
 		await queryRunner.query(`DROP INDEX "IDX_2ba868f42c2301075b7c141359"`);
 		await queryRunner.query(`DROP INDEX "IDX_6b5b0c3d994f59d9c800922257"`);
 		await queryRunner.query(`DROP INDEX "IDX_f3d1102a8aa6442cdfce5d57c3"`);
@@ -318,6 +348,8 @@ export class AddIndexingOrganizationProjectEmployeeEntity1727271308311 implement
 		await queryRunner.query(`DROP INDEX "IDX_509be755cdaf837c263ffaa6b6"`);
 		await queryRunner.query(`DROP INDEX "IDX_25de67f7f3f030438e3ecb1c0e"`);
 		await queryRunner.query(`DROP INDEX "IDX_1c5e006185395a6193ede3456c"`);
+
+		console.log('Step 8: Creating a temporary table with the new schema...');
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_employee" RENAME TO "temporary_organization_project_employee"`
 		);
@@ -328,6 +360,8 @@ export class AddIndexingOrganizationProjectEmployeeEntity1727271308311 implement
 			`INSERT INTO "organization_project_employee"("employeeId", "organizationProjectId", "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "isManager", "assignedAt", "roleId") SELECT "employeeId", "organizationProjectId", "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "isManager", "assignedAt", "roleId" FROM "temporary_organization_project_employee"`
 		);
 		await queryRunner.query(`DROP TABLE "temporary_organization_project_employee"`);
+
+		console.log('Step 9: Re-creating indexes...');
 		await queryRunner.query(
 			`CREATE INDEX "IDX_2ba868f42c2301075b7c141359" ON "organization_project_employee" ("organizationProjectId") `
 		);
@@ -362,12 +396,72 @@ export class AddIndexingOrganizationProjectEmployeeEntity1727271308311 implement
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		console.log('Step 1: Dropping existing foreign key constraints...');
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` DROP FOREIGN KEY \`FK_2ba868f42c2301075b7c141359e\``
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` DROP FOREIGN KEY \`FK_6b5b0c3d994f59d9c800922257f\``
+		);
+
+		console.log('Step 2: Modifying the columns without dropping them...');
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` MODIFY \`organizationProjectId\` varchar(255) NOT NULL`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` MODIFY \`employeeId\` varchar(255) NOT NULL`
+		);
+
+		console.log('Step 3: Creating indexes for the columns...');
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_2ba868f42c2301075b7c141359\` ON \`organization_project_employee\` (\`organizationProjectId\`)`
+		);
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_6b5b0c3d994f59d9c800922257\` ON \`organization_project_employee\` (\`employeeId\`)`
+		);
+
+		console.log('Step 4: Adding the foreign key constraints back with the updated columns...');
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD CONSTRAINT \`FK_2ba868f42c2301075b7c141359e\` FOREIGN KEY (\`organizationProjectId\`) REFERENCES \`organization_project\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD CONSTRAINT \`FK_6b5b0c3d994f59d9c800922257f\` FOREIGN KEY (\`employeeId\`) REFERENCES \`employee\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+	}
 
 	/**
 	 * MySQL Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		console.log('Step 1: Dropping existing foreign key constraints...');
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` DROP FOREIGN KEY \`FK_6b5b0c3d994f59d9c800922257f\``
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` DROP FOREIGN KEY \`FK_2ba868f42c2301075b7c141359e\``
+		);
+
+		console.log('Step 2: Dropping the indexes created in the up migration...');
+		await queryRunner.query(`DROP INDEX \`IDX_6b5b0c3d994f59d9c800922257\` ON \`organization_project_employee\``);
+		await queryRunner.query(`DROP INDEX \`IDX_2ba868f42c2301075b7c141359\` ON \`organization_project_employee\``);
+
+		console.log('Step 3: Modifying the columns back to their original data types...');
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` MODIFY \`employeeId\` varchar(36) NOT NULL`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` MODIFY \`organizationProjectId\` varchar(36) NOT NULL`
+		);
+
+		console.log('Step 4: Re-adding the foreign key constraints...');
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD CONSTRAINT \`FK_6b5b0c3d994f59d9c800922257f\` FOREIGN KEY (\`employeeId\`) REFERENCES \`employee\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD CONSTRAINT \`FK_2ba868f42c2301075b7c141359e\` FOREIGN KEY (\`organizationProjectId\`) REFERENCES \`organization_project\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+	}
 }
