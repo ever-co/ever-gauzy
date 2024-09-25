@@ -3,8 +3,8 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, tap } from 'rxjs/operators';
 import { combineLatest, debounceTime, firstValueFrom, Subject } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
 import { Cell } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -53,6 +53,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	public disableButton: boolean = true;
 	public settingsSmartTable: any;
 	public viewComponentName: ComponentEnum;
+	public PermissionsEnum = PermissionsEnum;
 	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	public selectedEmployeeId: ID | null;
@@ -63,7 +64,9 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	public project$: Subject<boolean> = this.subject$;
 	private _refresh$: Subject<boolean> = new Subject();
 
-	/** */
+	/**
+	 * Represents a component property for handling the project view.
+	 */
 	private _grid: CardGridComponent;
 	@ViewChild('grid') set grid(content: CardGridComponent) {
 		if (content) {
@@ -187,9 +190,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 					action: CrudActionEnum.DELETED
 				};
 
-				this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.REMOVE_PROJECT', {
-					name
-				});
+				this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.REMOVE_PROJECT', { name });
 
 				this.cancel();
 				this._refresh$.next(true);
@@ -237,7 +238,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 				...(this.selectedEmployeeId
 					? {
 							members: {
-								id: this.selectedEmployeeId
+								employeeId: this.selectedEmployeeId
 							}
 					  }
 					: {}),
@@ -558,17 +559,17 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	}
 
 	/**
-	 * Navigate to the create project page.
+	 * Navigates to the create or edit project page based on the provided project.
+	 * If no project is provided, it navigates to the create page.
+	 *
+	 * @param project - (Optional) The project to edit. If not provided, navigates to the create page.
 	 */
-	navigateToCreateProject(): void {
-		this._router.navigate(['/pages/organization/projects', 'create']);
-	}
-
-	/**
-	 * Navigate to the edit project page for the specified project.
-	 * @param project The project to edit.
-	 */
-	navigateToEditProject(project: IOrganizationProject): void {
-		this._router.navigate([`/pages/organization/projects`, project.id, 'edit']);
+	navigateToProject(project?: IOrganizationProject): void {
+		// Define the base path for the project page
+		const basePath = '/pages/organization/projects';
+		// Construct the path based on the provided project
+		const path = project ? [basePath, project.id, 'edit'] : [basePath, 'create'];
+		// Navigate to the specified path
+		this._router.navigate(path);
 	}
 }

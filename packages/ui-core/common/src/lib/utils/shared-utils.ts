@@ -529,6 +529,7 @@ export function replaceAll(value: string, search: string, replace: string): stri
 
 /**
  * Remove duplicates from an array of objects based on a specified property.
+ *
  * @param items The array of objects to process.
  * @param property The property to check for duplicates (case-insensitive).
  * @returns A new array with duplicates removed, keeping the last occurrence.
@@ -537,4 +538,15 @@ export function removeDuplicatesByProperty<T>(items: T[], property: keyof T): T[
 	return Array.from(
 		new Map(items.map((item) => [(item[property] as unknown as string).toLowerCase(), item])).values()
 	);
+}
+
+/**
+ * Extracts the numeric value from a string.
+ *
+ * @param value The string containing both text and numbers (e.g., 'BGN 20', 'USD 45.67').
+ * @returns The numeric part of the string as a number. Returns NaN if no numeric value is found.
+ */
+export function extractNumber(value: string): number {
+	const numericPart = value.toString().match(/-?\d+(\.\d+)?/); // Matches negative, decimal numbers.
+	return numericPart ? parseFloat(numericPart[0]) : NaN; // Converts the extracted part to a number or returns NaN if not found.
 }

@@ -691,6 +691,32 @@ export function wrapSerialize<T extends object>(entity: T): T {
 }
 
 /**
+ * Converts the given entity instance to a plain object.
+ *
+ * This function creates a shallow copy of the entity, retaining its properties as a plain object,
+ * making it suitable for use in contexts where a non-class representation is required.
+ *
+ * @param entity - The entity instance to be converted to a plain object.
+ * @returns A plain object representation of the given entity instance.
+ */
+export function toPlain(entity: any): Record<string, any> {
+	return { ...entity };
+}
+
+/**
+ * Converts the given entity instance to a JSON object.
+ *
+ * This function creates a deep copy of the entity, converting it into a JSON-compatible structure,
+ * making it suitable for serialization or transferring over a network.
+ *
+ * @param entity - The entity instance to be converted to a JSON object.
+ * @returns A JSON representation of the given entity instance.
+ */
+export function toJSON(entity: any): Record<string, any> {
+	return JSON.parse(JSON.stringify(toPlain(entity)));
+}
+
+/**
  * Replace $ placeholders with ? for mysql, sqlite, and better-sqlite3
  * @param query - The SQL query with $ placeholders
  * @param dbType - The database type

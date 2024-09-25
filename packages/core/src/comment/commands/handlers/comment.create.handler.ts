@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { IComment } from '@gauzy/contracts';
 import { CommentService } from '../../comment.service';
 import { CommentCreateCommand } from '../comment.create.command';
-import { IComment } from '@gauzy/contracts';
 
 @CommandHandler(CommentCreateCommand)
 export class CommentCreateHandler implements ICommandHandler<CommentCreateCommand> {
