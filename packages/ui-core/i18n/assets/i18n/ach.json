@@ -15,6 +15,7 @@
 		"DELETE": "crwdns8:0crwdne8:0",
 		"REMOVE": "crwdns3152:0crwdne3152:0",
 		"ADD_EXISTING": "crwdns3154:0crwdne3154:0",
+		"CONVERT_TO_EMPLOYEE": "Toki ija kw'enja",
 		"OK": "crwdns10:0crwdne10:0",
 		"YES": "crwdns8012:0crwdne8012:0",
 		"NO": "crwdns8014:0crwdne8014:0",
@@ -2500,6 +2501,7 @@
 		"ADD_EXISTING_USER": "crwdns3158:0crwdne3158:0",
 		"ADD_EXISTING_ORGANIZATION": "crwdns8336:0crwdne8336:0",
 		"ADD_EXISTING_USER_TOOLTIP": "crwdns10813:0crwdne10813:0",
+		"CONVERT_USER_TO_EMPLOYEE": "Kijuko idano ija kw'enja pwod matye.",
 		"ROLE": {
 			"SUPER_ADMIN": "crwdns3448:0crwdne3448:0",
 			"ADMIN": "crwdns2317:0crwdne2317:0",

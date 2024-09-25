@@ -16,8 +16,8 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
 import {
 	ID,
-	IEditEntityByMemberInput,
 	IOrganizationProject,
+	IOrganizationProjectEditByEmployeeInput,
 	IOrganizationProjectSetting,
 	IPagination,
 	PermissionsEnum
@@ -106,10 +106,8 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT)
 	@Put('/employee')
-	async updateByEmployee(@Body() body: IEditEntityByMemberInput): Promise<boolean> {
-		return await this.commandBus.execute(
-			new OrganizationProjectEditByEmployeeCommand(body)
-		);
+	async updateByEmployee(@Body() body: IOrganizationProjectEditByEmployeeInput): Promise<boolean> {
+		return await this.commandBus.execute(new OrganizationProjectEditByEmployeeCommand(body));
 	}
 
 	/**

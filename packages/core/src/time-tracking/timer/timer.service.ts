@@ -55,7 +55,7 @@ export class TimerService {
 		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 		private readonly _employeeService: EmployeeService,
 		private readonly _commandBus: CommandBus
-	) { }
+	) {}
 
 	/**
 	 * Fetches an employee based on the provided query.
@@ -300,8 +300,8 @@ export class TimerService {
 		// Retrieve the last running log or start a new timer if none exist
 		let lastLog = await this.getLastRunningLog();
 		if (!lastLog) {
-			console.log('No running log found. Starting a new timer before stopping it.');
-			throw new NotAcceptableException('No running log found. Starting a new timer before stopping it.');
+			console.log(`No running log found. Can't stop timer because it was already stopped.`);
+			throw new NotAcceptableException(`No running log found. Can't stop timer because it was already stopped.`);
 		}
 
 		// Retrieve the employee ID and organization ID
@@ -363,11 +363,7 @@ export class TimerService {
 	 * @param tenantId The tenant ID.
 	 * @param organizationId The organization ID.
 	 */
-	private async handleConflictingTimeLogs(
-		lastLog: ITimeLog,
-		tenantId: ID,
-		organizationId: ID
-	): Promise<void> {
+	private async handleConflictingTimeLogs(lastLog: ITimeLog, tenantId: ID, organizationId: ID): Promise<void> {
 		try {
 			// Retrieve conflicting time logs
 			const conflicts = await this._commandBus.execute(
@@ -427,7 +423,7 @@ export class TimerService {
 		if (request.source === TimeLogSourceEnum.DESKTOP) {
 			// Retrieve the most recent time slot from the last log
 			const lastTimeSlot: ITimeSlot | undefined = lastLog.timeSlots?.sort((a: ITimeSlot, b: ITimeSlot) =>
-				moment(a.startedAt).isBefore(b.startedAt) ? 1 : -1
+				moment(b.startedAt).diff(a.startedAt)
 			)[0];
 
 			// Example:
@@ -440,6 +436,9 @@ export class TimerService {
 				// Retrieve the last time slot's startedAt date
 				const lastTimeSlotStartedAt = moment.utc(lastTimeSlot.startedAt);
 
+				// Retrieve the request stopped moment
+				const requestStoppedAt = moment.utc(stoppedAt);
+
 				// Retrieve the last time slot's duration
 				const duration = lastTimeSlot.duration;
 
@@ -448,9 +447,9 @@ export class TimerService {
 				// and the current time is "2024-09-24 20:10:00", the difference is 20 minutes, which is more than 10 minutes.
 
 				// Check if the last time slot was created more than 10 minutes ago
-				if (moment.utc().diff(lastTimeSlotStartedAt, 'minutes') > 10) {
+				if (requestStoppedAt.diff(lastTimeSlotStartedAt, 'minutes') > 10) {
 					// Calculate the potential stoppedAt time using the total duration
-					stoppedAt = moment.utc(lastTimeSlot.startedAt).add(duration, 'seconds').toDate();
+					stoppedAt = lastTimeSlotStartedAt.add(duration, 'seconds').toDate();
 					// Example: stoppedAt = "2024-09-24 20:00:00"
 				}
 			} else {
@@ -473,7 +472,6 @@ export class TimerService {
 		// Example log output: "Last calculated stoppedAt: 2024-09-24 20:00:00"
 		return stoppedAt;
 	}
-
 
 	/**
 	 * Toggle time tracking start/stop
@@ -503,11 +501,7 @@ export class TimerService {
 	async stopPreviousRunningTimers(employeeId: ID, organizationId: ID, tenantId: ID): Promise<void> {
 		try {
 			// Execute the ScheduleTimeLogEntriesCommand to stop all previous running timers
-			await this._commandBus.execute(new ScheduleTimeLogEntriesCommand(
-				employeeId,
-				organizationId,
-				tenantId
-			));
+			await this._commandBus.execute(new ScheduleTimeLogEntriesCommand(employeeId, organizationId, tenantId));
 		} catch (error) {
 			// Log the error or handle it appropriately
 			console.log('Failed to stop previous running timers:', error);
@@ -534,7 +528,6 @@ export class TimerService {
 		return employee;
 	}
 
-
 	/**
 	 * Get the last running log or all pending running logs for the current employee
 	 *
@@ -553,19 +546,19 @@ export class TimerService {
 			tenantId,
 			organizationId,
 			isRunning: true,
-			stoppedAt: Not(IsNull()), // Logs should have a non-null `stoppedAt`
+			stoppedAt: Not(IsNull()) // Logs should have a non-null `stoppedAt`
 		};
 
 		// Determine whether to fetch a single log or multiple logs
 		return fetchAll
 			? await this.typeOrmTimeLogRepository.find({
-				where: whereClause,
-				order: { startedAt: 'DESC', createdAt: 'DESC' }
-			})
+					where: whereClause,
+					order: { startedAt: 'DESC', createdAt: 'DESC' }
+			  })
 			: await this.typeOrmTimeLogRepository.findOne({
-				where: whereClause,
-				order: { startedAt: 'DESC', createdAt: 'DESC' }
-			});
+					where: whereClause,
+					order: { startedAt: 'DESC', createdAt: 'DESC' }
+			  });
 	}
 
 	/**
