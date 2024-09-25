@@ -223,8 +223,7 @@ export class TaskTableComponent implements OnInit, AfterViewInit {
 			...(projectId && { projectId }),
 			...(teamId && { teams: [teamId] }),
 			...(searchTerm && {
-				title: searchTerm,
-				prefix: searchTerm
+				title: searchTerm
 			}),
 			members: { id: employeeId }
 		};
