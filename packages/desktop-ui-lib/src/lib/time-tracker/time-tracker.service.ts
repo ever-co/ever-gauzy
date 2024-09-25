@@ -291,19 +291,18 @@ export class TimeTrackerService {
 
 		// Prepare the parameters
 		const params = {
-			relations: ['organizationContact', 'members.employee.user', 'tags', 'teams'],
+			relations: ['organizationContact', 'members.employee.user', 'teams'],
 			join: {
-				alias: 'organization_project',
-				leftJoin: { tags: 'organization_project.tags' }
+				alias: 'organization_project_team',
+				leftJoin: { teams: 'organization_project_team.teams' }
 			},
 			where: {
 				organizationId,
 				tenantId,
-				...(organizationTeamId && { organizationTeamId }),
-				...(employeeId && { members: { id: employeeId } })
+				...(employeeId && { members: { id: employeeId } }),
+				...(organizationContactId && { organizationContactId }),
+				...(organizationTeamId && { teams: { id: organizationTeamId } })
 			},
-			...(organizationContactId && { organizationContactId }),
-			...(organizationTeamId && { organizationTeamId }),
 			skip,
 			take
 		};
