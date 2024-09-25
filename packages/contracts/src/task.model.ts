@@ -9,7 +9,7 @@ import { IUser } from './user.model';
 import { ITaskStatus, TaskStatusEnum } from './task-status.model';
 import { ITaskPriority, TaskPriorityEnum } from './task-priority.model';
 import { ITaskSize, TaskSizeEnum } from './task-size.model';
-import { IOrganizationProjectModule } from 'organization-project-module.model';
+import { IOrganizationProjectModule } from './organization-project-module.model';
 
 export interface ITask extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationProject {
 	title: string;
