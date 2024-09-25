@@ -558,38 +558,32 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 
 				const updatedProjectsToAdd = projectsToAdd.map((project) => {
 					const existingMembers = project.members || [];
-					return {
-						id: project.id,
-						members: [...existingMembers, member]
-					};
+
+					// Verify if member already exists on project
+					const isMemberAlreadyInProject = existingMembers.some(
+						(existingMember) => existingMember.employeeId === member.employeeId
+					);
+
+					if (!isMemberAlreadyInProject) {
+						return {
+							...project,
+							members: [...existingMembers, { ...member, organizationProjectId: project.id }]
+						};
+					}
+
+					return project; // If member already assigned to project, no change needed
 				});
 
-				// Save all updated projects in parallel
-				await Promise.all(updatedProjectsToAdd.map((project) => this.create(project)));
+				// save updated projects
+				await Promise.all(updatedProjectsToAdd.map(async (project) => await this.save(project)));
 			}
 
 			// Handle removing projects
 			if (removedProjectIds.length > 0) {
-				const projectsToRemove = await this.find({
-					where: {
-						id: In(removedProjectIds),
-						organizationId
-					},
-					relations: {
-						members: true
-					}
+				await this.typeOrmOrganizationProjectEmployeeRepository.delete({
+					organizationProjectId: In(removedProjectIds),
+					employeeId: member.employeeId
 				});
-
-				const updatedProjectsToRemove = projectsToRemove.map((project) => {
-					const updatedMembers = (project.members || []).filter((e) => e.id !== member.id);
-					return {
-						id: project.id,
-						members: updatedMembers
-					};
-				});
-
-				// Save all updated projects in parallel
-				await Promise.all(updatedProjectsToRemove.map((project) => this.create(project)));
 			}
 
 			return true;
