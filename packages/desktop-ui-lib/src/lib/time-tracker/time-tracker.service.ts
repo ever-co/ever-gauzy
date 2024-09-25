@@ -300,7 +300,26 @@ export class TimeTrackerService {
 				);
 			this._clientCacheService.setValue(clients$, params);
 		}
-		return firstValueFrom(clients$);
+		return firstValueFrom(clients$) as Promise<IOrganizationContact[]>;
+	}
+
+	async getClientWithPagination(values) {
+		const params = {
+			organizationId: values.organizationId
+		};
+		let clients$ = this._clientCacheService.getValue(params);
+		if (!clients$) {
+			clients$ = this.http
+				.get<IPagination<IOrganizationContact>>(`${API_PREFIX}/organization-contact/pagination`, {
+					params
+				})
+				.pipe(
+					map((response: any) => response),
+					shareReplay(1)
+				);
+			this._clientCacheService.setValue(clients$, params);
+		}
+		return firstValueFrom(clients$) as Promise<IPagination<IOrganizationContact>>;
 	}
 
 	getUserDetail() {

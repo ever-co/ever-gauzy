@@ -31,6 +31,7 @@ export class ClientSelectorComponent implements OnInit {
 	) {}
 
 	public ngOnInit(): void {
+		this.clientSelectorService.onScroll$.pipe(untilDestroyed(this)).subscribe();
 		this.clientSelectorService
 			.getAll$()
 			.pipe(

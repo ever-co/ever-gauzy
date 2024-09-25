@@ -61,9 +61,21 @@ export class ClientSelectorService extends SelectorService<IOrganizationContact>
 				}
 			} = this.store;
 			const request = {
-				organizationId,
-				employeeId,
-				tenantId
+				relations: ['projects.members', 'members.user', 'tags', 'contact'],
+				join: {
+					alias: 'organization_contact',
+					leftJoin: {
+						members: 'organization_contact.members'
+					}
+				},
+				where: {
+					organizationId,
+					tenantId,
+					contactType: ContactType.CLIENT,
+					members: [employeeId]
+				},
+				take: this.selectorQuery.limit,
+				skip: this.selectorQuery.page
 			};
 			const data = await this.timeTrackerService.getClient(request);
 			this.selectorStore.updateData(data);
