@@ -39,6 +39,7 @@ export class TeamSelectorComponent implements OnInit {
 		this.teamSelectorQuery.selected$
 			.pipe(
 				filter(Boolean),
+				tap(() => this.taskSelectorService.resetPage()),
 				concatMap(() => this.projectSelectorService.load()),
 				concatMap(() => this.taskSelectorService.load()),
 				untilDestroyed(this)

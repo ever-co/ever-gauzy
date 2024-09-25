@@ -4,7 +4,6 @@ import { ITask } from 'packages/contracts/dist';
 import { filter, Observable, tap } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
-import { NoteService } from '../note/+state/note.service';
 import { TaskSelectorQuery } from './+state/task-selector.query';
 import { TaskSelectorService } from './+state/task-selector.service';
 import { TaskSelectorStore } from './+state/task-selector.store';
@@ -22,8 +21,7 @@ export class TaskSelectorComponent implements OnInit {
 		public readonly taskSelectorStore: TaskSelectorStore,
 		public readonly taskSelectorQuery: TaskSelectorQuery,
 		private readonly timeTrackerQuery: TimeTrackerQuery,
-		private readonly taskSelectorService: TaskSelectorService,
-		private readonly noteService: NoteService
+		private readonly taskSelectorService: TaskSelectorService
 	) {}
 
 	public ngOnInit() {
@@ -35,6 +33,7 @@ export class TaskSelectorComponent implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.taskSelectorService.onScroll$.pipe(untilDestroyed(this)).subscribe();
 	}
 
 	public refresh(): void {
@@ -71,5 +70,9 @@ export class TaskSelectorComponent implements OnInit {
 
 	public get hasPermission$(): Observable<boolean> {
 		return this.taskSelectorService.hasPermission$;
+	}
+
+	public onScrollToEnd(): void {
+		this.taskSelectorService.onScrollToEnd();
 	}
 }

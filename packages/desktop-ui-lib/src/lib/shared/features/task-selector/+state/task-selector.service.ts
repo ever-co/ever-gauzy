@@ -79,18 +79,20 @@ export class TaskSelectorService extends SelectorService<ITask> {
 				tenantId,
 				projectId: this.projectSelectorQuery.selectedId,
 				organizationTeamId: this.teamSelectorQuery.selectedId,
+				take: this.taskSelectorQuery.limit,
+				skip: this.taskSelectorQuery.page,
 				employeeId
 			};
-			const tasks = await this.timeTrackerService.getTasks(request);
+			const { total, items: tasks } = await this.timeTrackerService.getTasksWithPagination(request);
 			if (tasks.length) {
 				const statistics = await this.timeTrackerService.getTasksStatistics({
 					...request,
 					taskIds: tasks.map((task) => task.id)
 				});
-				const merged = this.merge(tasks, statistics);
-				this.taskSelectorStore.updateData(merged);
+				const data = this.merge(tasks, statistics);
+				this.taskSelectorStore.updateInfiniteList({ data, total });
 			} else {
-				this.taskSelectorStore.updateData([]);
+				this.taskSelectorStore.update({ data: [], total: 0 });
 			}
 			this.taskSelectorStore.setError(null);
 		} catch (error) {

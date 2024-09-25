@@ -9,6 +9,7 @@ import {
 	IOrganizationTeam,
 	IOrganizationTeamEmployee,
 	IPagination,
+	ITask,
 	ITaskPriority,
 	ITaskSize,
 	ITaskSizeFindInput,
@@ -120,7 +121,71 @@ export class TimeTrackerService {
 				);
 			this._taskCacheService.setValue(tasks$, request);
 		}
-		return firstValueFrom(tasks$);
+		return firstValueFrom(tasks$) as Promise<ITask[]>;
+	}
+
+	async getTasksWithPagination(values: {
+		organizationId: string;
+		tenantId: string;
+		projectId?: string;
+		organizationTeamId?: string;
+		employeeId: string;
+		take: number;
+		skip: number;
+	}): Promise<IPagination<ITask>> {
+		const { organizationId, tenantId, projectId, organizationTeamId, employeeId, take, skip } = values;
+
+		const request = {
+			where: {
+				organizationId,
+				tenantId,
+				...(projectId && { projectId }),
+				...(organizationTeamId && { teams: [organizationTeamId] }),
+				members: { id: employeeId }
+			},
+			relations: [
+				'members',
+				'members.user',
+				'project',
+				'tags',
+				'teams',
+				'teams.members',
+				'teams.members.employee',
+				'teams.members.employee.user',
+				'creator',
+				'organizationSprint',
+				'taskStatus',
+				'taskSize',
+				'taskPriority'
+			],
+			join: {
+				alias: 'task',
+				leftJoin: {
+					members: 'task.members',
+					user: 'members.user'
+				}
+			},
+			order: { updatedAt: 'DESC' },
+			take,
+			skip
+		};
+
+		let tasks$ = this._taskCacheService.getValue(request);
+
+		if (!tasks$) {
+			tasks$ = this.http
+				.get<IPagination<ITask>>(`${API_PREFIX}/tasks/pagination`, {
+					params: toParams(request)
+				})
+				.pipe(
+					map((response: any) => response),
+					shareReplay(1)
+				);
+
+			this._taskCacheService.setValue(tasks$, request);
+		}
+
+		return firstValueFrom(tasks$) as Promise<IPagination<ITask>>;
 	}
 
 	/**
@@ -161,7 +226,7 @@ export class TimeTrackerService {
 		}
 
 		// Return the tasks statistics
-		return await firstValueFrom(tasksStatistics$);
+		return firstValueFrom(tasksStatistics$) as Promise<ITasksStatistics[]>;
 	}
 
 	async getEmployees(values) {
