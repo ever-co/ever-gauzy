@@ -4,6 +4,7 @@ export * from './tenant-organization-base-entity.subscriber';
 import { MultiORMEnum, getORMType } from '../../utils';
 import {
 	ActivitySubscriber,
+	ActivityLogSubscriber,
 	CandidateSubscriber,
 	CustomSmtpSubscriber,
 	EmailResetSubscriber,
@@ -53,6 +54,7 @@ export const coreSubscribers = [
 	// Add the subscriber only if the ORM type is MikroORM
 	...(ormType === MultiORMEnum.MikroORM ? [TenantOrganizationBaseEntityEventSubscriber] : []),
 	ActivitySubscriber,
+	ActivityLogSubscriber,
 	CandidateSubscriber,
 	CustomSmtpSubscriber,
 	EmailResetSubscriber,

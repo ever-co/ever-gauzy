@@ -1,6 +1,10 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { EventBus } from '@nestjs/cqrs';
 import { In, IsNull, SelectQueryBuilder } from 'typeorm';
 import {
+	ActionTypeEnum,
+	ActivityLogEntityEnum,
+	ActorTypeEnum,
 	FavoriteEntityEnum,
 	ID,
 	IEmployee,
@@ -16,10 +20,12 @@ import {
 } from '@gauzy/contracts';
 import { getConfig } from '@gauzy/config';
 import { CustomEmbeddedFieldConfig, isNotEmpty } from '@gauzy/common';
-import { Employee, OrganizationProjectEmployee, Role } from '../core/entities/internal';
-import { FavoriteService } from '../core/decorators';
 import { PaginationParams, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
+import { Employee, OrganizationProjectEmployee, Role } from '../core/entities/internal';
+import { FavoriteService } from '../core/decorators';
+import { ActivityLogEvent } from '../activity-log/events';
+import { generateActivityLogDescription } from '../activity-log/activity-log.helper';
 import { RoleService } from '../role/role.service';
 import { OrganizationProject } from './organization-project.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -39,8 +45,9 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		readonly mikroOrmOrganizationProjectRepository: MikroOrmOrganizationProjectRepository,
 		readonly typeOrmOrganizationProjectEmployeeRepository: TypeOrmOrganizationProjectEmployeeRepository,
 		readonly mikroOrmOrganizationProjectEmployeeRepository: MikroOrmOrganizationProjectEmployeeRepository,
-		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
-		private readonly roleService: RoleService
+		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+		private readonly _roleService: RoleService,
+		private readonly _eventBus: EventBus
 	) {
 		super(typeOrmOrganizationProjectRepository, mikroOrmOrganizationProjectRepository);
 	}
@@ -94,7 +101,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			// If the employee creates the project, default add as a manager
 			try {
 				// Check if the current role is EMPLOYEE
-				await this.roleService.findOneByIdString(currentRoleId, {
+				await this._roleService.findOneByIdString(currentRoleId, {
 					where: { name: RolesEnum.EMPLOYEE }
 				});
 
@@ -109,7 +116,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			const employees = await this.retrieveEmployees(memberIds, managerIds, organizationId, tenantId);
 
 			// Find the manager role
-			const managerRole = await this.roleService.findOneByWhereOptions({ name: RolesEnum.MANAGER });
+			const managerRole = await this._roleService.findOneByWhereOptions({ name: RolesEnum.MANAGER });
 
 			// Create a Set for faster membership checks
 			const managerIdsSet = new Set(managerIds);
@@ -143,14 +150,37 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				});
 			});
 
-			// Create the organization project with the prepared members
-			return await super.create({
+			// Create the organization team with the prepared members
+			const project = await super.create({
 				...entity,
 				members: projectMembers,
 				tags,
 				organizationId,
 				tenantId
 			});
+
+			// Generate the activity log description
+			const description = generateActivityLogDescription(
+				ActionTypeEnum.Created,
+				ActivityLogEntityEnum.OrganizationProject,
+				project.name
+			);
+
+			// Emit an event to log the activity
+			this._eventBus.publish(
+				new ActivityLogEvent({
+					entity: ActivityLogEntityEnum.OrganizationProject,
+					entityId: project.id,
+					action: ActionTypeEnum.Created,
+					actorType: ActorTypeEnum.User,
+					description,
+					data: project,
+					organizationId,
+					tenantId
+				})
+			);
+
+			return project;
 		} catch (error) {
 			throw new BadRequestException(`Failed to create project: ${error}`);
 		}
@@ -203,7 +233,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			const memberIds = members.map((member) => member.id);
 			if (isNotEmpty(memberIds) || isNotEmpty(managerIds)) {
 				// Find the manager role
-				const role = await this.roleService.findOneByWhereOptions({
+				const role = await this._roleService.findOneByWhereOptions({
 					name: RolesEnum.MANAGER
 				});
 
