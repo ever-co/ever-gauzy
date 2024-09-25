@@ -7,6 +7,7 @@ import {
 	IOrganizationGithubRepository,
 	IOrganizationProject,
 	IOrganizationProjectCreateInput,
+	IOrganizationProjectEditByEmployeeInput,
 	IOrganizationProjectsFindInput,
 	IOrganizationProjectUpdateInput,
 	IPagination,
@@ -105,12 +106,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			} catch (error) {}
 
 			// Retrieves a collection of employees based on specified criteria.
-			const employees = await this.retrieveEmployees(
-				memberIds,
-				managerIds,
-				organizationId,
-				tenantId
-			);
+			const employees = await this.retrieveEmployees(memberIds, managerIds, organizationId, tenantId);
 
 			// Find the manager role
 			const managerRole = await this.roleService.findOneByWhereOptions({ name: RolesEnum.MANAGER });
@@ -140,11 +136,14 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 					tenantId,
 					isManager,
 					role: isManager ? managerRole : null,
-					assignedAt: isManager && !existingManagersMap.has(employeeId) ? new Date() : existingManagersMap.get(employeeId) || null
+					assignedAt:
+						isManager && !existingManagersMap.has(employeeId)
+							? new Date()
+							: existingManagersMap.get(employeeId) || null
 				});
 			});
 
-			// Create the organization team with the prepared members
+			// Create the organization project with the prepared members
 			return await super.create({
 				...entity,
 				members: projectMembers,
@@ -156,7 +155,6 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			throw new BadRequestException(`Failed to create project: ${error}`);
 		}
 	}
-
 
 	/**
 	 * Update an organization project.
@@ -249,7 +247,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	/**
 	 * Update organization project by managing its members and their roles.
 	 *
-	 * @param organizationTeamId - ID of the organization project
+	 * @param organizationProjectId - ID of the organization project
 	 * @param organizationId - ID of the organization
 	 * @param employees - Array of employees to be assigned to the project
 	 * @param role - The role to assign to managers in the project
@@ -268,7 +266,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		const tenantId = RequestContext.currentTenantId();
 		const membersToUpdate = [...managerIds, ...memberIds];
 
-		// Fetch existing team members with their roles
+		// Fetch existing project members with their roles
 		const projectMembers = await this.typeOrmOrganizationProjectEmployeeRepository.find({
 			where: { tenantId, organizationId, organizationProjectId },
 			relations: { role: true }
@@ -281,7 +279,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		const removedMembers = projectMembers.filter((member) => !membersToUpdate.includes(member.employeeId));
 		const updatedMembers = projectMembers.filter((member) => membersToUpdate.includes(member.employeeId));
 
-		// 1. Remove members who are no longer in the team
+		// 1. Remove members who are no longer assigned to project
 		if (removedMembers.length > 0) {
 			const removedMemberIds = removedMembers.map((member) => member.id);
 			await this.deleteMemberByIds(removedMemberIds);
@@ -302,18 +300,19 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		const newMembers = employees.filter((employee) => !existingMemberMap.has(employee.id));
 
 		if (newMembers.length > 0) {
-			const newTeamMembers = newMembers.map(
+			const newProjectMembers = newMembers.map(
 				(employee) =>
 					new OrganizationProjectEmployee({
 						organizationProjectId,
 						employeeId: employee.id,
 						tenantId,
 						organizationId,
+						isManager: managerIds.includes(employee.id),
 						roleId: managerIds.includes(employee.id) ? role.id : null
 					})
 			);
 
-			await this.typeOrmRepository.save(newTeamMembers);
+			await this.typeOrmRepository.save(newProjectMembers);
 		}
 	}
 
@@ -329,7 +328,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		const { organizationId, organizationContactId, organizationTeamId } = input;
 
 		// Create a query to fetch organization projects
-		const query = this.typeOrmRepository.createQueryBuilder(this.tableName)
+		const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 		query.setFindOptions({
 			select: {
 				id: true,
@@ -342,9 +341,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				taskListType: true
 			}
 		});
-		query
-			.innerJoin(`${query.alias}.members`, 'project_members')
-			.leftJoin(`${query.alias}.teams`, 'project_team');
+		query.innerJoin(`${query.alias}.members`, 'project_members').leftJoin(`${query.alias}.teams`, 'project_team');
 		query
 			.where(`project_members.employeeId = :employeeId`, { employeeId })
 			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId })
@@ -541,5 +538,58 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		// Execute the query and return the paginated result
 		const [items, total] = await query.getManyAndCount();
 		return { items, total };
+	}
+
+	async updateByEmployee(input: IOrganizationProjectEditByEmployeeInput) {
+		try {
+			const { organizationId, addedProjectIds = [], removedProjectIds = [], member } = input;
+
+			// Handle adding projects
+			if (addedProjectIds.length > 0) {
+				const projectsToAdd = await this.find({
+					where: {
+						id: In(addedProjectIds),
+						organizationId
+					},
+					relations: {
+						members: true
+					}
+				});
+
+				const updatedProjectsToAdd = projectsToAdd.map((project) => {
+					const existingMembers = project.members || [];
+
+					// Verify if member already exists on project
+					const isMemberAlreadyInProject = existingMembers.some(
+						(existingMember) => existingMember.employeeId === member.employeeId
+					);
+
+					if (!isMemberAlreadyInProject) {
+						return {
+							...project,
+							members: [...existingMembers, { ...member, organizationProjectId: project.id }]
+						};
+					}
+
+					return project; // If member already assigned to project, no change needed
+				});
+
+				// save updated projects
+				await Promise.all(updatedProjectsToAdd.map(async (project) => await this.save(project)));
+			}
+
+			// Handle removing projects
+			if (removedProjectIds.length > 0) {
+				await this.typeOrmOrganizationProjectEmployeeRepository.delete({
+					organizationProjectId: In(removedProjectIds),
+					employeeId: member.employeeId
+				});
+			}
+
+			return true;
+		} catch (error) {
+			console.error('Error while updating project by member:', error);
+			throw new BadRequestException(error);
+		}
 	}
 }

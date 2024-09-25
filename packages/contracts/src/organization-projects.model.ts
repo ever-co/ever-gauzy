@@ -117,3 +117,9 @@ export enum OrganizationProjectBudgetTypeEnum {
 	HOURS = 'hours',
 	COST = 'cost'
 }
+
+export interface IOrganizationProjectEditByEmployeeInput extends IBasePerTenantAndOrganizationEntityModel {
+	addedProjectIds?: ID[];
+	removedProjectIds?: ID[];
+	member: IOrganizationProjectEmployee;
+}
