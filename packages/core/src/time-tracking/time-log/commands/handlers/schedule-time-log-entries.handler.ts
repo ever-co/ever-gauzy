@@ -175,7 +175,7 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 
 		// Retrieve the most recent time slot from the last log
 		const lastTimeSlot: ITimeSlot | undefined = timeSlots.sort((a: ITimeSlot, b: ITimeSlot) =>
-			moment(a.startedAt).isBefore(b.startedAt) ? 1 : -1
+			moment(b.startedAt).diff(a.startedAt)
 		)[0];
 
 		// Example:
@@ -190,17 +190,20 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 			// Retrieve the last time slot's duration
 			const duration = lastTimeSlot.duration;
 
+			// Retrieve the request stopped moment
+			const requestStoppedAt = moment.utc(stoppedAt);
+
 			// Example:
 			// If lastTimeSlot.startedAt = "2024-09-24 10:00:00" and duration = 300 (i.e., 5 minutes)
 			// then lastTimeSlotStartedAt would be "2024-09-24 10:00:00"
 			// and the stoppedAt time will be calculated as "2024-09-24 10:05:00".
 
 			// Check if the last time slot was created more than 10 minutes ago
-			if (moment.utc().diff(lastTimeSlotStartedAt, 'minutes') > 10) {
+			if (requestStoppedAt.diff(lastTimeSlotStartedAt, 'minutes') > 10) {
 				// Calculate the potential stoppedAt time using the total duration
 				// Example: If the last time slot started at "2024-09-24 10:00:00" and ran for 300 seconds (5 minutes),
 				// then the calculated stoppedAt time would be "2024-09-24 10:05:00".
-				stoppedAt = moment.utc(lastTimeSlot.startedAt).add(duration, 'seconds').toDate();
+				stoppedAt = lastTimeSlotStartedAt.add(duration, 'seconds').toDate();
 			}
 		}
 
