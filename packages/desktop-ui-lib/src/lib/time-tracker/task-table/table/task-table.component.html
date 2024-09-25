@@ -11,14 +11,16 @@
 		<div class="row grow">
 			<div class="col-12 custom-table">
 				<div class="table-scroll-container grow">
-					<angular2-smart-table
-						#smartTable
-						(userRowSelect)="handleRowSelection($event)"
-						[settings]="smartTableSettings"
-						[source]="smartTableSource"
-						style="cursor: pointer"
-					>
-					</angular2-smart-table>
+					<div class="smart-table" [nbSpinner]="loading$ | async" nbSpinnerSize="small">
+						<angular2-smart-table
+							#smartTable
+							(userRowSelect)="handleRowSelection($event)"
+							[settings]="smartTableSettings"
+							[source]="smartTableSource"
+							style="cursor: pointer"
+						>
+						</angular2-smart-table>
+					</div>
 				</div>
 				<div class="pagination-container">
 					<ga-pagination [source]="smartTableSource"></ga-pagination>

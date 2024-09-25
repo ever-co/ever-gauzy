@@ -3,11 +3,19 @@
 	<input
 		#search
 		[value]="searchTerm$ | async"
-		(keydown.enter)="onSearch(search?.value)"
 		[disabled]="disabled$ | async"
 		[placeholder]="'TIMER_TRACKER.SEARCH' | translate"
 		fullWidth
 		nbInput
 		type="text"
 	/>
+	<!-- Spinner: Conditionally shown when loading -->
+	<nb-icon
+		*ngIf="loading$ | async"
+		icon="loader-outline"
+		nbSuffix
+		[nbSpinner]="true"
+		nbSpinnerStatus="primary"
+		nbSpinnerSize="small"
+	></nb-icon>
 </nb-form-field>

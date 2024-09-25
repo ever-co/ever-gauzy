@@ -12,6 +12,11 @@ nb-card {
 		flex-direction: column;
 		gap: 1rem;
 		overflow: unset;
+
+		.smart-table {
+			border-radius: var(--border-radius);
+			height: 100%;
+		}
 	}
 }
 

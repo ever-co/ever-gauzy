@@ -6,6 +6,7 @@ import {
 	NbFormFieldModule,
 	NbIconModule,
 	NbInputModule,
+	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
@@ -43,7 +44,8 @@ import { TaskTableComponent } from './table/task-table.component';
 		ProjectSelectorModule,
 		TeamSelectorModule,
 		LanguageModule.forChild(),
-		Angular2SmartTableModule
+		Angular2SmartTableModule,
+		NbSpinnerModule
 	],
 	providers: [
 		ActionButtonStore,
