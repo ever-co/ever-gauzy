@@ -10,7 +10,8 @@ import {
 	IActivity,
 	IScreenshot,
 	IEmployee,
-	ITimeLog
+	ITimeLog,
+	ID
 } from '@gauzy/contracts';
 import {
 	Activity,
@@ -60,7 +61,9 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	@MultiORMColumn()
 	startedAt: Date;
 
-	/** Additional virtual columns */
+	/**
+	 * Additional virtual columns
+	 */
 	@VirtualMultiOrmColumn()
 	stoppedAt?: Date;
 
@@ -72,16 +75,17 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 
 	@VirtualMultiOrmColumn()
 	mousePercentage?: number;
+
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
-
 	/**
 	 * Employee
 	 */
 	@MultiORMManyToOne(() => Employee, (it) => it.timeSlots, {
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	employee?: IEmployee;
@@ -92,7 +96,7 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	@RelationId((it: TimeSlot) => it.employee)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	employeeId: IEmployee['id'];
+	employeeId: ID;
 
 	/*
 	|--------------------------------------------------------------------------
