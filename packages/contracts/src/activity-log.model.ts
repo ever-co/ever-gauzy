@@ -1,6 +1,9 @@
 import { ActorTypeEnum, IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IUser } from './user.model';
 
+// Define a type for JSON data
+export type JsonData = Record<string, any> | string;
+
 /**
  * Interface representing an activity log entry.
  */
@@ -17,7 +20,7 @@ export interface IActivityLog extends IBasePerTenantAndOrganizationEntityModel {
 	updatedEntities?: IActivityLogUpdatedValues[]; // Stores updated IDs, or other values for related entities. Eg : {members: ['member_1_ID', 'member_2_ID']},
 	creator?: IUser;
 	creatorId?: ID;
-	data?: Record<string, any>;
+	data?: JsonData;
 }
 
 export interface IActivityLogUpdatedValues {

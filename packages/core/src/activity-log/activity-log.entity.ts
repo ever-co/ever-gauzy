@@ -3,7 +3,15 @@ import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
 import { IsArray, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { isMySQL, isPostgres } from '@gauzy/config';
-import { ActivityLogEntityEnum, ActionTypeEnum, ActorTypeEnum, IActivityLog, ID, IUser } from '@gauzy/contracts';
+import {
+	ActivityLogEntityEnum,
+	ActionTypeEnum,
+	ActorTypeEnum,
+	IActivityLog,
+	ID,
+	IUser,
+	JsonData
+} from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
 import { MikroOrmActivityLogRepository } from './repository/mikro-orm-activity-log.repository';
@@ -80,7 +88,7 @@ export class ActivityLog extends TenantOrganizationBaseEntity implements IActivi
 	@IsOptional()
 	@IsArray()
 	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
-	data?: Record<string, any>;
+	data?: JsonData;
 
 	/*
 	|--------------------------------------------------------------------------
