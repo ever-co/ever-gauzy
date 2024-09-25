@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { Subject } from 'rxjs';
 
 @Component({
 	selector: 'gauzy-select',
@@ -20,7 +21,7 @@ export class SelectComponent {
 	private _isLoading: boolean = false;
 	private _addTagText: string = null;
 	private _clearable: boolean = true;
-	private _typeahead!: string;
+	private _typeahead!: Subject<string>;
 	private _addTag!: Function;
 
 	@Output() clear = new EventEmitter<void>();
@@ -155,10 +156,10 @@ export class SelectComponent {
 
 	// Getter and Setter for selectedItem
 	@Input()
-	public get typeahead(): any {
+	public get typeahead(): Subject<string> {
 		return this._typeahead;
 	}
-	public set typeahead(value: any) {
+	public set typeahead(value: Subject<string>) {
 		this._typeahead = value;
 	}
 	// Handle clear action
