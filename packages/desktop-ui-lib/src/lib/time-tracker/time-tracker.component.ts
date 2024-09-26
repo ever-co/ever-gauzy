@@ -1541,7 +1541,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						if (timeSlotId && screenshots?.length > 0) {
 							await this.uploadScreenshots(activities, timeSlotId, screenshots);
 							this._loggerService.info('Capturing Screen and Sending Activities Done ✔️');
-						} else {
 						}
 					}, 1000);
 				}
