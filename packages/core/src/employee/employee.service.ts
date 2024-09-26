@@ -174,15 +174,11 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 */
 	async findOneByUserId(userId: ID, options?: FindOneOptions<Employee>): Promise<IEmployee | null> {
 		try {
-			// Retrieve the tenant ID from the current context
-			const tenantId = RequestContext.currentTenantId();
-
 			// Define the base where clause
 			const whereClause = {
 				userId,
-				...(tenantId && { tenantId }), // Include tenantId if available
 				isActive: true,
-				isArchived: false,
+				isArchived: false
 			};
 
 			// Merge the existing where conditions in options, if any
@@ -196,11 +192,13 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<Employee>(queryOptions as FindManyOptions);
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<Employee>(
+						queryOptions as FindManyOptions
+					);
 					const item = await this.mikroOrmRepository.findOne(where, mikroOptions);
 					return this.serialize(item as Employee);
 				case MultiORMEnum.TypeORM:
-					return this.typeOrmRepository.findOne(queryOptions);
+					return await this.typeOrmRepository.findOne(queryOptions);
 				default:
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
@@ -506,10 +504,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * @param params - Contains organizationId and possibly other per-tenant information.
 	 * @returns - UpdateResult or DeleteResult depending on the ORM type.
 	 */
-	async softRemovedById(
-		employeeId: ID,
-		params: IBasePerTenantAndOrganizationEntityModel
-	): Promise<Employee> {
+	async softRemovedById(employeeId: ID, params: IBasePerTenantAndOrganizationEntityModel): Promise<Employee> {
 		try {
 			// Obtain the organization ID from the provided parameters
 			const organizationId = params.organizationId;
@@ -539,10 +534,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * @returns The restored Employee entity.
 	 * @throws BadRequestException if the employee cannot be restored or if an error occurs.
 	 */
-	async softRecoverById(
-		employeeId: ID,
-		params: IBasePerTenantAndOrganizationEntityModel
-	): Promise<Employee> {
+	async softRecoverById(employeeId: ID, params: IBasePerTenantAndOrganizationEntityModel): Promise<Employee> {
 		try {
 			// Obtain the organization ID from the provided parameters
 			const organizationId = params.organizationId;

@@ -310,23 +310,24 @@ export function freshTimestamp(): Date {
  *
  * @param startedAt The start date of the range.
  * @param stoppedAt The end date of the range.
- * @throws BadRequestException if the dates are invalid or if the stoppedAt date is before the startedAt date.
+ * @throws BadRequestException if the stoppedAt date is before the startedAt date.
  */
 export function validateDateRange(startedAt: Date, stoppedAt: Date): void {
 	const start = moment(startedAt);
 	const end = moment(stoppedAt);
 
-	console.log('------ Stopped Timer ------', start.toDate(), end.toDate());
+	console.log('------ Timer Date Range ------', start.toDate(), end.toDate());
 
+	// Validate that both dates are valid
 	if (!start.isValid() || !end.isValid()) {
 		throw new BadRequestException('Started and Stopped date must be valid dates.');
 	}
 
+	// Only throw error if stoppedAt is smaller than startedAt
 	if (end.isBefore(start)) {
-		throw new BadRequestException('Stopped date must be greater than the started date.');
+		throw new BadRequestException('Stopped date must be greater than or equal to the started date.');
 	}
 }
-
 
 /**
  * Function that returns intersection of 2 arrays
@@ -469,8 +470,8 @@ export const flatten = (input: any): any => {
 					const newKey = Array.isArray(value)
 						? key
 						: nestedKeys.length > 0
-							? `${key}.${nestedKeys.join('.')}`
-							: key;
+						? `${key}.${nestedKeys.join('.')}`
+						: key;
 					return acc.concat(newKey);
 				}
 			}, []) || []
