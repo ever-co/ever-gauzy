@@ -28,35 +28,37 @@ import { TranslateModule } from '@ngx-translate/core';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { TaskRenderModule } from '../time-tracker/task-render';
 import { TagService } from '../services';
+import { SelectModule } from "../shared/components/ui/select/select.module";
 
 @NgModule({
 	declarations: [TasksComponent],
 	imports: [
-		CommonModule,
-		NbLayoutModule,
-		NbSidebarModule,
-		NbMenuModule.forRoot(),
-		NbCardModule,
-		NbIconModule,
-		NbListModule,
-		NbSelectModule,
-		FormsModule,
-		NbToggleModule,
-		NbInputModule,
-		NbButtonModule,
-		NbAlertModule,
-		NbProgressBarModule,
-		NbTabsetModule,
-		NbAccordionModule,
-		NbDatepickerModule,
-		NgSelectModule,
-		ReactiveFormsModule,
-		NbBadgeModule,
-		DesktopDirectiveModule,
-		TranslateModule,
-		CKEditorModule,
-		TaskRenderModule
-	],
+    CommonModule,
+    NbLayoutModule,
+    NbSidebarModule,
+    NbMenuModule.forRoot(),
+    NbCardModule,
+    NbIconModule,
+    NbListModule,
+    NbSelectModule,
+    FormsModule,
+    NbToggleModule,
+    NbInputModule,
+    NbButtonModule,
+    NbAlertModule,
+    NbProgressBarModule,
+    NbTabsetModule,
+    NbAccordionModule,
+    NbDatepickerModule,
+    NgSelectModule,
+    ReactiveFormsModule,
+    NbBadgeModule,
+    DesktopDirectiveModule,
+    TranslateModule,
+    CKEditorModule,
+    TaskRenderModule,
+    SelectModule
+],
 	providers: [NbToastrService, TimeTrackerService, TagService],
 	exports: [TasksComponent]
 })

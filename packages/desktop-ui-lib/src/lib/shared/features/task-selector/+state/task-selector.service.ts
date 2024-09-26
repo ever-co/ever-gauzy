@@ -35,6 +35,7 @@ export class TaskSelectorService extends SelectorService<ITask> {
 		if (!title) {
 			return;
 		}
+		this.taskSelectorStore.setLoading(true);
 		const { tenantId, organizationId, user, statuses } = this.store;
 		const taskStatus = statuses.find((status) => status.isInProgress);
 		const data = {
@@ -59,8 +60,12 @@ export class TaskSelectorService extends SelectorService<ITask> {
 			});
 			this.taskSelectorStore.appendData(task);
 			this.toastrNotifier.success(this.translateService.instant('TIMER_TRACKER.TOASTR.TASK_ADDED'));
+			this.taskSelectorStore.setError(null);
 		} catch (error) {
 			console.error('ERROR', error);
+			this.taskSelectorStore.setError(error);
+		} finally {
+			this.taskSelectorStore.setLoading(false);
 		}
 	}
 

@@ -1,13 +1,21 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, forwardRef, Input, Output } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
 
 @Component({
 	selector: 'gauzy-select',
 	templateUrl: './select.component.html',
 	styleUrls: ['./select.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => SelectComponent),
+			multi: true
+		}
+	]
 })
-export class SelectComponent {
+export class SelectComponent implements ControlValueAccessor {
 	private _selectedItem: string = null;
 	private _items: any[] = [];
 	private _bindLabel: string = 'id';
@@ -29,6 +37,9 @@ export class SelectComponent {
 	@Output() modelChange = new EventEmitter<any>();
 	@Output() scrollToEnd = new EventEmitter<any>();
 
+	onChange: (value: any) => void = () => {};
+	onTouched: () => void = () => {};
+
 	// Getter and Setter for searchTextPlaceholder
 	@Input()
 	public get typeToSearchText(): string {
@@ -45,6 +56,7 @@ export class SelectComponent {
 	}
 	public set selectedItem(value: any) {
 		this._selectedItem = value;
+		this.onTouched();
 	}
 
 	// Getter and Setter for items
@@ -175,14 +187,34 @@ export class SelectComponent {
 	// Handle clear action
 	public onClear() {
 		this.clear.emit();
+		this.onChange(null);
 	}
 
 	// Emit model change event
 	public onModelChange(event: any) {
 		this.modelChange.emit(event);
+		this.onChange(event);
 	}
 
 	public onScrollToEnd() {
 		this.scrollToEnd.emit();
+	}
+
+	// ControlValueAccessor methods
+	writeValue(value: any): void {
+		this.selectedItem = value;
+		this.onChange(value);
+	}
+
+	registerOnChange(fn: any): void {
+		this.onChange = fn;
+	}
+
+	registerOnTouched(fn: any): void {
+		this.onTouched = fn;
+	}
+
+	setDisabledState(isDisabled: boolean): void {
+		this._disabled = isDisabled;
 	}
 }

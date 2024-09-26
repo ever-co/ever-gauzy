@@ -33,6 +33,7 @@ export class ClientSelectorService extends SelectorService<IOrganizationContact>
 	/* Creating a new contact for the organization. */
 	public async addContact(name: IOrganizationContact['name']): Promise<void> {
 		try {
+			this.selectorStore.setLoading(true);
 			const { tenantId, organizationId, user } = this.store;
 			const member: any = { ...user.employee };
 			const payload = {
@@ -45,8 +46,12 @@ export class ClientSelectorService extends SelectorService<IOrganizationContact>
 			const contact = await this.timeTrackerService.createNewContact(payload, user);
 			this.selectorStore.appendData(contact);
 			this.toastrNotifier.success(this.translateService.instant('TIMER_TRACKER.TOASTR.CLIENT_ADDED'));
+			this.selectorStore.setError(null);
 		} catch (error) {
 			console.error('ERROR', error);
+			this.selectorStore.setError(error);
+		} finally {
+			this.selectorStore.setLoading(false);
 		}
 	}
 
