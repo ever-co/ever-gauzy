@@ -1523,7 +1523,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 				const activities = await this.electronService.ipcRenderer.invoke('COLLECT_ACTIVITIES', config);
 
-				// Check if is a remote timer.
+				// Make sure it's not a remote timer
 				if (!this.isRemoteTimer) {
 					this._loggerService.info('Capturing Screen and Sending Activities Start...', activities);
 					// Create time slot and return time slot ID and error
