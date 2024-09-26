@@ -504,58 +504,62 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	}
 
 	/**
-	 * GET module tasks
+	 * Retrieves module tasks based on the provided options.
 	 *
-	 * @param options
-	 * @returns A promise that resolves with pagination task items and total
+	 * @param {PaginationParams<Task>} options - The pagination options and filters for querying tasks.
+	 * @returns {Promise<IPagination<ITask>>} A promise that resolves with pagination task items and total count.
 	 */
 	async findModuleTasks(options: PaginationParams<Task>): Promise<IPagination<ITask>> {
 		try {
 			const { where } = options;
-
-			const { status, modules = [], title, prefix, isDraft, organizationSprintId = null } = where;
-			const { organizationId, projectId, members } = where;
+			const {
+				status,
+				modules = [],
+				title,
+				prefix,
+				isDraft,
+				organizationSprintId = null,
+				organizationId,
+				projectId,
+				members
+			} = where;
+			const tenantId = RequestContext.currentTenantId() || where?.tenantId;
 			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
+			// Initialize the query
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.leftJoin(`${query.alias}.modules`, 'modules');
 
-			/**
-			 * Find options
-			 */
+			// Apply find options if provided
 			if (isNotEmpty(options)) {
 				query.setFindOptions({
-					...(options.select ? { select: options.select } : {}),
-					...(options.relations ? { relations: options.relations } : {}),
-					...(options.order ? { order: options.order } : {})
+					...(options.select && { select: options.select }),
+					...(options.relations && { relations: options.relations }),
+					...(options.order && { order: options.order })
 				});
 			}
 
-			// Filter options
+			// Filter by project_module_task with a subquery
 			query.andWhere((qb: SelectQueryBuilder<Task>) => {
-				const subQuery = qb.subQuery();
-				subQuery
+				const subQuery = qb
+					.subQuery()
 					.select(p('"project_module_task"."taskId"'))
-					.from(p('project_module_task'), p('project_module_task'));
-				subQuery.leftJoin(
-					'project_module_employee',
-					'project_module_employee',
-					p(
-						'"project_module_employee"."organizationProjectModuleId" = "project_module_task"."organizationProjectModuleId"'
-					)
-				);
-				// If user have permission to change employee
-				if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-					if (isNotEmpty(members) && isNotEmpty(members['id'])) {
-						const employeeId = members['id'];
-						subQuery.andWhere(p('"project_module_employee"."employeeId" = :employeeId'), { employeeId });
-					}
-				} else {
-					// If employee has login and don't have permission to change employee
-					const employeeId = RequestContext.currentEmployeeId();
-					if (isNotEmpty(employeeId)) {
-						subQuery.andWhere(p('"project_module_employee"."employeeId" = :employeeId'), { employeeId });
-					}
+					.from(p('project_module_task'), p('project_module_task'))
+					.leftJoin(
+						'project_module_employee',
+						'project_module_employee',
+						p(
+							'"project_module_employee"."organizationProjectModuleId" = "project_module_task"."organizationProjectModuleId"'
+						)
+					);
+
+				// Retrieve the employee ID based on the permission
+				const employeeId = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+					? members?.id
+					: RequestContext.currentEmployeeId();
+
+				if (isNotEmpty(employeeId)) {
+					subQuery.andWhere(p('"project_module_employee"."employeeId" = :employeeId'), { employeeId });
 				}
 				if (isNotEmpty(modules)) {
 					subQuery.andWhere(p(`"${subQuery.alias}"."organizationProjectModuleId" IN (:...modules)`), {
@@ -564,49 +568,51 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				}
 				return p(`"project_module_tasks"."taskId" IN `) + subQuery.distinct(true).getQuery();
 			});
+
+			// Add organization and tenant filters
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					const tenantId = RequestContext.currentTenantId();
 					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 				})
 			);
-			if (isNotEmpty(projectId) && isNotEmpty(modules)) {
-				query.orWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
+
+			// Filter by projectId and modules
+			if (isNotEmpty(projectId)) {
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => {
+						if (isEmpty(modules)) {
+							qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
+						}
+					})
+				);
 			}
+
+			// Add additional filters (status, draft, title, etc.)
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					if (isNotEmpty(projectId) && isEmpty(modules)) {
-						qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
-					}
 					if (isNotEmpty(status)) {
-						qb.andWhere(p(`"${query.alias}"."status" = :status`), {
-							status
-						});
+						qb.andWhere(p(`"${query.alias}"."status" = :status`), { status });
 					}
 					if (isNotEmpty(isDraft)) {
-						qb.andWhere(p(`"${query.alias}"."isDraft" = :isDraft`), {
-							isDraft
-						});
+						qb.andWhere(p(`"${query.alias}"."isDraft" = :isDraft`), { isDraft });
 					}
 					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."title" ${likeOperator} :title`), {
-							title: `%${title}%`
-						});
+						qb.andWhere(p(`"${query.alias}"."title" ${likeOperator} :title`), { title: `%${title}%` });
 					}
 					if (isNotEmpty(prefix)) {
-						qb.andWhere(p(`"${query.alias}"."prefix" ${likeOperator} :prefix`), {
-							prefix: `%${prefix}%`
-						});
+						qb.andWhere(p(`"${query.alias}"."prefix" ${likeOperator} :prefix`), { prefix: `%${prefix}%` });
 					}
-					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
+					if (!isUUID(organizationSprintId)) {
 						qb.andWhere(p(`"${query.alias}"."organizationSprintId" IS NULL`));
 					}
 				})
 			);
+
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {
+			console.log('Error while retrieving module tasks', error);
 			throw new BadRequestException(error);
 		}
 	}
