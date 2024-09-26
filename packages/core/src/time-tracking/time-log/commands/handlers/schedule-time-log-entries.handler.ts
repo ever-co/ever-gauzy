@@ -10,7 +10,7 @@ import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.rep
 
 @CommandHandler(ScheduleTimeLogEntriesCommand)
 export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTimeLogEntriesCommand> {
-	constructor(readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository) { }
+	constructor(readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository) {}
 
 	/**
 	 * Executes the scheduling of TimeLog entries based on the given command parameters.
@@ -30,15 +30,11 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 		const { tenantId, organizationId, employeeId } = command;
 
 		// Retrieve all pending TimeLog entries based on the provided tenantId, organizationId, and employeeId (if available)
-		const timeLogs = await this.getPendingTimeLogs(
-			tenantId,
-			organizationId,
-			employeeId
-		);
+		const logs = await this.getPendingTimeLogs(tenantId, organizationId, employeeId);
 
 		// Iterate through each pending time log entry to process and update them as necessary
-		for await (const timeLog of timeLogs) {
-			await this.processTimeLogEntry(timeLog);
+		for await (const log of logs) {
+			await this.processTimeLogEntry(log);
 		}
 	}
 
@@ -48,13 +44,10 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 	 * @param tenantId
 	 * @param organizationId
 	 * @param employeeId
+	 *
 	 * @returns A list of pending time logs
 	 */
-	private async getPendingTimeLogs(
-		tenantId: ID,
-		organizationId: ID,
-		employeeId?: ID
-	): Promise<ITimeLog[]> {
+	private async getPendingTimeLogs(tenantId: ID, organizationId: ID, employeeId?: ID): Promise<ITimeLog[]> {
 		// Construct the query with find options
 		const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log').setFindOptions({
 			relations: { timeSlots: true }
@@ -82,10 +75,12 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 				);
 			}
 
-			qb.andWhere(new Brackets((web: WhereExpressionBuilder) => {
-				web.andWhere(andWhere);
-				web.orWhere(orWhere);
-			}));
+			qb.andWhere(
+				new Brackets((web: WhereExpressionBuilder) => {
+					web.andWhere(andWhere);
+					web.orWhere(orWhere);
+				})
+			);
 		});
 
 		console.log(
@@ -107,16 +102,20 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 		// Handle cases where there are no time slots
 		if (isEmpty(timeSlots)) {
 			// Retrieve the last log's startedAt date
-			const lastLogStartedAt = moment.utc(timeLog.startedAt);
+			const startedAt = moment.utc(timeLog.startedAt);
 
 			// Example:
 			// If timeLog.startedAt = "2024-09-24 20:00:00"
-			// then lastLogStartedAt will be "2024-09-24 20:00:00"
+			// then startedAt will be "2024-09-24 20:00:00"
 
 			// If the minutes difference is greater than 10, update the stoppedAt date
 			// Example:
 			// If the current time is "2024-09-24 20:15:00", the difference is 15 minutes, which is greater than 10
-			if (moment.utc().diff(lastLogStartedAt, 'minutes') > 10) {
+
+			const difference = moment.utc().diff(startedAt, 'minutes');
+			console.log(`This log was created more than ${difference} minutes ago at ${startedAt}`);
+
+			if (difference > 10) {
 				await this.updateStoppedAtUsingStartedAt(timeLog);
 			}
 		} else {
@@ -159,19 +158,8 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 	 * @param timeSlots The time slots associated with the time log
 	 */
 	private async updateStoppedAtUsingTimeSlots(timeLog: ITimeLog, timeSlots: ITimeSlot[]): Promise<void> {
-		// Calculate the total duration in seconds from all time slots
-		const totalDurationInSeconds = timeSlots.reduce<number>((sum, { duration }) => sum + duration, 0);
-
-		// Example:
-		// If timeSlots = [{ duration: 300 }, { duration: 600 }]
-		// Then totalDurationInSeconds = 300 + 600 = 900 seconds (i.e., 15 minutes)
-
-		// Calculate the stoppedAt date by adding the total duration to the startedAt date of the time log
-		let stoppedAt = moment.utc(timeLog.startedAt).add(totalDurationInSeconds, 'seconds').toDate();
-
-		// Example:
-		// If timeLog.startedAt = "2024-09-24 10:00:00" and totalDurationInSeconds = 900,
-		// then stoppedAt = "2024-09-24 10:15:00"
+		// Get the stoppedAt date from the time log
+		let stoppedAt = moment.utc(timeLog.stoppedAt).toDate();
 
 		// Retrieve the most recent time slot from the last log
 		const lastTimeSlot: ITimeSlot | undefined = timeSlots.sort((a: ITimeSlot, b: ITimeSlot) =>
@@ -185,43 +173,33 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 
 		// Check if the last time slot was created more than 10 minutes ago
 		if (lastTimeSlot) {
-			// Retrieve the last time slot's startedAt date
-			const lastTimeSlotStartedAt = moment.utc(lastTimeSlot.startedAt);
-			// Retrieve the last time slot's duration
-			const duration = lastTimeSlot.duration;
-
-			// Retrieve the request stopped moment
-			const requestStoppedAt = moment.utc(stoppedAt);
+			const duration = lastTimeSlot.duration; // Retrieve the last time slot's duration
+			const startedAt = moment.utc(lastTimeSlot.startedAt); // Retrieve the last time slot's startedAt date
 
 			// Example:
 			// If lastTimeSlot.startedAt = "2024-09-24 10:00:00" and duration = 300 (i.e., 5 minutes)
-			// then lastTimeSlotStartedAt would be "2024-09-24 10:00:00"
+			// then startedAt would be "2024-09-24 10:00:00"
 			// and the stoppedAt time will be calculated as "2024-09-24 10:05:00".
 
+			// Calculate the potential stoppedAt time using the total duration
+			const difference = moment.utc().diff(stoppedAt, 'minutes');
+			console.log(`Last time slot (${duration}) created ${difference} mins ago at ${startedAt}`);
+
 			// Check if the last time slot was created more than 10 minutes ago
-			if (requestStoppedAt.diff(lastTimeSlotStartedAt, 'minutes') > 10) {
-				// Calculate the potential stoppedAt time using the total duration
+			if (difference > 10) {
 				// Example: If the last time slot started at "2024-09-24 10:00:00" and ran for 300 seconds (5 minutes),
 				// then the calculated stoppedAt time would be "2024-09-24 10:05:00".
-				stoppedAt = lastTimeSlotStartedAt.add(duration, 'seconds').toDate();
+				stoppedAt = startedAt.add(duration, 'seconds').toDate();
+
+				// Update the stoppedAt field in the database
+				await this.typeOrmTimeLogRepository.save({
+					id: timeLog.id,
+					stoppedAt
+				});
 			}
 		}
 
-		// Update the stoppedAt field in the database
-		if (moment.utc().diff(stoppedAt, 'minutes') > 10) {
-			// Example:
-			// If the current time is "2024-09-24 21:30:00" and stoppedAt is "2024-09-24 21:15:00",
-			// the difference would be 15 minutes, which is greater than 10.
-			// In this case, the stoppedAt field will be updated in the database.
-
-			// Calculate the potential stoppedAt time using the total duration
-			await this.typeOrmTimeLogRepository.save({
-				id: timeLog.id,
-				stoppedAt
-			});
-			console.log('Schedule Time Log Entry Updated StoppedAt Using StoppedAt', stoppedAt);
-			// Example log output: "Schedule Time Log Entry Updated StoppedAt Using StoppedAt 2024-09-24 21:15:00"
-		}
+		console.log('Time log entry stoppedAt updated to', stoppedAt);
 	}
 
 	/**
@@ -229,10 +207,10 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 	 *
 	 * @param timeLog - The time log entry to stop
 	 */
-	private async stopTimeLog(timeLog: ITimeLog): Promise<void> {
+	private async stopTimeLog(log: ITimeLog): Promise<ITimeLog> {
 		// Update the isRunning field to false in the database for the given time log
-		await this.typeOrmTimeLogRepository.save({
-			id: timeLog.id,
+		return await this.typeOrmTimeLogRepository.save({
+			id: log.id,
 			isRunning: false
 		});
 	}
