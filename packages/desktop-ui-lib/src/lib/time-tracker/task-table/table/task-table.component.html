@@ -11,7 +11,9 @@
 		<div class="row grow">
 			<div class="col-12 custom-table">
 				<div class="table-scroll-container grow">
-					<div class="smart-table" *ngIf="loading$ | async" [nbSpinner]="true" nbSpinnerSize="small"></div>
+					<ng-container *ngIf="loading$ | async">
+						<div class="smart-table" [nbSpinner]="true" nbSpinnerSize="small"></div>
+					</ng-container>
 					<angular2-smart-table
 						#smartTable
 						(userRowSelect)="handleRowSelection($event)"
