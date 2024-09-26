@@ -1523,11 +1523,21 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 				const activities = await this.electronService.ipcRenderer.invoke('COLLECT_ACTIVITIES', config);
 
-				asyncScheduler.schedule(async () => {
+				// Check if is a remote timer.
+				if (!this.isRemoteTimer) {
 					this._loggerService.info('Capturing Screen and Sending Activities Start...', activities);
-					await this.takeCaptureAndSendActivities(activities);
-					this._loggerService.info('Capturing Screen and Sending Activities Done ✔️');
-				}, 1000);
+					// Take Screenshots
+					const screenshots = await this.takeScreenCapture(activities);
+					// Create time slot and return time slot ID
+					const timeslotId = await this.createTimeSlot(activities, screenshots);
+					// Upload screenshots if available
+					asyncScheduler.schedule(async () => {
+						if (timeslotId && screenshots.length > 0) {
+							await this.uploadScreenshots(activities, timeslotId, screenshots);
+							this._loggerService.info('Capturing Screen and Sending Activities Done ✔️');
+						}
+					}, 1000);
+				}
 			}
 
 			console.log('Stopping timer');
@@ -1967,24 +1977,34 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	private buildParamActivity(arg) {
+	private buildParamActivity(arg: any) {
+		const { user, organizationId, tenantId } = this._store;
+		const {
+			employeeId,
+			projectId,
+			duration,
+			keyboard,
+			mouse,
+			system: overall,
+			startedAt,
+			activities,
+			timeLogId,
+			organizationContactId
+		} = arg ?? {};
+
 		return {
-			employeeId: arg.employeeId,
-			projectId: arg.projectId,
-			duration: arg.duration,
-			keyboard: arg.keyboard,
-			mouse: arg.mouse,
-			overall: arg.system,
-			startedAt: arg.startedAt,
-			activities: arg.activities,
-			timeLogId: arg.timeLogId,
-			organizationId: arg.organizationId,
-			tenantId: arg.tenantId,
-			organizationContactId: arg.organizationContactId,
-			apiHost: arg.apiHost,
-			token: arg.token,
-			isAw: arg.isAw,
-			isAwConnected: arg.isAwConnected
+			employeeId: employeeId ?? user?.employee?.id,
+			projectId: projectId ?? null,
+			duration: duration ?? 0,
+			keyboard: keyboard ?? 0,
+			mouse: mouse ?? 0,
+			overall: overall ?? null,
+			startedAt: startedAt ?? null,
+			activities: activities ?? [],
+			timeLogId: timeLogId ?? null,
+			organizationId: arg?.organizationId ?? organizationId,
+			tenantId: arg?.tenantId ?? tenantId,
+			organizationContactId: organizationContactId ?? null
 		};
 	}
 
@@ -2032,7 +2052,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public async takeCaptureAndSendActivities(activities) {
 		// Check validations
-		if (this.checkSendActivitiesValidationFail(activities)) return;
+		if (this.isRemoteTimer) return;
 		// Take Screenshots
 		const screenshots = await this.takeScreenCapture(activities);
 		// Create time slot and return time slot ID
