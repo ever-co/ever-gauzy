@@ -1,8 +1,9 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Brackets, FindManyOptions, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import {
 	ID,
 	IOrganizationProjectModule,
+	IOrganizationProjectModuleCreateInput,
 	IOrganizationProjectModuleFindInput,
 	IPagination,
 	PermissionsEnum,
@@ -24,6 +25,18 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		readonly mikroOrmProjectModuleRepository: MikroOrmOrganizationProjectModuleRepository
 	) {
 		super(typeOrmProjectModuleRepository, mikroOrmProjectModuleRepository);
+	}
+
+	async create(entity: IOrganizationProjectModuleCreateInput): Promise<IOrganizationProjectModule> {
+		try {
+			const creatorId = RequestContext.currentUserId();
+			return super.create({
+				...entity,
+				creatorId
+			});
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
 	/**
