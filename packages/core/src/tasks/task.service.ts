@@ -543,29 +543,26 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			query.andWhere((qb: SelectQueryBuilder<Task>) => {
 				const subQuery = qb
 					.subQuery()
-					.select(p('"project_module_task"."taskId"'))
-					.from(p('project_module_task'), p('project_module_task'))
+					.select(p('"pmt"."taskId"')) // Use the alias 'pmt' here
+					.from(p('project_module_task'), 'pmt') // Assign alias 'pmt' to project_module_task
 					.leftJoin(
 						'project_module_employee',
-						'project_module_employee',
-						p(
-							'"project_module_employee"."organizationProjectModuleId" = "project_module_task"."organizationProjectModuleId"'
-						)
+						'pme',
+						p('"pme"."organizationProjectModuleId" = "pmt"."organizationProjectModuleId"')
 					);
 
 				// Retrieve the employee ID based on the permission
 				const employeeId = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
-					? members?.id
+					? members?.['id']
 					: RequestContext.currentEmployeeId();
 
 				if (isNotEmpty(employeeId)) {
-					subQuery.andWhere(p('"project_module_employee"."employeeId" = :employeeId'), { employeeId });
+					subQuery.andWhere(p('"pme"."employeeId" = :employeeId'), { employeeId });
 				}
 				if (isNotEmpty(modules)) {
-					subQuery.andWhere(p(`"${subQuery.alias}"."organizationProjectModuleId" IN (:...modules)`), {
-						modules
-					});
+					subQuery.andWhere(p(`"pmt"."organizationProjectModuleId" IN (:...modules)`), { modules });
 				}
+
 				return p(`"project_module_tasks"."taskId" IN `) + subQuery.distinct(true).getQuery();
 			});
 
