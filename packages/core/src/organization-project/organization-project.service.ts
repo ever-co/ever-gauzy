@@ -1,6 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
-import { In, IsNull, SelectQueryBuilder } from 'typeorm';
+import { ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
 import {
 	ActionTypeEnum,
 	ActivityLogEntityEnum,
@@ -421,6 +421,10 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			options.where.tags = {
 				id: In(options.where.tags as string[])
 			};
+		}
+
+		if (options?.where?.name) {
+			options.where.name = ILike(`%${options.where.name}%`);
 		}
 
 		// Call the parent class's paginate method with the modified options
