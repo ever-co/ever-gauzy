@@ -303,15 +303,10 @@ export class TimeTrackerService {
 
 		// Prepare the parameters
 		const params = {
-			relations: ['organizationContact', 'members.employee.user', 'teams'],
-			join: {
-				alias: 'organization_project_team',
-				leftJoin: { teams: 'organization_project_team.teams' }
-			},
 			where: {
 				organizationId,
 				tenantId,
-				...(employeeId && { members: { id: employeeId } }),
+				...(employeeId && { members: { employeeId } }),
 				...(organizationContactId && { organizationContactId }),
 				...(organizationTeamId && { teams: { id: organizationTeamId } }),
 				...(name && { name })
