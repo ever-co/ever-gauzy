@@ -152,6 +152,29 @@ export class TaskController extends CrudController<Task> {
 		return await this.taskService.findTeamTasks(params);
 	}
 
+	/**
+	 * GET module tasks
+	 *
+	 * @param params
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Find module tasks.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found tasks',
+		type: Task
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Records not found'
+	})
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
+	@Get('module')
+	@UseValidationPipe({ transform: true })
+	async findModuleTasks(@Query() params: PaginationParams<Task>): Promise<IPagination<ITask>> {
+		return await this.taskService.findModuleTasks(params);
+	}
+
 	@ApiOperation({ summary: 'Find by id' })
 	@ApiResponse({
 		status: HttpStatus.OK,

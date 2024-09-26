@@ -1,6 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
-import { In, IsNull, SelectQueryBuilder } from 'typeorm';
+import { ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
 import {
 	ActionTypeEnum,
 	ActivityLogEntityEnum,
@@ -95,8 +95,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 
 		try {
 			// Retrieve members and managers IDs
-			const managerIds = managers.map((manager) => manager.id);
-			const memberIds = members.map((member) => member.id);
+			const managerIds = managers.map((manager) => manager.employeeId);
+			const memberIds = members.map((member) => member.employeeId);
 
 			// If the employee creates the project, default add as a manager
 			try {
@@ -229,8 +229,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 
 		try {
 			// Retrieve members and managers IDs
-			const managerIds = managers.map((manager) => manager.id);
-			const memberIds = members.map((member) => member.id);
+			const managerIds = managers.map((manager) => manager.employeeId);
+			const memberIds = members.map((member) => member.employeeId);
 			if (isNotEmpty(memberIds) || isNotEmpty(managerIds)) {
 				// Find the manager role
 				const role = await this._roleService.findOneByWhereOptions({
@@ -421,6 +421,10 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			options.where.tags = {
 				id: In(options.where.tags as string[])
 			};
+		}
+
+		if (options?.where?.name) {
+			options.where.name = ILike(`%${options.where.name}%`);
 		}
 
 		// Call the parent class's paginate method with the modified options

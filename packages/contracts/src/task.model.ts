@@ -9,12 +9,9 @@ import { IUser } from './user.model';
 import { ITaskStatus, TaskStatusEnum } from './task-status.model';
 import { ITaskPriority, TaskPriorityEnum } from './task-priority.model';
 import { ITaskSize, TaskSizeEnum } from './task-size.model';
-import { IRelationalOrganizationProjectModule } from './organization-project-module.model';
+import { IOrganizationProjectModule } from './organization-project-module.model';
 
-export interface ITask
-	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalOrganizationProject,
-		IRelationalOrganizationProjectModule {
+export interface ITask extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationProject {
 	title: string;
 	number?: number;
 	public?: boolean;
@@ -29,6 +26,7 @@ export interface ITask
 	members?: IEmployee[];
 	invoiceItems?: IInvoiceItem[];
 	teams?: IOrganizationTeam[];
+	modules?: IOrganizationProjectModule[];
 	organizationSprint?: IOrganizationSprint;
 	organizationSprintId?: ID;
 	creator?: IUser;
