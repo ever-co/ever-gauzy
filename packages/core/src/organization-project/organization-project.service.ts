@@ -95,8 +95,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 
 		try {
 			// Retrieve members and managers IDs
-			const managerIds = managers.map((manager) => manager.id);
-			const memberIds = members.map((member) => member.id);
+			const managerIds = managers.map((manager) => manager.employeeId);
+			const memberIds = members.map((member) => member.employeeId);
 
 			// If the employee creates the project, default add as a manager
 			try {
@@ -229,8 +229,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 
 		try {
 			// Retrieve members and managers IDs
-			const managerIds = managers.map((manager) => manager.id);
-			const memberIds = members.map((member) => member.id);
+			const managerIds = managers.map((manager) => manager.employeeId);
+			const memberIds = members.map((member) => member.employeeId);
 			if (isNotEmpty(memberIds) || isNotEmpty(managerIds)) {
 				// Find the manager role
 				const role = await this._roleService.findOneByWhereOptions({
