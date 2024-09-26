@@ -139,9 +139,6 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	/**
 	 * Creator
 	 */
-	@ApiPropertyOptional({ type: () => Object })
-	@IsOptional()
-	@IsObject()
 	@MultiORMManyToOne(() => User, {
 		nullable: true,
 		onDelete: 'CASCADE'
@@ -149,9 +146,6 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	@JoinColumn()
 	creator?: IUser;
 
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@IsUUID()
 	@RelationId((it: OrganizationProjectModule) => it.creator)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
