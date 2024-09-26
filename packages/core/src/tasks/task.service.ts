@@ -594,7 +594,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 							title: `%${title}%`
 						});
 					}
-					if (isNotEmpty(title)) {
+					if (isNotEmpty(prefix)) {
 						qb.andWhere(p(`"${query.alias}"."prefix" ${likeOperator} :prefix`), {
 							prefix: `%${prefix}%`
 						});
