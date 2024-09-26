@@ -1526,15 +1526,22 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				// Check if is a remote timer.
 				if (!this.isRemoteTimer) {
 					this._loggerService.info('Capturing Screen and Sending Activities Start...', activities);
-					// Take Screenshots
-					const screenshots = await this.takeScreenCapture(activities);
-					// Create time slot and return time slot ID
-					const timeslotId = await this.createTimeSlot(activities, screenshots);
+					// Create time slot and return time slot ID and error
+					const { timeSlotId, error } = await this.createTimeSlot(activities);
 					// Upload screenshots if available
 					asyncScheduler.schedule(async () => {
-						if (timeslotId && screenshots.length > 0) {
-							await this.uploadScreenshots(activities, timeslotId, screenshots);
+						// Take Screenshots
+						const screenshots = await this.takeScreenCapture(activities);
+						//Check there's an error
+						if (error) {
+							// handle create time slot error
+							this.handleCreateTimeSlotError(error, activities, screenshots);
+						}
+						// Upload screenshots if timeslot and screenshots is available
+						if (timeSlotId && screenshots?.length > 0) {
+							await this.uploadScreenshots(activities, timeSlotId, screenshots);
 							this._loggerService.info('Capturing Screen and Sending Activities Done ✔️');
+						} else {
 						}
 					}, 1000);
 				}
@@ -2008,7 +2015,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		};
 	}
 
-	public async createTimeSlot(arg, screenshots: any[]) {
+	public async createTimeSlot(arg): Promise<{ timeSlotId: string; error: any }> {
 		try {
 			this._loggerService.info('Build Param Activity');
 			const paramActivity = this.buildParamActivity(arg);
@@ -2043,23 +2050,27 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				b64Imgs: []
 			});
 
-			return timeSlotId;
+			return { timeSlotId, error: null };
 		} catch (error) {
-			this.handleCreateTimeSlotError(error, arg, screenshots);
-			return null;
+			return { timeSlotId: null, error };
 		}
 	}
 
 	public async takeCaptureAndSendActivities(activities) {
 		// Check validations
 		if (this.isRemoteTimer) return;
+		// Create time slot and return time slot ID
+		const { timeSlotId, error } = await this.createTimeSlot(activities);
 		// Take Screenshots
 		const screenshots = await this.takeScreenCapture(activities);
-		// Create time slot and return time slot ID
-		const timeslotId = await this.createTimeSlot(activities, screenshots);
+		// Check if error
+		if (error) {
+			// handle create time slot error
+			this.handleCreateTimeSlotError(error, activities, screenshots);
+		}
 		// Upload screenshots if available
-		if (timeslotId && screenshots.length > 0) {
-			await this.uploadScreenshots(activities, timeslotId, screenshots);
+		if (timeSlotId && screenshots?.length > 0) {
+			await this.uploadScreenshots(activities, timeSlotId, screenshots);
 		}
 	}
 
