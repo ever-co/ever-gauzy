@@ -62,16 +62,16 @@ export class ScreenshotController {
 			return;
 		}
 
-		// console.log('Screenshot Http Request Input: ', { input });
+		console.log('Screenshot request input:', input);
 
 		// Extract user information from the request context
 		const user = RequestContext.currentUser();
+		// Extract necessary properties from the request body
+		const tenantId = RequestContext.currentTenantId() || input.tenantId;
+		const organizationId = input.organizationId;
+		const userId = RequestContext.currentUserId();
 
 		try {
-			// Extract necessary properties from the request body
-			const { organizationId } = input;
-			const tenantId = RequestContext.currentTenantId() || input.tenantId;
-
 			// Initialize file storage provider and process thumbnail
 			const provider = new FileStorage().getProvider();
 
@@ -118,9 +118,9 @@ export class ScreenshotController {
 
 			// Populate entity properties for the screenshot
 			const entity = new Screenshot({
-				organizationId: organizationId,
-				tenantId: tenantId,
-				userId: RequestContext.currentUserId(),
+				organizationId,
+				tenantId,
+				userId,
 				file: file.key,
 				thumb: thumb.key,
 				storageProvider: provider.name.toUpperCase(),
@@ -130,7 +130,7 @@ export class ScreenshotController {
 
 			// Create the screenshot entity in the database
 			const screenshot = await this._screenshotService.create(entity);
-			// console.log(`Screenshot created for employee (${user.name})`, screenshot);
+			console.log(`Screenshot created for employee (${user.name})`, screenshot);
 
 			// Publish the screenshot created event
 			const ctx = RequestContext.currentRequestContext(); // Get current request context;
