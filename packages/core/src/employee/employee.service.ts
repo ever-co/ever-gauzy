@@ -3,10 +3,10 @@ import { Brackets, FindManyOptions, FindOneOptions, In, SelectQueryBuilder, Wher
 import * as moment from 'moment';
 import {
 	IBasePerTenantAndOrganizationEntityModel,
+	ID,
 	IDateRangePicker,
 	IEmployee,
 	IFindMembersInput,
-	IOrganization,
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
@@ -97,7 +97,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * @param userIds An array of user IDs.
 	 * @returns A promise resolving to an array of employees.
 	 */
-	async findEmployeesByUserIds(userIds: string[]): Promise<Employee[]> {
+	async findEmployeesByUserIds(userIds: ID[]): Promise<Employee[]> {
 		try {
 			// Get the tenant ID from the current request context
 			const tenantId = RequestContext.currentTenantId();
@@ -137,7 +137,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * @param userId The ID of the user.
 	 * @returns The employeeId or null if not found or in case of an error.
 	 */
-	async findEmployeeIdByUserId(userId: string): Promise<string | null> {
+	async findEmployeeIdByUserId(userId: ID): Promise<string | null> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			// Construct the where clause based on whether tenantId is available
@@ -172,29 +172,35 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * @param userId The ID of the user to find.
 	 * @returns A Promise resolving to the employee if found, otherwise null.
 	 */
-	async findOneByUserId(userId: string, options?: FindOneOptions<Employee>): Promise<IEmployee | null> {
+	async findOneByUserId(userId: ID, options?: FindOneOptions<Employee>): Promise<IEmployee | null> {
 		try {
+			// Retrieve the tenant ID from the current context
 			const tenantId = RequestContext.currentTenantId();
 
-			// Construct the where clause based on whether tenantId is available
+			// Define the base where clause
 			const whereClause = {
 				userId,
+				...(tenantId && { tenantId }), // Include tenantId if available
 				isActive: true,
 				isArchived: false,
-				...(tenantId && { tenantId }) // Include tenantId if available
 			};
-			const queryOptions = options ? { ...options } : {};
+
+			// Merge the existing where conditions in options, if any
+			const queryOptions: FindOneOptions<Employee> = {
+				...options,
+				where: {
+					...whereClause,
+					...(options?.where || {}) // Merge with existing where options if present
+				}
+			};
 
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					const { mikroOptions } = parseTypeORMFindToMikroOrm<Employee>(options as FindManyOptions);
-					const item = await this.mikroOrmRepository.findOne(whereClause, mikroOptions);
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<Employee>(queryOptions as FindManyOptions);
+					const item = await this.mikroOrmRepository.findOne(where, mikroOptions);
 					return this.serialize(item as Employee);
 				case MultiORMEnum.TypeORM:
-					return this.typeOrmRepository.findOne({
-						where: whereClause,
-						...queryOptions
-					});
+					return this.typeOrmRepository.findOne(queryOptions);
 				default:
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
@@ -208,7 +214,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * Retrieves all active employees with their associated user and organization details.
 	 * @returns A Promise that resolves to an array of active employees.
 	 */
-	public async findAllActive(): Promise<Employee[]> {
+	public async findAllActive(): Promise<IEmployee[]> {
 		try {
 			return await super.find({
 				where: { isActive: true, isArchived: false },
@@ -232,7 +238,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * @returns
 	 */
 	async findWorkingEmployees(
-		organizationId: IOrganization['id'],
+		organizationId: ID,
 		forRange: IDateRangePicker | any,
 		withUser: boolean = false
 	): Promise<IPagination<IEmployee>> {
@@ -497,17 +503,19 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * Softly delete an employee by ID, with organization and tenant constraints.
 	 *
 	 * @param employeeId - ID of the employee to delete.
-	 * @param options - Contains organizationId and possibly other per-tenant information.
+	 * @param params - Contains organizationId and possibly other per-tenant information.
 	 * @returns - UpdateResult or DeleteResult depending on the ORM type.
 	 */
 	async softRemovedById(
-		employeeId: IEmployee['id'],
-		options: IBasePerTenantAndOrganizationEntityModel
+		employeeId: ID,
+		params: IBasePerTenantAndOrganizationEntityModel
 	): Promise<Employee> {
 		try {
-			const { organizationId } = options;
+			// Obtain the organization ID from the provided parameters
+			const organizationId = params.organizationId;
+
 			// Obtain tenant ID from the current request context
-			const tenantId = RequestContext.currentTenantId() || options.tenantId;
+			const tenantId = RequestContext.currentTenantId() || params.tenantId;
 
 			// Perform the soft delete operation
 			return await super.softRemove(employeeId, {
@@ -527,18 +535,20 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * and tenant ID to ensure that the correct employee is restored.
 	 *
 	 * @param employeeId The ID of the employee to restore.
-	 * @param options Additional context parameters, including organization ID and tenant ID.
+	 * @param params Additional context parameters, including organization ID and tenant ID.
 	 * @returns The restored Employee entity.
 	 * @throws BadRequestException if the employee cannot be restored or if an error occurs.
 	 */
 	async softRecoverById(
-		employeeId: IEmployee['id'],
-		options: IBasePerTenantAndOrganizationEntityModel
+		employeeId: ID,
+		params: IBasePerTenantAndOrganizationEntityModel
 	): Promise<Employee> {
 		try {
-			const { organizationId } = options;
+			// Obtain the organization ID from the provided parameters
+			const organizationId = params.organizationId;
+
 			// Obtain the tenant ID from the current request context or the provided options
-			const tenantId = RequestContext.currentTenantId() || options.tenantId;
+			const tenantId = RequestContext.currentTenantId() || params.tenantId;
 
 			// Perform the soft recovery operation using the ID, organization ID, and tenant ID
 			return await super.softRecover(employeeId, {

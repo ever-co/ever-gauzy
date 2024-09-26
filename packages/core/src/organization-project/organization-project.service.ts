@@ -1,12 +1,17 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
-import { Brackets, In, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { EventBus } from '@nestjs/cqrs';
+import { In, IsNull, SelectQueryBuilder } from 'typeorm';
 import {
+	ActionTypeEnum,
+	ActivityLogEntityEnum,
+	ActorTypeEnum,
 	FavoriteEntityEnum,
 	ID,
 	IEmployee,
 	IOrganizationGithubRepository,
 	IOrganizationProject,
 	IOrganizationProjectCreateInput,
+	IOrganizationProjectEditByEmployeeInput,
 	IOrganizationProjectsFindInput,
 	IOrganizationProjectUpdateInput,
 	IPagination,
@@ -15,10 +20,12 @@ import {
 } from '@gauzy/contracts';
 import { getConfig } from '@gauzy/config';
 import { CustomEmbeddedFieldConfig, isNotEmpty } from '@gauzy/common';
-import { Employee, OrganizationProjectEmployee, Role } from '../core/entities/internal';
-import { FavoriteService } from '../core/decorators';
 import { PaginationParams, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
+import { Employee, OrganizationProjectEmployee, Role } from '../core/entities/internal';
+import { FavoriteService } from '../core/decorators';
+import { ActivityLogEvent } from '../activity-log/events';
+import { generateActivityLogDescription } from '../activity-log/activity-log.helper';
 import { RoleService } from '../role/role.service';
 import { OrganizationProject } from './organization-project.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -38,8 +45,9 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		readonly mikroOrmOrganizationProjectRepository: MikroOrmOrganizationProjectRepository,
 		readonly typeOrmOrganizationProjectEmployeeRepository: TypeOrmOrganizationProjectEmployeeRepository,
 		readonly mikroOrmOrganizationProjectEmployeeRepository: MikroOrmOrganizationProjectEmployeeRepository,
-		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
-		private readonly roleService: RoleService
+		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+		private readonly _roleService: RoleService,
+		private readonly _eventBus: EventBus
 	) {
 		super(typeOrmOrganizationProjectRepository, mikroOrmOrganizationProjectRepository);
 	}
@@ -87,13 +95,13 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 
 		try {
 			// Retrieve members and managers IDs
-			const managerIds = managers.map((manager) => manager.id);
-			const memberIds = members.map((member) => member.id);
+			const managerIds = managers.map((manager) => manager.employeeId);
+			const memberIds = members.map((member) => member.employeeId);
 
 			// If the employee creates the project, default add as a manager
 			try {
 				// Check if the current role is EMPLOYEE
-				await this.roleService.findOneByIdString(currentRoleId, {
+				await this._roleService.findOneByIdString(currentRoleId, {
 					where: { name: RolesEnum.EMPLOYEE }
 				});
 
@@ -105,15 +113,10 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			} catch (error) {}
 
 			// Retrieves a collection of employees based on specified criteria.
-			const employees = await this.retrieveEmployees(
-				memberIds,
-				managerIds,
-				organizationId,
-				tenantId
-			);
+			const employees = await this.retrieveEmployees(memberIds, managerIds, organizationId, tenantId);
 
 			// Find the manager role
-			const managerRole = await this.roleService.findOneByWhereOptions({ name: RolesEnum.MANAGER });
+			const managerRole = await this._roleService.findOneByWhereOptions({ name: RolesEnum.MANAGER });
 
 			// Create a Set for faster membership checks
 			const managerIdsSet = new Set(managerIds);
@@ -140,23 +143,48 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 					tenantId,
 					isManager,
 					role: isManager ? managerRole : null,
-					assignedAt: isManager && !existingManagersMap.has(employeeId) ? new Date() : existingManagersMap.get(employeeId) || null
+					assignedAt:
+						isManager && !existingManagersMap.has(employeeId)
+							? new Date()
+							: existingManagersMap.get(employeeId) || null
 				});
 			});
 
 			// Create the organization team with the prepared members
-			return await super.create({
+			const project = await super.create({
 				...entity,
 				members: projectMembers,
 				tags,
 				organizationId,
 				tenantId
 			});
+
+			// Generate the activity log description
+			const description = generateActivityLogDescription(
+				ActionTypeEnum.Created,
+				ActivityLogEntityEnum.OrganizationProject,
+				project.name
+			);
+
+			// Emit an event to log the activity
+			this._eventBus.publish(
+				new ActivityLogEvent({
+					entity: ActivityLogEntityEnum.OrganizationProject,
+					entityId: project.id,
+					action: ActionTypeEnum.Created,
+					actorType: ActorTypeEnum.User,
+					description,
+					data: project,
+					organizationId,
+					tenantId
+				})
+			);
+
+			return project;
 		} catch (error) {
 			throw new BadRequestException(`Failed to create project: ${error}`);
 		}
 	}
-
 
 	/**
 	 * Update an organization project.
@@ -201,11 +229,11 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 
 		try {
 			// Retrieve members and managers IDs
-			const managerIds = managers.map((manager) => manager.id);
-			const memberIds = members.map((member) => member.id);
+			const managerIds = managers.map((manager) => manager.employeeId);
+			const memberIds = members.map((member) => member.employeeId);
 			if (isNotEmpty(memberIds) || isNotEmpty(managerIds)) {
 				// Find the manager role
-				const role = await this.roleService.findOneByWhereOptions({
+				const role = await this._roleService.findOneByWhereOptions({
 					name: RolesEnum.MANAGER
 				});
 
@@ -249,7 +277,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	/**
 	 * Update organization project by managing its members and their roles.
 	 *
-	 * @param organizationTeamId - ID of the organization project
+	 * @param organizationProjectId - ID of the organization project
 	 * @param organizationId - ID of the organization
 	 * @param employees - Array of employees to be assigned to the project
 	 * @param role - The role to assign to managers in the project
@@ -268,7 +296,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		const tenantId = RequestContext.currentTenantId();
 		const membersToUpdate = [...managerIds, ...memberIds];
 
-		// Fetch existing team members with their roles
+		// Fetch existing project members with their roles
 		const projectMembers = await this.typeOrmOrganizationProjectEmployeeRepository.find({
 			where: { tenantId, organizationId, organizationProjectId },
 			relations: { role: true }
@@ -281,7 +309,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		const removedMembers = projectMembers.filter((member) => !membersToUpdate.includes(member.employeeId));
 		const updatedMembers = projectMembers.filter((member) => membersToUpdate.includes(member.employeeId));
 
-		// 1. Remove members who are no longer in the team
+		// 1. Remove members who are no longer assigned to project
 		if (removedMembers.length > 0) {
 			const removedMemberIds = removedMembers.map((member) => member.id);
 			await this.deleteMemberByIds(removedMemberIds);
@@ -302,29 +330,34 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		const newMembers = employees.filter((employee) => !existingMemberMap.has(employee.id));
 
 		if (newMembers.length > 0) {
-			const newTeamMembers = newMembers.map(
+			const newProjectMembers = newMembers.map(
 				(employee) =>
 					new OrganizationProjectEmployee({
 						organizationProjectId,
 						employeeId: employee.id,
 						tenantId,
 						organizationId,
+						isManager: managerIds.includes(employee.id),
 						roleId: managerIds.includes(employee.id) ? role.id : null
 					})
 			);
 
-			await this.typeOrmRepository.save(newTeamMembers);
+			await this.typeOrmRepository.save(newProjectMembers);
 		}
 	}
 
 	/**
-	 * Find employee assigned projects
+	 * Finds projects assigned to a specific employee based on the provided options.
 	 *
-	 * @param employeeId
-	 * @param options
-	 * @returns
+	 * @param employeeId - The ID of the employee to find projects for.
+	 * @param input - Filter options for finding organization projects.
+	 * @returns A promise that resolves with a list of projects assigned to the employee.
 	 */
-	async findByEmployee(employeeId: ID, options: IOrganizationProjectsFindInput): Promise<IOrganizationProject[]> {
+	async findByEmployee(employeeId: ID, input: IOrganizationProjectsFindInput): Promise<IOrganizationProject[]> {
+		const tenantId = RequestContext.currentTenantId() || input.tenantId; // Use the current tenant ID or fallback to input tenantId
+		const { organizationId, organizationContactId, organizationTeamId } = input;
+
+		// Create a query to fetch organization projects
 		const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 		query.setFindOptions({
 			select: {
@@ -338,65 +371,60 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				taskListType: true
 			}
 		});
-		query.innerJoin(`${query.alias}.members`, 'member');
-		query.leftJoin(`${query.alias}.teams`, 'project_team');
-		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => {
-				const tenantId = RequestContext.currentTenantId();
-				const { organizationId, organizationContactId, organizationTeamId } = options;
+		query.innerJoin(`${query.alias}.members`, 'project_members').leftJoin(`${query.alias}.teams`, 'project_team');
+		query
+			.where(`project_members.employeeId = :employeeId`, { employeeId })
+			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId })
+			.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
 
-				qb.andWhere(p('member.id = :employeeId'), { employeeId });
-				qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-				qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+		// Apply additional filters if organizationContactId is provided
+		if (isNotEmpty(organizationContactId)) {
+			query.andWhere(`${query.alias}.organizationContactId = :organizationContactId`, { organizationContactId });
+		}
 
-				if (isNotEmpty(organizationContactId)) {
-					qb.andWhere(`${query.alias}.organizationContactId = :organizationContactId`, {
-						organizationContactId
-					});
-				}
+		// Apply additional filters if organizationTeamId is provided
+		if (isNotEmpty(organizationTeamId)) {
+			query.andWhere(`project_team.id = :organizationTeamId`, { organizationTeamId });
+		}
 
-				if (isNotEmpty(organizationTeamId)) {
-					qb.andWhere(`project_team.id = :organizationTeamId`, { organizationTeamId });
-				}
-			})
-		);
-		return await query.getMany();
+		// Get the results
+		return query.getMany();
 	}
 
 	/**
-	 * Organization project override find all method
+	 * Overrides the organization project find all method to handle special cases.
 	 *
-	 * @param filter
-	 * @returns
+	 * @param options - Pagination parameters with optional filters.
+	 * @returns A promise that resolves with the paginated result of organization projects.
 	 */
 	public async findAll(options?: PaginationParams<OrganizationProject>): Promise<IPagination<OrganizationProject>> {
-		if ('where' in options) {
-			const { where } = options;
-			if (where.organizationContactId === 'null') {
-				options.where.organizationContactId = IsNull();
-			}
+		// Check and handle the case where `organizationContactId` is explicitly set to 'null'
+		if (options?.where?.organizationContactId === 'null') {
+			options.where.organizationContactId = IsNull();
 		}
-		return await super.findAll(options);
+
+		// Call the parent class's findAll method with the modified options
+		return super.findAll(options);
 	}
 
 	/**
-	 * Organization project override pagination method
+	 * Overrides the organization project pagination method to handle filtering by tags.
 	 *
-	 * @param filter
-	 * @returns
+	 * @param options - Pagination parameters with optional filters.
+	 * @returns A promise that resolves with the paginated result of organization projects.
 	 */
 	public async pagination(
 		options?: PaginationParams<OrganizationProject>
 	): Promise<IPagination<OrganizationProject>> {
-		if ('where' in options) {
-			const { where } = options;
-			if (where.tags) {
-				options.where.tags = {
-					id: In(where.tags as string[])
-				};
-			}
+		// Check if there is a `where` clause and handle the `tags` filter
+		if (options?.where?.tags) {
+			options.where.tags = {
+				id: In(options.where.tags as string[])
+			};
 		}
-		return await super.paginate(options);
+
+		// Call the parent class's paginate method with the modified options
+		return super.paginate(options);
 	}
 
 	/**
@@ -435,6 +463,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 					isArchived: false
 				}
 			});
+
+			// Return the projects
 			return projects;
 		} catch (error) {
 			return [];
@@ -538,5 +568,58 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		// Execute the query and return the paginated result
 		const [items, total] = await query.getManyAndCount();
 		return { items, total };
+	}
+
+	async updateByEmployee(input: IOrganizationProjectEditByEmployeeInput) {
+		try {
+			const { organizationId, addedProjectIds = [], removedProjectIds = [], member } = input;
+
+			// Handle adding projects
+			if (addedProjectIds.length > 0) {
+				const projectsToAdd = await this.find({
+					where: {
+						id: In(addedProjectIds),
+						organizationId
+					},
+					relations: {
+						members: true
+					}
+				});
+
+				const updatedProjectsToAdd = projectsToAdd.map((project) => {
+					const existingMembers = project.members || [];
+
+					// Verify if member already exists on project
+					const isMemberAlreadyInProject = existingMembers.some(
+						(existingMember) => existingMember.employeeId === member.employeeId
+					);
+
+					if (!isMemberAlreadyInProject) {
+						return {
+							...project,
+							members: [...existingMembers, { ...member, organizationProjectId: project.id }]
+						};
+					}
+
+					return project; // If member already assigned to project, no change needed
+				});
+
+				// save updated projects
+				await Promise.all(updatedProjectsToAdd.map(async (project) => await this.save(project)));
+			}
+
+			// Handle removing projects
+			if (removedProjectIds.length > 0) {
+				await this.typeOrmOrganizationProjectEmployeeRepository.delete({
+					organizationProjectId: In(removedProjectIds),
+					employeeId: member.employeeId
+				});
+			}
+
+			return true;
+		} catch (error) {
+			console.error('Error while updating project by member:', error);
+			throw new BadRequestException(error);
+		}
 	}
 }

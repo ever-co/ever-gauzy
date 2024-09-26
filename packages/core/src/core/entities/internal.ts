@@ -148,6 +148,7 @@ export * from '../../warehouse/warehouse-product.entity';
 export * from '../../warehouse/warehouse.entity';
 
 //core subscribers
+export * from '../../activity-log/activity-log.subscriber';
 export * from '../../candidate/candidate.subscriber';
 export * from '../../custom-smtp/custom-smtp.subscriber';
 export * from '../../email-reset/email-reset.subscriber';

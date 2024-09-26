@@ -437,7 +437,9 @@ export class TimeTrackerService {
 				params: {
 					tenantId: values.tenantId,
 					organizationId: values.organizationId,
-					relations: ['employee', 'employee.user']
+					relations: ['employee', 'employee.user'],
+					todayStart: TimeTrackerDateManager.startToday,
+					todayEnd: TimeTrackerDateManager.endToday
 				}
 			})
 		);

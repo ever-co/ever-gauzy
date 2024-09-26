@@ -14,5 +14,6 @@ export class TaskCacheService extends AbstractCacheService<ITask[]> {
 	) {
 		super(_storageService, _store);
 		this.prefix = TaskCacheService.name.toString();
+		this.duration = 24 * 3600 * 1000; // 1 day
 	}
 }

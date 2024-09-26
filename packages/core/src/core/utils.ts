@@ -306,32 +306,27 @@ export function freshTimestamp(): Date {
 }
 
 /**
- * Function that performs the date range validation
+ * Validates the date range between startedAt and stoppedAt.
  *
- * @param startedAt
- * @param stoppedAt
- * @returns
+ * @param startedAt The start date of the range.
+ * @param stoppedAt The end date of the range.
+ * @throws BadRequestException if the dates are invalid or if the stoppedAt date is before the startedAt date.
  */
 export function validateDateRange(startedAt: Date, stoppedAt: Date): void {
-	try {
-		const start = moment(startedAt);
-		const end = moment(stoppedAt);
+	const start = moment(startedAt);
+	const end = moment(stoppedAt);
 
-		console.log('------ Stopped Timer ------', start.toDate(), end.toDate());
+	console.log('------ Stopped Timer ------', start.toDate(), end.toDate());
 
-		if (!start.isValid() || !end.isValid()) {
-			throw 'Started and Stopped date must be valid date.';
-			// If either start or end date is invalid, return without throwing an exception
-		}
+	if (!start.isValid() || !end.isValid()) {
+		throw new BadRequestException('Started and Stopped date must be valid dates.');
+	}
 
-		if (end.isBefore(start)) {
-			throw 'Stopped date must be greater than started date.';
-		}
-	} catch (error) {
-		// If any error occurs during date validation, throw a BadRequestException
-		throw new BadRequestException(error);
+	if (end.isBefore(start)) {
+		throw new BadRequestException('Stopped date must be greater than the started date.');
 	}
 }
+
 
 /**
  * Function that returns intersection of 2 arrays
@@ -474,8 +469,8 @@ export const flatten = (input: any): any => {
 					const newKey = Array.isArray(value)
 						? key
 						: nestedKeys.length > 0
-						? `${key}.${nestedKeys.join('.')}`
-						: key;
+							? `${key}.${nestedKeys.join('.')}`
+							: key;
 					return acc.concat(newKey);
 				}
 			}, []) || []
@@ -693,6 +688,32 @@ export function convertTypeORMWhereToMikroORM<T>(where: MikroFilterQuery<T>) {
 export function wrapSerialize<T extends object>(entity: T): T {
 	// If using MikroORM, use wrap(entity).toJSON() for serialization
 	return wrap(entity).toJSON() as T;
+}
+
+/**
+ * Converts the given entity instance to a plain object.
+ *
+ * This function creates a shallow copy of the entity, retaining its properties as a plain object,
+ * making it suitable for use in contexts where a non-class representation is required.
+ *
+ * @param entity - The entity instance to be converted to a plain object.
+ * @returns A plain object representation of the given entity instance.
+ */
+export function toPlain(entity: any): Record<string, any> {
+	return { ...entity };
+}
+
+/**
+ * Converts the given entity instance to a JSON object.
+ *
+ * This function creates a deep copy of the entity, converting it into a JSON-compatible structure,
+ * making it suitable for serialization or transferring over a network.
+ *
+ * @param entity - The entity instance to be converted to a JSON object.
+ * @returns A JSON representation of the given entity instance.
+ */
+export function toJSON(entity: any): Record<string, any> {
+	return JSON.parse(JSON.stringify(toPlain(entity)));
 }
 
 /**
