@@ -14,8 +14,11 @@ nb-card {
 		overflow: unset;
 
 		.smart-table {
+			position: absolute;
+			height: calc(100% - 3.875rem);
+			width: calc(100% - 1.875rem);
+			z-index: 1050;
 			border-radius: var(--border-radius);
-			height: 100%;
 		}
 	}
 }
