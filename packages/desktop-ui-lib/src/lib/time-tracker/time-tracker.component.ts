@@ -1535,7 +1535,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				// Stop loading
 				this.loading = false;
 				/*
-					Start networtk processing...
+					Start network processing...
 				*/
 				// Make sure it's not a remote timer
 				if (!this.isRemoteTimer) {
