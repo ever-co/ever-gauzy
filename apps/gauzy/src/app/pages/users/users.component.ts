@@ -529,8 +529,6 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 	 * @returns An object containing mapped employee properties.
 	 */
 	private employeeMapper(employee: IEmployee): any {
-		console.log(employee);
-
 		if (!employee) {
 			return {};
 		}
