@@ -105,8 +105,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			// Construct the base where clause for querying employees by user IDs
 			const whereClause = {
 				userId: In(userIds), // Find employees with matching user IDs
-				isActive: true, // Only active employees
-				isArchived: false, // Exclude archived employees
+				// isActive: true, // Only active employees
+				// isArchived: false, // Exclude archived employees
 				...(tenantId && { tenantId }) // Include tenant ID if available
 			};
 
