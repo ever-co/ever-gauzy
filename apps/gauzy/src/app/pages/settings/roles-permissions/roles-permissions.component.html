@@ -27,10 +27,7 @@
 							></nb-icon>
 						</button>
 					</nb-form-field>
-					<nb-autocomplete
-						#autocomplete
-						(selectedChange)="onSelectionChange($event)"
-					>
+					<nb-autocomplete #autocomplete (selectedChange)="onSelectionChange($event)">
 						<nb-option
 							*ngFor="let role of roles$ | async"
 							[value]="role.name"
@@ -41,10 +38,7 @@
 					</nb-autocomplete>
 				</div>
 			</div>
-			<div
-				class="col-6"
-				*ngxPermissionsOnly="['CHANGE_ROLES_PERMISSIONS']"
-			>
+			<div class="col-6" *ngxPermissionsOnly="['CHANGE_ROLES_PERMISSIONS']">
 				<ng-container *ngIf="isWantToCreate">
 					<div class="actions create">
 						<button
@@ -59,9 +53,7 @@
 						{{ 'BUTTONS.CREATE_NEW_ROLE' | translate : { name: input.value } }}
 					</div>
 				</ng-container>
-				<ng-container
-					*ngIf="role && role.isSystem === false && !isWantToCreate"
-				>
+				<ng-container *ngIf="role && role.isSystem === false && !isWantToCreate">
 					<div class="actions delete">
 						<button
 							nbButton
@@ -71,10 +63,7 @@
 							size="small"
 							[nbTooltip]="'BUTTONS.DELETE' | translate"
 						>
-							<nb-icon
-								status="danger"
-								icon="trash-2-outline"
-							></nb-icon>
+							<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 						</button>
 						{{ 'BUTTONS.DELETE_EXISTING_ROLE' | translate : { name: role.name } }}
 					</div>
@@ -85,35 +74,20 @@
 			<div class="col-12 col-xl-6">
 				<nb-card>
 					<nb-card-header>
-						{{
-							'ORGANIZATIONS_PAGE.PERMISSIONS.GROUPS.GENERAL'
-								| translate
-						}}
+						{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.GROUPS.GENERAL' | translate }}
 					</nb-card-header>
 					<nb-card-body class="permission-items-col">
 						<nb-toggle
 							*ngFor="let permission of permissionGroups.GENERAL"
 							[(checked)]="enabledPermissions[permission]"
-							(checkedChange)="
-								permissionChanged(
-									permission,
-									$event,
-									!isDisabledGeneralPermissions()
-								)
-							"
+							(checkedChange)="permissionChanged(permission, $event, !isDisabledGeneralPermissions())"
 							labelPosition="start"
 							status="basic"
 							[disabled]="isDisabledGeneralPermissions()"
 						>
 							<div class="custom-permission-view">
-								<strong>{{
-									'ORGANIZATIONS_PAGE.PERMISSIONS.' +
-										permission | translate
-								}}</strong>
-								<small>{{
-									'ORGANIZATIONS_PAGE.PERMISSIONS.' +
-										permission | translate
-								}}</small>
+								<strong>{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}</strong>
+								<small>{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}</small>
 							</div>
 						</nb-toggle>
 					</nb-card-body>
@@ -122,15 +96,9 @@
 			<div class="col-12 col-xl-6">
 				<nb-card>
 					<nb-card-header
-						>{{
-							'ORGANIZATIONS_PAGE.PERMISSIONS.GROUPS.ADMINISTRATION'
-								| translate
-						}}
+						>{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.GROUPS.ADMINISTRATION' | translate }}
 						<nb-icon
-							[nbTooltip]="
-								'ORGANIZATIONS_PAGE.PERMISSIONS.ONLY_ADMIN'
-									| translate
-							"
+							[nbTooltip]="'ORGANIZATIONS_PAGE.PERMISSIONS.ONLY_ADMIN' | translate"
 							icon="question-mark-circle-outline"
 							size="tiny"
 						>
@@ -138,30 +106,18 @@
 					</nb-card-header>
 					<nb-card-body class="permission-items-col">
 						<nb-toggle
-							*ngFor="
-								let permission of getAdministrationPermissions()
-							"
+							*ngFor="let permission of getAdministrationPermissions()"
 							[(checked)]="enabledPermissions[permission]"
 							(checkedChange)="
-								permissionChanged(
-									permission,
-									$event,
-									!isDisabledAdministrationPermissions()
-								)
+								permissionChanged(permission, $event, !isDisabledAdministrationPermissions())
 							"
 							labelPosition="start"
 							status="basic"
 							[disabled]="isDisabledAdministrationPermissions()"
 						>
 							<div class="custom-permission-view">
-								<strong>{{
-									'ORGANIZATIONS_PAGE.PERMISSIONS.' +
-										permission | translate
-								}}</strong>
-								<small>{{
-									'ORGANIZATIONS_PAGE.PERMISSIONS.' +
-										permission | translate
-								}}</small>
+								<strong>{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}</strong>
+								<small>{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}</small>
 							</div>
 						</nb-toggle>
 					</nb-card-body>

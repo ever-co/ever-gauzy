@@ -145,9 +145,16 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 				})
 				.finally(() => (this.loading = false))
 		).items;
-
+		console.log(this.permissions[0].enabled);
 		this.permissions.forEach((p) => {
-			this.enabledPermissions[p.permission] = p.enabled;
+			// Vérification si la permission existe déjà dans l'objet
+			if (this.enabledPermissions.hasOwnProperty(p.permission)) {
+				// Log des doublons rencontrés
+				console.log(`Doublon détecté pour la permission: ${p.permission}`);
+			} else {
+				// Si la permission n'existe pas, on l'ajoute
+				this.enabledPermissions[p.permission] = p.enabled;
+			}
 		});
 	}
 
