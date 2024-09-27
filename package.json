@@ -331,7 +331,7 @@
 		"@ng-select/ng-select": "^11.2.0",
 		"angular2-smart-table": "^3.2.0",
 		"autoprefixer": "10.4.14",
-		"bcrypt": "^5.1.1",
+		"bcrypt": "^5.1.0",
 		"camelcase": "^6.3.0",
 		"dotenv": "^16.0.3",
 		"ffi-napi": "^4.0.3",
