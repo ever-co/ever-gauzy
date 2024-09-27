@@ -348,7 +348,7 @@ export class UpworkService {
 					engagement_end_date,
 					active_milestone
 				}) => {
-					const payload = {
+					const input = {
 						name,
 						organizationId,
 						public: true,
@@ -356,18 +356,18 @@ export class UpworkService {
 					};
 
 					if (isObject(active_milestone)) {
-						payload['billing'] = ProjectBillingEnum.MILESTONES;
+						input['billing'] = ProjectBillingEnum.MILESTONES;
 					} else {
-						payload['billing'] = ProjectBillingEnum.RATE;
+						input['billing'] = ProjectBillingEnum.RATE;
 					}
 
 					// contract start date
 					if (typeof engagement_start_date === 'string' && engagement_start_date.length > 0) {
-						payload['startDate'] = new Date(unixTimestampToDate(engagement_start_date));
+						input['startDate'] = new Date(unixTimestampToDate(engagement_start_date));
 					}
 					// contract end date
 					if (typeof engagement_end_date === 'string' && engagement_end_date.length > 0) {
-						payload['endDate'] = new Date(unixTimestampToDate(engagement_end_date));
+						input['endDate'] = new Date(unixTimestampToDate(engagement_end_date));
 					}
 
 					const tenantId = RequestContext.currentTenantId();
@@ -382,16 +382,12 @@ export class UpworkService {
 					//if project already integrated then only update model/entity
 					if (integrationMap) {
 						await this._commandBus.execute(
-							new OrganizationProjectUpdateCommand(
-								Object.assign(payload, {
-									id: integrationMap.gauzyId
-								})
-							)
+							new OrganizationProjectUpdateCommand(integrationMap.gauzyId, input)
 						);
 						return integrationMap;
 					}
 					const project = await this._commandBus.execute(
-						new OrganizationProjectCreateCommand(Object.assign({}, payload))
+						new OrganizationProjectCreateCommand(Object.assign({}, input))
 					);
 					return await this._commandBus.execute(
 						new IntegrationMapSyncEntityCommand({

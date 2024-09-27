@@ -32,6 +32,7 @@ export class ProjectSelectorService extends SelectorService<IOrganizationProject
 
 	public async addProject(name: IOrganizationProject['name']): Promise<void> {
 		try {
+			this.projectSelectorStore.setLoading(true);
 			const { tenantId, user } = this.store;
 			const organizationId = this.store.organizationId;
 			const request = {
@@ -49,14 +50,23 @@ export class ProjectSelectorService extends SelectorService<IOrganizationProject
 			const project = await this.timeTrackerService.createNewProject(request, user);
 			this.projectSelectorStore.appendData(project);
 			this.toastrNotifier.success(this.translateService.instant('TIMER_TRACKER.TOASTR.PROJECT_ADDED'));
+			this.projectSelectorStore.setError(null);
 		} catch (error) {
 			console.error(error);
+			this.projectSelectorStore.setError(error);
+		} finally {
+			this.projectSelectorStore.setLoading(false);
 		}
 	}
 
-	public async load(): Promise<void> {
+	public async load(options?: {
+		searchTerm?: string;
+		organizationContactId?: string;
+		organizationTeamId?: string;
+	}): Promise<void> {
 		try {
 			this.projectSelectorStore.setLoading(true);
+			const { searchTerm: name } = options || {};
 			const {
 				organizationId,
 				tenantId,
@@ -68,11 +78,15 @@ export class ProjectSelectorService extends SelectorService<IOrganizationProject
 				organizationId,
 				tenantId,
 				employeeId,
+				name,
 				organizationContactId: this.clientSelectorQuery.selectedId,
-				organizationTeamId: this.teamSelectorQuery.selectedId
+				organizationTeamId: this.teamSelectorQuery.selectedId,
+				skip: this.projectSelectorQuery.page,
+				take: this.projectSelectorQuery.limit,
+				...options
 			};
-			const data = await this.timeTrackerService.getProjects(request);
-			this.projectSelectorStore.updateData(data);
+			const { items: data, total } = await this.timeTrackerService.getPaginatedProjects(request);
+			this.projectSelectorStore.updateInfiniteList({ data, total });
 			this.projectSelectorStore.setError(null);
 		} catch (error) {
 			this.toastrNotifier.error(error.message || 'An error occurred while fetching projects.');

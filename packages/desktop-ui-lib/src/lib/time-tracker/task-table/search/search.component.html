@@ -3,7 +3,6 @@
 	<input
 		#search
 		[value]="searchTerm$ | async"
-		(keydown.enter)="onSearch(search?.value)"
 		[disabled]="disabled$ | async"
 		[placeholder]="'TIMER_TRACKER.SEARCH' | translate"
 		fullWidth

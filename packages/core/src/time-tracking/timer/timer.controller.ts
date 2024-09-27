@@ -1,10 +1,10 @@
 import { Controller, UseGuards, HttpStatus, Post, Body, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ITimeLog, ITimerStatus, PermissionsEnum } from '@gauzy/contracts';
-import { TimerService } from './timer.service';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { Permissions } from './../../shared/decorators';
 import { UseValidationPipe } from '../../shared/pipes';
+import { TimerService } from './timer.service';
 import { StartTimerDTO, StopTimerDTO, TimerStatusQueryDTO } from './dto';
 
 @ApiTags('Timer Tracker')
@@ -77,7 +77,6 @@ export class TimerController {
 	@Post('/start')
 	@UseValidationPipe()
 	async startTimer(@Body() entity: StartTimerDTO): Promise<ITimeLog> {
-		console.log('----------------------------------Start Timer----------------------------------', entity);
 		return await this.timerService.startTimer(entity);
 	}
 
@@ -98,7 +97,6 @@ export class TimerController {
 	@Post('/stop')
 	@UseValidationPipe()
 	async stopTimer(@Body() entity: StopTimerDTO): Promise<ITimeLog | null> {
-		console.log('----------------------------------Stop Timer----------------------------------', entity);
 		return await this.timerService.stopTimer(entity);
 	}
 }

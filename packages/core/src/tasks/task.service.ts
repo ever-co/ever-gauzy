@@ -502,4 +502,115 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			throw new BadRequestException(error);
 		}
 	}
+
+	/**
+	 * Retrieves module tasks based on the provided options.
+	 *
+	 * @param {PaginationParams<Task>} options - The pagination options and filters for querying tasks.
+	 * @returns {Promise<IPagination<ITask>>} A promise that resolves with pagination task items and total count.
+	 */
+	async findModuleTasks(options: PaginationParams<Task>): Promise<IPagination<ITask>> {
+		try {
+			const { where } = options;
+			const {
+				status,
+				modules = [],
+				title,
+				prefix,
+				isDraft,
+				organizationSprintId = null,
+				organizationId,
+				projectId,
+				members
+			} = where;
+			const tenantId = RequestContext.currentTenantId() || where?.tenantId;
+			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+
+			// Initialize the query
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+			query.leftJoin(`${query.alias}.modules`, 'modules');
+
+			// Apply find options if provided
+			if (isNotEmpty(options)) {
+				query.setFindOptions({
+					...(options.select && { select: options.select }),
+					...(options.relations && { relations: options.relations }),
+					...(options.order && { order: options.order })
+				});
+			}
+
+			// Filter by project_module_task with a subquery
+			query.andWhere((qb: SelectQueryBuilder<Task>) => {
+				const subQuery = qb
+					.subQuery()
+					.select(p('"pmt"."taskId"')) // Use the alias 'pmt' here
+					.from(p('project_module_task'), 'pmt') // Assign alias 'pmt' to project_module_task
+					.leftJoin(
+						'project_module_employee',
+						'pme',
+						p('"pme"."organizationProjectModuleId" = "pmt"."organizationProjectModuleId"')
+					);
+
+				// Retrieve the employee ID based on the permission
+				const employeeId = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+					? members?.['id']
+					: RequestContext.currentEmployeeId();
+
+				if (isNotEmpty(employeeId)) {
+					subQuery.andWhere(p('"pme"."employeeId" = :employeeId'), { employeeId });
+				}
+				if (isNotEmpty(modules)) {
+					subQuery.andWhere(p(`"pmt"."organizationProjectModuleId" IN (:...modules)`), { modules });
+				}
+
+				return p(`"project_module_tasks"."taskId" IN `) + subQuery.distinct(true).getQuery();
+			});
+
+			// Add organization and tenant filters
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+				})
+			);
+
+			// Filter by projectId and modules
+			if (isNotEmpty(projectId)) {
+				query.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => {
+						if (isEmpty(modules)) {
+							qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
+						}
+					})
+				);
+			}
+
+			// Add additional filters (status, draft, title, etc.)
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					if (isNotEmpty(status)) {
+						qb.andWhere(p(`"${query.alias}"."status" = :status`), { status });
+					}
+					if (isNotEmpty(isDraft)) {
+						qb.andWhere(p(`"${query.alias}"."isDraft" = :isDraft`), { isDraft });
+					}
+					if (isNotEmpty(title)) {
+						qb.andWhere(p(`"${query.alias}"."title" ${likeOperator} :title`), { title: `%${title}%` });
+					}
+					if (isNotEmpty(prefix)) {
+						qb.andWhere(p(`"${query.alias}"."prefix" ${likeOperator} :prefix`), { prefix: `%${prefix}%` });
+					}
+					if (!isUUID(organizationSprintId)) {
+						qb.andWhere(p(`"${query.alias}"."organizationSprintId" IS NULL`));
+					}
+				})
+			);
+
+			const [items, total] = await query.getManyAndCount();
+			return { items, total };
+		} catch (error) {
+			console.log('Error while retrieving module tasks', error);
+			throw new BadRequestException(error);
+		}
+	}
 }

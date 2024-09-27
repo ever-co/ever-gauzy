@@ -26,7 +26,6 @@ export class TaskSizeSubscriber extends BaseEntityEventSubscriber<TaskSize> {
 		try {
 			// Update the fullIconUrl if an icon property is present
 			if (Object.prototype.hasOwnProperty.call(entity, 'icon')) {
-				console.log('TaskSize: Setting fullIconUrl for task size ID ' + entity.id);
 				await this.setFullIconUrl(entity);
 			}
 		} catch (error) {

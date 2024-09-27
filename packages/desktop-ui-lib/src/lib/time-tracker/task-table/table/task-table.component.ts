@@ -4,7 +4,7 @@ import { ITask, ITaskStatus, ITaskUpdateInput, TaskStatusEnum } from '@gauzy/con
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
-import { combineLatest, concatMap, tap } from 'rxjs';
+import { combineLatest, concatMap, Observable, tap } from 'rxjs';
 import { TaskTableStore } from '../+state/task-table.store';
 import { API_PREFIX } from '../../../constants';
 import { ElectronService } from '../../../electron/services';
@@ -20,6 +20,7 @@ import { TaskStatusComponent } from '../../task-render/task-status/task-status.c
 import { TimeTrackerService } from '../../time-tracker.service';
 import { ActionButtonStore } from '../action-button/+state/action-button.store';
 import { SearchTermQuery } from '../search/+state/search-term.query';
+import { SearchTermStore } from '../search/+state/search-term.store';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -31,6 +32,7 @@ export class TaskTableComponent implements OnInit, AfterViewInit {
 	private _smartTable: Angular2SmartTableComponent;
 	public smartTableSource: CachedServerDataSource;
 	public smartTableSettings: any;
+	public loading$!: Observable<boolean>;
 
 	@ViewChild('smartTable')
 	public set smartTable(content: Angular2SmartTableComponent) {
@@ -55,6 +57,7 @@ export class TaskTableComponent implements OnInit, AfterViewInit {
 		private readonly projectSelectorService: ProjectSelectorService,
 		private readonly actionButtonStore: ActionButtonStore,
 		private readonly searchTermQuery: SearchTermQuery,
+		private readonly searchTermStore: SearchTermStore,
 		private readonly taskCacheService: TaskCacheService,
 		private readonly store: Store
 	) {}
@@ -78,6 +81,11 @@ export class TaskTableComponent implements OnInit, AfterViewInit {
 			this.loadSmartTableSettings();
 		});
 		this.onChangedSource();
+		this.monitorLoadingState();
+	}
+
+	private monitorLoadingState(): void {
+		this.loading$ = this.smartTableSource.loading$;
 	}
 
 	public refreshTimer(): void {
@@ -213,16 +221,19 @@ export class TaskTableComponent implements OnInit, AfterViewInit {
 		}
 
 		// Prepare request parameters for filtering
+		const { selectedId: projectId } = this.projectSelectorService;
+		const { selectedId: teamId } = this.teamSelectorService;
+		const { value: searchTerm } = this.searchTermQuery;
+
 		const requestFilters = {
 			tenantId,
 			organizationId,
-			...(this.projectSelectorService.selectedId && { projectId: this.projectSelectorService.selectedId }),
-			...(this.teamSelectorService.selectedId && { teams: [this.teamSelectorService.selectedId] }),
-			members: { id: employeeId },
-			...(this.searchTermQuery.value && {
-				title: this.searchTermQuery.value,
-				prefix: this.searchTermQuery.value
-			})
+			...(projectId && { projectId }),
+			...(teamId && { teams: [teamId] }),
+			...(searchTerm && {
+				title: searchTerm
+			}),
+			members: { id: employeeId }
 		};
 
 		// Initialize the smart table data source
