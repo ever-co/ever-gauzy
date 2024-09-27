@@ -2,9 +2,7 @@ import { Controller, UseGuards, HttpStatus, Post, Body, UseInterceptors, Delete,
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { isUUID } from 'class-validator';
 import * as path from 'path';
-import * as moment from 'moment';
 import * as fs from 'fs';
-import { v4 as uuid } from 'uuid';
 import * as Jimp from 'jimp';
 import { IScreenshot, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { EventBus } from '../../event-bus/event-bus';
@@ -20,6 +18,7 @@ import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { DeleteQueryDTO } from './../../shared/dto';
 import { Screenshot } from './screenshot.entity';
 import { ScreenshotService } from './screenshot.service';
+import { createFileStorage } from './screenshot.helper';
 
 @ApiTags('Screenshot')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -29,40 +28,32 @@ export class ScreenshotController {
 	constructor(private readonly _screenshotService: ScreenshotService, private readonly _eventBus: EventBus) {}
 
 	/**
-	 * Create start/stop screenshot.
+	 * Capture a start/stop screenshot
+	 *
 	 * @param input The screenshot input data.
 	 * @param file The uploaded file data.
 	 * @returns The created screenshot entity.
 	 */
-	@ApiOperation({ summary: 'Create start/stop screenshot.' })
+	@ApiOperation({
+		summary: 'Capture a start/stop screenshot',
+		description:
+			'Captures a screenshot when the timer is started or stopped. This API allows uploading the screenshot file along with related metadata.'
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'The screenshot has been successfully captured.'
+		description: 'Screenshot captured successfully.',
+		type: Screenshot
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input provided. Check the response body for error details.'
 	})
 	@Post()
 	@UseInterceptors(
 		// Use LazyFileInterceptor for handling file uploads with custom storage settings
 		LazyFileInterceptor('file', {
 			// Define storage settings for uploaded files
-			storage: () => {
-				// Define the base directory for storing screenshots
-				const baseDirectory = path.join('screenshots', moment().format('YYYY/MM/DD'));
-
-				// Generate unique sub directories based on the current tenant and employee IDs
-				const subDirectory = path.join(
-					RequestContext.currentTenantId() || uuid(),
-					RequestContext.currentEmployeeId() || uuid()
-				);
-
-				return new FileStorage().storage({
-					dest: () => path.join(baseDirectory, subDirectory),
-					prefix: 'screenshots'
-				});
-			}
+			storage: () => createFileStorage()
 		})
 	)
 	async create(@Body() input: Screenshot, @UploadedFileStorage() file: UploadedFile) {
@@ -71,16 +62,16 @@ export class ScreenshotController {
 			return;
 		}
 
-		console.log('Screenshot Http Request Input: ', { input });
+		console.log('Screenshot request input:', input);
 
 		// Extract user information from the request context
 		const user = RequestContext.currentUser();
+		// Extract necessary properties from the request body
+		const tenantId = RequestContext.currentTenantId() || input.tenantId;
+		const organizationId = input.organizationId;
+		const userId = RequestContext.currentUserId();
 
 		try {
-			// Extract necessary properties from the request body
-			const { organizationId } = input;
-			const tenantId = RequestContext.currentTenantId() || input.tenantId;
-
 			// Initialize file storage provider and process thumbnail
 			const provider = new FileStorage().getProvider();
 
@@ -127,17 +118,15 @@ export class ScreenshotController {
 
 			// Populate entity properties for the screenshot
 			const entity = new Screenshot({
-				organizationId: organizationId,
-				tenantId: tenantId,
-				userId: RequestContext.currentUserId(),
+				organizationId,
+				tenantId,
+				userId,
 				file: file.key,
 				thumb: thumb.key,
 				storageProvider: provider.name.toUpperCase(),
 				timeSlotId: isUUID(input.timeSlotId) ? input.timeSlotId : null,
 				recordedAt: input.recordedAt ? input.recordedAt : new Date()
 			});
-
-			console.log(`Screenshot entity for employee (${user.name})`, { entity });
 
 			// Create the screenshot entity in the database
 			const screenshot = await this._screenshotService.create(entity);

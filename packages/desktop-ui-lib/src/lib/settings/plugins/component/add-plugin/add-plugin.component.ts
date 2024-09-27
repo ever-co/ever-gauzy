@@ -16,8 +16,19 @@ export class AddPluginComponent implements OnInit {
 	private readonly dialogRef = inject(NbDialogRef<AddPluginComponent>);
 	private readonly ngZone = inject(NgZone);
 	public installing = false;
-	public error = '';
-	public context = '';
+	public error = null;
+	public context = 'local';
+	public showRegistry = false;
+	public npmModel = {
+		pkg: {
+			name: null,
+			version: null
+		},
+		registry: {
+			privateURL: null,
+			authToken: null
+		}
+	};
 
 	ngOnInit(): void {
 		this.pluginElectronService.status
@@ -37,12 +48,11 @@ export class AddPluginComponent implements OnInit {
 		switch (notification.status) {
 			case 'success':
 				this.installing = false;
-				this.context = '';
+				this.context = 'local';
 				this.close();
 				break;
 			case 'error':
 				this.installing = false;
-				this.context = '';
 				this.error = notification.message;
 				break;
 			case 'inProgress':
@@ -70,12 +80,26 @@ export class AddPluginComponent implements OnInit {
 		this.pluginElectronService.downloadAndInstall({ contextType: 'local' });
 	}
 
+	public handleUnmaskedValueChange(authToken: string) {
+		this.npmModel.registry.authToken = authToken;
+	}
+
+	public installPluginFromNPM() {
+		this.installing = true;
+		this.context = 'npm';
+		this.pluginElectronService.downloadAndInstall({ ...this.npmModel, contextType: 'npm' });
+	}
+
 	public close() {
 		this.dialogRef.close();
 	}
 
 	public reset() {
-		this.context = '';
-		this.error = '';
+		this.context = 'local';
+		this.error = null;
+	}
+
+	public toggleRegistry(enabled: boolean) {
+		this.showRegistry = enabled;
 	}
 }

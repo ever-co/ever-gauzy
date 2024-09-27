@@ -101,7 +101,7 @@ export class TaskSelectorService extends SelectorService<ITask> {
 		}
 	}
 
-	private merge(tasks: ITask[], statistics: ITasksStatistics[]): (ITask & ITasksStatistics)[] {
+	public merge(tasks: ITask[], statistics: ITasksStatistics[]): (ITask & ITasksStatistics)[] {
 		let arr: (ITask & ITasksStatistics)[] = [];
 		arr = arr.concat(statistics, tasks);
 		return arr.reduce((result, current) => {

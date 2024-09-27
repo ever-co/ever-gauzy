@@ -1,6 +1,5 @@
-import { Component, EventEmitter, Input, OnInit, Output, Inject } from '@angular/core';
+import { Component, EventEmitter, Inject, Input, OnInit, Output } from '@angular/core';
 import { FormControl, UntypedFormGroup, Validators } from '@angular/forms';
-import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import {
 	IEmployee,
 	IOrganizationContact,
@@ -16,13 +15,17 @@ import {
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
-import * as moment from 'moment';
-import { TranslateService } from '@ngx-translate/core';
-import { CkEditorConfig, ColorAdapter } from '../utils';
-import { Store, TagService } from '../services';
-import { GAUZY_ENV } from '../constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { tap, from, Observable, map } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
+import * as moment from 'moment';
+import { concatMap, from, map, Observable, tap } from 'rxjs';
+import { GAUZY_ENV } from '../constants';
+import { Store, TagService } from '../services';
+import { ClientSelectorService } from '../shared/features/client-selector/+state/client-selector.service';
+import { ProjectSelectorService } from '../shared/features/project-selector/+state/project-selector.service';
+import { TeamSelectorService } from '../shared/features/team-selector/+state/team-selector.service';
+import { TimeTrackerService } from '../time-tracker/time-tracker.service';
+import { CkEditorConfig, ColorAdapter } from '../utils';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -31,13 +34,17 @@ import { tap, from, Observable, map } from 'rxjs';
 	styleUrls: ['./tasks.component.scss']
 })
 export class TasksComponent implements OnInit {
-	@Input() userData: IUserOrganization;
-	@Input() employee: IEmployee;
-	@Input() hasProjectPermission: boolean;
+	@Input() userData: IUserOrganization = this.store.user as any;
+	@Input() employee: IEmployee = this.store.user.employee;
+	@Input() hasProjectPermission: boolean = this.projectSelectorService.hasPermission;
 	@Input() selected: {
 		projectId: IOrganizationProject['id'];
 		teamId: IOrganizationTeam['id'];
 		contactId: IOrganizationContact['id'];
+	} = {
+		projectId: this.projectSelectorService.selectedId,
+		teamId: this.teamSelectorService.selectedId,
+		contactId: this.clientSelectorService.selectedId
 	};
 	@Output() isAddTask: EventEmitter<boolean> = new EventEmitter();
 	@Output() newTaskCallback: EventEmitter<{
@@ -93,20 +100,43 @@ export class TasksComponent implements OnInit {
 		private readonly _environment: any,
 		private store: Store,
 		private _dialogRef: NbDialogRef<TasksComponent>,
-		private _tagService: TagService
+		private _tagService: TagService,
+		private readonly clientSelectorService: ClientSelectorService,
+		private readonly teamSelectorService: TeamSelectorService,
+		private readonly projectSelectorService: ProjectSelectorService
 	) {
 		this.isSaving = false;
 	}
 
-	private async _projects(user: IUserOrganization): Promise<void> {
+	private async _projects(value?: {
+		organizationContactId?: string;
+		organizationTeamId?: string;
+		projectId?: string;
+	}): Promise<void> {
 		try {
-			this.projects = await this.timeTrackerService.getProjects({
-				organizationContactId: this.selected.contactId,
-				organizationTeamId: this.selected.teamId,
-				...user
-			});
+			const { organizationId, user, tenantId } = this.store;
+			const employeeId = user?.employee?.id;
+
+			if (!employeeId) {
+				throw new Error('Employee ID is missing.');
+			}
+
+			const filterParams = {
+				organizationId,
+				tenantId,
+				employeeId,
+				...(value?.organizationContactId && { organizationContactId: value.organizationContactId }),
+				...(value?.organizationTeamId && { organizationTeamId: value.organizationTeamId })
+			};
+
+			this.projects = await this.timeTrackerService.getProjects(filterParams);
+
+			// Clear the form's projectId if the selected project does not exist in the fetched list
+			if (value?.projectId && !this.projects.some(({ id }) => id === value.projectId)) {
+				this.form.patchValue({ projectId: null });
+			}
 		} catch (error) {
-			console.error('[error]', "can't get employee project::" + error.message);
+			console.error('[Projects Fetch Error]', `Unable to fetch employee projects: ${error.message}`);
 		}
 	}
 
@@ -118,18 +148,22 @@ export class TasksComponent implements OnInit {
 		}
 	}
 
-	private async _employees(user: IUserOrganization): Promise<void> {
+	private async _employees(): Promise<void> {
 		try {
-			const employee = await this.timeTrackerService.getEmployees(user);
+			const { organizationId, user, tenantId } = this.store;
+			const employeeId = user.employee.id;
+			const employee = await this.timeTrackerService.getEmployees({ employeeId, organizationId, tenantId });
 			this.employees = [employee];
 		} catch (error) {
 			console.error('[error]', 'while get employees::' + error.message);
 		}
 	}
 
-	private async _clients(user: IUserOrganization): Promise<void> {
+	private async _clients(): Promise<void> {
 		try {
-			this.contacts = await this.timeTrackerService.getClient(user);
+			const { organizationId, user, tenantId } = this.store;
+			const employeeId = user.employee.id;
+			this.contacts = await this.timeTrackerService.getClient({ organizationId, employeeId, tenantId });
 		} catch (error) {
 			console.error('[error]', 'while get contacts::' + error.message);
 		}
@@ -167,14 +201,15 @@ export class TasksComponent implements OnInit {
 	}
 
 	ngOnInit() {
+		const { organizationId, tenantId } = this.store;
 		this.editorConfig.editorplaceholder = this.translate.instant('FORM.PLACEHOLDERS.DESCRIPTION');
 		this.taskStatuses = this.store.statuses;
 		from(
 			Promise.allSettled([
-				this._projects(this.userData),
+				this._projects(),
 				this._tags(),
-				this._employees(this.userData),
-				this._clients(this.userData),
+				this._employees(),
+				this._clients(),
 				this._teams(),
 				this._sizes(),
 				this._priorities()
@@ -194,7 +229,7 @@ export class TasksComponent implements OnInit {
 			estimateHours: new FormControl(null, [Validators.min(0), Validators.max(23)]),
 			estimateMinutes: new FormControl(null, [Validators.min(0), Validators.max(59)]),
 			members: new FormControl([]),
-			organizationId: new FormControl(this.userData.organizationId),
+			organizationId: new FormControl(organizationId),
 			project: new FormControl(null),
 			projectId: new FormControl(this.selected.projectId),
 			status: new FormControl(TaskStatusEnum.OPEN),
@@ -202,7 +237,7 @@ export class TasksComponent implements OnInit {
 			size: new FormControl(null),
 			tags: new FormControl([]),
 			teams: new FormControl([]),
-			tenantId: new FormControl(this.userData.tenantId),
+			tenantId: new FormControl(tenantId),
 			title: new FormControl(null, Validators.required),
 			taskStatus: new FormControl(null),
 			taskPriority: new FormControl(null),
@@ -210,6 +245,12 @@ export class TasksComponent implements OnInit {
 			organizationContactId: new FormControl(this.selected.contactId),
 			organizationTeamId: new FormControl(this.selected.teamId)
 		});
+		this.form.valueChanges
+			.pipe(
+				concatMap((values) => this._projects(values)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.hasAddTagPermission$ = this.store.userRolePermissions$.pipe(
 			map(() => this.store.hasPermissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_ADD))
 		);
@@ -232,6 +273,7 @@ export class TasksComponent implements OnInit {
 			taskSize,
 			organizationTeamId
 		} = this.form.value;
+		const { user } = this.store;
 		const days = estimateDays ? estimateDays * 24 * 3600 : 0;
 		const hours = estimateHours ? estimateHours * 3600 : 1;
 		const minutes = estimateMinutes ? estimateMinutes * 60 : 0;
@@ -252,7 +294,7 @@ export class TasksComponent implements OnInit {
 				teams
 			});
 
-			await this.timeTrackerService.saveNewTask(this.userData, this.form.value);
+			await this.timeTrackerService.saveNewTask(user, this.form.value);
 			this.close({
 				isSuccess: true,
 				message: this.translate.instant('TOASTR.MESSAGE.CREATED')
@@ -269,30 +311,7 @@ export class TasksComponent implements OnInit {
 	}
 
 	public addProject = async (name: string) => {
-		try {
-			const data = this.userData as any;
-			const { tenantId, organizationContactId } = data;
-			const { organizationId } = data;
-
-			const request = {
-				name,
-				organizationId,
-				tenantId,
-				...(organizationContactId ? { contactId: organizationContactId } : {})
-			};
-
-			request['members'] = [...this.employees];
-
-			const project = await this.timeTrackerService.createNewProject(request, data);
-
-			this.projects = this.projects.concat([project]);
-			this.toastrService.success(
-				this.translate.instant('TIMER_TRACKER.TOASTR.PROJECT_ADDED'),
-				this._environment.DESCRIPTION
-			);
-		} catch (error) {
-			this.toastrService.danger(error);
-		}
+		await this.projectSelectorService.addProject(name);
 	};
 
 	public background(bgColor: string) {

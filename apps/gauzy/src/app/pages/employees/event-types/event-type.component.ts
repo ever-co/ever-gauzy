@@ -313,7 +313,7 @@ export class EventTypeComponent extends PaginationFilterBaseComponent implements
 					title: this.getTranslation('EVENT_TYPE_PAGE.EMPLOYEE'),
 					type: 'string',
 					isFilterable: false,
-					sort: false
+					isSortable: false
 				}
 			},
 			pager: {

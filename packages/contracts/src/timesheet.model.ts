@@ -7,7 +7,7 @@ import {
 } from './organization-projects.model';
 import { IEmployee, IEmployeeFindInput, IEmployeeEntityInput } from './employee.model';
 import { ITask } from './task.model';
-import { ITag } from './tag.model';
+import { ITag, ITaggable } from './tag.model';
 import { IPaginationInput } from './core.model';
 import { ReportGroupByFilter } from './report.model';
 import { IUser } from './user.model';
@@ -98,7 +98,7 @@ export interface IDateRange {
 export interface ITimeLog
 	extends IBasePerTenantAndOrganizationEntityModel,
 		IRelationalOrganizationProject,
-		IRelationalOrganizationTeam {
+		IRelationalOrganizationTeam, ITaggable {
 	employee: IEmployee;
 	employeeId: ID;
 	timesheet?: ITimesheet;
@@ -113,14 +113,12 @@ export interface ITimeLog
 	source?: TimeLogSourceEnum;
 	startedAt?: Date;
 	stoppedAt?: Date;
-	/** Edited At* */
 	editedAt?: Date;
-	logType: TimeLogType;
+	logType?: TimeLogType;
 	description?: string;
 	reason?: string;
 	duration: number;
-	isBillable: boolean;
-	tags?: string[];
+	isBillable?: boolean;
 	isRunning?: boolean;
 	isEdited?: boolean;
 }

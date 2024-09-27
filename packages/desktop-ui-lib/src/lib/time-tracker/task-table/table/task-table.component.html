@@ -1,0 +1,34 @@
+<nb-card>
+	<nb-card-body>
+		<div class="row">
+			<div class="col-6">
+				<ngx-search></ngx-search>
+			</div>
+			<div class="col-6">
+				<ngx-action-button></ngx-action-button>
+			</div>
+		</div>
+		<div class="row grow">
+			<div class="col-12 custom-table">
+				<div class="table-scroll-container grow">
+					<angular2-smart-table
+						#smartTable
+						(userRowSelect)="handleRowSelection($event)"
+						[settings]="smartTableSettings"
+						[source]="smartTableSource"
+						style="cursor: pointer"
+					>
+					</angular2-smart-table>
+				</div>
+				<div class="pagination-container">
+					<ga-pagination [source]="smartTableSource"></ga-pagination>
+				</div>
+			</div>
+			<ng-template #noTask>
+				<div class="no-data col-12">
+					<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.TASK' | translate"> </ngx-no-data-message>
+				</div>
+			</ng-template>
+		</div>
+	</nb-card-body>
+</nb-card>

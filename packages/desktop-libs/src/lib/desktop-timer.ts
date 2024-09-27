@@ -635,19 +635,19 @@ export default class TimerHandler {
 	}
 
 	/*
-	 * Make screenshots and activities after start and stop timer
+	 * Collect All activities after start and stop timer
 	 */
-	async makeScreenshot(knex, quitApp) {
+	async collectAllActivities(knex, quitApp) {
 		console.log(`Time Slot Start/End At ${quitApp ? 'End' : 'Beginning'}`, this.timeSlotStart);
 
 		if (this.timeSlotStart) {
-			console.log('Make Screenshot Started for: ', this.timeSlotStart);
+			console.log('Collection Started At: ', this.timeSlotStart);
 			await this._activeWindow.updateActivities();
 			console.log('Updated Activities');
 
 			const activities = await this.getAllActivities(knex, this.timeSlotStart);
 
-			console.log('Make Screenshot Ended for: ', this.timeSlotStart);
+			console.log('Collection Ended At: ', this.timeSlotStart);
 
 			return activities;
 		} else {

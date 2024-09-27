@@ -64,7 +64,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@IsEnum(TimeLogType)
 	@ColumnIndex()
 	@MultiORMColumn({ default: TimeLogType.TRACKED })
-	logType: TimeLogType;
+	logType?: TimeLogType;
 
 	@ApiProperty({ type: () => String, enum: TimeLogSourceEnum, default: TimeLogSourceEnum.WEB_TIMER })
 	@IsEnum(TimeLogSourceEnum)
@@ -92,7 +92,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@IsBoolean()
 	@ColumnIndex()
 	@MultiORMColumn({ default: false })
-	isBillable: boolean;
+	isBillable?: boolean;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
@@ -101,7 +101,10 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@MultiORMColumn({ nullable: true })
 	isRunning?: boolean;
 
-	@ApiPropertyOptional({ type: () => String })
+	/**
+	 * Version of the sources (Desktop/Web/Extension/Mobile) timer
+	 */
+	@ApiPropertyOptional({ type: () => String, example: '1.0.1' })
 	@IsOptional()
 	@IsString()
 	@ColumnIndex()

@@ -1,4 +1,4 @@
-import { IEmployee } from './employee.model';
+import { IEmployee, IEmployeeEntityInput } from './employee.model';
 import { IRelationalOrganizationContact } from './organization-contact.model';
 import { ITaggable } from './tag.model';
 import { ITask } from './task.model';
@@ -11,6 +11,7 @@ import { IOrganizationProjectModule } from './organization-project-module.model'
 import { CrudActionEnum, ProjectBillingEnum, ProjectOwnerEnum } from './organization.model';
 import { CurrenciesEnum } from './currency.model';
 import { TaskStatusEnum } from './task-status.model';
+import { IRelationalRole } from './role.model';
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model'; // Base Entities
 import { CustomFieldsObject } from './shared-types'; // Shared Types
 
@@ -32,7 +33,7 @@ export interface IOrganizationProjectBase
 	endDate?: Date;
 	billing?: ProjectBillingEnum;
 	currency?: CurrenciesEnum;
-	members?: IEmployee[];
+	members?: IOrganizationProjectEmployee[];
 	public?: boolean;
 	owner?: ProjectOwnerEnum;
 	tasks?: ITask[];
@@ -84,13 +85,25 @@ export interface IOrganizationProjectsFindInput
 	organizationTeamId?: ID;
 }
 
-export interface IOrganizationProjectCreateInput extends IOrganizationProjectBase {}
+export interface IOrganizationProjectCreateInput extends IOrganizationProjectBase {
+	managers?: IOrganizationProjectEmployee[];
+}
 
-export interface IOrganizationProjectUpdateInput extends IOrganizationProjectBase, IOrganizationProjectSetting {}
+export interface IOrganizationProjectUpdateInput extends IOrganizationProjectCreateInput {}
 
 export interface IOrganizationProjectStoreState {
 	project: IOrganizationProject;
 	action: CrudActionEnum;
+}
+
+export interface IOrganizationProjectEmployee
+	extends IBasePerTenantAndOrganizationEntityModel,
+		IEmployeeEntityInput,
+		IRelationalRole {
+	organizationProject: IOrganizationProject;
+	organizationProjectId: ID;
+	isManager?: boolean;
+	assignedAt?: Date;
 }
 
 // Task List Type Enum
@@ -103,4 +116,10 @@ export enum TaskListTypeEnum {
 export enum OrganizationProjectBudgetTypeEnum {
 	HOURS = 'hours',
 	COST = 'cost'
+}
+
+export interface IOrganizationProjectEditByEmployeeInput extends IBasePerTenantAndOrganizationEntityModel {
+	addedProjectIds?: ID[];
+	removedProjectIds?: ID[];
+	member: IOrganizationProjectEmployee;
 }

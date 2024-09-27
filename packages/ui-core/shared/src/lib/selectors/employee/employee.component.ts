@@ -272,22 +272,27 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	}
 
 	/**
+	 * Searches for an employee by matching the provided search term with the employee's first name and/or last name.
+	 * The search term can contain multiple words separated by spaces, and each word is matched individually against
+	 * both the first and last names of the employee.
 	 *
-	 * @param term
-	 * @param item
-	 * @returns
+	 * @param term - The search term used to find matching employees. It can contain multiple words separated by spaces.
+	 * @param item - The employee object containing `firstName` and `lastName` properties.
+	 * @returns A boolean indicating whether any of the words in the search term match the first name or last name of the employee.
 	 */
-	searchEmployee(term: string, item: any) {
-		if (item.firstName && item.lastName) {
-			return (
-				item.firstName.toLowerCase().includes(term.toLowerCase()) ||
-				item.lastName.toLowerCase().includes(term.toLowerCase())
-			);
-		} else if (item.firstName) {
-			return item.firstName.toLowerCase().includes(term.toLowerCase());
-		} else if (item.lastName) {
-			return item.lastName.toLowerCase().includes(term.toLowerCase());
-		}
+	searchEmployee(term: string, item: any): boolean {
+		// Split the search term by commas to handle multiple names
+		const searchTerms = term.toLowerCase().split(',').map((s) => s.trim());
+
+		// Combine the employee's firstName and lastName for easier comparison
+		const fullName = `${item.firstName || ''} ${item.lastName || ''}`.toLowerCase();
+
+		// Check if any search term matches the employee's full name
+		return searchTerms.some((searchTerm) => {
+			// Split the search term into individual words for handling names with spaces
+			const keywords = searchTerm.split(' ');
+			return keywords.some((keyword) => fullName.includes(keyword));
+		});
 	}
 
 	/**

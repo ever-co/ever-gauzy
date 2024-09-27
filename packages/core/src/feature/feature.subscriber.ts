@@ -30,7 +30,6 @@ export class FeatureSubscriber extends BaseEntityEventSubscriber<Feature> {
 
 			// Set imageUrl based on the entity's image property
 			if (Object.prototype.hasOwnProperty.call(entity, 'image')) {
-				console.log('Feature: Setting imageUrl for feature ID ' + entity.id);
 				await this.setImageUrl(entity);
 			}
 		} catch (error) {

@@ -19,7 +19,7 @@ import {
 	ExpenseStatusesEnum
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
-import { compareDate, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
+import { compareDate, distinctUntilChange, extractNumber, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
 import { LocalDataSource } from 'angular2-smart-table';
 import { Observable, firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
@@ -1033,14 +1033,14 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 	async onCreateConfirm(event) {
 		if (
 			!isNaN(event.newData.quantity) &&
-			!isNaN(event.newData.price) &&
+			!isNaN(extractNumber(event.newData.price)) &&
 			event.newData.quantity &&
 			event.newData.price &&
 			event.newData.description &&
 			(event.newData.selectedItem || this.selectedInvoiceType === InvoiceTypeEnum.DETAILED_ITEMS)
 		) {
-			const newData = event.newData;
-			const itemTotal = +event.newData.quantity * +event.newData.price;
+			const newData = { ...event.newData, price: extractNumber(event.newData.price) };
+			const itemTotal = +event.newData.quantity * +extractNumber(event.newData.price);
 			newData.totalValue = itemTotal;
 			this.subtotal += itemTotal;
 			await event.confirm.resolve(newData);
@@ -1057,16 +1057,17 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 	async onEditConfirm(event) {
 		if (
 			!isNaN(event.newData.quantity) &&
-			!isNaN(event.newData.price) &&
+			!isNaN(extractNumber(event.newData.price)) &&
 			event.newData.quantity &&
 			event.newData.price &&
 			event.newData.description &&
 			(event.newData.selectedItem || this.selectedInvoiceType === InvoiceTypeEnum.DETAILED_ITEMS)
 		) {
-			const newData = event.newData;
+			const newData = { ...event.newData, price: extractNumber(event.newData.price) };
 			const oldValue = +event.data.quantity * +event.data.price;
-			const newValue = +newData.quantity * +event.newData.price;
+			const newValue = +newData.quantity * +extractNumber(event.newData.price);
 			newData.totalValue = newValue;
+
 			if (newValue > oldValue) {
 				this.subtotal += newValue - oldValue;
 			} else if (oldValue > newValue) {

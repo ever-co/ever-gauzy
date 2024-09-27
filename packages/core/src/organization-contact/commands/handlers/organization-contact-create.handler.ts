@@ -1,11 +1,12 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { BadRequestException } from '@nestjs/common';
 import { In } from 'typeorm';
-import { IOrganizationContact, IOrganizationProject } from '@gauzy/contracts';
+import { IEmployee, IOrganizationContact, IOrganizationProject, IOrganizationProjectEmployee } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
+import { RequestContext } from '../../../core/context';
 import { OrganizationContactCreateCommand } from '../organization-contact-create.command';
 import { OrganizationContactService } from '../../organization-contact.service';
 import { OrganizationProjectService } from '../../../organization-project/organization-project.service';
-import { RequestContext } from '../../../core/context';
 import { ContactService } from '../../../contact/contact.service';
 
 @CommandHandler(OrganizationContactCreateCommand)
@@ -24,16 +25,14 @@ export class OrganizationContactCreateHandler implements ICommandHandler<Organiz
 	 */
 	public async execute(command: OrganizationContactCreateCommand): Promise<IOrganizationContact> {
 		try {
-			// Destructure the input from the command.
 			const { input } = command;
-			// Destructure organizationId from the input, and get tenantId either from the current RequestContext or from the input.
-			let { organizationId } = input;
+
+			const organizationId = input.organizationId;
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
-			// Check if the input members are empty and projects are defined.
+			// If members are empty and projects are provided, populate members from projects
 			if (isEmpty(input.members) && isNotEmpty(input.projects)) {
-				// Map the projects to their IDs.
-				const projectIds = input.projects.map((project) => project.id);
+				const projectIds = input.projects.map((project: IOrganizationProject) => project.id);
 
 				// Retrieve projects with specified IDs, belonging to the given organization and tenant.
 				const projects = await this._organizationProjectService.find({
@@ -45,30 +44,45 @@ export class OrganizationContactCreateHandler implements ICommandHandler<Organiz
 					relations: { members: true }
 				});
 
-				// Flatten the members from these projects and assign them to input.members.
-				input.members = projects.flatMap((project: IOrganizationProject) => project.members);
+				// Extract all project employees
+				const projectEmployees: IOrganizationProjectEmployee[] = projects.flatMap(
+					(project: IOrganizationProject) => project.members
+				);
+
+				// Map each project employee to IEmployee
+				const projectMembers: IEmployee[] = await Promise.all(
+					projectEmployees
+						.flatMap((projectEmployee: IOrganizationProjectEmployee) => projectEmployee.employee)
+						.map((employee: IEmployee) => employee)
+				);
+
+				// Assign to input.members, ensuring input.members is initialized
+				input.members = [...(input.members || []), ...projectMembers];
 			}
 
 			// Create contact details of organization
 			try {
 				input.contact = await this._contactService.create({
 					...input.contact,
-					organization: { id: organizationId }
+					organizationId,
+					tenantId,
+					organization: { id: organizationId },
+					tenant: { id: tenantId }
 				});
 			} catch (error) {
-				console.log(
-					'Error occurred during creation of contact details or creating the organization contact:',
-					error
-				);
+				throw new BadRequestException('Failed to create contact details', error.message);
 			}
 
-			// Create a new organization contact with the modified input.
+			// Create a new organization contact with the modified input
 			return await this._organizationContactService.create({
 				...input,
-				organization: { id: organizationId }
+				organizationId,
+				organization: { id: organizationId },
+				tenantId,
+				tenant: { id: tenantId }
 			});
 		} catch (error) {
-			console.error('Error while creating new organization contact', error);
+			throw new BadRequestException('Failed to create organization contact', error.message);
 		}
 	}
 }

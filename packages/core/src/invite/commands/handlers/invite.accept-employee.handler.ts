@@ -1,6 +1,8 @@
+import { NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UpdateResult } from 'typeorm';
+import { IAppIntegrationConfig } from '@gauzy/common';
 import {
 	IEmployee,
 	IInvite,
@@ -22,6 +24,7 @@ import {
 	OrganizationContact,
 	OrganizationDepartment,
 	OrganizationProject,
+	OrganizationProjectEmployee,
 	OrganizationTeam,
 	OrganizationTeamEmployee,
 	User
@@ -32,8 +35,6 @@ import { TypeOrmOrganizationDepartmentRepository } from '../../../organization-d
 import { TypeOrmOrganizationProjectRepository } from '../../../organization-project/repository/type-orm-organization-project.repository';
 import { TypeOrmOrganizationTeamRepository } from '../../../organization-team/repository/type-orm-organization-team.repository';
 import { TypeOrmUserRepository } from '../../../user/repository/type-orm-user.repository';
-import { IAppIntegrationConfig } from '@gauzy/common';
-import { NotFoundException } from '@nestjs/common';
 
 /**
  * Use this command for registering employees.
@@ -215,23 +216,6 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 	 * @param employee
 	 */
 	public async updateEmployeeMemberships(invite: IInvite, employee: IEmployee): Promise<void> {
-		//Update project members
-		if (invite.projects) {
-			invite.projects.forEach(async (project: IOrganizationProject) => {
-				let members = project.members || [];
-				members = [...members, employee];
-				/**
-				 * Creates a new entity instance and copies all entity properties from this object into a new entity.
-				 */
-				const create = this.typeOrmOrganizationProjectRepository.create({
-					...project,
-					members
-				});
-				//This will call save() on the project (and not really create a new organization project)
-				await this.typeOrmOrganizationProjectRepository.save(create);
-			});
-		}
-
 		//Update organization Contacts members
 		if (invite.organizationContacts) {
 			invite.organizationContacts.forEach(async (organizationContact: IOrganizationContact) => {
@@ -271,11 +255,13 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 			invite.teams.forEach(async (team: IOrganizationTeam) => {
 				let members = team.members || [];
 
+				// Create new team member
 				const member = new OrganizationTeamEmployee();
 				member.organizationId = employee.organizationId;
 				member.tenantId = employee.tenantId;
 				member.employee = employee;
 
+				// Add member to team
 				members = [...members, member];
 
 				/**
@@ -287,6 +273,32 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 				});
 				//This will call save() on the department (and not really create a new organization department)
 				await this.typeOrmOrganizationTeamRepository.save(create);
+			});
+		}
+
+		//Update project members
+		if (invite.projects) {
+			invite.projects.forEach(async (project: IOrganizationProject) => {
+				// Get existing project members
+				let members = project.members || [];
+
+				// Create new project member
+				const member = new OrganizationProjectEmployee();
+				member.employee = employee;
+				member.organizationId = employee.organizationId;
+				member.tenantId = employee.tenantId;
+
+				// Add member to project
+				members = [...members, member];
+
+				// Create new project
+				const create = this.typeOrmOrganizationProjectRepository.create({
+					...project,
+					members
+				});
+
+				//This will call save() on the project (and not really create a new organization project)
+				await this.typeOrmOrganizationProjectRepository.save(create);
 			});
 		}
 	}

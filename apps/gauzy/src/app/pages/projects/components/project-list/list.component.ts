@@ -3,8 +3,8 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, tap } from 'rxjs/operators';
 import { combineLatest, debounceTime, firstValueFrom, Subject } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
 import { Cell } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -12,9 +12,10 @@ import {
 	PermissionsEnum,
 	ComponentLayoutStyleEnum,
 	CrudActionEnum,
-	IEmployee,
 	ITag,
-	IOrganizationProject
+	IOrganizationProject,
+	ID,
+	IOrganizationProjectEmployee
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
@@ -52,9 +53,10 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	public disableButton: boolean = true;
 	public settingsSmartTable: any;
 	public viewComponentName: ComponentEnum;
+	public PermissionsEnum = PermissionsEnum;
 	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-	public selectedEmployeeId: IEmployee['id'] | null;
+	public selectedEmployeeId: ID | null;
 	public selectedProject: IOrganizationProject;
 	public organization: IOrganization;
 	public smartTableSource: ServerDataSource;
@@ -62,7 +64,9 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	public project$: Subject<boolean> = this.subject$;
 	private _refresh$: Subject<boolean> = new Subject();
 
-	/** */
+	/**
+	 * Represents a component property for handling the project view.
+	 */
 	private _grid: CardGridComponent;
 	@ViewChild('grid') set grid(content: CardGridComponent) {
 		if (content) {
@@ -186,9 +190,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 					action: CrudActionEnum.DELETED
 				};
 
-				this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.REMOVE_PROJECT', {
-					name
-				});
+				this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.REMOVE_PROJECT', { name });
 
 				this.cancel();
 				this._refresh$.next(true);
@@ -218,12 +220,12 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 			return;
 		}
 
-		const { tenantId } = this._store.user;
-		const { id: organizationId } = this.organization;
+		// Extract organization ID and tenant ID from the organization object
+		const { id: organizationId, tenantId } = this.organization;
 
 		this.smartTableSource = new ServerDataSource(this._httpClient, {
 			endPoint: `${API_PREFIX}/organization-projects/pagination`,
-			relations: ['organizationContact', 'organization', 'members', 'members.user', 'tags', 'teams'],
+			relations: ['organizationContact', 'members.employee.user', 'tags', 'teams'],
 			join: {
 				alias: 'organization_project',
 				leftJoin: {
@@ -236,7 +238,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 				...(this.selectedEmployeeId
 					? {
 							members: {
-								id: this.selectedEmployeeId
+								employeeId: this.selectedEmployeeId
 							}
 					  }
 					: {}),
@@ -245,7 +247,9 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 			resultMap: (project: IOrganizationProject) => {
 				return Object.assign({}, project, {
 					...this.privatePublicProjectMapper(project),
-					employeesMergedTeams: [project.members]
+					employeesMergedTeams: [
+						project.members.map((member: IOrganizationProjectEmployee) => member.employee)
+					]
 				});
 			},
 			finalize: () => {
@@ -301,6 +305,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 
 	/**
 	 * Maps an organization project based on user permissions and project visibility.
+	 *
 	 * @param project The project to be mapped.
 	 * @returns The mapped project.
 	 */
@@ -316,11 +321,14 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 
 	/**
 	 * Filters project members to include only the ones that match the current user's ID.
+	 *
 	 * @param project The project with members.
 	 * @returns The project with filtered members.
 	 */
 	private filterProjectMembers(project: IOrganizationProject): IOrganizationProject {
-		project.members = project.members.filter((member: IEmployee) => member.id === this._store.userId);
+		project.members = project.members.filter(
+			(member: IOrganizationProjectEmployee) => member.employeeId === this._store.user?.employeeId
+		);
 		return project;
 	}
 
@@ -438,7 +446,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 							}
 							this.setFilter({ field: 'tags', search: tagIds });
 						},
-						sort: false
+						isSortable: false
 					}
 				};
 				break;
@@ -551,17 +559,17 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	}
 
 	/**
-	 * Navigate to the create project page.
+	 * Navigates to the create or edit project page based on the provided project.
+	 * If no project is provided, it navigates to the create page.
+	 *
+	 * @param project - (Optional) The project to edit. If not provided, navigates to the create page.
 	 */
-	navigateToCreateProject(): void {
-		this._router.navigate(['/pages/organization/projects', 'create']);
-	}
-
-	/**
-	 * Navigate to the edit project page for the specified project.
-	 * @param project The project to edit.
-	 */
-	navigateToEditProject(project: IOrganizationProject): void {
-		this._router.navigate([`/pages/organization/projects`, project.id, 'edit']);
+	navigateToProject(project?: IOrganizationProject): void {
+		// Define the base path for the project page
+		const basePath = '/pages/organization/projects';
+		// Construct the path based on the provided project
+		const path = project ? [basePath, project.id, 'edit'] : [basePath, 'create'];
+		// Navigate to the specified path
+		this._router.navigate(path);
 	}
 }

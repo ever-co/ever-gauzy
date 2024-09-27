@@ -6,7 +6,14 @@ import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { filter, tap } from 'rxjs/operators';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ErrorHandlingService, Store, ToastrService, UsersOrganizationsService, monthNames } from '@gauzy/ui-core/core';
+import {
+	EmployeesService,
+	ErrorHandlingService,
+	Store,
+	ToastrService,
+	UsersOrganizationsService,
+	monthNames
+} from '@gauzy/ui-core/core';
 import {
 	InvitationTypeEnum,
 	PermissionsEnum,
@@ -70,7 +77,8 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 		private readonly errorHandlingService: ErrorHandlingService,
 		private readonly route: ActivatedRoute,
 		public readonly translateService: TranslateService,
-		private readonly userOrganizationsService: UsersOrganizationsService
+		private readonly userOrganizationsService: UsersOrganizationsService,
+		private readonly employeesService: EmployeesService
 	) {
 		super(translateService);
 		this.setView();
@@ -473,7 +481,7 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 						}
 						this.setFilter({ field: 'tags', search: tagIds });
 					},
-					sort: false,
+					isSortable: false,
 					class: 'align-row',
 					width: '10%'
 				},
@@ -545,6 +553,55 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 		const month = monthNames[date.getMonth()];
 		const year = date.getFullYear();
 		return `${day} ${month} ${year}`;
+	}
+
+	/**
+	 * Checks if the user is an employee.
+	 *
+	 * @param user The user to check.
+	 * @returns True if the user is an employee, otherwise false.
+	 */
+	private isEmployee(): boolean {
+		return !!this.selectedUser.employeeId;
+	}
+
+	/**
+	 * Converts a selected user to an employee on the users page.
+	 *
+	 * This method registers the selected user as an employee within the currently selected organization,
+	 * provided the user hasn't already been registered as an employee.
+	 *
+	 * Preconditions:
+	 * - A valid user must be selected.
+	 * - The user must not already have an employee ID.
+	 * - The organization details must be available.
+	 *
+	 * @throws {Error} Logs an error if the employee registration process fails.
+	 *
+	 * @returns {Promise<void>} Resolves when the user is successfully registered as an employee or does nothing if preconditions aren't met.
+	 */
+	async convertUserToEmployee(): Promise<void> {
+		if (!this.selectedUser || !this.organization || this.isEmployee()) {
+			return;
+		}
+
+		const { id: organizationId } = this.organization;
+		const { id: userId, tenantId } = this.selectedUser;
+
+		try {
+			await firstValueFrom(
+				this.employeesService.create({
+					startedWorkOn: null, // Default start date is null (can be updated later)
+					userId,
+					organizationId,
+					tenantId
+				})
+			);
+			this.toastrService.success('USERS_PAGE.CONVERT_USER_TO_EMPLOYEE');
+		} catch (error) {
+			console.error('Error while converting user to employee:', error);
+			this.toastrService.danger(error);
+		}
 	}
 
 	ngOnDestroy() {}

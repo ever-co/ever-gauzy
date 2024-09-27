@@ -6,7 +6,7 @@
 	padding-bottom: 10px;
 	background-color: var(--gauzy-card-1);
 	border-radius: var(--border-radius);
-	height: calc(100vh - 23.75rem);
+	height: calc(100vh - 23.625rem);
 	overflow-y: auto;
 
 	.table-row-custom {
@@ -96,7 +96,7 @@
 }
 
 .main-report-wrapper {
-	height: calc(100vh - 8rem);
+	height: calc(100vh - 9rem);
 	margin-bottom: 0 !important;
 
 	.main-report-body {

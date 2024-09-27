@@ -1,5 +1,6 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { ID } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ngx-avatar',
@@ -48,9 +49,14 @@ export class AvatarComponent implements OnInit {
 
 	ngOnInit() {}
 
-	edit(id: string) {
+	/**
+	 * Navigates to the employee edit page based on the provided employee ID.
+	 *
+	 * @param id - The ID of the employee to edit.
+	 */
+	edit(id: ID): void {
 		if (id) {
-			this.router.navigate(['/pages/employees/edit/', id]);
+			this.router.navigate([`/pages/employees/edit/${id}`]);
 		}
 	}
 }

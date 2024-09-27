@@ -29,8 +29,6 @@ export class PowerManagerDetectInactivity extends BasePowerManagerDecorator {
 			if (proof) {
 				if (accepted) {
 					this._detectionEmitter.emit('activity-proof-result-accepted', true);
-					this._clearIntervals();
-					this.startInactivityDetection();
 				} else {
 					this._detectionEmitter.emit('activity-proof-result-not-accepted');
 				}
@@ -59,7 +57,7 @@ export class PowerManagerDetectInactivity extends BasePowerManagerDecorator {
 		}, 1000);
 	}
 
-	private _clearIntervals(): void {
+	public clearIntervals(): void {
 		if (this._inactivityDetectionIntervalId) {
 			clearInterval(this._inactivityDetectionIntervalId);
 			this._inactivityDetectionIntervalId = null;
@@ -71,11 +69,11 @@ export class PowerManagerDetectInactivity extends BasePowerManagerDecorator {
 	}
 
 	public stopInactivityDetection(): void {
-		this._clearIntervals();
+		this.clearIntervals();
 		this.removeListeners();
 	}
 
-	private removeListeners() {
+	public removeListeners() {
 		this._detectionEmitter.removeAllListeners();
 	}
 

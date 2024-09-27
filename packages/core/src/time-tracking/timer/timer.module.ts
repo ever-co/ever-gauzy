@@ -7,14 +7,9 @@ import { TimerController } from './timer.controller';
 import { TimerService } from './timer.service';
 
 @Module({
+	imports: [RolePermissionModule, TimeLogModule, EmployeeModule, CqrsModule],
 	controllers: [TimerController],
-	imports: [
-		RolePermissionModule,
-		TimeLogModule,
-		EmployeeModule,
-		CqrsModule
-	],
-	providers: [TimerService],
-	exports: [TimerService]
+	exports: [TimerService],
+	providers: [TimerService]
 })
-export class TimerModule { }
+export class TimerModule {}
