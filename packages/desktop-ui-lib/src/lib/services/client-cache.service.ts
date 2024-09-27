@@ -16,6 +16,6 @@ export class ClientCacheService extends AbstractCacheService<
 	) {
 		super(_storageService, _store);
 		this.prefix = ClientCacheService.name.toString();
-		this.duration = 24 * 3600 * 1000; // 1 day
+		this.duration = 1 * 3600 * 1000; // 1 hour
 	}
 }
