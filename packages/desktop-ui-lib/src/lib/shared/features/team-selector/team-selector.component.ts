@@ -40,14 +40,6 @@ export class TeamSelectorComponent extends AbstractSelectorComponent<IOrganizati
 	}
 	public ngOnInit(): void {
 		this.taskSelectorService.onScroll$.pipe(untilDestroyed(this)).subscribe();
-		this.teamSelectorService
-			.getAll$()
-			.pipe(
-				filter((data) => !data.some((value) => value.id === this.teamSelectorService.selectedId)),
-				tap(() => this.change(null)),
-				untilDestroyed(this)
-			)
-			.subscribe();
 		this.teamSelectorQuery.selected$
 			.pipe(
 				filter(Boolean),

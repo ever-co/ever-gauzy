@@ -50,14 +50,6 @@ export class ProjectSelectorComponent extends AbstractSelectorComponent<IOrganiz
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.projectSelectorService
-			.getAll$()
-			.pipe(
-				filter((data) => !data.some((value) => value.id === this.projectSelectorService.selectedId)),
-				tap(() => this.change(null)),
-				untilDestroyed(this)
-			)
-			.subscribe();
 		// Handle search logic
 		this.handleSearch(this.projectSelectorService);
 	}

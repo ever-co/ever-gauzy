@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, concatMap, filter, map, Observable, startWith, tap } from 'rxjs';
@@ -49,8 +50,7 @@ export class TimerTrackerChangeDialogComponent implements OnInit {
 			.pipe(
 				filter(({ state }) => state === IgnitionState.RESTARTED),
 				tap(() => this.timeTrackerStore.update({ ignition: { state: IgnitionState.STARTED } })),
-				tap(() => this.getCurrentState()),
-				tap(() => this.dismiss()),
+				tap(() => this.dismiss(this.form.value)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -60,6 +60,7 @@ export class TimerTrackerChangeDialogComponent implements OnInit {
 			this.form.get('teamId').valueChanges.pipe(startWith(this.teamSelectorService.selectedId))
 		])
 			.pipe(
+				distinctUntilChange(),
 				tap(() => this.projectSelectorService.resetPage()),
 				concatMap(([organizationContactId, organizationTeamId]) =>
 					this.projectSelectorService.load({ organizationContactId, organizationTeamId })
@@ -70,6 +71,7 @@ export class TimerTrackerChangeDialogComponent implements OnInit {
 		this.form
 			.get('projectId')
 			.valueChanges.pipe(
+				distinctUntilChange(),
 				tap(() => this.teamSelectorService.resetPage()),
 				tap(() => this.taskSelectorService.resetPage()),
 				concatMap((projectId) =>
@@ -87,12 +89,6 @@ export class TimerTrackerChangeDialogComponent implements OnInit {
 		this.form.patchValue(this.timeTrackerFormService.getState());
 	}
 
-	private getCurrentState() {
-		if (this.form.valid) {
-			this.timeTrackerFormService.setState(this.form.value);
-		}
-	}
-
 	public applyChanges() {
 		this.timeTrackerStore.update({ ignition: { state: IgnitionState.RESTARTING } });
 	}
@@ -108,8 +104,8 @@ export class TimerTrackerChangeDialogComponent implements OnInit {
 		return this.timeTrackerQuery.isExpanded$;
 	}
 
-	public dismiss() {
+	public dismiss(data?) {
 		this.timeTrackerStore.update({ isEditing: false });
-		this.dialogRef.close();
+		this.dialogRef.close(data);
 	}
 }

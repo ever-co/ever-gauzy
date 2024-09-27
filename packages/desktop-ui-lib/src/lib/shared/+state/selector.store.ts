@@ -37,8 +37,8 @@ export abstract class SelectorStore<T> extends Store<ISelector<T>> {
 			return;
 		}
 		const data = this.getValue().data;
+		this.updateData([...new Map([...data, selected].map((item) => [item['id'], item])).values()]);
 		this.updateSelected(selected);
-		this.updateData(data.concat([selected]));
 	}
 
 	public resetToInitialState(): void {

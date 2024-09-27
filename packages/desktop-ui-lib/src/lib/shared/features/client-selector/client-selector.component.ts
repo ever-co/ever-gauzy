@@ -39,14 +39,6 @@ export class ClientSelectorComponent extends AbstractSelectorComponent<IOrganiza
 
 	public ngOnInit(): void {
 		this.clientSelectorService.onScroll$.pipe(untilDestroyed(this)).subscribe();
-		this.clientSelectorService
-			.getAll$()
-			.pipe(
-				filter((data) => !data.some((value) => value.id === this.clientSelectorService.selectedId)),
-				tap(() => this.change(null)),
-				untilDestroyed(this)
-			)
-			.subscribe();
 		this.clientSelectorQuery.selected$
 			.pipe(
 				filter(Boolean),

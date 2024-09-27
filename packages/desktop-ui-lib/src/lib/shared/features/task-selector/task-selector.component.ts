@@ -2,8 +2,7 @@ import { ChangeDetectionStrategy, Component, forwardRef, OnInit } from '@angular
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { ITask } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { combineLatest, debounceTime, filter, map, Observable, switchMap, tap } from 'rxjs';
-import { distinctUntilChanged } from 'rxjs/operators';
+import { combineLatest, map, Observable } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
 import { AbstractSelectorComponent } from '../../components/abstract/selector.abstract';
@@ -37,23 +36,7 @@ export class TaskSelectorComponent extends AbstractSelectorComponent<ITask> impl
 	}
 
 	public ngOnInit() {
-		this.search$
-			.pipe(
-				debounceTime(300),
-				distinctUntilChanged(),
-				tap(() => this.taskSelectorService.resetPage()),
-				switchMap((searchTerm) => this.taskSelectorService.load({ searchTerm })),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		this.taskSelectorService
-			.getAll$()
-			.pipe(
-				filter((data) => !data.some((value) => value.id === this.taskSelectorService.selectedId)),
-				tap(() => this.change(null)),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		// Subscribe to onScroll$
 		this.taskSelectorService.onScroll$.pipe(untilDestroyed(this)).subscribe();
 		// Handle search logic
 		this.handleSearch(this.taskSelectorService);

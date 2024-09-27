@@ -71,6 +71,7 @@ import { NoteService } from '../shared/features/note/+state/note.service';
 import { ProjectSelectorService } from '../shared/features/project-selector/+state/project-selector.service';
 import { TaskSelectorService } from '../shared/features/task-selector/+state/task-selector.service';
 import { TeamSelectorService } from '../shared/features/team-selector/+state/team-selector.service';
+import { TimeTrackerFormService } from '../shared/features/time-tracker-form/time-tracker-form.service';
 import { hasAllPermissions } from '../shared/utils/permission.util';
 import { TimeTrackerQuery } from './+state/time-tracker.query';
 import { IgnitionState, TimeTrackerStore } from './+state/time-tracker.store';
@@ -189,7 +190,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private readonly taskSelectorService: TaskSelectorService,
 		private readonly noteService: NoteService,
 		private readonly timeTrackerQuery: TimeTrackerQuery,
-		private readonly timeTrackerStore: TimeTrackerStore
+		private readonly timeTrackerStore: TimeTrackerStore,
+		private readonly timeTrackerFormService: TimeTrackerFormService
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
@@ -733,12 +735,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.timeTrackerQuery.isEditing$
 			.pipe(
 				filter((editing) => editing && !this._isOffline),
-				tap(() =>
-					this.dialogService.open(TimerTrackerChangeDialogComponent, {
-						backdropClass: 'backdrop-blur',
-						closeOnBackdropClick: false
-					})
+				concatMap(
+					() =>
+						this.dialogService.open(TimerTrackerChangeDialogComponent, {
+							backdropClass: 'backdrop-blur',
+							closeOnBackdropClick: false
+						}).onClose
 				),
+				filter(Boolean),
+				tap((value) => this.timeTrackerFormService.setState(value)),
 				untilDestroyed(this)
 			)
 			.subscribe();
