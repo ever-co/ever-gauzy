@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
 import { NoteSelectorQuery } from './+state/note-selector.query';
@@ -9,15 +10,43 @@ import { NoteService } from './+state/note.service';
 	selector: 'gauzy-note',
 	templateUrl: './note.component.html',
 	styleUrls: ['./note.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => NoteComponent),
+			multi: true
+		}
+	]
 })
-export class NoteComponent {
+export class NoteComponent implements ControlValueAccessor {
+	private onChange: (value: string) => void;
+	private onTouched: () => void;
+	// Flag to control whether to update the store
+	protected useStore: boolean = true;
 	constructor(
 		private readonly electronService: ElectronService,
 		public readonly noteSelectorStore: NoteSelectorStore,
 		public readonly noteSelectorQuery: NoteSelectorQuery,
 		public readonly noteSelectorService: NoteService
 	) {}
+	writeValue(note: string): void {
+		this.useStore = false;
+		if (this.useStore) {
+			this.noteSelectorStore.update({ note });
+		}
+	}
+
+	registerOnChange(fn: (note: string) => void): void {
+		this.onChange = fn;
+	}
+
+	registerOnTouched(fn: () => void): void {
+		this.onTouched = fn;
+	}
+	setDisabledState(disabled: boolean): void {
+		this.noteSelectorStore.update({ disabled });
+	}
 
 	public refresh(): void {
 		this.electronService.ipcRenderer.send('refresh-timer');
@@ -28,7 +57,11 @@ export class NoteComponent {
 	}
 
 	public change(note: string) {
-		this.noteSelectorStore.update({ note });
+		if (this.useStore) {
+			this.noteSelectorStore.update({ note });
+		}
+		this.onChange(note);
+		this.onTouched();
 	}
 
 	public get disabled$(): Observable<boolean> {
