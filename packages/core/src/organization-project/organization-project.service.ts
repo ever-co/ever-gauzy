@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 import { ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
 import {
@@ -15,20 +15,20 @@ import {
 	IOrganizationProjectsFindInput,
 	IOrganizationProjectUpdateInput,
 	IPagination,
-	PermissionsEnum,
 	RolesEnum
 } from '@gauzy/contracts';
 import { getConfig } from '@gauzy/config';
 import { CustomEmbeddedFieldConfig, isNotEmpty } from '@gauzy/common';
 import { PaginationParams, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
-import { Employee, OrganizationProjectEmployee, Role } from '../core/entities/internal';
+import { OrganizationProjectEmployee, Role } from '../core/entities/internal';
 import { FavoriteService } from '../core/decorators';
 import { ActivityLogEvent } from '../activity-log/events';
 import { generateActivityLogDescription } from '../activity-log/activity-log.helper';
 import { RoleService } from '../role/role.service';
 import { OrganizationProject } from './organization-project.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { EmployeeService } from '../employee/employee.service';
 import { TypeOrmEmployeeRepository } from '../employee/repository';
 import {
 	MikroOrmOrganizationProjectEmployeeRepository,
@@ -47,36 +47,10 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		readonly mikroOrmOrganizationProjectEmployeeRepository: MikroOrmOrganizationProjectEmployeeRepository,
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		private readonly _roleService: RoleService,
+		private readonly _employeeService: EmployeeService,
 		private readonly _eventBus: EventBus
 	) {
 		super(typeOrmOrganizationProjectRepository, mikroOrmOrganizationProjectRepository);
-	}
-
-	/**
-	 * Retrieves a collection of employees based on specified criteria.
-	 * @param memberIds - Array of member IDs to include in the query.
-	 * @param managerIds - Array of manager IDs to include in the query.
-	 * @param organizationId - The organization ID for filtering.
-	 * @param tenantId - The tenant ID for filtering.
-	 * @returns A Promise resolving to an array of Employee entities with associated user information.
-	 */
-	async retrieveEmployees(memberIds: ID[], managerIds: ID[], organizationId: ID, tenantId: ID): Promise<Employee[]> {
-		try {
-			// Filter out falsy values (e.g., null or undefined) from the union of memberIds and managerIds
-			const filteredIds = [...memberIds, ...managerIds].filter(Boolean);
-
-			// Retrieve employees based on specified criteria
-			const employees = await this.typeOrmEmployeeRepository.findBy({
-				id: In(filteredIds), // Filtering by employee IDs (union of memberIds and managerIds)
-				organizationId, // Filtering by organizationId
-				tenantId // Filtering by tenantId
-			});
-
-			return employees;
-		} catch (error) {
-			// Handle any potential errors during the retrieval process
-			throw new Error(`Failed to retrieve employees: ${error}`);
-		}
 	}
 
 	/**
@@ -90,14 +64,10 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		const employeeId = RequestContext.currentEmployeeId();
 		const currentRoleId = RequestContext.currentRoleId();
 
-		const { tags = [], members = [], managers = [], ...entity } = input;
+		const { tags = [], memberIds = [], managerIds = [], ...entity } = input;
 		const { organizationId } = entity;
 
 		try {
-			// Retrieve members and managers IDs
-			const managerIds = managers.map((manager) => manager.employeeId);
-			const memberIds = members.map((member) => member.employeeId);
-
 			// If the employee creates the project, default add as a manager
 			try {
 				// Check if the current role is EMPLOYEE
@@ -112,11 +82,20 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				}
 			} catch (error) {}
 
+			// Combine memberIds and managerIds into a single array
+			const employeeIds = [...memberIds, ...managerIds].filter(Boolean);
+
 			// Retrieves a collection of employees based on specified criteria.
-			const employees = await this.retrieveEmployees(memberIds, managerIds, organizationId, tenantId);
+			const employees = await this._employeeService.findActiveEmployeesByEmployeeIds(
+				employeeIds,
+				organizationId,
+				tenantId
+			);
 
 			// Find the manager role
-			const managerRole = await this._roleService.findOneByWhereOptions({ name: RolesEnum.MANAGER });
+			const managerRole = await this._roleService.findOneByWhereOptions({
+				name: RolesEnum.MANAGER
+			});
 
 			// Create a Set for faster membership checks
 			const managerIdsSet = new Set(managerIds);
@@ -135,6 +114,11 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			const projectMembers = employees.map(({ id: employeeId }) => {
 				// Check if the employee is a manager
 				const isManager = managerIdsSet.has(employeeId);
+				// If the employee is a manager, assign the existing manager with the latest assignedAt date
+				const assignedAt =
+					isManager && !existingManagersMap.has(employeeId)
+						? new Date()
+						: existingManagersMap.get(employeeId);
 
 				// If the employee is a manager, assign the existing manager with the latest assignedAt date
 				return new OrganizationProjectEmployee({
@@ -143,10 +127,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 					tenantId,
 					isManager,
 					role: isManager ? managerRole : null,
-					assignedAt:
-						isManager && !existingManagersMap.has(employeeId)
-							? new Date()
-							: existingManagersMap.get(employeeId) || null
+					assignedAt: assignedAt || null
 				});
 			});
 
@@ -182,7 +163,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 
 			return project;
 		} catch (error) {
-			throw new BadRequestException(`Failed to create project: ${error}`);
+			// Handle errors and return an appropriate error response
+			throw new HttpException(`Failed to create organization project: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -197,51 +179,27 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 */
 	async update(id: ID, input: IOrganizationProjectUpdateInput): Promise<IOrganizationProject> {
 		const tenantId = RequestContext.currentTenantId() || input.tenantId;
-		const { managers, members, organizationId } = input;
+		const { memberIds = [], managerIds = [], organizationId } = input;
 
 		let organizationProject = await super.findOneByIdString(id, {
 			where: { organizationId, tenantId }
 		});
 
-		// Check permission for CHANGE_SELECTED_EMPLOYEE
-		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-			try {
-				const employeeId = RequestContext.currentEmployeeId();
-				// If employee ID is present, restrict update to manager role
-				if (employeeId) {
-					organizationProject = await super.findOneByIdString(id, {
-						where: {
-							organizationId,
-							tenantId,
-							members: {
-								employeeId,
-								tenantId,
-								organizationId,
-								role: { name: RolesEnum.MANAGER }
-							}
-						}
-					});
-				}
-			} catch (error) {
-				throw new ForbiddenException();
-			}
-		}
-
 		try {
 			// Retrieve members and managers IDs
-			const managerIds = managers.map((manager) => manager.employeeId);
-			const memberIds = members.map((member) => member.employeeId);
 			if (isNotEmpty(memberIds) || isNotEmpty(managerIds)) {
-				// Find the manager role
-				const role = await this._roleService.findOneByWhereOptions({
-					name: RolesEnum.MANAGER
-				});
+				// Combine memberIds and managerIds into a single array
+				const employeeIds = [...memberIds, ...managerIds].filter(Boolean);
 
 				// Retrieves a collection of employees based on specified criteria.
-				const projectMembers = await this.retrieveEmployees(memberIds, managerIds, organizationId, tenantId);
+				const projectMembers = await this._employeeService.findActiveEmployeesByEmployeeIds(
+					employeeIds,
+					organizationId,
+					tenantId
+				);
 
-				// Update nested entity
-				await this.updateOrganizationProject(id, organizationId, projectMembers, role, managerIds, memberIds);
+				// Update nested entity (Organization Project Members)
+				await this.updateOrganizationProjectMembers(id, organizationId, projectMembers, managerIds, memberIds);
 			}
 
 			const { id: organizationProjectId } = organizationProject;
@@ -254,7 +212,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				id: organizationProjectId
 			});
 		} catch (error) {
-			throw new BadRequestException(error);
+			// Handle errors and return an appropriate error response
+			throw new HttpException(`Failed to update organization project: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -275,61 +234,63 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	}
 
 	/**
-	 * Update organization project by managing its members and their roles.
+	 * Updates an organization project by managing its members and their roles.
 	 *
 	 * @param organizationProjectId - ID of the organization project
 	 * @param organizationId - ID of the organization
 	 * @param employees - Array of employees to be assigned to the project
-	 * @param role - The role to assign to managers in the project
 	 * @param managerIds - Array of employee IDs to be assigned as managers
 	 * @param memberIds - Array of employee IDs to be assigned as members
 	 * @returns Promise<void>
 	 */
-	async updateOrganizationProject(
+	async updateOrganizationProjectMembers(
 		organizationProjectId: ID,
 		organizationId: ID,
 		employees: IEmployee[],
-		role: Role,
-		managerIds: string[],
-		memberIds: string[]
+		managerIds: ID[],
+		memberIds: ID[]
 	): Promise<void> {
 		const tenantId = RequestContext.currentTenantId();
-		const membersToUpdate = [...managerIds, ...memberIds];
+		const membersToUpdate = new Set([...managerIds, ...memberIds].filter(Boolean));
+
+		// Find the manager role
+		const managerRole = await this._roleService.findOneByWhereOptions({
+			name: RolesEnum.MANAGER
+		});
 
 		// Fetch existing project members with their roles
 		const projectMembers = await this.typeOrmOrganizationProjectEmployeeRepository.find({
-			where: { tenantId, organizationId, organizationProjectId },
-			relations: { role: true }
+			where: { tenantId, organizationId, organizationProjectId }
 		});
 
-		// Create a map for fast lookup of current project members
+		// Create a map of existing members for quick lookup
 		const existingMemberMap = new Map(projectMembers.map((member) => [member.employeeId, member]));
 
-		// Separate members to remove and to update
-		const removedMembers = projectMembers.filter((member) => !membersToUpdate.includes(member.employeeId));
-		const updatedMembers = projectMembers.filter((member) => membersToUpdate.includes(member.employeeId));
-
-		// 1. Remove members who are no longer assigned to project
-		if (removedMembers.length > 0) {
-			const removedMemberIds = removedMembers.map((member) => member.id);
-			await this.deleteMemberByIds(removedMemberIds);
-		}
-
-		// 2. Update role for existing members
-		for (const member of updatedMembers) {
-			const isManager = managerIds.includes(member.employeeId);
-			const newRole = isManager ? role : member.role?.id === role.id ? member.role : null;
-
-			// Only update if the role is different
-			if (newRole && newRole.id !== member.roleId) {
-				await this.typeOrmOrganizationProjectEmployeeRepository.update(member.id, { role: newRole });
-			}
-		}
-
-		// 3. Add new members to the project
+		// Separate members into removed, updated, and new members
+		const removedMembers = projectMembers.filter((member) => !membersToUpdate.has(member.employeeId));
+		const updatedMembers = projectMembers.filter((member) => membersToUpdate.has(member.employeeId));
 		const newMembers = employees.filter((employee) => !existingMemberMap.has(employee.id));
 
-		if (newMembers.length > 0) {
+		// 1. Remove members who are no longer assigned to the project
+		if (removedMembers.length) {
+			await this.deleteMemberByIds(removedMembers.map((member) => member.id));
+		}
+
+		// 2. Update roles for existing members where necessary
+		await Promise.all(
+			updatedMembers.map(async (member) => {
+				const isManager = managerIds.includes(member.employeeId);
+				const newRole = isManager ? managerRole : null;
+
+				// Only update if the role has changed
+				if (newRole && newRole.id !== member.roleId) {
+					await this.typeOrmOrganizationProjectEmployeeRepository.update(member.id, { role: newRole });
+				}
+			})
+		);
+
+		// 3. Add new members to the project
+		if (newMembers.length) {
 			const newProjectMembers = newMembers.map(
 				(employee) =>
 					new OrganizationProjectEmployee({
@@ -338,7 +299,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 						tenantId,
 						organizationId,
 						isManager: managerIds.includes(employee.id),
-						roleId: managerIds.includes(employee.id) ? role.id : null
+						roleId: managerIds.includes(employee.id) ? managerRole.id : null
 					})
 			);
 

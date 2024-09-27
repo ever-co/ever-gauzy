@@ -93,11 +93,45 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	}
 
 	/**
+	 * Retrieves a list of active, non-archived employees based on provided employee IDs,
+	 * organization ID, and tenant ID.
+	 *
+	 * @param {ID[]} employeeIds - Array of employee IDs to search for. Defaults to an empty array if not provided.
+	 * @param {ID} organizationId - The ID of the organization to filter employees.
+	 * @param {ID} tenantId - The ID of the tenant to filter employees.
+	 * @returns {Promise<IEmployee[]>} - Promise resolving with an array of matching `IEmployee` objects.
+	 *
+	 * @throws {Error} - Throws an error if the retrieval process fails.
+	 */
+	async findActiveEmployeesByEmployeeIds(
+		employeeIds: ID[] = [],
+		organizationId: ID,
+		tenantId: ID
+	): Promise<IEmployee[]> {
+		try {
+			// Filter out any invalid values from the employee IDs array
+			const filteredIds = employeeIds.filter(Boolean);
+
+			// Fetch employees using filtered IDs, organizationId, and tenantId
+			return await this.typeOrmEmployeeRepository.findBy({
+				id: In(filteredIds),
+				organizationId,
+				tenantId,
+				isActive: true,
+				isArchived: false
+			});
+		} catch (error) {
+			console.error('Error while retrieving employees', error);
+			throw new Error(`Failed to retrieve employees: ${error}`);
+		}
+	}
+
+	/**
 	 * Finds employees based on an array of user IDs.
 	 * @param userIds An array of user IDs.
 	 * @returns A promise resolving to an array of employees.
 	 */
-	async findEmployeesByUserIds(userIds: ID[]): Promise<Employee[]> {
+	async findEmployeesByUserIds(userIds: ID[]): Promise<IEmployee[]> {
 		try {
 			// Get the tenant ID from the current request context
 			const tenantId = RequestContext.currentTenantId();

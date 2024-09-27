@@ -9,7 +9,6 @@ import { Router } from '@angular/router';
 import { uniq } from 'underscore';
 import { environment } from '@gauzy/ui-config';
 import {
-	IEmployee,
 	IOrganization,
 	IOrganizationContact,
 	ProjectBillingEnum,
@@ -29,7 +28,8 @@ import {
 	IIntegrationMapSyncRepository,
 	IOrganizationGithubRepository,
 	SYNC_TAG_GAUZY,
-	IOrganizationProjectEmployee
+	IOrganizationProjectEmployee,
+	ID
 } from '@gauzy/contracts';
 import {
 	GithubService,
@@ -57,16 +57,15 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 	public FormHelpers: typeof FormHelpers = FormHelpers;
 	public OrganizationProjectBudgetTypeEnum = OrganizationProjectBudgetTypeEnum;
 	public TaskListTypeEnum = TaskListTypeEnum;
-	public members: string[] = [];
-	public selectedEmployeeIds: string[] = [];
-	public selectedTeamIds: string[] = [];
+	public memberIds: ID[] = [];
+	public selectedEmployeeIds: ID[] = [];
+	public selectedTeamIds: ID[] = [];
 	public billings: string[] = Object.values(ProjectBillingEnum);
 	public owners: ProjectOwnerEnum[] = Object.values(ProjectOwnerEnum);
 	public taskViewModeTypes: TaskListTypeEnum[] = Object.values(TaskListTypeEnum);
 	public showSprintManage = false;
 	public ckConfig: CKEditor4.Config = ckEditorConfig;
 	public organization: IOrganization;
-	public employees: IEmployee[] = [];
 	public hoverState: boolean;
 	public loading: boolean;
 
@@ -158,6 +157,18 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 	 * Actions Buttons directive
 	 */
 	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
+
+	public get projectName(): AbstractControl {
+		return this.form.get('name');
+	}
+
+	public get projectUrl(): AbstractControl {
+		return this.form.get('projectUrl');
+	}
+
+	public get openSourceProjectUrl(): AbstractControl {
+		return this.form.get('openSourceProjectUrl');
+	}
 
 	constructor(
 		private readonly _router: Router,
@@ -292,7 +303,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 
 		// Selected Members Ids
 		this.selectedEmployeeIds = project.members.map((member: IOrganizationProjectEmployee) => member.employeeId);
-		this.members = this.selectedEmployeeIds;
+		this.memberIds = this.selectedEmployeeIds;
 
 		this.form.patchValue({
 			imageUrl: project.imageUrl || null,
@@ -356,145 +367,177 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 		this.form.get('openSource').updateValueAndValidity();
 	}
 
-	onMembersSelected(members: string[]) {
-		this.members = members;
+	/**
+	 * Handles the selection of members and updates the `memberIds` property.
+	 *
+	 * @param {ID[]} memberIds - An array of selected member IDs.
+	 * The function is called when members are selected, and it sets the `memberIds` property
+	 * with the array of selected IDs.
+	 */
+	onMembersSelected(memberIds: ID[]): void {
+		this.memberIds = memberIds;
 	}
 
-	onTeamsSelected(teams: IOrganizationTeam[]) {
+	/**
+	 * Updates the form's teams field with the selected organization teams.
+	 *
+	 * @param {IOrganizationTeam[]} teams - An array of selected organization teams.
+	 */
+	onTeamsSelected(teams: IOrganizationTeam[]): void {
 		this.form.get('teams').setValue(teams);
 		this.form.get('teams').updateValueAndValidity();
 	}
 
 	/**
+	 * Navigates to the organization projects page, canceling the current project workflow.
 	 *
+	 * This method is typically called when the user decides to cancel the project creation/edit process.
 	 */
-	navigateToCancelProject() {
-		this._router.navigate([`/pages/organization/projects`]);
+	navigateToCancelProject(): void {
+		this._router.navigate(['/pages/organization/projects']);
 	}
 
 	/**
-	 * On submit project mutation form
+	 * Handles the submission of the project mutation form.
 	 *
-	 * @returns
+	 * @returns void
 	 */
-	onSubmit() {
+	onSubmit(): void {
 		if (this.form.invalid) {
 			return;
 		}
 
-		const { name, code, projectUrl, owner, organizationContact, startDate, endDate } = this.form.value;
-		const { description, tags } = this.form.value;
-		const { billing, currency } = this.form.value;
-		const { budget, budgetType } = this.form.value;
-		const { openSource, openSourceProjectUrl } = this.form.value;
-		const { color, taskListType, public: isPublic, billable } = this.form.value;
-		const { imageId } = this.form.value;
+		// Emit the form values
+		this.onSubmitted.emit(this.getFormValues());
+	}
 
-		this.onSubmitted.emit({
+	/**
+	 * Extracts and processes form values for submission.
+	 *
+	 * @returns {object} - The processed form values.
+	 */
+	private getFormValues(): object {
+		// Destructure the form values in one step
+		const {
+			name,
+			code,
+			projectUrl,
+			owner,
+			organizationContact,
+			startDate,
+			endDate,
+			description,
+			tags,
+			billing,
+			currency,
+			budget,
+			budgetType,
+			openSource,
+			openSourceProjectUrl,
+			color,
+			taskListType,
+			public: isPublic,
+			billable,
+			imageId,
+			teams
+		} = this.form.value;
+
+		return {
 			// Main Step
-			name: name,
-			code: code,
-			projectUrl: projectUrl,
-			owner: owner,
-			organizationContactId: organizationContact ? organizationContact.id : null,
-			startDate: startDate,
-			endDate: endDate,
-			members: this.members.map((id) => this.employees.find((e) => e.id === id)).filter((e) => !!e),
-			teams: this.form
-				.get('teams')
-				.value.map((id) => this.teams.find((e) => e.id === id))
-				.filter((e) => !!e),
+			name,
+			code,
+			projectUrl,
+			owner,
+			organizationContactId: organizationContact?.id || null,
+			startDate,
+			endDate,
+			memberIds: this.memberIds,
+			teams: teams.map((id) => this.teams.find((team) => team.id === id)).filter(Boolean),
+
 			// Description Step
-			description: description,
+			description,
 			tags: tags || [],
 
 			// Billing Step
-			billing: billing,
-			billingFlat: billing === ProjectBillingEnum.RATE || billing === ProjectBillingEnum.FLAT_FEE ? true : false,
-			currency: currency,
+			billing,
+			billingFlat: [ProjectBillingEnum.RATE, ProjectBillingEnum.FLAT_FEE].includes(billing),
+			currency,
 
 			// Budget Step
-			budget: budget,
-			budgetType: budgetType,
+			budget,
+			budgetType,
 
 			// Open Source Step
-			openSource: openSource,
-			openSourceProjectUrl: openSourceProjectUrl,
+			openSource,
+			openSourceProjectUrl,
 
 			// Setting Step
-			color: color,
-			taskListType: taskListType,
+			color,
+			taskListType,
 			public: isPublic,
-			billable: billable,
+			billable,
 
+			// Image Step
 			imageId
-		});
+		};
 	}
 
-	selectedTagsEvent(selectedTags: ITag[]) {
+	/**
+	 * Updates the form's tags field with the selected tags.
+	 *
+	 * @param {ITag[]} selectedTags - An array of selected tags.
+	 */
+	selectedTagsEvent(selectedTags: ITag[]): void {
 		this.form.get('tags').setValue(selectedTags);
 		this.form.get('tags').updateValueAndValidity();
 	}
 
 	/**
-	 * Add organization contact
+	 * Adds a new organization contact with the provided name.
 	 *
-	 * @param name
-	 * @returns
+	 * @param {string} name - The name of the new organization contact.
+	 * @returns {Promise<IOrganizationContact>} - Returns a promise that resolves to the created organization contact.
+	 *
+	 * @throws {Error} - Handles errors using the error handler service if the contact creation fails.
 	 */
 	addNewOrganizationContact = async (name: string): Promise<IOrganizationContact> => {
 		try {
 			const { id: organizationId, tenantId } = this.organization;
 
+			// Create a new organization contact
 			const contact: IOrganizationContact = await this._organizationContactService.create({
 				name,
 				organizationId,
 				tenantId,
 				contactType: ContactType.CLIENT
 			});
+
+			// Display a success message if the contact is created
 			if (contact) {
 				const { name } = contact;
-				this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT', {
-					name
-				});
+				this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT', { name });
 			}
 			return contact;
 		} catch (error) {
+			// Handle any errors that occur during the contact creation process
 			this._errorHandler.handleError(error);
 		}
 	};
 
+	/**
+	 * Navigates to the tasks settings page for the selected project.
+	 */
 	openTasksSettings(): void {
-		this._router.navigate(['/pages/tasks/settings', this.project.id], {
-			state: this.project
-		});
+		// Get the selected project
+		const project = this.project;
+		// Navigate to the tasks settings page with the selected project
+		this._router.navigate(['/pages/tasks/settings', project.id], { state: project });
 	}
 
 	/*
 	 * On Changed Currency Event Emitter
 	 */
 	currencyChanged($event: ICurrency) {}
-
-	/**
-	 * Load employees from multiple selected employees
-	 *
-	 * @param employees
-	 */
-	public onLoadEmployees(employees: IEmployee[]) {
-		this.employees = employees;
-	}
-
-	public get projectName(): AbstractControl {
-		return this.form.get('name');
-	}
-
-	public get projectUrl(): AbstractControl {
-		return this.form.get('projectUrl');
-	}
-
-	public get openSourceProjectUrl(): AbstractControl {
-		return this.form.get('openSourceProjectUrl');
-	}
 
 	/**
 	 * Upload project logo
