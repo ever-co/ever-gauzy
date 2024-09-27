@@ -1516,13 +1516,27 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 			const config = { quitApp: this.quitApp, isEmergency };
 
+			let timer;
+
 			this.electronService.ipcRenderer.send('stop-capture-screen');
 
 			if (this._startMode === TimerStartMode.MANUAL) {
 				console.log('Taking screen capture');
-
+				// Collect activities
 				const activities = await this.electronService.ipcRenderer.invoke('COLLECT_ACTIVITIES', config);
-
+				// Stop timer locally and return current state of timer
+				console.log('Stopping timer');
+				timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
+				// Update tray
+				console.log('Updating Tray stop');
+				this.electronService.ipcRenderer.send('update_tray_stop');
+				// Update view
+				this.start$.next(false);
+				// Stop loading
+				this.loading = false;
+				/*
+					Start networtk processing...
+				*/
 				// Make sure it's not a remote timer
 				if (!this.isRemoteTimer) {
 					this._loggerService.info('Capturing Screen and Sending Activities Start...', activities);
@@ -1544,21 +1558,23 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						}
 					}, 1000);
 				}
+			} else {
+				// Stop timer locally and return current state
+				timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
+				// Update tray
+				console.log('Updating Tray stop');
+				this.electronService.ipcRenderer.send('update_tray_stop');
+				// Update view
+				this.start$.next(false);
+				// Stop loading
+				this.loading = false;
 			}
-
-			console.log('Stopping timer');
-			const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
-
+			// Stop timer on server
 			console.log('Toggling timer');
 			await this._toggle(timer, onClick);
-
-			this.start$.next(false);
-
-			this.loading = false;
-
-			console.log('Updating Tray stop');
-
-			this.electronService.ipcRenderer.send('update_tray_stop');
+			/**
+			 * End network processing
+			 */
 
 			this._startMode = TimerStartMode.STOP;
 
