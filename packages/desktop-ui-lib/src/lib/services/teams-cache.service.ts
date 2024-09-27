@@ -13,6 +13,6 @@ export class TeamsCacheService extends AbstractCacheService<IOrganizationTeam[] 
 	) {
 		super(_storageService, _store);
 		this.prefix = TeamsCacheService.name.toString();
-		this.duration = 24 * 3600 * 1000; // 1 day
+		this.duration = 1 * 3600 * 1000; // 1 hour
 	}
 }
