@@ -54,7 +54,7 @@ export class ProjectSelectorComponent extends AbstractSelectorComponent<IOrganiz
 			.getAll$()
 			.pipe(
 				filter((data) => !data.some((value) => value.id === this.projectSelectorService.selectedId)),
-				tap(() => (this.projectSelectorService.selected = null)),
+				tap(() => this.change(null)),
 				untilDestroyed(this)
 			)
 			.subscribe();

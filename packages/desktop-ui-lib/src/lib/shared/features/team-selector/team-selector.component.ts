@@ -44,7 +44,7 @@ export class TeamSelectorComponent extends AbstractSelectorComponent<IOrganizati
 			.getAll$()
 			.pipe(
 				filter((data) => !data.some((value) => value.id === this.teamSelectorService.selectedId)),
-				tap(() => (this.teamSelectorService.selected = null)),
+				tap(() => this.change(null)),
 				untilDestroyed(this)
 			)
 			.subscribe();

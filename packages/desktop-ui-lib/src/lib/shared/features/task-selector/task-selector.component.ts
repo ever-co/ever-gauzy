@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, forwardRef, OnInit } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ITask } from '@gauzy/contracts';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, debounceTime, filter, map, Observable, switchMap, tap } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { ElectronService } from '../../../electron/services';
@@ -50,7 +50,7 @@ export class TaskSelectorComponent extends AbstractSelectorComponent<ITask> impl
 			.getAll$()
 			.pipe(
 				filter((data) => !data.some((value) => value.id === this.taskSelectorService.selectedId)),
-				tap(() => (this.taskSelectorService.selected = null)),
+				tap(() => this.change(null)),
 				untilDestroyed(this)
 			)
 			.subscribe();

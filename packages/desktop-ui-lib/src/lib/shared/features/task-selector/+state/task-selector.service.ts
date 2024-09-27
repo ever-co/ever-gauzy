@@ -69,7 +69,7 @@ export class TaskSelectorService extends SelectorService<ITask> {
 		}
 	}
 
-	public async load(options?: { searchTerm?: string }): Promise<void> {
+	public async load(options?: { searchTerm?: string; projectId?: string }): Promise<void> {
 		try {
 			this.taskSelectorStore.setLoading(true);
 			const { searchTerm } = options || {};
@@ -88,7 +88,8 @@ export class TaskSelectorService extends SelectorService<ITask> {
 				organizationTeamId: this.teamSelectorQuery.selectedId,
 				take: this.taskSelectorQuery.limit,
 				skip: this.taskSelectorQuery.page,
-				employeeId
+				employeeId,
+				...options
 			};
 			const { total, items: tasks } = await this.timeTrackerService.getPaginatedTasks(request);
 			if (tasks.length) {

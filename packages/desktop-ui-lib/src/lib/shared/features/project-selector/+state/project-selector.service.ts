@@ -59,7 +59,11 @@ export class ProjectSelectorService extends SelectorService<IOrganizationProject
 		}
 	}
 
-	public async load(options?: { searchTerm?: string }): Promise<void> {
+	public async load(options?: {
+		searchTerm?: string;
+		organizationContactId?: string;
+		organizationTeamId?: string;
+	}): Promise<void> {
 		try {
 			this.projectSelectorStore.setLoading(true);
 			const { searchTerm: name } = options || {};
@@ -78,7 +82,8 @@ export class ProjectSelectorService extends SelectorService<IOrganizationProject
 				organizationContactId: this.clientSelectorQuery.selectedId,
 				organizationTeamId: this.teamSelectorQuery.selectedId,
 				skip: this.projectSelectorQuery.page,
-				take: this.projectSelectorQuery.limit
+				take: this.projectSelectorQuery.limit,
+				...options
 			};
 			const { items: data, total } = await this.timeTrackerService.getPaginatedProjects(request);
 			this.projectSelectorStore.updateInfiniteList({ data, total });

@@ -18,7 +18,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { from, map, Observable, tap } from 'rxjs';
+import { combineLatest, concatMap, from, map, Observable, startWith, tap } from 'rxjs';
 import { Store, TagService } from '../services';
 import { ClientSelectorService } from '../shared/features/client-selector/+state/client-selector.service';
 import { ProjectSelectorService } from '../shared/features/project-selector/+state/project-selector.service';
@@ -174,6 +174,26 @@ export class TasksComponent implements OnInit {
 		this.hasAddTagPermission$ = this.store.userRolePermissions$.pipe(
 			map(() => this.store.hasPermissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_ADD))
 		);
+		combineLatest([
+			this.form.get('organizationContactId').valueChanges.pipe(startWith(this.clientSelectorService.selectedId)),
+			this.form.get('organizationTeamId').valueChanges.pipe(startWith(this.teamSelectorService.selectedId))
+		])
+			.pipe(
+				tap(() => this.projectSelectorService.resetPage()),
+				concatMap(([organizationContactId, organizationTeamId]) =>
+					this.projectSelectorService.load({ organizationContactId, organizationTeamId })
+				),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.form
+			.get('projectId')
+			.valueChanges.pipe(
+				tap(() => this.teamSelectorService.resetPage()),
+				concatMap((projectId) => this.teamSelectorService.load({ projectId })),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	public close(res?: any): void {

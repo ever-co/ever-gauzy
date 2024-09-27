@@ -26,7 +26,7 @@ export class TeamSelectorService extends SelectorService<IOrganizationTeam> {
 		return this.teamSelectorQuery.selectedId;
 	}
 
-	public async load(options?: { searchTerm?: string }): Promise<void> {
+	public async load(options?: { searchTerm?: string; projectId?: string }): Promise<void> {
 		try {
 			this.teamSelectorStore.setLoading(true);
 			const { searchTerm: name } = options || {};
@@ -44,7 +44,8 @@ export class TeamSelectorService extends SelectorService<IOrganizationTeam> {
 				name,
 				projectId: this.projectSelectorQuery.selectedId,
 				take: this.teamSelectorQuery.limit,
-				skip: this.teamSelectorQuery.page
+				skip: this.teamSelectorQuery.page,
+				...options
 			};
 			const { items: data, total } = await this.timeTrackerService.getPaginatedTeams(request);
 			this.teamSelectorStore.updateInfiniteList({ data, total });

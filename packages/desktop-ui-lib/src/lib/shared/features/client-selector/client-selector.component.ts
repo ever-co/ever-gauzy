@@ -43,7 +43,7 @@ export class ClientSelectorComponent extends AbstractSelectorComponent<IOrganiza
 			.getAll$()
 			.pipe(
 				filter((data) => !data.some((value) => value.id === this.clientSelectorService.selectedId)),
-				tap(() => (this.clientSelectorService.selected = null)),
+				tap(() => this.change(null)),
 				untilDestroyed(this)
 			)
 			.subscribe();
