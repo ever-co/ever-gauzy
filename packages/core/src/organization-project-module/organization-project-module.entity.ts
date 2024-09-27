@@ -4,7 +4,7 @@ import { EntityRepositoryType } from '@mikro-orm/core';
 import {
 	IsArray,
 	IsBoolean,
-	IsDate,
+	IsDateString,
 	IsEnum,
 	IsNotEmpty,
 	IsObject,
@@ -12,7 +12,6 @@ import {
 	IsString,
 	IsUUID
 } from 'class-validator';
-import { Type } from 'class-transformer';
 import {
 	ID,
 	IEmployee,
@@ -22,7 +21,7 @@ import {
 	IOrganizationTeam,
 	ITask,
 	IUser,
-	TaskStatusEnum
+	ProjectModuleStatusEnum
 } from '@gauzy/contracts';
 import {
 	Employee,
@@ -63,22 +62,20 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@IsEnum(TaskStatusEnum)
+	@IsEnum(ProjectModuleStatusEnum)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
-	status?: TaskStatusEnum;
+	status?: ProjectModuleStatusEnum;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@Type(() => Date)
 	@IsOptional()
-	@IsDate()
+	@IsDateString()
 	@MultiORMColumn({ nullable: true })
 	startDate?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@Type(() => Date)
 	@IsOptional()
-	@IsDate()
+	@IsDateString()
 	@MultiORMColumn({ nullable: true })
 	endDate?: Date;
 
@@ -157,6 +154,9 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	/**
 	 * Module manager
 	 */
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@IsObject()
 	@MultiORMManyToOne(() => User, {
 		nullable: true,
 		onDelete: 'CASCADE'
@@ -164,6 +164,9 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	@JoinColumn()
 	manager?: IUser;
 
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((it: OrganizationProjectModule) => it.manager)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
@@ -181,17 +184,23 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	@MultiORMOneToMany(() => OrganizationProjectModule, (module) => module.parent)
 	children?: OrganizationProjectModule[];
 
-	/**
-	 * Organization Tasks Relationship
-	 */
-	@MultiORMOneToMany(() => Task, (it) => it.projectModule)
-	tasks?: ITask[];
-
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToMany
 	|--------------------------------------------------------------------------
 	*/
+
+	/**
+	 * Task
+	 */
+	@MultiORMManyToMany(() => Task, (it) => it.modules, {
+		/** Defines the database action to perform on update. */
+		onUpdate: 'CASCADE',
+		/** Defines the database cascade action on delete. */
+		onDelete: 'CASCADE'
+	})
+	@JoinTable({ name: 'project_module_task' })
+	tasks?: ITask[];
 
 	/**
 	 * Organization Sprint

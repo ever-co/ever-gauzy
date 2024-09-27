@@ -10,7 +10,10 @@ export function createInitialState(): ITeamSelectorState {
 	return {
 		hasPermission: false,
 		selected: null,
-		data: []
+		data: [],
+		total: 0,
+		page: 1,
+		limit: 10
 	};
 }
 

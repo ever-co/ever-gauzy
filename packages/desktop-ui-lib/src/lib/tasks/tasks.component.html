@@ -1,10 +1,8 @@
 <nb-card [formGroup]="form">
 	<nb-card-header class="d-flex flex-column">
-		<span class="cancel"
-		><i (click)="close()" class="fas fa-times"></i
-		></span>
+		<span class="cancel"><i (click)="close()" class="fas fa-times"></i></span>
 		<h5>
-			{{ "TIMER_TRACKER.ADD_TASK" | translate }}
+			{{ 'TIMER_TRACKER.ADD_TASK' | translate }}
 		</h5>
 	</nb-card-header>
 	<nb-card-body>
@@ -13,182 +11,37 @@
 				<div class="row">
 					<div class="col-sm-6">
 						<div class="form-group">
-							<label class="label">{{
-								"CONTEXT_MENU.CLIENT" | translate
-								}}</label>
-							<ng-select
-								[addTagText]="
-								'TIMER_TRACKER.ADD_CONTACT' | translate
-							"
-								[clearable]="true"
-								[items]="contacts"
-								[placeholder]="
-								'TIMER_TRACKER.SELECT_CLIENT' | translate
-							"
-								bindLabel="name"
-								bindValue="id"
-								formControlName="organizationContactId"
-							>
-								<ng-template
-									let-index="index"
-									let-item="item"
-									ng-option-tmp
-								>
-									<img
-										*ngIf="item.imageUrl"
-										[src]="item.imageUrl"
-										height="20px"
-										width="20px"
-									/>
-									<span>
-									{{ item?.name }}
-								</span>
-								</ng-template>
-								<ng-template let-item="item" ng-label-tmp>
-									<div class="selector-template">
-										<img
-											*ngIf="item.imageUrl"
-											[src]="item.imageUrl"
-											height="20px"
-											width="20px"
-										/>
-										<span>
-										{{ item?.name }}
-									</span>
-									</div>
-								</ng-template>
-							</ng-select>
+							<gauzy-client-selector formControlName="organizationContactId"></gauzy-client-selector>
 						</div>
 					</div>
 					<div class="col-sm-6">
 						<div class="form-group">
-							<label class="label">{{
-								"TASKS_PAGE.TASKS_PROJECT" | translate
-								}}</label>
-							<ng-select
-								[addTagText]="
-								'FORM.PLACEHOLDERS.ADD_PROJECT' | translate
-							"
-								[addTag]="hasProjectPermission ? addProject : null"
-								[clearable]="true"
-								[items]="projects"
-								[placeholder]="
-								'TASKS_PAGE.TASKS_PROJECT' | translate
-							"
-								bindLabel="name"
-								bindValue="id"
-								formControlName="projectId"
-							>
-								<ng-template
-									let-index="index"
-									let-item="item"
-									ng-option-tmp
-								>
-									<img
-										*ngIf="item.imageUrl"
-										[src]="item.imageUrl"
-										height="20px"
-										width="20px"
-									/>
-									<span>
-									{{ item?.name }}
-								</span>
-								</ng-template>
-								<ng-template let-item="item" ng-label-tmp>
-									<div class="selector-template">
-										<img
-											*ngIf="item.imageUrl"
-											[src]="item.imageUrl"
-											height="20px"
-											width="20px"
-										/>
-										<span>
-										{{ item?.name }}
-									</span>
-									</div>
-								</ng-template>
-							</ng-select>
+							<gauzy-project-selector formControlName="projectId"></gauzy-project-selector>
 						</div>
 					</div>
 				</div>
 				<div class="row">
 					<div class="col-sm-6">
 						<div class="form-group">
-							<label>{{ "CONTEXT_MENU.TEAM" | translate }}</label>
-							<ng-select
-								[clearable]="true"
-								[items]="teams"
-								[placeholder]="
-								'FORM.LABELS.SELECT_TEAM'
-									| translate
-									| titlecase
-							"
-								bindLabel="name"
-								bindValue="id"
-								formControlName="organizationTeamId"
-								nbTooltipStatus="warning"
-							>
-								<ng-template
-									let-index="index"
-									let-item="item"
-									ng-option-tmp
-								>
-									<img
-										*ngIf="item?.logo"
-										[src]="item?.logo"
-										height="20px"
-										width="20px"
-									/>
-									<span class="text-container">
-									{{ item?.name }}
-								</span>
-								</ng-template>
-								<ng-template let-item="item" ng-label-tmp>
-									<div class="selector-template">
-										<img
-											*ngIf="item?.logo"
-											[src]="item?.logo"
-											height="20px"
-											width="20px"
-										/>
-										<span
-											class="black-bold-text text-container"
-										>
-										{{ item?.name }}
-									</span>
-									</div>
-								</ng-template>
-							</ng-select>
+							<gauzy-team-selector formControlName="organizationTeamId"></gauzy-team-selector>
 						</div>
 					</div>
 					<div class="col-sm-6">
 						<div class="form-group">
-							<label class="label">{{
-								"TASKS_PAGE.TASKS_STATUS" | translate
-								}}</label>
+							<label class="label">{{ 'TASKS_PAGE.TASKS_STATUS' | translate }}</label>
 							<ng-select
 								[clearable]="true"
 								[items]="taskStatuses"
-								[placeholder]="
-								'TASKS_PAGE.TASKS_STATUS' | translate
-							"
+								[placeholder]="'TASKS_PAGE.TASKS_STATUS' | translate"
 								[searchable]="false"
 								bindLabel="name"
 								formControlName="taskStatus"
 							>
-								<ng-template
-									let-index="index"
-									let-item="item"
-									ng-option-tmp
-								>
-									<gauzy-task-badge-view
-										[taskBadge]="item"
-									></gauzy-task-badge-view>
+								<ng-template let-index="index" let-item="item" ng-option-tmp>
+									<gauzy-task-badge-view [taskBadge]="item"></gauzy-task-badge-view>
 								</ng-template>
 								<ng-template let-item="item" ng-label-tmp>
-									<gauzy-task-badge-view
-										[taskBadge]="item"
-									></gauzy-task-badge-view>
+									<gauzy-task-badge-view [taskBadge]="item"></gauzy-task-badge-view>
 								</ng-template>
 							</ng-select>
 						</div>
@@ -197,9 +50,7 @@
 				<div class="row">
 					<div class="col-sm-12">
 						<div class="form-group">
-							<label class="label">{{
-								"TASKS_PAGE.TASKS_TITLE" | translate
-								}}</label>
+							<label class="label">{{ 'TASKS_PAGE.TASKS_TITLE' | translate }}</label>
 							<input
 								[placeholder]="'TASKS_PAGE.TASKS_TITLE' | translate"
 								class="name-input"
@@ -213,11 +64,11 @@
 				<div class="row">
 					<div class="col-sm-12">
 						<label class="label">
-							{{ "SM_TABLE.TAGS" | translate }}
+							{{ 'SM_TABLE.TAGS' | translate }}
 						</label>
 						<div class="form-group">
 							<ng-select
-								[addTag]="(hasAddTagPermission$ | async) ? createTag: null"
+								[addTag]="(hasAddTagPermission$ | async) ? createTag : null"
 								[clearable]="true"
 								[items]="tags"
 								[multiple]="true"
@@ -226,39 +77,24 @@
 								bindLabel="name"
 								formControlName="tags"
 							>
-								<ng-template
-									let-tag="item"
-									let-tag$="item$"
-									ng-option-tmp
-								>
+								<ng-template let-tag="item" let-tag$="item$" ng-option-tmp>
 									<div class="d-flex align-items-center">
 										<ng-container *ngIf="multiple">
-											<input
-												[ngModel]="tag$.selected"
-												type="checkbox"
-											/>
+											<input [ngModel]="tag$.selected" type="checkbox" />
 										</ng-container>
 										<nb-badge
-											[style.background]="
-											background(tag.color)
-										"
+											[style.background]="background(tag.color)"
 											class="tag-color"
 										></nb-badge>
 										<span class="text">{{ tag.name }}</span>
 									</div>
 								</ng-template>
 
-								<ng-template
-									let-clear="clear"
-									let-tag="item"
-									ng-label-tmp
-								>
+								<ng-template let-clear="clear" let-tag="item" ng-label-tmp>
 									<nb-badge
 										(click)="clear(tag)"
 										[style.background]="background(tag.color)"
-										[style.color]="
-										backgroundContrast(tag.color)
-									"
+										[style.color]="backgroundContrast(tag.color)"
 										[text]="tag.name"
 										class="tag-color tag-label"
 									></nb-badge>
@@ -270,41 +106,27 @@
 				<div class="row">
 					<div class="col-sm-6">
 						<div class="form-group">
-							<label>{{
-								"TASKS_PAGE.TASK_PRIORITY" | translate
-								}}</label>
+							<label>{{ 'TASKS_PAGE.TASK_PRIORITY' | translate }}</label>
 							<ng-select
 								[clearable]="true"
 								[items]="taskPriorities"
-								[placeholder]="
-								'TASKS_PAGE.TASK_PRIORITY' | translate
-							"
+								[placeholder]="'TASKS_PAGE.TASK_PRIORITY' | translate"
 								bindLabel="name"
 								formControlName="taskPriority"
 								nbTooltipStatus="warning"
 							>
-								<ng-template
-									let-index="index"
-									let-item="item"
-									ng-option-tmp
-								>
-									<gauzy-task-badge-view
-										[taskBadge]="item"
-									></gauzy-task-badge-view>
+								<ng-template let-index="index" let-item="item" ng-option-tmp>
+									<gauzy-task-badge-view [taskBadge]="item"></gauzy-task-badge-view>
 								</ng-template>
 								<ng-template let-item="item" ng-label-tmp>
-									<gauzy-task-badge-view
-										[taskBadge]="item"
-									></gauzy-task-badge-view>
+									<gauzy-task-badge-view [taskBadge]="item"></gauzy-task-badge-view>
 								</ng-template>
 							</ng-select>
 						</div>
 					</div>
 					<div class="col-sm-6">
 						<div class="form-group">
-							<label class="label">{{
-								"TASKS_PAGE.TASK_SIZE" | translate
-								}}</label>
+							<label class="label">{{ 'TASKS_PAGE.TASK_SIZE' | translate }}</label>
 							<ng-select
 								[clearable]="true"
 								[items]="taskSizes"
@@ -313,19 +135,11 @@
 								bindLabel="name"
 								formControlName="taskSize"
 							>
-								<ng-template
-									let-index="index"
-									let-item="item"
-									ng-option-tmp
-								>
-									<gauzy-task-badge-view
-										[taskBadge]="item"
-									></gauzy-task-badge-view>
+								<ng-template let-index="index" let-item="item" ng-option-tmp>
+									<gauzy-task-badge-view [taskBadge]="item"></gauzy-task-badge-view>
 								</ng-template>
 								<ng-template let-item="item" ng-label-tmp>
-									<gauzy-task-badge-view
-										[taskBadge]="item"
-									></gauzy-task-badge-view>
+									<gauzy-task-badge-view [taskBadge]="item"></gauzy-task-badge-view>
 								</ng-template>
 							</ng-select>
 						</div>
@@ -334,9 +148,7 @@
 				<div class="row">
 					<div class="col-sm-6">
 						<div class="form-group">
-							<label class="label" for="dueDate">{{
-								"TASKS_PAGE.DUE_DATE" | translate
-								}}</label>
+							<label class="label" for="dueDate">{{ 'TASKS_PAGE.DUE_DATE' | translate }}</label>
 							<input
 								[nbDatepicker]="taskDueDatePicker"
 								[placeholder]="'TASKS_PAGE.DUE_DATE' | translate"
@@ -350,24 +162,18 @@
 						</div>
 					</div>
 					<div class="col-sm-6">
-						<label class="label" for="estimate">{{
-							"TASKS_PAGE.ESTIMATE" | translate
-							}}</label>
+						<label class="label" for="estimate">{{ 'TASKS_PAGE.ESTIMATE' | translate }}</label>
 						<div class="estimate-inputs">
 							<input
 								[min]="0"
-								[placeholder]="
-								'TASKS_PAGE.ESTIMATE_DAYS' | translate
-							"
+								[placeholder]="'TASKS_PAGE.ESTIMATE_DAYS' | translate"
 								formControlName="estimateDays"
 								nbInput
 								type="number"
 							/>
 
 							<input
-								[placeholder]="
-								'TASKS_PAGE.ESTIMATE_HOURS' | translate
-							"
+								[placeholder]="'TASKS_PAGE.ESTIMATE_HOURS' | translate"
 								formControlName="estimateHours"
 								max="23"
 								min="0"
@@ -377,9 +183,7 @@
 
 							<input
 								[min]="0"
-								[placeholder]="
-								'TASKS_PAGE.ESTIMATE_MINUTES' | translate
-							"
+								[placeholder]="'TASKS_PAGE.ESTIMATE_MINUTES' | translate"
 								formControlName="estimateMinutes"
 								max="59"
 								min="0"
@@ -394,9 +198,7 @@
 				<div class="row">
 					<div class="col-12">
 						<div class="form-group">
-							<label class="label">{{
-								"TASKS_PAGE.TASKS_DESCRIPTION" | translate
-								}}</label>
+							<label class="label">{{ 'TASKS_PAGE.TASKS_DESCRIPTION' | translate }}</label>
 							<ckeditor
 								[config]="editorConfig"
 								class="description"
@@ -410,19 +212,11 @@
 	</nb-card-body>
 	<nb-card-footer>
 		<button (click)="close()" nbButton outline status="basic">
-			{{ "BUTTONS.CANCEL" | translate }}
+			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button
-			(click)="save()"
-			[disabled]="form?.invalid"
-			nbButton
-			status="success"
-		>
-			{{ "BUTTONS.SAVE" | translate }}
-			<nb-icon
-				*gauzySpinnerButton="isSaving"
-				[ngStyle]="{ display: 'none' }"
-			></nb-icon>
+		<button (click)="save()" [disabled]="form?.invalid" nbButton status="success">
+			{{ 'BUTTONS.SAVE' | translate }}
+			<nb-icon *gauzySpinnerButton="isSaving" [ngStyle]="{ display: 'none' }"></nb-icon>
 		</button>
 	</nb-card-footer>
 </nb-card>

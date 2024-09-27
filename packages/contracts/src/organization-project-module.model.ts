@@ -3,7 +3,6 @@ import { IEmployee } from './employee.model';
 import { IRelationalOrganizationProject } from './organization-projects.model';
 import { IOrganizationSprint } from './organization-sprint.model';
 import { IOrganizationTeam } from './organization-team.model';
-import { TaskStatusEnum } from './task-status.model';
 import { ITask } from './task.model';
 import { IUser } from './user.model';
 
@@ -17,7 +16,7 @@ export interface IOrganizationProjectModule
 		IRelationalOrganizationProject {
 	name: string;
 	description?: string;
-	status?: TaskStatusEnum;
+	status?: ProjectModuleStatusEnum;
 	startDate?: Date;
 	endDate?: Date;
 	isFavorite?: boolean;
@@ -40,6 +39,15 @@ export interface IOrganizationProjectModuleFindInput
 		Partial<Pick<IOrganizationProjectModule, 'name' | 'status' | 'projectId'>> {
 	organizationTeamId?: ID;
 	organizationSprintId?: ID;
+}
+
+export enum ProjectModuleStatusEnum {
+	BACKLOG = 'backlog',
+	PLANNED = 'planned',
+	IN_PROGRESS = 'in-progress',
+	PAUSED = 'paused',
+	COMPLETED = 'completed',
+	CANCELLED = 'cancelled'
 }
 
 export interface IOrganizationProjectModuleCreateInput extends Omit<IOrganizationProjectModule, 'id'> {}

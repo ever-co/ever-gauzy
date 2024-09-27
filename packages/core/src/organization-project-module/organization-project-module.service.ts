@@ -1,12 +1,13 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Brackets, FindManyOptions, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import {
 	ID,
 	IOrganizationProjectModule,
+	IOrganizationProjectModuleCreateInput,
 	IOrganizationProjectModuleFindInput,
 	IPagination,
 	PermissionsEnum,
-	TaskStatusEnum
+	ProjectModuleStatusEnum
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { isPostgres } from '@gauzy/config';
@@ -24,6 +25,18 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		readonly mikroOrmProjectModuleRepository: MikroOrmOrganizationProjectModuleRepository
 	) {
 		super(typeOrmProjectModuleRepository, mikroOrmProjectModuleRepository);
+	}
+
+	async create(entity: IOrganizationProjectModuleCreateInput): Promise<IOrganizationProjectModule> {
+		try {
+			const creatorId = RequestContext.currentUserId();
+			return super.create({
+				...entity,
+				creatorId
+			});
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
 	/**
@@ -82,7 +95,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 				new Brackets((qb: WhereExpressionBuilder) => {
 					// Apply optional filters
 					const filters: IOrganizationProjectModuleFindInput = {
-						status: status as TaskStatusEnum,
+						status: status as ProjectModuleStatusEnum,
 						projectId: projectId as ID,
 						name: name as string
 					};
@@ -176,7 +189,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 
 					// Apply optional filters
 					const filters: IOrganizationProjectModuleFindInput = {
-						status: status as TaskStatusEnum,
+						status: status as ProjectModuleStatusEnum,
 						name: name as string
 					};
 
@@ -185,7 +198,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 				})
 			);
 
-			console.log('Get Employees modules', query.getSql()); // Query logs for debugging
+			console.log('Get Team modules', query.getSql()); // Query logs for debugging
 
 			// Execute the query with pagination
 			return await this.executePaginationQuery<OrganizationProjectModule>(query);

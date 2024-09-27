@@ -86,7 +86,8 @@ export interface IOrganizationProjectsFindInput
 }
 
 export interface IOrganizationProjectCreateInput extends IOrganizationProjectBase {
-	managers?: IOrganizationProjectEmployee[];
+	memberIds?: ID[]; // Manager of the organization project
+	managerIds?: ID[]; // Manager of the organization project
 }
 
 export interface IOrganizationProjectUpdateInput extends IOrganizationProjectCreateInput {}
