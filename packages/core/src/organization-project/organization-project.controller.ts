@@ -138,7 +138,7 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: UpdateTaskModeDTO
 	): Promise<IOrganizationProject> {
-		return await this.commandBus.execute(new OrganizationProjectUpdateCommand({ ...entity, id }));
+		return await this.commandBus.execute(new OrganizationProjectUpdateCommand(id, entity));
 	}
 
 	/**
@@ -291,7 +291,7 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: UpdateOrganizationProjectDTO
 	): Promise<IOrganizationProject> {
-		return await this.commandBus.execute(new OrganizationProjectUpdateCommand({ ...entity, id }));
+		return await this.commandBus.execute(new OrganizationProjectUpdateCommand(id, entity));
 	}
 
 	/**

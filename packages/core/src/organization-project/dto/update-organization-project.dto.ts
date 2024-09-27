@@ -7,5 +7,5 @@ import { OrganizationProjectDTO } from './organization-project.dto';
  * Update Organization Project DTO request validation
  */
 export class UpdateOrganizationProjectDTO
-	extends IntersectionType(PartialType(OrganizationProjectDTO), TenantOrganizationBaseDTO)
+	extends IntersectionType(TenantOrganizationBaseDTO, PartialType(OrganizationProjectDTO))
 	implements IOrganizationProjectUpdateInput {}
