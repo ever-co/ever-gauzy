@@ -21,7 +21,7 @@ import { getConfig } from '@gauzy/config';
 import { CustomEmbeddedFieldConfig, isNotEmpty } from '@gauzy/common';
 import { PaginationParams, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
-import { OrganizationProjectEmployee, Role } from '../core/entities/internal';
+import { OrganizationProjectEmployee } from '../core/entities/internal';
 import { FavoriteService } from '../core/decorators';
 import { ActivityLogEvent } from '../activity-log/events';
 import { generateActivityLogDescription } from '../activity-log/activity-log.helper';
