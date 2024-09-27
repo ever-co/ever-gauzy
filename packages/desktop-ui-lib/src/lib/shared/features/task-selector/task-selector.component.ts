@@ -1,10 +1,12 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, OnInit } from '@angular/core';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ITask } from 'packages/contracts/dist';
-import { debounceTime, filter, Observable, Subject, switchMap, tap } from 'rxjs';
+import { debounceTime, filter, Observable, switchMap, tap } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { ElectronService } from '../../../electron/services';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
+import { AbstractSelectorComponent } from '../../components/abstract/selector.abstract';
 import { TaskSelectorQuery } from './+state/task-selector.query';
 import { TaskSelectorService } from './+state/task-selector.service';
 import { TaskSelectorStore } from './+state/task-selector.store';
@@ -14,17 +16,25 @@ import { TaskSelectorStore } from './+state/task-selector.store';
 	selector: 'gauzy-task-selector',
 	templateUrl: './task-selector.component.html',
 	styleUrls: ['./task-selector.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => TaskSelectorComponent),
+			multi: true
+		}
+	]
 })
-export class TaskSelectorComponent implements OnInit {
-	public search$ = new Subject<string>();
+export class TaskSelectorComponent extends AbstractSelectorComponent<ITask> implements OnInit {
 	constructor(
 		private readonly electronService: ElectronService,
 		public readonly taskSelectorStore: TaskSelectorStore,
 		public readonly taskSelectorQuery: TaskSelectorQuery,
 		private readonly timeTrackerQuery: TimeTrackerQuery,
 		private readonly taskSelectorService: TaskSelectorService
-	) {}
+	) {
+		super();
+	}
 
 	public ngOnInit() {
 		this.search$
@@ -45,6 +55,8 @@ export class TaskSelectorComponent implements OnInit {
 			)
 			.subscribe();
 		this.taskSelectorService.onScroll$.pipe(untilDestroyed(this)).subscribe();
+		// Handle search logic
+		this.handleSearch(this.taskSelectorService);
 	}
 
 	public refresh(): void {
@@ -67,8 +79,11 @@ export class TaskSelectorComponent implements OnInit {
 		return this.taskSelectorQuery.data$;
 	}
 
-	public change(taskId: ITask['id']) {
-		this.taskSelectorStore.updateSelected(taskId);
+	protected updateSelected(value: ITask): void {
+		// Update store only if useStore is true
+		if (this.useStore) {
+			this.taskSelectorStore.updateSelected(value.id);
+		}
 	}
 
 	public get isLoading$(): Observable<boolean> {

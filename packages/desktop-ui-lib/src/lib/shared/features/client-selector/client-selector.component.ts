@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, OnInit } from '@angular/core';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganizationContact } from 'packages/contracts/dist';
-import { concatMap, debounceTime, distinctUntilChanged, filter, Observable, Subject, switchMap, tap } from 'rxjs';
+import { concatMap, filter, Observable, tap } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
+import { AbstractSelectorComponent } from '../../components/abstract/selector.abstract';
 import { ProjectSelectorService } from '../project-selector/+state/project-selector.service';
 import { TaskSelectorService } from '../task-selector/+state/task-selector.service';
 import { TeamSelectorService } from '../team-selector/+state/team-selector.service';
@@ -16,10 +18,16 @@ import { ClientSelectorStore } from './+state/client-selector.store';
 	selector: 'gauzy-client-selector',
 	templateUrl: './client-selector.component.html',
 	styleUrls: ['./client-selector.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => ClientSelectorComponent),
+			multi: true
+		}
+	]
 })
-export class ClientSelectorComponent implements OnInit {
-	public search$ = new Subject<string>();
+export class ClientSelectorComponent extends AbstractSelectorComponent<IOrganizationContact> implements OnInit {
 	constructor(
 		private readonly electronService: ElectronService,
 		public readonly clientSelectorStore: ClientSelectorStore,
@@ -29,7 +37,9 @@ export class ClientSelectorComponent implements OnInit {
 		private readonly taskSelectorService: TaskSelectorService,
 		private readonly teamSelectorService: TeamSelectorService,
 		private readonly timeTrackerQuery: TimeTrackerQuery
-	) {}
+	) {
+		super();
+	}
 
 	public ngOnInit(): void {
 		this.clientSelectorService.onScroll$.pipe(untilDestroyed(this)).subscribe();
@@ -50,15 +60,8 @@ export class ClientSelectorComponent implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.search$
-			.pipe(
-				debounceTime(300),
-				distinctUntilChanged(),
-				tap(() => this.clientSelectorService.resetPage()),
-				switchMap((searchTerm) => this.clientSelectorService.load({ searchTerm })),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		// Handle search logic
+		this.handleSearch(this.clientSelectorService);
 	}
 
 	public refresh(): void {
@@ -81,8 +84,11 @@ export class ClientSelectorComponent implements OnInit {
 		return this.clientSelectorQuery.data$;
 	}
 
-	public change(clientId: IOrganizationContact['id']) {
-		this.clientSelectorStore.updateSelected(clientId);
+	protected updateSelected(value: IOrganizationContact): void {
+		// Update store only if useStore is true
+		if (this.useStore) {
+			this.clientSelectorStore.updateSelected(value.id);
+		}
 	}
 
 	public get isLoading$(): Observable<boolean> {

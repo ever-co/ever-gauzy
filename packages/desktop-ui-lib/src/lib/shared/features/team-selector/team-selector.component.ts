@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, OnInit } from '@angular/core';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganizationTeam } from 'packages/contracts/dist';
-import { concatMap, debounceTime, distinctUntilChanged, filter, Observable, Subject, switchMap, tap } from 'rxjs';
+import { concatMap, filter, Observable, of, tap } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
+import { AbstractSelectorComponent } from '../../components/abstract/selector.abstract';
 import { ProjectSelectorService } from '../project-selector/+state/project-selector.service';
 import { TaskSelectorService } from '../task-selector/+state/task-selector.service';
 import { TeamSelectorQuery } from './+state/team-selector.query';
@@ -15,11 +17,16 @@ import { TeamSelectorStore } from './+state/team-selector.store';
 	selector: 'gauzy-team-selector',
 	templateUrl: './team-selector.component.html',
 	styleUrls: ['./team-selector.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => TeamSelectorComponent),
+			multi: true
+		}
+	]
 })
-export class TeamSelectorComponent implements OnInit {
-	public search$ = new Subject<string>();
-
+export class TeamSelectorComponent extends AbstractSelectorComponent<IOrganizationTeam> implements OnInit {
 	constructor(
 		private readonly electronService: ElectronService,
 		private readonly teamSelectorStore: TeamSelectorStore,
@@ -28,7 +35,9 @@ export class TeamSelectorComponent implements OnInit {
 		private readonly taskSelectorService: TaskSelectorService,
 		private readonly timeTrackerQuery: TimeTrackerQuery,
 		private readonly teamSelectorService: TeamSelectorService
-	) {}
+	) {
+		super();
+	}
 	public ngOnInit(): void {
 		this.taskSelectorService.onScroll$.pipe(untilDestroyed(this)).subscribe();
 		this.teamSelectorService
@@ -47,15 +56,8 @@ export class TeamSelectorComponent implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.search$
-			.pipe(
-				debounceTime(300),
-				distinctUntilChanged(),
-				tap(() => this.teamSelectorService.resetPage()),
-				switchMap((searchTerm) => this.teamSelectorService.load({ searchTerm })),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		// Handle search logic
+		this.handleSearch(this.projectSelectorService);
 	}
 
 	public refresh(): void {
@@ -74,8 +76,11 @@ export class TeamSelectorComponent implements OnInit {
 		return this.teamSelectorQuery.data$;
 	}
 
-	public change(teamId: IOrganizationTeam['id']) {
-		this.teamSelectorStore.updateSelected(teamId);
+	protected updateSelected(value: IOrganizationTeam): void {
+		// Update store only if useStore is true
+		if (this.useStore) {
+			this.teamSelectorStore.updateSelected(value.id);
+		}
 	}
 
 	public get isLoading$(): Observable<boolean> {
@@ -84,6 +89,10 @@ export class TeamSelectorComponent implements OnInit {
 
 	public get disabled$(): Observable<boolean> {
 		return this.timeTrackerQuery.disabled$;
+	}
+
+	public get hasPermission$(): Observable<boolean> {
+		return of(false);
 	}
 
 	public onShowMore(): void {

@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, OnInit } from '@angular/core';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganizationProject } from 'packages/contracts/dist';
-import { concatMap, debounceTime, distinctUntilChanged, filter, Observable, Subject, switchMap, tap } from 'rxjs';
+import { concatMap, filter, Observable, tap } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
+import { AbstractSelectorComponent } from '../../components/abstract/selector.abstract';
 import { TaskSelectorService } from '../task-selector/+state/task-selector.service';
 import { TeamSelectorService } from '../team-selector/+state/team-selector.service';
 import { ProjectSelectorQuery } from './+state/project-selector.query';
@@ -15,10 +17,16 @@ import { ProjectSelectorStore } from './+state/project-selector.store';
 	selector: 'gauzy-project-selector',
 	templateUrl: './project-selector.component.html',
 	styleUrls: ['./project-selector.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => ProjectSelectorComponent),
+			multi: true
+		}
+	]
 })
-export class ProjectSelectorComponent implements OnInit {
-	public search$ = new Subject<string>();
+export class ProjectSelectorComponent extends AbstractSelectorComponent<IOrganizationProject> implements OnInit {
 	constructor(
 		private readonly electronService: ElectronService,
 		private readonly projectSelectorStore: ProjectSelectorStore,
@@ -27,7 +35,9 @@ export class ProjectSelectorComponent implements OnInit {
 		private readonly taskSelectorService: TaskSelectorService,
 		private readonly teamSelectorService: TeamSelectorService,
 		private readonly timeTrackerQuery: TimeTrackerQuery
-	) {}
+	) {
+		super();
+	}
 
 	public ngOnInit(): void {
 		this.projectSelectorService.onScroll$.pipe(untilDestroyed(this)).subscribe();
@@ -46,15 +56,8 @@ export class ProjectSelectorComponent implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.search$
-			.pipe(
-				debounceTime(300),
-				distinctUntilChanged(),
-				tap(() => this.projectSelectorService.resetPage()),
-				switchMap((searchTerm) => this.projectSelectorService.load({ searchTerm })),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		// Handle search logic
+		this.handleSearch(this.projectSelectorService);
 	}
 
 	public refresh(): void {
@@ -77,8 +80,11 @@ export class ProjectSelectorComponent implements OnInit {
 		return this.projectSelectorQuery.data$;
 	}
 
-	public change(projectId: IOrganizationProject['id']) {
-		this.projectSelectorStore.updateSelected(projectId);
+	protected updateSelected(value: IOrganizationProject): void {
+		// Update store only if useStore is true
+		if (this.useStore) {
+			this.projectSelectorStore.updateSelected(value.id);
+		}
 	}
 
 	public get isLoading$(): Observable<boolean> {

@@ -12,7 +12,7 @@ export abstract class SelectorService<T> {
 		public readonly selectorQuery: SelectorQuery<T>
 	) {}
 
-	public abstract load(): Promise<void>;
+	public abstract load(options?: { searchTerm?: string }): Promise<void>;
 
 	public getAll$(): Observable<T[]> {
 		return this.selectorQuery.data$;
