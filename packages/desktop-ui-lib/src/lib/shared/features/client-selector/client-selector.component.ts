@@ -44,9 +44,6 @@ export class ClientSelectorComponent implements OnInit {
 		this.clientSelectorQuery.selected$
 			.pipe(
 				filter(Boolean),
-				tap(() => this.projectSelectorService.resetPage()),
-				tap(() => this.taskSelectorService.resetPage()),
-				tap(() => this.teamSelectorService.resetPage()),
 				concatMap(() => this.projectSelectorService.load()),
 				concatMap(() => this.taskSelectorService.load()),
 				concatMap(() => this.teamSelectorService.load()),

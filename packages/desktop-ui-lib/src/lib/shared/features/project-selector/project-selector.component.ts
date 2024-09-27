@@ -34,8 +34,6 @@ export class ProjectSelectorComponent implements OnInit {
 		this.projectSelectorQuery.selected$
 			.pipe(
 				filter(Boolean),
-				tap(() => this.teamSelectorService.resetPage()),
-				tap(() => this.taskSelectorService.resetPage()),
 				concatMap(() => Promise.allSettled([this.teamSelectorService.load(), this.taskSelectorService.load()])),
 				untilDestroyed(this)
 			)
