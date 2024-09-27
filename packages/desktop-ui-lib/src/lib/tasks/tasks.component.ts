@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Inject, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import {
 	IEmployee,
@@ -14,12 +14,11 @@ import {
 	PermissionsEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { concatMap, from, map, Observable, tap } from 'rxjs';
-import { GAUZY_ENV } from '../constants';
+import { from, map, Observable, tap } from 'rxjs';
 import { Store, TagService } from '../services';
 import { ClientSelectorService } from '../shared/features/client-selector/+state/client-selector.service';
 import { ProjectSelectorService } from '../shared/features/project-selector/+state/project-selector.service';
@@ -36,16 +35,6 @@ import { CkEditorConfig, ColorAdapter } from '../utils';
 export class TasksComponent implements OnInit {
 	@Input() userData: IUserOrganization = this.store.user as any;
 	@Input() employee: IEmployee = this.store.user.employee;
-	@Input() hasProjectPermission: boolean = this.projectSelectorService.hasPermission;
-	@Input() selected: {
-		projectId: IOrganizationProject['id'];
-		teamId: IOrganizationTeam['id'];
-		contactId: IOrganizationContact['id'];
-	} = {
-		projectId: this.projectSelectorService.selectedId,
-		teamId: this.teamSelectorService.selectedId,
-		contactId: this.clientSelectorService.selectedId
-	};
 	@Output() isAddTask: EventEmitter<boolean> = new EventEmitter();
 	@Output() newTaskCallback: EventEmitter<{
 		isSuccess: boolean;
@@ -94,10 +83,7 @@ export class TasksComponent implements OnInit {
 
 	constructor(
 		private timeTrackerService: TimeTrackerService,
-		private toastrService: NbToastrService,
 		private translate: TranslateService,
-		@Inject(GAUZY_ENV)
-		private readonly _environment: any,
 		private store: Store,
 		private _dialogRef: NbDialogRef<TasksComponent>,
 		private _tagService: TagService,
@@ -106,38 +92,6 @@ export class TasksComponent implements OnInit {
 		private readonly projectSelectorService: ProjectSelectorService
 	) {
 		this.isSaving = false;
-	}
-
-	private async _projects(value?: {
-		organizationContactId?: string;
-		organizationTeamId?: string;
-		projectId?: string;
-	}): Promise<void> {
-		try {
-			const { organizationId, user, tenantId } = this.store;
-			const employeeId = user?.employee?.id;
-
-			if (!employeeId) {
-				throw new Error('Employee ID is missing.');
-			}
-
-			const filterParams = {
-				organizationId,
-				tenantId,
-				employeeId,
-				...(value?.organizationContactId && { organizationContactId: value.organizationContactId }),
-				...(value?.organizationTeamId && { organizationTeamId: value.organizationTeamId })
-			};
-
-			this.projects = await this.timeTrackerService.getProjects(filterParams);
-
-			// Clear the form's projectId if the selected project does not exist in the fetched list
-			if (value?.projectId && !this.projects.some(({ id }) => id === value.projectId)) {
-				this.form.patchValue({ projectId: null });
-			}
-		} catch (error) {
-			console.error('[Projects Fetch Error]', `Unable to fetch employee projects: ${error.message}`);
-		}
 	}
 
 	private async _tags(): Promise<void> {
@@ -156,24 +110,6 @@ export class TasksComponent implements OnInit {
 			this.employees = [employee];
 		} catch (error) {
 			console.error('[error]', 'while get employees::' + error.message);
-		}
-	}
-
-	private async _clients(): Promise<void> {
-		try {
-			const { organizationId, user, tenantId } = this.store;
-			const employeeId = user.employee.id;
-			this.contacts = await this.timeTrackerService.getClient({ organizationId, employeeId, tenantId });
-		} catch (error) {
-			console.error('[error]', 'while get contacts::' + error.message);
-		}
-	}
-
-	private async _teams(): Promise<void> {
-		try {
-			this.teams = await this.timeTrackerService.getTeams();
-		} catch (error) {
-			console.error('[error]', 'while get teams::' + error.message);
 		}
 	}
 
@@ -204,17 +140,7 @@ export class TasksComponent implements OnInit {
 		const { organizationId, tenantId } = this.store;
 		this.editorConfig.editorplaceholder = this.translate.instant('FORM.PLACEHOLDERS.DESCRIPTION');
 		this.taskStatuses = this.store.statuses;
-		from(
-			Promise.allSettled([
-				this._projects(),
-				this._tags(),
-				this._employees(),
-				this._clients(),
-				this._teams(),
-				this._sizes(),
-				this._priorities()
-			])
-		)
+		from(Promise.allSettled([this._tags(), this._employees(), this._sizes(), this._priorities()]))
 			.pipe(
 				tap(() => this.form.patchValue({ taskStatus: this.taskStatuses[0] })),
 				untilDestroyed(this)
@@ -231,7 +157,7 @@ export class TasksComponent implements OnInit {
 			members: new FormControl([]),
 			organizationId: new FormControl(organizationId),
 			project: new FormControl(null),
-			projectId: new FormControl(this.selected.projectId),
+			projectId: new FormControl(this.projectSelectorService.selectedId),
 			status: new FormControl(TaskStatusEnum.OPEN),
 			priority: new FormControl(null),
 			size: new FormControl(null),
@@ -242,15 +168,9 @@ export class TasksComponent implements OnInit {
 			taskStatus: new FormControl(null),
 			taskPriority: new FormControl(null),
 			taskSize: new FormControl(null),
-			organizationContactId: new FormControl(this.selected.contactId),
-			organizationTeamId: new FormControl(this.selected.teamId)
+			organizationContactId: new FormControl(this.clientSelectorService.selectedId),
+			organizationTeamId: new FormControl(this.teamSelectorService.selectedId)
 		});
-		this.form.valueChanges
-			.pipe(
-				concatMap((values) => this._projects(values)),
-				untilDestroyed(this)
-			)
-			.subscribe();
 		this.hasAddTagPermission$ = this.store.userRolePermissions$.pipe(
 			map(() => this.store.hasPermissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_ADD))
 		);
@@ -309,10 +229,6 @@ export class TasksComponent implements OnInit {
 
 		this.isSaving = false;
 	}
-
-	public addProject = async (name: string) => {
-		await this.projectSelectorService.addProject(name);
-	};
 
 	public background(bgColor: string) {
 		return ColorAdapter.background(bgColor);

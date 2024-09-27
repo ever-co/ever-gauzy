@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { ControlValueAccessor } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Observable, Subject } from 'rxjs';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
 import { SelectorService } from '../../+state/selector.service';
 
@@ -13,7 +13,7 @@ export abstract class AbstractSelectorComponent<T> implements ControlValueAccess
 	public search$ = new Subject<string>();
 	private onChange: (value: any) => void;
 	private onTouched: () => void;
-	private isDisabled: boolean;
+	protected isDisabled$ = new BehaviorSubject<boolean>(false);
 
 	// Flag to control whether to update the store
 	protected useStore: boolean = true;
@@ -28,20 +28,18 @@ export abstract class AbstractSelectorComponent<T> implements ControlValueAccess
 	constructor() {}
 
 	// Handle value change
-	public change(value: T): void {
-		this.onChange(value); // Notify the form control
-		if (this.useStore) {
-			this.updateSelected(value); // Update the store only if useStore is true
-		}
+	public change(value: string): void {
+		this.onChange?.(value); // Notify the form control
+		this.onTouched?.();
+		this.updateSelected(value); // Update the store only if useStore is true
 	}
 
 	// Implement ControlValueAccessor methods
-	public writeValue(value: T): void {
+	public writeValue(value: string): void {
 		this.useStore = false; // Disable store updates when used in a form
 		if (value) {
 			this.updateSelected(value);
 		}
-		this.useStore = true; // Enable store updates after initialization
 	}
 
 	public registerOnChange(fn: any): void {
@@ -53,11 +51,11 @@ export abstract class AbstractSelectorComponent<T> implements ControlValueAccess
 	}
 
 	public setDisabledState(isDisabled: boolean): void {
-		this.isDisabled = isDisabled;
+		this.isDisabled$.next(isDisabled);
 	}
 
 	// Abstract method to update selected item
-	protected abstract updateSelected(value: T): void;
+	protected abstract updateSelected(value: string): void;
 
 	// Common search handling logic
 	protected handleSearch(service: SelectorService<T>) {

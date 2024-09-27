@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, forwardRef, OnInit } from '@angular
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganizationTeam } from 'packages/contracts/dist';
-import { concatMap, filter, Observable, of, tap } from 'rxjs';
+import { combineLatest, concatMap, filter, map, Observable, of, tap } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
 import { AbstractSelectorComponent } from '../../components/abstract/selector.abstract';
@@ -51,8 +51,8 @@ export class TeamSelectorComponent extends AbstractSelectorComponent<IOrganizati
 		this.teamSelectorQuery.selected$
 			.pipe(
 				filter(Boolean),
+				tap(() => this.projectSelectorService.resetPage()),
 				concatMap(() => this.projectSelectorService.load()),
-				concatMap(() => this.taskSelectorService.load()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -76,10 +76,10 @@ export class TeamSelectorComponent extends AbstractSelectorComponent<IOrganizati
 		return this.teamSelectorQuery.data$;
 	}
 
-	protected updateSelected(value: IOrganizationTeam): void {
+	protected updateSelected(value: IOrganizationTeam['id']): void {
 		// Update store only if useStore is true
 		if (this.useStore) {
-			this.teamSelectorStore.updateSelected(value.id);
+			this.teamSelectorStore.updateSelected(value);
 		}
 	}
 
@@ -88,7 +88,9 @@ export class TeamSelectorComponent extends AbstractSelectorComponent<IOrganizati
 	}
 
 	public get disabled$(): Observable<boolean> {
-		return this.timeTrackerQuery.disabled$;
+		return combineLatest([this.timeTrackerQuery.disabled$, this.isDisabled$.asObservable()]).pipe(
+			map(([disabled, selectorDisabled]) => disabled || selectorDisabled)
+		);
 	}
 
 	public get hasPermission$(): Observable<boolean> {

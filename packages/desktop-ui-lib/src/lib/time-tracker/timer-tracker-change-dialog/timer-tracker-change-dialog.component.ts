@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { FormControl, FormGroup } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, map, Observable, startWith, tap } from 'rxjs';
@@ -14,7 +15,13 @@ import { TimeTrackerFormService } from '../../shared/features/time-tracker-form/
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TimerTrackerChangeDialogComponent implements OnInit {
-	private currentState!: any;
+	public form: FormGroup = new FormGroup({
+		clientId: new FormControl(null),
+		projectId: new FormControl(null),
+		teamId: new FormControl(null),
+		taskId: new FormControl(null),
+		note: new FormControl(null)
+	});
 	constructor(
 		private dialogRef: NbDialogRef<TimerTrackerChangeDialogComponent>,
 		private readonly timeTrackerStore: TimeTrackerStore,
@@ -33,7 +40,7 @@ export class TimerTrackerChangeDialogComponent implements OnInit {
 			.pipe(
 				filter(({ state }) => state === IgnitionState.RESTARTED),
 				tap(() => this.timeTrackerStore.update({ ignition: { state: IgnitionState.STARTED } })),
-				tap(() => this.setCurrentState()),
+				tap(() => this.getCurrentState()),
 				tap(() => this.dismiss()),
 				untilDestroyed(this)
 			)
@@ -42,7 +49,13 @@ export class TimerTrackerChangeDialogComponent implements OnInit {
 	}
 
 	private setCurrentState() {
-		this.currentState = this.timeTrackerFormService.getState();
+		this.form.patchValue(this.timeTrackerFormService.getState());
+	}
+
+	private getCurrentState() {
+		if (this.form.valid) {
+			this.timeTrackerFormService.setState(this.form.value);
+		}
 	}
 
 	public applyChanges() {
@@ -62,7 +75,6 @@ export class TimerTrackerChangeDialogComponent implements OnInit {
 
 	public dismiss() {
 		this.timeTrackerStore.update({ isEditing: false });
-		this.timeTrackerFormService.setState(this.currentState);
 		this.dialogRef.close();
 	}
 }

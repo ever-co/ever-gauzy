@@ -1,14 +1,12 @@
 import { ChangeDetectionStrategy, Component, forwardRef, OnInit } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { IOrganizationContact } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IOrganizationContact } from 'packages/contracts/dist';
-import { concatMap, filter, Observable, tap } from 'rxjs';
+import { combineLatest, concatMap, filter, map, Observable, tap } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
 import { AbstractSelectorComponent } from '../../components/abstract/selector.abstract';
 import { ProjectSelectorService } from '../project-selector/+state/project-selector.service';
-import { TaskSelectorService } from '../task-selector/+state/task-selector.service';
-import { TeamSelectorService } from '../team-selector/+state/team-selector.service';
 import { ClientSelectorQuery } from './+state/client-selector.query';
 import { ClientSelectorService } from './+state/client-selector.service';
 import { ClientSelectorStore } from './+state/client-selector.store';
@@ -34,8 +32,6 @@ export class ClientSelectorComponent extends AbstractSelectorComponent<IOrganiza
 		public readonly clientSelectorQuery: ClientSelectorQuery,
 		private readonly clientSelectorService: ClientSelectorService,
 		private readonly projectSelectorService: ProjectSelectorService,
-		private readonly taskSelectorService: TaskSelectorService,
-		private readonly teamSelectorService: TeamSelectorService,
 		private readonly timeTrackerQuery: TimeTrackerQuery
 	) {
 		super();
@@ -54,9 +50,8 @@ export class ClientSelectorComponent extends AbstractSelectorComponent<IOrganiza
 		this.clientSelectorQuery.selected$
 			.pipe(
 				filter(Boolean),
+				tap(() => this.projectSelectorService.resetPage()),
 				concatMap(() => this.projectSelectorService.load()),
-				concatMap(() => this.taskSelectorService.load()),
-				concatMap(() => this.teamSelectorService.load()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -84,10 +79,10 @@ export class ClientSelectorComponent extends AbstractSelectorComponent<IOrganiza
 		return this.clientSelectorQuery.data$;
 	}
 
-	protected updateSelected(value: IOrganizationContact): void {
+	protected updateSelected(value: IOrganizationContact['id']): void {
 		// Update store only if useStore is true
 		if (this.useStore) {
-			this.clientSelectorStore.updateSelected(value.id);
+			this.clientSelectorStore.updateSelected(value);
 		}
 	}
 
@@ -96,7 +91,9 @@ export class ClientSelectorComponent extends AbstractSelectorComponent<IOrganiza
 	}
 
 	public get disabled$(): Observable<boolean> {
-		return this.timeTrackerQuery.disabled$;
+		return combineLatest([this.timeTrackerQuery.disabled$, this.isDisabled$.asObservable()]).pipe(
+			map(([disabled, selectorDisabled]) => disabled || selectorDisabled)
+		);
 	}
 
 	public get hasPermission$(): Observable<boolean> {

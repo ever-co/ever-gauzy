@@ -1,18 +1,33 @@
-<nb-card [ngClass]="{ large: expanded$ | async }">
-	<nb-card-header class="d-flex flex-column">
-		<span class="cancel"><i class="fas fa-times" (click)="dismiss()"></i></span>
-		<h5 class="title">{{ 'Update' | translate }}</h5>
-	</nb-card-header>
-	<nb-card-body>
-		<gauzy-time-tracker-form></gauzy-time-tracker-form>
-	</nb-card-body>
-	<nb-card-footer class="footer">
-		<button status="basic" size="small" outline (click)="dismiss()" nbButton>
-			{{ 'BUTTONS.CANCEL' | translate }}
-		</button>
-		<button [disabled]="isRestarting$ | async" status="success" size="small" (click)="applyChanges()" nbButton>
-			{{ 'BUTTONS.APPLY' | translate }}
-			<nb-icon [ngStyle]="{ display: 'none' }" *gauzySpinnerButton="isRestarting$ | async"></nb-icon>
-		</button>
-	</nb-card-footer>
-</nb-card>
+<form [formGroup]="form" (ngSubmit)="applyChanges()">
+	<nb-card [ngClass]="{ large: expanded$ | async }">
+		<nb-card-header class="d-flex flex-column">
+			<span class="cancel"><i class="fas fa-times" (click)="dismiss()"></i></span>
+			<h5 class="title">{{ 'Update' | translate }}</h5>
+		</nb-card-header>
+		<nb-card-body class="selector-container">
+			<!-- Client selector -->
+			<gauzy-client-selector formControlName="clientId" class="selector"></gauzy-client-selector>
+
+			<!-- Project selector -->
+			<gauzy-project-selector formControlName="projectId" class="selector"></gauzy-project-selector>
+
+			<!-- Team selector -->
+			<gauzy-team-selector formControlName="teamId" class="selector"></gauzy-team-selector>
+
+			<!-- Task selector -->
+			<gauzy-task-selector formControlName="taskId" class="selector"></gauzy-task-selector>
+
+			<!-- Note -->
+			<gauzy-note formControlName="note" class="selector"></gauzy-note>
+		</nb-card-body>
+		<nb-card-footer class="footer">
+			<button status="basic" type="button" size="small" outline (click)="dismiss()" nbButton>
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
+			<button [disabled]="isRestarting$ | async" status="success" size="small" type="submit" nbButton>
+				{{ 'BUTTONS.APPLY' | translate }}
+				<nb-icon [ngStyle]="{ display: 'none' }" *gauzySpinnerButton="isRestarting$ | async"></nb-icon>
+			</button>
+		</nb-card-footer>
+	</nb-card>
+</form>

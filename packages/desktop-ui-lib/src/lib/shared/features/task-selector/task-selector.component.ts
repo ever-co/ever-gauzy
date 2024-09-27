@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, forwardRef, OnInit } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ITask } from 'packages/contracts/dist';
-import { debounceTime, filter, Observable, switchMap, tap } from 'rxjs';
+import { ITask } from '@gauzy/contracts';
+import { combineLatest, debounceTime, filter, map, Observable, switchMap, tap } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { ElectronService } from '../../../electron/services';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
@@ -79,10 +79,10 @@ export class TaskSelectorComponent extends AbstractSelectorComponent<ITask> impl
 		return this.taskSelectorQuery.data$;
 	}
 
-	protected updateSelected(value: ITask): void {
+	protected updateSelected(value: ITask['id']): void {
 		// Update store only if useStore is true
 		if (this.useStore) {
-			this.taskSelectorStore.updateSelected(value.id);
+			this.taskSelectorStore.updateSelected(value);
 		}
 	}
 
@@ -91,7 +91,9 @@ export class TaskSelectorComponent extends AbstractSelectorComponent<ITask> impl
 	}
 
 	public get disabled$(): Observable<boolean> {
-		return this.timeTrackerQuery.disabled$;
+		return combineLatest([this.timeTrackerQuery.disabled$, this.isDisabled$.asObservable()]).pipe(
+			map(([disabled, selectorDisabled]) => disabled || selectorDisabled)
+		);
 	}
 
 	public get hasPermission$(): Observable<boolean> {

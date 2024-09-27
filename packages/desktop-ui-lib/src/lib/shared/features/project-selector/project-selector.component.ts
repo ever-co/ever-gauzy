@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, forwardRef, OnInit } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { IOrganizationProject } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IOrganizationProject } from 'packages/contracts/dist';
-import { concatMap, filter, Observable, tap } from 'rxjs';
+import { combineLatest, concatMap, filter, map, Observable, tap } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
 import { AbstractSelectorComponent } from '../../components/abstract/selector.abstract';
@@ -44,6 +44,8 @@ export class ProjectSelectorComponent extends AbstractSelectorComponent<IOrganiz
 		this.projectSelectorQuery.selected$
 			.pipe(
 				filter(Boolean),
+				tap(() => this.teamSelectorService.resetPage()),
+				tap(() => this.taskSelectorService.resetPage()),
 				concatMap(() => Promise.allSettled([this.teamSelectorService.load(), this.taskSelectorService.load()])),
 				untilDestroyed(this)
 			)
@@ -80,10 +82,10 @@ export class ProjectSelectorComponent extends AbstractSelectorComponent<IOrganiz
 		return this.projectSelectorQuery.data$;
 	}
 
-	protected updateSelected(value: IOrganizationProject): void {
+	protected updateSelected(value: IOrganizationProject['id']): void {
 		// Update store only if useStore is true
 		if (this.useStore) {
-			this.projectSelectorStore.updateSelected(value.id);
+			this.projectSelectorStore.updateSelected(value);
 		}
 	}
 
@@ -92,7 +94,9 @@ export class ProjectSelectorComponent extends AbstractSelectorComponent<IOrganiz
 	}
 
 	public get disabled$(): Observable<boolean> {
-		return this.timeTrackerQuery.disabled$;
+		return combineLatest([this.timeTrackerQuery.disabled$, this.isDisabled$.asObservable()]).pipe(
+			map(([disabled, selectorDisabled]) => disabled || selectorDisabled)
+		);
 	}
 
 	public get hasPermission$(): Observable<boolean> {
