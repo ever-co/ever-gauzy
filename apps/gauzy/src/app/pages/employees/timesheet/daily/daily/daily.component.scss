@@ -1,33 +1,37 @@
 @import '../../weekly/weekly/weekly.component.scss';
 
 :host {
-	nb-card {
-		border-radius: 0 nb-theme(border-radius) nb-theme(border-radius) nb-theme(border-radius);
-	}
-	nb-card-body {
-		height: 100%;
-	}
-	.gauzy-button-action {
-		display: flex;
-		align-content: center;
-		justify-content: flex-end;
-	}
-	.log-container {
-		height: calc(100% - 50px);
-	}
-	.log {
-		width: fit-content;
-		font-size: 12px;
-		font-weight: 600;
-		line-height: 15px;
-		letter-spacing: 0em;
-		text-align: left;
-		padding: 3px 8px;
-		display: flex;
-		flex-direction: row;
-		justify-content: center;
-		align-items: center;
-		border-radius: nb-theme(border-radius);
-		background: var(--gauzy-sidebar-background-3);
-	}
+  nb-card {
+    border-radius: 0 nb-theme(border-radius) nb-theme(border-radius) nb-theme(border-radius);
+  }
+  nb-card-body {
+    height: 100%;
+  }
+  .gauzy-button-action {
+    display: flex;
+    align-content: center;
+    justify-content: flex-end;
+  }
+  .log-container {
+    height: calc(100% - 50px);
+  }
+  .log {
+    width: fit-content;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 15px;
+    letter-spacing: 0em;
+    text-align: left;
+    padding: 3px 8px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    border-radius: nb-theme(border-radius);
+    background: var(--gauzy-sidebar-background-3);
+  }
+  .source-version {
+    display: flex;
+    gap: 5%;
+  }
 }

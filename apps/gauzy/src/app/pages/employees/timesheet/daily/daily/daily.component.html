@@ -84,7 +84,7 @@
 											</div>
 										</ng-template>
 									</ng-template>
-									<div class="col-3 project-name">
+									<div class="col-3">
 										<ngx-project *ngIf="log?.project; else noProject" [rowData]="log"></ngx-project>
 										<ng-template #noProject>
 											<span>
@@ -94,7 +94,7 @@
 										<div class="mt-2 small">
 											<span *ngIf="log?.task; else noToDo">
 												<strong> {{ 'TIMESHEET.TODO' | translate }} : </strong>
-												{{ log?.task?.title }}
+												{{ log?.task?.title | truncate : 50 }}
 											</span>
 											<ng-template #noToDo>
 												<span>{{ 'TIMESHEET.NO_TODO' | translate }}</span>
@@ -119,10 +119,18 @@
 											{{ log.logType | titlecase }}
 										</span>
 									</div>
-									<div class="col">
-										<span class="log">
-											{{ log.source | replace : '_' : ' ' | titlecase }}
-										</span>
+									<div class="col source-version">
+										<ngx-badge-label
+											[text]="log?.source | replace : '_' : ' ' | titlecase"
+											class="badge-item"
+										></ngx-badge-label>
+
+										<ngx-badge-label
+											*ngIf="log?.version"
+											[text]="log?.version"
+											status="info"
+											class="badge-item"
+										></ngx-badge-label>
 									</div>
 									<div class="col">
 										{{ log.duration | durationFormat }}
