@@ -84,11 +84,11 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	}
 
 	ngOnInit(): void {
-		this._applyTranslationOnSmartTable(); //
-		this._loadSmartTableSettings(); // Load smart table settings
 		this.initializeUiPermissions(); // Initialize UI permissions
 		this.initializeUiLanguagesAndLocale(); // Initialize UI languages and Update Locale
 		this._initializePageElements(); // Register page elements
+		this._applyTranslationOnSmartTable(); //
+		this._loadSmartTableSettings(); // Load smart table settings
 	}
 
 	ngAfterViewInit(): void {
@@ -629,8 +629,6 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	};
 
 	ngOnDestroy(): void {
-		// Delete the dashboard tabset from the registry
-		this._pageTabRegistryService.deleteTabset(this.tabsetId);
-		this._pageDataTableRegistryService.deleteDataTable(this.dataTableId);
+		this._pageTabRegistryService.deleteTabset(this.tabsetId); // Delete the dashboard tabset from the registry
 	}
 }
