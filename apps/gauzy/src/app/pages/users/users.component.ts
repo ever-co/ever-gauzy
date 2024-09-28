@@ -336,9 +336,7 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 		);
 
 		// Filter out user organizations that are not active or don't have a user with a role
-		return userOrganizations.items.filter(
-			(organization: IUserOrganization) => organization.isActive && organization.user?.role
-		);
+		return userOrganizations.items.filter((organization: IUserOrganization) => organization.user?.role);
 	}
 
 	/**
@@ -360,7 +358,7 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 					tags: user.tags,
 					imageUrl: user.imageUrl,
 					role: user.role,
-					isActive: user.employeeId ? user.employee.isActive : user.isActive,
+					isActive: isActive,
 					userOrganizationId,
 					...this.employeeMapper(user.employee)
 				}));
