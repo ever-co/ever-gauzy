@@ -24,7 +24,7 @@ export const createRolePermissions = async (
 	const deniedPermissions = new Set([PermissionsEnum.ACCESS_DELETE_ACCOUNT, PermissionsEnum.ACCESS_DELETE_ALL_DATA]);
 
 	for (const tenant of tenants) {
-		const rolePermissions = [];
+		const rolePermissions: IRolePermission[] = [];
 
 		// Loop through each default role permission configuration
 		for (const { role: roleEnum, defaultEnabledPermissions } of DEFAULT_ROLE_PERMISSIONS) {
@@ -39,7 +39,7 @@ export const createRolePermissions = async (
 
 				// Create RolePermission objects and add them to the array
 				rolePermissions.push(
-					...permissions.map((permission) => {
+					...permissions.map((permission: string) => {
 						const rolePermission = new RolePermission();
 						rolePermission.role = role;
 						rolePermission.permission = permission;
