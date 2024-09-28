@@ -26,6 +26,12 @@ export interface IRolePermissionCreateInput extends IBasePerTenantEntityModel {
 	enabled: boolean;
 }
 
+export interface IRolePermissionFindInput extends IBasePerTenantEntityModel {
+	roleId?: ID;
+	permission?: string;
+	enabled?: boolean;
+}
+
 export interface IRolePermissionUpdateInput extends IRolePermissionCreateInput {
 	enabled: boolean;
 }
