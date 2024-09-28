@@ -8,28 +8,50 @@ import { environment } from '@gauzy/config';
 import { DEFAULT_ROLE_PERMISSIONS } from './default-role-permissions';
 import { RolePermission } from './role-permission.entity';
 
-export const createRolePermissions = async (dataSource: DataSource, roles: IRole[], tenants: ITenant[]) => {
-	// removed permissions for all users in DEMO mode
-	const deniedPermissions = [PermissionsEnum.ACCESS_DELETE_ACCOUNT, PermissionsEnum.ACCESS_DELETE_ALL_DATA];
+/**
+ * Creates role permissions for each tenant and role.
+ *
+ * @param {DataSource} dataSource - The data source to interact with the database.
+ * @param {IRole[]} roles - The list of roles to create permissions for.
+ * @param {ITenant[]} tenants - The list of tenants for whom to create role permissions.
+ */
+export const createRolePermissions = async (
+	dataSource: DataSource,
+	roles: IRole[],
+	tenants: ITenant[]
+): Promise<void> => {
+	// Permissions that should be denied in DEMO mode
+	const deniedPermissions = new Set([PermissionsEnum.ACCESS_DELETE_ACCOUNT, PermissionsEnum.ACCESS_DELETE_ALL_DATA]);
 
 	for (const tenant of tenants) {
-		const rolePermissions: IRolePermission[] = [];
-		DEFAULT_ROLE_PERMISSIONS.forEach(({ role: roleEnum, defaultEnabledPermissions }) => {
+		const rolePermissions = [];
+
+		// Loop through each default role permission configuration
+		for (const { role: roleEnum, defaultEnabledPermissions } of DEFAULT_ROLE_PERMISSIONS) {
+			// Find the corresponding role for the current tenant
 			const role = roles.find((dbRole: IRole) => dbRole.name === roleEnum && dbRole.tenant.name === tenant.name);
+
 			if (role) {
-				const permissions = Object.values(PermissionsEnum).filter((permission: PermissionsEnum) =>
-					environment.demo ? !deniedPermissions.includes(permission) : true
+				// Filter permissions, excluding denied permissions in DEMO mode
+				const permissions = environment.demo
+					? Object.values(PermissionsEnum).filter((permission) => !deniedPermissions.has(permission))
+					: Object.values(PermissionsEnum);
+
+				// Create RolePermission objects and add them to the array
+				rolePermissions.push(
+					...permissions.map((permission) => {
+						const rolePermission = new RolePermission();
+						rolePermission.role = role;
+						rolePermission.permission = permission;
+						rolePermission.enabled = defaultEnabledPermissions.includes(permission);
+						rolePermission.tenant = tenant;
+						return rolePermission;
+					})
 				);
-				for (const permission of permissions) {
-					const rolePermission = new RolePermission();
-					rolePermission.role = role;
-					rolePermission.permission = permission;
-					rolePermission.enabled = defaultEnabledPermissions.includes(permission);
-					rolePermission.tenant = tenant;
-					rolePermissions.push(rolePermission);
-				}
 			}
-		});
+		}
+
+		// Save all role permissions in one batch for the current tenant
 		await dataSource.manager.save(rolePermissions);
 	}
 };

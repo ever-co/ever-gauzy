@@ -17,7 +17,7 @@ import { ID, IPagination, IRolePermission, IRolePermissions, PermissionsEnum } f
 import { CrudController, PaginationParams } from './../core/crud';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { CreateRolePermissionDTO, UpdateRolePermissionDTO } from './dto';
 import { RolePermission } from './role-permission.entity';
 import { RolePermissionService } from './role-permission.service';
@@ -74,23 +74,12 @@ export class RolePermissionController extends CrudController<RolePermission> {
 	}
 
 	/**
-	 * GET role-permissions for specific tenant
+	 * GET role permissions for a specific tenant with pagination.
 	 *
-	 * @param options
-	 * @returns
+	 * @param {PaginationParams<RolePermission>} query - The query parameters for pagination and filtering.
+	 * @returns {Promise<IPagination<IRolePermission>>} - Returns a promise that resolves to a paginated list of role permissions.
 	 */
-	@Get('/pagination')
-	async pagination(@Query() options: PaginationParams<RolePermission>): Promise<IPagination<IRolePermission>> {
-		return await this._rolePermissionService.findAllRolePermissions(options);
-	}
-
-	/**
-	 * GET all role permissions for specific tenant
-	 *
-	 * @param data
-	 * @returns
-	 */
-	@ApiOperation({ summary: 'Find role permissions.' })
+	@ApiOperation({ summary: 'Retrieve role permissions for a specific tenant.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found role permissions.',
@@ -101,10 +90,11 @@ export class RolePermissionController extends CrudController<RolePermission> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.OK)
-	@Get('/')
-	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IRolePermission>> {
-		const { findInput } = data;
-		return this._rolePermissionService.findAllRolePermissions({ where: findInput });
+	@Get(['/pagination', '/'])
+	async findAllRolePermissions(
+		@Query() query: PaginationParams<RolePermission>
+	): Promise<IPagination<IRolePermission>> {
+		return this._rolePermissionService.findAllRolePermissions(query);
 	}
 
 	/**
