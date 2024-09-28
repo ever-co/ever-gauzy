@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { isNotEmpty, toParams } from '@gauzy/ui-core/common';
 import { IFilterConfig, LocalDataSource } from 'angular2-smart-table';
-import { firstValueFrom, Observable, shareReplay } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, Observable, shareReplay } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { AbstractCacheService } from '../../services/abstract-cache.service';
 import { ServerSourceConf } from './server-source.conf';
@@ -10,6 +10,7 @@ export class CachedServerDataSource extends LocalDataSource {
 	protected conf: ServerSourceConf;
 	protected lastRequestCount: number = 0;
 	protected operatorFunctions: any[] = [];
+	protected _loading$ = new BehaviorSubject<boolean>(false);
 
 	constructor(
 		protected http: HttpClient,
@@ -46,8 +47,10 @@ export class CachedServerDataSource extends LocalDataSource {
 				)
 				.pipe(
 					tap(() => this.conf.finalize?.()),
+					tap(() => this._loading$.next(false)),
 					catchError((error) => {
 						this.conf.finalize?.();
+						this._loading$.next(false);
 						throw new Error(error);
 					})
 				)
@@ -91,6 +94,7 @@ export class CachedServerDataSource extends LocalDataSource {
 	}
 
 	protected requestElements(): Observable<any> {
+		this._loading$.next(true);
 		const httpParams = this.createRequestParams();
 		return this.cacheService
 			? this.cachedRequestElements(httpParams)
@@ -102,10 +106,7 @@ export class CachedServerDataSource extends LocalDataSource {
 
 		if (!elements$) {
 			// Fetch elements
-			elements$ = this.http.get(this.conf.endPoint, { params, observe: 'response' }).pipe(
-				map((httpResponse) => httpResponse),
-				shareReplay(1)
-			);
+			elements$ = this.http.get(this.conf.endPoint, { params, observe: 'response' }).pipe(shareReplay(1));
 			// Set elements in the cache
 			this.cacheService.setValue(elements$, params);
 		}
@@ -191,5 +192,9 @@ export class CachedServerDataSource extends LocalDataSource {
 
 	public registerOperatorFunction(operatorFunction: any) {
 		this.operatorFunctions.push(operatorFunction);
+	}
+
+	public get loading$(): Observable<boolean> {
+		return this._loading$.asObservable();
 	}
 }

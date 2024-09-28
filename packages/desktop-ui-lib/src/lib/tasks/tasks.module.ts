@@ -1,33 +1,37 @@
-import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TasksComponent } from './tasks.component';
+import { NgModule } from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
-	NbLayoutModule,
-	NbSidebarModule,
-	NbMenuModule,
-	NbCardModule,
-	NbIconModule,
-	NbListModule,
-	NbSelectModule,
-	NbToggleModule,
-	NbInputModule,
-	NbButtonModule,
+	NbAccordionModule,
 	NbAlertModule,
+	NbBadgeModule,
+	NbButtonModule,
+	NbCardModule,
+	NbDatepickerModule,
+	NbIconModule,
+	NbInputModule,
+	NbLayoutModule,
+	NbListModule,
+	NbMenuModule,
 	NbProgressBarModule,
+	NbSelectModule,
+	NbSidebarModule,
 	NbTabsetModule,
 	NbToastrService,
-	NbAccordionModule,
-	NbDatepickerModule,
-	NbBadgeModule
+	NbToggleModule
 } from '@nebular/theme';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TimeTrackerService } from '../time-tracker/time-tracker.service';
-import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { CKEditorModule } from 'ckeditor4-angular';
-import { TaskRenderModule } from '../time-tracker/task-render';
+import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 import { TagService } from '../services';
+import { ClientSelectorModule } from '../shared/features/client-selector/client-selector.module';
+import { ProjectSelectorModule } from '../shared/features/project-selector/project-selector.module';
+import { TaskSelectorModule } from '../shared/features/task-selector/task-selector.module';
+import { TeamSelectorModule } from '../shared/features/team-selector/team-selector.module';
+import { TaskRenderModule } from '../time-tracker/task-render';
+import { TimeTrackerService } from '../time-tracker/time-tracker.service';
+import { TasksComponent } from './tasks.component';
 
 @NgModule({
 	declarations: [TasksComponent],
@@ -55,7 +59,11 @@ import { TagService } from '../services';
 		DesktopDirectiveModule,
 		TranslateModule,
 		CKEditorModule,
-		TaskRenderModule
+		TaskRenderModule,
+		ClientSelectorModule,
+		TaskSelectorModule,
+		TeamSelectorModule,
+		ProjectSelectorModule
 	],
 	providers: [NbToastrService, TimeTrackerService, TagService],
 	exports: [TasksComponent]

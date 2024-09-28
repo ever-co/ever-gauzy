@@ -71,6 +71,7 @@ import { NoteService } from '../shared/features/note/+state/note.service';
 import { ProjectSelectorService } from '../shared/features/project-selector/+state/project-selector.service';
 import { TaskSelectorService } from '../shared/features/task-selector/+state/task-selector.service';
 import { TeamSelectorService } from '../shared/features/team-selector/+state/team-selector.service';
+import { TimeTrackerFormService } from '../shared/features/time-tracker-form/time-tracker-form.service';
 import { hasAllPermissions } from '../shared/utils/permission.util';
 import { TimeTrackerQuery } from './+state/time-tracker.query';
 import { IgnitionState, TimeTrackerStore } from './+state/time-tracker.store';
@@ -189,7 +190,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private readonly taskSelectorService: TaskSelectorService,
 		private readonly noteService: NoteService,
 		private readonly timeTrackerQuery: TimeTrackerQuery,
-		private readonly timeTrackerStore: TimeTrackerStore
+		private readonly timeTrackerStore: TimeTrackerStore,
+		private readonly timeTrackerFormService: TimeTrackerFormService
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
@@ -733,12 +735,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.timeTrackerQuery.isEditing$
 			.pipe(
 				filter((editing) => editing && !this._isOffline),
-				tap(() =>
-					this.dialogService.open(TimerTrackerChangeDialogComponent, {
-						backdropClass: 'backdrop-blur',
-						closeOnBackdropClick: false
-					})
+				concatMap(
+					() =>
+						this.dialogService.open(TimerTrackerChangeDialogComponent, {
+							backdropClass: 'backdrop-blur',
+							closeOnBackdropClick: false
+						}).onClose
 				),
+				filter(Boolean),
+				tap((value) => this.timeTrackerFormService.setState(value)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -1516,33 +1521,65 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 			const config = { quitApp: this.quitApp, isEmergency };
 
+			let timer;
+
 			this.electronService.ipcRenderer.send('stop-capture-screen');
 
 			if (this._startMode === TimerStartMode.MANUAL) {
 				console.log('Taking screen capture');
-
+				// Collect activities
 				const activities = await this.electronService.ipcRenderer.invoke('COLLECT_ACTIVITIES', config);
-
-				asyncScheduler.schedule(async () => {
+				// Stop timer locally and return current state of timer
+				console.log('Stopping timer');
+				timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
+				// Update tray
+				console.log('Updating Tray stop');
+				this.electronService.ipcRenderer.send('update_tray_stop');
+				// Update view
+				this.start$.next(false);
+				// Stop loading
+				this.loading = false;
+				/*
+					Start network processing...
+				*/
+				// Make sure it's not a remote timer
+				if (!this.isRemoteTimer) {
 					this._loggerService.info('Capturing Screen and Sending Activities Start...', activities);
-					await this.takeCaptureAndSendActivities(activities);
-					this._loggerService.info('Capturing Screen and Sending Activities Done ✔️');
-				}, 1000);
+					// Create time slot and return time slot ID and error
+					const { timeSlotId, error } = await this.createTimeSlot(activities);
+					// Upload screenshots if available
+					asyncScheduler.schedule(async () => {
+						// Take Screenshots
+						const screenshots = await this.takeScreenCapture(activities);
+						//Check there's an error
+						if (error) {
+							// handle create time slot error
+							this.handleCreateTimeSlotError(error, activities, screenshots);
+						}
+						// Upload screenshots if timeslot and screenshots is available
+						if (timeSlotId && screenshots?.length > 0) {
+							await this.uploadScreenshots(activities, timeSlotId, screenshots);
+							this._loggerService.info('Capturing Screen and Sending Activities Done ✔️');
+						}
+					}, 1000);
+				}
+			} else {
+				// Stop timer locally and return current state
+				timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
+				// Update tray
+				console.log('Updating Tray stop');
+				this.electronService.ipcRenderer.send('update_tray_stop');
+				// Update view
+				this.start$.next(false);
+				// Stop loading
+				this.loading = false;
 			}
-
-			console.log('Stopping timer');
-			const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
-
+			// Stop timer on server
 			console.log('Toggling timer');
 			await this._toggle(timer, onClick);
-
-			this.start$.next(false);
-
-			this.loading = false;
-
-			console.log('Updating Tray stop');
-
-			this.electronService.ipcRenderer.send('update_tray_stop');
+			/**
+			 * End network processing
+			 */
 
 			this._startMode = TimerStartMode.STOP;
 
@@ -1967,28 +2004,38 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	private buildParamActivity(arg) {
+	private buildParamActivity(arg: any) {
+		const { user, organizationId, tenantId } = this._store;
+		const {
+			employeeId,
+			projectId,
+			duration,
+			keyboard,
+			mouse,
+			system: overall,
+			startedAt,
+			activities,
+			timeLogId,
+			organizationContactId
+		} = arg ?? {};
+
 		return {
-			employeeId: arg.employeeId,
-			projectId: arg.projectId,
-			duration: arg.duration,
-			keyboard: arg.keyboard,
-			mouse: arg.mouse,
-			overall: arg.system,
-			startedAt: arg.startedAt,
-			activities: arg.activities,
-			timeLogId: arg.timeLogId,
-			organizationId: arg.organizationId,
-			tenantId: arg.tenantId,
-			organizationContactId: arg.organizationContactId,
-			apiHost: arg.apiHost,
-			token: arg.token,
-			isAw: arg.isAw,
-			isAwConnected: arg.isAwConnected
+			employeeId: employeeId ?? user?.employee?.id,
+			projectId: projectId ?? null,
+			duration: duration ?? 0,
+			keyboard: keyboard ?? 0,
+			mouse: mouse ?? 0,
+			overall: overall ?? null,
+			startedAt: startedAt ?? null,
+			activities: activities ?? [],
+			timeLogId: timeLogId ?? null,
+			organizationId: arg?.organizationId ?? organizationId,
+			tenantId: arg?.tenantId ?? tenantId,
+			organizationContactId: organizationContactId ?? null
 		};
 	}
 
-	public async createTimeSlot(arg, screenshots: any[]) {
+	public async createTimeSlot(arg): Promise<{ timeSlotId: string; error: any }> {
 		try {
 			this._loggerService.info('Build Param Activity');
 			const paramActivity = this.buildParamActivity(arg);
@@ -2023,23 +2070,27 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				b64Imgs: []
 			});
 
-			return timeSlotId;
+			return { timeSlotId, error: null };
 		} catch (error) {
-			this.handleCreateTimeSlotError(error, arg, screenshots);
-			return null;
+			return { timeSlotId: null, error };
 		}
 	}
 
 	public async takeCaptureAndSendActivities(activities) {
 		// Check validations
-		if (this.checkSendActivitiesValidationFail(activities)) return;
+		if (this.isRemoteTimer) return;
+		// Create time slot and return time slot ID
+		const { timeSlotId, error } = await this.createTimeSlot(activities);
 		// Take Screenshots
 		const screenshots = await this.takeScreenCapture(activities);
-		// Create time slot and return time slot ID
-		const timeslotId = await this.createTimeSlot(activities, screenshots);
+		// Check if error
+		if (error) {
+			// handle create time slot error
+			this.handleCreateTimeSlotError(error, activities, screenshots);
+		}
 		// Upload screenshots if available
-		if (timeslotId && screenshots.length > 0) {
-			await this.uploadScreenshots(activities, timeslotId, screenshots);
+		if (timeSlotId && screenshots?.length > 0) {
+			await this.uploadScreenshots(activities, timeSlotId, screenshots);
 		}
 	}
 

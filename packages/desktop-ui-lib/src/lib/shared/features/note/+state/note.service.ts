@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, combineLatest, map } from 'rxjs';
 import { TimeTrackerQuery } from '../../../../time-tracker/+state/time-tracker.query';
 import { NoteSelectorQuery } from './note-selector.query';
 import { NoteSelectorStore } from './note-selector.store';
@@ -23,6 +23,8 @@ export class NoteService {
 	}
 
 	public get disabled$(): Observable<boolean> {
-		return this.timeTrackerQuery.disabled$;
+		return combineLatest([this.timeTrackerQuery.disabled$, this.query.select((s) => s.disabled)]).pipe(
+			map(([disabled, noteDisabled]) => disabled || noteDisabled)
+		);
 	}
 }

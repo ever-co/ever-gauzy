@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { concatMap, Observable } from 'rxjs';
 import { SelectorQuery } from './selector.query';
 import { SelectorStore } from './selector.store';
 
@@ -12,7 +12,7 @@ export abstract class SelectorService<T> {
 		public readonly selectorQuery: SelectorQuery<T>
 	) {}
 
-	public abstract load(): Promise<void>;
+	public abstract load(options?: { searchTerm?: string }): Promise<void>;
 
 	public getAll$(): Observable<T[]> {
 		return this.selectorQuery.data$;
@@ -44,5 +44,19 @@ export abstract class SelectorService<T> {
 
 	public get selected$(): Observable<T> {
 		return this.selectorQuery.selected$;
+	}
+
+	public onScrollToEnd(): void {
+		if (this.selectorQuery.hasNext) {
+			this.selectorStore.next();
+		}
+	}
+
+	public get onScroll$(): Observable<void> {
+		return this.selectorQuery.page$.pipe(concatMap(() => this.load()));
+	}
+
+	public resetPage() {
+		this.selectorStore.update({ page: 1, data: [] });
 	}
 }

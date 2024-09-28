@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, OnInit } from '@angular/core';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { IOrganizationProject } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IOrganizationProject } from 'packages/contracts/dist';
-import { concatMap, filter, Observable, tap } from 'rxjs';
+import { combineLatest, concatMap, filter, map, Observable, tap } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
+import { AbstractSelectorComponent } from '../../components/abstract/selector.abstract';
 import { TaskSelectorService } from '../task-selector/+state/task-selector.service';
 import { TeamSelectorService } from '../team-selector/+state/team-selector.service';
 import { ProjectSelectorQuery } from './+state/project-selector.query';
@@ -15,9 +17,16 @@ import { ProjectSelectorStore } from './+state/project-selector.store';
 	selector: 'gauzy-project-selector',
 	templateUrl: './project-selector.component.html',
 	styleUrls: ['./project-selector.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => ProjectSelectorComponent),
+			multi: true
+		}
+	]
 })
-export class ProjectSelectorComponent implements OnInit {
+export class ProjectSelectorComponent extends AbstractSelectorComponent<IOrganizationProject> implements OnInit {
 	constructor(
 		private readonly electronService: ElectronService,
 		private readonly projectSelectorStore: ProjectSelectorStore,
@@ -26,24 +35,23 @@ export class ProjectSelectorComponent implements OnInit {
 		private readonly taskSelectorService: TaskSelectorService,
 		private readonly teamSelectorService: TeamSelectorService,
 		private readonly timeTrackerQuery: TimeTrackerQuery
-	) {}
+	) {
+		super();
+	}
 
 	public ngOnInit(): void {
+		this.projectSelectorService.onScroll$.pipe(untilDestroyed(this)).subscribe();
 		this.projectSelectorQuery.selected$
 			.pipe(
 				filter(Boolean),
+				tap(() => this.teamSelectorService.resetPage()),
+				tap(() => this.taskSelectorService.resetPage()),
 				concatMap(() => Promise.allSettled([this.teamSelectorService.load(), this.taskSelectorService.load()])),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.projectSelectorService
-			.getAll$()
-			.pipe(
-				filter((data) => !data.some((value) => value.id === this.projectSelectorService.selectedId)),
-				tap(() => (this.projectSelectorService.selected = null)),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		// Handle search logic
+		this.handleSearch(this.projectSelectorService);
 	}
 
 	public refresh(): void {
@@ -66,8 +74,11 @@ export class ProjectSelectorComponent implements OnInit {
 		return this.projectSelectorQuery.data$;
 	}
 
-	public change(projectId: IOrganizationProject['id']) {
-		this.projectSelectorStore.updateSelected(projectId);
+	protected updateSelected(value: IOrganizationProject['id']): void {
+		// Update store only if useStore is true
+		if (this.useStore) {
+			this.projectSelectorStore.updateSelected(value);
+		}
 	}
 
 	public get isLoading$(): Observable<boolean> {
@@ -75,10 +86,16 @@ export class ProjectSelectorComponent implements OnInit {
 	}
 
 	public get disabled$(): Observable<boolean> {
-		return this.timeTrackerQuery.disabled$;
+		return combineLatest([this.timeTrackerQuery.disabled$, this.isDisabled$.asObservable()]).pipe(
+			map(([disabled, selectorDisabled]) => disabled || selectorDisabled)
+		);
 	}
 
 	public get hasPermission$(): Observable<boolean> {
 		return this.projectSelectorService.hasPermission$;
+	}
+
+	public onShowMore(): void {
+		this.projectSelectorService.onScrollToEnd();
 	}
 }

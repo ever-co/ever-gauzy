@@ -35,6 +35,7 @@ export class TaskSelectorService extends SelectorService<ITask> {
 		if (!title) {
 			return;
 		}
+		this.taskSelectorStore.setLoading(true);
 		const { tenantId, organizationId, user, statuses } = this.store;
 		const taskStatus = statuses.find((status) => status.isInProgress);
 		const data = {
@@ -59,14 +60,19 @@ export class TaskSelectorService extends SelectorService<ITask> {
 			});
 			this.taskSelectorStore.appendData(task);
 			this.toastrNotifier.success(this.translateService.instant('TIMER_TRACKER.TOASTR.TASK_ADDED'));
+			this.taskSelectorStore.setError(null);
 		} catch (error) {
 			console.error('ERROR', error);
+			this.taskSelectorStore.setError(error);
+		} finally {
+			this.taskSelectorStore.setLoading(false);
 		}
 	}
 
-	public async load(): Promise<void> {
+	public async load(options?: { searchTerm?: string; projectId?: string }): Promise<void> {
 		try {
 			this.taskSelectorStore.setLoading(true);
+			const { searchTerm } = options || {};
 			const {
 				organizationId,
 				tenantId,
@@ -77,20 +83,24 @@ export class TaskSelectorService extends SelectorService<ITask> {
 			const request = {
 				organizationId,
 				tenantId,
+				searchTerm,
 				projectId: this.projectSelectorQuery.selectedId,
 				organizationTeamId: this.teamSelectorQuery.selectedId,
-				employeeId
+				take: this.taskSelectorQuery.limit,
+				skip: this.taskSelectorQuery.page,
+				employeeId,
+				...options
 			};
-			const tasks = await this.timeTrackerService.getTasks(request);
+			const { total, items: tasks } = await this.timeTrackerService.getPaginatedTasks(request);
 			if (tasks.length) {
 				const statistics = await this.timeTrackerService.getTasksStatistics({
 					...request,
 					taskIds: tasks.map((task) => task.id)
 				});
-				const merged = this.merge(tasks, statistics);
-				this.taskSelectorStore.updateData(merged);
+				const data = this.merge(tasks, statistics);
+				this.taskSelectorStore.updateInfiniteList({ data, total });
 			} else {
-				this.taskSelectorStore.updateData([]);
+				this.taskSelectorStore.update({ data: [], total: 0 });
 			}
 			this.taskSelectorStore.setError(null);
 		} catch (error) {
