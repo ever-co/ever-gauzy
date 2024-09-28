@@ -33,6 +33,7 @@ export class ClientSelectorService extends SelectorService<IOrganizationContact>
 	/* Creating a new contact for the organization. */
 	public async addContact(name: IOrganizationContact['name']): Promise<void> {
 		try {
+			this.selectorStore.setLoading(true);
 			const { tenantId, organizationId, user } = this.store;
 			const member: any = { ...user.employee };
 			const payload = {
@@ -45,14 +46,19 @@ export class ClientSelectorService extends SelectorService<IOrganizationContact>
 			const contact = await this.timeTrackerService.createNewContact(payload, user);
 			this.selectorStore.appendData(contact);
 			this.toastrNotifier.success(this.translateService.instant('TIMER_TRACKER.TOASTR.CLIENT_ADDED'));
+			this.selectorStore.setError(null);
 		} catch (error) {
 			console.error('ERROR', error);
+			this.selectorStore.setError(error);
+		} finally {
+			this.selectorStore.setLoading(false);
 		}
 	}
 
-	public async load(): Promise<void> {
+	public async load(options?: { searchTerm?: string }): Promise<void> {
 		try {
 			this.selectorStore.setLoading(true);
+			const { searchTerm: name } = options || {};
 			const {
 				organizationId,
 				tenantId,
@@ -61,12 +67,25 @@ export class ClientSelectorService extends SelectorService<IOrganizationContact>
 				}
 			} = this.store;
 			const request = {
-				organizationId,
-				employeeId,
-				tenantId
+				relations: ['projects.members', 'members.user', 'contact'],
+				join: {
+					alias: 'organization_contact',
+					leftJoin: {
+						members: 'organization_contact.members'
+					}
+				},
+				where: {
+					organizationId,
+					tenantId,
+					contactType: ContactType.CLIENT,
+					members: [employeeId],
+					...(name && { name })
+				},
+				take: this.selectorQuery.limit,
+				skip: this.selectorQuery.page
 			};
-			const data = await this.timeTrackerService.getClient(request);
-			this.selectorStore.updateData(data);
+			const { items: data, total } = await this.timeTrackerService.getPaginatedClients(request);
+			this.selectorStore.updateInfiniteList({ data, total });
 			this.selectorStore.setError(null);
 		} catch (error) {
 			this.toastrNotifier.error(error.message || 'An error occurred while fetching clients.');

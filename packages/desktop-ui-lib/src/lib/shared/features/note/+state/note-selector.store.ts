@@ -3,11 +3,13 @@ import { Store, StoreConfig } from '@datorama/akita';
 
 export interface INoteSelectorState {
 	note: string;
+	disabled: boolean;
 }
 
 export function createInitialState(): INoteSelectorState {
 	return {
-		note: ''
+		note: '',
+		disabled: false
 	};
 }
 

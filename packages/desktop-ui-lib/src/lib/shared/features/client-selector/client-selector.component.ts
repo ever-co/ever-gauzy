@@ -1,12 +1,12 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, OnInit } from '@angular/core';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { IOrganizationContact } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IOrganizationContact } from 'packages/contracts/dist';
-import { concatMap, filter, Observable, tap } from 'rxjs';
+import { combineLatest, concatMap, filter, map, Observable, tap } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
+import { AbstractSelectorComponent } from '../../components/abstract/selector.abstract';
 import { ProjectSelectorService } from '../project-selector/+state/project-selector.service';
-import { TaskSelectorService } from '../task-selector/+state/task-selector.service';
-import { TeamSelectorService } from '../team-selector/+state/team-selector.service';
 import { ClientSelectorQuery } from './+state/client-selector.query';
 import { ClientSelectorService } from './+state/client-selector.service';
 import { ClientSelectorStore } from './+state/client-selector.store';
@@ -16,38 +16,39 @@ import { ClientSelectorStore } from './+state/client-selector.store';
 	selector: 'gauzy-client-selector',
 	templateUrl: './client-selector.component.html',
 	styleUrls: ['./client-selector.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => ClientSelectorComponent),
+			multi: true
+		}
+	]
 })
-export class ClientSelectorComponent implements OnInit {
+export class ClientSelectorComponent extends AbstractSelectorComponent<IOrganizationContact> implements OnInit {
 	constructor(
 		private readonly electronService: ElectronService,
 		public readonly clientSelectorStore: ClientSelectorStore,
 		public readonly clientSelectorQuery: ClientSelectorQuery,
 		private readonly clientSelectorService: ClientSelectorService,
 		private readonly projectSelectorService: ProjectSelectorService,
-		private readonly taskSelectorService: TaskSelectorService,
-		private readonly teamSelectorService: TeamSelectorService,
 		private readonly timeTrackerQuery: TimeTrackerQuery
-	) {}
+	) {
+		super();
+	}
 
 	public ngOnInit(): void {
-		this.clientSelectorService
-			.getAll$()
-			.pipe(
-				filter((data) => !data.some((value) => value.id === this.clientSelectorService.selectedId)),
-				tap(() => (this.clientSelectorService.selected = null)),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		this.clientSelectorService.onScroll$.pipe(untilDestroyed(this)).subscribe();
 		this.clientSelectorQuery.selected$
 			.pipe(
 				filter(Boolean),
+				tap(() => this.projectSelectorService.resetPage()),
 				concatMap(() => this.projectSelectorService.load()),
-				concatMap(() => this.taskSelectorService.load()),
-				concatMap(() => this.teamSelectorService.load()),
 				untilDestroyed(this)
 			)
 			.subscribe();
+		// Handle search logic
+		this.handleSearch(this.clientSelectorService);
 	}
 
 	public refresh(): void {
@@ -70,8 +71,11 @@ export class ClientSelectorComponent implements OnInit {
 		return this.clientSelectorQuery.data$;
 	}
 
-	public change(clientId: IOrganizationContact['id']) {
-		this.clientSelectorStore.updateSelected(clientId);
+	protected updateSelected(value: IOrganizationContact['id']): void {
+		// Update store only if useStore is true
+		if (this.useStore) {
+			this.clientSelectorStore.updateSelected(value);
+		}
 	}
 
 	public get isLoading$(): Observable<boolean> {
@@ -79,10 +83,16 @@ export class ClientSelectorComponent implements OnInit {
 	}
 
 	public get disabled$(): Observable<boolean> {
-		return this.timeTrackerQuery.disabled$;
+		return combineLatest([this.timeTrackerQuery.disabled$, this.isDisabled$.asObservable()]).pipe(
+			map(([disabled, selectorDisabled]) => disabled || selectorDisabled)
+		);
 	}
 
 	public get hasPermission$(): Observable<boolean> {
 		return this.clientSelectorService.hasPermission$;
+	}
+
+	public onShowMore(): void {
+		this.clientSelectorService.onScrollToEnd();
 	}
 }

@@ -26,7 +26,6 @@ export class TaskStatusSubscriber extends BaseEntityEventSubscriber<TaskStatus> 
 		try {
 			// Update the fullIconUrl if an icon is present
 			if (Object.prototype.hasOwnProperty.call(entity, 'icon')) {
-				console.log('TaskStatus: Setting fullIconUrl for task status ID ' + entity.id);
 				await this.setFullIconUrl(entity);
 			}
 		} catch (error) {

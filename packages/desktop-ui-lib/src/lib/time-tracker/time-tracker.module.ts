@@ -34,8 +34,13 @@ import { LanguageModule } from '../language/language.module';
 import { TimeSlotQueueService } from '../offline-sync';
 import { ErrorHandlerService, NativeNotificationService, Store, ToastrNotificationService } from '../services';
 import { SelectModule } from '../shared/components/ui/select/select.module';
+import { ClientSelectorModule } from '../shared/features/client-selector/client-selector.module';
+import { NoteModule } from '../shared/features/note/note.module';
+import { TaskSelectorModule } from '../shared/features/task-selector/task-selector.module';
+import { TeamSelectorModule } from '../shared/features/team-selector/team-selector.module';
 import { TimeTrackerFormModule } from '../shared/features/time-tracker-form/time-tracker-form.module';
 import { TasksModule } from '../tasks/tasks.module';
+import { ProjectSelectorModule } from './../shared/features/project-selector/project-selector.module';
 import { CustomRenderComponent } from './custom-render-cell.component';
 import { NoDataMessageModule } from './no-data-message/no-data-message.module';
 import { OrganizationSelectorComponent } from './organization-selector/organization-selector.component';
@@ -91,7 +96,12 @@ import { TimerTrackerChangeDialogComponent } from './timer-tracker-change-dialog
 		TimeTrackerFormModule,
 		SelectModule,
 		DesktopDirectiveModule,
-		NbRouteTabsetModule
+		NbRouteTabsetModule,
+		ClientSelectorModule,
+		TaskSelectorModule,
+		TeamSelectorModule,
+		ProjectSelectorModule,
+		NoteModule
 	],
 	providers: [
 		NbSidebarService,
