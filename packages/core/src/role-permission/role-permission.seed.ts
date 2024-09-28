@@ -39,7 +39,7 @@ export const createRolePermissions = async (
 
 				// Create RolePermission objects and add them to the array
 				rolePermissions.push(
-					...permissions.map((permission: string) => {
+					...permissions.map((permission) => {
 						const rolePermission = new RolePermission();
 						rolePermission.role = role;
 						rolePermission.permission = permission;
