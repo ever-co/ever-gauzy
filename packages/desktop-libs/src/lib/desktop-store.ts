@@ -37,85 +37,77 @@ export const LocalStore = {
 
 	setDefaultApplicationSetting: () => {
 		try {
-			const config = store.get('appSetting');
-			const authConfig = store.get('auth');
-			if (!authConfig) {
-				const defaultConfig = {
-					allowScreenshotCapture: true,
-					isLogout: true
-				};
-				store.set({
-					auth: defaultConfig
-				});
-			} else {
-				authConfig.auth = typeof authConfig.isLogout === 'undefined' ? true : authConfig.isLogout;
-				authConfig.allowScreenshotCapture =
-					typeof authConfig.allowScreenshotCapture === 'undefined' ? true : authConfig.allowScreenshotCapture;
-				store.set({
-					auth: authConfig
-				});
-			}
-			const projectConfig = store.get('project');
-			if (!projectConfig) {
-				const config = {
-					aw: {
-						isAw: true
-					}
-				};
-				store.set({
-					project: config
-				});
-			} else {
-				projectConfig.aw = typeof projectConfig.aw === 'undefined' ? { isAw: true } : projectConfig.aw;
-				store.set({
-					appSetting: projectConfig
-				});
-			}
-			if (!config) {
-				const defaultAppSetting = {
-					monitor: {
-						captured: 'all' // ['all', 'active-only']
+			// Helper function to set default values if undefined
+			const setDefault = (obj, defaults) => {
+				return Object.keys(defaults).reduce(
+					(acc, key) => {
+						acc[key] = typeof obj[key] === 'undefined' ? defaults[key] : obj[key];
+						return acc;
 					},
-					timer: {
-						updatePeriod: 10 // [1, 5, 10]
-					},
-					SCREENSHOTS_ENGINE_METHOD: 'ElectronDesktopCapturer',
-					screenshotNotification: true,
-					simpleScreenshotNotification: false,
-					mutedNotification: false,
-					autoLaunch: true,
-					visibleAwOption: true,
-					randomScreenshotTime: false,
-					visibleWakatimeOption: false,
-					trackOnPcSleep: false,
-					awIsConnected: true,
-					preventDisplaySleep: false,
-					automaticUpdate: true,
-					automaticUpdateDelay: 1, //hour
-					cdnUpdater: {
-						github: false,
-						digitalOcean: true
-					},
-					prerelease: false,
-					preferredLanguage: 'en',
-					zone: 'local',
-					alwaysOn: true,
-					enforced: false,
-					theme: 'light'
-				};
-				store.set({
-					appSetting: defaultAppSetting
-				});
-			} else {
-				config.screenshotNotification =
-					typeof config.screenshotNotification === 'undefined' ? true : config.screenshotNotification;
-				config.awIsConnected = true;
-				store.set({
-					appSetting: config
-				});
-			}
+					{ ...obj }
+				);
+			};
+
+			// Handle  configs setting
+			const configs = store.get('configs') || {};
+			const defaultConfigs: any = {
+				isSetup: false
+			};
+			store.set({ configs: setDefault(configs, defaultConfigs) });
+
+			// Handle auth settings
+			const authConfig = store.get('auth') || {};
+			const defaultAuthConfig = {
+				allowScreenshotCapture: true,
+				isLogout: true
+			};
+			store.set({ auth: setDefault(authConfig, defaultAuthConfig) });
+
+			// Handle project settings
+			const projectConfig = store.get('project') || {};
+			const defaultProjectConfig = {
+				aw: {
+					isAw: true
+				}
+			};
+			store.set({ project: setDefault(projectConfig, defaultProjectConfig) });
+
+			// Handle application settings
+			const config = store.get('appSetting') || {};
+			const defaultAppSetting = {
+				monitor: {
+					captured: 'all' // ['all', 'active-only']
+				},
+				timer: {
+					updatePeriod: 10 // [1, 5, 10]
+				},
+				SCREENSHOTS_ENGINE_METHOD: 'ElectronDesktopCapturer',
+				screenshotNotification: true,
+				simpleScreenshotNotification: false,
+				mutedNotification: false,
+				autoLaunch: true,
+				visibleAwOption: true,
+				randomScreenshotTime: false,
+				visibleWakatimeOption: false,
+				trackOnPcSleep: false,
+				awIsConnected: true,
+				preventDisplaySleep: false,
+				automaticUpdate: true,
+				automaticUpdateDelay: 1, // hour
+				cdnUpdater: {
+					github: false,
+					digitalOcean: true
+				},
+				prerelease: false,
+				preferredLanguage: 'en',
+				zone: 'local',
+				alwaysOn: true,
+				enforced: false,
+				theme: 'light'
+			};
+			store.set({ appSetting: setDefault(config, defaultAppSetting) });
 		} catch (error) {
-			console.log('error set store', error);
+			console.log('Error setting store:', error);
 		}
 	},
 
