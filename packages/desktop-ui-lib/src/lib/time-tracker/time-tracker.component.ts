@@ -681,8 +681,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.timeTrackerQuery.ignition$
 			.pipe(
 				filter(({ state }) => state === IgnitionState.RESTARTING),
-				concatMap(async () => {
+				concatMap(async ({ data }) => {
 					this.isProcessingEnabled = true;
+					this.timeTrackerFormService.setState(data);
 					const session: moment.Moment = this._session?.clone();
 					const sessionLog = await this.silentRestart();
 					return { sessionLog, session };
