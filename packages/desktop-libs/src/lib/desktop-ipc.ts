@@ -154,7 +154,9 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		log.info('Time Tracker Ready');
 
 		// Update preferred language
-		timeTrackerWindow.webContents.send('preferred_language_change', TranslateService.preferredLanguage);
+		windowManager
+			.webContents(timeTrackerWindow)
+			.send('preferred_language_change', TranslateService.preferredLanguage);
 
 		// Check Authenticated user
 		await checkAuthenticatedUser(timeTrackerWindow);
@@ -483,7 +485,7 @@ export function ipcTimer(
 			// Start Timer
 			const timerResponse = await timerHandler.startTimer(setupWindow, knex, timeTrackerWindow, arg?.timeLog);
 
-			settingWindow.webContents.send('app_setting_update', {
+			windowManager.webContents(settingWindow).send('app_setting_update', {
 				setting: LocalStore.getStore('appSetting')
 			});
 
@@ -503,7 +505,7 @@ export function ipcTimer(
 			return timerResponse;
 		} catch (error) {
 			log.error('Error on start timer', error);
-			timeTrackerWindow.webContents.send('emergency_stop');
+			windowManager.webContents(timeTrackerWindow).send('emergency_stop');
 			throw new UIError('400', error, 'IPCSTARTMR');
 		}
 	});
@@ -736,7 +738,7 @@ export function ipcTimer(
 
 			console.log('Timer Stopped ...');
 
-			settingWindow.webContents.send('app_setting_update', {
+			windowManager.webContents(settingWindow).send('app_setting_update', {
 				setting: LocalStore.getStore('appSetting')
 			});
 
@@ -753,7 +755,7 @@ export function ipcTimer(
 			return timerResponse;
 		} catch (error) {
 			log.info('Error on stop timer', error);
-			timeTrackerWindow.webContents.send('emergency_stop');
+			windowManager.webContents(timeTrackerWindow).send('emergency_stop');
 			throw new UIError('500', error, 'IPCSTOPTMR');
 		}
 	});
@@ -774,7 +776,7 @@ export function ipcTimer(
 				knex
 			);
 
-			timeTrackerWindow.webContents.send('refresh_time_log', LocalStore.beforeRequestParams());
+			windowManager.webContents(timeTrackerWindow).send('refresh_time_log', LocalStore.beforeRequestParams());
 
 			// after update time slot do upload screenshot
 			// check config
@@ -858,13 +860,9 @@ export function ipcTimer(
 		const auth = LocalStore.getStore('auth');
 		const addSetting = LocalStore.getStore('additionalSetting');
 
-		if (!settingWindow) {
-			settingWindow = await createSettingsWindow(settingWindow, windowPath.timeTrackerUi, windowPath.preloadPath);
-		}
+		windowManager.show(RegisteredWindow.SETTINGS);
 
-		settingWindow.show();
-
-		settingWindow.webContents.send('app_setting', {
+		windowManager.webContents(settingWindow).send('app_setting', {
 			...LocalStore.beforeRequestParams(),
 			setting: appSetting,
 			config: config,
@@ -872,18 +870,18 @@ export function ipcTimer(
 			additionalSetting: addSetting
 		});
 
-		settingWindow.webContents.send('goto_top_menu');
+		windowManager.webContents(settingWindow).send('goto_top_menu');
 	});
 
 	ipcMain.on('switch_aw_option', (event, arg) => {
 		const settings = LocalStore.getStore('appSetting');
-		timeTrackerWindow.webContents.send('update_setting_value', settings);
+		windowManager.webContents(timeTrackerWindow).send('update_setting_value', settings);
 	});
 
 	ipcMain.on('logout_desktop', async (event, arg) => {
 		try {
 			log.info('Logout Desktop');
-			timeTrackerWindow.webContents.send('logout', arg);
+			windowManager.webContents(timeTrackerWindow).send('logout', arg);
 		} catch (error) {
 			log.error('Error Logout Desktop', error);
 		}
@@ -900,7 +898,7 @@ export function ipcTimer(
 			LocalStore.updateAuthSetting({ isLogout: true });
 
 			if (settingWindow) {
-				settingWindow.webContents.send('logout_success');
+				windowManager.webContents(settingWindow).send('logout_success');
 			}
 		} catch (error) {
 			log.error('IPCQNVGLOGIN', error);
@@ -974,7 +972,7 @@ export function ipcTimer(
 
 	ipcMain.on('timer_stopped', (event, arg) => {
 		log.info(`Timer Stopped: ${moment().format()}`);
-		timeTrackerWindow.webContents.send('timer_already_stop');
+		windowManager.webContents(timeTrackerWindow).send('timer_already_stop');
 	});
 
 	ipcMain.on('refresh-timer', async (event) => {
@@ -992,13 +990,13 @@ export function ipcTimer(
 
 			await countIntervalQueue(timeTrackerWindow, false);
 
-			timeTrackerWindow.webContents.send('timer_tracker_show', {
+			windowManager.webContents(timeTrackerWindow).send('timer_tracker_show', {
 				...LocalStore.beforeRequestParams(),
 				timeSlotId: lastTime ? lastTime.timeslotId : null
 			});
 		} catch (error) {
 			log.error('Error on refresh timer', error);
-			timeTrackerWindow.webContents.send('timer_tracker_show', {
+			windowManager.webContents(timeTrackerWindow).send('timer_tracker_show', {
 				...LocalStore.beforeRequestParams(),
 				timeSlotId: null
 			});
@@ -1334,7 +1332,7 @@ export async function checkAuthenticatedUser(timeTrackerWindow: BrowserWindow): 
 
 	const logout = async () => {
 		await userService.remove();
-		timeTrackerWindow.webContents.send('__logout__');
+		windowManager.webContents(timeTrackerWindow).send('__logout__');
 		LocalStore.updateAuthSetting({ isLogout: true });
 	};
 
