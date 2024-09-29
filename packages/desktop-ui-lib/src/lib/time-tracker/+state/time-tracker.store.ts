@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Store, StoreConfig } from '@datorama/akita';
+import { ITimeTrackerFormState } from '../../shared/features/time-tracker-form/time-tracker-form.service';
 
 export enum TimerStartMode {
 	MANUAL = 'manual',
@@ -19,6 +20,7 @@ export enum IgnitionState {
 export interface ITimerIgnition {
 	mode?: TimerStartMode;
 	state?: IgnitionState;
+	data?: ITimeTrackerFormState;
 }
 
 export interface ITimeTrackerState {
@@ -35,7 +37,14 @@ export function createInitialState(): ITimeTrackerState {
 		isEditing: false,
 		ignition: {
 			mode: TimerStartMode.STOP,
-			state: IgnitionState.STOPPED
+			state: IgnitionState.STOPPED,
+			data: {
+				clientId: null,
+				teamId: null,
+				projectId: null,
+				taskId: null,
+				note: null
+			}
 		}
 	};
 }
