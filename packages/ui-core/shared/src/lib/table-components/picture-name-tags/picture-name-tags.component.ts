@@ -8,7 +8,7 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 			[src]="avatar?.imageUrl"
 			[name]="avatar?.name"
 			[id]="avatar?.id"
-			[employee]="avatar"
+			[employee]="avatar.employee"
 			class="report-table"
 		></ngx-avatar>
 		<ng-template [ngIf]="rowData?.isDefault">
