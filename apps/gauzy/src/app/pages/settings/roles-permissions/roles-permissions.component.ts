@@ -1,14 +1,14 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-import { PermissionGroups, IRolePermission, RolesEnum, IUser, IRole, PermissionsEnum } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { debounceTime, filter, tap, map } from 'rxjs/operators';
 import { Observable, Subject, of as observableOf, startWith, catchError } from 'rxjs';
+import { debounceTime, filter, tap, map } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { environment } from '@gauzy/ui-config';
+import { PermissionGroups, IRolePermission, RolesEnum, IUser, IRole, PermissionsEnum } from '@gauzy/contracts';
 import { RolePermissionsService, RoleService, Store, ToastrService } from '@gauzy/ui-core/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -22,17 +22,13 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 	isWantToCreate: boolean = false;
 	loading: boolean;
 	enabledPermissions: any = {};
-
 	user: IUser;
 	role: IRole;
 	roles: IRole[] = [];
 	permissions: IRolePermission[] = [];
-
 	roles$: Observable<IRole[]> = observableOf([]);
 	permissions$: Subject<any> = new Subject();
-
 	roleSubject$: Subject<any> = new Subject();
-
 	formControl: FormControl = new FormControl();
 	@ViewChild('input') input: ElementRef;
 
@@ -127,34 +123,42 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 		}
 	}
 
-	async loadPermissions() {
+	/**
+	 * Loads and sets the enabled permissions for the current role.
+	 */
+	async loadPermissions(): Promise<void> {
 		this.enabledPermissions = {};
 
-		if (!this.role) {
-			return;
+		if (!this.role) return;
+
+		try {
+			const { id: roleId, tenantId } = this.role;
+
+			// Fetch role permissions and update the enabledPermissions map
+			const { items: permissions } = await this.rolePermissionsService.getRolePermissions({
+				roleId,
+				tenantId
+			});
+
+			this.permissions = permissions;
+			this.permissions.forEach(({ permission, enabled }) => {
+				this.enabledPermissions[permission] = enabled;
+			});
+		} finally {
+			this.loading = false;
 		}
-
-		const { tenantId } = this.user;
-		const { id: roleId } = this.role;
-
-		this.permissions = (
-			await this.rolePermissionsService
-				.getRolePermissions({
-					roleId,
-					tenantId
-				})
-				.finally(() => (this.loading = false))
-		).items;
-
-		this.permissions.forEach((p) => {
-			this.enabledPermissions[p.permission] = p.enabled;
-		});
 	}
 
-	async permissionChanged(permission: string, enabled: boolean, allowChange: boolean) {
-		/**
-		 * If anyone trying to update another users permissions without enough permission
-		 */
+	/**
+	 * Handles the change in permission status and updates it accordingly.
+	 *
+	 * @param {string} permission - The name of the permission to be changed.
+	 * @param {boolean} enabled - Indicates whether the permission should be enabled or disabled.
+	 * @param {boolean} allowChange - Flag indicating whether the current user has the right to change the permission.
+	 * @returns {Promise<void>}
+	 */
+	async permissionChanged(permission: string, enabled: boolean, allowChange: boolean): Promise<void> {
+		// Check if the user has permission to make changes
 		if (!allowChange) {
 			this.toastrService.danger(
 				this.getTranslation('TOASTR.MESSAGE.PERMISSION_UPDATE_ERROR'),
@@ -162,25 +166,22 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 			);
 			return;
 		}
+
 		try {
 			const { id: roleId } = this.role;
 			const { tenantId } = this.user;
 
 			const permissionToEdit = this.permissions.find((p) => p.permission === permission);
+			const payload = { enabled, roleId, tenantId, permission };
 
-			const payload = {
-				enabled,
-				roleId,
-				tenantId,
-				permission
-			};
-			permissionToEdit && permissionToEdit.id
-				? await this.rolePermissionsService.update(permissionToEdit.id, {
-						...payload
-				  })
-				: await this.rolePermissionsService.create({
-						...payload
-				  });
+			// Update or create the permission based on its existence
+			if (permissionToEdit?.id) {
+				await this.rolePermissionsService.update(permissionToEdit.id, payload);
+			} else {
+				await this.rolePermissionsService.create(payload);
+			}
+
+			// Display success message
 			this.toastrService.success(
 				this.getTranslation('TOASTR.MESSAGE.PERMISSION_UPDATED', {
 					permissionName: this.getTranslation('ORGANIZATIONS_PAGE.PERMISSIONS.' + permission),
@@ -189,43 +190,49 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 		} catch (error) {
+			// Display error message
 			this.toastrService.danger(
 				this.getTranslation('TOASTR.MESSAGE.PERMISSION_UPDATE_ERROR'),
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 		} finally {
+			// Notify about permission update
 			this.permissions$.next(true);
 		}
 	}
 
 	/**
-	 * CHANGE current selected role
+	 * Handles the change of the currently selected role.
 	 */
-	onSelectedRole() {
+	onSelectedRole(): void {
 		this.role = this.getRoleByName(this.formControl.value);
 		this.isWantToCreate = !this.role;
 		this.permissions$.next(true);
 	}
 
 	/**
-	 * GET role by name
+	 * Retrieves a role by its name.
 	 *
-	 * @param name
-	 * @returns
+	 * @param {string} name - The name of the role to retrieve.
+	 * @returns {IRole | undefined} - The found role, or undefined if not found.
 	 */
-	getRoleByName(name: IRole['name']) {
-		return this.roles.find((role: IRole) => name === role.name);
+	getRoleByName(name: IRole['name']): IRole | undefined {
+		return this.roles.find((role) => role.name === name);
 	}
 
-	/***
-	 * GET Administration permissions & removed some permission in DEMO
+	/**
+	 * Retrieves administration permissions, removing certain permissions in DEMO mode.
+	 *
+	 * @returns {PermissionsEnum[]} - The filtered list of administration permissions.
 	 */
 	getAdministrationPermissions(): PermissionsEnum[] {
-		// removed permissions for all users in DEMO mode
-		const deniedPermissions = [PermissionsEnum.ACCESS_DELETE_ACCOUNT, PermissionsEnum.ACCESS_DELETE_ALL_DATA];
+		const deniedPermissions = new Set([
+			PermissionsEnum.ACCESS_DELETE_ACCOUNT,
+			PermissionsEnum.ACCESS_DELETE_ALL_DATA
+		]);
 
-		return this.permissionGroups.ADMINISTRATION.filter((permission) =>
-			environment.DEMO ? !deniedPermissions.includes(permission) : true
+		return this.permissionGroups.ADMINISTRATION.filter(
+			(permission) => !environment.DEMO || !deniedPermissions.has(permission)
 		);
 	}
 
@@ -311,30 +318,21 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 	}
 
 	/**
-	 * Disabled General Group Permissions
+	 * Checks whether the General Group Permissions should be disabled.
 	 *
-	 * @returns
+	 * @returns {boolean} - Returns true if the general permissions are disabled; otherwise, false.
 	 */
 	isDisabledGeneralPermissions(): boolean {
-		if (!this.role) {
-			return true;
-		}
+		if (!this.role) return true;
 
-		/**
-		 * Disabled all permissions for "SUPER_ADMIN"
-		 */
-		const excludes = [RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN];
-		if (excludes.includes(this.user.role.name as RolesEnum)) {
-			if (this.role.name === RolesEnum.SUPER_ADMIN) {
-				return true;
-			}
-		}
-		if (this.user.role.name === RolesEnum.ADMIN) {
-			if (this.role.name === RolesEnum.ADMIN) {
-				return true;
-			}
-		}
-		return false;
+		// Disable permissions for "SUPER_ADMIN" role and when the current user's role is "ADMIN"
+		const userRole = this.user.role.name as RolesEnum;
+		const roleName = this.role.name;
+
+		return (
+			(userRole === RolesEnum.SUPER_ADMIN && roleName === RolesEnum.SUPER_ADMIN) ||
+			(userRole === RolesEnum.ADMIN && roleName === RolesEnum.ADMIN)
+		);
 	}
 
 	/**

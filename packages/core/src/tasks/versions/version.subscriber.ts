@@ -26,7 +26,6 @@ export class TaskVersionSubscriber extends BaseEntityEventSubscriber<TaskVersion
 		try {
 			// Generate and set the full icon URL if an icon property exists
 			if (Object.prototype.hasOwnProperty.call(entity, 'icon')) {
-				console.log('TaskVersion: Setting fullIconUrl for task version ID ' + entity.id);
 				await this.setFullIconUrl(entity);
 			}
 		} catch (error) {

@@ -26,9 +26,10 @@ export class TeamSelectorService extends SelectorService<IOrganizationTeam> {
 		return this.teamSelectorQuery.selectedId;
 	}
 
-	public async load(): Promise<void> {
+	public async load(options?: { searchTerm?: string; projectId?: string }): Promise<void> {
 		try {
 			this.teamSelectorStore.setLoading(true);
+			const { searchTerm: name } = options || {};
 			const {
 				organizationId,
 				tenantId,
@@ -40,10 +41,14 @@ export class TeamSelectorService extends SelectorService<IOrganizationTeam> {
 				organizationId,
 				tenantId,
 				employeeId,
-				projectId: this.projectSelectorQuery.selectedId
+				name,
+				projectId: this.projectSelectorQuery.selectedId,
+				take: this.teamSelectorQuery.limit,
+				skip: this.teamSelectorQuery.page,
+				...options
 			};
-			const data = await this.timeTrackerService.getTeams(request);
-			this.teamSelectorStore.updateData(data);
+			const { items: data, total } = await this.timeTrackerService.getPaginatedTeams(request);
+			this.teamSelectorStore.updateInfiniteList({ data, total });
 			this.teamSelectorStore.setError(null);
 		} catch (error) {
 			this.toastrNotifier.error(error.message || 'An error occurred while fetching teams.');

@@ -6,25 +6,25 @@ import {
 	IPagination,
 	IRolePermission,
 	IRolePermissionCreateInput,
+	IRolePermissionFindInput,
 	IRolePermissionUpdateInput
 } from '@gauzy/contracts';
-import { API_PREFIX } from '@gauzy/ui-core/common';
+import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 
 @Injectable()
 export class RolePermissionsService {
 	constructor(private readonly http: HttpClient) {}
 
 	/**
-	 * Retrieves a list of role permissions based on the provided filter criteria.
+	 * Retrieves role permissions based on the specified filter criteria.
 	 *
-	 * @param findInput - Optional filter criteria for retrieving role permissions.
-	 * @returns A promise that resolves to an object containing the list of role permissions (`items`) and the total count (`total`).
+	 * @param {IRolePermissionFindInput} [where] - An optional filter object used to specify the criteria for retrieving role permissions.
+	 * @returns {Promise<IPagination<IRolePermission>>} - Returns a promise that resolves to a pagination object containing the role permissions.
 	 */
-	getRolePermissions(findInput?: any): Promise<IPagination<IRolePermission>> {
-		const data = JSON.stringify(findInput);
+	getRolePermissions(where?: IRolePermissionFindInput): Promise<IPagination<IRolePermission>> {
 		return firstValueFrom(
 			this.http.get<IPagination<IRolePermission>>(`${API_PREFIX}/role-permissions`, {
-				params: { data }
+				params: toParams({ where })
 			})
 		);
 	}

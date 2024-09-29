@@ -49,8 +49,8 @@ export interface IOrganizationTeamCreateInput extends IBasePerTenantAndOrganizat
 	requirePlanToTrack?: boolean;
 	public?: boolean;
 	profile_link?: string;
-	memberIds?: string[];
-	managerIds?: string[];
+	memberIds?: ID[];
+	managerIds?: ID[];
 	tags?: ITag[];
 	projects?: IOrganizationProject[];
 }

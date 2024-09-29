@@ -196,21 +196,16 @@
 										[searchable]="true"
 										#organizationContact
 										formControlName="organizationContact"
-										placeholder="{{
-											'FORM.PLACEHOLDERS.CLIENTS'
-												| translate
-										}}"
+										[placeholder]="'FORM.PLACEHOLDERS.CLIENTS' | translate"
 										appendTo="body"
-									>
-									</ng-select>
+									></ng-select>
 								</div>
 							</div>
 							<div class="row">
 								<div class="form-group col-6">
 									<ga-employee-multi-select
-										[selectedEmployeeIds]=" selectedEmployeeIds"
+										[selectedEmployeeIds]="selectedEmployeeIds"
 										(selectedChange)="onMembersSelected($event)"
-										(onLoadEmployees)="onLoadEmployees($event)"
 									></ga-employee-multi-select>
 								</div>
 								<div class="form-group col-6">
@@ -321,8 +316,7 @@
 								[selectedTags]="form.get('tags').value"
 								(selectedTagsEvent)="selectedTagsEvent($event)"
 								[isOrgLevel]="true"
-							>
-							</ga-tags-color-input>
+							></ga-tags-color-input>
 						</div>
 					</div>
 				</nb-tab>

@@ -93,34 +93,66 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	}
 
 	/**
+	 * Retrieves a list of active, non-archived employees based on provided employee IDs,
+	 * organization ID, and tenant ID.
+	 *
+	 * @param {ID[]} employeeIds - Array of employee IDs to search for. Defaults to an empty array if not provided.
+	 * @param {ID} organizationId - The ID of the organization to filter employees.
+	 * @param {ID} tenantId - The ID of the tenant to filter employees.
+	 * @returns {Promise<IEmployee[]>} - Promise resolving with an array of matching `IEmployee` objects.
+	 *
+	 * @throws {Error} - Throws an error if the retrieval process fails.
+	 */
+	async findActiveEmployeesByEmployeeIds(
+		employeeIds: ID[] = [],
+		organizationId: ID,
+		tenantId: ID
+	): Promise<IEmployee[]> {
+		try {
+			// Filter out any invalid values from the employee IDs array
+			const filteredIds = employeeIds.filter(Boolean);
+
+			// Fetch employees using filtered IDs, organizationId, and tenantId
+			return await this.typeOrmEmployeeRepository.findBy({
+				id: In(filteredIds),
+				organizationId,
+				tenantId,
+				isActive: true,
+				isArchived: false
+			});
+		} catch (error) {
+			console.error('Error while retrieving employees', error);
+			throw new Error(`Failed to retrieve employees: ${error}`);
+		}
+	}
+
+	/**
 	 * Finds employees based on an array of user IDs.
+	 *
 	 * @param userIds An array of user IDs.
+	 * @param tenantId The ID of the tenant to filter employees.
 	 * @returns A promise resolving to an array of employees.
 	 */
-	async findEmployeesByUserIds(userIds: ID[]): Promise<Employee[]> {
+	async findEmployeesByUserIds(userIds: ID[], tenantId: ID): Promise<IEmployee[]> {
 		try {
-			// Get the tenant ID from the current request context
-			const tenantId = RequestContext.currentTenantId();
-
-			// Construct the base where clause for querying employees by user IDs
-			const whereClause = {
-				userId: In(userIds), // Find employees with matching user IDs
-				isActive: true, // Only active employees
-				isArchived: false, // Exclude archived employees
-				...(tenantId && { tenantId }) // Include tenant ID if available
+			// Define the options for the query
+			const options: FindManyOptions<Employee> = {
+				// Construct the base where clause for querying employees by user IDs
+				where: {
+					userId: In(userIds), // Find employees with matching user IDs
+					tenantId // Find employees in the same tenant
+				}
 			};
 
 			// Execute the query based on the ORM type
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
-					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<Employee>({
-						where: whereClause
-					} as FindManyOptions);
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<Employee>(options);
 					const employees = await this.mikroOrmRepository.find(where, mikroOptions);
 					return employees.map((entity: Employee) => this.serialize(entity)) as Employee[];
 				}
 				case MultiORMEnum.TypeORM: {
-					return await this.typeOrmRepository.find({ where: whereClause });
+					return await this.typeOrmRepository.find(options);
 				}
 				default:
 					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
@@ -174,15 +206,11 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 */
 	async findOneByUserId(userId: ID, options?: FindOneOptions<Employee>): Promise<IEmployee | null> {
 		try {
-			// Retrieve the tenant ID from the current context
-			const tenantId = RequestContext.currentTenantId();
-
 			// Define the base where clause
 			const whereClause = {
 				userId,
-				...(tenantId && { tenantId }), // Include tenantId if available
 				isActive: true,
-				isArchived: false,
+				isArchived: false
 			};
 
 			// Merge the existing where conditions in options, if any
@@ -196,11 +224,13 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<Employee>(queryOptions as FindManyOptions);
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<Employee>(
+						queryOptions as FindManyOptions
+					);
 					const item = await this.mikroOrmRepository.findOne(where, mikroOptions);
 					return this.serialize(item as Employee);
 				case MultiORMEnum.TypeORM:
-					return this.typeOrmRepository.findOne(queryOptions);
+					return await this.typeOrmRepository.findOne(queryOptions);
 				default:
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
@@ -506,10 +536,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * @param params - Contains organizationId and possibly other per-tenant information.
 	 * @returns - UpdateResult or DeleteResult depending on the ORM type.
 	 */
-	async softRemovedById(
-		employeeId: ID,
-		params: IBasePerTenantAndOrganizationEntityModel
-	): Promise<Employee> {
+	async softRemovedById(employeeId: ID, params: IBasePerTenantAndOrganizationEntityModel): Promise<Employee> {
 		try {
 			// Obtain the organization ID from the provided parameters
 			const organizationId = params.organizationId;
@@ -539,10 +566,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * @returns The restored Employee entity.
 	 * @throws BadRequestException if the employee cannot be restored or if an error occurs.
 	 */
-	async softRecoverById(
-		employeeId: ID,
-		params: IBasePerTenantAndOrganizationEntityModel
-	): Promise<Employee> {
+	async softRecoverById(employeeId: ID, params: IBasePerTenantAndOrganizationEntityModel): Promise<Employee> {
 		try {
 			// Obtain the organization ID from the provided parameters
 			const organizationId = params.organizationId;

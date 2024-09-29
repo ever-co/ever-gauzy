@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IOrganization, IPagination, ITenant, IUser, IUserOrganization, RolesEnum } from '@gauzy/contracts';
-import { PaginationParams, TenantAwareCrudService } from './../core/crud';
-import { Employee } from './../core/entities/internal';
+import { ID, IOrganization, IPagination, IUser, IUserOrganization, RolesEnum } from '@gauzy/contracts';
+import { RequestContext } from '../core/context';
+import { PaginationParams, TenantAwareCrudService } from '../core/crud';
+import { Employee } from '../core/entities/internal';
 import { EmployeeService } from '../employee/employee.service';
 import { TypeOrmOrganizationRepository } from '../organization/repository';
 import { UserOrganization } from './user-organization.entity';
@@ -36,13 +37,16 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 		// If 'includeEmployee' is set to true, fetch employee details associated with each user organization
 		if (includeEmployee) {
 			try {
+				// Get the tenant ID from the current request context
+				const tenantId = RequestContext.currentTenantId();
+
 				// Extract user IDs from the items array
 				const userIds = items
 					.filter((organization: IUserOrganization) => organization.user) // Filter out user organizations without a user object
 					.map((organization: IUserOrganization) => organization.user.id);
 
 				// Fetch all employee details in bulk for the extracted user IDs
-				const employees = await this.employeeService.findEmployeesByUserIds(userIds);
+				const employees = await this.employeeService.findEmployeesByUserIds(userIds, tenantId);
 
 				// Map employee details to a dictionary for easier lookup
 				const employeeMap = new Map<string, Employee>();
@@ -74,10 +78,7 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 	 * @param tenantId The unique identifier of the tenant whose organizations the user will be added to.
 	 * @returns A promise that resolves to an array of IUserOrganization, where each element represents the user's association with an organization in the tenant.
 	 */
-	async addUserToOrganization(
-		user: IUser,
-		organizationId: IOrganization['id']
-	): Promise<IUserOrganization | IUserOrganization[]> {
+	async addUserToOrganization(user: IUser, organizationId: ID): Promise<IUserOrganization | IUserOrganization[]> {
 		/** If role is SUPER_ADMIN, add user to all organizations in the tenant */
 		if (user.role.name === RolesEnum.SUPER_ADMIN) {
 			return await this._addUserToAllOrganizations(user.id, user.tenantId);
@@ -97,10 +98,7 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 	 * @param tenantId The unique identifier of the tenant whose organizations the user will be added to.
 	 * @returns A promise that resolves to an array of IUserOrganization, representing the user-organization relationships created.
 	 */
-	private async _addUserToAllOrganizations(
-		userId: IUser['id'],
-		tenantId: ITenant['id']
-	): Promise<IUserOrganization[]> {
+	private async _addUserToAllOrganizations(userId: ID, tenantId: ID): Promise<IUserOrganization[]> {
 		/** Add user to all organizations in the tenant */
 		const organizations = await this.typeOrmOrganizationRepository.find({
 			where: { tenantId }

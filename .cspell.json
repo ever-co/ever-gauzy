@@ -517,7 +517,8 @@
 		"nbbutton",
 		"xaxis",
 		"wdth",
-		"concate"
+		"concate",
+		"typeahead"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
