@@ -3,6 +3,7 @@ import {
 	getApiBaseUrl,
 	loginPage,
 	RegisteredWindow,
+	settingsPage,
 	timeTrackerPage,
 	WindowManager
 } from '@gauzy/desktop-window';
@@ -369,6 +370,12 @@ export class TrayIcon {
 					await timeTrackerWindow.loadURL(timeTrackerPage(windowPath.timeTrackerUi));
 				} catch (error) {
 					console.error('An error occurred while loading Time Tracker Page', error);
+				}
+
+				try {
+					await settingsWindow.loadURL(settingsPage(windowPath.timeTrackerUi));
+				} catch (error) {
+					console.error('An error occurred while loading settings Page', error);
 				}
 
 				manager.webContents(timeTrackerWindow).send('auth_success_tray_init', arg);
