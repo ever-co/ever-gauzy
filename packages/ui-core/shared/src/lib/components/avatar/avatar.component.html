@@ -3,6 +3,11 @@
 		<div class="image-outer-wrapper" *ngIf="src">
 			<div class="image-container {{ size }}" (click)="edit(id)">
 				<img class="rounded-circle" type="user" [src]="src" />
+				<span
+					*ngIf="id"
+					class="status-indicator"
+					[ngClass]="{ online: (online$ | async), offline: !(online$ | async) }"
+				></span>
 			</div>
 		</div>
 		<div class="names-wrapper">

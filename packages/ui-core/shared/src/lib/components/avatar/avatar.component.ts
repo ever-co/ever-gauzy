@@ -1,6 +1,9 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ID } from '@gauzy/contracts';
+import { EmployeesService } from '@gauzy/ui-core/core';
+import { Observable } from 'rxjs';
+import { tap, map } from 'rxjs/operators';
 
 @Component({
 	selector: 'ngx-avatar',
@@ -14,6 +17,8 @@ export class AvatarComponent implements OnInit {
 	@Input() caption: string;
 	@Input() id: string;
 	@Input() isOption: boolean;
+
+	online$: Observable<boolean>;
 
 	// Added for set component value when used for angular2-smart-table renderer.
 	@Input() set value(object) {
@@ -45,9 +50,16 @@ export class AvatarComponent implements OnInit {
 		this._name = value;
 	}
 
-	constructor(private readonly router: Router) {}
+	constructor(private readonly router: Router, private readonly _employeeService: EmployeesService) {}
 
-	ngOnInit() {}
+	ngOnInit() {
+		if (this.id) {
+			this.online$ = this._employeeService.getEmployeeById(this.id).pipe(
+				tap((employee) => console.log('Employee data:', employee)), // Log the employee object
+				map((employee) => employee?.isOnline && !employee?.isAway) // Continue with the online status check
+			);
+		}
+	}
 
 	/**
 	 * Navigates to the employee edit page based on the provided employee ID.
