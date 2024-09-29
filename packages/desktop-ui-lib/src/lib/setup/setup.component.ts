@@ -305,7 +305,8 @@ export class SetupComponent implements OnInit {
 	getFeature() {
 		return {
 			gauzyWindow: this.desktopFeatures.gauzyPlatform,
-			timeTrackerWindow: this.desktopFeatures.timeTracking
+			timeTrackerWindow: this.desktopFeatures.timeTracking,
+			isSetup: true
 		};
 	}
 
@@ -326,6 +327,8 @@ export class SetupComponent implements OnInit {
 			if (this.isServer) {
 				this.electronService.ipcRenderer.send('start_server', gauzyConfig);
 				isStarted = true;
+			} else if (this.isDesktopTimer) {
+				this.electronService.ipcRenderer.send('restart_app', gauzyConfig);
 			} else {
 				isStarted = await this.electronService.ipcRenderer.invoke('START_SERVER', gauzyConfig);
 			}
@@ -418,7 +421,7 @@ export class SetupComponent implements OnInit {
 		try {
 			const resp = await this.setupService.pingServer({
 				host: url.origin
-			})
+			});
 			this.serverConfig.custom.apiHost = url.origin;
 			return resp;
 		} catch (error) {
