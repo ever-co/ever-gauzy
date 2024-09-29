@@ -1,9 +1,6 @@
 <nb-card>
 	<nb-card-header class="d-flex">
-		<ngx-back-navigation
-			[haveLink]="true"
-			(click)="cancel()"
-		></ngx-back-navigation>
+		<ngx-back-navigation [haveLink]="true" (click)="cancel()"></ngx-back-navigation>
 		<h4>
 			{{
 				(organizationContact
@@ -16,10 +13,7 @@
 	<nb-card-body>
 		<nb-stepper #stepper disableStepNavigation>
 			<!-- Step 1 Contact Main Form -->
-			<nb-step
-				[stepControl]="contMainForm"
-				[label]="'CONTACTS_PAGE.MAIN' | translate"
-			>
+			<nb-step [stepControl]="contMainForm" [label]="'CONTACTS_PAGE.MAIN' | translate">
 				<ng-template #mainStep>
 					{{ 'CONTACTS_PAGE.MAIN' | translate }}
 				</ng-template>
@@ -37,10 +31,7 @@
 									(uploadImageAssetError)="handleImageUploadError($event)"
 								></ngx-image-uploader>
 								<svg
-									*ngIf="
-										contMainForm &&
-										contMainForm.get('imageUrl').value
-									"
+									*ngIf="contMainForm && contMainForm.get('imageUrl').value"
 									xmlns="http://www.w3.org/2000/svg"
 									xmlns:xlink="http://www.w3.org/1999/xlink"
 									width="68"
@@ -57,25 +48,9 @@
 										/>
 									</defs>
 									<g fill="none" fill-rule="evenodd">
-										<circle
-											cx="34"
-											cy="34"
-											r="34"
-											fill="#0091FF"
-											opacity=".3"
-										/>
-										<circle
-											cx="34"
-											cy="34"
-											r="26"
-											fill="#0091FF"
-											opacity=".9"
-										/>
-										<use
-											fill="#FFF"
-											fill-rule="nonzero"
-											xlink:href="#a"
-										/>
+										<circle cx="34" cy="34" r="34" fill="#0091FF" opacity=".3" />
+										<circle cx="34" cy="34" r="26" fill="#0091FF" opacity=".9" />
+										<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
 									</g>
 								</svg>
 								<div
@@ -86,36 +61,21 @@
 								></div>
 
 								<img
-									*ngIf="
-										contMainForm &&
-										contMainForm.get('imageUrl').value
-									"
+									*ngIf="contMainForm && contMainForm.get('imageUrl').value"
 									[src]="contMainForm.get('imageUrl').value"
 									alt="Contact Photo"
 									(mouseenter)="hoverState = true"
 									(mouseleave)="hoverState = false"
 								/>
-								<div
-									*ngIf="
-										!contMainForm ||
-										!contMainForm.get('imageUrl').value
-									"
-									class="image"
-								>
-									<span
-										><i class="fas fa-image"></i>Add or Drop
-										Image</span
-									>
+								<div *ngIf="!contMainForm || !contMainForm.get('imageUrl').value" class="image">
+									<span><i class="fas fa-image"></i>Add or Drop Image</span>
 								</div>
 							</div>
 						</div>
 						<div class="fields container">
 							<div class="row">
 								<div class="form-group col-7">
-									<label class="label">{{
-										'ORGANIZATIONS_PAGE.EDIT.NAME'
-											| translate
-									}}</label>
+									<label class="label">{{ 'ORGANIZATIONS_PAGE.EDIT.NAME' | translate }}</label>
 									<input
 										id="name"
 										type="text"
@@ -123,25 +83,14 @@
 										nbInput
 										fullWidth
 										formControlName="name"
-										[placeholder]="
-											'ORGANIZATIONS_PAGE.EDIT.NAME'
-												| translate
-										"
+										[placeholder]="'ORGANIZATIONS_PAGE.EDIT.NAME' | translate"
 										[status]="
-											FormHelpers.isInvalidControl(
-												contMainForm,
-												'name'
-											) ? 'danger' : 'basic'
+											FormHelpers.isInvalidControl(contMainForm, 'name') ? 'danger' : 'basic'
 										"
 									/>
-									<ng-container
-										*ngIf="FormHelpers.isInvalidControl(contMainForm, 'name')"
-									>
+									<ng-container *ngIf="FormHelpers.isInvalidControl(contMainForm, 'name')">
 										<p class="caption status-danger mt-1">
-											{{
-												'TOASTR.MESSAGE.NAME_REQUIRED'
-													| translate
-											}}
+											{{ 'TOASTR.MESSAGE.NAME_REQUIRED' | translate }}
 										</p>
 									</ng-container>
 								</div>
@@ -149,8 +98,7 @@
 							<div class="row">
 								<div class="form-group col-7">
 									<label class="label">{{
-										'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL'
-											| translate
+										'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL' | translate
 									}}</label>
 									<input
 										id="email"
@@ -161,97 +109,62 @@
 										nbInput
 										fullWidth
 										formControlName="primaryEmail"
-										[placeholder]="
-											'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL'
-												| translate
-										"
+										[placeholder]="'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL' | translate"
 										[status]="
-											FormHelpers.isInvalidControl(
-												contMainForm,
-												'primaryEmail'
-											) ? 'danger' : 'basic'
+											FormHelpers.isInvalidControl(contMainForm, 'primaryEmail')
+												? 'danger'
+												: 'basic'
 										"
 									/>
-									<ng-container
-										*ngIf="FormHelpers.isInvalidControl(
-											contMainForm,
-											'primaryEmail'
-										)"
-									>
+									<ng-container *ngIf="FormHelpers.isInvalidControl(contMainForm, 'primaryEmail')">
 										<p
 											class="caption status-danger mt-1"
-											*ngIf="
-												contMainForm.controls
-													.primaryEmail.errors
-													?.pattern
-											"
+											*ngIf="contMainForm.controls.primaryEmail.errors?.pattern"
 										>
-											{{
-												'TOASTR.MESSAGE.EMAIL_SHOULD_BE_REAL'
-													| translate
-											}}
+											{{ 'TOASTR.MESSAGE.EMAIL_SHOULD_BE_REAL' | translate }}
 										</p>
 									</ng-container>
 								</div>
 								<div class="form-group col-5">
-									<label class="label">{{
-										'ORGANIZATIONS_PAGE.EDIT.PHONE'
-											| translate
-									}}</label>
+									<label class="label">{{ 'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate }}</label>
 									<input
 										type="text"
 										#phone
 										nbInput
 										fullWidth
 										formControlName="primaryPhone"
-										[placeholder]="
-											'ORGANIZATIONS_PAGE.EDIT.PHONE'
-												| translate
-										"
+										[placeholder]="'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate"
 									/>
 								</div>
 							</div>
 							<div class="row">
 								<div class="form-group col-7">
-									<label class="label">{{
-										'ORGANIZATIONS_PAGE.EDIT.WEBSITE'
-											| translate
-									}}</label>
+									<label class="label">{{ 'ORGANIZATIONS_PAGE.EDIT.WEBSITE' | translate }}</label>
 									<input
 										type="text"
 										#website
 										nbInput
 										fullWidth
 										formControlName="website"
-										[placeholder]="
-											'ORGANIZATIONS_PAGE.EDIT.WEBSITE'
-												| translate
-										"
+										[placeholder]="'ORGANIZATIONS_PAGE.EDIT.WEBSITE' | translate"
 									/>
 								</div>
 								<div class="form-group col-5">
-									<label class="label">{{
-										'ORGANIZATIONS_PAGE.EDIT.FAX'
-											| translate
-									}}</label>
+									<label class="label">{{ 'ORGANIZATIONS_PAGE.EDIT.FAX' | translate }}</label>
 									<input
 										type="text"
 										#fax
 										nbInput
 										fullWidth
 										formControlName="fax"
-										[placeholder]="
-											'ORGANIZATIONS_PAGE.EDIT.FAX'
-												| translate
-										"
+										[placeholder]="'ORGANIZATIONS_PAGE.EDIT.FAX' | translate"
 									/>
 								</div>
 							</div>
 							<div class="row">
 								<div class="form-group col-7">
 									<label class="label">{{
-										'ORGANIZATIONS_PAGE.EDIT.FISCAL_INFORMATION'
-											| translate
+										'ORGANIZATIONS_PAGE.EDIT.FISCAL_INFORMATION' | translate
 									}}</label>
 									<input
 										type="text"
@@ -259,19 +172,13 @@
 										nbInput
 										fullWidth
 										formControlName="fiscalInformation"
-										[placeholder]="
-											'ORGANIZATIONS_PAGE.EDIT.FISCAL_INFORMATION'
-												| translate
-										"
+										[placeholder]="'ORGANIZATIONS_PAGE.EDIT.FISCAL_INFORMATION' | translate"
 									/>
 								</div>
 							</div>
 							<div class="row">
 								<div class="form-group col-7">
-									<label class="label">{{
-										'ORGANIZATIONS_PAGE.EDIT.PROJECTS'
-											| translate
-									}}</label>
+									<label class="label">{{ 'ORGANIZATIONS_PAGE.EDIT.PROJECTS' | translate }}</label>
 									<ng-select
 										[addTag]="addNewProject"
 										[items]="projects"
@@ -279,32 +186,23 @@
 										[multiple]="true"
 										[searchable]="true"
 										formControlName="projects"
-										[placeholder]="
-											'ORGANIZATIONS_PAGE.EDIT.PROJECTS'
-												| translate
-										"
+										[placeholder]="'ORGANIZATIONS_PAGE.EDIT.PROJECTS' | translate"
 										appendTo="body"
 									>
 									</ng-select>
 								</div>
 								<div class="form-group col-5">
-									<label class="label">{{
-										'CONTACTS_PAGE.CONTACT_TYPE' | translate
-									}}</label>
+									<label class="label">{{ 'CONTACTS_PAGE.CONTACT_TYPE' | translate }}</label>
 									<ng-select
 										formControlName="contactType"
 										[clearable]="false"
 										[searchable]="false"
-										[placeholder]="
-											'CONTACTS_PAGE.CONTACT_TYPE'
-												| translate
-										"
+										[placeholder]="'CONTACTS_PAGE.CONTACT_TYPE' | translate"
 										appendTo="body"
 									>
-										<ng-option
-											[value]="type"
-											*ngFor="let type of contactTypes"
-										>{{ type }}</ng-option>
+										<ng-option [value]="type" *ngFor="let type of contactTypes">{{
+											type
+										}}</ng-option>
 									</ng-select>
 								</div>
 							</div>
@@ -312,9 +210,7 @@
 								<div class="form-group col-12">
 									<ga-tags-color-input
 										[selectedTags]="tags"
-										(selectedTagsEvent)="
-											selectedTagsEvent($event)
-										"
+										(selectedTagsEvent)="selectedTagsEvent($event)"
 										[isOrgLevel]="true"
 									>
 									</ga-tags-color-input>
@@ -333,12 +229,7 @@
 								>
 									{{ 'BUTTONS.NEXT' | translate }}
 								</button>
-								<button
-									nbButton
-									(click)="cancel()"
-									status="basic"
-									outline
-								>
+								<button nbButton (click)="cancel()" status="basic" outline>
 									{{ 'BUTTONS.CANCEL' | translate }}
 								</button>
 							</div>
@@ -349,13 +240,8 @@
 			<!-- Step 1 Contact Main Form End -->
 
 			<!-- Step 2 Address Form -->
-			<nb-step
-				[stepControl]="locationForm"
-				[label]="'CONTACTS_PAGE.ADDRESS' | translate"
-			>
-				<ng-template #addressStep>{{
-					'CONTACTS_PAGE.ADDRESS' | translate
-				}}</ng-template>
+			<nb-step [stepControl]="locationForm" [label]="'CONTACTS_PAGE.ADDRESS' | translate">
+				<ng-template #addressStep>{{ 'CONTACTS_PAGE.ADDRESS' | translate }}</ng-template>
 				<form
 					class="step-container custom-card"
 					[formGroup]="locationForm"
@@ -364,30 +250,18 @@
 				>
 					<div class="fields h-100">
 						<div class="row h-100">
-							<div
-								class="col-5 h-100 d-flex flex-column justify-content-between"
-							>
+							<div class="col-5 h-100 d-flex flex-column justify-content-between">
 								<ga-location-form
 									#locationFormDirective
 									[form]="locationForm"
 									[showAutocompleteSearch]="true"
 									[showCoordinateInput]="true"
-									(mapCoordinatesEmitter)="
-										onCoordinatesChanges($event)
-									"
-									(mapGeometryEmitter)="
-										onGeometrySend($event)
-									"
+									(mapCoordinatesEmitter)="onCoordinatesChanges($event)"
+									(mapGeometryEmitter)="onGeometrySend($event)"
 								>
 								</ga-location-form>
 								<div>
-									<button
-										nbButton
-										nbStepperPrevious
-										class="gray mr-2"
-										status="basic"
-										outline
-									>
+									<button nbButton nbStepperPrevious class="gray mr-2" status="basic" outline>
 										{{ 'BUTTONS.PREVIOUS' | translate }}
 									</button>
 									<button
@@ -400,25 +274,14 @@
 									>
 										{{ 'BUTTONS.NEXT' | translate }}
 									</button>
-									<button
-										nbButton
-										(click)="cancel()"
-										class="mr-2"
-										status="basic"
-										outline
-									>
+									<button nbButton (click)="cancel()" class="mr-2" status="basic" outline>
 										{{ 'BUTTONS.CANCEL' | translate }}
 									</button>
 								</div>
 							</div>
 							<div class="col-7">
-								<ng-container
-									*ngIf="stepper._selectedIndex === 1"
-								>
-									<ga-leaflet-map
-										#leafletTemplate
-										(mapClicked)="onMapClicked($event)"
-									>
+								<ng-container *ngIf="stepper._selectedIndex === 1">
+									<ga-leaflet-map #leafletTemplate (mapClicked)="onMapClicked($event)">
 									</ga-leaflet-map>
 								</ng-container>
 							</div>
@@ -438,89 +301,49 @@
 				<form class="custom-card" [formGroup]="budgetForm">
 					<div class="row">
 						<div class="form-group col-3">
-							<label
-								class="label"
-								[innerHtml]="
-									'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate
-								"
-							></label>
+							<label class="label" [innerHtml]="'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate"></label>
 							<nb-select
 								fullWidth
-								[placeholder]="
-									'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate
-								"
+								[placeholder]="'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate"
 								formControlName="budgetType"
 							>
 								<nb-option
-									*ngFor="
-										let budgetType of organizationContactBudgetTypeEnum
-											| keyvalue
-									"
+									*ngFor="let budgetType of organizationContactBudgetTypeEnum | keyvalue"
 									[value]="budgetType.value"
 								>
 									{{ budgetType.value | titlecase }}
 								</nb-option>
 							</nb-select>
 						</div>
-						<ng-container
-							*ngIf="
-								budgetType ===
-								organizationContactBudgetTypeEnum.HOURS
-							"
-						>
+						<ng-container *ngIf="budgetType === organizationContactBudgetTypeEnum.HOURS">
 							<div class="form-group col-3">
-								<label
-									class="label"
-									[innerHtml]="
-										'FORM.PLACEHOLDERS.HOURS' | translate
-									"
-								></label>
+								<label class="label" [innerHtml]="'FORM.PLACEHOLDERS.HOURS' | translate"></label>
 								<input
 									nbInput
 									type="number"
 									[min]="0"
 									fullWidth
 									formControlName="budget"
-									[placeholder]="
-										'FORM.PLACEHOLDERS.HOURS' | translate
-									"
+									[placeholder]="'FORM.PLACEHOLDERS.HOURS' | translate"
 								/>
 							</div>
 						</ng-container>
-						<ng-container
-							*ngIf="
-								budgetType ===
-								organizationContactBudgetTypeEnum.COST
-							"
-						>
+						<ng-container *ngIf="budgetType === organizationContactBudgetTypeEnum.COST">
 							<div class="form-group col-3">
-								<label
-									class="label"
-									[innerHtml]="
-										'FORM.PLACEHOLDERS.COST' | translate
-									"
-								></label>
+								<label class="label" [innerHtml]="'FORM.PLACEHOLDERS.COST' | translate"></label>
 								<input
 									nbInput
 									type="number"
 									[min]="0"
 									fullWidth
 									formControlName="budget"
-									[placeholder]="
-										'FORM.PLACEHOLDERS.COST' | translate
-									"
+									[placeholder]="'FORM.PLACEHOLDERS.COST' | translate"
 								/>
 							</div>
 						</ng-container>
 					</div>
 					<div class="buttons">
-						<button
-							nbButton
-							nbStepperPrevious
-							class="gray mr-2"
-							status="basic"
-							outline
-						>
+						<button nbButton nbStepperPrevious class="gray mr-2" status="basic" outline>
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
 						<button
@@ -533,13 +356,7 @@
 						>
 							{{ 'BUTTONS.NEXT' | translate }}
 						</button>
-						<button
-							nbButton
-							(click)="cancel()"
-							class="mr-2"
-							status="basic"
-							outline
-						>
+						<button nbButton (click)="cancel()" class="mr-2" status="basic" outline>
 							{{ 'BUTTONS.CANCEL' | translate }}
 						</button>
 					</div>
@@ -549,9 +366,7 @@
 
 			<!-- Step 4 Members Form -->
 			<nb-step [label]="'CONTACTS_PAGE.MEMBERS' | translate">
-				<ng-template #membersStep>{{
-					'CONTACTS_PAGE.MEMBERS' | translate
-				}}</ng-template>
+				<ng-template #membersStep>{{ 'CONTACTS_PAGE.MEMBERS' | translate }}</ng-template>
 				<div class="fields custom-card">
 					<div class="row">
 						<div class="col-6">
@@ -566,41 +381,24 @@
 						</div>
 						<div class="col-6" *ngIf="selectedMembers">
 							<div class="team-card">
-								<div
-									class="name-container"
-									*ngFor="let member of selectedMembers"
-								>
+								<div class="name-container" *ngFor="let member of selectedMembers">
 									<ngx-avatar
 										class="report-table"
 										[src]="member.user.imageUrl"
 										[name]="member.user.name"
 										[id]="member.id"
-										[nbTooltip]="
-											'ORGANIZATIONS_PAGE.EDIT.CLICK_EMPLOYEE'
-												| translate
-										"
+										[employee]="member"
+										[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.CLICK_EMPLOYEE' | translate"
 									></ngx-avatar>
 								</div>
 							</div>
 						</div>
 					</div>
 					<div class="buttons">
-						<button
-							class="gray mr-2"
-							status="basic"
-							outline
-							nbButton
-							nbStepperPrevious
-						>
+						<button class="gray mr-2" status="basic" outline nbButton nbStepperPrevious>
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
-						<button
-							(click)="submitForm()"
-							nbButton
-							status="success"
-							class="mr-2 ml-2"
-							nbStepperNext
-						>
+						<button (click)="submitForm()" nbButton status="success" class="mr-2 ml-2" nbStepperNext>
 							{{ 'BUTTONS.SAVE' | translate }}
 						</button>
 					</div>

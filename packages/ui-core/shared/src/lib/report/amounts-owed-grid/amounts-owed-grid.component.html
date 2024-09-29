@@ -33,7 +33,12 @@
 								<div class="responsive-table-row employee-column">
 									<div class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEE' | translate }}</div>
 									<div class="responsive-table-content project-name">
-										<ng-container *ngTemplateOutlet="employeeEl; context: { $implicit: employeeRow?.employee }"></ng-container>
+										<ng-container
+											*ngTemplateOutlet="
+												employeeEl;
+												context: { $implicit: employeeRow?.employee }
+											"
+										></ng-container>
 									</div>
 								</div>
 								<div class="responsive-table-row rate-column">
@@ -41,7 +46,11 @@
 										{{ 'REPORT_PAGE.CURRENT_RATE' | translate }}
 									</div>
 									<div class="responsive-table-content day-col">
-										{{ (employeeRow?.employee?.billRateValue || 0) | currency: employeeRow?.employee?.billRateCurrency | position: organization?.currencyPosition }}
+										{{
+											employeeRow?.employee?.billRateValue || 0
+												| currency : employeeRow?.employee?.billRateCurrency
+												| position : organization?.currencyPosition
+										}}
 									</div>
 								</div>
 								<div class="responsive-table-row duration-column">
@@ -57,7 +66,11 @@
 										{{ 'REPORT_PAGE.AMOUNT' | translate }}
 									</div>
 									<div class="responsive-table-content day-col">
-										{{ (employeeRow?.amount || 0) | currency: employeeRow?.employee?.billRateCurrency | position: organization?.currencyPosition }}
+										{{
+											employeeRow?.amount || 0
+												| currency : employeeRow?.employee?.billRateCurrency
+												| position : organization?.currencyPosition
+										}}
 									</div>
 								</div>
 							</div>
@@ -67,9 +80,7 @@
 			</nb-card>
 		</ng-template>
 		<ng-template #notFound>
-			<ngx-no-data-message
-				[message]="'REPORT_PAGE.NO_DATA.AMOUNT_OWED' | translate"
-			></ngx-no-data-message>
+			<ngx-no-data-message [message]="'REPORT_PAGE.NO_DATA.AMOUNT_OWED' | translate"></ngx-no-data-message>
 		</ng-template>
 	</div>
 
@@ -95,6 +106,7 @@
 				[src]="employee?.user?.imageUrl"
 				[name]="employee?.user?.name"
 				[id]="employee?.id"
+				[employee]="employee"
 			></ngx-avatar>
 			<ng-template #noEmployee>
 				<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
