@@ -1731,6 +1731,8 @@ export class StatisticService {
 		query.innerJoin(`${query.alias}.timeSlots`, 'time_slot');
 		query.innerJoin(`employee.user`, 'user');
 		query.select(p(`"${query.alias}"."employeeId"`), 'id');
+		query.addSelect(p(`"employee"."isOnline"`), 'isOnline');
+		query.addSelect(p(`"employee"."isAway"`), 'isAway');
 		query.addSelect(p(`MAX("${query.alias}"."startedAt")`), 'startedAt');
 		query.addSelect(p(`"user"."imageUrl"`), 'user_image_url');
 		// Builds a SELECT statement for the "user_name" column based on the database type.
@@ -1764,6 +1766,8 @@ export class StatisticService {
 		);
 		query.groupBy(p(`"${query.alias}"."employeeId"`));
 		query.addGroupBy(p(`"user"."id"`));
+		query.addGroupBy(p(`"employee"."isOnline"`));
+		query.addGroupBy(p(`"employee"."isAway"`));
 		query.addOrderBy(p(`"startedAt"`), 'DESC');
 		query.limit(3);
 
