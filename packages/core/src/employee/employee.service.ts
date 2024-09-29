@@ -128,33 +128,31 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 
 	/**
 	 * Finds employees based on an array of user IDs.
+	 *
 	 * @param userIds An array of user IDs.
+	 * @param tenantId The ID of the tenant to filter employees.
 	 * @returns A promise resolving to an array of employees.
 	 */
-	async findEmployeesByUserIds(userIds: ID[]): Promise<IEmployee[]> {
+	async findEmployeesByUserIds(userIds: ID[], tenantId: ID): Promise<IEmployee[]> {
 		try {
-			// Get the tenant ID from the current request context
-			const tenantId = RequestContext.currentTenantId();
-
-			// Construct the base where clause for querying employees by user IDs
-			const whereClause = {
-				userId: In(userIds), // Find employees with matching user IDs
-				isActive: true, // Only active employees
-				isArchived: false, // Exclude archived employees
-				...(tenantId && { tenantId }) // Include tenant ID if available
+			// Define the options for the query
+			const options: FindManyOptions<Employee> = {
+				// Construct the base where clause for querying employees by user IDs
+				where: {
+					userId: In(userIds), // Find employees with matching user IDs
+					tenantId // Find employees in the same tenant
+				}
 			};
 
 			// Execute the query based on the ORM type
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
-					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<Employee>({
-						where: whereClause
-					} as FindManyOptions);
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<Employee>(options);
 					const employees = await this.mikroOrmRepository.find(where, mikroOptions);
 					return employees.map((entity: Employee) => this.serialize(entity)) as Employee[];
 				}
 				case MultiORMEnum.TypeORM: {
-					return await this.typeOrmRepository.find({ where: whereClause });
+					return await this.typeOrmRepository.find(options);
 				}
 				default:
 					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
