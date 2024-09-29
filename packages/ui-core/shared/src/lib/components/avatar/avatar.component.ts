@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { ID } from '@gauzy/contracts';
 import { EmployeesService } from '@gauzy/ui-core/core';
 import { Observable } from 'rxjs';
-import { tap, map } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 
 @Component({
 	selector: 'ngx-avatar',
@@ -54,10 +54,9 @@ export class AvatarComponent implements OnInit {
 
 	ngOnInit() {
 		if (this.id) {
-			this.online$ = this._employeeService.getEmployeeById(this.id).pipe(
-				tap((employee) => console.log('Employee data:', employee)), // Log the employee object
-				map((employee) => employee?.isOnline && !employee?.isAway) // Continue with the online status check
-			);
+			this.online$ = this._employeeService
+				.getEmployeeById(this.id)
+				.pipe(map((employee) => employee?.isOnline && !employee?.isAway));
 		}
 	}
 
