@@ -297,7 +297,6 @@ export default class TimerHandler {
 
 		if (isStop) params.manualTimeSlot = true;
 
-		setupWindow.webContents.send('update_toggle_timer', params);
 		console.log('Update Toggle Timer End');
 	}
 
