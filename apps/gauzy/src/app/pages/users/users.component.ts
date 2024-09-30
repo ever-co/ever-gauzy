@@ -30,7 +30,6 @@ import {
 } from '@gauzy/contracts';
 import { ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
-	DateFormatPipe,
 	DeleteConfirmationComponent,
 	EmailComponent,
 	IPaginationBase,
@@ -79,8 +78,7 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 		private readonly route: ActivatedRoute,
 		public readonly translateService: TranslateService,
 		private readonly userOrganizationsService: UsersOrganizationsService,
-		private readonly employeesService: EmployeesService,
-		private readonly _dateFormatPipe: DateFormatPipe
+		private readonly employeesService: EmployeesService
 	) {
 		super(translateService);
 		this.setView();
@@ -336,7 +334,9 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 		);
 
 		// Filter out user organizations that are not active or don't have a user with a role
-		return userOrganizations.items.filter((organization: IUserOrganization) => organization.user?.role);
+		return userOrganizations.items.filter(
+			(organization: IUserOrganization) => organization.isActive && organization.user?.role
+		);
 	}
 
 	/**
@@ -358,7 +358,7 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 					tags: user.tags,
 					imageUrl: user.imageUrl,
 					role: user.role,
-					isActive: isActive,
+					isActive,
 					userOrganizationId,
 					...this.employeeMapper(user.employee)
 				}));
@@ -530,26 +530,22 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 		if (!employee) {
 			return {};
 		}
-		const { endWork, startedWorkOn, isTrackingEnabled, id } = employee;
-		/**
-		 * "Range" when was hired and when exit
-		 */
-		const start = this._dateFormatPipe.transform(startedWorkOn, null, 'LL');
-		const end = this._dateFormatPipe.transform(endWork, null, 'LL');
 
-		const workStatus = [start, end].filter(Boolean).join(' - ');
+		const { endWork, startedWorkOn, isTrackingEnabled, id } = employee;
 
 		return {
 			employeeId: id,
 			endWork: endWork ? new Date(endWork) : null,
-			workStatus: endWork ? workStatus : '',
+			workStatus: endWork ? this.formatDate(new Date(endWork)) : '',
 			startedWorkOn,
-			isTrackingEnabled
+			isTrackingEnabled,
+			employee
 		};
 	}
 
 	/**
 	 * Formats a date in the format "DD Month YYYY".
+	 *
 	 *
 	 * @param date The date object to be formatted.
 	 * @returns A string representing the formatted date.
