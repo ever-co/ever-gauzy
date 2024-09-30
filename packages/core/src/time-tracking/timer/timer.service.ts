@@ -317,6 +317,7 @@ export class TimerService {
 
 		// Retrieve stoppedAt date or use current date if not provided
 		let stoppedAt = await this.calculateStoppedAt(request, lastLog);
+		console.log('last stop request was at', stoppedAt);
 
 		// Update the time log entry to mark it as stopped
 		lastLog = await this._commandBus.execute(
