@@ -46,7 +46,7 @@ export class TrayIcon {
 					if (!settingsWindow) {
 						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
 					}
-					settingsWindow.show();
+					manager.show(RegisteredWindow.SETTINGS);
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('goto_top_menu');
 					manager.webContents(settingsWindow).send('refresh_menu');
@@ -60,7 +60,7 @@ export class TrayIcon {
 					if (!settingsWindow) {
 						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
 					}
-					settingsWindow.show();
+					manager.show(RegisteredWindow.SETTINGS);
 					manager.webContents(settingsWindow).send('goto_update');
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('refresh_menu');
@@ -80,6 +80,16 @@ export class TrayIcon {
 		];
 		const unAuthMenu: MenuItemConstructorOptions[] = [
 			{
+				id: '3',
+				label: TranslateService.instant('TIMER_TRACKER.MENU.OPEN_TIMER'),
+				enabled: true,
+				accelerator: 'CmdOrCtrl+O',
+				visible: appConfig.timeTrackerWindow,
+				async click(menuItem) {
+					manager.show(RegisteredWindow.TIMER);
+				}
+			},
+			{
 				id: '4',
 				label: TranslateService.instant('TIMER_TRACKER.SETUP.SETTING'),
 				accelerator: 'CmdOrCtrl+,',
@@ -87,7 +97,7 @@ export class TrayIcon {
 					if (!settingsWindow) {
 						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
 					}
-					settingsWindow.show();
+					manager.show(RegisteredWindow.SETTINGS);
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('goto_top_menu');
 					manager.webContents(settingsWindow).send('refresh_menu');
@@ -101,7 +111,7 @@ export class TrayIcon {
 					if (!settingsWindow) {
 						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
 					}
-					settingsWindow.show();
+					manager.show(RegisteredWindow.SETTINGS);
 					manager.webContents(settingsWindow).send('goto_update');
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('refresh_menu');
@@ -143,7 +153,7 @@ export class TrayIcon {
 							.webContents(timeTrackerWindow)
 							.send('start_from_tray', LocalStore.beforeRequestParams());
 					} else {
-						timeTrackerWindow.show();
+						manager.show(RegisteredWindow.TIMER);
 						manager.webContents(timeTrackerWindow).send('auth_success_tray_init');
 					}
 				}
@@ -165,7 +175,7 @@ export class TrayIcon {
 				accelerator: 'CmdOrCtrl+O',
 				visible: appConfig.timeTrackerWindow,
 				async click(menuItem) {
-					timeTrackerWindow.show();
+					manager.show(RegisteredWindow.TIMER);
 					manager.webContents(timeTrackerWindow).send('auth_success_tray_init');
 				}
 			},
@@ -181,7 +191,7 @@ export class TrayIcon {
 					if (!settingsWindow) {
 						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
 					}
-					settingsWindow.show();
+					manager.show(RegisteredWindow.SETTINGS);
 					manager.webContents(settingsWindow).send('goto_update');
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('refresh_menu');
@@ -195,7 +205,7 @@ export class TrayIcon {
 					if (!settingsWindow) {
 						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
 					}
-					settingsWindow.show();
+					manager.show(RegisteredWindow.SETTINGS);
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('goto_top_menu');
 					manager.webContents(settingsWindow).send('refresh_menu');
@@ -252,7 +262,7 @@ export class TrayIcon {
 
 		const openWindow = async () => {
 			if (process.env.IS_DESKTOP_TIMER) {
-				timeTrackerWindow.show();
+				manager.show(RegisteredWindow.TIMER);
 				manager.webContents(timeTrackerWindow).send('auth_success_tray_init');
 			}
 		};
@@ -364,7 +374,7 @@ export class TrayIcon {
 				manager.webContents(timeTrackerWindow).send('auth_success_tray_init', arg);
 
 				if (!isGauzyWindow) {
-					timeTrackerWindow.show();
+					manager.show(RegisteredWindow.TIMER);
 				}
 			}
 			event.sender.send('refresh_menu');
