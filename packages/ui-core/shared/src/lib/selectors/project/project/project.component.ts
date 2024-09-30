@@ -1,12 +1,21 @@
 import { Component, OnInit, OnDestroy, Input, forwardRef, AfterViewInit, Output, EventEmitter } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { IOrganization, IOrganizationProject, CrudActionEnum, PermissionsEnum } from '@gauzy/contracts';
+import {
+	IOrganization,
+	IOrganizationProject,
+	CrudActionEnum,
+	PermissionsEnum,
+	ID,
+	IOrganizationProjectCreateInput,
+	IOrganizationProjectsFindInput
+} from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { map, Observable, Subject, switchMap } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
 import {
+	ErrorHandlingService,
 	NavigationService,
 	OrganizationProjectStore,
 	OrganizationProjectsService,
@@ -115,32 +124,33 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	onChanged = new EventEmitter<IOrganizationProject>();
 
 	constructor(
-		private readonly organizationProjects: OrganizationProjectsService,
-		private readonly store: Store,
-		private readonly toastrService: ToastrService,
+		private readonly _organizationProjects: OrganizationProjectsService,
+		private readonly _store: Store,
+		private readonly _toastrService: ToastrService,
+		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly _organizationProjectStore: OrganizationProjectStore,
 		private readonly _truncatePipe: TruncatePipe,
 		private readonly _navigationService: NavigationService,
-		private readonly activatedRoute: ActivatedRoute
+		private readonly _activatedRoute: ActivatedRoute
 	) {}
 
 	ngOnInit(): void {
-		this.hasAddProject$ = this.store.userRolePermissions$.pipe(
-			map(() => this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_ADD))
+		this.hasAddProject$ = this._store.userRolePermissions$.pipe(
+			map(() => this._store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_ADD))
 		);
 		this.subject$
 			.pipe(
 				switchMap(() => this.getProjects()),
 				tap(() => {
-					if (this.activatedRoute.snapshot.queryParams.projectId) {
-						this.selectProjectById(this.activatedRoute.snapshot.queryParams.projectId);
+					if (this._activatedRoute.snapshot.queryParams.projectId) {
+						this.selectProjectById(this._activatedRoute.snapshot.queryParams.projectId);
 					}
 				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
 
-		this.activatedRoute.queryParams
+		this._activatedRoute.queryParams
 			.pipe(
 				filter((query) => !!query.projectId),
 				tap(({ projectId }) => this.selectProjectById(projectId)),
@@ -148,7 +158,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 			)
 			.subscribe();
 
-		this.store.selectedOrganization$
+		this._store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
@@ -185,60 +195,59 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 
 	/**
 	 * Retrieves projects based on specified parameters.
-	 * If an employee ID is provided, it retrieves projects associated with that employee.
-	 * Otherwise, it retrieves all projects for the organization.
-	 * Inserts an "All Projects" option if specified.
+	 * If an employee ID is provided, retrieves projects associated with that employee.
+	 * Otherwise, retrieves all projects for the organization. Optionally inserts an "All Projects" option.
 	 */
-	async getProjects() {
-		// Check if organization is defined
-		if (!this.organization) {
-			return;
-		}
+	async getProjects(): Promise<void> {
+		if (!this.organization) return;
 
-		// Extract user and organization details
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
-		// Construct query options based on provided parameters
-		const queryOptions = {
+		const { id: organizationId, tenantId } = this.organization;
+		const queryOptions: IOrganizationProjectsFindInput = {
 			organizationId,
 			tenantId,
-			...(this.organizationContactId ? { organizationContactId: this.organizationContactId } : {})
+			...(this.organizationContactId && { organizationContactId: this.organizationContactId })
 		};
 
-		// Retrieve projects based on whether employee ID is provided or not
-		if (this.employeeId) {
-			// Retrieve projects associated with the specified employee
-			this.projects = await this.organizationProjects.getAllByEmployee(this.employeeId, queryOptions);
-		} else {
-			// Retrieve all projects for the organization
-			const { items = [] } = await this.organizationProjects.getAll([], queryOptions);
-			this.projects = items;
-		}
+		// Retrieve projects based on the presence of employeeId
+		this.projects = this.employeeId
+			? await this._organizationProjects.getAllByEmployee(this.employeeId, queryOptions)
+			: (await this._organizationProjects.getAll([], queryOptions)).items || [];
 
-		// Insert an "All Projects" option if specified
+		// Optionally add "All Projects" selection
 		if (this.showAllOption) {
 			this.projects.unshift(ALL_PROJECT_SELECTED);
 			this.selectProject(ALL_PROJECT_SELECTED);
 		}
 	}
 
-	writeValue(value: string | string[]) {
-		if (this.multiple) {
-			this._projectId = value instanceof Array ? value : [value];
-		} else {
-			this._projectId = value;
-		}
+	/**
+	 * Writes a value to the component, handling single or multiple selection modes.
+	 * @param {string | string[]} value - The value(s) to write, either a single string or an array of strings.
+	 */
+	writeValue(value: string | string[]): void {
+		this._projectId = this.multiple ? (Array.isArray(value) ? value : [value]) : value;
 	}
 
+	/**
+	 * Registers a callback function to be called when the rating changes.
+	 * @param {(rating: number) => void} fn - The callback function to register.
+	 */
 	registerOnChange(fn: (rating: number) => void): void {
 		this.onChange = fn;
 	}
 
+	/**
+	 * Registers a callback function to be called when the component is touched.
+	 * @param {() => void} fn - The callback function to register.
+	 */
 	registerOnTouched(fn: () => void): void {
 		this.onTouched = fn;
 	}
 
+	/**
+	 * Sets the disabled state of the component.
+	 * @param {boolean} isDisabled - The disabled state to set.
+	 */
 	setDisabledState(isDisabled: boolean): void {
 		this.disabled = isDisabled;
 	}
@@ -247,96 +256,76 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	 * Creates a new project with the given name.
 	 * @param {string} name - The name of the new project.
 	 */
-	createNew = async (name: string) => {
-		// Check if organization is defined
-		if (!this.organization) {
-			return;
-		}
+	createNew = async (name: string): Promise<void> => {
+		// Return early if organization is not defined
+		if (!this.organization) return;
 
 		try {
-			// Extract tenantId and organizationId
+			// Destructure tenantId and organizationId from organization
 			const { id: organizationId, tenantId } = this.organization;
 
-			// Construct request object with common parameters
-			const request = {
+			// Create the project
+			const project = await this._organizationProjects.create({
 				name,
 				organizationId,
 				tenantId,
-				...(this.organizationContactId && { organizationContactId: this.organizationContactId })
-			};
+				...(this.organizationContactId && { organizationContactId: this.organizationContactId }),
+				memberIds: [this.employeeId || this._store.user.employee?.id].filter(Boolean) // Filter out falsy values
+			});
 
-			// Include member if employeeId or store user's employeeId is provided
-			const employeeId = this.store.user.employee?.id;
-
-			if (this.employeeId || employeeId) {
-				const member: Record<string, string> = {
-					id: this.employeeId || employeeId
-				};
-				request['members'] = [member];
-			}
-
-			// Create the project
-			const project = await this.organizationProjects.create(request);
-
-			// Call method to handle the created project
+			// Handle the created project and update projectId
 			this.createOrganizationProject(project);
-
-			// Update projectId
 			this.projectId = project.id;
 
 			// Show success message
-			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT', { name });
+			this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT', { name });
 		} catch (error) {
-			// Show error message
-			this.toastrService.error(error);
+			// Handle the error
+			console.log('Error while creating new project: ', error);
+			this._errorHandlingService.handleError(error);
 		}
 	};
 
-	/*
-	 * After created new organization project pushed on dropdown
+	/**
+	 * Adds a newly created organization project to the dropdown list.
+	 * @param {IOrganizationProject} project - The project to add.
 	 */
-	createOrganizationProject(project: IOrganizationProject) {
-		const projects: IOrganizationProject[] = this.projects || [];
-		if (Array.isArray(projects)) {
-			projects.push(project);
-		}
-		this.projects = [...projects].filter(isNotEmpty);
+	createOrganizationProject(project: IOrganizationProject): void {
+		this.projects = [...(this.projects || []), project].filter(isNotEmpty);
 	}
 
-	/*
-	 * After updated existing organization project changed in the dropdown
+	/**
+	 * Updates an existing organization project in the dropdown list.
+	 * @param {IOrganizationProject} project - The project with updated details.
 	 */
-	updateOrganizationProject(project: IOrganizationProject) {
-		let projects: IOrganizationProject[] = this.projects || [];
-		if (Array.isArray(projects) && projects.length) {
-			projects = projects.map((item: IOrganizationProject) => {
-				if (item.id === project.id) {
-					return Object.assign({}, item, project);
-				}
-				return item;
-			});
-		}
-		this.projects = [...projects].filter(isNotEmpty);
+	updateOrganizationProject(project: IOrganizationProject): void {
+		this.projects = (this.projects || [])
+			.map((item) => (item.id === project.id ? { ...item, ...project } : item))
+			.filter(isNotEmpty);
 	}
 
-	/*
-	 * After deleted organization project removed on dropdown
+	/**
+	 * Removes a deleted organization project from the dropdown list.
+	 * @param {IOrganizationProject} project - The project to remove.
 	 */
-	deleteOrganizationProject(project: IOrganizationProject) {
-		let projects: IOrganizationProject[] = this.projects || [];
-		if (Array.isArray(projects) && projects.length) {
-			projects = projects.filter((item: IOrganizationProject) => item.id !== project.id);
-		}
-		this.projects = [...projects].filter(isNotEmpty);
+	deleteOrganizationProject(project: IOrganizationProject): void {
+		this.projects = (this.projects || []).filter((item) => item.id !== project.id).filter(isNotEmpty);
 	}
 
+	/**
+	 * Selects the specified project, updates relevant parameters, and emits the change event.
+	 * @param {IOrganizationProject} project - The project to select.
+	 */
 	selectProject(project: IOrganizationProject): void {
+		const selectedProject = project || ALL_PROJECT_SELECTED;
+
 		if (!this.skipGlobalChange) {
-			this.store.selectedProject = project || ALL_PROJECT_SELECTED;
-			this.setAttributesToParams({ projectId: project?.id });
+			this._store.selectedProject = selectedProject;
+			this.setAttributesToParams({ projectId: selectedProject.id });
 		}
-		this.selectedProject = project || ALL_PROJECT_SELECTED;
-		this.projectId = this.selectedProject.id;
+
+		this.selectedProject = selectedProject;
+		this.projectId = selectedProject.id;
 		this.onChanged.emit(project);
 	}
 
@@ -348,11 +337,13 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 		await this._navigationService.updateQueryParams(params);
 	}
 
-	selectProjectById(projectId: string) {
-		const project = this.projects.find((project: IOrganizationProject) => projectId === project.id);
-		if (project) {
-			this.selectProject(project);
-		}
+	/**
+	 * Selects a project by its ID and triggers further processing if found.
+	 * @param {ID} projectId - The unique identifier of the project to select.
+	 */
+	selectProjectById(projectId: ID): void {
+		const project = this.projects.find((project) => project.id === projectId);
+		if (project) this.selectProject(project);
 	}
 
 	/**
