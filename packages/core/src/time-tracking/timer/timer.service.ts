@@ -364,6 +364,9 @@ export class TimerService {
 	 */
 	private async handleConflictingTimeLogs(lastLog: ITimeLog, tenantId: ID, organizationId: ID): Promise<void> {
 		try {
+			// Validate date range
+			validateDateRange(lastLog.startedAt, lastLog.stoppedAt);
+
 			// Retrieve conflicting time logs
 			const conflicts = await this._commandBus.execute(
 				new IGetConflictTimeLogCommand({
