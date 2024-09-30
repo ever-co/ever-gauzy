@@ -6,7 +6,7 @@ import { OrganizationProjectModuleService } from 'organization-project-module/or
 
 @CommandHandler(OrganizationProjectModuleUpdateCommand)
 export class OrganizationProjectModuleUpdateHandler implements ICommandHandler<OrganizationProjectModuleUpdateCommand> {
-	constructor(private readonly projectModuleService: OrganizationProjectModuleService) {}
+	constructor(private readonly organizationProjectModuleService: OrganizationProjectModuleService) {}
 
 	/**
 	 * @description Executes the OrganizationProjectModuleUpdateCommand
@@ -18,6 +18,6 @@ export class OrganizationProjectModuleUpdateHandler implements ICommandHandler<O
 		command: OrganizationProjectModuleUpdateCommand
 	): Promise<IOrganizationProjectModule | UpdateResult> {
 		const { id, input } = command;
-		return await this.projectModuleService.update(id, input);
+		return await this.organizationProjectModuleService.update(id, input);
 	}
 }

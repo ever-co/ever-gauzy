@@ -34,10 +34,10 @@ import { OrganizationProjectModuleCreateCommand, OrganizationProjectModuleUpdate
 @Controller()
 export class OrganizationProjectModuleController extends CrudController<OrganizationProjectModule> {
 	constructor(
-		private readonly projectModuleService: OrganizationProjectModuleService,
+		private readonly organizationProjectModuleService: OrganizationProjectModuleService,
 		private readonly commandBus: CommandBus
 	) {
-		super(projectModuleService);
+		super(organizationProjectModuleService);
 	}
 
 	/**
@@ -62,7 +62,7 @@ export class OrganizationProjectModuleController extends CrudController<Organiza
 	async getEmployeeProjectModules(
 		@Query() params: PaginationParams<OrganizationProjectModule>
 	): Promise<IPagination<IOrganizationProjectModule>> {
-		return await this.projectModuleService.getEmployeeProjectModules(params);
+		return await this.organizationProjectModuleService.getEmployeeProjectModules(params);
 	}
 
 	/**
@@ -87,7 +87,7 @@ export class OrganizationProjectModuleController extends CrudController<Organiza
 	async findTeamProjectModules(
 		@Query() params: PaginationParams<OrganizationProjectModule>
 	): Promise<IPagination<IOrganizationProjectModule>> {
-		return await this.projectModuleService.findTeamProjectModules(params);
+		return await this.organizationProjectModuleService.findTeamProjectModules(params);
 	}
 
 	/**
@@ -116,7 +116,7 @@ export class OrganizationProjectModuleController extends CrudController<Organiza
 		@Param('id') employeeId: ID,
 		@Query() params: OrganizationProjectModuleFindInputDTO
 	): Promise<IPagination<IOrganizationProjectModule>> {
-		return await this.projectModuleService.findByEmployee(employeeId, params);
+		return await this.organizationProjectModuleService.findByEmployee(employeeId, params);
 	}
 
 	@ApiOperation({ summary: 'Find all project modules.' })
@@ -134,7 +134,7 @@ export class OrganizationProjectModuleController extends CrudController<Organiza
 	async findAll(
 		@Query() params: PaginationParams<OrganizationProjectModule>
 	): Promise<IPagination<IOrganizationProjectModule>> {
-		return await this.projectModuleService.findAll(params);
+		return await this.organizationProjectModuleService.findAll(params);
 	}
 
 	@UseValidationPipe()
@@ -153,7 +153,7 @@ export class OrganizationProjectModuleController extends CrudController<Organiza
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Query() params: PaginationParams<OrganizationProjectModule>
 	): Promise<OrganizationProjectModule> {
-		return this.projectModuleService.findOneByIdString(id, params);
+		return this.organizationProjectModuleService.findOneByIdString(id, params);
 	}
 
 	@ApiOperation({ summary: 'create a project module' })
@@ -200,6 +200,6 @@ export class OrganizationProjectModuleController extends CrudController<Organiza
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.PROJECT_MODULE_DELETE)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
-		return await this.projectModuleService.delete(id);
+		return await this.organizationProjectModuleService.delete(id);
 	}
 }

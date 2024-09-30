@@ -5,7 +5,7 @@ import { OrganizationProjectModuleService } from 'organization-project-module/or
 
 @CommandHandler(OrganizationProjectModuleCreateCommand)
 export class OrganizationProjectModuleCreateHandler implements ICommandHandler<OrganizationProjectModuleCreateCommand> {
-	constructor(private readonly projectModuleService: OrganizationProjectModuleService) {}
+	constructor(private readonly organizationProjectModuleService: OrganizationProjectModuleService) {}
 
 	/**
 	 * @description Executes the OrganizationProjectModuleCreateCommand
@@ -15,6 +15,6 @@ export class OrganizationProjectModuleCreateHandler implements ICommandHandler<O
 	 */
 	public async execute(command: OrganizationProjectModuleCreateCommand): Promise<IOrganizationProjectModule> {
 		const { input } = command;
-		return await this.projectModuleService.create(input);
+		return await this.organizationProjectModuleService.create(input);
 	}
 }
