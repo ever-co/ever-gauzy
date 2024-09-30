@@ -7,8 +7,11 @@
 				</ngx-header-title>
 			</h4>
 			<ng-container *ngIf="selectedDateRange?.startDate && selectedDateRange?.endDate">
-				<ngx-date-range-title [start]="selectedDateRange?.startDate" [end]="selectedDateRange?.endDate"
-					[format]="'dddd, LL'">
+				<ngx-date-range-title
+					[start]="selectedDateRange?.startDate"
+					[end]="selectedDateRange?.endDate"
+					[format]="'dddd, LL'"
+				>
 				</ngx-date-range-title>
 			</ng-container>
 		</div>
@@ -17,13 +20,11 @@
 				<nb-card-body>
 					<ga-single-statistic
 						[color]="'var(--color-info-default)'"
-						[title]="
-							'DASHBOARD_PAGE.TITLE.TOTAL_INCOME' | translate
-						"
+						[title]="'DASHBOARD_PAGE.TITLE.TOTAL_INCOME' | translate"
 						[value]="
 							aggregatedEmployeeStatistics?.total?.income || 0
-								| currency: organization?.currency
-								| position: organization?.currencyPosition
+								| currency : organization?.currency
+								| position : organization?.currencyPosition
 						"
 					></ga-single-statistic>
 				</nb-card-body>
@@ -32,13 +33,11 @@
 				<nb-card-body>
 					<ga-single-statistic
 						[color]="'var(--color-danger-default)'"
-						[title]="
-							'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES' | translate
-						"
+						[title]="'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES' | translate"
 						[value]="
 							aggregatedEmployeeStatistics?.total?.expense || 0
-								| currency: organization?.currency
-								| position: organization?.currencyPosition
+								| currency : organization?.currency
+								| position : organization?.currencyPosition
 						"
 					></ga-single-statistic>
 				</nb-card-body>
@@ -54,25 +53,21 @@
 						[title]="'DASHBOARD_PAGE.TITLE.PROFIT' | translate"
 						[value]="
 							aggregatedEmployeeStatistics?.total?.profit || 0
-								| currency: organization?.currency
-								| position: organization?.currencyPosition
+								| currency : organization?.currency
+								| position : organization?.currencyPosition
 						"
 					></ga-single-statistic>
 				</nb-card-body>
 			</nb-card>
-			<nb-card
-				*ngIf="organization?.bonusType"
-				[nbSpinner]="isLoading"
-				nbSpinnerStatus="primary"
-			>
+			<nb-card *ngIf="organization?.bonusType" [nbSpinner]="isLoading" nbSpinnerStatus="primary">
 				<nb-card-body>
 					<ga-single-statistic
 						[color]="'#089c17'"
 						[title]="'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate"
 						[value]="
 							aggregatedEmployeeStatistics?.total?.bonus || 0
-								| currency: organization?.currency
-								| position: organization?.currencyPosition
+								| currency : organization?.currency
+								| position : organization?.currencyPosition
 						"
 						type="highlight"
 					></ga-single-statistic>
@@ -85,9 +80,7 @@
 					{{ 'DASHBOARD_PAGE.CHARTS.CASH_FLOW' | translate }}
 				</nb-card-header>
 				<nb-card-body class="chart">
-					<ngx-line-chart
-						[data]="charts"
-					></ngx-line-chart>
+					<ngx-line-chart [data]="charts"></ngx-line-chart>
 				</nb-card-body>
 			</nb-card>
 		</div>
@@ -98,21 +91,13 @@
 				<div class="block-info">
 					<div class="row">
 						<div class="col">
-							{{
-								'DASHBOARD_PAGE.DEVELOPER.EMPLOYEES' | translate
-							}}
+							{{ 'DASHBOARD_PAGE.DEVELOPER.EMPLOYEES' | translate }}
 						</div>
 						<div class="col">
-							{{
-								'DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME'
-									| translate
-							}}
+							{{ 'DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME' | translate }}
 						</div>
 						<div class="col">
-							{{
-								'DASHBOARD_PAGE.DEVELOPER.TOTAL_EXPENSES'
-									| translate
-							}}
+							{{ 'DASHBOARD_PAGE.DEVELOPER.TOTAL_EXPENSES' | translate }}
 						</div>
 						<div class="col">
 							{{ 'DASHBOARD_PAGE.DEVELOPER.PROFIT' | translate }}
@@ -125,61 +110,45 @@
 			</div>
 		</div>
 		<div class="table-scrollable">
-			<div
-				class="setting-block"
-				*ngFor="
-					let employeeExpense of aggregatedEmployeeStatistics?.employees
-				"
-			>
-				<div
-					class="block-content"
-					(click)="selectEmployee(employeeExpense.employee)"
-				>
+			<div class="setting-block" *ngFor="let employeeExpense of aggregatedEmployeeStatistics?.employees">
+				<div class="block-content" (click)="selectEmployee(employeeExpense.employee)">
 					<div class="block-info">
 						<div class="row">
 							<div class="col">
 								<ngx-avatar
 									class="report-table"
-									[name]="
-										employeeExpense?.employee?.user?.name
-									"
-									[src]="
-										employeeExpense?.employee?.user
-											?.imageUrl
-									"
+									[name]="employeeExpense?.employee?.user?.name"
+									[src]="employeeExpense?.employee?.user?.imageUrl"
 									[id]="employeeExpense?.employee?.id"
+									[employee]="employeeExpense?.employee"
 								></ngx-avatar>
 							</div>
 							<div class="col">
 								{{
 									employeeExpense.income || 0
-										| currency: organization?.currency
-										| position
-											: organization?.currencyPosition
+										| currency : organization?.currency
+										| position : organization?.currencyPosition
 								}}
 							</div>
 							<div class="col">
 								{{
 									employeeExpense.expense || 0
-										| currency: organization?.currency
-										| position
-											: organization?.currencyPosition
+										| currency : organization?.currency
+										| position : organization?.currencyPosition
 								}}
 							</div>
 							<div class="col">
 								{{
 									employeeExpense.profit || 0
-										| currency: organization?.currency
-										| position
-											: organization?.currencyPosition
+										| currency : organization?.currency
+										| position : organization?.currencyPosition
 								}}
 							</div>
 							<div *ngIf="organization?.bonusType" class="col">
 								{{
 									employeeExpense.bonus || 0
-										| currency: organization?.currency
-										| position
-											: organization?.currencyPosition
+										| currency : organization?.currency
+										| position : organization?.currencyPosition
 								}}
 							</div>
 						</div>

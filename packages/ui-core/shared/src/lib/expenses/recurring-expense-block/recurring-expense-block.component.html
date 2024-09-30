@@ -9,6 +9,7 @@
 							[src]="currentEmployee?.user?.imageUrl"
 							[name]="currentEmployee?.user?.name"
 							[id]="currentEmployee?.id"
+							[employee]="currentEmployee"
 							class="report-table"
 						></ngx-avatar>
 					</div>
@@ -22,8 +23,8 @@
 						<span class="block-amount">
 							{{
 								recurringExpense?.value
-									| currency: recurringExpense?.currency
-									| position: selectedOrganization?.currencyPosition
+									| currency : recurringExpense?.currency
+									| position : selectedOrganization?.currencyPosition
 							}}
 							<nb-icon
 								*ngIf="splitExpense"
@@ -36,12 +37,7 @@
 			</div>
 			<div class="block-panel">
 				<div class="block-value">
-					<nb-icon
-						class="hide-menu"
-						icon="log-in"
-						*ngIf="showMenu"
-						(click)="showMenu = false"
-					></nb-icon>
+					<nb-icon class="hide-menu" icon="log-in" *ngIf="showMenu" (click)="showMenu = false"></nb-icon>
 					<small
 						(click)="showMenu = false"
 						[ngStyle]="{
@@ -50,11 +46,7 @@
 						>{{ 'BUTTONS.CLOSE' | translate }}</small
 					>
 					<span *ngIf="!showMenu" class="block-actions open">
-						<nb-icon
-							icon="settings-2-outline"
-							(click)="showMenu = true"
-						>
-						</nb-icon>
+						<nb-icon icon="settings-2-outline" (click)="showMenu = true"> </nb-icon>
 					</span>
 				</div>
 				<div
@@ -80,10 +72,7 @@
 		</div>
 	</div>
 	<div class="setting-table" *ngIf="showHistory && selected">
-		<ga-recurring-expense-history
-			[recordsData]="fetchedHistories"
-			(closeHistory)="this.showHistory = false"
-		>
+		<ga-recurring-expense-history [recordsData]="fetchedHistories" (closeHistory)="this.showHistory = false">
 		</ga-recurring-expense-history>
 	</div>
 </div>

@@ -1533,7 +1533,8 @@ export class StatisticService {
 				duration: timeLog.duration,
 				user: { ...pick(timeLog.employee.user, ['name', 'imageUrl']) },
 				project: { ...pick(timeLog.project, ['name', 'imageUrl']) },
-				employeeId: timeLog.employee.id
+				employeeId: timeLog.employee.id,
+				employee: timeLog.employee
 			})
 		);
 
