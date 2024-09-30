@@ -1,10 +1,16 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Brackets, FindManyOptions, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { EventBus } from '@nestjs/cqrs';
+import { Brackets, FindManyOptions, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
 import {
+	ActionTypeEnum,
+	ActivityLogEntityEnum,
+	ActorTypeEnum,
+	IActivityLogUpdatedValues,
 	ID,
 	IOrganizationProjectModule,
 	IOrganizationProjectModuleCreateInput,
 	IOrganizationProjectModuleFindInput,
+	IOrganizationProjectModuleUpdateInput,
 	IPagination,
 	PermissionsEnum,
 	ProjectModuleStatusEnum
@@ -13,6 +19,8 @@ import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { isPostgres } from '@gauzy/config';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
+import { ActivityLogEvent } from '../activity-log/events';
+import { generateActivityLogDescription } from '../activity-log/activity-log.helper';
 import { OrganizationProjectModule } from './organization-project-module.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmOrganizationProjectModuleRepository } from './repository/type-orm-organization-project-module.repository';
@@ -22,18 +30,129 @@ import { MikroOrmOrganizationProjectModuleRepository } from './repository/mikro-
 export class OrganizationProjectModuleService extends TenantAwareCrudService<OrganizationProjectModule> {
 	constructor(
 		readonly typeOrmProjectModuleRepository: TypeOrmOrganizationProjectModuleRepository,
-		readonly mikroOrmProjectModuleRepository: MikroOrmOrganizationProjectModuleRepository
+		readonly mikroOrmProjectModuleRepository: MikroOrmOrganizationProjectModuleRepository,
+		private readonly _eventBus: EventBus
 	) {
 		super(typeOrmProjectModuleRepository, mikroOrmProjectModuleRepository);
 	}
-
+	/**
+	 * @description Create project Module
+	 * @param {IOrganizationProjectModuleCreateInput} entity Body Request data
+	 * @returns A promise resolved to created project module
+	 * @memberof OrganizationProjectModuleService
+	 */
 	async create(entity: IOrganizationProjectModuleCreateInput): Promise<IOrganizationProjectModule> {
+		const tenantId = RequestContext.currentTenantId() || entity.tenantId;
+		const creatorId = RequestContext.currentUserId();
+		const { organizationId } = entity;
+
 		try {
-			const creatorId = RequestContext.currentUserId();
-			return super.create({
+			const module = await super.create({
 				...entity,
 				creatorId
 			});
+
+			// Generate the activity log description
+			const description = generateActivityLogDescription(
+				ActionTypeEnum.Created,
+				ActivityLogEntityEnum.OrganizationProjectModule,
+				module.name
+			);
+
+			// Emit an event to log the activity
+			this._eventBus.publish(
+				new ActivityLogEvent({
+					entity: ActivityLogEntityEnum.OrganizationProject,
+					entityId: module.id,
+					action: ActionTypeEnum.Created,
+					actorType: ActorTypeEnum.User,
+					description,
+					data: module,
+					organizationId,
+					tenantId
+				})
+			);
+
+			return module;
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
+
+	/**
+	 * @description Update Project Module
+	 * @param {ID} id - The project module ID to be updated
+	 * @param {IOrganizationProjectModuleUpdateInput} entity Body Request data
+	 * @returns A promise resolved to updated project module Or Update Result
+	 * @memberof OrganizationProjectModuleService
+	 */
+	async update(
+		id: ID,
+		entity: IOrganizationProjectModuleUpdateInput
+	): Promise<IOrganizationProjectModule | UpdateResult> {
+		const tenantId = RequestContext.currentTenantId() || entity.tenantId;
+
+		try {
+			// Retrieve existing module.
+			const existingModule = await this.findOneByIdString(id, {
+				relations: {
+					members: true,
+					manager: true
+				}
+			});
+
+			if (!existingModule) {
+				throw new BadRequestException('Module not found');
+			}
+
+			// Update module with new values
+			const updatedModule = await super.create({
+				...entity,
+				id
+			});
+
+			// // Generate the activity log description
+			const description = generateActivityLogDescription(
+				ActionTypeEnum.Updated,
+				ActivityLogEntityEnum.OrganizationProjectModule,
+				updatedModule.name
+			);
+
+			// Compare values befor and after update then add updates to fields
+			const updatedFields = [];
+			const previousValues: IActivityLogUpdatedValues[] = [];
+			const updatedValues: IActivityLogUpdatedValues[] = [];
+
+			for (const key of Object.keys(entity)) {
+				if (existingModule[key] !== entity[key]) {
+					// Add updated field
+					updatedFields.push(key);
+
+					// Add old and new values
+					previousValues.push({ [key]: existingModule[key] });
+					updatedValues.push({ [key]: updatedModule[key] });
+				}
+			}
+
+			// Emit an event to log the activity
+			this._eventBus.publish(
+				new ActivityLogEvent({
+					entity: ActivityLogEntityEnum.OrganizationProjectModule,
+					entityId: updatedModule.id,
+					action: ActionTypeEnum.Updated,
+					actorType: ActorTypeEnum.User,
+					description,
+					updatedFields,
+					updatedValues,
+					previousValues,
+					data: updatedModule,
+					organizationId: updatedModule.organizationId,
+					tenantId
+				})
+			);
+
+			// return updated Module
+			return updatedModule;
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

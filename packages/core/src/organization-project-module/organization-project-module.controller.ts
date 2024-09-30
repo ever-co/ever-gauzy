@@ -1,3 +1,4 @@
+import { CommandBus } from '@nestjs/cqrs';
 import {
 	Body,
 	Controller,
@@ -25,13 +26,17 @@ import {
 	OrganizationProjectModuleFindInputDTO,
 	UpdateOrganizationProjectModuleDTO
 } from './dto';
+import { OrganizationProjectModuleUpdateCommand } from './commands';
 
 @ApiTags('Project Modules')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
 @Controller()
 export class OrganizationProjectModuleController extends CrudController<OrganizationProjectModule> {
-	constructor(private readonly projectModuleService: OrganizationProjectModuleService) {
+	constructor(
+		private readonly projectModuleService: OrganizationProjectModuleService,
+		private readonly commandBus: CommandBus
+	) {
 		super(projectModuleService);
 	}
 
@@ -189,7 +194,7 @@ export class OrganizationProjectModuleController extends CrudController<Organiza
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: UpdateOrganizationProjectModuleDTO
 	): Promise<IOrganizationProjectModule | UpdateResult> {
-		return await this.projectModuleService.update(id, entity);
+		return await this.commandBus.execute(new OrganizationProjectModuleUpdateCommand(id, entity));
 	}
 
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.PROJECT_MODULE_DELETE)
