@@ -25,6 +25,8 @@ import { createFileStorage } from './screenshot.helper';
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class ScreenshotController {
+	private logging: boolean = false;
+
 	constructor(private readonly _screenshotService: ScreenshotService, private readonly _eventBus: EventBus) {}
 
 	/**
@@ -62,7 +64,7 @@ export class ScreenshotController {
 			return;
 		}
 
-		console.log('Screenshot request input:', input);
+		if (this.logging) console.log('Screenshot request input:', input);
 
 		// Extract user information from the request context
 		const user = RequestContext.currentUser();
@@ -114,7 +116,7 @@ export class ScreenshotController {
 
 			// Upload the thumbnail data to the file storage provider
 			const thumb = await provider.putFile(data, fullPath);
-			console.log(`Screenshot thumb created for employee (${user.name})`, thumb);
+			if (this.logging) console.log(`Screenshot thumb created for employee (${user.name})`, thumb);
 
 			// Populate entity properties for the screenshot
 			const entity = new Screenshot({
@@ -130,7 +132,7 @@ export class ScreenshotController {
 
 			// Create the screenshot entity in the database
 			const screenshot = await this._screenshotService.create(entity);
-			console.log(`Screenshot created for employee (${user.name})`, screenshot);
+			if (this.logging) console.log(`Screenshot created for employee (${user.name})`, screenshot);
 
 			// Publish the screenshot created event
 			const ctx = RequestContext.currentRequestContext(); // Get current request context;

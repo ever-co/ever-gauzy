@@ -15,7 +15,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
-import { ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
+import { ID, ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
 import { CreateTimeSlotCommand, DeleteTimeSlotCommand, UpdateTimeSlotCommand } from './commands';
 import { TimeSlotService } from './time-slot.service';
 import { TimeSlot } from './time-slot.entity';
@@ -60,10 +60,7 @@ export class TimeSlotController {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get(':id')
-	async findById(
-		@Param('id', UUIDValidationPipe) id: ITimeSlot['id'],
-		@Query() options: FindOneOptions
-	): Promise<ITimeSlot> {
+	async findById(@Param('id', UUIDValidationPipe) id: ID, @Query() options: FindOneOptions): Promise<ITimeSlot> {
 		return await this.timeSlotService.findOneByIdString(id, options);
 	}
 

@@ -316,8 +316,6 @@ export function validateDateRange(startedAt: Date, stoppedAt: Date): void {
 	const start = moment(startedAt);
 	const end = moment(stoppedAt);
 
-	console.log('------ Timer Date Range ------', start.toDate(), end.toDate());
-
 	// Validate that both dates are valid
 	if (!start.isValid() || !end.isValid()) {
 		throw new BadRequestException('Started and Stopped date must be valid dates.');
