@@ -26,7 +26,7 @@ import {
 	OrganizationProjectModuleFindInputDTO,
 	UpdateOrganizationProjectModuleDTO
 } from './dto';
-import { OrganizationProjectModuleUpdateCommand } from './commands';
+import { OrganizationProjectModuleCreateCommand, OrganizationProjectModuleUpdateCommand } from './commands';
 
 @ApiTags('Project Modules')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -170,7 +170,7 @@ export class OrganizationProjectModuleController extends CrudController<Organiza
 	@Post()
 	@UseValidationPipe({ whitelist: true })
 	async create(@Body() entity: CreateOrganizationProjectModuleDTO): Promise<IOrganizationProjectModule> {
-		return await this.projectModuleService.create(entity);
+		return await this.commandBus.execute(new OrganizationProjectModuleCreateCommand(entity));
 	}
 
 	@ApiOperation({ summary: 'Update an existing project module' })

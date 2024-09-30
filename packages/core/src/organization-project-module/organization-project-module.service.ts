@@ -62,7 +62,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 			// Emit an event to log the activity
 			this._eventBus.publish(
 				new ActivityLogEvent({
-					entity: ActivityLogEntityEnum.OrganizationProject,
+					entity: ActivityLogEntityEnum.OrganizationProjectModule,
 					entityId: module.id,
 					action: ActionTypeEnum.Created,
 					actorType: ActorTypeEnum.User,
