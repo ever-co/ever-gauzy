@@ -25,7 +25,7 @@ import { createFileStorage } from './screenshot.helper';
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class ScreenshotController {
-	private logging: boolean = false;
+	private logging: boolean = true;
 
 	constructor(private readonly _screenshotService: ScreenshotService, private readonly _eventBus: EventBus) {}
 

@@ -9,8 +9,9 @@ import { TimeSlot } from './../../time-slot.entity';
 import { CreateTimeSlotCommand } from '../create-time-slot.command';
 import { BulkActivitiesSaveCommand } from '../../../activity/commands';
 import { TimeSlotMergeCommand } from './../time-slot-merge.command';
-import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.repository';
+import { TypeOrmEmployeeRepository } from '../../../../employee/repository';
 import { TypeOrmTimeLogRepository } from '../../../time-log/repository/type-orm-time-log.repository';
+import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.repository';
 
 @CommandHandler(CreateTimeSlotCommand)
 export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotCommand> {
@@ -19,6 +20,7 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 	constructor(
 		readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
 		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
+		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		private readonly _commandBus: CommandBus
 	) {}
 
@@ -54,6 +56,14 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 			employeeId = RequestContext.currentEmployeeId();
 		}
 
+		/*
+		 * If organization not found in request then assign current logged user organization
+		 */
+		if (isEmpty(organizationId)) {
+			let employee = await this.typeOrmEmployeeRepository.findOneBy({ id: employeeId });
+			organizationId = employee ? employee.organizationId : null;
+		}
+
 		// Input.startedAt is a string, so convert it to a Date object
 		input.startedAt = moment(input.startedAt).utc().set('millisecond', 0).toDate();
 
@@ -63,14 +73,17 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 
 		let timeSlot: ITimeSlot;
 		try {
-			timeSlot = await this.typeOrmTimeSlotRepository
-				.createQueryBuilder('timeSlot')
-				.leftJoinAndSelect('timeSlot.timeLogs', 'timeLogs')
-				.where('timeSlot.tenantId = :tenantId', { tenantId })
-				.andWhere('timeSlot.organizationId = :organizationId', { organizationId })
-				.andWhere('timeSlot.employeeId = :employeeId', { employeeId })
-				.andWhere('timeSlot.startedAt = :startedAt', { startedAt: input.startedAt })
-				.getOneOrFail();
+			// Find TimeLog for TimeSlot Range
+			const baseQuery = this.typeOrmTimeSlotRepository
+				.createQueryBuilder('time_slot')
+				.leftJoinAndSelect('time_slot.timeLogs', 'timeLogs')
+				.where('time_slot.tenantId = :tenantId', { tenantId })
+				.andWhere('time_slot.organizationId = :organizationId', { organizationId })
+				.andWhere('time_slot.employeeId = :employeeId', { employeeId })
+				.andWhere('time_slot.startedAt = :startedAt', { startedAt: input.startedAt });
+
+			// Get the last time slot
+			timeSlot = await baseQuery.getOneOrFail();
 		} catch (error) {
 			// Create a new TimeSlot instance if not found
 			timeSlot = new TimeSlot({
@@ -85,14 +98,14 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 		try {
 			// Find TimeLog for TimeSlot Range
 			const baseQuery = this.typeOrmTimeLogRepository
-				.createQueryBuilder('timeLog')
-				.where('timeLog.tenantId = :tenantId', { tenantId })
-				.andWhere('timeLog.organizationId = :organizationId', { organizationId })
-				.andWhere('timeLog.employeeId = :employeeId', { employeeId })
-				.andWhere('timeLog.source = :source', { source })
-				.andWhere('timeLog.logType = :logType', { logType })
-				.andWhere('timeLog.stoppedAt IS NOT NULL')
-				.orderBy('timeLog.createdAt', 'DESC');
+				.createQueryBuilder('time_log')
+				.where('time_log.tenantId = :tenantId', { tenantId })
+				.andWhere('time_log.organizationId = :organizationId', { organizationId })
+				.andWhere('time_log.employeeId = :employeeId', { employeeId })
+				.andWhere('time_log.source = :source', { source })
+				.andWhere('time_log.logType = :logType', { logType })
+				.andWhere('time_log.stoppedAt IS NOT NULL')
+				.orderBy('time_log.createdAt', 'DESC');
 
 			// Get the last time log
 			const timeLog = await baseQuery.getOneOrFail();

@@ -14,7 +14,7 @@ import { isNotEmpty } from '@gauzy/common';
 import { SerializedRequestContext } from './types';
 
 export class RequestContext {
-	private static logging: boolean = false;
+	private static logging: boolean = true;
 	protected readonly _id: string;
 	protected readonly _res: Response;
 	private readonly _req: Request;
