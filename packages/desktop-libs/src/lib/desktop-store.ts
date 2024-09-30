@@ -1,3 +1,4 @@
+import { nativeTheme } from 'electron';
 const Store = require('electron-store');
 const store = new Store();
 
@@ -103,7 +104,7 @@ export const LocalStore = {
 				zone: 'local',
 				alwaysOn: true,
 				enforced: false,
-				theme: 'light'
+				theme: nativeTheme.shouldUseDarkColors ? 'dark' : 'light'
 			};
 			store.set({ appSetting: setDefault(config, defaultAppSetting) });
 		} catch (error) {

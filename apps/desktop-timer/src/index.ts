@@ -290,6 +290,9 @@ app.on('ready', async () => {
 	/** Set Default Menu **/
 	setDefaultMenu();
 
+	// Set up theme listener for desktop windows
+	new DesktopThemeListener();
+
 	/** Get configurations and appllication settings */
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
@@ -339,9 +342,6 @@ app.on('ready', async () => {
 
 			// Setup IPC handler
 			ipcMainHandler(store, null, knex, { ...environment }, timeTrackerWindow);
-
-			// Set up theme listener for desktop windows
-			new DesktopThemeListener();
 
 			// start Server
 			await startServer();
