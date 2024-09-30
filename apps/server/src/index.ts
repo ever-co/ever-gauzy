@@ -292,11 +292,7 @@ const runMainWindow = async () => {
 		setting: serverConfig.setting
 	});
 
-	new DesktopThemeListener({
-		settingsWindow,
-		splashScreenWindow: splashScreen.browserWindow,
-		serverWindow
-	}).listen();
+	new DesktopThemeListener();
 };
 
 const initializeConfig = async (val) => {

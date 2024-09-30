@@ -1,5 +1,5 @@
 import { IActivityWatchEventResult } from '@gauzy/contracts';
-import { ScreenCaptureNotification, WindowManager, loginPage } from '@gauzy/desktop-window';
+import { RegisteredWindow, ScreenCaptureNotification, WindowManager, loginPage } from '@gauzy/desktop-window';
 import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences } from 'electron';
 import log from 'electron-log';
 import { resetPermissions } from 'mac-screen-capture-permissions';
@@ -421,18 +421,18 @@ export function ipcTimer(
 
 	offlineMode.on('offline', async () => {
 		log.info('Offline mode triggered...');
-		const windows = [alwaysOn.browserWindow, timeTrackerWindow];
+		const windows = [alwaysOn, timeTrackerWindow];
 		for (const window of windows) {
-			window.webContents.send('offline-handler', true);
+			windowManager.webContents(window).send('offline-handler', true);
 		}
 	});
 
 	offlineMode.on('connection-restored', async () => {
 		log.info('Api connected...');
 		try {
-			const windows = [alwaysOn.browserWindow, timeTrackerWindow];
+			const windows = [alwaysOn, timeTrackerWindow];
 			for (const window of windows) {
-				window.webContents.send('offline-handler', false);
+				windowManager.webContents(window).send('offline-handler', false);
 			}
 			await sequentialSyncQueue(timeTrackerWindow);
 		} catch (error) {
@@ -1086,23 +1086,23 @@ export function ipcTimer(
 		const setting = LocalStore.getStore('appSetting');
 		const auth = LocalStore.getStore('auth');
 		if (setting?.alwaysOn && auth?.employeeId) {
-			alwaysOn.show();
+			windowManager.show(RegisteredWindow.WIDGET);
 		}
 	});
 
 	ipcMain.on('hide_ao', (event, arg) => {
-		alwaysOn.hide();
+		windowManager.hide(RegisteredWindow.WIDGET);
 	});
 
 	ipcMain.on('change_state_from_ao', async (event, arg) => {
-		const windows = [alwaysOn.browserWindow, timeTrackerWindow];
+		const windows = [alwaysOn, timeTrackerWindow];
 		for (const window of windows) {
-			window.webContents.send('change_state_from_ao', arg);
+			windowManager.webContents(window).send('change_state_from_ao', arg);
 		}
 	});
 
 	ipcMain.on('ao_time_update', (event, arg) => {
-		alwaysOn.browserWindow.webContents.send('ao_time_update', arg);
+		windowManager.webContents(alwaysOn).send('ao_time_update', arg);
 	});
 
 	ipcMain.handle('MARK_AS_STOPPED_OFFLINE', async () => {

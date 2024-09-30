@@ -4,7 +4,13 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 @Component({
 	selector: 'ga-picture-name-tags',
 	template: `
-		<ngx-avatar [src]="avatar?.imageUrl" [name]="avatar?.name" [id]="avatar?.id" class="report-table"></ngx-avatar>
+		<ngx-avatar
+			[src]="avatar?.imageUrl"
+			[name]="avatar?.name"
+			[id]="avatar?.id"
+			[employee]="avatar.employee"
+			class="report-table"
+		></ngx-avatar>
 		<ng-template [ngIf]="rowData?.isDefault">
 			<nb-badge
 				class="color"
@@ -71,14 +77,15 @@ export class PictureNameTagsComponent extends NotesWithTagsComponent {
 	 * @returns An object representing the avatar data.
 	 */
 	public get avatar(): any {
-		const { id, employeeId, fullName, name } = this.rowData;
+		const { id, employeeId, fullName, name, employee } = this.rowData;
 		const avatarId = employeeId === id ? id : employeeId;
 
 		return {
 			...this.rowData,
 			id: avatarId || null,
 			name: fullName || name || null,
-			imageUrl: this.rowData.user?.image?.fullUrl || this.rowData.imageUrl
+			imageUrl: this.rowData.user?.image?.fullUrl || this.rowData.imageUrl,
+			employee
 		};
 	}
 

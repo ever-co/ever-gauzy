@@ -101,6 +101,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				},
 				employee: {
 					id: true,
+					isAway: true,
+					isOnline: true,
 					user: {
 						id: true,
 						firstName: true,
@@ -151,6 +153,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				employee: {
 					id: true,
 					userId: true,
+					isAway: true,
+					isOnline: true,
 					user: {
 						id: true,
 						firstName: true,
@@ -356,6 +360,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				employee: {
 					id: true,
 					userId: true,
+					isAway: true,
+					isOnline: true,
 					user: {
 						id: true,
 						firstName: true,
@@ -432,6 +438,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				employee: {
 					id: true,
 					userId: true,
+					isAway: true,
+					isOnline: true,
 					billRateValue: true,
 					user: {
 						id: true,
@@ -513,6 +521,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					id: true,
 					billRateValue: true,
 					userId: true,
+					isAway: true,
+					isOnline: true,
 					user: {
 						id: true,
 						firstName: true,
@@ -611,6 +621,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					id: true,
 					reWeeklyLimit: true,
 					userId: true,
+					isOnline: true,
+					isAway: true,
 					user: {
 						id: true,
 						firstName: true,
