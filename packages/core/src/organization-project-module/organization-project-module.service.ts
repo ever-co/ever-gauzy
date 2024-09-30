@@ -118,7 +118,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 				updatedModule.name
 			);
 
-			// Compare values befor and after update then add updates to fields
+			// Compare values before and after update then add updates to fields
 			const updatedFields = [];
 			const previousValues: IActivityLogUpdatedValues[] = [];
 			const updatedValues: IActivityLogUpdatedValues[] = [];
