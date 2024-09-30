@@ -6,7 +6,6 @@ import {
 	CrudActionEnum,
 	PermissionsEnum,
 	ID,
-	IOrganizationProjectCreateInput,
 	IOrganizationProjectsFindInput
 } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';

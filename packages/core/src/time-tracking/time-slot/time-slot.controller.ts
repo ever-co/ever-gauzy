@@ -65,9 +65,12 @@ export class TimeSlotController {
 	}
 
 	/**
+	 * Handles the creation of a new time slot based on the provided request data.
+	 * This method is called via an HTTP POST request and invokes the `CreateTimeSlotCommand`
+	 * to execute the time slot creation logic.
 	 *
-	 * @param entity
-	 * @returns
+	 * @param {ITimeSlot} request - The time slot data provided in the request body.
+	 * @returns {Promise<ITimeSlot>} - A promise that resolves to the created TimeSlot instance.
 	 */
 	@ApiOperation({ summary: 'Create Time Slot' })
 	@ApiResponse({
@@ -75,8 +78,8 @@ export class TimeSlotController {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
-	async create(@Body() requst: ITimeSlot): Promise<ITimeSlot> {
-		return await this.commandBus.execute(new CreateTimeSlotCommand(requst));
+	async create(@Body() request: ITimeSlot): Promise<ITimeSlot> {
+		return await this.commandBus.execute(new CreateTimeSlotCommand(request));
 	}
 
 	/**
