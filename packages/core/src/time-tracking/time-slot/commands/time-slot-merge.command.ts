@@ -1,13 +1,13 @@
-import { ITimeSlot } from '@gauzy/contracts';
 import { ICommand } from '@nestjs/cqrs';
+import { ID } from '@gauzy/contracts';
 
 export class TimeSlotMergeCommand implements ICommand {
 	static readonly type = '[TimeSlot] merge';
 
 	constructor(
-		public readonly organizationId: ITimeSlot['organizationId'],
-		public readonly employeeId: ITimeSlot['employeeId'],
-		public readonly start: ITimeSlot['startedAt'],
-		public readonly end: ITimeSlot['stoppedAt']
+		public readonly organizationId: ID,
+		public readonly employeeId: ID,
+		public readonly start: Date,
+		public readonly end: Date
 	) {}
 }
