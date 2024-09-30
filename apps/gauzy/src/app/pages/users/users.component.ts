@@ -544,6 +544,7 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 			endWork: endWork ? new Date(endWork) : null,
 			workStatus: endWork ? workStatus : '',
 			startedWorkOn,
+			employee,
 			isTrackingEnabled
 		};
 	}

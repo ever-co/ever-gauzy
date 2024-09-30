@@ -53,7 +53,7 @@ export class AvatarComponent implements OnInit {
 	constructor(private readonly router: Router) {}
 
 	ngOnInit() {
-		if (this.id) {
+		if (this._employee) {
 			this.online$ = this._employee
 				.asObservable()
 				.pipe(map((employee) => employee?.isOnline && !employee?.isAway));

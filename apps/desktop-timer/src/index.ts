@@ -445,15 +445,7 @@ app.on('ready', async () => {
 	}
 	removeMainListener();
 	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
-	new DesktopThemeListener({
-		timeTrackerWindow,
-		settingsWindow,
-		updaterWindow,
-		imageViewerWindow: imageView,
-		gauzyWindow,
-		splashScreenWindow: splashScreen.browserWindow,
-		alwaysOnWindow: alwaysOn.browserWindow
-	}).listen();
+	new DesktopThemeListener();
 });
 
 app.on('window-all-closed', () => {
