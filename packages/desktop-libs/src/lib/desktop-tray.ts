@@ -1,4 +1,11 @@
-import { getApiBaseUrl, loginPage, RegisteredWindow, timeTrackerPage, WindowManager } from '@gauzy/desktop-window';
+import {
+	getApiBaseUrl,
+	loginPage,
+	RegisteredWindow,
+	settingsPage,
+	timeTrackerPage,
+	WindowManager
+} from '@gauzy/desktop-window';
 import { app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, nativeImage, Tray } from 'electron';
 import { handleLogoutDialog } from './desktop-ipc';
 import { LocalStore } from './desktop-store';
@@ -344,6 +351,12 @@ export class TrayIcon {
 					await timeTrackerWindow.loadURL(timeTrackerPage(windowPath.timeTrackerUi));
 				} catch (error) {
 					console.error('An error occurred while loading Time Tracker Page', error);
+				}
+
+				try {
+					await settingsWindow.loadURL(settingsPage(windowPath.timeTrackerUi));
+				} catch (error) {
+					console.error('An error occurred while loading settings Page', error);
 				}
 
 				manager.webContents(timeTrackerWindow).send('auth_success_tray_init', arg);
