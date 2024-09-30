@@ -79,7 +79,6 @@ export class PictureNameTagsComponent extends NotesWithTagsComponent {
 	public get avatar(): any {
 		const { id, employeeId, fullName, name, employee } = this.rowData;
 		const avatarId = employeeId === id ? id : employeeId;
-		console.log(employee);
 
 		return {
 			...this.rowData,
