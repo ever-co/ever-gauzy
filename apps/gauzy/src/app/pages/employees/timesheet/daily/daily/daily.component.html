@@ -92,8 +92,8 @@
 											</span>
 										</ng-template>
 										<div class="mt-2 small">
-											<span *ngIf="log?.task; else noToDo">
-												<strong> {{ 'TIMESHEET.TODO' | translate }} : </strong>
+											<span *ngIf="log?.task; else noToDo" [nbTooltip]="log?.task?.title">
+												<strong>{{ 'TIMESHEET.TODO' | translate }}:</strong>
 												{{ log?.task?.title | truncate : 50 }}
 											</span>
 											<ng-template #noToDo>
@@ -111,6 +111,7 @@
 												[name]="log?.employee?.user?.name"
 												[src]="log?.employee?.user?.imageUrl"
 												[id]="log?.employee?.id"
+												[employee]="log?.employee"
 											></ngx-avatar>
 										</div>
 									</div>

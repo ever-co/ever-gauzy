@@ -58,17 +58,9 @@
 				[nbSpinnerStatus]="'primary'"
 				class="custom-body approval"
 			>
-				<ng-template
-					[ngIf]="timesheets?.length > 0"
-					[ngIfElse]="notFound"
-				>
+				<ng-template [ngIf]="timesheets?.length > 0" [ngIfElse]="notFound">
 					<div class="content-approval">
-						<ng-container
-							*ngFor="
-								let timesheet of timesheets;
-								let last = last
-							"
-						>
+						<ng-container *ngFor="let timesheet of timesheets; let last = last">
 							<div
 								(click)="userRowSelect(timesheet)"
 								class="row item m-0 py-3 align-items-center"
@@ -81,9 +73,7 @@
 									<nb-checkbox
 										[checked]="timesheet.checked"
 										(click)="$event.stopPropagation()"
-										(checkedChange)="
-											toggleCheckbox($event, timesheet)
-										"
+										(checkedChange)="toggleCheckbox($event, timesheet)"
 										status="basic"
 									></nb-checkbox>
 								</div>
@@ -91,10 +81,9 @@
 									<ngx-avatar
 										class="report-table"
 										[name]="timesheet?.employee?.user?.name"
-										[src]="
-											timesheet?.employee?.user?.imageUrl
-										"
+										[src]="timesheet?.employee?.user?.imageUrl"
 										[id]="timesheet?.employee?.id"
+										[employee]="timesheet?.employee"
 									></ngx-avatar>
 								</div>
 								<div class="col">
@@ -112,9 +101,7 @@
 									{{ timesheet.submittedAt | dateFormat }}
 								</div>
 								<div class="col-1">
-									<ga-status-badge
-										[value]="statusMapper(timesheet)"
-									></ga-status-badge>
+									<ga-status-badge [value]="statusMapper(timesheet)"></ga-status-badge>
 								</div>
 							</div>
 						</ng-container>
@@ -183,13 +170,9 @@
 					{{ 'TIMESHEET.UNSUBMIT_TIMESHEET' | translate }}
 				</button>
 			</ng-container>
-			<ng-container
-				*ngIf="selectedItem.status != TimesheetStatus.APPROVED"
-			>
+			<ng-container *ngIf="selectedItem.status != TimesheetStatus.APPROVED">
 				<button
-					(click)="
-						updateStatus(selectedItem.id, TimesheetStatus.APPROVED)
-					"
+					(click)="updateStatus(selectedItem.id, TimesheetStatus.APPROVED)"
 					nbButton
 					class="action success"
 					status="basic"
@@ -203,9 +186,7 @@
 			</ng-container>
 			<ng-container *ngIf="selectedItem.status != TimesheetStatus.DENIED">
 				<button
-					(click)="
-						updateStatus(selectedItem.id, TimesheetStatus.DENIED)
-					"
+					(click)="updateStatus(selectedItem.id, TimesheetStatus.DENIED)"
 					nbButton
 					class="action warning"
 					status="basic"

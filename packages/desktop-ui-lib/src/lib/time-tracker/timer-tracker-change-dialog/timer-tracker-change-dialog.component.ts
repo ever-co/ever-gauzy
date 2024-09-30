@@ -10,7 +10,10 @@ import { ClientSelectorService } from '../../shared/features/client-selector/+st
 import { ProjectSelectorService } from '../../shared/features/project-selector/+state/project-selector.service';
 import { TaskSelectorService } from '../../shared/features/task-selector/+state/task-selector.service';
 import { TeamSelectorService } from '../../shared/features/team-selector/+state/team-selector.service';
-import { TimeTrackerFormService } from '../../shared/features/time-tracker-form/time-tracker-form.service';
+import {
+	ITimeTrackerFormState,
+	TimeTrackerFormService
+} from '../../shared/features/time-tracker-form/time-tracker-form.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -20,6 +23,7 @@ import { TimeTrackerFormService } from '../../shared/features/time-tracker-form/
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TimerTrackerChangeDialogComponent implements OnInit {
+	private lastSelectorState: ITimeTrackerFormState;
 	public form: FormGroup = new FormGroup({
 		clientId: new FormControl(null),
 		projectId: new FormControl(null),
@@ -50,7 +54,7 @@ export class TimerTrackerChangeDialogComponent implements OnInit {
 			.pipe(
 				filter(({ state }) => state === IgnitionState.RESTARTED),
 				tap(() => this.timeTrackerStore.update({ ignition: { state: IgnitionState.STARTED } })),
-				tap(() => this.dismiss(this.form.value)),
+				tap(() => this.dismiss(this.lastSelectorState)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -90,7 +94,8 @@ export class TimerTrackerChangeDialogComponent implements OnInit {
 	}
 
 	public applyChanges() {
-		this.timeTrackerStore.update({ ignition: { state: IgnitionState.RESTARTING } });
+		this.lastSelectorState = this.form.value;
+		this.timeTrackerStore.ignition({ state: IgnitionState.RESTARTING, data: this.form.value });
 	}
 
 	public get isRestarting$(): Observable<boolean> {
