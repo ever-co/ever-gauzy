@@ -26,7 +26,7 @@ export class ProjectSelectorService extends SelectorService<IOrganizationProject
 		super(projectSelectorStore, projectSelectorQuery);
 	}
 
-	public get selectedId(): IOrganizationProject['id'] {
+	public get selectedId(): ID {
 		return this.projectSelectorQuery.selectedId;
 	}
 

@@ -29,7 +29,7 @@
 		"config:prod": "yarn run config -- --environment=prod",
 		"start": "yarn build:package:all && yarn concurrently --raw --kill-others \"yarn start:api\" \"yarn start:gauzy\"",
 		"start:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn build:package:all && yarn concurrently --raw --kill-others \"yarn start:api:prod\" \"yarn start:gauzy:prod\"",
-		"start:gauzy": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn run postinstall.web && yarn run build:package:ui-config && yarn ng serve gauzy --open",
+		"start:gauzy": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn run postinstall.web && yarn build:package:ui-config && yarn ng serve gauzy --open",
 		"start:gauzy:forever": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn run config:dev && forever start node_modules/@angular/cli/bin/ng serve gauzy --disable-host-check --host 0.0.0.0",
 		"start:gauzy:pm2": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn build:package:all && yarn build:gauzy && yarn ts-node ./apps/gauzy/src/pm2bootstrap.ts",
 		"start:gauzy:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn run config:prod && yarn ng serve gauzy --configuration production --disable-host-check --host 0.0.0.0 --prod",

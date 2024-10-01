@@ -294,6 +294,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					billRateValue: true,
 					minimumBillingRate: true,
 					userId: true,
+					isAway: true,
+					isOnline: true,
 					user: {
 						id: true,
 						firstName: true,
@@ -448,7 +450,9 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					deletedAt: true,
 					allowScreenshotCapture: true,
 					isActive: true,
-					isArchived: true
+					isArchived: true,
+					isAway: true,
+					isOnline: true
 				},
 				...(options && options.relations ? { relations: options.relations } : {}),
 				...(options && 'withDeleted' in options ? { withDeleted: options.withDeleted } : {}) // Include soft-deleted parent entities
