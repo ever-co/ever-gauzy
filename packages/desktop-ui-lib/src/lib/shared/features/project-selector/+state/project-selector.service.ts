@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { IOrganizationProject, ProjectOwnerEnum } from '@gauzy/contracts';
+import { ID, IOrganizationProject, IOrganizationProjectCreateInput, ProjectOwnerEnum } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { TimeTrackerService } from 'packages/desktop-ui-lib/src/lib/time-tracker/time-tracker.service';
 import { SelectorService } from '../../../+state/selector.service';
@@ -26,28 +26,33 @@ export class ProjectSelectorService extends SelectorService<IOrganizationProject
 		super(projectSelectorStore, projectSelectorQuery);
 	}
 
-	public get selectedId(): IOrganizationProject['id'] {
+	public get selectedId(): ID {
 		return this.projectSelectorQuery.selectedId;
 	}
 
+	/**
+	 * Adds a new project with the specified name.
+	 *
+	 * @param {IOrganizationProject['name']} name - The name of the project to add.
+	 */
 	public async addProject(name: IOrganizationProject['name']): Promise<void> {
+		this.projectSelectorStore.setLoading(true);
+		const { tenantId, user, organizationId } = this.store;
+
 		try {
-			this.projectSelectorStore.setLoading(true);
-			const { tenantId, user } = this.store;
-			const organizationId = this.store.organizationId;
-			const request = {
+			// Define the input for creating a new project
+			const input: Partial<IOrganizationProjectCreateInput> = {
 				name,
 				organizationId,
 				tenantId,
 				owner: ProjectOwnerEnum.CLIENT,
-				...(this.clientSelectorQuery.selectedId
-					? { organizationContactId: this.clientSelectorQuery.selectedId }
-					: {})
+				organizationContactId: this.clientSelectorQuery.selectedId || undefined,
+				memberIds: user.employee.id ? [user.employee.id] : []
 			};
 
-			request['members'] = [{ ...user.employee }];
-
-			const project = await this.timeTrackerService.createNewProject(request, user);
+			// Create the project
+			const project = await this.timeTrackerService.createNewProject(input, user);
+			// Add the project to the store
 			this.projectSelectorStore.appendData(project);
 			this.toastrNotifier.success(this.translateService.instant('TIMER_TRACKER.TOASTR.PROJECT_ADDED'));
 			this.projectSelectorStore.setError(null);
