@@ -47,6 +47,11 @@ import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-em
 import { TypeOrmActivityRepository } from '../activity/repository';
 import { MikroOrmTimeLogRepository, TypeOrmTimeLogRepository } from '../time-log/repository';
 
+export interface IStatisticsActivities {
+	overall: number;
+	duration: number;
+}
+
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
 
@@ -105,227 +110,297 @@ export class StatisticService {
 	 * @returns
 	 */
 	async getCounts(request: IGetCountsStatistics): Promise<ICountsStatistics> {
-		const { organizationId, startDate, endDate, todayStart, todayEnd } = request;
-		let { employeeIds = [], projectIds = [], teamIds = [] } = request;
+		// Retrieve statistics counts concurrently
+		const [employeesCount, projectsCount, weekActivities, todayActivities] = await Promise.all([
+			this.getEmployeeWorkedCounts(request),
+			this.getProjectWorkedCounts(request),
+			this.getWeeklyStatisticsActivities(request),
+			this.getTodayStatisticsActivities(request)
+		]);
 
-		const user = RequestContext.currentUser();
-		const tenantId = RequestContext.currentTenantId() || request.tenantId;
+		// Construct and return the response object
+		return {
+			employeesCount,
+			projectsCount,
+			weekActivities: parseFloat(weekActivities.overall.toFixed(2)),
+			weekDuration: weekActivities.duration,
+			todayActivities: parseFloat(todayActivities.overall.toFixed(2)),
+			todayDuration: todayActivities.duration
+		};
+	}
 
-		const { start, end } = getDateRangeFormat(
-			moment.utc(startDate || moment().startOf('week')),
-			moment.utc(endDate || moment().endOf('week'))
-		);
+	/**
+	 * Get average activity and total duration of the work for the week.
+	 *
+	 * @param request - The request object containing filters and parameters
+	 * @returns {Promise<IStatisticsActivities>} - The weekly activity statistics
+	 */
+	async getWeeklyStatisticsActivities(request: IGetCountsStatistics): Promise<IStatisticsActivities> {
+		let {
+			organizationId,
+			startDate,
+			endDate,
+			employeeIds = [],
+			projectIds = [],
+			teamIds = [],
+			activityLevel,
+			logType,
+			source,
+			onlyMe: isOnlyMeSelected // Determine if the request specifies to retrieve data for the current user only
+		} = request;
+
+		// Retrieves the database type from the configuration service.
+		const dbType = this.configService.dbConnectionOptions.type;
+		const user = RequestContext.currentUser(); // Retrieve the current user
+		const tenantId = RequestContext.currentTenantId() ?? request.tenantId; // Retrieve the current tenant ID
 
 		// Check if the current user has the permission to change the selected employee
 		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		);
 
-		// Determine if the request specifies to retrieve data for the current user only
-		const isOnlyMeSelected: boolean = request.onlyMe;
-
-		/**
-		 * Set employeeIds based on user conditions and permissions
-		 */
-		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
+		// Set employeeIds based on user conditions and permissions
+		if (user.employeeId && (isOnlyMeSelected || !hasChangeSelectedEmployeePermission)) {
 			employeeIds = [user.employeeId];
 		}
 
-		/**
-		 * GET statistics counts
-		 */
-		const employeesCount = await this.getEmployeeWorkedCounts({
-			...request,
-			employeeIds
-		});
-		const projectsCount = await this.getProjectWorkedCounts({
-			...request,
-			employeeIds
-		});
-
-		// Retrieves the database type from the configuration service.
-		const dbType = this.configService.dbConnectionOptions.type;
-
-		/*
-		 * Get average activity and total duration of the work for the week.
-		 */
 		let weekActivities = {
 			overall: 0,
 			duration: 0
 		};
 
-		const weekQuery = this.typeOrmTimeSlotRepository.createQueryBuilder();
-		weekQuery
-			.innerJoin(`${weekQuery.alias}.timeLogs`, 'timeLogs')
-			.select(getDurationQueryString(dbType, 'timeLogs', weekQuery.alias), `week_duration`)
-			.addSelect(p(`COALESCE(SUM("${weekQuery.alias}"."overall"), 0)`), `overall`)
-			.addSelect(p(`COALESCE(SUM("${weekQuery.alias}"."duration"), 0)`), `duration`)
-			.addSelect(p(`COUNT("${weekQuery.alias}"."id")`), `time_slot_count`);
+		// Define the start and end dates
+		const { start, end } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('week')),
+			moment.utc(endDate || moment().endOf('week'))
+		);
 
-		weekQuery
-			.andWhere(`${weekQuery.alias}.tenantId = :tenantId`, { tenantId })
-			.andWhere(`${weekQuery.alias}.organizationId = :organizationId`, { organizationId })
-			.andWhere(`timeLogs.tenantId = :tenantId`, { tenantId })
-			.andWhere(`timeLogs.organizationId = :organizationId`, { organizationId });
+		// Create a query builder for the TimeSlot entity
+		const query = this.typeOrmTimeSlotRepository.createQueryBuilder();
+		query
+			.innerJoin(`${query.alias}.timeLogs`, 'time_log')
+			.select([
+				getDurationQueryString(dbType, 'time_log', query.alias) + ' AS week_duration',
+				p(`COALESCE(SUM("${query.alias}"."overall"), 0)`) + ' AS overall',
+				p(`COALESCE(SUM("${query.alias}"."duration"), 0)`) + ' AS duration',
+				p(`COUNT("${query.alias}"."id")`) + ' AS time_slot_count'
+			]);
 
-		weekQuery
-			.andWhere(p(`"${weekQuery.alias}"."startedAt" BETWEEN :startDate AND :endDate`), {
+		// Base where conditions
+		query
+			.where(`${query.alias}.tenantId = :tenantId`, { tenantId })
+			.andWhere(`${query.alias}.organizationId = :organizationId`, { organizationId })
+			.andWhere(`time_log.tenantId = :tenantId`, { tenantId })
+			.andWhere(`time_log.organizationId = :organizationId`, { organizationId })
+			.andWhere(`${query.alias}.startedAt BETWEEN :startDate AND :endDate`, {
 				startDate: start,
 				endDate: end
 			})
-			.andWhere(p(`"timeLogs"."startedAt" BETWEEN :startDate AND :endDate`), { startDate: start, endDate: end });
+			.andWhere(`time_log.startedAt BETWEEN :startDate AND :endDate`, { startDate: start, endDate: end })
+			.andWhere(`time_log.stoppedAt >= time_log.startedAt`);
 
+		// Applying optional filters conditionally to avoid unnecessary execution
 		if (isNotEmpty(employeeIds)) {
-			weekQuery.andWhere(p(`"${weekQuery.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
-			weekQuery.andWhere(p(`"timeLogs"."employeeId" IN (:...employeeIds)`), { employeeIds });
+			query.andWhere(`${query.alias}.employeeId IN (:...employeeIds)`, { employeeIds });
+			query.andWhere(`time_log.employeeId IN (:...employeeIds)`, { employeeIds });
 		}
 
+		// Filter by project
 		if (isNotEmpty(projectIds)) {
-			weekQuery.andWhere(p(`"timeLogs"."projectId" IN (:...projectIds)`), { projectIds });
+			query.andWhere(`time_log.projectId IN (:...projectIds)`, { projectIds });
 		}
 
-		if (isNotEmpty(request.activityLevel)) {
-			/**
-			 * Activity Level should be 0-100%
-			 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
-			 */
-			const { activityLevel } = request;
-			const startLevel = activityLevel.start * 6;
-			const endLevel = activityLevel.end * 6;
+		// Filter by team
+		if (isNotEmpty(teamIds)) {
+			query.andWhere(`time_log.organizationTeamId IN (:...teamIds)`, { teamIds });
+		}
 
-			weekQuery.andWhere(p(`"${weekQuery.alias}"."overall" BETWEEN :startLevel AND :endLevel`), {
+		// Filter by activity level
+		if (isNotEmpty(activityLevel)) {
+			const startLevel = activityLevel.start * 6; // Start level for actitivy level in seconds
+			const endLevel = activityLevel.end * 6; // End level for activity level in seconds
+
+			query.andWhere(`${query.alias}.overall BETWEEN :startLevel AND :endLevel`, {
 				startLevel,
 				endLevel
 			});
 		}
 
-		if (isNotEmpty(request.logType)) {
-			const { logType } = request;
-			weekQuery.andWhere(p(`"timeLogs"."logType" IN (:...logType)`), { logType });
+		// Filter by log type
+		if (isNotEmpty(logType)) {
+			query.andWhere(`time_log.logType IN (:...logType)`, { logType });
 		}
 
-		if (isNotEmpty(request.source)) {
-			const { source } = request;
-			weekQuery.andWhere(p(`"timeLogs"."source" IN (:...source)`), { source });
+		// Filter by source
+		if (isNotEmpty(source)) {
+			query.andWhere(`time_log.source IN (:...source)`, { source });
 		}
 
-		if (isNotEmpty(teamIds)) {
-			weekQuery.andWhere(p(`"timeLogs"."organizationTeamId" IN (:...teamIds)`), { teamIds });
+		// Group by time_log.id to get the total duration and overall for each time slot
+		const weekTimeStatistics = await query.groupBy(p(`"time_log"."id"`)).getRawMany();
+
+		// Initialize variables to accumulate values
+		let totalWeekDuration = 0;
+		let totalOverall = 0;
+		let totalDuration = 0;
+
+		// Iterate over the weekTimeStatistics array once to calculate all values
+		for (const stat of weekTimeStatistics) {
+			totalWeekDuration += stat.week_duration || 0;
+			totalOverall += stat.overall || 0;
+			totalDuration += stat.duration || 0;
 		}
 
-		weekQuery.groupBy(p(`"timeLogs"."id"`));
-		const weekTimeStatistics = await weekQuery.getRawMany();
+		// Calculate the week percentage, avoiding division by zero
+		const weekPercentage = totalDuration > 0 ? (totalOverall * 100) / totalDuration : 0;
 
-		const weekDuration = reduce(pluck(weekTimeStatistics, 'week_duration'), ArraySum, 0);
-		const weekPercentage =
-			(reduce(pluck(weekTimeStatistics, 'overall'), ArraySum, 0) * 100) /
-			reduce(pluck(weekTimeStatistics, 'duration'), ArraySum, 0);
-
-		weekActivities['duration'] = weekDuration;
+		// Assign the calculated values to weekActivities
+		weekActivities['duration'] = totalWeekDuration;
 		weekActivities['overall'] = weekPercentage;
 
-		/*
-		 * Get average activity and total duration of the work for today.
+		return weekActivities;
+	}
+
+	/**
+	 * Get average activity and total duration of the work for today.
+	 *
+	 * @param request - The request object containing filters and parameters
+	 * @returns {Promise<IStatisticsActivities>} - Today's activity statistics
+	 */
+	async getTodayStatisticsActivities(request: IGetCountsStatistics): Promise<IStatisticsActivities> {
+		// Destructure the necessary properties from the request with default values
+		let {
+			organizationId,
+			todayStart,
+			todayEnd,
+			employeeIds = [],
+			projectIds = [],
+			teamIds = [],
+			activityLevel,
+			onlyMe: isOnlyMeSelected, // Determine if the request specifies to retrieve data for the current user only
+			logType,
+			source
+		} = request || {};
+
+		// Retrieves the database type from the configuration service.
+		const dbType = this.configService.dbConnectionOptions.type;
+		const user = RequestContext.currentUser(); // Retrieve the current user
+		const tenantId = RequestContext.currentTenantId() ?? request.tenantId; // Retrieve the current tenant ID
+
+		// Check if the current user has the permission to change the selected employee
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+
+		/**
+		 * Set employeeIds based on user conditions and permissions
 		 */
+		if (user.employeeId && (isOnlyMeSelected || !hasChangeSelectedEmployeePermission)) {
+			employeeIds = [user.employeeId];
+		}
+
+		// Get average activity and total duration of the work for today.
 		let todayActivities = {
 			overall: 0,
 			duration: 0
 		};
 
+		// Get date range for today
 		const { start: startToday, end: endToday } = getDateRangeFormat(
 			moment.utc(todayStart || moment().startOf('day')),
 			moment.utc(todayEnd || moment().endOf('day'))
 		);
 
-		const todayQuery = this.typeOrmTimeSlotRepository.createQueryBuilder();
-		todayQuery
-			.innerJoin(`${todayQuery.alias}.timeLogs`, 'timeLogs')
-			.select(getDurationQueryString(dbType, 'timeLogs', todayQuery.alias), `today_duration`)
-			.addSelect(p(`COALESCE(SUM("${todayQuery.alias}"."overall"), 0)`), `overall`)
-			.addSelect(p(`COALESCE(SUM("${todayQuery.alias}"."duration"), 0)`), `duration`)
-			.addSelect(p(`COUNT("${todayQuery.alias}"."id")`), `time_slot_count`);
+		// Create a query builder for the TimeSlot entity
+		const query = this.typeOrmTimeSlotRepository.createQueryBuilder();
 
-		todayQuery
-			.andWhere(`${todayQuery.alias}.tenantId = :tenantId`, { tenantId })
-			.andWhere(`${todayQuery.alias}.organizationId = :organizationId`, { organizationId })
-			.andWhere(`timeLogs.tenantId = :tenantId`, { tenantId })
-			.andWhere(`timeLogs.organizationId = :organizationId`, { organizationId });
+		// Define the base select statements and joins
+		query
+			.innerJoin(`${query.alias}.timeLogs`, 'time_log')
+			.select([
+				getDurationQueryString(dbType, 'time_log', query.alias) + ' AS today_duration',
+				p(`COALESCE(SUM("${query.alias}"."overall"), 0)`) + ' AS overall',
+				p(`COALESCE(SUM("${query.alias}"."duration"), 0)`) + ' AS duration',
+				p(`COUNT("${query.alias}"."id")`) + ' AS time_slot_count'
+			]);
 
-		todayQuery
-			.andWhere(p(`"timeLogs"."startedAt" BETWEEN :startDate AND :endDate`), {
+		// Base where conditions
+		query
+			.andWhere(`${query.alias}.tenantId = :tenantId`, { tenantId })
+			.andWhere(`${query.alias}.organizationId = :organizationId`, { organizationId })
+			.andWhere(`time_log.tenantId = :tenantId`, { tenantId })
+			.andWhere(`time_log.organizationId = :organizationId`, { organizationId })
+			.andWhere(p(`"${query.alias}"."startedAt" BETWEEN :startDate AND :endDate`), {
 				startDate: startToday,
 				endDate: endToday
 			})
-			.andWhere(p(`"${todayQuery.alias}"."startedAt" BETWEEN :startDate AND :endDate`), {
+			.andWhere(p(`"time_log"."startedAt" BETWEEN :startDate AND :endDate`), {
 				startDate: startToday,
 				endDate: endToday
-			});
+			})
+			.andWhere(`time_log.stoppedAt >= time_log.startedAt`);
 
+		// Optional filters
 		if (isNotEmpty(employeeIds)) {
-			todayQuery.andWhere(p(`"timeLogs"."employeeId" IN (:...employeeIds)`), { employeeIds });
-			todayQuery.andWhere(p(`"${todayQuery.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
+			query
+				.andWhere(p(`"${query.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds })
+				.andWhere(p(`"time_log"."employeeId" IN (:...employeeIds)`), { employeeIds });
+		}
+
+		if (isNotEmpty(teamIds)) {
+			query.andWhere(p(`"time_log"."organizationTeamId" IN (:...teamIds)`), { teamIds });
 		}
 
 		if (isNotEmpty(projectIds)) {
-			todayQuery.andWhere(p(`"timeLogs"."projectId" IN (:...projectIds)`), { projectIds });
+			query.andWhere(p(`"time_log"."projectId" IN (:...projectIds)`), { projectIds });
 		}
 
-		if (isNotEmpty(request.activityLevel)) {
+		if (isNotEmpty(activityLevel)) {
 			/**
 			 * Activity Level should be 0-100%
-			 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
+			 * So, we have to convert it into a 10-minute TimeSlot by multiplying by 6
 			 */
-			const { activityLevel } = request;
 			const startLevel = activityLevel.start * 6;
 			const endLevel = activityLevel.end * 6;
 
-			todayQuery.andWhere(p(`"${todayQuery.alias}"."overall" BETWEEN :startLevel AND :endLevel`), {
+			query.andWhere(p(`"${query.alias}"."overall" BETWEEN :startLevel AND :endLevel`), {
 				startLevel,
 				endLevel
 			});
 		}
 
-		if (isNotEmpty(request.logType)) {
-			const { logType } = request;
-			todayQuery.andWhere(p(`"timeLogs"."logType" IN (:...logType)`), { logType });
+		if (isNotEmpty(logType)) {
+			query.andWhere(p(`"time_log"."logType" IN (:...logType)`), { logType });
 		}
 
-		if (isNotEmpty(request.source)) {
-			const { source } = request;
-			todayQuery.andWhere(p(`"timeLogs"."source" IN (:...source)`), { source });
+		if (isNotEmpty(source)) {
+			query.andWhere(p(`"time_log"."source" IN (:...source)`), { source });
 		}
 
-		if (isNotEmpty(teamIds)) {
-			todayQuery.andWhere(p(`"timeLogs"."organizationTeamId" IN (:...teamIds)`), { teamIds });
+		const todayTimeStatistics = await query.groupBy(p(`"time_log"."id"`)).getRawMany();
+
+		// Initialize variables to accumulate values
+		let totalTodayDuration = 0;
+		let totalOverall = 0;
+		let totalDuration = 0;
+
+		// Iterate over the todayTimeStatistics array once to calculate all values
+		for (const stat of todayTimeStatistics) {
+			totalTodayDuration += stat.today_duration || 0;
+			totalOverall += stat.overall || 0;
+			totalDuration += stat.duration || 0;
 		}
 
-		todayQuery.groupBy(p(`"timeLogs"."id"`));
-		const todayTimeStatistics = await todayQuery.getRawMany();
+		// Calculate today's percentage, avoiding division by zero
+		const todayPercentage = totalDuration > 0 ? (totalOverall * 100) / totalDuration : 0;
 
-		const todayDuration = reduce(pluck(todayTimeStatistics, 'today_duration'), ArraySum, 0);
-		const todayPercentage =
-			(reduce(pluck(todayTimeStatistics, 'overall'), ArraySum, 0) * 100) /
-			reduce(pluck(todayTimeStatistics, 'duration'), ArraySum, 0);
-
-		todayActivities['duration'] = todayDuration;
+		// Assign the calculated values to todayActivities
+		todayActivities['duration'] = totalTodayDuration;
 		todayActivities['overall'] = todayPercentage;
 
-		return {
-			employeesCount,
-			projectsCount,
-			weekActivities: parseFloat(parseFloat(weekActivities.overall + '').toFixed(2)),
-			weekDuration: weekActivities.duration,
-			todayActivities: parseFloat(parseFloat(todayActivities.overall + '').toFixed(2)),
-			todayDuration: todayActivities.duration
-		};
+		return todayActivities;
 	}
 
-	/**
-	 * GET Time Tracking Dashboard Worked Members Statistics
-	 *
-	 * @param request
-	 * @returns
-	 */
 	/**
 	 * GET Time Tracking Dashboard Worked Members Statistics
 	 *
@@ -1826,46 +1901,48 @@ export class StatisticService {
 	}
 
 	/**
-	 * Get employees count who worked in this week.
+	 * Get the count of employees who worked this week.
 	 *
 	 * @param request
-	 * @returns
+	 * @returns The count of unique employees
 	 */
 	private async getEmployeeWorkedCounts(request: IGetCountsStatistics) {
 		const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
-		query.select(p(`"${query.alias}"."employeeId"`), 'employeeId');
-		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`${query.alias}.timeSlots`, 'time_slot');
-		query.andWhere(
-			new Brackets((where: WhereExpressionBuilder) => {
-				this.getFilterQuery(query, where, request);
-			})
-		);
-		query.groupBy(p(`"${query.alias}"."employeeId"`));
-		const employees = await query.getRawMany();
-		return employees.length;
+		query
+			.select('COUNT(DISTINCT time_log.employeeId)', 'count')
+			.innerJoin('time_log.employee', 'employee')
+			.innerJoin('time_log.timeSlots', 'time_slot')
+			.andWhere(
+				new Brackets((where: WhereExpressionBuilder) => {
+					this.getFilterQuery(query, where, request);
+				})
+			);
+		const result = await query.getRawOne();
+		const count = parseInt(result.count, 10);
+		return count;
 	}
 
 	/**
-	 * Get projects count who worked in this week.
+	 * Get the count of projects worked on this week.
 	 *
 	 * @param request
-	 * @returns
+	 * @returns The count of unique projects
 	 */
 	private async getProjectWorkedCounts(request: IGetCountsStatistics) {
 		const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
-		query.select(p(`"${query.alias}"."projectId"`), 'projectId');
-		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`${query.alias}.project`, 'project');
-		query.innerJoin(`${query.alias}.timeSlots`, 'time_slot');
-		query.andWhere(
-			new Brackets((where: WhereExpressionBuilder) => {
-				this.getFilterQuery(query, where, request);
-			})
-		);
-		query.groupBy(p(`"${query.alias}"."projectId"`));
-		const projects = await query.getRawMany();
-		return projects.length;
+		query
+			.select('COUNT(DISTINCT time_log.projectId)', 'count')
+			.innerJoin('time_log.employee', 'employee')
+			.innerJoin('time_log.project', 'project')
+			.innerJoin('time_log.timeSlots', 'time_slot')
+			.andWhere(
+				new Brackets((where: WhereExpressionBuilder) => {
+					this.getFilterQuery(query, where, request);
+				})
+			);
+		const result = await query.getRawOne();
+		const count = parseInt(result.count, 10);
+		return count;
 	}
 
 	/**
@@ -1881,9 +1958,33 @@ export class StatisticService {
 		qb: WhereExpressionBuilder,
 		request: IGetCountsStatistics
 	): WhereExpressionBuilder {
-		const { organizationId, startDate, endDate, employeeIds = [], projectIds = [], teamIds = [] } = request;
-		const tenantId = RequestContext.currentTenantId() || request.tenantId;
+		let {
+			organizationId,
+			startDate,
+			endDate,
+			employeeIds = [],
+			projectIds = [],
+			teamIds = [],
+			activityLevel,
+			logType,
+			source,
+			onlyMe: isOnlyMeSelected // Determine if the request specifies to retrieve data for the current user only
+		} = request;
 
+		const user = RequestContext.currentUser(); // Retrieve the current user
+		const tenantId = RequestContext.currentTenantId() ?? request.tenantId; // Retrieve the current tenant ID
+
+		// Check if the current user has the permission to change the selected employee
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+
+		// Set employeeIds based on user conditions and permissions
+		if (user.employeeId && (isOnlyMeSelected || !hasChangeSelectedEmployeePermission)) {
+			employeeIds = [user.employeeId];
+		}
+
+		// Use consistent date range formatting
 		const { start, end } = getDateRangeFormat(
 			moment.utc(startDate || moment().startOf('week')),
 			moment.utc(endDate || moment().endOf('week'))
@@ -1894,33 +1995,38 @@ export class StatisticService {
 		qb.andWhere(`${query.alias}.startedAt BETWEEN :startDate AND :endDate`, { startDate: start, endDate: end });
 		qb.andWhere(`time_slot.startedAt BETWEEN :startDate AND :endDate`, { startDate: start, endDate: end });
 
-		if (isNotEmpty(request.activityLevel)) {
-			const { start: startLevel, end: endLevel } = request.activityLevel;
+		// Apply activity level filter only if provided
+		if (isNotEmpty(activityLevel)) {
+			const startLevel = activityLevel.start * 6; // Start level for actitivy level in seconds
+			const endLevel = activityLevel.end * 6; // End level for activity level in seconds
+
 			qb.andWhere(`time_slot.overall BETWEEN :startLevel AND :endLevel`, {
-				startLevel: startLevel * 6,
-				endLevel: endLevel * 6
+				startLevel,
+				endLevel
 			});
 		}
 
-		if (isNotEmpty(request.logType)) {
-			qb.andWhere(`${query.alias}.logType IN (:...logType)`, { logType: request.logType });
+		// Apply log type filter if present
+		if (isNotEmpty(logType)) {
+			qb.andWhere(`${query.alias}.logType IN (:...logType)`, { logType });
 		}
 
-		if (isNotEmpty(request.source)) {
-			qb.andWhere(`${query.alias}.source IN (:...source)`, { source: request.source });
+		// Apply source filter if present
+		if (isNotEmpty(source)) {
+			qb.andWhere(`${query.alias}.source IN (:...source)`, { source });
 		}
 
+		// Apply employee filter, optimizing joins
 		if (isNotEmpty(employeeIds)) {
-			qb.andWhere(`${query.alias}.employeeId IN (:...employeeIds)`, { employeeIds }).andWhere(
-				`time_slot.employeeId IN (:...employeeIds)`,
-				{ employeeIds }
-			);
+			qb.andWhere(`${query.alias}.employeeId IN (:...employeeIds)`, { employeeIds });
 		}
 
+		// Apply project filter
 		if (isNotEmpty(projectIds)) {
 			qb.andWhere(`${query.alias}.projectId IN (:...projectIds)`, { projectIds });
 		}
 
+		// Apply team filter
 		if (isNotEmpty(teamIds)) {
 			qb.andWhere(`${query.alias}.organizationTeamId IN (:...teamIds)`, { teamIds });
 		}
