@@ -1,5 +1,4 @@
 import {
-	createSettingsWindow,
 	getApiBaseUrl,
 	loginPage,
 	RegisteredWindow,
@@ -43,9 +42,6 @@ export class TrayIcon {
 				label: TranslateService.instant('TIMER_TRACKER.SETUP.SETTING'),
 				accelerator: 'CmdOrCtrl+,',
 				async click() {
-					if (!settingsWindow) {
-						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
-					}
 					manager.show(RegisteredWindow.SETTINGS);
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('goto_top_menu');
@@ -57,9 +53,6 @@ export class TrayIcon {
 				label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 				accelerator: 'CmdOrCtrl+U',
 				async click() {
-					if (!settingsWindow) {
-						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
-					}
 					manager.show(RegisteredWindow.SETTINGS);
 					manager.webContents(settingsWindow).send('goto_update');
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
@@ -94,9 +87,6 @@ export class TrayIcon {
 				label: TranslateService.instant('TIMER_TRACKER.SETUP.SETTING'),
 				accelerator: 'CmdOrCtrl+,',
 				async click() {
-					if (!settingsWindow) {
-						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
-					}
 					manager.show(RegisteredWindow.SETTINGS);
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('goto_top_menu');
@@ -108,9 +98,6 @@ export class TrayIcon {
 				label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 				accelerator: 'CmdOrCtrl+U',
 				async click() {
-					if (!settingsWindow) {
-						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
-					}
 					manager.show(RegisteredWindow.SETTINGS);
 					manager.webContents(settingsWindow).send('goto_update');
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
@@ -188,9 +175,6 @@ export class TrayIcon {
 				label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 				accelerator: 'CmdOrCtrl+U',
 				async click() {
-					if (!settingsWindow) {
-						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
-					}
 					manager.show(RegisteredWindow.SETTINGS);
 					manager.webContents(settingsWindow).send('goto_update');
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
@@ -202,9 +186,6 @@ export class TrayIcon {
 				label: TranslateService.instant('TIMER_TRACKER.SETUP.SETTING'),
 				accelerator: 'CmdOrCtrl+,',
 				async click() {
-					if (!settingsWindow) {
-						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
-					}
 					manager.show(RegisteredWindow.SETTINGS);
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('goto_top_menu');
