@@ -616,7 +616,7 @@ export class TimeTrackerService {
 		formData.append('timeSlotId', values.timeSlotId);
 		formData.append('tenantId', values.tenantId);
 		formData.append('organizationId', values.organizationId);
-		formData.append('recordedAt', moment(values.recordedAt).utc().toISOString());
+		formData.append('recordedAt', moment(values.startedAt).utc().toISOString());
 
 		const options = {
 			headers: new HttpHeaders({ timeout: TIMEOUT.toString() })
