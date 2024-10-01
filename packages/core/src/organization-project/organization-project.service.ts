@@ -64,8 +64,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		const employeeId = RequestContext.currentEmployeeId();
 		const currentRoleId = RequestContext.currentRoleId();
 
-		const { tags = [], memberIds = [], managerIds = [], ...entity } = input;
-		const { organizationId } = entity;
+		// Destructure the input data
+		const { tags = [], memberIds = [], managerIds = [], organizationId, ...entity } = input;
 
 		try {
 			// If the employee creates the project, default add as a manager
@@ -100,41 +100,26 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			// Create a Set for faster membership checks
 			const managerIdsSet = new Set(managerIds);
 
-			// Fetch existing managers for this organization project
-			const existingManagers = await this.typeOrmOrganizationProjectEmployeeRepository.findBy({
-				employee: { id: In(managerIds), organizationId, tenantId },
-				organizationId,
-				tenantId
-			});
-
-			// Create a Map for faster lookups
-			const existingManagersMap = new Map(existingManagers.map((em) => [em.employee.id, em.assignedAt]));
-
 			// Use destructuring to directly extract 'id' from 'employee'
-			const projectMembers = employees.map(({ id: employeeId }) => {
-				// Check if the employee is a manager
+			const members = employees.map(({ id: employeeId }) => {
+				// If the employee is a manager, assign the existing manager with the latest assignedAt date
 				const isManager = managerIdsSet.has(employeeId);
-				// If the employee is a manager, assign the existing manager with the latest assignedAt date
-				const assignedAt =
-					isManager && !existingManagersMap.has(employeeId)
-						? new Date()
-						: existingManagersMap.get(employeeId);
+				const assignedAt = new Date();
 
-				// If the employee is a manager, assign the existing manager with the latest assignedAt date
 				return new OrganizationProjectEmployee({
 					employeeId,
 					organizationId,
 					tenantId,
 					isManager,
-					role: isManager ? managerRole : null,
-					assignedAt: assignedAt || null
+					assignedAt,
+					role: isManager ? managerRole : null
 				});
 			});
 
 			// Create the organization team with the prepared members
 			const project = await super.create({
 				...entity,
-				members: projectMembers,
+				members,
 				tags,
 				organizationId,
 				tenantId

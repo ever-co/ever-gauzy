@@ -36,91 +36,111 @@ import { ALL_PROJECT_SELECTED } from './default-project';
 			multi: true
 		}
 	]
-	// changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewInit {
-	projects: IOrganizationProject[] = [];
-	selectedProject: IOrganizationProject;
-	hasAddProject$: Observable<boolean>;
-
+	public projects: IOrganizationProject[] = [];
+	public selectedProject: IOrganizationProject;
+	public hasAddProject$: Observable<boolean>;
 	public organization: IOrganization;
-	subject$: Subject<any> = new Subject();
-	onChange: any = () => {};
-	onTouched: any = () => {};
+	public subject$: Subject<any> = new Subject();
 
 	@Input() shortened = false;
 	@Input() disabled = false;
 	@Input() multiple = false;
 	@Input() label = null;
 
-	private _projectId: string | string[];
-	get projectId(): string | string[] {
-		return this._projectId;
-	}
-	set projectId(val: string | string[]) {
+	/**
+	 * Sets the project ID for this component and triggers change and touch events.
+	 * @param val - The project ID or array of project IDs to be set.
+	 */
+	private _projectId: ID | ID[];
+	set projectId(val: ID | ID[]) {
 		this._projectId = val;
 		this.onChange(val);
 		this.onTouched(val);
 	}
-
-	private _employeeId: string;
-	public get employeeId() {
-		return this._employeeId;
+	get projectId(): ID | ID[] {
+		return this._projectId;
 	}
-	@Input() public set employeeId(value) {
+
+	/**
+	 * Sets the employee ID for this component and triggers an update.
+	 * @param value - The ID of the employee to be set.
+	 */
+	private _employeeId: ID;
+	@Input() public set employeeId(value: ID) {
 		this._employeeId = value;
 		this.subject$.next(true);
 	}
-
-	private _organizationContactId: string;
-	public get organizationContactId(): string {
-		return this._organizationContactId;
+	public get employeeId() {
+		return this._employeeId;
 	}
-	@Input() public set organizationContactId(value: string) {
+
+	/**
+	 * Sets the organization contact ID for this component and triggers an update.
+	 * @param value - The ID of the organization contact to be set.
+	 */
+	private _organizationContactId: ID;
+	@Input() public set organizationContactId(value: ID) {
 		this._organizationContactId = value;
 		this.subject$.next(true);
 	}
+	public get organizationContactId(): ID {
+		return this._organizationContactId;
+	}
 
-	/*
-	 * Getter & Setter for dynamic placeholder
+	/**
+	 * Sets the placeholder text for this component.
+	 * @param value - The placeholder text to be displayed.
 	 */
 	private _placeholder: string;
-	get placeholder(): string {
-		return this._placeholder;
-	}
 	@Input() set placeholder(value: string) {
 		this._placeholder = value;
 	}
+	get placeholder(): string {
+		return this._placeholder;
+	}
 
-	/*
-	 * Getter & Setter for skip global change
+	/**
+	 * Sets the flag to determine whether to skip triggering global change detection.
+	 * @param value - A boolean indicating whether to skip global change detection.
 	 */
 	private _skipGlobalChange: boolean = false;
-	get skipGlobalChange(): boolean {
-		return this._skipGlobalChange;
-	}
 	@Input() set skipGlobalChange(value: boolean) {
 		this._skipGlobalChange = value;
 	}
-
-	private _defaultSelected: boolean = true;
-	get defaultSelected(): boolean {
-		return this._defaultSelected;
+	get skipGlobalChange(): boolean {
+		return this._skipGlobalChange;
 	}
+
+	/**
+	 * Sets the default selection flag for this component.
+	 * @param value - A boolean indicating whether to enable the default selection.
+	 */
+	private _defaultSelected: boolean = true;
 	@Input() set defaultSelected(value: boolean) {
 		this._defaultSelected = value;
 	}
-
-	private _showAllOption: boolean = true;
-	get showAllOption(): boolean {
-		return this._showAllOption;
+	get defaultSelected(): boolean {
+		return this._defaultSelected;
 	}
+
+	/**
+	 * Sets the flag to determine whether to display the "Show All" option.
+	 * @param value - A boolean indicating whether to show the "Show All" option.
+	 */
+	private _showAllOption: boolean = true;
 	@Input() set showAllOption(value: boolean) {
 		this._showAllOption = value;
 	}
+	get showAllOption(): boolean {
+		return this._showAllOption;
+	}
 
-	@Output()
-	onChanged = new EventEmitter<IOrganizationProject>();
+	@Output() onChanged = new EventEmitter<IOrganizationProject>();
+
+	onChange: any = () => {};
+	onTouched: any = () => {};
 
 	constructor(
 		private readonly _organizationProjects: OrganizationProjectsService,
@@ -274,6 +294,8 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 
 			// Handle the created project and update projectId
 			this.createOrganizationProject(project);
+
+			// Update projectId
 			this.projectId = project.id;
 
 			// Show success message
