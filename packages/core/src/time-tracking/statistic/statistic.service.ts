@@ -244,7 +244,7 @@ export class StatisticService {
 
 		// Group by time_log.id to get the total duration and overall for each time slot
 		const weekTimeStatistics = await query.groupBy(p(`"time_log"."id"`)).getRawMany();
-		console.log('weekly time statistics activity', weekTimeStatistics);
+		console.log('weekly time statistics activity', JSON.stringify(weekTimeStatistics));
 
 		// Initialize variables to accumulate values
 		let totalWeekDuration = 0;
@@ -387,7 +387,7 @@ export class StatisticService {
 		}
 
 		const todayTimeStatistics = await query.groupBy(p(`"time_log"."id"`)).getRawMany();
-		console.log('today time statistics activity', todayTimeStatistics);
+		console.log('today time statistics activity', JSON.stringify(todayTimeStatistics));
 
 		// Initialize variables to accumulate values
 		let totalTodayDuration = 0;
