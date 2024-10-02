@@ -333,8 +333,8 @@ export class TimerService {
 
 		// Update the employee's tracking status to reflect they are now tracking time
 		await this._employeeService.update(employeeId, {
-			isOnline: true,
-			isTrackingTime: true
+			isOnline: false, // Employee status (Online/Offline)
+			isTrackingTime: false // Employee time tracking status
 		});
 
 		// Stop previous running timers
