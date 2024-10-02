@@ -1,7 +1,7 @@
 import * as remoteMain from '@electron/remote/main';
+import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 import { BrowserWindow } from 'electron';
 import * as url from 'url';
-import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 
 import log from 'electron-log';
 import { WindowManager } from './concretes/window.manager';
@@ -73,3 +73,12 @@ const windowSetting = (preloadPath?) => {
 	mainWindowSettings.icon = filesPath.iconPath;
 	return mainWindowSettings;
 };
+
+export function settingsPage(filePath) {
+	return url.format({
+		pathname: filePath,
+		protocol: 'file:',
+		slashes: true,
+		hash: '/settings'
+	});
+}
