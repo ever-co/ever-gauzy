@@ -223,7 +223,7 @@ export class StatisticService {
 
 		// Filter by activity level
 		if (isNotEmpty(activityLevel)) {
-			const startLevel = activityLevel.start * 6; // Start level for actitivy level in seconds
+			const startLevel = activityLevel.start * 6; // Start level for activity level in seconds
 			const endLevel = activityLevel.end * 6; // End level for activity level in seconds
 
 			query.andWhere(`${query.alias}.overall BETWEEN :startLevel AND :endLevel`, {
@@ -2014,7 +2014,7 @@ export class StatisticService {
 
 		// Apply activity level filter only if provided
 		if (isNotEmpty(activityLevel)) {
-			const startLevel = activityLevel.start * 6; // Start level for actitivy level in seconds
+			const startLevel = activityLevel.start * 6; // Start level for activity level in seconds
 			const endLevel = activityLevel.end * 6; // End level for activity level in seconds
 
 			qb.andWhere(`time_slot.overall BETWEEN :startLevel AND :endLevel`, {
