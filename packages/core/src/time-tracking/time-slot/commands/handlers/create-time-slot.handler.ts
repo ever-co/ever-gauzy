@@ -135,9 +135,12 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 		const stoppedAt = moment.utc().toDate();
 		console.log('time log stoppedAt inside create-time-slot.handler at line 169', stoppedAt);
 
-		// Map only running time logs to an array of IDs
-		const ids: ID[] = timeSlot.timeLogs.filter((log) => log.isRunning).map((log) => log.id);
-		console.log('ids inside create-time-slot.handler at line 173', ids);
+		// Only update running timer
+		for await (const timeLog of timeSlot.timeLogs) {
+			if (timeLog.isRunning) {
+				await this.typeOrmTimeLogRepository.update(timeLog.id, { stoppedAt: stoppedAt });
+			}
+		}
 
 		// Save bulk activities
 		const bulkActivities = await this._commandBus.execute(
