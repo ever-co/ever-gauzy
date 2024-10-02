@@ -38,20 +38,43 @@ export const getDurationQueryString = (dbType: string, logQueryAlias: string, sl
 	switch (dbType) {
 		case DatabaseTypeEnum.sqlite:
 		case DatabaseTypeEnum.betterSqlite3:
-			return `COALESCE(ROUND(SUM(CASE
-				WHEN (julianday(COALESCE("${logQueryAlias}"."stoppedAt", datetime('now'))) - julianday("${logQueryAlias}"."startedAt")) * 86400 >= 0
-				THEN (julianday(COALESCE("${logQueryAlias}"."stoppedAt", datetime('now'))) - julianday("${logQueryAlias}"."startedAt")) * 86400
-				ELSE 0 END) / COUNT("${slotQueryAlias}"."id")), 0)`;
+			return `COALESCE(
+				ROUND(
+					SUM(
+						CASE
+							WHEN (julianday(COALESCE("${logQueryAlias}"."stoppedAt", datetime('now'))) -
+								  julianday("${logQueryAlias}"."startedAt")) * 86400 >= 0
+							THEN (julianday(COALESCE("${logQueryAlias}"."stoppedAt", datetime('now'))) -
+								  julianday("${logQueryAlias}"."startedAt")) * 86400
+							ELSE 0
+						END
+					) / COUNT("${slotQueryAlias}"."id")
+				), 0
+			)`;
 		case DatabaseTypeEnum.postgres:
-			return `COALESCE(ROUND(SUM(CASE
-				WHEN extract(epoch from (COALESCE("${logQueryAlias}"."stoppedAt", NOW()) - "${logQueryAlias}"."startedAt")) >= 0
-				THEN extract(epoch from (COALESCE("${logQueryAlias}"."stoppedAt", NOW()) - "${logQueryAlias}"."startedAt"))
-				ELSE 0 END) / COUNT("${slotQueryAlias}"."id")), 0)`;
+			return `COALESCE(
+				ROUND(
+					SUM(
+						CASE
+							WHEN extract(epoch from (COALESCE("${logQueryAlias}"."stoppedAt", NOW()) - "${logQueryAlias}"."startedAt")) >= 0
+							THEN extract(epoch from (COALESCE("${logQueryAlias}"."stoppedAt", NOW()) - "${logQueryAlias}"."startedAt"))
+							ELSE 0
+						END
+					) / COUNT("${slotQueryAlias}"."id")
+				), 0
+			)`;
 		case DatabaseTypeEnum.mysql:
-			return `COALESCE(ROUND(SUM(CASE
-				WHEN TIMESTAMPDIFF(SECOND, \`${logQueryAlias}\`.\`startedAt\`, COALESCE(\`${logQueryAlias}\`.\`stoppedAt\`, NOW())) >= 0
-				THEN TIMESTAMPDIFF(SECOND, \`${logQueryAlias}\`.\`startedAt\`, COALESCE(\`${logQueryAlias}\`.\`stoppedAt\`, NOW()))
-				ELSE 0 END) / COUNT(\`${slotQueryAlias}\`.\`id\`)), 0)`;
+			return p(`COALESCE(
+				ROUND(
+					SUM(
+						CASE
+							WHEN TIMESTAMPDIFF(SECOND, \`${logQueryAlias}\`.\`startedAt\`, COALESCE(\`${logQueryAlias}\`.\`stoppedAt\`, NOW())) >= 0
+							THEN TIMESTAMPDIFF(SECOND, \`${logQueryAlias}\`.\`startedAt\`, COALESCE(\`${logQueryAlias}\`.\`stoppedAt\`, NOW()))
+							ELSE 0
+						END
+					) / COUNT(\`${slotQueryAlias}\`.\`id\`)
+				), 0
+			)`);
 		default:
 			throw new Error(`Unsupported database type: ${dbType}`);
 	}
@@ -69,20 +92,43 @@ export const getTotalDurationQueryString = (dbType: string, queryAlias: string):
 	switch (dbType) {
 		case DatabaseTypeEnum.sqlite:
 		case DatabaseTypeEnum.betterSqlite3:
-			return `COALESCE(ROUND(SUM(CASE
-				WHEN (julianday(COALESCE("${queryAlias}"."stoppedAt", datetime('now'))) - julianday("${queryAlias}"."startedAt")) * 86400 >= 0
-				THEN (julianday(COALESCE("${queryAlias}"."stoppedAt", datetime('now'))) - julianday("${queryAlias}"."startedAt")) * 86400
-				ELSE 0 END)), 0)`;
+			return `COALESCE(
+				ROUND(
+					SUM(
+						CASE
+							WHEN (julianday(COALESCE("${queryAlias}"."stoppedAt", datetime('now'))) -
+								  julianday("${queryAlias}"."startedAt")) * 86400 >= 0
+							THEN (julianday(COALESCE("${queryAlias}"."stoppedAt", datetime('now'))) -
+								  julianday("${queryAlias}"."startedAt")) * 86400
+							ELSE 0
+						END
+					)
+				), 0
+			)`;
 		case DatabaseTypeEnum.postgres:
-			return `COALESCE(ROUND(SUM(CASE
-				WHEN extract(epoch from (COALESCE("${queryAlias}"."stoppedAt", NOW()) - "${queryAlias}"."startedAt")) >= 0
-				THEN extract(epoch from (COALESCE("${queryAlias}"."stoppedAt", NOW()) - "${queryAlias}"."startedAt"))
-				ELSE 0 END)), 0)`;
+			return `COALESCE(
+				ROUND(
+					SUM(
+						CASE
+							WHEN extract(epoch from (COALESCE("${queryAlias}"."stoppedAt", NOW()) - "${queryAlias}"."startedAt")) >= 0
+							THEN extract(epoch from (COALESCE("${queryAlias}"."stoppedAt", NOW()) - "${queryAlias}"."startedAt"))
+							ELSE 0
+						END
+					)
+				), 0
+			)`;
 		case DatabaseTypeEnum.mysql:
-			return `COALESCE(ROUND(SUM(CASE
-				WHEN TIMESTAMPDIFF(SECOND, \`${queryAlias}\`.\`startedAt\`, COALESCE(\`${queryAlias}\`.\`stoppedAt\`, NOW())) >= 0
-				THEN TIMESTAMPDIFF(SECOND, \`${queryAlias}\`.\`startedAt\`, COALESCE(\`${queryAlias}\`.\`stoppedAt\`, NOW()))
-				ELSE 0 END)), 0)`;
+			return p(`COALESCE(
+				ROUND(
+					SUM(
+						CASE
+							WHEN TIMESTAMPDIFF(SECOND, \`${queryAlias}\`.\`startedAt\`, COALESCE(\`${queryAlias}\`.\`stoppedAt\`, NOW())) >= 0
+							THEN TIMESTAMPDIFF(SECOND, \`${queryAlias}\`.\`startedAt\`, COALESCE(\`${queryAlias}\`.\`stoppedAt\`, NOW()))
+							ELSE 0
+						END
+					)
+				), 0
+			)`);
 		default:
 			throw Error(`Unsupported database type: ${dbType}`);
 	}

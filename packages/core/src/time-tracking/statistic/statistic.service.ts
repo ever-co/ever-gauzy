@@ -20,7 +20,9 @@ import {
 	IGetManualTimesStatistics,
 	IManualTimesStatistics,
 	TimeLogType,
-	ITimeLog
+	ITimeLog,
+	IWeeklyStatisticsActivities,
+	ITodayStatisticsActivities
 } from '@gauzy/contracts';
 import { ArraySum, isNotEmpty } from '@gauzy/common';
 import {
@@ -44,13 +46,8 @@ import { TimeLog, TimeSlot } from './../../core/entities/internal';
 import { MultiORMEnum, getDateRangeFormat, getORMType } from './../../core/utils';
 import { TypeOrmTimeSlotRepository } from '../../time-tracking/time-slot/repository/type-orm-time-slot.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
-import { TypeOrmActivityRepository } from '../activity/repository';
+import { TypeOrmActivityRepository } from '../activity/repository/type-orm-activity.repository';
 import { MikroOrmTimeLogRepository, TypeOrmTimeLogRepository } from '../time-log/repository';
-
-export interface IStatisticsActivities {
-	overall: number;
-	duration: number;
-}
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
@@ -104,10 +101,17 @@ export class StatisticService {
 	}
 
 	/**
-	 * GET Time Tracking Dashboard Counts Statistics
+	 * Retrieves time tracking dashboard count statistics, including the total number of employees worked,
+	 * projects worked, weekly activities, and today's activities based on the given request.
 	 *
-	 * @param request
-	 * @returns
+	 * This function executes multiple asynchronous operations concurrently to fetch the necessary statistics
+	 * and constructs a comprehensive response object with aggregated data.
+	 *
+	 * @param {IGetCountsStatistics} request - The request object containing filters and parameters to fetch
+	 * the counts statistics, such as organizationId, date ranges, employeeIds, projectIds, and other filtering criteria.
+	 *
+	 * @returns {Promise<ICountsStatistics>} - Returns a promise that resolves with the counts statistics object,
+	 * containing total employees count, projects count, weekly activity, weekly duration, today's activity, and today's duration.
 	 */
 	async getCounts(request: IGetCountsStatistics): Promise<ICountsStatistics> {
 		// Retrieve statistics counts concurrently
@@ -135,7 +139,7 @@ export class StatisticService {
 	 * @param request - The request object containing filters and parameters
 	 * @returns {Promise<IStatisticsActivities>} - The weekly activity statistics
 	 */
-	async getWeeklyStatisticsActivities(request: IGetCountsStatistics): Promise<IStatisticsActivities> {
+	async getWeeklyStatisticsActivities(request: IGetCountsStatistics): Promise<IWeeklyStatisticsActivities> {
 		let {
 			organizationId,
 			startDate,
@@ -191,7 +195,9 @@ export class StatisticService {
 			.where(`${query.alias}.tenantId = :tenantId`, { tenantId })
 			.andWhere(`${query.alias}.organizationId = :organizationId`, { organizationId })
 			.andWhere(`time_log.tenantId = :tenantId`, { tenantId })
-			.andWhere(`time_log.organizationId = :organizationId`, { organizationId })
+			.andWhere(`time_log.organizationId = :organizationId`, { organizationId });
+
+		query
 			.andWhere(`${query.alias}.startedAt BETWEEN :startDate AND :endDate`, {
 				startDate: start,
 				endDate: end
@@ -238,6 +244,7 @@ export class StatisticService {
 
 		// Group by time_log.id to get the total duration and overall for each time slot
 		const weekTimeStatistics = await query.groupBy(p(`"time_log"."id"`)).getRawMany();
+		console.log('weekly time statistics activity', weekTimeStatistics);
 
 		// Initialize variables to accumulate values
 		let totalWeekDuration = 0;
@@ -246,9 +253,9 @@ export class StatisticService {
 
 		// Iterate over the weekTimeStatistics array once to calculate all values
 		for (const stat of weekTimeStatistics) {
-			totalWeekDuration += stat.week_duration || 0;
-			totalOverall += stat.overall || 0;
-			totalDuration += stat.duration || 0;
+			totalWeekDuration += Number(stat.week_duration) || 0;
+			totalOverall += Number(stat.overall) || 0;
+			totalDuration += Number(stat.duration) || 0;
 		}
 
 		// Calculate the week percentage, avoiding division by zero
@@ -267,7 +274,7 @@ export class StatisticService {
 	 * @param request - The request object containing filters and parameters
 	 * @returns {Promise<IStatisticsActivities>} - Today's activity statistics
 	 */
-	async getTodayStatisticsActivities(request: IGetCountsStatistics): Promise<IStatisticsActivities> {
+	async getTodayStatisticsActivities(request: IGetCountsStatistics): Promise<ITodayStatisticsActivities> {
 		// Destructure the necessary properties from the request with default values
 		let {
 			organizationId,
@@ -329,7 +336,9 @@ export class StatisticService {
 			.andWhere(`${query.alias}.tenantId = :tenantId`, { tenantId })
 			.andWhere(`${query.alias}.organizationId = :organizationId`, { organizationId })
 			.andWhere(`time_log.tenantId = :tenantId`, { tenantId })
-			.andWhere(`time_log.organizationId = :organizationId`, { organizationId })
+			.andWhere(`time_log.organizationId = :organizationId`, { organizationId });
+
+		query
 			.andWhere(p(`"${query.alias}"."startedAt" BETWEEN :startDate AND :endDate`), {
 				startDate: startToday,
 				endDate: endToday
@@ -378,6 +387,7 @@ export class StatisticService {
 		}
 
 		const todayTimeStatistics = await query.groupBy(p(`"time_log"."id"`)).getRawMany();
+		console.log('today time statistics activity', todayTimeStatistics);
 
 		// Initialize variables to accumulate values
 		let totalTodayDuration = 0;
@@ -386,9 +396,9 @@ export class StatisticService {
 
 		// Iterate over the todayTimeStatistics array once to calculate all values
 		for (const stat of todayTimeStatistics) {
-			totalTodayDuration += stat.today_duration || 0;
-			totalOverall += stat.overall || 0;
-			totalDuration += stat.duration || 0;
+			totalTodayDuration += Number(stat.today_duration) || 0;
+			totalOverall += Number(stat.overall) || 0;
+			totalDuration += Number(stat.duration) || 0;
 		}
 
 		// Calculate today's percentage, avoiding division by zero
@@ -408,12 +418,24 @@ export class StatisticService {
 	 * @returns
 	 */
 	async getMembers(request: IGetMembersStatistics): Promise<IMembersStatistics[]> {
-		const { organizationId, startDate, endDate, todayStart, todayEnd } = request;
-		let { employeeIds = [], projectIds = [], teamIds = [] } = request;
+		// Destructure properties from the request with default values where necessary
+		let {
+			organizationId,
+			startDate,
+			endDate,
+			todayStart,
+			todayEnd,
+			employeeIds = [],
+			projectIds = [],
+			teamIds = []
+		} = request || {};
 
-		const user = RequestContext.currentUser();
-		const tenantId = RequestContext.currentTenantId() || request.tenantId;
+		// Retrieves the database type from the configuration service.
+		const dbType = this.configService.dbConnectionOptions.type;
+		const user = RequestContext.currentUser(); // Retrieve the current user
+		const tenantId = RequestContext.currentTenantId() || request.tenantId; // Retrieve the current tenant ID
 
+		// Get the start and end date for the weekly statistics
 		const { start: weeklyStart, end: weeklyEnd } = getDateRangeFormat(
 			moment.utc(startDate || moment().startOf('week')),
 			moment.utc(endDate || moment().endOf('week'))
@@ -424,12 +446,7 @@ export class StatisticService {
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		);
 
-		// Retrieves the database type from the configuration service.
-		const dbType = this.configService.dbConnectionOptions.type;
-
-		/**
-		 * Set employeeIds based on user conditions and permissions
-		 */
+		// Set employeeIds based on user conditions and permissions
 		if (user.employeeId || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
 			employeeIds = [user.employeeId];
 		}
