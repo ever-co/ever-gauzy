@@ -243,12 +243,16 @@ export const addHttpsPrefix = (url: string, prefix = 'https'): string => {
  * @returns A string representation of the query parameters.
  */
 export function createQueryParamsString(queryParams: { [key: string]: string | string[] | boolean }): string {
-	return Object.keys(queryParams)
-		.map((key) => {
-			const value = queryParams[key];
+	return Object.entries(queryParams)
+		.map(([key, value]) => {
 			if (Array.isArray(value)) {
+				// Handle array values by joining them with '&'
 				return value.map((v) => `${encodeURIComponent(key)}=${encodeURIComponent(v)}`).join('&');
+			} else if (typeof value === 'boolean') {
+				// Convert boolean to string explicitly (true/false)
+				return `${encodeURIComponent(key)}=${value}`;
 			} else {
+				// Handle string or other types
 				return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
 			}
 		})
