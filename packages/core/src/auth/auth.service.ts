@@ -406,6 +406,7 @@ export class AuthService extends SocialAuthService {
 
 			// Fetch users with specific criteria
 			const users = await this.fetchUsers(email);
+
 			// Throw an exception if no matching users are found
 			if (users.length === 0) {
 				throw new BadRequestException('Forgot password request failed!');
