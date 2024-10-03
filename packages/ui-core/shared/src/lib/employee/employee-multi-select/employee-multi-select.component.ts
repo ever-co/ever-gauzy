@@ -99,12 +99,6 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	public selectedDateRange: IDateRangePicker;
 
 	ngOnInit(): void {
-		//delay to pre selected employee
-		this.loaded = false;
-		setTimeout(() => {
-			this.loaded = true;
-		}, 500);
-
 		this.changeValue$.pipe(debounceTime(100), untilDestroyed(this)).subscribe((value) => {
 			this.checkForMultiSelectValue(value);
 			this.onChange(this.val);
@@ -124,7 +118,13 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 				}),
 				tap(() => {
 					if (!this.allEmployees || this.allEmployees.length === 0) {
-						this.getWorkingEmployees();
+						this.getWorkingEmployees().then(() => {
+							this.select.setValue(this.preSelected);
+							this.loaded = true;
+						});
+					} else {
+						this.select.setValue(this.preSelected);
+						this.loaded = true;
 					}
 				}),
 				untilDestroyed(this)
