@@ -28,6 +28,26 @@ export abstract class SelectorQuery<T> extends Query<ISelector<T>> {
 		return this.getValue().selected;
 	}
 
+	public get page(): number {
+		return this.getValue().page;
+	}
+
+	public get page$(): Observable<number> {
+		return this.select((state) => state.page);
+	}
+
+	public get limit(): number {
+		return this.getValue().limit;
+	}
+
+	public get total(): number {
+		return this.getValue().total;
+	}
+
+	public get hasNext(): boolean {
+		return this.page * this.limit < this.total;
+	}
+
 	public get hasPermission$(): Observable<boolean> {
 		return this.select((state) => state.hasPermission);
 	}

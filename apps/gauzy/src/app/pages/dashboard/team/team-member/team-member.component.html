@@ -1,22 +1,26 @@
 <nb-card>
-    <nb-card-body>
+	<nb-card-body>
 		<div class="row w-100">
 			<div [class]="isClassic ? 'col-5' : 'col-3'">
-				<div [class]="isClassic ?'user-container' : 'row'">
+				<div [class]="isClassic ? 'user-container' : 'row'">
 					<div class="col-3">
 						<div class="dot-container">
-							<div [ngClass]="{
-                        online: member?.isRunningTimer,
-                        offline: !member?.isWorkingToday
-                    }" class="dot"></div>
+							<div
+								[ngClass]="{
+									online: member?.isRunningTimer,
+									offline: !member?.isWorkingToday
+								}"
+								class="dot"
+							></div>
 						</div>
 					</div>
 					<div class="col-9">
 						<ngx-avatar
-							[class]="isClassic ?  'avatar-dashboard' : 'report-table'"
+							[class]="isClassic ? 'avatar-dashboard' : 'report-table'"
 							[id]="member?.employee?.id"
 							[name]="member?.employee?.user?.name"
 							[src]="member?.employee?.user?.imageUrl"
+							[employee]="member?.employee"
 						></ngx-avatar>
 					</div>
 				</div>
@@ -76,7 +80,11 @@
 				</nb-progress-bar>
 			</div>
 			<div [class]="member?.isWorkingToday ? 'col-3 text-right' : 'col-4'">
-				{{member?.todayWorkDuration > 0 ? humanize(member?.todayWorkDuration) : ('ORGANIZATIONS_PAGE.NOT_WORKED'|translate)}}
+				{{
+					member?.todayWorkDuration > 0
+						? humanize(member?.todayWorkDuration)
+						: ('ORGANIZATIONS_PAGE.NOT_WORKED' | translate)
+				}}
 			</div>
 			<div *ngIf="member?.isWorkingToday" class="col-1">
 				<nb-badge

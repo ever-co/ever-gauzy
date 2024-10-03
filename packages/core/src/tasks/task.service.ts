@@ -523,7 +523,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				projectId,
 				members
 			} = where;
-			const tenantId = RequestContext.currentTenantId() || where?.tenantId;
+			const tenantId = RequestContext.currentTenantId() || where.tenantId;
 			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
 			// Initialize the query
@@ -563,7 +563,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					subQuery.andWhere(p(`"pmt"."organizationProjectModuleId" IN (:...modules)`), { modules });
 				}
 
-				return p(`"project_module_tasks"."taskId" IN `) + subQuery.distinct(true).getQuery();
+				return p(`"task_modules"."taskId" IN `) + subQuery.distinct(true).getQuery();
 			});
 
 			// Add organization and tenant filters

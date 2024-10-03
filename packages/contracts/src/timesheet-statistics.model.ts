@@ -64,7 +64,8 @@ export interface IGetManualTimesStatistics extends ITimeLogFilters {
 	onlyMe?: boolean;
 }
 
-export interface IManualTimesStatistics extends Pick<ITimeLog, 'id' | 'startedAt' | 'duration' | 'employeeId'> {
+export interface IManualTimesStatistics
+	extends Pick<ITimeLog, 'id' | 'startedAt' | 'duration' | 'employeeId' | 'employee'> {
 	user?: Pick<IUser, 'name' | 'imageUrl'>;
 	project?: Pick<IOrganizationProject, 'name' | 'imageUrl'>;
 }
@@ -106,6 +107,19 @@ export interface ICountsStatistics {
 	todayActivities: number;
 	todayDuration: number;
 }
+
+/**
+ * Weekly Statistics Activities
+ */
+export interface IWeeklyStatisticsActivities {
+	overall: number;
+	duration: number;
+}
+
+/**
+ * Today Statistics Activities
+ */
+export interface ITodayStatisticsActivities extends IWeeklyStatisticsActivities {}
 
 export interface ISelectedDateRange {
 	startDate: Date;

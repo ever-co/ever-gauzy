@@ -1,187 +1,204 @@
 @import 'themes';
 
 @mixin common {
-	.inner-wrapper {
-		border-radius: var(--button-rectangle-border-radius);
-		align-items: center;
-		overflow: hidden;
-		display: flex;
-		gap: 8px;
-	}
+  .inner-wrapper {
+    border-radius: var(--button-rectangle-border-radius);
+    align-items: center;
+    overflow: hidden;
+    display: flex;
+    gap: 8px;
+  }
 
-	.avatar-wrapper {
-		width: 100%;
-		border-radius: var(--border-radius);
-	}
+  .avatar-wrapper {
+    width: 100%;
+    border-radius: var(--border-radius);
+  }
 
-	.names-wrapper {
-		overflow: hidden;
-		white-space: nowrap;
-		text-overflow: ellipsis;
-	}
+  .names-wrapper {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
 
-	.link-text {
-		cursor: pointer;
-		text-decoration: none;
-		font-style: normal;
-		line-height: 15px;
-		letter-spacing: 0;
-		white-space: nowrap;
-		width: 100%;
-		text-overflow: ellipsis;
-	}
+  .link-text {
+    cursor: pointer;
+    text-decoration: none;
+    font-style: normal;
+    line-height: 15px;
+    letter-spacing: 0;
+    white-space: nowrap;
+    width: 100%;
+    text-overflow: ellipsis;
+  }
 
-	.link-text:hover {
-		text-decoration: underline;
-	}
+  .link-text:hover {
+    text-decoration: underline;
+  }
 
-	.image-container {
-		width: 20px;
-		cursor: pointer;
-		border-radius: var(--border-radius);
-		display: flex;
+  .image-container {
+    width: 20px;
+    cursor: pointer;
+    border-radius: var(--border-radius);
+    display: flex;
+    position: relative;
 
-		img {
-			width: 20px;
-			height: 20px;
-			object-fit: cover;
-			border-radius: var(--border-radius) !important;
-		}
-	}
+    img {
+      width: 20px;
+      height: 20px;
+      object-fit: cover;
+      border-radius: var(--border-radius) !important;
+    }
+    .status-indicator {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 8px;
+      border: 2px solid #ebebeb;
+      right: 0;
+      top: 0;
+
+      &.online {
+        background-color: #4caf50; /* Green for online */
+      }
+      &.offline {
+        background-color: #f44336; /* Red for offline */
+      }
+    }
+  }
 }
 
 :host {
-	display: block;
+  display: block;
 
-	.link-text {
-		font-size: 14px;
-		font-weight: 600;
-		line-height: 16px;
-		cursor: pointer;
-		text-decoration: none;
-		letter-spacing: 0em;
-		color: nb-theme(gauzy-text-contact);
-	}
+  .link-text {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 16px;
+    cursor: pointer;
+    text-decoration: none;
+    letter-spacing: 0em;
+    color: nb-theme(gauzy-text-contact);
+  }
 
-	.caption {
-		font-size: 11px;
-		font-weight: 400;
-		line-height: 11px;
-		letter-spacing: 0em;
-		color: var(--gauzy-text-color-2);
-	}
+  .caption {
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 11px;
+    letter-spacing: 0em;
+    color: var(--gauzy-text-color-2);
+  }
 
-	.link-text:hover {
-		text-decoration: underline;
-	}
+  .link-text:hover {
+    text-decoration: underline;
+  }
 
-	.image-container {
-		width: 48px;
-		cursor: pointer;
+  .image-container {
+    width: 48px;
+    cursor: pointer;
 
-		img {
-			width: 48px;
-			height: 48px;
-			object-fit: cover;
-		}
+    img {
+      width: 48px;
+      height: 48px;
+      object-fit: cover;
+    }
 
-		&.lg {
-			width: 64px;
+    &.lg {
+      width: 64px;
 
-			img {
-				width: 64px;
-				height: 64px;
-			}
-		}
+      img {
+        width: 64px;
+        height: 64px;
+      }
+    }
 
-		&.sm {
-			width: 32px;
+    &.sm {
+      width: 32px;
 
-			img {
-				width: 32px;
-				height: 32px;
-			}
-		}
-	}
+      img {
+        width: 32px;
+        height: 32px;
+      }
+    }
+  }
 }
 
 :host-context(.report-table) {
-	width: 100%;
+  width: 100%;
 
-	.inner-wrapper {
-		width: fit-content;
-		@include nb-ltr(padding, 3px 9px 3px 3px);
-		@include nb-rtl(padding, 3px 3px 3px 9px);
-		background-color: var(--color-primary-transparent-100);
-	}
+  .inner-wrapper {
+    width: fit-content;
+    @include nb-ltr(padding, 3px 9px 3px 3px);
+    @include nb-rtl(padding, 3px 3px 3px 9px);
+    background-color: var(--color-primary-transparent-100);
+  }
 
-	.link-text {
-		font-size: 12px;
-		font-weight: 400;
-		text-overflow: ellipsis;
-		color: var(--text-primary-color) !important;
-	}
+  .link-text {
+    font-size: 12px;
+    font-weight: 400;
+    text-overflow: ellipsis;
+    color: var(--text-primary-color) !important;
+  }
 
-	@include common;
+  @include common;
 }
 
 :host-context(.avatar-dashboard) {
-	width: 100%;
+  width: 100%;
 
-	.inner-wrapper {
-		width: 100%;
-	}
+  .inner-wrapper {
+    width: 100%;
+  }
 
-	.names-wrapper {
-		width: 100%;
-	}
+  .names-wrapper {
+    width: 100%;
+  }
 
-	.link-text {
-		font-size: 14px;
-		font-weight: 600;
-		color: var(--gauzy-text-color-1) !important;
-	}
+  .link-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gauzy-text-color-1) !important;
+  }
 
-	&.activity {
-		.image-container {
-			width: 28px;
-			border-radius: var(--button-rectangle-border-radius) !important;
+  &.activity {
+    .image-container {
+      width: 28px;
+      border-radius: var(--button-rectangle-border-radius) !important;
 
-			img {
-				border-radius: var(--button-rectangle-border-radius) !important;
-				width: 28px;
-				height: 28px;
-			}
-		}
-	}
+      img {
+        border-radius: var(--button-rectangle-border-radius) !important;
+        width: 28px;
+        height: 28px;
+      }
+    }
+  }
 
-	@include common;
+  @include common;
 }
 
 :host-context(.workspace) {
-	$radius: var(--border-radius);
-	width: 100%;
+  $radius: var(--border-radius);
+  width: 100%;
 
-	.inner-wrapper {
-		width: fit-content;
-		padding: calc($radius / 4);
-		background-color: var(--color-primary-transparent-100);
-		border-radius: calc($radius / 2) !important;
-	}
+  .inner-wrapper {
+    width: fit-content;
+    padding: calc($radius / 4);
+    background-color: var(--color-primary-transparent-100);
+    border-radius: calc($radius / 2) !important;
+  }
 
-	@include common;
+  @include common;
 
-	.image-container {
-		&,
-		img {
-			border-radius: calc($radius / 4) !important;
-		}
-	}
+  .image-container {
+    &,
+    img {
+      border-radius: calc($radius / 4) !important;
+    }
+  }
 
-	.names-wrapper {
-		a.link-text {
-			text-decoration: none;
-			cursor: none;
-		}
-	}
+  .names-wrapper {
+    a.link-text {
+      text-decoration: none;
+      cursor: none;
+    }
+  }
 }

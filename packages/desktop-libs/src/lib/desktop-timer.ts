@@ -297,7 +297,6 @@ export default class TimerHandler {
 
 		if (isStop) params.manualTimeSlot = true;
 
-		setupWindow.webContents.send('update_toggle_timer', params);
 		console.log('Update Toggle Timer End');
 	}
 
@@ -415,7 +414,7 @@ export default class TimerHandler {
 		const now = moment();
 		const nowUtcFormat = now.utc().format();
 		const start = lastTimeSlot.utc().format();
-		const startedAt = lastTimeSlot.utc().toDate();
+		const startedAt = now.utc().toDate();
 		const params = LocalStore.beforeRequestParams();
 		const projectInfo = LocalStore.getStore('project');
 		const appSetting = LocalStore.getStore('appSetting');

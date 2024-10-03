@@ -224,13 +224,14 @@
 							<div class="hour-label mb-3">
 								<ng-template [ngxPermissionsOnly]="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
 									<ngx-avatar
-										size="sm"
 										class="avatar-dashboard activity"
+										[size]="'sm'"
 										[name]="employee?.user?.name"
 										[src]="employee?.user?.imageUrl"
 										[appendCaption]="'TIMESHEET.LAST_WORKED' | translate"
 										[caption]="(employee?.timeSlots)[0]?.startedAt | utcToLocal | dateFormat"
 										[id]="employee?.id"
+										[employee]="employee"
 									></ngx-avatar>
 								</ng-template>
 								<div></div>
@@ -351,6 +352,7 @@
 										[name]="manualTime?.user?.name"
 										[src]="manualTime?.user?.imageUrl"
 										[id]="manualTime?.employeeId"
+										[employee]="manualTime?.employee"
 										size="sm"
 										class="avatar-dashboard"
 									></ngx-avatar>
@@ -577,6 +579,7 @@
 											[name]="member?.user?.name"
 											[src]="member?.user?.imageUrl"
 											[id]="member?.id"
+											[employee]="member"
 											size="sm"
 											class="avatar-dashboard"
 										>
