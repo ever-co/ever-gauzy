@@ -1,6 +1,16 @@
+import { CommandHandler, ICommandHandler, EventBus as CqrsEventBus } from '@nestjs/cqrs';
 import { HttpException, HttpStatus, Logger } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { ID, ITask, ITaskUpdateInput } from '@gauzy/contracts';
+import {
+	ActionTypeEnum,
+	ActivityLogEntityEnum,
+	ActorTypeEnum,
+	IActivityLogUpdatedValues,
+	ID,
+	ITask,
+	ITaskUpdateInput
+} from '@gauzy/contracts';
+import { ActivityLogEvent } from '../../../activity-log/events';
+import { generateActivityLogDescription } from '../../../activity-log/activity-log.helper';
 import { TaskEvent } from '../../../event-bus/events';
 import { EventBus } from '../../../event-bus/event-bus';
 import { BaseEntityEventTypeEnum } from '../../../event-bus/base-entity-event';
@@ -12,7 +22,11 @@ import { TaskUpdateCommand } from '../task-update.command';
 export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 	private readonly logger = new Logger('TaskUpdateHandler');
 
-	constructor(private readonly _eventBus: EventBus, private readonly _taskService: TaskService) {}
+	constructor(
+		private readonly _eventBus: EventBus,
+		private readonly _cqrsEventBus: CqrsEventBus,
+		private readonly _taskService: TaskService
+	) {}
 
 	/**
 	 * Executes the TaskUpdateCommand.
@@ -72,10 +86,63 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 				this._eventBus.publish(event); // Publish the event using EventBus
 			}
 
+			// Generate the activity log description
+			const description = generateActivityLogDescription(
+				ActionTypeEnum.Updated,
+				ActivityLogEntityEnum.Task,
+				updatedTask.title
+			);
+
+			const { updatedFields, previousValues, updatedValues } = this.activityLogUpdatedFieldsAndValues(
+				updatedTask,
+				input
+			);
+
+			// Emit an event to log the activity
+			this._cqrsEventBus.publish(
+				new ActivityLogEvent({
+					entity: ActivityLogEntityEnum.Task,
+					entityId: updatedTask.id,
+					action: ActionTypeEnum.Updated,
+					actorType: ActorTypeEnum.User, // TODO : Since we have Github Integration, make sure we can also store "System" for actor
+					description,
+					updatedFields,
+					updatedValues,
+					previousValues,
+					data: updatedTask,
+					organizationId: updatedTask.organizationId,
+					tenantId
+				})
+			);
+
 			return updatedTask;
 		} catch (error) {
 			this.logger.error(`Error while updating task: ${error.message}`, error.message);
 			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
 		}
+	}
+
+	/**
+	 * @description - Compare values before and after update then add updates to fields
+	 * @param {ITask} task - Updated task
+	 * @param {ITaskUpdateInput} entity - Input data with new values
+	 */
+	private activityLogUpdatedFieldsAndValues(task: ITask, entity: ITaskUpdateInput) {
+		const updatedFields = [];
+		const previousValues: IActivityLogUpdatedValues[] = [];
+		const updatedValues: IActivityLogUpdatedValues[] = [];
+
+		for (const key of Object.keys(entity)) {
+			if (task[key] !== entity[key]) {
+				// Add updated field
+				updatedFields.push(key);
+
+				// Add old and new values
+				previousValues.push({ [key]: task[key] });
+				updatedValues.push({ [key]: task[key] });
+			}
+		}
+
+		return { updatedFields, previousValues, updatedValues };
 	}
 }
