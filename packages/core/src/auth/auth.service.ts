@@ -1,6 +1,12 @@
 import { CommandBus } from '@nestjs/cqrs';
 import { HttpService } from '@nestjs/axios';
-import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import {
+	BadRequestException,
+	Injectable,
+	InternalServerErrorException,
+	NotFoundException,
+	UnauthorizedException
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -424,7 +430,7 @@ export class AuthService extends SocialAuthService {
 				if (!!token && !!email) {
 					try {
 						// Create a password reset request and generate a reset link
-						const request = await this.commandBus.execute(
+						await this.commandBus.execute(
 							new PasswordResetCreateCommand({
 								email,
 								tenantId,
@@ -500,48 +506,51 @@ export class AuthService extends SocialAuthService {
 	 * @returns {Promise<User[]>} A Promise that resolves to an array of User objects.
 	 */
 	async fetchUsers(email: IUserEmailInput['email']): Promise<IUser[]> {
+		// Find users matching the criteria
 		return await this.typeOrmUserRepository.find({
-			where: {
-				email,
-				isActive: true,
-				isArchived: false
-			},
-			relations: {
-				tenant: true,
-				role: true
-			}
+			where: { email, isActive: true, isArchived: false },
+			relations: { tenant: true, role: true }
 		});
 	}
 
 	/**
-	 *  Reset password
-	 * @param request
-	 * @returns
+	 * Resets the user's password based on a valid password reset token.
+	 *
+	 * @param request - The request object containing the new password and the reset token.
+	 * @returns A boolean indicating whether the password reset was successful.
+	 * @throws {BadRequestException} - If the password reset fails due to an invalid or expired token, or if there is an issue updating the password.
 	 */
 	async resetPassword(request: IChangePasswordRequest) {
 		try {
 			const { password, token } = request;
+
+			// Validate the password reset token
 			const record: IPasswordReset = await this.commandBus.execute(new PasswordResetGetCommand({ token }));
 			if (record.expired) {
-				throw new BadRequestException('Password Reset Failed.');
+				throw new BadRequestException('Password Reset Failed: Token has expired.');
 			}
+
+			// Verify the token and extract user information
 			const { id, tenantId } = verify(token, environment.JWT_SECRET) as {
-				id: string;
-				tenantId: string;
+				id: ID;
+				tenantId: ID;
 			};
-			try {
-				const user = await this.userService.findOneByIdString(id, {
-					where: { tenantId },
-					relations: { tenant: true }
-				});
-				if (user) {
-					const hash = await this.getPasswordHash(password);
-					await this.userService.changePassword(user.id, hash);
-					return true;
-				}
-			} catch (error) {
-				throw new BadRequestException('Password Reset Failed.');
+
+			// Fetch the user by ID and tenant
+			const user = await this.userService.findOneByIdString(id, {
+				where: { tenantId },
+				relations: { tenant: true }
+			});
+
+			if (!user) {
+				throw new NotFoundException('Password Reset Failed.');
 			}
+
+			// Hash the new password and update it for the user
+			const hash = await this.getPasswordHash(password);
+			await this.userService.changePassword(user.id, hash);
+
+			return true;
 		} catch (error) {
 			throw new BadRequestException('Password Reset Failed.');
 		}
