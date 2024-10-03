@@ -1,6 +1,8 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler, EventBus as CqrsEventBus } from '@nestjs/cqrs';
 import { HttpException, HttpStatus, Logger } from '@nestjs/common';
-import { ITask } from '@gauzy/contracts';
+import { ActionTypeEnum, ActivityLogEntityEnum, ActorTypeEnum, ITask } from '@gauzy/contracts';
+import { ActivityLogEvent } from '../../../activity-log/events';
+import { generateActivityLogDescription } from '../../../activity-log/activity-log.helper';
 import { EventBus } from '../../../event-bus';
 import { TaskEvent } from '../../../event-bus/events';
 import { BaseEntityEventTypeEnum } from '../../../event-bus/base-entity-event';
@@ -14,7 +16,9 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 	private readonly logger = new Logger('TaskCreateCommand');
 
 	constructor(
+		// TODO : use only one event bus type
 		private readonly _eventBus: EventBus,
+		private readonly _cqrsEventBus: CqrsEventBus,
 		private readonly _taskService: TaskService,
 		private readonly _organizationProjectService: OrganizationProjectService
 	) {}
@@ -67,6 +71,27 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 				const event = new TaskEvent(ctx, createdTask, BaseEntityEventTypeEnum.CREATED, input);
 				this._eventBus.publish(event); // Publish the event using EventBus
 			}
+
+			// Generate the activity log description
+			const description = generateActivityLogDescription(
+				ActionTypeEnum.Created,
+				ActivityLogEntityEnum.Task,
+				createdTask.title
+			);
+
+			// Emit an event to log the activity
+			this._cqrsEventBus.publish(
+				new ActivityLogEvent({
+					entity: ActivityLogEntityEnum.Task,
+					entityId: createdTask.id,
+					action: ActionTypeEnum.Created,
+					actorType: ActorTypeEnum.User, // TODO : Since we have Github Integration, make sure we can also store "System" for actor
+					description,
+					data: createdTask,
+					organizationId,
+					tenantId
+				})
+			);
 
 			return createdTask; // Return the created task
 		} catch (error) {
