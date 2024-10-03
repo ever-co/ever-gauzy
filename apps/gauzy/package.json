@@ -82,7 +82,7 @@
 		"@ngx-translate/core": "^15.0.0",
 		"@ngx-translate/http-loader": "^8.0.0",
 		"@sentry/angular-ivy": "^7.101.1",
-		"@sentry/browser": "^7.90.0",
+		"@sentry/browser": "^8.33.0",
 		"@sentry/node": "^7.101.1",
 		"@sentry/tracing": "^7.101.1",
 		"@sentry/types": "^7.101.1",
