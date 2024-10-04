@@ -1,1 +1,2 @@
-export { DeleteTimeSlotDTO } from './delete-time-slot.dto';
+export * from './time-slot-delete.dto';
+export * from './time-slot-query.dto';
