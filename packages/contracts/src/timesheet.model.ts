@@ -461,7 +461,7 @@ export interface IReportDayGroupByClient {
 		logs: {
 			date: string;
 			employeeLogs: {
-				task: ITask;
+				tasks: ITask[];
 				employee: IEmployee;
 				sum: number;
 				activity: number;
