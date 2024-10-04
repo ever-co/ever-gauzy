@@ -111,7 +111,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 				id
 			});
 
-			// // Generate the activity log description
+			// Generate the activity log description
 			const description = generateActivityLogDescription(
 				ActionTypeEnum.Updated,
 				ActivityLogEntityEnum.OrganizationProjectModule,

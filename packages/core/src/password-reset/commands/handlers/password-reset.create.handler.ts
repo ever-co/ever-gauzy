@@ -5,10 +5,7 @@ import { PasswordResetService } from './../../password-reset.service';
 
 @CommandHandler(PasswordResetCreateCommand)
 export class PasswordResetCreateHandler implements ICommandHandler<PasswordResetCreateCommand> {
-
-	constructor(
-		private readonly _passwordResetService: PasswordResetService
-	) { }
+	constructor(private readonly _passwordResetService: PasswordResetService) {}
 
 	/**
 	 * Execute a command to create a password reset request.

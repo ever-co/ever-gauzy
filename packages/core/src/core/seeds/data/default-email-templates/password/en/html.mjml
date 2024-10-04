@@ -13,8 +13,8 @@
 				<mj-text>
 					<p>Hello {{userName}}!</p>
 					<p>
-						We received a password change request for your Gauzy account for the
-						<strong>{{tenantName}}</strong>.
+						We received a request to reset the password for your Gauzy account
+						{{#if tenantName}} for <strong>{{tenantName}}</strong>{{/if}}.
 					</p>
 					<p>If you requested to reset your password, click the button below:</p>
 				</mj-text>
