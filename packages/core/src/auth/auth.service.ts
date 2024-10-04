@@ -1,6 +1,12 @@
 import { CommandBus } from '@nestjs/cqrs';
 import { HttpService } from '@nestjs/axios';
-import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import {
+	BadRequestException,
+	Injectable,
+	InternalServerErrorException,
+	NotFoundException,
+	UnauthorizedException
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -36,7 +42,7 @@ import {
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
-import { IAppIntegrationConfig, deepMerge, isNotEmpty } from '@gauzy/common';
+import { IAppIntegrationConfig, createQueryParamsString, deepMerge, isNotEmpty } from '@gauzy/common';
 import { AccountRegistrationEvent } from '../event-bus/events';
 import { EventBus } from '../event-bus/event-bus';
 import { ALPHA_NUMERIC_CODE_LENGTH, DEMO_PASSWORD_LESS_MAGIC_CODE } from './../constants';
@@ -406,13 +412,14 @@ export class AuthService extends SocialAuthService {
 
 			// Fetch users with specific criteria
 			const users = await this.fetchUsers(email);
+
 			// Throw an exception if no matching users are found
 			if (users.length === 0) {
 				throw new BadRequestException('Forgot password request failed!');
 			}
 
 			// Initialize an array to store reset links along with tenant and user information
-			const tenantUsersMap: { resetLink: string; tenant: ITenant; user: IUser }[] = [];
+			const tenantUsersMap: { resetLink: string; tenant?: ITenant; user: IUser }[] = [];
 
 			// Iterate through users and generate reset links
 			for await (const user of users) {
@@ -423,15 +430,22 @@ export class AuthService extends SocialAuthService {
 				if (!!token && !!email) {
 					try {
 						// Create a password reset request and generate a reset link
-						const request = await this.commandBus.execute(
+						await this.commandBus.execute(
 							new PasswordResetCreateCommand({
 								email,
 								tenantId,
 								token
 							})
 						);
-						const resetLink = `${environment.clientBaseUrl}/#/auth/reset-password?token=${request.token}&tenantId=${tenantId}&email=${email}`;
-						tenantUsersMap.push({ resetLink, tenant: user.tenant, user });
+
+						// Initialize Base URL
+						let baseURL = `${environment.clientBaseUrl}/#/auth/reset-password`;
+
+						// Generate the reset link using the helper function
+						const resetLink = this.generateResetLink(baseURL, token, email, tenantId);
+
+						// Add the reset link, tenant, and user to the tenantUsersMap array
+						tenantUsersMap.push({ resetLink, tenant: user.tenant ?? undefined, user });
 					} catch (error) {
 						throw new BadRequestException('Forgot password request failed!');
 					}
@@ -461,54 +475,82 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
+	 * Generates a password reset link.
+	 *
+	 * @param baseURL The base URL for the reset password page.
+	 * @param token The token generated for the password reset.
+	 * @param email The email of the user.
+	 * @param tenantId The tenant ID (optional).
+	 * @returns The password reset link.
+	 */
+	generateResetLink(baseURL: string, token: string, email: string, tenantId?: ID): string {
+		// Initialize an object to store query parameters
+		const params: { [key: string]: string | ID } = { token, email };
+
+		// Add tenantId to the reset link only if it's available
+		if (tenantId) {
+			params['tenantId'] = tenantId;
+		}
+
+		// Convert query params object to a string
+		const queryString = createQueryParamsString(params);
+
+		// Combine base URL with query params
+		return `${baseURL}?${queryString}`;
+	}
+
+	/**
 	 * Fetch users from the repository based on specific criteria.
 	 *
 	 * @param {string} email - The user's email address.
 	 * @returns {Promise<User[]>} A Promise that resolves to an array of User objects.
 	 */
 	async fetchUsers(email: IUserEmailInput['email']): Promise<IUser[]> {
+		// Find users matching the criteria
 		return await this.typeOrmUserRepository.find({
-			where: {
-				email,
-				isActive: true,
-				isArchived: false
-			},
-			relations: {
-				tenant: true,
-				role: true
-			}
+			where: { email, isActive: true, isArchived: false },
+			relations: { tenant: true, role: true }
 		});
 	}
 
 	/**
-	 *  Reset password
-	 * @param request
-	 * @returns
+	 * Resets the user's password based on a valid password reset token.
+	 *
+	 * @param request - The request object containing the new password and the reset token.
+	 * @returns A boolean indicating whether the password reset was successful.
+	 * @throws {BadRequestException} - If the password reset fails due to an invalid or expired token, or if there is an issue updating the password.
 	 */
 	async resetPassword(request: IChangePasswordRequest) {
 		try {
 			const { password, token } = request;
+
+			// Validate the password reset token
 			const record: IPasswordReset = await this.commandBus.execute(new PasswordResetGetCommand({ token }));
 			if (record.expired) {
-				throw new BadRequestException('Password Reset Failed.');
+				throw new BadRequestException('Password Reset Failed: Token has expired.');
 			}
+
+			// Verify the token and extract user information
 			const { id, tenantId } = verify(token, environment.JWT_SECRET) as {
-				id: string;
-				tenantId: string;
+				id: ID;
+				tenantId: ID;
 			};
-			try {
-				const user = await this.userService.findOneByIdString(id, {
-					where: { tenantId },
-					relations: { tenant: true }
-				});
-				if (user) {
-					const hash = await this.getPasswordHash(password);
-					await this.userService.changePassword(user.id, hash);
-					return true;
-				}
-			} catch (error) {
-				throw new BadRequestException('Password Reset Failed.');
+
+			// Fetch the user by ID and tenant
+			const user = await this.userService.findOneByIdString(id, {
+				where: { tenantId },
+				relations: { tenant: true }
+			});
+
+			if (!user) {
+				throw new NotFoundException('Password Reset Failed.');
 			}
+
+			// Hash the new password and update it for the user
+			const hash = await this.getPasswordHash(password);
+			await this.userService.changePassword(user.id, hash);
+
+			return true;
 		} catch (error) {
 			throw new BadRequestException('Password Reset Failed.');
 		}
@@ -787,7 +829,7 @@ export class AuthService extends SocialAuthService {
 			// Create a payload for the JWT token
 			const payload: JwtPayload = {
 				id: user.id,
-				tenantId: user.tenantId,
+				tenantId: user.tenantId ?? null,
 				employeeId: employee ? employee.id : null,
 				role: user.role ? user.role.name : null,
 				permissions: user.role?.rolePermissions?.filter((rp) => rp.enabled).map((rp) => rp.permission) ?? null

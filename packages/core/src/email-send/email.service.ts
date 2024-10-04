@@ -18,7 +18,8 @@ import {
 	EmailTemplateEnum,
 	IResendEmailInput,
 	EmailStatusEnum,
-	ITenant
+	ITenant,
+	ID
 } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 import { deepMerge, IAppIntegrationConfig } from '@gauzy/common';
@@ -594,46 +595,48 @@ export class EmailService {
 	}
 
 	/**
+	 * Sends a multi-tenant password reset email to a user across multiple tenants.
 	 *
-	 * @param email
-	 * @param tenantUsersMap
-	 * @param languageCode
-	 * @param originUrl
+	 * @param email The email of the user.
+	 * @param tenants Array of tenants and user details with reset links.
+	 * @param languageCode The language code for localization.
+	 * @param originUrl The origin URL to be used for generating reset links.
 	 */
 	async multiTenantResetPassword(
 		email: string,
-		tenants: { resetLink: string; tenant: ITenant; user: IUser }[],
+		tenants: { resetLink: string; tenant?: ITenant; user: IUser }[],
 		languageCode: LanguagesEnum,
 		originUrl: string
 	) {
-		const integration = Object.assign({}, env.appIntegrationConfig);
+		const integration = { ...env.appIntegrationConfig }; // Clone app integration config
 
-		/** */
+		// Initialize an array to hold the items for the email
 		const items: {
 			resetLink: string;
-			tenantName: ITenant['name'];
-			tenantId: ITenant['id'];
+			tenantName: string; // Handle cases where tenant name may not be available
+			tenantId: ID; // Fallback to current tenant ID if tenant is unavailable
 			userName: IUser['name'];
 		}[] = [];
 
-		/** */
+		// Iterate over each tenant and user, constructing email items
 		for await (const { resetLink, tenant, user } of tenants) {
-			/** */
-			const tenantId = tenant ? tenant.id : RequestContext.currentTenantId();
+			// Fallback to current tenant ID if tenant is not available
+			const tenantId = tenant?.id ?? RequestContext.currentTenantId();
 
-			/** */
+			// Push each tenant/user data to the items array
 			items.push({
-				tenantName: tenant ? tenant.name : user.name,
+				tenantName: tenant?.name ?? 'Not Created', // If tenant is missing, use 'Not Created' or 'Not Yet'
 				userName: user.name,
 				resetLink,
 				tenantId
 			});
 		}
 
+		// Prepare email sending options
 		const sendOptions = {
 			template: EmailTemplateEnum.MULTI_TENANT_PASSWORD_RESET,
 			message: {
-				to: `${email}`
+				to: email
 			},
 			locals: {
 				...integration,
@@ -643,6 +646,7 @@ export class EmailService {
 			}
 		};
 
+		// Prepare email record body
 		const body = {
 			templateName: sendOptions.template,
 			email: sendOptions.message.to,
@@ -650,17 +654,21 @@ export class EmailService {
 			message: ''
 		};
 
+		// Check if the email domain is disallowed
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+
 		if (!match) {
 			try {
-				// TODO : Which Organization to prefer while sending email
+				// Retrieve the email service instance and send the email
 				const instance = await this.emailSendService.getInstance();
 				const send = await instance.send(sendOptions);
 
+				// Record the original message
 				body['message'] = send.originalMessage;
 			} catch (error) {
-				console.error(error);
+				console.error('Failed to send email:', error);
 			} finally {
+				// Create an email record
 				await this.createEmailRecord(body);
 			}
 		}
