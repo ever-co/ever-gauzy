@@ -32,7 +32,7 @@ export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
 	lockedAt?: Date;
 	editedAt?: Date;
 	isBilled?: boolean;
-	status: string;
+	status: TimesheetStatus;
 	isEdited?: boolean;
 }
 
