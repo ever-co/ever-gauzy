@@ -51,7 +51,7 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 		const hasChangeEmployeePermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 
 		// Check if the logged user does not have employee selection permission
-		if (!hasChangeEmployeePermission || isEmpty(employeeId)) {
+		if (!hasChangeEmployeePermission || (isEmpty(employeeId) && RequestContext.currentEmployeeId())) {
 			// Assign current employeeId if not provided in the request payload
 			employeeId = RequestContext.currentEmployeeId();
 		}

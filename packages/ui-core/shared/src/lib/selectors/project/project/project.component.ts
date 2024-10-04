@@ -294,6 +294,8 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 
 			// Handle the created project and update projectId
 			this.createOrganizationProject(project);
+
+			// Update projectId
 			this.projectId = project.id;
 
 			// Show success message
