@@ -24,7 +24,6 @@ export class PasswordReset extends TenantBaseEntity implements IPasswordReset {
 	/**
 	 * Token field to store a long string (text).
 	 *
-	 * @example "jC4MYf4MJ9z...END5tgygcc"
 	 */
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
