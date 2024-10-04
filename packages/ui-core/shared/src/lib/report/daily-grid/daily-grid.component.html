@@ -194,7 +194,7 @@
 						<div class="responsive-table-header">
 							{{ 'REPORT_PAGE.NOTES' | translate }}
 						</div>
-						<div class="responsive-table-content day-col" [nbTooltip]="tasks?.description">
+						<div class="responsive-table-content day-col" [nbTooltip]="task?.description">
 							{{ task?.description | truncate : 40 }}
 						</div>
 					</div>
@@ -268,7 +268,7 @@
 						<div class="responsive-table-header">
 							{{ 'REPORT_PAGE.NOTES' | translate }}
 						</div>
-						<div class="responsive-table-content day-col" [nbTooltip]="tasks?.description">
+						<div class="responsive-table-content day-col" [nbTooltip]="task?.description">
 							{{ task?.description | truncate : 40 }}
 						</div>
 					</div>
@@ -298,75 +298,75 @@
 </ng-template>
 
 <ng-template class="table-template" let-project #groupByProjectCardEl>
-	<div class="cart-body project-row" *ngFor="let day of project.logs">
-		<div class="table-row" *ngFor="let employeeLog of day.employeeLogs">
-			<div class="table-inner-wrapper">
-				<div class="responsive-table-row employee-column">
-					<div class="responsive-table-header">
-						{{ 'REPORT_PAGE.DATE' | translate }}
+	<ng-container *ngFor="let day of project.logs">
+		<div class="cart-body project-row" *ngFor="let employeeLog of day.employeeLogs">
+			<div class="table-row" *ngFor="let task of employeeLog.tasks">
+				<div class="table-inner-wrapper">
+					<div class="responsive-table-row employee-column">
+						<div class="responsive-table-header">
+							{{ 'REPORT_PAGE.DATE' | translate }}
+						</div>
+						<div class="responsive-table-content project-name">
+							<ng-container *ngTemplateOutlet="dateEl; context: { $implicit: day?.date }"></ng-container>
+						</div>
 					</div>
-					<div class="responsive-table-content project-name">
-						<ng-container *ngTemplateOutlet="dateEl; context: { $implicit: day?.date }"></ng-container>
+					<div class="responsive-table-row project-column">
+						<div class="responsive-table-header">
+							{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+						</div>
+						<div class="responsive-table-content project-name">
+							<ng-container *ngTemplateOutlet="employeeEl; context: { $implicit: employeeLog?.employee }">
+							</ng-container>
+						</div>
 					</div>
-				</div>
-				<div class="responsive-table-row project-column">
-					<div class="responsive-table-header">
-						{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+					<div class="responsive-table-row project-column">
+						<div class="responsive-table-header">
+							{{ 'REPORT_PAGE.CLIENT' | translate }}
+						</div>
+						<div class="responsive-table-content project-name">
+							<ng-container *ngTemplateOutlet="clientEl; context: { $implicit: project?.client }">
+							</ng-container>
+						</div>
 					</div>
-					<div class="responsive-table-content project-name">
-						<ng-container *ngTemplateOutlet="employeeEl; context: { $implicit: employeeLog?.employee }">
-						</ng-container>
+					<div class="responsive-table-row todo-column">
+						<div class="responsive-table-header">
+							{{ 'REPORT_PAGE.TO_DO' | translate }}
+						</div>
+						<div class="responsive-table-content day-col">
+							<ng-container *ngTemplateOutlet="taskEl; context: { $implicit: task?.task }"></ng-container>
+						</div>
 					</div>
-				</div>
-				<div class="responsive-table-row project-column">
-					<div class="responsive-table-header">
-						{{ 'REPORT_PAGE.CLIENT' | translate }}
+					<div class="responsive-table-row todo-column">
+						<div class="responsive-table-header">
+							{{ 'REPORT_PAGE.NOTES' | translate }}
+						</div>
+						<div class="responsive-table-content day-col" [nbTooltip]="task?.description">
+							{{ task?.description | truncate : 40 }}
+						</div>
 					</div>
-					<div class="responsive-table-content project-name">
-						<ng-container *ngTemplateOutlet="clientEl; context: { $implicit: project?.client }">
-						</ng-container>
+					<div class="responsive-table-row time-column">
+						<div class="responsive-table-header">
+							{{ 'REPORT_PAGE.TIME' | translate }}
+						</div>
+						<div class="responsive-table-content day-col">
+							{{ task?.duration | durationFormat }}
+						</div>
 					</div>
-				</div>
-				<div class="responsive-table-row todo-column">
-					<div class="responsive-table-header">
-						{{ 'REPORT_PAGE.TO_DO' | translate }}
-					</div>
-					<div class="responsive-table-content day-col">
-						<ng-container
-							*ngTemplateOutlet="taskEl; context: { $implicit: employeeLog?.task }"
-						></ng-container>
-					</div>
-				</div>
-				<div class="responsive-table-row todo-column">
-					<div class="responsive-table-header">
-						{{ 'REPORT_PAGE.NOTES' | translate }}
-					</div>
-					<div class="responsive-table-content day-col">
-						{{ employeeLog?.description }}
-					</div>
-				</div>
-				<div class="responsive-table-row time-column">
-					<div class="responsive-table-header">
-						{{ 'REPORT_PAGE.TIME' | translate }}
-					</div>
-					<div class="responsive-table-content day-col">
-						{{ employeeLog.sum | durationFormat }}
-					</div>
-				</div>
-				<div class="responsive-table-row activity-column">
-					<div class="responsive-table-header">
-						{{ 'REPORT_PAGE.ACTIVITY' | translate }}
-					</div>
-					<div class="responsive-table-content day-col">
-						<nb-badge
-							[status]="getStatus(employeeLog?.activity || 0)"
-							[text]="(employeeLog?.activity || 0) + '%'"
-						></nb-badge>
+					<div class="responsive-table-row activity-column">
+						<div class="responsive-table-header">
+							{{ 'REPORT_PAGE.ACTIVITY' | translate }}
+						</div>
+						<div class="responsive-table-content day-col">
+							<nb-badge
+								[status]="getStatus(employeeLog?.activity || 0)"
+								[text]="(employeeLog?.activity || 0) + '%'"
+							></nb-badge>
+						</div>
 					</div>
 				</div>
 			</div>
 		</div>
-	</div>
+	</ng-container>
 </ng-template>
 
 <ng-template class="table-template" let-client #groupByClientCardEl>

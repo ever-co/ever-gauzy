@@ -76,13 +76,16 @@ export class GetTimeLogGroupByProjectHandler implements ICommandHandler<GetTimeL
 				const avgActivity = calculateAverageActivity(chain(timeLogs).pluck('timeSlots').flatten(true).value());
 
 				// Retrieve employee details
-				const task = timeLogs.length > 0 ? timeLogs[0].task : null;
-				const employee = timeLogs.length > 0 ? timeLogs[0].employee : null;
-				const description = timeLogs.length > 0 ? timeLogs[0].description : null;
 
+				const employee = timeLogs.length > 0 ? timeLogs[0].employee : null;
+
+				const tasks = timeLogs.map((log) => ({
+					task: log.task,
+					description: log.description,
+					duration: log.duration
+				}));
 				return {
-					description,
-					task,
+					tasks,
 					employee,
 					sum,
 					activity: parseFloat(parseFloat(avgActivity + '').toFixed(2))
