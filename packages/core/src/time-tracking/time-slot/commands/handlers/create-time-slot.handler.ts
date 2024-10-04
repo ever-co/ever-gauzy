@@ -167,11 +167,11 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 		await this.typeOrmTimeSlotRepository.save(timeSlot);
 
 		// Merge timeSlots into 10 minutes slots
-		let [slot] = await this._commandBus.execute(
+		let [mergedTimeSlot] = await this._commandBus.execute(
 			new TimeSlotMergeCommand(organizationId, employeeId, minDate, maxDate)
 		);
-		if (slot) {
-			timeSlot = slot;
+		if (mergedTimeSlot) {
+			timeSlot = mergedTimeSlot;
 		}
 
 		return await this.typeOrmTimeSlotRepository.findOne({
