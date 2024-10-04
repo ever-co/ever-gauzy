@@ -98,7 +98,8 @@ export interface IDateRange {
 export interface ITimeLog
 	extends IBasePerTenantAndOrganizationEntityModel,
 		IRelationalOrganizationProject,
-		IRelationalOrganizationTeam, ITaggable {
+		IRelationalOrganizationTeam,
+		ITaggable {
 	employee: IEmployee;
 	employeeId: ID;
 	timesheet?: ITimesheet;
@@ -397,7 +398,7 @@ export interface IReportDayGroupByDate {
 	logs: {
 		project: IOrganizationProject;
 		employeeLogs: {
-			task: ITask;
+			tasks: ITask[];
 			employee: IEmployee;
 			sum: number;
 			activity: number;
@@ -419,7 +420,7 @@ export interface IReportDayGroupByDate {
 	logs: {
 		project: IOrganizationProject;
 		employeeLogs: {
-			task: ITask;
+			tasks: ITask[];
 			employee: IEmployee;
 			sum: number;
 			activity: number;
