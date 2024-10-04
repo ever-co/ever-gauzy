@@ -21,16 +21,16 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 	}
 
 	/**
-	 * @description Find favorites for current employee
+	 * @description Find favorites by employee
 	 * @param {PaginationParams<Favorite>} options Filter criteria to find favorites
 	 * @returns A promise that resolves to paginated list of favorites
 	 * @memberof FavoriteService
 	 */
 	async findFavoritesByEmployee(options: PaginationParams<Favorite>): Promise<IPagination<IFavorite>> {
 		try {
-			const employeeId = RequestContext.currentEmployeeId();
-
 			const { where, relations = [], take, skip } = options;
+
+			const employeeId = RequestContext.currentEmployeeId() || where.employeeId;
 
 			return await super.findAll({
 				where: { ...where, employeeId },

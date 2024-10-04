@@ -40,7 +40,7 @@ export class FavoriteController extends CrudController<Favorite> {
 	}
 
 	/**
-	 * @description Find favorites for current employee
+	 * @description Find favorites by employee
 	 * @param {PaginationParams<Favorite>} params Filter criteria to find favorites
 	 * @returns A promise that resolves to paginated list of favorites
 	 * @memberof FavoriteController
