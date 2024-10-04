@@ -1,10 +1,8 @@
 import { CommandHandler, ICommandHandler, CommandBus } from '@nestjs/cqrs';
 import { NotAcceptableException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
-import { ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
+import * as moment from 'moment';
+import { ID, ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
-import { TimeSlot } from './../../time-slot.entity';
 import { DeleteTimeSpanCommand } from '../../../time-log/commands/delete-time-span.command';
 import { DeleteTimeSlotCommand } from '../delete-time-slot.command';
 import { RequestContext } from './../../../../core/context';
@@ -13,74 +11,87 @@ import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.r
 
 @CommandHandler(DeleteTimeSlotCommand)
 export class DeleteTimeSlotHandler implements ICommandHandler<DeleteTimeSlotCommand> {
-
 	constructor(
-		@InjectRepository(TimeSlot)
 		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
-
 		private readonly commandBus: CommandBus
-	) { }
+	) {}
 
+	/**
+	 * Executes the command to delete time slots based on the provided query.
+	 *
+	 * This method processes the deletion of time slots based on the provided IDs in the query.
+	 * It checks for the current user's permission to change selected employees, and if not permitted,
+	 * restricts the deletion to the current user's time slots. The method handles deleting time spans
+	 * for each time slot, ensuring that only non-running time logs are deleted.
+	 *
+	 * @param command - The `DeleteTimeSlotCommand` containing the query with time slot IDs and organization data.
+	 * @returns A promise that resolves to `true` if the deletion process is successful, or throws an exception if no IDs are provided.
+	 * @throws NotAcceptableException if no time slot IDs are provided in the query.
+	 */
 	public async execute(command: DeleteTimeSlotCommand): Promise<boolean> {
-		const { query } = command;
-		const ids: string | string[] = query.ids;
+		const { ids, organizationId } = command.options;
+
+		// Throw an error if no IDs are provided
 		if (isEmpty(ids)) {
 			throw new NotAcceptableException('You can not delete time slots');
 		}
 
-		let employeeIds: string[] = [];
-		if (
-			!RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
-			const user = RequestContext.currentUser();
-			employeeIds = [user.employeeId];
-		}
+		// Retrieve the tenant ID from the current request context
+		const tenantId = RequestContext.currentTenantId() || command.options.tenantId;
 
-		const tenantId = RequestContext.currentTenantId();
-		const { organizationId } = query;
+		// Check if the current user has the permission to change the selected employee
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+		const employeeIds: ID[] = !hasChangeSelectedEmployeePermission ? [RequestContext.currentEmployeeId()] : [];
 
 		for await (const id of Object.values(ids)) {
-			const query = this.typeOrmTimeSlotRepository.createQueryBuilder('time_slot');
+			// Create a query builder for the TimeSlot entity
+			const query = this.typeOrmTimeSlotRepository.createQueryBuilder();
+
+			// Set the find options for the query
 			query.setFindOptions({
 				relations: {
 					timeLogs: true,
 					screenshots: true
 				}
 			});
-			query.where((qb: SelectQueryBuilder<TimeSlot>) => {
-				qb.andWhere(
-					new Brackets((web: WhereExpressionBuilder) => {
-						web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
-						web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
-						web.andWhere(p(`"${qb.alias}"."id" = :id`), { id });
-					})
-				);
-				if (isNotEmpty(employeeIds)) {
-					qb.andWhere(p(`"${qb.alias}"."employeeId" IN (:...employeeIds)`), {
-						employeeIds
-					});
-				}
-				qb.addOrderBy(p(`"${qb.alias}"."createdAt"`), 'ASC');
-			});
+
+			// Add where clauses to the query
+			query.where(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+			query.andWhere(p(`"${query.alias}"."id" = :id`), { id });
+
+			// Restrict deletion based on employeeId if permission is not granted
+			if (isNotEmpty(employeeIds)) {
+				query.andWhere(p(`"${query.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
+			}
+
+			// Order by creation date
+			query.addOrderBy(p(`"${query.alias}"."createdAt"`), 'ASC');
 			const timeSlots: ITimeSlot[] = await query.getMany();
+
+			// If no time slots are found, stop processing
 			if (isEmpty(timeSlots)) {
 				continue;
 			}
 
+			// Loop through each time slot
 			for await (const timeSlot of timeSlots) {
-				if (timeSlot && isNotEmpty(timeSlot.timeLogs)) {
-					const timeLogs = timeSlot.timeLogs.filter(
-						(timeLog) => timeLog.isRunning === false
-					);
-					if (isNotEmpty(timeLogs)) {
-						for await (const timeLog of timeLogs) {
+				if (isNotEmpty(timeSlot.timeLogs)) {
+					// Filter non-running time logs
+					const nonRunningTimeLogs = timeSlot.timeLogs.filter((timeLog) => !timeLog.isRunning);
+
+					// Delete non-running time logs
+					if (isNotEmpty(nonRunningTimeLogs)) {
+						// Sequentially execute delete commands for non-running time logs
+						for await (const timeLog of nonRunningTimeLogs) {
+							// Delete time span for non-running time log
 							await this.commandBus.execute(
 								new DeleteTimeSpanCommand(
 									{
-										start: timeSlot.startedAt,
-										end: timeSlot.stoppedAt
+										start: moment.utc(timeSlot.startedAt).toDate(),
+										end: moment.utc(timeSlot.stoppedAt).toDate()
 									},
 									timeLog,
 									timeSlot

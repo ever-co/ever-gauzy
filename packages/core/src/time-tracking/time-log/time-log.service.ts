@@ -1,7 +1,8 @@
 import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
-import { TimeLog } from './time-log.entity';
+import { CommandBus } from '@nestjs/cqrs';
 import { SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult } from 'typeorm';
-import { RequestContext } from '../../core/context';
+import { chain, pluck } from 'underscore';
+
 import {
 	IManualTimeInput,
 	PermissionsEnum,
@@ -23,8 +24,6 @@ import {
 	IEmployee,
 	IOrganization
 } from '@gauzy/contracts';
-import { CommandBus } from '@nestjs/cqrs';
-import { chain, pluck } from 'underscore';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../../core/crud';
 import {
@@ -39,6 +38,7 @@ import {
 	TimeLogUpdateCommand
 } from './commands';
 import { getDateRangeFormat, getDaysBetweenDates } from './../../core/utils';
+import { RequestContext } from '../../core/context';
 import { moment } from './../../core/moment-extend';
 import { calculateAverage, calculateAverageActivity, calculateDuration } from './time-log.utils';
 import { prepareSQLQuery as p } from './../../database/database.helper';
@@ -50,6 +50,7 @@ import { TypeOrmOrganizationProjectRepository } from '../../organization-project
 import { MikroOrmOrganizationProjectRepository } from '../../organization-project/repository/mikro-orm-organization-project.repository';
 import { TypeOrmOrganizationContactRepository } from '../../organization-contact/repository/type-orm-organization-contact.repository';
 import { MikroOrmOrganizationContactRepository } from '../../organization-contact/repository/mikro-orm-organization-contact.repository';
+import { TimeLog } from './time-log.entity';
 
 @Injectable()
 export class TimeLogService extends TenantAwareCrudService<TimeLog> {
@@ -1198,49 +1199,43 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
+	 * Deletes time logs based on the provided parameters.
 	 *
-	 * @param params
-	 * @returns
+	 * @param params - The parameters for deleting the time logs, including `logIds`, `organizationId`, and `forceDelete`.
+	 * @returns A promise that resolves to the result of the delete or soft delete operation.
+	 * @throws NotAcceptableException if no log IDs are provided.
 	 */
 	async deleteTimeLogs(params: IDeleteTimeLog): Promise<DeleteResult | UpdateResult> {
-		let logIds: string | string[] = params.logIds;
-		if (isEmpty(logIds)) {
-			throw new NotAcceptableException('You can not delete time logs');
-		}
-		if (typeof logIds === 'string') {
-			logIds = [logIds];
+		// Early return if no logIds are provided
+		if (isEmpty(params.logIds)) {
+			throw new NotAcceptableException('You cannot delete time logs without IDs');
 		}
 
-		const tenantId = RequestContext.currentTenantId();
-		const user = RequestContext.currentUser();
+		// Ensure logIds is an array
+		const logIds: string[] = Array.isArray(params.logIds) ? params.logIds : [params.logIds];
+
+		// Get the tenant ID from the request context or the provided tenant ID
+		const tenantId = RequestContext.currentTenantId() ?? params.tenantId;
 		const { organizationId, forceDelete } = params;
 
-		const query = this.typeOrmRepository.createQueryBuilder('time_log');
+		// Create a query builder for the TimeLog entity
+		const query = this.typeOrmRepository.createQueryBuilder();
+
+		// Set find options for the query
 		query.setFindOptions({
-			relations: {
-				timeSlots: true
-			}
+			relations: { timeSlots: true }
 		});
-		query.where((db: SelectQueryBuilder<TimeLog>) => {
-			db.andWhere({
-				...(RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
-					? {}
-					: {
-							employeeId: user.employeeId
-					  })
-			});
-			db.andWhere(
-				new Brackets((web: WhereExpressionBuilder) => {
-					web.andWhere(p(`"${db.alias}"."tenantId" = :tenantId`), {
-						tenantId
-					});
-					web.andWhere(p(`"${db.alias}"."organizationId" = :organizationId`), { organizationId });
-					web.andWhere(p(`"${db.alias}"."id" IN (:...logIds)`), {
-						logIds
-					});
-				})
-			);
-		});
+
+		// Add where clauses to the query
+		query.where(p(`"${query.alias}"."id" IN (:...logIds)`), { logIds });
+		query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+		query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+
+		// If user don't have permission to change selected employee, filter by current employee ID
+		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			const employeeId = RequestContext.currentEmployeeId();
+			query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
+		}
 
 		const timeLogs = await query.getMany();
 		return await this.commandBus.execute(new TimeLogDeleteCommand(timeLogs, forceDelete));

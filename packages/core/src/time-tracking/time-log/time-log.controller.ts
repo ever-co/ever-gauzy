@@ -14,12 +14,12 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
-import { ITimeLog, PermissionsEnum, IGetTimeLogConflictInput } from '@gauzy/contracts';
+import { ITimeLog, PermissionsEnum, IGetTimeLogConflictInput, ID } from '@gauzy/contracts';
 import { TimeLogService } from './time-log.service';
 import { Permissions } from './../../shared/decorators';
 import { OrganizationPermissionGuard, PermissionGuard, TenantBaseGuard } from './../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
-import { CreateManualTimeLogDTO, DeleteTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
+import { CreateManualTimeLogDTO, TimeLogDeleteDTO, UpdateManualTimeLogDTO } from './dto';
 import { TimeLogLimitQueryDTO, TimeLogQueryDTO } from './dto/query';
 import { TimeLogBodyTransformPipe } from './pipes';
 import { IGetConflictTimeLogCommand } from './commands';
@@ -29,11 +29,7 @@ import { IGetConflictTimeLogCommand } from './commands';
 @Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ALL_ORG_VIEW)
 @Controller()
 export class TimeLogController {
-
-	constructor(
-		private readonly timeLogService: TimeLogService,
-		private readonly commandBus: CommandBus
-	) { }
+	constructor(private readonly timeLogService: TimeLogService, private readonly commandBus: CommandBus) {}
 
 	/**
 	 * Get conflicting timer logs based on the provided entity.
@@ -243,10 +239,7 @@ export class TimeLogController {
 	 * @returns The found time log.
 	 */
 	@Get(':id')
-	async findById(
-		@Param('id', UUIDValidationPipe) id: ITimeLog['id'],
-		@Query() options: FindOneOptions
-	): Promise<ITimeLog> {
+	async findById(@Param('id', UUIDValidationPipe) id: ID, @Query() options: FindOneOptions): Promise<ITimeLog> {
 		return await this.timeLogService.findOneByIdString(id, options);
 	}
 
@@ -292,7 +285,7 @@ export class TimeLogController {
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_MODIFY_TIME)
 	async updateManualTime(
-		@Param('id', UUIDValidationPipe) id: ITimeLog['id'],
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Body(TimeLogBodyTransformPipe, new ValidationPipe({ transform: true })) entity: UpdateManualTimeLogDTO
 	): Promise<ITimeLog> {
 		return await this.timeLogService.updateManualTime(id, entity);
@@ -315,7 +308,7 @@ export class TimeLogController {
 	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
 	@Delete()
 	@UseValidationPipe({ transform: true })
-	async deleteTimeLog(@Query() deleteQuery: DeleteTimeLogDTO): Promise<DeleteResult | UpdateResult> {
-		return await this.timeLogService.deleteTimeLogs(deleteQuery);
+	async deleteTimeLog(@Query() query: TimeLogDeleteDTO): Promise<DeleteResult | UpdateResult> {
+		return await this.timeLogService.deleteTimeLogs(query);
 	}
 }
