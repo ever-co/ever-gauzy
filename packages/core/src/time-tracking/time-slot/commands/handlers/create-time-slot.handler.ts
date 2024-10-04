@@ -1,17 +1,18 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { In } from 'typeorm';
 import * as moment from 'moment';
 import { omit } from 'underscore';
 import * as chalk from 'chalk';
-import { ID, ITimeSlot, PermissionsEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
-import { isEmpty } from '@gauzy/common';
+import { ID, ITimeLog, ITimeSlot, PermissionsEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
+import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { RequestContext } from '../../../../core/context';
-import { TimeSlot } from './../../time-slot.entity';
 import { CreateTimeSlotCommand } from '../create-time-slot.command';
 import { BulkActivitiesSaveCommand } from '../../../activity/commands';
 import { TimeSlotMergeCommand } from './../time-slot-merge.command';
 import { TypeOrmEmployeeRepository } from '../../../../employee/repository';
 import { TypeOrmTimeLogRepository } from '../../../time-log/repository/type-orm-time-log.repository';
 import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.repository';
+import { TimeSlot } from './../../time-slot.entity';
 
 @CommandHandler(CreateTimeSlotCommand)
 export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotCommand> {
@@ -46,8 +47,8 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 
 		this.log(`Time Slot Request - Input: ${JSON.stringify(input)}`);
 
-		// Retrieve the current tenant ID
-		const tenantId = RequestContext.currentTenantId() || input.tenantId;
+		const tenantId = RequestContext.currentTenantId() || input.tenantId; // Retrieve the current tenant ID
+		const user = RequestContext.currentUser(); // Retrieve the current user
 		const hasChangeEmployeePermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 
 		// Check if the logged user does not have employee selection permission
@@ -131,16 +132,23 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 			}
 		}
 
+		// Map only running time logs to an array of IDs
+		const ids: ID[] = timeSlot.timeLogs.filter((log: ITimeLog) => log.isRunning).map((log) => log.id);
 		// Set stoppedAt to current time
 		const stoppedAt = moment.utc().toDate();
-		console.log('time log stoppedAt inside create-time-slot.handler at line 169', stoppedAt);
 
 		// Only update running timer
-		for await (const timeLog of timeSlot.timeLogs) {
-			if (timeLog.isRunning) {
-				await this.typeOrmTimeLogRepository.update(timeLog.id, { stoppedAt: stoppedAt });
-			}
+		if (isNotEmpty(ids)) {
+			await this.typeOrmTimeLogRepository.update(
+				{
+					id: In(ids),
+					isRunning: true
+				},
+				{ stoppedAt }
+			);
 		}
+
+		this.log(`Bulk activities save parameters employee (${user.name}): ${JSON.stringify({ activities })}`);
 
 		// Save bulk activities
 		const bulkActivities = await this._commandBus.execute(
