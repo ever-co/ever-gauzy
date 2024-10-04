@@ -18,8 +18,7 @@ import {
 	EmailTemplateEnum,
 	IResendEmailInput,
 	EmailStatusEnum,
-	ITenant,
-	ID
+	ITenant
 } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 import { deepMerge, IAppIntegrationConfig } from '@gauzy/common';
