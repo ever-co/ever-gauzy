@@ -436,7 +436,7 @@ export interface IReportDayGroupByEmployee {
 			sum: number;
 			activity: number;
 			project: IOrganizationProject;
-			task: ITask;
+			tasks: ITask[];
 		}[];
 	}[];
 }
