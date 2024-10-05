@@ -2,7 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEnum, IsOptional } from 'class-validator';
 import { ITimeLogFilters, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
-import { IsBetweenActivty } from './../../shared/validators';
+import { IsBetweenActivity } from './../../shared/validators';
 
 /**
  * Data Transfer Object for filtering time logs based on source, log type, and activity level.
@@ -36,7 +36,7 @@ export class FiltersQueryDTO implements ITimeLogFilters {
 	 */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
-	@IsBetweenActivty(FiltersQueryDTO, (it) => it.activityLevel)
+	@IsBetweenActivity(FiltersQueryDTO, (it) => it.activityLevel)
 	@Type(() => Object)
 	activityLevel: {
 		start: number;
