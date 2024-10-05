@@ -1,6 +1,6 @@
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { FileStorageProvider } from './file-provider';
-import { ITimeSlot } from './timesheet.model';
+import { IDeleteEntity, ITimeSlot } from './timesheet.model';
 import { IRelationalUser } from './user.model';
 
 export interface IScreenshot extends IBasePerTenantAndOrganizationEntityModel, IRelationalUser {
@@ -36,3 +36,9 @@ export interface IScreenshotCreateInput extends IBasePerTenantAndOrganizationEnt
 	thumb?: string;
 	recordedAt: Date | string;
 }
+
+/**
+ * Interface for deleting time slots.
+ * Includes an array of time slot IDs to be deleted.
+ */
+export interface IDeleteScreenshot extends IDeleteEntity {}

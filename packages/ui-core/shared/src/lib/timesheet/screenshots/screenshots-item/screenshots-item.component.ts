@@ -1,9 +1,9 @@
 import { Component, OnInit, Input, OnDestroy, Output, EventEmitter } from '@angular/core';
-import { ITimeSlot, IScreenshot, ITimeLog, IOrganization, IEmployee, TimeFormatEnum } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { filter, take, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { sortBy } from 'underscore';
+import { ITimeSlot, IScreenshot, ITimeLog, IOrganization, IEmployee, TimeFormatEnum } from '@gauzy/contracts';
 import { DEFAULT_SVG, distinctUntilChange, isNotEmpty, progressStatus } from '@gauzy/ui-core/common';
 import { ErrorHandlingService, Store, TimesheetService, ToastrService } from '@gauzy/ui-core/core';
 import { GalleryItem } from '../../../gallery/gallery.directive';
@@ -104,21 +104,21 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 		this._lastScreenshot = screenshot;
 	}
 
-	@Input() timezone: string = this.timeZoneService.currentTimeZone;
+	@Input() timezone: string = this._timeZoneService.currentTimeZone;
 	@Input() timeFormat: TimeFormatEnum = TimeFormatEnum.FORMAT_12_HOURS;
 
 	constructor(
-		private readonly nbDialogService: NbDialogService,
-		private readonly timesheetService: TimesheetService,
-		private readonly galleryService: GalleryService,
-		private readonly toastrService: ToastrService,
-		private readonly errorHandler: ErrorHandlingService,
-		private readonly store: Store,
-		private readonly timeZoneService: TimeZoneService
+		private readonly _nbDialogService: NbDialogService,
+		private readonly _timesheetService: TimesheetService,
+		private readonly _galleryService: GalleryService,
+		private readonly _toastrService: ToastrService,
+		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _store: Store,
+		private readonly _timeZoneService: TimeZoneService
 	) {}
 
 	ngOnInit(): void {
-		this.store.selectedOrganization$
+		this._store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange(),
@@ -152,15 +152,15 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 		}
 
 		try {
+			// Destructure the organization ID and tenant ID from the organization object
 			const { id: organizationId, tenantId } = this.organization;
-			const request = {
+
+			// Delete time slots
+			await this._timesheetService.deleteTimeSlots({
 				ids: [timeSlot.id],
 				organizationId,
 				tenantId
-			};
-
-			// Delete time slots
-			await this.timesheetService.deleteTimeSlots(request);
+			});
 
 			// Remove related screenshots from the gallery
 			const screenshotsToRemove = timeSlot.screenshots.map((screenshot) => ({
@@ -168,12 +168,13 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 				fullUrl: screenshot.fullUrl,
 				...screenshot
 			}));
-			this.galleryService.removeGalleryItems(screenshotsToRemove);
+			this._galleryService.removeGalleryItems(screenshotsToRemove);
 
 			// Display success message
 			const employeeName = timeSlot.employee?.fullName?.trim() || 'Unknown Employee';
 
-			this.toastrService.success('TOASTR.MESSAGE.SCREENSHOT_DELETED', {
+			// Display success message
+			this._toastrService.success('TOASTR.MESSAGE.SCREENSHOT_DELETED', {
 				name: employeeName,
 				organization: this.organization.name
 			});
@@ -181,7 +182,8 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 			// Trigger delete event
 			this.delete.emit();
 		} catch (error) {
-			this.errorHandler.handleError(error);
+			console.log('Error while deleting time slot', error);
+			this._errorHandlingService.handleError(error);
 		}
 	}
 
@@ -191,7 +193,7 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	 * @param timeSlot - The time slot for which information is to be viewed.
 	 */
 	viewInfo(timeSlot: ITimeSlot): void {
-		const dialog$ = this.nbDialogService.open(ViewScreenshotsModalComponent, {
+		const dialog$ = this._nbDialogService.open(ViewScreenshotsModalComponent, {
 			context: {
 				timeSlot,
 				timeLogs: timeSlot.timeLogs

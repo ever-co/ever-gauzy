@@ -137,13 +137,6 @@
 										{{ log.duration | durationFormat }}
 									</div>
 									<div class="col-2">
-										<div class="">
-											{{
-												log.startedAt
-													| utcToTimezone : filters?.timeZone
-													| date : 'MMMM d, yyyy'
-											}}
-										</div>
 										<span class="start-timer">
 											{{
 												log.startedAt
