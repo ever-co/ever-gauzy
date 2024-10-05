@@ -1,5 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform, TransformFnParams } from 'class-transformer';
 import { IsOptional, IsBoolean } from 'class-validator';
+import { parseToBoolean } from '@gauzy/common';
 import { DeleteQueryDTO } from '../../shared/dto';
 
 /**
@@ -16,5 +18,6 @@ export class ForceDeleteDTO<T = any> extends DeleteQueryDTO<T> {
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	readonly forceDelete: boolean = false;
+	@Transform(({ value }: TransformFnParams) => (value ? parseToBoolean(value) : false))
+	readonly forceDelete: boolean;
 }
