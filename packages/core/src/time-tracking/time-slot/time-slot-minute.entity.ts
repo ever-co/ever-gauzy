@@ -1,7 +1,7 @@
 import { RelationId, Unique, JoinColumn } from 'typeorm';
+import { ID, ITimeSlot, ITimeSlotMinute } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsDateString, IsUUID } from 'class-validator';
-import { ID, ITimeSlot, ITimeSlotMinute } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from './../../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../../core/decorators/entity';
 import { TimeSlot } from './time-slot.entity';
@@ -38,10 +38,10 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 	datetime?: Date;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne Relationship
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne Relationship
+	|--------------------------------------------------------------------------
+	*/
 	/**
 	 * The reference to the `TimeSlot` entity to which this minute belongs.
 	 * This establishes a many-to-one relationship with the `TimeSlot` entity.
@@ -57,7 +57,7 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 	 * The ID of the related `TimeSlot` entity, stored as a UUID.
 	 * This is a relation ID that helps link the minute to the corresponding `TimeSlot`.
 	 */
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@RelationId((it: TimeSlotMinute) => it.timeSlot)
 	@IsUUID()
 	@ColumnIndex()

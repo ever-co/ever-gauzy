@@ -672,7 +672,7 @@ export class TimerService {
 	 * @returns The timer status for the employee.
 	 */
 	public async getTimerWorkedStatus(request: ITimerStatusInput): Promise<ITimerStatus[]> {
-		const tenantId = RequestContext.currentTenantId() || request.tenantId;
+		const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
 		const { organizationId, organizationTeamId, source } = request;
 
 		// Define the array to store employeeIds
@@ -682,14 +682,11 @@ export class TimerService {
 
 		// Check if the current user has any of the specified permissions
 		if (RequestContext.hasAnyPermission(permissions)) {
-			// If yes, set employeeIds based on request.employeeIds or request.employeeId
-			employeeIds = request.employeeIds
-				? request.employeeIds.filter(Boolean)
-				: [request.employeeId].filter(Boolean);
+			// Set employeeIds based on request.employeeIds or request.employeeId
+			employeeIds = (request.employeeIds ?? [request.employeeId]).filter(Boolean);
 		} else {
 			// EMPLOYEE have the ability to see only their own timer status
-			const employeeId = RequestContext.currentEmployeeId();
-			employeeIds = [employeeId];
+			employeeIds = [RequestContext.currentEmployeeId()];
 		}
 
 		let lastLogs: TimeLog[] = [];

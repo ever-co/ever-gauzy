@@ -1,85 +1,70 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import { IActivity, PermissionsEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { Activity } from '../../activity.entity';
 import { BulkActivitiesSaveCommand } from '../bulk-activities-save.command';
 import { RequestContext } from '../../../../core/context';
-import { Employee } from './../../../../core/entities/internal';
 import { TypeOrmActivityRepository } from '../../repository/type-orm-activity.repository';
 import { TypeOrmEmployeeRepository } from '../../../../employee/repository/type-orm-employee.repository';
 
 @CommandHandler(BulkActivitiesSaveCommand)
 export class BulkActivitiesSaveHandler implements ICommandHandler<BulkActivitiesSaveCommand> {
-
 	constructor(
-		@InjectRepository(Activity)
 		private readonly typeOrmActivityRepository: TypeOrmActivityRepository,
-
-		@InjectRepository(Employee)
 		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository
-	) { }
+	) {}
 
 	/**
+	 * Executes the bulk save operation for activities.
 	 *
-	 * @param command
-	 * @returns
+	 * @param command - The command containing the input data for saving multiple activities.
+	 * @returns A promise that resolves with the saved activities.
+	 * @throws BadRequestException if there is an error during the save process.
 	 */
 	public async execute(command: BulkActivitiesSaveCommand): Promise<IActivity[]> {
 		const { input } = command;
-		let { employeeId, organizationId, activities = [] } = input;
+		let { employeeId, organizationId, activities = [], projectId } = input;
 
 		const user = RequestContext.currentUser();
-		const tenantId = RequestContext.currentTenantId();
+		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 
-		/**
-		 * Check logged user does not have employee selection permission
-		 */
-		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-			try {
-				let employee = await this.typeOrmEmployeeRepository.findOneByOrFail({
-					userId: user.id,
-					tenantId
-				});
-				employeeId = employee.id;
-				organizationId = employee.organizationId;
-			} catch (error) {
-				console.log(`Error while finding logged in employee for (${user.name}) create bulk activities`, error);
-			}
-		} else if (isEmpty(employeeId) && RequestContext.currentEmployeeId()) {
+		// Check if the logged user has permission to change the selected employee
+		const hasChangeEmployeePermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+
+		// Assign current employeeId if the user doesn't have permission or if employeeId is not provided
+		if (!hasChangeEmployeePermission || (isEmpty(employeeId) && RequestContext.currentEmployeeId())) {
 			employeeId = RequestContext.currentEmployeeId();
 		}
 
-		/*
-		 * If organization not found in request then assign current logged user organization
-		 */
-		if (isEmpty(organizationId)) {
-			let employee = await this.typeOrmEmployeeRepository.findOneBy({
-				id: employeeId
-			});
+		// Assign the current user's organizationId if it's not provided
+		if (isEmpty(organizationId) && employeeId) {
+			const employee = await this.typeOrmEmployeeRepository.findOneBy({ id: employeeId });
 			organizationId = employee ? employee.organizationId : null;
 		}
 
-		console.log(`Empty bulk App & URL's activities for employee (${user.name}): ${employeeId}`, activities.filter(
-			(activity: IActivity) => Object.keys(activity).length === 0
-		));
+		// Log empty activities and filter out any invalid ones
+		console.log(
+			`Empty bulk App & URL's activities for employee (${user.name}): ${employeeId}`,
+			activities.filter((activity: IActivity) => Object.keys(activity).length === 0)
+		);
 
-		activities = activities.filter(
-			(activity: IActivity) => Object.keys(activity).length !== 0
-		).map((activity: IActivity) => new Activity({
-			...activity,
-			...(input.projectId ? { projectId: input.projectId } : {}),
-			employeeId,
-			organizationId,
-			tenantId,
-		}));
+		activities = activities
+			.filter((activity: IActivity) => Object.keys(activity).length !== 0)
+			.map(
+				(activity: IActivity) =>
+					new Activity({
+						...activity,
+						...(projectId ? { projectId } : {}),
+						employeeId,
+						organizationId,
+						tenantId
+					})
+			);
 
-		console.log(`Activities should be insert into database for employee (${user.name})`, { activities });
+		// Log the activities that will be inserted into the database
+		console.log(`Activities should be inserted into database for employee (${user.name})`, { activities });
 
-		if (isNotEmpty(activities)) {
-			return await this.typeOrmActivityRepository.save(activities);
-		} else {
-			return [];
-		}
+		// Save activities if they exist, otherwise return an empty array
+		return isNotEmpty(activities) ? await this.typeOrmActivityRepository.save(activities) : [];
 	}
 }

@@ -34,7 +34,7 @@ export class FiltersQueryDTO implements ITimeLogFilters {
 	 * This filter limits logs to a specific activity range (e.g., from 10% to 90% activity).
 	 * If not provided, no filtering by activity level will be applied.
 	 */
-	@ApiPropertyOptional({ type: () => 'object' })
+	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsBetweenActivty(FiltersQueryDTO, (it) => it.activityLevel)
 	@Type(() => Object)
