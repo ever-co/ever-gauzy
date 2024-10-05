@@ -8,7 +8,7 @@ import { OrganizationPermissionGuard, PermissionGuard, TenantPermissionGuard } f
 import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { CreateTimeSlotCommand, DeleteTimeSlotCommand, UpdateTimeSlotCommand } from './commands';
 import { TimeSlotService } from './time-slot.service';
-import { TimeSlotDeleteDTO, TimeSlotQueryDTO } from './dto';
+import { DeleteTimeSlotDTO, TimeSlotQueryDTO } from './dto';
 
 @ApiTags('TimeSlot')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -125,7 +125,7 @@ export class TimeSlotController {
 	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
 	@Delete('/')
 	@UseValidationPipe({ transform: true })
-	async deleteTimeSlot(@Query() query: TimeSlotDeleteDTO): Promise<DeleteResult | UpdateResult> {
-		return await this._commandBus.execute(new DeleteTimeSlotCommand(query));
+	async deleteTimeSlot(@Query() options: DeleteTimeSlotDTO): Promise<DeleteResult | UpdateResult> {
+		return await this._commandBus.execute(new DeleteTimeSlotCommand(options));
 	}
 }

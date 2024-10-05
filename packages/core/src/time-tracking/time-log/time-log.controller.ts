@@ -19,7 +19,7 @@ import { TimeLogService } from './time-log.service';
 import { Permissions } from './../../shared/decorators';
 import { OrganizationPermissionGuard, PermissionGuard, TenantBaseGuard } from './../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
-import { CreateManualTimeLogDTO, TimeLogDeleteDTO, UpdateManualTimeLogDTO } from './dto';
+import { CreateManualTimeLogDTO, DeleteTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
 import { TimeLogLimitQueryDTO, TimeLogQueryDTO } from './dto/query';
 import { TimeLogBodyTransformPipe } from './pipes';
 import { IGetConflictTimeLogCommand } from './commands';
@@ -311,7 +311,7 @@ export class TimeLogController {
 	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
 	@Delete()
 	@UseValidationPipe({ transform: true })
-	async deleteTimeLog(@Query() options: TimeLogDeleteDTO): Promise<DeleteResult | UpdateResult> {
+	async deleteTimeLog(@Query() options: DeleteTimeLogDTO): Promise<DeleteResult | UpdateResult> {
 		return await this._timeLogService.deleteTimeLogs(options);
 	}
 }

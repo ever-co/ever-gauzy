@@ -29,7 +29,7 @@ export class DeleteTimeSlotHandler implements ICommandHandler<DeleteTimeSlotComm
 	 * @throws NotAcceptableException if no time slot IDs are provided in the query.
 	 */
 	public async execute(command: DeleteTimeSlotCommand): Promise<boolean> {
-		const { ids, organizationId } = command.options;
+		const { ids, organizationId, forceDelete } = command.options;
 
 		// Throw an error if no IDs are provided
 		if (isEmpty(ids)) {
@@ -94,7 +94,8 @@ export class DeleteTimeSlotHandler implements ICommandHandler<DeleteTimeSlotComm
 										end: moment.utc(timeSlot.stoppedAt).toDate()
 									},
 									timeLog,
-									timeSlot
+									timeSlot,
+									forceDelete
 								)
 							);
 						}
@@ -102,6 +103,7 @@ export class DeleteTimeSlotHandler implements ICommandHandler<DeleteTimeSlotComm
 				}
 			}
 		}
+
 		return true;
 	}
 }

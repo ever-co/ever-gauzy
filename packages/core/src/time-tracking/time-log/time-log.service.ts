@@ -22,7 +22,8 @@ import {
 	IDeleteTimeLog,
 	IOrganizationContact,
 	IEmployee,
-	IOrganization
+	IOrganization,
+	ID
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../../core/crud';
@@ -1064,7 +1065,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 */
 	async addManualTime(request: IManualTimeInput): Promise<ITimeLog> {
 		try {
-			const tenantId = RequestContext.currentTenantId();
+			const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
 			const { employeeId, startedAt, stoppedAt, organizationId } = request;
 
 			// Validate input
@@ -1078,7 +1079,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				relations: { organization: true }
 			});
 
-			//
+			// Check if future dates are allowed for the organization
 			const futureDateAllowed: IOrganization['futureDateAllowed'] = employee.organization.futureDateAllowed;
 
 			// Check if the selected date and time range is allowed for the organization
@@ -1095,18 +1096,20 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					employeeId,
 					organizationId,
 					tenantId,
-					...(request.id ? { ignoreId: request.id } : {})
+					...(request.id && { ignoreId: request.id }) // Simplified ternary check
 				})
 			);
 
 			// Resolve conflicts by deleting conflicting time slots
-			if (conflicts && conflicts.length > 0) {
+			if (conflicts?.length) {
 				const times: IDateRange = {
 					start: new Date(startedAt),
 					end: new Date(stoppedAt)
 				};
+				// Loop through each conflicting time log
 				for await (const timeLog of conflicts) {
 					const { timeSlots = [] } = timeLog;
+					// Delete conflicting time slots
 					for await (const timeSlot of timeSlots) {
 						await this.commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, timeSlot));
 					}
@@ -1128,9 +1131,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @param request The updated data for the manual time log.
 	 * @returns The updated time log entry.
 	 */
-	async updateManualTime(id: ITimeLog['id'], request: IManualTimeInput): Promise<ITimeLog> {
+	async updateManualTime(id: ID, request: IManualTimeInput): Promise<ITimeLog> {
 		try {
-			const tenantId = RequestContext.currentTenantId();
+			const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
 			const { startedAt, stoppedAt, employeeId, organizationId } = request;
 
 			// Validate input
@@ -1144,7 +1147,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				relations: { organization: true }
 			});
 
-			//
+			// Check if future dates are allowed for the organization
 			const futureDateAllowed: IOrganization['futureDateAllowed'] = employee.organization.futureDateAllowed;
 
 			// Check if the selected date and time range is allowed for the organization
@@ -1154,9 +1157,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 
 			// Check for conflicts with existing time logs
-			const timeLog = await this.typeOrmRepository.findOneBy({
-				id: id
-			});
+			const timeLog = await this.typeOrmRepository.findOneBy({ id });
 
 			// Check for conflicts with existing time logs
 			const conflicts = await this.commandBus.execute(
@@ -1166,18 +1167,18 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					employeeId,
 					organizationId,
 					tenantId,
-					...(id ? { ignoreId: id } : {})
+					...(id && { ignoreId: id }) // Simplified check for id
 				})
 			);
 
 			// Resolve conflicts by deleting conflicting time slots
-			if (isNotEmpty(conflicts)) {
-				const times: IDateRange = {
-					start: new Date(startedAt),
-					end: new Date(stoppedAt)
-				};
+			if (conflicts?.length) {
+				const times: IDateRange = { start: new Date(startedAt), end: new Date(stoppedAt) };
+
+				// Loop through each conflicting time log
 				for await (const timeLog of conflicts) {
 					const { timeSlots = [] } = timeLog;
+					// Delete conflicting time slots
 					for await (const timeSlot of timeSlots) {
 						await this.commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, timeSlot));
 					}
@@ -1237,7 +1238,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
 		}
 
+		// Get the time logs from the database
 		const timeLogs = await query.getMany();
+
+		// Invoke the command bus to delete the time logs
 		return await this.commandBus.execute(new TimeLogDeleteCommand(timeLogs, forceDelete));
 	}
 

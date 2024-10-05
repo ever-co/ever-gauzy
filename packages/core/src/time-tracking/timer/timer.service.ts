@@ -380,21 +380,21 @@ export class TimerService {
 				tenantId
 			});
 
-			if (isNotEmpty(conflicts)) {
+			// Resolve conflicts by deleting conflicting time slots
+			if (conflicts?.length) {
 				const times: IDateRange = {
 					start: new Date(lastLog.startedAt),
 					end: new Date(lastLog.stoppedAt)
 				};
 
-				// Delete conflicting time slots
-				await Promise.all(
-					conflicts.flatMap((timeLog: ITimeLog) => {
-						const { timeSlots = [] } = timeLog;
-						return timeSlots.map((timeSlot: ITimeSlot) =>
-							this._commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, timeSlot))
-						);
-					})
-				);
+				// Loop through each conflicting time log
+				for await (const timeLog of conflicts) {
+					const { timeSlots = [] } = timeLog;
+					// Delete conflicting time slots
+					for await (const timeSlot of timeSlots) {
+						await this._commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, timeSlot));
+					}
+				}
 			}
 		} catch (error) {
 			console.warn('Error while handling conflicts in time logs:', error?.message);
