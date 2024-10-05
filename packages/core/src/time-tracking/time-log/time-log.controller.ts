@@ -14,7 +14,7 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
-import { ITimeLog, PermissionsEnum, IGetTimeLogConflictInput } from '@gauzy/contracts';
+import { ITimeLog, PermissionsEnum, IGetTimeLogConflictInput, ID } from '@gauzy/contracts';
 import { TimeLogService } from './time-log.service';
 import { Permissions } from './../../shared/decorators';
 import { OrganizationPermissionGuard, PermissionGuard, TenantBaseGuard } from './../../shared/guards';
@@ -239,10 +239,7 @@ export class TimeLogController {
 	 * @returns The found time log.
 	 */
 	@Get(':id')
-	async findById(
-		@Param('id', UUIDValidationPipe) id: ITimeLog['id'],
-		@Query() options: FindOneOptions
-	): Promise<ITimeLog> {
+	async findById(@Param('id', UUIDValidationPipe) id: ID, @Query() options: FindOneOptions): Promise<ITimeLog> {
 		return await this._timeLogService.findOneByIdString(id, options);
 	}
 
@@ -288,7 +285,7 @@ export class TimeLogController {
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_MODIFY_TIME)
 	async updateManualTime(
-		@Param('id', UUIDValidationPipe) id: ITimeLog['id'],
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Body(TimeLogBodyTransformPipe, new ValidationPipe({ transform: true })) entity: UpdateManualTimeLogDTO
 	): Promise<ITimeLog> {
 		return await this._timeLogService.updateManualTime(id, entity);

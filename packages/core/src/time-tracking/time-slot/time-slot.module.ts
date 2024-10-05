@@ -12,6 +12,7 @@ import { TimeLogModule } from './../time-log/time-log.module';
 import { EmployeeModule } from './../../employee/employee.module';
 import { ActivityModule } from './../activity/activity.module';
 import { TypeOrmTimeSlotRepository } from './repository/type-orm-time-slot.repository';
+import { TypeOrmTimeSlotMinuteRepository } from './repository/type-orm-time-slot-minute.repository';
 
 @Module({
 	controllers: [TimeSlotController],
@@ -24,7 +25,13 @@ import { TypeOrmTimeSlotRepository } from './repository/type-orm-time-slot.repos
 		forwardRef(() => ActivityModule),
 		CqrsModule
 	],
-	providers: [TimeSlotService, TypeOrmTimeSlotRepository, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, TimeSlotService, TypeOrmTimeSlotRepository]
+	providers: [TimeSlotService, TypeOrmTimeSlotRepository, TypeOrmTimeSlotMinuteRepository, ...CommandHandlers],
+	exports: [
+		TypeOrmModule,
+		MikroOrmModule,
+		TimeSlotService,
+		TypeOrmTimeSlotRepository,
+		TypeOrmTimeSlotMinuteRepository
+	]
 })
 export class TimeSlotModule {}
