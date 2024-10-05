@@ -507,11 +507,26 @@ export interface IClientBudgetLimitReport {
 	remainingBudget?: number;
 }
 
-export interface IDeleteTimeSlot extends IBasePerTenantAndOrganizationEntityModel {
+/**
+ * Base interface for delete operations that include forceDelete flag
+ * and extend the tenant and organization properties.
+ */
+export interface IDeleteEntity extends IBasePerTenantAndOrganizationEntityModel {
+	forceDelete?: boolean;
+}
+
+/**
+ * Interface for deleting time slots.
+ * Includes an array of time slot IDs to be deleted.
+ */
+export interface IDeleteTimeSlot extends IDeleteEntity {
 	ids: ID[];
 }
 
-export interface IDeleteTimeLog extends IBasePerTenantAndOrganizationEntityModel {
+/**
+ * Interface for deleting time logs.
+ * Includes an array of log IDs to be deleted.
+ */
+export interface IDeleteTimeLog extends IDeleteEntity {
 	logIds: ID[];
-	forceDelete: boolean;
 }
