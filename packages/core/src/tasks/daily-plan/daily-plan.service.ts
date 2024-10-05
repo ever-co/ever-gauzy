@@ -41,7 +41,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	async createDailyPlan(partialEntity: IDailyPlanCreateInput): Promise<IDailyPlan> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			const { employeeId, organizationId, taskId } = partialEntity;
+			const { employeeId, organizationId, organizationTeamId, taskId } = partialEntity;
 
 			const dailyPlanDate = new Date(partialEntity.date).toISOString().split('T')[0];
 
@@ -56,6 +56,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			query.setFindOptions({ relations: { tasks: true } });
 			query.where('"dailyPlan"."tenantId" = :tenantId', { tenantId });
 			query.andWhere('"dailyPlan"."organizationId" = :organizationId', { organizationId });
+			query.andWhere('"dailyPlan"."organizationTeamId" = :organizationTeamId', { organizationTeamId });
 			query.andWhere(p(`DATE("dailyPlan"."date") = :dailyPlanDate`), { dailyPlanDate: `${dailyPlanDate}` });
 			query.andWhere('"dailyPlan"."employeeId" = :employeeId', { employeeId });
 			let dailyPlan = await query.getOne();
@@ -317,7 +318,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	async removeTaskFromManyPlans(taskId: ID, input: IDailyPlansTasksUpdateInput): Promise<IDailyPlan[]> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			const { employeeId, plansIds, organizationId } = input;
+			const { employeeId, plansIds, organizationId, organizationTeamId } = input;
 			const currentDate = new Date().toISOString().split('T')[0];
 
 			// Initial query
@@ -331,6 +332,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			// Conditions
 			query.where(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+			query.andWhere(p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), { organizationTeamId });
 			query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
 
 			// Find condition must include only today and future plans. We cannot delete tasks from past plans

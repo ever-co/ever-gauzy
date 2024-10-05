@@ -5,7 +5,7 @@ import { PasswordReset } from '../password-reset.entity';
 
 @Injectable()
 export class TypeOrmPasswordResetRepository extends Repository<PasswordReset> {
-    constructor(@InjectRepository(PasswordReset) readonly repository: Repository<PasswordReset>) {
-        super(repository.target, repository.manager, repository.queryRunner);
-    }
+	constructor(@InjectRepository(PasswordReset) readonly repository: Repository<PasswordReset>) {
+		super(repository.target, repository.manager, repository.queryRunner);
+	}
 }

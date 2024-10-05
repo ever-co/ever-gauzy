@@ -1,8 +1,8 @@
 import {
-	createSettingsWindow,
 	getApiBaseUrl,
 	loginPage,
 	RegisteredWindow,
+	settingsPage,
 	timeTrackerPage,
 	WindowManager
 } from '@gauzy/desktop-window';
@@ -43,9 +43,6 @@ export class TrayIcon {
 				label: TranslateService.instant('TIMER_TRACKER.SETUP.SETTING'),
 				accelerator: 'CmdOrCtrl+,',
 				async click() {
-					if (!settingsWindow) {
-						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
-					}
 					manager.show(RegisteredWindow.SETTINGS);
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('goto_top_menu');
@@ -57,9 +54,6 @@ export class TrayIcon {
 				label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 				accelerator: 'CmdOrCtrl+U',
 				async click() {
-					if (!settingsWindow) {
-						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
-					}
 					manager.show(RegisteredWindow.SETTINGS);
 					manager.webContents(settingsWindow).send('goto_update');
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
@@ -94,9 +88,6 @@ export class TrayIcon {
 				label: TranslateService.instant('TIMER_TRACKER.SETUP.SETTING'),
 				accelerator: 'CmdOrCtrl+,',
 				async click() {
-					if (!settingsWindow) {
-						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
-					}
 					manager.show(RegisteredWindow.SETTINGS);
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('goto_top_menu');
@@ -108,9 +99,6 @@ export class TrayIcon {
 				label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 				accelerator: 'CmdOrCtrl+U',
 				async click() {
-					if (!settingsWindow) {
-						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
-					}
 					manager.show(RegisteredWindow.SETTINGS);
 					manager.webContents(settingsWindow).send('goto_update');
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
@@ -188,9 +176,6 @@ export class TrayIcon {
 				label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 				accelerator: 'CmdOrCtrl+U',
 				async click() {
-					if (!settingsWindow) {
-						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
-					}
 					manager.show(RegisteredWindow.SETTINGS);
 					manager.webContents(settingsWindow).send('goto_update');
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
@@ -202,9 +187,6 @@ export class TrayIcon {
 				label: TranslateService.instant('TIMER_TRACKER.SETUP.SETTING'),
 				accelerator: 'CmdOrCtrl+,',
 				async click() {
-					if (!settingsWindow) {
-						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
-					}
 					manager.show(RegisteredWindow.SETTINGS);
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('goto_top_menu');
@@ -369,6 +351,12 @@ export class TrayIcon {
 					await timeTrackerWindow.loadURL(timeTrackerPage(windowPath.timeTrackerUi));
 				} catch (error) {
 					console.error('An error occurred while loading Time Tracker Page', error);
+				}
+
+				try {
+					await settingsWindow.loadURL(settingsPage(windowPath.timeTrackerUi));
+				} catch (error) {
+					console.error('An error occurred while loading settings Page', error);
 				}
 
 				manager.webContents(timeTrackerWindow).send('auth_success_tray_init', arg);

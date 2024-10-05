@@ -1,4 +1,3 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IOrganizationProject } from '@gauzy/contracts';
 import { OrganizationProjectCreateCommand } from '../organization-project-create.command';
@@ -25,23 +24,17 @@ export class OrganizationProjectCreateHandler implements ICommandHandler<Organiz
 	 * @throws {BadRequestException} - Throws a BadRequestException if an error occurs during the process.
 	 */
 	public async execute(command: OrganizationProjectCreateCommand): Promise<IOrganizationProject> {
-		try {
-			// Destructure the input data from the command
-			const { input } = command;
+		// Destructure the input data from the command
+		const { input } = command;
 
-			// Create the organization project using the input data
-			const project = await this._organizationProjectService.create(input);
+		// Create the organization project using the input data
+		const project = await this._organizationProjectService.create(input);
 
-			// Initialize associated entities for the created project
-			this.createAssociatedEntitiesForProject(project);
+		// Initialize associated entities for the created project
+		this.createAssociatedEntitiesForProject(project);
 
-			// Return the created organization project
-			return project;
-		} catch (error) {
-			// Handle errors and return an appropriate error response
-			console.error('Error during organization project creation:', error);
-			throw new HttpException(`Failed to create organization project: ${error.message}`, HttpStatus.BAD_REQUEST);
-		}
+		// Return the created organization project
+		return project;
 	}
 
 	/**

@@ -548,24 +548,36 @@ export class EmailService {
 	}
 
 	/**
+	 * Sends a password reset request to the user via email.
 	 *
-	 * @param user
-	 * @param url
-	 * @param languageCode
-	 * @param organizationId
-	 * @param originUrl
+	 * This method sends a password reset email to the specified user using the provided reset link.
+	 * It integrates with an email service to send the email and logs the email message to a record.
+	 * The function checks whether the user's email domain is allowed before proceeding with the email.
+	 *
+	 * @param user - The user object containing the user's information, including their email.
+	 * @param resetLink - The generated password reset link that will be sent to the user's email.
+	 * @param languageCode - The language code to use for the email localization.
+	 * @param originUrl - Optional URL that defines the origin of the reset link. If not provided,
+	 *                    it defaults to the application's client base URL.
+	 * @returns {Promise<void>} - A promise that resolves once the email has been sent and the record has been created.
 	 */
-	async requestPassword(user: IUser, resetLink: string, languageCode: LanguagesEnum, originUrl?: string) {
-		const integration = Object.assign({}, env.appIntegrationConfig);
+	async requestPassword(
+		user: IUser,
+		resetLink: string,
+		languageCode: LanguagesEnum,
+		originUrl?: string
+	): Promise<void> {
+		const { email, name, tenant } = user;
+		const integration = { ...env.appIntegrationConfig }; // Clone app integration config
+
+		// Prepare email sending options
 		const sendOptions = {
 			template: EmailTemplateEnum.PASSWORD_RESET,
-			message: {
-				to: `${user.email}`
-			},
+			message: { to: email },
 			locals: {
 				...integration,
-				userName: user.name,
-				tenantName: user.tenant.name,
+				userName: name,
+				tenantName: tenant?.name, // Tenant is optional
 				locale: languageCode,
 				generatedUrl: resetLink,
 				host: originUrl || env.clientBaseUrl
@@ -574,67 +586,59 @@ export class EmailService {
 
 		const body = {
 			templateName: sendOptions.template,
-			email: sendOptions.message.to,
+			email,
 			languageCode,
 			message: ''
 		};
-		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
-		if (!match) {
-			try {
-				const instance = await this.emailSendService.getInstance();
-				const send = await instance.send(sendOptions);
 
-				body['message'] = send.originalMessage;
-			} catch (error) {
-				console.error(error);
-			} finally {
-				await this.createEmailRecord(body);
-			}
+		// Check if the email domain is disallowed
+		if (DISALLOW_EMAIL_SERVER_DOMAIN.some((server) => email.includes(server))) {
+			return;
+		}
+
+		try {
+			// Retrieve the email service instance and send the email
+			const instance = await this.emailSendService.getInstance();
+			const send = await instance.send(sendOptions);
+
+			// Record the original message
+			body.message = send.originalMessage;
+		} catch (error) {
+			console.error('Failed to send password reset email:', error);
+		} finally {
+			// Create an email record
+			await this.createEmailRecord(body);
 		}
 	}
 
 	/**
+	 * Sends a multi-tenant password reset email to a user across multiple tenants.
 	 *
-	 * @param email
-	 * @param tenantUsersMap
-	 * @param languageCode
-	 * @param originUrl
+	 * @param email The email of the user.
+	 * @param tenants Array of tenants and user details with reset links.
+	 * @param languageCode The language code for localization.
+	 * @param originUrl The origin URL to be used for generating reset links.
 	 */
 	async multiTenantResetPassword(
 		email: string,
-		tenants: { resetLink: string; tenant: ITenant; user: IUser }[],
+		tenants: { resetLink: string; tenant?: ITenant; user: IUser }[],
 		languageCode: LanguagesEnum,
 		originUrl: string
 	) {
-		const integration = Object.assign({}, env.appIntegrationConfig);
+		const integration = { ...env.appIntegrationConfig }; // Clone app integration config
 
-		/** */
-		const items: {
-			resetLink: string;
-			tenantName: ITenant['name'];
-			tenantId: ITenant['id'];
-			userName: IUser['name'];
-		}[] = [];
+		// Iterate over each tenant and user, constructing email items
+		const items = tenants.map(({ resetLink, tenant, user }) => ({
+			tenantName: tenant?.name ?? 'Not Created', // If tenant is missing, use 'Not Created' or 'Not Yet'
+			userName: user.name, //
+			resetLink,
+			tenantId: tenant?.id ?? RequestContext.currentTenantId() // Fallback to current tenant ID if tenant is not available
+		}));
 
-		/** */
-		for await (const { resetLink, tenant, user } of tenants) {
-			/** */
-			const tenantId = tenant ? tenant.id : RequestContext.currentTenantId();
-
-			/** */
-			items.push({
-				tenantName: tenant ? tenant.name : user.name,
-				userName: user.name,
-				resetLink,
-				tenantId
-			});
-		}
-
+		// Prepare email sending options
 		const sendOptions = {
 			template: EmailTemplateEnum.MULTI_TENANT_PASSWORD_RESET,
-			message: {
-				to: `${email}`
-			},
+			message: { to: email },
 			locals: {
 				...integration,
 				locale: languageCode,
@@ -643,6 +647,7 @@ export class EmailService {
 			}
 		};
 
+		// Prepare email record body
 		const body = {
 			templateName: sendOptions.template,
 			email: sendOptions.message.to,
@@ -650,19 +655,22 @@ export class EmailService {
 			message: ''
 		};
 
-		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
-		if (!match) {
-			try {
-				// TODO : Which Organization to prefer while sending email
-				const instance = await this.emailSendService.getInstance();
-				const send = await instance.send(sendOptions);
+		// Return early if the email domain is disallowed
+		if (DISALLOW_EMAIL_SERVER_DOMAIN.some((server) => email.includes(server))) {
+			return;
+		}
 
-				body['message'] = send.originalMessage;
-			} catch (error) {
-				console.error(error);
-			} finally {
-				await this.createEmailRecord(body);
-			}
+		try {
+			// Retrieve the email service instance and send the email
+			const instance = await this.emailSendService.getInstance();
+			const send = await instance.send(sendOptions);
+
+			// Record the original message
+			body.message = send.originalMessage;
+		} catch (error) {
+			console.error('Failed to send multi-tenant password reset email:', error);
+		} finally {
+			await this.createEmailRecord(body);
 		}
 	}
 
