@@ -1,6 +1,6 @@
 import { Controller, HttpStatus, Get, Query, Post, Body, Param, Delete } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { ID, IGetJobPresetCriterionInput, IJobPreset, IMatchingCriterions } from '@gauzy/contracts';
+import { ID, IGetJobPresetCriterionInput } from '@gauzy/contracts';
 import { GauzyAIService } from '@gauzy/plugin-integration-ai';
 import { EmployeeService, UUIDValidationPipe, UseValidationPipe } from '@gauzy/core';
 import { JobPresetService } from './job-preset.service';
