@@ -4,7 +4,7 @@ import { isUUID } from 'class-validator';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as Jimp from 'jimp';
-import { IScreenshot, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
+import { ID, IScreenshot, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { EventBus } from '../../event-bus/event-bus';
 import { ScreenshotEvent } from '../../event-bus/events/screenshot.event';
 import { BaseEntityEventTypeEnum } from '../../event-bus/base-entity-event';
@@ -15,10 +15,10 @@ import { LazyFileInterceptor } from './../../core/interceptors';
 import { Permissions } from './../../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
-import { DeleteQueryDTO } from './../../shared/dto';
+import { DeleteScreenshotDTO } from './dto/delete-screenshot.dto';
 import { Screenshot } from './screenshot.entity';
 import { ScreenshotService } from './screenshot.service';
-import { createFileStorage } from './screenshot.helper';
+import { createFileStorage } from './screenshot-file-storage.helper';
 
 @ApiTags('Screenshot')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -147,28 +147,37 @@ export class ScreenshotController {
 	}
 
 	/**
+	 * Deletes a screenshot record by its ID.
 	 *
-	 * @param screenshotId
-	 * @param options
-	 * @returns
+	 * This endpoint allows authorized users to delete a screenshot record by providing its ID.
+	 * Additional query options can be provided to customize the delete operation.
+	 *
+	 * @param screenshotId - The UUID of the screenshot to delete.
+	 * @param options - Additional query options for deletion (e.g., soft delete or force delete).
+	 * @returns A Promise that resolves with the details of the deleted screenshot.
 	 */
 	@ApiOperation({
-		summary: 'Delete record'
+		summary: 'Delete a screenshot by ID',
+		description: 'Deletes a screenshot record from the system based on the provided ID.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'The record has been successfully deleted'
+		description: 'The screenshot has been successfully deleted.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Screenshot record not found.'
+	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'User does not have permission to delete screenshots.'
 	})
 	@Permissions(PermissionsEnum.DELETE_SCREENSHOTS)
 	@Delete(':id')
 	@UseValidationPipe()
 	async delete(
-		@Param('id', UUIDValidationPipe) screenshotId: IScreenshot['id'],
-		@Query() options: DeleteQueryDTO<Screenshot>
+		@Param('id', UUIDValidationPipe) screenshotId: ID,
+		@Query() options: DeleteScreenshotDTO
 	): Promise<IScreenshot> {
 		return await this._screenshotService.deleteScreenshot(screenshotId, options);
 	}
