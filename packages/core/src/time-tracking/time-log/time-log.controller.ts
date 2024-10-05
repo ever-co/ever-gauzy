@@ -29,11 +29,7 @@ import { IGetConflictTimeLogCommand } from './commands';
 @Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ALL_ORG_VIEW)
 @Controller()
 export class TimeLogController {
-
-	constructor(
-		private readonly timeLogService: TimeLogService,
-		private readonly commandBus: CommandBus
-	) { }
+	constructor(private readonly _timeLogService: TimeLogService, private readonly _commandBus: CommandBus) {}
 
 	/**
 	 * Get conflicting timer logs based on the provided entity.
@@ -52,7 +48,7 @@ export class TimeLogController {
 	})
 	@Get('conflict')
 	async getConflict(@Query() request: IGetTimeLogConflictInput): Promise<ITimeLog[]> {
-		return await this.commandBus.execute(new IGetConflictTimeLogCommand(request));
+		return await this._commandBus.execute(new IGetConflictTimeLogCommand(request));
 	}
 
 	/**
@@ -72,7 +68,7 @@ export class TimeLogController {
 	@Get('report/daily')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getDailyReport(@Query() options: TimeLogQueryDTO): Promise<any | null> {
-		return await this.timeLogService.getDailyReport(options);
+		return await this._timeLogService.getDailyReport(options);
 	}
 
 	/**
@@ -92,7 +88,7 @@ export class TimeLogController {
 	@Get('report/daily-chart')
 	@UseValidationPipe({ whitelist: true })
 	async getDailyReportChartData(@Query() options: TimeLogQueryDTO): Promise<any | null> {
-		return await this.timeLogService.getDailyReportCharts(options);
+		return await this._timeLogService.getDailyReportCharts(options);
 	}
 
 	/**
@@ -112,7 +108,7 @@ export class TimeLogController {
 	@Get('report/owed-report')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getOwedAmountReport(@Query() options: TimeLogQueryDTO): Promise<any | null> {
-		return await this.timeLogService.getOwedAmountReport(options);
+		return await this._timeLogService.getOwedAmountReport(options);
 	}
 
 	/**
@@ -132,7 +128,7 @@ export class TimeLogController {
 	@Get('report/owed-charts')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getOwedAmountReportChartData(@Query() options: TimeLogQueryDTO): Promise<any | null> {
-		return await this.timeLogService.getOwedAmountReportCharts(options);
+		return await this._timeLogService.getOwedAmountReportCharts(options);
 	}
 
 	/**
@@ -152,7 +148,7 @@ export class TimeLogController {
 	@Get('report/weekly')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getWeeklyReport(@Query() options: TimeLogQueryDTO): Promise<any | null> {
-		return await this.timeLogService.getWeeklyReport(options);
+		return await this._timeLogService.getWeeklyReport(options);
 	}
 
 	/**
@@ -172,7 +168,7 @@ export class TimeLogController {
 	@Get('time-limit')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getTimeLimitReport(@Query() options: TimeLogLimitQueryDTO): Promise<any | null> {
-		return await this.timeLogService.getTimeLimit(options);
+		return await this._timeLogService.getTimeLimit(options);
 	}
 
 	/**
@@ -192,7 +188,7 @@ export class TimeLogController {
 	@Get('project-budget-limit')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getProjectBudgetLimit(@Query() options: TimeLogQueryDTO) {
-		return await this.timeLogService.getProjectBudgetLimit(options);
+		return await this._timeLogService.getProjectBudgetLimit(options);
 	}
 
 	/**
@@ -212,7 +208,7 @@ export class TimeLogController {
 	@Get('client-budget-limit')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async clientBudgetLimit(@Query() options: TimeLogQueryDTO) {
-		return await this.timeLogService.getClientBudgetLimit(options);
+		return await this._timeLogService.getClientBudgetLimit(options);
 	}
 
 	/**
@@ -233,7 +229,7 @@ export class TimeLogController {
 	@Get()
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async getLogs(@Query() options: TimeLogQueryDTO): Promise<ITimeLog[]> {
-		return await this.timeLogService.getTimeLogs(options);
+		return await this._timeLogService.getTimeLogs(options);
 	}
 
 	/**
@@ -247,7 +243,7 @@ export class TimeLogController {
 		@Param('id', UUIDValidationPipe) id: ITimeLog['id'],
 		@Query() options: FindOneOptions
 	): Promise<ITimeLog> {
-		return await this.timeLogService.findOneByIdString(id, options);
+		return await this._timeLogService.findOneByIdString(id, options);
 	}
 
 	/**
@@ -270,7 +266,7 @@ export class TimeLogController {
 	async addManualTime(
 		@Body(TimeLogBodyTransformPipe, new ValidationPipe({ transform: true })) entity: CreateManualTimeLogDTO
 	): Promise<ITimeLog> {
-		return await this.timeLogService.addManualTime(entity);
+		return await this._timeLogService.addManualTime(entity);
 	}
 
 	/**
@@ -295,12 +291,15 @@ export class TimeLogController {
 		@Param('id', UUIDValidationPipe) id: ITimeLog['id'],
 		@Body(TimeLogBodyTransformPipe, new ValidationPipe({ transform: true })) entity: UpdateManualTimeLogDTO
 	): Promise<ITimeLog> {
-		return await this.timeLogService.updateManualTime(id, entity);
+		return await this._timeLogService.updateManualTime(id, entity);
 	}
 
 	/**
-	 * Delete time log
-	 * @param deleteQuery The query parameters for deleting time logs.
+	 * Deletes a time log based on the provided query parameters.
+	 *
+	 * @param options - The query parameters for deleting time logs, including conditions like log IDs and force delete flag.
+	 * @returns A Promise that resolves to either a DeleteResult or UpdateResult, depending on whether it's a soft or hard delete.
+	 * @throws BadRequestException if the input is invalid or deletion fails.
 	 */
 	@ApiOperation({ summary: 'Delete time log' })
 	@ApiResponse({
@@ -309,13 +308,13 @@ export class TimeLogController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong.'
 	})
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
 	@Delete()
 	@UseValidationPipe({ transform: true })
-	async deleteTimeLog(@Query() deleteQuery: DeleteTimeLogDTO): Promise<DeleteResult | UpdateResult> {
-		return await this.timeLogService.deleteTimeLogs(deleteQuery);
+	async deleteTimeLog(@Query() options: DeleteTimeLogDTO): Promise<DeleteResult | UpdateResult> {
+		return await this._timeLogService.deleteTimeLogs(options);
 	}
 }

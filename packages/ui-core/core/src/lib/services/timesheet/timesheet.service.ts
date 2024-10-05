@@ -22,7 +22,8 @@ import {
 	IUpdateTimesheetStatusInput,
 	ISubmitTimesheetInput,
 	IBasePerTenantAndOrganizationEntityModel,
-	ID
+	ID,
+	IDeleteTimeSlot
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 
@@ -243,7 +244,13 @@ export class TimesheetService {
 		return firstValueFrom(this.http.get<ITimeSlot[]>(`${API_PREFIX}/timesheet/time-slot`, { params }));
 	}
 
-	deleteTimeSlots(request) {
+	/**
+	 * Deletes multiple time slots based on the provided request.
+	 *
+	 * @param request - The request object containing parameters for deletion.
+	 * @returns A Promise that resolves when the time slots are deleted.
+	 */
+	deleteTimeSlots(request: IDeleteTimeSlot): Promise<Object> {
 		return firstValueFrom(
 			this.http.delete(`${API_PREFIX}/timesheet/time-slot`, {
 				params: toParams(request)
