@@ -79,7 +79,6 @@ export class GetTimeLogGroupByProjectHandler implements ICommandHandler<GetTimeL
 				return {
 					tasks,
 					employee,
-
 					sum,
 					activity: parseFloat(parseFloat(avgActivity + '').toFixed(2))
 				};
