@@ -21,7 +21,6 @@ import {
 	ReportDayData,
 	IUpdateTimesheetStatusInput,
 	ISubmitTimesheetInput,
-	IBasePerTenantAndOrganizationEntityModel,
 	ID,
 	IDeleteTimeSlot,
 	IDeleteScreenshot

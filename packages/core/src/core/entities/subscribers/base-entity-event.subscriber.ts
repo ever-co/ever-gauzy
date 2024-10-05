@@ -1,5 +1,5 @@
 import { EntityName } from '@mikro-orm/core';
-import { EntityEventSubscriber } from './entity-event.subsciber';
+import { EntityEventSubscriber } from './entity-event.subscriber';
 import { IEntityEventSubscriber, MultiOrmEntityManager } from './entity-event-subscriber.types';
 
 /**

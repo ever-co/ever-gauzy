@@ -6,7 +6,7 @@ import {
 	EntitySubscriberInterface as TypeOrmEntitySubscriberInterface,
 	UpdateEvent
 } from 'typeorm';
-import { MultiORM, MultiORMEnum, getORMType } from '../../../core/utils';
+import { MultiORM, MultiORMEnum, getORMType } from '../../utils';
 import { MultiOrmEntityManager } from './entity-event-subscriber.types';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
