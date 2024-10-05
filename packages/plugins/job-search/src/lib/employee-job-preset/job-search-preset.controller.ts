@@ -6,7 +6,7 @@ import { EmployeeService, UUIDValidationPipe, UseValidationPipe } from '@gauzy/c
 import { JobPresetService } from './job-preset.service';
 import { JobPreset } from './job-preset.entity';
 import { JobPresetUpworkJobSearchCriterion } from './job-preset-upwork-job-search-criterion.entity';
-import { JobPresetQueryDTO } from './dto';
+import { CreateJobPresetDTO, JobPresetQueryDTO, SaveJobPresetCriterionDTO } from './dto';
 
 @ApiTags('JobSearchPreset')
 @Controller()
@@ -106,7 +106,8 @@ export class JobSearchPresetController {
 		description: 'Invalid job preset data'
 	})
 	@Post()
-	async createJobPreset(@Body() request: IJobPreset) {
+	@UseValidationPipe()
+	async createJobPreset(@Body() request: CreateJobPresetDTO) {
 		return await this.jobPresetService.createJobPreset(request);
 	}
 
@@ -128,7 +129,11 @@ export class JobSearchPresetController {
 		description: 'Invalid job preset criteria data'
 	})
 	@Post(':jobPresetId/criterion')
-	async saveUpdate(@Param('jobPresetId', UUIDValidationPipe) jobPresetId: ID, @Body() request: IMatchingCriterions) {
+	@UseValidationPipe()
+	async saveUpdate(
+		@Param('jobPresetId', UUIDValidationPipe) jobPresetId: ID,
+		@Body() request: SaveJobPresetCriterionDTO
+	) {
 		return await this.jobPresetService.saveJobPresetCriterion({
 			...request,
 			jobPresetId
