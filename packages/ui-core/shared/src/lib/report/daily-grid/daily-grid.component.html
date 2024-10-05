@@ -168,7 +168,7 @@
 							{{ 'REPORT_PAGE.CLIENT' | translate }}
 						</div>
 						<div class="responsive-table-content project-name">
-							<ng-container *ngTemplateOutlet="clientEl; context: { $implicit: logs?.client }">
+							<ng-container *ngTemplateOutlet="clientEl; context: { $implicit: task?.client }">
 							</ng-container>
 						</div>
 					</div>
@@ -242,7 +242,7 @@
 						</div>
 						<div class="responsive-table-content">
 							<ng-container
-								*ngTemplateOutlet="clientEl; context: { $implicit: projectLog?.client }"
+								*ngTemplateOutlet="clientEl; context: { $implicit: task?.client }"
 							></ng-container>
 						</div>
 					</div>
@@ -324,7 +324,7 @@
 							{{ 'REPORT_PAGE.CLIENT' | translate }}
 						</div>
 						<div class="responsive-table-content project-name">
-							<ng-container *ngTemplateOutlet="clientEl; context: { $implicit: project?.client }">
+							<ng-container *ngTemplateOutlet="clientEl; context: { $implicit: task?.client }">
 							</ng-container>
 						</div>
 					</div>

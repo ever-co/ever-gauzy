@@ -32,17 +32,8 @@ export class GetTimeLogGroupByDateHandler implements ICommandHandler<GetTimeLogG
 						// Extract project information
 						const project = byProjectLogs.length > 0 ? byProjectLogs[0].project : null;
 
-						// Extract client information using optional chaining
-						const client =
-							byProjectLogs.length > 0
-								? byProjectLogs[0].organizationContact
-								: project
-								? project.organizationContact
-								: null;
-
 						return {
 							project,
-							client,
 							employeeLogs: this.getGroupByEmployee(byProjectLogs)
 						};
 					})
@@ -81,7 +72,8 @@ export class GetTimeLogGroupByDateHandler implements ICommandHandler<GetTimeLogG
 				const tasks = timeLogs.map((log) => ({
 					task: log.task,
 					description: log.description,
-					duration: log.duration
+					duration: log.duration,
+					client: log.organizationContact ? log.organizationContact : null
 				}));
 
 				return {
