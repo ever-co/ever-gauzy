@@ -30,14 +30,6 @@ export class GetTimeLogGroupByProjectHandler implements ICommandHandler<GetTimeL
 				// Extract project information
 				const project = byProjectLogs.length > 0 ? byProjectLogs[0].project : null;
 
-				// Extract client information using optional chaining
-				const client =
-					byProjectLogs.length > 0
-						? byProjectLogs[0].organizationContact
-						: project
-						? project.organizationContact
-						: null;
-
 				// Group projectLogs by date
 				const byDate = chain(byProjectLogs)
 					.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timeZone).format('YYYY-MM-DD'))
@@ -49,7 +41,6 @@ export class GetTimeLogGroupByProjectHandler implements ICommandHandler<GetTimeL
 
 				return {
 					project,
-					client,
 					logs: byDate,
 					sum: avgDuration || null,
 					activity: parseFloat(parseFloat(avgActivity + '').toFixed(2))
@@ -76,13 +67,17 @@ export class GetTimeLogGroupByProjectHandler implements ICommandHandler<GetTimeL
 				const avgActivity = calculateAverageActivity(chain(timeLogs).pluck('timeSlots').flatten(true).value());
 
 				// Retrieve employee details
-				const task = timeLogs.length > 0 ? timeLogs[0].task : null;
-				const employee = timeLogs.length > 0 ? timeLogs[0].employee : null;
-				const description = timeLogs.length > 0 ? timeLogs[0].description : null;
 
+				const employee = timeLogs.length > 0 ? timeLogs[0].employee : null;
+
+				const tasks = timeLogs.map((log) => ({
+					task: log.task,
+					description: log.description,
+					duration: log.duration,
+					client: log.organizationContact ? log.organizationContact : null
+				}));
 				return {
-					description,
-					task,
+					tasks,
 					employee,
 					sum,
 					activity: parseFloat(parseFloat(avgActivity + '').toFixed(2))

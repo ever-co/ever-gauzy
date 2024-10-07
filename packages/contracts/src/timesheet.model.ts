@@ -398,7 +398,7 @@ export interface IReportDayGroupByDate {
 	logs: {
 		project: IOrganizationProject;
 		employeeLogs: {
-			task: ITask;
+			tasks: ITask[];
 			employee: IEmployee;
 			sum: number;
 			activity: number;
@@ -420,7 +420,7 @@ export interface IReportDayGroupByDate {
 	logs: {
 		project: IOrganizationProject;
 		employeeLogs: {
-			task: ITask;
+			tasks: ITask[];
 			employee: IEmployee;
 			sum: number;
 			activity: number;
@@ -436,7 +436,7 @@ export interface IReportDayGroupByEmployee {
 			sum: number;
 			activity: number;
 			project: IOrganizationProject;
-			task: ITask;
+			tasks: ITask[];
 		}[];
 	}[];
 }
@@ -446,7 +446,7 @@ export interface IReportDayGroupByProject {
 	logs: {
 		date: string;
 		employeeLogs: {
-			task: ITask;
+			tasks: ITask[];
 			employee: IEmployee;
 			sum: number;
 			activity: number;
@@ -461,7 +461,7 @@ export interface IReportDayGroupByClient {
 		logs: {
 			date: string;
 			employeeLogs: {
-				task: ITask;
+				tasks: ITask[];
 				employee: IEmployee;
 				sum: number;
 				activity: number;
