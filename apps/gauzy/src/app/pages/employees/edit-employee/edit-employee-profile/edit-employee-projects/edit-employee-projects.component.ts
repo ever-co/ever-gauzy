@@ -8,7 +8,6 @@ import {
 	IEmployee,
 	IOrganization,
 	IOrganizationProject,
-	IOrganizationProjectEmployee,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
