@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { SelectQueryBuilder } from 'typeorm';
 import { PermissionsEnum, IGetTimeSlotInput, ID, ITimeSlot } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../../core/crud';
