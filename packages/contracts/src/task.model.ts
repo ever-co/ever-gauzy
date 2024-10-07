@@ -2,7 +2,7 @@ import { IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel, ID
 import { IEmployee } from './employee.model';
 import { IInvoiceItem } from './invoice-item.model';
 import { IRelationalOrganizationProject } from './organization-projects.model';
-import { IOrganizationSprint } from './organization-sprint.model';
+import { IOrganizationSprint, IOrganizationSprintTaskHistory } from './organization-sprint.model';
 import { IOrganizationTeam } from './organization-team.model';
 import { ITag } from './tag.model';
 import { IUser } from './user.model';
@@ -30,6 +30,7 @@ export interface ITask extends IBasePerTenantAndOrganizationEntityModel, IRelati
 	organizationSprint?: IOrganizationSprint;
 	organizationSprintId?: ID;
 	taskSprints?: IOrganizationSprint[];
+	taskSprintHistories?: IOrganizationSprintTaskHistory[];
 	creator?: IUser;
 	creatorId?: ID;
 	isDraft?: boolean; // Define if task is still draft (E.g : Task description not completed yet)

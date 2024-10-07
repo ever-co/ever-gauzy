@@ -89,6 +89,7 @@ export * from '../../organization-recurring-expense/organization-recurring-expen
 export * from '../../organization-sprint/organization-sprint.entity';
 export * from '../../organization-sprint/organization-sprint-employee.entity';
 export * from '../../organization-sprint/organization-sprint-task.entity';
+export * from '../../organization-sprint/organization-sprint-task-history.entity';
 export * from '../../organization-task-setting/organization-task-setting.entity';
 export * from '../../organization-team-employee/organization-team-employee.entity';
 export * from '../../organization-team-join-request/organization-team-join-request.entity';

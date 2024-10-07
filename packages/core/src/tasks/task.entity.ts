@@ -11,6 +11,7 @@ import {
 	IOrganizationProject,
 	IOrganizationProjectModule,
 	IOrganizationSprint,
+	IOrganizationSprintTaskHistory,
 	IOrganizationTeam,
 	ITag,
 	ITask,
@@ -33,6 +34,7 @@ import {
 	OrganizationProjectModule,
 	OrganizationSprint,
 	OrganizationSprintTask,
+	OrganizationSprintTaskHistory,
 	OrganizationTeam,
 	OrganizationTeamEmployee,
 	Tag,
@@ -361,6 +363,14 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 		cascade: true
 	})
 	taskSprints?: IOrganizationSprint[];
+
+	/*
+	 * Sprint Task Histories
+	 */
+	@MultiORMOneToMany(() => OrganizationSprintTaskHistory, (it) => it.task, {
+		cascade: true
+	})
+	taskSprintHistories?: IOrganizationSprintTaskHistory[];
 
 	/*
 	|--------------------------------------------------------------------------

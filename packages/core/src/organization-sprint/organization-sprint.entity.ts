@@ -1,21 +1,24 @@
 import { JoinColumn } from 'typeorm';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { isMySQL, isPostgres } from '@gauzy/config';
 import {
 	ID,
 	IOrganizationProjectModule,
 	IOrganizationSprint,
 	IOrganizationSprintEmployee,
 	IOrganizationSprintTask,
+	IOrganizationSprintTaskHistory,
 	JsonData,
 	OrganizationSprintStatusEnum,
 	SprintStartDayEnum
 } from '@gauzy/contracts';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import {
 	OrganizationProject,
 	OrganizationProjectModule,
 	OrganizationSprintEmployee,
 	OrganizationSprintTask,
+	OrganizationSprintTaskHistory,
 	Task,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
@@ -28,7 +31,6 @@ import {
 	MultiORMOneToMany
 } from './../core/decorators/entity';
 import { MikroOrmOrganizationSprintRepository } from './repository/mikro-orm-organization-sprint.repository';
-import { isMySQL, isPostgres } from '@gauzy/config';
 
 @MultiORMEntity('organization_sprint', { mikroOrmRepository: () => MikroOrmOrganizationSprintRepository })
 export class OrganizationSprint extends TenantOrganizationBaseEntity implements IOrganizationSprint {
@@ -136,6 +138,24 @@ export class OrganizationSprint extends TenantOrganizationBaseEntity implements 
 	@MultiORMOneToMany(() => Task, (task) => task.organizationSprint)
 	@JoinColumn()
 	tasks?: Task[];
+
+	/**
+	 * From OrganizatoinSprint histories
+	 */
+	@MultiORMOneToMany(() => OrganizationSprintTaskHistory, (it) => it.fromSprint, {
+		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
+		cascade: true
+	})
+	fromSprintTaskHistories?: IOrganizationSprintTaskHistory[];
+
+	/**
+	 * From OrganizatoinSprint histories
+	 */
+	@MultiORMOneToMany(() => OrganizationSprintTaskHistory, (it) => it.toSprint, {
+		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
+		cascade: true
+	})
+	toSprintTaskHistories?: IOrganizationSprintTaskHistory[];
 
 	/*
 	|--------------------------------------------------------------------------

@@ -5,6 +5,7 @@ import { ITask } from './task.model';
 import { IEmployeeEntityInput } from './employee.model';
 import { IRelationalRole } from './role.model';
 import { JsonData } from './activity-log.model';
+import { IUser } from './user.model';
 
 export interface IOrganizationSprintBase extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
@@ -21,6 +22,8 @@ export interface IOrganizationSprintBase extends IBasePerTenantAndOrganizationEn
 	members?: IOrganizationSprintEmployee[];
 	modules?: IOrganizationProjectModule[];
 	taskSprints?: IOrganizationSprintTask[];
+	fromSprintTaskHistories?: IOrganizationSprintTaskHistory[];
+	toSprintTaskHistories?: IOrganizationSprintTaskHistory[];
 }
 
 export interface IOrganizationSprint extends IOrganizationSprintBase {
@@ -70,4 +73,16 @@ export interface IOrganizationSprintTask extends IBasePerTenantAndOrganizationEn
 	task?: ITask;
 	taskId: ID;
 	totalWorkedHours?: number;
+}
+
+export interface IOrganizationSprintTaskHistory extends IBasePerTenantAndOrganizationEntityModel {
+	reason?: string;
+	task?: ITask;
+	taskId?: ID;
+	fromSprint?: IOrganizationSprint;
+	fromSprintId?: ID;
+	toSprint?: IOrganizationSprint;
+	toSprintId?: ID;
+	movedBy?: IUser;
+	movedById?: ID;
 }
