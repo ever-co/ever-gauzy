@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
-import { TimeLog } from './time-log.entity';
+import { CommandBus } from '@nestjs/cqrs';
 import { SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult } from 'typeorm';
-import { RequestContext } from '../../core/context';
+import { chain, pluck } from 'underscore';
 import {
 	IManualTimeInput,
 	PermissionsEnum,
@@ -21,10 +21,9 @@ import {
 	IDeleteTimeLog,
 	IOrganizationContact,
 	IEmployee,
-	IOrganization
+	IOrganization,
+	ID
 } from '@gauzy/contracts';
-import { CommandBus } from '@nestjs/cqrs';
-import { chain, pluck } from 'underscore';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../../core/crud';
 import {
@@ -39,6 +38,7 @@ import {
 	TimeLogUpdateCommand
 } from './commands';
 import { getDateRangeFormat, getDaysBetweenDates } from './../../core/utils';
+import { RequestContext } from '../../core/context';
 import { moment } from './../../core/moment-extend';
 import { calculateAverage, calculateAverageActivity, calculateDuration } from './time-log.utils';
 import { prepareSQLQuery as p } from './../../database/database.helper';
@@ -50,6 +50,7 @@ import { TypeOrmOrganizationProjectRepository } from '../../organization-project
 import { MikroOrmOrganizationProjectRepository } from '../../organization-project/repository/mikro-orm-organization-project.repository';
 import { TypeOrmOrganizationContactRepository } from '../../organization-contact/repository/type-orm-organization-contact.repository';
 import { MikroOrmOrganizationContactRepository } from '../../organization-contact/repository/mikro-orm-organization-contact.repository';
+import { TimeLog } from './time-log.entity';
 
 @Injectable()
 export class TimeLogService extends TenantAwareCrudService<TimeLog> {
@@ -1063,7 +1064,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 */
 	async addManualTime(request: IManualTimeInput): Promise<ITimeLog> {
 		try {
-			const tenantId = RequestContext.currentTenantId();
+			const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
 			const { employeeId, startedAt, stoppedAt, organizationId } = request;
 
 			// Validate input
@@ -1077,7 +1078,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				relations: { organization: true }
 			});
 
-			//
+			// Check if future dates are allowed for the organization
 			const futureDateAllowed: IOrganization['futureDateAllowed'] = employee.organization.futureDateAllowed;
 
 			// Check if the selected date and time range is allowed for the organization
@@ -1094,18 +1095,20 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					employeeId,
 					organizationId,
 					tenantId,
-					...(request.id ? { ignoreId: request.id } : {})
+					...(request.id && { ignoreId: request.id }) // Simplified ternary check
 				})
 			);
 
 			// Resolve conflicts by deleting conflicting time slots
-			if (conflicts && conflicts.length > 0) {
+			if (conflicts?.length) {
 				const times: IDateRange = {
 					start: new Date(startedAt),
 					end: new Date(stoppedAt)
 				};
+				// Loop through each conflicting time log
 				for await (const timeLog of conflicts) {
 					const { timeSlots = [] } = timeLog;
+					// Delete conflicting time slots
 					for await (const timeSlot of timeSlots) {
 						await this.commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, timeSlot));
 					}
@@ -1127,9 +1130,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @param request The updated data for the manual time log.
 	 * @returns The updated time log entry.
 	 */
-	async updateManualTime(id: ITimeLog['id'], request: IManualTimeInput): Promise<ITimeLog> {
+	async updateManualTime(id: ID, request: IManualTimeInput): Promise<ITimeLog> {
 		try {
-			const tenantId = RequestContext.currentTenantId();
+			const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
 			const { startedAt, stoppedAt, employeeId, organizationId } = request;
 
 			// Validate input
@@ -1143,7 +1146,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				relations: { organization: true }
 			});
 
-			//
+			// Check if future dates are allowed for the organization
 			const futureDateAllowed: IOrganization['futureDateAllowed'] = employee.organization.futureDateAllowed;
 
 			// Check if the selected date and time range is allowed for the organization
@@ -1153,9 +1156,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 
 			// Check for conflicts with existing time logs
-			const timeLog = await this.typeOrmRepository.findOneBy({
-				id: id
-			});
+			const timeLog = await this.typeOrmRepository.findOneBy({ id });
 
 			// Check for conflicts with existing time logs
 			const conflicts = await this.commandBus.execute(
@@ -1165,18 +1166,18 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					employeeId,
 					organizationId,
 					tenantId,
-					...(id ? { ignoreId: id } : {})
+					...(id && { ignoreId: id }) // Simplified check for id
 				})
 			);
 
 			// Resolve conflicts by deleting conflicting time slots
-			if (isNotEmpty(conflicts)) {
-				const times: IDateRange = {
-					start: new Date(startedAt),
-					end: new Date(stoppedAt)
-				};
+			if (conflicts?.length) {
+				const times: IDateRange = { start: new Date(startedAt), end: new Date(stoppedAt) };
+
+				// Loop through each conflicting time log
 				for await (const timeLog of conflicts) {
 					const { timeSlots = [] } = timeLog;
+					// Delete conflicting time slots
 					for await (const timeSlot of timeSlots) {
 						await this.commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, timeSlot));
 					}
@@ -1198,51 +1199,48 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
+	 * Deletes time logs based on the provided parameters.
 	 *
-	 * @param params
-	 * @returns
+	 * @param params - The parameters for deleting the time logs, including `logIds`, `organizationId`, and `forceDelete`.
+	 * @returns A promise that resolves to the result of the delete or soft delete operation.
+	 * @throws NotAcceptableException if no log IDs are provided.
 	 */
 	async deleteTimeLogs(params: IDeleteTimeLog): Promise<DeleteResult | UpdateResult> {
-		let logIds: string | string[] = params.logIds;
-		if (isEmpty(logIds)) {
-			throw new NotAcceptableException('You can not delete time logs');
-		}
-		if (typeof logIds === 'string') {
-			logIds = [logIds];
+		// Early return if no logIds are provided
+		if (isEmpty(params.logIds)) {
+			throw new NotAcceptableException('You cannot delete time logs without IDs');
 		}
 
-		const tenantId = RequestContext.currentTenantId();
-		const user = RequestContext.currentUser();
+		// Ensure logIds is an array
+		const logIds: ID[] = Array.isArray(params.logIds) ? params.logIds : [params.logIds];
+
+		// Get the tenant ID from the request context or the provided tenant ID
+		const tenantId = RequestContext.currentTenantId() ?? params.tenantId;
 		const { organizationId, forceDelete } = params;
 
-		const query = this.typeOrmRepository.createQueryBuilder('time_log');
+		// Create a query builder for the TimeLog entity
+		const query = this.typeOrmRepository.createQueryBuilder();
+
+		// Set find options for the query
 		query.setFindOptions({
-			relations: {
-				timeSlots: true
-			}
-		});
-		query.where((db: SelectQueryBuilder<TimeLog>) => {
-			db.andWhere({
-				...(RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
-					? {}
-					: {
-							employeeId: user.employeeId
-					  })
-			});
-			db.andWhere(
-				new Brackets((web: WhereExpressionBuilder) => {
-					web.andWhere(p(`"${db.alias}"."tenantId" = :tenantId`), {
-						tenantId
-					});
-					web.andWhere(p(`"${db.alias}"."organizationId" = :organizationId`), { organizationId });
-					web.andWhere(p(`"${db.alias}"."id" IN (:...logIds)`), {
-						logIds
-					});
-				})
-			);
+			relations: { timeSlots: true }
 		});
 
+		// Add where clauses to the query
+		query.where(p(`"${query.alias}"."id" IN (:...logIds)`), { logIds });
+		query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+		query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+
+		// If user don't have permission to change selected employee, filter by current employee ID
+		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			const employeeId = RequestContext.currentEmployeeId();
+			query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
+		}
+
+		// Get the time logs from the database
 		const timeLogs = await query.getMany();
+
+		// Invoke the command bus to delete the time logs
 		return await this.commandBus.execute(new TimeLogDeleteCommand(timeLogs, forceDelete));
 	}
 
