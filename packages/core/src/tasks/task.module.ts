@@ -1,6 +1,5 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { EventBusModule } from '../event-bus/event-bus.module';
@@ -18,7 +17,6 @@ import { TypeOrmTaskRepository } from './repository';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/tasks', module: TaskModule }]),
 		TypeOrmModule.forFeature([Task, TaskStatus, IntegrationMap]),
 		MikroOrmModule.forFeature([Task, TaskStatus, IntegrationMap]),
 		RolePermissionModule,

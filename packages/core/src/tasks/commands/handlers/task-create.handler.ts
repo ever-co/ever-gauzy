@@ -33,43 +33,41 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 		try {
 			// Destructure input and triggered event flag from the command
 			const { input, triggeredEvent } = command;
-			let { organizationId, project } = input;
+			const { organizationId, projectId } = input;
 
 			// Retrieve current tenant ID from request context or use input tenant ID
-			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 
-			// If input contains project ID, fetch project details
-			if (input.projectId) {
-				const { projectId } = input;
-				project = await this._organizationProjectService.findOneByIdString(projectId);
-			}
-
-			// Determine project ID and task prefix based on project existence
-			const projectId = project ? project.id : null;
-			const taskPrefix = project ? project.name.substring(0, 3) : null;
+			// Fetch project details if projectId is provided
+			const project = projectId ? await this._organizationProjectService.findOneByIdString(projectId) : null;
+			const projectPrefix = project?.name?.substring(0, 3) ?? null;
 
 			// Retrieve the maximum task number for the specified project
 			const maxNumber = await this._taskService.getMaxTaskNumberByProject({
 				tenantId,
 				organizationId,
-				projectId
+				projectId: project?.id ?? null
 			});
 
-			// Create the task with incremented number, prefix, and other details
+			// Create the task with incremented number and task details
 			const createdTask = await this._taskService.create({
 				...input,
 				number: maxNumber + 1,
-				prefix: taskPrefix,
+				prefix: projectPrefix,
 				tenantId,
 				organizationId
 			});
 
 			// Publish a task created event if triggeredEvent flag is set
 			if (triggeredEvent) {
-				// Publish the task created event
-				const ctx = RequestContext.currentRequestContext(); // Get current request context;
-				const event = new TaskEvent(ctx, createdTask, BaseEntityEventTypeEnum.CREATED, input);
-				this._eventBus.publish(event); // Publish the event using EventBus
+				this._eventBus.publish(
+					new TaskEvent(
+						RequestContext.currentRequestContext(),
+						createdTask,
+						BaseEntityEventTypeEnum.CREATED,
+						input
+					)
+				); // Publish the event using EventBus
 			}
 
 			// Generate the activity log description
