@@ -51,7 +51,7 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 
 		// Get the sum of durations between startedAt and stoppedAt
 		const sumQuery = this.getSumQuery(query.alias);
-		console.log('sum of durations between startedAt and stoppedAt for whole carrer', sumQuery);
+		console.log('sum of durations between startedAt and stoppedAt', sumQuery);
 
 		// Execute the query and get the duration
 		const result = await query
