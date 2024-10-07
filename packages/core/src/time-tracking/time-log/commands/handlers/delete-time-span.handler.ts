@@ -40,7 +40,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			relations: { timeSlots: true }
 		});
 
-		const { startedAt, stoppedAt, employeeId, organizationId, timesheetId } = log;
+		const { startedAt, stoppedAt, employeeId, organizationId } = log;
 
 		const newTimeRange = moment.range(start, end);
 		const dbTimeRange = moment.range(startedAt, stoppedAt);

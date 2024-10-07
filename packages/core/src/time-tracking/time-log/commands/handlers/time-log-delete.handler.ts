@@ -1,6 +1,6 @@
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { In, DeleteResult, UpdateResult } from 'typeorm';
-import { chain, pluck } from 'underscore';
+import { pluck } from 'underscore';
 import { ID } from '@gauzy/contracts';
 import { TimesheetRecalculateCommand } from '../../../timesheet/commands/timesheet-recalculate.command';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
