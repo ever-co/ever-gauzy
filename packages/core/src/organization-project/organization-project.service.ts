@@ -520,42 +520,51 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		return { items, total };
 	}
 
-	async updateByEmployee(input: IOrganizationProjectEditByEmployeeInput) {
+	/**
+	 * Updates the employee's project associations.
+	 *
+	 * This method adds or removes projects for an employee based on the provided input. If the employee is added to
+	 * new projects, the respective project members are updated. If the employee is removed from projects, the project
+	 * membership records are deleted.
+	 *
+	 * @param input The input data containing information about the employee, projects to add, projects to remove, and the organization.
+	 * @returns A Promise that resolves to `true` when the update is successful.
+	 */
+	async updateByEmployee(input: IOrganizationProjectEditByEmployeeInput): Promise<boolean> {
 		try {
+			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 			const { organizationId, addedProjectIds = [], removedProjectIds = [], member } = input;
 
 			// Handle adding projects
 			if (addedProjectIds.length > 0) {
 				const projectsToAdd = await this.find({
-					where: {
-						id: In(addedProjectIds),
-						organizationId
-					},
-					relations: {
-						members: true
-					}
+					where: { id: In(addedProjectIds), organizationId, tenantId },
+					relations: { members: true }
 				});
 
-				const updatedProjectsToAdd = projectsToAdd.map((project) => {
-					const existingMembers = project.members || [];
+				const updatedProjectsToAdd = projectsToAdd
+					.filter((project: IOrganizationProject) => {
+						// Filter only projects where the member is not already assigned
+						return !project.members?.some(({ employeeId }) => employeeId === member.id);
+					})
+					.map((project: IOrganizationProject) => {
+						// Create new member object for the projects where the member is not yet assigned
+						const newMember = new OrganizationProjectEmployee({
+							employeeId: member.id,
+							organizationProjectId: project.id,
+							organizationId,
+							tenantId
+						});
 
-					// Verify if member already exists on project
-					const isMemberAlreadyInProject = existingMembers.some(
-						(existingMember) => existingMember.employeeId === member.employeeId
-					);
-
-					if (!isMemberAlreadyInProject) {
+						// Return the project with the new member added to the members array
 						return {
 							...project,
-							members: [...existingMembers, { ...member, organizationProjectId: project.id }]
+							members: [...project.members, newMember] // Add new member while keeping existing members intact
 						};
-					}
+					});
 
-					return project; // If member already assigned to project, no change needed
-				});
-
-				// save updated projects
-				await Promise.all(updatedProjectsToAdd.map(async (project) => await this.save(project)));
+				// Save updated projects
+				await Promise.all(updatedProjectsToAdd.map((project) => this.save(project)));
 			}
 
 			// Handle removing projects
@@ -568,8 +577,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 
 			return true;
 		} catch (error) {
-			console.error('Error while updating project by member:', error);
-			throw new BadRequestException(error);
+			console.log('Error while updating project by employee:', error);
+			throw new HttpException({ message: 'Error while updating project by employee' }, HttpStatus.BAD_REQUEST);
 		}
 	}
 }

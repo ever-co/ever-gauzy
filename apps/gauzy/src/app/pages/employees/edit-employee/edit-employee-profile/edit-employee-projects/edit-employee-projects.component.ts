@@ -8,10 +8,17 @@ import {
 	IEmployee,
 	IOrganization,
 	IOrganizationProject,
+	IOrganizationProjectEmployee,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { EmployeeStore, OrganizationProjectsService, Store, ToastrService } from '@gauzy/ui-core/core';
+import {
+	EmployeeStore,
+	ErrorHandlingService,
+	OrganizationProjectsService,
+	Store,
+	ToastrService
+} from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
@@ -45,11 +52,12 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent impl
 	public organization: IOrganization;
 
 	constructor(
-		private readonly organizationProjectsService: OrganizationProjectsService,
-		private readonly toastrService: ToastrService,
-		private readonly employeeStore: EmployeeStore,
 		public readonly translateService: TranslateService,
-		private readonly store: Store
+		private readonly _organizationProjectsService: OrganizationProjectsService,
+		private readonly _toastrService: ToastrService,
+		private readonly _employeeStore: EmployeeStore,
+		private readonly _store: Store,
+		private readonly _errorHandlingService: ErrorHandlingService
 	) {
 		super(translateService);
 	}
@@ -61,8 +69,8 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent impl
 				untilDestroyed(this)
 			)
 			.subscribe();
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeEmployee$ = this.employeeStore.selectedEmployee$;
+		const storeOrganization$ = this._store.selectedOrganization$;
+		const storeEmployee$ = this._employeeStore.selectedEmployee$;
 		combineLatest([storeOrganization$, storeEmployee$])
 			.pipe(
 				distinctUntilChange(),
@@ -77,79 +85,129 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent impl
 			.subscribe();
 	}
 
-	ngOnDestroy(): void {}
+	/**
+	 * Submits the form to update the employee's project association.
+	 *
+	 * If the `member` exists in the input, the method will either update or remove the employee's project assignment
+	 * and provide feedback through a success or error toastr notification.
+	 *
+	 * @param input The input data containing information about the employee and the project.
+	 * @param removed A flag indicating whether the employee was removed from or added to the project.
+	 */
+	async submitForm(input: IEditEntityByMemberInput, removed: boolean): Promise<void> {
+		if (!this.organization || !input.member) {
+			return;
+		}
 
-	async submitForm(formInput: IEditEntityByMemberInput, removed: boolean) {
+		const { id: organizationId, tenantId } = this.organization;
+
 		try {
-			if (formInput.member) {
-				await this.organizationProjectsService.updateByEmployee(formInput);
-				this.loadProjects();
-				this.toastrService.success(
-					removed ? 'TOASTR.MESSAGE.EMPLOYEE_PROJECT_REMOVED' : 'TOASTR.MESSAGE.EMPLOYEE_PROJECT_ADDED'
-				);
-			}
+			// Update the employee's project assignment
+			await this._organizationProjectsService.updateByEmployee({
+				addedProjectIds: input.addedEntityIds,
+				removedProjectIds: input.removedEntityIds,
+				member: input.member,
+				organizationId,
+				tenantId
+			});
+
+			// Show success message based on the action performed (added or removed)
+			const message = removed
+				? 'TOASTR.MESSAGE.EMPLOYEE_PROJECT_REMOVED'
+				: 'TOASTR.MESSAGE.EMPLOYEE_PROJECT_ADDED';
+			this._toastrService.success(message);
 		} catch (error) {
-			this.toastrService.danger('TOASTR.MESSAGE.EMPLOYEE_EDIT_ERROR');
+			// Show error message in case of failure
+			this._toastrService.danger('TOASTR.MESSAGE.EMPLOYEE_EDIT_ERROR');
+		} finally {
+			// Notify subscribers that the operation is complete
+			this.subject$.next(true);
 		}
 	}
 
 	/**
-	 * Load organization & employee assigned projects
+	 * Loads organization and employee assigned projects.
+	 *
+	 * This method loads the projects assigned to the selected employee and all organization projects,
+	 * then filters out the employee's assigned projects from the full list of organization projects.
 	 */
-	private async loadProjects() {
+	private async loadProjects(): Promise<void> {
+		// Load employee projects and all organization projects
 		await this.loadSelectedEmployeeProjects();
+
+		// Get all organization projects
 		const organizationProjects = await this.getOrganizationProjects();
 
+		// Filter out employee's assigned projects from the organization projects list
 		this.organizationProjects = organizationProjects.filter(
-			(item: IOrganizationProject) =>
-				!this.employeeProjects.some((project: IOrganizationProject) => project.id === item.id)
+			(orgProject: IOrganizationProject) =>
+				!this.employeeProjects.some((empProject: IOrganizationProject) => empProject.id === orgProject.id)
 		);
 	}
 
 	/**
-	 * Get selected employee projects
+	 * Fetches projects assigned to the selected employee.
 	 *
-	 * @returns
+	 * This method loads the projects associated with the selected employee if the user has the necessary permissions
+	 * and the organization is available.
+	 *
+	 * @returns A Promise that resolves once the employee projects are loaded.
 	 */
-	private async loadSelectedEmployeeProjects() {
+	private async loadSelectedEmployeeProjects(): Promise<void> {
 		if (
 			!this.organization ||
-			!this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW)
+			!this._store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW)
 		) {
 			return;
 		}
 
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		const { id: organizationId, tenantId } = this.organization;
 		const { id: selectedEmployeeId } = this.selectedEmployee;
 
-		this.employeeProjects = await this.organizationProjectsService.getAllByEmployee(selectedEmployeeId, {
-			organizationId,
-			tenantId
-		});
+		try {
+			// Fetch and assign employee projects to the component property
+			this.employeeProjects = await this._organizationProjectsService.getAllByEmployee(selectedEmployeeId, {
+				organizationId,
+				tenantId
+			});
+		} catch (error) {
+			console.error('Error loading selected employee projects:', error);
+			this._errorHandlingService.handleError(error);
+		}
 	}
 
 	/**
-	 * Get organization projects
+	 * Fetches all projects within the organization.
 	 *
-	 * @returns
+	 * This method retrieves all projects in the organization if the user has the required permissions
+	 * and the organization is available.
+	 *
+	 * @returns A Promise that resolves to an array of organization projects.
 	 */
 	private async getOrganizationProjects(): Promise<IOrganizationProject[]> {
 		if (
 			!this.organization ||
-			!this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW)
+			!this._store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW)
 		) {
-			return;
+			return [];
 		}
 
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		const { id: organizationId, tenantId } = this.organization;
 
-		return (
-			await this.organizationProjectsService.getAll([], {
+		try {
+			// Fetch and return all organization projects
+			const result = await this._organizationProjectsService.getAll([], {
 				organizationId,
 				tenantId
-			})
-		).items;
+			});
+			return result.items;
+		} catch (error) {
+			console.error('Error fetching organization projects:', error);
+			// Handle errors
+			this._errorHandlingService.handleError(error);
+			return [];
+		}
 	}
+
+	ngOnDestroy(): void {}
 }
