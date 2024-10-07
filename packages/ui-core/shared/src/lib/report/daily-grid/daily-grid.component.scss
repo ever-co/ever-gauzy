@@ -1,74 +1,76 @@
 @import 'report';
 
 .group-by-wrapper {
-	display: flex;
-	align-items: center;
-	gap: 18px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
 }
 
 :host {
-    display: block;
+  display: block;
 
-    .no-data {
-		min-height: 10rem;
-		height: calc(100vh - 57.5rem) !important
-	}
+  .no-data {
+    min-height: 10rem;
+    height: calc(100vh - 57.5rem) !important;
+  }
 
-    ::ng-deep {
-        .select-button {
-            background-color: nb-theme(gauzy-card-1) !important;
-            box-shadow: var(--gauzy-shadow);
-        }
-        .names-wrapper {
-            max-width: 110px;
-        }
+  ::ng-deep {
+    .select-button {
+      background-color: nb-theme(gauzy-card-1) !important;
+      box-shadow: var(--gauzy-shadow);
     }
+    .names-wrapper {
+      max-width: 110px;
+    }
+  }
 }
 
 .employee-column {
-    width: 20%;
-    min-width: 165px;
-    max-width: 200px;
+  width: 20%;
+  min-width: 165px;
+  max-width: 200px;
 }
 .project-column {
-    width: 20%;
-    min-width: 20%;
+  width: 20%;
+  min-width: 20%;
 }
 .todo-column {
-    width: 30%;
-    &.header{
-        width: 28%;
-        &.client{
-            width: 22%;
-        }
+  width: 30%;
+  &.header {
+    width: 28%;
+    &.client {
+      width: 22%;
     }
+  }
 }
 .time-column {
-    width: 15%;
+  width: 15%;
 }
 .activity-column {
-    width: 15%;
+  width: 15%;
 }
 
-
 @include respond(lg) {
-    .employee-column {
-        min-width: auto;
-        max-width: unset;
-    }
-    .single-project-template .headers-wrapper .main-header {
-        white-space: break-spaces;
-    }
+  .employee-column {
+    min-width: auto;
+    max-width: unset;
+  }
+  .single-project-template .headers-wrapper .main-header {
+    white-space: break-spaces;
+  }
 
-    :host {
-        ::ng-deep {
-            .avatar-wrapper {
-                width: unset;
-                max-width: 100%;
-            }
-            .names-wrapper {
-                max-width: unset;
-            }
-        }
+  :host {
+    ::ng-deep {
+      .avatar-wrapper {
+        width: unset;
+        max-width: 100%;
+      }
+      .names-wrapper {
+        max-width: unset;
+      }
     }
+  }
+  .cart-body {
+    cursor: pointer;
+  }
 }

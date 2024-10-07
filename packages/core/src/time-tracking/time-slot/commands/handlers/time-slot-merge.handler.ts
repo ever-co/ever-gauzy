@@ -1,5 +1,4 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import { In, SelectQueryBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { chain, omit, pluck, uniq } from 'underscore';
@@ -16,13 +15,10 @@ import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.r
 
 @CommandHandler(TimeSlotMergeCommand)
 export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeCommand> {
-
 	constructor(
-		@InjectRepository(TimeSlot)
 		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
-
 		private readonly commandBus: CommandBus
-	) { }
+	) {}
 
 	/**
 	 *
@@ -36,11 +32,7 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 		let startMinute = moment(start).utc().get('minute');
 		startMinute = startMinute - (startMinute % 10);
 
-		let startDate: any = moment(start)
-			.utc()
-			.set('minute', startMinute)
-			.set('second', 0)
-			.set('millisecond', 0);
+		let startDate: any = moment(start).utc().set('minute', startMinute).set('second', 0).set('millisecond', 0);
 
 		let endMinute = moment(end).utc().get('minute');
 		endMinute = endMinute - (endMinute % 10);
@@ -51,10 +43,7 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 			.set('second', 0)
 			.set('millisecond', 0);
 
-		const { start: startedAt, end: stoppedAt } = getDateRangeFormat(
-			startDate,
-			endDate
-		);
+		const { start: startedAt, end: stoppedAt } = getDateRangeFormat(startDate, endDate);
 		console.log({ startedAt, stoppedAt }, 'Time Slot Merging Dates');
 
 		// GET Time Slots for the given date range slot
@@ -78,80 +67,83 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 					.set('millisecond', 0);
 				return date.format('YYYY-MM-DD HH:mm:ss');
 			});
-			const savePromises = groupByTimeSlots.mapObject(async (timeSlots, slotStart) => {
-				const [timeSlot] = timeSlots;
+			const savePromises = groupByTimeSlots
+				.mapObject(async (timeSlots, slotStart) => {
+					const [timeSlot] = timeSlots;
 
-				let timeLogs: ITimeLog[] = [];
-				let screenshots: IScreenshot[] = [];
-				let activities: IActivity[] = [];
+					let timeLogs: ITimeLog[] = [];
+					let screenshots: IScreenshot[] = [];
+					let activities: IActivity[] = [];
 
-				let duration = 0;
-				let keyboard = 0;
-				let mouse = 0;
-				let overall = 0;
+					let duration = 0;
+					let keyboard = 0;
+					let mouse = 0;
+					let overall = 0;
 
-				const calculateValue = (value: number | undefined): number => parseInt(value as any, 10) || 0;
+					const calculateValue = (value: number | undefined): number => parseInt(value as any, 10) || 0;
 
-				duration += timeSlots.reduce((acc, slot) => acc + calculateValue(slot.duration), 0);
-				keyboard += timeSlots.reduce((acc, slot) => acc + calculateValue(slot.keyboard), 0);
-				mouse += timeSlots.reduce((acc, slot) => acc + calculateValue(slot.mouse), 0);
-				overall += timeSlots.reduce((acc, slot) => acc + calculateValue(slot.overall), 0);
+					duration += timeSlots.reduce((acc, slot) => acc + calculateValue(slot.duration), 0);
+					keyboard += timeSlots.reduce((acc, slot) => acc + calculateValue(slot.keyboard), 0);
+					mouse += timeSlots.reduce((acc, slot) => acc + calculateValue(slot.mouse), 0);
+					overall += timeSlots.reduce((acc, slot) => acc + calculateValue(slot.overall), 0);
 
-				screenshots = screenshots.concat(...timeSlots.map(slot => slot.screenshots || []));
-				timeLogs = timeLogs.concat(...timeSlots.map(slot => slot.timeLogs || []));
-				activities = activities.concat(...timeSlots.map(slot => slot.activities || []));
+					screenshots = screenshots.concat(...timeSlots.map((slot) => slot.screenshots || []));
+					timeLogs = timeLogs.concat(...timeSlots.map((slot) => slot.timeLogs || []));
+					activities = activities.concat(...timeSlots.map((slot) => slot.activities || []));
 
-				const nonZeroKeyboardSlots = timeSlots.filter((item: ITimeSlot) => item.keyboard !== 0);
-				const timeSlotsLength = nonZeroKeyboardSlots.length;
+					const nonZeroKeyboardSlots = timeSlots.filter((item: ITimeSlot) => item.keyboard !== 0);
+					const timeSlotsLength = nonZeroKeyboardSlots.length;
 
-				keyboard = Math.round(keyboard / timeSlotsLength || 0);
-				mouse = Math.round(mouse / timeSlotsLength || 0);
+					keyboard = Math.round(keyboard / timeSlotsLength || 0);
+					mouse = Math.round(mouse / timeSlotsLength || 0);
 
-				const activity = {
-					duration: Math.max(0, Math.min(600, duration)),
-					overall: Math.max(0, Math.min(600, overall)),
-					keyboard: Math.max(0, Math.min(600, keyboard)),
-					mouse: Math.max(0, Math.min(600, mouse)),
-				};
-				/*
-				* Map old screenshots newly created TimeSlot
-				*/
-				screenshots = screenshots.map((item) => new Screenshot(omit(item, ['timeSlotId'])));
-				/*
-				* Map old activities newly created TimeSlot
-				*/
-				activities = activities.map((item) => new Activity(omit(item, ['timeSlotId'])));
+					const activity = {
+						duration: Math.max(0, Math.min(600, duration)),
+						overall: Math.max(0, Math.min(600, overall)),
+						keyboard: Math.max(0, Math.min(600, keyboard)),
+						mouse: Math.max(0, Math.min(600, mouse))
+					};
+					/*
+					 * Map old screenshots newly created TimeSlot
+					 */
+					screenshots = screenshots.map((item) => new Screenshot(omit(item, ['timeSlotId'])));
+					/*
+					 * Map old activities newly created TimeSlot
+					 */
+					activities = activities.map((item) => new Activity(omit(item, ['timeSlotId'])));
 
-				timeLogs = uniq(timeLogs, (log: ITimeLog) => log.id);
+					timeLogs = uniq(timeLogs, (log: ITimeLog) => log.id);
 
-				const newTimeSlot = new TimeSlot({
-					...omit(timeSlot),
-					...activity,
-					screenshots,
-					activities,
-					timeLogs,
-					startedAt: moment(slotStart).toDate(),
-					tenantId,
-					organizationId,
-					employeeId
-				});
-				console.log('Newly Created Time Slot', newTimeSlot);
-
-				await this.updateTimeLogAndEmployeeTotalWorkedHours(newTimeSlot);
-
-				await this.typeOrmTimeSlotRepository.save(newTimeSlot);
-				createdTimeSlots.push(newTimeSlot);
-
-				const ids = pluck(timeSlots, 'id');
-				ids.splice(0, 1);
-				console.log('TimeSlots Ids Will Be Deleted:', ids);
-
-				if (ids.length > 0) {
-					await this.typeOrmTimeSlotRepository.delete({
-						id: In(ids)
+					const newTimeSlot = new TimeSlot({
+						...omit(timeSlot),
+						...activity,
+						screenshots,
+						activities,
+						timeLogs,
+						startedAt: moment(slotStart).toDate(),
+						tenantId,
+						organizationId,
+						employeeId
 					});
-				}
-			}).values().value();
+					console.log('Newly Created Time Slot', newTimeSlot);
+
+					await this.updateTimeLogAndEmployeeTotalWorkedHours(newTimeSlot);
+
+					await this.typeOrmTimeSlotRepository.save(newTimeSlot);
+					createdTimeSlots.push(newTimeSlot);
+
+					const ids = pluck(timeSlots, 'id');
+					ids.splice(0, 1);
+					console.log('TimeSlots Ids Will Be Deleted:', ids);
+
+					if (ids.length > 0) {
+						await this.typeOrmTimeSlotRepository.delete({
+							id: In(ids)
+						});
+					}
+				})
+				.values()
+				.value();
 			await Promise.all(savePromises);
 		}
 		return createdTimeSlots;
@@ -163,13 +155,7 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 	 * @param param0 - An object containing parameters like organizationId, employeeId, tenantId, startedAt, and stoppedAt.
 	 * @returns A promise that resolves to an array of TimeSlot instances.
 	 */
-	private async getTimeSlots({
-		organizationId,
-		employeeId,
-		tenantId,
-		startedAt,
-		stoppedAt
-	}): Promise<TimeSlot[]> {
+	private async getTimeSlots({ organizationId, employeeId, tenantId, startedAt, stoppedAt }): Promise<TimeSlot[]> {
 		/**
 		 * GET Time Slots for given date range slot
 		 */
@@ -194,7 +180,7 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 		});
 		query.addOrderBy(p(`"${query.alias}"."createdAt"`), 'ASC');
 		const timeSlots = await query.getMany();
-		return timeSlots
+		return timeSlots;
 	}
 
 	/**
@@ -207,20 +193,14 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 		 * RECALCULATE timesheet activity
 		 */
 		for await (const timeLog of newTimeSlot.timeLogs) {
-			await this.commandBus.execute(
-				new TimesheetRecalculateCommand(timeLog.timesheetId)
-			);
+			await this.commandBus.execute(new TimesheetRecalculateCommand(timeLog.timesheetId));
 		}
 
 		/**
 		 * UPDATE employee total worked hours
 		 */
 		if (newTimeSlot.employeeId) {
-			await this.commandBus.execute(
-				new UpdateEmployeeTotalWorkedHoursCommand(
-					newTimeSlot.employeeId
-				)
-			);
+			await this.commandBus.execute(new UpdateEmployeeTotalWorkedHoursCommand(newTimeSlot.employeeId));
 		}
 	}
 }

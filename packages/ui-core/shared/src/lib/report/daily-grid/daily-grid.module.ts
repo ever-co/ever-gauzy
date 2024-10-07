@@ -7,7 +7,8 @@ import {
 	NbCardModule,
 	NbIconModule,
 	NbSelectModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
@@ -26,6 +27,7 @@ import { NoDataMessageModule } from '../../smart-data-layout/no-data-message/no-
 		NbIconModule,
 		NbSelectModule,
 		NbSpinnerModule,
+		NbTooltipModule,
 		TranslateModule.forChild(),
 		SharedModule,
 		ProjectColumnViewModule,
