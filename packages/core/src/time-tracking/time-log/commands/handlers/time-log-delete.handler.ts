@@ -1,6 +1,7 @@
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { In, DeleteResult, UpdateResult } from 'typeorm';
 import { chain, pluck } from 'underscore';
+import { ID } from '@gauzy/contracts';
 import { TimesheetRecalculateCommand } from '../../../timesheet/commands/timesheet-recalculate.command';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
 import { TimeSlotBulkDeleteCommand } from '../../../time-slot/commands';
@@ -10,6 +11,8 @@ import { MikroOrmTimeLogRepository, TypeOrmTimeLogRepository } from '../../repos
 
 @CommandHandler(TimeLogDeleteCommand)
 export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteCommand> {
+	readonly logging = false;
+
 	constructor(
 		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
@@ -35,7 +38,8 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 
 		// Step 1: Fetch time logs based on the provided IDs
 		const timeLogs = await this.fetchTimeLogs(ids);
-		console.log('TimeLogs to be deleted:', timeLogs);
+
+		if (this.logging) console.log('TimeLogs to be deleted:', timeLogs);
 
 		// Step 2: Delete associated time slots for each time log sequentially
 		await this.deleteTimeSlotsForLogs(timeLogs, forceDelete);
@@ -55,15 +59,20 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 	 * @param ids - A string, array of strings, or TimeLog object(s).
 	 * @returns A promise that resolves to an array of TimeLogs.
 	 */
-	private async fetchTimeLogs(ids: string | string[] | TimeLog | TimeLog[]): Promise<TimeLog[]> {
+	private async fetchTimeLogs(ids: ID | ID[] | TimeLog | TimeLog[]): Promise<TimeLog[]> {
 		if (typeof ids === 'string') {
-			return await this.typeOrmTimeLogRepository.findBy({ id: ids });
-		} else if (Array.isArray(ids) && typeof ids[0] === 'string') {
-			return await this.typeOrmTimeLogRepository.findBy({ id: In(ids as string[]) });
-		} else if (ids instanceof TimeLog) {
-			return [ids];
-		} else {
+			// Fetch single time log by ID
+			return this.typeOrmTimeLogRepository.findBy({ id: ids });
+		} else if (Array.isArray(ids)) {
+			if (typeof ids[0] === 'string') {
+				// Fetch multiple time logs by IDs
+				return this.typeOrmTimeLogRepository.findBy({ id: In(ids as ID[]) });
+			}
+			// Return the array of TimeLog objects
 			return ids as TimeLog[];
+		} else {
+			// Return single TimeLog object wrapped in an array
+			return [ids as TimeLog];
 		}
 	}
 
@@ -74,7 +83,8 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 	 */
 	private async deleteTimeSlotsForLogs(timeLogs: TimeLog[], forceDelete = false): Promise<void> {
 		// Loop through each time log and delete its associated time slots
-		for (const { employeeId, organizationId, timeSlots } of timeLogs) {
+		for (const timeLog of timeLogs) {
+			const { employeeId, organizationId, timeSlots } = timeLog;
 			const timeSlotsIds = pluck(timeSlots, 'id');
 
 			// Delete time slots sequentially
@@ -83,6 +93,7 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 					{
 						organizationId,
 						employeeId,
+						timeLog,
 						timeSlotsIds
 					},
 					forceDelete
@@ -103,14 +114,14 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 	 * @returns A promise that resolves to a DeleteResult (for hard delete) or UpdateResult (for soft delete).
 	 */
 	private async deleteTimeLogs(timeLogs: TimeLog[], forceDelete = false): Promise<DeleteResult | UpdateResult> {
-		const logIds = pluck(timeLogs, 'id');
+		const logIds = timeLogs.map((log) => log.id); // Extract ids using map for simplicity
 
-		// If force delete is true, perform a hard delete
 		if (forceDelete) {
+			// Hard delete (permanent deletion)
 			return await this.typeOrmTimeLogRepository.delete({ id: In(logIds) });
 		}
 
-		// Otherwise, perform a soft delete
+		// Soft delete (mark records as deleted)
 		return await this.typeOrmTimeLogRepository.softDelete({ id: In(logIds) });
 	}
 
@@ -121,19 +132,24 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 	 */
 	private async recalculateTimesheetAndEmployeeHours(timeLogs: TimeLog[]): Promise<void> {
 		try {
+			const timesheetIds = [...new Set(timeLogs.map((log) => log.timesheetId))];
+			const employeeIds = [...new Set(timeLogs.map((log) => log.employeeId))];
+
 			// Recalculate timesheets
-			const timesheetIds = chain(timeLogs).pluck('timesheetId').uniq().value();
-			for (const timesheetId of timesheetIds) {
-				await this._commandBus.execute(new TimesheetRecalculateCommand(timesheetId));
-			}
+			await Promise.all(
+				timesheetIds.map((timesheetId) =>
+					this._commandBus.execute(new TimesheetRecalculateCommand(timesheetId))
+				)
+			);
 
 			// Recalculate employee worked hours
-			const employeeIds = chain(timeLogs).pluck('employeeId').uniq().value();
-			for (const employeeId of employeeIds) {
-				await this._commandBus.execute(new UpdateEmployeeTotalWorkedHoursCommand(employeeId));
-			}
+			await Promise.all(
+				employeeIds.map((employeeId) =>
+					this._commandBus.execute(new UpdateEmployeeTotalWorkedHoursCommand(employeeId))
+				)
+			);
 		} catch (error) {
-			console.log('Error while recalculating timesheet and employee worked hours:', error);
+			console.error('Error while recalculating timesheet and employee worked hours:', error);
 		}
 	}
 }

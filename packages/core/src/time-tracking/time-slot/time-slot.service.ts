@@ -174,6 +174,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 		const slots = await query.getMany();
 		return slots;
 	}
+
 	/**
 	 * Bulk creates or updates time slots for a given employee within an organization.
 	 *

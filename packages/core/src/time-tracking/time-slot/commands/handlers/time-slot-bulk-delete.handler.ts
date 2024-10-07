@@ -8,6 +8,8 @@ import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.r
 
 @CommandHandler(TimeSlotBulkDeleteCommand)
 export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDeleteCommand> {
+	readonly logging = false;
+
 	constructor(private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository) {}
 
 	/**
@@ -18,12 +20,15 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 	 */
 	public async execute(command: TimeSlotBulkDeleteCommand): Promise<ITimeSlot | ITimeSlot[]> {
 		const { input, forceDelete, entireSlots } = command;
+		// Extract organizationId, employeeId, timeLog, and timeSlotsIds from the input
 		const { organizationId, employeeId, timeLog, timeSlotsIds = [] } = input;
+		// Retrieve the tenant ID from the current request context or the provided input
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 
 		// Step 1: Fetch time slots based on input parameters
 		const timeSlots = await this.fetchTimeSlots({ organizationId, employeeId, tenantId, timeSlotsIds });
-		console.log({ timeSlots, forceDelete }, 'Time Slots Delete Range');
+
+		if (this.logging) console.log({ timeSlots, forceDelete }, 'Time Slots Delete Range');
 
 		// If timeSlots is empty, return an empty array
 		if (isEmpty(timeSlots)) {
@@ -57,7 +62,11 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 
 		// Set the find options for the query
 		query.setFindOptions({
-			relations: { timeLogs: true, screenshots: true }
+			relations: {
+				timeLogs: true,
+				screenshots: true,
+				activities: true
+			}
 		});
 
 		query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
@@ -105,9 +114,14 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 	): Promise<ITimeSlot> {
 		// Loop through each time slot
 		for (const timeSlot of timeSlots) {
-			const { timeLogs } = timeSlot;
-			// If the time slot has only one time log and it matches the provided time log, delete the time slot
-			if (timeLogs.length === 1 && timeLogs[0].id === timeLog.id) {
+			const { timeLogs = [] } = timeSlot;
+			const [firstTimeLog] = timeLogs;
+
+			console.log('Matching TimeLog ID:', firstTimeLog.id === timeLog.id);
+			console.log('TimeSlots Ids Will Be Deleted:', timeSlot.id);
+
+			if (timeLogs.length === 1 && firstTimeLog.id === timeLog.id) {
+				// If the time slot has only one time log and it matches the provided time log, delete the time slot
 				if (forceDelete) {
 					return await this.typeOrmTimeSlotRepository.remove(timeSlot);
 				} else {
