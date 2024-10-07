@@ -169,8 +169,14 @@ export class AlterTokenColumnTypeToTextInPasswordResetTable1727954184608 impleme
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		// Alter the column type to `text` without dropping the column
-		await queryRunner.query(`ALTER TABLE \`password_reset\` MODIFY \`token\` text NOT NULL`);
+		// Drop the original index without the key length restriction
+		await queryRunner.query(`DROP INDEX \`IDX_36e929b98372d961bb63bd4b4e\` ON \`password_reset\``);
+		// Alter the `token` column to `TEXT` and modify the index with a length
+		await queryRunner.query(`ALTER TABLE \`password_reset\` MODIFY \`token\` TEXT NOT NULL`);
+		// Recreate the original index without the key length restriction
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_36e929b98372d961bb63bd4b4e\` ON \`password_reset\` (\`token\`(255))`
+		);
 	}
 
 	/**
@@ -179,7 +185,10 @@ export class AlterTokenColumnTypeToTextInPasswordResetTable1727954184608 impleme
 	 * @param queryRunner
 	 */
 	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		// Revert the column type back to `varchar(255)` without dropping the column
-		await queryRunner.query(`ALTER TABLE \`password_reset\` MODIFY \`token\` varchar(255) NOT NULL`);
+		await queryRunner.query(`DROP INDEX \`IDX_36e929b98372d961bb63bd4b4e\` ON \`password_reset\``);
+		// Revert the `token` column back to `VARCHAR(255)`
+		await queryRunner.query(`ALTER TABLE \`password_reset\` MODIFY \`token\` VARCHAR(255) NOT NULL`);
+		// Recreate the original index without the key length restriction
+		await queryRunner.query(`CREATE INDEX \`IDX_36e929b98372d961bb63bd4b4e\` ON \`password_reset\` (\`token\`)`);
 	}
 }
