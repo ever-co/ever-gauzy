@@ -1,27 +1,13 @@
-import {
-	Controller,
-	UseGuards,
-	Get,
-	Query,
-	HttpStatus,
-	Delete,
-	Param,
-	Post,
-	Body,
-	Put,
-	ValidationPipe,
-	UsePipes
-} from '@nestjs/common';
+import { Controller, UseGuards, Get, Query, HttpStatus, Delete, Param, Post, Body, Put } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
 import { ID, ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
-import { CreateTimeSlotCommand, DeleteTimeSlotCommand, UpdateTimeSlotCommand } from './commands';
-import { TimeSlotService } from './time-slot.service';
-import { TimeSlot } from './time-slot.entity';
 import { Permissions } from './../../shared/decorators';
 import { OrganizationPermissionGuard, PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
+import { CreateTimeSlotCommand, DeleteTimeSlotCommand, UpdateTimeSlotCommand } from './commands';
+import { TimeSlotService } from './time-slot.service';
 import { DeleteTimeSlotDTO, TimeSlotQueryDTO } from './dto';
 
 @ApiTags('TimeSlot')
@@ -93,6 +79,8 @@ export class TimeSlotController {
 	}
 
 	/**
+	 * Updates a specific time slot by its ID.
+	 *
 	 * This method allows modifying the details of a time slot using its unique ID.
 	 * It accepts a time slot ID as a parameter and the updated time slot data as the
 	 * request body. The method is guarded by `OrganizationPermissionGuard` to ensure
@@ -109,12 +97,14 @@ export class TimeSlotController {
 	})
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_MODIFY_TIME)
-	@Put(':id')
-	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() request: TimeSlot): Promise<ITimeSlot> {
+	@Put('/:id')
+	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() request: ITimeSlot): Promise<ITimeSlot> {
 		return await this._commandBus.execute(new UpdateTimeSlotCommand(id, request));
 	}
 
 	/**
+	 * Deletes time slots based on the provided query parameters.
+	 *
 	 * This method allows deleting multiple time slots by accepting a list of time slot IDs
 	 * in the query parameters. The method is protected by `OrganizationPermissionGuard`
 	 * to ensure that only authorized users with the `ALLOW_DELETE_TIME` permission can delete time slots.
@@ -133,7 +123,7 @@ export class TimeSlotController {
 	})
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
-	@Delete()
+	@Delete('/')
 	@UseValidationPipe({ transform: true })
 	async deleteTimeSlot(@Query() options: DeleteTimeSlotDTO): Promise<DeleteResult | UpdateResult> {
 		return await this._commandBus.execute(new DeleteTimeSlotCommand(options));
