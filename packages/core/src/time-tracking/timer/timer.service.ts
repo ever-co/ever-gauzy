@@ -380,21 +380,21 @@ export class TimerService {
 				tenantId
 			});
 
-			if (isNotEmpty(conflicts)) {
+			// Resolve conflicts by deleting conflicting time slots
+			if (conflicts?.length) {
 				const times: IDateRange = {
 					start: new Date(lastLog.startedAt),
 					end: new Date(lastLog.stoppedAt)
 				};
 
-				// Delete conflicting time slots
-				await Promise.all(
-					conflicts.flatMap((timeLog: ITimeLog) => {
-						const { timeSlots = [] } = timeLog;
-						return timeSlots.map((timeSlot: ITimeSlot) =>
-							this._commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, timeSlot))
-						);
-					})
-				);
+				// Loop through each conflicting time log
+				for await (const timeLog of conflicts) {
+					const { timeSlots = [] } = timeLog;
+					// Delete conflicting time slots
+					for await (const timeSlot of timeSlots) {
+						await this._commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, timeSlot));
+					}
+				}
 			}
 		} catch (error) {
 			console.warn('Error while handling conflicts in time logs:', error?.message);
@@ -672,7 +672,7 @@ export class TimerService {
 	 * @returns The timer status for the employee.
 	 */
 	public async getTimerWorkedStatus(request: ITimerStatusInput): Promise<ITimerStatus[]> {
-		const tenantId = RequestContext.currentTenantId() || request.tenantId;
+		const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
 		const { organizationId, organizationTeamId, source } = request;
 
 		// Define the array to store employeeIds
@@ -682,14 +682,11 @@ export class TimerService {
 
 		// Check if the current user has any of the specified permissions
 		if (RequestContext.hasAnyPermission(permissions)) {
-			// If yes, set employeeIds based on request.employeeIds or request.employeeId
-			employeeIds = request.employeeIds
-				? request.employeeIds.filter(Boolean)
-				: [request.employeeId].filter(Boolean);
+			// Set employeeIds based on request.employeeIds or request.employeeId
+			employeeIds = (request.employeeIds ?? [request.employeeId]).filter(Boolean);
 		} else {
 			// EMPLOYEE have the ability to see only their own timer status
-			const employeeId = RequestContext.currentEmployeeId();
-			employeeIds = [employeeId];
+			employeeIds = [RequestContext.currentEmployeeId()];
 		}
 
 		let lastLogs: TimeLog[] = [];

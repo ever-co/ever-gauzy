@@ -1,5 +1,4 @@
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import { In, DeleteResult, UpdateResult } from 'typeorm';
 import { chain, pluck } from 'underscore';
 import { TimeLog } from './../../time-log.entity';
@@ -12,19 +11,13 @@ import { MikroOrmTimeLogRepository } from '../..//repository/mikro-orm-time-log.
 
 @CommandHandler(TimeLogDeleteCommand)
 export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteCommand> {
-
 	constructor(
-		@InjectRepository(TimeLog)
 		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
-
 		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
-
 		private readonly commandBus: CommandBus
-	) { }
+	) {}
 
-	public async execute(
-		command: TimeLogDeleteCommand
-	): Promise<DeleteResult | UpdateResult> {
+	public async execute(command: TimeLogDeleteCommand): Promise<DeleteResult | UpdateResult> {
 		const { ids, forceDelete } = command;
 
 		let timeLogs: TimeLog[];
@@ -71,9 +64,7 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 			 */
 			const timesheetIds = chain(timeLogs).pluck('timesheetId').uniq().value();
 			for await (const timesheetId of timesheetIds) {
-				await this.commandBus.execute(
-					new TimesheetRecalculateCommand(timesheetId)
-				);
+				await this.commandBus.execute(new TimesheetRecalculateCommand(timesheetId));
 			}
 
 			/**
@@ -81,9 +72,7 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 			 */
 			const employeeIds = chain(timeLogs).pluck('employeeId').uniq().value();
 			for await (const employeeId of employeeIds) {
-				await this.commandBus.execute(
-					new UpdateEmployeeTotalWorkedHoursCommand(employeeId)
-				);
+				await this.commandBus.execute(new UpdateEmployeeTotalWorkedHoursCommand(employeeId));
 			}
 		} catch (error) {
 			console.log('TimeLogDeleteHandler', { error });

@@ -40,6 +40,7 @@ import {
 	TaskVersionSubscriber,
 	TenantSubscriber,
 	TimeOffRequestSubscriber,
+	TimesheetSubscriber,
 	TimeSlotSubscriber,
 	UserSubscriber
 } from '../internal';
@@ -90,6 +91,7 @@ export const coreSubscribers = [
 	TaskVersionSubscriber,
 	TenantSubscriber,
 	TimeOffRequestSubscriber,
+	TimesheetSubscriber,
 	TimeSlotSubscriber,
 	UserSubscriber
 ];

@@ -1,19 +1,17 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { ArrayNotEmpty, IsEnum } from "class-validator";
-import { IUpdateTimesheetStatusInput, TimesheetStatus } from "@gauzy/contracts";
-import { TenantOrganizationBaseDTO } from "./../../../../core/dto";
+import { ApiProperty, IntersectionType, PickType } from '@nestjs/swagger';
+import { ArrayNotEmpty } from 'class-validator';
+import { ID, IUpdateTimesheetStatusInput } from '@gauzy/contracts';
+import { TenantOrganizationBaseDTO } from './../../../../core/dto';
+import { Timesheet } from '../../timesheet.entity';
 
 /**
  * Update timesheets status request DTO validation
  */
-export class UpdateTimesheetStatusDTO extends TenantOrganizationBaseDTO
-	implements IUpdateTimesheetStatusInput {
-
-    @ApiProperty({ type: () => Array })
+export class UpdateTimesheetStatusDTO
+	extends IntersectionType(TenantOrganizationBaseDTO, PickType(Timesheet, ['status'] as const))
+	implements IUpdateTimesheetStatusInput
+{
+	@ApiProperty({ type: () => Array })
 	@ArrayNotEmpty()
-    readonly ids: string[] = [];
-
-	@ApiProperty({ enum: TimesheetStatus })
-	@IsEnum(TimesheetStatus)
-	readonly status: TimesheetStatus;
+	ids: ID[] = [];
 }

@@ -21,7 +21,7 @@ export class UpdateEmployeeJobSearchStatusHandler implements ICommandHandler<Upd
 		const { isJobSearchActive, organizationId } = input;
 
 		let employeeId: ID = command.employeeId;
-		const tenantId: ID = RequestContext.currentTenantId() || input.tenantId;
+		const tenantId: ID = RequestContext.currentTenantId() ?? input.tenantId;
 
 		// Check for permission CHANGE_SELECTED_EMPLOYEE
 		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {

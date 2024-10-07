@@ -10,6 +10,7 @@ import { CommandHandlers } from './commands/handlers';
 import { TimeSheetController } from './timesheet.controller';
 import { TimeSheetService } from './timesheet.service';
 import { Timesheet } from './timesheet.entity';
+import { TypeOrmTimesheetRepository } from './repository/type-orm-timesheet.repository';
 
 @Module({
 	controllers: [TimeSheetController],
@@ -22,7 +23,7 @@ import { Timesheet } from './timesheet.entity';
 		TimeSlotModule,
 		EmployeeModule
 	],
-	providers: [TimeSheetService, ...CommandHandlers],
-	exports: [TimeSheetService, TypeOrmModule, MikroOrmModule]
+	providers: [TimeSheetService, TypeOrmTimesheetRepository, ...CommandHandlers],
+	exports: [TypeOrmModule, MikroOrmModule, TimeSheetService, TypeOrmTimesheetRepository]
 })
 export class TimesheetModule {}

@@ -1,33 +1,22 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	RelationId,
-	JoinTable
-} from 'typeorm';
+import { RelationId, JoinTable } from 'typeorm';
 import { IsNumber, IsDateString, IsUUID, IsNotEmpty, IsOptional } from 'class-validator';
-import {
-	ITimeSlot,
-	ITimeSlotMinute,
-	IActivity,
-	IScreenshot,
-	IEmployee,
-	ITimeLog,
-	ID
-} from '@gauzy/contracts';
-import {
-	Activity,
-	Employee,
-	Screenshot,
-	TenantOrganizationBaseEntity,
-	TimeLog
-} from './../../core/entities/internal';
+import { ITimeSlot, ITimeSlotMinute, IActivity, IScreenshot, IEmployee, ITimeLog, ID } from '@gauzy/contracts';
+import { Activity, Employee, Screenshot, TenantOrganizationBaseEntity, TimeLog } from './../../core/entities/internal';
 import { TimeSlotMinute } from './time-slot-minute.entity';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, VirtualMultiOrmColumn } from './../../core/decorators/entity';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne,
+	MultiORMOneToMany,
+	VirtualMultiOrmColumn
+} from './../../core/decorators/entity';
 import { MikroOrmTimeSlotRepository } from './repository/mikro-orm-time-slot.repository';
 
 @MultiORMEntity('time_slot', { mikroOrmRepository: () => MikroOrmTimeSlotRepository })
-export class TimeSlot extends TenantOrganizationBaseEntity
-	implements ITimeSlot {
-
+export class TimeSlot extends TenantOrganizationBaseEntity implements ITimeSlot {
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
 	@IsNumber()

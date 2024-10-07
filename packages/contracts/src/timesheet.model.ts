@@ -32,7 +32,7 @@ export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
 	lockedAt?: Date;
 	editedAt?: Date;
 	isBilled?: boolean;
-	status: string;
+	status: TimesheetStatus;
 	isEdited?: boolean;
 }
 
@@ -508,11 +508,26 @@ export interface IClientBudgetLimitReport {
 	remainingBudget?: number;
 }
 
-export interface IDeleteTimeSlot extends IBasePerTenantAndOrganizationEntityModel {
-	ids: string[];
+/**
+ * Base interface for delete operations that include forceDelete flag
+ * and extend the tenant and organization properties.
+ */
+export interface IDeleteEntity extends IBasePerTenantAndOrganizationEntityModel {
+	forceDelete?: boolean;
 }
 
-export interface IDeleteTimeLog extends IBasePerTenantAndOrganizationEntityModel {
-	logIds: string[];
-	forceDelete: boolean;
+/**
+ * Interface for deleting time slots.
+ * Includes an array of time slot IDs to be deleted.
+ */
+export interface IDeleteTimeSlot extends IDeleteEntity {
+	ids: ID[];
+}
+
+/**
+ * Interface for deleting time logs.
+ * Includes an array of log IDs to be deleted.
+ */
+export interface IDeleteTimeLog extends IDeleteEntity {
+	logIds: ID[];
 }

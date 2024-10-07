@@ -185,5 +185,6 @@ export * from '../../tenant/tenant.subscriber';
 export * from '../../time-off-request/time-off-request.subscriber';
 export * from '../../time-tracking/activity/activity.subscriber';
 export * from '../../time-tracking/screenshot/screenshot.subscriber';
+export * from '../../time-tracking/timesheet/timesheet.subscriber';
 export * from '../../time-tracking/time-slot/time-slot.subscriber';
 export * from '../../user/user.subscriber';
