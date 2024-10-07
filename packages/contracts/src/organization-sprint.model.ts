@@ -2,8 +2,9 @@ import { IOrganizationProjectModule } from './organization-project-module.model'
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { ITask } from './task.model';
-import { IEmployeeEntityInput } from 'employee.model';
-import { IRelationalRole } from 'role.model';
+import { IEmployeeEntityInput } from './employee.model';
+import { IRelationalRole } from './role.model';
+import { JsonData } from './activity-log.model';
 
 export interface IOrganizationSprintBase extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
@@ -11,18 +12,22 @@ export interface IOrganizationSprintBase extends IBasePerTenantAndOrganizationEn
 	length?: number; // Duration of Sprint. Default value - 7 (days)
 	startDate?: Date;
 	endDate?: Date;
-	status?: SprintStartDayEnum;
+	status?: OrganizationSprintStatusEnum;
 	dayStart?: number; // Enum ((Sunday-Saturday) => (0-7))
+	sprintProgress?: JsonData; // Stores the current state and metrics of the sprint's progress
 	project?: IOrganizationProject;
 	projectId?: ID;
 	tasks?: ITask[];
 	members?: IOrganizationSprintEmployee[];
 	modules?: IOrganizationProjectModule[];
+	taskSprints?: IOrganizationSprintTask[];
 }
 
 export interface IOrganizationSprint extends IOrganizationSprintBase {
 	name: string;
 	length: number;
+	project: IOrganizationProject;
+	projectId: ID;
 }
 
 export interface IOrganizationSprintCreateInput extends IOrganizationSprintBase {
@@ -57,4 +62,12 @@ export interface IOrganizationSprintEmployee
 	organizationSprintId: ID;
 	isManager?: boolean;
 	assignedAt?: Date;
+}
+
+export interface IOrganizationSprintTask extends IBasePerTenantAndOrganizationEntityModel {
+	organizationSprint: IOrganizationSprint;
+	organizationSprintId: ID;
+	task?: ITask;
+	taskId: ID;
+	totalWorkedHours?: number;
 }

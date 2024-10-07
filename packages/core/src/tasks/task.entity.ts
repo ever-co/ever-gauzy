@@ -32,6 +32,7 @@ import {
 	OrganizationProject,
 	OrganizationProjectModule,
 	OrganizationSprint,
+	OrganizationSprintTask,
 	OrganizationTeam,
 	OrganizationTeamEmployee,
 	Tag,
@@ -352,6 +353,14 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@MultiORMOneToMany(() => TaskLinkedIssue, (it) => it.taskTo)
 	@JoinColumn()
 	linkedIssues?: TaskLinkedIssue[];
+
+	/*
+	 * Task Sprint
+	 */
+	@MultiORMOneToMany(() => OrganizationSprintTask, (it) => it.task, {
+		cascade: true
+	})
+	taskSprints?: IOrganizationSprint[];
 
 	/*
 	|--------------------------------------------------------------------------

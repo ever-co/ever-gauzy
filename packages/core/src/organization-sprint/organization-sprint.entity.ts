@@ -1,14 +1,26 @@
 import { JoinColumn } from 'typeorm';
-import { IOrganizationProjectModule, IOrganizationSprint, SprintStartDayEnum } from '@gauzy/contracts';
+import {
+	ID,
+	IOrganizationProjectModule,
+	IOrganizationSprint,
+	IOrganizationSprintEmployee,
+	IOrganizationSprintTask,
+	JsonData,
+	OrganizationSprintStatusEnum,
+	SprintStartDayEnum
+} from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDate, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import {
 	OrganizationProject,
 	OrganizationProjectModule,
+	OrganizationSprintEmployee,
+	OrganizationSprintTask,
 	Task,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import {
+	ColumnIndex,
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToMany,
@@ -16,6 +28,7 @@ import {
 	MultiORMOneToMany
 } from './../core/decorators/entity';
 import { MikroOrmOrganizationSprintRepository } from './repository/mikro-orm-organization-sprint.repository';
+import { isMySQL, isPostgres } from '@gauzy/config';
 
 @MultiORMEntity('organization_sprint', { mikroOrmRepository: () => MikroOrmOrganizationSprintRepository })
 export class OrganizationSprint extends TenantOrganizationBaseEntity implements IOrganizationSprint {
@@ -48,10 +61,23 @@ export class OrganizationSprint extends TenantOrganizationBaseEntity implements 
 	@MultiORMColumn({ nullable: true })
 	endDate?: Date;
 
-	@ApiProperty({ type: () => Number, enum: SprintStartDayEnum })
-	@IsNumber()
+	@ApiPropertyOptional({ type: () => String, enum: OrganizationSprintStatusEnum })
+	@IsNotEmpty()
+	@IsEnum(OrganizationSprintStatusEnum)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true })
+	status?: OrganizationSprintStatusEnum;
+
+	@ApiPropertyOptional({ type: () => Number, enum: SprintStartDayEnum })
+	@IsOptional()
+	@IsEnum(SprintStartDayEnum)
 	@MultiORMColumn({ nullable: true })
 	dayStart?: number;
+
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	sprintProgress?: JsonData;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -71,13 +97,13 @@ export class OrganizationSprint extends TenantOrganizationBaseEntity implements 
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	project?: OrganizationProject;
+	project: OrganizationProject;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@MultiORMColumn({ relationId: true })
-	projectId: string;
+	projectId: ID;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -85,6 +111,27 @@ export class OrganizationSprint extends TenantOrganizationBaseEntity implements 
 	|--------------------------------------------------------------------------
 	*/
 
+	/**
+	 * OrganizationTeamEmployee
+	 */
+	@MultiORMOneToMany(() => OrganizationSprintEmployee, (it) => it.organizationSprint, {
+		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
+		cascade: true
+	})
+	members?: IOrganizationSprintEmployee[];
+
+	/**
+	 * Sprint Tasks (Many-To-Many sprint tasks)
+	 */
+	@MultiORMOneToMany(() => OrganizationSprintTask, (it) => it.organizationSprint, {
+		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
+		cascade: true
+	})
+	taskSprints?: IOrganizationSprintTask[];
+
+	/**
+	 * Tasks (Task active sprint)
+	 */
 	@ApiProperty({ type: () => Task })
 	@MultiORMOneToMany(() => Task, (task) => task.organizationSprint)
 	@JoinColumn()

@@ -29,6 +29,7 @@ export interface ITask extends IBasePerTenantAndOrganizationEntityModel, IRelati
 	modules?: IOrganizationProjectModule[];
 	organizationSprint?: IOrganizationSprint;
 	organizationSprintId?: ID;
+	taskSprints?: IOrganizationSprint[];
 	creator?: IUser;
 	creatorId?: ID;
 	isDraft?: boolean; // Define if task is still draft (E.g : Task description not completed yet)
