@@ -122,5 +122,5 @@ export enum OrganizationProjectBudgetTypeEnum {
 export interface IOrganizationProjectEditByEmployeeInput extends IBasePerTenantAndOrganizationEntityModel {
 	addedProjectIds?: ID[];
 	removedProjectIds?: ID[];
-	member: IOrganizationProjectEmployee;
+	member: IEmployee;
 }

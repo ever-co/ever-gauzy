@@ -17,6 +17,8 @@ export class OrganizationProjectEditByEmployeeHandler
 	public async execute(command: OrganizationProjectEditByEmployeeCommand): Promise<any> {
 		// Extracts the input from the command and executes the command logic
 		const { input } = command;
+
+		// Update the organization project by an employee
 		return await this.organizationProjectService.updateByEmployee(input);
 	}
 }

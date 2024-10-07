@@ -2,7 +2,7 @@ import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { TimeLog } from './../core/entities/internal';
+import { TimeLog, TimeSlot } from './../core/entities/internal';
 import { Employee } from './employee.entity';
 import { UserModule } from './../user/user.module';
 import { CommandHandlers } from './commands/handlers';
@@ -17,8 +17,8 @@ import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.reposi
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([Employee, TimeLog]),
-		MikroOrmModule.forFeature([Employee, TimeLog]),
+		TypeOrmModule.forFeature([Employee, TimeLog, TimeSlot]),
+		MikroOrmModule.forFeature([Employee, TimeLog, TimeSlot]),
 		forwardRef(() => EmailSendModule),
 		forwardRef(() => UserOrganizationModule),
 		forwardRef(() => RolePermissionModule),
