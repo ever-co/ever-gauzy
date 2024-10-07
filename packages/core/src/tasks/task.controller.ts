@@ -261,11 +261,11 @@ export class TaskController extends CrudController<Task> {
 	/**
 	 * DELETE employee from team tasks
 	 *
-	 * Unassigns an employee from tasks associated with a specific organization team.
+	 * Unassign an employee from tasks associated with a specific organization team.
 	 *
 	 * @param employeeId The ID of the employee to be unassigned from tasks.
 	 * @param organizationTeamId The ID of the organization team from which to unassign the employee.
-	 * @returns A Promise that resolves with the result of the unassignment.
+	 * @returns A Promise that resolves with the result of the no assignment.
 	 */
 	@HttpCode(HttpStatus.OK)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)

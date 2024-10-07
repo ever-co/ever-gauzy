@@ -552,7 +552,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				});
 			}
 
-			// Filter by project_module_task with a subquery
+			// Filter by project_module_task with a sub query
 			query.andWhere((qb: SelectQueryBuilder<Task>) => {
 				const subQuery = qb
 					.subQuery()
