@@ -304,11 +304,18 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 		const project: IOrganizationProject = this.project;
 
 		// Selected Members Ids
-		this.selectedEmployeeIds = project.members.map((member: IOrganizationProjectEmployee) => member.employeeId);
+		this.selectedEmployeeIds = project.members
+			.filter((member: IOrganizationProjectEmployee) => !member.isManager)
+			.map((member: IOrganizationProjectEmployee) => member.employeeId);
+
 		this.memberIds = this.selectedEmployeeIds;
+
+		// Selected Managers Ids
 		this.selectedManagerIds = project.members
 			.filter((member: IOrganizationProjectEmployee) => member.isManager)
 			.map((member: IOrganizationProjectEmployee) => member.employeeId);
+
+		this.managerIds = this.selectedManagerIds;
 
 		this.form.patchValue({
 			imageUrl: project.imageUrl || null,
@@ -699,6 +706,8 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 				)
 				.subscribe();
 		} catch (error) {
+			console.log(error);
+
 			this._errorHandler.handleError(error);
 		}
 	}
