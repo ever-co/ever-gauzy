@@ -2,7 +2,6 @@ import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs
 import { CommandBus } from '@nestjs/cqrs';
 import { SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult } from 'typeorm';
 import { chain, pluck } from 'underscore';
-
 import {
 	IManualTimeInput,
 	PermissionsEnum,
@@ -1213,7 +1212,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		}
 
 		// Ensure logIds is an array
-		const logIds: string[] = Array.isArray(params.logIds) ? params.logIds : [params.logIds];
+		const logIds: ID[] = Array.isArray(params.logIds) ? params.logIds : [params.logIds];
 
 		// Get the tenant ID from the request context or the provided tenant ID
 		const tenantId = RequestContext.currentTenantId() ?? params.tenantId;

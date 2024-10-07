@@ -156,6 +156,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 					logType instanceof Array
 						? p(`"time_log"."logType" IN (:...logType)`)
 						: p(`"time_log"."logType" = :logType`);
+
 				qb.andWhere(whereClause, { logType });
 			}
 
@@ -185,7 +186,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	 * @param organizationId - The ID of the organization associated with the time slots.
 	 * @returns A promise that resolves when the command is executed, performing bulk creation or update.
 	 */
-	async bulkCreateOrUpdate(slots: ITimeSlot[], employeeId: ID, organizationId: ID): Promise<any> {
+	async bulkCreateOrUpdate(slots: ITimeSlot[], employeeId: ID, organizationId: ID) {
 		return await this._commandBus.execute(new TimeSlotBulkCreateOrUpdateCommand(slots, employeeId, organizationId));
 	}
 

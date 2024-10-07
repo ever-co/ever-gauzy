@@ -1,6 +1,5 @@
 import { CommandHandler, ICommandHandler, CommandBus } from '@nestjs/cqrs';
 import { NotAcceptableException } from '@nestjs/common';
-import * as moment from 'moment';
 import { ID, ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { DeleteTimeSpanCommand } from '../../../time-log/commands/delete-time-span.command';
@@ -58,9 +57,9 @@ export class DeleteTimeSlotHandler implements ICommandHandler<DeleteTimeSlotComm
 			});
 
 			// Add where clauses to the query
-			query.where(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+			query.where(p(`"${query.alias}"."id" = :id`), { id });
+			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-			query.andWhere(p(`"${query.alias}"."id" = :id`), { id });
 
 			// Restrict deletion based on employeeId if permission is not granted
 			if (isNotEmpty(employeeIds)) {
@@ -90,8 +89,8 @@ export class DeleteTimeSlotHandler implements ICommandHandler<DeleteTimeSlotComm
 							await this.commandBus.execute(
 								new DeleteTimeSpanCommand(
 									{
-										start: moment.utc(timeSlot.startedAt).toDate(),
-										end: moment.utc(timeSlot.stoppedAt).toDate()
+										start: timeSlot.startedAt,
+										end: timeSlot.stoppedAt
 									},
 									timeLog,
 									timeSlot,
