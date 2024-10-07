@@ -140,7 +140,7 @@ export class OrganizationSprint extends TenantOrganizationBaseEntity implements 
 	tasks?: Task[];
 
 	/**
-	 * From OrganizatoinSprint histories
+	 * From OrganizationSprint histories
 	 */
 	@MultiORMOneToMany(() => OrganizationSprintTaskHistory, (it) => it.fromSprint, {
 		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
@@ -149,7 +149,7 @@ export class OrganizationSprint extends TenantOrganizationBaseEntity implements 
 	fromSprintTaskHistories?: IOrganizationSprintTaskHistory[];
 
 	/**
-	 * From OrganizatoinSprint histories
+	 * From OrganizationSprint histories
 	 */
 	@MultiORMOneToMany(() => OrganizationSprintTaskHistory, (it) => it.toSprint, {
 		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
