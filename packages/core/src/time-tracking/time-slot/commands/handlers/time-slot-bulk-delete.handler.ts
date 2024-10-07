@@ -8,8 +8,6 @@ import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.r
 
 @CommandHandler(TimeSlotBulkDeleteCommand)
 export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDeleteCommand> {
-	readonly logging = false;
-
 	constructor(private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository) {}
 
 	/**
@@ -27,8 +25,7 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 
 		// Step 1: Fetch time slots based on input parameters
 		const timeSlots = await this.fetchTimeSlots({ organizationId, employeeId, tenantId, timeSlotsIds });
-
-		if (this.logging) console.log({ timeSlots, forceDelete }, 'Time Slots Delete Range');
+		console.log({ timeSlots, forceDelete }, 'Time Slots Delete Range');
 
 		// If timeSlots is empty, return an empty array
 		if (isEmpty(timeSlots)) {
@@ -65,11 +62,12 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 			relations: {
 				timeLogs: true,
 				screenshots: true,
-				activities: true
+				activities: true,
+				timeSlotMinutes: true
 			}
 		});
 
-		query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
+		query.where(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
 		query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 		query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 
@@ -90,6 +88,7 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 	 * @returns A promise that resolves to true after deletion.
 	 */
 	private async bulkDeleteTimeSlots(timeSlots: ITimeSlot[], forceDelete: boolean): Promise<ITimeSlot[]> {
+		console.log('bulk delete time slots:', timeSlots);
 		if (forceDelete) {
 			return await this.typeOrmTimeSlotRepository.remove(timeSlots);
 		} else {
@@ -112,6 +111,7 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 		timeLog: ITimeLog,
 		forceDelete: boolean
 	): Promise<ITimeSlot> {
+		console.log('conditional delete time slots:', timeSlots);
 		// Loop through each time slot
 		for (const timeSlot of timeSlots) {
 			const { timeLogs = [] } = timeSlot;
@@ -125,6 +125,7 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 				if (forceDelete) {
 					return await this.typeOrmTimeSlotRepository.remove(timeSlot);
 				} else {
+					console.log('soft removing time slot', timeSlot.id);
 					return await this.typeOrmTimeSlotRepository.softRemove(timeSlot);
 				}
 			}

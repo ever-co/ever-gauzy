@@ -50,10 +50,7 @@ export class DeleteTimeSlotHandler implements ICommandHandler<DeleteTimeSlotComm
 
 			// Set the find options for the query
 			query.setFindOptions({
-				relations: {
-					timeLogs: true,
-					screenshots: true
-				}
+				relations: { timeLogs: true }
 			});
 
 			// Add where clauses to the query
@@ -74,6 +71,8 @@ export class DeleteTimeSlotHandler implements ICommandHandler<DeleteTimeSlotComm
 			if (isEmpty(timeSlots)) {
 				continue;
 			}
+
+			console.log(`time slots for soft delete or hard delete:`, timeSlots);
 
 			// Loop through each time slot
 			for await (const timeSlot of timeSlots) {

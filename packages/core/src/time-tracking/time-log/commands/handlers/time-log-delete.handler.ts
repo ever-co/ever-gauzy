@@ -83,7 +83,7 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 	 */
 	private async deleteTimeSlotsForLogs(timeLogs: TimeLog[], forceDelete = false): Promise<void> {
 		// Loop through each time log and delete its associated time slots
-		for (const timeLog of timeLogs) {
+		for await (const timeLog of timeLogs) {
 			const { employeeId, organizationId, timeSlots } = timeLog;
 			const timeSlotsIds = pluck(timeSlots, 'id');
 
@@ -115,6 +115,7 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 	 */
 	private async deleteTimeLogs(timeLogs: TimeLog[], forceDelete = false): Promise<DeleteResult | UpdateResult> {
 		const logIds = timeLogs.map((log) => log.id); // Extract ids using map for simplicity
+		console.log('deleting time logs', logIds, forceDelete);
 
 		if (forceDelete) {
 			// Hard delete (permanent deletion)
