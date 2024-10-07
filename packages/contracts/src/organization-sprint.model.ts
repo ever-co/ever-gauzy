@@ -5,18 +5,29 @@ import { ITask } from './task.model';
 import { IEmployeeEntityInput } from 'employee.model';
 import { IRelationalRole } from 'role.model';
 
-export interface IOrganizationSprint extends IBasePerTenantAndOrganizationEntityModel {
-	name: string;
+export interface IOrganizationSprintBase extends IBasePerTenantAndOrganizationEntityModel {
+	name?: string;
 	goal?: string;
-	length: number; // Duration of Sprint. Default value - 7 (days)
+	length?: number; // Duration of Sprint. Default value - 7 (days)
 	startDate?: Date;
 	endDate?: Date;
+	status?: SprintStartDayEnum;
 	dayStart?: number; // Enum ((Sunday-Saturday) => (0-7))
 	project?: IOrganizationProject;
-	projectId: ID;
+	projectId?: ID;
 	tasks?: ITask[];
 	members?: IOrganizationSprintEmployee[];
 	modules?: IOrganizationProjectModule[];
+}
+
+export interface IOrganizationSprint extends IOrganizationSprintBase {
+	name: string;
+	length: number;
+}
+
+export interface IOrganizationSprintCreateInput extends IOrganizationSprintBase {
+	memberIds?: ID[]; // Members of the organization sprint
+	managerIds?: ID[]; // Managers of the organization project
 }
 
 export enum SprintStartDayEnum {
@@ -29,17 +40,14 @@ export enum SprintStartDayEnum {
 	SATURDAY = 7
 }
 
-export interface IOrganizationSprintUpdateInput {
-	name: string;
-	goal?: string;
-	length: number;
-	startDate?: Date;
-	endDate?: Date;
-	dayStart?: number;
-	project?: IOrganizationProject;
-	isActive?: boolean;
-	tasks?: ITask[];
+export enum OrganizationSprintStatusEnum {
+	ACTIVE = 'active',
+	COMPLETED = 'completed',
+	DRAFT = 'draft',
+	UPCOMING = 'upcoming'
 }
+
+export interface IOrganizationSprintUpdateInput extends IOrganizationSprintCreateInput {}
 
 export interface IOrganizationSprintEmployee
 	extends IBasePerTenantAndOrganizationEntityModel,
