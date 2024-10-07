@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 import { ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
 import {
