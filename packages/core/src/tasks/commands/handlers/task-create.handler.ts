@@ -40,9 +40,9 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 
 			// Check if projectId is provided, if not use the provided project object from the input.
 			// If neither is provided, set project to null.
-			const project = input?.projectId
+			const project = input.projectId
 				? await this._organizationProjectService.findOneByIdString(input.projectId)
-				: input?.project || null;
+				: input.project || null;
 
 			// Check if project exists and extract the project prefix (first 3 characters of the project name)
 			const projectPrefix = project?.name?.substring(0, 3) ?? null;
