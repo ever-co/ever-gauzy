@@ -50,7 +50,7 @@ export class DeleteTimeSlotHandler implements ICommandHandler<DeleteTimeSlotComm
 
 			// Set the find options for the query
 			query.setFindOptions({
-				relations: { timeLogs: true }
+				relations: { timeLogs: true, screenshots: true }
 			});
 
 			// Add where clauses to the query
