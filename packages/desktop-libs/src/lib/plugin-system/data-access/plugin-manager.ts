@@ -36,7 +36,10 @@ export class PluginManager implements IPluginManager {
 		if (plugin) {
 			await this.updatePlugin(metadata);
 		} else {
+			/* Install plugin */
 			await this.installPlugin(metadata, pathDirname);
+			/* Activate plugin */
+			await this.activatePlugin(metadata.name);
 		}
 		process.noAsar = false;
 	}
