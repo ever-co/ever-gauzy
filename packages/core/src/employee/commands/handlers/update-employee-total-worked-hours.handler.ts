@@ -30,7 +30,7 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 
 		// Determine total work hours, calculate if not provided
 		const totalWorkHours = (await this.calculateTotalWorkHours(employeeId, tenantId)) || hours;
-		console.log('Updated Employee Total Worked Hours: %s', totalWorkHours.toFixed(2), Math.floor(totalWorkHours));
+		console.log('Updated Employee Total Worked Hours: %s', Math.floor(totalWorkHours));
 
 		// Update employee's total worked hours
 		await this._employeeService.update(employeeId, {
