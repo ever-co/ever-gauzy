@@ -1,5 +1,6 @@
 import { CommandHandler, ICommandHandler, CommandBus } from '@nestjs/cqrs';
 import { NotAcceptableException } from '@nestjs/common';
+import * as chalk from 'chalk';
 import { ID, ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { DeleteTimeSpanCommand } from '../../../time-log/commands/delete-time-span.command';
@@ -47,11 +48,11 @@ export class DeleteTimeSlotHandler implements ICommandHandler<DeleteTimeSlotComm
 		for await (const id of Object.values(ids)) {
 			// Create a query builder for the TimeSlot entity
 			const query = this.typeOrmTimeSlotRepository.createQueryBuilder();
-
-			// Set the find options for the query
-			query.setFindOptions({
-				relations: { timeLogs: true, screenshots: true }
-			});
+			query
+				.leftJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs')
+				.leftJoinAndSelect(`${query.alias}.screenshots`, 'screenshots')
+				.leftJoinAndSelect(`${query.alias}.activities`, 'activities')
+				.leftJoinAndSelect(`${query.alias}.timeSlotMinutes`, 'timeSlotMinutes');
 
 			// Add where clauses to the query
 			query.where(p(`"${query.alias}"."id" = :id`), { id });
@@ -64,7 +65,7 @@ export class DeleteTimeSlotHandler implements ICommandHandler<DeleteTimeSlotComm
 			}
 
 			// Order by creation date
-			query.addOrderBy(p(`"${query.alias}"."createdAt"`), 'ASC');
+			query.orderBy(p(`"${query.alias}"."createdAt"`), 'ASC');
 			const timeSlots: ITimeSlot[] = await query.getMany();
 
 			// If no time slots are found, stop processing
@@ -72,7 +73,7 @@ export class DeleteTimeSlotHandler implements ICommandHandler<DeleteTimeSlotComm
 				continue;
 			}
 
-			console.log(`time slots for soft delete or hard delete:`, timeSlots);
+			console.log(chalk.blue(`time slots for soft delete or hard delete:`), timeSlots);
 
 			// Loop through each time slot
 			for await (const timeSlot of timeSlots) {
