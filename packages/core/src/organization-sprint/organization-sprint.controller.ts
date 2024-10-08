@@ -1,31 +1,19 @@
-import {
-	Body,
-	Controller,
-	Get,
-	HttpCode,
-	HttpStatus,
-	Param,
-	Put,
-	Query,
-	UseGuards,
-	Post
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Put, Query, UseGuards, Post } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import {
-	IOrganizationSprint,
-	IOrganizationSprintUpdateInput,
-	IPagination
-} from '@gauzy/contracts';
+import { IOrganizationSprint, IOrganizationSprintUpdateInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
+import { Permissions } from './../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { OrganizationSprint } from './organization-sprint.entity';
 import { OrganizationSprintService } from './organization-sprint.service';
-import { OrganizationSprintUpdateCommand } from './commands';
-import { TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { OrganizationSprintCreateCommand, OrganizationSprintUpdateCommand } from './commands';
+import { ParseJsonPipe, UseValidationPipe, UUIDValidationPipe } from './../shared/pipes';
+import { CreateOrganizationSprintDTO } from './dto';
 
 @ApiTags('OrganizationSprint')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 @Controller()
 export class OrganizationSprintController extends CrudController<OrganizationSprint> {
 	constructor(
@@ -37,9 +25,9 @@ export class OrganizationSprintController extends CrudController<OrganizationSpr
 
 	/**
 	 * GET all organization sprints
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all organization sprint.'
@@ -54,9 +42,7 @@ export class OrganizationSprintController extends CrudController<OrganizationSpr
 		description: 'Record not found'
 	})
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IOrganizationSprint>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IOrganizationSprint>> {
 		const { relations, findInput } = data;
 		return this.organizationSprintService.findAll({
 			where: findInput,
@@ -66,11 +52,11 @@ export class OrganizationSprintController extends CrudController<OrganizationSpr
 
 	/**
 	 * CREATE organization sprint
-	 * 
-	 * @param entity 
-	 * @param options 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @returns
 	 */
+	@HttpCode(HttpStatus.CREATED)
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -78,23 +64,21 @@ export class OrganizationSprintController extends CrudController<OrganizationSpr
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_SPRINT_EDIT)
+	@UseValidationPipe()
 	@Post()
-	async create(
-		@Body() body: OrganizationSprint,
-		...options: any[]
-	): Promise<IOrganizationSprint> {
-		return this.organizationSprintService.create(body);
+	async create(@Body() entity: CreateOrganizationSprintDTO): Promise<IOrganizationSprint> {
+		return await this.commandBus.execute(new OrganizationSprintCreateCommand(entity));
 	}
 
 	/**
 	 * UPDATE organization sprint by id
-	 * 
-	 * @param id 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
@@ -107,8 +91,7 @@ export class OrganizationSprintController extends CrudController<OrganizationSpr
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
@@ -116,8 +99,6 @@ export class OrganizationSprintController extends CrudController<OrganizationSpr
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() body: IOrganizationSprintUpdateInput
 	): Promise<IOrganizationSprint> {
-		return this.commandBus.execute(
-			new OrganizationSprintUpdateCommand(id, body)
-		);
+		return this.commandBus.execute(new OrganizationSprintUpdateCommand(id, body));
 	}
 }
