@@ -39,11 +39,11 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			where: { id },
 			relations: { timeSlots: true }
 		});
+		const { startedAt, stoppedAt, employeeId, organizationId } = log;
 
-		const { startedAt, stoppedAt, employeeId, organizationId, timesheetId } = log;
+		const newTimeRange = moment.range(start, end); // Calculate the new time rang
+		const dbTimeRange = moment.range(startedAt, stoppedAt); // Calculate the database time range
 
-		const newTimeRange = moment.range(start, end);
-		const dbTimeRange = moment.range(startedAt, stoppedAt);
 		/*
 		 * Check is overlapping time or not.
 		 */
@@ -132,24 +132,40 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	}
 
 	/**
-	 * Handle non-overlapping time ranges.
+	 * Handles non-overlapping time ranges by deleting the time log and associated time slots,
+	 * and recalculating the timesheet.
+	 *
+	 * @param timeLog - The time log associated with the non-overlapping time range.
+	 * @param timeSlot - The time slot to be deleted.
+	 * @param employeeId - The ID of the employee associated with the time log.
+	 * @param organizationId - The ID of the organization.
+	 * @param forceDelete - A flag indicating whether to perform a hard delete.
 	 */
 	private async handleNonOverlappingTimeRange(
-		log: ITimeLog,
-		slot: ITimeSlot,
+		timeLog: ITimeLog,
+		timeSlot: ITimeSlot,
 		employeeId: ID,
 		organizationId: ID,
 		forceDelete: boolean = false
 	): Promise<void> {
-		const timeSlotsIds = [slot.id];
+		const timeSlotsIds = [timeSlot.id];
 
-		// Delete time log and time slots
+		// Delete the time log and its associated time slots
 		await this._commandBus.execute(
-			new TimeSlotBulkDeleteCommand({ organizationId, employeeId, log, timeSlotsIds }, forceDelete, true)
+			new TimeSlotBulkDeleteCommand(
+				{
+					organizationId,
+					employeeId,
+					timeLog,
+					timeSlotsIds
+				},
+				forceDelete,
+				true
+			)
 		);
 
-		// Recalculate timesheet
-		await this._commandBus.execute(new TimesheetRecalculateCommand(log.timesheetId));
+		// Recalculate the timesheet
+		await this._commandBus.execute(new TimesheetRecalculateCommand(timeLog.timesheetId));
 	}
 
 	/**
