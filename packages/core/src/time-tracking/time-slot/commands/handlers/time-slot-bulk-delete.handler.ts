@@ -122,7 +122,7 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 
 			if (timeLogs.length === 1) {
 				const [firstTimeLog] = timeLogs;
-				if (timeLogs.length === 1 && firstTimeLog.id === timeLog.id) {
+				if (firstTimeLog.id === timeLog.id) {
 					// If the time slot has only one time log and it matches the provided time log, delete the time slot
 					if (forceDelete) {
 						console.log(
