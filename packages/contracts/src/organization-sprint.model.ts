@@ -2,7 +2,7 @@ import { IOrganizationProjectModule } from './organization-project-module.model'
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { ITask } from './task.model';
-import { IEmployeeEntityInput } from './employee.model';
+import { IEmployeeEntityInput, IMemberEntityBased } from './employee.model';
 import { IRelationalRole } from './role.model';
 import { JsonData } from './activity-log.model';
 import { IUser } from './user.model';
@@ -33,10 +33,7 @@ export interface IOrganizationSprint extends IOrganizationSprintBase {
 	projectId: ID;
 }
 
-export interface IOrganizationSprintCreateInput extends IOrganizationSprintBase {
-	memberIds?: ID[]; // Members of the organization sprint
-	managerIds?: ID[]; // Managers of the organization project
-}
+export interface IOrganizationSprintCreateInput extends IOrganizationSprintBase, IMemberEntityBased {}
 
 export enum SprintStartDayEnum {
 	SUNDAY = 1,

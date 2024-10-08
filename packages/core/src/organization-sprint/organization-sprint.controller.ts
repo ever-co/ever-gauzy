@@ -1,14 +1,27 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Put, Query, UseGuards, Post } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Put,
+	Query,
+	UseGuards,
+	Post,
+	Delete
+} from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { DeleteResult } from 'typeorm';
 import { ID, IOrganizationSprint, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController } from './../core/crud';
+import { CrudController, PaginationParams } from './../core/crud';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { OrganizationSprint } from './organization-sprint.entity';
 import { OrganizationSprintService } from './organization-sprint.service';
 import { OrganizationSprintCreateCommand, OrganizationSprintUpdateCommand } from './commands';
-import { ParseJsonPipe, UseValidationPipe, UUIDValidationPipe } from './../shared/pipes';
+import { UseValidationPipe, UUIDValidationPipe } from './../shared/pipes';
 import { CreateOrganizationSprintDTO, UpdateOrganizationSprintDTO } from './dto';
 
 @ApiTags('OrganizationSprint')
@@ -23,12 +36,6 @@ export class OrganizationSprintController extends CrudController<OrganizationSpr
 		super(organizationSprintService);
 	}
 
-	/**
-	 * GET all organization sprints
-	 *
-	 * @param data
-	 * @returns
-	 */
 	@ApiOperation({
 		summary: 'Find all organization sprint.'
 	})
@@ -41,21 +48,22 @@ export class OrganizationSprintController extends CrudController<OrganizationSpr
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_SPRINT_VIEW)
 	@Get()
-	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IOrganizationSprint>> {
-		const { relations, findInput } = data;
-		return this.organizationSprintService.findAll({
-			where: findInput,
-			relations
-		});
+	@UseValidationPipe()
+	async findAll(@Query() params: PaginationParams<OrganizationSprint>): Promise<IPagination<IOrganizationSprint>> {
+		return this.organizationSprintService.findAll(params);
 	}
 
-	/**
-	 * CREATE organization sprint
-	 *
-	 * @param entity
-	 * @returns
-	 */
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_SPRINT_VIEW)
+	@Get('/:id')
+	async findById(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Query() params: PaginationParams<OrganizationSprint>
+	): Promise<IOrganizationSprint> {
+		return await this.organizationSprintService.findOneByIdString(id, params);
+	}
+
 	@HttpCode(HttpStatus.CREATED)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_SPRINT_EDIT)
 	@UseValidationPipe()
@@ -64,21 +72,20 @@ export class OrganizationSprintController extends CrudController<OrganizationSpr
 		return await this.commandBus.execute(new OrganizationSprintCreateCommand(entity));
 	}
 
-	/**
-	 * UPDATE organization sprint by id
-	 *
-	 * @param id
-	 * @param entity
-	 * @returns
-	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_SPRINT_EDIT)
 	@UseValidationPipe()
 	@Put('/:id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Body() body: UpdateOrganizationSprintDTO
+		@Body() entity: UpdateOrganizationSprintDTO
 	): Promise<IOrganizationSprint> {
-		return this.commandBus.execute(new OrganizationSprintUpdateCommand(id, body));
+		return this.commandBus.execute(new OrganizationSprintUpdateCommand(id, entity));
+	}
+
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_SPRINT_EDIT)
+	@Delete(':id')
+	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
+		return await this.organizationSprintService.delete(id);
 	}
 }
