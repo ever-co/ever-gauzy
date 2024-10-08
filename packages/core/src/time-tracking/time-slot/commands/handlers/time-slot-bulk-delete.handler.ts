@@ -88,6 +88,8 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 	 * @returns A promise that resolves to the deleted time slots.
 	 */
 	private bulkDeleteTimeSlots(timeSlots: ITimeSlot[], forceDelete: boolean): Promise<ITimeSlot[]> {
+		console.log(`bulk ${forceDelete ? 'hard' : 'soft'} deleting time slots:`, timeSlots);
+
 		return forceDelete
 			? this.typeOrmTimeSlotRepository.remove(timeSlots)
 			: this.typeOrmTimeSlotRepository.softRemove(timeSlots);
@@ -108,7 +110,8 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 		timeLog: ITimeLog,
 		forceDelete: boolean
 	): Promise<ITimeSlot> {
-		console.log('conditional delete time slots:', timeSlots);
+		console.log(`conditional ${forceDelete ? 'hard' : 'soft'} deleting time slots:`, timeSlots);
+
 		// Loop through each time slot
 		for await (const timeSlot of timeSlots) {
 			const { timeLogs = [] } = timeSlot;
