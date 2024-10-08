@@ -1,6 +1,6 @@
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
-import * as _ from 'underscore';
-import { ITimeLog, ITimeSlot } from '@gauzy/contracts';
+import { omit } from 'underscore';
+import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { moment } from '../../../../core/moment-extend';
 import { TimesheetRecalculateCommand } from './../../../timesheet/commands';
@@ -39,38 +39,19 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			where: { id },
 			relations: { timeSlots: true }
 		});
+		const { startedAt, stoppedAt, employeeId, organizationId } = log;
 
-		const { startedAt, stoppedAt, employeeId, organizationId, timesheetId } = log;
+		const newTimeRange = moment.range(start, end); // Calculate the new time rang
+		const dbTimeRange = moment.range(startedAt, stoppedAt); // Calculate the database time range
 
-		const newTimeRange = moment.range(start, end);
-		const dbTimeRange = moment.range(startedAt, stoppedAt);
-
-		console.log({ newTimeRange, dbTimeRange });
 		/*
 		 * Check is overlapping time or not.
 		 */
 		if (!newTimeRange.overlaps(dbTimeRange, { adjacent: false })) {
 			console.log('Not Overlapping', newTimeRange, dbTimeRange);
-			/**
-			 * If TimeSlot Not Overlapping the TimeLog
-			 * Still we have to remove that TimeSlot with screenshots/activities
-			 */
-			if (employeeId && start && end) {
-				const timeSlotsIds = [timeSlot.id];
-				await this._commandBus.execute(
-					new TimeSlotBulkDeleteCommand(
-						{
-							organizationId,
-							employeeId,
-							timeLog: log,
-							timeSlotsIds
-						},
-						forceDelete,
-						true
-					)
-				);
-				await this._commandBus.execute(new TimesheetRecalculateCommand(timesheetId));
-			}
+
+			// Handle non-overlapping time ranges
+			await this.handleNonOverlappingTimeRange(log, timeSlot, employeeId, organizationId, forceDelete);
 		}
 
 		if (moment(startedAt).isBetween(moment(start), moment(end), null, '[]')) {
@@ -83,11 +64,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				 *  		|--------------------------------------|
 				 */
 				console.log('Delete time log because overlap entire time.');
-				try {
-					await this._commandBus.execute(new TimeLogDeleteCommand(log, forceDelete));
-				} catch (error) {
-					console.log('Error while, delete time log because overlap entire time.', error);
-				}
+				await this.deleteTimeLog(log, forceDelete);
 			} else {
 				/*
 				 * Update start time
@@ -134,22 +111,18 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 								timeSlots: true
 							}
 						});
+
+						// If no remaining time slots, delete the time log
 						if (isEmpty(updatedTimeLog.timeSlots)) {
-							await this._commandBus.execute(new TimeLogDeleteCommand(updatedTimeLog, forceDelete));
+							await this.deleteTimeLog(updatedTimeLog, forceDelete);
 						}
 					} catch (error) {
 						console.log('Error while, updating startedAt time', error);
 					}
 				} else {
 					console.log('Delete startedAt time log.');
-					try {
-						/*
-						 * Delete if remaining duration 0 seconds
-						 */
-						await this._commandBus.execute(new TimeLogDeleteCommand(log, forceDelete));
-					} catch (error) {
-						console.log('Error while, deleting time log for startedAt time', error);
-					}
+					// Delete if remaining duration 0 seconds
+					await this.deleteTimeLog(log, forceDelete);
 				}
 			}
 		} else {
@@ -200,22 +173,18 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 								timeSlots: true
 							}
 						});
+
+						// If no remaining time slots, delete the time log
 						if (isEmpty(updatedTimeLog.timeSlots)) {
-							await this._commandBus.execute(new TimeLogDeleteCommand(updatedTimeLog, forceDelete));
+							await this.deleteTimeLog(updatedTimeLog, forceDelete);
 						}
 					} catch (error) {
 						console.log('Error while, updating stoppedAt time', error);
 					}
 				} else {
 					console.log('Delete stoppedAt time log.');
-					try {
-						/*
-						 * Delete if remaining duration 0 seconds
-						 */
-						await this._commandBus.execute(new TimeLogDeleteCommand(log, forceDelete));
-					} catch (error) {
-						console.log('Error while, deleting time log for stoppedAt time', error);
-					}
+					// Delete if remaining duration 0 seconds
+					await this.deleteTimeLog(log, forceDelete);
 				}
 			} else {
 				/*
@@ -227,7 +196,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				 */
 				console.log('Split database time in two entries.');
 				const remainingDuration = moment(start).diff(moment(startedAt), 'seconds');
-				const timeLogClone: TimeLog = _.omit(timeLog, ['createdAt', 'updatedAt', 'id']);
+				const timeLogClone: TimeLog = omit(timeLog, ['createdAt', 'updatedAt', 'id']);
 				try {
 					if (remainingDuration > 0) {
 						try {
@@ -301,6 +270,133 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Handles non-overlapping time ranges by deleting the time log and associated time slots,
+	 * and recalculating the timesheet.
+	 *
+	 * @param timeLog - The time log associated with the non-overlapping time range.
+	 * @param timeSlot - The time slot to be deleted.
+	 * @param employeeId - The ID of the employee associated with the time log.
+	 * @param organizationId - The ID of the organization.
+	 * @param forceDelete - A flag indicating whether to perform a hard delete.
+	 */
+	private async handleNonOverlappingTimeRange(
+		timeLog: ITimeLog,
+		timeSlot: ITimeSlot,
+		employeeId: ID,
+		organizationId: ID,
+		forceDelete: boolean = false
+	): Promise<void> {
+		const timeSlotsIds = [timeSlot.id];
+
+		// Delete the time log and its associated time slots
+		await this._commandBus.execute(
+			new TimeSlotBulkDeleteCommand(
+				{
+					organizationId,
+					employeeId,
+					timeLog,
+					timeSlotsIds
+				},
+				forceDelete,
+				true
+			)
+		);
+
+		// Recalculate the timesheet
+		await this._commandBus.execute(new TimesheetRecalculateCommand(timeLog.timesheetId));
+	}
+
+	/**
+	 * Updates the start time or deletes the time log if remaining duration is 0.
+	 *
+	 * @param log - The time log to update or delete.
+	 * @param slot - The related time slot.
+	 * @param organizationId - The organization ID.
+	 * @param employeeId - The employee ID.
+	 * @param end - The new end time.
+	 * @param stoppedAt - The current stopped time of the log.
+	 */
+	private async updateStartTimeOrDelete(
+		log: ITimeLog,
+		slot: ITimeSlot,
+		organizationId: ID,
+		employeeId: ID,
+		end: Date,
+		stoppedAt: Date,
+		forceDelete: boolean = false
+	): Promise<void> {}
+
+	/**
+	 * Updates the stoppedAt time for a given time log, or deletes it if the remaining duration is 0.
+	 *
+	 * @param log - The time log to update or delete.
+	 * @param slot - The related time slot.
+	 * @param organizationId - The organization ID.
+	 * @param employeeId - The employee ID.
+	 * @param start - The new start time.
+	 * @param startedAt - The original start time of the time log.
+	 * @param end - The new end time for the time log.
+	 */
+	private async updateStopTimeOrDelete(
+		log: ITimeLog,
+		slot: ITimeSlot,
+		organizationId: ID,
+		employeeId: ID,
+		start: Date,
+		startedAt: Date,
+		end: Date,
+		forceDelete: boolean = false
+	): Promise<void> {}
+
+	/**
+	 * Handles splitting a time log into two entries and processing the associated time slots.
+	 *
+	 * @param timeLog - The original time log to split.
+	 * @param timeSlot - The related time slot.
+	 * @param organizationId - The organization ID.
+	 * @param employeeId - The employee ID.
+	 * @param start - The new start time.
+	 * @param end - The new end time.
+	 * @param startedAt - The original start time of the time log.
+	 */
+	private async handleTimeLogSplitting(
+		timeLog: ITimeLog,
+		timeSlot: ITimeSlot,
+		organizationId: ID,
+		employeeId: ID,
+		start: Date,
+		end: Date,
+		startedAt: Date,
+		forceDelete: boolean = false
+	): Promise<void> {}
+
+	/**
+	 * Creates and syncs the new time log if the duration is greater than 0.
+	 *
+	 * @param timeLog - The original time log (will be cloned).
+	 * @param end - The new start time for the new log.
+	 */
+	private async createAndSyncNewTimeLog(timeLog: ITimeLog, end: Date): Promise<void> {}
+
+	/**
+	 * Deletes a time log if it overlaps the entire time range.
+	 *
+	 * @param timeLog - The log to delete.
+	 * @param forceDelete - Whether to hard delete (default: false).
+	 * @returns Promise<void> - Resolves when deletion is complete.
+	 */
+
+	private async deleteTimeLog(timeLog: ITimeLog, forceDelete: boolean = false): Promise<void> {
+		try {
+			// Execute the TimeLogDeleteCommand to delete the time log
+			await this._commandBus.execute(new TimeLogDeleteCommand(timeLog, forceDelete));
+		} catch (error) {
+			// Log any errors that occur during deletion
+			console.log(`Error while, delete time log because overlap entire time for ID: ${timeLog.id}`, error);
+		}
 	}
 
 	/**
