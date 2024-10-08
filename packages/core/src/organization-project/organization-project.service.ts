@@ -116,7 +116,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				});
 			});
 
-			// Create the organization team with the prepared members
+			// Create the organization project with the prepared members
 			const project = await super.create({
 				...entity,
 				members,
