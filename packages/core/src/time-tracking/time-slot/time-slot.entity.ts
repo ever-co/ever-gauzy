@@ -96,7 +96,9 @@ export class TimeSlot extends TenantOrganizationBaseEntity implements ITimeSlot 
 	/**
 	 * Screenshot
 	 */
-	@MultiORMOneToMany(() => Screenshot, (it) => it.timeSlot)
+	@MultiORMOneToMany(() => Screenshot, (it) => it.timeSlot, {
+		cascade: true
+	})
 	screenshots?: IScreenshot[];
 
 	/**
