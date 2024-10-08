@@ -63,6 +63,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				 * 		DB Start Time				DB Stop Time
 				 *  		|--------------------------------------|
 				 */
+				// Overlap entire time: delete time log
 				console.log('Delete time log because overlap entire time.');
 				await this.deleteTimeLog(log, forceDelete);
 			} else {
@@ -73,57 +74,17 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				 * 		DB Start Time				DB Stop Time
 				 * 		|--------------------------------------	|
 				 */
-				const remainingDuration = moment(stoppedAt).diff(moment(end), 'seconds');
-				if (remainingDuration > 0) {
-					try {
-						console.log('Update startedAt time.');
-						let updatedTimeLog: ITimeLog = await this._commandBus.execute(
-							new TimeLogUpdateCommand(
-								{
-									startedAt: end
-								},
-								log,
-								true,
-								forceDelete
-							)
-						);
-						const timeSlotsIds = [timeSlot.id];
-						await this._commandBus.execute(
-							new TimeSlotBulkDeleteCommand(
-								{
-									organizationId,
-									employeeId,
-									timeLog: updatedTimeLog,
-									timeSlotsIds
-								},
-								forceDelete,
-								true
-							)
-						);
-						/*
-						 * Delete TimeLog if remaining timeSlots are 0
-						 */
-						updatedTimeLog = await this.typeOrmTimeLogRepository.findOne({
-							where: {
-								id: updatedTimeLog.id
-							},
-							relations: {
-								timeSlots: true
-							}
-						});
-
-						// If no remaining time slots, delete the time log
-						if (isEmpty(updatedTimeLog.timeSlots)) {
-							await this.deleteTimeLog(updatedTimeLog, forceDelete);
-						}
-					} catch (error) {
-						console.log('Error while, updating startedAt time', error);
-					}
-				} else {
-					console.log('Delete startedAt time log.');
-					// Delete if remaining duration 0 seconds
-					await this.deleteTimeLog(log, forceDelete);
-				}
+				// Partial overlap: update start time or delete
+				console.log(`Partial overlap: update started time or delete`);
+				await this.updateStartTimeOrDelete(
+					log,
+					timeSlot,
+					organizationId,
+					employeeId,
+					end,
+					stoppedAt,
+					forceDelete
+				);
 			}
 		} else {
 			if (moment(timeLog.stoppedAt).isBetween(moment(start), moment(end), null, '[]')) {
@@ -134,58 +95,17 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				 * 		DB Start Time				DB Stop Time
 				 * 		|--------------------------------------|
 				 */
-				const remainingDuration = moment(end).diff(moment(startedAt), 'seconds');
-				if (remainingDuration > 0) {
-					try {
-						console.log('Update stoppedAt time.');
-						let updatedTimeLog: ITimeLog = await this._commandBus.execute(
-							new TimeLogUpdateCommand(
-								{
-									stoppedAt: start
-								},
-								timeLog,
-								true,
-								forceDelete
-							)
-						);
-						const timeSlotsIds = [timeSlot.id];
-						await this._commandBus.execute(
-							new TimeSlotBulkDeleteCommand(
-								{
-									organizationId,
-									employeeId,
-									timeLog: updatedTimeLog,
-									timeSlotsIds
-								},
-								forceDelete,
-								true
-							)
-						);
-
-						/*
-						 * Delete TimeLog if remaining timeSlots are 0
-						 */
-						updatedTimeLog = await this.typeOrmTimeLogRepository.findOne({
-							where: {
-								id: updatedTimeLog.id
-							},
-							relations: {
-								timeSlots: true
-							}
-						});
-
-						// If no remaining time slots, delete the time log
-						if (isEmpty(updatedTimeLog.timeSlots)) {
-							await this.deleteTimeLog(updatedTimeLog, forceDelete);
-						}
-					} catch (error) {
-						console.log('Error while, updating stoppedAt time', error);
-					}
-				} else {
-					console.log('Delete stoppedAt time log.');
-					// Delete if remaining duration 0 seconds
-					await this.deleteTimeLog(log, forceDelete);
-				}
+				console.log(`Partial overlap: update stopped time or delete`);
+				await this.updateStopTimeOrDelete(
+					log,
+					timeSlot,
+					organizationId,
+					employeeId,
+					start,
+					startedAt,
+					end,
+					forceDelete
+				);
 			} else {
 				/*
 				 * Split database time in two entries.
@@ -195,80 +115,19 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				 *  		|--------------------------------------------------|
 				 */
 				console.log('Split database time in two entries.');
-				const remainingDuration = moment(start).diff(moment(startedAt), 'seconds');
-				const timeLogClone: TimeLog = omit(timeLog, ['createdAt', 'updatedAt', 'id']);
-				try {
-					if (remainingDuration > 0) {
-						try {
-							timeLog.stoppedAt = start;
-							await this.typeOrmTimeLogRepository.save(timeLog);
-						} catch (error) {
-							console.error(`Error while updating old timelog`, error);
-						}
-					} else {
-						/*
-						 * Delete if remaining duration 0 seconds
-						 */
-						try {
-							await this._commandBus.execute(new TimeLogDeleteCommand(log, forceDelete));
-						} catch (error) {
-							console.error(`Error while deleting old timelog`, error);
-						}
-					}
-					const timeSlotsIds = [timeSlot.id];
-					await this._commandBus.execute(
-						new TimeSlotBulkDeleteCommand(
-							{
-								organizationId,
-								employeeId,
-								timeLog,
-								timeSlotsIds
-							},
-							forceDelete,
-							true
-						)
-					);
-				} catch (error) {
-					console.error(`Error while split time entires: ${remainingDuration}`);
-				}
-
-				const newLog = timeLogClone;
-				newLog.startedAt = end;
-
-				const newLogRemainingDuration = moment(newLog.stoppedAt).diff(moment(newLog.startedAt), 'seconds');
-				/*
-				 * Insert if remaining duration is more 0 seconds
-				 */
-				if (newLogRemainingDuration > 0) {
-					try {
-						await this.typeOrmTimeLogRepository.save(newLog);
-					} catch (error) {
-						console.log('Error while creating new log', error, newLog);
-					}
-
-					try {
-						const timeSlots = await this.syncTimeSlots(newLog);
-						console.log('Sync TimeSlots for new log', { timeSlots }, { newLog });
-						if (isNotEmpty(timeSlots)) {
-							let timeLogs: ITimeLog[] = [];
-							timeLogs = timeLogs.concat(newLog);
-
-							for await (const timeSlot of timeSlots) {
-								timeSlot.timeLogs = timeLogs;
-							}
-
-							try {
-								await this.typeOrmTimeSlotRepository.save(timeSlots);
-							} catch (error) {
-								console.log('Error while creating new TimeSlot & TimeLog entires', error, timeSlots);
-							}
-						}
-					} catch (error) {
-						console.log('Error while syncing TimeSlot & TimeLog', error);
-					}
-				}
+				await this.handleTimeLogSplitting(
+					timeLog,
+					timeSlot,
+					organizationId,
+					employeeId,
+					start,
+					end,
+					startedAt,
+					forceDelete
+				);
 			}
 		}
+
 		return true;
 	}
 
@@ -289,9 +148,10 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		organizationId: ID,
 		forceDelete: boolean = false
 	): Promise<void> {
+		// Delete the associated time slots
 		const timeSlotsIds = [timeSlot.id];
 
-		// Delete the time log and its associated time slots
+		// Bulk delete the time slots
 		await this._commandBus.execute(
 			new TimeSlotBulkDeleteCommand(
 				{
@@ -327,7 +187,58 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		end: Date,
 		stoppedAt: Date,
 		forceDelete: boolean = false
-	): Promise<void> {}
+	): Promise<void> {
+		const stoppedAtMoment = moment(stoppedAt); // Get the stopped at moment
+		const endMoment = moment(end); // Get the end moment
+		const remainingDuration = stoppedAtMoment.diff(endMoment, 'seconds'); // Calculate the remaining duration
+
+		// If there is remaining duration
+		if (remainingDuration > 0) {
+			// Update the start time if there is remaining duration
+			try {
+				console.log(`update startedAt time to ${end}`);
+				// Update the started at time
+				let timeLog: ITimeLog = await this._commandBus.execute(
+					new TimeLogUpdateCommand({ startedAt: end }, log, true, forceDelete)
+				);
+
+				// Delete the associated time slots
+				const timeSlotsIds = [slot.id];
+
+				// Bulk delete the time slots
+				await this._commandBus.execute(
+					new TimeSlotBulkDeleteCommand(
+						{
+							organizationId,
+							employeeId,
+							timeLog,
+							timeSlotsIds
+						},
+						forceDelete,
+						true
+					)
+				);
+
+				// Check if there are any remaining time slots
+				timeLog = await this.typeOrmTimeLogRepository.findOne({
+					where: { id: timeLog.id },
+					relations: { timeSlots: true }
+				});
+
+				// If no remaining time slots, delete the time log
+				if (isEmpty(timeLog.timeSlots)) {
+					// Delete TimeLog if remaining timeSlots are 0
+					await this.deleteTimeLog(timeLog, forceDelete);
+				}
+			} catch (error) {
+				console.log('Error while updating startedAt time', error);
+			}
+		} else {
+			// Delete the time log if remaining duration is 0
+			console.log('Remaining duration is 0, so we are deleting the time log during update startedAt time');
+			await this.deleteTimeLog(log, forceDelete);
+		}
+	}
 
 	/**
 	 * Updates the stoppedAt time for a given time log, or deletes it if the remaining duration is 0.
@@ -349,7 +260,57 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		startedAt: Date,
 		end: Date,
 		forceDelete: boolean = false
-	): Promise<void> {}
+	): Promise<void> {
+		const startedAtMoment = moment(startedAt); // Get the started at moment
+		const endMoment = moment(end); // Get the end moment
+		const remainingDuration = endMoment.diff(startedAtMoment, 'seconds'); // Calculate the remaining duration
+
+		// If there is remaining duration
+		if (remainingDuration > 0) {
+			// Update the stoppedAt time if there is remaining duration
+			try {
+				console.log(`update stoppedAt time to ${start}`);
+
+				// Update the stoppedAt time
+				let timeLog: ITimeLog = await this._commandBus.execute(
+					new TimeLogUpdateCommand({ stoppedAt: start }, log, true, forceDelete)
+				);
+
+				// Delete the associated time slots
+				const timeSlotsIds = [slot.id];
+
+				// Bulk delete the time slots
+				await this._commandBus.execute(
+					new TimeSlotBulkDeleteCommand(
+						{
+							organizationId,
+							employeeId,
+							timeLog,
+							timeSlotsIds
+						},
+						forceDelete,
+						true
+					)
+				);
+
+				// Check if there are any remaining time slots
+				timeLog = await this.typeOrmTimeLogRepository.findOne({
+					where: { id: timeLog.id },
+					relations: { timeSlots: true }
+				});
+
+				// If no remaining time slots, delete the time log
+				if (isEmpty(timeLog.timeSlots)) {
+					await this.deleteTimeLog(timeLog, forceDelete);
+				}
+			} catch (error) {
+				console.log('Error while updating stoppedAt time', error);
+			}
+		} else {
+			console.log('Remaining duration is 0, so we are deleting the time log during update stoppedAt time');
+			await this.deleteTimeLog(log, forceDelete);
+		}
+	}
 
 	/**
 	 * Handles splitting a time log into two entries and processing the associated time slots.
@@ -371,7 +332,48 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		end: Date,
 		startedAt: Date,
 		forceDelete: boolean = false
-	): Promise<void> {}
+	): Promise<void> {
+		const startedAtMoment = moment(startedAt); // Get the started at moment
+		const startMoment = moment(start); // Get the start moment
+		const remainingDuration = startMoment.diff(startedAtMoment, 'seconds'); // Calculate the remaining duration
+
+		// If there is remaining duration
+		if (remainingDuration > 0) {
+			try {
+				timeLog.stoppedAt = start;
+				await this.typeOrmTimeLogRepository.save(timeLog);
+			} catch (error) {
+				console.error(`Error while updating stoppedAt time for ID: ${timeLog.id}`, error);
+			}
+		} else {
+			// Delete the old time log if remaining duration is 0
+			await this.deleteTimeLog(timeLog, forceDelete);
+		}
+
+		try {
+			// Delete the associated time slots
+			const timeSlotsIds = [timeSlot.id];
+
+			// Bulk delete the time slots
+			await this._commandBus.execute(
+				new TimeSlotBulkDeleteCommand(
+					{
+						organizationId,
+						employeeId,
+						timeLog,
+						timeSlotsIds
+					},
+					forceDelete,
+					true
+				)
+			);
+		} catch (error) {
+			console.error(`Error while splitting time entries: ${remainingDuration}`, error);
+		}
+
+		// Handle the creation of the new time log
+		await this.createAndSyncNewTimeLog(timeLog, end);
+	}
 
 	/**
 	 * Creates and syncs the new time log if the duration is greater than 0.
@@ -379,7 +381,41 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	 * @param timeLog - The original time log (will be cloned).
 	 * @param end - The new start time for the new log.
 	 */
-	private async createAndSyncNewTimeLog(timeLog: ITimeLog, end: Date): Promise<void> {}
+	private async createAndSyncNewTimeLog(timeLog: ITimeLog, end: Date): Promise<void> {
+		const clone: TimeLog = omit(timeLog, ['createdAt', 'updatedAt', 'id']);
+		const newLog = clone;
+		newLog.startedAt = end;
+
+		// Calculate the remaining duration of the new log
+		const newLogRemainingDuration = moment(newLog.stoppedAt).diff(moment(newLog.startedAt), 'seconds');
+
+		// If there is remaining duration
+		if (newLogRemainingDuration > 0) {
+			try {
+				await this.typeOrmTimeLogRepository.save(newLog);
+			} catch (error) {
+				console.log('Error while creating new log', error, newLog);
+			}
+
+			try {
+				// Sync time slots for the new time log
+				const slots = await this.syncTimeSlots(newLog);
+				console.log('sync time slots for new log', { slots }, { newLog });
+
+				// Assign the new log to time slots and save
+				if (isNotEmpty(slots)) {
+					// Assign the new log to time slots and save
+					for await (const ts of slots) {
+						ts.timeLogs = [newLog];
+					}
+
+					await this.typeOrmTimeSlotRepository.save(slots);
+				}
+			} catch (error) {
+				console.error('Error while creating or syncing new log and time slots', error);
+			}
+		}
+	}
 
 	/**
 	 * Deletes a time log if it overlaps the entire time range.
