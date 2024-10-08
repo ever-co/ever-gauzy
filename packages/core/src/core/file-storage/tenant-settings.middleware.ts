@@ -7,12 +7,12 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class TenantSettingsMiddleware implements NestMiddleware {
-	private logging = true;
+	private logging = false;
 
 	constructor(
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		private readonly tenantSettingService: TenantSettingService
-	) { }
+	) {}
 
 	/**
 	 *
@@ -43,7 +43,10 @@ export class TenantSettingsMiddleware implements NestMiddleware {
 
 					if (!tenantSettings) {
 						if (this.logging) {
-							console.log('Tenant settings NOT loaded from Cache for tenantId: %s', decodedToken.tenantId);
+							console.log(
+								'Tenant settings NOT loaded from Cache for tenantId: %s',
+								decodedToken.tenantId
+							);
 						}
 
 						// Fetch tenant settings based on the decoded tenantId
@@ -54,11 +57,14 @@ export class TenantSettingsMiddleware implements NestMiddleware {
 						});
 
 						if (tenantSettings) {
-							const ttl = 5 * 60 * 1000 // 5 min caching period for Tenants Settings
+							const ttl = 5 * 60 * 1000; // 5 min caching period for Tenants Settings
 							await this.cacheManager.set(cacheKey, tenantSettings, ttl);
 
 							if (this.logging) {
-								console.log('Tenant settings loaded from DB and stored in Cache for tenantId: %s', decodedToken.tenantId);
+								console.log(
+									'Tenant settings loaded from DB and stored in Cache for tenantId: %s',
+									decodedToken.tenantId
+								);
 							}
 						}
 					} else {

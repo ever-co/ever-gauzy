@@ -1,4 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import * as chalk from 'chalk';
 import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TimeSlotBulkDeleteCommand } from '../time-slot-bulk-delete.command';
@@ -25,7 +26,7 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 
 		// Step 1: Fetch time slots based on input parameters
 		const timeSlots = await this.fetchTimeSlots({ organizationId, employeeId, tenantId, timeSlotsIds });
-		console.log(`fetched time slots for soft delete or hard delete: ${timeSlots}`);
+		console.log(`fetched time slots for soft delete or hard delete:`, timeSlots);
 
 		// If timeSlots is empty, return an empty array
 		if (isEmpty(timeSlots)) {
@@ -121,10 +122,16 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 				if (timeLogs.length === 1 && firstTimeLog.id === timeLog.id) {
 					// If the time slot has only one time log and it matches the provided time log, delete the time slot
 					if (forceDelete) {
-						console.log('hard removing time slot', timeSlot.id);
+						console.log(
+							chalk.red('--------------------hard removing time slot--------------------'),
+							timeSlot.id
+						);
 						return await this.typeOrmTimeSlotRepository.remove(timeSlot);
 					} else {
-						console.log('soft removing time slot', timeSlot.id);
+						console.log(
+							chalk.yellow('--------------------soft removing time slot--------------------'),
+							timeSlot.id
+						);
 						return await this.typeOrmTimeSlotRepository.softRemove(timeSlot);
 					}
 				}
