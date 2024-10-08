@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Put, Query, UseGuards, Post } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IOrganizationSprint, IOrganizationSprintUpdateInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { ID, IOrganizationSprint, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -9,7 +9,7 @@ import { OrganizationSprint } from './organization-sprint.entity';
 import { OrganizationSprintService } from './organization-sprint.service';
 import { OrganizationSprintCreateCommand, OrganizationSprintUpdateCommand } from './commands';
 import { ParseJsonPipe, UseValidationPipe, UUIDValidationPipe } from './../shared/pipes';
-import { CreateOrganizationSprintDTO } from './dto';
+import { CreateOrganizationSprintDTO, UpdateOrganizationSprintDTO } from './dto';
 
 @ApiTags('OrganizationSprint')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -57,15 +57,6 @@ export class OrganizationSprintController extends CrudController<OrganizationSpr
 	 * @returns
 	 */
 	@HttpCode(HttpStatus.CREATED)
-	@ApiOperation({ summary: 'Create new record' })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input, The response body may contain clues as to what went wrong'
-	})
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_SPRINT_EDIT)
 	@UseValidationPipe()
 	@Post()
@@ -80,24 +71,13 @@ export class OrganizationSprintController extends CrudController<OrganizationSpr
 	 * @param entity
 	 * @returns
 	 */
-	@ApiOperation({ summary: 'Update an existing record' })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'The record has been successfully edited.'
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input, The response body may contain clues as to what went wrong'
-	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Put(':id')
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_SPRINT_EDIT)
+	@UseValidationPipe()
+	@Put('/:id')
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() body: IOrganizationSprintUpdateInput
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() body: UpdateOrganizationSprintDTO
 	): Promise<IOrganizationSprint> {
 		return this.commandBus.execute(new OrganizationSprintUpdateCommand(id, body));
 	}
