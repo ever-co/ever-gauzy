@@ -183,6 +183,18 @@ export const DEFAULT_EVER_EMPLOYEES: any = [
 		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
+		email: 'rahulrathore576@gmail.com',
+		password: '123456',
+		firstName: 'Rahul',
+		lastName: 'R.',
+		imageUrl: 'assets/images/avatars/rahul.png',
+		startedWorkOn: '2020-09-10',
+		endWork: null,
+		employeeLevel: null,
+		preferredLanguage: LanguagesEnum.ENGLISH,
+		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
+	},
+	{
 		email: 'julia@example-ever.co',
 		password: '123456',
 		firstName: 'Julia',

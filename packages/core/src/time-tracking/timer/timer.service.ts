@@ -353,8 +353,14 @@ export class TimerService {
 	 * @param lastLog The last running time log entry.
 	 * @param tenantId The tenant ID.
 	 * @param organizationId The organization ID.
+	 * @param forceDelete Flag indicating whether to force delete the conflicts.
 	 */
-	private async handleConflictingTimeLogs(lastLog: ITimeLog, tenantId: ID, organizationId: ID): Promise<void> {
+	private async handleConflictingTimeLogs(
+		lastLog: ITimeLog,
+		tenantId: ID,
+		organizationId: ID,
+		forceDelete: boolean = false
+	): Promise<void> {
 		try {
 			// Validate the date range and check if the timer is running
 			validateDateRange(lastLog.startedAt, lastLog.stoppedAt);
@@ -392,7 +398,9 @@ export class TimerService {
 					const { timeSlots = [] } = timeLog;
 					// Delete conflicting time slots
 					for await (const timeSlot of timeSlots) {
-						await this._commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, timeSlot));
+						await this._commandBus.execute(
+							new DeleteTimeSpanCommand(times, timeLog, timeSlot, forceDelete)
+						);
 					}
 				}
 			}

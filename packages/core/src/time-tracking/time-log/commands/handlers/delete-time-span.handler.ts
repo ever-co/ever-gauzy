@@ -40,7 +40,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			relations: { timeSlots: true }
 		});
 
-		const { startedAt, stoppedAt, employeeId, organizationId } = log;
+		const { startedAt, stoppedAt, employeeId, organizationId, timesheetId } = log;
 
 		const newTimeRange = moment.range(start, end);
 		const dbTimeRange = moment.range(startedAt, stoppedAt);
@@ -179,7 +179,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			// Update the start time if there is remaining duration
 			try {
 				let timeLog: ITimeLog = await this._commandBus.execute(
-					new TimeLogUpdateCommand({ startedAt: end }, log, true)
+					new TimeLogUpdateCommand({ startedAt: end }, log, true, forceDelete)
 				);
 
 				// Delete the associated time slots
@@ -239,7 +239,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			try {
 				// Update the stoppedAt time
 				let timeLog: ITimeLog = await this._commandBus.execute(
-					new TimeLogUpdateCommand({ stoppedAt: start }, log, true)
+					new TimeLogUpdateCommand({ stoppedAt: start }, log, true, forceDelete)
 				);
 
 				// Delete the associated time slots

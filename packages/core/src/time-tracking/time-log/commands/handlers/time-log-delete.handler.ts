@@ -2,12 +2,13 @@ import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { In, DeleteResult, UpdateResult } from 'typeorm';
 import { pluck } from 'underscore';
 import { ID } from '@gauzy/contracts';
-import { TimesheetRecalculateCommand } from '../../../timesheet/commands/timesheet-recalculate.command';
+import { TimesheetRecalculateCommand } from './../../../timesheet/commands/timesheet-recalculate.command';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
-import { TimeSlotBulkDeleteCommand } from '../../../time-slot/commands';
-import { TimeLog } from '../../time-log.entity';
+import { TimeSlotBulkDeleteCommand } from './../../../time-slot/commands';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
-import { MikroOrmTimeLogRepository, TypeOrmTimeLogRepository } from '../../repository';
+import { TimeLog } from './../../time-log.entity';
+import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
+import { MikroOrmTimeLogRepository } from '../..//repository/mikro-orm-time-log.repository';
 
 @CommandHandler(TimeLogDeleteCommand)
 export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteCommand> {
@@ -38,8 +39,6 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 
 		// Step 1: Fetch time logs based on the provided IDs
 		const timeLogs = await this.fetchTimeLogs(ids);
-
-		if (this.logging) console.log('TimeLogs to be deleted:', timeLogs);
 
 		// Step 2: Delete associated time slots for each time log sequentially
 		await this.deleteTimeSlotsForLogs(timeLogs, forceDelete);
@@ -138,14 +137,14 @@ export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteComman
 
 			// Recalculate timesheets
 			await Promise.all(
-				timesheetIds.map((timesheetId) =>
+				timesheetIds.map((timesheetId: ID) =>
 					this._commandBus.execute(new TimesheetRecalculateCommand(timesheetId))
 				)
 			);
 
 			// Recalculate employee worked hours
 			await Promise.all(
-				employeeIds.map((employeeId) =>
+				employeeIds.map((employeeId: ID) =>
 					this._commandBus.execute(new UpdateEmployeeTotalWorkedHoursCommand(employeeId))
 				)
 			);

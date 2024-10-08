@@ -1,4 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import * as chalk from 'chalk';
 import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TimeSlotBulkDeleteCommand } from '../time-slot-bulk-delete.command';
@@ -25,7 +26,7 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 
 		// Step 1: Fetch time slots based on input parameters
 		const timeSlots = await this.fetchTimeSlots({ organizationId, employeeId, tenantId, timeSlotsIds });
-		console.log({ timeSlots, forceDelete }, 'Time Slots Delete Range');
+		console.log(`fetched time slots for soft delete or hard delete:`, timeSlots);
 
 		// If timeSlots is empty, return an empty array
 		if (isEmpty(timeSlots)) {
@@ -46,37 +47,36 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 	 * @param params - The parameters for querying time slots.
 	 * @returns A promise that resolves to an array of time slots.
 	 */
-	private async fetchTimeSlots(params: {
+	private async fetchTimeSlots({
+		organizationId,
+		employeeId,
+		tenantId,
+		timeSlotsIds = []
+	}: {
 		organizationId: ID;
 		employeeId: ID;
 		tenantId: ID;
 		timeSlotsIds: ID[];
 	}): Promise<ITimeSlot[]> {
-		const { organizationId, employeeId, tenantId, timeSlotsIds } = params;
-
 		// Create a query builder for the TimeSlot entity
 		const query = this.typeOrmTimeSlotRepository.createQueryBuilder();
+		query
+			.leftJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs')
+			.leftJoinAndSelect(`${query.alias}.screenshots`, 'screenshots')
+			.leftJoinAndSelect(`${query.alias}.activities`, 'activities')
+			.leftJoinAndSelect(`${query.alias}.timeSlotMinutes`, 'timeSlotMinutes');
 
-		// Set the find options for the query
-		query.setFindOptions({
-			relations: {
-				timeLogs: true,
-				screenshots: true,
-				activities: true,
-				timeSlotMinutes: true
-			}
-		});
-
-		query.where(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
-		query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-		query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+		query
+			.where(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId })
+			.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId })
+			.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 
 		// If timeSlotsIds is not empty, add a WHERE clause to the query
 		if (isNotEmpty(timeSlotsIds)) {
 			query.andWhere(p(`"${query.alias}"."id" IN (:...timeSlotsIds)`), { timeSlotsIds });
 		}
 
-		console.log('Time Slots Delete Range Query', query.getQueryAndParameters());
+		console.log('fetched time slots by parameters:', query.getParameters());
 		return await query.getMany();
 	}
 
@@ -85,15 +85,14 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 	 *
 	 * @param timeSlots - The time slots to delete.
 	 * @param forceDelete - A boolean flag to indicate whether to hard delete or soft delete.
-	 * @returns A promise that resolves to true after deletion.
+	 * @returns A promise that resolves to the deleted time slots.
 	 */
-	private async bulkDeleteTimeSlots(timeSlots: ITimeSlot[], forceDelete: boolean): Promise<ITimeSlot[]> {
-		console.log('bulk delete time slots:', timeSlots);
-		if (forceDelete) {
-			return await this.typeOrmTimeSlotRepository.remove(timeSlots);
-		} else {
-			return await this.typeOrmTimeSlotRepository.softRemove(timeSlots);
-		}
+	private bulkDeleteTimeSlots(timeSlots: ITimeSlot[], forceDelete: boolean): Promise<ITimeSlot[]> {
+		console.log(`bulk ${forceDelete ? 'hard' : 'soft'} deleting time slots:`, timeSlots);
+
+		return forceDelete
+			? this.typeOrmTimeSlotRepository.remove(timeSlots)
+			: this.typeOrmTimeSlotRepository.softRemove(timeSlots);
 	}
 
 	/**
@@ -111,22 +110,33 @@ export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDe
 		timeLog: ITimeLog,
 		forceDelete: boolean
 	): Promise<ITimeSlot> {
-		console.log('conditional delete time slots:', timeSlots);
+		console.log(`conditional ${forceDelete ? 'hard' : 'soft'} deleting time slots:`, timeSlots);
+
 		// Loop through each time slot
-		for (const timeSlot of timeSlots) {
+		for await (const timeSlot of timeSlots) {
 			const { timeLogs = [] } = timeSlot;
 			const [firstTimeLog] = timeLogs;
 
 			console.log('Matching TimeLog ID:', firstTimeLog.id === timeLog.id);
 			console.log('TimeSlots Ids Will Be Deleted:', timeSlot.id);
 
-			if (timeLogs.length === 1 && firstTimeLog.id === timeLog.id) {
-				// If the time slot has only one time log and it matches the provided time log, delete the time slot
-				if (forceDelete) {
-					return await this.typeOrmTimeSlotRepository.remove(timeSlot);
-				} else {
-					console.log('soft removing time slot', timeSlot.id);
-					return await this.typeOrmTimeSlotRepository.softRemove(timeSlot);
+			if (timeLogs.length === 1) {
+				const [firstTimeLog] = timeLogs;
+				if (firstTimeLog.id === timeLog.id) {
+					// If the time slot has only one time log and it matches the provided time log, delete the time slot
+					if (forceDelete) {
+						console.log(
+							chalk.red('--------------------hard removing time slot--------------------'),
+							timeSlot.id
+						);
+						return await this.typeOrmTimeSlotRepository.remove(timeSlot);
+					} else {
+						console.log(
+							chalk.yellow('--------------------soft removing time slot--------------------'),
+							timeSlot.id
+						);
+						return await this.typeOrmTimeSlotRepository.softRemove(timeSlot);
+					}
 				}
 			}
 		}
