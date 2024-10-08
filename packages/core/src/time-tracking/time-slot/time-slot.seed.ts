@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
-import { TimeSlot } from './time-slot.entity';
 import { generateTimeSlots } from './utils';
+import { TimeSlot } from './time-slot.entity';
 
 /**
  * Generates an array of time slots between the provided start and end times.
@@ -14,23 +14,22 @@ import { generateTimeSlots } from './utils';
  * @param end - The ending time of the time slots (as a Date object).
  * @returns An array of `TimeSlot` objects containing the generated time slots.
  */
-export function createTimeSlots(start, end) {
-	const timeSlots: TimeSlot[] = generateTimeSlots(start, end).map(({ duration, startedAt, stoppedAt }) => {
-		const keyboard = faker.number.int(duration);
-		const mouse = faker.number.int(duration);
-		const overall = (keyboard + mouse) / 2;
+export function createTimeSlots(start: Date, end: Date): TimeSlot[] {
+	return generateTimeSlots(start, end).map(({ duration, startedAt, stoppedAt }) => {
+		const keyboard = faker.number.int(duration); // Randomly generate keyboard activity based on duration
+		const mouse = faker.number.int(duration); // Randomly generate mouse activity based on duration
+		const overall = Math.ceil((keyboard + mouse) / 2); // Calculate the average activity
 
 		const slot = new TimeSlot();
-		slot.startedAt = startedAt;
-		slot.stoppedAt = stoppedAt;
-		slot.duration = duration;
-		slot.screenshots = [];
-		slot.timeSlotMinutes = [];
-		slot.keyboard = keyboard;
-		slot.mouse = mouse;
-		slot.overall = Math.ceil(overall);
-		return slot;
-	});
+		slot.startedAt = startedAt; // Set the start time of the time slot
+		slot.stoppedAt = stoppedAt; // Set the end time of the time slot
+		slot.duration = duration; // Set the duration of the time slot
+		slot.screenshots = []; // Initialize an empty array for screenshots
+		slot.timeSlotMinutes = []; // Initialize an empty array for time slot minutes
+		slot.keyboard = keyboard; // Set the keyboard activity
+		slot.mouse = mouse; // Set the mouse activity
+		slot.overall = overall; // Set the overall activity (rounded)
 
-	return timeSlots;
+		return slot; // Return the constructed TimeSlot object
+	});
 }

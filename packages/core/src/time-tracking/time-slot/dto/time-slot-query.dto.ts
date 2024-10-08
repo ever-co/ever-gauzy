@@ -6,5 +6,5 @@ import { FiltersQueryDTO, RelationsQueryDTO, SelectorsQueryDTO } from '../../../
  * Get time slot request DTO validation
  */
 export class TimeSlotQueryDTO
-	extends IntersectionType(FiltersQueryDTO, IntersectionType(RelationsQueryDTO, SelectorsQueryDTO))
+	extends IntersectionType(FiltersQueryDTO, RelationsQueryDTO, SelectorsQueryDTO)
 	implements IGetTimeSlotInput {}
