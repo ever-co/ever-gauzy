@@ -106,7 +106,8 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 									startedAt: end
 								},
 								log,
-								true
+								true,
+								forceDelete
 							)
 						);
 						const timeSlotsIds = [timeSlot.id];
@@ -162,15 +163,16 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				 */
 				const remainingDuration = moment(end).diff(moment(startedAt), 'seconds');
 				if (remainingDuration > 0) {
-					console.log('Update stoppedAt time.');
 					try {
+						console.log('Update stoppedAt time.');
 						let updatedTimeLog: ITimeLog = await this._commandBus.execute(
 							new TimeLogUpdateCommand(
 								{
 									stoppedAt: start
 								},
 								timeLog,
-								true
+								true,
+								forceDelete
 							)
 						);
 						const timeSlotsIds = [timeSlot.id];

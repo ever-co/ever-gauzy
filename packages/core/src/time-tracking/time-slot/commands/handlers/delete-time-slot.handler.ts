@@ -73,7 +73,7 @@ export class DeleteTimeSlotHandler implements ICommandHandler<DeleteTimeSlotComm
 				continue;
 			}
 
-			console.log(chalk.blue(`time slots for soft delete or hard delete:`), timeSlots);
+			console.log(chalk.blue(`time slots for soft delete or hard delete:`), JSON.stringify(timeSlots));
 
 			// Loop through each time slot
 			for await (const timeSlot of timeSlots) {
