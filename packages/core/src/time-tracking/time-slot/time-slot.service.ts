@@ -199,7 +199,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	 * @param organizationId The ID of the organization
 	 * @returns The result of the bulk creation command
 	 */
-	async bulkCreate(slots: ITimeSlot[], employeeId: ID, organizationId: ID) {
+	async bulkCreate(slots: ITimeSlot[], employeeId: ID, organizationId: ID): Promise<ITimeSlot[]> {
 		return await this._commandBus.execute(new TimeSlotBulkCreateCommand(slots, employeeId, organizationId));
 	}
 
