@@ -375,27 +375,20 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 	}
 
 	/**
-	 * Deletes the time log if it overlaps the entire time range.
+	 * Deletes a time log if it overlaps the entire time range.
 	 *
-	 * This method executes the `TimeLogDeleteCommand` to remove the time log from the system.
-	 * It handles cases where the time log overlaps with the entire specified time range,
-	 * requiring complete removal of the log.
-	 *
-	 * If the deletion fails for any reason, the error is caught and logged for debugging.
-	 *
-	 * @param log - The time log entity that needs to be deleted.
-	 * @returns Promise<void> - A promise that resolves when the deletion is completed.
-	 * @example
-	 * const timeLog = { id: '123', startedAt: new Date(), stoppedAt: new Date() };
-	 * await deleteTimeLog(timeLog);
+	 * @param timeLog - The log to delete.
+	 * @param forceDelete - Whether to hard delete (default: false).
+	 * @returns Promise<void> - Resolves when deletion is complete.
 	 */
-	private async deleteTimeLog(log: ITimeLog, forceDelete: boolean = false): Promise<void> {
+
+	private async deleteTimeLog(timeLog: ITimeLog, forceDelete: boolean = false): Promise<void> {
 		try {
 			// Execute the TimeLogDeleteCommand to delete the time log
-			await this._commandBus.execute(new TimeLogDeleteCommand(log, forceDelete));
+			await this._commandBus.execute(new TimeLogDeleteCommand(timeLog, forceDelete));
 		} catch (error) {
 			// Log any errors that occur during deletion
-			console.log('Error while deleting time log for stoppedAt time', error);
+			console.log(`Error while, delete time log because overlap entire time for ID: ${timeLog.id}`, error);
 		}
 	}
 
