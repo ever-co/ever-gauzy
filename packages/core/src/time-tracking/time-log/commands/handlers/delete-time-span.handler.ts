@@ -188,13 +188,16 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		stoppedAt: Date,
 		forceDelete: boolean = false
 	): Promise<void> {
-		const stoppedAtMoment = moment(stoppedAt);
-		const endMoment = moment(end);
+		const stoppedAtMoment = moment(stoppedAt); // Get the stopped at moment
+		const endMoment = moment(end); // Get the end moment
 		const remainingDuration = stoppedAtMoment.diff(endMoment, 'seconds'); // Calculate the remaining duration
 
+		// If there is remaining duration
 		if (remainingDuration > 0) {
 			// Update the start time if there is remaining duration
 			try {
+				console.log(`update startedAt time to ${end}`);
+				// Update the started at time
 				let timeLog: ITimeLog = await this._commandBus.execute(
 					new TimeLogUpdateCommand({ startedAt: end }, log, true, forceDelete)
 				);
@@ -211,7 +214,8 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 							timeLog,
 							timeSlotsIds
 						},
-						forceDelete
+						forceDelete,
+						true
 					)
 				);
 
@@ -221,6 +225,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 					relations: { timeSlots: true }
 				});
 
+				// If no remaining time slots, delete the time log
 				if (isEmpty(timeLog.timeSlots)) {
 					// Delete TimeLog if remaining timeSlots are 0
 					await this.deleteTimeLog(timeLog, forceDelete);
@@ -230,7 +235,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			}
 		} else {
 			// Delete the time log if remaining duration is 0
-			console.log('Remaining duration is 0, so we are deleting the time log.');
+			console.log('Remaining duration is 0, so we are deleting the time log during update startedAt time');
 			await this.deleteTimeLog(log, forceDelete);
 		}
 	}
@@ -256,13 +261,16 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		end: Date,
 		forceDelete: boolean = false
 	): Promise<void> {
-		const startedAtMoment = moment(startedAt);
-		const endMoment = moment(end);
+		const startedAtMoment = moment(startedAt); // Get the started at moment
+		const endMoment = moment(end); // Get the end moment
 		const remainingDuration = endMoment.diff(startedAtMoment, 'seconds'); // Calculate the remaining duration
 
+		// If there is remaining duration
 		if (remainingDuration > 0) {
 			// Update the stoppedAt time if there is remaining duration
 			try {
+				console.log(`update stoppedAt time to ${start}`);
+
 				// Update the stoppedAt time
 				let timeLog: ITimeLog = await this._commandBus.execute(
 					new TimeLogUpdateCommand({ stoppedAt: start }, log, true, forceDelete)
@@ -299,7 +307,7 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				console.log('Error while updating stoppedAt time', error);
 			}
 		} else {
-			console.log('Remaining duration is 0, so we are deleting the time log.');
+			console.log('Remaining duration is 0, so we are deleting the time log during update stoppedAt time');
 			await this.deleteTimeLog(log, forceDelete);
 		}
 	}
@@ -325,20 +333,24 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		startedAt: Date,
 		forceDelete: boolean = false
 	): Promise<void> {
-		const startedAtMoment = moment(startedAt);
-		const startMoment = moment(start);
+		const startedAtMoment = moment(startedAt); // Get the started at moment
+		const startMoment = moment(start); // Get the start moment
 		const remainingDuration = startMoment.diff(startedAtMoment, 'seconds'); // Calculate the remaining duration
 
-		try {
-			// Handle the old time log
-			if (remainingDuration > 0) {
+		// If there is remaining duration
+		if (remainingDuration > 0) {
+			try {
 				timeLog.stoppedAt = start;
 				await this.typeOrmTimeLogRepository.save(timeLog);
-			} else {
-				// Delete the old time log if remaining duration is 0
-				await this.deleteTimeLog(timeLog, forceDelete);
+			} catch (error) {
+				console.error(`Error while updating stoppedAt time for ID: ${timeLog.id}`, error);
 			}
+		} else {
+			// Delete the old time log if remaining duration is 0
+			await this.deleteTimeLog(timeLog, forceDelete);
+		}
 
+		try {
 			// Delete the associated time slots
 			const timeSlotsIds = [timeSlot.id];
 
@@ -374,12 +386,18 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		const newLog = clone;
 		newLog.startedAt = end;
 
+		// Calculate the remaining duration of the new log
 		const newLogRemainingDuration = moment(newLog.stoppedAt).diff(moment(newLog.startedAt), 'seconds');
 
+		// If there is remaining duration
 		if (newLogRemainingDuration > 0) {
 			try {
 				await this.typeOrmTimeLogRepository.save(newLog);
+			} catch (error) {
+				console.log('Error while creating new log', error, newLog);
+			}
 
+			try {
 				// Sync time slots for the new time log
 				const slots = await this.syncTimeSlots(newLog);
 				console.log('sync time slots for new log', { slots }, { newLog });
