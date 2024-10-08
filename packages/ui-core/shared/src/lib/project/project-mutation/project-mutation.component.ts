@@ -706,8 +706,6 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 				)
 				.subscribe();
 		} catch (error) {
-			console.log(error);
-
 			this._errorHandler.handleError(error);
 		}
 	}
