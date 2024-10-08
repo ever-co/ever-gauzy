@@ -68,6 +68,7 @@ export type ITaskCreateInput = ITask;
 
 export interface ITaskUpdateInput extends ITaskCreateInput {
 	id?: string;
+	taskSprintMoveReason?: string;
 }
 
 export interface IGetTaskById {

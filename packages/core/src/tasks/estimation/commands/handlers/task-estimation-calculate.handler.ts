@@ -5,9 +5,7 @@ import { TaskEstimationService } from '../../task-estimation.service';
 import { TaskService } from '../../../task.service';
 
 @CommandHandler(TaskEstimationCalculateCommand)
-export class TaskEstimationCalculateHandler
-	implements ICommandHandler<TaskEstimationCalculateCommand>
-{
+export class TaskEstimationCalculateHandler implements ICommandHandler<TaskEstimationCalculateCommand> {
 	constructor(
 		private readonly _taskEstimationService: TaskEstimationService,
 		private readonly _taskService: TaskService
@@ -17,20 +15,18 @@ export class TaskEstimationCalculateHandler
 		try {
 			const { id: taskId } = command;
 
+			const task = await this._taskService.findOneByIdString(taskId);
+
 			const taskEstimations = await this._taskEstimationService.findAll({
 				where: {
-					taskId,
-				},
+					taskId
+				}
 			});
-			const totalEstimation = taskEstimations.items.reduce(
-				(sum, current) => sum + current.estimate,
-				0
-			);
-			const averageEstimation = Math.ceil(
-				totalEstimation / taskEstimations.items.length
-			);
+			const totalEstimation = taskEstimations.items.reduce((sum, current) => sum + current.estimate, 0);
+			const averageEstimation = Math.ceil(totalEstimation / taskEstimations.items.length);
 			await this._taskService.update(taskId, {
-				estimate: averageEstimation,
+				...task,
+				estimate: averageEstimation
 			});
 		} catch (error) {
 			console.log('Error while creating task estimation', error?.message);

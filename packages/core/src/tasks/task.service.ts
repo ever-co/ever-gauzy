@@ -1,12 +1,28 @@
 import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
+import { EventBus } from '@nestjs/cqrs';
 import { IsNull, SelectQueryBuilder, Brackets, WhereExpressionBuilder, Raw, In } from 'typeorm';
 import { isBoolean, isUUID } from 'class-validator';
-import { ID, IEmployee, IGetTaskOptions, IPagination, ITask, PermissionsEnum } from '@gauzy/contracts';
+import {
+	ActionTypeEnum,
+	ActivityLogEntityEnum,
+	ActorTypeEnum,
+	IActivityLogUpdatedValues,
+	ID,
+	IEmployee,
+	IGetTaskOptions,
+	IPagination,
+	ITask,
+	ITaskUpdateInput,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { isPostgres } from '@gauzy/config';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
+import { ActivityLogEvent } from '../activity-log/events';
+import { generateActivityLogDescription } from '../activity-log/activity-log.helper';
 import { Task } from './task.entity';
+import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
 import { GetTaskByIdDTO } from './dto';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
@@ -16,9 +32,121 @@ import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 export class TaskService extends TenantAwareCrudService<Task> {
 	constructor(
 		readonly typeOrmTaskRepository: TypeOrmTaskRepository,
-		readonly mikroOrmTaskRepository: MikroOrmTaskRepository
+		readonly mikroOrmTaskRepository: MikroOrmTaskRepository,
+		readonly typeOrmOrganizationSprintTaskHistoryRepository: TypeOrmOrganizationSprintTaskHistoryRepository,
+		private readonly _eventBus: EventBus
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
+	}
+
+	/**
+	 * Update task, if already exist
+	 *
+	 * @param id - The ID of the task to update
+	 * @param input - The data to update the task with
+	 * @returns The updated task
+	 */
+	async update(id: ID, input: ITaskUpdateInput): Promise<ITask> {
+		try {
+			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+			const userId = RequestContext.currentUserId();
+			const { organizationSprintId } = input;
+			const task = await this.findOneByIdString(id);
+
+			if (input.projectId && input.projectId !== task.projectId) {
+				const { organizationId, projectId } = task;
+
+				// Get the maximum task number for the project
+				const maxNumber = await this.getMaxTaskNumberByProject({
+					tenantId,
+					organizationId,
+					projectId
+				});
+
+				// Update the task with the new project and task number
+				await super.update(id, {
+					projectId,
+					number: maxNumber + 1
+				});
+			}
+
+			// Update the task with the provided data
+			const updatedTask = await super.create({
+				...input,
+				id
+			});
+
+			// Register Task Sprint moving historty
+			if (organizationSprintId && organizationSprintId !== task.organizationSprintId) {
+				await this.typeOrmOrganizationSprintTaskHistoryRepository.save({
+					fromSprintId: task.organizationSprintId,
+					toSprintId: organizationSprintId,
+					taskId: updatedTask.id,
+					movedById: userId,
+					reason: input.taskSprintMoveReason,
+					organizationId: input.organizationId,
+					tenantId
+				});
+			}
+
+			// Generate the activity log description
+			const description = generateActivityLogDescription(
+				ActionTypeEnum.Updated,
+				ActivityLogEntityEnum.Task,
+				updatedTask.title
+			);
+
+			const { updatedFields, previousValues, updatedValues } = this.activityLogUpdatedFieldsAndValues(
+				updatedTask,
+				input
+			);
+
+			// Emit an event to log the activity
+			this._eventBus.publish(
+				new ActivityLogEvent({
+					entity: ActivityLogEntityEnum.Task,
+					entityId: updatedTask.id,
+					action: ActionTypeEnum.Updated,
+					actorType: ActorTypeEnum.User, // TODO : Since we have Github Integration, make sure we can also store "System" for actor
+					description,
+					updatedFields,
+					updatedValues,
+					previousValues,
+					data: updatedTask,
+					organizationId: updatedTask.organizationId,
+					tenantId
+				})
+			);
+
+			return updatedTask;
+		} catch (error) {
+			console.error(`Error while updating task: ${error.message}`, error.message);
+			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/**
+	 * @description - Compare values before and after update then add updates to fields
+	 * @param {ITask} task - Updated task
+	 * @param {ITaskUpdateInput} entity - Input data with new values
+	 */
+	private activityLogUpdatedFieldsAndValues(task: ITask, entity: ITaskUpdateInput) {
+		const updatedFields = [];
+		const previousValues: IActivityLogUpdatedValues[] = [];
+		const updatedValues: IActivityLogUpdatedValues[] = [];
+
+		for (const key of Object.keys(entity)) {
+			if (task[key] !== entity[key]) {
+				// Add updated field
+				updatedFields.push(key);
+
+				// Add old and new values
+				previousValues.push({ [key]: task[key] });
+				updatedValues.push({ [key]: task[key] });
+			}
+		}
+
+		return { updatedFields, previousValues, updatedValues };
 	}
 
 	/**
