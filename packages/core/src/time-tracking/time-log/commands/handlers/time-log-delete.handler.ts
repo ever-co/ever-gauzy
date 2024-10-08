@@ -12,8 +12,6 @@ import { MikroOrmTimeLogRepository } from '../..//repository/mikro-orm-time-log.
 
 @CommandHandler(TimeLogDeleteCommand)
 export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteCommand> {
-	readonly logging = false;
-
 	constructor(
 		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
