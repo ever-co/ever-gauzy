@@ -148,9 +148,10 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 		organizationId: ID,
 		forceDelete: boolean = false
 	): Promise<void> {
+		// Delete the associated time slots
 		const timeSlotsIds = [timeSlot.id];
 
-		// Delete the time log and its associated time slots
+		// Bulk delete the time slots
 		await this._commandBus.execute(
 			new TimeSlotBulkDeleteCommand(
 				{
@@ -201,8 +202,17 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 				// Delete the associated time slots
 				const timeSlotsIds = [slot.id];
 
+				// Bulk delete the time slots
 				await this._commandBus.execute(
-					new TimeSlotBulkDeleteCommand({ organizationId, employeeId, timeLog, timeSlotsIds }, forceDelete)
+					new TimeSlotBulkDeleteCommand(
+						{
+							organizationId,
+							employeeId,
+							timeLog,
+							timeSlotsIds
+						},
+						forceDelete
+					)
 				);
 
 				// Check if there are any remaining time slots
@@ -260,9 +270,16 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 
 				// Delete the associated time slots
 				const timeSlotsIds = [slot.id];
+
+				// Bulk delete the time slots
 				await this._commandBus.execute(
 					new TimeSlotBulkDeleteCommand(
-						{ organizationId, employeeId, timeLog, timeSlotsIds },
+						{
+							organizationId,
+							employeeId,
+							timeLog,
+							timeSlotsIds
+						},
 						forceDelete,
 						true
 					)
@@ -323,9 +340,17 @@ export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanComm
 			}
 
 			// Delete the associated time slots
+			const timeSlotsIds = [timeSlot.id];
+
+			// Bulk delete the time slots
 			await this._commandBus.execute(
 				new TimeSlotBulkDeleteCommand(
-					{ organizationId, employeeId, timeLog, timeSlotsIds: [timeSlot.id] },
+					{
+						organizationId,
+						employeeId,
+						timeLog,
+						timeSlotsIds
+					},
 					forceDelete,
 					true
 				)
