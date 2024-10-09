@@ -1,40 +1,29 @@
-import {
-	Controller,
-	HttpStatus,
-	Get,
-	Query,
-	Post,
-	Body,
-	Param,
-	Delete
-} from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, Post, Body, Param, Delete } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
 import {
+	ID,
 	IEmployeePresetInput,
 	IEmployeeUpworkJobsSearchCriterion,
 	IGetMatchingCriterions,
-	IJobPreset,
-	IMatchingCriterions
+	IJobPreset
 } from '@gauzy/contracts';
 import { UUIDValidationPipe } from '@gauzy/core';
 import { JobPresetService } from './job-preset.service';
 import { JobPreset } from './job-preset.entity';
+import { SaveJobPresetCriterionDTO } from './dto';
 
 @ApiTags('EmployeeJobPreset')
 @Controller('employee')
 export class EmployeePresetController {
-
-	constructor(
-		private readonly jobPresetService: JobPresetService
-	) { }
+	constructor(private readonly jobPresetService: JobPresetService) {}
 
 	/**
-	* Retrieves the job preset for a specific employee.
-	*
-	* @param employeeId The ID of the employee.
-	* @returns The job preset for the specified employee.
-	*/
+	 * Retrieves the job preset for a specific employee.
+	 *
+	 * @param employeeId The ID of the employee.
+	 * @returns The job preset for the specified employee.
+	 */
 	@ApiOperation({ summary: 'Retrieves the job preset for a specific employee.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -46,19 +35,17 @@ export class EmployeePresetController {
 		description: 'Record not found'
 	})
 	@Get(':employeeId')
-	async getEmployeePreset(
-		@Param('employeeId', UUIDValidationPipe) employeeId: string
-	): Promise<IJobPreset[]> {
+	async getEmployeePreset(@Param('employeeId', UUIDValidationPipe) employeeId: ID): Promise<IJobPreset[]> {
 		return await this.jobPresetService.getEmployeePreset(employeeId);
 	}
 
 	/**
-	* Retrieves all matching criteria for job presets of a specific employee.
-	*
-	* @param employeeId The ID of the employee.
-	* @param request The request containing criteria for matching.
-	* @returns The matching criteria for job presets of the specified employee.
-	*/
+	 * Retrieves all matching criteria for job presets of a specific employee.
+	 *
+	 * @param employeeId The ID of the employee.
+	 * @param request The request containing criteria for matching.
+	 * @returns The matching criteria for job presets of the specified employee.
+	 */
 	@ApiOperation({ summary: 'Find all employee job posts' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -71,7 +58,7 @@ export class EmployeePresetController {
 	})
 	@Get(':employeeId/criterion')
 	async getEmployeeCriterion(
-		@Param('employeeId', UUIDValidationPipe) employeeId: string,
+		@Param('employeeId', UUIDValidationPipe) employeeId: ID,
 		@Query() request: IGetMatchingCriterions
 	): Promise<IEmployeeUpworkJobsSearchCriterion[]> {
 		return await this.jobPresetService.getEmployeeCriterion({
@@ -81,12 +68,12 @@ export class EmployeePresetController {
 	}
 
 	/**
-	* Saves or updates matching criteria for job presets of a specific employee.
-	*
-	* @param employeeId The ID of the employee.
-	* @param request The request containing criteria for matching.
-	* @returns The saved or updated job presets for the specified employee.
-	*/
+	 * Saves or updates matching criteria for job presets of a specific employee.
+	 *
+	 * @param employeeId The ID of the employee.
+	 * @param request The request containing criteria for matching.
+	 * @returns The saved or updated job presets for the specified employee.
+	 */
 	@ApiOperation({ summary: 'Save or update employee job presets' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -99,8 +86,8 @@ export class EmployeePresetController {
 	})
 	@Post(':employeeId/criterion')
 	async saveUpdateEmployeeCriterion(
-		@Param('employeeId', UUIDValidationPipe) employeeId: string,
-		@Body() request: IMatchingCriterions
+		@Param('employeeId', UUIDValidationPipe) employeeId: ID,
+		@Body() request: SaveJobPresetCriterionDTO
 	): Promise<IJobPreset[]> {
 		return await this.jobPresetService.saveEmployeeCriterion({
 			...request,
@@ -109,11 +96,11 @@ export class EmployeePresetController {
 	}
 
 	/**
-   * Saves an employee preset.
-   *
-   * @param request The request containing the employee preset data.
-   * @returns The saved employee job preset.
-   */
+	 * Saves an employee preset.
+	 *
+	 * @param request The request containing the employee preset data.
+	 * @returns The saved employee job preset.
+	 */
 	@ApiOperation({ summary: 'Save Employee preset' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -125,9 +112,7 @@ export class EmployeePresetController {
 		description: 'Record not found'
 	})
 	@Post()
-	async saveEmployeePreset(
-		@Body() request: IEmployeePresetInput
-	): Promise<IJobPreset[]> {
+	async saveEmployeePreset(@Body() request: IEmployeePresetInput): Promise<IJobPreset[]> {
 		return await this.jobPresetService.saveEmployeePreset(request);
 	}
 
@@ -150,12 +135,9 @@ export class EmployeePresetController {
 	})
 	@Delete(':employeeId/criterion/:criterionId')
 	async deleteEmployeeCriterion(
-		@Param('criterionId', UUIDValidationPipe) criterionId: string,
-		@Param('employeeId', UUIDValidationPipe) employeeId: string
+		@Param('criterionId', UUIDValidationPipe) criterionId: ID,
+		@Param('employeeId', UUIDValidationPipe) employeeId: ID
 	): Promise<DeleteResult> {
-		return await this.jobPresetService.deleteEmployeeCriterion(
-			criterionId,
-			employeeId
-		);
+		return await this.jobPresetService.deleteEmployeeCriterion(criterionId, employeeId);
 	}
 }

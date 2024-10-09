@@ -289,14 +289,12 @@ export class EmployeeController extends CrudController<Employee> {
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Query() params: OptionParams<Employee>
 	): Promise<IEmployee> {
-		const currentEmployeeId = RequestContext.currentEmployeeId();
-
 		// Check permissions to determine the correct ID to retrieve
 		const searchCriteria = {
 			where: {
 				...(RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
 					? { id }
-					: { id: currentEmployeeId })
+					: { id: RequestContext.currentEmployeeId() })
 			},
 			...(params.relations ? { relations: params.relations } : {}),
 			withDeleted: true

@@ -3082,11 +3082,11 @@
 		"TAGS": "Schlüsselwörter"
 	},
 	"HEADER": {
-		"SELECT_EMPLOYEE": "Auswählen der Mitarbeitenden",
-		"SELECT_A_DATE": "Wählen Sie ein Datum aus.",
-		"SELECT_AN_ORGANIZATION": "Wählen Sie eine Organisation aus",
-		"SELECT_PROJECT": "Wählen Sie Projekt.",
-		"SELECT_TEAM": "Wählen Sie das Team."
+		"SELECT_EMPLOYEE": "Mitarbeiter auswählen",
+		"SELECT_A_DATE": "Ein Datum auswählen",
+		"SELECT_AN_ORGANIZATION": "Organisation auswählen",
+		"SELECT_PROJECT": "Projekt auswählen",
+		"SELECT_TEAM": "Team auswählen"
 	},
 	"HEADER_TITLE": {
 		"FOR": "für",
