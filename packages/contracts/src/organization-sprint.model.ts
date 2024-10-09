@@ -1,7 +1,13 @@
 import { IOrganizationProjectModule } from './organization-project-module.model';
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { ITask } from './task.model';
+
+// Base interface with optional properties
+export interface IRelationalOrganizationSprint {
+	organizationSprint?: IOrganizationSprint;
+	organizationSprintId?: ID;
+}
 
 export interface IOrganizationSprint extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
