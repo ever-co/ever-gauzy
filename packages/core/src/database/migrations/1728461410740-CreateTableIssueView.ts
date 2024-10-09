@@ -122,14 +122,102 @@ export class CreateTableIssueView1728461410740 implements MigrationInterface {
 	 *
 	 * @param queryRunner
 	 */
-	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(
+			`CREATE TABLE "task_view" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "description" text, "visibilityLevel" integer, "queryParams" text, "filterOptions" text, "displayOptions" text, "properties" text, "isLocked" boolean NOT NULL DEFAULT (0), "projectId" varchar, "organizationTeamId" varchar, "projectModuleId" varchar, "organizationSprintId" varchar)`
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_38bcdf0455ac5ab5a925a015ab" ON "task_view" ("isActive") `);
+		await queryRunner.query(`CREATE INDEX "IDX_7c4f8a4d5b859c23c42ab5f984" ON "task_view" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_ee94e92fccbbf8898221cb4eb5" ON "task_view" ("tenantId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_c1c6e1c8d7c7971e234a768419" ON "task_view" ("organizationId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_cf779d00641c3bd276a5a7e4df" ON "task_view" ("name") `);
+		await queryRunner.query(`CREATE INDEX "IDX_d4c182a7adfffa1a57315e8bfc" ON "task_view" ("visibilityLevel") `);
+		await queryRunner.query(`CREATE INDEX "IDX_1e5e43bbd58c370c538dac0b17" ON "task_view" ("projectId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_3c1eb880f298e646d43736e911" ON "task_view" ("organizationTeamId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_e58e58a3fd113bf4b336c90997" ON "task_view" ("projectModuleId") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_4814ca7712537f79bed938d9a1" ON "task_view" ("organizationSprintId") `
+		);
+		await queryRunner.query(`DROP INDEX "IDX_38bcdf0455ac5ab5a925a015ab"`);
+		await queryRunner.query(`DROP INDEX "IDX_7c4f8a4d5b859c23c42ab5f984"`);
+		await queryRunner.query(`DROP INDEX "IDX_ee94e92fccbbf8898221cb4eb5"`);
+		await queryRunner.query(`DROP INDEX "IDX_c1c6e1c8d7c7971e234a768419"`);
+		await queryRunner.query(`DROP INDEX "IDX_cf779d00641c3bd276a5a7e4df"`);
+		await queryRunner.query(`DROP INDEX "IDX_d4c182a7adfffa1a57315e8bfc"`);
+		await queryRunner.query(`DROP INDEX "IDX_1e5e43bbd58c370c538dac0b17"`);
+		await queryRunner.query(`DROP INDEX "IDX_3c1eb880f298e646d43736e911"`);
+		await queryRunner.query(`DROP INDEX "IDX_e58e58a3fd113bf4b336c90997"`);
+		await queryRunner.query(`DROP INDEX "IDX_4814ca7712537f79bed938d9a1"`);
+		await queryRunner.query(
+			`CREATE TABLE "temporary_task_view" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "description" text, "visibilityLevel" integer, "queryParams" text, "filterOptions" text, "displayOptions" text, "properties" text, "isLocked" boolean NOT NULL DEFAULT (0), "projectId" varchar, "organizationTeamId" varchar, "projectModuleId" varchar, "organizationSprintId" varchar, CONSTRAINT "FK_ee94e92fccbbf8898221cb4eb53" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_c1c6e1c8d7c7971e234a768419c" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_1e5e43bbd58c370c538dac0b17c" FOREIGN KEY ("projectId") REFERENCES "organization_project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_3c1eb880f298e646d43736e911a" FOREIGN KEY ("organizationTeamId") REFERENCES "organization_team" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_e58e58a3fd113bf4b336c90997b" FOREIGN KEY ("projectModuleId") REFERENCES "organization_project_module" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_4814ca7712537f79bed938d9a15" FOREIGN KEY ("organizationSprintId") REFERENCES "organization_sprint" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
+		);
+		await queryRunner.query(
+			`INSERT INTO "temporary_task_view"("deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "name", "description", "visibilityLevel", "queryParams", "filterOptions", "displayOptions", "properties", "isLocked", "projectId", "organizationTeamId", "projectModuleId", "organizationSprintId") SELECT "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "name", "description", "visibilityLevel", "queryParams", "filterOptions", "displayOptions", "properties", "isLocked", "projectId", "organizationTeamId", "projectModuleId", "organizationSprintId" FROM "task_view"`
+		);
+		await queryRunner.query(`DROP TABLE "task_view"`);
+		await queryRunner.query(`ALTER TABLE "temporary_task_view" RENAME TO "task_view"`);
+		await queryRunner.query(`CREATE INDEX "IDX_38bcdf0455ac5ab5a925a015ab" ON "task_view" ("isActive") `);
+		await queryRunner.query(`CREATE INDEX "IDX_7c4f8a4d5b859c23c42ab5f984" ON "task_view" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_ee94e92fccbbf8898221cb4eb5" ON "task_view" ("tenantId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_c1c6e1c8d7c7971e234a768419" ON "task_view" ("organizationId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_cf779d00641c3bd276a5a7e4df" ON "task_view" ("name") `);
+		await queryRunner.query(`CREATE INDEX "IDX_d4c182a7adfffa1a57315e8bfc" ON "task_view" ("visibilityLevel") `);
+		await queryRunner.query(`CREATE INDEX "IDX_1e5e43bbd58c370c538dac0b17" ON "task_view" ("projectId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_3c1eb880f298e646d43736e911" ON "task_view" ("organizationTeamId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_e58e58a3fd113bf4b336c90997" ON "task_view" ("projectModuleId") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_4814ca7712537f79bed938d9a1" ON "task_view" ("organizationSprintId") `
+		);
+	}
 
 	/**
 	 * SqliteDB and BetterSQlite3DB Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`DROP INDEX "IDX_4814ca7712537f79bed938d9a1"`);
+		await queryRunner.query(`DROP INDEX "IDX_e58e58a3fd113bf4b336c90997"`);
+		await queryRunner.query(`DROP INDEX "IDX_3c1eb880f298e646d43736e911"`);
+		await queryRunner.query(`DROP INDEX "IDX_1e5e43bbd58c370c538dac0b17"`);
+		await queryRunner.query(`DROP INDEX "IDX_d4c182a7adfffa1a57315e8bfc"`);
+		await queryRunner.query(`DROP INDEX "IDX_cf779d00641c3bd276a5a7e4df"`);
+		await queryRunner.query(`DROP INDEX "IDX_c1c6e1c8d7c7971e234a768419"`);
+		await queryRunner.query(`DROP INDEX "IDX_ee94e92fccbbf8898221cb4eb5"`);
+		await queryRunner.query(`DROP INDEX "IDX_7c4f8a4d5b859c23c42ab5f984"`);
+		await queryRunner.query(`DROP INDEX "IDX_38bcdf0455ac5ab5a925a015ab"`);
+		await queryRunner.query(`ALTER TABLE "task_view" RENAME TO "temporary_task_view"`);
+		await queryRunner.query(
+			`CREATE TABLE "task_view" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "description" text, "visibilityLevel" integer, "queryParams" text, "filterOptions" text, "displayOptions" text, "properties" text, "isLocked" boolean NOT NULL DEFAULT (0), "projectId" varchar, "organizationTeamId" varchar, "projectModuleId" varchar, "organizationSprintId" varchar)`
+		);
+		await queryRunner.query(
+			`INSERT INTO "task_view"("deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "name", "description", "visibilityLevel", "queryParams", "filterOptions", "displayOptions", "properties", "isLocked", "projectId", "organizationTeamId", "projectModuleId", "organizationSprintId") SELECT "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "name", "description", "visibilityLevel", "queryParams", "filterOptions", "displayOptions", "properties", "isLocked", "projectId", "organizationTeamId", "projectModuleId", "organizationSprintId" FROM "temporary_task_view"`
+		);
+		await queryRunner.query(`DROP TABLE "temporary_task_view"`);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_4814ca7712537f79bed938d9a1" ON "task_view" ("organizationSprintId") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_e58e58a3fd113bf4b336c90997" ON "task_view" ("projectModuleId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_3c1eb880f298e646d43736e911" ON "task_view" ("organizationTeamId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_1e5e43bbd58c370c538dac0b17" ON "task_view" ("projectId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_d4c182a7adfffa1a57315e8bfc" ON "task_view" ("visibilityLevel") `);
+		await queryRunner.query(`CREATE INDEX "IDX_cf779d00641c3bd276a5a7e4df" ON "task_view" ("name") `);
+		await queryRunner.query(`CREATE INDEX "IDX_c1c6e1c8d7c7971e234a768419" ON "task_view" ("organizationId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_ee94e92fccbbf8898221cb4eb5" ON "task_view" ("tenantId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_7c4f8a4d5b859c23c42ab5f984" ON "task_view" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_38bcdf0455ac5ab5a925a015ab" ON "task_view" ("isActive") `);
+		await queryRunner.query(`DROP INDEX "IDX_4814ca7712537f79bed938d9a1"`);
+		await queryRunner.query(`DROP INDEX "IDX_e58e58a3fd113bf4b336c90997"`);
+		await queryRunner.query(`DROP INDEX "IDX_3c1eb880f298e646d43736e911"`);
+		await queryRunner.query(`DROP INDEX "IDX_1e5e43bbd58c370c538dac0b17"`);
+		await queryRunner.query(`DROP INDEX "IDX_d4c182a7adfffa1a57315e8bfc"`);
+		await queryRunner.query(`DROP INDEX "IDX_cf779d00641c3bd276a5a7e4df"`);
+		await queryRunner.query(`DROP INDEX "IDX_c1c6e1c8d7c7971e234a768419"`);
+		await queryRunner.query(`DROP INDEX "IDX_ee94e92fccbbf8898221cb4eb5"`);
+		await queryRunner.query(`DROP INDEX "IDX_7c4f8a4d5b859c23c42ab5f984"`);
+		await queryRunner.query(`DROP INDEX "IDX_38bcdf0455ac5ab5a925a015ab"`);
+		await queryRunner.query(`DROP TABLE "task_view"`);
+	}
 
 	/**
 	 * MySQL Up Migration
