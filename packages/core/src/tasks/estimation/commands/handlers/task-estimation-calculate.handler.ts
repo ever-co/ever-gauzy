@@ -15,8 +15,6 @@ export class TaskEstimationCalculateHandler implements ICommandHandler<TaskEstim
 		try {
 			const { id: taskId } = command;
 
-			const task = await this._taskService.findOneByIdString(taskId);
-
 			const taskEstimations = await this._taskEstimationService.findAll({
 				where: {
 					taskId
@@ -25,7 +23,6 @@ export class TaskEstimationCalculateHandler implements ICommandHandler<TaskEstim
 			const totalEstimation = taskEstimations.items.reduce((sum, current) => sum + current.estimate, 0);
 			const averageEstimation = Math.ceil(totalEstimation / taskEstimations.items.length);
 			await this._taskService.update(taskId, {
-				...task,
 				estimate: averageEstimation
 			});
 		} catch (error) {

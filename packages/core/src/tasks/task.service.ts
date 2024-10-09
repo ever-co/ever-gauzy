@@ -45,7 +45,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @param input - The data to update the task with
 	 * @returns The updated task
 	 */
-	async update(id: ID, input: ITaskUpdateInput): Promise<ITask> {
+	async update(id: ID, input: Partial<ITaskUpdateInput>): Promise<ITask> {
 		try {
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 			const userId = RequestContext.currentUserId();
