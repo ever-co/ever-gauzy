@@ -75,7 +75,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				id
 			});
 
-			// Register Task Sprint moving historty
+			// Register Task Sprint moving history
 			if (organizationSprintId && organizationSprintId !== task.organizationSprintId) {
 				await this.typeOrmOrganizationSprintTaskHistoryRepository.save({
 					fromSprintId: task.organizationSprintId,
