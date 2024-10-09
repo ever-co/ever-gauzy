@@ -3117,11 +3117,11 @@
 		"TAGS": "Тагове"
 	},
 	"HEADER": {
-		"SELECT_EMPLOYEE": "Select Employee",
-		"SELECT_A_DATE": "Select A date",
-		"SELECT_AN_ORGANIZATION": "Select An Organization",
-		"SELECT_PROJECT": "Select Project",
-		"SELECT_TEAM": "Select Team"
+		"SELECT_EMPLOYEE": "Изберете служител",
+		"SELECT_A_DATE": "Изберете дата",
+		"SELECT_AN_ORGANIZATION": "Изберете организация",
+		"SELECT_PROJECT": "Изберете проект",
+		"SELECT_TEAM": "Изберете отбор"
 	},
 	"HEADER_TITLE": {
 		"FOR": "за",

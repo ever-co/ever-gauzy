@@ -386,7 +386,7 @@
 			"SELECT_SHARE_START_DATE": "Selecteer startdatum",
 			"SELECT_SHARE_END_DATE": "Selecteer einddatum",
 			"SELECT_EMPLOYEE": "Selecteer werknemer",
-			"SELECT_TEAM": "Selecteer team",
+			"SELECT_TEAM": "Selecteer Team",
 			"ENABLE_DISABLE_FUTURE_DATE": "Toekomstige datums in- of uitschakelen",
 			"ALLOW_FUTURE_DATE": "Sta het wisselen naar toekomstige periodes toe",
 			"REGISTRATION_DATE": "Registratiedatum",
@@ -3089,8 +3089,8 @@
 		"SELECT_EMPLOYEE": "Selecteer medewerker",
 		"SELECT_A_DATE": "Kies een datum",
 		"SELECT_AN_ORGANIZATION": "Selecteer een organisatie",
-		"SELECT_PROJECT": "Selecteer project",
-		"SELECT_TEAM": "Selecteer team"
+		"SELECT_PROJECT": "Selecteer Project",
+		"SELECT_TEAM": "Selecteer Team"
 	},
 	"HEADER_TITLE": {
 		"FOR": "voor",
