@@ -81,7 +81,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	@Input() label: string | null = null;
 
 	/**
-	 * The placeholder text to be displayed in the organization selector.
+	 * The placeholder text to be displayed in the project selector.
 	 * Provides guidance to the user on what action to take or what information to provide.
 	 *
 \	 */
@@ -97,7 +97,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 
 	/**
 	 * Enables the default selection behavior.
-	 * When `true`, the component may automatically select a default organization upon initialization.
+	 * When `true`, the component may automatically select a default project upon initialization.
 	 *
 	 * @default true
 	 */
@@ -105,7 +105,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 
 	/**
 	 * Determines whether to display the "Show All" option in the selector.
-	 * Allows users to view and select all available organizations if enabled.
+	 * Allows users to view and select all available projects if enabled.
 	 *
 	 * @default true
 	 */
@@ -239,7 +239,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	/**
-	 * Initializes the observable that determines if the user has edit permissions for organizations.
+	 * Initializes the observable that determines if the user has edit permissions for projects.
 	 */
 	private initializePermissions(): void {
 		this.hasAddProject$ = this._store.userRolePermissions$.pipe(
@@ -339,6 +339,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 
 	/**
 	 * Writes a value to the component, handling single or multiple selection modes.
+	 *
 	 * @param {ID | ID[]} value - The value(s) to write, either a single ID or IDs.
 	 */
 	writeValue(value: ID | ID[]): void {
@@ -346,10 +347,12 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	/**
-	 * Registers a callback function to be called when the rating changes.
-	 * @param {(rating: number) => void} fn - The callback function to register.
+	 * Registers a callback function to be called when the control's value changes.
+	 * This method is used by Angular forms to bind the model to the view.
+	 *
+	 * @param fn - The callback function to register for the 'onChange' event.
 	 */
-	registerOnChange(fn: () => void): void {
+	registerOnChange(fn: (value: any) => void): void {
 		this.onChange = fn;
 	}
 
@@ -363,6 +366,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 
 	/**
 	 * Sets the disabled state of the component.
+	 *
 	 * @param {boolean} isDisabled - The disabled state to set.
 	 */
 	setDisabledState(isDisabled: boolean): void {
@@ -385,11 +389,14 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 			// Destructure tenantId and organizationId from organization
 			const { id: organizationId, tenantId } = this.organization;
 
+			// Include member if employeeId or store user's employeeId is provided
+			const memberId = this.employeeId || this._store.user.employee?.id;
+
 			// Create the project
 			const project = await this._organizationProjects.create({
 				name,
+				...(memberId && { memberIds: [memberId] }),
 				...(this.organizationContactId && { organizationContactId: this.organizationContactId }),
-				memberIds: [this.employeeId || this._store.user.employee?.id].filter(Boolean),
 				organizationId,
 				tenantId
 			});
