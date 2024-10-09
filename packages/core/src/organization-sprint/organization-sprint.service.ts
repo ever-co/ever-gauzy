@@ -328,7 +328,7 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 					})
 			);
 
-			await this.typeOrmRepository.save(newSprintMembers);
+			await this.typeOrmOrganizationSprintEmployeeRepository.save(newSprintMembers);
 		}
 	}
 }

@@ -6,7 +6,6 @@ import {
 	ActionTypeEnum,
 	ActivityLogEntityEnum,
 	ActorTypeEnum,
-	IActivityLogUpdatedValues,
 	ID,
 	IEmployee,
 	IGetTaskOptions,
@@ -20,7 +19,7 @@ import { isPostgres } from '@gauzy/config';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { ActivityLogEvent } from '../activity-log/events';
-import { generateActivityLogDescription } from '../activity-log/activity-log.helper';
+import { activityLogUpdatedFieldsAndValues, generateActivityLogDescription } from '../activity-log/activity-log.helper';
 import { Task } from './task.entity';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
 import { GetTaskByIdDTO } from './dto';
@@ -96,7 +95,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				updatedTask.title
 			);
 
-			const { updatedFields, previousValues, updatedValues } = this.activityLogUpdatedFieldsAndValues(
+			const { updatedFields, previousValues, updatedValues } = activityLogUpdatedFieldsAndValues(
 				updatedTask,
 				input
 			);
@@ -123,30 +122,6 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			console.error(`Error while updating task: ${error.message}`, error.message);
 			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
 		}
-	}
-
-	/**
-	 * @description - Compare values before and after update then add updates to fields
-	 * @param {ITask} task - Updated task
-	 * @param {ITaskUpdateInput} entity - Input data with new values
-	 */
-	private activityLogUpdatedFieldsAndValues(task: ITask, entity: ITaskUpdateInput) {
-		const updatedFields = [];
-		const previousValues: IActivityLogUpdatedValues[] = [];
-		const updatedValues: IActivityLogUpdatedValues[] = [];
-
-		for (const key of Object.keys(entity)) {
-			if (task[key] !== entity[key]) {
-				// Add updated field
-				updatedFields.push(key);
-
-				// Add old and new values
-				previousValues.push({ [key]: task[key] });
-				updatedValues.push({ [key]: task[key] });
-			}
-		}
-
-		return { updatedFields, previousValues, updatedValues };
 	}
 
 	/**

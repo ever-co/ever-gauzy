@@ -5,7 +5,6 @@ import {
 	ActionTypeEnum,
 	ActivityLogEntityEnum,
 	ActorTypeEnum,
-	IActivityLogUpdatedValues,
 	ID,
 	IOrganizationProjectModule,
 	IOrganizationProjectModuleCreateInput,
@@ -20,7 +19,7 @@ import { isPostgres } from '@gauzy/config';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { ActivityLogEvent } from '../activity-log/events';
-import { generateActivityLogDescription } from '../activity-log/activity-log.helper';
+import { activityLogUpdatedFieldsAndValues, generateActivityLogDescription } from '../activity-log/activity-log.helper';
 import { OrganizationProjectModule } from './organization-project-module.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmOrganizationProjectModuleRepository } from './repository/type-orm-organization-project-module.repository';
@@ -118,21 +117,10 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 				updatedModule.name
 			);
 
-			// Compare values before and after update then add updates to fields
-			const updatedFields = [];
-			const previousValues: IActivityLogUpdatedValues[] = [];
-			const updatedValues: IActivityLogUpdatedValues[] = [];
-
-			for (const key of Object.keys(entity)) {
-				if (existingModule[key] !== entity[key]) {
-					// Add updated field
-					updatedFields.push(key);
-
-					// Add old and new values
-					previousValues.push({ [key]: existingModule[key] });
-					updatedValues.push({ [key]: updatedModule[key] });
-				}
-			}
+			const { updatedFields, previousValues, updatedValues } = activityLogUpdatedFieldsAndValues(
+				updatedModule,
+				entity
+			);
 
 			// Emit an event to log the activity
 			this._eventBus.publish(
