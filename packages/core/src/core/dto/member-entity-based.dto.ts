@@ -1,16 +1,24 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsOptional } from 'class-validator';
+import { IsArray, IsOptional, IsUUID } from 'class-validator';
 import { ID, IMemberEntityBased } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from './tenant-organization-base.dto';
 
 export class MemberEntityBasedDTO extends TenantOrganizationBaseDTO implements IMemberEntityBased {
-	@ApiPropertyOptional({ type: () => String })
+	/**
+	 * Array of member UUIDs.
+	 */
+	@ApiPropertyOptional({ type: Array })
 	@IsOptional()
 	@IsArray()
+	@IsUUID('all', { each: true })
 	memberIds?: ID[] = [];
 
-	@ApiPropertyOptional({ type: () => String })
+	/**
+	 * Array of manager UUIDs.
+	 */
+	@ApiPropertyOptional({ type: Array })
 	@IsOptional()
 	@IsArray()
+	@IsUUID('all', { each: true })
 	managerIds?: ID[] = [];
 }
