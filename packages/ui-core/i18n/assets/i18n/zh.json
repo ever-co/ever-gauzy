@@ -3088,7 +3088,7 @@
 	"HEADER": {
 		"SELECT_EMPLOYEE": "选择员工",
 		"SELECT_A_DATE": "选择日期",
-		"SELECT_AN_ORGANIZATION": "选择一个组织",
+		"SELECT_AN_ORGANIZATION": "选择组织",
 		"SELECT_PROJECT": "选择项目",
 		"SELECT_TEAM": "选择团队"
 	},
