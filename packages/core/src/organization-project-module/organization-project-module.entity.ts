@@ -20,6 +20,7 @@ import {
 	IOrganizationSprint,
 	IOrganizationTeam,
 	ITask,
+	ITaskView,
 	IUser,
 	ProjectModuleStatusEnum
 } from '@gauzy/contracts';
@@ -29,6 +30,7 @@ import {
 	OrganizationSprint,
 	OrganizationTeam,
 	Task,
+	TaskView,
 	TenantOrganizationBaseEntity,
 	User
 } from '../core/entities/internal';
@@ -183,6 +185,12 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	 */
 	@MultiORMOneToMany(() => OrganizationProjectModule, (module) => module.parent)
 	children?: OrganizationProjectModule[];
+
+	/**
+	 * Project Module views
+	 */
+	@MultiORMOneToMany(() => TaskView, (module) => module.projectModule)
+	views?: ITaskView[];
 
 	/*
 	|--------------------------------------------------------------------------

@@ -1,11 +1,12 @@
 import { JoinColumn } from 'typeorm';
-import { IOrganizationProjectModule, IOrganizationSprint, SprintStartDayEnum } from '@gauzy/contracts';
+import { IOrganizationProjectModule, IOrganizationSprint, ITaskView, SprintStartDayEnum } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import {
 	OrganizationProject,
 	OrganizationProjectModule,
 	Task,
+	TaskView,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import {
@@ -85,10 +86,19 @@ export class OrganizationSprint extends TenantOrganizationBaseEntity implements 
 	|--------------------------------------------------------------------------
 	*/
 
+	/**
+	 * Tasks
+	 */
 	@ApiProperty({ type: () => Task })
 	@MultiORMOneToMany(() => Task, (task) => task.organizationSprint)
 	@JoinColumn()
 	tasks?: Task[];
+
+	/**
+	 * Sprint views
+	 */
+	@MultiORMOneToMany(() => TaskView, (sprint) => sprint.organizationSprint)
+	views?: ITaskView[];
 
 	/*
 	|--------------------------------------------------------------------------
