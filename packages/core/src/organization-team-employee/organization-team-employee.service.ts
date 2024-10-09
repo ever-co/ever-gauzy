@@ -42,8 +42,8 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		organizationId: ID,
 		employees: IEmployee[],
 		role: Role,
-		managerIds: string[],
-		memberIds: string[]
+		managerIds: ID[],
+		memberIds: ID[]
 	): Promise<void> {
 		const tenantId = RequestContext.currentTenantId();
 		const membersToUpdate = [...managerIds, ...memberIds];

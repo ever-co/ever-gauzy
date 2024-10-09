@@ -1,4 +1,4 @@
-import { IEmployeeEntityInput } from './employee.model';
+import { IEmployeeEntityInput, IMemberEntityBased } from './employee.model';
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IOrganizationTeamEmployee } from './organization-team-employee-model';
 import { ITag } from './tag.model';
@@ -38,7 +38,10 @@ export interface IOrganizationTeamFindInput extends IBasePerTenantAndOrganizatio
 	members?: IOrganizationTeamEmployee;
 }
 
-export interface IOrganizationTeamCreateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset {
+export interface IOrganizationTeamCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel,
+		IRelationalImageAsset,
+		IMemberEntityBased {
 	name: string;
 	emoji?: string;
 	teamSize?: string;
@@ -49,8 +52,6 @@ export interface IOrganizationTeamCreateInput extends IBasePerTenantAndOrganizat
 	requirePlanToTrack?: boolean;
 	public?: boolean;
 	profile_link?: string;
-	memberIds?: ID[];
-	managerIds?: ID[];
 	tags?: ITag[];
 	projects?: IOrganizationProject[];
 }
