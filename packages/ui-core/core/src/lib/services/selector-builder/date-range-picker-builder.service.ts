@@ -64,8 +64,7 @@ export class DateRangePickerBuilderService {
 	setDatePickerConfig(config: IDatePickerConfig) {
 		// If the provided config is not empty, merge it with the current config
 		if (isNotEmpty(config)) {
-			const updatedConfig = { ...this.datePickerConfig, ...config };
-			this._datePickerConfig$.next(updatedConfig);
+			this._datePickerConfig$.next(config);
 		}
 	}
 
