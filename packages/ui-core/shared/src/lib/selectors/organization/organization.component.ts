@@ -99,8 +99,6 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 			console.info('Selected employee store has been reset.');
 		}
 
-		// Provide user feedback
-		this._toastrService.success(`Selected Organization: ${organization.name}`);
 		console.log(`Selected Organization: ${organization.name}`);
 
 		// Update the query parameters in the URL
