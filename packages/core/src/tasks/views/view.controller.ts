@@ -82,7 +82,7 @@ export class TaskViewController extends CrudController<TaskView> {
 		return await this.commandBus.execute(new TaskViewCreateCommand(entity));
 	}
 
-	@ApiOperation({ summary: 'Update an existing viiew' })
+	@ApiOperation({ summary: 'Update an existing view' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
 		description: 'The record has been successfully edited.'
