@@ -136,12 +136,52 @@ export class CreateTableIssueView1728461410740 implements MigrationInterface {
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(
+			`CREATE TABLE \`task_view\` (\`deletedAt\` datetime(6) NULL, \`id\` varchar(36) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`name\` varchar(255) NOT NULL, \`description\` text NULL, \`visibilityLevel\` int NULL, \`queryParams\` json NULL, \`filterOptions\` json NULL, \`displayOptions\` json NULL, \`properties\` json NULL, \`isLocked\` tinyint NOT NULL DEFAULT 0, \`projectId\` varchar(255) NULL, \`organizationTeamId\` varchar(255) NULL, \`projectModuleId\` varchar(255) NULL, \`organizationSprintId\` varchar(255) NULL, INDEX \`IDX_38bcdf0455ac5ab5a925a015ab\` (\`isActive\`), INDEX \`IDX_7c4f8a4d5b859c23c42ab5f984\` (\`isArchived\`), INDEX \`IDX_ee94e92fccbbf8898221cb4eb5\` (\`tenantId\`), INDEX \`IDX_c1c6e1c8d7c7971e234a768419\` (\`organizationId\`), INDEX \`IDX_cf779d00641c3bd276a5a7e4df\` (\`name\`), INDEX \`IDX_d4c182a7adfffa1a57315e8bfc\` (\`visibilityLevel\`), INDEX \`IDX_1e5e43bbd58c370c538dac0b17\` (\`projectId\`), INDEX \`IDX_3c1eb880f298e646d43736e911\` (\`organizationTeamId\`), INDEX \`IDX_e58e58a3fd113bf4b336c90997\` (\`projectModuleId\`), INDEX \`IDX_4814ca7712537f79bed938d9a1\` (\`organizationSprintId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`task_view\` ADD CONSTRAINT \`FK_ee94e92fccbbf8898221cb4eb53\` FOREIGN KEY (\`tenantId\`) REFERENCES \`tenant\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`task_view\` ADD CONSTRAINT \`FK_c1c6e1c8d7c7971e234a768419c\` FOREIGN KEY (\`organizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`task_view\` ADD CONSTRAINT \`FK_1e5e43bbd58c370c538dac0b17c\` FOREIGN KEY (\`projectId\`) REFERENCES \`organization_project\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`task_view\` ADD CONSTRAINT \`FK_3c1eb880f298e646d43736e911a\` FOREIGN KEY (\`organizationTeamId\`) REFERENCES \`organization_team\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`task_view\` ADD CONSTRAINT \`FK_e58e58a3fd113bf4b336c90997b\` FOREIGN KEY (\`projectModuleId\`) REFERENCES \`organization_project_module\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`task_view\` ADD CONSTRAINT \`FK_4814ca7712537f79bed938d9a15\` FOREIGN KEY (\`organizationSprintId\`) REFERENCES \`organization_sprint\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+	}
 
 	/**
 	 * MySQL Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE \`task_view\` DROP FOREIGN KEY \`FK_4814ca7712537f79bed938d9a15\``);
+		await queryRunner.query(`ALTER TABLE \`task_view\` DROP FOREIGN KEY \`FK_e58e58a3fd113bf4b336c90997b\``);
+		await queryRunner.query(`ALTER TABLE \`task_view\` DROP FOREIGN KEY \`FK_3c1eb880f298e646d43736e911a\``);
+		await queryRunner.query(`ALTER TABLE \`task_view\` DROP FOREIGN KEY \`FK_1e5e43bbd58c370c538dac0b17c\``);
+		await queryRunner.query(`ALTER TABLE \`task_view\` DROP FOREIGN KEY \`FK_c1c6e1c8d7c7971e234a768419c\``);
+		await queryRunner.query(`ALTER TABLE \`task_view\` DROP FOREIGN KEY \`FK_ee94e92fccbbf8898221cb4eb53\``);
+		await queryRunner.query(`DROP INDEX \`IDX_4814ca7712537f79bed938d9a1\` ON \`task_view\``);
+		await queryRunner.query(`DROP INDEX \`IDX_e58e58a3fd113bf4b336c90997\` ON \`task_view\``);
+		await queryRunner.query(`DROP INDEX \`IDX_3c1eb880f298e646d43736e911\` ON \`task_view\``);
+		await queryRunner.query(`DROP INDEX \`IDX_1e5e43bbd58c370c538dac0b17\` ON \`task_view\``);
+		await queryRunner.query(`DROP INDEX \`IDX_d4c182a7adfffa1a57315e8bfc\` ON \`task_view\``);
+		await queryRunner.query(`DROP INDEX \`IDX_cf779d00641c3bd276a5a7e4df\` ON \`task_view\``);
+		await queryRunner.query(`DROP INDEX \`IDX_c1c6e1c8d7c7971e234a768419\` ON \`task_view\``);
+		await queryRunner.query(`DROP INDEX \`IDX_ee94e92fccbbf8898221cb4eb5\` ON \`task_view\``);
+		await queryRunner.query(`DROP INDEX \`IDX_7c4f8a4d5b859c23c42ab5f984\` ON \`task_view\``);
+		await queryRunner.query(`DROP INDEX \`IDX_38bcdf0455ac5ab5a925a015ab\` ON \`task_view\``);
+		await queryRunner.query(`DROP TABLE \`task_view\``);
+	}
 }
