@@ -1,52 +1,17 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsBoolean } from 'class-validator';
+import { PickType } from '@nestjs/swagger';
+import { Organization } from '../organization.entity';
 
 /**
  * Organization Public Setting DTO
  */
-export class OrganizationPublicSettingDTO {
-	@ApiPropertyOptional({ type: () => Boolean })
-	@IsOptional()
-	@IsBoolean()
-	readonly show_income: boolean;
-
-	@ApiPropertyOptional({ type: () => Boolean })
-	@IsOptional()
-	@IsBoolean()
-	readonly show_profits: boolean;
-
-	@ApiPropertyOptional({ type: () => Boolean })
-	@IsOptional()
-	@IsBoolean()
-	readonly show_bonuses_paid: boolean;
-
-	@ApiPropertyOptional({ type: () => Boolean })
-	@IsOptional()
-	@IsBoolean()
-	readonly show_total_hours: boolean;
-
-	@ApiPropertyOptional({ type: () => Boolean })
-	@IsOptional()
-	@IsBoolean()
-	readonly show_minimum_project_size: boolean;
-
-	@ApiPropertyOptional({ type: () => Boolean })
-	@IsOptional()
-	@IsBoolean()
-	readonly show_projects_count: boolean;
-
-	@ApiPropertyOptional({ type: () => Boolean })
-	@IsOptional()
-	@IsBoolean()
-	readonly show_clients_count: boolean;
-
-	@ApiPropertyOptional({ type: () => Boolean })
-	@IsOptional()
-	@IsBoolean()
-	readonly show_clients: boolean;
-
-	@ApiPropertyOptional({ type: () => Boolean })
-	@IsOptional()
-	@IsBoolean()
-	readonly show_employees_count: boolean;
-}
+export class OrganizationPublicSettingDTO extends PickType(Organization, [
+	'show_income',
+	'show_profits',
+	'show_bonuses_paid',
+	'show_total_hours',
+	'show_minimum_project_size',
+	'show_projects_count',
+	'show_clients_count',
+	'show_clients',
+	'show_employees_count'
+]) {}
