@@ -385,7 +385,7 @@
 			"SELECT_SHARE_START_DATE": "Select start date",
 			"SELECT_SHARE_END_DATE": "Select end date",
 			"SELECT_EMPLOYEE": "Select employee",
-			"SELECT_TEAM": "Select team",
+			"SELECT_TEAM": "בחר קבוצה",
 			"ENABLE_DISABLE_FUTURE_DATE": "Enable/Disable future dates",
 			"ALLOW_FUTURE_DATE": "Allow switching to future periods",
 			"REGISTRATION_DATE": "Registration Date",
@@ -3113,7 +3113,7 @@
 		"SELECT_A_DATE": "Select A date",
 		"SELECT_AN_ORGANIZATION": "Select An Organization",
 		"SELECT_PROJECT": "Select Project",
-		"SELECT_TEAM": "תבחר קבוצה"
+		"SELECT_TEAM": "בחר קבוצה"
 	},
 	"HEADER_TITLE": {
 		"FOR": "for",

@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Between, In, SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { IGetTimesheetInput, PermissionsEnum, ITimesheet } from '@gauzy/contracts';
@@ -14,38 +13,42 @@ import { MikroOrmTimesheetRepository } from './repository/mikro-orm-timesheet.re
 @Injectable()
 export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	constructor(
-		@InjectRepository(Timesheet)
 		typeOrmTimesheetRepository: TypeOrmTimesheetRepository,
-
 		mikroOrmTimesheetRepository: MikroOrmTimesheetRepository
 	) {
 		super(typeOrmTimesheetRepository, mikroOrmTimesheetRepository);
 	}
 
 	/**
-	 * GET timesheets count in date range for same tenant
+	 * GET timesheets count in date range for the same tenant
 	 *
 	 * @param request
-	 * @returns
+	 * @returns number - Count of timesheets
 	 */
 	async getTimeSheetCount(request: IGetTimesheetInput): Promise<number> {
 		const query = this.typeOrmRepository.createQueryBuilder('timesheet');
 		query.innerJoin(`${query.alias}.employee`, 'employee');
+
+		// Apply filters to the query
 		query.where((query: SelectQueryBuilder<Timesheet>) => {
 			this.getFilterTimesheetQuery(query, request);
 		});
-		return await query.getCount();
+
+		// Return the total count of timesheets
+		return query.getCount();
 	}
 
 	/**
-	 * GET timesheets in date range for same tenant
+	 * GET timesheets in date range for the same tenant
 	 *
 	 * @param request
-	 * @returns
+	 * @returns Promise<ITimesheet[]> - List of timesheets
 	 */
 	async getTimeSheets(request: IGetTimesheetInput): Promise<ITimesheet[]> {
 		const query = this.typeOrmRepository.createQueryBuilder('timesheet');
 		query.innerJoin(`${query.alias}.employee`, 'employee');
+
+		// Set select options and optional relations
 		query.setFindOptions({
 			select: {
 				employee: {
@@ -61,15 +64,15 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 					brandColor: true
 				}
 			},
-			...(request && request.relations
-				? {
-					relations: request.relations
-				}
-				: {})
+			...(request?.relations ? { relations: request.relations } : {})
 		});
+
+		// Apply filters to the query
 		query.where((query: SelectQueryBuilder<Timesheet>) => {
 			this.getFilterTimesheetQuery(query, request);
 		});
+
+		// Return the list of timesheets
 		return await query.getMany();
 	}
 
@@ -81,29 +84,25 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	 * @returns
 	 */
 	async getFilterTimesheetQuery(qb: SelectQueryBuilder<Timesheet>, request: IGetTimesheetInput) {
-		const { organizationId, startDate, endDate } = request;
-		let { employeeIds = [] } = request;
+		let { organizationId, startDate, endDate, onlyMe: isOnlyMeSelected, employeeIds = [] } = request;
 
-		const tenantId = RequestContext.currentTenantId() || request.tenantId;
-		const user = RequestContext.currentUser();
-
-		// Calculate start and end dates using a utility function
-		const { start, end } = getDateRangeFormat(
-			moment.utc(startDate || moment().startOf('month')), // use current start of the month if startDate not found
-			moment.utc(endDate || moment().endOf('month')) // use current end of the month if endDate not found
-		);
+		const tenantId = RequestContext.currentTenantId() ?? request.tenantId; // Retrieve the tenant ID from the request
+		const user = RequestContext.currentUser(); // Retrieve the current user
 
 		// Check if the current user has the permission to change the selected employee
 		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		);
 
-		// Determine if the request specifies to retrieve data for the current user only
-		const isOnlyMeSelected: boolean = request.onlyMe;
-
-		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
+		if (user.employeeId && (isOnlyMeSelected || !hasChangeSelectedEmployeePermission)) {
 			employeeIds = [user.employeeId];
 		}
+
+		// Calculate start and end dates using a utility function
+		const { start, end } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('month')), // use current start of the month if startDate not found
+			moment.utc(endDate || moment().endOf('month')) // use current end of the month if endDate not found
+		);
 
 		qb.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {

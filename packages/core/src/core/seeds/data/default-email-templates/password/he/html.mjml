@@ -13,8 +13,8 @@
 				<mj-text>
 					<p>שלום {{userName}}!</p>
 					<p>
-						קיבלנו בקשה לשינוי סיסמה עבור חשבון Gauzy שלך עבור
-						<strong>{{tenantName}}</strong>.
+						קיבלנו בקשה לשינוי סיסמה עבור חשבון Gauzy שלך
+						{{#if tenantName}} עבור <strong>{{tenantName}}</strong>{{/if}}.
 					</p>
 					<p>אם ביקשת לאפס את הסיסמה שלך, לחץ על הכפתור למטה:</p>
 				</mj-text>

@@ -26,6 +26,7 @@ import { IOrganizationProjectModule } from './organization-project-module.model'
 import { CurrenciesEnum } from './currency.model';
 import { IFavorite } from './favorite.model';
 import { IComment } from './comment.model';
+import { IOrganizationSprint } from './organization-sprint.model';
 
 export interface IFindMembersInput extends IBasePerTenantAndOrganizationEntityModel {
 	organizationTeamId: ID;
@@ -79,6 +80,7 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel, ITa
 	timesheets?: ITimesheet[];
 	tasks?: ITask[];
 	modules?: IOrganizationProjectModule[];
+	sprints?: IOrganizationSprint[];
 	assignedComments?: IComment[];
 	timeSlots?: ITimeSlot[];
 	contact?: IContact;
@@ -279,4 +281,9 @@ export interface IEmployeeStoreState {
 
 export interface IEmployeeUpdateProfileStatus extends IBasePerTenantAndOrganizationEntityModel {
 	readonly isActive: boolean;
+}
+
+export interface IMemberEntityBased extends IBasePerTenantAndOrganizationEntityModel {
+	memberIds?: ID[]; // Members of the given entity
+	managerIds?: ID[]; // Managers of the given entity
 }

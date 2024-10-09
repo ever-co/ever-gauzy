@@ -1,16 +1,16 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { RequestContext, TypeOrmEmployeeRepository } from '@gauzy/core';
+import { RequestContext } from '@gauzy/core';
 import { JobPresetUpworkJobSearchCriterion } from '../../job-preset-upwork-job-search-criterion.entity';
 import { JobPreset } from '../../job-preset.entity';
 import { CreateJobPresetCommand } from '../create-job-preset.command';
 import { TypeOrmJobPresetRepository } from '../../repository/type-orm-job-preset.repository';
 import { TypeOrmJobPresetUpworkJobSearchCriterionRepository } from '../../repository/type-orm-job-preset-upwork-job-search-criterion.repository';
+import { PermissionsEnum } from '@gauzy/contracts';
 
 @CommandHandler(CreateJobPresetCommand)
 export class CreateJobPresetHandler implements ICommandHandler<CreateJobPresetCommand> {
 	constructor(
 		private readonly typeOrmJobPresetRepository: TypeOrmJobPresetRepository,
-		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		private readonly typeOrmJobPresetUpworkJobSearchCriterionRepository: TypeOrmJobPresetUpworkJobSearchCriterionRepository
 	) {}
 
@@ -24,15 +24,11 @@ export class CreateJobPresetHandler implements ICommandHandler<CreateJobPresetCo
 		const { input } = command;
 
 		// Set tenantId
-		input.tenantId = RequestContext.currentTenantId() || input.tenantId;
+		input.tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 
-		// Set organizationId if not provided in the input
-		if (!input.organizationId) {
-			const employeeId = RequestContext.currentEmployeeId();
-			if (employeeId) {
-				const employee = await this.typeOrmEmployeeRepository.findOneBy({ id: employeeId });
-				input.organizationId = employee.organizationId;
-			}
+		// If the current user has the permission to change the selected employee, use their ID
+		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			input.employees.push({ employeeId: RequestContext.currentEmployeeId() });
 		}
 
 		// Create a new job preset

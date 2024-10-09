@@ -1,4 +1,4 @@
-import { IMatchingCriterions } from '@gauzy/contracts';
+import { IMatchingCriterions, PermissionsEnum } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { RequestContext, TypeOrmEmployeeRepository } from '@gauzy/core';
 import { JobPresetUpworkJobSearchCriterion } from '../../job-preset-upwork-job-search-criterion.entity';
@@ -20,15 +20,17 @@ export class SavePresetCriterionHandler implements ICommandHandler<SavePresetCri
 	 */
 	public async execute(command: SavePresetCriterionCommand): Promise<IMatchingCriterions> {
 		const { input } = command;
-		input.tenantId = RequestContext.currentTenantId();
+		input.tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 
-		// If organizationId is not provided in the input, retrieve it from the current user's employee data
-		if (!input.organizationId) {
-			const employeeId = RequestContext.currentEmployeeId();
-			if (employeeId) {
-				const employee = await this.typeOrmEmployeeRepository.findOneBy({ id: employeeId });
-				input.organizationId = employee.organizationId;
-			}
+		// If the current user has the permission to change the selected employee, use their ID
+		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			input.employeeId = RequestContext.currentEmployeeId();
+		}
+
+		// Set organizationId if not provided in the input
+		if (!input.organizationId && input.employeeId) {
+			const employee = await this.typeOrmEmployeeRepository.findOneBy({ id: input.employeeId });
+			input.organizationId = employee.organizationId;
 		}
 
 		// Create a new JobPresetUpworkJobSearchCriterion instance with the input data

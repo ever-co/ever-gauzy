@@ -94,7 +94,7 @@
 										<div class="mt-2 small">
 											<span *ngIf="log?.task; else noToDo" [nbTooltip]="log?.task?.title">
 												<strong>{{ 'TIMESHEET.TODO' | translate }}:</strong>
-												{{ log?.task?.title | truncate : 50 }}
+												{{ log?.task?.title | truncate : 40 }}
 											</span>
 											<ng-template #noToDo>
 												<span>{{ 'TIMESHEET.NO_TODO' | translate }}</span>

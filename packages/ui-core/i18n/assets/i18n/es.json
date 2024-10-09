@@ -3089,8 +3089,8 @@
 	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Seleccionar empleado",
-		"SELECT_A_DATE": "Seleccione una fecha",
-		"SELECT_AN_ORGANIZATION": "Seleccione una organización",
+		"SELECT_A_DATE": "Seleccionar una fecha",
+		"SELECT_AN_ORGANIZATION": "Seleccionar una organización",
 		"SELECT_PROJECT": "Seleccionar proyecto",
 		"SELECT_TEAM": "Seleccionar equipo"
 	},

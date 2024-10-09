@@ -40,6 +40,28 @@ export class FavoriteController extends CrudController<Favorite> {
 	}
 
 	/**
+	 * @description Find favorites by employee
+	 * @param {PaginationParams<Favorite>} params Filter criteria to find favorites
+	 * @returns A promise that resolves to paginated list of favorites
+	 * @memberof FavoriteController
+	 */
+	@ApiOperation({ summary: 'Find favorite entity records By current Employee' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found favorite records',
+		type: Favorite
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Records not found'
+	})
+	@Get('/employee')
+	@UseValidationPipe({ transform: true })
+	async findFavoritesByEmployee(@Query() params: PaginationParams<Favorite>) {
+		return await this.favoriteService.findFavoritesByEmployee(params);
+	}
+
+	/**
 	 * @description Get favorites elements details
 	 * @param params - Favorite query params
 	 * @returns A promise resolved at favorites elements records

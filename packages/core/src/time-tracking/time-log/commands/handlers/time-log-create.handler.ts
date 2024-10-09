@@ -2,10 +2,7 @@ import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import * as moment from 'moment';
 import { TimeLogType, TimeLogSourceEnum, ID, ITimeSlot, ITimesheet } from '@gauzy/contracts';
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
-import {
-	TimesheetFirstOrCreateCommand,
-	TimesheetRecalculateCommand
-} from '../../../timesheet/commands';
+import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from '../../../timesheet/commands';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
 import { RequestContext } from '../../../../core/context';
 import { TimeLogService } from '../../time-log.service';
@@ -20,7 +17,7 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
 		private readonly _commandBus: CommandBus,
 		private readonly _timeSlotService: TimeSlotService,
-		private readonly _timeLogService: TimeLogService,
+		private readonly _timeLogService: TimeLogService
 	) {}
 
 	/**
@@ -42,11 +39,7 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 		);
 
 		// Create time log entity
-		const timeLog = this.createTimeLogEntity(
-			input,
-			tenantId,
-			timesheet
-		);
+		const timeLog = this.createTimeLogEntity(input, tenantId, timesheet);
 
 		// Generate blank time slots if stoppedAt is provided
 		let generatedTimeSlots: ITimeSlot[] = stoppedAt ? this.generateBlankTimeSlots(input, tenantId) : [];
@@ -58,14 +51,10 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 			employeeId,
 			organizationId,
 			tenantId
-		)
+		);
 
 		// Bulk create time slots
-		timeLog.timeSlots = await this._timeSlotService.bulkCreate(
-			mergeTimeSlots,
-			employeeId,
-			organizationId
-		);
+		timeLog.timeSlots = await this._timeSlotService.bulkCreate(mergeTimeSlots, employeeId, organizationId);
 
 		await this.typeOrmTimeLogRepository.save(timeLog);
 
@@ -166,15 +155,15 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 		organizationId: ID,
 		tenantId: ID
 	): ITimeSlot[] {
-		const standardizedInputSlots = inputSlots.map(slot => ({
+		const standardizedInputSlots = inputSlots.map((slot) => ({
 			...slot,
 			employeeId,
 			organizationId,
 			tenantId
 		}));
 
-		return generatedSlots.map(blankSlot => {
-			const matchingSlot = standardizedInputSlots.find(slot =>
+		return generatedSlots.map((blankSlot) => {
+			const matchingSlot = standardizedInputSlots.find((slot) =>
 				moment(slot.startedAt).isSame(blankSlot.startedAt)
 			);
 			return matchingSlot ? { ...matchingSlot } : blankSlot;
@@ -187,9 +176,7 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 	 */
 	private async recalculateTimesheet(timesheet: ITimesheet): Promise<void> {
 		if (timesheet?.id) {
-			await this._commandBus.execute(
-				new TimesheetRecalculateCommand(timesheet.id)
-			);
+			await this._commandBus.execute(new TimesheetRecalculateCommand(timesheet.id));
 		}
 	}
 
@@ -199,8 +186,6 @@ export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateComman
 	 * @param employeeId ID
 	 */
 	private async updateEmployeeTotalWorkedHours(employeeId: ID): Promise<void> {
-		await this._commandBus.execute(
-			new UpdateEmployeeTotalWorkedHoursCommand(employeeId)
-		);
+		await this._commandBus.execute(new UpdateEmployeeTotalWorkedHoursCommand(employeeId));
 	}
 }

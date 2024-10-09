@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 import { ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
 import {
@@ -64,8 +64,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		const employeeId = RequestContext.currentEmployeeId();
 		const currentRoleId = RequestContext.currentRoleId();
 
-		const { tags = [], memberIds = [], managerIds = [], ...entity } = input;
-		const { organizationId } = entity;
+		// Destructure the input data
+		const { tags = [], memberIds = [], managerIds = [], organizationId, ...entity } = input;
 
 		try {
 			// If the employee creates the project, default add as a manager
@@ -100,41 +100,26 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			// Create a Set for faster membership checks
 			const managerIdsSet = new Set(managerIds);
 
-			// Fetch existing managers for this organization project
-			const existingManagers = await this.typeOrmOrganizationProjectEmployeeRepository.findBy({
-				employee: { id: In(managerIds), organizationId, tenantId },
-				organizationId,
-				tenantId
-			});
-
-			// Create a Map for faster lookups
-			const existingManagersMap = new Map(existingManagers.map((em) => [em.employee.id, em.assignedAt]));
-
 			// Use destructuring to directly extract 'id' from 'employee'
-			const projectMembers = employees.map(({ id: employeeId }) => {
-				// Check if the employee is a manager
+			const members = employees.map(({ id: employeeId }) => {
+				// If the employee is a manager, assign the existing manager with the latest assignedAt date
 				const isManager = managerIdsSet.has(employeeId);
-				// If the employee is a manager, assign the existing manager with the latest assignedAt date
-				const assignedAt =
-					isManager && !existingManagersMap.has(employeeId)
-						? new Date()
-						: existingManagersMap.get(employeeId);
+				const assignedAt = new Date();
 
-				// If the employee is a manager, assign the existing manager with the latest assignedAt date
 				return new OrganizationProjectEmployee({
 					employeeId,
 					organizationId,
 					tenantId,
 					isManager,
-					role: isManager ? managerRole : null,
-					assignedAt: assignedAt || null
+					assignedAt,
+					role: isManager ? managerRole : null
 				});
 			});
 
-			// Create the organization team with the prepared members
+			// Create the organization project with the prepared members
 			const project = await super.create({
 				...entity,
-				members: projectMembers,
+				members,
 				tags,
 				organizationId,
 				tenantId
@@ -187,20 +172,18 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 
 		try {
 			// Retrieve members and managers IDs
-			if (isNotEmpty(memberIds) || isNotEmpty(managerIds)) {
-				// Combine memberIds and managerIds into a single array
-				const employeeIds = [...memberIds, ...managerIds].filter(Boolean);
+			// Combine memberIds and managerIds into a single array
+			const employeeIds = [...memberIds, ...managerIds].filter(Boolean);
 
-				// Retrieves a collection of employees based on specified criteria.
-				const projectMembers = await this._employeeService.findActiveEmployeesByEmployeeIds(
-					employeeIds,
-					organizationId,
-					tenantId
-				);
+			// Retrieves a collection of employees based on specified criteria.
+			const projectMembers = await this._employeeService.findActiveEmployeesByEmployeeIds(
+				employeeIds,
+				organizationId,
+				tenantId
+			);
 
-				// Update nested entity (Organization Project Members)
-				await this.updateOrganizationProjectMembers(id, organizationId, projectMembers, managerIds, memberIds);
-			}
+			// Update nested entity (Organization Project Members)
+			await this.updateOrganizationProjectMembers(id, organizationId, projectMembers, managerIds, memberIds);
 
 			const { id: organizationProjectId } = organizationProject;
 
@@ -284,7 +267,10 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 
 				// Only update if the role has changed
 				if (newRole && newRole.id !== member.roleId) {
-					await this.typeOrmOrganizationProjectEmployeeRepository.update(member.id, { role: newRole });
+					await this.typeOrmOrganizationProjectEmployeeRepository.update(member.id, {
+						role: newRole,
+						isManager: true
+					});
 				}
 			})
 		);
@@ -303,7 +289,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 					})
 			);
 
-			await this.typeOrmRepository.save(newProjectMembers);
+			await this.typeOrmOrganizationProjectEmployeeRepository.save(newProjectMembers);
 		}
 	}
 
@@ -535,42 +521,51 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		return { items, total };
 	}
 
-	async updateByEmployee(input: IOrganizationProjectEditByEmployeeInput) {
+	/**
+	 * Updates the employee's project associations.
+	 *
+	 * This method adds or removes projects for an employee based on the provided input. If the employee is added to
+	 * new projects, the respective project members are updated. If the employee is removed from projects, the project
+	 * membership records are deleted.
+	 *
+	 * @param input The input data containing information about the employee, projects to add, projects to remove, and the organization.
+	 * @returns A Promise that resolves to `true` when the update is successful.
+	 */
+	async updateByEmployee(input: IOrganizationProjectEditByEmployeeInput): Promise<boolean> {
 		try {
+			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 			const { organizationId, addedProjectIds = [], removedProjectIds = [], member } = input;
 
 			// Handle adding projects
 			if (addedProjectIds.length > 0) {
 				const projectsToAdd = await this.find({
-					where: {
-						id: In(addedProjectIds),
-						organizationId
-					},
-					relations: {
-						members: true
-					}
+					where: { id: In(addedProjectIds), organizationId, tenantId },
+					relations: { members: true }
 				});
 
-				const updatedProjectsToAdd = projectsToAdd.map((project) => {
-					const existingMembers = project.members || [];
+				const updatedProjectsToAdd = projectsToAdd
+					.filter((project: IOrganizationProject) => {
+						// Filter only projects where the member is not already assigned
+						return !project.members?.some(({ employeeId }) => employeeId === member.id);
+					})
+					.map((project: IOrganizationProject) => {
+						// Create new member object for the projects where the member is not yet assigned
+						const newMember = new OrganizationProjectEmployee({
+							employeeId: member.id,
+							organizationProjectId: project.id,
+							organizationId,
+							tenantId
+						});
 
-					// Verify if member already exists on project
-					const isMemberAlreadyInProject = existingMembers.some(
-						(existingMember) => existingMember.employeeId === member.employeeId
-					);
-
-					if (!isMemberAlreadyInProject) {
+						// Return the project with the new member added to the members array
 						return {
 							...project,
-							members: [...existingMembers, { ...member, organizationProjectId: project.id }]
+							members: [...project.members, newMember] // Add new member while keeping existing members intact
 						};
-					}
+					});
 
-					return project; // If member already assigned to project, no change needed
-				});
-
-				// save updated projects
-				await Promise.all(updatedProjectsToAdd.map(async (project) => await this.save(project)));
+				// Save updated projects
+				await Promise.all(updatedProjectsToAdd.map((project) => this.save(project)));
 			}
 
 			// Handle removing projects
@@ -583,8 +578,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 
 			return true;
 		} catch (error) {
-			console.error('Error while updating project by member:', error);
-			throw new BadRequestException(error);
+			console.log('Error while updating project by employee:', error);
+			throw new HttpException({ message: 'Error while updating project by employee' }, HttpStatus.BAD_REQUEST);
 		}
 	}
 }

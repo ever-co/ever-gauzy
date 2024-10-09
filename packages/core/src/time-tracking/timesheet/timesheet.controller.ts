@@ -1,7 +1,7 @@
-import { Controller, UseGuards, Put, HttpStatus, Body, Get, Query, Param, BadRequestException } from '@nestjs/common';
+import { Controller, UseGuards, Put, HttpStatus, Body, Get, Query, Param, HttpException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
-import { ITimesheet, PermissionsEnum } from '@gauzy/contracts';
+import { ID, ITimesheet, PermissionsEnum } from '@gauzy/contracts';
 import { TimeSheetService } from './timesheet.service';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
@@ -14,38 +14,44 @@ import { TimesheetSubmitCommand, TimesheetUpdateStatusCommand } from './commands
 @Permissions(PermissionsEnum.CAN_APPROVE_TIMESHEET)
 @Controller()
 export class TimeSheetController {
-	constructor(private readonly commandBus: CommandBus, private readonly timeSheetService: TimeSheetService) {}
+	constructor(private readonly _commandBus: CommandBus, private readonly _timeSheetService: TimeSheetService) {}
 
 	/**
-	 * GET timesheet counts in the same tenant
+	 * GET timesheet counts for the same tenant
+	 * This method retrieves the count of timesheets for a tenant, filtered by the provided query options.
 	 *
-	 * @param options
-	 * @returns
+	 * @param options - The query parameters for filtering timesheets, such as tenant ID, date range, employee ID, etc.
+	 * @returns Promise<number> - The count of timesheets matching the provided filters.
+	 * @throws HttpException - If an error occurs during query execution, it returns an HTTP 400 error with an error message.
 	 */
-	@ApiOperation({ summary: 'Get timesheet Count' })
+	@ApiOperation({ summary: 'Get timesheet count' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Get timesheet Count'
+		description: 'Timesheet count successfully retrieved'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, check the response body for more details'
 	})
 	@Get('/count')
 	@UseValidationPipe({ whitelist: true })
 	async getTimesheetCount(@Query() options: TimesheetQueryDTO): Promise<number> {
 		try {
-			return await this.timeSheetService.getTimeSheetCount(options);
+			// Return the timesheet count directly
+			return await this._timeSheetService.getTimeSheetCount(options);
 		} catch (error) {
-			throw new BadRequestException(error);
+			// Handle errors and throw an appropriate error response
+			throw new HttpException(`Error retrieving timesheet count: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
 
 	/**
 	 * UPDATE timesheet status
+	 * This method updates the status of a timesheet based on the data provided in the DTO.
 	 *
-	 * @param entity
-	 * @returns
+	 * @param entity - The DTO containing the updated status for the timesheet.
+	 * @returns Promise<ITimesheet[]> - The updated list of timesheets after applying the status changes.
+	 * @throws HttpException - If an error occurs during status update, it throws an HTTP 400 error.
 	 */
 	@ApiOperation({ summary: 'Update timesheet' })
 	@ApiResponse({
@@ -59,14 +65,16 @@ export class TimeSheetController {
 	@Put('/status')
 	@UseValidationPipe({ whitelist: true })
 	async updateTimesheetStatus(@Body() entity: UpdateTimesheetStatusDTO): Promise<ITimesheet[]> {
-		return await this.commandBus.execute(new TimesheetUpdateStatusCommand(entity));
+		return await this._commandBus.execute(new TimesheetUpdateStatusCommand(entity));
 	}
 
 	/**
 	 * UPDATE timesheet submit status
+	 * This method submits a timesheet by updating its submission status.
 	 *
-	 * @param entity
-	 * @returns
+	 * @param entity - The DTO containing the submission details for the timesheet.
+	 * @returns Promise<ITimesheet[]> - The updated list of timesheets after the submission.
+	 * @throws HttpException - If an error occurs during submission, it throws an HTTP 400 error.
 	 */
 	@ApiOperation({ summary: 'Submit timesheet' })
 	@ApiResponse({
@@ -80,14 +88,16 @@ export class TimeSheetController {
 	@Put('/submit')
 	@UseValidationPipe({ whitelist: true })
 	async submitTimeSheet(@Body() entity: SubmitTimesheetStatusDTO): Promise<ITimesheet[]> {
-		return await this.commandBus.execute(new TimesheetSubmitCommand(entity));
+		return await this._commandBus.execute(new TimesheetSubmitCommand(entity));
 	}
 
 	/**
-	 * GET all timesheet in same tenant
+	 * GET all timesheets in the same tenant
+	 * This method retrieves all timesheets for the same tenant based on the provided query options.
 	 *
-	 * @param options
-	 * @returns
+	 * @param options - The query parameters for filtering timesheets, such as tenant ID, date range, employee ID, etc.
+	 * @returns Promise<ITimesheet[]> - A list of timesheets matching the provided filters.
+	 * @throws HttpException - If an error occurs during query execution, it throws an HTTP 400 error with an error message.
 	 */
 	@ApiOperation({ summary: 'Get timesheet' })
 	@ApiResponse({
@@ -102,17 +112,20 @@ export class TimeSheetController {
 	@UseValidationPipe({ whitelist: true })
 	async get(@Query() options: TimesheetQueryDTO): Promise<ITimesheet[]> {
 		try {
-			return await this.timeSheetService.getTimeSheets(options);
+			return await this._timeSheetService.getTimeSheets(options);
 		} catch (error) {
-			throw new BadRequestException(error);
+			// Handle errors and throw an appropriate error response
+			throw new HttpException(`Error retrieving timesheets: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
 
 	/**
-	 * Find timesheet by id
+	 * Find timesheet by ID
+	 * This method retrieves a specific timesheet by its unique identifier.
 	 *
-	 * @param id
-	 * @returns
+	 * @param id - The UUID of the timesheet to retrieve.
+	 * @returns Promise<ITimesheet> - The timesheet with the specified ID.
+	 * @throws HttpException - If the timesheet with the specified ID is not found, it throws an HTTP 400 error.
 	 */
 	@ApiOperation({ summary: 'Find timesheet by id' })
 	@ApiResponse({
@@ -124,11 +137,7 @@ export class TimeSheetController {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/:id')
-	async findById(@Param('id', UUIDValidationPipe) id: ITimesheet['id']): Promise<ITimesheet> {
-		try {
-			return await this.timeSheetService.findOneByIdString(id);
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+	async findById(@Param('id', UUIDValidationPipe) id: ID): Promise<ITimesheet> {
+		return await this._timeSheetService.findOneByIdString(id);
 	}
 }
