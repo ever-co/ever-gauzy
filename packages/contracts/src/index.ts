@@ -120,6 +120,7 @@ export * from './task-related-issue-type.model';
 export * from './task-size.model';
 export * from './task-status.model';
 export * from './task-version.model';
+export * from './task-view.model';
 export * from './task.model';
 export * from './daily-plan.model';
 export * from './tenant.model';

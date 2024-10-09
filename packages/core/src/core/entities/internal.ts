@@ -134,6 +134,7 @@ export * from '../../tasks/sizes/size.entity';
 export * from '../../tasks/statuses/status.entity';
 export * from '../../tasks/task.entity';
 export * from '../../tasks/versions/version.entity';
+export * from '../../tasks/views/view.entity';
 export * from '../../tenant/tenant-setting/tenant-setting.entity';
 export * from '../../tenant/tenant.entity';
 export * from '../../time-off-policy/time-off-policy.entity';
