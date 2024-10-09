@@ -3088,10 +3088,10 @@
 	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Sélectionner un employé",
-		"SELECT_A_DATE": "Sélectionnez une date",
-		"SELECT_AN_ORGANIZATION": "Sélectionnez une organisation",
-		"SELECT_PROJECT": "Sélectionner le projet",
-		"SELECT_TEAM": "Sélectionner l'équipe"
+		"SELECT_A_DATE": "Sélectionner une date",
+		"SELECT_AN_ORGANIZATION": "Sélectionner une organisation",
+		"SELECT_PROJECT": "Sélectionner un projet",
+		"SELECT_TEAM": "Sélectionner une équipe"
 	},
 	"HEADER_TITLE": {
 		"FOR": "pour",

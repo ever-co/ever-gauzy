@@ -3084,11 +3084,11 @@
 		"TAGS": "العلامات"
 	},
 	"HEADER": {
-		"SELECT_EMPLOYEE": "اختر الموظف",
+		"SELECT_EMPLOYEE": "اختر موظف",
 		"SELECT_A_DATE": "اختر تاريخًا",
-		"SELECT_AN_ORGANIZATION": "اختر منظمة",
-		"SELECT_PROJECT": "اختر المشروع",
-		"SELECT_TEAM": "اختر الفريق"
+		"SELECT_AN_ORGANIZATION": "اختر مؤسسة",
+		"SELECT_PROJECT": "اختر مشروعًا",
+		"SELECT_TEAM": "اختر فريقًا"
 	},
 	"HEADER_TITLE": {
 		"FOR": "لـ",

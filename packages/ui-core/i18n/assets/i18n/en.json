@@ -406,8 +406,8 @@
 			"SELECT_SHARE_REQUEST_DATE": "Select request date",
 			"SELECT_SHARE_START_DATE": "Select start date",
 			"SELECT_SHARE_END_DATE": "Select end date",
-			"SELECT_EMPLOYEE": "Select employee",
-			"SELECT_TEAM": "Select team",
+			"SELECT_EMPLOYEE": "Select Employee",
+			"SELECT_TEAM": "Select Team",
 			"ENABLE_DISABLE_FUTURE_DATE": "Enable/Disable future dates",
 			"ALLOW_FUTURE_DATE": "Allow switching to future periods",
 			"REGISTRATION_DATE": "Registration Date",
@@ -3210,7 +3210,7 @@
 	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Select Employee",
-		"SELECT_A_DATE": "Select A date",
+		"SELECT_A_DATE": "Select A Date",
 		"SELECT_AN_ORGANIZATION": "Select An Organization",
 		"SELECT_PROJECT": "Select Project",
 		"SELECT_TEAM": "Select Team"
