@@ -237,30 +237,57 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@MultiORMColumn({ nullable: true, default: true })
 	invitesAllowed?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
 	show_income?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
 	show_profits?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
 	show_bonuses_paid?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
 	show_total_hours?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
 	show_minimum_project_size?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
 	show_projects_count?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
 	show_clients_count?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
 	show_clients?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
 	show_employees_count?: boolean;
 
