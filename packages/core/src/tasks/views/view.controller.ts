@@ -23,7 +23,7 @@ import { TaskViewService } from './view.service';
 import { CreateViewDTO, UpdateViewDTO } from './dto';
 import { TaskViewCreateCommand, TaskViewUpdateCommand } from './commands';
 
-@ApiTags('Comments')
+@ApiTags('Task views')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class TaskViewController extends CrudController<TaskView> {
