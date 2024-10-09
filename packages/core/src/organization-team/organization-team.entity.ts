@@ -19,6 +19,7 @@ import {
 	ITaskSize,
 	ITaskStatus,
 	ITaskVersion,
+	ITaskView,
 	IUser
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -41,6 +42,7 @@ import {
 	TaskSize,
 	TaskStatus,
 	TaskVersion,
+	TaskView,
 	TenantOrganizationBaseEntity,
 	User
 } from '../core/entities/internal';
@@ -255,6 +257,12 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	 */
 	@MultiORMOneToMany(() => TaskVersion, (it) => it.organizationTeam)
 	versions?: ITaskVersion[];
+
+	/**
+	 * Team views
+	 */
+	@MultiORMOneToMany(() => TaskView, (it) => it.organizationTeam)
+	views?: ITaskView[];
 
 	/**
 	 * Team Labels

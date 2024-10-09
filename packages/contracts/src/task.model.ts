@@ -2,7 +2,11 @@ import { IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel, ID
 import { IEmployee } from './employee.model';
 import { IInvoiceItem } from './invoice-item.model';
 import { IRelationalOrganizationProject } from './organization-projects.model';
-import { IOrganizationSprint, IOrganizationSprintTaskHistory } from './organization-sprint.model';
+import {
+	IOrganizationSprint,
+	IRelationalOrganizationSprint,
+	IOrganizationSprintTaskHistory
+} from './organization-sprint.model';
 import { IOrganizationTeam } from './organization-team.model';
 import { ITag } from './tag.model';
 import { IUser } from './user.model';
@@ -11,7 +15,10 @@ import { ITaskPriority, TaskPriorityEnum } from './task-priority.model';
 import { ITaskSize, TaskSizeEnum } from './task-size.model';
 import { IOrganizationProjectModule } from './organization-project-module.model';
 
-export interface ITask extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationProject {
+export interface ITask
+	extends IBasePerTenantAndOrganizationEntityModel,
+		IRelationalOrganizationProject,
+		IRelationalOrganizationSprint {
 	title: string;
 	number?: number;
 	public?: boolean;
@@ -27,8 +34,6 @@ export interface ITask extends IBasePerTenantAndOrganizationEntityModel, IRelati
 	invoiceItems?: IInvoiceItem[];
 	teams?: IOrganizationTeam[];
 	modules?: IOrganizationProjectModule[];
-	organizationSprint?: IOrganizationSprint;
-	organizationSprintId?: ID;
 	taskSprints?: IOrganizationSprint[];
 	taskSprintHistories?: IOrganizationSprintTaskHistory[];
 	creator?: IUser;
