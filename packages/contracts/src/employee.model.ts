@@ -282,3 +282,8 @@ export interface IEmployeeStoreState {
 export interface IEmployeeUpdateProfileStatus extends IBasePerTenantAndOrganizationEntityModel {
 	readonly isActive: boolean;
 }
+
+export interface IMemberEntityBased extends IBasePerTenantAndOrganizationEntityModel {
+	memberIds?: ID[]; // Members of the given entity
+	managerIds?: ID[]; // Managers of the given entity
+}
