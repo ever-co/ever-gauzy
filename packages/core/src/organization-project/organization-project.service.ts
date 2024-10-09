@@ -36,7 +36,6 @@ import {
 	TypeOrmOrganizationProjectEmployeeRepository,
 	TypeOrmOrganizationProjectRepository
 } from './repository';
-import { all } from 'axios';
 
 @FavoriteService(FavoriteEntityEnum.OrganizationProject)
 @Injectable()
