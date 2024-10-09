@@ -62,7 +62,6 @@ export class DateRangePickerBuilderService {
 	 * @param config - The new configuration to set.
 	 */
 	setDatePickerConfig(config: IDatePickerConfig) {
-		// If the provided config is not empty, merge it with the current config
 		if (isNotEmpty(config)) {
 			this._datePickerConfig$.next(config);
 		}
