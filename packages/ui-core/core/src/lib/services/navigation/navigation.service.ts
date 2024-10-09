@@ -8,9 +8,9 @@ import { isNotNullOrUndefinedOrEmpty } from '@gauzy/ui-core/common';
 })
 export class NavigationService {
 	constructor(
-		private readonly router: Router,
-		private readonly activatedRoute: ActivatedRoute,
-		private readonly location: Location
+		private readonly _router: Router,
+		private readonly _activatedRoute: ActivatedRoute,
+		private readonly _location: Location
 	) {}
 
 	/**
@@ -23,8 +23,8 @@ export class NavigationService {
 		queryParams: { [key: string]: string | string[] | boolean },
 		queryParamsHandling: QueryParamsHandling = 'merge'
 	): Promise<void> {
-		await this.router.navigate(route, {
-			relativeTo: this.activatedRoute,
+		await this._router.navigate(route, {
+			relativeTo: this._activatedRoute,
 			queryParams,
 			queryParamsHandling
 		});
@@ -40,7 +40,7 @@ export class NavigationService {
 		queryParams: { [key: string]: string | string[] | boolean },
 		queryParamsHandling: QueryParamsHandling = 'merge'
 	): Promise<void> {
-		const currentUrl = this.location.path();
+		const currentUrl = this._location.path();
 		const [currentUrlTree, currentQueryParamsString] = currentUrl.split('?'); // Split current URL to get the path and query params
 
 		let existingQueryParams: { [key: string]: string | string[] | boolean } = {};
@@ -84,7 +84,7 @@ export class NavigationService {
 		const newUrl = [currentUrlTree, queryParamsString].filter(Boolean).join('?'); // Combine current URL with updated query params
 
 		// Replace the browser's URL without triggering navigation
-		this.location.replaceState(newUrl);
+		this._location.replaceState(newUrl);
 	}
 
 	/**
