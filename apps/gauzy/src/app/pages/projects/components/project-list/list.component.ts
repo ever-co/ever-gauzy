@@ -32,6 +32,7 @@ import {
 	DateViewComponent,
 	DeleteConfirmationComponent,
 	EmployeesMergedTeamsComponent,
+	EmployeeWithLinksComponent,
 	PaginationFilterBaseComponent,
 	ProjectOrganizationComponent,
 	ProjectOrganizationEmployeesComponent,
@@ -247,6 +248,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 			resultMap: (project: IOrganizationProject) => {
 				return Object.assign({}, project, {
 					...this.privatePublicProjectMapper(project),
+					managers: project.members.filter((member) => member.isManager).map((item) => item.employee),
 					employeesMergedTeams: [
 						project.members.map((member: IOrganizationProjectEmployee) => member.employee)
 					]
@@ -417,6 +419,17 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 							instance.value = cell.getValue();
 						}
 					},
+					managers: {
+						title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MANAGERS'),
+						type: 'custom',
+						isFilterable: false,
+						renderComponent: EmployeeWithLinksComponent,
+						componentInitFunction: (instance: EmployeeWithLinksComponent, cell: Cell) => {
+							instance.rowData = cell.getRow().getData();
+							instance.value = cell.getRawValue();
+						}
+					},
+
 					employeesMergedTeams: {
 						title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.MEMBERS'),
 						type: 'custom',
