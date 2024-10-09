@@ -29,25 +29,9 @@
 										/>
 									</defs>
 									<g fill="none" fill-rule="evenodd">
-										<circle
-											cx="34"
-											cy="34"
-											r="34"
-											fill="#0091FF"
-											opacity=".3"
-										/>
-										<circle
-											cx="34"
-											cy="34"
-											r="26"
-											fill="#0091FF"
-											opacity=".9"
-										/>
-										<use
-											fill="#FFF"
-											fill-rule="nonzero"
-											xlink:href="#a"
-										/>
+										<circle cx="34" cy="34" r="34" fill="#0091FF" opacity=".3" />
+										<circle cx="34" cy="34" r="26" fill="#0091FF" opacity=".9" />
+										<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
 									</g>
 								</svg>
 								<div
@@ -64,89 +48,56 @@
 									(mouseenter)="hoverState = true"
 									(mouseleave)="hoverState = false"
 								/>
-								<div
-									*ngIf="!form || !form.get('imageUrl').value"
-									class="image"
-								>
-									<span
-										><i class="fas fa-image"></i>Add or Drop
-										Image</span
-									>
+								<div *ngIf="!form || !form.get('imageUrl').value" class="image">
+									<span><i class="fas fa-image"></i>Add or Drop Image</span>
 								</div>
 							</div>
 						</div>
 						<div class="project-form-container">
 							<div class="row">
 								<div class="form-group col-6">
-									<label for="name" class="label">{{
-										'FORM.PLACEHOLDERS.NAME' | translate
-									}}</label>
+									<label for="name" class="label">{{ 'FORM.PLACEHOLDERS.NAME' | translate }}</label>
 									<input
 										type="text"
 										#name
 										nbInput
 										fullWidth
 										formControlName="name"
-										[placeholder]="
-											'FORM.PLACEHOLDERS.NAME' | translate
-										"
+										[placeholder]="'FORM.PLACEHOLDERS.NAME' | translate"
 										id="name"
-										[status]="
-											FormHelpers.isInvalidControl(
-												form,
-												'name'
-											)
-												? 'danger'
-												: 'basic'
-										"
+										[status]="FormHelpers.isInvalidControl(form, 'name') ? 'danger' : 'basic'"
 									/>
 									<p class="caption status-danger" *ngIf="FormHelpers.isInvalidControl(form, 'name')">
 										{{ 'FORM.ERROR.PROJECT_NAME' | translate }}
 									</p>
 								</div>
 								<div class="form-group col-6">
-									<label for="code" class="label">{{
-										'FORM.PLACEHOLDERS.CODE' | translate
-									}}</label>
+									<label for="code" class="label">{{ 'FORM.PLACEHOLDERS.CODE' | translate }}</label>
 									<input
 										type="text"
 										#code
 										nbInput
 										fullWidth
 										formControlName="code"
-										[placeholder]="
-											'FORM.PLACEHOLDERS.CODE' | translate
-										"
+										[placeholder]="'FORM.PLACEHOLDERS.CODE' | translate"
 										id="code"
 									/>
 								</div>
 							</div>
 							<div class="row">
-								<div class="form-group col-12">
+								<div class="form-group col-6">
 									<label for="projectUrl" class="label">
-										{{
-											'FORM.LABELS.PROJECT_URL'
-												| translate
-										}}
+										{{ 'FORM.LABELS.PROJECT_URL' | translate }}
 									</label>
+
 									<input
 										type="text"
 										nbInput
 										fullWidth
-										placeholder="{{
-											'FORM.PLACEHOLDERS.PROJECT_URL'
-												| translate
-										}}"
+										placeholder="{{ 'FORM.PLACEHOLDERS.PROJECT_URL' | translate }}"
 										id="projectUrl"
 										formControlName="projectUrl"
-										[status]="
-											FormHelpers.isInvalidControl(
-												form,
-												'projectUrl'
-											)
-												? 'danger'
-												: 'basic'
-										"
+										[status]="FormHelpers.isInvalidControl(form, 'projectUrl') ? 'danger' : 'basic'"
 									/>
 									<div
 										class="caption status-danger position-absolute"
@@ -155,38 +106,32 @@
 										{{ 'FORM.ERROR.PROJECT_URL' | translate }}
 									</div>
 								</div>
+								<div class="form-group col-6">
+									<ga-employee-multi-select
+										[selectedEmployeeIds]="selectedManagerIds"
+										(selectedChange)="onManagersSelected($event)"
+										[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_MANAGERS' | translate"
+										[label]="'FORM.PLACEHOLDERS.ADD_REMOVE_MANAGERS' | translate"
+									></ga-employee-multi-select>
+								</div>
 							</div>
 							<div class="row">
 								<div class="form-group col-6">
-									<label for="owner" class="label">{{
-										'FORM.PLACEHOLDERS.OWNER' | translate
-									}}</label>
+									<label for="owner" class="label">{{ 'FORM.PLACEHOLDERS.OWNER' | translate }}</label>
 									<nb-select
 										fullWidth
-										placeholder="{{
-											'FORM.PLACEHOLDERS.OWNER'
-												| translate
-										}}"
+										placeholder="{{ 'FORM.PLACEHOLDERS.OWNER' | translate }}"
 										formControlName="owner"
 										id="owner"
-										(selectedChange)="
-											changeProjectOwner($event)
-										"
+										(selectedChange)="changeProjectOwner($event)"
 									>
-										<nb-option
-											*ngFor="let owner of owners"
-											[value]="owner"
-											>{{
-												'SM_TABLE.' + owner | translate
-											}}
+										<nb-option *ngFor="let owner of owners" [value]="owner"
+											>{{ 'SM_TABLE.' + owner | translate }}
 										</nb-option>
 									</nb-select>
 								</div>
 								<div class="form-group col-6">
-									<label
-										for="organizationContacts"
-										class="label"
-									>
+									<label for="organizationContacts" class="label">
 										{{ 'FORM.LABELS.CLIENTS' | translate }}
 									</label>
 									<ng-select
@@ -224,65 +169,37 @@
 							<div class="row">
 								<div class="form-group col-6">
 									<div class="w-75">
-										<label
-											for="start-date-project"
-											class="label"
-											>{{
-												'FORM.PLACEHOLDERS.START_DATE_PROJECT'
-													| translate
-											}}</label
-										>
+										<label for="start-date-project" class="label">{{
+											'FORM.PLACEHOLDERS.START_DATE_PROJECT' | translate
+										}}</label>
 										<input
 											[nbDatepicker]="startDate"
 											nbInput
 											fullWidth
 											formControlName="startDate"
-											placeholder="{{
-												'FORM.PLACEHOLDERS.START_DATE_PROJECT'
-													| translate
-											}}"
+											placeholder="{{ 'FORM.PLACEHOLDERS.START_DATE_PROJECT' | translate }}"
 											id="start-date-project"
 											[status]="
-												FormHelpers.isInvalidControl(
-													form,
-													'startDate'
-												)
-													? 'danger'
-													: 'basic'
+												FormHelpers.isInvalidControl(form, 'startDate') ? 'danger' : 'basic'
 											"
 										/>
-										<nb-datepicker
-											#startDate
-										></nb-datepicker>
+										<nb-datepicker #startDate></nb-datepicker>
 									</div>
 								</div>
 								<div class="form-group col-6">
 									<div class="w-75">
-										<label
-											for="end-date-project"
-											class="label"
-											>{{
-												'FORM.PLACEHOLDERS.END_DATE_PROJECT'
-													| translate
-											}}</label
-										>
+										<label for="end-date-project" class="label">{{
+											'FORM.PLACEHOLDERS.END_DATE_PROJECT' | translate
+										}}</label>
 										<input
 											[nbDatepicker]="endDate"
 											nbInput
 											fullWidth
 											formControlName="endDate"
-											placeholder="{{
-												'FORM.PLACEHOLDERS.END_DATE_PROJECT'
-													| translate
-											}}"
+											placeholder="{{ 'FORM.PLACEHOLDERS.END_DATE_PROJECT' | translate }}"
 											id="end-date-project"
 											[status]="
-												FormHelpers.isInvalidControl(
-													form,
-													'endDate'
-												)
-													? 'danger'
-													: 'basic'
+												FormHelpers.isInvalidControl(form, 'endDate') ? 'danger' : 'basic'
 											"
 										/>
 										<nb-datepicker #endDate></nb-datepicker>
@@ -292,22 +209,15 @@
 						</div>
 					</div>
 				</nb-tab>
-				<nb-tab
-					[tabTitle]="'ORGANIZATIONS_PAGE.DESCRIPTION' | translate"
-				>
+				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.DESCRIPTION' | translate">
 					<div class="row">
 						<div class="col-8">
 							<label
 								for="description"
 								class="label"
-								[innerHtml]="
-									'FORM.PLACEHOLDERS.DESCRIPTION' | translate
-								"
+								[innerHtml]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"
 							></label>
-							<ckeditor
-								formControlName="description"
-								[config]="ckConfig"
-							></ckeditor>
+							<ckeditor formControlName="description" [config]="ckConfig"></ckeditor>
 						</div>
 					</div>
 					<div class="row mt-3">
@@ -323,30 +233,20 @@
 				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.BILLING' | translate">
 					<div class="row">
 						<div class="form-group col-4">
-							<label for="billing" class="label">{{
-								'FORM.PLACEHOLDERS.BILLING' | translate
-							}}</label>
+							<label for="billing" class="label">{{ 'FORM.PLACEHOLDERS.BILLING' | translate }}</label>
 							<nb-select
 								fullWidth
-								placeholder="{{
-									'FORM.PLACEHOLDERS.BILLING' | translate
-								}}"
+								placeholder="{{ 'FORM.PLACEHOLDERS.BILLING' | translate }}"
 								formControlName="billing"
 								id="billing"
 							>
-								<nb-option
-									*ngFor="let billing of billings"
-									[value]="billing"
-								>
+								<nb-option *ngFor="let billing of billings" [value]="billing">
 									{{ 'SM_TABLE.' + billing | translate }}
 								</nb-option>
 							</nb-select>
 						</div>
 						<div class="col-4">
-							<ga-currency
-								formControlName="currency"
-								(optionChange)="currencyChanged($event)"
-							>
+							<ga-currency formControlName="currency" (optionChange)="currencyChanged($event)">
 							</ga-currency>
 						</div>
 					</div>
@@ -354,21 +254,14 @@
 				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.BUDGET' | translate">
 					<div class="row">
 						<div class="form-group col-4">
-							<label class="label">{{
-								'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate
-							}}</label>
+							<label class="label">{{ 'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate }}</label>
 							<nb-select
 								fullWidth
-								[placeholder]="
-									'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate
-								"
+								[placeholder]="'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate"
 								formControlName="budgetType"
 							>
 								<nb-option
-									*ngFor="
-										let budgetType of OrganizationProjectBudgetTypeEnum
-											| keyvalue
-									"
+									*ngFor="let budgetType of OrganizationProjectBudgetTypeEnum | keyvalue"
 									[value]="budgetType.value"
 								>
 									{{ budgetType.value | titlecase }}
@@ -377,51 +270,35 @@
 						</div>
 						<div
 							class="form-group col-4"
-							*ngIf="
-								form.controls.budgetType.value ===
-								OrganizationProjectBudgetTypeEnum.HOURS
-							"
+							*ngIf="form.controls.budgetType.value === OrganizationProjectBudgetTypeEnum.HOURS"
 						>
-							<label class="label">{{
-								'FORM.PLACEHOLDERS.HOURS' | translate
-							}}</label>
+							<label class="label">{{ 'FORM.PLACEHOLDERS.HOURS' | translate }}</label>
 							<input
 								nbInput
 								type="number"
 								[min]="0"
 								fullWidth
 								formControlName="budget"
-								[placeholder]="
-									'FORM.PLACEHOLDERS.HOURS' | translate
-								"
+								[placeholder]="'FORM.PLACEHOLDERS.HOURS' | translate"
 							/>
 						</div>
 						<div
 							class="form-group col-4"
-							*ngIf="
-								form.controls.budgetType.value ===
-								OrganizationProjectBudgetTypeEnum.COST
-							"
+							*ngIf="form.controls.budgetType.value === OrganizationProjectBudgetTypeEnum.COST"
 						>
-							<label class="label">{{
-								'FORM.PLACEHOLDERS.COST' | translate
-							}}</label>
+							<label class="label">{{ 'FORM.PLACEHOLDERS.COST' | translate }}</label>
 							<input
 								nbInput
 								type="number"
 								[min]="0"
 								fullWidth
 								formControlName="budget"
-								[placeholder]="
-									'FORM.PLACEHOLDERS.COST' | translate
-								"
+								[placeholder]="'FORM.PLACEHOLDERS.COST' | translate"
 							/>
 						</div>
 					</div>
 				</nb-tab>
-				<nb-tab
-					[tabTitle]="'ORGANIZATIONS_PAGE.OPEN_SOURCE' | translate"
-				>
+				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.OPEN_SOURCE' | translate">
 					<div class="row">
 						<div class="col-4 d-flex align-items-center">
 							<nb-toggle
@@ -432,21 +309,12 @@
 								(checkedChange)="toggleOpenSource($event)"
 								formControlName="openSource"
 							>
-								{{
-									'FORM.LABELS.IS_PROJECT_OPEN_SOURCE'
-										| translate
-								}}
+								{{ 'FORM.LABELS.IS_PROJECT_OPEN_SOURCE' | translate }}
 							</nb-toggle>
 						</div>
-						<div
-							*ngIf="form.get('openSource').value"
-							class="form-group col-4"
-						>
+						<div *ngIf="form.get('openSource').value" class="form-group col-4">
 							<label for="openSourceProjectUrl" class="label">
-								{{
-									'FORM.LABELS.OPEN_SOURCE_PROJECT_URL'
-										| translate
-								}}
+								{{ 'FORM.LABELS.OPEN_SOURCE_PROJECT_URL' | translate }}
 							</label>
 							<input
 								type="text"
@@ -456,12 +324,7 @@
 								id="openSourceProjectUrl"
 								formControlName="openSourceProjectUrl"
 								[status]="
-									FormHelpers.isInvalidControl(
-										form,
-										'openSourceProjectUrl'
-									)
-										? 'danger'
-										: 'basic'
+									FormHelpers.isInvalidControl(form, 'openSourceProjectUrl') ? 'danger' : 'basic'
 								"
 							/>
 							<div
@@ -474,45 +337,29 @@
 					</div>
 				</nb-tab>
 				<nb-tab
-					*ngIf="
-						form.get('taskListType').value ==
-							TaskListTypeEnum.SPRINT && project
-					"
+					*ngIf="form.get('taskListType').value == TaskListTypeEnum.SPRINT && project"
 					[tabTitle]="'ORGANIZATIONS_PAGE.SPRINTS' | translate"
 				>
-					<ngx-tasks-sprint-settings-view
-						[project]="project"
-					></ngx-tasks-sprint-settings-view>
+					<ngx-tasks-sprint-settings-view [project]="project"></ngx-tasks-sprint-settings-view>
 				</nb-tab>
-				<nb-tab
-					[tabTitle]="'ORGANIZATIONS_PAGE.SETTINGS' | translate"
-					[style.minHeight]="'330px'"
-				>
+				<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.SETTINGS' | translate" [style.minHeight]="'330px'">
 					<div class="row">
 						<div class="form-group col-3">
-							<label for="color" class="label">{{
-								'FORM.PLACEHOLDERS.COLOR' | translate
-							}}</label>
+							<label for="color" class="label">{{ 'FORM.PLACEHOLDERS.COLOR' | translate }}</label>
 
 							<input
 								type="text"
 								nbInput
 								fullWidth
 								formControlName="color"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.COLOR' | translate
-								}}"
+								placeholder="{{ 'FORM.PLACEHOLDERS.COLOR' | translate }}"
 								id="color"
 								[colorPicker]="form.get('color').value"
-								[style.background-color]="
-									form.get('color').value + ' !important'
-								"
+								[style.background-color]="form.get('color').value + ' !important'"
 								[style.color]="'#fff'"
 								autocomplete-off
 								[value]="form.get('color').value"
-								(colorPickerChange)="
-									form.get('color').setValue($event)
-								"
+								(colorPickerChange)="form.get('color').setValue($event)"
 							/>
 						</div>
 						<div class="form-group col-3">
@@ -521,18 +368,11 @@
 							}}</label>
 							<nb-select
 								fullWidth
-								placeholder="{{
-									'FORM.PLACEHOLDERS.TASK_VIEW_MODE'
-										| translate
-								}}"
+								placeholder="{{ 'FORM.PLACEHOLDERS.TASK_VIEW_MODE' | translate }}"
 								formControlName="taskListType"
 								id="taskListType"
 							>
-								<nb-option
-									*ngFor="let mode of taskViewModeTypes"
-									[value]="mode"
-									>{{ mode }}
-								</nb-option>
+								<nb-option *ngFor="let mode of taskViewModeTypes" [value]="mode">{{ mode }} </nb-option>
 							</nb-select>
 						</div>
 					</div>
@@ -546,10 +386,7 @@
 								[checked]="form.get('public').value"
 								formControlName="public"
 								(checkedChange)="togglePublic($event)"
-								>{{
-									'FORM.PLACEHOLDERS.SWITCH_PROJECT_STATE'
-										| translate
-								}}</nb-toggle
+								>{{ 'FORM.PLACEHOLDERS.SWITCH_PROJECT_STATE' | translate }}</nb-toggle
 							>
 						</div>
 						<div class="col-2 d-flex align-items-center">
@@ -561,9 +398,7 @@
 								[checked]="form.get('billable').value"
 								formControlName="billable"
 								(checkedChange)="toggleBillable($event)"
-								>{{
-									'FORM.PLACEHOLDERS.BILLABLE' | translate
-								}}</nb-toggle
+								>{{ 'FORM.PLACEHOLDERS.BILLABLE' | translate }}</nb-toggle
 							>
 						</div>
 					</div>
@@ -579,7 +414,7 @@
 											height="70px"
 											[src]="integration.integration.fullImgUrl"
 											[alt]="[integration.integration.title]"
-											[title]="integration.integration.name | replace: '_':' '"
+											[title]="integration.integration.name | replace : '_' : ' '"
 										/>
 									</div>
 								</div>
@@ -595,7 +430,6 @@
 							</div>
 						</div>
 					</div>
-
 				</nb-tab>
 				<nb-tab *ngIf="integration" [tabTitle]="'ORGANIZATIONS_PAGE.AUTOMATION' | translate">
 					<form [formGroup]="projectSettingForm">
@@ -663,22 +497,10 @@
 
 <ng-template #actionButtons>
 	<div class="form-group action-buttons">
-		<button
-			class="mr-3"
-			(click)="navigateToCancelProject()"
-			nbButton
-			status="basic"
-			outline
-		>
+		<button class="mr-3" (click)="navigateToCancelProject()" nbButton status="basic" outline>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button
-			class="mr-3"
-			nbButton
-			status="success"
-			[disabled]="form.invalid"
-			(click)="onSubmit()"
-		>
+		<button class="mr-3" nbButton status="success" [disabled]="form.invalid" (click)="onSubmit()">
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 		<ng-template [ngIf]="project">
