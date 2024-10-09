@@ -63,7 +63,7 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 		const { memberIds = [], managerIds = [], organizationId, ...entity } = input;
 
 		try {
-			// If the current employee creates the sprint, defailt add him as a manager
+			// If the current employee creates the sprint, default add him as a manager
 			try {
 				// Check if the current role is EMPLOYEE
 				await this._roleService.findOneByIdString(currentRoleId, { where: { name: RolesEnum.EMPLOYEE } });
@@ -78,7 +78,7 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 			// Combine memberIds and managerIds into a single array.
 			const employeeIds = [...memberIds, ...managerIds].filter(Boolean);
 
-			// Retrive a collection of employees based on specified criteria.
+			// Retrieve a collection of employees based on specified criteria.
 			const employees = await this._employeeService.findActiveEmployeesByEmployeeIds(
 				employeeIds,
 				organizationId,
@@ -90,7 +90,7 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 				name: RolesEnum.MANAGER
 			});
 
-			// Create a Set for faster mambership checks
+			// Create a Set for faster membership checks
 			const managerIdsSet = new Set(managerIds);
 
 			// Use destructuring to directly extract 'id' from 'employee'
@@ -161,7 +161,7 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 		const { memberIds = [], managerIds = [], organizationId, projectId } = input;
 
 		try {
-			// Seaech for existing Organization Sprint
+			// Search for existing Organization Sprint
 			let organizationSprint = await super.findOneByIdString(id, {
 				where: { organizationId, tenantId, projectId },
 				relations: {
@@ -185,7 +185,7 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 				// Update nested entity (Organization Sprint Members)
 				await this.updateOrganizationSprintMembers(id, organizationId, sprintMembers, managerIds, memberIds);
 
-				// Update the organization sprint with the prepapred members
+				// Update the organization sprint with the prepared members
 				const { id: organizationSprintId } = organizationSprint;
 				const updatedSprint = await super.create({
 					...input,
@@ -293,7 +293,7 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 
 		// Separate members into removed, updated and new members
 		const removedMembers = sprintMembers.filter((member) => !membersToUpdate.has(member.employeeId));
-		const updatedmembers = sprintMembers.filter((member) => membersToUpdate.has(member.employeeId));
+		const updatedMembers = sprintMembers.filter((member) => membersToUpdate.has(member.employeeId));
 		const newMembers = employees.filter((employee) => !existingMemberMap.has(employee.id));
 
 		// 1. Remove members who are no longer assigned to the sprint
@@ -303,7 +303,7 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 
 		// 2. Update roles for existing members where necessary.
 		await Promise.all(
-			updatedmembers.map(async (member) => {
+			updatedMembers.map(async (member) => {
 				const isManager = managerIds.includes(member.employeeId);
 				const newRole = isManager ? managerRole : null;
 
