@@ -1189,7 +1189,8 @@
 			"DAILY_TIME_AND_ACTIVITY": "Il n'y a pas encore de temps et d'activité enregistrés pour cette journée. Veuillez utiliser l'application Gauzy Desktop Timer App <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">ici</a>.",
 			"PROJECT_BUDGET": "Vous n'avez créé aucun projet avec un budget.",
 			"CLIENT_BUDGET": "Vous n'avez créé aucun client avec un budget."
-		}
+		},
+		"STANDARD_WORK_HOURS": "Heures de travail standard ({{hours}})"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Applications et intégrations disponibles",

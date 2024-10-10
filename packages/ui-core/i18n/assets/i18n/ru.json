@@ -1196,7 +1196,8 @@
 			"DAILY_TIME_AND_ACTIVITY": "В этот день еще не отслеживается время и активность. Пожалуйста, используйте <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>.",
 			"PROJECT_BUDGET": "Вы не создали ни одного проекта с бюджетом.",
 			"CLIENT_BUDGET": "Вы не создали ни одного клиента с бюджетом."
-		}
+		},
+		"STANDARD_WORK_HOURS": "Стандартные рабочие часы ({{hours}})"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Доступные приложения и интеграции",

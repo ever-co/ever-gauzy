@@ -1190,7 +1190,8 @@
 			"DAILY_TIME_AND_ACTIVITY": "Todavía no se ha registrado el tiempo y la actividad de este día. Por favor, utiliza la <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Aplicación de Temporizador de Gauzy para Escritorio</a>.",
 			"PROJECT_BUDGET": "No has creado ningún proyecto con presupuesto.",
 			"CLIENT_BUDGET": "No has creado ningún cliente con presupuesto."
-		}
+		},
+		"STANDARD_WORK_HOURS": "Horas de trabajo estándar ({{hours}})"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Aplicaciones y integraciones disponibles",
