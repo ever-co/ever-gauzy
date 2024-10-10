@@ -147,6 +147,22 @@ export class TaskController extends CrudController<Task> {
 	}
 
 	/**
+	 * GET view tasks
+	 *
+	 * @param params The filter options for retrieving view tasks.
+	 * @returns A paginated list of tasks by view filters.
+	 */
+	@ApiOperation({ summary: 'Get tasks by view query filter.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Tasks retrieved successfully.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No records found.' })
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
+	@Get('/view/:id')
+	@UseValidationPipe({ transform: true })
+	async findTasksByViewQuery(@Param('id', UUIDValidationPipe) viewId: ID): Promise<IPagination<ITask>> {
+		return this.taskService.findTasksByViewQuery(viewId);
+	}
+
+	/**
 	 * GET task by ID
 	 *
 	 * @param id The ID of the task.

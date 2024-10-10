@@ -1,9 +1,9 @@
-import { IIssueType } from '@gauzy/contracts';
+import { IIssueType, TaskTypeEnum } from '@gauzy/contracts';
 
 export const DEFAULT_GLOBAL_ISSUE_TYPES: IIssueType[] = [
 	{
 		name: 'Bug',
-		value: 'bug',
+		value: TaskTypeEnum.BUG,
 		description:
 			'A "bug type issue" typically refers to a specific type of technical issue that occurs in software development',
 		icon: 'task-issue-types/bug.svg',
@@ -13,7 +13,7 @@ export const DEFAULT_GLOBAL_ISSUE_TYPES: IIssueType[] = [
 	},
 	{
 		name: 'Story',
-		value: 'story',
+		value: TaskTypeEnum.STORY,
 		description:
 			'A "story (or user story) type issue" typically refers to an issue related to a user story in software development.',
 		icon: 'task-issue-types/note.svg',
@@ -23,7 +23,7 @@ export const DEFAULT_GLOBAL_ISSUE_TYPES: IIssueType[] = [
 	},
 	{
 		name: 'Task',
-		value: 'task',
+		value: TaskTypeEnum.TASK,
 		description: 'A "task type issue" typically refers to an issue related to a specific task within a project.',
 		icon: 'task-issue-types/task-square.svg',
 		color: '#5483BA',
@@ -32,7 +32,7 @@ export const DEFAULT_GLOBAL_ISSUE_TYPES: IIssueType[] = [
 	},
 	{
 		name: 'Epic',
-		value: 'epic',
+		value: TaskTypeEnum.EPIC,
 		description: 'An "epic type issue" typically refers to an issue related to an Epic in software development.',
 		icon: 'task-issue-types/category.svg',
 		color: '#8154BA',
