@@ -1,6 +1,16 @@
 import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
-import { IsNull, SelectQueryBuilder, Brackets, WhereExpressionBuilder, Raw, In } from 'typeorm';
+import {
+	IsNull,
+	SelectQueryBuilder,
+	Brackets,
+	WhereExpressionBuilder,
+	Raw,
+	In,
+	FindOptionsWhere,
+	Between,
+	FindManyOptions
+} from 'typeorm';
 import { isBoolean, isUUID } from 'class-validator';
 import {
 	ActionTypeEnum,
@@ -9,6 +19,7 @@ import {
 	ID,
 	IEmployee,
 	IGetTaskOptions,
+	IGetTasksByViewFilters,
 	IPagination,
 	ITask,
 	ITaskUpdateInput,
@@ -727,6 +738,77 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		} catch (error) {
 			console.log('Error while retrieving module tasks', error);
 			throw new BadRequestException(error);
+		}
+	}
+
+	/**
+	 * @description Get tasks by views query
+	 * @param {IGetTasksByViewFilters} query - View query filters
+	 * @returns {Promise<IPagination<ITask>>} A Promise resolved to paginated found tasks and total matching query filters
+	 * @memberof TaskService
+	 */
+	async findTasksByViewQuery(query: IGetTasksByViewFilters): Promise<IPagination<ITask>> {
+		try {
+			const {
+				projects = [],
+				teams = [],
+				members = [],
+				modules = [],
+				sprints = [],
+				statusIds = [],
+				statuses = [],
+				priorityIds = [],
+				priorities = [],
+				sizeIds = [],
+				sizes = [],
+				tags = [],
+				types = [],
+				creators = [],
+				startDates = [],
+				dueDates = [],
+				relations = []
+			} = query;
+
+			// Calculate min and max dates only if arrays are not empty
+			const getMinMaxDates = (dates: Date[]) =>
+				dates.length
+					? [
+							new Date(Math.min(...dates.map((date) => new Date(date).getTime()))),
+							new Date(Math.max(...dates.map((date) => new Date(date).getTime())))
+					  ]
+					: [undefined, undefined];
+
+			const [minStartDate, maxStartDate] = getMinMaxDates(startDates);
+			const [minDueDate, maxDueDate] = getMinMaxDates(dueDates);
+
+			// Build the 'where' condition
+			const where: FindOptionsWhere<Task> = {
+				...(projects && { projectId: In(projects) }),
+				...(teams && { teams: { id: In(teams) } }),
+				...(members && { members: { id: In(members) } }),
+				...(modules && { modules: { id: In(modules) } }),
+				...(sprints && { organizationSprintId: In(sprints) }),
+				...(statusIds && { taskStatusId: In(statusIds) }),
+				...(statuses && { status: In(statuses) }),
+				...(priorityIds && { taskPriorityId: In(priorityIds) }),
+				...(priorities && { priority: In(priorities) }),
+				...(sizeIds && { taskSizeId: In(sizeIds) }),
+				...(sizes && { size: In(sizes) }),
+				...(tags && { tags: { id: In(tags) } }),
+				...(types && { types: In(types) }),
+				...(creators && { creatorId: In(creators) }),
+				...(minStartDate && maxStartDate && { startDate: Between(minStartDate, maxStartDate) }),
+				...(minDueDate && maxDueDate && { dueDate: Between(minDueDate, maxDueDate) })
+			};
+
+			// Define find options
+			const findOptions: FindManyOptions<Task> = { where, ...(relations && { relations }) };
+
+			// Retrieve tasks using base class method
+			return await super.findAll(findOptions);
+		} catch (error) {
+			console.error(`Error while retrieve view tasks: ${error.message}`, error.message);
+			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
 		}
 	}
 }

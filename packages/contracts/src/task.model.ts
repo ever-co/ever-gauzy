@@ -97,4 +97,7 @@ export interface IGetTasksByViewFilters {
 	startDates?: Date[];
 	dueDates?: Date[];
 	creators?: ID[];
+
+	// Relations
+	relations?: any[];
 }

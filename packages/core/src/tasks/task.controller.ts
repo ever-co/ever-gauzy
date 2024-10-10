@@ -23,7 +23,7 @@ import { CrudController, PaginationParams } from './../core/crud';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskCreateCommand, TaskUpdateCommand } from './commands';
-import { CreateTaskDTO, GetTaskByIdDTO, TaskMaxNumberQueryDTO, UpdateTaskDTO } from './dto';
+import { CreateTaskDTO, GetTaskByIdDTO, GetTasksByViewFiltersDTO, TaskMaxNumberQueryDTO, UpdateTaskDTO } from './dto';
 
 @ApiTags('Tasks')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -144,6 +144,22 @@ export class TaskController extends CrudController<Task> {
 	@UseValidationPipe({ transform: true })
 	async findModuleTasks(@Query() params: PaginationParams<Task>): Promise<IPagination<ITask>> {
 		return this.taskService.findModuleTasks(params);
+	}
+
+	/**
+	 * GET view tasks
+	 *
+	 * @param params The filter options for retrieving view tasks.
+	 * @returns A paginated list of tasks by view filters.
+	 */
+	@ApiOperation({ summary: 'Get tasks by view query filter.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Tasks retrieved successfully.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No records found.' })
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
+	@Get('/view')
+	@UseValidationPipe({ transform: true })
+	async findTasksByViewQuery(@Query() params: GetTasksByViewFiltersDTO): Promise<IPagination<ITask>> {
+		return this.taskService.findTasksByViewQuery(params);
 	}
 
 	/**

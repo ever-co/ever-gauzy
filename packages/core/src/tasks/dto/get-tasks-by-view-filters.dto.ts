@@ -98,4 +98,10 @@ export class GetTasksByViewFiltersDTO implements IGetTasksByViewFilters {
 	@IsArray()
 	@IsUUID('all', { each: true })
 	creators?: ID[] = [];
+
+	// Defined Relations
+	@ApiPropertyOptional({ type: Array })
+	@IsOptional()
+	@IsArray()
+	relations?: any[];
 }
