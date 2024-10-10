@@ -105,13 +105,28 @@ export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent i
 		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
+
+		// Clear previous data if necessary
+		this.dailyData = [];
+
+		// Set loading to true before the request
 		this.loading = true;
+
 		try {
+			// Get the current payloads from the observable
 			const payloads = this.payloads$.getValue();
-			this.dailyData = (await this.activityService.getDailyActivitiesReport(payloads)) as IReportDayData[];
+
+			// Fetch new activities report
+			const newReportData = await this.activityService.getDailyActivitiesReport(payloads);
+
+			// Update dailyData with the newly fetched report
+			this.dailyData = newReportData as IReportDayData[];
 		} catch (error) {
+			// Log the error and optionally notify the user
 			console.error('Error while retrieving daily activities report', error);
+			// Optionally: this.notificationService.showError('Failed to load daily activities report.');
 		} finally {
+			// Ensure loading is set to false after completion
 			this.loading = false;
 		}
 	}
