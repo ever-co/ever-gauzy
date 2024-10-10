@@ -79,3 +79,22 @@ export interface ITaskUpdateInput extends ITaskCreateInput {
 export interface IGetTaskById {
 	includeRootEpic?: boolean;
 }
+
+export interface IGetTasksByViewFilters {
+	projects?: ID[];
+	teams?: ID[];
+	modules?: ID[];
+	sprints?: ID[];
+	members?: ID[];
+	tags?: ID[];
+	statusIds?: ID[];
+	statuses?: TaskStatusEnum[];
+	priorityIds?: ID[];
+	priorities?: TaskPriorityEnum[];
+	sizeIds?: ID[];
+	sizes?: TaskSizeEnum[];
+	types?: string[];
+	startDates?: Date[];
+	dueDates?: Date[];
+	creators?: ID[];
+}
