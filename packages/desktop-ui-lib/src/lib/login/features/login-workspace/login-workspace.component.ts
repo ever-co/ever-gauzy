@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { NavigationExtras, Router } from '@angular/router';
 import { HttpStatus, IAuthResponse, IUser, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { asyncScheduler, catchError, EMPTY, filter, tap } from 'rxjs';
@@ -12,13 +13,14 @@ import { ErrorHandlerService, Store, TimeTrackerDateManager } from '../../../ser
 	templateUrl: './login-workspace.component.html',
 	styleUrls: ['./login-workspace.component.scss']
 })
-export class NgxLoginWorkspaceComponent {
+export class NgxLoginWorkspaceComponent implements OnInit {
 	public confirmedEmail: string;
 	public totalWorkspaces: number;
 	public showPopup: boolean = false;
 	public loading: boolean = false; // Flag to indicate if data loading is in progress
 	public workspaces: IWorkspaceResponse[] = []; // Array of workspace users
 	public showPassword = false;
+	private state: NavigationExtras['state'];
 
 	/** The FormGroup for the sign-in form */
 	public form: FormGroup = NgxLoginWorkspaceComponent.buildForm(this._fb);
@@ -40,8 +42,16 @@ export class NgxLoginWorkspaceComponent {
 		private readonly _store: Store,
 		private readonly _fb: FormBuilder,
 		private readonly _authService: AuthService,
-		private readonly _errorHandlingService: ErrorHandlerService
-	) {}
+		private readonly _errorHandlingService: ErrorHandlerService,
+		private readonly _router: Router
+	) {
+		const navigation = this._router.getCurrentNavigation();
+		this.state = navigation?.extras?.state as { email: string; password: string };
+	}
+
+	ngOnInit(): void {
+		this.handleWorkspaceNavigation();
+	}
 
 	/**
 	 * Handle the form submission.
@@ -152,5 +162,13 @@ export class NgxLoginWorkspaceComponent {
 
 	public get email() {
 		return this.form.get('email');
+	}
+
+	private handleWorkspaceNavigation(): void {
+		if (this.state) {
+			if (!this.state.email || !this.state.password) return;
+			this.form.patchValue(this.state);
+			this.onSubmit();
+		}
 	}
 }
