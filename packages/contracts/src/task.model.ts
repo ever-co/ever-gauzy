@@ -99,5 +99,5 @@ export interface IGetTasksByViewFilters extends IBasePerTenantAndOrganizationEnt
 	creators?: ID[];
 
 	// Relations
-	relations?: any[];
+	relations?: string[];
 }

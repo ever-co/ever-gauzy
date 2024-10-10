@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, RelationId } from 'typeorm';
-import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-import { ID, IImageAsset, IIssueType, IOrganizationProject, IOrganizationTeam } from '@gauzy/contracts';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { ID, IImageAsset, IIssueType, IOrganizationProject, IOrganizationTeam, TaskTypeEnum } from '@gauzy/contracts';
 import {
 	ImageAsset,
 	OrganizationProject,
@@ -26,10 +26,11 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	@MultiORMColumn()
 	name: string;
 
-	@ApiProperty({ type: () => String })
+	@ApiProperty({ type: () => String, enum: TaskTypeEnum })
+	@IsEnum(TaskTypeEnum)
 	@ColumnIndex()
 	@MultiORMColumn()
-	value: string;
+	value: TaskTypeEnum;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

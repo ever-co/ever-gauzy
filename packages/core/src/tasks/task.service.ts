@@ -753,16 +753,22 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		const tenantId = RequestContext.currentTenantId();
 		try {
 			// Retrieve Task View by ID for getting their pre-defined query params
-			const taskView = await this.typeOrmTaskViewRepository.findOne({ where: { id: viewId } });
+			const taskView = await this.typeOrmTaskViewRepository.findOne({ where: { id: viewId, tenantId } });
 			if (!taskView) {
 				throw new HttpException('View not found', HttpStatus.NOT_FOUND);
 			}
 
 			// Extract `queryParams` from the view
 			const queryParams = taskView.queryParams;
-			const viewFilters = isSqlite()
-				? (JSON.parse(queryParams as string) as IGetTasksByViewFilters)
-				: (queryParams as IGetTasksByViewFilters) || {};
+			let viewFilters: IGetTasksByViewFilters = {};
+
+			try {
+				viewFilters = isSqlite()
+					? (JSON.parse(queryParams as string) as IGetTasksByViewFilters)
+					: (queryParams as IGetTasksByViewFilters) || {};
+			} catch (error) {
+				throw new HttpException('Invalid query parameters in task view', HttpStatus.BAD_REQUEST);
+			}
 
 			// Extract filters
 			const {
@@ -790,8 +796,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const getMinMaxDates = (dates: Date[]) =>
 				dates.length
 					? [
-							new Date(Math.min(...dates.map((date) => new Date(date).getTime()))),
-							new Date(Math.max(...dates.map((date) => new Date(date).getTime())))
+							new Date(
+								Math.min(
+									...dates.map((date) => new Date(date).getTime()).filter((time) => !isNaN(time))
+								)
+							),
+							new Date(
+								Math.max(
+									...dates.map((date) => new Date(date).getTime()).filter((time) => !isNaN(time))
+								)
+							)
 					  ]
 					: [undefined, undefined];
 
