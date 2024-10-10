@@ -5,6 +5,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pluck, pick } from 'underscore';
 import * as randomColor from 'randomcolor';
+import { IGetTimeLogReportInput, ITimeLogFilters, ReportDayData } from '@gauzy/contracts';
 import {
 	DateRangePickerBuilderService,
 	moment,
@@ -12,7 +13,6 @@ import {
 	TimesheetFilterService,
 	TimesheetService
 } from '@gauzy/ui-core/core';
-import { IGetTimeLogReportInput, ITimeLogFilters, ReportDayData } from '@gauzy/contracts';
 import { distinctUntilChange, isEmpty, progressStatus } from '@gauzy/ui-core/common';
 import {
 	BaseSelectorFilterComponent,
