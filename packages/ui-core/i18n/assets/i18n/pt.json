@@ -468,7 +468,8 @@
 			"UPWORK_ORGANIZATION_ID": "ID da Organização Upwork",
 			"UPWORK_ORGANIZATION_NAME": "Nome da Organização Upwork",
 			"UPWORK_ID": "ID do Upwork",
-			"LINKEDIN_ID": "ID do LinkedIn"
+			"LINKEDIN_ID": "ID do LinkedIn",
+			"STANDARD_WORK_HOURS_PER_DAY": "Horas de trabalho padrão por dia"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Nome",
@@ -654,7 +655,8 @@
 			"UPWORK_ORGANIZATION_ID": "Identificação da Organização Upwork",
 			"UPWORK_ORGANIZATION_NAME": "Nome da organização Upwork",
 			"UPWORK_ID": "ID Upwork",
-			"LINKEDIN_ID": "ID do LinkedIn"
+			"LINKEDIN_ID": "ID do LinkedIn",
+			"STANDARD_WORK_HOURS_PER_DAY": "Insira o número de horas de trabalho padrão por dia (ex: 8)"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Taxa de inadimplência",
@@ -1978,7 +1980,8 @@
 					"ENABLE_DETECTION_INACTIVITY_INFO": "Ativado - o sistema detectará a inatividade e exibirá um aviso. Desativado - nenhum aviso será exibido quando um funcionário estiver inativo.",
 					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
 					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
-					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking."
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking.",
+					"STANDARD_WORK_HOURS_PER_DAY": "Selecione o número padrão de horas de trabalho por dia. Esse valor será usado em relatórios de controle de tempo para comparar quantas horas um funcionário trabalhou em relação a esse padrão."
 				}
 			},
 			"TEAMS_PAGE": {
