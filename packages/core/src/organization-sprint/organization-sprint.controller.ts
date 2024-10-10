@@ -85,7 +85,7 @@ export class OrganizationSprintController extends CrudController<OrganizationSpr
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
-	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_SPRINT_EDIT)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_SPRINT_ADD)
 	@UseValidationPipe()
 	@Post()
 	async create(@Body() entity: CreateOrganizationSprintDTO): Promise<IOrganizationSprint> {
@@ -123,7 +123,7 @@ export class OrganizationSprintController extends CrudController<OrganizationSpr
 		return this.commandBus.execute(new OrganizationSprintUpdateCommand(id, entity));
 	}
 
-	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_SPRINT_EDIT)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_SPRINT_DELETE)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
 		return await this.organizationSprintService.delete(id);
