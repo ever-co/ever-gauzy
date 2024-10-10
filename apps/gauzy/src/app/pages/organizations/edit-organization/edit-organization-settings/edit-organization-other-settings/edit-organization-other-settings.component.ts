@@ -431,9 +431,10 @@ export class EditOrganizationOtherSettingsComponent
 			return;
 		}
 
+		// Extract organization ID and update organization settings
+		const { id: organizationId, name } = this.organization;
+
 		try {
-			// Extract organization ID and update organization settings
-			const { id: organizationId, name } = this.organization;
 			const organization: IOrganization = await this._organizationService.update(organizationId, this.form.value);
 
 			// Update the organization in the store
