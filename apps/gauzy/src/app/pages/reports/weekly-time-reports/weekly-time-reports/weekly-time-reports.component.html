@@ -32,8 +32,12 @@
 			<div class="daily-time-report">
 				<div class="daily-time-report">
 					<nb-card>
-						<nb-card-body class="chart">
-							<ngx-line-chart [data]="charts"></ngx-line-chart>
+						<nb-card-body class="chart" *ngIf="organization">
+							<ngx-line-chart
+								[data]="charts"
+								[standardWorkHours]="organization?.standardWorkHoursPerDay"
+								[enableAnnotations]="true"
+							></ngx-line-chart>
 						</nb-card-body>
 					</nb-card>
 				</div>

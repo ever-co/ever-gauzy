@@ -1,26 +1,27 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, RelationId } from 'typeorm';
-import { IsOptional, IsUUID } from 'class-validator';
+import { IsNumber, IsOptional, IsUUID, Max, Min } from 'class-validator';
 import {
 	ITenant,
 	IOrganization,
 	IRolePermission,
 	IFeatureOrganization,
+	DEFAULT_STANDARD_WORK_HOURS_PER_DAY,
+	ID,
 	IImageAsset
 } from '@gauzy/contracts';
+import { BaseEntity, FeatureOrganization, ImageAsset, Organization, RolePermission } from '../core/entities/internal';
 import {
-	BaseEntity,
-	FeatureOrganization,
-	ImageAsset,
-	Organization,
-	RolePermission
-} from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToOne,
+	MultiORMOneToMany
+} from './../core/decorators/entity';
 import { MikroOrmTenantRepository } from './repository/mikro-orm-tenant.repository';
 
 @MultiORMEntity('tenant', { mikroOrmRepository: () => MikroOrmTenantRepository })
 export class Tenant extends BaseEntity implements ITenant {
-
 	@ApiProperty({ type: () => String })
 	@ColumnIndex()
 	@MultiORMColumn()
@@ -29,6 +30,22 @@ export class Tenant extends BaseEntity implements ITenant {
 	@ApiPropertyOptional({ type: () => String })
 	@MultiORMColumn({ nullable: true })
 	logo?: string;
+
+	/**
+	 * Standard work hours per day for the tenant.
+	 */
+	@ApiPropertyOptional({
+		type: () => Number,
+		description: 'Standard work hours per day for the tenant',
+		minimum: 1,
+		maximum: 24
+	})
+	@IsOptional()
+	@IsNumber()
+	@Max(24, { message: 'Standard work hours per day cannot exceed 24 hours' })
+	@Min(1, { message: 'Standard work hours per day must be at least 1 hour' })
+	@MultiORMColumn({ nullable: true, default: DEFAULT_STANDARD_WORK_HOURS_PER_DAY })
+	standardWorkHoursPerDay?: number;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -50,7 +67,7 @@ export class Tenant extends BaseEntity implements ITenant {
 		eager: true
 	})
 	@JoinColumn()
-	image?: ImageAsset;
+	image?: IImageAsset;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
@@ -58,7 +75,7 @@ export class Tenant extends BaseEntity implements ITenant {
 	@RelationId((it: Tenant) => it.image)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	imageId?: IImageAsset['id'];
+	imageId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -80,7 +97,7 @@ export class Tenant extends BaseEntity implements ITenant {
 	 * Array of feature organizations associated with the entity.
 	 */
 	@MultiORMOneToMany(() => FeatureOrganization, (it) => it.tenant, {
-		cascade: true,
+		cascade: true
 	})
 	featureOrganizations?: IFeatureOrganization[];
 }

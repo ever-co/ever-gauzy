@@ -8,7 +8,7 @@ import { IOrganizationAward } from './organization-award.model';
 import { IOrganizationLanguage } from './organization-language.model';
 import { IOrganizationSprint } from './organization-sprint.model';
 import { ISkill } from './skill-entity.model';
-import { ITag } from './tag.model';
+import { ITag, ITaggable } from './tag.model';
 import { ITenant } from './tenant.model';
 import { IReportOrganization } from './report.model';
 import { IRelationalImageAsset } from './image-asset.model';
@@ -31,7 +31,11 @@ export enum ListsInputTypeEnum {
 	VENDORS = 'VENDORS'
 }
 
-export interface IOrganization extends IBasePerTenantEntityModel, IRelationalImageAsset, IOrganizationTimerSetting {
+export interface IOrganization
+	extends IBasePerTenantEntityModel,
+		IRelationalImageAsset,
+		IOrganizationTimerSetting,
+		ITaggable {
 	name: string;
 	isDefault: boolean;
 	profile_link: string;
@@ -63,12 +67,11 @@ export interface IOrganization extends IBasePerTenantEntityModel, IRelationalIma
 	startWeekOn?: WeekDaysEnum;
 	taxId?: string;
 	numberFormat?: string;
-	bonusType?: string;
+	bonusType?: BonusTypeEnum;
 	bonusPercentage?: number;
 	employees?: IEmployee[];
 	invitesAllowed?: boolean;
 	inviteExpiryPeriod?: number;
-	tags: ITag[];
 	futureDateAllowed?: boolean;
 	allowManualTime?: boolean;
 	allowModifyTime?: boolean;
@@ -140,6 +143,7 @@ export interface IOrganizationCreateInput extends IContact, IRegisterAsEmployee,
 	show_clients_count?: boolean;
 	show_employees_count?: boolean;
 	defaultValueDateType?: DefaultValueDateTypeEnum;
+	standardWorkHoursPerDay?: number;
 	dateFormat?: string;
 	timeZone?: string;
 	officialName?: string;
@@ -274,10 +278,6 @@ export enum MinimumProjectSizeEnum {
 	ONE_HUNDRED_THOUSAND = '100000+'
 }
 
-export const DEFAULT_PROFIT_BASED_BONUS = 75;
-export const DEFAULT_REVENUE_BASED_BONUS = 10;
-export const DEFAULT_INVITE_EXPIRY_PERIOD = 7;
-
 export interface IOrganizationStoreState {
 	organization: IOrganization;
 	action: CrudActionEnum;
@@ -300,17 +300,19 @@ export enum TimeZoneEnum {
 	MINE_TIMEZONE = 'mine'
 }
 
-export const DEFAULT_TIME_FORMATS: number[] = [TimeFormatEnum.FORMAT_12_HOURS, TimeFormatEnum.FORMAT_24_HOURS];
-export const DEFAULT_DATE_FORMATS: string[] = ['L', 'LL', 'dddd, LL'];
-
 export interface IKeyValuePair {
 	key: string;
 	value: boolean | string;
 }
 
+export const DEFAULT_STANDARD_WORK_HOURS_PER_DAY = 8; // Adjust the default value if needed
+export const DEFAULT_TIME_FORMATS: number[] = [TimeFormatEnum.FORMAT_12_HOURS, TimeFormatEnum.FORMAT_24_HOURS];
+export const DEFAULT_PROFIT_BASED_BONUS = 75;
+export const DEFAULT_REVENUE_BASED_BONUS = 10;
+export const DEFAULT_INVITE_EXPIRY_PERIOD = 7;
+export const DEFAULT_DATE_FORMATS: string[] = ['L', 'LL', 'dddd, LL'];
 export const DEFAULT_INACTIVITY_TIME_LIMITS: number[] = [1, 5, 10, 20, 30];
 export const DEFAULT_ACTIVITY_PROOF_DURATIONS: number[] = [1, 3, 5, 10];
-
 export const DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS: number[] = [1, 3, 5, 10];
 
 export interface IOrganizationTimerSetting {
@@ -323,4 +325,5 @@ export interface IOrganizationTimerSetting {
 	trackOnSleep?: boolean;
 	screenshotFrequency?: number;
 	enforced?: boolean;
+	standardWorkHoursPerDay?: number;
 }

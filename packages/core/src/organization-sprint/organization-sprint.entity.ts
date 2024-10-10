@@ -10,6 +10,7 @@ import {
 	IOrganizationSprintTask,
 	IOrganizationSprintTaskHistory,
 	JsonData,
+	ITaskView,
 	OrganizationSprintStatusEnum,
 	SprintStartDayEnum
 } from '@gauzy/contracts';
@@ -20,6 +21,7 @@ import {
 	OrganizationSprintTask,
 	OrganizationSprintTaskHistory,
 	Task,
+	TaskView,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import {
@@ -138,6 +140,12 @@ export class OrganizationSprint extends TenantOrganizationBaseEntity implements 
 	@MultiORMOneToMany(() => Task, (task) => task.organizationSprint)
 	@JoinColumn()
 	tasks?: Task[];
+
+	/**
+	 * Sprint views
+	 */
+	@MultiORMOneToMany(() => TaskView, (sprint) => sprint.organizationSprint)
+	views?: ITaskView[];
 
 	/**
 	 * From OrganizationSprint histories

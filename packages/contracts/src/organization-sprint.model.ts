@@ -7,6 +7,12 @@ import { IRelationalRole } from './role.model';
 import { JsonData } from './activity-log.model';
 import { IUser } from './user.model';
 
+// Base interface with optional properties
+export interface IRelationalOrganizationSprint {
+	organizationSprint?: IOrganizationSprint;
+	organizationSprintId?: ID;
+}
+
 export interface IOrganizationSprintBase extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	goal?: string;

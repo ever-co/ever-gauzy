@@ -1,20 +1,8 @@
-import { IOrganization, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import {
-	Body,
-	Controller,
-	Get,
-	HttpCode,
-	HttpStatus,
-	Param,
-	Post,
-	UseGuards,
-	Put,
-	Query,
-	BadRequestException
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, UseGuards, Put, Query } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FindOptionsWhere } from 'typeorm';
+import { ID, IOrganization, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
@@ -27,7 +15,7 @@ import { CreateOrganizationDTO, OrganizationFindOptionsDTO, UpdateOrganizationDT
 @ApiTags('Organization')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
-@Controller()
+@Controller('/organization')
 export class OrganizationController extends CrudController<Organization> {
 	constructor(private readonly organizationService: OrganizationService, private readonly commandBus: CommandBus) {
 		super(organizationService);
@@ -40,7 +28,7 @@ export class OrganizationController extends CrudController<Organization> {
 	 * @returns
 	 */
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
-	@Get('count')
+	@Get('/count')
 	async getCount(@Query() options: FindOptionsWhere<Organization>): Promise<number> {
 		return await this.organizationService.countBy(options);
 	}
@@ -48,11 +36,24 @@ export class OrganizationController extends CrudController<Organization> {
 	/**
 	 * GET organization pagination
 	 *
-	 * @param options
-	 * @returns
+	 * Retrieve a paginated list of organizations within the tenant.
+	 *
+	 * @param options Query options for pagination and filtering
+	 * @returns Paginated list of organizations
 	 */
+	@ApiOperation({ summary: 'Retrieve paginated list of organizations within the tenant.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Successfully retrieved paginated list of organizations.',
+		type: Organization,
+		isArray: true
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'No organizations found.'
+	})
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
-	@Get('pagination')
+	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
 	async pagination(@Query() options: OrganizationFindOptionsDTO<Organization>): Promise<IPagination<IOrganization>> {
 		return await this.organizationService.paginate(options);
@@ -61,71 +62,80 @@ export class OrganizationController extends CrudController<Organization> {
 	/**
 	 * GET organizations by find many conditions
 	 *
-	 * @param options
-	 * @returns
+	 * Find all organizations within the tenant, optionally applying filters.
+	 *
+	 * @param options Query options for filtering organizations
+	 * @returns A list of organizations based on the applied filters
 	 */
 	@ApiOperation({ summary: 'Find all organizations within the tenant.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found organizations',
-		type: Organization
+		description: 'Successfully retrieved organizations.',
+		type: Organization,
+		isArray: true
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'No organizations found.'
 	})
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
-	@Get()
+	@Get('/')
 	@UseValidationPipe({ transform: true })
 	async findAll(@Query() options: OrganizationFindOptionsDTO<Organization>): Promise<IPagination<IOrganization>> {
-		try {
-			return await this.organizationService.findAll(options);
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+		return await this.organizationService.findAll(options);
 	}
 
 	/**
 	 * GET organization by id
 	 *
-	 * @param id
-	 * @param options
-	 * @returns
+	 * Find an organization by its ID within the tenant.
+	 *
+	 * @param id The unique ID of the organization
+	 * @param options Query options for additional filtering
+	 * @returns The organization that matches the ID
 	 */
-	@ApiOperation({ summary: 'Find Organization by id within the tenant.' })
+	@ApiOperation({ summary: 'Find Organization by ID within the tenant.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found one record',
+		description: 'Successfully retrieved the organization.',
 		type: Organization
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'No organization found with the provided ID.'
 	})
-	@Permissions()
+	@ApiParam({
+		name: 'id',
+		type: String,
+		description: 'The unique identifier (UUID) of the organization.'
+	})
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get(':id')
 	@UseValidationPipe({ transform: true })
 	async findById(
-		@Param('id', UUIDValidationPipe) id: IOrganization['id'],
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Query() options: OrganizationFindOptionsDTO<Organization>
 	): Promise<IOrganization> {
 		return await this.organizationService.findOneByIdString(id, options);
 	}
 
 	/**
-	 * CREATE organization for specific tenant
+	 * CREATE organization for a specific tenant
 	 *
-	 * @param entity
-	 * @returns
+	 * Creates a new organization within the tenant.
+	 *
+	 * @param entity The DTO containing organization details
+	 * @returns The newly created organization
 	 */
-	@ApiOperation({ summary: 'Create new Organization' })
+	@ApiOperation({ summary: 'Create a new Organization for a specific tenant' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The Organization has been successfully created.'
+		description: 'The Organization has been successfully created.',
+		type: Organization
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, the response body may contain clues as to what went wrong.'
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
@@ -137,24 +147,36 @@ export class OrganizationController extends CrudController<Organization> {
 	/**
 	 * UPDATE organization by id
 	 *
-	 * @param id
-	 * @param entity
-	 * @returns
+	 * Update an existing organization by its ID within the tenant.
+	 *
+	 * @param id The unique ID of the organization
+	 * @param entity The DTO containing updated organization details
+	 * @returns The updated organization
 	 */
-	@ApiOperation({ summary: 'Update existing Organization' })
+	@ApiOperation({ summary: 'Update an existing Organization' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'The Organization has been successfully updated.'
+		description: 'The Organization has been successfully updated.',
+		type: Organization
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, the response body may contain clues as to what went wrong.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'No organization found with the provided ID.'
+	})
+	@ApiParam({
+		name: 'id',
+		type: String,
+		description: 'The unique identifier (UUID) of the organization.'
 	})
 	@HttpCode(HttpStatus.OK)
 	@Put(':id')
 	@UseValidationPipe()
 	async update(
-		@Param('id', UUIDValidationPipe) id: IOrganization['id'],
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: UpdateOrganizationDTO
 	): Promise<IOrganization> {
 		return await this.commandBus.execute(new OrganizationUpdateCommand(id, entity));
