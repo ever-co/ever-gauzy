@@ -2093,6 +2093,7 @@
 			"INSUFFICIENT": "No tienes suficientes permisos. Faltan los siguientes permisos:",
 			"ORG_SPRINT_EDIT": "Crear/Editar Sprints",
 			"ORG_SPRINT_VIEW": "Ver Sprint",
+			"ORG_SPRINT_DELETE": "Eliminar sprints",
 			"ORG_PROJECT_ADD": "Crear proyectos",
 			"ORG_PROJECT_VIEW": "Ver proyectos",
 			"ORG_PROJECT_EDIT": "Editar Proyectos",

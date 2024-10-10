@@ -2091,6 +2091,7 @@
 			"INSUFFICIENT": "您没有足够的权限。缺少以下权限：",
 			"ORG_SPRINT_EDIT": "创建/编辑迭代",
 			"ORG_SPRINT_VIEW": "查看冲刺",
+			"ORG_SPRINT_DELETE": "删除冲刺",
 			"ORG_PROJECT_ADD": "创造项目",
 			"ORG_PROJECT_VIEW": "查看项目",
 			"ORG_PROJECT_EDIT": "编辑项目",

@@ -2091,6 +2091,7 @@
 			"INSUFFICIENT": "U heeft onvoldoende rechten. De volgende rechten ontbreken:",
 			"ORG_SPRINT_EDIT": "Maak/bewerk sprints",
 			"ORG_SPRINT_VIEW": "Bekijk Sprints",
+			"ORG_SPRINT_DELETE": "Sprints verwijderen",
 			"ORG_PROJECT_ADD": "Maak projecten",
 			"ORG_PROJECT_VIEW": "Bekijk projecten",
 			"ORG_PROJECT_EDIT": "Bewerk projecten",

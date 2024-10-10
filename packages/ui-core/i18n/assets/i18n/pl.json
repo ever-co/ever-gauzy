@@ -2091,6 +2091,7 @@
 			"INSUFFICIENT": "Nie masz wystarczających uprawnień. Brakuje następujących uprawnień:",
 			"ORG_SPRINT_EDIT": "Twórz/Edytuj sprinty",
 			"ORG_SPRINT_VIEW": "Wyświetl sprinty",
+			"ORG_SPRINT_DELETE": "Usuń sprinty",
 			"ORG_PROJECT_ADD": "Tworzenie projektów",
 			"ORG_PROJECT_VIEW": "Wyświetl projekty",
 			"ORG_PROJECT_EDIT": "Edytuj projekty",
