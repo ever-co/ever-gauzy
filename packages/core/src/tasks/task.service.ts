@@ -8,8 +8,8 @@ import {
 	Raw,
 	In,
 	FindOptionsWhere,
-	Between,
-	FindManyOptions
+	FindManyOptions,
+	Between
 } from 'typeorm';
 import { isBoolean, isUUID } from 'class-validator';
 import {
@@ -26,13 +26,14 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
-import { isPostgres } from '@gauzy/config';
+import { isPostgres, isSqlite } from '@gauzy/config';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { ActivityLogEvent } from '../activity-log/events';
 import { activityLogUpdatedFieldsAndValues, generateActivityLogDescription } from '../activity-log/activity-log.helper';
 import { Task } from './task.entity';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
+import { TypeOrmTaskViewRepository } from './views/repository/type-orm-task-view.repository';
 import { GetTaskByIdDTO } from './dto';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
@@ -44,6 +45,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		readonly typeOrmTaskRepository: TypeOrmTaskRepository,
 		readonly mikroOrmTaskRepository: MikroOrmTaskRepository,
 		readonly typeOrmOrganizationSprintTaskHistoryRepository: TypeOrmOrganizationSprintTaskHistoryRepository,
+		readonly typeOrmTaskViewRepository: TypeOrmTaskViewRepository,
 		private readonly _eventBus: EventBus
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
@@ -743,12 +745,26 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 	/**
 	 * @description Get tasks by views query
-	 * @param {IGetTasksByViewFilters} query - View query filters
+	 * @param {ID} viewId - View ID
 	 * @returns {Promise<IPagination<ITask>>} A Promise resolved to paginated found tasks and total matching query filters
 	 * @memberof TaskService
 	 */
-	async findTasksByViewQuery(query: IGetTasksByViewFilters): Promise<IPagination<ITask>> {
+	async findTasksByViewQuery(viewId: ID): Promise<IPagination<ITask>> {
+		const tenantId = RequestContext.currentTenantId();
 		try {
+			// Retrieve Task View by ID for getting their pre-defined query params
+			const taskView = await this.typeOrmTaskViewRepository.findOne({ where: { id: viewId } });
+			if (!taskView) {
+				throw new HttpException('View not found', HttpStatus.NOT_FOUND);
+			}
+
+			// Extract `queryParams` from the view
+			const queryParams = taskView.queryParams;
+			const viewFilters = isSqlite()
+				? (JSON.parse(queryParams as string) as IGetTasksByViewFilters)
+				: (queryParams as IGetTasksByViewFilters) || {};
+
+			// Extract filters
 			const {
 				projects = [],
 				teams = [],
@@ -766,8 +782,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				creators = [],
 				startDates = [],
 				dueDates = [],
+				organizationId,
 				relations = []
-			} = query;
+			} = viewFilters;
 
 			// Calculate min and max dates only if arrays are not empty
 			const getMinMaxDates = (dates: Date[]) =>
@@ -783,22 +800,24 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 			// Build the 'where' condition
 			const where: FindOptionsWhere<Task> = {
-				...(projects && { projectId: In(projects) }),
-				...(teams && { teams: { id: In(teams) } }),
-				...(members && { members: { id: In(members) } }),
-				...(modules && { modules: { id: In(modules) } }),
-				...(sprints && { organizationSprintId: In(sprints) }),
-				...(statusIds && { taskStatusId: In(statusIds) }),
-				...(statuses && { status: In(statuses) }),
-				...(priorityIds && { taskPriorityId: In(priorityIds) }),
-				...(priorities && { priority: In(priorities) }),
-				...(sizeIds && { taskSizeId: In(sizeIds) }),
-				...(sizes && { size: In(sizes) }),
-				...(tags && { tags: { id: In(tags) } }),
-				...(types && { types: In(types) }),
-				...(creators && { creatorId: In(creators) }),
+				...(projects.length && { projectId: In(projects) }),
+				...(teams.length && { teams: { id: In(teams) } }),
+				...(members.length && { members: { id: In(members) } }),
+				...(modules.length && { modules: { id: In(modules) } }),
+				...(sprints.length && { organizationSprintId: In(sprints) }),
+				...(statusIds.length && { taskStatusId: In(statusIds) }),
+				...(statuses.length && { status: In(statuses) }),
+				...(priorityIds.length && { taskPriorityId: In(priorityIds) }),
+				...(priorities.length && { priority: In(priorities) }),
+				...(sizeIds.length && { taskSizeId: In(sizeIds) }),
+				...(sizes.length && { size: In(sizes) }),
+				...(tags.length && { tags: { id: In(tags) } }),
+				...(types.length && { issueType: In(types) }),
+				...(creators.length && { creatorId: In(creators) }),
 				...(minStartDate && maxStartDate && { startDate: Between(minStartDate, maxStartDate) }),
-				...(minDueDate && maxDueDate && { dueDate: Between(minDueDate, maxDueDate) })
+				...(minDueDate && maxDueDate && { dueDate: Between(minDueDate, maxDueDate) }),
+				organizationId,
+				tenantId
 			};
 
 			// Define find options

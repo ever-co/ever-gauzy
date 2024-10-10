@@ -23,7 +23,7 @@ import { CrudController, PaginationParams } from './../core/crud';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskCreateCommand, TaskUpdateCommand } from './commands';
-import { CreateTaskDTO, GetTaskByIdDTO, GetTasksByViewFiltersDTO, TaskMaxNumberQueryDTO, UpdateTaskDTO } from './dto';
+import { CreateTaskDTO, GetTaskByIdDTO, TaskMaxNumberQueryDTO, UpdateTaskDTO } from './dto';
 
 @ApiTags('Tasks')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -156,10 +156,10 @@ export class TaskController extends CrudController<Task> {
 	@ApiResponse({ status: HttpStatus.OK, description: 'Tasks retrieved successfully.' })
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No records found.' })
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
-	@Get('/view')
+	@Get('/view/:id')
 	@UseValidationPipe({ transform: true })
-	async findTasksByViewQuery(@Query() params: GetTasksByViewFiltersDTO): Promise<IPagination<ITask>> {
-		return this.taskService.findTasksByViewQuery(params);
+	async findTasksByViewQuery(@Param('id', UUIDValidationPipe) viewId: ID): Promise<IPagination<ITask>> {
+		return this.taskService.findTasksByViewQuery(viewId);
 	}
 
 	/**

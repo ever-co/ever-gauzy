@@ -80,7 +80,7 @@ export interface IGetTaskById {
 	includeRootEpic?: boolean;
 }
 
-export interface IGetTasksByViewFilters {
+export interface IGetTasksByViewFilters extends IBasePerTenantAndOrganizationEntityModel {
 	projects?: ID[];
 	teams?: ID[];
 	modules?: ID[];
