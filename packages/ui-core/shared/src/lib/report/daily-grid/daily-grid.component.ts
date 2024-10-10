@@ -24,7 +24,8 @@ import { BaseSelectorFilterComponent, TimeZoneService } from '../../timesheet/ga
 })
 export class DailyGridComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit, OnDestroy {
 	// This constant holds the URL for downloading content from the platform's website.
-	readonly PLATFORM_WEBSITE_DOWNLOAD_URL: string = environment.PLATFORM_WEBSITE_DOWNLOAD_URL;
+	readonly PLATFORM_WEBSITE_DOWNLOAD_URL: Environment['PLATFORM_WEBSITE_DOWNLOAD_URL'] =
+		environment.PLATFORM_WEBSITE_DOWNLOAD_URL;
 
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 	dailyLogs: IReportDayData[] = [];
