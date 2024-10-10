@@ -816,7 +816,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				...(creators.length && { creatorId: In(creators) }),
 				...(minStartDate && maxStartDate && { startDate: Between(minStartDate, maxStartDate) }),
 				...(minDueDate && maxDueDate && { dueDate: Between(minDueDate, maxDueDate) }),
-				organizationId,
+				organizationId: taskView.organizationId || organizationId,
 				tenantId
 			};
 
