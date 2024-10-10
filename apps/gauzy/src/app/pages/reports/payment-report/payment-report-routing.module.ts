@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
+import { BookmarkQueryParamsResolver } from '@gauzy/ui-core/core';
 import { DateRangePickerResolver } from '@gauzy/ui-core/shared';
 import { PaymentReportComponent } from './payment-report/payment-report.component';
 
@@ -15,7 +16,10 @@ const routes: Routes = [
 				employee: false
 			}
 		},
-		resolve: { dates: DateRangePickerResolver }
+		resolve: {
+			dates: DateRangePickerResolver,
+			bookmarkParams: BookmarkQueryParamsResolver
+		}
 	}
 ];
 

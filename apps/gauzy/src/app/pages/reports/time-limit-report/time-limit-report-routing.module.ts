@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
+import { BookmarkQueryParamsResolver } from '@gauzy/ui-core/core';
 import { DateRangePickerResolver } from '@gauzy/ui-core/shared';
 import { TimeLimitReportComponent } from './time-limit-report/time-limit-report.component';
 
@@ -14,7 +15,10 @@ const routes: Routes = [
 				unitOfTime: 'week'
 			}
 		},
-		resolve: { dates: DateRangePickerResolver }
+		resolve: {
+			dates: DateRangePickerResolver,
+			bookmarkParams: BookmarkQueryParamsResolver
+		}
 	}
 ];
 

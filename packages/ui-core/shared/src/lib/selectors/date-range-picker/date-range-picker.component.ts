@@ -182,6 +182,12 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 			}
 			this._selectedDateRange = range;
 			this.range$.next(range);
+
+			// Check if the date selector exists
+			if (this._selectorBuilderService.getSelectors().date) {
+				// Updates the query parameters of the current route without navigating away
+				this.navigateWithQueryParams();
+			}
 		}
 	}
 	get selectedDateRange(): IDateRangePicker {
@@ -392,9 +398,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 
 		// Update future strategy settings if necessary
 		this.setFutureStrategy();
-
-		// Update the query parameters of the current route without navigating away
-		this.navigateWithQueryParams();
 	}
 
 	/**
@@ -412,9 +415,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		// Update the selected date range and ensure consistency with the range picker
 		this.selectedDateRange = { ...previousRange };
 		this.rangePicker = { ...previousRange };
-
-		// Update the query parameters of the current route without navigating away
-		this.navigateWithQueryParams();
 	}
 
 	/**
@@ -469,9 +469,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		// Update the selected date range and ensure consistency with the range picker
 		this.selectedDateRange = { ...range };
 		this.rangePicker = { ...range };
-
-		// Update the query parameters of the current route without navigating away
-		this.navigateWithQueryParams();
 	}
 
 	/**
@@ -575,9 +572,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 					isCustomDate: this.isCustomDate({ startDate: start, endDate: end })
 				};
 				this.rangePicker = { ...this.selectedDateRange }; // Ensure consistency between selectedDateRange and rangePicker
-
-				// Update the query parameters of the current route without navigating away
-				this.navigateWithQueryParams();
 			});
 	}
 
@@ -643,8 +637,10 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	 * @param queryParams The query parameters to be attached.
 	 */
 	async navigateWithQueryParams(): Promise<void> {
+		const selectors = this._selectorBuilderService.getSelectors();
+
 		// Check if the date selector exists
-		if (this._selectorBuilderService.getSelectors().date) {
+		if (selectors.date) {
 			const { startDate, endDate, isCustomDate } = this.selectedDateRange;
 
 			// Create new moment objects for formatted dates to avoid mutation
