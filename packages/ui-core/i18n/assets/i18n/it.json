@@ -2091,6 +2091,7 @@
 			"INSUFFICIENT": "Non hai autorizzazioni sufficienti. Le seguenti autorizzazioni mancano:",
 			"ORG_SPRINT_EDIT": "Crea/Modifica Sprint",
 			"ORG_SPRINT_VIEW": "Visualizza gli sprint",
+			"ORG_SPRINT_DELETE": "Eliminare sprint",
 			"ORG_PROJECT_ADD": "Crea Progetti",
 			"ORG_PROJECT_VIEW": "Visualizza progetti",
 			"ORG_PROJECT_EDIT": "Modifica Progetti",

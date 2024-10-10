@@ -123,7 +123,7 @@ export class OrganizationSprintController extends CrudController<OrganizationSpr
 		return this.commandBus.execute(new OrganizationSprintUpdateCommand(id, entity));
 	}
 
-	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_SPRINT_EDIT)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_SPRINT_DELETE)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
 		return await this.organizationSprintService.delete(id);
