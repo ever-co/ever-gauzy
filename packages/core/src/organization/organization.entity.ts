@@ -1,18 +1,7 @@
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, TransformFnParams } from 'class-transformer';
-import {
-	IsBoolean,
-	IsEnum,
-	IsNotEmpty,
-	IsNumber,
-	IsOptional,
-	IsString,
-	IsUUID,
-	Max,
-	Min,
-	ValidateIf
-} from 'class-validator';
+import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
 import {
 	DefaultValueDateTypeEnum,
 	IOrganization,
