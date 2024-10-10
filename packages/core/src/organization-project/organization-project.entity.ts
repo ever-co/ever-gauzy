@@ -23,6 +23,7 @@ import {
 	ITaskSize,
 	ITaskStatus,
 	ITaskVersion,
+	ITaskView,
 	ITimeLog,
 	OrganizationProjectBudgetTypeEnum,
 	ProjectBillingEnum,
@@ -50,6 +51,7 @@ import {
 	TaskSize,
 	TaskStatus,
 	TaskVersion,
+	TaskView,
 	TenantOrganizationBaseEntity,
 	TimeLog
 } from '../core/entities/internal';
@@ -421,6 +423,12 @@ export class OrganizationProject
 	 */
 	@MultiORMOneToMany(() => TaskVersion, (it) => it.project)
 	versions?: ITaskVersion[];
+
+	/**
+	 * Project views Relationship
+	 */
+	@MultiORMOneToMany(() => TaskView, (it) => it.project)
+	views?: ITaskView[];
 
 	/**
 	 * Organization modules Relationship

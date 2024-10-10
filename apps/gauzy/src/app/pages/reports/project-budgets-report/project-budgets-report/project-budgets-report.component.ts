@@ -106,9 +106,9 @@ export class ProjectBudgetsReportComponent extends BaseSelectorFilterComponent i
 	}
 
 	/**
-	 * retrieves project budget reports, updates the 'projects' property, and handles loading state.
+	 * Asynchronously retrieves project budget reports, updates the 'projects' property, and handles the loading state.
 	 *
-	 * @returns
+	 * @returns {Promise<void>}
 	 */
 	async getProjectBudgetReport(): Promise<void> {
 		// Check if organization or request is not provided, resolve the Promise without further action
@@ -116,7 +116,8 @@ export class ProjectBudgetsReportComponent extends BaseSelectorFilterComponent i
 			return;
 		}
 
-		// Set the loading flag to true
+		// Clear previous project data and set the loading flag to true
+		this.projects = [];
 		this.loading = true;
 
 		try {
@@ -127,7 +128,8 @@ export class ProjectBudgetsReportComponent extends BaseSelectorFilterComponent i
 			this.projects = await this.timesheetService.getProjectBudgetLimit(payloads);
 		} catch (error) {
 			// Log any errors during the process
-			console.error('Error while retrieving project budget chart', error);
+			console.error('Error while retrieving project budget chart:', error);
+			// Optionally: this.notificationService.showError('Failed to retrieve project budget reports.');
 		} finally {
 			// Set the loading flag to false, regardless of success or failure
 			this.loading = false;

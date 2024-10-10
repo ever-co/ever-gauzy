@@ -116,7 +116,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				});
 			});
 
-			// Create the organization team with the prepared members
+			// Create the organization project with the prepared members
 			const project = await super.create({
 				...entity,
 				members,
@@ -267,7 +267,10 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 
 				// Only update if the role has changed
 				if (newRole && newRole.id !== member.roleId) {
-					await this.typeOrmOrganizationProjectEmployeeRepository.update(member.id, { role: newRole });
+					await this.typeOrmOrganizationProjectEmployeeRepository.update(member.id, {
+						role: newRole,
+						isManager: true
+					});
 				}
 			})
 		);

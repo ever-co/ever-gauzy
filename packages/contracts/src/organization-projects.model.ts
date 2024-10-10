@@ -1,4 +1,4 @@
-import { IEmployee, IEmployeeEntityInput } from './employee.model';
+import { IEmployee, IEmployeeEntityInput, IMemberEntityBased } from './employee.model';
 import { IRelationalOrganizationContact } from './organization-contact.model';
 import { ITaggable } from './tag.model';
 import { ITask } from './task.model';
@@ -85,10 +85,7 @@ export interface IOrganizationProjectsFindInput
 	organizationTeamId?: ID;
 }
 
-export interface IOrganizationProjectCreateInput extends IOrganizationProjectBase {
-	memberIds?: ID[]; // Manager of the organization project
-	managerIds?: ID[]; // Manager of the organization project
-}
+export interface IOrganizationProjectCreateInput extends IOrganizationProjectBase, IMemberEntityBased {}
 
 export interface IOrganizationProjectUpdateInput extends IOrganizationProjectCreateInput {}
 

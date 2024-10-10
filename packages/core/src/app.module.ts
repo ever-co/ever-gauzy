@@ -148,6 +148,7 @@ import { CommentModule } from './comment/comment.module';
 import { StatsModule } from './stats/stats.module'; // Global Stats Module
 import { ReactionModule } from './reaction/reaction.module';
 import { ActivityLogModule } from './activity-log/activity-log.module';
+import { TaskViewModule } from './tasks/views/view.module';
 
 const { unleashConfig } = environment;
 
@@ -445,7 +446,8 @@ if (environment.THROTTLE_ENABLED) {
 		StatsModule, // Global Stats Module
 		ReactionModule,
 		CommentModule,
-		ActivityLogModule		
+		ActivityLogModule,
+		TaskViewModule // Task views Module
 	],
 	controllers: [AppController],
 	providers: [

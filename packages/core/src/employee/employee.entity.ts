@@ -35,7 +35,8 @@ import {
 	IOrganizationProjectModule,
 	ID,
 	IFavorite,
-	IComment
+	IComment,
+	IOrganizationSprint
 } from '@gauzy/contracts';
 import {
 	ColumnIndex,
@@ -67,6 +68,7 @@ import {
 	OrganizationPosition,
 	OrganizationProjectEmployee,
 	OrganizationProjectModule,
+	OrganizationSprintEmployee,
 	OrganizationTeamEmployee,
 	RequestApprovalEmployee,
 	Skill,
@@ -495,6 +497,12 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 		cascade: true
 	})
 	projects?: IOrganizationProject[];
+
+	// Employee Sprint
+	@MultiORMOneToMany(() => OrganizationSprintEmployee, (it) => it.employee, {
+		cascade: true
+	})
+	sprints?: IOrganizationSprint[];
 
 	/**
 	 * Estimations

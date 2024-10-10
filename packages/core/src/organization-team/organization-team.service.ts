@@ -172,8 +172,8 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @returns A Promise resolving to an array of Employee entities with associated user information.
 	 */
 	async retrieveEmployees(
-		memberIds: string[],
-		managerIds: string[],
+		memberIds: ID[],
+		managerIds: ID[],
 		organizationId: string,
 		tenantId: string
 	): Promise<Employee[]> {
