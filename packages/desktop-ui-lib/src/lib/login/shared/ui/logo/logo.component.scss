@@ -1,0 +1,9 @@
+.svg-wrapper {
+	display: flex;
+	justify-content: space-between;
+
+	& .ever-logo-svg {
+		margin-bottom: 40px;
+		height: 25px;
+	}
+}

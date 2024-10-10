@@ -14,7 +14,10 @@ import {
 } from '@nebular/theme';
 import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 import { LanguageModule } from '../language/language.module';
+import { SwitchThemeModule } from '../theme-selector/switch-theme/switch-theme.module';
 import { NgxLoginComponent } from './login.component';
+import { LogoComponent } from './shared/ui/logo/logo.component';
+import { SocialLinksComponent } from './shared/ui/social-links/social-links.component';
 
 @NgModule({
 	imports: [
@@ -30,9 +33,10 @@ import { NgxLoginComponent } from './login.component';
 		NbInputModule,
 		NbFormFieldModule,
 		DesktopDirectiveModule,
-		LanguageModule.forChild()
+		LanguageModule.forChild(),
+		SwitchThemeModule
 	],
-	declarations: [NgxLoginComponent],
+	declarations: [NgxLoginComponent, SocialLinksComponent, LogoComponent],
 	exports: [NgxLoginComponent]
 })
 export class NgxLoginModule {}
