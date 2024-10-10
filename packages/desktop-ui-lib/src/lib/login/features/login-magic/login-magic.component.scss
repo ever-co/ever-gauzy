@@ -1,0 +1,450 @@
+@import 'themes';
+@import '@shared/reusable';
+
+.login-container {
+	width: 765px;
+	position: relative;
+	display: flex;
+	justify-content: space-between;
+	height: 100%;
+
+	& .login-wrapper {
+		background: nb-theme(gauzy-card-2);
+		border-radius: nb-theme(border-radius);
+		box-sizing: border-box;
+		padding: 30px;
+		width: 476px;
+		height: 100%;
+
+		& .svg-wrapper {
+			display: flex;
+			justify-content: space-between;
+			width: 100%;
+
+			& .ever-logo-svg {
+				margin-bottom: 57px;
+			}
+		}
+
+		& .headings {
+			display: flex;
+			justify-content: space-between;
+			flex-direction: column;
+			position: relative;
+
+			& .headings-inner {
+				& .title {
+					font-family: Inter;
+					font-size: 24px;
+					font-style: normal;
+					font-weight: 700;
+					line-height: 30px;
+					letter-spacing: 0em;
+					margin-bottom: 18px;
+					text-align: start;
+				}
+
+				& .sub-title {
+					font-family: Inter;
+					font-size: 14px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: 11px;
+					letter-spacing: 0em;
+					margin-bottom: 26px;
+					text-align: start;
+				}
+			}
+
+			& .sent-code-container {
+				margin-bottom: 1rem;
+				margin-right: -20px;
+
+				& .normal-text {
+					font-size: 0.8rem;
+				}
+
+				& .minimum-text {
+					font-size: 0.75rem;
+				}
+
+				& p {
+					margin-bottom: 0;
+				}
+
+				& b {
+					font-size: 0.8rem;
+				}
+
+				& span {
+					font-size: 0.7rem;
+					color: var(--text-hint-color);
+				}
+			}
+		}
+
+		& .hr-div-strong {
+			@include hr-div-strong;
+		}
+
+		& .hr-div-soft {
+			@include hr-div-soft;
+		}
+	}
+
+	& form {
+		margin-top: 29px;
+		margin-bottom: 42px;
+
+		& .form-control-group {
+			.not-allowed {
+				cursor: not-allowed;
+			}
+
+			.edit-email {
+				transition: all;
+
+				&:hover {
+					color: var(--text-basic-color);
+				}
+			}
+		}
+
+		& .new-code-wrapper {
+			font-size: 0.75rem;
+			text-align: right;
+			@include nb-rtl(text-align, left);
+			margin-top: 0.4rem;
+			margin-right: 0.4rem;
+			@include nb-rtl(margin-right, 0);
+			@include nb-rtl(margin-left, 0.4rem);
+
+			& .resend-code {
+				margin-bottom: 0.4rem;
+
+				&:hover {
+					cursor: pointer;
+				}
+			}
+
+			& .request-new-code {
+				color: var(--text-hint-color);
+			}
+		}
+
+		& .submit-btn-wrapper {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 2rem;
+
+			& .forgot-email {
+				text-decoration-line: underline;
+				margin-bottom: 0;
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 500;
+				line-height: 17px;
+				letter-spacing: -0.01em;
+				text-align: left;
+
+				@include mobile-screen {
+					display: none;
+				}
+			}
+
+			& .forgot-email:hover {
+				color: $button-color;
+			}
+
+			& .forgot-email-big {
+				display: block;
+
+				@include mobile-screen {
+					display: none;
+				}
+			}
+
+			& .submit-inner-wrapper {
+				display: inline-flex;
+				flex-direction: column;
+				align-items: center;
+			}
+
+			& .submit-btn {
+				@include submit-btn;
+				padding: 13px 20px;
+				font-size: 14px;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+
+				& nb-icon {
+					position: relative;
+					background: transparent;
+				}
+
+				& .spinner {
+					animation: spin 1s linear infinite;
+				}
+			}
+		}
+
+		& .accept-group {
+			margin-bottom: 20px;
+
+			@include mobile-screen {
+				display: flex;
+				justify-content: center;
+			}
+		}
+
+		& .magic-description {
+			& p {
+				text-align: left;
+				font-size: 0.85rem;
+
+				& a {
+					color: var(--link-text-color);
+				}
+			}
+		}
+	}
+
+	& .links {
+		margin-top: 21px;
+		@include social-links-style;
+
+		& .socials {
+			margin-top: 15px;
+			margin-bottom: 25px;
+		}
+	}
+
+	& .another-action {
+		@include another-action;
+		margin-top: 10px;
+	}
+}
+
+.features-wrapper {
+	width: 260px;
+
+	// demo side container
+	& .card-body {
+		padding: 38px 15px;
+		background: nb-theme(color-primary-transparent-default);
+		border-radius: nb-theme(border-radius);
+
+		&.dark {
+			background: nb-theme(color-primary-700);
+
+			& .custom-btn {
+				color: white;
+				background: #6e49e8;
+				border: 1px solid #6e49e8;
+			}
+		}
+	}
+
+	// non-demo side container
+	& .features-card {
+		border: none;
+		background: nb-theme(color-primary-transparent-default);
+		border-radius: nb-theme(border-radius);
+		width: 100%;
+	}
+
+	& .title {
+		font-family: Inter;
+		font-size: 16px;
+		font-style: normal;
+		font-weight: 600;
+		line-height: 19px;
+		letter-spacing: -0.009em;
+		text-align: left;
+		padding-left: 13px;
+	}
+
+	& .sub-title {
+		font-family: Inter;
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 17px;
+		letter-spacing: 0em;
+		text-align: left;
+		margin-bottom: 20px;
+		padding-left: 13px;
+		color: #7e7e8f;
+	}
+
+	& .custom-btn {
+		-webkit-box-shadow: 3px 11px 30px -17px #3366ff;
+		box-shadow: 3px 11px 30px -17px #3366ff;
+		width: auto;
+		padding: 13px 28px;
+		display: inline-flex;
+		justify-content: flex-start;
+		background-color: white;
+		color: nb-theme(color-primary-500);
+		border: 1px solid white;
+		//styleName: Button label;
+		font-family: Inter;
+		font-size: 15px;
+		font-style: normal;
+		font-weight: 700;
+		line-height: 16px;
+		letter-spacing: -0.009em;
+		text-align: left;
+
+		&>nb-icon {
+			width: 16px;
+			height: 14px;
+		}
+
+		@include small-laptop-screen {
+			padding: 10px 20px;
+		}
+
+		@include tablet-screen {
+			padding: 15px 25px;
+		}
+
+		&:hover {
+			background-color: #fafafa;
+			border: 1px solid #fafafa;
+		}
+	}
+}
+
+@include tablet-screen {
+	.login-container {
+		flex-direction: column;
+		align-items: center;
+
+		& .another-action {
+			margin-top: 0;
+		}
+	}
+
+	.features-wrapper {
+		width: 476px;
+		margin-top: 30px;
+
+		& .demo-credentials-buttons {
+			& * {
+				text-align: center;
+			}
+
+			& .title,
+			.sub-title {
+				text-align: center;
+			}
+		}
+	}
+}
+
+@include mobile-screen {
+	.login-container {
+		width: 100%;
+
+		& .login-wrapper {
+			width: 100%;
+			padding: 1rem;
+
+			& .headings {
+				& .headings-inner {
+					width: 100%;
+
+					& .title,
+					.sub-title {
+						width: 100%;
+						text-align: center;
+					}
+				}
+			}
+
+			& .headings.headings-demo {
+				height: 135px;
+				align-items: flex-start;
+			}
+		}
+
+		& form {
+			margin-bottom: 35px;
+
+			& .submit-btn-wrapper {
+				justify-content: center;
+
+				& .submit-inner-wrapper {
+					justify-content: center;
+				}
+
+				& .submit-btn {
+					margin-bottom: 0;
+				}
+			}
+
+			& .form-control-group {
+				margin-bottom: 13px;
+			}
+
+			& .links {
+				margin-bottom: 10px;
+			}
+		}
+	}
+
+	.features-wrapper {
+		width: 100%;
+	}
+}
+
+@include small-mobile-screen {
+	.features-wrapper {
+		& .demo-credentials-buttons {
+			& * {
+				text-align: left;
+			}
+
+			& .title,
+			.sub-title {
+				text-align: left;
+			}
+		}
+	}
+}
+
+.hr-div-soft {
+	@include hr-div-soft;
+	margin-bottom: 12px;
+}
+
+.theme-switch {
+	@include not-mobile-screen {
+		display: none;
+	}
+}
+
+// input fields color
+@include input-fields-color;
+
+::ng-deep .remember-me .text {
+	font-family: Inter;
+	font-size: 13px;
+	font-style: normal;
+	font-weight: 600;
+	line-height: 13px;
+	letter-spacing: 0em;
+	text-align: left;
+	color: nb-theme(text-primary-color);
+}
+
+// changing the demo select border radius when its expanded, because color change, new border radiuses had to be introduced.
+::ng-deep .accordion-item-header-expanded {
+	border-bottom-left-radius: 0 !important;
+	border-bottom-right-radius: 0 !important;
+	border-bottom: 1px solid transparent;
+}
