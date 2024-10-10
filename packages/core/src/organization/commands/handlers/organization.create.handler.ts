@@ -19,14 +19,13 @@ import { OrganizationTaskSettingCreateCommand } from '../../../organization-task
 
 @CommandHandler(OrganizationCreateCommand)
 export class OrganizationCreateHandler implements ICommandHandler<OrganizationCreateCommand> {
-
 	constructor(
 		private readonly commandBus: CommandBus,
 		private readonly organizationService: OrganizationService,
 		private readonly userOrganizationService: UserOrganizationService,
 		private readonly userService: UserService,
-		private readonly contactService: ContactService,
-	) { }
+		private readonly contactService: ContactService
+	) {}
 
 	/**
 	 * Asynchronously executes the process of creating a new organization, along with associated tasks such as
@@ -51,8 +50,8 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 					role: {
 						name: RolesEnum.SUPER_ADMIN,
 						tenantId
-					},
-				},
+					}
+				}
 			});
 			admins.push(...superAdminUsers);
 
@@ -64,8 +63,8 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 						role: {
 							name: RolesEnum.ADMIN,
 							tenantId
-						},
-					},
+						}
+					}
 				});
 				admins.push(...adminUsers);
 			}
@@ -89,7 +88,10 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 				show_clients_count: input.show_clients_count !== false,
 				show_clients: input.show_clients !== false,
 				show_employees_count: input.show_employees_count !== false,
-				brandColor: faker.internet.color()
+				brandColor: faker.internet.color(),
+				...(input.standardWorkHoursPerDay && {
+					standardWorkHoursPerDay: input.standardWorkHoursPerDay
+				})
 			});
 			const { id: organizationId } = organization;
 
@@ -108,7 +110,7 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 								entityType: this.userOrganizationService.tableName,
 								sourceId: userOrganizationSourceId,
 								destinationId: userOrganization.id,
-								tenantId,
+								tenantId
 							})
 						);
 					}
@@ -142,7 +144,7 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 						entityType: this.organizationService.tableName,
 						sourceId,
 						destinationId: organizationId,
-						tenantId,
+						tenantId
 					})
 				);
 			}
@@ -167,25 +169,15 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 	public async executeOrganizationUpdateTasks(organization: Organization): Promise<void> {
 		try {
 			// 1. Create report for relative organization.
-			await this.commandBus.execute(
-				new ReportOrganizationCreateCommand(organization)
-			);
+			await this.commandBus.execute(new ReportOrganizationCreateCommand(organization));
 			// 2. Create task statuses for relative organization.
-			await this.commandBus.execute(
-				new OrganizationStatusBulkCreateCommand(organization)
-			);
+			await this.commandBus.execute(new OrganizationStatusBulkCreateCommand(organization));
 			// 3. Create task sizes for relative organization.
-			await this.commandBus.execute(
-				new OrganizationTaskSizeBulkCreateCommand(organization)
-			);
+			await this.commandBus.execute(new OrganizationTaskSizeBulkCreateCommand(organization));
 			// 4. Create task priorities for relative organization.
-			await this.commandBus.execute(
-				new OrganizationTaskPriorityBulkCreateCommand(organization)
-			);
+			await this.commandBus.execute(new OrganizationTaskPriorityBulkCreateCommand(organization));
 			// 5. Create issue types for relative organization.
-			await this.commandBus.execute(
-				new OrganizationIssueTypeBulkCreateCommand(organization)
-			);
+			await this.commandBus.execute(new OrganizationIssueTypeBulkCreateCommand(organization));
 			// 6. Create task setting for relative organization.
 			await this.commandBus.execute(
 				new OrganizationTaskSettingCreateCommand({

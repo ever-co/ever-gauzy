@@ -468,7 +468,8 @@
 			"UPWORK_ORGANIZATION_ID": "Upwork Organisatie ID",
 			"UPWORK_ORGANIZATION_NAME": "Naam van de Upwork organisatie",
 			"UPWORK_ID": "Upwork-identificatie",
-			"LINKEDIN_ID": "LinkedIn ID"
+			"LINKEDIN_ID": "LinkedIn ID",
+			"STANDARD_WORK_HOURS_PER_DAY": "Standaardwerkuren per dag"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Naam",
@@ -654,7 +655,8 @@
 			"UPWORK_ORGANIZATION_ID": "Upwork Organisatie ID",
 			"UPWORK_ORGANIZATION_NAME": "Naam van de Upwork Organisatie",
 			"UPWORK_ID": "Upwork ID",
-			"LINKEDIN_ID": "LinkedIn ID"
+			"LINKEDIN_ID": "LinkedIn ID",
+			"STANDARD_WORK_HOURS_PER_DAY": "Voer het aantal standaardwerkuren per dag in (bijv. 8)"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Standaardtarief",
@@ -1186,7 +1188,8 @@
 			"DAILY_TIME_AND_ACTIVITY": "Er is nog geen tijd en activiteit bijgehouden voor deze dag. Gebruik alsjeblieft de <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>.",
 			"PROJECT_BUDGET": "U heeft geen enkel project gemaakt met een budget.",
 			"CLIENT_BUDGET": "U heeft nog geen klant met een budget aangemaakt."
-		}
+		},
+		"STANDARD_WORK_HOURS": "Standaard werkuren ({{hours}})"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Beschikbare apps & integraties",
@@ -1978,7 +1981,8 @@
 					"ENABLE_DETECTION_INACTIVITY_INFO": "Ingeschakeld - het systeem detecteert inactiviteit en geeft een waarschuwing weer. Uitgeschakeld - er wordt geen waarschuwing weergegeven wanneer een werknemer inactief is.",
 					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
 					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
-					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking."
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking.",
+					"STANDARD_WORK_HOURS_PER_DAY": "Selecteer het standaard aantal werkuren per dag. Deze waarde wordt gebruikt in tijdregistratierapporten om te vergelijken hoeveel uren een werknemer heeft gewerkt ten opzichte van deze norm."
 				}
 			},
 			"TEAMS_PAGE": {

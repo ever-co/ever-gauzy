@@ -7,10 +7,7 @@ import { IAppSetting } from '@gauzy/contracts';
 @Controller()
 @Public() // This seems to be a custom decorator indicating that this controller's endpoints are public
 export class AppController {
-
-	constructor(
-		private readonly _configService: ConfigService
-	) { }
+	constructor(private readonly _configService: ConfigService) {}
 
 	/**
 	 * This is a controller method for handling the HTTP GET request to the root endpoint ('/').
