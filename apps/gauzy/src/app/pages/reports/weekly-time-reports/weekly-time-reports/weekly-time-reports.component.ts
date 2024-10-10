@@ -143,7 +143,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent impl
 	/**
 	 * Asynchronously retrieves weekly time logs reports, processes the data, and updates the class properties.
 	 *
-	 * @returns
+	 * @returns {Promise<void>}
 	 */
 	async getWeeklyLogs(): Promise<void> {
 		// Check if organization or request is not provided, resolve the Promise without further action
@@ -151,7 +151,10 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent impl
 			return;
 		}
 
-		// Set the loading flag to true
+		// Clear existing weekly logs
+		this.weekLogs = [];
+
+		// Set loading to true to indicate that the logs are being fetched
 		this.loading = true;
 
 		try {
@@ -159,7 +162,10 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent impl
 			const payloads = this.payloads$.getValue();
 
 			// Fetch the weekly logs from the timesheetService
-			this.weekLogs = await this.timesheetService.getWeeklyReportChart(payloads);
+			const newLogs = await this.timesheetService.getWeeklyReportChart(payloads);
+
+			// Update weekLogs with the newly fetched logs
+			this.weekLogs = newLogs;
 
 			// Process and map the logs for chart presentation
 			await this._mapLogs(this.weekLogs);

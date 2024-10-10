@@ -35,9 +35,9 @@ export class ExpensesReportComponent extends BaseSelectorFilterComponent impleme
 
 	constructor(
 		public readonly translateService: TranslateService,
-		private readonly expensesService: ExpensesService,
-		private readonly cd: ChangeDetectorRef,
-		private readonly timesheetFilterService: TimesheetFilterService,
+		private readonly _expensesService: ExpensesService,
+		private readonly _cd: ChangeDetectorRef,
+		private readonly _timesheetFilterService: TimesheetFilterService,
 		protected readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		protected readonly timeZoneService: TimeZoneService
@@ -71,7 +71,7 @@ export class ExpensesReportComponent extends BaseSelectorFilterComponent impleme
 	}
 
 	ngAfterViewInit() {
-		this.cd.detectChanges();
+		this._cd.detectChanges();
 	}
 
 	/**
@@ -100,7 +100,7 @@ export class ExpensesReportComponent extends BaseSelectorFilterComponent impleme
 	filterByCategory(event) {
 		if (this.gauzyFiltersComponent.saveFilters) {
 			// If true, set the timesheetFilterService's filter property to the provided filters
-			this.timesheetFilterService.filter = this.filters;
+			this._timesheetFilterService.filter = this.filters;
 		}
 		this.filters = Object.assign(
 			{},
@@ -121,7 +121,7 @@ export class ExpensesReportComponent extends BaseSelectorFilterComponent impleme
 		// Check if the saveFilters property of the gauzyFiltersComponent is truthy
 		if (this.gauzyFiltersComponent.saveFilters) {
 			// If true, set the timesheetFilterService's filter property to the provided filters
-			this.timesheetFilterService.filter = filters;
+			this._timesheetFilterService.filter = filters;
 		}
 
 		// Create a shallow copy of the filters object and assign it to the component's filters property
@@ -131,46 +131,52 @@ export class ExpensesReportComponent extends BaseSelectorFilterComponent impleme
 		this.subject$.next(true);
 	}
 
-	async updateChart() {
+	/**
+	 * Asynchronously fetch and update the expense report chart data.
+	 *
+	 * @returns {Promise<void>}
+	 */
+	async updateChart(): Promise<void> {
 		// Check if the organization is not defined or if the request is empty
 		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
 
-		// Set the loading flag to true
+		// Clear previous chart data and set the loading flag to true
+		this.charts = null;
 		this.loading = true;
 
 		try {
 			// Get the current value of the payloads$ observable
 			const payloads = this.payloads$.getValue();
 
-			// Call the expensesService to fetch report chart data based on the payloads
-			const logs: any[] = await this.expensesService.getExpenseReportCharts(payloads);
+			// Fetch the expense report chart data from the expensesService
+			const logs: any[] = await this._expensesService.getExpenseReportCharts(payloads);
 
-			// Define a datasets array with the fetched data
+			// Prepare datasets for the chart using the fetched data
 			const datasets = [
 				{
-					label: this.getTranslation('REPORT_PAGE.EXPENSE'), // Label for the dataset, likely representing expenses
-					data: logs.map((log) => log.value['expense']), // An array of data points representing expenses
-					borderColor: ChartUtil.CHART_COLORS.red, // Color of the dataset border
-					backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 1), // Background color with transparency
-					borderWidth: 2, // Width of the dataset border
-					pointRadius: 2, // Radius of the data points
-					pointHoverRadius: 4, // Radius of the data points on hover
-					pointHoverBorderWidth: 4, // Width of the border of data points on hover
-					tension: 0.4, // Tension of the spline curve connecting data points
-					fill: false // Whether to fill the area under the line or not
+					label: this.getTranslation('REPORT_PAGE.EXPENSE'), // Label for the dataset, representing expenses
+					data: logs.map((log) => log.value['expense']), // Extract expense values from logs
+					borderColor: ChartUtil.CHART_COLORS.red, // Set the color of the dataset border
+					backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 1), // Transparent background color
+					borderWidth: 2, // Set the dataset border width
+					pointRadius: 2, // Set the data point radius
+					pointHoverRadius: 4, // Data point radius on hover
+					pointHoverBorderWidth: 4, // Border width of data points on hover
+					tension: 0.4, // Set the curve tension between data points
+					fill: false // Disable filling the area under the line
 				}
 			];
 
 			// Update the chartData property with the new data
 			this.charts = {
-				labels: pluck(logs, 'date'), // Assuming pluck is a function to extract 'date' property from each log
-				datasets
+				labels: pluck(logs, 'date'), // Extract 'date' from each log for chart labels
+				datasets // Set the datasets for the chart
 			};
 		} catch (error) {
-			// Log any errors that occur during the data retrieval process
-			console.log('Error while retrieving expense reports chart', error);
+			// Log any errors that occur during data retrieval
+			console.error('Error while retrieving expense reports chart:', error);
 		} finally {
 			// Set the loading flag to false regardless of success or failure
 			this.loading = false;

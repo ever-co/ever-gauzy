@@ -38,11 +38,11 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	constructor(
-		private readonly cd: ChangeDetectorRef,
-		private readonly errorHandlingService: ErrorHandlingService,
-		private readonly timesheetService: TimesheetService,
-		private readonly timesheetFilterService: TimesheetFilterService,
 		public readonly translateService: TranslateService,
+		private readonly _cd: ChangeDetectorRef,
+		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _timesheetService: TimesheetService,
+		private readonly _timesheetFilterService: TimesheetFilterService,
 		protected readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		protected readonly timeZoneService: TimeZoneService
@@ -72,7 +72,7 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 	 *
 	 */
 	ngAfterViewInit() {
-		this.cd.detectChanges();
+		this._cd.detectChanges();
 		this.control.valueChanges
 			.pipe(
 				distinctUntilChanged(),
@@ -107,7 +107,7 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 	 */
 	filtersChange(filters: ITimeLogFilters) {
 		if (this.gauzyFiltersComponent.saveFilters) {
-			this.timesheetFilterService.filter = filters;
+			this._timesheetFilterService.filter = filters;
 		}
 		this.filters = Object.assign({}, filters);
 		this.subject$.next(true);
@@ -117,15 +117,16 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 	 * Asynchronously fetch manual time logs and update the component's state.
 	 * Handles loading state, API request, data processing, and errors.
 	 *
-	 * @returns A promise resolving to an array of objects containing date and timeLogs.
+	 * @returns {Promise<void>} A promise resolving to an array of objects containing date and timeLogs.
 	 */
-	async getManualLogs() {
+	async getManualLogs(): Promise<void> {
 		// Check if organization and request data are available
 		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
 
-		// Set loading state to true
+		// Clear previous data and set loading state to true
+		this.dailyData = [];
 		this.loading = true;
 
 		try {
@@ -133,12 +134,18 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 			const payloads = this.payloads$.getValue();
 
 			// Call the timesheetService to fetch time logs
-			const logs: ITimeLog[] = await this.timesheetService.getTimeLogs(payloads, [
+			const logs: ITimeLog[] = await this._timesheetService.getTimeLogs(payloads, [
 				'task',
 				'project',
 				'employee',
 				'employee.user'
 			]);
+
+			// Check if logs are empty and handle gracefully
+			if (logs.length === 0) {
+				console.log('No manual logs found for the given request.');
+				return;
+			}
 
 			// Process the fetched logs and update the component's state
 			this.dailyData = chain(logs)
@@ -147,8 +154,8 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 				.value();
 		} catch (error) {
 			// Handle any exceptions or errors during the fetch
-			console.log('Error fetching manual logs:', error);
-			this.errorHandlingService.handleError(error);
+			console.error('Error fetching manual logs:', error);
+			this._errorHandlingService.handleError(error);
 		} finally {
 			// Set loading state to false regardless of success or failure
 			this.loading = false;
