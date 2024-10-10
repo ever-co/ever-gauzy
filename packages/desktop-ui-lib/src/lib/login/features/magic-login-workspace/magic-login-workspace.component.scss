@@ -1,0 +1,41 @@
+@import "themes";
+
+.ever-logo-svg {
+    margin-top: 2rem;
+    align-self: center;
+}
+
+.message-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: nb-theme(gauzy-card-2);
+    border-radius: nb-theme(border-radius);
+    box-sizing: border-box;
+    padding: 30px;
+    width: 100%;
+    height: 100%;
+}
+
+.error .title {
+    color: #FF4040;
+}
+.title {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+.sub-title {
+    font-size: .8rem;
+    color: var(--text-hint-color);
+}
+.thanking-text {
+    text-align: center;
+    font-size: .8rem;
+}
+.icon {
+    font-size: 24px;
+    margin-right: 15px;
+}
+h3 {
+    margin-bottom: 10px;
+}
