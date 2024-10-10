@@ -496,7 +496,8 @@
 			"GITHUB_REPOSITORY": "GitHub Repository",
 			"PROJECT": "Project",
 			"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Do you want to enable Jobs Search & Matching Analysis?",
-			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Do you want to enable Employee Performance Analysis?"
+			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Do you want to enable Employee Performance Analysis?",
+			"STANDARD_WORK_HOURS_PER_DAY": "Standard Work Hours Per Day"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -693,7 +694,8 @@
 			"AUTO_SYNC_TAG": "Select Auto-sync Label",
 			"SELECT_PROJECT": "Select Project",
 			"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Enable Jobs Search & Matching Analysis",
-			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Enable Employee Performance Analysis"
+			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Enable Employee Performance Analysis",
+			"STANDARD_WORK_HOURS_PER_DAY": "Enter the number of standard work hours per day (e.g., 8)"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -2085,7 +2087,8 @@
 					"TASK_AUTO_STATUS_ENABLED_INFO": "Indicates whether automatic status updates are enabled for tasks.",
 					"TASK_NOTIFY_LEFT_ENABLED_INFO": "Indicates whether notifications about tasks approaching their due date are enabled.",
 					"TASK_AUTO_CLOSE_ENABLED_INFO": "Indicates whether tasks may automatically close after a specified period.",
-					"TASK_AUTO_ARCHIVE_ENABLED_INFO": "Indicates whether tasks may automatically be archived after a specified period."
+					"TASK_AUTO_ARCHIVE_ENABLED_INFO": "Indicates whether tasks may automatically be archived after a specified period.",
+					"STANDARD_WORK_HOURS_PER_DAY": "Select the default number of work hours per day. This value will be used in time-tracking reports to compare how many hours an employee worked relative to this standard."
 				}
 			},
 			"TEAMS_PAGE": {

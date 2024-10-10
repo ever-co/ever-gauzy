@@ -467,7 +467,8 @@
 			"UPWORK_ORGANIZATION_ID": "معرّف منظمة أبورك",
 			"UPWORK_ORGANIZATION_NAME": "اسم المنظمة على منصة أبورك",
 			"UPWORK_ID": "معرف أبورك",
-			"LINKEDIN_ID": "معرّف LinkedIn"
+			"LINKEDIN_ID": "معرّف LinkedIn",
+			"STANDARD_WORK_HOURS_PER_DAY": "ساعات العمل القياسية في اليوم"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "الاسم",
@@ -653,7 +654,8 @@
 			"UPWORK_ORGANIZATION_ID": "رقم هوية المنظمة في أبوورك",
 			"UPWORK_ORGANIZATION_NAME": "اسم المنظمة على أبورك",
 			"UPWORK_ID": "معرّف أبوورك",
-			"LINKEDIN_ID": "معرّف LinkedIn"
+			"LINKEDIN_ID": "معرّف LinkedIn",
+			"STANDARD_WORK_HOURS_PER_DAY": "أدخل عدد ساعات العمل القياسية في اليوم (مثل 8)"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "معدل الافتراضي",
@@ -1976,7 +1978,8 @@
 					"ENABLE_DETECTION_INACTIVITY_INFO": "تمكين - سيتم اكتشاف عدم النشاط في النظام وعرض تحذير.\nتعطيل - لن يتم عرض أي تحذير عندما يكون الموظف غير نشط.",
 					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
 					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
-					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking."
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking.",
+					"STANDARD_WORK_HOURS_PER_DAY": "اختر عدد ساعات العمل الافتراضية في اليوم. سيتم استخدام هذه القيمة في تقارير تتبع الوقت لمقارنة عدد الساعات التي عمل فيها الموظف بالنسبة لهذا المعيار."
 				}
 			},
 			"TEAMS_PAGE": {

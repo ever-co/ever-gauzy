@@ -474,7 +474,8 @@
 			"GITHUB_REPOSITORY": "GitHub Repository",
 			"PROJECT": "Project",
 			"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Хотите включить поиск вакансий и анализ соответствия?",
-			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Хотите включить анализ эффективности сотрудников?"
+			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Хотите включить анализ эффективности сотрудников?",
+			"STANDARD_WORK_HOURS_PER_DAY": "Стандартные рабочие часы в день"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -669,7 +670,8 @@
 			"AUTO_SYNC_TAG": "Select Auto-sync Label",
 			"SELECT_PROJECT": "Select Project",
 			"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Включить поиск вакансий и анализ соответствия",
-			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Включить анализ производительности сотрудников"
+			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Включить анализ производительности сотрудников",
+			"STANDARD_WORK_HOURS_PER_DAY": "Введите количество стандартных рабочих часов в день (например, 8)"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -2013,7 +2015,8 @@
 					"ENABLE_DETECTION_INACTIVITY_INFO": "Включено — система обнаружит бездействие и выдаст предупреждение. Отключено — предупреждение не будет отображаться, если сотрудник неактивен.",
 					"ALLOW_MANUAL_TIME_INFO": "Указывает, разрешен ли ручной ввод времени для отслеживания времени.",
 					"ALLOW_MODIFY_TIME_INFO": "Указывает, разрешено ли изменение записей времени для учета времени.",
-					"ALLOW_DELETE_TIME_INFO": "Указывает, разрешено ли удаление записей времени для учета времени."
+					"ALLOW_DELETE_TIME_INFO": "Указывает, разрешено ли удаление записей времени для учета времени.",
+					"STANDARD_WORK_HOURS_PER_DAY": "Выберите стандартное количество рабочих часов в день. Это значение будет использоваться в отчетах по учету рабочего времени для сравнения отработанных сотрудником часов относительно этого стандарта."
 				}
 			},
 			"TEAMS_PAGE": {
