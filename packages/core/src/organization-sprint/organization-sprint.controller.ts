@@ -85,7 +85,7 @@ export class OrganizationSprintController extends CrudController<OrganizationSpr
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
-	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_SPRINT_EDIT)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_SPRINT_ADD)
 	@UseValidationPipe()
 	@Post()
 	async create(@Body() entity: CreateOrganizationSprintDTO): Promise<IOrganizationSprint> {
