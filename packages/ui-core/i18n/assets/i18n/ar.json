@@ -1187,7 +1187,8 @@
 			"DAILY_TIME_AND_ACTIVITY": "لا توجد وقت ونشاط تم تتبعه حتى الآن لهذا اليوم. يرجى استخدام تطبيق مؤقت سطح المكتب <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Gauzy</a>.",
 			"PROJECT_BUDGET": "لم تقم بإنشاء أي مشروع بميزانية.",
 			"CLIENT_BUDGET": "لم تقم بإنشاء أي عميل بميزانية."
-		}
+		},
+		"STANDARD_WORK_HOURS": "ساعات العمل القياسية ({{hours}})"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "التطبيقات والتكاملات المتاحة",

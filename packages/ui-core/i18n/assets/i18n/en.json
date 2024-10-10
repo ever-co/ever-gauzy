@@ -1227,7 +1227,8 @@
 			"DAILY_TIME_AND_ACTIVITY": "There is no time and activity tracked yet for this day. Please use the <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>.",
 			"PROJECT_BUDGET": "You have not created any project with budget.",
 			"CLIENT_BUDGET": "You have not created any client with budget."
-		}
+		},
+		"STANDARD_WORK_HOURS": "Standard Work Hours ({{ hours }})"
 	},
 	"INTEGRATIONS": {
 		"TITLE": "Integrations",

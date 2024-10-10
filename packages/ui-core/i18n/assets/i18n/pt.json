@@ -1188,7 +1188,8 @@
 			"DAILY_TIME_AND_ACTIVITY": "Ainda não há tempo e atividade registrados para este dia. Por favor, utilize o aplicativo de cronômetro Gauzy Desktop <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">aqui</a>.",
 			"PROJECT_BUDGET": "Você não criou nenhum projeto com orçamento.",
 			"CLIENT_BUDGET": "Você não criou nenhum cliente com orçamento."
-		}
+		},
+		"STANDARD_WORK_HOURS": "Horas de trabalho padrão ({{hours}})"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Aplicativos e integrações disponíveis",

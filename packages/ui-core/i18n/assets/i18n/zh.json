@@ -1188,7 +1188,8 @@
 			"DAILY_TIME_AND_ACTIVITY": "当天尚未追踪时间和活动。请使用<a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Gauzy桌面计时器应用</a>。",
 			"PROJECT_BUDGET": "你还没有创建任何有预算的项目。",
 			"CLIENT_BUDGET": "您还没有创建任何有预算的客户。"
-		}
+		},
+		"STANDARD_WORK_HOURS": "标准工作时间 ({{hours}})"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "可用应用程序与集成",
