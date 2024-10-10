@@ -32,13 +32,13 @@ export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
 	lockedAt?: Date;
 	editedAt?: Date;
 	isBilled?: boolean;
-	status: string;
+	status: TimesheetStatus;
 	isEdited?: boolean;
 }
 
 export interface ITimesheetCreateInput extends IBasePerTenantAndOrganizationEntityModel {
-	employeeId: string;
-	approvedById?: string;
+	employeeId: ID;
+	approvedById?: ID;
 	duration: number;
 	keyboard: number;
 	mouse: number;
@@ -53,8 +53,8 @@ export interface ITimesheetCreateInput extends IBasePerTenantAndOrganizationEnti
 }
 
 export interface ITimeSheetFindInput extends IBasePerTenantAndOrganizationEntityModel {
-	employeeId: string;
-	approvedById?: string;
+	employeeId: ID;
+	approvedById?: ID;
 	employee: IEmployeeFindInput;
 	isBilled?: boolean;
 	status?: string;
@@ -73,12 +73,12 @@ export enum TimesheetStatus {
 }
 
 export interface IUpdateTimesheetStatusInput extends IBasePerTenantAndOrganizationEntityModel {
-	ids: string | string[];
+	ids: ID | ID[];
 	status?: TimesheetStatus;
 }
 
 export interface ISubmitTimesheetInput extends IBasePerTenantAndOrganizationEntityModel {
-	ids: string | string[];
+	ids: ID | ID[];
 	status: 'submit' | 'unsubmit';
 }
 
@@ -86,9 +86,9 @@ export interface IGetTimesheetInput extends IBasePerTenantAndOrganizationEntityM
 	onlyMe?: boolean;
 	startDate?: Date | string;
 	endDate?: Date | string;
-	projectIds?: string[];
-	clientId?: string[];
-	employeeIds?: string[];
+	projectIds?: ID[];
+	clientId?: ID[];
+	employeeIds?: ID[];
 }
 
 export interface IDateRange {
@@ -98,7 +98,8 @@ export interface IDateRange {
 export interface ITimeLog
 	extends IBasePerTenantAndOrganizationEntityModel,
 		IRelationalOrganizationProject,
-		IRelationalOrganizationTeam, ITaggable {
+		IRelationalOrganizationTeam,
+		ITaggable {
 	employee: IEmployee;
 	employeeId: ID;
 	timesheet?: ITimesheet;
@@ -124,10 +125,10 @@ export interface ITimeLog
 }
 
 export interface ITimeLogCreateInput extends IBasePerTenantAndOrganizationEntityModel {
-	employeeId: string;
-	timesheetId?: string;
-	taskId?: string;
-	projectId: string;
+	employeeId: ID;
+	timesheetId?: ID;
+	taskId?: ID;
+	projectId: ID;
 	startedAt?: Date;
 	stoppedAt?: Date;
 	logType: TimeLogType;
@@ -138,7 +139,7 @@ export interface ITimeLogCreateInput extends IBasePerTenantAndOrganizationEntity
 }
 
 export interface ITimeSlotCreateInput extends IBasePerTenantAndOrganizationEntityModel {
-	employeeId: string;
+	employeeId: ID;
 	duration: number;
 	keyboard: number;
 	mouse: number;
@@ -175,19 +176,19 @@ export interface ITimeLogFilters extends IBasePerTenantAndOrganizationEntityMode
 	startDate?: Date | string;
 	endDate?: Date | string;
 	isCustomDate?: boolean;
-	projectIds?: string[];
-	teamIds?: string[];
-	employeeIds?: string[];
+	employeeIds?: ID[];
+	projectIds?: ID[];
+	teamIds?: ID[];
+	taskIds?: ID[];
 	logType?: TimeLogType[];
 	source?: TimeLogSourceEnum[];
 	activityLevel?: {
 		start: number;
 		end: number;
 	};
-	taskIds?: string[];
 	defaultRange?: boolean;
 	unitOfTime?: any;
-	categoryId?: string;
+	categoryId?: ID;
 	timeZone?: string;
 	timeFormat?: TimeFormatEnum;
 }
@@ -199,14 +200,14 @@ export interface ITimeLogTodayFilters extends IBasePerTenantAndOrganizationEntit
 
 export interface ITimeSlot extends IBasePerTenantAndOrganizationEntityModel {
 	[x: string]: any;
-	employeeId: string;
+	employeeId: ID;
 	employee?: IEmployee;
 	activities?: IActivity[];
 	screenshots?: IScreenshot[];
 	timeLogs?: ITimeLog[];
 	timeSlotMinutes?: ITimeSlotMinute[];
 	project?: IOrganizationProject;
-	projectId?: string;
+	projectId?: ID;
 	duration?: number;
 	keyboard?: number;
 	mouse?: number;
@@ -223,13 +224,13 @@ export interface ITimeSlot extends IBasePerTenantAndOrganizationEntityModel {
 export interface ITimeSlotTimeLogs extends IBasePerTenantAndOrganizationEntityModel {
 	timeLogs: ITimeLog[];
 	timeSlots: ITimeSlot[];
-	timeLogId: string;
-	timeSlotId: string;
+	timeLogId: ID;
+	timeSlotId: ID;
 }
 
 export interface ITimeSlotMinute extends IBasePerTenantAndOrganizationEntityModel {
 	timeSlot?: ITimeSlot;
-	timeSlotId?: string;
+	timeSlotId?: ID;
 	keyboard?: number;
 	mouse?: number;
 	datetime?: Date;
@@ -239,20 +240,19 @@ export interface IActivity extends IBasePerTenantAndOrganizationEntityModel {
 	title: string;
 	description?: string;
 	employee?: IEmployee;
-	employeeId?: string;
+	employeeId?: ID;
 	timeSlot?: ITimeSlot;
-	timeSlotId?: string;
+	timeSlotId?: ID;
 	project?: IOrganizationProject;
-	projectId?: string;
+	projectId?: ID;
 	task?: ITask;
-	taskId?: string;
+	taskId?: ID;
 	metaData?: string | IURLMetaData;
 	date: string;
 	time: string;
 	duration?: number;
 	type?: string;
 	source?: string;
-	id?: string;
 	activityTimestamp?: string;
 	recordedAt?: Date;
 }
@@ -261,7 +261,7 @@ export interface IDailyActivity {
 	[x: string]: any;
 	sessions?: number;
 	duration?: number;
-	employeeId?: string;
+	employeeId?: ID;
 	date?: string;
 	title?: string;
 	description?: string;
@@ -270,15 +270,15 @@ export interface IDailyActivity {
 }
 
 export interface ICreateActivityInput extends IBasePerTenantAndOrganizationEntityModel {
-	employeeId?: string;
-	projectId?: string;
+	employeeId?: ID;
+	projectId?: ID;
+	timeSlotId?: ID;
 	duration?: number;
 	keyboard?: number;
 	mouse?: number;
 	overall?: number;
 	startedAt?: Date;
 	stoppedAt?: Date;
-	timeSlotId?: string;
 	type: string;
 	title: string;
 	data?: string;
@@ -302,7 +302,7 @@ export interface ITimerStatusInput
 		IEmployeeEntityInput,
 		IRelationalOrganizationTeam {
 	source?: TimeLogSourceEnum;
-	employeeIds?: string[];
+	employeeIds?: ID[];
 }
 
 export interface ITimerStatus {
@@ -329,9 +329,9 @@ export interface ITimerPosition {
 export interface ITimerToggleInput
 	extends IBasePerTenantAndOrganizationEntityModel,
 		Pick<IRelationalOrganizationTeam, 'organizationTeamId'> {
-	projectId?: string;
-	taskId?: string;
-	organizationContactId?: string;
+	projectId?: ID;
+	taskId?: ID;
+	organizationContactId?: ID;
 	description?: string;
 	logType?: TimeLogType;
 	source?: TimeLogSourceEnum;
@@ -344,11 +344,10 @@ export interface ITimerToggleInput
 }
 
 export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityModel {
-	id?: string;
-	employeeId?: string;
-	projectId?: string;
-	taskId?: string;
-	organizationContactId?: string;
+	employeeId?: ID;
+	projectId?: ID;
+	taskId?: ID;
+	organizationContactId?: ID;
 	logType?: TimeLogType;
 	description?: string;
 	reason?: string;
@@ -361,7 +360,7 @@ export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityMod
 
 export interface IGetTimeLogInput extends ITimeLogFilters, IBaseRelationsEntityModel {
 	onlyMe?: boolean;
-	timesheetId?: string;
+	timesheetId?: ID;
 }
 
 export interface IGetTimeLogReportInput extends IGetTimeLogInput {
@@ -370,10 +369,10 @@ export interface IGetTimeLogReportInput extends IGetTimeLogInput {
 }
 
 export interface IGetTimeLogConflictInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {
-	ignoreId?: string | string[];
+	ignoreId?: ID | ID[];
 	startDate: string | Date;
 	endDate: string | Date;
-	employeeId: string;
+	employeeId: ID;
 }
 
 export interface IGetTimeSlotInput extends ITimeLogFilters, IBaseRelationsEntityModel {
@@ -387,8 +386,8 @@ export interface IGetActivitiesInput extends ITimeLogFilters, IPaginationInput, 
 }
 
 export interface IBulkActivitiesInput extends IBasePerTenantAndOrganizationEntityModel {
-	employeeId: string;
-	projectId?: string;
+	employeeId: ID;
+	projectId?: ID;
 	activities: IActivity[];
 }
 
@@ -397,7 +396,7 @@ export interface IReportDayGroupByDate {
 	logs: {
 		project: IOrganizationProject;
 		employeeLogs: {
-			task: ITask;
+			tasks: ITask[];
 			employee: IEmployee;
 			sum: number;
 			activity: number;
@@ -419,7 +418,7 @@ export interface IReportDayGroupByDate {
 	logs: {
 		project: IOrganizationProject;
 		employeeLogs: {
-			task: ITask;
+			tasks: ITask[];
 			employee: IEmployee;
 			sum: number;
 			activity: number;
@@ -435,7 +434,7 @@ export interface IReportDayGroupByEmployee {
 			sum: number;
 			activity: number;
 			project: IOrganizationProject;
-			task: ITask;
+			tasks: ITask[];
 		}[];
 	}[];
 }
@@ -445,7 +444,7 @@ export interface IReportDayGroupByProject {
 	logs: {
 		date: string;
 		employeeLogs: {
-			task: ITask;
+			tasks: ITask[];
 			employee: IEmployee;
 			sum: number;
 			activity: number;
@@ -460,7 +459,7 @@ export interface IReportDayGroupByClient {
 		logs: {
 			date: string;
 			employeeLogs: {
-				task: ITask;
+				tasks: ITask[];
 				employee: IEmployee;
 				sum: number;
 				activity: number;
@@ -507,11 +506,26 @@ export interface IClientBudgetLimitReport {
 	remainingBudget?: number;
 }
 
-export interface IDeleteTimeSlot extends IBasePerTenantAndOrganizationEntityModel {
-	ids: string[];
+/**
+ * Base interface for delete operations that include forceDelete flag
+ * and extend the tenant and organization properties.
+ */
+export interface IDeleteEntity extends IBasePerTenantAndOrganizationEntityModel {
+	forceDelete?: boolean;
 }
 
-export interface IDeleteTimeLog extends IBasePerTenantAndOrganizationEntityModel {
-	logIds: string[];
-	forceDelete: boolean;
+/**
+ * Interface for deleting time slots.
+ * Includes an array of time slot IDs to be deleted.
+ */
+export interface IDeleteTimeSlot extends IDeleteEntity {
+	ids: ID[];
+}
+
+/**
+ * Interface for deleting time logs.
+ * Includes an array of log IDs to be deleted.
+ */
+export interface IDeleteTimeLog extends IDeleteEntity {
+	logIds: ID[];
 }

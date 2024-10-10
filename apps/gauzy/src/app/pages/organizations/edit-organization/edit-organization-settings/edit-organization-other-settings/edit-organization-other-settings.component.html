@@ -786,7 +786,7 @@
 													}}
 													<button
 														[nbTooltip]="
-															'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ENABLE_DETECTION_INACTIVITY_INFO'
+															'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.ENABLE_DETECTION_INACTIVITY_INFO'
 																| translate
 														"
 														ghost
@@ -998,6 +998,36 @@
 												</div>
 											</div>
 										</nb-toggle>
+									</div>
+								</div>
+								<!-- Standard Work Hours Per Day -->
+								<div class="col-xl-6 col-12 pt-2">
+									<div class="col-6">
+										<div class="form-group">
+											<label class="label">
+												{{ 'FORM.LABELS.STANDARD_WORK_HOURS_PER_DAY' | translate }}
+												<button
+													[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.STANDARD_WORK_HOURS_PER_DAY' | translate"
+													class="p-0"
+													ghost
+													nbButton
+													size="small"
+													status="info"
+												>
+													<nb-icon icon="info"></nb-icon>
+												</button>
+											</label>
+											<nb-select
+												[placeholder]="'FORM.PLACEHOLDERS.STANDARD_WORK_HOURS_PER_DAY' | translate"
+												formControlName="standardWorkHoursPerDay"
+												fullWidth
+												size="medium"
+											>
+												<nb-option *ngFor="let hour of standardWorkHoursPerDayOptions" [value]="hour">
+													{{ hour }}
+												</nb-option>
+											</nb-select>
+										</div>
 									</div>
 								</div>
 							</div>
@@ -1515,6 +1545,15 @@
 									<div class="form-group">
 										<label class="label">
 											{{ 'FORM.LABELS.UPWORK_ORGANIZATION_ID' | translate }}
+											<button
+												[nbTooltip]=""
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
 										</label>
 										<input
 											[placeholder]="'FORM.PLACEHOLDERS.UPWORK_ORGANIZATION_ID' | translate"
@@ -1528,6 +1567,15 @@
 									<div class="form-group">
 										<label class="label">
 											{{ 'FORM.LABELS.UPWORK_ORGANIZATION_NAME' | translate }}
+											<button
+												[nbTooltip]=""
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
 										</label>
 										<input
 											[placeholder]="'FORM.PLACEHOLDERS.UPWORK_ORGANIZATION_NAME' | translate"

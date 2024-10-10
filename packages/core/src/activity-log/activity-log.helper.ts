@@ -1,9 +1,9 @@
-import { ActionTypeEnum, ActivityLogEntityEnum } from "@gauzy/contracts";
+import { ActionTypeEnum, ActivityLogEntityEnum, IActivityLogUpdatedValues } from '@gauzy/contracts';
 
 const ActivityTemplates = {
 	[ActionTypeEnum.Created]: `{action} a new {entity} called "{entityName}"`,
 	[ActionTypeEnum.Updated]: `{action} {entity} "{entityName}"`,
-	[ActionTypeEnum.Deleted]: `{action} {entity} "{entityName}"`,
+	[ActionTypeEnum.Deleted]: `{action} {entity} "{entityName}"`
 };
 
 /**
@@ -31,7 +31,26 @@ export function generateActivityLogDescription(
 			case 'entityName':
 				return entityName;
 			default:
-			return '';
+				return '';
 		}
 	});
+}
+
+export function activityLogUpdatedFieldsAndValues<T>(original: T, updated: Partial<T>) {
+	const updatedFields: string[] = [];
+	const previousValues: IActivityLogUpdatedValues[] = [];
+	const updatedValues: IActivityLogUpdatedValues[] = [];
+
+	for (const key of Object.keys(updated)) {
+		if (original[key] !== updated[key]) {
+			// Add updated field
+			updatedFields.push(key);
+
+			// Add old and new values
+			previousValues.push({ [key]: original[key] });
+			updatedValues.push({ [key]: updated[key] });
+		}
+	}
+
+	return { updatedFields, previousValues, updatedValues };
 }

@@ -163,7 +163,7 @@ export class ScreenshotSubscriber extends BaseEntityEventSubscriber<Screenshot> 
 				return; // Early exit if the entity is not a Screenshot
 			}
 			const { id: entityId, storageProvider, file, thumb } = entity;
-			console.log(`BEFORE SCREENSHOT ENTITY WITH ID ${entityId} REMOVED`);
+			console.log(`AFTER SCREENSHOT ENTITY WITH ID ${entityId} REMOVED`);
 			console.log('ScreenshotSubscriber: Deleting files...', file, thumb);
 
 			// Initialize the file storage instance with the provided storage provider.
@@ -174,6 +174,26 @@ export class ScreenshotSubscriber extends BaseEntityEventSubscriber<Screenshot> 
 			await Promise.all([file && instance.deleteFile(file), thumb && instance.deleteFile(thumb)]);
 		} catch (error) {
 			console.error(`ScreenshotSubscriber: Error deleting files for entity ID ${entity?.id}:`, error.message);
+		}
+	}
+
+	/**
+	 * Called after entity is soft removed from the database.
+	 * This method handles the removal of associated files (both the main file and its thumbnail) from the storage system.
+	 *
+	 * @param entity The entity that was soft removed.
+	 * @returns {Promise<void>} A promise that resolves when the file soft removal operations are complete.
+	 */
+	async afterEntitySoftRemove(entity: Screenshot): Promise<void> {
+		try {
+			if (!(entity instanceof Screenshot)) {
+				return; // Early exit if the entity is not a Screenshot
+			}
+			const { id: entityId, file, thumb } = entity;
+			console.log(`AFTER SCREENSHOT ENTITY WITH ID ${entityId} SOFT REMOVED`);
+			console.log('ScreenshotSubscriber: Soft removing files...', file, thumb);
+		} catch (error) {
+			console.error(`ScreenshotSubscriber: Error soft removing entity ID ${entity?.id}:`, error.message);
 		}
 	}
 }

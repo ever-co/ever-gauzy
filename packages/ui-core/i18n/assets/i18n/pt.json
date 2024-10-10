@@ -468,7 +468,8 @@
 			"UPWORK_ORGANIZATION_ID": "ID da Organização Upwork",
 			"UPWORK_ORGANIZATION_NAME": "Nome da Organização Upwork",
 			"UPWORK_ID": "ID do Upwork",
-			"LINKEDIN_ID": "ID do LinkedIn"
+			"LINKEDIN_ID": "ID do LinkedIn",
+			"STANDARD_WORK_HOURS_PER_DAY": "Horas de trabalho padrão por dia"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Nome",
@@ -654,7 +655,8 @@
 			"UPWORK_ORGANIZATION_ID": "Identificação da Organização Upwork",
 			"UPWORK_ORGANIZATION_NAME": "Nome da organização Upwork",
 			"UPWORK_ID": "ID Upwork",
-			"LINKEDIN_ID": "ID do LinkedIn"
+			"LINKEDIN_ID": "ID do LinkedIn",
+			"STANDARD_WORK_HOURS_PER_DAY": "Insira o número de horas de trabalho padrão por dia (ex: 8)"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Taxa de inadimplência",
@@ -1186,7 +1188,8 @@
 			"DAILY_TIME_AND_ACTIVITY": "Ainda não há tempo e atividade registrados para este dia. Por favor, utilize o aplicativo de cronômetro Gauzy Desktop <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">aqui</a>.",
 			"PROJECT_BUDGET": "Você não criou nenhum projeto com orçamento.",
 			"CLIENT_BUDGET": "Você não criou nenhum cliente com orçamento."
-		}
+		},
+		"STANDARD_WORK_HOURS": "Horas de trabalho padrão ({{hours}})"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Aplicativos e integrações disponíveis",
@@ -1978,7 +1981,8 @@
 					"ENABLE_DETECTION_INACTIVITY_INFO": "Ativado - o sistema detectará a inatividade e exibirá um aviso. Desativado - nenhum aviso será exibido quando um funcionário estiver inativo.",
 					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
 					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
-					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking."
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking.",
+					"STANDARD_WORK_HOURS_PER_DAY": "Selecione o número padrão de horas de trabalho por dia. Esse valor será usado em relatórios de controle de tempo para comparar quantas horas um funcionário trabalhou em relação a esse padrão."
 				}
 			},
 			"TEAMS_PAGE": {
@@ -2085,8 +2089,10 @@
 			},
 			"ONLY_ADMIN": "Essas permissões são somente de leitura e ativadas apenas para administradores.",
 			"INSUFFICIENT": "Você não tem permissões suficientes. Estão faltando as seguintes permissões:",
-			"ORG_SPRINT_EDIT": "Criar/Editar Sprints",
-			"ORG_SPRINT_VIEW": "Visualizar os Sprints.",
+			"ORG_SPRINT_EDIT": "Editar sprint",
+			"ORG_SPRINT_VIEW": "Ver sprint",
+			"ORG_SPRINT_DELETE": "Excluir sprints",
+			"ORG_SPRINT_ADD": "Adicionar sprint",
 			"ORG_PROJECT_ADD": "Criar projetos",
 			"ORG_PROJECT_VIEW": "Ver Projetos",
 			"ORG_PROJECT_EDIT": "Editar Projetos",
@@ -3087,10 +3093,10 @@
 	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Selecionar Funcionário",
-		"SELECT_A_DATE": "Selecione uma data.",
-		"SELECT_AN_ORGANIZATION": "Selecionar uma organização",
+		"SELECT_A_DATE": "Selecionar uma Data",
+		"SELECT_AN_ORGANIZATION": "Selecionar uma Organização",
 		"SELECT_PROJECT": "Selecionar Projeto",
-		"SELECT_TEAM": "Selecionar equipe"
+		"SELECT_TEAM": "Selecionar Equipe"
 	},
 	"HEADER_TITLE": {
 		"FOR": "para",

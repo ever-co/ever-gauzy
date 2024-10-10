@@ -10,16 +10,17 @@ import moment from 'moment-timezone';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { DateRangePickerBuilderService, Store, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
 import {
 	ITimeLogFilters,
 	ITimeSlot,
 	IGetTimeSlotInput,
 	IScreenshotMap,
 	IScreenshot,
-	PermissionsEnum
+	PermissionsEnum,
+	ID
 } from '@gauzy/contracts';
 import { isEmpty, distinctUntilChange, isNotEmpty, toTimezone } from '@gauzy/ui-core/common';
+import { DateRangePickerBuilderService, Store, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
 import {
 	BaseSelectorFilterComponent,
 	DeleteConfirmationComponent,
@@ -188,7 +189,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	 *
 	 * @param slotId The ID of the time slot to toggle selection for.
 	 */
-	toggleSelect(slotId?: string): void {
+	toggleSelect(slotId?: ID): void {
 		if (slotId) {
 			// Toggle the selection state of the time slot identified by slotId
 			this.selectedIds[slotId] = !this.selectedIds[slotId];
@@ -252,11 +253,17 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 					const ids = Object.keys(this.selectedIds).filter((key) => this.selectedIds[key]);
 
 					// Construct request object with organization ID
-					const { id: organizationId } = this.organization;
-					const request = { ids, organizationId };
+					const { id: organizationId, tenantId } = this.organization;
+
+					// Call the deleteTimeSlots API with forceDelete set to true
+					const api$ = this._timesheetService.deleteTimeSlots({
+						ids,
+						organizationId,
+						tenantId
+					});
 
 					// Convert the promise to an observable and handle deletion
-					return from(this._timesheetService.deleteTimeSlots(request)).pipe(
+					return from(api$).pipe(
 						tap(() => this._deleteScreenshotGallery(ids)),
 						tap(() => this.screenshots$.next(true))
 					);
@@ -264,10 +271,6 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
-
-	ngOnDestroy(): void {
-		this._galleryService.clearGallery();
 	}
 
 	/**
@@ -344,7 +347,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	 *
 	 * @param timeSlotIds An array of time slot IDs whose screenshots should be removed from the gallery.
 	 */
-	private _deleteScreenshotGallery(timeSlotIds: string[]) {
+	private _deleteScreenshotGallery(timeSlotIds: ID[]) {
 		if (isNotEmpty(this.originalTimeSlots)) {
 			// Extract all screenshots from time slots that match the provided time slot IDs
 			const screenshotsToRemove = this.originalTimeSlots
@@ -360,5 +363,9 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 			// Remove the extracted gallery items from the gallery
 			this._galleryService.removeGalleryItems(screenshotsToRemove);
 		}
+	}
+
+	ngOnDestroy(): void {
+		this._galleryService.clearGallery();
 	}
 }

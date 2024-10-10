@@ -468,7 +468,8 @@
 			"UPWORK_ORGANIZATION_ID": "Upwork Organisationsnummer",
 			"UPWORK_ORGANIZATION_NAME": "Upwork Unternehmensname",
 			"UPWORK_ID": "Upwork ID",
-			"LINKEDIN_ID": "LinkedIn-Kennung"
+			"LINKEDIN_ID": "LinkedIn-Kennung",
+			"STANDARD_WORK_HOURS_PER_DAY": "Standardarbeitsstunden pro Tag"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -654,7 +655,8 @@
 			"UPWORK_ORGANIZATION_ID": "Upwork Unternehmens-ID",
 			"UPWORK_ORGANIZATION_NAME": "Upwork-Organisationsname",
 			"UPWORK_ID": "Upwork ID",
-			"LINKEDIN_ID": "LinkedIn-ID"
+			"LINKEDIN_ID": "LinkedIn-ID",
+			"STANDARD_WORK_HOURS_PER_DAY": "Geben Sie die Anzahl der Standardarbeitsstunden pro Tag ein (z. B. 8)"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Standardzinssatz",
@@ -1186,7 +1188,8 @@
 			"DAILY_TIME_AND_ACTIVITY": "Es gibt noch keine erfasste Zeit und Aktivität für diesen Tag. Bitte verwenden Sie die <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>.",
 			"PROJECT_BUDGET": "Sie haben noch kein Projekt mit Budget erstellt.",
 			"CLIENT_BUDGET": "Sie haben keinen Kunden mit Budget erstellt."
-		}
+		},
+		"STANDARD_WORK_HOURS": "Standardarbeitszeit ({{hours}})"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Verfügbare Apps und Integrationen",
@@ -1974,7 +1977,8 @@
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "Auto-Archivierungszeitraum (in Tagen)",
 				"AUTO_STATUS": "Fahrzeugstatus.",
 				"TOOLTIP": {
-					"ENABLE_DETECTION_INACTIVITY_INFO": "Aktiviert - Das System erkennt die Inaktivität und zeigt eine Warnung an. Deaktiviert - Es wird keine Warnung angezeigt, wenn ein Mitarbeiter inaktiv ist."
+					"ENABLE_DETECTION_INACTIVITY_INFO": "Aktiviert - Das System erkennt die Inaktivität und zeigt eine Warnung an. Deaktiviert - Es wird keine Warnung angezeigt, wenn ein Mitarbeiter inaktiv ist.",
+					"STANDARD_WORK_HOURS_PER_DAY": "Wählen Sie die Standardanzahl der Arbeitsstunden pro Tag. Dieser Wert wird in Zeitverfolgungsberichten verwendet, um zu vergleichen, wie viele Stunden ein Mitarbeiter im Vergleich zu diesem Standard gearbeitet hat."
 				}
 			},
 			"TEAMS_PAGE": {
@@ -2081,8 +2085,10 @@
 			},
 			"ONLY_ADMIN": "Diese Berechtigungen sind schreibgeschützt und nur für Administratoren aktiviert.",
 			"INSUFFICIENT": "Sie haben nicht ausreichende Berechtigungen. Es fehlen die folgenden Berechtigungen:",
-			"ORG_SPRINT_EDIT": "Erstellen/Bearbeiten von Sprints",
-			"ORG_SPRINT_VIEW": "Sprints anzeigen",
+			"ORG_SPRINT_EDIT": "Sprint bearbeiten",
+			"ORG_SPRINT_VIEW": "Sprint anzeigen",
+			"ORG_SPRINT_DELETE": "Sprints löschen",
+			"ORG_SPRINT_ADD": "Sprint hinzufügen",
 			"ORG_PROJECT_ADD": "Projekte erstellen",
 			"ORG_PROJECT_VIEW": "Projekte anzeigen",
 			"ORG_PROJECT_EDIT": "Bearbeiten von Projekten",
@@ -3082,11 +3088,11 @@
 		"TAGS": "Schlüsselwörter"
 	},
 	"HEADER": {
-		"SELECT_EMPLOYEE": "Auswählen der Mitarbeitenden",
-		"SELECT_A_DATE": "Wählen Sie ein Datum aus.",
-		"SELECT_AN_ORGANIZATION": "Wählen Sie eine Organisation aus",
-		"SELECT_PROJECT": "Wählen Sie Projekt.",
-		"SELECT_TEAM": "Wählen Sie das Team."
+		"SELECT_EMPLOYEE": "Mitarbeiter auswählen",
+		"SELECT_A_DATE": "Ein Datum auswählen",
+		"SELECT_AN_ORGANIZATION": "Organisation auswählen",
+		"SELECT_PROJECT": "Projekt auswählen",
+		"SELECT_TEAM": "Team auswählen"
 	},
 	"HEADER_TITLE": {
 		"FOR": "für",

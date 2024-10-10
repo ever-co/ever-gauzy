@@ -28,7 +28,6 @@ export class DailyGridComponent extends BaseSelectorFilterComponent implements O
 		environment.PLATFORM_WEBSITE_DOWNLOAD_URL;
 
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
-
 	dailyLogs: IReportDayData[] = [];
 	loading: boolean;
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
@@ -124,13 +123,29 @@ export class DailyGridComponent extends BaseSelectorFilterComponent implements O
 		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
+
+		// Clear current data
+		this.dailyLogs = [];
+
+		// Set loading to true to indicate that the logs are being fetched
 		this.loading = true;
+
 		try {
+			// Get the current payloads from the observable
 			const payloads = this.payloads$.getValue();
-			this.dailyLogs = await this.timesheetService.getDailyReport(payloads);
+
+			// Fetch new daily logs data
+			const newLogs = await this.timesheetService.getDailyReport(payloads);
+
+			// Update dailyLogs with the newly fetched data
+			this.dailyLogs = newLogs;
 		} catch (error) {
+			// Log the error and provide meaningful feedback to the user if necessary
 			console.error('Error while retrieving daily logs report', error);
+			// Optionally: Show a notification or alert to the user about the error
+			// this.notificationService.showError('Failed to load daily logs.');
 		} finally {
+			// Ensure that loading is set to false whether the request was successful or not
 			this.loading = false;
 		}
 	}

@@ -5,12 +5,11 @@ import {
 	IOrganizationProjectCreateInput,
 	IOrganizationProject,
 	IOrganizationProjectsFindInput,
-	IEditEntityByMemberInput,
 	IPagination,
-	IEmployee,
 	IOrganizationProjectUpdateInput,
 	IOrganizationProjectSetting,
-	ID
+	ID,
+	IOrganizationProjectEditByEmployeeInput
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/ui-core/common';
 import { API_PREFIX } from '@gauzy/ui-core/common';
@@ -23,15 +22,34 @@ export class OrganizationProjectsService {
 
 	constructor(private readonly _http: HttpClient) {}
 
-	create(body: IOrganizationProjectCreateInput): Promise<IOrganizationProject> {
-		return firstValueFrom(this._http.post<IOrganizationProject>(this.API_URL, body));
+	/**
+	 * Creates a new organization project.
+	 *
+	 * @param input The input data for creating the project.
+	 * @returns A Promise that resolves with the newly created project.
+	 */
+	create(input: IOrganizationProjectCreateInput): Promise<IOrganizationProject> {
+		return firstValueFrom(this._http.post<IOrganizationProject>(this.API_URL, input));
 	}
 
-	edit(body: Partial<IOrganizationProjectUpdateInput>): Promise<IOrganizationProject> {
-		return firstValueFrom(this._http.put<IOrganizationProject>(`${this.API_URL}/${body.id}`, body));
+	/**
+	 * Edits an existing organization project.
+	 *
+	 * @param input The input data for updating the project. Partial data is accepted.
+	 * @returns A Promise that resolves with the updated project.
+	 */
+	edit(input: Partial<IOrganizationProjectUpdateInput>): Promise<IOrganizationProject> {
+		return firstValueFrom(this._http.put<IOrganizationProject>(`${this.API_URL}/${input.id}`, input));
 	}
 
-	getAllByEmployee(id: IEmployee['id'], where?: IOrganizationProjectsFindInput): Promise<IOrganizationProject[]> {
+	/**
+	 * Retrieves all projects assigned to a specific employee.
+	 *
+	 * @param id The employee ID.
+	 * @param where Optional filters to apply when retrieving projects.
+	 * @returns A Promise that resolves with a list of organization projects assigned to the employee.
+	 */
+	getAllByEmployee(id: ID, where?: IOrganizationProjectsFindInput): Promise<IOrganizationProject[]> {
 		return firstValueFrom(
 			this._http.get<IOrganizationProject[]>(`${this.API_URL}/employee/${id}`, {
 				params: toParams({ ...where })
@@ -39,6 +57,13 @@ export class OrganizationProjectsService {
 		);
 	}
 
+	/**
+	 * Retrieves all organization projects, with optional relations and filters.
+	 *
+	 * @param relations Optional array of related entities to include.
+	 * @param where Optional filters to apply when retrieving projects.
+	 * @returns A Promise that resolves with paginated organization projects.
+	 */
 	getAll(
 		relations: string[] = [],
 		where?: IOrganizationProjectsFindInput
@@ -50,12 +75,25 @@ export class OrganizationProjectsService {
 		);
 	}
 
+	/**
+	 * Retrieves a specific organization project by its ID.
+	 *
+	 * @param id The ID of the project.
+	 * @param relations Optional array of related entities to include.
+	 * @returns An Observable that resolves with the requested project.
+	 */
 	getById(id: ID, relations: string[] = []): Observable<IOrganizationProject> {
 		return this._http.get<IOrganizationProject>(`${this.API_URL}/${id}`, {
 			params: toParams({ relations })
 		});
 	}
 
+	/**
+	 * Retrieves the total count of organization projects that match the given criteria.
+	 *
+	 * @param request The input criteria for finding the projects.
+	 * @returns A Promise that resolves with the count of matching projects.
+	 */
 	getCount(request: IOrganizationProjectsFindInput): Promise<number> {
 		return firstValueFrom(
 			this._http.get<number>(`${this.API_URL}/count`, {
@@ -64,16 +102,35 @@ export class OrganizationProjectsService {
 		);
 	}
 
-	updateByEmployee(updateInput: IEditEntityByMemberInput): Promise<any> {
+	/**
+	 * Updates project assignments for an employee.
+	 *
+	 * @param updateInput The input data containing employee and project information.
+	 * @returns A Promise that resolves once the update operation is complete.
+	 */
+	updateByEmployee(updateInput: IOrganizationProjectEditByEmployeeInput): Promise<any> {
 		return firstValueFrom(this._http.put(`${this.API_URL}/employee`, updateInput));
 	}
 
-	updateTaskViewMode(id: ID, body: IOrganizationProjectUpdateInput): Promise<IOrganizationProject> {
+	/**
+	 * Updates the task view mode for a specific project.
+	 *
+	 * @param id The ID of the project.
+	 * @param input The input data for updating the task view mode.
+	 * @returns A Promise that resolves with the updated project.
+	 */
+	updateTaskViewMode(id: ID, input: IOrganizationProjectUpdateInput): Promise<IOrganizationProject> {
 		return firstValueFrom(
-			this._http.put<IOrganizationProject>(`${this.API_URL}/task-view/${id}`, body).pipe(take(1))
+			this._http.put<IOrganizationProject>(`${this.API_URL}/task-view/${id}`, input).pipe(take(1))
 		);
 	}
 
+	/**
+	 * Deletes an organization project by its ID.
+	 *
+	 * @param id The ID of the project to delete.
+	 * @returns A Promise that resolves once the project is deleted.
+	 */
 	delete(id: ID): Promise<any> {
 		return firstValueFrom(this._http.delete(`${this.API_URL}/${id}`));
 	}
