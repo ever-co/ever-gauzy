@@ -12,7 +12,7 @@ export * from './auth.guard';
 export * from './no-auth.guard';
 
 const environment = injector.get(GAUZY_ENV);
-const socialLinks = [
+export const socialLinks = [
 	{
 		url: environment?.GOOGLE_AUTH_LINK,
 		icon: 'google-outline',
