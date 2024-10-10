@@ -53,8 +53,8 @@ export class AuthService {
 		});
 	}
 
-	confirmEmail(body: IUserEmailInput & IUserTokenInput): Observable<Object> {
-		return this.http.post<Object>(`${API_PREFIX}/auth/email/verify`, body);
+	confirmEmail(body: IUserEmailInput & IUserTokenInput) {
+		return this.http.post(`${API_PREFIX}/auth/email/verify`, body);
 	}
 
 	/**
@@ -64,42 +64,24 @@ export class AuthService {
 	 * @returns An observable of the response for signing in to workspaces.
 	 */
 	findWorkspaces(input: IUserLoginInput): Observable<IUserSigninWorkspaceResponse> {
-		try {
-			// Send a POST request to the server endpoint with the provided input
-			return this.http.post<IUserSigninWorkspaceResponse>(`${API_PREFIX}/auth/signin.email.password`, input);
-		} catch (error) {
-			console.log('Error while signing in workspaces: %s', error?.message);
-			// Handle errors appropriately (e.g., log, throw, etc.)
-			throw error;
-		}
+		// Send a POST request to the server endpoint with the provided input
+		return this.http.post<IUserSigninWorkspaceResponse>(`${API_PREFIX}/auth/signin.email.password`, input);
 	}
 
 	/**
 	 *
 	 */
 	sendSigninCode(input: IUserEmailInput) {
-		try {
-			// Send a POST request to the server endpoint with the provided input
-			return this.http.post<IUserEmailInput>(`${API_PREFIX}/auth/signin.email`, input);
-		} catch (error) {
-			console.log('Error while sending magic code: %s', error?.message);
-			// Handle errors appropriately (e.g., log, throw, etc.)
-			throw error;
-		}
+		// Send a POST request to the server endpoint with the provided input
+		return this.http.post<IUserEmailInput>(`${API_PREFIX}/auth/signin.email`, input);
 	}
 
 	/**
 	 *
 	 */
 	confirmSignInByCode(input: IUserEmailInput & IUserCodeInput) {
-		try {
-			// Send a POST request to the server endpoint with the provided input
-			return this.http.post<IUserSigninWorkspaceResponse>(`${API_PREFIX}/auth/signin.email/confirm`, input);
-		} catch (error) {
-			console.log('Error while confirm signin by email & magic code: %s', error?.message);
-			// Handle errors appropriately (e.g., log, throw, etc.)
-			throw error;
-		}
+		// Send a POST request to the server endpoint with the provided input
+		return this.http.post<IUserSigninWorkspaceResponse>(`${API_PREFIX}/auth/signin.email/confirm`, input);
 	}
 
 	/**
@@ -109,14 +91,8 @@ export class AuthService {
 	 * @returns An observable of the response for signing in to the specific tenant workspace.
 	 */
 	signinWorkspaceByToken(input: IUserEmailInput & IUserTokenInput) {
-		try {
-			// Send a POST request to the server endpoint with the provided input
-			return this.http.post<IAuthResponse>(`${API_PREFIX}/auth/signin.workspace`, input);
-		} catch (error) {
-			console.log('Error while signing in specific tenant workspace: %s', error?.message);
-			// Handle errors appropriately (e.g., log, throw, etc.)
-			throw error;
-		}
+		// Send a POST request to the server endpoint with the provided input
+		return this.http.post<IAuthResponse>(`${API_PREFIX}/auth/signin.workspace`, input);
 	}
 
 	/**
@@ -147,7 +123,7 @@ export class AuthService {
 	 * @returns
 	 */
 	refreshToken(refresh_token: string): Promise<{ token: string } | null> {
-		return firstValueFrom(this.http.post<any>(`${API_PREFIX}/auth/refresh-token`, { refresh_token }));
+		return firstValueFrom(this.http.post<{ token: string }>(`${API_PREFIX}/auth/refresh-token`, { refresh_token }));
 	}
 
 	public electronAuthentication({ user, token }: IAuthResponse) {
