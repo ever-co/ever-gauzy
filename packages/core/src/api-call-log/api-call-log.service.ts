@@ -32,16 +32,16 @@ export class ApiCallLogService extends TenantAwareCrudService<ApiCallLog> {
 
 		// Check if `filters.where` is an array or an object, then apply individual filters
 		if (!Array.isArray(filters)) {
-			if (filters?.correlationId) {
+			if (filters.correlationId) {
 				queryOptions.where['correlationId'] = filters.correlationId;
 			}
-			if (filters?.statusCode) {
+			if (filters.statusCode) {
 				queryOptions.where['statusCode'] = filters.statusCode;
 			}
-			if (filters?.ipAddress) {
+			if (filters.ipAddress) {
 				queryOptions.where['ipAddress'] = filters.ipAddress;
 			}
-			if (filters?.userId) {
+			if (filters.userId) {
 				queryOptions.where['userId'] = filters.userId;
 			}
 
