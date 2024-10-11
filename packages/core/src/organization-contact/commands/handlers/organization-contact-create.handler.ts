@@ -73,7 +73,13 @@ export class OrganizationContactCreateHandler implements ICommandHandler<Organiz
 				throw new BadRequestException('Failed to create contact details', error.message);
 			}
 
+			if (isNotEmpty(input.projects)) {
+				input.projects.forEach((project) => {
+					delete project.members;
+				});
+			}
 			// Create a new organization contact with the modified input
+
 			return await this._organizationContactService.create({
 				...input,
 				organizationId,
