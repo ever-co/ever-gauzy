@@ -120,7 +120,7 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 	public set teamId(value: ID | ID[]) {
 		this._teamId = value;
 		this.onChange(value);
-		this.onTouched(value);
+		this.onTouched();
 	}
 
 	/**
@@ -182,7 +182,7 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 	/**
 	 * Callback function to notify touch events in the form control.
 	 */
-	private onTouched: (value: ID | ID[]) => void = () => {};
+	private onTouched: () => void = () => {};
 
 	constructor(
 		private readonly _activatedRoute: ActivatedRoute,
@@ -339,7 +339,7 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 	 *
 	 * @param fn - The callback function to register for the 'onChange' event.
 	 */
-	registerOnChange(fn: (value: any) => void): void {
+	registerOnChange(fn: (value: ID | ID[]) => void): void {
 		this.onChange = fn;
 	}
 
