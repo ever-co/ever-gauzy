@@ -1,8 +1,5 @@
-import { ActorTypeEnum, IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
+import { ActorTypeEnum, IBasePerTenantAndOrganizationEntityModel, ID, JsonData } from './base-entity.model';
 import { IUser } from './user.model';
-
-// Define a type for JSON data
-export type JsonData = Record<string, any> | string;
 
 /**
  * Interface representing an activity log entry.

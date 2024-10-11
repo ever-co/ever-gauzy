@@ -1,9 +1,8 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, JsonData } from './base-entity.model';
 import { IRelationalOrganizationTeam } from './organization-team.model';
 import { IRelationalOrganizationProject } from './organization-projects.model';
 import { IRelationalOrganizationProjectModule } from './organization-project-module.model';
 import { IRelationalOrganizationSprint } from './organization-sprint.model';
-import { JsonData } from './activity-log.model';
 
 export interface ITaskViewBase
 	extends IBasePerTenantAndOrganizationEntityModel,

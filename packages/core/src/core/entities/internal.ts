@@ -7,6 +7,7 @@ export * from './translate-base';
 //core entities
 export * from '../../accounting-template/accounting-template.entity';
 export * from '../../activity-log/activity-log.entity';
+export * from '../../api-call-log/api-call-log.entity';
 export * from '../../appointment-employees/appointment-employees.entity';
 export * from '../../approval-policy/approval-policy.entity';
 export * from '../../availability-slots/availability-slots.entity';
@@ -153,6 +154,7 @@ export * from '../../warehouse/warehouse.entity';
 
 //core subscribers
 export * from '../../activity-log/activity-log.subscriber';
+export * from '../../api-call-log/api-call-log.subscriber';
 export * from '../../candidate/candidate.subscriber';
 export * from '../../custom-smtp/custom-smtp.subscriber';
 export * from '../../email-reset/email-reset.subscriber';

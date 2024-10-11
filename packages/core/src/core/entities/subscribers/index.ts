@@ -5,6 +5,7 @@ import { MultiORMEnum, getORMType } from '../../utils';
 import {
 	ActivitySubscriber,
 	ActivityLogSubscriber,
+	ApiCallLogSubscriber,
 	CandidateSubscriber,
 	CustomSmtpSubscriber,
 	EmailResetSubscriber,
@@ -56,6 +57,7 @@ export const coreSubscribers = [
 	...(ormType === MultiORMEnum.MikroORM ? [TenantOrganizationBaseEntityEventSubscriber] : []),
 	ActivitySubscriber,
 	ActivityLogSubscriber,
+	ApiCallLogSubscriber,
 	CandidateSubscriber,
 	CustomSmtpSubscriber,
 	EmailResetSubscriber,
