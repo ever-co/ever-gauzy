@@ -29,7 +29,7 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		public readonly cdr: ChangeDetectorRef,
 		public readonly router: Router,
 		private readonly authService: AuthService,
-		private readonly _errorHandlingService: ErrorHandlerService,
+		private readonly errorHandlingService: ErrorHandlerService,
 		@Inject(NB_AUTH_OPTIONS)
 		options: any,
 		@Inject(GAUZY_ENV)
@@ -57,7 +57,7 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		this.authService
 			.findWorkspaces({ email, password })
 			.pipe(
-				tap((response: any) => {
+				tap((response) => {
 					if (response['status'] === HttpStatus.UNAUTHORIZED) {
 						throw new Error(`${response['message']}`);
 					}
@@ -81,7 +81,7 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 				catchError((error) => {
 					this.submitted = false;
 					// Handle and log errors using the error handling service
-					this._errorHandlingService.handleError(error);
+					this.errorHandlingService.handleError(error);
 					return EMPTY;
 				}),
 				// Handle component lifecycle to avoid memory leaks
