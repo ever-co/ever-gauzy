@@ -74,7 +74,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 
 				// Only update if the role has changed
 				if (newRole && newRole.id !== member.roleId) {
-					await this.typeOrmOrganizationTeamEmployeeRepository.update(member.id, {
+					await this.typeOrmRepository.update(member.id, {
 						role: newRole,
 						isManager
 					});
@@ -97,7 +97,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 					})
 			);
 
-			await this.typeOrmOrganizationTeamEmployeeRepository.save(newTeamMembers);
+			await this.typeOrmRepository.save(newTeamMembers);
 		}
 	}
 
@@ -108,12 +108,8 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 	 * @returns A promise that resolves when all deletions are complete
 	 */
 	async deleteMemberByIds(memberIds: ID[]): Promise<void> {
-		console.warn('deletedIds:', memberIds);
-
 		// Map member IDs to deletion promises
-		const deletePromises = memberIds.map((memberId: ID) =>
-			this.typeOrmOrganizationTeamEmployeeRepository.delete(memberId)
-		);
+		const deletePromises = memberIds.map((memberId: ID) => this.typeOrmRepository.delete(memberId));
 
 		// Wait for all deletions to complete
 		await Promise.all(deletePromises);
