@@ -449,11 +449,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		try {
 			const { lastTimer, isStarted } = timer;
 
-			const isRemote =
-				(this._timeTrackerStatus.remoteTimer &&
-					this.xor(!isStarted, this._timeTrackerStatus.remoteTimer.running) &&
-					this._startMode === TimerStartMode.REMOTE) ||
-				!onClick;
+			const remoteTimer = this._timeTrackerStatus.remoteTimer;
+			const isRemoteTimerRunning = remoteTimer && remoteTimer.running;
+			const isInRemoteStartMode = this._startMode === TimerStartMode.REMOTE;
+			const isLocalTimerNotStarted = !isStarted;
+			const isToggleModeValid = this.xor(isLocalTimerNotStarted, isRemoteTimerRunning);
+
+			const isRemote = (isToggleModeValid && isInRemoteStartMode) || !onClick;
 
 			const params = {
 				token: this.token,
