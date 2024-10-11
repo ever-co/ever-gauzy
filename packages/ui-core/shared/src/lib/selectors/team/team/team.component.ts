@@ -84,7 +84,7 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 	 * The placeholder text to be displayed in the team selector.
 	 * Provides guidance to the user on what action to take or what information to provide.
 	 *
-\	 */
+	 */
 	@Input() placeholder: string | null = null;
 
 	/**
