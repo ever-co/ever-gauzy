@@ -26,7 +26,7 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	@MultiORMColumn()
 	name: string;
 
-	@ApiProperty({ type: () => String, enum: TaskTypeEnum })
+	@ApiProperty({ enum: TaskTypeEnum })
 	@IsEnum(TaskTypeEnum)
 	@ColumnIndex()
 	@MultiORMColumn()

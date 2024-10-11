@@ -798,12 +798,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					? [
 							new Date(
 								Math.min(
-									...dates.map((date) => new Date(date).getTime()).filter((time) => !isNaN(time))
+									...dates
+										.filter((date) => !Number.isNaN(new Date(date).getTime()))
+										.map((date) => new Date(date).getTime())
 								)
 							),
 							new Date(
 								Math.max(
-									...dates.map((date) => new Date(date).getTime()).filter((time) => !isNaN(time))
+									...dates
+										.filter((date) => !Number.isNaN(new Date(date).getTime()))
+										.map((date) => new Date(date).getTime())
 								)
 							)
 					  ]
