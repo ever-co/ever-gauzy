@@ -266,10 +266,10 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				const newRole = isManager ? managerRole : null;
 
 				// Only update if the role has changed
-				if (newRole && newRole.id !== member.roleId) {
+				if (newRole?.id !== member.roleId) {
 					await this.typeOrmOrganizationProjectEmployeeRepository.update(member.id, {
 						role: newRole,
-						isManager: true
+						isManager
 					});
 				}
 			})
