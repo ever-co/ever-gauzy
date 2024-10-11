@@ -1140,9 +1140,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							projectId: this.projectSelectorService.selectedId,
 							taskId: this.taskSelectorService.selectedId,
 							organizationContactId: this.clientSelectorService.selectedId,
+							organizationTeamId: this.teamSelectorService.selectedId,
 							organizationId,
 							tenantId,
-							apiHost: this.apiHost
+							apiHost: this.apiHost,
+							...arg.timer
 						};
 
 						this._isLockSyncProcess = true;
