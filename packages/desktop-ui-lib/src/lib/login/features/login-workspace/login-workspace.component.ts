@@ -111,7 +111,7 @@ export class NgxLoginWorkspaceComponent {
 		this._authService
 			.signinWorkspaceByToken({ email, token })
 			.pipe(
-				tap((response: any) => {
+				tap((response) => {
 					if (response['status'] === HttpStatus.UNAUTHORIZED) {
 						throw new Error(`${response['message']}`);
 					}
