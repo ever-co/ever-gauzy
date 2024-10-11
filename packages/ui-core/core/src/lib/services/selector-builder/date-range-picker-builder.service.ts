@@ -24,29 +24,29 @@ export const DEFAULT_DATE_RANGE: IDateRangePicker = {
 
 @Injectable({ providedIn: 'root' })
 export class DateRangePickerBuilderService {
+	public dates$: BehaviorSubject<IDateRangePicker> = new BehaviorSubject(DEFAULT_DATE_RANGE);
 	private _datePickerConfig$: BehaviorSubject<IDatePickerConfig | null> = new BehaviorSubject(null);
 	public datePickerConfig$: Observable<IDatePickerConfig | null> = this._datePickerConfig$.asObservable();
-
 	private _selectedDateRange$: BehaviorSubject<IDateRangePicker | null> = new BehaviorSubject(null);
 	public selectedDateRange$: Observable<IDateRangePicker | null> = this._selectedDateRange$.asObservable();
 
-	public dates$: BehaviorSubject<IDateRangePicker> = new BehaviorSubject(DEFAULT_DATE_RANGE);
-
-	/**
-	 * Gets the currently selected date range.
-	 */
-	get selectedDateRange(): IDateRangePicker {
-		return this.dates$.getValue();
-	}
 	/**
 	 * Sets a new selected date range.
 	 *
 	 * @param range - The new date range to set.
 	 */
 	set selectedDateRange(range: IDateRangePicker) {
-		if (isNotEmpty(range)) {
+		if (range) {
 			this._selectedDateRange$.next(range);
+			this.dates$.next(range);
 		}
+	}
+
+	/**
+	 * Gets the currently selected date range.
+	 */
+	get selectedDateRange(): IDateRangePicker {
+		return this.dates$.getValue();
 	}
 
 	/**

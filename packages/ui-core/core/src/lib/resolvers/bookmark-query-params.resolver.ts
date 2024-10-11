@@ -3,6 +3,7 @@ import { ActivatedRouteSnapshot, ResolveFn } from '@angular/router';
 import { EMPTY, Observable, of } from 'rxjs';
 import { Store } from '../services/store/store.service';
 import { DEFAULT_SELECTOR_VISIBILITY } from '../services/selector-builder/selector-builder.service';
+import { ErrorHandlingService } from '../services/notification/error-handling.service';
 
 /**
  * The `BookmarkQueryParamsResolver` is responsible for constructing a set of query parameters
@@ -17,12 +18,13 @@ import { DEFAULT_SELECTOR_VISIBILITY } from '../services/selector-builder/select
 export const BookmarkQueryParamsResolver: ResolveFn<Observable<Record<string, string>>> = (
 	route: ActivatedRouteSnapshot
 ): Observable<Record<string, string>> => {
+	// Get injected services
+	const _store = inject(Store);
+	const _errorHandlingService = inject(ErrorHandlingService);
+
 	try {
 		// Get selectors visibility and selected entities
 		const selectors = Object.assign({}, DEFAULT_SELECTOR_VISIBILITY, route.data?.selectors);
-
-		// Get injected services
-		const _store = inject(Store);
 		const { selectedOrganization, selectedEmployee, selectedProject, selectedTeam } = _store;
 
 		// Map selectors to entity IDs
@@ -46,7 +48,7 @@ export const BookmarkQueryParamsResolver: ResolveFn<Observable<Record<string, st
 	} catch (error) {
 		// Handle any synchronous errors and redirect to "new integration" page
 		console.log(`Error resolving entity query params: ${error}`);
-		// Return an empty observable
-		return EMPTY;
+		_errorHandlingService.handleError(error);
+		return EMPTY; // Return an empty observable
 	}
 };

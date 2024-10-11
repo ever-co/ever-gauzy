@@ -84,7 +84,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	 * The placeholder text to be displayed in the project selector.
 	 * Provides guidance to the user on what action to take or what information to provide.
 	 *
-\	 */
+	 */
 	@Input() placeholder: string | null = null;
 
 	/**
@@ -120,7 +120,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	public set projectId(value: ID | ID[]) {
 		this._projectId = value;
 		this.onChange(value);
-		this.onTouched(value);
+		this.onTouched();
 	}
 
 	/**
@@ -182,7 +182,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	/**
 	 * Callback function to notify touch events in the form control.
 	 */
-	private onTouched: (value: ID | ID[]) => void = () => {};
+	private onTouched: () => void = () => {};
 
 	constructor(
 		private readonly _organizationProjects: OrganizationProjectsService,
@@ -352,7 +352,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	 *
 	 * @param fn - The callback function to register for the 'onChange' event.
 	 */
-	registerOnChange(fn: (value: any) => void): void {
+	registerOnChange(fn: (value: ID | ID[]) => void): void {
 		this.onChange = fn;
 	}
 
