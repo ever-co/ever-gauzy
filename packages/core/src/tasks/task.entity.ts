@@ -1,17 +1,7 @@
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	IsArray,
-	IsBoolean,
-	IsEnum,
-	IsNotEmpty,
-	IsNumber,
-	IsObject,
-	IsOptional,
-	IsString,
-	IsUUID
-} from 'class-validator';
+import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	IActivity,
 	ID,
@@ -32,8 +22,7 @@ import {
 	IUser,
 	TaskPriorityEnum,
 	TaskSizeEnum,
-	TaskStatusEnum,
-	TaskTypeEnum
+	TaskStatusEnum
 } from '@gauzy/contracts';
 import { isMySQL } from '@gauzy/config';
 import {
@@ -119,12 +108,12 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@MultiORMColumn({ nullable: true })
 	size?: TaskSizeEnum;
 
-	@ApiPropertyOptional({ type: () => String, enum: TaskTypeEnum })
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@IsEnum(TaskTypeEnum)
+	@IsString()
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
-	issueType?: TaskTypeEnum;
+	issueType?: string;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()

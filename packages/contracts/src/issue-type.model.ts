@@ -9,7 +9,7 @@ export interface IIssueType
 		IRelationalOrganizationProject,
 		IRelationalImageAsset {
 	name: string;
-	value: TaskTypeEnum;
+	value: string;
 	description?: string;
 	icon?: string;
 	color?: string;

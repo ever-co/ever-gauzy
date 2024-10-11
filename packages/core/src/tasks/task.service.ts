@@ -31,9 +31,9 @@ import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { ActivityLogEvent } from '../activity-log/events';
 import { activityLogUpdatedFieldsAndValues, generateActivityLogDescription } from '../activity-log/activity-log.helper';
+import { TaskViewService } from './views/view.service';
 import { Task } from './task.entity';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
-import { TypeOrmTaskViewRepository } from './views/repository/type-orm-task-view.repository';
 import { GetTaskByIdDTO } from './dto';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
@@ -45,7 +45,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		readonly typeOrmTaskRepository: TypeOrmTaskRepository,
 		readonly mikroOrmTaskRepository: MikroOrmTaskRepository,
 		readonly typeOrmOrganizationSprintTaskHistoryRepository: TypeOrmOrganizationSprintTaskHistoryRepository,
-		readonly typeOrmTaskViewRepository: TypeOrmTaskViewRepository,
+		private readonly taskViewService: TaskViewService,
 		private readonly _eventBus: EventBus
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
@@ -753,7 +753,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		const tenantId = RequestContext.currentTenantId();
 		try {
 			// Retrieve Task View by ID for getting their pre-defined query params
-			const taskView = await this.typeOrmTaskViewRepository.findOne({ where: { id: viewId, tenantId } });
+			const taskView = await this.taskViewService.findOneByWhereOptions({ id: viewId, tenantId });
 			if (!taskView) {
 				throw new HttpException('View not found', HttpStatus.NOT_FOUND);
 			}

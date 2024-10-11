@@ -1,7 +1,7 @@
 import { EventSubscriber } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { sluggable } from '@gauzy/common';
-import { FileStorageProviderEnum, TaskTypeEnum } from '@gauzy/contracts';
+import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { FileStorage } from './../../core/file-storage';
 import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';
 import { IssueType } from './issue-type.entity';
@@ -53,7 +53,7 @@ export class IssueTypeSubscriber extends BaseEntityEventSubscriber<IssueType> {
 
 			// Generate a slug from the name, if the name property exists
 			if (typeof entity.name === 'string') {
-				entity.value = sluggable(entity.name) as TaskTypeEnum;
+				entity.value = sluggable(entity.name);
 			}
 		} catch (error) {
 			console.error('IssueTypeSubscriber: An error occurred during the beforeEntityCreate process:', error);
