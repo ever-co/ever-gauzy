@@ -1,12 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
-import { IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import { IApiCallLog, ID, IUser, JsonData, RequestMethod } from '@gauzy/contracts';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
 import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
-import { MikroOrmApiCallLogRepository } from './repository';
+import { MikroOrmApiCallLogRepository } from './repository/mikro-orm-api-call-log.repository';
 
 @MultiORMEntity('api_call_log', { mikroOrmRepository: () => MikroOrmApiCallLogRepository })
 export class ApiCallLog extends TenantOrganizationBaseEntity implements IApiCallLog {
@@ -95,8 +95,8 @@ export class ApiCallLog extends TenantOrganizationBaseEntity implements IApiCall
 	/**
 	 * IP Address of the client making the request
 	 */
-	@ApiProperty({ type: () => String })
-	@IsNotEmpty()
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	ipAddress: string;
@@ -144,7 +144,8 @@ export class ApiCallLog extends TenantOrganizationBaseEntity implements IApiCall
 	 * The ID of the user who performed the action.
 	 * This column stores the user ID as a foreign key, if applicable.
 	 */
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@IsUUID()
 	@RelationId((it: ApiCallLog) => it.user)
 	@ColumnIndex()
