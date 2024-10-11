@@ -1,6 +1,9 @@
 import { ITenant } from './tenant.model';
 import { IOrganization } from './organization.model';
 
+// Define a type for JSON data
+export type JsonData = Record<string, any> | string;
+
 /**
  * @description
  * An entity ID. Represents a unique identifier as a string.

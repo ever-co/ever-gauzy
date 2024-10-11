@@ -1,10 +1,9 @@
 import { IOrganizationProjectModule } from './organization-project-module.model';
-import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID, JsonData } from './base-entity.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { ITask } from './task.model';
 import { IEmployeeEntityInput, IMemberEntityBased } from './employee.model';
 import { IRelationalRole } from './role.model';
-import { JsonData } from './activity-log.model';
 import { IUser } from './user.model';
 
 // Base interface with optional properties
