@@ -40,7 +40,6 @@ import {
 	Observable,
 	of,
 	Subject,
-	switchMap,
 	tap
 } from 'rxjs';
 import * as _ from 'underscore';
@@ -616,7 +615,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						this._isReady &&
 						this.inQueue.size === 0
 				),
-				switchMap(async (remoteTimer: IRemoteTimer) => {
+				tap(async (remoteTimer: IRemoteTimer) => {
 					this.timeTrackerFormService.setState({
 						clientId: remoteTimer.lastLog.organizationContactId,
 						teamId: remoteTimer.lastLog.organizationTeamId,
@@ -1135,6 +1134,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 					if (isReadyForDeletion) {
 						const apiParams = {
+							...arg.timer,
 							token: this.token,
 							note: this.noteService.note,
 							projectId: this.projectSelectorService.selectedId,
@@ -1143,8 +1143,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							organizationTeamId: this.teamSelectorService.selectedId,
 							organizationId,
 							tenantId,
-							apiHost: this.apiHost,
-							...arg.timer
+							apiHost: this.apiHost
 						};
 
 						this._isLockSyncProcess = true;
