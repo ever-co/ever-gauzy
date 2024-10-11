@@ -1,6 +1,6 @@
-<ng-container *ngIf="showPopup; then workspacesTemplate; else singInTemplate"> </ng-container>
+<ng-container *ngIf="showPopup; then workspacesTemplate; else signInTemplate"> </ng-container>
 
-<ng-template #singInTemplate>
+<ng-template #signInTemplate>
 	<section class="section-wrapper">
 		<div class="-wrapper">
 			<div class="svg-wrapper">
@@ -11,7 +11,7 @@
 
 			<div class="hr-div-strong"></div>
 
-			<ng-container [ngTemplateOutlet]="singInForm"></ng-container>
+			<ng-container [ngTemplateOutlet]="signInForm"></ng-container>
 
 			<div class="hr-div-soft"></div>
 
@@ -30,8 +30,8 @@
 	</section>
 </ng-template>
 
-<ng-template #singInForm>
-	<form [formGroup]="form" class="form" (ngSubmit)="onSubmit()" autocomplete-off>
+<ng-template #signInForm>
+	<form [formGroup]="form" class="form" (ngSubmit)="onSubmit()" autocomplete="off">
 		<div style="height: 0; overflow: hidden">
 			<input style="opacity: 0" type="email" value="" class="" />
 			<input style="opacity: 0" type="password" value="" class="d-" />
@@ -97,7 +97,7 @@
 			</div>
 		</div>
 		<div class="submit-btn-wrapper">
-			<button nbButton size="small" class="submit-btn" type="submit">
+			<button nbButton size="small" [disabled]="form.invalid || loading" class="submit-btn" type="submit">
 				{{ 'BUTTONS.SIGNIN' | translate }}
 				<nb-icon [ngStyle]="{ display: 'none' }" *gauzySpinnerButton="loading"></nb-icon>
 			</button>

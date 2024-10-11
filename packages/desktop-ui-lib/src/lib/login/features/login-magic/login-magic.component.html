@@ -43,7 +43,7 @@
 						[status]="email.dirty ? (email.invalid ? 'danger' : 'success') : 'basic'"
 						[attr.aria-invalid]="email.invalid && email.touched ? true : null"
 						autofocus
-						autocomplete-off
+						autocomplete="off"
 						[ngClass]="isCodeSent ? 'not-allowed' : ''"
 					/>
 					<nb-icon
@@ -124,7 +124,13 @@
 				</a>
 				<div class="submit-inner-wrapper">
 					<ng-template [ngIf]="isCodeSent" [ngIfElse]="sendCodeButtonTemplate">
-						<button type="submit" nbButton size="tiny" class="submit-btn" [disabled]="form.invalid">
+						<button
+							type="submit"
+							nbButton
+							size="tiny"
+							class="submit-btn"
+							[disabled]="form.invalid || isLoading"
+						>
 							<span class="btn-text">
 								{{ 'BUTTONS.LOGIN' | translate }}
 							</span>
@@ -139,7 +145,7 @@
 							nbButton
 							size="tiny"
 							class="submit-btn"
-							[disabled]="email.invalid"
+							[disabled]="email.invalid || isLoading"
 							(click)="sendLoginCode()"
 						>
 							<span class="btn-text">

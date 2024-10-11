@@ -39,7 +39,7 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 				// Tap into the observable to update the 'form.email' property with the 'email' query parameter.
 				tap(({ email, code }: Params) => {
 					if (email && code) {
-						this.confirmSingInCode();
+						this.confirmSignInCode();
 					}
 				}),
 				// Use 'untilDestroyed' to handle component lifecycle and avoid memory leaks.
@@ -51,7 +51,7 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 	/**
 	 * Confirm the sign in code
 	 */
-	async confirmSingInCode() {
+	async confirmSignInCode() {
 		// Get the email & code value from the query params
 		const { email, code } = this._activatedRoute.snapshot.queryParams;
 		if (!email || !code) {
@@ -109,41 +109,39 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 		// Extract workspace, email, and token from the parameter and component state
 		const email = this.confirmedEmail;
 		const token = workspace.token;
+		// Send a request to sign in to the workspace using the authentication service
+		this._authService
+			.signinWorkspaceByToken({ email, token })
+			.pipe(
+				filter(({ user, token }: IAuthResponse) => !!user && !!token),
+				tap((response: IAuthResponse) => {
+					const user: IUser = response.user;
+					const token: string = response.token;
 
-		try {
-			// Send a request to sign in to the workspace using the authentication service
-			this._authService
-				.signinWorkspaceByToken({ email, token })
-				.pipe(
-					filter(({ user, token }: IAuthResponse) => !!user && !!token),
-					tap((response: IAuthResponse) => {
-						const user: IUser = response.user;
-						const token: string = response.token;
+					const { id, employee, tenantId } = user;
 
-						const { id, employee, tenantId } = user;
+					if (employee) {
 						TimeTrackerDateManager.organization = employee.organization;
 						this._store.organizationId = employee.organizationId;
-						this._store.tenantId = tenantId;
-						this._store.userId = id;
-						this._store.token = token;
-						this._store.user = user;
+					}
 
-						asyncScheduler.schedule(() => {
-							this._authService.electronAuthentication({ token, user });
-						}, 3000);
-					}),
-					catchError((error) => {
-						// Handle and log errors using the error handling service
-						this._errorHandlingService.handleError(error);
-						return EMPTY;
-					}),
-					// Handle component lifecycle to avoid memory leaks
-					untilDestroyed(this)
-				)
-				.subscribe();
-		} catch (error) {
-			console.log('Error while signing in workspace', error);
-			this._errorHandlingService.handleError(error);
-		}
+					this._store.tenantId = tenantId;
+					this._store.userId = id;
+					this._store.token = token;
+					this._store.user = user;
+
+					asyncScheduler.schedule(() => {
+						this._authService.electronAuthentication({ token, user });
+					}, 3000);
+				}),
+				catchError((error) => {
+					// Handle and log errors using the error handling service
+					this._errorHandlingService.handleError(error);
+					return EMPTY;
+				}),
+				// Handle component lifecycle to avoid memory leaks
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 }

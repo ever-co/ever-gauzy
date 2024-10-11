@@ -1,6 +1,32 @@
 @import 'themes';
 @import '@shared/reusable';
 
+$button-color: #fa754e;
+
+@mixin submit-btn($padding: 13px 39px) {
+	padding: $padding;
+	box-shadow: 0px 19px 15px -14px rgba(0, 0, 0, 0.22);
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 16px;
+    letter-spacing: -0.009em;
+    text-align: left;
+    margin-bottom: 25px;
+    margin-top: 15px;
+
+	&:not([disabled]) {
+		background-color: $button-color;
+		border: 1px solid $button-color;
+		color: var(--text-alternate-color);
+		cursor: pointer;
+    }
+}
+
+@mixin hr-div-soft($margin-bottom: 12px) {
+	margin-bottom: $margin-bottom;
+}
+
 .login-container {
 	width: 765px;
 	position: relative;
@@ -88,7 +114,7 @@
 		}
 
 		& .hr-div-soft {
-			@include hr-div-soft;
+			@include hr-div-soft($margin-bottom: 16px);
 		}
 	}
 
@@ -102,7 +128,7 @@
 			}
 
 			.edit-email {
-				transition: all;
+				transition: color 0.3s ease;
 
 				&:hover {
 					color: var(--text-basic-color);
@@ -173,9 +199,7 @@
 			}
 
 			& .submit-btn {
-				@include submit-btn;
-				padding: 13px 20px;
-				font-size: 14px;
+				@include submit-btn($padding: 13px 20px);
 				display: flex;
 				justify-content: center;
 				align-items: center;
@@ -231,7 +255,6 @@
 .features-wrapper {
 	width: 260px;
 
-	// demo side container
 	& .card-body {
 		padding: 38px 15px;
 		background: nb-theme(color-primary-transparent-default);
@@ -241,19 +264,11 @@
 			background: nb-theme(color-primary-700);
 
 			& .custom-btn {
-				color: white;
-				background: #6e49e8;
-				border: 1px solid #6e49e8;
+				color: var(--text-alternate-color);
+				background: nb-theme(color-primary-600);
+				border: 1px solid nb-theme(color-primary-600);
 			}
 		}
-	}
-
-	// non-demo side container
-	& .features-card {
-		border: none;
-		background: nb-theme(color-primary-transparent-default);
-		border-radius: nb-theme(border-radius);
-		width: 100%;
 	}
 
 	& .title {
@@ -277,7 +292,7 @@
 		text-align: left;
 		margin-bottom: 20px;
 		padding-left: 13px;
-		color: #7e7e8f;
+		color: nb-theme(text-hint-color);
 	}
 
 	& .custom-btn {
@@ -287,9 +302,9 @@
 		padding: 13px 28px;
 		display: inline-flex;
 		justify-content: flex-start;
-		background-color: white;
+		background-color: nb-theme(background-basic-color-1);
 		color: nb-theme(color-primary-500);
-		border: 1px solid white;
+		border: 1px solid nb-theme(background-basic-color-1);
 		//styleName: Button label;
 		font-family: Inter;
 		font-size: 15px;
@@ -313,8 +328,8 @@
 		}
 
 		&:hover {
-			background-color: #fafafa;
-			border: 1px solid #fafafa;
+			background-color: nb-theme(background-basic-color-2);
+			border: 1px solid nb-theme(background-basic-color-2);
 		}
 	}
 }

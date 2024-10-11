@@ -6,11 +6,11 @@ import { debounceTime } from 'rxjs/operators';
 	selector: '[debounceClick]'
 })
 export class DebounceClickDirective implements OnInit, OnDestroy {
-	private clicks = new Subject();
+	private clicks: Subject<Event> = new Subject<Event>();
 	private subscription: Subscription;
 
 	@Input() debounceTime = 300;
-	@Output() throttledClick = new EventEmitter();
+	@Output() throttledClick: EventEmitter<Event> = new EventEmitter<Event>();
 
 	/**
 	 * Handles the click event and emits it after a debounce time.
@@ -20,8 +20,6 @@ export class DebounceClickDirective implements OnInit, OnDestroy {
 	 */
 	@HostListener('click', ['$event'])
 	clickEvent(event: Event): void {
-		event.preventDefault();
-		event.stopPropagation();
 		this.clicks.next(event);
 	}
 

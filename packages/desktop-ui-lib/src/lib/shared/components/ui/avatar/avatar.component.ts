@@ -21,7 +21,7 @@ export class AvatarComponent implements OnInit {
 	/**
 	 * A class member and getter/setter for managing an employee object.
 	 */
-	private _employee = new BehaviorSubject<any>(null);
+	private _employee = new BehaviorSubject<IEmployee>(null);
 	@Input() set employee(value: IEmployee) {
 		this._employee.next(value);
 	}
@@ -50,10 +50,6 @@ export class AvatarComponent implements OnInit {
 	}
 
 	ngOnInit() {
-		if (this._employee) {
-			this.online$ = this._employee
-				.asObservable()
-				.pipe(map((employee) => employee?.isOnline && !employee?.isAway));
-		}
+		this.online$ = this._employee.asObservable().pipe(map((employee) => employee?.isOnline && !employee?.isAway));
 	}
 }

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FormControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { HttpStatus, IAuthResponse, IUser, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { asyncScheduler, catchError, EMPTY, filter, tap } from 'rxjs';
@@ -21,7 +21,7 @@ export class NgxLoginWorkspaceComponent {
 	public showPassword = false;
 
 	/** The FormGroup for the sign-in form */
-	public form: UntypedFormGroup = NgxLoginWorkspaceComponent.buildForm(this._fb);
+	public form: FormGroup = NgxLoginWorkspaceComponent.buildForm(this._fb);
 
 	/**
 	 * Static method to build a FormGroup for the sign-in form.
@@ -29,7 +29,7 @@ export class NgxLoginWorkspaceComponent {
 	 * @param fb - The FormBuilder service for creating form controls.
 	 * @returns A FormGroup for the sign-in form.
 	 */
-	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
+	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
 			email: new FormControl(null, [Validators.required, Validators.email]), // Email input with email validation
 			password: new FormControl(null, [Validators.required]) // Password input with required validation
@@ -51,57 +51,46 @@ export class NgxLoginWorkspaceComponent {
 			return; // Exit if the form is invalid
 		}
 
-		try {
-			//
-			this.loading = true;
+		//
+		this.loading = true;
 
-			// Get the values of email and password from the form
-			const email = this.form.get('email').value;
-			const password = this.password.value;
+		// Get the values of email and password from the form
+		const email = this.form.get('email').value;
+		const password = this.password.value;
 
-			// Send a request to sign in to workspaces using the authentication service
-			this._authService
-				.findWorkspaces({ email, password })
-				.pipe(
-					tap((response: any) => {
-						if (response['status'] === HttpStatus.UNAUTHORIZED) {
-							throw new Error(`${response['message']}`);
-						}
-					}),
-					// Update component state with the fetched workspaces
-					tap(
-						({
-							workspaces,
-							show_popup,
-							total_workspaces,
-							confirmed_email
-						}: IUserSigninWorkspaceResponse) => {
-							this.workspaces = workspaces;
-							this.showPopup = show_popup;
-							this.confirmedEmail = confirmed_email;
-							this.totalWorkspaces = total_workspaces;
-							/** */
-							if (total_workspaces == 1) {
-								const [workspace] = this.workspaces;
-								this.signInWorkspace(workspace);
-							} else {
-								this.loading = false;
-							}
-						}
-					),
-					catchError((error) => {
-						// Handle and log errors using the error handling service
+		// Send a request to sign in to workspaces using the authentication service
+		this._authService
+			.findWorkspaces({ email, password })
+			.pipe(
+				tap((response) => {
+					if (response['status'] === HttpStatus.UNAUTHORIZED) {
+						throw new Error(`${response['message']}`);
+					}
+				}),
+				// Update component state with the fetched workspaces
+				tap(({ workspaces, show_popup, total_workspaces, confirmed_email }: IUserSigninWorkspaceResponse) => {
+					this.workspaces = workspaces;
+					this.showPopup = show_popup;
+					this.confirmedEmail = confirmed_email;
+					this.totalWorkspaces = total_workspaces;
+					/** */
+					if (total_workspaces == 1) {
+						const [workspace] = this.workspaces;
+						this.signInWorkspace(workspace);
+					} else {
 						this.loading = false;
-						this._errorHandlingService.handleError(error);
-						return EMPTY;
-					}),
-					// Handle component lifecycle to avoid memory leaks
-					untilDestroyed(this)
-				)
-				.subscribe();
-		} catch (error) {
-			console.log(error);
-		}
+					}
+				}),
+				catchError((error) => {
+					// Handle and log errors using the error handling service
+					this.loading = false;
+					this._errorHandlingService.handleError(error);
+					return EMPTY;
+				}),
+				// Handle component lifecycle to avoid memory leaks
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**

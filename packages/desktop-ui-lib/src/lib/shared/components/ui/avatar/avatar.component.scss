@@ -1,17 +1,16 @@
 @import 'themes';
 
-@mixin common {
+@mixin avatarMixin($radius: var(--border-radius), $imageSize: 48px) {
   .inner-wrapper {
-    border-radius: var(--button-rectangle-border-radius);
+    display: flex;
     align-items: center;
     overflow: hidden;
-    display: flex;
-    gap: 8px;
+    border-radius: $radius;
   }
 
   .avatar-wrapper {
     width: 100%;
-    border-radius: var(--border-radius);
+    border-radius: $radius;
   }
 
   .names-wrapper {
@@ -36,23 +35,23 @@
   }
 
   .image-container {
-    width: 20px;
+    width: $imageSize;
     cursor: pointer;
-    border-radius: var(--border-radius);
+    border-radius: $radius;
     display: flex;
     position: relative;
 
     img {
-      width: 20px;
-      height: 20px;
+      width: $imageSize;
+      height: $imageSize;
       object-fit: cover;
-      border-radius: var(--border-radius) !important;
+      border-radius: $radius !important;
     }
     .status-indicator {
       position: absolute;
-      width: 10px;
-      height: 10px;
-      border-radius: 8px;
+      width: calc($imageSize / 2);
+      height: calc($imageSize / 2);
+      border-radius: calc($radius / 2);
       border: 2px solid #ebebeb;
       right: 0;
       top: 0;
@@ -94,12 +93,10 @@
 
   .image-container {
     width: 48px;
-    cursor: pointer;
 
     img {
       width: 48px;
       height: 48px;
-      object-fit: cover;
     }
 
     &.lg {
@@ -139,7 +136,7 @@
     color: var(--text-primary-color) !important;
   }
 
-  @include common;
+  @include avatarMixin();
 }
 
 :host-context(.avatar-dashboard) {
@@ -172,26 +169,25 @@
     }
   }
 
-  @include common;
+  @include avatarMixin();
 }
 
 :host-context(.workspace) {
-  $radius: var(--border-radius);
   width: 100%;
 
   .inner-wrapper {
     width: fit-content;
-    padding: calc($radius / 4);
+    padding: calc(var(--border-radius) / 4);
     background-color: var(--color-primary-transparent-100);
-    border-radius: calc($radius / 2) !important;
+    border-radius: calc(var(--border-radius) / 2) !important;
   }
 
-  @include common;
+  @include avatarMixin($radius: calc(var(--border-radius) / 2), $imageSize: 48px);
 
   .image-container {
     &,
     img {
-      border-radius: calc($radius / 4) !important;
+      border-radius: calc(var(--border-radius) / 4) !important;
     }
   }
 

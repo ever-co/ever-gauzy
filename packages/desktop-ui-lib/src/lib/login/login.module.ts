@@ -47,7 +47,6 @@ const shared = [
 		NbFormFieldModule,
 		DesktopDirectiveModule,
 		LanguageModule.forChild(),
-		FormsModule,
 		ReactiveFormsModule,
 		SwitchThemeModule,
 		NbListModule,
