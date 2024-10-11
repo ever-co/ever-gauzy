@@ -11,6 +11,6 @@ import { TypeOrmApiCallLogRepository } from './repository/type-orm-api-call-log.
 	imports: [TypeOrmModule.forFeature([ApiCallLog]), MikroOrmModule.forFeature([ApiCallLog]), RolePermissionModule],
 	controllers: [ApiCallLogController],
 	providers: [ApiCallLogService, TypeOrmApiCallLogRepository],
-	exports: [TypeOrmModule, MikroOrmModule, ApiCallLogService, TypeOrmApiCallLogRepository]
+	exports: [ApiCallLogService]
 })
 export class ApiCallLogModule {}
