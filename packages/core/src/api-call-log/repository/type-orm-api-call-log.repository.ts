@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ApiCallLog } from '../api-call-log.entity';
 
 @Injectable()
 export class TypeOrmApiCallLogRepository extends Repository<ApiCallLog> {
-	constructor(@InjectRepository(ApiCallLog) readonly repository: Repository<ApiCallLog>) {
-		super(repository.target, repository.manager, repository.queryRunner);
-	}
+	// constructor(@InjectRepository(ApiCallLog) readonly repository: Repository<ApiCallLog>) {
+	// 	super(repository.target, repository.manager, repository.queryRunner);
+	// }
 }

@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import { ApiCallLog } from './api-call-log.entity';
-import { MikroOrmApiCallLogRepository, TypeOrmApiCallLogRepository } from './repository';
+import { MikroOrmApiCallLogRepository } from './repository/mikro-orm-api-call-log.repository';
+import { TypeOrmApiCallLogRepository } from './repository/type-orm-api-call-log.repository';
 
 @Injectable()
 export class ApiCallLogService extends TenantAwareCrudService<ApiCallLog> {
 	constructor(
-		readonly typeOrmActivityLogRepository: TypeOrmApiCallLogRepository,
-		readonly mikroOrmActivityLogRepository: MikroOrmApiCallLogRepository
+		@InjectRepository(ApiCallLog) readonly typeOrmApiCallLogRepository: TypeOrmApiCallLogRepository,
+		readonly mikroOrmApiCallLogRepository: MikroOrmApiCallLogRepository
 	) {
-		super(typeOrmActivityLogRepository, mikroOrmActivityLogRepository);
+		super(typeOrmApiCallLogRepository, mikroOrmApiCallLogRepository);
 	}
 }

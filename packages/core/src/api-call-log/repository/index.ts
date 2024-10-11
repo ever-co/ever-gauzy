@@ -1,2 +1,2 @@
-export * from './mikro-orm-api_call_log.repository';
-export * from './type-orm-api_call_log.repository';
+export * from './mikro-orm-api-call-log.repository';
+export * from './type-orm-api-call-log.repository';
