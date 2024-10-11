@@ -53,6 +53,6 @@ const shared = [
 		AvatarModule
 	],
 	declarations: [LogoComponent, SocialLinksComponent, WorkspaceSelectionComponent, ...shared],
-	exports: [shared]
+	exports: [...shared]
 })
 export class NgxLoginModule {}

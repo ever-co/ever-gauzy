@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { NB_AUTH_OPTIONS, NbAuthService, NbLoginComponent } from '@nebular/auth';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -59,7 +59,7 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 	}
 
 	constructor(
-		private readonly _fb: UntypedFormBuilder,
+		private readonly _fb: FormBuilder,
 		private readonly _activatedRoute: ActivatedRoute,
 		public readonly nbAuthService: NbAuthService,
 		public readonly cdr: ChangeDetectorRef,
@@ -179,14 +179,12 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 	 * Confirms the sign-in code.
 	 */
 	async confirmSignInCode(): Promise<void> {
+		this.isLoading = true;
 		// Check if the form is invalid
 		if (this.form.invalid) {
 			this.isLoading = false;
 			return;
 		}
-
-		this.isLoading = true;
-
 		// Get the email and code values from the form
 		const { email, code } = this.form.getRawValue();
 
@@ -211,6 +209,8 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 	 * Starts a timer for a countdown.
 	 */
 	startTimer() {
+		this.stopTimer();
+
 		this.isCodeResent = true;
 		this.countdown = 30;
 

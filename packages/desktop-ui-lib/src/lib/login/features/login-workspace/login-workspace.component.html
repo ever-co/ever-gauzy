@@ -32,10 +32,6 @@
 
 <ng-template #signInForm>
 	<form [formGroup]="form" class="form" (ngSubmit)="onSubmit()" autocomplete="off">
-		<div style="height: 0; overflow: hidden">
-			<input style="opacity: 0" type="email" value="" class="" />
-			<input style="opacity: 0" type="password" value="" class="d-" />
-		</div>
 		<div class="row">
 			<div class="col">
 				<div class="form-group">
@@ -71,7 +67,7 @@
 							fieldSize="large"
 							[status]="password.dirty ? (password.invalid ? 'danger' : 'success') : 'basic'"
 							[attr.aria-invalid]="password.invalid && password.touched ? true : null"
-							autocomplete="off"
+							autocomplete="current-password"
 						/>
 						<a
 							nbSuffix

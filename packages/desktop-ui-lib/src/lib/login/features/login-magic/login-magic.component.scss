@@ -296,8 +296,8 @@ $button-color: #fa754e;
 	}
 
 	& .custom-btn {
-		-webkit-box-shadow: 3px 11px 30px -17px #3366ff;
-		box-shadow: 3px 11px 30px -17px #3366ff;
+		-webkit-box-shadow: 3px 11px 30px -17px nb-theme(color-primary-500);
+		box-shadow: 3px 11px 30px -17px nb-theme(color-primary-500);
 		width: auto;
 		padding: 13px 28px;
 		display: inline-flex;

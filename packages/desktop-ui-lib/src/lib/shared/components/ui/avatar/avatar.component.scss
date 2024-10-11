@@ -1,200 +1,151 @@
 @import 'themes';
 
 @mixin avatarMixin($radius: var(--border-radius), $imageSize: 48px) {
-  .inner-wrapper {
-    display: flex;
-    align-items: center;
-    overflow: hidden;
-    border-radius: $radius;
-  }
+	.inner-wrapper {
+		display: flex;
+		align-items: center;
+		overflow: hidden;
+		border-radius: $radius;
+		gap: 4px;
+	}
 
-  .avatar-wrapper {
-    width: 100%;
-    border-radius: $radius;
-  }
+	.avatar-wrapper,
+	.image-container,
+	img {
+		border-radius: $radius !important;
+	}
 
-  .names-wrapper {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
+	.names-wrapper {
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+	}
 
-  .link-text {
-    cursor: pointer;
-    text-decoration: none;
-    font-style: normal;
-    line-height: 15px;
-    letter-spacing: 0;
-    white-space: nowrap;
-    width: 100%;
-    text-overflow: ellipsis;
-  }
+	.link-text {
+		cursor: pointer;
+		text-decoration: none;
+		font-style: normal;
+		line-height: 15px;
+		letter-spacing: 0;
+		white-space: nowrap;
+		width: 100%;
+		text-overflow: ellipsis;
 
-  .link-text:hover {
-    text-decoration: underline;
-  }
+		&:hover {
+			text-decoration: underline;
+		}
+	}
 
-  .image-container {
-    width: $imageSize;
-    cursor: pointer;
-    border-radius: $radius;
-    display: flex;
-    position: relative;
+	.image-container {
+		width: $imageSize;
+		cursor: pointer;
+		display: flex;
+		position: relative;
 
-    img {
-      width: $imageSize;
-      height: $imageSize;
-      object-fit: cover;
-      border-radius: $radius !important;
-    }
-    .status-indicator {
-      position: absolute;
-      width: calc($imageSize / 2);
-      height: calc($imageSize / 2);
-      border-radius: calc($radius / 2);
-      border: 2px solid #ebebeb;
-      right: 0;
-      top: 0;
+		img {
+			width: $imageSize;
+			height: $imageSize;
+			object-fit: cover;
+		}
 
-      &.online {
-        background-color: #4caf50; /* Green for online */
-      }
-      &.offline {
-        background-color: #f44336; /* Red for offline */
-      }
-    }
-  }
+		.status-indicator {
+			position: absolute;
+			width: calc($imageSize / 2);
+			height: calc($imageSize / 2);
+			border-radius: calc($radius / 2);
+			border: 2px solid #ebebeb;
+			right: 0;
+			top: 0;
+
+			&.online {
+				background-color: #4caf50;
+				/* Green for online */
+			}
+
+			&.offline {
+				background-color: #f44336;
+				/* Red for offline */
+			}
+		}
+	}
+}
+
+@mixin avatarSizeVariant($size) {
+	.image-container {
+		width: $size;
+
+		img {
+			width: $size;
+			height: $size;
+		}
+	}
 }
 
 :host {
-  display: block;
+	display: block;
+	@include avatarMixin();
 
-  .link-text {
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 16px;
-    cursor: pointer;
-    text-decoration: none;
-    letter-spacing: 0em;
-    color: nb-theme(gauzy-text-contact);
-  }
+	.link-text {
+		font-size: 14px;
+		font-weight: 600;
+		line-height: 16px;
+		color: nb-theme(gauzy-text-contact);
+	}
 
-  .caption {
-    font-size: 11px;
-    font-weight: 400;
-    line-height: 11px;
-    letter-spacing: 0em;
-    color: var(--gauzy-text-color-2);
-  }
+	.caption {
+		font-size: 11px;
+		font-weight: 400;
+		line-height: 11px;
+		color: var(--gauzy-text-color-2);
+	}
 
-  .link-text:hover {
-    text-decoration: underline;
-  }
+	@include avatarSizeVariant(48px);
 
-  .image-container {
-    width: 48px;
+	&.lg {
+		@include avatarSizeVariant(64px);
+	}
 
-    img {
-      width: 48px;
-      height: 48px;
-    }
-
-    &.lg {
-      width: 64px;
-
-      img {
-        width: 64px;
-        height: 64px;
-      }
-    }
-
-    &.sm {
-      width: 32px;
-
-      img {
-        width: 32px;
-        height: 32px;
-      }
-    }
-  }
+	&.sm {
+		@include avatarSizeVariant(32px);
+	}
 }
 
-:host-context(.report-table) {
-  width: 100%;
+:host-context(.report-table),
+:host-context(.avatar-dashboard),
+:host-context(.workspace) {
+	width: 100%;
 
-  .inner-wrapper {
-    width: fit-content;
-    @include nb-ltr(padding, 3px 9px 3px 3px);
-    @include nb-rtl(padding, 3px 3px 3px 9px);
-    background-color: var(--color-primary-transparent-100);
-  }
+	.inner-wrapper {
+		width: fit-content;
+		padding: calc(var(--border-radius) / 4);
+		background-color: var(--color-primary-transparent-100);
+	}
 
-  .link-text {
-    font-size: 12px;
-    font-weight: 400;
-    text-overflow: ellipsis;
-    color: var(--text-primary-color) !important;
-  }
-
-  @include avatarMixin();
+	.link-text {
+		color: var(--text-primary-color) !important;
+	}
 }
 
 :host-context(.avatar-dashboard) {
-  width: 100%;
+	.link-text {
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--gauzy-text-color-1) !important;
+	}
 
-  .inner-wrapper {
-    width: 100%;
-  }
-
-  .names-wrapper {
-    width: 100%;
-  }
-
-  .link-text {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--gauzy-text-color-1) !important;
-  }
-
-  &.activity {
-    .image-container {
-      width: 28px;
-      border-radius: var(--button-rectangle-border-radius) !important;
-
-      img {
-        border-radius: var(--button-rectangle-border-radius) !important;
-        width: 28px;
-        height: 28px;
-      }
-    }
-  }
-
-  @include avatarMixin();
+	&.activity {
+		@include avatarMixin($radius: var(--button-rectangle-border-radius), $imageSize: 28px);
+	}
 }
 
 :host-context(.workspace) {
-  width: 100%;
+	@include avatarMixin($radius: calc(var(--border-radius) / 2), $imageSize: 24px);
 
-  .inner-wrapper {
-    width: fit-content;
-    padding: calc(var(--border-radius) / 4);
-    background-color: var(--color-primary-transparent-100);
-    border-radius: calc(var(--border-radius) / 2) !important;
-  }
+	.names-wrapper a.link-text {
+		text-decoration: none;
+	}
 
-  @include avatarMixin($radius: calc(var(--border-radius) / 2), $imageSize: 48px);
-
-  .image-container {
-    &,
-    img {
-      border-radius: calc(var(--border-radius) / 4) !important;
-    }
-  }
-
-  .names-wrapper {
-    a.link-text {
-      text-decoration: none;
-      cursor: none;
-    }
-  }
+	.inner-wrapper {
+		max-width: 135px;
+	}
 }

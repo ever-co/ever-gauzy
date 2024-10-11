@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { HttpStatus, IAuthResponse, IUser, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { asyncScheduler, catchError, EMPTY, filter, tap } from 'rxjs';
@@ -38,7 +38,7 @@ export class NgxLoginWorkspaceComponent {
 
 	constructor(
 		private readonly _store: Store,
-		private readonly _fb: UntypedFormBuilder,
+		private readonly _fb: FormBuilder,
 		private readonly _authService: AuthService,
 		private readonly _errorHandlingService: ErrorHandlerService
 	) {}
@@ -55,7 +55,7 @@ export class NgxLoginWorkspaceComponent {
 		this.loading = true;
 
 		// Get the values of email and password from the form
-		const email = this.form.get('email').value;
+		const email = this.email.value;
 		const password = this.password.value;
 
 		// Send a request to sign in to workspaces using the authentication service
@@ -148,5 +148,9 @@ export class NgxLoginWorkspaceComponent {
 
 	public get password() {
 		return this.form.get('password');
+	}
+
+	public get email() {
+		return this.form.get('email');
 	}
 }

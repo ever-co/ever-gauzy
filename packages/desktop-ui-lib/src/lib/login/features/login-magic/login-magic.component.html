@@ -38,7 +38,6 @@
 						nbInput
 						fullWidth
 						formControlName="email"
-						noSpaceEdges
 						[placeholder]="'LOGIN_PAGE.PLACEHOLDERS.EMAIL' | translate"
 						[status]="email.dirty ? (email.invalid ? 'danger' : 'success') : 'basic'"
 						[attr.aria-invalid]="email.invalid && email.touched ? true : null"
@@ -83,7 +82,7 @@
 						[attr.aria-invalid]="code.invalid && code.touched ? true : null"
 						maxlength="6"
 						autofocus
-						autocomplete-off
+						autocomplete="off"
 					/>
 					<ng-container *ngIf="code.invalid && code.touched">
 						<p class="caption status-danger" *ngIf="code.errors?.required">
