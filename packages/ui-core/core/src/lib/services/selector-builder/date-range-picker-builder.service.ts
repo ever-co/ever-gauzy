@@ -36,7 +36,7 @@ export class DateRangePickerBuilderService {
 	 * @param range - The new date range to set.
 	 */
 	set selectedDateRange(range: IDateRangePicker) {
-		if (range) {
+		if (isNotEmpty(range)) {
 			this._selectedDateRange$.next(range);
 			this.dates$.next(range);
 		}

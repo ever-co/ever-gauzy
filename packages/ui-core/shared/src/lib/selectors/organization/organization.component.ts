@@ -1,9 +1,9 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { catchError, distinctUntilChanged, filter, map, tap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, filter, map, tap } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { uniq as uniqBy } from 'underscore';
+import { uniq } from 'underscore';
 import { IOrganization, CrudActionEnum, PermissionsEnum, ID } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/ui-core/common';
 import {
@@ -139,7 +139,7 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 			const fetchedOrganizations: IOrganization[] = items.map(({ organization }) => organization);
 
 			// Remove duplicate organizations based on their ID
-			this.organizations = uniqBy(fetchedOrganizations, 'id');
+			this.organizations = uniq(fetchedOrganizations, 'id');
 
 			// Select and set the active organization
 			this.selectAndSetOrganization();
@@ -265,6 +265,7 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 			// Assign the filtered and updated organizations list
 			this.organizations = updatedOrganizations.filter(isNotEmpty);
 		} catch (error) {
+			console.error('Error updating organization:', error);
 			this._toastrService.error('Failed to update organization.', error);
 		}
 	}
@@ -391,6 +392,10 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 	 * @returns A randomly selected organization.
 	 */
 	private getRandomOrganization(organizations: IOrganization[]): IOrganization {
+		if (organizations.length === 0) {
+			return null;
+		}
+
 		const randomIndex = Math.floor(Math.random() * organizations.length);
 		return organizations[randomIndex];
 	}
