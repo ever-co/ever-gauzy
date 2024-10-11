@@ -219,7 +219,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 						const datePickerConfig = Object.assign({}, DEFAULT_DATE_PICKER_CONFIG, datePicker);
 						this._dateRangePickerBuilderService.setDatePickerConfig(datePickerConfig);
 
-						// Create query parama URL builder
+						// Create query parameters URL builder
 						this._navigationService.updateQueryParams(bookmarkParams);
 					}
 				),
