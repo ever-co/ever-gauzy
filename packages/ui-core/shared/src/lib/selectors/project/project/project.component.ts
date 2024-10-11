@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, Input, forwardRef, AfterViewInit, Output, EventEmitter } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { combineLatest, map, Observable, of, Subject, switchMap } from 'rxjs';
+import { combineLatest, from, map, Observable, of, Subject, switchMap } from 'rxjs';
 import { catchError, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -254,7 +254,6 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 
 	/**
 	 * Handles the combined stream to fetch projects and select the appropriate project
-	 *
 	 * based on route parameters and subject emissions.
 	 */
 	private initializeProjectSelection(): void {
@@ -262,13 +261,23 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 			.pipe(
 				// Switch to a new observable each time the source observables emit
 				switchMap(([_, queryParams]) =>
-					// Fetch projects and then pass the projectId from queryParams
-					this.getProjects().then(() => queryParams.projectId)
+					// Fetch projects and handle errors during retrieval
+					from(this.getProjects()).pipe(
+						// Return the projectId from queryParams on success
+						map(() => queryParams.projectId),
+						// Handle any errors that occur during project fetching
+						catchError((error) => {
+							console.error('Error fetching projects:', error);
+							return of(null); // Return a null value to prevent project selection on error
+						})
+					)
 				),
 				// After fetching, select the project if projectId exists
-				tap((projectId: ID) => {
+				tap((projectId: ID | null) => {
 					if (projectId) {
 						this.selectProjectById(projectId);
+					} else {
+						console.warn('Project ID is missing or projects could not be retrieved.');
 					}
 				}),
 				// Automatically unsubscribe when the component is destroyed
