@@ -450,9 +450,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			const { lastTimer, isStarted } = timer;
 
 			const isRemote =
-				this._timeTrackerStatus.remoteTimer &&
-				this.xor(!isStarted, this._timeTrackerStatus.remoteTimer.running) &&
-				this._startMode === TimerStartMode.REMOTE;
+				(this._timeTrackerStatus.remoteTimer &&
+					this.xor(!isStarted, this._timeTrackerStatus.remoteTimer.running) &&
+					this._startMode === TimerStartMode.REMOTE) ||
+				!onClick;
 
 			const params = {
 				token: this.token,
@@ -814,7 +815,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 				// Check if quitApp flag is already set, and if so, force stop the timer and return
 				if (this.quitApp) {
-					await this.stopTimer(true, true);
+					await this.stopTimer(!this.isRemoteTimer, true);
 					return;
 				}
 
@@ -2228,7 +2229,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			// Force stop timer on error
 			try {
 				if (this.stopTimer) {
-					await this.stopTimer(false, true);
+					await this.stopTimer(!this.isRemoteTimer, true);
 				}
 			} catch (stopError) {
 				this._loggerService?.error('Error in force stopping the timer', stopError);
