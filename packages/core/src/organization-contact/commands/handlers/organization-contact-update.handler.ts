@@ -40,12 +40,6 @@ export class OrganizationContactUpdateHandler implements ICommandHandler<Organiz
 				);
 			}
 
-			if (isNotEmpty(input.projects)) {
-				input.projects.forEach((project) => {
-					delete project.members;
-				});
-			}
-
 			// Update the organization contact using the provided ID and input data.
 			await this._organizationContactService.create({
 				...input,
