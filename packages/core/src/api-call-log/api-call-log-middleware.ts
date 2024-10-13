@@ -1,15 +1,14 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-import { ClsService } from 'nestjs-cls';
 import { v4 as uuidv4 } from 'uuid';
 import { ID, RequestMethod } from '@gauzy/contracts';
+import { RequestContext } from '../core/context';
 import { ApiCallLogService } from './api-call-log.service';
 import { ApiCallLog } from './api-call-log.entity';
-import { RequestContext } from '../core/context';
 
 @Injectable()
 export class ApiCallLogMiddleware implements NestMiddleware {
-	constructor(private readonly _apiCallLogService: ApiCallLogService, private readonly cls: ClsService) {}
+	constructor(private readonly _apiCallLogService: ApiCallLogService) {}
 
 	/**
 	 * Middleware for logging API requests and responses to the database.
@@ -23,42 +22,64 @@ export class ApiCallLogMiddleware implements NestMiddleware {
 	 * @returns void
 	 */
 	async use(req: Request, res: Response, next: NextFunction): Promise<void> {
+		let responseBody = '';
+
 		// Generate a unique correlation ID if not provided
 		const correlationId = RequestContext.getContextId() ?? uuidv4();
-		console.log('ApiCallLogMiddleware: logging API call...: %s', correlationId, RequestContext.getContextId());
+		console.log('ApiCallLogMiddleware: logging API call...: %s', RequestContext.getContextId());
 
-		const organizationId = req.headers['x-organization-id'] as ID;
-		const tenantId = req.headers['x-tenant-id'] as ID;
-		console.log('ApiCallLogMiddleware: logging API call for organizationId: %s', organizationId);
-		console.log('ApiCallLogMiddleware: logging API call for tenantId: %s', tenantId);
+		// Get the current user ID
+		const userId = RequestContext.currentUserId();
+
+		// Retrieve the user's organization ID and tenant ID from the request headers
+		const organizationId = req.headers['organization-id'] as ID;
+		const tenantId = req.headers['tenant-id'] as ID;
 
 		// Redact sensitive data from request headers and body
-		const requestHeaders = this.redactSensitiveData(req.headers, ['Authorization', 'token']);
+		const requestHeaders = this.redactSensitiveData(req.headers, ['authorization', 'token']);
 		const requestBody = this.redactSensitiveData(req.body, ['password', 'secretKey', 'accessToken']);
 		const startTime = Date.now(); // Capture request start time
+
+		console.log('ApiCallLogMiddleware: logging API call for request: %s', req.user);
+
+		const originalEnd = res.end;
+
+		// Override res.end to capture response body
+		res.end = (chunk: any) => {
+			if (chunk) {
+				// If a chunk is provided, ensure it's a string, buffer, or similar valid type
+				if (typeof chunk === 'string' || chunk instanceof Buffer || chunk instanceof Uint8Array) {
+					responseBody += chunk; // Append to captured response body
+				}
+			}
+			return originalEnd.apply(res, arguments); // Call original res.end with proper arguments
+		};
 
 		// Listen for the 'finish' event to capture response details
 		res.on('finish', async () => {
 			const entity = new ApiCallLog({
 				correlationId,
-				organizationId,
-				tenantId,
-				url: req.originalUrl,
+				organizationId: organizationId || null,
+				tenantId: tenantId || null,
 				method: this.mapHttpMethodToEnum(req.method),
-				protocol: req.protocol,
-				requestHeaders,
-				requestBody,
+				url: req.originalUrl,
+				protocol: req.protocol || null,
+				ipAddress: req.ip || null,
+				origin: req.headers['origin'] || null,
+				userAgent: req.headers['user-agent'] || '',
+				requestHeaders: requestHeaders || {},
+				requestBody: requestBody || {},
 				statusCode: res.statusCode,
-				responseBody: res.locals.data || {},
-				requestTime: new Date(startTime), // Capture request time
-				responseTime: new Date() // Capture response time
+				responseBody: responseBody || {},
+				requestTime: new Date(startTime),
+				responseTime: new Date(),
+				userId: userId || null
 			});
+			console.log('ApiCallLogMiddleware: logging API call entity: %s', entity);
 
 			try {
 				// Asynchronously log the API call to the database
-				await this._apiCallLogService.create(entity).catch((error) => {
-					console.error('Failed to log API call:', error); // Log error if logging fails
-				});
+				await this._apiCallLogService.create(entity);
 			} catch (error) {
 				console.error('Failed to log API call:', error); // Catch any errors during logging
 			}

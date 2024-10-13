@@ -15,7 +15,7 @@ import { SerializedRequestContext } from './types';
 
 export class RequestContext {
 	protected static clsService: ClsService;
-	private static loggingEnabled: boolean = true;
+	private static loggingEnabled: boolean = false;
 
 	private readonly _id: ID;
 	private readonly _res: Response;
