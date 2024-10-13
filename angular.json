@@ -1088,7 +1088,10 @@
 						"tsConfig": "apps/desktop-timer/tsconfig.app.json",
 						"aot": true,
 						"stylePreprocessorOptions": {
-							"includePaths": ["apps/desktop-timer/src/assets/styles"]
+							"includePaths": [
+								"apps/desktop-timer/src/assets/styles",
+								"packages/ui-core/static/styles"
+							]
 						},
 						"assets": [
 							"apps/desktop-timer/src/favicon.ico",

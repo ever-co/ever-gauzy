@@ -1,0 +1,112 @@
+<ng-container *ngIf="showPopup; then workspacesTemplate; else signInTemplate"> </ng-container>
+
+<ng-template #signInTemplate>
+	<section class="section-wrapper">
+		<div class="-wrapper">
+			<div class="svg-wrapper">
+				<gauzy-logo></gauzy-logo>
+			</div>
+
+			<h1 class="title">{{ 'WORKSPACES.SIGN_IN_TITLE' | translate }}</h1>
+
+			<div class="hr-div-strong"></div>
+
+			<ng-container [ngTemplateOutlet]="signInForm"></ng-container>
+
+			<div class="hr-div-soft"></div>
+
+			<section class="sign-in-or-up" aria-label="Sign in or sign up">
+				<p class="redirect-link-p">
+					<span>{{ 'WORKSPACES.BACK_TO' | translate }}</span>
+					<a class="text-link" [routerLink]="['/auth/login']">
+						<span>{{ 'BUTTONS.LOGIN' | translate }}</span>
+					</a>
+				</p>
+				<p class="redirect-link-p">
+					<a [routerLink]="['/auth/register']" class="text-link">{{ 'BUTTONS.REGISTER' | translate }}</a>
+				</p>
+			</section>
+		</div>
+	</section>
+</ng-template>
+
+<ng-template #signInForm>
+	<form [formGroup]="form" class="form" (ngSubmit)="onSubmit()" autocomplete="off">
+		<div class="row">
+			<div class="col">
+				<div class="form-group">
+					<label class="label" for="email">
+						{{ 'WORKSPACES.LABELS.EMAIL' | translate }}
+					</label>
+					<input
+						nbInput
+						id="email"
+						name="email"
+						type="email"
+						[placeholder]="'WORKSPACES.PLACEHOLDERS.EMAIL' | translate"
+						fullWidth
+						fieldSize="large"
+						formControlName="email"
+					/>
+				</div>
+				<div class="form-control-group">
+					<span class="label-with-link">
+						<label class="label" for="input-password">
+							{{ 'LOGIN_PAGE.LABELS.PASSWORD' | translate }}
+						</label>
+					</span>
+					<nb-form-field>
+						<input
+							nbInput
+							fullWidth
+							formControlName="password"
+							name="password"
+							[type]="showPassword ? 'text' : 'password'"
+							id="input-password"
+							[placeholder]="'LOGIN_PAGE.PLACEHOLDERS.PASSWORD' | translate"
+							fieldSize="large"
+							[status]="password.dirty ? (password.invalid ? 'danger' : 'success') : 'basic'"
+							[attr.aria-invalid]="password.invalid && password.touched ? true : null"
+							autocomplete="current-password"
+						/>
+						<a
+							nbSuffix
+							nbButton
+							size="small"
+							ghost
+							(click)="showPassword = !showPassword"
+							class="show-password-icon"
+						>
+							<nb-icon
+								[icon]="showPassword ? 'eye-outline' : 'eye-off-outline'"
+								pack="eva"
+								[attr.aria-label]="showPassword ? 'hide password' : 'show password'"
+							></nb-icon>
+						</a>
+					</nb-form-field>
+					<ng-container *ngIf="password.invalid && password.touched && !password.pristine">
+						<p class="caption status-danger" *ngIf="password.errors?.required">
+							{{ 'LOGIN_PAGE.VALIDATION.PASSWORD_REQUIRED' | translate }}
+						</p>
+					</ng-container>
+				</div>
+			</div>
+		</div>
+		<div class="submit-btn-wrapper">
+			<button nbButton size="small" [disabled]="form.invalid || loading" class="submit-btn" type="submit">
+				{{ 'BUTTONS.SIGNIN' | translate }}
+				<nb-icon [ngStyle]="{ display: 'none' }" *gauzySpinnerButton="loading"></nb-icon>
+			</button>
+		</div>
+	</form>
+</ng-template>
+
+<ng-template #workspacesTemplate>
+	<ng-container *ngIf="workspaces.length > 0">
+		<ngx-workspace-selection
+			[workspaces]="workspaces"
+			[confirmedEmail]="confirmedEmail"
+			(selectedWorkspace)="signInWorkspace($event)"
+		></ngx-workspace-selection>
+	</ng-container>
+</ng-template>

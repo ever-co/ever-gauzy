@@ -1,0 +1,115 @@
+:host {
+	.workspace-selection-container {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		width: 100%;
+		background: var(--gauzy-card-2);
+		border-radius: var(--border-radius);
+		padding: 1rem;
+	}
+
+	.logo {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+
+		h4 {
+			font-size: 24px;
+			color: var(--gauzy-text-color-1);
+			font-weight: 600;
+			letter-spacing: -1px;
+
+			strong {
+				color: var(--text-primary-active-color);
+			}
+		}
+
+		p {
+			color: var(--gauzy-text-color-2);
+			font-weight: 500;
+		}
+	}
+
+	.text-start {
+		display: block;
+		padding: 1rem 1rem 0;
+	}
+
+	nb-card {
+		box-shadow: var(--gauzy-shadow);
+		background-color: var(--gauzy-card-2);
+
+		.title {
+			font-weight: 400;
+			color: var(--gauzy-text-color-1);
+			text-overflow: ellipsis;
+			overflow: hidden;
+			text-wrap: nowrap;
+
+			.sub-title {
+				font-weight: 600;
+			}
+		}
+
+		nb-card-body {
+			nb-list-item {
+				border-top: 1px solid var(--border-primary-color-1);
+				justify-content: space-between;
+				cursor: pointer;
+
+				&:hover+nb-list-item {
+					border-top: unset;
+				}
+
+				&:hover {
+					background-color: var(--gauzy-background-transparent-1);
+					border-bottom: 1px solid var(--border-primary-color-1);
+					border-radius: var(--border-radius);
+				}
+
+				.workspace-container {
+					display: flex;
+					gap: 0.5rem;
+
+					.workspace-image {
+						width: 48px;
+						height: 48px;
+						border-radius: var(--border-radius);
+
+						img {
+							width: 100%;
+							height: 100%;
+							object-fit: cover;
+							border-radius: var(--border-radius);
+						}
+					}
+
+					.workspace-info {
+						display: flex;
+						flex-direction: column;
+						align-items: flex-start;
+						justify-content: space-between;
+
+						.workspace-name {
+							font-weight: 600;
+						}
+					}
+				}
+
+				.continue-icon {
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					gap: 4px;
+
+					.label-primary {
+						font-weight: 600;
+						color: var(--text-primary-color);
+					}
+				}
+			}
+		}
+	}
+}
