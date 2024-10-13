@@ -260,7 +260,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 				vendorName: {
 					title: this.getTranslation('SM_TABLE.VENDOR'),
 					type: 'string',
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: VendorFilterComponent
 					},
@@ -272,7 +272,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 				categoryName: {
 					title: this.getTranslation('SM_TABLE.CATEGORY'),
 					type: 'string',
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: ExpenseCategoryFilterComponent
 					},
@@ -313,7 +313,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 					title: this.getTranslation('SM_TABLE.NOTES'),
 					type: 'text',
 					class: 'align-row',
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -325,7 +325,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 					title: this.getTranslation('POP_UPS.PURPOSE'),
 					type: 'string',
 					class: 'align-row',
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},

@@ -141,7 +141,7 @@ export class WarehousesTableComponent
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					},
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -152,7 +152,7 @@ export class WarehousesTableComponent
 				email: {
 					title: this.getTranslation('INVENTORY_PAGE.EMAIL'),
 					type: 'string',
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},

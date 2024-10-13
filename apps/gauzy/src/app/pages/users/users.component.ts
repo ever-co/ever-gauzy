@@ -470,7 +470,7 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					},
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: TagsColorFilterComponent
 					},

@@ -232,7 +232,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 					type: 'string',
 					title: this.getTranslation('SM_TABLE.NAME'),
 					width: '30%',
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -244,7 +244,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 					type: 'string',
 					title: this.getTranslation('SM_TABLE.DESCRIPTION'),
 					width: '30%',
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},

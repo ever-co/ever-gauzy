@@ -150,7 +150,7 @@ export class EquipmentComponent extends PaginationFilterBaseComponent implements
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getRawValue();
 					},
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -161,7 +161,7 @@ export class EquipmentComponent extends PaginationFilterBaseComponent implements
 				type: {
 					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_TYPE'),
 					type: 'string',
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -172,7 +172,7 @@ export class EquipmentComponent extends PaginationFilterBaseComponent implements
 				serialNumber: {
 					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_SN'),
 					type: 'string',
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},

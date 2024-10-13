@@ -142,7 +142,7 @@ export class ProductTypesComponent extends PaginationFilterBaseComponent impleme
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
 					type: 'string',
 					width: '40%',
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},

@@ -528,7 +528,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_METHOD'),
 					type: 'text',
 					width: '10%',
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: PaymentMethodFilterComponent
 					},
@@ -547,7 +547,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 					title: this.getTranslation('PAYMENTS_PAGE.NOTE'),
 					type: 'text',
 					width: '10%',
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -562,7 +562,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 					componentInitFunction: (instance: ContactLinksComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();
 					},
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: OrganizationContactFilterComponent
 					},
@@ -597,7 +597,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					},
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: TagsColorFilterComponent
 					},
