@@ -1,11 +1,11 @@
-import { ActorTypeEnum, IBasePerTenantAndOrganizationEntityModel, ID, JsonData } from './base-entity.model';
+import { ActorTypeEnum, EntityEnum, IBasePerTenantAndOrganizationEntityModel, ID, JsonData } from './base-entity.model';
 import { IUser } from './user.model';
 
 /**
  * Interface representing an activity log entry.
  */
 export interface IActivityLog extends IBasePerTenantAndOrganizationEntityModel {
-	entity: ActivityLogEntityEnum; // Entity / Table name concerned by activity log
+	entity: EntityEnum; // Entity / Table name concerned by activity log
 	entityId: ID; // The ID of the element we are interacting with (a task, an organization, an employee, ...)
 	action: ActionTypeEnum;
 	actorType?: ActorTypeEnum;
@@ -31,29 +31,6 @@ export enum ActionTypeEnum {
 	Created = 'Created',
 	Updated = 'Updated',
 	Deleted = 'Deleted'
-}
-
-/**
- * Enum for entities that can be involved in activity logs.
- */
-export enum ActivityLogEntityEnum {
-	Candidate = 'Candidate',
-	Contact = 'Contact',
-	Employee = 'Employee',
-	Expense = 'Expense',
-	DailyPlan = 'DailyPlan',
-	Invoice = 'Invoice',
-	Income = 'Income',
-	Organization = 'Organization',
-	OrganizationContact = 'OrganizationContact',
-	OrganizationDepartment = 'OrganizationDepartment',
-	OrganizationDocument = 'OrganizationDocument',
-	OrganizationProject = 'OrganizationProject',
-	OrganizationTeam = 'OrganizationTeam',
-	OrganizationProjectModule = 'OrganizationProjectModule',
-	OrganizationSprint = 'OrganizationSprint',
-	Task = 'Task',
-	User = 'User'
 }
 
 /**
