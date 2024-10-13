@@ -1,4 +1,4 @@
-import { ActionTypeEnum, ActivityLogEntityEnum, IActivityLogUpdatedValues } from '@gauzy/contracts';
+import { ActionTypeEnum, EntityEnum, IActivityLogUpdatedValues } from '@gauzy/contracts';
 
 const ActivityTemplates = {
 	[ActionTypeEnum.Created]: `{action} a new {entity} called "{entityName}"`,
@@ -13,11 +13,7 @@ const ActivityTemplates = {
  * @param entityName - The name of the specific entity instance.
  * @returns A formatted description string.
  */
-export function generateActivityLogDescription(
-	action: ActionTypeEnum,
-	entity: ActivityLogEntityEnum,
-	entityName: string
-): string {
+export function generateActivityLogDescription(action: ActionTypeEnum, entity: EntityEnum, entityName: string): string {
 	// Get the template corresponding to the action
 	const template = ActivityTemplates[action] || '{action} {entity} "{entityName}"';
 
