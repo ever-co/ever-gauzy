@@ -115,5 +115,8 @@ export interface Environment {
 	DESKTOP_API_SERVER_APP_WELCOME_TITLE: string;
 	DESKTOP_API_SERVER_APP_WELCOME_CONTENT: string;
 
+	REGISTER_URL: string;
+	FORGOT_PASSWORD_URL: string;
+
 	I18N_FILES_URL: string;
 }

@@ -24,7 +24,7 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		@Inject(NB_AUTH_OPTIONS)
 		options: any,
 		@Inject(GAUZY_ENV)
-		private readonly environment: any,
+		private readonly environment: any
 	) {
 		super(nbAuthService, options, cdr, router);
 	}
