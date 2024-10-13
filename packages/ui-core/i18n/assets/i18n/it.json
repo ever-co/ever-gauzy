@@ -468,7 +468,8 @@
 			"UPWORK_ORGANIZATION_ID": "ID organizzazione Upwork",
 			"UPWORK_ORGANIZATION_NAME": "Nome dell'organizzazione Upwork",
 			"UPWORK_ID": "ID Upwork",
-			"LINKEDIN_ID": "ID LinkedIn"
+			"LINKEDIN_ID": "ID LinkedIn",
+			"STANDARD_WORK_HOURS_PER_DAY": "Ore lavorative standard al giorno"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Nome",
@@ -654,7 +655,8 @@
 			"UPWORK_ORGANIZATION_ID": "ID organizzazione Upwork",
 			"UPWORK_ORGANIZATION_NAME": "Nome dell'organizzazione Upwork",
 			"UPWORK_ID": "ID di Upwork",
-			"LINKEDIN_ID": "ID LinkedIn"
+			"LINKEDIN_ID": "ID LinkedIn",
+			"STANDARD_WORK_HOURS_PER_DAY": "Inserisci il numero di ore lavorative standard al giorno (es. 8)"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Tariffa predefinita",
@@ -1186,7 +1188,8 @@
 			"DAILY_TIME_AND_ACTIVITY": "Non è ancora stato registrato alcun tempo e attività per questo giorno. Si prega di utilizzare l'applicazione Gauzy Desktop Timer <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">qua</a>",
 			"PROJECT_BUDGET": "Non hai creato nessun progetto con un budget",
 			"CLIENT_BUDGET": "Non hai creato nessun cliente con un budget"
-		}
+		},
+		"STANDARD_WORK_HOURS": "Ore di lavoro standard ({{hours}})"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "App e integrazioni disponibili",
@@ -1978,7 +1981,8 @@
 					"ENABLE_DETECTION_INACTIVITY_INFO": "Abilitato: il sistema rileverà l'inattività e mostrerà un avviso. Disabilitato: non verrà mostrato alcun avviso quando un dipendente è inattivo",
 					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
 					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
-					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking."
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking.",
+					"STANDARD_WORK_HOURS_PER_DAY": "Seleziona il numero predefinito di ore lavorative al giorno. Questo valore verrà utilizzato nei rapporti di monitoraggio del tempo per confrontare quante ore ha lavorato un dipendente rispetto a questo standard."
 				}
 			},
 			"TEAMS_PAGE": {
@@ -2085,8 +2089,10 @@
 			},
 			"ONLY_ADMIN": "Queste autorizzazioni sono di sola lettura e abilitate solo per gli amministratori",
 			"INSUFFICIENT": "Non hai autorizzazioni sufficienti. Le seguenti autorizzazioni mancano:",
-			"ORG_SPRINT_EDIT": "Crea/Modifica Sprint",
-			"ORG_SPRINT_VIEW": "Visualizza gli sprint",
+			"ORG_SPRINT_EDIT": "Modifica sprint",
+			"ORG_SPRINT_VIEW": "Visualizza sprint",
+			"ORG_SPRINT_DELETE": "Elimina sprint",
+			"ORG_SPRINT_ADD": "Aggiungi sprint",
 			"ORG_PROJECT_ADD": "Crea Progetti",
 			"ORG_PROJECT_VIEW": "Visualizza progetti",
 			"ORG_PROJECT_EDIT": "Modifica Progetti",

@@ -28,8 +28,8 @@ export interface IFindMeUser extends IBaseRelationsEntityModel {
 }
 
 export interface IRelationalUser {
-	user?: IUser;
-	userId?: IUser['id'];
+	user?: IUser; // User who performed the action (if applicable).
+	userId?: ID; // The ID of the user who performed the action (if applicable).
 }
 
 export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset {

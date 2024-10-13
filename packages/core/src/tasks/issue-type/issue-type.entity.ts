@@ -27,6 +27,7 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	name: string;
 
 	@ApiProperty({ type: () => String })
+	@IsString()
 	@ColumnIndex()
 	@MultiORMColumn()
 	value: string;

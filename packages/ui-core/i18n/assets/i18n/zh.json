@@ -468,7 +468,8 @@
 			"UPWORK_ORGANIZATION_ID": "Upwork 组织编号",
 			"UPWORK_ORGANIZATION_NAME": "Upwork 组织名称",
 			"UPWORK_ID": "Upwork ID\nUpwork ID (在Upwork的身份证明或标识号码)",
-			"LINKEDIN_ID": "领英ID"
+			"LINKEDIN_ID": "领英ID",
+			"STANDARD_WORK_HOURS_PER_DAY": "每天标准工作时间"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "名字 (Míngzì)",
@@ -654,7 +655,8 @@
 			"UPWORK_ORGANIZATION_ID": "Upwork 组织ID",
 			"UPWORK_ORGANIZATION_NAME": "Upwork 组织名称",
 			"UPWORK_ID": "Upwork标识",
-			"LINKEDIN_ID": "领英帐号"
+			"LINKEDIN_ID": "领英帐号",
+			"STANDARD_WORK_HOURS_PER_DAY": "输入每天的标准工作时间（例如 8 小时）"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "违约率",
@@ -1186,7 +1188,8 @@
 			"DAILY_TIME_AND_ACTIVITY": "当天尚未追踪时间和活动。请使用<a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Gauzy桌面计时器应用</a>。",
 			"PROJECT_BUDGET": "你还没有创建任何有预算的项目。",
 			"CLIENT_BUDGET": "您还没有创建任何有预算的客户。"
-		}
+		},
+		"STANDARD_WORK_HOURS": "标准工作时间 ({{hours}})"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "可用应用程序与集成",
@@ -1978,7 +1981,8 @@
 					"ENABLE_DETECTION_INACTIVITY_INFO": "启用 - 系统将检测到不活动状态并显示警告。停用 - 当员工处于不活动状态时，不会显示任何警告。",
 					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
 					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
-					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking."
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking.",
+					"STANDARD_WORK_HOURS_PER_DAY": "选择每天的默认工作时间。该值将用于时间跟踪报告，以比较员工相对于此标准的工作小时数。"
 				}
 			},
 			"TEAMS_PAGE": {
@@ -2085,8 +2089,10 @@
 			},
 			"ONLY_ADMIN": "这些权限是只读的，并且仅对管理员启用。",
 			"INSUFFICIENT": "您没有足够的权限。缺少以下权限：",
-			"ORG_SPRINT_EDIT": "创建/编辑迭代",
+			"ORG_SPRINT_EDIT": "编辑冲刺",
 			"ORG_SPRINT_VIEW": "查看冲刺",
+			"ORG_SPRINT_DELETE": "删除冲刺",
+			"ORG_SPRINT_ADD": "添加冲刺",
 			"ORG_PROJECT_ADD": "创造项目",
 			"ORG_PROJECT_VIEW": "查看项目",
 			"ORG_PROJECT_EDIT": "编辑项目",

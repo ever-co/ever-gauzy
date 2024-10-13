@@ -95,21 +95,31 @@ export class ExpensesReportGridComponent extends BaseSelectorFilterComponent imp
 	}
 
 	/**
-	 * Get expense report
+	 * Asynchronously fetches the daily expense report.
 	 *
-	 * @returns
+	 * @returns {Promise<void>}
 	 */
-	async getExpensesReport() {
+	async getExpensesReport(): Promise<void> {
 		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
+
+		// Clear previous data and set loading state to true
+		this.dailyData = [];
 		this.loading = true;
+
 		try {
+			// Get current payload values from the observable
 			const payloads = this.payloads$.getValue();
+
+			// Fetch the daily expenses report from the service
 			this.dailyData = await this.expensesService.getDailyExpensesReport(payloads);
 		} catch (error) {
-			console.log('Error while retrieving expense reports', error);
+			// Log the error and optionally notify the user
+			console.error('Error while retrieving expense reports:', error);
+			// Optionally: this.notificationService.showError('Failed to load daily expense report.');
 		} finally {
+			// Reset the loading state
 			this.loading = false;
 		}
 	}

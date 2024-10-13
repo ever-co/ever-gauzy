@@ -669,7 +669,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getRawValue();
 					},
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -682,7 +682,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					type: 'email',
 					class: 'email-column',
 					width: '20%',
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -732,7 +732,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					componentInitFunction: (instance: EmployeeTimeTrackingStatusComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 					},
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: ToggleFilterComponent
 					},
@@ -752,7 +752,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					},
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: TagsColorFilterComponent
 					},
@@ -774,7 +774,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					componentInitFunction: (instance: EmployeeWorkStatusComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 					},
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: ToggleFilterComponent
 					},
@@ -810,7 +810,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				addable: false,
 				notShownField: true,
 				// Configure custom filter for the column
-				isFilterable: {
+				filter: {
 					type: 'custom',
 					component: ToggleFilterComponent
 				},

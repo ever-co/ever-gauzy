@@ -78,8 +78,15 @@ export class TeamsMutationComponent implements OnInit {
 		// Check if there is a valid team
 		if (this.team) {
 			// Extract employee and manager IDs from the team
-			const selectedEmployees = this.team.members.map((member) => member.id);
-			const selectedManagers = this.team.managers.map((manager) => manager.id);
+			const selectedManagers = [...new Set(this.team.managers.map((manager) => manager.id))];
+
+			const selectedEmployees = [
+				...new Set(
+					this.team.members
+						.filter((member) => !selectedManagers.includes(member.id))
+						.map((member) => member.id)
+				)
+			];
 
 			// Patch form values with team information
 			this.form.patchValue({

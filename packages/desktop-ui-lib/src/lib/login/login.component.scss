@@ -27,6 +27,7 @@
 		& .svg-wrapper {
 			display: flex;
 			justify-content: space-between;
+			width: 100%;
 
 			& .ever-logo-svg {
 				margin-bottom: 40px;
@@ -325,7 +326,7 @@
 
 		& .login-wrapper {
 			width: 100%;
-			padding: 30px 2px;
+			padding: 1rem 0;
 
 			& .headings {
 				& .headings-inner {

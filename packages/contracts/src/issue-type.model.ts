@@ -27,3 +27,10 @@ export interface IIssueTypeUpdateInput extends Partial<IIssueTypeCreateInput> {
 export interface IIssueTypeFindInput
 	extends IBasePerTenantAndOrganizationEntityModel,
 		Pick<IIssueType, 'projectId' | 'organizationTeamId'> {}
+
+export enum TaskTypeEnum {
+	EPIC = 'epic',
+	STORY = 'story',
+	TASK = 'task',
+	BUG = 'bug'
+}

@@ -108,9 +108,9 @@ export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent im
 	}
 
 	/**
-	 * retrieves client budget reports, updates the 'clients' property,
+	 * Asynchronously retrieves client budget reports and updates the 'clients' property.
 	 *
-	 * @returns
+	 * @returns {Promise<void>}
 	 */
 	async getClientBudgetReport(): Promise<void> {
 		// Check if organization or request is not provided, resolve the Promise without further action
@@ -118,7 +118,8 @@ export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent im
 			return;
 		}
 
-		// Set the loading flag to true
+		// Clear previous client data and set the loading flag to true
+		this.clients = [];
 		this.loading = true;
 
 		try {
@@ -129,7 +130,8 @@ export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent im
 			this.clients = await this.timesheetService.getClientBudgetLimit(payloads);
 		} catch (error) {
 			// Log any errors during the process
-			console.error('Error while retrieving client budget reports', error);
+			console.error('Error while retrieving client budget reports:', error);
+			// Optionally: this.notificationService.showError('Failed to retrieve client budget reports.');
 		} finally {
 			// Set the loading flag to false, regardless of success or failure
 			this.loading = false;

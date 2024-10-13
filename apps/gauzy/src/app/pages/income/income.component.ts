@@ -237,7 +237,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getRawValue();
 					},
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: OrganizationContactFilterComponent
 					},
@@ -273,7 +273,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 					type: 'text',
 					class: 'align-row',
 					width: '25%',
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -291,7 +291,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					},
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: TagsColorFilterComponent
 					},

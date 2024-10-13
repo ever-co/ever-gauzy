@@ -214,7 +214,7 @@ export class AuthStrategy extends NbAuthStrategy {
 				this.store.token = token;
 				this.store.user = user;
 
-				this.electronAuthentication({ user, token });
+				this.authService.electronAuthentication({ user, token });
 
 				return new NbAuthResult(
 					true,
@@ -232,7 +232,7 @@ export class AuthStrategy extends NbAuthStrategy {
 						user: this.store.user,
 						token: this.store.token,
 					};
-					this.electronAuthentication(res);
+					this.authService.electronAuthentication(res);
 					return of(
 						new NbAuthResult(
 							true,
@@ -254,24 +254,5 @@ export class AuthStrategy extends NbAuthStrategy {
 				);
 			})
 		);
-	}
-
-	public electronAuthentication({ user, token }: IAuthResponse) {
-		try {
-			if (this.electronService.isElectron) {
-				this.electronService.ipcRenderer.send('auth_success', {
-					user: user,
-					token: token,
-					userId: user.id,
-					employeeId: user.employee ? user.employee.id : null,
-					organizationId: user.employee
-						? user.employee.organizationId
-						: null,
-					tenantId: user.tenantId ? user.tenantId : null,
-				});
-			}
-		} catch (error) {
-			console.log(error);
-		}
 	}
 }

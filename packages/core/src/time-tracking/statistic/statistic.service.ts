@@ -433,7 +433,7 @@ export class StatisticService {
 		// Retrieves the database type from the configuration service.
 		const dbType = this.configService.dbConnectionOptions.type;
 		const user = RequestContext.currentUser(); // Retrieve the current user
-		const tenantId = RequestContext.currentTenantId() || request.tenantId; // Retrieve the current tenant ID
+		const tenantId = RequestContext.currentTenantId() ?? request.tenantId; // Retrieve the current tenant ID
 
 		// Get the start and end date for the weekly statistics
 		const { start: weeklyStart, end: weeklyEnd } = getDateRangeFormat(
@@ -451,13 +451,18 @@ export class StatisticService {
 			employeeIds = [user.employeeId];
 		}
 
+		// Create a query builder for the Employee entity
 		const query = this.typeOrmEmployeeRepository.createQueryBuilder();
+
 		let employees: IMembersStatistics[] = await query
 			.select(p(`"${query.alias}".id`))
 			// Builds a SELECT statement for the "user_name" column based on the database type.
 			.addSelect(p(`${concateUserNameExpression(dbType)}`), 'user_name')
 			.addSelect(p(`"user"."imageUrl"`), 'user_image_url')
 			.addSelect(getTotalDurationQueryString(dbType, 'timeLogs'), `duration`)
+			// Add isOnline and isAway from the employee table
+			.addSelect(p(`"${query.alias}"."isOnline"`), 'isOnline')
+			.addSelect(p(`"${query.alias}"."isAway"`), 'isAway')
 			.innerJoin(`${query.alias}.user`, 'user')
 			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
 			.innerJoin(`timeLogs.timeSlots`, 'time_slot')
@@ -501,10 +506,13 @@ export class StatisticService {
 					}
 				})
 			)
-			.addGroupBy(p(`"${query.alias}"."id"`))
+			.groupBy(p(`"${query.alias}"."id"`))
+			.addGroupBy(p(`"${query.alias}"."isOnline"`))
+			.addGroupBy(p(`"${query.alias}"."isAway"`))
 			.addGroupBy(p(`"user"."id"`))
 			.orderBy('duration', 'DESC')
 			.getRawMany();
+
 		if (employees.length > 0) {
 			const employeeIds = pluck(employees, 'id');
 

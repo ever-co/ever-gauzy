@@ -3,7 +3,7 @@ import { EventBus } from '@nestjs/cqrs';
 import { ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
 import {
 	ActionTypeEnum,
-	ActivityLogEntityEnum,
+	EntityEnum,
 	ActorTypeEnum,
 	FavoriteEntityEnum,
 	ID,
@@ -128,14 +128,14 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			// Generate the activity log description
 			const description = generateActivityLogDescription(
 				ActionTypeEnum.Created,
-				ActivityLogEntityEnum.OrganizationProject,
+				EntityEnum.OrganizationProject,
 				project.name
 			);
 
 			// Emit an event to log the activity
 			this._eventBus.publish(
 				new ActivityLogEvent({
-					entity: ActivityLogEntityEnum.OrganizationProject,
+					entity: EntityEnum.OrganizationProject,
 					entityId: project.id,
 					action: ActionTypeEnum.Created,
 					actorType: ActorTypeEnum.User,
@@ -266,10 +266,10 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				const newRole = isManager ? managerRole : null;
 
 				// Only update if the role has changed
-				if (newRole && newRole.id !== member.roleId) {
+				if (newRole?.id !== member.roleId) {
 					await this.typeOrmOrganizationProjectEmployeeRepository.update(member.id, {
 						role: newRole,
-						isManager: true
+						isManager
 					});
 				}
 			})

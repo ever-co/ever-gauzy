@@ -11,6 +11,7 @@ import { RoleModule } from './../role/role.module';
 import { EmployeeModule } from './../employee/employee.module';
 import { OrganizationProjectModule } from './../organization-project/organization-project.module';
 import { OrganizationSprintModule } from './../organization-sprint/organization-sprint.module';
+import { TaskViewModule } from './views/view.module';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskController } from './task.controller';
@@ -26,6 +27,7 @@ import { TypeOrmTaskRepository } from './repository';
 		EmployeeModule,
 		OrganizationProjectModule,
 		OrganizationSprintModule,
+		TaskViewModule,
 		CqrsModule,
 		EventBusModule
 	],

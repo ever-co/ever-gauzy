@@ -343,7 +343,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					},
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -355,7 +355,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 					title: this.getTranslation('SM_TABLE.EMAIL'),
 					type: 'email',
 					class: 'email-column',
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
