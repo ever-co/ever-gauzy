@@ -179,6 +179,7 @@ export * from '../../payment/payment.subscriber';
 export * from '../../pipeline/pipeline.subscriber';
 export * from '../../product-category/product-category.subscriber';
 export * from '../../reports/report.subscriber';
+export * from '../../resource-link/resource-link.subscriber';
 export * from '../../role/role.subscriber';
 export * from '../../tags/tag.subscriber';
 export * from '../../tasks/issue-type/issue-type.subscriber';
