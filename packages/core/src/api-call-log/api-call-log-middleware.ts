@@ -1,6 +1,7 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import * as jwt from 'jsonwebtoken';
 import { ID, RequestMethod } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { ApiCallLogService } from './api-call-log.service';
@@ -12,65 +13,76 @@ export class ApiCallLogMiddleware implements NestMiddleware {
 
 	/**
 	 * Middleware for logging API requests and responses to the database.
-	 *
-	 * This middleware generates a unique `correlationId` for each request and captures key details
-	 * about the incoming request and the outgoing response, including:
+	 * This middleware generates a unique `correlationId` for each request
+	 * and captures key details about the incoming request and outgoing response.
 	 *
 	 * @param req The incoming HTTP request object.
 	 * @param res The outgoing HTTP response object.
 	 * @param next The next middleware function in the request-response cycle.
-	 * @returns void
 	 */
 	async use(req: Request, res: Response, next: NextFunction): Promise<void> {
 		let responseBody = '';
+		const startTime = Date.now(); // Capture request start time
 
 		// Generate a unique correlation ID if not provided
 		const correlationId = RequestContext.getContextId() ?? uuidv4();
-		console.log('ApiCallLogMiddleware: logging API call...: %s', RequestContext.getContextId());
+		console.log('ApiCallLogMiddleware: Logging API call with correlation ID:', correlationId);
 
-		// Get the current user ID
-		const userId = RequestContext.currentUserId();
-
-		// Retrieve the user's organization ID and tenant ID from the request headers
-		const organizationId = req.headers['organization-id'] as ID;
-		const tenantId = req.headers['tenant-id'] as ID;
+		// Retrieve the organization ID and tenant ID from request headers
+		const organizationId = (req.headers['organization-id'] as ID) || null;
+		const tenantId = (req.headers['tenant-id'] as ID) || null;
 
 		// Redact sensitive data from request headers and body
 		const requestHeaders = this.redactSensitiveData(req.headers, ['authorization', 'token']);
 		const requestBody = this.redactSensitiveData(req.body, ['password', 'secretKey', 'accessToken']);
-		const startTime = Date.now(); // Capture request start time
 
-		console.log('ApiCallLogMiddleware: logging API call for request: %s', req.user);
-
+		// Capture the original end method of the response object to log the response body
 		const originalEnd = res.end;
-
-		// Override res.end to capture response body
-		res.end = (chunk: any) => {
-			if (chunk) {
-				// If a chunk is provided, ensure it's a string, buffer, or similar valid type
-				if (typeof chunk === 'string' || chunk instanceof Buffer || chunk instanceof Uint8Array) {
-					responseBody += chunk; // Append to captured response body
-				}
+		res.end = (chunk: any, encoding?: any, callback?: any) => {
+			if (chunk && (typeof chunk === 'string' || chunk instanceof Buffer || chunk instanceof Uint8Array)) {
+				responseBody += chunk; // Append chunk to response body
 			}
-			return originalEnd.apply(res, arguments); // Call original res.end with proper arguments
+			return originalEnd.call(res, chunk, encoding, callback); // Call original res.end with the arguments
 		};
 
-		// Listen for the 'finish' event to capture response details
+		// Get user ID from request context or JWT token
+		let userId = RequestContext.currentUserId();
+
+		try {
+			const authHeader = req.headers['authorization'];
+			const token = authHeader?.split(' ')[1];
+			if (!userId && token) {
+				const jwtPayload: string | jwt.JwtPayload = jwt.decode(token);
+				userId = typeof jwtPayload === 'object' ? jwtPayload['sub'] || jwtPayload['id'] : null;
+			}
+			console.log('User ID:', userId);
+		} catch (error) {
+			console.error('Failed to decode JWT token or retrieve user ID:', error);
+		}
+
+		// Listen for the 'finish' event to log the API call after the response is completed
 		res.on('finish', async () => {
+			// Redact sensitive data from response body
+			const redactedResponseBody = this.redactSensitiveData(responseBody, [
+				'password',
+				'secretKey',
+				'accessToken'
+			]);
+
 			const entity = new ApiCallLog({
 				correlationId,
-				organizationId: organizationId || null,
-				tenantId: tenantId || null,
+				organizationId,
+				tenantId,
 				method: this.mapHttpMethodToEnum(req.method),
 				url: req.originalUrl,
 				protocol: req.protocol || null,
 				ipAddress: req.ip || null,
 				origin: req.headers['origin'] || null,
 				userAgent: req.headers['user-agent'] || '',
-				requestHeaders: requestHeaders || {},
-				requestBody: requestBody || {},
+				requestHeaders,
+				requestBody,
 				statusCode: res.statusCode,
-				responseBody: responseBody || {},
+				responseBody: redactedResponseBody || {},
 				requestTime: new Date(startTime),
 				responseTime: new Date(),
 				userId: userId || null
@@ -81,7 +93,7 @@ export class ApiCallLogMiddleware implements NestMiddleware {
 				// Asynchronously log the API call to the database
 				await this._apiCallLogService.create(entity);
 			} catch (error) {
-				console.error('Failed to log API call:', error); // Catch any errors during logging
+				console.error('Failed to log API call:', error);
 			}
 		});
 
