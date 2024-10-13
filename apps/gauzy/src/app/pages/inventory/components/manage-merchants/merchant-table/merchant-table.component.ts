@@ -138,7 +138,7 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent implem
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					},
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -149,7 +149,7 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent implem
 				code: {
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),
 					type: 'string',
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},

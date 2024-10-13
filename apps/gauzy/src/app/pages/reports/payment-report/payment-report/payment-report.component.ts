@@ -120,9 +120,9 @@ export class PaymentReportComponent extends BaseSelectorFilterComponent implemen
 	}
 
 	/**
-	 * Updates the chart with payment report data.
+	 * Asynchronously updates the chart with payment report data.
 	 *
-	 * @returns
+	 * @returns {Promise<void>}
 	 */
 	private async updateChart(): Promise<void> {
 		// Check if organization or request is not provided, resolve the Promise without further action
@@ -130,7 +130,8 @@ export class PaymentReportComponent extends BaseSelectorFilterComponent implemen
 			return;
 		}
 
-		// Set the loading flag to true
+		// Clear previous chart data and set the loading flag to true
+		this.charts = null;
 		this.loading = true;
 
 		try {
@@ -140,7 +141,7 @@ export class PaymentReportComponent extends BaseSelectorFilterComponent implemen
 			// Fetch payment report chart data from the paymentService
 			const logs: IPaymentReportChartData[] = await this.paymentService.getPaymentsReportCharts(payloads);
 
-			// Extract payment values and create a dataset
+			// Extract payment values and create a dataset for the chart
 			const datasets = [
 				{
 					label: this.getTranslation('REPORT_PAGE.PAYMENT'), // Label for the dataset, translated using a translation function
@@ -156,14 +157,15 @@ export class PaymentReportComponent extends BaseSelectorFilterComponent implemen
 				}
 			];
 
-			// Update the chart data with the retrieved data
+			// Update the chart with the new data
 			this.charts = {
-				labels: pluck(logs, 'date'),
-				datasets
+				labels: pluck(logs, 'date'), // Extract the dates from the logs for chart labels
+				datasets // Assign the datasets to the chart
 			};
 		} catch (error) {
 			// Log any errors during the process
-			console.error('Error while retrieving payment reports chart', error);
+			console.error('Error while retrieving payment reports chart:', error);
+			// Optionally: this.notificationService.showError('Failed to retrieve payment reports chart.');
 		} finally {
 			// Set the loading flag to false, regardless of success or failure
 			this.loading = false;

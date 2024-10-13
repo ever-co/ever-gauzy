@@ -1,6 +1,9 @@
 import { ITenant } from './tenant.model';
 import { IOrganization } from './organization.model';
 
+// Define a type for JSON data
+export type JsonData = Record<string, any> | string;
+
 /**
  * @description
  * An entity ID. Represents a unique identifier as a string.
@@ -60,4 +63,24 @@ export interface IBasePerTenantAndOrganizationEntityMutationInput extends Partia
 export enum ActorTypeEnum {
 	System = 0, // System performed the action
 	User = 1 // User performed the action
+}
+
+export enum EntityEnum {
+	Candidate = 'Candidate',
+	Contact = 'Contact',
+	Employee = 'Employee',
+	Expense = 'Expense',
+	DailyPlan = 'DailyPlan',
+	Invoice = 'Invoice',
+	Income = 'Income',
+	Organization = 'Organization',
+	OrganizationContact = 'OrganizationContact',
+	OrganizationDepartment = 'OrganizationDepartment',
+	OrganizationDocument = 'OrganizationDocument',
+	OrganizationProject = 'OrganizationProject',
+	OrganizationTeam = 'OrganizationTeam',
+	OrganizationProjectModule = 'OrganizationProjectModule',
+	OrganizationSprint = 'OrganizationSprint',
+	Task = 'Task',
+	User = 'User'
 }

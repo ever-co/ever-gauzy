@@ -14,6 +14,7 @@ import { ITaskStatus, TaskStatusEnum } from './task-status.model';
 import { ITaskPriority, TaskPriorityEnum } from './task-priority.model';
 import { ITaskSize, TaskSizeEnum } from './task-size.model';
 import { IOrganizationProjectModule } from './organization-project-module.model';
+import { TaskTypeEnum } from './issue-type.model';
 
 export interface ITask
 	extends IBasePerTenantAndOrganizationEntityModel,
@@ -78,4 +79,26 @@ export interface ITaskUpdateInput extends ITaskCreateInput {
 
 export interface IGetTaskById {
 	includeRootEpic?: boolean;
+}
+
+export interface IGetTasksByViewFilters extends IBasePerTenantAndOrganizationEntityModel {
+	projects?: ID[];
+	teams?: ID[];
+	modules?: ID[];
+	sprints?: ID[];
+	members?: ID[];
+	tags?: ID[];
+	statusIds?: ID[];
+	statuses?: TaskStatusEnum[];
+	priorityIds?: ID[];
+	priorities?: TaskPriorityEnum[];
+	sizeIds?: ID[];
+	sizes?: TaskSizeEnum[];
+	types?: TaskTypeEnum[];
+	startDates?: Date[];
+	dueDates?: Date[];
+	creators?: ID[];
+
+	// Relations
+	relations?: string[];
 }

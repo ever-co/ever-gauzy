@@ -426,7 +426,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 				name: {
 					title: this.getTranslation('SM_TABLE.NAME'),
 					type: 'string',
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -463,7 +463,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getRawValue();
 					},
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: TagsColorFilterComponent
 					},

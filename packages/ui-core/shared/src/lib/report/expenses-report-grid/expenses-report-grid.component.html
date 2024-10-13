@@ -94,8 +94,7 @@
 							<div class="responsive-table-content employee">
 								<ng-container
 									*ngTemplateOutlet="employeeEl; context: { $implicit: employeeRow?.employee }"
-								>
-								</ng-container>
+								></ng-container>
 							</div>
 						</div>
 						<ng-template #noEmployee>
@@ -109,8 +108,7 @@
 								<ng-template [ngIf]="expanseIndex == 0">
 									<ng-container
 										*ngTemplateOutlet="projectEl; context: { $implicit: projectRow?.project }"
-									>
-									</ng-container>
+									></ng-container>
 								</ng-template>
 							</div>
 						</div>

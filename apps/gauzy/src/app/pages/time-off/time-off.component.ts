@@ -410,13 +410,13 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					},
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
 					filterFunction: (value) => {
 						this.setFilter({
-							field: 'user.firstName',
+							field: 'user.name',
 							search: value
 						});
 					}
@@ -424,7 +424,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 				extendedDescription: {
 					title: this.getTranslation('SM_TABLE.DESCRIPTION'),
 					type: 'html',
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -440,7 +440,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getRawValue();
 					},
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},

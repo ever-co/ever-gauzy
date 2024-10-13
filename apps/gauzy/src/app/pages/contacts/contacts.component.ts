@@ -222,7 +222,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					},
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -243,7 +243,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 				primaryPhone: {
 					title: this.getTranslation('CONTACTS_PAGE.PHONE'),
 					type: 'string',
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -254,7 +254,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 				primaryEmail: {
 					title: this.getTranslation('CONTACTS_PAGE.EMAIL'),
 					type: 'string',
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},

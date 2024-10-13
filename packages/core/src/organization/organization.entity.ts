@@ -1,6 +1,7 @@
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform, TransformFnParams } from 'class-transformer';
+import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
 import {
 	DefaultValueDateTypeEnum,
 	IOrganization,
@@ -21,7 +22,12 @@ import {
 	IAccountingTemplate,
 	IReportOrganization,
 	IImageAsset,
-	ID
+	ID,
+	DEFAULT_PROFIT_BASED_BONUS,
+	BonusTypeEnum,
+	CurrenciesEnum,
+	DEFAULT_INVITE_EXPIRY_PERIOD,
+	DEFAULT_STANDARD_WORK_HOURS_PER_DAY
 } from '@gauzy/contracts';
 import {
 	AccountingTemplate,
@@ -53,6 +59,9 @@ import { MikroOrmOrganizationRepository } from './repository/mikro-orm-organizat
 
 @MultiORMEntity('organization', { mikroOrmRepository: () => MikroOrmOrganizationRepository })
 export class Organization extends TenantBaseEntity implements IOrganization {
+	@ApiProperty({ type: () => String, required: true })
+	@IsNotEmpty()
+	@IsString()
 	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
@@ -88,6 +97,19 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@MultiORMColumn({ length: 500, nullable: true })
 	imageUrl?: string;
 
+	/**
+	 * Currency
+	 *
+	 * The currency used by the organization, selected from the CurrenciesEnum.
+	 */
+	@ApiProperty({
+		enum: CurrenciesEnum,
+		example: CurrenciesEnum.USD,
+		required: true,
+		description: 'The currency used by the organization, must be one of the CurrenciesEnum values.'
+	})
+	@IsNotEmpty()
+	@IsEnum(CurrenciesEnum)
 	@ColumnIndex()
 	@MultiORMColumn()
 	currency: string;
@@ -95,6 +117,18 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@MultiORMColumn({ nullable: true })
 	valueDate?: Date;
 
+	/**
+	 * Default Value Date Type
+	 *
+	 * The type of default value for a date field, which can be one of the values from DefaultValueDateTypeEnum.
+	 */
+	@ApiPropertyOptional({
+		enum: DefaultValueDateTypeEnum,
+		example: DefaultValueDateTypeEnum.TODAY,
+		description: 'The default value date type, can be one of the values from DefaultValueDateTypeEnum.'
+	})
+	@IsOptional()
+	@IsEnum(DefaultValueDateTypeEnum)
 	@ColumnIndex()
 	@MultiORMColumn({
 		type: 'simple-enum',
@@ -110,6 +144,17 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@MultiORMColumn({ nullable: true })
 	timeZone?: string;
 
+	/**
+	 * Region Code
+	 *
+	 * The code representing a specific region, such as a country or geographical area.
+	 */
+	@ApiPropertyOptional({
+		type: () => String,
+		description: 'The code representing a specific region (e.g., country or geographical area).'
+	})
+	@IsOptional()
+	@IsString()
 	@MultiORMColumn({ nullable: true })
 	regionCode?: string;
 
@@ -122,6 +167,18 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@MultiORMColumn({ nullable: true })
 	officialName?: string;
 
+	/**
+	 * Start Week On
+	 *
+	 * Specifies which day the week starts on. The value must be one of the days from WeekDaysEnum.
+	 */
+	@ApiPropertyOptional({
+		enum: WeekDaysEnum,
+		example: WeekDaysEnum.MONDAY,
+		description: 'Specifies which day the week starts on. Must be one of the WeekDaysEnum values.'
+	})
+	@IsOptional()
+	@IsEnum(WeekDaysEnum)
 	@MultiORMColumn({ nullable: true })
 	startWeekOn?: WeekDaysEnum;
 
@@ -134,42 +191,107 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@MultiORMColumn({ nullable: true })
 	minimumProjectSize?: string;
 
+	/**
+	 * Bonus Type
+	 *
+	 * The type of bonus, which can be one of the values from BonusTypeEnum.
+	 */
+	@ApiPropertyOptional({
+		enum: BonusTypeEnum,
+		example: BonusTypeEnum.PROFIT_BASED_BONUS,
+		description: 'The type of bonus, can be one of the defined BonusTypeEnum values.'
+	})
+	@IsOptional()
+	@IsEnum(BonusTypeEnum)
 	@MultiORMColumn({ nullable: true })
-	bonusType?: string;
+	bonusType?: BonusTypeEnum;
 
+	/**
+	 * Bonus Percentage
+	 *
+	 * The percentage of profit-based bonus (between 0 and 100).
+	 */
+	@ApiPropertyOptional({
+		type: () => Number,
+		example: DEFAULT_PROFIT_BASED_BONUS,
+		description: 'The percentage of profit-based bonus, must be between 0 and 100.'
+	})
+	@IsOptional()
+	@IsNumber()
+	@Min(0)
+	@Max(100)
 	@MultiORMColumn({ nullable: true })
 	bonusPercentage?: number;
 
 	@MultiORMColumn({ nullable: true, default: true })
 	invitesAllowed?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
 	show_income?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
 	show_profits?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
 	show_bonuses_paid?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
 	show_total_hours?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
 	show_minimum_project_size?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
 	show_projects_count?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
 	show_clients_count?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
 	show_clients?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
 	show_employees_count?: boolean;
 
+	/**
+	 * Default Organization Invite Expiry Period
+	 *
+	 * The default period (in days) after which an organization invite expires.
+	 */
+	@ApiPropertyOptional({
+		type: () => Number,
+		example: DEFAULT_INVITE_EXPIRY_PERIOD,
+		description: 'The default invite expiry period in days.'
+	})
+	@IsOptional()
+	@Transform(({ value }: TransformFnParams) => parseInt(value, 10), { toClassOnly: true })
 	@MultiORMColumn({ nullable: true })
 	inviteExpiryPeriod?: number;
 
@@ -328,6 +450,22 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@MultiORMColumn({ nullable: true, default: false })
 	enforced?: boolean;
 
+	/**
+	 * Standard work hours per day for the organization.
+	 */
+	@ApiPropertyOptional({
+		type: () => Number,
+		description: 'Standard work hours per day for the organization',
+		minimum: 1,
+		maximum: 24
+	})
+	@IsOptional()
+	@IsNumber()
+	@Max(24, { message: 'Standard work hours per day cannot exceed 24 hours' })
+	@Min(1, { message: 'Standard work hours per day must be at least 1 hour' })
+	@MultiORMColumn({ nullable: true, default: DEFAULT_STANDARD_WORK_HOURS_PER_DAY })
+	standardWorkHoursPerDay?: number;
+
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne
@@ -432,7 +570,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	| @ManyToMany
 	|--------------------------------------------------------------------------
 	*/
-	// Tags
+	// Organization Tags
 	@MultiORMManyToMany(() => Tag, (it) => it.organizations, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
@@ -444,8 +582,11 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@JoinTable({
 		name: 'tag_organization'
 	})
-	tags: ITag[];
+	tags?: ITag[];
 
+	/**
+	 * Organization Skills
+	 */
 	@MultiORMManyToMany(() => Skill, (skill) => skill.organizations, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'

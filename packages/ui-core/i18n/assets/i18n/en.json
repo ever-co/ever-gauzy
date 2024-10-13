@@ -496,7 +496,8 @@
 			"GITHUB_REPOSITORY": "GitHub Repository",
 			"PROJECT": "Project",
 			"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Do you want to enable Jobs Search & Matching Analysis?",
-			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Do you want to enable Employee Performance Analysis?"
+			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Do you want to enable Employee Performance Analysis?",
+			"STANDARD_WORK_HOURS_PER_DAY": "Standard Work Hours Per Day"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -693,7 +694,8 @@
 			"AUTO_SYNC_TAG": "Select Auto-sync Label",
 			"SELECT_PROJECT": "Select Project",
 			"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Enable Jobs Search & Matching Analysis",
-			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Enable Employee Performance Analysis"
+			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Enable Employee Performance Analysis",
+			"STANDARD_WORK_HOURS_PER_DAY": "Enter the number of standard work hours per day (e.g., 8)"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -1225,7 +1227,8 @@
 			"DAILY_TIME_AND_ACTIVITY": "There is no time and activity tracked yet for this day. Please use the <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>.",
 			"PROJECT_BUDGET": "You have not created any project with budget.",
 			"CLIENT_BUDGET": "You have not created any client with budget."
-		}
+		},
+		"STANDARD_WORK_HOURS": "Standard Work Hours ({{ hours }})"
 	},
 	"INTEGRATIONS": {
 		"TITLE": "Integrations",
@@ -2085,7 +2088,8 @@
 					"TASK_AUTO_STATUS_ENABLED_INFO": "Indicates whether automatic status updates are enabled for tasks.",
 					"TASK_NOTIFY_LEFT_ENABLED_INFO": "Indicates whether notifications about tasks approaching their due date are enabled.",
 					"TASK_AUTO_CLOSE_ENABLED_INFO": "Indicates whether tasks may automatically close after a specified period.",
-					"TASK_AUTO_ARCHIVE_ENABLED_INFO": "Indicates whether tasks may automatically be archived after a specified period."
+					"TASK_AUTO_ARCHIVE_ENABLED_INFO": "Indicates whether tasks may automatically be archived after a specified period.",
+					"STANDARD_WORK_HOURS_PER_DAY": "Select the default number of work hours per day. This value will be used in time-tracking reports to compare how many hours an employee worked relative to this standard."
 				}
 			},
 			"TEAMS_PAGE": {
@@ -2194,8 +2198,10 @@
 			},
 			"ONLY_ADMIN": "These permissions are read-only and enabled only for admin",
 			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:",
-			"ORG_SPRINT_EDIT": "Create/Edit Sprints",
-			"ORG_SPRINT_VIEW": "View Sprints",
+			"ORG_SPRINT_EDIT": "Edit sprint",
+			"ORG_SPRINT_VIEW": "View sprint",
+			"ORG_SPRINT_DELETE": "Delete sprints",
+			"ORG_SPRINT_ADD": "Add sprint",
 			"ORG_PROJECT_ADD": "Create Projects",
 			"ORG_PROJECT_VIEW": "View Projects",
 			"ORG_PROJECT_EDIT": "Edit Projects",

@@ -3,7 +3,7 @@
 	[addTag]="(hasEditEmployee$ | async) && addTag ? createNew : null"
 	[clearable]="isClearable()"
 	[disabled]="disabled"
-	[(items)]="people"
+	[(items)]="employees"
 	(change)="selectEmployee($event); select.blur()"
 	(clear)="select.blur()"
 	[(ngModel)]="selectedEmployee"

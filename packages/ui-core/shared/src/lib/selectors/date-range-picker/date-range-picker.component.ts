@@ -25,7 +25,7 @@ import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
 import { dayOfWeekAsString, shiftUTCtoLocal } from './date-picker.utils';
-import { DateRangeKeyEnum, DateRanges, TimePeriod } from './date-picker.interface';
+import { DateRangeClicked, DateRangeKeyEnum, DateRanges, TimePeriod } from './date-picker.interface';
 import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
@@ -43,90 +43,138 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	public ranges: DateRanges; // Define ngx-daterangepicker-material range configuration
 	private readonly dates$: BehaviorSubject<IDateRangePicker> = this._dateRangePickerBuilderService.dates$; // Default selected date picker ranges
 	private readonly range$: Subject<IDateRangePicker> = new Subject(); // Local store date picker ranges
+
 	// Declaration of arrow variables
 	private arrow: Arrow = new Arrow();
 	private next: Next = new Next();
 	private previous: Previous = new Previous();
 
-	// Private field to store the locale configuration
-	public _locale: LocaleConfig = {
-		displayFormat: 'DD.MM.YYYY', // default display format could be 'YYYY-MM-DDTHH:mm:ss.SSSSZ'
-		format: 'DD.MM.YYYY', // default format
-		direction: 'ltr' // default direction
+	/**
+	 * Locale configuration for the component.
+	 * Defaults are:
+	 * - displayFormat: 'DD.MM.YYYY'
+	 * - format: 'DD.MM.YYYY'
+	 * - direction: 'ltr'
+	 */
+	public locale: LocaleConfig = {
+		displayFormat: 'DD.MM.YYYY', // Default display format
+		format: 'DD.MM.YYYY', // Default format
+		direction: 'ltr' // Default direction
 	};
-	// Getter for the locale configuration
-	get locale(): LocaleConfig {
-		return this._locale;
-	}
-	// Setter for the locale configuration
-	set locale(locale: LocaleConfig) {
-		this._locale = locale;
-	}
 
-	// Show or Hide arrows button, show by default
+	/** ViewChild for the DateRangePickerDirective */
+	@ViewChild(DateRangePickerDirective, { static: true }) public dateRangePickerDirective: DateRangePickerDirective;
+
+	/**
+	 * Determines whether to show or hide the arrows button.
+	 * Defaults to showing the arrows.
+	 */
 	@Input() arrows: boolean = true;
 
-	// Private field to store the first day of the week
+	/**
+	 * Indicates whether the date picker is locked.
+	 */
+	@Input() isLockDatePicker: boolean = false;
+
+	/**
+	 * Indicates whether the date picker is in single date selection mode.
+	 */
+	@Input() isSingleDatePicker: boolean = false;
+
+	/**
+	 * Indicates whether future dates are disabled in the date picker.
+	 */
+	@Input() isDisableFutureDatePicker: boolean = false;
+
+	/**
+	 * Indicates whether past dates are disabled in the date picker.
+	 */
+	@Input() isDisablePastDatePicker: boolean = false;
+
+	/**
+	 * The first day of the week.
+	 */
 	private _firstDayOfWeek: number = moment.localeData().firstDayOfWeek();
-	// Getter for the first day of the week
+	@Input() set firstDayOfWeek(value: WeekDaysEnum) {
+		// Accept zero (Sunday) as a valid value
+		if (value !== null && value !== undefined) {
+			this._firstDayOfWeek = dayOfWeekAsString(value);
+		} else {
+			// Default to locale's first day of the week if value is null or undefined
+			this._firstDayOfWeek = moment.localeData().firstDayOfWeek();
+		}
+		this.locale.firstDay = this._firstDayOfWeek;
+	}
 	get firstDayOfWeek(): number {
 		return this._firstDayOfWeek;
 	}
-	// Setter for the first day of the week with input binding
-	@Input() set firstDayOfWeek(value: WeekDaysEnum) {
-		if (value) this._firstDayOfWeek = dayOfWeekAsString(value);
-		this.locale.firstDay = this.firstDayOfWeek;
-	}
 
-	/*
-	 * Getter & Setter
+	/**
+	 * The time zone to be used.
+	 * Defaults to the user's local time zone.
 	 */
 	private _timeZone: string = moment.tz.guess();
+	@Input() set timeZone(value: string | null | undefined) {
+		// Update the time zone if a valid value is provided
+		if (value) {
+			this._timeZone = value;
+		}
+
+		// Get the date picker configuration
+		const datePickerConfig = this._dateRangePickerBuilderService.datePickerConfig;
+		// Update the date picker based on the current settings
+		const selectorDates = this.getSelectorDates();
+		// If the date picker is set to save date range, save the selected date range
+		if (datePickerConfig.isSaveDatePicker) {
+			this.onSavingFilter(selectorDates);
+		} else {
+			this.selectedDateRange = selectorDates;
+			this.rangePicker = { ...selectorDates }; // Ensure consistency between selectedDateRange and rangePicker
+		}
+	}
 	get timeZone(): string {
 		return this._timeZone;
 	}
-	@Input() set timeZone(value: string) {
-		if (value) this._timeZone = value;
 
-		if (this.isSaveDatePicker) {
-			this.onSavingFilter(this.getSelectorDates());
-		} else {
-			this.selectedDateRange = this.getSelectorDates();
-			this.rangePicker = this.selectedDateRange; // Ensure consistency between selectedDateRange and rangePicker
-		}
-	}
-
-	/*
-	 * Getter & Setter for dynamic unitOfTime
+	/**
+	 * Dynamic unit of time for date operations.
+	 * Defaults to the configuration's unit of time if not provided.
 	 */
 	private _unitOfTime: moment.unitOfTime.Base = DEFAULT_DATE_PICKER_CONFIG.unitOfTime;
+	@Input() set unitOfTime(value: moment.unitOfTime.Base | null | undefined) {
+		// Update _unitOfTime if a valid value is provided; otherwise, use default
+		if (value !== null && value !== undefined) {
+			this._unitOfTime = value;
+		} else {
+			this._unitOfTime = DEFAULT_DATE_PICKER_CONFIG.unitOfTime;
+		}
+
+		// Get the date picker configuration
+		const datePickerConfig = this._dateRangePickerBuilderService.datePickerConfig;
+		// Update the date picker based on the current settings
+		const selectorDates = this.getSelectorDates();
+		// If the date picker is set to save date range, save the selected date range
+		if (datePickerConfig.isSaveDatePicker) {
+			this.onSavingFilter(selectorDates);
+		} else {
+			this.selectedDateRange = selectorDates;
+			this.rangePicker = { ...selectorDates }; // Ensure consistency between selectedDateRange and rangePicker
+		}
+	}
 	get unitOfTime(): moment.unitOfTime.Base {
 		return this._unitOfTime;
 	}
-	@Input() set unitOfTime(value: moment.unitOfTime.Base) {
-		if (value) this._unitOfTime = value;
 
-		if (this.isSaveDatePicker) {
-			this.onSavingFilter(this.getSelectorDates());
-		} else {
-			this.selectedDateRange = this.getSelectorDates();
-			this.rangePicker = this.selectedDateRange; // Ensure consistency between selectedDateRange and rangePicker
-		}
-	}
-
-	/*
-	 * Getter & Setter for dynamic selected date range
+	/**
+	 * Getter and Setter for dynamic selected date range.
 	 */
 	private _selectedDateRange: IDateRangePicker;
-	get selectedDateRange(): IDateRangePicker {
-		return this._selectedDateRange;
-	}
 	@Input() set selectedDateRange(range: IDateRangePicker) {
 		if (isNotEmpty(range)) {
-			/**
-			 * IF current route has timesheet filter save state
-			 */
-			if (this.isSaveDatePicker) {
+			// Get the date picker configuration
+			const datePickerConfig = this._dateRangePickerBuilderService.datePickerConfig;
+			// If the current route has timesheet filter save state
+			if (datePickerConfig.isSaveDatePicker) {
 				this._timesheetFilterService.filter = {
 					...this._timesheetFilterService.filter,
 					...range
@@ -142,9 +190,12 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 			}
 		}
 	}
+	get selectedDateRange(): IDateRangePicker {
+		return this._selectedDateRange;
+	}
 
-	/*
-	 * Getter & Setter for dynamic selected internal date range
+	/**
+	 * Getter and Setter for the dynamic selected internal date range.
 	 */
 	private _rangePicker: IDateRangePicker;
 	public get rangePicker(): IDateRangePicker {
@@ -155,64 +206,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 			this._rangePicker = range;
 		}
 	}
-
-	/*
-	 * Getter & Setter for lock date picker
-	 */
-	private _isLockDatePicker: boolean = false;
-	get isLockDatePicker(): boolean {
-		return this._isLockDatePicker;
-	}
-	@Input() set isLockDatePicker(isLock: boolean) {
-		this._isLockDatePicker = isLock;
-	}
-
-	/*
-	 * Getter & Setter for save date picker
-	 */
-	private _isSaveDatePicker: boolean = false;
-	get isSaveDatePicker(): boolean {
-		return this._isSaveDatePicker;
-	}
-	@Input() set isSaveDatePicker(isSave: boolean) {
-		this._isSaveDatePicker = isSave;
-	}
-
-	/*
-	 * Getter & Setter for single date picker
-	 */
-	private _isSingleDatePicker: boolean = false;
-	get isSingleDatePicker(): boolean {
-		return this._isSingleDatePicker;
-	}
-	@Input() set isSingleDatePicker(isSingle: boolean) {
-		this._isSingleDatePicker = isSingle;
-	}
-
-	/*
-	 * Getter & Setter for disabled future dates
-	 */
-	private _isDisableFutureDatePicker: boolean = false;
-	get isDisableFutureDatePicker(): boolean {
-		return this._isDisableFutureDatePicker;
-	}
-	@Input() set isDisableFutureDatePicker(isDisable: boolean) {
-		this._isDisableFutureDatePicker = isDisable;
-	}
-
-	/**
-	 * Getter & Setter for disabled past dates
-	 */
-	private _isDisablePastDatePicker: boolean = false;
-	get isDisablePastDatePicker(): boolean {
-		return this._isDisablePastDatePicker;
-	}
-	@Input() set isDisablePastDatePicker(isDisable: boolean) {
-		this._isDisablePastDatePicker = isDisable;
-	}
-
-	/** */
-	@ViewChild(DateRangePickerDirective, { static: true }) public dateRangePickerDirective: DateRangePickerDirective;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -265,21 +258,20 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 					])
 				),
 				tap(([organization, datePickerConfig, queryParams, timeZone]) => {
-					this.organization = organization;
-					this.futureDateAllowed = organization.futureDateAllowed;
-					this.timeZone = timeZone;
+					this.organization = organization; // Update the organization
+					this.futureDateAllowed = organization.futureDateAllowed; // Update the future date allowed
+					this.timeZone = timeZone; // Update the time zone
 
-					const { isLockDatePicker, isSaveDatePicker } = datePickerConfig;
+					const { isLockDatePicker } = datePickerConfig;
 					const { isSingleDatePicker, isDisableFutureDate, isDisablePastDate } = datePickerConfig;
 
 					this.isDisableFutureDatePicker = isDisableFutureDate;
 					this.isDisablePastDatePicker = isDisablePastDate;
 					this.isLockDatePicker = isLockDatePicker;
-					this.isSaveDatePicker = isSaveDatePicker;
 					this.isSingleDatePicker = isSingleDatePicker;
 
-					const { unit_of_time = datePickerConfig.unitOfTime } = queryParams;
-					this.unitOfTime = unit_of_time;
+					const { unit_of_time: unitOfTime = datePickerConfig.unitOfTime } = queryParams;
+					this.unitOfTime = unitOfTime;
 				}),
 				tap(() => {
 					this.createDateRangeMenus();
@@ -304,169 +296,190 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	}
 
 	/**
-	 * Create Date Range Translated Menus
+	 * Creates the date range translated menus based on the current configuration.
 	 */
-	createDateRangeMenus() {
-		this.ranges = {
-			[DateRangeKeyEnum.TODAY]: [moment(), moment()],
-			[DateRangeKeyEnum.YESTERDAY]: [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-			[DateRangeKeyEnum.CURRENT_WEEK]: [moment().startOf('week'), moment().endOf('week')],
-			[DateRangeKeyEnum.LAST_WEEK]: [
-				moment().subtract(1, 'week').startOf('week'),
-				moment().subtract(1, 'week').endOf('week')
-			],
-			[DateRangeKeyEnum.CURRENT_MONTH]: [moment().startOf('month'), moment().endOf('month')],
-			[DateRangeKeyEnum.LAST_MONTH]: [
-				moment().subtract(1, 'month').startOf('month'),
-				moment().subtract(1, 'month').endOf('month')
-			]
+	createDateRangeMenus(): void {
+		this.ranges = {};
+
+		// Helper function to add ranges to the ranges object
+		const addRange = (key: DateRangeKeyEnum, startDate: moment.Moment, endDate: moment.Moment) => {
+			this.ranges[key] = [startDate, endDate];
 		};
 
-		// Define the units of time to remove based on conditions
-		const unitsToRemove = [];
+		// Determine which units of time are allowed
+		const allowedUnits = this.isLockDatePicker ? [this.unitOfTime] : ['day', 'week', 'month'];
 
-		if (this.isLockDatePicker && this.unitOfTime !== 'day') {
-			unitsToRemove.push(DateRangeKeyEnum.TODAY, DateRangeKeyEnum.YESTERDAY);
-		}
-		if (this.isLockDatePicker && this.unitOfTime !== 'week') {
-			unitsToRemove.push(DateRangeKeyEnum.CURRENT_WEEK, DateRangeKeyEnum.LAST_WEEK);
-		}
-		if (this.isLockDatePicker && this.unitOfTime !== 'month') {
-			unitsToRemove.push(DateRangeKeyEnum.CURRENT_MONTH, DateRangeKeyEnum.LAST_MONTH);
-		}
-
-		// Remove date ranges based on unitsToRemove
-		unitsToRemove.forEach((unit) => {
-			delete this.ranges[unit];
+		// Add date ranges based on the allowed units of time
+		allowedUnits.forEach((unit) => {
+			switch (unit) {
+				case 'day':
+					addRange(DateRangeKeyEnum.TODAY, moment(), moment());
+					addRange(DateRangeKeyEnum.YESTERDAY, moment().subtract(1, 'days'), moment().subtract(1, 'days'));
+					break;
+				case 'week':
+					addRange(DateRangeKeyEnum.CURRENT_WEEK, moment().startOf('week'), moment().endOf('week'));
+					addRange(
+						DateRangeKeyEnum.LAST_WEEK,
+						moment().subtract(1, 'week').startOf('week'),
+						moment().subtract(1, 'week').endOf('week')
+					);
+					break;
+				case 'month':
+					addRange(DateRangeKeyEnum.CURRENT_MONTH, moment().startOf('month'), moment().endOf('month'));
+					addRange(
+						DateRangeKeyEnum.LAST_MONTH,
+						moment().subtract(1, 'month').startOf('month'),
+						moment().subtract(1, 'month').endOf('month')
+					);
+					break;
+			}
 		});
 	}
 
 	/**
-	 * Allowed/Disallowed future max date strategy.
+	 * Updates the maximum selectable date based on the future date strategy.
+	 * If future dates are allowed, `maxDate` is set to `null` (no maximum limit).
+	 * If future dates are disallowed, `maxDate` is set to today.
+	 * Additionally, if the selected end date is in the future, it is adjusted to today.
 	 */
-	private setFutureStrategy() {
+	private setFutureStrategy(): void {
 		if (this.hasFutureStrategy()) {
+			// Future dates are allowed; no maximum date limit
 			this.maxDate = null;
 		} else {
-			this.maxDate = moment().format();
+			// Future dates are disallowed; set maxDate to today
+			const today = moment();
+			this.maxDate = today.format();
+
+			// If the selected end date is today or in the future, adjust it to today
 			if (this.isSameOrAfterDay(this.selectedDateRange.endDate)) {
 				this.selectedDateRange = {
 					...this.selectedDateRange,
-					endDate: moment().toDate()
+					endDate: today.toDate()
 				};
 			}
 		}
 	}
 
 	/**
-	 * Sets the strategy for allowing/disallowing past dates.
+	 * Updates the minimum selectable date based on the past date strategy.
+	 * If past dates are disallowed, `minDate` is set to today.
+	 * If past dates are allowed, `minDate` is set to `null` (no minimum limit).
 	 */
-	private setPastStrategy() {
+	private setPastStrategy(): void {
 		if (this.hasPastStrategy()) {
-			// If there is a past strategy, set the minimum date to the current date
+			// Past dates are disallowed; set minDate to today
 			this.minDate = moment().format();
 		} else {
-			// If there is no past strategy, set the minimum date to null, allowing past dates
+			// Past dates are allowed; no minimum date limit
 			this.minDate = null;
 		}
 	}
 
 	/**
-	 * Retrieves the next selected range if not disabled.
+	 * Advances the selected date range to the next period if not disabled.
+	 * Updates the selected date range and synchronizes the range picker.
+	 * Also updates the query parameters without navigating away.
 	 */
-	async nextRange() {
+	async nextRange(): Promise<void> {
 		if (this.isNextDisabled()) {
 			return;
 		}
 
-		this.arrow.setStrategy = this.next;
+		// Set the strategy to 'next' on the arrow object
+		this.arrow.setStrategy(this.next);
+
+		// Execute the strategy to get the next range
 		const nextRange = this.arrow.execute(this.rangePicker, this.unitOfTime);
-		this.selectedDateRange = { ...this.selectedDateRange, ...nextRange };
-		this.rangePicker = this.selectedDateRange; // Ensure consistency between selectedDateRange and rangePicker
+
+		// Update the selected date range and ensure consistency with the range picker
+		this.selectedDateRange = { ...nextRange };
+		this.rangePicker = { ...nextRange };
+
+		// Update future strategy settings if necessary
 		this.setFutureStrategy();
 	}
 
 	/**
-	 * Retrieves the previous selected range.
+	 * Moves the selected date range to the previous period.
+	 * Updates the selected date range and synchronizes the range picker.
+	 * Also updates the query parameters without navigating away.
 	 */
-	async previousRange() {
-		this.arrow.setStrategy = this.previous;
+	previousRange(): void {
+		// Set the strategy to 'previous' on the arrow object
+		this.arrow.setStrategy(this.previous);
+
+		// Execute the strategy to get the previous range
 		const previousRange = this.arrow.execute(this.rangePicker, this.unitOfTime);
-		this.selectedDateRange = { ...this.selectedDateRange, ...previousRange };
-		this.rangePicker = this.selectedDateRange; // Ensure consistency between selectedDateRange and rangePicker
+
+		// Update the selected date range and ensure consistency with the range picker
+		this.selectedDateRange = { ...previousRange };
+		this.rangePicker = { ...previousRange };
 	}
 
 	/**
-	 * Navigates to the current route with specified query parameters, while preserving existing ones.
+	 * Determines whether the "Next" button should be disabled.
+	 * The "Next" button is disabled if:
+	 * - There is no selected date range.
+	 * - The selected date range lacks a start or end date.
+	 * - There is no future strategy available and the end date is today or in the past.
 	 *
-	 * @param queryParams The query parameters to be attached.
-	 */
-	async navigateWithQueryParams(): Promise<void> {
-		const { startDate, endDate, isCustomDate } = this.selectedDateRange;
-
-		// Create new moment objects for formatted dates to avoid mutation
-		const formattedStartDate = moment(startDate).clone().format('YYYY-MM-DD');
-		const formattedEndDate = moment(endDate).clone().format('YYYY-MM-DD');
-
-		// Updates the query parameters of the current route without navigating away.
-		await this._navigationService.updateQueryParams({
-			date: formattedStartDate,
-			date_end: formattedEndDate,
-			unit_of_time: this.unitOfTime,
-			is_custom_date: isCustomDate
-		});
-	}
-
-	/**
-	 * Checks if the Next Button should be disabled.
-	 * @returns True if the Next Button should be disabled, false otherwise.
+	 * @returns {boolean} True if the Next Button should be disabled, false otherwise.
 	 */
 	isNextDisabled(): boolean {
-		if (!this.selectedDateRange) {
+		// Check if selectedDateRange, startDate, and endDate are all defined
+		if (!this.selectedDateRange?.startDate || !this.selectedDateRange?.endDate) {
 			return true;
 		}
 
-		const { startDate, endDate } = this.selectedDateRange;
-		if (!startDate || !endDate) {
-			return true;
-		}
-
-		return !this.hasFutureStrategy() && this.isSameOrAfterDay(endDate);
+		// Determine if there is no future strategy and the end date is today or after
+		return !this.hasFutureStrategy() && this.isSameOrAfterDay(this.selectedDateRange.endDate);
 	}
 
 	/**
-	 * Listens to the event on ngx-daterangepicker-material.
-	 * @param event The updated time period.
+	 * Listens to the date update event from ngx-daterangepicker-material.
+	 * Updates the selected date range and synchronizes the range picker.
+	 * Also updates the query parameters without navigating away.
+	 *
+	 * @param event - The updated time period.
 	 */
-	onDatesUpdated(event: TimePeriod) {
+	onDatesUpdated(event: TimePeriod): void {
 		if (!this.dateRangePickerDirective) {
 			return;
 		}
 
 		const { startDate, endDate } = shiftUTCtoLocal(event);
-		if (startDate && endDate) {
-			const range = {} as IDateRangePicker;
-			const start = this.isLockDatePicker ? moment(startDate).startOf(this.unitOfTime) : startDate;
-			const end = this.isLockDatePicker ? moment(startDate).endOf(this.unitOfTime) : endDate;
 
-			range.startDate = start.toDate();
-			range.endDate = end.toDate();
-			range.isCustomDate = this.isCustomDate({
-				startDate: start,
-				endDate: end
-			});
-
-			this.selectedDateRange = range;
-			this.rangePicker = this.selectedDateRange; // Ensure consistency between selectedDateRange and rangePicker
+		// Return early if either date is missing
+		if (!startDate || !endDate) {
+			return;
 		}
+
+		// Ensure start and end are moment objects
+		const startMoment = this.isLockDatePicker ? moment(startDate).startOf(this.unitOfTime) : moment(startDate);
+		const endMoment = this.isLockDatePicker ? moment(startDate).endOf(this.unitOfTime) : moment(endDate);
+
+		// Construct the range object directly
+		const range: IDateRangePicker = {
+			startDate: startMoment.toDate(),
+			endDate: endMoment.toDate(),
+			isCustomDate: this.isCustomDate({ startDate: startMoment, endDate: endMoment })
+		};
+
+		// Update the selected date range and ensure consistency with the range picker
+		this.selectedDateRange = { ...range };
+		this.rangePicker = { ...range };
 	}
 
 	/**
-	 * Listens to the range click event on ngx-daterangepicker-material.
-	 * @param range The clicked range object.
+	 * Handles the range click event from ngx-daterangepicker-material.
+	 * Updates the `unitOfTime` based on the selected range label.
+	 *
+	 * @param {DateRangeClicked} range - The clicked range object.
 	 */
-	rangeClicked(range: any) {
-		const unitOfTimeMap: { [key in DateRangeKeyEnum]: string } = {
+	rangeClicked(range: DateRangeClicked) {
+		// Define the mapping outside the method to avoid recreating it on every call
+		const unitOfTimeMap: Record<string, moment.unitOfTime.Base> = {
 			[DateRangeKeyEnum.TODAY]: 'day',
 			[DateRangeKeyEnum.YESTERDAY]: 'day',
 			[DateRangeKeyEnum.CURRENT_WEEK]: 'week',
@@ -478,115 +491,170 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		const unitOfTime = unitOfTimeMap[range.label];
 		if (unitOfTime) {
 			this.unitOfTime = unitOfTime;
+		} else {
+			console.warn(`Unrecognized range label: ${range.label}`);
 		}
 	}
 
 	/**
-	 * Checks if the provided date range is a custom date range.
+	 * Determines if the provided date range is a custom date range,
+	 * meaning it does not match any predefined ranges.
 	 *
-	 * @param dateRange The date range to check.
+	 * @param dateRange - The date range to check.
 	 * @returns True if the date range is custom, false otherwise.
 	 */
-	isCustomDate(dateRange: any): boolean {
-		if (!this.dateRangePickerDirective) {
-			return true; // If dateRangePickerDirective is not available, consider it as a custom range
+	isCustomDate(dateRange: { startDate: moment.Moment; endDate: moment.Moment }): boolean {
+		// If the date range picker directive or its ranges are not available, consider it a custom range
+		if (!this.dateRangePickerDirective?.ranges) {
+			return true;
 		}
 
-		const ranges = this.dateRangePickerDirective.ranges;
-		for (const range in ranges) {
-			if (this.ranges[range]) {
-				const [rangeStartDate, rangeEndDate] = this.ranges[range];
+		const predefinedRanges = this.dateRangePickerDirective.ranges;
+		const formattedStartDate = moment(dateRange.startDate).format('YYYY-MM-DD');
+		const formattedEndDate = moment(dateRange.endDate).format('YYYY-MM-DD');
 
-				// Create new moment objects for formatted dates to avoid mutation
-				const formattedStartDate = moment(dateRange.startDate).clone().format('YYYY-MM-DD');
-				const formattedEndDate = moment(dateRange.endDate).clone().format('YYYY-MM-DD');
+		// Iterate over the predefined ranges to check for a match
+		for (const rangeLabel in predefinedRanges) {
+			if (predefinedRanges.hasOwnProperty(rangeLabel)) {
+				const [rangeStartDate, rangeEndDate] = predefinedRanges[rangeLabel];
 
-				const isStartDateEqual = formattedStartDate === rangeStartDate.format('YYYY-MM-DD');
-				const isEndDateEqual = formattedEndDate === rangeEndDate.format('YYYY-MM-DD');
+				// Format the predefined range dates for comparison
+				const predefinedStartDate = rangeStartDate.format('YYYY-MM-DD');
+				const predefinedEndDate = rangeEndDate.format('YYYY-MM-DD');
 
-				// ignore times when comparing dates if time picker is not enabled
-				if (isStartDateEqual && isEndDateEqual) {
-					return false; // If the range matches any predefined range, it's not custom
+				// Compare the formatted dates
+				if (formattedStartDate === predefinedStartDate && formattedEndDate === predefinedEndDate) {
+					// The date range matches a predefined range; it's not custom
+					return false;
 				}
 			}
 		}
-		return true; // If no predefined range matches, it's a custom range
+
+		// No matching predefined range found; it's a custom date range
+		return true;
 	}
 
 	/**
-	 * When date range picker wants to save dates in local storage
+	 * Saves the selected date range to the timesheet filter service and updates the query parameters.
 	 *
-	 * @param range
+	 * @param range - The selected date range.
 	 */
-	onSavingFilter(range: IDateRangePicker) {
-		this._timesheetFilterService.filter$
-			.pipe(
-				take(1),
-				filter(() => !!this.isSaveDatePicker),
-				tap((filters: ITimeLogFilters) => {
-					const { startDate = range.startDate } = filters;
-					const hasFutureStrategy = this.hasFutureStrategy();
-					const date = !hasFutureStrategy && this.isSameOrAfterDay(startDate) ? moment() : moment(startDate);
-					const start = moment(date).startOf(this.unitOfTime);
-					const end = moment(date).endOf(this.unitOfTime);
+	onSavingFilter(range: IDateRangePicker): void {
+		const datePickerConfig = this._dateRangePickerBuilderService.datePickerConfig;
 
-					this.selectedDateRange = {
-						startDate: start.toDate(),
-						endDate: end.toDate(),
-						isCustomDate: this.isCustomDate({ startDate: start, endDate: end })
-					};
-					this.rangePicker = this.selectedDateRange; // Ensure consistency between selectedDateRange and rangePicker
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		// Proceed only if saving the date picker is enabled
+		if (!datePickerConfig.isSaveDatePicker) {
+			return;
+		}
+
+		// Subscribe to the filter$ Observable and take the first emitted value
+		this._timesheetFilterService.filter$
+			.pipe(take(1), untilDestroyed(this))
+			.subscribe((filters: ITimeLogFilters) => {
+				// Use the startDate from filters if available; otherwise, use the startDate from the range parameter
+				const startDate = filters.startDate || range.startDate;
+
+				// Determine if future dates are allowed
+				const hasFutureStrategy = this.hasFutureStrategy();
+
+				// Calculate the date based on the future strategy and the start date
+				const dateMoment =
+					!hasFutureStrategy && this.isSameOrAfterDay(startDate) ? moment() : moment(startDate);
+
+				// Get the start and end of the unit of time (e.g., day, week, month)
+				const start = dateMoment.clone().startOf(this.unitOfTime);
+				const end = dateMoment.clone().endOf(this.unitOfTime);
+
+				// Update the selected date range and ensure consistency with the range picker
+				this.selectedDateRange = {
+					startDate: start.toDate(),
+					endDate: end.toDate(),
+					isCustomDate: this.isCustomDate({ startDate: start, endDate: end })
+				};
+				this.rangePicker = { ...this.selectedDateRange }; // Ensure consistency between selectedDateRange and rangePicker
+			});
 	}
 
 	/**
-	 * Is same or after today
+	 * Checks if the provided date is the same as or after today.
 	 *
-	 * @param date
-	 * @returns {Boolean}
+	 * @param date - The date to compare.
+	 * @returns True if the date is today or in the future, false otherwise.
 	 */
 	isSameOrAfterDay(date: string | Date): boolean {
-		return moment(moment(date)).isSameOrAfter(moment(), 'day');
+		return moment(date).isSameOrAfter(moment(), 'day');
 	}
 
 	/**
-	 * Checks if there is a future strategy or not.
-	 * @returns {Boolean} True if there is a future strategy, false otherwise.
+	 * Determines whether future dates are allowed based on the current strategy.
+	 *
+	 * @returns True if future dates are allowed, false otherwise.
 	 */
 	private hasFutureStrategy(): boolean {
 		return !this.isDisableFutureDatePicker && this.futureDateAllowed;
 	}
 
 	/**
-	 * Determines whether there is a strategy to disable past dates.
-	 * @returns {Boolean} True if there is a strategy to disable past dates, otherwise false.
+	 * Determines whether past dates are disallowed based on the current strategy.
+	 *
+	 * @returns True if past dates are disallowed, false otherwise.
 	 */
 	private hasPastStrategy(): boolean {
 		return this.isDisablePastDatePicker;
 	}
 
 	/**
-	 * Open Date Picker On Calender Click
+	 * Opens the date picker when the calendar icon is clicked.
+	 *
+	 * @param event - The mouse event triggered by clicking the calendar icon.
 	 */
 	openDatepicker(event: MouseEvent): void {
-		this.dateRangePickerDirective.toggle(event);
+		if (this.dateRangePickerDirective) {
+			this.dateRangePickerDirective.toggle(event);
+		} else {
+			console.warn('DateRangePickerDirective is not initialized.');
+		}
 	}
 
 	/**
-	 * Gets the selector default dates from the BehaviorSubject.
+	 * Retrieves the default date range picker configuration from the dates BehaviorSubject.
 	 *
 	 * @returns The default date range picker configuration.
 	 */
 	private getSelectorDates(): IDateRangePicker {
 		const { startDate, endDate, isCustomDate } = this.dates$.getValue();
+
 		return {
 			startDate: moment(startDate).toDate(),
 			endDate: moment(endDate).toDate(),
-			isCustomDate
+			isCustomDate: isCustomDate ?? false
 		};
+	}
+
+	/**
+	 * Navigates to the current route with specified query parameters, while preserving existing ones.
+	 *
+	 * @param queryParams The query parameters to be attached.
+	 */
+	async navigateWithQueryParams(): Promise<void> {
+		const selectors = this._selectorBuilderService.getSelectors();
+
+		// Check if the date selector exists
+		if (selectors.date) {
+			const { startDate, endDate, isCustomDate } = this.selectedDateRange;
+
+			// Create new moment objects for formatted dates to avoid mutation
+			const formattedStartDate = moment(startDate).clone().format('YYYY-MM-DD');
+			const formattedEndDate = moment(endDate).clone().format('YYYY-MM-DD');
+
+			// Updates the query parameters of the current route without navigating away.
+			await this._navigationService.updateQueryParams({
+				date: formattedStartDate,
+				date_end: formattedEndDate,
+				unit_of_time: this.unitOfTime,
+				is_custom_date: isCustomDate
+			});
+		}
 	}
 
 	ngOnDestroy(): void {}

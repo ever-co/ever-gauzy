@@ -7,6 +7,7 @@ export * from './translate-base';
 //core entities
 export * from '../../accounting-template/accounting-template.entity';
 export * from '../../activity-log/activity-log.entity';
+export * from '../../api-call-log/api-call-log.entity';
 export * from '../../appointment-employees/appointment-employees.entity';
 export * from '../../approval-policy/approval-policy.entity';
 export * from '../../availability-slots/availability-slots.entity';
@@ -120,6 +121,7 @@ export * from '../../reports/report.entity';
 export * from '../../request-approval-employee/request-approval-employee.entity';
 export * from '../../request-approval-team/request-approval-team.entity';
 export * from '../../request-approval/request-approval.entity';
+export * from '../../resource-link/resource-link.entity';
 export * from '../../role-permission/role-permission.entity';
 export * from '../../role/role.entity';
 export * from '../../skills/skill.entity';
@@ -153,6 +155,7 @@ export * from '../../warehouse/warehouse.entity';
 
 //core subscribers
 export * from '../../activity-log/activity-log.subscriber';
+export * from '../../api-call-log/api-call-log.subscriber';
 export * from '../../candidate/candidate.subscriber';
 export * from '../../custom-smtp/custom-smtp.subscriber';
 export * from '../../email-reset/email-reset.subscriber';
@@ -176,6 +179,7 @@ export * from '../../payment/payment.subscriber';
 export * from '../../pipeline/pipeline.subscriber';
 export * from '../../product-category/product-category.subscriber';
 export * from '../../reports/report.subscriber';
+export * from '../../resource-link/resource-link.subscriber';
 export * from '../../role/role.subscriber';
 export * from '../../tags/tag.subscriber';
 export * from '../../tasks/issue-type/issue-type.subscriber';

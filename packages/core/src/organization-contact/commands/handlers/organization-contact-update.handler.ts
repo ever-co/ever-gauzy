@@ -4,14 +4,14 @@ import { IOrganizationContact } from '@gauzy/contracts';
 import { OrganizationContactUpdateCommand } from '../organization-contact-update.command';
 import { OrganizationContactService } from '../../organization-contact.service';
 import { ContactService } from '../../../contact/contact.service';
+import { isNotEmpty } from '@gauzy/common';
 
 @CommandHandler(OrganizationContactUpdateCommand)
 export class OrganizationContactUpdateHandler implements ICommandHandler<OrganizationContactUpdateCommand> {
-
 	constructor(
 		private readonly _organizationContactService: OrganizationContactService,
-		private readonly _contactService: ContactService,
-	) { }
+		private readonly _contactService: ContactService
+	) {}
 
 	/**
 	 * Updates an organization contact based on a given command and retrieves the updated contact.
@@ -34,7 +34,10 @@ export class OrganizationContactUpdateHandler implements ICommandHandler<Organiz
 					organization: { id: organizationId }
 				});
 			} catch (error) {
-				console.log('Error occurred during creation of contact details or creating the organization contact:', error);
+				console.log(
+					'Error occurred during creation of contact details or creating the organization contact:',
+					error
+				);
 			}
 
 			// Update the organization contact using the provided ID and input data.

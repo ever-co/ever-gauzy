@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler, EventBus as CqrsEventBus } from '@nestjs/cqrs';
 import { HttpException, HttpStatus, Logger } from '@nestjs/common';
-import { ActionTypeEnum, ActivityLogEntityEnum, ActorTypeEnum, ITask } from '@gauzy/contracts';
+import { ActionTypeEnum, EntityEnum, ActorTypeEnum, ITask } from '@gauzy/contracts';
 import { ActivityLogEvent } from '../../../activity-log/events';
 import { generateActivityLogDescription } from '../../../activity-log/activity-log.helper';
 import { EventBus } from '../../../event-bus';
@@ -75,18 +75,14 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			}
 
 			// Generate the activity log description
-			const description = generateActivityLogDescription(
-				ActionTypeEnum.Created,
-				ActivityLogEntityEnum.Task,
-				task.title
-			);
+			const description = generateActivityLogDescription(ActionTypeEnum.Created, EntityEnum.Task, task.title);
 
 			console.log(`Generating activity log description: ${description}`);
 
 			// Emit an event to log the activity
 			this._cqrsEventBus.publish(
 				new ActivityLogEvent({
-					entity: ActivityLogEntityEnum.Task,
+					entity: EntityEnum.Task,
 					entityId: task.id,
 					action: ActionTypeEnum.Created,
 					actorType: ActorTypeEnum.User, // TODO : Since we have Github Integration, make sure we can also store "System" for actor
@@ -99,7 +95,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 
 			console.log(
 				`Task created with ID: ${task.id} with activity log: ${JSON.stringify({
-					entity: ActivityLogEntityEnum.Task,
+					entity: EntityEnum.Task,
 					entityId: task.id,
 					action: ActionTypeEnum.Created,
 					actorType: ActorTypeEnum.User, // TODO : Since we have Github Integration, make sure we can also store "System" for actor
