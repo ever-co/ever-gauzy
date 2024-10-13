@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { UserModule } from '../user/user.module';
+import { CommandHandlers } from './commands/handlers';
 import { ResourceLink } from './resource-link.entity';
 import { ResourceLinkService } from './resource-link.service';
 import { ResourceLinkController } from './resource-link.controller';
@@ -19,7 +20,7 @@ import { TypeOrmResourceLinkRepository } from './repository/type-orm-resource-li
 		UserModule,
 		CqrsModule
 	],
-	providers: [ResourceLinkService, TypeOrmResourceLinkRepository],
+	providers: [ResourceLinkService, TypeOrmResourceLinkRepository, ...CommandHandlers],
 	controllers: [ResourceLinkController],
 	exports: [ResourceLinkService, TypeOrmModule, TypeOrmResourceLinkRepository]
 })
