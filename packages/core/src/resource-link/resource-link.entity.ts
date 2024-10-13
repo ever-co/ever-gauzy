@@ -8,7 +8,7 @@ import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
 import { MikroOrmResourceLinkRepository } from './repository/mikro-orm-resource-link.repository';
 
-@MultiORMEntity('resource_links', { mikroOrmRepository: () => MikroOrmResourceLinkRepository })
+@MultiORMEntity('resource_link', { mikroOrmRepository: () => MikroOrmResourceLinkRepository })
 export class ResourceLink extends TenantOrganizationBaseEntity implements IResourceLink {
 	[EntityRepositoryType]?: MikroOrmResourceLinkRepository;
 
