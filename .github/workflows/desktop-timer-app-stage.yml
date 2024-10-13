@@ -185,25 +185,15 @@ jobs:
           DESKTOP_TIMER_APP_DESCRIPTION: 'Ever Gauzy Desktop Timer'
           DESKTOP_TIMER_APP_ID: 'com.ever.gauzydesktoptimer'
 
-      - name: Print environment variable names
-        run: |
-          echo "Environment Variable Names:"
-          printenv | cut -d= -f1
-
-      - name: Print large environment variables names
+      - name: Print environment variables and their sizes
         shell: powershell
         run: |
-          # List all environment variables
           foreach ($envVar in [System.Environment]::GetEnvironmentVariables().Keys) {
-            # Get the value of the environment variable
             $value = [System.Environment]::GetEnvironmentVariable($envVar)
 
-            # Check if the value is not null
             if ($null -ne $value) {
-              # Check if the value length is greater than 100 bytes
-              if ([Text.Encoding]::UTF8.GetByteCount($value) -gt 100) {
-                  Write-Output $envVar
-              }
+              $length = $value.Length
+              Write-Output "${envVar}: ${length}"
             }
           }
 
@@ -258,10 +248,10 @@ jobs:
           STATS_V3PS: ''
           STATS_VMD: ''
           STATS_VMFE: ''
-          SYSTEMDRIVE: ''
-          SYSTEMROOT: ''
-          TEMP: ''
-          TMP: ''
+          # SYSTEMDRIVE: ''
+          # SYSTEMROOT: ''
+          # TEMP: ''
+          # TMP: ''
           ANDROID_HOME: ''
           ANDROID_NDK: ''
           ANDROID_NDK_HOME: ''
@@ -346,8 +336,8 @@ jobs:
           PROCESSOR_REVISION: ''
           PSModuleAnalysisCachePath: ''
           PSModulePath: ''
-          PUBLIC: ''
-          Path: 'C:\hostedtoolcache\windows\node\20.11.1\x64;C:\Program Files\Git\bin;C:\npm\prefix;C:\hostedtoolcache\windows\Python\3.9.13\x64\Scripts;C:\hostedtoolcache\windows\Python\3.9.13\x64;C:\Program Files\OpenSSL\bin;C:\Program Files\nodejs;C:\Program Files\Git\cmd;C:\Program Files\Git\usr\bin;C:\Program Files\GitHub CLI;C:\Program Files\Amazon\AWSCLIV2'
+          # PUBLIC: ''
+          Path: 'C:\hostedtoolcache\windows\node\20.11.1\x64;C:\Program Files\Git\bin;C:\npm\prefix;C:\hostedtoolcache\windows\Python\3.9.13\x64\Scripts;C:\hostedtoolcache\windows\Python\3.9.13\x64;C:\Windows\system32;C:\Windows;C:\Program Files\dotnet\;C:\Program Files\PowerShell\7\;C:\Program Files\CMake\bin;C:\Program Files\nodejs\;C:\Program Files\Git\cmd;C:\Program Files\Git\mingw64\bin;C:\Program Files\Git\usr\bin;C:\Program Files\GitHub CLI\;C:\Program Files\Amazon\AWSCLIV2\;C:\Users\runneradmin\.dotnet\tools'
           DOTNET_MULTILEVEL_LOOKUP: ''
           DOTNET_NOLOGO: ''
           DOTNET_SKIP_FIRST_TIME_EXPERIENCE: ''
