@@ -104,20 +104,28 @@ export class ApiCallLog extends TenantOrganizationBaseEntity implements IApiCall
 	/**
 	 * The protocol used in the request (HTTP, HTTPS)
 	 */
-	@ApiProperty({ type: () => String })
-	@IsNotEmpty()
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@ColumnIndex()
-	@MultiORMColumn()
+	@MultiORMColumn({ nullable: true })
 	protocol: string;
 
 	/**
 	 * User-Agent string of the client making the request.
 	 * This could be a browser, desktop app, Postman, or any other API client.
 	 */
-	@ApiProperty({ type: () => String })
-	@IsNotEmpty()
-	@MultiORMColumn()
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@MultiORMColumn({ nullable: true })
 	userAgent: string;
+
+	/**
+	 * Origin from where the request was initiated (web, mobile, desktop, etc.).
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@MultiORMColumn({ nullable: true })
+	origin: string; // Added column to track request origin
 
 	/*
 	|--------------------------------------------------------------------------

@@ -32,4 +32,5 @@ export interface IApiCallLog extends IBasePerTenantAndOrganizationEntityModel, I
 	ipAddress: string; // The IP address of the client making the request.
 	protocol: string; // The protocol used in the request (HTTP, HTTPS).
 	userAgent: string; // User-Agent string of the client making the request (could be a browser, desktop app, Postman, etc.).
+	origin: string; // Origin from where the request was initiated (web, mobile, desktop, etc.).
 }
