@@ -3,23 +3,24 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { HttpException, HttpStatus } from '@nestjs/common';
-import { ClsService } from 'nestjs-cls';
+import { CLS_ID, ClsService } from 'nestjs-cls';
 import { v4 as uuidv4 } from 'uuid';
 import { Request, Response } from 'express';
 import { ExtractJwt } from 'passport-jwt';
 import { JsonWebTokenError, verify } from 'jsonwebtoken';
-import { IUser, PermissionsEnum, LanguagesEnum, RolesEnum } from '@gauzy/contracts';
+import { IUser, PermissionsEnum, LanguagesEnum, RolesEnum, ID } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/common';
 import { SerializedRequestContext } from './types';
 
 export class RequestContext {
-	private static logging: boolean = false;
-	protected readonly _id: string;
-	protected readonly _res: Response;
+	protected static clsService: ClsService;
+	private static loggingEnabled: boolean = true;
+
+	private readonly _id: ID;
+	private readonly _res: Response;
 	private readonly _req: Request;
 	private readonly _languageCode: LanguagesEnum;
-	protected static clsService: ClsService;
 
 	/**
 	 * Gets the language code.
@@ -35,7 +36,7 @@ export class RequestContext {
 	 *
 	 * @returns The id.
 	 */
-	get id(): string {
+	get id(): ID {
 		return this._id;
 	}
 
@@ -49,21 +50,51 @@ export class RequestContext {
 	 * @param options.isAuthorized - Optional flag indicating whether the user is authorized.
 	 */
 	constructor(options: {
-		id?: string;
+		id?: ID;
 		req?: Request;
 		res?: Response;
 		languageCode?: LanguagesEnum;
 		isAuthorized?: boolean;
 	}) {
-		// Destructure options to extract individual properties.
-		const { req, res, id, languageCode } = options;
-		// Assign values to instance properties.
-		this._id = id || uuidv4().toString(); // If 'id' is not provided, generate a random ID.
-		this._req = req;
-		this._res = res;
-		this._languageCode = languageCode;
+		// Set the context ID
+		const contextId = options.id || uuidv4(); // If 'id' is not provided, generate a random ID.
+		RequestContext.setContextId(contextId);
 
-		if (RequestContext.logging) console.log('RequestContext: setting context with Id:', this._id);
+		// Assign values to instance properties.
+		this._id = contextId;
+		this._req = options.req;
+		this._res = options.res;
+		this._languageCode = options.languageCode;
+
+		if (RequestContext.loggingEnabled) {
+			console.log('RequestContext: setting context with generated Id:', RequestContext.getContextId());
+		}
+	}
+
+	/**
+	 * Static method to set the context ID in the ClsService.
+	 *
+	 * @param cls The ClsService instance used to set the context ID.
+	 * @param id The ID to set in the ClsService context.
+	 */
+	public static setContextId(id: ID): void {
+		// Check if the ClsService is available
+		if (RequestContext.clsService) {
+			RequestContext.clsService.set(CLS_ID, id);
+		}
+	}
+
+	/**
+	 * Static method to get the context ID from the ClsService.
+	 *
+	 * @param cls The ClsService instance used to retrieve the context ID.
+	 * @returns The context ID or undefined if not set.
+	 */
+	public static getContextId(): ID | undefined {
+		// Check if the ClsService is available
+		if (RequestContext.clsService) {
+			return RequestContext.clsService.get(CLS_ID);
+		}
 	}
 
 	/**
@@ -81,9 +112,19 @@ export class RequestContext {
 	 * @returns The current RequestContext instance.
 	 */
 	static currentRequestContext(): RequestContext {
-		if (RequestContext?.logging) console.log('RequestContext: getting context ...');
-		const context = RequestContext?.clsService?.get(RequestContext.name);
-		if (RequestContext?.logging) console.log('RequestContext: got context with Id:', context?._id);
+		// Log if logging is enabled
+		if (this.loggingEnabled) {
+			console.log('RequestContext: retrieving context...');
+		}
+
+		// Retrieve the context from the ClsService
+		const context = this.clsService?.get(RequestContext.name);
+
+		// Log context ID if logging is enabled
+		if (this.loggingEnabled) {
+			console.log('RequestContext: context retrieved with ID:', context?.id);
+		}
+
 		return context;
 	}
 
@@ -126,12 +167,8 @@ export class RequestContext {
 	 * @returns {string | null} - The current tenant ID or null if not available.
 	 */
 	static currentTenantId(): string | null {
-		try {
-			const user: IUser | null = RequestContext.currentUser();
-			return user ? user.tenantId : null;
-		} catch (error) {
-			return null;
-		}
+		const user: IUser | null = RequestContext.currentUser();
+		return user?.tenantId || null;
 	}
 
 	/**
@@ -141,12 +178,8 @@ export class RequestContext {
 	 * @returns {string | null} - The current user ID or null if not available.
 	 */
 	static currentUserId(): string | null {
-		try {
-			const user: IUser | null = RequestContext.currentUser();
-			return user ? user.id : null;
-		} catch (error) {
-			return null;
-		}
+		const user: IUser | null = RequestContext.currentUser();
+		return user?.id || null;
 	}
 
 	/**
@@ -156,12 +189,8 @@ export class RequestContext {
 	 * @returns {string | null} - The current role ID or null if not available.
 	 */
 	static currentRoleId(): string | null {
-		try {
-			const user: IUser | null = RequestContext.currentUser();
-			return user ? user.roleId : null;
-		} catch (error) {
-			return null;
-		}
+		const user: IUser | null = RequestContext.currentUser();
+		return user?.roleId || null;
 	}
 
 	/**
