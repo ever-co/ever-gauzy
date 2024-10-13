@@ -394,10 +394,17 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 			const projectMembers: IOrganizationProjectEmployee[] = members.map((employee: IEmployee) =>
 				this.transformToProjectEmployee(employee, project, this.organization)
 			);
+			const combinedMembers = [
+				...(Array.isArray(projectMembers) ? projectMembers : []),
+				...(Array.isArray(project.members) ? project.members : [])
+			];
+
+			const uniqueMembers = Array.from(new Map(combinedMembers.map((member) => [member.id, member])).values());
 
 			return {
 				...project,
-				members: Array.isArray(project.members) ? [...project.members, ...projectMembers] : [...projectMembers]
+				managerIds: uniqueMembers.filter((member) => member.isManager).map((member) => member.employeeId),
+				memberIds: uniqueMembers.filter((member) => !member.isManager).map((member) => member.employeeId)
 			};
 		});
 	}
@@ -446,6 +453,7 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 		organization: IOrganization
 	): IOrganizationProjectEmployee => ({
 		...employee,
+		employeeId: employee.id,
 		organizationProject: project, // Assign the current project
 		organizationProjectId: project.id, // Assign the project's ID
 		organizationId: organization.id, // Assign the organization's ID

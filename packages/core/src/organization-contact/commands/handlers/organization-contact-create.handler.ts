@@ -74,6 +74,7 @@ export class OrganizationContactCreateHandler implements ICommandHandler<Organiz
 			}
 
 			// Create a new organization contact with the modified input
+
 			return await this._organizationContactService.create({
 				...input,
 				organizationId,
