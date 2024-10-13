@@ -609,17 +609,20 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.pipe(
 				filter(
 					(remoteTimer: IRemoteTimer) =>
+						!!remoteTimer.lastLog &&
 						this.xor(this.start, remoteTimer.running) &&
 						!this._isLockSyncProcess &&
 						this._isReady &&
 						this.inQueue.size === 0
 				),
 				tap(async (remoteTimer: IRemoteTimer) => {
-					this.projectSelectorService.selected = remoteTimer.lastLog.projectId;
-					this.taskSelectorService.selected = remoteTimer.lastLog.taskId;
-					this.noteService.note = remoteTimer.lastLog.description;
-					this.teamSelectorService.selected = remoteTimer.lastLog.organizationTeamId;
-					this.clientSelectorService.selected = remoteTimer.lastLog.organizationContactId;
+					this.timeTrackerFormService.setState({
+						clientId: remoteTimer.lastLog.organizationContactId,
+						teamId: remoteTimer.lastLog.organizationTeamId,
+						projectId: remoteTimer.lastLog.projectId,
+						note: remoteTimer.lastLog.description,
+						taskId: remoteTimer.lastLog.taskId
+					});
 					if (!this.isProcessingEnabled) {
 						await this.toggleStart(remoteTimer.running, false);
 					}
@@ -775,6 +778,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				if (!this._isReady && this.appSetting?.alwaysOn) {
 					this.electronService.ipcRenderer.send('show_ao');
 				}
+				this.timeTrackerFormService.setState({
+					clientId: arg.organizationContactId,
+					teamId: arg.organizationTeamId,
+					projectId: arg.projectId,
+					taskId: arg.taskId,
+					note: arg.note
+				});
 				const parallelizedTasks: Promise<void>[] = [
 					this.loadStatuses(),
 					this.clientSelectorService.load(),
@@ -1124,11 +1134,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 					if (isReadyForDeletion) {
 						const apiParams = {
+							...arg.timer,
 							token: this.token,
 							note: this.noteService.note,
 							projectId: this.projectSelectorService.selectedId,
 							taskId: this.taskSelectorService.selectedId,
 							organizationContactId: this.clientSelectorService.selectedId,
+							organizationTeamId: this.teamSelectorService.selectedId,
 							organizationId,
 							tenantId,
 							apiHost: this.apiHost
