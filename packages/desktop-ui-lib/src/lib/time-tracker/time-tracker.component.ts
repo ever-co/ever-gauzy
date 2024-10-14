@@ -2328,6 +2328,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			taskId: timer.taskId,
 			organizationTeamId: timer.organizationTeamId,
 			description: timer.description,
+			version: timer.version,
 			startedAt: timer.startedAt,
 			stoppedAt: new Date(),
 			...(session?.params && { ...session.params })
