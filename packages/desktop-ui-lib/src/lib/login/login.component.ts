@@ -4,6 +4,7 @@ import { NB_AUTH_OPTIONS, NbAuthService, NbLoginComponent } from '@nebular/auth'
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { ElectronService } from '../electron/services';
 import { LanguageElectronService } from '../language/language-electron.service';
+import { GAUZY_ENV } from '../constants';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -21,7 +22,9 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		public readonly cdr: ChangeDetectorRef,
 		public readonly router: Router,
 		@Inject(NB_AUTH_OPTIONS)
-		options: any
+		options: any,
+		@Inject(GAUZY_ENV)
+		private readonly environment: any
 	) {
 		super(nbAuthService, options, cdr, router);
 	}
@@ -31,10 +34,18 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	}
 
 	public forgot(): void {
-		this.electronService.shell.openExternal('https://app.gauzy.co/#/auth/request-password');
+		this.electronService.shell.openExternal(this.forgotPasswordUrl);
 	}
 
 	public register(): void {
-		this.electronService.shell.openExternal('https://app.gauzy.co/#/auth/register');
+		this.electronService.shell.openExternal(this.registerUrl);
+	}
+
+	get forgotPasswordUrl(): string {
+		return this.environment.FORGOT_PASSWORD_URL || 'https://app.gauzy.co/#/auth/request-password';
+	}
+
+	get registerUrl(): string {
+		return this.environment.REGISTER_URL || 'https://app.gauzy.co/#/auth/register';
 	}
 }

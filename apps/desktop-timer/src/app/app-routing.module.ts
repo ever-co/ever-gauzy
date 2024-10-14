@@ -5,8 +5,6 @@ import {
 	AlwaysOnComponent,
 	AuthGuard,
 	ImageViewerComponent,
-	NgxLoginComponent,
-	NoAuthGuard,
 	ScreenCaptureComponent,
 	ServerDownPage,
 	SettingsComponent,
@@ -15,7 +13,6 @@ import {
 	TimeTrackerComponent,
 	UpdaterComponent
 } from '@gauzy/desktop-ui-lib';
-import { NbAuthComponent, NbRequestPasswordComponent, NbResetPasswordComponent } from '@nebular/auth';
 import { AppModuleGuard } from './app.module.guards';
 
 const routes: Routes = [
@@ -25,29 +22,8 @@ const routes: Routes = [
 	},
 	{
 		path: 'auth',
-		component: NbAuthComponent,
-		children: [
-			{
-				path: '',
-				redirectTo: 'login',
-				pathMatch: 'full'
-			},
-			{
-				path: 'login',
-				component: NgxLoginComponent,
-				canActivate: [AppModuleGuard, NoAuthGuard]
-			},
-			{
-				path: 'request-password',
-				component: NbRequestPasswordComponent,
-				canActivate: [AppModuleGuard, NoAuthGuard]
-			},
-			{
-				path: 'reset-password',
-				component: NbResetPasswordComponent,
-				canActivate: [AppModuleGuard, NoAuthGuard]
-			}
-		]
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.authRoutes),
+		canActivate: [AppModuleGuard]
 	},
 	{
 		path: 'time-tracker',

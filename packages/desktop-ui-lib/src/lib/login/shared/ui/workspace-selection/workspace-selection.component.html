@@ -1,0 +1,53 @@
+<section class="workspace-selection-container">
+	<div class="logo">
+		<gauzy-logo></gauzy-logo>
+		<h4>
+			<strong>Welcome back!</strong><br />
+			You look nice today!
+		</h4>
+		<p>The email associated with multiple workspaces, please select one to continue</p>
+	</div>
+	<nb-card>
+		<nb-card-header class="text-start">
+			<div class="title">
+				Select Workspace for <span class="sub-title">{{ confirmedEmail }}</span>
+			</div>
+		</nb-card-header>
+		<nb-card-body class="p-2">
+			<nb-list>
+				<nb-list-item
+					*ngFor="let workspace of workspaces"
+					debounceClick
+					(throttledClick)="selectWorkspace(workspace)"
+				>
+					<div class="workspace-container">
+						<div class="workspace-image">
+							<img [src]="workspace.user?.tenant?.logo" />
+						</div>
+						<div class="workspace-info">
+							<div class="workspace-name">
+								{{ workspace.user?.tenant?.name }}
+							</div>
+							<div class="workspace-user">
+								<ngx-avatar
+									[name]="workspace.user?.name"
+									[src]="workspace.user?.imageUrl"
+									class="workspace"
+								></ngx-avatar>
+							</div>
+						</div>
+					</div>
+					<div class="continue-icon">
+						<span class="label-primary">Open</span>
+						<nb-icon
+							status="primary"
+							icon="arrow-forward-outline"
+							*gauzySpinnerButton="workspace.token === selected?.token"
+							[options]="{ animation: { type: 'shake' } }"
+						></nb-icon>
+					</div>
+				</nb-list-item>
+			</nb-list>
+		</nb-card-body>
+	</nb-card>
+</section>

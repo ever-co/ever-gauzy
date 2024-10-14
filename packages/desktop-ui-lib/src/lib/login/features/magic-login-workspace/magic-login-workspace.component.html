@@ -1,0 +1,33 @@
+<ng-container *ngIf="showPopup; then showWorkspacesTemplate; else showMessagesTemplate"></ng-container>
+
+<ng-template #showWorkspacesTemplate>
+	<ngx-workspace-selection
+		[workspaces]="workspaces"
+		[confirmedEmail]="confirmedEmail"
+		(selectedWorkspace)="signInWorkspace($event)"
+	></ngx-workspace-selection>
+</ng-template>
+
+<ng-template #showMessagesTemplate>
+	<div class="message-container" *ngIf="success || error">
+		<gauzy-logo></gauzy-logo>
+		<!-- Error Message -->
+		<div *ngIf="error" class="error">
+			<div class="text">
+				<p class="title">{{ 'WORKSPACES.FAIL_SIGNIN_TITLE' | translate }}</p>
+				<p class="sub-title">{{ 'WORKSPACES.FAIL_SIGNIN_SUB_TITLE' | translate }}</p>
+			</div>
+		</div>
+		<!-- Success Message -->
+		<div *ngIf="success" class="success">
+			<div class="text">
+				<p class="title">{{ 'WORKSPACES.SUCCESS_SIGNIN_TITLE' | translate }}</p>
+				<p class="sub-title">{{ 'WORKSPACES.SUCCESS_SIGNIN_SUB_TITLE' | translate }}</p>
+			</div>
+		</div>
+		<!-- Thanking text -->
+		<div>
+			<p class="thanking-text">{{ 'WORKSPACES.THANKING_TEXT' | translate }}</p>
+		</div>
+	</div>
+</ng-template>

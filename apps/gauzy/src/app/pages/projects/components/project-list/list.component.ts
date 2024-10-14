@@ -448,7 +448,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 							instance.rowData = cell.getRow().getData();
 							instance.value = cell.getValue();
 						},
-						isFilterable: {
+						filter: {
 							type: 'custom',
 							component: TagsColorFilterComponent
 						},
