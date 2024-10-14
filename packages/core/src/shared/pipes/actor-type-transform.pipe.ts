@@ -1,4 +1,3 @@
-import { Logger } from '@nestjs/common';
 import { ValueTransformer } from 'typeorm';
 import { ActorTypeEnum } from '@gauzy/contracts';
 
@@ -7,8 +6,6 @@ import { ActorTypeEnum } from '@gauzy/contracts';
  * (used in the application) and the integer values (stored in the database).
  */
 export class ActorTypeTransformerPipe implements ValueTransformer {
-	private readonly logger = new Logger(ActorTypeTransformerPipe.name);
-
 	/**
 	 * Converts the enum string value to its integer representation when writing to the database.
 	 *
@@ -16,7 +13,6 @@ export class ActorTypeTransformerPipe implements ValueTransformer {
 	 * @returns The corresponding integer value to be stored in the database (0 for System, 1 for User).
 	 */
 	to(value: ActorTypeEnum): number {
-		this.logger.debug(`ActorTypeTransformerPipe: converting ${value} to integer`);
 		return value === ActorTypeEnum.User ? 1 : 0; // 1 for 'User', 0 for 'System' (default)
 	}
 
@@ -27,7 +23,6 @@ export class ActorTypeTransformerPipe implements ValueTransformer {
 	 * @returns The corresponding `ActorTypeEnum` ('System' for 0, 'User' for 1).
 	 */
 	from(value: number): ActorTypeEnum {
-		this.logger.debug(`ActorTypeTransformerPipe: converting ${value} to enum`);
 		return value === 1 ? ActorTypeEnum.User : ActorTypeEnum.System;
 	}
 }
