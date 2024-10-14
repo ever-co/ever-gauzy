@@ -6,6 +6,7 @@ import { isMySQL, isPostgres } from '@gauzy/config';
 import { BaseEntityEnum, ActionTypeEnum, ActorTypeEnum, IActivityLog, ID, IUser, JsonData } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
+import { ActorTypeTransformerPipe } from '../shared/pipes';
 import { MikroOrmActivityLogRepository } from './repository/mikro-orm-activity-log.repository';
 
 @MultiORMEntity('activity_log', { mikroOrmRepository: () => MikroOrmActivityLogRepository })
@@ -26,19 +27,19 @@ export class ActivityLog extends TenantOrganizationBaseEntity implements IActivi
 	@MultiORMColumn()
 	entityId: ID;
 
-	@ApiProperty({ type: () => String, enum: ActionTypeEnum })
+	@ApiProperty({ enum: ActionTypeEnum })
 	@IsNotEmpty()
 	@IsEnum(ActionTypeEnum)
 	@ColumnIndex()
 	@MultiORMColumn()
 	action: ActionTypeEnum;
 
-	@ApiPropertyOptional({ type: () => String, enum: ActorTypeEnum })
+	@ApiPropertyOptional({ enum: ActorTypeEnum })
 	@IsOptional()
 	@IsEnum(ActorTypeEnum)
 	@ColumnIndex()
-	@MultiORMColumn({ nullable: true })
-	actorType?: ActorTypeEnum;
+	@MultiORMColumn({ type: 'int', nullable: true, transformer: new ActorTypeTransformerPipe() })
+	actorType?: ActorTypeEnum; // Will be stored as 0 or 1 in DB
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

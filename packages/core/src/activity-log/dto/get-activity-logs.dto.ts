@@ -15,7 +15,7 @@ export const allowedOrderDirections = ['ASC', 'DESC', 'asc', 'desc'];
 export class GetActivityLogsDTO extends IntersectionType(
 	TenantOrganizationBaseDTO,
 	PickType(PaginationParams<ActivityLog>, ['skip', 'take', 'relations']),
-	PickType(ActivityLog, ['isActive', 'isArchived'])
+	PickType(ActivityLog, ['isActive', 'isArchived', 'actorType'])
 ) {
 	// Filter by entity (example: Organization, Task, OrganizationContact)
 	@ApiPropertyOptional({ enum: BaseEntityEnum })
@@ -34,12 +34,6 @@ export class GetActivityLogsDTO extends IntersectionType(
 	@IsOptional()
 	@IsEnum(ActionTypeEnum)
 	action: ActionTypeEnum;
-
-	// Filter by actorType (example: SYSTEM, USER)
-	@ApiPropertyOptional({ type: () => String, enum: ActorTypeEnum })
-	@IsOptional()
-	@IsEnum(ActorTypeEnum)
-	actorType?: ActorTypeEnum;
 
 	// Filter by orderBy (example: createdAt, updatedAt, entity, action)
 	@ApiPropertyOptional({ type: () => String, enum: allowedOrderFields })

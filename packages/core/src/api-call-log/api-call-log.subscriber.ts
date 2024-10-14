@@ -8,7 +8,6 @@ import { ApiCallLog } from './api-call-log.entity';
 @EventSubscriber()
 export class ApiCallLogSubscriber extends BaseEntityEventSubscriber<ApiCallLog> {
 	private readonly logger = new Logger(ApiCallLogSubscriber.name);
-
 	/**
 	 * Indicates that this subscriber only listen to ApiCallLog events.
 	 */
@@ -26,15 +25,22 @@ export class ApiCallLogSubscriber extends BaseEntityEventSubscriber<ApiCallLog> 
 	 */
 	async beforeEntityCreate(entity: ApiCallLog): Promise<void> {
 		try {
-			// Check if the database is SQLite and the entity's metaData is a JavaScript object
+			// Check if the database is SQLite and ensure that requestHeaders, requestBody, and responseBody are strings
 			if (isSqlite() || isBetterSqlite3()) {
-				entity.requestHeaders = JSON.stringify(entity.requestHeaders);
-				entity.requestBody = JSON.stringify(entity.requestBody);
-				entity.responseBody = JSON.stringify(entity.responseBody);
+				['requestHeaders', 'requestBody', 'responseBody'].forEach((field) => {
+					try {
+						if (typeof entity[field] === 'object') {
+							entity[field] = JSON.stringify(entity[field]); // Convert to JSON string
+						}
+					} catch (error) {
+						console.error(`Failed to stringify ${field}:`, error);
+						entity[field] = '{}'; // Set to an empty JSON object string in case of an error
+					}
+				});
 			}
 		} catch (error) {
 			// In case of error during JSON serialization, reset metaData to an empty object
-			this.logger.log('Error parsing JSON data in beforeEntityCreate:', error);
+			this.logger.error('Error parsing JSON data in beforeEntityCreate:', error);
 		}
 	}
 
@@ -49,22 +55,22 @@ export class ApiCallLogSubscriber extends BaseEntityEventSubscriber<ApiCallLog> 
 	 */
 	async afterEntityLoad(entity: ApiCallLog, em?: MultiOrmEntityManager): Promise<void> {
 		try {
-			console.log('Parsing JSON data in afterEntityLoad: %s', entity);
 			// Check if the database is SQLite and attempt to parse JSON fields
 			if (isSqlite() || isBetterSqlite3()) {
-				if (entity.requestHeaders && typeof entity.requestHeaders === 'string') {
-					entity.requestHeaders = JSON.parse(entity.requestHeaders);
-				}
-				if (entity.requestBody && typeof entity.requestBody === 'string') {
-					entity.requestBody = JSON.parse(entity.requestBody);
-				}
-				if (entity.responseBody && typeof entity.responseBody === 'string') {
-					entity.responseBody = JSON.parse(entity.responseBody);
-				}
+				['requestHeaders', 'requestBody', 'responseBody'].forEach((field) => {
+					if (entity[field] && typeof entity[field] === 'string') {
+						try {
+							entity[field] = JSON.parse(entity[field]);
+						} catch (error) {
+							console.error(`Failed to parse ${field}:`, error);
+							entity[field] = {}; // Set to an empty object in case of a parsing error
+						}
+					}
+				});
 			}
 		} catch (error) {
 			// Log the error and reset the data to an empty object if JSON parsing fails
-			this.logger.log('Error parsing JSON data in afterEntityLoad:', error);
+			this.logger.error('Error parsing JSON data in afterEntityLoad:', error);
 		}
 	}
 }
