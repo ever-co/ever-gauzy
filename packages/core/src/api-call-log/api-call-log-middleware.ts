@@ -40,8 +40,20 @@ export class ApiCallLogMiddleware implements NestMiddleware {
 		try {
 			// Get the authorization header
 			const authHeader = req.headers['authorization'];
-			// Extract the token from the authorization header
-			const token = authHeader?.split(' ')[1];
+
+			// Initialize token variable
+			let token: string | undefined;
+
+			// Check if the authorization header exists
+			if (authHeader) {
+				// Use a regular expression to extract the token
+				const bearerTokenMatch = authHeader.match(/^Bearer\s+(.+)$/i);
+
+				if (bearerTokenMatch && bearerTokenMatch[1]) {
+					token = bearerTokenMatch[1];
+				}
+			}
+
 			// Decode the JWT token and retrieve the user ID
 			if (!userId && token) {
 				const jwtPayload: string | jwt.JwtPayload = jwt.decode(token);
