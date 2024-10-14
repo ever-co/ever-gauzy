@@ -2,7 +2,7 @@ import { Injectable, Logger, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import * as jwt from 'jsonwebtoken';
-import { ID, RequestMethod } from '@gauzy/contracts';
+import { ID } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { ApiCallLogService } from './api-call-log.service';
 import { ApiCallLog } from './api-call-log.entity';
@@ -10,7 +10,6 @@ import { ApiCallLog } from './api-call-log.entity';
 @Injectable()
 export class ApiCallLogMiddleware implements NestMiddleware {
 	private readonly logger = new Logger(ApiCallLogMiddleware.name);
-	private readonly loggingEnabled = true;
 
 	constructor(private readonly apiCallLogService: ApiCallLogService) {}
 
@@ -53,8 +52,8 @@ export class ApiCallLogMiddleware implements NestMiddleware {
 		}
 
 		// Redact sensitive data from request headers and body
-		const requestHeaders = this.redactSensitiveData(req.headers, ['authorization', 'token']);
-		const requestBody = this.redactSensitiveData(req.body, ['password']);
+		const requestHeaders = this.redactSensitiveData(req.headers, ['authorization', 'Authorization', 'token']);
+		const requestBody = this.redactSensitiveData(req.body, ['password', 'hash', 'token']);
 
 		// Capture the original end method of the response object to log the response body
 		const originalEnd = res.end;
@@ -82,7 +81,7 @@ export class ApiCallLogMiddleware implements NestMiddleware {
 				correlationId,
 				organizationId,
 				tenantId,
-				method: this.mapHttpMethodToEnum(req.method),
+				method: req.method,
 				url: req.originalUrl,
 				protocol: req.protocol || null,
 				ipAddress: req.ip || null,
@@ -144,22 +143,5 @@ export class ApiCallLogMiddleware implements NestMiddleware {
 		}
 
 		return cleanedData;
-	}
-
-	/**
-	 * Maps an HTTP method string (e.g., 'GET', 'POST') to the corresponding RequestMethod enum.
-	 *
-	 * This function takes an HTTP method as a string and returns the matching RequestMethod enum.
-	 * It handles case-insensitivity by converting the input string to uppercase.
-	 * If the input does not match any valid HTTP method, it defaults to `RequestMethod.ALL`.
-	 *
-	 * @param method The HTTP method string to map (e.g., 'GET', 'POST').
-	 * @returns The corresponding RequestMethod enum value.
-	 */
-	mapHttpMethodToEnum(method: string): RequestMethod {
-		const methodUpper = method.toUpperCase(); // Convert the input string to uppercase
-
-		// Return the corresponding RequestMethod enum value, or RequestMethod.ALL if not found
-		return RequestMethod[methodUpper as keyof typeof RequestMethod] ?? RequestMethod.ALL;
 	}
 }
