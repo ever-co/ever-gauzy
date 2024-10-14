@@ -31,7 +31,7 @@ export class ActivityLogSubscriber extends BaseEntityEventSubscriber<ActivityLog
 			// On error, reset data to an empty JSON object
 			entity.data = JSON.stringify({});
 			// Log the error and reset the data to an empty object if JSON parsing fails
-			console.error('Error stringifying data in serializeDataForSQLite:', error);
+			console.error('Error stringify data in serializeDataForSQLite:', error);
 		}
 	}
 
