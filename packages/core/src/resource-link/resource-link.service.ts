@@ -61,20 +61,7 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 				BaseEntityEnum.ResourceLink,
 				`${resourceLink.title} for ${resourceLink.entity}`
 			);
-
-			// Emit an event to log the activity
-			this._eventBus.publish(
-				new ActivityLogEvent({
-					entity: BaseEntityEnum.ResourceLink,
-					entityId: resourceLink.id,
-					action: ActionTypeEnum.Created,
-					actorType: ActorTypeEnum.User,
-					description,
-					data: resourceLink,
-					organizationId: resourceLink.organizationId,
-					tenantId
-				})
-			);
+			this.logActivity(ActionTypeEnum.Created, resourceLink, description);
 
 			return resourceLink;
 		} catch (error) {
@@ -102,6 +89,12 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 				id
 			});
 
+			// Compare values before and after update then add updates to fields
+			const { updatedFields, previousValues, updatedValues } = activityLogUpdatedFieldsAndValues(
+				updatedResourceLink,
+				input
+			);
+
 			// Generate the activity log description.
 			const description = generateActivityLogDescription(
 				ActionTypeEnum.Updated,
@@ -109,27 +102,14 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 				`${resourceLink.title} for ${resourceLink.entity}`
 			);
 
-			// Compare values before and after update then add updates to fields
-			const { updatedFields, previousValues, updatedValues } = activityLogUpdatedFieldsAndValues(
+			//Log activity
+			this.logActivity(
+				ActionTypeEnum.Updated,
 				updatedResourceLink,
-				input
-			);
-
-			// Emit event to log activity
-			this._eventBus.publish(
-				new ActivityLogEvent({
-					entity: BaseEntityEnum.ResourceLink,
-					entityId: updatedResourceLink.id,
-					action: ActionTypeEnum.Updated,
-					actorType: ActorTypeEnum.User,
-					description,
-					updatedFields,
-					updatedValues,
-					previousValues,
-					data: updatedResourceLink,
-					organizationId: updatedResourceLink.organizationId,
-					tenantId: updatedResourceLink.tenantId
-				})
+				description,
+				updatedFields,
+				previousValues,
+				updatedValues
 			);
 
 			// return updated Resource Link
@@ -138,5 +118,30 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 			console.log(error); // Debug Logging
 			throw new BadRequestException('Resource Link update failed', error);
 		}
+	}
+
+	private logActivity(
+		action: ActionTypeEnum,
+		resourceLink: ResourceLink,
+		description: string,
+		updatedFields?: string[],
+		previousValues?: any,
+		updatedValues?: any
+	) {
+		this._eventBus.publish(
+			new ActivityLogEvent({
+				entity: BaseEntityEnum.ResourceLink,
+				entityId: resourceLink.id,
+				action,
+				actorType: ActorTypeEnum.User,
+				description,
+				updatedFields,
+				updatedValues,
+				previousValues,
+				data: resourceLink,
+				organizationId: resourceLink.organizationId,
+				tenantId: resourceLink.tenantId
+			})
+		);
 	}
 }
