@@ -5,7 +5,6 @@ import {
 	ActionTypeEnum,
 	EntityEnum,
 	ActorTypeEnum,
-	FavoriteEntityEnum,
 	ID,
 	IEmployee,
 	IOrganizationGithubRepository,
@@ -37,7 +36,7 @@ import {
 	TypeOrmOrganizationProjectRepository
 } from './repository';
 
-@FavoriteService(FavoriteEntityEnum.OrganizationProject)
+@FavoriteService(EntityEnum.OrganizationProject)
 @Injectable()
 export class OrganizationProjectService extends TenantAwareCrudService<OrganizationProject> {
 	constructor(
