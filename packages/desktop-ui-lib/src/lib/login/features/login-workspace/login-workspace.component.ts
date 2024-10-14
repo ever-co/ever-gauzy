@@ -46,7 +46,7 @@ export class NgxLoginWorkspaceComponent implements OnInit {
 		private readonly _router: Router
 	) {
 		const navigation = this._router.getCurrentNavigation();
-		this.state = navigation?.extras?.state as { email: string; password: string };
+		this.state = navigation?.extras?.state;
 	}
 
 	ngOnInit(): void {
@@ -166,9 +166,9 @@ export class NgxLoginWorkspaceComponent implements OnInit {
 
 	private handleWorkspaceNavigation(): void {
 		if (this.state) {
-			if (!this.state.email || !this.state.password) return;
-			this.form.patchValue(this.state);
-			this.onSubmit();
+			this.workspaces = this.state.workspaces;
+			this.showPopup = this.state.show_popup;
+			this.confirmedEmail = this.state.confirmed_email;
 		}
 	}
 }
