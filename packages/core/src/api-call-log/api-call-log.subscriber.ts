@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { EventSubscriber } from 'typeorm';
 import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
@@ -6,6 +7,8 @@ import { ApiCallLog } from './api-call-log.entity';
 
 @EventSubscriber()
 export class ApiCallLogSubscriber extends BaseEntityEventSubscriber<ApiCallLog> {
+	private readonly logger = new Logger(ApiCallLogSubscriber.name);
+
 	/**
 	 * Indicates that this subscriber only listen to ApiCallLog events.
 	 */
@@ -31,7 +34,7 @@ export class ApiCallLogSubscriber extends BaseEntityEventSubscriber<ApiCallLog> 
 			}
 		} catch (error) {
 			// In case of error during JSON serialization, reset metaData to an empty object
-			entity.requestHeaders = JSON.stringify({});
+			this.logger.log('Error parsing JSON data in beforeEntityCreate:', error);
 		}
 	}
 
@@ -61,10 +64,7 @@ export class ApiCallLogSubscriber extends BaseEntityEventSubscriber<ApiCallLog> 
 			}
 		} catch (error) {
 			// Log the error and reset the data to an empty object if JSON parsing fails
-			console.error('Error parsing JSON data in afterEntityLoad:', error);
-			entity.requestHeaders = {};
-			entity.requestBody = {};
-			entity.responseBody = {};
+			this.logger.log('Error parsing JSON data in afterEntityLoad:', error);
 		}
 	}
 }

@@ -56,11 +56,11 @@ export class ApiCallLogController {
 	@Delete('/:id')
 	@UseValidationPipe()
 	async deleteById(@Param('id') id: ID, @Query() filters: DeleteApiCallLogDTO): Promise<DeleteResult | ApiCallLog> {
-		// If the forceDelete flag is set, perform a soft delete
+		// If the forceDelete flag is set, perform a hard delete
 		if (filters.forceDelete) {
-			return this._apiCallLogService.softDelete(id, { where: { ...filters } });
+			return this._apiCallLogService.delete(id, { where: { ...filters } });
 		}
-		// Otherwise, perform a hard delete
-		return this._apiCallLogService.delete(id, { where: { ...filters } });
+		// Otherwise, perform a soft delete
+		return this._apiCallLogService.softDelete(id, { where: { ...filters } });
 	}
 }

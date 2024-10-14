@@ -166,7 +166,7 @@ export class RequestContext {
 	 *
 	 * @returns {string | null} - The current tenant ID or null if not available.
 	 */
-	static currentTenantId(): string | null {
+	static currentTenantId(): ID | null {
 		const user: IUser | null = RequestContext.currentUser();
 		return user?.tenantId || null;
 	}
@@ -177,7 +177,7 @@ export class RequestContext {
 	 *
 	 * @returns {string | null} - The current user ID or null if not available.
 	 */
-	static currentUserId(): string | null {
+	static currentUserId(): ID | null {
 		const user: IUser | null = RequestContext.currentUser();
 		return user?.id || null;
 	}
@@ -188,7 +188,7 @@ export class RequestContext {
 	 *
 	 * @returns {string | null} - The current role ID or null if not available.
 	 */
-	static currentRoleId(): string | null {
+	static currentRoleId(): ID | null {
 		const user: IUser | null = RequestContext.currentUser();
 		return user?.roleId || null;
 	}
