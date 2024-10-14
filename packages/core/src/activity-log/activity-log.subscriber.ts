@@ -14,6 +14,32 @@ export class ActivityLogSubscriber extends BaseEntityEventSubscriber<ActivityLog
 	}
 
 	/**
+	 * @description Serialize Activity Log fields to support SQLite DB before creation
+	 * @param {ActivityLog} entity - The ActivityLog entity that is about to be created or updated.
+	 * @param {string[]} fields - Array fields to be serialized
+	 */
+	private serializeFields(entity: ActivityLog, fields: string[]): void {
+		fields.forEach((field) => {
+			if (Array.isArray(entity[field]) || typeof entity[field] === 'object') {
+				entity[field] = JSON.stringify(entity[field]);
+			}
+		});
+	}
+
+	/**
+	 * @description de-serialize Activity Log fields to support SQLite DB after load data
+	 * @param {ActivityLog} entity - The ActivityLog entity that is about to be loaded or updated.
+	 * @param {string[]} fields - Array fields to be de-serialized
+	 */
+	private deserializeFields(entity: ActivityLog, fields: string[]): void {
+		fields.forEach((field) => {
+			if (entity[field] && typeof entity[field] === 'string') {
+				entity[field] = JSON.parse(entity[field]);
+			}
+		});
+	}
+
+	/**
 	 * Called before an ActivityLog entity is inserted or updated in the database.
 	 * This method prepares the entity for insertion or update by serializing the data property to a JSON string
 	 * for SQLite databases.
@@ -31,15 +57,20 @@ export class ActivityLogSubscriber extends BaseEntityEventSubscriber<ActivityLog
 				}
 
 				// Serialize `updatedValues`, `previousValues`, `updatedEntities`, `previousEntities` if they are arrays or objects
-				['updatedValues', 'previousValues', 'updatedEntities', 'previousEntities'].forEach((field) => {
-					if (Array.isArray(entity[field]) || typeof entity[field] === 'object') {
-						entity[field] = JSON.stringify(entity[field]);
-					}
-				});
+				this.serializeFields(entity, [
+					'updatedValues',
+					'previousValues',
+					'updatedEntities',
+					'previousEntities'
+				]);
 			}
 		} catch (error) {
 			// Log the error and reset the data to an empty object if JSON parsing fails
 			console.error('Error stringify data in serializeDataForSQLite:', error);
+			entity.data = '{}';
+			['updatedValues', 'previousValues', 'updatedEntities', 'previousEntities'].forEach((field) => {
+				entity[field] = '{}';
+			});
 		}
 	}
 
@@ -84,16 +115,20 @@ export class ActivityLogSubscriber extends BaseEntityEventSubscriber<ActivityLog
 				}
 
 				// Parse `updatedValues`, `previousValues`, `updatedEntities`, `previousEntities` if they are strings
-				['updatedValues', 'previousValues', 'updatedEntities', 'previousEntities'].forEach((field) => {
-					if (entity[field] && typeof entity[field] === 'string') {
-						entity[field] = JSON.parse(entity[field]);
-					}
-				});
+				this.deserializeFields(entity, [
+					'updatedValues',
+					'previousValues',
+					'updatedEntities',
+					'previousEntities'
+				]);
 			}
 		} catch (error) {
-			entity.data = {};
 			// Log the error and reset the data to an empty object if JSON parsing fails
 			console.error('Error parsing JSON data in afterEntityLoad:', error);
+			entity.data = {};
+			['updatedValues', 'previousValues', 'updatedEntities', 'previousEntities'].forEach((field) => {
+				entity[field] = {};
+			});
 		}
 	}
 }
