@@ -175,38 +175,80 @@ export class Store {
 		);
 	}
 
+	// Getter and Setter for selectedOrganization
 	get selectedOrganization(): IOrganization {
-		const { selectedOrganization } = this.appQuery.getValue();
-		return selectedOrganization;
-	}
-
-	set selectedEmployee(employee: ISelectedEmployee) {
-		this.appStore.update({
-			selectedEmployee: employee
-		});
-	}
-
-	get selectedEmployee(): ISelectedEmployee {
-		const { selectedEmployee } = this.appQuery.getValue();
-		return selectedEmployee;
+		/**
+		 * Retrieves the currently selected organization from the application's state.
+		 *
+		 * @returns {IOrganization} - The selected organization object.
+		 */
+		return this.appQuery.getValue().selectedOrganization;
 	}
 
 	set selectedOrganization(organization: IOrganization) {
-		this.appStore.update({
-			selectedOrganization: organization
-		});
+		/**
+		 * Updates the selected organization in the application's state.
+		 *
+		 * @param {IOrganization} organization - The organization object to be set as the selected organization.
+		 */
+		this.appStore.update({ selectedOrganization: organization });
+	}
+
+	// Getter and Setter for selectedEmployee
+	get selectedEmployee(): ISelectedEmployee {
+		/**
+		 * Retrieves the currently selected employee from the application's state.
+		 *
+		 * @returns {ISelectedEmployee} - The selected employee object.
+		 */
+		return this.appQuery.getValue().selectedEmployee;
+	}
+
+	set selectedEmployee(employee: ISelectedEmployee) {
+		/**
+		 * Updates the selected employee in the application's state.
+		 *
+		 * @param {ISelectedEmployee} employee - The employee object to be set as the selected employee.
+		 */
+		this.appStore.update({ selectedEmployee: employee });
+	}
+
+	// Getter and Setter for selectedProject
+	get selectedProject(): IOrganizationProject {
+		/**
+		 * Retrieves the currently selected project from the application's state.
+		 *
+		 * @returns {IOrganizationProject} - The selected project object.
+		 */
+		return this.appQuery.getValue().selectedProject;
 	}
 
 	set selectedProject(project: IOrganizationProject) {
-		this.appStore.update({
-			selectedProject: project
-		});
+		/**
+		 * Updates the selected project in the application's state.
+		 *
+		 * @param {IOrganizationProject} project - The project object to be set as the selected project.
+		 */
+		this.appStore.update({ selectedProject: project });
+	}
+
+	// Getter and Setter for selectedTeam
+	get selectedTeam(): IOrganizationTeam {
+		/**
+		 * Retrieves the currently selected team from the application's state.
+		 *
+		 * @returns {IOrganizationTeam} - The selected team object.
+		 */
+		return this.appQuery.getValue().selectedTeam;
 	}
 
 	set selectedTeam(team: IOrganizationTeam) {
-		this.appStore.update({
-			selectedTeam: team
-		});
+		/**
+		 * Updates the selected team in the application's state.
+		 *
+		 * @param {IOrganizationTeam} team - The team object to be set as the selected team.
+		 */
+		this.appStore.update({ selectedTeam: team });
 	}
 
 	set systemLanguages(languages: ILanguage[]) {

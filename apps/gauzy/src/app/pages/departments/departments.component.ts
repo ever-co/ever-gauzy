@@ -151,7 +151,7 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent implemen
 				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
 					type: 'string',
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -178,7 +178,7 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent implemen
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getRawValue();
 					},
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: TagsColorFilterComponent
 					},

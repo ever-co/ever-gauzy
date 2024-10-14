@@ -1,11 +1,10 @@
 import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { NB_AUTH_OPTIONS, NbAuthService, NbLoginComponent } from '@nebular/auth';
 import { UntilDestroy } from '@ngneat/until-destroy';
-import { GAUZY_ENV } from '../constants/app.constants';
 import { ElectronService } from '../electron/services';
 import { LanguageElectronService } from '../language/language-electron.service';
+import { GAUZY_ENV } from '../constants';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -24,9 +23,8 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		public readonly router: Router,
 		@Inject(NB_AUTH_OPTIONS)
 		options: any,
-		private readonly _domSanitizer: DomSanitizer,
 		@Inject(GAUZY_ENV)
-		private readonly _environment: any
+		private readonly environment: any
 	) {
 		super(nbAuthService, options, cdr, router);
 	}
@@ -36,14 +34,18 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	}
 
 	public forgot(): void {
-		this.electronService.shell.openExternal('https://app.gauzy.co/#/auth/request-password');
+		this.electronService.shell.openExternal(this.forgotPasswordUrl);
 	}
 
 	public register(): void {
-		this.electronService.shell.openExternal('https://app.gauzy.co/#/auth/register');
+		this.electronService.shell.openExternal(this.registerUrl);
 	}
 
-	public get logoUrl(): SafeResourceUrl {
-		return this._domSanitizer.bypassSecurityTrustResourceUrl(this._environment.PLATFORM_LOGO);
+	get forgotPasswordUrl(): string {
+		return this.environment.FORGOT_PASSWORD_URL || 'https://app.gauzy.co/#/auth/request-password';
+	}
+
+	get registerUrl(): string {
+		return this.environment.REGISTER_URL || 'https://app.gauzy.co/#/auth/register';
 	}
 }

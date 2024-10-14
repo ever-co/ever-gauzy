@@ -939,7 +939,10 @@
 						"tsConfig": "apps/desktop/tsconfig.app.json",
 						"aot": true,
 						"stylePreprocessorOptions": {
-							"includePaths": ["apps/desktop-timer/src/assets/styles"]
+							"includePaths": [
+								"apps/desktop-timer/src/assets/styles",
+								"packages/ui-core/static/styles"
+							]
 						},
 						"assets": ["apps/desktop/src/favicon.ico", "apps/desktop/src/assets"],
 						"styles": [
@@ -1123,7 +1126,10 @@
 						"tsConfig": "apps/desktop-timer/tsconfig.app.json",
 						"aot": true,
 						"stylePreprocessorOptions": {
-							"includePaths": ["apps/desktop-timer/src/assets/styles"]
+							"includePaths": [
+								"apps/desktop-timer/src/assets/styles",
+								"packages/ui-core/static/styles"
+							]
 						},
 						"assets": [
 							"apps/desktop-timer/src/favicon.ico",
@@ -1272,7 +1278,10 @@
 						],
 						"scripts": [],
 						"stylePreprocessorOptions": {
-							"includePaths": ["apps/server/src/assets/styles"]
+							"includePaths": [
+								"apps/server/src/assets/styles",
+								"packages/ui-core/static/styles"
+							]
 						}
 					},
 					"configurations": {
@@ -1525,7 +1534,10 @@
 						],
 						"scripts": [],
 						"stylePreprocessorOptions": {
-							"includePaths": ["apps/server-api/src/assets/styles"]
+							"includePaths": [
+								"apps/server-api/src/assets/styles",
+								"packages/ui-core/static/styles"
+							]
 						}
 					},
 					"configurations": {

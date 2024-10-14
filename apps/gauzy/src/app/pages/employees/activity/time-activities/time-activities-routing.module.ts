@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
+import { BookmarkQueryParamsResolver } from '@gauzy/ui-core/core';
 import { DateRangePickerResolver } from '@gauzy/ui-core/shared';
 import { TimeActivitiesComponent } from './time-activities/time-activities.component';
 
@@ -16,7 +17,10 @@ const routes: Routes = [
 				isSingleDatePicker: true
 			}
 		},
-		resolve: { dates: DateRangePickerResolver }
+		resolve: {
+			dates: DateRangePickerResolver,
+			bookmarkParams: BookmarkQueryParamsResolver
+		}
 	}
 ];
 

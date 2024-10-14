@@ -438,7 +438,7 @@ export class ProposalComponent extends PaginationFilterBaseComponent implements 
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					},
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -467,7 +467,7 @@ export class ProposalComponent extends PaginationFilterBaseComponent implements 
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getRawValue();
 					},
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: OrganizationContactFilterComponent
 					},
@@ -518,7 +518,7 @@ export class ProposalComponent extends PaginationFilterBaseComponent implements 
 					instance.rowData = cell.getRow().getData();
 					instance.value = cell.getRawValue();
 				},
-				isFilterable: {
+				filter: {
 					type: 'custom',
 					component: TagsColorFilterComponent
 				},

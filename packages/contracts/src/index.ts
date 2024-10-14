@@ -1,6 +1,7 @@
 export * from './accounting-template.model';
 /** App Setting Model */
 export * from './activity-log.model';
+export * from './api-call-log.model';
 export * from './app.model';
 export * from './appointment-employees.model';
 export * from './approval-policy.model';
@@ -104,6 +105,7 @@ export * from './report.model';
 export * from './request-approval-employee.model';
 export * from './request-approval-team.model';
 export * from './request-approval.model';
+export * from './resource-link.model';
 export * from './role-permission.model';
 export * from './role.model';
 export * from './screenshot.model';
@@ -135,13 +137,16 @@ export * from './user.model';
 export * from './wakatime.model';
 export * from './activity-watch.model';
 
-export { IBaseEntityModel as BaseEntityModel, ID } from './base-entity.model';
 export {
+	IBaseEntityModel as BaseEntityModel,
+	ID,
 	IBasePerTenantAndOrganizationEntityModel,
 	IBasePerTenantEntityModel,
 	IBaseSoftDeleteEntityModel,
 	IBaseRelationsEntityModel,
-	ActorTypeEnum
+	ActorTypeEnum,
+	JsonData,
+	EntityEnum
 } from './base-entity.model';
 
 export * from './proxy.model';

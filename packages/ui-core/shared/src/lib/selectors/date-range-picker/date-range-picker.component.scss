@@ -38,7 +38,7 @@ $button-radius: nb-theme(button-rectangle-border-radius);
         color: nb-theme(gauzy-text-color-2);
     }
     input.single-range {
-        width: 103px; 
+        width: 103px;
     }
     input.double-range {
         width: 190px;
@@ -129,6 +129,7 @@ $button-radius: nb-theme(button-rectangle-border-radius);
                         button {
                             border-radius: $button-radius;
                             color: nb-theme(text-basic-color);
+							text-transform: capitalize;
                             &.active {
                                 background-color: nb-theme(color-primary-active);
                             }

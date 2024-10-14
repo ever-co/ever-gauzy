@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 import {
 	ActionTypeEnum,
-	ActivityLogEntityEnum,
+	EntityEnum,
 	ActorTypeEnum,
 	FavoriteEntityEnum,
 	IActivityLogUpdatedValues,
@@ -120,14 +120,14 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 			// Generate the activity log description.
 			const description = generateActivityLogDescription(
 				ActionTypeEnum.Created,
-				ActivityLogEntityEnum.OrganizationSprint,
+				EntityEnum.OrganizationSprint,
 				sprint.name
 			);
 
 			// Emit an event to log the activity
 			this._eventBus.publish(
 				new ActivityLogEvent({
-					entity: ActivityLogEntityEnum.OrganizationSprint,
+					entity: EntityEnum.OrganizationSprint,
 					entityId: sprint.id,
 					action: ActionTypeEnum.Created,
 					actorType: ActorTypeEnum.User,
@@ -196,7 +196,7 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 
 				const description = generateActivityLogDescription(
 					ActionTypeEnum.Updated,
-					ActivityLogEntityEnum.OrganizationSprint,
+					EntityEnum.OrganizationSprint,
 					updatedSprint.name
 				);
 
@@ -219,7 +219,7 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 				// Emit event to log activity
 				this._eventBus.publish(
 					new ActivityLogEvent({
-						entity: ActivityLogEntityEnum.OrganizationSprint,
+						entity: EntityEnum.OrganizationSprint,
 						entityId: updatedSprint.id,
 						action: ActionTypeEnum.Updated,
 						actorType: ActorTypeEnum.User,

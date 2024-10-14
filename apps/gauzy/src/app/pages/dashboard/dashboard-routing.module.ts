@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { PermissionsGuard } from '@gauzy/ui-core/core';
+import { PermissionsGuard, BookmarkQueryParamsResolver } from '@gauzy/ui-core/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { DateRangePickerResolver } from '@gauzy/ui-core/shared';
 import { DashboardComponent } from './dashboard.component';
@@ -33,7 +33,8 @@ const routes: Routes = [
 					}
 				},
 				resolve: {
-					dates: DateRangePickerResolver
+					dates: DateRangePickerResolver,
+					bookmarkParams: BookmarkQueryParamsResolver
 				}
 			},
 			{
@@ -48,7 +49,8 @@ const routes: Routes = [
 					}
 				},
 				resolve: {
-					dates: DateRangePickerResolver
+					dates: DateRangePickerResolver,
+					bookmarkParams: BookmarkQueryParamsResolver
 				}
 			},
 			{
@@ -60,7 +62,8 @@ const routes: Routes = [
 					}
 				},
 				resolve: {
-					dates: DateRangePickerResolver
+					dates: DateRangePickerResolver,
+					bookmarkParams: BookmarkQueryParamsResolver
 				}
 			},
 			{
@@ -76,7 +79,8 @@ const routes: Routes = [
 					}
 				},
 				resolve: {
-					dates: DateRangePickerResolver
+					dates: DateRangePickerResolver,
+					bookmarkParams: BookmarkQueryParamsResolver
 				}
 			},
 			{
@@ -99,7 +103,8 @@ const routes: Routes = [
 					}
 				},
 				resolve: {
-					dates: DateRangePickerResolver
+					dates: DateRangePickerResolver,
+					bookmarkParams: BookmarkQueryParamsResolver
 				}
 			}
 		]

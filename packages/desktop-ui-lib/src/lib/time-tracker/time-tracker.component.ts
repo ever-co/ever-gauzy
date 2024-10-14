@@ -449,10 +449,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		try {
 			const { lastTimer, isStarted } = timer;
 
-			const isRemote =
-				this._timeTrackerStatus.remoteTimer &&
-				this.xor(!isStarted, this._timeTrackerStatus.remoteTimer.running) &&
-				this._startMode === TimerStartMode.REMOTE;
+			const remoteTimer = this._timeTrackerStatus.remoteTimer;
+			const isRemoteTimerRunning = remoteTimer && remoteTimer.running;
+			const isInRemoteStartMode = this._startMode === TimerStartMode.REMOTE;
+			const isLocalTimerNotStarted = !isStarted;
+			const isToggleModeValid = this.xor(isLocalTimerNotStarted, isRemoteTimerRunning);
+
+			const isRemote = (isToggleModeValid && isInRemoteStartMode) || !onClick;
 
 			const params = {
 				token: this.token,
@@ -609,17 +612,20 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.pipe(
 				filter(
 					(remoteTimer: IRemoteTimer) =>
+						!!remoteTimer.lastLog &&
 						this.xor(this.start, remoteTimer.running) &&
 						!this._isLockSyncProcess &&
 						this._isReady &&
 						this.inQueue.size === 0
 				),
 				tap(async (remoteTimer: IRemoteTimer) => {
-					this.projectSelectorService.selected = remoteTimer.lastLog.projectId;
-					this.taskSelectorService.selected = remoteTimer.lastLog.taskId;
-					this.noteService.note = remoteTimer.lastLog.description;
-					this.teamSelectorService.selected = remoteTimer.lastLog.organizationTeamId;
-					this.clientSelectorService.selected = remoteTimer.lastLog.organizationContactId;
+					this.timeTrackerFormService.setState({
+						clientId: remoteTimer.lastLog.organizationContactId,
+						teamId: remoteTimer.lastLog.organizationTeamId,
+						projectId: remoteTimer.lastLog.projectId,
+						note: remoteTimer.lastLog.description,
+						taskId: remoteTimer.lastLog.taskId
+					});
 					if (!this.isProcessingEnabled) {
 						await this.toggleStart(remoteTimer.running, false);
 					}
@@ -775,6 +781,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				if (!this._isReady && this.appSetting?.alwaysOn) {
 					this.electronService.ipcRenderer.send('show_ao');
 				}
+				this.timeTrackerFormService.setState({
+					clientId: arg.organizationContactId,
+					teamId: arg.organizationTeamId,
+					projectId: arg.projectId,
+					taskId: arg.taskId,
+					note: arg.note
+				});
 				const parallelizedTasks: Promise<void>[] = [
 					this.loadStatuses(),
 					this.clientSelectorService.load(),
@@ -814,7 +827,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 				// Check if quitApp flag is already set, and if so, force stop the timer and return
 				if (this.quitApp) {
-					await this.stopTimer(true, true);
+					await this.stopTimer(!this.isRemoteTimer, true);
 					return;
 				}
 
@@ -1124,11 +1137,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 					if (isReadyForDeletion) {
 						const apiParams = {
+							...arg.timer,
 							token: this.token,
 							note: this.noteService.note,
 							projectId: this.projectSelectorService.selectedId,
 							taskId: this.taskSelectorService.selectedId,
 							organizationContactId: this.clientSelectorService.selectedId,
+							organizationTeamId: this.teamSelectorService.selectedId,
 							organizationId,
 							tenantId,
 							apiHost: this.apiHost
@@ -2228,7 +2243,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			// Force stop timer on error
 			try {
 				if (this.stopTimer) {
-					await this.stopTimer(false, true);
+					await this.stopTimer(!this.isRemoteTimer, true);
 				}
 			} catch (stopError) {
 				this._loggerService?.error('Error in force stopping the timer', stopError);
