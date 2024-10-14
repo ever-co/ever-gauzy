@@ -2366,6 +2366,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		await this.electronService.ipcRenderer.invoke('UPDATE_SELECTOR', newParams);
 
+		await this.updateTaskStatus();
+
+		await this.updateOrganizationTeamEmployee();
 		// Return the result of the callback (or void if no callback was provided)
 		return { current, previous, result, params };
 	}
