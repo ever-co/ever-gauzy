@@ -5,7 +5,6 @@ import {
 	EntityEnum,
 	ActorTypeEnum,
 	FavoriteEntityEnum,
-	IActivityLogUpdatedValues,
 	ID,
 	IEmployee,
 	IOrganizationSprint,
@@ -20,7 +19,7 @@ import { OrganizationSprintEmployee } from '../core/entities/internal';
 import { FavoriteService } from '../core/decorators';
 // import { prepareSQLQuery as p } from './../database/database.helper';
 import { ActivityLogEvent } from '../activity-log/events';
-import { generateActivityLogDescription } from '../activity-log/activity-log.helper';
+import { activityLogUpdatedFieldsAndValues, generateActivityLogDescription } from '../activity-log/activity-log.helper';
 import { RoleService } from '../role/role.service';
 import { EmployeeService } from '../employee/employee.service';
 import { OrganizationSprint } from './organization-sprint.entity';
@@ -201,20 +200,10 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 				);
 
 				// Compare values before and after update then add updates to fields
-				const updatedFields = [];
-				const previousValues: IActivityLogUpdatedValues[] = [];
-				const updatedValues: IActivityLogUpdatedValues[] = [];
-
-				for (const key of Object.keys(input)) {
-					if (organizationSprint[key] !== input[key]) {
-						// Add updated field
-						updatedFields.push(key);
-
-						// Add old and new values
-						previousValues.push({ [key]: organizationSprint[key] });
-						updatedValues.push({ [key]: updatedSprint[key] });
-					}
-				}
+				const { updatedFields, previousValues, updatedValues } = activityLogUpdatedFieldsAndValues(
+					updatedSprint,
+					input
+				);
 
 				// Emit event to log activity
 				this._eventBus.publish(
