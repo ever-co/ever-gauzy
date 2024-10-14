@@ -1,10 +1,15 @@
-import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ChangeDetectorRef, Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
+import { NavigationExtras, Router } from '@angular/router';
+import { HttpStatus, IUserSigninWorkspaceResponse } from '@gauzy/contracts';
 import { NB_AUTH_OPTIONS, NbAuthService, NbLoginComponent } from '@nebular/auth';
-import { UntilDestroy } from '@ngneat/until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { catchError, EMPTY, tap } from 'rxjs';
+import { AuthService } from '../auth';
+import { GAUZY_ENV } from '../constants';
 import { ElectronService } from '../electron/services';
 import { LanguageElectronService } from '../language/language-electron.service';
-import { GAUZY_ENV } from '../constants';
+import { ErrorHandlerService } from '../services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -13,7 +18,9 @@ import { GAUZY_ENV } from '../constants';
 	styleUrls: ['./login.component.scss']
 })
 export class NgxLoginComponent extends NbLoginComponent implements OnInit {
-	showPassword = false;
+	@ViewChild('form')
+	public form: NgForm;
+	public showPassword = false;
 
 	constructor(
 		public readonly electronService: ElectronService,
@@ -21,6 +28,8 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		public readonly languageElectronService: LanguageElectronService,
 		public readonly cdr: ChangeDetectorRef,
 		public readonly router: Router,
+		private readonly authService: AuthService,
+		private readonly errorHandlingService: ErrorHandlerService,
 		@Inject(NB_AUTH_OPTIONS)
 		options: any,
 		@Inject(GAUZY_ENV)
@@ -31,6 +40,61 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 
 	ngOnInit() {
 		this.languageElectronService.initialize<void>();
+	}
+
+	public override login(): void {
+		if (!this.form || this.form.invalid) {
+			return; // Exit if the form is invalid
+		}
+
+		this.submitted = true;
+
+		// Get the values of email and password from the form
+		const email = this.user.email;
+		const password = this.user.password;
+
+		// Send a request to sign in to workspaces using the authentication service
+		this.authService
+			.findWorkspaces({ email, password })
+			.pipe(
+				tap((response) => {
+					if (response['status'] === HttpStatus.UNAUTHORIZED) {
+						throw new Error(`${response['message']}`);
+					}
+				}),
+				// Update component state with the fetched workspaces
+				tap(
+					async ({
+						workspaces,
+						show_popup,
+						total_workspaces,
+						confirmed_email
+					}: IUserSigninWorkspaceResponse) => {
+						if (total_workspaces === 1) {
+							super.login();
+						} else {
+							const extra: NavigationExtras = {
+								state: {
+									confirmed_email,
+									workspaces,
+									show_popup
+								}
+							};
+							await this.router.navigate(['/', 'auth', 'login-workspace'], extra);
+							this.submitted = false;
+						}
+					}
+				),
+				catchError((error) => {
+					this.submitted = false;
+					// Handle and log errors using the error handling service
+					this.errorHandlingService.handleError(error);
+					return EMPTY;
+				}),
+				// Handle component lifecycle to avoid memory leaks
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	public forgot(): void {
