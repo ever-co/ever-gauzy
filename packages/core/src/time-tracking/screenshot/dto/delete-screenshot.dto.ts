@@ -1,13 +1,9 @@
 import { IDeleteScreenshot } from '@gauzy/contracts';
-import { ForceDeleteDTO } from '../../../time-tracking/dto/force-delete.dto';
+import { ForceDeleteBaseDTO } from '../../../core/dto';
 import { Screenshot } from '../screenshot.entity';
 
 /**
- * Data Transfer Object for deleting screenshots.
- *
- * This DTO is used to define the structure of the data required for deleting
- * screenshots. It extends the `DeleteQueryDTO`, which includes tenant and
- * organization context. The DTO also extends `ForceDeleteDTO` to include an optional
- * `forceDelete` flag to determine whether a hard or soft delete should be performed.
+ * Data Transfer Object (DTO) for deleting screenshots with the `forceDelete` flag.
+ * This DTO extends the `ForceDeleteBaseDTO` to include the `forceDelete` flag.
  */
-export class DeleteScreenshotDTO extends ForceDeleteDTO<Screenshot> implements IDeleteScreenshot {}
+export class DeleteScreenshotDTO extends ForceDeleteBaseDTO<Screenshot> implements IDeleteScreenshot {}

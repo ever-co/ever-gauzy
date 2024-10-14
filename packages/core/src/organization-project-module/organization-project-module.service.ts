@@ -3,7 +3,7 @@ import { EventBus } from '@nestjs/cqrs';
 import { Brackets, FindManyOptions, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
 import {
 	ActionTypeEnum,
-	EntityEnum,
+	BaseEntityEnum,
 	ActorTypeEnum,
 	ID,
 	IOrganizationProjectModule,
@@ -54,14 +54,14 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 			// Generate the activity log description
 			const description = generateActivityLogDescription(
 				ActionTypeEnum.Created,
-				EntityEnum.OrganizationProjectModule,
+				BaseEntityEnum.OrganizationProjectModule,
 				module.name
 			);
 
 			// Emit an event to log the activity
 			this._eventBus.publish(
 				new ActivityLogEvent({
-					entity: EntityEnum.OrganizationProjectModule,
+					entity: BaseEntityEnum.OrganizationProjectModule,
 					entityId: module.id,
 					action: ActionTypeEnum.Created,
 					actorType: ActorTypeEnum.User,
@@ -113,7 +113,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 			// Generate the activity log description
 			const description = generateActivityLogDescription(
 				ActionTypeEnum.Updated,
-				EntityEnum.OrganizationProjectModule,
+				BaseEntityEnum.OrganizationProjectModule,
 				updatedModule.name
 			);
 
@@ -125,7 +125,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 			// Emit an event to log the activity
 			this._eventBus.publish(
 				new ActivityLogEvent({
-					entity: EntityEnum.OrganizationProjectModule,
+					entity: BaseEntityEnum.OrganizationProjectModule,
 					entityId: updatedModule.id,
 					action: ActionTypeEnum.Updated,
 					actorType: ActorTypeEnum.User,

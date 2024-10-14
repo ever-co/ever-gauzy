@@ -1,10 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ArrayNotEmpty } from 'class-validator';
 import { ID, IDeleteTimeSlot } from '@gauzy/contracts';
-import { ForceDeleteDTO } from '../../dto/force-delete.dto';
+import { ForceDeleteBaseDTO } from '../../../core/dto';
 import { TimeSlot } from '../time-slot.entity';
 
-export class DeleteTimeSlotDTO extends ForceDeleteDTO<TimeSlot> implements IDeleteTimeSlot {
+/**
+ * Data Transfer Object (DTO) for deleting time slots with the `forceDelete` flag.
+ * This DTO extends the `ForceDeleteBaseDTO` to include the `forceDelete` flag.
+ */
+export class DeleteTimeSlotDTO extends ForceDeleteBaseDTO<TimeSlot> implements IDeleteTimeSlot {
 	/**
 	 * An array of IDs representing the time slots to be deleted.
 	 * This array must not be empty and ensures that at least one time slot is selected for deletion.

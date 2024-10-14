@@ -8,7 +8,7 @@
 	tooltipText="TIMER_TRACKER.STOP_TIMER_CHANGE_PROJECT"
 	placeholder="TIMER_TRACKER.SELECT_PROJECT"
 	[canAddTag]="hasPermission$ | async"
-	(clear)="refresh()"
+	(clear)="clear()"
 	(modelChange)="change($event)"
 	[addTag]="addProject"
 	addTagText="FORM.PLACEHOLDERS.ADD_PROJECT"

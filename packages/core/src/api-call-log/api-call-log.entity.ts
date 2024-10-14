@@ -6,6 +6,7 @@ import { isMySQL, isPostgres } from '@gauzy/config';
 import { IApiCallLog, ID, IUser, JsonData, RequestMethod } from '@gauzy/contracts';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
 import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
+import { HttpMethodTransformerPipe } from '../shared/pipes';
 import { MikroOrmApiCallLogRepository } from './repository/mikro-orm-api-call-log.repository';
 
 @MultiORMEntity('api_call_log', { mikroOrmRepository: () => MikroOrmApiCallLogRepository })
@@ -32,13 +33,14 @@ export class ApiCallLog extends TenantOrganizationBaseEntity implements IApiCall
 	url: string;
 
 	/**
-	 * The HTTP method (GET, POST, etc.) used in the request
+	 * The HTTP method (GET, POST, etc.) used in the request.
+	 * It is transformed from enum to string using HttpMethodTransformerPipe.
 	 */
 	@ApiProperty({ enum: RequestMethod })
 	@IsNotEmpty()
 	@IsEnum(RequestMethod)
 	@ColumnIndex()
-	@MultiORMColumn()
+	@MultiORMColumn({ transformer: new HttpMethodTransformerPipe() })
 	method: RequestMethod;
 
 	/**

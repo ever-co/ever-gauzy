@@ -361,6 +361,8 @@ const getApiBaseUrl = (configs) => {
 app.on('ready', async () => {
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
+	// Set up theme listener for desktop windows
+	new DesktopThemeListener();
 	// default global
 	global.variableGlobal = {
 		API_BASE_URL: getApiBaseUrl(configs || {}),
@@ -445,7 +447,6 @@ app.on('ready', async () => {
 	}
 	removeMainListener();
 	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
-	new DesktopThemeListener();
 });
 
 app.on('window-all-closed', () => {

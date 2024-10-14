@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { FindManyOptions, FindOptionsOrder, FindOptionsWhere } from 'typeorm';
 import { IActivityLog, IActivityLogInput, IPagination } from '@gauzy/contracts';
+import { isNotNullOrUndefined } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { GetActivityLogsDTO, allowedOrderDirections, allowedOrderFields } from './dto/get-activity-logs.dto';
@@ -17,9 +18,9 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 	}
 
 	/**
-	 * Finds and retrieves activity logs based on the given filter criteria.
+	 * Finds and retrieves activity logs based on the given filters criteria.
 	 *
-	 * @param {GetActivityLogsDTO} filter - Filter criteria to find activity logs, including entity, entityId, action, actorType, isActive, isArchived, orderBy, and order.
+	 * @param {GetActivityLogsDTO} filters - Filter criteria to find activity logs, including entity, entityId, action, actorType, isActive, isArchived, orderBy, and order.
 	 * @returns {Promise<IPagination<IActivityLog>>} - A promise that resolves to a paginated list of activity logs.
 	 *
 	 * Example usage:
@@ -32,8 +33,9 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 	 * });
 	 * ```
 	 */
-	public async findActivityLogs(filter: GetActivityLogsDTO): Promise<IPagination<IActivityLog>> {
+	public async findActivityLogs(filters: GetActivityLogsDTO): Promise<IPagination<IActivityLog>> {
 		const {
+			organizationId,
 			entity,
 			entityId,
 			action,
@@ -42,20 +44,8 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 			isArchived = false,
 			orderBy = 'createdAt',
 			order = 'DESC',
-			relations = [],
-			skip,
-			take
-		} = filter;
-
-		// Build the 'where' condition using concise syntax
-		const where: FindOptionsWhere<ActivityLog> = {
-			...(entity && { entity }),
-			...(entityId && { entityId }),
-			...(action && { action }),
-			...(actorType && { actorType }),
-			isActive,
-			isArchived
-		};
+			relations = []
+		} = filters;
 
 		// Fallback to default if invalid orderBy/order values are provided
 		const orderField = allowedOrderFields.includes(orderBy) ? orderBy : 'createdAt';
@@ -64,17 +54,34 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 		// Define order option
 		const orderOption: FindOptionsOrder<ActivityLog> = { [orderField]: orderDirection };
 
-		// Define find options
-		const findOptions: FindManyOptions<ActivityLog> = {
-			where,
-			order: orderOption,
-			...(skip && { skip }),
-			...(take && { take }),
-			...(relations && { relations })
+		// Build the 'where' condition using concise syntax
+		const where: FindOptionsWhere<ActivityLog> = {
+			...(organizationId && { organizationId }),
+			...(entity && { entity }),
+			...(entityId && { entityId }),
+			...(action && { action }),
+			...(isNotNullOrUndefined(actorType) && { actorType }),
+			isActive,
+			isArchived
 		};
 
+		const take = filters.take ? filters.take : 100; // Default take value if not provided
+		// Pagination: ensure `filters.skip` is a positive integer starting from 1
+		const skip = (filters.skip && Number.isInteger(filters.skip) && filters.skip > 0) ? filters.skip : 1;
+
+		// Ensure that filters are properly defined
+		const queryOptions: FindManyOptions<ActivityLog> = {
+			where,
+			...(relations && { relations }),
+			take: take,
+			skip: take * (skip - 1) // Calculate offset (skip) based on validated skip value
+		};
+
+		// Apply sorting options (if provided)
+		queryOptions.order = orderOption;
+
 		// Retrieve activity logs using the base class method
-		return await super.findAll(findOptions);
+		return await super.findAll(queryOptions);
 	}
 
 	/**

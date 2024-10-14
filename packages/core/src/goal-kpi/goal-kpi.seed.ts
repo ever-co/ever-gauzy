@@ -27,12 +27,25 @@ export const createDefaultGoalKpi = async (
 			goalKpis.push(goalKpi);
 		});
 	});
-	return await insertRandomGoalKpi(dataSource, goalKpis);
+	// Insert in batches to prevent deadlocks
+	return await insertRandomGoalKpiInBatches(dataSource, goalKpis, 100);
 };
 
-const insertRandomGoalKpi = async (
+const insertRandomGoalKpiInBatches = async (
 	dataSource: DataSource,
-	goalKpis: GoalKPI[]
+	goalKpis: GoalKPI[],
+	batchSize: number
 ): Promise<GoalKPI[]> => {
-	return await dataSource.manager.save(goalKpis);
+	const insertedGoalKpis: GoalKPI[] = [];
+
+	// Insert records in batches to avoid deadlocks
+	for (let i = 0; i < goalKpis.length; i += batchSize) {
+		const batch = goalKpis.slice(i, i + batchSize);
+		await dataSource.transaction(async (manager) => {
+			await manager.save(batch);
+		});
+		insertedGoalKpis.push(...batch);
+	}
+
+	return insertedGoalKpis;
 };

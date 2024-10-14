@@ -9,7 +9,7 @@ import { DeleteQueryDTO } from '../../shared/dto';
  * If `true`, a hard delete will be performed; otherwise, a soft delete is used.
  * This field is optional and defaults to `false`.
  */
-export class ForceDeleteDTO<T = any> extends DeleteQueryDTO<T> {
+export class ForceDeleteBaseDTO<T = any> extends DeleteQueryDTO<T> {
 	/**
 	 * A flag to determine whether to force delete the records.
 	 * If `true`, a hard delete will be performed; otherwise, a soft delete is used.
