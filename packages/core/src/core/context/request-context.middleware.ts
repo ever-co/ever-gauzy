@@ -37,7 +37,8 @@ export class RequestContextMiddleware implements NestMiddleware {
 
 			// Log the start of the request if logging is enabled
 			if (this.loggingEnabled) {
-				this.logger.log(`Context ${RequestContext.getContextId()}: Request to ${fullUrl} started.`);
+				const contextId = RequestContext.getContextId();
+				this.logger.log(`Context ${contextId}: ${req.method} request to ${fullUrl} started.`);
 			}
 
 			// Capture the original res.end function
@@ -46,7 +47,10 @@ export class RequestContextMiddleware implements NestMiddleware {
 			// Override the res.end function to log when the response finishes
 			res.end = (...args: any[]): Response => {
 				if (this.loggingEnabled) {
-					this.logger.log(`Context ${RequestContext.getContextId()}: Request to ${fullUrl} completed.`);
+					const contextId = RequestContext.getContextId();
+					this.logger.log(
+						`Context ${contextId}: ${req.method} request to ${fullUrl} completed with status ${res.statusCode}.`
+					);
 				}
 
 				// Call the original res.end and return its result
