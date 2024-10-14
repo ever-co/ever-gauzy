@@ -68,11 +68,13 @@ export enum ActorTypeEnum {
 export enum EntityEnum {
 	Candidate = 'Candidate',
 	Contact = 'Contact',
+	Currency = 'Currency',
 	Employee = 'Employee',
 	Expense = 'Expense',
 	DailyPlan = 'DailyPlan',
 	Invoice = 'Invoice',
 	Income = 'Income',
+	Language = 'Language',
 	Organization = 'Organization',
 	OrganizationContact = 'OrganizationContact',
 	OrganizationDepartment = 'OrganizationDepartment',
@@ -82,6 +84,7 @@ export enum EntityEnum {
 	OrganizationProjectModule = 'OrganizationProjectModule',
 	OrganizationSprint = 'OrganizationSprint',
 	ResourceLink = 'ResourceLink',
+	OrganizationVendor = 'OrganizationVendor',
 	Task = 'Task',
 	TaskView = 'TaskView',
 	User = 'User'

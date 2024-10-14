@@ -5,7 +5,6 @@ import {
 	ActionTypeEnum,
 	ActorTypeEnum,
 	EntityEnum,
-	FavoriteEntityEnum,
 	ID,
 	ITaskView,
 	ITaskViewCreateInput,
@@ -23,7 +22,7 @@ import { TaskView } from './view.entity';
 import { TypeOrmTaskViewRepository } from './repository/type-orm-task-view.repository';
 import { MikroOrmTaskViewRepository } from './repository/mikro-orm-task-view.repository';
 
-@FavoriteService(FavoriteEntityEnum.OrganizationTeam)
+@FavoriteService(EntityEnum.TaskView)
 @Injectable()
 export class TaskViewService extends TenantAwareCrudService<TaskView> {
 	constructor(
