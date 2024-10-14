@@ -4,7 +4,7 @@
             <nb-card class="h-100">
                 <nb-card-body>
                     <div class="row">
-                        <div class="col-12 d-flex justify-content-center">
+                        <div class="col-12 d-flex justify-content-center cet-logo">
                             <div class="logo">
                                 <img [src]="application?.iconPath" />
                             </div>
@@ -19,11 +19,13 @@
                             <span>
                                 Copyright © 2020-{{'FOOTER.PRESENT' | translate}}
                                 <span class="link" (click)="openLink('EVER')">{{ application?.companyName}}</span>
-                                <br/>
+                                <br />
                                 {{'FOOTER.RIGHTS_RESERVED' | translate}}
-                                <br/>
-                                <span class="link" (click)="openLink('TOS')">{{'FOOTER.TERMS_OF_SERVICE' | translate}}</span> |
-                                <span (click)="openLink('PRIVACY')" class="link">{{'FOOTER.PRIVACY_POLICY' | translate}}</span>
+                                <br />
+                                <span class="link" (click)="openLink('TOS')">{{'FOOTER.TERMS_OF_SERVICE' |
+                                    translate}}</span> |
+                                <span (click)="openLink('PRIVACY')" class="link">{{'FOOTER.PRIVACY_POLICY' |
+                                    translate}}</span>
                             </span>
                         </div>
                     </div>
