@@ -82,5 +82,6 @@ export enum EntityEnum {
 	OrganizationProjectModule = 'OrganizationProjectModule',
 	OrganizationSprint = 'OrganizationSprint',
 	Task = 'Task',
+	TaskView = 'TaskView',
 	User = 'User'
 }
