@@ -113,15 +113,15 @@ export class RequestContext {
 	 */
 	static currentRequestContext(): RequestContext {
 		// Log if logging is enabled
-		if (this.loggingEnabled) {
+		if (RequestContext.loggingEnabled) {
 			console.log('RequestContext: retrieving context...');
 		}
 
 		// Retrieve the context from the ClsService
-		const context = this.clsService?.get(RequestContext.name);
+		const context = RequestContext.clsService?.get(RequestContext.name);
 
 		// Log context ID if logging is enabled
-		if (this.loggingEnabled) {
+		if (RequestContext.loggingEnabled) {
 			console.log('RequestContext: context retrieved with ID:', context?.id);
 		}
 

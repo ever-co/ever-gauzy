@@ -46,9 +46,18 @@ export class ApiCallLogSubscriber extends BaseEntityEventSubscriber<ApiCallLog> 
 	 */
 	async afterEntityLoad(entity: ApiCallLog, em?: MultiOrmEntityManager): Promise<void> {
 		try {
+			console.log('Parsing JSON data in afterEntityLoad: %s', entity);
 			// Check if the database is SQLite and attempt to parse JSON fields
 			if (isSqlite() || isBetterSqlite3()) {
-				console.log('Parsing JSON data in afterEntityLoad: %s', entity);
+				if (entity.requestHeaders && typeof entity.requestHeaders === 'string') {
+					entity.requestHeaders = JSON.parse(entity.requestHeaders);
+				}
+				if (entity.requestBody && typeof entity.requestBody === 'string') {
+					entity.requestBody = JSON.parse(entity.requestBody);
+				}
+				if (entity.responseBody && typeof entity.responseBody === 'string') {
+					entity.responseBody = JSON.parse(entity.responseBody);
+				}
 			}
 		} catch (error) {
 			// Log the error and reset the data to an empty object if JSON parsing fails

@@ -1,4 +1,4 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Injectable, Logger, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import * as jwt from 'jsonwebtoken';
@@ -9,7 +9,10 @@ import { ApiCallLog } from './api-call-log.entity';
 
 @Injectable()
 export class ApiCallLogMiddleware implements NestMiddleware {
-	constructor(private readonly _apiCallLogService: ApiCallLogService) {}
+	private readonly logger = new Logger(ApiCallLogMiddleware.name);
+	private readonly loggingEnabled = true;
+
+	constructor(private readonly apiCallLogService: ApiCallLogService) {}
 
 	/**
 	 * Middleware for logging API requests and responses to the database.
@@ -26,7 +29,7 @@ export class ApiCallLogMiddleware implements NestMiddleware {
 
 		// Generate a unique correlation ID if not provided
 		const correlationId = RequestContext.getContextId() ?? uuidv4();
-		console.log('ApiCallLogMiddleware: Logging API call with correlation ID:', correlationId);
+		this.logger.debug(`Logging API call with correlation ID: ${correlationId}`);
 
 		// Retrieve the organization ID and tenant ID from request headers
 		const organizationId = (req.headers['organization-id'] as ID) || null;
@@ -49,15 +52,15 @@ export class ApiCallLogMiddleware implements NestMiddleware {
 		let userId = RequestContext.currentUserId();
 
 		try {
-			const authHeader = req.headers['authorization'];
-			const token = authHeader?.split(' ')[1];
+			const authHeader = req.headers['authorization']; // Get the authorization header
+			const token = authHeader?.split(' ')[1]; // Extract the token from the authorization header
+			// Decode the JWT token and retrieve the user ID
 			if (!userId && token) {
 				const jwtPayload: string | jwt.JwtPayload = jwt.decode(token);
 				userId = typeof jwtPayload === 'object' ? jwtPayload['sub'] || jwtPayload['id'] : null;
 			}
-			console.log('User ID:', userId);
 		} catch (error) {
-			console.error('Failed to decode JWT token or retrieve user ID:', error);
+			this.logger.error('Failed to decode JWT token or retrieve user ID', error.stack);
 		}
 
 		// Listen for the 'finish' event to log the API call after the response is completed
@@ -87,13 +90,13 @@ export class ApiCallLogMiddleware implements NestMiddleware {
 				responseTime: new Date(),
 				userId: userId || null
 			});
-			console.log('ApiCallLogMiddleware: logging API call entity: %s', entity);
+			this.logger.debug('ApiCallLogMiddleware: logging API call entity:', entity);
 
 			try {
 				// Asynchronously log the API call to the database
-				await this._apiCallLogService.create(entity);
+				await this.apiCallLogService.create(entity);
 			} catch (error) {
-				console.error('Failed to log API call:', error);
+				this.logger.error('Failed to log API call', error.stack);
 			}
 		});
 
@@ -139,8 +142,9 @@ export class ApiCallLogMiddleware implements NestMiddleware {
 	 * @returns The corresponding RequestMethod enum value.
 	 */
 	mapHttpMethodToEnum(method: string): RequestMethod {
-		const methodUpper = method.toUpperCase();
+		const methodUpper = method.toUpperCase(); // Convert the input string to uppercase
 
+		// Return the corresponding RequestMethod enum value, or RequestMethod.ALL if not found
 		return RequestMethod[methodUpper as keyof typeof RequestMethod] ?? RequestMethod.ALL;
 	}
 }

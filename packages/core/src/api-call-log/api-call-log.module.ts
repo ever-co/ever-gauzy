@@ -21,27 +21,12 @@ export class ApiCallLogModule implements NestModule {
 	 * @param consumer The middleware consumer used to apply the middleware to specific routes.
 	 */
 	configure(consumer: MiddlewareConsumer) {
-		consumer.apply(ApiCallLogMiddleware).forRoutes(
-			// POST Routes
-			{ path: '/timesheet/timer/toggle', method: RequestMethod.POST },
-			{ path: '/timesheet/timer/start', method: RequestMethod.POST },
-			{ path: '/timesheet/timer/stop', method: RequestMethod.POST },
-			{ path: '/timesheet/time-log', method: RequestMethod.POST },
-			{ path: '/timesheet/activity/bulk', method: RequestMethod.POST },
-			{ path: '/timesheet/time-slot', method: RequestMethod.POST },
-			{ path: '/timesheet/screenshot', method: RequestMethod.POST },
-
-			// PUT Routes
-			{ path: '/timesheet/time-log/:id', method: RequestMethod.PUT },
-			{ path: '/timesheet/time-slot/:id', method: RequestMethod.PUT },
-			{ path: '/timesheet/status', method: RequestMethod.PUT },
-			{ path: '/timesheet/submit', method: RequestMethod.PUT },
-			{ path: '/integration-entity-setting/integration/:id', method: RequestMethod.PUT },
-
-			// DELETE Routes
-			{ path: '/timesheet/time-log', method: RequestMethod.DELETE },
-			{ path: '/timesheet/time-slot', method: RequestMethod.DELETE },
-			{ path: '/timesheet/screenshot/:id', method: RequestMethod.DELETE }
-		);
+		consumer
+			.apply(ApiCallLogMiddleware)
+			.forRoutes(
+				{ path: '/timesheet/(.*)', method: RequestMethod.POST },
+				{ path: '/timesheet/(.*)', method: RequestMethod.PUT },
+				{ path: '/timesheet/(.*)', method: RequestMethod.DELETE }
+			);
 	}
 }
