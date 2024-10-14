@@ -54,7 +54,8 @@ export class ProjectSelectorComponent extends AbstractSelectorComponent<IOrganiz
 		this.handleSearch(this.projectSelectorService);
 	}
 
-	public refresh(): void {
+	public clear(): void {
+		this.selectorElectronService.update({ projectId: null });
 		this.selectorElectronService.refresh();
 	}
 

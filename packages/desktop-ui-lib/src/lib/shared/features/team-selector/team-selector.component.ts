@@ -52,7 +52,8 @@ export class TeamSelectorComponent extends AbstractSelectorComponent<IOrganizati
 		this.handleSearch(this.projectSelectorService);
 	}
 
-	public refresh(): void {
+	public clear(): void {
+		this.selectorElectronService.update({ organizationTeamId: null });
 		this.selectorElectronService.refresh();
 	}
 

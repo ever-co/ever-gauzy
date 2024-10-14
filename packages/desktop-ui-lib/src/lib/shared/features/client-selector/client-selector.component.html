@@ -8,7 +8,7 @@
 	tooltipText="TIMER_TRACKER.STOP_TIMER_CHANGE_CLIENT"
 	placeholder="TIMER_TRACKER.SELECT_CLIENT"
 	[canAddTag]="hasPermission$ | async"
-	(clear)="refresh()"
+	(clear)="clear()"
 	(modelChange)="change($event)"
 	[addTag]="addContact"
 	addTagText="TIMER_TRACKER.ADD_CONTACT"

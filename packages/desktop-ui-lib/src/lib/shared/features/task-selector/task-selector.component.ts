@@ -42,7 +42,8 @@ export class TaskSelectorComponent extends AbstractSelectorComponent<ITask> impl
 		this.handleSearch(this.taskSelectorService);
 	}
 
-	public refresh(): void {
+	public clear(): void {
+		this.selectorElectronService.update({ taskId: null });
 		this.selectorElectronService.refresh();
 	}
 

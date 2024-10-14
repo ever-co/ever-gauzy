@@ -51,7 +51,8 @@ export class ClientSelectorComponent extends AbstractSelectorComponent<IOrganiza
 		this.handleSearch(this.clientSelectorService);
 	}
 
-	public refresh(): void {
+	public clear(): void {
+		this.selectorElectronService.update({ organizationContactId: null });
 		this.selectorElectronService.refresh();
 	}
 
