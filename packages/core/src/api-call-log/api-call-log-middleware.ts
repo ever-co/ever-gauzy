@@ -112,19 +112,27 @@ export class ApiCallLogMiddleware implements NestMiddleware {
 	 * @returns {any} - The cleaned data object.
 	 */
 	redactSensitiveData(data: any, sensitiveFields: string[] = ['password', 'Authorization', 'token']): any {
-		// If the data is not an object, return it as-is
+		// If data is not an object or array, return it as-is
 		if (typeof data !== 'object' || data === null) {
 			return data;
 		}
 
-		// Create a shallow copy of the data object
+		// If data is an array, process each element
+		if (Array.isArray(data)) {
+			return data.map((item) => this.redactSensitiveData(item, sensitiveFields));
+		}
+
+		// If data is an object, create a shallow copy to avoid mutating the original
 		const cleanedData = { ...data };
 
-		// Iterate through sensitive fields and remove or mask them
-		for (const field of sensitiveFields) {
-			if (field in cleanedData) {
-				// Remove the field or mask it (e.g., replace with 'REDACTED')
-				cleanedData[field] = '[REDACTED]';
+		// Iterate through the object's keys and redact sensitive fields
+		for (const key of Object.keys(cleanedData)) {
+			if (sensitiveFields.includes(key)) {
+				// Redact the sensitive field
+				cleanedData[key] = '[REDACTED]';
+			} else if (typeof cleanedData[key] === 'object' && cleanedData[key] !== null) {
+				// Recursively process nested objects and arrays
+				cleanedData[key] = this.redactSensitiveData(cleanedData[key], sensitiveFields);
 			}
 		}
 
