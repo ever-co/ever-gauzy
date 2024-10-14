@@ -32,8 +32,9 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 	 * });
 	 * ```
 	 */
-	public async findActivityLogs(filter: GetActivityLogsDTO): Promise<IPagination<IActivityLog>> {
+	public async findActivityLogs(filters: GetActivityLogsDTO): Promise<IPagination<IActivityLog>> {
 		const {
+			organizationId,
 			entity,
 			entityId,
 			action,
@@ -42,17 +43,16 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 			isArchived = false,
 			orderBy = 'createdAt',
 			order = 'DESC',
-			relations = [],
-			skip,
-			take
-		} = filter;
+			relations = []
+		} = filters;
 
 		// Build the 'where' condition using concise syntax
 		const where: FindOptionsWhere<ActivityLog> = {
 			...(entity && { entity }),
 			...(entityId && { entityId }),
 			...(action && { action }),
-			...(actorType && { actorType }),
+			...(actorType !== undefined && actorType !== null && { actorType }), // Ensure 0 is not ignored
+			organizationId,
 			isActive,
 			isArchived
 		};
@@ -64,17 +64,22 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 		// Define order option
 		const orderOption: FindOptionsOrder<ActivityLog> = { [orderField]: orderDirection };
 
-		// Define find options
-		const findOptions: FindManyOptions<ActivityLog> = {
+		// Ensure that filters are properly defined
+		const queryOptions: FindManyOptions<ActivityLog> = {
 			where,
-			order: orderOption,
-			...(skip && { skip }),
-			...(take && { take }),
-			...(relations && { relations })
+			...(relations && { relations }),
+			take: filters.take ?? 100, // Default to 100 if not provided
+			skip: filters.skip ? filters.take * (filters.skip - 1) : 0 // Calculate offset
 		};
 
+		// Apply sorting options (if provided)
+		if (filters.order) {
+			queryOptions.order = orderOption; // Order, in which entities should be ordered. Default to ASC if no order is provided.
+		}
+
+		console.log('queryOptions', queryOptions);
 		// Retrieve activity logs using the base class method
-		return await super.findAll(findOptions);
+		return await super.findAll(queryOptions);
 	}
 
 	/**
