@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { FindManyOptions, FindOptionsOrder, FindOptionsWhere } from 'typeorm';
 import { IActivityLog, IActivityLogInput, IPagination } from '@gauzy/contracts';
+import { isNotNullOrUndefined } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { GetActivityLogsDTO, allowedOrderDirections, allowedOrderFields } from './dto/get-activity-logs.dto';
@@ -17,9 +18,9 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 	}
 
 	/**
-	 * Finds and retrieves activity logs based on the given filter criteria.
+	 * Finds and retrieves activity logs based on the given filters criteria.
 	 *
-	 * @param {GetActivityLogsDTO} filter - Filter criteria to find activity logs, including entity, entityId, action, actorType, isActive, isArchived, orderBy, and order.
+	 * @param {GetActivityLogsDTO} filters - Filter criteria to find activity logs, including entity, entityId, action, actorType, isActive, isArchived, orderBy, and order.
 	 * @returns {Promise<IPagination<IActivityLog>>} - A promise that resolves to a paginated list of activity logs.
 	 *
 	 * Example usage:
@@ -46,17 +47,6 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 			relations = []
 		} = filters;
 
-		// Build the 'where' condition using concise syntax
-		const where: FindOptionsWhere<ActivityLog> = {
-			...(entity && { entity }),
-			...(entityId && { entityId }),
-			...(action && { action }),
-			...(actorType !== undefined && actorType !== null && { actorType }), // Ensure 0 is not ignored
-			organizationId,
-			isActive,
-			isArchived
-		};
-
 		// Fallback to default if invalid orderBy/order values are provided
 		const orderField = allowedOrderFields.includes(orderBy) ? orderBy : 'createdAt';
 		const orderDirection = allowedOrderDirections.includes(order.toUpperCase()) ? order.toUpperCase() : 'DESC';
@@ -64,20 +54,32 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 		// Define order option
 		const orderOption: FindOptionsOrder<ActivityLog> = { [orderField]: orderDirection };
 
+		// Build the 'where' condition using concise syntax
+		const where: FindOptionsWhere<ActivityLog> = {
+			...(organizationId && { organizationId }),
+			...(entity && { entity }),
+			...(entityId && { entityId }),
+			...(action && { action }),
+			...(isNotNullOrUndefined(actorType) && { actorType }),
+			isActive,
+			isArchived
+		};
+
+		const take = filters.take ? filters.take : 100; // Default take value if not provided
+		// Pagination: ensure `filters.skip` is a positive integer starting from 1
+		const skip = (filters.skip && Number.isInteger(filters.skip) && filters.skip > 0) ? filters.skip : 1;
+
 		// Ensure that filters are properly defined
 		const queryOptions: FindManyOptions<ActivityLog> = {
 			where,
 			...(relations && { relations }),
-			take: filters.take ?? 100, // Default to 100 if not provided
-			skip: filters.skip ? filters.take * (filters.skip - 1) : 0 // Calculate offset
+			take: take,
+			skip: take * (skip - 1) // Calculate offset (skip) based on validated skip value
 		};
 
 		// Apply sorting options (if provided)
-		if (filters.order) {
-			queryOptions.order = orderOption; // Order, in which entities should be ordered. Default to ASC if no order is provided.
-		}
+		queryOptions.order = orderOption;
 
-		console.log('queryOptions', queryOptions);
 		// Retrieve activity logs using the base class method
 		return await super.findAll(queryOptions);
 	}
