@@ -209,7 +209,10 @@ export enum PermissionsEnum {
 	PROJECT_MODULE_CREATE = 'PROJECT_MODULE_CREATE',
 	PROJECT_MODULE_READ = 'PROJECT_MODULE_READ',
 	PROJECT_MODULE_UPDATE = 'PROJECT_MODULE_UPDATE',
-	PROJECT_MODULE_DELETE = 'PROJECT_MODULE_DELETE'
+	PROJECT_MODULE_DELETE = 'PROJECT_MODULE_DELETE',
+	/** API Call Log */
+	API_CALL_LOG_READ = 'API_CALL_LOG_READ',
+	API_CALL_LOG_DELETE = 'API_CALL_LOG_DELETE'
 }
 
 export const PermissionGroups = {
@@ -385,6 +388,8 @@ export const PermissionGroups = {
 		PermissionsEnum.IMPORT_ADD,
 		PermissionsEnum.EXPORT_ADD,
 		PermissionsEnum.ACCESS_DELETE_ALL_DATA,
-		PermissionsEnum.TENANT_SETTING
+		PermissionsEnum.TENANT_SETTING,
+		PermissionsEnum.API_CALL_LOG_READ,
+		PermissionsEnum.API_CALL_LOG_DELETE
 	]
 };

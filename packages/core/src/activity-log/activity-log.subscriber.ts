@@ -14,24 +14,45 @@ export class ActivityLogSubscriber extends BaseEntityEventSubscriber<ActivityLog
 	}
 
 	/**
-	 * Called before an ActivityLog entity is inserted or created in the database.
-	 * This method prepares the entity for insertion, particularly by serializing the data property to a JSON string
+	 * Called before an ActivityLog entity is inserted or updated in the database.
+	 * This method prepares the entity for insertion or update by serializing the data property to a JSON string
 	 * for SQLite databases.
 	 *
-	 * @param entity The ActivityLog entity that is about to be created.
-	 * @returns {Promise<void>} A promise that resolves when the pre-creation processing is complete.
+	 * @param entity The ActivityLog entity that is about to be created or updated.
+	 * @returns {Promise<void>} A promise that resolves when the pre-creation or pre-update processing is complete.
 	 */
-	async beforeEntityCreate(entity: ActivityLog): Promise<void> {
+	async serializeDataForSQLite(entity: ActivityLog): Promise<void> {
 		try {
-			// Check if the database is SQLite and the entity's metaData is a JavaScript object
-			if (isSqlite() || isBetterSqlite3()) {
-				// ToDo: If need convert data to JSON before save
+			// Check if the database is SQLite and the entity's data is an object
+			if ((isSqlite() || isBetterSqlite3()) && typeof entity.data === 'object') {
 				entity.data = JSON.stringify(entity.data);
 			}
 		} catch (error) {
-			// In case of error during JSON serialization, reset metaData to an empty object
-			entity.data = JSON.stringify({});
+			// Log the error and reset the data to an empty object if JSON parsing fails
+			console.error('Error stringify data in serializeDataForSQLite:', error);
 		}
+	}
+
+	/**
+	 * Called before an ActivityLog entity is inserted or created in the database.
+	 * This method prepares the entity for insertion, particularly by serializing the data property to a JSON string
+	 *
+	 * @param entity The ActivityLog entity that is about to be created.
+	 * @returns {Promise<void>} A promise that resolves when the pre-insertion processing is complete.
+	 */
+	async beforeEntityCreate(entity: ActivityLog): Promise<void> {
+		await this.serializeDataForSQLite(entity);
+	}
+
+	/**
+	 * Called before an ActivityLog entity is updated in the database.
+	 * This method prepares the entity for update, particularly by serializing the data property to a JSON string
+	 *
+	 * @param entity The ActivityLog entity that is about to be updated.
+	 * @returns {Promise<void>} A promise that resolves when the pre-update processing is complete.
+	 */
+	async beforeEntityUpdate(entity: ActivityLog): Promise<void> {
+		await this.serializeDataForSQLite(entity);
 	}
 
 	/**
@@ -50,9 +71,9 @@ export class ActivityLogSubscriber extends BaseEntityEventSubscriber<ActivityLog
 				entity.data = JSON.parse(entity.data);
 			}
 		} catch (error) {
+			entity.data = {};
 			// Log the error and reset the data to an empty object if JSON parsing fails
 			console.error('Error parsing JSON data in afterEntityLoad:', error);
-			entity.data = {};
 		}
 	}
 }

@@ -1,12 +1,12 @@
 import { BadRequestException, Injectable, InternalServerErrorException, OnModuleInit } from '@nestjs/common';
 import { DiscoveryService, MetadataScanner, Reflector } from '@nestjs/core';
 import { InstanceWrapper } from '@nestjs/core/injector/instance-wrapper';
-import { FavoriteEntityEnum } from '@gauzy/contracts';
+import { EntityEnum } from '@gauzy/contracts';
 import { FAVORITABLE_TYPE } from '../core/decorators/is-favoritable';
 
 @Injectable()
 export class GlobalFavoriteDiscoveryService implements OnModuleInit {
-	private readonly serviceMap = new Map<FavoriteEntityEnum, any>();
+	private readonly serviceMap = new Map<EntityEnum, any>();
 
 	constructor(
 		private readonly discoveryService: DiscoveryService,
@@ -39,16 +39,16 @@ export class GlobalFavoriteDiscoveryService implements OnModuleInit {
 	}
 
 	// Extract service favorite type
-	private extractTypeFromProvider(metatype: any): FavoriteEntityEnum | null {
+	private extractTypeFromProvider(metatype: any): EntityEnum | null {
 		return Reflect.getMetadata(FAVORITABLE_TYPE, metatype);
 	}
 
 	// Get "Favoritable" service
-	getService(type: FavoriteEntityEnum) {
+	getService(type: EntityEnum) {
 		return this.serviceMap.get(type);
 	}
 
-	callMethod(type: FavoriteEntityEnum, methodName: string, ...args: any[]): any {
+	callMethod(type: EntityEnum, methodName: string, ...args: any[]): any {
 		const serviceWithMethods = this.serviceMap.get(type);
 		if (!serviceWithMethods) {
 			throw new BadRequestException(`Service for type ${type} not found`);
