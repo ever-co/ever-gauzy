@@ -14,7 +14,7 @@ import {
 import { isBoolean, isUUID } from 'class-validator';
 import {
 	ActionTypeEnum,
-	EntityEnum,
+	BaseEntityEnum,
 	ActorTypeEnum,
 	ID,
 	IEmployee,
@@ -104,7 +104,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Generate the activity log description
 			const description = generateActivityLogDescription(
 				ActionTypeEnum.Updated,
-				EntityEnum.Task,
+				BaseEntityEnum.Task,
 				updatedTask.title
 			);
 
@@ -116,7 +116,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Emit an event to log the activity
 			this._eventBus.publish(
 				new ActivityLogEvent({
-					entity: EntityEnum.Task,
+					entity: BaseEntityEnum.Task,
 					entityId: updatedTask.id,
 					action: ActionTypeEnum.Updated,
 					actorType: ActorTypeEnum.User, // TODO : Since we have Github Integration, make sure we can also store "System" for actor

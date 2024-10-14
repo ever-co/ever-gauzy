@@ -3,7 +3,7 @@ import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { IsArray, IsBoolean, IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ActorTypeEnum, CommentEntityEnum, IComment, ID, IEmployee, IOrganizationTeam, IUser } from '@gauzy/contracts';
+import { ActorTypeEnum, BaseEntityEnum, IComment, ID, IEmployee, IOrganizationTeam, IUser } from '@gauzy/contracts';
 import { Employee, OrganizationTeam, TenantOrganizationBaseEntity, User } from '../core/entities/internal';
 import {
 	ColumnIndex,
@@ -19,12 +19,12 @@ import { MikroOrmCommentRepository } from './repository/mikro-orm-comment.reposi
 export class Comment extends TenantOrganizationBaseEntity implements IComment {
 	[EntityRepositoryType]?: MikroOrmCommentRepository;
 
-	@ApiProperty({ type: () => String, enum: CommentEntityEnum })
+	@ApiProperty({ type: () => String, enum: BaseEntityEnum })
 	@IsNotEmpty()
-	@IsEnum(CommentEntityEnum)
+	@IsEnum(BaseEntityEnum)
 	@ColumnIndex()
 	@MultiORMColumn()
-	entity: CommentEntityEnum;
+	entity: BaseEntityEnum;
 
 	// Indicate the ID of entity record commented
 	@ApiProperty({ type: () => String })

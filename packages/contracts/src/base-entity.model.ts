@@ -65,7 +65,7 @@ export enum ActorTypeEnum {
 	User = 1 // User performed the action
 }
 
-export enum EntityEnum {
+export enum BaseEntityEnum {
 	Candidate = 'Candidate',
 	Contact = 'Contact',
 	Currency = 'Currency',

@@ -3,7 +3,7 @@ import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
 import { IsArray, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { isMySQL, isPostgres } from '@gauzy/config';
-import { EntityEnum, ActionTypeEnum, ActorTypeEnum, IActivityLog, ID, IUser, JsonData } from '@gauzy/contracts';
+import { BaseEntityEnum, ActionTypeEnum, ActorTypeEnum, IActivityLog, ID, IUser, JsonData } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
 import { MikroOrmActivityLogRepository } from './repository/mikro-orm-activity-log.repository';
@@ -12,12 +12,12 @@ import { MikroOrmActivityLogRepository } from './repository/mikro-orm-activity-l
 export class ActivityLog extends TenantOrganizationBaseEntity implements IActivityLog {
 	[EntityRepositoryType]?: MikroOrmActivityLogRepository;
 
-	@ApiProperty({ enum: EntityEnum })
+	@ApiProperty({ enum: BaseEntityEnum })
 	@IsNotEmpty()
-	@IsEnum(EntityEnum)
+	@IsEnum(BaseEntityEnum)
 	@ColumnIndex()
 	@MultiORMColumn()
-	entity: EntityEnum;
+	entity: BaseEntityEnum;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()

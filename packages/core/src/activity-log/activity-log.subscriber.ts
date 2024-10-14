@@ -23,9 +23,19 @@ export class ActivityLogSubscriber extends BaseEntityEventSubscriber<ActivityLog
 	 */
 	async serializeDataForSQLite(entity: ActivityLog): Promise<void> {
 		try {
-			// Check if the database is SQLite and the entity's data is an object
-			if ((isSqlite() || isBetterSqlite3()) && typeof entity.data === 'object') {
-				entity.data = JSON.stringify(entity.data);
+			// Check if the database is SQLite
+			if (isSqlite() || isBetterSqlite3()) {
+				// Serialize the `data` field if it's an object
+				if (typeof entity.data === 'object') {
+					entity.data = JSON.stringify(entity.data);
+				}
+
+				// Serialize `updatedValues`, `previousValues`, `updatedEntities`, `previousEntities` if they are arrays or objects
+				['updatedValues', 'previousValues', 'updatedEntities', 'previousEntities'].forEach((field) => {
+					if (Array.isArray(entity[field]) || typeof entity[field] === 'object') {
+						entity[field] = JSON.stringify(entity[field]);
+					}
+				});
 			}
 		} catch (error) {
 			// Log the error and reset the data to an empty object if JSON parsing fails
@@ -66,9 +76,19 @@ export class ActivityLogSubscriber extends BaseEntityEventSubscriber<ActivityLog
 	 */
 	async afterEntityLoad(entity: ActivityLog, em?: MultiOrmEntityManager): Promise<void> {
 		try {
-			// Check if the database is SQLite and if `data` is a non-null string
-			if ((isSqlite() || isBetterSqlite3()) && entity.data && typeof entity.data === 'string') {
-				entity.data = JSON.parse(entity.data);
+			// Check if the database is SQLite
+			if (isSqlite() || isBetterSqlite3()) {
+				// Parse the `data` field if it's a string
+				if (entity.data && typeof entity.data === 'string') {
+					entity.data = JSON.parse(entity.data);
+				}
+
+				// Parse `updatedValues`, `previousValues`, `updatedEntities`, `previousEntities` if they are strings
+				['updatedValues', 'previousValues', 'updatedEntities', 'previousEntities'].forEach((field) => {
+					if (entity[field] && typeof entity[field] === 'string') {
+						entity[field] = JSON.parse(entity[field]);
+					}
+				});
 			}
 		} catch (error) {
 			entity.data = {};

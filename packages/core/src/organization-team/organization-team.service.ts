@@ -18,7 +18,7 @@ import {
 	IOrganizationTeamEmployee,
 	IOrganizationTeamStatisticInput,
 	ITimerStatus,
-	EntityEnum,
+	BaseEntityEnum,
 	ID
 } from '@gauzy/contracts';
 import { isNotEmpty, parseToBoolean } from '@gauzy/common';
@@ -41,7 +41,7 @@ import { MikroOrmOrganizationTeamRepository, TypeOrmOrganizationTeamRepository }
 import { OrganizationTeam } from './organization-team.entity';
 import { MikroOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/mikro-orm-organization-team-employee.repository';
 
-@FavoriteService(EntityEnum.OrganizationTeam)
+@FavoriteService(BaseEntityEnum.OrganizationTeam)
 @Injectable()
 export class OrganizationTeamService extends TenantAwareCrudService<OrganizationTeam> {
 	constructor(

@@ -7,7 +7,7 @@ import {
 	IResourceLinkUpdateInput,
 	ID,
 	ActionTypeEnum,
-	EntityEnum,
+	BaseEntityEnum,
 	ActorTypeEnum
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
@@ -58,14 +58,14 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 			// Generate the activity log description.
 			const description = generateActivityLogDescription(
 				ActionTypeEnum.Created,
-				EntityEnum.ResourceLink,
+				BaseEntityEnum.ResourceLink,
 				`${resourceLink.title} for ${resourceLink.entity}`
 			);
 
 			// Emit an event to log the activity
 			this._eventBus.publish(
 				new ActivityLogEvent({
-					entity: EntityEnum.ResourceLink,
+					entity: BaseEntityEnum.ResourceLink,
 					entityId: resourceLink.id,
 					action: ActionTypeEnum.Created,
 					actorType: ActorTypeEnum.User,
@@ -105,7 +105,7 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 			// Generate the activity log description.
 			const description = generateActivityLogDescription(
 				ActionTypeEnum.Updated,
-				EntityEnum.ResourceLink,
+				BaseEntityEnum.ResourceLink,
 				`${resourceLink.title} for ${resourceLink.entity}`
 			);
 
@@ -118,7 +118,7 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 			// Emit event to log activity
 			this._eventBus.publish(
 				new ActivityLogEvent({
-					entity: EntityEnum.ResourceLink,
+					entity: BaseEntityEnum.ResourceLink,
 					entityId: updatedResourceLink.id,
 					action: ActionTypeEnum.Updated,
 					actorType: ActorTypeEnum.User,

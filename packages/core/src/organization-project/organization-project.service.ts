@@ -3,7 +3,7 @@ import { EventBus } from '@nestjs/cqrs';
 import { ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
 import {
 	ActionTypeEnum,
-	EntityEnum,
+	BaseEntityEnum,
 	ActorTypeEnum,
 	ID,
 	IEmployee,
@@ -36,7 +36,7 @@ import {
 	TypeOrmOrganizationProjectRepository
 } from './repository';
 
-@FavoriteService(EntityEnum.OrganizationProject)
+@FavoriteService(BaseEntityEnum.OrganizationProject)
 @Injectable()
 export class OrganizationProjectService extends TenantAwareCrudService<OrganizationProject> {
 	constructor(
@@ -127,14 +127,14 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			// Generate the activity log description
 			const description = generateActivityLogDescription(
 				ActionTypeEnum.Created,
-				EntityEnum.OrganizationProject,
+				BaseEntityEnum.OrganizationProject,
 				project.name
 			);
 
 			// Emit an event to log the activity
 			this._eventBus.publish(
 				new ActivityLogEvent({
-					entity: EntityEnum.OrganizationProject,
+					entity: BaseEntityEnum.OrganizationProject,
 					entityId: project.id,
 					action: ActionTypeEnum.Created,
 					actorType: ActorTypeEnum.User,

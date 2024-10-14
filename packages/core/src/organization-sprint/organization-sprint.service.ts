@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 import {
 	ActionTypeEnum,
-	EntityEnum,
+	BaseEntityEnum,
 	ActorTypeEnum,
 	ID,
 	IEmployee,
@@ -30,7 +30,7 @@ import {
 	TypeOrmOrganizationSprintRepository
 } from './repository';
 
-@FavoriteService(EntityEnum.OrganizationSprint)
+@FavoriteService(BaseEntityEnum.OrganizationSprint)
 @Injectable()
 export class OrganizationSprintService extends TenantAwareCrudService<OrganizationSprint> {
 	constructor(
@@ -118,14 +118,14 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 			// Generate the activity log description.
 			const description = generateActivityLogDescription(
 				ActionTypeEnum.Created,
-				EntityEnum.OrganizationSprint,
+				BaseEntityEnum.OrganizationSprint,
 				sprint.name
 			);
 
 			// Emit an event to log the activity
 			this._eventBus.publish(
 				new ActivityLogEvent({
-					entity: EntityEnum.OrganizationSprint,
+					entity: BaseEntityEnum.OrganizationSprint,
 					entityId: sprint.id,
 					action: ActionTypeEnum.Created,
 					actorType: ActorTypeEnum.User,
@@ -194,7 +194,7 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 
 				const description = generateActivityLogDescription(
 					ActionTypeEnum.Updated,
-					EntityEnum.OrganizationSprint,
+					BaseEntityEnum.OrganizationSprint,
 					updatedSprint.name
 				);
 
@@ -207,7 +207,7 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 				// Emit event to log activity
 				this._eventBus.publish(
 					new ActivityLogEvent({
-						entity: EntityEnum.OrganizationSprint,
+						entity: BaseEntityEnum.OrganizationSprint,
 						entityId: updatedSprint.id,
 						action: ActionTypeEnum.Updated,
 						actorType: ActorTypeEnum.User,

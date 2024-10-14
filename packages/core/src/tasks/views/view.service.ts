@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import {
 	ActionTypeEnum,
 	ActorTypeEnum,
-	EntityEnum,
+	BaseEntityEnum,
 	ID,
 	ITaskView,
 	ITaskViewCreateInput,
@@ -22,7 +22,7 @@ import { TaskView } from './view.entity';
 import { TypeOrmTaskViewRepository } from './repository/type-orm-task-view.repository';
 import { MikroOrmTaskViewRepository } from './repository/mikro-orm-task-view.repository';
 
-@FavoriteService(EntityEnum.TaskView)
+@FavoriteService(BaseEntityEnum.TaskView)
 @Injectable()
 export class TaskViewService extends TenantAwareCrudService<TaskView> {
 	constructor(
@@ -50,12 +50,16 @@ export class TaskViewService extends TenantAwareCrudService<TaskView> {
 			const view = await super.create({ ...entity, tenantId });
 
 			// Generate the activity log description.
-			const description = generateActivityLogDescription(ActionTypeEnum.Created, EntityEnum.TaskView, view.name);
+			const description = generateActivityLogDescription(
+				ActionTypeEnum.Created,
+				BaseEntityEnum.TaskView,
+				view.name
+			);
 
 			// Emit an event to log the activity
 			this._eventBus.publish(
 				new ActivityLogEvent({
-					entity: EntityEnum.TaskView,
+					entity: BaseEntityEnum.TaskView,
 					entityId: view.id,
 					action: ActionTypeEnum.Created,
 					actorType: ActorTypeEnum.User,
@@ -94,7 +98,7 @@ export class TaskViewService extends TenantAwareCrudService<TaskView> {
 			// Generate the activity log description.
 			const description = generateActivityLogDescription(
 				ActionTypeEnum.Updated,
-				EntityEnum.TaskView,
+				BaseEntityEnum.TaskView,
 				updatedTaskView.name
 			);
 
@@ -107,7 +111,7 @@ export class TaskViewService extends TenantAwareCrudService<TaskView> {
 			// Emit event to log activity
 			this._eventBus.publish(
 				new ActivityLogEvent({
-					entity: EntityEnum.TaskView,
+					entity: BaseEntityEnum.TaskView,
 					entityId: updatedTaskView.id,
 					action: ActionTypeEnum.Updated,
 					actorType: ActorTypeEnum.User,
