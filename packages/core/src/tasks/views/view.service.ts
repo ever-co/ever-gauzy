@@ -76,7 +76,6 @@ export class TaskViewService extends TenantAwareCrudService<TaskView> {
 
 	/**
 	 * @description Update a Task View
-	 * @author GloireMutaliko
 	 * @param {ID} id - The ID of the Task View to be updated
 	 * @param {ITaskViewUpdateInput} input - The updated information for the Task View
 	 * @throws BadRequestException if there's an error during the update process.
