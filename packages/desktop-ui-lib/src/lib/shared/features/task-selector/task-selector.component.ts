@@ -3,9 +3,9 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { ITask } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, map, Observable } from 'rxjs';
-import { ElectronService } from '../../../electron/services';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
 import { AbstractSelectorComponent } from '../../components/abstract/selector.abstract';
+import { SelectorElectronService } from '../../services/selector-electron.service';
 import { TaskSelectorQuery } from './+state/task-selector.query';
 import { TaskSelectorService } from './+state/task-selector.service';
 import { TaskSelectorStore } from './+state/task-selector.store';
@@ -26,7 +26,7 @@ import { TaskSelectorStore } from './+state/task-selector.store';
 })
 export class TaskSelectorComponent extends AbstractSelectorComponent<ITask> implements OnInit {
 	constructor(
-		private readonly electronService: ElectronService,
+		private readonly selectorElectronService: SelectorElectronService,
 		public readonly taskSelectorStore: TaskSelectorStore,
 		public readonly taskSelectorQuery: TaskSelectorQuery,
 		private readonly timeTrackerQuery: TimeTrackerQuery,
@@ -43,7 +43,7 @@ export class TaskSelectorComponent extends AbstractSelectorComponent<ITask> impl
 	}
 
 	public refresh(): void {
-		this.electronService.ipcRenderer.send('refresh-timer');
+		this.selectorElectronService.refresh();
 	}
 
 	public addNewTask = async (name: ITask['title']) => {
@@ -65,6 +65,7 @@ export class TaskSelectorComponent extends AbstractSelectorComponent<ITask> impl
 	protected updateSelected(value: ITask['id']): void {
 		// Update store only if useStore is true
 		if (this.useStore) {
+			this.selectorElectronService.update({ taskId: value });
 			this.taskSelectorStore.updateSelected(value);
 		}
 	}

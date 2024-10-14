@@ -3,9 +3,9 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { IOrganizationContact } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, concatMap, filter, map, Observable, tap } from 'rxjs';
-import { ElectronService } from '../../../electron/services';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
 import { AbstractSelectorComponent } from '../../components/abstract/selector.abstract';
+import { SelectorElectronService } from '../../services/selector-electron.service';
 import { ProjectSelectorService } from '../project-selector/+state/project-selector.service';
 import { ClientSelectorQuery } from './+state/client-selector.query';
 import { ClientSelectorService } from './+state/client-selector.service';
@@ -27,7 +27,7 @@ import { ClientSelectorStore } from './+state/client-selector.store';
 })
 export class ClientSelectorComponent extends AbstractSelectorComponent<IOrganizationContact> implements OnInit {
 	constructor(
-		private readonly electronService: ElectronService,
+		private readonly selectorElectronService: SelectorElectronService,
 		public readonly clientSelectorStore: ClientSelectorStore,
 		public readonly clientSelectorQuery: ClientSelectorQuery,
 		private readonly clientSelectorService: ClientSelectorService,
@@ -52,7 +52,7 @@ export class ClientSelectorComponent extends AbstractSelectorComponent<IOrganiza
 	}
 
 	public refresh(): void {
-		this.electronService.ipcRenderer.send('refresh-timer');
+		this.selectorElectronService.refresh();
 	}
 
 	public addContact = async (name: IOrganizationContact['name']) => {
@@ -74,6 +74,7 @@ export class ClientSelectorComponent extends AbstractSelectorComponent<IOrganiza
 	protected updateSelected(value: IOrganizationContact['id']): void {
 		// Update store only if useStore is true
 		if (this.useStore) {
+			this.selectorElectronService.update({ organizationContactId: value });
 			this.clientSelectorStore.updateSelected(value);
 		}
 	}

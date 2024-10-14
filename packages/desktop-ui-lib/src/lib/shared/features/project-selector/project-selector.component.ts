@@ -3,9 +3,9 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { IOrganizationProject } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, concatMap, filter, map, Observable, tap } from 'rxjs';
-import { ElectronService } from '../../../electron/services';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
 import { AbstractSelectorComponent } from '../../components/abstract/selector.abstract';
+import { SelectorElectronService } from '../../services/selector-electron.service';
 import { TaskSelectorService } from '../task-selector/+state/task-selector.service';
 import { TeamSelectorService } from '../team-selector/+state/team-selector.service';
 import { ProjectSelectorQuery } from './+state/project-selector.query';
@@ -28,7 +28,7 @@ import { ProjectSelectorStore } from './+state/project-selector.store';
 })
 export class ProjectSelectorComponent extends AbstractSelectorComponent<IOrganizationProject> implements OnInit {
 	constructor(
-		private readonly electronService: ElectronService,
+		private readonly selectorElectronService: SelectorElectronService,
 		private readonly projectSelectorStore: ProjectSelectorStore,
 		private readonly projectSelectorQuery: ProjectSelectorQuery,
 		private readonly projectSelectorService: ProjectSelectorService,
@@ -55,7 +55,7 @@ export class ProjectSelectorComponent extends AbstractSelectorComponent<IOrganiz
 	}
 
 	public refresh(): void {
-		this.electronService.ipcRenderer.send('refresh-timer');
+		this.selectorElectronService.refresh();
 	}
 
 	public addProject = async (name: IOrganizationProject['name']) => {
@@ -77,6 +77,7 @@ export class ProjectSelectorComponent extends AbstractSelectorComponent<IOrganiz
 	protected updateSelected(value: IOrganizationProject['id']): void {
 		// Update store only if useStore is true
 		if (this.useStore) {
+			this.selectorElectronService.update({ projectId: value });
 			this.projectSelectorStore.updateSelected(value);
 		}
 	}
