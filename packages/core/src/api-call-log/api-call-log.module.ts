@@ -24,9 +24,10 @@ export class ApiCallLogModule implements NestModule {
 		consumer
 			.apply(ApiCallLogMiddleware)
 			.forRoutes(
-				{ path: '/timesheet/(.*)', method: RequestMethod.POST },
-				{ path: '/timesheet/(.*)', method: RequestMethod.PUT },
-				{ path: '/timesheet/(.*)', method: RequestMethod.DELETE }
+				{ path: '/timesheet/*', method: RequestMethod.POST },
+				{ path: '/timesheet/*', method: RequestMethod.PUT },
+				{ path: '/timesheet/*', method: RequestMethod.PATCH },
+				{ path: '/timesheet/*', method: RequestMethod.DELETE }
 			);
 	}
 }
