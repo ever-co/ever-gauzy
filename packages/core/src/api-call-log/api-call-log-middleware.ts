@@ -35,25 +35,14 @@ export class ApiCallLogMiddleware implements NestMiddleware {
 		const organizationId = (req.headers['organization-id'] as ID) || null;
 		const tenantId = (req.headers['tenant-id'] as ID) || null;
 
-		// Redact sensitive data from request headers and body
-		const requestHeaders = this.redactSensitiveData(req.headers, ['authorization', 'token']);
-		const requestBody = this.redactSensitiveData(req.body, ['password', 'secretKey', 'accessToken']);
-
-		// Capture the original end method of the response object to log the response body
-		const originalEnd = res.end;
-		res.end = (chunk: any, encoding?: any, callback?: any) => {
-			if (chunk && (typeof chunk === 'string' || chunk instanceof Buffer || chunk instanceof Uint8Array)) {
-				responseBody += chunk; // Append chunk to response body
-			}
-			return originalEnd.call(res, chunk, encoding, callback); // Call original res.end with the arguments
-		};
-
 		// Get user ID from request context or JWT token
 		let userId = RequestContext.currentUserId();
 
 		try {
-			const authHeader = req.headers['authorization']; // Get the authorization header
-			const token = authHeader?.split(' ')[1]; // Extract the token from the authorization header
+			// Get the authorization header
+			const authHeader = req.headers['authorization'];
+			// Extract the token from the authorization header
+			const token = authHeader?.split(' ')[1];
 			// Decode the JWT token and retrieve the user ID
 			if (!userId && token) {
 				const jwtPayload: string | jwt.JwtPayload = jwt.decode(token);
@@ -63,14 +52,31 @@ export class ApiCallLogMiddleware implements NestMiddleware {
 			this.logger.error('Failed to decode JWT token or retrieve user ID', error.stack);
 		}
 
+		// Redact sensitive data from request headers and body
+		const requestHeaders = this.redactSensitiveData(req.headers, ['authorization', 'token']);
+		const requestBody = this.redactSensitiveData(req.body, ['password']);
+
+		// Capture the original end method of the response object to log the response body
+		const originalEnd = res.end;
+		res.end = (chunk: any, encoding?: any, callback?: any) => {
+			if (chunk && (typeof chunk === 'string' || Buffer.isBuffer(chunk) || chunk instanceof Uint8Array)) {
+				// Convert chunk to a string if it's a Buffer
+				let chunkContent = typeof chunk === 'string' ? chunk : chunk.toString('utf-8');
+
+				// Try to parse the chunk string as JSON, fallback to a string if it's not JSON
+				try {
+					responseBody = JSON.parse(chunkContent); // Store as object if JSON
+				} catch (error) {
+					responseBody = chunkContent; // If not JSON, store as string
+				}
+			}
+			return originalEnd.call(res, chunk, encoding, callback); // Call original res.end with the arguments
+		};
+
 		// Listen for the 'finish' event to log the API call after the response is completed
 		res.on('finish', async () => {
 			// Redact sensitive data from response body
-			const redactedResponseBody = this.redactSensitiveData(responseBody, [
-				'password',
-				'secretKey',
-				'accessToken'
-			]);
+			responseBody = this.redactSensitiveData(responseBody, ['password']);
 
 			const entity = new ApiCallLog({
 				correlationId,
@@ -85,12 +91,13 @@ export class ApiCallLogMiddleware implements NestMiddleware {
 				requestHeaders,
 				requestBody,
 				statusCode: res.statusCode,
-				responseBody: redactedResponseBody || {},
+				responseBody: responseBody || {},
 				requestTime: new Date(startTime),
 				responseTime: new Date(),
 				userId: userId || null
 			});
-			this.logger.debug('ApiCallLogMiddleware: logging API call entity:', entity);
+
+			this.logger.debug(`ApiCallLogMiddleware: logging API call entity: ${JSON.stringify(entity)}`);
 
 			try {
 				// Asynchronously log the API call to the database

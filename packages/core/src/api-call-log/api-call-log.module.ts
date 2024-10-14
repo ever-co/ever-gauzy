@@ -16,18 +16,30 @@ import { TypeOrmApiCallLogRepository } from './repository/type-orm-api-call-log.
 })
 export class ApiCallLogModule implements NestModule {
 	/**
-	 * Configures the middleware for Time Tracking routes (POST, PUT, PATCH, DELETE).
+	 * Configures the middleware for Time Tracking routes (POST, PUT, PATCH, DELETE)
+	 * excluding the '/timesheet/statistics' route.
 	 *
 	 * @param consumer The middleware consumer used to apply the middleware to specific routes.
 	 */
 	configure(consumer: MiddlewareConsumer) {
-		consumer
-			.apply(ApiCallLogMiddleware)
-			.forRoutes(
-				{ path: '/timesheet/*', method: RequestMethod.POST },
-				{ path: '/timesheet/*', method: RequestMethod.PUT },
-				{ path: '/timesheet/*', method: RequestMethod.PATCH },
-				{ path: '/timesheet/*', method: RequestMethod.DELETE }
-			);
+		consumer.apply(ApiCallLogMiddleware).forRoutes(
+			// POST Routes
+			{ path: '/timesheet/timer/*', method: RequestMethod.POST },
+			{ path: '/timesheet/time-log', method: RequestMethod.POST },
+			{ path: '/timesheet/activity/bulk', method: RequestMethod.POST },
+			{ path: '/timesheet/time-slot', method: RequestMethod.POST },
+			{ path: '/timesheet/screenshot', method: RequestMethod.POST },
+
+			// PUT Routes
+			{ path: '/timesheet/time-log/:id', method: RequestMethod.PUT },
+			{ path: '/timesheet/time-slot/:id', method: RequestMethod.PUT },
+			{ path: '/timesheet/status', method: RequestMethod.PUT },
+			{ path: '/timesheet/submit', method: RequestMethod.PUT },
+
+			// DELETE Routes
+			{ path: '/timesheet/time-log', method: RequestMethod.DELETE },
+			{ path: '/timesheet/time-slot', method: RequestMethod.DELETE },
+			{ path: '/timesheet/screenshot/:id', method: RequestMethod.DELETE }
+		);
 	}
 }
