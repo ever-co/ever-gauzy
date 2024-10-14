@@ -55,8 +55,10 @@ export class ProjectSelectorComponent extends AbstractSelectorComponent<IOrganiz
 	}
 
 	public clear(): void {
-		this.selectorElectronService.update({ projectId: null });
-		this.selectorElectronService.refresh();
+		if (this.useStore) {
+			this.selectorElectronService.update({ projectId: null });
+			this.selectorElectronService.refresh();
+		}
 	}
 
 	public addProject = async (name: IOrganizationProject['name']) => {

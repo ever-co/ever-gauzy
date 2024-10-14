@@ -43,8 +43,10 @@ export class TaskSelectorComponent extends AbstractSelectorComponent<ITask> impl
 	}
 
 	public clear(): void {
-		this.selectorElectronService.update({ taskId: null });
-		this.selectorElectronService.refresh();
+		if (this.useStore) {
+			this.selectorElectronService.update({ taskId: null });
+			this.selectorElectronService.refresh();
+		}
 	}
 
 	public addNewTask = async (name: ITask['title']) => {

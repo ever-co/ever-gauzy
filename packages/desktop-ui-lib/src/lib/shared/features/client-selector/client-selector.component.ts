@@ -52,8 +52,10 @@ export class ClientSelectorComponent extends AbstractSelectorComponent<IOrganiza
 	}
 
 	public clear(): void {
-		this.selectorElectronService.update({ organizationContactId: null });
-		this.selectorElectronService.refresh();
+		if (this.useStore) {
+			this.selectorElectronService.update({ organizationContactId: null });
+			this.selectorElectronService.refresh();
+		}
 	}
 
 	public addContact = async (name: IOrganizationContact['name']) => {

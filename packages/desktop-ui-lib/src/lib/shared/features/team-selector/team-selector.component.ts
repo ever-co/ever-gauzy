@@ -53,8 +53,10 @@ export class TeamSelectorComponent extends AbstractSelectorComponent<IOrganizati
 	}
 
 	public clear(): void {
-		this.selectorElectronService.update({ organizationTeamId: null });
-		this.selectorElectronService.refresh();
+		if (this.useStore) {
+			this.selectorElectronService.update({ organizationTeamId: null });
+			this.selectorElectronService.refresh();
+		}
 	}
 
 	public get error$(): Observable<string> {
