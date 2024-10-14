@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere, In } from 'typeorm';
-import { EntityEnum, ID, IFavorite, IFavoriteCreateInput, IPagination } from '@gauzy/contracts';
+import { BaseEntityEnum, ID, IFavorite, IFavoriteCreateInput, IPagination } from '@gauzy/contracts';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { Favorite } from './favorite.entity';
@@ -109,7 +109,7 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 		try {
 			const { where } = options;
 			const { entity } = where;
-			const favoriteType: EntityEnum = entity as EntityEnum;
+			const favoriteType: BaseEntityEnum = entity as BaseEntityEnum;
 
 			// Find favorite elements with filtered params
 			const favorites = await super.findAll(options);

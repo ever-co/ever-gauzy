@@ -1,8 +1,19 @@
+import { EventBus } from '@nestjs/cqrs';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateResult } from 'typeorm';
+import {
+	IResourceLink,
+	IResourceLinkCreateInput,
+	IResourceLinkUpdateInput,
+	ID,
+	ActionTypeEnum,
+	BaseEntityEnum,
+	ActorTypeEnum
+} from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
-import { IResourceLink, IResourceLinkCreateInput, IResourceLinkUpdateInput, ID } from '@gauzy/contracts';
+import { ActivityLogEvent } from '../activity-log/events';
+import { activityLogUpdatedFieldsAndValues, generateActivityLogDescription } from '../activity-log/activity-log.helper';
 import { UserService } from '../user/user.service';
 import { ResourceLink } from './resource-link.entity';
 import { TypeOrmResourceLinkRepository } from './repository/type-orm-resource-link.repository';
@@ -13,7 +24,8 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 	constructor(
 		readonly typeOrmResourceLinkRepository: TypeOrmResourceLinkRepository,
 		readonly mikroOrmResourceLinkRepository: MikroOrmResourceLinkRepository,
-		private readonly userService: UserService
+		private readonly userService: UserService,
+		private readonly _eventBus: EventBus
 	) {
 		super(typeOrmResourceLinkRepository, mikroOrmResourceLinkRepository);
 	}
@@ -37,11 +49,21 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 			}
 
 			// return created resource link
-			return await super.create({
+			const resourceLink = await super.create({
 				...entity,
 				tenantId,
 				creatorId: user.id
 			});
+
+			// Generate the activity log description.
+			const description = generateActivityLogDescription(
+				ActionTypeEnum.Created,
+				BaseEntityEnum.ResourceLink,
+				`${resourceLink.title} for ${resourceLink.entity}`
+			);
+			this.logActivity(ActionTypeEnum.Created, resourceLink, description);
+
+			return resourceLink;
 		} catch (error) {
 			console.log(error); // Debug Logging
 			throw new BadRequestException('Resource Link creation failed', error);
@@ -62,13 +84,64 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 				throw new BadRequestException('Resource Link not found');
 			}
 
-			return await super.create({
+			const updatedResourceLink = await super.create({
 				...input,
 				id
 			});
+
+			// Compare values before and after update then add updates to fields
+			const { updatedFields, previousValues, updatedValues } = activityLogUpdatedFieldsAndValues(
+				updatedResourceLink,
+				input
+			);
+
+			// Generate the activity log description.
+			const description = generateActivityLogDescription(
+				ActionTypeEnum.Updated,
+				BaseEntityEnum.ResourceLink,
+				`${resourceLink.title} for ${resourceLink.entity}`
+			);
+
+			//Log activity
+			this.logActivity(
+				ActionTypeEnum.Updated,
+				updatedResourceLink,
+				description,
+				updatedFields,
+				previousValues,
+				updatedValues
+			);
+
+			// return updated Resource Link
+			return updatedResourceLink;
 		} catch (error) {
 			console.log(error); // Debug Logging
 			throw new BadRequestException('Resource Link update failed', error);
 		}
+	}
+
+	private logActivity(
+		action: ActionTypeEnum,
+		resourceLink: ResourceLink,
+		description: string,
+		updatedFields?: string[],
+		previousValues?: any,
+		updatedValues?: any
+	) {
+		this._eventBus.publish(
+			new ActivityLogEvent({
+				entity: BaseEntityEnum.ResourceLink,
+				entityId: resourceLink.id,
+				action,
+				actorType: ActorTypeEnum.User,
+				description,
+				updatedFields,
+				updatedValues,
+				previousValues,
+				data: resourceLink,
+				organizationId: resourceLink.organizationId,
+				tenantId: resourceLink.tenantId
+			})
+		);
 	}
 }
