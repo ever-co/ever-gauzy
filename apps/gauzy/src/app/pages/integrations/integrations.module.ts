@@ -81,6 +81,8 @@ export class IntegrationsModule {
 
 		// Register the routes for hubstaff integration
 		this._pageRouteRegistryService.registerPageRoute({
+			// Data to be passed to the component
+			data: { selectors: false },
 			// Register the location 'integrations'
 			location: 'integrations',
 			// Register the path 'hubstaff'
@@ -91,24 +93,26 @@ export class IntegrationsModule {
 
 		// Register the routes for gauzy-ai integration
 		this._pageRouteRegistryService.registerPageRoute({
+			// Data to be passed to the component
+			data: { selectors: false },
 			// Register the location 'integrations'
 			location: 'integrations',
 			// Register the path 'gauzy-ai'
 			path: 'gauzy-ai',
 			// Register the loadChildren function to load the GauzyAIModule lazy module
-			loadChildren: () => import('./gauzy-ai/gauzy-ai.module').then((m) => m.GauzyAIModule),
-			data: { selectors: false }
+			loadChildren: () => import('./gauzy-ai/gauzy-ai.module').then((m) => m.GauzyAIModule)
 		});
 
 		// Register the routes for github integration
 		this._pageRouteRegistryService.registerPageRoute({
+			// Data to be passed to the component
+			data: { selectors: false },
 			// Register the location 'integrations'
 			location: 'integrations',
 			// Register the path 'github'
 			path: 'github',
 			// Register the loadChildren function to load the GithubModule lazy module
-			loadChildren: () => import('./github/github.module').then((m) => m.GithubModule),
-			data: { selectors: false }
+			loadChildren: () => import('./github/github.module').then((m) => m.GithubModule)
 		});
 
 		// Set hasRegisteredRoutes to true
