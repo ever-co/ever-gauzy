@@ -1,10 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Validators, UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { filter, tap } from 'rxjs/operators';
+import { catchError, filter, of, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ID, IIntegrationTenant, IOrganization, IntegrationEnum } from '@gauzy/contracts';
-import { HubstaffService, IntegrationsService, Store } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, HubstaffService, IntegrationsService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -29,14 +29,17 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 		private readonly _fb: UntypedFormBuilder,
 		private readonly _router: Router,
 		private readonly _store: Store,
-		private readonly _integrationsService: IntegrationsService
+		private readonly _integrationsService: IntegrationsService,
+		private readonly _errorHandlingService: ErrorHandlingService
 	) {}
 
 	ngOnInit() {
 		this._store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
-				tap((organization: IOrganization) => (this.organization = organization)),
+				tap((organization: IOrganization) => {
+					this.organization = organization;
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -150,6 +153,10 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 				})
 				.pipe(
 					tap(({ id }) => this._redirectToHubstaffIntegration(id)),
+					catchError((error) => {
+						this._errorHandlingService.handleError(error);
+						return of(null);
+					}),
 					untilDestroyed(this)
 				)
 				.subscribe();
