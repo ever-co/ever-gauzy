@@ -8,7 +8,6 @@
 				<nb-toggle [(checked)]="entity.sync" labelPosition="start" status="basic">
 					{{ entity.entity }}
 				</nb-toggle>
-
 				<div class="tied-entities-wrapper">
 					<ng-container *ngFor="let tiedEntity of entity.tiedEntities">
 						<div class="tied-entity">
@@ -20,16 +19,13 @@
 									[icon]="expandOptions ? 'chevron-down-outline' : 'chevron-right-outline'"
 									(click)="expandOptions = !expandOptions"
 								></nb-icon>
-
 								<label class="label">
 									{{ tiedEntity.entity }}
 								</label>
 								<nb-icon
 									icon="info-outline"
 									[nbTooltip]="'INTEGRATIONS.HUBSTAFF_PAGE.TOOLTIP_ACTIVITY_INFO' | translate"
-									nbTooltipTrigger="hover"
-								>
-								</nb-icon>
+								></nb-icon>
 							</div>
 							<ng-template #notActivityTemp>
 								<label class="label">
@@ -41,17 +37,9 @@
 								[disabled]="!entity.sync"
 								labelPosition="start"
 								status="basic"
-							>
-							</nb-toggle>
+							></nb-toggle>
 						</div>
-
-						<div
-							[ngClass]="
-								expandOptions && tiedEntity.entity === IntegrationEntity.ACTIVITY
-									? 'visible'
-									: 'not-visible'
-							"
-						>
+						<div [ngClass]="expandOptions && tiedEntity.entity === IntegrationEntity.ACTIVITY ? 'visible' : 'not-visible'">
 							<input
 								nbInput
 								[placeholder]="'INTEGRATIONS.HUBSTAFF_PAGE.DATE_RANGE_PLACEHOLDER' | translate"
@@ -64,18 +52,16 @@
 								[max]="maxDate"
 								[min]="minDate"
 								(rangeChange)="onDateChange($event)"
-							>
-							</nb-rangepicker>
+							></nb-rangepicker>
 						</div>
 					</ng-container>
 				</div>
 			</ng-container>
 		</div>
 	</nb-card-body>
-
 	<nb-card-footer>
 		<div class="dialog-footer">
-			<button nbButton (click)="dialogRef.close(true)" status="primary" class="mr-2">
+			<button nbButton (click)="closeDialog(true)" status="primary" class="mr-2">
 				{{ 'BUTTONS.SAVE' | translate }}
 			</button>
 		</div>

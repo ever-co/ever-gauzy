@@ -16,7 +16,6 @@ import {
 import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { LanguagesEnum } from '@gauzy/contracts';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import {
@@ -24,7 +23,8 @@ import {
 	DialogsModule,
 	EmployeeMultiSelectModule,
 	SharedModule,
-	StatusBadgeModule
+	StatusBadgeModule,
+	getBrowserLanguage
 } from '@gauzy/ui-core/shared';
 import { createJobProposalTemplateRoutes } from './job-proposal-template.routes';
 import { ProposalTemplateComponent } from './components/proposal-template/proposal-template.component';
@@ -49,7 +49,7 @@ const THIRD_PARTY_MODULES = [
 	CKEditorModule,
 	NgxPermissionsModule.forRoot(),
 	TranslateModule.forRoot({
-		defaultLanguage: LanguagesEnum.ENGLISH,
+		defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
 		loader: {
 			provide: TranslateLoader,
 			useFactory: HttpLoaderFactory,
