@@ -73,6 +73,7 @@ import { TaskSelectorService } from '../shared/features/task-selector/+state/tas
 import { TeamSelectorService } from '../shared/features/team-selector/+state/team-selector.service';
 import { TimeTrackerFormService } from '../shared/features/time-tracker-form/time-tracker-form.service';
 import { hasAllPermissions } from '../shared/utils/permission.util';
+import { SelectorValidator } from '../shared/utils/validation/selector.validator';
 import { TimeTrackerQuery } from './+state/time-tracker.query';
 import { IgnitionState, TimeTrackerStore } from './+state/time-tracker.store';
 import { IRemoteTimer } from './time-tracker-status/interfaces';
@@ -1429,7 +1430,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			} else {
 				this.loading = false;
 				this.isProcessingEnabled = false;
+				this._toastrNotifier.error('Validation failed');
 				this._loggerService.error('Error', 'validation failed');
+				this.timeTrackerStore.ignition({ state: IgnitionState.STOPPED });
 			}
 		}
 	}
@@ -1653,25 +1656,26 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public validationField(): boolean {
-		this.errorBind();
-		const errors = [];
-		const requireField = {
-			task: 'requireTask',
-			project: 'requireProject',
-			client: 'requireClient',
-			note: 'requireDescription'
-		};
-		Object.keys(this.errors).forEach((key) => {
-			if (this.errors[key] && this.userOrganization[requireField[key]]) errors.push(true);
-		});
-		return errors.length === 0;
-	}
+		const selectorValidator = new SelectorValidator([
+			{
+				service: this.projectSelectorService,
+				requireField: this.userOrganization.requireProject
+			},
+			{
+				service: this.taskSelectorService,
+				requireField: this.userOrganization.requireTask
+			},
+			{
+				service: this.clientSelectorService,
+				requireField: this.userOrganization.requireClient
+			},
+			{
+				service: this.noteService,
+				requireField: this.userOrganization.requireDescription
+			}
+		]);
 
-	public errorBind(): void {
-		if (!this.projectSelectorService.selected && this.userOrganization.requireProject) this.errors.project = true;
-		if (!this.selectedTask && this.userOrganization.requireTask) this.errors.task = true;
-		if (!this.clientSelectorService.selected && this.userOrganization.requireClient) this.errors.client = true;
-		if (!this.noteService.note && this.userOrganization.requireDescription) this.errors.note = true;
+		return selectorValidator.validateAll();
 	}
 
 	public doShoot(): void {

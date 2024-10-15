@@ -16,10 +16,9 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { LanguagesEnum } from '@gauzy/contracts';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
-import { DialogsModule, SharedModule } from '@gauzy/ui-core/shared';
+import { DialogsModule, SharedModule, getBrowserLanguage } from '@gauzy/ui-core/shared';
 import { createJobMatchingRoutes } from './job-matching.routes';
 import { JobMatchingComponent } from './components/job-matching/job-matching.component';
 import { COMPONENTS } from './components';
@@ -47,7 +46,7 @@ const THIRD_PARTY_MODULES = [
 	NgxPermissionsModule.forRoot(),
 	NgSelectModule,
 	TranslateModule.forRoot({
-		defaultLanguage: LanguagesEnum.ENGLISH,
+		defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
 		loader: {
 			provide: TranslateLoader,
 			useFactory: HttpLoaderFactory,

@@ -1,0 +1,11 @@
+.error-message {
+	color: red;
+	font-weight: 500;
+	font-size: 13px;
+	padding: 0.5rem;
+	background-color: rgb(255 0 0 / 10%);
+	border-radius: calc(var(--border-radius) / 2);
+	text-wrap: pretty;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
