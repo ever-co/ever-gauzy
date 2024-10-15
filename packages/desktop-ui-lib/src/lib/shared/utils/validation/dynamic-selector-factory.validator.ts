@@ -1,4 +1,4 @@
-import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+import { ValidatorFn, Validators } from '@angular/forms';
 import { SelectorService } from '../../+state/selector.service';
 import { NoteService } from '../../features/note/+state/note.service';
 import { IValidation } from '../../interfaces/validation.interface';
@@ -55,16 +55,6 @@ export class DynamicSelectorValidation implements IValidation {
 	}
 
 	public static requiredValidator(requireField: boolean): ValidatorFn {
-		return (control: AbstractControl): ValidationErrors | null => {
-			// If the field is required, check the control's value
-			if (requireField) {
-				const value = control.value;
-				// Return error if the value is empty (handles various empty cases)
-				if (value === null || value === undefined || value === '') {
-					return { required: true }; // Field is required but not filled
-				}
-			}
-			return null; // No error, the field is valid
-		};
+		return requireField ? Validators.required : Validators.nullValidator;
 	}
 }

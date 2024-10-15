@@ -27,11 +27,11 @@ import { DynamicSelectorValidation } from '../../shared/utils/validation/dynamic
 export class TimerTrackerChangeDialogComponent implements OnInit {
 	private lastSelectorState: ITimeTrackerFormState;
 	public form: FormGroup = new FormGroup({
-		clientId: new FormControl(null, this.requiredValidator(this.organization.requireClient)),
-		projectId: new FormControl(null, this.requiredValidator(this.organization.requireProject)),
+		clientId: new FormControl(null, this.requiredValidator(this.organization?.requireClient)),
+		projectId: new FormControl(null, this.requiredValidator(this.organization?.requireProject)),
 		teamId: new FormControl(null),
-		taskId: new FormControl(null, this.requiredValidator(this.organization.requireTask)),
-		note: new FormControl(null, this.requiredValidator(this.organization.requireDescription))
+		taskId: new FormControl(null, this.requiredValidator(this.organization?.requireTask)),
+		note: new FormControl(null, this.requiredValidator(this.organization?.requireDescription))
 	});
 	constructor(
 		private dialogRef: NbDialogRef<TimerTrackerChangeDialogComponent>,

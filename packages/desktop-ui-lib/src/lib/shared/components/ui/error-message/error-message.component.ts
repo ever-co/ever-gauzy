@@ -22,7 +22,7 @@ export class ErrorMessageComponent {
 	}
 
 	private getControlErrors(): any {
-		if (this.field) {
+		if (this.field instanceof FormControl) {
 			return this.field.errors;
 		} else if (this.field instanceof NgModel) {
 			return this.field.errors;

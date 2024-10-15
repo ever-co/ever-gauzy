@@ -29,7 +29,7 @@
 				{{ 'BUTTONS.CANCEL' | translate }}
 			</button>
 			<button
-				[disabled]="(isRestarting$ | async) || this.form.invalid"
+				[disabled]="(isRestarting$ | async) || form.invalid"
 				status="success"
 				size="small"
 				type="submit"

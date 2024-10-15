@@ -1,6 +1,6 @@
 export interface IValidation {
 	validate(): boolean;
-	setError(): void;
+	setError<T>(error?: T): void;
 }
 
 export interface IValidationConfig {
