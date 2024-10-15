@@ -198,7 +198,16 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent implemen
 			})
 			.pipe(
 				map(({ items, total }: IPagination<ITaskStatus>) => (total > 0 ? items : this._statuses)),
-				tap((statuses: ITaskStatus[]) => this.statuses$.next(statuses)),
+				tap((statuses: ITaskStatus[]) => {
+					this.statuses$.next(statuses);
+					if (!this.status) {
+						const defaultStatus = statuses.find((status) => status.name === TaskStatusEnum.OPEN);
+						if (defaultStatus) {
+							this.status = defaultStatus;
+							this.onChange(defaultStatus);
+						}
+					}
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
