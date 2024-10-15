@@ -1,6 +1,6 @@
 import { IntersectionType, OmitType } from '@nestjs/swagger';
 import { IResourceLinkCreateInput } from '@gauzy/contracts';
-import { TenantOrganizationBaseDTO } from './../../core/dto';
+import { TenantOrganizationBaseDTO } from '../../core/dto';
 import { ResourceLink } from '../resource-link.entity';
 
 /**
