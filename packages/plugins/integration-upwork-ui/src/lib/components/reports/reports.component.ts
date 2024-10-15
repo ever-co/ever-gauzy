@@ -1,9 +1,8 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, AfterViewInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable, Subject } from 'rxjs';
-import { tap } from 'rxjs/internal/operators/tap';
-import { debounceTime, filter } from 'rxjs/operators';
+import { Observable, Subject, catchError, debounceTime, filter, of, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { NbCalendarRange } from '@nebular/theme';
 import * as moment from 'moment';
 import { Cell } from 'angular2-smart-table';
 import { IncomeTypeEnum, IOrganization, IUpworkDateRange } from '@gauzy/contracts';
@@ -13,13 +12,13 @@ import { DateViewComponent, IncomeExpenseAmountComponent } from '@gauzy/ui-core/
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-reports',
+	selector: 'ngx-upwork-reports',
 	templateUrl: './reports.component.html',
 	styleUrls: ['./reports.component.scss']
 })
 export class ReportsComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
 	public reports$: Observable<any> = this._upworkStoreService.reports$;
-	public settingsSmartTable: object;
+	public settingsSmartTable: any;
 	public today: Date = new Date();
 	public defaultDateRange$ = this._upworkStoreService.dateRangeActivity$;
 	public displayDate: any;
@@ -46,32 +45,69 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 	ngOnInit(): void {
 		this._loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
-		this._storeService.selectedOrganization$
-			.pipe(
-				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => (this.organization = organization)),
-				tap(() => this._setDefaultRange()),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		this.updateReports$
-			.pipe(
-				tap(() => this._getReport()),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		this._subscribeToOrganizationAndReports();
 	}
-
-	ngOnDestroy(): void {}
 
 	ngAfterViewInit(): void {
 		this.cdr.detectChanges();
 	}
 
-	private _getReport(): void {
-		this._upworkStoreService.loadReports(this.organization).pipe(untilDestroyed(this)).subscribe();
+	/*
+	 * Subscribe to selected organization and update reports
+	 */
+	private _subscribeToOrganizationAndReports(): void {
+		this._storeService.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization), // Ensure organization is truthy
+				tap((organization: IOrganization) => {
+					this.organization = organization; // Set the selected organization
+					this._setDefaultRange(); // Set the default date range
+				}),
+				untilDestroyed(this),
+				catchError((error) => {
+					console.error('Error retrieving organization:', error);
+					return of(null); // Return null or an appropriate default value
+				})
+			)
+			.subscribe();
+
+		this.updateReports$
+			.pipe(
+				tap(() => this._getReport()), // Call method to get reports
+				untilDestroyed(this),
+				catchError((error) => {
+					console.error('Error updating reports:', error);
+					return of(null); // Return null or an appropriate default value
+				})
+			)
+			.subscribe();
 	}
 
+	/*
+	 * Load reports for the organization
+	 */
+	private _getReport(): void {
+		this._upworkStoreService
+			.loadReports(this.organization)
+			.pipe(
+				untilDestroyed(this),
+				tap(() => {
+					// Optional: You can set a loading state here if needed
+					console.log('Reports are being loaded...');
+				}),
+				catchError((error) => {
+					// Handle error case
+					console.error('Failed to load reports:', error);
+					// Optionally return a default value or empty result
+					return of([]); // Assuming you want to return an empty array in case of error
+				})
+			)
+			.subscribe();
+	}
+
+	/**
+	 *
+	 */
 	private _loadSettingsSmartTable(): void {
 		this.settingsSmartTable = {
 			actions: false,
@@ -102,12 +138,7 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 				clientName: {
 					title: this.getTranslation('SM_TABLE.CLIENT_NAME'),
 					type: 'string',
-					valuePrepareFunction: (value, item) => {
-						if (item.hasOwnProperty('vendor')) {
-							return item.vendor ? item.vendor.name : null;
-						}
-						return value;
-					}
+					valuePrepareFunction: (value, item) => item.vendor?.name || value
 				},
 				amount: {
 					title: this.getTranslation('SM_TABLE.AMOUNT'),
@@ -129,21 +160,14 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 					type: 'string',
 					isFilterable: true,
 					valuePrepareFunction: (item) => {
-						const user = item.user || null;
-						if (user) {
-							return `${user.firstName} ${user.lastName}`;
-						}
+						const { user } = item; // Destructure user directly from item
+						return user ? `${user.firstName} ${user.lastName}` : ''; // Return an empty string if user is null or undefined
 					},
 					filterFunction(cell?: any, search?: string): boolean {
-						if (
-							cell.user.firstName.indexOf(search) >= 0 ||
-							cell.user.lastName.indexOf(search) >= 0 ||
-							search === ''
-						) {
-							return true;
-						} else {
-							return false;
-						}
+						if (!search) return true; // If there's no search term, return true for all
+
+						const user = cell?.user; // Use optional chaining to safely access user
+						return user?.firstName.includes(search) || user?.lastName.includes(search) || false; // Return true if search matches first or last name
 					}
 				}
 			},
@@ -169,54 +193,79 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 	private _setDefaultRange(): void {
 		this.defaultDateRange$ = this._upworkStoreService.dateRangeActivity$.pipe(
 			debounceTime(100),
-			tap((dateRange) => ((this.selectedDateRange = dateRange), this.updateReports$.next(true))),
-			tap(
-				(dateRange) =>
-					(this.displayDate = `${moment(dateRange.start).format('MMM D, YYYY')} - ${moment(
-						dateRange.end
-					).format('MMM D, YYYY')}`)
-			)
+			tap(({ start, end }) => {
+				// Set selected date range
+				this.selectedDateRange = { start, end };
+				// Update report trigger
+				this.updateReports$.next(true);
+				// Set display date
+				this.displayDate = this.formatDateRange(start, end);
+			})
 		);
 	}
 
 	/*
-	 * Onchange date range for filter'
+	 * Format date range for display
 	 */
-	public handleRangeChange({ start, end }: IUpworkDateRange): void {
-		if (moment(start, 'YYYY-MM-DD').isValid() && moment(end, 'YYYY-MM-DD').isValid()) {
+	private formatDateRange(start: string | Date, end: string | Date): string {
+		return `${moment(start).format('MMM D, YYYY')} - ${moment(end).format('MMM D, YYYY')}`;
+	}
+
+	/**
+	 * Handles the change in the date range.
+	 * This method validates the start and end dates emitted from the calendar component
+	 * and updates the filter date range in the Upwork store.
+	 *
+	 * @param range - The calendar range object containing start and end dates.
+	 */
+	public handleRangeChange(range: NbCalendarRange<any>): void {
+		const { start, end } = range; // Destructure start and end from the emitted range
+
+		// Check if both start and end dates are valid
+		if (start && end && moment(start, 'YYYY-MM-DD').isValid() && moment(end, 'YYYY-MM-DD').isValid()) {
+			// Update the filter date range in the store
 			this._upworkStoreService.setFilterDateRange({ start, end });
+			// Trigger report updates
 			this.updateReports$.next(true);
 		}
 	}
 
 	/*
-	 * Previous month calendar
+	 * Change month by the specified number of months
 	 */
-	public previousMonth(): void {
+	private changeMonth(months: number): void {
 		const { start, end }: IUpworkDateRange = this.selectedDateRange;
-		this.selectedDateRange = {
-			start: new Date(moment(start).subtract(1, 'months').format('YYYY-MM-DD')),
-			end: new Date(moment(end).subtract(1, 'months').format('YYYY-MM-DD'))
-		};
-		this._upworkStoreService.setFilterDateRange(this.selectedDateRange);
-	}
+		const newStart = moment(start).add(months, 'months').format('YYYY-MM-DD');
+		const newEnd = moment(end).add(months, 'months').format('YYYY-MM-DD');
 
-	/*
-	 * Next month calendar
-	 */
-	public nextMonth(): void {
-		const { start, end }: IUpworkDateRange = this.selectedDateRange;
 		this.selectedDateRange = {
-			start: new Date(moment(start).add(1, 'months').format('YYYY-MM-DD')),
-			end: new Date(moment(end).add(1, 'months').format('YYYY-MM-DD'))
+			start: new Date(newStart),
+			end: new Date(newEnd)
 		};
+
+		// Ensure the selected range does not exceed today's date
 		if (this.selectedDateRange.start > this.today) {
 			this.selectedDateRange.start = new Date(moment(this.today).subtract(1, 'months').format('YYYY-MM-DD'));
 		}
 		if (this.selectedDateRange.end > this.today) {
 			this.selectedDateRange.end = this.today;
 		}
+
 		this._upworkStoreService.setFilterDateRange(this.selectedDateRange);
+	}
+
+	/*
+	 * Previous month calendar
+	 */
+	public previousMonth(): void {
+		this.changeMonth(-1);
+	}
+
+	/*
+	 * Next month calendar
+	 */
+	public nextMonth(): void {
+		this.changeMonth(1);
 	}
 
 	/*
@@ -228,4 +277,6 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 		}
 		return moment(this.selectedDateRange.end).isSameOrAfter(this.today, 'day');
 	}
+
+	ngOnDestroy(): void {}
 }

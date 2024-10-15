@@ -25,48 +25,38 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { Store } from '@gauzy/ui-core/core';
 import { HttpLoaderFactory, I18nService } from '@gauzy/ui-core/i18n';
 import { getBrowserLanguage, SmartDataViewLayoutModule, SharedModule } from '@gauzy/ui-core/shared';
-import { IntegrationHubstaffRoutingModule } from './integration-hubstaff-routing.module';
+import { IntegrationHubstaffRoutes } from './integration-hubstaff.routes';
 import { HubstaffComponent } from './components/hubstaff/hubstaff.component';
 import { HubstaffAuthorizeComponent } from './components/hubstaff-authorize/hubstaff-authorize.component';
 import { SettingsDialogComponent } from './components/settings-dialog/settings-dialog.component';
 
-// Nebular Modules
-const NB_MODULES = [
-	NbActionsModule,
-	NbButtonModule,
-	NbCardModule,
-	NbCheckboxModule,
-	NbContextMenuModule,
-	NbDatepickerModule,
-	NbDialogModule.forChild(),
-	NbIconModule,
-	NbInputModule,
-	NbSelectModule,
-	NbSpinnerModule,
-	NbToggleModule,
-	NbTooltipModule
-];
-
-// Third Party Modules
-const THIRD_PARTY_MODULES = [
-	NgSelectModule,
-	NgxPermissionsModule.forRoot(),
-	TranslateModule.forRoot({
-		defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
-		loader: {
-			provide: TranslateLoader,
-			useFactory: HttpLoaderFactory,
-			deps: [HttpClient]
-		}
-	})
-];
-
 @NgModule({
 	declarations: [HubstaffAuthorizeComponent, HubstaffComponent, SettingsDialogComponent],
 	imports: [
-		...NB_MODULES,
-		...THIRD_PARTY_MODULES,
-		IntegrationHubstaffRoutingModule,
+		NbActionsModule,
+		NbButtonModule,
+		NbCardModule,
+		NbCheckboxModule,
+		NbContextMenuModule,
+		NbDatepickerModule,
+		NbDialogModule.forChild(),
+		NbIconModule,
+		NbInputModule,
+		NbSelectModule,
+		NbSpinnerModule,
+		NbToggleModule,
+		NbTooltipModule,
+		NgSelectModule,
+		NgxPermissionsModule.forRoot(),
+		TranslateModule.forRoot({
+			defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
+			loader: {
+				provide: TranslateLoader,
+				useFactory: HttpLoaderFactory,
+				deps: [HttpClient]
+			}
+		}),
+		IntegrationHubstaffRoutes,
 		SharedModule,
 		SmartDataViewLayoutModule
 	]

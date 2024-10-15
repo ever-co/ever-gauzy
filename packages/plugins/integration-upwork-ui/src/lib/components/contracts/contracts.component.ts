@@ -1,8 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 import { TitleCasePipe } from '@angular/common';
-import { Observable, of, EMPTY, firstValueFrom, filter } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { ActivatedRoute } from '@angular/router';
+import { Observable, of, EMPTY, firstValueFrom, filter, catchError, tap } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -22,8 +21,8 @@ import { SyncDataSelectionComponent } from '../sync-data-selection/sync-data-sel
 	providers: [TitleCasePipe]
 })
 export class ContractsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+	public smartTableSettings: any;
 	public contracts$: Observable<IEngagement[]> = this._upworkStoreServices.contracts$;
-	public smartTableSettings: object;
 	public selectedContracts: IEngagement[] = [];
 
 	constructor(
@@ -178,8 +177,8 @@ export class ContractsComponent extends TranslationBaseComponent implements OnIn
 					);
 				}),
 				// Handle errors using the _ehs.handleError method and return an EMPTY observable
-				catchError((err) => {
-					this._errorHandlingService.handleError(err);
+				catchError((error) => {
+					this._errorHandlingService.handleError(error);
 					return EMPTY;
 				}),
 				// Automatically unsubscribe when the component is destroyed
