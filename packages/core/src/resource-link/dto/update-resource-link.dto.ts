@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/swagger';
 import { IResourceLinkUpdateInput } from '@gauzy/contracts';
-import { CreateResourceLinkDTO } from './create-ressource-link.dto';
+import { CreateResourceLinkDTO } from './create-resource-link.dto';
 
 /**
  * Create ResourceLink data validation request DTO
