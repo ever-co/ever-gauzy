@@ -86,7 +86,7 @@ export class IntegrationsModule {
 			// Register the path 'hubstaff'
 			path: 'hubstaff',
 			// Register the loadChildren function to load the HubstaffModule lazy module
-			loadChildren: () => import('../hubstaff/hubstaff.module').then((m) => m.HubstaffModule)
+			loadChildren: () => import('@gauzy/plugin-integration-hubstaff-ui').then((m) => m.IntegrationHubstaffModule)
 		});
 
 		// Register the routes for gauzy-ai integration

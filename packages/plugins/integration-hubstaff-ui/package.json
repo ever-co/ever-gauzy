@@ -40,7 +40,15 @@
 		"@angular/core": "^16.2.12"
 	},
 	"dependencies": {
+		"@angular/forms": "^16.2.12",
+		"@angular/router": "^16.2.12",
 		"@gauzy/contracts": "^0.1.0",
+		"@nebular/theme": "^12.0.0",
+		"@ng-select/ng-select": "^11.2.0",
+		"@ngneat/until-destroy": "^9.2.0",
+		"@ngx-translate/core": "^15.0.0",
+		"angular2-smart-table": "^3.2.0",
+		"ngx-permissions": "^13.0.1",
 		"rxjs": "^7.4.0",
 		"tslib": "^2.6.2"
 	},
