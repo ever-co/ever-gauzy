@@ -488,19 +488,29 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			} else {
 				if (!this._isOffline) {
 					try {
-						timelog =
+						// Combine all conditions into a single descriptive boolean
+						const isRetrieveRemoteLog =
+							!isRemoteTimerRunning ||
 							isRemote ||
 							this._remoteSleepLock ||
-							(this.isRemoteTimer && (this._isSpecialLogout || this.quitApp))
-								? this._timeTrackerStatus.remoteTimer.lastLog
-								: await this.preventDuplicateApiRequest(
-										{
-											...params,
-											...lastTimer
-										},
-										(payload) => this.timeTrackerService.toggleApiStop(payload)
-								  );
+							(this.isRemoteTimer && (this._isSpecialLogout || this.quitApp));
+
+						if (isRetrieveRemoteLog) {
+							// Retrieve remote timer log
+							timelog = this._timeTrackerStatus.remoteTimer.lastLog;
+						} else {
+							// Create request parameters only when necessary
+							const requestParams = {
+								...params,
+								...lastTimer
+							};
+							// Execute API request to stop timer and store the result in timelog
+							timelog = await this.preventDuplicateApiRequest(requestParams, (payload) =>
+								this.timeTrackerService.toggleApiStop(payload)
+							);
+						}
 					} catch (error) {
+						// Handle any error during the process
 						lastTimer.isStoppedOffline = true;
 						await this.electronService.ipcRenderer.invoke('MARK_AS_STOPPED_OFFLINE');
 						this._loggerService.error(error);
@@ -2328,6 +2338,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			taskId: timer.taskId,
 			organizationTeamId: timer.organizationTeamId,
 			description: timer.description,
+			version: timer.version,
 			startedAt: timer.startedAt,
 			stoppedAt: new Date(),
 			...(session?.params && { ...session.params })
@@ -2366,6 +2377,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		await this.electronService.ipcRenderer.invoke('UPDATE_SELECTOR', newParams);
 
+		await this.updateTaskStatus();
+
+		await this.updateOrganizationTeamEmployee();
 		// Return the result of the callback (or void if no callback was provided)
 		return { current, previous, result, params };
 	}

@@ -61,18 +61,20 @@ export interface IBasePerTenantAndOrganizationEntityMutationInput extends Partia
 
 // Actor type defines if it's User or system performed some action
 export enum ActorTypeEnum {
-	System = 0, // System performed the action
-	User = 1 // User performed the action
+	System = 'System', // System performed the action
+	User = 'User' // User performed the action
 }
 
-export enum EntityEnum {
+export enum BaseEntityEnum {
 	Candidate = 'Candidate',
 	Contact = 'Contact',
+	Currency = 'Currency',
 	Employee = 'Employee',
 	Expense = 'Expense',
 	DailyPlan = 'DailyPlan',
 	Invoice = 'Invoice',
 	Income = 'Income',
+	Language = 'Language',
 	Organization = 'Organization',
 	OrganizationContact = 'OrganizationContact',
 	OrganizationDepartment = 'OrganizationDepartment',
@@ -81,6 +83,9 @@ export enum EntityEnum {
 	OrganizationTeam = 'OrganizationTeam',
 	OrganizationProjectModule = 'OrganizationProjectModule',
 	OrganizationSprint = 'OrganizationSprint',
+	ResourceLink = 'ResourceLink',
+	OrganizationVendor = 'OrganizationVendor',
 	Task = 'Task',
+	TaskView = 'TaskView',
 	User = 'User'
 }

@@ -152,7 +152,7 @@ export class ScreenshotController {
 	 * This endpoint allows authorized users to delete a screenshot record by providing its ID.
 	 * Additional query options can be provided to customize the delete operation.
 	 *
-	 * @param screenshotId - The UUID of the screenshot to delete.
+	 * @param id - The UUID of the screenshot to delete.
 	 * @param options - Additional query options for deletion (e.g., soft delete or force delete).
 	 * @returns A Promise that resolves with the details of the deleted screenshot.
 	 */
@@ -175,10 +175,7 @@ export class ScreenshotController {
 	@Permissions(PermissionsEnum.DELETE_SCREENSHOTS)
 	@Delete(':id')
 	@UseValidationPipe()
-	async delete(
-		@Param('id', UUIDValidationPipe) screenshotId: ID,
-		@Query() options: DeleteScreenshotDTO
-	): Promise<IScreenshot> {
-		return await this._screenshotService.deleteScreenshot(screenshotId, options);
+	async delete(@Param('id', UUIDValidationPipe) id: ID, @Query() options: DeleteScreenshotDTO): Promise<IScreenshot> {
+		return await this._screenshotService.deleteScreenshot(id, options);
 	}
 }

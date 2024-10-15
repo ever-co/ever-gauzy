@@ -7,7 +7,7 @@
 	bindValue="id"
 	tooltipText="TIMER_TRACKER.STOP_TIMER_CHANGE_TEAM"
 	placeholder="FORM.LABELS.SELECT_TEAM"
-	(clear)="refresh()"
+	(clear)="clear()"
 	(modelChange)="change($event)"
 	[isLoading]="isLoading$ | async"
 	[disabled]="disabled$ | async"
