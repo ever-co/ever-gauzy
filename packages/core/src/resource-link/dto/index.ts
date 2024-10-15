@@ -1,2 +1,2 @@
-export * from './create-ressource-link.dto';
-export * from './update-ressource-link.dto';
+export * from './create-resource-link.dto';
+export * from './update-resource-link.dto';
