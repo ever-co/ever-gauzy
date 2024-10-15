@@ -161,6 +161,8 @@
 		"build:package:plugin:job-search:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/job-search build:prod",
 		"build:package:plugin:integration-ai-ui": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/integration-ai-ui lib:build",
 		"build:package:plugin:integration-ai-ui:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/integration-ai-ui lib:build:prod",
+		"build:package:plugin:integration-upwork-ui": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/integration-upwork-ui lib:build",
+		"build:package:plugin:integration-upwork-ui:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/integration-upwork-ui lib:build:prod",
 		"build:package:plugin:job-employee-ui": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/job-employee-ui lib:build",
 		"build:package:plugin:job-employee-ui:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/job-employee-ui lib:build:prod",
 		"build:package:plugin:job-matching-ui": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/job-matching-ui lib:build",
