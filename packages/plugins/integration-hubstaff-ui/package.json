@@ -1,0 +1,57 @@
+{
+	"name": "@gauzy/plugin-integration-hubstaff-ui",
+	"version": "0.1.0",
+	"type": "commonjs",
+	"description": "UI components and integrations for Hubstaff within the Gauzy platform, enabling seamless time tracking and project management.",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"keywords": [
+		"hubstaff",
+		"gauzy",
+		"plugin",
+		"integration",
+		"time-tracking",
+		"project-management",
+		"angular",
+		"UI",
+		"ever-co",
+		"nestjs"
+	],
+	"private": true,
+	"scripts": {
+		"lib:build": "ng build plugin-integration-hubstaff-ui --configuration=development",
+		"lib:build:prod": "ng build plugin-integration-hubstaff-ui --configuration=production",
+		"lib:watch": "ng build plugin-integration-hubstaff-ui --watch --configuration=development"
+	},
+	"peerDependencies": {
+		"@angular/common": "^16.2.12",
+		"@angular/core": "^16.2.12"
+	},
+	"dependencies": {
+		"@gauzy/contracts": "^0.1.0",
+		"rxjs": "^7.4.0",
+		"tslib": "^2.6.2"
+	},
+	"devDependencies": {
+		"@types/jest": "^29.4.4",
+		"@types/node": "^20.14.9",
+		"jest-preset-angular": "^13.1.4"
+	},
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
+}
