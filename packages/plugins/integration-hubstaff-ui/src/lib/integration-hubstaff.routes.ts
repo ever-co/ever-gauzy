@@ -28,4 +28,4 @@ import { HubstaffComponent } from './components/hubstaff/hubstaff.component';
 	],
 	exports: [RouterModule]
 })
-export class IntegrationHubstaffRoutingModule {}
+export class IntegrationHubstaffRoutes {}

@@ -9,10 +9,7 @@
 			<div class="ml-1">
 				<input
 					nbInput
-					[placeholder]="
-						'INTEGRATIONS.UPWORK_PAGE.DATE_RANGE_PLACEHOLDER'
-							| translate
-					"
+					[placeholder]="'INTEGRATIONS.UPWORK_PAGE.DATE_RANGE_PLACEHOLDER' | translate"
 					[nbDatepicker]="rangePicker"
 					[value]="displayDate"
 				/>
@@ -21,8 +18,7 @@
 					[range]="defaultDateRange$ | async"
 					[max]="today"
 					(rangeChange)="handleRangeChange($event)"
-				>
-				</nb-rangepicker>
+				></nb-rangepicker>
 			</div>
 			<div class="input-group-append ml-1">
 				<button
