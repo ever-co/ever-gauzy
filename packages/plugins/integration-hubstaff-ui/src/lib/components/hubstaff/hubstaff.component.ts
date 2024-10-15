@@ -1,15 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { switchMap, tap, catchError, finalize } from 'rxjs/operators';
-import { Observable, of, firstValueFrom } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { Observable, of, firstValueFrom, filter, catchError, finalize, switchMap, tap } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ID, IHubstaffOrganization, IHubstaffProject, IOrganization } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ErrorHandlingService, HubstaffService, Store, ToastrService } from '@gauzy/ui-core/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { SettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -20,7 +18,7 @@ import { SettingsDialogComponent } from '../settings-dialog/settings-dialog.comp
 	providers: [TitleCasePipe]
 })
 export class HubstaffComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	public settingsSmartTable: object;
+	public settingsSmartTable: any;
 	public organizations$: Observable<IHubstaffOrganization[]>;
 	public organizations: IHubstaffOrganization[] = [];
 	public projects$: Observable<IHubstaffProject[]>;
