@@ -33,6 +33,7 @@ import { ActivityWatchModule } from '../integrations';
 import { LanguageModule } from '../language/language.module';
 import { TimeSlotQueueService } from '../offline-sync';
 import { ErrorHandlerService, NativeNotificationService, Store, ToastrNotificationService } from '../services';
+import { ErrorMessageModule } from '../shared/components/ui/error-message/error-message.module';
 import { SelectModule } from '../shared/components/ui/select/select.module';
 import { ClientSelectorModule } from '../shared/features/client-selector/client-selector.module';
 import { NoteModule } from '../shared/features/note/note.module';
@@ -101,7 +102,8 @@ import { TimerTrackerChangeDialogComponent } from './timer-tracker-change-dialog
 		TaskSelectorModule,
 		TeamSelectorModule,
 		ProjectSelectorModule,
-		NoteModule
+		NoteModule,
+		ErrorMessageModule
 	],
 	providers: [
 		NbSidebarService,
