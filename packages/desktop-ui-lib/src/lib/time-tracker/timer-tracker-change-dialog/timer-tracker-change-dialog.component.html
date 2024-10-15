@@ -7,24 +7,34 @@
 		<nb-card-body class="selector-container">
 			<!-- Client selector -->
 			<gauzy-client-selector formControlName="clientId" class="selector"></gauzy-client-selector>
+			<ngx-error-message class="full-width" [field]="form.get('clientId')"></ngx-error-message>
 
 			<!-- Project selector -->
 			<gauzy-project-selector formControlName="projectId" class="selector"></gauzy-project-selector>
+			<ngx-error-message class="full-width" [field]="form.get('projectId')"></ngx-error-message>
 
 			<!-- Team selector -->
 			<gauzy-team-selector formControlName="teamId" class="selector"></gauzy-team-selector>
 
 			<!-- Task selector -->
 			<gauzy-task-selector formControlName="taskId" class="selector"></gauzy-task-selector>
+			<ngx-error-message class="full-width" [field]="form.get('taskId')"></ngx-error-message>
 
 			<!-- Note -->
 			<gauzy-note formControlName="note" class="selector"></gauzy-note>
+			<ngx-error-message class="full-width" [field]="form.get('note')"></ngx-error-message>
 		</nb-card-body>
 		<nb-card-footer class="footer">
 			<button status="basic" type="button" size="small" outline (click)="dismiss()" nbButton>
 				{{ 'BUTTONS.CANCEL' | translate }}
 			</button>
-			<button [disabled]="isRestarting$ | async" status="success" size="small" type="submit" nbButton>
+			<button
+				[disabled]="(isRestarting$ | async) || this.form.invalid"
+				status="success"
+				size="small"
+				type="submit"
+				nbButton
+			>
 				{{ 'BUTTONS.APPLY' | translate }}
 				<nb-icon [ngStyle]="{ display: 'none' }" *gauzySpinnerButton="isRestarting$ | async"></nb-icon>
 			</button>
