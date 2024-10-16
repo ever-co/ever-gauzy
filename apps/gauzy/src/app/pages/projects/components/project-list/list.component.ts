@@ -248,9 +248,13 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 			resultMap: (project: IOrganizationProject) => {
 				return Object.assign({}, project, {
 					...this.privatePublicProjectMapper(project),
-					managers: project.members.filter((member) => member.isManager).map((item) => item.employee),
+					managers: project.members
+						.filter((member) => member.isManager)
+						.map((member: IOrganizationProjectEmployee) => member.employee),
 					employeesMergedTeams: [
-						project.members.map((member: IOrganizationProjectEmployee) => member.employee)
+						project.members
+							.filter((member) => !member.isManager)
+							.map((member: IOrganizationProjectEmployee) => member.employee)
 					]
 				});
 			},
