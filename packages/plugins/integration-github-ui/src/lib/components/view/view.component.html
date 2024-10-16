@@ -57,7 +57,7 @@
 										<div class="col-4">
 											<ngx-github-repository-selector
 												id="auto-repository"
-												[sourceId]="(project$ | async)?.repository?.repositoryId"
+												[sourceId]="(project$ | async)?.customFields?.repository?.repositoryId"
 												[integration]="integration"
 												(onChanged)="selectAutoRepository($event)"
 												[selected]="true"
@@ -182,13 +182,13 @@
 											#issuesTable
 										></angular2-smart-table>
 									</div>
-									<ng-container *ngIf="page$ | async">
+									<!-- <ng-container *ngIf="page$ | async">
 										<div class="pagination-container">
 											<ng-container *ngIf="smartTableSource">
 												<ngx-pagination [source]="smartTableSource"></ngx-pagination>
 											</ng-container>
 										</div>
-									</ng-container>
+									</ng-container> -->
 								</nb-card-body>
 							</nb-card>
 						</ng-template>
