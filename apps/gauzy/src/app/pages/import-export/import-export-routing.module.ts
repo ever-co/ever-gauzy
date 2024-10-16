@@ -1,7 +1,8 @@
 import { InjectionToken, NgModule } from '@angular/core';
-import { Routes, RouterModule, ActivatedRouteSnapshot } from '@angular/router';
+import { Routes, RouterModule } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PermissionsGuard } from '@gauzy/ui-core/core';
+import { ExternalRedirectGuard } from '@gauzy/ui-core/core';
 import { ImportExportComponent } from './import-export.component';
 
 const externalUrlProvider = new InjectionToken('externalUrlRedirectResolver');
@@ -28,24 +29,17 @@ const routes: Routes = [
 	},
 	{
 		path: 'external-redirect',
+		component: ExternalRedirectGuard,
 		resolve: {
 			url: externalUrlProvider
 		},
-		canActivate: [externalUrlProvider]
+		canActivate: [ExternalRedirectGuard]
 	}
 ];
 
 @NgModule({
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule],
-	providers: [
-		{
-			provide: externalUrlProvider,
-			useValue: (route: ActivatedRouteSnapshot) => {
-				const externalUrl = route.paramMap.get('redirect');
-				window.open(externalUrl, '_blank');
-			}
-		}
-	]
+	providers: [ExternalRedirectGuard]
 })
 export class ImportExportRoutingModule {}

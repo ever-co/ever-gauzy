@@ -48,12 +48,21 @@ export class PermissionsGuard implements CanActivate, CanActivateChild {
 			return of(true); // No permissions required, allow access
 		}
 
+		// If permissions.only is a function, execute it
+		const requiredPermissions = typeof permissions.only === 'function' ? permissions.only(route) : permissions.only;
+
+		// Ensure it's an array before spreading
+		if (!Array.isArray(requiredPermissions)) {
+			console.error('Expected permissions.only to be an array but received:', requiredPermissions);
+			return of(false); // Block access if permissions aren't valid
+		}
+
 		// Check if the user has the necessary permissions
 		const isFunction = typeof permissions.redirectTo === 'function';
 		const redirectTo = isFunction ? permissions.redirectTo(route, state) : permissions.redirectTo;
 
 		// Check if the user has the necessary permissions
-		return this._authService.hasPermissions(...permissions.only).pipe(
+		return this._authService.hasPermissions(...requiredPermissions).pipe(
 			map((hasPermission) => {
 				if (hasPermission) {
 					return true;
