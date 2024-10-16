@@ -192,7 +192,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 		// Observable that emits when preferred language changes.
 		const preferredLanguage$ = merge(this._store.preferredLanguage$, this._i18nService.preferredLanguage$).pipe(
 			distinctUntilChange(),
-			filter((lang: LanguagesEnum) => !!lang),
+			filter((lang: string | LanguagesEnum) => !!lang),
 			tap((lang: string | LanguagesEnum) => {
 				this.translateService.use(lang);
 			}),
