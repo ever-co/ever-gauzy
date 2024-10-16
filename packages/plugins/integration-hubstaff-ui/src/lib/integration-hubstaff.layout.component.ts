@@ -10,10 +10,10 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: '</ngx-integration-ai-layout>',
+	selector: '</ngx-integration-hubstaff-layout>',
 	template: `<router-outlet></router-outlet>`
 })
-export class IntegrationAILayoutComponent implements OnInit, OnDestroy {
+export class IntegrationHubstaffLayoutComponent implements OnInit, OnDestroy {
 	constructor(
 		private readonly _translateService: TranslateService,
 		private readonly _ngxPermissionsService: NgxPermissionsService,
@@ -24,7 +24,7 @@ export class IntegrationAILayoutComponent implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.initializeUiPermissions(); // Initialize UI permissions
 		this.initializeUiLanguagesAndLocale(); // Initialize UI languages and Update Locale
-		console.log(`Integration AI UI module plugin initialized`);
+		console.log(`Integration Hubstaff UI module plugin initialized`);
 	}
 
 	/**
@@ -41,21 +41,22 @@ export class IntegrationAILayoutComponent implements OnInit, OnDestroy {
 	 * Initialize UI languages and Update Locale
 	 */
 	private initializeUiLanguagesAndLocale() {
+		// Observable that emits when preferred language changes.
 		const preferredLanguage$ = merge(this._store.preferredLanguage$, this._i18nService.preferredLanguage$).pipe(
 			distinctUntilChange(),
 			filter((lang: string | LanguagesEnum) => !!lang),
 			tap((lang: string | LanguagesEnum) => {
-				console.log(`Integration AI UI module plugin lang: %s`, lang);
-				this._translateService.use(lang); // Set the language
+				console.log(`Integration Hubstaff UI module plugin lang: %s`, lang);
+				this._translateService.use(lang);
 			}),
 			untilDestroyed(this)
 		);
 
-		// Start the subscription
+		// Subscribe to initiate the stream
 		preferredLanguage$.subscribe();
 	}
 
 	ngOnDestroy(): void {
-		console.log(`Integration AI UI module plugin destroyed`);
+		console.log(`Integration Hubstaff UI module plugin destroyed`);
 	}
 }
