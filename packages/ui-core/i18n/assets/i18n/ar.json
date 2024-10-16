@@ -4638,7 +4638,14 @@
 		"FAIL_SIGNIN_SUB_TITLE": ".يرجى بدء العملية من جديد",
 		"THANKING_TEXT": ".شكرًا لاختيارك لنا",
 		"UNKNOWN_WORKSPACE": "لا تعرف مساحة العمل الخاصة بك؟",
-		"FIND_WORKSPACE": "ابحث عن مساحتك الخاصة"
+		"FIND_WORKSPACE": "ابحث عن مساحتك الخاصة",
+		"SELECTION": {
+			"WELCOME_BACK": "مرحبًا بعودتك!",
+			"YOU_LOOK_NICE_TODAY": "تبدو رائعًا اليوم!",
+			"EMAIL_MULTIPLE_WORKSPACE": "البريد الإلكتروني مرتبط بعدة مساحات عمل، يرجى اختيار واحدة للمتابعة",
+			"SELECT_WORKSPACE_FOR": "اختر مساحة العمل لـ",
+			"OPEN": "فتح"
+		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "أضف أو أزل الصورة",

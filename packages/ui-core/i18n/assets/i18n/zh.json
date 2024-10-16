@@ -4640,7 +4640,14 @@
 		"FAIL_SIGNIN_SUB_TITLE": "请重新启动流程。",
 		"THANKING_TEXT": "感谢您选择我们。",
 		"UNKNOWN_WORKSPACE": "不知道您的工作区？",
-		"FIND_WORKSPACE": "查找您的工作区"
+		"FIND_WORKSPACE": "查找您的工作区",
+		"SELECTION": {
+			"WELCOME_BACK": "欢迎回来！",
+			"YOU_LOOK_NICE_TODAY": "你今天看起来不错！",
+			"EMAIL_MULTIPLE_WORKSPACE": "此电子邮件与多个工作区关联，请选择一个继续",
+			"SELECT_WORKSPACE_FOR": "选择工作区",
+			"OPEN": "打开"
+		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "添加或删除图像",

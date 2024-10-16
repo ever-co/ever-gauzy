@@ -4642,7 +4642,14 @@
 		"FAIL_SIGNIN_SUB_TITLE": "Por favor, inicia el proceso de nuevo.",
 		"THANKING_TEXT": "Gracias por elegirnos.",
 		"UNKNOWN_WORKSPACE": "¿No conoces tu espacio de trabajo?",
-		"FIND_WORKSPACE": "Encuentra tu espacio de trabajo"
+		"FIND_WORKSPACE": "Encuentra tu espacio de trabajo",
+		"SELECTION": {
+			"WELCOME_BACK": "¡Bienvenido de nuevo!",
+			"YOU_LOOK_NICE_TODAY": "¡Te ves bien hoy!",
+			"EMAIL_MULTIPLE_WORKSPACE": "El correo electrónico está asociado a varios espacios de trabajo, por favor selecciona uno para continuar",
+			"SELECT_WORKSPACE_FOR": "Seleccionar espacio de trabajo para",
+			"OPEN": "Abrir"
+		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Agregar o Eliminar Imagen",
