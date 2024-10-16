@@ -1,35 +1,30 @@
-import { Component, OnDestroy } from '@angular/core';
-import { filter, merge, tap } from 'rxjs';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { filter, merge, tap } from 'rxjs';
 import { NgxPermissionsService } from 'ngx-permissions';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { Store } from '@gauzy/ui-core/core';
 import { I18nService } from '@gauzy/ui-core/i18n';
 
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gz-proposal-layout',
-	template: ` <router-outlet></router-outlet>`,
-	styles: [
-		`
-			:host {
-				height: 100%;
-				display: block;
-			}
-		`
-	]
+	selector: '</ngx-integration-ai-layout>',
+	template: `<router-outlet></router-outlet>`
 })
-export class ProposalLayoutComponent implements OnDestroy {
+export class IntegrationAILayoutComponent implements OnInit, OnDestroy {
 	constructor(
-		readonly _translateService: TranslateService,
-		readonly _ngxPermissionsService: NgxPermissionsService,
-		readonly _store: Store,
-		readonly _i18nService: I18nService
-	) {
+		private readonly _translateService: TranslateService,
+		private readonly _ngxPermissionsService: NgxPermissionsService,
+		private readonly _store: Store,
+		private readonly _i18nService: I18nService
+	) {}
+
+	ngOnInit() {
 		this.initializeUiPermissions(); // Initialize UI permissions
 		this.initializeUiLanguagesAndLocale(); // Initialize UI languages and Update Locale
+		console.log(`Integration AI UI module plugin initialized`);
 	}
 
 	/**
@@ -46,22 +41,21 @@ export class ProposalLayoutComponent implements OnDestroy {
 	 * Initialize UI languages and Update Locale
 	 */
 	private initializeUiLanguagesAndLocale() {
-		// Observable that emits when preferred language changes.
 		const preferredLanguage$ = merge(this._store.preferredLanguage$, this._i18nService.preferredLanguage$).pipe(
 			distinctUntilChange(),
 			filter((lang: string | LanguagesEnum) => !!lang),
 			tap((lang: string | LanguagesEnum) => {
-				this._translateService.use(lang);
+				console.log(`Integration AI UI module plugin lang: %s`, lang);
+				this._translateService.use(lang); // Set the language
 			}),
 			untilDestroyed(this)
 		);
 
-		// Subscribe to initiate the stream
+		// Start the subscription
 		preferredLanguage$.subscribe();
 	}
 
-	/**
-	 * Unsubscribe from all subscriptions
-	 */
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		console.log(`Integration AI UI module plugin destroyed`);
+	}
 }

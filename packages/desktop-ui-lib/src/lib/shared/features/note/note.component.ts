@@ -68,4 +68,8 @@ export class NoteComponent implements ControlValueAccessor {
 	public get disabled$(): Observable<boolean> {
 		return this.noteSelectorService.disabled$;
 	}
+
+	public get error$(): Observable<string> {
+		return this.noteSelectorQuery.selectError();
+	}
 }

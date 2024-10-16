@@ -31,9 +31,11 @@ import { TransactionsComponent } from './components/transactions/transactions.co
 import { ContractsComponent } from './components/contracts/contracts.component';
 import { SyncDataSelectionComponent } from './components/sync-data-selection/sync-data-selection.component';
 import { ReportsComponent } from './components/reports/reports.component';
+import { IntegrationUpworkLayoutComponent } from './integration-upwork.layout.component';
 
 @NgModule({
 	declarations: [
+		IntegrationUpworkLayoutComponent,
 		UpworkComponent,
 		UpworkAuthorizeComponent,
 		TransactionsComponent,

@@ -1,19 +1,19 @@
 import { waitForAsync, ComponentFixture, TestBed } from '@angular/core/testing';
-import { GauzyAIAuthorizationComponent } from './authorization.component';
+import { IntegrationAIAuthorizationComponent } from './authorization.component';
 
-describe('GauzyAIAuthorizationComponent', () => {
-	let component: GauzyAIAuthorizationComponent;
-	let fixture: ComponentFixture<GauzyAIAuthorizationComponent>;
+describe('IntegrationAIAuthorizationComponent', () => {
+	let component: IntegrationAIAuthorizationComponent;
+	let fixture: ComponentFixture<IntegrationAIAuthorizationComponent>;
 
 	beforeEach(waitForAsync(() => {
 		TestBed.configureTestingModule({
-			declarations: [GauzyAIAuthorizationComponent],
+			declarations: [IntegrationAIAuthorizationComponent],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 
 	beforeEach(() => {
-		fixture = TestBed.createComponent(GauzyAIAuthorizationComponent);
+		fixture = TestBed.createComponent(IntegrationAIAuthorizationComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();
 	});
