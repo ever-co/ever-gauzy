@@ -2321,7 +2321,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 
 		if (this.quitApp) {
-			return { state: this.quitApp, message: 'TIMER_TRACKER.LOADING.PLEASE_HOLD' };
+			return { state: this.quitApp, message: 'TIMER_TRACKER.LOADING.SHUTTING_DOWN' };
 		}
 
 		return { state: false, message: this._translateService.instant('TIMER_TRACKER.LOADING.PLEASE_HOLD') };
