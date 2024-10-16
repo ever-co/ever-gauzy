@@ -42,7 +42,6 @@ import {
 	Subject,
 	tap
 } from 'rxjs';
-import * as _ from 'underscore';
 import { AlwaysOnService, AlwaysOnStateEnum } from '../always-on/always-on.service';
 import { AuthStrategy } from '../auth';
 import { GAUZY_ENV } from '../constants';
@@ -806,11 +805,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.teamSelectorService.load(),
 					this.taskSelectorService.load(),
 					this.getTodayTime(),
-					this.setTimerDetails()
+					this.setTimerDetails(),
+					this.getLastTimeSlotImage(arg)
 				];
-				if (arg.timeSlotId) {
-					parallelizedTasks.push(this.getLastTimeSlotImage(arg));
-				}
 				await Promise.allSettled(parallelizedTasks);
 				this._isReady = true;
 				this._isRefresh$.next(false);
@@ -1708,10 +1705,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		if (this._isOffline) return;
 		try {
 			const res = await this.timeTrackerService.getTimeSlot(arg);
-			let { screenshots }: any = res;
+			const { screenshots = [] } = res || {};
 			console.log('Get Last Timeslot Image Response:', screenshots);
 			if (screenshots && screenshots.length > 0) {
-				screenshots = _.sortBy(screenshots, 'recordedAt').reverse();
 				const [lastCaptureScreen] = screenshots;
 				console.log('Last Capture Screen:', lastCaptureScreen);
 				this.lastScreenCapture$.next(lastCaptureScreen);
@@ -1719,7 +1715,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.screenshots$.next(screenshots);
 				this.lastTimeSlot = res;
 			}
-			if (this.lastScreenCapture.recordedAt) {
+			if (this.lastScreenCapture?.recordedAt) {
 				this.lastScreenCapture$.next({
 					...this.lastScreenCapture,
 					textTime: moment(this.lastScreenCapture.recordedAt).fromNow()
@@ -1819,6 +1815,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public showImage(): void {
+		if (!this.screenshots.length) {
+			const message = 'Attempted to open an empty image gallery.';
+			this.toastrService.warning(message);
+			this._loggerService.log.warn(`WARN: ${message}`);
+			return;
+		}
 		this.electronService.ipcRenderer.send('show_image', this.screenshots);
 	}
 
