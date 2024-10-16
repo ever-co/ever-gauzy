@@ -36,14 +36,14 @@
 					<ngx-integration-setting-card
 						[title]="'INTEGRATIONS.GAUZY_AI_PAGE.CONSUMER_KEYS' | translate"
 						[items]="settings"
-						(saved)="updateIntegrationSettings($event)"
+						(saved)="updateIntegrationSettings()"
 					></ngx-integration-setting-card>
 				</ng-container>
 				<ng-container *ngIf="openAISettings$ | async as openAISettings">
 					<ngx-integration-setting-card
 						[title]="'INTEGRATIONS.GAUZY_AI_PAGE.OPEN_AI_API_KEYS' | translate"
 						[items]="openAISettings"
-						(saved)="updateIntegrationSettings($event)"
+						(saved)="updateIntegrationSettings()"
 					></ngx-integration-setting-card>
 				</ng-container>
 			</nb-tab>

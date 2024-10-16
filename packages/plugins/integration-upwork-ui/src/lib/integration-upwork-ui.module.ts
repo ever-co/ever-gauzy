@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { filter, merge } from 'rxjs';
 import {
 	NbActionsModule,
 	NbButtonModule,
@@ -15,8 +16,12 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
+import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { LanguagesEnum } from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
+import { HttpLoaderFactory, I18nService } from '@gauzy/ui-core/i18n';
 import {
 	SmartDataViewLayoutModule,
 	SelectorsModule,
@@ -70,4 +75,30 @@ import { ReportsComponent } from './components/reports/reports.component';
 		TableComponentsModule
 	]
 })
-export class IntegrationUpworkUiModule {}
+@UntilDestroy()
+export class IntegrationUpworkUiModule {
+	constructor(
+		readonly _translateService: TranslateService,
+		readonly _store: Store,
+		readonly _i18nService: I18nService
+	) {
+		this.initializeUiLanguagesAndLocale(); // Initialize UI languages and Update Locale
+	}
+
+	/**
+	 * Initialize UI languages and Update Locale
+	 */
+	private initializeUiLanguagesAndLocale() {
+		// Observable that emits when preferred language changes.
+		const preferredLanguage$ = merge(this._store.preferredLanguage$, this._i18nService.preferredLanguage$).pipe(
+			distinctUntilChange(),
+			filter((lang: LanguagesEnum) => !!lang),
+			untilDestroyed(this)
+		);
+
+		// Subscribe to preferred language changes
+		preferredLanguage$.subscribe((lang: string | LanguagesEnum) => {
+			this._translateService.use(lang);
+		});
+	}
+}
