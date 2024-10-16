@@ -58,8 +58,8 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 	public syncTabsEnum: typeof SyncTabsEnum = SyncTabsEnum;
 	public nbTab$: Subject<string> = new BehaviorSubject(SyncTabsEnum.AUTO_SYNC);
 	public page$: Observable<IPaginationBase>; // Observable for the organization project
-	public settingsSmartTableIssues: object; // Settings for the Smart Table used for issues
-	public settingsSmartTableProjects: object; // Settings for the Smart Table used for projects
+	public settingsSmartTableIssues: any; // Settings for the Smart Table used for issues
+	public settingsSmartTableProjects: any; // Settings for the Smart Table used for projects
 	public syncing: boolean = false; // Flag to indicate if data synchronization is in progress
 	public loading: boolean = false; // Flag to indicate if data loading is in progress
 	public user: IUser = this._store.user; // User object obtained from a service (likely a store)

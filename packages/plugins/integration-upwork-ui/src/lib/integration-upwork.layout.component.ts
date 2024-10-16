@@ -9,7 +9,7 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: '</ngx-integration-upwork-layout>',
+	selector: 'ngx-integration-upwork-layout',
 	template: `<router-outlet></router-outlet>`
 })
 export class IntegrationUpworkLayoutComponent implements OnInit, OnDestroy {

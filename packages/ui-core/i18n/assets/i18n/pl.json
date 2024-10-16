@@ -4640,7 +4640,14 @@
 		"FAIL_SIGNIN_SUB_TITLE": "Proszę rozpocznij proces ponownie.",
 		"THANKING_TEXT": "Dziękujemy, że nas wybrałeś.",
 		"UNKNOWN_WORKSPACE": "Nie wiesz, gdzie jest twoja przestrzeń robocza?",
-		"FIND_WORKSPACE": "Znajdź swoje przestrzenie robocze"
+		"FIND_WORKSPACE": "Znajdź swoje przestrzenie robocze",
+		"SELECTION": {
+			"WELCOME_BACK": "Witamy ponownie!",
+			"YOU_LOOK_NICE_TODAY": "Dziś wyglądasz świetnie!",
+			"EMAIL_MULTIPLE_WORKSPACE": "E-mail jest powiązany z wieloma przestrzeniami roboczymi, wybierz jedną, aby kontynuować",
+			"SELECT_WORKSPACE_FOR": "Wybierz przestrzeń roboczą dla",
+			"OPEN": "Otwórz"
+		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Dodaj lub usuń obraz",

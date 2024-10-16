@@ -571,7 +571,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			if (removedProjectIds.length > 0) {
 				await this.typeOrmOrganizationProjectEmployeeRepository.delete({
 					organizationProjectId: In(removedProjectIds),
-					employeeId: member.employeeId
+					employeeId: member.id
 				});
 			}
 

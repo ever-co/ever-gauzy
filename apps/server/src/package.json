@@ -39,6 +39,7 @@
 			"../../../packages/plugins/integration-upwork-ui",
 			"../../../packages/plugins/integration-upwork",
 			"../../../packages/plugins/integration-github",
+			"../../../packages/plugins/integration-github-ui",
 			"../../../packages/plugins/integration-jira",
 			"../../../packages/plugins/product-reviews",
 			"../../../packages/plugins/knowledge-base",

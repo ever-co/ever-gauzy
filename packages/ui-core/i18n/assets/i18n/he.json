@@ -4630,7 +4630,14 @@
 		"FAIL_SIGNIN_SUB_TITLE": ".אנא התחל/י את התהליך מחדש",
 		"THANKING_TEXT": ".תודה על בחירתך בנו",
 		"UNKNOWN_WORKSPACE": "אין לך מושג מה המרחב שלך?",
-		"FIND_WORKSPACE": "מצא את המרחב שלך"
+		"FIND_WORKSPACE": "מצא את המרחב שלך",
+		"SELECTION": {
+			"WELCOME_BACK": "ברוך שובך!",
+			"YOU_LOOK_NICE_TODAY": "אתה נראה טוב היום!",
+			"EMAIL_MULTIPLE_WORKSPACE": "האימייל מקושר למספר סביבת עבודה, אנא בחר אחת להמשך",
+			"SELECT_WORKSPACE_FOR": "בחר סביבת עבודה עבור",
+			"OPEN": "פתח"
+		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Add or Drop Image",

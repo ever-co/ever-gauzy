@@ -2,15 +2,17 @@
 	<div class="logo">
 		<gauzy-logo></gauzy-logo>
 		<h4>
-			<strong>Welcome back!</strong><br />
-			You look nice today!
+			<strong>{{ 'WORKSPACES.SELECTION.WELCOME_BACK' | translate }}</strong
+			><br />
+			{{ 'WORKSPACES.SELECTION.YOU_LOOK_NICE_TODAY' | translate }}
 		</h4>
-		<p>The email associated with multiple workspaces, please select one to continue</p>
+		<p>{{ 'WORKSPACES.SELECTION.EMAIL_MULTIPLE_WORKSPACE' | translate }}</p>
 	</div>
 	<nb-card>
 		<nb-card-header class="text-start">
 			<div class="title">
-				Select Workspace for <span class="sub-title">{{ confirmedEmail }}</span>
+				{{ 'WORKSPACES.SELECTION.SELECT_WORKSPACE_FOR' | translate }}
+				<span class="sub-title">{{ confirmedEmail }}</span>
 			</div>
 		</nb-card-header>
 		<nb-card-body class="p-2">
@@ -38,7 +40,7 @@
 						</div>
 					</div>
 					<div class="continue-icon">
-						<span class="label-primary">Open</span>
+						<span class="label-primary">{{ 'WORKSPACES.SELECTION.OPEN' | translate }}</span>
 						<nb-icon
 							status="primary"
 							icon="arrow-forward-outline"

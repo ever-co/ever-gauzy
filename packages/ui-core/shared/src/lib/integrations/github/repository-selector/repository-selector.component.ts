@@ -5,8 +5,7 @@ import { catchError, finalize, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IGithubRepository, IGithubRepositoryResponse, IIntegrationTenant, IOrganization } from '@gauzy/contracts';
-import { ErrorHandlingService, GithubService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, GithubService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -29,65 +28,71 @@ export class RepositorySelectorComponent implements OnInit, OnDestroy {
 	public repositories: IGithubRepository[] = [];
 	public repositories$: Observable<IGithubRepository[]>;
 
-	/*
-	 * Getter & Setter for dynamic placeholder
+	/**
+	 * Placeholder text to guide the user. Defaults to null if not provided.
 	 */
-	_placeholder: string;
-	get placeholder(): string {
-		return this._placeholder;
-	}
-	@Input() set placeholder(value: string) {
-		this._placeholder = value;
-	}
+	@Input() placeholder: string | null = null;
 
-	/** Getter & Setter */
-	private _selected: boolean = false;
-	get selected(): boolean {
-		return this._selected;
-	}
-	@Input() set selected(value: boolean) {
-		this._selected = value;
-	}
+	/**
+	 * Indicates whether the component is selected. Defaults to false.
+	 */
+	@Input() selected: boolean = false;
 
-	/** Getter & Setter */
+	/** Getter & Setter for integration */
 	private _integration: IIntegrationTenant;
-	// Getter for the integration property as an Observable
-	get integration(): IIntegrationTenant {
-		return this._integration;
-	}
-	// Setter for the integration property
+	/**
+	 * Setter for the integration property.
+	 * Updates the integration and notifies observers with the new value.
+	 */
 	@Input() set integration(value: IIntegrationTenant) {
 		if (value) {
 			this._integration = value;
 			this.subject$.next(value); // Emit the updated value to observers
 		}
 	}
-
-	// Implement your onChange and onTouched methods
-	onChange: (value: IGithubRepository['id']) => void = () => {};
-	onTouched: (value: IGithubRepository['id']) => void = () => {};
+	/**
+	 * Getter for the integration property.
+	 * Returns the current integration value.
+	 */
+	get integration(): IIntegrationTenant {
+		return this._integration;
+	}
 
 	// Define the getter and setter for the repository
-	private _sourceId: IGithubRepository['id'];
-	get sourceId(): IGithubRepository['id'] {
-		return this._sourceId;
-	}
-	@Input() set sourceId(val: IGithubRepository['id']) {
+	private _sourceId: number;
+	/**
+	 * Setter for the sourceId property.
+	 * Updates the source ID and triggers relevant changes when a valid value is provided.
+	 */
+	@Input() set sourceId(val: number) {
 		if (val) {
+			// Check if the conversion was successful
 			this._sourceId = val;
-			this.onChange(val);
-			this.onTouched(val);
 
-			/** Pre Selected Repository */
+			this.onChange(this._sourceId); // Trigger the onChange event with the converted number
+			this.onTouched(); // Mark the field as touched
+
+			// Handle pre-selected repository if applicable
 			if (this.selected) {
-				this._preSelectedRepository(this._sourceId);
+				this._preSelectedRepository(this._sourceId); // Pre-select the repository
 			}
 		}
+	}
+	/**
+	 * Getter for the sourceId property.
+	 * Returns the current source ID value.
+	 */
+	get sourceId(): number {
+		return this._sourceId;
 	}
 
 	/** */
 	@Output() onChanged = new EventEmitter<IGithubRepository>();
 	@Output() afterLoad = new EventEmitter<IGithubRepository[]>();
+
+	// Implement your onChange and onTouched methods
+	onChange: (value: number) => void = () => {};
+	onTouched: () => void = () => {};
 
 	constructor(
 		private readonly _store: Store,
@@ -109,13 +114,11 @@ export class RepositorySelectorComponent implements OnInit, OnDestroy {
 	 *
 	 * @param sourceId - The ID of the source repository to pre-select.
 	 */
-	private _preSelectedRepository(sourceId: IGithubRepository['id']) {
-		// Find the repository in the list of repositories using the source ID
-		const repository = this.repositories.find((repository: IGithubRepository) => repository.id === sourceId);
+	private _preSelectedRepository(sourceId: number): void {
+		const repository = this.repositories.find((repo: IGithubRepository) => repo.id === sourceId);
 
-		// If the repository is found, select it
 		if (repository) {
-			this.selectRepository(repository);
+			this.selectRepository(repository); // Select the found repository
 		}
 	}
 
@@ -123,17 +126,14 @@ export class RepositorySelectorComponent implements OnInit, OnDestroy {
 	 * Fetches repositories for a given integration and organization.
 	 */
 	private _getRepositories() {
-		// Ensure there is a valid organization
-		if (!this.organization) {
-			return;
-		}
+		if (!this.integration) return; // Ensure a valid integration is present
 
 		this.loading = true;
 
-		// Extract organization properties
-		const { id: organizationId, tenantId } = this.organization;
-		const { id: integrationId } = this.integration;
+		// Destructure required properties from the integration object
+		const { id: integrationId, organizationId, tenantId } = this.integration;
 
+		// Fetch the repositories using the integration details
 		const repositories$ = this._githubService.getRepositories(integrationId, {
 			organizationId,
 			tenantId
@@ -151,6 +151,7 @@ export class RepositorySelectorComponent implements OnInit, OnDestroy {
 				return of([]);
 			}),
 			finalize(() => {
+				// Set loading to false once finished
 				this.loading = false;
 			}),
 			// Handle component lifecycle to avoid memory leaks
@@ -159,27 +160,40 @@ export class RepositorySelectorComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * Selects a GitHub repository and retrieves its associated issues.
-	 * @param repository - The GitHub repository to select.
+	 * Selects a GitHub repository and emits the selection event.
+	 *
+	 * @param repository - The selected GitHub repository.
 	 */
 	public selectRepository(repository: IGithubRepository) {
 		if (repository) {
-			this.onChanged.emit(repository);
+			this.onChanged.emit(repository); // Emit the selected repository
 		}
 	}
 
-	// Define the writeValue method required for ControlValueAccessor
-	public writeValue(value: IGithubRepository['id']) {
-		this._sourceId = value;
+	/**
+	 * Write the value (repository ID) into the component.
+	 *
+	 * @param value - The value to be written, representing the repository ID.
+	 */
+	public writeValue(value: number): void {
+		this._sourceId = value; // Assign the provided value to _sourceId
 	}
 
-	// Define the registerOnChange method required for ControlValueAccessor
-	public registerOnChange(fn: (value: IGithubRepository['id']) => void) {
+	/**
+	 * Register a function to call when the control's value changes.
+	 *
+	 * @param fn - The function that handles value changes.
+	 */
+	public registerOnChange(fn: (value: number) => void): void {
 		this.onChange = fn;
 	}
 
-	// Define the registerOnTouched method required for ControlValueAccessor
-	public registerOnTouched(fn: () => void) {
+	/**
+	 * Register a function to call when the control is touched.
+	 *
+	 * @param fn - The function that handles touch events.
+	 */
+	public registerOnTouched(fn: () => void): void {
 		this.onTouched = fn;
 	}
 
