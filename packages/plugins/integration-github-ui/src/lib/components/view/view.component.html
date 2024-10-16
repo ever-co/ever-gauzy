@@ -182,6 +182,20 @@
 											#issuesTable
 										></angular2-smart-table>
 									</div>
+									<ng-container *ngIf="(page$ | async)">
+										<div class="pagination-container">
+											<ng-container *ngIf="pagination.totalItems > minItemPerPage">
+												<ga-pagination
+													(selectedOption)="onUpdateOption($event)"
+													(selectedPage)="onPageChange($event)"
+													[doEmit]="false"
+													[totalItems]="pagination?.totalItems"
+													[itemsPerPage]="pagination?.itemsPerPage"
+													[activePage]="pagination?.activePage"
+												></ga-pagination>
+											</ng-container>
+										</div>
+									</ng-container>
 								</nb-card-body>
 							</nb-card>
 						</ng-template>

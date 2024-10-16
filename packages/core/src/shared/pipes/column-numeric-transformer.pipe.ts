@@ -1,5 +1,5 @@
 import { ValueTransformer } from 'typeorm';
-import { isNotNullOrUndefined, isNullOrUndefined } from '@gauzy/common';
+import { isNotNullOrUndefined } from '@gauzy/common';
 
 /**
  * Convert Non-integer numbers string to integer
