@@ -1,32 +1,30 @@
-import { ValueTransformer } from "typeorm";
-import { isNullOrUndefined } from "@gauzy/common";
+import { ValueTransformer } from 'typeorm';
+import { isNotNullOrUndefined, isNullOrUndefined } from '@gauzy/common';
 
 /**
  * Convert Non-integer numbers string to integer
+ *
  * From https://github.com/typeorm/typeorm/issues/873#issuecomment-502294597
  */
 export class ColumnNumericTransformerPipe implements ValueTransformer {
-    /**
-     * Transforms a number to the database value.
-     *
-     * @param data - The input number.
-     * @returns The transformed number or null.
-     */
-    to(data?: number | null): number | null {
-        return isNullOrUndefined(data) ? null : data;
-    }
+	/**
+	 * Converts a number for storage in the database.
+	 * If the value is not defined, it returns null.
+	 *
+	 * @param value - The number to convert.
+	 * @returns The number itself, or null if undefined.
+	 */
+	to(value: number): number | null {
+		return isNotNullOrUndefined(value) ? value : null; // Return the number for storage
+	}
 
-    /**
-     * Transforms a string to the entity property value.
-     *
-     * @param data - The input string.
-     * @returns The transformed number or null.
-     */
-    from(data?: string | null): number | null {
-        if (!isNullOrUndefined(data)) {
-            const parsedValue = parseFloat(data);
-            return isNaN(parsedValue) ? null : parsedValue;
-        }
-        return null;
-    }
+	/**
+	 * Transforms a string to the entity property value.
+	 *
+	 * @param value - The input string.
+	 * @returns The transformed number or null if the input is invalid.
+	 */
+	from(value?: string | null): number | null {
+		return isNotNullOrUndefined(value) ? parseFloat(value) : null; // Convert string to number
+	}
 }

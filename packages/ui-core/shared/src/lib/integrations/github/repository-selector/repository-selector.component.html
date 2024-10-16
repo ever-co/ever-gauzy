@@ -9,13 +9,13 @@
 		[searchable]="false"
 		[clearable]="true"
 		[loading]="loading"
-		(change)="selectRepository($event)"
 		[(ngModel)]="sourceId"
-		[placeholder]="placeholder || 'INTEGRATIONS.GITHUB_PAGE.SELECT_REPOSITORY' | translate"
+		[placeholder]="placeholder || ('INTEGRATIONS.GITHUB_PAGE.SELECT_REPOSITORY' | translate)"
 		bindLabel="full_name"
 		bindValue="id"
 		appendTo="body"
 		dropdownPosition="bottom"
+		(change)="selectRepository($event)"
 	>
 		<ng-template ng-header-tmp>
 			<input
@@ -26,12 +26,16 @@
 			/>
 		</ng-template>
 		<ng-template ng-label-tmp let-item="item">
-			<img src="assets/images/integrations/github.svg" />
-			<span class="ml-1">{{ item.full_name }}</span>
+			<ng-container *ngIf="item">
+				<img src="assets/images/integrations/github.svg" />
+				<span class="ml-1">{{ item.full_name }}</span>
+			</ng-container>
 		</ng-template>
 		<ng-template ng-option-tmp let-item="item">
-			<img src="assets/images/integrations/github.svg" />
-			<span class="ml-1">{{ item.full_name }}</span>
+			<ng-container *ngIf="item">
+				<img src="assets/images/integrations/github.svg" />
+				<span class="ml-1">{{ item.full_name }}</span>
+			</ng-container>
 		</ng-template>
 	</ng-select>
 </div>
