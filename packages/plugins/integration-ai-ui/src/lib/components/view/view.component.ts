@@ -31,7 +31,7 @@ import { SettingTitlesEnum } from '../integration-setting-card/integration-setti
 	templateUrl: './view.component.html',
 	providers: [TitleCasePipe]
 })
-export class GauzyAIViewComponent extends TranslationBaseComponent implements OnInit {
+export class IntegrationAIViewComponent extends TranslationBaseComponent implements OnInit {
 	public organization: IOrganization;
 	public organization$: Observable<IOrganization>; // Observable to hold the selected organization
 	public settings$: Observable<IIntegrationSetting[]>;

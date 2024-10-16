@@ -8,3 +8,8 @@ $input-background-color: var(--gauzy-card-1);
 	background-color: $input-background-color !important;
 	border: none;
 }
+
+.error-border {
+	border: solid 1px red;
+	border-radius: var(--border-radius);
+}

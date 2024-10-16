@@ -1,35 +1,30 @@
-import { Component, OnDestroy } from '@angular/core';
-import { filter, merge, tap } from 'rxjs';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { filter, merge, tap } from 'rxjs';
 import { NgxPermissionsService } from 'ngx-permissions';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { Store } from '@gauzy/ui-core/core';
 import { I18nService } from '@gauzy/ui-core/i18n';
 
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gz-proposal-layout',
-	template: ` <router-outlet></router-outlet>`,
-	styles: [
-		`
-			:host {
-				height: 100%;
-				display: block;
-			}
-		`
-	]
+	selector: '</ngx-integration-hubstaff-layout>',
+	template: `<router-outlet></router-outlet>`
 })
-export class ProposalLayoutComponent implements OnDestroy {
+export class IntegrationHubstaffLayoutComponent implements OnInit, OnDestroy {
 	constructor(
-		readonly _translateService: TranslateService,
-		readonly _ngxPermissionsService: NgxPermissionsService,
-		readonly _store: Store,
-		readonly _i18nService: I18nService
-	) {
+		private readonly _translateService: TranslateService,
+		private readonly _ngxPermissionsService: NgxPermissionsService,
+		private readonly _store: Store,
+		private readonly _i18nService: I18nService
+	) {}
+
+	ngOnInit() {
 		this.initializeUiPermissions(); // Initialize UI permissions
 		this.initializeUiLanguagesAndLocale(); // Initialize UI languages and Update Locale
+		console.log(`Integration Hubstaff UI module plugin initialized`);
 	}
 
 	/**
@@ -51,6 +46,7 @@ export class ProposalLayoutComponent implements OnDestroy {
 			distinctUntilChange(),
 			filter((lang: string | LanguagesEnum) => !!lang),
 			tap((lang: string | LanguagesEnum) => {
+				console.log(`Integration Hubstaff UI module plugin lang: %s`, lang);
 				this._translateService.use(lang);
 			}),
 			untilDestroyed(this)
@@ -60,8 +56,7 @@ export class ProposalLayoutComponent implements OnDestroy {
 		preferredLanguage$.subscribe();
 	}
 
-	/**
-	 * Unsubscribe from all subscriptions
-	 */
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		console.log(`Integration Hubstaff UI module plugin destroyed`);
+	}
 }

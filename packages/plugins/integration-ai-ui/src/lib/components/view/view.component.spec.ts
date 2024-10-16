@@ -1,19 +1,19 @@
 import { waitForAsync, ComponentFixture, TestBed } from '@angular/core/testing';
-import { GauzyAIViewComponent } from './view.component';
+import { IntegrationAIViewComponent } from './view.component';
 
-describe('GauzyAIViewComponent', () => {
-	let component: GauzyAIViewComponent;
-	let fixture: ComponentFixture<GauzyAIViewComponent>;
+describe('IntegrationAIViewComponent', () => {
+	let component: IntegrationAIViewComponent;
+	let fixture: ComponentFixture<IntegrationAIViewComponent>;
 
 	beforeEach(waitForAsync(() => {
 		TestBed.configureTestingModule({
-			declarations: [GauzyAIViewComponent],
+			declarations: [IntegrationAIViewComponent],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 
 	beforeEach(() => {
-		fixture = TestBed.createComponent(GauzyAIViewComponent);
+		fixture = TestBed.createComponent(IntegrationAIViewComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();
 	});

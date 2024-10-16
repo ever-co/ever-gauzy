@@ -520,7 +520,8 @@
 		"xaxis",
 		"wdth",
 		"concate",
-		"typeahead"
+		"typeahead",
+		"maxlength"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
