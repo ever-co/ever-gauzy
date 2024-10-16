@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { filter, merge } from 'rxjs';
+import { filter, merge, tap } from 'rxjs';
 import {
 	NbActionsModule,
 	NbButtonModule,
@@ -71,6 +71,7 @@ export class IntegrationHubstaffModule {
 	) {
 		this.initializeUiPermissions(); // Initialize UI permissions
 		this.initializeUiLanguagesAndLocale(); // Initialize UI languages and Update Locale
+		console.log(`integration hubstaff ui module plugin initialized`);
 	}
 
 	/**
@@ -91,12 +92,13 @@ export class IntegrationHubstaffModule {
 		const preferredLanguage$ = merge(this._store.preferredLanguage$, this._i18nService.preferredLanguage$).pipe(
 			distinctUntilChange(),
 			filter((lang: LanguagesEnum) => !!lang),
+			tap((lang: string | LanguagesEnum) => {
+				this._translateService.use(lang);
+			}),
 			untilDestroyed(this)
 		);
 
-		// Subscribe to preferred language changes
-		preferredLanguage$.subscribe((lang: string | LanguagesEnum) => {
-			this._translateService.use(lang);
-		});
+		// Subscribe to initiate the stream
+		preferredLanguage$.subscribe();
 	}
 }

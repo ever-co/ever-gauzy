@@ -11,6 +11,14 @@ import { IntegrationAIAuthorizationComponent } from './components/authorization/
 import { IntegrationAILayoutComponent } from './integration-ai.layout.component';
 import { IntegrationAIViewComponent } from './components/view/view.component';
 
+// Define no selectors for the main route
+const noSelectors = {
+	project: false,
+	team: false,
+	employee: false,
+	date: false
+};
+
 @NgModule({
 	imports: [
 		RouterModule.forChild([
@@ -18,12 +26,7 @@ import { IntegrationAIViewComponent } from './components/view/view.component';
 				path: '', // Empty path for the main route
 				component: IntegrationAILayoutComponent, // Component for the main layout
 				data: {
-					selectors: {
-						project: false,
-						team: false,
-						employee: false,
-						date: false
-					}
+					selectors: noSelectors
 				},
 				children: [
 					{
@@ -51,12 +54,7 @@ import { IntegrationAIViewComponent } from './components/view/view.component';
 								redirectTo: '/pages/dashboard'
 							},
 							state: false,
-							selectors: {
-								project: false,
-								team: false,
-								employee: false,
-								date: false
-							}
+							selectors: noSelectors
 						}
 					},
 					{
@@ -67,12 +65,7 @@ import { IntegrationAIViewComponent } from './components/view/view.component';
 							entitySettings: IntegrationEntitySettingResolver // Resolver to fetch entity settings before activating the route
 						},
 						data: {
-							selectors: {
-								project: false,
-								team: false,
-								employee: false,
-								date: false
-							}
+							selectors: noSelectors
 						}
 					}
 				]

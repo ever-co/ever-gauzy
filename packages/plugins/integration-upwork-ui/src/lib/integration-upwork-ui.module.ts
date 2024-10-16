@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { filter, merge } from 'rxjs';
+import { filter, merge, tap } from 'rxjs';
 import {
 	NbActionsModule,
 	NbButtonModule,
@@ -83,6 +83,7 @@ export class IntegrationUpworkUiModule {
 		readonly _i18nService: I18nService
 	) {
 		this.initializeUiLanguagesAndLocale(); // Initialize UI languages and Update Locale
+		console.log(`integration upwork ui module plugin initialized`);
 	}
 
 	/**
@@ -93,12 +94,13 @@ export class IntegrationUpworkUiModule {
 		const preferredLanguage$ = merge(this._store.preferredLanguage$, this._i18nService.preferredLanguage$).pipe(
 			distinctUntilChange(),
 			filter((lang: LanguagesEnum) => !!lang),
+			tap((lang: string | LanguagesEnum) => {
+				this._translateService.use(lang);
+			}),
 			untilDestroyed(this)
 		);
 
-		// Subscribe to preferred language changes
-		preferredLanguage$.subscribe((lang: string | LanguagesEnum) => {
-			this._translateService.use(lang);
-		});
+		// Subscribe to initiate the stream
+		preferredLanguage$.subscribe();
 	}
 }
