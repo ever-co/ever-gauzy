@@ -4044,6 +4044,11 @@
 			"NO_MONTHLY_ACTIVITY": "Non hai tracciato alcun tempo o attività per questo mese.",
 			"WORKED_FOR_MONTH": "Lavorato questo mese",
 			"ACTIVITY_FOR_MONTH": "Attività Mensile"
+		},
+		"LOADING": {
+			"PLEASE_HOLD": "Attendere prego...",
+			"SHUTTING_DOWN": "L'applicazione si sta spegnendo",
+			"LOGOUT_IN_PROGRESS": "Logout in corso"
 		}
 	},
 	"SERVER": "Server",

@@ -4042,6 +4042,11 @@
 			"NO_MONTHLY_ACTIVITY": "لم تقم بتتبع أي وقت أو نشاط لهذا الشهر.",
 			"WORKED_FOR_MONTH": "عملت هذا الشهر",
 			"ACTIVITY_FOR_MONTH": "النشاط الشهري"
+		},
+		"LOADING": {
+			"PLEASE_HOLD": "يرجى الانتظار...",
+			"SHUTTING_DOWN": "التطبيق يغلق",
+			"LOGOUT_IN_PROGRESS": "تسجيل الخروج جارٍ"
 		}
 	},
 	"SERVER": "خادم",

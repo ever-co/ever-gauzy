@@ -4056,6 +4056,11 @@
 			"NO_MONTHLY_ACTIVITY": "לא עקבת אחרי זמן ופעילות החודש.",
 			"WORKED_FOR_MONTH": "עבדת החודש",
 			"ACTIVITY_FOR_MONTH": "פעילות חודשית"
+		},
+		"LOADING": {
+			"PLEASE_HOLD": "אנא המתן...",
+			"SHUTTING_DOWN": "היישום נסגר",
+			"LOGOUT_IN_PROGRESS": "התנתקות בתהליך"
 		}
 	},
 	"SERVER": "שרת",

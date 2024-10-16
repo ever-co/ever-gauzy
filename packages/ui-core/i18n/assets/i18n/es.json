@@ -4046,6 +4046,11 @@
 			"NO_MONTHLY_ACTIVITY": "No has registrado tiempo o actividad para este mes.",
 			"WORKED_FOR_MONTH": "Trabajado este mes",
 			"ACTIVITY_FOR_MONTH": "Actividad Mensual"
+		},
+		"LOADING": {
+			"PLEASE_HOLD": "Por favor, espera...",
+			"SHUTTING_DOWN": "La aplicación se está cerrando",
+			"LOGOUT_IN_PROGRESS": "Cierre de sesión en progreso"
 		}
 	},
 	"SERVER": "Servidor",
