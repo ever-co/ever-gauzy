@@ -107,7 +107,7 @@ export class IntegrationsModule {
 			// Register the path 'github'
 			path: 'github',
 			// Register the loadChildren function to load the GithubModule lazy module
-			loadChildren: () => import('./github/github.module').then((m) => m.GithubModule)
+			loadChildren: () => import('@gauzy/plugin-integration-github-ui').then((m) => m.IntegrationGithubUiModule)
 		});
 
 		// Set hasRegisteredRoutes to true

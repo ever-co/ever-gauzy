@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -12,15 +12,17 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import {
 	SmartDataViewLayoutModule,
 	ProjectSelectModule,
 	RepositorySelectorModule,
-	SharedModule
+	SharedModule,
+	getBrowserLanguage
 } from '@gauzy/ui-core/shared';
-import { GithubRoutingModule } from './github-routing.module';
-import { GithubComponent } from './github.component';
+import { IntegrationGithubRoutes } from './integration-github.routes';
+import { IntegrationGithubLayoutComponent } from './integration-github.layout.component';
 import { GithubWizardComponent } from './components/wizard/wizard.component';
 import { GithubInstallationComponent } from './components/installation/installation.component';
 import { GithubViewComponent } from './components/view/view.component';
@@ -28,15 +30,13 @@ import { GithubSettingsComponent } from './components/settings/settings.componen
 
 @NgModule({
 	declarations: [
-		GithubComponent,
+		IntegrationGithubLayoutComponent,
 		GithubWizardComponent,
 		GithubInstallationComponent,
 		GithubViewComponent,
 		GithubSettingsComponent
 	],
 	imports: [
-		CommonModule,
-		GithubRoutingModule,
 		NbButtonModule,
 		NbCardModule,
 		NbDialogModule,
@@ -46,12 +46,20 @@ import { GithubSettingsComponent } from './components/settings/settings.componen
 		NbTabsetModule,
 		NbToggleModule,
 		NgSelectModule,
-		NgxPermissionsModule.forChild(),
-		TranslateModule.forChild(),
+		NgxPermissionsModule.forRoot(),
+		TranslateModule.forRoot({
+			defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
+			loader: {
+				provide: TranslateLoader,
+				useFactory: HttpLoaderFactory,
+				deps: [HttpClient]
+			}
+		}),
+		IntegrationGithubRoutes,
 		SharedModule,
 		SmartDataViewLayoutModule,
 		RepositorySelectorModule,
 		ProjectSelectModule
 	]
 })
-export class GithubModule {}
+export class IntegrationGithubUiModule {}

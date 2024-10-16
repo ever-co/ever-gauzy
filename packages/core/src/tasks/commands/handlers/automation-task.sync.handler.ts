@@ -135,7 +135,7 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 			return createdTask;
 		} catch (error) {
 			// Handle and log errors, and return a rejected promise or throw an exception.
-			console.log(chalk.red(`Error automation syncing a task with payload: %s`, error.message), entity);
+			console.log(chalk.red(`Error while creating task using Automation Task: %s`, error.message), entity);
 		}
 	}
 
@@ -146,7 +146,7 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 	 * @param entity - The new data for the task.
 	 * @returns A Promise that resolves to the updated task.
 	 */
-	async updateTask(id: ITaskUpdateInput['id'], entity: ITaskUpdateInput): Promise<ITask> {
+	async updateTask(id: ID, entity: ITaskUpdateInput): Promise<ITask> {
 		try {
 			// Find the existing task by its ID
 			const existingTask = await this._taskService.findOneByIdString(id);
@@ -162,7 +162,7 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 			return updatedTask;
 		} catch (error) {
 			// Handle and log errors, and return a rejected promise or throw an exception.
-			console.log(chalk.red(`Error automation syncing a task with payload: %s`, error), entity);
+			console.log(chalk.red(`Error while updating task using Automation Task: %s`), error.message);
 		}
 	}
 }
