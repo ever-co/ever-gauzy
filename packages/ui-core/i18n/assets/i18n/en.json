@@ -4789,7 +4789,14 @@
 		"FAIL_SIGNIN_SUB_TITLE": "Please initiate the process again.",
 		"THANKING_TEXT": "Thank you for choosing us.",
 		"UNKNOWN_WORKSPACE": "Don't know your workspace?",
-		"FIND_WORKSPACE": "Find your workspaces"
+		"FIND_WORKSPACE": "Find your workspaces",
+		"SELECTION": {
+			"WELCOME_BACK": "Welcome Back!",
+			"YOU_LOOK_NICE_TODAY": "You look nice today!",
+			"EMAIL_MULTIPLE_WORKSPACE": "The email associated with multiple workspaces, please select one to continue",
+			"SELECT_WORKSPACE_FOR": "Select Workspace for",
+			"OPEN": "Open"
+		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Add or Drop Image",
