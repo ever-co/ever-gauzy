@@ -24,7 +24,7 @@ export class IntegrationAILayoutComponent implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.initializeUiPermissions(); // Initialize UI permissions
 		this.initializeUiLanguagesAndLocale(); // Initialize UI languages and Update Locale
-		console.log(`integration ai ui module plugin initialized`);
+		console.log(`Integration AI UI module plugin initialized`);
 	}
 
 	/**
@@ -45,7 +45,7 @@ export class IntegrationAILayoutComponent implements OnInit, OnDestroy {
 			distinctUntilChange(),
 			filter((lang: string | LanguagesEnum) => !!lang),
 			tap((lang: string | LanguagesEnum) => {
-				console.log('integration ai ui module plugin lang', lang);
+				console.log(`Integration AI UI module plugin lang: %s`, lang);
 				this._translateService.use(lang); // Set the language
 			}),
 			untilDestroyed(this)
@@ -56,6 +56,6 @@ export class IntegrationAILayoutComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy(): void {
-		console.log(`integration ai ui module plugin destroyed`);
+		console.log(`Integration AI UI module plugin destroyed`);
 	}
 }

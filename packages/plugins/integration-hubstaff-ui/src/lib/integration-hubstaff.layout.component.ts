@@ -24,7 +24,7 @@ export class IntegrationHubstaffLayoutComponent implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.initializeUiPermissions(); // Initialize UI permissions
 		this.initializeUiLanguagesAndLocale(); // Initialize UI languages and Update Locale
-		console.log(`integration hubstaff ui module plugin initialized`);
+		console.log(`Integration Hubstaff UI module plugin initialized`);
 	}
 
 	/**
@@ -46,7 +46,7 @@ export class IntegrationHubstaffLayoutComponent implements OnInit, OnDestroy {
 			distinctUntilChange(),
 			filter((lang: string | LanguagesEnum) => !!lang),
 			tap((lang: string | LanguagesEnum) => {
-				console.log('integration hubstaff ui module plugin lang', lang);
+				console.log(`Integration Hubstaff UI module plugin lang: %s`, lang);
 				this._translateService.use(lang);
 			}),
 			untilDestroyed(this)
@@ -57,6 +57,6 @@ export class IntegrationHubstaffLayoutComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy(): void {
-		console.log(`integration hubstaff ui module plugin destroyed`);
+		console.log(`Integration Hubstaff UI module plugin destroyed`);
 	}
 }

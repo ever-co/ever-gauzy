@@ -21,7 +21,7 @@ export class IntegrationUpworkLayoutComponent implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.initializeUiLanguagesAndLocale(); // Initialize UI languages and Update Locale
-		console.log(`integration upwork ui module plugin initialized`);
+		console.log(`Integration Upwork UI module plugin initialized`);
 	}
 
 	/**
@@ -44,6 +44,6 @@ export class IntegrationUpworkLayoutComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy(): void {
-		console.log(`integration upwork ui module plugin destroyed`);
+		console.log(`Integration Upwork UI module plugin destroyed`);
 	}
 }
