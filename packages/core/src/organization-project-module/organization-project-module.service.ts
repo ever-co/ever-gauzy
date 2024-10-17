@@ -44,23 +44,24 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		const { organizationId } = entity;
 
 		try {
-			const module = await super.create({
+			const projectModule = await super.create({
 				...entity,
 				creatorId
 			});
 
 			// Generate the activity log
-			this.activityLogService.logActivity(
+			this.activityLogService.logActivity<OrganizationProjectModule>(
 				BaseEntityEnum.OrganizationProjectModule,
-				module.name,
+				projectModule.name,
+				projectModule.id,
 				ActorTypeEnum.User,
 				organizationId,
 				tenantId,
 				ActionTypeEnum.Created,
-				module
+				projectModule
 			);
 
-			return module;
+			return projectModule;
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -93,27 +94,29 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 			}
 
 			// Update module with new values
-			const updatedModule = await super.create({
+			const updatedProjectModule = await super.create({
 				...entity,
 				id
 			});
 
 			// Generate the activity log
-			const { organizationId } = updatedModule;
-			this.activityLogService.logActivity(
+			const { organizationId } = updatedProjectModule;
+
+			this.activityLogService.logActivity<OrganizationProjectModule>(
 				BaseEntityEnum.OrganizationProjectModule,
-				updatedModule.name,
+				updatedProjectModule.name,
+				updatedProjectModule.id,
 				ActorTypeEnum.User,
 				organizationId,
 				tenantId,
 				ActionTypeEnum.Updated,
-				updatedModule,
+				updatedProjectModule,
 				existingModule,
 				entity
 			);
 
 			// return updated Module
-			return updatedModule;
+			return updatedProjectModule;
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

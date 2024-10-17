@@ -42,21 +42,22 @@ export class TaskViewService extends TenantAwareCrudService<TaskView> {
 		const tenantId = RequestContext.currentTenantId() || entity.tenantId;
 		const { organizationId } = entity;
 		try {
-			const view = await super.create({ ...entity, tenantId });
+			const taskView = await super.create({ ...entity, tenantId });
 
 			// Generate the activity log
-			this.activityLogService.logActivity(
+			this.activityLogService.logActivity<TaskView>(
 				BaseEntityEnum.TaskView,
-				view.name,
+				taskView.name,
+				taskView.id,
 				ActorTypeEnum.User,
 				organizationId,
 				tenantId,
 				ActionTypeEnum.Created,
-				view
+				taskView
 			);
 
-			// return the created view
-			return view;
+			// return the created task view
+			return taskView;
 		} catch (error) {
 			// Handle errors and return an appropriate error response
 			throw new HttpException(`Failed to create view : ${error.message}`, HttpStatus.BAD_REQUEST);
@@ -91,9 +92,10 @@ export class TaskViewService extends TenantAwareCrudService<TaskView> {
 
 			// Generate the activity log
 			const { organizationId } = updatedTaskView;
-			this.activityLogService.logActivity(
+			this.activityLogService.logActivity<TaskView>(
 				BaseEntityEnum.TaskView,
 				updatedTaskView.name,
+				updatedTaskView.id,
 				ActorTypeEnum.User,
 				organizationId,
 				tenantId,

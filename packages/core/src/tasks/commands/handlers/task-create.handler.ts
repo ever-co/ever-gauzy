@@ -8,6 +8,7 @@ import { RequestContext } from './../../../core/context';
 import { OrganizationProjectService } from './../../../organization-project/organization-project.service';
 import { TaskCreateCommand } from './../task-create.command';
 import { TaskService } from '../../task.service';
+import { Task } from './../../task.entity';
 import { ActivityLogService } from '../../../activity-log/activity-log.service';
 
 @CommandHandler(TaskCreateCommand)
@@ -73,9 +74,10 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			}
 
 			// Generate the activity log
-			this.activityLogService.logActivity(
+			this.activityLogService.logActivity<Task>(
 				BaseEntityEnum.Task,
 				task.title,
+				task.id,
 				ActorTypeEnum.User, // TODO : Since we have Github Integration, make sure we can also store "System" for actor
 				organizationId,
 				tenantId,

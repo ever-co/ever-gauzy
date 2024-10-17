@@ -123,9 +123,10 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			});
 
 			// Generate the activity log
-			this._activityLogService.logActivity(
+			this._activityLogService.logActivity<OrganizationProject>(
 				BaseEntityEnum.OrganizationProject,
 				project.name,
+				project.id,
 				ActorTypeEnum.User,
 				organizationId,
 				tenantId,

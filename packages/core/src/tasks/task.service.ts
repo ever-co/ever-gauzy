@@ -101,9 +101,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 			// Generate the activity log
 			const { organizationId } = updatedTask;
-			this.activityLogService.logActivity(
+			this.activityLogService.logActivity<Task>(
 				BaseEntityEnum.Task,
 				updatedTask.title,
+				updatedTask.id,
 				ActorTypeEnum.User, // TODO : Since we have Github Integration, make sure we can also store "System" for actor
 				organizationId,
 				tenantId,
