@@ -34,4 +34,8 @@ export class LoggerService {
 	public error<T>(...message: T[]): void {
 		if (this._log) this._log.error(...message);
 	}
+
+	public warn(...message: any[]): void {
+		if (this._log) this._log.warn(...message);
+	}
 }

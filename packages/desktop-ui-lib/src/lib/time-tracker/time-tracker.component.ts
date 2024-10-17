@@ -42,7 +42,6 @@ import {
 	Subject,
 	tap
 } from 'rxjs';
-import * as _ from 'underscore';
 import { AlwaysOnService, AlwaysOnStateEnum } from '../always-on/always-on.service';
 import { AuthStrategy } from '../auth';
 import { GAUZY_ENV } from '../constants';
@@ -807,11 +806,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.teamSelectorService.load(),
 					this.taskSelectorService.load(),
 					this.getTodayTime(),
-					this.setTimerDetails()
+					this.setTimerDetails(),
+					this.getLastTimeSlotImage(arg)
 				];
-				if (arg.timeSlotId) {
-					parallelizedTasks.push(this.getLastTimeSlotImage(arg));
-				}
 				await Promise.allSettled(parallelizedTasks);
 				this._isReady = true;
 				this._isRefresh$.next(false);
@@ -1708,13 +1705,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public async getLastTimeSlotImage(arg): Promise<void> {
-		if (this._isOffline) return;
+		if (this._isOffline || this.lastTimeSlot?.id === arg?.timeSlotId) {
+			return;
+		}
 		try {
 			const res = await this.timeTrackerService.getTimeSlot(arg);
-			let { screenshots }: any = res;
+			const { screenshots = [] } = res || {};
 			console.log('Get Last Timeslot Image Response:', screenshots);
 			if (screenshots && screenshots.length > 0) {
-				screenshots = _.sortBy(screenshots, 'recordedAt').reverse();
 				const [lastCaptureScreen] = screenshots;
 				console.log('Last Capture Screen:', lastCaptureScreen);
 				this.lastScreenCapture$.next(lastCaptureScreen);
@@ -1722,7 +1720,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.screenshots$.next(screenshots);
 				this.lastTimeSlot = res;
 			}
-			if (this.lastScreenCapture.recordedAt) {
+			if (this.lastScreenCapture?.recordedAt) {
 				this.lastScreenCapture$.next({
 					...this.lastScreenCapture,
 					textTime: moment(this.lastScreenCapture.recordedAt).fromNow()
@@ -1735,24 +1733,40 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	public async localImage(img, originalBase64Image?: string): Promise<void> {
+	public async localImage(
+		img: { thumbUrl?: string; recordedAt?: string; fullUrl?: string } | string,
+		originalBase64Image?: string
+	): Promise<void> {
 		try {
-			const convScreenshot =
-				img && img.thumbUrl ? await this._imageViewerService.getBase64ImageFromUrl(img.thumbUrl) : img;
-			localStorage.setItem(
-				'lastScreenCapture',
-				JSON.stringify({
-					thumbUrl: convScreenshot,
-					textTime: moment().fromNow(),
-					createdAt: Date.now(),
-					recordedAt: Date.now(),
-					...(originalBase64Image && {
-						fullUrl: originalBase64Image
-					})
-				})
-			);
+			// Determine the fullUrl, prioritizing originalBase64Image if provided
+			const fullUrl = originalBase64Image || (typeof img === 'object' ? img.fullUrl : undefined);
+
+			// Fetch the thumbnail or use the image string directly if img is a string
+			const thumbUrl =
+				typeof img === 'object' && img.thumbUrl
+					? await this._imageViewerService.getBase64ImageFromUrl(img.thumbUrl)
+					: typeof img === 'string'
+					? img
+					: undefined;
+
+			// Set timestamp, preferring recordedAt if available
+			const timestamp = typeof img === 'object' && img.recordedAt ? new Date(img.recordedAt) : new Date();
+
+			if (fullUrl && thumbUrl) {
+				const screenCaptureData = {
+					fullUrl,
+					thumbUrl,
+					textTime: moment(timestamp).fromNow(),
+					createdAt: timestamp,
+					recordedAt: timestamp
+				};
+
+				localStorage.setItem('lastScreenCapture', JSON.stringify(screenCaptureData));
+			} else {
+				this._loggerService.warn('WARN: Invalid image data: missing fullUrl or thumbUrl.');
+			}
 		} catch (error) {
-			console.log('ERROR', error);
+			this._loggerService.error('ERROR: Storing image:', error.message);
 		}
 	}
 
@@ -1822,6 +1836,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public showImage(): void {
+		if (!this.screenshots.length) {
+			const message = 'Attempted to open an empty image gallery.';
+			this.toastrService.warning(message);
+			this._loggerService.warn(`WARN: ${message}`);
+			return;
+		}
 		this.electronService.ipcRenderer.send('show_image', this.screenshots);
 	}
 

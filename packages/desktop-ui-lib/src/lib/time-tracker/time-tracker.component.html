@@ -113,7 +113,10 @@
 													<div class="row">
 														<div class="col-6">
 															<button (click)="showImage()" nbButton status="basic">
-																<nb-icon icon="eye" pack="font-awesome"></nb-icon>
+																<nb-icon
+																	[icon]="screenshots.length > 0 ? 'eye' : 'eye-slash'"
+																	pack="font-awesome"
+																></nb-icon>
 															</button>
 														</div>
 														<div class="col-6">
