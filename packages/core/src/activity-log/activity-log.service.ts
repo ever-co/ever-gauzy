@@ -134,27 +134,17 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 	 */
 	logActivity<T>(
 		entity: BaseEntityEnum,
-		entityName: string,
-		entityId: ID,
+		actionType: ActionTypeEnum,
 		actor: ActorTypeEnum,
+		entityId: ID,
+		entityName: string,
+		data: T,
 		organizationId: ID,
 		tenantId: ID,
-		actionType: ActionTypeEnum,
-		data: T,
 		originalValues?: Partial<T>,
 		newValues?: Partial<T>
 	) {
-		// Initialize log event payload
-		const activityLog: IActivityLog = {
-			entity,
-			entityId,
-			action: actionType,
-			actorType: actor,
-			description: generateActivityLogDescription(actionType, entity, entityName),
-			data,
-			organizationId,
-			tenantId
-		};
+		let jsonFields: Record<string, any> = new Object();
 
 		// If it's an update action, add updated fields and values
 		if (actionType === ActionTypeEnum.Updated && originalValues && newValues) {
@@ -164,10 +154,22 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 			);
 
 			// Add updated fields and values to the log
-			Object.assign(activityLog, { updatedFields, previousValues, updatedValues });
+			jsonFields = Object.assign({}, { updatedFields, previousValues, updatedValues });
 		}
 
 		// Emit the event to log the activity
-		this._eventBus.publish(new ActivityLogEvent(activityLog));
+		this._eventBus.publish(
+			new ActivityLogEvent({
+				entity,
+				entityId,
+				action: actionType,
+				actorType: actor,
+				description: generateActivityLogDescription(actionType, entity, entityName),
+				data,
+				organizationId,
+				tenantId,
+				...jsonFields
+			})
+		);
 	}
 }

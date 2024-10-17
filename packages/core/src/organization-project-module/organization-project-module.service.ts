@@ -52,13 +52,13 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 			// Generate the activity log
 			this.activityLogService.logActivity<OrganizationProjectModule>(
 				BaseEntityEnum.OrganizationProjectModule,
-				projectModule.name,
-				projectModule.id,
-				ActorTypeEnum.User,
-				organizationId,
-				tenantId,
 				ActionTypeEnum.Created,
-				projectModule
+				ActorTypeEnum.User,
+				projectModule.id,
+				projectModule.name,
+				projectModule,
+				organizationId,
+				tenantId
 			);
 
 			return projectModule;
@@ -82,14 +82,14 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 
 		try {
 			// Retrieve existing module.
-			const existingModule = await this.findOneByIdString(id, {
+			const existingProjectModule = await this.findOneByIdString(id, {
 				relations: {
 					members: true,
 					manager: true
 				}
 			});
 
-			if (!existingModule) {
+			if (!existingProjectModule) {
 				throw new BadRequestException('Module not found');
 			}
 
@@ -104,14 +104,14 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 
 			this.activityLogService.logActivity<OrganizationProjectModule>(
 				BaseEntityEnum.OrganizationProjectModule,
-				updatedProjectModule.name,
-				updatedProjectModule.id,
+				ActionTypeEnum.Updated,
 				ActorTypeEnum.User,
+				updatedProjectModule.id,
+				updatedProjectModule.name,
+				updatedProjectModule,
 				organizationId,
 				tenantId,
-				ActionTypeEnum.Updated,
-				updatedProjectModule,
-				existingModule,
+				existingProjectModule,
 				entity
 			);
 

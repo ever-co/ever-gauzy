@@ -56,13 +56,13 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 			// Generate the activity log
 			this.activityLogService.logActivity<ResourceLink>(
 				BaseEntityEnum.ResourceLink,
-				resourceLink.title,
-				resourceLink.id,
-				ActorTypeEnum.User,
-				resourceLink.organizationId,
-				tenantId,
 				ActionTypeEnum.Created,
-				resourceLink
+				ActorTypeEnum.User,
+				resourceLink.id,
+				resourceLink.title,
+				resourceLink,
+				resourceLink.organizationId,
+				tenantId
 			);
 
 			return resourceLink;
@@ -95,13 +95,13 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 			const { organizationId, tenantId } = updatedResourceLink;
 			this.activityLogService.logActivity<ResourceLink>(
 				BaseEntityEnum.ResourceLink,
-				`${resourceLink.title} for ${resourceLink.entity}`,
-				resourceLink.id,
+				ActionTypeEnum.Updated,
 				ActorTypeEnum.User,
+				resourceLink.id,
+				`${resourceLink.title} for ${resourceLink.entity}`,
+				updatedResourceLink,
 				organizationId,
 				tenantId,
-				ActionTypeEnum.Updated,
-				updatedResourceLink,
 				resourceLink,
 				input
 			);

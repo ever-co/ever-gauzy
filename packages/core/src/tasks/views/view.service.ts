@@ -47,13 +47,13 @@ export class TaskViewService extends TenantAwareCrudService<TaskView> {
 			// Generate the activity log
 			this.activityLogService.logActivity<TaskView>(
 				BaseEntityEnum.TaskView,
-				taskView.name,
-				taskView.id,
-				ActorTypeEnum.User,
-				organizationId,
-				tenantId,
 				ActionTypeEnum.Created,
-				taskView
+				ActorTypeEnum.User,
+				taskView.id,
+				taskView.name,
+				taskView,
+				organizationId,
+				tenantId
 			);
 
 			// return the created task view
@@ -78,9 +78,9 @@ export class TaskViewService extends TenantAwareCrudService<TaskView> {
 
 		try {
 			// Retrieve existing view.
-			const existingView = await this.findOneByIdString(id);
+			const existingTaskView = await this.findOneByIdString(id);
 
-			if (!existingView) {
+			if (!existingTaskView) {
 				throw new NotFoundException('View not found');
 			}
 
@@ -94,14 +94,14 @@ export class TaskViewService extends TenantAwareCrudService<TaskView> {
 			const { organizationId } = updatedTaskView;
 			this.activityLogService.logActivity<TaskView>(
 				BaseEntityEnum.TaskView,
-				updatedTaskView.name,
-				updatedTaskView.id,
+				ActionTypeEnum.Updated,
 				ActorTypeEnum.User,
+				updatedTaskView.id,
+				updatedTaskView.name,
+				updatedTaskView,
 				organizationId,
 				tenantId,
-				ActionTypeEnum.Updated,
-				updatedTaskView,
-				existingView,
+				existingTaskView,
 				input
 			);
 

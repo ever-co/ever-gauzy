@@ -116,13 +116,13 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 			// Generate the activity log
 			this.activityLogService.logActivity<OrganizationSprint>(
 				BaseEntityEnum.OrganizationSprint,
-				sprint.name,
-				sprint.id,
-				ActorTypeEnum.User,
-				organizationId,
-				tenantId,
 				ActionTypeEnum.Created,
-				sprint
+				ActorTypeEnum.User,
+				sprint.id,
+				sprint.name,
+				sprint,
+				organizationId,
+				tenantId
 			);
 
 			return sprint;
@@ -184,13 +184,13 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 				// Generate the activity log
 				this.activityLogService.logActivity<OrganizationSprint>(
 					BaseEntityEnum.OrganizationSprint,
-					updatedSprint.name,
-					updatedSprint.id,
+					ActionTypeEnum.Updated,
 					ActorTypeEnum.User,
+					updatedSprint.id,
+					updatedSprint.name,
+					updatedSprint,
 					organizationId,
 					tenantId,
-					ActionTypeEnum.Updated,
-					updatedSprint,
 					organizationSprint,
 					input
 				);

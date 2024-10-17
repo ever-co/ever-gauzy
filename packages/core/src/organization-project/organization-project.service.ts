@@ -125,13 +125,13 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			// Generate the activity log
 			this._activityLogService.logActivity<OrganizationProject>(
 				BaseEntityEnum.OrganizationProject,
-				project.name,
-				project.id,
-				ActorTypeEnum.User,
-				organizationId,
-				tenantId,
 				ActionTypeEnum.Created,
-				project
+				ActorTypeEnum.User,
+				project.id,
+				project.name,
+				project,
+				organizationId,
+				tenantId
 			);
 
 			// Return the created project
@@ -177,12 +177,28 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			const { id: organizationProjectId } = organizationProject;
 
 			// Update the organization project with the prepared members
-			return await super.create({
+			const updatedProject = await super.create({
 				...input,
 				organizationId,
 				tenantId,
 				id: organizationProjectId
 			});
+
+			// Generate the activity log
+			this._activityLogService.logActivity<OrganizationProject>(
+				BaseEntityEnum.OrganizationProject,
+				ActionTypeEnum.Updated,
+				ActorTypeEnum.User,
+				updatedProject.id,
+				updatedProject.name,
+				updatedProject,
+				organizationId,
+				tenantId,
+				organizationProject,
+				input
+			);
+
+			return updatedProject;
 		} catch (error) {
 			// Handle errors and return an appropriate error response
 			throw new HttpException(`Failed to update organization project: ${error.message}`, HttpStatus.BAD_REQUEST);

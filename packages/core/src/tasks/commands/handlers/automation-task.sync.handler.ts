@@ -149,13 +149,13 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 			const { organizationId, tenantId } = createdTask;
 			this.activityLogService.logActivity<Task>(
 				BaseEntityEnum.Task,
-				createdTask.title,
-				createdTask.id,
-				ActorTypeEnum.System,
-				organizationId,
-				tenantId,
 				ActionTypeEnum.Created,
-				createdTask
+				ActorTypeEnum.System,
+				createdTask.id,
+				createdTask.title,
+				createdTask,
+				organizationId,
+				tenantId
 			);
 
 			// Return the created Task
@@ -191,13 +191,13 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 			const { organizationId, tenantId } = updatedTask;
 			this.activityLogService.logActivity<Task>(
 				BaseEntityEnum.Task,
-				updatedTask.title,
-				updatedTask.id,
+				ActionTypeEnum.Updated,
 				ActorTypeEnum.System,
+				updatedTask.id,
+				updatedTask.title,
+				updatedTask,
 				organizationId,
 				tenantId,
-				ActionTypeEnum.Updated,
-				updatedTask,
 				existingTask,
 				entity
 			);

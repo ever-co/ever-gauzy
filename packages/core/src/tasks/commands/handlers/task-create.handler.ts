@@ -76,13 +76,13 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			// Generate the activity log
 			this.activityLogService.logActivity<Task>(
 				BaseEntityEnum.Task,
-				task.title,
-				task.id,
-				ActorTypeEnum.User, // TODO : Since we have Github Integration, make sure we can also store "System" for actor
-				organizationId,
-				tenantId,
 				ActionTypeEnum.Created,
-				task
+				ActorTypeEnum.User, // TODO : Since we have Github Integration, make sure we can also store "System" for actor
+				task.id,
+				task.title,
+				task,
+				organizationId,
+				tenantId
 			);
 
 			return task; // Return the created task
