@@ -1818,7 +1818,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		if (!this.screenshots.length) {
 			const message = 'Attempted to open an empty image gallery.';
 			this.toastrService.warning(message);
-			this._loggerService.log.warn(`WARN: ${message}`);
+			this._loggerService.warn(`WARN: ${message}`);
 			return;
 		}
 		this.electronService.ipcRenderer.send('show_image', this.screenshots);

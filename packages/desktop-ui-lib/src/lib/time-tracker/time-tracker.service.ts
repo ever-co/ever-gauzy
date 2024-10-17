@@ -18,9 +18,9 @@ import {
 	ITaskStatusFindInput,
 	ITaskUpdateInput,
 	ITimeLog,
+	ITimeSlot,
 	TimeLogSourceEnum,
-	TimeLogType,
-	ITimeSlot
+	TimeLogType
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/ui-core/common';
 import * as moment from 'moment';
@@ -402,7 +402,7 @@ export class TimeTrackerService {
 		return firstValueFrom(timeLogs$);
 	}
 
-	async getTimeSlot(values): Promise<ITimeSlot> {
+	async getTimeSlot(values: { timeSlotId: string }): Promise<ITimeSlot> {
 		const { timeSlotId } = values;
 		if (!timeSlotId) {
 			this._loggerService.log.warn('WARN: Time Slot ID should not be empty');
