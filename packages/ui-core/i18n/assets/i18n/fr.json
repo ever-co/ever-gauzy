@@ -4045,6 +4045,11 @@
 			"NO_MONTHLY_ACTIVITY": "Vous n'avez aucune heure ou activité enregistrée pour ce mois.",
 			"WORKED_FOR_MONTH": "Travail de ce mois-ci",
 			"ACTIVITY_FOR_MONTH": "Activité Mensuelle"
+		},
+		"LOADING": {
+			"PLEASE_HOLD": "Veuillez patienter...",
+			"SHUTTING_DOWN": "L'application est en train de s'éteindre",
+			"LOGOUT_IN_PROGRESS": "Déconnexion en cours"
 		}
 	},
 	"SERVER": "Serveur",

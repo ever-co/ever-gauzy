@@ -4044,6 +4044,11 @@
 			"NO_MONTHLY_ACTIVITY": "Je hebt deze maand geen tijd of activiteit bijgehouden.",
 			"WORKED_FOR_MONTH": "Gewerkt deze maand",
 			"ACTIVITY_FOR_MONTH": "Maandelijkse Activiteit"
+		},
+		"LOADING": {
+			"PLEASE_HOLD": "Even geduld aub...",
+			"SHUTTING_DOWN": "Applicatie wordt afgesloten",
+			"LOGOUT_IN_PROGRESS": "Uitloggen bezig"
 		}
 	},
 	"SERVER": "Server",
