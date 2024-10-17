@@ -95,11 +95,7 @@ export class UserOrganizationController extends CrudController<UserOrganization>
 
 			// Attempt to count the user organizations
 			const total = await this.userOrganizationService.count({
-				where: {
-					userId,
-					isActive: true,
-					isArchived: false
-				}
+				where: { userId, isActive: true, isArchived: false }
 			});
 
 			// Return the total count of user organizations

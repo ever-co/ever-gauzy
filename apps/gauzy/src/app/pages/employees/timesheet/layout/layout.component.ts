@@ -100,8 +100,5 @@ export class TimesheetLayoutComponent extends TranslationBaseComponent implement
 		});
 	}
 
-	ngOnDestroy(): void {
-		// Delete the timesheet tabset from the registry
-		this._pageTabRegistryService.deleteTabset(this.tabsetId);
-	}
+	ngOnDestroy(): void {}
 }
