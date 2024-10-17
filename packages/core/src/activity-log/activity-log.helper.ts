@@ -70,7 +70,7 @@ export function activityLogUpdatedFieldsAndValues<T>(originalValues: T, updated:
  * @param {EventBus} eventBus - CQRS event to log activity
  * @param {BaseEntityEnum} entityType - Entity type for whom creating activity log (E.g : Task, OrganizationProject, etc.)
  * @param {string} entityName - Name or Title of created entity
- * @param {ActorTypeEnum} actor - The actor type perfomed action (User or System)
+ * @param {ActorTypeEnum} actor - The actor type performed action (User or System)
  * @param {ID} organizationId
  * @param {ID} tenantId
  * @param {T} data - Created entity data
@@ -110,11 +110,11 @@ export function activityLogCreateAction<T>(
  * @param {EventBus} eventBus - CQRS event to log activity
  * @param {BaseEntityEnum} entityType - Entity type for whom creating activity log (E.g : Task, OrganizationProject, etc.)
  * @param {string} entityName - Name or Title of created entity
- * @param {ActorTypeEnum} actor - The actor type perfomed action (User or System)
+ * @param {ActorTypeEnum} actor - The actor type performed action (User or System)
  * @param {ID} organizationId
  * @param {ID} tenantId
  * @param {Partial<T>} originalValues - entity data before update
- * @param {Partial<T>} newValues - entity upated data per field
+ * @param {Partial<T>} newValues - entity updated data per field
  * @param {T} data - Updated entity data
 = */
 export function activityLogUpdateAction<T>(
