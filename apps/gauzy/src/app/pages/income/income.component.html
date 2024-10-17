@@ -4,12 +4,13 @@
 	nbSpinnerSize="large"
 >
 	<nb-card-header class="card-custom-header">
-		<div class="card-header-title">
+		<div class="col-auto">
 			<h4>
 				<ngx-header-title>
 					{{ 'INCOME_PAGE.INCOME' | translate }}
 				</ngx-header-title>
 			</h4>
+			<ngx-date-range-title [format]="'dddd, LL'"></ngx-date-range-title>
 		</div>
 		<div class="gauzy-button-container">
 			<ngx-gauzy-button-action
