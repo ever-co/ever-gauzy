@@ -145,8 +145,5 @@ export class DashboardComponent extends TranslationBaseComponent implements OnIn
 	/**
 	 * Clears the registry when the component is destroyed.
 	 */
-	ngOnDestroy() {
-		// Delete the dashboard tabset from the registry
-		console.warn(`Tabset with id "${this.tabsetId}" has been successfully removed from the registry.`);
-	}
+	ngOnDestroy() {}
 }

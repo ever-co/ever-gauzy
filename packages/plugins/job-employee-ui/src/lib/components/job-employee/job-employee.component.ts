@@ -629,7 +629,5 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 		}
 	};
 
-	ngOnDestroy(): void {
-		this._pageTabRegistryService.deleteTabset(this.tabsetId); // Delete the dashboard tabset from the registry
-	}
+	ngOnDestroy(): void {}
 }
