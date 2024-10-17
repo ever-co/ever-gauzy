@@ -1,4 +1,3 @@
-import { EventBus } from '@nestjs/cqrs';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateResult } from 'typeorm';
 import {
@@ -7,12 +6,13 @@ import {
 	IResourceLinkUpdateInput,
 	ID,
 	BaseEntityEnum,
-	ActorTypeEnum
+	ActorTypeEnum,
+	ActionTypeEnum
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
-import { activityLogCreateAction, activityLogUpdateAction } from '../activity-log/activity-log.helper';
 import { UserService } from '../user/user.service';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import { ResourceLink } from './resource-link.entity';
 import { TypeOrmResourceLinkRepository } from './repository/type-orm-resource-link.repository';
 import { MikroOrmResourceLinkRepository } from './repository/mikro-orm-resource-link.repository';
@@ -23,7 +23,7 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 		readonly typeOrmResourceLinkRepository: TypeOrmResourceLinkRepository,
 		readonly mikroOrmResourceLinkRepository: MikroOrmResourceLinkRepository,
 		private readonly userService: UserService,
-		private readonly _eventBus: EventBus
+		private readonly activityLogService: ActivityLogService
 	) {
 		super(typeOrmResourceLinkRepository, mikroOrmResourceLinkRepository);
 	}
@@ -54,13 +54,13 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 			});
 
 			// Generate the activity log
-			activityLogCreateAction(
-				this._eventBus,
+			this.activityLogService.logActivity(
 				BaseEntityEnum.ResourceLink,
 				resourceLink.title,
 				ActorTypeEnum.User,
 				resourceLink.organizationId,
 				tenantId,
+				ActionTypeEnum.Created,
 				resourceLink
 			);
 
@@ -92,16 +92,16 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 
 			// Generate the activity log
 			const { organizationId, tenantId } = updatedResourceLink;
-			activityLogUpdateAction(
-				this._eventBus,
+			this.activityLogService.logActivity(
 				BaseEntityEnum.ResourceLink,
 				`${resourceLink.title} for ${resourceLink.entity}`,
 				ActorTypeEnum.User,
 				organizationId,
 				tenantId,
+				ActionTypeEnum.Updated,
+				updatedResourceLink,
 				resourceLink,
-				input,
-				updatedResourceLink
+				input
 			);
 
 			// return updated Resource Link

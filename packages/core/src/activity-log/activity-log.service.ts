@@ -1,18 +1,30 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { FindManyOptions, FindOptionsOrder, FindOptionsWhere } from 'typeorm';
-import { IActivityLog, IActivityLogInput, IPagination } from '@gauzy/contracts';
+import {
+	ActionTypeEnum,
+	ActorTypeEnum,
+	BaseEntityEnum,
+	IActivityLog,
+	IActivityLogInput,
+	ID,
+	IPagination
+} from '@gauzy/contracts';
 import { isNotNullOrUndefined } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { GetActivityLogsDTO, allowedOrderDirections, allowedOrderFields } from './dto/get-activity-logs.dto';
 import { ActivityLog } from './activity-log.entity';
 import { MikroOrmActivityLogRepository, TypeOrmActivityLogRepository } from './repository';
+import { EventBus } from '@nestjs/cqrs';
+import { activityLogUpdatedFieldsAndValues, generateActivityLogDescription } from './activity-log.helper';
+import { ActivityLogEvent } from './events';
 
 @Injectable()
 export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 	constructor(
 		readonly typeOrmActivityLogRepository: TypeOrmActivityLogRepository,
-		readonly mikroOrmActivityLogRepository: MikroOrmActivityLogRepository
+		readonly mikroOrmActivityLogRepository: MikroOrmActivityLogRepository,
+		private readonly _eventBus: EventBus
 	) {
 		super(typeOrmActivityLogRepository, mikroOrmActivityLogRepository);
 	}
@@ -67,7 +79,7 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 
 		const take = filters.take ? filters.take : 100; // Default take value if not provided
 		// Pagination: ensure `filters.skip` is a positive integer starting from 1
-		const skip = (filters.skip && Number.isInteger(filters.skip) && filters.skip > 0) ? filters.skip : 1;
+		const skip = filters.skip && Number.isInteger(filters.skip) && filters.skip > 0 ? filters.skip : 1;
 
 		// Ensure that filters are properly defined
 		const queryOptions: FindManyOptions<ActivityLog> = {
@@ -91,7 +103,7 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 	 * @returns The created activity log entry.
 	 * @throws BadRequestException when the log creation fails.
 	 */
-	async logActivity(input: IActivityLogInput): Promise<IActivityLog> {
+	async create(input: IActivityLogInput): Promise<IActivityLog> {
 		try {
 			const creatorId = RequestContext.currentUserId(); // Retrieve the current user's ID from the request context
 			// Create the activity log entry using the provided input along with the tenantId and creatorId
@@ -100,5 +112,59 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 			console.log('Error while creating activity log:', error);
 			throw new BadRequestException('Error while creating activity log', error);
 		}
+	}
+
+	/**
+	 * @description Create or Update Activity Log
+	 * @template T
+	 * @param {BaseEntityEnum} entityType - Entity type for whom creating activity log (E.g : Task, OrganizationProject, etc.)
+	 * @param {string} entityName - Name or Title of the entity
+	 * @param {ActorTypeEnum} actor - The actor type performing the action (User or System)
+	 * @param {ID} organizationId
+	 * @param {ID} tenantId
+	 * @param {ActionTypeEnum} actionType - Action performed (Created or Updated)
+	 * @param {T} data - Entity data (for Created action) or Updated entity data (for Updated action)
+	 * @param {Partial<T>} [originalValues] - Entity data before update (optional for Update action)
+	 * @param {Partial<T>} [newValues] - Entity updated data per field (optional for Update action)
+	 */
+	logActivity<T>(
+		entityType: BaseEntityEnum,
+		entityName: string,
+		actor: ActorTypeEnum,
+		organizationId: ID,
+		tenantId: ID,
+		actionType: ActionTypeEnum,
+		data: T,
+		originalValues?: Partial<T>,
+		newValues?: Partial<T>
+	) {
+		// Generate the activity log description based on action type
+		const description = generateActivityLogDescription(actionType, entityType, entityName);
+
+		// Initialize log event payload
+		const logPayload: IActivityLog = {
+			entity: entityType,
+			entityId: data['id'],
+			action: actionType,
+			actorType: actor,
+			description,
+			data,
+			organizationId,
+			tenantId
+		};
+
+		// If it's an update action, add updated fields and values
+		if (actionType === ActionTypeEnum.Updated && originalValues && newValues) {
+			const { updatedFields, previousValues, updatedValues } = activityLogUpdatedFieldsAndValues(
+				originalValues,
+				newValues
+			);
+
+			// Add updated fields and values to the log
+			Object.assign(logPayload, { updatedFields, previousValues, updatedValues });
+		}
+
+		// Emit the event to log the activity
+		return this._eventBus.publish(new ActivityLogEvent(logPayload));
 	}
 }

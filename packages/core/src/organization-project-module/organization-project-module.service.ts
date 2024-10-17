@@ -1,5 +1,4 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { EventBus } from '@nestjs/cqrs';
 import { Brackets, FindManyOptions, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
 import {
 	BaseEntityEnum,
@@ -11,15 +10,16 @@ import {
 	IOrganizationProjectModuleUpdateInput,
 	IPagination,
 	PermissionsEnum,
-	ProjectModuleStatusEnum
+	ProjectModuleStatusEnum,
+	ActionTypeEnum
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { isPostgres } from '@gauzy/config';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
-import { activityLogCreateAction, activityLogUpdateAction } from '../activity-log/activity-log.helper';
 import { OrganizationProjectModule } from './organization-project-module.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import { TypeOrmOrganizationProjectModuleRepository } from './repository/type-orm-organization-project-module.repository';
 import { MikroOrmOrganizationProjectModuleRepository } from './repository/mikro-orm-organization-project-module.repository';
 
@@ -28,7 +28,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 	constructor(
 		readonly typeOrmProjectModuleRepository: TypeOrmOrganizationProjectModuleRepository,
 		readonly mikroOrmProjectModuleRepository: MikroOrmOrganizationProjectModuleRepository,
-		private readonly _eventBus: EventBus
+		private readonly activityLogService: ActivityLogService
 	) {
 		super(typeOrmProjectModuleRepository, mikroOrmProjectModuleRepository);
 	}
@@ -50,13 +50,13 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 			});
 
 			// Generate the activity log
-			activityLogCreateAction(
-				this._eventBus,
+			this.activityLogService.logActivity(
 				BaseEntityEnum.OrganizationProjectModule,
 				module.name,
 				ActorTypeEnum.User,
 				organizationId,
 				tenantId,
+				ActionTypeEnum.Created,
 				module
 			);
 
@@ -100,16 +100,16 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 
 			// Generate the activity log
 			const { organizationId } = updatedModule;
-			activityLogUpdateAction(
-				this._eventBus,
+			this.activityLogService.logActivity(
 				BaseEntityEnum.OrganizationProjectModule,
 				updatedModule.name,
 				ActorTypeEnum.User,
 				organizationId,
 				tenantId,
+				ActionTypeEnum.Updated,
+				updatedModule,
 				existingModule,
-				entity,
-				updatedModule
+				entity
 			);
 
 			// return updated Module

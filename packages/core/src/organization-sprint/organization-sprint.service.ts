@@ -1,5 +1,4 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { EventBus } from '@nestjs/cqrs';
 import {
 	BaseEntityEnum,
 	ActorTypeEnum,
@@ -8,7 +7,8 @@ import {
 	IOrganizationSprint,
 	IOrganizationSprintCreateInput,
 	IOrganizationSprintUpdateInput,
-	RolesEnum
+	RolesEnum,
+	ActionTypeEnum
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
@@ -16,9 +16,9 @@ import { RequestContext } from '../core/context';
 import { OrganizationSprintEmployee } from '../core/entities/internal';
 import { FavoriteService } from '../core/decorators';
 // import { prepareSQLQuery as p } from './../database/database.helper';
-import { activityLogCreateAction, activityLogUpdateAction } from '../activity-log/activity-log.helper';
 import { RoleService } from '../role/role.service';
 import { EmployeeService } from '../employee/employee.service';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import { OrganizationSprint } from './organization-sprint.entity';
 import { TypeOrmEmployeeRepository } from '../employee/repository';
 import {
@@ -39,7 +39,7 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		private readonly _roleService: RoleService,
 		private readonly _employeeService: EmployeeService,
-		private readonly _eventBus: EventBus
+		private readonly activityLogService: ActivityLogService
 	) {
 		super(typeOrmOrganizationSprintRepository, mikroOrmOrganizationSprintRepository);
 	}
@@ -114,13 +114,13 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 			});
 
 			// Generate the activity log
-			activityLogCreateAction(
-				this._eventBus,
+			this.activityLogService.logActivity(
 				BaseEntityEnum.OrganizationSprint,
 				sprint.name,
 				ActorTypeEnum.User,
 				organizationId,
 				tenantId,
+				ActionTypeEnum.Created,
 				sprint
 			);
 
@@ -181,16 +181,16 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 				});
 
 				// Generate the activity log
-				activityLogUpdateAction(
-					this._eventBus,
+				this.activityLogService.logActivity(
 					BaseEntityEnum.OrganizationSprint,
 					updatedSprint.name,
 					ActorTypeEnum.User,
 					organizationId,
 					tenantId,
+					ActionTypeEnum.Updated,
+					updatedSprint,
 					organizationSprint,
-					input,
-					updatedSprint
+					input
 				);
 
 				// return updated sprint

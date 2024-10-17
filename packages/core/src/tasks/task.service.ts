@@ -1,5 +1,4 @@
 import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
-import { EventBus } from '@nestjs/cqrs';
 import {
 	IsNull,
 	SelectQueryBuilder,
@@ -22,14 +21,15 @@ import {
 	IPagination,
 	ITask,
 	ITaskUpdateInput,
-	PermissionsEnum
+	PermissionsEnum,
+	ActionTypeEnum
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { isPostgres, isSqlite } from '@gauzy/config';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
-import { activityLogUpdateAction } from '../activity-log/activity-log.helper';
 import { TaskViewService } from './views/view.service';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import { Task } from './task.entity';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
 import { GetTaskByIdDTO } from './dto';
@@ -44,7 +44,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		readonly mikroOrmTaskRepository: MikroOrmTaskRepository,
 		readonly typeOrmOrganizationSprintTaskHistoryRepository: TypeOrmOrganizationSprintTaskHistoryRepository,
 		private readonly taskViewService: TaskViewService,
-		private readonly _eventBus: EventBus
+		private readonly activityLogService: ActivityLogService
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
 	}
@@ -101,16 +101,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 			// Generate the activity log
 			const { organizationId } = updatedTask;
-			activityLogUpdateAction(
-				this._eventBus,
+			this.activityLogService.logActivity(
 				BaseEntityEnum.Task,
 				updatedTask.title,
 				ActorTypeEnum.User, // TODO : Since we have Github Integration, make sure we can also store "System" for actor
 				organizationId,
 				tenantId,
+				ActionTypeEnum.Updated,
+				updatedTask,
 				task,
-				input,
-				updatedTask
+				input
 			);
 
 			// Return the updated Task

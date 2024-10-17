@@ -1,7 +1,7 @@
-import { EventBus } from '@nestjs/cqrs';
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
+	ActionTypeEnum,
 	ActorTypeEnum,
 	BaseEntityEnum,
 	ID,
@@ -12,7 +12,7 @@ import {
 import { FavoriteService } from '../../core/decorators';
 import { TenantAwareCrudService } from '../../core/crud';
 import { RequestContext } from '../../core/context';
-import { activityLogCreateAction, activityLogUpdateAction } from '../../activity-log/activity-log.helper';
+import { ActivityLogService } from '../../activity-log/activity-log.service';
 import { TaskView } from './view.entity';
 import { TypeOrmTaskViewRepository } from './repository/type-orm-task-view.repository';
 import { MikroOrmTaskViewRepository } from './repository/mikro-orm-task-view.repository';
@@ -26,7 +26,7 @@ export class TaskViewService extends TenantAwareCrudService<TaskView> {
 
 		mikroOrmTaskViewRepository: MikroOrmTaskViewRepository,
 
-		private readonly _eventBus: EventBus
+		private readonly activityLogService: ActivityLogService
 	) {
 		super(typeOrmTaskViewRepository, mikroOrmTaskViewRepository);
 	}
@@ -45,13 +45,13 @@ export class TaskViewService extends TenantAwareCrudService<TaskView> {
 			const view = await super.create({ ...entity, tenantId });
 
 			// Generate the activity log
-			activityLogCreateAction(
-				this._eventBus,
+			this.activityLogService.logActivity(
 				BaseEntityEnum.TaskView,
 				view.name,
 				ActorTypeEnum.User,
 				organizationId,
 				tenantId,
+				ActionTypeEnum.Created,
 				view
 			);
 
@@ -90,16 +90,16 @@ export class TaskViewService extends TenantAwareCrudService<TaskView> {
 
 			// Generate the activity log
 			const { organizationId } = updatedTaskView;
-			activityLogUpdateAction(
-				this._eventBus,
+			this.activityLogService.logActivity(
 				BaseEntityEnum.TaskView,
 				updatedTaskView.name,
 				ActorTypeEnum.User,
 				organizationId,
 				tenantId,
+				ActionTypeEnum.Updated,
+				updatedTaskView,
 				existingView,
-				input,
-				updatedTaskView
+				input
 			);
 
 			// return updated view

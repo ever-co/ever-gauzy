@@ -1,5 +1,4 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { EventBus } from '@nestjs/cqrs';
 import { ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
 import {
 	ActionTypeEnum,
@@ -22,9 +21,8 @@ import { PaginationParams, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationProjectEmployee } from '../core/entities/internal';
 import { FavoriteService } from '../core/decorators';
-import { ActivityLogEvent } from '../activity-log/events';
-import { generateActivityLogDescription } from '../activity-log/activity-log.helper';
 import { RoleService } from '../role/role.service';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import { OrganizationProject } from './organization-project.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { EmployeeService } from '../employee/employee.service';
@@ -47,7 +45,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		private readonly _roleService: RoleService,
 		private readonly _employeeService: EmployeeService,
-		private readonly _eventBus: EventBus
+		private readonly _activityLogService: ActivityLogService
 	) {
 		super(typeOrmOrganizationProjectRepository, mikroOrmOrganizationProjectRepository);
 	}
@@ -124,27 +122,18 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				tenantId
 			});
 
-			// Generate the activity log description
-			const description = generateActivityLogDescription(
-				ActionTypeEnum.Created,
+			// Generate the activity log
+			this._activityLogService.logActivity(
 				BaseEntityEnum.OrganizationProject,
-				project.name
+				project.name,
+				ActorTypeEnum.User,
+				organizationId,
+				tenantId,
+				ActionTypeEnum.Created,
+				project
 			);
 
-			// Emit an event to log the activity
-			this._eventBus.publish(
-				new ActivityLogEvent({
-					entity: BaseEntityEnum.OrganizationProject,
-					entityId: project.id,
-					action: ActionTypeEnum.Created,
-					actorType: ActorTypeEnum.User,
-					description,
-					data: project,
-					organizationId,
-					tenantId
-				})
-			);
-
+			// Return the created project
 			return project;
 		} catch (error) {
 			// Handle errors and return an appropriate error response
