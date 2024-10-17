@@ -217,9 +217,12 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent i
 			return;
 		}
 
+		this.setParticipantsValues(); // Ensure participants are set properly
+
 		if (!this.form.get('id').value) {
 			delete this.form.value['id'];
 		}
+
 		const requestApproval: IRequestApprovalCreateInput = {
 			name: this.form.value['name'],
 			approvalPolicyId: this.form.value['approvalPolicyId'],
@@ -255,12 +258,19 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent i
 
 	onParticipantsChange(participants: string) {
 		this.participants = participants;
-		if (participants === 'employees') {
-			this.form.get('teams').setValue([]);
-		} else {
-			this.form.get('employees').setValue([]);
-		}
 		this.form.updateValueAndValidity();
+	}
+
+	/**
+	 * Handle setting the participant values based on type
+	 */
+	setParticipantsValues() {
+		if (this.participants === 'employees') {
+			this.form.get('employees').setValue(this.selectedEmployees);
+			this.form.get('teams').setValue([]); // Clear teams if employees are selected
+		} else if (this.participants === 'teams') {
+			this.form.get('employees').setValue([]); // Clear employees if teams are selected
+		}
 	}
 
 	/**
