@@ -431,7 +431,7 @@ export class TimeTrackerService {
 					map((response: any) => response),
 					shareReplay(1)
 				);
-			this._timeSlotCacheService.setValue(timeSlots$, values.timeSlotId);
+			this._timeSlotCacheService.setValue(timeSlots$, timeSlotId);
 		}
 		return firstValueFrom(timeSlots$);
 	}
