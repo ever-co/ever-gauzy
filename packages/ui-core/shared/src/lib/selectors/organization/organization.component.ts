@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { catchError, distinctUntilChanged, filter, map, tap } from 'rxjs';
+import { catchError, distinctUntilChanged, filter, map, of, tap } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { uniq } from 'underscore';
@@ -13,7 +13,6 @@ import {
 	ToastrService,
 	UsersOrganizationsService
 } from '@gauzy/ui-core/core';
-import { of } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
