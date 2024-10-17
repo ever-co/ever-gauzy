@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 
 @Injectable({
 	providedIn: 'root'
 })
-export class ExternalRedirectGuard implements CanActivate {
+export class ExternalRedirectGuard {
 	/**
 	 * Checks if navigation can proceed.
 	 *
