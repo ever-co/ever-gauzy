@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
 	ActionTypeEnum,
@@ -67,7 +67,8 @@ export class TaskViewService extends TenantAwareCrudService<TaskView> {
 	 * @description Update a Task View
 	 * @param {ID} id - The ID of the Task View to be updated
 	 * @param {ITaskViewUpdateInput} input - The updated information for the Task View
-	 * @throws BadRequestException if there's an error during the update process.
+	 * @throws NotFoundException if there's an error if requested update view was not found.
+	 * @throws BadRequest if there's an error during the update process.
 	 * @returns {Promise<ITaskView>} A Promise resolving to the updated Task View
 	 * @memberof TaskViewService
 	 */
@@ -79,7 +80,7 @@ export class TaskViewService extends TenantAwareCrudService<TaskView> {
 			const existingView = await this.findOneByIdString(id);
 
 			if (!existingView) {
-				throw new BadRequestException('View not found');
+				throw new NotFoundException('View not found');
 			}
 
 			const updatedTaskView = await super.create({
