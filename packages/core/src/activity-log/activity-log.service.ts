@@ -165,6 +165,6 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 		}
 
 		// Emit the event to log the activity
-		return this._eventBus.publish(new ActivityLogEvent(logPayload));
+		this._eventBus.publish(new ActivityLogEvent(logPayload));
 	}
 }
