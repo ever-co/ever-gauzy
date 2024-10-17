@@ -30,7 +30,7 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent implemen
 	public statuses$: BehaviorSubject<ITaskStatus[]> = new BehaviorSubject([]);
 
 	/**
-	 * Predefined task statuses with names and sluggified values.
+	 * Predefined task statuses with names and sluggable values.
 	 */
 	private _statuses: Array<{ name: string; value: string }> = [
 		{ name: TaskStatusEnum.OPEN, value: sluggable(TaskStatusEnum.OPEN) },
