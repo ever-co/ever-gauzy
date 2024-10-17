@@ -4075,6 +4075,11 @@
 			"NO_MONTHLY_ACTIVITY": "Нямате проследено време и дейност за този месец.",
 			"WORKED_FOR_MONTH": "Работил този месец",
 			"ACTIVITY_FOR_MONTH": "Месечна активност"
+		},
+		"LOADING": {
+			"PLEASE_HOLD": "Моля, изчакайте...",
+			"SHUTTING_DOWN": "Приложението се затваря",
+			"LOGOUT_IN_PROGRESS": "Отписването е в ход"
 		}
 	},
 	"SERVER": "Сървър",

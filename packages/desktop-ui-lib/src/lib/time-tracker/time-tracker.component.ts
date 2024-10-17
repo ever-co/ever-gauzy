@@ -126,6 +126,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	public weeklyDuration$: BehaviorSubject<any> = new BehaviorSubject('--h --m');
 	public userOrganization$: BehaviorSubject<any> = new BehaviorSubject({});
 	public lastScreenCapture$: BehaviorSubject<any> = new BehaviorSubject({});
+	public processing$ = new BehaviorSubject(this.processingStatus);
 	userPermission: any = [];
 	quitApp = false;
 	employeeId = null;
@@ -834,6 +835,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				if (arg?.quitApp) {
 					// Set the quitApp flag to true
 					this.quitApp = true;
+					this.processing$.next(this.processingStatus);
 				}
 
 				// Check if quitApp flag is already set, and if so, force stop the timer and return
@@ -1001,6 +1003,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				if (this.isExpand) this.expand();
 				if (this.start && !this.isRemoteTimer) {
 					this._isSpecialLogout = true;
+					this.processing$.next(this.processingStatus);
 					await this.stopTimer();
 				}
 				if (!this._isSpecialLogout) {
@@ -2314,14 +2317,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public get processingStatus() {
 		if (this._isSpecialLogout) {
-			return { state: this._isSpecialLogout, message: 'Logout in progress' };
+			return { state: this._isSpecialLogout, message: 'TIMER_TRACKER.LOADING.LOGOUT_IN_PROGRESS' };
 		}
 
 		if (this.quitApp) {
-			return { state: this.quitApp, message: 'Application is shutting down' };
+			return { state: this.quitApp, message: 'TIMER_TRACKER.LOADING.SHUTTING_DOWN' };
 		}
 
-		return { state: false, message: '' };
+		return { state: false, message: this._translateService.instant('TIMER_TRACKER.LOADING.PLEASE_HOLD') };
 	}
 
 	private async preventDuplicateApiRequest<T, U>(payload: T, callback: (payload: T) => Promise<U>): Promise<U> {

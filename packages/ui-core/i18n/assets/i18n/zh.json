@@ -4044,6 +4044,11 @@
 			"NO_MONTHLY_ACTIVITY": "您本月没有跟踪的时间和活动。",
 			"WORKED_FOR_MONTH": "本月工作",
 			"ACTIVITY_FOR_MONTH": "每月活动"
+		},
+		"LOADING": {
+			"PLEASE_HOLD": "请稍等...",
+			"SHUTTING_DOWN": "应用程序正在关闭",
+			"LOGOUT_IN_PROGRESS": "正在注销"
 		}
 	},
 	"SERVER": "服务器",

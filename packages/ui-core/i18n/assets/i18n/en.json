@@ -4171,6 +4171,11 @@
 			"WORKED_FOR_MONTH": "Worked this month",
 			"ACTIVITY_FOR_MONTH": "Monthly Activity",
 			"NO_MONTHLY_ACTIVITY": "You have not any tracked time and activity for this month."
+		},
+		"LOADING": {
+			"PLEASE_HOLD": "Please hold...",
+			"SHUTTING_DOWN": "Application is shutting down",
+			"LOGOUT_IN_PROGRESS": "Logout in progress"
 		}
 	},
 	"SERVER": "Server",

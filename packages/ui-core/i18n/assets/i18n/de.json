@@ -4040,6 +4040,11 @@
 			"NO_MONTHLY_ACTIVITY": "Sie haben in diesem Monat keine Zeit oder Aktivität verfolgt.",
 			"WORKED_FOR_MONTH": "In diesem Monat gearbeitet",
 			"ACTIVITY_FOR_MONTH": "Monatliche Aktivität"
+		},
+		"LOADING": {
+			"PLEASE_HOLD": "Bitte warten...",
+			"SHUTTING_DOWN": "Anwendung wird heruntergefahren",
+			"LOGOUT_IN_PROGRESS": "Abmeldung läuft"
 		}
 	},
 	"SERVER": "Server",
