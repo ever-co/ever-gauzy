@@ -1,4 +1,6 @@
-import { ActionTypeEnum, BaseEntityEnum, IActivityLogUpdatedValues } from '@gauzy/contracts';
+import { EventBus } from '@nestjs/cqrs';
+import { ActionTypeEnum, ActorTypeEnum, BaseEntityEnum, IActivityLogUpdatedValues, ID } from '@gauzy/contracts';
+import { ActivityLogEvent } from './events';
 
 const ActivityTemplates = {
 	[ActionTypeEnum.Created]: `{action} a new {entity} called "{entityName}"`,
@@ -36,21 +38,119 @@ export function generateActivityLogDescription(
 	});
 }
 
-export function activityLogUpdatedFieldsAndValues<T>(original: T, updated: Partial<T>) {
+/**
+ * @description Log updated field names, old and new values for Activity Log Updated Actions
+ * @template T
+ * @param {T} originalValues - Old values before update
+ * @param {Partial<T>} updated - Updated values
+ * @returns An object with updated fields, their old and new values
+ */
+export function activityLogUpdatedFieldsAndValues<T>(originalValues: T, updated: Partial<T>) {
 	const updatedFields: string[] = [];
 	const previousValues: IActivityLogUpdatedValues[] = [];
 	const updatedValues: IActivityLogUpdatedValues[] = [];
 
 	for (const key of Object.keys(updated)) {
-		if (original[key] !== updated[key]) {
+		if (originalValues[key] !== updated[key]) {
 			// Add updated field
 			updatedFields.push(key);
 
 			// Add old and new values
-			previousValues.push({ [key]: original[key] });
+			previousValues.push({ [key]: originalValues[key] });
 			updatedValues.push({ [key]: updated[key] });
 		}
 	}
 
 	return { updatedFields, previousValues, updatedValues };
+}
+
+/**
+ * @description Create activity log for Action "Created"
+ * @template T
+ * @param {EventBus} eventBus - CQRS event to log activity
+ * @param {BaseEntityEnum} entityType - Entity type for whom creating activity log (E.g : Task, OrganizationProject, etc.)
+ * @param {string} entityName - Name or Title of created entity
+ * @param {ActorTypeEnum} actor - The actor type perfomed action (User or System)
+ * @param {ID} organizationId
+ * @param {ID} tenantId
+ * @param {T} data - Created entity data
+ */
+export function activityLogCreateAction<T>(
+	eventBus: EventBus,
+	entityType: BaseEntityEnum,
+	entityName: string,
+	actor: ActorTypeEnum,
+	organizationId: ID,
+	tenantId: ID,
+	data: T
+) {
+	// Generate the activity log description
+	const description = generateActivityLogDescription(ActionTypeEnum.Created, entityType, entityName);
+
+	console.log(`Generating activity log description: ${description}`);
+
+	// Emit an event to log the activity
+	return eventBus.publish(
+		new ActivityLogEvent({
+			entity: entityType,
+			entityId: data['id'],
+			action: ActionTypeEnum.Created,
+			actorType: actor,
+			description,
+			data,
+			organizationId,
+			tenantId
+		})
+	);
+}
+
+/**
+ * @description Create Activity Log for Action "Updated"
+ * @template T
+ * @param {EventBus} eventBus - CQRS event to log activity
+ * @param {BaseEntityEnum} entityType - Entity type for whom creating activity log (E.g : Task, OrganizationProject, etc.)
+ * @param {string} entityName - Name or Title of created entity
+ * @param {ActorTypeEnum} actor - The actor type perfomed action (User or System)
+ * @param {ID} organizationId
+ * @param {ID} tenantId
+ * @param {Partial<T>} originalValues - entity data before update
+ * @param {Partial<T>} newValues - entity upated data per field
+ * @param {T} data - Updated entity data
+= */
+export function activityLogUpdateAction<T>(
+	eventBus: EventBus,
+	entityType: BaseEntityEnum,
+	entityName: string,
+	actor: ActorTypeEnum,
+	organizationId: ID,
+	tenantId: ID,
+	originalValues: Partial<T>,
+	newValues: Partial<T>,
+	data: T
+) {
+	// Generate the activity log description
+	const description = generateActivityLogDescription(ActionTypeEnum.Updated, entityType, entityName);
+
+	// Retrieve updated fields, their old and new values
+	const { updatedFields, previousValues, updatedValues } = activityLogUpdatedFieldsAndValues(
+		originalValues,
+		newValues
+	);
+
+	// Emit an event to log the activity
+	return eventBus.publish(
+		new ActivityLogEvent({
+			entity: entityType,
+			entityId: data['id'],
+			action: ActionTypeEnum.Updated,
+			actorType: actor,
+			description,
+			updatedFields,
+			updatedValues,
+			previousValues,
+			data,
+			organizationId,
+			tenantId
+		})
+	);
 }

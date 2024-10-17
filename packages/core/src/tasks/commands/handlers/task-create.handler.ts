@@ -1,8 +1,7 @@
 import { CommandHandler, ICommandHandler, EventBus as CqrsEventBus } from '@nestjs/cqrs';
 import { HttpException, HttpStatus, Logger } from '@nestjs/common';
-import { ActionTypeEnum, BaseEntityEnum, ActorTypeEnum, ITask } from '@gauzy/contracts';
-import { ActivityLogEvent } from '../../../activity-log/events';
-import { generateActivityLogDescription } from '../../../activity-log/activity-log.helper';
+import { BaseEntityEnum, ActorTypeEnum, ITask } from '@gauzy/contracts';
+import { activityLogCreateAction } from '../../../activity-log/activity-log.helper';
 import { EventBus } from '../../../event-bus';
 import { TaskEvent } from '../../../event-bus/events';
 import { BaseEntityEventTypeEnum } from '../../../event-bus/base-entity-event';
@@ -74,36 +73,15 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 				this._eventBus.publish(new TaskEvent(ctx, task, BaseEntityEventTypeEnum.CREATED, input)); // Publish the event using EventBus
 			}
 
-			// Generate the activity log description
-			const description = generateActivityLogDescription(ActionTypeEnum.Created, BaseEntityEnum.Task, task.title);
-
-			console.log(`Generating activity log description: ${description}`);
-
-			// Emit an event to log the activity
-			this._cqrsEventBus.publish(
-				new ActivityLogEvent({
-					entity: BaseEntityEnum.Task,
-					entityId: task.id,
-					action: ActionTypeEnum.Created,
-					actorType: ActorTypeEnum.User, // TODO : Since we have Github Integration, make sure we can also store "System" for actor
-					description,
-					data: task,
-					organizationId,
-					tenantId
-				})
-			);
-
-			console.log(
-				`Task created with ID: ${task.id} with activity log: ${JSON.stringify({
-					entity: BaseEntityEnum.Task,
-					entityId: task.id,
-					action: ActionTypeEnum.Created,
-					actorType: ActorTypeEnum.User, // TODO : Since we have Github Integration, make sure we can also store "System" for actor
-					description,
-					data: task,
-					organizationId,
-					tenantId
-				})}`
+			// Generate the activity log
+			activityLogCreateAction(
+				this._cqrsEventBus,
+				BaseEntityEnum.Task,
+				task.title,
+				ActorTypeEnum.User, // TODO : Since we have Github Integration, make sure we can also store "System" for actor
+				organizationId,
+				tenantId,
+				task
 			);
 
 			return task; // Return the created task

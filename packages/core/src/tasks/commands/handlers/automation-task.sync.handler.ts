@@ -1,7 +1,15 @@
-import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
+import { ICommandHandler, CommandHandler, EventBus } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as chalk from 'chalk';
-import { ID, IIntegrationMap, ITask, ITaskCreateInput, ITaskUpdateInput } from '@gauzy/contracts';
+import {
+	ActorTypeEnum,
+	BaseEntityEnum,
+	ID,
+	IIntegrationMap,
+	ITask,
+	ITaskCreateInput,
+	ITaskUpdateInput
+} from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
 import { IntegrationMap, TaskStatus } from '../../../core/entities/internal';
 import { AutomationTaskSyncCommand } from './../automation-task.sync.command';
@@ -10,6 +18,7 @@ import { Task } from './../../task.entity';
 import { TypeOrmIntegrationMapRepository } from '../../../integration-map/repository/type-orm-integration-map.repository';
 import { TypeOrmTaskStatusRepository } from '../../statuses/repository/type-orm-task-status.repository';
 import { TypeOrmTaskRepository } from '../../repository/type-orm-task.repository';
+import { activityLogCreateAction, activityLogUpdateAction } from '../../../activity-log/activity-log.helper';
 
 @CommandHandler(AutomationTaskSyncCommand)
 export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTaskSyncCommand> {
@@ -23,7 +32,9 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 		@InjectRepository(IntegrationMap)
 		private readonly typeOrmIntegrationMapRepository: TypeOrmIntegrationMapRepository,
 
-		private readonly _taskService: TaskService
+		private readonly _taskService: TaskService,
+
+		private readonly _eventBus: EventBus
 	) {}
 
 	/**
@@ -132,6 +143,19 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 
 			// Save the new task
 			const createdTask = await this.typeOrmTaskRepository.save(newTask);
+
+			// Activity Log Task Creation
+			const { organizationId, tenantId } = createdTask;
+			activityLogCreateAction(
+				this._eventBus,
+				BaseEntityEnum.Task,
+				createdTask.title,
+				ActorTypeEnum.System,
+				organizationId,
+				tenantId,
+				createdTask
+			);
+
 			return createdTask;
 		} catch (error) {
 			// Handle and log errors, and return a rejected promise or throw an exception.
@@ -159,6 +183,22 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 
 			// Save the updated task
 			const updatedTask = await this.typeOrmTaskRepository.save(existingTask);
+
+			// Activity Log Task Update
+			const { organizationId, tenantId } = updatedTask;
+			activityLogUpdateAction(
+				this._eventBus,
+				BaseEntityEnum.Task,
+				updatedTask.title,
+				ActorTypeEnum.System,
+				organizationId,
+				tenantId,
+				existingTask,
+				entity,
+				updatedTask
+			);
+
+			// Return the updated Task
 			return updatedTask;
 		} catch (error) {
 			// Handle and log errors, and return a rejected promise or throw an exception.

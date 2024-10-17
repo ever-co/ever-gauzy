@@ -2,7 +2,6 @@ import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nes
 import { EventBus } from '@nestjs/cqrs';
 import { Brackets, FindManyOptions, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
 import {
-	ActionTypeEnum,
 	BaseEntityEnum,
 	ActorTypeEnum,
 	ID,
@@ -18,8 +17,7 @@ import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { isPostgres } from '@gauzy/config';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
-import { ActivityLogEvent } from '../activity-log/events';
-import { activityLogUpdatedFieldsAndValues, generateActivityLogDescription } from '../activity-log/activity-log.helper';
+import { activityLogCreateAction, activityLogUpdateAction } from '../activity-log/activity-log.helper';
 import { OrganizationProjectModule } from './organization-project-module.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmOrganizationProjectModuleRepository } from './repository/type-orm-organization-project-module.repository';
@@ -51,25 +49,15 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 				creatorId
 			});
 
-			// Generate the activity log description
-			const description = generateActivityLogDescription(
-				ActionTypeEnum.Created,
+			// Generate the activity log
+			activityLogCreateAction(
+				this._eventBus,
 				BaseEntityEnum.OrganizationProjectModule,
-				module.name
-			);
-
-			// Emit an event to log the activity
-			this._eventBus.publish(
-				new ActivityLogEvent({
-					entity: BaseEntityEnum.OrganizationProjectModule,
-					entityId: module.id,
-					action: ActionTypeEnum.Created,
-					actorType: ActorTypeEnum.User,
-					description,
-					data: module,
-					organizationId,
-					tenantId
-				})
+				module.name,
+				ActorTypeEnum.User,
+				organizationId,
+				tenantId,
+				module
 			);
 
 			return module;
@@ -110,33 +98,18 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 				id
 			});
 
-			// Generate the activity log description
-			const description = generateActivityLogDescription(
-				ActionTypeEnum.Updated,
+			// Generate the activity log
+			const { organizationId } = updatedModule;
+			activityLogUpdateAction(
+				this._eventBus,
 				BaseEntityEnum.OrganizationProjectModule,
-				updatedModule.name
-			);
-
-			const { updatedFields, previousValues, updatedValues } = activityLogUpdatedFieldsAndValues(
-				updatedModule,
-				entity
-			);
-
-			// Emit an event to log the activity
-			this._eventBus.publish(
-				new ActivityLogEvent({
-					entity: BaseEntityEnum.OrganizationProjectModule,
-					entityId: updatedModule.id,
-					action: ActionTypeEnum.Updated,
-					actorType: ActorTypeEnum.User,
-					description,
-					updatedFields,
-					updatedValues,
-					previousValues,
-					data: updatedModule,
-					organizationId: updatedModule.organizationId,
-					tenantId
-				})
+				updatedModule.name,
+				ActorTypeEnum.User,
+				organizationId,
+				tenantId,
+				existingModule,
+				entity,
+				updatedModule
 			);
 
 			// return updated Module

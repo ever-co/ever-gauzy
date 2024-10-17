@@ -6,14 +6,12 @@ import {
 	IResourceLinkCreateInput,
 	IResourceLinkUpdateInput,
 	ID,
-	ActionTypeEnum,
 	BaseEntityEnum,
 	ActorTypeEnum
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
-import { ActivityLogEvent } from '../activity-log/events';
-import { activityLogUpdatedFieldsAndValues, generateActivityLogDescription } from '../activity-log/activity-log.helper';
+import { activityLogCreateAction, activityLogUpdateAction } from '../activity-log/activity-log.helper';
 import { UserService } from '../user/user.service';
 import { ResourceLink } from './resource-link.entity';
 import { TypeOrmResourceLinkRepository } from './repository/type-orm-resource-link.repository';
@@ -55,13 +53,16 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 				creatorId: user.id
 			});
 
-			// Generate the activity log description.
-			const description = generateActivityLogDescription(
-				ActionTypeEnum.Created,
+			// Generate the activity log
+			activityLogCreateAction(
+				this._eventBus,
 				BaseEntityEnum.ResourceLink,
-				`${resourceLink.title} for ${resourceLink.entity}`
+				resourceLink.title,
+				ActorTypeEnum.User,
+				resourceLink.organizationId,
+				tenantId,
+				resourceLink
 			);
-			this.logActivity(ActionTypeEnum.Created, resourceLink, description);
 
 			return resourceLink;
 		} catch (error) {
@@ -89,27 +90,18 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 				id
 			});
 
-			// Compare values before and after update then add updates to fields
-			const { updatedFields, previousValues, updatedValues } = activityLogUpdatedFieldsAndValues(
-				updatedResourceLink,
-				input
-			);
-
-			// Generate the activity log description.
-			const description = generateActivityLogDescription(
-				ActionTypeEnum.Updated,
+			// Generate the activity log
+			const { organizationId, tenantId } = updatedResourceLink;
+			activityLogUpdateAction(
+				this._eventBus,
 				BaseEntityEnum.ResourceLink,
-				`${resourceLink.title} for ${resourceLink.entity}`
-			);
-
-			//Log activity
-			this.logActivity(
-				ActionTypeEnum.Updated,
-				updatedResourceLink,
-				description,
-				updatedFields,
-				previousValues,
-				updatedValues
+				`${resourceLink.title} for ${resourceLink.entity}`,
+				ActorTypeEnum.User,
+				organizationId,
+				tenantId,
+				resourceLink,
+				input,
+				updatedResourceLink
 			);
 
 			// return updated Resource Link
@@ -118,30 +110,5 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 			console.log(error); // Debug Logging
 			throw new BadRequestException('Resource Link update failed', error);
 		}
-	}
-
-	private logActivity(
-		action: ActionTypeEnum,
-		resourceLink: ResourceLink,
-		description: string,
-		updatedFields?: string[],
-		previousValues?: any,
-		updatedValues?: any
-	) {
-		this._eventBus.publish(
-			new ActivityLogEvent({
-				entity: BaseEntityEnum.ResourceLink,
-				entityId: resourceLink.id,
-				action,
-				actorType: ActorTypeEnum.User,
-				description,
-				updatedFields,
-				updatedValues,
-				previousValues,
-				data: resourceLink,
-				organizationId: resourceLink.organizationId,
-				tenantId: resourceLink.tenantId
-			})
-		);
 	}
 }

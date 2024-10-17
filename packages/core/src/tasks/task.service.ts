@@ -13,7 +13,6 @@ import {
 } from 'typeorm';
 import { isBoolean, isUUID } from 'class-validator';
 import {
-	ActionTypeEnum,
 	BaseEntityEnum,
 	ActorTypeEnum,
 	ID,
@@ -29,8 +28,7 @@ import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { isPostgres, isSqlite } from '@gauzy/config';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
-import { ActivityLogEvent } from '../activity-log/events';
-import { activityLogUpdatedFieldsAndValues, generateActivityLogDescription } from '../activity-log/activity-log.helper';
+import { activityLogUpdateAction } from '../activity-log/activity-log.helper';
 import { TaskViewService } from './views/view.service';
 import { Task } from './task.entity';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
@@ -101,35 +99,21 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				});
 			}
 
-			// Generate the activity log description
-			const description = generateActivityLogDescription(
-				ActionTypeEnum.Updated,
+			// Generate the activity log
+			const { organizationId } = updatedTask;
+			activityLogUpdateAction(
+				this._eventBus,
 				BaseEntityEnum.Task,
-				updatedTask.title
+				updatedTask.title,
+				ActorTypeEnum.User, // TODO : Since we have Github Integration, make sure we can also store "System" for actor
+				organizationId,
+				tenantId,
+				task,
+				input,
+				updatedTask
 			);
 
-			const { updatedFields, previousValues, updatedValues } = activityLogUpdatedFieldsAndValues(
-				updatedTask,
-				input
-			);
-
-			// Emit an event to log the activity
-			this._eventBus.publish(
-				new ActivityLogEvent({
-					entity: BaseEntityEnum.Task,
-					entityId: updatedTask.id,
-					action: ActionTypeEnum.Updated,
-					actorType: ActorTypeEnum.User, // TODO : Since we have Github Integration, make sure we can also store "System" for actor
-					description,
-					updatedFields,
-					updatedValues,
-					previousValues,
-					data: updatedTask,
-					organizationId: updatedTask.organizationId,
-					tenantId
-				})
-			);
-
+			// Return the updated Task
 			return updatedTask;
 		} catch (error) {
 			console.error(`Error while updating task: ${error.message}`, error.message);

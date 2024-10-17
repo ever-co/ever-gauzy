@@ -1,8 +1,7 @@
 import { EventBus } from '@nestjs/cqrs';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
-	ActionTypeEnum,
 	ActorTypeEnum,
 	BaseEntityEnum,
 	ID,
@@ -13,11 +12,7 @@ import {
 import { FavoriteService } from '../../core/decorators';
 import { TenantAwareCrudService } from '../../core/crud';
 import { RequestContext } from '../../core/context';
-import { ActivityLogEvent } from '../../activity-log/events';
-import {
-	activityLogUpdatedFieldsAndValues,
-	generateActivityLogDescription
-} from '../../activity-log/activity-log.helper';
+import { activityLogCreateAction, activityLogUpdateAction } from '../../activity-log/activity-log.helper';
 import { TaskView } from './view.entity';
 import { TypeOrmTaskViewRepository } from './repository/type-orm-task-view.repository';
 import { MikroOrmTaskViewRepository } from './repository/mikro-orm-task-view.repository';
@@ -49,27 +44,18 @@ export class TaskViewService extends TenantAwareCrudService<TaskView> {
 		try {
 			const view = await super.create({ ...entity, tenantId });
 
-			// Generate the activity log description.
-			const description = generateActivityLogDescription(
-				ActionTypeEnum.Created,
+			// Generate the activity log
+			activityLogCreateAction(
+				this._eventBus,
 				BaseEntityEnum.TaskView,
-				view.name
+				view.name,
+				ActorTypeEnum.User,
+				organizationId,
+				tenantId,
+				view
 			);
 
-			// Emit an event to log the activity
-			this._eventBus.publish(
-				new ActivityLogEvent({
-					entity: BaseEntityEnum.TaskView,
-					entityId: view.id,
-					action: ActionTypeEnum.Created,
-					actorType: ActorTypeEnum.User,
-					description,
-					data: view,
-					organizationId,
-					tenantId
-				})
-			);
-
+			// return the created view
 			return view;
 		} catch (error) {
 			// Handle errors and return an appropriate error response
@@ -89,40 +75,31 @@ export class TaskViewService extends TenantAwareCrudService<TaskView> {
 		const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
 		try {
+			// Retrieve existing view.
+			const existingView = await this.findOneByIdString(id);
+
+			if (!existingView) {
+				throw new BadRequestException('View not found');
+			}
+
 			const updatedTaskView = await super.create({
 				...input,
 				tenantId,
 				id
 			});
 
-			// Generate the activity log description.
-			const description = generateActivityLogDescription(
-				ActionTypeEnum.Updated,
+			// Generate the activity log
+			const { organizationId } = updatedTaskView;
+			activityLogUpdateAction(
+				this._eventBus,
 				BaseEntityEnum.TaskView,
-				updatedTaskView.name
-			);
-
-			// Compare values before and after update then add updates to fields
-			const { updatedFields, previousValues, updatedValues } = activityLogUpdatedFieldsAndValues(
-				updatedTaskView,
-				input
-			);
-
-			// Emit event to log activity
-			this._eventBus.publish(
-				new ActivityLogEvent({
-					entity: BaseEntityEnum.TaskView,
-					entityId: updatedTaskView.id,
-					action: ActionTypeEnum.Updated,
-					actorType: ActorTypeEnum.User,
-					description,
-					updatedFields,
-					updatedValues,
-					previousValues,
-					data: updatedTaskView,
-					organizationId: updatedTaskView.organizationId,
-					tenantId
-				})
+				updatedTaskView.name,
+				ActorTypeEnum.User,
+				organizationId,
+				tenantId,
+				existingView,
+				input,
+				updatedTaskView
 			);
 
 			// return updated view
