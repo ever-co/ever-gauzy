@@ -44,32 +44,34 @@ export class PermissionsGuard implements CanActivate, CanActivateChild {
 		const permissions = route.data['permissions'];
 		const defaultRedirectTo = '/pages/dashboard'; // Default redirection path
 
+		// No permissions required, allow access
 		if (!permissions || (permissions.only && permissions.only.length === 0)) {
-			return of(true); // No permissions required, allow access
+			return of(true);
 		}
 
-		// If permissions.only is a function, execute it
+		// Retrieve required permissions
 		const requiredPermissions = typeof permissions.only === 'function' ? permissions.only(route) : permissions.only;
 
-		// Ensure it's an array before spreading
+		// Ensure it's an array before proceeding
 		if (!Array.isArray(requiredPermissions)) {
 			console.error('Expected permissions.only to be an array but received:', requiredPermissions);
 			return of(false); // Block access if permissions aren't valid
 		}
 
-		// Check if the user has the necessary permissions
-		const isFunction = typeof permissions.redirectTo === 'function';
-		const redirectTo = isFunction ? permissions.redirectTo(route, state) : permissions.redirectTo;
+		// Determine redirect path
+		const redirectTo =
+			typeof permissions.redirectTo === 'function'
+				? permissions.redirectTo(route, state)
+				: permissions.redirectTo;
 
 		// Check if the user has the necessary permissions
 		return this._authService.hasPermissions(...requiredPermissions).pipe(
 			map((hasPermission) => {
 				if (hasPermission) {
 					return true;
-				} else {
-					this._router.navigate([redirectTo || defaultRedirectTo]);
-					return false;
 				}
+				this._router.navigate([redirectTo || defaultRedirectTo]);
+				return false;
 			}),
 			catchError(() => {
 				this._router.navigate([redirectTo || defaultRedirectTo]);
