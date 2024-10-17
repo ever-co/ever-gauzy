@@ -1,4 +1,3 @@
-import { EventBus } from '@nestjs/cqrs';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateResult } from 'typeorm';
 import {
@@ -6,15 +5,14 @@ import {
 	IResourceLinkCreateInput,
 	IResourceLinkUpdateInput,
 	ID,
-	ActionTypeEnum,
 	BaseEntityEnum,
-	ActorTypeEnum
+	ActorTypeEnum,
+	ActionTypeEnum
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
-import { ActivityLogEvent } from '../activity-log/events';
-import { activityLogUpdatedFieldsAndValues, generateActivityLogDescription } from '../activity-log/activity-log.helper';
 import { UserService } from '../user/user.service';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import { ResourceLink } from './resource-link.entity';
 import { TypeOrmResourceLinkRepository } from './repository/type-orm-resource-link.repository';
 import { MikroOrmResourceLinkRepository } from './repository/mikro-orm-resource-link.repository';
@@ -25,7 +23,7 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 		readonly typeOrmResourceLinkRepository: TypeOrmResourceLinkRepository,
 		readonly mikroOrmResourceLinkRepository: MikroOrmResourceLinkRepository,
 		private readonly userService: UserService,
-		private readonly _eventBus: EventBus
+		private readonly activityLogService: ActivityLogService
 	) {
 		super(typeOrmResourceLinkRepository, mikroOrmResourceLinkRepository);
 	}
@@ -55,13 +53,17 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 				creatorId: user.id
 			});
 
-			// Generate the activity log description.
-			const description = generateActivityLogDescription(
-				ActionTypeEnum.Created,
+			// Generate the activity log
+			this.activityLogService.logActivity<ResourceLink>(
 				BaseEntityEnum.ResourceLink,
-				`${resourceLink.title} for ${resourceLink.entity}`
+				ActionTypeEnum.Created,
+				ActorTypeEnum.User,
+				resourceLink.id,
+				resourceLink.title,
+				resourceLink,
+				resourceLink.organizationId,
+				tenantId
 			);
-			this.logActivity(ActionTypeEnum.Created, resourceLink, description);
 
 			return resourceLink;
 		} catch (error) {
@@ -89,27 +91,19 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 				id
 			});
 
-			// Compare values before and after update then add updates to fields
-			const { updatedFields, previousValues, updatedValues } = activityLogUpdatedFieldsAndValues(
-				updatedResourceLink,
-				input
-			);
-
-			// Generate the activity log description.
-			const description = generateActivityLogDescription(
-				ActionTypeEnum.Updated,
+			// Generate the activity log
+			const { organizationId, tenantId } = updatedResourceLink;
+			this.activityLogService.logActivity<ResourceLink>(
 				BaseEntityEnum.ResourceLink,
-				`${resourceLink.title} for ${resourceLink.entity}`
-			);
-
-			//Log activity
-			this.logActivity(
 				ActionTypeEnum.Updated,
+				ActorTypeEnum.User,
+				resourceLink.id,
+				`${resourceLink.title} for ${resourceLink.entity}`,
 				updatedResourceLink,
-				description,
-				updatedFields,
-				previousValues,
-				updatedValues
+				organizationId,
+				tenantId,
+				resourceLink,
+				input
 			);
 
 			// return updated Resource Link
@@ -118,30 +112,5 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 			console.log(error); // Debug Logging
 			throw new BadRequestException('Resource Link update failed', error);
 		}
-	}
-
-	private logActivity(
-		action: ActionTypeEnum,
-		resourceLink: ResourceLink,
-		description: string,
-		updatedFields?: string[],
-		previousValues?: any,
-		updatedValues?: any
-	) {
-		this._eventBus.publish(
-			new ActivityLogEvent({
-				entity: BaseEntityEnum.ResourceLink,
-				entityId: resourceLink.id,
-				action,
-				actorType: ActorTypeEnum.User,
-				description,
-				updatedFields,
-				updatedValues,
-				previousValues,
-				data: resourceLink,
-				organizationId: resourceLink.organizationId,
-				tenantId: resourceLink.tenantId
-			})
-		);
 	}
 }

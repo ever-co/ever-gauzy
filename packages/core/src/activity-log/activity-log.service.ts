@@ -1,9 +1,20 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { EventBus } from '@nestjs/cqrs';
 import { FindManyOptions, FindOptionsOrder, FindOptionsWhere } from 'typeorm';
-import { IActivityLog, IActivityLogInput, IPagination } from '@gauzy/contracts';
+import {
+	ActionTypeEnum,
+	ActorTypeEnum,
+	BaseEntityEnum,
+	IActivityLog,
+	IActivityLogInput,
+	ID,
+	IPagination
+} from '@gauzy/contracts';
 import { isNotNullOrUndefined } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
+import { activityLogUpdatedFieldsAndValues, generateActivityLogDescription } from './activity-log.helper';
+import { ActivityLogEvent } from './events/activity-log.event';
 import { GetActivityLogsDTO, allowedOrderDirections, allowedOrderFields } from './dto/get-activity-logs.dto';
 import { ActivityLog } from './activity-log.entity';
 import { MikroOrmActivityLogRepository, TypeOrmActivityLogRepository } from './repository';
@@ -12,9 +23,33 @@ import { MikroOrmActivityLogRepository, TypeOrmActivityLogRepository } from './r
 export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 	constructor(
 		readonly typeOrmActivityLogRepository: TypeOrmActivityLogRepository,
-		readonly mikroOrmActivityLogRepository: MikroOrmActivityLogRepository
+		readonly mikroOrmActivityLogRepository: MikroOrmActivityLogRepository,
+		private readonly _eventBus: EventBus
 	) {
 		super(typeOrmActivityLogRepository, mikroOrmActivityLogRepository);
+	}
+
+	/**
+	 * Creates a new activity log entry with the provided input, while associating it with the current user and tenant.
+	 *
+	 * @param input - The data required to create an activity log entry.
+	 * @returns The created activity log entry.
+	 * @throws BadRequestException when the log creation fails.
+	 */
+	async create(input: IActivityLogInput): Promise<IActivityLog> {
+		try {
+			// Retrieve the current user's ID from the request context
+			const creatorId = RequestContext.currentUserId();
+
+			// Retrieve the current tenant ID from the request context or use the provided tenantId
+			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+
+			// Create the activity log entry using the provided input along with the tenantId and creatorId
+			return await super.create({ ...input, tenantId, creatorId });
+		} catch (error) {
+			console.log('Error while creating activity log:', error);
+			throw new BadRequestException('Error while creating activity log', error);
+		}
 	}
 
 	/**
@@ -67,7 +102,7 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 
 		const take = filters.take ? filters.take : 100; // Default take value if not provided
 		// Pagination: ensure `filters.skip` is a positive integer starting from 1
-		const skip = (filters.skip && Number.isInteger(filters.skip) && filters.skip > 0) ? filters.skip : 1;
+		const skip = filters.skip && Number.isInteger(filters.skip) && filters.skip > 0 ? filters.skip : 1;
 
 		// Ensure that filters are properly defined
 		const queryOptions: FindManyOptions<ActivityLog> = {
@@ -85,20 +120,56 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 	}
 
 	/**
-	 * Creates a new activity log entry with the provided input, while associating it with the current user and tenant.
-	 *
-	 * @param input - The data required to create an activity log entry.
-	 * @returns The created activity log entry.
-	 * @throws BadRequestException when the log creation fails.
+	 * @description Create or Update Activity Log
+	 * @template T
+	 * @param {BaseEntityEnum} entityType - Entity type for whom creating activity log (E.g : Task, OrganizationProject, etc.)
+	 * @param {string} entityName - Name or Title of the entity
+	 * @param {ActorTypeEnum} actor - The actor type performing the action (User or System)
+	 * @param {ID} organizationId
+	 * @param {ID} tenantId
+	 * @param {ActionTypeEnum} actionType - Action performed (Created or Updated)
+	 * @param {T} data - Entity data (for Created action) or Updated entity data (for Updated action)
+	 * @param {Partial<T>} [originalValues] - Entity data before update (optional for Update action)
+	 * @param {Partial<T>} [newValues] - Entity updated data per field (optional for Update action)
 	 */
-	async logActivity(input: IActivityLogInput): Promise<IActivityLog> {
-		try {
-			const creatorId = RequestContext.currentUserId(); // Retrieve the current user's ID from the request context
-			// Create the activity log entry using the provided input along with the tenantId and creatorId
-			return await super.create({ ...input, creatorId });
-		} catch (error) {
-			console.log('Error while creating activity log:', error);
-			throw new BadRequestException('Error while creating activity log', error);
+	logActivity<T>(
+		entity: BaseEntityEnum,
+		actionType: ActionTypeEnum,
+		actor: ActorTypeEnum,
+		entityId: ID,
+		entityName: string,
+		data: T,
+		organizationId: ID,
+		tenantId: ID,
+		originalValues?: Partial<T>,
+		newValues?: Partial<T>
+	) {
+		let jsonFields: Record<string, any> = new Object();
+
+		// If it's an update action, add updated fields and values
+		if (actionType === ActionTypeEnum.Updated && originalValues && newValues) {
+			const { updatedFields, previousValues, updatedValues } = activityLogUpdatedFieldsAndValues(
+				originalValues,
+				newValues
+			);
+
+			// Add updated fields and values to the log
+			jsonFields = Object.assign({}, { updatedFields, previousValues, updatedValues });
 		}
+
+		// Emit the event to log the activity
+		this._eventBus.publish(
+			new ActivityLogEvent({
+				entity,
+				entityId,
+				action: actionType,
+				actorType: actor,
+				description: generateActivityLogDescription(actionType, entity, entityName),
+				data,
+				organizationId,
+				tenantId,
+				...jsonFields
+			})
+		);
 	}
 }
