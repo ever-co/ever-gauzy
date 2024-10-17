@@ -47,6 +47,7 @@ import { ValueWithUnitComponent } from './value-with-units/value-with-units.comp
 import { VisibilityComponent } from './visibility/visibility.component';
 import { DirectivesModule } from '../directives/directives.module';
 import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badge-view.module';
+import { EmployeeLinkEditorComponent } from '../public-api';
 
 @NgModule({
 	imports: [
@@ -86,6 +87,7 @@ import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badg
 		InvoiceTotalValueComponent,
 		NotesWithTagsComponent,
 		NumberEditorComponent,
+		EmployeeLinkEditorComponent,
 		OrganizationWithTagsComponent,
 		PhoneUrlComponent,
 		PictureNameTagsComponent,
