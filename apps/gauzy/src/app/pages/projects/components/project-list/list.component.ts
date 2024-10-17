@@ -15,7 +15,8 @@ import {
 	ITag,
 	IOrganizationProject,
 	ID,
-	IOrganizationProjectEmployee
+	IOrganizationProjectEmployee,
+	IEmployee
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
@@ -248,14 +249,8 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 			resultMap: (project: IOrganizationProject) => {
 				return Object.assign({}, project, {
 					...this.privatePublicProjectMapper(project),
-					managers: project.members
-						.filter((member) => member.isManager)
-						.map((member: IOrganizationProjectEmployee) => member.employee),
-					employeesMergedTeams: [
-						project.members
-							.filter((member) => !member.isManager)
-							.map((member: IOrganizationProjectEmployee) => member.employee)
-					]
+					managers: this.getProjectManagers(project),
+					employeesMergedTeams: this.getNonManagerEmployees(project)
 				});
 			},
 			finalize: () => {
@@ -269,6 +264,32 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 				});
 			}
 		});
+	}
+
+	/**
+	 * Retrieves the project managers from the list of members.
+	 *
+	 * @param project - The project containing members.
+	 * @returns A list of manager employees.
+	 */
+	getProjectManagers(project: IOrganizationProject): IEmployee[] {
+		return project.members
+			.filter((member: IOrganizationProjectEmployee) => member.isManager)
+			.map((member: IOrganizationProjectEmployee) => member.employee);
+	}
+
+	/**
+	 * Retrieves the non-manager employees from the list of members.
+	 *
+	 * @param project - The project containing members.
+	 * @returns A list of non-manager employees as merged teams.
+	 */
+	getNonManagerEmployees(project: IOrganizationProject): IEmployee[][] {
+		return [
+			project.members
+				.filter((member: IOrganizationProjectEmployee) => !member.isManager)
+				.map((member: IOrganizationProjectEmployee) => member.employee)
+		];
 	}
 
 	/**
