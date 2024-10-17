@@ -19,14 +19,8 @@ export class EmployeeLinkEditorComponent extends DefaultEditor implements OnInit
 	@Input() cell!: Cell; // Input to access the cell data
 	value!: IUser;
 
-	constructor() {
-		super();
-	}
-
 	ngOnInit() {
 		const employee: IEmployee | undefined = this.cell.getRow().getData();
-		if (employee.user) {
-			this.value = employee.user;
-		}
+		this.value = employee?.user ?? null;
 	}
 }
