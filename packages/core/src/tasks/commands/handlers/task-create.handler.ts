@@ -1,7 +1,6 @@
-import { CommandHandler, ICommandHandler, EventBus as CqrsEventBus } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { HttpException, HttpStatus, Logger } from '@nestjs/common';
-import { BaseEntityEnum, ActorTypeEnum, ITask } from '@gauzy/contracts';
-import { activityLogCreateAction } from '../../../activity-log/activity-log.helper';
+import { BaseEntityEnum, ActorTypeEnum, ITask, ActionTypeEnum } from '@gauzy/contracts';
 import { EventBus } from '../../../event-bus';
 import { TaskEvent } from '../../../event-bus/events';
 import { BaseEntityEventTypeEnum } from '../../../event-bus/base-entity-event';
@@ -9,17 +8,17 @@ import { RequestContext } from './../../../core/context';
 import { OrganizationProjectService } from './../../../organization-project/organization-project.service';
 import { TaskCreateCommand } from './../task-create.command';
 import { TaskService } from '../../task.service';
+import { ActivityLogService } from '../../../activity-log/activity-log.service';
 
 @CommandHandler(TaskCreateCommand)
 export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 	private readonly logger = new Logger('TaskCreateCommand');
 
 	constructor(
-		// TODO : use only one event bus type
 		private readonly _eventBus: EventBus,
-		private readonly _cqrsEventBus: CqrsEventBus,
 		private readonly _taskService: TaskService,
-		private readonly _organizationProjectService: OrganizationProjectService
+		private readonly _organizationProjectService: OrganizationProjectService,
+		private readonly activityLogService: ActivityLogService
 	) {}
 
 	/**
@@ -74,13 +73,13 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			}
 
 			// Generate the activity log
-			activityLogCreateAction(
-				this._cqrsEventBus,
+			this.activityLogService.logActivity(
 				BaseEntityEnum.Task,
 				task.title,
 				ActorTypeEnum.User, // TODO : Since we have Github Integration, make sure we can also store "System" for actor
 				organizationId,
 				tenantId,
+				ActionTypeEnum.Created,
 				task
 			);
 
