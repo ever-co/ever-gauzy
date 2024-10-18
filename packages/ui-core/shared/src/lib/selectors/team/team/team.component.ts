@@ -45,8 +45,8 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 	public selectedTeam: IOrganizationTeam;
 
 	private _organizationTeamId: ID | ID[]; // Internal storage for the organization team ID.
-	private _employeeId: ID; // Internal storage for the employee ID.
-	private _projectId: ID; // Internal storage for the project ID.
+	private _employeeId: ID | undefined; // Internal storage for the employee ID.
+	private _projectId: ID | undefined; // Internal storage for the project ID.
 
 	/**
 	 * Determines whether the component should be displayed in a shortened form.
@@ -314,7 +314,7 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 			const teamsResponse = this.employeeId
 				? await this._organizationTeamsService.getMyTeams({
 						...queryOptions,
-						...(this.employeeId && { members: { employeeId: this.employeeId } })
+						members: { employeeId: this.employeeId }
 				  })
 				: await this._organizationTeamsService.getAll([], queryOptions);
 

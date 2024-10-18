@@ -3,11 +3,6 @@
 	<a href="https://app.gauzy.co/#/auth/register"> Click here to Sign Up and start using for free! </a>
 </div>
 <div class="main-header">
-	<div class="header-container"
-		[class.left]="position === 'normal'"
-		[class.right]="position === 'inverse'"
-	></div>
-
 	<div class="header-container">
 		<ng-template [ngIf]="createQuickActionsMenu?.length > 0">
 			<nb-action
@@ -70,10 +65,10 @@
 
 			<nb-action
 				icon="options-2-outline"
-				class="toggle-layout"
-				class="show-large-down"
+				class="toggle-layout show-large-down"
 				(click)="toggleExtraActions()"
 			></nb-action>
+
 			<nb-action
 				*ngIf="supportContextMenu"
 				icon="message-circle-outline"

@@ -57,8 +57,8 @@ export class OrganizationTeamsService {
 	 * @param input - The input data for updating the team.
 	 * @returns A promise that resolves to the updated organization team or a response.
 	 */
-	update(id: ID, input: IOrganizationTeamUpdateInput): Promise<any> {
-		return firstValueFrom(this.http.put(`${API_PREFIX}/organization-team/${id}`, input));
+	update(id: ID, input: IOrganizationTeamUpdateInput): Promise<IOrganizationTeam> {
+		return firstValueFrom(this.http.put<IOrganizationTeam>(`${API_PREFIX}/organization-team/${id}`, input));
 	}
 
 	/**
@@ -105,7 +105,7 @@ export class OrganizationTeamsService {
 				})
 				.pipe(
 					catchError((error) => {
-						console.log('Error fetching teams:', error);
+						console.error('Error fetching teams:', error);
 						return of({ total: 0, items: [] });
 					})
 				)

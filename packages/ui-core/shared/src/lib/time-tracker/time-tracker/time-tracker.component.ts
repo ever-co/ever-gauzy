@@ -226,7 +226,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	 *
 	 * @returns The current position or offset of the timer.
 	 */
-	public get position(): any {
+	public get position(): NgxDraggablePoint {
 		return this.timeTrackerService.position;
 	}
 
@@ -235,7 +235,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	 *
 	 * @param offSet - The offset value to set for the timer's position.
 	 */
-	public set position(offSet: any) {
+	public set position(offSet: NgxDraggablePoint) {
 		this.timeTrackerService.position = offSet;
 	}
 

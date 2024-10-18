@@ -369,7 +369,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			}
 
 			// Update tags filter using In
-			if (where.tags) {
+			if (Array.isArray(where.tags) && where.tags.length > 0) {
 				options.where.tags = {
 					id: In(where.tags as [])
 				};
