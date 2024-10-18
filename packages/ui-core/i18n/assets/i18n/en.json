@@ -3913,6 +3913,7 @@
 		"SELECT_PROJECT": "Select Project",
 		"SELECT_TASK": "Select Task",
 		"SELECT_CLIENT": "Select Client",
+		"SELECT_TEAM": "Select Team",
 		"DATE": "Date",
 		"START_TIME": "Start Time",
 		"END_TIME": "End Time",

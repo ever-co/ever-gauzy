@@ -3784,6 +3784,7 @@
 		"SELECT_PROJECT": "Projekt auswählen",
 		"SELECT_TASK": "Wählen Sie eine Aufgabe aus",
 		"SELECT_CLIENT": "Wählen Sie den Client aus",
+		"SELECT_TEAM": "Team auswählen",
 		"DATE": "Datum",
 		"START_TIME": "Startzeit",
 		"END_TIME": "Endzeit",
