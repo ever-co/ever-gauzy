@@ -186,7 +186,163 @@ jobs:
           DESKTOP_TIMER_APP_ID: 'com.ever.gauzydesktoptimer'
 
       - name: Build Desktop Timer App
-        run: 'yarn build:desktop-timer:windows:release:gh'
+        run: |
+          # we need to clear some environment variables to avoid the error about limit of env vars size
+          set ACTIONS_RUNNER_ACTION_ARCHIVE_CACHE=
+          set ANT_HOME=
+          set AZURE_CONFIG_DIR=
+          set AZURE_DEVOPS_CACHE_DIR=
+          set AZURE_EXTENSION_DIR=
+          set AZ_DEVOPS_GLOBAL_CONFIG_DIR=
+          set CABAL_DIR=
+          set ChocolateyInstall=
+          set ChromeWebDriver=
+          set COBERTURA_HOME=
+          # set COMPUTERNAME=
+          # set COMSPEC=
+          # set CONDA=
+          # set DEPLOYMENT_BASEPATH=
+          set SBT_HOME=
+          set SELENIUM_JAR_PATH=
+          set STATS_BLT=
+          set STATS_D=
+          set STATS_D_D=
+          set STATS_EXT=
+          set STATS_EXTP=
+          set STATS_RDCL=
+          set STATS_TIS=
+          set STATS_TRP=
+          set STATS_UE=
+          set STATS_V3PS=
+          set STATS_VMD=
+          set STATS_VMFE=
+          # set SYSTEMDRIVE=
+          # set SYSTEMROOT=
+          # set TEMP=
+          # set TMP=
+          set ANDROID_HOME=
+          set ANDROID_NDK=
+          set ANDROID_NDK_HOME=
+          set ANDROID_NDK_LATEST_HOME=
+          set ANDROID_NDK_ROOT=
+          set ANDROID_SDK_ROOT=
+          set GITHUB_ACTION=
+          set GITHUB_ACTIONS=
+          set GITHUB_ACTION_REF=
+          # set GITHUB_ACTION_REPOSITORY=
+          set GITHUB_ACTOR=
+          # set GITHUB_ACTOR_ID=
+          # set GITHUB_API_URL=
+          # set GITHUB_BASE_REF=
+          # set GITHUB_ENV=
+          set GITHUB_EVENT_NAME=
+          set GITHUB_EVENT_PATH=
+          # set GITHUB_GRAPHQL_URL=
+          # set GITHUB_HEAD_REF=
+          # set GITHUB_JOB=
+          set GITHUB_OUTPUT=
+          set GITHUB_PATH=
+          # set GITHUB_REF=
+          # set GITHUB_REF_NAME=
+          set GITHUB_REF_PROTECTED=
+          # set GITHUB_REF_TYPE=
+          # set GITHUB_REPOSITORY=
+          # set GITHUB_REPOSITORY_ID=
+          # set GITHUB_REPOSITORY_OWNER=
+          # set GITHUB_REPOSITORY_OWNER_ID=
+          set GITHUB_RETENTION_DAYS=
+          set GITHUB_RUN_ATTEMPT=
+          set GITHUB_RUN_ID=
+          set GITHUB_RUN_NUMBER=
+          # set GITHUB_SERVER_URL=
+          set GITHUB_SHA=
+          # set GITHUB_STATE=
+          set GITHUB_STEP_SUMMARY=
+          set GITHUB_TRIGGERING_ACTOR=
+          set GITHUB_WORKFLOW=
+          set GITHUB_WORKFLOW_REF=
+          set GITHUB_WORKFLOW_SHA=
+          # set GITHUB_WORKSPACE=
+          set GOROOT_1_20_X64=
+          set GOROOT_1_21_X64=
+          set GOROOT_1_22_X64=
+          set GRADLE_HOME=
+          # set HOMEDRIVE=
+          # set HOMEPATH=
+          set IEWebDriver=
+          set ImageOS=
+          set ImageVersion=
+          set JAVA_HOME=
+          set JAVA_HOME_11_X64=
+          set JAVA_HOME_17_X64=
+          set JAVA_HOME_21_X64=
+          set JAVA_HOME_8_X64=
+          # set LOCALAPPDATA=
+          # set LOGONSERVER=
+          set M2=
+          set M2_REPO=
+          set MAVEN_OPTS=
+          set MonAgentClientLocation=
+          # set npm_config_prefix=
+          # set NUMBER_OF_PROCESSORS=
+          # set OS=
+          # set PATHEXT=
+          # set PERFLOG_LOCATION_SETTING=
+          set PGBIN=
+          set PGDATA=
+          set PGPASSWORD=
+          set PGROOT=
+          set PGUSER=
+          set PHPROOT=
+          set PIPX_BIN_DIR=
+          set PIPX_HOME=
+          set POWERSHELL_DISTRIBUTION_CHANNEL=
+          set POWERSHELL_UPDATECHECK=
+          set PROCESSOR_ARCHITECTURE=
+          set PROCESSOR_IDENTIFIER=
+          set PROCESSOR_LEVEL=
+          set PROCESSOR_REVISION=
+          set PSModuleAnalysisCachePath=
+          set PSModulePath=
+          # set PUBLIC=
+          set DOTNET_MULTILEVEL_LOOKUP=
+          set DOTNET_NOLOGO=
+          set DOTNET_SKIP_FIRST_TIME_EXPERIENCE=
+          set DriverData=
+          set EdgeWebDriver=
+          set GCM_INTERACTIVE=
+          set GeckoWebDriver=
+          set GHCUP_INSTALL_BASE_PREFIX=
+          set GHCUP_MSYS2=
+          # set RTOOLS44_HOME=
+          set RUNNER_ARCH=
+          set RUNNER_ENVIRONMENT=
+          set RUNNER_NAME=
+          set RUNNER_OS=
+          set RUNNER_PERFLOG=
+          set RUNNER_TEMP=
+          set RUNNER_TOOL_CACHE=
+          set RUNNER_TRACKING_ID=
+          set RUNNER_WORKSPACE=
+          # set USERDOMAIN=
+          # set USERDOMAIN_ROAMINGPROFILE=
+          # set USERNAME=
+          # set USERPROFILE=
+          # set VCPKG_INSTALLATION_ROOT=
+          # set WIX=
+          # set TERM=
+          # set HOME=
+          # set WINDIR=
+          # set ProgramData=
+          # set PROGRAMFILES=
+          # set ProgramFiles(x86)=
+          # set ProgramW6432=
+          # set ALLUSERSPROFILE=
+          # set APPDATA=
+          # set COMMONPROGRAMFILES=
+          # set CommonProgramFiles(x86)=
+          # set CommonProgramW6432=
+          yarn build:desktop-timer:windows:release:gh
         env:
           USE_HARD_LINKS: false
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -200,159 +356,4 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_NO_CLOUD: true
-          # Override unwanted environment variables
-          ACTIONS_RUNNER_ACTION_ARCHIVE_CACHE: ''
-          ANT_HOME: ''
-          AZURE_CONFIG_DIR: ''
-          AZURE_DEVOPS_CACHE_DIR: ''
-          AZURE_EXTENSION_DIR: ''
-          AZ_DEVOPS_GLOBAL_CONFIG_DIR: ''
-          CABAL_DIR: ''
-          ChocolateyInstall: ''
-          ChromeWebDriver: ''
-          COBERTURA_HOME: ''
-          # COMPUTERNAME: ''
-          # COMSPEC: ''
-          # CONDA: ''
-          # DEPLOYMENT_BASEPATH: ''
-          SBT_HOME: ''
-          SELENIUM_JAR_PATH: ''
-          STATS_BLT: ''
-          STATS_D: ''
-          STATS_D_D: ''
-          STATS_EXT: ''
-          STATS_EXTP: ''
-          STATS_RDCL: ''
-          STATS_TIS: ''
-          STATS_TRP: ''
-          STATS_UE: ''
-          STATS_V3PS: ''
-          STATS_VMD: ''
-          STATS_VMFE: ''
-          # SYSTEMDRIVE: ''
-          # SYSTEMROOT: ''
-          # TEMP: ''
-          # TMP: ''
-          ANDROID_HOME: ''
-          ANDROID_NDK: ''
-          ANDROID_NDK_HOME: ''
-          ANDROID_NDK_LATEST_HOME: ''
-          ANDROID_NDK_ROOT: ''
-          ANDROID_SDK_ROOT: ''
-          GITHUB_ACTION: ''
-          GITHUB_ACTIONS: ''
-          GITHUB_ACTION_REF: ''
-          # GITHUB_ACTION_REPOSITORY: ''
-          GITHUB_ACTOR: ''
-          # GITHUB_ACTOR_ID: ''
-          # GITHUB_API_URL: ''
-          # GITHUB_BASE_REF: ''
-          # GITHUB_ENV: ''
-          GITHUB_EVENT_NAME: ''
-          GITHUB_EVENT_PATH: ''
-          # GITHUB_GRAPHQL_URL: ''
-          # GITHUB_HEAD_REF: ''
-          # GITHUB_JOB: ''
-          GITHUB_OUTPUT: ''
-          GITHUB_PATH: ''
-          # GITHUB_REF: ''
-          # GITHUB_REF_NAME: ''
-          GITHUB_REF_PROTECTED: ''
-          # GITHUB_REF_TYPE: ''
-          # GITHUB_REPOSITORY: ''
-          # GITHUB_REPOSITORY_ID: ''
-          # GITHUB_REPOSITORY_OWNER: ''
-          # GITHUB_REPOSITORY_OWNER_ID: ''
-          GITHUB_RETENTION_DAYS: ''
-          GITHUB_RUN_ATTEMPT: ''
-          GITHUB_RUN_ID: ''
-          GITHUB_RUN_NUMBER: ''
-          # GITHUB_SERVER_URL: ''
-          GITHUB_SHA: ''
-          # GITHUB_STATE: ''
-          GITHUB_STEP_SUMMARY: ''
-          GITHUB_TRIGGERING_ACTOR: ''
-          GITHUB_WORKFLOW: ''
-          GITHUB_WORKFLOW_REF: ''
-          GITHUB_WORKFLOW_SHA: ''
-          # GITHUB_WORKSPACE: ''
-          GOROOT_1_20_X64: ''
-          GOROOT_1_21_X64: ''
-          GOROOT_1_22_X64: ''
-          GRADLE_HOME: ''
-          # HOMEDRIVE: ''
-          # HOMEPATH: ''
-          IEWebDriver: ''
-          ImageOS: ''
-          ImageVersion: ''
-          JAVA_HOME: ''
-          JAVA_HOME_11_X64: ''
-          JAVA_HOME_17_X64: ''
-          JAVA_HOME_21_X64: ''
-          JAVA_HOME_8_X64: ''
-          # LOCALAPPDATA: ''
-          # LOGONSERVER: ''
-          M2: ''
-          M2_REPO: ''
-          MAVEN_OPTS: ''
-          MonAgentClientLocation: ''
-          # npm_config_prefix: ''
-          # NUMBER_OF_PROCESSORS: ''
-          # OS: ''
-          # PATHEXT: ''
-          # PERFLOG_LOCATION_SETTING: ''
-          PGBIN: ''
-          PGDATA: ''
-          PGPASSWORD: ''
-          PGROOT: ''
-          PGUSER: ''
-          PHPROOT: ''
-          PIPX_BIN_DIR: ''
-          PIPX_HOME: ''
-          POWERSHELL_DISTRIBUTION_CHANNEL: ''
-          POWERSHELL_UPDATECHECK: ''
-          PROCESSOR_ARCHITECTURE: ''
-          PROCESSOR_IDENTIFIER: ''
-          PROCESSOR_LEVEL: ''
-          PROCESSOR_REVISION: ''
-          PSModuleAnalysisCachePath: ''
-          PSModulePath: ''
-          # PUBLIC: ''
           Path: 'C:\hostedtoolcache\windows\node\20.11.1\x64;C:\Program Files\Git\bin;C:\npm\prefix;C:\hostedtoolcache\windows\Python\3.9.13\x64\Scripts;C:\hostedtoolcache\windows\Python\3.9.13\x64;C:\Program Files\OpenSSL\bin;C:\Windows\system32;C:\Windows;C:\Windows\System32\OpenSSH\;C:\Program Files\dotnet\;C:\Program Files\PowerShell\7\;C:\Program Files\CMake\bin;C:\Program Files\nodejs\;C:\Program Files\Git\cmd;C:\Program Files\Git\mingw64\bin;C:\Program Files\Git\usr\bin;C:\Program Files\GitHub CLI\;C:\Program Files\Amazon\AWSCLIV2\;C:\Users\runneradmin\.dotnet\tools'
-          DOTNET_MULTILEVEL_LOOKUP: ''
-          DOTNET_NOLOGO: ''
-          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: ''
-          DriverData: ''
-          EdgeWebDriver: ''
-          GCM_INTERACTIVE: ''
-          GeckoWebDriver: ''
-          GHCUP_INSTALL_BASE_PREFIX: ''
-          GHCUP_MSYS2: ''
-          # RTOOLS44_HOME: ''
-          RUNNER_ARCH: ''
-          RUNNER_ENVIRONMENT: ''
-          RUNNER_NAME: ''
-          RUNNER_OS: ''
-          RUNNER_PERFLOG: ''
-          RUNNER_TEMP: ''
-          RUNNER_TOOL_CACHE: ''
-          RUNNER_TRACKING_ID: ''
-          RUNNER_WORKSPACE: ''
-          # USERDOMAIN: ''
-          # USERDOMAIN_ROAMINGPROFILE: ''
-          # USERNAME: ''
-          # USERPROFILE: ''
-          # VCPKG_INSTALLATION_ROOT: ''
-          # WIX: ''
-          # TERM: ''
-          # HOME: ''
-          # WINDIR: ''
-          # ProgramData: ''
-          # PROGRAMFILES: ''
-          # ProgramFiles(x86): ''
-          # ProgramW6432: ''
-          # ALLUSERSPROFILE: ''
-          # APPDATA: ''
-          # COMMONPROGRAMFILES: ''
-          # CommonProgramFiles(x86)
-          # CommonProgramW6432

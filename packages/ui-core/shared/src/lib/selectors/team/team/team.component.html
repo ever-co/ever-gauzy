@@ -1,43 +1,47 @@
 <label class="label" *ngIf="label">{{ label | translate }}</label>
-<ng-template [ngIf]="!multiple" [ngIfElse]="multipleSelect">
+
+<!-- Single Select -->
+<ng-container *ngIf="!multiple; else multipleSelect">
 	<ng-select
 		#select
 		[addTag]="(hasAddTeam$ | async) ? createNew : null"
-		[multiple]="multiple"
+		[multiple]="false"
 		[clearable]="isClearable()"
 		[disabled]="disabled"
 		[items]="teams"
-		(change)="selectTeam($event); select.blur()"
-		(clear)="select.blur(); clearSelection()"
-		[(ngModel)]="teamId"
+		[(ngModel)]="organizationTeamId"
 		[placeholder]="placeholder || 'FORM.PLACEHOLDERS.ALL_TEAMS' | translate"
 		[addTagText]="'FORM.PLACEHOLDERS.ADD_TEAM' | translate"
 		bindValue="id"
 		bindLabel="name"
 		appendTo="body"
 		fullWidth
+		(change)="selectTeam($event); select.blur()"
+		(clear)="clearSelection(); select.blur()"
 	>
 		<ng-container *ngIf="shortened">
-			<ng-template ng-option-tmp let-item="item" let-index="index">
+			<ng-template ng-option-tmp let-item="item">
 				<img *ngIf="item.logo" [src]="item.logo" width="20px" height="20px" />
-				<span> {{ item?.name }} </span>
+				<span>{{ item.name }}</span>
 			</ng-template>
 			<ng-template ng-label-tmp let-item="item">
 				<div class="selector-template">
 					<img *ngIf="item.logo" [src]="item.logo" width="20px" height="20px" />
-					<span> {{ getShortenedName(item?.name) }} </span>
+					<span>{{ getShortenedName(item?.name) }}</span>
 				</div>
 			</ng-template>
 		</ng-container>
 	</ng-select>
-</ng-template>
+</ng-container>
+
+<!-- Multiple Select -->
 <ng-template #multipleSelect>
 	<nb-select
 		class="multiple-select"
 		[disabled]="disabled"
-		[multiple]="multiple"
+		[multiple]="true"
+		[(selected)]="organizationTeamId"
 		[placeholder]="placeholder || 'FORM.PLACEHOLDERS.ALL_TEAMS' | translate"
-		[(selected)]="teamId"
 		fullWidth
 	>
 		<nb-option *ngFor="let team of teams" [value]="team.id">

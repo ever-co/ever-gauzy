@@ -42,21 +42,9 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent implemen
 	];
 
 	/**
-	 * EventEmitter to notify when a status is selected or changed.
-	 */
-	@Output() onChanged = new EventEmitter<ITaskStatus>();
-
-	constructor(
-		public readonly translateService: TranslateService,
-		private readonly _store: Store,
-		private readonly _taskStatusesService: TaskStatusesService,
-		private readonly _errorHandlingService: ErrorHandlingService
-	) {
-		super(translateService);
-	}
-
-	/**
+	 * Input properties for component customization.
 	 *
+	 * @property addTag - Whether adding new tags is allowed (default: true).
 	 */
 	@Input() addTag: boolean = true;
 
@@ -66,6 +54,14 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent implemen
 	 *
 	 */
 	@Input() placeholder: string | null = null;
+
+	/**
+	 * Enables the default selection behavior.
+	 * When `true`, the component may automatically select a default team upon initialization.
+	 *
+	 * @default true
+	 */
+	@Input() defaultSelected: boolean = true;
 
 	/*
 	 * Getter and Setter for the selected organization project ID.
@@ -103,6 +99,20 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent implemen
 	 * Callback function to notify touch events in the form control.
 	 */
 	private onTouched: () => void = () => {};
+
+	/**
+	 * EventEmitter to notify when a status is selected or changed.
+	 */
+	@Output() onChanged = new EventEmitter<ITaskStatus>();
+
+	constructor(
+		public readonly translateService: TranslateService,
+		private readonly _store: Store,
+		private readonly _taskStatusesService: TaskStatusesService,
+		private readonly _errorHandlingService: ErrorHandlingService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit(): void {
 		this.subject$
@@ -193,18 +203,35 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent implemen
 				tap((statuses: ITaskStatus[]) => {
 					this.statuses$.next(statuses);
 
-					// Set default status if no status is currently selected
-					if (!this.status) {
-						const defaultStatus = statuses.find((status) => status.name === TaskStatusEnum.OPEN);
-						if (defaultStatus) {
-							this.status = defaultStatus;
-							this.onChange(defaultStatus);
-						}
+					// Set default status if no status is currently selected and defaultSelected is true
+					if (this.defaultSelected) {
+						this.setDefaultStatusIfNeeded(statuses);
 					}
 				}),
 				untilDestroyed(this) // Clean up the subscription when component is destroyed
 			)
 			.subscribe();
+	}
+
+	/**
+	 * Sets the default status for the task if no status is currently assigned.
+	 *
+	 * This method checks if the `status` property is not set. If it is not set,
+	 * it looks for the default status in the provided array of statuses.
+	 * If found, it assigns this default status to the `status` property and triggers
+	 * the `onChange` callback with the default status.
+	 *
+	 * @param statuses - An array of task statuses to search for the default status.
+	 *                   It should contain objects that implement the `ITaskStatus` interface.
+	 */
+	private setDefaultStatusIfNeeded(statuses: ITaskStatus[]): void {
+		if (!this.status) {
+			const defaultStatus = statuses.find((status) => status.name === TaskStatusEnum.OPEN);
+			if (defaultStatus) {
+				this.status = defaultStatus;
+				this.onChange(defaultStatus);
+			}
+		}
 	}
 
 	/**

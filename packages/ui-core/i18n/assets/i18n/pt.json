@@ -3788,6 +3788,7 @@
 		"SELECT_PROJECT": "Selecionar Projeto",
 		"SELECT_TASK": "Selecionar Tarefa",
 		"SELECT_CLIENT": "Selecionar Cliente",
+		"SELECT_TEAM": "Selecionar equipe",
 		"DATE": "Data",
 		"START_TIME": "Hora de Início",
 		"END_TIME": "Fim do Tempo",

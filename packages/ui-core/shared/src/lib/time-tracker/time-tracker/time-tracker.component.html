@@ -290,6 +290,26 @@
 							</div>
 						</div>
 					</div>
+
+					<!-- Team Selector Start -->
+					<div class="form-group">
+						<label>
+							{{ 'TIMER_TRACKER.SELECT_TEAM' | translate }}
+						</label>
+						<ga-team-selector
+							name="organizationTeamId"
+							[skipGlobalChange]="true"
+							[showAllOption]="false"
+							[defaultSelected]="false"
+							[placeholder]="'TIMER_TRACKER.SELECT_TEAM' | translate"
+							[employeeId]="employee?.id"
+							[projectId]="projectId"
+							[(ngModel)]="organizationTeamId"
+							[required]="false"
+						></ga-team-selector>
+					</div>
+					<!-- Team Selector Emd -->
+
 					<div class="form-group">
 						<label>
 							{{ 'TIMER_TRACKER.SELECT_TASK' | translate }}
