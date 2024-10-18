@@ -1,7 +1,7 @@
 import { Component, Input, OnDestroy, OnInit, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { NbSidebarService, NbThemeService, NbMenuItem, NbDialogService, NbDialogRef } from '@nebular/theme';
-import { combineLatest, firstValueFrom, Subject } from 'rxjs';
+import { combineLatest, firstValueFrom, Observable, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
@@ -12,6 +12,8 @@ import {
 	IDateRangePicker,
 	IEmployee,
 	IOrganization,
+	IOrganizationProject,
+	ISelectedEmployee,
 	IUser,
 	PermissionsEnum,
 	TimeLogSourceEnum,
@@ -56,6 +58,8 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	@Input() position = 'normal';
 	user: IUser;
 	employee: IEmployee;
+	employee$: Observable<ISelectedEmployee> = this.store.selectedEmployee$;
+	project$: Observable<IOrganizationProject> = this.store.selectedProject$;
 
 	showEmployeesSelector: boolean;
 	showOrganizationsSelector: boolean;

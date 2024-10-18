@@ -9,7 +9,7 @@ import {
 	IOrganizationTeamFindInput
 } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { combineLatest, map, Observable, of, Subject, switchMap } from 'rxjs';
+import { combineLatest, from, map, Observable, of, Subject, switchMap } from 'rxjs';
 import { catchError, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
@@ -44,9 +44,9 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 	public teams: IOrganizationTeam[] = [];
 	public selectedTeam: IOrganizationTeam;
 
-	private _teamId: ID | ID[]; // Internal storage for the team ID.
+	private _organizationTeamId: ID | ID[]; // Internal storage for the organization team ID.
 	private _employeeId: ID; // Internal storage for the employee ID.
-	private _organizationContactId: ID; // Internal storage for the organization contact ID.
+	private _projectId: ID; // Internal storage for the project ID.
 
 	/**
 	 * Determines whether the component should be displayed in a shortened form.
@@ -117,8 +117,8 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 	 * @param value - The team ID or array of team IDs to be set.
 	 */
 	@Input()
-	public set teamId(value: ID | ID[]) {
-		this._teamId = value;
+	public set organizationTeamId(value: ID | ID[]) {
+		this._organizationTeamId = value;
 		this.onChange(value);
 		this.onTouched();
 	}
@@ -128,8 +128,8 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 	 *
 	 * @returns The current team ID or array of team IDs.
 	 */
-	public get teamId(): ID | ID[] {
-		return this._teamId;
+	public get organizationTeamId(): ID | ID[] {
+		return this._organizationTeamId;
 	}
 
 	/**
@@ -153,23 +153,23 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * Sets the organization contact ID and triggers change and touch events.
+	 * Sets the project ID and triggers change and touch events.
 	 *
-	 * @param value - The ID of the organization contact to be set.
+	 * @param value - The ID of the project to be set.
 	 */
 	@Input()
-	public set organizationContactId(value: ID) {
-		this._organizationContactId = value;
+	public set projectId(value: ID) {
+		this._projectId = value;
 		this.subject$.next(true);
 	}
 
 	/**
-	 * Gets the current organization contact ID
+	 * Gets the current project ID
 	 *
-	 * @returns The current organization contact ID or array of organization contact ID.
+	 * @returns The current project ID or array of project IDs.
 	 */
-	public get organizationContactId(): ID | undefined {
-		return this._organizationContactId;
+	public get projectId(): ID | undefined {
+		return this._projectId;
 	}
 
 	@Output() onChanged = new EventEmitter<IOrganizationTeam>();
@@ -241,7 +241,6 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 
 	/**
 	 * Handles the combined stream to fetch teams and select the appropriate team
-	 *
 	 * based on route parameters and subject emissions.
 	 */
 	private initializeTeamSelection(): void {
@@ -249,11 +248,19 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 			.pipe(
 				// Switch to a new observable each time the source observables emit
 				switchMap(([_, queryParams]) =>
-					// Fetch teams and then pass the teamId from queryParams
-					this.getTeams().then(() => queryParams.teamId)
+					// Fetch teams and handle errors during retrieval
+					from(this.getTeams()).pipe(
+						// Return the teamId from queryParams on success
+						map(() => queryParams.teamId),
+						// Handle any errors that occur during team fetching
+						catchError((error) => {
+							console.error('Error fetching teams:', error);
+							return of(null); // Return a null value to prevent team selection on error
+						})
+					)
 				),
 				// After fetching, select the team if teamId exists
-				tap((teamId: ID) => {
+				tap((teamId: ID | null) => {
 					if (teamId) {
 						this.selectTeamById(teamId);
 					}
@@ -297,21 +304,22 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 
 		// Construct query options
 		const queryOptions: IOrganizationTeamFindInput = {
-			...(this.organizationContactId && { organizationContactId: this.organizationContactId }),
 			organizationId,
-			tenantId
+			tenantId,
+			...(this.projectId && { projects: { id: this.projectId } })
 		};
 
 		try {
 			// Retrieve teams based on whether employeeId is provided
-			this.teams = this.employeeId
-				? (
-						await this._organizationTeamsService.getMyTeams({
-							...queryOptions,
-							members: { employeeId: this.employeeId }
-						})
-				  ).items || []
-				: (await this._organizationTeamsService.getAll([], queryOptions)).items || [];
+			const teamsResponse = this.employeeId
+				? await this._organizationTeamsService.getMyTeams({
+						...queryOptions,
+						...(this.employeeId && { members: { employeeId: this.employeeId } })
+				  })
+				: await this._organizationTeamsService.getAll([], queryOptions);
+
+			// Assign teams from response
+			this.teams = teamsResponse.items || [];
 
 			// Optionally add "All Projects" option
 			if (this.showAllOption) {
@@ -330,7 +338,7 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 	 * @param {ID | ID[]} value - The value(s) to write, either a single ID or IDs.
 	 */
 	writeValue(value: ID | ID[]): void {
-		this._teamId = this.multiple ? (Array.isArray(value) ? value : [value]) : value;
+		this._organizationTeamId = this.multiple ? (Array.isArray(value) ? value : [value]) : value;
 	}
 
 	/**
@@ -382,7 +390,7 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 			const request = {
 				name,
 				...(memberId && { memberIds: [memberId] }),
-				...(this.organizationContactId && { organizationContactId: this.organizationContactId }),
+				...(this.projectId && { projects: [{ id: this.projectId }] }),
 				organizationId,
 				tenantId
 			};
@@ -394,7 +402,7 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 			this.createOrganizationTeam(team);
 
 			// Set the newly created team's ID
-			this.teamId = team.id;
+			this.organizationTeamId = team.id;
 
 			// Show success message
 			this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.ADD_NEW_TEAM', { name });
@@ -455,7 +463,7 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 			this.setAttributesToParams({ teamId: team?.id });
 		}
 		this.selectedTeam = team || ALL_TEAM_SELECTED;
-		this.teamId = this.selectedTeam.id;
+		this.organizationTeamId = this.selectedTeam.id;
 		this.onChanged.emit(team);
 	}
 
@@ -522,7 +530,7 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 	 */
 	clearSelection(): void {
 		if (!this.showAllOption) {
-			this.teamId = null;
+			this.organizationTeamId = null;
 		}
 	}
 

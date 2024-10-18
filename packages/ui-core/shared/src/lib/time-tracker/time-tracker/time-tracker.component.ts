@@ -16,7 +16,8 @@ import {
 	TimeLogType,
 	PermissionsEnum,
 	TimeLogSourceEnum,
-	IEmployee
+	IEmployee,
+	ITimerToggleInput
 } from '@gauzy/contracts';
 import { distinctUntilChange, toLocal, toUTC } from '@gauzy/ui-core/common';
 import {
@@ -89,78 +90,151 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
+	/**
+	 * Gets the value indicating whether the task is billable.
+	 *
+	 * @returns A boolean indicating if the task is billable.
+	 */
 	public get isBillable(): boolean {
 		return this.timeTrackerService.timerConfig.isBillable;
 	}
+
+	/**
+	 * Sets the value indicating whether the task is billable.
+	 *
+	 * @param value - A boolean indicating if the task should be billable.
+	 */
 	public set isBillable(value: boolean) {
-		this.timeTrackerService.timerConfig = {
-			...this.timeTrackerService.timerConfig,
-			isBillable: value
-		};
+		this.updateTimerConfig({ isBillable: value });
 	}
 
-	public get taskId(): string {
-		const { taskId } = this.timeTrackerService.timerConfig;
-		if (taskId) {
-			return taskId;
-		}
-		return null;
+	/**
+	 * Gets the current task ID associated with the timer configuration.
+	 *
+	 * @returns The task ID if it exists and is a string; otherwise, null.
+	 */
+	public get taskId(): string | null {
+		return this.getStringConfigValue('taskId');
 	}
+
+	/**
+	 * Sets the task ID for the timer configuration.
+	 *
+	 * @param value - The task ID to set.
+	 */
 	public set taskId(value: string) {
-		this.timeTrackerService.timerConfig = {
-			...this.timeTrackerService.timerConfig,
-			taskId: value
-		};
+		this.updateTimerConfig({ taskId: value });
 	}
 
-	public get organizationContactId(): string {
-		const { organizationContactId } = this.timeTrackerService.timerConfig;
-		if (organizationContactId) {
-			return organizationContactId;
-		}
-		return null;
+	/**
+	 * Gets the organization contact ID from the timer configuration.
+	 *
+	 * @returns The organization contact ID if it exists and is a string; otherwise, null.
+	 */
+	public get organizationContactId(): string | null {
+		return this.getStringConfigValue('organizationContactId');
 	}
+
+	/**
+	 * Sets the organization contact ID for the timer configuration.
+	 *
+	 * @param value - The organization contact ID to set.
+	 */
 	public set organizationContactId(value: string) {
-		this.timeTrackerService.timerConfig = {
-			...this.timeTrackerService.timerConfig,
-			organizationContactId: value
-		};
+		this.updateTimerConfig({ organizationContactId: value });
 	}
 
-	public get projectId(): string {
-		const { projectId } = this.timeTrackerService.timerConfig;
-		if (projectId) {
-			return projectId;
-		}
-		return null;
+	/**
+	 * Gets the project ID associated with the timer configuration.
+	 *
+	 * @returns The project ID if it exists and is a string; otherwise, null.
+	 */
+	public get projectId(): string | null {
+		return this.getStringConfigValue('projectId');
 	}
+
+	/**
+	 * Sets the project ID for the timer configuration.
+	 *
+	 * @param value - The project ID to set.
+	 */
 	public set projectId(value: string) {
-		this.timeTrackerService.timerConfig = {
-			...this.timeTrackerService.timerConfig,
-			projectId: value
-		};
+		this.updateTimerConfig({ projectId: value });
 	}
 
-	public get description(): string {
-		const { description } = this.timeTrackerService.timerConfig;
-		if (description) {
-			return description;
-		}
-		return null;
+	/**
+	 * Gets the organization team ID associated with the timer configuration.
+	 *
+	 * @returns The organization team ID if it exists and is a string; otherwise, null.
+	 */
+	public get organizationTeamId(): string | null {
+		return this.getStringConfigValue('organizationTeamId');
 	}
+
+	/**
+	 * Sets the organization team ID for the timer configuration.
+	 *
+	 * @param value - The organization team ID to set.
+	 */
+	public set organizationTeamId(value: string) {
+		this.updateTimerConfig({ organizationTeamId: value });
+	}
+
+	/**
+	 * Gets the description from the timer configuration.
+	 *
+	 * @returns The description if it exists and is a string; otherwise, null.
+	 */
+	public get description(): string | null {
+		return this.getStringConfigValue('description');
+	}
+
+	/**
+	 * Sets the description for the timer configuration.
+	 *
+	 * @param value - The description to set.
+	 */
 	public set description(value: string) {
+		this.updateTimerConfig({ description: value });
+	}
+
+	/**
+	 * Updates the timer configuration with new values.
+	 *
+	 * @param updates - An object containing the properties to update in the timer configuration.
+	 */
+	private updateTimerConfig(updates: Partial<ITimerToggleInput>): void {
 		this.timeTrackerService.timerConfig = {
 			...this.timeTrackerService.timerConfig,
-			description: value
+			...updates
 		};
 	}
 
 	/**
-	 * Remember timer position
+	 * Retrieves the value of a specified string property from the timer configuration.
+	 *
+	 * @param key - The name of the property to retrieve.
+	 * @returns The value of the property if it exists and is a string; otherwise, null.
 	 */
-	public get position() {
+	private getStringConfigValue(key: keyof ITimerToggleInput): string | null {
+		const value = this.timeTrackerService.timerConfig[key];
+		return typeof value === 'string' ? value : null;
+	}
+
+	/**
+	 * Gets the current position of the timer.
+	 *
+	 * @returns The current position or offset of the timer.
+	 */
+	public get position(): any {
 		return this.timeTrackerService.position;
 	}
+
+	/**
+	 * Sets the position of the timer.
+	 *
+	 * @param offSet - The offset value to set for the timer's position.
+	 */
 	public set position(offSet: any) {
 		this.timeTrackerService.position = offSet;
 	}
