@@ -41,7 +41,8 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 				taskId: timer.taskId,
 				projectId: timer.projectId,
 				organizationId: this._store.organizationId,
-				tenantId: this._store.tenantId
+				tenantId: this._store.tenantId,
+				version: timer.version
 			};
 
 			let latest = null;

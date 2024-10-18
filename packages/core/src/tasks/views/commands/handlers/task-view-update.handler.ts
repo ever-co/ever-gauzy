@@ -10,9 +10,6 @@ export class TaskViewUpdateHandler implements ICommandHandler<TaskViewUpdateComm
 	public async execute(command: TaskViewUpdateCommand): Promise<ITaskView> {
 		const { id, input } = command;
 
-		return await this.taskViewService.create({
-			...input,
-			id
-		});
+		return await this.taskViewService.update(id, input);
 	}
 }

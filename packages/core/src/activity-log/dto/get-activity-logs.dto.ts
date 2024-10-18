@@ -1,6 +1,6 @@
 import { ApiPropertyOptional, IntersectionType, PickType } from '@nestjs/swagger';
 import { IsEnum, IsIn, IsOptional, IsString, IsUUID } from 'class-validator';
-import { ActionTypeEnum, EntityEnum, ActorTypeEnum, ID } from '@gauzy/contracts';
+import { ActionTypeEnum, BaseEntityEnum, ID } from '@gauzy/contracts';
 import { PaginationParams } from '../../core/crud';
 import { TenantOrganizationBaseDTO } from '../../core/dto';
 import { ActivityLog } from '../activity-log.entity';
@@ -15,13 +15,13 @@ export const allowedOrderDirections = ['ASC', 'DESC', 'asc', 'desc'];
 export class GetActivityLogsDTO extends IntersectionType(
 	TenantOrganizationBaseDTO,
 	PickType(PaginationParams<ActivityLog>, ['skip', 'take', 'relations']),
-	PickType(ActivityLog, ['isActive', 'isArchived'])
+	PickType(ActivityLog, ['isActive', 'isArchived', 'actorType'])
 ) {
 	// Filter by entity (example: Organization, Task, OrganizationContact)
-	@ApiPropertyOptional({ enum: EntityEnum })
+	@ApiPropertyOptional({ enum: BaseEntityEnum })
 	@IsOptional()
-	@IsEnum(EntityEnum)
-	entity: EntityEnum;
+	@IsEnum(BaseEntityEnum)
+	entity: BaseEntityEnum;
 
 	// Filter by entityId (example: projectId, taskId, organizationContactId)
 	@ApiPropertyOptional({ type: () => String })
@@ -34,12 +34,6 @@ export class GetActivityLogsDTO extends IntersectionType(
 	@IsOptional()
 	@IsEnum(ActionTypeEnum)
 	action: ActionTypeEnum;
-
-	// Filter by actorType (example: SYSTEM, USER)
-	@ApiPropertyOptional({ type: () => String, enum: ActorTypeEnum })
-	@IsOptional()
-	@IsEnum(ActorTypeEnum)
-	actorType?: ActorTypeEnum;
 
 	// Filter by orderBy (example: createdAt, updatedAt, entity, action)
 	@ApiPropertyOptional({ type: () => String, enum: allowedOrderFields })

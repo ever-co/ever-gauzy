@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
 import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUrl, IsUUID } from 'class-validator';
-import { EntityEnum, ID, IResourceLink, IURLMetaData, IUser } from '@gauzy/contracts';
+import { BaseEntityEnum, ID, IResourceLink, IURLMetaData, IUser } from '@gauzy/contracts';
 import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
@@ -12,12 +12,12 @@ import { MikroOrmResourceLinkRepository } from './repository/mikro-orm-resource-
 export class ResourceLink extends TenantOrganizationBaseEntity implements IResourceLink {
 	[EntityRepositoryType]?: MikroOrmResourceLinkRepository;
 
-	@ApiProperty({ type: () => String, enum: EntityEnum })
+	@ApiProperty({ type: () => String, enum: BaseEntityEnum })
 	@IsNotEmpty()
-	@IsEnum(EntityEnum)
+	@IsEnum(BaseEntityEnum)
 	@ColumnIndex()
 	@MultiORMColumn()
-	entity: EntityEnum;
+	entity: BaseEntityEnum;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()

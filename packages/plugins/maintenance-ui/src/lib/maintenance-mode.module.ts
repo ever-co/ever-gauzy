@@ -4,9 +4,9 @@ import { HttpClient } from '@angular/common/http';
 import { RouterModule, ROUTES } from '@angular/router';
 import { NbLayoutModule } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { LanguagesEnum } from '@gauzy/contracts';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
+import { getBrowserLanguage } from '@gauzy/ui-core/shared';
 import { createMaintenanceRoutes } from './maintenance-mode.routes';
 import { MaintenanceModeComponent } from './maintenance-mode.component';
 
@@ -14,7 +14,7 @@ import { MaintenanceModeComponent } from './maintenance-mode.component';
 	imports: [
 		CommonModule,
 		TranslateModule.forRoot({
-			defaultLanguage: LanguagesEnum.ENGLISH,
+			defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,

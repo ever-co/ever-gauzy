@@ -3,9 +3,9 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganizationTeam } from 'packages/contracts/dist';
 import { combineLatest, concatMap, filter, map, Observable, of, tap } from 'rxjs';
-import { ElectronService } from '../../../electron/services';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
 import { AbstractSelectorComponent } from '../../components/abstract/selector.abstract';
+import { SelectorElectronService } from '../../services/selector-electron.service';
 import { ProjectSelectorService } from '../project-selector/+state/project-selector.service';
 import { TaskSelectorService } from '../task-selector/+state/task-selector.service';
 import { TeamSelectorQuery } from './+state/team-selector.query';
@@ -28,7 +28,7 @@ import { TeamSelectorStore } from './+state/team-selector.store';
 })
 export class TeamSelectorComponent extends AbstractSelectorComponent<IOrganizationTeam> implements OnInit {
 	constructor(
-		private readonly electronService: ElectronService,
+		private readonly selectorElectronService: SelectorElectronService,
 		private readonly teamSelectorStore: TeamSelectorStore,
 		private readonly teamSelectorQuery: TeamSelectorQuery,
 		private readonly projectSelectorService: ProjectSelectorService,
@@ -52,8 +52,11 @@ export class TeamSelectorComponent extends AbstractSelectorComponent<IOrganizati
 		this.handleSearch(this.projectSelectorService);
 	}
 
-	public refresh(): void {
-		this.electronService.ipcRenderer.send('refresh-timer');
+	public clear(): void {
+		if (this.useStore) {
+			this.selectorElectronService.update({ organizationTeamId: null });
+			this.selectorElectronService.refresh();
+		}
 	}
 
 	public get error$(): Observable<string> {
@@ -71,6 +74,7 @@ export class TeamSelectorComponent extends AbstractSelectorComponent<IOrganizati
 	protected updateSelected(value: IOrganizationTeam['id']): void {
 		// Update store only if useStore is true
 		if (this.useStore) {
+			this.selectorElectronService.update({ organizationTeamId: value });
 			this.teamSelectorStore.updateSelected(value);
 		}
 	}

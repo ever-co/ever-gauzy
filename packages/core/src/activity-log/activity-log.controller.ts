@@ -10,7 +10,7 @@ import { ActivityLogService } from './activity-log.service';
 @Permissions()
 @Controller('/activity-log')
 export class ActivityLogController {
-    constructor(readonly _activityLogService: ActivityLogService) {}
+	constructor(readonly _activityLogService: ActivityLogService) {}
 
 	/**
 	 * Retrieves activity logs based on query parameters.
@@ -20,10 +20,8 @@ export class ActivityLogController {
 	 * @returns A list of activity logs.
 	 */
 	@Get('/')
-	@UseValidationPipe()
-	async getActivityLogs(
-		@Query() query: GetActivityLogsDTO
-	): Promise<IPagination<IActivityLog>> {
+	@UseValidationPipe({ transform: true })
+	async getActivityLogs(@Query() query: GetActivityLogsDTO): Promise<IPagination<IActivityLog>> {
 		return await this._activityLogService.findActivityLogs(query);
 	}
 }

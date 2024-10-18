@@ -21,13 +21,19 @@ import {
 } from '@gauzy/contracts';
 import { Environment, environment } from '@gauzy/ui-config';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { ErrorHandlingService, Store, ToastrService, UsersOrganizationsService } from '@gauzy/ui-core/core';
-import { ExportAllService, GauzyCloudService } from '@gauzy/ui-core/core';
+import {
+	ErrorHandlingService,
+	ExportAllService,
+	GauzyCloudService,
+	Store,
+	ToastrService,
+	UsersOrganizationsService
+} from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-import-export',
-	templateUrl: './import-export.html',
+	templateUrl: './import-export.component.html',
 	styleUrls: ['./import-export.component.scss']
 })
 export class ImportExportComponent extends TranslationBaseComponent implements OnInit {

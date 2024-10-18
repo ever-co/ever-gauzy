@@ -14,6 +14,32 @@ export class ActivityLogSubscriber extends BaseEntityEventSubscriber<ActivityLog
 	}
 
 	/**
+	 * @description Serialize Activity Log fields to support SQLite DB before creation
+	 * @param {ActivityLog} entity - The ActivityLog entity that is about to be created or updated.
+	 * @param {string[]} fields - Array fields to be serialized
+	 */
+	private serializeFields(entity: ActivityLog, fields: string[]): void {
+		fields.forEach((field) => {
+			if (Array.isArray(entity[field]) || typeof entity[field] === 'object') {
+				entity[field] = JSON.stringify(entity[field]);
+			}
+		});
+	}
+
+	/**
+	 * @description de-serialize Activity Log fields to support SQLite DB after load data
+	 * @param {ActivityLog} entity - The ActivityLog entity that is about to be loaded or updated.
+	 * @param {string[]} fields - Array fields to be de-serialized
+	 */
+	private deserializeFields(entity: ActivityLog, fields: string[]): void {
+		fields.forEach((field) => {
+			if (entity[field] && typeof entity[field] === 'string') {
+				entity[field] = JSON.parse(entity[field]);
+			}
+		});
+	}
+
+	/**
 	 * Called before an ActivityLog entity is inserted or updated in the database.
 	 * This method prepares the entity for insertion or update by serializing the data property to a JSON string
 	 * for SQLite databases.
@@ -23,13 +49,28 @@ export class ActivityLogSubscriber extends BaseEntityEventSubscriber<ActivityLog
 	 */
 	async serializeDataForSQLite(entity: ActivityLog): Promise<void> {
 		try {
-			// Check if the database is SQLite and the entity's data is an object
-			if ((isSqlite() || isBetterSqlite3()) && typeof entity.data === 'object') {
-				entity.data = JSON.stringify(entity.data);
+			// Check if the database is SQLite
+			if (isSqlite() || isBetterSqlite3()) {
+				// Serialize the `data` field if it's an object
+				if (typeof entity.data === 'object') {
+					entity.data = JSON.stringify(entity.data);
+				}
+
+				// Serialize `updatedValues`, `previousValues`, `updatedEntities`, `previousEntities` if they are arrays or objects
+				this.serializeFields(entity, [
+					'updatedValues',
+					'previousValues',
+					'updatedEntities',
+					'previousEntities'
+				]);
 			}
 		} catch (error) {
 			// Log the error and reset the data to an empty object if JSON parsing fails
 			console.error('Error stringify data in serializeDataForSQLite:', error);
+			entity.data = '{}';
+			['updatedValues', 'previousValues', 'updatedEntities', 'previousEntities'].forEach((field) => {
+				entity[field] = '{}';
+			});
 		}
 	}
 
@@ -66,14 +107,28 @@ export class ActivityLogSubscriber extends BaseEntityEventSubscriber<ActivityLog
 	 */
 	async afterEntityLoad(entity: ActivityLog, em?: MultiOrmEntityManager): Promise<void> {
 		try {
-			// Check if the database is SQLite and if `data` is a non-null string
-			if ((isSqlite() || isBetterSqlite3()) && entity.data && typeof entity.data === 'string') {
-				entity.data = JSON.parse(entity.data);
+			// Check if the database is SQLite
+			if (isSqlite() || isBetterSqlite3()) {
+				// Parse the `data` field if it's a string
+				if (entity.data && typeof entity.data === 'string') {
+					entity.data = JSON.parse(entity.data);
+				}
+
+				// Parse `updatedValues`, `previousValues`, `updatedEntities`, `previousEntities` if they are strings
+				this.deserializeFields(entity, [
+					'updatedValues',
+					'previousValues',
+					'updatedEntities',
+					'previousEntities'
+				]);
 			}
 		} catch (error) {
-			entity.data = {};
 			// Log the error and reset the data to an empty object if JSON parsing fails
 			console.error('Error parsing JSON data in afterEntityLoad:', error);
+			entity.data = {};
+			['updatedValues', 'previousValues', 'updatedEntities', 'previousEntities'].forEach((field) => {
+				entity[field] = {};
+			});
 		}
 	}
 }

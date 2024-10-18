@@ -1,4 +1,4 @@
-<nb-layout [nbSpinner]="processingStatus.state" [nbSpinnerMessage]="processingStatus.message" nbSpinnerSize="small">
+<nb-layout [nbSpinner]="(processing$ | async)?.state" [nbSpinnerMessage]="(processing$ | async)?.message" nbSpinnerSize="small">
 	<nb-layout-column class="top-space">
 		<button (click)="expand()" class="expand-icon" ghost nbButton status="primary">
 			<nb-icon [icon]="expandIcon"></nb-icon>
@@ -113,7 +113,10 @@
 													<div class="row">
 														<div class="col-6">
 															<button (click)="showImage()" nbButton status="basic">
-																<nb-icon icon="eye" pack="font-awesome"></nb-icon>
+																<nb-icon
+																	[icon]="screenshots.length > 0 ? 'eye' : 'eye-slash'"
+																	pack="font-awesome"
+																></nb-icon>
 															</button>
 														</div>
 														<div class="col-6">

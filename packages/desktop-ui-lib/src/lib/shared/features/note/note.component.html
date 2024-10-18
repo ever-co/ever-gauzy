@@ -5,4 +5,5 @@
 	placeholder="TIMER_TRACKER.DESCRIPTION"
 	[disabled]="disabled$ | async"
 	(modelChange)="change($event)"
+	[hasError]="error$ | async"
 ></gauzy-text-area>

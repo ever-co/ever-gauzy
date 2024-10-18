@@ -3,7 +3,7 @@ import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { IsArray, IsBoolean, IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ActorTypeEnum, CommentEntityEnum, IComment, ID, IEmployee, IOrganizationTeam, IUser } from '@gauzy/contracts';
+import { ActorTypeEnum, BaseEntityEnum, IComment, ID, IEmployee, IOrganizationTeam, IUser } from '@gauzy/contracts';
 import { Employee, OrganizationTeam, TenantOrganizationBaseEntity, User } from '../core/entities/internal';
 import {
 	ColumnIndex,
@@ -13,18 +13,19 @@ import {
 	MultiORMManyToOne,
 	MultiORMOneToMany
 } from '../core/decorators/entity';
+import { ActorTypeTransformerPipe } from '../shared/pipes';
 import { MikroOrmCommentRepository } from './repository/mikro-orm-comment.repository';
 
 @MultiORMEntity('comment', { mikroOrmRepository: () => MikroOrmCommentRepository })
 export class Comment extends TenantOrganizationBaseEntity implements IComment {
 	[EntityRepositoryType]?: MikroOrmCommentRepository;
 
-	@ApiProperty({ type: () => String, enum: CommentEntityEnum })
+	@ApiProperty({ type: () => String, enum: BaseEntityEnum })
 	@IsNotEmpty()
-	@IsEnum(CommentEntityEnum)
+	@IsEnum(BaseEntityEnum)
 	@ColumnIndex()
 	@MultiORMColumn()
-	entity: CommentEntityEnum;
+	entity: BaseEntityEnum;
 
 	// Indicate the ID of entity record commented
 	@ApiProperty({ type: () => String })
@@ -40,12 +41,12 @@ export class Comment extends TenantOrganizationBaseEntity implements IComment {
 	@MultiORMColumn({ type: 'text' })
 	comment: string;
 
-	@ApiPropertyOptional({ type: () => String, enum: ActorTypeEnum })
-	@IsNotEmpty()
+	@ApiPropertyOptional({ enum: ActorTypeEnum })
+	@IsOptional()
 	@IsEnum(ActorTypeEnum)
 	@ColumnIndex()
-	@MultiORMColumn({ nullable: true })
-	actorType?: ActorTypeEnum;
+	@MultiORMColumn({ type: 'int', nullable: true, transformer: new ActorTypeTransformerPipe() })
+	actorType?: ActorTypeEnum; // Will be stored as 0 or 1 in DB
 
 	@ApiPropertyOptional({ type: Boolean })
 	@IsOptional()

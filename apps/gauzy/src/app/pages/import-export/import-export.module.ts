@@ -6,6 +6,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { DialogsModule } from '@gauzy/ui-core/shared';
 import { ImportExportRoutingModule } from './import-export-routing.module';
 import { ImportExportComponent } from './import-export.component';
+import { ExternalRedirectComponent } from './external-redirect/external-redirect.component';
 
 @NgModule({
 	imports: [
@@ -19,7 +20,7 @@ import { ImportExportComponent } from './import-export.component';
 		NgxPermissionsModule.forChild(),
 		TranslateModule.forChild()
 	],
-	declarations: [ImportExportComponent],
+	declarations: [ImportExportComponent, ExternalRedirectComponent],
 	providers: []
 })
 export class ImportExportModule {}

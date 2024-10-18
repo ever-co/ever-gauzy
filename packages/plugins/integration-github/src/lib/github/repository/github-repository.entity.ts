@@ -8,7 +8,14 @@ import {
 	IOrganizationGithubRepositoryIssue
 } from '@gauzy/contracts';
 import { IntegrationTenant, TenantOrganizationBaseEntity } from '@gauzy/core';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from '@gauzy/core';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToOne,
+	MultiORMOneToMany,
+	ColumnNumericTransformerPipe
+} from '@gauzy/core';
 import { MikroOrmOrganizationGithubRepositoryRepository } from './repository/mikro-orm-organization-github-repository.repository';
 import { OrganizationGithubRepositoryIssue } from './issue/github-repository-issue.entity';
 
@@ -19,11 +26,15 @@ export class OrganizationGithubRepository
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationGithubRepository
 {
+	/**
+	 * The ID of the GitHub repository.
+	 * Should be a bigint to accommodate larger IDs.
+	 */
 	@ApiProperty({ type: () => Number })
 	@IsNotEmpty()
 	@IsNumber()
 	@ColumnIndex()
-	@MultiORMColumn({ type: 'bigint' })
+	@MultiORMColumn({ type: 'bigint', transformer: new ColumnNumericTransformerPipe() })
 	repositoryId: number;
 
 	@ApiProperty({ type: () => String })

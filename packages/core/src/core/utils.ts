@@ -725,5 +725,10 @@ export function replacePlaceholders(query: string, dbType: DatabaseTypeEnum): st
 	if ([DatabaseTypeEnum.sqlite, DatabaseTypeEnum.betterSqlite3, DatabaseTypeEnum.mysql].includes(dbType)) {
 		return query.replace(/\$\d+/g, '?');
 	}
+	if ([DatabaseTypeEnum.mysql].includes(dbType)) {
+		// Replace double quotes with backticks for MySQL
+		query = query.replace(/"/g, '`');
+	}
+
 	return query;
 }

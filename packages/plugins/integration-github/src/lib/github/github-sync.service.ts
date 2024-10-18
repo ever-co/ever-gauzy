@@ -443,9 +443,7 @@ export class GithubSyncService {
 
 		try {
 			/** Extract necessary data from integration */
-			const tenantId = integration['tenantId'];
-			const organizationId = integration['organizationId'];
-			const integrationId = integration['id'];
+			const { tenantId, organizationId, id: integrationId } = integration;
 
 			/** Get a list of projects for the repository */
 			const projects = await this._organizationProjectService.getProjectsByGithubRepository(repository.id, {

@@ -3913,6 +3913,7 @@
 		"SELECT_PROJECT": "Select Project",
 		"SELECT_TASK": "Select Task",
 		"SELECT_CLIENT": "Select Client",
+		"SELECT_TEAM": "Select Team",
 		"DATE": "Date",
 		"START_TIME": "Start Time",
 		"END_TIME": "End Time",
@@ -4171,6 +4172,11 @@
 			"WORKED_FOR_MONTH": "Worked this month",
 			"ACTIVITY_FOR_MONTH": "Monthly Activity",
 			"NO_MONTHLY_ACTIVITY": "You have not any tracked time and activity for this month."
+		},
+		"LOADING": {
+			"PLEASE_HOLD": "Please hold...",
+			"SHUTTING_DOWN": "Application is shutting down",
+			"LOGOUT_IN_PROGRESS": "Logout in progress"
 		}
 	},
 	"SERVER": "Server",
@@ -4789,7 +4795,14 @@
 		"FAIL_SIGNIN_SUB_TITLE": "Please initiate the process again.",
 		"THANKING_TEXT": "Thank you for choosing us.",
 		"UNKNOWN_WORKSPACE": "Don't know your workspace?",
-		"FIND_WORKSPACE": "Find your workspaces"
+		"FIND_WORKSPACE": "Find your workspaces",
+		"SELECTION": {
+			"WELCOME_BACK": "Welcome Back!",
+			"YOU_LOOK_NICE_TODAY": "You look nice today!",
+			"EMAIL_MULTIPLE_WORKSPACE": "The email associated with multiple workspaces, please select one to continue",
+			"SELECT_WORKSPACE_FOR": "Select Workspace for",
+			"OPEN": "Open"
+		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Add or Drop Image",

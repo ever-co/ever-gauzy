@@ -5,6 +5,7 @@ import { NbIconModule, NbTooltipModule, NbBadgeModule, NbToggleModule, NbButtonM
 import { TranslateModule } from '@ngx-translate/core';
 import { ComponentsModule } from '../components/components.module';
 import { PipesModule } from '../pipes/pipes.module';
+import { EmployeeLinkEditorComponent, NumberEditorComponent } from './editors';
 import { AllowScreenshotCaptureComponent } from './allow-screenshot-capture/allow-screenshot-capture.component';
 import { AssignedToComponent } from './assigned-to/assigned-to.component';
 import { ClickableLinkComponent } from './clickable-link/clickable-link.component';
@@ -16,7 +17,6 @@ import { CreatedAtComponent } from './created-at/created-at.component';
 import { DateViewComponent } from './date-view/date-view.component';
 import { DocumentDateTableComponent } from './document-date/document-date.component';
 import { DocumentUrlTableComponent } from './document-url/document-url.component';
-import { NumberEditorComponent } from './editors/number-editor.component';
 import { EmailComponent } from './email/email.component';
 import { EmployeeLinksComponent } from './employee-links/employee-links.component';
 import { EmployeeWithLinksComponent } from './employee-with-links/employee-with-links.component';
@@ -86,6 +86,7 @@ import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badg
 		InvoiceTotalValueComponent,
 		NotesWithTagsComponent,
 		NumberEditorComponent,
+		EmployeeLinkEditorComponent,
 		OrganizationWithTagsComponent,
 		PhoneUrlComponent,
 		PictureNameTagsComponent,
