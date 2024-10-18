@@ -20,9 +20,9 @@
     &:hover {
       box-shadow: 0px 36px 18px -24px rgba(0, 0, 0, 0.15);
     }
-	&.danger-bordered {
-		border: 2px solid nb-theme(color-danger-500) !important;
-	}
+    &.danger-bordered {
+      border: 2px solid nb-theme(color-danger-500) !important;
+    }
   }
   .curser-pointer {
     cursor: pointer;
@@ -116,7 +116,7 @@
       }
     }
   }
-  .no-activity{
+  .no-activity {
     background-color: var(--gauzy-sidebar-background-4);
     border-radius: var(--border-radius);
   }
@@ -130,13 +130,13 @@
 }
 
 ::ng-deep {
-	.cdk-overlay-container {
-		nb-overlay-container {
-			nb-list {
-				overflow: hidden !important;
-			}
-		}
-	}
+  .cdk-overlay-container {
+    nb-overlay-container {
+      nb-list {
+        overflow: hidden !important;
+      }
+    }
+  }
 }
 
 .slot-info {
@@ -147,10 +147,15 @@
   text-align: left;
 
   .caption {
-		font-size: 11px;
-		font-weight: 400;
-		line-height: 11px;
-		letter-spacing: 0em;
-		color: var(--gauzy-text-color-2);
-	}
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 11px;
+    letter-spacing: 0em;
+    color: var(--gauzy-text-color-2);
+  }
+
+  .inline-timespan {
+    white-space: nowrap;
+    font-size: 0.75rem;
+  }
 }
