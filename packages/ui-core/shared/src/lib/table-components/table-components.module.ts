@@ -7,7 +7,7 @@ import { ComponentsModule } from '../components/components.module';
 import { PipesModule } from '../pipes/pipes.module';
 import {
 	EmployeeLinkEditorComponent,
-	JobSearchAvailabilityComponent,
+	JobSearchAvailabilityEditorComponent,
 	NonEditableNumberEditorComponent,
 	NumberEditorComponent
 } from './editors';
@@ -111,7 +111,7 @@ import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badg
 		ValueWithUnitComponent,
 		VisibilityComponent,
 		NonEditableNumberEditorComponent,
-		JobSearchAvailabilityComponent
+		JobSearchAvailabilityEditorComponent
 	],
 	exports: [
 		AllowScreenshotCaptureComponent,

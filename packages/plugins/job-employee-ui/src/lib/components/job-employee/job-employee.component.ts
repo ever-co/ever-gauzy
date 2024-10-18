@@ -31,7 +31,7 @@ import {
 	PaginationFilterBaseComponent,
 	SmartTableToggleComponent,
 	NonEditableNumberEditorComponent,
-	JobSearchAvailabilityComponent
+	JobSearchAvailabilityEditorComponent
 } from '@gauzy/ui-core/shared';
 
 /**
@@ -331,7 +331,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			},
 			editor: {
 				type: 'custom',
-				component: JobSearchAvailabilityComponent
+				component: JobSearchAvailabilityEditorComponent
 			}
 		});
 	}

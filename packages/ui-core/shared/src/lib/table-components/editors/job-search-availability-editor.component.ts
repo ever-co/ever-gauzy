@@ -13,7 +13,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 		></nb-toggle>
 	</div>`
 })
-export class JobSearchAvailabilityComponent extends DefaultEditor implements OnInit {
+export class JobSearchAvailabilityEditorComponent extends DefaultEditor implements OnInit {
 	private _checked$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	@Input() cell!: Cell;
 	@Output() toggleChange: EventEmitter<boolean> = new EventEmitter();
