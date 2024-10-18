@@ -1,9 +1,14 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, QueryParamsHandling } from '@angular/router';
-import { tap } from 'rxjs/operators';
+import { Observable, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { PermissionsEnum } from '@gauzy/contracts';
-import { PageTabRegistryService, PageTabsetRegistryId, RouteUtil } from '@gauzy/ui-core/core';
+import { IDateRangePicker, PermissionsEnum } from '@gauzy/contracts';
+import {
+	DateRangePickerBuilderService,
+	PageTabRegistryService,
+	PageTabsetRegistryId,
+	RouteUtil
+} from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -15,12 +20,14 @@ import { PageTabRegistryService, PageTabsetRegistryId, RouteUtil } from '@gauzy/
 export class ActivityLayoutComponent implements OnInit, OnDestroy {
 	public title: string;
 	public tabsetId: PageTabsetRegistryId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
+	public selectedDateRange$: Observable<IDateRangePicker> = this._dateRangePickerBuilderService.selectedDateRange$;
 
 	constructor(
 		private readonly _route: ActivatedRoute,
 		private readonly _cdr: ChangeDetectorRef,
 		private readonly _routeUtil: RouteUtil,
-		private readonly _pageTabRegistryService: PageTabRegistryService
+		private readonly _pageTabRegistryService: PageTabRegistryService,
+		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {}
 
 	ngOnInit(): void {

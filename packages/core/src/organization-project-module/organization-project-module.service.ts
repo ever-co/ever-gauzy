@@ -1,9 +1,7 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { EventBus } from '@nestjs/cqrs';
 import { Brackets, FindManyOptions, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
 import {
-	ActionTypeEnum,
-	EntityEnum,
+	BaseEntityEnum,
 	ActorTypeEnum,
 	ID,
 	IOrganizationProjectModule,
@@ -12,16 +10,16 @@ import {
 	IOrganizationProjectModuleUpdateInput,
 	IPagination,
 	PermissionsEnum,
-	ProjectModuleStatusEnum
+	ProjectModuleStatusEnum,
+	ActionTypeEnum
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { isPostgres } from '@gauzy/config';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
-import { ActivityLogEvent } from '../activity-log/events';
-import { activityLogUpdatedFieldsAndValues, generateActivityLogDescription } from '../activity-log/activity-log.helper';
 import { OrganizationProjectModule } from './organization-project-module.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import { TypeOrmOrganizationProjectModuleRepository } from './repository/type-orm-organization-project-module.repository';
 import { MikroOrmOrganizationProjectModuleRepository } from './repository/mikro-orm-organization-project-module.repository';
 
@@ -30,7 +28,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 	constructor(
 		readonly typeOrmProjectModuleRepository: TypeOrmOrganizationProjectModuleRepository,
 		readonly mikroOrmProjectModuleRepository: MikroOrmOrganizationProjectModuleRepository,
-		private readonly _eventBus: EventBus
+		private readonly activityLogService: ActivityLogService
 	) {
 		super(typeOrmProjectModuleRepository, mikroOrmProjectModuleRepository);
 	}
@@ -46,33 +44,24 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		const { organizationId } = entity;
 
 		try {
-			const module = await super.create({
+			const projectModule = await super.create({
 				...entity,
 				creatorId
 			});
 
-			// Generate the activity log description
-			const description = generateActivityLogDescription(
+			// Generate the activity log
+			this.activityLogService.logActivity<OrganizationProjectModule>(
+				BaseEntityEnum.OrganizationProjectModule,
 				ActionTypeEnum.Created,
-				EntityEnum.OrganizationProjectModule,
-				module.name
+				ActorTypeEnum.User,
+				projectModule.id,
+				projectModule.name,
+				projectModule,
+				organizationId,
+				tenantId
 			);
 
-			// Emit an event to log the activity
-			this._eventBus.publish(
-				new ActivityLogEvent({
-					entity: EntityEnum.OrganizationProjectModule,
-					entityId: module.id,
-					action: ActionTypeEnum.Created,
-					actorType: ActorTypeEnum.User,
-					description,
-					data: module,
-					organizationId,
-					tenantId
-				})
-			);
-
-			return module;
+			return projectModule;
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -93,54 +82,41 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 
 		try {
 			// Retrieve existing module.
-			const existingModule = await this.findOneByIdString(id, {
+			const existingProjectModule = await this.findOneByIdString(id, {
 				relations: {
 					members: true,
 					manager: true
 				}
 			});
 
-			if (!existingModule) {
+			if (!existingProjectModule) {
 				throw new BadRequestException('Module not found');
 			}
 
 			// Update module with new values
-			const updatedModule = await super.create({
+			const updatedProjectModule = await super.create({
 				...entity,
 				id
 			});
 
-			// Generate the activity log description
-			const description = generateActivityLogDescription(
-				ActionTypeEnum.Updated,
-				EntityEnum.OrganizationProjectModule,
-				updatedModule.name
-			);
+			// Generate the activity log
+			const { organizationId } = updatedProjectModule;
 
-			const { updatedFields, previousValues, updatedValues } = activityLogUpdatedFieldsAndValues(
-				updatedModule,
+			this.activityLogService.logActivity<OrganizationProjectModule>(
+				BaseEntityEnum.OrganizationProjectModule,
+				ActionTypeEnum.Updated,
+				ActorTypeEnum.User,
+				updatedProjectModule.id,
+				updatedProjectModule.name,
+				updatedProjectModule,
+				organizationId,
+				tenantId,
+				existingProjectModule,
 				entity
 			);
 
-			// Emit an event to log the activity
-			this._eventBus.publish(
-				new ActivityLogEvent({
-					entity: EntityEnum.OrganizationProjectModule,
-					entityId: updatedModule.id,
-					action: ActionTypeEnum.Updated,
-					actorType: ActorTypeEnum.User,
-					description,
-					updatedFields,
-					updatedValues,
-					previousValues,
-					data: updatedModule,
-					organizationId: updatedModule.organizationId,
-					tenantId
-				})
-			);
-
 			// return updated Module
-			return updatedModule;
+			return updatedProjectModule;
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

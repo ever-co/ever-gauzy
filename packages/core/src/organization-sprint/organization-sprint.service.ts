@@ -1,16 +1,14 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { EventBus } from '@nestjs/cqrs';
 import {
-	ActionTypeEnum,
-	EntityEnum,
+	BaseEntityEnum,
 	ActorTypeEnum,
-	IActivityLogUpdatedValues,
 	ID,
 	IEmployee,
 	IOrganizationSprint,
 	IOrganizationSprintCreateInput,
 	IOrganizationSprintUpdateInput,
-	RolesEnum
+	RolesEnum,
+	ActionTypeEnum
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
@@ -18,10 +16,9 @@ import { RequestContext } from '../core/context';
 import { OrganizationSprintEmployee } from '../core/entities/internal';
 import { FavoriteService } from '../core/decorators';
 // import { prepareSQLQuery as p } from './../database/database.helper';
-import { ActivityLogEvent } from '../activity-log/events';
-import { generateActivityLogDescription } from '../activity-log/activity-log.helper';
 import { RoleService } from '../role/role.service';
 import { EmployeeService } from '../employee/employee.service';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import { OrganizationSprint } from './organization-sprint.entity';
 import { TypeOrmEmployeeRepository } from '../employee/repository';
 import {
@@ -31,7 +28,7 @@ import {
 	TypeOrmOrganizationSprintRepository
 } from './repository';
 
-@FavoriteService(EntityEnum.OrganizationSprint)
+@FavoriteService(BaseEntityEnum.OrganizationSprint)
 @Injectable()
 export class OrganizationSprintService extends TenantAwareCrudService<OrganizationSprint> {
 	constructor(
@@ -42,7 +39,7 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		private readonly _roleService: RoleService,
 		private readonly _employeeService: EmployeeService,
-		private readonly _eventBus: EventBus
+		private readonly activityLogService: ActivityLogService
 	) {
 		super(typeOrmOrganizationSprintRepository, mikroOrmOrganizationSprintRepository);
 	}
@@ -116,25 +113,16 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 				tenantId
 			});
 
-			// Generate the activity log description.
-			const description = generateActivityLogDescription(
+			// Generate the activity log
+			this.activityLogService.logActivity<OrganizationSprint>(
+				BaseEntityEnum.OrganizationSprint,
 				ActionTypeEnum.Created,
-				EntityEnum.OrganizationSprint,
-				sprint.name
-			);
-
-			// Emit an event to log the activity
-			this._eventBus.publish(
-				new ActivityLogEvent({
-					entity: EntityEnum.OrganizationSprint,
-					entityId: sprint.id,
-					action: ActionTypeEnum.Created,
-					actorType: ActorTypeEnum.User,
-					description,
-					data: sprint,
-					organizationId,
-					tenantId
-				})
+				ActorTypeEnum.User,
+				sprint.id,
+				sprint.name,
+				sprint,
+				organizationId,
+				tenantId
 			);
 
 			return sprint;
@@ -161,7 +149,7 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 
 		try {
 			// Search for existing Organization Sprint
-			let organizationSprint = await super.findOneByIdString(id, {
+			const organizationSprint = await super.findOneByIdString(id, {
 				where: { organizationId, tenantId, projectId },
 				relations: {
 					members: true,
@@ -193,43 +181,18 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 					id: organizationSprintId
 				});
 
-				const description = generateActivityLogDescription(
+				// Generate the activity log
+				this.activityLogService.logActivity<OrganizationSprint>(
+					BaseEntityEnum.OrganizationSprint,
 					ActionTypeEnum.Updated,
-					EntityEnum.OrganizationSprint,
-					updatedSprint.name
-				);
-
-				// Compare values before and after update then add updates to fields
-				const updatedFields = [];
-				const previousValues: IActivityLogUpdatedValues[] = [];
-				const updatedValues: IActivityLogUpdatedValues[] = [];
-
-				for (const key of Object.keys(input)) {
-					if (organizationSprint[key] !== input[key]) {
-						// Add updated field
-						updatedFields.push(key);
-
-						// Add old and new values
-						previousValues.push({ [key]: organizationSprint[key] });
-						updatedValues.push({ [key]: updatedSprint[key] });
-					}
-				}
-
-				// Emit event to log activity
-				this._eventBus.publish(
-					new ActivityLogEvent({
-						entity: EntityEnum.OrganizationSprint,
-						entityId: updatedSprint.id,
-						action: ActionTypeEnum.Updated,
-						actorType: ActorTypeEnum.User,
-						description,
-						updatedFields,
-						updatedValues,
-						previousValues,
-						data: updatedSprint,
-						organizationId,
-						tenantId
-					})
+					ActorTypeEnum.User,
+					updatedSprint.id,
+					updatedSprint.name,
+					updatedSprint,
+					organizationId,
+					tenantId,
+					organizationSprint,
+					input
 				);
 
 				// return updated sprint

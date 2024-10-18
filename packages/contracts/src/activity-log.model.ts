@@ -1,11 +1,17 @@
-import { ActorTypeEnum, EntityEnum, IBasePerTenantAndOrganizationEntityModel, ID, JsonData } from './base-entity.model';
+import {
+	ActorTypeEnum,
+	BaseEntityEnum,
+	IBasePerTenantAndOrganizationEntityModel,
+	ID,
+	JsonData
+} from './base-entity.model';
 import { IUser } from './user.model';
 
 /**
  * Interface representing an activity log entry.
  */
 export interface IActivityLog extends IBasePerTenantAndOrganizationEntityModel {
-	entity: EntityEnum; // Entity / Table name concerned by activity log
+	entity: BaseEntityEnum; // Entity / Table name concerned by activity log
 	entityId: ID; // The ID of the element we are interacting with (a task, an organization, an employee, ...)
 	action: ActionTypeEnum;
 	actorType?: ActorTypeEnum;

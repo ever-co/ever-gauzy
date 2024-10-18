@@ -3788,6 +3788,7 @@
 		"SELECT_PROJECT": "Wybierz projekt",
 		"SELECT_TASK": "Wybierz zadanie",
 		"SELECT_CLIENT": "Wybierz Klienta",
+		"SELECT_TEAM": "Wybierz zespół",
 		"DATE": "Data",
 		"START_TIME": "Czas rozpoczęcia",
 		"END_TIME": "Czas zakończenia",
@@ -4044,6 +4045,11 @@
 			"NO_MONTHLY_ACTIVITY": "Nie masz śledzonego czasu i aktywności na ten miesiąc.",
 			"WORKED_FOR_MONTH": "Pracowano w tym miesiącu",
 			"ACTIVITY_FOR_MONTH": "Miesięczna Aktywność"
+		},
+		"LOADING": {
+			"PLEASE_HOLD": "Proszę czekać...",
+			"SHUTTING_DOWN": "Aplikacja się zamyka",
+			"LOGOUT_IN_PROGRESS": "Wylogowywanie w toku"
 		}
 	},
 	"SERVER": "Serwer",
@@ -4640,7 +4646,14 @@
 		"FAIL_SIGNIN_SUB_TITLE": "Proszę rozpocznij proces ponownie.",
 		"THANKING_TEXT": "Dziękujemy, że nas wybrałeś.",
 		"UNKNOWN_WORKSPACE": "Nie wiesz, gdzie jest twoja przestrzeń robocza?",
-		"FIND_WORKSPACE": "Znajdź swoje przestrzenie robocze"
+		"FIND_WORKSPACE": "Znajdź swoje przestrzenie robocze",
+		"SELECTION": {
+			"WELCOME_BACK": "Witamy ponownie!",
+			"YOU_LOOK_NICE_TODAY": "Dziś wyglądasz świetnie!",
+			"EMAIL_MULTIPLE_WORKSPACE": "E-mail jest powiązany z wieloma przestrzeniami roboczymi, wybierz jedną, aby kontynuować",
+			"SELECT_WORKSPACE_FOR": "Wybierz przestrzeń roboczą dla",
+			"OPEN": "Otwórz"
+		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Dodaj lub usuń obraz",

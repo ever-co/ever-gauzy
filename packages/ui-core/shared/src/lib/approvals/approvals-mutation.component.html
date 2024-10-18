@@ -1,8 +1,6 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex flex-column">
-		<span class="cancel"
-			><i class="fas fa-times" (click)="closeDialog()"></i
-		></span>
+		<span class="cancel"><i class="fas fa-times" (click)="closeDialog()"></i></span>
 		<h5 class="title">
 			{{
 				(requestApproval
@@ -13,37 +11,21 @@
 		</h5>
 	</nb-card-header>
 	<nb-card-body class="body">
-		<form
-			[formGroup]="form"
-			(ngSubmit)="onSubmit()"
-			#formDirective="ngForm"
-		>
+		<form [formGroup]="form" (ngSubmit)="onSubmit()" #formDirective="ngForm">
 			<div class="row">
 				<div class="col-12 mb-3">
 					<label for="name" class="label">
-						{{
-							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME'
-								| translate
-						}}
+						{{ 'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME' | translate }}
 					</label>
 					<input
 						nbInput
 						type="text"
 						formControlName="name"
 						fullWidth
-						[placeholder]="
-							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME'
-								| translate
-						"
+						[placeholder]="'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME' | translate"
 						[ngClass]="{
-							'status-danger': FormHelpers.isInvalidControl(
-								form,
-								'name'
-							),
-							'status-success': FormHelpers.isValidControl(
-								form,
-								'name'
-							)
+							'status-danger': FormHelpers.isInvalidControl(form, 'name'),
+							'status-success': FormHelpers.isValidControl(form, 'name')
 						}"
 					/>
 				</div>
@@ -52,10 +34,7 @@
 			<div class="row">
 				<div class="col-sm-6 mb-3">
 					<label for="min_count" class="label">
-						{{
-							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_MIN_COUNT'
-								| translate
-						}}
+						{{ 'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_MIN_COUNT' | translate }}
 					</label>
 					<input
 						nbInput
@@ -63,32 +42,21 @@
 						[min]="0"
 						formControlName="min_count"
 						fullWidth
-						[placeholder]="
-							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_MIN_COUNT'
-								| translate
-						"
+						[placeholder]="'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_MIN_COUNT' | translate"
 					/>
 				</div>
 				<div class="col-sm-6 mb-3">
 					<label for="Approval Policy" class="label">
-						{{
-							'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_APPROVAL_POLICY'
-								| translate
-						}}
+						{{ 'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_APPROVAL_POLICY' | translate }}
 					</label>
 					<nb-select
 						formControlName="approvalPolicyId"
 						[selected]="selectedApprovalPolicy"
 						(selectedChange)="onApprovalPolicySelected($event)"
 						fullWidth
-						placeholder="{{
-							'APPROVAL_REQUEST_PAGE.CHOOSE_POLICIES' | translate
-						}}"
+						placeholder="{{ 'APPROVAL_REQUEST_PAGE.CHOOSE_POLICIES' | translate }}"
 					>
-						<nb-option
-							*ngFor="let approvalPolicy of approvalPolicies"
-							[value]="approvalPolicy.id"
-						>
+						<nb-option *ngFor="let approvalPolicy of approvalPolicies" [value]="approvalPolicy.id">
 							{{ approvalPolicy.name }}</nb-option
 						>
 					</nb-select>
@@ -96,53 +64,23 @@
 			</div>
 			<div class="row">
 				<div class="col-sm-12 mb-3">
-					<nb-radio-group
-						(valueChange)="onParticipantsChange($event)"
-						[value]="participants"
-					>
-						<nb-radio [value]="'employees'"
-							>{{ 'APPROVAL_REQUEST_PAGE.EMPLOYEES' | translate }}
-						</nb-radio>
-						<nb-radio [value]="'teams'"
-							>{{ 'APPROVAL_REQUEST_PAGE.TEAMS' | translate }}
-						</nb-radio>
+					<nb-radio-group (valueChange)="onParticipantsChange($event)" [value]="participants">
+						<nb-radio [value]="'employees'">{{ 'APPROVAL_REQUEST_PAGE.EMPLOYEES' | translate }} </nb-radio>
+						<nb-radio [value]="'teams'">{{ 'APPROVAL_REQUEST_PAGE.TEAMS' | translate }} </nb-radio>
 					</nb-radio-group>
 				</div>
 			</div>
 			<div class="row">
-				<div
-					class="col-sm-12 mb-3"
-					*ngIf="participants === 'employees'"
-				>
+				<div class="col-sm-12 mb-3" *ngIf="participants === 'employees'">
 					<label for="employees" class="label">
 						{{ 'APPROVAL_REQUEST_PAGE.EMPLOYEES' | translate }}
 					</label>
-					<nb-select
-						formControlName="employees"
-						multiple
-						[selected]="selectedEmployees"
-						[(ngModel)]="selectedEmployees"
+					<ga-employee-multi-select
+						[selectedEmployeeIds]="selectedEmployees"
+						[allEmployees]="employees"
 						(selectedChange)="onEmployeesSelected($event)"
-						fullWidth
-						placeholder="{{
-							'FORM.PLACEHOLDERS.CHOOSE_EMPLOYEES' | translate
-						}}"
 					>
-						<nb-option
-							*ngFor="let employee of employees"
-							[value]="employee.id"
-						>
-							<img
-								src="{{ employee.user.imageUrl }}"
-								alt="Employee picture"
-								height="40"
-								width="40"
-								style="margin-right: 10px"
-							/>
-							{{ employee.user.firstName }}
-							{{ employee.user.lastName }}</nb-option
-						>
-					</nb-select>
+					</ga-employee-multi-select>
 				</div>
 				<div class="col-sm-12 mb-3" *ngIf="participants === 'teams'">
 					<label for="teams" class="label">
@@ -155,13 +93,9 @@
 						[(ngModel)]="selectedTeams"
 						(selectedChange)="onTeamsSelected($event)"
 						fullWidth
-						placeholder="{{
-							'FORM.PLACEHOLDERS.CHOOSE_TEAMS' | translate
-						}}"
+						placeholder="{{ 'FORM.PLACEHOLDERS.CHOOSE_TEAMS' | translate }}"
 					>
-						<nb-option *ngFor="let team of teams" [value]="team.id">
-							{{ team.name }}</nb-option
-						>
+						<nb-option *ngFor="let team of teams" [value]="team.id"> {{ team.name }}</nb-option>
 					</nb-select>
 				</div>
 				<div class="col-sm-12 mb-3">
@@ -179,13 +113,7 @@
 	</nb-card-body>
 
 	<nb-card-footer class="text-left">
-		<button
-			(click)="dialogRef.close()"
-			status="basic"
-			outline
-			class="mr-3"
-			nbButton
-		>
+		<button (click)="dialogRef.close()" status="basic" outline class="mr-3" nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button

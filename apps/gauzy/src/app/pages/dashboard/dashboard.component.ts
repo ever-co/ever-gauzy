@@ -1,7 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { filter, tap } from 'rxjs/operators';
-import { NbRouteTab } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ISelectedEmployee, PermissionsEnum } from '@gauzy/contracts';
@@ -16,7 +15,6 @@ import { DynamicTabsComponent } from '@gauzy/ui-core/shared';
 	styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	public tabs: NbRouteTab[] = [];
 	public tabsetId: PageTabsetRegistryId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
 	public selectedEmployee: ISelectedEmployee;
 
@@ -42,6 +40,7 @@ export class DashboardComponent extends TranslationBaseComponent implements OnIn
 			tap(() => this.registerAccountingTabs()),
 			untilDestroyed(this)
 		);
+
 		// Subscribe to the store employee observable
 		storeEmployee$.subscribe();
 	}
@@ -146,8 +145,5 @@ export class DashboardComponent extends TranslationBaseComponent implements OnIn
 	/**
 	 * Clears the registry when the component is destroyed.
 	 */
-	ngOnDestroy() {
-		// Delete the dashboard tabset from the registry
-		this._pageTabRegistryService.deleteTabset(this.tabsetId);
-	}
+	ngOnDestroy() {}
 }

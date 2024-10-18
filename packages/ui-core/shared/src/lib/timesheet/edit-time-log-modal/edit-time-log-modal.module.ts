@@ -19,6 +19,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { DialogsModule } from '../../dialogs/dialogs.module';
 import { ProjectSelectModule } from '../../selectors/project';
+import { TeamSelectModule } from '../../selectors/team';
 import { EditTimeLogModalComponent } from './edit-time-log-modal.component';
 import { TimerPickerModule } from '../../timer-picker/timer-picker.module';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
@@ -50,6 +51,7 @@ import { TaskSelectModule } from '../../tasks/task-select/task-select.module';
 		TimerPickerModule,
 		TaskSelectModule,
 		ProjectSelectModule,
+		TeamSelectModule,
 		EmployeeMultiSelectModule,
 		ContactSelectorModule
 	]
