@@ -1,6 +1,7 @@
 // @import 'themes';
 .top-bottom-space {
 	padding: 0px !important;
+	margin-top: 28px;
 }
 :host {
 	nb-icon {
@@ -10,7 +11,7 @@
 	.gallery-inner {
 		display: flex;
 		flex-direction: column;
-		height: 100vh;
+		height: calc(100vh - 28px);
 		width: 100%;
 		gap: 8px;
 		padding: 8px;
