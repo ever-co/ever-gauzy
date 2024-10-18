@@ -93,7 +93,7 @@
 		</ng-template>
 		<div class="slot-info text-left p-3">
 			<div class="time-span mb-4 mt-1 hour-label">
-				<div class="inline-timespan">
+				<div class="inline-time-span">
 					{{ timeSlot.startedAt | utcToTimezone : timezone | timeFormat : this.timeFormat }} -
 					{{ timeSlot.stoppedAt | utcToTimezone : timezone | timeFormat : this.timeFormat }}
 				</div>
