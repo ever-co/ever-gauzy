@@ -6,6 +6,7 @@ import { ITaskStatus } from '@gauzy/contracts';
 	selector: 'ga-task-status-select-filter',
 	template: `
 		<ga-task-status-select
+			[defaultSelected]="false"
 			[addTag]="false"
 			[placeholder]="'TASKS_PAGE.TASKS_STATUS' | translate"
 			(onChanged)="onChange($event)"

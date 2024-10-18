@@ -15,16 +15,11 @@ import { createActivityRoutes } from './activity.routes';
 import { ActivityLayoutComponent } from './layout/layout.component';
 import { AppUrlActivityComponent } from './app-url-activity/app-url-activity.component';
 
-// Nebular Modules
-const NB_MODULES = [NbCardModule, NbSpinnerModule];
-
-// Components
-const COMPONENTS = [AppUrlActivityComponent];
-
 @NgModule({
 	imports: [
 		RouterModule.forChild([]),
-		...NB_MODULES,
+		NbCardModule,
+		NbSpinnerModule,
 		TranslateModule.forChild(),
 		ActivityItemModule,
 		DynamicTabsModule,
@@ -32,7 +27,7 @@ const COMPONENTS = [AppUrlActivityComponent];
 		NoDataMessageModule,
 		SharedModule
 	],
-	declarations: [ActivityLayoutComponent, ...COMPONENTS],
+	declarations: [ActivityLayoutComponent, AppUrlActivityComponent],
 	providers: [
 		{
 			provide: ROUTES,

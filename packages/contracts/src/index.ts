@@ -146,7 +146,7 @@ export {
 	IBaseRelationsEntityModel,
 	ActorTypeEnum,
 	JsonData,
-	EntityEnum
+	BaseEntityEnum
 } from './base-entity.model';
 
 export * from './proxy.model';

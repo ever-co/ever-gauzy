@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
+import { DateRangePickerBuilderService } from '@gauzy/ui-core/core';
 import { DateFormatPipe } from '../../pipes';
 
 @UntilDestroy({ checkProperties: true })
@@ -19,47 +20,47 @@ import { DateFormatPipe } from '../../pipes';
 	]
 })
 export class DateRangeTitleComponent {
-	/*
-	 * Getter & Setter for start element
+	/**
+	 * @Input start: Date
+	 * Represents the starting date for a given time range or period.
+	 * This value is passed from the parent component and used for time-related calculations or display.
 	 */
-	private _start: Date;
-	get start(): Date {
-		return this._start;
-	}
-	@Input() set start(start: Date) {
-		this._start = start;
-	}
+	@Input() start: Date;
 
-	/*
-	 * Getter & Setter for end element
+	/**
+	 * @Input end: Date
+	 * Represents the ending date for a given time range or period.
+	 * This value is passed from the parent component and is used to define the endpoint of a time range.
 	 */
-	private _end: Date;
-	get end(): Date {
-		return this._end;
-	}
-	@Input() set end(end: Date) {
-		this._end = end;
-	}
+	@Input() end: Date;
 
-	/*
-	 * Getter & Setter for default format
+	/**
+	 * @Input format: string
+	 * Represents the format to be used for displaying the date values.
+	 * This could define how the `start` and `end` dates are displayed (e.g., 'MM/DD/YYYY', 'YYYY-MM-DD').
 	 */
-	private _format: string;
-	get format(): string {
-		return this._format;
-	}
-	@Input() set format(format: string) {
-		this._format = format;
-	}
+	@Input() format: string;
 
-	constructor(private readonly dateFormatPipe: DateFormatPipe) {}
+	constructor(
+		readonly _dateFormatPipe: DateFormatPipe,
+		readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
+	) {}
 
 	/**
 	 * GET date range title
 	 */
-	get title() {
-		const start = this.dateFormatPipe.transform(this.start, null, this.format);
-		const end = this.dateFormatPipe.transform(this.end, null, this.format);
-		return [start, end].filter(Boolean).join(' - ');
+	get title(): string {
+		// Destructure the date range for start and end dates
+		const { startDate, endDate } = this._dateRangePickerBuilderService.selectedDateRange;
+
+		// Check if it’s a single date picker
+		const isSingleDatePicker = this._dateRangePickerBuilderService.datePickerConfig.isSingleDatePicker;
+
+		// Use provided `start` and `end` or fallback to the default range values
+		const start = this._dateFormatPipe.transform(this.start || startDate, null, this.format);
+		const end = this._dateFormatPipe.transform(this.end || endDate, null, this.format);
+
+		// If it's a single date picker, return only the start date, otherwise return the date range
+		return isSingleDatePicker ? start : [start, end].filter(Boolean).join(' - ');
 	}
 }

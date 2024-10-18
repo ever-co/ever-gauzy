@@ -1,9 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { NbRouteTab } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { PermissionsEnum } from '@gauzy/contracts';
-import { PageTabRegistryService, PageTabsetRegistryId } from '@gauzy/ui-core/core';
+import { Observable } from 'rxjs';
+import { IDateRangePicker, PermissionsEnum } from '@gauzy/contracts';
+import { DateRangePickerBuilderService, PageTabRegistryService, PageTabsetRegistryId } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @Component({
@@ -12,13 +12,14 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 	styleUrls: ['./layout.component.scss']
 })
 export class TimesheetLayoutComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	public tabs: NbRouteTab[] = [];
 	public tabsetId: PageTabsetRegistryId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
+	public selectedDateRange$: Observable<IDateRangePicker> = this._dateRangePickerBuilderService.selectedDateRange$;
 
 	constructor(
 		public readonly translateService: TranslateService,
 		private readonly _route: ActivatedRoute,
-		private readonly _pageTabRegistryService: PageTabRegistryService
+		private readonly _pageTabRegistryService: PageTabRegistryService,
+		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		super(translateService);
 	}
@@ -100,8 +101,5 @@ export class TimesheetLayoutComponent extends TranslationBaseComponent implement
 		});
 	}
 
-	ngOnDestroy(): void {
-		// Delete the timesheet tabset from the registry
-		this._pageTabRegistryService.deleteTabset(this.tabsetId);
-	}
+	ngOnDestroy(): void {}
 }

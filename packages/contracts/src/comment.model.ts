@@ -1,10 +1,10 @@
-import { ActorTypeEnum, IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
+import { ActorTypeEnum, BaseEntityEnum, IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IUser } from './user.model';
 import { IEmployee } from './employee.model';
 import { IOrganizationTeam } from './organization-team.model';
 
 export interface IComment extends IBasePerTenantAndOrganizationEntityModel {
-	entity: CommentEntityEnum;
+	entity: BaseEntityEnum;
 	entityId: ID; // Indicate the ID of entity record comment related to
 	comment: string;
 	creator?: IUser;
@@ -22,27 +22,9 @@ export interface IComment extends IBasePerTenantAndOrganizationEntityModel {
 	replies?: IComment[];
 }
 
-export enum CommentEntityEnum {
-	Contact = 'Contact',
-	Employee = 'Employee',
-	Expense = 'Expense',
-	DailyPlan = 'DailyPlan',
-	Invoice = 'Invoice',
-	Income = 'Income',
-	Organization = 'Organization',
-	OrganizationContact = 'OrganizationContact',
-	OrganizationDepartment = 'OrganizationDepartment',
-	OrganizationDocument = 'OrganizationDocument',
-	OrganizationProject = 'OrganizationProject',
-	OrganizationTeam = 'OrganizationTeam',
-	OrganizationProjectModule = 'OrganizationProjectModule',
-	OrganizationSprint = 'OrganizationSprint',
-	Task = 'Task'
-}
-
 export interface ICommentCreateInput {
 	comment: string;
-	entity: CommentEntityEnum;
+	entity: BaseEntityEnum;
 	entityId: ID;
 	parentId?: ID;
 	members?: IEmployee[];

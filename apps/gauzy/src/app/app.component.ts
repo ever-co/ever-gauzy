@@ -235,7 +235,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 	getPreferredLanguage(): void {
 		this._i18nService.preferredLanguage$
 			.pipe(
-				tap((preferredLanguage: string) => this._translateService.use(preferredLanguage)),
+				tap((lang: string) => this._translateService.use(lang)),
 				untilDestroyed(this)
 			)
 			.subscribe();

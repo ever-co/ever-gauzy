@@ -27,4 +27,12 @@ export class NoteService {
 			map(([disabled, noteDisabled]) => disabled || noteDisabled)
 		);
 	}
+
+	public setError<T>(error: T): void {
+		this.store.setError(error);
+	}
+
+	public get selected(): string {
+		return this.note;
+	}
 }

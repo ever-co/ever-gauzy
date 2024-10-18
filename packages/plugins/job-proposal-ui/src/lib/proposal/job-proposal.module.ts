@@ -31,7 +31,8 @@ import {
 	UserFormsModule,
 	TableComponentsModule,
 	TagsColorInputModule,
-	DateRangePickerResolver
+	DateRangePickerResolver,
+	getBrowserLanguage
 } from '@gauzy/ui-core/shared';
 import { createProposalsRoutes } from './job-proposal.routes';
 import { COMPONENTS, ProposalDetailsComponent, ProposalEditComponent, ProposalRegisterComponent } from './components';
@@ -71,6 +72,7 @@ const THIRD_PARTY_MODULES = [
 	NgSelectModule,
 	NgxPermissionsModule.forRoot(),
 	TranslateModule.forRoot({
+		defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
 		loader: {
 			provide: TranslateLoader,
 			useFactory: HttpLoaderFactory,

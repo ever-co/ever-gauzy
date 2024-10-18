@@ -116,6 +116,7 @@
 					</nb-checkbox>
 				</div>
 			</div>
+
 			<div class="form-group">
 				<div class="col-12 d-flex">
 					<div class="mr-3">
@@ -135,7 +136,7 @@
 							</div>
 						</div>
 					</div>
-					<div>
+					<div class="ml-3">
 						<label>{{ 'TIMER_TRACKER.SELECT_PROJECT' | translate }}</label>
 						<ga-project-selector
 							name="projectId"
@@ -154,6 +155,21 @@
 							</div>
 						</div>
 					</div>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<div class="col-6">
+					<label>{{ 'TIMER_TRACKER.SELECT_TEAM' | translate }}</label>
+					<ga-team-selector
+						formControlName="organizationTeamId"
+						[skipGlobalChange]="true"
+						[showAllOption]="false"
+						[defaultSelected]="false"
+						[placeholder]="'TIMER_TRACKER.SELECT_TEAM' | translate"
+						[employeeId]="getControlValue('employeeId')"
+						[projectId]="getControlValue('projectId')"
+					></ga-team-selector>
 				</div>
 			</div>
 

@@ -276,8 +276,6 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 				tap((projectId: ID | null) => {
 					if (projectId) {
 						this.selectProjectById(projectId);
-					} else {
-						console.warn('Project ID is missing or projects could not be retrieved.');
 					}
 				}),
 				// Automatically unsubscribe when the component is destroyed

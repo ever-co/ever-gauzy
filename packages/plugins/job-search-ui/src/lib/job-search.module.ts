@@ -20,7 +20,6 @@ import { CKEditorModule } from 'ckeditor4-angular';
 import { MomentModule } from 'ngx-moment';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { FileUploadModule } from 'ng2-file-upload';
-import { LanguagesEnum } from '@gauzy/contracts';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import {
@@ -29,14 +28,15 @@ import {
 	ProposalTemplateSelectModule,
 	SelectorsModule,
 	SharedModule,
-	StatusBadgeModule
+	StatusBadgeModule,
+	getBrowserLanguage
 } from '@gauzy/ui-core/shared';
 import { createJobSearchRoutes } from './job-search.routes';
 import { JobSearchComponent } from './components/job-search/job-search.component';
 import { COMPONENTS } from './components';
 
 /**
- * Nebular modules
+ * Nebular Modules
  */
 const NB_MODULES = [
 	NbButtonModule,
@@ -54,7 +54,7 @@ const NB_MODULES = [
 ];
 
 /*
- * Third party modules
+ * Third Party Modules
  */
 const THIRD_PARTY_MODULES = [
 	CKEditorModule,
@@ -62,7 +62,7 @@ const THIRD_PARTY_MODULES = [
 	MomentModule,
 	NgxPermissionsModule.forRoot(),
 	TranslateModule.forRoot({
-		defaultLanguage: LanguagesEnum.ENGLISH,
+		defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
 		loader: {
 			provide: TranslateLoader,
 			useFactory: HttpLoaderFactory,

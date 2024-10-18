@@ -7,9 +7,9 @@ import { Store } from '../services';
 @Injectable({
 	providedIn: 'root',
 })
-export class TimeSlotCacheService extends AbstractCacheService<ITimeSlot[]> {
+export class TimeSlotCacheService extends AbstractCacheService<ITimeSlot> {
 	constructor(
-		protected _storageService: StorageService<ITimeSlot[]>,
+		protected _storageService: StorageService<ITimeSlot>,
 		protected _store: Store
 	) {
 		super(_storageService, _store);

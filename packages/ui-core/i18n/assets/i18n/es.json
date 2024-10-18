@@ -3790,6 +3790,7 @@
 		"SELECT_PROJECT": "Seleccionar proyecto",
 		"SELECT_TASK": "Seleccionar tarea",
 		"SELECT_CLIENT": "Seleccionar cliente",
+		"SELECT_TEAM": "Seleccionar equipo",
 		"DATE": "Fecha",
 		"START_TIME": "Hora de inicio",
 		"END_TIME": "Hora de finalización",
@@ -4046,6 +4047,11 @@
 			"NO_MONTHLY_ACTIVITY": "No has registrado tiempo o actividad para este mes.",
 			"WORKED_FOR_MONTH": "Trabajado este mes",
 			"ACTIVITY_FOR_MONTH": "Actividad Mensual"
+		},
+		"LOADING": {
+			"PLEASE_HOLD": "Por favor, espera...",
+			"SHUTTING_DOWN": "La aplicación se está cerrando",
+			"LOGOUT_IN_PROGRESS": "Cierre de sesión en progreso"
 		}
 	},
 	"SERVER": "Servidor",
@@ -4642,7 +4648,14 @@
 		"FAIL_SIGNIN_SUB_TITLE": "Por favor, inicia el proceso de nuevo.",
 		"THANKING_TEXT": "Gracias por elegirnos.",
 		"UNKNOWN_WORKSPACE": "¿No conoces tu espacio de trabajo?",
-		"FIND_WORKSPACE": "Encuentra tu espacio de trabajo"
+		"FIND_WORKSPACE": "Encuentra tu espacio de trabajo",
+		"SELECTION": {
+			"WELCOME_BACK": "¡Bienvenido de nuevo!",
+			"YOU_LOOK_NICE_TODAY": "¡Te ves bien hoy!",
+			"EMAIL_MULTIPLE_WORKSPACE": "El correo electrónico está asociado a varios espacios de trabajo, por favor selecciona uno para continuar",
+			"SELECT_WORKSPACE_FOR": "Seleccionar espacio de trabajo para",
+			"OPEN": "Abrir"
+		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Agregar o Eliminar Imagen",
@@ -4650,5 +4663,5 @@
 	},
 	"SERVER_API": "Servidor API",
 	"SERVER_API_LOG": "Registro del servidor API",
-	"COMING_SOON": "This page is coming soon!"
+	"COMING_SOON": "¡Esta página estará disponible pronto!"
 }

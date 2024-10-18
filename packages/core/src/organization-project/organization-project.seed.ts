@@ -52,7 +52,6 @@ export const createDefaultOrganizationProjects = async (
 			organizationId
 		});
 
-
 		// Define a mapping between Budget Types and their respective min and max values
 		const budgetRanges: Record<OrganizationProjectBudgetTypeEnum, { min: number; max: number }> = {
 			[OrganizationProjectBudgetTypeEnum.COST]: { min: 500, max: 5000 },
@@ -182,7 +181,6 @@ export const createRandomOrganizationProjects = async (
 				project.startDate = faker.date.past({ years: 5 });
 				project.endDate = faker.date.between({ from: project.startDate, to: new Date() });
 
-
 				// If organizationContacts is not empty, assign a random organization contact
 				if (organizationContacts.length > 0) {
 					project.organizationContact = faker.helpers.arrayElement(organizationContacts);
@@ -268,9 +266,26 @@ export async function seedProjectMembersCount(dataSource: DataSource, tenants: I
 		for (const tenant of tenants) {
 			const tenantId = tenant.id;
 
-			// Consolidated SQL to update membersCount for all projects of the current tenant
-			const query = replacePlaceholders(
-				p(`
+			let query: string;
+
+			// Check if the database type is MySQL
+			if (dataSource.options.type === DatabaseTypeEnum.mysql) {
+				// Rewrite the query for MySQL without using the FROM clause
+				query = `
+					UPDATE \`organization_project\` op
+					JOIN (
+						SELECT \`organizationProjectId\`, COUNT(\`employeeId\`) AS count
+						FROM \`organization_project_employee\`
+						GROUP BY \`organizationProjectId\`
+					) AS sub
+					ON op.id = sub.\`organizationProjectId\`
+					SET op.\`membersCount\` = sub.count
+					WHERE op.\`tenantId\` = ?;
+				`;
+			} else {
+				// Consolidated SQL to update membersCount for all projects of the current tenant
+				query = replacePlaceholders(
+					p(`
 					UPDATE "organization_project" AS op
 					SET "membersCount" = sub.count
 					FROM (
@@ -281,9 +296,9 @@ export async function seedProjectMembersCount(dataSource: DataSource, tenants: I
 					WHERE op.id = sub."organizationProjectId"
 					AND op."tenantId" = $1;
 				`),
-				dataSource.options.type as DatabaseTypeEnum
-			);
-
+					dataSource.options.type as DatabaseTypeEnum
+				);
+			}
 			// Execute the consolidated update query with the appropriate parameter
 			await dataSource.manager.query(query, [tenantId]);
 			console.log(`Updated membersCount for tenant ID: ${tenantId}`);

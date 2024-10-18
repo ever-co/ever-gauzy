@@ -15,6 +15,6 @@ export class ActivityLogEventHandler implements IEventHandler<ActivityLogEvent> 
 	 */
 	async handle(event: ActivityLogEvent) {
 		// Extract the input from the event and create a new activity log entry
-		return await this.activityLogService.logActivity(event.input);
+		return await this.activityLogService.create(event.input);
 	}
 }

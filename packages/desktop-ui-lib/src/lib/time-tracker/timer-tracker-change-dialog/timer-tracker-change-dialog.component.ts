@@ -6,6 +6,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, concatMap, filter, map, Observable, startWith, tap } from 'rxjs';
 import { TimeTrackerQuery } from '../+state/time-tracker.query';
 import { IgnitionState, TimeTrackerStore } from '../+state/time-tracker.store';
+import { Store } from '../../services';
 import { ClientSelectorService } from '../../shared/features/client-selector/+state/client-selector.service';
 import { ProjectSelectorService } from '../../shared/features/project-selector/+state/project-selector.service';
 import { TaskSelectorService } from '../../shared/features/task-selector/+state/task-selector.service';
@@ -14,6 +15,7 @@ import {
 	ITimeTrackerFormState,
 	TimeTrackerFormService
 } from '../../shared/features/time-tracker-form/time-tracker-form.service';
+import { DynamicSelectorValidation } from '../../shared/utils/validation/dynamic-selector-factory.validator';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -25,11 +27,11 @@ import {
 export class TimerTrackerChangeDialogComponent implements OnInit {
 	private lastSelectorState: ITimeTrackerFormState;
 	public form: FormGroup = new FormGroup({
-		clientId: new FormControl(null),
-		projectId: new FormControl(null),
+		clientId: new FormControl(null, this.requiredValidator(this.organization?.requireClient)),
+		projectId: new FormControl(null, this.requiredValidator(this.organization?.requireProject)),
 		teamId: new FormControl(null),
-		taskId: new FormControl(null),
-		note: new FormControl(null)
+		taskId: new FormControl(null, this.requiredValidator(this.organization?.requireTask)),
+		note: new FormControl(null, this.requiredValidator(this.organization?.requireDescription))
 	});
 	constructor(
 		private dialogRef: NbDialogRef<TimerTrackerChangeDialogComponent>,
@@ -39,7 +41,8 @@ export class TimerTrackerChangeDialogComponent implements OnInit {
 		private readonly projectSelectorService: ProjectSelectorService,
 		private readonly teamSelectorService: TeamSelectorService,
 		private readonly taskSelectorService: TaskSelectorService,
-		private readonly clientSelectorService: ClientSelectorService
+		private readonly clientSelectorService: ClientSelectorService,
+		private readonly store: Store
 	) {}
 
 	public ngOnInit(): void {
@@ -94,6 +97,7 @@ export class TimerTrackerChangeDialogComponent implements OnInit {
 	}
 
 	public applyChanges() {
+		if (this.form.invalid) return;
 		this.lastSelectorState = this.form.value;
 		this.timeTrackerStore.ignition({ state: IgnitionState.RESTARTING, data: this.form.value });
 	}
@@ -112,5 +116,13 @@ export class TimerTrackerChangeDialogComponent implements OnInit {
 	public dismiss(data?) {
 		this.timeTrackerStore.update({ isEditing: false });
 		this.dialogRef.close(data);
+	}
+
+	public get organization() {
+		return this.store.selectedOrganization;
+	}
+
+	public requiredValidator(value: boolean) {
+		return DynamicSelectorValidation.requiredValidator(value);
 	}
 }
