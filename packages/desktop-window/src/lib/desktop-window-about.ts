@@ -1,5 +1,5 @@
 import * as remoteMain from '@electron/remote/main';
-import { BrowserWindow, Menu } from 'electron';
+import { BrowserWindow, Menu, app } from 'electron';
 import * as url from 'url';
 import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 
@@ -15,6 +15,13 @@ const store = new Store();
 export async function createAboutWindow(filePath, preloadPath?) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting(preloadPath);
 	const manager = WindowManager.getInstance();
+
+	const allwindows = BrowserWindow.getAllWindows();
+	const aboutWindows = allwindows.find((win) => win.getTitle() === 'About');
+	if (aboutWindows) {
+		aboutWindows.show();
+		return aboutWindows;
+	}
 
 	const window = new BrowserWindow(mainWindowSettings);
 	remoteMain.enable(window.webContents);
@@ -42,7 +49,7 @@ export async function createAboutWindow(filePath, preloadPath?) {
 
 	manager.register(RegisteredWindow.ABOUT, window);
 	if (preloadPath) {
-		attachTitlebarToWindow(window);
+		window.webContents.send('hide-menu');
 	}
 	return window;
 }
@@ -69,11 +76,6 @@ const windowSetting = (preloadPath) => {
 	};
 	if (preloadPath) {
 		mainWindowSettings.webPreferences.preload = preloadPath;
-		mainWindowSettings.titleBarOverlay = true;
-		mainWindowSettings.titleBarStyle = 'hidden';
-		if (process.platform === 'linux') {
-			mainWindowSettings.frame = false;
-		}
 	}
 	return mainWindowSettings;
 };
