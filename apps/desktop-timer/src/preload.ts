@@ -17,6 +17,10 @@ window.addEventListener('DOMContentLoaded', async () => {
         titleBar.refreshMenu();
     });
 
+    ipcRenderer.on('hide-menu', () => {
+        titleBar.dispose();
+    })
+
     const overStyle = document.createElement('style');
     overStyle.innerHTML = `
         .cet-container {
