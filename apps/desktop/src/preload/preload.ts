@@ -21,6 +21,10 @@ window.addEventListener('DOMContentLoaded', async () => {
         titleBar.refreshMenu();
     });
 
+    ipcRenderer.on('hide-menu', () => {
+        titleBar.dispose();
+    })
+
     ipcRenderer.on('adjust_view', () => {
         clearInterval(contentInterval);
         const headerIcon = '/html/body/div[2]/ga-app/ngx-pages/ngx-one-column-layout/nb-layout/div[1]/div/div/nb-sidebar[1]/div/div/div';
