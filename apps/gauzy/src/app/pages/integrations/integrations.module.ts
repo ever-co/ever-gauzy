@@ -94,8 +94,8 @@ export class IntegrationsModule {
 			location: 'integrations',
 			// Register the path 'gauzy-ai'
 			path: 'gauzy-ai',
-			// Register the loadChildren function to load the GauzyAIModule lazy module
-			loadChildren: () => import('./gauzy-ai/gauzy-ai.module').then((m) => m.GauzyAIModule)
+			// Register the loadChildren function to load the IntegrationAiUiModule lazy module
+			loadChildren: () => import('@gauzy/plugin-integration-ai-ui').then((m) => m.IntegrationAiUiModule)
 		});
 
 		// Register the routes for github integration
@@ -107,7 +107,7 @@ export class IntegrationsModule {
 			// Register the path 'github'
 			path: 'github',
 			// Register the loadChildren function to load the GithubModule lazy module
-			loadChildren: () => import('./github/github.module').then((m) => m.GithubModule)
+			loadChildren: () => import('@gauzy/plugin-integration-github-ui').then((m) => m.IntegrationGithubUiModule)
 		});
 
 		// Set hasRegisteredRoutes to true

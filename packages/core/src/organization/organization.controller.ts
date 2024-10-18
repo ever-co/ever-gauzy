@@ -106,10 +106,9 @@ export class OrganizationController extends CrudController<Organization> {
 	})
 	@ApiParam({
 		name: 'id',
-		type: String,
 		description: 'The unique identifier (UUID) of the organization.'
 	})
-	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
+	@Permissions()
 	@Get(':id')
 	@UseValidationPipe({ transform: true })
 	async findById(

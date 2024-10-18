@@ -1,7 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { EventBus } from '@nestjs/cqrs';
 import {
-	ActionTypeEnum,
 	BaseEntityEnum,
 	ActorTypeEnum,
 	ID,
@@ -9,7 +7,8 @@ import {
 	IOrganizationSprint,
 	IOrganizationSprintCreateInput,
 	IOrganizationSprintUpdateInput,
-	RolesEnum
+	RolesEnum,
+	ActionTypeEnum
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
@@ -17,10 +16,9 @@ import { RequestContext } from '../core/context';
 import { OrganizationSprintEmployee } from '../core/entities/internal';
 import { FavoriteService } from '../core/decorators';
 // import { prepareSQLQuery as p } from './../database/database.helper';
-import { ActivityLogEvent } from '../activity-log/events';
-import { activityLogUpdatedFieldsAndValues, generateActivityLogDescription } from '../activity-log/activity-log.helper';
 import { RoleService } from '../role/role.service';
 import { EmployeeService } from '../employee/employee.service';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import { OrganizationSprint } from './organization-sprint.entity';
 import { TypeOrmEmployeeRepository } from '../employee/repository';
 import {
@@ -41,7 +39,7 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		private readonly _roleService: RoleService,
 		private readonly _employeeService: EmployeeService,
-		private readonly _eventBus: EventBus
+		private readonly activityLogService: ActivityLogService
 	) {
 		super(typeOrmOrganizationSprintRepository, mikroOrmOrganizationSprintRepository);
 	}
@@ -115,25 +113,16 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 				tenantId
 			});
 
-			// Generate the activity log description.
-			const description = generateActivityLogDescription(
-				ActionTypeEnum.Created,
+			// Generate the activity log
+			this.activityLogService.logActivity<OrganizationSprint>(
 				BaseEntityEnum.OrganizationSprint,
-				sprint.name
-			);
-
-			// Emit an event to log the activity
-			this._eventBus.publish(
-				new ActivityLogEvent({
-					entity: BaseEntityEnum.OrganizationSprint,
-					entityId: sprint.id,
-					action: ActionTypeEnum.Created,
-					actorType: ActorTypeEnum.User,
-					description,
-					data: sprint,
-					organizationId,
-					tenantId
-				})
+				ActionTypeEnum.Created,
+				ActorTypeEnum.User,
+				sprint.id,
+				sprint.name,
+				sprint,
+				organizationId,
+				tenantId
 			);
 
 			return sprint;
@@ -160,7 +149,7 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 
 		try {
 			// Search for existing Organization Sprint
-			let organizationSprint = await super.findOneByIdString(id, {
+			const organizationSprint = await super.findOneByIdString(id, {
 				where: { organizationId, tenantId, projectId },
 				relations: {
 					members: true,
@@ -192,33 +181,18 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 					id: organizationSprintId
 				});
 
-				const description = generateActivityLogDescription(
-					ActionTypeEnum.Updated,
+				// Generate the activity log
+				this.activityLogService.logActivity<OrganizationSprint>(
 					BaseEntityEnum.OrganizationSprint,
-					updatedSprint.name
-				);
-
-				// Compare values before and after update then add updates to fields
-				const { updatedFields, previousValues, updatedValues } = activityLogUpdatedFieldsAndValues(
+					ActionTypeEnum.Updated,
+					ActorTypeEnum.User,
+					updatedSprint.id,
+					updatedSprint.name,
 					updatedSprint,
+					organizationId,
+					tenantId,
+					organizationSprint,
 					input
-				);
-
-				// Emit event to log activity
-				this._eventBus.publish(
-					new ActivityLogEvent({
-						entity: BaseEntityEnum.OrganizationSprint,
-						entityId: updatedSprint.id,
-						action: ActionTypeEnum.Updated,
-						actorType: ActorTypeEnum.User,
-						description,
-						updatedFields,
-						updatedValues,
-						previousValues,
-						data: updatedSprint,
-						organizationId,
-						tenantId
-					})
 				);
 
 				// return updated sprint

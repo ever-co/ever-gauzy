@@ -15,6 +15,18 @@ export class UsersOrganizationsService {
 	constructor(private readonly http: HttpClient) {}
 
 	/**
+	 * Count the number of user organizations based on the provided filter.
+	 *
+	 * @param where - Optional filter criteria for counting user organizations.
+	 * @returns A promise that resolves to the count of user organizations.
+	 */
+	getCount(where?: IUserOrganizationFindInput): Promise<number> {
+		return firstValueFrom(
+			this.http.get<number>(`${API_PREFIX}/user-organization/count`, { params: toParams(where) })
+		);
+	}
+
+	/**
 	 * Retrieves user organizations based on specified relations, conditions, and employee inclusion.
 	 *
 	 * @param relations An array of relation names to be eager loaded.

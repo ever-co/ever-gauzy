@@ -36,18 +36,25 @@ export function generateActivityLogDescription(
 	});
 }
 
-export function activityLogUpdatedFieldsAndValues<T>(original: T, updated: Partial<T>) {
+/**
+ * @description Log updated field names, old and new values for Activity Log Updated Actions
+ * @template T
+ * @param {T} originalValues - Old values before update
+ * @param {Partial<T>} updated - Updated values
+ * @returns An object with updated fields, their old and new values
+ */
+export function activityLogUpdatedFieldsAndValues<T>(originalValues: T, updated: Partial<T>) {
 	const updatedFields: string[] = [];
 	const previousValues: IActivityLogUpdatedValues[] = [];
 	const updatedValues: IActivityLogUpdatedValues[] = [];
 
 	for (const key of Object.keys(updated)) {
-		if (original[key] !== updated[key]) {
+		if (originalValues[key] !== updated[key]) {
 			// Add updated field
 			updatedFields.push(key);
 
 			// Add old and new values
-			previousValues.push({ [key]: original[key] });
+			previousValues.push({ [key]: originalValues[key] });
 			updatedValues.push({ [key]: updated[key] });
 		}
 	}

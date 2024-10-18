@@ -10,6 +10,7 @@ export * from './date-view/date-view.component';
 export * from './document-date/document-date.component';
 export * from './document-url/document-url.component';
 export * from './editors/number-editor.component';
+export * from './editors/employee-link-editor.component';
 export * from './email/email.component';
 export * from './employee-links/employee-links.component';
 export * from './employee-with-links/employee-with-links.component';
