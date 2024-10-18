@@ -354,23 +354,28 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	}
 
 	/**
-	 * GET organization teams pagination by params
+	 * GET organization teams pagination by params.
 	 *
-	 * @param filter
-	 * @returns
+	 * @param options - The pagination parameters including filters.
+	 * @returns A promise that resolves to a paginated list of organization teams.
 	 */
 	public async pagination(options?: PaginationParams<OrganizationTeam>): Promise<IPagination<OrganizationTeam>> {
-		if ('where' in options) {
+		if (options?.where) {
 			const { where } = options;
-			if ('name' in where) {
-				options['where']['name'] = ILike(`%${where.name}%`);
+
+			// Update name filter using ILike
+			if (where.name) {
+				options.where.name = ILike(`%${where.name}%`);
 			}
-			if ('tags' in where) {
-				options['where']['tags'] = {
+
+			// Update tags filter using In
+			if (Array.isArray(where.tags) && where.tags.length > 0) {
+				options.where.tags = {
 					id: In(where.tags as [])
 				};
 			}
 		}
+
 		return await this.findAll(options);
 	}
 

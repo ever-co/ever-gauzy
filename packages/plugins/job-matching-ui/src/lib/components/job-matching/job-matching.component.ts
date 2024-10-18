@@ -132,14 +132,15 @@ export class JobMatchingComponent extends TranslationBaseComponent implements On
 		// Observable that emits when preferred language changes.
 		const preferredLanguage$ = merge(this._store.preferredLanguage$, this._i18nService.preferredLanguage$).pipe(
 			distinctUntilChange(),
-			filter((preferredLanguage: LanguagesEnum) => !!preferredLanguage),
+			filter((lang: string | LanguagesEnum) => !!lang),
+			tap((lang: string | LanguagesEnum) => {
+				this.translateService.use(lang);
+			}),
 			untilDestroyed(this)
 		);
 
-		// Subscribe to preferred language changes
-		preferredLanguage$.subscribe((preferredLanguage: string | LanguagesEnum) => {
-			this.translateService.use(preferredLanguage);
-		});
+		// Subscribe to initiate the stream
+		preferredLanguage$.subscribe();
 	}
 
 	/**

@@ -15,7 +15,8 @@ import {
 	IOrganization,
 	TimerState,
 	TimeLogSourceEnum,
-	ITimerStatusInput
+	ITimerStatusInput,
+	ITimerPosition
 } from '@gauzy/contracts';
 import { API_PREFIX, BACKGROUND_SYNC_INTERVAL, toLocal, toParams, toUTC } from '@gauzy/ui-core/common';
 import { Store as AppStore } from '../store/store.service';
@@ -34,7 +35,8 @@ export function createInitialTimerState(): TimerState {
 		projectId: null,
 		taskId: null,
 		organizationContactId: null,
-		description: '',
+		organizationTeamId: null,
+		description: null,
 		logType: TimeLogType.TRACKED,
 		source: TimeLogSourceEnum.WEB_TIMER,
 		startedAt: null,
@@ -64,7 +66,6 @@ export function createInitialTimerState(): TimerState {
 		timerConfig
 	} as TimerState;
 }
-
 
 @Injectable({ providedIn: 'root' })
 @StoreConfig({ name: 'timer' })
@@ -147,64 +148,112 @@ export class TimeTrackerService implements OnDestroy {
 			.catch(() => {});
 	}
 
+	/**
+	 * Gets the value indicating whether the timer window is shown.
+	 *
+	 * @returns A boolean indicating if the timer window is displayed.
+	 */
 	public get showTimerWindow(): boolean {
-		const { showTimerWindow } = this.timerQuery.getValue();
-		return showTimerWindow;
+		return this.timerQuery.getValue().showTimerWindow;
 	}
+
+	/**
+	 * Sets the value indicating whether to show the timer window.
+	 *
+	 * @param value - A boolean value to set for displaying the timer window.
+	 */
 	public set showTimerWindow(value: boolean) {
-		this.timerStore.update({
-			showTimerWindow: value
-		});
+		this.timerStore.update({ showTimerWindow: value });
 	}
 
+	/**
+	 * Gets the current duration of the timer.
+	 *
+	 * @returns The duration in seconds.
+	 */
 	public get duration(): number {
-		const { duration } = this.timerQuery.getValue();
-		return duration;
+		return this.timerQuery.getValue().duration;
 	}
+
+	/**
+	 * Sets the duration of the timer.
+	 *
+	 * @param value - A number representing the duration to set.
+	 */
 	public set duration(value: number) {
-		this.timerStore.update({
-			duration: value
-		});
+		this.timerStore.update({ duration: value });
 	}
 
+	/**
+	 * Gets the current session duration of the timer.
+	 *
+	 * @returns The current session duration in seconds.
+	 */
 	public get currentSessionDuration(): number {
-		const { currentSessionDuration } = this.timerQuery.getValue();
-		return currentSessionDuration;
+		return this.timerQuery.getValue().currentSessionDuration;
 	}
+
+	/**
+	 * Sets the current session duration of the timer.
+	 *
+	 * @param value - A number representing the current session duration to set.
+	 */
 	public set currentSessionDuration(value: number) {
-		this.timerStore.update({
-			currentSessionDuration: value
-		});
+		this.timerStore.update({ currentSessionDuration: value });
 	}
 
+	/**
+	 * Gets the configuration settings for the timer.
+	 *
+	 * @returns The timer configuration object.
+	 */
 	public get timerConfig(): ITimerToggleInput {
-		const { timerConfig } = this.timerQuery.getValue();
-		return timerConfig;
+		return this.timerQuery.getValue().timerConfig;
 	}
+
+	/**
+	 * Sets the configuration settings for the timer.
+	 *
+	 * @param value - An object containing the timer configuration to set.
+	 */
 	public set timerConfig(value: ITimerToggleInput) {
-		this.timerStore.update({
-			timerConfig: value
-		});
+		this.timerStore.update({ timerConfig: value });
 	}
 
+	/**
+	 * Gets the running state of the timer.
+	 *
+	 * @returns A boolean indicating if the timer is currently running.
+	 */
 	public get running(): boolean {
-		const { running } = this.timerQuery.getValue();
-		return running;
-	}
-	public set running(value: boolean) {
-		this.timerStore.update({
-			running: value
-		});
+		return this.timerQuery.getValue().running;
 	}
 
-	public get position() {
-		const { position } = this.timerQuery.getValue();
-		return position;
+	/**
+	 * Sets the running state of the timer.
+	 *
+	 * @param value - A boolean value to indicate whether the timer should be running.
+	 */
+	public set running(value: boolean) {
+		this.timerStore.update({ running: value });
 	}
-	public set position(offSet: any) {
-		this.timerStore.update({
-			position: offSet
-		});
+
+	/**
+	 * Gets the current position of the timer.
+	 *
+	 * @returns The current position or offset of the timer.
+	 */
+	public get position(): ITimerPosition {
+		return this.timerQuery.getValue().position;
+	}
+
+	/**
+	 * Sets the position of the timer.
+	 *
+	 * @param offset - The offset value to set for the timer's position.
+	 */
+	public set position(offset: ITimerPosition) {
+		this.timerStore.update({ position: offset });
 	}
 
 	/**

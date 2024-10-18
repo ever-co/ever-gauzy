@@ -3820,6 +3820,7 @@
 		"SELECT_PROJECT": "Select Project",
 		"SELECT_TASK": "Select Task",
 		"SELECT_CLIENT": "Select Client",
+		"SELECT_TEAM": "Избери отбор",
 		"DATE": "Дата",
 		"START_TIME": "Start Time",
 		"END_TIME": "End Time",
@@ -4075,6 +4076,11 @@
 			"NO_MONTHLY_ACTIVITY": "Нямате проследено време и дейност за този месец.",
 			"WORKED_FOR_MONTH": "Работил този месец",
 			"ACTIVITY_FOR_MONTH": "Месечна активност"
+		},
+		"LOADING": {
+			"PLEASE_HOLD": "Моля, изчакайте...",
+			"SHUTTING_DOWN": "Приложението се затваря",
+			"LOGOUT_IN_PROGRESS": "Отписването е в ход"
 		}
 	},
 	"SERVER": "Сървър",
@@ -4650,7 +4656,14 @@
 		"FAIL_SIGNIN_SUB_TITLE": "Моля, инициирайте процеса отново.",
 		"THANKING_TEXT": "Благодарим ви, че ни избрахте.",
 		"UNKNOWN_WORKSPACE": "Не знаете работното си пространство?",
-		"FIND_WORKSPACE": "Намерете вашето работно пространство"
+		"FIND_WORKSPACE": "Намерете вашето работно пространство",
+		"SELECTION": {
+			"WELCOME_BACK": "Добре дошъл обратно!",
+			"YOU_LOOK_NICE_TODAY": "Изглеждаш добре днес!",
+			"EMAIL_MULTIPLE_WORKSPACE": "Имейлът е свързан с няколко работни пространства, моля изберете едно, за да продължите",
+			"SELECT_WORKSPACE_FOR": "Изберете работно пространство за",
+			"OPEN": "Отвори"
+		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Add or Drop Image",

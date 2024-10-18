@@ -3788,6 +3788,7 @@
 		"SELECT_PROJECT": "选择项目",
 		"SELECT_TASK": "选择任务",
 		"SELECT_CLIENT": "选择客户",
+		"SELECT_TEAM": "选择团队",
 		"DATE": "日期",
 		"START_TIME": "开始时间",
 		"END_TIME": "末日时光",
@@ -4044,6 +4045,11 @@
 			"NO_MONTHLY_ACTIVITY": "您本月没有跟踪的时间和活动。",
 			"WORKED_FOR_MONTH": "本月工作",
 			"ACTIVITY_FOR_MONTH": "每月活动"
+		},
+		"LOADING": {
+			"PLEASE_HOLD": "请稍等...",
+			"SHUTTING_DOWN": "应用程序正在关闭",
+			"LOGOUT_IN_PROGRESS": "正在注销"
 		}
 	},
 	"SERVER": "服务器",
@@ -4640,7 +4646,14 @@
 		"FAIL_SIGNIN_SUB_TITLE": "请重新启动流程。",
 		"THANKING_TEXT": "感谢您选择我们。",
 		"UNKNOWN_WORKSPACE": "不知道您的工作区？",
-		"FIND_WORKSPACE": "查找您的工作区"
+		"FIND_WORKSPACE": "查找您的工作区",
+		"SELECTION": {
+			"WELCOME_BACK": "欢迎回来！",
+			"YOU_LOOK_NICE_TODAY": "你今天看起来不错！",
+			"EMAIL_MULTIPLE_WORKSPACE": "此电子邮件与多个工作区关联，请选择一个继续",
+			"SELECT_WORKSPACE_FOR": "选择工作区",
+			"OPEN": "打开"
+		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "添加或删除图像",

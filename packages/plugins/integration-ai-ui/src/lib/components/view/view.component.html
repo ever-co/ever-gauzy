@@ -1,0 +1,139 @@
+<nb-card class="card-scroll">
+	<nb-card-header class="card-header-title">
+		<div class="card-header-title">
+			<h5>
+				<ngx-back-navigation
+					class="float-left"
+					[haveLink]="true"
+					[routerLink]="'/pages/integrations'"
+				></ngx-back-navigation>
+				{{ 'INTEGRATIONS.GAUZY_AI_PAGE.TITLE' | translate }}
+			</h5>
+		</div>
+		<div>
+			<div>
+				<ng-template [ngxPermissionsOnly]="['INTEGRATION_EDIT']">
+					<button
+						nbButton
+						status="primary"
+						class="mr-2"
+						size="small"
+						[routerLink]="'/pages/integrations/gauzy-ai/reset'"
+					>
+						<div class="sync-container">
+							<nb-icon class="sync" icon="sync-outline"></nb-icon>
+							{{ 'BUTTONS.RESET_INTEGRATION' | translate }}
+						</div>
+					</button>
+				</ng-template>
+			</div>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<nb-tabset class="mt-4">
+			<nb-tab [tabTitle]="'INTEGRATIONS.GAUZY_AI_PAGE.TAB.KEYS' | translate" [tabIcon]="'list-outline'">
+				<ng-container *ngIf="settings$ | async as settings">
+					<ngx-integration-setting-card
+						[title]="'INTEGRATIONS.GAUZY_AI_PAGE.CONSUMER_KEYS' | translate"
+						[items]="settings"
+						(saved)="updateIntegrationSettings()"
+					></ngx-integration-setting-card>
+				</ng-container>
+				<ng-container *ngIf="openAISettings$ | async as openAISettings">
+					<ngx-integration-setting-card
+						[title]="'INTEGRATIONS.GAUZY_AI_PAGE.OPEN_AI_API_KEYS' | translate"
+						[items]="openAISettings"
+						(saved)="updateIntegrationSettings()"
+					></ngx-integration-setting-card>
+				</ng-container>
+			</nb-tab>
+			<nb-tab [tabTitle]="'INTEGRATIONS.GAUZY_AI_PAGE.TAB.SETTINGS' | translate" [tabIcon]="'settings-outline'">
+				<nb-card *ngIf="organization$ | async">
+					<ng-template [ngxPermissionsOnly]="['INTEGRATION_EDIT']">
+						<nb-card-body>
+							<form>
+								<div class="fields">
+									<div class="row">
+										<div class="col-6">
+											<div class="form-group">
+												<label for="isJobSearchMatchingSync" class="label">
+													{{ 'FORM.LABELS.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS' | translate }}
+												</label>
+												<nb-toggle
+													id="isJobSearchMatchingSync"
+													class="d-block"
+													status="primary"
+													labelPosition="start"
+													[checked]="jobSearchMatchingSync?.sync"
+													(checkedChange)="
+														toggleIntegrationEntitySync($event, jobSearchMatchingSync)
+													"
+												>
+													{{
+														'FORM.PLACEHOLDERS.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS'
+															| translate
+													}}
+													<button
+														[nbTooltip]="
+															'INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS'
+																| translate
+														"
+														ghost
+														nbButton
+														size="small"
+														status="info"
+													>
+														<nb-icon icon="info"></nb-icon>
+													</button>
+												</nb-toggle>
+											</div>
+										</div>
+									</div>
+									<div class="row">
+										<div class="col-6">
+											<div class="form-group">
+												<label for="isEmployeePerformanceAnalysisSync" class="label">
+													{{ 'FORM.LABELS.ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS' | translate }}
+												</label>
+												<nb-toggle
+													id="isEmployeePerformanceAnalysisSync"
+													class="d-block"
+													status="primary"
+													labelPosition="start"
+													[checked]="employeePerformanceAnalysisSync?.sync"
+													(checkedChange)="
+														toggleIntegrationEntitySync(
+															$event,
+															employeePerformanceAnalysisSync
+														)
+													"
+												>
+													{{
+														'FORM.PLACEHOLDERS.ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS'
+															| translate
+													}}
+													<button
+														[nbTooltip]="
+															'INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS'
+																| translate
+														"
+														ghost
+														nbButton
+														size="small"
+														status="info"
+													>
+														<nb-icon icon="info"></nb-icon>
+													</button>
+												</nb-toggle>
+											</div>
+										</div>
+									</div>
+								</div>
+							</form>
+						</nb-card-body>
+					</ng-template>
+				</nb-card>
+			</nb-tab>
+		</nb-tabset>
+	</nb-card-body>
+</nb-card>
