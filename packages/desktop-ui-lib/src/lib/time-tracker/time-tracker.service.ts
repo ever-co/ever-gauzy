@@ -18,6 +18,7 @@ import {
 	ITaskStatusFindInput,
 	ITaskUpdateInput,
 	ITimeLog,
+	ITimeSlot,
 	TimeLogSourceEnum,
 	TimeLogType
 } from '@gauzy/contracts';
@@ -401,25 +402,36 @@ export class TimeTrackerService {
 		return firstValueFrom(timeLogs$);
 	}
 
-	async getTimeSlot(values) {
+	async getTimeSlot(values: { timeSlotId: string }): Promise<ITimeSlot> {
+		const { timeSlotId } = values;
+		if (!timeSlotId) {
+			this._loggerService.log.warn('WARN: Time Slot ID should not be empty');
+			return null;
+		}
 		this._loggerService.log.info(`Get Time Slot: ${moment().format()}`);
 		const { tenantId, organizationId } = this._store;
 		const params = toParams({
 			tenantId,
 			organizationId,
-			relations: ['screenshots']
+			relations: ['screenshots'],
+			order: {
+				createdAt: 'DESC',
+				screenshots: {
+					recordedAt: 'DESC'
+				}
+			}
 		});
-		let timeSlots$ = this._timeSlotCacheService.getValue(values.timeSlotId);
+		let timeSlots$ = this._timeSlotCacheService.getValue(timeSlotId);
 		if (!timeSlots$) {
 			timeSlots$ = this.http
-				.get(`${API_PREFIX}/timesheet/time-slot/${values.timeSlotId}`, {
+				.get<ITimeSlot>(`${API_PREFIX}/timesheet/time-slot/${timeSlotId}`, {
 					params
 				})
 				.pipe(
 					map((response: any) => response),
 					shareReplay(1)
 				);
-			this._timeSlotCacheService.setValue(timeSlots$, values.timeSlotId);
+			this._timeSlotCacheService.setValue(timeSlots$, timeSlotId);
 		}
 		return firstValueFrom(timeSlots$);
 	}
