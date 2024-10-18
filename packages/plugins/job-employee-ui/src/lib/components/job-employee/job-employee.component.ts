@@ -29,7 +29,9 @@ import {
 	NumberEditorComponent,
 	EmployeeLinkEditorComponent,
 	PaginationFilterBaseComponent,
-	SmartTableToggleComponent
+	SmartTableToggleComponent,
+	NonEditableNumberEditorComponent,
+	JobSearchAvailabilityComponent
 } from '@gauzy/ui-core/shared';
 
 /**
@@ -238,7 +240,11 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			width: '10%', // The width of the column
 			isSortable: false, // Indicates whether the column is sortable
 			isEditable: false, // Indicates whether the column is editable
-			valuePrepareFunction: (rawValue: any) => rawValue || 0
+			valuePrepareFunction: (rawValue: any) => rawValue || 0,
+			editor: {
+				type: 'custom',
+				component: NonEditableNumberEditorComponent
+			}
 		});
 
 		// Register the data table column
@@ -251,7 +257,11 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			width: '10%', // The width of the column
 			isSortable: false, // Indicates whether the column is sortable
 			isEditable: false, // Indicates whether the column is editable
-			valuePrepareFunction: (rawValue: any) => rawValue || 0
+			valuePrepareFunction: (rawValue: any) => rawValue || 0,
+			editor: {
+				type: 'custom',
+				component: NonEditableNumberEditorComponent
+			}
 		});
 
 		// Register the data table column
@@ -305,7 +315,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			type: 'custom', // The type of the column
 			width: '20%', // The width of the column
 			isSortable: false, // Indicates whether the column is sortable
-			isEditable: false, // Indicates whether the column is editable
+			isEditable: true, // Indicates whether the column is editable
 			renderComponent: SmartTableToggleComponent,
 			componentInitFunction: (instance: SmartTableToggleComponent, cell: Cell) => {
 				// Get the employee data from the cell
@@ -318,6 +328,10 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 				instance.toggleChange.pipe(untilDestroyed(this)).subscribe((toggle: boolean) => {
 					this.updateJobSearchAvailability(employee, toggle);
 				});
+			},
+			editor: {
+				type: 'custom',
+				component: JobSearchAvailabilityComponent
 			}
 		});
 	}
