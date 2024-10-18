@@ -136,6 +136,8 @@ import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badg
 		InvoiceTotalValueComponent,
 		NotesWithTagsComponent,
 		NumberEditorComponent,
+		JobSearchAvailabilityEditorComponent,
+		NonEditableNumberEditorComponent,
 		OrganizationWithTagsComponent,
 		PhoneUrlComponent,
 		PictureNameTagsComponent,

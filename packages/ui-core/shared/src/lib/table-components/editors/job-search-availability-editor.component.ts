@@ -63,7 +63,8 @@ export class JobSearchAvailabilityEditorComponent extends DefaultEditor implemen
 
 			this._toastrService.success(toastrMessageKey, { name: employee.fullName });
 		} catch (error) {
-			this._toastrService.danger(error);
+			const errorMessage = error?.message || 'An error occurred while updating the job search availability.';
+			this._toastrService.danger(errorMessage);
 		}
 	}
 }
