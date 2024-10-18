@@ -27,6 +27,7 @@ import {
 	EmployeeLinksComponent,
 	IPaginationBase,
 	NumberEditorComponent,
+	EmployeeLinkEditorComponent,
 	PaginationFilterBaseComponent,
 	SmartTableToggleComponent
 } from '@gauzy/ui-core/shared';
@@ -212,7 +213,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			type: 'custom', // The type of the column
 			width: '20%', // The width of the column
 			isSortable: true, // Indicates whether the column is sortable
-			isEditable: true, // Indicates whether the column is editable
+			isEditable: false, // Indicates whether the column is editable
 			renderComponent: EmployeeLinksComponent,
 			valuePrepareFunction: (_: any, cell: Cell) => this.prepareEmployeeValue(_, cell),
 			componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
@@ -220,6 +221,10 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 				instance.rowData = cell.getRow().getData();
 				// Get the value from the cell
 				instance.value = cell.getValue();
+			},
+			editor: {
+				type: 'custom',
+				component: EmployeeLinkEditorComponent // Use the custom component for display
 			}
 		});
 
