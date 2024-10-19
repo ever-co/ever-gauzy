@@ -1,7 +1,6 @@
 import * as remoteMain from '@electron/remote/main';
-import { BrowserWindow, Menu, app } from 'electron';
+import { BrowserWindow, Menu } from 'electron';
 import * as url from 'url';
-import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 
 import log from 'electron-log';
 import { WindowManager } from './concretes/window.manager';
