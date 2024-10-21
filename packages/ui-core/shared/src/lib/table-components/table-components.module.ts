@@ -41,7 +41,7 @@ import { StatusViewComponent } from './status-view/status-view.component';
 import { TagsOnlyComponent } from './tags-only/tags-only.component';
 import { TaskEstimateComponent } from './task-estimate/task-estimate.component';
 import { TaskTeamsComponent } from './task-teams/task-teams.component';
-import { ToggleSwitchComponent } from './toggle-switch/toggle-switch.component';
+import { ToggleSwitcherComponent } from './toggle-switcher/toggle-switcher.component';
 import { TrustHtmlLinkComponent } from './trust-html/trust-html.component';
 import { ValueWithUnitComponent } from './value-with-units/value-with-units.component';
 import { VisibilityComponent } from './visibility/visibility.component';
@@ -101,7 +101,7 @@ import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badg
 		TagsOnlyComponent,
 		TaskEstimateComponent,
 		TaskTeamsComponent,
-		ToggleSwitchComponent,
+		ToggleSwitcherComponent,
 		TrustHtmlLinkComponent,
 		ValueWithUnitComponent,
 		VisibilityComponent
@@ -143,7 +143,7 @@ import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badg
 		TagsOnlyComponent,
 		TaskEstimateComponent,
 		TaskTeamsComponent,
-		ToggleSwitchComponent,
+		ToggleSwitcherComponent,
 		TrustHtmlLinkComponent,
 		ValueWithUnitComponent,
 		VisibilityComponent
