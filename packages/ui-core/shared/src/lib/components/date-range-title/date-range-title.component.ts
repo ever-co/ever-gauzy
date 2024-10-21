@@ -1,4 +1,4 @@
-import { Component, Inject, Input, LOCALE_ID } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { DateRangePickerBuilderService } from '@gauzy/ui-core/core';
 import { DateFormatPipe } from '../../pipes';
