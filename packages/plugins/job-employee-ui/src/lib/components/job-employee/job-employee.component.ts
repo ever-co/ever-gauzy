@@ -30,9 +30,8 @@ import {
 	NumberEditorComponent,
 	EmployeeLinkEditorComponent,
 	PaginationFilterBaseComponent,
-	SmartTableToggleComponent,
 	NonEditableNumberEditorComponent,
-	JobSearchAvailabilityEditorComponent
+	JobSearchAvailabilityEditorComponent,
 	ToggleSwitcherComponent
 } from '@gauzy/ui-core/shared';
 

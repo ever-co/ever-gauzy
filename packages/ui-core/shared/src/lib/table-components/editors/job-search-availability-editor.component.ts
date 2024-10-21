@@ -1,70 +1,74 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { IEmployee } from '@gauzy/contracts';
-import { JobService, ToastrService } from '@gauzy/ui-core/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { filter, tap } from 'rxjs';
 import { Cell, DefaultEditor } from 'angular2-smart-table';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { IEmployee, IOrganization } from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
+import { JobSearchStoreService, Store } from '@gauzy/ui-core/core';
+import { ToggleSwitcherComponent } from '../toggle-switcher/toggle-switcher.component';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
-	template: `<div>
-		<nb-toggle
-			[checked]="checked$ | async"
-			(checkedChange)="onCheckedChange($event)"
-			triggerParentClick
-		></nb-toggle>
-	</div>`
+	template: `
+		<ngx-toggle-switcher [label]="false" (onSwitched)="updateJobSearchAvailability($event)"></ngx-toggle-switcher>
+	`
 })
-export class JobSearchAvailabilityEditorComponent extends DefaultEditor implements OnInit {
-	private _checked$: BehaviorSubject<boolean> = new BehaviorSubject(false);
-	@Input() cell!: Cell;
-	@Output() toggleChange: EventEmitter<boolean> = new EventEmitter();
+export class JobSearchAvailabilityEditorComponent extends DefaultEditor implements AfterViewInit, OnInit {
+	public organization: IOrganization;
+	public employee: IEmployee;
 
-	constructor(private readonly _jobService: JobService, private readonly _toastrService: ToastrService) {
+	// Reference to the cell object
+	@Input() cell!: Cell;
+
+	// Reference to the ToggleSwitcherComponent instance
+	@ViewChild(ToggleSwitcherComponent) switcher!: ToggleSwitcherComponent;
+
+	constructor(
+		private readonly _cdr: ChangeDetectorRef,
+		private readonly _store: Store,
+		private readonly _jobSearchStoreService: JobSearchStoreService
+	) {
 		super();
 	}
 
-	public get checked$(): Observable<boolean> {
-		return this._checked$.asObservable();
-	}
-
 	ngOnInit() {
-		if (this.cell) {
-			const employee: IEmployee = this.cell.getRow()?.getData();
-			if (employee) {
-				this.value = employee.isJobSearchActive; // Initialize the toggle value
-			}
+		this._store.selectedOrganization$
+			.pipe(
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => {
+					this.organization = organization;
+					this.employee = this.cell.getRow()?.getData();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	ngAfterViewInit(): void {
+		if (!this.switcher) {
+			return;
 		}
+		this.switcher.value = this.employee?.isJobSearchActive || false;
+		this._cdr.detectChanges(); // Force change detection to update the UI
 	}
 
-	@Input() public set value(checked: boolean) {
-		this._checked$.next(checked);
-	}
-
-	onCheckedChange(isChecked: boolean) {
-		this.toggleChange.emit(isChecked); // Emit the toggle change event
-		this._checked$.next(isChecked);
-		this.updateJobSearchAvailability(isChecked); // Update job search availability
-	}
-
-	async updateJobSearchAvailability(isJobSearchActive: boolean): Promise<void> {
-		if (!this.cell) return; // Ensure 'cell' is available
-		const employee: IEmployee = this.cell.getRow()?.getData();
-		if (!employee) return; // Ensure employee data is available
-
+	/**
+	 * Updates the job search availability status of an employee within the organization.
+	 *
+	 * @param isJobSearchActive - A boolean flag indicating whether the job search is active.
+	 */
+	updateJobSearchAvailability(isJobSearchActive: boolean): void {
 		try {
-			await this._jobService.updateJobSearchStatus(employee.id, {
-				isJobSearchActive,
-				organizationId: employee.organizationId,
-				tenantId: employee.tenantId
-			});
-
-			const toastrMessageKey = isJobSearchActive
-				? 'TOASTR.MESSAGE.EMPLOYEE_JOB_STATUS_ACTIVE'
-				: 'TOASTR.MESSAGE.EMPLOYEE_JOB_STATUS_INACTIVE';
-
-			this._toastrService.success(toastrMessageKey, { name: employee.fullName });
+			// Call the service to update the job search availability status
+			this._jobSearchStoreService.updateJobSearchAvailability(
+				this.organization,
+				this.employee,
+				isJobSearchActive
+			);
 		} catch (error) {
-			const errorMessage = error?.message || 'An error occurred while updating the job search availability.';
-			this._toastrService.danger(errorMessage);
+			// Log the error for debugging purposes
+			console.log('Error while updating job search availability:', error);
 		}
 	}
 }
