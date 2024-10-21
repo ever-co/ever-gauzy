@@ -5,7 +5,12 @@ import { NbIconModule, NbTooltipModule, NbBadgeModule, NbToggleModule, NbButtonM
 import { TranslateModule } from '@ngx-translate/core';
 import { ComponentsModule } from '../components/components.module';
 import { PipesModule } from '../pipes/pipes.module';
-import { EmployeeLinkEditorComponent, NumberEditorComponent } from './editors';
+import {
+	EmployeeLinkEditorComponent,
+	JobSearchAvailabilityEditorComponent,
+	NonEditableNumberEditorComponent,
+	NumberEditorComponent
+} from './editors';
 import { AllowScreenshotCaptureComponent } from './allow-screenshot-capture/allow-screenshot-capture.component';
 import { AssignedToComponent } from './assigned-to/assigned-to.component';
 import { ClickableLinkComponent } from './clickable-link/clickable-link.component';
@@ -104,7 +109,9 @@ import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badg
 		ToggleSwitcherComponent,
 		TrustHtmlLinkComponent,
 		ValueWithUnitComponent,
-		VisibilityComponent
+		VisibilityComponent,
+		NonEditableNumberEditorComponent,
+		JobSearchAvailabilityEditorComponent
 	],
 	exports: [
 		AllowScreenshotCaptureComponent,
@@ -129,6 +136,8 @@ import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badg
 		InvoiceTotalValueComponent,
 		NotesWithTagsComponent,
 		NumberEditorComponent,
+		JobSearchAvailabilityEditorComponent,
+		NonEditableNumberEditorComponent,
 		OrganizationWithTagsComponent,
 		PhoneUrlComponent,
 		PictureNameTagsComponent,

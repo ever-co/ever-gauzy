@@ -10,7 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { ID, IEmployee, IOrganization, LanguagesEnum, PermissionsEnum } from '@gauzy/contracts';
-import { API_PREFIX, distinctUntilChange } from '@gauzy/ui-core/common';
+import { API_PREFIX, distinctUntilChange, isNotNullOrUndefined } from '@gauzy/ui-core/common';
 import {
 	PageDataTableRegistryService,
 	EmployeesService,
@@ -30,6 +30,8 @@ import {
 	NumberEditorComponent,
 	EmployeeLinkEditorComponent,
 	PaginationFilterBaseComponent,
+	NonEditableNumberEditorComponent,
+	JobSearchAvailabilityEditorComponent,
 	ToggleSwitcherComponent
 } from '@gauzy/ui-core/shared';
 
@@ -240,7 +242,11 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			width: '10%', // The width of the column
 			isSortable: false, // Indicates whether the column is sortable
 			isEditable: false, // Indicates whether the column is editable
-			valuePrepareFunction: (rawValue: any) => rawValue || 0
+			valuePrepareFunction: (rawValue: any) => (isNotNullOrUndefined(rawValue) ? rawValue : 0),
+			editor: {
+				type: 'custom',
+				component: NonEditableNumberEditorComponent
+			}
 		});
 
 		// Register the data table column
@@ -253,7 +259,11 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			width: '10%', // The width of the column
 			isSortable: false, // Indicates whether the column is sortable
 			isEditable: false, // Indicates whether the column is editable
-			valuePrepareFunction: (rawValue: any) => rawValue || 0
+			valuePrepareFunction: (rawValue: any) => (isNotNullOrUndefined(rawValue) ? rawValue : 0),
+			editor: {
+				type: 'custom',
+				component: NonEditableNumberEditorComponent
+			}
 		});
 
 		// Register the data table column
@@ -307,7 +317,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			type: 'custom', // The type of the column
 			width: '20%', // The width of the column
 			isSortable: false, // Indicates whether the column is sortable
-			isEditable: false, // Indicates whether the column is editable
+			isEditable: true, // Indicates whether the column is editable
 			renderComponent: ToggleSwitcherComponent,
 			componentInitFunction: (instance: ToggleSwitcherComponent, cell: Cell) => {
 				// Get the employee data from the cell
@@ -323,6 +333,10 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 					// Call the JobSearchStoreService to update the job search availability
 					this._jobSearchStoreService.updateJobSearchAvailability(this.organization, employee, toggle);
 				});
+			},
+			editor: {
+				type: 'custom',
+				component: JobSearchAvailabilityEditorComponent
 			}
 		});
 	}
@@ -528,6 +542,21 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			// If an error occurs, reject the edit and log the error.
 			await event.confirm.reject();
 		}
+	}
+
+	/**
+	 * Handles the cancellation of an edit operation in the smart table.
+	 * Refreshes the data table to reflect any changes made.
+	 *
+	 * @param event - The event object containing details about the canceled edit.
+	 *
+	 */
+	onEditCancel(event: any): void {
+		// Optionally, you can log the event for debugging purposes
+		console.log('Edit canceled for row:', event);
+
+		// Refresh the data table to revert any changes made during the edit
+		this.smartTableSource.refresh();
 	}
 
 	/**
