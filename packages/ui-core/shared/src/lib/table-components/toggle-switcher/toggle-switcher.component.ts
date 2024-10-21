@@ -1,28 +1,25 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { Observable } from 'rxjs/internal/Observable';
-import { tap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-toggle-switch',
-	templateUrl: './toggle-switch.component.html'
+	selector: 'ngx-toggle-switcher',
+	templateUrl: './toggle-switcher.component.html'
 })
-export class ToggleSwitchComponent implements OnInit {
-
+export class ToggleSwitcherComponent implements OnInit {
 	/**
 	 * A class member that represents a boolean switch or toggle using a BehaviorSubject.
 	 */
-	private _toggle_switch$: BehaviorSubject<boolean> = new BehaviorSubject(false);
+	private _switcher$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 
 	/**
 	 * Getter method for retrieving the toggle switch state as an Observable.
 	 *
 	 * @returns An Observable<boolean> that emits the current state and subsequent changes of the toggle switch.
 	 */
-	public get toggle_switch$(): Observable<boolean> {
-		return this._toggle_switch$.asObservable();
+	public get switcher$(): Observable<boolean> {
+		return this._switcher$.asObservable();
 	}
 
 	/**
@@ -45,7 +42,7 @@ export class ToggleSwitchComponent implements OnInit {
 	 */
 	@Input() set value(value: any) {
 		// Updates the dynamic element's value using a BehaviorSubject or similar mechanism.
-		this._toggle_switch$.next(value);
+		this._switcher$.next(value);
 
 		// Stores the value in the local variable for future reference.
 		this._value = value;
@@ -86,22 +83,22 @@ export class ToggleSwitchComponent implements OnInit {
 	 *
 	 * This is used to create a custom event named 'switched' that can be listened to by external components.
 	 */
-	@Output() switched: EventEmitter<boolean> = new EventEmitter();
+	@Output() onSwitched: EventEmitter<boolean> = new EventEmitter<boolean>();
 
-
-	constructor() { }
+	constructor() {}
 
 	/**
 	 * The ngOnInit lifecycle hook is called when the component is initialized.
-	 * This method subscribes to the 'switched' Observable, and upon changes, updates the '_toggle_switch$' BehaviorSubject.
+	 * This method subscribes to the 'switched' Observable, and upon changes, updates the '_switcher$' BehaviorSubject.
 	 */
 	ngOnInit(): void {
-		this.switched.pipe(
-			// The 'tap' operator allows side-effects without changing the emitted values.
-			tap((enable: boolean) => this._toggle_switch$.next(enable)),
-			// The 'untilDestroyed' operator helps to automatically unsubscribe when the component is destroyed.
-			untilDestroyed(this)
-		).subscribe(); // Subscribe to the Observable but perform actions in 'tap'.
+		this.onSwitched
+			.pipe(
+				tap((enable: boolean) => this._switcher$.next(enable)),
+				// The 'untilDestroyed' operator helps to automatically unsubscribe when the component is destroyed.
+				untilDestroyed(this)
+			)
+			.subscribe(); // Subscribe to the Observable but perform actions in 'tap'.
 	}
 
 	/**
@@ -111,6 +108,6 @@ export class ToggleSwitchComponent implements OnInit {
 	 */
 	onCheckedChange(event: boolean) {
 		// Emits the provided boolean 'event' using the 'switched' EventEmitter.
-		this.switched.emit(event);
+		this.onSwitched.emit(event);
 	}
 }

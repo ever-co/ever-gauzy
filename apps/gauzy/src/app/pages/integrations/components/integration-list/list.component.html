@@ -62,11 +62,11 @@
 											{{ integration?.lastSyncedAt || integration?.updatedAt | dateTimeFormat }}
 										</div>
 										<div class="col-2 p-0 float-left text-truncate">
-											<ngx-toggle-switch
+											<ngx-toggle-switcher
 												[value]="integration?.isActive"
 												[label]="false"
-												(switched)="updateIntegrationTenant(integration, $event)"
-											></ngx-toggle-switch>
+												(onSwitched)="updateIntegrationTenant(integration, $event)"
+											></ngx-toggle-switcher>
 										</div>
 										<div class="col-1 p-0 text-right text-truncate">
 											<div
