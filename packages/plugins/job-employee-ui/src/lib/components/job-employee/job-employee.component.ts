@@ -10,7 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { ID, IEmployee, IOrganization, LanguagesEnum, PermissionsEnum } from '@gauzy/contracts';
-import { API_PREFIX, distinctUntilChange } from '@gauzy/ui-core/common';
+import { API_PREFIX, distinctUntilChange, isNotNullOrUndefined } from '@gauzy/ui-core/common';
 import {
 	PageDataTableRegistryService,
 	EmployeesService,
@@ -242,7 +242,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			width: '10%', // The width of the column
 			isSortable: false, // Indicates whether the column is sortable
 			isEditable: false, // Indicates whether the column is editable
-			valuePrepareFunction: (rawValue: any) => rawValue || 0,
+			valuePrepareFunction: (rawValue: any) => (isNotNullOrUndefined(rawValue) ? rawValue : 0),
 			editor: {
 				type: 'custom',
 				component: NonEditableNumberEditorComponent
@@ -259,7 +259,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			width: '10%', // The width of the column
 			isSortable: false, // Indicates whether the column is sortable
 			isEditable: false, // Indicates whether the column is editable
-			valuePrepareFunction: (rawValue: any) => rawValue || 0,
+			valuePrepareFunction: (rawValue: any) => (isNotNullOrUndefined(rawValue) ? rawValue : 0),
 			editor: {
 				type: 'custom',
 				component: NonEditableNumberEditorComponent
