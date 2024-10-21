@@ -545,6 +545,21 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	}
 
 	/**
+	 * Handles the cancellation of an edit operation in the smart table.
+	 * Refreshes the data table to reflect any changes made.
+	 *
+	 * @param event - The event object containing details about the canceled edit.
+	 *
+	 */
+	onEditCancel(event: any): void {
+		// Optionally, you can log the event for debugging purposes
+		console.log('Edit canceled for row:', event);
+
+		// Refresh the data table to revert any changes made during the edit
+		this.smartTableSource.refresh();
+	}
+
+	/**
 	 * Applies translations to the Smart Table settings when the language changes.
 	 * This method listens for the onLangChange event from the translateService.
 	 */
