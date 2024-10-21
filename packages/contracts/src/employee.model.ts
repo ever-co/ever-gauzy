@@ -123,6 +123,9 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel, ITa
 	isTrackingTime?: boolean;
 	// True mean active, false away
 	isAway?: boolean;
+	allowManualTime?: boolean;
+	allowModifyTime?: boolean;
+	allowDeleteTime?: boolean;
 }
 
 export type IEmployeeJobsStatisticsResponse = IEmployee & IEmployeeJobsStatistics;
