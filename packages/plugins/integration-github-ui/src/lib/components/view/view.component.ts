@@ -412,7 +412,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 						instance.value = rowData?.customFields?.repository?.hasSyncEnabled || false;
 
 						// Subscribe to the 'switched' event of the ToggleSwitcherComponent
-						instance.onSwitched.pipe(untilDestroyed(this)).subscribe({
+						instance.onSwitched.subscribe({
 							// When the switch state changes, execute the following callback
 							next: (hasSyncEnabled: boolean) => {
 								// Call the 'updateGithubRepository' method with the row data and the new switch state
