@@ -14,6 +14,7 @@ import { Store } from '@gauzy/ui-core/core';
 export class DateFormatPipe implements PipeTransform {
 	dateFormat: string = 'd MMMM, y';
 	regionCode: string = RegionsEnum.EN;
+	locale!: string;
 
 	constructor(private readonly store: Store) {
 		this.store.selectedOrganization$
@@ -23,6 +24,17 @@ export class DateFormatPipe implements PipeTransform {
 				tap((organization: IOrganization) => {
 					this.regionCode = organization.regionCode || RegionsEnum.EN;
 					this.dateFormat = organization.dateFormat || 'd MMMM, y';
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		this.store.preferredLanguage$
+			.pipe(
+				distinctUntilChange(),
+				filter((preferredLanguage: string) => !!preferredLanguage),
+				tap((preferredLanguage: string) => {
+					this.locale = preferredLanguage;
 				}),
 				untilDestroyed(this)
 			)
@@ -52,7 +64,7 @@ export class DateFormatPipe implements PipeTransform {
 		}
 
 		if (isEmpty(locale)) {
-			locale = this.regionCode;
+			locale = this.locale;
 		}
 
 		if (date && defaultFormat) {
