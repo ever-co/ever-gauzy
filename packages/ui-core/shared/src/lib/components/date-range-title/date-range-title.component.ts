@@ -1,7 +1,8 @@
-import { Component, Input } from '@angular/core';
+import { Component, Inject, Input, LOCALE_ID } from '@angular/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { DateRangePickerBuilderService } from '@gauzy/ui-core/core';
 import { DateFormatPipe } from '../../pipes';
+import { ThemeLanguageSelectorService } from '@gauzy/ui-core/theme';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -43,7 +44,8 @@ export class DateRangeTitleComponent {
 
 	constructor(
 		readonly _dateFormatPipe: DateFormatPipe,
-		readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
+		readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
+		private readonly _themeLanguageService: ThemeLanguageSelectorService
 	) {}
 
 	/**
@@ -56,9 +58,11 @@ export class DateRangeTitleComponent {
 		// Check if it’s a single date picker
 		const isSingleDatePicker = this._dateRangePickerBuilderService.datePickerConfig.isSingleDatePicker;
 
+		const language = this._themeLanguageService.preferredLanguage;
+
 		// Use provided `start` and `end` or fallback to the default range values
-		const start = this._dateFormatPipe.transform(this.start || startDate, null, this.format);
-		const end = this._dateFormatPipe.transform(this.end || endDate, null, this.format);
+		const start = this._dateFormatPipe.transform(this.start || startDate, language, this.format);
+		const end = this._dateFormatPipe.transform(this.end || endDate, language, this.format);
 
 		// If it's a single date picker, return only the start date, otherwise return the date range
 		return isSingleDatePicker ? start : [start, end].filter(Boolean).join(' - ');
