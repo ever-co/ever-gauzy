@@ -1,0 +1,12 @@
+<div>
+	<nb-toggle
+		status="primary"
+		[checked]="switcher$ | async"
+		(checkedChange)="onCheckedChange($event)"
+		triggerParentClick
+	>
+		<ng-template [ngIf]="label">
+			{{ ((switcher$ | async) ? 'BUTTONS.ENABLED' : 'BUTTONS.DISABLED') | translate }}
+		</ng-template>
+	</nb-toggle>
+</div>

@@ -20,7 +20,8 @@ import {
 	ToastrService,
 	PageTabsetRegistryId,
 	PageTabRegistryService,
-	PageDataTableRegistryId
+	PageDataTableRegistryId,
+	JobSearchStoreService
 } from '@gauzy/ui-core/core';
 import { I18nService } from '@gauzy/ui-core/i18n';
 import {
@@ -32,6 +33,7 @@ import {
 	SmartTableToggleComponent,
 	NonEditableNumberEditorComponent,
 	JobSearchAvailabilityEditorComponent
+	ToggleSwitcherComponent
 } from '@gauzy/ui-core/shared';
 
 /**
@@ -77,6 +79,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 		private readonly _store: Store,
 		private readonly _employeesService: EmployeesService,
 		private readonly _jobService: JobService,
+		private readonly _jobSearchStoreService: JobSearchStoreService,
 		private readonly _toastrService: ToastrService,
 		private readonly _currencyPipe: CurrencyPipe,
 		private readonly _i18nService: I18nService,
@@ -208,7 +211,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	registerDataTableColumns(_pageDataTableRegistryService: PageDataTableRegistryService): void {
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			dataTableId: 'job-employee', // The identifier for the data table location
+			dataTableId: this.dataTableId, // The identifier for the data table location
 			columnId: 'name', // The identifier for the column
 			order: 0, // The order of the column in the table
 			title: () => this.getTranslation('JOB_EMPLOYEE.EMPLOYEE'), // The title of the column
@@ -232,7 +235,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			dataTableId: 'job-employee', // The identifier for the data table location
+			dataTableId: this.dataTableId, // The identifier for the data table location
 			columnId: 'availableJobs', // The identifier for the column
 			order: 1, // The order of the column in the table
 			title: () => this.getTranslation('JOB_EMPLOYEE.AVAILABLE_JOBS'), // The title of the column
@@ -249,7 +252,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			dataTableId: 'job-employee', // The identifier for the data table location
+			dataTableId: this.dataTableId, // The identifier for the data table location
 			columnId: 'appliedJobs', // The identifier for the column
 			order: 2, // The order of the column in the table
 			title: () => this.getTranslation('JOB_EMPLOYEE.APPLIED_JOBS'), // The title of the column
@@ -266,7 +269,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			dataTableId: 'job-employee', // The identifier for the data table location
+			dataTableId: this.dataTableId, // The identifier for the data table location
 			columnId: 'billRateValue', // The identifier for the column
 			order: 3, // The order of the column in the table
 			title: () => this.getTranslation('JOB_EMPLOYEE.BILLING_RATE'), // The title of the column
@@ -288,7 +291,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			dataTableId: 'job-employee', // The identifier for the data table location
+			dataTableId: this.dataTableId, // The identifier for the data table location
 			columnId: 'minimumBillingRate', // The identifier for the column
 			order: 4, // The order of the column in the table
 			title: () => this.getTranslation('JOB_EMPLOYEE.MINIMUM_BILLING_RATE'), // The title of the column
@@ -308,7 +311,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			dataTableId: 'job-employee', // The identifier for the data table location
+			dataTableId: this.dataTableId, // The identifier for the data table location
 			columnId: 'isJobSearchActive', // The identifier for the column
 			order: 5, // The order of the column in the table
 			title: () => this.getTranslation('JOB_EMPLOYEE.JOB_SEARCH_STATUS'), // The title of the column
@@ -316,17 +319,20 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			width: '20%', // The width of the column
 			isSortable: false, // Indicates whether the column is sortable
 			isEditable: true, // Indicates whether the column is editable
-			renderComponent: SmartTableToggleComponent,
-			componentInitFunction: (instance: SmartTableToggleComponent, cell: Cell) => {
+			renderComponent: ToggleSwitcherComponent,
+			componentInitFunction: (instance: ToggleSwitcherComponent, cell: Cell) => {
 				// Get the employee data from the cell
 				const employee: IEmployee = cell.getRow().getData();
 
+				// Set the label property to false to hide the label
+				instance.label = false;
 				// Set the initial value of the toggle
 				instance.value = employee.isJobSearchActive;
 
 				// Subscribe to the toggleChange event
-				instance.toggleChange.pipe(untilDestroyed(this)).subscribe((toggle: boolean) => {
-					this.updateJobSearchAvailability(employee, toggle);
+				instance.onSwitched.subscribe((toggle: boolean) => {
+					// Call the JobSearchStoreService to update the job search availability
+					this._jobSearchStoreService.updateJobSearchAvailability(this.organization, employee, toggle);
 				});
 			},
 			editor: {
@@ -536,42 +542,6 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			console.error('Error while updating employee rates', error);
 			// If an error occurs, reject the edit and log the error.
 			await event.confirm.reject();
-		}
-	}
-
-	/**
-	 * Updates the job search availability status of an employee within the organization.
-	 * @param employee - The employee object to update.
-	 * @param isJobSearchActive - A boolean flag indicating whether the job search is active.
-	 * @returns {Promise<void>} - A Promise resolving to void.
-	 */
-	async updateJobSearchAvailability(employee: IEmployee, isJobSearchActive: boolean): Promise<void> {
-		try {
-			// Ensure the organization context is available before proceeding.
-			if (!this.organization) {
-				return;
-			}
-
-			// Destructure organization properties for clarity.
-			const { id: organizationId, tenantId } = this.organization;
-
-			// Update the job search status using the employeesService.
-			await this._jobService.updateJobSearchStatus(employee.id, {
-				isJobSearchActive,
-				organizationId,
-				tenantId
-			});
-
-			// Display a success toastr notification based on the job search status.
-			const toastrMessageKey = isJobSearchActive
-				? 'TOASTR.MESSAGE.EMPLOYEE_JOB_STATUS_ACTIVE'
-				: 'TOASTR.MESSAGE.EMPLOYEE_JOB_STATUS_INACTIVE';
-
-			const fullName = employee.fullName.trim() || 'Unknown Employee';
-			this._toastrService.success(toastrMessageKey, { name: fullName });
-		} catch (error) {
-			// Display an error toastr notification in case of any exceptions.
-			this._toastrService.danger(error);
 		}
 	}
 
