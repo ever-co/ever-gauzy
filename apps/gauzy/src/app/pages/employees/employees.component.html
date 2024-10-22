@@ -95,7 +95,7 @@
 <ng-template #visibleButtons>
 	<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EMPLOYEES_EDIT]">
 		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_INVITE_EDIT]">
-			<ng-template [ngIf]="organizationInvitesAllowed">
+			<ng-template [ngIf]="organization?.invitesAllowed">
 				<button nbButton status="info" class="action" (click)="invite()" size="small">
 					<nb-icon class="mr-1" icon="email-outline"></nb-icon>
 					{{ 'BUTTONS.INVITE' | translate }}
