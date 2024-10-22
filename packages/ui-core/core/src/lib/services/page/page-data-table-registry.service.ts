@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Cell, IColumn, IColumns } from 'angular2-smart-table';
+import { IColumn, IColumns } from 'angular2-smart-table';
 import { PageDataTableRegistryId } from '../../common/component-registry.types';
 import { IPageDataTableRegistry, PageDataTableRegistryConfig } from './page-data-table-registry.types';
 
