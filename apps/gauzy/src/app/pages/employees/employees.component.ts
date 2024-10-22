@@ -10,6 +10,8 @@ import {
 	EmployeeStore,
 	EmployeesService,
 	ErrorHandlingService,
+	PageDataTableRegistryConfig,
+	PageDataTableRegistryId,
 	PageDataTableRegistryService,
 	ServerDataSource,
 	Store,
@@ -57,6 +59,7 @@ import {
 	styleUrls: ['./employees.component.scss']
 })
 export class EmployeesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+	public dataTableId: PageDataTableRegistryId = this._route.snapshot.data.dataTableId; // The identifier for the data table
 	public settingsSmartTable: Settings;
 	public smartTableSource: ServerDataSource;
 	public selectedEmployee: EmployeeViewModel;
@@ -619,7 +622,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	private employeeMapper(employee: IEmployee) {
 		const {
 			id,
-			user: { name, email, imageUrl } = {},
+			user = {},
 			isActive,
 			endWork,
 			tags,
@@ -630,10 +633,12 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			isTrackingEnabled,
 			isDeleted
 		} = employee;
+		const { name = '', email = '', imageUrl = '' } = user;
 
 		// Format start and end work dates, and create the work status range
-		const start = this._dateFormatPipe.transform(startedWorkOn, null, 'LL');
-		const end = this._dateFormatPipe.transform(endWork, null, 'LL');
+		const start = startedWorkOn ? this._dateFormatPipe.transform(startedWorkOn, null, 'LL') : '';
+		const end = endWork ? this._dateFormatPipe.transform(endWork, null, 'LL') : '';
+
 		const workStatus = [start, end].filter(Boolean).join(' - ');
 
 		// Return the mapped object
@@ -665,180 +670,170 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 * including a custom filter function and a rendering component.
 	 */
 	private _registerDataTableColumns(): void {
-		// Register the data table column
-		this._pageDataTableRegistryService.registerPageDataTableColumn({
-			dataTableId: 'employee-manage', // The identifier for the data table location
-			columnId: 'fullName', // The identifier for the column
-			order: 0, // The order of the column in the table
-			title: () => this.getTranslation('SM_TABLE.FULL_NAME'), // The title of the column
-			type: 'custom', // The type of the column
-			class: 'align-row',
-			width: '20%', // The width of the column
-			isFilterable: true,
-			renderComponent: PictureNameTagsComponent,
-			componentInitFunction: (instance: PictureNameTagsComponent, cell: Cell) => {
-				instance.rowData = cell.getRow().getData();
-				instance.value = cell.getRawValue();
-			},
-			filter: {
+		const columns: PageDataTableRegistryConfig[] = [
+			{
+				dataTableId: this.dataTableId,
+				columnId: 'fullName',
+				order: 0,
+				title: () => this.getTranslation('SM_TABLE.FULL_NAME'),
 				type: 'custom',
-				component: InputFilterComponent
+				class: 'align-row',
+				width: '20%',
+				isFilterable: true,
+				renderComponent: PictureNameTagsComponent,
+				componentInitFunction: (instance: PictureNameTagsComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+					instance.value = cell.getRawValue();
+				},
+				filter: {
+					type: 'custom',
+					component: InputFilterComponent
+				},
+				filterFunction: this._getFilterFunction('user.name')
 			},
-			filterFunction: (value: string) => {
-				this.setFilter({ field: 'user.name', search: value });
-				return value.length > 0; // Return `true` if the value is non-empty, `false` otherwise
-			}
-		});
-
-		// Register the data table column
-		this._pageDataTableRegistryService.registerPageDataTableColumn({
-			dataTableId: 'employee-manage', // The identifier for the data table location
-			columnId: 'email', // The identifier for the column
-			order: 1, // The order of the column in the table
-			title: () => this.getTranslation('SM_TABLE.EMAIL'), // The title of the column
-			type: 'text', // The type of the column
-			class: 'align-row',
-			width: '20%', // The width of the column
-			isFilterable: true,
-			filter: {
+			{
+				dataTableId: this.dataTableId,
+				columnId: 'email',
+				order: 1,
+				title: () => this.getTranslation('SM_TABLE.EMAIL'),
+				type: 'text',
+				class: 'align-row',
+				width: '20%',
+				isFilterable: true,
+				filter: {
+					type: 'custom',
+					component: InputFilterComponent
+				},
+				filterFunction: this._getFilterFunction('user.email')
+			},
+			{
+				dataTableId: this.dataTableId,
+				columnId: 'averageIncome',
+				order: 2,
+				title: () => this.getTranslation('SM_TABLE.INCOME'),
 				type: 'custom',
-				component: InputFilterComponent
+				isFilterable: false,
+				isSortable: true,
+				class: 'text-center',
+				width: '5%',
+				renderComponent: EmployeeAverageIncomeComponent,
+				componentInitFunction: (instance: EmployeeAverageIncomeComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+				}
 			},
-			// Use the custom filter function, passing the instance context
-			filterFunction: (value: string) => {
-				this.setFilter({ field: 'user.email', search: value });
-				return value.length > 0; // Return `true` if the value is non-empty, `false` otherwise
-			}
-		});
-
-		// Register the data table column
-		this._pageDataTableRegistryService.registerPageDataTableColumn({
-			dataTableId: 'employee-manage', // The identifier for the data table location
-			columnId: 'averageIncome', // The identifier for the column
-			order: 2, // The order of the column in the table
-			title: () => this.getTranslation('SM_TABLE.INCOME'), // The title of the column
-			type: 'custom', // The type of the column
-			isFilterable: false, // Indicates whether the column is filterable
-			isSortable: true, // Indicates whether the column is sortable
-			class: 'text-center', // The class of the column
-			width: '5%', // The width of the column
-			renderComponent: EmployeeAverageIncomeComponent, // The component to render the column
-			componentInitFunction: (instance: EmployeeAverageIncomeComponent, cell: Cell) => {
-				instance.rowData = cell.getRow().getData();
-			}
-		});
-
-		// Register the data table column
-		this._pageDataTableRegistryService.registerPageDataTableColumn({
-			dataTableId: 'employee-manage', // The identifier for the data table location
-			columnId: 'averageExpenses', // The identifier for the column
-			order: 3, // The order of the column in the table
-			title: () => this.getTranslation('SM_TABLE.EXPENSES'), // The title of the column
-			type: 'custom', // The type of the column
-			isFilterable: false, // Indicates whether the column is filterable
-			isSortable: true, // Indicates whether the column is sortable
-			class: 'text-center', // The class of the column
-			width: '5%', // The width of the column
-			renderComponent: EmployeeAverageExpensesComponent, // The component to render the column
-			componentInitFunction: (instance: EmployeeAverageExpensesComponent, cell: Cell) => {
-				instance.rowData = cell.getRow().getData();
-			}
-		});
-
-		// Register the data table column
-		this._pageDataTableRegistryService.registerPageDataTableColumn({
-			dataTableId: 'employee-manage', // The identifier for the data table location
-			columnId: 'averageBonus', // The identifier for the column
-			order: 4, // The order of the column in the table
-			title: () => this.getTranslation('SM_TABLE.BONUS_AVG'), // The title of the column
-			type: 'custom', // The type of the column
-			isFilterable: false, // Indicates whether the column is filterable
-			isSortable: true, // Indicates whether the column is sortable
-			class: 'text-center', // The class of the column
-			width: '5%', // The width of the column
-			renderComponent: EmployeeAverageBonusComponent, // The component to render the column
-			componentInitFunction: (instance: EmployeeAverageBonusComponent, cell: Cell) => {
-				instance.rowData = cell.getRow().getData();
-			}
-		});
-
-		// Register the data table column
-		this._pageDataTableRegistryService.registerPageDataTableColumn({
-			dataTableId: 'employee-manage', // The identifier for the data table location
-			columnId: 'isTrackingEnabled', // The identifier for the column
-			order: 5, // The order of the column in the table
-			title: () => this.getTranslation('SM_TABLE.TIME_TRACKING'), // The title of the column
-			type: 'custom', // The type of the column
-			isFilterable: true, // Indicates whether the column is filterable
-			isSortable: true, // Indicates whether the column is sortable
-			class: 'text-center', // The class of the column
-			width: '5%', // The width of the column
-			filter: {
+			{
+				dataTableId: this.dataTableId,
+				columnId: 'averageExpenses',
+				order: 3,
+				title: () => this.getTranslation('SM_TABLE.EXPENSES'),
 				type: 'custom',
-				component: ToggleFilterComponent
+				isFilterable: false,
+				isSortable: true,
+				class: 'text-center',
+				width: '5%',
+				renderComponent: EmployeeAverageExpensesComponent,
+				componentInitFunction: (instance: EmployeeAverageExpensesComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+				}
 			},
-			filterFunction: (isTrackingEnabled: boolean) => {
-				this.setFilter({ field: 'isTrackingEnabled', search: isTrackingEnabled });
-				return isTrackingEnabled;
-			},
-			renderComponent: EmployeeTimeTrackingStatusComponent, // The component to render the column
-			componentInitFunction: (instance: EmployeeTimeTrackingStatusComponent, cell: Cell) => {
-				instance.rowData = cell.getRow().getData();
-			}
-		});
-
-		// Register the data table column
-		this._pageDataTableRegistryService.registerPageDataTableColumn({
-			dataTableId: 'employee-manage', // The identifier for the data table location
-			columnId: 'tags', // The identifier for the column
-			order: 6, // The order of the column in the table
-			title: () => this.getTranslation('SM_TABLE.TAGS'), // The title of the column
-			type: 'custom', // The type of the column
-			width: '20%', // The width of the column
-			isFilterable: true, // Indicates whether the column is filterable
-			isSortable: false,
-			filter: {
+			{
+				dataTableId: this.dataTableId,
+				columnId: 'averageBonus',
+				order: 4,
+				title: () => this.getTranslation('SM_TABLE.BONUS_AVG'),
 				type: 'custom',
-				component: TagsColorFilterComponent
+				isFilterable: false,
+				isSortable: true,
+				class: 'text-center',
+				width: '5%',
+				renderComponent: EmployeeAverageBonusComponent,
+				componentInitFunction: (instance: EmployeeAverageBonusComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+				}
 			},
-			filterFunction: (tags: ITag[]) => {
-				// Extract tag IDs from the tags array
-				const tagIds = tags.map((tag) => tag.id);
-				// Set the filter to the tag IDs
-				this.setFilter({ field: 'tags', search: tagIds });
-				return tags.length > 0;
-			},
-			renderComponent: TagsOnlyComponent, // The component to render the column
-			componentInitFunction: (instance: TagsOnlyComponent, cell: Cell) => {
-				instance.rowData = cell.getRow().getData();
-				instance.value = cell.getValue();
-			}
-		});
-
-		// Register the data table column
-		this._pageDataTableRegistryService.registerPageDataTableColumn({
-			dataTableId: 'employee-manage', // The identifier for the data table location
-			columnId: 'workStatus', // The identifier for the column
-			order: 7, // The order of the column in the table
-			title: () => this.getTranslation('SM_TABLE.STATUS'), // The title of the column
-			type: 'custom', // The type of the column
-			class: 'text-center', // The class of the column
-			width: '5%', // The width of the column
-			isFilterable: true, // Indicates whether the column is filterable
-			isSortable: false,
-			filter: {
+			{
+				dataTableId: this.dataTableId,
+				columnId: 'isTrackingEnabled',
+				order: 5,
+				title: () => this.getTranslation('SM_TABLE.TIME_TRACKING'),
 				type: 'custom',
-				component: ToggleFilterComponent
+				isFilterable: true,
+				isSortable: true,
+				class: 'text-center',
+				width: '5%',
+				filter: {
+					type: 'custom',
+					component: ToggleFilterComponent
+				},
+				filterFunction: this._getFilterFunction('isTrackingEnabled'),
+				renderComponent: EmployeeTimeTrackingStatusComponent,
+				componentInitFunction: (instance: EmployeeTimeTrackingStatusComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+				}
 			},
-			filterFunction: (isActive: boolean) => {
-				this.setFilter({ field: 'isActive', search: isActive });
-				return isActive;
+			{
+				dataTableId: this.dataTableId,
+				columnId: 'tags',
+				order: 6,
+				title: () => this.getTranslation('SM_TABLE.TAGS'),
+				type: 'custom',
+				width: '20%',
+				isFilterable: true,
+				isSortable: false,
+				filter: {
+					type: 'custom',
+					component: TagsColorFilterComponent
+				},
+				filterFunction: (tags: ITag[]) => {
+					const tagIds = tags.map((tag) => tag.id);
+					this.setFilter({ field: 'tags', search: tagIds });
+					return tags.length > 0;
+				},
+				renderComponent: TagsOnlyComponent,
+				componentInitFunction: (instance: TagsOnlyComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+					instance.value = cell.getValue();
+				}
 			},
-			renderComponent: EmployeeWorkStatusComponent, // The component to render the column
-			componentInitFunction: (instance: EmployeeWorkStatusComponent, cell: Cell) => {
-				instance.rowData = cell.getRow().getData();
+			{
+				dataTableId: this.dataTableId,
+				columnId: 'workStatus',
+				order: 7,
+				title: () => this.getTranslation('SM_TABLE.STATUS'),
+				type: 'custom',
+				class: 'text-center',
+				width: '5%',
+				isFilterable: true,
+				isSortable: false,
+				filter: {
+					type: 'custom',
+					component: ToggleFilterComponent
+				},
+				filterFunction: (isActive: boolean) => {
+					this.setFilter({ field: 'isActive', search: isActive });
+					return isActive;
+				},
+				renderComponent: EmployeeWorkStatusComponent,
+				componentInitFunction: (instance: EmployeeWorkStatusComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+				}
 			}
+		];
+
+		columns.forEach((column: PageDataTableRegistryConfig) => {
+			this._pageDataTableRegistryService.registerPageDataTableColumn(column);
 		});
+	}
+
+	/**
+	 * Helper function to create a reusable filter function for columns.
+	 * @param field - The field to filter by.
+	 */
+	private _getFilterFunction(field: string) {
+		return (value: string) => {
+			this.setFilter({ field, search: value });
+			return value.length > 0; // Return `true` if the value is non-empty
+		};
 	}
 
 	/**
@@ -853,7 +848,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 */
 	getColumns(): IColumns {
 		// Fetch and return the columns for 'employee-manage' data table
-		return this._pageDataTableRegistryService.getPageDataTableColumns('employee-manage');
+		return this._pageDataTableRegistryService.getPageDataTableColumns(this.dataTableId);
 	}
 
 	/**
@@ -890,7 +885,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 
 		// Check if screenshot capture is allowed and hide the column if not
 		this._pageDataTableRegistryService.registerPageDataTableColumn({
-			dataTableId: 'employee-manage', // The identifier for the data table location
+			dataTableId: this.dataTableId, // The identifier for the data table location
 			columnId: 'allowScreenshotCapture', // The identifier for the column
 			order: 8, // The order of the column in the table
 			title: () => this.getTranslation('SM_TABLE.SCREEN_CAPTURE'), // The title of the column

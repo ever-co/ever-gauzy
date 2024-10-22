@@ -96,7 +96,7 @@ export class PageDataTableRegistryService implements IPageDataTableRegistry {
 		const columns = this.registry.get(dataTableId) || [];
 
 		// Sort the columns by the 'order' property in ascending order
-		return columns.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+		return [...columns].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 	}
 
 	/**
