@@ -45,7 +45,7 @@
 		"@ng-select/ng-select": "^11.2.0",
 		"@ngneat/until-destroy": "^9.2.0",
 		"@ngx-translate/core": "^15.0.0",
-		"angular2-smart-table": "^3.2.0",
+		"angular2-smart-table": "^3.3.0",
 		"ckeditor4-angular": "4.0.1",
 		"moment": "^2.30.1",
 		"ngx-infinite-scroll": "^16.0.0",
