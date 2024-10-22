@@ -12,7 +12,7 @@
 				<div class="mr-2">
 					<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EMPLOYEES_VIEW]">
 						<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_INVITE_VIEW]">
-							<ng-template [ngIf]="organizationInvitesAllowed">
+							<ng-template [ngIf]="organization?.invitesAllowed">
 								<button nbButton status="primary" [routerLink]="'/pages/employees/invites'">
 									{{ 'BUTTONS.MANAGE_INVITES' | translate }}
 								</button>
@@ -44,10 +44,44 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-template [ngxPermissionsOnly]="['ORG_EMPLOYEES_VIEW']">
-			<ng-template
-				[ngTemplateOutlet]="dataLayoutStyle === componentLayoutStyleEnum.TABLE ? tableLayout : gridLayout"
-			></ng-template>
+		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_EMPLOYEES_VIEW]">
+			<ng-container [ngSwitch]="dataLayoutStyle">
+				<!-- Table View -->
+				<ng-template [ngSwitchCase]="componentLayoutStyleEnum.TABLE">
+					<div class="table-scroll-container">
+						<angular2-smart-table
+							style="cursor: pointer"
+							[settings]="settingsSmartTable"
+							[source]="smartTableSource"
+							(userRowSelect)="selectEmployee($event)"
+						></angular2-smart-table>
+					</div>
+					<div class="pagination-container">
+						<ng-container *ngIf="smartTableSource">
+							<ngx-pagination [source]="smartTableSource"></ngx-pagination>
+						</ng-container>
+					</div>
+				</ng-template>
+
+				<!-- Card Grid View -->
+				<ng-template [ngSwitchCase]="componentLayoutStyleEnum.CARDS_GRID">
+					<div class="grid">
+						<ga-card-grid
+							[totalItems]="pagination?.totalItems"
+							[settings]="settingsSmartTable"
+							[source]="employees"
+							(onSelectedItem)="selectEmployee($event)"
+							(scroll)="onScroll()"
+							#grid
+						></ga-card-grid>
+					</div>
+				</ng-template>
+
+				<!-- Optional: Default case if no specific layout matches -->
+				<ng-template *ngSwitchDefault>
+					<p>{{ 'SETTINGS_MENU.NO_LAYOUT' | translate }}</p>
+				</ng-template>
+			</ng-container>
 		</ng-template>
 		<ng-template [ngxPermissionsExcept]="['ORG_EMPLOYEES_VIEW']">
 			<div>
@@ -57,6 +91,33 @@
 	</nb-card-body>
 </nb-card>
 
+<!-- Visible Buttons -->
+<ng-template #visibleButtons>
+	<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EMPLOYEES_EDIT]">
+		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_INVITE_EDIT]">
+			<ng-template [ngIf]="organization?.invitesAllowed">
+				<button nbButton status="info" class="action" (click)="invite()" size="small">
+					<nb-icon class="mr-1" icon="email-outline"></nb-icon>
+					{{ 'BUTTONS.INVITE' | translate }}
+				</button>
+			</ng-template>
+		</ng-template>
+		<button nbButton size="small" status="success" (click)="add()">
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
+		</button>
+	</ng-template>
+</ng-template>
+
+<!-- Start Work Button -->
+<ng-template #startWork>
+	<button (click)="startEmployeeWork()" class="action text-info" nbButton size="small" status="basic">
+		<nb-icon icon="person-done-outline"></nb-icon>
+		{{ 'BUTTONS.START_WORK' | translate }}
+	</button>
+</ng-template>
+
+<!-- Action Buttons -->
 <ng-template #actionButtons let-selectedItem>
 	<div class="btn-group actions">
 		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.ORG_EMPLOYEES_VIEW]">
@@ -145,58 +206,4 @@
 			</ng-container>
 		</ng-template>
 	</div>
-</ng-template>
-
-<!-- Visible Buttons -->
-<ng-template #visibleButtons>
-	<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EMPLOYEES_EDIT]">
-		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_INVITE_EDIT]">
-			<ng-template [ngIf]="organizationInvitesAllowed">
-				<button nbButton status="info" class="action" (click)="invite()" size="small">
-					<nb-icon class="mr-1" icon="email-outline"></nb-icon>{{ 'BUTTONS.INVITE' | translate }}
-				</button>
-			</ng-template>
-		</ng-template>
-		<button nbButton size="small" status="success" (click)="add()">
-			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-			{{ 'BUTTONS.ADD' | translate }}
-		</button>
-	</ng-template>
-</ng-template>
-
-<ng-template #tableLayout>
-	<div class="table-scroll-container">
-		<angular2-smart-table
-			style="cursor: pointer"
-			[settings]="settingsSmartTable"
-			[source]="smartTableSource"
-			(userRowSelect)="selectEmployee($event)"
-		></angular2-smart-table>
-	</div>
-	<div class="pagination-container">
-		<ng-container *ngIf="smartTableSource">
-			<ngx-pagination [source]="smartTableSource"></ngx-pagination>
-		</ng-container>
-	</div>
-</ng-template>
-
-<ng-template #gridLayout>
-	<div class="grid">
-		<ga-card-grid
-			[totalItems]="pagination?.totalItems"
-			[settings]="settingsSmartTable"
-			[source]="employees"
-			(onSelectedItem)="selectEmployee($event)"
-			(scroll)="onScroll()"
-			#grid
-		></ga-card-grid>
-	</div>
-</ng-template>
-
-<!-- Start Work Button -->
-<ng-template #startWork>
-	<button (click)="startEmployeeWork()" class="action text-info" nbButton size="small" status="basic">
-		<nb-icon icon="person-done-outline"></nb-icon>
-		{{ 'BUTTONS.START_WORK' | translate }}
-	</button>
 </ng-template>
