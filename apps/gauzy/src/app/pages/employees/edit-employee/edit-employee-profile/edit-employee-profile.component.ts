@@ -1,20 +1,21 @@
 import { Component, OnDestroy, OnInit, Output, EventEmitter } from '@angular/core';
-import { ActivatedRoute, Params } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { firstValueFrom, Subject } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { NbRouteTab } from '@nebular/theme';
+import { debounceTime, filter, firstValueFrom, Subject, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IEmployee, IEmployeeUpdateInput, IUserUpdateInput, PermissionsEnum } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { ID, IEmployee, IEmployeeUpdateInput, IUserUpdateInput, PermissionsEnum } from '@gauzy/contracts';
 import {
 	EmployeesService,
 	EmployeeStore,
 	ErrorHandlingService,
+	PageTabRegistryConfig,
+	PageTabRegistryService,
+	PageTabsetRegistryId,
 	Store,
 	ToastrService,
 	UsersService
 } from '@gauzy/ui-core/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -24,10 +25,11 @@ import {
 	providers: [EmployeeStore]
 })
 export class EditEmployeeProfileComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	routeParams: Params;
+	public tabsetId: PageTabsetRegistryId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
+	public employeeId: ID = this._route.snapshot.params.id;
+
 	selectedEmployee: IEmployee;
 	employeeName: string;
-	tabs: NbRouteTab[] = [];
 	subject$: Subject<any> = new Subject();
 
 	@Output() updatedImage = new EventEmitter<any>();
@@ -40,7 +42,8 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 		private readonly _toastrService: ToastrService,
 		private readonly _employeeStore: EmployeeStore,
 		private readonly _errorHandlingService: ErrorHandlingService,
-		private readonly _store: Store
+		private readonly _store: Store,
+		private readonly _pageTabRegistryService: PageTabRegistryService
 	) {
 		super(translateService);
 	}
@@ -56,8 +59,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 		this._route.params
 			.pipe(
 				filter((params) => !!params),
-				tap((params) => (this.routeParams = params)),
-				tap(() => this.loadTabs()),
+				tap(() => this._registerPageTabs()),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
@@ -84,71 +86,165 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 		this._applyTranslationOnTabs();
 	}
 
+	/**
+	 * Constructs a route URL for a specific tab in the 'edit-employee' view.
+	 *
+	 * This method dynamically generates the route URL based on the employee's ID
+	 * and the tab passed as a parameter. It is used to navigate between
+	 * different sections (tabs) of the employee edit page.
+	 *
+	 * @param {string} tab - The name of the tab for which to generate the route.
+	 * @returns {string} - The complete route URL for the specified tab.
+	 */
 	getRoute(tab: string): string {
-		return `/pages/employees/edit/${this.routeParams.id}/${tab}`;
+		return `/pages/employees/edit/${this.employeeId}/${tab}`;
 	}
 
-	loadTabs() {
-		this.tabs = [
+	/**
+	 * Registers custom tabs for the 'employee-edit' page.
+	 * This method defines and registers the various tabs, their icons, routes, and titles.
+	 */
+	private _registerPageTabs(): void {
+		const tabs: PageTabRegistryConfig[] = this._createTabsConfig();
+
+		// Register each tab using the page tab registry service
+		tabs.forEach((tab: PageTabRegistryConfig) => this._pageTabRegistryService.registerPageTab(tab));
+	}
+
+	/**
+	 * Creates the configuration for the tabs used in the 'employee-edit' page.
+	 * @returns An array of PageTabRegistryConfig objects.
+	 */
+	private _createTabsConfig(): PageTabRegistryConfig[] {
+		return [
 			{
-				title: this.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.ACCOUNT'),
-				icon: 'person-outline',
+				tabsetId: this.tabsetId,
+				tabId: 'account',
+				tabIcon: 'person-outline',
+				tabsetType: 'route',
+				tabTitle: (_i18n) => _i18n.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.ACCOUNT'),
+				order: 0,
 				responsive: true,
 				route: this.getRoute('account')
 			},
 			{
-				title: this.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.NETWORKS'),
-				icon: 'at-outline',
+				tabsetId: this.tabsetId,
+				tabId: 'networks',
+				tabIcon: 'at-outline',
+				tabsetType: 'route',
+				tabTitle: (_i18n) => _i18n.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.NETWORKS'),
+				order: 1,
 				responsive: true,
 				route: this.getRoute('networks')
 			},
 			{
-				title: this.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT'),
-				icon: 'browser-outline',
+				tabsetId: this.tabsetId,
+				tabId: 'employment',
+				tabIcon: 'browser-outline',
+				tabsetType: 'route',
+				tabTitle: (_i18n) => _i18n.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT'),
+				order: 2,
 				responsive: true,
 				route: this.getRoute('employment')
 			},
 			{
-				title: this.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.HIRING'),
-				icon: 'map-outline',
+				tabsetId: this.tabsetId,
+				tabId: 'hiring',
+				tabIcon: 'browser-outline',
+				tabsetType: 'route',
+				tabTitle: (_i18n) => _i18n.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.HIRING'),
+				order: 3,
 				responsive: true,
 				route: this.getRoute('hiring')
 			},
 			{
-				title: this.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.LOCATION'),
-				icon: 'pin-outline',
+				tabsetId: this.tabsetId,
+				tabId: 'location',
+				tabIcon: 'pin-outline',
+				tabsetType: 'route',
+				tabTitle: (_i18n) => _i18n.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.LOCATION'),
+				order: 4,
 				responsive: true,
 				route: this.getRoute('location')
 			},
 			{
-				title: this.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATES'),
-				icon: 'pricetags-outline',
+				tabsetId: this.tabsetId,
+				tabId: 'rates',
+				tabIcon: 'pricetags-outline',
+				tabsetType: 'route',
+				tabTitle: (_i18n) => _i18n.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATES'),
+				order: 5,
 				responsive: true,
 				route: this.getRoute('rates')
 			},
-			...(this._store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW)
-				? [
-						{
-							title: this.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.PROJECTS'),
-							icon: 'book-outline',
-							responsive: true,
-							route: this.getRoute('projects')
-						}
-				  ]
-				: []),
 			{
-				title: this.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.CONTACTS'),
-				icon: 'book-open-outline',
+				tabsetId: this.tabsetId,
+				tabId: 'projects',
+				tabIcon: 'book-open-outline',
+				tabsetType: 'route',
+				tabTitle: (_i18n) => _i18n.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.PROJECTS'),
+				order: 6,
+				responsive: true,
+				route: this.getRoute('projects'),
+				permissions: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW]
+			},
+			{
+				tabsetId: this.tabsetId,
+				tabId: 'contacts',
+				tabIcon: 'book-outline',
+				tabsetType: 'route',
+				tabTitle: (_i18n) => _i18n.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.CONTACTS'),
+				order: 7,
 				responsive: true,
 				route: this.getRoute('contacts')
 			},
 			{
-				title: this.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.SETTINGS'),
-				icon: 'settings-outline',
+				tabsetId: this.tabsetId,
+				tabId: 'settings',
+				tabIcon: 'settings-outline',
+				tabsetType: 'route',
+				tabTitle: (_i18n) => _i18n.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.SETTINGS'),
+				order: 8,
 				responsive: true,
 				route: this.getRoute('settings')
 			}
 		];
+	}
+
+	/**
+	 * Retrieves and sets the profile of the selected employee
+	 *
+	 * @returns
+	 */
+	private async _getEmployeeProfile() {
+		try {
+			if (!this.employeeId) {
+				return;
+			}
+
+			// Fetch employee data from the service
+			const employee = await firstValueFrom(
+				this._employeeService.getEmployeeById(this.employeeId, [
+					'user',
+					'organizationDepartments',
+					'organizationPosition',
+					'organizationEmploymentTypes',
+					'tags',
+					'skills',
+					'contact'
+				])
+			);
+
+			// Set the selected employee in the store and component
+			this._employeeStore.selectedEmployee = this.selectedEmployee = employee;
+
+			// Set the employee name for display
+			this.employeeName = employee?.user?.name || employee?.user?.username || 'Unknown Employee';
+		} catch (error) {
+			// Handle errors gracefully
+			console.error('Error fetching employee profile:', error);
+			this._errorHandlingService.handleError(error);
+		}
 	}
 
 	/**
@@ -218,44 +314,12 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 	}
 
 	/**
-	 * Retrieves and sets the profile of the selected employee
+	 * Applies translations to the page tabs.
 	 */
-	private async _getEmployeeProfile() {
-		try {
-			const { id } = this.routeParams;
-			if (!id) {
-				return;
-			}
-
-			// Fetch employee data from the service
-			const employee = await firstValueFrom(
-				this._employeeService.getEmployeeById(id, [
-					'user',
-					'organizationDepartments',
-					'organizationPosition',
-					'organizationEmploymentTypes',
-					'tags',
-					'skills',
-					'contact'
-				])
-			);
-
-			// Set the selected employee in the store and component
-			this._employeeStore.selectedEmployee = this.selectedEmployee = employee;
-
-			// Set the employee name for display
-			this.employeeName = employee?.user?.name || employee?.user?.username || 'Unknown Employee';
-		} catch (error) {
-			// Handle errors gracefully
-			console.error('Error fetching employee profile:', error);
-			this._errorHandlingService.handleError(error);
-		}
-	}
-
 	private _applyTranslationOnTabs() {
 		this.translateService.onLangChange
 			.pipe(
-				tap(() => this.loadTabs()),
+				tap(() => this._registerPageTabs()),
 				untilDestroyed(this)
 			)
 			.subscribe();

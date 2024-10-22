@@ -48,7 +48,8 @@ import {
 	SkillsInputModule,
 	TableComponentsModule,
 	TagsColorInputModule,
-	TimeZoneSelectorModule
+	TimeZoneSelectorModule,
+	DynamicTabsModule
 } from '@gauzy/ui-core/shared';
 import {
 	EditEmployeeContactComponent,
@@ -139,7 +140,8 @@ const COMPONENTS = [
 		LanguageSelectorModule,
 		SmartDataViewLayoutModule,
 		CardGridModule,
-		TimeZoneSelectorModule
+		TimeZoneSelectorModule,
+		DynamicTabsModule
 	],
 	declarations: [...COMPONENTS],
 	providers: [OrganizationsService, InviteGuard, CandidatesService, OrganizationEmploymentTypesService, SkillsService]

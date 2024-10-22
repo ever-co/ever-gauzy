@@ -57,10 +57,12 @@ export type PageRouteRegistryId =
  * based on the context and requirements of the application.
  *
  * Possible values:
+ * - 'dashboard': A dashboard tab.
  * - 'timesheet': A timesheet tab.
  * - 'time-activity': A time and activity tab.
+ * - 'employee-edit': An employee edit tab.
  */
-export type PageTabsetRegistryId = 'dashboard' | 'timesheet' | 'time-activity';
+export type PageTabsetRegistryId = 'dashboard' | 'timesheet' | 'time-activity' | 'employee-edit';
 
 /**
  * @description
