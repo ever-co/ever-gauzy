@@ -72,6 +72,7 @@ export type PageTabsetRegistryId = 'dashboard' | 'timesheet' | 'time-activity';
  * on the context and requirements of the application.
  *
  * Possible values:
- * - 'job-employee': A sub-page under the jobs section.
+ * - 'employee-manage': Employee management page
+ * - 'job-employee': Sub-page under the jobs section (Job employee management page)
  */
-export type PageDataTableRegistryId = 'job-employee';
+export type PageDataTableRegistryId = 'employee-manage' | 'job-employee';

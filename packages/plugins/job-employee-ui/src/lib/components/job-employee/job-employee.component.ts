@@ -14,7 +14,6 @@ import { API_PREFIX, distinctUntilChange, isNotNullOrUndefined } from '@gauzy/ui
 import {
 	PageDataTableRegistryService,
 	EmployeesService,
-	JobService,
 	ServerDataSource,
 	Store,
 	ToastrService,
@@ -77,7 +76,6 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 		private readonly _ngxPermissionsService: NgxPermissionsService,
 		private readonly _store: Store,
 		private readonly _employeesService: EmployeesService,
-		private readonly _jobService: JobService,
 		private readonly _jobSearchStoreService: JobSearchStoreService,
 		private readonly _toastrService: ToastrService,
 		private readonly _currencyPipe: CurrencyPipe,

@@ -18,25 +18,25 @@ import {
 } from './edit-employee/edit-employee-profile';
 import { EmployeeResolver } from './employee.resolver';
 
-export function redirectTo() {
-	return '/pages/dashboard';
-}
-
 const routes: Routes = [
 	{
 		path: '',
 		component: EmployeesComponent,
 		canActivate: [PermissionsGuard],
 		data: {
+			// The data table identifier for the route
+			dataTableId: 'employee-manage',
+			// The permission required to access the route
 			permissions: {
 				only: [PermissionsEnum.ORG_EMPLOYEES_VIEW],
-				redirectTo
+				redirectTo: '/pages/dashboard'
 			},
+			// The selectors for the route
 			selectors: {
+				team: false,
 				project: false,
 				employee: false,
-				date: false,
-				team: false
+				date: false
 			}
 		}
 	},
@@ -47,7 +47,7 @@ const routes: Routes = [
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.PROFILE_EDIT],
-				redirectTo
+				redirectTo: '/pages/dashboard'
 			}
 		},
 		resolve: {
@@ -64,9 +64,11 @@ const routes: Routes = [
 				component: EditEmployeeMainComponent,
 				data: {
 					selectors: {
+						team: false,
 						project: false,
-						organization: false,
-						date: false
+						employee: false,
+						date: false,
+						organization: false
 					}
 				}
 			},
@@ -75,9 +77,11 @@ const routes: Routes = [
 				component: EditEmployeeNetworksComponent,
 				data: {
 					selectors: {
+						team: false,
 						project: false,
-						organization: false,
-						date: false
+						employee: false,
+						date: false,
+						organization: false
 					}
 				}
 			},
@@ -86,9 +90,11 @@ const routes: Routes = [
 				component: EditEmployeeRatesComponent,
 				data: {
 					selectors: {
+						team: false,
 						project: false,
-						organization: false,
-						date: false
+						employee: false,
+						date: false,
+						organization: false
 					}
 				}
 			},
@@ -98,13 +104,15 @@ const routes: Routes = [
 				canActivate: [PermissionsGuard],
 				data: {
 					selectors: {
+						team: false,
 						project: false,
-						organization: false,
-						date: false
+						employee: false,
+						date: false,
+						organization: false
 					},
 					permissions: {
 						only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW],
-						redirectTo
+						redirectTo: '/pages/dashboard'
 					}
 				}
 			},
@@ -113,9 +121,11 @@ const routes: Routes = [
 				component: EditEmployeeContactComponent,
 				data: {
 					selectors: {
+						team: false,
 						project: false,
-						organization: false,
-						date: false
+						employee: false,
+						date: false,
+						organization: false
 					}
 				}
 			},
@@ -124,9 +134,11 @@ const routes: Routes = [
 				component: EditEmployeeLocationComponent,
 				data: {
 					selectors: {
+						team: false,
 						project: false,
-						organization: false,
-						date: false
+						employee: false,
+						date: false,
+						organization: false
 					}
 				}
 			},
@@ -135,9 +147,11 @@ const routes: Routes = [
 				component: EditEmployeeHiringComponent,
 				data: {
 					selectors: {
+						team: false,
 						project: false,
-						organization: false,
-						date: false
+						employee: false,
+						date: false,
+						organization: false
 					}
 				}
 			},
@@ -146,9 +160,11 @@ const routes: Routes = [
 				component: EditEmployeeEmploymentComponent,
 				data: {
 					selectors: {
+						team: false,
 						project: false,
-						organization: false,
-						date: false
+						employee: false,
+						date: false,
+						organization: false
 					}
 				}
 			},
@@ -157,9 +173,11 @@ const routes: Routes = [
 				component: EditEmployeeOtherSettingsComponent,
 				data: {
 					selectors: {
+						team: false,
 						project: false,
-						organization: false,
-						date: false
+						employee: false,
+						date: false,
+						organization: false
 					}
 				}
 			}
