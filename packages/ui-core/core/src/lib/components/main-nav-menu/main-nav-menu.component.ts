@@ -1,9 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { NavMenuCategory, NavMenuSectionItem } from '../../services/nav-builder/nav-builder-types';
+import { Observable, catchError, map } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BaseNavMenuComponent } from '../base-nav-menu/base-nav-menu.component';
+import { NavMenuCategory, NavMenuSectionItem } from '../../services/nav-builder/nav-builder-types';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-main-nav-menu',
 	templateUrl: './main-nav-menu.component.html',
@@ -21,7 +22,12 @@ export class MainNavMenuComponent extends BaseNavMenuComponent implements OnInit
 
 		// Subscribe to the menuConfig$ observable provided by _navMenuBuilderService
 		this.mainMenuConfig$ = this._navMenuBuilderService.menuConfig$.pipe(
-			map((sections) => this.filterSectionsByCategory(sections))
+			map((sections: NavMenuSectionItem[]) => this.filterSectionsByCategory(sections)),
+			catchError((error) => {
+				console.error('Error while retrieving main menu sections:', error);
+				return [];
+			}),
+			untilDestroyed(this)
 		);
 	}
 
@@ -32,8 +38,8 @@ export class MainNavMenuComponent extends BaseNavMenuComponent implements OnInit
 	 * @returns An array of navigation menu section items that match the specified menu category.
 	 */
 	private filterSectionsByCategory(sections: NavMenuSectionItem[]): NavMenuSectionItem[] {
-		return this.mapMenuSections(sections).filter((section) =>
-			this.menuCategory ? section.menuCategory === this.menuCategory : !section.menuCategory
+		return this.mapMenuSections(sections ?? []).filter((section) =>
+			this.menuCategory ? section?.menuCategory === this.menuCategory : !section?.menuCategory
 		);
 	}
 
