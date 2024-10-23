@@ -1,4 +1,4 @@
-import { NbJSThemeOptions } from '@nebular/theme';
+import { NbJSThemeOptions, NbJSThemeVariable } from '@nebular/theme';
 
 const palette = {
 	primary: '#6200ee',
@@ -47,20 +47,14 @@ export const baseTheme: NbJSThemeOptions = {
 	}
 };
 
-const baseThemeVariables = baseTheme.variables;
+const baseThemeVariables = baseTheme.variables as NbJSThemeVariable;
 
 export const MATERIAL_LIGHT_THEME = {
 	name: 'material-light',
 	base: 'default',
 	variables: {
 		temperature: {
-			arcFill: [
-				baseThemeVariables.primary,
-				baseThemeVariables.primary,
-				baseThemeVariables.primary,
-				baseThemeVariables.primary,
-				baseThemeVariables.primary
-			],
+			arcFill: Array(5).fill(baseThemeVariables.primary),
 			arcEmpty: baseThemeVariables.bg2,
 			thumbBg: baseThemeVariables.bg2,
 			thumbBorder: baseThemeVariables.primary
