@@ -2,8 +2,8 @@ import { Pipe, PipeTransform } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
-import { IOrganization, RegionsEnum } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
+import { IOrganization, LanguagesEnum, RegionsEnum } from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
@@ -32,8 +32,8 @@ export class DateFormatPipe implements PipeTransform {
 		this.store.preferredLanguage$
 			.pipe(
 				distinctUntilChange(),
-				filter((preferredLanguage: string) => !!preferredLanguage),
-				tap((preferredLanguage: string) => {
+				filter((preferredLanguage: LanguagesEnum) => !!preferredLanguage),
+				tap((preferredLanguage: LanguagesEnum) => {
 					this.locale = preferredLanguage;
 				}),
 				untilDestroyed(this)
@@ -47,35 +47,32 @@ export class DateFormatPipe implements PipeTransform {
 	 * @param {Date | string | number | null | undefined} value - The value to transform. Can be a Date object, string, number, or null/undefined.
 	 * @param {string} [locale] - The locale to use for formatting. If not provided, the default region code will be used.
 	 * @param {string} [defaultFormat] - The format to apply to the date. If not provided, the default date format will be used.
-	 * @return {string | undefined} The formatted date string, or undefined if the value is falsy.
+	 * @return {string | undefined} The formatted date string, or undefined if the value is falsy or invalid.
 	 */
 	transform(
 		value: Date | string | number | null | undefined,
 		locale?: string,
 		defaultFormat?: string
 	): string | undefined {
-		if (!value) {
-			return;
-		}
+		// Return undefined if no value provided
+		if (!value) return;
 
+		// Parse date and check if it's valid
 		let date = moment(new Date(value));
 		if (!date.isValid()) {
 			date = moment.utc(value);
 		}
 
-		if (isEmpty(locale)) {
-			locale = this.locale || this.regionCode;
-		}
+		// If still invalid, return undefined
+		if (!date.isValid()) return;
 
-		if (date && defaultFormat) {
-			/**
-			 * Override default format to organization date format as a priority format
-			 */
-			return date.locale(locale).format(defaultFormat);
-		} else if (date && this.dateFormat) {
-			return date.locale(locale).format(this.dateFormat);
-		}
+		// Set locale to the given locale or fallback to instance's locale or region code
+		locale = locale || this.locale || this.regionCode;
 
-		return;
+		// Determine the format to use: defaultFormat, or fallback to instance date format
+		const format = defaultFormat || this.dateFormat;
+
+		// Return formatted date based on locale and format
+		return date.locale(locale).format(format);
 	}
 }
