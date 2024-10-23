@@ -46,6 +46,18 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 	 */
 	private defineBaseNavMenus() {
 		this._navMenuBuilderService.defineNavMenuSections([
+			...this._getMainMenu(),
+			...this._getAccordionMenu(),
+			...this._getSettingsMenu()
+		]);
+	}
+
+	/**
+	 * Retrieves the main navigation menu configuration.
+	 * @returns An array of NavMenuSectionItem objects representing the main menu.
+	 */
+	private _getMainMenu(): NavMenuSectionItem[] {
+		return [
 			{
 				id: 'dashboards',
 				title: 'Dashboards',
@@ -877,7 +889,214 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 					}
 				]
 			}
-		]);
+		];
+	}
+
+	/**
+	 * Retrieves the accordion menu configuration based on user permissions.
+	 * Each menu item includes an ID, title, icon, link, and additional data such as translation keys,
+	 * permission keys, and feature keys.
+	 *
+	 * @returns An array of NavMenuSectionItem objects representing the accordion menu.
+	 */
+	private _getAccordionMenu(): NavMenuSectionItem[] {
+		return [
+			{
+				id: 'invite-people',
+				title: 'Invite people',
+				icon: 'fas fa-user-plus',
+				link: '/pages/employees/invites',
+				menuCategory: 'accordion',
+				data: {
+					translationKey: 'MENU.INVITE_PEOPLE',
+					permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_INVITE_VIEW],
+					featureKey: FeatureEnum.FEATURE_MANAGE_INVITE
+				}
+			},
+			{
+				id: 'users',
+				title: 'Users',
+				icon: 'fas fa-users',
+				link: '/pages/users',
+				menuCategory: 'accordion',
+				data: {
+					translationKey: 'MENU.USERS',
+					permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_USERS_VIEW],
+					featureKey: FeatureEnum.FEATURE_USER
+				}
+			},
+			{
+				id: 'import-export',
+				title: 'Import/Export',
+				icon: 'fas fa-exchange-alt',
+				link: '/pages/settings/import-export',
+				menuCategory: 'accordion',
+				data: {
+					translationKey: 'MENU.IMPORT_EXPORT.IMPORT_EXPORT',
+					permissionKeys: [
+						PermissionsEnum.ALL_ORG_VIEW,
+						PermissionsEnum.IMPORT_ADD,
+						PermissionsEnum.EXPORT_ADD
+					],
+					featureKey: FeatureEnum.FEATURE_IMPORT_EXPORT
+				}
+			},
+			{
+				id: 'organizations',
+				title: 'Organizations',
+				icon: 'fas fa-globe',
+				link: '/pages/organizations',
+				menuCategory: 'accordion',
+				data: {
+					translationKey: 'MENU.ORGANIZATIONS',
+					permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_EXPENSES_EDIT],
+					featureKey: FeatureEnum.FEATURE_ORGANIZATIONS
+				}
+			},
+			{
+				id: 'integrations',
+				title: 'Integrations',
+				icon: 'fas fa-swatchbook',
+				link: '/pages/integrations',
+				menuCategory: 'accordion',
+				pathMatch: 'prefix',
+				data: {
+					translationKey: 'MENU.INTEGRATIONS',
+					permissionKeys: [PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT],
+					featureKey: FeatureEnum.FEATURE_APP_INTEGRATION
+				}
+			}
+		];
+	}
+
+	/**
+	 * Retrieves the settings menu configuration.
+	 *
+	 * @returns An array containing a single NavMenuSectionItem for settings.
+	 */
+	private _getSettingsMenu(): NavMenuSectionItem[] {
+		return [
+			{
+				id: 'settings',
+				title: 'Settings',
+				icon: 'fas fa-cog',
+				menuCategory: 'settings',
+				data: {
+					translationKey: 'MENU.SETTINGS'
+				},
+				items: [
+					{
+						id: 'settings-general',
+						title: 'General',
+						icon: 'fas fa-pen',
+						link: '/pages/settings/general',
+						data: {
+							translationKey: 'MENU.GENERAL',
+							featureKey: FeatureEnum.FEATURE_SETTING
+						}
+					},
+					{
+						id: 'settings-features',
+						title: 'Features',
+						icon: 'fas fa-swatchbook',
+						link: '/pages/settings/features',
+						data: {
+							translationKey: 'MENU.FEATURES',
+							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ALL_ORG_VIEW]
+						}
+					},
+					{
+						id: 'settings-email-history',
+						title: 'Email History',
+						icon: 'fas fa-envelope-open',
+						link: '/pages/settings/email-history',
+						data: {
+							translationKey: 'MENU.EMAIL_HISTORY',
+							permissionKeys: [PermissionsEnum.VIEW_ALL_EMAILS],
+							featureKey: FeatureEnum.FEATURE_EMAIL_HISTORY
+						}
+					},
+					{
+						id: 'settings-email-templates',
+						title: 'Email Templates',
+						icon: 'fas fa-envelope',
+						link: '/pages/settings/email-templates',
+						data: {
+							translationKey: 'MENU.EMAIL_TEMPLATES',
+							permissionKeys: [PermissionsEnum.VIEW_ALL_EMAIL_TEMPLATES],
+							featureKey: FeatureEnum.FEATURE_EMAIL_TEMPLATE
+						}
+					},
+					{
+						id: 'settings-accounting-templates',
+						title: 'Accounting Templates',
+						icon: 'fas fa-address-card',
+						link: '/pages/settings/accounting-templates',
+						data: {
+							translationKey: 'MENU.ACCOUNTING_TEMPLATES',
+							permissionKeys: [PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES]
+						}
+					},
+					{
+						id: 'settings-file-storage',
+						title: 'File storage',
+						icon: 'fas fa-database',
+						link: '/pages/settings/file-storage',
+						data: {
+							translationKey: 'MENU.FILE_STORAGE',
+							permissionKeys: [PermissionsEnum.FILE_STORAGE_VIEW],
+							featureKey: FeatureEnum.FEATURE_FILE_STORAGE
+						}
+					},
+					{
+						id: 'settings-sms-gateways',
+						title: 'SMS Gateways',
+						icon: 'fas fa-at',
+						link: '/pages/settings/sms-gateway',
+						data: {
+							translationKey: 'MENU.SMS_GATEWAYS',
+							permissionKeys: [PermissionsEnum.SMS_GATEWAY_VIEW],
+							featureKey: FeatureEnum.FEATURE_SMS_GATEWAY
+						}
+					},
+					{
+						id: 'settings-custom-smtp',
+						title: 'Custom SMTP',
+						icon: 'fas fa-at',
+						link: '/pages/settings/custom-smtp',
+						data: {
+							translationKey: 'MENU.CUSTOM_SMTP',
+							permissionKeys: [PermissionsEnum.CUSTOM_SMTP_VIEW],
+							featureKey: FeatureEnum.FEATURE_SMTP
+						}
+					},
+					{
+						id: 'settings-roles-permissions',
+						title: 'Roles & Permissions',
+						link: '/pages/settings/roles-permissions',
+						icon: 'fas fa-award',
+						data: {
+							translationKey: 'MENU.ROLES',
+							permissionKeys: [PermissionsEnum.CHANGE_ROLES_PERMISSIONS],
+							featureKey: FeatureEnum.FEATURE_ROLES_PERMISSION
+						}
+					},
+					{
+						id: 'settings-danger-zone',
+						title: 'Danger Zone',
+						link: '/pages/settings/danger-zone',
+						icon: 'fas fa-radiation-alt',
+						data: {
+							translationKey: 'MENU.DANGER_ZONE',
+							permissionKeys: [
+								PermissionsEnum.ACCESS_DELETE_ACCOUNT,
+								PermissionsEnum.ACCESS_DELETE_ALL_DATA
+							]
+						}
+					}
+				]
+			}
+		];
 	}
 
 	/**

@@ -13,22 +13,23 @@ import { NavMenuBuilderService } from '../services/nav-builder';
  * const beforeSectionId = 'dashboard';
  *
  * export default [
- *      addNavMenuSection({
- *           id: 'reports',
- *           label: 'Reports',
- *           items: [
- *               {
- *                   id: 'report1',
- *                   label: 'Report 1',
- *                   link: '/reports/report1'
- *               },
- *               {
- *                   id: 'report2',
- *                   label: 'Report 2',
- *                   link: '/reports/report2'
- *               }
- *           ]
- *      }, beforeSectionId)
+ *     addNavMenuSection({
+ *         id: 'reports',
+ *         label: 'Reports',
+ *         menuCategory: 'settings', // Optional, can be 'main', 'settings', or 'accordion'
+ *         items: [
+ *             {
+ *                 id: 'report1',
+ *                 label: 'Report 1',
+ *                 link: '/reports/report1'
+ *             },
+ *             {
+ *                 id: 'report2',
+ *                 label: 'Report 2',
+ *                 link: '/reports/report2'
+ *             }
+ *         ]
+ *     }, beforeSectionId)
  * ];
  *
  * @returns The provider configuration.
