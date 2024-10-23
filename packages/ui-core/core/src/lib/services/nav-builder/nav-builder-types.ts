@@ -13,11 +13,11 @@ export type NavMenuCategory = 'main' | 'settings' | 'accordion';
  */
 export interface NavMenuSectionItem extends NbMenuItem {
 	id: string; // Unique identifier for the section
+	menuCategory?: NavMenuCategory; // Category of the menu (optional)
 	class?: string; // Additional class for styling (optional)
 	items?: NavMenuSectionItem[]; // Array of NavMenuItem objects representing the links within the section (optional)
 	onClick?: (event: MouseEvent) => void; // Function to be called when the menu item is clicked (optional)
 	data: NavMenuItemData; // Data associated with the section
-	menuCategory?: NavMenuCategory; // Category of the menu (optional)
 }
 
 /**

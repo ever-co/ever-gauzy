@@ -2,7 +2,7 @@ import { NbMenuItem } from '@nebular/theme';
 import { FeatureEnum, PermissionsEnum } from '@gauzy/contracts';
 
 export interface IMenuItem extends NbMenuItem {
-	id?: string;
+	id?: string; // Unique identifier for the menu item.
 	class?: string;
 	data: {
 		translationKey: string; //Translation key for the title, mandatory for all items
