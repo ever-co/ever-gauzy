@@ -2,6 +2,7 @@
 	<ng-container *ngFor="let item of items">
 		<ng-container *ngIf="!item?.hidden">
 			<ga-menu-item
+				[id]="item?.id"
 				(selectedChange)="focusOn($event)"
 				[item]="item"
 				[selected]="item === selectedItem"
