@@ -1,6 +1,7 @@
 import { JoinColumn } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import {
 	ID,
@@ -56,12 +57,14 @@ export class OrganizationSprint extends TenantOrganizationBaseEntity implements 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
+	@Type(() => Date)
 	@MultiORMColumn({ nullable: true })
 	startDate?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
+	@Type(() => Date)
 	@MultiORMColumn({ nullable: true })
 	endDate?: Date;
 

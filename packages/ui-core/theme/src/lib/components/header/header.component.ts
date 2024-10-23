@@ -466,10 +466,14 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		// Extract organization and tenant IDs
 		const { id: organizationId, tenantId } = this.organization;
 
+		// Include member if employeeId or store user's employeeId is provided
+		const employeeId = this.store.user.employee?.id || this.store.selectedEmployee?.id;
+
 		// Get project count
 		const count = await this.organizationProjectsService.getCount({
 			organizationId,
-			tenantId
+			tenantId,
+			...(employeeId && { members: { employeeId } })
 		});
 
 		//	Show project selector if count > 0
@@ -494,10 +498,14 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		// Extract organization and tenant IDs
 		const { id: organizationId, tenantId } = this.organization;
 
+		// Include member if employeeId or store user's employeeId is provided
+		const employeeId = this.store.user.employee?.id || this.store.selectedEmployee?.id;
+
 		// Get team count
 		const count = await this.organizationTeamsService.getCount({
 			organizationId,
-			tenantId
+			tenantId,
+			...(employeeId && { members: { employeeId } })
 		});
 
 		// Show team selector if count > 0

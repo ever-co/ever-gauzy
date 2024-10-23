@@ -104,16 +104,40 @@ export class ServerDataSource extends LocalDataSource {
 		return toParams(requestParams);
 	}
 
-	protected addSortRequestParams() {
+	/**
+	 * Adds sorting parameters to the request based on the sorting configuration.
+	 *
+	 * This function processes the `sortConf` configuration and extracts the field
+	 * and its direction (ascending or descending) to create a sorting object.
+	 * If a field does not have a valid direction, it will be skipped, and a warning
+	 * will be logged. The resulting sorting parameters are returned as part of an
+	 * object that can be used in a request.
+	 *
+	 * @returns {Object} An object containing the sorting parameters.
+	 */
+	protected addSortRequestParams(): { [key: string]: any } {
 		if (this.sortConf) {
-			const orders: any = {};
+			// Initialize an object to hold sorting orders
+			const orders: { [key: string]: string } = {};
+
+			// Iterate through the sort configuration array
 			this.sortConf.forEach((fieldConf) => {
-				orders[fieldConf.field] = fieldConf.direction.toUpperCase();
+				// Ensure the field configuration has a valid direction
+				if (fieldConf.direction) {
+					// Convert direction to uppercase (e.g., ASC or DESC) and add it to orders
+					orders[fieldConf.field] = fieldConf.direction.toUpperCase();
+				} else {
+					// Log a warning if the direction is not defined
+					console.warn(`Direction is not defined for field: ${fieldConf.field}`);
+				}
 			});
+
+			// Return the sorting orders wrapped in the expected format
 			return {
 				[this.conf.sortDirKey]: orders
 			};
 		} else {
+			// Return an empty object if there is no sorting configuration
 			return {};
 		}
 	}
