@@ -303,3 +303,22 @@ nb-accordion {
     width: 100%;
   }
 }
+:host ::ng-deep nb-toggle {
+  padding: 10px;
+  border: 1px solid nb-theme(gauzy-border-default-color);
+  border-radius: nb-theme(border-radius);
+  & > label {
+    margin-bottom: 0;
+  }
+}
+:host ::ng-deep .toggle {
+  border: 1px solid #7e7e8f !important;
+  background-color: #7e7e8f !important;
+  &.checked {
+    background-color: nb-theme(text-primary-color) !important;
+    border: 1px solid nb-theme(text-primary-color) !important;
+    & + span {
+      color: nb-theme(text-primary-color);
+    }
+  }
+}

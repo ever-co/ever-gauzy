@@ -113,6 +113,10 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel, ITa
 	isTrackingEnabled: boolean;
 	isDeleted?: boolean;
 	allowScreenshotCapture?: boolean;
+	allowManualTime?: boolean;
+	allowModifyTime?: boolean;
+	allowDeleteTime?: boolean;
+
 	/** Upwork ID For Gauzy AI*/
 	upworkId?: string;
 	/** LinkedIn ID For Gauzy AI*/
@@ -123,9 +127,6 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel, ITa
 	isTrackingTime?: boolean;
 	// True mean active, false away
 	isAway?: boolean;
-	allowManualTime?: boolean;
-	allowModifyTime?: boolean;
-	allowDeleteTime?: boolean;
 }
 
 export type IEmployeeJobsStatisticsResponse = IEmployee & IEmployeeJobsStatistics;
@@ -179,6 +180,9 @@ export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntit
 	upworkUrl?: string;
 	profile_link?: string;
 	allowScreenshotCapture?: boolean;
+	allowManualTime?: boolean;
+	allowModifyTime?: boolean;
+	allowDeleteTime?: boolean;
 	/** Upwork ID For Gauzy AI*/
 	upworkId?: string;
 	/** LinkedIn ID For Gauzy AI*/
