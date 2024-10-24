@@ -87,6 +87,42 @@ function isCookieForValidDomain(cookie: string | null): boolean {
 }
 
 /**
+ * Prepares cookie options with default values and overrides.
+ *
+ * @param {Object} [options={}] - Additional options to customize the cookie settings.
+ * @param {string} [options.path='/'] - The path where the cookie is accessible.
+ * @param {string} [options.SameSite='Lax'] - SameSite attribute to control cookie sharing across sites.
+ * @param {boolean} [options.Secure] - If true, the cookie will only be sent over HTTPS.
+ * @param {string} [options.domain] - The domain for which the cookie is valid.
+ * @returns {Object} The final cookie options object with defaults applied.
+ */
+function prepareCookieOptions(options: { [key: string]: any } = {}): { [key: string]: any } {
+	// Prepare cookie options with defaults
+	const cookieOptions = {
+		path: '/', // Default path for all cookies
+		SameSite: 'Lax', // Prevent CSRF attacks
+		Secure: window.location.protocol === 'https:', // Send only over HTTPS
+		...options // Spread existing options
+	};
+
+	// Cache hostname lookup to avoid repeated access to window.location.hostname
+	const getCurrentHostname = (() => {
+		let hostname: string;
+		return () => (hostname ??= window.location.hostname);
+	})();
+
+	// Get current host name
+	const hostname = getCurrentHostname();
+	if (hostname === 'localhost' || hostname === '127.0.0.1') {
+		cookieOptions['domain'] = undefined; // Don't set the domain for localhost
+	} else {
+		cookieOptions['domain'] = cookieOptions['domain'] || '.gauzy.co'; // Default domain for production
+	}
+
+	return cookieOptions; // Return the final cookie options
+}
+
+/**
  * Sets a cookie with the specified name, value, and options.
  *
  * @param {string} name - The name of the cookie.
@@ -99,27 +135,13 @@ export function setCookie(name: string, value: string, options: { [key: string]:
 	}
 
 	// Prepare cookie options with defaults
-	const cookieOptions = {
-		path: '/',
-		SameSite: 'Lax',
-		Secure: window.location.protocol === 'https:',
-		...options
-	};
-
-	// Remove domain option for localhost or 127.0.0.1
-	const hostname = window.location.hostname;
-	if (hostname === 'localhost' || hostname === '127.0.0.1') {
-		delete cookieOptions['domain'];
-	} else {
-		cookieOptions['domain'] = cookieOptions['domain'] || '.gauzy.co';
-	}
+	const cookieOptions = prepareCookieOptions(options);
 
 	// Build the cookie string
-	const cookieString =
-		`${encodeURIComponent(name)}=${encodeURIComponent(value)}; ` +
-		Object.entries(cookieOptions)
-			.map(([key, val]) => `${key}=${val}`)
-			.join('; ');
+	const cookieString = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; `;
+	Object.entries(cookieOptions)
+		.map(([key, val]) => `${key}=${val}`)
+		.join('; ');
 
 	// Set the cookie
 	document.cookie = cookieString;
@@ -137,27 +159,13 @@ export function deleteCookie(name: string, options: { [key: string]: any } = {})
 	}
 
 	// Prepare cookie options with defaults
-	const cookieOptions = {
-		path: '/',
-		SameSite: 'Lax',
-		Secure: window.location.protocol === 'https:',
-		...options
-	};
-
-	// Remove domain option for localhost or 127.0.0.1
-	const hostname = window.location.hostname;
-	if (hostname === 'localhost' || hostname === '127.0.0.1') {
-		delete cookieOptions['domain'];
-	} else {
-		cookieOptions['domain'] = cookieOptions['domain'] || '.gauzy.co';
-	}
+	const cookieOptions = prepareCookieOptions(options);
 
 	// Build the cookie string for deletion
-	const cookieString =
-		`${encodeURIComponent(name)}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; ` +
-		Object.entries(cookieOptions)
-			.map(([key, val]) => `${key}=${val}`)
-			.join('; ');
+	const cookieString = `${encodeURIComponent(name)}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; `;
+	Object.entries(cookieOptions)
+		.map(([key, val]) => `${key}=${val}`)
+		.join('; ');
 
 	// Set the cookie to delete it
 	document.cookie = cookieString;
