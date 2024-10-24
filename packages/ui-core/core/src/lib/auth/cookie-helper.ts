@@ -1,3 +1,11 @@
+// Define allowed domains configuration
+const DOMAIN_CONFIG = {
+	production: ['gauzy.co'],
+	demo: ['demo.gauzy.co'],
+	staging: ['staging.gauzy.co'],
+	development: ['localhost', '127.0.0.1']
+} as const;
+
 /**
  * Retrieves the value of a cookie by its name for the current domain and its subdomains.
  *
@@ -5,8 +13,14 @@
  * @return {string | null} - The value of the cookie if found, or null if not found.
  */
 export function getCookie(name: string): string | null {
+	if (!name || typeof name !== 'string') {
+		return null;
+	}
+
+	// Sanitize the cookie name
+	const sanitizedName = encodeURIComponent(name);
 	const value = `; ${document.cookie}`; // Get all cookies as a string and add a leading semicolon
-	const parts = value.split(`; ${name}=`); // Split the string by the desired cookie name
+	const parts = value.split(`; ${sanitizedName}=`); // Split the string by the desired cookie name
 
 	// If the cookie is found, split to isolate its value and return it
 	if (parts.length === 2) {
@@ -14,7 +28,7 @@ export function getCookie(name: string): string | null {
 
 		// Check if the cookie is set for the current domain or its subdomains
 		if (isCookieForValidDomain(cookie)) {
-			return cookie; // Return the cookie value if it's for a valid domain
+			return decodeURIComponent(cookie); // Return the cookie value if it's for a valid domain
 		}
 	}
 
@@ -35,14 +49,22 @@ function isCookieForValidDomain(cookie: string | null): boolean {
 	}
 
 	// Get the current hostname
-	const hostname = window.location.hostname; // e.g., "demo.gauzy.co" or "gauzy.co"
+	const hostname = window.location.hostname; // e.g., "demo.gauzy.co" or "app.gauzy.co"
 
-	// Define the base domain
-	const mainDomain = 'gauzy.co';
+	// Get environment-specific domains
+	const validDomains = [
+		...DOMAIN_CONFIG.production,
+		...DOMAIN_CONFIG.demo,
+		...DOMAIN_CONFIG.staging,
+		...DOMAIN_CONFIG.development
+	];
 
-	// Check if the hostname is localhost or a subdomain of gauzy.co
-	const isLocalhost = hostname === 'localhost';
-	const isSubdomain = hostname.endsWith(`.${mainDomain}`) || hostname === mainDomain;
+	// More robust domain validation
+	const isValidDomain = validDomains.some((domain) => {
+		if (domain === hostname) return true;
+		if (domain.startsWith('.')) return hostname.endsWith(domain);
+		return hostname.endsWith(`.${domain}`) || hostname === domain;
+	});
 
-	return isLocalhost || isSubdomain; // Return true if valid, false otherwise
+	return isValidDomain; // Return true if valid, false otherwise
 }
