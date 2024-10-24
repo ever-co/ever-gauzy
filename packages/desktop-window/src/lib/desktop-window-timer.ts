@@ -12,6 +12,13 @@ Object.assign(console, log.functions);
 const Store = require('electron-store');
 const store = new Store();
 
+function getScreenSize() {
+	const sizes = screen.getPrimaryDisplay().workAreaSize;
+	const width = sizes.height < 768 ? 310 : 360;
+	const height = sizes.height < 768 ? sizes.height - 20 : 768;
+	return { width, height }
+}
+
 export async function createTimeTrackerWindow(timeTrackerWindow, filePath, preloadPath?) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting(preloadPath);
 	const manager = WindowManager.getInstance();
@@ -29,6 +36,11 @@ export async function createTimeTrackerWindow(timeTrackerWindow, filePath, prelo
 
 	timeTrackerWindow.hide();
 	await timeTrackerWindow.loadURL(launchPath);
+	if (preloadPath) {
+		attachTitlebarToWindow(timeTrackerWindow);
+	}
+	const { width, height } = getScreenSize();
+	timeTrackerWindow.setMinimumSize(width, height);
 	timeTrackerWindow.setMenu(null);
 	timeTrackerWindow.on('close', (event) => {
 		event.preventDefault();
@@ -36,17 +48,14 @@ export async function createTimeTrackerWindow(timeTrackerWindow, filePath, prelo
 	});
 
 	manager.register(RegisteredWindow.TIMER, timeTrackerWindow);
-	if (preloadPath) {
-		attachTitlebarToWindow(timeTrackerWindow);
-	}
+
 	return timeTrackerWindow;
 }
 
 const windowSetting = (preloadPath?) => {
 	const sizes = screen.getPrimaryDisplay().workAreaSize;
-	const height = sizes.height < 768 ? sizes.height - 20 : 768;
+	const { width, height } = getScreenSize();
 	const zoomF = sizes.height < 768 ? 0.8 : 1.0;
-	const width = sizes.height < 768 ? 310 : 360;
 	const filesPath = store.get('filePath');
 	console.log('file path == ', filesPath);
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
