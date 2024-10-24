@@ -1,16 +1,17 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService, AuthStrategy, ElectronService, Store } from '../services';
+import { getCookie } from './cookie-helper';
 
 @Injectable()
-export class AuthGuard implements CanActivate {
+export class AuthGuard {
 	constructor(
-		private readonly router: Router,
-		private readonly authService: AuthService,
-		private readonly authStrategy: AuthStrategy,
-		private readonly store: Store,
-		private readonly electronService: ElectronService
+		private readonly _router: Router,
+		private readonly _authService: AuthService,
+		private readonly _authStrategy: AuthStrategy,
+		private readonly _store: Store,
+		private readonly _electronService: ElectronService
 	) {}
 
 	/**
@@ -21,20 +22,21 @@ export class AuthGuard implements CanActivate {
 	 * @return {Promise<boolean>} A promise that resolves to true if the user is authenticated, false otherwise.
 	 */
 	async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean> {
-		const token = route.queryParamMap.get('token');
-		const userId = route.queryParamMap.get('userId');
+		const token = route.queryParamMap.get('token') || getCookie('token');
+		const userId = route.queryParamMap.get('userId') || getCookie('userId');
 
+		// If token and userId exist, store them
 		if (token && userId) {
-			this.store.token = token;
-			this.store.userId = userId;
+			this._store.token = token;
+			this._store.userId = userId;
 		}
 
-		if (await this.authService.isAuthenticated()) {
-			// Logged in, so allow navigation
-			return true;
+		// Check if the user is authenticated
+		if (await this._authService.isAuthenticated()) {
+			return true; // Allow navigation
 		}
 
-		// Not logged in, handle the logout process
+		// Not authenticated, handle logout
 		await this.handleLogout(state.url);
 		return false;
 	}
@@ -45,15 +47,15 @@ export class AuthGuard implements CanActivate {
 	 * @param {string} returnUrl - The URL to return to after logging in.
 	 */
 	private async handleLogout(returnUrl: string): Promise<void> {
-		if (this.electronService.isElectron) {
+		if (this._electronService.isElectron) {
 			try {
-				this.electronService.ipcRenderer.send('logout');
+				this._electronService.ipcRenderer.send('logout');
 			} catch (error) {
 				console.error('Error sending logout message to Electron:', error);
 			}
 		}
 
-		await firstValueFrom(this.authStrategy.logout());
-		await this.router.navigate(['/auth/login'], { queryParams: { returnUrl } });
+		await firstValueFrom(this._authStrategy.logout());
+		await this._router.navigate(['/auth/login'], { queryParams: { returnUrl } });
 	}
 }

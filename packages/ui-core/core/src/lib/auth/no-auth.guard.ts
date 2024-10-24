@@ -1,15 +1,16 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
 import { AuthService, Store } from '../services';
+
 /**
  * Use for routes which only need to be displayed if user is NOT logged in
  */
 @Injectable()
-export class NoAuthGuard implements CanActivate {
+export class NoAuthGuard {
 	constructor(
-		private readonly router: Router,
-		private readonly authService: AuthService,
-		private readonly store: Store
+		private readonly _router: Router,
+		private readonly _authService: AuthService,
+		private readonly _store: Store
 	) {}
 
 	/**
@@ -20,18 +21,18 @@ export class NoAuthGuard implements CanActivate {
 	 * @return {Promise<boolean>} A promise that resolves to true if the user is authenticated, false otherwise.
 	 */
 	async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean> {
-		if (!this.store.token) {
+		if (!this._store.token) {
 			// not logged in so return true
 			return true;
 		}
 
-		if (!(await this.authService.isAuthenticated())) {
+		if (!(await this._authService.isAuthenticated())) {
 			// not logged in so return true
 			return true;
 		}
 
 		// logged in so redirect to dashboard
-		this.router.navigate(['/pages/dashboard']);
+		this._router.navigate(['/pages/dashboard']);
 
 		return false;
 	}
