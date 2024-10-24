@@ -27,7 +27,7 @@ export function getCookie(name: string): string | null {
 		const cookie = parts.pop()?.split(';').shift() || null; // Get the cookie value
 
 		// Validate if the cookie is set for the current domain or its subdomains
-		if (isCookieForValidDomain(sanitizedName)) {
+		if (isCookieForValidDomain(cookie)) {
 			return decodeURIComponent(cookie); // Return the cookie value if it's for a valid domain
 		}
 	}
