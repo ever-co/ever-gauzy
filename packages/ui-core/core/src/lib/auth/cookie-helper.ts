@@ -1,10 +1,4 @@
-// Define allowed domains for each environment
-const DOMAIN_CONFIG = {
-	production: ['gauzy.co'],
-	demo: ['demo.gauzy.co'],
-	staging: ['staging.gauzy.co'],
-	development: ['localhost', '127.0.0.1']
-} as const;
+import { environment } from '@gauzy/ui-config';
 
 /**
  * Retrieves the value of a cookie by its name for the current domain and its subdomains.
@@ -50,6 +44,14 @@ function isCookieForValidDomain(cookie: string | null): boolean {
 
 	// Get the current hostname
 	const hostname = window.location.hostname; // e.g., "demo.gauzy.co" or "app.gauzy.co"
+
+	// Define allowed domains for each environment
+	const DOMAIN_CONFIG = {
+		production: ['gauzy.co', 'app.gauzy.co'],
+		demo: ['demo.gauzy.co'],
+		staging: ['staging.gauzy.co'],
+		development: ['localhost', '127.0.0.1']
+	} as const;
 
 	// Check for development environments
 	if (DOMAIN_CONFIG.development.includes(hostname as 'localhost' | '127.0.0.1')) {
@@ -116,7 +118,7 @@ function prepareCookieOptions(options: { [key: string]: any } = {}): { [key: str
 	if (hostname === 'localhost' || hostname === '127.0.0.1') {
 		cookieOptions['domain'] = undefined; // Don't set the domain for localhost
 	} else {
-		cookieOptions['domain'] = cookieOptions['domain'] || '.gauzy.co'; // Default domain for production
+		cookieOptions['domain'] = cookieOptions['domain'] || environment.COOKIE_DOMAIN; // Default domain for production
 	}
 
 	return cookieOptions; // Return the final cookie options

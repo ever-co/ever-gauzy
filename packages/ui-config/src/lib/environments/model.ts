@@ -3,6 +3,7 @@ export interface Environment {
 
 	API_BASE_URL: string;
 	CLIENT_BASE_URL: string;
+	COOKIE_DOMAIN: string;
 
 	PLATFORM_WEBSITE_URL?: string;
 	PLATFORM_WEBSITE_DOWNLOAD_URL?: string;
