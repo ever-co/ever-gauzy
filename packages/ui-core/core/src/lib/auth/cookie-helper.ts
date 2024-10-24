@@ -1,4 +1,4 @@
-// Define allowed domains configuration
+// Define allowed domains for each environment
 const DOMAIN_CONFIG = {
 	production: ['gauzy.co'],
 	demo: ['demo.gauzy.co'],
@@ -26,8 +26,8 @@ export function getCookie(name: string): string | null {
 	if (parts.length === 2) {
 		const cookie = parts.pop()?.split(';').shift() || null; // Get the cookie value
 
-		// Check if the cookie is set for the current domain or its subdomains
-		if (isCookieForValidDomain(cookie)) {
+		// Validate if the cookie is set for the current domain or its subdomains
+		if (isCookieForValidDomain(sanitizedName)) {
 			return decodeURIComponent(cookie); // Return the cookie value if it's for a valid domain
 		}
 	}
@@ -39,7 +39,7 @@ export function getCookie(name: string): string | null {
 /**
  * Checks if the cookie is set for the current domain, its subdomains, or localhost.
  *
- * @param {string} cookie - The value of the cookie to check.
+ * @param {string} cookie - The name of the cookie to check.
  * @return {boolean} - True if the cookie is considered valid, otherwise false.
  */
 function isCookieForValidDomain(cookie: string | null): boolean {
@@ -49,7 +49,7 @@ function isCookieForValidDomain(cookie: string | null): boolean {
 	}
 
 	// Get the current hostname
-	const hostname = window.location.hostname; // e.g., "demo.gauzy.co" or "app.gauzy.co"
+	const hostname = window.location.hostname; // e.g., "demo.gauzy.co" or "localhost"
 
 	// Get environment-specific domains
 	const validDomains = [
@@ -59,12 +59,10 @@ function isCookieForValidDomain(cookie: string | null): boolean {
 		...DOMAIN_CONFIG.development
 	];
 
-	// More robust domain validation
-	const isValidDomain = validDomains.some((domain) => {
+	// Check if the cookie's domain is valid
+	return validDomains.some((domain) => {
 		if (domain === hostname) return true;
 		if (domain.startsWith('.')) return hostname.endsWith(domain);
 		return hostname.endsWith(`.${domain}`) || hostname === domain;
 	});
-
-	return isValidDomain; // Return true if valid, false otherwise
 }
