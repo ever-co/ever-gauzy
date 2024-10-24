@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import { Router, CanActivate, ActivatedRouteSnapshot } from '@angular/router';
+import { Router, ActivatedRouteSnapshot } from '@angular/router';
 import { environment } from '@gauzy/ui-config';
 import { Store } from '@gauzy/ui-core/core';
 
 @Injectable()
-export class AppModuleGuard implements CanActivate {
+export class AppModuleGuard {
 	constructor(private readonly router: Router, private readonly store: Store) {}
 
 	/**

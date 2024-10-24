@@ -2,12 +2,10 @@ import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { merge, pairwise } from 'rxjs';
-import { filter, map, take, tap } from 'rxjs/operators';
+import { filter, map, merge, pairwise, take, tap } from 'rxjs';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { chain } from 'underscore';
-import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { FeatureEnum, IOrganization, IRolePermission, IUser, IntegrationEnum, PermissionsEnum } from '@gauzy/contracts';
 import {
 	AuthStrategy,
 	IJobMatchingEntity,
@@ -19,8 +17,8 @@ import {
 	Store,
 	UsersService
 } from '@gauzy/ui-core/core';
-import { FeatureEnum, IOrganization, IRolePermission, IUser, IntegrationEnum, PermissionsEnum } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ReportService } from './reports/all-report/report.service';
 
 @UntilDestroy({ checkProperties: true })
@@ -80,15 +78,9 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange(),
 				pairwise(), // Pair each emitted value with the previous one
-				tap(([organization]: [IOrganization, IOrganization]) => {
-					const { id: organizationId, tenantId } = organization;
-
+				tap(([previousOrganization]: [IOrganization, IOrganization]) => {
 					// Remove the specified menu items for previous selected organization
-					this._navMenuBuilderService.removeNavMenuItems(
-						// Define the base item IDs
-						this.getReportMenuBaseItemIds().map((itemId) => `${itemId}-${organizationId}-${tenantId}`),
-						'reports'
-					);
+					this.removeOrganizationReportsMenuItems(previousOrganization);
 				}),
 				untilDestroyed(this)
 			)
@@ -118,25 +110,21 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 			.subscribe();
 
 		this.reportService.menuItems$.pipe(distinctUntilChange(), untilDestroyed(this)).subscribe((menuItems) => {
-			if (menuItems) {
-				this.reportMenuItems = chain(menuItems)
-					.values()
-					.map((item) => {
-						return {
-							id: item.slug + `-${this.organization?.id}`,
-							title: item.name,
-							link: `/pages/reports/${item.slug}`,
-							icon: item.iconClass,
-							data: {
-								translationKey: `${item.name}`
-							}
-						};
-					})
-					.value();
-			} else {
-				this.reportMenuItems = [];
-			}
-			this.addOrganizationReportsMenuItems();
+			// Convert the menuItems object to an array
+			const reportItems = menuItems ? Object.values(menuItems) : [];
+
+			this.reportMenuItems = reportItems.map((item) => ({
+				id: item.slug,
+				title: item.name,
+				link: `/pages/reports/${item.slug}`,
+				icon: item.iconClass,
+				data: {
+					translationKey: item.name
+				}
+			}));
+
+			// Add the report menu items to the navigation menu
+			this.addOrRemoveOrganizationReportsMenuItems();
 		});
 	}
 
@@ -176,49 +164,62 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 	}
 
 	/**
+	 * Removes the report menu items associated with the current organization.
+	 *
+	 * This function checks if the organization is defined. If not, it logs a warning and exits early.
+	 * If the organization is defined, it constructs item IDs based on the organization and tenant ID
+	 * and removes these items from the navigation menu.
+	 *
+	 * @returns {void} This function does not return a value.
+	 */
+	private removeOrganizationReportsMenuItems(organization: IOrganization): void {
+		// Return early if the organization is not defined, logging a warning
+		if (!organization) {
+			console.warn(`Organization not defined. Unable to remove menu items.`);
+			return;
+		}
+
+		// Destructure organization properties
+		const { id: organizationId, tenantId } = organization;
+
+		// Generate the item IDs to remove and call the service method
+		const itemIdsToRemove = this.getReportMenuBaseItemIds().map(
+			(itemId) => `${itemId}-${organizationId}-${tenantId}`
+		);
+
+		this._navMenuBuilderService.removeNavMenuItems(itemIdsToRemove, 'reports');
+	}
+
+	/**
 	 * Adds report menu items to the organization's navigation menu.
 	 */
-	private addOrganizationReportsMenuItems() {
+	private addOrRemoveOrganizationReportsMenuItems() {
 		if (!this.organization) {
-			// Handle the case where this.organization is not defined
 			console.warn('Organization not defined. Unable to add/remove menu items.');
 			return;
 		}
+
 		const { id: organizationId, tenantId } = this.organization;
 
-		// Remove the specified menu items for current selected organization
-		// Note: We need to remove old menus before constructing new menus for the organization.
-		this._navMenuBuilderService.removeNavMenuItems(
-			// Define the base item IDs
-			this.getReportMenuBaseItemIds().map((itemId) => `${itemId}-${organizationId}-${tenantId}`),
-			'reports'
-		);
-
-		// Validate if reportMenuItems is an array and has elements
-		if (!Array.isArray(this.reportMenuItems) || this.reportMenuItems.length === 0) {
-			return;
-		}
+		// Remove old menu items before constructing new ones for the organization
+		this.removeOrganizationReportsMenuItems(this.organization);
 
 		// Iterate over each report and add it to the navigation menu
-		try {
-			this.reportMenuItems.forEach((report: NavMenuSectionItem) => {
-				// Validate the structure of each report item
-				if (report && report.id && report.title) {
-					this._navMenuBuilderService.addNavMenuItem(
-						{
-							id: report.id, // Unique identifier for the menu item
-							title: report.title, // The title of the menu item
-							icon: report.icon, // The icon class for the menu item, using FontAwesome in this case
-							link: report.link, // The link where the menu item directs
-							data: report.data
-						},
-						'reports'
-					); // The id of the section where this item should be added
-				}
-			});
-		} catch (error) {
-			console.error('Error adding report menu items', error);
-		}
+		this.reportMenuItems.forEach((report: NavMenuSectionItem) => {
+			// Validate the structure of each report item
+			if (report?.id && report?.title) {
+				this._navMenuBuilderService.addNavMenuItem(
+					{
+						id: `${report.id}-${organizationId}-${tenantId}`, // Unique identifier for the menu item
+						title: report.title, // The title of the menu item
+						icon: report.icon, // The icon class for the menu item
+						link: report.link, // The link where the menu item directs
+						data: report.data // The data associated with the menu item
+					},
+					'reports' // The id of the section where this item should be added
+				);
+			}
+		});
 	}
 
 	/**
@@ -402,5 +403,8 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 		this.store.featureTenant = tenant.featureOrganizations.filter((item) => !item.organizationId);
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() {
+		// Remove the report menu items associated with the current organization before destroying the component
+		this.removeOrganizationReportsMenuItems(this.organization);
+	}
 }

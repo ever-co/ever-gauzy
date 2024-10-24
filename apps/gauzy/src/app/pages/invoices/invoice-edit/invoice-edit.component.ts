@@ -311,9 +311,8 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 						component: InvoiceProductsSelectorComponent
 					},
 					valuePrepareFunction: (product: IProduct) => {
-						return product?.name
-							? `${this.translatableService.getTranslatedProperty(product, 'name')}`
-							: '';
+						const translatedName = this.translatableService.getTranslatedProperty(product, 'name');
+						return translatedName || '';
 					}
 				};
 				break;

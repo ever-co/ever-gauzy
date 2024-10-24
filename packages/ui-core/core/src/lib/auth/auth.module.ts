@@ -6,6 +6,9 @@ import { AuthGuard } from './auth.guard';
 import { NoAuthGuard } from './no-auth.guard';
 import { AuthService, AuthStrategy, ElectronService, Store } from '../services';
 
+/**
+ * Social links for auth
+ */
 const socialLinks = [
 	{
 		url: environment.GOOGLE_AUTH_LINK,
