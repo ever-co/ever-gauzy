@@ -31,7 +31,10 @@ export class UpdateEmployeeDTO
 			'isTrackingEnabled',
 			'isTrackingTime',
 			'isJobSearchActive',
-			'allowScreenshotCapture'
+			'allowScreenshotCapture',
+			'allowManualTime',
+			'allowModifyTime',
+			'allowDeleteTime'
 		] as const)
 	)
 	implements IEmployeeUpdateInput {}

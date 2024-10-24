@@ -32,6 +32,7 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 	 */
 	@ViewChild('general') general: NbAccordionItemComponent;
 	@ViewChild('integrations') integrations: NbAccordionItemComponent;
+	@ViewChild('timer') timer: NbAccordionItemComponent;
 
 	/**
 	 * Employee other settings settings
@@ -42,7 +43,11 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			timeZone: [],
 			timeFormat: [],
 			upworkId: [],
-			linkedInId: []
+			linkedInId: [],
+			allowManualTime: [],
+			allowModifyTime: [],
+			allowDeleteTime: [],
+			allowScreenshotCapture: []
 		});
 	}
 
@@ -82,7 +87,11 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			timeZone: user.timeZone || moment.tz.guess(), // set current timezone, if employee don't have any timezone
 			timeFormat: user.timeFormat,
 			upworkId: employee.upworkId,
-			linkedInId: employee.linkedInId
+			linkedInId: employee.linkedInId,
+			allowManualTime: employee.allowManualTime,
+			allowDeleteTime: employee.allowDeleteTime,
+			allowModifyTime: employee.allowModifyTime,
+			allowScreenshotCapture: employee.allowScreenshotCapture
 		});
 		this.form.updateValueAndValidity();
 	}
@@ -97,7 +106,16 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			return;
 		}
 		const { organizationId, tenantId } = this.selectedEmployee;
-		const { timeZone, timeFormat, upworkId, linkedInId } = this.form.value;
+		const {
+			timeZone,
+			timeFormat,
+			upworkId,
+			linkedInId,
+			allowScreenshotCapture,
+			allowManualTime,
+			allowModifyTime,
+			allowDeleteTime
+		} = this.form.value;
 
 		/** Update user fields */
 		this.employeeStore.userForm = {
@@ -110,7 +128,11 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			upworkId,
 			linkedInId,
 			organizationId,
-			tenantId
+			tenantId,
+			allowManualTime,
+			allowModifyTime,
+			allowDeleteTime,
+			allowScreenshotCapture
 		};
 	}
 

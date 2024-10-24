@@ -7,10 +7,7 @@ import { RequestContext } from './../../../core/context';
 
 @CommandHandler(EmployeeUpdateCommand)
 export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateCommand> {
-
-	constructor(
-		private readonly _employeeService: EmployeeService,
-	) { }
+	constructor(private readonly _employeeService: EmployeeService) {}
 
 	public async execute(command: EmployeeUpdateCommand): Promise<IEmployee> {
 		const { id, input } = command;
