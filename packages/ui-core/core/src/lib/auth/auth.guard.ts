@@ -24,11 +24,13 @@ export class AuthGuard {
 	async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean> {
 		const token = route.queryParamMap.get('token') || getCookie('token');
 		const userId = route.queryParamMap.get('userId') || getCookie('userId');
+		const refreshToken = route.queryParamMap.get('refresh_token') || getCookie('refresh_token');
 
 		// If token and userId exist, store them
 		if (token && userId) {
 			this._store.token = token;
 			this._store.userId = userId;
+			this._store.refresh_token = refreshToken;
 		}
 
 		// Check if the user is authenticated
