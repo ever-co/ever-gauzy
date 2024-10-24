@@ -10,6 +10,8 @@ export type Env = Readonly<{
 	// Set to true if build / runs in Docker
 	IS_DOCKER: boolean;
 
+	COOKIE_DOMAIN: string;
+
 	// Base URL of Gauzy UI website
 	CLIENT_BASE_URL: string;
 
@@ -139,6 +141,8 @@ export const env: Env = cleanEnv(
 		production: bool({ default: false }),
 
 		IS_DOCKER: bool({ default: false }),
+
+		COOKIE_DOMAIN: str({ default: '.gauzy.co' }),
 
 		CLIENT_BASE_URL: str({ default: 'http://localhost:4200' }),
 
