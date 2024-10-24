@@ -1,8 +1,8 @@
 import { ChangeDetectorRef, Directive, Input, OnInit, TemplateRef, ViewContainerRef } from '@angular/core';
-import { filter, tap } from 'rxjs/operators';
+import { filter, tap, map, switchMap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as camelcase from 'camelcase';
-import { IOrganization } from '@gauzy/contracts';
+import { IOrganization, IUser } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { Store } from '@gauzy/ui-core/core';
 
@@ -35,14 +35,37 @@ export class TimeTrackingAuthorizedDirective implements OnInit {
 	) {}
 
 	ngOnInit(): void {
+		console.log('yess');
 		this._store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				filter((organization: IOrganization) => camelcase(this.permission) in organization),
 				tap(() => this._viewContainer.clear()),
-				tap((organization: IOrganization) => {
-					if (organization[camelcase(this.permission)]) {
+				switchMap((organization: IOrganization) =>
+					this._store.user$.pipe(
+						filter((user: IUser) => !!user),
+						map((user: IUser) => {
+							if (user.employee) {
+								// Check if the permission is in the organization and in the employee properties
+								return (
+									camelcase(this.permission) in organization &&
+									organization[camelcase(this.permission)] &&
+									camelcase(this.permission) in user.employee &&
+									user.employee[camelcase(this.permission)]
+								);
+							} else {
+								return (
+									camelcase(this.permission) in organization &&
+									organization[camelcase(this.permission)]
+								);
+							}
+						})
+					)
+				),
+				tap((hasPermission: boolean) => {
+					console.log(hasPermission);
+
+					if (hasPermission) {
 						this._viewContainer.createEmbeddedView(this._templateRef);
 					} else {
 						this.showTemplateBlockInView(this.permissionElse);
