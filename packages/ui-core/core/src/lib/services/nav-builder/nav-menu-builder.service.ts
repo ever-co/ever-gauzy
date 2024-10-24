@@ -245,18 +245,9 @@ export class NavMenuBuilderService {
 	 * @param sectionId - The ID of the section where the item was to be added.
 	 * @param level - Optional logging level; defaults to 'warn'.
 	 */
-	logMenuWarning(itemId: string, sectionId: string, level: 'warn' | 'info' | 'error' = 'warn') {
-		const message = `Warning: Unable to add menu item "${itemId}" because the specified section "${sectionId}" does not exist.`;
-
-		switch (level) {
-			case 'info':
-				console.info(message);
-				break;
-			case 'error':
-				console.error(message);
-				break;
-			default:
-				console.warn(message);
-		}
+	private logMenuWarning(itemId: string, sectionId: string, level: 'warn' | 'info' | 'error' = 'warn') {
+		const message = `Unable to add menu item "${itemId}". Section "${sectionId}" does not exist. Please ensure the section is defined before adding items.`;
+		const logFn = console[level];
+		logFn(message);
 	}
 }
