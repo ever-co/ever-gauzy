@@ -229,14 +229,25 @@ export class NavMenuBuilderService {
 							}
 						}
 					} else {
-						console.error(
-							`Could not add menu item "${item.config.id}", section "${item.sectionId}" does not exist`
-						);
+						this.logMenuWarning(item.config.id, item.sectionId);
 					}
 				});
 
 				return sections;
 			})
 		);
+	}
+
+	/**
+	 * Logs a warning message about an inability to add a menu item.
+	 *
+	 * @param itemId - The ID of the menu item that could not be added.
+	 * @param sectionId - The ID of the section where the item was to be added.
+	 * @param level - Optional logging level; defaults to 'warn'.
+	 */
+	private logMenuWarning(itemId: string, sectionId: string, level: 'warn' | 'info' | 'error' = 'warn') {
+		const message = `Unable to add menu item "${itemId}". Section "${sectionId}" does not exist. Please ensure the section is defined before adding items.`;
+		const logFn = console[level];
+		logFn(message);
 	}
 }
