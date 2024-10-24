@@ -33,6 +33,13 @@ export class AuthGuard {
 			this._store.refresh_token = refreshToken;
 		}
 
+		// Validate the token before proceeding
+		if (token && !this.validateToken(token)) {
+			console.error('Invalid token, redirecting to login page...');
+			await this.handleLogout(state.url); // Handle invalid token
+			return false; // Prevent navigation
+		}
+
 		// Check if the user is authenticated
 		if (await this._authService.isAuthenticated()) {
 			return true; // Allow navigation
@@ -59,5 +66,15 @@ export class AuthGuard {
 
 		await firstValueFrom(this._authStrategy.logout());
 		await this._router.navigate(['/auth/login'], { queryParams: { returnUrl } });
+	}
+
+	/**
+	 * Validates the format of a JWT token.
+	 *
+	 * @param {string} token - The JWT token to validate.
+	 * @returns {boolean} - Returns true if the token is valid, otherwise false.
+	 */
+	private validateToken(token: string): boolean {
+		return typeof token === 'string' && token.trim().length > 0 && token.split('.').length === 3;
 	}
 }
