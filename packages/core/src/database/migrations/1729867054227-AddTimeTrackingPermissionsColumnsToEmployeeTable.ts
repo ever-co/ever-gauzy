@@ -147,12 +147,20 @@ export class AddTimeTrackingPermissionsColumnsToEmployeeTable1729867054227 imple
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE \`employee\` ADD \`allowManualTime\` tinyint NOT NULL DEFAULT 0`);
+		await queryRunner.query(`ALTER TABLE \`employee\` ADD \`allowModifyTime\` tinyint NOT NULL DEFAULT 0`);
+		await queryRunner.query(`ALTER TABLE \`employee\` ADD \`allowDeleteTime\` tinyint NOT NULL DEFAULT 0`);
+	}
 
 	/**
 	 * MySQL Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE \`employee\` DROP COLUMN \`allowDeleteTime\``);
+		await queryRunner.query(`ALTER TABLE \`employee\` DROP COLUMN \`allowModifyTime\``);
+		await queryRunner.query(`ALTER TABLE \`employee\` DROP COLUMN \`allowManualTime\``);
+	}
 }
