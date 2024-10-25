@@ -141,20 +141,6 @@ export class AlterConstraintsForResourceLinkTable1729861943822 implements Migrat
 		);
 		await queryRunner.query(`DROP TABLE "resource_link"`);
 		await queryRunner.query(`ALTER TABLE "temporary_resource_link" RENAME TO "resource_link"`);
-		await queryRunner.query(`CREATE INDEX "IDX_e891dad6f91b8eb04a47f42a06" ON "resource_link" ("isActive") `);
-		await queryRunner.query(`CREATE INDEX "IDX_2efdd5f6dc5d0c483edbc932ff" ON "resource_link" ("isArchived") `);
-		await queryRunner.query(`CREATE INDEX "IDX_64d90b997156b7de382fd8a88f" ON "resource_link" ("tenantId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_b3caaf70dcd98d572c0fe09c59" ON "resource_link" ("organizationId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_ada8b0cf4463e653a756fc6db2" ON "resource_link" ("entity") `);
-		await queryRunner.query(`CREATE INDEX "IDX_61dc38c01dfd2fe25cd934a0d1" ON "resource_link" ("entityId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_df91a85b49f78544da67aa9d9a" ON "resource_link" ("creatorId") `);
-		await queryRunner.query(`DROP INDEX "IDX_e891dad6f91b8eb04a47f42a06"`);
-		await queryRunner.query(`DROP INDEX "IDX_2efdd5f6dc5d0c483edbc932ff"`);
-		await queryRunner.query(`DROP INDEX "IDX_64d90b997156b7de382fd8a88f"`);
-		await queryRunner.query(`DROP INDEX "IDX_b3caaf70dcd98d572c0fe09c59"`);
-		await queryRunner.query(`DROP INDEX "IDX_ada8b0cf4463e653a756fc6db2"`);
-		await queryRunner.query(`DROP INDEX "IDX_61dc38c01dfd2fe25cd934a0d1"`);
-		await queryRunner.query(`DROP INDEX "IDX_df91a85b49f78544da67aa9d9a"`);
 		await queryRunner.query(
 			`CREATE TABLE "temporary_resource_link" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "entity" varchar NOT NULL, "entityId" varchar NOT NULL, "title" varchar NOT NULL, "url" text NOT NULL, "metaData" text, "creatorId" varchar, CONSTRAINT "FK_64d90b997156b7de382fd8a88f2" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_b3caaf70dcd98d572c0fe09c59f" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_df91a85b49f78544da67aa9d9ad" FOREIGN KEY ("creatorId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
 		);
