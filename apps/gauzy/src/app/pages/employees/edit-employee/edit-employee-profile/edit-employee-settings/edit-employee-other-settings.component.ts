@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, ViewChild } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormGroup, NgForm } from '@angular/forms';
-import { filter, tap } from 'rxjs/operators';
+import { FormBuilder, FormGroup, NgForm } from '@angular/forms';
+import { filter, tap } from 'rxjs';
 import { NbAccordionComponent, NbAccordionItemComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
@@ -37,12 +37,13 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 	/**
 	 * Employee other settings settings
 	 */
-	public form: UntypedFormGroup = EditEmployeeOtherSettingsComponent.buildForm(this.fb);
-	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
+	public form: FormGroup = EditEmployeeOtherSettingsComponent.buildForm(this.fb);
+	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
 			timeZone: [],
 			timeFormat: [],
 			upworkId: [],
+			linkedInId: [],
 			allowManualTime: [false],
 			allowModifyTime: [false],
 			allowDeleteTime: [false],
@@ -52,7 +53,7 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private readonly cdr: ChangeDetectorRef,
-		private readonly fb: UntypedFormBuilder,
+		private readonly fb: FormBuilder,
 		private readonly employeeStore: EmployeeStore
 	) {}
 

@@ -11,18 +11,22 @@ import { Store } from '@gauzy/ui-core/core';
 	selector: '[ngxTimeTrackingAuthorized]'
 })
 export class TimeTrackingAuthorizedDirective implements OnInit {
-	/*
-	 * Getter & Setter for dynamic permission
+	private _permission: string | string[] = []; // Default initialization
+	/**
+	 * Setter for dynamic permission.
+	 * @param permission - The permission(s) to be set.
 	 */
-	_permission: string | string[];
-	get permission(): string | string[] {
-		return this._permission;
-	}
 	@Input() set permission(permission: string | string[]) {
 		if (!permission) {
-			throw false;
+			throw new Error('Permission must be provided');
 		}
 		this._permission = permission;
+	}
+	/**
+	 * Getter for dynamic permission.
+	 */
+	get permission(): string | string[] {
+		return this._permission;
 	}
 
 	@Input() permissionElse: TemplateRef<any>;
