@@ -179,19 +179,6 @@ export class AlterConstraintsForResourceLinkTable1729861943822 implements Migrat
 			`INSERT INTO "resource_link"("deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "entity", "entityId", "title", "url", "metaData", "creatorId") SELECT "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "entity", "entityId", "title", "url", "metaData", "creatorId" FROM "temporary_resource_link"`
 		);
 		await queryRunner.query(`DROP TABLE "temporary_resource_link"`);
-		await queryRunner.query(`CREATE INDEX "IDX_df91a85b49f78544da67aa9d9a" ON "resource_link" ("creatorId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_61dc38c01dfd2fe25cd934a0d1" ON "resource_link" ("entityId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_ada8b0cf4463e653a756fc6db2" ON "resource_link" ("entity") `);
-		await queryRunner.query(`CREATE INDEX "IDX_b3caaf70dcd98d572c0fe09c59" ON "resource_link" ("organizationId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_64d90b997156b7de382fd8a88f" ON "resource_link" ("tenantId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_2efdd5f6dc5d0c483edbc932ff" ON "resource_link" ("isArchived") `);
-		await queryRunner.query(`CREATE INDEX "IDX_e891dad6f91b8eb04a47f42a06" ON "resource_link" ("isActive") `);
-		await queryRunner.query(`DROP INDEX "IDX_df91a85b49f78544da67aa9d9a"`);
-		await queryRunner.query(`DROP INDEX "IDX_61dc38c01dfd2fe25cd934a0d1"`);
-		await queryRunner.query(`DROP INDEX "IDX_ada8b0cf4463e653a756fc6db2"`);
-		await queryRunner.query(`DROP INDEX "IDX_b3caaf70dcd98d572c0fe09c59"`);
-		await queryRunner.query(`DROP INDEX "IDX_64d90b997156b7de382fd8a88f"`);
-		await queryRunner.query(`DROP INDEX "IDX_2efdd5f6dc5d0c483edbc932ff"`);
 		await queryRunner.query(`DROP INDEX "IDX_e891dad6f91b8eb04a47f42a06"`);
 		await queryRunner.query(`DROP INDEX "IDX_2ef674d18792e8864fd8d484ea"`);
 		await queryRunner.query(`ALTER TABLE "resource_link" RENAME TO "temporary_resource_link"`);
