@@ -43,11 +43,10 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			timeZone: [],
 			timeFormat: [],
 			upworkId: [],
-			linkedInId: [],
-			allowManualTime: [],
-			allowModifyTime: [],
-			allowDeleteTime: [],
-			allowScreenshotCapture: []
+			allowManualTime: [false],
+			allowModifyTime: [false],
+			allowDeleteTime: [false],
+			allowScreenshotCapture: [true]
 		});
 	}
 

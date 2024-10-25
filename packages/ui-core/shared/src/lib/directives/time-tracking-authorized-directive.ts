@@ -44,19 +44,22 @@ export class TimeTrackingAuthorizedDirective implements OnInit {
 					this._store.user$.pipe(
 						filter((user: IUser) => !!user),
 						map((user: IUser) => {
+							const permissions = Array.isArray(this.permission) ? this.permission : [this.permission];
+
+							const hasPermissions = (source: any) =>
+								permissions.every((permission) => {
+									const permKey = camelcase(permission);
+									return permKey in source && source[permKey];
+								});
+
+							const hasOrgPermission = hasPermissions(organization);
+
 							if (user.employee) {
 								// Check if the permission is in the organization and in the employee properties
-								return (
-									camelcase(this.permission) in organization &&
-									organization[camelcase(this.permission)] &&
-									camelcase(this.permission) in user.employee &&
-									user.employee[camelcase(this.permission)]
-								);
+								const hasEmployeePermission = hasPermissions(user.employee);
+								return hasOrgPermission && hasEmployeePermission;
 							} else {
-								return (
-									camelcase(this.permission) in organization &&
-									organization[camelcase(this.permission)]
-								);
+								return hasOrgPermission;
 							}
 						})
 					)
