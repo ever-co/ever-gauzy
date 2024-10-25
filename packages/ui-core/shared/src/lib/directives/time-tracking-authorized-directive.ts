@@ -35,7 +35,6 @@ export class TimeTrackingAuthorizedDirective implements OnInit {
 	) {}
 
 	ngOnInit(): void {
-		console.log('yess');
 		this._store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
@@ -63,8 +62,6 @@ export class TimeTrackingAuthorizedDirective implements OnInit {
 					)
 				),
 				tap((hasPermission: boolean) => {
-					console.log(hasPermission);
-
 					if (hasPermission) {
 						this._viewContainer.createEmbeddedView(this._templateRef);
 					} else {
