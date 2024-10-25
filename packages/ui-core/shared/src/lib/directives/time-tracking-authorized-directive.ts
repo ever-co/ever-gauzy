@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Directive, Input, OnInit, TemplateRef, ViewContainerRef } from '@angular/core';
-import { filter, tap, map, switchMap } from 'rxjs/operators';
+import { filter, tap, map, switchMap, distinctUntilChanged } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as camelcase from 'camelcase';
 import { IOrganization, IUser } from '@gauzy/contracts';
@@ -39,32 +39,27 @@ export class TimeTrackingAuthorizedDirective implements OnInit {
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap(() => this._viewContainer.clear()),
 				switchMap((organization: IOrganization) =>
 					this._store.user$.pipe(
 						filter((user: IUser) => !!user),
 						map((user: IUser) => {
-							const permissions = Array.isArray(this.permission) ? this.permission : [this.permission];
+							// Determine permission based on employee existence
+							const hasPermission = user.employee
+								? camelcase(this.permission) in organization &&
+								  organization[camelcase(this.permission)] &&
+								  camelcase(this.permission) in user.employee &&
+								  user.employee[camelcase(this.permission)]
+								: camelcase(this.permission) in organization &&
+								  organization[camelcase(this.permission)];
 
-							const hasPermissions = (source: any) =>
-								permissions.every((permission) => {
-									const permKey = camelcase(permission);
-									return permKey in source && source[permKey];
-								});
-
-							const hasOrgPermission = hasPermissions(organization);
-
-							if (user.employee) {
-								// Check if the permission is in the organization and in the employee properties
-								const hasEmployeePermission = hasPermissions(user.employee);
-								return hasOrgPermission && hasEmployeePermission;
-							} else {
-								return hasOrgPermission;
-							}
-						})
+							return hasPermission;
+						}),
+						distinctUntilChanged() // Only emit when permission status changes
 					)
 				),
 				tap((hasPermission: boolean) => {
+					this._viewContainer.clear(); // Clear the container once per status change
+
 					if (hasPermission) {
 						this._viewContainer.createEmbeddedView(this._templateRef);
 					} else {
