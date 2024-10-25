@@ -62,9 +62,8 @@ export class TimeTrackingAuthorizedDirective implements OnInit {
 					)
 				),
 				tap((hasPermission: boolean) => {
-					this._viewContainer.clear(); // Clear the container once per status change
-
 					if (hasPermission) {
+						this._viewContainer.clear(); // Clear the container once per status change
 						this._viewContainer.createEmbeddedView(this._templateRef);
 					} else {
 						this.showTemplateBlockInView(this.permissionElse);
@@ -82,10 +81,11 @@ export class TimeTrackingAuthorizedDirective implements OnInit {
 	 * @returns
 	 */
 	showTemplateBlockInView(template: TemplateRef<any>) {
-		this._viewContainer.clear();
+		this._viewContainer.clear(); // Clear the container once per status change
 		if (!template) {
 			return;
 		}
+
 		this._viewContainer.createEmbeddedView(template);
 		this._cdr.markForCheck();
 	}
