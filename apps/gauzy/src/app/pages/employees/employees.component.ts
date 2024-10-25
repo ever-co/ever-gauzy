@@ -3,14 +3,16 @@ import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { Cell } from 'angular2-smart-table';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Subject, firstValueFrom } from 'rxjs';
+import { Cell, IColumns, Settings } from 'angular2-smart-table';
+import { Subject, debounceTime, filter, firstValueFrom, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	EmployeeStore,
 	EmployeesService,
 	ErrorHandlingService,
+	PageDataTableRegistryConfig,
+	PageDataTableRegistryId,
+	PageDataTableRegistryService,
 	ServerDataSource,
 	Store,
 	ToastrService
@@ -36,12 +38,12 @@ import {
 	EmployeeStartWorkComponent,
 	InputFilterComponent,
 	InviteMutationComponent,
+	PaginationFilterBaseComponent,
 	PictureNameTagsComponent,
 	TagsColorFilterComponent,
 	TagsOnlyComponent,
 	ToggleFilterComponent
 } from '@gauzy/ui-core/shared';
-import { PaginationFilterBaseComponent, IPaginationBase } from '@gauzy/ui-core/shared';
 import {
 	EmployeeAverageBonusComponent,
 	EmployeeAverageExpensesComponent,
@@ -52,11 +54,13 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
+	selector: 'ga-employees-list',
 	templateUrl: './employees.component.html',
 	styleUrls: ['./employees.component.scss']
 })
 export class EmployeesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-	public settingsSmartTable: object;
+	public dataTableId: PageDataTableRegistryId = this._route.snapshot.data.dataTableId; // The identifier for the data table
+	public settingsSmartTable: Settings;
 	public smartTableSource: ServerDataSource;
 	public selectedEmployee: EmployeeViewModel;
 	public employees: EmployeeViewModel[] = [];
@@ -68,7 +72,6 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	public disableButton: boolean = true;
 	public includeDeleted: boolean = false;
 	public loading: boolean = false;
-	public organizationInvitesAllowed: boolean = false;
 	public organization: IOrganization;
 	public refresh$: Subject<any> = new Subject();
 	public employees$: Subject<any> = this.subject$;
@@ -96,16 +99,17 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly _employeeStore: EmployeeStore,
 		private readonly _httpClient: HttpClient,
-		private readonly _dateFormatPipe: DateFormatPipe
+		private readonly _dateFormatPipe: DateFormatPipe,
+		private readonly _pageDataTableRegistryService: PageDataTableRegistryService
 	) {
 		super(translateService);
 		this.setView();
 	}
 
 	ngOnInit() {
+		this._registerDataTableColumns();
 		this._loadSmartTableSettings();
-		this._applyTranslationOnSmartTable();
-
+		this._subscribeToQueryParams();
 		this.employees$
 			.pipe(
 				debounceTime(300),
@@ -128,19 +132,9 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => (this.organization = organization)),
-				tap(({ invitesAllowed }) => (this.organizationInvitesAllowed = invitesAllowed)),
 				tap(() => this._additionalColumns()),
 				tap(() => this.refresh$.next(true)),
 				tap(() => this.employees$.next(true)),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		this._route.queryParamMap
-			.pipe(
-				filter((params: ParamMap) => !!params),
-				filter((params: ParamMap) => params.get('openAddDialog') === 'true'),
-				debounceTime(1000),
-				tap(() => this.add()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -149,6 +143,26 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => (this.employees = [])),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	ngAfterViewInit(): void {
+		this._applyTranslationOnSmartTable();
+	}
+
+	/**
+	 * Subscribes to the query parameters and performs actions based on the 'openAddDialog' parameter.
+	 */
+	private _subscribeToQueryParams(): void {
+		this._route.queryParamMap
+			.pipe(
+				// Check if 'openAddDialog' is set to 'true' and filter out falsy values
+				filter((params: ParamMap) => params?.get('openAddDialog') === 'true'),
+				// Trigger the add method
+				tap(() => this.add()),
+				// Automatically unsubscribe when component is destroyed
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -163,7 +177,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	}
 
 	/**
-	 *
+	 * @description
+	 * This method sets the view layout for the component based on the current layout configuration.
+	 * It listens for layout changes from the store and updates the `dataLayoutStyle`.
+	 * Depending on the layout (e.g., if it's `CARDS_GRID`), it clears the employee list and triggers a refresh.
 	 */
 	setView() {
 		this._store
@@ -597,46 +614,48 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	}
 
 	/**
+	 * Maps an IEmployee object to a formatted employee object.
 	 *
-	 * @param employee
-	 * @returns
+	 * @param employee The IEmployee object to map.
+	 * @returns The formatted employee object.
 	 */
 	private employeeMapper(employee: IEmployee) {
 		const {
 			id,
-			user,
+			user = {},
 			isActive,
 			endWork,
 			tags,
-			averageIncome,
-			averageExpenses,
-			averageBonus,
+			averageIncome = 0,
+			averageExpenses = 0,
+			averageBonus = 0,
 			startedWorkOn,
 			isTrackingEnabled,
 			isDeleted
 		} = employee;
+		const { name = '', email = '', imageUrl = '' } = user;
 
-		/**
-		 * "Range" when was hired and when exit
-		 */
-		const start = this._dateFormatPipe.transform(startedWorkOn, null, 'LL');
-		const end = this._dateFormatPipe.transform(endWork, null, 'LL');
+		// Format start and end work dates, and create the work status range
+		const start = startedWorkOn ? this._dateFormatPipe.transform(startedWorkOn, null, 'LL') : '';
+		const end = endWork ? this._dateFormatPipe.transform(endWork, null, 'LL') : '';
+
 		const workStatus = [start, end].filter(Boolean).join(' - ');
+
+		// Return the mapped object
 		return {
-			fullName: `${user.name}`,
-			email: user.email,
+			fullName: name || '', // Ensure default values for safety
+			email: email || '',
 			id,
 			isActive,
 			endWork: endWork ? new Date(endWork) : '',
 			workStatus: endWork ? workStatus : '',
-			imageUrl: user.imageUrl,
-			tags,
-			// TODO: load real bonus and bonusDate
-			bonus: this.bonusForSelectedMonth,
+			imageUrl: imageUrl || '',
+			tags: tags || [],
+			bonus: this.bonusForSelectedMonth, // TODO: load real bonus and bonusDate
 			averageIncome: Math.floor(averageIncome),
 			averageExpenses: Math.floor(averageExpenses),
 			averageBonus: Math.floor(averageBonus),
-			bonusDate: Date.now(),
+			bonusDate: Date.now(), // Placeholder for actual bonus date
 			employeeId: id,
 			employee,
 			startedWorkOn,
@@ -646,143 +665,208 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	}
 
 	/**
+	 * Registers custom columns for the 'employee-manage' data table.
+	 * This method defines and registers the columns with various properties,
+	 * including a custom filter function and a rendering component.
+	 */
+	private _registerDataTableColumns(): void {
+		const columns: PageDataTableRegistryConfig[] = [
+			{
+				dataTableId: this.dataTableId,
+				columnId: 'fullName',
+				order: 0,
+				title: () => this.getTranslation('SM_TABLE.FULL_NAME'),
+				type: 'custom',
+				class: 'align-row',
+				width: '20%',
+				isFilterable: true,
+				renderComponent: PictureNameTagsComponent,
+				componentInitFunction: (instance: PictureNameTagsComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+					instance.value = cell.getRawValue();
+				},
+				filter: {
+					type: 'custom',
+					component: InputFilterComponent
+				},
+				filterFunction: this._getFilterFunction('user.name')
+			},
+			{
+				dataTableId: this.dataTableId,
+				columnId: 'email',
+				order: 1,
+				title: () => this.getTranslation('SM_TABLE.EMAIL'),
+				type: 'text',
+				class: 'align-row',
+				width: '20%',
+				isFilterable: true,
+				filter: {
+					type: 'custom',
+					component: InputFilterComponent
+				},
+				filterFunction: this._getFilterFunction('user.email')
+			},
+			{
+				dataTableId: this.dataTableId,
+				columnId: 'averageIncome',
+				order: 2,
+				title: () => this.getTranslation('SM_TABLE.INCOME'),
+				type: 'custom',
+				isFilterable: false,
+				isSortable: true,
+				class: 'text-center',
+				width: '5%',
+				renderComponent: EmployeeAverageIncomeComponent,
+				componentInitFunction: (instance: EmployeeAverageIncomeComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+				}
+			},
+			{
+				dataTableId: this.dataTableId,
+				columnId: 'averageExpenses',
+				order: 3,
+				title: () => this.getTranslation('SM_TABLE.EXPENSES'),
+				type: 'custom',
+				isFilterable: false,
+				isSortable: true,
+				class: 'text-center',
+				width: '5%',
+				renderComponent: EmployeeAverageExpensesComponent,
+				componentInitFunction: (instance: EmployeeAverageExpensesComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+				}
+			},
+			{
+				dataTableId: this.dataTableId,
+				columnId: 'averageBonus',
+				order: 4,
+				title: () => this.getTranslation('SM_TABLE.BONUS_AVG'),
+				type: 'custom',
+				isFilterable: false,
+				isSortable: true,
+				class: 'text-center',
+				width: '5%',
+				renderComponent: EmployeeAverageBonusComponent,
+				componentInitFunction: (instance: EmployeeAverageBonusComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+				}
+			},
+			{
+				dataTableId: this.dataTableId,
+				columnId: 'isTrackingEnabled',
+				order: 5,
+				title: () => this.getTranslation('SM_TABLE.TIME_TRACKING'),
+				type: 'custom',
+				isFilterable: true,
+				isSortable: true,
+				class: 'text-center',
+				width: '5%',
+				filter: {
+					type: 'custom',
+					component: ToggleFilterComponent
+				},
+				filterFunction: this._getFilterFunction('isTrackingEnabled'),
+				renderComponent: EmployeeTimeTrackingStatusComponent,
+				componentInitFunction: (instance: EmployeeTimeTrackingStatusComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+				}
+			},
+			{
+				dataTableId: this.dataTableId,
+				columnId: 'tags',
+				order: 6,
+				title: () => this.getTranslation('SM_TABLE.TAGS'),
+				type: 'custom',
+				width: '20%',
+				isFilterable: true,
+				isSortable: false,
+				filter: {
+					type: 'custom',
+					component: TagsColorFilterComponent
+				},
+				filterFunction: (tags: ITag[]) => {
+					const tagIds = tags.map((tag) => tag.id);
+					this.setFilter({ field: 'tags', search: tagIds });
+					return tags.length > 0;
+				},
+				renderComponent: TagsOnlyComponent,
+				componentInitFunction: (instance: TagsOnlyComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+					instance.value = cell.getValue();
+				}
+			},
+			{
+				dataTableId: this.dataTableId,
+				columnId: 'workStatus',
+				order: 7,
+				title: () => this.getTranslation('SM_TABLE.STATUS'),
+				type: 'custom',
+				class: 'text-center',
+				width: '5%',
+				isFilterable: true,
+				isSortable: false,
+				filter: {
+					type: 'custom',
+					component: ToggleFilterComponent
+				},
+				filterFunction: (isActive: boolean) => {
+					this.setFilter({ field: 'isActive', search: isActive });
+					return isActive;
+				},
+				renderComponent: EmployeeWorkStatusComponent,
+				componentInitFunction: (instance: EmployeeWorkStatusComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+				}
+			}
+		];
+
+		columns.forEach((column: PageDataTableRegistryConfig) => {
+			this._pageDataTableRegistryService.registerPageDataTableColumn(column);
+		});
+	}
+
+	/**
+	 * Helper function to create a reusable filter function for columns.
+	 * @param field - The field to filter by.
+	 */
+	private _getFilterFunction(field: string) {
+		return (value: string) => {
+			this.setFilter({ field, search: value });
+			return value.length > 0; // Return `true` if the value is non-empty
+		};
+	}
+
+	/**
+	 * Retrieves the registered columns for the 'employee-manage' data table.
+	 *
+	 * This method fetches all the column configurations registered under the
+	 * 'employee-manage' data table from the PageDataTableRegistryService.
+	 * It returns the columns in the format of `IColumns`, which can be used for rendering or
+	 * further manipulation in the smart table.
+	 *
+	 * @returns {IColumns} The column configurations for the 'employee-manage' table.
+	 */
+	getColumns(): IColumns {
+		// Fetch and return the columns for 'employee-manage' data table
+		return this._pageDataTableRegistryService.getPageDataTableColumns(this.dataTableId);
+	}
+
+	/**
 	 * Load Smart Table settings
 	 */
 	private _loadSmartTableSettings() {
-		const pagination: IPaginationBase = this.getPagination();
+		// Get pagination settings
+		const { itemsPerPage } = this.getPagination() || { itemsPerPage: this.minItemPerPage };
+
+		// Configure Smart Table settings
 		this.settingsSmartTable = {
 			actions: false,
-			selectedRowIndex: -1,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EMPLOYEE'),
 			pager: {
 				display: false,
-				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
+				perPage: itemsPerPage
 			},
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EMPLOYEE'),
-			columns: {
-				fullName: {
-					title: this.getTranslation('SM_TABLE.FULL_NAME'),
-					type: 'custom',
-					class: 'align-row',
-					width: '20%',
-					renderComponent: PictureNameTagsComponent,
-					componentInitFunction: (instance: PictureNameTagsComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-						instance.value = cell.getRawValue();
-					},
-					filter: {
-						type: 'custom',
-						component: InputFilterComponent
-					},
-					filterFunction: (value: string) => {
-						this.setFilter({ field: 'user.name', search: value });
-					}
-				},
-				email: {
-					title: this.getTranslation('SM_TABLE.EMAIL'),
-					type: 'email',
-					class: 'email-column',
-					width: '20%',
-					filter: {
-						type: 'custom',
-						component: InputFilterComponent
-					},
-					filterFunction: (value: string) => {
-						this.setFilter({ field: 'user.email', search: value });
-					}
-				},
-				averageIncome: {
-					title: this.getTranslation('SM_TABLE.INCOME'),
-					type: 'custom',
-					isFilterable: false,
-					class: 'text-center',
-					width: '5%',
-					renderComponent: EmployeeAverageIncomeComponent,
-					componentInitFunction: (instance: EmployeeAverageIncomeComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-					}
-				},
-				averageExpenses: {
-					title: this.getTranslation('SM_TABLE.EXPENSES'),
-					type: 'custom',
-					isFilterable: false,
-					class: 'text-center',
-					width: '5%',
-					renderComponent: EmployeeAverageExpensesComponent,
-					componentInitFunction: (instance: EmployeeAverageExpensesComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-					}
-				},
-				averageBonus: {
-					title: this.getTranslation('SM_TABLE.BONUS_AVG'),
-					type: 'custom',
-					isFilterable: false,
-					class: 'text-center',
-					width: '5%',
-					renderComponent: EmployeeAverageBonusComponent,
-					componentInitFunction: (instance: EmployeeAverageBonusComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-					}
-				},
-				isTrackingEnabled: {
-					title: this.getTranslation('SM_TABLE.TIME_TRACKING'),
-					type: 'custom',
-					class: 'text-center',
-					width: '5%',
-					renderComponent: EmployeeTimeTrackingStatusComponent,
-					componentInitFunction: (instance: EmployeeTimeTrackingStatusComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-					},
-					filter: {
-						type: 'custom',
-						component: ToggleFilterComponent
-					},
-					filterFunction: (checked: boolean) => {
-						this.setFilter({
-							field: 'isTrackingEnabled',
-							search: checked
-						});
-					}
-				},
-				tags: {
-					title: this.getTranslation('SM_TABLE.TAGS'),
-					type: 'custom',
-					width: '20%',
-					renderComponent: TagsOnlyComponent,
-					componentInitFunction: (instance: TagsOnlyComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-						instance.value = cell.getValue();
-					},
-					filter: {
-						type: 'custom',
-						component: TagsColorFilterComponent
-					},
-					filterFunction: (tags: ITag[]) => {
-						const tagIds = [];
-						for (const tag of tags) {
-							tagIds.push(tag.id);
-						}
-						this.setFilter({ field: 'tags', search: tagIds });
-					},
-					isSortable: false
-				},
-				workStatus: {
-					title: this.getTranslation('SM_TABLE.STATUS'),
-					type: 'custom',
-					class: 'text-center',
-					width: '5%',
-					renderComponent: EmployeeWorkStatusComponent,
-					componentInitFunction: (instance: EmployeeWorkStatusComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-					},
-					filter: {
-						type: 'custom',
-						component: ToggleFilterComponent
-					},
-					filterFunction: (isActive: boolean) => {
-						this.setFilter({ field: 'isActive', search: isActive });
-					}
-				}
-			}
+			columns: { ...this.getColumns() }
 		};
 	}
 
@@ -799,52 +883,50 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		// Destructure properties for clarity
 		const { allowScreenshotCapture } = this.organization;
 
-		// Check if screenshot capture is allowed
-		if (allowScreenshotCapture) {
-			// Configure the additional column for screenshot capture
-			this.settingsSmartTable['columns']['allowScreenshotCapture'] = {
-				title: this.getTranslation('SM_TABLE.SCREEN_CAPTURE'),
+		// Check if screenshot capture is allowed and hide the column if not
+		this._pageDataTableRegistryService.registerPageDataTableColumn({
+			dataTableId: this.dataTableId, // The identifier for the data table location
+			columnId: 'allowScreenshotCapture', // The identifier for the column
+			order: 8, // The order of the column in the table
+			title: () => this.getTranslation('SM_TABLE.SCREEN_CAPTURE'), // The title of the column
+			type: 'custom', // The type of the column
+			class: 'text-center', // The class of the column
+			width: '5%', // The width of the column
+			isFilterable: true, // Indicates whether the column is filterable
+			isSortable: false,
+			hide: allowScreenshotCapture === false,
+			filter: {
 				type: 'custom',
-				class: 'text-center',
-				editable: false,
-				addable: false,
-				notShownField: true,
-				// Configure custom filter for the column
-				filter: {
-					type: 'custom',
-					component: ToggleFilterComponent
-				},
-				// Define filter function to update the filter settings
-				filterFunction: (isEnable: boolean) => {
-					this.setFilter({
-						field: 'allowScreenshotCapture',
-						search: isEnable
-					});
-				},
-				// Configure custom component for rendering the column
-				renderComponent: AllowScreenshotCaptureComponent,
-				// Initialize component function to set initial values
-				componentInitFunction: (instance: AllowScreenshotCaptureComponent, cell: Cell) => {
-					instance.rowData = cell.getRow().getData();
-					instance.value = cell.getValue();
+				component: ToggleFilterComponent
+			},
+			filterFunction: (isEnable: boolean) => {
+				this.setFilter({ field: 'allowScreenshotCapture', search: isEnable });
+				return isEnable;
+			},
+			renderComponent: AllowScreenshotCaptureComponent, // The component to render the column
+			componentInitFunction: (instance: AllowScreenshotCaptureComponent, cell: Cell) => {
+				instance.rowData = cell.getRow().getData();
+				instance.value = cell.getValue();
 
-					// Subscribe to the allowScreenshotCaptureChange event
-					instance.allowScreenshotCaptureChange.subscribe({
-						next: (isAllow: boolean) => {
-							// Clear selected items and update allowScreenshotCapture
-							this.clearItem();
-							this._updateAllowScreenshotCapture(instance.rowData, isAllow);
-						},
-						error: (err: any) => {
-							console.warn(err);
-						}
-					});
-				}
-			};
-		}
+				// Subscribe to the allowScreenshotCaptureChange event
+				instance.allowScreenshotCaptureChange.subscribe({
+					next: (isAllow: boolean) => {
+						// Clear selected items and update allowScreenshotCapture
+						this.clearItem();
+						this._updateAllowScreenshotCapture(instance.rowData, isAllow);
+					},
+					error: (err: any) => {
+						console.warn(err);
+					}
+				});
+			}
+		});
 
-		// Copy the settingsSmartTable to trigger change detection
-		this.settingsSmartTable = { ...this.settingsSmartTable };
+		// Update the settingsSmartTable with the new columns
+		this.settingsSmartTable = {
+			...this.settingsSmartTable,
+			columns: this.getColumns()
+		};
 	}
 
 	/**
@@ -901,10 +983,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 * Clear selected item
 	 */
 	clearItem() {
-		this.selectEmployee({
-			isSelected: false,
-			data: null
-		});
+		this.selectEmployee({ isSelected: false, data: null });
 	}
 
 	/**

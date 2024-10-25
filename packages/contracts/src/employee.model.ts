@@ -113,6 +113,10 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel, ITa
 	isTrackingEnabled: boolean;
 	isDeleted?: boolean;
 	allowScreenshotCapture?: boolean;
+	allowManualTime?: boolean;
+	allowModifyTime?: boolean;
+	allowDeleteTime?: boolean;
+
 	/** Upwork ID For Gauzy AI*/
 	upworkId?: string;
 	/** LinkedIn ID For Gauzy AI*/
@@ -176,6 +180,9 @@ export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntit
 	upworkUrl?: string;
 	profile_link?: string;
 	allowScreenshotCapture?: boolean;
+	allowManualTime?: boolean;
+	allowModifyTime?: boolean;
+	allowDeleteTime?: boolean;
 	/** Upwork ID For Gauzy AI*/
 	upworkId?: string;
 	/** LinkedIn ID For Gauzy AI*/

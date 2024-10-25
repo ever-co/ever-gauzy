@@ -83,6 +83,7 @@ export interface IOrganizationProjectsFindInput
 	billable?: boolean;
 	billingFlat?: boolean;
 	organizationTeamId?: ID;
+	members?: Partial<IOrganizationProjectEmployeeFindInput>;
 }
 
 export interface IOrganizationProjectCreateInput extends IOrganizationProjectBase, IMemberEntityBased {}
@@ -93,6 +94,8 @@ export interface IOrganizationProjectStoreState {
 	project: IOrganizationProject;
 	action: CrudActionEnum;
 }
+
+export interface IOrganizationProjectEmployeeFindInput extends Partial<IOrganizationProjectEmployee> {}
 
 export interface IOrganizationProjectEmployee
 	extends IBasePerTenantAndOrganizationEntityModel,

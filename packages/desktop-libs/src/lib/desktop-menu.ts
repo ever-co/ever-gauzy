@@ -23,7 +23,7 @@ export class AppMenu {
 						label: TranslateService.instant('MENU.ABOUT'),
 						enabled: true,
 						async click() {
-							const window: BrowserWindow = await createAboutWindow(windowPath.timeTrackerUi);
+							const window: BrowserWindow = await createAboutWindow(windowPath.timeTrackerUi, windowPath.preloadPath);
 							window.show();
 						}
 					},

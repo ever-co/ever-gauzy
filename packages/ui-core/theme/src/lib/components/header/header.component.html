@@ -3,6 +3,11 @@
 	<a href="https://app.gauzy.co/#/auth/register"> Click here to Sign Up and start using for free! </a>
 </div>
 <div class="main-header">
+	<div class="header-container"
+		[class.left]="position === 'normal'"
+		[class.right]="position === 'inverse'"
+	></div>
+
 	<div class="header-container">
 		<ng-template [ngIf]="createQuickActionsMenu?.length > 0">
 			<nb-action

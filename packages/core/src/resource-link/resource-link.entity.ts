@@ -12,7 +12,7 @@ import { MikroOrmResourceLinkRepository } from './repository/mikro-orm-resource-
 export class ResourceLink extends TenantOrganizationBaseEntity implements IResourceLink {
 	[EntityRepositoryType]?: MikroOrmResourceLinkRepository;
 
-	@ApiProperty({ type: () => String, enum: BaseEntityEnum })
+	@ApiProperty({ enum: BaseEntityEnum })
 	@IsNotEmpty()
 	@IsEnum(BaseEntityEnum)
 	@ColumnIndex()
@@ -38,14 +38,9 @@ export class ResourceLink extends TenantOrganizationBaseEntity implements IResou
 	@MultiORMColumn({ type: 'text' })
 	url: string;
 
-	@ApiPropertyOptional({
-		type: () => (isSqlite() || isBetterSqlite3() ? String : Object)
-	})
+	@ApiPropertyOptional({ type: () => (isSqlite() || isBetterSqlite3() ? String : Object) })
 	@IsOptional()
-	@MultiORMColumn({
-		nullable: true,
-		type: isSqlite() || isBetterSqlite3() ? 'text' : 'json'
-	})
+	@MultiORMColumn({ nullable: true, type: isSqlite() || isBetterSqlite3() ? 'text' : 'json' })
 	metaData?: string | IURLMetaData;
 
 	/*
@@ -53,12 +48,9 @@ export class ResourceLink extends TenantOrganizationBaseEntity implements IResou
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
-
 	/**
-	 * User comment author
+	 * User Author of the Resource Link
 	 */
-	@ApiPropertyOptional({ type: () => Object })
-	@IsOptional()
 	@MultiORMManyToOne(() => User, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
@@ -69,11 +61,8 @@ export class ResourceLink extends TenantOrganizationBaseEntity implements IResou
 	@JoinColumn()
 	creator?: IUser;
 
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@IsUUID()
 	@RelationId((it: ResourceLink) => it.creator)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	creatorId?: string;
+	creatorId?: ID;
 }

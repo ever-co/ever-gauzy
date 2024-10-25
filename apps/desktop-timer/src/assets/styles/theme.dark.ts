@@ -49,13 +49,7 @@ export const DARK_THEME = {
 		...theme,
 
 		temperature: {
-			arcFill: [
-				theme.primary,
-				theme.primary,
-				theme.primary,
-				theme.primary,
-				theme.primary
-			],
+			arcFill: Array(5).fill(theme.primary),
 			arcEmpty: theme.bg2,
 			thumbBg: theme.bg2,
 			thumbBorder: theme.primary

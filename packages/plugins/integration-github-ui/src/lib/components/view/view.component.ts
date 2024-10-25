@@ -35,7 +35,7 @@ import {
 	ProjectComponent,
 	GithubRepositoryComponent,
 	GithubIssueTitleDescriptionComponent,
-	ToggleSwitchComponent,
+	ToggleSwitcherComponent,
 	ResyncButtonComponent,
 	PaginationFilterBaseComponent,
 	IPaginationBase,
@@ -402,17 +402,17 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 					title: this.getTranslation('SM_TABLE.ENABLED_DISABLED_SYNC'),
 					type: 'custom',
 					isFilterable: false,
-					renderComponent: ToggleSwitchComponent,
-					componentInitFunction: (instance: ToggleSwitchComponent, cell: Cell) => {
+					renderComponent: ToggleSwitcherComponent,
+					componentInitFunction: (instance: ToggleSwitcherComponent, cell: Cell) => {
 						// Get the data of the entire row
 						const rowData = cell.getRow().getData();
 
-						// Set properties on the ToggleSwitchComponent instance
+						// Set properties on the ToggleSwitcherComponent instance
 						instance.rowData = rowData;
 						instance.value = rowData?.customFields?.repository?.hasSyncEnabled || false;
 
-						// Subscribe to the 'switched' event of the ToggleSwitchComponent
-						instance.switched.subscribe({
+						// Subscribe to the 'switched' event of the ToggleSwitcherComponent
+						instance.onSwitched.subscribe({
 							// When the switch state changes, execute the following callback
 							next: (hasSyncEnabled: boolean) => {
 								// Call the 'updateGithubRepository' method with the row data and the new switch state
