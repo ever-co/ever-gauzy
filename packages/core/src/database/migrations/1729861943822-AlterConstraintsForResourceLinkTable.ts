@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import { yellow } from 'chalk';
 import { DatabaseTypeEnum } from '@gauzy/config';
@@ -11,7 +12,7 @@ export class AlterConstraintsForResourceLinkTable1729861943822 implements Migrat
 	 * @param queryRunner
 	 */
 	public async up(queryRunner: QueryRunner): Promise<void> {
-		console.log(yellow(this.name + ' start running!'));
+		Logger.debug(yellow(this.name + ' start running!'), 'Migration');
 
 		switch (queryRunner.connection.options.type) {
 			case DatabaseTypeEnum.sqlite:
@@ -140,20 +141,6 @@ export class AlterConstraintsForResourceLinkTable1729861943822 implements Migrat
 		);
 		await queryRunner.query(`DROP TABLE "resource_link"`);
 		await queryRunner.query(`ALTER TABLE "temporary_resource_link" RENAME TO "resource_link"`);
-		await queryRunner.query(`CREATE INDEX "IDX_2ef674d18792e8864fd8d484ea" ON "resource_link" ("creatorId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_b73c278619bd8fb7f30f93182c" ON "resource_link" ("entityId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_44100d3eaf418ee67fa7a756f1" ON "resource_link" ("entity") `);
-		await queryRunner.query(`CREATE INDEX "IDX_95603855ae10050123e48a6688" ON "resource_link" ("organizationId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_f9438f82f6e93bd6a87b8216af" ON "resource_link" ("tenantId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_4c25c2c9d7ebbd0c07edd824ff" ON "resource_link" ("isArchived") `);
-		await queryRunner.query(`CREATE INDEX "IDX_841b729b80bc03ea38d16b8508" ON "resource_link" ("isActive") `);
-		await queryRunner.query(`DROP INDEX "IDX_2ef674d18792e8864fd8d484ea"`);
-		await queryRunner.query(`DROP INDEX "IDX_b73c278619bd8fb7f30f93182c"`);
-		await queryRunner.query(`DROP INDEX "IDX_44100d3eaf418ee67fa7a756f1"`);
-		await queryRunner.query(`DROP INDEX "IDX_95603855ae10050123e48a6688"`);
-		await queryRunner.query(`DROP INDEX "IDX_f9438f82f6e93bd6a87b8216af"`);
-		await queryRunner.query(`DROP INDEX "IDX_4c25c2c9d7ebbd0c07edd824ff"`);
-		await queryRunner.query(`DROP INDEX "IDX_841b729b80bc03ea38d16b8508"`);
 		await queryRunner.query(`CREATE INDEX "IDX_e891dad6f91b8eb04a47f42a06" ON "resource_link" ("isActive") `);
 		await queryRunner.query(`CREATE INDEX "IDX_2efdd5f6dc5d0c483edbc932ff" ON "resource_link" ("isArchived") `);
 		await queryRunner.query(`CREATE INDEX "IDX_64d90b997156b7de382fd8a88f" ON "resource_link" ("tenantId") `);
@@ -220,19 +207,6 @@ export class AlterConstraintsForResourceLinkTable1729861943822 implements Migrat
 		await queryRunner.query(`DROP INDEX "IDX_64d90b997156b7de382fd8a88f"`);
 		await queryRunner.query(`DROP INDEX "IDX_2efdd5f6dc5d0c483edbc932ff"`);
 		await queryRunner.query(`DROP INDEX "IDX_e891dad6f91b8eb04a47f42a06"`);
-		await queryRunner.query(`CREATE INDEX "IDX_841b729b80bc03ea38d16b8508" ON "resource_link" ("isActive") `);
-		await queryRunner.query(`CREATE INDEX "IDX_4c25c2c9d7ebbd0c07edd824ff" ON "resource_link" ("isArchived") `);
-		await queryRunner.query(`CREATE INDEX "IDX_f9438f82f6e93bd6a87b8216af" ON "resource_link" ("tenantId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_95603855ae10050123e48a6688" ON "resource_link" ("organizationId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_44100d3eaf418ee67fa7a756f1" ON "resource_link" ("entity") `);
-		await queryRunner.query(`CREATE INDEX "IDX_b73c278619bd8fb7f30f93182c" ON "resource_link" ("entityId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_2ef674d18792e8864fd8d484ea" ON "resource_link" ("creatorId") `);
-		await queryRunner.query(`DROP INDEX "IDX_841b729b80bc03ea38d16b8508"`);
-		await queryRunner.query(`DROP INDEX "IDX_4c25c2c9d7ebbd0c07edd824ff"`);
-		await queryRunner.query(`DROP INDEX "IDX_f9438f82f6e93bd6a87b8216af"`);
-		await queryRunner.query(`DROP INDEX "IDX_95603855ae10050123e48a6688"`);
-		await queryRunner.query(`DROP INDEX "IDX_44100d3eaf418ee67fa7a756f1"`);
-		await queryRunner.query(`DROP INDEX "IDX_b73c278619bd8fb7f30f93182c"`);
 		await queryRunner.query(`DROP INDEX "IDX_2ef674d18792e8864fd8d484ea"`);
 		await queryRunner.query(`ALTER TABLE "resource_link" RENAME TO "temporary_resource_link"`);
 		await queryRunner.query(
