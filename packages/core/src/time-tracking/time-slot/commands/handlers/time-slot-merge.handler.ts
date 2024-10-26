@@ -1,17 +1,27 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { In, SelectQueryBuilder } from 'typeorm';
+import { In } from 'typeorm';
 import * as moment from 'moment';
 import { chain, omit, pluck, uniq } from 'underscore';
-import { IActivity, IScreenshot, ITimeLog, ITimeSlot } from '@gauzy/contracts';
+import { DateRange, IActivity, IScreenshot, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
-import { TimeSlotMergeCommand } from '../time-slot-merge.command';
 import { Activity, Screenshot, TimeSlot } from './../../../../core/entities/internal';
 import { RequestContext } from './../../../../core/context';
 import { getDateRangeFormat } from './../../../../core/utils';
+import { prepareSQLQuery as p } from './../../../../database/database.helper';
+import { TimeSlotMergeCommand } from '../time-slot-merge.command';
 import { TimesheetRecalculateCommand } from './../../../timesheet/commands';
 import { UpdateEmployeeTotalWorkedHoursCommand } from './../../../../employee/commands';
-import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.repository';
+
+interface IAggregatedTimeSlot {
+	duration: number;
+	keyboard: number;
+	mouse: number;
+	overall: number;
+	screenshots: IScreenshot[];
+	timeLogs: ITimeLog[];
+	activities: IActivity[];
+}
 
 @CommandHandler(TimeSlotMergeCommand)
 export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeCommand> {
@@ -21,29 +31,16 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 	) {}
 
 	/**
+	 * Execute the TimeSlot merge command
 	 *
-	 * @param command
-	 * @returns
+	 * @param command - The TimeSlotMergeCommand to execute
 	 */
 	public async execute(command: TimeSlotMergeCommand) {
-		let { organizationId, employeeId, start, end } = command;
+		let { organizationId, employeeId, start, end, forceDelete } = command;
 		const tenantId = RequestContext.currentTenantId();
 
-		let startMinute = moment(start).utc().get('minute');
-		startMinute = startMinute - (startMinute % 10);
-
-		let startDate: any = moment(start).utc().set('minute', startMinute).set('second', 0).set('millisecond', 0);
-
-		let endMinute = moment(end).utc().get('minute');
-		endMinute = endMinute - (endMinute % 10);
-
-		let endDate: any = moment(end)
-			.utc()
-			.set('minute', endMinute + 10)
-			.set('second', 0)
-			.set('millisecond', 0);
-
-		const { start: startedAt, end: stoppedAt } = getDateRangeFormat(startDate, endDate);
+		// Round start and end dates to the nearest 10 minutes
+		const { start: startedAt, end: stoppedAt } = this.getRoundedDateRange(start, end);
 		console.log({ startedAt, stoppedAt }, 'Time Slot Merging Dates');
 
 		// GET Time Slots for the given date range slot
@@ -80,12 +77,10 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 					let mouse = 0;
 					let overall = 0;
 
-					const calculateValue = (value: number | undefined): number => parseInt(value as any, 10) || 0;
-
-					duration += timeSlots.reduce((acc, slot) => acc + calculateValue(slot.duration), 0);
-					keyboard += timeSlots.reduce((acc, slot) => acc + calculateValue(slot.keyboard), 0);
-					mouse += timeSlots.reduce((acc, slot) => acc + calculateValue(slot.mouse), 0);
-					overall += timeSlots.reduce((acc, slot) => acc + calculateValue(slot.overall), 0);
+					duration += timeSlots.reduce((acc, slot) => acc + this.calculateValue(slot.duration), 0);
+					keyboard += timeSlots.reduce((acc, slot) => acc + this.calculateValue(slot.keyboard), 0);
+					mouse += timeSlots.reduce((acc, slot) => acc + this.calculateValue(slot.mouse), 0);
+					overall += timeSlots.reduce((acc, slot) => acc + this.calculateValue(slot.overall), 0);
 
 					screenshots = screenshots.concat(...timeSlots.map((slot) => slot.screenshots || []));
 					timeLogs = timeLogs.concat(...timeSlots.map((slot) => slot.timeLogs || []));
@@ -103,16 +98,13 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 						keyboard: Math.max(0, Math.min(600, keyboard)),
 						mouse: Math.max(0, Math.min(600, mouse))
 					};
-					/*
-					 * Map old screenshots newly created TimeSlot
-					 */
-					screenshots = screenshots.map((item) => new Screenshot(omit(item, ['timeSlotId'])));
-					/*
-					 * Map old activities newly created TimeSlot
-					 */
-					activities = activities.map((item) => new Activity(omit(item, ['timeSlotId'])));
 
-					timeLogs = uniq(timeLogs, (log: ITimeLog) => log.id);
+					// Map old screenshots newly created TimeSlot
+					screenshots = this.mapScreenshots(screenshots);
+					// Map old activities newly created TimeSlot
+					activities = this.mapActivities(activities);
+					// Deduplicate time logs
+					timeLogs = this.mapUniqueTimeLogs(timeLogs);
 
 					const newTimeSlot = new TimeSlot({
 						...omit(timeSlot),
@@ -132,15 +124,7 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 					await this.typeOrmTimeSlotRepository.save(newTimeSlot);
 					createdTimeSlots.push(newTimeSlot);
 
-					const ids = pluck(timeSlots, 'id');
-					ids.splice(0, 1);
-					console.log('TimeSlots Ids Will Be Deleted:', ids);
-
-					if (ids.length > 0) {
-						await this.typeOrmTimeSlotRepository.delete({
-							id: In(ids)
-						});
-					}
+					this.cleanUpOldTimeSlots(timeSlots, forceDelete); // Clean up old time slots
 				})
 				.values()
 				.value();
@@ -150,42 +134,124 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 	}
 
 	/**
-	 * Get time slots for the given date range.
+	 * Deletes or soft-deletes old time slots based on the `forceDelete` flag.
 	 *
-	 * @param param0 - An object containing parameters like organizationId, employeeId, tenantId, startedAt, and stoppedAt.
-	 * @returns A promise that resolves to an array of TimeSlot instances.
+	 * @param slots - Array of time slots to clean up
+	 * @param forceDelete - Flag to indicate if deletion should be permanent
 	 */
-	private async getTimeSlots({ organizationId, employeeId, tenantId, startedAt, stoppedAt }): Promise<TimeSlot[]> {
-		/**
-		 * GET Time Slots for given date range slot
-		 */
-		const query = this.typeOrmTimeSlotRepository.createQueryBuilder();
-		query.leftJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs');
-		query.leftJoinAndSelect(`${query.alias}.screenshots`, 'screenshots');
-		query.leftJoinAndSelect(`${query.alias}.activities`, 'activities');
-		query.where((qb: SelectQueryBuilder<TimeSlot>) => {
-			qb.andWhere(p(`"${qb.alias}"."startedAt" >= :startedAt AND "${qb.alias}"."startedAt" < :stoppedAt`), {
-				startedAt,
-				stoppedAt
-			});
-			qb.andWhere(p(`"${qb.alias}"."employeeId" = :employeeId`), {
-				employeeId
-			});
-			qb.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), {
-				organizationId
-			});
-			qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), {
-				tenantId
-			});
-		});
-		query.addOrderBy(p(`"${query.alias}"."createdAt"`), 'ASC');
-		const timeSlots = await query.getMany();
-		return timeSlots;
+	private async cleanUpOldTimeSlots(slots: ITimeSlot[], forceDelete: boolean) {
+		const idsToDelete = pluck(slots, 'id'); // Exclude the first ID as the latest time slot
+		idsToDelete.splice(0, 1);
+
+		console.log('---------------TimeSlots Ids Will Be Deleted---------------', idsToDelete);
+
+		if (isNotEmpty(idsToDelete)) {
+			if (forceDelete) {
+				await this.typeOrmTimeSlotRepository.delete({ id: In(idsToDelete) });
+			} else {
+				await this.typeOrmTimeSlotRepository.softDelete({ id: In(idsToDelete) });
+			}
+		}
 	}
 
 	/**
+	 * Maps and prepares screenshots for a new time slot by omitting the `timeSlotId` property.
 	 *
-	 * @param newTimeSlot
+	 * @param screenshots - Array of screenshots to be mapped
+	 * @returns A new array of `Screenshot` instances without `timeSlotId`
+	 */
+	private mapScreenshots(screenshots: IScreenshot[]): Screenshot[] {
+		return screenshots.map((screenshot) => new Screenshot(omit(screenshot, ['timeSlotId'])));
+	}
+
+	/**
+	 * Maps and prepares activities for a new time slot by omitting the `timeSlotId` property.
+	 *
+	 * @param activities - Array of activities to be mapped
+	 * @returns A new array of `Activity` instances without `timeSlotId`
+	 */
+	private mapActivities(activities: IActivity[]): Activity[] {
+		return activities.map((activity) => new Activity(omit(activity, ['timeSlotId'])));
+	}
+
+	/**
+	 * Maps and deduplicates time logs by their unique ID.
+	 *
+	 * @param logs - Array of time logs to be mapped and deduplicated
+	 * @returns Array of unique time logs
+	 */
+	private mapUniqueTimeLogs(logs: ITimeLog[]): ITimeLog[] {
+		return uniq(logs, (log: ITimeLog) => log.id);
+	}
+
+	/**
+	 * Calculate a value safely (handles undefined)
+	 *
+	 * @param value - The value to calculate
+	 * @returns The calculated value
+	 */
+	private calculateValue(value: number | undefined): number {
+		return parseInt(value as any, 10) || 0;
+	}
+
+	/**
+	 * Rounds start and end dates to the nearest 10 minutes and returns the formatted date range.
+	 *
+	 * @param start - Start date of the range
+	 * @param end - End date of the range
+	 * @returns The formatted start and end dates
+	 */
+	private getRoundedDateRange(start: Date, end: Date): DateRange {
+		const startDate = this.roundToNearestTenMinutes(moment(start).utc());
+		const endDate = this.roundToNearestTenMinutes(moment(end).utc().add(10, 'minutes'));
+		return getDateRangeFormat(startDate, endDate);
+	}
+
+	/**
+	 * Round a moment date to the nearest 10 minutes
+	 *
+	 * @param date - The moment date to round
+	 * @returns The rounded moment date
+	 */
+	private roundToNearestTenMinutes(date: moment.Moment): moment.Moment {
+		const minutes = date.minutes();
+		return date
+			.minutes(minutes - (minutes % 10))
+			.seconds(0)
+			.milliseconds(0);
+	}
+
+	/**
+	 * Get time slots for the given date range.
+	 *
+	 * @param params - An object containing parameters like organizationId, employeeId, tenantId, startedAt, and stoppedAt.
+	 * @returns A promise that resolves to an array of TimeSlot instances.
+	 */
+	private async getTimeSlots({ organizationId, employeeId, tenantId, startedAt, stoppedAt }): Promise<TimeSlot[]> {
+		// Create a query builder for the TimeSlot entity
+		const query = this.typeOrmTimeSlotRepository.createQueryBuilder();
+		query
+			.leftJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs')
+			.leftJoinAndSelect(`${query.alias}.screenshots`, 'screenshots')
+			.leftJoinAndSelect(`${query.alias}.activities`, 'activities');
+		query
+			.where(p(`"${query.alias}"."startedAt" >= :startedAt AND "${query.alias}"."startedAt" < :stoppedAt`), {
+				startedAt,
+				stoppedAt
+			})
+			.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId })
+			.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId })
+			.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId })
+			.addOrderBy(p(`"${query.alias}"."createdAt"`), 'ASC');
+
+		// Execute the query and return the results
+		return await query.getMany();
+	}
+
+	/**
+	 * Updates time logs and recalculates the total worked hours for an employee based on the given time slot.
+	 *
+	 * @param newTimeSlot - The newly created time slot containing time logs and employee information.
 	 */
 	private async updateTimeLogAndEmployeeTotalWorkedHours(newTimeSlot: ITimeSlot): Promise<void> {
 		/**
