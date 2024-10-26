@@ -163,6 +163,9 @@ jobs:
       - name: Install latest version of NPM
         run: 'npm install -g npm@9'
 
+      - name: Install Windows Build Tools
+        run: npm install -g windows-build-tools
+
       - name: Install node-gyp package
         run: 'npm install --quiet -g node-gyp@9.3.1'
 
