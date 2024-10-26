@@ -2,7 +2,7 @@ import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { In } from 'typeorm';
 import * as moment from 'moment';
 import { chain, omit, pluck, uniq } from 'underscore';
-import { DateRange, IActivity, IScreenshot, ITimeLog, ITimeSlot } from '@gauzy/contracts';
+import { DateRange, IActivity, ID, IScreenshot, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { Activity, Screenshot, TimeSlot } from './../../../../core/entities/internal';
 import { RequestContext } from './../../../../core/context';
@@ -35,15 +35,14 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 	 *
 	 * @param command - The TimeSlotMergeCommand to execute
 	 */
-	public async execute(command: TimeSlotMergeCommand) {
-		let { organizationId, employeeId, start, end, forceDelete } = command;
+	public async execute(command: TimeSlotMergeCommand): Promise<ITimeSlot[]> {
+		const { organizationId, employeeId, start, end, forceDelete } = command;
 		const tenantId = RequestContext.currentTenantId();
 
 		// Round start and end dates to the nearest 10 minutes
 		const { start: startedAt, end: stoppedAt } = this.getRoundedDateRange(start, end);
-		console.log({ startedAt, stoppedAt }, 'Time Slot Merging Dates');
 
-		// GET Time Slots for the given date range slot
+		// Retrieve time slots for the given date range
 		const timeSlots = await this.getTimeSlots({
 			organizationId,
 			employeeId,
@@ -52,46 +51,119 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 			stoppedAt
 		});
 
-		const createdTimeSlots: ITimeSlot[] = [];
-
 		if (isNotEmpty(timeSlots)) {
-			const groupByTimeSlots = chain(timeSlots).groupBy((timeSlot) => {
-				let date = moment(timeSlot.startedAt);
-				const minutes = date.get('minute');
-				date = date
-					.set('minute', minutes - (minutes % 10))
-					.set('second', 0)
-					.set('millisecond', 0);
-				return date.format('YYYY-MM-DD HH:mm:ss');
-			});
-			const savePromises = groupByTimeSlots
-				.mapObject(async (slots, slotStart) => {
-					const [slot] = slots; // Get the first time slot and aggregate data from all time slots
-					const aggregated = this.aggregateTimeSlot(slots); // Aggregate data from all time slots
-
-					const newTimeSlot = new TimeSlot({
-						...omit(slot),
-						...this.calculateActivity(aggregated, slots), // Calculate activity metrics
-						screenshots: this.mapScreenshots(aggregated.screenshots), // Map old screenshots
-						activities: this.mapActivities(aggregated.activities), // Map old activities
-						timeLogs: this.mapUniqueTimeLogs(aggregated.timeLogs), // Deduplicate time logs
-						startedAt: moment(slotStart).toDate(),
-						tenantId,
-						organizationId,
-						employeeId
-					});
-					console.log('Newly Created Time Slot', newTimeSlot);
-					await this.updateTimeLogAndEmployeeTotalWorkedHours(newTimeSlot);
-					await this.typeOrmTimeSlotRepository.save(newTimeSlot);
-					createdTimeSlots.push(newTimeSlot);
-
-					this.cleanUpOldTimeSlots(timeSlots, forceDelete); // Clean up old time slots
-				})
-				.values()
-				.value();
-			await Promise.all(savePromises);
+			// Aggregate data and save new time slots
+			return await this.mergeAndSaveTimeSlots(
+				this.groupTimeSlots(timeSlots), // Group time slots by rounded start time
+				tenantId,
+				organizationId,
+				employeeId,
+				forceDelete
+			);
 		}
-		return createdTimeSlots;
+
+		return [];
+	}
+
+	/**
+	 * Aggregates, saves new time slots, and deletes old ones.
+	 *
+	 * @param groupedTimeSlots - The grouped time slots by rounded start time
+	 * @param tenantId - Tenant ID associated with the time slots
+	 * @param organizationId - Organization ID associated with the time slots
+	 * @param employeeId - Employee ID associated with the time slots
+	 * @param forceDelete - Flag to force deletion of old time slots
+	 * @returns An array of created time slots
+	 */
+	private async mergeAndSaveTimeSlots(
+		groupedTimeSlots: Record<string, ITimeSlot[]>,
+		tenantId: ID,
+		organizationId: ID,
+		employeeId: ID,
+		forceDelete: boolean
+	): Promise<ITimeSlot[]> {
+		const newTimeSlots: ITimeSlot[] = [];
+
+		await Promise.all(
+			Object.entries(groupedTimeSlots).map(async ([start, slots]) => {
+				// Create a new TimeSlot instance with aggregated data
+				const newTimeSlot = await this.createNewTimeSlot(slots, start, tenantId, organizationId, employeeId);
+
+				// Update time logs and recalculate total worked hours for the employee
+				await this.updateTimeLogAndEmployeeTotalWorkedHours(newTimeSlot);
+
+				// Clean up old time slots if needed
+				await this.cleanUpOldTimeSlots(slots, forceDelete);
+
+				newTimeSlots.push(newTimeSlot);
+			})
+		);
+
+		return newTimeSlots;
+	}
+
+	/**
+	 * Rounds start and end dates to the nearest 10 minutes and returns the formatted date range.
+	 *
+	 * @param start - Start date of the range
+	 * @param end - End date of the range
+	 * @returns The formatted start and end dates
+	 */
+	private getRoundedDateRange(start: Date, end: Date): DateRange {
+		const startDate = this.roundToNearestTenMinutes(moment(start).utc());
+		const endDate = this.roundToNearestTenMinutes(moment(end).utc().add(10, 'minutes'));
+		return getDateRangeFormat(startDate, endDate);
+	}
+
+	/**
+	 * Group time slots by their start time
+	 * @param timeSlots - The array of time slots to group
+	 * @returns An object where keys are the start times and values are arrays of time slots
+	 */
+	private groupTimeSlots(timeSlots: ITimeSlot[]): Record<string, ITimeSlot[]> {
+		return chain(timeSlots)
+			.groupBy((slot) => this.roundToNearestTenMinutes(moment(slot.startedAt)).format('YYYY-MM-DD HH:mm:ss'))
+			.value();
+	}
+
+	/**
+	 * Creates a new TimeSlot instance by aggregating data from multiple time slots.
+	 * Calculates the overall duration, keyboard, mouse, and activity metrics, and
+	 * creates a new `TimeSlot` entity with aggregated screenshots, activities, and time logs.
+	 *
+	 * @param slots - The array of time slots to aggregate data from
+	 * @param startedAt - The start time for the new aggregated time slot
+	 * @param tenantId - The tenant ID associated with the time slot
+	 * @param organizationId - The organization ID associated with the time slot
+	 * @param employeeId - The employee ID associated with the time slot
+	 * @returns A new `TimeSlot` instance with aggregated data
+	 */
+	private async createNewTimeSlot(
+		slots: ITimeSlot[],
+		startedAt: string,
+		tenantId: ID,
+		organizationId: ID,
+		employeeId: ID
+	): Promise<TimeSlot> {
+		const [slot] = slots; // Get the first time slot and aggregate data from all time slots
+		const aggregated = this.aggregateTimeSlot(slots); // Aggregate data from all time slots
+
+		// Create new TimeSlot instance with aggregated data
+		const newTimeSlot = new TimeSlot({
+			...omit(slot),
+			...this.calculateActivity(aggregated, slots), // Calculate activity metrics
+			screenshots: this.mapScreenshots(aggregated.screenshots), // Map old screenshots
+			activities: this.mapActivities(aggregated.activities), // Map old activities
+			timeLogs: this.mapUniqueTimeLogs(aggregated.timeLogs), // Deduplicate time logs
+			startedAt: moment(startedAt).toDate(),
+			tenantId,
+			organizationId,
+			employeeId
+		});
+
+		console.log('Newly Created Time Slot with Aggregated Data:', newTimeSlot);
+		// Save the new time slot to the database
+		return await this.typeOrmTimeSlotRepository.save(newTimeSlot);
 	}
 
 	/**
@@ -209,19 +281,6 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 	 */
 	private calculateValue(value: number | undefined): number {
 		return parseInt(value as any, 10) || 0;
-	}
-
-	/**
-	 * Rounds start and end dates to the nearest 10 minutes and returns the formatted date range.
-	 *
-	 * @param start - Start date of the range
-	 * @param end - End date of the range
-	 * @returns The formatted start and end dates
-	 */
-	private getRoundedDateRange(start: Date, end: Date): DateRange {
-		const startDate = this.roundToNearestTenMinutes(moment(start).utc());
-		const endDate = this.roundToNearestTenMinutes(moment(end).utc().add(10, 'minutes'));
-		return getDateRangeFormat(startDate, endDate);
 	}
 
 	/**

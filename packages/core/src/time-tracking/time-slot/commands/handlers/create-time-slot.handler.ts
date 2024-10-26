@@ -17,7 +17,7 @@ import { TimeSlot } from './../../time-slot.entity';
 
 @CommandHandler(CreateTimeSlotCommand)
 export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotCommand> {
-	private logging: boolean = false;
+	private logging: boolean = true;
 
 	constructor(
 		readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
@@ -180,7 +180,7 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 			new TimeSlotMergeCommand(organizationId, employeeId, minDate, maxDate, forceDelete)
 		);
 
-		console.log('Merged Time Slots:', mergedTimeSlot);
+		this.log(`Newly Created Merged Time Slots: ${JSON.stringify(mergedTimeSlot)}`);
 
 		if (mergedTimeSlot) {
 			timeSlot = mergedTimeSlot;
