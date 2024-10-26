@@ -344,7 +344,6 @@
 		"bcrypt": "^5.1.1",
 		"camelcase": "^6.3.0",
 		"dotenv": "^16.0.3",
-		"iconv": "^3.0.1",
 		"jsdom": "^23.0.1",
 		"lodash-es": "^4.17.21",
 		"parse5": "^7.1.2",
@@ -467,9 +466,6 @@
 	"overrides": {
 		"prebuild": {
 			"node-gyp": "$node-gyp"
-		},
-		"iconv": {
-			"node-gyp": "9.3.1"
 		},
 		"twing": {
 			"locutus": "2.0.30"
