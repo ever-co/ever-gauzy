@@ -39,7 +39,7 @@ aliases:
       sudo apt install python3-distutils
       sudo apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick
       python3 -m pip install packaging setuptools
-      sudo npm install --quiet node-gyp@9.3.1 -g
+      sudo npm install --quiet node-gyp@10.2.0 -g
       sudo npm config set python /usr/bin/python
 
   - &install-yarn
