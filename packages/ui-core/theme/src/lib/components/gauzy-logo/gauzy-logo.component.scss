@@ -76,15 +76,20 @@ nb-accordion-item-body.setting ::ng-deep {
   }
 }
 
-.setting.action ga-sidebar-menu ::ng-deep {
-  nb-accordion-item nb-accordion-item-header {
-    box-shadow: unset;
-    border-width: 0;
-
-    nb-icon {
-      display: none;
-    }
-  }
+.setting.action ::ng-deep {
+	ga-main-nav-menu {
+		ga-sidebar-menu {
+			nb-accordion-item  {
+				nb-accordion-item-header {
+					box-shadow: unset;
+					border-width: 0;
+					nb-icon {
+						display: none;
+					}
+				}
+			}
+		}
+	}
 }
 
 nb-accordion-item:first-child.collapsed nb-accordion-item-header.principal {

@@ -12,6 +12,7 @@ import { AuthService } from './auth.service';
 import { TimesheetFilterService } from '../timesheet/timesheet-filter.service';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { Store } from '../store/store.service';
+import { deleteCookie } from '../../auth/cookie-helper';
 
 @Injectable()
 export class AuthStrategy extends NbAuthStrategy {
@@ -289,6 +290,11 @@ export class AuthStrategy extends NbAuthStrategy {
 			this.timeTrackerService.clearTimeTracker();
 			this.timesheetFilterService.clear();
 		}
+
+		// Delete cookies
+		deleteCookie('userId', { SameSite: 'None', Secure: true }); // Default path
+		deleteCookie('token', { SameSite: 'None', Secure: true }); // Default path
+		deleteCookie('refresh_token', { SameSite: 'None', Secure: true }); // Default path
 	}
 
 	public login(loginInput: IUserLoginInput): Observable<NbAuthResult> {

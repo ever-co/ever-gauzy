@@ -1,16 +1,11 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, combineLatest, map, Observable, of, shareReplay } from 'rxjs';
-import {
-	NavMenuSectionItem,
-	NavMenuItemsConfig,
-	NavMenuSectionConfig,
-} from './nav-builder-types';
+import { NavMenuSectionItem, NavMenuItemsConfig, NavMenuSectionConfig } from './nav-builder-types';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class NavMenuBuilderService {
-
 	// Declare an observable property menuConfig$ of type Observable<NavMenuSection[]>
 	public menuConfig$: Observable<NavMenuSectionItem[]>;
 
@@ -78,8 +73,8 @@ export class NavMenuBuilderService {
 	 */
 	addNavMenuItem(config: NavMenuSectionItem, sectionId: string, before?: string) {
 		// Check if the item already exists
-		const existingIndex = this.addedNavMenuItems.findIndex(item =>
-			item.config.id === config.id && item.sectionId === sectionId
+		const existingIndex = this.addedNavMenuItems.findIndex(
+			(item) => item.config.id === config.id && item.sectionId === sectionId
 		);
 
 		if (existingIndex !== -1) {
@@ -103,8 +98,8 @@ export class NavMenuBuilderService {
 	addNavMenuItems(configs: NavMenuSectionItem[], sectionId: string, before?: string) {
 		configs.forEach((config: NavMenuSectionItem) => {
 			// Check if the item already exists
-			const existingIndex = this.addedNavMenuItems.findIndex((item) =>
-				item.config.id === config.id && item.sectionId === sectionId
+			const existingIndex = this.addedNavMenuItems.findIndex(
+				(item) => item.config.id === config.id && item.sectionId === sectionId
 			);
 
 			if (existingIndex !== -1) {
@@ -127,10 +122,14 @@ export class NavMenuBuilderService {
 	 * @param sectionId The identifier of the section from which the item should be removed.
 	 */
 	removeNavMenuItem(itemId: string, sectionId: string): void {
-		const itemIndex = this.addedNavMenuItems.findIndex((item) => item.config.id === itemId && item.sectionId === sectionId);
+		const itemIndex = this.addedNavMenuItems.findIndex(
+			(item) => item.config.id === itemId && item.sectionId === sectionId
+		);
 		if (itemIndex !== -1) {
 			// Check if the item is already present in the removedNavMenuItems array
-			const existingIndex = this.removedNavMenuItems.findIndex((item) => item.config.id === itemId && item.sectionId === sectionId);
+			const existingIndex = this.removedNavMenuItems.findIndex(
+				(item) => item.config.id === itemId && item.sectionId === sectionId
+			);
 			if (existingIndex === -1) {
 				// Push the removed item into the removedNavMenuItems array
 				this.removedNavMenuItems.push(this.addedNavMenuItems[itemIndex]);
@@ -188,7 +187,7 @@ export class NavMenuBuilderService {
 
 				return [...configMap.values()];
 			}),
-			shareReplay(1),
+			shareReplay(1)
 		);
 
 		// Combine the combined configuration with item additions to produce the final menu configuration
@@ -230,12 +229,25 @@ export class NavMenuBuilderService {
 							}
 						}
 					} else {
-						console.error(`Could not add menu item "${item.config.id}", section "${item.sectionId}" does not exist`);
+						this.logMenuWarning(item.config.id, item.sectionId);
 					}
 				});
 
 				return sections;
 			})
 		);
+	}
+
+	/**
+	 * Logs a warning message about an inability to add a menu item.
+	 *
+	 * @param itemId - The ID of the menu item that could not be added.
+	 * @param sectionId - The ID of the section where the item was to be added.
+	 * @param level - Optional logging level; defaults to 'warn'.
+	 */
+	private logMenuWarning(itemId: string, sectionId: string, level: 'warn' | 'info' | 'error' = 'warn') {
+		const message = `Unable to add menu item "${itemId}". Section "${sectionId}" does not exist. Please ensure the section is defined before adding items.`;
+		const logFn = console[level];
+		logFn(message);
 	}
 }

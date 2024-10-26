@@ -24,15 +24,18 @@
 			[ngClass]="onCollapse ? 'collapsed' : ''"
 			(click)="redirectTo()"
 		>
-			<i [class]="item?.icon"></i
-			><span *ngIf="state"
-				><a [href]="getExternalUrl(item?.link)" onclick="return false;">{{ item?.title }}</a></span
-			>
+			<i [class]="item?.icon"></i>
+			<span *ngIf="state">
+				<a [href]="getExternalUrl(item?.link)" onclick="return false;">
+					{{ item?.title }}
+				</a>
+			</span>
 		</nb-accordion-item-header>
 		<nb-accordion-item-body [ngClass]="{ 'item-collapsed': !state }" *ngIf="item?.children?.length > 0">
 			<div *ngFor="let subItem of item.children; trackBy: subItem?.title">
 				<ga-children-menu-item
 					*ngIf="!item?.hidden"
+					[id]="subItem?.id"
 					[item]="subItem"
 					[parent]="item"
 					[collapse]="state"

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Cell, IColumn, IColumns } from 'angular2-smart-table';
+import { IColumn, IColumns } from 'angular2-smart-table';
 import { PageDataTableRegistryId } from '../../common/component-registry.types';
 import { IPageDataTableRegistry, PageDataTableRegistryConfig } from './page-data-table-registry.types';
 
@@ -88,11 +88,46 @@ export class PageDataTableRegistryService implements IPageDataTableRegistry {
 	 * `PageDataTableRegistryId`. If any configurations are found, they are sorted based on their `order` property in
 	 * ascending order. If no configurations are found, an empty array is returned.
 	 *
-	 * @param location - The identifier used to look up the data table column configurations.
-	 * @returns An array of `PageDataTableRegistryConfig` objects sorted by the `order` property, or an empty array if none are found.
+	 * @param dataTableId The identifier for the data table.
+	 * @returns An array of `PageDataTableRegistryConfig` objects associated with the specified `dataTableId`,
+	 *          sorted by the `order` property in ascending order.
 	 */
-	private getDataTableColumnsByOrder(location: PageDataTableRegistryId): PageDataTableRegistryConfig[] {
-		return this.registry.get(location)?.sort((a, b) => (a.order ?? 0) - (b.order ?? 0)) || [];
+	public getColumnsByDataTableId(dataTableId: PageDataTableRegistryId): PageDataTableRegistryConfig[] {
+		const columns = this.registry.get(dataTableId) || [];
+
+		// Sort the columns by the 'order' property in ascending order
+		return [...columns].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+	}
+
+	/**
+	 * Maps a PageDataTableRegistryConfig object to an IColumn object.
+	 *
+	 * @param config The PageDataTableRegistryConfig object to map.
+	 * @returns The corresponding IColumn object.
+	 */
+	private mapConfigToColumn(config: PageDataTableRegistryConfig): IColumn {
+		const column: IColumn = {
+			...(config.title && { title: typeof config.title === 'function' ? config.title() : config.title }),
+			type: config.type,
+			width: config.width,
+			isSortable: config.isSortable ?? false,
+			isEditable: config.isEditable ?? false,
+			isFilterable: config.isFilterable ?? false,
+			hide: config.hide ?? false,
+			...(config.editor && { editor: config.editor }),
+			...(config.renderComponent && { renderComponent: config.renderComponent }),
+			...(config.valuePrepareFunction && { valuePrepareFunction: config.valuePrepareFunction }),
+			...(config.componentInitFunction && { componentInitFunction: config.componentInitFunction }),
+			...(config.filter && { filter: config.filter }),
+			...(config.filterFunction && { filterFunction: config.filterFunction })
+		};
+
+		// Check if the column configuration has additional column options
+		if (config.column) {
+			Object.assign(column, config.column);
+		}
+
+		return column; // Return the mapped IColumn object
 	}
 
 	/**
@@ -111,7 +146,7 @@ export class PageDataTableRegistryService implements IPageDataTableRegistry {
 	 */
 	public getPageDataTableColumns(dataTableId: PageDataTableRegistryId): IColumns {
 		// Get all registered columns for the specified location
-		let columns = this.getDataTableColumnsByOrder(dataTableId);
+		let columns = this.getColumnsByDataTableId(dataTableId);
 
 		// Use a Set to track unique location-id combinations
 		const dataTableIds = new Set<string>();
@@ -122,7 +157,7 @@ export class PageDataTableRegistryService implements IPageDataTableRegistry {
 			const identifier = `${config.dataTableId}-${config.columnId}`;
 
 			// Check if the unique identifier is already in the Set
-			if (dataTableIds.has(identifier)) {
+			if (dataTableIds.has(identifier) || config.hide) {
 				return false; // Duplicate found, filter it out
 			}
 
@@ -133,35 +168,24 @@ export class PageDataTableRegistryService implements IPageDataTableRegistry {
 
 		// Map each unique configuration to an IColumn object
 		return columns.reduce((acc: IColumns, config: PageDataTableRegistryConfig) => {
-			// Create and return a new IColumn object
-			const column: IColumn = {
-				...(config.title && {
-					title: typeof config.title === 'function' ? config.title() : config.title
-				}),
-				type: config.type,
-				width: config.width,
-				isSortable: config.isSortable ?? false,
-				isEditable: config.isEditable ?? false,
-				...(config.editor && { editor: config.editor }),
-				...(config.renderComponent && { renderComponent: config.renderComponent }),
-				...(config.valuePrepareFunction && {
-					valuePrepareFunction: (rawValue: any, cell: Cell) => config.valuePrepareFunction(rawValue, cell)
-				}),
-				...(config.componentInitFunction && {
-					componentInitFunction: (component: any, cell: Cell) => config.componentInitFunction(component, cell)
-				})
-			};
-
-			// Check if the column configuration has additional column options
-			if (config.column) {
-				Object.assign(column, config.column);
-			}
-
-			// Add the column configuration to the accumulator object with the columnId as the key
-			acc[config.columnId] = column;
-
+			const column = this.mapConfigToColumn(config); // Use the mapping function
+			acc[config.columnId] = column; // Add the column to the accumulator
 			return acc;
 		}, {});
+	}
+
+	/**
+	 * Retrieves a specific column configuration by its dataTableId and columnId.
+	 *
+	 * @param dataTableId The identifier for the data table.
+	 * @param columnId The identifier for the column.
+	 * @returns The `IColumn` object for the specified column, or `null` if not found.
+	 */
+	public getColumnById(dataTableId: PageDataTableRegistryId, columnId: string): IColumns | null {
+		const columns = this.registry.get(dataTableId) || [];
+		const config = columns.find((column) => column.columnId === columnId);
+
+		return config ? { [columnId]: this.mapConfigToColumn(config) } : null;
 	}
 
 	/**

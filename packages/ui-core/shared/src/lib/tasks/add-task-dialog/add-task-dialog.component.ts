@@ -115,7 +115,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 				distinctUntilChange(),
 				filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
 				tap((employee: ISelectedEmployee) => {
-					if (!this.task) {
+					if (!this.selectedTask) {
 						this.selectedMembers.push(employee.id);
 					}
 				}),
@@ -127,7 +127,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 				distinctUntilChange(),
 				filter((project: IOrganizationProject) => !!project && !!project.id),
 				tap((project: IOrganizationProject) => {
-					if (!this.task) {
+					if (!this.selectedTask) {
 						this.form.get('project').setValue(project);
 						this.form.get('projectId').setValue(project.id);
 						this.form.updateValueAndValidity();

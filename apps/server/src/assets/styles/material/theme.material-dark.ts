@@ -54,13 +54,7 @@ export const MATERIAL_DARK_THEME = {
 	base: 'default',
 	variables: {
 		temperature: {
-			arcFill: [
-				baseThemeVariables.primary,
-				baseThemeVariables.primary,
-				baseThemeVariables.primary,
-				baseThemeVariables.primary,
-				baseThemeVariables.primary
-			],
+			arcFill: Array(5).fill(baseThemeVariables.primary),
 			arcEmpty: baseThemeVariables.bg2,
 			thumbBg: baseThemeVariables.bg2,
 			thumbBorder: baseThemeVariables.primary

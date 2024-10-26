@@ -11,6 +11,7 @@ export * from './document-date/document-date.component';
 export * from './document-url/document-url.component';
 export * from './editors/number-editor.component';
 export * from './editors/employee-link-editor.component';
+export * from './editors/job-search-availability-editor.component';
 export * from './email/email.component';
 export * from './employee-links/employee-links.component';
 export * from './employee-with-links/employee-with-links.component';
@@ -35,10 +36,11 @@ export * from './status-view/status-view.component';
 export * from './tags-only/tags-only.component';
 export * from './task-estimate/task-estimate.component';
 export * from './task-teams/task-teams.component';
-export * from './toggle-switch/toggle-switch.component';
+export * from './toggle-switcher/toggle-switcher.component';
 export * from './trust-html/trust-html.component';
 export * from './value-with-units/value-with-units.component';
 export * from './visibility/visibility.component';
+export * from './editors/non-editable-number-editor.component';
 
-//
+// Export the table components main module
 export * from './table-components.module';

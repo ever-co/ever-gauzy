@@ -57,10 +57,12 @@ export type PageRouteRegistryId =
  * based on the context and requirements of the application.
  *
  * Possible values:
+ * - 'dashboard': A dashboard tab.
  * - 'timesheet': A timesheet tab.
  * - 'time-activity': A time and activity tab.
+ * - 'employee-edit': An employee edit tab.
  */
-export type PageTabsetRegistryId = 'dashboard' | 'timesheet' | 'time-activity';
+export type PageTabsetRegistryId = 'dashboard' | 'timesheet' | 'time-activity' | 'employee-edit';
 
 /**
  * @description
@@ -72,6 +74,7 @@ export type PageTabsetRegistryId = 'dashboard' | 'timesheet' | 'time-activity';
  * on the context and requirements of the application.
  *
  * Possible values:
- * - 'job-employee': A sub-page under the jobs section.
+ * - 'employee-manage': Employee management page
+ * - 'job-employee': Sub-page under the jobs section (Job employee management page)
  */
-export type PageDataTableRegistryId = 'job-employee';
+export type PageDataTableRegistryId = 'employee-manage' | 'job-employee';
