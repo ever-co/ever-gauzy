@@ -326,12 +326,14 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		query.innerJoin(`${query.alias}.members`, 'project_members').leftJoin(`${query.alias}.teams`, 'project_team');
 		query
 			.where(`project_members.employeeId = :employeeId`, { employeeId })
-			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId })
-			.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+			.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId })
+			.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 
 		// Apply additional filters if organizationContactId is provided
 		if (isNotEmpty(organizationContactId)) {
-			query.andWhere(`${query.alias}.organizationContactId = :organizationContactId`, { organizationContactId });
+			query.andWhere(p(`"${query.alias}"."organizationContactId" = :organizationContactId`), {
+				organizationContactId
+			});
 		}
 
 		// Apply additional filters if organizationTeamId is provided

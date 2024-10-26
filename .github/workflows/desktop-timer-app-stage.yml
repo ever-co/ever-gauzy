@@ -163,9 +163,6 @@ jobs:
       - name: Install latest version of NPM
         run: 'npm install -g npm@9'
 
-      - name: Install Windows Build Tools
-        run: npm install -g windows-build-tools
-
       - name: Install node-gyp package
         run: 'npm install --quiet -g node-gyp@9.3.1'
 
@@ -260,4 +257,3 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_NO_CLOUD: true
-          Path: 'C:\hostedtoolcache\windows\node\20.11.1\x64;C:\Program Files\Git\bin;C:\npm\prefix;C:\hostedtoolcache\windows\Python\3.9.13\x64\Scripts;C:\hostedtoolcache\windows\Python\3.9.13\x64;C:\Program Files\OpenSSL\bin;C:\Windows\system32;C:\Windows;C:\Windows\System32\OpenSSH\;C:\Program Files\dotnet\;C:\Program Files\PowerShell\7\;C:\Program Files\CMake\bin;C:\Program Files\nodejs\;C:\Program Files\Git\cmd;C:\Program Files\Git\mingw64\bin;C:\Program Files\Git\usr\bin;C:\Program Files\GitHub CLI\;C:\Program Files\Amazon\AWSCLIV2\;C:\Users\runneradmin\.dotnet\tools'
