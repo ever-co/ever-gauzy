@@ -152,7 +152,6 @@
 		"embedded-queue": "^0.0.11",
 		"form-data": "^3.0.0",
 		"htmlparser2": "^8.0.2",
-		"iconv": "^3.0.1",
 		"knex": "^3.1.0",
 		"libsql": "^0.3.16",
 		"mac-screen-capture-permissions": "^2.1.0",

@@ -68,7 +68,6 @@
 		"electron-updater": "^6.1.7",
 		"electron-util": "^0.17.2",
 		"express": "^4.18.2",
-		"iconv": "^3.0.1",
 		"mac-screen-capture-permissions": "^2.1.0",
 		"moment": "^2.30.1",
 		"moment-duration-format": "^2.3.2",
