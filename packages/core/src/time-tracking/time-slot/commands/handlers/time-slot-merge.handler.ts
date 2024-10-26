@@ -65,62 +65,23 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 				return date.format('YYYY-MM-DD HH:mm:ss');
 			});
 			const savePromises = groupByTimeSlots
-				.mapObject(async (timeSlots, slotStart) => {
-					const [timeSlot] = timeSlots;
-
-					let timeLogs: ITimeLog[] = [];
-					let screenshots: IScreenshot[] = [];
-					let activities: IActivity[] = [];
-
-					let duration = 0;
-					let keyboard = 0;
-					let mouse = 0;
-					let overall = 0;
-
-					duration += timeSlots.reduce((acc, slot) => acc + this.calculateValue(slot.duration), 0);
-					keyboard += timeSlots.reduce((acc, slot) => acc + this.calculateValue(slot.keyboard), 0);
-					mouse += timeSlots.reduce((acc, slot) => acc + this.calculateValue(slot.mouse), 0);
-					overall += timeSlots.reduce((acc, slot) => acc + this.calculateValue(slot.overall), 0);
-
-					screenshots = screenshots.concat(...timeSlots.map((slot) => slot.screenshots || []));
-					timeLogs = timeLogs.concat(...timeSlots.map((slot) => slot.timeLogs || []));
-					activities = activities.concat(...timeSlots.map((slot) => slot.activities || []));
-
-					const nonZeroKeyboardSlots = timeSlots.filter((item: ITimeSlot) => item.keyboard !== 0);
-					const timeSlotsLength = nonZeroKeyboardSlots.length;
-
-					keyboard = Math.round(keyboard / timeSlotsLength || 0);
-					mouse = Math.round(mouse / timeSlotsLength || 0);
-
-					const activity = {
-						duration: Math.max(0, Math.min(600, duration)),
-						overall: Math.max(0, Math.min(600, overall)),
-						keyboard: Math.max(0, Math.min(600, keyboard)),
-						mouse: Math.max(0, Math.min(600, mouse))
-					};
-
-					// Map old screenshots newly created TimeSlot
-					screenshots = this.mapScreenshots(screenshots);
-					// Map old activities newly created TimeSlot
-					activities = this.mapActivities(activities);
-					// Deduplicate time logs
-					timeLogs = this.mapUniqueTimeLogs(timeLogs);
+				.mapObject(async (slots, slotStart) => {
+					const [slot] = slots; // Get the first time slot and aggregate data from all time slots
+					const aggregated = this.aggregateTimeSlot(slots); // Aggregate data from all time slots
 
 					const newTimeSlot = new TimeSlot({
-						...omit(timeSlot),
-						...activity,
-						screenshots,
-						activities,
-						timeLogs,
+						...omit(slot),
+						...this.calculateActivity(aggregated, slots), // Calculate activity metrics
+						screenshots: this.mapScreenshots(aggregated.screenshots), // Map old screenshots
+						activities: this.mapActivities(aggregated.activities), // Map old activities
+						timeLogs: this.mapUniqueTimeLogs(aggregated.timeLogs), // Deduplicate time logs
 						startedAt: moment(slotStart).toDate(),
 						tenantId,
 						organizationId,
 						employeeId
 					});
 					console.log('Newly Created Time Slot', newTimeSlot);
-
 					await this.updateTimeLogAndEmployeeTotalWorkedHours(newTimeSlot);
-
 					await this.typeOrmTimeSlotRepository.save(newTimeSlot);
 					createdTimeSlots.push(newTimeSlot);
 
@@ -152,6 +113,62 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 				await this.typeOrmTimeSlotRepository.softDelete({ id: In(idsToDelete) });
 			}
 		}
+	}
+
+	/**
+	 * Aggregates data from multiple time slots into a single object.
+	 * It calculates the total duration, keyboard activity, mouse activity, and overall activity,
+	 * and consolidates screenshots, time logs, and activities into arrays.
+	 *
+	 * @param slots - An array of time slots to be aggregated.
+	 * @returns An object containing aggregated duration, keyboard activity, mouse activity,
+	 * overall activity, and arrays of screenshots, time logs, and activities.
+	 */
+	private aggregateTimeSlot(slots: ITimeSlot[]): IAggregatedTimeSlot {
+		return slots.reduce(
+			(acc, slot) => {
+				acc.duration += this.calculateValue(slot.duration);
+				acc.keyboard += this.calculateValue(slot.keyboard);
+				acc.mouse += this.calculateValue(slot.mouse);
+				acc.overall += this.calculateValue(slot.overall);
+				acc.screenshots.push(...(slot.screenshots || []));
+				acc.timeLogs.push(...(slot.timeLogs || []));
+				acc.activities.push(...(slot.activities || []));
+				return acc;
+			},
+			{
+				duration: 0,
+				keyboard: 0,
+				mouse: 0,
+				overall: 0,
+				screenshots: [],
+				timeLogs: [],
+				activities: []
+			}
+		);
+	}
+
+	/**
+	 * Calculates the average activity metrics from the aggregated data.
+	 * It calculates average keyboard and mouse activity from time slots that contain non-zero keyboard data.
+	 * It also ensures each metric (duration, overall, keyboard, mouse) is capped at a maximum of 600.
+	 *
+	 * @param data - Aggregated data from time slots including total keyboard, mouse, and overall activities.
+	 * @returns An object containing the calculated activity metrics (duration, overall, keyboard, mouse).
+	 */
+	private calculateActivity(data: IAggregatedTimeSlot, slots: ITimeSlot[]) {
+		const nonZeroKeyboardSlots = slots.filter((slot: ITimeSlot) => slot.keyboard > 0);
+		const count = nonZeroKeyboardSlots.length; // Count the number of non-zero keyboard slots
+
+		const keyboardAverage = count > 0 ? Math.round(data.keyboard / count) : 0;
+		const mouseAverage = count > 0 ? Math.round(data.mouse / count) : 0;
+
+		return {
+			duration: Math.max(0, Math.min(600, data.duration)),
+			overall: Math.max(0, Math.min(600, data.overall)),
+			keyboard: Math.max(0, Math.min(600, keyboardAverage)),
+			mouse: Math.max(0, Math.min(600, mouseAverage))
+		};
 	}
 
 	/**
