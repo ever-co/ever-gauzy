@@ -81,7 +81,6 @@
 		"rxjs": "^7.4.0",
 		"screenshot-desktop": "^1.15.0",
 		"sound-play": "1.1.0",
-		"sqlite3": "^5.1.7",
 		"squirrelly": "^8.0.8",
 		"twing": "^5.0.2",
 		"locutus": "^2.0.30",
