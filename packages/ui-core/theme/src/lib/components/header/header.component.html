@@ -3,7 +3,10 @@
 	<a href="https://app.gauzy.co/#/auth/register"> Click here to Sign Up and start using for free! </a>
 </div>
 <div class="main-header">
-	<div class="header-container" [class.left]="position === 'normal'" [class.right]="position === 'inverse'"></div>
+	<div class="header-container"
+		[class.left]="position === 'normal'"
+		[class.right]="position === 'inverse'"
+	></div>
 
 	<div class="header-container">
 		<ng-template [ngIf]="createQuickActionsMenu?.length > 0">
@@ -20,38 +23,26 @@
 		</ng-template>
 		<div class="actions" size="small" [class.left]="position === 'normal'" [class.right]="position === 'inverse'">
 			<nb-action
-				*ngIf="showProjectsSelector && !showExtraActions && selectorsVisibility?.project"
-				class="show-large-up"
-			>
-				<ng-template ngxPermissionsOnly="CHANGE_SELECTED_EMPLOYEE">
-					<ga-project-selector
-						[shortened]="true"
-						class="header-selector project-selector"
-					></ga-project-selector>
-				</ng-template>
-				<ng-template ngxPermissionsExcept="CHANGE_SELECTED_EMPLOYEE">
-					<ga-project-selector
-						[employeeId]="employee?.id"
-						[shortened]="true"
-						class="header-selector project-selector"
-					></ga-project-selector>
-				</ng-template>
-			</nb-action>
-
-			<nb-action
 				*ngIf="showTeamsSelector && !showExtraActions && selectorsVisibility?.team"
 				class="show-large-up"
 			>
-				<ng-template ngxPermissionsOnly="CHANGE_SELECTED_EMPLOYEE">
-					<ga-team-selector [shortened]="true" class="header-selector team-selector"></ga-team-selector>
-				</ng-template>
-				<ng-template ngxPermissionsExcept="CHANGE_SELECTED_EMPLOYEE">
-					<ga-team-selector
-						[employeeId]="employee?.id"
-						[shortened]="true"
-						class="header-selector team-selector"
-					></ga-team-selector>
-				</ng-template>
+				<ga-team-selector
+					[employeeId]="(employee$ | async)?.id"
+					[projectId]="(project$ | async)?.id"
+					[shortened]="true"
+					class="header-selector team-selector"
+				></ga-team-selector>
+			</nb-action>
+
+			<nb-action
+				*ngIf="showProjectsSelector && !showExtraActions && selectorsVisibility?.project"
+				class="show-large-up"
+			>
+				<ga-project-selector
+					[employeeId]="(employee$ | async)?.id"
+					[shortened]="true"
+					class="header-selector project-selector"
+				></ga-project-selector>
 			</nb-action>
 
 			<nb-action
@@ -79,10 +70,10 @@
 
 			<nb-action
 				icon="options-2-outline"
-				class="toggle-layout"
-				class="show-large-down"
+				class="toggle-layout show-large-down"
 				(click)="toggleExtraActions()"
 			></nb-action>
+
 			<nb-action
 				*ngIf="supportContextMenu"
 				icon="message-circle-outline"
@@ -101,42 +92,32 @@
 				[icon]="action.icon"
 				[class]="action.class"
 				(click)="toggleSidebarActions(action)"
-			>
-			</nb-action>
+			></nb-action>
 		</div>
 	</div>
 
 	<div (window:resize)="closeExtraActionsIfLarge($event)" class="extra-actions" *ngIf="showExtraActions">
-		<ng-container *ngIf="selectorsVisibility?.project">
-			<div>
-				<h6>{{ 'HEADER.SELECT_PROJECT' | translate }}</h6>
-			</div>
-			<ng-template ngxPermissionsOnly="CHANGE_SELECTED_EMPLOYEE">
-				<ga-project-selector [shortened]="true" class="header-selector project-selector"></ga-project-selector>
-			</ng-template>
-			<ng-template ngxPermissionsExcept="CHANGE_SELECTED_EMPLOYEE">
-				<ga-project-selector
-					[employeeId]="employee?.id"
-					[shortened]="true"
-					class="header-selector project-selector"
-				></ga-project-selector>
-			</ng-template>
-		</ng-container>
-
 		<ng-container *ngIf="selectorsVisibility?.team">
 			<div>
 				<h6>{{ 'HEADER.SELECT_TEAM' | translate }}</h6>
 			</div>
-			<ng-template ngxPermissionsOnly="CHANGE_SELECTED_EMPLOYEE">
-				<ga-team-selector [shortened]="true" class="header-selector team-selector"></ga-team-selector>
-			</ng-template>
-			<ng-template ngxPermissionsExcept="CHANGE_SELECTED_EMPLOYEE">
-				<ga-team-selector
-					[employeeId]="employee?.id"
-					[shortened]="true"
-					class="header-selector team-selector"
-				></ga-team-selector>
-			</ng-template>
+			<ga-team-selector
+				[employeeId]="(employee$ | async)?.id"
+				[projectId]="(project$ | async)?.id"
+				[shortened]="true"
+				class="header-selector team-selector"
+			></ga-team-selector>
+		</ng-container>
+
+		<ng-container *ngIf="selectorsVisibility?.project">
+			<div>
+				<h6>{{ 'HEADER.SELECT_PROJECT' | translate }}</h6>
+			</div>
+			<ga-project-selector
+				[employeeId]="(employee$ | async)?.id"
+				[shortened]="true"
+				class="header-selector project-selector"
+			></ga-project-selector>
 		</ng-container>
 
 		<ng-container *ngIf="selectorsVisibility?.employee">

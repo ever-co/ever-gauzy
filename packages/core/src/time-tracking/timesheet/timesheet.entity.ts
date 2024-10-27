@@ -1,22 +1,19 @@
-import {
-	RelationId,
-	JoinColumn,
-	AfterLoad
-} from 'typeorm';
+import { RelationId, JoinColumn } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsUUID } from 'class-validator';
-import { IEmployee, ITimesheet, IUser, TimesheetStatus } from '@gauzy/contracts';
+import { ID, IEmployee, ITimesheet, IUser, TimesheetStatus } from '@gauzy/contracts';
+import { Employee, TenantOrganizationBaseEntity, User } from './../../core/entities/internal';
 import {
-	Employee,
-	TenantOrganizationBaseEntity,
-	User
-} from './../../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, VirtualMultiOrmColumn } from './../../core/decorators/entity';
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToOne,
+	VirtualMultiOrmColumn
+} from './../../core/decorators/entity';
 import { MikroOrmTimesheetRepository } from './repository/mikro-orm-timesheet.repository';
 
 @MultiORMEntity('timesheet', { mikroOrmRepository: () => MikroOrmTimesheetRepository })
 export class Timesheet extends TenantOrganizationBaseEntity implements ITimesheet {
-
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
 	@IsNumber()
@@ -90,12 +87,11 @@ export class Timesheet extends TenantOrganizationBaseEntity implements ITimeshee
 	@MultiORMColumn({ default: false })
 	isBilled?: boolean;
 
-	@ApiPropertyOptional({ type: () => String, enum: TimesheetStatus, default: TimesheetStatus.PENDING })
-	@IsOptional()
+	@ApiProperty({ type: () => String, enum: TimesheetStatus, default: TimesheetStatus.PENDING })
 	@IsEnum(TimesheetStatus)
 	@ColumnIndex()
 	@MultiORMColumn({ default: TimesheetStatus.PENDING })
-	status: string;
+	status: TimesheetStatus;
 
 	/** Additional virtual columns */
 
@@ -128,14 +124,14 @@ export class Timesheet extends TenantOrganizationBaseEntity implements ITimeshee
 	@RelationId((it: Timesheet) => it.employee)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	employeeId?: IEmployee['id'];
+	employeeId?: ID;
 
 	/**
 	 * Approve By User
 	 */
 	@MultiORMManyToOne(() => User, {
 		/** Indicates if the relation column value can be nullable or not. */
-		nullable: true,
+		nullable: true
 	})
 	@JoinColumn()
 	approvedBy?: IUser;
@@ -146,19 +142,5 @@ export class Timesheet extends TenantOrganizationBaseEntity implements ITimeshee
 	@RelationId((it: Timesheet) => it.approvedBy)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	approvedById?: IUser['id'];
-
-	/**
-	 * Called after entity is loaded.
-	 */
-	@AfterLoad()
-	afterLoadEntity?() {
-		/**
-		 * Sets the 'isEdited' property based on the presence of 'editedAt'.
-		 * If 'editedAt' is defined, 'isEdited' is set to true; otherwise, it is set to false.
-		 */
-		if ('editedAt' in this) {
-			this.isEdited = !!this.editedAt;
-		}
-	}
+	approvedById?: ID;
 }

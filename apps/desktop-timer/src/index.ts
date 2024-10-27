@@ -14,7 +14,6 @@ import * as Url from 'url';
 import { environment } from './environments/environment';
 
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
-require('sqlite3');
 
 process.env = Object.assign(process.env, environment);
 
@@ -361,6 +360,8 @@ const getApiBaseUrl = (configs) => {
 app.on('ready', async () => {
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
+	// Set up theme listener for desktop windows
+	new DesktopThemeListener();
 	// default global
 	global.variableGlobal = {
 		API_BASE_URL: getApiBaseUrl(configs || {}),
@@ -376,7 +377,7 @@ app.on('ready', async () => {
 	if (!settings) {
 		launchAtStartup(true, false);
 	}
-	if (['sqlite', 'better-sqlite'].includes(provider.dialect)) {
+	if (['sqlite', 'better-sqlite', 'better-sqlite3'].includes(provider.dialect)) {
 		try {
 			const res = await knex.raw(`pragma journal_mode = WAL;`);
 			console.log(res);
@@ -445,7 +446,6 @@ app.on('ready', async () => {
 	}
 	removeMainListener();
 	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
-	new DesktopThemeListener();
 });
 
 app.on('window-all-closed', () => {

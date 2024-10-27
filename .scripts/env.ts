@@ -10,6 +10,8 @@ export type Env = Readonly<{
 	// Set to true if build / runs in Docker
 	IS_DOCKER: boolean;
 
+	COOKIE_DOMAIN: string;
+
 	// Base URL of Gauzy UI website
 	CLIENT_BASE_URL: string;
 
@@ -128,6 +130,9 @@ export type Env = Readonly<{
 	GAUZY_UI_DEFAULT_PORT: number;
 	SCREENSHOTS_ENGINE_METHOD: string;
 	I18N_FILES_URL: string;
+
+	REGISTER_URL: string;
+	FORGOT_PASSWORD_URL: string;
 }>;
 
 export const env: Env = cleanEnv(
@@ -136,6 +141,8 @@ export const env: Env = cleanEnv(
 		production: bool({ default: false }),
 
 		IS_DOCKER: bool({ default: false }),
+
+		COOKIE_DOMAIN: str({ default: '.gauzy.co' }),
 
 		CLIENT_BASE_URL: str({ default: 'http://localhost:4200' }),
 
@@ -321,7 +328,10 @@ export const env: Env = cleanEnv(
 		}),
 		DESKTOP_API_SERVER_APP_REPO_OWNER: str({ default: 'ever-co' }),
 		DESKTOP_API_SERVER_APP_WELCOME_TITLE: str({ default: '' }),
-		DESKTOP_API_SERVER_APP_WELCOME_CONTENT: str({ default: '' })
+		DESKTOP_API_SERVER_APP_WELCOME_CONTENT: str({ default: '' }),
+
+		REGISTER_URL: str({ default: 'https://app.gauzy.co/#/auth/register' }),
+		FORGOT_PASSWORD_URL: str({ default: 'https://app.gauzy.co/#/auth/request-password' })
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
 );

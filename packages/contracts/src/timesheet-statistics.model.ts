@@ -108,6 +108,19 @@ export interface ICountsStatistics {
 	todayDuration: number;
 }
 
+/**
+ * Weekly Statistics Activities
+ */
+export interface IWeeklyStatisticsActivities {
+	overall: number;
+	duration: number;
+}
+
+/**
+ * Today Statistics Activities
+ */
+export interface ITodayStatisticsActivities extends IWeeklyStatisticsActivities {}
+
 export interface ISelectedDateRange {
 	startDate: Date;
 	endDate: Date;

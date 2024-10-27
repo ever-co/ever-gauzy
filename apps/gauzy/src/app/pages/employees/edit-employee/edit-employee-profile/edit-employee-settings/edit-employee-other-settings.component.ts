@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, ViewChild } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormGroup, NgForm } from '@angular/forms';
-import { filter, tap } from 'rxjs/operators';
+import { FormBuilder, FormGroup, NgForm } from '@angular/forms';
+import { filter, tap } from 'rxjs';
 import { NbAccordionComponent, NbAccordionItemComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
@@ -32,23 +32,28 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 	 */
 	@ViewChild('general') general: NbAccordionItemComponent;
 	@ViewChild('integrations') integrations: NbAccordionItemComponent;
+	@ViewChild('timer') timer: NbAccordionItemComponent;
 
 	/**
 	 * Employee other settings settings
 	 */
-	public form: UntypedFormGroup = EditEmployeeOtherSettingsComponent.buildForm(this.fb);
-	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
+	public form: FormGroup = EditEmployeeOtherSettingsComponent.buildForm(this.fb);
+	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
 			timeZone: [],
 			timeFormat: [],
 			upworkId: [],
-			linkedInId: []
+			linkedInId: [],
+			allowManualTime: [false],
+			allowModifyTime: [false],
+			allowDeleteTime: [false],
+			allowScreenshotCapture: [true]
 		});
 	}
 
 	constructor(
 		private readonly cdr: ChangeDetectorRef,
-		private readonly fb: UntypedFormBuilder,
+		private readonly fb: FormBuilder,
 		private readonly employeeStore: EmployeeStore
 	) {}
 
@@ -82,7 +87,11 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			timeZone: user.timeZone || moment.tz.guess(), // set current timezone, if employee don't have any timezone
 			timeFormat: user.timeFormat,
 			upworkId: employee.upworkId,
-			linkedInId: employee.linkedInId
+			linkedInId: employee.linkedInId,
+			allowManualTime: employee.allowManualTime,
+			allowDeleteTime: employee.allowDeleteTime,
+			allowModifyTime: employee.allowModifyTime,
+			allowScreenshotCapture: employee.allowScreenshotCapture
 		});
 		this.form.updateValueAndValidity();
 	}
@@ -97,7 +106,16 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			return;
 		}
 		const { organizationId, tenantId } = this.selectedEmployee;
-		const { timeZone, timeFormat, upworkId, linkedInId } = this.form.value;
+		const {
+			timeZone,
+			timeFormat,
+			upworkId,
+			linkedInId,
+			allowScreenshotCapture,
+			allowManualTime,
+			allowModifyTime,
+			allowDeleteTime
+		} = this.form.value;
 
 		/** Update user fields */
 		this.employeeStore.userForm = {
@@ -110,7 +128,11 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			upworkId,
 			linkedInId,
 			organizationId,
-			tenantId
+			tenantId,
+			allowManualTime,
+			allowModifyTime,
+			allowDeleteTime,
+			allowScreenshotCapture
 		};
 	}
 

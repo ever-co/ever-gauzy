@@ -12,6 +12,8 @@
 		"Alexi",
 		"alish",
 		"Alish",
+		"Rahul",
+		"rahul",
 		"apicivo",
 		"apicw",
 		"apidemo",
@@ -518,7 +520,8 @@
 		"xaxis",
 		"wdth",
 		"concate",
-		"typeahead"
+		"typeahead",
+		"maxlength"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

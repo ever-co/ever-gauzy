@@ -45,18 +45,12 @@ const theme = {
 
 export const GAUZY_DARK = {
 	name: 'gauzy-dark',
-  base: 'dark',
+	base: 'dark',
 	variables: {
 		...theme,
 
 		temperature: {
-			arcFill: [
-				theme.primary,
-				theme.primary,
-				theme.primary,
-				theme.primary,
-				theme.primary
-			],
+			arcFill: Array(5).fill(theme.primary),
 			arcEmpty: theme.bg2,
 			thumbBg: theme.bg2,
 			thumbBorder: theme.primary

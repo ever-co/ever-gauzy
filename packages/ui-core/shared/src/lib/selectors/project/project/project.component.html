@@ -1,4 +1,6 @@
 <label class="label" *ngIf="label">{{ label | translate }}</label>
+
+<!-- Single Select -->
 <ng-template [ngIf]="!multiple" [ngIfElse]="multipleSelect">
 	<ng-select
 		#select
@@ -35,6 +37,8 @@
 		</ng-container>
 	</ng-select>
 </ng-template>
+
+<!-- Multi Select -->
 <ng-template #multipleSelect>
 	<nb-select
 		class="multiple-select"

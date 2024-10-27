@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable } from 'rxjs';
-import { ElectronService } from '../../../electron/services';
+import { SelectorElectronService } from '../../services/selector-electron.service';
 import { NoteSelectorQuery } from './+state/note-selector.query';
 import { NoteSelectorStore } from './+state/note-selector.store';
 import { NoteService } from './+state/note.service';
@@ -25,7 +25,7 @@ export class NoteComponent implements ControlValueAccessor {
 	// Flag to control whether to update the store
 	protected useStore: boolean = true;
 	constructor(
-		private readonly electronService: ElectronService,
+		private readonly electronService: SelectorElectronService,
 		public readonly noteSelectorStore: NoteSelectorStore,
 		public readonly noteSelectorQuery: NoteSelectorQuery,
 		public readonly noteSelectorService: NoteService
@@ -49,7 +49,7 @@ export class NoteComponent implements ControlValueAccessor {
 	}
 
 	public refresh(): void {
-		this.electronService.ipcRenderer.send('refresh-timer');
+		this.electronService.refresh();
 	}
 
 	public get note$(): Observable<string> {
@@ -58,6 +58,7 @@ export class NoteComponent implements ControlValueAccessor {
 
 	public change(note: string) {
 		if (this.useStore) {
+			this.electronService.update({ note });
 			this.noteSelectorStore.update({ note });
 		}
 		this.onChange(note);
@@ -66,5 +67,9 @@ export class NoteComponent implements ControlValueAccessor {
 
 	public get disabled$(): Observable<boolean> {
 		return this.noteSelectorService.disabled$;
+	}
+
+	public get error$(): Observable<string> {
+		return this.noteSelectorQuery.selectError();
 	}
 }

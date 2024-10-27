@@ -66,20 +66,20 @@ export class GetTimeLogGroupByEmployeeHandler implements ICommandHandler<GetTime
 
 				// Retrieve employee details
 				const project = timeLogs.length > 0 ? timeLogs[0].project : null;
-				const task = timeLogs.length > 0 ? timeLogs[0].task : null;
-				const client =
-					timeLogs.length > 0
-						? timeLogs[0].organizationContact
+
+				const tasks = timeLogs.map((log) => ({
+					task: log.task,
+					description: log.description,
+					duration: log.duration,
+					client: log.organizationContact
+						? log.organizationContact
 						: project
 						? project.organizationContact
-						: null;
-				const description = timeLogs.length > 0 ? timeLogs[0].description : null;
-
+						: null
+				}));
 				return {
-					description,
-					task,
+					tasks,
 					project,
-					client,
 					sum,
 					activity: parseFloat(parseFloat(avgActivity + '').toFixed(2))
 				};

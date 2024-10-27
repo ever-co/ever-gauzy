@@ -58,7 +58,9 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 	public OrganizationProjectBudgetTypeEnum = OrganizationProjectBudgetTypeEnum;
 	public TaskListTypeEnum = TaskListTypeEnum;
 	public memberIds: ID[] = [];
+	public managerIds: ID[] = [];
 	public selectedEmployeeIds: ID[] = [];
+	public selectedManagerIds: ID[] = [];
 	public selectedTeamIds: ID[] = [];
 	public billings: string[] = Object.values(ProjectBillingEnum);
 	public owners: ProjectOwnerEnum[] = Object.values(ProjectOwnerEnum);
@@ -302,8 +304,18 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 		const project: IOrganizationProject = this.project;
 
 		// Selected Members Ids
-		this.selectedEmployeeIds = project.members.map((member: IOrganizationProjectEmployee) => member.employeeId);
+		this.selectedEmployeeIds = project.members
+			.filter((member: IOrganizationProjectEmployee) => !member.isManager)
+			.map((member: IOrganizationProjectEmployee) => member.employeeId);
+
 		this.memberIds = this.selectedEmployeeIds;
+
+		// Selected Managers Ids
+		this.selectedManagerIds = project.members
+			.filter((member: IOrganizationProjectEmployee) => member.isManager)
+			.map((member: IOrganizationProjectEmployee) => member.employeeId);
+
+		this.managerIds = this.selectedManagerIds;
 
 		this.form.patchValue({
 			imageUrl: project.imageUrl || null,
@@ -365,6 +377,17 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 	toggleOpenSource(state: boolean) {
 		this.form.get('openSource').setValue(state);
 		this.form.get('openSource').updateValueAndValidity();
+	}
+
+	/**
+	 * Handles the selection of managers and updates the `managerIds` property.
+	 *
+	 * @param {ID[]} managerIds - An array of selected manager IDs.
+	 * The function is called when managers are selected, and it sets the `managerIds` property
+	 * with the array of selected IDs.
+	 */
+	onManagersSelected(managerIds: ID[]): void {
+		this.managerIds = managerIds;
 	}
 
 	/**
@@ -451,7 +474,8 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 			organizationContactId: organizationContact?.id || null,
 			startDate,
 			endDate,
-			memberIds: this.memberIds,
+			memberIds: this.memberIds.filter((memberId) => !this.managerIds.includes(memberId)),
+			managerIds: this.managerIds,
 			teams: teams.map((id) => this.teams.find((team) => team.id === id)).filter(Boolean),
 
 			// Description Step

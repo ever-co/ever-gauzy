@@ -5,6 +5,7 @@ export class TimeSlotBulkDeleteCommand implements ICommand {
 
 	constructor(
 		public readonly input: any,
-		public readonly forceDirectDelete: boolean = false
+		public readonly forceDelete: boolean = false, // Force delete
+		public readonly entireSlots: boolean = false // Delete entire slots
 	) {}
 }

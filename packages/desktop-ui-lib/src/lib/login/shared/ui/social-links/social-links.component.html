@@ -1,0 +1,27 @@
+<ng-container *ngIf="socialLinks$ | async as socialLinks">
+	<ng-container *ngIf="socialLinks.length > 0">
+		<div class="links" aria-label="Social SignIn">
+			{{ 'LOGIN_PAGE.OR_SIGN_IN_WITH' | translate }}
+			<div class="socials">
+				<ng-container *ngFor="let socialLink of socialLinks">
+					<ng-container *ngIf="socialLink.link">
+						<a [routerLink]="socialLink.link" [attr.target]="socialLink.target" class="social-link">
+							<nb-icon *ngIf="socialLink.icon; else title" [icon]="socialLink.icon"></nb-icon>
+							<ng-template #title>
+								{{ socialLink.title }}
+							</ng-template>
+						</a>
+					</ng-container>
+					<ng-container *ngIf="socialLink.url">
+						<a [attr.href]="socialLink.url" [attr.target]="socialLink.target" class="social-link">
+							<nb-icon *ngIf="socialLink.icon; else title" [icon]="socialLink.icon"></nb-icon>
+							<ng-template #title>
+								{{ socialLink.title }}
+							</ng-template>
+						</a>
+					</ng-container>
+				</ng-container>
+			</div>
+		</div>
+	</ng-container>
+</ng-container>

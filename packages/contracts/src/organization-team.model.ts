@@ -1,16 +1,16 @@
-import { IEmployeeEntityInput } from './employee.model';
+import { IEmployeeEntityInput, IMemberEntityBased } from './employee.model';
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IOrganizationTeamEmployee } from './organization-team-employee-model';
-import { ITag } from './tag.model';
+import { ITaggable } from './tag.model';
 import { ITask } from './task.model';
 import { ITimerStatusInput } from './timesheet.model';
 import { IRelationalImageAsset } from './image-asset.model';
 import { CrudActionEnum } from './organization.model';
-import { IOrganizationProject } from './organization-projects.model';
+import { IOrganizationProject, IOrganizationProjectCreateInput } from './organization-projects.model';
 import { IOrganizationProjectModule } from './organization-project-module.model';
 import { IComment } from './comment.model';
 
-export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset {
+export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset, ITaggable {
 	name: string;
 	color?: string;
 	emoji?: string;
@@ -26,7 +26,6 @@ export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityMo
 	projects?: IOrganizationProject[];
 	modules?: IOrganizationProjectModule[];
 	assignedComments?: IComment[];
-	tags?: ITag[];
 	tasks?: ITask[];
 }
 
@@ -38,7 +37,11 @@ export interface IOrganizationTeamFindInput extends IBasePerTenantAndOrganizatio
 	members?: IOrganizationTeamEmployee;
 }
 
-export interface IOrganizationTeamCreateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset {
+export interface IOrganizationTeamCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel,
+		IRelationalImageAsset,
+		IMemberEntityBased,
+		ITaggable {
 	name: string;
 	emoji?: string;
 	teamSize?: string;
@@ -49,14 +52,10 @@ export interface IOrganizationTeamCreateInput extends IBasePerTenantAndOrganizat
 	requirePlanToTrack?: boolean;
 	public?: boolean;
 	profile_link?: string;
-	memberIds?: ID[];
-	managerIds?: ID[];
-	tags?: ITag[];
-	projects?: IOrganizationProject[];
+	projects?: IOrganizationProjectCreateInput[];
 }
 
 export interface IOrganizationTeamUpdateInput extends Partial<IOrganizationTeamCreateInput> {
-	id: string;
 	shareProfileView?: boolean;
 	requirePlanToTrack?: boolean;
 	public?: boolean;

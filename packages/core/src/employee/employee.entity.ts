@@ -35,7 +35,8 @@ import {
 	IOrganizationProjectModule,
 	ID,
 	IFavorite,
-	IComment
+	IComment,
+	IOrganizationSprint
 } from '@gauzy/contracts';
 import {
 	ColumnIndex,
@@ -67,6 +68,7 @@ import {
 	OrganizationPosition,
 	OrganizationProjectEmployee,
 	OrganizationProjectModule,
+	OrganizationSprintEmployee,
 	OrganizationTeamEmployee,
 	RequestApprovalEmployee,
 	Skill,
@@ -374,6 +376,36 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	@MultiORMColumn({ default: true })
 	allowScreenshotCapture?: boolean;
 
+	/**
+	 * Indicates whether manual time entry is allowed for time tracking
+	 * for a specific employee.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: false })
+	allowManualTime?: boolean;
+
+	/**
+	 * Indicates whether modification of time entries is allowed for time tracking
+	 * for a specific employee.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: false })
+	allowModifyTime?: boolean;
+
+	/**
+	 * Indicates whether deletion of time entries is allowed for time tracking
+	 * for a specific employee.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: false })
+	allowDeleteTime?: boolean;
+
 	/** Upwork ID */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
@@ -495,6 +527,12 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 		cascade: true
 	})
 	projects?: IOrganizationProject[];
+
+	// Employee Sprint
+	@MultiORMOneToMany(() => OrganizationSprintEmployee, (it) => it.employee, {
+		cascade: true
+	})
+	sprints?: IOrganizationSprint[];
 
 	/**
 	 * Estimations

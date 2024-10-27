@@ -468,7 +468,8 @@
 			"UPWORK_ORGANIZATION_ID": "Identyfikator organizacji na platformie Upwork",
 			"UPWORK_ORGANIZATION_NAME": "Nazwa organizacji na Upwork",
 			"UPWORK_ID": "ID na Upwork",
-			"LINKEDIN_ID": "ID LinkedIn"
+			"LINKEDIN_ID": "ID LinkedIn",
+			"STANDARD_WORK_HOURS_PER_DAY": "Standardowe godziny pracy na dzień"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Imię",
@@ -654,7 +655,8 @@
 			"UPWORK_ORGANIZATION_ID": "ID organizacji na Upwork",
 			"UPWORK_ORGANIZATION_NAME": "Nazwa Organizacji na Upwork",
 			"UPWORK_ID": "ID Upwork",
-			"LINKEDIN_ID": "Identyfikator LinkedIn"
+			"LINKEDIN_ID": "Identyfikator LinkedIn",
+			"STANDARD_WORK_HOURS_PER_DAY": "Wprowadź liczbę standardowych godzin pracy na dzień (np. 8)"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Domyślna stawka",
@@ -1186,7 +1188,8 @@
 			"DAILY_TIME_AND_ACTIVITY": "Na ten dzień nie ma jeszcze zapisanego czasu i aktywności. Proszę użyć aplikacji <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>",
 			"PROJECT_BUDGET": "Nie utworzyłeś jeszcze żadnego projektu z budżetem",
 			"CLIENT_BUDGET": "Nie utworzyłeś żadnego klienta z budżetem"
-		}
+		},
+		"STANDARD_WORK_HOURS": "Standardowe godziny pracy ({{hours}})"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Dostępne aplikacje i integracje",
@@ -1978,7 +1981,8 @@
 					"ENABLE_DETECTION_INACTIVITY_INFO": "Włączone - system wykryje brak aktywności i wyświetli ostrzeżenie. Wyłączone - nie będzie wyświetlane żadne ostrzeżenie, gdy pracownik jest nieaktywny",
 					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
 					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
-					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking."
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking.",
+					"STANDARD_WORK_HOURS_PER_DAY": "Wybierz domyślną liczbę godzin pracy dziennie. Ta wartość zostanie wykorzystana w raportach śledzenia czasu do porównania, ile godzin pracownik przepracował w stosunku do tego standardu."
 				}
 			},
 			"TEAMS_PAGE": {
@@ -2085,8 +2089,10 @@
 			},
 			"ONLY_ADMIN": "Te uprawnienia są tylko do odczytu i są aktywowane tylko dla administratora",
 			"INSUFFICIENT": "Nie masz wystarczających uprawnień. Brakuje następujących uprawnień:",
-			"ORG_SPRINT_EDIT": "Twórz/Edytuj sprinty",
-			"ORG_SPRINT_VIEW": "Wyświetl sprinty",
+			"ORG_SPRINT_EDIT": "Edytuj sprint",
+			"ORG_SPRINT_VIEW": "Wyświetl sprint",
+			"ORG_SPRINT_DELETE": "Usuń sprinty",
+			"ORG_SPRINT_ADD": "Dodaj sprint",
 			"ORG_PROJECT_ADD": "Tworzenie projektów",
 			"ORG_PROJECT_VIEW": "Wyświetl projekty",
 			"ORG_PROJECT_EDIT": "Edytuj projekty",
@@ -3782,6 +3788,7 @@
 		"SELECT_PROJECT": "Wybierz projekt",
 		"SELECT_TASK": "Wybierz zadanie",
 		"SELECT_CLIENT": "Wybierz Klienta",
+		"SELECT_TEAM": "Wybierz zespół",
 		"DATE": "Data",
 		"START_TIME": "Czas rozpoczęcia",
 		"END_TIME": "Czas zakończenia",
@@ -4038,6 +4045,11 @@
 			"NO_MONTHLY_ACTIVITY": "Nie masz śledzonego czasu i aktywności na ten miesiąc.",
 			"WORKED_FOR_MONTH": "Pracowano w tym miesiącu",
 			"ACTIVITY_FOR_MONTH": "Miesięczna Aktywność"
+		},
+		"LOADING": {
+			"PLEASE_HOLD": "Proszę czekać...",
+			"SHUTTING_DOWN": "Aplikacja się zamyka",
+			"LOGOUT_IN_PROGRESS": "Wylogowywanie w toku"
 		}
 	},
 	"SERVER": "Serwer",
@@ -4634,7 +4646,14 @@
 		"FAIL_SIGNIN_SUB_TITLE": "Proszę rozpocznij proces ponownie.",
 		"THANKING_TEXT": "Dziękujemy, że nas wybrałeś.",
 		"UNKNOWN_WORKSPACE": "Nie wiesz, gdzie jest twoja przestrzeń robocza?",
-		"FIND_WORKSPACE": "Znajdź swoje przestrzenie robocze"
+		"FIND_WORKSPACE": "Znajdź swoje przestrzenie robocze",
+		"SELECTION": {
+			"WELCOME_BACK": "Witamy ponownie!",
+			"YOU_LOOK_NICE_TODAY": "Dziś wyglądasz świetnie!",
+			"EMAIL_MULTIPLE_WORKSPACE": "E-mail jest powiązany z wieloma przestrzeniami roboczymi, wybierz jedną, aby kontynuować",
+			"SELECT_WORKSPACE_FOR": "Wybierz przestrzeń roboczą dla",
+			"OPEN": "Otwórz"
+		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Dodaj lub usuń obraz",

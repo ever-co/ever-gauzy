@@ -18,7 +18,7 @@ import {
 	IOrganizationTeamEmployee,
 	IOrganizationTeamStatisticInput,
 	ITimerStatus,
-	FavoriteEntityEnum,
+	BaseEntityEnum,
 	ID
 } from '@gauzy/contracts';
 import { isNotEmpty, parseToBoolean } from '@gauzy/common';
@@ -41,7 +41,7 @@ import { MikroOrmOrganizationTeamRepository, TypeOrmOrganizationTeamRepository }
 import { OrganizationTeam } from './organization-team.entity';
 import { MikroOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/mikro-orm-organization-team-employee.repository';
 
-@FavoriteService(FavoriteEntityEnum.OrganizationTeam)
+@FavoriteService(BaseEntityEnum.OrganizationTeam)
 @Injectable()
 export class OrganizationTeamService extends TenantAwareCrudService<OrganizationTeam> {
 	constructor(
@@ -172,8 +172,8 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @returns A Promise resolving to an array of Employee entities with associated user information.
 	 */
 	async retrieveEmployees(
-		memberIds: string[],
-		managerIds: string[],
+		memberIds: ID[],
+		managerIds: ID[],
 		organizationId: string,
 		tenantId: string
 	): Promise<Employee[]> {
@@ -354,23 +354,28 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	}
 
 	/**
-	 * GET organization teams pagination by params
+	 * GET organization teams pagination by params.
 	 *
-	 * @param filter
-	 * @returns
+	 * @param options - The pagination parameters including filters.
+	 * @returns A promise that resolves to a paginated list of organization teams.
 	 */
 	public async pagination(options?: PaginationParams<OrganizationTeam>): Promise<IPagination<OrganizationTeam>> {
-		if ('where' in options) {
+		if (options?.where) {
 			const { where } = options;
-			if ('name' in where) {
-				options['where']['name'] = ILike(`%${where.name}%`);
+
+			// Update name filter using ILike
+			if (where.name) {
+				options.where.name = ILike(`%${where.name}%`);
 			}
-			if ('tags' in where) {
-				options['where']['tags'] = {
+
+			// Update tags filter using In
+			if (Array.isArray(where.tags) && where.tags.length > 0) {
+				options.where.tags = {
 					id: In(where.tags as [])
 				};
 			}
 		}
+
 		return await this.findAll(options);
 	}
 

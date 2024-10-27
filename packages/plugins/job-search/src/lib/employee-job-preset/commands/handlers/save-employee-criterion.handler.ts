@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { GauzyAIService } from '@gauzy/plugin-integration-ai';
-import { IMatchingCriterions } from '@gauzy/contracts';
+import { IMatchingCriterions, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext, TypeOrmEmployeeRepository } from '@gauzy/core';
 import { EmployeeUpworkJobsSearchCriterion } from '../../employee-upwork-jobs-search-criterion.entity';
 import { SaveEmployeeCriterionCommand } from '../save-employee-criterion.command';
@@ -23,15 +23,17 @@ export class SaveEmployeeCriterionHandler implements ICommandHandler<SaveEmploye
 		const { input } = command;
 
 		// Set tenantId
-		input.tenantId = RequestContext.currentTenantId();
+		input.tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+
+		// If the current user has the permission to change the selected employee, use their ID
+		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			input.employeeId = RequestContext.currentEmployeeId();
+		}
 
 		// Set organizationId if not provided in the input
-		if (!input.organizationId) {
-			const employeeId = RequestContext.currentEmployeeId();
-			if (employeeId) {
-				const employee = await this.typeOrmEmployeeRepository.findOneBy({ id: employeeId });
-				input.organizationId = employee.organizationId;
-			}
+		if (!input.organizationId && input.employeeId) {
+			const employee = await this.typeOrmEmployeeRepository.findOneBy({ id: input.employeeId });
+			input.organizationId = employee.organizationId;
 		}
 
 		// Create criteria

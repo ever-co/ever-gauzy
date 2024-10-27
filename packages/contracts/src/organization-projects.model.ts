@@ -1,4 +1,4 @@
-import { IEmployee, IEmployeeEntityInput } from './employee.model';
+import { IEmployee, IEmployeeEntityInput, IMemberEntityBased } from './employee.model';
 import { IRelationalOrganizationContact } from './organization-contact.model';
 import { ITaggable } from './tag.model';
 import { ITask } from './task.model';
@@ -83,12 +83,10 @@ export interface IOrganizationProjectsFindInput
 	billable?: boolean;
 	billingFlat?: boolean;
 	organizationTeamId?: ID;
+	members?: Partial<IOrganizationProjectEmployeeFindInput>;
 }
 
-export interface IOrganizationProjectCreateInput extends IOrganizationProjectBase {
-	memberIds?: ID[]; // Manager of the organization project
-	managerIds?: ID[]; // Manager of the organization project
-}
+export interface IOrganizationProjectCreateInput extends IOrganizationProjectBase, IMemberEntityBased {}
 
 export interface IOrganizationProjectUpdateInput extends IOrganizationProjectCreateInput {}
 
@@ -96,6 +94,8 @@ export interface IOrganizationProjectStoreState {
 	project: IOrganizationProject;
 	action: CrudActionEnum;
 }
+
+export interface IOrganizationProjectEmployeeFindInput extends Partial<IOrganizationProjectEmployee> {}
 
 export interface IOrganizationProjectEmployee
 	extends IBasePerTenantAndOrganizationEntityModel,
@@ -122,5 +122,5 @@ export enum OrganizationProjectBudgetTypeEnum {
 export interface IOrganizationProjectEditByEmployeeInput extends IBasePerTenantAndOrganizationEntityModel {
 	addedProjectIds?: ID[];
 	removedProjectIds?: ID[];
-	member: IOrganizationProjectEmployee;
+	member: IEmployee;
 }

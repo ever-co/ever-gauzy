@@ -9,15 +9,12 @@ import {
 } from './file-provider';
 import { IOrganization } from './organization.model';
 import { IRolePermission } from './role-permission.model';
+import { IBaseEntityModel, ID } from './base-entity.model';
 
-export interface ITenant extends IRelationalImageAsset {
-	id?: string;
+export interface ITenant extends IBaseEntityModel, IRelationalImageAsset {
 	name?: string;
 	logo?: string;
-
-	readonly createdAt?: Date;
-	readonly updatedAt?: Date;
-
+	standardWorkHoursPerDay?: number;
 	organizations?: IOrganization[];
 	rolePermissions?: IRolePermission[];
 	featureOrganizations?: IFeatureOrganization[];
@@ -27,7 +24,7 @@ export interface ITenant extends IRelationalImageAsset {
 export interface ITenantCreateInput extends ITenantUpdateInput {
 	isImporting?: boolean;
 	sourceId?: string;
-	userSourceId?: string;
+	userSourceId?: ID;
 }
 
 export interface ITenantUpdateInput extends IRelationalImageAsset {
@@ -35,6 +32,9 @@ export interface ITenantUpdateInput extends IRelationalImageAsset {
 	logo?: string;
 }
 
-export interface ITenantSetting extends IS3FileStorageProviderConfig, IWasabiFileStorageProviderConfig, ICloudinaryFileStorageProviderConfig {
+export interface ITenantSetting
+	extends IS3FileStorageProviderConfig,
+		IWasabiFileStorageProviderConfig,
+		ICloudinaryFileStorageProviderConfig {
 	fileStorageProvider?: FileStorageProviderEnum;
 }

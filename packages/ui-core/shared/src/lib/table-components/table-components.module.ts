@@ -5,6 +5,12 @@ import { NbIconModule, NbTooltipModule, NbBadgeModule, NbToggleModule, NbButtonM
 import { TranslateModule } from '@ngx-translate/core';
 import { ComponentsModule } from '../components/components.module';
 import { PipesModule } from '../pipes/pipes.module';
+import {
+	EmployeeLinkEditorComponent,
+	JobSearchAvailabilityEditorComponent,
+	NonEditableNumberEditorComponent,
+	NumberEditorComponent
+} from './editors';
 import { AllowScreenshotCaptureComponent } from './allow-screenshot-capture/allow-screenshot-capture.component';
 import { AssignedToComponent } from './assigned-to/assigned-to.component';
 import { ClickableLinkComponent } from './clickable-link/clickable-link.component';
@@ -16,7 +22,6 @@ import { CreatedAtComponent } from './created-at/created-at.component';
 import { DateViewComponent } from './date-view/date-view.component';
 import { DocumentDateTableComponent } from './document-date/document-date.component';
 import { DocumentUrlTableComponent } from './document-url/document-url.component';
-import { NumberEditorComponent } from './editors/number-editor.component';
 import { EmailComponent } from './email/email.component';
 import { EmployeeLinksComponent } from './employee-links/employee-links.component';
 import { EmployeeWithLinksComponent } from './employee-with-links/employee-with-links.component';
@@ -41,7 +46,7 @@ import { StatusViewComponent } from './status-view/status-view.component';
 import { TagsOnlyComponent } from './tags-only/tags-only.component';
 import { TaskEstimateComponent } from './task-estimate/task-estimate.component';
 import { TaskTeamsComponent } from './task-teams/task-teams.component';
-import { ToggleSwitchComponent } from './toggle-switch/toggle-switch.component';
+import { ToggleSwitcherComponent } from './toggle-switcher/toggle-switcher.component';
 import { TrustHtmlLinkComponent } from './trust-html/trust-html.component';
 import { ValueWithUnitComponent } from './value-with-units/value-with-units.component';
 import { VisibilityComponent } from './visibility/visibility.component';
@@ -86,6 +91,7 @@ import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badg
 		InvoiceTotalValueComponent,
 		NotesWithTagsComponent,
 		NumberEditorComponent,
+		EmployeeLinkEditorComponent,
 		OrganizationWithTagsComponent,
 		PhoneUrlComponent,
 		PictureNameTagsComponent,
@@ -100,10 +106,12 @@ import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badg
 		TagsOnlyComponent,
 		TaskEstimateComponent,
 		TaskTeamsComponent,
-		ToggleSwitchComponent,
+		ToggleSwitcherComponent,
 		TrustHtmlLinkComponent,
 		ValueWithUnitComponent,
-		VisibilityComponent
+		VisibilityComponent,
+		NonEditableNumberEditorComponent,
+		JobSearchAvailabilityEditorComponent
 	],
 	exports: [
 		AllowScreenshotCaptureComponent,
@@ -128,6 +136,8 @@ import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badg
 		InvoiceTotalValueComponent,
 		NotesWithTagsComponent,
 		NumberEditorComponent,
+		JobSearchAvailabilityEditorComponent,
+		NonEditableNumberEditorComponent,
 		OrganizationWithTagsComponent,
 		PhoneUrlComponent,
 		PictureNameTagsComponent,
@@ -142,7 +152,7 @@ import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badg
 		TagsOnlyComponent,
 		TaskEstimateComponent,
 		TaskTeamsComponent,
-		ToggleSwitchComponent,
+		ToggleSwitcherComponent,
 		TrustHtmlLinkComponent,
 		ValueWithUnitComponent,
 		VisibilityComponent

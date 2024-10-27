@@ -1,16 +1,17 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { EventBusModule } from '../event-bus/event-bus.module';
 import { IntegrationMap, TaskStatus } from '../core/entities/internal';
-import { OrganizationProjectModule } from './../organization-project/organization-project.module';
 import { CommandHandlers } from './commands/handlers';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { UserModule } from './../user/user.module';
 import { RoleModule } from './../role/role.module';
 import { EmployeeModule } from './../employee/employee.module';
+import { OrganizationProjectModule } from './../organization-project/organization-project.module';
+import { OrganizationSprintModule } from './../organization-sprint/organization-sprint.module';
+import { TaskViewModule } from './views/view.module';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskController } from './task.controller';
@@ -18,7 +19,6 @@ import { TypeOrmTaskRepository } from './repository';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/tasks', module: TaskModule }]),
 		TypeOrmModule.forFeature([Task, TaskStatus, IntegrationMap]),
 		MikroOrmModule.forFeature([Task, TaskStatus, IntegrationMap]),
 		RolePermissionModule,
@@ -26,6 +26,8 @@ import { TypeOrmTaskRepository } from './repository';
 		RoleModule,
 		EmployeeModule,
 		OrganizationProjectModule,
+		OrganizationSprintModule,
+		TaskViewModule,
 		CqrsModule,
 		EventBusModule
 	],

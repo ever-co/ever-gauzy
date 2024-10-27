@@ -11,10 +11,9 @@ import {
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { LanguagesEnum } from '@gauzy/contracts';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
-import { DynamicTabsModule, SharedModule, SmartDataViewLayoutModule } from '@gauzy/ui-core/shared';
+import { DynamicTabsModule, SharedModule, SmartDataViewLayoutModule, getBrowserLanguage } from '@gauzy/ui-core/shared';
 import { createJobEmployeeRoutes } from './job-employee.routes';
 import { JobEmployeeComponent } from './components/job-employee/job-employee.component';
 
@@ -29,7 +28,7 @@ const NB_MODULES = [NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule,
 const THIRD_PARTY_MODULES = [
 	NgxPermissionsModule.forRoot(),
 	TranslateModule.forRoot({
-		defaultLanguage: LanguagesEnum.ENGLISH,
+		defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
 		loader: {
 			provide: TranslateLoader,
 			useFactory: HttpLoaderFactory,

@@ -3,6 +3,7 @@ export interface Environment {
 
 	API_BASE_URL: string;
 	CLIENT_BASE_URL: string;
+	COOKIE_DOMAIN?: string;
 
 	PLATFORM_WEBSITE_URL?: string;
 	PLATFORM_WEBSITE_DOWNLOAD_URL?: string;
@@ -114,6 +115,9 @@ export interface Environment {
 	DESKTOP_API_SERVER_APP_REPO_OWNER: string;
 	DESKTOP_API_SERVER_APP_WELCOME_TITLE: string;
 	DESKTOP_API_SERVER_APP_WELCOME_CONTENT: string;
+
+	REGISTER_URL: string;
+	FORGOT_PASSWORD_URL: string;
 
 	I18N_FILES_URL: string;
 }

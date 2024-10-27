@@ -341,7 +341,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 					renderComponent: this.isEstimate ? null : NotesWithTagsComponent,
 					sortDirection: 'asc',
 					width: '20%',
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -382,7 +382,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 					type: 'custom',
 					renderComponent: InvoiceTotalValueComponent,
 					width: '12%',
-					isFilterable: {
+					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -428,7 +428,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 				class: 'align-row',
 				width: '10%',
 				renderComponent: TagsOnlyComponent,
-				isFilterable: {
+				filter: {
 					type: 'custom',
 					component: TagsColorFilterComponent
 				},
@@ -452,7 +452,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 				type: 'custom',
 				width: '5%',
 				renderComponent: StatusBadgeComponent,
-				isFilterable: {
+				filter: {
 					type: 'custom',
 					component: InputFilterComponent
 				},

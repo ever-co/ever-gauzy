@@ -1,13 +1,17 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Brackets, FindManyOptions, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, FindManyOptions, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
 import {
+	BaseEntityEnum,
+	ActorTypeEnum,
 	ID,
 	IOrganizationProjectModule,
 	IOrganizationProjectModuleCreateInput,
 	IOrganizationProjectModuleFindInput,
+	IOrganizationProjectModuleUpdateInput,
 	IPagination,
 	PermissionsEnum,
-	ProjectModuleStatusEnum
+	ProjectModuleStatusEnum,
+	ActionTypeEnum
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { isPostgres } from '@gauzy/config';
@@ -15,6 +19,7 @@ import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationProjectModule } from './organization-project-module.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import { TypeOrmOrganizationProjectModuleRepository } from './repository/type-orm-organization-project-module.repository';
 import { MikroOrmOrganizationProjectModuleRepository } from './repository/mikro-orm-organization-project-module.repository';
 
@@ -22,18 +27,96 @@ import { MikroOrmOrganizationProjectModuleRepository } from './repository/mikro-
 export class OrganizationProjectModuleService extends TenantAwareCrudService<OrganizationProjectModule> {
 	constructor(
 		readonly typeOrmProjectModuleRepository: TypeOrmOrganizationProjectModuleRepository,
-		readonly mikroOrmProjectModuleRepository: MikroOrmOrganizationProjectModuleRepository
+		readonly mikroOrmProjectModuleRepository: MikroOrmOrganizationProjectModuleRepository,
+		private readonly activityLogService: ActivityLogService
 	) {
 		super(typeOrmProjectModuleRepository, mikroOrmProjectModuleRepository);
 	}
-
+	/**
+	 * @description Create project Module
+	 * @param {IOrganizationProjectModuleCreateInput} entity Body Request data
+	 * @returns A promise resolved to created project module
+	 * @memberof OrganizationProjectModuleService
+	 */
 	async create(entity: IOrganizationProjectModuleCreateInput): Promise<IOrganizationProjectModule> {
+		const tenantId = RequestContext.currentTenantId() || entity.tenantId;
+		const creatorId = RequestContext.currentUserId();
+		const { organizationId } = entity;
+
 		try {
-			const creatorId = RequestContext.currentUserId();
-			return super.create({
+			const projectModule = await super.create({
 				...entity,
 				creatorId
 			});
+
+			// Generate the activity log
+			this.activityLogService.logActivity<OrganizationProjectModule>(
+				BaseEntityEnum.OrganizationProjectModule,
+				ActionTypeEnum.Created,
+				ActorTypeEnum.User,
+				projectModule.id,
+				projectModule.name,
+				projectModule,
+				organizationId,
+				tenantId
+			);
+
+			return projectModule;
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
+
+	/**
+	 * @description Update Project Module
+	 * @param {ID} id - The project module ID to be updated
+	 * @param {IOrganizationProjectModuleUpdateInput} entity Body Request data
+	 * @returns A promise resolved to updated project module Or Update Result
+	 * @memberof OrganizationProjectModuleService
+	 */
+	async update(
+		id: ID,
+		entity: IOrganizationProjectModuleUpdateInput
+	): Promise<IOrganizationProjectModule | UpdateResult> {
+		const tenantId = RequestContext.currentTenantId() || entity.tenantId;
+
+		try {
+			// Retrieve existing module.
+			const existingProjectModule = await this.findOneByIdString(id, {
+				relations: {
+					members: true,
+					manager: true
+				}
+			});
+
+			if (!existingProjectModule) {
+				throw new BadRequestException('Module not found');
+			}
+
+			// Update module with new values
+			const updatedProjectModule = await super.create({
+				...entity,
+				id
+			});
+
+			// Generate the activity log
+			const { organizationId } = updatedProjectModule;
+
+			this.activityLogService.logActivity<OrganizationProjectModule>(
+				BaseEntityEnum.OrganizationProjectModule,
+				ActionTypeEnum.Updated,
+				ActorTypeEnum.User,
+				updatedProjectModule.id,
+				updatedProjectModule.name,
+				updatedProjectModule,
+				organizationId,
+				tenantId,
+				existingProjectModule,
+				entity
+			);
+
+			// return updated Module
+			return updatedProjectModule;
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

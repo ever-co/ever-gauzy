@@ -1,4 +1,5 @@
 import * as logger from 'electron-log';
+import { existsSync } from 'fs';
 import * as fs from 'fs/promises';
 import * as https from 'https';
 import * as path from 'path';
@@ -31,6 +32,8 @@ export class NpmDownloadStrategy implements IPluginDownloadStrategy {
 		await fs.rename(pluginDir, pathDirname);
 		logger.info(`✔ Plugin directory renamed to: ${pathDirname}`);
 
+		// Rename native modules to node_modules if available
+		await this.renameNativeModules(pathDirname);
 		// Install dependencies
 		await this.installDependencies(pathDirname, config as INpmDownloadConfig);
 
@@ -172,16 +175,14 @@ export class NpmDownloadStrategy implements IPluginDownloadStrategy {
 		// Create the node_modules directory if it doesn't exist
 		await fs.mkdir(path.join(dependencyDir, 'node_modules'), { recursive: true });
 
-		// Install dependencies in parallel
-		await Promise.all(
-			Object.entries(dependencies).map(([dependency, version]) =>
-				this.installDependency({
-					...config,
-					pkg: { name: dependency, version: formatNpmVersion(version) },
-					pluginPath: path.join(dependencyDir, 'node_modules')
-				})
-			)
-		);
+		// Install dependencies in sequence
+		for (const [dependency, version] of Object.entries(dependencies)) {
+			await this.installDependency({
+				...config,
+				pkg: { name: dependency, version: formatNpmVersion(version) },
+				pluginPath: path.join(dependencyDir, 'node_modules')
+			});
+		}
 	}
 	/**
 	 * Installs a single dependency by downloading and extracting it.
@@ -208,6 +209,26 @@ export class NpmDownloadStrategy implements IPluginDownloadStrategy {
 			logger.info(`Dependencies installed successfully for: ${depDir}`);
 		} catch (error) {
 			logger.error(`Failed to install dependency: ${config.pkg.name}`, error);
+		}
+	}
+
+	private async renameNativeModules(pathDirname: string) {
+		// Define paths for native and node modules
+		const nativeModulesPath = path.join(pathDirname, 'native_modules');
+		const nodeModulesPath = path.join(pathDirname, 'node_modules');
+
+		try {
+			// Check if native modules directory exists
+			if (existsSync(nativeModulesPath)) {
+				// Rename native_modules to node_modules
+				await fs.rename(nativeModulesPath, nodeModulesPath);
+				logger.info(`✔ Plugin native modules ${nativeModulesPath} renamed to: ${nodeModulesPath}`);
+			} else {
+				logger.info(`✔ No native modules found`);
+			}
+		} catch (error) {
+			// Handle errors during renaming
+			logger.error(`✖ Error renaming ${nativeModulesPath} to ${nodeModulesPath}: ${error.message}`);
 		}
 	}
 }

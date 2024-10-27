@@ -1,6 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { SqliteDriver } from '@mikro-orm/sqlite';
 import {
 	FindOptions as MikroORMFindOptions,
 	FilterQuery as MikroFilterQuery,
@@ -316,8 +315,6 @@ export function validateDateRange(startedAt: Date, stoppedAt: Date): void {
 	const start = moment(startedAt);
 	const end = moment(stoppedAt);
 
-	console.log('------ Timer Date Range ------', start.toDate(), end.toDate());
-
 	// Validate that both dates are valid
 	if (!start.isValid() || !end.isValid()) {
 		throw new BadRequestException('Started and Stopped date must be valid dates.');
@@ -399,9 +396,7 @@ export function getDBType(dbConnection?: IDBConnectionOptions): any {
 	let dbType: any;
 	switch (dbORM) {
 		case MultiORMEnum.MikroORM:
-			if (dbConnection.driver instanceof SqliteDriver) {
-				dbType = DatabaseTypeEnum.sqlite;
-			} else if (dbConnection.driver instanceof BetterSqliteDriver) {
+			if (dbConnection.driver instanceof BetterSqliteDriver) {
 				dbType = DatabaseTypeEnum.betterSqlite3;
 			} else if (dbConnection.driver instanceof PostgreSqlDriver) {
 				dbType = DatabaseTypeEnum.postgres;
@@ -727,5 +722,10 @@ export function replacePlaceholders(query: string, dbType: DatabaseTypeEnum): st
 	if ([DatabaseTypeEnum.sqlite, DatabaseTypeEnum.betterSqlite3, DatabaseTypeEnum.mysql].includes(dbType)) {
 		return query.replace(/\$\d+/g, '?');
 	}
+	if ([DatabaseTypeEnum.mysql].includes(dbType)) {
+		// Replace double quotes with backticks for MySQL
+		query = query.replace(/"/g, '`');
+	}
+
 	return query;
 }

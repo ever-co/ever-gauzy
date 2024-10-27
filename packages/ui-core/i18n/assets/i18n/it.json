@@ -468,7 +468,8 @@
 			"UPWORK_ORGANIZATION_ID": "ID organizzazione Upwork",
 			"UPWORK_ORGANIZATION_NAME": "Nome dell'organizzazione Upwork",
 			"UPWORK_ID": "ID Upwork",
-			"LINKEDIN_ID": "ID LinkedIn"
+			"LINKEDIN_ID": "ID LinkedIn",
+			"STANDARD_WORK_HOURS_PER_DAY": "Ore lavorative standard al giorno"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Nome",
@@ -654,7 +655,8 @@
 			"UPWORK_ORGANIZATION_ID": "ID organizzazione Upwork",
 			"UPWORK_ORGANIZATION_NAME": "Nome dell'organizzazione Upwork",
 			"UPWORK_ID": "ID di Upwork",
-			"LINKEDIN_ID": "ID LinkedIn"
+			"LINKEDIN_ID": "ID LinkedIn",
+			"STANDARD_WORK_HOURS_PER_DAY": "Inserisci il numero di ore lavorative standard al giorno (es. 8)"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Tariffa predefinita",
@@ -1186,7 +1188,8 @@
 			"DAILY_TIME_AND_ACTIVITY": "Non è ancora stato registrato alcun tempo e attività per questo giorno. Si prega di utilizzare l'applicazione Gauzy Desktop Timer <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">qua</a>",
 			"PROJECT_BUDGET": "Non hai creato nessun progetto con un budget",
 			"CLIENT_BUDGET": "Non hai creato nessun cliente con un budget"
-		}
+		},
+		"STANDARD_WORK_HOURS": "Ore di lavoro standard ({{hours}})"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "App e integrazioni disponibili",
@@ -1978,7 +1981,8 @@
 					"ENABLE_DETECTION_INACTIVITY_INFO": "Abilitato: il sistema rileverà l'inattività e mostrerà un avviso. Disabilitato: non verrà mostrato alcun avviso quando un dipendente è inattivo",
 					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
 					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
-					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking."
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking.",
+					"STANDARD_WORK_HOURS_PER_DAY": "Seleziona il numero predefinito di ore lavorative al giorno. Questo valore verrà utilizzato nei rapporti di monitoraggio del tempo per confrontare quante ore ha lavorato un dipendente rispetto a questo standard."
 				}
 			},
 			"TEAMS_PAGE": {
@@ -2085,8 +2089,10 @@
 			},
 			"ONLY_ADMIN": "Queste autorizzazioni sono di sola lettura e abilitate solo per gli amministratori",
 			"INSUFFICIENT": "Non hai autorizzazioni sufficienti. Le seguenti autorizzazioni mancano:",
-			"ORG_SPRINT_EDIT": "Crea/Modifica Sprint",
-			"ORG_SPRINT_VIEW": "Visualizza gli sprint",
+			"ORG_SPRINT_EDIT": "Modifica sprint",
+			"ORG_SPRINT_VIEW": "Visualizza sprint",
+			"ORG_SPRINT_DELETE": "Elimina sprint",
+			"ORG_SPRINT_ADD": "Aggiungi sprint",
 			"ORG_PROJECT_ADD": "Crea Progetti",
 			"ORG_PROJECT_VIEW": "Visualizza progetti",
 			"ORG_PROJECT_EDIT": "Modifica Progetti",
@@ -3090,7 +3096,7 @@
 		"SELECT_A_DATE": "Seleziona una data",
 		"SELECT_AN_ORGANIZATION": "Seleziona un'organizzazione",
 		"SELECT_PROJECT": "Seleziona progetto",
-		"SELECT_TEAM": "Seleziona Squadra"
+		"SELECT_TEAM": "Seleziona squadra"
 	},
 	"HEADER_TITLE": {
 		"FOR": "per",
@@ -3782,6 +3788,7 @@
 		"SELECT_PROJECT": "Seleziona Progetto",
 		"SELECT_TASK": "Seleziona attività",
 		"SELECT_CLIENT": "Seleziona il Cliente",
+		"SELECT_TEAM": "Seleziona squadra",
 		"DATE": "Data",
 		"START_TIME": "Ora di inizio",
 		"END_TIME": "Ora di fine",
@@ -4038,6 +4045,11 @@
 			"NO_MONTHLY_ACTIVITY": "Non hai tracciato alcun tempo o attività per questo mese.",
 			"WORKED_FOR_MONTH": "Lavorato questo mese",
 			"ACTIVITY_FOR_MONTH": "Attività Mensile"
+		},
+		"LOADING": {
+			"PLEASE_HOLD": "Attendere prego...",
+			"SHUTTING_DOWN": "L'applicazione si sta spegnendo",
+			"LOGOUT_IN_PROGRESS": "Logout in corso"
 		}
 	},
 	"SERVER": "Server",
@@ -4634,7 +4646,14 @@
 		"FAIL_SIGNIN_SUB_TITLE": "Per favore, inizia il processo di nuovo.",
 		"THANKING_TEXT": "Grazie per averci scelto.",
 		"UNKNOWN_WORKSPACE": "Non conosci il tuo spazio di lavoro?",
-		"FIND_WORKSPACE": "Trova i tuoi spazi di lavoro"
+		"FIND_WORKSPACE": "Trova i tuoi spazi di lavoro",
+		"SELECTION": {
+			"WELCOME_BACK": "Bentornato!",
+			"YOU_LOOK_NICE_TODAY": "Oggi sembri in forma!",
+			"EMAIL_MULTIPLE_WORKSPACE": "L'email è associata a più spazi di lavoro, selezionane uno per continuare",
+			"SELECT_WORKSPACE_FOR": "Seleziona lo spazio di lavoro per",
+			"OPEN": "Apri"
+		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Aggiungi o Rimuovi Immagine",

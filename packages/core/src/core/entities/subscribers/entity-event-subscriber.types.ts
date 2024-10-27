@@ -73,4 +73,13 @@ export interface IEntityEventSubscriber<Entity> {
 	 * @returns {Promise<void>}
 	 */
 	afterEntityDelete(entity: Entity, em?: MultiOrmEntityManager): Promise<void>;
+
+	/**
+	 * Optional method that is called after an entity is soft removed.
+	 * Implement this method to define specific logic to be executed after an entity soft removal event.
+	 *
+	 * @param entity The entity that has been soft removed.
+	 * @param em An optional entity manager which can be either from TypeORM or MikroORM, used for further database operations if needed.
+	 */
+	afterEntitySoftRemove(entity: Entity, em?: MultiOrmEntityManager): Promise<void>;
 }

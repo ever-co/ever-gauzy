@@ -104,9 +104,9 @@ export class AmountsOwedGridComponent extends BaseSelectorFilterComponent implem
 	}
 
 	/**
-	 * Retrieves amounts owed reports, updates the 'dailyData' property, and handles loading state.
+	 * Asynchronously retrieves amounts owed reports, updates the 'dailyData' property, and handles the loading state.
 	 *
-	 * @returns
+	 * @returns {Promise<void>}
 	 */
 	async getAmountsOwed(): Promise<void> {
 		// Check if organization or request is not provided, resolve the Promise without further action
@@ -114,7 +114,8 @@ export class AmountsOwedGridComponent extends BaseSelectorFilterComponent implem
 			return;
 		}
 
-		// Set the loading flag to true
+		// Clear previous data and set the loading flag to true
+		this.dailyData = [];
 		this.loading = true;
 
 		try {
@@ -125,7 +126,8 @@ export class AmountsOwedGridComponent extends BaseSelectorFilterComponent implem
 			this.dailyData = await this.timesheetService.getOwedAmountReport(payloads);
 		} catch (error) {
 			// Log any errors during the process
-			console.error('Error while retrieving amounts owed reports', error);
+			console.error('Error while retrieving amounts owed reports:', error);
+			// Optionally: this.notificationService.showError('Failed to retrieve amounts owed reports.');
 		} finally {
 			// Set the loading flag to false, regardless of success or failure
 			this.loading = false;

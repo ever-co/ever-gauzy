@@ -1,12 +1,37 @@
 import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
-import { IsNull, SelectQueryBuilder, Brackets, WhereExpressionBuilder, Raw, In } from 'typeorm';
+import {
+	IsNull,
+	SelectQueryBuilder,
+	Brackets,
+	WhereExpressionBuilder,
+	Raw,
+	In,
+	FindOptionsWhere,
+	FindManyOptions,
+	Between
+} from 'typeorm';
 import { isBoolean, isUUID } from 'class-validator';
-import { IEmployee, IGetTaskOptions, IPagination, ITask, PermissionsEnum } from '@gauzy/contracts';
+import {
+	BaseEntityEnum,
+	ActorTypeEnum,
+	ID,
+	IEmployee,
+	IGetTaskOptions,
+	IGetTasksByViewFilters,
+	IPagination,
+	ITask,
+	ITaskUpdateInput,
+	PermissionsEnum,
+	ActionTypeEnum
+} from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
-import { isPostgres } from '@gauzy/config';
+import { isPostgres, isSqlite } from '@gauzy/config';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
+import { TaskViewService } from './views/view.service';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import { Task } from './task.entity';
+import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
 import { GetTaskByIdDTO } from './dto';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
@@ -16,52 +41,134 @@ import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 export class TaskService extends TenantAwareCrudService<Task> {
 	constructor(
 		readonly typeOrmTaskRepository: TypeOrmTaskRepository,
-		readonly mikroOrmTaskRepository: MikroOrmTaskRepository
+		readonly mikroOrmTaskRepository: MikroOrmTaskRepository,
+		readonly typeOrmOrganizationSprintTaskHistoryRepository: TypeOrmOrganizationSprintTaskHistoryRepository,
+		private readonly taskViewService: TaskViewService,
+		private readonly activityLogService: ActivityLogService
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
 	}
 
 	/**
+	 * Update task, if already exist
 	 *
-	 * @param id
-	 * @param relations
-	 * @returns
+	 * @param id - The ID of the task to update
+	 * @param input - The data to update the task with
+	 * @returns The updated task
 	 */
-	async findById(id: ITask['id'], params: GetTaskByIdDTO): Promise<ITask> {
+	async update(id: ID, input: Partial<ITaskUpdateInput>): Promise<ITask> {
+		try {
+			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+			const userId = RequestContext.currentUserId();
+			const { organizationSprintId } = input;
+			const task = await this.findOneByIdString(id);
+
+			if (input.projectId && input.projectId !== task.projectId) {
+				const { organizationId, projectId } = task;
+
+				// Get the maximum task number for the project
+				const maxNumber = await this.getMaxTaskNumberByProject({
+					tenantId,
+					organizationId,
+					projectId
+				});
+
+				// Update the task with the new project and task number
+				await super.update(id, {
+					projectId,
+					number: maxNumber + 1
+				});
+			}
+
+			// Update the task with the provided data
+			const updatedTask = await super.create({
+				...input,
+				id
+			});
+
+			// Register Task Sprint moving history
+			if (organizationSprintId && organizationSprintId !== task.organizationSprintId) {
+				await this.typeOrmOrganizationSprintTaskHistoryRepository.save({
+					fromSprintId: task.organizationSprintId,
+					toSprintId: organizationSprintId,
+					taskId: updatedTask.id,
+					movedById: userId,
+					reason: input.taskSprintMoveReason,
+					organizationId: input.organizationId,
+					tenantId
+				});
+			}
+
+			// Generate the activity log
+			const { organizationId } = updatedTask;
+			this.activityLogService.logActivity<Task>(
+				BaseEntityEnum.Task,
+				ActionTypeEnum.Updated,
+				ActorTypeEnum.User, // TODO : Since we have Github Integration, make sure we can also store "System" for actor
+				updatedTask.id,
+				updatedTask.title,
+				updatedTask,
+				organizationId,
+				tenantId,
+				task,
+				input
+			);
+
+			// Return the updated Task
+			return updatedTask;
+		} catch (error) {
+			console.error(`Error while updating task: ${error.message}`, error.message);
+			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/**
+	 * Retrieves a task by its ID and includes optional related data.
+	 *
+	 * @param id The unique identifier of the task.
+	 * @param params Additional parameters for fetching task details, including related entities.
+	 * @returns A Promise that resolves to the task entity.
+	 */
+	async findById(id: ID, params: GetTaskByIdDTO): Promise<ITask> {
 		const task = await this.findOneByIdString(id, params);
 
-		if (params.includeRootEpic) {
+		// Include the root epic if requested
+		if (params.includeRootEpic && task) {
 			task.rootEpic = await this.findParentUntilEpic(task.id);
 		}
 
 		return task;
 	}
 
-	async findParentUntilEpic(issueId: string): Promise<Task> {
-		// Define the recursive SQL query
+	/**
+	 * Recursively searches for the parent epic of a given task (issue) using a SQL recursive query.
+	 *
+	 * @param issueId The ID of the task (issue) to start the search from.
+	 * @returns A Promise that resolves to the epic task if found, otherwise null.
+	 */
+	async findParentUntilEpic(issueId: ID): Promise<Task | null> {
+		// Define the recursive SQL query to find the parent epic
 		const query = p(`
-			WITH RECURSIVE IssueHierarchy AS (SELECT *
+			WITH RECURSIVE IssueHierarchy AS (
+				SELECT *
 				FROM task
 				WHERE id = $1
 			UNION ALL
 				SELECT i.*
 				FROM task i
-						INNER JOIN IssueHierarchy ih ON i.id = ih."parentId")
+				INNER JOIN IssueHierarchy ih ON i.id = ih."parentId"
+			)
 			SELECT *
-				FROM IssueHierarchy
-				WHERE "issueType" = 'Epic'
+			FROM IssueHierarchy
+			WHERE "issueType" = 'Epic'
 			LIMIT 1;
 		`);
 
 		// Execute the raw SQL query with the issueId parameter
 		const result = await this.typeOrmRepository.query(query, [issueId]);
 
-		// Check if any epic was found and return it, or return null
-		if (result.length > 0) {
-			return result[0];
-		} else {
-			return null;
-		}
+		// Return the first epic task found or null if no epic is found
+		return result.length > 0 ? result[0] : null;
 	}
 
 	/**
@@ -338,87 +445,94 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	}
 
 	/**
-	 * GET tasks by pagination
+	 * GET tasks by pagination with filtering options.
 	 *
-	 * @param options
-	 * @returns
+	 * @param options The pagination and filtering parameters.
+	 * @returns A Promise that resolves to a paginated list of tasks.
 	 */
 	public async pagination(options: PaginationParams<Task>): Promise<IPagination<ITask>> {
-		if ('where' in options) {
+		// Define the like operator based on the database type
+		const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+
+		// Check if there are any filters in the options
+		if (options?.where) {
 			const { where } = options;
-			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
-			if ('title' in where) {
-				const { title } = where;
-				options['where']['title'] = Raw((alias) => `${alias} ${likeOperator} '%${title}%'`);
+
+			// Apply filters for task title with like operator
+			if (where.title) {
+				options.where.title = Raw((alias) => `${alias} ${likeOperator} '%${where.title}%'`);
 			}
-			if ('prefix' in where) {
-				const { prefix } = where;
-				options['where']['prefix'] = Raw((alias) => `${alias} ${likeOperator} '%${prefix}%'`);
+
+			// Apply filters for task prefix with like operator
+			if (where.prefix) {
+				options.where.prefix = Raw((alias) => `${alias} ${likeOperator} '%${where.prefix}%'`);
 			}
-			if ('isDraft' in where) {
-				const { isDraft } = where;
-				if (!isBoolean(isDraft)) {
-					options.where.isDraft = IsNull();
-				}
+
+			// Apply filters for isDraft, setting null if not a boolean
+			if (where.isDraft !== undefined && !isBoolean(where.isDraft)) {
+				options.where.isDraft = IsNull();
 			}
-			if ('organizationSprintId' in where) {
-				const { organizationSprintId } = where;
-				if (!isUUID(organizationSprintId)) {
-					options['where']['organizationSprintId'] = IsNull();
-				}
+
+			// Apply filters for organizationSprintId, setting null if not a valid UUID
+			if (where.organizationSprintId && !isUUID(where.organizationSprintId)) {
+				options.where.organizationSprintId = IsNull();
 			}
-			if ('teams' in where) {
-				const { teams } = where;
+
+			// Apply filters for teams, ensuring it uses In for array comparison
+			if (where.teams) {
 				options.where.teams = {
-					id: In(teams as string[])
+					id: In(where.teams as string[])
 				};
 			}
 		}
+
+		// Call the base paginate method
 		return await super.paginate(options);
 	}
 
 	/**
 	 * GET maximum task number by project filter
 	 *
-	 * @param options
+	 * @param options The filtering options including tenant, organization, and project details.
+	 * @returns A Promise that resolves to the maximum task number for the given project.
 	 */
-	public async getMaxTaskNumberByProject(options: IGetTaskOptions) {
+	public async getMaxTaskNumberByProject(options: IGetTaskOptions): Promise<number> {
 		try {
-			// Extract necessary options
+			// Extract tenantId from context or options
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
 			const { organizationId, projectId } = options;
 
+			// Create a query builder for the Task entity
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
 			// Build the query to get the maximum task number
 			query.select(p(`COALESCE(MAX("${query.alias}"."number"), 0)`), 'maxTaskNumber');
 
-			// Filter by organization and tenant
+			// Apply filters for organization and tenant
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), {
-						organizationId
-					});
-					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), {
-						tenantId
-					});
+					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 				})
 			);
 
-			// Filter by project (if provided)
+			// Apply project filter if provided, otherwise check for null
 			if (isNotEmpty(projectId)) {
-				query.andWhere(p(`"${query.alias}"."projectId" = :projectId`), {
-					projectId
-				});
+				query.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
 			} else {
 				query.andWhere(p(`"${query.alias}"."projectId" IS NULL`));
 			}
 
-			// Execute the query and get the maximum task number
-			const { maxTaskNumber } = await query.getRawOne();
+			// Execute the query and parse the result to a number
+			const result = await query.getRawOne();
+			const maxTaskNumber = parseInt(result.maxTaskNumber, 10);
+			console.log('get max task number', maxTaskNumber);
+
 			return maxTaskNumber;
 		} catch (error) {
-			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
+			// Log the error and throw a detailed exception
+			console.log(`Error fetching max task number: ${error.message}`, error.stack);
+			throw new HttpException({ message: 'Failed to get the max task number', error }, HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -523,7 +637,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				projectId,
 				members
 			} = where;
-			const tenantId = RequestContext.currentTenantId() || where?.tenantId;
+			const tenantId = RequestContext.currentTenantId() || where.tenantId;
 			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
 			// Initialize the query
@@ -539,7 +653,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				});
 			}
 
-			// Filter by project_module_task with a subquery
+			// Filter by project_module_task with a sub query
 			query.andWhere((qb: SelectQueryBuilder<Task>) => {
 				const subQuery = qb
 					.subQuery()
@@ -563,7 +677,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					subQuery.andWhere(p(`"pmt"."organizationProjectModuleId" IN (:...modules)`), { modules });
 				}
 
-				return p(`"project_module_tasks"."taskId" IN `) + subQuery.distinct(true).getQuery();
+				return p(`"task_modules"."taskId" IN `) + subQuery.distinct(true).getQuery();
 			});
 
 			// Add organization and tenant filters
@@ -611,6 +725,112 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		} catch (error) {
 			console.log('Error while retrieving module tasks', error);
 			throw new BadRequestException(error);
+		}
+	}
+
+	/**
+	 * @description Get tasks by views query
+	 * @param {ID} viewId - View ID
+	 * @returns {Promise<IPagination<ITask>>} A Promise resolved to paginated found tasks and total matching query filters
+	 * @memberof TaskService
+	 */
+	async findTasksByViewQuery(viewId: ID): Promise<IPagination<ITask>> {
+		const tenantId = RequestContext.currentTenantId();
+		try {
+			// Retrieve Task View by ID for getting their pre-defined query params
+			const taskView = await this.taskViewService.findOneByWhereOptions({ id: viewId, tenantId });
+			if (!taskView) {
+				throw new HttpException('View not found', HttpStatus.NOT_FOUND);
+			}
+
+			// Extract `queryParams` from the view
+			const queryParams = taskView.queryParams;
+			let viewFilters: IGetTasksByViewFilters = {};
+
+			try {
+				viewFilters = isSqlite()
+					? (JSON.parse(queryParams as string) as IGetTasksByViewFilters)
+					: (queryParams as IGetTasksByViewFilters) || {};
+			} catch (error) {
+				throw new HttpException('Invalid query parameters in task view', HttpStatus.BAD_REQUEST);
+			}
+
+			// Extract filters
+			const {
+				projects = [],
+				teams = [],
+				members = [],
+				modules = [],
+				sprints = [],
+				statusIds = [],
+				statuses = [],
+				priorityIds = [],
+				priorities = [],
+				sizeIds = [],
+				sizes = [],
+				tags = [],
+				types = [],
+				creators = [],
+				startDates = [],
+				dueDates = [],
+				organizationId,
+				relations = []
+			} = viewFilters;
+
+			// Calculate min and max dates only if arrays are not empty
+			const getMinMaxDates = (dates: Date[]) =>
+				dates.length
+					? [
+							new Date(
+								Math.min(
+									...dates
+										.filter((date) => !Number.isNaN(new Date(date).getTime()))
+										.map((date) => new Date(date).getTime())
+								)
+							),
+							new Date(
+								Math.max(
+									...dates
+										.filter((date) => !Number.isNaN(new Date(date).getTime()))
+										.map((date) => new Date(date).getTime())
+								)
+							)
+					  ]
+					: [undefined, undefined];
+
+			const [minStartDate, maxStartDate] = getMinMaxDates(startDates);
+			const [minDueDate, maxDueDate] = getMinMaxDates(dueDates);
+
+			// Build the 'where' condition
+			const where: FindOptionsWhere<Task> = {
+				...(projects.length && { projectId: In(projects) }),
+				...(teams.length && { teams: { id: In(teams) } }),
+				...(members.length && { members: { id: In(members) } }),
+				...(modules.length && { modules: { id: In(modules) } }),
+				...(sprints.length && { organizationSprintId: In(sprints) }),
+				...(statusIds.length && { taskStatusId: In(statusIds) }),
+				...(statuses.length && { status: In(statuses) }),
+				...(priorityIds.length && { taskPriorityId: In(priorityIds) }),
+				...(priorities.length && { priority: In(priorities) }),
+				...(sizeIds.length && { taskSizeId: In(sizeIds) }),
+				...(sizes.length && { size: In(sizes) }),
+				...(tags.length && { tags: { id: In(tags) } }),
+				...(types.length && { issueType: In(types) }),
+				...(creators.length && { creatorId: In(creators) }),
+				...(minStartDate && maxStartDate && { startDate: Between(minStartDate, maxStartDate) }),
+				...(minDueDate && maxDueDate && { dueDate: Between(minDueDate, maxDueDate) }),
+				organizationId: taskView.organizationId || organizationId,
+				tenantId
+			};
+
+			// Define find options
+			const findOptions: FindManyOptions<Task> = { where, ...(relations && { relations }) };
+
+			// Retrieve tasks using base class method
+			return await super.findAll(findOptions);
+		} catch (error) {
+			console.error(`Error while retrieve view tasks: ${error.message}`, error.message);
+			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
 		}
 	}
 }

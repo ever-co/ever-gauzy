@@ -1,12 +1,20 @@
 import { Component, OnInit, OnDestroy, Input, forwardRef, Output, EventEmitter } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { IOrganization, IOrganizationTeam, CrudActionEnum, PermissionsEnum, IPagination } from '@gauzy/contracts';
+import {
+	IOrganization,
+	IOrganizationTeam,
+	CrudActionEnum,
+	PermissionsEnum,
+	ID,
+	IOrganizationTeamFindInput
+} from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { map, Observable, Subject, switchMap } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
+import { combineLatest, from, map, Observable, of, Subject, switchMap } from 'rxjs';
+import { catchError, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
 import {
+	ErrorHandlingService,
 	NavigationService,
 	OrganizationTeamStore,
 	OrganizationTeamsService,
@@ -30,130 +38,167 @@ import { ALL_TEAM_SELECTED } from './default-team';
 	]
 })
 export class TeamSelectorComponent implements OnInit, OnDestroy {
-	teams: IOrganizationTeam[] = [];
-	selectedTeam: IOrganizationTeam;
-	hasAddTeam$: Observable<boolean>;
-
 	public organization: IOrganization;
-	subject$: Subject<any> = new Subject();
-	onChange: any = () => {};
-	onTouched: any = () => {};
+	public subject$: Subject<any> = new Subject();
+	public hasAddTeam$: Observable<boolean>;
+	public teams: IOrganizationTeam[] = [];
+	public selectedTeam: IOrganizationTeam;
 
-	@Input() shortened = false;
-	@Input() disabled = false;
-	@Input() multiple = false;
-	@Input() label = null;
+	private _organizationTeamId: ID | ID[]; // Internal storage for the organization team ID.
+	private _employeeId: ID | undefined; // Internal storage for the employee ID.
+	private _projectId: ID | undefined; // Internal storage for the project ID.
 
-	private _teamId: string | string[];
-	get teamId(): string | string[] {
-		return this._teamId;
-	}
-	set teamId(val: string | string[]) {
-		this._teamId = val;
-		this.onChange(val);
-		this.onTouched(val);
+	/**
+	 * Determines whether the component should be displayed in a shortened form.
+	 * This might control the size, visibility of certain elements, or compactness of the UI.
+	 *
+	 * @default false
+	 */
+	@Input() shortened: boolean = false;
+
+	/**
+	 * Determines whether the component is disabled and non-interactive.
+	 * When set to `true`, user interactions (like clicking or selecting) are disabled.
+	 *
+	 * @default false
+	 */
+	@Input() disabled: boolean = false;
+
+	/**
+	 * Allows multiple selections if set to `true`.
+	 * This could enable features like multi-select dropdowns or checkboxes.
+	 *
+	 * @default false
+	 */
+	@Input() multiple: boolean = false;
+
+	/**
+	 * The label text to be displayed alongside the component.
+	 * This could be used for accessibility purposes or to provide context to the user.
+	 *
+	 * @default null
+	 */
+	@Input() label: string | null = null;
+
+	/**
+	 * The placeholder text to be displayed in the team selector.
+	 * Provides guidance to the user on what action to take or what information to provide.
+	 *
+	 */
+	@Input() placeholder: string | null = null;
+
+	/**
+	 * Determines whether to skip triggering global change detection.
+	 * Useful for optimizing performance by preventing unnecessary change detection cycles.
+	 *
+	 * @default false
+	 */
+	@Input() skipGlobalChange: boolean = false;
+
+	/**
+	 * Enables the default selection behavior.
+	 * When `true`, the component may automatically select a default team upon initialization.
+	 *
+	 * @default true
+	 */
+	@Input() defaultSelected: boolean = true;
+
+	/**
+	 * Determines whether to display the "Show All" option in the selector.
+	 * Allows users to view and select all available teams if enabled.
+	 *
+	 * @default true
+	 */
+	@Input() showAllOption: boolean = true;
+
+	/**
+	 * Sets the team ID and triggers change and touch events.
+	 *
+	 * @param value - The team ID or array of team IDs to be set.
+	 */
+	@Input()
+	public set organizationTeamId(value: ID | ID[]) {
+		this._organizationTeamId = value;
+		this.onChange(value);
+		this.onTouched();
 	}
 
-	private _employeeId: string;
-	public get employeeId() {
-		return this._employeeId;
+	/**
+	 * Gets the current team ID
+	 *
+	 * @returns The current team ID or array of team IDs.
+	 */
+	public get organizationTeamId(): ID | ID[] {
+		return this._organizationTeamId;
 	}
-	@Input() public set employeeId(value) {
+
+	/**
+	 * Sets the employee ID and triggers change and touch events.
+	 *
+	 * @param value - The ID of the employee to be set.
+	 */
+	@Input()
+	public set employeeId(value: ID) {
 		this._employeeId = value;
 		this.subject$.next(true);
 	}
 
-	private _organizationContactId: string;
-	public get organizationContactId(): string {
-		return this._organizationContactId;
+	/**
+	 * Gets the current employee ID
+	 *
+	 * @returns The current employee ID or array of employee IDs.
+	 */
+	public get employeeId(): ID | undefined {
+		return this._employeeId;
 	}
-	@Input() public set organizationContactId(value: string) {
-		this._organizationContactId = value;
+
+	/**
+	 * Sets the project ID and triggers change and touch events.
+	 *
+	 * @param value - The ID of the project to be set.
+	 */
+	@Input()
+	public set projectId(value: ID) {
+		this._projectId = value;
 		this.subject$.next(true);
 	}
 
-	/*
-	 * Getter & Setter for dynamic placeholder
+	/**
+	 * Gets the current project ID
+	 *
+	 * @returns The current project ID or array of project IDs.
 	 */
-	private _placeholder: string;
-	get placeholder(): string {
-		return this._placeholder;
-	}
-	@Input() set placeholder(value: string) {
-		this._placeholder = value;
+	public get projectId(): ID | undefined {
+		return this._projectId;
 	}
 
-	/*
-	 * Getter & Setter for skip global change
+	@Output() onChanged = new EventEmitter<IOrganizationTeam>();
+
+	/**
+	 * Callback function to notify changes in the form control.
 	 */
-	private _skipGlobalChange: boolean = false;
-	get skipGlobalChange(): boolean {
-		return this._skipGlobalChange;
-	}
-	@Input() set skipGlobalChange(value: boolean) {
-		this._skipGlobalChange = value;
-	}
+	private onChange: (value: ID | ID[]) => void = () => {};
 
-	private _defaultSelected: boolean = true;
-	get defaultSelected(): boolean {
-		return this._defaultSelected;
-	}
-	@Input() set defaultSelected(value: boolean) {
-		this._defaultSelected = value;
-	}
-
-	private _showAllOption: boolean = true;
-	get showAllOption(): boolean {
-		return this._showAllOption;
-	}
-	@Input() set showAllOption(value: boolean) {
-		this._showAllOption = value;
-	}
-
-	@Output()
-	onChanged = new EventEmitter<IOrganizationTeam>();
+	/**
+	 * Callback function to notify touch events in the form control.
+	 */
+	private onTouched: () => void = () => {};
 
 	constructor(
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _organizationTeamsService: OrganizationTeamsService,
-		private readonly store: Store,
-		private readonly toastrService: ToastrService,
+		private readonly _store: Store,
+		private readonly _toastrService: ToastrService,
+		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly _organizationTeamStore: OrganizationTeamStore,
 		private readonly _truncatePipe: TruncatePipe,
 		private readonly _navigationService: NavigationService
 	) {}
 
 	ngOnInit(): void {
-		this.hasAddTeam$ = this.store.userRolePermissions$.pipe(
-			map(() => this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_ADD))
-		);
-		this.subject$
-			.pipe(
-				switchMap(() => this.getTeams()),
-				tap(() => {
-					if (this._activatedRoute.snapshot.queryParams.teamId) {
-						this.selectTeamById(this._activatedRoute.snapshot.queryParams.teamId);
-					}
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		this._activatedRoute.queryParams
-			.pipe(
-				filter((query) => !!query.teamId),
-				tap(({ teamId }) => this.selectTeamById(teamId)),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		this.store.selectedOrganization$
-			.pipe(
-				distinctUntilChange(),
-				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => (this.organization = organization)),
-				tap(() => this.subject$.next(true)),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		this.initializePermissions();
+		this.initializeTeamSelection();
+		this.initializeOrganizationSelection();
 	}
 
 	ngAfterViewInit(): void {
@@ -181,157 +226,244 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * Retrieves teams based on the current organization and employee.
+	 * Initializes the observable that determines if the user has edit permissions for teams.
+	 */
+	private initializePermissions(): void {
+		this.hasAddTeam$ = this._store.userRolePermissions$.pipe(
+			map(() => this._store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_ADD)),
+			catchError((error) => {
+				console.error('Error checking permissions:', error);
+				return of(false);
+			}),
+			untilDestroyed(this)
+		);
+	}
+
+	/**
+	 * Handles the combined stream to fetch teams and select the appropriate team
+	 * based on route parameters and subject emissions.
+	 */
+	private initializeTeamSelection(): void {
+		combineLatest([this.subject$, this._activatedRoute.queryParams])
+			.pipe(
+				// Switch to a new observable each time the source observables emit
+				switchMap(([_, queryParams]) =>
+					// Fetch teams and handle errors during retrieval
+					from(this.getTeams()).pipe(
+						// Return the teamId from queryParams on success
+						map(() => queryParams.teamId),
+						// Handle any errors that occur during team fetching
+						catchError((error) => {
+							console.error('Error fetching teams:', error);
+							return of(null); // Return a null value to prevent team selection on error
+						})
+					)
+				),
+				// After fetching, select the team if teamId exists
+				tap((teamId: ID | null) => {
+					if (teamId) {
+						this.selectTeamById(teamId);
+					}
+				}),
+				// Automatically unsubscribe when the component is destroyed
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/**
+	 * Handles changes in the selected organization.
+	 *
+	 * Updates the local organization property and triggers a team fetch.
+	 */
+	private initializeOrganizationSelection(): void {
+		this._store.selectedOrganization$
+			.pipe(
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/**
+	 * Retrieves teams based on specified parameters.
+	 * If an employee ID is provided, retrieves teams associated with that employee.
+	 * Otherwise, retrieves all teams for the organization. Optionally inserts an "All Projects" option.
 	 */
 	async getTeams() {
+		// Return early if the organization is not defined
 		if (!this.organization) {
+			console.warn('Organization is not defined.');
 			return;
 		}
 
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		const { id: organizationId, tenantId } = this.organization;
 
-		let teamsResponse: IPagination<IOrganizationTeam>;
+		// Construct query options
+		const queryOptions: IOrganizationTeamFindInput = {
+			organizationId,
+			tenantId,
+			...(this.projectId && { projects: { id: this.projectId } })
+		};
 
-		if (this.employeeId) {
-			// Fetch teams based on the current employee
-			teamsResponse = await this._organizationTeamsService.getMyTeams({
-				organizationId,
-				tenantId,
-				members: { employeeId: this.employeeId }
-			});
-		} else {
-			// Fetch all teams for the organization
-			teamsResponse = await this._organizationTeamsService.getAll([], {
-				organizationId,
-				tenantId,
-				...(this.organizationContactId && { organizationContactId: this.organizationContactId })
-			});
-		}
+		try {
+			// Retrieve teams based on whether employeeId is provided
+			const teamsResponse = this.employeeId
+				? await this._organizationTeamsService.getMyTeams({
+						...queryOptions,
+						members: { employeeId: this.employeeId }
+				  })
+				: await this._organizationTeamsService.getAll([], queryOptions);
 
-		// Update teams list
-		this.teams = teamsResponse.items || [];
+			// Assign teams from response
+			this.teams = teamsResponse.items || [];
 
-		//Insert All Employees Option
-		if (this.showAllOption) {
-			this.teams.unshift(ALL_TEAM_SELECTED);
-			this.selectTeam(ALL_TEAM_SELECTED);
-		}
-	}
-
-	writeValue(value: string | string[]) {
-		if (this.multiple) {
-			this._teamId = value instanceof Array ? value : [value];
-		} else {
-			this._teamId = value;
+			// Optionally add "All Projects" option
+			if (this.showAllOption) {
+				this.teams.unshift(ALL_TEAM_SELECTED);
+				this.selectTeam(ALL_TEAM_SELECTED);
+			}
+		} catch (error) {
+			console.error('Error retrieving teams:', error);
+			this._errorHandlingService.handleError(error);
 		}
 	}
 
-	registerOnChange(fn: (rating: number) => void): void {
+	/**
+	 * Writes a value to the component, handling single or multiple selection modes.
+	 *
+	 * @param {ID | ID[]} value - The value(s) to write, either a single ID or IDs.
+	 */
+	writeValue(value: ID | ID[]): void {
+		this._organizationTeamId = this.multiple ? (Array.isArray(value) ? value : [value]) : value;
+	}
+
+	/**
+	 * Registers a callback function to be called when the control's value changes.
+	 * This method is used by Angular forms to bind the model to the view.
+	 *
+	 * @param fn - The callback function to register for the 'onChange' event.
+	 */
+	registerOnChange(fn: (value: ID | ID[]) => void): void {
 		this.onChange = fn;
 	}
 
+	/**
+	 * Registers a callback function to be called when the component is touched.
+	 * @param {() => void} fn - The callback function to register.
+	 */
 	registerOnTouched(fn: () => void): void {
 		this.onTouched = fn;
 	}
 
+	/**
+	 * Sets the disabled state of the component.
+	 *
+	 * @param {boolean} isDisabled - The disabled state to set.
+	 */
 	setDisabledState(isDisabled: boolean): void {
 		this.disabled = isDisabled;
 	}
 
 	/**
 	 * Creates a new team with the given name.
+	 *
 	 * @param {string} name - The name of the new team.
 	 */
-	createNew = async (name: string) => {
-		// Check if organization is defined
+	createNew = async (name: string): Promise<void> => {
+		// Return early if organization is not defined
 		if (!this.organization) {
+			console.warn('Organization is not defined.');
 			return;
 		}
 
 		try {
 			const { id: organizationId, tenantId } = this.organization;
 
+			// Include member if employeeId or store user's employeeId is provided
+			const memberId = this.employeeId || this._store.user.employee?.id;
+
 			// Construct request object with common parameters
 			const request = {
 				name,
+				...(memberId && { memberIds: [memberId] }),
+				...(this.projectId && { projects: [{ id: this.projectId }] }),
 				organizationId,
-				tenantId,
-				...(this.organizationContactId && { organizationContactId: this.organizationContactId })
+				tenantId
 			};
 
-			// Include member if employeeId or store user's employeeId is provided
-			const employeeId = this.store.user.employee?.id;
-
-			if (this.employeeId || employeeId) {
-				const member: Record<string, string> = {
-					id: this.employeeId || employeeId
-				};
-				request['members'] = [member];
-			}
-
-			// Create the team
+			// Handle the created team and update teamId
 			const team = await this._organizationTeamsService.create(request);
 
-			// Call method to handle the created team
+			// Handle the created team
 			this.createOrganizationTeam(team);
 
-			// Update teamId
-			this.teamId = team.id;
+			// Set the newly created team's ID
+			this.organizationTeamId = team.id;
 
 			// Show success message
-			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.ADD_NEW_TEAM', { name });
+			this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.ADD_NEW_TEAM', { name });
 		} catch (error) {
-			// Show error message
-			this.toastrService.error(error);
+			// Log and show error message
+			console.error('Error while creating new team: ', error);
+			this._errorHandlingService.handleError(error);
 		}
 	};
 
-	/*
-	 * After created new organization team pushed on dropdown
+	/**
+	 * Adds a newly created organization team to the dropdown list.
+	 *
+	 * @param team - The new organization team to add.
 	 */
-	createOrganizationTeam(team: IOrganizationTeam) {
-		const teams: IOrganizationTeam[] = this.teams || [];
-		if (Array.isArray(teams)) {
-			teams.push(team);
+	createOrganizationTeam(team: IOrganizationTeam): void {
+		if (!team) {
+			console.warn('Invalid team or empty team provided.');
+			return; // Ensure the team is valid and not empty before proceeding.
 		}
-		this.teams = [...teams].filter(isNotEmpty);
+
+		this.teams = [...(this.teams || []), team].filter(isNotEmpty);
 	}
 
-	/*
-	 * After updated existing organization team changed in the dropdown
+	/**
+	 * Updates an existing organization team in the dropdown.
+	 *
+	 * @param team - The updated organization team.
 	 */
-	updateOrganizationTeam(team: IOrganizationTeam) {
-		let teams: IOrganizationTeam[] = this.teams || [];
-		if (Array.isArray(teams) && teams.length) {
-			teams = teams.map((item: IOrganizationTeam) => {
-				if (item.id === team.id) {
-					return Object.assign({}, item, team);
-				}
-				return item;
-			});
+	updateOrganizationTeam(team: IOrganizationTeam): void {
+		if (!team || !team.id) {
+			console.warn('Invalid team or empty team provided.');
+			return; // Ensure the team and its ID are valid before proceeding.
 		}
-		this.teams = [...teams].filter(isNotEmpty);
+
+		this.teams = (this.teams || [])
+			.map((item: IOrganizationTeam) => (item.id === team.id ? { ...item, ...team } : item))
+			.filter(isNotEmpty);
 	}
 
-	/*
-	 * After deleted organization team removed on dropdown
+	/**
+	 * Removes a deleted organization team from the dropdown.
+	 *
+	 * @param team - The organization team to remove.
 	 */
-	deleteOrganizationTeam(team: IOrganizationTeam) {
-		let teams: IOrganizationTeam[] = this.teams || [];
-		if (Array.isArray(teams) && teams.length) {
-			teams = teams.filter((item: IOrganizationTeam) => item.id !== team.id);
+	deleteOrganizationTeam(team: IOrganizationTeam): void {
+		if (!team || !team.id) {
+			console.warn('Invalid team or empty team provided.');
+			return; // Ensure the team and its ID are valid before proceeding.
 		}
-		this.teams = [...teams].filter(isNotEmpty);
+
+		this.teams = (this.teams || []).filter((item: IOrganizationTeam) => item.id !== team.id).filter(isNotEmpty);
 	}
 
 	selectTeam(team: IOrganizationTeam): void {
 		if (!this.skipGlobalChange) {
-			this.store.selectedTeam = team || ALL_TEAM_SELECTED;
+			this._store.selectedTeam = team || ALL_TEAM_SELECTED;
 			this.setAttributesToParams({ teamId: team?.id });
 		}
 		this.selectedTeam = team || ALL_TEAM_SELECTED;
-		this.teamId = this.selectedTeam.id;
+		this.organizationTeamId = this.selectedTeam.id;
 		this.onChanged.emit(team);
 	}
 
@@ -343,7 +475,12 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 		await this._navigationService.updateQueryParams(params);
 	}
 
-	selectTeamById(teamId: string) {
+	/**
+	 * Selects a team by its ID.
+	 *
+	 * @param teamId - The ID of the team to select.
+	 */
+	selectTeamById(teamId: ID): void {
 		const team = this.teams.find((team: IOrganizationTeam) => teamId === team.id);
 		if (team) {
 			this.selectTeam(team);
@@ -351,52 +488,49 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * Display clearable option in team selector
+	 * Determines if the "clear" option should be displayed in the team selector.
 	 *
-	 * @returns
+	 * @returns True if the "clear" option should be displayed, false otherwise.
 	 */
 	isClearable(): boolean {
-		if (this.selectedTeam === ALL_TEAM_SELECTED) {
-			return false;
-		}
-		return true;
+		return this.selectedTeam !== ALL_TEAM_SELECTED;
 	}
 
 	/**
-	 * GET Shortened Name
+	 * Returns a shortened version of the name, with truncation applied to both first and last names.
 	 *
-	 * @param name
-	 * @returns
+	 * @param {string} name - The full name to be shortened.
+	 * @param {number} [limit=20] - The maximum character limit for the shortened name.
+	 * @returns {string | undefined} - The shortened name, or undefined if the name is empty.
 	 */
-	getShortenedName(name: string, limit = 20) {
+	getShortenedName(name: string, limit = 20): string | undefined {
 		if (isEmpty(name)) {
 			return;
 		}
-		const chunks = name.split(/\s+/);
-		const [firstName, lastName] = [chunks.shift(), chunks.join(' ')];
 
+		const chunks = name.split(/\s+/);
+		const firstName = chunks.shift();
+		const lastName = chunks.join(' ');
+
+		// If both first and last names exist, truncate both
 		if (firstName && lastName) {
 			return (
-				this._truncatePipe.transform(firstName, limit / 2, false, '') +
+				this._truncatePipe.transform(firstName, Math.floor(limit / 2), false, '') +
 				' ' +
-				this._truncatePipe.transform(lastName, limit / 2, false, '.')
-			);
-		} else {
-			return (
-				this._truncatePipe.transform(firstName, limit) ||
-				this._truncatePipe.transform(lastName, limit) ||
-				'[error: bad name]'
+				this._truncatePipe.transform(lastName, Math.floor(limit / 2), false, '.')
 			);
 		}
+
+		// Fallback to truncating either firstName or lastName if available
+		return this._truncatePipe.transform(firstName || lastName, limit) || '[error: bad name]';
 	}
 
 	/**
-	 * Clear Selector Value
-	 *
+	 * Clears the selected team value if the "Show All" option is disabled.
 	 */
-	clearSelection() {
+	clearSelection(): void {
 		if (!this.showAllOption) {
-			this.teamId = null;
+			this.organizationTeamId = null;
 		}
 	}
 

@@ -1,7 +1,7 @@
 import { Component, Input, OnDestroy, OnInit, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { NbSidebarService, NbThemeService, NbMenuItem, NbDialogService, NbDialogRef } from '@nebular/theme';
-import { combineLatest, firstValueFrom, lastValueFrom, Subject } from 'rxjs';
+import { combineLatest, firstValueFrom, Observable, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
@@ -12,6 +12,8 @@ import {
 	IDateRangePicker,
 	IEmployee,
 	IOrganization,
+	IOrganizationProject,
+	ISelectedEmployee,
 	IUser,
 	PermissionsEnum,
 	TimeLogSourceEnum,
@@ -56,6 +58,8 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	@Input() position = 'normal';
 	user: IUser;
 	employee: IEmployee;
+	employee$: Observable<ISelectedEmployee> = this.store.selectedEmployee$;
+	project$: Observable<IOrganizationProject> = this.store.selectedProject$;
 
 	showEmployeesSelector: boolean;
 	showOrganizationsSelector: boolean;
@@ -462,10 +466,14 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		// Extract organization and tenant IDs
 		const { id: organizationId, tenantId } = this.organization;
 
+		// Include member if employeeId or store user's employeeId is provided
+		const employeeId = this.store.user.employee?.id || this.store.selectedEmployee?.id;
+
 		// Get project count
 		const count = await this.organizationProjectsService.getCount({
 			organizationId,
-			tenantId
+			tenantId,
+			...(employeeId && { members: { employeeId } })
 		});
 
 		//	Show project selector if count > 0
@@ -490,10 +498,14 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		// Extract organization and tenant IDs
 		const { id: organizationId, tenantId } = this.organization;
 
+		// Include member if employeeId or store user's employeeId is provided
+		const employeeId = this.store.user.employee?.id || this.store.selectedEmployee?.id;
+
 		// Get team count
 		const count = await this.organizationTeamsService.getCount({
 			organizationId,
-			tenantId
+			tenantId,
+			...(employeeId && { members: { employeeId } })
 		});
 
 		// Show team selector if count > 0
@@ -560,27 +572,42 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	 * Check organization selector visibility
 	 */
 	async checkOrganizationSelectorVisibility() {
-		// hidden organization selector if not activate for current page
+		const { id: userId, tenantId } = this.store.user;
 
-		const { userId } = this.store;
-		const { tenantId } = this.store.user;
-		const { items: userOrg } = await this.usersOrganizationsService.getAll([], {
-			userId,
-			tenantId
-		});
-		if (this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_ORGANIZATION) && userOrg.length > 1) {
-			this.showOrganizationsSelector = true;
-		} else {
-			if (userOrg.length > 0) {
-				const [firstUserOrg] = userOrg;
-				/**
-				 * GET organization for employee
-				 */
-				const organization$ = this.organizationsService.getById(firstUserOrg.organizationId, ['contact']);
-				const organization = await lastValueFrom(organization$);
+		// Count user organizations based on the provided userId and tenantId
+		const orgCount = await this.usersOrganizationsService.getCount({ userId, tenantId });
 
-				this.store.selectedOrganization = organization;
-				this.showOrganizationsSelector = false;
+		// Check if the current user has the permission to change the selected organization
+		const hasChangeSelectedOrganizationPermission: boolean = this.store.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_ORGANIZATION
+		);
+
+		// Show organization selector only if user has permission and more than 1 organization exists
+		this.showOrganizationsSelector = hasChangeSelectedOrganizationPermission && orgCount > 1;
+
+		// If organization selector is not shown and the user has at least one organization
+		if (!this.showOrganizationsSelector && orgCount > 0) {
+			try {
+				// Retrieve user organizations
+				const { items: userOrg } = await this.usersOrganizationsService.getAll([], {
+					userId,
+					tenantId
+				});
+
+				// If organizations exist, set the first one into local storage
+				if (userOrg.length > 0) {
+					const [firstUserOrg] = userOrg;
+
+					// Retrieve organization details for the employee
+					const organization = await firstValueFrom(
+						this.organizationsService.getById(firstUserOrg.organizationId, ['contact'])
+					);
+
+					// Set the selected organization in local storage
+					this.store.selectedOrganization = organization;
+				}
+			} catch (error) {
+				console.error('Error retrieving user organizations or organization details:', error);
 			}
 		}
 	}

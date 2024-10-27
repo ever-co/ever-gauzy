@@ -21,8 +21,9 @@ import {
 	ReportDayData,
 	IUpdateTimesheetStatusInput,
 	ISubmitTimesheetInput,
-	IBasePerTenantAndOrganizationEntityModel,
-	ID
+	ID,
+	IDeleteTimeSlot,
+	IDeleteScreenshot
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 
@@ -243,7 +244,13 @@ export class TimesheetService {
 		return firstValueFrom(this.http.get<ITimeSlot[]>(`${API_PREFIX}/timesheet/time-slot`, { params }));
 	}
 
-	deleteTimeSlots(request) {
+	/**
+	 * Deletes multiple time slots based on the provided request.
+	 *
+	 * @param request - The request object containing parameters for deletion.
+	 * @returns A Promise that resolves when the time slots are deleted.
+	 */
+	deleteTimeSlots(request: IDeleteTimeSlot): Promise<Object> {
 		return firstValueFrom(
 			this.http.delete(`${API_PREFIX}/timesheet/time-slot`, {
 				params: toParams(request)
@@ -259,7 +266,14 @@ export class TimesheetService {
 		);
 	}
 
-	deleteScreenshot(id: ID, params: IBasePerTenantAndOrganizationEntityModel) {
+	/**
+	 * Deletes a screenshot by its ID.
+	 *
+	 * @param id - The ID of the screenshot to delete.
+	 * @param params - The parameters that include tenant and organization context.
+	 * @returns A Promise that resolves to an object containing the result of the deletion.
+	 */
+	deleteScreenshot(id: ID, params: IDeleteScreenshot): Promise<Object> {
 		return firstValueFrom(
 			this.http.delete(`${API_PREFIX}/timesheet/screenshot/${id}`, {
 				params: toParams(params)

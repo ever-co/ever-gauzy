@@ -21,6 +21,7 @@ import {
 	ISelectorVisibility,
 	JitsuService,
 	LanguagesService,
+	NavigationService,
 	SelectorBuilderService,
 	SeoService,
 	Store
@@ -47,7 +48,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 		private readonly _router: Router,
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _selectorBuilderService: SelectorBuilderService,
-		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
+		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
+		private readonly _navigationService: NavigationService
 	) {
 		this.getActivateRouterDataEvent();
 		this.getPreferredLanguage();
@@ -200,18 +202,25 @@ export class AppComponent implements OnInit, AfterViewInit {
 				tap(
 					({
 						datePicker,
-						dates
+						dates,
+						bookmarkParams
 					}: {
 						datePicker: IDatePickerConfig;
 						dates: IDateRangePicker;
 						selectors: ISelectorVisibility;
+						bookmarkParams: Record<string, string>;
 					}) => {
+						// Date Range Picker
 						if (isNotEmpty(dates)) {
 							this._dateRangePickerBuilderService.setDateRangePicker(dates);
 						}
+
 						// Set Date Range Picker Default Unit
 						const datePickerConfig = Object.assign({}, DEFAULT_DATE_PICKER_CONFIG, datePicker);
 						this._dateRangePickerBuilderService.setDatePickerConfig(datePickerConfig);
+
+						// Create query parameters URL builder
+						this._navigationService.updateQueryParams(bookmarkParams);
 					}
 				),
 				// Automatically unsubscribe when the component is destroyed
@@ -226,7 +235,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 	getPreferredLanguage(): void {
 		this._i18nService.preferredLanguage$
 			.pipe(
-				tap((preferredLanguage: string) => this._translateService.use(preferredLanguage)),
+				tap((lang: string) => this._translateService.use(lang)),
 				untilDestroyed(this)
 			)
 			.subscribe();

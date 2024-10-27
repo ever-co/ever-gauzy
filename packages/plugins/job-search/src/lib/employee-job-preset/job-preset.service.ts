@@ -3,6 +3,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, SelectQueryBuilder } from 'typeorm';
 import { isNotEmpty } from 'class-validator';
 import {
+	ID,
 	IEmployeePresetInput,
 	IGetJobPresetCriterionInput,
 	IGetJobPresetInput,
@@ -46,17 +47,15 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	 * @returns A Promise that resolves to an array of job presets.
 	 */
 	public async getAll(request?: IGetJobPresetInput) {
+		// Tenant ID is required for the query
+		const tenantId = RequestContext.currentTenantId() || request?.tenantId;
 		// Extract parameters from the request object
-		const { organizationId, search } = request || {};
-		let employeeId = request?.employeeId;
+		let { organizationId, search, employeeId } = request || {};
 
 		// If the user does not have the permission to change selected employee, use the current employee ID
 		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			employeeId = RequestContext.currentEmployeeId();
 		}
-
-		// Tenant ID is required for the query
-		const tenantId = RequestContext.currentTenantId() || request?.tenantId;
 
 		// Determine the appropriate LIKE operator based on the database type
 		const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
@@ -67,9 +66,8 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 		// Set the find options for the query
 		query.setFindOptions({
 			join: {
-				alias: 'job_preset',
-				// Left join employees relation
-				leftJoin: { employees: 'job_preset.employees' }
+				alias: 'job_preset', // Alias for the job preset table
+				leftJoin: { employees: 'job_preset.employees' } // Left join employees relation
 			},
 			// Include job preset criterions in the query result
 			relations: { jobPresetCriterions: true },
@@ -109,7 +107,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	 * @param request Additional parameters for the query, such as employeeId for fetching employee criteria.
 	 * @returns A Promise that resolves to the retrieved job preset.
 	 */
-	public async get(id: string, request?: IGetJobPresetCriterionInput) {
+	public async get(id: ID, request?: IGetJobPresetCriterionInput) {
 		const query = this.typeOrmRepository.createQueryBuilder();
 
 		// Left join job preset criterions
@@ -189,7 +187,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	 * @param employeeId The ID of the employee.
 	 * @returns A Promise that resolves to the job presets associated with the employee.
 	 */
-	async getEmployeePreset(employeeId: string): Promise<IJobPreset[]> {
+	async getEmployeePreset(employeeId: ID): Promise<IJobPreset[]> {
 		// Find the employee with the specified ID and include jobPresets relation
 		const employee = await this.typeOrmEmployeeRepository.findOne({
 			where: { id: employeeId },

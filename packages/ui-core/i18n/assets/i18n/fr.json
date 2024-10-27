@@ -468,7 +468,8 @@
 			"UPWORK_ORGANIZATION_ID": "Identifiant d'organisation Upwork",
 			"UPWORK_ORGANIZATION_NAME": "Nom de l'organisation Upwork",
 			"UPWORK_ID": "Identifiant Upwork",
-			"LINKEDIN_ID": "Identifiant LinkedIn"
+			"LINKEDIN_ID": "Identifiant LinkedIn",
+			"STANDARD_WORK_HOURS_PER_DAY": "Heures de travail standard par jour"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Nom",
@@ -655,7 +656,8 @@
 			"UPWORK_ORGANIZATION_ID": "ID d'organisation Upwork",
 			"UPWORK_ORGANIZATION_NAME": "Nom de l'organisation Upwork",
 			"UPWORK_ID": "Identifiant Upwork",
-			"LINKEDIN_ID": "ID LinkedIn"
+			"LINKEDIN_ID": "ID LinkedIn",
+			"STANDARD_WORK_HOURS_PER_DAY": "Entrez le nombre d'heures de travail standard par jour (par exemple, 8)"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Taux par défaut",
@@ -1187,7 +1189,8 @@
 			"DAILY_TIME_AND_ACTIVITY": "Il n'y a pas encore de temps et d'activité enregistrés pour cette journée. Veuillez utiliser l'application Gauzy Desktop Timer App <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">ici</a>.",
 			"PROJECT_BUDGET": "Vous n'avez créé aucun projet avec un budget.",
 			"CLIENT_BUDGET": "Vous n'avez créé aucun client avec un budget."
-		}
+		},
+		"STANDARD_WORK_HOURS": "Heures de travail standard ({{hours}})"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Applications et intégrations disponibles",
@@ -1979,7 +1982,8 @@
 					"ENABLE_DETECTION_INACTIVITY_INFO": "Activé - le système détectera l'inactivité et affichera un avertissement. Désactivé - aucun avertissement ne sera affiché lorsqu'un employé est inactif.",
 					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
 					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
-					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking."
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking.",
+					"STANDARD_WORK_HOURS_PER_DAY": "Sélectionnez le nombre d'heures de travail par jour par défaut. Cette valeur sera utilisée dans les rapports de suivi du temps pour comparer combien d'heures un employé a travaillé par rapport à cette norme."
 				}
 			},
 			"TEAMS_PAGE": {
@@ -2086,8 +2090,10 @@
 			},
 			"ONLY_ADMIN": "Ces autorisations sont en lecture seule et activées uniquement pour l'administrateur.",
 			"INSUFFICIENT": "Vous n'avez pas les permissions nécessaires. Les permissions suivantes sont manquantes :",
-			"ORG_SPRINT_EDIT": "Créer/Modifier des sprints",
-			"ORG_SPRINT_VIEW": "Voir les Sprints",
+			"ORG_SPRINT_EDIT": "Modifier le sprint",
+			"ORG_SPRINT_VIEW": "Voir le sprint",
+			"ORG_SPRINT_DELETE": "Supprimer les sprints",
+			"ORG_SPRINT_ADD": "Ajouter un sprint",
 			"ORG_PROJECT_ADD": "Créer des projets",
 			"ORG_PROJECT_VIEW": "Voir les projets",
 			"ORG_PROJECT_EDIT": "Modifier les projets",
@@ -3088,10 +3094,10 @@
 	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Sélectionner un employé",
-		"SELECT_A_DATE": "Sélectionnez une date",
-		"SELECT_AN_ORGANIZATION": "Sélectionnez une organisation",
-		"SELECT_PROJECT": "Sélectionner le projet",
-		"SELECT_TEAM": "Sélectionner l'équipe"
+		"SELECT_A_DATE": "Sélectionner une date",
+		"SELECT_AN_ORGANIZATION": "Sélectionner une organisation",
+		"SELECT_PROJECT": "Sélectionner un projet",
+		"SELECT_TEAM": "Sélectionner une équipe"
 	},
 	"HEADER_TITLE": {
 		"FOR": "pour",
@@ -3783,6 +3789,7 @@
 		"SELECT_PROJECT": "Sélectionner un projet",
 		"SELECT_TASK": "Sélectionner tâche",
 		"SELECT_CLIENT": "Sélectionner le client",
+		"SELECT_TEAM": "Sélectionner une équipe",
 		"DATE": "Date",
 		"START_TIME": "Heure de début",
 		"END_TIME": "Fin du temps.",
@@ -4039,6 +4046,11 @@
 			"NO_MONTHLY_ACTIVITY": "Vous n'avez aucune heure ou activité enregistrée pour ce mois.",
 			"WORKED_FOR_MONTH": "Travail de ce mois-ci",
 			"ACTIVITY_FOR_MONTH": "Activité Mensuelle"
+		},
+		"LOADING": {
+			"PLEASE_HOLD": "Veuillez patienter...",
+			"SHUTTING_DOWN": "L'application est en train de s'éteindre",
+			"LOGOUT_IN_PROGRESS": "Déconnexion en cours"
 		}
 	},
 	"SERVER": "Serveur",
@@ -4635,7 +4647,14 @@
 		"FAIL_SIGNIN_SUB_TITLE": "Veuillez initier le processus à nouveau.",
 		"THANKING_TEXT": "Merci de nous avoir choisis.",
 		"UNKNOWN_WORKSPACE": "Vous ne connaissez pas votre espace de travail ?",
-		"FIND_WORKSPACE": "Trouver votre espace de travail"
+		"FIND_WORKSPACE": "Trouver votre espace de travail",
+		"SELECTION": {
+			"WELCOME_BACK": "Bon retour!",
+			"YOU_LOOK_NICE_TODAY": "Tu as bonne mine aujourd'hui!",
+			"EMAIL_MULTIPLE_WORKSPACE": "L'email est associé à plusieurs espaces de travail, veuillez en sélectionner un pour continuer",
+			"SELECT_WORKSPACE_FOR": "Sélectionner l'espace de travail pour",
+			"OPEN": "Ouvrir"
+		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Ajouter ou supprimer une image",

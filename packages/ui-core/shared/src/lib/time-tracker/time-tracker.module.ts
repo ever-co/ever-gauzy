@@ -21,6 +21,7 @@ import { SharedModule } from '../shared.module';
 import { TimerPickerModule } from '../timer-picker/timer-picker.module';
 import { TaskSelectModule } from '../tasks/task-select/task-select.module';
 import { ProjectSelectModule } from '../selectors/project/project.module';
+import { TeamSelectModule } from '../selectors/team/team.module';
 import { ContactSelectorModule } from '../contact-selector/contact-selector.module';
 
 @NgModule({
@@ -43,6 +44,7 @@ import { ContactSelectorModule } from '../contact-selector/contact-selector.modu
 		TimerPickerModule,
 		TaskSelectModule,
 		ProjectSelectModule,
+		TeamSelectModule,
 		ContactSelectorModule,
 		TimeTrackerStatusModule
 	],

@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere, In } from 'typeorm';
-import { FavoriteEntityEnum, ID, IFavorite, IFavoriteCreateInput } from '@gauzy/contracts';
+import { BaseEntityEnum, ID, IFavorite, IFavoriteCreateInput, IPagination } from '@gauzy/contracts';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { Favorite } from './favorite.entity';
@@ -18,6 +18,29 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 		private readonly employeeService: EmployeeService
 	) {
 		super(typeOrmFavoriteRepository, mikroOrmFavoriteRepository);
+	}
+
+	/**
+	 * @description Find favorites by employee
+	 * @param {PaginationParams<Favorite>} options Filter criteria to find favorites
+	 * @returns A promise that resolves to paginated list of favorites
+	 * @memberof FavoriteService
+	 */
+	async findFavoritesByEmployee(options: PaginationParams<Favorite>): Promise<IPagination<IFavorite>> {
+		try {
+			const { where, relations = [], take, skip } = options;
+
+			const employeeId = RequestContext.currentEmployeeId() || where.employeeId;
+
+			return await super.findAll({
+				where: { ...where, employeeId },
+				...(skip && { skip }),
+				...(take && { take }),
+				...(relations && { relations })
+			});
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 
 	/**
@@ -86,10 +109,10 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 		try {
 			const { where } = options;
 			const { entity } = where;
-			const favoriteType: FavoriteEntityEnum = entity as FavoriteEntityEnum;
+			const favoriteType: BaseEntityEnum = entity as BaseEntityEnum;
 
 			// Find favorite elements with filtered params
-			const favorites = await this.findAll(options);
+			const favorites = await super.findAll(options);
 
 			// Get related entity IDs
 			const entityIds: ID[] = favorites.items.map((favorite) => favorite.entityId);

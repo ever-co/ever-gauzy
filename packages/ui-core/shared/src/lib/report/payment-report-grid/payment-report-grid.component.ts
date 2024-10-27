@@ -102,9 +102,9 @@ export class PaymentReportGridComponent extends BaseSelectorFilterComponent impl
 	}
 
 	/**
-	 * Retrieves payment report based on the provided request parameters.
+	 * Asynchronously retrieves the payment report based on the provided request parameters.
 	 *
-	 * @returns A Promise that resolves to the payment report data.
+	 * @returns {Promise<void>} A Promise that resolves to the payment report data.
 	 */
 	async getPaymentReport(): Promise<void> {
 		// Check if the organization and request are available
@@ -112,19 +112,22 @@ export class PaymentReportGridComponent extends BaseSelectorFilterComponent impl
 			return;
 		}
 
-		// Set loading to true
+		// Clear previous data and set loading to true
+		this.dailyData = [];
 		this.loading = true;
 
 		try {
-			// Get the request payloads
+			// Get the request payloads from the observable
 			const payloads = this.payloads$.getValue();
 
-			// Retrieve payments report using the service
+			// Retrieve payments report using the payment service
 			this.dailyData = await this.paymentService.getPaymentsReport(payloads);
 		} catch (error) {
-			console.log('Error while retrieving payments reports', error);
+			// Log the error and optionally notify the user
+			console.error('Error while retrieving payments reports:', error);
+			// Optionally: this.notificationService.showError('Failed to retrieve payment reports.');
 		} finally {
-			// Set loading to false
+			// Set loading to false once the process is done
 			this.loading = false;
 		}
 	}

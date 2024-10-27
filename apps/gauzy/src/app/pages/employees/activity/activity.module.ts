@@ -2,7 +2,7 @@ import { Inject, NgModule } from '@angular/core';
 import { ROUTES, RouterModule } from '@angular/router';
 import { NbCardModule, NbSpinnerModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { PageRouteRegistryService } from '@gauzy/ui-core/core';
+import { BookmarkQueryParamsResolver, PageRouteRegistryService } from '@gauzy/ui-core/core';
 import {
 	ActivityItemModule,
 	DateRangePickerResolver,
@@ -15,16 +15,11 @@ import { createActivityRoutes } from './activity.routes';
 import { ActivityLayoutComponent } from './layout/layout.component';
 import { AppUrlActivityComponent } from './app-url-activity/app-url-activity.component';
 
-// Nebular Modules
-const NB_MODULES = [NbCardModule, NbSpinnerModule];
-
-// Components
-const COMPONENTS = [AppUrlActivityComponent];
-
 @NgModule({
 	imports: [
 		RouterModule.forChild([]),
-		...NB_MODULES,
+		NbCardModule,
+		NbSpinnerModule,
 		TranslateModule.forChild(),
 		ActivityItemModule,
 		DynamicTabsModule,
@@ -32,7 +27,7 @@ const COMPONENTS = [AppUrlActivityComponent];
 		NoDataMessageModule,
 		SharedModule
 	],
-	declarations: [ActivityLayoutComponent, ...COMPONENTS],
+	declarations: [ActivityLayoutComponent, AppUrlActivityComponent],
 	providers: [
 		{
 			provide: ROUTES,
@@ -92,7 +87,10 @@ export class ActivityModule {
 				title: 'ACTIVITY.APPS', // Register the title for the page
 				type: 'apps' // Register the type for the page
 			},
-			resolve: { dates: DateRangePickerResolver }
+			resolve: {
+				dates: DateRangePickerResolver,
+				bookmarkParams: BookmarkQueryParamsResolver
+			}
 		});
 
 		// Register URL Activity Page Routes
@@ -111,7 +109,10 @@ export class ActivityModule {
 				title: 'ACTIVITY.VISITED_SITES', // Register the title for the page
 				type: 'urls' // Register the type for the page
 			},
-			resolve: { dates: DateRangePickerResolver }
+			resolve: {
+				dates: DateRangePickerResolver,
+				bookmarkParams: BookmarkQueryParamsResolver
+			}
 		});
 
 		// Set the flag to true

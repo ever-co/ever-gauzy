@@ -8,6 +8,7 @@ export class DeleteTimeSpanCommand implements ICommand {
 	constructor(
 		public readonly newTime: IDateRange,
 		public readonly timeLog: TimeLog,
-		public readonly timeSlot: ITimeSlot
+		public readonly timeSlot: ITimeSlot,
+		public readonly forceDelete: boolean = false
 	) {}
 }

@@ -1,5 +1,5 @@
-import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { ID, ITask, ITaskUpdateInput } from '@gauzy/contracts';
 import { TaskEvent } from '../../../event-bus/events';
 import { EventBus } from '../../../event-bus/event-bus';
@@ -38,31 +38,8 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 	 */
 	public async update(id: ID, input: ITaskUpdateInput, triggeredEvent: boolean): Promise<ITask> {
 		try {
-			const tenantId = RequestContext.currentTenantId() || input.tenantId;
-			const task = await this._taskService.findOneByIdString(id);
-
-			if (input.projectId && input.projectId !== task.projectId) {
-				const { organizationId, projectId } = task;
-
-				// Get the maximum task number for the project
-				const maxNumber = await this._taskService.getMaxTaskNumberByProject({
-					tenantId,
-					organizationId,
-					projectId
-				});
-
-				// Update the task with the new project and task number
-				await this._taskService.update(id, {
-					projectId,
-					number: maxNumber + 1
-				});
-			}
-
 			// Update the task with the provided data
-			const updatedTask = await this._taskService.create({
-				...input,
-				id
-			});
+			const updatedTask = await this._taskService.update(id, input);
 
 			// The "2 Way Sync Triggered Event" for Synchronization
 			if (triggeredEvent) {

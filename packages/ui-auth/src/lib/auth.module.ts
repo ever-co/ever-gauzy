@@ -19,7 +19,6 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { LanguagesEnum } from '@gauzy/contracts';
 import {
 	ElectronService,
 	InviteService,
@@ -28,7 +27,7 @@ import {
 	RoleService
 } from '@gauzy/ui-core/core';
 import { ThemeModule, ThemeSelectorModule } from '@gauzy/ui-core/theme';
-import { NgxFaqModule, PasswordFormFieldModule, SharedModule } from '@gauzy/ui-core/shared';
+import { NgxFaqModule, PasswordFormFieldModule, SharedModule, getBrowserLanguage } from '@gauzy/ui-core/shared';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import { createAuthRoutes } from './auth.routes';
 import { WorkspaceSelectionComponent } from './components/workspace-selection/workspace-selection.component';
@@ -95,7 +94,7 @@ const COMPONENTS = [
 
 const THIRD_PARTY_MODULES = [
 	TranslateModule.forRoot({
-		defaultLanguage: LanguagesEnum.ENGLISH,
+		defaultLanguage: getBrowserLanguage(), // Get the browser language and fall back to a default if needed
 		loader: {
 			provide: TranslateLoader,
 			useFactory: HttpLoaderFactory,

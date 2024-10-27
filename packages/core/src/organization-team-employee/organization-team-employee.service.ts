@@ -42,11 +42,11 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		organizationId: ID,
 		employees: IEmployee[],
 		role: Role,
-		managerIds: string[],
-		memberIds: string[]
+		managerIds: ID[],
+		memberIds: ID[]
 	): Promise<void> {
 		const tenantId = RequestContext.currentTenantId();
-		const membersToUpdate = [...managerIds, ...memberIds];
+		const membersToUpdate = new Set([...managerIds, ...memberIds].filter(Boolean));
 
 		// Fetch existing team members with their roles
 		const teamMembers = await this.typeOrmRepository.find({
@@ -58,25 +58,29 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		const existingMemberMap = new Map(teamMembers.map((member) => [member.employeeId, member]));
 
 		// Separate members to remove and to update
-		const removedMembers = teamMembers.filter((member) => !membersToUpdate.includes(member.employeeId));
-		const updatedMembers = teamMembers.filter((member) => membersToUpdate.includes(member.employeeId));
+		const removedMembers = teamMembers.filter((member) => !membersToUpdate.has(member.employeeId));
+		const updatedMembers = teamMembers.filter((member) => membersToUpdate.has(member.employeeId));
 
 		// 1. Remove members who are no longer in the team
 		if (removedMembers.length > 0) {
-			const removedMemberIds = removedMembers.map((member) => member.id);
-			await this.deleteMemberByIds(removedMemberIds);
+			await this.deleteMemberByIds(removedMembers.map((member) => member.id));
 		}
 
 		// 2. Update role for existing members
-		for (const member of updatedMembers) {
-			const isManager = managerIds.includes(member.employeeId);
-			const newRole = isManager ? role : member.role?.id === role.id ? member.role : null;
+		await Promise.all(
+			updatedMembers.map(async (member) => {
+				const isManager = managerIds.includes(member.employeeId);
+				const newRole = isManager ? role : null;
 
-			// Only update if the role is different
-			if (newRole && newRole.id !== member.roleId) {
-				await this.typeOrmRepository.update(member.id, { role: newRole });
-			}
-		}
+				// Only update if the role has changed
+				if (newRole?.id !== member.roleId) {
+					await this.typeOrmRepository.update(member.id, {
+						role: newRole,
+						isManager
+					});
+				}
+			})
+		);
 
 		// 3. Add new members to the team
 		const newMembers = employees.filter((employee) => !existingMemberMap.has(employee.id));

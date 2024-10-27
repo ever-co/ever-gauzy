@@ -42,7 +42,6 @@ import {
 	Subject,
 	tap
 } from 'rxjs';
-import * as _ from 'underscore';
 import { AlwaysOnService, AlwaysOnStateEnum } from '../always-on/always-on.service';
 import { AuthStrategy } from '../auth';
 import { GAUZY_ENV } from '../constants';
@@ -73,6 +72,7 @@ import { TaskSelectorService } from '../shared/features/task-selector/+state/tas
 import { TeamSelectorService } from '../shared/features/team-selector/+state/team-selector.service';
 import { TimeTrackerFormService } from '../shared/features/time-tracker-form/time-tracker-form.service';
 import { hasAllPermissions } from '../shared/utils/permission.util';
+import { SelectorValidator } from '../shared/utils/validation/selector.validator';
 import { TimeTrackerQuery } from './+state/time-tracker.query';
 import { IgnitionState, TimeTrackerStore } from './+state/time-tracker.store';
 import { IRemoteTimer } from './time-tracker-status/interfaces';
@@ -125,6 +125,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	public weeklyDuration$: BehaviorSubject<any> = new BehaviorSubject('--h --m');
 	public userOrganization$: BehaviorSubject<any> = new BehaviorSubject({});
 	public lastScreenCapture$: BehaviorSubject<any> = new BehaviorSubject({});
+	public processing$ = new BehaviorSubject(this.processingStatus);
 	userPermission: any = [];
 	quitApp = false;
 	employeeId = null;
@@ -449,10 +450,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		try {
 			const { lastTimer, isStarted } = timer;
 
-			const isRemote =
-				this._timeTrackerStatus.remoteTimer &&
-				this.xor(!isStarted, this._timeTrackerStatus.remoteTimer.running) &&
-				this._startMode === TimerStartMode.REMOTE;
+			const remoteTimer = this._timeTrackerStatus.remoteTimer;
+			const isRemoteTimerRunning = remoteTimer && remoteTimer.running;
+			const isInRemoteStartMode = this._startMode === TimerStartMode.REMOTE;
+			const isLocalTimerNotStarted = !isStarted;
+			const isToggleModeValid = this.xor(isLocalTimerNotStarted, isRemoteTimerRunning);
+
+			const isRemote = (isToggleModeValid && isInRemoteStartMode) || !onClick;
 
 			const params = {
 				token: this.token,
@@ -485,19 +489,29 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			} else {
 				if (!this._isOffline) {
 					try {
-						timelog =
+						// Combine all conditions into a single descriptive boolean
+						const isRetrieveRemoteLog =
+							!isRemoteTimerRunning ||
 							isRemote ||
 							this._remoteSleepLock ||
-							(this.isRemoteTimer && (this._isSpecialLogout || this.quitApp))
-								? this._timeTrackerStatus.remoteTimer.lastLog
-								: await this.preventDuplicateApiRequest(
-										{
-											...params,
-											...lastTimer
-										},
-										(payload) => this.timeTrackerService.toggleApiStop(payload)
-								  );
+							(this.isRemoteTimer && (this._isSpecialLogout || this.quitApp));
+
+						if (isRetrieveRemoteLog) {
+							// Retrieve remote timer log
+							timelog = this._timeTrackerStatus.remoteTimer.lastLog;
+						} else {
+							// Create request parameters only when necessary
+							const requestParams = {
+								...params,
+								...lastTimer
+							};
+							// Execute API request to stop timer and store the result in timelog
+							timelog = await this.preventDuplicateApiRequest(requestParams, (payload) =>
+								this.timeTrackerService.toggleApiStop(payload)
+							);
+						}
 					} catch (error) {
+						// Handle any error during the process
 						lastTimer.isStoppedOffline = true;
 						await this.electronService.ipcRenderer.invoke('MARK_AS_STOPPED_OFFLINE');
 						this._loggerService.error(error);
@@ -609,17 +623,20 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.pipe(
 				filter(
 					(remoteTimer: IRemoteTimer) =>
+						!!remoteTimer.lastLog &&
 						this.xor(this.start, remoteTimer.running) &&
 						!this._isLockSyncProcess &&
 						this._isReady &&
 						this.inQueue.size === 0
 				),
 				tap(async (remoteTimer: IRemoteTimer) => {
-					this.projectSelectorService.selected = remoteTimer.lastLog.projectId;
-					this.taskSelectorService.selected = remoteTimer.lastLog.taskId;
-					this.noteService.note = remoteTimer.lastLog.description;
-					this.teamSelectorService.selected = remoteTimer.lastLog.organizationTeamId;
-					this.clientSelectorService.selected = remoteTimer.lastLog.organizationContactId;
+					this.timeTrackerFormService.setState({
+						clientId: remoteTimer.lastLog.organizationContactId,
+						teamId: remoteTimer.lastLog.organizationTeamId,
+						projectId: remoteTimer.lastLog.projectId,
+						note: remoteTimer.lastLog.description,
+						taskId: remoteTimer.lastLog.taskId
+					});
 					if (!this.isProcessingEnabled) {
 						await this.toggleStart(remoteTimer.running, false);
 					}
@@ -775,6 +792,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				if (!this._isReady && this.appSetting?.alwaysOn) {
 					this.electronService.ipcRenderer.send('show_ao');
 				}
+				this.timeTrackerFormService.setState({
+					clientId: arg.organizationContactId,
+					teamId: arg.organizationTeamId,
+					projectId: arg.projectId,
+					taskId: arg.taskId,
+					note: arg.note
+				});
 				const parallelizedTasks: Promise<void>[] = [
 					this.loadStatuses(),
 					this.clientSelectorService.load(),
@@ -782,11 +806,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.teamSelectorService.load(),
 					this.taskSelectorService.load(),
 					this.getTodayTime(),
-					this.setTimerDetails()
+					this.setTimerDetails(),
+					this.getLastTimeSlotImage(arg)
 				];
-				if (arg.timeSlotId) {
-					parallelizedTasks.push(this.getLastTimeSlotImage(arg));
-				}
 				await Promise.allSettled(parallelizedTasks);
 				this._isReady = true;
 				this._isRefresh$.next(false);
@@ -810,11 +832,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				if (arg?.quitApp) {
 					// Set the quitApp flag to true
 					this.quitApp = true;
+					this.processing$.next(this.processingStatus);
 				}
 
 				// Check if quitApp flag is already set, and if so, force stop the timer and return
 				if (this.quitApp) {
-					await this.stopTimer(true, true);
+					await this.stopTimer(!this.isRemoteTimer, true);
 					return;
 				}
 
@@ -977,6 +1000,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				if (this.isExpand) this.expand();
 				if (this.start && !this.isRemoteTimer) {
 					this._isSpecialLogout = true;
+					this.processing$.next(this.processingStatus);
 					await this.stopTimer();
 				}
 				if (!this._isSpecialLogout) {
@@ -1124,11 +1148,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 					if (isReadyForDeletion) {
 						const apiParams = {
+							...arg.timer,
 							token: this.token,
 							note: this.noteService.note,
 							projectId: this.projectSelectorService.selectedId,
 							taskId: this.taskSelectorService.selectedId,
 							organizationContactId: this.clientSelectorService.selectedId,
+							organizationTeamId: this.teamSelectorService.selectedId,
 							organizationId,
 							tenantId,
 							apiHost: this.apiHost
@@ -1404,7 +1430,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			} else {
 				this.loading = false;
 				this.isProcessingEnabled = false;
+				this._toastrNotifier.error('Validation failed');
 				this._loggerService.error('Error', 'validation failed');
+				this.timeTrackerStore.ignition({ state: IgnitionState.STOPPED });
 			}
 		}
 	}
@@ -1628,25 +1656,26 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public validationField(): boolean {
-		this.errorBind();
-		const errors = [];
-		const requireField = {
-			task: 'requireTask',
-			project: 'requireProject',
-			client: 'requireClient',
-			note: 'requireDescription'
-		};
-		Object.keys(this.errors).forEach((key) => {
-			if (this.errors[key] && this.userOrganization[requireField[key]]) errors.push(true);
-		});
-		return errors.length === 0;
-	}
+		const selectorValidator = new SelectorValidator([
+			{
+				service: this.projectSelectorService,
+				requireField: this.userOrganization.requireProject
+			},
+			{
+				service: this.taskSelectorService,
+				requireField: this.userOrganization.requireTask
+			},
+			{
+				service: this.clientSelectorService,
+				requireField: this.userOrganization.requireClient
+			},
+			{
+				service: this.noteService,
+				requireField: this.userOrganization.requireDescription
+			}
+		]);
 
-	public errorBind(): void {
-		if (!this.projectSelectorService.selected && this.userOrganization.requireProject) this.errors.project = true;
-		if (!this.selectedTask && this.userOrganization.requireTask) this.errors.task = true;
-		if (!this.clientSelectorService.selected && this.userOrganization.requireClient) this.errors.client = true;
-		if (!this.noteService.note && this.userOrganization.requireDescription) this.errors.note = true;
+		return selectorValidator.validateAll();
 	}
 
 	public doShoot(): void {
@@ -1676,13 +1705,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public async getLastTimeSlotImage(arg): Promise<void> {
-		if (this._isOffline) return;
+		if (this._isOffline || this.lastTimeSlot?.id === arg?.timeSlotId) {
+			return;
+		}
 		try {
 			const res = await this.timeTrackerService.getTimeSlot(arg);
-			let { screenshots }: any = res;
+			const { screenshots = [] } = res || {};
 			console.log('Get Last Timeslot Image Response:', screenshots);
 			if (screenshots && screenshots.length > 0) {
-				screenshots = _.sortBy(screenshots, 'recordedAt').reverse();
 				const [lastCaptureScreen] = screenshots;
 				console.log('Last Capture Screen:', lastCaptureScreen);
 				this.lastScreenCapture$.next(lastCaptureScreen);
@@ -1690,7 +1720,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.screenshots$.next(screenshots);
 				this.lastTimeSlot = res;
 			}
-			if (this.lastScreenCapture.recordedAt) {
+			if (this.lastScreenCapture?.recordedAt) {
 				this.lastScreenCapture$.next({
 					...this.lastScreenCapture,
 					textTime: moment(this.lastScreenCapture.recordedAt).fromNow()
@@ -1703,24 +1733,40 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	public async localImage(img, originalBase64Image?: string): Promise<void> {
+	public async localImage(
+		img: { thumbUrl?: string; recordedAt?: string; fullUrl?: string } | string,
+		originalBase64Image?: string
+	): Promise<void> {
 		try {
-			const convScreenshot =
-				img && img.thumbUrl ? await this._imageViewerService.getBase64ImageFromUrl(img.thumbUrl) : img;
-			localStorage.setItem(
-				'lastScreenCapture',
-				JSON.stringify({
-					thumbUrl: convScreenshot,
-					textTime: moment().fromNow(),
-					createdAt: Date.now(),
-					recordedAt: Date.now(),
-					...(originalBase64Image && {
-						fullUrl: originalBase64Image
-					})
-				})
-			);
+			// Determine the fullUrl, prioritizing originalBase64Image if provided
+			const fullUrl = originalBase64Image || (typeof img === 'object' ? img.fullUrl : undefined);
+
+			// Fetch the thumbnail or use the image string directly if img is a string
+			const thumbUrl =
+				typeof img === 'object' && img.thumbUrl
+					? await this._imageViewerService.getBase64ImageFromUrl(img.thumbUrl)
+					: typeof img === 'string'
+					? img
+					: undefined;
+
+			// Set timestamp, preferring recordedAt if available
+			const timestamp = typeof img === 'object' && img.recordedAt ? new Date(img.recordedAt) : new Date();
+
+			if (fullUrl && thumbUrl) {
+				const screenCaptureData = {
+					fullUrl,
+					thumbUrl,
+					textTime: moment(timestamp).fromNow(),
+					createdAt: timestamp,
+					recordedAt: timestamp
+				};
+
+				localStorage.setItem('lastScreenCapture', JSON.stringify(screenCaptureData));
+			} else {
+				this._loggerService.warn('WARN: Invalid image data: missing fullUrl or thumbUrl.');
+			}
 		} catch (error) {
-			console.log('ERROR', error);
+			this._loggerService.error('ERROR: Storing image:', error.message);
 		}
 	}
 
@@ -1790,6 +1836,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public showImage(): void {
+		if (!this.screenshots.length) {
+			const message = 'Attempted to open an empty image gallery.';
+			this.toastrService.warning(message);
+			this._loggerService.warn(`WARN: ${message}`);
+			return;
+		}
 		this.electronService.ipcRenderer.send('show_image', this.screenshots);
 	}
 
@@ -2228,7 +2280,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			// Force stop timer on error
 			try {
 				if (this.stopTimer) {
-					await this.stopTimer(false, true);
+					await this.stopTimer(!this.isRemoteTimer, true);
 				}
 			} catch (stopError) {
 				this._loggerService?.error('Error in force stopping the timer', stopError);
@@ -2285,14 +2337,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public get processingStatus() {
 		if (this._isSpecialLogout) {
-			return { state: this._isSpecialLogout, message: 'Logout in progress' };
+			return { state: this._isSpecialLogout, message: 'TIMER_TRACKER.LOADING.LOGOUT_IN_PROGRESS' };
 		}
 
 		if (this.quitApp) {
-			return { state: this.quitApp, message: 'Application is shutting down' };
+			return { state: this.quitApp, message: 'TIMER_TRACKER.LOADING.SHUTTING_DOWN' };
 		}
 
-		return { state: false, message: '' };
+		return { state: false, message: this._translateService.instant('TIMER_TRACKER.LOADING.PLEASE_HOLD') };
 	}
 
 	private async preventDuplicateApiRequest<T, U>(payload: T, callback: (payload: T) => Promise<U>): Promise<U> {
@@ -2313,6 +2365,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			taskId: timer.taskId,
 			organizationTeamId: timer.organizationTeamId,
 			description: timer.description,
+			version: timer.version,
 			startedAt: timer.startedAt,
 			stoppedAt: new Date(),
 			...(session?.params && { ...session.params })
@@ -2351,6 +2404,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		await this.electronService.ipcRenderer.invoke('UPDATE_SELECTOR', newParams);
 
+		await this.updateTaskStatus();
+
+		await this.updateOrganizationTeamEmployee();
 		// Return the result of the callback (or void if no callback was provided)
 		return { current, previous, result, params };
 	}

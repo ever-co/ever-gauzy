@@ -17,6 +17,7 @@ import { filter, debounceTime, tap, switchMap } from 'rxjs/operators';
 import {
 	CrudActionEnum,
 	DEFAULT_TYPE,
+	ID,
 	IDateRangePicker,
 	IEmployee,
 	IOrganization,
@@ -43,82 +44,37 @@ import { ALL_EMPLOYEES_SELECTED } from './default-employee';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, AfterViewInit {
-	/*
-	 * Getter & Setter for dynamic clearable option
-	 */
-	_clearable: boolean = true;
-	get clearable(): boolean {
-		return this._clearable;
-	}
-	@Input() set clearable(value: boolean) {
-		this._clearable = value;
-	}
-
-	/*
-	 * Getter & Setter for dynamic add tag option
-	 */
-	_addTag: boolean = true;
-	get addTag(): boolean {
-		return this._addTag;
-	}
-	@Input() set addTag(value: boolean) {
-		this._addTag = value;
-	}
-
-	private _skipGlobalChange: boolean = false;
-	get skipGlobalChange(): boolean {
-		return this._skipGlobalChange;
-	}
-	@Input() set skipGlobalChange(value: boolean) {
-		this._skipGlobalChange = value;
-	}
-
-	/*
-	 * Getter & Setter for dynamic disabled element
-	 */
-	private _disabled: boolean = false;
-	get disabled(): boolean {
-		return this._disabled;
-	}
-	@Input() set disabled(value: boolean) {
-		this._disabled = value;
-	}
-
-	/*
-	 * Getter & Setter for dynamic placeholder
-	 */
-	private _placeholder: string;
-	get placeholder(): string {
-		return this._placeholder;
-	}
-	@Input() set placeholder(value: string) {
-		this._placeholder = value;
-	}
+	public hasEditEmployee$: Observable<boolean>;
+	public organization: IOrganization;
+	public employees: ISelectedEmployee[] = [];
+	public subject$: Subject<any> = new Subject();
 
 	/**
+	 * Input properties for component customization.
 	 *
+	 * @property clearable - Whether the component allows clearing the selection (default: true).
+	 * @property addTag - Whether adding new tags is allowed (default: true).
+	 * @property skipGlobalChange - Whether to skip global change handling (default: false).
+	 * @property disabled - Whether the component is disabled (default: false).
+	 * @property placeholder - The placeholder text for the component.
+	 * @property defaultSelected - Whether the default option is selected (default: true).
+	 * @property showAllEmployeesOption - Whether to show the "All Employees" option (default: true).
 	 */
-	private _defaultSelected: boolean = true;
-	get defaultSelected(): boolean {
-		return this._defaultSelected;
-	}
-	@Input() set defaultSelected(value: boolean) {
-		this._defaultSelected = value;
-	}
+	@Input() clearable: boolean = true;
+	@Input() addTag: boolean = true;
+	@Input() skipGlobalChange: boolean = false;
+	@Input() disabled: boolean = false;
+	@Input() placeholder: string;
+	@Input() defaultSelected: boolean = true;
+	@Input() showAllEmployeesOption: boolean = true;
 
 	/**
+	 * Manages the selected date range.
 	 *
-	 */
-	private _showAllEmployeesOption: boolean = true;
-	get showAllEmployeesOption(): boolean {
-		return this._showAllEmployeesOption;
-	}
-	@Input() set showAllEmployeesOption(value: boolean) {
-		this._showAllEmployeesOption = value;
-	}
-
-	/**
+	 * The `selectedDateRange` setter updates the date range and triggers an update via `subject$.next`
+	 * with the selected organization and date range.
 	 *
+	 * @property selectedDateRange - The currently selected date range.
 	 */
 	private _selectedDateRange?: IDateRangePicker;
 	get selectedDateRange(): IDateRangePicker {
@@ -130,7 +86,11 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	}
 
 	/**
+	 * Manages the selected employee.
 	 *
+	 * The `selectedEmployee` setter updates the selected employee and logs the change for debugging.
+	 *
+	 * @property selectedEmployee - The currently selected employee.
 	 */
 	private _selectedEmployee: ISelectedEmployee;
 	get selectedEmployee(): ISelectedEmployee {
@@ -138,14 +98,14 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	}
 	@Input() set selectedEmployee(employee: ISelectedEmployee) {
 		this._selectedEmployee = employee;
+
+		// If skipGlobalChange is false, update the query parameters
+		if (!this.skipGlobalChange) {
+			this.setAttributesToParams({ employeeId: employee?.id });
+		}
 	}
 
 	@Output() selectionChanged: EventEmitter<ISelectedEmployee> = new EventEmitter();
-
-	public hasEditEmployee$: Observable<boolean>;
-	public organization: IOrganization;
-	people: ISelectedEmployee[] = [];
-	subject$: Subject<any> = new Subject();
 
 	constructor(
 		private readonly _router: Router,
@@ -238,37 +198,32 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	}
 
 	/**
-	 * After create new employee pushed on header selector
-	 * @param employees
+	 * Adds newly created employees to the header selector.
+	 * @param employees - The array of employees to add.
 	 */
-	createEmployee(employees: IEmployee[]) {
-		const people: ISelectedEmployee[] = this.people || [];
-		if (Array.isArray(people)) {
-			employees.forEach((employee: IEmployee) => {
-				people.push({
-					id: employee.id,
-					firstName: employee.user.firstName,
-					lastName: employee.user.lastName,
-					fullName: employee.user.name,
-					imageUrl: employee.user.imageUrl,
-					timeFormat: employee.user.timeFormat,
-					timeZone: employee.user.timeZone
-				});
-			});
-			this.people = [...people].filter(isNotEmpty);
-		}
+	createEmployee(employees: IEmployee[]): void {
+		this.employees = [
+			...(this.employees || []),
+			...employees.map((employee: IEmployee) => ({
+				id: employee.id,
+				firstName: employee.user.firstName,
+				lastName: employee.user.lastName,
+				fullName: employee.user.name,
+				imageUrl: employee.user.imageUrl,
+				timeFormat: employee.user.timeFormat,
+				timeZone: employee.user.timeZone
+			}))
+		].filter(isNotEmpty);
 	}
 
 	/**
-	 * After delete remove employee from header selector
-	 * @param employee
+	 * Removes a deleted employee from the header selector.
+	 * @param employee - The employee to remove.
 	 */
-	deleteEmployee(employee: IEmployee) {
-		let people: ISelectedEmployee[] = this.people || [];
-		if (Array.isArray(people) && people.length) {
-			people = people.filter((item: ISelectedEmployee) => item.id !== employee.id);
-		}
-		this.people = [...people].filter(isNotEmpty);
+	deleteEmployee(employee: IEmployee): void {
+		this.employees = (this.employees || [])
+			.filter((item: ISelectedEmployee) => item.id !== employee.id)
+			.filter(isNotEmpty);
 	}
 
 	/**
@@ -282,7 +237,10 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	 */
 	searchEmployee(term: string, item: any): boolean {
 		// Split the search term by commas to handle multiple names
-		const searchTerms = term.toLowerCase().split(',').map((s) => s.trim());
+		const searchTerms = term
+			.toLowerCase()
+			.split(',')
+			.map((s) => s.trim());
 
 		// Combine the employee's firstName and lastName for easier comparison
 		const fullName = `${item.firstName || ''} ${item.lastName || ''}`.toLowerCase();
@@ -325,17 +283,18 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	}
 
 	/**
-	 * Selects an employee by their ID and performs necessary actions based on the selection
-	 * @param employeeId The ID of the employee to select
+	 * Selects an employee by their ID and performs necessary actions based on the selection.
+	 *
+	 * @param employeeId - The ID of the employee to select.
 	 */
-	async selectEmployeeById(employeeId: string) {
+	async selectEmployeeById(employeeId: ID): Promise<void> {
 		try {
-			const employee = this.people.find((employee: ISelectedEmployee) => employeeId === employee.id);
+			const employee = this.employees.find((emp: ISelectedEmployee) => emp.id === employeeId);
 			if (employee) {
 				await this.selectEmployee(employee);
 			}
 		} catch (error) {
-			console.error('Error while selecting employee by ID:', error);
+			console.error('Error selecting employee by ID:', error);
 		}
 	}
 
@@ -368,9 +327,9 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	 */
 	private onSelectEmployee() {
 		try {
-			if (!this.selectedEmployee && isNotEmpty(this.people)) {
+			if (!this.selectedEmployee && isNotEmpty(this.employees)) {
 				// Ensure selected employee doesn't get reset when already set elsewhere
-				this.selectEmployee(this.people[0]);
+				this.selectEmployee(this.employees[0]);
 			}
 
 			if (!this.defaultSelected && this.selectedEmployee === ALL_EMPLOYEES_SELECTED) {
@@ -390,7 +349,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	loadWorkingEmployeesIfRequired = async (organization: IOrganization, selectedDateRange: IDateRangePicker) => {
 		//If no organization, then something is wrong
 		if (!organization) {
-			this.people = [];
+			this.employees = [];
 			return;
 		}
 		this._selectedDateRange = selectedDateRange;
@@ -405,7 +364,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	 */
 	private getEmployees = async (organization: IOrganization, selectedDateRange: IDateRangePicker) => {
 		if (!organization) {
-			this.people = [];
+			this.employees = [];
 			return;
 		}
 		const { tenantId } = this._store.user;
@@ -413,7 +372,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 
 		const { items } = await this._employeesService.getWorking(organizationId, tenantId, selectedDateRange, true);
 
-		this.people = [
+		this.employees = [
 			...items.map((employee: IEmployee) => {
 				return {
 					id: employee.id,
@@ -433,12 +392,12 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 
 		//Insert All Employees Option
 		if (this.showAllEmployeesOption && this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-			this.people.unshift(ALL_EMPLOYEES_SELECTED);
+			this.employees.unshift(ALL_EMPLOYEES_SELECTED);
 		}
 
 		//Set selected employee if no employee selected
 		if (items.length > 0 && !this._store.selectedEmployee) {
-			this._store.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
+			this._store.selectedEmployee = this.employees[0] || ALL_EMPLOYEES_SELECTED;
 		}
 	};
 
@@ -482,8 +441,8 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	};
 
 	ngOnDestroy() {
-		if (this.people.length > 0 && !this._store.selectedEmployee && !this.skipGlobalChange) {
-			this._store.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
+		if (this.employees.length > 0 && !this._store.selectedEmployee && !this.skipGlobalChange) {
+			this._store.selectedEmployee = this.employees[0] || ALL_EMPLOYEES_SELECTED;
 		}
 	}
 }

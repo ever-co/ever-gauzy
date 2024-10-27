@@ -1,9 +1,9 @@
-import { ActionTypeEnum, ActivityLogEntityEnum } from "@gauzy/contracts";
+import { ActionTypeEnum, BaseEntityEnum, IActivityLogUpdatedValues } from '@gauzy/contracts';
 
 const ActivityTemplates = {
 	[ActionTypeEnum.Created]: `{action} a new {entity} called "{entityName}"`,
 	[ActionTypeEnum.Updated]: `{action} {entity} "{entityName}"`,
-	[ActionTypeEnum.Deleted]: `{action} {entity} "{entityName}"`,
+	[ActionTypeEnum.Deleted]: `{action} {entity} "{entityName}"`
 };
 
 /**
@@ -15,7 +15,7 @@ const ActivityTemplates = {
  */
 export function generateActivityLogDescription(
 	action: ActionTypeEnum,
-	entity: ActivityLogEntityEnum,
+	entity: BaseEntityEnum,
 	entityName: string
 ): string {
 	// Get the template corresponding to the action
@@ -31,7 +31,33 @@ export function generateActivityLogDescription(
 			case 'entityName':
 				return entityName;
 			default:
-			return '';
+				return '';
 		}
 	});
+}
+
+/**
+ * @description Log updated field names, old and new values for Activity Log Updated Actions
+ * @template T
+ * @param {T} originalValues - Old values before update
+ * @param {Partial<T>} updated - Updated values
+ * @returns An object with updated fields, their old and new values
+ */
+export function activityLogUpdatedFieldsAndValues<T>(originalValues: T, updated: Partial<T>) {
+	const updatedFields: string[] = [];
+	const previousValues: IActivityLogUpdatedValues[] = [];
+	const updatedValues: IActivityLogUpdatedValues[] = [];
+
+	for (const key of Object.keys(updated)) {
+		if (originalValues[key] !== updated[key]) {
+			// Add updated field
+			updatedFields.push(key);
+
+			// Add old and new values
+			previousValues.push({ [key]: originalValues[key] });
+			updatedValues.push({ [key]: updated[key] });
+		}
+	}
+
+	return { updatedFields, previousValues, updatedValues };
 }

@@ -5,6 +5,7 @@ import { MultiORMEnum, getORMType } from '../../utils';
 import {
 	ActivitySubscriber,
 	ActivityLogSubscriber,
+	ApiCallLogSubscriber,
 	CandidateSubscriber,
 	CustomSmtpSubscriber,
 	EmailResetSubscriber,
@@ -29,6 +30,7 @@ import {
 	PipelineSubscriber,
 	ProductCategorySubscriber,
 	ReportSubscriber,
+	ResourceLinkSubscriber,
 	RoleSubscriber,
 	ScreenshotSubscriber,
 	TagSubscriber,
@@ -40,6 +42,7 @@ import {
 	TaskVersionSubscriber,
 	TenantSubscriber,
 	TimeOffRequestSubscriber,
+	TimesheetSubscriber,
 	TimeSlotSubscriber,
 	UserSubscriber
 } from '../internal';
@@ -55,6 +58,7 @@ export const coreSubscribers = [
 	...(ormType === MultiORMEnum.MikroORM ? [TenantOrganizationBaseEntityEventSubscriber] : []),
 	ActivitySubscriber,
 	ActivityLogSubscriber,
+	ApiCallLogSubscriber,
 	CandidateSubscriber,
 	CustomSmtpSubscriber,
 	EmailResetSubscriber,
@@ -79,6 +83,7 @@ export const coreSubscribers = [
 	PipelineSubscriber,
 	ProductCategorySubscriber,
 	ReportSubscriber,
+	ResourceLinkSubscriber,
 	RoleSubscriber,
 	ScreenshotSubscriber,
 	TagSubscriber,
@@ -90,6 +95,7 @@ export const coreSubscribers = [
 	TaskVersionSubscriber,
 	TenantSubscriber,
 	TimeOffRequestSubscriber,
+	TimesheetSubscriber,
 	TimeSlotSubscriber,
 	UserSubscriber
 ];

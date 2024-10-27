@@ -1,0 +1,24 @@
+<div class="avatar-wrapper">
+	<div class="inner-wrapper">
+		<div class="image-outer-wrapper" *ngIf="src">
+			<div class="image-container" [ngClass]="size">
+				<img class="rounded-circle" type="user" [src]="src" />
+				<span
+					*ngIf="employee"
+					class="status-indicator"
+					[ngClass]="{ online: online$ | async, offline: !(online$ | async) }"
+				></span>
+			</div>
+		</div>
+		<div class="names-wrapper">
+			<ng-container *ngIf="name">
+				<a *ngIf="!isOption" class="link-text" [title]="name">{{ name }}</a>
+				<div *ngIf="isOption">{{ name }}</div>
+			</ng-container>
+			<div class="text-caption caption" *ngIf="caption">
+				<ng-container *ngIf="appendCaption">{{ appendCaption }}</ng-container>
+				{{ caption }}
+			</div>
+		</div>
+	</div>
+</div>
