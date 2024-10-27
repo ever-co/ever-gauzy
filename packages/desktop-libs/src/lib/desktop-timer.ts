@@ -387,7 +387,10 @@ export default class TimerHandler {
 					organizationContactId: params.organizationContactId,
 					employeeId: params.employeeId,
 					metaData:
-						this.configs && this.configs.db === 'sqlite'
+						this.configs &&
+						(this.configs.db === 'sqlite' ||
+							this.configs.db === 'better-sqlite' ||
+							this.configs.db === 'better-sqlite3')
 							? JSON.stringify(activityMetadata)
 							: activityMetadata
 				};

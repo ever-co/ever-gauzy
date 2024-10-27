@@ -70,7 +70,6 @@
 		"npmRebuild": true,
 		"asarUnpack": [
 			"node_modules/@sentry/electron",
-			"node_modules/sqlite3/lib",
 			"node_modules/better-sqlite3",
 			"node_modules/@sentry/profiling-node/lib"
 		],
@@ -194,7 +193,6 @@
 		"pg-query-stream": "^4.7.1",
 		"pg": "^8.13.1",
 		"sound-play": "1.1.0",
-		"sqlite3": "^5.1.7",
 		"squirrelly": "^8.0.8",
 		"tslib": "^2.6.2",
 		"twing": "^5.0.2",

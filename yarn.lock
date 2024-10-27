@@ -7043,16 +7043,6 @@
     postgres-date "2.1.0"
     postgres-interval "4.0.2"
 
-"@mikro-orm/sqlite@^6.2.3":
-  version "6.3.13"
-  resolved "https://registry.yarnpkg.com/@mikro-orm/sqlite/-/sqlite-6.3.13.tgz#1aca779524ac6248503a7046a7c89a0b1fd73325"
-  integrity sha512-oExVw+nyIQGJY2MT+RLvqOfem+971i97tD+1kUbQ8Umc2FtSobzQsprO5gg2hEw7skA4QF/zahEkepVBCh8SbA==
-  dependencies:
-    "@mikro-orm/knex" "6.3.13"
-    fs-extra "11.2.0"
-    sqlite3 "5.1.7"
-    sqlstring-sqlite "0.1.1"
-
 "@mongodb-js/saslprep@^1.1.0", "@mongodb-js/saslprep@^1.1.5":
   version "1.1.9"
   resolved "https://registry.yarnpkg.com/@mongodb-js/saslprep/-/saslprep-1.1.9.tgz#e974bab8eca9faa88677d4ea4da8d09a52069004"
@@ -14521,7 +14511,15 @@ better-sqlite3@11.3.0:
     bindings "^1.5.0"
     prebuild-install "^7.1.1"
 
-better-sqlite3@^9.4.3:
+better-sqlite3@^11.5.0:
+  version "11.5.0"
+  resolved "https://registry.yarnpkg.com/better-sqlite3/-/better-sqlite3-11.5.0.tgz#58faa51e02845a578dd154f0083487132ead0695"
+  integrity sha512-e/6eggfOutzoK0JWiU36jsisdWoHOfN9iWiW/SieKvb7SAa6aGNmBM/UKyp+/wWSXpLlWNN8tCPwoDNPhzUvuQ==
+  dependencies:
+    bindings "^1.5.0"
+    prebuild-install "^7.1.1"
+
+better-sqlite3@^9.5.0:
   version "9.6.0"
   resolved "https://registry.yarnpkg.com/better-sqlite3/-/better-sqlite3-9.6.0.tgz#b01e58ba7c48abcdc0383b8301206ee2ab81d271"
   integrity sha512-yR5HATnqeYNVnkaUTf4bOP2dJSnyhP4puJN/QPRyx4YkBEEUxib422n2XzPqDEHjQQqazoYoADdAm5vE15+dAQ==
@@ -26677,7 +26675,7 @@ make-fetch-happen@^8.0.9:
     socks-proxy-agent "^5.0.0"
     ssri "^8.0.0"
 
-make-fetch-happen@^9.0.1, make-fetch-happen@^9.1.0:
+make-fetch-happen@^9.0.1:
   version "9.1.0"
   resolved "https://registry.yarnpkg.com/make-fetch-happen/-/make-fetch-happen-9.1.0.tgz#53085a09e7971433e6765f7971bf63f4e05cb968"
   integrity sha512-+zopwDy7DNknmwPQplem5lAZX/eCOzSvSNNcSKm5eVwTkOBzoktEfXsa9L23J/GIRhxRsaxzkPEhrJEpE2F4Gg==
@@ -28480,22 +28478,6 @@ node-gyp-build@^4.2.2, node-gyp-build@^4.3.0:
   version "4.8.2"
   resolved "https://registry.yarnpkg.com/node-gyp-build/-/node-gyp-build-4.8.2.tgz#4f802b71c1ab2ca16af830e6c1ea7dd1ad9496fa"
   integrity sha512-IRUxE4BVsHWXkV/SFOut4qTlagw2aM8T5/vnTsmrHJvVoKueJHRc/JaFND7QDDc61kLYUJ6qlZM3sqTSyx2dTw==
-
-node-gyp@8.x:
-  version "8.4.1"
-  resolved "https://registry.yarnpkg.com/node-gyp/-/node-gyp-8.4.1.tgz#3d49308fc31f768180957d6b5746845fbd429937"
-  integrity sha512-olTJRgUtAb/hOXG0E93wZDs5YiJlgbXxTwQAFHyNlRsXQnYzUaF2aGgujZbw+hR8aF4ZG/rST57bWMWD16jr9w==
-  dependencies:
-    env-paths "^2.2.0"
-    glob "^7.1.4"
-    graceful-fs "^4.2.6"
-    make-fetch-happen "^9.1.0"
-    nopt "^5.0.0"
-    npmlog "^6.0.0"
-    rimraf "^3.0.2"
-    semver "^7.3.5"
-    tar "^6.1.2"
-    which "^2.0.2"
 
 node-gyp@^10.0.0, node-gyp@^10.2.0:
   version "10.2.0"
@@ -34796,18 +34778,6 @@ sql.js@^1.5.0:
   version "1.11.0"
   resolved "https://registry.yarnpkg.com/sql.js/-/sql.js-1.11.0.tgz#2fcfb6aa24fae9b8ecc5395c70fc596a71247994"
   integrity sha512-GsLUDU3vhOo14Pd5ME0y2te49JQyby6HuoCuadevEV+CGgTUjmYRrm7B7lhRyzOgrmcWmspUfyjNb6sOAEqdsA==
-
-sqlite3@5.1.7, sqlite3@^5.1.7:
-  version "5.1.7"
-  resolved "https://registry.yarnpkg.com/sqlite3/-/sqlite3-5.1.7.tgz#59ca1053c1ab38647396586edad019b1551041b7"
-  integrity sha512-GGIyOiFaG+TUra3JIfkI/zGP8yZYLPQ0pl1bH+ODjiX57sPhrLU5sQJn1y9bDKZUFYkX1crlrPfSYt0BKKdkog==
-  dependencies:
-    bindings "^1.5.0"
-    node-addon-api "^7.0.0"
-    prebuild-install "^7.1.1"
-    tar "^6.1.11"
-  optionalDependencies:
-    node-gyp "8.x"
 
 sqlstring-sqlite@0.1.1:
   version "0.1.1"

@@ -109,8 +109,6 @@
 		"build:desktop:mac:quick": "npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 build --mac --project dist/apps/desktop",
 		"build:desktop:local:quick": "yarn electron dist/apps/desktop --prod",
 		"build:desktop:windows:quick": "npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 build --windows --project dist/apps/desktop",
-		"build:sqlite:mac": "cd node_modules/sqlite3 && HOME=~/.electron-gyp node-pre-gyp rebuild --target=8.3.0 --arch=x64 --dist-url=https://electronjs.org/headers",
-		"build:sqlite:windows": "cd node_modules/sqlite3 && cross-env HOME=~/.electron-gyp node-pre-gyp rebuild --target=8.3.0 --arch=x64 --target_platform=win32 --dist-url=https://electronjs.org/headers",
 		"debug:desktop:app:mac": "lldb ./dist/apps/desktop-packages/mac/GauzyDesktop.app && run",
 		"start:desktop:ui": "yarn run postinstall.web && yarn ng serve desktop-ui",
 		"build:desktop:ui": "yarn run postinstall.web && yarn ng:prod build desktop-ui --prod --base-href ./",
