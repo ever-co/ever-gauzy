@@ -43,18 +43,19 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 		const { start: startedAt, end: stoppedAt } = this.getRoundedDateRange(start, end);
 
 		// Retrieve time slots for the given date range
-		const timeSlots = await this.getTimeSlots({
+		const slots = await this.getTimeSlots({
 			organizationId,
 			employeeId,
 			tenantId,
 			startedAt,
 			stoppedAt
 		});
+		console.log('GET Time Slots To Be Merged Length: %s', slots.length);
 
-		if (isNotEmpty(timeSlots)) {
+		if (isNotEmpty(slots)) {
 			// Aggregate data and save new time slots
 			return await this.mergeAndSaveTimeSlots(
-				this.groupTimeSlots(timeSlots), // Group time slots by rounded start time
+				this.groupTimeSlots(slots), // Group time slots by rounded start time
 				tenantId,
 				organizationId,
 				employeeId,
@@ -173,17 +174,24 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 	 * @param forceDelete - Flag to indicate if deletion should be permanent
 	 */
 	private async cleanUpOldTimeSlots(slots: ITimeSlot[], forceDelete: boolean) {
-		const idsToDelete = pluck(slots, 'id'); // Exclude the first ID as the latest time slot
-		idsToDelete.splice(0, 1);
+		try {
+			const idsToDelete = pluck(slots, 'id');
+			// Keep the most recent time slot by removing it from deletion
+			idsToDelete.splice(0, 1);
 
-		console.log('---------------TimeSlots Ids Will Be Deleted---------------', idsToDelete);
+			console.log('---------------TimeSlots Ids Will Be Deleted---------------', idsToDelete);
 
-		if (isNotEmpty(idsToDelete)) {
-			if (forceDelete) {
-				await this.typeOrmTimeSlotRepository.delete({ id: In(idsToDelete) });
-			} else {
-				await this.typeOrmTimeSlotRepository.softDelete({ id: In(idsToDelete) });
+			if (isNotEmpty(idsToDelete)) {
+				if (forceDelete) {
+					// Hard delete (permanent deletion)
+					return await this.typeOrmTimeSlotRepository.delete({ id: In(idsToDelete) });
+				}
+
+				// Soft delete (mark records as deleted)
+				return await this.typeOrmTimeSlotRepository.softDelete({ id: In(idsToDelete) });
 			}
+		} catch (error) {
+			console.error('Error while cleaning up old time slots:', error);
 		}
 	}
 
@@ -320,6 +328,7 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 			.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId })
 			.addOrderBy(p(`"${query.alias}"."createdAt"`), 'ASC');
 
+		console.log('GET Time Slots Query:', query.getQueryAndParameters());
 		// Execute the query and return the results
 		return await query.getMany();
 	}
