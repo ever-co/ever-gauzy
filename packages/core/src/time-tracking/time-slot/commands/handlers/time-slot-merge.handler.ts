@@ -149,19 +149,24 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 	 * @param forceDelete - Flag to indicate if deletion should be permanent
 	 */
 	private async cleanUpOldTimeSlots(slots: ITimeSlot[], forceDelete: boolean) {
-		const idsToDelete = pluck(slots, 'id'); // Exclude the first ID as the latest time slot
-		idsToDelete.splice(0, 1);
+		try {
+			const idsToDelete = pluck(slots, 'id');
+			// Keep the most recent time slot by removing it from deletion
+			idsToDelete.splice(0, 1);
 
-		console.log('---------------TimeSlots Ids Will Be Deleted---------------', idsToDelete);
+			console.log('---------------TimeSlots Ids Will Be Deleted---------------', idsToDelete);
 
-		if (isNotEmpty(idsToDelete)) {
-			if (forceDelete) {
-				// Hard delete (permanent deletion)
-				return await this.typeOrmTimeSlotRepository.delete({ id: In(idsToDelete) });
+			if (isNotEmpty(idsToDelete)) {
+				if (forceDelete) {
+					// Hard delete (permanent deletion)
+					return await this.typeOrmTimeSlotRepository.delete({ id: In(idsToDelete) });
+				}
+
+				// Soft delete (mark records as deleted)
+				return await this.typeOrmTimeSlotRepository.softDelete({ id: In(idsToDelete) });
 			}
-
-			// Soft delete (mark records as deleted)
-			return await this.typeOrmTimeSlotRepository.softDelete({ id: In(idsToDelete) });
+		} catch (error) {
+			console.error('Error while cleaning up old time slots:', error);
 		}
 	}
 
