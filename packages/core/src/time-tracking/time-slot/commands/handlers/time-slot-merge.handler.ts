@@ -53,9 +53,11 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 		console.log('GET Time Slots To Be Merged Length: %s', slots.length);
 
 		if (isNotEmpty(slots)) {
+			const groupedTimeSlots = this.groupTimeSlots(slots); // Group time slots by rounded start time
+
 			// Aggregate data and save new time slots
 			return await this.mergeAndSaveTimeSlots(
-				this.groupTimeSlots(slots), // Group time slots by rounded start time
+				groupedTimeSlots, // Group time slots by rounded start time
 				tenantId,
 				organizationId,
 				employeeId,
