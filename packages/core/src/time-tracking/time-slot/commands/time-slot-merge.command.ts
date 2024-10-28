@@ -8,6 +8,7 @@ export class TimeSlotMergeCommand implements ICommand {
 		public readonly organizationId: ID,
 		public readonly employeeId: ID,
 		public readonly start: Date,
-		public readonly end: Date
+		public readonly end: Date,
+		public readonly forceDelete: boolean = false
 	) {}
 }
