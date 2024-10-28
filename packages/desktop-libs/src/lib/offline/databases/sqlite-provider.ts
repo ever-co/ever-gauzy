@@ -9,11 +9,25 @@ export class SqliteProvider implements IServerLessProvider {
 
 	private constructor() {
 		this._connection = require('knex')(this.config);
-		console.log('[provider]: ', 'sqlite connected...');
+		console.log('[provider]: ', 'SQlite connected...');
 	}
-	get config(): Knex.Config {
+
+	public static get instance(): IServerLessProvider {
+		if (!this._instance) {
+			this._instance = new SqliteProvider();
+		}
+		return this._instance;
+	}
+
+	public get connection(): Knex {
+		return this._connection;
+	}
+
+	public get config(): Knex.Config {
 		return {
-			client: 'sqlite3',
+			// Here we can use 'sqlite' if we want native SQlite3 driver
+			// But we need to install it manually and instead we prefer to use 'better-sqlite3'
+			client: 'better-sqlite3',
 			connection: {
 				filename: path.resolve(app?.getPath('userData') || __dirname, 'gauzy.sqlite3'),
 				timezone: 'utc'
@@ -34,16 +48,5 @@ export class SqliteProvider implements IServerLessProvider {
 			debug: false,
 			asyncStackTraces: true
 		};
-	}
-
-	public get connection(): Knex {
-		return this._connection;
-	}
-
-	public static get instance(): IServerLessProvider {
-		if (!this._instance) {
-			this._instance = new SqliteProvider();
-		}
-		return this._instance;
 	}
 }

@@ -1,6 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { SqliteDriver } from '@mikro-orm/sqlite';
 import {
 	FindOptions as MikroORMFindOptions,
 	FilterQuery as MikroFilterQuery,
@@ -397,9 +396,7 @@ export function getDBType(dbConnection?: IDBConnectionOptions): any {
 	let dbType: any;
 	switch (dbORM) {
 		case MultiORMEnum.MikroORM:
-			if (dbConnection.driver instanceof SqliteDriver) {
-				dbType = DatabaseTypeEnum.sqlite;
-			} else if (dbConnection.driver instanceof BetterSqliteDriver) {
+			if (dbConnection.driver instanceof BetterSqliteDriver) {
 				dbType = DatabaseTypeEnum.betterSqlite3;
 			} else if (dbConnection.driver instanceof PostgreSqlDriver) {
 				dbType = DatabaseTypeEnum.postgres;

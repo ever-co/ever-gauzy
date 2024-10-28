@@ -23,8 +23,6 @@ import { environment } from './environments/environment';
 
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 
-require('sqlite3');
-
 process.env = Object.assign(process.env, environment);
 
 app.setName(process.env.NAME);
@@ -534,7 +532,7 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 			};
 		} else {
 			databaseOptions = {
-				client: 'sqlite',
+				client: 'better-sqlite3',
 				connection: {
 					filename: sqlite3filename
 				}

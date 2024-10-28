@@ -109,8 +109,6 @@
 		"build:desktop:mac:quick": "npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 build --mac --project dist/apps/desktop",
 		"build:desktop:local:quick": "yarn electron dist/apps/desktop --prod",
 		"build:desktop:windows:quick": "npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 build --windows --project dist/apps/desktop",
-		"build:sqlite:mac": "cd node_modules/sqlite3 && HOME=~/.electron-gyp node-pre-gyp rebuild --target=8.3.0 --arch=x64 --dist-url=https://electronjs.org/headers",
-		"build:sqlite:windows": "cd node_modules/sqlite3 && cross-env HOME=~/.electron-gyp node-pre-gyp rebuild --target=8.3.0 --arch=x64 --target_platform=win32 --dist-url=https://electronjs.org/headers",
 		"debug:desktop:app:mac": "lldb ./dist/apps/desktop-packages/mac/GauzyDesktop.app && run",
 		"start:desktop:ui": "yarn run postinstall.web && yarn ng serve desktop-ui",
 		"build:desktop:ui": "yarn run postinstall.web && yarn ng:prod build desktop-ui --prod --base-href ./",
@@ -168,7 +166,7 @@
 		"build:package:plugin:integration-github-ui:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/integration-github-ui lib:build:prod",
 		"build:package:plugin:integration-upwork-ui:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/integration-upwork-ui lib:build:prod",
 		"build:integration-ui-plugins": "yarn run build:package:plugin:integration-ai-ui && yarn run build:package:plugin:integration-hubstaff-ui && yarn run build:package:plugin:integration-upwork-ui && yarn run build:package:plugin:integration-github-ui",
-    	"build:integration-ui-plugins:prod": "yarn run build:package:plugin:integration-ai-ui:prod && yarn run build:package:plugin:integration-hubstaff-ui:prod && yarn run build:package:plugin:integration-upwork-ui:prod && yarn run build:package:plugin:integration-github-ui:prod",
+		"build:integration-ui-plugins:prod": "yarn run build:package:plugin:integration-ai-ui:prod && yarn run build:package:plugin:integration-hubstaff-ui:prod && yarn run build:package:plugin:integration-upwork-ui:prod && yarn run build:package:plugin:integration-github-ui:prod",
 		"build:package:plugin:job-employee-ui": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/job-employee-ui lib:build",
 		"build:package:plugin:job-employee-ui:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/job-employee-ui lib:build:prod",
 		"build:package:plugin:job-matching-ui": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/job-matching-ui lib:build",
@@ -344,8 +342,6 @@
 		"bcrypt": "^5.1.1",
 		"camelcase": "^6.3.0",
 		"dotenv": "^16.0.3",
-		"ffi-napi": "^4.0.3",
-		"iconv": "^3.0.1",
 		"jsdom": "^23.0.1",
 		"lodash-es": "^4.17.21",
 		"parse5": "^7.1.2",
@@ -432,7 +428,7 @@
 		"lighthouse": "^6.3.0",
 		"lint-staged": "^10.4.0",
 		"ng-packagr": "~16.0.0",
-		"node-gyp": "^9.3.1",
+		"node-gyp": "^10.2.0",
 		"npm-run-all": "^4.1.5",
 		"nx": "15.9.4",
 		"nx-cloud": "^16.5.2",
@@ -468,9 +464,6 @@
 	"overrides": {
 		"prebuild": {
 			"node-gyp": "$node-gyp"
-		},
-		"iconv": {
-			"node-gyp": "9.3.1"
 		},
 		"twing": {
 			"locutus": "2.0.30"

@@ -30,6 +30,15 @@ export class BetterSqliteProvider implements IServerLessProvider {
 				filename: path.resolve(app?.getPath('userData') || __dirname, 'gauzy.sqlite3'),
 				timezone: 'utc'
 			},
+			pool: {
+				min: 0,
+				max: 1,
+				createTimeoutMillis: 3000,
+				acquireTimeoutMillis: 60 * 1000 * 2,
+				idleTimeoutMillis: 30000,
+				reapIntervalMillis: 1000,
+				createRetryIntervalMillis: 100
+			},
 			migrations: {
 				directory: __dirname + '/migrations'
 			},
