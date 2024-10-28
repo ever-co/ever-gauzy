@@ -282,13 +282,13 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 	}
 
 	/**
-	 * Calculate a value safely (handles undefined)
+	 * Calculates a value safely, returning 0 if the input is undefined or not a number.
 	 *
 	 * @param value - The value to calculate
-	 * @returns The calculated value
+	 * @returns The calculated value, or 0 if the input is undefined or invalid
 	 */
-	private calculateValue(value: number | undefined): number {
-		return parseInt(value as any, 10) || 0;
+	private calculateValue(value?: number): number {
+		return Number(value) || 0;
 	}
 
 	/**
