@@ -42,7 +42,7 @@ jobs:
         run: 'sudo npm install -g npm@9'
 
       - name: Install node-gyp package
-        run: 'sudo npm install --quiet -g node-gyp@9.3.1'
+        run: 'sudo npm install --quiet -g node-gyp@10.2.0'
 
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile'
@@ -103,7 +103,7 @@ jobs:
         run: 'sudo npm install -g npm@9'
 
       - name: Install node-gyp package
-        run: 'sudo npm install --quiet -g node-gyp@9.3.1'
+        run: 'sudo npm install --quiet -g node-gyp@10.2.0'
 
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile'
@@ -164,7 +164,7 @@ jobs:
         run: 'npm install -g npm@9'
 
       - name: Install node-gyp package
-        run: 'npm install --quiet -g node-gyp@9.3.1'
+        run: 'npm install --quiet -g node-gyp@10.2.0'
 
       - name: Install Yarn dependencies
         run: 'yarn install --network-timeout 1000000 --frozen-lockfile'
@@ -187,43 +187,6 @@ jobs:
 
       - name: Build Desktop App
         run: |
-          # we need to clear some environment variables to avoid the error about limit of env vars size
-          set AZURE_CONFIG_DIR=
-          set AZURE_DEVOPS_CACHE_DIR=
-          set AZURE_EXTENSION_DIR=
-          set STATS_BLT=
-          set STATS_D=
-          set STATS_D_D=
-          set STATS_EXT=
-          set STATS_EXTP=
-          set STATS_RDCL=
-          set STATS_TIS=
-          set STATS_TRP=
-          set STATS_UE=
-          set STATS_V3PS=
-          set STATS_VMD=
-          set STATS_VMFE=
-          set ANDROID_HOME=
-          set ANDROID_NDK=
-          set ANDROID_NDK_HOME=
-          set ANDROID_NDK_LATEST_HOME=
-          set ANDROID_NDK_ROOT=
-          set ANDROID_SDK_ROOT=
-          set GOROOT_1_20_X64=
-          set GOROOT_1_21_X64=
-          set GOROOT_1_22_X64=
-          set GRADLE_HOME=
-          set JAVA_HOME=
-          set JAVA_HOME_11_X64=
-          set JAVA_HOME_17_X64=
-          set JAVA_HOME_21_X64=
-          set JAVA_HOME_8_X64=
-          set PGBIN=
-          set PGDATA=
-          set PGPASSWORD=
-          set PGROOT=
-          set PGUSER=
-          set PHPROOT=
           yarn build:desktop:windows:release:gh
         env:
           USE_HARD_LINKS: false
@@ -238,4 +201,3 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_NO_CLOUD: true
-          Path: 'C:\hostedtoolcache\windows\node\20.11.1\x64;C:\Program Files\Git\bin;C:\npm\prefix;C:\hostedtoolcache\windows\Python\3.9.13\x64\Scripts;C:\hostedtoolcache\windows\Python\3.9.13\x64;C:\Program Files\OpenSSL\bin;C:\Windows\system32;C:\Windows;C:\Windows\System32\OpenSSH\;C:\Program Files\dotnet\;C:\Program Files\PowerShell\7\;C:\Program Files\CMake\bin;C:\Program Files\nodejs\;C:\Program Files\Git\cmd;C:\Program Files\Git\mingw64\bin;C:\Program Files\Git\usr\bin;C:\Program Files\GitHub CLI\;C:\Program Files\Amazon\AWSCLIV2\;C:\Users\runneradmin\.dotnet\tools'

@@ -12,12 +12,6 @@ yarn install
 
 **build executable for mac**
 
-rebuild sqlite3 for mac
-
-```bash
-yarn build:sqlite:mac
-```
-
 build desktop
 
 ```bash
@@ -31,11 +25,6 @@ build:desktop:mac:quick
 ```
 
 **build execute app for windows**
-rebuild sqlite3 for windows
-
-```bash
-yarn build:sqlite:windows
-```
 
 build desktop
 

@@ -14,8 +14,6 @@ import { environment } from './environments/environment';
 
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 
-require('sqlite3');
-
 Object.assign(process.env, environment);
 
 app.setName(process.env.NAME);
@@ -263,7 +261,7 @@ async function startServer(value, restart = false) {
 	if (value.db === 'sqlite') {
 		process.env.DB_PATH = sqlite3filename;
 		process.env.DB_TYPE = 'sqlite';
-	} else if (value.db === 'better-sqlite') {
+	} else if (value.db === 'better-sqlite' || value.db === 'better-sqlite3') {
 		process.env.DB_PATH = sqlite3filename;
 		process.env.DB_TYPE = 'better-sqlite3';
 	} else {
@@ -432,7 +430,7 @@ app.on('ready', async () => {
 		throw new AppError('MAINWININIT', error);
 	}
 
-	if (['sqlite', 'better-sqlite'].includes(provider.dialect)) {
+	if (['sqlite', 'better-sqlite', 'better-sqlite3'].includes(provider.dialect)) {
 		try {
 			const res = await knex.raw(`pragma journal_mode = WAL;`);
 			console.log(res);

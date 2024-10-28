@@ -3,8 +3,7 @@ import * as chalk from 'chalk';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { MikroOrmModuleOptions } from '@mikro-orm/nestjs';
 import { EntityCaseNamingStrategy } from '@mikro-orm/core';
-import { SoftDeleteHandler } from "mikro-orm-soft-delete";
-import { SqliteDriver, Options as MikroOrmSqliteOptions } from '@mikro-orm/sqlite';
+import { SoftDeleteHandler } from 'mikro-orm-soft-delete';
 import { BetterSqliteDriver, Options as MikroOrmBetterSqliteOptions } from '@mikro-orm/better-sqlite';
 import { PostgreSqlDriver, Options as MikroOrmPostgreSqlOptions } from '@mikro-orm/postgresql';
 import { Options as MikroOrmMySqlOptions, MySqlDriver } from '@mikro-orm/mysql';
@@ -63,7 +62,9 @@ const dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT ? parseInt(process
 
 const idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000; // 10 seconds
 
-const dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT ? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT) : 10000; // 10 seconds default
+const dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
+	? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
+	: 10000; // 10 seconds default
 
 const dbSslMode = process.env.DB_SSL_MODE === 'true';
 
@@ -276,52 +277,16 @@ switch (dbType) {
 		break;
 
 	case DatabaseTypeEnum.sqlite:
-		const dbPath = process.env.DB_PATH || path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
-		console.log('Sqlite DB Path: ' + dbPath);
-
-		// MikroORM DB Config (SQLite3)
-		const mikroOrmSqliteConfig: MikroOrmSqliteOptions = {
-			driver: SqliteDriver,
-			dbName: dbPath,
-			persistOnCreate: true,
-			extensions: [SoftDeleteHandler],
-			namingStrategy: EntityCaseNamingStrategy,
-			debug: getLoggingMikroOptions(process.env.DB_LOGGING) // by default set to false only
-		};
-		mikroOrmConnectionConfig = mikroOrmSqliteConfig;
-
-		// TypeORM DB Config (SQLite3)
-		const typeOrmSqliteConfig: DataSourceOptions = {
-			type: dbType,
-			database: dbPath,
-			logging: 'all',
-			logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
-			synchronize: process.env.DB_SYNCHRONIZE === 'true' // We are using migrations, synchronize should be set to false.
-		};
-		typeOrmConnectionConfig = typeOrmSqliteConfig;
-
-		// Knex DB Config (SQLite3)
-		const knexSqliteConfig: KnexModuleOptions = {
-			config: {
-				client: 'sqlite3',
-				connection: {
-					filename: dbPath
-				},
-				useNullAsDefault: true // Specify whether to use null as the default for unspecified fields
-			}
-		};
-		knexConnectionConfig = knexSqliteConfig;
-
-		break;
-
 	case DatabaseTypeEnum.betterSqlite3:
-		const betterSqlitePath = process.env.DB_PATH || path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
-		console.log('Better Sqlite DB Path: ' + betterSqlitePath);
+		const sqlitePath =
+			process.env.DB_PATH || path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
+
+		console.log('Better Sqlite DB Path: ' + sqlitePath);
 
 		// MikroORM DB Config (Better-SQLite3)
 		const mikroOrmBetterSqliteConfig: MikroOrmBetterSqliteOptions = {
 			driver: BetterSqliteDriver,
-			dbName: betterSqlitePath,
+			dbName: sqlitePath,
 			persistOnCreate: true,
 			extensions: [SoftDeleteHandler],
 			namingStrategy: EntityCaseNamingStrategy,
@@ -332,7 +297,7 @@ switch (dbType) {
 		// TypeORM DB Config (Better-SQLite3)
 		const typeOrmBetterSqliteConfig: DataSourceOptions = {
 			type: dbType,
-			database: betterSqlitePath,
+			database: sqlitePath,
 			logging: 'all',
 			logger: 'file', // Removes console logging, instead logs all queries in a file ormlogs.log
 			synchronize: process.env.DB_SYNCHRONIZE === 'true', // We are using migrations, synchronize should be set to false.
@@ -350,7 +315,7 @@ switch (dbType) {
 			config: {
 				client: 'better-sqlite3',
 				connection: {
-					filename: betterSqlitePath
+					filename: sqlitePath
 				},
 				useNullAsDefault: true // Specify whether to use null as the default for unspecified fields
 			}

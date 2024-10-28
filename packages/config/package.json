@@ -51,7 +51,6 @@
 		"@mikro-orm/mysql": "^6.2.3",
 		"@mikro-orm/nestjs": "^5.2.3",
 		"@mikro-orm/postgresql": "^6.2.3",
-		"@mikro-orm/sqlite": "^6.2.3",
 		"@nestjs/common": "^10.3.7",
 		"@nestjs/config": "^3.2.0",
 		"@nestjs/typeorm": "^10.0.2",

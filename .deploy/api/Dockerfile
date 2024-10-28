@@ -128,7 +128,7 @@ RUN npm --version
 # Output Python3 version
 RUN python3 --version
 
-RUN npm install --quiet node-gyp@9.3.1 -g
+RUN npm install --quiet node-gyp@10.2.0 -g
 RUN npm install yarn -g --force
 RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
@@ -206,7 +206,7 @@ RUN npm --version
 # Output Python3 version
 RUN python3 --version
 
-RUN npm install --quiet node-gyp@9.3.1 -g
+RUN npm install --quiet node-gyp@10.2.0 -g
 RUN npm install yarn -g --force
 RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
