@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
 import { Response } from 'express';
 import { environment } from '@gauzy/config';
+import { CryptoHelper } from './helpers/crypto-helper';
 
 /**
  * Base class for social authentication.
@@ -38,10 +38,11 @@ export class SocialAuthService extends BaseSocialAuth {
 	 */
 	public async getPasswordHash(password: string): Promise<string> {
 		try {
+			// Generate a random salt
+			const salt = CryptoHelper.genSaltSync();
+
 			// Generate bcrypt hash using provided password and salt rounds from environment
-			const salt = await bcrypt.genSalt(environment.USER_PASSWORD_BCRYPT_SALT_ROUNDS);
-			// Use bcrypt to hash the password
-			return await bcrypt.hash(password, salt);
+			return await CryptoHelper.hash(password, salt);
 		} catch (error) {
 			// Handle the error appropriately, e.g., log it or throw a custom error
 			console.error('Error in getPasswordHash:', error);

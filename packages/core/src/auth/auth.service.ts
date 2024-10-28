@@ -41,7 +41,7 @@ import {
 	ID
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
-import { SocialAuthService } from '@gauzy/auth';
+import { CryptoHelper, SocialAuthService } from '@gauzy/auth';
 import { IAppIntegrationConfig, createQueryParamsString, deepMerge, isNotEmpty } from '@gauzy/common';
 import { AccountRegistrationEvent } from '../event-bus/events';
 import { EventBus } from '../event-bus/event-bus';
@@ -109,7 +109,7 @@ export class AuthService extends SocialAuthService {
 			});
 
 			// Verify the provided password. If no user is found or the password does not match, throw an error.
-			if (!user || !(await bcrypt.compare(password, user.hash))) {
+			if (!user || !(await CryptoHelper.compare(password, user.hash))) {
 				throw new UnauthorizedException(); // Generic error for security purposes
 			}
 
