@@ -84,7 +84,6 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 
 	async remove(id: string) {
 		const { tenantId } = this.store.user;
-		const user = await this.usersService.getUserById(this.selectedUserId);
 		const { items } = await this.userOrganizationsService.getAll(['user', 'user.role'], {
 			tenantId,
 			userId: this.selectedUserId
@@ -93,13 +92,16 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 		let counter = 0;
 		let userName: string;
 
-		this.userToRemove = items.find((orgUser) => orgUser.organizationId === id);
+		this.userToRemove = items.find((orgUser) => orgUser.organizationId === id && orgUser.isActive);
 
-		if (this.userToRemove) {
-			userName = this.userToRemove.user.firstName + ' ' + this.userToRemove.user.lastName;
-			this.orgUserId = this.userToRemove.id;
-			counter = items.filter((orgUser) => orgUser.user.id === user.id && orgUser.isActive).length;
+		if (!this.userToRemove?.user) {
+			this.toastrService.danger('User organization record not found');
+			return;
 		}
+
+		userName = [this.userToRemove.user.firstName, this.userToRemove.user.lastName].filter(Boolean).join(' ');
+		this.orgUserId = this.userToRemove.id;
+		counter = items.filter((orgUser) => orgUser.isActive).length;
 
 		if (counter - 1 < 1) {
 			this.dialogService
