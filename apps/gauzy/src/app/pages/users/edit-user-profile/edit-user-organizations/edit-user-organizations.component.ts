@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { IOrganization, IUserOrganizationCreateInput, RolesEnum } from '@gauzy/contracts';
+import { IOrganization, IUserOrganizationCreateInput } from '@gauzy/contracts';
 import { filter, tap, debounceTime } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
