@@ -1,14 +1,12 @@
 {
 	"name": "plugin-job-proposal-ui",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
-	"sourceRoot": "packages/plugins/job-proposal-ui/src",
-	"prefix": "gauzy",
-	"tags": [],
 	"projectType": "library",
+	"sourceRoot": "packages/plugins/job-proposal-ui",
+	"prefix": "lib",
 	"targets": {
 		"build": {
-			"executor": "@nrwl/angular:package",
-			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"executor": "@angular-devkit/build-angular:ng-packagr",
 			"options": {
 				"project": "packages/plugins/job-proposal-ui/ng-package.json"
 			},
@@ -23,28 +21,17 @@
 			"defaultConfiguration": "production"
 		},
 		"test": {
-			"executor": "@nrwl/jest:jest",
-			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"executor": "@angular-devkit/build-angular:karma",
 			"options": {
-				"jestConfig": "packages/plugins/job-proposal-ui/jest.config.ts",
-				"passWithNoTests": true
-			},
-			"configurations": {
-				"ci": {
-					"ci": true,
-					"codeCoverage": true
-				}
+				"tsConfig": "packages/plugins/job-proposal-ui/tsconfig.spec.json",
+				"polyfills": ["zone.js", "zone.js/testing"]
 			}
-		},
-		"lint": {
-			"executor": "@nrwl/linter:eslint",
-			"outputs": ["{options.outputFile}"],
-			"options": {
-				"lintFilePatterns": [
-					"packages/plugins/job-proposal-ui/**/*.ts",
-					"packages/plugins/job-proposal-ui/**/*.html"
-				]
-			}
+		}
+	},
+	"generators": {
+		"@nrwl/angular:component": {
+			"prefix": "ngx",
+			"style": "scss"
 		}
 	}
 }

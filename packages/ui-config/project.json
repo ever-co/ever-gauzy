@@ -1,15 +1,14 @@
 {
 	"name": "ui-config",
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
-	"sourceRoot": "packages/ui-config/src",
-	"prefix": "gauzy",
-	"tags": [],
 	"projectType": "library",
+	"sourceRoot": "packages/ui-config/src",
+	"prefix": "lib",
 	"targets": {
 		"build": {
-			"executor": "@nrwl/angular:ng-packagr-lite",
-			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"executor": "@angular-devkit/build-angular:ng-packagr",
 			"options": {
+				"tsConfig": "packages/ui-config/tsconfig.lib.json",
 				"project": "packages/ui-config/ng-package.json"
 			},
 			"configurations": {
@@ -23,25 +22,18 @@
 			"defaultConfiguration": "production"
 		},
 		"test": {
-			"executor": "@nrwl/jest:jest",
-			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"executor": "@angular-devkit/build-angular:karma",
 			"options": {
-				"jestConfig": "packages/ui-config/jest.config.ts",
-				"passWithNoTests": true
-			},
-			"configurations": {
-				"ci": {
-					"ci": true,
-					"codeCoverage": true
-				}
+				"main": "packages/ui-config/src/test-setup.ts",
+				"tsConfig": "packages/ui-config/tsconfig.spec.json",
+				"polyfills": ["zone.js", "zone.js/testing"]
 			}
-		},
-		"lint": {
-			"executor": "@nrwl/linter:eslint",
-			"outputs": ["{options.outputFile}"],
-			"options": {
-				"lintFilePatterns": ["packages/ui-config/**/*.ts", "packages/ui-config/**/*.html"]
-			}
+		}
+	},
+	"generators": {
+		"@nrwl/angular:component": {
+			"prefix": "ngx",
+			"style": "scss"
 		}
 	}
 }

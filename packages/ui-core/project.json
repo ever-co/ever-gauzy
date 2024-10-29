@@ -1,13 +1,12 @@
 {
 	"name": "ui-core",
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
-	"sourceRoot": "packages/ui-core",
-	"prefix": "gauzy",
 	"projectType": "library",
+	"sourceRoot": "packages/ui-core",
+	"prefix": "lib",
 	"targets": {
 		"build": {
-			"executor": "@nrwl/angular:ng-packagr-lite",
-			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"executor": "@angular-devkit/build-angular:ng-packagr",
 			"options": {
 				"project": "packages/ui-core/ng-package.json"
 			},
@@ -22,39 +21,17 @@
 			"defaultConfiguration": "production"
 		},
 		"test": {
-			"executor": "@nrwl/jest:jest",
-			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"executor": "@angular-devkit/build-angular:karma",
 			"options": {
-				"jestConfig": "packages/ui-core/jest.config.ts",
-				"passWithNoTests": true
-			},
-			"configurations": {
-				"ci": {
-					"ci": true,
-					"codeCoverage": true
-				}
-			}
-		},
-		"lint": {
-			"executor": "@nrwl/linter:eslint",
-			"outputs": ["{options.outputFile}"],
-			"options": {
-				"lintFilePatterns": [
-					"packages/ui-core/**/*.ts",
-					"packages/ui-core/**/*.html",
-					"packages/ui-core/i18n/**/*.ts",
-					"packages/ui-core/i18n/**/*.html",
-					"packages/ui-core/common/**/*.ts",
-					"packages/ui-core/common/**/*.html",
-					"packages/ui-core/core/**/*.ts",
-					"packages/ui-core/core/**/*.html",
-					"packages/ui-core/shared/**/*.ts",
-					"packages/ui-core/shared/**/*.html",
-					"packages/ui-core/theme/**/*.ts",
-					"packages/ui-core/theme/**/*.html"
-				]
+				"tsConfig": "packages/ui-core/tsconfig.spec.json",
+				"polyfills": ["zone.js", "zone.js/testing"]
 			}
 		}
 	},
-	"tags": ["scope:ui"]
+	"generators": {
+		"@nrwl/angular:component": {
+			"prefix": "ngx",
+			"style": "scss"
+		}
+	}
 }

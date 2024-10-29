@@ -1,14 +1,12 @@
 {
 	"name": "plugin-legal-ui",
-	"$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-	"sourceRoot": "packages/plugins/legal-ui/src",
-	"prefix": "ga",
-	"tags": [],
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
 	"projectType": "library",
+	"sourceRoot": "packages/plugins/legal-ui",
+	"prefix": "lib",
 	"targets": {
 		"build": {
-			"executor": "@nrwl/angular:package",
-			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"executor": "@angular-devkit/build-angular:ng-packagr",
 			"options": {
 				"project": "packages/plugins/legal-ui/ng-package.json"
 			},
@@ -23,25 +21,17 @@
 			"defaultConfiguration": "production"
 		},
 		"test": {
-			"executor": "@nrwl/jest:jest",
-			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"executor": "@angular-devkit/build-angular:karma",
 			"options": {
-				"jestConfig": "packages/plugins/legal-ui/jest.config.ts",
-				"passWithNoTests": true
-			},
-			"configurations": {
-				"ci": {
-					"ci": true,
-					"codeCoverage": true
-				}
+				"tsConfig": "packages/plugins/legal-ui/tsconfig.spec.json",
+				"polyfills": ["zone.js", "zone.js/testing"]
 			}
-		},
-		"lint": {
-			"executor": "@nrwl/linter:eslint",
-			"outputs": ["{options.outputFile}"],
-			"options": {
-				"lintFilePatterns": ["packages/plugins/legal-ui/**/*.ts", "packages/plugins/legal-ui/**/*.html"]
-			}
+		}
+	},
+	"generators": {
+		"@nrwl/angular:component": {
+			"prefix": "ngx",
+			"style": "scss"
 		}
 	}
 }

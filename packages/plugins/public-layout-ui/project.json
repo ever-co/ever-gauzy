@@ -1,50 +1,37 @@
 {
 	"name": "plugin-public-layout-ui",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
-	"sourceRoot": "packages/plugins/public-layout/src",
-	"prefix": "gauzy",
-	"tags": [],
 	"projectType": "library",
+	"sourceRoot": "packages/plugins/public-layout-ui/src",
+	"prefix": "lib",
 	"targets": {
 		"build": {
-			"executor": "@nrwl/angular:package",
-			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"executor": "@angular-devkit/build-angular:ng-packagr",
 			"options": {
-				"project": "packages/plugins/public-layout/ng-package.json"
+				"project": "packages/plugins/public-layout-ui/ng-package.json"
 			},
 			"configurations": {
 				"production": {
-					"tsConfig": "packages/plugins/public-layout/tsconfig.lib.prod.json"
+					"tsConfig": "packages/plugins/public-layout-ui/tsconfig.lib.prod.json"
 				},
 				"development": {
-					"tsConfig": "packages/plugins/public-layout/tsconfig.lib.json"
+					"tsConfig": "packages/plugins/public-layout-ui/tsconfig.lib.json"
 				}
 			},
 			"defaultConfiguration": "production"
 		},
 		"test": {
-			"executor": "@nrwl/jest:jest",
-			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"executor": "@angular-devkit/build-angular:karma",
 			"options": {
-				"jestConfig": "packages/plugins/public-layout/jest.config.ts",
-				"passWithNoTests": true
-			},
-			"configurations": {
-				"ci": {
-					"ci": true,
-					"codeCoverage": true
-				}
+				"tsConfig": "packages/plugins/public-layout-ui/tsconfig.spec.json",
+				"polyfills": ["zone.js", "zone.js/testing"]
 			}
-		},
-		"lint": {
-			"executor": "@nrwl/linter:eslint",
-			"outputs": ["{options.outputFile}"],
-			"options": {
-				"lintFilePatterns": [
-					"packages/plugins/public-layout/**/*.ts",
-					"packages/plugins/public-layout/**/*.html"
-				]
-			}
+		}
+	},
+	"generators": {
+		"@nrwl/angular:component": {
+			"prefix": "gz",
+			"style": "scss"
 		}
 	}
 }
