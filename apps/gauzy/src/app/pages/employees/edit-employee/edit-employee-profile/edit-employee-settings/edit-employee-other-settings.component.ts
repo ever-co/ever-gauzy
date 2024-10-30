@@ -74,67 +74,62 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 	}
 
 	/**
+	 * Patches the form with employee data or default values if data is unavailable.
 	 *
-	 * @param employee
-	 * @returns
+	 * @param {IEmployee} employee - The employee object containing user data.
+	 * @returns {void}
 	 */
-	private _patchFormValue(employee: IEmployee) {
-		if (!employee) {
-			return;
-		}
-		const { user } = employee;
+	private _patchFormValue(employee: IEmployee): void {
+		if (!employee) return;
+
+		const { user, upworkId, linkedInId, allowManualTime, allowDeleteTime, allowModifyTime, allowScreenshotCapture } = employee;
 		this.form.patchValue({
-			timeZone: user.timeZone || moment.tz.guess(), // set current timezone, if employee don't have any timezone
-			timeFormat: user.timeFormat,
-			upworkId: employee.upworkId,
-			linkedInId: employee.linkedInId,
-			allowManualTime: employee.allowManualTime,
-			allowDeleteTime: employee.allowDeleteTime,
-			allowModifyTime: employee.allowModifyTime,
-			allowScreenshotCapture: employee.allowScreenshotCapture
+			timeZone: user?.timeZone ?? moment.tz.guess(),
+			timeFormat: user?.timeFormat,
+			upworkId,
+			linkedInId,
+			allowManualTime,
+			allowDeleteTime,
+			allowModifyTime,
+			allowScreenshotCapture
 		});
 		this.form.updateValueAndValidity();
 	}
 
 	/**
+	 * Handles the form submission, updating employee and user settings if valid.
 	 *
-	 * @param form
-	 * @returns
+	 * @param {NgForm} form - The form reference for submission.
+	 * @returns {void}
 	 */
-	onSubmit(form: NgForm) {
-		if (form.invalid) {
-			return;
-		}
+	onSubmit(form: NgForm): void {
+		if (form.invalid) return;
+
 		const { organizationId, tenantId } = this.selectedEmployee;
 		const {
 			timeZone,
 			timeFormat,
 			upworkId,
 			linkedInId,
-			allowScreenshotCapture,
 			allowManualTime,
+			allowDeleteTime,
 			allowModifyTime,
-			allowDeleteTime
+			allowScreenshotCapture
 		} = this.form.value;
 
-		/** Update user fields */
-		this.employeeStore.userForm = {
-			timeZone,
-			timeFormat
-		};
-
-		/** Update employee fields */
-		this.employeeStore.employeeForm = {
+		this.employeeStore.updateUserForm({ timeZone, timeFormat });
+		this.employeeStore.updateEmployeeForm({
 			upworkId,
 			linkedInId,
 			organizationId,
 			tenantId,
 			allowManualTime,
-			allowModifyTime,
 			allowDeleteTime,
+			allowModifyTime,
 			allowScreenshotCapture
-		};
+		});
 	}
+
 
 	/**
 	 *
