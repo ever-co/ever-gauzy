@@ -376,6 +376,7 @@
     "@nrwl/linter": "16.10.0",
     "@nrwl/nest": "16.10.0",
     "@nrwl/node": "16.10.0",
+    "@nrwl/nx-cloud": "16.5.2",
     "@nrwl/tao": "16.10.0",
     "@nrwl/workspace": "16.10.0",
     "@nstudio/angular": "^16.8.0",

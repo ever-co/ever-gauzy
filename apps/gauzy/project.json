@@ -2,6 +2,7 @@
     "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "name": "gauzy",
     "projectType": "application",
+    "root": "apps/gauzy",
     "sourceRoot": "apps/gauzy/src",
     "prefix": "gauzy",
     "targets": {
@@ -87,7 +88,7 @@
                     "sourceMap": false,
                     "namedChunks": false,
                     "ngswConfigPath": "apps/gauzy/ngsw-config.prod.json",
-	                    "aot": true,
+                    "aot": true,
                     "verbose": true,
                     "extractLicenses": true,
                     "vendorChunk": true,
