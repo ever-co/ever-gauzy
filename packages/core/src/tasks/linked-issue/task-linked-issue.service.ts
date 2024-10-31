@@ -84,7 +84,7 @@ export class TaskLinkedIssueService extends TenantAwareCrudService<TaskLinkedIss
 			const existingTaskLinkedIssue = await this.findOneByIdString(id);
 
 			if (!existingTaskLinkedIssue) {
-				throw new NotFoundException('View not found');
+				throw new NotFoundException('Task linked issue not found');
 			}
 
 			const updatedTaskLinkedIssue = await super.create({ ...input, tenantId, id });
@@ -129,7 +129,7 @@ export class TaskLinkedIssueService extends TenantAwareCrudService<TaskLinkedIss
 			const existingTaskLinkedIssue = await this.findOneByIdString(id);
 
 			if (!existingTaskLinkedIssue) {
-				throw new NotFoundException('View not found');
+				throw new NotFoundException('Task linked issue not found');
 			}
 
 			// Generate deleted activity log

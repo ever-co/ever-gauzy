@@ -12,10 +12,14 @@ export function taskRelatedIssueRelationMap(relation: TaskRelatedIssuesRelationE
 		[TaskRelatedIssuesRelationEnum.CLONES]: 'Clones',
 		[TaskRelatedIssuesRelationEnum.DUPLICATES]: 'Duplicates',
 		[TaskRelatedIssuesRelationEnum.IS_BLOCKED_BY]: 'Is Blocked By',
-		[TaskRelatedIssuesRelationEnum.IS_CLONED_BY]: 'Is cloned By',
+		[TaskRelatedIssuesRelationEnum.IS_CLONED_BY]: 'Is Cloned By',
 		[TaskRelatedIssuesRelationEnum.IS_DUPLICATED_BY]: 'Is Duplicated By',
 		[TaskRelatedIssuesRelationEnum.RELATES_TO]: 'Relates To'
 	};
 
-	return issueRelationMap[relation];
+	const issueRelation = issueRelationMap[relation];
+	if (!issueRelation) {
+		throw new Error(`Unsupported relation type: ${relation}`);
+	}
+	return issueRelation;
 }
