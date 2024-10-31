@@ -40,11 +40,13 @@ import {
 	Observable,
 	of,
 	Subject,
-	tap
+	Subscription,
+	tap,
+	timer
 } from 'rxjs';
 import { AlwaysOnService, AlwaysOnStateEnum } from '../always-on/always-on.service';
 import { AuthStrategy } from '../auth';
-import { GAUZY_ENV } from '../constants';
+import { BLOCK_DELAY, GAUZY_ENV } from '../constants';
 import { ElectronService, LoggerService } from '../electron/services';
 import { ImageViewerService } from '../image-viewer/image-viewer.service';
 import { ActivityWatchViewService } from '../integrations';
@@ -115,6 +117,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _isReady = false;
 	private _session: moment.Moment = null;
 	private hasActiveTaskPermissions = false;
+	private timerSubscription: Subscription | null = null;
 	@ViewChild('dialogOpenBtn') btnDialogOpen: ElementRef<HTMLElement>;
 	public start$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	userData: any;
@@ -518,8 +521,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					}
 				}
 			}
-
-			this.isProcessingEnabled = false;
 
 			asapScheduler.schedule(async () => {
 				try {
@@ -1391,10 +1392,24 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				: 'Please wait for timer to start and make initial screenshot';
 			this._toastrNotifier.warn(message);
 			this._loggerService.debug(message);
+			return;
 		} else {
 			this.isProcessingEnabled = true;
 		}
 		this.loading = true;
+
+		if (this.timerSubscription) {
+			this.timerSubscription.unsubscribe();
+		}
+
+		this.timerSubscription = timer(BLOCK_DELAY)
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loading = false;
+				this.isProcessingEnabled = false;
+				this._loggerService.info('unloclked processing');
+				this.timerSubscription = null;
+			});
 
 		if (!val) {
 			console.log('Stop tracking');
@@ -1515,6 +1530,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this._loggerService.info('Capturing Screen and Sending Activities Start...', activities);
 					await this.takeCaptureAndSendActivities(activities);
 					this._loggerService.info('Capturing Screen and Sending Activities Done ✔️');
+					this.isProcessingEnabled = false;
 				}, 1000);
 			}
 
@@ -1536,7 +1552,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this._errorHandlerService.handleError(error);
 		} finally {
 			this.loading = false;
-			this.isProcessingEnabled = false;
+			if (this.isRemoteTimer) {
+				this.isProcessingEnabled = false;
+			}
 		}
 	}
 
@@ -1590,6 +1608,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							await this.uploadScreenshots(activities, timeSlotId, screenshots);
 							this._loggerService.info('Capturing Screen and Sending Activities Done ✔️');
 						}
+						this.isProcessingEnabled = false;
 					}, 1000);
 				}
 			} else {
@@ -1628,7 +1647,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		} finally {
 			this._session = null;
 			this.loading = false;
-			this.isProcessingEnabled = false;
+			if (this.isRemoteTimer) {
+				this.isProcessingEnabled = false;
+			}
 			this.timeTrackerStore.ignition({ state: IgnitionState.STOPPED, mode: this._startMode });
 		}
 	}
