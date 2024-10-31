@@ -122,4 +122,20 @@ export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
 		return await this.taskLinkedIssueService.delete(id);
 	}
+
+	@ApiOperation({ summary: 'Soft delete Task Linked Issue record' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'The record has been successfully soft-deleted'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Task Linked Issue record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete('/:id/soft')
+	@UseValidationPipe({ whitelist: true })
+	async softRemove(@Param('id', UUIDValidationPipe) id: ID): Promise<any> {
+		return await this.taskLinkedIssueService.softDelete(id);
+	}
 }

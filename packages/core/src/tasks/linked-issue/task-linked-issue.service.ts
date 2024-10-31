@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, FindOneOptions } from 'typeorm';
+import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
 import {
 	ActionTypeEnum,
 	ActorTypeEnum,
@@ -123,6 +123,35 @@ export class TaskLinkedIssueService extends TenantAwareCrudService<TaskLinkedIss
 	 *
 	 */
 	async delete(id: ID, options?: FindOneOptions<TaskLinkedIssue>): Promise<DeleteResult> {
+		try {
+			await this.deleteActivityLog(id);
+
+			return await super.delete(id, options);
+		} catch (error) {
+			// Handle errors and return an appropriate error response
+			throw new HttpException(`Failed to delete task linked issue: ${error.message}`, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/**
+	 * Soft deletes a task linked issue by its ID, preserving the data while marking it as deleted.
+	 *
+	 * @param {ID} id - The ID of the task linked issue to be soft deleted.
+	 * @returns {Promise<TaskLinkedIssue | UpdateResult>} - A promise that resolves to the soft-deleted task linked issue or the update result.
+	 * @throws {HttpException} - Throws an error if the task linked issue cannot be found or the deletion process fails.
+	 */
+	async softDelete(id: ID): Promise<TaskLinkedIssue | UpdateResult> {
+		try {
+			await this.deleteActivityLog(id);
+
+			return await super.softDelete(id);
+		} catch (error) {
+			// Handle errors and return an appropriate error response
+			throw new HttpException(`Failed to delete task linked issue: ${error.message}`, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	private async deleteActivityLog(id: ID) {
 		const tenantId = RequestContext.currentTenantId();
 		try {
 			// Retrieve existing task linked issue
@@ -144,12 +173,6 @@ export class TaskLinkedIssueService extends TenantAwareCrudService<TaskLinkedIss
 				organizationId,
 				tenantId
 			);
-
-			//
-			return await super.delete(id, options);
-		} catch (error) {
-			// Handle errors and return an appropriate error response
-			throw new HttpException(`Failed to delete task linked issue: ${error.message}`, HttpStatus.BAD_REQUEST);
-		}
+		} catch {}
 	}
 }
