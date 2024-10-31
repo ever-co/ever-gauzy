@@ -1,4 +1,4 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { ITask } from './task.model';
 
 export enum TaskRelatedIssuesRelationEnum {
@@ -8,23 +8,21 @@ export enum TaskRelatedIssuesRelationEnum {
 	CLONES = 4,
 	IS_DUPLICATED_BY = 5,
 	DUPLICATES = 6,
-	RELATES_TO = 7,
+	RELATES_TO = 7
 }
 
-export interface ITaskLinkedIssue
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ITaskLinkedIssue extends IBasePerTenantAndOrganizationEntityModel {
 	action: TaskRelatedIssuesRelationEnum;
 	taskFrom?: ITask;
-	taskFromId: ITask['id'];
+	taskFromId: ID;
 	taskTo?: ITask;
-	taskToId: ITask['id'];
+	taskToId: ID;
 }
 
 export interface ITaskLinkedIssueCreateInput extends ITaskLinkedIssue {}
 
-export interface ITaskLinkedIssueUpdateInput
-	extends Partial<ITaskLinkedIssueCreateInput> {
-	id?: string;
+export interface ITaskLinkedIssueUpdateInput extends Partial<ITaskLinkedIssueCreateInput> {
+	id?: ID;
 }
 
 export interface ILinkedIssueFindInput

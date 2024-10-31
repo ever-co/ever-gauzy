@@ -1,14 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	JoinColumn,
-	RelationId,
-} from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { IsEnum, IsUUID } from 'class-validator';
-import {
-	ITask,
-	ITaskLinkedIssue,
-	TaskRelatedIssuesRelationEnum,
-} from '@gauzy/contracts';
+import { ID, ITask, ITaskLinkedIssue, TaskRelatedIssuesRelationEnum } from '@gauzy/contracts';
 import { Task } from './../task.entity';
 import { TenantOrganizationBaseEntity } from './../../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../../core/decorators/entity';
@@ -36,7 +29,7 @@ export class TaskLinkedIssue extends TenantOrganizationBaseEntity implements ITa
 	@RelationId((it: TaskLinkedIssue) => it.taskFrom)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	taskFromId: ITask['id'];
+	taskFromId: ID;
 
 	/**
 	 * Task Linked Issues
@@ -51,5 +44,5 @@ export class TaskLinkedIssue extends TenantOrganizationBaseEntity implements ITa
 	@RelationId((it: TaskLinkedIssue) => it.taskTo)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	taskToId: ITask['id'];
+	taskToId: ID;
 }

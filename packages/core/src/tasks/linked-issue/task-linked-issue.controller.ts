@@ -1,6 +1,6 @@
 import { Body, Controller, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { ITaskLinkedIssue, PermissionsEnum } from '@gauzy/contracts';
+import { ID, ITaskLinkedIssue, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from '../../shared/pipes';
 import { Permissions } from '../../shared/decorators';
@@ -44,7 +44,7 @@ export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
 	@Put(':id')
 	@UseValidationPipe({ whitelist: true })
 	async update(
-		@Param('id', UUIDValidationPipe) id: ITaskLinkedIssue['id'],
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: UpdateTaskLinkedIssueDTO
 	): Promise<ITaskLinkedIssue> {
 		return await this.taskLinkedIssueService.create({
