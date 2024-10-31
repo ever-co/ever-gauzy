@@ -1,11 +1,13 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
 	ActionTypeEnum,
 	ActorTypeEnum,
 	BaseEntityEnum,
+	ID,
 	ITaskLinkedIssue,
-	ITaskLinkedIssueCreateInput
+	ITaskLinkedIssueCreateInput,
+	ITaskLinkedIssueUpdateInput
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../../core/crud';
 import { RequestContext } from '../../core/context';
@@ -60,6 +62,52 @@ export class TaskLinkedIssueService extends TenantAwareCrudService<TaskLinkedIss
 		} catch (error) {
 			// Handle errors and return an appropriate error response
 			throw new HttpException(`Failed to create task linked issue : ${error.message}`, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/**
+	 * Updates a task linked issue.
+	 *
+	 * @param {ID} id - The ID of the task linked issue to update.
+	 * @param {ITaskLinkedIssueUpdateInput} input - The input data for updating the task linked issue.
+	 * @returns {Promise<ITaskLinkedIssue>} The updated task linked issue.
+	 * @throws {HttpException} Throws a Bad Request exception if the update fails.
+	 * @throws {NotFoundException} Throws a Not Found exception if the task linked issue does not exist.
+	 *
+	 */
+	async update(id: ID, input: ITaskLinkedIssueUpdateInput): Promise<ITaskLinkedIssue> {
+		const tenantId = RequestContext.currentTenantId() || input.tenantId;
+
+		try {
+			// Retrieve existing task linked issue
+			const existingTaskLinkedIssue = await this.findOneByIdString(id);
+
+			if (!existingTaskLinkedIssue) {
+				throw new NotFoundException('View not found');
+			}
+
+			const updatedTaskLinkedIssue = await super.create({ ...input, tenantId, id });
+
+			// Generate the activity log
+			const { organizationId } = updatedTaskLinkedIssue;
+			this.activityLogService.logActivity<TaskLinkedIssue>(
+				BaseEntityEnum.TaskLinkedIssue,
+				ActionTypeEnum.Updated,
+				ActorTypeEnum.User,
+				updatedTaskLinkedIssue.id,
+				taskRelatedIssueRelationMap(updatedTaskLinkedIssue.action),
+				updatedTaskLinkedIssue,
+				organizationId,
+				tenantId,
+				existingTaskLinkedIssue,
+				input
+			);
+
+			// return the updated task linked issue
+			return updatedTaskLinkedIssue;
+		} catch (error) {
+			// Handle errors and return an appropriate error response
+			throw new HttpException(`Failed to update task linked issue: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
 }
