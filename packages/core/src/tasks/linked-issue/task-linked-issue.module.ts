@@ -5,6 +5,7 @@ import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { TaskLinkedIssue } from './task-linked-issue.entity';
+import { CommandHandlers } from './commands/handlers';
 import { TaskLinkedIssueController } from './task-linked-issue.controller';
 import { TaskLinkedIssueService } from './task-linked-issue.service';
 
@@ -17,7 +18,7 @@ import { TaskLinkedIssueService } from './task-linked-issue.service';
 		CqrsModule
 	],
 	controllers: [TaskLinkedIssueController],
-	providers: [TaskLinkedIssueService],
+	providers: [TaskLinkedIssueService, ...CommandHandlers],
 	exports: [TaskLinkedIssueService]
 })
-export class TaskLinkedIssueModule { }
+export class TaskLinkedIssueModule {}
