@@ -1,12 +1,24 @@
-import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	Query,
+	UseGuards
+} from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
-import { ID, ITaskLinkedIssue, PermissionsEnum } from '@gauzy/contracts';
+import { ID, IPagination, ITaskLinkedIssue, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from '../../shared/pipes';
 import { Permissions } from '../../shared/decorators';
-import { CrudController } from '../../core/crud';
+import { CrudController, PaginationParams } from '../../core/crud';
 import { TaskLinkedIssue } from './task-linked-issue.entity';
 import { TaskLinkedIssueService } from './task-linked-issue.service';
 import { CreateTaskLinkedIssueDTO, UpdateTaskLinkedIssueDTO } from './dto';
@@ -22,6 +34,24 @@ export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
 		private readonly commandBus: CommandBus
 	) {
 		super(taskLinkedIssueService);
+	}
+
+	@ApiOperation({
+		summary: 'Find all'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found task linked issues',
+		type: TaskLinkedIssue
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	@UseValidationPipe()
+	async findAll(@Query() params: PaginationParams<TaskLinkedIssue>): Promise<IPagination<ITaskLinkedIssue>> {
+		return await this.taskLinkedIssueService.findAll(params);
 	}
 
 	/**
