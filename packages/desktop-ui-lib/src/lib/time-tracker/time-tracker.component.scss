@@ -741,3 +741,35 @@ img {
 	  }
 	}
 }
+
+//animation
+@keyframes pulseBorder {
+	0% {
+	  box-shadow: 0 0 0 0 var(--pulse-color-rgba);
+	}
+	70% {
+	  box-shadow: 0 0 1rem 1rem rgba(var(--pulse-color-rgb), 0);
+	}
+	100% {
+	  box-shadow: 0 0 0 0 rgba(var(--pulse-color-rgb), 0);
+	}
+  }
+
+.pulse-border {
+--pulse-duration: 1.5s;
+--pulse-color-rgb: 0, 255, 0; /* Default green color in RGB format */
+--pulse-color-rgba: rgba(var(--pulse-color-rgb), 0.4);
+--border-color: rgb(var(--pulse-color-rgb));
+
+animation: pulseBorder var(--pulse-duration) infinite;
+}
+
+.start-button {
+--pulse-color-rgb: 0, 255, 0;  /* Green */
+--pulse-duration: 1s;
+}
+
+.stop-button {
+--pulse-color-rgb: 255, 0, 0;  /* Red */
+--pulse-duration: 1s;
+}
