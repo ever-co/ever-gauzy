@@ -1407,7 +1407,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.subscribe(() => {
 				this.loading = false;
 				this.isProcessingEnabled = false;
-				this._loggerService.info('unloclked processing');
+				this._loggerService.info('Processing Unlocked');
 				this.timerSubscription = null;
 			});
 
