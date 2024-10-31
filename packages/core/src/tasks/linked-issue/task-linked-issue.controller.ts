@@ -1,6 +1,7 @@
-import { Body, Controller, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { DeleteResult } from 'typeorm';
 import { ID, ITaskLinkedIssue, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from '../../shared/pipes';
@@ -75,5 +76,20 @@ export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
 		@Body() entity: UpdateTaskLinkedIssueDTO
 	): Promise<ITaskLinkedIssue> {
 		return await this.commandBus.execute(new TaskLinkedIssueUpdateCommand(id, entity));
+	}
+
+	@ApiOperation({ summary: 'Delete Task Linked issue' })
+	@ApiResponse({
+		status: HttpStatus.NO_CONTENT,
+		description: 'The record has been successfully deleted'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete('/:id')
+	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
+		return await this.taskLinkedIssueService.delete(id);
 	}
 }

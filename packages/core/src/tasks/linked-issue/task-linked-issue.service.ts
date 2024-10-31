@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { DeleteResult, FindOneOptions } from 'typeorm';
 import {
 	ActionTypeEnum,
 	ActorTypeEnum,
@@ -108,6 +109,47 @@ export class TaskLinkedIssueService extends TenantAwareCrudService<TaskLinkedIss
 		} catch (error) {
 			// Handle errors and return an appropriate error response
 			throw new HttpException(`Failed to update task linked issue: ${error.message}`, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/**
+	 * Deletes a task linked.
+	 *
+	 * @param {ID} id - The ID of the task linked issue to delete.
+	 * @param {FindOneOptions<TaskLinkedIssue>} [options] - Optional query options to find the task linked issue before deletion.
+	 * @returns {Promise<DeleteResult>} The result of the deletion operation.
+	 * @throws {HttpException} Throws a Bad Request exception if the deletion fails.
+	 * @throws {NotFoundException} Throws a Not Found exception if the task linked issue does not exist.
+	 *
+	 */
+	async delete(id: ID, options?: FindOneOptions<TaskLinkedIssue>): Promise<DeleteResult> {
+		const tenantId = RequestContext.currentTenantId();
+		try {
+			// Retrieve existing task linked issue
+			const existingTaskLinkedIssue = await this.findOneByIdString(id);
+
+			if (!existingTaskLinkedIssue) {
+				throw new NotFoundException('View not found');
+			}
+
+			// Generate deleted activity log
+			const { organizationId } = existingTaskLinkedIssue;
+			this.activityLogService.logActivity<TaskLinkedIssue>(
+				BaseEntityEnum.TaskLinkedIssue,
+				ActionTypeEnum.Deleted,
+				ActorTypeEnum.User,
+				id,
+				taskRelatedIssueRelationMap(existingTaskLinkedIssue.action),
+				existingTaskLinkedIssue,
+				organizationId,
+				tenantId
+			);
+
+			//
+			return await super.delete(id, options);
+		} catch (error) {
+			// Handle errors and return an appropriate error response
+			throw new HttpException(`Failed to delete task linked issue: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
 }
