@@ -11,42 +11,6 @@
 	"version": 1,
 	"newProjectRoot": "",
 	"projects": {
-		"ui-auth": {
-			"projectType": "library",
-			"root": "packages/ui-auth",
-			"sourceRoot": "packages/ui-auth",
-			"prefix": "lib",
-			"architect": {
-				"build": {
-					"builder": "@angular-devkit/build-angular:ng-packagr",
-					"options": {
-						"project": "packages/ui-auth/ng-package.json"
-					},
-					"configurations": {
-						"production": {
-							"tsConfig": "packages/ui-auth/tsconfig.lib.prod.json"
-						},
-						"development": {
-							"tsConfig": "packages/ui-auth/tsconfig.lib.json"
-						}
-					},
-					"defaultConfiguration": "production"
-				},
-				"test": {
-					"builder": "@angular-devkit/build-angular:karma",
-					"options": {
-						"tsConfig": "packages/ui-auth/tsconfig.spec.json",
-						"polyfills": ["zone.js", "zone.js/testing"]
-					}
-				}
-			},
-			"schematics": {
-				"@nrwl/angular:component": {
-					"prefix": "ngx",
-					"style": "scss"
-				}
-			}
-		},
 		"ui-config": {
 			"projectType": "library",
 			"root": "packages/ui-config",

@@ -1,0 +1,51 @@
+{
+	"name": "ui-auth",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/ui-auth/src",
+	"prefix": "gauzy",
+	"tags": [],
+	"projectType": "library",
+	"targets": {
+		"build": {
+			"executor": "@nx/angular:package",
+			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"options": {
+				"project": "packages/ui-auth/ng-package.json"
+			},
+			"configurations": {
+				"production": {
+					"tsConfig": "../../packages/ui-auth/tsconfig.lib.prod.json"
+				},
+				"development": {
+					"tsConfig": "../../packages/ui-auth/tsconfig.lib.json"
+				}
+			},
+			"defaultConfiguration": "production"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/ui-auth/jest.config.ts",
+				"passWithNoTests": true
+			},
+			"configurations": {
+				"ci": {
+					"ci": true,
+					"codeCoverage": true
+				}
+			}
+		},
+		"lint": {
+			"executor": "@nx/linter:eslint",
+			"outputs": ["{options.outputFile}"],
+			"options": {
+				"lintFilePatterns": [
+					"packages/ui-auth/**/*.ts",
+					"packages/ui-auth/**/*.html",
+					"packages/ui-auth/package.json"
+				]
+			}
+		}
+	}
+}

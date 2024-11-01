@@ -27,9 +27,9 @@
 	],
 	"private": true,
 	"scripts": {
-		"lib:build": "ng build ui-auth --configuration=development",
-		"lib:build:prod": "ng build ui-auth --configuration=production",
-		"lib:watch": "ng build ui-auth --watch --configuration=development"
+		"lib:build": "nx build ui-auth --configuration=development",
+		"lib:build:prod": "nx build ui-auth --configuration=production",
+		"lib:watch": "nx build ui-auth --watch --configuration=development"
 	},
 	"peerDependencies": {
 		"@angular/common": "^16.2.12",
