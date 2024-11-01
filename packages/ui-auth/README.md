@@ -20,3 +20,7 @@ npm install @gauzy/ui-auth
 # or
 yarn add @gauzy/ui-auth
 ```
+
+## Running unit tests
+
+Run `nx test ui-auth` to execute the unit tests.
