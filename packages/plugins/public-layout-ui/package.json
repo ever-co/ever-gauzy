@@ -2,7 +2,7 @@
 	"name": "@gauzy/plugin-public-layout-ui",
 	"version": "0.1.0",
 	"type": "commonjs",
-	"description": "",
+	"description": "A public-facing UI plugin for the Ever Gauzy Platform, providing reusable components and layouts for public views and interactions.",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -17,12 +17,23 @@
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"homepage": "https://ever.co",
-	"keywords": [],
+	"keywords": [
+		"angular",
+		"ui",
+		"public-layout",
+		"frontend",
+		"gauzy",
+		"components",
+		"ever-co",
+		"web-plugin",
+		"layout",
+		"reusable-components"
+	],
 	"private": true,
 	"scripts": {
-		"lib:build": "ng build plugin-public-layout-ui --configuration=development",
-		"lib:build:prod": "ng build plugin-public-layout-ui --configuration=production",
-		"lib:watch": "ng build plugin-public-layout-ui --watch --configuration=development"
+		"lib:build": "nx build plugin-public-layout-ui --configuration=development",
+		"lib:build:prod": "nx build plugin-public-layout-ui --configuration=production",
+		"lib:watch": "nx build plugin-public-layout-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
 		"@angular/common": "^16.2.12",
