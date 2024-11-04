@@ -11,42 +11,6 @@
 	"version": 1,
 	"newProjectRoot": "",
 	"projects": {
-		"plugin-maintenance-ui": {
-			"projectType": "library",
-			"root": "packages/plugins/maintenance-ui",
-			"sourceRoot": "packages/plugins/maintenance-ui",
-			"prefix": "lib",
-			"architect": {
-				"build": {
-					"builder": "@angular-devkit/build-angular:ng-packagr",
-					"options": {
-						"project": "packages/plugins/maintenance-ui/ng-package.json"
-					},
-					"configurations": {
-						"production": {
-							"tsConfig": "packages/plugins/maintenance-ui/tsconfig.lib.prod.json"
-						},
-						"development": {
-							"tsConfig": "packages/plugins/maintenance-ui/tsconfig.lib.json"
-						}
-					},
-					"defaultConfiguration": "production"
-				},
-				"test": {
-					"builder": "@nrwl/jest:jest",
-					"options": {
-						"jestConfig": "packages/plugins/maintenance-ui/jest.config.js",
-						"passWithNoTests": true
-					}
-				}
-			},
-			"schematics": {
-				"@nrwl/angular:component": {
-					"prefix": "ngx",
-					"style": "scss"
-				}
-			}
-		},
 		"gauzy-e2e": {
 			"root": "apps/gauzy-e2e",
 			"sourceRoot": "apps/gauzy-e2e/src",

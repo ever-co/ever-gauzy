@@ -20,9 +20,9 @@
 	"keywords": [],
 	"private": true,
 	"scripts": {
-		"lib:build": "ng build plugin-maintenance-ui --configuration=development",
-		"lib:build:prod": "ng build plugin-maintenance-ui --configuration=production",
-		"lib:watch": "ng build plugin-maintenance-ui --watch --configuration=development"
+		"lib:build": "nx build plugin-maintenance-ui --configuration=development",
+		"lib:build:prod": "nx build plugin-maintenance-ui --configuration=production",
+		"lib:watch": "nx build plugin-maintenance-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
 		"@angular/common": "^16.2.12",
