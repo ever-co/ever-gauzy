@@ -17,24 +17,13 @@
 		],
 		"production": ["default"]
 	},
-	"tasksRunnerOptions": {
-		"default": {
-			"runner": "nx-cloud",
-			"options": {
-				"cacheableOperations": ["build", "lint", "test", "e2e"],
-				"parallel": 1,
-				"accessToken": "NWJlMDFmMTMtYzUyZS00ZGE4LTk0NzctNWIzZTkxMzNhMTFlfHJlYWQtd3JpdGU="
-			}
-		}
-	},
 	"cli": {
 		"warnings": {
 			"typescriptMismatch": false,
 			"versionMismatch": false
 		},
 		"packageManager": "yarn",
-		"analytics": false,
-		"defaultCollection": "@nstudio/xplat"
+		"analytics": false
 	},
 	"generators": {
 		"@nx/angular": {
@@ -95,5 +84,38 @@
 		}
 	},
 	"defaultProject": "gauzy",
-	"$schema": "./node_modules/nx/schemas/nx-schema.json"
+	"$schema": "./node_modules/nx/schemas/nx-schema.json",
+	"nxCloudAccessToken": "NWJlMDFmMTMtYzUyZS00ZGE4LTk0NzctNWIzZTkxMzNhMTFlfHJlYWQtd3JpdGU=",
+	"parallel": 1,
+	"targetDefaults": {
+		"build": {
+			"cache": true
+		},
+		"lint": {
+			"cache": true
+		},
+		"test": {
+			"cache": true
+		},
+		"e2e": {
+			"cache": true
+		},
+		"@nx/eslint:lint": {
+			"cache": true,
+			"inputs": ["default", "{workspaceRoot}/.eslintrc.json", "{workspaceRoot}/tools/eslint-rules/**/*"]
+		},
+		"@nx/jest:jest": {
+			"cache": true,
+			"inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"],
+			"options": {
+				"passWithNoTests": true
+			},
+			"configurations": {
+				"ci": {
+					"ci": true,
+					"codeCoverage": true
+				}
+			}
+		}
+	}
 }

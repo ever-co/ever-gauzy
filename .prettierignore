@@ -5,3 +5,5 @@
 /dist
 /coverage
 .angular
+
+/.nx/cache
