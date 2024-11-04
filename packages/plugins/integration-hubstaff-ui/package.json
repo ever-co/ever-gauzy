@@ -31,9 +31,9 @@
 	],
 	"private": true,
 	"scripts": {
-		"lib:build": "ng build plugin-integration-hubstaff-ui --configuration=development",
-		"lib:build:prod": "ng build plugin-integration-hubstaff-ui --configuration=production",
-		"lib:watch": "ng build plugin-integration-hubstaff-ui --watch --configuration=development"
+		"lib:build": "nx build plugin-integration-hubstaff-ui --configuration=development",
+		"lib:build:prod": "nx build plugin-integration-hubstaff-ui --configuration=production",
+		"lib:watch": "nx build plugin-integration-hubstaff-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
 		"@angular/common": "^16.2.12",
