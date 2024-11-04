@@ -11,42 +11,6 @@
 	"version": 1,
 	"newProjectRoot": "",
 	"projects": {
-		"plugin-job-employee-ui": {
-			"projectType": "library",
-			"root": "packages/plugins/job-employee-ui",
-			"sourceRoot": "packages/plugins/job-employee-ui",
-			"prefix": "lib",
-			"architect": {
-				"build": {
-					"builder": "@angular-devkit/build-angular:ng-packagr",
-					"options": {
-						"project": "packages/plugins/job-employee-ui/ng-package.json"
-					},
-					"configurations": {
-						"production": {
-							"tsConfig": "packages/plugins/job-employee-ui/tsconfig.lib.prod.json"
-						},
-						"development": {
-							"tsConfig": "packages/plugins/job-employee-ui/tsconfig.lib.json"
-						}
-					},
-					"defaultConfiguration": "production"
-				},
-				"test": {
-					"builder": "@angular-devkit/build-angular:karma",
-					"options": {
-						"tsConfig": "packages/plugins/job-employee-ui/tsconfig.spec.json",
-						"polyfills": ["zone.js", "zone.js/testing"]
-					}
-				}
-			},
-			"schematics": {
-				"@nrwl/angular:component": {
-					"prefix": "ngx",
-					"style": "scss"
-				}
-			}
-		},
 		"plugin-job-matching-ui": {
 			"projectType": "library",
 			"root": "packages/plugins/job-matching-ui",
