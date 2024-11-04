@@ -11,41 +11,6 @@
 	"version": 1,
 	"newProjectRoot": "",
 	"projects": {
-		"plugin-integration-ai-ui": {
-			"projectType": "library",
-			"root": "packages/plugins/integration-ai-ui",
-			"sourceRoot": "packages/plugins/integration-ai-ui",
-			"prefix": "lib",
-			"architect": {
-				"build": {
-					"builder": "@angular-devkit/build-angular:ng-packagr",
-					"options": {
-						"project": "packages/plugins/integration-ai-ui/ng-package.json"
-					},
-					"configurations": {
-						"production": {
-							"tsConfig": "packages/plugins/integration-ai-ui/tsconfig.lib.prod.json"
-						},
-						"development": {
-							"tsConfig": "packages/plugins/integration-ai-ui/tsconfig.lib.json"
-						}
-					},
-					"defaultConfiguration": "production"
-				},
-				"test": {
-					"builder": "@angular-devkit/build-angular:karma",
-					"options": {
-						"tsConfig": "packages/plugins/integration-ai-ui/tsconfig.spec.json",
-						"polyfills": ["zone.js", "zone.js/testing"]
-					}
-				}
-			},
-			"schematics": {
-				"@nrwl/angular:component": {
-					"style": "scss"
-				}
-			}
-		},
 		"plugin-integration-hubstaff-ui": {
 			"projectType": "library",
 			"root": "packages/plugins/integration-hubstaff-ui",

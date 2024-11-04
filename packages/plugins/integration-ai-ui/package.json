@@ -20,9 +20,9 @@
 	"keywords": [],
 	"private": true,
 	"scripts": {
-		"lib:build": "ng build plugin-integration-ai-ui --configuration=development",
-		"lib:build:prod": "ng build plugin-integration-ai-ui --configuration=production",
-		"lib:watch": "ng build plugin-integration-ai-ui --watch --configuration=development"
+		"lib:build": "nx build plugin-integration-ai-ui --configuration=development",
+		"lib:build:prod": "nx build plugin-integration-ai-ui --configuration=production",
+		"lib:watch": "nx build plugin-integration-ai-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
 		"@angular/common": "^16.2.12",
