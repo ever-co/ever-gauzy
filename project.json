@@ -54,19 +54,7 @@
 		"plugin-public-layout-ui": {
 			"tags": []
 		},
-		"plugin-onboarding-ui": {
-			"tags": []
-		},
 		"plugin-legal-ui": {
-			"tags": []
-		},
-		"ui-auth": {
-			"tags": []
-		},
-		"ui-config": {
-			"tags": []
-		},
-		"ui-core": {
 			"tags": []
 		}
 	}
