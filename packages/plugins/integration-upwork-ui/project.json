@@ -1,12 +1,14 @@
 {
 	"name": "plugin-integration-upwork-ui",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
-	"projectType": "library",
-	"sourceRoot": "packages/plugins/integration-upwork-ui",
+	"sourceRoot": "packages/plugins/integration-upwork-ui/src",
 	"prefix": "lib",
+	"tags": [],
+	"projectType": "library",
 	"targets": {
 		"build": {
-			"executor": "@angular-devkit/build-angular:ng-packagr",
+			"executor": "@nx/angular:package",
+			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
 			"options": {
 				"project": "packages/plugins/integration-upwork-ui/ng-package.json"
 			},
@@ -21,15 +23,33 @@
 			"defaultConfiguration": "production"
 		},
 		"test": {
-			"executor": "@angular-devkit/build-angular:karma",
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
-				"tsConfig": "packages/plugins/integration-upwork-ui/tsconfig.spec.json",
-				"polyfills": ["zone.js", "zone.js/testing"]
+				"jestConfig": "packages/plugins/integration-upwork-ui/jest.config.ts",
+				"passWithNoTests": true
+			},
+			"configurations": {
+				"ci": {
+					"ci": true,
+					"codeCoverage": true
+				}
+			}
+		},
+		"lint": {
+			"executor": "@nx/linter:eslint",
+			"outputs": ["{options.outputFile}"],
+			"options": {
+				"lintFilePatterns": [
+					"packages/plugins/integration-upwork-ui/**/*.ts",
+					"packages/plugins/integration-upwork-ui/**/*.html",
+					"packages/plugins/integration-upwork-ui/package.json"
+				]
 			}
 		}
 	},
 	"generators": {
-		"@nrwl/angular:component": {
+		"@nx/angular:component": {
 			"style": "scss"
 		}
 	}
