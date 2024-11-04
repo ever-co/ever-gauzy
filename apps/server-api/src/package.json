@@ -199,9 +199,9 @@
 			"node_modules/linebreak/src/classes.trie"
 		],
 		"targets": [
-			"node16-linux-x64",
-			"node16-mac-x64",
-			"node16-win-x64"
+			"node20-linux-x64",
+			"node20-mac-x64",
+			"node20-win-x64"
 		]
 	}
 }

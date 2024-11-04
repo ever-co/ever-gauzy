@@ -54,22 +54,43 @@
 										</div>
 									</div>
 								</div>
-								<gauzy-time-tracker-status class="status"></gauzy-time-tracker-status>
+								<gauzy-time-tracker-status *ngIf="isRemoteTimer" class="status"></gauzy-time-tracker-status>
 							</div>
 							<div class="col-3 d-flex flex-column align-items-center">
 								<div>
-									<button (click)="toggleStart(true)" *ngIf="!(start$ | async)"
-										[disabled]="loading || !isTrackingEnabled" class="button-ghost" nbButton
-										status="success">
-										<nb-icon [nbTooltipDisabled]="isTrackingEnabled" [nbTooltipIcon]="{
+									<button
+										(click)="toggleStart(true)"
+										*ngIf="!(start$ | async)"
+										[ngClass]="{ 'pulse-border start-button': isProcessingEnabled }"
+										[disabled]="loading || !isTrackingEnabled"
+										class="button-ghost"
+										nbButton
+										status="success"
+									>
+										<nb-icon
+											[nbTooltipDisabled]="isTrackingEnabled"
+											[nbTooltipIcon]="{
 												icon: 'alert-triangle-outline',
 												pack: 'eva'
-											}" [nbTooltip]="'TIMER_TRACKER.TIME_TRACKER_DISABLED' | translate" class="start-button" icon="play"
-											nbTooltipPlacement="bottom" nbTooltipStatus="warning" pack="font-awesome">
+											}"
+											[nbTooltip]="'TIMER_TRACKER.TIME_TRACKER_DISABLED' | translate"
+											class="start-button"
+											icon="play"
+											nbTooltipPlacement="bottom"
+											nbTooltipStatus="warning"
+											pack="font-awesome"
+										>
 										</nb-icon>
 									</button>
-									<button (click)="toggleStart(false)" *ngIf="start$ | async" [disabled]="loading"
-										class="button-ghost" nbButton status="danger">
+									<button
+										(click)="toggleStart(false)"
+										*ngIf="start$ | async"
+										[disabled]="loading"
+										[ngClass]="{ 'pulse-border stop-button': isProcessingEnabled }"
+										class="button-ghost"
+										nbButton
+										status="danger"
+									>
 										<nb-icon class="start-button" icon="pause" pack="font-awesome"> </nb-icon>
 									</button>
 								</div>
