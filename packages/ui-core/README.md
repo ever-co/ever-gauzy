@@ -1,6 +1,13 @@
 # @gauzy/ui-core
 
-This library was generated with [Nx](https://nx.dev).
+The `@gauzy/ui-core` library is generated with [Nx](https://nx.dev) and is intended to be used within the Gauzy ecosystem. Before installing, make sure you have a Gauzy workspace set up and that all necessary dependencies are in place.
+
+# Getting Started
+
+-   **Core Components:** Offers a collection of essential UI components and utilities for building user interfaces in Angular applications.
+-   **Shared Pipes:** Provides reusable pipes for transforming data and formatting strings in Angular applications.
+-   **Shared Services:** Offers a collection of shared services for common functionality, such as authentication, localization, and data access.
+-   **Shared Directives:** Provides reusable directives for common UI elements, such as tooltips, dropdowns, and modals.
 
 ## Code scaffolding
 
@@ -18,15 +25,16 @@ After building your library with `ng build ui-core`, go to the dist folder `cd d
 
 ## Running unit tests
 
-Run `ng test ui-core` to execute the unit tests via [Karma](https://karma-runner.github.io).
+Run `nx test ui-core` to execute the unit tests via [Jest](https://jestjs.io).
 
 ## Installation
 
 To install the `@gauzy/ui-core` library, run the following command in your Angular project:
 
-```sh
+```bash
+npm install @gauzy/ui-core
+# or
 yarn add @gauzy/ui-core
-
 ```
 
 ## Further help

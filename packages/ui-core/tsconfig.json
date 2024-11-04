@@ -19,6 +19,7 @@
 		}
 	},
 	"files": [],
+	"include": [],
 	"references": [
 		{
 			"path": "./tsconfig.lib.json"
