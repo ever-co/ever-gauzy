@@ -26,9 +26,9 @@
 	],
 	"private": true,
 	"scripts": {
-		"lib:build": "ng build plugin-legal-ui --configuration=development",
-		"lib:build:prod": "ng build plugin-legal-ui --configuration=production",
-		"lib:watch": "ng build plugin-legal-ui --watch --configuration=development"
+		"lib:build": "nx build plugin-legal-ui --configuration=development",
+		"lib:build:prod": "nx build plugin-legal-ui --configuration=production",
+		"lib:watch": "nx build plugin-legal-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
 		"@angular/common": "^16.2.12",
