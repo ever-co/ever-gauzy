@@ -7184,10 +7184,10 @@
     "@napi-rs/nice-win32-ia32-msvc" "1.0.1"
     "@napi-rs/nice-win32-x64-msvc" "1.0.1"
 
-"@nebular/auth@^12.0.0":
-  version "12.0.0"
-  resolved "https://registry.yarnpkg.com/@nebular/auth/-/auth-12.0.0.tgz#2e5d88056cbeaf8153390fbc6dc076193e92426d"
-  integrity sha512-DI3r3svAb9kGzDXUffeQU3/tHUYYwmhgPvFCmCnxaEHUHV89Y7qlaKm5+7J2EwTgcsia3EiP5SwECT5BMbR25Q==
+"@nebular/auth@^13.0.0":
+  version "13.0.0"
+  resolved "https://registry.yarnpkg.com/@nebular/auth/-/auth-13.0.0.tgz#c4bc9e83390beb8004fb3cb0b02e538ee3127d83"
+  integrity sha512-S+ZbKEtMsP5cE3bkwDNLYuEdAadaVPG/40PiCawzkukUM+FSFZ36Soz2lrUQj69MlOemLCtNuTaBMPFfkX93XA==
   dependencies:
     tslib "^2.3.0"
 
@@ -7196,24 +7196,24 @@
   resolved "https://registry.yarnpkg.com/@nebular/bootstrap/-/bootstrap-9.1.0-rc.6.tgz#526996ff2029427f9a3c116d50398120df8291af"
   integrity sha512-xVb6fztyO8NVFVXV2EOPe2vuwbQ97s2DOve5se0DjaiyZjy5ExSigkKjImNCa+CCMROWNp6UxhjmPlYlsdAIEA==
 
-"@nebular/eva-icons@^12.0.0":
-  version "12.0.0"
-  resolved "https://registry.yarnpkg.com/@nebular/eva-icons/-/eva-icons-12.0.0.tgz#acf0b3102f4c5aa300f3b9793d800daedf706c1c"
-  integrity sha512-YB2xGhRyhgvppvZ+I9hGS5q8LS3u0gOKml3KYeDMA/Rf8h3erFVn5ZEK/KBqoVh9khIY6OHj305RqiLXA25j7Q==
+"@nebular/eva-icons@^13.0.0":
+  version "13.0.0"
+  resolved "https://registry.yarnpkg.com/@nebular/eva-icons/-/eva-icons-13.0.0.tgz#22292d507e223af9e236d52fd4270b781b29e31e"
+  integrity sha512-4M9vwo3OJeDjlVufeGTg1u/01uxZ0LH8f8GvD1wuyzGitY/3hlySmXP31Nz/koKcM9QJZsm0wECJVxd+8BDf3Q==
   dependencies:
     tslib "^2.3.0"
 
-"@nebular/security@^12.0.0":
-  version "12.0.0"
-  resolved "https://registry.yarnpkg.com/@nebular/security/-/security-12.0.0.tgz#93f782f2744fe4e4228ed27436d430eb5d06c168"
-  integrity sha512-BLYrGRUYj/r6cgADDNviIJz9Hh6YGwsl/gdx4UIRjQftqpdvfxXN96PCA2pbxclD/fSdlvWezcWq/LZZbQlf/g==
+"@nebular/security@^13.0.0":
+  version "13.0.0"
+  resolved "https://registry.yarnpkg.com/@nebular/security/-/security-13.0.0.tgz#47b9c414d5362cc9d74abd5e1cfdd2ae289f08e2"
+  integrity sha512-GC//strVKPImPpyasUYSww6FAj2C81wDhMPW010LxtXPfOUzw9pvOThF3kXjP6XgbTZGT0Ugk+RpSOGWkbu15A==
   dependencies:
     tslib "^2.3.0"
 
-"@nebular/theme@^12.0.0":
-  version "12.0.0"
-  resolved "https://registry.yarnpkg.com/@nebular/theme/-/theme-12.0.0.tgz#38e621a44e578a41a1ed4e0d150b8b05802947d1"
-  integrity sha512-CHmOUODjKxBNHc0LD2Rct5nGkseErMHQuLY5lwXFTbQ7oD/TZTWbFGurFYJShppFF+9Q6qJGodJ+nI6mTUQYBQ==
+"@nebular/theme@^13.0.0":
+  version "13.0.0"
+  resolved "https://registry.yarnpkg.com/@nebular/theme/-/theme-13.0.0.tgz#5c40de36e8cfd362ec473d3689574c4eb846dc24"
+  integrity sha512-Tru51zohkCe2Xw4mDhVmmRsiHeAwkbzNDKSEP4/IVCHcCUpwT/d7S6w3Wc6NlzrVD8DsDSbN6BWef9VIbvs5Pw==
   dependencies:
     tslib "^2.3.0"
 
