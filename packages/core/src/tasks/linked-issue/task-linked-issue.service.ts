@@ -173,6 +173,8 @@ export class TaskLinkedIssueService extends TenantAwareCrudService<TaskLinkedIss
 				organizationId,
 				tenantId
 			);
-		} catch {}
+		} catch (error) {
+			console.error('Failed to create activity log for deletion:', error);
+		}
 	}
 }

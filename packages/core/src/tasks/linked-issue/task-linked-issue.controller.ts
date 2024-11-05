@@ -118,7 +118,7 @@ export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Delete('/:id')
+	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
 		return await this.taskLinkedIssueService.delete(id);
 	}
@@ -133,7 +133,7 @@ export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
 		description: 'Task Linked Issue record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Delete('/:id/soft')
+	@Delete(':id/soft')
 	@UseValidationPipe({ whitelist: true })
 	async softRemove(@Param('id', UUIDValidationPipe) id: ID): Promise<any> {
 		return await this.taskLinkedIssueService.softDelete(id);
