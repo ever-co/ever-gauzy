@@ -18,10 +18,7 @@
 			}
 		},
 		"lint": {
-			"executor": "@nx/eslint:lint",
-			"options": {
-				"lintFilePatterns": ["apps/gauzy-e2e/**/*.{js,ts}"]
-			}
+			"executor": "@nx/eslint:lint"
 		}
 	}
 }
