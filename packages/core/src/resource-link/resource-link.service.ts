@@ -80,7 +80,12 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 	 */
 	async update(id: ID, input: IResourceLinkUpdateInput): Promise<IResourceLink | UpdateResult> {
 		try {
-			const resourceLink = await this.findOneByIdString(id);
+			// Find Resource Link relations
+			const relations = this.typeOrmResourceLinkRepository.metadata.relations.map(
+				(relation) => relation.propertyName
+			);
+
+			const resourceLink = await this.findOneByIdString(id, { relations });
 
 			if (!resourceLink) {
 				throw new BadRequestException('Resource Link not found');

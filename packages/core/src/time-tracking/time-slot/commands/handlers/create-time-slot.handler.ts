@@ -36,7 +36,7 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 	 * @returns {Promise<TimeSlot>} - A promise that resolves to the created or updated TimeSlot instance.
 	 */
 	public async execute(command: CreateTimeSlotCommand): Promise<TimeSlot> {
-		const { input } = command;
+		const { input, forceDelete } = command;
 		let {
 			organizationId,
 			employeeId,
@@ -177,8 +177,11 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 
 		// Merge timeSlots into 10 minutes slots
 		let [mergedTimeSlot] = await this._commandBus.execute(
-			new TimeSlotMergeCommand(organizationId, employeeId, minDate, maxDate)
+			new TimeSlotMergeCommand(organizationId, employeeId, minDate, maxDate, forceDelete)
 		);
+
+		this.log(`Newly Created Merged Time Slots: ${JSON.stringify(mergedTimeSlot)}`);
+
 		if (mergedTimeSlot) {
 			timeSlot = mergedTimeSlot;
 		}

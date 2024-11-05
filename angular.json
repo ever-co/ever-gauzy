@@ -85,7 +85,8 @@
 							"randomcolor",
 							"underscore.string",
 							"slugify",
-							"eva-icons"
+							"eva-icons",
+							"localforage"
 						]
 					},
 					"configurations": {

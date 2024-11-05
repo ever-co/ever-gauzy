@@ -87,5 +87,6 @@ export enum BaseEntityEnum {
 	OrganizationVendor = 'OrganizationVendor',
 	Task = 'Task',
 	TaskView = 'TaskView',
+	TaskLinkedIssue = 'TaskLinkedIssue',
 	User = 'User'
 }

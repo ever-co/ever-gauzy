@@ -58,7 +58,7 @@ export class TimeTrackerStatusService {
 						duration: status.duration
 					});
 					this._icon$.next(TimerIconFactory.create(remoteTimer.source));
-					if (!remoteTimer.running || !remoteTimer.isExternalSource) this._icon$.next(null);
+					if (!remoteTimer.running) this._icon$.next(null);
 					this._external$.next(remoteTimer);
 				}),
 				repeat({
