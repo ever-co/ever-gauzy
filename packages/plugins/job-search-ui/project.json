@@ -1,7 +1,6 @@
 {
 	"name": "plugin-job-search-ui",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
-	"root": "packages/plugins/job-search-ui",
 	"sourceRoot": "packages/plugins/job-search-ui/src",
 	"prefix": "lib",
 	"tags": [],

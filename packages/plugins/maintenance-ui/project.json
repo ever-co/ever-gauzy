@@ -1,7 +1,6 @@
 {
 	"name": "plugin-maintenance-ui",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
-	"root": "packages/plugins/maintenance-ui",
 	"sourceRoot": "packages/plugins/maintenance-ui/src",
 	"prefix": "lib",
 	"tags": [],

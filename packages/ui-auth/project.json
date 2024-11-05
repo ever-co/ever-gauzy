@@ -1,7 +1,6 @@
 {
 	"name": "ui-auth",
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
-	"root": "packages/ui-auth",
 	"sourceRoot": "packages/ui-auth/src",
 	"prefix": "gauzy",
 	"tags": [],

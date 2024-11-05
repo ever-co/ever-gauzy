@@ -1,7 +1,6 @@
 {
 	"name": "ui-core",
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
-	"root": "packages/ui-core",
 	"sourceRoot": "packages/ui-core",
 	"prefix": "lib",
 	"tags": [],

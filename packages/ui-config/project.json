@@ -1,7 +1,6 @@
 {
 	"name": "ui-config",
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
-	"root": "packages/ui-config",
 	"sourceRoot": "packages/ui-config/src",
 	"prefix": "gauzy",
 	"tags": [],

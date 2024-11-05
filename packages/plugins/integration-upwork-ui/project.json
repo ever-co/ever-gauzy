@@ -1,7 +1,6 @@
 {
 	"name": "plugin-integration-upwork-ui",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
-	"root": "packages/plugins/integration-upwork-ui",
 	"sourceRoot": "packages/plugins/integration-upwork-ui/src",
 	"prefix": "lib",
 	"tags": [],

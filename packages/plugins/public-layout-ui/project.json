@@ -1,7 +1,6 @@
 {
 	"name": "plugin-public-layout-ui",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
-	"root": "packages/plugins/public-layout-ui",
 	"sourceRoot": "packages/plugins/public-layout-ui/src",
 	"prefix": "lib",
 	"tags": [],

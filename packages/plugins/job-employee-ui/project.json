@@ -1,7 +1,6 @@
 {
 	"name": "plugin-job-employee-ui",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
-	"root": "packages/plugins/job-employee-ui",
 	"sourceRoot": "packages/plugins/job-employee-ui/src",
 	"prefix": "lib",
 	"tags": [],

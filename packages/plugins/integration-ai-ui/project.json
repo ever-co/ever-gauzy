@@ -1,7 +1,6 @@
 {
 	"name": "plugin-integration-ai-ui",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
-	"root": "packages/plugins/integration-ai-ui",
 	"sourceRoot": "packages/plugins/integration-ai-ui/src",
 	"prefix": "lib",
 	"tags": [],

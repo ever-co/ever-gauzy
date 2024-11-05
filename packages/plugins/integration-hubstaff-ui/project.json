@@ -1,7 +1,6 @@
 {
 	"name": "plugin-integration-hubstaff-ui",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
-	"root": "packages/plugins/integration-hubstaff-ui",
 	"sourceRoot": "packages/plugins/integration-hubstaff-ui/src",
 	"prefix": "lib",
 	"tags": [],

@@ -1,7 +1,6 @@
 {
 	"name": "plugin-legal-ui",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
-	"root": "packages/plugins/legal-ui",
 	"sourceRoot": "packages/plugins/legal-ui/src",
 	"prefix": "lib",
 	"tags": [],

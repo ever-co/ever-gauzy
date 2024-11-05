@@ -1,7 +1,6 @@
 {
 	"name": "plugin-onboarding-ui",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
-	"root": "packages/plugins/onboarding-ui",
 	"sourceRoot": "packages/plugins/onboarding-ui/src",
 	"prefix": "lib",
 	"tags": [],

@@ -1,7 +1,6 @@
 {
 	"name": "plugin-job-proposal-ui",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
-	"root": "packages/plugins/job-proposal-ui",
 	"sourceRoot": "packages/plugins/job-proposal-ui/src",
 	"prefix": "lib",
 	"tags": [],

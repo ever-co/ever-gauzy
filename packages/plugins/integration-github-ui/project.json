@@ -1,7 +1,6 @@
 {
 	"name": "plugin-integration-github-ui",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
-	"root": "packages/plugins/integration-github-ui",
 	"sourceRoot": "packages/plugins/integration-github-ui/src",
 	"prefix": "lib",
 	"tags": [],
