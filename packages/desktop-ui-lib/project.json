@@ -1,0 +1,29 @@
+{
+    "name": "desktop-ui-lib",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "projectType": "library",
+    "root": "packages/desktop-ui-lib",
+    "sourceRoot": "packages/desktop-ui-lib/src",
+    "prefix": "gauzy",
+    "targets": {
+        "build": {
+            "executor": "@nx/angular:ng-packagr",
+            "options": {
+                "tsConfig": "packages/desktop-ui-lib/tsconfig.lib.json",
+                "project": "packages/desktop-ui-lib/ng-package.json"
+            }
+        },
+        "test": {
+            "executor": "@nx/jest:jest",
+            "options": {
+                "jestConfig": "packages/desktop-ui-lib/jest.config.js",
+                "passWithNoTests": true
+            }
+        }
+    },
+    "generators": {
+        "@nrwl/angular:component": {
+            "style": "scss"
+        }
+    }
+}

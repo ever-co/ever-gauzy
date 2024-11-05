@@ -131,18 +131,18 @@
 				"serve": {
 					"builder": "@angular-devkit/build-angular:dev-server",
 					"options": {
-						"browserTarget": "desktop-ui:build"
+						"buildTarget": "desktop-ui:build"
 					},
 					"configurations": {
 						"production": {
-							"browserTarget": "desktop-ui:build:production"
+							"buildTarget": "desktop-ui:build:production"
 						}
 					}
 				},
 				"extract-i18n": {
 					"builder": "@angular-devkit/build-angular:extract-i18n",
 					"options": {
-						"browserTarget": "desktop-ui:build"
+						"buildTarget": "desktop-ui:build"
 					}
 				},
 				"test": {
@@ -153,33 +153,6 @@
 						"passWithNoTests": true,
 						"setupFile": "apps/desktop/web-ui/src/test-setup.ts"
 					}
-				}
-			}
-		},
-		"desktop-ui-lib": {
-			"projectType": "library",
-			"root": "packages/desktop-ui-lib",
-			"sourceRoot": "packages/desktop-ui-lib/src",
-			"prefix": "gauzy",
-			"architect": {
-				"build": {
-					"builder": "@angular-devkit/build-angular:ng-packagr",
-					"options": {
-						"tsConfig": "packages/desktop-ui-lib/tsconfig.lib.json",
-						"project": "packages/desktop-ui-lib/ng-package.json"
-					}
-				},
-				"test": {
-					"builder": "@nrwl/jest:jest",
-					"options": {
-						"jestConfig": "libs/desktop-ui-lib/jest.config.js",
-						"passWithNoTests": true
-					}
-				}
-			},
-			"schematics": {
-				"@schematics/angular:component": {
-					"style": "scss"
 				}
 			}
 		},
@@ -269,12 +242,12 @@
 				"serve": {
 					"builder": "@angular-devkit/build-angular:dev-server",
 					"options": {
-						"browserTarget": "gauzy-server-ui:build",
+						"buildTarget": "gauzy-server-ui:build",
 						"proxyConfig": "apps/gauzy/proxy.conf.json"
 					},
 					"configurations": {
 						"production": {
-							"browserTarget": "gauzy-server-ui:build:production",
+							"buildTarget": "gauzy-server-ui:build:production",
 							"proxyConfig": "apps/gauzy/proxy.prod.conf.json"
 						}
 					}
