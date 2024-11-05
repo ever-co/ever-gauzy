@@ -58,7 +58,7 @@
 	"devDependencies": {
 		"@4tw/cypress-drag-drop": "^2.1.0",
 		"@angular-devkit/build-angular": "^17.1.4",
-		"@angular/cli": "~17.0.0",
+		"@angular/cli": "~17.1.0",
 		"@cypress/browserify-preprocessor": "^3.0.2",
 		"@nx/angular": "16.10.0",
 		"@nx/cypress": "16.10.0",
