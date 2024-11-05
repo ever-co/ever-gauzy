@@ -1,0 +1,30 @@
+{
+    "name": "gauzy-e2e",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "projectType": "application",
+    "root": "apps/gauzy-e2e",
+    "sourceRoot": "apps/gauzy-e2e/src",
+    "targets": {
+        "e2e": {
+            "executor": "@nx/cypress:cypress",
+            "options": {
+                "cypressConfig": "apps/gauzy-e2e/cypress.json",
+                "tsConfig": "apps/gauzy-e2e/tsconfig.e2e.json",
+                "devServerTarget": "gauzy:serve"
+            },
+            "configurations": {
+                "production": {
+                    "devServerTarget": "gauzy:serve:production"
+                }
+            }
+        },
+        "lint": {
+            "executor": "@nx/linter:eslint",
+            "options": {
+                "lintFilePatterns": [
+                    "apps/gauzy-e2e/**/*.{js,ts}"
+                ]
+            }
+        }
+    }
+}
