@@ -122,7 +122,7 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 	/**
 	 * @description Create or Update Activity Log
 	 * @template T
-	 * @param {BaseEntityEnum} entityType - Entity type for whom creating activity log (E.g : Task, OrganizationProject, etc.)
+	 * @param {BaseEntityEnum} entity - Entity type for whom creating activity log (E.g : Task, OrganizationProject, etc.)
 	 * @param {string} entityName - Name or Title of the entity
 	 * @param {ActorTypeEnum} actor - The actor type performing the action (User or System)
 	 * @param {ID} organizationId

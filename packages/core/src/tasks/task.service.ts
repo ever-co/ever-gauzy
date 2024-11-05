@@ -93,7 +93,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Register Task Sprint moving history
 			if (organizationSprintId && organizationSprintId !== task.organizationSprintId) {
 				await this.typeOrmOrganizationSprintTaskHistoryRepository.save({
-					fromSprintId: task.organizationSprintId,
+					fromSprintId: task.organizationSprintId || organizationSprintId, // Use incoming sprint ID if the task's organizationSprintId was previously null or undefined
 					toSprintId: organizationSprintId,
 					taskId: updatedTask.id,
 					movedById: userId,

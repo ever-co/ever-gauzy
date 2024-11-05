@@ -1,14 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	JoinColumn,
-	RelationId,
-} from 'typeorm';
-import { IsEnum, IsUUID } from 'class-validator';
-import {
-	ITask,
-	ITaskLinkedIssue,
-	TaskRelatedIssuesRelationEnum,
-} from '@gauzy/contracts';
+import { JoinColumn, RelationId } from 'typeorm';
+import { IsEnum, IsOptional, IsUUID } from 'class-validator';
+import { ID, ITask, ITaskLinkedIssue, TaskRelatedIssuesRelationEnum } from '@gauzy/contracts';
 import { Task } from './../task.entity';
 import { TenantOrganizationBaseEntity } from './../../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../../core/decorators/entity';
@@ -16,9 +9,9 @@ import { MikroOrmTaskLinkedIssueRepository } from './repository/mikro-orm-linked
 
 @MultiORMEntity('task_linked_issues', { mikroOrmRepository: () => MikroOrmTaskLinkedIssueRepository })
 export class TaskLinkedIssue extends TenantOrganizationBaseEntity implements ITaskLinkedIssue {
-	@ApiProperty({ type: () => String, enum: TaskRelatedIssuesRelationEnum })
-	@MultiORMColumn()
+	@ApiProperty({ enum: TaskRelatedIssuesRelationEnum })
 	@IsEnum(TaskRelatedIssuesRelationEnum)
+	@MultiORMColumn()
 	action: TaskRelatedIssuesRelationEnum;
 
 	/*
@@ -27,6 +20,7 @@ export class TaskLinkedIssue extends TenantOrganizationBaseEntity implements ITa
 	|--------------------------------------------------------------------------
 	*/
 	@ApiPropertyOptional({ type: () => Task })
+	@IsOptional()
 	@MultiORMManyToOne(() => Task)
 	@JoinColumn()
 	taskFrom?: ITask;
@@ -36,12 +30,13 @@ export class TaskLinkedIssue extends TenantOrganizationBaseEntity implements ITa
 	@RelationId((it: TaskLinkedIssue) => it.taskFrom)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	taskFromId: ITask['id'];
+	taskFromId: ID;
 
 	/**
 	 * Task Linked Issues
 	 */
 	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
 	@MultiORMManyToOne(() => Task, (it) => it.linkedIssues)
 	@JoinColumn()
 	taskTo?: ITask;
@@ -51,5 +46,5 @@ export class TaskLinkedIssue extends TenantOrganizationBaseEntity implements ITa
 	@RelationId((it: TaskLinkedIssue) => it.taskTo)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	taskToId: ITask['id'];
+	taskToId: ID;
 }
