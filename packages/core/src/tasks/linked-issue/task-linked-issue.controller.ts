@@ -15,10 +15,10 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
 import { ID, IPagination, ITaskLinkedIssue, PermissionsEnum } from '@gauzy/contracts';
+import { CrudController, PaginationParams } from '../../core/crud';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from '../../shared/pipes';
 import { Permissions } from '../../shared/decorators';
-import { CrudController, PaginationParams } from '../../core/crud';
 import { TaskLinkedIssue } from './task-linked-issue.entity';
 import { TaskLinkedIssueService } from './task-linked-issue.service';
 import { CreateTaskLinkedIssueDTO, UpdateTaskLinkedIssueDTO } from './dto';
@@ -26,16 +26,22 @@ import { TaskLinkedIssueCreateCommand, TaskLinkedIssueUpdateCommand } from './co
 
 @ApiTags('Linked Issue')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(PermissionsEnum.ALL_ORG_EDIT)
+@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)
 @Controller()
 export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
 	constructor(
-		protected readonly taskLinkedIssueService: TaskLinkedIssueService,
+		private readonly taskLinkedIssueService: TaskLinkedIssueService,
 		private readonly commandBus: CommandBus
 	) {
 		super(taskLinkedIssueService);
 	}
 
+	/**
+	 * Finds all task linked issues based on the provided query parameters.
+	 *
+	 * @param params - The pagination and filter parameters for the query.
+	 * @returns A promise that resolves to a paginated list of task linked issues.
+	 */
 	@ApiOperation({
 		summary: 'Find all'
 	})
@@ -51,15 +57,15 @@ export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
 	@Get()
 	@UseValidationPipe()
 	async findAll(@Query() params: PaginationParams<TaskLinkedIssue>): Promise<IPagination<ITaskLinkedIssue>> {
-		return await this.taskLinkedIssueService.findAll(params);
+		return this.taskLinkedIssueService.findAll(params);
 	}
 
 	/**
-	 * Create new Linked Issue
+	 * Creates a new task linked issue.
 	 *
 	 * @param entity - The input data for creating a task linked issue.
+	 * @returns A promise that resolves to the created task linked issue.
 	 */
-
 	@ApiOperation({ summary: 'Create Task Linked Issue' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -67,22 +73,22 @@ export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_ADD)
 	@Post()
 	@UseValidationPipe({ whitelist: true })
 	async create(@Body() entity: CreateTaskLinkedIssueDTO): Promise<ITaskLinkedIssue> {
-		return await this.commandBus.execute(new TaskLinkedIssueCreateCommand(entity));
+		return this.commandBus.execute(new TaskLinkedIssueCreateCommand(entity));
 	}
 
 	/**
-	 * Update existing Linked Issue
+	 * Updates an existing task linked issue.
 	 *
 	 * @param id - The ID of the task linked issue to update.
 	 * @param entity - The input data for updating the task linked issue.
-	 * @returns
+	 * @returns A promise that resolves to the updated task linked issue.
 	 */
 	@ApiOperation({ summary: 'Update an existing task linked issue' })
 	@ApiResponse({
@@ -95,7 +101,7 @@ export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)
@@ -105,10 +111,16 @@ export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: UpdateTaskLinkedIssueDTO
 	): Promise<ITaskLinkedIssue> {
-		return await this.commandBus.execute(new TaskLinkedIssueUpdateCommand(id, entity));
+		return this.commandBus.execute(new TaskLinkedIssueUpdateCommand(id, entity));
 	}
 
-	@ApiOperation({ summary: 'Delete Task Linked issue' })
+	/**
+	 * Deletes a task linked issue.
+	 *
+	 * @param id - The ID of the task linked issue to delete.
+	 * @returns A promise that resolves to the result of the delete operation.
+	 */
+	@ApiOperation({ summary: 'Delete Task Linked Issue' })
 	@ApiResponse({
 		status: HttpStatus.NO_CONTENT,
 		description: 'The record has been successfully deleted'
@@ -120,9 +132,15 @@ export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
-		return await this.taskLinkedIssueService.delete(id);
+		return this.taskLinkedIssueService.delete(id);
 	}
 
+	/**
+	 * Soft deletes a task linked issue record.
+	 *
+	 * @param id - The ID of the task linked issue to soft delete.
+	 * @returns A promise that resolves to the result of the soft delete operation.
+	 */
 	@ApiOperation({ summary: 'Soft delete Task Linked Issue record' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -136,6 +154,6 @@ export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
 	@Delete(':id/soft')
 	@UseValidationPipe({ whitelist: true })
 	async softRemove(@Param('id', UUIDValidationPipe) id: ID): Promise<any> {
-		return await this.taskLinkedIssueService.softDelete(id);
+		return this.taskLinkedIssueService.softDelete(id);
 	}
 }

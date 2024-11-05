@@ -1,5 +1,4 @@
 import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
 import {
 	ActionTypeEnum,
@@ -21,11 +20,8 @@ import { taskRelatedIssueRelationMap } from './task-linked-issue.helper';
 @Injectable()
 export class TaskLinkedIssueService extends TenantAwareCrudService<TaskLinkedIssue> {
 	constructor(
-		@InjectRepository(TaskLinkedIssue)
 		typeOrmTaskLinkedIssueRepository: TypeOrmTaskLinkedIssueRepository,
-
 		mikroOrmTaskLinkedIssueRepository: MikroOrmTaskLinkedIssueRepository,
-
 		private readonly activityLogService: ActivityLogService
 	) {
 		super(typeOrmTaskLinkedIssueRepository, mikroOrmTaskLinkedIssueRepository);
@@ -113,53 +109,52 @@ export class TaskLinkedIssueService extends TenantAwareCrudService<TaskLinkedIss
 	}
 
 	/**
-	 * Deletes a task linked.
+	 * Deletes a task linked issue and logs the deletion activity.
 	 *
-	 * @param {ID} id - The ID of the task linked issue to delete.
-	 * @param {FindOneOptions<TaskLinkedIssue>} [options] - Optional query options to find the task linked issue before deletion.
-	 * @returns {Promise<DeleteResult>} The result of the deletion operation.
-	 * @throws {HttpException} Throws a Bad Request exception if the deletion fails.
-	 * @throws {NotFoundException} Throws a Not Found exception if the task linked issue does not exist.
-	 *
+	 * @param id - The ID of the task linked issue to delete.
+	 * @param options - Optional find options for the task linked issue.
+	 * @returns A promise that resolves to the result of the delete operation.
 	 */
 	async delete(id: ID, options?: FindOneOptions<TaskLinkedIssue>): Promise<DeleteResult> {
 		try {
 			await this.deleteActivityLog(id);
-
-			return await super.delete(id, options);
+			return super.delete(id, options);
 		} catch (error) {
-			// Handle errors and return an appropriate error response
+			console.error(`Failed to delete task linked issue (ID: ${id}):`, error);
 			throw new HttpException(`Failed to delete task linked issue: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
 
 	/**
-	 * Soft deletes a task linked issue by its ID, preserving the data while marking it as deleted.
+	 * Soft deletes a task linked issue and logs the deletion activity.
 	 *
-	 * @param {ID} id - The ID of the task linked issue to be soft deleted.
-	 * @returns {Promise<TaskLinkedIssue | UpdateResult>} - A promise that resolves to the soft-deleted task linked issue or the update result.
-	 * @throws {HttpException} - Throws an error if the task linked issue cannot be found or the deletion process fails.
+	 * @param id - The ID of the task linked issue to soft delete.
+	 * @returns A promise that resolves to the result of the soft delete operation or the deleted entity.
 	 */
 	async softDelete(id: ID): Promise<TaskLinkedIssue | UpdateResult> {
 		try {
 			await this.deleteActivityLog(id);
-
-			return await super.softDelete(id);
+			return super.softDelete(id);
 		} catch (error) {
-			// Handle errors and return an appropriate error response
-			throw new HttpException(`Failed to delete task linked issue: ${error.message}`, HttpStatus.BAD_REQUEST);
+			console.error(`Failed to soft delete task linked issue (ID: ${id}):`, error);
+			throw new HttpException(`Failed to soft delete task linked issue: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
 
+	/**
+	 * Deletes an activity log for a given task linked issue.
+	 *
+	 * @param id - The ID of the task linked issue to delete.
+	 */
 	private async deleteActivityLog(id: ID) {
 		const tenantId = RequestContext.currentTenantId();
-		try {
-			// Retrieve existing task linked issue
-			const existingTaskLinkedIssue = await this.findOneByIdString(id);
 
-			if (!existingTaskLinkedIssue) {
-				throw new NotFoundException('Task linked issue not found');
-			}
+		try {
+			  // Retrieve existing task linked issue
+			  const existingTaskLinkedIssue = await this.findOneByIdString(id);
+			  if (!existingTaskLinkedIssue) {
+				  throw new NotFoundException('Task linked issue not found');
+			  }
 
 			// Generate deleted activity log
 			const { organizationId } = existingTaskLinkedIssue;
@@ -174,7 +169,7 @@ export class TaskLinkedIssueService extends TenantAwareCrudService<TaskLinkedIss
 				tenantId
 			);
 		} catch (error) {
-			console.error('Failed to create activity log for deletion:', error);
+			console.error(`Failed to create activity log for deletion (ID: ${id}):`, error);
 		}
 	}
 }

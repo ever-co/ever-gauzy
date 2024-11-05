@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, RelationId } from 'typeorm';
-import { IsEnum, IsUUID } from 'class-validator';
+import { IsEnum, IsOptional, IsUUID } from 'class-validator';
 import { ID, ITask, ITaskLinkedIssue, TaskRelatedIssuesRelationEnum } from '@gauzy/contracts';
 import { Task } from './../task.entity';
 import { TenantOrganizationBaseEntity } from './../../core/entities/internal';
@@ -9,9 +9,9 @@ import { MikroOrmTaskLinkedIssueRepository } from './repository/mikro-orm-linked
 
 @MultiORMEntity('task_linked_issues', { mikroOrmRepository: () => MikroOrmTaskLinkedIssueRepository })
 export class TaskLinkedIssue extends TenantOrganizationBaseEntity implements ITaskLinkedIssue {
-	@ApiProperty({ type: () => String, enum: TaskRelatedIssuesRelationEnum })
-	@MultiORMColumn()
+	@ApiProperty({ enum: TaskRelatedIssuesRelationEnum })
 	@IsEnum(TaskRelatedIssuesRelationEnum)
+	@MultiORMColumn()
 	action: TaskRelatedIssuesRelationEnum;
 
 	/*
@@ -20,6 +20,7 @@ export class TaskLinkedIssue extends TenantOrganizationBaseEntity implements ITa
 	|--------------------------------------------------------------------------
 	*/
 	@ApiPropertyOptional({ type: () => Task })
+	@IsOptional()
 	@MultiORMManyToOne(() => Task)
 	@JoinColumn()
 	taskFrom?: ITask;
@@ -35,6 +36,7 @@ export class TaskLinkedIssue extends TenantOrganizationBaseEntity implements ITa
 	 * Task Linked Issues
 	 */
 	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
 	@MultiORMManyToOne(() => Task, (it) => it.linkedIssues)
 	@JoinColumn()
 	taskTo?: ITask;
