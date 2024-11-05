@@ -1,134 +1,133 @@
 {
-    "name": "api",
-    "$schema": "../../node_modules/nx/schemas/project-schema.json",
-    "projectType": "application",
-    "root": "apps/api",
-    "sourceRoot": "apps/api/src",
-    "prefix": "api",
-    "targets": {
-        "build": {
-            "executor": "@nx/node:webpack",
-            "options": {
-                "outputPath": "dist/apps/api",
-                "main": "apps/api/src/main.ts",
-                "showCircularDependencies": false,
-                "sourceMap": true,
-                "maxWorkers": 4,
-                "memoryLimit": 7000,
-                "tsConfig": "apps/api/tsconfig.app.json"
-            },
-            "configurations": {
-                "production": {
-                    "optimization": true,
-                    "extractLicenses": true,
-                    "inspect": false,
-                    "sourceMap": true,
-                    "fileReplacements": [
-                        {
-                            "replace": "packages/config/src/environments/environment.ts",
-                            "with": "packages/config/src/environments/environment.prod.ts"
-                        }
-                    ]
-                }
-            }
-        },
-        "serve": {
-            "executor": "@nx/node:node",
-            "options": {
-                "buildTarget": "api:build",
-                "inspect": true,
-                "port": 9229
-            },
-            "configurations": {
-                "production": {
-                    "buildTarget": "api:build:production"
-                }
-            }
-        },
-        "test": {
-            "executor": "@nx/jest:jest",
-            "options": {
-                "jestConfig": "apps/api/jest.config.js",
-                "tsConfig": "apps/api/tsconfig.spec.json"
-            }
-        },
-        "seed": {
-            "executor": "@nx/node:webpack",
-            "options": {
-                "outputPath": "dist/apps/api",
-                "main": "apps/api/src/seed.ts",
-                "showCircularDependencies": false,
-                "sourceMap": true,
-                "maxWorkers": 4,
-                "memoryLimit": 7000,
-                "tsConfig": "apps/api/tsconfig.app.json"
-            },
-            "configurations": {
-                "production": {
-                    "optimization": true,
-                    "extractLicenses": true,
-                    "inspect": false,
-                    "sourceMap": true,
-                    "fileReplacements": [
-                        {
-                            "replace": "packages/config/src/environments/environment.ts",
-                            "with": "packages/config/src/environments/environment.prod.ts"
-                        }
-                    ]
-                }
-            }
-        },
-        "seed-all": {
-            "executor": "@nx/node:webpack",
-            "options": {
-                "outputPath": "dist/apps/api",
-                "main": "apps/api/src/seed-all.ts",
-                "showCircularDependencies": false,
-                "sourceMap": true,
-                "maxWorkers": 4,
-                "memoryLimit": 7000,
-                "tsConfig": "apps/api/tsconfig.app.json"
-            },
-            "configurations": {
-                "production": {
-                    "optimization": true,
-                    "extractLicenses": true,
-                    "inspect": false,
-                    "sourceMap": true,
-                    "fileReplacements": [
-                        {
-                            "replace": "packages/config/src/environments/environment.ts",
-                            "with": "packages/config/src/environments/environment.prod.ts"
-                        }
-                    ]
-                }
-            }
-        },
-        "seed-ever": {
-            "executor": "@nx/node:webpack",
-            "options": {
-                "outputPath": "dist/apps/api",
-                "main": "apps/api/src/seed-ever.ts",
-                "showCircularDependencies": false,
-                "sourceMap": true,
-                "maxWorkers": 4,
-                "memoryLimit": 7000,
-                "tsConfig": "apps/api/tsconfig.app.json"
-            },
-            "configurations": {
-                "production": {
-                    "optimization": true,
-                    "extractLicenses": true,
-                    "inspect": false,
-                    "sourceMap": true,
-                    "fileReplacements": [
-                        {
-                            "replace": "packages/config/src/environments/environment.ts",
-                            "with": "packages/config/src/environments/environment.prod.ts"
-                        }
-                    ]
-                }
-            }
-        }
-    }
+	"name": "api",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"projectType": "application",
+	"sourceRoot": "apps/api/src",
+	"prefix": "api",
+	"targets": {
+		"build": {
+			"executor": "@nx/node:webpack",
+			"options": {
+				"outputPath": "dist/apps/api",
+				"main": "apps/api/src/main.ts",
+				"showCircularDependencies": false,
+				"sourceMap": true,
+				"maxWorkers": 4,
+				"memoryLimit": 7000,
+				"tsConfig": "apps/api/tsconfig.app.json"
+			},
+			"configurations": {
+				"production": {
+					"optimization": true,
+					"extractLicenses": true,
+					"inspect": false,
+					"sourceMap": true,
+					"fileReplacements": [
+						{
+							"replace": "packages/config/src/environments/environment.ts",
+							"with": "packages/config/src/environments/environment.prod.ts"
+						}
+					]
+				}
+			}
+		},
+		"serve": {
+			"executor": "@nx/node:node",
+			"options": {
+				"buildTarget": "api:build",
+				"inspect": true,
+				"port": 9229
+			},
+			"configurations": {
+				"production": {
+					"buildTarget": "api:build:production"
+				}
+			}
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"options": {
+				"jestConfig": "apps/api/jest.config.js",
+				"tsConfig": "apps/api/tsconfig.spec.json"
+			}
+		},
+		"seed": {
+			"executor": "@nx/node:webpack",
+			"options": {
+				"outputPath": "dist/apps/api",
+				"main": "apps/api/src/seed.ts",
+				"showCircularDependencies": false,
+				"sourceMap": true,
+				"maxWorkers": 4,
+				"memoryLimit": 7000,
+				"tsConfig": "apps/api/tsconfig.app.json"
+			},
+			"configurations": {
+				"production": {
+					"optimization": true,
+					"extractLicenses": true,
+					"inspect": false,
+					"sourceMap": true,
+					"fileReplacements": [
+						{
+							"replace": "packages/config/src/environments/environment.ts",
+							"with": "packages/config/src/environments/environment.prod.ts"
+						}
+					]
+				}
+			}
+		},
+		"seed-all": {
+			"executor": "@nx/node:webpack",
+			"options": {
+				"outputPath": "dist/apps/api",
+				"main": "apps/api/src/seed-all.ts",
+				"showCircularDependencies": false,
+				"sourceMap": true,
+				"maxWorkers": 4,
+				"memoryLimit": 7000,
+				"tsConfig": "apps/api/tsconfig.app.json"
+			},
+			"configurations": {
+				"production": {
+					"optimization": true,
+					"extractLicenses": true,
+					"inspect": false,
+					"sourceMap": true,
+					"fileReplacements": [
+						{
+							"replace": "packages/config/src/environments/environment.ts",
+							"with": "packages/config/src/environments/environment.prod.ts"
+						}
+					]
+				}
+			}
+		},
+		"seed-ever": {
+			"executor": "@nx/node:webpack",
+			"options": {
+				"outputPath": "dist/apps/api",
+				"main": "apps/api/src/seed-ever.ts",
+				"showCircularDependencies": false,
+				"sourceMap": true,
+				"maxWorkers": 4,
+				"memoryLimit": 7000,
+				"tsConfig": "apps/api/tsconfig.app.json"
+			},
+			"configurations": {
+				"production": {
+					"optimization": true,
+					"extractLicenses": true,
+					"inspect": false,
+					"sourceMap": true,
+					"fileReplacements": [
+						{
+							"replace": "packages/config/src/environments/environment.ts",
+							"with": "packages/config/src/environments/environment.prod.ts"
+						}
+					]
+				}
+			}
+		}
+	}
 }
