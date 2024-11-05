@@ -155,8 +155,14 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		const tenantId = RequestContext.currentTenantId() || input.tenantId;
 		const { memberIds = [], managerIds = [], organizationId } = input;
 
+		// Find Organization Project relations
+		const relations = this.typeOrmOrganizationProjectRepository.metadata.relations.map(
+			(relation) => relation.propertyName
+		);
+
 		let organizationProject = await super.findOneByIdString(id, {
-			where: { organizationId, tenantId }
+			where: { organizationId, tenantId },
+			relations
 		});
 
 		try {

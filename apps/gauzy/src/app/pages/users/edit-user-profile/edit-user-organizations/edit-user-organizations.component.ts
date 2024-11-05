@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { IOrganization, IUserOrganizationCreateInput, RolesEnum } from '@gauzy/contracts';
+import { IOrganization, IUserOrganizationCreateInput } from '@gauzy/contracts';
 import { filter, tap, debounceTime } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -84,21 +84,24 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 
 	async remove(id: string) {
 		const { tenantId } = this.store.user;
-		const user = await this.usersService.getUserById(this.selectedUserId);
-		const { items } = await this.userOrganizationsService.getAll(['user', 'user.role'], { tenantId });
+		const { items } = await this.userOrganizationsService.getAll(['user', 'user.role'], {
+			tenantId,
+			userId: this.selectedUserId
+		});
 
 		let counter = 0;
 		let userName: string;
 
-		for (const orgUser of items) {
-			if (orgUser.isActive && (!orgUser.user.role || orgUser.user.role.name !== RolesEnum.EMPLOYEE)) {
-				this.userToRemove = orgUser;
-				userName = orgUser.user.firstName + ' ' + orgUser.user.lastName;
+		this.userToRemove = items.find((orgUser) => orgUser.organizationId === id && orgUser.isActive);
 
-				if (orgUser.organizationId === id) this.orgUserId = orgUser.id;
-				if (this.userToRemove.user.id === user.id) counter++;
-			}
+		if (!this.userToRemove?.user) {
+			this.toastrService.danger('User organization record not found');
+			return;
 		}
+
+		userName = [this.userToRemove.user.firstName, this.userToRemove.user.lastName].filter(Boolean).join(' ');
+		this.orgUserId = this.userToRemove.id;
+		counter = items.filter((orgUser) => orgUser.isActive).length;
 
 		if (counter - 1 < 1) {
 			this.dialogService
