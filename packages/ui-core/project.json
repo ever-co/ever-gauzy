@@ -1,6 +1,7 @@
 {
 	"name": "ui-core",
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"root": "packages/ui-core",
 	"sourceRoot": "packages/ui-core",
 	"prefix": "lib",
 	"tags": [],
@@ -14,10 +15,10 @@
 			},
 			"configurations": {
 				"production": {
-					"tsConfig": "../../packages/ui-core/tsconfig.lib.prod.json"
+					"tsConfig": "tsconfig.lib.prod.json"
 				},
 				"development": {
-					"tsConfig": "../../packages/ui-core/tsconfig.lib.json"
+					"tsConfig": "tsconfig.lib.json"
 				}
 			},
 			"defaultConfiguration": "production"
@@ -26,7 +27,7 @@
 			"executor": "@nx/jest:jest",
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
-				"jestConfig": "../../packages/ui-core/jest.config.ts"
+				"jestConfig": "jest.config.ts"
 			}
 		},
 		"lint": {

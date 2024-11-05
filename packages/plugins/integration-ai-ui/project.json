@@ -1,6 +1,7 @@
 {
 	"name": "plugin-integration-ai-ui",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"root": "packages/plugins/integration-ai-ui",
 	"sourceRoot": "packages/plugins/integration-ai-ui/src",
 	"prefix": "lib",
 	"tags": [],
@@ -14,10 +15,10 @@
 			},
 			"configurations": {
 				"production": {
-					"tsConfig": "../../../packages/plugins/integration-ai-ui/tsconfig.lib.prod.json"
+					"tsConfig": "tsconfig.lib.prod.json"
 				},
 				"development": {
-					"tsConfig": "../../../packages/plugins/integration-ai-ui/tsconfig.lib.json"
+					"tsConfig": "tsconfig.lib.json"
 				}
 			},
 			"defaultConfiguration": "production"
@@ -26,7 +27,7 @@
 			"executor": "@nx/jest:jest",
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
-				"jestConfig": "../../../packages/plugins/integration-ai-ui/jest.config.ts"
+				"jestConfig": "jest.config.ts"
 			}
 		},
 		"lint": {
