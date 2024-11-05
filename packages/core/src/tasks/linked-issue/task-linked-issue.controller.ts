@@ -54,6 +54,7 @@ export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get()
 	@UseValidationPipe()
 	async findAll(@Query() params: PaginationParams<TaskLinkedIssue>): Promise<IPagination<ITaskLinkedIssue>> {
@@ -130,6 +131,7 @@ export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
 		return this.taskLinkedIssueService.delete(id);
@@ -151,6 +153,7 @@ export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
 		description: 'Task Linked Issue record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE)
 	@Delete(':id/soft')
 	@UseValidationPipe({ whitelist: true })
 	async softRemove(@Param('id', UUIDValidationPipe) id: ID): Promise<any> {
