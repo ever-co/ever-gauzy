@@ -155,7 +155,7 @@
             }
         },
         "test": {
-            "executor": "@nrwl/jest:jest",
+            "executor": "@nx/jest:jest",
             "options": {
                 "jestConfig": "apps/gauzy/jest.config.js",
                 "tsConfig": "apps/gauzy/tsconfig.spec.json",
@@ -164,7 +164,7 @@
         }
     },
     "schematics": {
-        "@nrwl/workspace:component": {
+        "@nx/workspace:component": {
             "style": "scss"
         }
     }

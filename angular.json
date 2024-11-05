@@ -19,7 +19,7 @@
 			"schematics": {},
 			"architect": {
 				"build": {
-					"builder": "@nrwl/node:webpack",
+					"builder": "@nx/node:webpack",
 					"options": {
 						"outputPath": "dist/apps/desktop/api",
 						"main": "apps/api/src/main.ts",
@@ -50,7 +50,7 @@
 		"desktop-ui": {
 			"projectType": "application",
 			"schematics": {
-				"@nrwl/angular:component": {
+				"@nx/angular:component": {
 					"style": "scss"
 				}
 			},
@@ -146,7 +146,7 @@
 					}
 				},
 				"test": {
-					"builder": "@nrwl/jest:jest",
+					"builder": "@nx/jest:jest",
 					"options": {
 						"jestConfig": "apps/desktop/web-ui/jest.config.js",
 						"tsConfig": "apps/desktop/web-ui/tsconfig.spec.json",
@@ -159,7 +159,7 @@
 		"gauzy-server-ui": {
 			"projectType": "application",
 			"schematics": {
-				"@nrwl/workspace:component": {
+				"@nx/workspace:component": {
 					"style": "scss"
 				}
 			},
@@ -262,7 +262,7 @@
 			"schematics": {},
 			"architect": {
 				"build": {
-					"builder": "@nrwl/node:webpack",
+					"builder": "@nx/node:webpack",
 					"options": {
 						"outputPath": "dist/apps/gauzy-server/api",
 						"main": "apps/api/src/main.ts",
@@ -298,7 +298,7 @@
 			"schematics": {},
 			"architect": {
 				"build": {
-					"builder": "@nrwl/node:webpack",
+					"builder": "@nx/node:webpack",
 					"options": {
 						"outputPath": "dist/apps/gauzy-api-server/api",
 						"main": "apps/api/src/main.ts",
@@ -328,7 +328,7 @@
 		}
 	},
 	"schematics": {
-		"@nrwl/angular": {
+		"@nx/angular": {
 			"application": {
 				"linter": "eslint"
 			},
@@ -339,20 +339,20 @@
 				"linter": "eslint"
 			}
 		},
-		"@nrwl/angular:application": {
+		"@nx/angular:application": {
 			"style": "scss",
 			"linter": "eslint",
 			"unitTestRunner": "jest",
 			"e2eTestRunner": "cypress"
 		},
-		"@nrwl/angular:component": {
+		"@nx/angular:component": {
 			"prefix": "ngx",
 			"style": "scss"
 		},
-		"@nrwl/angular:directive": {
+		"@nx/angular:directive": {
 			"prefix": "ngx"
 		},
-		"@nrwl/angular:library": {
+		"@nx/angular:library": {
 			"style": "scss",
 			"linter": "eslint",
 			"unitTestRunner": "jest"

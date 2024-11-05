@@ -120,7 +120,7 @@
         }
     },
 	"generators": {
-		"@nrwl/angular:component": {
+		"@nx/angular:component": {
 			"style": "scss"
 		}
 	}

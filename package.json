@@ -82,7 +82,7 @@
 		"format": "yarn nx format:write",
 		"format:write": "yarn nx format:write",
 		"format:check": "yarn nx format:check",
-		"update": "yarn ng update @nrwl/workspace",
+		"update": "yarn ng update @nx/workspace",
 		"update:check": "yarn ng update",
 		"workspace-schematic": "yarn nx workspace-schematic",
 		"dep-graph": "yarn nx dep-graph",

@@ -103,7 +103,7 @@
         }
     },
 	"generators": {
-		"@nrwl/workspace:component": {
+		"@nx/workspace:component": {
 			"style": "scss"
 		}
 	}
