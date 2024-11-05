@@ -1,123 +1,116 @@
 {
-    "name": "gauzy-api-server",
-    "$schema": "../../node_modules/nx/schemas/project-schema.json",
-    "projectType": "application",
-    "root": "apps/server-api",
-    "sourceRoot": "apps/server-api/src",
-    "prefix": "gauzy",
-    "targets": {
-        "build": {
-            "executor": "@nx/angular:webpack-browser",
-            "options": {
-                "customWebpackConfig": {
-                    "path": "apps/server-api/config/custom-webpack.config.js"
-                },
-                "outputPath": "dist/apps/gauzy-api-server",
-                "index": "apps/server-api/src/index.html",
-                "main": "apps/server-api/src/main.ts",
-                "polyfills": "apps/server-api/src/polyfills.ts",
-                "tsConfig": "apps/server-api/tsconfig.app.json",
-                "aot": true,
-                "assets": [
-                    "apps/server-api/src/favicon.ico",
-                    "apps/server-api/src/assets",
-                    {
-                        "glob": "**/*",
-                        "input": "apps/server-api/src/",
-                        "ignore": ["**/*.ts"],
-                        "output": ""
-                    }
-                ],
-                "styles": [
-                    "node_modules/@nebular/theme/styles/prebuilt/default.css",
-                    "node_modules/bootstrap/dist/css/bootstrap.css",
-                    "node_modules/typeface-exo/index.css",
-                    "node_modules/roboto-fontface/css/roboto/roboto-fontface.css",
-                    "node_modules/ionicons/dist/scss/ionicons.scss",
-                    "node_modules/@fortawesome/fontawesome-free/css/all.css",
-                    "node_modules/socicon/css/socicon.css",
-                    "node_modules/nebular-icons/scss/nebular-icons.scss",
-                    "node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
-                    "node_modules/leaflet/dist/leaflet.css",
-                    "apps/server-api/src/assets/styles/styles.scss",
-                    "node_modules/@ng-select/ng-select/themes/default.theme.css"
-                ],
-                "scripts": [],
-                "stylePreprocessorOptions": {
-                    "includePaths": [
-                        "apps/server-api/src/assets/styles",
-                        "packages/ui-core/static/styles"
-                    ]
-                }
-            },
-            "configurations": {
-                "production": {
-                    "fileReplacements": [
-                        {
-                            "replace": "apps/server-api/src/environments/environment.ts",
-                            "with": "apps/server-api/src/environments/environment.prod.ts"
-                        },
-                        {
-                            "replace": "packages/ui-config/src/lib/environments/environment.ts",
-                            "with": "packages/ui-config/src/lib/environments/environment.prod.ts"
-                        }
-                    ],
-                    "optimization": true,
-                    "outputHashing": "all",
-                    "sourceMap": true,
-                    "namedChunks": false,
-                    "extractLicenses": true,
-                    "vendorChunk": false,
-                    "buildOptimizer": true,
-                    "budgets": [
-                        {
-                            "type": "initial",
-                            "maximumWarning": "20mb",
-                            "maximumError": "40mb"
-                        },
-                        {
-                            "type": "anyComponentStyle",
-                            "maximumWarning": "60kb",
-                            "maximumError": "120kb"
-                        }
-                    ]
-                }
-            }
-        },
-        "serve": {
-            "executor": "@nx/angular:dev-server",
-            "options": {
-                "browserTarget": "gauzy-api-server:build"
-            },
-            "configurations": {
-                "production": {
-                    "browserTarget": "gauzy-api-server:build:production"
-                }
-            }
-        },
-        "extract-i18n": {
-            "executor": "@nx/angular:extract-i18n",
-            "options": {
-                "browserTarget": "gauzy-api-server:build"
-            }
-        },
-        "lint": {
-            "executor": "@nx/linter:eslint",
-            "options": {
-                "lintFilePatterns": [
-                    "apps/server-api/src/**/*.ts",
-                    "apps/server-api/src/**/*.html"
-                ]
-            }
-        },
-        "test": {
-            "executor": "@nx/jest:jest",
-            "options": {
-                "jestConfig": "apps/server-api/jest.config.js",
-                "passWithNoTests": true
-            }
-        }
-    },
+	"name": "gauzy-api-server",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"projectType": "application",
+	"sourceRoot": "apps/server-api/src",
+	"prefix": "gauzy",
+	"targets": {
+		"build": {
+			"executor": "@nx/angular:webpack-browser",
+			"options": {
+				"customWebpackConfig": {
+					"path": "apps/server-api/config/custom-webpack.config.js"
+				},
+				"outputPath": "dist/apps/gauzy-api-server",
+				"index": "apps/server-api/src/index.html",
+				"main": "apps/server-api/src/main.ts",
+				"polyfills": "apps/server-api/src/polyfills.ts",
+				"tsConfig": "apps/server-api/tsconfig.app.json",
+				"aot": true,
+				"assets": [
+					"apps/server-api/src/favicon.ico",
+					"apps/server-api/src/assets",
+					{
+						"glob": "**/*",
+						"input": "apps/server-api/src/",
+						"ignore": ["**/*.ts"],
+						"output": ""
+					}
+				],
+				"styles": [
+					"node_modules/@nebular/theme/styles/prebuilt/default.css",
+					"node_modules/bootstrap/dist/css/bootstrap.css",
+					"node_modules/typeface-exo/index.css",
+					"node_modules/roboto-fontface/css/roboto/roboto-fontface.css",
+					"node_modules/ionicons/dist/scss/ionicons.scss",
+					"node_modules/@fortawesome/fontawesome-free/css/all.css",
+					"node_modules/socicon/css/socicon.css",
+					"node_modules/nebular-icons/scss/nebular-icons.scss",
+					"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
+					"node_modules/leaflet/dist/leaflet.css",
+					"apps/server-api/src/assets/styles/styles.scss",
+					"node_modules/@ng-select/ng-select/themes/default.theme.css"
+				],
+				"scripts": [],
+				"stylePreprocessorOptions": {
+					"includePaths": ["apps/server-api/src/assets/styles", "packages/ui-core/static/styles"]
+				}
+			},
+			"configurations": {
+				"production": {
+					"fileReplacements": [
+						{
+							"replace": "apps/server-api/src/environments/environment.ts",
+							"with": "apps/server-api/src/environments/environment.prod.ts"
+						},
+						{
+							"replace": "packages/ui-config/src/lib/environments/environment.ts",
+							"with": "packages/ui-config/src/lib/environments/environment.prod.ts"
+						}
+					],
+					"optimization": true,
+					"outputHashing": "all",
+					"sourceMap": true,
+					"namedChunks": false,
+					"extractLicenses": true,
+					"vendorChunk": false,
+					"buildOptimizer": true,
+					"budgets": [
+						{
+							"type": "initial",
+							"maximumWarning": "20mb",
+							"maximumError": "40mb"
+						},
+						{
+							"type": "anyComponentStyle",
+							"maximumWarning": "60kb",
+							"maximumError": "120kb"
+						}
+					]
+				}
+			}
+		},
+		"serve": {
+			"executor": "@nx/angular:dev-server",
+			"options": {
+				"browserTarget": "gauzy-api-server:build"
+			},
+			"configurations": {
+				"production": {
+					"browserTarget": "gauzy-api-server:build:production"
+				}
+			}
+		},
+		"extract-i18n": {
+			"executor": "@nx/angular:extract-i18n",
+			"options": {
+				"browserTarget": "gauzy-api-server:build"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint",
+			"options": {
+				"lintFilePatterns": ["apps/server-api/src/**/*.ts", "apps/server-api/src/**/*.html"]
+			}
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"options": {
+				"jestConfig": "apps/server-api/jest.config.js",
+				"passWithNoTests": true
+			}
+		}
+	},
 	"generators": {
 		"@nx/angular:component": {
 			"style": "scss"
