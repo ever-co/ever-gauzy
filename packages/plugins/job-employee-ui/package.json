@@ -33,12 +33,12 @@
 		"lib:watch": "nx build plugin-job-employee-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^17.1.3",
-		"@angular/core": "^17.1.3"
+		"@angular/common": "17.1.3",
+		"@angular/core": "17.1.3"
 	},
 	"dependencies": {
-		"@angular/forms": "^17.1.3",
-		"@angular/router": "^17.1.3",
+		"@angular/forms": "17.1.3",
+		"@angular/router": "17.1.3",
 		"@gauzy/contracts": "^0.1.0",
 		"@nebular/theme": "^13.0.0",
 		"@ngneat/until-destroy": "^9.2.0",
