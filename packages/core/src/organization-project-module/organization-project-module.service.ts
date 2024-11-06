@@ -359,7 +359,9 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 			const query = this.typeOrmProjectModuleRepository.createQueryBuilder(this.tableName);
 
 			// Joins and where clauses
-			query.leftJoin(`${query.alias}.relatedEntity`, 'relatedEntity'); // Example join, adjust as necessary
+			query.innerJoin(`${query.alias}.members`, 'member');
+			query.leftJoin(`${query.alias}.teams`, 'project_team');
+			query.leftJoin(`${query.alias}."organizationSprints"`, 'sprint');
 
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
