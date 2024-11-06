@@ -3155,7 +3155,25 @@
 		}
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
-		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "此选项卡将显示项目管理图表和汇总数据。"
+		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "此选项卡将显示项目管理图表和汇总数据。",
+		"PROJECT_MODULE": {
+			"PROJECT": "项目",
+			"SELECT_PROJECT": "选择项目",
+			"STATUS": "状态",
+			"TEAM_MEMBERS": "团队成员",
+			"TEAMS": "团队",
+			"SELECT_TEAMS": "选择团队",
+			"CHOOSE_TEAMS": "选择团队",
+			"NAME": "名称",
+			"ENTER_NAME": "输入名称",
+			"PARENT_MODULE": "父模块",
+			"SELECT_PARENT": "选择父模块",
+			"START_DATE": "开始日期",
+			"SELECT_START_DATE": "选择开始日期",
+			"END_DATE": "结束日期",
+			"SELECT_END_DATE": "选择结束日期",
+			"DESCRIPTION": "描述"
+		}
 	},
 	"SETTINGS_FEATURES": {
 		"INVOICE": "发票",

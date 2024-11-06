@@ -3156,6 +3156,27 @@
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
 		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "Ta karta pokaże wykresy zarządzania projektem oraz dane agregowane"
+		,
+			"PROJECT_MODULE": {
+			  "PROJECT": "Projekt",
+			  "SELECT_PROJECT": "Wybierz projekt",
+			  "STATUS": "Status",
+			  "TEAM_MEMBERS": "Członkowie zespołu",
+			  "TEAMS": "Zespoły",
+			  "SELECT_TEAMS": "Wybierz zespoły",
+			  "CHOOSE_TEAMS": "Wybierz zespoły",
+			  "NAME": "Nazwa",
+			  "ENTER_NAME": "Wpisz nazwę",
+			  "PARENT_MODULE": "Moduł nadrzędny",
+			  "SELECT_PARENT": "Wybierz moduł nadrzędny",
+			  "START_DATE": "Data rozpoczęcia",
+			  "SELECT_START_DATE": "Wybierz datę rozpoczęcia",
+			  "END_DATE": "Data zakończenia",
+			  "SELECT_END_DATE": "Wybierz datę zakończenia",
+			  "DESCRIPTION": "Opis"
+			}
+
+
 	},
 	"SETTINGS_FEATURES": {
 		"INVOICE": "Faktura",

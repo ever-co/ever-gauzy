@@ -3278,7 +3278,30 @@
 		}
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
-		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "This tab will show project management charts and aggregated data."
+		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "This tab will show project management charts and aggregated data.",
+		"PROJECT_MODULE": {
+			"PROJECT": "Project",
+			"SELECT_PROJECT": "Select a project",
+			"STATUS": "Status",
+			"TEAM_MEMBERS": "Team Members",
+			"TEAMS": "Teams",
+			"SELECT_TEAMS": "Select Teams",
+			"CHOOSE_TEAMS": "Choose teams",
+			"NAME": "Module Name",
+			"ENTER_NAME": "Enter the module name",
+			"PARENT_MODULE": "Parent Module",
+			"SELECT_PARENT": "Select a parent module",
+			"START_DATE": "Start Date",
+			"SELECT_START_DATE": "Select start date",
+			"END_DATE": "End Date",
+			"SELECT_END_DATE": "Select end date",
+			"DESCRIPTION": "Description",
+			"MANAGER": "Manager",
+			"SELECT_MANAGER": "Select a manager",
+			"ORGANIZATION_SPRINTS": "Organization Sprints",
+			"SELECT_SPRINTS": "Select sprints",
+			"FAVORITE": "Favorite"
+		}
 	},
 	"SETTINGS_FEATURES": {
 		"INVOICE": "Invoice",

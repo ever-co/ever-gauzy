@@ -28,6 +28,7 @@ import {
 	ToastrService
 } from '@gauzy/ui-core/core';
 import {
+	AddProjectModuleDialogComponent,
 	CardGridComponent,
 	ContactLinksComponent,
 	DateViewComponent,
@@ -611,6 +612,6 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 		this._router.navigate(path);
 	}
 	async createProjectModuleDialog() {
-		return;
+		this._dialogService.open(AddProjectModuleDialogComponent, {});
 	}
 }

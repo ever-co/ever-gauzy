@@ -3155,7 +3155,25 @@
 		}
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
-		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "Esta aba mostrará gráficos de gerenciamento de projetos e dados agregados."
+		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "Esta aba mostrará gráficos de gerenciamento de projetos e dados agregados.",
+		"PROJECT_MODULE": {
+			"PROJECT": "Projeto",
+			"SELECT_PROJECT": "Selecionar um projeto",
+			"STATUS": "Status",
+			"TEAM_MEMBERS": "Membros da equipe",
+			"TEAMS": "Equipes",
+			"SELECT_TEAMS": "Selecionar equipes",
+			"CHOOSE_TEAMS": "Escolher equipes",
+			"NAME": "Nome",
+			"ENTER_NAME": "Insira o nome",
+			"PARENT_MODULE": "Módulo pai",
+			"SELECT_PARENT": "Selecionar módulo pai",
+			"START_DATE": "Data de início",
+			"SELECT_START_DATE": "Selecionar data de início",
+			"END_DATE": "Data de término",
+			"SELECT_END_DATE": "Selecionar data de término",
+			"DESCRIPTION": "Descrição"
+		}
 	},
 	"SETTINGS_FEATURES": {
 		"INVOICE": "Fatura",

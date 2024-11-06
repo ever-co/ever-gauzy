@@ -3178,7 +3178,25 @@
 		"CATEGORY_EDIT_DELETED": "Категория была удалена"
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
-		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "На этой вкладке будут показаны диаграммы управления проектами и агрегированные данные."
+		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "На этой вкладке будут показаны диаграммы управления проектами и агрегированные данные.",
+		"PROJECT_MODULE": {
+			"PROJECT": "Проект",
+			"SELECT_PROJECT": "Выбрать проект",
+			"STATUS": "Статус",
+			"TEAM_MEMBERS": "Члены команды",
+			"TEAMS": "Команды",
+			"SELECT_TEAMS": "Выбрать команды",
+			"CHOOSE_TEAMS": "Выберите команды",
+			"NAME": "Имя",
+			"ENTER_NAME": "Введите имя",
+			"PARENT_MODULE": "Родительский модуль",
+			"SELECT_PARENT": "Выбрать родительский модуль",
+			"START_DATE": "Дата начала",
+			"SELECT_START_DATE": "Выбрать дату начала",
+			"END_DATE": "Дата окончания",
+			"SELECT_END_DATE": "Выбрать дату окончания",
+			"DESCRIPTION": "Описание"
+		}
 	},
 	"SETTINGS_FEATURES": {
 		"INVOICE": "Счет",

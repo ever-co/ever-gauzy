@@ -3151,7 +3151,25 @@
 		}
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
-		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "Dieses Tab zeigt Projektmanagementdiagramme und zusammengefasste Daten."
+		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "Dieses Tab zeigt Projektmanagementdiagramme und zusammengefasste Daten.",
+		"PROJECT_MODULE": {
+			"PROJECT": "Projekt",
+			"SELECT_PROJECT": "Projekt auswählen",
+			"STATUS": "Status",
+			"TEAM_MEMBERS": "Teammitglieder",
+			"TEAMS": "Teams",
+			"SELECT_TEAMS": "Teams auswählen",
+			"CHOOSE_TEAMS": "Wählen Sie Teams",
+			"NAME": "Name",
+			"ENTER_NAME": "Name eingeben",
+			"PARENT_MODULE": "Übergeordnetes Modul",
+			"SELECT_PARENT": "Übergeordnetes Modul auswählen",
+			"START_DATE": "Startdatum",
+			"SELECT_START_DATE": "Startdatum wählen",
+			"END_DATE": "Enddatum",
+			"SELECT_END_DATE": "Enddatum wählen",
+			"DESCRIPTION": "Beschreibung"
+		}
 	},
 	"SETTINGS_FEATURES": {
 		"INVOICE": "Rechnung",

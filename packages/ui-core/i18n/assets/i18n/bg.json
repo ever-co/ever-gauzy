@@ -3208,6 +3208,27 @@
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
 		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "This tab will show project management charts and aggregated data."
+		,
+			"PROJECT_MODULE": {
+			  "PROJECT": "Проект",
+			  "SELECT_PROJECT": "Изберете проект",
+			  "STATUS": "Статус",
+			  "TEAM_MEMBERS": "Членове на екипа",
+			  "TEAMS": "Отбори",
+			  "SELECT_TEAMS": "Изберете отбори",
+			  "CHOOSE_TEAMS": "Изберете отбори",
+			  "NAME": "Име",
+			  "ENTER_NAME": "Въведете име",
+			  "PARENT_MODULE": "Родителски модул",
+			  "SELECT_PARENT": "Изберете родителски модул",
+			  "START_DATE": "Начална дата",
+			  "SELECT_START_DATE": "Изберете начална дата",
+			  "END_DATE": "Крайна дата",
+			  "SELECT_END_DATE": "Изберете крайна дата",
+			  "DESCRIPTION": "Описание"
+			}
+
+
 	},
 	"SETTINGS_FEATURES": {
 		"INVOICE": "Фактура",
