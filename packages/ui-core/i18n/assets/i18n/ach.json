@@ -129,7 +129,8 @@
 		"COLLAPSE": "crwdns11461:0crwdne11461:0",
 		"EXPAND": "crwdns11463:0crwdne11463:0",
 		"SHOW_MORE": "crwdns11483:0crwdne11483:0",
-		"START_WORK": "crwdns11525:0crwdne11525:0"
+		"START_WORK": "crwdns11525:0crwdne11525:0",
+		"ADD_MODULE": "Yamo Module"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

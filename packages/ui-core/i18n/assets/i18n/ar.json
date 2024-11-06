@@ -165,7 +165,8 @@
 		"ACTIVATE": "تفعيل",
 		"ADD_PLUGIN": "إضافة ملحق",
 		"LOAD_PLUGIN": "تحميل المكون الإضافي",
-		"FROM_CDN": "من CDN"
+		"FROM_CDN": "من CDN",
+		"ADD_MODULE": "إضافة وحدة"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

@@ -165,7 +165,8 @@
 		"ACTIVATE": "Activeren",
 		"ADD_PLUGIN": "Plugin toevoegen",
 		"LOAD_PLUGIN": "Plugin laden",
-		"FROM_CDN": "Van CDN"
+		"FROM_CDN": "Van CDN",
+		"ADD_MODULE": "Module toevoegen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

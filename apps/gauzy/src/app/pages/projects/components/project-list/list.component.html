@@ -85,6 +85,19 @@
 					{{ 'BUTTONS.EDIT' | translate }}
 				</button>
 			</ng-template>
+			<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_EDIT']">
+				<button
+					nbButton
+					status="basic"
+					class="action primary"
+					size="small"
+					(click)="createProjectModuleDialog()"
+					[disabled]="disableButton"
+				>
+					<nb-icon class="mr-1" icon="plus-circle-outline"></nb-icon>
+					{{ 'BUTTONS.ADD_MODULE' | translate }}
+				</button>
+			</ng-template>
 			<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_DELETE]">
 				<button
 					[nbTooltip]="'BUTTONS.DELETE' | translate"

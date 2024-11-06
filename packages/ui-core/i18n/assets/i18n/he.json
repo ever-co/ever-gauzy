@@ -164,7 +164,8 @@
 		"ACTIVATE": "הפעל",
 		"ADD_PLUGIN": "הוסף תוסף",
 		"LOAD_PLUGIN": "טען תוסף",
-		"FROM_CDN": "מ-CDN"
+		"FROM_CDN": "מ-CDN",
+		"ADD_MODULE": "הוסף מודול"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

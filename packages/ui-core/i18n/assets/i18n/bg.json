@@ -174,7 +174,8 @@
 		"ACTIVATE": "Активирайте",
 		"ADD_PLUGIN": "Добавете плъгин",
 		"LOAD_PLUGIN": "Зареди плъгин",
-		"FROM_CDN": "От CDN"
+		"FROM_CDN": "От CDN",
+		"ADD_MODULE": "Добавяне на модул"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

@@ -165,7 +165,8 @@
 		"ACTIVATE": "Ativar",
 		"ADD_PLUGIN": "Adicionar plugin",
 		"LOAD_PLUGIN": "Carregar Plugin",
-		"FROM_CDN": "Do CDN"
+		"FROM_CDN": "Do CDN",
+		"ADD_MODULE": "Adicionar módulo"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

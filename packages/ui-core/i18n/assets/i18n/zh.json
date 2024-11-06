@@ -165,7 +165,8 @@
 		"ACTIVATE": "启用",
 		"ADD_PLUGIN": "添加插件",
 		"LOAD_PLUGIN": "加载插件",
-		"FROM_CDN": "来自CDN"
+		"FROM_CDN": "来自CDN",
+		"ADD_MODULE": "添加模块"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
