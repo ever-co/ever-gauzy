@@ -376,6 +376,7 @@
 		"@nstudio/xplat": "^17.0.1",
 		"@nx/angular": "17.3.2",
 		"@nx/cypress": "17.3.2",
+		"@nx/eslint": "17.3.2",
 		"@nx/eslint-plugin": "17.3.2",
 		"@nx/jest": "17.3.2",
 		"@nx/js": "17.3.2",
@@ -456,8 +457,7 @@
 		"webpack-bundle-analyzer": "^4.10.2",
 		"webpack-cli": "^4.9.0",
 		"webpack-merge": "^5.10.0",
-		"webpack-node-externals": "^3.0.0",
-		"@nx/eslint": "17.3.2"
+		"webpack-node-externals": "^3.0.0"
 	},
 	"overrides": {
 		"prebuild": {
