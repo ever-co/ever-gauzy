@@ -342,6 +342,52 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 	}
 
 	/**
+	 * @description Retrieve all modules for a given project
+	 * @param projectId - The ID of the project for which to retrieve modules
+	 * @returns A promise that resolves to the list of project modules
+	 * @memberof OrganizationProjectModuleService
+	 */
+	async findModulesByProject(
+		projectId: ID,
+		options: IOrganizationProjectModuleFindInput
+	): Promise<IOrganizationProjectModule[]> {
+		if (!projectId) {
+			throw new BadRequestException('Project ID is required');
+		}
+		try {
+			const tenantId = RequestContext.currentTenantId() || options?.tenantId;
+			const organizationId = options?.organizationId;
+
+			// Create query builder
+			const query = this.typeOrmProjectModuleRepository.createQueryBuilder(this.tableName);
+
+			// Joins and where clauses
+			query.innerJoin(`${query.alias}.members`, 'member');
+			query.leftJoin(`${query.alias}.teams`, 'project_team');
+			query.leftJoin(`${query.alias}."organizationSprints"`, 'sprint');
+
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId })
+						.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId })
+						.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+				})
+			);
+
+			console.log('Query to retrieve modules by project:', query.getSql()); // Log query for debugging
+
+			// Execute the query
+			return await query.getMany();
+		} catch (error) {
+			// Throw an error if retrieval fails
+			throw new HttpException(
+				`Error retrieving modules for project ${projectId}: ${error.message}`,
+				HttpStatus.BAD_REQUEST
+			);
+		}
+	}
+
+	/**
 	 * Apply pagination and query options
 	 *
 	 * @param query - The query builder to apply pagination and options

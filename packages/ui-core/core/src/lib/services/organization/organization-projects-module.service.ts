@@ -9,7 +9,7 @@ import { CrudService } from '../crud';
 	providedIn: 'root'
 })
 export class OrganizationProjectModuleService extends CrudService<IOrganizationProjectModule> {
-	private static readonly API_URL = `${API_PREFIX}/organization-project-module`;
+	private static readonly API_URL = `${API_PREFIX}/organization-project-modules`;
 
 	constructor(http: HttpClient) {
 		super(http, OrganizationProjectModuleService.API_URL);
@@ -43,6 +43,15 @@ export class OrganizationProjectModuleService extends CrudService<IOrganizationP
 		return this.http.get<IPagination<IOrganizationProjectModule>>(`${this.API_URL}/employee/${employeeId}`, {
 			params
 		});
+	}
+
+	/**
+	 * Retrieve project modules associated with a specific project.
+	 * @param projectId - The unique identifier of the project.
+	 * @returns An Observable that emits the list of project modules for the specified project.
+	 */
+	findModulesByProject(projectId: ID): Observable<IOrganizationProjectModule[]> {
+		return this.http.get<IOrganizationProjectModule[]>(`${this.API_URL}/project/${projectId}`);
 	}
 
 	/**
