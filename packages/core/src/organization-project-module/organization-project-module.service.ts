@@ -351,6 +351,9 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		projectId: ID,
 		options: IOrganizationProjectModuleFindInput
 	): Promise<IOrganizationProjectModule[]> {
+		if (!projectId) {
+			throw new BadRequestException('Project ID is required');
+		}
 		try {
 			const tenantId = RequestContext.currentTenantId() || options?.tenantId;
 			const organizationId = options?.organizationId;
