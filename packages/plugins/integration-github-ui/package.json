@@ -42,9 +42,9 @@
 		"@angular/router": "17.3.12",
 		"@gauzy/contracts": "^0.1.0",
 		"@nebular/theme": "^13.0.0",
-		"@ngneat/until-destroy": "^9.2.0",
-		"@ngx-translate/core": "^15.0.0",
-		"angular2-smart-table": "^3.3.0",
+		"@ngneat/until-destroy": "^10.0.0",
+		"@ngx-translate/core": "^16.0.3",
+		"angular2-smart-table": "^3.4.0",
 		"ngx-permissions": "^13.0.1",
 		"rxjs": "^7.4.0",
 		"tslib": "^2.6.2"
