@@ -4,7 +4,7 @@
 			<i class="fas fa-times" (click)="dialogRef.close()"></i>
 		</div>
 		<h5 class="title">
-			{{ (selectedProjectModule && selectedProjectModule.id ? 'Edit Module' : 'Add Module') | translate }}
+			{{ (!createModule ? 'Edit Module' : 'Add Module') | translate }}
 		</h5>
 	</nb-card-header>
 	<nb-card-body class="body">
@@ -18,57 +18,52 @@
 							formControlName="projectId"
 							[placeholder]="'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.SELECT_PROJECT' | translate"
 							[skipGlobalChange]="true"
-							[defaultSelected]="true"
-							(onChanged)="selectedProject($event)"
+							[defaultSelected]="false"
+							[showAllOption]="false"
 						></ga-project-selector>
 					</div>
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
 						<label class="label">{{ 'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.STATUS' | translate }}</label>
-						<ga-task-status-select
-							[projectId]="form.get('projectId').value"
-							formControlName="status"
-							[placeholder]="'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.STATUS' | translate"
-						></ga-task-status-select>
+						<nb-select formControlName="status" fullWidth>
+							<nb-option *ngFor="let status of projectModuleStatuses" [value]="status">
+								{{ status }}
+							</nb-option>
+						</nb-select>
 					</div>
 				</div>
 			</div>
 
 			<!-- Participants -->
 			<div class="row">
-				<div class="col-sm-12">
-					<nb-radio-group (valueChange)="onParticipantsChange($event)" [value]="participants">
-						<nb-radio class="nb-radio" [value]="taskParticipantEnum.EMPLOYEES">
-							{{ 'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.TEAM_MEMBERS' | translate }}
-						</nb-radio>
-						<nb-radio class="nb-radio" [value]="taskParticipantEnum.TEAMS">
-							{{ 'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.TEAMS' | translate }}
-						</nb-radio>
-					</nb-radio-group>
-				</div>
+				<!-- Employee Multi-Select -->
 				<div class="col-sm-12">
 					<div class="form-group">
-						<ng-container *ngIf="participants === taskParticipantEnum.EMPLOYEES">
-							<ga-employee-multi-select
-								[selectedEmployeeIds]="selectedMembers"
-								[allEmployees]="employees"
-								(selectedChange)="onMembersSelected($event)"
-							></ga-employee-multi-select>
-						</ng-container>
-						<ng-container *ngIf="participants === taskParticipantEnum.TEAMS">
-							<label class="label">{{ 'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.SELECT_TEAMS' | translate }}</label>
-							<nb-select
-								formControlName="teams"
-								multiple
-								[selected]="selectedTeams"
-								(selectedChange)="onTeamsSelected($event)"
-								fullWidth
-								[placeholder]="'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.CHOOSE_TEAMS' | translate"
-							>
-								<nb-option *ngFor="let team of teams" [value]="team.id"> {{ team.name }}</nb-option>
-							</nb-select>
-						</ng-container>
+						<ga-employee-multi-select
+							[selectedEmployeeIds]="selectedMembers"
+							[allEmployees]="employees"
+							(selectedChange)="onMembersSelected($event)"
+						></ga-employee-multi-select>
+					</div>
+				</div>
+
+				<!-- Team Multi-Select -->
+				<div class="col-sm-12">
+					<div class="form-group">
+						<label class="label">{{
+							'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.SELECT_TEAMS' | translate
+						}}</label>
+						<nb-select
+							formControlName="teams"
+							multiple
+							[selected]="selectedTeams"
+							(selectedChange)="onTeamsSelected($event)"
+							fullWidth
+							[placeholder]="'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.CHOOSE_TEAMS' | translate"
+						>
+							<nb-option *ngFor="let team of teams" [value]="team.id">{{ team.name }}</nb-option>
+						</nb-select>
 					</div>
 				</div>
 			</div>
@@ -89,7 +84,9 @@
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label class="label">{{ 'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.PARENT_MODULE' | translate }}</label>
+						<label class="label">{{
+							'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.PARENT_MODULE' | translate
+						}}</label>
 						<nb-select
 							formControlName="parentId"
 							[placeholder]="'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.SELECT_PARENT' | translate"
@@ -102,12 +99,49 @@
 					</div>
 				</div>
 			</div>
+			<!-- Manager Selection -->
+			<div class="row">
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="label">{{ 'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.MANAGER' | translate }}</label>
 
+						<ga-employee-selector
+							fullWidth
+							[skipGlobalChange]="true"
+							class="employees"
+							[showAllEmployeesOption]="false"
+							[defaultSelected]="true"
+							(selectionChanged)="onManagerSelected($event)"
+						></ga-employee-selector>
+					</div>
+				</div>
+
+				<!-- Organization Sprints -->
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="label">{{
+							'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.ORGANIZATION_SPRINTS' | translate
+						}}</label>
+						<nb-select
+							formControlName="organizationSprints"
+							multiple
+							[placeholder]="'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.SELECT_SPRINTS' | translate"
+							fullWidth
+						>
+							<nb-option *ngFor="let sprint of organizationSprints" [value]="sprint.id">
+								{{ sprint.name }}
+							</nb-option>
+						</nb-select>
+					</div>
+				</div>
+			</div>
 			<!-- Date and Description -->
 			<div class="row">
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label for="startDate" class="label">{{ 'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.START_DATE' | translate }}</label>
+						<label for="startDate" class="label">{{
+							'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.START_DATE' | translate
+						}}</label>
 						<input
 							formControlName="startDate"
 							type="text"
@@ -122,7 +156,9 @@
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label for="endDate" class="label">{{ 'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.END_DATE' | translate }}</label>
+						<label for="endDate" class="label">{{
+							'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.END_DATE' | translate
+						}}</label>
 						<input
 							formControlName="endDate"
 							type="text"
@@ -133,37 +169,6 @@
 							fullWidth
 						/>
 						<nb-datepicker #endDatePicker></nb-datepicker>
-					</div>
-				</div>
-			</div>
-
-			<!-- Manager Selection -->
-			<div class="row">
-				<div class="col-sm-6">
-					<div class="form-group">
-						<label class="label">{{ 'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.MANAGER' | translate }}</label>
-						<ga-employee-multi-select
-							[selectedEmployeeIds]="[form.get('managerId').value]"
-							[allEmployees]="employees"
-							(selectedChange)="onManagerSelected($event)"
-						></ga-employee-multi-select>
-					</div>
-				</div>
-
-				<!-- Organization Sprints -->
-				<div class="col-sm-6">
-					<div class="form-group">
-						<label class="label">{{ 'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.ORGANIZATION_SPRINTS' | translate }}</label>
-						<nb-select
-							formControlName="organizationSprints"
-							multiple
-							[placeholder]="'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.SELECT_SPRINTS' | translate"
-							fullWidth
-						>
-							<nb-option *ngFor="let sprint of organizationSprints" [value]="sprint.id">
-								{{ sprint.name }}
-							</nb-option>
-						</nb-select>
 					</div>
 				</div>
 			</div>

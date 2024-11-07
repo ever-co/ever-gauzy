@@ -17,7 +17,7 @@ import { CKEditorModule } from 'ckeditor4-angular';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
 import { TaskSelectModule, TaskStatusSelectModule } from '../../../tasks';
-import { ProjectSelectModule } from '../../../selectors';
+import { ProjectSelectModule, SelectorsModule } from '../../../selectors';
 import { TagsColorInputModule } from '../../../tags';
 import { EmployeeMultiSelectModule } from '../../../employee';
 import { AddProjectModuleDialogComponent } from './add-project-module-dialog.component';
@@ -39,9 +39,10 @@ import { AddProjectModuleDialogComponent } from './add-project-module-dialog.com
 		NbSelectModule,
 		NbToastrModule,
 		NgSelectModule,
-
+		SelectorsModule,
 		TranslateModule.forChild(),
 		EmployeeMultiSelectModule,
+
 		TagsColorInputModule,
 		ProjectSelectModule,
 		TaskSelectModule,

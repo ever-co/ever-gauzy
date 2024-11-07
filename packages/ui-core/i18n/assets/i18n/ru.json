@@ -3195,7 +3195,8 @@
 			"SELECT_START_DATE": "Выбрать дату начала",
 			"END_DATE": "Дата окончания",
 			"SELECT_END_DATE": "Выбрать дату окончания",
-			"DESCRIPTION": "Описание"
+			"DESCRIPTION": "Описание",
+			"IS_FAVORITE": "Избранное"
 		}
 	},
 	"SETTINGS_FEATURES": {

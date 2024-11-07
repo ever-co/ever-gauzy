@@ -15,7 +15,7 @@ import {
 	IOrganizationSprint,
 	IOrganizationTeam,
 	ISelectedEmployee,
-	ITag,
+	ProjectModuleStatusEnum,
 	TaskParticipantEnum
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -41,42 +41,42 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 	selectedTeams: string[] = [];
 	organizationSprints: IOrganizationSprint[] = [];
 	availableParentModules: IOrganizationProjectModule[] = [];
-	selectedProjectModule: IOrganizationProjectModule;
 	organization: IOrganization;
 	taskParticipantEnum = TaskParticipantEnum;
 	participants = TaskParticipantEnum.EMPLOYEES;
-	public ckConfig: CKEditor4.Config = richTextCKEditorConfig;
+	ckConfig: CKEditor4.Config = richTextCKEditorConfig;
 	@Input() createModule = false;
-	/*
-	 * Payment Mutation Form
-	 */
-	public form: UntypedFormGroup = AddProjectModuleDialogComponent.buildForm(this.fb);
+
+	form: UntypedFormGroup = AddProjectModuleDialogComponent.buildForm(this.fb);
+	projectModuleStatuses = Object.values(ProjectModuleStatusEnum);
 
 	constructor(
-		public readonly dialogRef: NbDialogRef<AddProjectModuleDialogComponent>,
-		private readonly fb: UntypedFormBuilder,
-		private readonly store: Store,
-		public readonly translateService: TranslateService,
-		private readonly employeesService: EmployeesService,
-		private readonly organizationTeamsService: OrganizationTeamsService,
-		private readonly organizationProjectModuleService: OrganizationProjectModuleService,
-		private readonly organizationSprintService: SprintService
+		public dialogRef: NbDialogRef<AddProjectModuleDialogComponent>,
+		private fb: UntypedFormBuilder,
+		private store: Store,
+		public translateService: TranslateService,
+		private employeesService: EmployeesService,
+		private organizationTeamsService: OrganizationTeamsService,
+		private organizationProjectModuleService: OrganizationProjectModuleService,
+		private organizationSprintService: SprintService
 	) {
 		super(translateService);
 	}
 
+	/**
+	 * Initializes the form structure with default values and validators.
+	 */
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
-			name: [],
-			description: [],
-			status: [],
-			startDate: [],
-			endDate: [],
+			name: ['', Validators.required],
+			description: [''],
+			status: [ProjectModuleStatusEnum.BACKLOG],
+			startDate: ['', Validators.required],
+			endDate: ['', Validators.required],
 			isFavorite: [false],
 			parentId: [],
-			projectId: [],
+			projectId: [null, Validators.required],
 			managerId: [],
-			creatorId: [],
 			members: [],
 			organizationSprints: [],
 			teams: [],
@@ -84,207 +84,163 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 		});
 	}
 
-	/*
-	 * Getter & Setter for Project Module
-	 */
-	_projectModule: IOrganizationProjectModule;
-
+	private _projectModule: IOrganizationProjectModule;
+	@Input()
 	get projectModule(): IOrganizationProjectModule {
 		return this._projectModule;
 	}
-
-	@Input() set projectModule(value: IOrganizationProjectModule) {
-		this.selectedProjectModule = value;
+	set projectModule(value: IOrganizationProjectModule) {
 		this._projectModule = value;
+
+		this.populateForm(value);
 	}
 
+	private _project: IOrganizationProject;
+	@Input()
+	get project(): IOrganizationProject {
+		return this._project;
+	}
+	set project(value: IOrganizationProject) {
+		this._project = value;
+		this.form.get('projectId').setValue(value?.id || null);
+	}
+
+	/**
+	 * Initializes component and loads necessary data.
+	 */
 	ngOnInit() {
 		this.ckConfig.editorplaceholder = this.translateService.instant('FORM.PLACEHOLDERS.DESCRIPTION');
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeEmployee$ = this.store.selectedEmployee$;
-		const storeProject$ = this.store.selectedProject$;
-		storeOrganization$
+		this.loadOrganizationData();
+		this.loadAvailableParentModules();
+		this.findOrganizationSprints();
+	}
+
+	/**
+	 * Populates form fields with data from an existing project module.
+	 * @param module - The selected project module data.
+	 */
+	private populateForm(module: IOrganizationProjectModule) {
+		if (!module) return;
+		this.form.patchValue({
+			name: module.name,
+			description: module.description,
+			status: module.status,
+			startDate: module.startDate,
+			endDate: module.endDate,
+			isFavorite: module.isFavorite,
+			projectId: module.projectId,
+			parentId: module.parentId,
+			managerId: module.managerId,
+			members: (module.members || []).map((m) => m.id),
+			organizationSprints: module.organizationSprints,
+			teams: (module.teams || []).map((t) => t.id),
+			tasks: module.tasks
+		});
+		this.selectedMembers = module.members.map((m) => m.id);
+		this.selectedTeams = module.teams.map((t) => t.id);
+	}
+
+	/**
+	 * Validates and saves the form data to create or update the project module.
+	 */
+	onSave() {
+		if (this.form.invalid) return;
+		this.createOrUpdateModule();
+	}
+
+	/**
+	 * Creates a new project module or updates the existing module based on form data.
+	 */
+	private async createOrUpdateModule() {
+		const organizationId = this.organization.id;
+		const formValue = { ...this.form.value, organizationId, organization: this.organization };
+
+		if (this.createModule) {
+			const module = await firstValueFrom(this.organizationProjectModuleService.create(formValue));
+			this.dialogRef.close(module);
+		} else {
+			this.dialogRef.close(formValue);
+		}
+	}
+
+	/**
+	 * Loads selected organization data and initializes employees and teams.
+	 */
+	async loadOrganizationData() {
+		const organization$ = this.store.selectedOrganization$;
+		organization$
 			.pipe(
 				distinctUntilChange(),
-				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => (this.organization = organization)),
+				filter(Boolean),
+				tap((org: IOrganization) => (this.organization = org)),
 				tap(() => this.loadEmployees()),
 				tap(() => this.loadTeams()),
-				tap(() => this.initializeForm()),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		storeEmployee$
-			.pipe(
-				distinctUntilChange(),
-				filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
-				tap((employee: ISelectedEmployee) => {
-					if (!this.selectedProjectModule) {
-						this.selectedMembers.push(employee.id);
-					}
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		storeProject$
-			.pipe(
-				distinctUntilChange(),
-				filter((project: IOrganizationProject) => !!project && !!project.id),
-				tap((project: IOrganizationProject) => {
-					if (!this.selectedProjectModule) {
-						this.form.get('project').setValue(project);
-						console.log(project);
-
-						this.form.get('projectId').setValue(project.id);
-						this.form.updateValueAndValidity();
-					}
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		this.findOrganizationSprints();
-		this.loadAvailableParentModules();
 	}
 
-	initializeForm() {
-		if (this.selectedProjectModule) {
-			const {
-				name,
-				description,
-				status,
-				startDate,
-				endDate,
-				isFavorite,
-				projectId,
-				parentId,
-				managerId,
-				creatorId,
-				members,
-				organizationSprints,
-				teams,
-				tasks
-			} = this.selectedProjectModule;
-
-			this.selectedMembers = (members || []).map((member) => member.id);
-			this.selectedTeams = (teams || []).map((team) => team.id);
-
-			if (teams && teams.length > 0) {
-				this.participants = TaskParticipantEnum.TEAMS;
-			}
-
-			this.form.patchValue({
-				name,
-				description,
-				status,
-				startDate,
-				endDate,
-				isFavorite,
-				projectId,
-				parentId,
-				managerId,
-				creatorId,
-				teams: this.selectedTeams,
-				members: this.selectedMembers,
-				organizationSprints,
-				tasks
-			});
-		}
-	}
-
-	onSave() {
-		if (this.form.valid) {
-			// Reset both fields to ensure only one is sent based on the selection
-			this.form.get('members').setValue([]);
-			this.form.get('teams').setValue([]);
-
-			if (this.participants === TaskParticipantEnum.EMPLOYEES) {
-				this.form.get('members').setValue(
-					(this.selectedMembers || []).map((id) => this.employees.find((e) => e.id === id)).filter((e) => !!e) // Only valid employees
-				);
-			} else if (this.participants === TaskParticipantEnum.TEAMS) {
-				this.form.get('teams').setValue(
-					(this.selectedTeams || []).map((id) => this.teams.find((e) => e.id === id)).filter((e) => !!e) // Only valid teams
-				);
-			}
-			this.form.get('status').setValue(this.form.get('taskStatus').value?.name);
-
-			if (this.createModule) {
-				firstValueFrom(this.organizationProjectModuleService.create(this.form.value)).then((module) => {
-					this.dialogRef.close(module);
-				});
-			} else {
-				this.dialogRef.close(this.form.value);
-			}
-		}
-	}
-
-	selectedTagsHandler(tags: ITag[]) {
-		this.form.get('tags').setValue(tags);
-		this.form.get('tags').updateValueAndValidity();
-	}
-
-	selectedProject(project: IOrganizationProject) {
-		this.form.get('project').setValue(project);
-		this.form.get('project').updateValueAndValidity();
-	}
-
+	/**
+	 * Loads available employees for the selected organization.
+	 */
 	async loadEmployees() {
-		if (!this.organization) {
-			return;
-		}
+		if (!this.organization) return;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-
 		const { items = [] } = await firstValueFrom(
-			this.employeesService.getAll(['user'], {
-				organizationId,
-				tenantId
-			})
+			this.employeesService.getAll(['user'], { organizationId, tenantId })
 		);
 		this.employees = items;
 	}
 
-	onMembersSelected(members: string[]) {
-		this.selectedMembers = members;
-	}
-
+	/**
+	 * Loads available teams for the selected organization.
+	 */
 	async loadTeams() {
-		if (!this.organization) {
-			return;
-		}
+		if (!this.organization) return;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-
 		const { items = [] } = await this.organizationTeamsService.getAll(['members'], { organizationId, tenantId });
 		this.teams = items;
 	}
+
+	/**
+	 * Loads available parent modules based on the selected project ID.
+	 */
 	private async loadAvailableParentModules() {
 		if (!this.organization) return;
-		const { id: organizationId } = this.organization;
-
 		const modules = await firstValueFrom(
-			this.organizationProjectModuleService.findModulesByProject(this.form.get('projectId')?.value)
+			this.organizationProjectModuleService.get<IOrganizationProjectModule>({
+				projectId: this.form.get('projectId')?.value
+			})
 		);
-		this.availableParentModules = modules || [];
+		this.availableParentModules = modules?.items || [];
 	}
-	findOrganizationSprints(): void {
+
+	/**
+	 * Fetches sprints associated with the organization.
+	 */
+	findOrganizationSprints() {
 		this.organizationSprintService.getAllSprints().subscribe(
-			(sprints: IOrganizationSprint[]) => {
-				this.organizationSprints = sprints;
-			},
-			(error) => {
-				console.error('Error fetching organization sprints:', error);
-			}
+			(sprints) => (this.organizationSprints = sprints.items),
+			(error) => console.error('Error fetching organization sprints:', error)
 		);
 	}
-	onParticipantsChange(participants: TaskParticipantEnum) {
-		this.participants = participants;
+
+	/**
+	 * Updates the selected manager ID in the form.
+	 * @param selectedManagerId - The selected manager's ID.
+	 */
+	onManagerSelected(employee: ISelectedEmployee) {
+		// Check if the provided value is an array; if so, take the first element, otherwise use the value directly
+		this.form.get('managerId').setValue(employee.id);
 	}
 
 	onTeamsSelected(teamsSelection: string[]) {
 		this.selectedTeams = teamsSelection;
 	}
-	onManagerSelected(selectedManagerId: number): void {
-		this.form.get('managerId').setValue(selectedManagerId);
+
+	onMembersSelected(members: string[]) {
+		this.selectedMembers = members;
 	}
 }

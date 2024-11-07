@@ -3174,7 +3174,8 @@
 			"SELECT_START_DATE": "Seleccionar fecha de inicio",
 			"END_DATE": "Fecha de finalización",
 			"SELECT_END_DATE": "Seleccionar fecha de finalización",
-			"DESCRIPTION": "Descripción"
+			"DESCRIPTION": "Descripción",
+			"IS_FAVORITE": "Favorito"
 		}
 	},
 	"SETTINGS_FEATURES": {

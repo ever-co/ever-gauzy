@@ -3172,7 +3172,8 @@
 			"SELECT_START_DATE": "选择开始日期",
 			"END_DATE": "结束日期",
 			"SELECT_END_DATE": "选择结束日期",
-			"DESCRIPTION": "描述"
+			"DESCRIPTION": "描述",
+			"IS_FAVORITE": "最爱"
 		}
 	},
 	"SETTINGS_FEATURES": {

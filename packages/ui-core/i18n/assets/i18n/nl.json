@@ -3155,28 +3155,26 @@
 		}
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
-		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "Deze tab zal projectbeheersgrafieken en geaggregeerde gegevens laten zien."
-		,
-			"PROJECT_MODULE": {
-			  "PROJECT": "Project",
-			  "SELECT_PROJECT": "Selecteer een project",
-			  "STATUS": "Status",
-			  "TEAM_MEMBERS": "Teamleden",
-			  "TEAMS": "Teams",
-			  "SELECT_TEAMS": "Selecteer teams",
-			  "CHOOSE_TEAMS": "Kies teams",
-			  "NAME": "Naam",
-			  "ENTER_NAME": "Voer naam in",
-			  "PARENT_MODULE": "Hoofdmodule",
-			  "SELECT_PARENT": "Selecteer hoofdmodule",
-			  "START_DATE": "Startdatum",
-			  "SELECT_START_DATE": "Selecteer startdatum",
-			  "END_DATE": "Einddatum",
-			  "SELECT_END_DATE": "Selecteer einddatum",
-			  "DESCRIPTION": "Beschrijving"
-			}
-
-
+		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "Deze tab zal projectbeheersgrafieken en geaggregeerde gegevens laten zien.",
+		"PROJECT_MODULE": {
+			"PROJECT": "Project",
+			"SELECT_PROJECT": "Selecteer een project",
+			"STATUS": "Status",
+			"TEAM_MEMBERS": "Teamleden",
+			"TEAMS": "Teams",
+			"SELECT_TEAMS": "Selecteer teams",
+			"CHOOSE_TEAMS": "Kies teams",
+			"NAME": "Naam",
+			"ENTER_NAME": "Voer naam in",
+			"PARENT_MODULE": "Hoofdmodule",
+			"SELECT_PARENT": "Selecteer hoofdmodule",
+			"START_DATE": "Startdatum",
+			"SELECT_START_DATE": "Selecteer startdatum",
+			"END_DATE": "Einddatum",
+			"SELECT_END_DATE": "Selecteer einddatum",
+			"DESCRIPTION": "Beschrijving",
+			"IS_FAVORITE": "Favoriet"
+		}
 	},
 	"SETTINGS_FEATURES": {
 		"INVOICE": "Factuur",

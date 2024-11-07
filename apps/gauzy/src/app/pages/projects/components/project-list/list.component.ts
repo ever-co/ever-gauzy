@@ -611,7 +611,12 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 		// Navigate to the specified path
 		this._router.navigate(path);
 	}
-	async createProjectModuleDialog() {
-		this._dialogService.open(AddProjectModuleDialogComponent, {});
+	async createProjectModuleDialog(project: IOrganizationProject) {
+		this._dialogService.open(AddProjectModuleDialogComponent, {
+			context: {
+				project,
+				createModule: true
+			}
+		});
 	}
 }

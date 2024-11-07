@@ -3300,7 +3300,7 @@
 			"SELECT_MANAGER": "Select a manager",
 			"ORGANIZATION_SPRINTS": "Organization Sprints",
 			"SELECT_SPRINTS": "Select sprints",
-			"FAVORITE": "Favorite"
+			"IS_FAVORITE": "Favorite"
 		}
 	},
 	"SETTINGS_FEATURES": {
