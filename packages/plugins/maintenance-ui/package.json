@@ -25,11 +25,11 @@
 		"lib:watch": "nx build plugin-maintenance-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "17.1.3",
-		"@angular/core": "17.1.3"
+		"@angular/common": "^17.3.12",
+		"@angular/core": "^17.3.12"
 	},
 	"dependencies": {
-		"@angular/router": "17.1.3",
+		"@angular/router": "17.3.12",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/ui-config": "^0.1.0",
 		"@nebular/theme": "^13.0.0",

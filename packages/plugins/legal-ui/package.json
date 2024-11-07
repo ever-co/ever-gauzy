@@ -31,11 +31,11 @@
 		"lib:watch": "nx build plugin-legal-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "17.1.3",
-		"@angular/core": "17.1.3"
+		"@angular/common": "^17.3.12",
+		"@angular/core": "^17.3.12"
 	},
 	"dependencies": {
-		"@angular/router": "17.1.3",
+		"@angular/router": "17.3.12",
 		"@nebular/auth": "^13.0.0",
 		"@ngx-translate/core": "^15.0.0",
 		"tslib": "^2.6.2"
