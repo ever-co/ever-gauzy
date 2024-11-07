@@ -69,7 +69,7 @@
 		"@types/moment-duration-format": "^2.2.3",
 		"@types/node": "^20.14.9",
 		"electron": "^30.0.1",
-		"jest-preset-angular": "^13.1.4",
+		"jest-preset-angular": "14.0.4",
 		"tslint": "^6.1.3"
 	}
 }

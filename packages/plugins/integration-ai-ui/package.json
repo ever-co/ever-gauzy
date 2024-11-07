@@ -42,7 +42,7 @@
 	"devDependencies": {
 		"@types/jest": "^29.4.4",
 		"@types/node": "^20.14.9",
-		"jest-preset-angular": "^13.1.4"
+		"jest-preset-angular": "14.0.4"
 	},
 	"engines": {
 		"node": ">=20.11.1",

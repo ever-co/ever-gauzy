@@ -20488,7 +20488,7 @@ esbuild-wasm@0.20.1:
   resolved "https://registry.yarnpkg.com/esbuild-wasm/-/esbuild-wasm-0.20.1.tgz#fdc14b95e3e16ec8e082dd641edb96140c1723f7"
   integrity sha512-6v/WJubRsjxBbQdz6izgvx7LsVFvVaGmSdwrFHmEzoVgfXL89hkKPoQHsnVI2ngOkcBUQT9kmAM1hVL1k/Av4A==
 
-esbuild-wasm@>=0.13.8, esbuild-wasm@>=0.15.13:
+esbuild-wasm@>=0.15.13:
   version "0.24.0"
   resolved "https://registry.yarnpkg.com/esbuild-wasm/-/esbuild-wasm-0.24.0.tgz#99f44feb1dfccd25dbe7de1a26326ea1c7aca0d8"
   integrity sha512-xhNn5tL1AhkPg4ft59yXT6FkwKXiPSYyz1IeinJHUJpjvOHOIPvdmFQc0pGdjxlKSbzZc2mNmtVOWAR1EF/JAg==
@@ -20555,7 +20555,7 @@ esbuild@0.20.1:
     "@esbuild/win32-ia32" "0.20.1"
     "@esbuild/win32-x64" "0.20.1"
 
-esbuild@>=0.13.8, esbuild@>=0.15.13:
+esbuild@>=0.15.13:
   version "0.24.0"
   resolved "https://registry.yarnpkg.com/esbuild/-/esbuild-0.24.0.tgz#f2d470596885fcb2e91c21eb3da3b3c89c0b55e7"
   integrity sha512-FuLPevChGDshgSicjisSooU0cemp/sGXR841D5LHMB7mTVOmsEHcAxaH3irL53+8YDIeVNQEySh4DaYU/iuPqQ==
@@ -25160,20 +25160,6 @@ jest-preset-angular@14.0.4:
     ts-jest "^29.0.0"
   optionalDependencies:
     esbuild ">=0.15.13"
-
-jest-preset-angular@^13.1.4:
-  version "13.1.6"
-  resolved "https://registry.yarnpkg.com/jest-preset-angular/-/jest-preset-angular-13.1.6.tgz#c32af7b3071a917c7fc75534f5aa00db1f36700a"
-  integrity sha512-0pXSm6168Qn+qKp7DpzYoaIp0uyMHdQaWYVp8jlw7Mh+NEBtrBjKqts3kLeBHgAhGMQArp07S2IxZ6eCr8fc7Q==
-  dependencies:
-    bs-logger "^0.2.6"
-    esbuild-wasm ">=0.13.8"
-    jest-environment-jsdom "^29.0.0"
-    jest-util "^29.0.0"
-    pretty-format "^29.0.0"
-    ts-jest "^29.0.0"
-  optionalDependencies:
-    esbuild ">=0.13.8"
 
 jest-regex-util@^29.6.3:
   version "29.6.3"
