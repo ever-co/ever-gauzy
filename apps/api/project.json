@@ -44,89 +44,92 @@
 				}
 			}
 		},
+		"desktop": {
+			"executor": "@nx/node:webpack",
+			"options": {
+				"outputPath": "dist/apps/desktop/api",
+				"main": "apps/api/src/main.ts",
+				"showCircularDependencies": false,
+				"sourceMap": true,
+				"maxWorkers": 4,
+				"memoryLimit": 7000,
+				"tsConfig": "apps/api/tsconfig.app.json",
+				"assets": ["apps/api/src/assets"]
+			},
+			"configurations": {
+				"production": {
+					"optimization": true,
+					"extractLicenses": false,
+					"inspect": false,
+					"sourceMap": true,
+					"fileReplacements": [
+						{
+							"replace": "packages/config/src/environments/environment.ts",
+							"with": "packages/config/src/environments/environment.prod.ts"
+						}
+					]
+				}
+			}
+		},
+		"server": {
+			"executor": "@nx/node:webpack",
+			"options": {
+				"outputPath": "dist/apps/gauzy-api-server/api",
+				"main": "apps/api/src/main.ts",
+				"showCircularDependencies": false,
+				"sourceMap": true,
+				"maxWorkers": 4,
+				"memoryLimit": 7000,
+				"tsConfig": "apps/api/tsconfig.app.json",
+				"assets": ["apps/api/src/assets"]
+			},
+			"configurations": {
+				"production": {
+					"optimization": true,
+					"extractLicenses": false,
+					"inspect": false,
+					"sourceMap": true,
+					"fileReplacements": [
+						{
+							"replace": "packages/config/src/environments/environment.ts",
+							"with": "packages/config/src/environments/environment.prod.ts"
+						}
+					]
+				}
+			}
+		},
+		"gauzy-server": {
+			"executor": "@nx/node:webpack",
+			"options": {
+				"outputPath": "dist/apps/gauzy-server/api",
+				"main": "apps/api/src/main.ts",
+				"showCircularDependencies": false,
+				"sourceMap": true,
+				"maxWorkers": 4,
+				"memoryLimit": 7000,
+				"tsConfig": "apps/api/tsconfig.app.json",
+				"assets": ["apps/api/src/assets"]
+			},
+			"configurations": {
+				"production": {
+					"optimization": true,
+					"extractLicenses": false,
+					"inspect": false,
+					"sourceMap": true,
+					"fileReplacements": [
+						{
+							"replace": "packages/config/src/environments/environment.ts",
+							"with": "packages/config/src/environments/environment.prod.ts"
+						}
+					]
+				}
+			}
+		},
 		"test": {
 			"executor": "@nx/jest:jest",
 			"options": {
 				"jestConfig": "apps/api/jest.config.js",
 				"tsConfig": "apps/api/tsconfig.spec.json"
-			}
-		},
-		"seed": {
-			"executor": "@nx/node:webpack",
-			"options": {
-				"outputPath": "dist/apps/api",
-				"main": "apps/api/src/seed.ts",
-				"showCircularDependencies": false,
-				"sourceMap": true,
-				"maxWorkers": 4,
-				"memoryLimit": 7000,
-				"tsConfig": "apps/api/tsconfig.app.json"
-			},
-			"configurations": {
-				"production": {
-					"optimization": true,
-					"extractLicenses": true,
-					"inspect": false,
-					"sourceMap": true,
-					"fileReplacements": [
-						{
-							"replace": "packages/config/src/environments/environment.ts",
-							"with": "packages/config/src/environments/environment.prod.ts"
-						}
-					]
-				}
-			}
-		},
-		"seed-all": {
-			"executor": "@nx/node:webpack",
-			"options": {
-				"outputPath": "dist/apps/api",
-				"main": "apps/api/src/seed-all.ts",
-				"showCircularDependencies": false,
-				"sourceMap": true,
-				"maxWorkers": 4,
-				"memoryLimit": 7000,
-				"tsConfig": "apps/api/tsconfig.app.json"
-			},
-			"configurations": {
-				"production": {
-					"optimization": true,
-					"extractLicenses": true,
-					"inspect": false,
-					"sourceMap": true,
-					"fileReplacements": [
-						{
-							"replace": "packages/config/src/environments/environment.ts",
-							"with": "packages/config/src/environments/environment.prod.ts"
-						}
-					]
-				}
-			}
-		},
-		"seed-ever": {
-			"executor": "@nx/node:webpack",
-			"options": {
-				"outputPath": "dist/apps/api",
-				"main": "apps/api/src/seed-ever.ts",
-				"showCircularDependencies": false,
-				"sourceMap": true,
-				"maxWorkers": 4,
-				"memoryLimit": 7000,
-				"tsConfig": "apps/api/tsconfig.app.json"
-			},
-			"configurations": {
-				"production": {
-					"optimization": true,
-					"extractLicenses": true,
-					"inspect": false,
-					"sourceMap": true,
-					"fileReplacements": [
-						{
-							"replace": "packages/config/src/environments/environment.ts",
-							"with": "packages/config/src/environments/environment.prod.ts"
-						}
-					]
-				}
 			}
 		}
 	}

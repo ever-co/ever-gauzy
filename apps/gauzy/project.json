@@ -158,6 +158,78 @@
 				"tsConfig": "apps/gauzy/tsconfig.spec.json",
 				"setupFile": "apps/gauzy/src/test-setup.ts"
 			}
+		},
+		"server-ui": {
+			"executor": "@angular-builders/custom-webpack:browser",
+			"options": {
+				"customWebpackConfig": {
+					"path": "apps/gauzy/config/custom-webpack.config.js"
+				},
+				"outputPath": "dist/apps/gauzy-server/data/ui",
+				"index": "apps/gauzy/src/index.html",
+				"main": "apps/gauzy/src/main.ts",
+				"polyfills": "apps/gauzy/src/polyfills.ts",
+				"tsConfig": "apps/gauzy/tsconfig.app.json",
+				"stylePreprocessorOptions": {
+					"includePaths": ["packages/ui-core/static/styles"]
+				},
+				"assets": [
+					"apps/gauzy/src/favicon.ico",
+					"apps/gauzy/src/assets",
+					"apps/gauzy/src/manifest.json",
+					"apps/gauzy/src/silent-refresh.html",
+					{
+						"glob": "**/*",
+						"input": "packages/ui-core/i18n/assets/i18n",
+						"output": "assets/i18n/"
+					}
+				],
+				"styles": [
+					"node_modules/bootstrap/dist/css/bootstrap.css",
+					"node_modules/typeface-exo/index.css",
+					"node_modules/roboto-fontface/css/roboto/roboto-fontface.css",
+					"node_modules/ionicons/dist/scss/ionicons.scss",
+					"node_modules/@fortawesome/fontawesome-free/css/all.css",
+					"node_modules/socicon/css/socicon.css",
+					"node_modules/nebular-icons/scss/nebular-icons.scss",
+					"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
+					"node_modules/leaflet/dist/leaflet.css",
+					"packages/ui-core/static/styles/styles.scss",
+					"node_modules/@ng-select/ng-select/themes/default.theme.css"
+				],
+				"scripts": [
+					"node_modules/echarts/dist/echarts.min.js",
+					"node_modules/echarts/dist/extension/bmap.min.js",
+					"node_modules/chart.js/dist/chart.js"
+				]
+			},
+			"configurations": {
+				"production": {
+					"fileReplacements": [
+						{
+							"replace": "packages/ui-config/src/lib/environments/environment.ts",
+							"with": "packages/ui-config/src/lib/environments/environment.prod.ts"
+						}
+					],
+					"optimization": true,
+					"outputHashing": "all",
+					"serviceWorker": true,
+					"sourceMap": false,
+					"namedChunks": false,
+					"ngswConfigPath": "apps/gauzy/ngsw-config.prod.json",
+					"aot": true,
+					"extractLicenses": false,
+					"vendorChunk": false,
+					"buildOptimizer": false,
+					"budgets": [
+						{
+							"type": "initial",
+							"maximumWarning": "20mb",
+							"maximumError": "40mb"
+						}
+					]
+				}
+			}
 		}
 	},
 	"generators": {
