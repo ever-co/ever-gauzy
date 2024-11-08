@@ -421,7 +421,7 @@
   dependencies:
     tslib "^2.3.0"
 
-"@angular/compiler-cli@17.3.12", "@angular/compiler-cli@^17.1.3":
+"@angular/compiler-cli@17.3.12":
   version "17.3.12"
   resolved "https://registry.yarnpkg.com/@angular/compiler-cli/-/compiler-cli-17.3.12.tgz#d54a65383ea56bdaf474af3ae475cc1585b11a0b"
   integrity sha512-1F8M7nWfChzurb7obbvuE7mJXlHtY1UG58pcwcomVtpPb+kPavgAO8OEvJHYBMV+bzSxkXt5UIwL9lt9jHUxZA==

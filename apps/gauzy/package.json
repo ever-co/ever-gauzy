@@ -181,7 +181,7 @@
 		"@angular-devkit/core": "^17.1.4",
 		"@angular-devkit/schematics": "17.1.4",
 		"@angular/cli": "~17.3.0",
-		"@angular/compiler-cli": "^17.1.3",
+		"@angular/compiler-cli": "17.3.12",
 		"@types/async": "^3.2.5",
 		"@types/chart.js": "^2.9.37",
 		"@types/ckeditor": "^4.9.10",
