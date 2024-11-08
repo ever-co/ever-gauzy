@@ -2,28 +2,11 @@
 	"migrations": [
 		{
 			"cli": "nx",
-			"version": "19.6.0-beta.4",
-			"description": "Update ciWebServerCommand to use static serve for the application.",
-			"implementation": "./src/migrations/update-19-6-0/update-ci-webserver-for-static-serve",
-			"package": "@nx/cypress",
-			"name": "update-19-6-0-update-ci-webserver-for-vite"
-		},
-		{
-			"cli": "nx",
-			"version": "19.6.0-beta.4",
-			"description": "Ensure Module Federation DTS is turned off by default.",
-			"factory": "./src/migrations/update-19-6-0/turn-off-dts-by-default",
+			"version": "19.6.1-beta.0",
+			"description": "Ensure Target Defaults are set correctly for Module Federation.",
+			"factory": "./src/migrations/update-19-6-1/ensure-depends-on-for-mf",
 			"package": "@nx/angular",
-			"name": "update-19-6-0"
-		},
-		{
-			"cli": "nx",
-			"version": "19.6.0-beta.7",
-			"requires": { "@angular/core": ">=18.2.0" },
-			"description": "Update the @angular/cli package version to ~18.2.0.",
-			"factory": "./src/migrations/update-19-6-0/update-angular-cli",
-			"package": "@nx/angular",
-			"name": "update-angular-cli-version-18-2-0"
+			"name": "update-19-6-1-ensure-module-federation-target-defaults"
 		}
 	]
 }
