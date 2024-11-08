@@ -93,7 +93,18 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				task: {
 					id: true,
 					title: true,
-					estimate: true
+					estimate: true,
+					taskStatus: {
+						name: true,
+						value: true,
+						description: true,
+						icon: true,
+						color: true,
+						order: true,
+						isCollapsed: true,
+						isDefault: true
+					},
+					issueType: true
 				},
 				organizationContact: {
 					id: true,
@@ -346,7 +357,18 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				},
 				task: {
 					id: true,
-					title: true
+					title: true,
+					taskStatus: {
+						name: true,
+						value: true,
+						description: true,
+						icon: true,
+						color: true,
+						order: true,
+						isCollapsed: true,
+						isDefault: true
+					},
+					issueType: true
 				},
 				timeSlots: {
 					id: true,
@@ -373,15 +395,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			},
 			relations: {
 				// Related entities to be included in the result
-				project: {
-					organizationContact: true
-				},
-				task: true,
+				project: { organizationContact: true },
+				task: { taskStatus: true },
 				timeSlots: true,
 				organizationContact: true,
-				employee: {
-					user: true
-				}
+				employee: { user: true }
 			},
 			order: {
 				// Order results by the 'startedAt' field in ascending order
