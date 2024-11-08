@@ -49,7 +49,7 @@
 		"ckeditor4-angular": "4.0.1",
 		"ng2-file-upload": "^6.0.0",
 		"ngx-moment": "^6.0.2",
-		"ngx-permissions": "^13.0.1",
+		"ngx-permissions": "^17.1.0",
 		"rxjs": "^7.4.0",
 		"tslib": "^2.6.2",
 		"underscore": "^1.13.3"
