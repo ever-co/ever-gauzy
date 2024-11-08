@@ -61,7 +61,7 @@
 		"typeorm": "^0.3.20"
 	},
 	"devDependencies": {
-		"@types/jest": "^29.4.4",
+		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
 		"rimraf": "^3.0.2",
 		"tslint": "^6.1.3",

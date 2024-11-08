@@ -60,7 +60,7 @@
 	},
 	"devDependencies": {
 		"@types/bcrypt": "^5.0.2",
-		"@types/jest": "^29.4.4",
+		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
 		"@types/passport": "^1.0.9",
 		"@types/passport-facebook": "^2.1.10",

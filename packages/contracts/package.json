@@ -29,7 +29,7 @@
 		"compile": "tsc -p tsconfig.build.json"
 	},
 	"devDependencies": {
-		"@types/jest": "^29.4.4",
+		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
 		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"

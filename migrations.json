@@ -2,52 +2,28 @@
 	"migrations": [
 		{
 			"cli": "nx",
-			"version": "19.2.0-beta.2",
-			"description": "Updates the default workspace data directory to .nx/workspace-data",
-			"implementation": "./src/migrations/update-19-2-0/move-workspace-data-directory",
-			"package": "nx",
-			"name": "19-2-0-move-graph-cache-directory"
+			"version": "19.6.0-beta.4",
+			"description": "Update ciWebServerCommand to use static serve for the application.",
+			"implementation": "./src/migrations/update-19-6-0/update-ci-webserver-for-static-serve",
+			"package": "@nx/cypress",
+			"name": "update-19-6-0-update-ci-webserver-for-vite"
 		},
 		{
 			"cli": "nx",
-			"version": "19.2.2-beta.0",
-			"description": "Updates the nx wrapper.",
-			"implementation": "./src/migrations/update-17-3-0/update-nxw",
-			"package": "nx",
-			"name": "19-2-2-update-nx-wrapper"
-		},
-		{
-			"version": "19.2.4-beta.0",
-			"description": "Set project name in nx.json explicitly",
-			"implementation": "./src/migrations/update-19-2-4/set-project-name",
-			"x-repair-skip": true,
-			"package": "nx",
-			"name": "19-2-4-set-project-name"
-		},
-		{
-			"cli": "nx",
-			"version": "19.2.1-beta.0",
-			"requires": { "@angular-eslint/eslint-plugin": ">=18.0.0" },
-			"description": "Installs the '@typescript-eslint/utils' package when having installed '@angular-eslint/eslint-plugin' or '@angular-eslint/eslint-plugin-template' with version >=18.0.0.",
-			"factory": "./src/migrations/update-19-2-1/add-typescript-eslint-utils",
+			"version": "19.6.0-beta.4",
+			"description": "Ensure Module Federation DTS is turned off by default.",
+			"factory": "./src/migrations/update-19-6-0/turn-off-dts-by-default",
 			"package": "@nx/angular",
-			"name": "add-typescript-eslint-utils"
+			"name": "update-19-6-0"
 		},
 		{
 			"cli": "nx",
-			"version": "19.5.0-beta.1",
-			"requires": { "@angular/core": ">=18.1.0" },
-			"description": "Update the @angular/cli package version to ~18.1.0.",
-			"factory": "./src/migrations/update-19-5-0/update-angular-cli",
+			"version": "19.6.0-beta.7",
+			"requires": { "@angular/core": ">=18.2.0" },
+			"description": "Update the @angular/cli package version to ~18.2.0.",
+			"factory": "./src/migrations/update-19-6-0/update-angular-cli",
 			"package": "@nx/angular",
-			"name": "update-angular-cli-version-18-1-0"
-		},
-		{
-			"version": "18.1.0",
-			"description": "Updates calls to afterRender with an explicit phase to the new API",
-			"factory": "./migrations/after-render-phase/bundle",
-			"package": "@angular/core",
-			"name": "migration-after-render-phase"
+			"name": "update-angular-cli-version-18-2-0"
 		}
 	]
 }

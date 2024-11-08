@@ -33,18 +33,18 @@
 		"lib:watch": "nx build ui-core --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "18.1.5",
-		"@angular/core": "18.1.5"
+		"@angular/common": "18.2.11",
+		"@angular/core": "18.2.11"
 	},
 	"dependencies": {
 		"@ali-hm/angular-tree-component": "^17.0.1",
 		"@angular-slider/ngx-slider": "^17.0.1",
-		"@angular/animations": "18.1.5",
-		"@angular/cdk": "18.1.5",
-		"@angular/forms": "18.1.5",
-		"@angular/material": "18.1.5",
-		"@angular/platform-browser": "18.1.5",
-		"@angular/router": "18.1.5",
+		"@angular/animations": "18.2.11",
+		"@angular/cdk": "18.2.12",
+		"@angular/forms": "18.2.11",
+		"@angular/material": "18.2.12",
+		"@angular/platform-browser": "18.2.11",
+		"@angular/router": "18.2.11",
 		"@asymmetrik/ngx-leaflet": "^17.0.0",
 		"@datorama/akita": "^7.1.1",
 		"@electron/remote": "^2.0.8",
@@ -119,7 +119,7 @@
 	"devDependencies": {
 		"@types/ckeditor": "^4.9.10",
 		"@types/google.maps": "~3.53.0",
-		"@types/jest": "^29.4.4",
+		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
 		"jest-preset-angular": "14.1.1"
 	},
