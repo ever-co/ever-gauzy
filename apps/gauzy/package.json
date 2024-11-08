@@ -172,7 +172,7 @@
 		"uuid": "^8.3.2",
 		"web-animations-js": "^2.3.2",
 		"yargs": "^17.5.0",
-		"zone.js": "^0.14.2"
+		"zone.js": "~0.14.10"
 	},
 	"devDependencies": {
 		"@angular-devkit/architect": "0.1802.9",
