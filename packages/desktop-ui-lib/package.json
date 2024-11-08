@@ -28,13 +28,13 @@
 	"keywords": [],
 	"dependencies": {
 		"@angular-slider/ngx-slider": "^17.0.1",
-		"@angular/animations": "17.3.12",
-		"@angular/common": "17.3.12",
-		"@angular/core": "17.3.12",
-		"@angular/forms": "17.3.12",
-		"@angular/platform-browser": "17.3.12",
-		"@angular/platform-browser-dynamic": "17.3.12",
-		"@angular/router": "17.3.12",
+		"@angular/animations": "18.0.7",
+		"@angular/common": "18.0.7",
+		"@angular/core": "18.0.7",
+		"@angular/forms": "18.0.7",
+		"@angular/platform-browser": "18.0.7",
+		"@angular/platform-browser-dynamic": "18.0.7",
+		"@angular/router": "18.0.7",
 		"@datorama/akita": "^7.1.1",
 		"@datorama/akita-ngdevtools": "^7.0.0",
 		"@electron/remote": "^2.0.8",
@@ -69,7 +69,7 @@
 		"@types/moment-duration-format": "^2.2.3",
 		"@types/node": "^20.14.9",
 		"electron": "^30.0.1",
-		"jest-preset-angular": "14.0.4",
+		"jest-preset-angular": "14.1.1",
 		"tslint": "^6.1.3"
 	}
 }

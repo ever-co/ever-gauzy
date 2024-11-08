@@ -44,8 +44,8 @@
 		"lib:watch": "nx build ui-config --watch --configuration development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^17.3.12",
-		"@angular/core": "^17.3.12"
+		"@angular/common": "18.0.7",
+		"@angular/core": "18.0.7"
 	},
 	"dependencies": {
 		"tslib": "^2.6.2",
@@ -55,7 +55,7 @@
 		"@types/jest": "^29.4.4",
 		"@types/node": "^20.14.9",
 		"cross-env": "^7.0.3",
-		"jest-preset-angular": "14.0.4"
+		"jest-preset-angular": "14.1.1"
 	},
 	"engines": {
 		"node": ">=20.11.1",

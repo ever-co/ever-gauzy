@@ -1,14 +1,15 @@
 import { TestBed, async } from '@angular/core/testing';
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { AppComponent } from './app.component';
 
 describe('AppComponent', () => {
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [AppComponent],
-			imports: [HttpClientModule],
-			teardown: { destroyAfterEach: false }
-		}).compileComponents();
+    declarations: [AppComponent],
+    teardown: { destroyAfterEach: false },
+    imports: [],
+    providers: [provideHttpClient(withInterceptorsFromDi())]
+}).compileComponents();
 	}));
 
 	it('should create the app', () => {

@@ -33,18 +33,18 @@
 		"lib:watch": "nx build ui-core --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^17.3.12",
-		"@angular/core": "^17.3.12"
+		"@angular/common": "18.0.7",
+		"@angular/core": "18.0.7"
 	},
 	"dependencies": {
 		"@ali-hm/angular-tree-component": "^17.0.1",
 		"@angular-slider/ngx-slider": "^17.0.1",
-		"@angular/animations": "17.3.12",
-		"@angular/cdk": "17.3.10",
-		"@angular/forms": "17.3.12",
-		"@angular/material": "17.3.10",
-		"@angular/platform-browser": "17.3.12",
-		"@angular/router": "17.3.12",
+		"@angular/animations": "18.0.7",
+		"@angular/cdk": "18.0.6",
+		"@angular/forms": "18.0.7",
+		"@angular/material": "18.0.6",
+		"@angular/platform-browser": "18.0.7",
+		"@angular/router": "18.0.7",
 		"@asymmetrik/ngx-leaflet": "^17.0.0",
 		"@datorama/akita": "^7.1.1",
 		"@electron/remote": "^2.0.8",
@@ -121,7 +121,7 @@
 		"@types/google.maps": "~3.53.0",
 		"@types/jest": "^29.4.4",
 		"@types/node": "^20.14.9",
-		"jest-preset-angular": "14.0.4"
+		"jest-preset-angular": "14.1.1"
 	},
 	"keywords": [
 		"gauzy",
