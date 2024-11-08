@@ -1,7 +1,7 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex flex-column">
 		<div class="cancel">
-			<i class="fas fa-times" (click)="dialogRef.close()"></i>
+			<i class="fas fa-times" role="button" (click)="dialogRef.close()"></i>
 		</div>
 		<h5 class="title">
 			{{ (!createModule ? 'Edit Module' : 'Add Module') | translate }}
@@ -166,6 +166,7 @@
 							[placeholder]="'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.SELECT_END_DATE' | translate"
 							[nbDatepicker]="endDatePicker"
 							id="endDate"
+							[min]="form.get('startDate').value"
 							fullWidth
 						/>
 						<nb-datepicker #endDatePicker></nb-datepicker>

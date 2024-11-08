@@ -31,7 +31,7 @@ import { AddProjectModuleDialogComponent } from './add-project-module-dialog.com
 		NbButtonModule,
 		NbCardModule,
 		NbDatepickerModule,
-		NbDialogModule.forRoot(),
+		NbDialogModule.forChild(),
 		NbIconModule,
 		NbInputModule,
 		NbToggleModule,
@@ -42,7 +42,6 @@ import { AddProjectModuleDialogComponent } from './add-project-module-dialog.com
 		SelectorsModule,
 		TranslateModule.forChild(),
 		EmployeeMultiSelectModule,
-
 		TagsColorInputModule,
 		ProjectSelectModule,
 		TaskSelectModule,
