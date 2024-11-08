@@ -41,6 +41,8 @@ export interface ITask
 	creatorId?: ID;
 	isDraft?: boolean; // Define if task is still draft (E.g : Task description not completed yet)
 
+	issueType?: string;
+
 	parent?: ITask;
 	parentId?: ID; // Optional field for specifying the parent task ID
 	children?: ITask[];
