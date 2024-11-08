@@ -33,18 +33,18 @@
 		"lib:watch": "nx build ui-core --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "18.0.7",
-		"@angular/core": "18.0.7"
+		"@angular/common": "18.1.5",
+		"@angular/core": "18.1.5"
 	},
 	"dependencies": {
 		"@ali-hm/angular-tree-component": "^17.0.1",
 		"@angular-slider/ngx-slider": "^17.0.1",
-		"@angular/animations": "18.0.7",
-		"@angular/cdk": "18.0.6",
-		"@angular/forms": "18.0.7",
-		"@angular/material": "18.0.6",
-		"@angular/platform-browser": "18.0.7",
-		"@angular/router": "18.0.7",
+		"@angular/animations": "18.1.5",
+		"@angular/cdk": "18.1.5",
+		"@angular/forms": "18.1.5",
+		"@angular/material": "18.1.5",
+		"@angular/platform-browser": "18.1.5",
+		"@angular/router": "18.1.5",
 		"@asymmetrik/ngx-leaflet": "^17.0.0",
 		"@datorama/akita": "^7.1.1",
 		"@electron/remote": "^2.0.8",
