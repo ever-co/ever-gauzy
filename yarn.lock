@@ -28907,12 +28907,12 @@ ngx-perfect-scrollbar@^10.1.1:
     resize-observer-polyfill "^1.5.0"
     tslib "^2.0.0"
 
-ngx-permissions@^13.0.1:
-  version "13.0.1"
-  resolved "https://registry.yarnpkg.com/ngx-permissions/-/ngx-permissions-13.0.1.tgz#120376ca201ab19cbdf2d584232572c98652b27f"
-  integrity sha512-KanBkK9v8aoQ9siSEmB69G+OPtF1i71Ie5ORuobOlKcpUMvmpcuCXG9eiu1j3k+8/Q+sv1jCbL9VviLiQF5PFA==
+ngx-permissions@^17.1.0:
+  version "17.1.0"
+  resolved "https://registry.yarnpkg.com/ngx-permissions/-/ngx-permissions-17.1.0.tgz#cb441f86e1ac56f782cc31549f6297ff39b3caf3"
+  integrity sha512-NWZ/HAX0NCts5n7Yt0UlawJ78Eq05U+ssEFd3ugXESOCsgPT2QJ85Ls/imsLebiIiMrB/0zx6Bc6LqVPldXA9A==
   dependencies:
-    tslib "^2.1.0"
+    tslib "^2.3.0"
 
 ngx-window-token@>=7.0.0:
   version "7.0.0"
