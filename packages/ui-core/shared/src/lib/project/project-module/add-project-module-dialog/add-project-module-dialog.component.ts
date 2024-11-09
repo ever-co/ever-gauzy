@@ -15,6 +15,7 @@ import {
 	IOrganizationSprint,
 	IOrganizationTeam,
 	ISelectedEmployee,
+	ITask,
 	ProjectModuleStatusEnum,
 	TaskParticipantEnum
 } from '@gauzy/contracts';
@@ -24,7 +25,8 @@ import {
 	OrganizationTeamsService,
 	Store,
 	OrganizationProjectModuleService,
-	SprintService
+	SprintService,
+	TasksService
 } from '@gauzy/ui-core/core';
 import { richTextCKEditorConfig } from '../../../ckeditor.config';
 
@@ -39,6 +41,7 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 	teams: IOrganizationTeam[] = [];
 	selectedMembers: string[] = [];
 	selectedTeams: string[] = [];
+	tasks: ITask[] = [];
 	organizationSprints: IOrganizationSprint[] = [];
 	availableParentModules: IOrganizationProjectModule[] = [];
 	organization: IOrganization;
@@ -58,7 +61,8 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 		private employeesService: EmployeesService,
 		private organizationTeamsService: OrganizationTeamsService,
 		private organizationProjectModuleService: OrganizationProjectModuleService,
-		private organizationSprintService: SprintService
+		private organizationSprintService: SprintService,
+		private readonly tasksService: TasksService
 	) {
 		super(translateService);
 	}
@@ -112,6 +116,7 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 		this.ckConfig.editorplaceholder = this.translateService.instant('FORM.PLACEHOLDERS.DESCRIPTION');
 		this.loadOrganizationData();
 		this.loadAvailableParentModules();
+		this.loadTasks();
 		this.findOrganizationSprints();
 	}
 
@@ -153,6 +158,20 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 	 */
 	private async createOrUpdateModule() {
 		const organizationId = this.organization.id;
+
+		this.form.get('members').setValue(
+			(this.selectedMembers || []).map((id) => this.employees.find((e) => e.id === id)).filter((e) => !!e) // Only valid employees
+		);
+
+		this.form.get('teams').setValue(
+			(this.selectedTeams || []).map((id) => this.teams.find((e) => e.id === id)).filter((e) => !!e) // Only valid teams
+		);
+		console.log(this.form.get('tasks').value);
+
+		this.form.get('tasks').setValue(
+			(this.form.get('tasks').value || []).map((id) => this.tasks.find((e) => e.id === id)).filter((e) => !!e) // Only valid teams
+		);
+
 		const formValue = { ...this.form.value, organizationId, organization: this.organization };
 
 		if (this.createModule) {
@@ -202,6 +221,17 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 		const { id: organizationId } = this.organization;
 		const { items = [] } = await this.organizationTeamsService.getAll(['members'], { organizationId, tenantId });
 		this.teams = items;
+	}
+
+	async loadTasks() {
+		const queryOption: any = {
+			projectId: this.form.get('projectId')?.value,
+			organizationId: this.organization.id,
+			tenantId: this.store.user.tenantId
+		};
+		if (!this.organization) return;
+		const { items = [] } = await firstValueFrom(this.tasksService.getAllTasks({ ...queryOption }));
+		this.tasks = items;
 	}
 
 	/**

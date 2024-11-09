@@ -11,6 +11,7 @@ import { AuthService, Store, TasksService, ToastrService } from '@gauzy/ui-core/
 @Component({
 	selector: 'ga-task-selector',
 	templateUrl: './task.component.html',
+
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,
@@ -20,6 +21,14 @@ import { AuthService, Store, TasksService, ToastrService } from '@gauzy/ui-core/
 	]
 })
 export class TaskSelectorComponent implements OnInit, OnDestroy, ControlValueAccessor {
+	private _multiple: boolean = false;
+	public get multiple(): boolean {
+		return this._multiple;
+	}
+	@Input() public set multiple(value: boolean) {
+		this._multiple = value;
+	}
+
 	/*
 	 * Getter & Setter for dynamic enabled/disabled element
 	 */
