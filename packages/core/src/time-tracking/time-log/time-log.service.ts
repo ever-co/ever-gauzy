@@ -92,8 +92,38 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				},
 				task: {
 					id: true,
+					deletedAt: true,
+					createdAt: true,
+					updatedAt: true,
+					isActive: true,
+					isArchived: true,
+					archivedAt: true,
+					tenantId: true,
+					organizationId: true,
+					number: true,
+					prefix: true,
 					title: true,
+					description: true,
+					status: true,
+					priority: true,
+					size: true,
+					issueType: true,
 					estimate: true,
+					dueDate: true,
+					public: true,
+					startDate: true,
+					resolvedAt: true,
+					version: true,
+					isDraft: true,
+					parentId: true,
+					projectId: true,
+					creatorId: true,
+					organizationSprintId: true,
+					taskStatusId: true,
+					taskSizeId: true,
+					taskPriorityId: true,
+
+					// Task status fields
 					taskStatus: {
 						name: true,
 						value: true,
@@ -103,8 +133,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						order: true,
 						isCollapsed: true,
 						isDefault: true
-					},
-					issueType: true
+					}
 				},
 				organizationContact: {
 					id: true,
@@ -357,7 +386,38 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				},
 				task: {
 					id: true,
+					deletedAt: true,
+					createdAt: true,
+					updatedAt: true,
+					isActive: true,
+					isArchived: true,
+					archivedAt: true,
+					tenantId: true,
+					organizationId: true,
+					number: true,
+					prefix: true,
 					title: true,
+					description: true,
+					status: true,
+					priority: true,
+					size: true,
+					issueType: true,
+					estimate: true,
+					dueDate: true,
+					public: true,
+					startDate: true,
+					resolvedAt: true,
+					version: true,
+					isDraft: true,
+					parentId: true,
+					projectId: true,
+					creatorId: true,
+					organizationSprintId: true,
+					taskStatusId: true,
+					taskSizeId: true,
+					taskPriorityId: true,
+
+					// Task status fields
 					taskStatus: {
 						name: true,
 						value: true,
@@ -367,8 +427,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						order: true,
 						isCollapsed: true,
 						isDefault: true
-					},
-					issueType: true
+					}
 				},
 				timeSlots: {
 					id: true,
