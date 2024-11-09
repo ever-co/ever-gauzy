@@ -46,15 +46,6 @@ export class OrganizationProjectModuleService extends CrudService<IOrganizationP
 	}
 
 	/**
-	 * Retrieve project modules associated with a specific project.
-	 * @param projectId - The unique identifier of the project.
-	 * @returns An Observable that emits the list of project modules for the specified project.
-	 */
-	findModulesByProject(projectId: ID): Observable<IOrganizationProjectModule[]> {
-		return this.http.get<IOrganizationProjectModule[]>(`${this.API_URL}/project/${projectId}`);
-	}
-
-	/**
 	 * Find a specific project module by its unique identifier.
 	 * @param id - The unique identifier of the project module.
 	 * @param params - Additional query parameters if required.

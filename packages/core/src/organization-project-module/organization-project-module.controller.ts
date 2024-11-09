@@ -137,31 +137,6 @@ export class OrganizationProjectModuleController extends CrudController<Organiza
 		return await this.organizationProjectModuleService.findAll(params);
 	}
 
-	/**
-	 * @description Find project modules by project ID
-	 * @param projectId - The ID of the project to retrieve modules for
-	 * @returns A promise that resolves to a list of modules associated with the project
-	 * @memberof OrganizationProjectModuleController
-	 */
-	@ApiOperation({ summary: 'Find project modules by project ID.' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found project modules for the given project',
-		type: [OrganizationProjectModule]
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'No modules found for the specified project ID'
-	})
-	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.PROJECT_MODULE_READ)
-	@Get('project/:projectId')
-	async findModulesByProject(
-		@Param('projectId', UUIDValidationPipe) projectId: ID,
-		@Query() params: OrganizationProjectModuleFindInputDTO
-	): Promise<IOrganizationProjectModule[]> {
-		return await this.organizationProjectModuleService.findModulesByProject(projectId, params);
-	}
-
 	@UseValidationPipe()
 	@ApiOperation({ summary: 'Find by id' })
 	@ApiResponse({
