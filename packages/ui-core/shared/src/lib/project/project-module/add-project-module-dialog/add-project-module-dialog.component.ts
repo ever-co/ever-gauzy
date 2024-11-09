@@ -166,7 +166,6 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 		this.form.get('teams').setValue(
 			(this.selectedTeams || []).map((id) => this.teams.find((e) => e.id === id)).filter((e) => !!e) // Only valid teams
 		);
-		console.log(this.form.get('tasks').value);
 
 		this.form.get('tasks').setValue(
 			(this.form.get('tasks').value || []).map((id) => this.tasks.find((e) => e.id === id)).filter((e) => !!e) // Only valid teams

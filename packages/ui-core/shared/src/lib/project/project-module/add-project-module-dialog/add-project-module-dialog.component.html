@@ -138,14 +138,16 @@
 
 			<div class="row">
 				<div class="col-sm-12">
-					<label>{{ 'TIMER_TRACKER.SELECT_TASK' | translate }}</label>
-					<ga-task-selector
-						name="taskId"
-						[projectId]="form.get('projectId').value"
-						formControlName="tasks"
-						[multiple]="true"
-						[required]="organization?.requireTask"
-					></ga-task-selector>
+					<div class="form-group">
+						<label>{{ 'TIMER_TRACKER.SELECT_TASK' | translate }}</label>
+						<ga-task-selector
+							name="taskId"
+							[projectId]="form.get('projectId').value"
+							formControlName="tasks"
+							[multiple]="true"
+							[required]="organization?.requireTask"
+						></ga-task-selector>
+					</div>
 				</div>
 			</div>
 			<!-- Date and Description -->
