@@ -7640,10 +7640,12 @@
   dependencies:
     tslib "^2.3.0"
 
-"@ngx-translate/http-loader@^8.0.0":
-  version "8.0.0"
-  resolved "https://registry.yarnpkg.com/@ngx-translate/http-loader/-/http-loader-8.0.0.tgz#e02c25dbe33c6b1edee73e3654ab8a161572cdfb"
-  integrity sha512-SFMsdUcmHF5OdZkL1CHEoSAwbP5EbAOPTLLboOCRRoOg21P4GJx+51jxGdJeGve6LSKLf4Pay7BkTwmE6vxYlg==
+"@ngx-translate/http-loader@^16.0.0":
+  version "16.0.0"
+  resolved "https://registry.yarnpkg.com/@ngx-translate/http-loader/-/http-loader-16.0.0.tgz#d1f91a1824f6440be468a496832fe50f58151356"
+  integrity sha512-l3okOHGVxZ1Bm55OpakSfXvI2yYmVmhYqgwGU4aIQIRUqpkBCrSDZnmrHTcZfsGJzXKB5E2D2rko9i28gBijmA==
+  dependencies:
+    tslib "^2.3.0"
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"

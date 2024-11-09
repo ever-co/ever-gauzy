@@ -44,7 +44,7 @@
 		"@nebular/theme": "^13.0.0",
 		"@ngneat/until-destroy": "^10.0.0",
 		"@ngx-translate/core": "^16.0.3",
-		"@ngx-translate/http-loader": "^8.0.0",
+		"@ngx-translate/http-loader": "^16.0.0",
 		"angular2-smart-table": "^3.4.0",
 		"ckeditor4-angular": "4.0.1",
 		"ng2-file-upload": "^6.0.0",
