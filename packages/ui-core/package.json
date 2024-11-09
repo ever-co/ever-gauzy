@@ -75,7 +75,7 @@
 		"@ng-select/ng-select": "^12.0.7",
 		"@ngneat/until-destroy": "^10.0.0",
 		"@ngx-translate/core": "^16.0.3",
-		"@ngx-translate/http-loader": "^8.0.0",
+		"@ngx-translate/http-loader": "^16.0.0",
 		"@sentry/angular-ivy": "^7.101.1",
 		"angular2-smart-table": "^3.4.0",
 		"bootstrap": "^4.3.1",
