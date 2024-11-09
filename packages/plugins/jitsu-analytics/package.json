@@ -50,7 +50,7 @@
 		"@gauzy/config": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
-		"@jitsu/js": "^1.8.2",
+		"@jitsu/js": "^1.9.10",
 		"@nestjs/common": "^10.3.7",
 		"chalk": "4.1.2",
 		"node-fetch": "^2.6.7",
