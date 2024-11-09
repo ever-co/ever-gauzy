@@ -33,13 +33,13 @@
 		"lib:watch": "nx build plugin-job-proposal-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^17.3.12",
-		"@angular/core": "^17.3.12"
+		"@angular/common": "^18.2.11",
+		"@angular/core": "^18.2.11"
 	},
 	"dependencies": {
-		"@angular/forms": "17.3.12",
-		"@angular/platform-browser": "17.3.12",
-		"@angular/router": "17.3.12",
+		"@angular/forms": "18.2.11",
+		"@angular/platform-browser": "18.2.11",
+		"@angular/router": "18.2.11",
 		"@gauzy/contracts": "^0.1.0",
 		"@nebular/theme": "^13.0.0",
 		"@ng-select/ng-select": "^12.0.7",
