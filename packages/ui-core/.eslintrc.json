@@ -17,7 +17,7 @@
 					"error",
 					{
 						"type": "attribute",
-						"prefix": "gauzy",
+						"prefix": "lib",
 						"style": "camelCase"
 					}
 				],
@@ -25,7 +25,7 @@
 					"error",
 					{
 						"type": "element",
-						"prefix": "gauzy",
+						"prefix": "lib",
 						"style": "kebab-case"
 					}
 				]
