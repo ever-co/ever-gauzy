@@ -15,7 +15,8 @@ import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
 	EntityWithMembersModule,
-	ProjectMutationModule
+	ProjectMutationModule,
+	AddProjectModuleDialogModule
 } from '@gauzy/ui-core/shared';
 import { ProjectsRoutingModule } from './projects-routing.module';
 import { TableComponentsModule } from '@gauzy/ui-core/shared';
@@ -43,6 +44,7 @@ import { ProjectListComponent } from './components/project-list/list.component';
 		SmartDataViewLayoutModule,
 		CardGridModule,
 		ProjectMutationModule,
+		AddProjectModuleDialogModule,
 		NgxPermissionsModule.forChild()
 	],
 	declarations: [
