@@ -90,51 +90,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					imageUrl: true,
 					membersCount: true
 				},
-				task: {
-					id: true,
-					deletedAt: true,
-					createdAt: true,
-					updatedAt: true,
-					isActive: true,
-					isArchived: true,
-					archivedAt: true,
-					tenantId: true,
-					organizationId: true,
-					number: true,
-					prefix: true,
-					title: true,
-					description: true,
-					status: true,
-					priority: true,
-					size: true,
-					issueType: true,
-					estimate: true,
-					dueDate: true,
-					public: true,
-					startDate: true,
-					resolvedAt: true,
-					version: true,
-					isDraft: true,
-					parentId: true,
-					projectId: true,
-					creatorId: true,
-					organizationSprintId: true,
-					taskStatusId: true,
-					taskSizeId: true,
-					taskPriorityId: true,
-
-					// Task status fields
-					taskStatus: {
-						name: true,
-						value: true,
-						description: true,
-						icon: true,
-						color: true,
-						order: true,
-						isCollapsed: true,
-						isDefault: true
-					}
-				},
+				task: TimeLogService.TASK_SELECT_FIELDS,
 				organizationContact: {
 					id: true,
 					name: true,
@@ -384,51 +340,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						imageUrl: true
 					}
 				},
-				task: {
-					id: true,
-					deletedAt: true,
-					createdAt: true,
-					updatedAt: true,
-					isActive: true,
-					isArchived: true,
-					archivedAt: true,
-					tenantId: true,
-					organizationId: true,
-					number: true,
-					prefix: true,
-					title: true,
-					description: true,
-					status: true,
-					priority: true,
-					size: true,
-					issueType: true,
-					estimate: true,
-					dueDate: true,
-					public: true,
-					startDate: true,
-					resolvedAt: true,
-					version: true,
-					isDraft: true,
-					parentId: true,
-					projectId: true,
-					creatorId: true,
-					organizationSprintId: true,
-					taskStatusId: true,
-					taskSizeId: true,
-					taskPriorityId: true,
-
-					// Task status fields
-					taskStatus: {
-						name: true,
-						value: true,
-						description: true,
-						icon: true,
-						color: true,
-						order: true,
-						isCollapsed: true,
-						isDefault: true
-					}
-				},
+				task: TimeLogService.TASK_SELECT_FIELDS,
 				timeSlots: {
 					id: true,
 					overall: true,
@@ -1341,4 +1253,35 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Check if the end date is on or before the current date
 		return moment(end).isSameOrBefore(moment());
 	}
+
+	private static readonly TASK_SELECT_FIELDS = {
+		id: true,
+		isActive: true,
+		isArchived: true,
+		tenantId: true,
+		organizationId: true,
+		number: true,
+		prefix: true,
+		title: true,
+		description: true,
+		status: true,
+		priority: true,
+		size: true,
+		issueType: true,
+		estimate: true,
+		dueDate: true,
+		startDate: true,
+		resolvedAt: true,
+		version: true,
+		taskStatus: {
+			name: true,
+			value: true,
+			description: true,
+			icon: true,
+			color: true,
+			order: true,
+			isCollapsed: true,
+			isDefault: true
+		}
+	} as const;
 }
