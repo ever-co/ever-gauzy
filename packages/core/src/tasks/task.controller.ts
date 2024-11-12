@@ -23,7 +23,7 @@ import { CrudController, PaginationParams } from './../core/crud';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskCreateCommand, TaskUpdateCommand } from './commands';
-import { CreateTaskDTO, GetTaskByIdDTO, TaskMaxNumberQueryDTO, UpdateTaskDTO } from './dto';
+import { CreateTaskDTO, GetTaskByIdDTO, TaskDateFilterInputDTO, TaskMaxNumberQueryDTO, UpdateTaskDTO } from './dto';
 
 @ApiTags('Tasks')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -144,6 +144,22 @@ export class TaskController extends CrudController<Task> {
 	@UseValidationPipe({ transform: true })
 	async findModuleTasks(@Query() params: PaginationParams<Task>): Promise<IPagination<ITask>> {
 		return this.taskService.findModuleTasks(params);
+	}
+
+	/**
+	 * Retrieves tasks based on the provided date filters for startDate and dueDate.
+	 *
+	 * @function getTasksByDateFilters
+	 * @param {TaskDateFilterInputDTO} params - The DTO containing the date filters for the tasks.
+	 */
+	@ApiOperation({ summary: 'Get tasks by start and due dates filters.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Tasks retrieved successfully.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No records found.' })
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
+	@Get('/filter-by-date')
+	@UseValidationPipe({ transform: true })
+	async getTasksByDateFilters(@Query() params: TaskDateFilterInputDTO): Promise<ITask[]> {
+		return this.taskService.getTasksByDateFilters(params);
 	}
 
 	/**

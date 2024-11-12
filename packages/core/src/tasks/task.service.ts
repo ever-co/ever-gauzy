@@ -22,9 +22,10 @@ import {
 	ITask,
 	ITaskUpdateInput,
 	PermissionsEnum,
-	ActionTypeEnum
+	ActionTypeEnum,
+	ITaskDateFilterInput
 } from '@gauzy/contracts';
-import { isEmpty, isNotEmpty } from '@gauzy/common';
+import { addBetween, isEmpty, isNotEmpty } from '@gauzy/common';
 import { isPostgres, isSqlite } from '@gauzy/config';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
@@ -835,6 +836,32 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		} catch (error) {
 			console.error(`Error while retrieve view tasks: ${error.message}`, error.message);
 			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/**
+	 * Retrieves tasks based on the provided date filters for startDate and dueDate.
+	 *
+	 * @function getTasksByDateFilters
+	 * @param {ITaskDateFilterInput} dateFilterDto - The DTO containing the date filters for the tasks.
+	 *
+	 * @returns {Promise<ITask[]>} A promise that resolves to an array of tasks filtered by the provided dates.
+	 *
+	 * @throws {Error} Will throw an error if there is a problem with the database query.
+	 */
+	async getTasksByDateFilters(dateFilterDto: ITaskDateFilterInput): Promise<ITask[]> {
+		try {
+			const { startDateFrom, startDateTo, dueDateFrom, dueDateTo } = dateFilterDto;
+
+			let query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+
+			// Apply the filters on startDate and dueDate
+			query = addBetween(query, 'startDate', startDateFrom, startDateTo);
+			query = addBetween(query, 'dueDate', dueDateFrom, dueDateTo);
+
+			return await query.getMany();
+		} catch (error) {
+			throw new BadRequestException(error);
 		}
 	}
 }
