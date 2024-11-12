@@ -18,7 +18,7 @@
 
 		<!-- Display only prefix and number after selection if multiple is enabled -->
 		<ng-template ng-label-tmp let-task="item">
-			{{ multiple ? task.taskNumber : task.title }}
+			{{ multiple ? '#' + task.taskNumber : task.title }}
 		</ng-template>
 	</ng-select>
 </div>
