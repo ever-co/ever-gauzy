@@ -50,6 +50,26 @@
 			</div>
 			<div class="row">
 				<div class="col-sm-12">
+					<div class="form-group">
+						<label class="label">Module</label>
+						<nb-select
+							formControlName="modules"
+							[placeholder]="'module'"
+							[selected]="selectedModules"
+							(selectedChange)="onModulesSelected($event)"
+							fullWidth
+							multiple
+						>
+							<nb-option *ngFor="let module of availableModules" [value]="module.id">
+								{{ module.name }}
+							</nb-option>
+						</nb-select>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-sm-12">
 					<nb-radio-group (valueChange)="onParticipantsChange($event)" [value]="participants">
 						<nb-radio class="nb-radio" [value]="taskParticipantEnum.EMPLOYEES"
 							>{{ 'TASKS_PAGE.TASK_MEMBERS' | translate }}
