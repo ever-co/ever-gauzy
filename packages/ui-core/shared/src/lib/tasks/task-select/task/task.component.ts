@@ -213,7 +213,6 @@ export class TaskSelectorComponent implements OnInit, OnDestroy, ControlValueAcc
 			} else {
 				const { items = [] } = await firstValueFrom(this.tasksService.getAllTasks({ ...queryOption }));
 				this.tasks = items;
-				console.log(this.tasks[0]);
 			}
 		} catch (error) {
 			// Log error if task retrieval fails
@@ -221,16 +220,5 @@ export class TaskSelectorComponent implements OnInit, OnDestroy, ControlValueAcc
 		}
 	}
 
-	/**
-	 * Extracts prefix and number from the task title.
-	 * Assumes the title is formatted to contain a prefix and number.
-	 * @param {string} title - Full task title.
-	 * @returns {string} - Extracted prefix and number.
-	 */
-	public getTaskPrefixAndNumber(title: string): string {
-		const regex = /^(\S+)\s+(\d+)/; // Example regex to capture prefix and number
-		const match = title.match(regex);
-		return match ? `${match[1]} ${match[2]}` : title;
-	}
 	ngOnDestroy(): void {}
 }
