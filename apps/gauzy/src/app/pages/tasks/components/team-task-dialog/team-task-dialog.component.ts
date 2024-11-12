@@ -251,7 +251,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 	 * Loads available modules based on the selected project ID.
 	 */
 	private async loadAvailableModules() {
-		const { organizationId, tenantId } = this;
+		const { organizationId } = this;
 		if (!organizationId) return;
 		const modules = await firstValueFrom(
 			this.organizationProjectModuleService.get<IOrganizationProjectModule>({
