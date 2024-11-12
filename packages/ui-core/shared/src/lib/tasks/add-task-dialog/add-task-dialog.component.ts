@@ -314,7 +314,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 				projectId: this.form.get('projectId')?.value
 			})
 		);
-		console.log(modules);
+
 		this.availableModules = modules?.items || [];
 	}
 }
