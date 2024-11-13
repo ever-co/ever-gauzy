@@ -2,8 +2,9 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsOptional, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ITaskDateFilterInput } from '@gauzy/contracts';
+import { TenantOrganizationBaseDTO } from '../../core/dto';
 
-export class TaskDateFilterInputDTO implements ITaskDateFilterInput {
+export class TaskDateFilterInputDTO extends TenantOrganizationBaseDTO implements ITaskDateFilterInput {
 	@ApiPropertyOptional({ type: () => Date })
 	@Type(() => Date)
 	@IsOptional()

@@ -853,7 +853,18 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		const tenantId = RequestContext.currentTenantId() || params.tenantId;
 
 		try {
-			const { startDateFrom, startDateTo, dueDateFrom, dueDateTo, organizationId, relations } = params;
+			const {
+				startDateFrom,
+				startDateTo,
+				dueDateFrom,
+				dueDateTo,
+				organizationId,
+				employeeId,
+				projectId,
+				organizationTeamId,
+				organizationSprintId,
+				relations
+			} = params;
 
 			let query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
@@ -867,6 +878,40 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Apply the filters on startDate and dueDate
 			query = addBetween<Task>(query, 'startDate', startDateFrom, startDateTo, p);
 			query = addBetween<Task>(query, 'dueDate', dueDateFrom, dueDateTo, p);
+
+			// Add Optional additonal filters by
+			query.andWhere(
+				new Brackets((web: WhereExpressionBuilder) => {
+					if (isNotEmpty(employeeId)) {
+						query.leftJoin(`${query.alias}.members`, 'members');
+						web.andWhere((qb: SelectQueryBuilder<Task>) => {
+							const subQuery = qb.subQuery();
+							subQuery.select(p('"task_employee"."taskId"')).from(p('task_employee'), p('task_employee'));
+							subQuery.andWhere(p('"task_employee"."employeeId" = :employeeId'), { employeeId });
+							return p(`"task_members"."taskId" IN (${subQuery.distinct(true).getQuery()})`);
+						});
+					}
+					if (isNotEmpty(organizationTeamId)) {
+						query.leftJoin(`${query.alias}.teams`, 'teams');
+						web.andWhere((qb: SelectQueryBuilder<Task>) => {
+							const subQuery = qb.subQuery();
+							subQuery.select(p('"task_team"."taskId"')).from(p('task_team'), p('task_team'));
+							subQuery.andWhere(p('"task_team"."organizationTeamId" = :organizationTeamId'), {
+								organizationTeamId
+							});
+							return p(`"task_teams"."taskId" IN (${subQuery.distinct(true).getQuery()})`);
+						});
+					}
+					if (isNotEmpty(projectId)) {
+						web.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
+					}
+					if (isNotEmpty(organizationSprintId)) {
+						web.andWhere(p(`"${query.alias}"."organizationSprintId" = :organizationSprintId`), {
+							organizationSprintId
+						});
+					}
+				})
+			);
 
 			// Check if relations were provided and include them
 			query.setFindOptions({

@@ -1,5 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel, ID } from './base-entity.model';
-import { IEmployee } from './employee.model';
+import { IEmployee, IEmployeeEntityInput } from './employee.model';
 import { IInvoiceItem } from './invoice-item.model';
 import { IRelationalOrganizationProject } from './organization-projects.model';
 import {
@@ -7,7 +7,7 @@ import {
 	IRelationalOrganizationSprint,
 	IOrganizationSprintTaskHistory
 } from './organization-sprint.model';
-import { IOrganizationTeam } from './organization-team.model';
+import { IOrganizationTeam, IRelationalOrganizationTeam } from './organization-team.model';
 import { ITag } from './tag.model';
 import { IUser } from './user.model';
 import { ITaskStatus, TaskStatusEnum } from './task-status.model';
@@ -107,6 +107,10 @@ export interface IGetTasksByViewFilters extends IBasePerTenantAndOrganizationEnt
 
 export interface ITaskDateFilterInput
 	extends IBasePerTenantAndOrganizationEntityModel,
+		IEmployeeEntityInput,
+		IRelationalOrganizationProject,
+		IRelationalOrganizationTeam,
+		IRelationalOrganizationSprint,
 		Pick<IGetTasksByViewFilters, 'relations'> {
 	startDateFrom?: Date;
 	startDateTo?: Date;
