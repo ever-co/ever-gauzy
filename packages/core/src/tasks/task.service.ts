@@ -879,7 +879,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			query = addBetween<Task>(query, 'startDate', startDateFrom, startDateTo, p);
 			query = addBetween<Task>(query, 'dueDate', dueDateFrom, dueDateTo, p);
 
-			// Add Optional additonal filters by
+			// Add Optional additional filters by
 			query.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
 					if (isNotEmpty(employeeId)) {
