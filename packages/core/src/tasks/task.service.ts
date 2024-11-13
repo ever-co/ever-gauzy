@@ -845,15 +845,24 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @function getTasksByDateFilters
 	 * @param {ITaskDateFilterInput} params - The query params containing the date filters for the tasks.
 	 *
-	 * @returns {Promise<ITask[]>} A promise that resolves to an array of tasks filtered by the provided dates.
+	 * @returns {Promise<IPagination<ITask>>} A promise that resolves to an paginated tasks filtered by the provided dates.
 	 *
 	 * @throws {Error} Will throw an error if there is a problem with the database query.
 	 */
-	async getTasksByDateFilters(params: ITaskDateFilterInput): Promise<ITask[]> {
+	async getTasksByDateFilters(params: ITaskDateFilterInput): Promise<IPagination<ITask>> {
+		const tenantId = RequestContext.currentTenantId() || params.tenantId;
+
 		try {
-			const { startDateFrom, startDateTo, dueDateFrom, dueDateTo, relations } = params;
+			const { startDateFrom, startDateTo, dueDateFrom, dueDateTo, organizationId, relations } = params;
 
 			let query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+				})
+			);
 
 			// Apply the filters on startDate and dueDate
 			query = addBetween<Task>(query, 'startDate', startDateFrom, startDateTo, p);
@@ -864,7 +873,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				...(relations ? { relations } : {})
 			});
 
-			return await query.getMany();
+			const [items, total] = await query.getManyAndCount();
+
+			return { items, total };
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

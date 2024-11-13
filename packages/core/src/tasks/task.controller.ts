@@ -158,7 +158,7 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('/filter-by-date')
 	@UseValidationPipe({ transform: true })
-	async getTasksByDateFilters(@Query() params: TaskDateFilterInputDTO): Promise<ITask[]> {
+	async getTasksByDateFilters(@Query() params: TaskDateFilterInputDTO): Promise<IPagination<ITask>> {
 		return this.taskService.getTasksByDateFilters(params);
 	}
 

@@ -24,9 +24,13 @@ export function addBetween<T>(
 	to?: Date,
 	p?: (queryStr: string) => string
 ): SelectQueryBuilder<T> {
+	if (!isValidField(field)) {
+		throw new BadRequestException(`Invalid field name: ${field}`);
+	}
+
 	if (from && to) {
 		if (from > to) {
-			throw new BadRequestException('From date must not be after to date');
+			throw new BadRequestException('"From" date must not be after "to" date');
 		}
 
 		// Convert dates to UTC for consistent comparison
