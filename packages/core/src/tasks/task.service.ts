@@ -856,8 +856,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			let query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
 			// Apply the filters on startDate and dueDate
-			query = addBetween(query, 'startDate', startDateFrom, startDateTo, p);
-			query = addBetween(query, 'dueDate', dueDateFrom, dueDateTo, p);
+			query = addBetween<Task>(query, 'startDate', startDateFrom, startDateTo, p);
+			query = addBetween<Task>(query, 'dueDate', dueDateFrom, dueDateTo, p);
 
 			// Check if relations were provided and include them
 			query.setFindOptions({
