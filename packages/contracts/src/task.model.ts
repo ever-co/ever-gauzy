@@ -105,7 +105,9 @@ export interface IGetTasksByViewFilters extends IBasePerTenantAndOrganizationEnt
 	relations?: string[];
 }
 
-export interface ITaskDateFilterInput {
+export interface ITaskDateFilterInput
+	extends IBasePerTenantAndOrganizationEntityModel,
+		Pick<IGetTasksByViewFilters, 'relations'> {
 	startDateFrom?: Date;
 	startDateTo?: Date;
 	dueDateFrom?: Date;

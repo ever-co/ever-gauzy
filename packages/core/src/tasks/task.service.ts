@@ -843,21 +843,26 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * Retrieves tasks based on the provided date filters for startDate and dueDate.
 	 *
 	 * @function getTasksByDateFilters
-	 * @param {ITaskDateFilterInput} dateFilterDto - The DTO containing the date filters for the tasks.
+	 * @param {ITaskDateFilterInput} params - The query params containing the date filters for the tasks.
 	 *
 	 * @returns {Promise<ITask[]>} A promise that resolves to an array of tasks filtered by the provided dates.
 	 *
 	 * @throws {Error} Will throw an error if there is a problem with the database query.
 	 */
-	async getTasksByDateFilters(dateFilterDto: ITaskDateFilterInput): Promise<ITask[]> {
+	async getTasksByDateFilters(params: ITaskDateFilterInput): Promise<ITask[]> {
 		try {
-			const { startDateFrom, startDateTo, dueDateFrom, dueDateTo } = dateFilterDto;
+			const { startDateFrom, startDateTo, dueDateFrom, dueDateTo, relations } = params;
 
 			let query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
 			// Apply the filters on startDate and dueDate
-			query = addBetween(query, 'startDate', startDateFrom, startDateTo);
-			query = addBetween(query, 'dueDate', dueDateFrom, dueDateTo);
+			query = addBetween(query, 'startDate', startDateFrom, startDateTo, p);
+			query = addBetween(query, 'dueDate', dueDateFrom, dueDateTo, p);
+
+			// Check if relations were provided and include them
+			query.setFindOptions({
+				...(relations ? { relations } : {})
+			});
 
 			return await query.getMany();
 		} catch (error) {
