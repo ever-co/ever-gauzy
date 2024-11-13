@@ -858,6 +858,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				startDateTo,
 				dueDateFrom,
 				dueDateTo,
+				creatorId,
 				organizationId,
 				employeeId,
 				projectId,
@@ -882,6 +883,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Add Optional additional filters by
 			query.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
+					if (isNotEmpty(creatorId)) {
+						web.andWhere(p(`"${query.alias}"."creatorId" = :creatorId`), { creatorId });
+					}
 					if (isNotEmpty(employeeId)) {
 						query.leftJoin(`${query.alias}.members`, 'members');
 						web.andWhere((qb: SelectQueryBuilder<Task>) => {
