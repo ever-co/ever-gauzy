@@ -107,14 +107,12 @@ export interface IGetTasksByViewFilters extends IBasePerTenantAndOrganizationEnt
 
 export interface ITaskDateFilterInput
 	extends IBasePerTenantAndOrganizationEntityModel,
+		Pick<ITask, 'projectId' | 'organizationSprintId' | 'creatorId'>,
 		IEmployeeEntityInput,
-		IRelationalOrganizationProject,
 		IRelationalOrganizationTeam,
-		IRelationalOrganizationSprint,
 		Pick<IGetTasksByViewFilters, 'relations'> {
 	startDateFrom?: Date;
 	startDateTo?: Date;
 	dueDateFrom?: Date;
 	dueDateTo?: Date;
-	creatorId?: Date;
 }
