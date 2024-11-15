@@ -224,13 +224,11 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 				);
 			}
 
-			this.form
-				.get('modules')
-				.setValue(
-					(this.selectedModules || [])
-						.map((id) => this.availableModules.find((e) => e.id === id))
-						.filter((e) => !!e)
-				);
+			const selectedModules = this.selectedModules || [];
+			const mappedModules = selectedModules
+				.map((id) => this.availableModules?.find((e) => e?.id === id))
+				.filter(Boolean);
+			this.form.get('modules')?.setValue(mappedModules);
 
 			this.form.get('status').setValue(this.form.get('taskStatus').value?.name);
 			this.form.get('priority').setValue(this.form.get('taskPriority').value?.name);
