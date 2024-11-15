@@ -1,142 +1,142 @@
 {
-  "namedInputs": {
-    "default": [
-      "{projectRoot}/**/*",
-      "sharedGlobals",
-      "{workspaceRoot}/angular.json",
-      "{workspaceRoot}/nx.json",
-      "{workspaceRoot}/tsconfig.base.json"
-    ],
-    "sharedGlobals": [
-      "{workspaceRoot}/package.json",
-      "{workspaceRoot}/tsconfig.json",
-      "{workspaceRoot}/.eslintrc.json"
-    ],
-    "production": [
-      "default"
-    ]
-  },
-  "cli": {
-    "warnings": {
-      "typescriptMismatch": false,
-      "versionMismatch": false
+    "namedInputs": {
+        "default": [
+            "{projectRoot}/**/*",
+            "sharedGlobals",
+            "{workspaceRoot}/angular.json",
+            "{workspaceRoot}/nx.json",
+            "{workspaceRoot}/tsconfig.base.json"
+        ],
+        "sharedGlobals": [
+            "{workspaceRoot}/package.json",
+            "{workspaceRoot}/tsconfig.json",
+            "{workspaceRoot}/.eslintrc.json"
+        ],
+        "production": [
+            "default"
+        ]
     },
-    "packageManager": "yarn",
-    "analytics": false,
-    "defaultCollection": "@nstudio/xplat"
-  },
-  "generators": {
-    "@nx/angular": {
-      "application": {
-        "linter": "eslint",
-        "style": "scss",
-        "unitTestRunner": "jest",
-        "e2eTestRunner": "cypress",
-        "strict": true
-      },
-      "library": {
-        "linter": "eslint",
-        "style": "scss",
-        "unitTestRunner": "jest",
-        "buildable": true,
-        "publishable": false,
-        "strict": true
-      },
-      "component": {
-        "style": "scss",
-        "changeDetection": "OnPush",
-        "prefix": "ngx",
-        "inlineStyle": false,
-        "inlineTemplate": false,
-        "skipTests": false
-      },
-      "directive": {
-        "prefix": "ngx",
-        "skipTests": false
-      },
-      "service": {
-        "skipTests": false
-      },
-      "pipe": {
-        "skipTests": false
-      },
-      "module": {
-        "skipTests": false
-      },
-      "storybook-configuration": {
-        "linter": "eslint",
-        "configureCypress": true,
-        "generateCypressSpecs": true
-      }
+    "cli": {
+        "warnings": {
+            "typescriptMismatch": false,
+            "versionMismatch": false
+        },
+        "packageManager": "yarn",
+        "analytics": false,
+        "defaultCollection": "@nstudio/xplat"
     },
-    "@nx/angular:application": {
-      "style": "css",
-      "linter": "eslint",
-      "unitTestRunner": "jest",
-      "e2eTestRunner": "none"
-    },
-    "@nx/angular:library": {
-      "linter": "eslint",
-      "unitTestRunner": "jest"
-    },
-    "@nx/angular:component": {
-      "style": "css"
-    }
-  },
-  "defaultProject": "gauzy",
-  "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "nxCloudAccessToken": "NWJlMDFmMTMtYzUyZS00ZGE4LTk0NzctNWIzZTkxMzNhMTFlfHJlYWQtd3JpdGU=",
-  "parallel": 1,
-  "targetDefaults": {
-    "build": {
-      "cache": true
-    },
-    "lint": {
-      "cache": true
-    },
-    "test": {
-      "cache": true
-    },
-    "e2e": {
-      "cache": true
-    },
-    "@nx/eslint:lint": {
-      "cache": true,
-      "inputs": [
-        "default",
-        "{workspaceRoot}/.eslintrc.json",
-        "{workspaceRoot}/tools/eslint-rules/**/*"
-      ]
-    },
-    "@nx/jest:jest": {
-      "cache": true,
-      "inputs": [
-        "default",
-        "^production",
-        "{workspaceRoot}/jest.preset.js"
-      ],
-      "options": {
-        "passWithNoTests": true
-      },
-      "configurations": {
-        "ci": {
-          "ci": true,
-          "codeCoverage": true
+    "generators": {
+        "@nx/angular": {
+            "application": {
+                "linter": "eslint",
+                "style": "scss",
+                "unitTestRunner": "jest",
+                "e2eTestRunner": "cypress",
+                "strict": true
+            },
+            "library": {
+                "linter": "eslint",
+                "style": "scss",
+                "unitTestRunner": "jest",
+                "buildable": true,
+                "publishable": false,
+                "strict": true
+            },
+            "component": {
+                "style": "scss",
+                "changeDetection": "OnPush",
+                "prefix": "ngx",
+                "inlineStyle": false,
+                "inlineTemplate": false,
+                "skipTests": false
+            },
+            "directive": {
+                "prefix": "ngx",
+                "skipTests": false
+            },
+            "service": {
+                "skipTests": false
+            },
+            "pipe": {
+                "skipTests": false
+            },
+            "module": {
+                "skipTests": false
+            },
+            "storybook-configuration": {
+                "linter": "eslint",
+                "configureCypress": true,
+                "generateCypressSpecs": true
+            }
+        },
+        "@nx/angular:application": {
+            "style": "css",
+            "linter": "eslint",
+            "unitTestRunner": "jest",
+            "e2eTestRunner": "none"
+        },
+        "@nx/angular:library": {
+            "linter": "eslint",
+            "unitTestRunner": "jest"
+        },
+        "@nx/angular:component": {
+            "style": "css"
         }
-      }
     },
-    "@nx/angular:package": {
-      "cache": true,
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "production",
-        "^production"
-      ]
-    }
-  },
-  "useInferencePlugins": false,
-  "defaultBase": "master",
-  "useLegacyCache": true
+    "defaultProject": "gauzy",
+    "$schema": "./node_modules/nx/schemas/nx-schema.json",
+    "nxCloudAccessToken": "NWJlMDFmMTMtYzUyZS00ZGE4LTk0NzctNWIzZTkxMzNhMTFlfHJlYWQtd3JpdGU=",
+    "parallel": 1,
+    "targetDefaults": {
+        "build": {
+            "cache": true
+        },
+        "lint": {
+            "cache": true
+        },
+        "test": {
+            "cache": true
+        },
+        "e2e": {
+            "cache": true
+        },
+        "@nx/eslint:lint": {
+            "cache": true,
+            "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*"
+            ]
+        },
+        "@nx/jest:jest": {
+            "cache": true,
+            "inputs": [
+                "default",
+                "^production",
+                "{workspaceRoot}/jest.preset.js"
+            ],
+            "options": {
+                "passWithNoTests": true
+            },
+            "configurations": {
+                "ci": {
+                    "ci": true,
+                    "codeCoverage": true
+                }
+            }
+        },
+        "@nx/angular:package": {
+            "cache": true,
+            "dependsOn": [
+                "^build"
+            ],
+            "inputs": [
+                "production",
+                "^production"
+            ]
+        }
+    },
+    "useInferencePlugins": false,
+    "defaultBase": "master",
+    "useLegacyCache": true
 }
