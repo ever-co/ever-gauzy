@@ -382,6 +382,7 @@
 		"@nx/js": "20.1.1",
 		"@nx/nest": "20.1.1",
 		"@nx/node": "20.1.1",
+		"@nx/webpack": "20.1.1",
 		"@nx/workspace": "20.1.1",
 		"@schematics/angular": "18.2.9",
 		"@semantic-release/changelog": "^6.0.3",

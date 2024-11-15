@@ -32,8 +32,8 @@
 		"lib:watch": "nx build ui-auth --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^18.2.11",
-		"@angular/core": "^18.2.11"
+		"@angular/common": "^18.2.0",
+		"@angular/core": "^18.2.0"
 	},
 	"dependencies": {
 		"@angular/forms": "18.2.11",

@@ -44,8 +44,8 @@
 		"lib:watch": "nx build ui-config --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^18.2.11",
-		"@angular/core": "^18.2.11"
+		"@angular/common": "^18.2.0",
+		"@angular/core": "^18.2.0"
 	},
 	"dependencies": {
 		"tslib": "^2.6.2",

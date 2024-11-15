@@ -31,8 +31,8 @@
 		"lib:watch": "nx build plugin-legal-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^18.2.11",
-		"@angular/core": "^18.2.11"
+		"@angular/common": "^18.2.0",
+		"@angular/core": "^18.2.0"
 	},
 	"dependencies": {
 		"@angular/router": "18.2.11",
