@@ -521,7 +521,10 @@
 		"wdth",
 		"concate",
 		"typeahead",
-		"maxlength"
+		"maxlength",
+		"xplatframework",
+		"localforage",
+		"longform"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

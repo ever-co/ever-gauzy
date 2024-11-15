@@ -4,8 +4,8 @@ The `@gauzy/ui-auth` library provides authentication-related components, service
 
 ## Features
 
--   **Login & Signup Components:** Pre-built components for user login and signup flows.
--   **Auth Guards & Interceptors:** Protect routes and intercept HTTP requests to ensure secure access.
+- **Login & Sign Up Components:** Pre-built components for user login and sign up flows.
+- **Auth Guards & Interceptors:** Protect routes and intercept HTTP requests to ensure secure access.
 
 ## Getting Started
 
