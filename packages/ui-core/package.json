@@ -28,9 +28,9 @@
 		"access": "restricted"
 	},
 	"scripts": {
-		"lib:build": "nx build ui-core --configuration=development",
-		"lib:build:prod": "nx build ui-core --configuration=production",
-		"lib:watch": "nx build ui-core --watch --configuration=development"
+		"lib:build": "nx run ui-core:build --configuration=development",
+		"lib:build:prod": "nx run ui-core:build --configuration=production",
+		"lib:watch": "nx run ui-core:build --configuration=development --watch"
 	},
 	"peerDependencies": {
 		"@angular/common": "^18.2.0",
