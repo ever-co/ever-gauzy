@@ -14,10 +14,10 @@
 			},
 			"configurations": {
 				"production": {
-					"tsConfig": "tsconfig.lib.prod.json"
+					"tsConfig": "packages/ui-config/tsconfig.lib.prod.json"
 				},
 				"development": {
-					"tsConfig": "tsconfig.lib.json"
+					"tsConfig": "packages/ui-config/tsconfig.lib.json"
 				}
 			},
 			"defaultConfiguration": "production"
