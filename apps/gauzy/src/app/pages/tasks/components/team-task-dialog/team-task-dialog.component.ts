@@ -24,7 +24,7 @@ import {
 	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
-import { untilDestroyed } from '@ngneat/until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 const initialTaskValue = {
 	title: '',
@@ -41,6 +41,7 @@ const initialTaskValue = {
 	taskPriority: null
 };
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-team-task-dialog',
 	templateUrl: './team-task-dialog.component.html',
@@ -253,11 +254,22 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 	private async loadAvailableModules() {
 		const { organizationId } = this;
 		if (!organizationId) return;
-		const modules = await firstValueFrom(
-			this.organizationProjectModuleService.get<IOrganizationProjectModule>({
-				projectId: this.form.get('projectId')?.value
-			})
-		);
-		this.availableModules = modules?.items || [];
+		const projectId = this.form.get('projectId')?.value;
+		if (!projectId) {
+			this.availableModules = [];
+			return;
+		}
+		try {
+			const modulesResponse = await firstValueFrom(
+				this.organizationProjectModuleService.get<IOrganizationProjectModule>({
+					projectId
+				})
+			);
+			this.availableModules = modulesResponse?.items || [];
+		} catch (error) {
+			this.availableModules = [];
+			this.errorHandler.handleError(error);
+			this.toastrService.danger('Error loading modules', 'Error');
+		}
 	}
 }

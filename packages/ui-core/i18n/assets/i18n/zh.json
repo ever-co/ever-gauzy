@@ -2606,7 +2606,9 @@
 		"SELECT": "选择",
 		"SPRINTS_SETTINGS": "冲刺设置",
 		"ARE_YOU_SURE": "你确定要删除冲刺吗？",
-		"SETTINGS": "设置"
+		"SETTINGS": "设置",
+		"MODULE": "模块",
+		"SELECT_MODULE": "模块"
 	},
 	"JOBS": {
 		"EMPLOYEE": "员工",

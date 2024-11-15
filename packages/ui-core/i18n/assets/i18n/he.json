@@ -2627,7 +2627,9 @@
 		"SELECT": "Select",
 		"SPRINTS_SETTINGS": "Sprints Settings",
 		"ARE_YOU_SURE": "Are you sure you want delete sprint",
-		"SETTINGS": "הגדרות"
+		"SETTINGS": "הגדרות",
+		"MODULE": "מודול",
+		"SELECT_MODULE": "מודולים"
 	},
 	"JOBS": {
 		"EMPLOYEE": "עובד",

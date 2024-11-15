@@ -2602,7 +2602,9 @@
 		"SELECT": "Wählen Sie aus",
 		"SPRINTS_SETTINGS": "Einstellungen für Sprints",
 		"ARE_YOU_SURE": "Bist du sicher, dass du den Sprint löschen möchtest?",
-		"SETTINGS": "Einstellungen"
+		"SETTINGS": "Einstellungen",
+		"MODULE": "Modul",
+		"SELECT_MODULE": "Module"
 	},
 	"JOBS": {
 		"EMPLOYEE": "Mitarbeiter",

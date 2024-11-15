@@ -308,7 +308,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	 * Loads available modules based on the selected project ID.
 	 */
 	private async loadAvailableModules() {
-		if (!this.organization) return;
+		if (!this.organization || !this.form.get('projectId')?.value) return;
 		const modules = await firstValueFrom(
 			this.organizationProjectModuleService.get<IOrganizationProjectModule>({
 				projectId: this.form.get('projectId')?.value
