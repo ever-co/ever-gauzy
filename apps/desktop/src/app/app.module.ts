@@ -1,4 +1,4 @@
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -83,7 +83,6 @@ if (environment.SENTRY_DSN) {
 		NgxDesktopThemeModule,
 		SetupModule,
 		TimeTrackerModule,
-		HttpClientModule,
 		ScreenCaptureModule,
 		SettingsModule,
 		UpdaterModule,
@@ -171,10 +170,9 @@ if (environment.SENTRY_DSN) {
 				...gauzyEnvironment,
 				...environment
 			}
-		}
+		},
+		provideHttpClient(withInterceptorsFromDi())
 	],
 	bootstrap: [AppComponent]
 })
-export class AppModule {
-	constructor() { }
-}
+export class AppModule {}

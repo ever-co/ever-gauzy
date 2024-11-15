@@ -1,12 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-	HttpRequest,
-	HttpHandler,
-	HttpEvent,
-	HttpInterceptor,
-	HttpErrorResponse,
-	HttpStatusCode
-} from '@angular/common/http';
+import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor, HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { Observable, catchError, retry, throwError } from 'rxjs';
 import { ErrorHandlerService } from '../services/error-handler.service';
 import { Store } from '../services';

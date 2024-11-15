@@ -1,4 +1,4 @@
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -45,60 +45,56 @@ if (environment.SENTRY_DSN) {
 
 @NgModule({
 	declarations: [AppComponent],
-	imports: [
-		NbLayoutModule,
-		NbDialogModule.forRoot(),
-		NbToastrModule.forRoot(),
-		NbCardModule,
-		NbButtonModule,
-		BrowserModule,
-		BrowserAnimationsModule,
-		RouterModule,
-		AppRoutingModule,
-		NbThemeModule,
-		NgxDesktopThemeModule,
-		NbMenuModule.forRoot(),
-		NbSidebarModule.forRoot(),
-		SetupModule,
-		HttpClientModule,
-		SettingsModule,
-		UpdaterModule,
-		ServerDashboardModule,
-		AboutModule,
-		LanguageModule.forRoot()
+    bootstrap: [AppComponent],
+	imports: [NbLayoutModule,
+        NbDialogModule.forRoot(),
+        NbToastrModule.forRoot(),
+        NbCardModule,
+        NbButtonModule,
+        BrowserModule,
+        BrowserAnimationsModule,
+        RouterModule,
+        AppRoutingModule,
+        NbThemeModule,
+        NgxDesktopThemeModule,
+        NbMenuModule.forRoot(),
+        NbSidebarModule.forRoot(),
+        SetupModule,
+        SettingsModule,
+        UpdaterModule,
+        ServerDashboardModule,
+        AboutModule,
+        LanguageModule.forRoot()
 	],
 	providers: [
-		AppService,
-		HttpClientModule,
-		NbDialogService,
-		ElectronService,
-		LoggerService,
-		{
-			provide: ErrorHandler,
-			useValue: Sentry.createErrorHandler({
-				showDialog: true
-			})
-		},
-		{
-			provide: Sentry.TraceService,
-			deps: [Router]
-		},
-		{
-			provide: APP_INITIALIZER,
-			useFactory: () => () => { },
-			deps: [Sentry.TraceService],
-			multi: true
-		},
-		{
-			provide: GAUZY_ENV,
-			useValue: {
-				...gauzyEnvironment,
-				...environment
-			}
-		}
-	],
-	bootstrap: [AppComponent]
+        AppService,
+        NbDialogService,
+        ElectronService,
+        LoggerService,
+        {
+            provide: ErrorHandler,
+            useValue: Sentry.createErrorHandler({
+                showDialog: true
+            })
+        },
+        {
+            provide: Sentry.TraceService,
+            deps: [Router]
+        },
+        {
+            provide: APP_INITIALIZER,
+            useFactory: () => () => { },
+            deps: [Sentry.TraceService],
+            multi: true
+        },
+        {
+            provide: GAUZY_ENV,
+            useValue: {
+                ...gauzyEnvironment,
+                ...environment
+            }
+        },
+        provideHttpClient(withInterceptorsFromDi())
+    ]
 })
-export class AppModule {
-	constructor() { }
-}
+export class AppModule {}

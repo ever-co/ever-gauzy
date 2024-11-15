@@ -180,7 +180,7 @@
 		"@angular-devkit/build-ng-packagr": "^0.1002.0",
 		"@angular-devkit/core": "^17.1.4",
 		"@angular-devkit/schematics": "17.1.4",
-		"@angular/cli": "~17.3.0",
+		"@angular/cli": "~18.2.0",
 		"@angular/compiler-cli": "18.2.11",
 		"@types/async": "^3.2.5",
 		"@types/chart.js": "^2.9.37",
