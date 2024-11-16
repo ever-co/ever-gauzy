@@ -3,11 +3,12 @@
 	"compilerOptions": {
 		"outDir": "../../dist/out-tsc",
 		"module": "commonjs",
+		"types": ["node"],
+		"emitDecoratorMetadata": true,
 		"target": "ES2022",
 		"removeComments": true,
-		"types": ["node"],
 		"resolveJsonModule": true
 	},
-	"exclude": ["**/*.spec.ts", "**/*.test.ts"],
-	"include": ["**/*.ts"]
+	"exclude": ["jest.config.ts", "**/*.spec.ts", "**/*.test.ts"],
+	"include": ["**/*.ts", "../../packages/core/src/bootstrap/tracer.ts"]
 }

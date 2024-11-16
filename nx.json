@@ -22,7 +22,8 @@
             "versionMismatch": false
         },
         "packageManager": "yarn",
-        "analytics": false
+        "analytics": false,
+        "defaultCollection": "@nstudio/xplat"
     },
     "generators": {
         "@nx/angular": {
@@ -129,6 +130,16 @@
             }
         },
         "@nx/angular:package": {
+            "cache": true,
+            "dependsOn": [
+                "^build"
+            ],
+            "inputs": [
+                "production",
+                "^production"
+            ]
+        },
+        "@nx/webpack:webpack": {
             "cache": true,
             "dependsOn": [
                 "^build"

@@ -1,23 +1,37 @@
 {
 	"name": "api",
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
-	"projectType": "application",
 	"sourceRoot": "apps/api/src",
-	"prefix": "api",
+	"projectType": "application",
+	"tags": [],
+	"generators": {
+		"@nx/nest:library": {
+			"directory": "api",
+			"tags": "type:library,scope:api",
+			"unitTestRunner": "jest",
+			"linter": "eslint"
+		}
+	},
 	"targets": {
 		"build": {
-			"executor": "@nx/node:webpack",
+			"executor": "@nx/webpack:webpack",
 			"outputs": ["{options.outputPath}"],
+			"defaultConfiguration": "production",
 			"options": {
+				"target": "node",
+				"compiler": "tsc",
 				"outputPath": "dist/apps/api",
 				"main": "apps/api/src/main.ts",
 				"showCircularDependencies": false,
 				"sourceMap": true,
 				"maxWorkers": 4,
 				"memoryLimit": 7000,
-				"tsConfig": "apps/api/tsconfig.app.json"
+				"tsConfig": "apps/api/tsconfig.app.json",
+				"assets": ["apps/api/src/assets"],
+				"webpackConfig": "apps/api/webpack.config.js"
 			},
 			"configurations": {
+				"development": {},
 				"production": {
 					"optimization": true,
 					"extractLicenses": true,
@@ -33,13 +47,17 @@
 			}
 		},
 		"serve": {
-			"executor": "@nx/node:node",
+			"executor": "@nx/js:node",
+			"defaultConfiguration": "development",
 			"options": {
 				"buildTarget": "api:build",
 				"inspect": true,
 				"port": 9229
 			},
 			"configurations": {
+				"development": {
+					"buildTarget": "api:build:development"
+				},
 				"production": {
 					"buildTarget": "api:build:production"
 				}
@@ -47,8 +65,9 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
-				"jestConfig": "apps/api/jest.config.js",
+				"jestConfig": "apps/api/jest.config.ts",
 				"tsConfig": "apps/api/tsconfig.spec.json"
 			}
 		}
