@@ -22,8 +22,7 @@
             "versionMismatch": false
         },
         "packageManager": "yarn",
-        "analytics": false,
-        "defaultCollection": "@nstudio/xplat"
+        "analytics": false
     },
     "generators": {
         "@nx/angular": {
@@ -89,7 +88,11 @@
     "parallel": 1,
     "targetDefaults": {
         "build": {
-            "cache": true
+            "cache": true,
+            "inputs": [
+                "production",
+                "^production"
+            ]
         },
         "lint": {
             "cache": true

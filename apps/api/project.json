@@ -7,6 +7,7 @@
 	"targets": {
 		"build": {
 			"executor": "@nx/node:webpack",
+			"outputs": ["{options.outputPath}"],
 			"options": {
 				"outputPath": "dist/apps/api",
 				"main": "apps/api/src/main.ts",
@@ -41,87 +42,6 @@
 			"configurations": {
 				"production": {
 					"buildTarget": "api:build:production"
-				}
-			}
-		},
-		"desktop": {
-			"executor": "@nx/node:webpack",
-			"options": {
-				"outputPath": "dist/apps/desktop/api",
-				"main": "apps/api/src/main.ts",
-				"showCircularDependencies": false,
-				"sourceMap": true,
-				"maxWorkers": 4,
-				"memoryLimit": 7000,
-				"tsConfig": "apps/api/tsconfig.app.json",
-				"assets": ["apps/api/src/assets"]
-			},
-			"configurations": {
-				"production": {
-					"optimization": true,
-					"extractLicenses": false,
-					"inspect": false,
-					"sourceMap": true,
-					"fileReplacements": [
-						{
-							"replace": "packages/config/src/environments/environment.ts",
-							"with": "packages/config/src/environments/environment.prod.ts"
-						}
-					]
-				}
-			}
-		},
-		"server": {
-			"executor": "@nx/node:webpack",
-			"options": {
-				"outputPath": "dist/apps/gauzy-api-server/api",
-				"main": "apps/api/src/main.ts",
-				"showCircularDependencies": false,
-				"sourceMap": true,
-				"maxWorkers": 4,
-				"memoryLimit": 7000,
-				"tsConfig": "apps/api/tsconfig.app.json",
-				"assets": ["apps/api/src/assets"]
-			},
-			"configurations": {
-				"production": {
-					"optimization": true,
-					"extractLicenses": false,
-					"inspect": false,
-					"sourceMap": true,
-					"fileReplacements": [
-						{
-							"replace": "packages/config/src/environments/environment.ts",
-							"with": "packages/config/src/environments/environment.prod.ts"
-						}
-					]
-				}
-			}
-		},
-		"gauzy-server": {
-			"executor": "@nx/node:webpack",
-			"options": {
-				"outputPath": "dist/apps/gauzy-server/api",
-				"main": "apps/api/src/main.ts",
-				"showCircularDependencies": false,
-				"sourceMap": true,
-				"maxWorkers": 4,
-				"memoryLimit": 7000,
-				"tsConfig": "apps/api/tsconfig.app.json",
-				"assets": ["apps/api/src/assets"]
-			},
-			"configurations": {
-				"production": {
-					"optimization": true,
-					"extractLicenses": false,
-					"inspect": false,
-					"sourceMap": true,
-					"fileReplacements": [
-						{
-							"replace": "packages/config/src/environments/environment.ts",
-							"with": "packages/config/src/environments/environment.prod.ts"
-						}
-					]
 				}
 			}
 		},

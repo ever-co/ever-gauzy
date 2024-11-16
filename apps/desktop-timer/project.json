@@ -4,6 +4,11 @@
 	"projectType": "application",
 	"sourceRoot": "apps/desktop-timer/src",
 	"prefix": "gauzy",
+	"generators": {
+		"@nx/angular:component": {
+			"style": "scss"
+		}
+	},
 	"targets": {
 		"build": {
 			"executor": "@nx/angular:webpack-browser",
@@ -107,16 +112,11 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": ["coverage/apps/desktop-timer"],
+			"outputs": ["{workspaceRoot}/coverage/apps/desktop-timer"],
 			"options": {
 				"jestConfig": "apps/desktop-timer/jest.config.js",
 				"passWithNoTests": true
 			}
-		}
-	},
-	"generators": {
-		"@nx/angular:component": {
-			"style": "scss"
 		}
 	}
 }
