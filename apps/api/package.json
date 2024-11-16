@@ -42,7 +42,6 @@
 	"dependencies": {
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin-changelog": "^0.1.0",
-		"@gauzy/plugin-integration-ai": "^0.1.0",
 		"@gauzy/plugin-integration-github": "^0.1.0",
 		"@gauzy/plugin-integration-hubstaff": "^0.1.0",
 		"@gauzy/plugin-integration-jira": "^0.1.0",

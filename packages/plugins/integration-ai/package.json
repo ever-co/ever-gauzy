@@ -29,22 +29,15 @@
 		"automation"
 	],
 	"private": true,
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"files": [
-		"dist"
-	],
-	"directories": {
-		"lib": "dist",
-		"test": "__test__"
-	},
+	"main": "./src/index.js",
+	"typings": "./src/index.d.ts",
 	"publishConfig": {
 		"access": "restricted"
 	},
 	"scripts": {
-		"test:e2e": "jest --config ./jest.config.ts",
-		"build": "rimraf dist && tsc -p tsconfig.lib.json",
-		"build:prod": "rimraf dist && tsc -p tsconfig.lib.prod.json"
+		"lib:build": "nx build plugin-integration-ai --configuration=development",
+		"lib:build:prod": "nx build plugin-integration-ai --configuration=production",
+		"lib:watch": "nx build plugin-integration-ai --watch --configuration=development"
 	},
 	"dependencies": {
 		"@apollo/client": "^3.6.2",

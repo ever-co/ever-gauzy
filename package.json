@@ -139,8 +139,8 @@
 		"build:package:plugins:pre:prod": "yarn run build:package:ui-config:prod && yarn run build:package:ui-core:prod && yarn run build:package:ui-auth:prod && yarn run build:package:plugin:onboarding-ui:prod && yarn run build:package:plugin:legal-ui:prod && yarn run build:package:plugin:job-search-ui:prod && yarn run build:package:plugin:job-matching-ui:prod && yarn run build:package:plugin:job-employee-ui:prod && yarn run build:package:plugin:job-proposal-ui:prod && yarn run build:package:plugin:public-layout-ui:prod && yarn run build:package:plugin:maintenance-ui:prod && yarn run build:integration-ui-plugins:prod",
 		"build:package:plugins:post": "yarn run build:package:plugin:integration-jira && yarn run build:package:plugin:integration-ai && yarn run build:package:plugin:sentry && yarn run build:package:plugin:jitsu-analytic && yarn run build:package:plugin:product-reviews && yarn run build:package:plugin:job-search && yarn run build:package:plugin:job-proposal && yarn run build:package:plugin:integration-github && yarn run build:package:plugin:knowledge-base && yarn run build:package:plugin:changelog && yarn run build:package:plugin:integration-hubstaff && yarn run build:package:plugin:integration-upwork",
 		"build:package:plugins:post:prod": "yarn run build:package:plugin:integration-jira:prod && yarn run build:package:plugin:integration-ai:prod && yarn run build:package:plugin:sentry:prod && yarn run build:package:plugin:jitsu-analytic:prod && yarn run build:package:plugin:product-reviews:prod && yarn run build:package:plugin:job-search:prod && yarn run build:package:plugin:job-proposal:prod && yarn run build:package:plugin:integration-github:prod && yarn run build:package:plugin:knowledge-base:prod && yarn run build:package:plugin:changelog:prod && yarn run build:package:plugin:integration-hubstaff:prod && yarn run build:package:plugin:integration-upwork:prod",
-		"build:package:plugin:integration-ai": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/integration-ai build",
-		"build:package:plugin:integration-ai:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/integration-ai build",
+		"build:package:plugin:integration-ai": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/integration-ai lib:build",
+		"build:package:plugin:integration-ai:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/integration-ai lib:build:prod",
 		"build:package:plugin:integration-hubstaff": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/integration-hubstaff build",
 		"build:package:plugin:integration-hubstaff:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/integration-hubstaff build:prod",
 		"build:package:plugin:integration-upwork": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/integration-upwork build",
@@ -336,6 +336,9 @@
 		"@nebular/eva-icons": "^13.0.0",
 		"@nebular/security": "^13.0.0",
 		"@nebular/theme": "^13.0.0",
+		"@nestjs/common": "^10.3.7",
+		"@nestjs/core": "^10.3.7",
+		"@nestjs/platform-express": "^10.3.7",
 		"@ng-select/ng-select": "^12.0.7",
 		"angular2-smart-table": "^3.4.0",
 		"autoprefixer": "10.4.18",
@@ -369,6 +372,8 @@
 		"@compodoc/compodoc": "^1.1.19",
 		"@cypress/browserify-preprocessor": "^3.0.2",
 		"@electron/remote": "^2.0.8",
+		"@nestjs/schematics": "^10.1.1",
+		"@nestjs/testing": "^10.3.7",
 		"@nstudio/angular": "^17.0.1",
 		"@nstudio/electron": "^17.0.1",
 		"@nstudio/electron-angular": "^17.0.1",
@@ -460,6 +465,7 @@
 		"tslint-language-service": "^0.9.9",
 		"typedoc": "^0.23.24",
 		"typescript": "5.4.5",
+		"verdaccio": "^5.0.4",
 		"webpack": "^5.91.0",
 		"webpack-bundle-analyzer": "^4.10.2",
 		"webpack-cli": "^4.9.0",
@@ -509,5 +515,8 @@
 	"xplat": {
 		"prefix": "gauzy",
 		"framework": "angular"
+	},
+	"nx": {
+		"includedScripts": []
 	}
 }

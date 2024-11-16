@@ -9,6 +9,7 @@
 			"@gauzy/desktop-timer": ["./packages/desktop-timer/src/index.ts"],
 			"@gauzy/desktop-ui-lib": ["./packages/desktop-ui-lib/src/index.ts"],
 			"@gauzy/desktop-window": ["./packages/desktop-window/src/index.ts"],
+			"@gauzy/plugin-integration-ai": ["./packages/plugins/integration-ai/src/index.ts"],
 			"@gauzy/plugin-integration-ai-ui": ["./packages/plugins/integration-ai-ui/src/index.ts"],
 			"@gauzy/plugin-integration-hubstaff-ui": ["./packages/plugins/integration-hubstaff-ui/src/index.ts"],
 			"@gauzy/plugin-integration-github-ui": ["./packages/plugins/integration-github-ui/src/index.ts"],

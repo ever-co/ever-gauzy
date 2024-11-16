@@ -148,8 +148,23 @@
                 "production",
                 "^production"
             ]
+        },
+        "@nx/js:tsc": {
+            "cache": true,
+            "dependsOn": [
+                "^build"
+            ],
+            "inputs": [
+                "production",
+                "^production"
+            ]
         }
     },
     "useInferencePlugins": false,
-    "defaultBase": "master"
+    "defaultBase": "master",
+    "release": {
+        "version": {
+            "preVersionCommand": "yarn nx run-many -t build"
+        }
+    }
 }
