@@ -129,7 +129,8 @@
 		"COLLAPSE": "crwdns11461:0crwdne11461:0",
 		"EXPAND": "crwdns11463:0crwdne11463:0",
 		"SHOW_MORE": "crwdns11483:0crwdne11483:0",
-		"START_WORK": "crwdns11525:0crwdne11525:0"
+		"START_WORK": "crwdns11525:0crwdne11525:0",
+		"ADD_MODULE": "Yamo Module"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -2901,6 +2902,28 @@
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
 		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "crwdns10591:0crwdne10591:0"
+		,
+			"PROJECT_MODULE": {
+			  "PROJECT": "Omwoky",
+			  "SELECT_PROJECT": "Yera omwoky",
+			  "STATUS": "Kibye",
+			  "TEAM_MEMBERS": "Abatuuk",
+			  "TEAMS": "Mbangu",
+			  "SELECT_TEAMS": "Yera mbangu",
+			  "CHOOSE_TEAMS": "Kwany mbangu",
+			  "NAME": "Nying",
+			  "ENTER_NAME": "Kel nying",
+			  "PARENT_MODULE": "Omwoky me lutino",
+			  "SELECT_PARENT": "Yera omwoky me lutino",
+			  "START_DATE": "Dwe kede ka",
+			  "SELECT_START_DATE": "Yera dwe kede ka",
+			  "END_DATE": "Dwe kede mogo",
+			  "SELECT_END_DATE": "Yera dwe kede mogo",
+			  "DESCRIPTION": "Kweyo",
+			  "IS_FAVORITE": "Fɛrɛbɔ"
+
+		  }
+
 	},
 	"SETTINGS_FEATURES": {
 		"INVOICE": "crwdns10593:0crwdne10593:0",

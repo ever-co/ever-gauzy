@@ -28,6 +28,8 @@ export interface ITask
 	status?: TaskStatusEnum;
 	priority?: TaskPriorityEnum;
 	size?: TaskSizeEnum;
+	startDate?: Date;
+	resolvedAt?: Date;
 	dueDate?: Date;
 	estimate?: number;
 	tags?: ITag[];
@@ -40,6 +42,9 @@ export interface ITask
 	creator?: IUser;
 	creatorId?: ID;
 	isDraft?: boolean; // Define if task is still draft (E.g : Task description not completed yet)
+
+	version?: string;
+	issueType?: string;
 
 	parent?: ITask;
 	parentId?: ID; // Optional field for specifying the parent task ID

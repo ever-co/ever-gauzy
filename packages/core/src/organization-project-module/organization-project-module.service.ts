@@ -81,12 +81,14 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		const tenantId = RequestContext.currentTenantId() || entity.tenantId;
 
 		try {
+			// Find Organization Project Module relations
+			const relations = this.typeOrmProjectModuleRepository.metadata.relations.map(
+				(relation) => relation.propertyName
+			);
+
 			// Retrieve existing module.
 			const existingProjectModule = await this.findOneByIdString(id, {
-				relations: {
-					members: true,
-					manager: true
-				}
+				relations
 			});
 
 			if (!existingProjectModule) {

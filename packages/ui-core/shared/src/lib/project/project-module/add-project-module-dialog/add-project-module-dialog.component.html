@@ -1,0 +1,205 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex flex-column">
+		<div class="cancel">
+			<i class="fas fa-times" role="button" (click)="dialogRef.close()"></i>
+		</div>
+		<h5 class="title">
+			{{ (!createModule ? 'Edit Module' : 'Add Module') | translate }}
+		</h5>
+	</nb-card-header>
+	<nb-card-body class="body">
+		<form [formGroup]="form">
+			<!-- Project Selection -->
+			<div class="row">
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="label">{{ 'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.PROJECT' | translate }}</label>
+						<ga-project-selector
+							formControlName="projectId"
+							[placeholder]="'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.SELECT_PROJECT' | translate"
+							[skipGlobalChange]="true"
+							[defaultSelected]="false"
+							[showAllOption]="false"
+						></ga-project-selector>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="label">{{ 'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.STATUS' | translate }}</label>
+						<nb-select formControlName="status" fullWidth>
+							<nb-option *ngFor="let status of projectModuleStatuses" [value]="status">
+								{{ status }}
+							</nb-option>
+						</nb-select>
+					</div>
+				</div>
+			</div>
+
+			<!-- Participants -->
+			<div class="row">
+				<!-- Employee Multi-Select -->
+				<div class="col-sm-12">
+					<div class="form-group">
+						<ga-employee-multi-select
+							[selectedEmployeeIds]="selectedMembers"
+							[allEmployees]="employees"
+							(selectedChange)="onMembersSelected($event)"
+						></ga-employee-multi-select>
+					</div>
+				</div>
+
+				<!-- Team Multi-Select -->
+				<div class="col-sm-12">
+					<div class="form-group">
+						<label class="label">{{
+							'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.SELECT_TEAMS' | translate
+						}}</label>
+						<nb-select
+							formControlName="teams"
+							multiple
+							[selected]="selectedTeams"
+							(selectedChange)="onTeamsSelected($event)"
+							fullWidth
+							[placeholder]="'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.CHOOSE_TEAMS' | translate"
+						>
+							<nb-option *ngFor="let team of teams" [value]="team.id">{{ team.name }}</nb-option>
+						</nb-select>
+					</div>
+				</div>
+			</div>
+
+			<!-- Module Details -->
+			<div class="row">
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="label">{{ 'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.NAME' | translate }}</label>
+						<input
+							class="name-input"
+							formControlName="name"
+							type="text"
+							nbInput
+							[placeholder]="'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.ENTER_NAME' | translate"
+						/>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="label">{{
+							'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.PARENT_MODULE' | translate
+						}}</label>
+						<nb-select
+							formControlName="parentId"
+							[placeholder]="'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.SELECT_PARENT' | translate"
+							fullWidth
+						>
+							<nb-option *ngFor="let module of availableParentModules" [value]="module.id">
+								{{ module.name }}
+							</nb-option>
+						</nb-select>
+					</div>
+				</div>
+			</div>
+			<!-- Manager Selection -->
+			<div class="row">
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="label">{{ 'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.MANAGER' | translate }}</label>
+
+						<ga-employee-selector
+							fullWidth
+							[skipGlobalChange]="true"
+							class="employees"
+							[showAllEmployeesOption]="false"
+							[defaultSelected]="true"
+							(selectionChanged)="onManagerSelected($event)"
+						></ga-employee-selector>
+					</div>
+				</div>
+
+				<!-- Organization Sprints -->
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="label">{{
+							'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.ORGANIZATION_SPRINTS' | translate
+						}}</label>
+						<nb-select
+							formControlName="organizationSprints"
+							multiple
+							[placeholder]="'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.SELECT_SPRINTS' | translate"
+							fullWidth
+						>
+							<nb-option *ngFor="let sprint of organizationSprints" [value]="sprint.id">
+								{{ sprint.name }}
+							</nb-option>
+						</nb-select>
+					</div>
+				</div>
+			</div>
+			<!-- Date and Description -->
+			<div class="row">
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label for="startDate" class="label">{{
+							'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.START_DATE' | translate
+						}}</label>
+						<input
+							formControlName="startDate"
+							type="text"
+							nbInput
+							[placeholder]="'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.SELECT_START_DATE' | translate"
+							[nbDatepicker]="startDatePicker"
+							id="startDate"
+							fullWidth
+						/>
+						<nb-datepicker #startDatePicker></nb-datepicker>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label for="endDate" class="label">{{
+							'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.END_DATE' | translate
+						}}</label>
+						<input
+							formControlName="endDate"
+							type="text"
+							nbInput
+							[placeholder]="'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.SELECT_END_DATE' | translate"
+							[nbDatepicker]="endDatePicker"
+							id="endDate"
+							[min]="form.get('startDate').value"
+							fullWidth
+						/>
+						<nb-datepicker #endDatePicker></nb-datepicker>
+					</div>
+				</div>
+			</div>
+
+			<!-- Is Favorite Switch -->
+			<div class="row">
+				<div class="col-sm-12">
+					<nb-toggle formControlName="isFavorite" class="favorite-switch">
+						{{ 'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.IS_FAVORITE' | translate }}
+					</nb-toggle>
+				</div>
+			</div>
+
+			<!-- Description -->
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="form-group">
+						<label class="label">{{ 'TASKS_PAGE.TASKS_DESCRIPTION' | translate }}</label>
+						<ckeditor class="description" formControlName="description" [config]="ckConfig"></ckeditor>
+					</div>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="text-left">
+		<button (click)="dialogRef.close()" status="basic" outline class="mr-3" nbButton>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button (click)="onSave()" [disabled]="form.invalid" status="success" nbButton>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

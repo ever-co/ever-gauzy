@@ -175,8 +175,11 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 	 */
 	async updateTask(id: ID, entity: ITaskUpdateInput): Promise<ITask> {
 		try {
+			// Find task relations
+			const relations = this.typeOrmTaskRepository.metadata.relations.map((relation) => relation.propertyName);
+
 			// Find the existing task by its ID
-			const existingTask = await this._taskService.findOneByIdString(id);
+			const existingTask = await this._taskService.findOneByIdString(id, { relations });
 			if (!existingTask) {
 				return;
 			}

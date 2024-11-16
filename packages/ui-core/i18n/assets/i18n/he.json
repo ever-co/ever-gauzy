@@ -164,7 +164,8 @@
 		"ACTIVATE": "הפעל",
 		"ADD_PLUGIN": "הוסף תוסף",
 		"LOAD_PLUGIN": "טען תוסף",
-		"FROM_CDN": "מ-CDN"
+		"FROM_CDN": "מ-CDN",
+		"ADD_MODULE": "הוסף מודול"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3171,7 +3172,26 @@
 		"CATEGORY_EDIT_DELETED": "Category was removed"
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
-		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "This tab will show project management charts and aggregated data."
+		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "This tab will show project management charts and aggregated data.",
+		"PROJECT_MODULE": {
+			"PROJECT": "פרויקט",
+			"SELECT_PROJECT": "בחר פרויקט",
+			"STATUS": "סטטוס",
+			"TEAM_MEMBERS": "חברי הצוות",
+			"TEAMS": "צוותים",
+			"SELECT_TEAMS": "בחר צוותים",
+			"CHOOSE_TEAMS": "בחר צוותים",
+			"NAME": "שם",
+			"ENTER_NAME": "הכנס שם",
+			"PARENT_MODULE": "מודול הורה",
+			"SELECT_PARENT": "בחר מודול הורה",
+			"START_DATE": "תאריך התחלה",
+			"SELECT_START_DATE": "בחר תאריך התחלה",
+			"END_DATE": "תאריך סיום",
+			"SELECT_END_DATE": "בחר תאריך סיום",
+			"DESCRIPTION": "תיאור",
+			"IS_FAVORITE": "מועדף"
+		}
 	},
 	"SETTINGS_FEATURES": {
 		"INVOICE": "Invoice",

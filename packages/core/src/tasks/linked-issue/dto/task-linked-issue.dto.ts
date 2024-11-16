@@ -1,18 +1,8 @@
-import { TaskRelatedIssuesRelationEnum } from '@gauzy/contracts';
-import { ApiProperty } from '@nestjs/swagger';
+import { ITaskLinkedIssue } from '@gauzy/contracts';
+import { IntersectionType } from '@nestjs/swagger';
 import { TenantOrganizationBaseDTO } from '../../../core/dto';
-import { IsEnum, IsUUID } from 'class-validator';
+import { TaskLinkedIssue } from '../task-linked-issue.entity';
 
-export class TaskLinkedIssueDTO extends TenantOrganizationBaseDTO {
-	@ApiProperty({ type: () => String, enum: TaskRelatedIssuesRelationEnum })
-	@IsEnum(TaskRelatedIssuesRelationEnum)
-	action: TaskRelatedIssuesRelationEnum;
-
-	@ApiProperty({ type: () => String })
-	@IsUUID()
-	taskFromId: string;
-
-	@ApiProperty({ type: () => String })
-	@IsUUID()
-	taskToId: string;
-}
+export class TaskLinkedIssueDTO
+	extends IntersectionType(TenantOrganizationBaseDTO, TaskLinkedIssue)
+	implements ITaskLinkedIssue {}

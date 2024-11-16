@@ -90,11 +90,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					imageUrl: true,
 					membersCount: true
 				},
-				task: {
-					id: true,
-					title: true,
-					estimate: true
-				},
+				task: TimeLogService.TASK_SELECT_FIELDS,
 				organizationContact: {
 					id: true,
 					name: true,
@@ -344,10 +340,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						imageUrl: true
 					}
 				},
-				task: {
-					id: true,
-					title: true
-				},
+				task: TimeLogService.TASK_SELECT_FIELDS,
 				timeSlots: {
 					id: true,
 					overall: true,
@@ -373,15 +366,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			},
 			relations: {
 				// Related entities to be included in the result
-				project: {
-					organizationContact: true
-				},
-				task: true,
+				project: { organizationContact: true },
+				task: { taskStatus: true },
 				timeSlots: true,
 				organizationContact: true,
-				employee: {
-					user: true
-				}
+				employee: { user: true }
 			},
 			order: {
 				// Order results by the 'startedAt' field in ascending order
@@ -1264,4 +1253,35 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Check if the end date is on or before the current date
 		return moment(end).isSameOrBefore(moment());
 	}
+
+	private static readonly TASK_SELECT_FIELDS = {
+		id: true,
+		isActive: true,
+		isArchived: true,
+		tenantId: true,
+		organizationId: true,
+		number: true,
+		prefix: true,
+		title: true,
+		description: true,
+		status: true,
+		priority: true,
+		size: true,
+		issueType: true,
+		estimate: true,
+		dueDate: true,
+		startDate: true,
+		resolvedAt: true,
+		version: true,
+		taskStatus: {
+			name: true,
+			value: true,
+			description: true,
+			icon: true,
+			color: true,
+			order: true,
+			isCollapsed: true,
+			isDefault: true
+		}
+	} as const;
 }

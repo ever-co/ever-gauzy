@@ -165,7 +165,8 @@
 		"ACTIVATE": "Attiva",
 		"ADD_PLUGIN": "Aggiungi plugin",
 		"LOAD_PLUGIN": "Carica Plugin",
-		"FROM_CDN": "Da CDN"
+		"FROM_CDN": "Da CDN",
+		"ADD_MODULE": "Aggiungi modulo"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3154,7 +3155,26 @@
 		}
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
-		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "Questa scheda mostrerà grafici di gestione del progetto e dati aggregati"
+		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "Questa scheda mostrerà grafici di gestione del progetto e dati aggregati",
+		"PROJECT_MODULE": {
+			"PROJECT": "Progetto",
+			"SELECT_PROJECT": "Seleziona un progetto",
+			"STATUS": "Stato",
+			"TEAM_MEMBERS": "Membri del team",
+			"TEAMS": "Squadre",
+			"SELECT_TEAMS": "Seleziona squadre",
+			"CHOOSE_TEAMS": "Scegli squadre",
+			"NAME": "Nome",
+			"ENTER_NAME": "Inserisci il nome",
+			"PARENT_MODULE": "Modulo genitore",
+			"SELECT_PARENT": "Seleziona modulo genitore",
+			"START_DATE": "Data di inizio",
+			"SELECT_START_DATE": "Seleziona data di inizio",
+			"END_DATE": "Data di fine",
+			"SELECT_END_DATE": "Seleziona data di fine",
+			"DESCRIPTION": "Descrizione",
+			"IS_FAVORITE": "Preferito"
+		}
 	},
 	"SETTINGS_FEATURES": {
 		"INVOICE": "Fattura",

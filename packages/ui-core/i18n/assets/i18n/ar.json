@@ -165,7 +165,8 @@
 		"ACTIVATE": "تفعيل",
 		"ADD_PLUGIN": "إضافة ملحق",
 		"LOAD_PLUGIN": "تحميل المكون الإضافي",
-		"FROM_CDN": "من CDN"
+		"FROM_CDN": "من CDN",
+		"ADD_MODULE": "إضافة وحدة"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3152,7 +3153,26 @@
 		}
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
-		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "سيعرض هذا الجدول الرسوم البيانية لإدارة المشروع والبيانات المجمعة."
+		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "سيعرض هذا الجدول الرسوم البيانية لإدارة المشروع والبيانات المجمعة.",
+		"PROJECT_MODULE": {
+			"PROJECT": "مشروع",
+			"SELECT_PROJECT": "اختر مشروعًا",
+			"STATUS": "الحالة",
+			"TEAM_MEMBERS": "أعضاء الفريق",
+			"TEAMS": "فرق",
+			"SELECT_TEAMS": "اختر الفرق",
+			"CHOOSE_TEAMS": "اختيار الفرق",
+			"NAME": "الاسم",
+			"ENTER_NAME": "أدخل الاسم",
+			"PARENT_MODULE": "الوحدة الأصلية",
+			"SELECT_PARENT": "اختر الوحدة الأصلية",
+			"START_DATE": "تاريخ البدء",
+			"SELECT_START_DATE": "اختر تاريخ البدء",
+			"END_DATE": "تاريخ الانتهاء",
+			"SELECT_END_DATE": "اختر تاريخ الانتهاء",
+			"DESCRIPTION": "الوصف",
+			"IS_FAVORITE": "مفضل"
+		}
 	},
 	"SETTINGS_FEATURES": {
 		"INVOICE": "فاتورة",
