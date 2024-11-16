@@ -2,6 +2,7 @@
 	"name": "@gauzy/contracts",
 	"version": "0.1.0",
 	"description": "Ever Gauzy Platform Contracts module",
+	"type": "commonjs",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -9,24 +10,15 @@
 	},
 	"license": "AGPL-3.0",
 	"private": true,
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"files": [
-		"dist"
-	],
-	"directories": {
-		"lib": "dist",
-		"test": "__test__"
-	},
-	"publishConfig": {
-		"access": "restricted"
-	},
+	"main": "./src/index.ts",
+	"typings": "./src/index.d.ts",
 	"scripts": {
-		"test": "jest",
-		"test:e2e": "jest --config ./__test__/jest.config.json",
-		"build": "rimraf dist && yarn run compile",
-		"build:prod": "rimraf dist && yarn run compile",
-		"compile": "tsc -p tsconfig.build.json"
+		"lib:build": "nx build contracts --configuration=development",
+		"lib:build:prod": "nx build contracts --configuration=production",
+		"lib:watch": "nx build contracts --configuration=development --watch"
+	},
+	"dependencies": {
+		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
 		"@types/jest": "^29.4.4",
@@ -34,21 +26,9 @@
 		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"
 	},
-	"jest": {
-		"moduleFileExtensions": [
-			"js",
-			"json",
-			"ts"
-		],
-		"rootDir": "src",
-		"testRegex": ".*\\.spec\\.ts$",
-		"transform": {
-			"^.+\\.(t|j)s$": "ts-jest"
-		},
-		"collectCoverageFrom": [
-			"**/*.(t|j)s"
-		],
-		"coverageDirectory": "../coverage/packages/contracts",
-		"testEnvironment": "node"
-	}
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
 }

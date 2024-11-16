@@ -6,6 +6,7 @@
 		"paths": {
 			"@angular/*": ["./node_modules/@angular/*"],
 			"@env-desktop/environment": ["./apps/desktop/src/environments/environment.ts"],
+			"@gauzy/contracts": ["./packages/contracts/src/index.ts"],
 			"@gauzy/desktop-timer": ["./packages/desktop-timer/src/index.ts"],
 			"@gauzy/desktop-ui-lib": ["./packages/desktop-ui-lib/src/index.ts"],
 			"@gauzy/desktop-window": ["./packages/desktop-window/src/index.ts"],

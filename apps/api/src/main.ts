@@ -1,10 +1,10 @@
 console.log('API Starting...');
 
-import { pluginConfig } from './plugin-config';
-console.log('Plugin Config loaded', pluginConfig);
-
 import { bootstrap } from '@gauzy/core';
 console.log('Bootstrap loaded');
+
+import { pluginConfig } from './plugin-config';
+console.log('Plugin Config loaded', pluginConfig);
 
 bootstrap(pluginConfig)
 	.then(() => {
