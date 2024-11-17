@@ -2,6 +2,7 @@
 	"name": "@gauzy/auth",
 	"version": "0.1.0",
 	"description": "Authentication module for the Ever Gauzy Platform, providing various authentication strategies and integrations.",
+	"type": "commonjs",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -9,21 +10,12 @@
 	},
 	"license": "AGPL-3.0",
 	"private": true,
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"files": [
-		"dist"
-	],
-	"directories": {
-		"lib": "dist"
-	},
-	"publishConfig": {
-		"access": "restricted"
-	},
+	"main": "./src/index.ts",
+	"typings": "./src/index.d.ts",
 	"scripts": {
-		"build": "rimraf dist && yarn run compile",
-		"build:prod": "rimraf dist && yarn run compile",
-		"compile": "tsc -p tsconfig.build.json"
+		"lib:build": "yarn nx build auth --configuration=development",
+		"lib:build:prod": "yarn nx build auth --configuration=production",
+		"lib:watch": "yarn nx build auth --watch --configuration=development"
 	},
 	"keywords": [
 		"auth",
@@ -70,5 +62,10 @@
 		"rimraf": "^3.0.2",
 		"tslint": "^6.1.3",
 		"typescript": "5.1.6"
-	}
+	},
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
 }

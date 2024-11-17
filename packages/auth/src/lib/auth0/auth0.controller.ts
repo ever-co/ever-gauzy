@@ -9,10 +9,22 @@ import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
 export class Auth0Controller {
 	constructor(public readonly service: SocialAuthService) {}
 
+	/**
+	 * Handles the initial Auth0 login request.
+	 *
+	 * @param req - The incoming request object, typically used to access request data or user information.
+	 */
 	@Get('')
 	@UseGuards(AuthGuard('auth0'))
 	auth0Login(@Req() req: any) {}
 
+	/**
+	 * Handles the callback from Auth0 after a successful login.
+	 *
+	 * @param requestCtx - The context of the incoming request, including the authenticated user information.
+	 * @param res - The response object used to send a redirect or response to the client.
+	 * @returns {Promise<void>} - A promise that resolves after redirecting the user.
+	 */
 	@Get('callback')
 	@UseGuards(AuthGuard('auth0'))
 	async auth0LoginCallback(
