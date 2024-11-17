@@ -14,7 +14,6 @@ import { IEnvironment } from './environments/ienvironment';
 
 @Injectable()
 export class ConfigService {
-
 	public readonly config: Partial<ApplicationPluginConfig>;
 	private readonly environment = environment;
 	private readonly logger = new Logger(ConfigService.name);
@@ -80,10 +79,21 @@ export class ConfigService {
 		return this.config.assetOptions;
 	}
 
+	/**
+	 * Get the environment variable value.
+	 *
+	 * @param key
+	 * @returns
+	 */
 	get<T>(key: keyof IEnvironment): IEnvironment[keyof IEnvironment] {
 		return this.environment[key] as T;
 	}
 
+	/**
+	 * Check if the application is running in production mode.
+	 *
+	 * @returns
+	 */
 	isProd(): boolean {
 		return this.environment.production;
 	}
