@@ -13,9 +13,9 @@
 	"main": "./src/index.ts",
 	"typings": "./src/index.d.ts",
 	"scripts": {
-		"lib:build": "nx build contracts --configuration=development",
-		"lib:build:prod": "nx build contracts --configuration=production",
-		"lib:watch": "nx build contracts --configuration=development --watch"
+		"lib:build": "yarn nx build contracts --configuration=development",
+		"lib:build:prod": "yarn nx build contracts --configuration=production",
+		"lib:watch": "yarn nx build contracts --configuration=development --watch"
 	},
 	"dependencies": {
 		"tslib": "^2.6.2"

@@ -17,16 +17,17 @@
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"homepage": "https://ever.co",
-	"keywords": [],
 	"private": true,
+	"main": "./src/index.ts",
+	"typings": "./src/index.d.ts",
 	"scripts": {
-		"lib:build": "nx build plugin-integration-ai-ui --configuration=development",
-		"lib:build:prod": "nx build plugin-integration-ai-ui --configuration=production",
-		"lib:watch": "nx build plugin-integration-ai-ui --watch --configuration=development"
+		"lib:build": "yarn nx build plugin-integration-ai-ui --configuration=development",
+		"lib:build:prod": "yarn nx build plugin-integration-ai-ui --configuration=production",
+		"lib:watch": "yarn nx build plugin-integration-ai-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^17.3.12",
-		"@angular/core": "^17.3.12"
+		"@angular/common": "^17.3.0",
+		"@angular/core": "^17.3.0"
 	},
 	"dependencies": {
 		"@angular/forms": "17.3.12",
@@ -44,6 +45,7 @@
 		"@types/node": "^20.14.9",
 		"jest-preset-angular": "14.0.4"
 	},
+	"keywords": [],
 	"engines": {
 		"node": ">=20.11.1",
 		"yarn": ">=1.22.19"

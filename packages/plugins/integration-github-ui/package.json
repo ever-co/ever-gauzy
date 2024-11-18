@@ -29,13 +29,13 @@
 	],
 	"private": true,
 	"scripts": {
-		"lib:build": "nx build plugin-integration-github-ui --configuration=development",
-		"lib:build:prod": "nx build plugin-integration-github-ui --configuration=production",
-		"lib:watch": "nx build plugin-integration-github-ui --watch --configuration=development"
+		"lib:build": "yarn nx build plugin-integration-github-ui --configuration=development",
+		"lib:build:prod": "yarn nx build plugin-integration-github-ui --configuration=production",
+		"lib:watch": "yarn nx build plugin-integration-github-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^17.3.12",
-		"@angular/core": "^17.3.12"
+		"@angular/common": "^17.3.0",
+		"@angular/core": "^17.3.0"
 	},
 	"dependencies": {
 		"@angular/forms": "17.3.12",

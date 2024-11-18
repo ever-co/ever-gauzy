@@ -8,7 +8,6 @@
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
-	"license": "AGPL-3.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ever-co/ever-gauzy"
@@ -17,27 +16,14 @@
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"homepage": "https://ever.co",
-	"keywords": [
-		"Ever Gauzy",
-		"Gauzy AI",
-		"plugin",
-		"integration",
-		"platform",
-		"management",
-		"business",
-		"tool",
-		"automation"
-	],
+	"license": "AGPL-3.0",
 	"private": true,
-	"main": "./src/index.js",
+	"main": "./src/index.ts",
 	"typings": "./src/index.d.ts",
-	"publishConfig": {
-		"access": "restricted"
-	},
 	"scripts": {
-		"lib:build": "nx build plugin-integration-ai --configuration=development",
-		"lib:build:prod": "nx build plugin-integration-ai --configuration=production",
-		"lib:watch": "nx build plugin-integration-ai --watch --configuration=development"
+		"lib:build": "yarn nx build plugin-integration-ai --configuration=development",
+		"lib:build:prod": "yarn nx build plugin-integration-ai --configuration=production",
+		"lib:watch": "yarn nx build plugin-integration-ai --watch --configuration=development"
 	},
 	"dependencies": {
 		"@apollo/client": "^3.6.2",
@@ -63,6 +49,17 @@
 		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"
 	},
+	"keywords": [
+		"Ever Gauzy",
+		"Gauzy AI",
+		"plugin",
+		"integration",
+		"platform",
+		"management",
+		"business",
+		"tool",
+		"automation"
+	],
 	"engines": {
 		"node": ">=20.11.1",
 		"yarn": ">=1.22.19"

@@ -28,13 +28,13 @@
 		"access": "restricted"
 	},
 	"scripts": {
-		"lib:build": "nx build ui-core --configuration=development",
-		"lib:build:prod": "nx build ui-core --configuration=production",
-		"lib:watch": "nx build ui-core --watch --configuration=development"
+		"lib:build": "yarn nx build ui-core --configuration=development",
+		"lib:build:prod": "yarn nx build ui-core --configuration=production",
+		"lib:watch": "yarn nx build ui-core --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^17.3.12",
-		"@angular/core": "^17.3.12"
+		"@angular/common": "^17.3.0",
+		"@angular/core": "^17.3.0"
 	},
 	"dependencies": {
 		"@ali-hm/angular-tree-component": "^17.0.1",

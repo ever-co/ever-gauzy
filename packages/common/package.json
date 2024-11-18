@@ -13,9 +13,9 @@
 	"main": "./src/index.ts",
 	"typings": "./src/index.d.ts",
 	"scripts": {
-		"lib:build": "nx build common --configuration=development",
-		"lib:build:prod": "nx build common --configuration=production",
-		"lib:watch": "nx build common --watch --configuration=development"
+		"lib:build": "yarn nx build common --configuration=development",
+		"lib:build:prod": "yarn nx build common --configuration=production",
+		"lib:watch": "yarn nx build common --watch --configuration=development"
 	},
 	"keywords": [],
 	"dependencies": {

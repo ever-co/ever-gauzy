@@ -1,16 +1,20 @@
 # @gauzy/plugin-integration-ai-ui
 
-This library was generated with [Nx](https://nx.dev).
+This library was generated with [Nx](https://nx.dev). It contains the AI Integration UI Plugin for the Gauzy platform.
 
-# Features
+## Features
 
--   **Integration AI UI Plugin:** Provides a user-friendly interface for integrating AI capabilities into the Gauzy platform.
+- **Integration AI UI Plugin:** Provides a user-friendly interface for integrating AI capabilities into the Gauzy platform.
+
+## Building
+
+Run `nx build plugin-integration-ai-ui` to build the library.
 
 ## Running unit tests
 
 Run `nx test plugin-integration-ai-ui` to execute the unit tests.
 
-# Installation
+## Installation
 
 Install the Integration AI UI Plugin using your preferred package manager:
 

@@ -13,9 +13,9 @@
 	"main": "./src/index.ts",
 	"typings": "./src/index.d.ts",
 	"scripts": {
-		"lib:build": "nx build plugin --configuration=development",
-		"lib:build:prod": "nx build plugin --configuration=production",
-		"lib:watch": "nx build plugin --watch --configuration=development"
+		"lib:build": "yarn nx build plugin --configuration=development",
+		"lib:build:prod": "yarn nx build plugin --configuration=production",
+		"lib:watch": "yarn nx build plugin --watch --configuration=development"
 	},
 	"keywords": [],
 	"dependencies": {
