@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Between, In, SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
-import { IGetTimesheetInput, PermissionsEnum, ITimesheet } from '@gauzy/contracts';
+import { IGetTimesheetInput, PermissionsEnum, ITimesheet, TimesheetStatus } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
 import { getDateRangeFormat } from './../../core/utils';
@@ -116,8 +116,12 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.where({
 					startedAt: Between(start, end),
-					...(status.length > 0 ? { status: In(status) } : {}),
-					...(taskIds.length > 0 ? { taskIds: In(taskIds) } : {}),
+					...(status.length > 0
+						? {
+								status: In(status.filter((s) => Object.values(TimesheetStatus).includes(s)))
+						  }
+						: {}),
+					...(taskIds.length > 0 ? { taskId: In(taskIds) } : {}),
 					...(employeeIds.length > 0 ? { employeeId: In(employeeIds) } : {})
 				});
 			})
