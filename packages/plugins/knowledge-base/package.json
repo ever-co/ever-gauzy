@@ -52,7 +52,7 @@
 		"@nestjs/passport": "^10.0.3",
 		"@nestjs/swagger": "^7.3.0",
 		"@nestjs/typeorm": "^10.0.2",
-		"chalk": "^5.3.0",
+		"chalk": "^4.1.0",
 		"class-validator": "^0.14.0",
 		"typeorm": "^0.3.20"
 	},
