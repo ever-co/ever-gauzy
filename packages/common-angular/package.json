@@ -2,6 +2,7 @@
 	"name": "@gauzy/common-angular",
 	"version": "0.1.0",
 	"description": "Ever Gauzy Platform Common Angular module",
+	"type": "commonjs",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -9,24 +10,12 @@
 	},
 	"license": "AGPL-3.0",
 	"private": true,
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"files": [
-		"dist"
-	],
-	"directories": {
-		"lib": "dist",
-		"test": "__test__"
-	},
-	"publishConfig": {
-		"access": "restricted"
-	},
+	"main": "./src/index.ts",
+	"types": "./src/index.d.ts",
 	"scripts": {
-		"test": "jest",
-		"test:e2e": "jest --config ./__test__/jest.config.json",
-		"build": "rimraf dist && yarn run compile",
-		"build:prod": "rimraf dist && yarn run compile:prod",
-		"compile": "tsc -p tsconfig.build.json"
+		"lib:build": "yarn nx build common-angular --configuration=development",
+		"lib:build:prod": "yarn nx build common-angular --configuration=production",
+		"lib:watch": "yarn nx build common-angular --watch --configuration=development"
 	},
 	"dependencies": {
 		"@angular/common": "17.3.12",
@@ -39,24 +28,11 @@
 	"devDependencies": {
 		"@types/jest": "^29.4.4",
 		"@types/node": "^20.14.9",
-		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"
 	},
-	"jest": {
-		"moduleFileExtensions": [
-			"js",
-			"json",
-			"ts"
-		],
-		"rootDir": "src",
-		"testRegex": ".*\\.spec\\.ts$",
-		"transform": {
-			"^.+\\.(t|j)s$": "ts-jest"
-		},
-		"collectCoverageFrom": [
-			"**/*.(t|j)s"
-		],
-		"coverageDirectory": "../coverage/packages/common-angular",
-		"testEnvironment": "node"
-	}
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
 }
