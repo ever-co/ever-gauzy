@@ -2633,7 +2633,9 @@
 		"SELECT": "Выбрать",
 		"SPRINTS_SETTINGS": "Настройки спринта",
 		"ARE_YOU_SURE": "Вы уверены, что хотите удалить спринт",
-		"SETTINGS": "Настройки"
+		"SETTINGS": "Настройки",
+		"MODULE": "Модуль",
+		"SELECT_MODULE": "Модули"
 	},
 	"JOBS": {
 		"EMPLOYEE": "Сотрудник",

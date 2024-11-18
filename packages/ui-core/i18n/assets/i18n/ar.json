@@ -2604,7 +2604,9 @@
 		"SELECT": "اختر",
 		"SPRINTS_SETTINGS": "إعدادات السبرينت",
 		"ARE_YOU_SURE": "هل أنت متأكد أنك تريد حذف السبرينت؟",
-		"SETTINGS": "الإعدادات"
+		"SETTINGS": "الإعدادات",
+		"MODULE": "وحدة",
+		"SELECT_MODULE": "الوح"
 	},
 	"JOBS": {
 		"EMPLOYEE": "موظف",

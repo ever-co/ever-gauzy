@@ -2606,7 +2606,9 @@
 		"SELECT": "Wybierz",
 		"SPRINTS_SETTINGS": "Ustawienia sprintów",
 		"ARE_YOU_SURE": "Jesteś pewien, że chcesz usunąć sprint?",
-		"SETTINGS": "Ustawienia"
+		"SETTINGS": "Ustawienia",
+		"MODULE": "Moduł",
+		"SELECT_MODULE": "Moduły"
 	},
 	"JOBS": {
 		"EMPLOYEE": "Pracownik",
