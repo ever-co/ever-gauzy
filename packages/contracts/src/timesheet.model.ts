@@ -89,6 +89,8 @@ export interface IGetTimesheetInput extends IBasePerTenantAndOrganizationEntityM
 	projectIds?: ID[];
 	clientId?: ID[];
 	employeeIds?: ID[];
+	status?: TimesheetStatus[];
+	taskIds?: ID[];
 }
 
 export interface IDateRange {
@@ -191,6 +193,7 @@ export interface ITimeLogFilters extends IBasePerTenantAndOrganizationEntityMode
 	categoryId?: ID;
 	timeZone?: string;
 	timeFormat?: TimeFormatEnum;
+	status?: TimesheetStatus[];
 }
 
 export interface ITimeLogTodayFilters extends IBasePerTenantAndOrganizationEntityModel {

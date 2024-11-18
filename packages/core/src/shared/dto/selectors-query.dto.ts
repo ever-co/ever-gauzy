@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsArray } from 'class-validator';
-import { ID, ITimeLogFilters } from '@gauzy/contracts';
+import { IsOptional, IsArray, IsString } from 'class-validator';
+import { ID, ITimeLogFilters, TimesheetStatus } from '@gauzy/contracts';
 import { DateRangeQueryDTO } from './date-range-query.dto';
 
 /**
@@ -43,4 +43,13 @@ export class SelectorsQueryDTO extends DateRangeQueryDTO implements ITimeLogFilt
 	@IsOptional()
 	@IsArray()
 	teamIds: ID[];
+
+	/**
+	 * An array of status  to filter the time logs by specific status.
+	 * If not provided, no filtering by status will be applied.
+	 */
+	@ApiPropertyOptional({ type: () => Array, isArray: true })
+	@IsOptional()
+	@IsArray()
+	status: TimesheetStatus[];
 }
