@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject, firstValueFrom, Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganization, ITask, PermissionsEnum, TaskStatusEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { AuthService, Store, TasksService, ToastrService } from '@gauzy/ui-core/core';
@@ -20,6 +20,14 @@ import { AuthService, Store, TasksService, ToastrService } from '@gauzy/ui-core/
 	]
 })
 export class TaskSelectorComponent implements OnInit, OnDestroy, ControlValueAccessor {
+	private _multiple: boolean = false;
+	public get multiple(): boolean {
+		return this._multiple;
+	}
+	@Input() public set multiple(value: boolean) {
+		this._multiple = value;
+	}
+
 	/*
 	 * Getter & Setter for dynamic enabled/disabled element
 	 */

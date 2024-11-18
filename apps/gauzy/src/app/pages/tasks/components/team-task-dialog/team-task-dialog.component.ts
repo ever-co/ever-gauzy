@@ -1,7 +1,16 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { IEmployee, IOrganizationProject, IOrganizationTeam, ITag, ITask, TaskStatusEnum } from '@gauzy/contracts';
+import {
+	IEmployee,
+	IOrganizationProject,
+	IOrganizationProjectModule,
+	IOrganizationTeam,
+	ITag,
+	ITask,
+	TaskStatusEnum
+} from '@gauzy/contracts';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
+import { firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
@@ -9,11 +18,13 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { richTextCKEditorConfig } from '@gauzy/ui-core/shared';
 import {
 	ErrorHandlingService,
+	OrganizationProjectModuleService,
 	OrganizationProjectsService,
 	OrganizationTeamsService,
 	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 const initialTaskValue = {
 	title: '',
@@ -30,6 +41,7 @@ const initialTaskValue = {
 	taskPriority: null
 };
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-team-task-dialog',
 	templateUrl: './team-task-dialog.component.html',
@@ -42,7 +54,9 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 	teams: IOrganizationTeam[] = [];
 	selectedMembers: string[];
 	selectedTeams: string[];
+	selectedModules: string[] = [];
 	selectedTask: ITask;
+	availableModules: IOrganizationProjectModule[] = [];
 	organizationId: string;
 	tenantId: string;
 	tags: ITag[] = [];
@@ -60,7 +74,8 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 		readonly translateService: TranslateService,
 		private readonly toastrService: ToastrService,
 		private readonly errorHandler: ErrorHandlingService,
-		private readonly organizationTeamsService: OrganizationTeamsService
+		private readonly organizationTeamsService: OrganizationTeamsService,
+		private organizationProjectModuleService: OrganizationProjectModuleService
 	) {
 		super(translateService);
 	}
@@ -71,6 +86,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 			title: [null, Validators.required],
 			project: [],
 			projectId: [],
+			modules: [],
 			status: [TaskStatusEnum.OPEN],
 			priority: [],
 			size: [],
@@ -105,6 +121,13 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 
 		await this.loadProjects();
 		await this.loadTeams();
+		await this.loadAvailableModules();
+
+		this.form
+			.get('projectId')
+			.valueChanges.pipe(untilDestroyed(this))
+			.subscribe(() => this.loadAvailableModules());
+
 		this.initializeForm(Object.assign({}, initialTaskValue, this.selectedTask || this.task));
 	}
 
@@ -115,6 +138,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 		status,
 		members,
 		teams,
+		modules,
 		estimate,
 		dueDate,
 		tags,
@@ -126,6 +150,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 	}: ITask) {
 		const duration = moment.duration(estimate, 'seconds');
 		this.selectedTeams = (teams || []).map((team) => team.id);
+		this.selectedModules = (modules || []).map((module) => module.id);
 		// employee id of logged in user, if value is null, disable the save button
 		// this.teamIds = null;
 		// if (this.store.user) {
@@ -142,6 +167,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 			status,
 			priority,
 			size,
+			modules: this.selectedModules,
 			estimateDays: duration.days(),
 			estimateHours: duration.hours(),
 			estimateMinutes: duration.minutes(),
@@ -178,6 +204,12 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 				.setValue(
 					(this.selectedTeams || []).map((id) => this.teams.find((e) => e.id === id)).filter((e) => !!e)
 				);
+
+			const selectedModules = this.selectedModules || [];
+			const mappedModules = selectedModules
+				.map((id) => this.availableModules?.find((e) => e?.id === id))
+				.filter(Boolean);
+			this.form.get('modules')?.setValue(mappedModules);
 			this.form.get('status').setValue(this.form.get('taskStatus').value?.name);
 			this.form.get('priority').setValue(this.form.get('taskPriority').value?.name);
 			this.form.get('size').setValue(this.form.get('taskSize').value?.name);
@@ -208,5 +240,34 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 
 	onTeamsSelected(teamsSelection: string[]) {
 		this.selectedTeams = teamsSelection;
+	}
+
+	onModulesSelected(modules: string[]) {
+		this.selectedModules = modules;
+	}
+
+	/**
+	 * Loads available modules based on the selected project ID.
+	 */
+	private async loadAvailableModules() {
+		const { organizationId } = this;
+		if (!organizationId) return;
+		const projectId = this.form.get('projectId')?.value;
+		if (!projectId) {
+			this.availableModules = [];
+			return;
+		}
+		try {
+			const modulesResponse = await firstValueFrom(
+				this.organizationProjectModuleService.get<IOrganizationProjectModule>({
+					projectId
+				})
+			);
+			this.availableModules = modulesResponse?.items || [];
+		} catch (error) {
+			this.availableModules = [];
+			this.errorHandler.handleError(error);
+			this.toastrService.danger('Error loading modules', 'Error');
+		}
 	}
 }

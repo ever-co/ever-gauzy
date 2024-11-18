@@ -12,6 +12,7 @@ import {
 	IEmployee,
 	IOrganization,
 	IOrganizationProject,
+	IOrganizationProjectModule,
 	IOrganizationTeam,
 	ISelectedEmployee,
 	ITag,
@@ -20,7 +21,13 @@ import {
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { EmployeesService, OrganizationTeamsService, Store, TasksService } from '@gauzy/ui-core/core';
+import {
+	EmployeesService,
+	OrganizationProjectModuleService,
+	OrganizationTeamsService,
+	Store,
+	TasksService
+} from '@gauzy/ui-core/core';
 import { richTextCKEditorConfig } from '../../ckeditor.config';
 
 @UntilDestroy({ checkProperties: true })
@@ -34,7 +41,9 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	teams: IOrganizationTeam[] = [];
 	selectedMembers: string[] = [];
 	selectedTeams: string[] = [];
+	selectedModules: string[] = [];
 	selectedTask: ITask;
+	availableModules: IOrganizationProjectModule[] = [];
 	organization: IOrganization;
 	taskParticipantEnum = TaskParticipantEnum;
 	participants = TaskParticipantEnum.EMPLOYEES;
@@ -52,7 +61,8 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 		public readonly translateService: TranslateService,
 		private readonly employeesService: EmployeesService,
 		private readonly tasksService: TasksService,
-		private readonly organizationTeamsService: OrganizationTeamsService
+		private readonly organizationTeamsService: OrganizationTeamsService,
+		private organizationProjectModuleService: OrganizationProjectModuleService
 	) {
 		super(translateService);
 	}
@@ -74,6 +84,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 			description: [],
 			tags: [],
 			teams: [],
+			modules: [],
 			taskStatus: [],
 			taskSize: [],
 			taskPriority: []
@@ -106,7 +117,9 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.loadEmployees()),
 				tap(() => this.loadTeams()),
+				tap(() => this.loadAvailableModules()),
 				tap(() => this.initializeForm()),
+
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -136,6 +149,11 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		this.form
+			.get('projectId')
+			.valueChanges.pipe(untilDestroyed(this))
+			.subscribe(() => this.loadAvailableModules());
 	}
 
 	initializeForm() {
@@ -154,12 +172,14 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 				size,
 				taskStatus,
 				taskSize,
+				modules,
 				taskPriority
 			} = this.selectedTask;
 			const duration = moment.duration(estimate, 'seconds');
 
 			this.selectedMembers = (members || []).map((member) => member.id);
 			this.selectedTeams = (teams || []).map((team) => team.id);
+			this.selectedModules = (modules || []).map((module) => module.id);
 
 			if (teams && teams.length > 0) {
 				this.participants = TaskParticipantEnum.TEAMS;
@@ -180,6 +200,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 				tags,
 				teams: this.selectedTeams,
 				members: this.selectedMembers,
+				modules: this.selectedModules,
 				taskStatus,
 				taskSize,
 				taskPriority
@@ -202,6 +223,13 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 					(this.selectedTeams || []).map((id) => this.teams.find((e) => e.id === id)).filter((e) => !!e) // Only valid teams
 				);
 			}
+
+			const selectedModules = this.selectedModules || [];
+			const mappedModules = selectedModules
+				.map((id) => this.availableModules?.find((e) => e?.id === id))
+				.filter(Boolean);
+			this.form.get('modules')?.setValue(mappedModules);
+
 			this.form.get('status').setValue(this.form.get('taskStatus').value?.name);
 			this.form.get('priority').setValue(this.form.get('taskPriority').value?.name);
 			this.form.get('size').setValue(this.form.get('taskSize').value?.name);
@@ -268,5 +296,23 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 
 	onTeamsSelected(teamsSelection: string[]) {
 		this.selectedTeams = teamsSelection;
+	}
+
+	onModulesSelected(modules: string[]) {
+		this.selectedModules = modules;
+	}
+
+	/**
+	 * Loads available modules based on the selected project ID.
+	 */
+	private async loadAvailableModules() {
+		if (!this.organization || !this.form.get('projectId')?.value) return;
+		const modules = await firstValueFrom(
+			this.organizationProjectModuleService.get<IOrganizationProjectModule>({
+				projectId: this.form.get('projectId')?.value
+			})
+		);
+
+		this.availableModules = modules?.items || [];
 	}
 }

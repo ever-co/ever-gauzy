@@ -2729,7 +2729,9 @@
 		"SELECT": "Select",
 		"SPRINTS_SETTINGS": "Sprints Settings",
 		"ARE_YOU_SURE": "Are you sure you want delete sprint",
-		"SETTINGS": "Settings"
+		"SETTINGS": "Settings",
+		"MODULE": "Module",
+		"SELECT_MODULE": "Module(s)"
 	},
 	"JOBS": {
 		"EMPLOYEE": "Employee",

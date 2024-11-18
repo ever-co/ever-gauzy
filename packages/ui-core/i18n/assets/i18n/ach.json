@@ -2402,7 +2402,9 @@
 		"SELECT": "crwdns9660:0crwdne9660:0",
 		"SPRINTS_SETTINGS": "crwdns9956:0crwdne9956:0",
 		"ARE_YOU_SURE": "crwdns10488:0crwdne10488:0",
-		"SETTINGS": "crwdns10372:0crwdne10372:0"
+		"SETTINGS": "crwdns10372:0crwdne10372:0",
+		"MODULE": "Mudil",
+		"SELECT_MODULE": "Mudil"
 	},
 	"JOBS": {
 		"EMPLOYEE": "crwdns8162:0crwdne8162:0",
@@ -2901,29 +2903,26 @@
 		"CATEGORY_EDIT_DELETED": "crwdns8842:0crwdne8842:0"
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
-		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "crwdns10591:0crwdne10591:0"
-		,
-			"PROJECT_MODULE": {
-			  "PROJECT": "Omwoky",
-			  "SELECT_PROJECT": "Yera omwoky",
-			  "STATUS": "Kibye",
-			  "TEAM_MEMBERS": "Abatuuk",
-			  "TEAMS": "Mbangu",
-			  "SELECT_TEAMS": "Yera mbangu",
-			  "CHOOSE_TEAMS": "Kwany mbangu",
-			  "NAME": "Nying",
-			  "ENTER_NAME": "Kel nying",
-			  "PARENT_MODULE": "Omwoky me lutino",
-			  "SELECT_PARENT": "Yera omwoky me lutino",
-			  "START_DATE": "Dwe kede ka",
-			  "SELECT_START_DATE": "Yera dwe kede ka",
-			  "END_DATE": "Dwe kede mogo",
-			  "SELECT_END_DATE": "Yera dwe kede mogo",
-			  "DESCRIPTION": "Kweyo",
-			  "IS_FAVORITE": "Fɛrɛbɔ"
-
-		  }
-
+		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "crwdns10591:0crwdne10591:0",
+		"PROJECT_MODULE": {
+			"PROJECT": "Omwoky",
+			"SELECT_PROJECT": "Yera omwoky",
+			"STATUS": "Kibye",
+			"TEAM_MEMBERS": "Abatuuk",
+			"TEAMS": "Mbangu",
+			"SELECT_TEAMS": "Yera mbangu",
+			"CHOOSE_TEAMS": "Kwany mbangu",
+			"NAME": "Nying",
+			"ENTER_NAME": "Kel nying",
+			"PARENT_MODULE": "Omwoky me lutino",
+			"SELECT_PARENT": "Yera omwoky me lutino",
+			"START_DATE": "Dwe kede ka",
+			"SELECT_START_DATE": "Yera dwe kede ka",
+			"END_DATE": "Dwe kede mogo",
+			"SELECT_END_DATE": "Yera dwe kede mogo",
+			"DESCRIPTION": "Kweyo",
+			"IS_FAVORITE": "Fɛrɛbɔ"
+		}
 	},
 	"SETTINGS_FEATURES": {
 		"INVOICE": "crwdns10593:0crwdne10593:0",
