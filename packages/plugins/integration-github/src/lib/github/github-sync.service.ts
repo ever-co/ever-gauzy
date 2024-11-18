@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import * as moment from 'moment';
+import moment from 'moment';
 import * as chalk from 'chalk';
 import { Request } from 'express';
 import {

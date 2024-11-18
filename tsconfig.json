@@ -11,6 +11,7 @@
 			"@gauzy/common-angular": ["./packages/common-angular/src/index.ts"],
 			"@gauzy/config": ["./packages/config/src/index.ts"],
 			"@gauzy/contracts": ["./packages/contracts/src/index.ts"],
+			"@gauzy/core": ["./packages/core/src/index.ts"],
 			"@gauzy/desktop-timer": ["./packages/desktop-timer/src/index.ts"],
 			"@gauzy/desktop-ui-lib": ["./packages/desktop-ui-lib/src/index.ts"],
 			"@gauzy/desktop-window": ["./packages/desktop-window/src/index.ts"],

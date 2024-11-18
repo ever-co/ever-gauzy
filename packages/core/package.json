@@ -9,36 +9,27 @@
 	},
 	"license": "AGPL-3.0",
 	"private": true,
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"files": [
-		"dist"
-	],
-	"directories": {
-		"lib": "dist",
-		"test": "__test__"
-	},
-	"publishConfig": {
-		"access": "restricted"
-	},
+	"main": "./src/index.ts",
+	"typings": "./src/index.d.ts",
 	"scripts": {
-		"lint": "tslint -p tsconfig.json",
-		"test": "jest",
-		"test:e2e": "jest --config ./__test__/jest.config.json",
-		"typeorm": "ts-node -r tsconfig-paths/register ./../../node_modules/typeorm/cli.js",
-		"migration:run": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn ts-node -r tsconfig-paths/register ./src/database/migration.ts migration:run",
-		"migration:generate": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn ts-node -r tsconfig-paths/register ./src/database/migration.ts migration:generate",
-		"migration:revert": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn ts-node -r tsconfig-paths/register ./src/database/migration.ts migration:revert",
-		"migration:create": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn ts-node -r tsconfig-paths/register ./src/database/migration.ts migration:create",
-		"build": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn nest build",
-		"build:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn nest build && yarn run postbuild",
-		"postbuild": "yarn run copy-files",
-		"copy-files": "copyfiles -u 1 src/**/**/*.gql src/**/**/*.hbs src/**/**/*.mjml src/**/*.csv src/**/*.json dist/",
-		"prepublishOnly": "yarn run build",
+		"copy-gql": "copyfiles -u 1 src/**/**/*.gql dist/",
+		"copy-hbs": "copyfiles -u 1 src/**/**/*.hbs dist/",
+		"copy-mjml": "copyfiles -u 1 src/**/**/*.mjml dist/",
+		"copy-csv": "copyfiles -u 1 src/**/*.csv dist/",
+		"copy-json": "copyfiles -u 1 src/**/*.json dist/",
+		"copy-files": "yarn copy-gql && yarn copy-hbs && yarn copy-mjml && yarn copy-csv && yarn copy-json",
 		"start:api": "nodemon",
-		"start:api:debug": "nodemon --config nodemon-debug.json"
+		"start:api:debug": "nodemon --config nodemon-debug.json",
+		"lib:build": "yarn nx build core --configuration=development",
+		"lib:build:prod": "yarn nx build core --configuration=production",
+		"lib:watch": "yarn nx build core --configuration=development --watch",
+		"postbuild": "yarn run copy-files",
+		"typeorm": "ts-node -r tsconfig-paths/register ./../../node_modules/typeorm/cli.js",
+		"migration:run": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn ts-node -r tsconfig-paths/register ./src/lib/database/migration.ts migration:run",
+		"migration:generate": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn ts-node -r tsconfig-paths/register ./src/lib/database/migration.ts migration:generate",
+		"migration:revert": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn ts-node -r tsconfig-paths/register ./src/lib/database/migration.ts migration:revert",
+		"migration:create": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn ts-node -r tsconfig-paths/register ./src/lib/database/migration.ts migration:create"
 	},
-	"keywords": [],
 	"dependencies": {
 		"@apollo/client": "^3.6.2",
 		"@apollo/server": "^4.9.5",
@@ -230,21 +221,36 @@
 		"tslint-config-prettier": "^1.18.0",
 		"typescript": "5.1.6"
 	},
-	"jest": {
-		"moduleFileExtensions": [
-			"js",
-			"json",
-			"ts"
-		],
-		"rootDir": "src",
-		"testRegex": ".*\\.spec\\.ts$",
-		"transform": {
-			"^.+\\.(t|j)s$": "ts-jest"
-		},
-		"collectCoverageFrom": [
-			"**/*.(t|j)s"
-		],
-		"coverageDirectory": "../coverage/packages/core",
-		"testEnvironment": "node"
-	}
+	"keywords": [
+		"gauzy",
+		"core",
+		"erp",
+		"crm",
+		"hrm",
+		"api",
+		"framework",
+		"nestjs",
+		"microservices",
+		"graphql",
+		"typeorm",
+		"open-source",
+		"enterprise",
+		"business",
+		"headless",
+		"platform",
+		"software",
+		"saas",
+		"authentication",
+		"authorization",
+		"api-core",
+		"backend",
+		"server",
+		"i18n",
+		"integration"
+	],
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
 }
