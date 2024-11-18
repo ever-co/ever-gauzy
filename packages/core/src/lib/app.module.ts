@@ -9,7 +9,7 @@ import { ClsModule, ClsService } from 'nestjs-cls';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 import { initialize as initializeUnleash, InMemStorageProvider, UnleashConfig } from 'unleash-client';
 import * as path from 'path';
-import moment from 'moment';
+import * as moment from 'moment';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { ConfigService, environment } from '@gauzy/config';
 import { ThrottlerBehindProxyGuard } from './throttler/throttler-behind-proxy.guard';

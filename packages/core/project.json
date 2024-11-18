@@ -23,7 +23,12 @@
 				"packageJson": "packages/core/package.json",
 				"main": "packages/core/src/index.ts",
 				"assets": [
-					"packages/core/*.md"
+					"packages/core/*.md",
+					{
+						"input": "packages/core/src",
+						"output": "src",
+						"glob": "**/*.{gql,hbs,mjml,csv,json}"
+					}
 				]
 			}
 		},
