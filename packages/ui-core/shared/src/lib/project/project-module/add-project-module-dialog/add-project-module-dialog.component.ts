@@ -17,7 +17,9 @@ import {
 	ISelectedEmployee,
 	ITask,
 	ProjectModuleStatusEnum,
-	TaskParticipantEnum
+	TaskParticipantEnum,
+	IGetTaskOptions,
+	ID
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
@@ -48,10 +50,43 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 	taskParticipantEnum = TaskParticipantEnum;
 	participants = TaskParticipantEnum.EMPLOYEES;
 	ckConfig: CKEditor4.Config = richTextCKEditorConfig;
+	projectModuleStatuses = Object.values(ProjectModuleStatusEnum);
+	form: UntypedFormGroup = this.fb.group({
+		name: ['', Validators.required],
+		description: [''],
+		status: [ProjectModuleStatusEnum.BACKLOG],
+		startDate: ['', Validators.required],
+		endDate: ['', Validators.required],
+		isFavorite: [false],
+		parentId: [],
+		projectId: [null, Validators.required],
+		managerId: [],
+		members: [],
+		organizationSprints: [],
+		teams: [],
+		tasks: []
+	});
+
 	@Input() createModule = false;
 
-	form: UntypedFormGroup = AddProjectModuleDialogComponent.buildForm(this.fb);
-	projectModuleStatuses = Object.values(ProjectModuleStatusEnum);
+	private _projectModule: IOrganizationProjectModule;
+	get projectModule(): IOrganizationProjectModule {
+		return this._projectModule;
+	}
+	@Input() set projectModule(value: IOrganizationProjectModule) {
+		this._projectModule = value;
+
+		this.populateForm(value);
+	}
+
+	private _project: IOrganizationProject;
+	get project(): IOrganizationProject {
+		return this._project;
+	}
+	@Input() set project(value: IOrganizationProject) {
+		this._project = value;
+		this.form.get('projectId').setValue(value?.id || null);
+	}
 
 	constructor(
 		public dialogRef: NbDialogRef<AddProjectModuleDialogComponent>,
@@ -67,47 +102,7 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 		super(translateService);
 	}
 
-	/**
-	 * Initializes the form structure with default values and validators.
-	 */
-	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
-		return fb.group({
-			name: ['', Validators.required],
-			description: [''],
-			status: [ProjectModuleStatusEnum.BACKLOG],
-			startDate: ['', Validators.required],
-			endDate: ['', Validators.required],
-			isFavorite: [false],
-			parentId: [],
-			projectId: [null, Validators.required],
-			managerId: [],
-			members: [],
-			organizationSprints: [],
-			teams: [],
-			tasks: []
-		});
-	}
 
-	private _projectModule: IOrganizationProjectModule;
-	@Input()
-	get projectModule(): IOrganizationProjectModule {
-		return this._projectModule;
-	}
-	set projectModule(value: IOrganizationProjectModule) {
-		this._projectModule = value;
-
-		this.populateForm(value);
-	}
-
-	private _project: IOrganizationProject;
-	@Input()
-	get project(): IOrganizationProject {
-		return this._project;
-	}
-	set project(value: IOrganizationProject) {
-		this._project = value;
-		this.form.get('projectId').setValue(value?.id || null);
-	}
 
 	/**
 	 * Initializes component and loads necessary data.
@@ -199,61 +194,104 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 	}
 
 	/**
-	 * Loads available employees for the selected organization.
+	 * Loads the employees for the currently selected organization.
+	 *
+	 * Retrieves all employees associated with the current organization and tenant,
+	 * including their user details, and assigns them to the `employees` property.
 	 */
-	async loadEmployees() {
+	async loadEmployees(): Promise<void> {
 		if (!this.organization) return;
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		const { items = [] } = await firstValueFrom(
-			this.employeesService.getAll(['user'], { organizationId, tenantId })
-		);
-		this.employees = items;
+
+		const { id: organizationId, tenantId } = this.organization;
+
+		try {
+			const { items: employees = [] } = await firstValueFrom(
+				this.employeesService.getAll(['user'], { organizationId, tenantId })
+			);
+			this.employees = employees;
+		} catch (error) {
+			console.error('Failed to load employees:', error);
+			this.employees = [];
+		}
 	}
 
 	/**
 	 * Loads available teams for the selected organization.
+	 *
+	 * Retrieves all teams associated with the current organization and tenant,
+	 * including their members, and assigns them to the `teams` property.
 	 */
-	async loadTeams() {
+	async loadTeams(): Promise<void> {
 		if (!this.organization) return;
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		const { items = [] } = await this.organizationTeamsService.getAll(['members'], { organizationId, tenantId });
-		this.teams = items;
+
+		const { id: organizationId, tenantId } = this.organization;
+
+		try {
+			const { items: teams = [] } = await this.organizationTeamsService.getAll(
+				['members'],
+				{ organizationId, tenantId }
+			);
+			this.teams = teams;
+		} catch (error) {
+			this.teams = [];
+		}
 	}
 
-	async loadTasks() {
-		const queryOption: any = {
-			projectId: this.form.get('projectId')?.value,
-			organizationId: this.organization.id,
-			tenantId: this.store.user.tenantId
-		};
+	/**
+	 * Loads available tasks for the selected project and organization.
+	 *
+	 * Retrieves all tasks associated with the current organization, tenant,
+	 * and selected project, then assigns them to the `tasks` property.
+	 */
+	async loadTasks(): Promise<void> {
 		if (!this.organization) return;
-		const { items = [] } = await firstValueFrom(this.tasksService.getAllTasks({ ...queryOption }));
-		this.tasks = items;
+
+		const { id: organizationId, tenantId } = this.organization;
+		const projectId = this.form.get('projectId')?.value;
+
+		try {
+			const { items: tasks = [] } = await firstValueFrom(
+				this.tasksService.getAllTasks({ projectId, organizationId, tenantId })
+			);
+			this.tasks = tasks;
+		} catch (error) {
+			this.tasks = [];
+		}
 	}
 
 	/**
 	 * Loads available parent modules based on the selected project ID.
+	 *
+	 * Retrieves parent modules associated with the selected project and assigns
+	 * them to the `availableParentModules` property.
 	 */
-	private async loadAvailableParentModules() {
+	private async loadAvailableParentModules(): Promise<void> {
 		if (!this.organization) return;
-		const modules = await firstValueFrom(
-			this.organizationProjectModuleService.get<IOrganizationProjectModule>({
-				projectId: this.form.get('projectId')?.value
-			})
-		);
-		this.availableParentModules = modules?.items || [];
+
+		const projectId = this.form.get('projectId')?.value;
+
+		try {
+			const modules = await firstValueFrom(
+				this.organizationProjectModuleService.get<IOrganizationProjectModule>({ projectId })
+			);
+			this.availableParentModules = modules?.items || [];
+		} catch (error) {
+			this.availableParentModules = [];
+		}
 	}
 
 	/**
 	 * Fetches sprints associated with the organization.
 	 */
-	findOrganizationSprints() {
-		this.organizationSprintService.getAllSprints().subscribe(
-			(sprints) => (this.organizationSprints = sprints.items),
-			(error) => console.error('Error fetching organization sprints:', error)
-		);
+	findOrganizationSprints(): void {
+		this.organizationSprintService.getAllSprints().subscribe({
+			next: (sprints) => {
+				this.organizationSprints = sprints.items;
+			},
+			error: (error) => {
+				console.error('Error fetching organization sprints:', error);
+			}
+		});
 	}
 
 	/**
@@ -265,11 +303,21 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 		this.form.get('managerId').setValue(employee.id);
 	}
 
-	onTeamsSelected(teamsSelection: string[]) {
-		this.selectedTeams = teamsSelection;
+	/**
+	 * Updates the selected teams based on the user's selection.
+	 *
+	 * @param teamsSelection - An array of team IDs selected by the user.
+	 */
+	onTeamsSelected(teamsSelection: ID[]): void {
+		this.selectedTeams = [...teamsSelection];
 	}
 
-	onMembersSelected(members: string[]) {
-		this.selectedMembers = members;
+	/**
+	 * Updates the selected members based on the user's selection.
+	 *
+	 * @param members - An array of member IDs selected by the user.
+	 */
+	onMembersSelected(members: ID[]): void {
+		this.selectedMembers = [...members];
 	}
 }
