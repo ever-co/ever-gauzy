@@ -1,4 +1,4 @@
-export * from './lib/job-proposal.plugin';
-export { ProposalModule } from './lib/proposal/proposal.module';
-export { ProposalService } from './lib/proposal/proposal.service';
-export { ProposalCreateCommand } from './lib/proposal/commands';
+/**
+ * Public API Surface of @gauzy/plugin-job-proposal
+ */
+export * from './lib/public-api';

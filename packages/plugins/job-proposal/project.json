@@ -3,42 +3,40 @@
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
 	"sourceRoot": "packages/plugins/job-proposal/src",
 	"projectType": "library",
+	"release": {
+		"version": {
+			"generatorOptions": {
+				"packageRoot": "dist\\{projectRoot}",
+				"currentVersionResolver": "git-tag"
+			}
+		}
+	},
 	"tags": [],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "./packages/plugins/job-proposal/dist",
+				"outputPath": "dist/packages/plugins/job-proposal",
 				"tsConfig": "packages/plugins/job-proposal/tsconfig.lib.json",
 				"packageJson": "packages/plugins/job-proposal/package.json",
 				"main": "packages/plugins/job-proposal/src/index.ts",
 				"assets": ["packages/plugins/job-proposal/*.md"]
 			}
 		},
-		"publish": {
-			"executor": "nx:run-commands",
+		"nx-release-publish": {
 			"options": {
-				"command": "node tools/scripts/publish.mjs plugin-job-proposal {args.ver} {args.tag}"
-			},
-			"dependsOn": ["build"]
+				"packageRoot": "dist\\{projectRoot}"
+			}
 		},
 		"lint": {
-			"executor": "@nx/eslint:lint",
-			"outputs": ["{options.outputFile}"]
+			"executor": "@nx/eslint:lint"
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
-				"jestConfig": "packages/plugins/job-proposal/jest.config.ts",
-				"passWithNoTests": true
-			},
-			"configurations": {
-				"ci": {
-					"ci": true,
-					"codeCoverage": true
-				}
+				"jestConfig": "packages/plugins/job-proposal/jest.config.ts"
 			}
 		}
 	}
