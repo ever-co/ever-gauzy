@@ -8,7 +8,6 @@
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
-	"license": "AGPL-3.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ever-co/ever-gauzy"
@@ -17,34 +16,14 @@
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"homepage": "https://ever.co",
-	"keywords": [
-		"jira",
-		"plugin",
-		"integration",
-		"Ever Gauzy",
-		"NestJS",
-		"typescript",
-		"project management",
-		"APIs",
-		"microservices"
-	],
+	"license": "AGPL-3.0",
 	"private": true,
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"files": [
-		"dist"
-	],
-	"directories": {
-		"lib": "dist",
-		"test": "__test__"
-	},
-	"publishConfig": {
-		"access": "restricted"
-	},
+	"main": "./src/index.ts",
+	"typings": "./src/index.d.ts",
 	"scripts": {
-		"test:e2e": "jest --config ./jest.config.ts",
-		"build": "rimraf dist && tsc -p tsconfig.lib.json",
-		"build:prod": "rimraf dist && tsc -p tsconfig.lib.prod.json"
+		"lib:build": "yarn nx build plugin-integration-jira --configuration=development",
+		"lib:build:prod": "yarn nx build plugin-integration-jira --configuration=production",
+		"lib:watch": "yarn nx build plugin-integration-jira --watch --configuration=development"
 	},
 	"dependencies": {
 		"@gauzy/config": "^0.1.0",
@@ -59,6 +38,17 @@
 		"@types/node": "^20.14.9",
 		"typescript": "5.1.6"
 	},
+	"keywords": [
+		"jira",
+		"plugin",
+		"integration",
+		"Ever Gauzy",
+		"NestJS",
+		"typescript",
+		"project management",
+		"APIs",
+		"microservices"
+	],
 	"engines": {
 		"node": ">=20.11.1",
 		"yarn": ">=1.22.19"

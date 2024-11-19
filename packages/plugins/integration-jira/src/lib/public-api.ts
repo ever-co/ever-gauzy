@@ -1,4 +1,4 @@
 /**
  * Public API Surface of @gauzy/plugin-integration-jira
  */
-export * from './lib/public-api';
+export * from './integration-jira.plugin';
