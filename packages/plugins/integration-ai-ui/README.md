@@ -8,11 +8,11 @@ This library was generated with [Nx](https://nx.dev). It contains the AI Integra
 
 ## Building
 
-Run `nx build plugin-integration-ai-ui` to build the library.
+Run `yarn nx build plugin-integration-ai-ui` to build the library.
 
 ## Running unit tests
 
-Run `nx test plugin-integration-ai-ui` to execute the unit tests.
+Run `yarn nx test plugin-integration-ai-ui` to execute the unit tests.
 
 ## Installation
 

@@ -1,7 +1,6 @@
 {
 	"name": "@gauzy/plugin-integration-ai-ui",
 	"version": "0.1.0",
-	"type": "commonjs",
 	"description": "",
 	"author": {
 		"name": "Ever Co. LTD",
