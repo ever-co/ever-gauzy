@@ -1,20 +1,23 @@
-docker
-tmp
-README.md
-.env
-
-# git
-
+# Ignore Git related files and directories
 .git
 .gitignore
 .gitmodules
 
-# dependencies
+# Ignore README file
+README.md
 
+# Ignore Docker-related files and directories
+docker
+
+# Ignore Node.js modules
 node_modules
 
-# misc
+# Ignore temporary files and directories
+tmp
 
-npm-debug.log
-dist
+# Ignore build and compilation output
 build
+dist
+
+# Ignore environment configuration files
+.env
