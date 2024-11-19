@@ -79,7 +79,6 @@
 		"@types/multer": "^1.4.11",
 		"@types/node": "^20.14.9",
 		"@types/uuid": "^3.4.4",
-		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"
 	},
 	"engines": {

@@ -23,9 +23,9 @@
 	"devDependencies": {
 		"@types/jest": "^29.4.4",
 		"@types/node": "^20.14.9",
-		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"
 	},
+	"keywords": [],
 	"engines": {
 		"node": ">=20.11.1",
 		"yarn": ">=1.22.19"

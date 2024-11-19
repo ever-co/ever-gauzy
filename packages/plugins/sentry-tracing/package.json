@@ -25,6 +25,9 @@
 		"lib:build:prod": "yarn nx build plugin-sentry --configuration=production",
 		"lib:watch": "yarn nx build plugin-sentry --watch --configuration=development"
 	},
+	"peerDependencies": {
+		"tslib": "^2.6.2"
+	},
 	"dependencies": {
 		"@gauzy/config": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
@@ -41,7 +44,6 @@
 	"devDependencies": {
 		"@types/jest": "^29.4.4",
 		"@types/node": "^20.14.9",
-		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"
 	},
 	"keywords": [
