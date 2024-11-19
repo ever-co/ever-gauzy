@@ -30,6 +30,7 @@
 			"@gauzy/plugin-legal-ui": ["./packages/plugins/legal-ui/src/index.ts"],
 			"@gauzy/plugin-maintenance-ui": ["./packages/plugins/maintenance-ui/src/index.ts"],
 			"@gauzy/plugin-onboarding-ui": ["./packages/plugins/onboarding-ui/src/index.ts"],
+			"@gauzy/plugin-product-reviews": ["packages/plugins/product-reviews/src/index.ts"],
 			"@gauzy/plugin-public-layout-ui": ["./packages/plugins/public-layout-ui/src/index.ts"],
 			"@gauzy/plugin-sentry": ["./packages/plugins/sentry-tracing/src/index.ts"],
 			"@gauzy/ui-auth": ["./packages/ui-auth/src/index.ts"],
