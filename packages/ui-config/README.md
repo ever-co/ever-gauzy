@@ -4,7 +4,7 @@ This library was generated with [Nx](https://nx.dev).
 
 ## Features
 
--   **Environment Settings:** Provides environment settings and configurations to be shared across various Angular applications within the Gauzy ecosystem.
+- **Environment Settings:** Provides environment settings and configurations to be shared across various Angular applications within the Gauzy ecosystem.
 
 ## Getting Started
 
@@ -12,11 +12,15 @@ The `@gauzy/ui-config` library is generated with [Nx](https://nx.dev) and is int
 
 ## Table of Contents
 
--   [Installation](#installation)
--   [Usage](#usage)
--   [Development](#development)
--   [Contributing](#contributing)
--   [License](#license)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Development](#development)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Running unit tests
+
+Run `nx test ui-config` to execute the unit tests.
 
 ## Installation
 
@@ -27,7 +31,3 @@ npm install @gauzy/ui-auth
 # or
 yarn add @gauzy/ui-auth
 ```
-
-## Running unit tests
-
-Run `nx test ui-config` to execute the unit tests.

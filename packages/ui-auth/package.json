@@ -8,7 +8,6 @@
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
-	"license": "AGPL-3.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ever-co/ever-gauzy"
@@ -17,14 +16,7 @@
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"homepage": "https://ever.co",
-	"keywords": [
-		"angular",
-		"ui",
-		"authentication",
-		"auth",
-		"gauzy",
-		"ever-co"
-	],
+	"license": "AGPL-3.0",
 	"private": true,
 	"scripts": {
 		"lib:build": "yarn nx build ui-auth --configuration=development",
@@ -33,7 +25,7 @@
 	},
 	"peerDependencies": {
 		"@angular/common": "^17.3.0",
-		"@angular/core": "^17.3.12"
+		"@angular/core": "^17.3.0"
 	},
 	"dependencies": {
 		"@angular/forms": "17.3.12",
@@ -54,6 +46,14 @@
 		"@types/node": "^20.14.9",
 		"jest-preset-angular": "14.0.4"
 	},
+	"keywords": [
+		"angular",
+		"ui",
+		"authentication",
+		"auth",
+		"gauzy",
+		"ever-co"
+	],
 	"engines": {
 		"node": ">=20.11.1",
 		"yarn": ">=1.22.19"

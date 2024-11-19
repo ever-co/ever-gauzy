@@ -8,7 +8,6 @@
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
-	"license": "AGPL-3.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ever-co/ever-gauzy"
@@ -17,27 +16,10 @@
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"homepage": "https://ever.co",
-	"keywords": [
-		"gauzy",
-		"angular",
-		"configuration",
-		"environment",
-		"settings",
-		"library"
-	],
+	"license": "AGPL-3.0",
 	"private": true,
-	"main": "src/index.ts",
-	"typings": "src/index.ts",
-	"files": [
-		"dist"
-	],
-	"directories": {
-		"lib": "dist",
-		"test": "__test__"
-	},
-	"publishConfig": {
-		"access": "restricted"
-	},
+	"main": "./src/index.ts",
+	"typings": "./src/index.d.ts",
 	"scripts": {
 		"lib:build": "yarn nx build ui-config --configuration=development",
 		"lib:build:prod": "cross-env NODE_ENV=production yarn ts-node scripts/replace-env-files.ts --environment=prod && yarn nx build ui-config --configuration=production",
@@ -57,6 +39,14 @@
 		"cross-env": "^7.0.3",
 		"jest-preset-angular": "14.0.4"
 	},
+	"keywords": [
+		"gauzy",
+		"angular",
+		"configuration",
+		"environment",
+		"settings",
+		"library"
+	],
 	"engines": {
 		"node": ">=20.11.1",
 		"yarn": ">=1.22.19"

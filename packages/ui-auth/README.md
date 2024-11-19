@@ -11,6 +11,14 @@ The `@gauzy/ui-auth` library provides authentication-related components, service
 
 The `@gauzy/ui-auth` library is generated with [Nx](https://nx.dev) and is intended to be used within the Gauzy ecosystem. Before installing, make sure you have a Gauzy workspace set up and that all necessary dependencies are in place.
 
+## Building
+
+Run `yarn nx build ui-auth` to build the library.
+
+## Running unit tests
+
+Run `yarn nx test ui-auth` to execute the unit tests.
+
 ## Installation
 
 To install `@gauzy/ui-auth` in your Gauzy project, run one of the following commands in your terminal:
@@ -20,7 +28,3 @@ npm install @gauzy/ui-auth
 # or
 yarn add @gauzy/ui-auth
 ```
-
-## Running unit tests
-
-Run `nx test ui-auth` to execute the unit tests.
