@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { RelationId } from 'typeorm';
-import { EntityRepositoryType } from '@mikro-orm/knex';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ISocialAccount, IUser, ProviderEnum } from '@gauzy/contracts';
 import { TenantBaseEntity, User } from '../../core/entities/internal';
