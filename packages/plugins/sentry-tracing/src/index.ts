@@ -1,2 +1,4 @@
-export * from './lib/sentry.plugin';
-export * from './lib/ntegral/sentry.service';
+/**
+ * Public API Surface of @gauzy/plugin-sentry
+ */
+export * from './lib/public-api';

@@ -8,7 +8,6 @@
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
-	"license": "AGPL-3.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ever-co/ever-gauzy"
@@ -17,33 +16,14 @@
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"homepage": "https://ever.co",
-	"keywords": [
-		"gauzy",
-		"sentry",
-		"plugin",
-		"error-tracking",
-		"monitoring",
-		"nestjs",
-		"typescript",
-		"logging",
-		"observability"
-	],
+	"license": "AGPL-3.0",
 	"private": true,
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"files": [
-		"dist/**/*"
-	],
-	"directories": {
-		"lib": "dist"
-	},
-	"publishConfig": {
-		"access": "restricted"
-	},
+	"main": "./src/index.ts",
+	"typings": "./src/index.d.ts",
 	"scripts": {
-		"test:e2e": "jest --config ./jest.config.ts",
-		"build": "rimraf dist && tsc -p tsconfig.lib.json",
-		"build:prod": "rimraf dist && tsc -p tsconfig.lib.prod.json"
+		"lib:build": "yarn nx build plugin-sentry --configuration=development",
+		"lib:build:prod": "yarn nx build plugin-sentry --configuration=production",
+		"lib:watch": "yarn nx build plugin-sentry --watch --configuration=development"
 	},
 	"dependencies": {
 		"@gauzy/config": "^0.1.0",
@@ -64,6 +44,17 @@
 		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"
 	},
+	"keywords": [
+		"gauzy",
+		"sentry",
+		"plugin",
+		"error-tracking",
+		"monitoring",
+		"nestjs",
+		"typescript",
+		"logging",
+		"observability"
+	],
 	"engines": {
 		"node": ">=20.11.1",
 		"yarn": ">=1.22.19"
