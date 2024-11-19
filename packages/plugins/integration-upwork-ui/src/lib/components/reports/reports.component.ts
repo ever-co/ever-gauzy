@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Observable, Subject, catchError, debounceTime, filter, of, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbCalendarRange } from '@nebular/theme';
-import moment from 'moment';
+import * as moment from 'moment';
 import { Cell } from 'angular2-smart-table';
 import { IncomeTypeEnum, IOrganization, IUpworkDateRange } from '@gauzy/contracts';
 import { Store, UpworkStoreService } from '@gauzy/ui-core/core';

@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"outDir": "../../../dist/out-tsc",
 		"declaration": true,
-		"types": ["node"],
+		"types": ["node", "multer"],
 		"target": "es2021",
 		"strictNullChecks": false,
 		"noImplicitAny": false,

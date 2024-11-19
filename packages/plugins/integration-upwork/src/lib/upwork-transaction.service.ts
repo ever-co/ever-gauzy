@@ -3,7 +3,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
 import * as fse from 'fs-extra';
-import * as csv from 'csv-parser';
+import csv from 'csv-parser';
 import { OrganizationVendorEnum, ExpenseCategoriesEnum, IncomeTypeEnum } from '@gauzy/contracts';
 import {
 	EmployeeService,
