@@ -4,13 +4,17 @@ This library was generated with [Nx](https://nx.dev). It contains the public-lay
 
 ## Features
 
--   **Public-layout UI Plugin:** Provides a user-friendly interface for public views and interactions in the Gauzy platform.
+- **Public-layout UI Plugin:** Provides a user-friendly interface for public views and interactions in the Gauzy platform.
+
+## Building
+
+Run `yarn nx build plugin-public-layout-ui` to build the library.
 
 ## Running unit tests
 
-Run `nx test plugin-public-layout-ui` to execute the unit tests.
+Run `yarn nx test plugin-public-layout-ui` to execute the unit tests.
 
-# Installation
+## Installation
 
 Install the public-layout UI Plugin using your preferred package manager:
 

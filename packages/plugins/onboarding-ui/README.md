@@ -4,13 +4,17 @@ This library was generated with [Nx](https://nx.dev). It contains the Onboarding
 
 ## Features
 
--   **Onboarding UI Plugin:** Provides a user-friendly interface for onboarding new users into the Gauzy platform.
+- **Onboarding UI Plugin:** Provides a user-friendly interface for onboarding new users into the Gauzy platform.
+
+## Building
+
+Run `yarn nx build plugin-onboarding-ui` to build the library.
 
 ## Running unit tests
 
-Run `nx test plugin-onboarding-ui` to execute the unit tests.
+Run `yarn nx test plugin-onboarding-ui` to execute the unit tests.
 
-# Installation
+## Installation
 
 Install the Onboarding UI Plugin using your preferred package manager:
 
