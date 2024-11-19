@@ -2,13 +2,12 @@
 	"name": "@gauzy/ui-core",
 	"version": "0.1.0",
 	"description": "A collection of core UI components and utilities for the Gauzy framework. This library provides essential building blocks for constructing user interfaces, designed to be flexible and reusable in various Angular applications.",
+	"type": "commonjs",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
-	"license": "AGPL-3.0",
-	"private": true,
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ever-co/ever-gauzy"
@@ -17,16 +16,8 @@
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"homepage": "https://ever.co",
-	"files": [
-		"dist"
-	],
-	"directories": {
-		"lib": "dist",
-		"test": "__test__"
-	},
-	"publishConfig": {
-		"access": "restricted"
-	},
+	"license": "AGPL-3.0",
+	"private": true,
 	"scripts": {
 		"lib:build": "yarn nx build ui-core --configuration=development",
 		"lib:build:prod": "yarn nx build ui-core --configuration=production",
