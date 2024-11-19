@@ -1,11 +1,25 @@
 # Integration Upwork
 
-This library was generated with [Nx](https://nx.dev).
+This library was generated with [Nx](https://nx.dev). It contains the Upwork Integration plugin for the Gauzy platform.
+
+## Overview
+
+This plugin provides integration with Upwork APIs. It allows you to manage freelance projects and job postings, track job applications, and generate job offers.
 
 ## Building
 
-Run `yarn run build` to build the library.
+Run `yarn nx build plugin-integration-upwork` to build the library.
 
 ## Running unit tests
 
-Run `yarn run test:e2e` to execute the unit tests via [Jest](https://jestjs.io).
+Run `yarn nx test plugin-integration-upwork` to execute the unit tests via [Jest](https://jestjs.io).
+
+## Installation
+
+Install the Integration Upwork plugin using your preferred package manager:
+
+```bash
+npm install @gauzy/plugin-integration-upwork
+# or
+yarn add @gauzy/plugin-integration-upwork
+```

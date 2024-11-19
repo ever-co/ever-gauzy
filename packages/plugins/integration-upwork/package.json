@@ -17,39 +17,13 @@
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"homepage": "https://ever.co",
-	"keywords": [
-		"gauzy",
-		"upwork",
-		"integration",
-		"plugin",
-		"nestjs",
-		"ever-co",
-		"typescript",
-		"api",
-		"cqrs",
-		"express",
-		"nestjs-plugin"
-	],
 	"private": true,
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"files": [
-		"dist"
-	],
-	"directories": {
-		"lib": "dist",
-		"test": "__test__"
-	},
-	"publishConfig": {
-		"access": "restricted"
-	},
+	"main": "./src/index.js",
+	"typings": "./src/index.d.ts",
 	"scripts": {
-		"test:e2e": "jest --config ./jest.config.ts",
-		"build": "rimraf dist && tsc -p tsconfig.lib.json",
-		"build:prod": "rimraf dist && tsc -p tsconfig.lib.prod.json"
-	},
-	"peerDependencies": {
-		"tslib": "^2.6.2"
+		"lib:build": "yarn nx build plugin-integration-upwork --configuration=development",
+		"lib:build:prod": "yarn nx build plugin-integration-upwork --configuration=production",
+		"lib:watch": "yarn nx build plugin-integration-upwork --watch --configuration=development"
 	},
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",
@@ -67,6 +41,7 @@
 		"express": "^4.18.2",
 		"fs-extra": "^10.1.0",
 		"moment": "^2.30.1",
+		"tslib": "^2.6.2",
 		"typeorm": "^0.3.20",
 		"underscore": "^1.13.3",
 		"upwork-api": "^1.3.8",
@@ -81,6 +56,19 @@
 		"@types/uuid": "^3.4.4",
 		"typescript": "5.1.6"
 	},
+	"keywords": [
+		"gauzy",
+		"upwork",
+		"integration",
+		"plugin",
+		"nestjs",
+		"ever-co",
+		"typescript",
+		"api",
+		"cqrs",
+		"express",
+		"nestjs-plugin"
+	],
 	"engines": {
 		"node": ">=20.11.1",
 		"yarn": ">=1.22.19"
