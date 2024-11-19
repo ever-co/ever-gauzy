@@ -1,14 +1,12 @@
 {
 	"name": "@gauzy/plugin-job-proposal-ui",
 	"version": "0.1.0",
-	"type": "commonjs",
 	"description": "A UI plugin for managing job proposals within the Ever Gauzy platform.",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
-	"license": "AGPL-3.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ever-co/ever-gauzy"
@@ -17,15 +15,7 @@
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"homepage": "https://ever.co",
-	"keywords": [
-		"Ever Gauzy",
-		"job proposal",
-		"UI plugin",
-		"Angular",
-		"ngx-translate",
-		"smart table",
-		"job management"
-	],
+	"license": "AGPL-3.0",
 	"private": true,
 	"scripts": {
 		"lib:build": "yarn nx build plugin-job-proposal-ui --configuration=development",
@@ -59,6 +49,15 @@
 		"@types/node": "^20.14.9",
 		"jest-preset-angular": "14.0.4"
 	},
+	"keywords": [
+		"Ever Gauzy",
+		"job proposal",
+		"UI plugin",
+		"Angular",
+		"ngx-translate",
+		"smart table",
+		"job management"
+	],
 	"engines": {
 		"node": ">=20.11.1",
 		"yarn": ">=1.22.19"
