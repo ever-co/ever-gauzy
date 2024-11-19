@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { WakatimeModule } from '@gauzy/integration-wakatime';
+import { WakatimeModule } from '@gauzy/plugin-integration-wakatime';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database.module';

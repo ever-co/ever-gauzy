@@ -3,42 +3,40 @@
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
 	"sourceRoot": "packages/plugins/integration-wakatime/src",
 	"projectType": "library",
+	"release": {
+		"version": {
+			"generatorOptions": {
+				"packageRoot": "dist\\{projectRoot}",
+				"currentVersionResolver": "git-tag"
+			}
+		}
+	},
 	"tags": [],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "./packages/plugins/integration-wakatime/dist",
+				"outputPath": "dist/packages/plugins/integration-wakatime",
 				"tsConfig": "packages/plugins/integration-wakatime/tsconfig.lib.json",
 				"packageJson": "packages/plugins/integration-wakatime/package.json",
 				"main": "packages/plugins/integration-wakatime/src/index.ts",
 				"assets": ["packages/plugins/integration-wakatime/*.md"]
 			}
 		},
-		"publish": {
-			"executor": "nx:run-commands",
+		"nx-release-publish": {
 			"options": {
-				"command": "node tools/scripts/publish.mjs plugin-integration-wakatime {args.ver} {args.tag}"
-			},
-			"dependsOn": ["build"]
+				"packageRoot": "dist\\{projectRoot}"
+			}
 		},
 		"lint": {
-			"executor": "@nx/eslint:lint",
-			"outputs": ["{options.outputFile}"]
+			"executor": "@nx/eslint:lint"
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
-				"jestConfig": "packages/plugins/integration-wakatime/jest.config.ts",
-				"passWithNoTests": true
-			},
-			"configurations": {
-				"ci": {
-					"ci": true,
-					"codeCoverage": true
-				}
+				"jestConfig": "packages/plugins/integration-wakatime/jest.config.ts"
 			}
 		}
 	}

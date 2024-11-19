@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import moment from 'moment';
+import * as moment from 'moment';
 import { Wakatime } from './wakatime.entity';
 import { TypeOrmWakatimeRepository } from './repository';
 

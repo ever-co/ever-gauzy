@@ -6,8 +6,8 @@ This library was generated with [Nx](https://nx.dev).
 
 ## Building
 
-Run `npm run build` to build the library.
+Run `nx build plugin-integration-wakatime` to build the library.
 
 ## Running unit tests
 
-Run `npm run test` to execute the unit tests via [Jest](https://jestjs.io).
+Run `nx test plugin-integration-wakatime` to execute the unit tests via [Jest](https://jestjs.io).
