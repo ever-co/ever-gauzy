@@ -1,12 +1,10 @@
-import { Controller, HttpStatus, Post, UseInterceptors, Body, UseGuards } from '@nestjs/common';
+import { Controller, HttpStatus, Post, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
-import * as path from 'path';
 import { CommandBus } from '@nestjs/cqrs';
 import { ImportStatusEnum, ImportTypeEnum, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { ImportService } from './import.service';
 import { RequestContext } from '../../core/context';
-import { FileStorage, UploadedFileStorage } from '../../core/file-storage';
+import { UploadedFileStorage } from '../../core/file-storage';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { Permissions } from '../../shared/decorators';
 import { ImportHistoryCreateCommand } from '../import-history';

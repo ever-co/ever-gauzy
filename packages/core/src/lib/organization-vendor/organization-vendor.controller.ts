@@ -8,9 +8,7 @@ import {
 	Delete,
 	Param,
 	Put,
-	Body,
-	ValidationPipe,
-	UsePipes
+	Body
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IOrganizationVendor, IPagination } from '@gauzy/contracts';

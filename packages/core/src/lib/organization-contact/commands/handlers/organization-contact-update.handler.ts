@@ -4,7 +4,6 @@ import { IOrganizationContact } from '@gauzy/contracts';
 import { OrganizationContactUpdateCommand } from '../organization-contact-update.command';
 import { OrganizationContactService } from '../../organization-contact.service';
 import { ContactService } from '../../../contact/contact.service';
-import { isNotEmpty } from '@gauzy/common';
 
 @CommandHandler(OrganizationContactUpdateCommand)
 export class OrganizationContactUpdateHandler implements ICommandHandler<OrganizationContactUpdateCommand> {

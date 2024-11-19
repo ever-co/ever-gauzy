@@ -10,8 +10,7 @@ import {
 	Put,
 	Param,
 	ValidationPipe,
-	Post,
-	UsePipes
+	Post
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { FindOptionsWhere } from 'typeorm';

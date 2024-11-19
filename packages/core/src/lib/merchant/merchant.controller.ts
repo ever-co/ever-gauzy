@@ -10,9 +10,7 @@ import {
 	Post,
 	Put,
 	Param,
-	ValidationPipe,
-	BadRequestException,
-	UsePipes
+	BadRequestException
 } from '@nestjs/common';
 import { ApiResponse, ApiOperation } from '@nestjs/swagger';
 import { IMerchant, IPagination, PermissionsEnum } from '@gauzy/contracts';
