@@ -18,7 +18,7 @@
 	"homepage": "https://ever.co",
 	"license": "AGPL-3.0",
 	"private": true,
-	"main": "./src/index.js",
+	"main": "./src/index.ts",
 	"typings": "./src/index.d.ts",
 	"scripts": {
 		"lib:build": "yarn nx build plugin-integration-hubstaff --configuration=development",
