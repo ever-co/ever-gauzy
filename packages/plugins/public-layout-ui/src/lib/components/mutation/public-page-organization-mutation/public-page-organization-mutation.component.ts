@@ -3,7 +3,7 @@ import { Validators, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
-import * as moment from 'moment';
+import moment from 'moment';
 import {
 	IIncome,
 	IOrganization,

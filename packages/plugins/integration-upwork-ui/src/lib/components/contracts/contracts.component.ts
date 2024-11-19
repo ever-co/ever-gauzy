@@ -6,7 +6,7 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Cell } from 'angular2-smart-table';
-import * as moment from 'moment';
+import moment from 'moment';
 import { IEngagement } from '@gauzy/contracts';
 import { ErrorHandlingService, ToastrService, UpworkStoreService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';

@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { NbDateService } from '@nebular/theme';
-import * as moment from 'moment';
+import moment from 'moment';
 import {
 	ITag,
 	IOrganization,

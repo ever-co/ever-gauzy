@@ -2,7 +2,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, OnInit } from '@angular/co
 import { NbCalendarRange, NbDialogRef } from '@nebular/theme';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import * as moment from 'moment';
+import moment from 'moment';
 import { IDateRangeActivityFilter, IntegrationEntity } from '@gauzy/contracts';
 import { HubstaffService } from '@gauzy/ui-core/core';
 

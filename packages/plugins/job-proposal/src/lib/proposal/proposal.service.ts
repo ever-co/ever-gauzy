@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { FindManyOptions, Between, Raw } from 'typeorm';
-import * as moment from 'moment';
+import moment from 'moment';
 import { IPagination } from '@gauzy/contracts';
 import { isPostgres } from '@gauzy/config';
 import { TenantAwareCrudService } from '@gauzy/core';

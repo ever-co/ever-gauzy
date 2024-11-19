@@ -5,7 +5,7 @@ import { EMPTY, Observable, catchError, filter, firstValueFrom, of, switchMap } 
 import { tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
-import * as moment from 'moment';
+import moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { EmployeeAppointmentStatus, ID, IEmployee, IEmployeeAppointment } from '@gauzy/contracts';
 import { EmployeeAppointmentService, EmployeesService, ErrorHandlingService } from '@gauzy/ui-core/core';

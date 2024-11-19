@@ -5,7 +5,7 @@ import { Observable, of } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { PermissionsEnum, IEmployee, IEmployeeAward, IOrganization, IUser, IImageAsset } from '@gauzy/contracts';
-import * as moment from 'moment';
+import moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { EmployeesService, ErrorHandlingService, Store, ToastrService, UsersService } from '@gauzy/ui-core/core';

@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import * as moment from 'moment';
+import moment from 'moment';
 import * as UpworkApi from 'upwork-api';
 import { Billings } from 'upwork-api/lib/routers/reports/finance/billings.js';
 import { Earnings } from 'upwork-api/lib/routers/reports/finance/earnings.js';
