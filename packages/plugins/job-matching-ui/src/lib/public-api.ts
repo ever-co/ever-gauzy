@@ -1,5 +1,5 @@
 /**
- * Public API Surface of job-matching-ui
+ * Public API Surface of @gauzy/plugin-job-matching-ui
  */
 export * from './job-matching.module';
 export * from './job-matching.routes';

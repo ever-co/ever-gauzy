@@ -1,14 +1,12 @@
 {
 	"name": "@gauzy/plugin-job-employee-ui",
 	"version": "0.1.0",
-	"type": "commonjs",
 	"description": "A plugin for managing job and employee UI functionalities in the Ever Gauzy platform.",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
-	"license": "AGPL-3.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ever-co/ever-gauzy"
@@ -17,15 +15,7 @@
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"homepage": "https://ever.co",
-	"keywords": [
-		"Angular",
-		"UI",
-		"plugin",
-		"Ever Gauzy",
-		"job",
-		"employee",
-		"management"
-	],
+	"license": "AGPL-3.0",
 	"private": true,
 	"scripts": {
 		"lib:build": "yarn nx build plugin-job-employee-ui --configuration=development",
@@ -54,6 +44,15 @@
 		"@types/node": "^20.14.9",
 		"jest-preset-angular": "14.0.4"
 	},
+	"keywords": [
+		"Angular",
+		"UI",
+		"plugin",
+		"Ever Gauzy",
+		"job",
+		"employee",
+		"management"
+	],
 	"engines": {
 		"node": ">=20.11.1",
 		"yarn": ">=1.22.19"

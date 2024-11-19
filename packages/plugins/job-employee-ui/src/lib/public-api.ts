@@ -1,5 +1,5 @@
 /**
- * Public API Surface of job-employee-ui
+ * Public API Surface of @gauzy/plugin-job-employee-ui
  */
 export * from './job-employee.module';
 export * from './job-employee.routes';
