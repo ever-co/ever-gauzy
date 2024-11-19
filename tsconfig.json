@@ -23,6 +23,7 @@
 			"@gauzy/plugin-integration-github-ui": ["./packages/plugins/integration-github-ui/src/index.ts"],
 			"@gauzy/plugin-integration-hubstaff-ui": ["./packages/plugins/integration-hubstaff-ui/src/index.ts"],
 			"@gauzy/plugin-integration-upwork-ui": ["./packages/plugins/integration-upwork-ui/src/index.ts"],
+			"@gauzy/plugin-jitsu-analytics": ["./packages/plugins/jitsu-analytics/src/index.ts"],
 			"@gauzy/plugin-job-employee-ui": ["./packages/plugins/job-employee-ui/src/index.ts"],
 			"@gauzy/plugin-job-matching-ui": ["./packages/plugins/job-matching-ui/src/index.ts"],
 			"@gauzy/plugin-job-proposal": ["./packages/plugins/job-proposal/src/index.ts"],

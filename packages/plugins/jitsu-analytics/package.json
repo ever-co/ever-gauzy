@@ -17,34 +17,13 @@
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"homepage": "https://ever.co",
-	"keywords": [
-		"gauzy",
-		"plugin",
-		"analytics",
-		"jitsu",
-		"ever",
-		"platform"
-	],
 	"private": true,
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"files": [
-		"dist"
-	],
-	"directories": {
-		"lib": "dist",
-		"test": "__test__"
-	},
-	"publishConfig": {
-		"access": "restricted"
-	},
+	"main": "./src/index.ts",
+	"typings": "./src/index.d.ts",
 	"scripts": {
-		"test:e2e": "jest --config ./jest.config.ts",
-		"build": "rimraf dist && tsc -p tsconfig.lib.json",
-		"build:prod": "rimraf dist && tsc -p tsconfig.lib.prod.json"
-	},
-	"peerDependencies": {
-		"tslib": "^2.6.2"
+		"lib:build": "yarn nx build plugin-jitsu-analytics --configuration=development",
+		"lib:build:prod": "yarn nx build plugin-jitsu-analytics --configuration=production",
+		"lib:watch": "yarn nx build plugin-jitsu-analytics --watch --configuration=development"
 	},
 	"dependencies": {
 		"@gauzy/config": "^0.1.0",
@@ -54,6 +33,7 @@
 		"@nestjs/common": "^10.3.7",
 		"chalk": "^4.1.0",
 		"node-fetch": "^2.6.7",
+		"tslib": "^2.6.2",
 		"typeorm": "^0.3.20"
 	},
 	"devDependencies": {
@@ -61,6 +41,14 @@
 		"@types/node": "^20.14.9",
 		"typescript": "5.1.6"
 	},
+	"keywords": [
+		"gauzy",
+		"plugin",
+		"analytics",
+		"jitsu",
+		"ever",
+		"platform"
+	],
 	"engines": {
 		"node": ">=20.11.1",
 		"yarn": ">=1.22.19"
