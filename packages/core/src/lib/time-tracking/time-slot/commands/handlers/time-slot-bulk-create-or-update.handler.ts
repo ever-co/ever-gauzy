@@ -1,7 +1,7 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In } from 'typeorm';
-import moment from 'moment';
+import * as moment from 'moment';
 import * as _ from 'underscore';
 import { isEmpty } from '@gauzy/common';
 import { TimeSlot } from './../../time-slot.entity';

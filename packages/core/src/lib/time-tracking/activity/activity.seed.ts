@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import * as _ from 'underscore';
-import moment from 'moment';
+import * as moment from 'moment';
 import { DataSource } from 'typeorm';
 import { ActivityType, ITenant, ITimeSlot } from '@gauzy/contracts';
 import { Activity } from './activity.entity';

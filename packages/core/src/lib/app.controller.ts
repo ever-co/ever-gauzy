@@ -1,6 +1,6 @@
 import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import moment from 'moment';
+import * as moment from 'moment';
 import { Public } from '@gauzy/common';
 import { IAppSetting } from '@gauzy/contracts';
 

@@ -5,7 +5,7 @@ import {
 	IInvoice
 } from '@gauzy/contracts';
 
-import moment from 'moment';
+import * as moment from 'moment';
 
 export async function generateInvoicePaymentPdfDefinition(
 	invoice: IInvoice,

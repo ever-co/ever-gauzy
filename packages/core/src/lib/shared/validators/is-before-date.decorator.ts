@@ -1,6 +1,6 @@
 import { ClassConstructor } from 'class-transformer';
 import { registerDecorator, ValidationArguments, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
-import moment from 'moment';
+import * as moment from 'moment';
 
 /**
  *

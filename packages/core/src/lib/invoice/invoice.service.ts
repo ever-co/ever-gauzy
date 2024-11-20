@@ -7,7 +7,7 @@ import { IInvoice, IOrganization, InvoiceStats, LanguagesEnum } from '@gauzy/con
 import { sign } from 'jsonwebtoken';
 import { environment } from '@gauzy/config';
 import { I18nService } from 'nestjs-i18n';
-import moment from 'moment';
+import * as moment from 'moment';
 import { EstimateEmailService } from '../estimate-email/estimate-email.service';
 import { Readable } from 'stream';
 import { PdfmakerService } from './pdfmaker.service';

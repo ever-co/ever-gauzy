@@ -1,6 +1,6 @@
 import { IActivityWatchEvent, IActivityWatchEventResult } from '@gauzy/contracts';
 import { IDesktopEvent } from '../../interfaces';
-import moment from 'moment';
+import * as moment from 'moment';
 
 export class ActivityWatchEventAdapter {
 	public static collections(activityWatchEventResult: IActivityWatchEventResult): IDesktopEvent[] {

@@ -1,6 +1,6 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { In } from 'typeorm';
-import moment from 'moment';
+import * as moment from 'moment';
 import { chain, omit, pluck, uniq } from 'underscore';
 import { DateRange, IActivity, ID, IScreenshot, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';

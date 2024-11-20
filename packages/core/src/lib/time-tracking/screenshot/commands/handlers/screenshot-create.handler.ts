@@ -1,7 +1,7 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
 import { Between } from 'typeorm';
-import moment from 'moment';
+import * as moment from 'moment';
 import { ITimeSlot } from '@gauzy/contracts';
 import { TimeSlotCreateCommand } from './../../../time-slot/commands';
 import { ScreenshotCreateCommand } from './../screenshot-create.command';

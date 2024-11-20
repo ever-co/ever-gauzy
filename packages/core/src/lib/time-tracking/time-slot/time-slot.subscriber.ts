@@ -1,5 +1,5 @@
 import { EventSubscriber } from 'typeorm';
-import moment from 'moment';
+import * as moment from 'moment';
 import { IScreenshot, ITimeSlot } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { TimeSlot } from './time-slot.entity';

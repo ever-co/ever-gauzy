@@ -1,6 +1,6 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
-import moment from 'moment';
+import * as moment from 'moment';
 import { isEmpty } from '@gauzy/common';
 import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';

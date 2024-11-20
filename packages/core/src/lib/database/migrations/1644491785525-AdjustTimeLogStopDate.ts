@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 import * as chalk from "chalk";
 import { chain } from 'underscore';
-import moment from 'moment';
+import * as moment from 'moment';
 import { isEmpty, isNotEmpty } from "@gauzy/common";
 import { DatabaseTypeEnum } from "@gauzy/config";
 

@@ -1,6 +1,6 @@
 import { Request } from 'express';
 import * as multer from 'multer';
-import moment from 'moment';
+import * as moment from 'moment';
 import { join } from 'path';
 import { URL } from 'url';
 import * as streamifier from 'streamifier';

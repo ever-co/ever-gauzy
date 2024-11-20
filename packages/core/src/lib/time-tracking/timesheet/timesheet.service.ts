@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Between, In, SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
-import moment from 'moment';
+import * as moment from 'moment';
 import { IGetTimesheetInput, PermissionsEnum, ITimesheet, TimesheetStatus } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';

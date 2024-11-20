@@ -4,7 +4,7 @@ import {
 	IRecurringExpenseModel
 } from '@gauzy/contracts';
 import { Between, FindOptionsWhere, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
-import moment from 'moment';
+import * as moment from 'moment';
 import { CrudService } from './../../core/crud';
 import { getDateRangeFormat } from './../../core/utils';
 import { RequestContext } from './../../core/context';

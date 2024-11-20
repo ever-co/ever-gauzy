@@ -3,7 +3,7 @@ import { ApplicationPluginConfig } from '@gauzy/common';
 import { environment as env } from '@gauzy/config';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { copyFileSync, mkdirSync, readdir } from 'fs';
-import moment from 'moment';
+import * as moment from 'moment';
 import * as path from 'path';
 import { Screenshot } from '../../core/entities/internal';
 import { randomSeedConfig } from './../../core/seeds/random-seed-config';

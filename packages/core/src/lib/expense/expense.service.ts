@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, Between, Brackets, WhereExpressionBuilder, In, ILike } from 'typeorm';
-import moment from 'moment';
+import * as moment from 'moment';
 import { chain } from 'underscore';
 import { IDateRangePicker, IExpense, IGetExpenseInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';

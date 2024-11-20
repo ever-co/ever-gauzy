@@ -1,5 +1,5 @@
 import * as _ from 'underscore';
-import moment from 'moment';
+import * as moment from 'moment';
 import * as timezone from 'moment-timezone';
 import { DataSource } from 'typeorm';
 import { faker } from '@faker-js/faker';

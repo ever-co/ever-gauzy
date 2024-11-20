@@ -1,6 +1,6 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import moment from 'moment';
+import * as moment from 'moment';
 import { ConfigService } from '@gauzy/config';
 import { IAvailabilitySlot } from '@gauzy/contracts';
 import { AvailabilitySlot } from '../../availability-slots.entity';

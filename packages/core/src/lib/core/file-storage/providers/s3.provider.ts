@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import multerS3 from 'multer-s3';
 import { basename, join } from 'path';
-import moment from 'moment';
+import * as moment from 'moment';
 import {
 	S3Client,
 	DeleteObjectCommand,

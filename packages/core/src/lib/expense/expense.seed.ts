@@ -10,7 +10,7 @@ import {
 import * as fs from 'fs';
 import * as path from 'path';
 import csv from 'csv-parser';
-import moment from 'moment';
+import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
 import { Expense } from './../core/entities/internal';
 

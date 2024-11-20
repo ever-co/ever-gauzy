@@ -15,7 +15,7 @@ import {
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from 'jsonwebtoken';
-import moment from 'moment';
+import * as moment from 'moment';
 import {
 	ComponentLayoutStyleEnum,
 	ID,

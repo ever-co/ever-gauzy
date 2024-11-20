@@ -8,7 +8,7 @@ import {
 	ITimesheet,
 	IOrganization
 } from '@gauzy/contracts';
-import moment from 'moment';
+import * as moment from 'moment';
 import * as _ from 'underscore';
 import * as chalk from 'chalk';
 import { ApplicationPluginConfig } from '@gauzy/common';

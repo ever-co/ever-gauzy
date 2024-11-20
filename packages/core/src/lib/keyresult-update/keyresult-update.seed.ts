@@ -8,7 +8,7 @@ import {
 	IOrganization,
 	ITenant
 } from '@gauzy/contracts';
-import moment from 'moment';
+import * as moment from 'moment';
 import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
 
 export const createDefaultKeyResultUpdates = async (

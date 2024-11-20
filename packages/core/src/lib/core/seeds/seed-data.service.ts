@@ -8,7 +8,7 @@ import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import * as chalk from 'chalk';
-import moment from 'moment';
+import * as moment from 'moment';
 import { environment as env, ConfigService, DatabaseTypeEnum } from '@gauzy/config';
 import { IEmployee, IOrganization, IOrganizationProject, IRole, ITenant, IUser } from '@gauzy/contracts';
 import { getPluginModules, hasLifecycleMethod, PluginLifecycleMethods } from '@gauzy/plugin';

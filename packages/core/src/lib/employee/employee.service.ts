@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Brackets, FindManyOptions, FindOneOptions, In, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
-import moment from 'moment';
+import * as moment from 'moment';
 import {
 	IBasePerTenantAndOrganizationEntityModel,
 	ID,

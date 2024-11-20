@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OnLoad } from '@mikro-orm/core';
 import { RelationId, JoinColumn, AfterLoad } from 'typeorm';
 import { IsBoolean, IsDateString, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
-import moment from 'moment';
+import * as moment from 'moment';
 import {
 	ITimeLog,
 	TimeLogType,

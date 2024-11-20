@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as mjml2html from 'mjml';
 import { v4 as uuidV4 } from 'uuid';
 import * as chalk from 'chalk';
-import moment from 'moment';
+import * as moment from 'moment';
 import { EmailTemplateEnum } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/common';
 import { DatabaseTypeEnum } from '@gauzy/config';

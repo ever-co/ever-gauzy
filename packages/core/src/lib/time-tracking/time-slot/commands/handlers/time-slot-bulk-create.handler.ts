@@ -1,6 +1,6 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { In } from 'typeorm';
-import moment from 'moment';
+import * as moment from 'moment';
 import { chain, pluck, where } from 'underscore';
 import { TimeSlot } from './../../time-slot.entity';
 import { TimeSlotBulkCreateCommand } from './../time-slot-bulk-create.command';

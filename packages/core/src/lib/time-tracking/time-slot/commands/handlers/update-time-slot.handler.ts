@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import moment from 'moment';
+import * as moment from 'moment';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../../../core/context';
 import { Activity } from '../../../activity/activity.entity';

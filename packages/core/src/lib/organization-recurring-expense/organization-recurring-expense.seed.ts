@@ -6,7 +6,7 @@ import {
 	ITenant,
 	RecurringExpenseDefaultCategoriesEnum
 } from '@gauzy/contracts';
-import moment from 'moment';
+import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
 
 export const createDefaultOrganizationRecurringExpense = async (

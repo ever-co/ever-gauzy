@@ -1,7 +1,7 @@
 import { DataSource } from 'typeorm';
 import { Invoice } from './invoice.entity';
 import { faker } from '@faker-js/faker';
-import moment from 'moment';
+import * as moment from 'moment';
 import { chain } from 'underscore';
 import {
 	DiscountTaxTypeEnum,

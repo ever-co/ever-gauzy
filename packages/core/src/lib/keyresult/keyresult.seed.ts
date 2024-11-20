@@ -11,7 +11,7 @@ import {
 } from '@gauzy/contracts';
 import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
 import { compareAsc } from 'date-fns';
-import moment from 'moment';
+import * as moment from 'moment';
 import { GoalKPI } from '../goal-kpi/goal-kpi.entity';
 import { DEFAULT_KEY_RESULTS } from './default-keyresults';
 

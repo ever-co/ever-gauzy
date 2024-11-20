@@ -1,5 +1,5 @@
 import { EventSubscriber } from "typeorm";
-import moment from 'moment';
+import * as moment from 'moment';
 import { average } from "@gauzy/common";
 import { CandidateStatusEnum } from "@gauzy/contracts";
 import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";

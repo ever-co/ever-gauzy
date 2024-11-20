@@ -2,7 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, WhereExpressionBuilder } from 'typeorm';
-import moment from 'moment';
+import * as moment from 'moment';
 import { ITimesheet } from '@gauzy/contracts';
 import { TimeSheetService } from '../../timesheet.service';
 import { TimesheetRecalculateCommand } from '../timesheet-recalculate.command';

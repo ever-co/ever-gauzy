@@ -11,7 +11,6 @@
 		}
 	],
 	"compilerOptions": {
-		"esModuleInterop": true,
 		"incremental": true,
 		"types": ["node", "jest"]
 	}

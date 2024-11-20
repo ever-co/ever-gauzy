@@ -1,7 +1,7 @@
 import { QueryRunner } from 'typeorm';
 import { v4 as uuidV4 } from 'uuid';
 import * as chalk from 'chalk';
-import moment from 'moment';
+import * as moment from 'moment';
 import { DatabaseTypeEnum, environment } from '@gauzy/config';
 import { ID, IRole, ITenant, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';

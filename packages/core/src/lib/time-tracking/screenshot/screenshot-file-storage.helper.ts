@@ -1,5 +1,5 @@
 import * as path from 'path';
-import moment from 'moment';
+import * as moment from 'moment';
 import { v4 as uuid } from 'uuid';
 import { RequestContext } from '../../core/context';
 import { FileStorage } from '../../core/file-storage';

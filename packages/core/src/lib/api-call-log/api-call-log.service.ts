@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Between, FindManyOptions } from 'typeorm';
-import moment from 'moment';
+import * as moment from 'moment';
 import { IApiCallLog, IPagination } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { ApiCallLog } from './api-call-log.entity';

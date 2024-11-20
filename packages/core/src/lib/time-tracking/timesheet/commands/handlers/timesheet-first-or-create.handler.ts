@@ -1,7 +1,7 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
-import moment from 'moment';
+import * as moment from 'moment';
 import { ITimesheet } from '@gauzy/contracts';
 import { Employee, Timesheet } from './../../../../core/entities/internal';
 import { RequestContext } from './../../../../core/context';

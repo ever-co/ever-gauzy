@@ -5,7 +5,7 @@ import { AxiosError, AxiosResponse } from 'axios';
 import { DeepPartial } from 'typeorm';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { map, catchError, switchMap } from 'rxjs/operators';
-import moment from 'moment';
+import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
 import { isEmpty, isNotEmpty, isObject } from '@gauzy/common';
 import {

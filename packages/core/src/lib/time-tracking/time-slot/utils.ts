@@ -1,4 +1,4 @@
-import moment from 'moment';
+import * as moment from 'moment';
 
 export function generateTimeSlots(start: Date, end: Date) {
 	let mStart = moment(start);

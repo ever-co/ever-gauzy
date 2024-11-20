@@ -5,7 +5,7 @@
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { faker } from '@faker-js/faker';
-import moment from 'moment';
+import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
 import {
 	IDefaultUser,

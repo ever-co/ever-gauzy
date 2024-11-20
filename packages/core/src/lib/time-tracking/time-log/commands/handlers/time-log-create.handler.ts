@@ -1,5 +1,5 @@
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
-import moment from 'moment';
+import * as moment from 'moment';
 import { TimeLogType, TimeLogSourceEnum, ID, ITimeSlot, ITimesheet } from '@gauzy/contracts';
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from '../../../timesheet/commands';

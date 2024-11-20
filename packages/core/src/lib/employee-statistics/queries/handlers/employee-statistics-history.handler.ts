@@ -1,6 +1,6 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { EmployeeStatisticsService } from '../../employee-statistics.service';
-import moment from 'moment';
+import * as moment from 'moment';
 import {
 	IEmployeeStatisticsHistory,
 	EmployeeStatisticsHistoryEnum,

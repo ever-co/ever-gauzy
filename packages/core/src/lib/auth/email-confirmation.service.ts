@@ -5,7 +5,7 @@ import { deepMerge, IAppIntegrationConfig } from '@gauzy/common';
 import { FeatureEnum, IBasePerTenantEntityModel, IUser, IUserCodeInput, IUserEmailInput, IUserTokenInput, IVerificationTokenPayload } from '@gauzy/contracts';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
 import * as bcrypt from 'bcrypt';
-import moment from 'moment';
+import * as moment from 'moment';
 import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
 import { EmailService } from './../email-send/email.service';
 import { UserService } from './../user/user.service';

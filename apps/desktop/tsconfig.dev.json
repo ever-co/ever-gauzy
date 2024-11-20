@@ -7,7 +7,6 @@
 		"moduleResolution": "node",
 		"emitDecoratorMetadata": true,
 		"experimentalDecorators": true,
-		"esModuleInterop": true,
 		"target": "ES2022",
 		"typeRoots": ["../../node_modules/@types"],
 		"lib": ["es2020", "es2017", "es2016", "dom"]

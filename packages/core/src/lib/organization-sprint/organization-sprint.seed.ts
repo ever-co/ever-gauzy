@@ -3,7 +3,7 @@ import { faker } from '@faker-js/faker';
 import { OrganizationSprint } from './organization-sprint.entity';
 import { IOrganization, ITenant, SprintStartDayEnum } from '@gauzy/contracts';
 import { OrganizationProject } from '../organization-project/organization-project.entity';
-import moment from 'moment';
+import * as moment from 'moment';
 import { Task } from '../tasks/task.entity';
 
 export const createRandomOrganizationSprint = async (

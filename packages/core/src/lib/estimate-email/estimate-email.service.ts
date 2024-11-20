@@ -1,7 +1,7 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, MoreThan } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import moment from 'moment';
+import * as moment from 'moment';
 import { sign, verify } from 'jsonwebtoken';
 import { environment } from '@gauzy/config';
 import { IEstimateEmail, IEstimateEmailFindInput, IInvoice, IOrganization } from '@gauzy/contracts';

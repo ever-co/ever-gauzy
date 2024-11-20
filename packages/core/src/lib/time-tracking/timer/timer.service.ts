@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, NotAcceptableException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { IsNull, Between, Not, In } from 'typeorm';
-import moment from 'moment';
+import * as moment from 'moment';
 import * as chalk from 'chalk';
 import {
 	TimeLogType,

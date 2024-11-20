@@ -10,7 +10,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import moment from 'moment';
+import * as moment from 'moment';
 import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
 import { pick } from 'underscore';
 import {

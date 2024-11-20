@@ -14,7 +14,7 @@ import {
 	OrganizationTeamJoinRequestStatusEnum,
 	RolesEnum
 } from '@gauzy/contracts';
-import moment from 'moment';
+import * as moment from 'moment';
 import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
 import { TenantAwareCrudService } from './../core/crud';
 import { generateRandomAlphaNumericCode } from './../core/utils';

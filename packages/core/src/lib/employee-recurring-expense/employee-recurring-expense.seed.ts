@@ -6,7 +6,7 @@ import {
 	RecurringExpenseDefaultCategoriesEnum
 } from '@gauzy/contracts';
 import { faker } from '@faker-js/faker';
-import moment from 'moment';
+import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
 import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
 

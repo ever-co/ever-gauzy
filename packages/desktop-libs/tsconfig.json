@@ -7,8 +7,7 @@
 		"rootDir": "./src",
 		"outDir": "./dist",
 		"module": "commonjs",
-		"types": ["node"],
-		"esModuleInterop": true
+		"types": ["node"]
 	},
 	"files": ["global.d.ts"],
 	"include": ["./src/**/*.ts", "src/lib/fetch.js"],

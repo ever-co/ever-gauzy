@@ -10,7 +10,7 @@ import {
 	ITimesheet,
 	ITimeLog
 } from '@gauzy/contracts';
-import moment from 'moment';
+import * as moment from 'moment';
 import { ApplicationPluginConfig, isEmpty } from '@gauzy/common';
 import { createRandomScreenshot } from '../screenshot/screenshot.seed';
 import { createTimeSlots } from '../time-slot/time-slot.seed';

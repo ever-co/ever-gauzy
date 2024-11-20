@@ -8,7 +8,7 @@ import { Snapshot } from 'upwork-api/lib/routers/snapshot.js';
 import { Auth } from 'upwork-api/lib/routers/auth.js';
 import { Users } from 'upwork-api/lib/routers/organization/users.js';
 import { pluck, map, sortBy } from 'underscore';
-import moment from 'moment';
+import * as moment from 'moment';
 import { environment } from '@gauzy/config';
 import { isEmpty, isNotEmpty, isObject } from '@gauzy/common';
 import {

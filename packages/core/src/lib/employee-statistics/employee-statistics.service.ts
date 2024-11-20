@@ -8,7 +8,7 @@ import {
 	IDateRangePicker
 } from '@gauzy/contracts';
 import { Injectable } from '@nestjs/common';
-import moment from 'moment';
+import * as moment from 'moment';
 import { EmployeeService } from '../employee/employee.service';
 import { ExpenseService } from '../expense/expense.service';
 import { IncomeService } from '../income/income.service';

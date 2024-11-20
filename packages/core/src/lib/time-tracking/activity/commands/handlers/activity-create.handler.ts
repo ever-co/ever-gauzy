@@ -1,6 +1,6 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
-import moment from 'moment';
+import * as moment from 'moment';
 import { Between } from 'typeorm';
 import { IntegrationEntity, ITimeSlot } from '@gauzy/contracts';
 import { TimeSlotCreateCommand } from './../../../time-slot/commands';

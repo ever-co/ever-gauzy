@@ -11,7 +11,7 @@ import {
 import * as fs from 'fs';
 import csv from 'csv-parser';
 import * as path from 'path';
-import moment from 'moment';
+import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
 import { Income, OrganizationContact, Tag } from './../core/entities/internal';
 import { getDummyImage } from './../core/utils';

@@ -10,7 +10,7 @@ import {
 	IStatisticSum
 } from '@gauzy/contracts';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import moment from 'moment';
+import * as moment from 'moment';
 import { EmployeeService } from '../../../employee/employee.service';
 import { AggregatedEmployeeStatisticQuery } from '../aggregate-employee-statistic.query';
 import { EmployeeStatisticsService } from './../../employee-statistics.service';
