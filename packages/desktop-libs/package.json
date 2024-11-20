@@ -2,6 +2,7 @@
 	"name": "@gauzy/desktop-libs",
 	"version": "0.1.0",
 	"description": "Ever Gauzy Platform desktop libs",
+	"type": "commonjs",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -9,24 +10,14 @@
 	},
 	"license": "AGPL-3.0",
 	"private": true,
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"files": [
-		"dist"
-	],
-	"directories": {
-		"lib": "dist"
-	},
-	"publishConfig": {
-		"access": "restricted"
-	},
+	"main": "./src/index.ts",
+	"typings": "./src/index.d.ts",
 	"scripts": {
-		"build": "rimraf dist && yarn run compile",
-		"build:prod": "rimraf dist && yarn run compile",
-		"compile": "tsc -p tsconfig.build.json",
+		"lib:build": "yarn nx build desktop-libs --configuration=development",
+		"lib:build:prod": "yarn nx build desktop-libs --configuration=production",
+		"lib:watch": "yarn nx build desktop-libs --watch --configuration=development",
 		"knex": "./node_modules/.bin/knex --knexfile src/lib/offline/databases/knexfile.ts"
 	},
-	"keywords": [],
 	"dependencies": {
 		"@electron/remote": "^2.0.8",
 		"@gauzy/desktop-window": "^0.1.0",
@@ -59,5 +50,11 @@
 		"@types/node": "^20.14.9",
 		"@types/unzipper": "^0.10.9",
 		"electron": "^30.0.1"
-	}
+	},
+	"keywords": [],
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
 }

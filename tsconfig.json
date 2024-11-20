@@ -13,6 +13,7 @@
 			"@gauzy/contracts": ["./packages/contracts/src/index.ts"],
 			"@gauzy/core": ["./packages/core/src/index.ts"],
 			"@gauzy/desktop-timer": ["./packages/desktop-timer/src/index.ts"],
+			"@gauzy/desktop-libs": ["./packages/desktop-libs/src/index.ts"],
 			"@gauzy/desktop-ui-lib": ["./packages/desktop-ui-lib/src/index.ts"],
 			"@gauzy/desktop-window": ["./packages/desktop-window/src/index.ts"],
 			"@gauzy/plugin": ["./packages/plugin/src/index.ts"],
