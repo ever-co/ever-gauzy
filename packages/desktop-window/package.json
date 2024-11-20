@@ -2,6 +2,7 @@
 	"name": "@gauzy/desktop-window",
 	"version": "0.1.0",
 	"description": "Ever Gauzy Platform desktop window module",
+	"type": "commonjs",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -9,30 +10,37 @@
 	},
 	"license": "AGPL-3.0",
 	"private": true,
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"files": [
-		"dist"
-	],
-	"directories": {
-		"lib": "dist"
-	},
-	"publishConfig": {
-		"access": "restricted"
-	},
+	"main": "./src/index.ts",
+	"typings": "./src/index.d.ts",
 	"scripts": {
-		"build": "rimraf dist && yarn run compile",
-		"build:prod": "rimraf dist && yarn run compile",
-		"compile": "tsc -p tsconfig.build.json"
+		"lib:build": "yarn nx build desktop-window --configuration=development",
+		"lib:build:prod": "yarn nx build desktop-window --configuration=production",
+		"lib:watch": "yarn nx build desktop-window --watch --configuration=development"
 	},
-	"keywords": [],
+	"keywords": [
+		"desktop",
+		"window",
+		"electron",
+		"desktop-application",
+		"gauzy",
+		"desktop-integration",
+		"remote",
+		"electron-log",
+		"electron-store"
+	],
 	"dependencies": {
 		"@electron/remote": "^2.0.8",
 		"electron-log": "^4.4.8",
-		"electron-store": "^8.1.0"
+		"electron-store": "^8.1.0",
+		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
 		"@types/node": "^20.14.9",
 		"electron": "^30.0.1"
-	}
+	},
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
 }

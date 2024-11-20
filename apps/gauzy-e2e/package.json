@@ -35,7 +35,9 @@
 		"build:package:plugin": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn --cwd ./packages/plugin build",
 		"build:package:plugin:integration-wakatime": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn --cwd ./packages/plugins/integration-wakatime build",
 		"build:package:desktop-libs": "yarn run build:package:desktop-window && cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn nx build desktop-libs --configuration=development",
-		"build:package:desktop-libs:prod": "yarn run build:package:desktop-window && cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=14000 yarn nx build desktop-libs --configuration=production",
+		"build:package:desktop-libs:prod": "yarn run build:package:desktop-window:prod && cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=14000 yarn nx build desktop-libs --configuration=production",
+		"build:package:desktop-window": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn nx build desktop-window --configuration=development",
+		"build:package:desktop-window:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=14000 yarn nx build desktop-window --configuration=production",
 		"build:package:plugin:changelog": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn --cwd ./packages/plugins/changelog build",
 		"build:package:plugin:knowledge-base": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn --cwd ./packages/plugins/knowledge-base build",
 		"build:package:core": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn --cwd ./packages/core build",
@@ -50,7 +52,6 @@
 		"build:package:plugin:integration-github": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn --cwd ./packages/plugins/integration-github build",
 		"build:package:plugin:integration-jira": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn --cwd ./packages/plugins/integration-jira build",
 		"build:package:plugin:product-reviews": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn --cwd ./packages/plugins/product-reviews build",
-		"build:package:desktop-window": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn --cwd ./packages/desktop-window build",
 		"postinstall.web": "yarn node ./decorate-angular-cli.js && yarn node tools/web/postinstall"
 	},
 	"resolutions": {
