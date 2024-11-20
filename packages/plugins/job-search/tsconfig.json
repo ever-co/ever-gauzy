@@ -7,7 +7,11 @@
 		"noImplicitOverride": false,
 		"noPropertyAccessFromIndexSignature": false,
 		"noImplicitReturns": false,
-		"noFallthroughCasesInSwitch": false
+		"noFallthroughCasesInSwitch": false,
+		"baseUrl": ".",
+		"paths": {
+			"@gauzy/plugin-integration-ai": ["./../../../dist/packages/plugins/integration-ai/*/index.d.ts"],
+		}
 	},
 	"files": [],
 	"include": [],
