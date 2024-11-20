@@ -27,7 +27,14 @@
 				"maxWorkers": 4,
 				"memoryLimit": 7000,
 				"tsConfig": "apps/api/tsconfig.app.json",
-				"assets": ["apps/api/src/assets"],
+				"assets": [
+					"apps/api/src/assets",
+					{
+						"input": "apps/api/public",
+						"glob": "**/.gitkeep",
+						"output": "public"
+					}
+				],
 				"webpackConfig": "apps/api/webpack.config.js"
 			},
 			"configurations": {

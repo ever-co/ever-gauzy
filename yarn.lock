@@ -8211,14 +8211,14 @@
   dependencies:
     "@nx/workspace" "18.3.5"
 
-"@nstudio/angular@17.0.1", "@nstudio/angular@^17.0.1":
+"@nstudio/angular@17.0.1", "@nstudio/angular@^17.0.0":
   version "17.0.1"
   resolved "https://registry.yarnpkg.com/@nstudio/angular/-/angular-17.0.1.tgz#1713d73a844d5f3433494fb381e5645f6f67ca88"
   integrity sha512-Z/ByZh+tOXhDFTP1JYv46DmQDGV2hh9d7RvuRiuU7pB8di77xJR9DL5Ecb0mg0zCS5Hr5Tzpc/Ki+tS5qkoQ6w==
   dependencies:
     "@nx/angular" "^17.0.0"
 
-"@nstudio/electron-angular@^17.0.1":
+"@nstudio/electron-angular@^17.0.0":
   version "17.0.1"
   resolved "https://registry.yarnpkg.com/@nstudio/electron-angular/-/electron-angular-17.0.1.tgz#df4e4a8c52c4ead825115dc68550cebeda42706a"
   integrity sha512-T58hCv8dbzhl9kF4Mg4JbKOcyHtoaE9i7MTV9tTHDNnm9Z3OAU6VGI/OwEsNbqKuBAUMkUmYLqPVmjok+ZUhfw==
@@ -8226,7 +8226,7 @@
     "@nstudio/angular" "17.0.1"
     "@nstudio/electron" "17.0.1"
 
-"@nstudio/electron@17.0.1", "@nstudio/electron@^17.0.1":
+"@nstudio/electron@17.0.1", "@nstudio/electron@^17.0.0":
   version "17.0.1"
   resolved "https://registry.yarnpkg.com/@nstudio/electron/-/electron-17.0.1.tgz#7dee2651788b230b631e00788f44e49d98a243fb"
   integrity sha512-1PKwxw15WrvU3TOURaV5BQ9bb+60SopWlk35Xzlo3IdWDGOqFOfuLniNZ4bkprRXmpM9/pKZcILt7mSWdnROiw==
@@ -8241,7 +8241,7 @@
     "@nstudio/xplat-utils" "17.0.1"
     xml2js "~0.6.2"
 
-"@nstudio/web-angular@^17.0.1":
+"@nstudio/web-angular@^17.0.0":
   version "17.0.1"
   resolved "https://registry.yarnpkg.com/@nstudio/web-angular/-/web-angular-17.0.1.tgz#334595be5afcaf6141b012023e87b1d3ccdd821c"
   integrity sha512-3OMm0n54OAfcsozFeF88dYTJ87ZB6vY0TGgq0sPKRPTePFA0KyrxLvngBVXNx7Y9aKib1aBQbmj37yiE+5LFCQ==
@@ -8249,7 +8249,7 @@
     "@nstudio/angular" "17.0.1"
     "@nstudio/web" "17.0.1"
 
-"@nstudio/web@17.0.1", "@nstudio/web@^17.0.1":
+"@nstudio/web@17.0.1", "@nstudio/web@^17.0.0":
   version "17.0.1"
   resolved "https://registry.yarnpkg.com/@nstudio/web/-/web-17.0.1.tgz#925422194b3d62d3a4a223e9c2142893c6f7f37d"
   integrity sha512-JUhGSIgpRlA2/rZuUYUlniiueXR6lfTbIvyE9UNvp8LfxpxXEegkZ+8BiLlD5m8YkpHBPdI5wVYW8YH0nWIMNA==
@@ -8261,7 +8261,7 @@
   resolved "https://registry.yarnpkg.com/@nstudio/xplat-utils/-/xplat-utils-17.0.1.tgz#962aaa57a1a66d0f7993196f74496f6a55002029"
   integrity sha512-sr2rJvRKMNdGMNDgeijq3wwtqu8NamCQEr4XwbMG3oEYbFDyi7RwoQxwoDzWyjEpGYdEKHm13LW3d2j81kWUzw==
 
-"@nstudio/xplat@^17.0.1":
+"@nstudio/xplat@^17.0.0":
   version "17.0.1"
   resolved "https://registry.yarnpkg.com/@nstudio/xplat/-/xplat-17.0.1.tgz#ca49a28a188ddc16d2d10c86591a0017eb6927a1"
   integrity sha512-kyuSx5G1iBvqJFgcF4OTJw30mHIgD18Lz+8sryK6uF3dLNUsUgwpAiLZCk9Xz5klEK/FBi1UV9sSU3B5yVIamQ==
