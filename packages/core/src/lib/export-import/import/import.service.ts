@@ -6,7 +6,7 @@ import { camelCase } from 'typeorm/util/StringUtils';
 import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 import * as fs from 'fs';
 import * as unzipper from 'unzipper';
-import csv from 'csv-parser';
+import * as csv from 'csv-parser';
 import * as rimraf from 'rimraf';
 import * as path from 'path';
 import * as chalk from 'chalk';

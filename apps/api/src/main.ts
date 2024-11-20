@@ -4,6 +4,7 @@ import { bootstrap } from '@gauzy/core';
 console.log('Bootstrap loaded');
 
 import { pluginConfig } from './plugin-config';
+console.log('Plugin Config loaded');
 
 bootstrap(pluginConfig)
 	.then(() => {

@@ -9,7 +9,7 @@ import {
 	IIncome
 } from '@gauzy/contracts';
 import * as fs from 'fs';
-import csv from 'csv-parser';
+import * as csv from 'csv-parser';
 import * as path from 'path';
 import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';

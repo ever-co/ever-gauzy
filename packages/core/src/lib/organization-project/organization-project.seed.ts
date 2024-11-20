@@ -86,10 +86,6 @@ export const createDefaultOrganizationProjects = async (
 			// If organizationContacts is not empty, assign a random organization contact
 			if (organizationContacts.length > 0) {
 				project.organizationContact = faker.helpers.arrayElement(organizationContacts);
-			} else {
-				console.warn(
-					`No OrganizationContacts found for tenantId: ${tenantId} and organizationId: ${organizationId}`
-				);
 			}
 
 			// Add project to projects array
@@ -184,10 +180,6 @@ export const createRandomOrganizationProjects = async (
 				// If organizationContacts is not empty, assign a random organization contact
 				if (organizationContacts.length > 0) {
 					project.organizationContact = faker.helpers.arrayElement(organizationContacts);
-				} else {
-					console.warn(
-						`No OrganizationContacts found for tenantId: ${tenantId} and organizationId: ${organizationId}`
-					);
 				}
 
 				projects.push(project);

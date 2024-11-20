@@ -9,7 +9,7 @@ import {
 } from '@gauzy/contracts';
 import * as fs from 'fs';
 import * as path from 'path';
-import csv from 'csv-parser';
+import * as csv from 'csv-parser';
 import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
 import { Expense } from './../core/entities/internal';
