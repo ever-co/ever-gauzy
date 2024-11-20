@@ -63,6 +63,7 @@
 		"build:api:prod": "yarn ng:prod build api -c=production --prod",
 		"build:api:prod:docker": "yarn ng:docker build api -c=production --prod",
 		"build:api:prod:ci": "yarn --frozen-lockfile --cache-folder ~/.cache/yarn ng:ci build api -c=production --prod",
+		"build:watch": "ts-node ./.scripts/build-watch.ts",
 		"bundle-report": "yarn run config:prod && yarn ng:prod build -c=production --stats-json && webpack-bundle-analyzer dist/apps/gauzy/stats.json",
 		"commit": "git-cz",
 		"commit:lint": "commitlint -E HUSKY_GIT_PARAMS",
