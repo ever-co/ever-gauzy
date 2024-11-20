@@ -21,9 +21,7 @@
 				"tsConfig": "packages/plugins/sentry-tracing/tsconfig.lib.json",
 				"packageJson": "packages/plugins/sentry-tracing/package.json",
 				"main": "packages/plugins/sentry-tracing/src/index.ts",
-				"assets": [
-					"packages/plugins/sentry-tracing/*.md"
-				]
+				"assets": ["packages/plugins/sentry-tracing/*.md"]
 			}
 		},
 		"nx-release-publish": {

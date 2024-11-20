@@ -1,5 +1,5 @@
 import * as path from 'path';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import {
 	ApplicationPluginConfig,
 	DEFAULT_API_PORT,
