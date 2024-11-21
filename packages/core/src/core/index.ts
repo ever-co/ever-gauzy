@@ -10,3 +10,4 @@ export * from './decorators';
 export * from './dto';
 export * from './orm-type';
 export * from './plugin-common.module';
+export * from './util';
