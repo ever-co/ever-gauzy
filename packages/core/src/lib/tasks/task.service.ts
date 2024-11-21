@@ -22,11 +22,13 @@ import {
 	ITask,
 	ITaskUpdateInput,
 	PermissionsEnum,
-	ActionTypeEnum
+	ActionTypeEnum,
+	ITaskDateFilterInput
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { isPostgres, isSqlite } from '@gauzy/config';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
+import { addBetween } from './../core/util';
 import { RequestContext } from '../core/context';
 import { TaskViewService } from './views/view.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
@@ -835,6 +837,97 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		} catch (error) {
 			console.error(`Error while retrieve view tasks: ${error.message}`, error.message);
 			throw new HttpException({ message: error?.message, error }, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/**
+	 * Retrieves tasks based on the provided date filters for startDate and dueDate.
+	 *
+	 * @function getTasksByDateFilters
+	 * @param {ITaskDateFilterInput} params - The query params containing the date filters for the tasks.
+	 *
+	 * @returns {Promise<IPagination<ITask>>} A promise that resolves to an paginated tasks filtered by the provided dates.
+	 *
+	 * @throws {Error} Will throw an error if there is a problem with the database query.
+	 */
+	async getTasksByDateFilters(params: ITaskDateFilterInput): Promise<IPagination<ITask>> {
+		const tenantId = RequestContext.currentTenantId() || params.tenantId;
+
+		try {
+			const {
+				startDateFrom,
+				startDateTo,
+				dueDateFrom,
+				dueDateTo,
+				creatorId,
+				organizationId,
+				employeeId,
+				projectId,
+				organizationTeamId,
+				organizationSprintId,
+				relations
+			} = params;
+
+			let query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+				})
+			);
+
+			// Apply the filters on startDate and dueDate
+			query = addBetween<Task>(query, 'startDate', startDateFrom, startDateTo, p);
+			query = addBetween<Task>(query, 'dueDate', dueDateFrom, dueDateTo, p);
+
+			// Add Optional additional filters by
+			query.andWhere(
+				new Brackets((web: WhereExpressionBuilder) => {
+					if (isNotEmpty(creatorId)) {
+						web.andWhere(p(`"${query.alias}"."creatorId" = :creatorId`), { creatorId });
+					}
+					if (isNotEmpty(employeeId)) {
+						query.leftJoin(`${query.alias}.members`, 'members');
+						web.andWhere((qb: SelectQueryBuilder<Task>) => {
+							const subQuery = qb.subQuery();
+							subQuery.select(p('"task_employee"."taskId"')).from(p('task_employee'), p('task_employee'));
+							subQuery.andWhere(p('"task_employee"."employeeId" = :employeeId'), { employeeId });
+							return p(`"task_members"."taskId" IN (${subQuery.distinct(true).getQuery()})`);
+						});
+					}
+					if (isNotEmpty(organizationTeamId)) {
+						query.leftJoin(`${query.alias}.teams`, 'teams');
+						web.andWhere((qb: SelectQueryBuilder<Task>) => {
+							const subQuery = qb.subQuery();
+							subQuery.select(p('"task_team"."taskId"')).from(p('task_team'), p('task_team'));
+							subQuery.andWhere(p('"task_team"."organizationTeamId" = :organizationTeamId'), {
+								organizationTeamId
+							});
+							return p(`"task_teams"."taskId" IN (${subQuery.distinct(true).getQuery()})`);
+						});
+					}
+					if (isNotEmpty(projectId)) {
+						web.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
+					}
+					if (isNotEmpty(organizationSprintId)) {
+						web.andWhere(p(`"${query.alias}"."organizationSprintId" = :organizationSprintId`), {
+							organizationSprintId
+						});
+					}
+				})
+			);
+
+			// Check if relations were provided and include them
+			query.setFindOptions({
+				...(relations ? { relations } : {})
+			});
+
+			const [items, total] = await query.getManyAndCount();
+
+			return { items, total };
+		} catch (error) {
+			throw new BadRequestException(error);
 		}
 	}
 }
