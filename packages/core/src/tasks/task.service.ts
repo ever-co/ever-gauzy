@@ -25,9 +25,10 @@ import {
 	ActionTypeEnum,
 	ITaskDateFilterInput
 } from '@gauzy/contracts';
-import { addBetween, isEmpty, isNotEmpty } from '@gauzy/common';
+import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { isPostgres, isSqlite } from '@gauzy/config';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
+import { addBetween } from './../core/util';
 import { RequestContext } from '../core/context';
 import { TaskViewService } from './views/view.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
