@@ -25,9 +25,6 @@
 		"lib:build:prod": "yarn nx build plugin-job-search --configuration=production",
 		"lib:watch": "yarn nx build plugin-job-search --watch --configuration=development"
 	},
-	"peerDependencies": {
-		"tslib": "^2.6.2"
-	},
 	"dependencies": {
 		"@faker-js/faker": "8.0.0-alpha.0",
 		"@gauzy/common": "^0.1.0",
@@ -45,6 +42,7 @@
 		"chalk": "^4.1.0",
 		"class-validator": "^0.14.0",
 		"html-to-text": "^9.0.5",
+		"tslib": "^2.6.2",
 		"typeorm": "^0.3.20"
 	},
 	"devDependencies": {

@@ -25,9 +25,6 @@
 		"lib:build:prod": "yarn nx build plugin-product-reviews --configuration=production",
 		"lib:watch": "yarn nx build plugin-product-reviews --watch --configuration=development"
 	},
-	"peerDependencies": {
-		"tslib": "^2.6.2"
-	},
 	"dependencies": {
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
@@ -38,6 +35,7 @@
 		"apollo-server-core": "^3.10.1",
 		"chalk": "^4.1.0",
 		"class-validator": "^0.14.0",
+		"tslib": "^2.6.2",
 		"typeorm": "^0.3.20"
 	},
 	"devDependencies": {

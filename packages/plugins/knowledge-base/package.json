@@ -17,9 +17,6 @@
 		"lib:build:prod": "yarn nx build plugin-knowledge-base --configuration=production",
 		"lib:watch": "yarn nx build plugin-knowledge-base --watch --configuration=development"
 	},
-	"peerDependencies": {
-		"tslib": "^2.6.2"
-	},
 	"dependencies": {
 		"@faker-js/faker": "8.0.0-alpha.0",
 		"@gauzy/common": "^0.1.0",
@@ -35,6 +32,7 @@
 		"@nestjs/typeorm": "^10.0.2",
 		"chalk": "^4.1.0",
 		"class-validator": "^0.14.0",
+		"tslib": "^2.6.2",
 		"typeorm": "^0.3.20"
 	},
 	"devDependencies": {

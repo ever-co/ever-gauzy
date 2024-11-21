@@ -25,9 +25,6 @@
 		"lib:build:prod": "yarn nx build plugin-integration-github --configuration=production",
 		"lib:watch": "yarn nx build plugin-integration-github --watch --configuration=development"
 	},
-	"peerDependencies": {
-		"tslib": "^2.6.2"
-	},
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",
 		"@gauzy/config": "^0.1.0",
@@ -54,6 +51,7 @@
 		"probot": "^12.3.3",
 		"rxjs": "^7.4.0",
 		"smee-client": "^1.2.3",
+		"tslib": "^2.6.2",
 		"typeorm": "^0.3.20",
 		"underscore": "^1.13.3",
 		"uuid": "^8.3.0"
