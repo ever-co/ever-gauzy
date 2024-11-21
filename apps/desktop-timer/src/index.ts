@@ -45,7 +45,7 @@ import {
 	TranslateService,
 	TrayIcon,
 	UIError
-} from '@gauzy/desktop-libs';
+} from '@gauzy/desktop-lib';
 import {
 	AlwaysOn,
 	createImageViewerWindow,
@@ -60,7 +60,7 @@ import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
 import { initSentry } from './sentry';
 
-// Can be like this: import fetch from '@gauzy/desktop-libs' for v3 of node-fetch;
+// Can be like this: import fetch from '@gauzy/desktop-lib' for v3 of node-fetch;
 
 initSentry();
 

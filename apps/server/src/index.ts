@@ -53,7 +53,7 @@ import {
 	ServerConfig,
 	TranslateLoader,
 	TranslateService
-} from '@gauzy/desktop-libs';
+} from '@gauzy/desktop-lib';
 import {
 	createAboutWindow,
 	createServerWindow,

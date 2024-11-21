@@ -1,5 +1,5 @@
 {
-	"name": "@gauzy/desktop-libs",
+	"name": "@gauzy/desktop-lib",
 	"version": "0.1.0",
 	"description": "Ever Gauzy Platform desktop libs",
 	"type": "commonjs",
@@ -13,9 +13,9 @@
 	"main": "./src/index.ts",
 	"typings": "./src/index.d.ts",
 	"scripts": {
-		"lib:build": "yarn nx build desktop-libs --configuration=development",
-		"lib:build:prod": "yarn nx build desktop-libs --configuration=production",
-		"lib:watch": "yarn nx build desktop-libs --watch --configuration=development",
+		"lib:build": "yarn nx build desktop-lib --configuration=development",
+		"lib:build:prod": "yarn nx build desktop-lib --configuration=production",
+		"lib:watch": "yarn nx build desktop-lib --watch --configuration=development",
 		"knex": "./node_modules/.bin/knex --knexfile src/lib/offline/databases/knexfile.ts"
 	},
 	"dependencies": {

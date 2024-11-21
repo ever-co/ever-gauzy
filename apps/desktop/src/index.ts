@@ -43,7 +43,7 @@ import {
 	ipcTimer,
 	removeMainListener,
 	removeTimerListener
-} from '@gauzy/desktop-libs';
+} from '@gauzy/desktop-lib';
 import {
 	AlwaysOn,
 	ScreenCaptureNotification,

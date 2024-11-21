@@ -1,7 +1,7 @@
 {
-	"name": "desktop-libs",
+	"name": "desktop-lib",
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
-	"sourceRoot": "packages/desktop-libs/src",
+	"sourceRoot": "packages/desktop-lib/src",
 	"projectType": "library",
 	"release": {
 		"version": {
@@ -17,11 +17,11 @@
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "dist/packages/desktop-libs",
-				"tsConfig": "packages/desktop-libs/tsconfig.lib.json",
-				"packageJson": "packages/desktop-libs/package.json",
-				"main": "packages/desktop-libs/src/index.ts",
-				"assets": ["packages/desktop-libs/*.md"]
+				"outputPath": "dist/packages/desktop-lib",
+				"tsConfig": "packages/desktop-lib/tsconfig.lib.json",
+				"packageJson": "packages/desktop-lib/package.json",
+				"main": "packages/desktop-lib/src/index.ts",
+				"assets": ["packages/desktop-lib/*.md"]
 			}
 		},
 		"nx-release-publish": {
@@ -36,7 +36,7 @@
 			"executor": "@nx/jest:jest",
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
-				"jestConfig": "packages/desktop-libs/jest.config.ts"
+				"jestConfig": "packages/desktop-lib/jest.config.ts"
 			}
 		}
 	}
