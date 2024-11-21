@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, NgZone, OnInit, Output } from '@angular/core';
-import { ElectronService } from '@gauzy/desktop-ui-lib';
-import { IProxyConfig } from '@gauzy/contracts';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { IProxyConfig } from '@gauzy/contracts';
+import { ElectronService } from '../../electron/services/electron/electron.service';
 
 interface ICheckSslResponse {
 	status: boolean;

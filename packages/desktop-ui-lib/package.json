@@ -9,28 +9,18 @@
 	},
 	"license": "AGPL-3.0",
 	"private": true,
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"files": [
-		"dist"
-	],
-	"directories": {
-		"lib": "dist"
-	},
-	"publishConfig": {
-		"access": "restricted"
-	},
 	"scripts": {
-		"build": "rimraf dist && yarn run compile",
-		"build:prod": "rimraf dist && yarn run compile",
-		"compile": "tsc -p tsconfig.lib.json"
+		"lib:build": "yarn nx build desktop-ui-lib --configuration=development",
+		"lib:build:prod": "yarn nx build desktop-ui-lib --configuration=production",
+		"lib:watch": "yarn nx build desktop-ui-lib --watch --configuration=development"
 	},
-	"keywords": [],
+	"peerDependencies": {
+		"@angular/common": "^17.3.0",
+		"@angular/core": "^17.3.0"
+	},
 	"dependencies": {
 		"@angular-slider/ngx-slider": "^17.0.1",
 		"@angular/animations": "17.3.12",
-		"@angular/common": "17.3.12",
-		"@angular/core": "17.3.12",
 		"@angular/forms": "17.3.12",
 		"@angular/platform-browser": "17.3.12",
 		"@angular/platform-browser-dynamic": "17.3.12",
@@ -62,6 +52,7 @@
 		"moment-duration-format": "^2.3.2",
 		"ngx-daterangepicker-material": "^6.0.4",
 		"rxjs": "^7.4.0",
+		"tslib": "^2.6.2",
 		"underscore": "^1.13.3"
 	},
 	"devDependencies": {
@@ -70,5 +61,11 @@
 		"@types/node": "^20.14.9",
 		"electron": "^30.0.1",
 		"jest-preset-angular": "14.0.4"
-	}
+	},
+	"keywords": [],
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
 }

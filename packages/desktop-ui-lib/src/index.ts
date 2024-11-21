@@ -39,6 +39,16 @@ export * from './lib/time-tracker/time-tracker.module';
 export * from './lib/time-tracker/time-tracker.service';
 export * from './lib/updater/updater.component';
 export * from './lib/updater/updater.module';
+export * from './lib/language/language-selector.component';
+export * from './lib/time-tracker/task-table/table/task-table.component';
+export * from './lib/recap/monthly/features/monthly-recap/monthly-recap.component'
+export * from './lib/login/features/login-magic/login-magic.component';
+export * from './/lib/login/features/login-workspace/login-workspace.component';
+export * from './lib/login/features/magic-login-workspace/magic-login-workspace.component';
+export * from './lib/integrations/activity-watch/view/activity-watch.component';
+export * from './lib/recap/features/recap/recap.component';
+export * from './lib/recap/weekly/features/weekly-recap/weekly-recap.component';
+
 /**
  * Auth Module
  */
