@@ -70,10 +70,10 @@
             }
         },
         "@nx/angular:application": {
-            "style": "css",
+            "e2eTestRunner": "none",
             "linter": "eslint",
-            "unitTestRunner": "jest",
-            "e2eTestRunner": "none"
+            "style": "css",
+            "unitTestRunner": "jest"
         },
         "@nx/angular:library": {
             "linter": "eslint",

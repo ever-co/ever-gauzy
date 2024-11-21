@@ -1,2 +1,6 @@
-node_modules
-sentry.properties
+# dependencies
+node_modules/
+
+# misc
+npm-debug.log
+dist
