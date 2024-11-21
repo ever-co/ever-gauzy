@@ -96,20 +96,28 @@
   resolved "https://registry.yarnpkg.com/@analytics/type-utils/-/type-utils-0.6.2.tgz#60d706603a98a95681d4b1e9726c703fdd541a9e"
   integrity sha512-TD+xbmsBLyYy/IxFimW/YL/9L2IEnM7/EoV9Aeh56U64Ify8o27HJcKjo38XY9Tcn0uOq1AX3thkKgvtWvwFQg==
 
-"@angular-builders/custom-webpack@^16.0.1":
-  version "16.0.1"
-  resolved "https://registry.yarnpkg.com/@angular-builders/custom-webpack/-/custom-webpack-16.0.1.tgz#a3af6cde72b629244c89ea3f88c2946782431175"
-  integrity sha512-C6INC8UOYDcp8LJwNhE0m66yp+nZX50JdgGI8oRn7fqw3gO58qhDgXrR/8BCrSeC8eOx8WxSuvBJ6u+9dozhyw==
+"@angular-builders/common@1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@angular-builders/common/-/common-1.0.2.tgz#84fbfa7713e71beb6d0f52ef76b266c949e67892"
+  integrity sha512-lUusRq6jN1It5LcUTLS6Q+AYAYGTo/EEN8hV0M6Ek9qXzweAouJaSEnwv7p04/pD7yJTl0YOCbN79u+wGm3x4g==
   dependencies:
-    "@angular-devkit/architect" ">=0.1600.0 < 0.1700.0"
-    "@angular-devkit/build-angular" "^16.0.0"
-    "@angular-devkit/core" "^16.0.0"
-    lodash "^4.17.15"
+    "@angular-devkit/core" "^17.1.0"
     ts-node "^10.0.0"
     tsconfig-paths "^4.1.0"
+
+"@angular-builders/custom-webpack@^17.0.0":
+  version "17.0.2"
+  resolved "https://registry.yarnpkg.com/@angular-builders/custom-webpack/-/custom-webpack-17.0.2.tgz#3a746580433dd4c0a4cf0fbcc8bbc76c2c95c76c"
+  integrity sha512-K0jqdW5UdVIeKiZXO4nLiiiVt0g6PKJELdxgjsBGMtyRk+RLEY+pIp1061oy/Yf09nGYseZ7Mdx3XASYHQjNwA==
+  dependencies:
+    "@angular-builders/common" "1.0.2"
+    "@angular-devkit/architect" ">=0.1700.0 < 0.1800.0"
+    "@angular-devkit/build-angular" "^17.0.0"
+    "@angular-devkit/core" "^17.0.0"
+    lodash "^4.17.15"
     webpack-merge "^5.7.3"
 
-"@angular-devkit/architect@0.1002.0", "@angular-devkit/architect@0.1703.11", "@angular-devkit/architect@>=0.1600.0 < 0.1700.0", "@angular-devkit/architect@^0.1701.4":
+"@angular-devkit/architect@0.1002.0", "@angular-devkit/architect@0.1703.11", "@angular-devkit/architect@>=0.1700.0 < 0.1800.0", "@angular-devkit/architect@^0.1701.4":
   version "0.1701.4"
   resolved "https://registry.yarnpkg.com/@angular-devkit/architect/-/architect-0.1701.4.tgz#7d517dd5cd686c7dcd99b9b1351a642adf888756"
   integrity sha512-FHEp6etsxjD+04vsrx9QbULRhLoyLfThK/sNMNnRI4n0CaNOS2879ZBua9dRedUEUYR8DzKXw1rPJX0t/65X6g==
@@ -117,7 +125,7 @@
     "@angular-devkit/core" "17.1.4"
     rxjs "7.8.1"
 
-"@angular-devkit/build-angular@^16.0.0", "@angular-devkit/build-angular@^17.1.4":
+"@angular-devkit/build-angular@^17.0.0", "@angular-devkit/build-angular@^17.1.4":
   version "17.3.11"
   resolved "https://registry.yarnpkg.com/@angular-devkit/build-angular/-/build-angular-17.3.11.tgz#70dbdcf3cf7f8609b63d688660b74f3ac7c63eb1"
   integrity sha512-lHX5V2dSts328yvo/9E2u9QMGcvJhbEKKDDp9dBecwvIG9s+4lTOJgi9DPUE7W+AtmPcmbbhwC2JRQ/SLQhAoA==
@@ -204,7 +212,7 @@
     "@angular-devkit/architect" "0.1703.11"
     rxjs "7.8.1"
 
-"@angular-devkit/core@16.0.1", "@angular-devkit/core@16.2.16", "@angular-devkit/core@17.1.4", "@angular-devkit/core@17.3.10", "@angular-devkit/core@17.3.11", "@angular-devkit/core@17.3.8", "@angular-devkit/core@17.3.9", "@angular-devkit/core@18.2.8", "@angular-devkit/core@8.3.29", "@angular-devkit/core@^16.0.0", "@angular-devkit/core@^17.1.4", "@angular-devkit/core@^8.3.8":
+"@angular-devkit/core@16.0.1", "@angular-devkit/core@16.2.16", "@angular-devkit/core@17.1.4", "@angular-devkit/core@17.3.10", "@angular-devkit/core@17.3.11", "@angular-devkit/core@17.3.8", "@angular-devkit/core@17.3.9", "@angular-devkit/core@18.2.8", "@angular-devkit/core@8.3.29", "@angular-devkit/core@^16.0.0", "@angular-devkit/core@^17.0.0", "@angular-devkit/core@^17.1.0", "@angular-devkit/core@^17.1.4", "@angular-devkit/core@^8.3.8":
   version "17.3.11"
   resolved "https://registry.yarnpkg.com/@angular-devkit/core/-/core-17.3.11.tgz#a74b042ec06cf626d5a2f6a3971b156c6759fe09"
   integrity sha512-vTNDYNsLIWpYk2I969LMQFH29GTsLzxNk/0cLw5q56ARF0v5sIWfHYwGTS88jdDqIpuuettcSczbxeA7EuAmqQ==
