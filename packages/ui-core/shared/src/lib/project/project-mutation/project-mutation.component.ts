@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
 import { AbstractControl, UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@angular/forms';
-import { EMPTY, of, switchMap } from 'rxjs';
+import { EMPTY, firstValueFrom, of, switchMap } from 'rxjs';
 import { catchError, debounceTime, filter, finalize, tap } from 'rxjs/operators';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -46,6 +46,8 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { patterns } from '../../regex/regex-patterns.const';
 import { FormHelpers } from '../../forms/helpers';
 import { ckEditorConfig } from '../../ckeditor.config';
+import { AddProjectModuleDialogComponent } from '../project-module';
+import { NbDialogService } from '@nebular/theme';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -182,7 +184,8 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 		private readonly _organizationTeamService: OrganizationTeamsService,
 		private readonly _organizationContactService: OrganizationContactService,
 		private readonly _githubService: GithubService,
-		private readonly _organizationProjectsService: OrganizationProjectsService
+		private readonly _organizationProjectsService: OrganizationProjectsService,
+		private readonly _dialogService: NbDialogService
 	) {
 		super(translateService);
 	}
@@ -707,6 +710,25 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 				.subscribe();
 		} catch (error) {
 			this._errorHandler.handleError(error);
+		}
+	}
+
+	/**
+	 * Opens a dialog for creating a new project module
+	 * @returns Promise that resolves when the dialog is closed
+	 */
+	public async createProjectModuleDialog(): Promise<void> {
+		try {
+			await firstValueFrom(
+				this._dialogService.open(AddProjectModuleDialogComponent, {
+					context: {
+						project: this.project,
+						createModule: true
+					}
+				}).onClose
+			);
+		} catch (error) {
+			console.error('Error while creating project module', error?.message);
 		}
 	}
 }

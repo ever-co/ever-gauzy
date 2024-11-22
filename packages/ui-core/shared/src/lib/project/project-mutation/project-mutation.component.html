@@ -506,6 +506,9 @@
 		<button class="mr-3" nbButton status="success" [disabled]="form.invalid" (click)="onSubmit()">
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
+		<button class="mr-3" nbButton status="success" [disabled]="form.invalid" (click)="createProjectModuleDialog()">
+			{{ 'BUTTONS.ADD_MODULE' | translate }}
+		</button>
 		<ng-template [ngIf]="project">
 			<button
 				*ngIf="form.get('taskListType').value === TaskListTypeEnum.SPRINT"
