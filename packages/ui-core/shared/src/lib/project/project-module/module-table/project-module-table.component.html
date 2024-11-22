@@ -1,0 +1,46 @@
+<div class="main-wrapper" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<div class="gauzy-button-container">
+		<ngx-gauzy-button-action
+			[hasLayoutSelector]="false"
+			[buttonTemplate]="actionButtons"
+			[isDisable]="disableButton"
+		></ngx-gauzy-button-action>
+	</div>
+	<div class="table-scroll-container">
+		<angular2-smart-table
+			[settings]="settingsSmartTable"
+			(userRowSelect)="selectItem($event)"
+			[source]="smartTableSource"
+			style="cursor: pointer"
+			#variantTable
+		>
+		</angular2-smart-table>
+	</div>
+</div>
+
+<ng-template #actionButtons>
+	<div class="actions">
+		<button
+			(click)="onEditProjectModuleDialog()"
+			nbButton
+			status="basic"
+			class="action primary"
+			size="small"
+			[disabled]="disableButton"
+		>
+			<nb-icon icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			(click)="delete()"
+			nbButton
+			status="basic"
+			class="action"
+			[disabled]="disableButton"
+			size="small"
+			[nbTooltip]="'BUTTONS.DELETE' | translate"
+		>
+			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+		</button>
+	</div>
+</ng-template>

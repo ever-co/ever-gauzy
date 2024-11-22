@@ -489,6 +489,9 @@
 						</div>
 					</form>
 				</nb-tab>
+				<nb-tab [tabTitle]="'TASKS_PAGE.MODULE' | translate">
+					<ngx-project-module-table [projectId]="project.id"></ngx-project-module-table>
+				</nb-tab>
 			</nb-tabset>
 			<ng-container [ngTemplateOutlet]="actionButtons"></ng-container>
 		</form>

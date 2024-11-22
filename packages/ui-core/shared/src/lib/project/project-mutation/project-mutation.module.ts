@@ -5,6 +5,7 @@ import {
 	NbButtonModule,
 	NbCardModule,
 	NbDatepickerModule,
+	NbIconModule,
 	NbInputModule,
 	NbListModule,
 	NbSelectModule,
@@ -23,9 +24,11 @@ import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-inp
 import { TeamSelectModule } from '../../selectors/team/team.module';
 import { ProjectMutationComponent } from './project-mutation.component';
 import { RepositorySelectorModule } from '../../integrations/github/repository-selector/repository-selector.module';
+import { ProjectModuleTableComponent } from '../project-module/module-table/project-module-table.component';
+import { SmartDataViewLayoutModule } from '../../smart-data-layout';
 
 @NgModule({
-	declarations: [ProjectMutationComponent],
+	declarations: [ProjectMutationComponent, ProjectModuleTableComponent],
 	exports: [ProjectMutationComponent],
 	imports: [
 		CommonModule,
@@ -39,6 +42,7 @@ import { RepositorySelectorModule } from '../../integrations/github/repository-s
 		NbSelectModule,
 		NbTabsetModule,
 		NbToggleModule,
+		NbIconModule,
 		NgSelectModule,
 		CKEditorModule,
 		ColorPickerModule,
@@ -49,7 +53,8 @@ import { RepositorySelectorModule } from '../../integrations/github/repository-s
 		ImageUploaderModule,
 		TagsColorInputModule,
 		TeamSelectModule,
-		RepositorySelectorModule
+		RepositorySelectorModule,
+		SmartDataViewLayoutModule
 	]
 })
 export class ProjectMutationModule {}

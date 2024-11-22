@@ -18,7 +18,6 @@ import {
 	ITask,
 	ProjectModuleStatusEnum,
 	TaskParticipantEnum,
-	IGetTaskOptions,
 	ID
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -102,8 +101,6 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 		super(translateService);
 	}
 
-
-
 	/**
 	 * Initializes component and loads necessary data.
 	 */
@@ -131,13 +128,13 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 			projectId: module.projectId,
 			parentId: module.parentId,
 			managerId: module.managerId,
-			members: (module.members || []).map((m) => m.id),
+			members: (module.members || [])?.map((m) => m.id),
 			organizationSprints: module.organizationSprints,
-			teams: (module.teams || []).map((t) => t.id),
+			teams: (module.teams || [])?.map((t) => t.id),
 			tasks: module.tasks
 		});
-		this.selectedMembers = module.members.map((m) => m.id);
-		this.selectedTeams = module.teams.map((t) => t.id);
+		this.selectedMembers = module.members?.map((m) => m.id);
+		this.selectedTeams = module.teams?.map((t) => t.id);
 	}
 
 	/**
@@ -172,7 +169,10 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 			const module = await firstValueFrom(this.organizationProjectModuleService.create(formValue));
 			this.dialogRef.close(module);
 		} else {
-			this.dialogRef.close(formValue);
+			const module = await firstValueFrom(
+				this.organizationProjectModuleService.update(this.projectModule.id, { ...formValue })
+			);
+			this.dialogRef.close(module);
 		}
 	}
 
@@ -227,10 +227,10 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 		const { id: organizationId, tenantId } = this.organization;
 
 		try {
-			const { items: teams = [] } = await this.organizationTeamsService.getAll(
-				['members'],
-				{ organizationId, tenantId }
-			);
+			const { items: teams = [] } = await this.organizationTeamsService.getAll(['members'], {
+				organizationId,
+				tenantId
+			});
 			this.teams = teams;
 		} catch (error) {
 			this.teams = [];
