@@ -473,23 +473,33 @@ async function preBootstrapRegisterSubscribers(
  * @returns An object containing paths for migrations and CLI migrations directory.
  */
 export function getMigrationsSetting() {
-	// Log the current directory for debugging purposes (consider removing in production)
-	console.log(`Reporting __dirname: ${__dirname}`);
+    // Determine whether the code is running from dist (production) or src (development)
+    const isDist = __dirname.includes('dist');
 
-	// Define the path for migration files, allowing for both TypeScript (.ts) and JavaScript (.js) files
-	const migrationsDir = join(__dirname, '../database/migrations/*{.ts,.js}');
+    // Base path adjustment based on environment
+    const baseDir = isDist
+        ? join(__dirname, '../../../../..') // Adjust for dist folder
+        : join(__dirname, '../../../../..'); // Adjust for src folder
 
-	// Define the directory for CLI migrations, typically where new migration files are created
-	const cliMigrationsDir = join(__dirname, '../database/migrations');
+	// Define paths for migrations and CLI migrations directory
+	const migrationsPath = 'packages/core/src/lib/database/migrations';
 
-	console.log('Migrations Dir:', migrationsDir);
-	console.log('CLI Migrations Dir:', cliMigrationsDir);
+    // Migrations directory path
+    const migrationsDir = join(baseDir, `${migrationsPath}/*{.ts,.js}`);
 
-	// Return the paths for migrations and CLI migration directory
-	return {
-		migrations: [migrationsDir], // An array of migration file paths
-		cli: {
-			migrationsDir: cliMigrationsDir // Directory for CLI migrations
-		}
-	};
+    // CLI Migrations directory path
+    const cliMigrationsDir = join(baseDir, migrationsPath);
+
+    // Debugging logs (remove or replace with proper logging in production)
+    console.log('Base Directory:', baseDir);
+    console.log('Migrations Dir:', migrationsDir);
+    console.log('CLI Migrations Dir:', cliMigrationsDir);
+
+    // Return the migration paths
+    return {
+        migrations: [migrationsDir],
+        cli: {
+            migrationsDir: cliMigrationsDir
+        }
+    };
 }
