@@ -50,8 +50,8 @@ import { coreSubscribers } from '../core/entities/subscribers';
 import { AuthGuard } from '../shared/guards';
 import { SharedModule } from '../shared/shared.module';
 import { registerMikroOrmCustomFields, registerTypeOrmCustomFields } from '../core/entities/custom-entity-fields';
-import { AppService } from '../app.service';
-import { AppModule } from '../app.module';
+import { AppService } from '../app/app.service';
+import { AppModule } from '../app/app.module';
 
 /**
  * Bootstrap the NestJS application, configuring various settings and initializing the server.
@@ -477,16 +477,17 @@ export function getMigrationsSetting() {
 	console.log(`Reporting __dirname: ${__dirname}`);
 
 	// Define the path for migration files, allowing for both TypeScript (.ts) and JavaScript (.js) files
-	const migrationsPath = join(__dirname, '../database/migrations/*{.ts,.js}');
+	const migrationsDir = join(__dirname, '../database/migrations/*{.ts,.js}');
 
 	// Define the directory for CLI migrations, typically where new migration files are created
-	const cliMigrationsDir = join(__dirname, '../../src/lib/database/migrations');
+	const cliMigrationsDir = join(__dirname, '../database/migrations');
 
+	console.log('Migrations Dir:', migrationsDir);
 	console.log('CLI Migrations Dir:', cliMigrationsDir);
 
 	// Return the paths for migrations and CLI migration directory
 	return {
-		migrations: [migrationsPath], // An array of migration file paths
+		migrations: [migrationsDir], // An array of migration file paths
 		cli: {
 			migrationsDir: cliMigrationsDir // Directory for CLI migrations
 		}

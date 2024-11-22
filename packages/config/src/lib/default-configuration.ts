@@ -26,8 +26,9 @@ if (__dirname.startsWith('/srv/gauzy')) {
 	assetPath = '/srv/gauzy/apps/api/src/assets';
 	assetPublicPath = '/srv/gauzy/apps/api/public';
 } else {
-	assetPath = path.join(path.resolve(__dirname, '../../../', ...['apps', 'api', 'src', 'assets']));
-	assetPublicPath = path.join(path.resolve(__dirname, '../../../', ...['apps', 'api', 'public']));
+	const basePath = path.resolve(__dirname, '../../../../apps/api');
+	assetPath = path.join(basePath, 'src/assets');
+	assetPublicPath = path.join(basePath, 'public');
 }
 
 console.log('Default Config -> assetPath: ' + assetPath);

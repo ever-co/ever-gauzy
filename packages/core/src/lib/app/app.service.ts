@@ -1,12 +1,23 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import * as chalk from 'chalk';
 import { ConfigService } from '@gauzy/config';
-import { SeedDataService } from './core/seeds/seed-data.service';
-import { UserService } from './user/user.service';
+import { SeedDataService } from '../core/seeds/seed-data.service';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class AppService {
 	public count: number = 0;
+
+	constructor(
+		@Inject(forwardRef(() => SeedDataService))
+		private readonly seedDataService: SeedDataService,
+
+		@Inject(forwardRef(() => UserService))
+		private readonly userService: UserService,
+
+		@Inject(forwardRef(() => ConfigService))
+		private readonly configService: ConfigService
+	) {}
 
 	/**
 	 * Seed DB if no users exists (for simplicity and safety we only re-seed DB if no users found)
@@ -19,17 +30,6 @@ export class AppService {
 			await this.seedDataService.runDefaultSeed(true);
 		}
 	}
-
-	constructor(
-		@Inject(forwardRef(() => SeedDataService))
-		private readonly seedDataService: SeedDataService,
-
-		@Inject(forwardRef(() => UserService))
-		private readonly userService: UserService,
-
-		@Inject(forwardRef(() => ConfigService))
-		private readonly configService: ConfigService
-	) {}
 
 	/*
 	 * Seed DB for Demo server
