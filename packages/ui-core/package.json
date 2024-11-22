@@ -99,7 +99,7 @@
 		"ngx-moment": "^6.0.2",
 		"ngx-permissions": "^17.1.0",
 		"randomcolor": "^0.6.2",
-		"rxjs": "^7.4.0",
+		"rxjs": "^7.8.0",
 		"slugify": "^1.6.5",
 		"swiper": "^8.3.1",
 		"tslib": "^2.6.2",

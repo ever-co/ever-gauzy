@@ -36,7 +36,7 @@
 		"@sentry/types": "^7.101.1",
 		"chalk": "^4.1.0",
 		"express": "^4.18.2",
-		"rxjs": "^7.4.0",
+		"rxjs": "^7.8.0",
 		"tslib": "^2.6.2"
 	},
 	"devDependencies": {

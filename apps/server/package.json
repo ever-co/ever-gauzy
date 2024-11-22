@@ -80,7 +80,7 @@
 		"node-static": "^0.7.11",
 		"pg": "^8.13.1",
 		"pg-query-stream": "^4.7.1",
-		"rxjs": "^7.4.0",
+		"rxjs": "^7.8.0",
 		"squirrelly": "^8.0.8",
 		"twing": "^5.0.2",
 		"typeorm": "^0.3.20",

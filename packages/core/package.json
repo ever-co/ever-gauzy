@@ -172,7 +172,7 @@
 		"redis": "^4.6.12",
 		"reflect-metadata": "^0.1.13",
 		"request": "^2.88.2",
-		"rxjs": "^7.4.0",
+		"rxjs": "^7.8.0",
 		"sql.js": "^1.5.0",
 		"streamifier": "^0.1.1",
 		"swagger-ui-express": "^5.0.0",

@@ -41,7 +41,7 @@
 		"ngx-infinite-scroll": "^17.0.1",
 		"ng2-charts": "^5.0.4",
 		"ngx-permissions": "^17.1.0",
-		"rxjs": "^7.4.0",
+		"rxjs": "^7.8.0",
 		"tslib": "^2.6.2"
 	},
 	"devDependencies": {

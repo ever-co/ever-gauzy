@@ -78,7 +78,7 @@
 		"node-notifier": "^8.0.0",
 		"pg": "^8.13.1",
 		"pg-query-stream": "^4.7.1",
-		"rxjs": "^7.4.0",
+		"rxjs": "^7.8.0",
 		"screenshot-desktop": "^1.15.0",
 		"sound-play": "1.1.0",
 		"squirrelly": "^8.0.8",

@@ -39,7 +39,7 @@
 		"ng2-file-upload": "^6.0.0",
 		"ngx-moment": "^6.0.2",
 		"ngx-permissions": "^17.1.0",
-		"rxjs": "^7.4.0",
+		"rxjs": "^7.8.0",
 		"tslib": "^2.6.2",
 		"underscore": "^1.13.3"
 	},
