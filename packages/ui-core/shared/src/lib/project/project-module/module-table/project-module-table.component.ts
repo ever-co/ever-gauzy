@@ -15,7 +15,7 @@ import {
 	EmployeeWithLinksComponent,
 	StatusViewComponent,
 	ToggleSwitcherComponent
-} from '@gauzy/ui-core/shared';
+} from '../../../../index';
 
 @UntilDestroy()
 @Component({
