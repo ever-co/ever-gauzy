@@ -1,63 +1,89 @@
 import { DataSource } from 'typeorm';
 import * as path from 'path';
-import * as fs from 'fs';
-import { imageSize } from 'image-size';
 import { environment as env, getConfig } from '@gauzy/config';
 import { FileStorageProviderEnum, IIssueType } from '@gauzy/contracts';
 import { ImageAsset } from './../../core/entities/internal';
-import { cleanAssets, copyAssets } from './../../core/seeds/utils';
+import { cleanAssets, copyAssets, getImageDimensions } from './../../core/seeds/utils';
 import { DEFAULT_GLOBAL_ISSUE_TYPES } from './default-global-issue-types';
 import { IssueType } from './issue-type.entity';
 
-/**
- * Default global system issue types
- *
- * @param dataSource
- * @returns
- */
-export const createDefaultIssueTypes = async (dataSource: DataSource): Promise<IIssueType[]> => {
-	await cleanAssets(getConfig(), path.join('ever-icons', 'task-issue-types'));
 
-	try {
+// Get the application configuration
+const config = getConfig();
+
+/**
+ * Creates default issue types for the system.
+ *
+ * This function is responsible for:
+ * - Cleaning existing assets related to issue types.
+ * - Copying default issue type icons to the appropriate asset directories.
+ * - Calculating dimensions and size of the icons.
+ * - Saving the issue types along with their associated icons in the database.
+ *
+ * @param dataSource The database connection/data source.
+ * @returns A promise resolving to an array of saved issue types.
+ *
+ * @throws Logs errors related to asset copying, icon saving, or issue type saving.
+ */
+export const createDefaultIssueTypes = async (
+    dataSource: DataSource
+): Promise<IIssueType[]> => {
+	// Check if running in Electron
+	const isElectron = env.isElectron;
+
+	// Determine if running from dist or source
+	const isDist = __dirname.includes('dist');
+
+	// Default public directory for assets
+	const publicDir = isDist
+		? path.resolve(process.cwd(), 'dist/apps/api/public') // Adjusted for dist structure
+		: path.resolve(__dirname, '../../../apps/api/public');
+
+	// Determine the base directory for assets
+	const baseDir = isElectron
+		? path.resolve(env.gauzyUserPath, 'public')
+		: config.assetOptions?.assetPublicPath || publicDir; // Custom public directory path from configuration.
+
+    try {
+		// Clean up old issue type assets
+		await cleanAssets(config, path.join('ever-icons', 'task-issue-types'));
+
 		let issueTypes: IIssueType[] = [];
 
-		const isElectron = env.isElectron; // Check if electron
-		const publicDir = path.resolve(__dirname, '../../../', ...['apps', 'api', 'public']); // Default public directory for assets
-		const assetPublicPath = getConfig().assetOptions.assetPublicPath || publicDir; // Custom public directory for assets
-		const baseDir = isElectron ? path.resolve(env.gauzyUserPath, ...['public']) : assetPublicPath; // Base directory for assets
+        // Iterate through default global issue types and process each.
+        for await (const issueType of DEFAULT_GLOBAL_ISSUE_TYPES) {
+            try {
+                // Copy issue type icon and get its path.
+                const iconPath = await copyAssets(issueType.icon, config);
+				// Calculate dimensions and size of the icon.
+                const absoluteFilePath = path.join(baseDir, iconPath);
+				// Get image dimensions.
+				const { height, width, size } = await getImageDimensions(absoluteFilePath);
 
-		// Copy default issue types icons
-		for await (const issueType of DEFAULT_GLOBAL_ISSUE_TYPES) {
-			//Copy issue type icon
-			const iconPath = copyAssets(issueType.icon, getConfig());
+                // Create a new image asset for the icon.
+                const icon = new ImageAsset();
+                icon.name = issueType.name;
+                icon.url = iconPath;
+                icon.storageProvider = FileStorageProviderEnum.LOCAL;
+                icon.height = height;
+                icon.width = width;
+                icon.size = size;
 
-			const absoluteFilePath = path.join(baseDir, iconPath);
-			const { height = 0, width = 0 } = imageSize(absoluteFilePath);
-			const { size } = fs.statSync(absoluteFilePath);
+                // Save the image asset in the database.
+                const image = await dataSource.getRepository(ImageAsset).save(icon);
 
-			try {
-				const icon = new ImageAsset();
-				icon.name = issueType.name;
-				icon.url = iconPath;
-				icon.storageProvider = FileStorageProviderEnum.LOCAL;
-				icon.height = height;
-				icon.width = width;
-				icon.size = size;
+                // Create and save the issue type with the associated icon.
+                issueTypes.push(new IssueType({ ...issueType, icon: iconPath, image }));
+            } catch (error) {
+				console.error('Error while saving issue type icon:', error?.message);
+                // Fallback to creating the issue type without an associated icon.
+                issueTypes.push(new IssueType({ ...issueType, icon: undefined }));
+            }
+        }
 
-				const image = await dataSource.getRepository(ImageAsset).save(icon);
-				issueTypes.push(new IssueType({ ...issueType, icon: iconPath, image }));
-			} catch (error) {
-				console.error('Error while saving issue type icon', error?.message);
-				issueTypes.push(new IssueType({ ...issueType, icon: undefined }));
-			}
-		}
-
-		try {
-			return await dataSource.manager.save(issueTypes);
-		} catch (error) {
-			console.log('Error while saving issue types', error);
-		}
-	} catch (error) {
-		console.log('Error while moving task issue type icons', error);
-	}
+		// Save all issue types in the database.
+        return await dataSource.manager.save(issueTypes);
+    } catch (error) {
+        console.log('Error while moving task issue type icons', error);
+    }
 };

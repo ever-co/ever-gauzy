@@ -58,18 +58,21 @@ export class TaskPrioritySubscriber extends BaseEntityEventSubscriber<TaskPriori
 	}
 
 	/**
-	 * Simulate an asynchronous operation to set the full icon URL.
+	 * Sets the full icon URL for a `TaskPriority` entity using a file storage provider.
 	 *
-	 * @param entity
-	 * @returns
+	 * @param entity - The `TaskPriority` entity whose `fullIconUrl` needs to be set.
+	 * @returns A promise that resolves once the `fullIconUrl` is successfully set.
 	 */
 	private async setFullIconUrl(entity: TaskPriority): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			try {
 				// Simulate async operation, e.g., fetching fullUrl from a service
 				setTimeout(async () => {
+					// Initialize the file storage provider
 					const provider = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
+					// Fetch and set the full URL for the icon
 					entity.fullIconUrl = await provider.getProviderInstance().url(entity.icon);
+					// Resolve the promise once the URL is set
 					resolve();
 				});
 			} catch (error) {

@@ -5,12 +5,24 @@ import { cleanAssets, copyAssets } from './../core/seeds/utils';
 import { Integration } from './integration.entity';
 import { DEFAULT_INTEGRATIONS } from './default-integration';
 
+// Get the application configuration
 const config = getConfig();
 
+/**
+ * Creates default integrations by mapping predefined integrations to their respective types,
+ * copying assets, and saving them to the database.
+ *
+ * If no `integrationTypes` are provided, the function logs a warning and exits without creating integrations.
+ *
+ * @param dataSource - The data source for database operations.
+ * @param integrationTypes - An array of available integration types or void if none are provided.
+ * @returns A promise resolving to the created `IIntegration[]` or void if no integrations are created.
+ */
 export const createDefaultIntegrations = async (
 	dataSource: DataSource,
 	integrationTypes: IIntegrationType[] | void
-): Promise<IIntegration[]> => {
+): Promise<IIntegration[] | void> => {
+	// Ensure integrationTypes are provided
 	if (!integrationTypes) {
 		console.warn(
 			'Warning: integrationTypes not found, DefaultIntegrations will not be created'
@@ -18,27 +30,53 @@ export const createDefaultIntegrations = async (
 		return;
 	}
 
+	// Clean up old assets in the integrations directory
 	const destDir = 'integrations';
 	await cleanAssets(config, destDir);
 
-	const integrations: IIntegration[] = [];
-	for await (const integration of DEFAULT_INTEGRATIONS) {
-		const { name, imgSrc, isComingSoon, integrationTypesMap, order, provider, redirectUrl } = integration;
+	// Map and create new integration entities
+	const integrations = await Promise.all(
+		DEFAULT_INTEGRATIONS.map(async (integration) => {
+			const {
+				name,
+				imgSrc,
+				isComingSoon,
+				integrationTypesMap,
+				order,
+				provider,
+				redirectUrl
+			} = integration;
 
-		const entity = new Integration();
-		entity.name = name;
-		entity.imgSrc = copyAssets(imgSrc, config, destDir);
-		entity.isComingSoon = isComingSoon;
-		entity.order = order;
-		entity.redirectUrl = redirectUrl;
-		entity.provider = provider;
-		entity.integrationTypes = integrationTypes.filter((it) =>
-			integrationTypesMap.includes(it.name)
-		);
-		integrations.push(entity);
-	}
+			// Create a new Integration entity
+			const entity = new Integration();
+			entity.name = name;
+			entity.imgSrc = await copyAssets(imgSrc, config, destDir);
+			entity.isComingSoon = isComingSoon;
+			entity.order = order;
+			entity.redirectUrl = redirectUrl;
+			entity.provider = provider;
 
-	return await insertIntegrations(dataSource, integrations);
+			// Associate integration types by filtering the provided types
+			entity.integrationTypes = integrationTypes.filter((type) =>
+				integrationTypesMap.includes(type.name)
+			);
+
+			return entity;
+		})
+	);
+
+	// Save the created integrations to the database
+	return insertIntegrations(dataSource, integrations);
 };
 
-const insertIntegrations = async (dataSource: DataSource, integrations: IIntegration[]) => await dataSource.manager.save(integrations);
+
+/**
+ * Inserts integrations into the database.
+ *
+ * @param dataSource - The data source for database operations.
+ * @param integrations - An array of integrations to be inserted.
+ * @returns A promise resolving to the saved integrations.
+ */
+const insertIntegrations = (dataSource: DataSource, integrations: IIntegration[]): Promise<IIntegration[]> => {
+    return dataSource.manager.save(integrations);
+};

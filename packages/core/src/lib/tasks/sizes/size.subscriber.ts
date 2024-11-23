@@ -58,18 +58,21 @@ export class TaskSizeSubscriber extends BaseEntityEventSubscriber<TaskSize> {
 	}
 
 	/**
-	 * Simulate an asynchronous operation to set the full icon URL.
+	 * Sets the full icon URL for a `TaskSize` entity using a file storage provider.
 	 *
-	 * @param entity
-	 * @returns
+	 * @param entity - The `TaskSize` entity whose `fullIconUrl` needs to be set.
+	 * @returns A promise that resolves when the `fullIconUrl` is successfully set.
 	 */
 	private async setFullIconUrl(entity: TaskSize): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			try {
-				// Simulate async operation, e.g., fetching fullUrl from a service
+				// Simulate async operation with a delay
 				setTimeout(async () => {
+					// Initialize the file storage provider
 					const provider = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
+					// Fetch and set the full URL for the icon
 					entity.fullIconUrl = await provider.getProviderInstance().url(entity.icon);
+					// Resolve the promise once the URL is set
 					resolve();
 				});
 			} catch (error) {

@@ -17,17 +17,32 @@ let assetPath: string;
 let assetPublicPath: string;
 
 console.log('Default Config -> __dirname: ' + __dirname);
-console.log('Plugin Config -> process.cwd: ' + process.cwd());
+console.log('Default Config -> process.cwd: ' + process.cwd());
 
 // TODO: maybe better to use process.cwd() instead of __dirname?
 
-// for Docker
+// For Docker environment
 if (__dirname.startsWith('/srv/gauzy')) {
-	assetPath = '/srv/gauzy/apps/api/src/assets';
-	assetPublicPath = '/srv/gauzy/apps/api/public';
+    // Set paths specific to Docker deployment
+    assetPath = '/srv/gauzy/apps/api/src/assets';
+    assetPublicPath = '/srv/gauzy/apps/api/public';
 } else {
-	const basePath = path.resolve(__dirname, '../../../../apps/api');
-	assetPath = path.join(basePath, 'src/assets');
+    // Determine if running in production (dist) or development (src)
+    const isDist = __dirname.includes(path.join('dist', 'packages'));
+	console.log('Default Config -> isDist: ' + isDist);
+
+	// Adjust the base path based on the environment
+	const basePath = isDist
+		? path.resolve(process.cwd(), 'dist/apps/api') // For production
+		: path.resolve(process.cwd(), 'apps/api'); // For development
+
+	console.log('Default Config -> basePath: ' + basePath);
+
+	// Set the asset paths relative to basePath
+	assetPath = isDist
+		? path.join(basePath, 'assets') // In dist, assets are directly under 'assets'
+		: path.join(basePath, 'src', 'assets'); // In dev, assets are under 'src/assets'
+
 	assetPublicPath = path.join(basePath, 'public');
 }
 

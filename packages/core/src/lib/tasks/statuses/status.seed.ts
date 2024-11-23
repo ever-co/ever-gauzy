@@ -5,25 +5,34 @@ import { cleanAssets, copyAssets } from './../../core/seeds/utils';
 import { DEFAULT_GLOBAL_STATUSES } from './default-global-statuses';
 import { TaskStatus } from './status.entity';
 
+// Get the application configuration
 const config = getConfig();
 
 /**
- * Default global system status
+ * Creates default global system task statuses.
  *
- * @param dataSource
- * @returns
+ * @param dataSource - The TypeORM DataSource instance.
+ * @returns A promise that resolves to an array of saved task statuses.
  */
 export const createDefaultStatuses = async (
-	dataSource: DataSource
+    dataSource: DataSource
 ): Promise<ITaskStatus[]> => {
-	await cleanAssets(config, 'ever-icons/task-statuses');
+	try {
+		// Clean task status assets directory
+		await cleanAssets(config, 'ever-icons/task-statuses');
 
-	let statuses: ITaskStatus[] = [];
-	for await (const status of DEFAULT_GLOBAL_STATUSES) {
-		statuses.push(new TaskStatus({
-			...status,
-			icon: copyAssets(status.icon, config)
-		}));
+		// Map default statuses to TaskStatus entities with updated icons
+		const statuses = DEFAULT_GLOBAL_STATUSES.map(
+			(status) =>
+				new TaskStatus({
+					...status,
+					icon: copyAssets(status.icon, config)
+				})
+		);
+
+		// Save all statuses in the database and return them
+		return dataSource.manager.save(statuses);
+	} catch (error) {
+		console.log('Error while moving task status icons', error);
 	}
-	return await dataSource.manager.save(statuses);
 };

@@ -28,19 +28,38 @@ console.log('Plugin Config -> process.cwd: ' + process.cwd());
 
 let assetPath: any;
 let assetPublicPath: any;
-// for Docker
+
+// For Docker environment
 if (__dirname.startsWith('/srv/gauzy')) {
 	assetPath = '/srv/gauzy/apps/api/src/assets';
 	assetPublicPath = '/srv/gauzy/apps/api/public';
 } else {
-	assetPath = path.join(path.resolve(__dirname, '../../../', ...['apps', 'api', 'src', 'assets']));
-	assetPublicPath = path.join(path.resolve(__dirname, '../../../', ...['apps', 'api', 'public']));
+	// Determine if running in production (dist) or development (src)
+	const isDist = __dirname.includes(path.join('dist', 'apps'));
+	console.log('Plugin Config -> isDist: ' + isDist);
+
+	// Adjust the base path based on the environment
+	const basePath = isDist
+		? path.resolve(process.cwd(), 'dist/apps/api') // For production
+		: path.resolve(process.cwd(), 'apps/api'); // For development
+
+	console.log('Plugin Config -> basePath: ' + basePath);
+
+	// Set the asset paths relative to basePath
+	assetPath = isDist
+		? path.join(basePath, 'assets') // In dist, assets are directly under 'assets'
+		: path.join(basePath, 'src', 'assets'); // In dev, assets are under 'src/assets'
+
+	assetPublicPath = path.join(basePath, 'public');
 }
 
 console.log('Plugin Config -> assetPath: ' + assetPath);
 console.log('Plugin Config -> assetPublicPath: ' + assetPublicPath);
 console.log('DB Synchronize: ' + process.env.DB_SYNCHRONIZE);
 
+/**
+ * Application plugin configuration
+ */
 export const pluginConfig: ApplicationPluginConfig = {
 	apiConfigOptions: {
 		host: process.env.API_HOST || DEFAULT_API_HOST,

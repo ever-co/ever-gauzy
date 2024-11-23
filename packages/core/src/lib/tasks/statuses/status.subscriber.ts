@@ -55,23 +55,31 @@ export class TaskStatusSubscriber extends BaseEntityEventSubscriber<TaskStatus> 
 	}
 
 	/**
-	 * Simulate an asynchronous operation to set the full icon URL.
+	 * Sets the full icon URL for a `TaskStatus` entity using a file storage provider.
 	 *
-	 * @param entity
-	 * @returns
+	 * @param entity - The `TaskStatus` entity whose `fullIconUrl` needs to be set.
+	 * @returns A promise that resolves when the `fullIconUrl` is successfully set.
 	 */
 	private async setFullIconUrl(entity: TaskStatus): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			try {
-				// Simulate async operation, e.g., fetching fullUrl from a service
+				// Simulate async operation with a delay
 				setTimeout(async () => {
-					const provider = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
-					entity.fullIconUrl = await provider.getProviderInstance().url(entity.icon);
-					resolve();
-				});
+					try {
+						// Initialize the file storage provider (e.g., LOCAL, S3, etc.)
+						const provider = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
+						// Fetch and set the full URL for the icon
+						entity.fullIconUrl = await provider.getProviderInstance().url(entity.icon);
+						// Resolve the promise once the URL is set
+						resolve();
+					} catch (innerError) {
+						console.error('Error fetching the icon URL:', innerError);
+						reject(innerError);
+					}
+				}, 0); // Delay of 0ms to simulate async operation
 			} catch (error) {
-				console.error('TaskStatusSubscriber: Error during the setImageUrl process:', error);
-				reject(null);
+				console.error('TaskStatusSubscriber: Error during the setFullIconUrl process:', error);
+				reject(error);
 			}
 		});
 	}
