@@ -166,13 +166,21 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 		const formValue = { ...this.form.value, organizationId, organization: this.organization };
 
 		if (this.createModule) {
-			const module = await firstValueFrom(this.organizationProjectModuleService.create(formValue));
-			this.dialogRef.close(module);
+			try {
+				const module = await firstValueFrom(this.organizationProjectModuleService.create(formValue));
+				this.dialogRef.close(module);
+			} catch (error) {
+				console.error('Failed to create module:', error);
+			}
 		} else {
-			const module = await firstValueFrom(
-				this.organizationProjectModuleService.update(this.projectModule.id, { ...formValue })
-			);
-			this.dialogRef.close(module);
+			try {
+				const module = await firstValueFrom(
+					this.organizationProjectModuleService.update(this.projectModule.id, { ...formValue })
+				);
+				this.dialogRef.close(module);
+			} catch (error) {
+				console.error('Failed to update module:', error);
+			}
 		}
 	}
 

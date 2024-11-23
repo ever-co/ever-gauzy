@@ -9,6 +9,7 @@ import {
 	NbInputModule,
 	NbListModule,
 	NbSelectModule,
+	NbSpinnerModule,
 	NbTabsetModule,
 	NbToggleModule
 } from '@nebular/theme';
@@ -40,6 +41,7 @@ import { SmartDataViewLayoutModule } from '../../smart-data-layout';
 		NbInputModule,
 		NbListModule,
 		NbSelectModule,
+		NbSpinnerModule,
 		NbTabsetModule,
 		NbToggleModule,
 		NbIconModule,

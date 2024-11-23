@@ -715,6 +715,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 
 	/**
 	 * Opens a dialog for creating a new project module
+	 * @param createModule - Flag indicating if this is a new module creation (true) or edit (false)
 	 * @returns Promise that resolves when the dialog is closed
 	 */
 	public async createProjectModuleDialog(): Promise<void> {
@@ -728,7 +729,8 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 				}).onClose
 			);
 		} catch (error) {
-			console.error('Error while creating project module', error?.message);
+			const message = error.message || 'Error while creating project module';
+			+this._toastrService.danger(message, 'Project Module Error');
 		}
 	}
 }
