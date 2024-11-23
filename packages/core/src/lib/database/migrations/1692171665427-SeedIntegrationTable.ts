@@ -50,7 +50,7 @@ export class SeedIntegrationTable1692171665427 implements MigrationInterface {
 
 		for await (const { name, imgSrc, isComingSoon, order, integrationTypesMap } of DEFAULT_AI_INTEGRATIONS) {
 			try {
-				const filePath = copyAssets(path.join(destDir, imgSrc), getConfig(), '');
+				const filePath = await copyAssets(path.join(destDir, imgSrc), getConfig(), '');
 				const payload = [name, filePath, isComingSoon ? 1 : 0, order];
 
 				// For SQLite, manually generate a UUID using uuidv4()
@@ -92,7 +92,7 @@ export class SeedIntegrationTable1692171665427 implements MigrationInterface {
 
 		for await (const { name, imgSrc, isComingSoon, order, integrationTypesMap } of DEFAULT_AI_INTEGRATIONS) {
 			try {
-				const filePath = copyAssets(path.join(destDir, imgSrc), getConfig(), '');
+				const filePath = await copyAssets(path.join(destDir, imgSrc), getConfig(), '');
 				const payload = [name, filePath, isComingSoon, order];
 
 				const upsertQuery = `

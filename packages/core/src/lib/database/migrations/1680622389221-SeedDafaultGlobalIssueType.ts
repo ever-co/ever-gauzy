@@ -2,12 +2,13 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from 'chalk';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
-import * as fs from 'fs';
-import { imageSize } from 'image-size';
 import { getConfig, environment as env, DatabaseTypeEnum } from '@gauzy/config';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
-import { copyAssets } from './../../core/seeds/utils';
+import { copyAssets, getImageDimensions } from './../../core/seeds/utils';
 import { DEFAULT_GLOBAL_ISSUE_TYPES } from './../../tasks/issue-type/default-global-issue-types';
+
+// Get the application configuration
+const config = getConfig();
 
 export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterface {
 	name = 'SeedDafaultGlobalIssueType1680622389221';
@@ -49,50 +50,32 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 	 */
 	async sqliteSeedDefaultIssueTypes(queryRunner: QueryRunner) {
 		try {
+			// Determine if running from dist or source
+			const destDirName = 'ever-icons';
+
+			// Determine if running from `dist` or `src`
+			const isDist = __dirname.includes('dist');
+
+    		// Default public directory for assets
+			const publicDir = isDist
+				? path.resolve(process.cwd(), 'dist/apps/api/public') // Production structure
+				: path.resolve(__dirname, '../../../apps/api/public'); // Development structure
+
+			// Determine the base directory for assets
+			const baseDir = env.isElectron
+				? path.resolve(process.env.GAUZY_USER_PATH || '', 'public') // Electron-specific path
+				: config.assetOptions?.assetPublicPath || publicDir; // Custom public directory path from configuration.
+
+
 			for await (const issueType of DEFAULT_GLOBAL_ISSUE_TYPES) {
-				const { name, value, description, icon, color, isSystem } = issueType;
-				// 	/** Move issue types icons to the public static folder */
-				// 	const filepath = path.join('ever-icons', icon);
-				// 	copyAssets(icon, this.config);
-				// 	const iconPath = path.join(this.config.assetOptions.assetPath, ...['seed', 'ever-icons', icon]);
-				// 	const { height, width } = imageSize(iconPath);
-				// 	const { size } = fs.statSync(iconPath);
-				// 	const imageAsset = [name, filepath, FileStorageProviderEnum.LOCAL, height, width, size];
-				// 	const payload = [name, value, description, filepath, color, isSystem ? 1 : 0];
-				// 	const imageAssetId = uuidv4();
-
-
-				// 	imageAsset.push(imageAssetId);
-				// 	const insertQuery = `
-				// 		INSERT INTO image_asset (
-				// 			"name", "url", "storageProvider", "height", "width", "size", "id"
-				// 		)
-				// 		VALUES (
-				// 			?, ?, ?, ?, ?, ?, ?
-				// 		);
-				// 	`;
-
-				// 	await queryRunner.connection.manager.query(insertQuery, imageAsset);
-				// 	payload.push(uuidv4(), imageAssetId);
-				// 	await queryRunner.connection.manager.query(
-				// 		`
-				// 		INSERT INTO "issue_type" (
-				// 			"name", "value", "description", "icon", "color", "isSystem", "id", "imageId"
-				// 		) VALUES (
-				// 			?, ?, ?, ?, ?, ?, ?, ?);
-				// 		`,
-				// 		payload
-				// 	);
-				// }
-				const destDirName = 'ever-icons';
-				const filePath = copyAssets(icon, getConfig(), destDirName);
-				const baseDir = env.isElectron
-					? path.resolve(env.gauzyUserPath, ...['public'])
-					: getConfig().assetOptions.assetPublicPath ||
-					path.resolve(__dirname, '../../../', ...['apps', 'api', 'public']);
+				// Copy issue type icon and get its path
+				const filePath = await copyAssets(issueType.icon, config, destDirName);
+				// Calculate dimensions and size of the icon
 				const absoluteFilePath = path.join(baseDir, filePath);
-				const { height = 0, width = 0 } = imageSize(absoluteFilePath);
-				const { size } = fs.statSync(absoluteFilePath);
+				// Get image dimensions
+				const { height, width, size } = await getImageDimensions(absoluteFilePath);
+
+				const { name, value, description, color, isSystem } = issueType;
 				const payload = [name, value, description, filePath, color, isSystem ? 1 : 0];
 				const imageAsset = [name, filePath, FileStorageProviderEnum.LOCAL, height, width, size];
 
@@ -135,19 +118,32 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 	 */
 	async postgresSeedDefaultIssueTypes(queryRunner: QueryRunner) {
 		try {
-			for await (const issueType of DEFAULT_GLOBAL_ISSUE_TYPES) {
-				const { name, value, description, icon, color, isSystem } = issueType;
-				const destDirName = 'ever-icons';
-				const filePath = copyAssets(icon, getConfig(), destDirName);
-				const payload = [name, value, description, filePath, color, isSystem];
-				const baseDir = env.isElectron
-					? path.resolve(env.gauzyUserPath, ...['public'])
-					: getConfig().assetOptions.assetPublicPath ||
-					path.resolve(__dirname, '../../../', ...['apps', 'api', 'public']);
-				const absoluteFilePath = path.join(baseDir, filePath);
+		// Determine if running from dist or source
+		const destDirName = 'ever-icons';
 
-				const { height = 0, width = 0 } = imageSize(absoluteFilePath);
-				const { size } = fs.statSync(absoluteFilePath);
+		// Determine if running from `dist` or `src`
+		const isDist = __dirname.includes('dist');
+
+		// Default public directory for assets
+		const publicDir = isDist
+			? path.resolve(process.cwd(), 'dist/apps/api/public') // Production structure
+			: path.resolve(__dirname, '../../../apps/api/public'); // Development structure
+
+		// Determine the base directory for assets
+		const baseDir = env.isElectron
+			? path.resolve(process.env.GAUZY_USER_PATH || '', 'public') // Electron-specific path
+			: config.assetOptions?.assetPublicPath || publicDir; // Custom public directory path from configuration.
+
+			for await (const issueType of DEFAULT_GLOBAL_ISSUE_TYPES) {
+				const { name, value, description, color, isSystem } = issueType;
+				// Copy issue type icon and get its path
+				const filePath = await copyAssets(issueType.icon, config, destDirName);
+				// Calculate dimensions and size of the icon
+				const absoluteFilePath = path.join(baseDir, filePath);
+				// Get image dimensions
+				const { height, width, size } = await getImageDimensions(absoluteFilePath);
+
+				const payload = [name, value, description, filePath, color, isSystem];
 
 				const insertQuery = `
 					INSERT INTO "image_asset" (

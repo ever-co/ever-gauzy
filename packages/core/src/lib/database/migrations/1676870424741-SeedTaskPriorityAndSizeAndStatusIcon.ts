@@ -59,7 +59,7 @@ export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements Migrat
                 const filepath = `ever-icons/${icon}`;
                 const query = `UPDATE "task_status" SET "icon" = '${filepath}', "color" = '${color}' WHERE ("name" = ? AND "value" = ?) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
                 await queryRunner.connection.manager.query(query, [name, value]);
-                copyAssets(status.icon, this.config);
+                await copyAssets(status.icon, this.config);
             }
         } catch (error) {
             // since we have errors let's rollback changes we made
@@ -78,7 +78,7 @@ export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements Migrat
                 const filepath = `ever-icons/${icon}`;
                 const query = `UPDATE "task_priority" SET "icon" = '${filepath}', "color" = '${color}' WHERE ("name" = ? AND "value" = ?) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
                 await queryRunner.connection.manager.query(query, [name, value]);
-                copyAssets(priority.icon, this.config);
+                await copyAssets(priority.icon, this.config);
             }
         } catch (error) {
             // since we have errors let's rollback changes we made
@@ -97,7 +97,7 @@ export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements Migrat
                 const filepath = `ever-icons/${icon}`;
                 const query = `UPDATE "task_size" SET "icon" = '${filepath}', "color" = '${color}' WHERE ("name" = ? AND "value" = ?) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
                 await queryRunner.connection.manager.query(query, [name, value]);
-                copyAssets(size.icon, this.config);
+                await copyAssets(size.icon, this.config);
             }
         } catch (error) {
             // since we have errors let's rollback changes we made
@@ -116,7 +116,7 @@ export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements Migrat
                 const filepath = `ever-icons/${icon}`;
                 const query = `UPDATE "task_status" SET "icon" = '${filepath}', "color" = '${color}' WHERE ("name" = $1 AND "value" = $2) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
                 await queryRunner.connection.manager.query(query, [name, value]);
-                copyAssets(status.icon, this.config);
+                await copyAssets(status.icon, this.config);
             }
         } catch (error) {
             // since we have errors let's rollback changes we made
@@ -135,7 +135,7 @@ export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements Migrat
                 const filepath = `ever-icons/${icon}`;
                 const query = `UPDATE "task_priority" SET "icon" = '${filepath}', "color" = '${color}' WHERE ("name" = $1 AND "value" = $2) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
                 await queryRunner.connection.manager.query(query, [name, value]);
-                copyAssets(priority.icon, this.config);
+                await copyAssets(priority.icon, this.config);
             }
         } catch (error) {
             // since we have errors let's rollback changes we made
@@ -154,7 +154,7 @@ export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements Migrat
                 const filepath = `ever-icons/${icon}`;
                 const query = `UPDATE "task_size" SET "icon" = '${filepath}', "color" = '${color}' WHERE ("name" = $1 AND "value" = $2) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
                 await queryRunner.connection.manager.query(query, [name, value]);
-                copyAssets(size.icon, this.config);
+				await copyAssets(size.icon, this.config);
             }
         } catch (error) {
             // since we have errors let's rollback changes we made

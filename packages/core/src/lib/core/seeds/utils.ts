@@ -4,6 +4,36 @@ import * as chalk from 'chalk';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as rimraf from 'rimraf';
+import * as sharp from 'sharp';
+
+/**
+ * Retrieves the dimensions of an image file, including SVG files, asynchronously.
+ *
+ * This function reads the specified image file, determines its dimensions (width and height),
+ * and returns them. If an error occurs, it defaults to returning width and height as 0.
+ *
+ * @param filePath - The path to the image file.
+ * @returns A promise resolving to the dimensions of the image as an object containing `width`, `height`, and optionally `type`.
+ *          Defaults to `{ width: 0, height: 0 }` if an error occurs.
+ */
+export const getImageDimensions = async (filePath: string): Promise<sharp.Metadata> => {
+    try {
+		// Read the image file as a buffer
+		const fileBuffer = fs.readFileSync(filePath);
+
+        // Determine the dimensions using the `sharp` library
+		const dimensions = await sharp(fileBuffer).metadata();
+
+        // Ensure the result conforms to the `ISize` interface
+        return dimensions; // { width: number, height: number, type?: string }
+    } catch (error) {
+        // Handle errors gracefully
+        console.error('Error getting image dimensions:', error);
+
+        // Return default dimensions in case of failure
+        return { width: 0, height: 0, size: 0 }; // Default values
+    }
+};
 
 /**
  * Copy assets from the source directory to the destination directory.
@@ -13,82 +43,106 @@ import * as rimraf from 'rimraf';
  * @param destDir The destination directory.
  * @returns The destination file path.
  */
-export function copyAssets(filename: string, config: Partial<ApplicationPluginConfig>, destDir: string = 'ever-icons') {
-	try {
-		// Check if electron
-		const isElectron = env.isElectron;
-		// Default public directory for assets
-		const publicDir = path.resolve(__dirname, '../../../', ...['apps', 'api', 'public']);
+export async function copyAssets(
+    filename: string,
+    config: Partial<ApplicationPluginConfig>,
+    destDir: string = 'ever-icons'
+): Promise<string | undefined> {
+    try {
+        // Check if running in Electron
+        const isElectron = env.isElectron;
 
-		// Default seed directory for assets
-		const defaultSeedDir = path.resolve(
-			__dirname,
-			'../../../',
-			...['apps', 'api', 'src', 'assets', 'seed', destDir]
-		);
+        // Determine if running from dist or source
+        const isDist = __dirname.includes('dist');
 
-		// Custom seed directory for assets
-		const customSeedDir = path.join(config.assetOptions.assetPath, ...['seed', destDir]);
+        // Default public directory for assets
+        const publicDir = isDist
+            ? path.resolve(process.cwd(), 'dist/apps/api/public') // Adjusted for dist structure
+            : path.resolve(__dirname, '../../../apps/api/public');
 
-		// Base directory for assets
-		const dir = isElectron ? path.join(env.gauzySeedPath, destDir) : customSeedDir || defaultSeedDir;
+        // Default seed directory for assets
+        const defaultSeedDir = isDist
+            ? path.resolve(process.cwd(), 'apps/api/src/assets/seed', destDir)
+            : path.resolve(__dirname, '../../../apps/api/src/assets/seed', destDir);
 
-		// Custom public directory for assets
-		const assetPublicPath = config.assetOptions.assetPublicPath;
+        // Custom seed directory for assets
+        const customSeedDir = config.assetOptions?.assetPath
+            ? path.resolve(config.assetOptions.assetPath, 'seed', destDir)
+            : defaultSeedDir;
 
-		// Base directory for assets
-		const baseDir = isElectron ? path.resolve(env.gauzyUserPath, ...['public']) : assetPublicPath || publicDir;
+        // Determine the base directory for assets
+        const baseDir = isElectron
+            ? path.resolve(env.gauzyUserPath, 'public')
+            : config.assetOptions.assetPublicPath || publicDir;
 
-		// File path
-		const filepath = filename.replace(/\\/g, '/');
+        // Determine the source directory
+        const sourceDir = isElectron ? path.join(env.gauzySeedPath, destDir) : customSeedDir;
 
-		// Create folders all the way down
-		const folders = filepath.split('/').slice(0, -1); // remove last item, filename
-		folders.reduce((acc, folder) => {
-			const folderPath = path.join(acc, folder);
-			if (!fs.existsSync(folderPath)) {
-				fs.mkdirSync(folderPath, { recursive: true });
-			}
-			return folderPath;
-		}, path.join(baseDir, destDir));
+        // File path
+        const filepath = filename.replace(/\\/g, '/');
+
+	 	// Create directories recursively if they don't exist
+		const destinationPath = path.join(baseDir, destDir, filepath);
+        const destinationDir = path.dirname(destinationPath);
+
+		// Create directories recursively if they don't exist
+		if (!fs.existsSync(destinationDir)) {
+            fs.mkdirSync(destinationDir, { recursive: true });
+        }
 
 		// copy files from source to destination folder
 		const destFilePath = path.join(destDir, filename);
-		fs.copyFileSync(path.join(dir, filename), path.join(baseDir, destFilePath));
 
-		// Return the destination file path
-		return destFilePath;
-	} catch (error) {
-		console.log('Error while copy ever icons for seeder', error);
-	}
+        // Copy files from source to destination folder
+        const sourceFilePath = path.join(sourceDir, filename);
+
+        if (fs.existsSync(sourceFilePath)) {
+            fs.copyFileSync(sourceFilePath, destinationPath);
+            console.log(`Copied: ${sourceFilePath} -> ${destinationPath}`);
+            return destFilePath;
+        } else {
+            console.warn(`Source file does not exist: ${sourceFilePath}`);
+            return undefined;
+        }
+    } catch (error) {
+        console.error('Error while copying assets:', error.message);
+        return undefined;
+    }
 }
 
 /**
- * Clean old ever icons
+ * Cleans old seed assets in the specified destination directory.
+ * This function removes all files in the target directory except for `rimraf` and `.gitkeep` files.
  *
- * @param config
- * @param destDir
+ * The directory to be cleaned is determined based on whether the application is running
+ * in an Electron environment or not.
+ *
+ * @param config - Partial configuration of the application, including asset options.
+ * @param destDir - The destination directory relative to the public assets folder.
+ * @returns A Promise that resolves when the cleanup is complete.
  */
-export async function cleanAssets(config: Partial<ApplicationPluginConfig>, destDir: string) {
-	console.log(chalk.green(`CLEANING UP SEED ASSETS FOR ${destDir}`));
+export async function cleanAssets(config: Partial<ApplicationPluginConfig>, destDir: string): Promise<void> {
+    console.log(chalk.green(`CLEANING UP SEED ASSETS FOR ${destDir}`));
 
-	await new Promise((resolve, reject) => {
-		const dir = env.isElectron
-			? path.resolve(env.gauzyUserPath, ...['public', destDir])
-			: path.join(config.assetOptions.assetPublicPath, destDir);
+    // Determine the directory to clean based on the environment
+    const dir = env.isElectron
+        ? path.resolve(env.gauzyUserPath, 'public', destDir) // Electron-specific path
+        : path.join(config.assetOptions.assetPublicPath, destDir); // Standard path for other environments
 
-		// delete old generated ever icons
-		rimraf(
-			`${dir}/!(rimraf|.gitkeep)`,
-			() => {
-				console.log(chalk.green(`CLEANED UP EVER ICONS: ${dir}`));
-				resolve(null);
-			},
-			() => {
-				reject(null);
-			}
-		);
-	});
+    // Delete old files in the directory except for `rimraf` and `.gitkeep`
+    await new Promise((resolve, reject) => {
+        rimraf(
+            `${dir}/!(rimraf|.gitkeep)`,
+            () => {
+                console.log(chalk.green(`CLEANED UP EVER ICONS: ${dir}`));
+                resolve(null); // Resolve on successful cleanup
+            },
+            () => {
+                console.error(chalk.red(`FAILED TO CLEAN EVER ICONS: ${dir}`));
+                reject(null); // Reject on failure
+            }
+        );
+    });
 }
 
 /**

@@ -27,7 +27,7 @@ export class IntegrationsUtils {
 			integrationTypesMap
 		} of integrations) {
 			try {
-				const filePath = copyAssets(path.join(destDir, imgSrc), getConfig(), '');
+				const filePath = await copyAssets(path.join(destDir, imgSrc), getConfig(), '');
 
 				const sqliteUpsertQuery = `
 					INSERT INTO integration (
