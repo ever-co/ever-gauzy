@@ -313,7 +313,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 */
 	async findByEmployee(employeeId: ID, input: IOrganizationProjectsFindInput): Promise<IOrganizationProject[]> {
 		const tenantId = RequestContext.currentTenantId() || input.tenantId; // Use the current tenant ID or fallback to input tenantId
-		const { organizationId, organizationContactId, organizationTeamId } = input;
+		const { organizationId, organizationContactId, organizationTeamId, relations = [] } = input;
 
 		// Create a query to fetch organization projects
 		const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
@@ -327,7 +327,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				public: true,
 				owner: true,
 				taskListType: true
-			}
+			},
+			relations
 		});
 		query.innerJoin(`${query.alias}.members`, 'project_members').leftJoin(`${query.alias}.teams`, 'project_team');
 		query

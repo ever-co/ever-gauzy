@@ -84,6 +84,7 @@ export interface IOrganizationProjectsFindInput
 	billingFlat?: boolean;
 	organizationTeamId?: ID;
 	members?: Partial<IOrganizationProjectEmployeeFindInput>;
+	relations?: string[];
 }
 
 export interface IOrganizationProjectCreateInput extends IOrganizationProjectBase, IMemberEntityBased {}
