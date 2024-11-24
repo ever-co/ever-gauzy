@@ -1,55 +1,83 @@
+import { DataSource } from 'typeorm';
 import * as chalk from 'chalk';
-import { copyFileSync, mkdirSync } from 'fs';
 import * as path from 'path';
 import * as rimraf from 'rimraf';
 import { ApplicationPluginConfig } from '@gauzy/common';
-import { ConfigService, environment as env, DatabaseTypeEnum } from '@gauzy/config';
+import { environment as env, DatabaseTypeEnum } from '@gauzy/config';
 import {
 	IFeature,
 	IFeatureOrganization,
 	ITenant
 } from '@gauzy/contracts';
-import { DataSource } from 'typeorm';
 import { DEFAULT_FEATURES } from './default-features';
 import { FeatureOrganization } from './feature-organization.entity';
 import { Feature } from './feature.entity';
+import { copyAssets } from '../core/seeds/utils';
+import { getApiPublicPath } from '../core/util';
 
+/**
+ * Creates default feature toggles and their hierarchical relationships.
+ *
+ * This function initializes the default features for a given tenant by cleaning up
+ * existing features, creating parent and child features, and saving them in the database.
+ *
+ * @param {DataSource} dataSource - The database connection or ORM data source.
+ * @param {Partial<ApplicationPluginConfig>} config - Application configuration for features.
+ * @param {ITenant} tenant - The tenant for which the features will be created.
+ * @returns {Promise<IFeature[]>} - A promise resolving to a list of created features.
+ */
 export const createDefaultFeatureToggle = async (
 	dataSource: DataSource,
 	config: Partial<ApplicationPluginConfig>,
 	tenant: ITenant
-) => {
+): Promise<IFeature[]> => {
+	// Clean up existing features
 	await cleanFeature(dataSource, config);
 
-	for await (const item of DEFAULT_FEATURES) {
+	for (const item of DEFAULT_FEATURES) {
+		// Create the parent feature
 		const feature: IFeature = await createFeature(item, tenant, config);
 		const parent = await dataSource.manager.save(feature);
 
-		const { children = [] } = item;
-		if (children.length > 0) {
-			const featureChildren: IFeature[] = [];
-
-			for await (const child of children) {
-				const childFeature: IFeature = await createFeature(child, tenant, config);
-				childFeature.parent = parent;
-				featureChildren.push(childFeature);
-			}
-
+		// Process and save child features, if any
+		if (item.children?.length > 0) {
+			const featureChildren: IFeature[] = await Promise.all(
+				item.children.map(async (child) => {
+					const childFeature: IFeature = await createFeature(child, tenant, config);
+					childFeature.parent = parent;
+					return childFeature;
+				})
+			);
 			await dataSource.manager.save(featureChildren);
 		}
 	}
+
+	// Retrieve and return all created features
 	return await dataSource.getRepository(Feature).find();
 };
 
-export const createRandomFeatureToggle = async (dataSource: DataSource, tenants: ITenant[]) => {
+/**
+ * Creates random feature toggles for multiple tenants.
+ *
+ * This function assigns random feature toggles to organizations associated with multiple tenants.
+ *
+ * @param {DataSource} dataSource - The database connection or ORM data source.
+ * @param {ITenant[]} tenants - A list of tenants for which random feature toggles will be created.
+ * @returns {Promise<IFeature[]>} - A promise resolving to a list of all features in the database.
+ */
+export const createRandomFeatureToggle = async (
+	dataSource: DataSource,
+	tenants: ITenant[]
+): Promise<IFeature[]> => {
+	// Retrieve all features
 	const features: IFeature[] = await dataSource.getRepository(Feature).find();
 	const featureOrganizations: IFeatureOrganization[] = [];
 
-	for await (const feature of features) {
-		for await (const tenant of tenants) {
-			const { isEnabled } = feature;
+	// Assign features to tenants
+	for (const feature of features) {
+		for (const tenant of tenants) {
 			const featureOrganization: IFeatureOrganization = new FeatureOrganization({
-				isEnabled,
+				isEnabled: feature.isEnabled,
 				tenant,
 				feature
 			});
@@ -57,31 +85,56 @@ export const createRandomFeatureToggle = async (dataSource: DataSource, tenants:
 		}
 	}
 
+	// Save all feature-organization relationships
 	await dataSource.manager.save(featureOrganizations);
+
+	// Return the list of features
 	return features;
 };
 
-async function createFeature(item: IFeature, tenant: ITenant, config: Partial<ApplicationPluginConfig>) {
+/**
+ * Creates a new feature entity for the provided tenant and configuration.
+ *
+ * This function initializes a feature entity using the given item details, associates it
+ * with the tenant, and optionally processes and copies related assets (e.g., images).
+ *
+ * @param {IFeature} item - The feature details including name, code, description, etc.
+ * @param {ITenant} tenant - The tenant to associate with the feature.
+ * @param {Partial<ApplicationPluginConfig>} config - Configuration for handling assets.
+ * @returns {Promise<IFeature>} - A promise resolving to the created feature entity.
+ */
+async function createFeature(
+    item: IFeature,
+    tenant: ITenant,
+    config: Partial<ApplicationPluginConfig>
+): Promise<IFeature> {
 	const { name, code, description, image, link, isEnabled, status, icon } = item;
 	const feature: IFeature = new Feature({
 		name,
 		code,
 		description,
-		image: copyImage(image, config),
+		image: copyAssets(image, config, 'features'),
 		link,
 		status,
 		icon,
 		featureOrganizations: [
-			new FeatureOrganization({
-				isEnabled,
-				tenant
-			})
+			new FeatureOrganization({ isEnabled, tenant })
 		]
 	});
 	return feature;
 }
 
-async function cleanFeature(dataSource, config) {
+/**
+ * Cleans up the `feature` and `feature_organization` tables and deletes associated images.
+ *
+ * This function performs a database cleanup for the feature-related tables based on the database type
+ * specified in the configuration. It also removes old feature-related images from the designated directory.
+ *
+ * @param {DataSource} dataSource - The database connection or ORM data source.
+ * @param {Partial<ApplicationPluginConfig>} config - Configuration for the application, including database options.
+ * @returns {Promise<void>} - Resolves when the cleanup operation is complete.
+ */
+async function cleanFeature(dataSource: DataSource, config: Partial<ApplicationPluginConfig>): Promise<void> {
 	switch (config.dbConnectionOptions.type) {
 		case DatabaseTypeEnum.sqlite:
 		case DatabaseTypeEnum.betterSqlite3:
@@ -109,18 +162,20 @@ async function cleanFeature(dataSource, config) {
 	console.log(chalk.green(`CLEANING UP FEATURE IMAGES...`));
 
 	await new Promise((resolve, reject) => {
-		const destDir = 'features';
-		const configService = new ConfigService();
+		// Determine directories based on environment
+		const isElectron = env.isElectron;
 
-		let dir: string;
+		// Default public directory for assets
+		const publicDir = getApiPublicPath();
 
-		if (env.isElectron) {
-			dir = path.resolve(env.gauzyUserPath, ...['public', destDir]);
-		} else {
-			dir = path.join(configService.assetOptions.assetPublicPath, destDir);
-		}
+		// Determine the base directory for assets
+		const dir = isElectron
+			? path.resolve(env.gauzyUserPath, 'public/features')
+			: path.resolve(config.assetOptions?.assetPublicPath || publicDir, 'features'); // Custom public directory path from configuration.
 
-		// delete old generated feature image
+		console.log('Feature Cleaner -> dir: ' + dir);
+
+		// delete old generated report image
 		rimraf(
 			`${dir}/!(rimraf|.gitkeep)`,
 			() => {
@@ -132,43 +187,4 @@ async function cleanFeature(dataSource, config) {
 			}
 		);
 	});
-}
-
-function copyImage(fileName: string, config: Partial<ApplicationPluginConfig>) {
-	try {
-		const destDir = 'features';
-
-		let dir: string;
-		let baseDir: string;
-
-		if (env.isElectron) {
-			dir = path.resolve(env.gauzySeedPath, destDir);
-
-			baseDir = path.resolve(env.gauzyUserPath, ...['public']);
-		} else {
-			if (config.assetOptions.assetPath) {
-				dir = path.join(config.assetOptions.assetPath, ...['seed', destDir]);
-			} else {
-				dir = path.resolve(__dirname, '../../../', ...['apps', 'api', 'src', 'assets', 'seed', destDir]);
-			}
-
-			if (config.assetOptions.assetPublicPath) {
-				baseDir = config.assetOptions.assetPublicPath;
-			} else {
-				baseDir = path.resolve(__dirname, '../../../', ...['apps', 'api', 'public']);
-			}
-		}
-
-		const finalDir = path.join(baseDir, destDir);
-
-		mkdirSync(finalDir, { recursive: true });
-
-		const destFilePath = path.join(destDir, fileName);
-
-		copyFileSync(path.join(dir, fileName), path.join(baseDir, destFilePath));
-
-		return destFilePath;
-	} catch (err) {
-		console.log(err);
-	}
 }

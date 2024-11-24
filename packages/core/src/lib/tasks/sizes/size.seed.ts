@@ -29,7 +29,7 @@ export const createDefaultSizes = async (
 			(size) =>
 				new TaskSize({
 					...size,
-					icon: copyAssets(size.icon, config)
+					icon: copyAssets(size.icon, config, 'ever-icons')
 				})
 		);
 

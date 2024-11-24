@@ -1,11 +1,14 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import * as chalk from 'chalk';
+import * as path from 'path';
 import { getConfig, DatabaseTypeEnum } from '@gauzy/config';
 import { copyAssets } from './../../core/seeds/utils';
 import { DEFAULT_SYSTEM_INTEGRATIONS } from './../../integration/default-integration';
 import { IntegrationsUtils } from './../../integration/utils';
-import * as path from 'path';
+
+// Get the application configuration
+const config = getConfig();
 
 export class SeedIntegrationTable1691494801748 implements MigrationInterface {
 	name = 'SeedIntegrationTable1691494801748';
@@ -46,11 +49,9 @@ export class SeedIntegrationTable1691494801748 implements MigrationInterface {
 	 * @param queryRunner
 	 */
 	public async sqliteUpsertIntegrationsAndIntegrationTypes(queryRunner: QueryRunner): Promise<any> {
-		const destDir = 'integrations';
-
 		for await (const { name, imgSrc, isComingSoon, order, integrationTypesMap } of DEFAULT_SYSTEM_INTEGRATIONS) {
 			try {
-				const filePath = await copyAssets(path.join(destDir, imgSrc), getConfig(), '');
+				const filePath = copyAssets(imgSrc, config, 'integrations');
 				const payload = [name, filePath, isComingSoon ? 1 : 0, order];
 
 				// For SQLite, manually generate a UUID using uuidv4()
@@ -87,11 +88,9 @@ export class SeedIntegrationTable1691494801748 implements MigrationInterface {
 	 * @param queryRunner
 	 */
 	public async postgresUpsertIntegrationsAndIntegrationTypes(queryRunner: QueryRunner): Promise<any> {
-		const destDir = 'integrations';
-
 		for await (const { name, imgSrc, isComingSoon, order, integrationTypesMap } of DEFAULT_SYSTEM_INTEGRATIONS) {
 			try {
-				const filePath = await copyAssets(path.join(destDir, imgSrc), getConfig(), '');
+				const filePath = copyAssets(imgSrc, config, 'integrations');
 				const payload = [name, filePath, isComingSoon, order];
 
 				const upsertQuery = `

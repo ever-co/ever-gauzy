@@ -29,7 +29,7 @@ export const createDefaultPriorities = async (
 			(priority) =>
 				new TaskPriority({
 					...priority,
-					icon: copyAssets(priority.icon, config)
+					icon: copyAssets(priority.icon, config, 'ever-icons')
 				})
 		);
 

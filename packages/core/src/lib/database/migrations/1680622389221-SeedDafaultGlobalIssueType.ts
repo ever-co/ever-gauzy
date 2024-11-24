@@ -6,6 +6,7 @@ import { getConfig, environment as env, DatabaseTypeEnum } from '@gauzy/config';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { copyAssets, getImageDimensions } from './../../core/seeds/utils';
 import { DEFAULT_GLOBAL_ISSUE_TYPES } from './../../tasks/issue-type/default-global-issue-types';
+import { getApiPublicPath } from '../../core';
 
 // Get the application configuration
 const config = getConfig();
@@ -50,16 +51,8 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 	 */
 	async sqliteSeedDefaultIssueTypes(queryRunner: QueryRunner) {
 		try {
-			// Determine if running from dist or source
-			const destDirName = 'ever-icons';
-
-			// Determine if running from `dist` or `src`
-			const isDist = __dirname.includes('dist');
-
-    		// Default public directory for assets
-			const publicDir = isDist
-				? path.resolve(process.cwd(), 'apps/api/public') // Production structure
-				: path.resolve(__dirname, '../../../apps/api/public'); // Development structure
+			// Default public directory for assets
+			const publicDir = getApiPublicPath();
 
 			// Determine the base directory for assets
 			const assetPublicPath = env.isElectron
@@ -69,7 +62,7 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 
 			for await (const issueType of DEFAULT_GLOBAL_ISSUE_TYPES) {
 				// Copy issue type icon and get its path
-				const filePath = await copyAssets(issueType.icon, config, destDirName);
+				const filePath = copyAssets(issueType.icon, config, 'ever-icons');
 				// Calculate dimensions and size of the icon
 				const absoluteFilePath = path.join(assetPublicPath, filePath);
 				// Get image dimensions
@@ -118,16 +111,8 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 	 */
 	async postgresSeedDefaultIssueTypes(queryRunner: QueryRunner) {
 		try {
-		// Determine if running from dist or source
-		const destDirName = 'ever-icons';
-
-		// Determine if running from `dist` or `src`
-		const isDist = __dirname.includes('dist');
-
 		// Default public directory for assets
-		const publicDir = isDist
-			? path.resolve(process.cwd(), 'apps/api/public') // Production structure
-			: path.resolve(__dirname, '../../../apps/api/public'); // Development structure
+		const publicDir = getApiPublicPath();
 
 		// Determine the base directory for assets
 		const assetPublicPath = env.isElectron
@@ -137,7 +122,7 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 			for await (const issueType of DEFAULT_GLOBAL_ISSUE_TYPES) {
 				const { name, value, description, color, isSystem } = issueType;
 				// Copy issue type icon and get its path
-				const filePath = await copyAssets(issueType.icon, config, destDirName);
+				const filePath = copyAssets(issueType.icon, config, 'ever-icons');
 				// Calculate dimensions and size of the icon
 				const absoluteFilePath = path.join(assetPublicPath, filePath);
 				// Get image dimensions

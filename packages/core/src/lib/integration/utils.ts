@@ -1,11 +1,14 @@
 import { QueryRunner } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import * as path from 'path';
 import { DatabaseTypeEnum, getConfig } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { IIntegration, IIntegrationType, IntegrationTypeEnum } from '@gauzy/contracts';
 import { copyAssets } from './../core/seeds/utils';
 import { DEFAULT_INTEGRATION_TYPES } from './default-integration-type';
-import * as path from 'path';
+
+// Get the application configuration
+const config = getConfig();
 
 export class IntegrationsUtils {
 	/**
@@ -16,7 +19,6 @@ export class IntegrationsUtils {
 		queryRunner: QueryRunner,
 		integrations: any[]
 	): Promise<any> {
-		const destDir = 'integrations';
 		for await (const {
 			name,
 			imgSrc,
@@ -27,7 +29,7 @@ export class IntegrationsUtils {
 			integrationTypesMap
 		} of integrations) {
 			try {
-				const filePath = await copyAssets(path.join(destDir, imgSrc), getConfig(), '');
+				const filePath = copyAssets(imgSrc, config, 'integrations');
 
 				const sqliteUpsertQuery = `
 					INSERT INTO integration (

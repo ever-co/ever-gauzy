@@ -52,7 +52,7 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 	 */
 	async create(input: IIntegrationTenantCreateInput): Promise<IIntegrationTenant> {
 		try {
-			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 			let { organizationId, entitySettings = [], settings = [] } = input;
 
 			settings = settings.map((item: IIntegrationSetting) => ({
@@ -87,7 +87,7 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 	 */
 	public async getIntegrationByOptions(input: IIntegrationTenantFindInput): Promise<IIntegrationTenant | boolean> {
 		try {
-			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 			const { organizationId, name } = input;
 
 			const integration = await this.findOneByOptions({
@@ -120,7 +120,7 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 	 */
 	async getIntegrationTenantSettings(input: IIntegrationTenantFindInput): Promise<IIntegrationTenant | null> {
 		try {
-			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 			const { organizationId, name } = input;
 
 			return await this.findOneByOptions({
@@ -141,7 +141,7 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 				}
 			});
 		} catch (error) {
-			console.error('Error occurred while retrieving integration tenant settings:', error);
+			console.error('Error occurred while retrieving integration tenant settings:', error?.message);
 			return null;
 		}
 	}

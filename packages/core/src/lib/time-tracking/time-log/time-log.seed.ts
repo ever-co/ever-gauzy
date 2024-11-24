@@ -1,6 +1,6 @@
 import { Brackets, DataSource, WhereExpressionBuilder } from 'typeorm';
 import { faker } from '@faker-js/faker';
-import * as _ from 'underscore';
+import { chain, chunk, omit } from 'underscore';
 import {
 	TimeLogSourceEnum,
 	TimeLogType,
@@ -19,6 +19,18 @@ import { getDateRangeFormat } from './../../core/utils';
 import { BadRequestException } from '@nestjs/common';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 
+/**
+ * Generates and saves random time logs for the provided timesheets.
+ *
+ * This function creates random time logs for each timesheet provided in the `timeSheets` array.
+ * It uses the provided data source to interact with the database and save the generated time logs.
+ *
+ * @param {DataSource} dataSource - The database connection or ORM data source used to execute queries.
+ * @param {Partial<ApplicationPluginConfig>} config - Configuration for generating random data (e.g., settings, paths).
+ * @param {ITenant} tenant - The tenant to associate with the generated time logs.
+ * @param {ITimesheet[]} timeSheets - An array of timesheets for which random time logs will be created.
+ * @returns {Promise<void>} - A promise that resolves when the time logs have been generated and saved.
+ */
 export const createRandomTimeLogs = async (
 	dataSource: DataSource,
 	config: Partial<ApplicationPluginConfig>,
@@ -38,7 +50,7 @@ export const createRandomTimeLogs = async (
 		);
 		return;
 	}
-	const timeSheetChunk = _.chunk(timeSheets, 5) as Array<ITimesheet[]>;
+	const timeSheetChunk = chunk(timeSheets, 5) as Array<ITimesheet[]>;
 	const allTimeSlots: ITimeSlot[] = [];
 	for (
 		let timeSheetChunkIndex = 0;
@@ -52,7 +64,7 @@ export const createRandomTimeLogs = async (
 			timeSheetIndex++
 		) {
 			const timesheet = timeSheetChunk[timeSheetChunkIndex][timeSheetIndex];
-			const randomDays = _.chain([0, 1, 2, 3, 4, 5, 6])
+			const randomDays = chain([0, 1, 2, 3, 4, 5, 6])
 				.shuffle()
 				.take(faker.number.int({ min: 3, max: 5 }))
 				.values()
@@ -133,20 +145,21 @@ export const createRandomTimeLogs = async (
 		*/
 		const newTrackedTimeSlots: ITimeSlot[] = [];
 		for await (const timeSlot of trackedTimeSlots) {
-			const { tenantId, organizationId, startedAt, stoppedAt } = timeSlot;
+			const { tenantId, organizationId, startedAt, stoppedAt, employeeId } = timeSlot;
 			const randomScreenshots = await createRandomScreenshot(
 				config,
 				tenantId,
 				organizationId,
+				employeeId,
 				startedAt,
 				stoppedAt
 			);
 			const screenshots = randomScreenshots.map(
-				(item) => new Screenshot(_.omit(item, ['timeSlotId']))
+				(item) => new Screenshot(omit(item, ['timeSlotId']))
 			);
 			const savedScreenshots = await dataSource.getRepository(Screenshot).save(screenshots);
 			const newTimeSlot = new TimeSlot({
-				..._.omit(timeSlot),
+				...omit(timeSlot),
 				screenshots: savedScreenshots
 			});
 			newTrackedTimeSlots.push(newTimeSlot);
@@ -158,17 +171,47 @@ export const createRandomTimeLogs = async (
 	return allTimeSlots;
 };
 
-function dateRanges(start: Date, stop: Date) {
-	const range = [];
-	const startedAt = faker.date.between({ from: start, to: stop });
-	const stoppedAt = faker.date.between({
-		from: startedAt,
-		to: moment(startedAt).add(2, 'hours').toDate()
-	});
-	range.push({ startedAt, stoppedAt });
-	return range;
+/**
+ * Generates a range of dates with start and stop timestamps.
+ *
+ * The function creates a random date range where the `startedAt` date
+ * is generated within the provided `start` and `stop` range, and the `stoppedAt`
+ * date is generated between `startedAt` and up to 2 hours after `startedAt`.
+ *
+ * @param {Date} start - The earliest possible start date for the range.
+ * @param {Date} stop - The latest possible stop date for the range.
+ * @returns {Array<{ startedAt: Date; stoppedAt: Date }>} - An array containing a single object
+ * with `startedAt` and `stoppedAt` timestamps.
+ */
+function dateRanges(start: Date, stop: Date): Array<{ startedAt: Date; stoppedAt: Date }> {
+    const range = [];
+
+    // Generate a random start date within the range
+    const startedAt = faker.date.between({ from: start, to: stop });
+
+    // Generate a random stop date between startedAt and 2 hours after startedAt
+    const stoppedAt = faker.date.between({
+        from: startedAt,
+        to: moment(startedAt).add(2, 'hours').toDate()
+    });
+
+    // Add the range to the result array
+    range.push({ startedAt, stoppedAt });
+
+    return range;
 }
 
+/**
+ * Recalculates the activity for the given timesheets by interacting with the data source.
+ *
+ * This function performs recalculation of activities for a list of timesheets. It may involve
+ * querying the database using the provided data source to update activity metrics based on the
+ * timesheet records.
+ *
+ * @param {DataSource} dataSource - The database connection or ORM data source used to execute queries.
+ * @param {ITimesheet[]} timesheets - An array of timesheet objects to process and recalculate activities for.
+ * @returns {Promise<void>} - A promise that resolves when the recalculation process is complete.
+ */
 export const recalculateTimesheetActivity = async (
 	dataSource: DataSource,
 	timesheets: ITimesheet[]

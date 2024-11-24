@@ -6,12 +6,13 @@ import * as moment from 'moment';
 import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
 import { environment, getConfig } from '@gauzy/config';
 import { Provider } from './provider';
+import { getApiPublicPath } from '../../util/path-util';
 
 // Get the application configuration
 const config = getConfig();
 
-// Public directory for assets
-const apiPublicPath = resolve(process.cwd(), 'apps/api/public');
+// Get the public path for the API
+const apiPublicPath = getApiPublicPath();
 console.log(`API Public Path: ${apiPublicPath}`);
 
 /**

@@ -26,7 +26,7 @@ export const createDefaultStatuses = async (
 			(status) =>
 				new TaskStatus({
 					...status,
-					icon: copyAssets(status.icon, config)
+					icon: copyAssets(status.icon, config, 'ever-icons')
 				})
 		);
 

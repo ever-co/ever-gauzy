@@ -31,8 +31,7 @@ export const createDefaultIntegrations = async (
 	}
 
 	// Clean up old assets in the integrations directory
-	const destDir = 'integrations';
-	await cleanAssets(config, destDir);
+	await cleanAssets(config, 'integrations');
 
 	// Map and create new integration entities
 	const integrations = await Promise.all(
@@ -50,7 +49,7 @@ export const createDefaultIntegrations = async (
 			// Create a new Integration entity
 			const entity = new Integration();
 			entity.name = name;
-			entity.imgSrc = await copyAssets(imgSrc, config, destDir);
+			entity.imgSrc = copyAssets(imgSrc, config, 'integrations');
 			entity.isComingSoon = isComingSoon;
 			entity.order = order;
 			entity.redirectUrl = redirectUrl;

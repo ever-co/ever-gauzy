@@ -1,11 +1,14 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { getConfig, DatabaseTypeEnum } from '@gauzy/config';
 import * as chalk from 'chalk';
+import * as path from 'path';
+import { getConfig, DatabaseTypeEnum } from '@gauzy/config';
 import { copyAssets } from './../../core/seeds/utils';
 import { DEFAULT_AI_INTEGRATIONS } from './../../integration/default-integration';
 import { IntegrationsUtils } from './../../integration/utils';
-import * as path from 'path';
+
+// Get the application configuration
+const config = getConfig();
 
 export class SeedIntegrationTable1692171665427 implements MigrationInterface {
 	name = 'SeedIntegrationTable1692171665427';
@@ -46,11 +49,9 @@ export class SeedIntegrationTable1692171665427 implements MigrationInterface {
 	 * @param queryRunner
 	 */
 	public async sqliteUpsertIntegrationsAndIntegrationTypes(queryRunner: QueryRunner): Promise<any> {
-		const destDir = 'integrations';
-
 		for await (const { name, imgSrc, isComingSoon, order, integrationTypesMap } of DEFAULT_AI_INTEGRATIONS) {
 			try {
-				const filePath = await copyAssets(path.join(destDir, imgSrc), getConfig(), '');
+				const filePath = copyAssets(imgSrc, config, 'integrations');
 				const payload = [name, filePath, isComingSoon ? 1 : 0, order];
 
 				// For SQLite, manually generate a UUID using uuidv4()
@@ -88,11 +89,9 @@ export class SeedIntegrationTable1692171665427 implements MigrationInterface {
 	 * @param queryRunner
 	 */
 	public async postgresUpsertIntegrationsAndIntegrationTypes(queryRunner: QueryRunner): Promise<any> {
-		const destDir = 'integrations';
-
 		for await (const { name, imgSrc, isComingSoon, order, integrationTypesMap } of DEFAULT_AI_INTEGRATIONS) {
 			try {
-				const filePath = await copyAssets(path.join(destDir, imgSrc), getConfig(), '');
+				const filePath = copyAssets(imgSrc, config, 'integrations');
 				const payload = [name, filePath, isComingSoon, order];
 
 				const upsertQuery = `

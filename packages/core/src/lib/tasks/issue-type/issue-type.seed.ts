@@ -54,7 +54,7 @@ export const createDefaultIssueTypes = async (
         for await (const issueType of DEFAULT_GLOBAL_ISSUE_TYPES) {
             try {
                 // Copy issue type icon and get its path.
-                const iconPath = await copyAssets(issueType.icon, config);
+                const iconPath = copyAssets(issueType.icon, config, 'ever-icons');
 				// Calculate dimensions and size of the icon.
                 const absoluteFilePath = path.join(assetPublicPath, iconPath);
 				// Get image dimensions.

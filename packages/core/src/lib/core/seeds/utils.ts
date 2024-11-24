@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as rimraf from 'rimraf';
 import * as sharp from 'sharp';
+import { getApiPublicPath } from '../util';
 
 /**
  * Retrieves the dimensions of an image file, including SVG files, asynchronously.
@@ -43,11 +44,15 @@ export const getImageDimensions = async (filePath: string): Promise<sharp.Metada
  * @param destDir The destination directory.
  * @returns The destination file path.
  */
-export async function copyAssets(
+export function copyAssets(
     filename: string,
     config: Partial<ApplicationPluginConfig>,
-    destDir: string = 'ever-icons'
-): Promise<string | undefined> {
+    destDir: string
+): string | undefined {
+	if (!destDir) {
+		console.warn('WARNING: destDir not found, Please provide a valid destination directory.');
+		return undefined;
+	}
     try {
         // Check if running in Electron
         const isElectron = env.isElectron;
@@ -56,9 +61,7 @@ export async function copyAssets(
         const isDist = __dirname.includes('dist');
 
 		// Default public directory for assets
-		const publicDir = isDist
-            ? path.resolve(process.cwd(), 'apps/api/public') // Adjusted for dist structure
-            : path.resolve(__dirname, '../../../apps/api/public');
+		const publicDir = getApiPublicPath();
 
         // Determine the base directory for assets
         const assetPublicPath = isElectron

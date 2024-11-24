@@ -2,6 +2,7 @@ import { ServeStaticModuleOptions } from '@nestjs/serve-static';
 import * as path from 'path';
 import * as chalk from 'chalk';
 import { ConfigService, environment } from '@gauzy/config';
+import { getApiPublicPath } from './core/util/path-util';
 
 /**
  * Resolves the path for serving static files based on the environment and configuration.
@@ -16,15 +17,8 @@ import { ConfigService, environment } from '@gauzy/config';
  * the root path and serve root for serving static assets.
  */
 export async function resolveServeStaticPath(config: ConfigService): Promise<ServeStaticModuleOptions[]> {
-	// Determine if running from dist or source
-	const isDist = __dirname.includes('dist');
-	console.log(chalk.green(`✔ Server Static Config -> isDist: ${isDist}`));
-
 	// Default public directory for assets
-	const publicDir = isDist
-		? path.resolve(process.cwd(), 'apps/api/public') // Adjusted for dist structure
-		: path.resolve(__dirname, '../../../apps/api/public');
-
+	const publicDir = getApiPublicPath();
 	console.log(chalk.green(`✔ Server Static Config -> publicDir: ${publicDir}`));
 
 	const assetPublicPath = environment.isElectron
