@@ -8,6 +8,7 @@ import { ServeStaticModule, ServeStaticModuleOptions } from '@nestjs/serve-stati
 import { ClsModule, ClsService } from 'nestjs-cls';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 import { initialize as initializeUnleash, InMemStorageProvider, UnleashConfig } from 'unleash-client';
+import * as chalk from 'chalk';
 import * as path from 'path';
 import * as moment from 'moment';
 import { LanguagesEnum } from '@gauzy/contracts';
@@ -289,7 +290,10 @@ if (environment.THROTTLE_ENABLED) {
 			: [CacheModule.register({ isGlobal: true })]),
 		// Serve Static Module Configuration
 		ServeStaticModule.forRootAsync({
-			useFactory: async (config: ConfigService): Promise<ServeStaticModuleOptions[]> => await resolveServeStaticPath(config),
+			useFactory: async (config: ConfigService): Promise<ServeStaticModuleOptions[]> => {
+				console.log(chalk.green(`✔ Serve Static Config -> process.cwd: ${process.cwd()}`));
+				return await resolveServeStaticPath(config);
+			},
 			inject: [ConfigService]
 		}),
 		MulterModule.register(),

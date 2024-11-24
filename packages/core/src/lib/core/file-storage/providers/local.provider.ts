@@ -7,11 +7,15 @@ import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy
 import { environment, getConfig } from '@gauzy/config';
 import { Provider } from './provider';
 
+// Get the application configuration
 const config = getConfig();
-const apiPublicPath = resolve(process.cwd(), 'apps', 'api', 'public');
+
+// Public directory for assets
+const apiPublicPath = resolve(process.cwd(), 'apps/api/public');
+console.log(`API Public Path: ${apiPublicPath}`);
 
 /**
- *
+ * Local file storage provider
  */
 export class LocalProvider extends Provider<LocalProvider> {
 	public instance: LocalProvider;

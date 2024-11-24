@@ -31,7 +31,7 @@
 					"apps/api/src/assets",
 					{
 						"input": "apps/api/public",
-						"glob": "**/.gitkeep",
+						"glob": "**/*",
 						"output": "public"
 					}
 				],

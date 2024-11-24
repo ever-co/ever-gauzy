@@ -28,7 +28,7 @@ if (__dirname.startsWith('/srv/gauzy')) {
     assetPublicPath = '/srv/gauzy/apps/api/public';
 } else {
     // Determine if running in production (dist) or development (src)
-    const isDist = __dirname.includes(path.join('dist', 'packages'));
+    const isDist = __dirname.includes(path.join('dist'));
 	console.log('Default Config -> isDist: ' + isDist);
 
 	// Adjust the base path based on the environment
@@ -43,7 +43,10 @@ if (__dirname.startsWith('/srv/gauzy')) {
 		? path.join(basePath, 'assets') // In dist, assets are directly under 'assets'
 		: path.join(basePath, 'src', 'assets'); // In dev, assets are under 'src/assets'
 
-	assetPublicPath = path.join(basePath, 'public');
+	// Default public directory for assets
+	assetPublicPath = isDist
+		? path.resolve(process.cwd(), 'apps/api/public') // Adjusted for dist structure
+		: path.resolve(__dirname, '../../../apps/api/public');
 }
 
 console.log('Default Config -> assetPath: ' + assetPath);

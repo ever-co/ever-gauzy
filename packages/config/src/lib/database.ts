@@ -278,9 +278,7 @@ switch (dbType) {
 
 	case DatabaseTypeEnum.sqlite:
 	case DatabaseTypeEnum.betterSqlite3:
-		const sqlitePath =
-			process.env.DB_PATH || path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
-
+		const sqlitePath = process.env.DB_PATH || path.resolve(process.cwd(), 'apps/api/data/gauzy.sqlite3');
 		console.log('Better Sqlite DB Path: ' + sqlitePath);
 
 		// MikroORM DB Config (Better-SQLite3)
