@@ -36,11 +36,11 @@ export const createDefaultIssueTypes = async (
 
 	// Default public directory for assets
 	const publicDir = isDist
-		? path.resolve(process.cwd(), 'dist/apps/api/public') // Adjusted for dist structure
+		? path.resolve(process.cwd(), 'apps/api/public') // Adjusted for dist structure
 		: path.resolve(__dirname, '../../../apps/api/public');
 
 	// Determine the base directory for assets
-	const baseDir = isElectron
+	const assetPublicPath = isElectron
 		? path.resolve(env.gauzyUserPath, 'public')
 		: config.assetOptions?.assetPublicPath || publicDir; // Custom public directory path from configuration.
 
@@ -56,7 +56,7 @@ export const createDefaultIssueTypes = async (
                 // Copy issue type icon and get its path.
                 const iconPath = await copyAssets(issueType.icon, config);
 				// Calculate dimensions and size of the icon.
-                const absoluteFilePath = path.join(baseDir, iconPath);
+                const absoluteFilePath = path.join(assetPublicPath, iconPath);
 				// Get image dimensions.
 				const { height, width, size } = await getImageDimensions(absoluteFilePath);
 

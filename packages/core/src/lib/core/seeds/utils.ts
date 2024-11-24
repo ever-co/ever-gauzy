@@ -55,13 +55,18 @@ export async function copyAssets(
         // Determine if running from dist or source
         const isDist = __dirname.includes('dist');
 
-        // Default public directory for assets
-        const publicDir = isDist
-            ? path.resolve(process.cwd(), 'dist/apps/api/public') // Adjusted for dist structure
+		// Default public directory for assets
+		const publicDir = isDist
+            ? path.resolve(process.cwd(), 'apps/api/public') // Adjusted for dist structure
             : path.resolve(__dirname, '../../../apps/api/public');
 
-        // Default seed directory for assets
-        const defaultSeedDir = isDist
+        // Determine the base directory for assets
+        const assetPublicPath = isElectron
+            ? path.resolve(env.gauzyUserPath, 'public')
+            : config.assetOptions.assetPublicPath || publicDir;
+
+		// Default seed directory for assets
+		const defaultSeedDir = isDist
             ? path.resolve(process.cwd(), 'apps/api/src/assets/seed', destDir)
             : path.resolve(__dirname, '../../../apps/api/src/assets/seed', destDir);
 
@@ -70,11 +75,6 @@ export async function copyAssets(
             ? path.resolve(config.assetOptions.assetPath, 'seed', destDir)
             : defaultSeedDir;
 
-        // Determine the base directory for assets
-        const baseDir = isElectron
-            ? path.resolve(env.gauzyUserPath, 'public')
-            : config.assetOptions.assetPublicPath || publicDir;
-
         // Determine the source directory
         const sourceDir = isElectron ? path.join(env.gauzySeedPath, destDir) : customSeedDir;
 
@@ -82,7 +82,9 @@ export async function copyAssets(
         const filepath = filename.replace(/\\/g, '/');
 
 	 	// Create directories recursively if they don't exist
-		const destinationPath = path.join(baseDir, destDir, filepath);
+		const destinationPath = path.join(assetPublicPath, destDir, filepath);
+
+		// Get destination directory
         const destinationDir = path.dirname(destinationPath);
 
 		// Create directories recursively if they don't exist

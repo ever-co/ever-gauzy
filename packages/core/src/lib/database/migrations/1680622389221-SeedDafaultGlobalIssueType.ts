@@ -58,11 +58,11 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 
     		// Default public directory for assets
 			const publicDir = isDist
-				? path.resolve(process.cwd(), 'dist/apps/api/public') // Production structure
+				? path.resolve(process.cwd(), 'apps/api/public') // Production structure
 				: path.resolve(__dirname, '../../../apps/api/public'); // Development structure
 
 			// Determine the base directory for assets
-			const baseDir = env.isElectron
+			const assetPublicPath = env.isElectron
 				? path.resolve(process.env.GAUZY_USER_PATH || '', 'public') // Electron-specific path
 				: config.assetOptions?.assetPublicPath || publicDir; // Custom public directory path from configuration.
 
@@ -71,7 +71,7 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 				// Copy issue type icon and get its path
 				const filePath = await copyAssets(issueType.icon, config, destDirName);
 				// Calculate dimensions and size of the icon
-				const absoluteFilePath = path.join(baseDir, filePath);
+				const absoluteFilePath = path.join(assetPublicPath, filePath);
 				// Get image dimensions
 				const { height, width, size } = await getImageDimensions(absoluteFilePath);
 
@@ -126,11 +126,11 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 
 		// Default public directory for assets
 		const publicDir = isDist
-			? path.resolve(process.cwd(), 'dist/apps/api/public') // Production structure
+			? path.resolve(process.cwd(), 'apps/api/public') // Production structure
 			: path.resolve(__dirname, '../../../apps/api/public'); // Development structure
 
 		// Determine the base directory for assets
-		const baseDir = env.isElectron
+		const assetPublicPath = env.isElectron
 			? path.resolve(process.env.GAUZY_USER_PATH || '', 'public') // Electron-specific path
 			: config.assetOptions?.assetPublicPath || publicDir; // Custom public directory path from configuration.
 
@@ -139,7 +139,7 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 				// Copy issue type icon and get its path
 				const filePath = await copyAssets(issueType.icon, config, destDirName);
 				// Calculate dimensions and size of the icon
-				const absoluteFilePath = path.join(baseDir, filePath);
+				const absoluteFilePath = path.join(assetPublicPath, filePath);
 				// Get image dimensions
 				const { height, width, size } = await getImageDimensions(absoluteFilePath);
 
