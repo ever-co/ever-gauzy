@@ -1,6 +1,5 @@
 import { QueryRunner } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import * as path from 'path';
 import { DatabaseTypeEnum, getConfig } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { IIntegration, IIntegrationType, IntegrationTypeEnum } from '@gauzy/contracts';

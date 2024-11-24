@@ -1,7 +1,6 @@
 import * as chalk from 'chalk';
 console.log(chalk.green(`✔ API Starting...`));
 
-import { defaultConfiguration } from '@gauzy/config';
 import { bootstrap } from '@gauzy/core';
 console.log('Bootstrap loaded');
 

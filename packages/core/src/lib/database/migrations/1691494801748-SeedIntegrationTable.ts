@@ -1,7 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import * as chalk from 'chalk';
-import * as path from 'path';
 import { getConfig, DatabaseTypeEnum } from '@gauzy/config';
 import { copyAssets } from './../../core/seeds/utils';
 import { DEFAULT_SYSTEM_INTEGRATIONS } from './../../integration/default-integration';
