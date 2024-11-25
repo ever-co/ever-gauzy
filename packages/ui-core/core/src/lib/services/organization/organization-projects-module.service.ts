@@ -1,9 +1,11 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { IOrganizationProjectModule, IPagination, ID } from '@gauzy/contracts';
-import { API_PREFIX } from '@gauzy/ui-core/common';
+import { Observable, throwError } from 'rxjs';
+import { IOrganizationProjectModule, IPagination, ID, IOrganizationProjectModuleFindInput } from '@gauzy/contracts';
+import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
+import { catchError } from 'rxjs/operators';
 import { CrudService } from '../crud';
+import { ToastrService } from '../notification';
 
 @Injectable({
 	providedIn: 'root'
@@ -11,8 +13,19 @@ import { CrudService } from '../crud';
 export class OrganizationProjectModuleService extends CrudService<IOrganizationProjectModule> {
 	private static readonly API_URL = `${API_PREFIX}/organization-project-modules`;
 
-	constructor(http: HttpClient) {
+	constructor(http: HttpClient, private readonly toastrService: ToastrService) {
 		super(http, OrganizationProjectModuleService.API_URL);
+	}
+
+	getAllModulesByProjectId(
+		where: IOrganizationProjectModuleFindInput,
+		relations: string[] = []
+	): Observable<IPagination<IOrganizationProjectModule>> {
+		return this.http
+			.get<IPagination<IOrganizationProjectModule>>(this.API_URL, {
+				params: toParams({ relations, where })
+			})
+			.pipe(catchError((error) => this.errorHandler(error)));
 	}
 
 	/**
@@ -53,5 +66,11 @@ export class OrganizationProjectModuleService extends CrudService<IOrganizationP
 	 */
 	findById(id: ID, params: HttpParams): Observable<IOrganizationProjectModule> {
 		return this.http.get<IOrganizationProjectModule>(`${this.API_URL}/${id}`, { params });
+	}
+
+	errorHandler(error: HttpErrorResponse) {
+		this.toastrService.danger(error.message, error.message);
+
+		return throwError(error.message);
 	}
 }

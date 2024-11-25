@@ -2,7 +2,7 @@ import { Component, OnInit, Input } from '@angular/core';
 import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { ID, IOrganizationProjectModule } from '@gauzy/contracts';
+import { ID, IEmployee, IOrganizationProjectEmployee, IOrganizationProjectModule } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
@@ -12,10 +12,12 @@ import {
 	AddProjectModuleDialogComponent,
 	DateViewComponent,
 	DeleteConfirmationComponent,
+	EmployeesMergedTeamsComponent,
 	EmployeeWithLinksComponent,
 	StatusViewComponent,
 	ToggleSwitcherComponent
 } from '../../../../index';
+import { I } from '@fullcalendar/core/internal-common';
 
 @UntilDestroy()
 @Component({
@@ -74,9 +76,25 @@ export class ProjectModuleTableComponent extends TranslationBaseComponent implem
 
 		try {
 			const { items } = await firstValueFrom(
-				this.organizationProjectModuleService.get<IOrganizationProjectModule>({ projectId: this.projectId })
+				this.organizationProjectModuleService.getAllModulesByProjectId({ projectId: this.projectId }, [
+					'teams',
+					'teams.members',
+					'teams.members.employee',
+					'teams.members.employee.user',
+					'members',
+					'members.user',
+					'tasks',
+					'manager',
+					'parent'
+				])
 			);
-			this.modules = items || [];
+			this.modules = (items || []).map((module) => {
+				return {
+					...module,
+					parentName: module.parent ? module.parent.name : '-',
+					employeesMergedTeams: [module.members, module.teams]
+				};
+			});
 			this.smartTableSource.load(this.modules);
 		} catch (error) {
 			this.toastrService.danger('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED');
@@ -113,8 +131,8 @@ export class ProjectModuleTableComponent extends TranslationBaseComponent implem
 						});
 					}
 				},
-				description: {
-					title: this.getTranslation('ORGANIZATIONS_PAGE.DESCRIPTION'),
+				parentName: {
+					title: this.getTranslation('PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.PARENT_MODULE'),
 					type: 'string',
 					class: 'text-wrap',
 					isFilterable: false
@@ -154,6 +172,15 @@ export class ProjectModuleTableComponent extends TranslationBaseComponent implem
 					renderComponent: EmployeeWithLinksComponent,
 					componentInitFunction: (instance: EmployeeWithLinksComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
+					}
+				},
+				employeesMergedTeams: {
+					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.MEMBERS'),
+					type: 'custom',
+					renderComponent: EmployeesMergedTeamsComponent,
+					componentInitFunction: (instance: EmployeesMergedTeamsComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getRawValue();
 					}
 				}
 			}
@@ -199,7 +226,7 @@ export class ProjectModuleTableComponent extends TranslationBaseComponent implem
 		dialogRef.onClose.subscribe({
 			next: (result) => {
 				if (result) {
-					this.updateModuleInTable(result);
+					this.loadModules();
 				}
 			},
 			error: (err) => {
@@ -223,19 +250,6 @@ export class ProjectModuleTableComponent extends TranslationBaseComponent implem
 		}
 	}
 
-	/**
-	 * Updates the specific module in the table without reloading all modules.
-	 * @param updatedModule The updated module returned from the dialog.
-	 */
-	private updateModuleInTable(updatedModule: IOrganizationProjectModule) {
-		const index = this.modules.findIndex((module) => module.id === updatedModule.id);
-		if (index !== -1) {
-			// Replace the existing module with the updated one
-			this.modules[index] = updatedModule;
-			this.smartTableSource.update(updatedModule, updatedModule);
-			this.smartTableSource.refresh(); // Ensures the UI reflects the change
-		}
-	}
 	/**
 	 * Applies translations dynamically on Smart Table columns when the language changes.
 	 */

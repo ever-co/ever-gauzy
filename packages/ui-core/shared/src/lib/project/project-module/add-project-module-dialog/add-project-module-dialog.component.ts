@@ -131,7 +131,7 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 			members: (module.members || [])?.map((m) => m.id),
 			organizationSprints: module.organizationSprints,
 			teams: (module.teams || [])?.map((t) => t.id),
-			tasks: module.tasks
+			tasks: (module.tasks || [])?.map((task) => task.id)
 		});
 		this.selectedMembers = module.members?.map((m) => m.id);
 		this.selectedTeams = module.teams?.map((t) => t.id);
@@ -280,7 +280,7 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 
 		try {
 			const modules = await firstValueFrom(
-				this.organizationProjectModuleService.get<IOrganizationProjectModule>({ projectId })
+				this.organizationProjectModuleService.getAllModulesByProjectId({ projectId })
 			);
 			this.availableParentModules = modules?.items || [];
 		} catch (error) {
