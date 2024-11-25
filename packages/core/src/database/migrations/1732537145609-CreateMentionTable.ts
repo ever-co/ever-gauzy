@@ -123,12 +123,42 @@ export class CreateMentionTable1732537145609 implements MigrationInterface {
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(
+			`CREATE TABLE \`mention\` (\`deletedAt\` datetime(6) NULL, \`id\` varchar(36) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`entityId\` varchar(255) NOT NULL, \`entity\` varchar(255) NOT NULL, \`mentionedUserId\` varchar(255) NOT NULL, \`mentionById\` varchar(255) NOT NULL, INDEX \`IDX_2c71b2f53b9162a94e1f02e40b\` (\`isActive\`), INDEX \`IDX_9597d3f3afbf40e6ffd1b0ebc9\` (\`isArchived\`), INDEX \`IDX_580d84e23219b07f520131f927\` (\`tenantId\`), INDEX \`IDX_4f018d32b6d2e2c907833d0db1\` (\`organizationId\`), INDEX \`IDX_d01675da9ddf57bef5692fca8b\` (\`entityId\`), INDEX \`IDX_3d6a8e3430779c21f04513cc5a\` (\`entity\`), INDEX \`IDX_16a2deee0d7ea361950eed1b94\` (\`mentionedUserId\`), INDEX \`IDX_34b0087a30379c86b470a4298c\` (\`mentionById\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`mention\` ADD CONSTRAINT \`FK_580d84e23219b07f520131f9271\` FOREIGN KEY (\`tenantId\`) REFERENCES \`tenant\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`mention\` ADD CONSTRAINT \`FK_4f018d32b6d2e2c907833d0db11\` FOREIGN KEY (\`organizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`mention\` ADD CONSTRAINT \`FK_16a2deee0d7ea361950eed1b944\` FOREIGN KEY (\`mentionedUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`mention\` ADD CONSTRAINT \`FK_34b0087a30379c86b470a4298ca\` FOREIGN KEY (\`mentionById\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+	}
 
 	/**
 	 * MySQL Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE \`mention\` DROP FOREIGN KEY \`FK_34b0087a30379c86b470a4298ca\``);
+		await queryRunner.query(`ALTER TABLE \`mention\` DROP FOREIGN KEY \`FK_16a2deee0d7ea361950eed1b944\``);
+		await queryRunner.query(`ALTER TABLE \`mention\` DROP FOREIGN KEY \`FK_4f018d32b6d2e2c907833d0db11\``);
+		await queryRunner.query(`ALTER TABLE \`mention\` DROP FOREIGN KEY \`FK_580d84e23219b07f520131f9271\``);
+		await queryRunner.query(`DROP INDEX \`IDX_34b0087a30379c86b470a4298c\` ON \`mention\``);
+		await queryRunner.query(`DROP INDEX \`IDX_16a2deee0d7ea361950eed1b94\` ON \`mention\``);
+		await queryRunner.query(`DROP INDEX \`IDX_3d6a8e3430779c21f04513cc5a\` ON \`mention\``);
+		await queryRunner.query(`DROP INDEX \`IDX_d01675da9ddf57bef5692fca8b\` ON \`mention\``);
+		await queryRunner.query(`DROP INDEX \`IDX_4f018d32b6d2e2c907833d0db1\` ON \`mention\``);
+		await queryRunner.query(`DROP INDEX \`IDX_580d84e23219b07f520131f927\` ON \`mention\``);
+		await queryRunner.query(`DROP INDEX \`IDX_9597d3f3afbf40e6ffd1b0ebc9\` ON \`mention\``);
+		await queryRunner.query(`DROP INDEX \`IDX_2c71b2f53b9162a94e1f02e40b\` ON \`mention\``);
+		await queryRunner.query(`DROP TABLE \`mention\``);
+	}
 }
