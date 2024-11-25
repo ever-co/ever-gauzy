@@ -100,7 +100,6 @@ export const createRandomScreenshot = async (
     return screenshots;
 };
 
-
 /**
  * Retrieves a list of files and directories from the specified directory.
  *
@@ -114,7 +113,6 @@ const getList = (dir: string): Promise<string[]> => {
 			if (err) {
 				reject(err); // Pass the error for better debugging
 			} else {
-				fileList = items;
 				resolve(items); // Resolve with the list of items
 			}
 		});
