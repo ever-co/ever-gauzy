@@ -34,7 +34,9 @@ export class OrganizationProjectModuleService extends CrudService<IOrganizationP
 	 * @returns An Observable that emits the paginated list of employee project modules.
 	 */
 	getEmployeeProjectModules(params: HttpParams): Observable<IPagination<IOrganizationProjectModule>> {
-		return this.http.get<IPagination<IOrganizationProjectModule>>(`${this.API_URL}/employee`, { params });
+		return this.http
+			.get<IPagination<IOrganizationProjectModule>>(`${this.API_URL}/employee`, { params })
+			.pipe(catchError((error) => this.errorHandler(error)));
 	}
 
 	/**
@@ -43,7 +45,9 @@ export class OrganizationProjectModuleService extends CrudService<IOrganizationP
 	 * @returns An Observable that emits the paginated list of team project modules.
 	 */
 	findTeamProjectModules(params: HttpParams): Observable<IPagination<IOrganizationProjectModule>> {
-		return this.http.get<IPagination<IOrganizationProjectModule>>(`${this.API_URL}/team`, { params });
+		return this.http
+			.get<IPagination<IOrganizationProjectModule>>(`${this.API_URL}/team`, { params })
+			.pipe(catchError((error) => this.errorHandler(error)));
 	}
 
 	/**
@@ -53,9 +57,9 @@ export class OrganizationProjectModuleService extends CrudService<IOrganizationP
 	 * @returns An Observable that emits the paginated list of project modules for the specified employee.
 	 */
 	findByEmployee(employeeId: ID, params: HttpParams): Observable<IPagination<IOrganizationProjectModule>> {
-		return this.http.get<IPagination<IOrganizationProjectModule>>(`${this.API_URL}/employee/${employeeId}`, {
-			params
-		});
+		return this.http
+			.get<IPagination<IOrganizationProjectModule>>(`${this.API_URL}/employee/${employeeId}`, { params })
+			.pipe(catchError((error) => this.errorHandler(error)));
 	}
 
 	/**
@@ -65,7 +69,9 @@ export class OrganizationProjectModuleService extends CrudService<IOrganizationP
 	 * @returns An Observable that emits the found project module.
 	 */
 	findById(id: ID, params: HttpParams): Observable<IOrganizationProjectModule> {
-		return this.http.get<IOrganizationProjectModule>(`${this.API_URL}/${id}`, { params });
+		return this.http
+			.get<IOrganizationProjectModule>(`${this.API_URL}/${id}`, { params })
+			.pipe(catchError((error) => this.errorHandler(error)));
 	}
 
 	errorHandler(error: HttpErrorResponse) {
