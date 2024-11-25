@@ -730,7 +730,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 			);
 		} catch (error) {
 			const message = error.message || 'Error while creating project module';
-			+this._toastrService.danger(message, 'Project Module Error');
+			this._toastrService.danger(message, 'Project Module Error');
 		}
 	}
 }
