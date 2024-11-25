@@ -2,7 +2,7 @@ import { Component, OnInit, Input } from '@angular/core';
 import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { ID, IEmployee, IOrganizationProjectEmployee, IOrganizationProjectModule } from '@gauzy/contracts';
+import { ID, IOrganizationProjectModule } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
@@ -17,7 +17,6 @@ import {
 	StatusViewComponent,
 	ToggleSwitcherComponent
 } from '../../../../index';
-import { I } from '@fullcalendar/core/internal-common';
 
 @UntilDestroy()
 @Component({
