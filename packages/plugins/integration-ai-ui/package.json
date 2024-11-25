@@ -25,12 +25,12 @@
 		"lib:watch": "yarn nx build plugin-integration-ai-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^17.3.0",
-		"@angular/core": "^17.3.0"
+		"@angular/common": "^18.2.0",
+		"@angular/core": "^18.2.0"
 	},
 	"dependencies": {
-		"@angular/forms": "17.3.12",
-		"@angular/router": "17.3.12",
+		"@angular/forms": "18.2.12",
+		"@angular/router": "18.2.12",
 		"@gauzy/contracts": "^0.1.0",
 		"@nebular/theme": "^13.0.0",
 		"@ngneat/until-destroy": "^10.0.0",
@@ -40,9 +40,9 @@
 		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
-		"@types/jest": "^29.4.4",
+		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
-		"jest-preset-angular": "14.0.4"
+		"jest-preset-angular": "14.1.1"
 	},
 	"keywords": [],
 	"engines": {

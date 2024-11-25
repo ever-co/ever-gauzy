@@ -42,14 +42,14 @@
 	},
 	"devDependencies": {
 		"@types/bcrypt": "^5.0.2",
-		"@types/jest": "^29.4.4",
+		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
 		"@types/passport": "^1.0.9",
 		"@types/passport-facebook": "^2.1.10",
 		"@types/passport-github2": "^1.2.9",
 		"@types/passport-google-oauth20": "^2.0.6",
 		"@types/passport-jwt": "^3.0.6",
-		"typescript": "5.4.5"
+		"typescript": "5.5.4"
 	},
 	"keywords": [
 		"auth",

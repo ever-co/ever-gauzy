@@ -18,7 +18,7 @@
 		"lib:watch": "yarn nx build common-angular --watch --configuration=development"
 	},
 	"dependencies": {
-		"@angular/common": "17.3.12",
+		"@angular/common": "18.2.12",
 		"moment": "^2.30.1",
 		"moment-timezone": "^0.5.45",
 		"rxjs": "^7.8.0",
@@ -26,9 +26,9 @@
 		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
-		"@types/jest": "^29.4.4",
+		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
-		"typescript": "5.4.5"
+		"typescript": "5.5.4"
 	},
 	"engines": {
 		"node": ">=20.11.1",

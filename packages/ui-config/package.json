@@ -27,17 +27,17 @@
 	},
 	"peerDependencies": {
 		"@angular/common": "^17.3.12",
-		"@angular/core": "^17.3.0"
+		"@angular/core": "^18.2.0"
 	},
 	"dependencies": {
 		"tslib": "^2.6.2",
 		"zone.js": "^0.14.2"
 	},
 	"devDependencies": {
-		"@types/jest": "^29.4.4",
+		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
 		"cross-env": "^7.0.3",
-		"jest-preset-angular": "14.0.4"
+		"jest-preset-angular": "14.1.1"
 	},
 	"keywords": [
 		"gauzy",
