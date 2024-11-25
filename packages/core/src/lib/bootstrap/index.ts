@@ -38,7 +38,7 @@ import RedisStore from 'connect-redis';
 import { createClient } from 'redis';
 import helmet from 'helmet';
 import * as chalk from 'chalk';
-import { join } from 'path';
+import * as path from 'path';
 import { urlencoded, json } from 'express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { EntitySubscriberInterface } from 'typeorm';
@@ -331,7 +331,7 @@ export async function preBootstrapApplicationConfig(applicationConfig: Partial<A
 	// Configure migration settings
 	setConfig({
 		dbConnectionOptions: {
-			...getMigrationsSetting()
+			...getMigrationsConfig()
 		}
 	});
 
@@ -472,28 +472,22 @@ async function preBootstrapRegisterSubscribers(
  *
  * @returns An object containing paths for migrations and CLI migrations directory.
  */
-export function getMigrationsSetting() {
-    // Determine whether the code is running from dist (production) or src (development)
-    const isDist = __dirname.includes('dist');
+export function getMigrationsConfig() {
+	// Determine if running from dist or source
+	const isDist = __dirname.includes('dist');
+	console.log('Migration isDist: ->', isDist);
 
-    // Base path adjustment based on environment
-    const baseDir = isDist
-        ? join(__dirname, '../../../../..') // Adjust for dist folder
-        : join(__dirname, '../../../../..'); // Adjust for src folder
-
-	// Define paths for migrations and CLI migrations directory
-	const migrationsPath = 'packages/core/src/lib/database/migrations';
-
-    // Migrations directory path
-    const migrationsDir = join(baseDir, `${migrationsPath}/*{.ts,.js}`);
+	// Base migrations directory
+	const migrationsDir = isDist
+		? path.resolve(process.cwd(), 'dist/packages/core/src/lib/database/migrations/*{.ts,.js}') // For dist structure
+		: path.resolve(process.cwd(), 'src/lib/database/migrations/*{.ts,.js}'); // For src structure
+	console.log('Migration migrationsDir: ->', migrationsDir);
 
     // CLI Migrations directory path
-    const cliMigrationsDir = join(baseDir, migrationsPath);
-
-    // Debugging logs (remove or replace with proper logging in production)
-    console.log('Base Directory:', baseDir);
-    console.log('Migrations Dir:', migrationsDir);
-    console.log('CLI Migrations Dir:', cliMigrationsDir);
+	const cliMigrationsDir = isDist
+		? path.resolve(process.cwd(), 'packages/core/src/lib/database/migrations') // Adjusted for dist structure
+		: path.resolve(process.cwd(), 'src/lib/database/migrations'); // Adjusted for src structure
+	console.log('Migration cliMigrationsDir: ->', cliMigrationsDir);
 
     // Return the migration paths
     return {
