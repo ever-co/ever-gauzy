@@ -28,7 +28,7 @@
 	},
 	"dependencies": {
 		"@angular/router": "18.2.12",
-		"@nebular/auth": "^13.0.0",
+		"@nebular/auth": "^14.0.2",
 		"@ngx-translate/core": "^16.0.3",
 		"tslib": "^2.6.2"
 	},
