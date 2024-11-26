@@ -5,10 +5,10 @@
 		"module": "commonjs",
 		"types": ["node"],
 		"emitDecoratorMetadata": true,
-		"target": "ES2022",
+		"target": "es2021",
 		"removeComments": true,
 		"resolveJsonModule": true
 	},
-	"exclude": ["jest.config.ts", "**/*.spec.ts", "**/*.test.ts"],
-	"include": ["**/*.ts", "../../packages/core/src/bootstrap/tracer.ts"]
+	"exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"],
+	"include": ["src/**/*.ts"]
 }

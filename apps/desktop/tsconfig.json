@@ -1,23 +1,34 @@
 {
 	"compilerOptions": {
-		"outDir": "../../dist/apps/desktop",
-		"sourceMap": true,
-		"declaration": false,
-		"moduleResolution": "node",
-		"emitDecoratorMetadata": true,
-		"experimentalDecorators": true,
-		"downlevelIteration": true,
-		"module": "commonjs",
-		"target": "ES2022",
-		"types": [
-			"pino-pretty"
-		]
+		"target": "es2022",
+		"useDefineForClassFields": false,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"strict": true,
+		"noImplicitOverride": true,
+		"noPropertyAccessFromIndexSignature": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"types": ["pino-pretty"]
 	},
-	"files": [
-		"global.d.ts"
+	"files": [],
+	"include": [],
+	"references": [
+		{
+			"path": "./tsconfig.editor.json"
+		},
+		{
+			"path": "./tsconfig.app.json"
+		},
+		{
+			"path": "./tsconfig.spec.json"
+		}
 	],
-	"include": [
-		"src/index.ts",
-		"src/preload"
-	]
+	"extends": "../../tsconfig.base.json",
+	"angularCompilerOptions": {
+		"enableI18nLegacyMessageIdFormat": false,
+		"strictInjectionParameters": true,
+		"strictInputAccessModifiers": true,
+		"strictTemplates": true
+	}
 }
