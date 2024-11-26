@@ -39,8 +39,8 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 
 			/**
 			 * TODO
-			 * 1. Optional create an user subscibption for provided entity
-			 * 2. Send email motifications and trigger internal system notifications for both mention and optional subscription
+			 * 1. Optional create an user subscription for provided entity
+			 * 2. Send email notifications and trigger internal system notifications for both mention and optional subscription
 			 */
 
 			// Return the created mention.
