@@ -6,7 +6,8 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 import { MentionService } from './mention.service';
 import { MentionController } from './mention.controller';
 import { Mention } from './mention.entity';
-import { TypeOrmMentionRepository } from './repository';
+import { EventHandlers } from './events/handlers';
+import { TypeOrmMentionRepository } from './repository/type-orm-mention.repository';
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([Mention]),
@@ -14,7 +15,7 @@ import { TypeOrmMentionRepository } from './repository';
 		CqrsModule,
 		RolePermissionModule
 	],
-	providers: [MentionService, TypeOrmMentionRepository],
+	providers: [MentionService, TypeOrmMentionRepository, ...EventHandlers],
 	controllers: [MentionController],
 	exports: [TypeOrmModule, MikroOrmModule, MentionService, TypeOrmMentionRepository]
 })
