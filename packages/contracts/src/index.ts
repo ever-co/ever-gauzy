@@ -74,6 +74,7 @@ export * from './job-matching.model';
 export * from './job-search-category.model';
 export * from './job-search-occupation.model';
 export * from './language.model';
+export * from './mention.model';
 export * from './organization-award.model';
 export * from './organization-contact.model';
 export * from './organization-department.model';

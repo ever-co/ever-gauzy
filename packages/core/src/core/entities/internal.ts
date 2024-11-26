@@ -75,6 +75,7 @@ export * from '../../keyresult-template/keyresult-template.entity';
 export * from '../../keyresult-update/keyresult-update.entity';
 export * from '../../keyresult/keyresult.entity';
 export * from '../../language/language.entity';
+export * from '../../mention/mention.entity';
 export * from '../../merchant/merchant.entity';
 export * from '../../organization-award/organization-award.entity';
 export * from '../../organization-contact/organization-contact.entity';
