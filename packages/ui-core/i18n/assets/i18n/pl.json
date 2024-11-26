@@ -3607,7 +3607,10 @@
 			"AUTHORIZED_TO_WORK": "{{ name }} jest uprawniony do pracy",
 			"EMAIL_VERIFICATION_NOT_VALID": "Przepraszam, ten link weryfikacyjny jest nieważny",
 			"EMAIL_VERIFICATION_VALID": "Gratulacje! Twój email został teraz zweryfikowany",
-			"SCREEN_CAPTURE_CHANGED": "Zmieniono stan zrzutu ekranu dla {{ name }}"
+			"SCREEN_CAPTURE_CHANGED": "Zmieniono stan zrzutu ekranu dla {{ name }}",
+			"MODULE_CREATED": "Moduł został pomyślnie utworzony!",
+		"MODULE_UPDATED": "Moduł został pomyślnie zaktualizowany!",
+		"MODULE_SAVE_ERROR": "Nie udało się zapisać modułu. Spróbuj ponownie."
 		}
 	},
 	"ACCEPT_INVITE": {

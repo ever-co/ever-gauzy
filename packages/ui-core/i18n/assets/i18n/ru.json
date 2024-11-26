@@ -3626,7 +3626,10 @@
 			"TIME_LOG_DELETED": "Журнал времени для '{{ name }}' ' удален из '{{ organization }}'",
 			"TIME_LOGS_DELETED": "Журналы времени удалены из '{{ organization }}'",
 			"BUCKET_CREATED": "'{{ bucket }}' для '{{ region }}' был успешно создан",
-			"AUTHORIZED_TO_WORK": "{{ name }} авторизован для работы"
+			"AUTHORIZED_TO_WORK": "{{ name }} авторизован для работы",
+			"MODULE_CREATED": "Модуль успешно создан!",
+		"MODULE_UPDATED": "Модуль успешно обновлен!",
+		"MODULE_SAVE_ERROR": "Не удалось сохранить модуль. Попробуйте еще раз."
 		}
 	},
 	"ACCEPT_INVITE": {

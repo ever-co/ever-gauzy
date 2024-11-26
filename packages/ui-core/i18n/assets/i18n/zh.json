@@ -3607,7 +3607,10 @@
 			"AUTHORIZED_TO_WORK": "{{ name }} 被授权工作。",
 			"EMAIL_VERIFICATION_NOT_VALID": "对不起，该验证链接无效。",
 			"EMAIL_VERIFICATION_VALID": "恭喜！您的电子邮件已经验证成功。",
-			"SCREEN_CAPTURE_CHANGED": "屏幕截图状态已更改为{{ name }}。"
+			"SCREEN_CAPTURE_CHANGED": "屏幕截图状态已更改为{{ name }}。",
+			"MODULE_CREATED": "模块创建成功！",
+		"MODULE_UPDATED": "模块更新成功！",
+		"MODULE_SAVE_ERROR": "模块保存失败。请再试一次。"
 		}
 	},
 	"ACCEPT_INVITE": {
