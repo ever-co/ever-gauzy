@@ -5,7 +5,7 @@ import { MentionService } from '../../mention.service';
 
 @EventsHandler(MentionEvent)
 export class MentionEventHandler implements IEventHandler<MentionEvent> {
-	constructor(readonly mentionService: MentionService) {}
+	constructor(private readonly mentionService: MentionService) {}
 
 	/**
 	 * Handles the `MentionEvent` by creating a new mention using the provided input.
