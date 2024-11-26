@@ -16018,7 +16018,7 @@ chart.js@^2.1.5:
     chartjs-color "^2.1.0"
     moment "^2.10.2"
 
-chart.js@^4.4.6:
+chart.js@^4.4.1:
   version "4.4.6"
   resolved "https://registry.yarnpkg.com/chart.js/-/chart.js-4.4.6.tgz#da39b84ca752298270d4c0519675c7659936abec"
   integrity sha512-8Y406zevUPbbIBA/HRk33khEmQPk5+cxeflWE/2rx1NJsjVWMPw/9mSP9rxHP5eqi6LNoPBVMfZHxbwLSgldYA==
@@ -16047,7 +16047,7 @@ chartjs-color@^2.1.0:
     chartjs-color-string "^0.6.0"
     color-convert "^1.9.3"
 
-chartjs-plugin-annotation@^3.1.0:
+chartjs-plugin-annotation@^3.0.1:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/chartjs-plugin-annotation/-/chartjs-plugin-annotation-3.1.0.tgz#0b3910862bde232344bbb6cf998633f71db7b093"
   integrity sha512-EkAed6/ycXD/7n0ShrlT1T2Hm3acnbFhgkIEJLa0X+M6S16x0zwj1Fv4suv/2bwayCT3jGPdAtI9uLcAMToaQQ==
@@ -19586,7 +19586,7 @@ ecdsa-sig-formatter@1.0.11:
   dependencies:
     safe-buffer "^5.0.1"
 
-echarts@^5.5.1:
+echarts@^5.0.1:
   version "5.5.1"
   resolved "https://registry.yarnpkg.com/echarts/-/echarts-5.5.1.tgz#8dc9c68d0c548934bedcb5f633db07ed1dd2101c"
   integrity sha512-Fce8upazaAXUVUVsjgV6mBnGuqgO+JNDlcgF79Dksy4+wgGpQB2lmYoO4TSweFg/mZITdpGHomw/cNBJZj1icA==
@@ -28731,10 +28731,10 @@ ng-packagr@18.2.1:
   optionalDependencies:
     rollup "^4.18.0"
 
-ng2-charts@^6.0.1:
-  version "6.0.1"
-  resolved "https://registry.yarnpkg.com/ng2-charts/-/ng2-charts-6.0.1.tgz#7fc01f4aa7f10b9e6d3e85c1f02b796fcb3ef180"
-  integrity sha512-pO7evbvHqjiKB7zqE12tCKWQI9gmQ8DVOEaWBBLlxJabc4fLGk7o9t4jC4+Q9pJiQrTtQkugm0dIPQ4PFHUaWA==
+ng2-charts@^5.0.4:
+  version "5.0.4"
+  resolved "https://registry.yarnpkg.com/ng2-charts/-/ng2-charts-5.0.4.tgz#306431e8b28532e22bcd877622b990c306516508"
+  integrity sha512-AnOZ2KSRw7QjiMMNtXz9tdnO+XrIKP/2MX1TfqEEo2fwFU5c8LFJIYqmkMPkIzAEm/U9y/1psA5TDNmxxjEdgA==
   dependencies:
     lodash-es "^4.17.15"
     tslib "^2.3.0"

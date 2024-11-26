@@ -39,7 +39,7 @@
 		"ckeditor4-angular": "4.0.1",
 		"moment": "^2.30.1",
 		"ngx-infinite-scroll": "^18.0.0",
-		"ng2-charts": "^6.0.1",
+		"ng2-charts": "^5.0.4",
 		"ngx-permissions": "^17.1.0",
 		"rxjs": "^7.8.0",
 		"tslib": "^2.6.2"
