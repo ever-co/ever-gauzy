@@ -3609,8 +3609,8 @@
 			"EMAIL_VERIFICATION_VALID": "Gefeliciteerd! Uw e-mail is nu geverifieerd.",
 			"SCREEN_CAPTURE_CHANGED": "Schermopnamestatus gewijzigd voor {{ name }}",
 			"MODULE_CREATED": "Module succesvol aangemaakt!",
-		"MODULE_UPDATED": "Module succesvol bijgewerkt!",
-		"MODULE_SAVE_ERROR": "Het opslaan van de module is mislukt. Probeer het opnieuw."
+			"MODULE_UPDATED": "Module succesvol bijgewerkt!",
+			"MODULE_SAVE_ERROR": "Het opslaan van de module is mislukt. Probeer het opnieuw."
 		}
 	},
 	"ACCEPT_INVITE": {

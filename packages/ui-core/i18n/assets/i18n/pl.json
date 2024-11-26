@@ -3609,8 +3609,8 @@
 			"EMAIL_VERIFICATION_VALID": "Gratulacje! Twój email został teraz zweryfikowany",
 			"SCREEN_CAPTURE_CHANGED": "Zmieniono stan zrzutu ekranu dla {{ name }}",
 			"MODULE_CREATED": "Moduł został pomyślnie utworzony!",
-		"MODULE_UPDATED": "Moduł został pomyślnie zaktualizowany!",
-		"MODULE_SAVE_ERROR": "Nie udało się zapisać modułu. Spróbuj ponownie."
+			"MODULE_UPDATED": "Moduł został pomyślnie zaktualizowany!",
+			"MODULE_SAVE_ERROR": "Nie udało się zapisać modułu. Spróbuj ponownie."
 		}
 	},
 	"ACCEPT_INVITE": {

@@ -3609,8 +3609,8 @@
 			"EMAIL_VERIFICATION_VALID": "Parabéns! Seu email foi verificado com sucesso.",
 			"SCREEN_CAPTURE_CHANGED": "Status de captura de tela alterado para {{ name }}",
 			"MODULE_CREATED": "Módulo criado com sucesso!",
-		"MODULE_UPDATED": "Módulo atualizado com sucesso!",
-		"MODULE_SAVE_ERROR": "Falha ao salvar o módulo. Por favor, tente novamente."
+			"MODULE_UPDATED": "Módulo atualizado com sucesso!",
+			"MODULE_SAVE_ERROR": "Falha ao salvar o módulo. Por favor, tente novamente."
 		}
 	},
 	"ACCEPT_INVITE": {
