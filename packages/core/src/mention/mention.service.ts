@@ -6,6 +6,7 @@ import { RequestContext } from '../core/context';
 import { Mention } from './mention.entity';
 import { TypeOrmMentionRepository } from './repository/type-orm-mention.repository';
 import { MikroOrmMentionRepository } from './repository/mikro-orm-mention.repository';
+import { MentionEvent } from './events';
 
 @Injectable()
 export class MentionService extends TenantAwareCrudService<Mention> {
@@ -48,5 +49,15 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 			console.log('Error while creating mention:', error);
 			throw new BadRequestException('Error while creating mention', error);
 		}
+	}
+
+	/**
+	 * Publishes a `MentionEvent` to the event bus.
+	 *
+	 * @param {IMentionCreateInput} input - The input data required to create a new mention.
+	 *
+	 */
+	publishMention(input: IMentionCreateInput) {
+		this._eventBus.publish(new MentionEvent(input));
 	}
 }
