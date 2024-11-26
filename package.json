@@ -314,12 +314,12 @@
 		]
 	},
 	"resolutions": {
-		"@angular-devkit/architect": "^0.1701.4",
-		"@angular-devkit/build-angular": "^17.1.4",
-		"@angular-devkit/core": "^17.1.4",
+		"@angular-devkit/architect": "^0.1703.11",
+		"@angular-devkit/build-angular": "^18.2.9",
+		"@angular-devkit/core": "^18.2.9",
 		"camelcase": "^6.3.0",
 		"rxjs": "^7.8.0",
-		"autoprefixer": "10.4.18",
+		"autoprefixer": "^10.4.20",
 		"locutus": "^2.0.30"
 	},
 	"dependencies": {
@@ -346,7 +346,7 @@
 		"@nestjs/platform-express": "^10.3.7",
 		"@ng-select/ng-select": "^13.9.0",
 		"angular2-smart-table": "^3.4.0",
-		"autoprefixer": "10.4.18",
+		"autoprefixer": "^10.4.20",
 		"bcrypt": "^5.1.1",
 		"camelcase": "^6.3.0",
 		"dotenv": "^16.0.3",
@@ -361,9 +361,9 @@
 	},
 	"devDependencies": {
 		"@angular-builders/custom-webpack": "^18.0.0",
-		"@angular-devkit/architect": "0.1802.9",
-		"@angular-devkit/build-angular": "18.2.9",
-		"@angular-devkit/core": "18.2.9",
+		"@angular-devkit/architect": "^0.1703.11",
+		"@angular-devkit/build-angular": "^18.2.9",
+		"@angular-devkit/core": "^18.2.9",
 		"@angular-devkit/schematics": "18.2.9",
 		"@angular-eslint/eslint-plugin": "18.0.1",
 		"@angular-eslint/eslint-plugin-template": "18.0.1",

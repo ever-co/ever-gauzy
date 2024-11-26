@@ -20,9 +20,9 @@
 	"resolutions": {
 		"uglify-js": "npm:terser",
 		"webpack": "^5.91.0",
-		"@angular-devkit/build-angular": "^17.1.4",
-		"@angular-devkit/architect": "^0.1701.4",
-		"@angular-devkit/core": "^17.1.4",
+		"@angular-devkit/build-angular": "^18.2.9",
+		"@angular-devkit/architect": "^0.1703.11",
+		"@angular-devkit/core": "^18.2.9",
 		"webpack-cli": "^4.9.0"
 	},
 	"dependencies": {
@@ -75,8 +75,8 @@
 		"@nebular/eva-icons": "^14.0.2",
 		"@nebular/security": "^14.0.2",
 		"@nebular/theme": "^14.0.2",
-		"@ng-maps/core": "^6.0.1",
-		"@ng-maps/google": "^6.0.0",
+		"@ng-maps/core": "^7.0.0",
+		"@ng-maps/google": "^7.0.0",
 		"@ng-select/ng-select": "^13.9.0",
 		"@ngneat/until-destroy": "^10.0.0",
 		"@ngx-translate/core": "^16.0.3",
@@ -175,10 +175,10 @@
 		"zone.js": "0.14.8"
 	},
 	"devDependencies": {
-		"@angular-devkit/architect": "^0.1701.4",
-		"@angular-devkit/build-angular": "^17.1.4",
+		"@angular-devkit/architect": "^0.1703.11",
+		"@angular-devkit/build-angular": "^18.2.9",
 		"@angular-devkit/build-ng-packagr": "^0.1002.0",
-		"@angular-devkit/core": "^17.1.4",
+		"@angular-devkit/core": "^18.2.9",
 		"@angular-devkit/schematics": "18.2.9",
 		"@angular/cli": "~18.2.0",
 		"@angular/compiler-cli": "18.2.12",
@@ -189,7 +189,7 @@
 		"@types/electron": "^1.6.10",
 		"@types/file-saver": "^2.0.7",
 		"@types/google.analytics": "^0.0.41",
-		"@types/google.maps": "~3.53.0",
+		"@types/google.maps": "^3.58.1",
 		"@types/hammerjs": "^2.0.36",
 		"@types/html-to-text": "^9.0.1",
 		"@types/i18n": "^0.12.0",
