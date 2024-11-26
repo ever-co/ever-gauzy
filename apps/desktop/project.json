@@ -1,13 +1,17 @@
 {
     "name": "desktop",
-    "$schema": "../../node_modules/nx/schemas/project-schema.json",
-    "projectType": "application",
-    "root": "apps/gauzy",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "apps/gauzy/src",
-    "prefix": "gauzy",
+    "projectType": "application",
+    "tags": [],
+	"generators": {
+		"@nx/angular:component": {
+			"style": "scss"
+		}
+	},
     "targets": {
         "build": {
-            "executor": "@nx/angular:webpack-browser",
+            "executor": "@angular-builders/custom-webpack:browser",
             "options": {
                 "customWebpackConfig": {
                     "path": "apps/desktop/config/custom-webpack.config.js"
@@ -30,9 +34,7 @@
                     {
                         "glob": "**/*",
                         "input": "apps/desktop/src/",
-                        "ignore": [
-                            "**/*.ts"
-                        ],
+                        "ignore": ["**/*.ts"],
                         "output": ""
                     },
                     {
@@ -42,6 +44,7 @@
                     }
                 ],
                 "styles": [
+					"apps/desktop/src/styles.css",
                     "node_modules/bootstrap/dist/css/bootstrap.css",
                     "node_modules/typeface-exo/index.css",
                     "node_modules/roboto-fontface/css/roboto/roboto-fontface.css",
@@ -93,95 +96,17 @@
             }
         },
         "serve": {
-            "executor": "@nx/angular:dev-server",
+            "executor": "@angular-devkit/build-angular:dev-server",
             "options": {
-                "browserTarget": "gauzy:build",
+                "browserTarget": "desktop:build",
                 "proxyConfig": "apps/gauzy/proxy.conf.json"
             },
             "configurations": {
                 "production": {
-                    "browserTarget": "gauzy:build:production",
+                    "browserTarget": "desktop:build:production",
                     "proxyConfig": "apps/gauzy/proxy.prod.conf.json"
                 }
             }
-        },
-        "ui": {
-            "executor": "@angular-builders/custom-webpack:browser",
-            "options": {
-                "customWebpackConfig": {
-                    "path": "apps/desktop/config/custom-webpack.config.js"
-                },
-                "outputPath": "dist/apps/desktop/ui",
-                "index": "apps/desktop/src/index.html",
-                "main": "apps/desktop/src/main.ts",
-                "polyfills": "apps/desktop/src/polyfills.ts",
-                "tsConfig": "apps/desktop/tsconfig.app.json",
-                "aot": true,
-                "stylePreprocessorOptions": {
-                    "includePaths": [
-                        "apps/desktop-timer/src/assets/styles",
-                        "packages/ui-core/static/styles"
-                    ]
-                },
-                "assets": [
-                    "apps/desktop/src/favicon.ico",
-                    "apps/desktop/src/assets"
-                ],
-                "styles": [
-                    "node_modules/@nebular/theme/styles/prebuilt/default.css",
-                    "node_modules/bootstrap/dist/css/bootstrap.css",
-                    "node_modules/typeface-exo/index.css",
-                    "node_modules/roboto-fontface/css/roboto/roboto-fontface.css",
-                    "node_modules/ionicons/dist/scss/ionicons.scss",
-                    "node_modules/@fortawesome/fontawesome-free/css/all.css",
-                    "node_modules/socicon/css/socicon.css",
-                    "node_modules/nebular-icons/scss/nebular-icons.scss",
-                    "node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
-                    "node_modules/leaflet/dist/leaflet.css",
-                    "apps/desktop/src/assets/styles/styles.scss",
-                    "packages/ui-core/static/styles/styles.scss",
-                    "node_modules/@ng-select/ng-select/themes/default.theme.css"
-                ],
-                "scripts": []
-            },
-            "configurations": {
-                "production": {
-                    "fileReplacements": [
-                        {
-                            "replace": "apps/desktop/src/environments/environment.ts",
-                            "with": "apps/desktop/src/environments/environment.prod.ts"
-                        },
-                        {
-                            "replace": "packages/ui-config/src/lib/environments/environment.ts",
-                            "with": "packages/ui-config/src/lib/environments/environment.prod.ts"
-                        }
-                    ],
-                    "optimization": true,
-                    "outputHashing": "all",
-                    "sourceMap": false,
-                    "namedChunks": false,
-                    "extractLicenses": true,
-                    "vendorChunk": false,
-                    "buildOptimizer": true,
-                    "budgets": [
-                        {
-                            "type": "initial",
-                            "maximumWarning": "20mb",
-                            "maximumError": "40mb"
-                        },
-                        {
-                            "type": "anyComponentStyle",
-                            "maximumWarning": "60kb",
-                            "maximumError": "120kb"
-                        }
-                    ]
-                }
-            }
-        }
-    },
-    "generators": {
-        "@nx/workspace:component": {
-            "style": "scss"
         }
     }
 }

@@ -158,6 +158,16 @@
                 "production",
                 "^production"
             ]
+        },
+        "@angular-devkit/build-angular:application": {
+            "cache": true,
+            "dependsOn": [
+                "^build"
+            ],
+            "inputs": [
+                "production",
+                "^production"
+            ]
         }
     },
     "useInferencePlugins": false,
