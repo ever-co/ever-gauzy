@@ -2,7 +2,6 @@
 	"name": "@gauzy/ui-core",
 	"version": "0.1.0",
 	"description": "A collection of core UI components and utilities for the Gauzy framework. This library provides essential building blocks for constructing user interfaces, designed to be flexible and reusable in various Angular applications.",
-	"type": "commonjs",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -115,10 +114,24 @@
 		"jest-preset-angular": "14.0.4"
 	},
 	"keywords": [
-		"gauzy",
-		"plugin",
+		"ui-core",
 		"angular",
-		"ui"
+		"core-components",
+		"utilities",
+		"ui-framework",
+		"ever-gauzy",
+		"nebular",
+		"angular-material",
+		"rxjs",
+		"ngx",
+		"typescript",
+		"leaflet",
+		"moment",
+		"ngx-translate",
+		"charts",
+		"open-source",
+		"enterprise",
+		"agpl"
 	],
 	"engines": {
 		"node": ">=20.11.1",

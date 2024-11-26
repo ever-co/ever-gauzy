@@ -2,7 +2,6 @@
 	"name": "@gauzy/auth",
 	"version": "0.1.0",
 	"description": "Authentication module for the Ever Gauzy Platform, providing various authentication strategies and integrations.",
-	"type": "commonjs",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -10,7 +9,8 @@
 	},
 	"license": "AGPL-3.0",
 	"private": true,
-	"main": "./src/index.ts",
+	"type": "commonjs",
+	"main": "./src/index.js",
 	"typings": "./src/index.d.ts",
 	"scripts": {
 		"lib:build": "yarn nx build auth --configuration=development",

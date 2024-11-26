@@ -10,7 +10,7 @@
 	},
 	"license": "AGPL-3.0",
 	"private": true,
-	"main": "./src/index.ts",
+	"main": "./src/index.js",
 	"typings": "./src/index.d.ts",
 	"scripts": {
 		"lib:build": "yarn nx build plugin-knowledge-base --configuration=development",

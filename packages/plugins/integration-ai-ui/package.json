@@ -17,7 +17,7 @@
 	},
 	"homepage": "https://ever.co",
 	"private": true,
-	"main": "./src/index.ts",
+	"main": "./src/index.js",
 	"typings": "./src/index.d.ts",
 	"scripts": {
 		"lib:build": "yarn nx build plugin-integration-ai-ui --configuration=development",
