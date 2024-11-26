@@ -30,8 +30,7 @@
 		"@angular/core": "^18.2.0"
 	},
 	"dependencies": {
-		"tslib": "^2.6.2",
-		"zone.js": "^0.14.2"
+		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",
