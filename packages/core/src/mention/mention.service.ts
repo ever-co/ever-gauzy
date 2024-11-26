@@ -6,7 +6,7 @@ import { RequestContext } from '../core/context';
 import { Mention } from './mention.entity';
 import { TypeOrmMentionRepository } from './repository/type-orm-mention.repository';
 import { MikroOrmMentionRepository } from './repository/mikro-orm-mention.repository';
-import { MentionEvent } from './events';
+import { CreateMentionEvent } from './events';
 
 @Injectable()
 export class MentionService extends TenantAwareCrudService<Mention> {
@@ -58,6 +58,6 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 	 *
 	 */
 	publishMention(input: IMentionCreateInput) {
-		this._eventBus.publish(new MentionEvent(input));
+		this._eventBus.publish(new CreateMentionEvent(input));
 	}
 }

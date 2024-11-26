@@ -1,3 +1,3 @@
-import { MentionEventHandler } from './mention.handler';
+import { CreateMentionEventHandler } from './mention.handler';
 
-export const EventHandlers = [MentionEventHandler];
+export const EventHandlers = [CreateMentionEventHandler];
