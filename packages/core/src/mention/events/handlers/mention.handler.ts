@@ -8,7 +8,7 @@ export class CreateMentionEventHandler implements IEventHandler<CreateMentionEve
 	constructor(private readonly mentionService: MentionService) {}
 
 	/**
-	 * Handles the `MentionEvent` by creating a new mention using the provided input.
+	 * Handles the `CreateMentionEvent` by creating a new mention using the provided input.
 	 *
 	 * @param {CreateMentionEvent} event - The mention event containing the data required to create a mention.
 	 * @returns {Promise<IMention>} A promise that resolves to the newly created mention entry.

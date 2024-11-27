@@ -14,4 +14,4 @@ export enum SubscriptionTypeEnum {
 	COMMENT = 'comment'
 }
 
-export interface ISubscriptionCreateInput extends Omit<ISubscription, 'subscriptionType'> {}
+export interface ISubscriptionCreateInput extends Omit<ISubscription, 'userId'> {}
