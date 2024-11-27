@@ -1,7 +1,6 @@
 {
 	"name": "@gauzy/plugin-job-proposal",
 	"version": "0.1.0",
-	"type": "commonjs",
 	"description": "Ever Gauzy Platform Job Proposal Plugin",
 	"author": {
 		"name": "Ever Co. LTD",
@@ -18,6 +17,7 @@
 	},
 	"homepage": "https://ever.co",
 	"private": true,
+	"type": "commonjs",
 	"main": "./src/index.js",
 	"typings": "./src/index.d.ts",
 	"scripts": {

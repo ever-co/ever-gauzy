@@ -1,4 +1,4 @@
-# Job Proposal Plugin
+# @gauzy/plugin-job-proposal
 
 ## Overview
 
@@ -17,6 +17,10 @@ Run `yarn nx build plugin-job-proposal` to build the library.
 ## Running unit tests
 
 Run `yarn nx test plugin-job-proposal` to execute the unit tests via [Jest](https://jestjs.io).
+
+## Publishing
+
+After building your library with `yarn nx build plugin-job-proposal`, go to the dist folder `dist/packages/plugins/job-proposal` and run `npm publish`.
 
 ## Installation
 
