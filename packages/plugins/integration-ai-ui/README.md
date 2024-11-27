@@ -14,6 +14,10 @@ Run `yarn nx build plugin-integration-ai-ui` to build the library.
 
 Run `yarn nx test plugin-integration-ai-ui` to execute the unit tests.
 
+## Publishing
+
+After building your library with `yarn nx build plugin-integration-ai-ui`, go to the dist folder `cd dist/packages/plugins/integration-ai-ui` and run `npm publish`.
+
 ## Installation
 
 Install the Integration AI UI Plugin using your preferred package manager:

@@ -4,11 +4,15 @@ This library was generated with [Nx](https://nx.dev). It contains the common cod
 
 ## Building
 
-Run `nx build common` to build the library.
+Run `yarn nx build common` to build the library.
 
 ## Running unit tests
 
-Run `nx test common` to execute the unit tests via [Jest](https://jestjs.io).
+Run `yarn nx test common` to execute the unit tests via [Jest](https://jestjs.io).
+
+## Publishing
+
+After building your library with `yarn nx build common`, go to the dist folder `dist/packages/common` and run `npm publish`.
 
 ## Installation
 

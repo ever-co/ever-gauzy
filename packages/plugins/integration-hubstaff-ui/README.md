@@ -4,11 +4,15 @@ This library was generated with [Nx](https://nx.dev).
 
 ## Building
 
-Run `nx build plugin-integration-hubstaff-ui` to build the library.
+Run `yarn nx build plugin-integration-hubstaff-ui` to build the library.
 
 ## Running unit tests
 
-Run `nx test plugin-integration-hubstaff-ui` to execute the unit tests.
+Run `yarn nx test plugin-integration-hubstaff-ui` to execute the unit tests.
+
+## Publishing
+
+After building your library with `yarn nx build plugin-integration-hubstaff-ui`, go to the dist folder `dist/packages/plugins/integration-hubstaff-ui` and run `npm publish`.
 
 ## Installation
 
