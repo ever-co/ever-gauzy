@@ -1,9 +1,7 @@
-import { BaseEntityEnum, IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
+import { IBasePerEntityType, IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IUser } from './user.model';
 
-export interface IMention extends IBasePerTenantAndOrganizationEntityModel {
-	entityId: ID;
-	entity: BaseEntityEnum;
+export interface IMention extends IBasePerTenantAndOrganizationEntityModel, IBasePerEntityType {
 	mentionedUserId: ID;
 	mentionedUser?: IUser;
 	mentionById: ID;

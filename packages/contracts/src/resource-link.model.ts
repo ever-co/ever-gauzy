@@ -1,10 +1,8 @@
 import { IURLMetaData } from './timesheet.model';
-import { BaseEntityEnum, IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
+import { IBasePerEntityType, IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IUser } from './user.model';
 
-export interface IResourceLink extends IBasePerTenantAndOrganizationEntityModel {
-	entity: BaseEntityEnum;
-	entityId: ID;
+export interface IResourceLink extends IBasePerTenantAndOrganizationEntityModel, IBasePerEntityType {
 	title: string;
 	url: string;
 	creator?: IUser;
