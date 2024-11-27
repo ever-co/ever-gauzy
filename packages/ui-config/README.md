@@ -22,6 +22,10 @@ The `@gauzy/ui-config` library is generated with [Nx](https://nx.dev) and is int
 
 Run `nx test ui-config` to execute the unit tests.
 
+## Publishing
+
+After building your library with `yarn nx build ui-config`, go to the dist folder `dist/packages/ui-config` and run `npm publish`.
+
 ## Installation
 
 To install the `@gauzy/ui-config` library, run the following command in your Angular project:

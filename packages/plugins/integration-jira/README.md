@@ -1,14 +1,18 @@
-# Integration Jira
+# @gauzy/plugin-integration-jira
 
 This library was generated with [Nx](https://nx.dev).
 
 ## Building
 
-Run `nx build plugin-integration-jira` to build the library.
+Run `yarn nx build plugin-integration-jira` to build the library.
 
 ## Running unit tests
 
-Run `nx test plugin-integration-jira` to execute the unit tests via [Jest](https://jestjs.io).
+Run `yarn nx test plugin-integration-jira` to execute the unit tests via [Jest](https://jestjs.io).
+
+## Publishing
+
+After building your library with `yarn nx build plugin-integration-jira`, go to the dist folder `dist/packages/plugins/integration-jira` and run `npm publish`.
 
 ## Installation
 

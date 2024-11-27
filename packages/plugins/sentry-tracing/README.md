@@ -20,6 +20,10 @@ Run `yarn nx build plugin-sentry` to build the library.
 
 Run `yarn nx test plugin-sentry` to execute the unit tests via [Jest](https://jestjs.io).
 
+## Publishing
+
+After building your library with `yarn nx build plugin-sentry`, go to the dist folder `dist/packages/plugins/sentry-tracing` and run `npm publish`.
+
 ## Installation
 
 Install the Gauzy Sentry Plugin using your preferred package manager:

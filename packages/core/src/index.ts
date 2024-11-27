@@ -1,9 +1,6 @@
 /**
  * Public API Surface of @gauzy/core
  */
-/**
- * Public API Surface of @gauzy/core
- */
 export { bootstrap } from './lib/bootstrap';
 export {
 	createMigration,

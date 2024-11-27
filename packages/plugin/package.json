@@ -2,7 +2,6 @@
 	"name": "@gauzy/plugin",
 	"version": "0.1.0",
 	"description": "Ever Gauzy Platform Plugin module",
-	"type": "commonjs",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -10,7 +9,8 @@
 	},
 	"license": "AGPL-3.0",
 	"private": true,
-	"main": "./src/index.ts",
+	"type": "commonjs",
+	"main": "./src/index.js",
 	"typings": "./src/index.d.ts",
 	"scripts": {
 		"lib:build": "yarn nx build plugin --configuration=development",
@@ -31,7 +31,23 @@
 		"@types/node": "^20.14.9",
 		"typescript": "5.5.4"
 	},
-	"keywords": [],
+	"keywords": [
+		"plugin",
+		"ever-gauzy",
+		"nestjs",
+		"typescript",
+		"common-module",
+		"shared-module",
+		"platform",
+		"chalk",
+		"underscore",
+		"modular",
+		"enterprise",
+		"open-source",
+		"agpl",
+		"nx",
+		"plugin-system"
+	],
 	"engines": {
 		"node": ">=20.11.1",
 		"yarn": ">=1.22.19"

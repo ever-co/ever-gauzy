@@ -19,6 +19,10 @@ Run `yarn nx build ui-auth` to build the library.
 
 Run `yarn nx test ui-auth` to execute the unit tests.
 
+## Publishing
+
+After building your library with `yarn nx build ui-auth`, go to the dist folder `dist/packages/ui-auth` and run `npm publish`.
+
 ## Installation
 
 To install `@gauzy/ui-auth` in your Gauzy project, run one of the following commands in your terminal:

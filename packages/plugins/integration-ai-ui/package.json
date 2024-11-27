@@ -1,7 +1,7 @@
 {
 	"name": "@gauzy/plugin-integration-ai-ui",
 	"version": "0.1.0",
-	"description": "",
+	"description": "A plugin for the Ever Gauzy platform providing AI-powered UI integrations for enhanced productivity and automation.",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -17,8 +17,6 @@
 	},
 	"homepage": "https://ever.co",
 	"private": true,
-	"main": "./src/index.ts",
-	"typings": "./src/index.d.ts",
 	"scripts": {
 		"lib:build": "yarn nx build plugin-integration-ai-ui --configuration=development",
 		"lib:build:prod": "yarn nx build plugin-integration-ai-ui --configuration=production",
@@ -44,7 +42,16 @@
 		"@types/node": "^20.14.9",
 		"jest-preset-angular": "14.1.1"
 	},
-	"keywords": [],
+	"keywords": [
+		"Ever Gauzy",
+		"AI",
+		"plugin",
+		"UI integration",
+		"automation",
+		"productivity",
+		"Angular",
+		"enterprise"
+	],
 	"engines": {
 		"node": ">=20.11.1",
 		"yarn": ">=1.22.19"

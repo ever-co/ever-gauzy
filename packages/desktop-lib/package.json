@@ -2,7 +2,6 @@
 	"name": "@gauzy/desktop-lib",
 	"version": "0.1.0",
 	"description": "Ever Gauzy Platform desktop libs",
-	"type": "commonjs",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -10,7 +9,8 @@
 	},
 	"license": "AGPL-3.0",
 	"private": true,
-	"main": "./src/index.ts",
+	"type": "commonjs",
+	"main": "./src/index.js",
 	"typings": "./src/index.d.ts",
 	"scripts": {
 		"lib:build": "yarn nx build desktop-lib --configuration=development",
@@ -52,7 +52,24 @@
 		"@types/unzipper": "^0.10.9",
 		"electron": "^30.0.1"
 	},
-	"keywords": [],
+	"keywords": [
+		"electron",
+		"desktop",
+		"desktop-lib",
+		"ever-gauzy",
+		"typescript",
+		"sqlite",
+		"knex",
+		"embedded-queue",
+		"moment",
+		"offline-mode",
+		"active-window",
+		"file-management",
+		"enterprise",
+		"platform",
+		"open-source",
+		"agpl"
+	],
 	"engines": {
 		"node": ">=20.11.1",
 		"yarn": ">=1.22.19"

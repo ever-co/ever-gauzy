@@ -2,7 +2,6 @@
 	"name": "@gauzy/common-angular",
 	"version": "0.1.0",
 	"description": "Ever Gauzy Platform Common Angular module",
-	"type": "commonjs",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -10,7 +9,8 @@
 	},
 	"license": "AGPL-3.0",
 	"private": true,
-	"main": "./src/index.ts",
+	"type": "commonjs",
+	"main": "./src/index.js",
 	"types": "./src/index.d.ts",
 	"scripts": {
 		"lib:build": "yarn nx build common-angular --configuration=development",
@@ -30,6 +30,9 @@
 		"@types/node": "^20.14.9",
 		"typescript": "5.5.4"
 	},
+	"keywords": [
+
+	],
 	"engines": {
 		"node": ">=20.11.1",
 		"yarn": ">=1.22.19"

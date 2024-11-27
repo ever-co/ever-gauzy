@@ -1,4 +1,4 @@
-# Job Search Plugin
+# @gauzy/plugin-job-search
 
 ## Overview
 
@@ -16,6 +16,10 @@ Run `yarn nx build plugin-job-search` to build the library.
 ## Running unit tests
 
 Run `yarn nx test plugin-job-search` to execute the unit tests via [Jest](https://jestjs.io).
+
+## Publishing
+
+After building your library with `yarn nx build plugin-job-search`, go to the dist folder `dist/packages/plugins/plugin-job-search` and run `npm publish`.
 
 ## Installation
 

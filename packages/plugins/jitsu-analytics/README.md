@@ -1,4 +1,4 @@
-# Jitsu Analytics Plugin
+# @gauzy/plugin-jitsu-analytics
 
 ## Overview
 
@@ -18,6 +18,10 @@ Run `yarn nx build plugin-jitsu-analytics` to build the library.
 ## Running unit tests
 
 Run `yarn nx test plugin-jitsu-analytics` to execute the unit tests via [Jest](https://jestjs.io).
+
+## Publishing
+
+After building your library with `yarn nx build plugin-jitsu-analytics`, go to the dist folder `dist/packages/plugins/jitsu-analytics` and run `npm publish`.
 
 ## Installation
 

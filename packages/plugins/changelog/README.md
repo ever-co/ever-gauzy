@@ -4,11 +4,15 @@ This library was generated with [Nx](https://nx.dev). It contains the authentica
 
 ## Building
 
-Run `nx build plugin-changelog` to build the library.
+Run `yarn nx build plugin-changelog` to build the library.
 
 ## Running unit tests
 
-Run `nx test plugin-changelog` to execute the unit tests via [Jest](https://jestjs.io).
+Run `yarn  nx test plugin-changelog` to execute the unit tests via [Jest](https://jestjs.io).
+
+## Publishing
+
+After building your library with `yarn nx build plugin-changelog`, go to the dist folder `dist/packages/plugins/changelog` and run `npm publish`.
 
 ## Installation
 

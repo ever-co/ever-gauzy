@@ -23,7 +23,7 @@ Run `yarn nx test ui-core` to execute the unit tests via [Jest](https://jestjs.i
 
 ## Publishing
 
-After building your library with `nx build ui-core`, go to the dist folder `dist/packages/ui-core` and run `npm publish`.
+After building your library with `yarn nx build ui-core`, go to the dist folder `dist/packages/ui-core` and run `npm publish`.
 
 ## Installation
 

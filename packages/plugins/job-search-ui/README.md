@@ -12,4 +12,14 @@ Run `yarn nx test plugin-job-search-ui` to execute the unit tests via [Jest](htt
 
 ## Publishing
 
-After building your library with `yarn build`, go to the dist folder `cd dist/plugins/job-search-ui` and run `npm publish`.
+After building your library with `yarn nx build plugin-job-search-ui`, go to the dist folder `dist/packages/plugins/job-search-ui` and run `npm publish`.
+
+## Installation
+
+Install the Job Search UI Plugin using your preferred package manager:
+
+```bash
+npm install @gauzy/plugin-job-search-ui
+# or
+yarn add @gauzy/plugin-job-search-ui
+```

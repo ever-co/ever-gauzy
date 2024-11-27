@@ -1,7 +1,6 @@
 {
 	"name": "@gauzy/ui-auth",
 	"version": "0.1.0",
-	"type": "commonjs",
 	"description": "A UI module for authentication in the Ever Gauzy Platform, providing reusable components and services for managing user authentication.",
 	"author": {
 		"name": "Ever Co. LTD",
