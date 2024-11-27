@@ -47,6 +47,7 @@ export class SubscriptionController extends CrudController<Subscription> {
 		description: 'Record not found'
 	})
 	@Get(':id')
+	@UseValidationPipe()
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Query() params: OptionParams<Subscription>
@@ -63,7 +64,7 @@ export class SubscriptionController extends CrudController<Subscription> {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@HttpCode(HttpStatus.ACCEPTED)
+	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	@UseValidationPipe({ whitelist: true })
 	async create(@Body() entity: CreateSubscriptionDTO): Promise<ISubscription> {
@@ -81,6 +82,7 @@ export class SubscriptionController extends CrudController<Subscription> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete('/:id')
+	@UseValidationPipe({ whitelist: true })
 	async delete(
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Query() options: SubscriptionFindInputDTO

@@ -63,11 +63,11 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 */
 	async unsubscribe(id: ID, options?: ISubscriptionFindInput): Promise<DeleteResult> {
 		try {
-			const { entity, entityId } = options;
+			const { entity, entityId } = options || {};
 			const userId = RequestContext.currentUserId();
 			return await super.delete({ id, userId, entity, entityId });
 		} catch (error) {
-			throw new BadRequestException(error);
+			throw new BadRequestException('Failed to unsubscribe from entity', error);
 		}
 	}
 }
