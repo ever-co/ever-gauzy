@@ -4,14 +4,6 @@
 	"sourceRoot": "apps/api/src",
 	"projectType": "application",
 	"tags": [],
-	"generators": {
-		"@nx/nest:library": {
-			"directory": "api",
-			"tags": "type:library,scope:api",
-			"unitTestRunner": "jest",
-			"linter": "eslint"
-		}
-	},
 	"targets": {
 		"build": {
 			"executor": "@nx/webpack:webpack",
@@ -80,6 +72,53 @@
 				"jestConfig": "apps/api/jest.config.ts",
 				"tsConfig": "apps/api/tsconfig.spec.json"
 			}
+		},
+		"desktop:build": {
+			"executor": "@nx/webpack:webpack",
+			"outputs": ["{options.outputPath}"],
+			"defaultConfiguration": "production",
+			"options": {
+				"target": "node",
+				"compiler": "tsc",
+				"outputPath": "dist/apps/desktop/api",
+				"main": "apps/api/src/main.ts",
+				"sourceMap": true,
+				"maxWorkers": 4,
+				"memoryLimit": 7000,
+				"tsConfig": "apps/api/tsconfig.app.json",
+				"assets": [
+					"apps/api/src/assets",
+					{
+						"input": "apps/api/public",
+						"glob": "**/*",
+						"output": "public"
+					}
+				],
+				"webpackConfig": "apps/api/webpack.config.js"
+			},
+			"configurations": {
+				"development": {},
+				"production": {
+					"optimization": true,
+					"extractLicenses": false,
+					"inspect": false,
+					"sourceMap": true,
+					"fileReplacements": [
+						{
+							"replace": "packages/config/src/environments/environment.ts",
+							"with": "packages/config/src/environments/environment.prod.ts"
+						}
+					]
+				}
+			}
+		}
+	},
+	"generators": {
+		"@nx/nest:library": {
+			"directory": "api",
+			"tags": "type:library,scope:api",
+			"unitTestRunner": "jest",
+			"linter": "eslint"
 		}
 	}
 }

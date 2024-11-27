@@ -11,42 +11,6 @@
 	"version": 1,
 	"newProjectRoot": "",
 	"projects": {
-		"desktop-api": {
-			"root": "apps/api",
-			"sourceRoot": "apps/api/src",
-			"projectType": "application",
-			"prefix": "api",
-			"schematics": {},
-			"architect": {
-				"build": {
-					"builder": "@nrwl/node:webpack",
-					"options": {
-						"outputPath": "dist/apps/desktop/api",
-						"main": "apps/api/src/main.ts",
-						"showCircularDependencies": false,
-						"sourceMap": true,
-						"maxWorkers": 4,
-						"memoryLimit": 7000,
-						"tsConfig": "apps/api/tsconfig.app.json",
-						"assets": ["apps/api/src/assets"]
-					},
-					"configurations": {
-						"production": {
-							"optimization": true,
-							"extractLicenses": false,
-							"inspect": false,
-							"sourceMap": true,
-							"fileReplacements": [
-								{
-									"replace": "packages/config/src/environments/environment.ts",
-									"with": "packages/config/src/environments/environment.prod.ts"
-								}
-							]
-						}
-					}
-				}
-			}
-		},
 		"desktop-ui": {
 			"projectType": "application",
 			"schematics": {

@@ -61,7 +61,26 @@
                     "node_modules/echarts/dist/echarts.min.js",
                     "node_modules/echarts/dist/extension/bmap.min.js",
                     "node_modules/chart.js/dist/chart.js"
-                ]
+                ],
+				"allowedCommonJsDependencies": [
+					"@gauzy/contracts",
+					"@gauzy/ui-config",
+					"brace",
+					"brace/mode/handlebars",
+					"camelcase",
+					"file-saver",
+					"leaflet",
+					"mobx",
+					"moment",
+					"moment-range",
+					"moment-timezone",
+					"randomcolor",
+					"underscore.string",
+					"slugify",
+					"eva-icons",
+					"localforage",
+					"rxjs"
+				]
             },
             "configurations": {
                 "production": {

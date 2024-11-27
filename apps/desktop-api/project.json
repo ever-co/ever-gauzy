@@ -1,5 +1,5 @@
 {
-	"name": "api-desktop",
+	"name": "desktop-api",
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
 	"sourceRoot": "apps/desktop-api/src",
 	"projectType": "application",
@@ -45,14 +45,14 @@
 			"executor": "@nx/js:node",
 			"defaultConfiguration": "development",
 			"options": {
-				"buildTarget": "api-desktop:build"
+				"buildTarget": "desktop-api:build"
 			},
 			"configurations": {
 				"development": {
-					"buildTarget": "api-desktop:build:development"
+					"buildTarget": "desktop-api:build:development"
 				},
 				"production": {
-					"buildTarget": "api-desktop:build:production"
+					"buildTarget": "desktop-api:build:production"
 				}
 			}
 		},
