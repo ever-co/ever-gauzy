@@ -1,12 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
-import { IMention, IMentionCreateInput } from '@gauzy/contracts';
+import { IMention, IMentionCreateInput, SubscriptionTypeEnum } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { Mention } from './mention.entity';
 import { TypeOrmMentionRepository } from './repository/type-orm-mention.repository';
 import { MikroOrmMentionRepository } from './repository/mikro-orm-mention.repository';
 import { CreateMentionEvent } from './events';
+import { CreateSubscriptionEvent } from '../subscription/events';
 
 @Injectable()
 export class MentionService extends TenantAwareCrudService<Mention> {
@@ -26,21 +27,34 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 	 * @throws {BadRequestException} If an error occurs during the creation process,
 	 *   a `BadRequestException` is thrown with a descriptive message and the original error.
 	 */
-	async create(entity: IMentionCreateInput): Promise<IMention> {
+	async create(input: IMentionCreateInput): Promise<IMention> {
 		try {
+			const { entity, entityId, mentionedUserId, organizationId } = input;
+
 			// Retrieve the ID of the currently logged-in user
 			const mentionById = RequestContext.currentUserId();
 
 			// Get the tenant ID from the current request context or use the one from the entity
-			const tenantId = RequestContext.currentTenantId() || entity.tenantId;
+			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
 			// Create the mention entry using the provided input along with the tenantId and mentionById.
-			const mention = await super.create({ ...entity, tenantId, mentionById });
+			const mention = await super.create({ ...input, tenantId, mentionById });
+
+			// Create an user subscription for provided entity
+			this._eventBus.publish(
+				new CreateSubscriptionEvent({
+					entity,
+					entityId,
+					userId: mentionedUserId,
+					subscriptionType: SubscriptionTypeEnum.MENTION,
+					organizationId,
+					tenantId
+				})
+			);
 
 			/**
 			 * TODO
-			 * 1. Optional create an user subscription for provided entity
-			 * 2. Send email notifications and trigger internal system notifications for both mention and optional subscription
+			 * 1. Send email notifications and trigger internal system notifications for both mention and optional subscription
 			 */
 
 			// Return the created mention.

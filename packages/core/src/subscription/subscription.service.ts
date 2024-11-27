@@ -1,10 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ISubscription, ISubscriptionCreateInput } from '@gauzy/contracts';
+import { ID, ISubscription, ISubscriptionCreateInput, ISubscriptionFindInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { Subscription } from './subscription.entity';
 import { MikroOrmSubscriptionRepository } from './repository/mikro-orm-subscription.repository';
 import { TypeOrmSubscriptionRepository } from './repository/type-orm-subscription.repository';
+import { DeleteResult } from 'typeorm';
 
 @Injectable()
 export class SubscriptionService extends TenantAwareCrudService<Subscription> {
@@ -24,7 +25,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 */
 	async create(input: ISubscriptionCreateInput): Promise<ISubscription> {
 		try {
-			const userId = RequestContext.currentUserId();
+			const userId = input.userId || RequestContext.currentUserId();
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
 			const { entity, entityId } = input;
@@ -46,6 +47,27 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 		} catch (error) {
 			console.log('Error creating subscription:', error);
 			throw new BadRequestException('Failed to create subscription', error);
+		}
+	}
+
+	/**
+	 * Unsubscribes a user from a specific entity by deleting the corresponding subscription.
+	 *
+	 * @param {ID} id - The unique identifier of the subscription to delete.
+	 * @param {ISubscriptionFindInput} options - Additional options to refine the deletion query.
+	 *   - `entity`: The type of entity the subscription is associated with (e.g., "project").
+	 *   - `entityId`: The unique identifier of the associated entity.
+	 * @returns {Promise<DeleteResult>} A promise that resolves to the result of the delete operation.
+	 *
+	 * @throws {BadRequestException} Throws an exception if an error occurs during the unsubscribe process.
+	 */
+	async unsubscribe(id: ID, options?: ISubscriptionFindInput): Promise<DeleteResult> {
+		try {
+			const { entity, entityId } = options;
+			const userId = RequestContext.currentUserId();
+			return await super.delete({ id, userId, entity, entityId });
+		} catch (error) {
+			throw new BadRequestException(error);
 		}
 	}
 }

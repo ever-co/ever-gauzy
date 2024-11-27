@@ -14,4 +14,8 @@ export enum SubscriptionTypeEnum {
 	COMMENT = 'comment'
 }
 
-export interface ISubscriptionCreateInput extends Omit<ISubscription, 'userId'> {}
+export interface ISubscriptionCreateInput
+	extends Omit<ISubscription, 'user' | 'userId'>,
+		Partial<Pick<ISubscription, 'userId'>> {}
+
+export interface ISubscriptionFindInput extends Partial<ISubscription> {}
