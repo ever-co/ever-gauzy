@@ -22,7 +22,7 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 	/**
 	 * Creates a new mention entity in the database.
 	 *
-	 * @param {IMentionCreateInput} entity - The data required to create a new mention entity.
+	 * @param {IMentionCreateInput} input - The data required to create a new mention entity.
 	 * @returns {Promise<IMention>} A promise that resolves to the newly created mention entity.
 	 * @throws {BadRequestException} If an error occurs during the creation process,
 	 *   a `BadRequestException` is thrown with a descriptive message and the original error.

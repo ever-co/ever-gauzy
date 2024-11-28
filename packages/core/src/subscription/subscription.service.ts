@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ID, ISubscription, ISubscriptionCreateInput, ISubscriptionFindInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
@@ -31,9 +31,18 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			const { entity, entityId } = input;
 
 			// Check if the subscription already exists
-			const existingSubscription = await this.findOneByOptions({ where: { userId, entity, entityId } });
-			if (existingSubscription) {
-				return existingSubscription;
+			try {
+				const existingSubscription = await this.findOneByOptions({
+					where: { userId, entity, entityId, tenantId }
+				});
+				if (existingSubscription) {
+					return existingSubscription;
+				}
+			} catch (e) {
+				// If NotFoundException, continue with subscription creation
+				if (!(e instanceof NotFoundException)) {
+					throw e;
+				}
 			}
 
 			// Create a new subscription if none exists

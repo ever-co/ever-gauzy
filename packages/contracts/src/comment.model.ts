@@ -25,8 +25,11 @@ export interface ICommentCreateInput extends IBasePerEntityType {
 	parentId?: ID;
 	members?: IEmployee[];
 	teams?: IOrganizationTeam[];
+	mentionIds?: ID[];
 }
 
-export interface ICommentUpdateInput extends Partial<Omit<IComment, 'entity' | 'entityId' | 'creatorId' | 'creator'>> {}
+export interface ICommentUpdateInput extends Partial<Omit<IComment, 'entity' | 'entityId' | 'creatorId' | 'creator'>> {
+	mentionIds?: ID[];
+}
 
 export interface ICommentFindInput extends Pick<IComment, 'entity' | 'entityId'> {}
