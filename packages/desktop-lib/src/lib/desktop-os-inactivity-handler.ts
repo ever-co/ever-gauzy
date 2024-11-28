@@ -1,5 +1,5 @@
 import { BrowserWindow } from 'electron';
-import moment from 'moment';
+import * as  moment from 'moment';
 import { SleepInactivityTracking, SleepTracking } from './contexts';
 import { DialogAcknowledgeInactivity, PowerManagerDetectInactivity } from './decorators';
 import { DesktopDialog } from './desktop-dialog';

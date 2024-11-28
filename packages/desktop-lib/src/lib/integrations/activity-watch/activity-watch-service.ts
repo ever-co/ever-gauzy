@@ -4,7 +4,7 @@ import { ActivityWatchFirefoxService } from './activity-watch-firefox-service';
 import { ActivityWatchAfkService } from './activity-watch-afk-service';
 import { ActivityWatchWindowService } from './activity-watch-window-service';
 import { IActivity, IActivityPercentage, IDesktopEvent } from '../../interfaces';
-import moment from 'moment';
+import * as  moment from 'moment';
 import { LocalStore } from '../../desktop-store';
 import { ActivityWatchBrowserList } from './i-activity-watch-event-service';
 import { ActivityWatchEdgeService } from './activity-watch-edge-service';
