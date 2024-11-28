@@ -1,6 +1,6 @@
 import { ActivityType, IActivityWatchCollectEventData, ITimeLog, TimeLogSourceEnum } from '@gauzy/contracts';
 import { app, screen } from 'electron';
-import * as  moment from 'moment';
+import * as moment from 'moment';
 import { DesktopActiveWindow } from './desktop-active-window';
 import { DesktopEventCounter } from './desktop-event-counter';
 import NotificationDesktop from './desktop-notifier';
