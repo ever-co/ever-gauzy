@@ -95,12 +95,24 @@ export class AtlerMentionTableAddParentEntityFields1732775571004 implements Migr
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE \`mention\` ADD \`parentEntityId\` varchar(255) NOT NULL`);
+		await queryRunner.query(`ALTER TABLE \`mention\` ADD \`parentEntityType\` varchar(255) NOT NULL`);
+		await queryRunner.query(`CREATE INDEX \`IDX_5b95805861f9de5cf7760a964a\` ON \`mention\` (\`parentEntityId\`)`);
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_4f9397b277ec0791c5f9e2fd62\` ON \`mention\` (\`parentEntityType\`)`
+		);
+	}
 
 	/**
 	 * MySQL Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`DROP INDEX \`IDX_4f9397b277ec0791c5f9e2fd62\` ON \`mention\``);
+		await queryRunner.query(`DROP INDEX \`IDX_5b95805861f9de5cf7760a964a\` ON \`mention\``);
+		await queryRunner.query(`ALTER TABLE \`mention\` DROP COLUMN \`parentEntityType\``);
+		await queryRunner.query(`ALTER TABLE \`mention\` DROP COLUMN \`parentEntityId\``);
+	}
 }
