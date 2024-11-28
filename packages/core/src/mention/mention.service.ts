@@ -29,7 +29,7 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 	 */
 	async create(input: IMentionCreateInput): Promise<IMention> {
 		try {
-			const { entity, entityId, mentionedUserId, organizationId } = input;
+			const { entity, entityId, parentEntityId, parentEntityType, mentionedUserId, organizationId } = input;
 
 			// Retrieve the ID of the currently logged-in user
 			const mentionById = RequestContext.currentUserId();
@@ -43,8 +43,8 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 			// Create an user subscription for provided entity
 			this._eventBus.publish(
 				new CreateSubscriptionEvent({
-					entity,
-					entityId,
+					entity: parentEntityType ?? entity,
+					entityId: parentEntityId ?? entityId,
 					userId: mentionedUserId,
 					subscriptionType: SubscriptionTypeEnum.MENTION,
 					organizationId,
