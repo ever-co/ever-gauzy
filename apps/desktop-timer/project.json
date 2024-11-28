@@ -4,11 +4,6 @@
 	"projectType": "application",
 	"sourceRoot": "apps/desktop-timer/src",
 	"prefix": "gauzy",
-	"generators": {
-		"@nx/angular:component": {
-			"style": "scss"
-		}
-	},
 	"targets": {
 		"build": {
 			"executor": "@nx/angular:webpack-browser",
@@ -23,7 +18,10 @@
 				"tsConfig": "apps/desktop-timer/tsconfig.app.json",
 				"aot": true,
 				"stylePreprocessorOptions": {
-					"includePaths": ["apps/desktop-timer/src/assets/styles", "packages/ui-core/static/styles"]
+					"includePaths": [
+						"apps/desktop-timer/src/assets/styles",
+						"packages/ui-core/static/styles"
+					]
 				},
 				"assets": [
 					"apps/desktop-timer/src/favicon.ico",
@@ -117,6 +115,11 @@
 				"jestConfig": "apps/desktop-timer/jest.config.js",
 				"passWithNoTests": true
 			}
+		}
+	},
+	"generators": {
+		"@nx/angular:component": {
+			"style": "scss"
 		}
 	}
 }

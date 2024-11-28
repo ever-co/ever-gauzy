@@ -1,5 +1,5 @@
-import http from 'http';
-import path from 'path';
+import * as http from 'http';
+import * as path from 'path';
 import { parse } from 'url';
 import { Server as NodeStaticServer } from 'node-static';
 import { IncomingMessage, ServerResponse } from 'http';

@@ -73,7 +73,7 @@
 				"tsConfig": "apps/api/tsconfig.spec.json"
 			}
 		},
-		"desktop": {
+		"desktop-api": {
 			"executor": "@nx/webpack:webpack",
 			"outputs": ["{options.outputPath}"],
 			"defaultConfiguration": "production",
@@ -98,6 +98,84 @@
 			},
 			"configurations": {
 				"development": {},
+				"production": {
+					"optimization": true,
+					"extractLicenses": false,
+					"inspect": false,
+					"sourceMap": true,
+					"fileReplacements": [
+						{
+							"replace": "packages/config/src/environments/environment.ts",
+							"with": "packages/config/src/environments/environment.prod.ts"
+						}
+					]
+				}
+			}
+		},
+		"server-api": {
+			"executor": "@nx/webpack:webpack",
+			"outputs": ["{options.outputPath}"],
+			"defaultConfiguration": "production",
+			"options": {
+				"target": "node",
+				"compiler": "tsc",
+				"outputPath": "dist/apps/gauzy-api-server/api",
+				"main": "apps/api/src/main.ts",
+				"showCircularDependencies": false,
+				"sourceMap": true,
+				"maxWorkers": 4,
+				"memoryLimit": 7000,
+				"tsConfig": "apps/api/tsconfig.app.json",
+				"assets": [
+					"apps/api/src/assets",
+					{
+						"input": "apps/api/public",
+						"glob": "**/*",
+						"output": "public"
+					}
+				],
+				"webpackConfig": "apps/api/webpack.config.js"
+			},
+			"configurations": {
+				"production": {
+					"optimization": true,
+					"extractLicenses": false,
+					"inspect": false,
+					"sourceMap": true,
+					"fileReplacements": [
+						{
+							"replace": "packages/config/src/environments/environment.ts",
+							"with": "packages/config/src/environments/environment.prod.ts"
+						}
+					]
+				}
+			}
+		},
+		"gauzy-server-api": {
+			"executor": "@nx/webpack:webpack",
+			"outputs": ["{options.outputPath}"],
+			"defaultConfiguration": "production",
+			"options": {
+				"target": "node",
+				"compiler": "tsc",
+				"outputPath": "dist/apps/gauzy-server/api",
+				"main": "apps/api/src/main.ts",
+				"showCircularDependencies": false,
+				"sourceMap": true,
+				"maxWorkers": 4,
+				"memoryLimit": 7000,
+				"tsConfig": "apps/api/tsconfig.app.json",
+				"assets": [
+					"apps/api/src/assets",
+					{
+						"input": "apps/api/public",
+						"glob": "**/*",
+						"output": "public"
+					}
+				],
+				"webpackConfig": "apps/api/webpack.config.js"
+			},
+			"configurations": {
 				"production": {
 					"optimization": true,
 					"extractLicenses": false,
