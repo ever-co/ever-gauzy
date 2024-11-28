@@ -725,15 +725,6 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	tasks?: ITask[];
 
 	/**
-	 * Project Module
-	 */
-	@MultiORMManyToMany(() => OrganizationProjectModule, (module) => module.members, {
-		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
-	})
-	modules?: IOrganizationProjectModule[];
-
-	/**
 	 * Equipment Sharing
 	 */
 	@MultiORMManyToMany(() => EquipmentSharing, (it) => it.employees, {

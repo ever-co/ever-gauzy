@@ -16,6 +16,7 @@ import {
 	ID,
 	IEmployee,
 	IOrganizationProject,
+	IOrganizationProjectEmployee,
 	IOrganizationProjectModule,
 	IOrganizationSprint,
 	IOrganizationTeam,
@@ -25,8 +26,8 @@ import {
 	ProjectModuleStatusEnum
 } from '@gauzy/contracts';
 import {
-	Employee,
 	OrganizationProject,
+	OrganizationProjectEmployee,
 	OrganizationSprint,
 	OrganizationTeam,
 	Task,
@@ -153,27 +154,6 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	@MultiORMColumn({ nullable: true, relationId: true })
 	creatorId?: ID;
 
-	/**
-	 * Module manager
-	 */
-	@ApiPropertyOptional({ type: () => Object })
-	@IsOptional()
-	@IsObject()
-	@MultiORMManyToOne(() => User, {
-		nullable: true,
-		onDelete: 'CASCADE'
-	})
-	@JoinColumn()
-	manager?: IUser;
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@IsUUID()
-	@RelationId((it: OrganizationProjectModule) => it.manager)
-	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, relationId: true })
-	managerId?: ID;
-
 	/*
 	|--------------------------------------------------------------------------
 	| @OneToMany
@@ -254,7 +234,7 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	@ApiPropertyOptional({ type: () => Array, isArray: true })
 	@IsOptional()
 	@IsArray()
-	@MultiORMManyToMany(() => Employee, (employee) => employee.modules, {
+	@MultiORMManyToMany(() => OrganizationProjectEmployee, (employee) => employee.modules, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
@@ -265,5 +245,5 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	@JoinTable({
 		name: 'project_module_employee'
 	})
-	members?: IEmployee[];
+	members?: IOrganizationProjectEmployee[];
 }

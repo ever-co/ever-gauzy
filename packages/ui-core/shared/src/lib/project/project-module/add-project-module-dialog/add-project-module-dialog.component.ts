@@ -18,7 +18,8 @@ import {
 	ITask,
 	ProjectModuleStatusEnum,
 	TaskParticipantEnum,
-	ID
+	ID,
+	IOrganizationProjectEmployee
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
@@ -38,9 +39,12 @@ import { richTextCKEditorConfig } from '../../../ckeditor.config';
 	styleUrls: ['./add-project-module-dialog.component.scss']
 })
 export class AddProjectModuleDialogComponent extends TranslationBaseComponent implements OnInit {
+	memberIds: ID[] = [];
+	managerIds: ID[] = [];
+	selectedEmployeeIds: ID[] = [];
+	selectedManagerIds: ID[] = [];
 	employees: IEmployee[] = [];
 	teams: IOrganizationTeam[] = [];
-	selectedMembers: string[] = [];
 	selectedTeams: string[] = [];
 	tasks: ITask[] = [];
 	organizationSprints: IOrganizationSprint[] = [];
@@ -59,8 +63,8 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 		isFavorite: [false],
 		parentId: [],
 		projectId: [null, Validators.required],
-		managerId: [],
-		members: [],
+		managerIds: [],
+		memberIds: [],
 		organizationSprints: [],
 		teams: [],
 		tasks: []
@@ -127,19 +131,25 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 			isFavorite: module.isFavorite,
 			projectId: module.projectId,
 			parentId: module.parentId,
-			managerId: module.managerId,
-			members: (module.members || [])?.map((m) => m.id),
 			organizationSprints: module.organizationSprints,
 			teams: (module.teams || [])?.map((t) => t.id),
 			tasks: (module.tasks || [])?.map((task) => task.id)
 		});
-		this.selectedMembers = module.members?.map((m) => m.id);
+		this.selectedEmployeeIds = module.members
+			.filter((member: IOrganizationProjectEmployee) => !member.isManager)
+			.map((member: IOrganizationProjectEmployee) => member.employeeId);
+
+		this.memberIds = this.selectedEmployeeIds;
+
+		// Selected Managers Ids
+		this.selectedManagerIds = module.members
+			.filter((member: IOrganizationProjectEmployee) => member.isManager)
+			.map((member: IOrganizationProjectEmployee) => member.employeeId);
+
+		this.managerIds = this.selectedManagerIds;
 		this.selectedTeams = module.teams?.map((t) => t.id);
 	}
 
-	/**
-	 * Validates and saves the form data to create or update the project module.
-	 */
 	onSave() {
 		if (this.form.invalid) return;
 		this.createOrUpdateModule();
@@ -151,10 +161,14 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 	private async createOrUpdateModule() {
 		const organizationId = this.organization.id;
 
-		this.form.get('members').setValue(
-			(this.selectedMembers || []).map((id) => this.employees.find((e) => e.id === id)).filter((e) => !!e) // Only valid employees
+		this.form.get('memberIds').setValue(
+			this.memberIds.filter((memberId) => !this.managerIds.includes(memberId)) // Only valid employees
 		);
+		console.log(this.managerIds);
 
+		this.form.get('managerIds').setValue(
+			this.managerIds // Only valid employees
+		);
 		this.form.get('teams').setValue(
 			(this.selectedTeams || []).map((id) => this.teams.find((e) => e.id === id)).filter((e) => !!e) // Only valid teams
 		);
@@ -303,12 +317,15 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 	}
 
 	/**
-	 * Updates the selected manager ID in the form.
-	 * @param selectedManagerId - The selected manager's ID.
+	 * Handles the selection of managers and updates the `managerIds` property.
+	 *
+	 * @param {ID[]} managerIds - An array of selected manager IDs.
+	 * The function is called when managers are selected, and it sets the `managerIds` property
+	 * with the array of selected IDs.
 	 */
-	onManagerSelected(employee: ISelectedEmployee) {
-		// Check if the provided value is an array; if so, take the first element, otherwise use the value directly
-		this.form.get('managerId').setValue(employee.id);
+	onManagersSelected(managerIds: ID[]): void {
+		console.log(managerIds);
+		this.managerIds = managerIds;
 	}
 
 	/**
@@ -321,11 +338,13 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 	}
 
 	/**
-	 * Updates the selected members based on the user's selection.
+	 * Handles the selection of members and updates the `memberIds` property.
 	 *
-	 * @param members - An array of member IDs selected by the user.
+	 * @param {ID[]} memberIds - An array of selected member IDs.
+	 * The function is called when members are selected, and it sets the `memberIds` property
+	 * with the array of selected IDs.
 	 */
-	onMembersSelected(members: ID[]): void {
-		this.selectedMembers = [...members];
+	onMembersSelected(memberIds: ID[]): void {
+		this.memberIds = memberIds;
 	}
 }

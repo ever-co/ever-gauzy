@@ -9,6 +9,8 @@ import { OrganizationProjectModuleController } from './organization-project-modu
 import { OrganizationProjectModule } from './organization-project-module.entity';
 import { TypeOrmOrganizationProjectModuleRepository } from './repository/type-orm-organization-project-module.repository';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { RoleModule } from 'role';
+import { EmployeeModule } from 'employee';
 
 @Module({
 	imports: [
@@ -22,6 +24,8 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		MikroOrmModule.forFeature([OrganizationProjectModule]),
 		MikroOrmModule,
 		RolePermissionModule,
+		RoleModule,
+		EmployeeModule,
 		CqrsModule
 	],
 	controllers: [OrganizationProjectModuleController],

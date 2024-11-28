@@ -11,7 +11,8 @@ import {
 	IPagination,
 	PermissionsEnum,
 	ProjectModuleStatusEnum,
-	ActionTypeEnum
+	ActionTypeEnum,
+	RolesEnum
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { isPostgres } from '@gauzy/config';
@@ -20,15 +21,20 @@ import { RequestContext } from '../core/context';
 import { OrganizationProjectModule } from './organization-project-module.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { ActivityLogService } from '../activity-log/activity-log.service';
+import { OrganizationProjectEmployee } from '../core/entities/internal';
 import { TypeOrmOrganizationProjectModuleRepository } from './repository/type-orm-organization-project-module.repository';
 import { MikroOrmOrganizationProjectModuleRepository } from './repository/mikro-orm-organization-project-module.repository';
+import { RoleService } from 'role';
+import { EmployeeService } from 'employee';
 
 @Injectable()
 export class OrganizationProjectModuleService extends TenantAwareCrudService<OrganizationProjectModule> {
 	constructor(
 		readonly typeOrmProjectModuleRepository: TypeOrmOrganizationProjectModuleRepository,
 		readonly mikroOrmProjectModuleRepository: MikroOrmOrganizationProjectModuleRepository,
-		private readonly activityLogService: ActivityLogService
+		private readonly activityLogService: ActivityLogService,
+		private readonly _roleService: RoleService,
+		private readonly _employeeService: EmployeeService
 	) {
 		super(typeOrmProjectModuleRepository, mikroOrmProjectModuleRepository);
 	}
@@ -43,9 +49,46 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		const creatorId = RequestContext.currentUserId();
 		const { organizationId } = entity;
 
+		// Destructure the input data
+		const { memberIds = [], managerIds = [], ...input } = entity;
+
+		// Combine memberIds and managerIds into a single array
+		const employeeIds = [...memberIds, ...managerIds].filter(Boolean);
+
+		// Retrieves a collection of employees based on specified criteria.
+		const employees = await this._employeeService.findActiveEmployeesByEmployeeIds(
+			employeeIds,
+			organizationId,
+			tenantId
+		);
+
+		// Find the manager role
+		const managerRole = await this._roleService.findOneByWhereOptions({
+			name: RolesEnum.MANAGER
+		});
+
+		// Create a Set for faster membership checks
+		const managerIdsSet = new Set(managerIds);
+
+		// Use destructuring to directly extract 'id' from 'employee'
+		const members = employees.map(({ id: employeeId }) => {
+			// If the employee is a manager, assign the existing manager with the latest assignedAt date
+			const isManager = managerIdsSet.has(employeeId);
+
+			return new OrganizationProjectEmployee({
+				employeeId,
+				organizationId,
+				tenantId,
+				isManager,
+				role: isManager ? managerRole : null
+			});
+		});
+
 		try {
+			console.log(members);
 			const projectModule = await super.create({
-				...entity,
+				...input,
+				members,
 				creatorId
 			});
 
