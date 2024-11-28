@@ -73,7 +73,7 @@
 				"tsConfig": "apps/api/tsconfig.spec.json"
 			}
 		},
-		"desktop:build": {
+		"desktop": {
 			"executor": "@nx/webpack:webpack",
 			"outputs": ["{options.outputPath}"],
 			"defaultConfiguration": "production",
