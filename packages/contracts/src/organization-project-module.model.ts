@@ -1,6 +1,7 @@
+import { IRelationalRole } from 'role.model';
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
-import { IEmployee, IMemberEntityBased } from './employee.model';
-import { IOrganizationProjectEmployee, IRelationalOrganizationProject } from './organization-projects.model';
+import { IEmployeeEntityInput, IMemberEntityBased } from './employee.model';
+import { IRelationalOrganizationProject } from './organization-projects.model';
 import { IOrganizationSprint } from './organization-sprint.model';
 import { IOrganizationTeam } from './organization-team.model';
 import { ITask } from './task.model';
@@ -26,12 +27,21 @@ export interface IOrganizationProjectModule
 	children?: IOrganizationProjectModule[]; // Modules related as children
 	creator?: IUser;
 	creatorId?: ID;
-	members?: IOrganizationProjectEmployee[];
+	members?: IOrganizationProjectModuleEmployee[];
 	organizationSprints?: IOrganizationSprint[];
 	teams?: IOrganizationTeam[];
 	tasks?: ITask[];
 }
 
+export interface IOrganizationProjectModuleEmployee
+	extends IBasePerTenantAndOrganizationEntityModel,
+		IEmployeeEntityInput,
+		IRelationalRole {
+	organizationProjectModule: IOrganizationProjectModule;
+	organizationProjectModuleId: ID;
+	isManager?: boolean;
+	assignedAt?: Date;
+}
 export interface IOrganizationProjectModuleFindInput
 	extends IBasePerTenantAndOrganizationEntityModel,
 		Partial<Pick<IOrganizationProjectModule, 'name' | 'status' | 'projectId'>> {

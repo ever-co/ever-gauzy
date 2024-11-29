@@ -14,10 +14,9 @@ import {
 } from 'class-validator';
 import {
 	ID,
-	IEmployee,
 	IOrganizationProject,
-	IOrganizationProjectEmployee,
 	IOrganizationProjectModule,
+	IOrganizationProjectModuleEmployee,
 	IOrganizationSprint,
 	IOrganizationTeam,
 	ITask,
@@ -27,7 +26,6 @@ import {
 } from '@gauzy/contracts';
 import {
 	OrganizationProject,
-	OrganizationProjectEmployee,
 	OrganizationSprint,
 	OrganizationTeam,
 	Task,
@@ -44,6 +42,7 @@ import {
 	MultiORMOneToMany
 } from '../core/decorators/entity';
 import { MikroOrmOrganizationProjectModuleRepository } from './repository/mikro-orm-organization-project-module.repository';
+import { OrganizationProjectModuleEmployee } from './organization-project-module-employee.entity';
 
 @MultiORMEntity('organization_project_module', {
 	mikroOrmRepository: () => MikroOrmOrganizationProjectModuleRepository
@@ -234,7 +233,7 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	@ApiPropertyOptional({ type: () => Array, isArray: true })
 	@IsOptional()
 	@IsArray()
-	@MultiORMManyToMany(() => OrganizationProjectEmployee, (employee) => employee.modules, {
+	@MultiORMManyToMany(() => OrganizationProjectModuleEmployee, (employee) => employee.organizationProjectModule, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
@@ -245,5 +244,5 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	@JoinTable({
 		name: 'project_module_employee'
 	})
-	members?: IOrganizationProjectEmployee[];
+	members?: IOrganizationProjectModuleEmployee[];
 }

@@ -1,35 +1,19 @@
 import { RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsDateString, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
-import {
-	ID,
-	IEmployee,
-	IOrganizationProject,
-	IOrganizationProjectEmployee,
-	IOrganizationProjectModule,
-	IRole
-} from '@gauzy/contracts';
-import {
-	Employee,
-	OrganizationProject,
-	OrganizationProjectModule,
-	Role,
-	TenantOrganizationBaseEntity
-} from '../core/entities/internal';
-import {
-	ColumnIndex,
-	MultiORMColumn,
-	MultiORMEntity,
-	MultiORMManyToMany,
-	MultiORMManyToOne
-} from './../core/decorators/entity';
-import { MikroOrmOrganizationProjectEmployeeRepository } from './repository/mikro-orm-organization-project-employee.repository';
+import { ID, IEmployee, IOrganizationProjectModuleEmployee, IRole } from '@gauzy/contracts';
+import { Employee, OrganizationProjectModule, Role, TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
+import { MikroOrmOrganizationProjectModuleEmployeeRepository } from './repository/mikro-orm-organization-project-module-employee.repository';
 
-@MultiORMEntity('organization_project_employee', {
-	mikroOrmRepository: () => MikroOrmOrganizationProjectEmployeeRepository
+@MultiORMEntity('organization_project_module_employee', {
+	mikroOrmRepository: () => MikroOrmOrganizationProjectModuleEmployeeRepository
 })
-export class OrganizationProjectEmployee extends TenantOrganizationBaseEntity implements IOrganizationProjectEmployee {
-	// Manager of the organization project
+export class OrganizationProjectModuleEmployee
+	extends TenantOrganizationBaseEntity
+	implements IOrganizationProjectModuleEmployee
+{
+	// Manager of the organization project module
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@IsOptional()
 	@IsBoolean()
@@ -37,7 +21,7 @@ export class OrganizationProjectEmployee extends TenantOrganizationBaseEntity im
 	@MultiORMColumn({ type: Boolean, nullable: true, default: false })
 	isManager?: boolean;
 
-	// Assigned At Manager of the organization project
+	// Assigned At Manager of the organization project module
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDateString()
@@ -52,26 +36,26 @@ export class OrganizationProjectEmployee extends TenantOrganizationBaseEntity im
 	*/
 
 	/**
-	 * OrganizationProject
+	 * OrganizationProjectModule
 	 */
-	@MultiORMManyToOne(() => OrganizationProject, (it) => it.members, {
+	@MultiORMManyToOne(() => OrganizationProjectModule, (it) => it.members, {
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
-	organizationProject!: IOrganizationProject;
+	organizationProjectModule!: OrganizationProjectModule;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsUUID()
-	@RelationId((it: OrganizationProjectEmployee) => it.organizationProject)
+	@RelationId((it: OrganizationProjectModuleEmployee) => it.organizationProjectModule)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	organizationProjectId: ID;
+	organizationProjectModuleId: ID;
 
 	/**
 	 * Employee
 	 */
-	@MultiORMManyToOne(() => Employee, (it) => it.projects, {
+	@MultiORMManyToOne(() => Employee, (it) => it.sprints, {
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -80,7 +64,7 @@ export class OrganizationProjectEmployee extends TenantOrganizationBaseEntity im
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsUUID()
-	@RelationId((it: OrganizationProjectEmployee) => it.employee)
+	@RelationId((it: OrganizationProjectModuleEmployee) => it.employee)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	employeeId?: ID;
@@ -100,7 +84,7 @@ export class OrganizationProjectEmployee extends TenantOrganizationBaseEntity im
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((it: OrganizationProjectEmployee) => it.role)
+	@RelationId((it: OrganizationProjectModuleEmployee) => it.role)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	roleId?: ID;

@@ -14,12 +14,11 @@ import {
 	IOrganizationProjectModule,
 	IOrganizationSprint,
 	IOrganizationTeam,
-	ISelectedEmployee,
 	ITask,
 	ProjectModuleStatusEnum,
 	TaskParticipantEnum,
 	ID,
-	IOrganizationProjectEmployee
+	IOrganizationProjectModuleEmployee
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
@@ -136,15 +135,15 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 			tasks: (module.tasks || [])?.map((task) => task.id)
 		});
 		this.selectedEmployeeIds = module.members
-			.filter((member: IOrganizationProjectEmployee) => !member.isManager)
-			.map((member: IOrganizationProjectEmployee) => member.employeeId);
+			.filter((member: IOrganizationProjectModuleEmployee) => !member.isManager)
+			.map((member: IOrganizationProjectModuleEmployee) => member.employeeId);
 
 		this.memberIds = this.selectedEmployeeIds;
 
 		// Selected Managers Ids
 		this.selectedManagerIds = module.members
-			.filter((member: IOrganizationProjectEmployee) => member.isManager)
-			.map((member: IOrganizationProjectEmployee) => member.employeeId);
+			.filter((member: IOrganizationProjectModuleEmployee) => member.isManager)
+			.map((member: IOrganizationProjectModuleEmployee) => member.employeeId);
 
 		this.managerIds = this.selectedManagerIds;
 		this.selectedTeams = module.teams?.map((t) => t.id);

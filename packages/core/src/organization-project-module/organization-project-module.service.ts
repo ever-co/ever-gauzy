@@ -21,11 +21,11 @@ import { RequestContext } from '../core/context';
 import { OrganizationProjectModule } from './organization-project-module.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { ActivityLogService } from '../activity-log/activity-log.service';
-import { OrganizationProjectEmployee } from '../core/entities/internal';
 import { TypeOrmOrganizationProjectModuleRepository } from './repository/type-orm-organization-project-module.repository';
 import { MikroOrmOrganizationProjectModuleRepository } from './repository/mikro-orm-organization-project-module.repository';
 import { RoleService } from 'role';
 import { EmployeeService } from 'employee';
+import { OrganizationProjectModuleEmployee } from './organization-project-module-employee.entity';
 
 @Injectable()
 export class OrganizationProjectModuleService extends TenantAwareCrudService<OrganizationProjectModule> {
@@ -75,7 +75,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 			// If the employee is a manager, assign the existing manager with the latest assignedAt date
 			const isManager = managerIdsSet.has(employeeId);
 
-			return new OrganizationProjectEmployee({
+			return new OrganizationProjectModuleEmployee({
 				employeeId,
 				organizationId,
 				tenantId,
