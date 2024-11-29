@@ -3,7 +3,7 @@ import { RegisteredWindow, ScreenCaptureNotification, WindowManager, loginPage }
 import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences } from 'electron';
 import log from 'electron-log';
 import { resetPermissions } from 'mac-screen-capture-permissions';
-import * as moment from 'moment';
+import moment from 'moment';
 import * as _ from 'underscore';
 import { SleepInactivityTracking } from './contexts';
 import {

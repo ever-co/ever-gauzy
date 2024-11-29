@@ -18,9 +18,8 @@
 			"outputs": ["{options.outputPath}"],
 			"options": {
 				"outputPath": "dist/packages/desktop-lib",
-				"tsConfig": "packages/desktop-lib/tsconfig.lib.json",
-				"packageJson": "packages/desktop-lib/package.json",
 				"main": "packages/desktop-lib/src/index.ts",
+				"tsConfig": "packages/desktop-lib/tsconfig.lib.json",
 				"assets": ["packages/desktop-lib/*.md"]
 			}
 		},

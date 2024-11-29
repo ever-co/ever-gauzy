@@ -7,21 +7,12 @@
 		"emitDecoratorMetadata": true,
 		"experimentalDecorators": true,
 		"downlevelIteration": true,
-		"esModuleInterop": true,
 		"module": "commonjs",
 		"target": "ES2022",
-		"types": [
-			"pino-pretty"
-		]
+		"types": ["pino-pretty"],
+		"esModuleInterop": true
 	},
-	"files": [
-		"global.d.ts"
-	],
-	"include": [
-		"src/index.ts",
-		"src/preload.ts"
-	],
-	"exclude": [
-		"jest.config.ts"
-	]
+	"files": ["global.d.ts"],
+	"include": ["src/index.ts", "src/preload.ts"],
+	"exclude": ["jest.config.ts"]
 }

@@ -1,6 +1,6 @@
 import { app } from 'electron';
 import { writeFileSync, existsSync, mkdirSync, unlinkSync } from 'fs';
-import * as moment from 'moment';
+import moment from 'moment';
 import * as path from 'path';
 import { LocalStore } from './desktop-store';
 import Form from 'form-data';

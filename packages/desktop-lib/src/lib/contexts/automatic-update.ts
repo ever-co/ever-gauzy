@@ -1,6 +1,6 @@
 import { BrowserWindow } from 'electron';
 import { UpdateContext } from './update-context';
-import * as moment from 'moment';
+import moment from 'moment';
 import { LocalStore } from './../desktop-store';
 
 export class AutomaticUpdate {
