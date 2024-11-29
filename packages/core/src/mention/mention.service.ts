@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
-import { IMention, IMentionCreateInput, SubscriptionTypeEnum } from '@gauzy/contracts';
+import { In } from 'typeorm';
+import { BaseEntityEnum, ID, IMention, IMentionCreateInput, SubscriptionTypeEnum } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { Mention } from './mention.entity';
@@ -73,5 +74,72 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 	 */
 	publishMention(input: IMentionCreateInput) {
 		this._eventBus.publish(new CreateMentionEvent(input));
+	}
+
+	/**
+	 * Synchronize mentions for a given entity.
+	 *
+	 * This method handles adding new mentions and removing outdated mentions
+	 * for an entity (e.g., comments, tasks, or projects). It ensures that only
+	 * the specified user mentions (`newMentionIds`) are associated with the entity.
+	 *
+	 * @param entity - The type of entity being updated (e.g., Comment, Task, etc.).
+	 * @param entityId - The ID of the entity being updated.
+	 * @param mentionIds - Array of user IDs to be mentioned in this entity.
+	 * @param parentEntityId - (Optional) The ID of the parent entity, if applicable.
+	 * @param parentEntityType - (Optional) The type of the parent entity, if applicable.
+	 */
+	async updateEntityMentions(
+		entity: BaseEntityEnum,
+		entityId: ID,
+		mentionsIds: ID[],
+		parentEntityId?: ID,
+		parentEntityType?: BaseEntityEnum
+	): Promise<void> {
+		try {
+			const actorId = RequestContext.currentUserId();
+
+			// Retrieve existing mentions for the entity
+			const existingMentions = await this.find({
+				where: { entity, entityId },
+				select: ['mentionedUserId']
+			});
+
+			// Extract the IDs of currently mentioned users
+			const existingMentionUserIds = new Set(existingMentions.map((mention) => mention.mentionedUserId));
+
+			// Determine mentions to add (not present in existing mentions)
+			const mentionsToAdd = mentionsIds.filter((id) => !existingMentionUserIds.has(id));
+
+			// Determine mentions to remove (present in existing mentions but not in mentionsIds)
+			const mentionsToRemove = [...existingMentionUserIds].filter((id) => !mentionsIds.includes(id));
+
+			// Add new mentions
+			if (mentionsToAdd.length > 0) {
+				await Promise.all(
+					mentionsToAdd.map((mentionedUserId) =>
+						this.publishMention({
+							entity: entity,
+							entityId,
+							mentionedUserId,
+							mentionById: actorId,
+							parentEntityId,
+							parentEntityType
+						})
+					)
+				);
+			}
+
+			// Remove outdated mentions
+			if (mentionsToRemove.length > 0) {
+				await this.delete({
+					mentionedUserId: In(mentionsToRemove),
+					entity,
+					entityId
+				});
+			}
+		} catch (error) {
+			console.log(error);
+		}
 	}
 }

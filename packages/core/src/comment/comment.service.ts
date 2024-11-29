@@ -1,11 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { FindOptionsSelect, FindOptionsWhere, In, UpdateResult } from 'typeorm';
+import { UpdateResult } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { BaseEntityEnum, IComment, ICommentCreateInput, ICommentUpdateInput, ID } from '@gauzy/contracts';
 import { UserService } from '../user/user.service';
 import { MentionService } from '../mention/mention.service';
-import { Mention } from '../mention/mention.entity';
 import { Comment } from './comment.entity';
 import { TypeOrmCommentRepository } from './repository/type-orm.comment.repository';
 import { MikroOrmCommentRepository } from './repository/mikro-orm-comment.repository';
@@ -77,7 +76,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	 */
 	async update(id: ID, input: ICommentUpdateInput): Promise<IComment | UpdateResult> {
 		try {
-			const { mentionIds } = input;
+			const { mentionIds = [] } = input;
 
 			const userId = RequestContext.currentUserId();
 			const comment = await this.findOneByOptions({
@@ -96,44 +95,14 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 				id
 			});
 
-			// Where condition for searching mentions
-			const where: FindOptionsWhere<Mention> = {
-				entity: BaseEntityEnum.Comment,
-				entityId: id
-			};
-
-			// Select option for selecting mentions' fields
-			const select: FindOptionsSelect<Mention> = {
-				mentionedUserId: true
-			};
-
-			const commentMentions = await this.mentionService.find({ where, select });
-
-			// Extract existing mentioned users in comment
-			const existingMentionUserIds = new Set(commentMentions.map((mention) => mention.mentionedUserId));
-
-			const mentionsToAdd = mentionIds.filter((id) => !existingMentionUserIds.has(id));
-			const mentionsToRemove = [...existingMentionUserIds].filter((id) => !mentionIds.includes(id));
-
-			// Add mentions
-			if (mentionsToAdd.length > 0) {
-				await Promise.all(
-					mentionsToAdd.map((mentionedUserId) =>
-						this.mentionService.publishMention({
-							entity: BaseEntityEnum.Comment,
-							entityId: updatedComment.id,
-							mentionedUserId,
-							mentionById: userId,
-							parentEntityId: updatedComment.entityId,
-							parentEntityType: updatedComment.entity
-						})
-					)
-				);
-			}
-			// Delete unused mentions
-			if (mentionsToRemove.length > 0) {
-				await this.mentionService.delete({ mentionedUserId: In(mentionsToRemove), ...where });
-			}
+			// Synchronize mentions
+			await this.mentionService.updateEntityMentions(
+				BaseEntityEnum.Comment,
+				id,
+				mentionIds,
+				updatedComment.entityId,
+				updatedComment.entity
+			);
 
 			return updatedComment;
 		} catch (error) {
