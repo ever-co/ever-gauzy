@@ -323,7 +323,6 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 	 * with the array of selected IDs.
 	 */
 	onManagersSelected(managerIds: ID[]): void {
-		console.log(managerIds);
 		this.managerIds = managerIds;
 	}
 

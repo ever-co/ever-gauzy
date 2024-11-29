@@ -85,7 +85,6 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		});
 
 		try {
-			console.log(members);
 			const projectModule = await super.create({
 				...input,
 				members,
