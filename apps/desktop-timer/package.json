@@ -24,7 +24,7 @@
 	"devDependencies": {
 		"@electron/rebuild": "^3.2.10",
 		"@types/moment-duration-format": "^2.2.3",
-		"electron": "^30.0.1",
+		"electron": "^33.2.1",
 		"electron-builder": "^24.13.3",
 		"electron-installer-dmg": "^4.0.0",
 		"electron-packager": "^17.1.1",

@@ -186,7 +186,6 @@
 		"@types/chart.js": "^2.9.37",
 		"@types/ckeditor": "^4.9.10",
 		"@types/d3-color": "^3.1.0",
-		"@types/electron": "^1.6.10",
 		"@types/file-saver": "^2.0.7",
 		"@types/google.analytics": "^0.0.41",
 		"@types/google.maps": "~3.53.0",

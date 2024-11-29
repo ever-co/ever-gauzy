@@ -25,7 +25,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "^20.14.9",
-		"electron": "^30.0.1"
+		"electron": "^33.2.1"
 	},
 	"keywords": [
 		"desktop",

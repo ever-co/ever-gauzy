@@ -50,7 +50,7 @@
 	"devDependencies": {
 		"@types/node": "^20.14.9",
 		"@types/unzipper": "^0.10.9",
-		"electron": "^30.0.1"
+		"electron": "^33.2.1"
 	},
 	"keywords": [
 		"electron",

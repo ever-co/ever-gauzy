@@ -12723,7 +12723,7 @@
   dependencies:
     "@types/ms" "*"
 
-"@types/electron@^1.6.10":
+"@types/electron@^1.6.10", "@types/electron@^1.6.12":
   version "1.6.12"
   resolved "https://registry.yarnpkg.com/@types/electron/-/electron-1.6.12.tgz#0921813f95b92fdce9f642f85cb561318fcf0a04"
   integrity sha512-NIJokDkGv9h+MStCL1IuiL1FOHYVkszoWeNxJtSI5dcEKRGbX83JcVYNAgk019qOQgJkHtz9WdP0CDXvrArrGg==
@@ -20582,10 +20582,10 @@ electron@*:
     "@types/node" "^20.9.0"
     extract-zip "^2.0.1"
 
-electron@^30.0.1:
-  version "30.5.1"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-30.5.1.tgz#9f6060ce5b869c3803cbf8064305e9c3056c0744"
-  integrity sha512-AhL7+mZ8Lg14iaNfoYTkXQ2qee8mmsQyllKdqxlpv/zrKgfxz6jNVtcRRbQtLxtF8yzcImWdfTQROpYiPumdbw==
+electron@^33.2.1:
+  version "33.2.1"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-33.2.1.tgz#d0d7bba7a7abf4f14881d0a6e03c498b301a2d5f"
+  integrity sha512-SG/nmSsK9Qg1p6wAW+ZfqU+AV8cmXMTIklUL18NnOKfZLlum4ZsDoVdmmmlL39ZmeCaq27dr7CgslRPahfoVJg==
   dependencies:
     "@electron/get" "^2.0.0"
     "@types/node" "^20.9.0"
