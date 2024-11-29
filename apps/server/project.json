@@ -2,16 +2,13 @@
 	"name": "gauzy-server",
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
 	"projectType": "application",
+	"prefix": "app",
 	"sourceRoot": "apps/server/src",
-	"prefix": "gauzy",
-	"generators": {
-		"@nx/angular:component": {
-			"style": "scss"
-		}
-	},
+	"tags": [],
 	"targets": {
 		"build": {
-			"executor": "@nx/angular:webpack-browser",
+			"executor": "@angular-devkit/build-angular:application",
+			"outputs": ["{options.outputPath}"],
 			"options": {
 				"customWebpackConfig": {
 					"path": "apps/server/config/custom-webpack.config.js"
@@ -19,9 +16,15 @@
 				"outputPath": "dist/apps/gauzy-server",
 				"index": "apps/server/src/index.html",
 				"main": "apps/server/src/main.ts",
-				"polyfills": "apps/server/src/polyfills.ts",
+				"polyfills": ["zone.js"],
 				"tsConfig": "apps/server/tsconfig.app.json",
 				"aot": true,
+				"stylePreprocessorOptions": {
+					"includePaths": [
+						"apps/server/src/assets/styles",
+						"packages/ui-core/static/styles"
+					]
+				},
 				"assets": [
 					"apps/server/src/favicon.ico",
 					"apps/server/src/assets",
@@ -33,6 +36,7 @@
 					}
 				],
 				"styles": [
+					"apps/server/src/styles.css",
 					"node_modules/@nebular/theme/styles/prebuilt/default.css",
 					"node_modules/bootstrap/dist/css/bootstrap.css",
 					"node_modules/typeface-exo/index.css",
@@ -46,10 +50,7 @@
 					"apps/server/src/assets/styles/styles.scss",
 					"node_modules/@ng-select/ng-select/themes/default.theme.css"
 				],
-				"scripts": [],
-				"stylePreprocessorOptions": {
-					"includePaths": ["apps/server/src/assets/styles", "packages/ui-core/static/styles"]
-				}
+				"scripts": []
 			},
 			"configurations": {
 				"production": {
@@ -64,7 +65,6 @@
 						}
 					],
 					"optimization": true,
-					"outputHashing": "all",
 					"sourceMap": true,
 					"namedChunks": false,
 					"extractLicenses": true,
@@ -81,25 +81,33 @@
 							"maximumWarning": "60kb",
 							"maximumError": "120kb"
 						}
-					]
+					],
+					"outputHashing": "all"
+				},
+				"development": {
+					"optimization": false,
+					"extractLicenses": false,
+					"sourceMap": true
 				}
-			}
+			},
+			"defaultConfiguration": "production"
 		},
 		"serve": {
-			"executor": "@nx/angular:dev-server",
-			"options": {
-				"browserTarget": "gauzy-server:build"
-			},
+			"executor": "@angular-devkit/build-angular:dev-server",
 			"configurations": {
 				"production": {
-					"browserTarget": "gauzy-server:build:production"
+					"buildTarget": "server:build:production"
+				},
+				"development": {
+					"buildTarget": "server:build:development"
 				}
-			}
+			},
+			"defaultConfiguration": "development"
 		},
 		"extract-i18n": {
-			"executor": "@nx/angular:extract-i18n",
+			"executor": "@angular-devkit/build-angular:extract-i18n",
 			"options": {
-				"browserTarget": "gauzy-server:build"
+				"buildTarget": "server:build"
 			}
 		},
 		"lint": {
@@ -107,11 +115,15 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": ["{workspaceRoot}/coverage/apps/server"],
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
-				"jestConfig": "apps/server/jest.config.js",
-				"passWithNoTests": true
+				"jestConfig": "apps/server/jest.config.ts"
 			}
+		}
+	},
+	"generators": {
+		"@nx/angular:component": {
+			"style": "scss"
 		}
 	}
 }
