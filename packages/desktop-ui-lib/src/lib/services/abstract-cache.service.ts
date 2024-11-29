@@ -1,4 +1,4 @@
-import * as moment from 'moment';
+import moment from 'moment';;
 import { Observable } from 'rxjs';
 import { ICache, StorageService } from './storage.service';
 import { Store } from '../services';

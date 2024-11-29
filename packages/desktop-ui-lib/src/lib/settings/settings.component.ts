@@ -4,7 +4,7 @@ import { DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS, LanguagesEnum } from '@gauzy/cont
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
+import moment from 'moment';;
 import { BehaviorSubject, Observable, filter, firstValueFrom, tap } from 'rxjs';
 import { AuthStrategy } from '../auth';
 import { GAUZY_ENV } from '../constants';

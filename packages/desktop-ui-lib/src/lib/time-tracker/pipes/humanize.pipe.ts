@@ -6,7 +6,7 @@
 // - original code `ngx-moment (c) 2015, 2016 Uri Shaked`;
 
 import { Pipe, ChangeDetectorRef, PipeTransform, OnDestroy, NgZone } from '@angular/core';
-import * as moment from 'moment';
+import moment from 'moment';;
 
 @Pipe({ name: 'humanize', pure: false })
 export class HumanizePipe implements PipeTransform, OnDestroy {

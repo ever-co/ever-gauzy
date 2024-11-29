@@ -1,5 +1,5 @@
 import { IOrganization, LanguagesEnum } from '@gauzy/contracts';
-import * as moment from 'moment';
+import moment from 'moment';;
 
 export class TimeTrackerDateManager {
 	private static _instance: TimeTrackerDateManager;

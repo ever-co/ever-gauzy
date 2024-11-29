@@ -7,7 +7,7 @@ import {
 	Output,
 } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import * as moment from 'moment';
+import moment from 'moment';;
 import { Observable, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 

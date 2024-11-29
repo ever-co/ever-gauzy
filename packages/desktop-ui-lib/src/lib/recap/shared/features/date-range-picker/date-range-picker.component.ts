@@ -13,7 +13,7 @@ import { IOrganization, WeekDaysEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment-timezone';
+import moment from 'moment-timezone';
 import {
 	DaterangepickerDirective as DateRangePickerDirective,
 	LocaleConfig,

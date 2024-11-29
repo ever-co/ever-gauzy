@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Store } from './store.service';
 import { AbstractCacheService } from './abstract-cache.service';
 import { StorageService } from './storage.service';
-import * as moment from 'moment';
+import moment from 'moment';;
 import { LinkedList } from '../offline-sync';
 import { Observable } from 'rxjs';
 import hash from 'hash-it';

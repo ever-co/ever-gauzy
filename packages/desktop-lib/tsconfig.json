@@ -2,13 +2,14 @@
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
 		"module": "commonjs",
+		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"strict": false,
 		"noImplicitOverride": false,
 		"noPropertyAccessFromIndexSignature": false,
 		"noImplicitReturns": false,
-		"noFallthroughCasesInSwitch": false,
-		"esModuleInterop": true
+		"noFallthroughCasesInSwitch": false
 	},
 	"files": [],
 	"include": [],

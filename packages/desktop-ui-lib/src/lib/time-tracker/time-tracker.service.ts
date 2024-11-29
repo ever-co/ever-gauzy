@@ -23,7 +23,7 @@ import {
 	TimeLogType
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/ui-core/common';
-import * as moment from 'moment';
+import moment from 'moment';;
 import { firstValueFrom, throwError } from 'rxjs';
 import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { API_PREFIX } from '../constants';

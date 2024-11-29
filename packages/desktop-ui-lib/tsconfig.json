@@ -1,14 +1,16 @@
 {
 	"compilerOptions": {
+		"baseUrl": ".",
 		"target": "es2022",
 		"useDefineForClassFields": false,
+		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"strict": false,
 		"noImplicitOverride": false,
 		"noPropertyAccessFromIndexSignature": false,
 		"noImplicitReturns": false,
 		"noFallthroughCasesInSwitch": false,
-		"baseUrl": ".",
 		"paths": {
 			"@gauzy/ui-core/*": ["./../../dist/packages/ui-core/*/index.d.ts"]
 		}

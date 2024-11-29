@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import * as moment from 'moment/moment';
+import moment from 'moment';
 
 @Component({
 	selector: 'gauzy-task-due-date',

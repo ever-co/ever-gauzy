@@ -25,7 +25,7 @@ import { compressImage, distinctUntilChange } from '@gauzy/ui-core/common';
 import { NbDialogRef, NbDialogService, NbIconLibraries, NbRouteTab, NbToastrService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
+import moment from 'moment';;
 import 'moment-duration-format';
 import {
 	asapScheduler,
