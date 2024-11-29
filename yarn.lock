@@ -20439,6 +20439,11 @@ electron-is-dev@^1.1.0:
   resolved "https://registry.yarnpkg.com/electron-is-dev/-/electron-is-dev-1.2.0.tgz#2e5cea0a1b3ccf1c86f577cee77363ef55deb05e"
   integrity sha512-R1oD5gMBPS7PVU8gJwH6CtT0e6VSoD0+SzSnYpNm+dBkcijgA+K7VAMHDfnRq/lkKPZArpzplTW6jfiMYosdzw==
 
+electron-is-dev@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/electron-is-dev/-/electron-is-dev-3.0.1.tgz#1cbc79b1dd046787903acd357efdfab6549dc17a"
+  integrity sha512-8TjjAh8Ec51hUi3o4TaU0mD3GMTOESi866oRNavj9A3IQJ7pmv+MJVmdZBFGw4GFT36X7bkqnuDNYvkQgvyI8Q==
+
 electron-log@^4.4.8:
   version "4.4.8"
   resolved "https://registry.yarnpkg.com/electron-log/-/electron-log-4.4.8.tgz#fcb9f714dbcaefb6ac7984c4683912c74730248a"
@@ -20531,6 +20536,14 @@ electron-util@^0.17.2:
   dependencies:
     electron-is-dev "^1.1.0"
     new-github-issue-url "^0.2.1"
+
+electron-util@^0.18.1:
+  version "0.18.1"
+  resolved "https://registry.yarnpkg.com/electron-util/-/electron-util-0.18.1.tgz#389ebd2c5eafb7e5eed3c020e862c0e8545a4d0a"
+  integrity sha512-Ew1h+lDYUlGUnOQNDRo87dJDPW4R7MK2PTLbzb4nHnbFEMytTlPjxFgTfZieq1pGIdhSrDWINtXNhvp6lUEH1Q==
+  dependencies:
+    electron-is-dev "^3.0.1"
+    new-github-issue-url "^1.0.0"
 
 electron@*:
   version "33.0.2"
@@ -29384,6 +29397,11 @@ new-github-issue-url@^0.2.1:
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/new-github-issue-url/-/new-github-issue-url-0.2.1.tgz#e17be1f665a92de465926603e44b9f8685630c1d"
   integrity sha512-md4cGoxuT4T4d/HDOXbrUHkTKrp/vp+m3aOA7XXVYwNsUNMK49g3SQicTSeV5GIz/5QVGAeYRAOlyp9OvlgsYA==
+
+new-github-issue-url@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/new-github-issue-url/-/new-github-issue-url-1.0.0.tgz#c9e84057c2609b7cbd686d1d8baa53e291292e79"
+  integrity sha512-wa9jlUFg3v6S3ddijQiB18SY4u9eJYcUe5sHa+6SB8m1UUbtX+H/bBglxOLnhhF1zIHuhWXnKBAa8kBeKRIozQ==
 
 next-tick@^1.1.0:
   version "1.1.0"
