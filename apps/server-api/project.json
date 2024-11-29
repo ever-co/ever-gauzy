@@ -1,5 +1,5 @@
 {
-	"name": "gauzy-api-server",
+	"name": "gauzy-server-api",
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
 	"projectType": "application",
 	"sourceRoot": "apps/server-api/src",
@@ -16,7 +16,7 @@
 				"customWebpackConfig": {
 					"path": "apps/server-api/config/custom-webpack.config.js"
 				},
-				"outputPath": "dist/apps/gauzy-api-server",
+				"outputPath": "dist/apps/gauzy-server-api",
 				"index": "apps/server-api/src/index.html",
 				"main": "apps/server-api/src/main.ts",
 				"polyfills": "apps/server-api/src/polyfills.ts",
@@ -28,7 +28,9 @@
 					{
 						"glob": "**/*",
 						"input": "apps/server-api/src/",
-						"ignore": ["**/*.ts"],
+						"ignore": [
+							"**/*.ts"
+						],
 						"output": ""
 					}
 				],
@@ -48,7 +50,10 @@
 				],
 				"scripts": [],
 				"stylePreprocessorOptions": {
-					"includePaths": ["apps/server-api/src/assets/styles", "packages/ui-core/static/styles"]
+					"includePaths": [
+						"apps/server-api/src/assets/styles",
+						"packages/ui-core/static/styles"
+					]
 				}
 			},
 			"configurations": {
@@ -88,18 +93,18 @@
 		"serve": {
 			"executor": "@nx/angular:dev-server",
 			"options": {
-				"browserTarget": "gauzy-api-server:build"
+				"browserTarget": "gauzy-server-api:build"
 			},
 			"configurations": {
 				"production": {
-					"browserTarget": "gauzy-api-server:build:production"
+					"browserTarget": "gauzy-server-api:build:production"
 				}
 			}
 		},
 		"extract-i18n": {
 			"executor": "@nx/angular:extract-i18n",
 			"options": {
-				"browserTarget": "gauzy-api-server:build"
+				"browserTarget": "gauzy-server-api:build"
 			}
 		},
 		"lint": {

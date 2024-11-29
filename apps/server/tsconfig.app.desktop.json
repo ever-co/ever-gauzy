@@ -1,0 +1,17 @@
+{
+	"extends": "./tsconfig.desktop.json",
+	"compilerOptions": {
+		"outDir": "../../dist/out-tsc",
+		"types": [
+			"node"
+		]
+	},
+	"exclude": [
+		"**/*.spec.ts",
+		"**/*.test.ts"
+	],
+	"include": [
+		"src/preload/*.ts",
+		"src/index.ts"
+	]
+}

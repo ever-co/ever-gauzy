@@ -259,7 +259,8 @@
 		"copy-files-i18n-api-server": "yarn run download:translations --desktop=server-api",
 		"quick:build:gauzy-api-server": "yarn electron-builder -c.electronVersion=30.0.1 -c.extraMetadata.author.name=Ever build --mac --project dist/apps/gauzy-api-server",
 		"generate:icons:server-api": "yarn run generate:icons --desktop=server-api",
-		"pack:api-server": "yarn run pack --desktop=gauzy-api-server"
+		"pack:api-server": "yarn run pack --desktop=gauzy-api-server",
+		"postinstall": "electron-builder install-app-deps"
 	},
 	"config": {
 		"commitizen": {
