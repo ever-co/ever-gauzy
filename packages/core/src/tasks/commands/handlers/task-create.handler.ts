@@ -103,6 +103,8 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 				})
 			);
 
+			// TODO : Subscribe assignees
+
 			// Generate the activity log
 			this.activityLogService.logActivity<Task>(
 				BaseEntityEnum.Task,

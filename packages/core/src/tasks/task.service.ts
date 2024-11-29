@@ -113,6 +113,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				await this.mentionService.updateEntityMentions(BaseEntityEnum.Task, id, mentionIds);
 			}
 
+			// TODO : Subscribe assignees
+
 			// Generate the activity log
 			const { organizationId } = updatedTask;
 			this.activityLogService.logActivity<Task>(
@@ -623,6 +625,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					task.members = task.members.filter((member) => member.id !== employeeId);
 				}
 			});
+
+			// TODO : Unsubscribe employee from task
 
 			// Save updated entities to DB
 			await this.typeOrmRepository.save(tasks);
