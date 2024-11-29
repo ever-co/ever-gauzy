@@ -5,6 +5,11 @@
 	"prefix": "app",
 	"sourceRoot": "apps/server/src",
 	"tags": [],
+	"generators": {
+		"@nx/angular:component": {
+			"style": "scss"
+		}
+	},
 	"targets": {
 		"build": {
 			"executor": "@angular-devkit/build-angular:application",
@@ -16,14 +21,11 @@
 				"outputPath": "dist/apps/gauzy-server",
 				"index": "apps/server/src/index.html",
 				"main": "apps/server/src/main.ts",
-				"polyfills": ["zone.js"],
+				"polyfills": "apps/server/src/polyfills.ts",
 				"tsConfig": "apps/server/tsconfig.app.json",
 				"aot": true,
 				"stylePreprocessorOptions": {
-					"includePaths": [
-						"apps/server/src/assets/styles",
-						"packages/ui-core/static/styles"
-					]
+					"includePaths": ["apps/server/src/assets/styles", "packages/ui-core/static/styles"]
 				},
 				"assets": [
 					"apps/server/src/favicon.ico",
@@ -119,11 +121,6 @@
 			"options": {
 				"jestConfig": "apps/server/jest.config.ts"
 			}
-		}
-	},
-	"generators": {
-		"@nx/angular:component": {
-			"style": "scss"
 		}
 	}
 }

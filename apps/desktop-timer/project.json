@@ -5,6 +5,11 @@
 	"prefix": "app",
 	"sourceRoot": "apps/desktop-timer/src",
 	"tags": [],
+	"generators": {
+		"@nx/angular:component": {
+			"style": "scss"
+		}
+	},
 	"targets": {
 		"build": {
 			"executor": "@angular-builders/custom-webpack:browser",
@@ -15,15 +20,12 @@
 				},
 				"outputPath": "dist/apps/desktop-timer",
 				"index": "apps/desktop-timer/src/index.html",
-				"browser": "apps/desktop-timer/src/main.ts",
-				"polyfills": ["zone.js"],
+				"main": "apps/desktop-timer/src/main.ts",
+				"polyfills": "apps/desktop-timer/src/polyfills.ts",
 				"tsConfig": "apps/desktop-timer/tsconfig.app.json",
 				"aot": true,
 				"stylePreprocessorOptions": {
-					"includePaths": [
-						"apps/desktop-timer/src/assets/styles",
-						"packages/ui-core/static/styles"
-					]
+					"includePaths": ["apps/desktop-timer/src/assets/styles", "packages/ui-core/static/styles"]
 				},
 				"assets": [
 					"apps/desktop-timer/src/favicon.ico",
@@ -55,7 +57,12 @@
 					"apps/desktop-timer/src/assets/styles/styles.scss",
 					"node_modules/@ng-select/ng-select/themes/default.theme.css"
 				],
-				"scripts": []
+				"scripts": [],
+				"allowedCommonJsDependencies": [
+					"localforage",
+					"rxjs",
+					"rxjs/operators"
+				]
 			},
 			"configurations": {
 				"production": {
@@ -124,11 +131,6 @@
 			"options": {
 				"jestConfig": "apps/desktop-timer/jest.config.ts"
 			}
-		}
-	},
-	"generators": {
-		"@nx/angular:component": {
-			"style": "scss"
 		}
 	}
 }
