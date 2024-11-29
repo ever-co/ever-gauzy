@@ -165,7 +165,7 @@
 		"electron-log": "^4.4.8",
 		"electron-store": "^8.1.0",
 		"electron-updater": "^6.1.7",
-		"electron-util": "^0.17.2",
+		"electron-util": "^0.18.1",
 		"form-data": "^4.0.1",
 		"htmlparser2": "^8.0.2",
 		"knex": "^3.1.0",

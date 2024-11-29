@@ -66,7 +66,7 @@
 		"electron-notarize": "^1.2.2",
 		"electron-store": "^8.1.0",
 		"electron-updater": "^6.1.7",
-		"electron-util": "^0.17.2",
+		"electron-util": "^0.18.1",
 		"express": "^4.18.2",
 		"mac-screen-capture-permissions": "^2.1.0",
 		"moment": "^2.30.1",
