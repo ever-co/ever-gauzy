@@ -4,19 +4,13 @@
 	"overrides": [
 		{
 			"files": ["*.ts"],
-			"extends": [
-				"plugin:@nrwl/nx/angular",
-				"plugin:@angular-eslint/template/process-inline-templates"
-			],
-			"parserOptions": {
-				"project": ["apps/web-desktop-timer/tsconfig.*?.json"]
-			},
+			"extends": ["plugin:@nx/angular", "plugin:@angular-eslint/template/process-inline-templates"],
 			"rules": {
 				"@angular-eslint/directive-selector": [
 					"error",
 					{
 						"type": "attribute",
-						"prefix": "gauzy",
+						"prefix": "app",
 						"style": "camelCase"
 					}
 				],
@@ -24,7 +18,7 @@
 					"error",
 					{
 						"type": "element",
-						"prefix": "gauzy",
+						"prefix": "app",
 						"style": "kebab-case"
 					}
 				]
@@ -32,7 +26,7 @@
 		},
 		{
 			"files": ["*.html"],
-			"extends": ["plugin:@nrwl/nx/angular-template"],
+			"extends": ["plugin:@nx/angular-template"],
 			"rules": {}
 		}
 	]

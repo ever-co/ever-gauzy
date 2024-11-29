@@ -2,7 +2,11 @@
 	"name": "@gauzy/desktop-timer",
 	"version": "0.1.0",
 	"description": "Ever Gauzy Desktop Timer App",
-	"license": "AGPL-3.0",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
 	"homepage": "https://gauzy.co",
 	"repository": {
 		"type": "git",
@@ -11,13 +15,12 @@
 	"bugs": {
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
+	"license": "AGPL-3.0",
 	"private": true,
-	"author": {
-		"name": "Ever Co. LTD",
-		"email": "ever@ever.co",
-		"url": "https://ever.co"
+	"scripts": {
+		"build": "yarn nx build desktop-timer",
+		"build:desktop": "yarn nx build desktop-timer --configuration=production"
 	},
-	"scripts": {},
 	"devDependencies": {
 		"@electron/rebuild": "^3.2.10",
 		"@types/moment-duration-format": "^2.2.3",
@@ -92,5 +95,10 @@
 		"node-linux": "^0.1.12",
 		"node-mac": "^1.0.1",
 		"node-windows": "^1.0.0-beta.8"
-	}
+	},
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
 }
