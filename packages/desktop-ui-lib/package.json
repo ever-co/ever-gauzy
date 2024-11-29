@@ -15,16 +15,16 @@
 		"lib:watch": "yarn nx build desktop-ui-lib --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^17.3.0",
-		"@angular/core": "^17.3.0"
+		"@angular/common": "^18.2.0",
+		"@angular/core": "^18.2.0"
 	},
 	"dependencies": {
-		"@angular-slider/ngx-slider": "^17.0.1",
-		"@angular/animations": "17.3.12",
-		"@angular/forms": "17.3.12",
-		"@angular/platform-browser": "17.3.12",
-		"@angular/platform-browser-dynamic": "17.3.12",
-		"@angular/router": "17.3.12",
+		"@angular-slider/ngx-slider": "^18.0.0",
+		"@angular/animations": "18.2.12",
+		"@angular/forms": "18.2.12",
+		"@angular/platform-browser": "18.2.12",
+		"@angular/platform-browser-dynamic": "18.2.12",
+		"@angular/router": "18.2.12",
 		"@datorama/akita": "^7.1.1",
 		"@datorama/akita-ngdevtools": "^7.0.0",
 		"@electron/remote": "^2.0.8",
@@ -32,13 +32,13 @@
 		"@fortawesome/free-solid-svg-icons": "^6.0.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/desktop-window": "^0.1.0",
-		"@kurkle/color": "^0.2.0",
-		"@nebular/auth": "^13.0.0",
+		"@kurkle/color": "^0.3.2",
+		"@nebular/auth": "^14.0.2",
 		"@nebular/bootstrap": "^9.1.0-rc.6",
-		"@nebular/eva-icons": "^13.0.0",
-		"@nebular/security": "^13.0.0",
-		"@nebular/theme": "^13.0.0",
-		"@ng-select/ng-select": "^12.0.7",
+		"@nebular/eva-icons": "^14.0.2",
+		"@nebular/security": "^14.0.2",
+		"@nebular/theme": "^14.0.2",
+		"@ng-select/ng-select": "^13.9.0",
 		"@ngneat/until-destroy": "^10.0.0",
 		"@ngx-translate/core": "^16.0.3",
 		"@ngx-translate/http-loader": "^16.0.0",
@@ -56,11 +56,11 @@
 		"underscore": "^1.13.3"
 	},
 	"devDependencies": {
-		"@types/jest": "^29.4.4",
+		"@types/jest": "29.5.14",
 		"@types/moment-duration-format": "^2.2.3",
 		"@types/node": "^20.14.9",
 		"electron": "^30.0.1",
-		"jest-preset-angular": "14.0.4"
+		"jest-preset-angular": "14.1.1"
 	},
 	"keywords": [],
 	"engines": {
