@@ -94,5 +94,6 @@ export enum BaseEntityEnum {
 	Task = 'Task',
 	TaskView = 'TaskView',
 	TaskLinkedIssue = 'TaskLinkedIssue',
-	User = 'User'
+	User = 'User',
+	Comment = 'Comment'
 }

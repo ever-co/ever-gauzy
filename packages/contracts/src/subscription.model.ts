@@ -11,7 +11,8 @@ export enum SubscriptionTypeEnum {
 	MANUAL = 'manual',
 	MENTION = 'mention',
 	ASSIGNMENT = 'assignment',
-	COMMENT = 'comment'
+	COMMENT = 'comment',
+	CREATED_ENTITY = 'created-entity'
 }
 
 export interface ISubscriptionCreateInput

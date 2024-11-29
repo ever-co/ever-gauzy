@@ -1,14 +1,16 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler, EventBus as CqrsEventBus } from '@nestjs/cqrs';
 import { HttpException, HttpStatus, Logger } from '@nestjs/common';
-import { BaseEntityEnum, ActorTypeEnum, ITask, ActionTypeEnum } from '@gauzy/contracts';
+import { BaseEntityEnum, ActorTypeEnum, ITask, ActionTypeEnum, SubscriptionTypeEnum } from '@gauzy/contracts';
 import { EventBus } from '../../../event-bus';
 import { TaskEvent } from '../../../event-bus/events';
 import { BaseEntityEventTypeEnum } from '../../../event-bus/base-entity-event';
 import { RequestContext } from './../../../core/context';
 import { OrganizationProjectService } from './../../../organization-project/organization-project.service';
+import { CreateSubscriptionEvent } from '../../../subscription/events';
 import { TaskCreateCommand } from './../task-create.command';
 import { TaskService } from '../../task.service';
 import { Task } from './../../task.entity';
+import { MentionService } from '../../../mention/mention.service';
 import { ActivityLogService } from '../../../activity-log/activity-log.service';
 
 @CommandHandler(TaskCreateCommand)
@@ -17,8 +19,10 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 
 	constructor(
 		private readonly _eventBus: EventBus,
+		private readonly _cqrsEventBus: CqrsEventBus,
 		private readonly _taskService: TaskService,
 		private readonly _organizationProjectService: OrganizationProjectService,
+		private readonly mentionService: MentionService,
 		private readonly activityLogService: ActivityLogService
 	) {}
 
@@ -32,16 +36,16 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 		try {
 			// Destructure input and triggered event flag from the command
 			const { input, triggeredEvent } = command;
-			const { organizationId } = input;
+			const { organizationId, mentionIds = [], ...data } = input;
 
 			// Retrieve current tenant ID from request context or use input tenant ID
-			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+			const tenantId = RequestContext.currentTenantId() ?? data.tenantId;
 
 			// Check if projectId is provided, if not use the provided project object from the input.
 			// If neither is provided, set project to null.
-			const project = input.projectId
-				? await this._organizationProjectService.findOneByIdString(input.projectId)
-				: input.project || null;
+			const project = data.projectId
+				? await this._organizationProjectService.findOneByIdString(data.projectId)
+				: data.project || null;
 
 			// Check if project exists and extract the project prefix (first 3 characters of the project name)
 			const projectPrefix = project?.name?.substring(0, 3) ?? null;
@@ -60,7 +64,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 
 			// Create the task with incremented number, project prefix, and other task details
 			const task = await this._taskService.create({
-				...input, // Spread the input properties
+				...data, // Spread the input properties
 				number: maxNumber + 1, // Increment the task number
 				prefix: projectPrefix, // Use the project prefix, or null if no project
 				tenantId, // Pass the tenant ID
@@ -70,8 +74,36 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			// Publish a task created event if triggeredEvent flag is set
 			if (triggeredEvent) {
 				const ctx = RequestContext.currentRequestContext(); // Get current request context;
-				this._eventBus.publish(new TaskEvent(ctx, task, BaseEntityEventTypeEnum.CREATED, input)); // Publish the event using EventBus
+				this._eventBus.publish(new TaskEvent(ctx, task, BaseEntityEventTypeEnum.CREATED, data)); // Publish the event using EventBus
 			}
+
+			// Apply mentions if needed
+			if (mentionIds.length > 0) {
+				await Promise.all(
+					mentionIds.map((mentionedUserId) =>
+						this.mentionService.publishMention({
+							entity: BaseEntityEnum.Task,
+							entityId: task.id,
+							mentionedUserId,
+							mentionById: task.creatorId
+						})
+					)
+				);
+			}
+
+			// Subscribe creator to the task
+			this._cqrsEventBus.publish(
+				new CreateSubscriptionEvent({
+					entity: BaseEntityEnum.Task,
+					entityId: task.id,
+					userId: task.creatorId,
+					subscriptionType: SubscriptionTypeEnum.CREATED_ENTITY,
+					organizationId,
+					tenantId
+				})
+			);
+
+			// TODO : Subscribe assignees
 
 			// Generate the activity log
 			this.activityLogService.logActivity<Task>(

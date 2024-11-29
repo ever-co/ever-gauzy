@@ -2,6 +2,7 @@ import { ActorTypeEnum, IBasePerEntityType, IBasePerTenantAndOrganizationEntityM
 import { IUser } from './user.model';
 import { IEmployee } from './employee.model';
 import { IOrganizationTeam } from './organization-team.model';
+import { IMentionedUserIds } from './mention.model';
 
 export interface IComment extends IBasePerTenantAndOrganizationEntityModel, IBasePerEntityType {
 	comment: string;
@@ -20,13 +21,15 @@ export interface IComment extends IBasePerTenantAndOrganizationEntityModel, IBas
 	replies?: IComment[];
 }
 
-export interface ICommentCreateInput extends IBasePerEntityType {
+export interface ICommentCreateInput extends IBasePerEntityType, IMentionedUserIds {
 	comment: string;
 	parentId?: ID;
 	members?: IEmployee[];
 	teams?: IOrganizationTeam[];
 }
 
-export interface ICommentUpdateInput extends Partial<Omit<IComment, 'entity' | 'entityId' | 'creatorId' | 'creator'>> {}
+export interface ICommentUpdateInput
+	extends IMentionedUserIds,
+		Partial<Omit<IComment, 'entity' | 'entityId' | 'creatorId' | 'creator'>> {}
 
 export interface ICommentFindInput extends Pick<IComment, 'entity' | 'entityId'> {}
