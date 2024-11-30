@@ -5,6 +5,7 @@
 	"prefix": "lib",
 	"projectType": "library",
 	"tags": [],
+	"implicitDependencies": ["contracts", "ui-core"],
 	"targets": {
 		"build": {
 			"executor": "@nx/angular:package",
