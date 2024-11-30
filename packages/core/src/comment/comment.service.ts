@@ -1,8 +1,17 @@
+import { EventBus } from '@nestjs/cqrs';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateResult } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
-import { BaseEntityEnum, IComment, ICommentCreateInput, ICommentUpdateInput, ID } from '@gauzy/contracts';
+import {
+	BaseEntityEnum,
+	IComment,
+	ICommentCreateInput,
+	ICommentUpdateInput,
+	ID,
+	SubscriptionTypeEnum
+} from '@gauzy/contracts';
+import { CreateSubscriptionEvent } from '../subscription/events';
 import { UserService } from '../user/user.service';
 import { MentionService } from '../mention/mention.service';
 import { Comment } from './comment.entity';
@@ -14,6 +23,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	constructor(
 		readonly typeOrmCommentRepository: TypeOrmCommentRepository,
 		readonly mikroOrmCommentRepository: MikroOrmCommentRepository,
+		private readonly _eventBus: EventBus,
 		private readonly userService: UserService,
 		private readonly mentionService: MentionService
 	) {
@@ -57,6 +67,18 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 						parentEntityType: comment.entity
 					})
 				)
+			);
+
+			// Subscribe creator to the entity
+			this._eventBus.publish(
+				new CreateSubscriptionEvent({
+					entity: input.entity,
+					entityId: input.entityId,
+					userId: user.id,
+					subscriptionType: SubscriptionTypeEnum.COMMENT,
+					organizationId: comment.organizationId,
+					tenantId
+				})
 			);
 
 			// Return created Comment
