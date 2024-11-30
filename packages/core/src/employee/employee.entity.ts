@@ -93,6 +93,7 @@ import { Trimmed } from '../shared/decorators';
 import { ColumnNumericTransformerPipe } from '../shared/pipes';
 import { Taggable } from '../tags/tag.types';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
+import { OrganizationProjectModuleEmployee } from 'organization-project-module/organization-project-module-employee.entity';
 
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee, Taggable, HasCustomFields {
@@ -533,6 +534,12 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 		cascade: true
 	})
 	sprints?: IOrganizationSprint[];
+
+	//Employee Module
+	@MultiORMOneToMany(() => OrganizationProjectModuleEmployee, (it) => it.employee, {
+		cascade: true
+	})
+	modules?: IOrganizationProjectModule[];
 
 	/**
 	 * Estimations

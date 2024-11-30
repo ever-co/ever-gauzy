@@ -55,7 +55,7 @@ export class OrganizationProjectModuleEmployee
 	/**
 	 * Employee
 	 */
-	@MultiORMManyToOne(() => Employee, (it) => it.sprints, {
+	@MultiORMManyToOne(() => Employee, (it) => it.modules, {
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
