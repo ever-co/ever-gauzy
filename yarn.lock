@@ -15750,10 +15750,10 @@ better-sqlite3@11.3.0:
     bindings "^1.5.0"
     prebuild-install "^7.1.1"
 
-better-sqlite3@^11.6.0:
-  version "11.6.0"
-  resolved "https://registry.npmjs.org/better-sqlite3/-/better-sqlite3-11.6.0.tgz#e50736956e6fe1c30dc94f1bc94a9c15d63b7b6b"
-  integrity sha512-2J6k/eVxcFYY2SsTxsXrj6XylzHWPxveCn4fKPKZFv/Vqn/Cd7lOuX4d7rGQXT5zL+97MkNL3nSbCrIoe3LkgA==
+better-sqlite3@^9.5.0:
+  version "9.6.0"
+  resolved "https://registry.npmjs.org/better-sqlite3/-/better-sqlite3-9.6.0.tgz#b01e58ba7c48abcdc0383b8301206ee2ab81d271"
+  integrity sha512-yR5HATnqeYNVnkaUTf4bOP2dJSnyhP4puJN/QPRyx4YkBEEUxib422n2XzPqDEHjQQqazoYoADdAm5vE15+dAQ==
   dependencies:
     bindings "^1.5.0"
     prebuild-install "^7.1.1"
