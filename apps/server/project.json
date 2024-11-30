@@ -44,25 +44,6 @@
 				"buildTarget": "gauzy-server:build"
 			}
 		},
-		"package": {
-			"executor": "nx-electron:package",
-			"options": {
-				"name": "gauzy-server",
-				"frontendProject": "gauzy-server",
-				"sourcePath": "dist/apps",
-				"outputPath": "dist/packages",
-				"prepackageOnly": true
-			}
-		},
-		"make": {
-			"executor": "nx-electron:make",
-			"options": {
-				"name": "gauzy-server",
-				"frontendProject": "gauzy-server",
-				"sourcePath": "dist/apps",
-				"outputPath": "dist/executables"
-			}
-		},
 		"build-ui": {
 			"executor": "@angular-devkit/build-angular:application",
 			"outputs": [
