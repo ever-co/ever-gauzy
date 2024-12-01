@@ -51,8 +51,8 @@
 			],
 			"options": {
 				"outputPath": "dist/apps/gauzy-server",
-				"index": "apps/server/src/main.ts",
-				"browser": "apps/server/src/index.html",
+				"browser": "apps/server/src/main.ts",
+				"index": "apps/server/src/index.html",
 				"polyfills": [
 					"zone.js"
 				],
