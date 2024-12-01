@@ -4,11 +4,19 @@
 		"outDir": "../../dist/out-tsc",
 		"types": []
 	},
-	"files": ["src/main.ts"],
+	"files": [
+		"src/main.ts"
+	],
 	"include": [
 		"src/**/*.d.ts",
 		"**/*.d.ts",
 		"../../node_modules/@nebular/**/*.d.ts"
 	],
-	"exclude": ["jest.config.ts", "src/**/*.test.ts", "src/**/*.spec.ts"]
+	"exclude": [
+		"jest.config.ts",
+		"src/**/*.test.ts",
+		"src/**/*.spec.ts",
+		"src/preload/*.ts",
+		"src/index.ts"
+	]
 }

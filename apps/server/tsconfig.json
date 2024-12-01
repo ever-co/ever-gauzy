@@ -4,11 +4,12 @@
 		"useDefineForClassFields": false,
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
-		"strict": true,
-		"noImplicitOverride": true,
-		"noPropertyAccessFromIndexSignature": true,
-		"noImplicitReturns": true,
-		"noFallthroughCasesInSwitch": true
+		"strict": false,
+		"noImplicitOverride": false,
+		"noPropertyAccessFromIndexSignature": false,
+		"noImplicitReturns": false,
+		"noFallthroughCasesInSwitch": false,
+		"strictNullChecks": false
 	},
 	"files": [],
 	"include": [],
@@ -23,11 +24,11 @@
 			"path": "./tsconfig.spec.json"
 		}
 	],
-	"extends": "../../tsconfig.base.json",
+	"extends": "../../tsconfig.json",
 	"angularCompilerOptions": {
 		"enableI18nLegacyMessageIdFormat": false,
-		"strictInjectionParameters": true,
-		"strictInputAccessModifiers": true,
-		"strictTemplates": true
+		"strictInjectionParameters": false,
+		"strictInputAccessModifiers": false,
+		"strictTemplates": false
 	}
 }

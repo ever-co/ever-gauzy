@@ -27,32 +27,34 @@ export const patterns = {
 	passwordNoSpaceEdges: /^(?!\s).*[^\s]$/
 };
 
+const env = injector.get(GAUZY_ENV);
+
 export const socialLinks = [
 	{
-		url: environment?.GOOGLE_AUTH_LINK,
+		url: env?.GOOGLE_AUTH_LINK,
 		icon: 'google-outline'
 	},
 	{
-		url: environment?.LINKEDIN_AUTH_LINK,
+		url: env?.LINKEDIN_AUTH_LINK,
 		icon: 'linkedin-outline'
 	},
 	{
-		url: environment?.GITHUB_AUTH_LINK,
+		url: env?.GITHUB_AUTH_LINK,
 		target: '_blank',
 		icon: 'github-outline'
 	},
 	{
-		url: environment?.TWITTER_AUTH_LINK,
+		url: env?.TWITTER_AUTH_LINK,
 		target: '_blank',
 		icon: 'twitter-outline'
 	},
 	{
-		url: environment?.FACEBOOK_AUTH_LINK,
+		url: env?.FACEBOOK_AUTH_LINK,
 		target: '_blank',
 		icon: 'facebook-outline'
 	},
 	{
-		url: environment?.MICROSOFT_AUTH_LINK,
+		url: env?.MICROSOFT_AUTH_LINK,
 		target: '_blank',
 		icon: 'grid'
 	}
