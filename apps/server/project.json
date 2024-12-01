@@ -51,11 +51,12 @@
 			],
 			"options": {
 				"outputPath": "dist/apps/gauzy-server",
-				"index": "apps/server/src/index.html",
-				"main": "apps/server/src/main.ts",
-				"polyfills": "apps/server/src/polyfills.ts",
+				"index": "apps/server/src/main.ts",
+				"browser": "apps/server/src/index.html",
+				"polyfills": [
+					"zone.js"
+				],
 				"tsConfig": "apps/server/tsconfig.app.json",
-				"aot": true,
 				"stylePreprocessorOptions": {
 					"includePaths": [
 						"apps/server/src/assets/styles",
@@ -107,8 +108,6 @@
 					"sourceMap": true,
 					"namedChunks": false,
 					"extractLicenses": true,
-					"vendorChunk": false,
-					"buildOptimizer": true,
 					"budgets": [
 						{
 							"type": "initial",
