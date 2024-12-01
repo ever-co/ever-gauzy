@@ -1,8 +1,8 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { BehaviorSubject, map, Observable } from 'rxjs';
-import { NbThemeService } from '@nebular/theme';
-import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
+import { Component, OnInit } from '@angular/core';
 import { Store } from '@gauzy/ui-core/core';
+import { NbThemeService } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { BehaviorSubject, map, Observable } from 'rxjs';
 import {
 	CORPORATE_THEME,
 	COSMIC_THEME,
@@ -81,9 +81,6 @@ export class ThemeSelectorComponent implements OnInit {
 
 	selected: Observable<any> = new Observable<any>();
 	selected$: BehaviorSubject<any> = new BehaviorSubject<any>(null);
-
-	@Input()
-	isClassic: boolean = true;
 
 	constructor(protected readonly themeService: NbThemeService, protected readonly store: Store) {}
 
