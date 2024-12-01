@@ -109,13 +109,13 @@ const gauzyUIPath = app.isPackaged
 	: path.join(__dirname, './data/ui/index.html');
 console.log('Gauzy UI path', gauzyUIPath);
 
-const uiPath = path.join(__dirname, 'index.html');
+const uiPath = path.join(__dirname, 'browser', 'index.html');
 console.log('UI path', uiPath);
 
 const dirPath = app.isPackaged ? path.join(__dirname, '../data/ui') : path.join(__dirname, './data/ui');
 console.log('Dir path', dirPath);
 
-const timeTrackerUIPath = path.join(__dirname, 'index.html');
+const timeTrackerUIPath = path.join(__dirname, 'browser', 'index.html');
 
 const pathWindow: IPathWindow = {
 	gauzyUi: gauzyUIPath,
