@@ -11,6 +11,8 @@ import { TypeOrmOrganizationProjectModuleRepository } from './repository/type-or
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { RoleModule } from 'role';
 import { EmployeeModule } from 'employee';
+import { OrganizationProjectModuleEmployee } from './organization-project-module-employee.entity';
+import { TypeOrmOrganizationProjectModuleEmployeeRepository } from './repository/type-orm-organization-project-module-employee.repository';
 
 @Module({
 	imports: [
@@ -20,8 +22,8 @@ import { EmployeeModule } from 'employee';
 				module: OrganizationProjectModuleModule
 			}
 		]),
-		TypeOrmModule.forFeature([OrganizationProjectModule]),
-		MikroOrmModule.forFeature([OrganizationProjectModule]),
+		TypeOrmModule.forFeature([OrganizationProjectModule, OrganizationProjectModuleEmployee]),
+		MikroOrmModule.forFeature([OrganizationProjectModule, OrganizationProjectModuleEmployee]),
 		MikroOrmModule,
 		RolePermissionModule,
 		RoleModule,
@@ -29,7 +31,17 @@ import { EmployeeModule } from 'employee';
 		CqrsModule
 	],
 	controllers: [OrganizationProjectModuleController],
-	providers: [OrganizationProjectModuleService, TypeOrmOrganizationProjectModuleRepository, ...CommandHandlers],
-	exports: [TypeOrmModule, OrganizationProjectModuleService, TypeOrmOrganizationProjectModuleRepository]
+	providers: [
+		OrganizationProjectModuleService,
+		TypeOrmOrganizationProjectModuleRepository,
+		TypeOrmOrganizationProjectModuleEmployeeRepository,
+		...CommandHandlers
+	],
+	exports: [
+		TypeOrmModule,
+		OrganizationProjectModuleService,
+		TypeOrmOrganizationProjectModuleRepository,
+		TypeOrmOrganizationProjectModuleEmployeeRepository
+	]
 })
 export class OrganizationProjectModuleModule {}

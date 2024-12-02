@@ -233,16 +233,9 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	@ApiPropertyOptional({ type: () => Array, isArray: true })
 	@IsOptional()
 	@IsArray()
-	@MultiORMManyToMany(() => OrganizationProjectModuleEmployee, (employee) => employee.organizationProjectModule, {
-		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
-		owner: true,
-		pivotTable: 'project_module_employee',
-		joinColumn: 'organizationProjectModuleId',
-		inverseJoinColumn: 'employeeId'
-	})
-	@JoinTable({
-		name: 'project_module_employee'
+	@MultiORMOneToMany(() => OrganizationProjectModuleEmployee, (employee) => employee.organizationProjectModule, {
+		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
+		cascade: true
 	})
 	members?: IOrganizationProjectModuleEmployee[];
 }
