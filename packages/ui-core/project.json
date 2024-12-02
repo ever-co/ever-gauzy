@@ -9,7 +9,9 @@
 	"targets": {
 		"build": {
 			"executor": "@nx/angular:package",
-			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"outputs": [
+				"{workspaceRoot}/dist/{projectRoot}"
+			],
 			"options": {
 				"project": "packages/ui-core/ng-package.json"
 			},
@@ -22,23 +24,32 @@
 				}
 			},
 			"defaultConfiguration": "production",
-			"dependsOn": ["^build", "config"]
+			"dependsOn": [
+				"^build",
+				"config"
+			]
 		},
 		"config": {
 			"executor": "nx:run-commands",
 			"configurations": {
 				"production": {
-					"commands": ["yarn run build:package:ui-config:prod"]
+					"commands": [
+						"yarn ts-node .scripts/configure.ts --prod"
+					]
 				},
 				"development": {
-					"commands": ["yarn run build:package:ui-config"]
+					"commands": [
+						"yarn ts-node .scripts/configure.ts --dev"
+					]
 				}
 			},
 			"defaultConfiguration": "production"
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"outputs": [
+				"{workspaceRoot}/coverage/{projectRoot}"
+			],
 			"options": {
 				"jestConfig": "packages/ui-core/jest.config.ts"
 			}

@@ -13,12 +13,25 @@
 	"targets": {
 		"build": {
 			"executor": "nx-electron:build",
-			"outputs": ["{options.outputPath}"],
+			"outputs": [
+				"{options.outputPath}"
+			],
 			"options": {
-				"outputPath": "dist/apps/server",
+				"outputPath": "dist/apps/gauzy-server",
 				"main": "apps/server/src/index.ts",
 				"tsConfig": "apps/server/tsconfig.app.desktop.json",
-				"assets": ["apps/server/src/assets"]
+				"deleteOutputPath": false,
+				"assets": [
+					"apps/server/src/assets",
+					{
+						"glob": "**/*",
+						"input": "apps/server/src/",
+						"ignore": [
+							"**/*.ts"
+						],
+						"output": ""
+					}
+				]
 			},
 			"configurations": {
 				"production": {
@@ -42,25 +55,27 @@
 		},
 		"build-ui": {
 			"executor": "@angular-devkit/build-angular:application",
-			"outputs": ["{options.outputPath}"],
+			"outputs": [
+				"{options.outputPath}"
+			],
 			"options": {
 				"outputPath": "dist/apps/gauzy-server",
+				"deleteOutputPath": false,
 				"browser": "apps/server/src/main.ts",
 				"index": "apps/server/src/index.html",
-				"polyfills": ["zone.js"],
+				"polyfills": [
+					"zone.js"
+				],
 				"tsConfig": "apps/server/tsconfig.app.json",
 				"stylePreprocessorOptions": {
-					"includePaths": ["apps/server/src/assets/styles", "packages/ui-core/static/styles"]
+					"includePaths": [
+						"apps/server/src/assets/styles",
+						"packages/ui-core/static/styles"
+					]
 				},
 				"assets": [
 					"apps/server/src/favicon.ico",
-					"apps/server/src/assets",
-					{
-						"glob": "**/*",
-						"input": "apps/server/src/",
-						"ignore": ["**/*.ts"],
-						"output": ""
-					}
+					"apps/server/src/assets"
 				],
 				"styles": [
 					"apps/server/src/styles.css",
@@ -77,7 +92,18 @@
 					"apps/server/src/assets/styles/styles.scss",
 					"node_modules/@ng-select/ng-select/themes/default.theme.css"
 				],
-				"scripts": []
+				"scripts": [],
+				"allowedCommonJsDependencies": [
+					"localforage",
+					"moment",
+					"moment-duration-format",
+					"moment-timezone",
+					"rfdc",
+					"eva-icons",
+					"moment-range",
+					"slugify",
+					"dayjs"
+				]
 			},
 			"configurations": {
 				"production": {
@@ -140,7 +166,9 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"outputs": [
+				"{workspaceRoot}/coverage/{projectRoot}"
+			],
 			"options": {
 				"jestConfig": "apps/server/jest.config.ts"
 			}
