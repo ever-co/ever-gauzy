@@ -4,6 +4,11 @@
 	"projectType": "application",
 	"sourceRoot": "apps/gauzy/src",
 	"prefix": "gauzy",
+	"generators": {
+		"@nx/workspace:component": {
+			"style": "scss"
+		}
+	},
 	"targets": {
 		"build": {
 			"executor": "@angular-builders/custom-webpack:browser",
@@ -336,11 +341,6 @@
 					]
 				}
 			}
-		}
-	},
-	"generators": {
-		"@nx/workspace:component": {
-			"style": "scss"
 		}
 	}
 }

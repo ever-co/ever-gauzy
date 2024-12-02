@@ -4,6 +4,14 @@
 	"sourceRoot": "apps/api/src",
 	"projectType": "application",
 	"tags": [],
+	"generators": {
+		"@nx/nest:library": {
+			"directory": "api",
+			"tags": "type:library,scope:api",
+			"unitTestRunner": "jest",
+			"linter": "eslint"
+		}
+	},
 	"targets": {
 		"build": {
 			"executor": "@nx/webpack:webpack",
@@ -189,14 +197,6 @@
 					]
 				}
 			}
-		}
-	},
-	"generators": {
-		"@nx/nest:library": {
-			"directory": "api",
-			"tags": "type:library,scope:api",
-			"unitTestRunner": "jest",
-			"linter": "eslint"
 		}
 	}
 }

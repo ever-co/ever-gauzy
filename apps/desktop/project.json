@@ -4,6 +4,11 @@
 	"sourceRoot": "apps/desktop/src",
 	"projectType": "application",
 	"tags": [],
+	"generators": {
+		"@nx/angular:component": {
+			"style": "scss"
+		}
+	},
 	"targets": {
 		"build": {
 			"executor": "@angular-builders/custom-webpack:browser",
@@ -18,15 +23,9 @@
 				"tsConfig": "apps/desktop/tsconfig.app.json",
 				"aot": true,
 				"stylePreprocessorOptions": {
-					"includePaths": [
-						"apps/desktop-timer/src/assets/styles",
-						"packages/ui-core/static/styles"
-					]
+					"includePaths": ["apps/desktop-timer/src/assets/styles", "packages/ui-core/static/styles"]
 				},
-				"assets": [
-					"apps/desktop/src/favicon.ico",
-					"apps/desktop/src/assets"
-				],
+				"assets": ["apps/desktop/src/favicon.ico", "apps/desktop/src/assets"],
 				"styles": [
 					"node_modules/@nebular/theme/styles/prebuilt/default.css",
 					"node_modules/bootstrap/dist/css/bootstrap.css",
@@ -43,12 +42,7 @@
 					"node_modules/@ng-select/ng-select/themes/default.theme.css"
 				],
 				"scripts": [],
-				"allowedCommonJsDependencies": [
-					"@datorama/akita",
-					"localforage",
-					"rxjs",
-					"rxjs/operators"
-				]
+				"allowedCommonJsDependencies": ["@datorama/akita", "localforage", "rxjs", "rxjs/operators"]
 			},
 			"configurations": {
 				"production": {
@@ -108,11 +102,6 @@
 				"tsConfig": "apps/desktop/tsconfig.spec.json",
 				"setupFile": "apps/desktop/src/test-setup.ts"
 			}
-		}
-	},
-	"generators": {
-		"@nx/angular:component": {
-			"style": "scss"
 		}
 	}
 }

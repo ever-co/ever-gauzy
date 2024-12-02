@@ -1,34 +1,27 @@
 {
 	"compilerOptions": {
-		"target": "es2022",
-		"useDefineForClassFields": false,
+		"outDir": "../../dist/apps/desktop-timer",
+		"sourceMap": true,
+		"declaration": false,
+		"moduleResolution": "node",
+		"emitDecoratorMetadata": true,
+		"experimentalDecorators": true,
+		"downlevelIteration": true,
 		"esModuleInterop": true,
-		"forceConsistentCasingInFileNames": true,
-		"strict": false,
-		"noImplicitOverride": false,
-		"noPropertyAccessFromIndexSignature": false,
-		"noImplicitReturns": false,
-		"noFallthroughCasesInSwitch": false,
-		"types": ["pino-pretty"]
+		"module": "commonjs",
+		"target": "ES2022",
+		"types": [
+			"pino-pretty"
+		]
 	},
-	"files": [],
-	"include": [],
-		"references": [
-			{
-				"path": "./tsconfig.editor.json"
-			},
-			{
-			"path": "./tsconfig.app.json"
-		},
-		{
-			"path": "./tsconfig.spec.json"
-		}
+	"files": [
+		"global.d.ts"
 	],
-	"extends": "../../tsconfig.json",
-	"angularCompilerOptions": {
-		"enableI18nLegacyMessageIdFormat": false,
-		"strictInjectionParameters": false,
-		"strictInputAccessModifiers": false,
-		"strictTemplates": false
-	}
+	"include": [
+		"src/index.ts",
+		"src/preload.ts"
+	],
+	"exclude": [
+		"jest.config.ts"
+	]
 }

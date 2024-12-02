@@ -1,17 +1,17 @@
 {
-    "extends": "./tsconfig.json",
+    "extends": "./tsconfig.ui.json",
     "compilerOptions": {
         "outDir": "../../dist/out-tsc",
-        "types": []
+		"types": []
     },
     "files": [
         "src/main.ts",
 		"src/polyfills.ts"
     ],
     "include": [
-        "src/**/*.d.ts",
-        "**/*.d.ts",
-        "../../node_modules/@nebular/**/*.d.ts"
+     	"src/**/*.d.ts",
+		"**/*.d.ts",
+		"../../node_modules/@nebular/**/*.d.ts"
     ],
     "exclude": [
         "jest.config.ts",

@@ -2,7 +2,6 @@ import { IActivityWatchEventResult } from '@gauzy/contracts';
 import { RegisteredWindow, ScreenCaptureNotification, WindowManager, loginPage } from '@gauzy/desktop-window';
 import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences } from 'electron';
 import log from 'electron-log';
-import { resetPermissions } from 'mac-screen-capture-permissions';
 import moment from 'moment';
 import * as _ from 'underscore';
 import { SleepInactivityTracking } from './contexts';
@@ -238,8 +237,6 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			log.info('Reset Permissions for Darwin');
 			if (isScreenUnauthorized()) {
 				log.info('Screen is Unauthorized');
-				const name = app.getName().split('-').join('');
-				resetPermissions({ bundleId: 'com.ever.' + name });
 			}
 		}
 	});

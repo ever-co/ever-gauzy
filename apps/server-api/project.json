@@ -28,9 +28,7 @@
 					{
 						"glob": "**/*",
 						"input": "apps/server-api/src/",
-						"ignore": [
-							"**/*.ts"
-						],
+						"ignore": ["**/*.ts"],
 						"output": ""
 					}
 				],
@@ -50,10 +48,7 @@
 				],
 				"scripts": [],
 				"stylePreprocessorOptions": {
-					"includePaths": [
-						"apps/server-api/src/assets/styles",
-						"packages/ui-core/static/styles"
-					]
+					"includePaths": ["apps/server-api/src/assets/styles", "packages/ui-core/static/styles"]
 				}
 			},
 			"configurations": {
