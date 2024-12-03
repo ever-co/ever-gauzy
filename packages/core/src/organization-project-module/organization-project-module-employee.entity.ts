@@ -79,7 +79,7 @@ export class OrganizationProjectModuleEmployee
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
-	role!: IRole;
+	role?: IRole;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
