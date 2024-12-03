@@ -3605,7 +3605,10 @@
 			"AUTHORIZED_TO_WORK": "{{ name }} مصرح له بالعمل",
 			"EMAIL_VERIFICATION_NOT_VALID": "عذراً، رابط التحقق هذا غير صالح.",
 			"EMAIL_VERIFICATION_VALID": "تهانينا! تم التحقق الآن من عنوان بريدك الإلكتروني.",
-			"SCREEN_CAPTURE_CHANGED": "تم تغيير حالة التقاط الشاشة لـ {{ name }}"
+			"SCREEN_CAPTURE_CHANGED": "تم تغيير حالة التقاط الشاشة لـ {{ name }}",
+			"MODULE_CREATED": "تم إنشاء الوحدة بنجاح!",
+			"MODULE_UPDATED": "تم تحديث الوحدة بنجاح!",
+			"MODULE_SAVE_ERROR": "فشل في حفظ الوحدة. حاول مرة أخرى."
 		}
 	},
 	"ACCEPT_INVITE": {

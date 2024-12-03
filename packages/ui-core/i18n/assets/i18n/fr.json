@@ -3608,7 +3608,10 @@
 			"AUTHORIZED_TO_WORK": "{{ name }} est autorisé à travailler.",
 			"EMAIL_VERIFICATION_NOT_VALID": "Désolé, ce lien de vérification n'est pas valide.",
 			"EMAIL_VERIFICATION_VALID": "Félicitations ! Votre adresse e-mail est désormais vérifiée.",
-			"SCREEN_CAPTURE_CHANGED": "Statut de capture d'écran modifié pour {{ name }}."
+			"SCREEN_CAPTURE_CHANGED": "Statut de capture d'écran modifié pour {{ name }}.",
+			"MODULE_CREATED": "Module créé avec succès !",
+			"MODULE_UPDATED": "Module mis à jour avec succès !",
+			"MODULE_SAVE_ERROR": "Échec de l'enregistrement du module. Veuillez réessayer."
 		}
 	},
 	"ACCEPT_INVITE": {

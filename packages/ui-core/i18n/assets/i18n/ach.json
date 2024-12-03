@@ -3349,7 +3349,10 @@
 			"TIME_LOG_DELETED": "crwdns11014:0{{ name }}crwdnd11014:0{{ organization }}crwdne11014:0",
 			"TIME_LOGS_DELETED": "crwdns11016:0{{ organization }}crwdne11016:0",
 			"BUCKET_CREATED": "crwdns10996:0{{ bucket }}crwdnd10996:0{{ region }}crwdne10996:0",
-			"AUTHORIZED_TO_WORK": "crwdns11529:0{{ name }}crwdne11529:0"
+			"AUTHORIZED_TO_WORK": "crwdns11529:0{{ name }}crwdne11529:0",
+			"MODULE_CREATED": "Module neno kibalo niber.",
+			"MODULE_UPDATED": "Module neno me kicari maber.",
+			"MODULE_SAVE_ERROR": "Kwero module ma neno opire."
 		}
 	},
 	"ACCEPT_INVITE": {

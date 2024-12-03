@@ -3603,7 +3603,10 @@
 			"AUTHORIZED_TO_WORK": "{{ name }} ist berechtigt zu arbeiten.",
 			"EMAIL_VERIFICATION_NOT_VALID": "Entschuldigung, dieser Bestätigungslink ist ungültig.",
 			"EMAIL_VERIFICATION_VALID": "Herzlichen Glückwunsch! Deine E-Mail ist jetzt verifiziert.",
-			"SCREEN_CAPTURE_CHANGED": "Bildschirmaufnahme-Status geändert für {{ name }}"
+			"SCREEN_CAPTURE_CHANGED": "Bildschirmaufnahme-Status geändert für {{ name }}",
+			"MODULE_CREATED": "Modul erfolgreich erstellt!",
+			"MODULE_UPDATED": "Modul erfolgreich aktualisiert!",
+			"MODULE_SAVE_ERROR": "Das Speichern des Moduls ist fehlgeschlagen. Bitte versuchen Sie es erneut."
 		}
 	},
 	"ACCEPT_INVITE": {
