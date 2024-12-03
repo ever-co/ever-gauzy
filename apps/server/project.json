@@ -27,7 +27,8 @@
 						"glob": "**/*",
 						"input": "apps/server/src/",
 						"ignore": [
-							"**/*.ts"
+							"**/*.ts",
+							"**/*.html"
 						],
 						"output": ""
 					}
