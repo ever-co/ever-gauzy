@@ -110,7 +110,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 			// Synchronize mentions
 			if (data.description) {
-				await this.mentionService.updateEntityMentions(BaseEntityEnum.Task, id, mentionUserIds);
+				try {
+					await this.mentionService.updateEntityMentions(BaseEntityEnum.Task, id, mentionUserIds);
+				} catch (error) {
+					console.error('Error synchronizing mentions:', error);
+				}
 			}
 
 			// TODO : Subscribe assignees
