@@ -24,7 +24,7 @@ import { ActivityLogService } from '../activity-log/activity-log.service';
 import { TypeOrmOrganizationProjectModuleRepository } from './repository/type-orm-organization-project-module.repository';
 import { MikroOrmOrganizationProjectModuleRepository } from './repository/mikro-orm-organization-project-module.repository';
 import { RoleService } from '../role/role.service';
-import { EmployeeService } from 'employee';
+import { EmployeeService } from '../employee/employee.service';
 import { OrganizationProjectModuleEmployee } from './organization-project-module-employee.entity';
 
 @Injectable()
@@ -53,7 +53,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		const { memberIds = [], managerIds = [], ...input } = entity;
 
 		// Combine memberIds and managerIds into a single array
-		const employeeIds = [...memberIds, ...managerIds].filter(Boolean);
+		const employeeIds = Array.from(new Set([...memberIds, ...managerIds])).filter(Boolean);
 
 		// Retrieves a collection of employees based on specified criteria.
 		const employees = await this._employeeService.findActiveEmployeesByEmployeeIds(
