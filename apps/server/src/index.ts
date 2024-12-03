@@ -122,7 +122,7 @@ const pathWindow: IPathWindow = {
 	ui: uiPath,
 	dir: dirPath,
 	timeTrackerUi: timeTrackerUIPath,
-	preloadPath: path.join(__dirname, 'preload/preload.js')
+	preloadPath: path.join(__dirname, 'preload.js')
 };
 
 ipcMain.handle('SAVED_THEME', () => {
@@ -318,7 +318,7 @@ const runServer = async () => {
 
 		// Instantiate API and UI servers
 		await desktopServer.start(
-			{ api: path.join(__dirname, 'api/main.js'), ui: path.join(__dirname, 'preload', 'ui-server.js') },
+			{ api: path.join(__dirname, 'api/main.js'), ui: path.join(__dirname, 'ui-server.js') },
 			envVal,
 			serverWindow,
 			signal,

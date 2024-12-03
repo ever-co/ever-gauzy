@@ -32,6 +32,16 @@
 						],
 						"output": ""
 					}
+				],
+				"additionalEntryPoints": [
+					{
+						"entryName": "preload",
+						"entryPath": "apps/server/src/preload/preload.ts"
+					},
+					{
+						"entryName": "ui-server",
+						"entryPath": "apps/server/src/preload/ui-server.ts"
+					}
 				]
 			},
 			"configurations": {
