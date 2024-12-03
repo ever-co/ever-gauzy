@@ -67,7 +67,6 @@ import {
 	OrganizationEmploymentType,
 	OrganizationPosition,
 	OrganizationProjectEmployee,
-	OrganizationProjectModule,
 	OrganizationSprintEmployee,
 	OrganizationTeamEmployee,
 	RequestApprovalEmployee,
