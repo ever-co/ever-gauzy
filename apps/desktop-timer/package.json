@@ -65,12 +65,14 @@
 		"app-root-path": "^3.0.0",
 		"auto-launch": "5.0.5",
 		"consolidate": "^0.16.0",
+		"custom-electron-titlebar": "^4.2.8",
 		"electron-log": "^4.4.8",
 		"electron-notarize": "^1.2.2",
 		"electron-store": "^8.1.0",
 		"electron-updater": "^6.1.7",
 		"electron-util": "^0.18.1",
 		"express": "^4.18.2",
+		"locutus": "^2.0.30",
 		"moment": "^2.30.1",
 		"moment-duration-format": "^2.3.2",
 		"moment-range": "^4.0.2",
@@ -85,10 +87,8 @@
 		"sound-play": "1.1.0",
 		"squirrelly": "^8.0.8",
 		"twing": "^5.0.2",
-		"locutus": "^2.0.30",
 		"underscore": "^1.13.3",
-		"undici": "^6.10.2",
-		"custom-electron-titlebar": "^4.2.8"
+		"undici": "^6.10.2"
 	},
 	"optionalDependencies": {
 		"node-linux": "^0.1.12",

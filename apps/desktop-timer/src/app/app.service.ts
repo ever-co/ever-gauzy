@@ -13,8 +13,18 @@ export class AppService {
 		private readonly _userOrganizationService: UserOrganizationService
 	) { }
 
-	public pingServer({ host }) {
-		return firstValueFrom(this.http.get(host + '/api'));
+	/**
+	 * Sends a GET request to the given host to check if the server is reachable.
+	 *
+	 * @param param0 - An object containing the host URL.
+	 * @param param0.host - The base URL of the server to ping.
+	 * @returns A promise that resolves with the server's response.
+	 *
+	 * @example
+	 * const response = await pingServer({ host: 'https://example.com' });
+	 */
+	public pingServer({ host }: { host: string }): Promise<any> {
+		return firstValueFrom(this.http.get(`${host}/api`));
 	}
 
 	/**
