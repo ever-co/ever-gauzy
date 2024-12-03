@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component,Input, OnInit} from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,7 +27,8 @@ import {
 	Store,
 	OrganizationProjectModuleService,
 	SprintService,
-	TasksService
+	TasksService,
+	ToastrService
 } from '@gauzy/ui-core/core';
 import { richTextCKEditorConfig } from '../../../ckeditor.config';
 
@@ -96,7 +97,8 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 		private organizationTeamsService: OrganizationTeamsService,
 		private organizationProjectModuleService: OrganizationProjectModuleService,
 		private organizationSprintService: SprintService,
-		private readonly tasksService: TasksService
+		private readonly tasksService: TasksService,
+		private readonly toastrService: ToastrService
 	) {
 		super(translateService);
 	}
@@ -116,26 +118,45 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 	 * Populates form fields with data from an existing project module.
 	 * @param module - The selected project module data.
 	 */
-	private populateForm(module: IOrganizationProjectModule) {
+	private populateForm(module: IOrganizationProjectModule): void {
 		if (!module) return;
+
+		const {
+			name,
+			description,
+			status,
+			startDate,
+			endDate,
+			isFavorite,
+			projectId,
+			parentId,
+			managerId,
+			members = [],
+			organizationSprints,
+			teams = [],
+			tasks = []
+		} = module;
+
 		this.form.patchValue({
-			name: module.name,
-			description: module.description,
-			status: module.status,
-			startDate: module.startDate,
-			endDate: module.endDate,
-			isFavorite: module.isFavorite,
-			projectId: module.projectId,
-			parentId: module.parentId,
-			managerId: module.managerId,
-			members: (module.members || [])?.map((m) => m.id),
-			organizationSprints: module.organizationSprints,
-			teams: (module.teams || [])?.map((t) => t.id),
-			tasks: (module.tasks || [])?.map((task) => task.id)
+			name,
+			description,
+			status,
+			startDate,
+			endDate,
+			isFavorite,
+			projectId,
+			parentId,
+			managerId,
+			members: members.map((m) => m.id),
+			organizationSprints,
+			teams: teams.map((t) => t.id),
+			tasks: tasks.map((task) => task.id),
 		});
-		this.selectedMembers = module.members?.map((m) => m.id);
-		this.selectedTeams = module.teams?.map((t) => t.id);
+
+		this.selectedMembers = members.map((m) => m.id);
+		this.selectedTeams = teams.map((t) => t.id);
 	}
+
 
 	/**
 	 * Validates and saves the form data to create or update the project module.
@@ -149,39 +170,69 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 	 * Creates a new project module or updates the existing module based on form data.
 	 */
 	private async createOrUpdateModule() {
-		const organizationId = this.organization.id;
+		try {
+			// Update form fields with valid members, teams, and tasks
+			this.updateFormFields();
 
-		this.form.get('members').setValue(
-			(this.selectedMembers || []).map((id) => this.employees.find((e) => e.id === id)).filter((e) => !!e) // Only valid employees
-		);
+			// Prepare form values
+			const formValue = {
+				...this.form.value,
+				organizationId: this.organization.id,
+				organization: this.organization
+			};
 
-		this.form.get('teams').setValue(
-			(this.selectedTeams || []).map((id) => this.teams.find((e) => e.id === id)).filter((e) => !!e) // Only valid teams
-		);
+			let module: IOrganizationProjectModule;
 
-		this.form.get('tasks').setValue(
-			(this.form.get('tasks').value || []).map((id) => this.tasks.find((e) => e.id === id)).filter((e) => !!e) // Only valid teams
-		);
-
-		const formValue = { ...this.form.value, organizationId, organization: this.organization };
-
-		if (this.createModule) {
-			try {
-				const module = await firstValueFrom(this.organizationProjectModuleService.create(formValue));
-				this.dialogRef.close(module);
-			} catch (error) {
-				console.error('Failed to create module:', error);
-			}
-		} else {
-			try {
-				const module = await firstValueFrom(
-					this.organizationProjectModuleService.update(this.projectModule.id, { ...formValue })
+			// Determine if we are creating or updating a module
+			if (this.createModule) {
+				module = await firstValueFrom(this.organizationProjectModuleService.create(formValue));
+				this.toastrService.success(
+					this.translateService.instant('TOASTR.MESSAGE.MODULE_CREATED'),
+					this.translateService.instant('TOASTR.TITLE.SUCCESS')
 				);
-				this.dialogRef.close(module);
-			} catch (error) {
-				console.error('Failed to update module:', error);
+			} else {
+				module = await firstValueFrom(
+					this.organizationProjectModuleService.update(this.projectModule.id, formValue)
+				);
+				this.toastrService.success(
+					this.translateService.instant('TOASTR.MESSAGE.MODULE_UPDATED'),
+					this.translateService.instant('TOASTR.TITLE.SUCCESS')
+				);
 			}
+
+			// Close the dialog and return the created/updated module
+			this.dialogRef.close(module);
+		} catch (error) {
+			// Display an error toast
+			this.toastrService.danger(
+				this.translateService.instant('TOASTR.MESSAGE.MODULE_SAVE_ERROR'),
+				this.translateService.instant('TOASTR.TITLE.ERROR')
+			);
+			console.error('Failed to save module:', error);
 		}
+	}
+
+	/**
+	 * Updates form fields with valid members, teams, and tasks.
+	 */
+	private updateFormFields() {
+		this.form
+			.get('members')
+			.setValue(
+				(this.selectedMembers || []).map((id: ID) => this.employees.find((e) => e.id === id)).filter(Boolean)
+			);
+
+		this.form
+			.get('teams')
+			.setValue((this.selectedTeams || []).map((id: ID) => this.teams.find((t) => t.id === id)).filter(Boolean));
+
+		this.form
+			.get('tasks')
+			.setValue(
+				(this.form.get('tasks').value || [])
+					.map((id: ID) => this.tasks.find((t) => t.id === id))
+					.filter(Boolean)
+			);
 	}
 
 	/**
