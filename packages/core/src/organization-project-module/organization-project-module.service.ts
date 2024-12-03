@@ -23,7 +23,7 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { TypeOrmOrganizationProjectModuleRepository } from './repository/type-orm-organization-project-module.repository';
 import { MikroOrmOrganizationProjectModuleRepository } from './repository/mikro-orm-organization-project-module.repository';
-import { RoleService } from 'role';
+import { RoleService } from '../role/role.service';
 import { EmployeeService } from 'employee';
 import { OrganizationProjectModuleEmployee } from './organization-project-module-employee.entity';
 

@@ -9,7 +9,7 @@ import { OrganizationProjectModuleController } from './organization-project-modu
 import { OrganizationProjectModule } from './organization-project-module.entity';
 import { TypeOrmOrganizationProjectModuleRepository } from './repository/type-orm-organization-project-module.repository';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { RoleModule } from 'role';
+import { RoleModule } from '../role/role.module';
 import { EmployeeModule } from 'employee';
 import { OrganizationProjectModuleEmployee } from './organization-project-module-employee.entity';
 import { TypeOrmOrganizationProjectModuleEmployeeRepository } from './repository/type-orm-organization-project-module-employee.repository';

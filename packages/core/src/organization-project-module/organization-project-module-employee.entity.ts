@@ -67,7 +67,7 @@ export class OrganizationProjectModuleEmployee
 	@RelationId((it: OrganizationProjectModuleEmployee) => it.employee)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	employeeId?: ID;
+	employeeId: ID;
 
 	/**
 	 * Role
