@@ -2,7 +2,7 @@ import { IBasePerEntityType, IBasePerTenantAndOrganizationEntityModel, ID } from
 import { IUser } from './user.model';
 
 export interface ISubscription extends IBasePerTenantAndOrganizationEntityModel, IBasePerEntityType {
-	subscriptionType: SubscriptionTypeEnum;
+	type: SubscriptionTypeEnum;
 	userId: ID;
 	user?: IUser;
 }

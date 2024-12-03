@@ -1,10 +1,10 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsOptional } from 'class-validator';
-import { ID, IMentionedUserIds } from '@gauzy/contracts';
+import { ID, IMentionUserIds } from '@gauzy/contracts';
 
-export class MentionedUserIdsDTO implements IMentionedUserIds {
+export class MentionUserIdsDTO implements IMentionUserIds {
 	@ApiPropertyOptional({ type: () => Array })
 	@IsOptional()
 	@IsArray()
-	mentionIds?: ID[];
+	mentionUserIds?: ID[];
 }

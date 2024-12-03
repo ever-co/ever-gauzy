@@ -1,7 +1,7 @@
 import { IntersectionType, OmitType } from '@nestjs/swagger';
 import { ICommentCreateInput } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
-import { MentionedUserIdsDTO } from '../../mention/dto';
+import { MentionUserIdsDTO } from '../../mention/dto';
 import { Comment } from '../comment.entity';
 
 /**
@@ -10,6 +10,6 @@ import { Comment } from '../comment.entity';
 export class CreateCommentDTO
 	extends IntersectionType(
 		TenantOrganizationBaseDTO,
-		IntersectionType(OmitType(Comment, ['creatorId', 'creator']), MentionedUserIdsDTO)
+		IntersectionType(OmitType(Comment, ['creatorId', 'creator']), MentionUserIdsDTO)
 	)
 	implements ICommentCreateInput {}

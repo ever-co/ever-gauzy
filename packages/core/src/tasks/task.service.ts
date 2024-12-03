@@ -64,7 +64,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		try {
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 			const userId = RequestContext.currentUserId();
-			const { mentionIds, ...data } = input;
+			const { mentionUserIds, ...data } = input;
 
 			// Find task relations
 			const relations = this.typeOrmTaskRepository.metadata.relations.map((relation) => relation.propertyName);
@@ -110,7 +110,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 			// Synchronize mentions
 			if (data.description) {
-				await this.mentionService.updateEntityMentions(BaseEntityEnum.Task, id, mentionIds);
+				await this.mentionService.updateEntityMentions(BaseEntityEnum.Task, id, mentionUserIds);
 			}
 
 			// TODO : Subscribe assignees

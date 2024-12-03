@@ -34,14 +34,14 @@ export class Mention extends TenantOrganizationBaseEntity implements IMention {
 	@IsOptional()
 	@IsUUID()
 	@ColumnIndex()
-	@MultiORMColumn()
+	@MultiORMColumn({ nullable: true })
 	parentEntityId?: ID;
 
 	@ApiProperty({ type: () => String, enum: BaseEntityEnum })
 	@IsOptional()
 	@IsEnum(BaseEntityEnum)
 	@ColumnIndex()
-	@MultiORMColumn()
+	@MultiORMColumn({ nullable: true })
 	parentEntityType?: BaseEntityEnum;
 
 	/*

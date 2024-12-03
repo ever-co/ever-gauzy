@@ -36,7 +36,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 		try {
 			// Destructure input and triggered event flag from the command
 			const { input, triggeredEvent } = command;
-			const { organizationId, mentionIds = [], ...data } = input;
+			const { organizationId, mentionUserIds = [], ...data } = input;
 
 			// Retrieve current tenant ID from request context or use input tenant ID
 			const tenantId = RequestContext.currentTenantId() ?? data.tenantId;
@@ -78,9 +78,9 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			}
 
 			// Apply mentions if needed
-			if (mentionIds.length > 0) {
+			if (mentionUserIds.length > 0) {
 				await Promise.all(
-					mentionIds.map((mentionedUserId) =>
+					mentionUserIds.map((mentionedUserId) =>
 						this.mentionService.publishMention({
 							entity: BaseEntityEnum.Task,
 							entityId: task.id,
@@ -97,7 +97,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 					entity: BaseEntityEnum.Task,
 					entityId: task.id,
 					userId: task.creatorId,
-					subscriptionType: SubscriptionTypeEnum.CREATED_ENTITY,
+					type: SubscriptionTypeEnum.CREATED_ENTITY,
 					organizationId,
 					tenantId
 				})

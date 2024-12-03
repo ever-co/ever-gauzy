@@ -1,7 +1,7 @@
 import { ITaskCreateInput } from '@gauzy/contracts';
 import { IntersectionType, OmitType } from '@nestjs/swagger';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
-import { MentionedUserIdsDTO } from '../../mention/dto';
+import { MentionUserIdsDTO } from '../../mention/dto';
 import { Task } from './../task.entity';
 
 /**
@@ -10,6 +10,6 @@ import { Task } from './../task.entity';
 export class CreateTaskDTO
 	extends IntersectionType(
 		TenantOrganizationBaseDTO,
-		IntersectionType(OmitType(Task, ['organizationId', 'organization']), MentionedUserIdsDTO)
+		IntersectionType(OmitType(Task, ['organizationId', 'organization']), MentionUserIdsDTO)
 	)
 	implements ITaskCreateInput {}

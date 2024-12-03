@@ -47,7 +47,7 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 					entity: parentEntityType ?? entity,
 					entityId: parentEntityId ?? entityId,
 					userId: mentionedUserId,
-					subscriptionType: SubscriptionTypeEnum.MENTION,
+					type: SubscriptionTypeEnum.MENTION,
 					organizationId,
 					tenantId
 				})
@@ -81,18 +81,18 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 	 *
 	 * This method handles adding new mentions and removing outdated mentions
 	 * for an entity (e.g., comments, tasks, or projects). It ensures that only
-	 * the specified user mentions (`newMentionIds`) are associated with the entity.
+	 * the specified user mentions (`newMentionUserIds`) are associated with the entity.
 	 *
 	 * @param entity - The type of entity being updated (e.g., Comment, Task, etc.).
 	 * @param entityId - The ID of the entity being updated.
-	 * @param mentionIds - Array of user IDs to be mentioned in this entity.
+	 * @param mentionUserIds - Array of user IDs to be mentioned in this entity.
 	 * @param parentEntityId - (Optional) The ID of the parent entity, if applicable.
 	 * @param parentEntityType - (Optional) The type of the parent entity, if applicable.
 	 */
 	async updateEntityMentions(
 		entity: BaseEntityEnum,
 		entityId: ID,
-		mentionsIds: ID[],
+		mentionUserIds: ID[],
 		parentEntityId?: ID,
 		parentEntityType?: BaseEntityEnum
 	): Promise<void> {
@@ -109,10 +109,10 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 			const existingMentionUserIds = new Set(existingMentions.map((mention) => mention.mentionedUserId));
 
 			// Determine mentions to add (not present in existing mentions)
-			const mentionsToAdd = mentionsIds.filter((id) => !existingMentionUserIds.has(id));
+			const mentionsToAdd = mentionUserIds.filter((id) => !existingMentionUserIds.has(id));
 
 			// Determine mentions to remove (present in existing mentions but not in mentionsIds)
-			const mentionsToRemove = [...existingMentionUserIds].filter((id) => !mentionsIds.includes(id));
+			const mentionsToRemove = [...existingMentionUserIds].filter((id) => !mentionUserIds.includes(id));
 
 			// Add new mentions
 			if (mentionsToAdd.length > 0) {

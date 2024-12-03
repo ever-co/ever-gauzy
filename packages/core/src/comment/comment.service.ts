@@ -40,7 +40,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		try {
 			const userId = RequestContext.currentUserId();
 			const tenantId = RequestContext.currentTenantId();
-			const { mentionIds = [], ...data } = input;
+			const { mentionUserIds = [], ...data } = input;
 
 			// Employee existence validation
 			const user = await this.userService.findOneByIdString(userId);
@@ -57,7 +57,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 
 			// Apply mentions if needed
 			await Promise.all(
-				mentionIds.map((mentionedUserId) =>
+				mentionUserIds.map((mentionedUserId) =>
 					this.mentionService.publishMention({
 						entity: BaseEntityEnum.Comment,
 						entityId: comment.id,
@@ -75,7 +75,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 					entity: input.entity,
 					entityId: input.entityId,
 					userId: user.id,
-					subscriptionType: SubscriptionTypeEnum.COMMENT,
+					type: SubscriptionTypeEnum.COMMENT,
 					organizationId: comment.organizationId,
 					tenantId
 				})
@@ -98,7 +98,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	 */
 	async update(id: ID, input: ICommentUpdateInput): Promise<IComment | UpdateResult> {
 		try {
-			const { mentionIds = [] } = input;
+			const { mentionUserIds = [] } = input;
 
 			const userId = RequestContext.currentUserId();
 			const comment = await this.findOneByOptions({
@@ -121,7 +121,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			await this.mentionService.updateEntityMentions(
 				BaseEntityEnum.Comment,
 				id,
-				mentionIds,
+				mentionUserIds,
 				updatedComment.entityId,
 				updatedComment.entity
 			);

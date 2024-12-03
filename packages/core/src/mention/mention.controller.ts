@@ -5,7 +5,7 @@ import { Mention } from './mention.entity';
 import { MentionService } from './mention.service';
 
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Controller('/mention')
+@Controller('/mentions')
 export class MentionController extends CrudController<Mention> {
 	constructor(readonly mentionService: MentionService) {
 		super(mentionService);

@@ -30,7 +30,7 @@ export class Subscription extends TenantOrganizationBaseEntity implements ISubsc
 	@IsEnum(SubscriptionTypeEnum)
 	@ColumnIndex()
 	@MultiORMColumn()
-	subscriptionType: SubscriptionTypeEnum;
+	type: SubscriptionTypeEnum;
 
 	/*
 	|--------------------------------------------------------------------------
