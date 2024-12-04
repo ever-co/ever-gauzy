@@ -61,7 +61,7 @@ export class UpdateModuleToMemberRelationship1733140380074 implements MigrationI
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_module" DROP CONSTRAINT "FK_e6b6555e5fc6c5120110a0195cd"`
 		);
-		await queryRunner.query(`ALTER TABLE "employee_job_preset" DROP CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2"`);
+
 		await queryRunner.query(`DROP INDEX "public"."IDX_e6b6555e5fc6c5120110a0195c"`);
 		await queryRunner.query(
 			`CREATE TABLE "organization_project_module_employee" ("deletedAt" TIMESTAMP, "id" uuid NOT NULL DEFAULT gen_random_uuid(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "isActive" boolean DEFAULT true, "isArchived" boolean DEFAULT false, "archivedAt" TIMESTAMP, "tenantId" uuid, "organizationId" uuid, "isManager" boolean DEFAULT false, "assignedAt" TIMESTAMP, "organizationProjectModuleId" uuid NOT NULL, "employeeId" uuid NOT NULL, "roleId" uuid, CONSTRAINT "PK_31c545c357a16282a2310027a05" PRIMARY KEY ("id"))`
@@ -109,9 +109,6 @@ export class UpdateModuleToMemberRelationship1733140380074 implements MigrationI
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_module_employee" ADD CONSTRAINT "FK_5f4b71530d53181987bea86a938" FOREIGN KEY ("roleId") REFERENCES "role"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
-		await queryRunner.query(
-			`ALTER TABLE "employee_job_preset" ADD CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2" FOREIGN KEY ("jobPresetId") REFERENCES "job_preset"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
-		);
 	}
 
 	/**
@@ -120,7 +117,6 @@ export class UpdateModuleToMemberRelationship1733140380074 implements MigrationI
 	 * @param queryRunner
 	 */
 	public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(`ALTER TABLE "employee_job_preset" DROP CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2"`);
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_module_employee" DROP CONSTRAINT "FK_5f4b71530d53181987bea86a938"`
 		);
@@ -149,9 +145,6 @@ export class UpdateModuleToMemberRelationship1733140380074 implements MigrationI
 		await queryRunner.query(`DROP TABLE "organization_project_module_employee"`);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_e6b6555e5fc6c5120110a0195c" ON "organization_project_module" ("managerId") `
-		);
-		await queryRunner.query(
-			`ALTER TABLE "employee_job_preset" ADD CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2" FOREIGN KEY ("jobPresetId") REFERENCES "job_preset"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
 		);
 		await queryRunner.query(
 			`ALTER TABLE "organization_project_module" ADD CONSTRAINT "FK_e6b6555e5fc6c5120110a0195cd" FOREIGN KEY ("managerId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
@@ -208,20 +201,7 @@ export class UpdateModuleToMemberRelationship1733140380074 implements MigrationI
 		);
 		await queryRunner.query(`DROP INDEX "IDX_7ae5b4d4bdec77971dab319f2e"`);
 		await queryRunner.query(`DROP INDEX "IDX_68e75e49f06409fd385b4f8774"`);
-		await queryRunner.query(
-			`CREATE TABLE "temporary_employee_job_preset" ("jobPresetId" varchar NOT NULL, "employeeId" varchar NOT NULL, CONSTRAINT "FK_68e75e49f06409fd385b4f87746" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY ("jobPresetId", "employeeId"))`
-		);
-		await queryRunner.query(
-			`INSERT INTO "temporary_employee_job_preset"("jobPresetId", "employeeId") SELECT "jobPresetId", "employeeId" FROM "employee_job_preset"`
-		);
-		await queryRunner.query(`DROP TABLE "employee_job_preset"`);
-		await queryRunner.query(`ALTER TABLE "temporary_employee_job_preset" RENAME TO "employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7ae5b4d4bdec77971dab319f2e" ON "employee_job_preset" ("jobPresetId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_68e75e49f06409fd385b4f8774" ON "employee_job_preset" ("employeeId") `
-		);
+
 		await queryRunner.query(`DROP INDEX "IDX_e6b6555e5fc6c5120110a0195c"`);
 		await queryRunner.query(
 			`CREATE TABLE "organization_project_module_employee" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "isManager" boolean DEFAULT (0), "assignedAt" datetime, "organizationProjectModuleId" varchar NOT NULL, "employeeId" varchar NOT NULL, "roleId" varchar)`
@@ -339,20 +319,6 @@ export class UpdateModuleToMemberRelationship1733140380074 implements MigrationI
 		);
 		await queryRunner.query(`DROP INDEX "IDX_7ae5b4d4bdec77971dab319f2e"`);
 		await queryRunner.query(`DROP INDEX "IDX_68e75e49f06409fd385b4f8774"`);
-		await queryRunner.query(
-			`CREATE TABLE "temporary_employee_job_preset" ("jobPresetId" varchar NOT NULL, "employeeId" varchar NOT NULL, CONSTRAINT "FK_68e75e49f06409fd385b4f87746" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2" FOREIGN KEY ("jobPresetId") REFERENCES "job_preset" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION, PRIMARY KEY ("jobPresetId", "employeeId"))`
-		);
-		await queryRunner.query(
-			`INSERT INTO "temporary_employee_job_preset"("jobPresetId", "employeeId") SELECT "jobPresetId", "employeeId" FROM "employee_job_preset"`
-		);
-		await queryRunner.query(`DROP TABLE "employee_job_preset"`);
-		await queryRunner.query(`ALTER TABLE "temporary_employee_job_preset" RENAME TO "employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7ae5b4d4bdec77971dab319f2e" ON "employee_job_preset" ("jobPresetId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_68e75e49f06409fd385b4f8774" ON "employee_job_preset" ("employeeId") `
-		);
 	}
 
 	/**
@@ -363,20 +329,6 @@ export class UpdateModuleToMemberRelationship1733140380074 implements MigrationI
 	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(`DROP INDEX "IDX_68e75e49f06409fd385b4f8774"`);
 		await queryRunner.query(`DROP INDEX "IDX_7ae5b4d4bdec77971dab319f2e"`);
-		await queryRunner.query(`ALTER TABLE "employee_job_preset" RENAME TO "temporary_employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE TABLE "employee_job_preset" ("jobPresetId" varchar NOT NULL, "employeeId" varchar NOT NULL, CONSTRAINT "FK_68e75e49f06409fd385b4f87746" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY ("jobPresetId", "employeeId"))`
-		);
-		await queryRunner.query(
-			`INSERT INTO "employee_job_preset"("jobPresetId", "employeeId") SELECT "jobPresetId", "employeeId" FROM "temporary_employee_job_preset"`
-		);
-		await queryRunner.query(`DROP TABLE "temporary_employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_68e75e49f06409fd385b4f8774" ON "employee_job_preset" ("employeeId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7ae5b4d4bdec77971dab319f2e" ON "employee_job_preset" ("jobPresetId") `
-		);
 		await queryRunner.query(`DROP INDEX "IDX_5f4b71530d53181987bea86a93"`);
 		await queryRunner.query(`DROP INDEX "IDX_230366f71696f7752afac3f53c"`);
 		await queryRunner.query(`DROP INDEX "IDX_5c6124c57cf06b62e6c5d4ae2c"`);
@@ -476,20 +428,7 @@ export class UpdateModuleToMemberRelationship1733140380074 implements MigrationI
 		);
 		await queryRunner.query(`DROP INDEX "IDX_68e75e49f06409fd385b4f8774"`);
 		await queryRunner.query(`DROP INDEX "IDX_7ae5b4d4bdec77971dab319f2e"`);
-		await queryRunner.query(`ALTER TABLE "employee_job_preset" RENAME TO "temporary_employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE TABLE "employee_job_preset" ("jobPresetId" varchar NOT NULL, "employeeId" varchar NOT NULL, CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2" FOREIGN KEY ("jobPresetId") REFERENCES "job_preset" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION, CONSTRAINT "FK_68e75e49f06409fd385b4f87746" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY ("jobPresetId", "employeeId"))`
-		);
-		await queryRunner.query(
-			`INSERT INTO "employee_job_preset"("jobPresetId", "employeeId") SELECT "jobPresetId", "employeeId" FROM "temporary_employee_job_preset"`
-		);
-		await queryRunner.query(`DROP TABLE "temporary_employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_68e75e49f06409fd385b4f8774" ON "employee_job_preset" ("employeeId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7ae5b4d4bdec77971dab319f2e" ON "employee_job_preset" ("jobPresetId") `
-		);
+
 		await queryRunner.query(`DROP INDEX "IDX_e6b6555e5fc6c5120110a0195c"`);
 		await queryRunner.query(`DROP INDEX "IDX_8f2054a6a2d4b9c17624b9c8a0"`);
 		await queryRunner.query(`DROP INDEX "IDX_7fd3c8f54c01943b283080aefa"`);
@@ -543,15 +482,13 @@ export class UpdateModuleToMemberRelationship1733140380074 implements MigrationI
 		await queryRunner.query(
 			`ALTER TABLE \`organization_project_module\` DROP FOREIGN KEY \`FK_e6b6555e5fc6c5120110a0195cd\``
 		);
-		await queryRunner.query(
-			`ALTER TABLE \`employee_job_preset\` DROP FOREIGN KEY \`FK_7ae5b4d4bdec77971dab319f2e2\``
-		);
+
 		await queryRunner.query(`DROP INDEX \`IDX_e6b6555e5fc6c5120110a0195c\` ON \`organization_project_module\``);
 		await queryRunner.query(
 			`CREATE TABLE \`organization_project_module_employee\` (\`deletedAt\` datetime(6) NULL, \`id\` varchar(36) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`isManager\` tinyint NULL DEFAULT 0, \`assignedAt\` datetime NULL, \`organizationProjectModuleId\` varchar(255) NOT NULL, \`employeeId\` varchar(255) NOT NULL, \`roleId\` varchar(255) NULL, INDEX \`IDX_84e91db708746a20040843c887\` (\`isActive\`), INDEX \`IDX_5851128af6de9c905f0e2be1e6\` (\`isArchived\`), INDEX \`IDX_0b50ed382a8698a973b6201895\` (\`tenantId\`), INDEX \`IDX_c0f24a425e294a86c977ccafed\` (\`organizationId\`), INDEX \`IDX_4ee53d5870dcd9668536d617f0\` (\`isManager\`), INDEX \`IDX_fa8fbbaa9d358aff5afb6492d3\` (\`assignedAt\`), INDEX \`IDX_5c6124c57cf06b62e6c5d4ae2c\` (\`organizationProjectModuleId\`), INDEX \`IDX_230366f71696f7752afac3f53c\` (\`employeeId\`), INDEX \`IDX_5f4b71530d53181987bea86a93\` (\`roleId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
 		);
 		await queryRunner.query(`ALTER TABLE \`organization_project_module\` DROP COLUMN \`managerId\``);
-		await queryRunner.query(`ALTER TABLE \`user\` DROP COLUMN \`numProjectsCreated\``);
+
 		await queryRunner.query(
 			`ALTER TABLE \`organization_project_module_employee\` ADD CONSTRAINT \`FK_0b50ed382a8698a973b6201895a\` FOREIGN KEY (\`tenantId\`) REFERENCES \`tenant\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
@@ -567,15 +504,6 @@ export class UpdateModuleToMemberRelationship1733140380074 implements MigrationI
 		await queryRunner.query(
 			`ALTER TABLE \`organization_project_module_employee\` ADD CONSTRAINT \`FK_5f4b71530d53181987bea86a938\` FOREIGN KEY (\`roleId\`) REFERENCES \`role\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
-		await queryRunner.query(
-			`ALTER TABLE \`mention\` ADD CONSTRAINT \`FK_16a2deee0d7ea361950eed1b944\` FOREIGN KEY (\`mentionedUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`mention\` ADD CONSTRAINT \`FK_34b0087a30379c86b470a4298ca\` FOREIGN KEY (\`mentionById\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`employee_job_preset\` ADD CONSTRAINT \`FK_7ae5b4d4bdec77971dab319f2e2\` FOREIGN KEY (\`jobPresetId\`) REFERENCES \`job_preset\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`
-		);
 	}
 
 	/**
@@ -584,11 +512,6 @@ export class UpdateModuleToMemberRelationship1733140380074 implements MigrationI
 	 * @param queryRunner
 	 */
 	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(
-			`ALTER TABLE \`employee_job_preset\` DROP FOREIGN KEY \`FK_7ae5b4d4bdec77971dab319f2e2\``
-		);
-		await queryRunner.query(`ALTER TABLE \`mention\` DROP FOREIGN KEY \`FK_34b0087a30379c86b470a4298ca\``);
-		await queryRunner.query(`ALTER TABLE \`mention\` DROP FOREIGN KEY \`FK_16a2deee0d7ea361950eed1b944\``);
 		await queryRunner.query(
 			`ALTER TABLE \`organization_project_module_employee\` DROP FOREIGN KEY \`FK_5f4b71530d53181987bea86a938\``
 		);
@@ -604,7 +527,6 @@ export class UpdateModuleToMemberRelationship1733140380074 implements MigrationI
 		await queryRunner.query(
 			`ALTER TABLE \`organization_project_module_employee\` DROP FOREIGN KEY \`FK_0b50ed382a8698a973b6201895a\``
 		);
-		await queryRunner.query(`ALTER TABLE \`user\` ADD \`numProjectsCreated\` int NOT NULL DEFAULT '0'`);
 		await queryRunner.query(`ALTER TABLE \`organization_project_module\` ADD \`managerId\` varchar(255) NULL`);
 		await queryRunner.query(
 			`DROP INDEX \`IDX_5f4b71530d53181987bea86a93\` ON \`organization_project_module_employee\``
@@ -636,9 +558,6 @@ export class UpdateModuleToMemberRelationship1733140380074 implements MigrationI
 		await queryRunner.query(`DROP TABLE \`organization_project_module_employee\``);
 		await queryRunner.query(
 			`CREATE INDEX \`IDX_e6b6555e5fc6c5120110a0195c\` ON \`organization_project_module\` (\`managerId\`)`
-		);
-		await queryRunner.query(
-			`ALTER TABLE \`employee_job_preset\` ADD CONSTRAINT \`FK_7ae5b4d4bdec77971dab319f2e2\` FOREIGN KEY (\`jobPresetId\`) REFERENCES \`job_preset\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`
 		);
 		await queryRunner.query(
 			`ALTER TABLE \`organization_project_module\` ADD CONSTRAINT \`FK_e6b6555e5fc6c5120110a0195cd\` FOREIGN KEY (\`managerId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
