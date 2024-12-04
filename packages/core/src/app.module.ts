@@ -152,6 +152,7 @@ import { ApiCallLogModule } from './api-call-log/api-call-log.module'; // Global
 import { TaskViewModule } from './tasks/views/view.module';
 import { ResourceLinkModule } from './resource-link/resource-link.module';
 import { MentionModule } from './mention/mention.module';
+import { SubscriptionModule } from './subscription/subscription.module';
 
 const { unleashConfig } = environment;
 
@@ -453,7 +454,8 @@ if (environment.THROTTLE_ENABLED) {
 		ApiCallLogModule,
 		TaskViewModule,
 		ResourceLinkModule,
-		MentionModule // Task views Module
+		MentionModule,
+		SubscriptionModule // Task views Module
 	],
 	controllers: [AppController],
 	providers: [
