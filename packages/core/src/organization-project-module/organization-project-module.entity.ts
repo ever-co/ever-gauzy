@@ -14,9 +14,9 @@ import {
 } from 'class-validator';
 import {
 	ID,
-	IEmployee,
 	IOrganizationProject,
 	IOrganizationProjectModule,
+	IOrganizationProjectModuleEmployee,
 	IOrganizationSprint,
 	IOrganizationTeam,
 	ITask,
@@ -25,7 +25,6 @@ import {
 	ProjectModuleStatusEnum
 } from '@gauzy/contracts';
 import {
-	Employee,
 	OrganizationProject,
 	OrganizationSprint,
 	OrganizationTeam,
@@ -43,6 +42,7 @@ import {
 	MultiORMOneToMany
 } from '../core/decorators/entity';
 import { MikroOrmOrganizationProjectModuleRepository } from './repository/mikro-orm-organization-project-module.repository';
+import { OrganizationProjectModuleEmployee } from './organization-project-module-employee.entity';
 
 @MultiORMEntity('organization_project_module', {
 	mikroOrmRepository: () => MikroOrmOrganizationProjectModuleRepository
@@ -153,27 +153,6 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	@MultiORMColumn({ nullable: true, relationId: true })
 	creatorId?: ID;
 
-	/**
-	 * Module manager
-	 */
-	@ApiPropertyOptional({ type: () => Object })
-	@IsOptional()
-	@IsObject()
-	@MultiORMManyToOne(() => User, {
-		nullable: true,
-		onDelete: 'CASCADE'
-	})
-	@JoinColumn()
-	manager?: IUser;
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@IsUUID()
-	@RelationId((it: OrganizationProjectModule) => it.manager)
-	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, relationId: true })
-	managerId?: ID;
-
 	/*
 	|--------------------------------------------------------------------------
 	| @OneToMany
@@ -254,16 +233,9 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	@ApiPropertyOptional({ type: () => Array, isArray: true })
 	@IsOptional()
 	@IsArray()
-	@MultiORMManyToMany(() => Employee, (employee) => employee.modules, {
-		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
-		owner: true,
-		pivotTable: 'project_module_employee',
-		joinColumn: 'organizationProjectModuleId',
-		inverseJoinColumn: 'employeeId'
+	@MultiORMOneToMany(() => OrganizationProjectModuleEmployee, (employee) => employee.organizationProjectModule, {
+		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
+		cascade: true
 	})
-	@JoinTable({
-		name: 'project_module_employee'
-	})
-	members?: IEmployee[];
+	members?: IOrganizationProjectModuleEmployee[];
 }

@@ -67,7 +67,6 @@ import {
 	OrganizationEmploymentType,
 	OrganizationPosition,
 	OrganizationProjectEmployee,
-	OrganizationProjectModule,
 	OrganizationSprintEmployee,
 	OrganizationTeamEmployee,
 	RequestApprovalEmployee,
@@ -93,6 +92,7 @@ import { Trimmed } from '../shared/decorators';
 import { ColumnNumericTransformerPipe } from '../shared/pipes';
 import { Taggable } from '../tags/tag.types';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
+import { OrganizationProjectModuleEmployee } from '../organization-project-module/organization-project-module-employee.entity';
 
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee, Taggable, HasCustomFields {
@@ -534,6 +534,12 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	})
 	sprints?: IOrganizationSprint[];
 
+	//Employee Module
+	@MultiORMOneToMany(() => OrganizationProjectModuleEmployee, (it) => it.employee, {
+		cascade: true
+	})
+	modules?: IOrganizationProjectModule[];
+
 	/**
 	 * Estimations
 	 */
@@ -723,15 +729,6 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	})
 	@JoinTable()
 	tasks?: ITask[];
-
-	/**
-	 * Project Module
-	 */
-	@MultiORMManyToMany(() => OrganizationProjectModule, (module) => module.members, {
-		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
-	})
-	modules?: IOrganizationProjectModule[];
 
 	/**
 	 * Equipment Sharing

@@ -81,9 +81,7 @@ export class ProjectModuleTableComponent extends TranslationBaseComponent implem
 					'teams.members.employee',
 					'teams.members.employee.user',
 					'members',
-					'members.user',
 					'tasks',
-					'manager',
 					'parent'
 				])
 			);

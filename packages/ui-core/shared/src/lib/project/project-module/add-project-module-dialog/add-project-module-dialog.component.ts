@@ -1,4 +1,4 @@
-import { Component,Input, OnInit} from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -14,11 +14,11 @@ import {
 	IOrganizationProjectModule,
 	IOrganizationSprint,
 	IOrganizationTeam,
-	ISelectedEmployee,
 	ITask,
 	ProjectModuleStatusEnum,
 	TaskParticipantEnum,
-	ID
+	ID,
+	IOrganizationProjectModuleEmployee
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
@@ -39,9 +39,12 @@ import { richTextCKEditorConfig } from '../../../ckeditor.config';
 	styleUrls: ['./add-project-module-dialog.component.scss']
 })
 export class AddProjectModuleDialogComponent extends TranslationBaseComponent implements OnInit {
+	memberIds: ID[] = [];
+	managerIds: ID[] = [];
+	selectedEmployeeIds: ID[] = [];
+	selectedManagerIds: ID[] = [];
 	employees: IEmployee[] = [];
 	teams: IOrganizationTeam[] = [];
-	selectedMembers: string[] = [];
 	selectedTeams: string[] = [];
 	tasks: ITask[] = [];
 	organizationSprints: IOrganizationSprint[] = [];
@@ -60,8 +63,8 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 		isFavorite: [false],
 		parentId: [],
 		projectId: [null, Validators.required],
-		managerId: [],
-		members: [],
+		managerIds: [],
+		memberIds: [],
 		organizationSprints: [],
 		teams: [],
 		tasks: []
@@ -130,7 +133,6 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 			isFavorite,
 			projectId,
 			parentId,
-			managerId,
 			members = [],
 			organizationSprints,
 			teams = [],
@@ -146,17 +148,27 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 			isFavorite,
 			projectId,
 			parentId,
-			managerId,
 			members: members.map((m) => m.id),
 			organizationSprints,
 			teams: teams.map((t) => t.id),
-			tasks: tasks.map((task) => task.id),
+			tasks: tasks.map((task) => task.id)
 		});
 
-		this.selectedMembers = members.map((m) => m.id);
+		this.selectedEmployeeIds = (module.members || [])
+			.filter((member: IOrganizationProjectModuleEmployee) => !member.isManager)
+			.map((member: IOrganizationProjectModuleEmployee) => member.employeeId);
+
+		this.memberIds = this.selectedEmployeeIds;
+
+		// Selected Managers Ids
+		this.selectedManagerIds = (module.members || [])
+			.filter((member: IOrganizationProjectModuleEmployee) => member.isManager)
+			.map((member: IOrganizationProjectModuleEmployee) => member.employeeId);
+
+		this.managerIds = this.selectedManagerIds;
+
 		this.selectedTeams = teams.map((t) => t.id);
 	}
-
 
 	/**
 	 * Validates and saves the form data to create or update the project module.
@@ -216,11 +228,9 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 	 * Updates form fields with valid members, teams, and tasks.
 	 */
 	private updateFormFields() {
-		this.form
-			.get('members')
-			.setValue(
-				(this.selectedMembers || []).map((id: ID) => this.employees.find((e) => e.id === id)).filter(Boolean)
-			);
+		this.form.get('memberIds').setValue(this.memberIds.filter((memberId) => !this.managerIds.includes(memberId)));
+
+		this.managerIds.filter((managerId) => this.employees.some((emp) => emp.id === managerId));
 
 		this.form
 			.get('teams')
@@ -354,12 +364,14 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 	}
 
 	/**
-	 * Updates the selected manager ID in the form.
-	 * @param selectedManagerId - The selected manager's ID.
+	 * Handles the selection of managers and updates the `managerIds` property.
+	 *
+	 * @param {ID[]} managerIds - An array of selected manager IDs.
+	 * The function is called when managers are selected, and it sets the `managerIds` property
+	 * with the array of selected IDs.
 	 */
-	onManagerSelected(employee: ISelectedEmployee) {
-		// Check if the provided value is an array; if so, take the first element, otherwise use the value directly
-		this.form.get('managerId').setValue(employee.id);
+	onManagersSelected(managerIds: ID[]): void {
+		this.managerIds = managerIds;
 	}
 
 	/**
@@ -372,11 +384,13 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 	}
 
 	/**
-	 * Updates the selected members based on the user's selection.
+	 * Handles the selection of members and updates the `memberIds` property.
 	 *
-	 * @param members - An array of member IDs selected by the user.
+	 * @param {ID[]} memberIds - An array of selected member IDs.
+	 * The function is called when members are selected, and it sets the `memberIds` property
+	 * with the array of selected IDs.
 	 */
-	onMembersSelected(members: ID[]): void {
-		this.selectedMembers = [...members];
+	onMembersSelected(memberIds: ID[]): void {
+		this.memberIds = memberIds;
 	}
 }
