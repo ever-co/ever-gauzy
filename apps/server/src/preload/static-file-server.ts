@@ -1,8 +1,8 @@
 import * as http from 'http';
+import { IncomingMessage, ServerResponse } from 'http';
+import { Server as NodeStaticServer } from 'node-static';
 import * as path from 'path';
 import { parse } from 'url';
-import { Server as NodeStaticServer } from 'node-static';
-import { IncomingMessage, ServerResponse } from 'http';
 
 export class StaticFileServer {
 	private static instance: StaticFileServer;
@@ -12,9 +12,7 @@ export class StaticFileServer {
 
 	private constructor() {
 		this.isPackaged = process.env.isPackaged === 'true';
-		this.dirUi = this.isPackaged
-			? path.join(__dirname, '..', '..', 'data', 'ui')
-			: path.join(__dirname, '..', 'data', 'ui');
+		this.dirUi = this.isPackaged ? path.join(__dirname, '..', 'data', 'ui') : path.join(__dirname, 'data', 'ui');
 		this.fileServer = new NodeStaticServer(this.dirUi);
 	}
 
