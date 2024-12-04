@@ -16,7 +16,7 @@ export class Mention extends TenantOrganizationBaseEntity implements IMention {
 	@IsUUID()
 	@ColumnIndex()
 	@MultiORMColumn()
-	entityId: string;
+	entityId: ID;
 
 	@ApiProperty({ type: () => String, enum: BaseEntityEnum })
 	@IsNotEmpty()
@@ -24,6 +24,25 @@ export class Mention extends TenantOrganizationBaseEntity implements IMention {
 	@ColumnIndex()
 	@MultiORMColumn()
 	entity: BaseEntityEnum;
+
+	/**
+	 * The parent entity ID
+	 *
+	 * E.g : If the user was mentioned is in a comment, we need this for subscription and notifications purpose (It could be the `task ID` concerned by comment, then the user will be subscribed to that task instead of to a comment itself because in this case, `entityId` will store the comment ID)
+	 */
+	@ApiProperty({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true })
+	parentEntityId?: ID;
+
+	@ApiProperty({ type: () => String, enum: BaseEntityEnum })
+	@IsOptional()
+	@IsEnum(BaseEntityEnum)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true })
+	parentEntityType?: BaseEntityEnum;
 
 	/*
 	|--------------------------------------------------------------------------

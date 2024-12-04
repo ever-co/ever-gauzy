@@ -126,6 +126,7 @@ export * from '../../resource-link/resource-link.entity';
 export * from '../../role-permission/role-permission.entity';
 export * from '../../role/role.entity';
 export * from '../../skills/skill.entity';
+export * from '../../subscription/subscription.entity';
 export * from '../../tags/tag.entity';
 export * from '../../tasks/daily-plan/daily-plan.entity';
 export * from '../../tasks/estimation/task-estimation.entity';
