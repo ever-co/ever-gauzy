@@ -10,15 +10,7 @@
 		"esModuleInterop": true,
 		"module": "commonjs",
 		"target": "ES2022",
-		"types": [
-			"pino-pretty"
-		],
-		"paths": {
-			"@gauzy/contracts": ["../../dist/packages/contracts"],
-			"@gauzy/desktop-lib": ["../../dist/packages/desktop-lib"],
-			"@gauzy/desktop-ui-lib": ["../../dist/packages/desktop-ui-lib"],
-			"@gauzy/desktop-window": ["../../dist/packages/desktop-window"]
-		}
+		"types": []
 	},
 	"files": [
 		"global.d.ts"

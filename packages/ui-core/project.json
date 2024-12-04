@@ -28,14 +28,10 @@
 			"executor": "nx:run-commands",
 			"configurations": {
 				"production": {
-					"commands": [
-						"yarn run build:package:ui-config:prod"
-					]
+					"commands": ["yarn run build:package:ui-config:prod"]
 				},
 				"development": {
-					"commands": [
-						"yarn run build:package:ui-config"
-					]
+					"commands": ["yarn run build:package:ui-config"]
 				}
 			},
 			"defaultConfiguration": "production"
