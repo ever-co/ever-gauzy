@@ -70,6 +70,7 @@
 				"{options.outputPath}"
 			],
 			"options": {
+				"baseHref": "./",
 				"outputPath": "dist/apps/gauzy-server",
 				"deleteOutputPath": false,
 				"browser": "apps/server/src/main.ts",
