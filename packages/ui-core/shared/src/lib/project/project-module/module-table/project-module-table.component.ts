@@ -2,7 +2,7 @@ import { Component, OnInit, Input } from '@angular/core';
 import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { ID, IOrganizationProjectModule } from '@gauzy/contracts';
+import { ID, IEmployee, IOrganizationProjectModule, IOrganizationProjectModuleEmployee } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
@@ -81,6 +81,8 @@ export class ProjectModuleTableComponent extends TranslationBaseComponent implem
 					'teams.members.employee',
 					'teams.members.employee.user',
 					'members',
+					'members.employee',
+					'members.employee.user',
 					'tasks',
 					'parent'
 				])
@@ -89,7 +91,8 @@ export class ProjectModuleTableComponent extends TranslationBaseComponent implem
 				return {
 					...module,
 					parentName: module.parent ? module.parent.name : '-',
-					employeesMergedTeams: [module.members, module.teams]
+					managers: this.getProjectModuleManagers(module),
+					employeesMergedTeams: this.getNonManagerEmployees(module)
 				};
 			});
 			this.smartTableSource.load(this.modules);
@@ -124,7 +127,7 @@ export class ProjectModuleTableComponent extends TranslationBaseComponent implem
 
 						// Update the module's isFavorite status
 						instance.onSwitched.subscribe((toggle: boolean) => {
-							this.updateModule(module.id, { isFavorite: toggle });
+							this.updateModule(module.id, { ...module,isFavorite:toggle});
 						});
 					}
 				},
@@ -162,13 +165,14 @@ export class ProjectModuleTableComponent extends TranslationBaseComponent implem
 						instance.value = cell.getValue();
 					}
 				},
-				manager: {
+				managers: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MANAGERS'),
 					type: 'custom',
 					isFilterable: false,
 					renderComponent: EmployeeWithLinksComponent,
-					componentInitFunction: (instance: EmployeeWithLinksComponent, cell: Cell) => {
+					componentInitFunction: (instance: EmployeesMergedTeamsComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getRawValue();
 					}
 				},
 				employeesMergedTeams: {
@@ -254,5 +258,31 @@ export class ProjectModuleTableComponent extends TranslationBaseComponent implem
 		this.translateService.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
 			this.loadSmartTable();
 		});
+	}
+
+	/**
+	 * Retrieves the project managers from the list of members.
+	 *
+	 * @param projectModule - The project module containing members.
+	 * @returns A list of manager employees.
+	 */
+	getProjectModuleManagers(projectModule: IOrganizationProjectModule): IEmployee[] {
+		return projectModule.members
+			.filter((member: IOrganizationProjectModuleEmployee) => member.isManager)
+			.map((member: IOrganizationProjectModuleEmployee) => member.employee);
+	}
+
+	/**
+	 * Retrieves the non-manager employees from the list of members.
+	 *
+	 * @param projectModule - The project module containing members.
+	 * @returns A list of non-manager employees as merged teams.
+	 */
+	getNonManagerEmployees(projectModule: IOrganizationProjectModule): IEmployee[][] {
+		return [
+			projectModule.members
+				.filter((member: IOrganizationProjectModuleEmployee) => !member.isManager)
+				.map((member: IOrganizationProjectModuleEmployee) => member.employee)
+		];
 	}
 }
