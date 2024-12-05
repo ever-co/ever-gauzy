@@ -1,3 +1,4 @@
+import { EventBus } from '@nestjs/cqrs';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
 import {
@@ -13,7 +14,8 @@ import {
 	IOrganizationProjectsFindInput,
 	IOrganizationProjectUpdateInput,
 	IPagination,
-	RolesEnum
+	RolesEnum,
+	SubscriptionTypeEnum
 } from '@gauzy/contracts';
 import { getConfig } from '@gauzy/config';
 import { CustomEmbeddedFieldConfig, isNotEmpty } from '@gauzy/common';
@@ -22,10 +24,12 @@ import { RequestContext } from '../core/context';
 import { OrganizationProjectEmployee } from '../core/entities/internal';
 import { FavoriteService } from '../core/decorators';
 import { RoleService } from '../role/role.service';
+import { SubscriptionService } from '../subscription/subscription.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
+import { EmployeeService } from '../employee/employee.service';
+import { CreateSubscriptionEvent } from '../subscription/events';
 import { OrganizationProject } from './organization-project.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
-import { EmployeeService } from '../employee/employee.service';
 import { TypeOrmEmployeeRepository } from '../employee/repository';
 import {
 	MikroOrmOrganizationProjectEmployeeRepository,
@@ -38,6 +42,7 @@ import {
 @Injectable()
 export class OrganizationProjectService extends TenantAwareCrudService<OrganizationProject> {
 	constructor(
+		private readonly _eventBus: EventBus,
 		readonly typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
 		readonly mikroOrmOrganizationProjectRepository: MikroOrmOrganizationProjectRepository,
 		readonly typeOrmOrganizationProjectEmployeeRepository: TypeOrmOrganizationProjectEmployeeRepository,
@@ -45,6 +50,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		private readonly _roleService: RoleService,
 		private readonly _employeeService: EmployeeService,
+		private readonly _subscriptionService: SubscriptionService,
 		private readonly _activityLogService: ActivityLogService
 	) {
 		super(typeOrmOrganizationProjectRepository, mikroOrmOrganizationProjectRepository);
@@ -121,6 +127,27 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				organizationId,
 				tenantId
 			});
+
+			// Subscribe creator and assignees to the project
+			try {
+				await Promise.all(
+					employees.map(({ id, userId }) =>
+						this._eventBus.publish(
+							new CreateSubscriptionEvent({
+								entity: BaseEntityEnum.OrganizationProject,
+								entityId: project.id,
+								userId,
+								type:
+									id === employeeId
+										? SubscriptionTypeEnum.CREATED_ENTITY
+										: SubscriptionTypeEnum.ASSIGNMENT,
+								organizationId,
+								tenantId
+							})
+						)
+					)
+				);
+			} catch (error) {}
 
 			// Generate the activity log
 			this._activityLogService.logActivity<OrganizationProject>(
@@ -268,6 +295,20 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		// 1. Remove members who are no longer assigned to the project
 		if (removedMembers.length) {
 			await this.deleteMemberByIds(removedMembers.map((member) => member.id));
+
+			// Unsubscribe members who were unassigned from project
+			try {
+				await Promise.all(
+					removedMembers.map(
+						async (member) =>
+							await this._subscriptionService.delete({
+								entity: BaseEntityEnum.OrganizationProject,
+								entityId: organizationProjectId,
+								userId: member.employee.userId
+							})
+					)
+				);
+			} catch (error) {}
 		}
 
 		// 2. Update roles for existing members where necessary
@@ -299,6 +340,24 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 						roleId: managerIds.includes(employee.id) ? managerRole.id : null
 					})
 			);
+
+			// Subscribe new assignees to the project
+			try {
+				await Promise.all(
+					newMembers.map(({ userId }) =>
+						this._eventBus.publish(
+							new CreateSubscriptionEvent({
+								entity: BaseEntityEnum.OrganizationProject,
+								entityId: organizationProjectId,
+								userId,
+								type: SubscriptionTypeEnum.ASSIGNMENT,
+								organizationId,
+								tenantId
+							})
+						)
+					)
+				);
+			} catch (error) {}
 
 			await this.typeOrmOrganizationProjectEmployeeRepository.save(newProjectMembers);
 		}
