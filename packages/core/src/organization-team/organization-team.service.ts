@@ -281,7 +281,9 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 						)
 					)
 				);
-			} catch (error) {}
+			} catch (error) {
+				console.error('Error publishing CreateSubscriptionEvent:', error);
+			}
 
 			return organizationTeam;
 		} catch (error) {

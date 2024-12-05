@@ -188,7 +188,9 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 							)
 						)
 					);
-				} catch (error) {}
+				} catch (error) {
+					console.error('Error subscribing new members to the task:', error);
+				}
 			}
 
 			// Activity Log Task Creation
@@ -259,7 +261,9 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 								})
 						)
 					);
-				} catch (error) {}
+				} catch (error) {
+					console.error('Error subscribing new members to the task:', error);
+				}
 			}
 
 			// Subscribe new assignees to the task
@@ -279,7 +283,9 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 							)
 						)
 					);
-				} catch (error) {}
+				} catch (error) {
+					console.error('Error subscribing new members to the task:', error);
+				}
 			}
 
 			// Activity Log Task Update

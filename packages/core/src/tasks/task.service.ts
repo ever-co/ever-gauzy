@@ -148,7 +148,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						)
 					);
 				} catch (error) {
-					console.error('Error publishing CreateSubscriptionEvent:', error);
+					console.error('Error unsubscribing members from the task:', error);
 				}
 			}
 

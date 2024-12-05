@@ -147,7 +147,9 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 						)
 					)
 				);
-			} catch (error) {}
+			} catch (error) {
+				console.error('Error subscribing creators and assignees to the project:', error);
+			}
 
 			// Generate the activity log
 			this._activityLogService.logActivity<OrganizationProject>(
@@ -309,7 +311,9 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 							})
 					)
 				);
-			} catch (error) {}
+			} catch (error) {
+				console.error('Error unsubscribing members from the project:', error);
+			}
 		}
 
 		// 2. Update roles for existing members where necessary

@@ -128,7 +128,9 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 							)
 						)
 					);
-				} catch (error) {}
+				} catch (error) {
+					this.logger.error('Error while subscribing members to task', error);
+				}
 			}
 
 			// Generate the activity log

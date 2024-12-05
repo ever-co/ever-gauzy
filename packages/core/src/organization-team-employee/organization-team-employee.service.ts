@@ -85,7 +85,9 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 							})
 					)
 				);
-			} catch (error) {}
+			} catch (error) {
+				console.error('Error subscribing new team members:', error);
+			}
 		}
 
 		// 2. Update role for existing members
@@ -135,7 +137,9 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 						)
 					)
 				);
-			} catch (error) {}
+			} catch (error) {
+				console.error('Error subscribing new team members:', error);
+			}
 
 			await this.typeOrmRepository.save(newTeamMembers);
 		}
