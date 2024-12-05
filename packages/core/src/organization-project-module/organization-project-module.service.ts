@@ -120,7 +120,10 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 			return projectModule;
 		} catch (error) {
 			// Handle errors and return an appropriate error response
-			throw new HttpException(`Failed to create organization sprint: ${error.message}`, HttpStatus.BAD_REQUEST);
+			throw new HttpException(
+				`Failed to create organization project module: ${error.message}`,
+				HttpStatus.BAD_REQUEST
+			);
 		}
 	}
 

@@ -168,7 +168,7 @@ export class OrganizationProjectModuleController extends CrudController<Organiza
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.PROJECT_MODULE_CREATE)
 	@Post()
-	@UseValidationPipe()
+	@UseValidationPipe({ whitelist: true })
 	async create(@Body() entity: CreateOrganizationProjectModuleDTO): Promise<IOrganizationProjectModule> {
 		return await this.commandBus.execute(new OrganizationProjectModuleCreateCommand(entity));
 	}
@@ -189,7 +189,7 @@ export class OrganizationProjectModuleController extends CrudController<Organiza
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.PROJECT_MODULE_UPDATE)
 	@Put(':id')
-	@UseValidationPipe()
+	@UseValidationPipe({ whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: UpdateOrganizationProjectModuleDTO
