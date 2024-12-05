@@ -4,6 +4,7 @@
 	"sourceRoot": "apps/desktop/src",
 	"projectType": "application",
 	"tags": [],
+	"implicitDependencies": [],
 	"generators": {
 		"@nx/angular:component": {
 			"style": "scss"
@@ -37,9 +38,9 @@
 					"node_modules/nebular-icons/scss/nebular-icons.scss",
 					"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 					"node_modules/leaflet/dist/leaflet.css",
+					"node_modules/@ng-select/ng-select/themes/default.theme.css",
 					"apps/desktop/src/assets/styles/styles.scss",
-					"packages/ui-core/static/styles/styles.scss",
-					"node_modules/@ng-select/ng-select/themes/default.theme.css"
+					"packages/ui-core/static/styles/styles.scss"
 				],
 				"scripts": [],
 				"allowedCommonJsDependencies": ["@datorama/akita", "localforage", "rxjs", "rxjs/operators"]

@@ -22,7 +22,7 @@
 				}
 			},
 			"defaultConfiguration": "production",
-			"dependsOn": ["config"]
+			"dependsOn": ["^build", "config"]
 		},
 		"config": {
 			"executor": "nx:run-commands",

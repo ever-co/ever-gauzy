@@ -175,6 +175,4 @@ if (environment.SENTRY_DSN) {
 	],
 	bootstrap: [AppComponent]
 })
-export class AppModule {
-	constructor() { }
-}
+export class AppModule {}

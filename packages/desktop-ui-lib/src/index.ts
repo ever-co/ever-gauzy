@@ -48,6 +48,7 @@ export * from './lib/login/features/magic-login-workspace/magic-login-workspace.
 export * from './lib/integrations/activity-watch/view/activity-watch.component';
 export * from './lib/recap/features/recap/recap.component';
 export * from './lib/recap/weekly/features/weekly-recap/weekly-recap.component';
+export * from './lib/server-connection.factory';
 
 /**
  * Auth Module

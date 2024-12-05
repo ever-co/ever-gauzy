@@ -8,7 +8,9 @@
 	"implicitDependencies": [],
 	"generators": {
 		"@nx/angular:component": {
-			"style": "scss"
+			"style": "scss",
+			"prefix": "lib",
+			"skipTests": true
 		}
 	},
 	"targets": {
