@@ -1,3 +1,4 @@
+import { EventBus } from '@nestjs/cqrs';
 import {
 	Injectable,
 	BadRequestException,
@@ -19,7 +20,8 @@ import {
 	IOrganizationTeamStatisticInput,
 	ITimerStatus,
 	BaseEntityEnum,
-	ID
+	ID,
+	SubscriptionTypeEnum
 } from '@gauzy/contracts';
 import { isNotEmpty, parseToBoolean } from '@gauzy/common';
 import { FavoriteService } from '../core/decorators';
@@ -36,6 +38,7 @@ import { TypeOrmEmployeeRepository } from '../employee/repository';
 import { EmployeeService } from './../employee/employee.service';
 import { TimerService } from '../time-tracking/timer/timer.service';
 import { StatisticService } from '../time-tracking/statistic';
+import { CreateSubscriptionEvent } from '../subscription/events';
 import { GetOrganizationTeamStatisticQuery } from './queries';
 import { MikroOrmOrganizationTeamRepository, TypeOrmOrganizationTeamRepository } from './repository';
 import { OrganizationTeam } from './organization-team.entity';
@@ -45,6 +48,7 @@ import { MikroOrmOrganizationTeamEmployeeRepository } from '../organization-team
 @Injectable()
 export class OrganizationTeamService extends TenantAwareCrudService<OrganizationTeam> {
 	constructor(
+		private readonly _eventBus: EventBus,
 		readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
 		readonly mikroOrmOrganizationTeamRepository: MikroOrmOrganizationTeamRepository,
 		readonly mikroOrmOrganizationTeamEmployeeRepository: MikroOrmOrganizationTeamEmployeeRepository,
@@ -244,7 +248,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			);
 
 			// Create the organization team with the prepared members
-			return await super.create({
+			const organizationTeam = await super.create({
 				organization: { id: organizationId },
 				tenant: { id: tenantId },
 				tags,
@@ -257,6 +261,29 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				imageId,
 				projects
 			});
+
+			// Subscribe creator and assignees to the project
+			try {
+				await Promise.all(
+					employees.map(({ id, userId }) =>
+						this._eventBus.publish(
+							new CreateSubscriptionEvent({
+								entity: BaseEntityEnum.OrganizationTeam,
+								entityId: organizationTeam.id,
+								userId,
+								type:
+									id === employeeId
+										? SubscriptionTypeEnum.CREATED_ENTITY
+										: SubscriptionTypeEnum.ASSIGNMENT,
+								organizationId,
+								tenantId
+							})
+						)
+					)
+				);
+			} catch (error) {}
+
+			return organizationTeam;
 		} catch (error) {
 			throw new BadRequestException(`Failed to create a team: ${error}`);
 		}
