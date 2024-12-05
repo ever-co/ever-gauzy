@@ -8,7 +8,8 @@ import {
 	In,
 	FindOptionsWhere,
 	FindManyOptions,
-	Between
+	Between,
+	FindOptionsRelations
 } from 'typeorm';
 import { isBoolean, isUUID } from 'class-validator';
 import {
@@ -67,7 +68,20 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const { mentionUserIds, ...data } = input;
 
 			// Find task relations
-			const relations = this.typeOrmTaskRepository.metadata.relations.map((relation) => relation.propertyName);
+			const relations: FindOptionsRelations<Task> = {
+				tags: true,
+				members: true,
+				teams: true,
+				modules: true,
+				parent: true,
+				project: true,
+				organizationSprint: true,
+				taskStatus: true,
+				taskSize: true,
+				taskPriority: true,
+				linkedIssues: true,
+				dailyPlans: true
+			};
 
 			const task = await this.findOneByIdString(id, { relations });
 
