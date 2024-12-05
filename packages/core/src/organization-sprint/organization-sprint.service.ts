@@ -148,15 +148,10 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 		const { memberIds = [], managerIds = [], organizationId, projectId } = input;
 
 		try {
-			// Find Organization Sprint relations
-			const relations = this.typeOrmOrganizationSprintRepository.metadata.relations.map(
-				(relation) => relation.propertyName
-			);
-
 			// Search for existing Organization Sprint
 			const organizationSprint = await super.findOneByIdString(id, {
 				where: { organizationId, tenantId, projectId },
-				relations
+				relations: { project: true, members: true, modules: true }
 			});
 
 			// Retrieve members and managers IDs

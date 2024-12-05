@@ -46,45 +46,59 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 	 */
 	async create(entity: IOrganizationProjectModuleCreateInput): Promise<IOrganizationProjectModule> {
 		const tenantId = RequestContext.currentTenantId() || entity.tenantId;
+		const employeeId = RequestContext.currentEmployeeId();
 		const creatorId = RequestContext.currentUserId();
+		const currentRoleId = RequestContext.currentRoleId();
 		const { organizationId } = entity;
 
 		// Destructure the input data
 		const { memberIds = [], managerIds = [], ...input } = entity;
 
-		// Combine memberIds and managerIds into a single array
-		const employeeIds = Array.from(new Set([...memberIds, ...managerIds])).filter(Boolean);
-
-		// Retrieves a collection of employees based on specified criteria.
-		const employees = await this._employeeService.findActiveEmployeesByEmployeeIds(
-			employeeIds,
-			organizationId,
-			tenantId
-		);
-
-		// Find the manager role
-		const managerRole = await this._roleService.findOneByWhereOptions({
-			name: RolesEnum.MANAGER
-		});
-
-		// Create a Set for faster membership checks
-		const managerIdsSet = new Set(managerIds);
-
-		// Use destructuring to directly extract 'id' from 'employee'
-		const members = employees.map(({ id: employeeId }) => {
-			// If the employee is a manager, assign the existing manager with the latest assignedAt date
-			const isManager = managerIdsSet.has(employeeId);
-
-			return new OrganizationProjectModuleEmployee({
-				employeeId,
-				organizationId,
-				tenantId,
-				isManager,
-				role: isManager ? managerRole : null
-			});
-		});
-
 		try {
+			try {
+				await this._roleService.findOneByIdString(currentRoleId, { where: { name: RolesEnum.EMPLOYEE } });
+
+				// Add the current employee to the managerIds if they have the EMPLOYEE role and are not already included.
+				if (!managerIds.includes(employeeId)) {
+					// If not included, add the employeeId to the managerIds array.
+					managerIds.push(employeeId);
+				}
+			} catch (error) {}
+
+			// Combine memberIds and managerIds into a single array.
+			const employeeIds = [...memberIds, ...managerIds].filter(Boolean);
+
+			// Retrieve a collection of employees based on specified criteria.
+			const employees = await this._employeeService.findActiveEmployeesByEmployeeIds(
+				employeeIds,
+				organizationId,
+				tenantId
+			);
+
+			// Find the manager role
+			const managerRole = await this._roleService.findOneByWhereOptions({
+				name: RolesEnum.MANAGER
+			});
+
+			// Create a Set for faster membership checks
+			const managerIdsSet = new Set(managerIds);
+
+			// Use destructuring to directly extract 'id' from 'employee'
+			const members = employees.map(({ id: employeeId }) => {
+				// If the employee is a manager, assign the existing manager with the latest assignedAt date
+				const isManager = managerIdsSet.has(employeeId);
+				const assignedAt = new Date();
+
+				return new OrganizationProjectModuleEmployee({
+					employeeId,
+					organizationId,
+					tenantId,
+					isManager,
+					assignedAt,
+					role: isManager ? managerRole : null
+				});
+			});
+
 			const projectModule = await super.create({
 				...input,
 				members,
@@ -105,7 +119,8 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 
 			return projectModule;
 		} catch (error) {
-			throw new BadRequestException(error);
+			// Handle errors and return an appropriate error response
+			throw new HttpException(`Failed to create organization sprint: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -123,14 +138,9 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		const tenantId = RequestContext.currentTenantId() || entity.tenantId;
 
 		try {
-			// Find Organization Project Module relations
-			const relations = this.typeOrmProjectModuleRepository.metadata.relations.map(
-				(relation) => relation.propertyName
-			);
-
 			// Retrieve existing module.
 			const existingProjectModule = await this.findOneByIdString(id, {
-				relations
+				relations: { parent: true, project: true, teams: true, members: true }
 			});
 
 			if (!existingProjectModule) {
