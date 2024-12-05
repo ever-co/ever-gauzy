@@ -304,7 +304,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 							await this._subscriptionService.delete({
 								entity: BaseEntityEnum.OrganizationProject,
 								entityId: organizationProjectId,
-								userId: member.employee.userId
+								userId: member.employee.userId,
+								type: SubscriptionTypeEnum.ASSIGNMENT
 							})
 					)
 				);

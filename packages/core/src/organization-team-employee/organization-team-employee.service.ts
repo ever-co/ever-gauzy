@@ -72,7 +72,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		if (removedMembers.length > 0) {
 			await this.deleteMemberByIds(removedMembers.map((member) => member.id));
 
-			// Unsubscribe members who were unassigned from project
+			// Unsubscribe members who were unassigned from team
 			try {
 				await Promise.all(
 					removedMembers.map(
@@ -119,7 +119,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 					})
 			);
 
-			// Subscribe new assignees to the project
+			// Subscribe new assignees to the team
 			try {
 				await Promise.all(
 					newMembers.map(({ userId }) =>

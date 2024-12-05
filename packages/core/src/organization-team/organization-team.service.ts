@@ -262,7 +262,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				projects
 			});
 
-			// Subscribe creator and assignees to the project
+			// Subscribe creator and assignees to the team
 			try {
 				await Promise.all(
 					employees.map(({ id, userId }) =>
