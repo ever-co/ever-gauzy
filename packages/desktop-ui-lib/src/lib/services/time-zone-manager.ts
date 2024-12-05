@@ -1,5 +1,5 @@
 import { TimeTrackerDateManager } from './time-tracker-date.manager';
-import moment from 'moment';;
+import * as moment from 'moment';
 
 export enum ZoneEnum {
 	LOCAL = 'local',

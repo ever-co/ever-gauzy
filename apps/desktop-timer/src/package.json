@@ -136,6 +136,7 @@
 		"@gauzy/contracts": "file:../../../dist/packages/contracts",
 		"@gauzy/desktop-lib": "file:../../../dist/packages/desktop-lib",
 		"@gauzy/desktop-window": "file:../../../dist/packages/desktop-window",
+		"@gauzy/ui-config": "file:../../../dist/packages/ui-config",
 		"@sentry/electron": "^4.18.0",
 		"@sentry/profiling-node": "^7.101.1",
 		"@sentry/replay": "^7.101.1",

@@ -13,7 +13,7 @@ function runBuildWatch() {
 		process.exit(1);
 	}
 
-	const command = `yarn nx build ${libName} --watch`;
+	const command = `yarn nx build ${libName} --watch --skip-nx-cache`;
 	console.log(`Running command: ${command}`);
 
 	const child = exec(command);

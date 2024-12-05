@@ -1,5 +1,5 @@
 import { ITimeSlot } from '@gauzy/contracts';
-import moment from 'moment';;
+import * as moment from 'moment';
 import 'moment-duration-format';
 
 export interface IChartData {

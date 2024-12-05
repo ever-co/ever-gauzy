@@ -17,7 +17,7 @@ import {
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import moment from 'moment';;
+import * as moment from 'moment';
 import { combineLatest, concatMap, from, map, Observable, startWith, tap } from 'rxjs';
 import { Store, TagService } from '../services';
 import { ClientSelectorService } from '../shared/features/client-selector/+state/client-selector.service';
