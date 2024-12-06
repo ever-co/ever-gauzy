@@ -1,5 +1,6 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
+import { FindOptionsRelations } from 'typeorm';
 import * as chalk from 'chalk';
 import {
 	ActionTypeEnum,
@@ -176,7 +177,20 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 	async updateTask(id: ID, entity: ITaskUpdateInput): Promise<ITask> {
 		try {
 			// Find task relations
-			const relations = this.typeOrmTaskRepository.metadata.relations.map((relation) => relation.propertyName);
+			const relations: FindOptionsRelations<Task> = {
+				tags: true,
+				members: true,
+				teams: true,
+				modules: true,
+				parent: true,
+				project: true,
+				organizationSprint: true,
+				taskStatus: true,
+				taskSize: true,
+				taskPriority: true,
+				linkedIssues: true,
+				dailyPlans: true
+			};
 
 			// Find the existing task by its ID
 			const existingTask = await this._taskService.findOneByIdString(id, { relations });
