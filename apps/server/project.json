@@ -71,6 +71,8 @@
 			],
 			"options": {
 				"baseHref": "./",
+				"aot": true,
+				"preserveSymlinks": true,
 				"outputPath": "dist/apps/gauzy-server",
 				"deleteOutputPath": false,
 				"browser": "apps/server/src/main.ts",
