@@ -1,4 +1,4 @@
-import { IBasePerTenantAndOrganizationEntityModel, IBasePerTenantEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, IBasePerTenantEntityModel, ID } from './base-entity.model';
 import { ITranslation, ITranslatable } from './translation.model';
 import { ITag } from './tag.model';
 import { IContact, IContactEntityInput } from './contact.model';
@@ -15,8 +15,8 @@ export interface IProduct extends IBasePerTenantAndOrganizationEntityModel {
 	featuredImage?: IImageAsset;
 	variants?: IProductVariant[];
 	optionGroups?: IProductOptionGroupTranslatable[];
-	productTypeId: string;
-	productCategoryId: string;
+	productTypeId: ID;
+	productCategoryId: ID;
 	productType?: IProductTypeTranslatable;
 	productCategory?: IProductCategoryTranslatable;
 	tags?: ITag[];
@@ -30,9 +30,9 @@ export interface IProductTranslatable extends ITranslatable<IProductTranslation>
 	featuredImage?: IImageAsset;
 	featuredImageId?: string;
 	productType?: IProductTypeTranslatable;
-	productTypeId?: string;
+	productTypeId?: ID;
 	productCategory?: IProductCategoryTranslatable;
-	productCategoryId?: string;
+	productCategoryId?: ID;
 	variants?: IProductVariant[];
 	optionGroups?: IProductOptionGroupTranslatable[];
 	invoiceItems?: IInvoiceItem[];
@@ -54,8 +54,8 @@ export interface IProductTranslated extends IBasePerTenantAndOrganizationEntityM
 	options?: IProductOption[];
 	tags?: ITag[];
 	variants?: IProductVariant[];
-	productTypeId?: string;
-	productCategoryId?: string;
+	productTypeId?: ID;
+	productCategoryId?: ID;
 }
 
 export interface IProductTranslation extends ITranslation<IProductTranslatable> {
@@ -68,6 +68,8 @@ export interface IProductCreateInput extends IBasePerTenantAndOrganizationEntity
 	enabled: boolean;
 	code: string;
 	imageUrl: string;
+	productTypeId: ID;
+	productCategoryId: ID;
 	type?: IProductTypeTranslatable;
 	category?: IProductCategoryTranslatable;
 	tags?: ITag[];
