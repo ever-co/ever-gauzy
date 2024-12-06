@@ -7,7 +7,6 @@
 	"generators": {
 		"@nx/nest:library": {
 			"directory": "api",
-			"tags": "type:library,scope:api",
 			"unitTestRunner": "jest",
 			"linter": "eslint"
 		}

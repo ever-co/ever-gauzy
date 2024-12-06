@@ -1,4 +1,5 @@
 const { composePlugins, withNx } = require('@nx/webpack');
+const nodeExternals = require('webpack-node-externals');
 
 // Nx plugins for webpack.
 module.exports = composePlugins(
@@ -8,7 +9,10 @@ module.exports = composePlugins(
 	(config) => {
 		// Add externals configuration
 		config.externals = [
-			...(config.externals || [])
+			...(config.externals || []),
+			nodeExternals({
+				allowlist: [/^@gauzy\/core$/], // Include @gauzy/core explicitly
+			}),
 		];
 
 		// Disable watch for the 'public' folder
