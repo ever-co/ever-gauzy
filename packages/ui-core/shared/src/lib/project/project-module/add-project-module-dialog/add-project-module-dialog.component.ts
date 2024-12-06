@@ -230,7 +230,9 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 	private updateFormFields() {
 		this.form.get('memberIds').setValue(this.memberIds.filter((memberId) => !this.managerIds.includes(memberId)));
 
-		this.managerIds.filter((managerId) => this.employees.some((emp) => emp.id === managerId));
+		this.form
+			.get('managerIds')
+			.setValue(this.managerIds.filter((managerId) => this.employees.some((emp) => emp.id === managerId)));
 
 		this.form
 			.get('teams')
