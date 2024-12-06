@@ -94,11 +94,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const taskMembers = task.members;
 
 			// Separate members into removed and new members
-			const memberIdSet = new Set(data.members.map(({ id }) => id));
-			const existingMemberIdSet = new Set(taskMembers.map(({ id }) => id));
+			const memberIdSet = new Set((data.members || []).map(({ id }) => id));
+			const existingMemberIdSet = new Set((taskMembers || []).map(({ id }) => id));
 
-			const removedMembers = taskMembers.filter((member) => !memberIdSet.has(member.id));
-			const newMembers = data.members.filter((member) => !existingMemberIdSet.has(member.id));
+			const removedMembers = (taskMembers || []).filter((member) => !memberIdSet.has(member.id));
+			const newMembers = (data.members || []).filter((member) => !existingMemberIdSet.has(member.id));
 
 			if (data.projectId && data.projectId !== task.projectId) {
 				const { organizationId, projectId } = task;
