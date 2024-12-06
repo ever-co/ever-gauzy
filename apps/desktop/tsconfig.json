@@ -8,8 +8,7 @@
 		"noPropertyAccessFromIndexSignature": false,
 		"noImplicitReturns": false,
 		"noFallthroughCasesInSwitch": false,
-		"types": ["pino-pretty"],
-		"esModuleInterop": true
+		"types": ["node", "google.maps"]
 	},
 	"files": [],
 	"include": [],

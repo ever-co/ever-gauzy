@@ -20,7 +20,7 @@ process.env = Object.assign(process.env, environment);
 
 app.setName(process.env.NAME);
 
-log.log('Node Modules Path', path.join(__dirname, 'node_modules'));
+log.log('Desktop Timer Node Modules Path', path.join(__dirname, 'node_modules'));
 
 remoteMain.initialize();
 
