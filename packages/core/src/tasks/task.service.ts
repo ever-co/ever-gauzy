@@ -1,3 +1,4 @@
+import { EventBus } from '@nestjs/cqrs';
 import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
 import {
 	IsNull,
@@ -24,7 +25,8 @@ import {
 	ITaskUpdateInput,
 	PermissionsEnum,
 	ActionTypeEnum,
-	ITaskDateFilterInput
+	ITaskDateFilterInput,
+	SubscriptionTypeEnum
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { isPostgres, isSqlite } from '@gauzy/config';
@@ -32,8 +34,10 @@ import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { addBetween } from './../core/util';
 import { RequestContext } from '../core/context';
 import { TaskViewService } from './views/view.service';
+import { SubscriptionService } from '../subscription/subscription.service';
 import { MentionService } from '../mention/mention.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
+import { CreateSubscriptionEvent } from '../subscription/events';
 import { Task } from './task.entity';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
 import { GetTaskByIdDTO } from './dto';
@@ -44,10 +48,12 @@ import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
 	constructor(
+		private readonly _eventBus: EventBus,
 		readonly typeOrmTaskRepository: TypeOrmTaskRepository,
 		readonly mikroOrmTaskRepository: MikroOrmTaskRepository,
 		readonly typeOrmOrganizationSprintTaskHistoryRepository: TypeOrmOrganizationSprintTaskHistoryRepository,
 		private readonly taskViewService: TaskViewService,
+		private readonly _subscriptionService: SubscriptionService,
 		private readonly mentionService: MentionService,
 		private readonly activityLogService: ActivityLogService
 	) {
@@ -84,6 +90,15 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			};
 
 			const task = await this.findOneByIdString(id, { relations });
+
+			const taskMembers = task.members;
+
+			// Separate members into removed and new members
+			const memberIdSet = new Set(data.members.map(({ id }) => id));
+			const existingMemberIdSet = new Set(taskMembers.map(({ id }) => id));
+
+			const removedMembers = taskMembers.filter((member) => !memberIdSet.has(member.id));
+			const newMembers = data.members.filter((member) => !existingMemberIdSet.has(member.id));
 
 			if (data.projectId && data.projectId !== task.projectId) {
 				const { organizationId, projectId } = task;
@@ -131,10 +146,49 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				}
 			}
 
-			// TODO : Subscribe assignees
+			const { organizationId } = updatedTask;
+			// Unsubscribe members who were unassigned from task
+			if (removedMembers.length > 0) {
+				try {
+					await Promise.all(
+						removedMembers.map(
+							async (member) =>
+								await this._subscriptionService.delete({
+									entity: BaseEntityEnum.Task,
+									entityId: updatedTask.id,
+									userId: member.userId,
+									type: SubscriptionTypeEnum.ASSIGNMENT
+								})
+						)
+					);
+				} catch (error) {
+					console.error('Error unsubscribing members from the task:', error);
+				}
+			}
+
+			// Subscribe the new assignees to the task
+			if (newMembers.length) {
+				try {
+					await Promise.all(
+						newMembers.map(({ userId }) =>
+							this._eventBus.publish(
+								new CreateSubscriptionEvent({
+									entity: BaseEntityEnum.Task,
+									entityId: updatedTask.id,
+									userId,
+									type: SubscriptionTypeEnum.ASSIGNMENT,
+									organizationId,
+									tenantId
+								})
+							)
+						)
+					);
+				} catch (error) {
+					console.error('Error publishing CreateSubscriptionEvent:', error);
+				}
+			}
 
 			// Generate the activity log
-			const { organizationId } = updatedTask;
 			this.activityLogService.logActivity<Task>(
 				BaseEntityEnum.Task,
 				ActionTypeEnum.Updated,

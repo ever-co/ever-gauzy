@@ -1,3 +1,4 @@
+import { EventBus } from '@nestjs/cqrs';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {
 	BaseEntityEnum,
@@ -8,7 +9,8 @@ import {
 	IOrganizationSprintCreateInput,
 	IOrganizationSprintUpdateInput,
 	RolesEnum,
-	ActionTypeEnum
+	ActionTypeEnum,
+	SubscriptionTypeEnum
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
@@ -16,8 +18,10 @@ import { RequestContext } from '../core/context';
 import { OrganizationSprintEmployee } from '../core/entities/internal';
 import { FavoriteService } from '../core/decorators';
 // import { prepareSQLQuery as p } from './../database/database.helper';
+import { CreateSubscriptionEvent } from '../subscription/events';
 import { RoleService } from '../role/role.service';
 import { EmployeeService } from '../employee/employee.service';
+import { SubscriptionService } from '../subscription/subscription.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { OrganizationSprint } from './organization-sprint.entity';
 import { TypeOrmEmployeeRepository } from '../employee/repository';
@@ -32,6 +36,7 @@ import {
 @Injectable()
 export class OrganizationSprintService extends TenantAwareCrudService<OrganizationSprint> {
 	constructor(
+		private readonly _eventBus: EventBus,
 		readonly typeOrmOrganizationSprintRepository: TypeOrmOrganizationSprintRepository,
 		readonly mikroOrmOrganizationSprintRepository: MikroOrmOrganizationSprintRepository,
 		readonly typeOrmOrganizationSprintEmployeeRepository: TypeOrmOrganizationSprintEmployeeRepository,
@@ -39,6 +44,7 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		private readonly _roleService: RoleService,
 		private readonly _employeeService: EmployeeService,
+		private readonly subscriptionService: SubscriptionService,
 		private readonly activityLogService: ActivityLogService
 	) {
 		super(typeOrmOrganizationSprintRepository, mikroOrmOrganizationSprintRepository);
@@ -112,6 +118,27 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 				organizationId,
 				tenantId
 			});
+
+			// Subscribe creator and assignees to the sprint
+			try {
+				await Promise.all(
+					employees.map(({ id, userId }) =>
+						this._eventBus.publish(
+							new CreateSubscriptionEvent({
+								entity: BaseEntityEnum.OrganizationSprint,
+								entityId: sprint.id,
+								userId,
+								type:
+									id === employeeId
+										? SubscriptionTypeEnum.CREATED_ENTITY
+										: SubscriptionTypeEnum.ASSIGNMENT,
+								organizationId,
+								tenantId
+							})
+						)
+					)
+				);
+			} catch (error) {}
 
 			// Generate the activity log
 			this.activityLogService.logActivity<OrganizationSprint>(
@@ -258,6 +285,21 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 		// 1. Remove members who are no longer assigned to the sprint
 		if (removedMembers.length) {
 			await this.deleteMemberByIds(removedMembers.map((member) => member.id));
+
+			// Unsubscribe members who were unassigned from sprint
+			try {
+				await Promise.all(
+					removedMembers.map(
+						async (member) =>
+							await this.subscriptionService.delete({
+								entity: BaseEntityEnum.OrganizationSprint,
+								entityId: organizationSprintId,
+								userId: member.employee.userId,
+								type: SubscriptionTypeEnum.ASSIGNMENT
+							})
+					)
+				);
+			} catch (error) {}
 		}
 
 		// 2. Update roles for existing members where necessary.
@@ -286,6 +328,24 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 						roleId: managerIds.includes(employee.id) ? managerRole.id : null
 					})
 			);
+
+			// Subscribe new assignees to the sprint
+			try {
+				await Promise.all(
+					newMembers.map(({ userId }) =>
+						this._eventBus.publish(
+							new CreateSubscriptionEvent({
+								entity: BaseEntityEnum.OrganizationSprint,
+								entityId: organizationSprintId,
+								userId,
+								type: SubscriptionTypeEnum.ASSIGNMENT,
+								organizationId,
+								tenantId
+							})
+						)
+					)
+				);
+			} catch (error) {}
 
 			await this.typeOrmOrganizationSprintEmployeeRepository.save(newSprintMembers);
 		}

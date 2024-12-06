@@ -10,6 +10,7 @@ import { CreateSubscriptionEvent } from '../../../subscription/events';
 import { TaskCreateCommand } from './../task-create.command';
 import { TaskService } from '../../task.service';
 import { Task } from './../../task.entity';
+import { EmployeeService } from '../../../employee/employee.service';
 import { MentionService } from '../../../mention/mention.service';
 import { ActivityLogService } from '../../../activity-log/activity-log.service';
 
@@ -22,6 +23,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 		private readonly _cqrsEventBus: CqrsEventBus,
 		private readonly _taskService: TaskService,
 		private readonly _organizationProjectService: OrganizationProjectService,
+		private readonly _employeeService: EmployeeService,
 		private readonly mentionService: MentionService,
 		private readonly activityLogService: ActivityLogService
 	) {}
@@ -36,7 +38,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 		try {
 			// Destructure input and triggered event flag from the command
 			const { input, triggeredEvent } = command;
-			const { organizationId, mentionUserIds = [], ...data } = input;
+			const { organizationId, mentionUserIds = [], members = [], ...data } = input;
 
 			// Retrieve current tenant ID from request context or use input tenant ID
 			const tenantId = RequestContext.currentTenantId() ?? data.tenantId;
@@ -103,7 +105,33 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 				})
 			);
 
-			// TODO : Subscribe assignees
+			// Subscribe assignees to the task
+			if (members.length > 0) {
+				try {
+					const employeeIds = members.map(({ id }) => id);
+					const employees = await this._employeeService.findActiveEmployeesByEmployeeIds(
+						employeeIds,
+						organizationId,
+						tenantId
+					);
+					await Promise.all(
+						employees.map(({ userId }) =>
+							this._cqrsEventBus.publish(
+								new CreateSubscriptionEvent({
+									entity: BaseEntityEnum.Task,
+									entityId: task.id,
+									userId,
+									type: SubscriptionTypeEnum.ASSIGNMENT,
+									organizationId,
+									tenantId
+								})
+							)
+						)
+					);
+				} catch (error) {
+					this.logger.error('Error while subscribing members to task', error);
+				}
+			}
 
 			// Generate the activity log
 			this.activityLogService.logActivity<Task>(

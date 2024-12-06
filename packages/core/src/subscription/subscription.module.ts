@@ -1,5 +1,5 @@
 import { CqrsModule } from '@nestjs/cqrs';
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
@@ -10,6 +10,7 @@ import { SubscriptionController } from './subscription.controller';
 import { Subscription } from './subscription.entity';
 import { TypeOrmSubscriptionRepository } from './repository/type-orm-subscription.repository';
 
+@Global()
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([Subscription]),
@@ -18,6 +19,7 @@ import { TypeOrmSubscriptionRepository } from './repository/type-orm-subscriptio
 		CqrsModule
 	],
 	providers: [SubscriptionService, TypeOrmSubscriptionRepository, ...CommandHandlers, ...EventHandlers],
-	controllers: [SubscriptionController]
+	controllers: [SubscriptionController],
+	exports: [TypeOrmModule, MikroOrmModule, SubscriptionService, TypeOrmSubscriptionRepository]
 })
 export class SubscriptionModule {}
