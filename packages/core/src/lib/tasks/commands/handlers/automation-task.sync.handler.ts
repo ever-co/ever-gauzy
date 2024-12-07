@@ -1,5 +1,6 @@
-import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
+import { ICommandHandler, CommandHandler, EventBus } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
+import { FindOptionsRelations } from 'typeorm';
 import * as chalk from 'chalk';
 import {
 	ActionTypeEnum,
@@ -9,11 +10,15 @@ import {
 	IIntegrationMap,
 	ITask,
 	ITaskCreateInput,
-	ITaskUpdateInput
+	ITaskUpdateInput,
+	SubscriptionTypeEnum
 } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
 import { IntegrationMap, TaskStatus } from '../../../core/entities/internal';
+import { CreateSubscriptionEvent } from '../../../subscription/events';
 import { AutomationTaskSyncCommand } from './../automation-task.sync.command';
+import { EmployeeService } from '../../../employee/employee.service';
+import { SubscriptionService } from '../../../subscription/subscription.service';
 import { TaskService } from './../../task.service';
 import { ActivityLogService } from '../../../activity-log/activity-log.service';
 import { Task } from './../../task.entity';
@@ -24,6 +29,8 @@ import { TypeOrmTaskRepository } from '../../repository/type-orm-task.repository
 @CommandHandler(AutomationTaskSyncCommand)
 export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTaskSyncCommand> {
 	constructor(
+		private readonly _eventBus: EventBus,
+
 		@InjectRepository(Task)
 		private readonly typeOrmTaskRepository: TypeOrmTaskRepository,
 
@@ -34,8 +41,9 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 		private readonly typeOrmIntegrationMapRepository: TypeOrmIntegrationMapRepository,
 
 		private readonly _taskService: TaskService,
-
-		private readonly activityLogService: ActivityLogService
+		private readonly activityLogService: ActivityLogService,
+		private readonly _employeeService: EmployeeService,
+		private readonly _subscriptionService: SubscriptionService
 	) {}
 
 	/**
@@ -145,8 +153,48 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 			// Save the new task
 			const createdTask = await this.typeOrmTaskRepository.save(newTask);
 
-			// Activity Log Task Creation
+			// Subscribe creator to the task
 			const { organizationId, tenantId } = createdTask;
+			this._eventBus.publish(
+				new CreateSubscriptionEvent({
+					entity: BaseEntityEnum.Task,
+					entityId: createdTask.id,
+					userId: createdTask.creatorId,
+					type: SubscriptionTypeEnum.CREATED_ENTITY,
+					organizationId,
+					tenantId
+				})
+			);
+
+			// Subscribe assignees to the task
+			if (entity.members.length > 0) {
+				try {
+					const employeeIds = entity.members.map(({ id }) => id);
+					const employees = await this._employeeService.findActiveEmployeesByEmployeeIds(
+						employeeIds,
+						organizationId,
+						tenantId
+					);
+					await Promise.all(
+						employees.map(({ userId }) =>
+							this._eventBus.publish(
+								new CreateSubscriptionEvent({
+									entity: BaseEntityEnum.Task,
+									entityId: createdTask.id,
+									userId,
+									type: SubscriptionTypeEnum.ASSIGNMENT,
+									organizationId,
+									tenantId
+								})
+							)
+						)
+					);
+				} catch (error) {
+					console.error('Error subscribing new members to the task:', error);
+				}
+			}
+
+			// Activity Log Task Creation
 			this.activityLogService.logActivity<Task>(
 				BaseEntityEnum.Task,
 				ActionTypeEnum.Created,
@@ -175,23 +223,86 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 	 */
 	async updateTask(id: ID, entity: ITaskUpdateInput): Promise<ITask> {
 		try {
+			const { members = [] } = entity;
 			// Find task relations
-			const relations = this.typeOrmTaskRepository.metadata.relations.map((relation) => relation.propertyName);
+			const relations: FindOptionsRelations<Task> = {
+				tags: true,
+				members: true,
+				teams: true,
+				modules: true,
+				parent: true,
+				project: true,
+				organizationSprint: true,
+				taskStatus: true,
+				taskSize: true,
+				taskPriority: true,
+				linkedIssues: true,
+				dailyPlans: true
+			};
 
 			// Find the existing task by its ID
 			const existingTask = await this._taskService.findOneByIdString(id, { relations });
 			if (!existingTask) {
 				return;
 			}
+			const taskMembers = existingTask.members;
+
+			// Separate members into removed and new members
+			const memberIds = members.map(({ id }) => id);
+			const existingMemberIds = taskMembers.map(({ id }) => id);
+
+			const removedMembers = taskMembers.filter((member) => !memberIds.includes(member.id));
+			const newMembers = members.filter((member) => !existingMemberIds.includes(member.id));
 
 			// Update the existing task with the new entity data
 			this.typeOrmTaskRepository.merge(existingTask, entity);
 
 			// Save the updated task
 			const updatedTask = await this.typeOrmTaskRepository.save(existingTask);
+			const { organizationId, tenantId } = updatedTask;
+
+			// Unsubscribe members who were unassigned from task
+			if (removedMembers.length > 0) {
+				try {
+					await Promise.all(
+						removedMembers.map(
+							async (member) =>
+								await this._subscriptionService.delete({
+									entity: BaseEntityEnum.Task,
+									entityId: updatedTask.id,
+									userId: member.userId,
+									type: SubscriptionTypeEnum.ASSIGNMENT
+								})
+						)
+					);
+				} catch (error) {
+					console.error('Error subscribing new members to the task:', error);
+				}
+			}
+
+			// Subscribe new assignees to the task
+			if (newMembers.length) {
+				try {
+					await Promise.all(
+						newMembers.map(({ userId }) =>
+							this._eventBus.publish(
+								new CreateSubscriptionEvent({
+									entity: BaseEntityEnum.Task,
+									entityId: updatedTask.id,
+									userId,
+									type: SubscriptionTypeEnum.ASSIGNMENT,
+									organizationId,
+									tenantId
+								})
+							)
+						)
+					);
+				} catch (error) {
+					console.error('Error subscribing new members to the task:', error);
+				}
+			}
 
 			// Activity Log Task Update
-			const { organizationId, tenantId } = updatedTask;
 			this.activityLogService.logActivity<Task>(
 				BaseEntityEnum.Task,
 				ActionTypeEnum.Updated,

@@ -1,3 +1,4 @@
+import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -13,6 +14,7 @@ import { TypeOrmOrganizationTeamEmployeeRepository } from './repository';
 		TypeOrmModule.forFeature([OrganizationTeamEmployee]),
 		MikroOrmModule.forFeature([OrganizationTeamEmployee]),
 		RolePermissionModule,
+		CqrsModule,
 		TaskModule
 	],
 	controllers: [OrganizationTeamEmployeeController],

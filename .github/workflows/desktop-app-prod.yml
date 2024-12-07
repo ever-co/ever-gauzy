@@ -84,7 +84,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [macos-12]
+        os: [macos-latest]
 
     steps:
       - name: Check out Git repository
@@ -97,7 +97,7 @@ jobs:
           cache: 'yarn'
 
       - name: Fix node-gyp and Python
-        run: python3 -m pip install packaging setuptools
+        run: python3 -m pip install --break-system-packages packaging setuptools
 
       - name: Install latest version of NPM
         run: 'sudo npm install -g npm@9'

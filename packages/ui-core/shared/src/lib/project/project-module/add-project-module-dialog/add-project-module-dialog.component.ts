@@ -14,12 +14,11 @@ import {
 	IOrganizationProjectModule,
 	IOrganizationSprint,
 	IOrganizationTeam,
-	ISelectedEmployee,
 	ITask,
 	ProjectModuleStatusEnum,
 	TaskParticipantEnum,
-	IGetTaskOptions,
-	ID
+	ID,
+	IOrganizationProjectModuleEmployee
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
@@ -28,7 +27,8 @@ import {
 	Store,
 	OrganizationProjectModuleService,
 	SprintService,
-	TasksService
+	TasksService,
+	ToastrService
 } from '@gauzy/ui-core/core';
 import { richTextCKEditorConfig } from '../../../ckeditor.config';
 
@@ -39,9 +39,12 @@ import { richTextCKEditorConfig } from '../../../ckeditor.config';
 	styleUrls: ['./add-project-module-dialog.component.scss']
 })
 export class AddProjectModuleDialogComponent extends TranslationBaseComponent implements OnInit {
+	memberIds: ID[] = [];
+	managerIds: ID[] = [];
+	selectedEmployeeIds: ID[] = [];
+	selectedManagerIds: ID[] = [];
 	employees: IEmployee[] = [];
 	teams: IOrganizationTeam[] = [];
-	selectedMembers: string[] = [];
 	selectedTeams: string[] = [];
 	tasks: ITask[] = [];
 	organizationSprints: IOrganizationSprint[] = [];
@@ -60,8 +63,8 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 		isFavorite: [false],
 		parentId: [],
 		projectId: [null, Validators.required],
-		managerId: [],
-		members: [],
+		managerIds: [],
+		memberIds: [],
 		organizationSprints: [],
 		teams: [],
 		tasks: []
@@ -97,12 +100,11 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 		private organizationTeamsService: OrganizationTeamsService,
 		private organizationProjectModuleService: OrganizationProjectModuleService,
 		private organizationSprintService: SprintService,
-		private readonly tasksService: TasksService
+		private readonly tasksService: TasksService,
+		private readonly toastrService: ToastrService
 	) {
 		super(translateService);
 	}
-
-
 
 	/**
 	 * Initializes component and loads necessary data.
@@ -119,25 +121,53 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 	 * Populates form fields with data from an existing project module.
 	 * @param module - The selected project module data.
 	 */
-	private populateForm(module: IOrganizationProjectModule) {
+	private populateForm(module: IOrganizationProjectModule): void {
 		if (!module) return;
+
+		const {
+			name,
+			description,
+			status,
+			startDate,
+			endDate,
+			isFavorite,
+			projectId,
+			parentId,
+			members = [],
+			organizationSprints,
+			teams = [],
+			tasks = []
+		} = module;
+
 		this.form.patchValue({
-			name: module.name,
-			description: module.description,
-			status: module.status,
-			startDate: module.startDate,
-			endDate: module.endDate,
-			isFavorite: module.isFavorite,
-			projectId: module.projectId,
-			parentId: module.parentId,
-			managerId: module.managerId,
-			members: (module.members || []).map((m) => m.id),
-			organizationSprints: module.organizationSprints,
-			teams: (module.teams || []).map((t) => t.id),
-			tasks: module.tasks
+			name,
+			description,
+			status,
+			startDate,
+			endDate,
+			isFavorite,
+			projectId,
+			parentId,
+			members: members.map((m) => m.id),
+			organizationSprints,
+			teams: teams.map((t) => t.id),
+			tasks: tasks.map((task) => task.id)
 		});
-		this.selectedMembers = module.members.map((m) => m.id);
-		this.selectedTeams = module.teams.map((t) => t.id);
+
+		this.selectedEmployeeIds = (module.members || [])
+			.filter((member: IOrganizationProjectModuleEmployee) => !member.isManager)
+			.map((member: IOrganizationProjectModuleEmployee) => member.employeeId);
+
+		this.memberIds = this.selectedEmployeeIds;
+
+		// Selected Managers Ids
+		this.selectedManagerIds = (module.members || [])
+			.filter((member: IOrganizationProjectModuleEmployee) => member.isManager)
+			.map((member: IOrganizationProjectModuleEmployee) => member.employeeId);
+
+		this.managerIds = this.selectedManagerIds;
+
+		this.selectedTeams = teams.map((t) => t.id);
 	}
 
 	/**
@@ -152,28 +182,69 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 	 * Creates a new project module or updates the existing module based on form data.
 	 */
 	private async createOrUpdateModule() {
-		const organizationId = this.organization.id;
+		try {
+			// Update form fields with valid members, teams, and tasks
+			this.updateFormFields();
 
-		this.form.get('members').setValue(
-			(this.selectedMembers || []).map((id) => this.employees.find((e) => e.id === id)).filter((e) => !!e) // Only valid employees
-		);
+			// Prepare form values
+			const formValue = {
+				...this.form.value,
+				organizationId: this.organization.id,
+				organization: this.organization
+			};
 
-		this.form.get('teams').setValue(
-			(this.selectedTeams || []).map((id) => this.teams.find((e) => e.id === id)).filter((e) => !!e) // Only valid teams
-		);
+			let module: IOrganizationProjectModule;
 
-		this.form.get('tasks').setValue(
-			(this.form.get('tasks').value || []).map((id) => this.tasks.find((e) => e.id === id)).filter((e) => !!e) // Only valid teams
-		);
+			// Determine if we are creating or updating a module
+			if (this.createModule) {
+				module = await firstValueFrom(this.organizationProjectModuleService.create(formValue));
+				this.toastrService.success(
+					this.translateService.instant('TOASTR.MESSAGE.MODULE_CREATED'),
+					this.translateService.instant('TOASTR.TITLE.SUCCESS')
+				);
+			} else {
+				module = await firstValueFrom(
+					this.organizationProjectModuleService.update(this.projectModule.id, formValue)
+				);
+				this.toastrService.success(
+					this.translateService.instant('TOASTR.MESSAGE.MODULE_UPDATED'),
+					this.translateService.instant('TOASTR.TITLE.SUCCESS')
+				);
+			}
 
-		const formValue = { ...this.form.value, organizationId, organization: this.organization };
-
-		if (this.createModule) {
-			const module = await firstValueFrom(this.organizationProjectModuleService.create(formValue));
+			// Close the dialog and return the created/updated module
 			this.dialogRef.close(module);
-		} else {
-			this.dialogRef.close(formValue);
+		} catch (error) {
+			// Display an error toast
+			this.toastrService.danger(
+				this.translateService.instant('TOASTR.MESSAGE.MODULE_SAVE_ERROR'),
+				this.translateService.instant('TOASTR.TITLE.ERROR')
+			);
+			console.error('Failed to save module:', error);
 		}
+	}
+
+	/**
+	 * Updates form fields with valid members, teams, and tasks.
+	 */
+	private updateFormFields() {
+		this.form.get('memberIds').setValue(this.memberIds.filter((memberId) => !this.managerIds.includes(memberId)));
+
+		this.form
+			.get('managerIds')
+			.setValue(this.managerIds.filter((managerId) => this.employees.some((emp) => emp.id === managerId)));
+
+		this.form
+			.get('teams')
+			.setValue((this.selectedTeams || []).map((id: ID) => this.teams.find((t) => t.id === id)).filter(Boolean));
+
+		this.form
+			.get('tasks')
+			.setValue(
+				(this.form.get('tasks').value || [])
+					.map((id: ID) => this.tasks.find((t) => t.id === id))
+					.filter(Boolean)
+			);
 	}
 
 	/**
@@ -227,10 +298,10 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 		const { id: organizationId, tenantId } = this.organization;
 
 		try {
-			const { items: teams = [] } = await this.organizationTeamsService.getAll(
-				['members'],
-				{ organizationId, tenantId }
-			);
+			const { items: teams = [] } = await this.organizationTeamsService.getAll(['members'], {
+				organizationId,
+				tenantId
+			});
 			this.teams = teams;
 		} catch (error) {
 			this.teams = [];
@@ -272,7 +343,7 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 
 		try {
 			const modules = await firstValueFrom(
-				this.organizationProjectModuleService.get<IOrganizationProjectModule>({ projectId })
+				this.organizationProjectModuleService.getAllModulesByProjectId({ projectId })
 			);
 			this.availableParentModules = modules?.items || [];
 		} catch (error) {
@@ -295,12 +366,14 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 	}
 
 	/**
-	 * Updates the selected manager ID in the form.
-	 * @param selectedManagerId - The selected manager's ID.
+	 * Handles the selection of managers and updates the `managerIds` property.
+	 *
+	 * @param {ID[]} managerIds - An array of selected manager IDs.
+	 * The function is called when managers are selected, and it sets the `managerIds` property
+	 * with the array of selected IDs.
 	 */
-	onManagerSelected(employee: ISelectedEmployee) {
-		// Check if the provided value is an array; if so, take the first element, otherwise use the value directly
-		this.form.get('managerId').setValue(employee.id);
+	onManagersSelected(managerIds: ID[]): void {
+		this.managerIds = managerIds;
 	}
 
 	/**
@@ -313,11 +386,13 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 	}
 
 	/**
-	 * Updates the selected members based on the user's selection.
+	 * Handles the selection of members and updates the `memberIds` property.
 	 *
-	 * @param members - An array of member IDs selected by the user.
+	 * @param {ID[]} memberIds - An array of selected member IDs.
+	 * The function is called when members are selected, and it sets the `memberIds` property
+	 * with the array of selected IDs.
 	 */
-	onMembersSelected(members: ID[]): void {
-		this.selectedMembers = [...members];
+	onMembersSelected(memberIds: ID[]): void {
+		this.memberIds = memberIds;
 	}
 }

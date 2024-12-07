@@ -1,3 +1,4 @@
+import { EventBus } from '@nestjs/cqrs';
 import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
 import {
 	IsNull,
@@ -8,7 +9,8 @@ import {
 	In,
 	FindOptionsWhere,
 	FindManyOptions,
-	Between
+	Between,
+	FindOptionsRelations
 } from 'typeorm';
 import { isBoolean, isUUID } from 'class-validator';
 import {
@@ -23,7 +25,8 @@ import {
 	ITaskUpdateInput,
 	PermissionsEnum,
 	ActionTypeEnum,
-	ITaskDateFilterInput
+	ITaskDateFilterInput,
+	SubscriptionTypeEnum
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { isPostgres, isSqlite } from '@gauzy/config';
@@ -31,7 +34,10 @@ import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { addBetween } from './../core/util';
 import { RequestContext } from '../core/context';
 import { TaskViewService } from './views/view.service';
+import { SubscriptionService } from '../subscription/subscription.service';
+import { MentionService } from '../mention/mention.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
+import { CreateSubscriptionEvent } from '../subscription/events';
 import { Task } from './task.entity';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
 import { GetTaskByIdDTO } from './dto';
@@ -42,10 +48,13 @@ import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
 	constructor(
+		private readonly _eventBus: EventBus,
 		readonly typeOrmTaskRepository: TypeOrmTaskRepository,
 		readonly mikroOrmTaskRepository: MikroOrmTaskRepository,
 		readonly typeOrmOrganizationSprintTaskHistoryRepository: TypeOrmOrganizationSprintTaskHistoryRepository,
 		private readonly taskViewService: TaskViewService,
+		private readonly _subscriptionService: SubscriptionService,
+		private readonly mentionService: MentionService,
 		private readonly activityLogService: ActivityLogService
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
@@ -62,14 +71,36 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		try {
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 			const userId = RequestContext.currentUserId();
-			const { organizationSprintId } = input;
+			const { mentionUserIds, ...data } = input;
 
 			// Find task relations
-			const relations = this.typeOrmTaskRepository.metadata.relations.map((relation) => relation.propertyName);
+			const relations: FindOptionsRelations<Task> = {
+				tags: true,
+				members: true,
+				teams: true,
+				modules: true,
+				parent: true,
+				project: true,
+				organizationSprint: true,
+				taskStatus: true,
+				taskSize: true,
+				taskPriority: true,
+				linkedIssues: true,
+				dailyPlans: true
+			};
 
 			const task = await this.findOneByIdString(id, { relations });
 
-			if (input.projectId && input.projectId !== task.projectId) {
+			const taskMembers = task.members;
+
+			// Separate members into removed and new members
+			const memberIdSet = new Set((data.members || []).map(({ id }) => id));
+			const existingMemberIdSet = new Set((taskMembers || []).map(({ id }) => id));
+
+			const removedMembers = (taskMembers || []).filter((member) => !memberIdSet.has(member.id));
+			const newMembers = (data.members || []).filter((member) => !existingMemberIdSet.has(member.id));
+
+			if (data.projectId && data.projectId !== task.projectId) {
 				const { organizationId, projectId } = task;
 
 				// Get the maximum task number for the project
@@ -88,25 +119,76 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 			// Update the task with the provided data
 			const updatedTask = await super.create({
-				...input,
+				...data,
 				id
 			});
 
 			// Register Task Sprint moving history
+			const { organizationSprintId } = data;
 			if (organizationSprintId && organizationSprintId !== task.organizationSprintId) {
 				await this.typeOrmOrganizationSprintTaskHistoryRepository.save({
 					fromSprintId: task.organizationSprintId || organizationSprintId, // Use incoming sprint ID if the task's organizationSprintId was previously null or undefined
 					toSprintId: organizationSprintId,
 					taskId: updatedTask.id,
 					movedById: userId,
-					reason: input.taskSprintMoveReason,
-					organizationId: input.organizationId,
+					reason: data.taskSprintMoveReason,
+					organizationId: data.organizationId,
 					tenantId
 				});
 			}
 
-			// Generate the activity log
+			// Synchronize mentions
+			if (data.description) {
+				try {
+					await this.mentionService.updateEntityMentions(BaseEntityEnum.Task, id, mentionUserIds);
+				} catch (error) {
+					console.error('Error synchronizing mentions:', error);
+				}
+			}
+
 			const { organizationId } = updatedTask;
+			// Unsubscribe members who were unassigned from task
+			if (removedMembers.length > 0) {
+				try {
+					await Promise.all(
+						removedMembers.map(
+							async (member) =>
+								await this._subscriptionService.delete({
+									entity: BaseEntityEnum.Task,
+									entityId: updatedTask.id,
+									userId: member.userId,
+									type: SubscriptionTypeEnum.ASSIGNMENT
+								})
+						)
+					);
+				} catch (error) {
+					console.error('Error unsubscribing members from the task:', error);
+				}
+			}
+
+			// Subscribe the new assignees to the task
+			if (newMembers.length) {
+				try {
+					await Promise.all(
+						newMembers.map(({ userId }) =>
+							this._eventBus.publish(
+								new CreateSubscriptionEvent({
+									entity: BaseEntityEnum.Task,
+									entityId: updatedTask.id,
+									userId,
+									type: SubscriptionTypeEnum.ASSIGNMENT,
+									organizationId,
+									tenantId
+								})
+							)
+						)
+					);
+				} catch (error) {
+					console.error('Error publishing CreateSubscriptionEvent:', error);
+				}
+			}
+
+			// Generate the activity log
 			this.activityLogService.logActivity<Task>(
 				BaseEntityEnum.Task,
 				ActionTypeEnum.Updated,
@@ -117,7 +199,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				organizationId,
 				tenantId,
 				task,
-				input
+				data
 			);
 
 			// Return the updated Task
@@ -615,6 +697,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					task.members = task.members.filter((member) => member.id !== employeeId);
 				}
 			});
+
+			// TODO : Unsubscribe employee from task
 
 			// Save updated entities to DB
 			await this.typeOrmRepository.save(tasks);
