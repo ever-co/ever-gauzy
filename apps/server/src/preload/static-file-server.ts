@@ -12,7 +12,8 @@ export class StaticFileServer {
 
 	private constructor() {
 		this.isPackaged = process.env.isPackaged === 'true';
-		this.dirUi = this.isPackaged ? path.join(__dirname, '..', 'data', 'ui') : path.join(__dirname, 'data', 'ui');
+		const baseDir = this.isPackaged ? ['..', '..'] : ['..'];
+		this.dirUi = path.join(__dirname, ...baseDir, 'data', 'ui');
 		this.fileServer = new NodeStaticServer(this.dirUi);
 	}
 

@@ -4,19 +4,6 @@ import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { Router, RouterModule } from '@angular/router';
 import {
-	AboutModule,
-	ElectronService,
-	GAUZY_ENV,
-	LanguageModule,
-	LoggerService,
-	NgxDesktopThemeModule,
-	ServerDashboardModule,
-	SettingsModule,
-	SetupModule,
-	UpdaterModule
-} from '@gauzy/desktop-ui-lib';
-import { environment as gauzyEnvironment } from '@gauzy/ui-config';
-import {
 	NbButtonModule,
 	NbCardModule,
 	NbDialogModule,
@@ -28,6 +15,19 @@ import {
 	NbToastrModule
 } from '@nebular/theme';
 import * as Sentry from '@sentry/angular-ivy';
+import {
+	AboutModule,
+	ElectronService,
+	GAUZY_ENV,
+	LanguageModule,
+	LoggerService,
+	ServerDashboardModule,
+	SettingsModule,
+	SetupModule,
+	UpdaterModule,
+	NgxDesktopThemeModule
+} from '@gauzy/desktop-ui-lib';
+import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
