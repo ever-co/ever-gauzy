@@ -120,7 +120,12 @@ export class CreateScreeningTaskEntity1733566941638 implements MigrationInterfac
      * @param queryRunner
      */
     public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-
+        await queryRunner.query(`CREATE TABLE \`screening-task\` (\`deletedAt\` datetime(6) NULL, \`id\` varchar(36) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`status\` varchar(255) NOT NULL, \`onHoldUntil\` datetime NULL, \`taskId\` varchar(255) NOT NULL, \`creatorId\` varchar(255) NULL, INDEX \`IDX_dd2e3b930072f1bfdf82756efc\` (\`isActive\`), INDEX \`IDX_850eb939f558df6f97cde349fc\` (\`isArchived\`), INDEX \`IDX_7b63a7c4bb3cb8388003281d0c\` (\`tenantId\`), INDEX \`IDX_40ec003f52889f9389735e8012\` (\`organizationId\`), INDEX \`IDX_5424134603415636eaa8dd22e3\` (\`status\`), INDEX \`IDX_ba7e9c148ba684f34bb72bac6d\` (\`taskId\`), INDEX \`IDX_e272af2d4d0ef95e4bb81d2746\` (\`creatorId\`), UNIQUE INDEX \`REL_ba7e9c148ba684f34bb72bac6d\` (\`taskId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`ALTER TABLE \`task\` ADD \`isScreeningTask\` tinyint NULL DEFAULT 0`);
+        await queryRunner.query(`ALTER TABLE \`screening-task\` ADD CONSTRAINT \`FK_7b63a7c4bb3cb8388003281d0cf\` FOREIGN KEY (\`tenantId\`) REFERENCES \`tenant\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`screening-task\` ADD CONSTRAINT \`FK_40ec003f52889f9389735e80122\` FOREIGN KEY (\`organizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`);
+        await queryRunner.query(`ALTER TABLE \`screening-task\` ADD CONSTRAINT \`FK_ba7e9c148ba684f34bb72bac6d1\` FOREIGN KEY (\`taskId\`) REFERENCES \`task\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`screening-task\` ADD CONSTRAINT \`FK_e272af2d4d0ef95e4bb81d2746d\` FOREIGN KEY (\`creatorId\`) REFERENCES \`user\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
     }
 
     /**
@@ -129,6 +134,19 @@ export class CreateScreeningTaskEntity1733566941638 implements MigrationInterfac
      * @param queryRunner
      */
     public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-
+ await queryRunner.query(`ALTER TABLE \`screening-task\` DROP FOREIGN KEY \`FK_e272af2d4d0ef95e4bb81d2746d\``);
+        await queryRunner.query(`ALTER TABLE \`screening-task\` DROP FOREIGN KEY \`FK_ba7e9c148ba684f34bb72bac6d1\``);
+        await queryRunner.query(`ALTER TABLE \`screening-task\` DROP FOREIGN KEY \`FK_40ec003f52889f9389735e80122\``);
+        await queryRunner.query(`ALTER TABLE \`screening-task\` DROP FOREIGN KEY \`FK_7b63a7c4bb3cb8388003281d0cf\``);
+        await queryRunner.query(`ALTER TABLE \`task\` DROP COLUMN \`isScreeningTask\``);
+        await queryRunner.query(`DROP INDEX \`REL_ba7e9c148ba684f34bb72bac6d\` ON \`screening-task\``);
+        await queryRunner.query(`DROP INDEX \`IDX_e272af2d4d0ef95e4bb81d2746\` ON \`screening-task\``);
+        await queryRunner.query(`DROP INDEX \`IDX_ba7e9c148ba684f34bb72bac6d\` ON \`screening-task\``);
+        await queryRunner.query(`DROP INDEX \`IDX_5424134603415636eaa8dd22e3\` ON \`screening-task\``);
+        await queryRunner.query(`DROP INDEX \`IDX_40ec003f52889f9389735e8012\` ON \`screening-task\``);
+        await queryRunner.query(`DROP INDEX \`IDX_7b63a7c4bb3cb8388003281d0c\` ON \`screening-task\``);
+        await queryRunner.query(`DROP INDEX \`IDX_850eb939f558df6f97cde349fc\` ON \`screening-task\``);
+        await queryRunner.query(`DROP INDEX \`IDX_dd2e3b930072f1bfdf82756efc\` ON \`screening-task\``);
+        await queryRunner.query(`DROP TABLE \`screening-task\``);
     }
 }
