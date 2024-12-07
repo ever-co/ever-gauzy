@@ -1,4 +1,4 @@
-import { IRelationalRole } from 'role.model';
+import { IRelationalRole } from './role.model';
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IEmployeeEntityInput, IMemberEntityBased } from './employee.model';
 import { IRelationalOrganizationProject } from './organization-projects.model';
