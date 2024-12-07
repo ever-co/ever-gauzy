@@ -43,6 +43,7 @@ export interface ITask
 	creator?: IUser;
 	creatorId?: ID;
 	isDraft?: boolean; // Define if task is still draft (E.g : Task description not completed yet)
+	isScreeningTask?: boolean; // Defines if the task still in discussion before to be accepted
 
 	version?: string;
 	issueType?: string;
