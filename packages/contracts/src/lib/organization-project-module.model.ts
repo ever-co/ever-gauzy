@@ -1,5 +1,6 @@
+import { IRelationalRole } from 'role.model';
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
-import { IEmployee } from './employee.model';
+import { IEmployeeEntityInput, IMemberEntityBased } from './employee.model';
 import { IRelationalOrganizationProject } from './organization-projects.model';
 import { IOrganizationSprint } from './organization-sprint.model';
 import { IOrganizationTeam } from './organization-team.model';
@@ -24,16 +25,23 @@ export interface IOrganizationProjectModule
 	parent?: IOrganizationProjectModule;
 	parentId?: ID; // Optional field for specifying the parent module ID
 	children?: IOrganizationProjectModule[]; // Modules related as children
-	manager?: IUser;
-	managerId?: ID;
 	creator?: IUser;
 	creatorId?: ID;
-	members?: IEmployee[];
+	members?: IOrganizationProjectModuleEmployee[];
 	organizationSprints?: IOrganizationSprint[];
 	teams?: IOrganizationTeam[];
 	tasks?: ITask[];
 }
 
+export interface IOrganizationProjectModuleEmployee
+	extends IBasePerTenantAndOrganizationEntityModel,
+		IEmployeeEntityInput,
+		IRelationalRole {
+	organizationProjectModule: IOrganizationProjectModule;
+	organizationProjectModuleId: ID;
+	isManager?: boolean;
+	assignedAt?: Date;
+}
 export interface IOrganizationProjectModuleFindInput
 	extends IBasePerTenantAndOrganizationEntityModel,
 		Partial<Pick<IOrganizationProjectModule, 'name' | 'status' | 'projectId'>> {
@@ -50,6 +58,8 @@ export enum ProjectModuleStatusEnum {
 	CANCELLED = 'cancelled'
 }
 
-export interface IOrganizationProjectModuleCreateInput extends Omit<IOrganizationProjectModule, 'id'> {}
+export interface IOrganizationProjectModuleCreateInput
+	extends Omit<IOrganizationProjectModule, 'id'>,
+		IMemberEntityBased {}
 
-export interface IOrganizationProjectModuleUpdateInput extends Partial<IOrganizationProjectModule> {}
+export interface IOrganizationProjectModuleUpdateInput extends Partial<IOrganizationProjectModuleCreateInput> {}
