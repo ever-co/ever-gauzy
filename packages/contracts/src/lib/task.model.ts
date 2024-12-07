@@ -15,6 +15,7 @@ import { ITaskPriority, TaskPriorityEnum } from './task-priority.model';
 import { ITaskSize, TaskSizeEnum } from './task-size.model';
 import { IOrganizationProjectModule } from './organization-project-module.model';
 import { TaskTypeEnum } from './issue-type.model';
+import { IMentionUserIds } from './mention.model';
 
 export interface ITask
 	extends IBasePerTenantAndOrganizationEntityModel,
@@ -75,7 +76,7 @@ export enum TaskParticipantEnum {
 	TEAMS = 'teams'
 }
 
-export type ITaskCreateInput = ITask;
+export interface ITaskCreateInput extends ITask, IMentionUserIds {}
 
 export interface ITaskUpdateInput extends ITaskCreateInput {
 	id?: string;
