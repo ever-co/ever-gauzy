@@ -1,0 +1,1 @@
+# @gauzy/plugin-sentry

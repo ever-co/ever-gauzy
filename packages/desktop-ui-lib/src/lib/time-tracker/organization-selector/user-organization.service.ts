@@ -85,7 +85,14 @@ export class UserOrganizationService {
 		return firstValueFrom(user$);
 	}
 
+	/**
+	 * Updates the preferred language for a user.
+	 *
+	 * @param input - The `IUserUpdateInput` object containing the updated user language preference.
+	 * @returns A `Promise<void>` indicating the completion of the update operation.
+	 */
 	public async updatePreferredLanguage(input: IUserUpdateInput): Promise<void> {
+		// Sends an HTTP PUT request to update the user's preferred language.
 		await firstValueFrom(this._http.put(`${API_PREFIX}/user/preferred-language`, input));
 	}
 }

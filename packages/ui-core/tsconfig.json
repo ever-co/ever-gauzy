@@ -2,6 +2,8 @@
 	"compilerOptions": {
 		"target": "es2022",
 		"useDefineForClassFields": false,
+		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"strict": false,
 		"noImplicitOverride": false,
@@ -19,6 +21,7 @@
 		}
 	},
 	"files": [],
+	"include": [],
 	"references": [
 		{
 			"path": "./tsconfig.lib.json"

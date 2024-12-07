@@ -9,11 +9,11 @@ import {
 	GAUZY_ENV,
 	LanguageModule,
 	LoggerService,
+	NgxDesktopThemeModule,
 	ServerDashboardModule,
 	SettingsModule,
 	SetupModule,
-	UpdaterModule,
-	NgxDesktopThemeModule
+	UpdaterModule
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import {
@@ -85,7 +85,7 @@ if (environment.SENTRY_DSN) {
 		},
 		{
 			provide: APP_INITIALIZER,
-			useFactory: () => () => { },
+			useFactory: () => {},
 			deps: [Sentry.TraceService],
 			multi: true
 		},
@@ -99,6 +99,4 @@ if (environment.SENTRY_DSN) {
 	],
 	bootstrap: [AppComponent]
 })
-export class AppModule {
-	constructor() { }
-}
+export class AppModule {}

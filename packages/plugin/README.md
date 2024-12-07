@@ -1,9 +1,25 @@
-# `@gauzy/plugin`
+# @gauzy/plugin
 
-All Gauzy plugins should use that package with shared Plugin related code.
+This library was generated with [Nx](https://nx.dev). It contains the Plugin Module for the Gauzy platform.
 
-## Usage
+## Building
 
-```
-const plugin = require('@gauzy/plugin');
+Run `nx build plugin` to build the library.
+
+## Running unit tests
+
+Run `nx test plugin` to execute the unit tests via [Jest](https://jestjs.io).
+
+## Publishing
+
+After building your library with `yarn nx build plugin`, go to the dist folder `dist/packages/plugin` and run `npm publish`.
+
+## Installation
+
+Install the Plugin Module using your preferred package manager:
+
+```bash
+npm install @gauzy/plugin
+# or
+yarn add @gauzy/plugin
 ```

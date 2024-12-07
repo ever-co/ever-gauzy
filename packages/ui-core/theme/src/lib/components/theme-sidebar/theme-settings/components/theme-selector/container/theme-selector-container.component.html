@@ -1,0 +1,11 @@
+<ng-container>
+	<ng-template [ngTemplateOutlet]="isClassic ? classic : card"></ng-template>
+</ng-container>
+
+<ng-template #classic>
+	<gauzy-theme-selector></gauzy-theme-selector>
+</ng-template>
+
+<ng-template #card>
+	<gauzy-theme-selector-image></gauzy-theme-selector-image>
+</ng-template>

@@ -13,88 +13,51 @@ const DEFAULT_DATE_RANGE = {
 
 @Injectable()
 export class UpworkReportService {
-	constructor() {}
-
-	/*
-	 * Get freelancer specific time reports
-	 * Description : This call allows callers to generate time reports for themselves, including monetary information. The caller must be the freelancer himself.
+	/**
+	 * Fetches detailed time reports for a specific freelancer.
+	 *
+	 * @param {IUpworkApiConfig} config - Configuration object for Upwork API, including access tokens and API keys.
+	 * @param {string} providerId - The ID of the freelancer for whom the report is being fetched.
+	 * @param {IUpworkDateRange} dateRange - The start and end dates for the report.
+	 * @returns {Promise<any>} - Returns the time report data or throws an exception if an error occurs.
+	 * @throws {BadRequestException} - Thrown if the report cannot be fetched.
 	 */
 	public async getFullReportByFreelancer(
 		config: IUpworkApiConfig,
 		providerId: string,
 		dateRange: IUpworkDateRange
 	): Promise<any> {
+		const api = new UpworkApi(config);
+		const reports = new Time(api);
+		const { start, end } = dateRange;
+
+		const selectQuery = `
+			SELECT
+				worked_on,
+				company_id,
+				company_name,
+				assignment_name,
+				assignment_team_id,
+				assignment_ref,
+				assignment_rate,
+				hours,
+				memo,
+				contract_type
+			WHERE
+				worked_on > '${start || DEFAULT_DATE_RANGE.start}' AND
+				worked_on <= '${end || DEFAULT_DATE_RANGE.end}'
+			ORDER BY
+				worked_on,
+				assignment_ref
+		`;
+
 		try {
-			const api = new UpworkApi(config);
-			const reports = new Time(api);
-			const { start, end } = dateRange;
-
-			const select = `SELECT
-							worked_on,
-							company_id,
-							company_name,
-							assignment_name,
-							assignment_team_id,
-							assignment_ref,
-							assignment_rate,
-							hours,
-							memo,
-							contract_type
-						WHERE
-							worked_on > '${start || DEFAULT_DATE_RANGE.start}' AND
-							worked_on <= '${end || DEFAULT_DATE_RANGE.end}'
-						ORDER BY
-							worked_on,
-							assignment_ref`;
-
 			return new Promise((resolve, reject) => {
 				api.setAccessToken(config.accessToken, config.accessSecret, () => {
-					reports.getByFreelancerFull(providerId, { tq: select }, (error: any, data: any) =>
-						error ? reject(error) : resolve(data)
-					);
-				});
-			});
-		} catch {
-			throw new BadRequestException('Cannot get freelancer income report');
-		}
-	}
-
-	/*
-	 * Get freelancer specific time reports (hours only)
-	 * Description : This call allows callers to generate time reports for themselves. No monetary fields, such as charges, are supported. The caller must be the freelancer himself.
-	 */
-	public async getLimitedReportByFreelance(
-		config: IUpworkApiConfig,
-		providerId: string,
-		dateRange: IUpworkDateRange
-	): Promise<any> {
-		try {
-			const api = new UpworkApi(config);
-			const reports = new Time(api);
-			const { start, end } = dateRange;
-
-			const select = `SELECT
-							worked_on,
-							company_id,
-							company_name,
-							assignment_name,
-							assignment_team_id,
-							assignment_ref,
-							assignment_rate,
-							hours,
-							memo,
-							contract_type
-						WHERE
-							worked_on > '${start || DEFAULT_DATE_RANGE.start}' AND
-							worked_on <= '${end || DEFAULT_DATE_RANGE.end}'
-						ORDER BY
-							worked_on,
-							assignment_ref`;
-
-			return new Promise((resolve, reject) => {
-				api.setAccessToken(config.accessToken, config.accessSecret, () => {
-					reports.getByFreelancerLimited(providerId, { tq: select }, (error: any, data: any) =>
-						error ? reject(error) : resolve(data)
+					reports.getByFreelancerFull(
+						providerId,
+						{ tq: selectQuery },
+						(error: any, data: any) => (error ? reject(error) : resolve(data))
 					);
 				});
 			});
@@ -103,33 +66,95 @@ export class UpworkReportService {
 		}
 	}
 
-	/*
-	 * Get billing reports for a freelancer
-	 * Description: This call allows freelancers to find out what clients are paying for their services.
+	/**
+	 * Fetches limited time reports (hours only) for a specific freelancer.
+	 *
+	 * @param {IUpworkApiConfig} config - Configuration object for Upwork API, including access tokens and API keys.
+	 * @param {string} providerId - The ID of the freelancer for whom the report is being fetched.
+	 * @param {IUpworkDateRange} dateRange - The start and end dates for the report.
+	 * @returns {Promise<any>} - Returns the time report data or throws an exception if an error occurs.
+	 * @throws {BadRequestException} - Thrown if the report cannot be fetched.
+	 */
+	public async getLimitedReportByFreelance(
+		config: IUpworkApiConfig,
+		providerId: string,
+		dateRange: IUpworkDateRange
+	): Promise<any> {
+		const api = new UpworkApi(config);
+		const reports = new Time(api);
+		const { start, end } = dateRange;
+
+		const selectQuery = `
+			SELECT
+				worked_on,
+				company_id,
+				company_name,
+				assignment_name,
+				assignment_team_id,
+				assignment_ref,
+				assignment_rate,
+				hours,
+				memo,
+				contract_type
+			WHERE
+				worked_on > '${start || DEFAULT_DATE_RANGE.start}' AND
+				worked_on <= '${end || DEFAULT_DATE_RANGE.end}'
+			ORDER BY
+				worked_on,
+				assignment_ref
+		`;
+
+		try {
+			return new Promise((resolve, reject) => {
+				api.setAccessToken(config.accessToken, config.accessSecret, () => {
+					reports.getByFreelancerLimited(
+						providerId,
+						{ tq: selectQuery },
+						(error: any, data: any) => (error ? reject(error) : resolve(data))
+					);
+				});
+			});
+		} catch (error) {
+			throw new BadRequestException('Cannot get freelancer limited time report');
+		}
+	}
+
+	/**
+	 * Fetches billing reports for a freelancer.
+	 *
+	 * @param {IUpworkApiConfig} config - Configuration object for Upwork API, including access tokens and API keys.
+	 * @param {string} providerReferenceId - The reference ID of the freelancer for whom the billing report is being fetched.
+	 * @param {IUpworkDateRange} dateRange - The start and end dates for the report.
+	 * @returns {Promise<any>} - Returns the billing report data or throws an exception if an error occurs.
+	 * @throws {BadRequestException} - Thrown if the billing report cannot be fetched.
 	 */
 	public async getBillingReportByFreelancer(
 		config: IUpworkApiConfig,
 		providerReferenceId: string,
 		dateRange: IUpworkDateRange
-	) {
+	): Promise<any> {
+		const api = new UpworkApi(config);
+		const billings = new Billings(api);
+		const { start, end } = dateRange;
+
+		const query = `
+			SELECT
+				amount,
+				date,
+				type,
+				subtype
+			WHERE
+				date > '${start || DEFAULT_DATE_RANGE.start}' AND
+				date <= '${end || DEFAULT_DATE_RANGE.end}'
+		`;
+
 		try {
-			const api = new UpworkApi(config);
-			const billings = new Billings(api);
-			const { start, end } = dateRange;
-
-			const select = `SELECT
-								amount,
-								date,
-								type,
-								subtype
-							WHERE
-								date > '${start || DEFAULT_DATE_RANGE.start}' AND
-								date <= '${end || DEFAULT_DATE_RANGE.end}'`;
-
 			return new Promise((resolve, reject) => {
 				api.setAccessToken(config.accessToken, config.accessSecret, () => {
-					billings.getByFreelancer(providerReferenceId, { tq: select }, (error: any, data: any) =>
-						error ? reject(error) : resolve(data)
+					billings.getByFreelancer(
+						providerReferenceId,
+						{ tq: query },
+						(error: any, data: any) => (error ? reject(error) : resolve(data))
 					);
 				});
 			});
@@ -138,38 +163,47 @@ export class UpworkReportService {
 		}
 	}
 
-	/*
-	 * Get earning reports for a freelancer
-	 * Description: This call allows freelancers to find out what they are being paid for their services.
+	/**
+	 * Fetches earning reports for a freelancer.
+	 *
+	 * @param {IUpworkApiConfig} config - Configuration object for the Upwork API, including API keys and tokens.
+	 * @param {string} providerReferenceId - The reference ID of the freelancer for whom the earning report is being fetched.
+	 * @param {IUpworkDateRange} dateRange - The start and end dates for the report.
+	 * @returns {Promise<any>} - Returns the earning report data or throws an exception if an error occurs.
+	 * @throws {BadRequestException} - Thrown if the earning report cannot be fetched.
 	 */
 	public async getEarningReportByFreelancer(
 		config: IUpworkApiConfig,
-		providerReferenceId,
+		providerReferenceId: string,
 		dateRange: IUpworkDateRange
 	): Promise<any> {
+		const api = new UpworkApi(config);
+		const earnings = new Earnings(api);
+		const { start, end } = dateRange;
+
+		const query = `
+			SELECT
+				amount,
+				date,
+				type,
+				subtype,
+				description,
+				assignment_name,
+				assignment__reference,
+				provider__reference,
+				reference
+			WHERE
+				date > '${start || DEFAULT_DATE_RANGE.start}' AND
+				date <= '${end || DEFAULT_DATE_RANGE.end}'
+		`;
+
 		try {
-			const api = new UpworkApi(config);
-			const earnings = new Earnings(api);
-			const { start, end } = dateRange;
-
-			const select = `SELECT
-								amount,
-								date,
-								type,
-								subtype,
-								description,
-								assignment_name,
-								assignment__reference,
-								provider__reference,
-								reference
-							WHERE
-								date > '${start || DEFAULT_DATE_RANGE.start}' AND
-								date <= '${end || DEFAULT_DATE_RANGE.end}'`;
-
 			return new Promise((resolve, reject) => {
 				api.setAccessToken(config.accessToken, config.accessSecret, () => {
-					earnings.getByFreelancer(providerReferenceId, { tq: select }, (error: any, data: any) =>
-						error ? reject(error) : resolve(data)
+					earnings.getByFreelancer(
+						providerReferenceId,
+						{ tq: query },
+						(error: any, data: any) => (error ? reject(error) : resolve(data))
 					);
 				});
 			});

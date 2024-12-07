@@ -3,8 +3,7 @@ import { filter, firstValueFrom, tap } from 'rxjs';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IEmployee, IOrganization, IOrganizationTeam, ITimeOffPolicy } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/core';
-import { EmployeesService } from '@gauzy/ui-core/core';
+import { EmployeesService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -91,7 +90,7 @@ export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
 		} else {
 			this.showWarning = true;
 
-			const timeoutId: NodeJS.Timeout = setTimeout(() => {
+			const timeoutId = setTimeout(() => {
 				this.closeWarning();
 			}, 3000); // 3000 milliseconds, adjust as needed
 

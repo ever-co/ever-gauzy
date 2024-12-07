@@ -14,7 +14,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { firstValueFrom } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import * as moment from 'moment';
+import moment from 'moment';
 import * as timezone from 'moment-timezone';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

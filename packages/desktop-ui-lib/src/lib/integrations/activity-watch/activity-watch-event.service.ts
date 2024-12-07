@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { IActivityWatchEventService } from './i-activity-watch';
 import { firstValueFrom } from 'rxjs';
 import { API_ACTIVITY_WATCH_PREFIX } from '../../constants';
-import { HttpClient } from '@angular/common/http';
 import {
 	IActivityWatchAfkEvent,
 	IActivityWatchBucketWatcherList,
@@ -10,8 +10,8 @@ import {
 	IActivityWatchWindowEvent,
 	IDateRange
 } from '@gauzy/contracts';
-import { ActivityWatchUtil } from './activity-watch.util';
 import { toParams } from '@gauzy/ui-core/common';
+import { ActivityWatchUtil } from './activity-watch.util';
 
 type BucketType = keyof ReturnType<(typeof ActivityWatchUtil)['parseBuckets']>;
 

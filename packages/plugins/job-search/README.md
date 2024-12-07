@@ -1,4 +1,4 @@
-# Job Search Plugin
+# @gauzy/plugin-job-search
 
 ## Overview
 
@@ -6,8 +6,20 @@ The Job Search Plugin is a powerful tool designed to enhance your job search exp
 
 ## Features
 
--   **Advanced Search:** Utilize advanced search filters to find relevant job listings tailored to your preferences.
--   **Job Alerts:** Set up job alerts to receive notifications when new job listings matching your criteria are posted.
+- **Advanced Search:** Utilize advanced search filters to find relevant job listings tailored to your preferences.
+- **Job Alerts:** Set up job alerts to receive notifications when new job listings matching your criteria are posted.
+
+## Building
+
+Run `yarn nx build plugin-job-search` to build the library.
+
+## Running unit tests
+
+Run `yarn nx test plugin-job-search` to execute the unit tests via [Jest](https://jestjs.io).
+
+## Publishing
+
+After building your library with `yarn nx build plugin-job-search`, go to the dist folder `dist/packages/plugins/plugin-job-search` and run `npm publish`.
 
 ## Installation
 

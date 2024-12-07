@@ -26,7 +26,7 @@ import {
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 import fetch from 'cross-fetch';
 import * as chalk from 'chalk';
-import * as FormData from 'form-data';
+import FormData from 'form-data';
 import {
 	ApolloClient,
 	ApolloQueryResult,

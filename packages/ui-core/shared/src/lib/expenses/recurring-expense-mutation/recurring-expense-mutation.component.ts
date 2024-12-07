@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, Input, OnDestroy, AfterViewInit } from '@
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { debounceTime, filter, firstValueFrom, tap } from 'rxjs';
-import * as moment from 'moment';
+import moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {

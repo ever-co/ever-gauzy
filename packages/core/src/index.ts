@@ -1,4 +1,7 @@
-export { bootstrap } from './bootstrap';
+/**
+ * Public API Surface of @gauzy/core
+ */
+export { bootstrap } from './lib/bootstrap';
 export {
 	createMigration,
 	ConnectionEntityManager,
@@ -6,46 +9,46 @@ export {
 	prepareSQLQuery,
 	revertLastDatabaseMigration,
 	runDatabaseMigrations
-} from './database';
-export * from './logger';
-export * from './core';
-export * from './core/seeds';
-export * from './shared';
-export * from './event-bus';
+} from './lib/database';
+export * from './lib/logger';
+export * from './lib/core';
+export * from './lib/core/seeds';
+export * from './lib/shared';
+export * from './lib/event-bus';
 
-export * from './tenant';
-export { RoleModule, RoleService } from './role';
-export { RolePermissionModule, RolePermissionService } from './role-permission';
-export { UserModule, UserService } from './user';
+export * from './lib/tenant';
+export { RoleModule, RoleService } from './lib/role';
+export { RolePermissionModule, RolePermissionService } from './lib/role-permission';
+export { UserModule, UserService } from './lib/user';
 
-export * from './organization';
+export * from './lib/organization';
 export {
 	OrganizationVendorModule,
 	OrganizationVendorService,
 	OrganizationVendorFirstOrCreateCommand
-} from './organization-vendor';
+} from './lib/organization-vendor';
 export {
 	OrganizationContactModule,
 	OrganizationContactService,
 	OrganizationContactCreateCommand
-} from './organization-contact';
+} from './lib/organization-contact';
 export {
 	OrganizationProjectModule,
 	OrganizationProjectService,
 	OrganizationProjectCreateCommand,
 	OrganizationProjectUpdateCommand
-} from './organization-project';
+} from './lib/organization-project';
 
-export * from './employee';
-export { TaskModule, TaskService, TaskCreateCommand, TaskUpdateCommand, AutomationTaskSyncCommand } from './tasks';
+export * from './lib/employee';
+export { TaskModule, TaskService, TaskCreateCommand, TaskUpdateCommand, AutomationTaskSyncCommand } from './lib/tasks';
 
-export { IntegrationModule, IntegrationService } from './integration';
+export { IntegrationModule, IntegrationService } from './lib/integration';
 export {
 	IntegrationTenantModule,
 	IntegrationTenantService,
 	IntegrationTenantGetCommand,
 	IntegrationTenantUpdateOrCreateCommand
-} from './integration-tenant';
+} from './lib/integration-tenant';
 export {
 	IntegrationMapModule,
 	IntegrationMapService,
@@ -59,39 +62,39 @@ export {
 	IntegrationMapSyncTimeSlotCommand,
 	IntegrationMapSyncIssueCommand,
 	IntegrationMapSyncLabelCommand
-} from './integration-map';
+} from './lib/integration-map';
 export {
 	IntegrationSettingModule,
 	IntegrationSettingService,
 	IntegrationSettingCreateCommand,
 	IntegrationSettingGetCommand,
 	IntegrationSettingGetManyCommand
-} from './integration-setting';
+} from './lib/integration-setting';
 export {
 	IntegrationEntitySettingModule,
 	IntegrationEntitySettingService,
 	DEFAULT_ENTITY_SETTINGS
-} from './integration-entity-setting';
+} from './lib/integration-entity-setting';
 export {
 	IntegrationEntitySettingTiedModule,
 	IntegrationEntitySettingTiedService,
 	PROJECT_TIED_ENTITIES
-} from './integration-entity-setting-tied';
+} from './lib/integration-entity-setting-tied';
 
 export {
 	TimeSlotModule,
 	TimeSlotService,
 	TimeSlotCreateCommand,
 	CreateTimeSlotMinutesCommand
-} from './time-tracking/time-slot';
-export { TimeLogModule, TimeLogService, TimeLogCreateCommand } from './time-tracking/time-log';
-export { ScreenshotModule, ScreenshotService, ScreenshotCreateCommand } from './time-tracking/screenshot';
+} from './lib/time-tracking/time-slot';
+export { TimeLogModule, TimeLogService, TimeLogCreateCommand } from './lib/time-tracking/time-log';
+export { ScreenshotModule, ScreenshotService, ScreenshotCreateCommand } from './lib/time-tracking/screenshot';
 
-export { IncomeModule, IncomeService, IncomeCreateCommand } from './income';
-export { ExpenseModule, ExpenseService, ExpenseCreateCommand } from './expense';
+export { IncomeModule, IncomeService, IncomeCreateCommand } from './lib/income';
+export { ExpenseModule, ExpenseService, ExpenseCreateCommand } from './lib/expense';
 export {
 	ExpenseCategoriesModule,
 	ExpenseCategoriesService,
 	ExpenseCategoryFirstOrCreateCommand
-} from './expense-categories';
-export { TagModule, TagService, Taggable, AutomationLabelSyncCommand, RelationalTagDTO } from './tags';
+} from './lib/expense-categories';
+export { TagModule, TagService, Taggable, AutomationLabelSyncCommand, RelationalTagDTO } from './lib/tags';

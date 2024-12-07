@@ -1,3 +1,10 @@
+# dependencies
+node_modules/
+
+# misc
+npm-debug.log
+dist
+
 # Ignore everything in this public directory
 public/**/*.*
 

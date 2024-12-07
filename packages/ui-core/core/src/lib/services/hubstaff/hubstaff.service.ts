@@ -4,7 +4,7 @@ import { Observable, BehaviorSubject, forkJoin, debounceTime } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import { switchMap, tap } from 'rxjs/operators';
 import { clone } from 'underscore';
-import * as moment from 'moment';
+import moment from 'moment';
 import {
 	IIntegrationTenant,
 	IIntegrationSetting,

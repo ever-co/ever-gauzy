@@ -1,7 +1,7 @@
 import { Injectable, NgZone } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { LanguagesEnum } from 'packages/contracts/dist';
+import { LanguagesEnum } from '@gauzy/contracts';
 import { from, tap } from 'rxjs';
 import { ElectronService } from '../electron/services';
 import { TimeTrackerDateManager } from '../services';

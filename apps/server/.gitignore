@@ -1,2 +1,12 @@
-node_modules
+# dependencies
+node_modules/
+
+# misc
+npm-debug.log
+dist
+
+# Sentry
 sentry.properties
+
+# no need to duplicate translations
+assets/i18n

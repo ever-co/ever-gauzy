@@ -1,13 +1,15 @@
 {
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
+		"outDir": "../../../dist/out-tsc",
 		"declaration": true,
-		"sourceMap": true,
-		"baseUrl": "./src",
-		"rootDir": "./src",
-		"outDir": "./dist",
-		"types": ["node", "jest", "multer"],
-		"target": "es6"
+		"types": ["node", "multer"],
+		"target": "es2021",
+		"strictNullChecks": false,
+		"noImplicitAny": false,
+		"strictBindCallApply": false,
+		"forceConsistentCasingInFileNames": true,
+		"noFallthroughCasesInSwitch": false
 	},
 	"include": ["src/**/*.ts"],
 	"exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"]

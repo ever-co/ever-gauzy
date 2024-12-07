@@ -1,21 +1,12 @@
 {
-	"extends": "../../tsconfig.json",
+	"extends": "./tsconfig.json",
 	"compilerOptions": {
 		"outDir": "../../dist/out-tsc",
 		"declaration": true,
-		"experimentalDecorators": true,
 		"declarationMap": true,
-		"sourceMap": true,
 		"inlineSources": true,
-		"types": ["node"],
-		"lib": ["es2020", "dom", "es2018"]
+		"types": []
 	},
-	"angularCompilerOptions": {
-		"skipTemplateCodegen": true,
-		"strictMetadataEmit": true,
-		"enableResourceInlining": true
-	},
-	"moduleResolution": "node",
-	"exclude": ["src/test-setup.ts", "**/*.spec.ts", "**/*.test.ts"],
-	"include": ["**/*.ts"]
+	"exclude": ["src/**/*.spec.ts", "src/test-setup.ts", "jest.config.ts", "src/**/*.test.ts"],
+	"include": ["src/**/*.ts"]
 }

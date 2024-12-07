@@ -41,6 +41,7 @@ import {
 	HubstaffTokenInterceptor,
 	LanguageInterceptor,
 	SentryErrorHandler,
+	serverConnectionFactory,
 	ServerConnectionService,
 	Store,
 	TenantInterceptor,
@@ -242,36 +243,6 @@ export class AppModule {
  */
 export function initializeApp(provider: AppInitService): () => Promise<void> {
 	return () => provider.init();
-}
-
-/**
- * Creates a factory function that checks the server connection and performs actions based on the result.
- *
- * @param {ServerConnectionService} provider - The server connection service instance.
- * @param {Store} store - The store instance.
- * @param {Router} router - The router instance.
- * @return {Function} A function that checks the server connection and performs actions based on the result.
- */
-export function serverConnectionFactory(provider: ServerConnectionService, store: Store, router: Router): Function {
-	return () => {
-		const url = environment.API_BASE_URL;
-		console.log('Checking server connection in serverConnectionFactory on URL: ', url);
-
-		return provider
-			.checkServerConnection(url)
-			.finally(() => {
-				console.log(
-					`Server connection status in serverConnectionFactory for Url ${url} is: ${store.serverConnection}`
-				);
-
-				if (store.serverConnection !== 200) {
-					router.navigate(['server-down']);
-				}
-			})
-			.catch((err) => {
-				console.error(`Error checking server connection in serverConnectionFactory for URL: ${url}`, err);
-			});
-	};
 }
 
 /**

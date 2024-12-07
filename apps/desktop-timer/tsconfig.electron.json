@@ -1,0 +1,25 @@
+{
+    "compilerOptions": {
+        "outDir": "../../dist/apps/desktop-timer",
+        "sourceMap": true,
+        "declaration": false,
+        "moduleResolution": "node",
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "downlevelIteration": true,
+        "esModuleInterop": true,
+        "module": "commonjs",
+        "target": "ES2022",
+        "types": []
+    },
+    "files": [
+        "global.d.ts"
+    ],
+    "include": [
+        "src/index.ts",
+        "src/preload.ts"
+    ],
+    "exclude": [
+        "jest.config.ts"
+    ]
+}

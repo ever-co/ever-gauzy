@@ -1,10 +1,25 @@
-# `@gauzy/common-angular`
+# @gauzy/common-angular
 
-Common code used in Gauzy Angular projects
+This library was generated with [Nx](https://nx.dev). It contains the common Angular modules for the Gauzy UI platform.
 
-## Usage
+## Building
 
-```
-const common = require('@gauzy/common-angular');
+Run `nx build common-angular` to build the library.
 
+## Running unit tests
+
+Run `nx test common-angular` to execute the unit tests via [Jest](https://jestjs.io).
+
+## Publishing
+
+After building your library with `yarn nx build common-angular`, go to the dist folder `dist/packages/common-angular` and run `npm publish`.
+
+## Installation
+
+To install the Common Angular Library, simply run the following command in your terminal:
+
+```bash
+npm install @gauzy/common-angular
+# or
+yarn add @gauzy/common-angular
 ```

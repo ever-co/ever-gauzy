@@ -13,5 +13,5 @@
 		"lib": ["es2020", "es2017", "es2016", "dom"]
 	},
 	"files": ["global.d.ts"],
-	"include": ["src/index.ts", "src/preload/"]
+	"include": ["src/index.ts", "src/preload/*.ts"]
 }

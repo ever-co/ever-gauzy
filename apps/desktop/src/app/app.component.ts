@@ -7,7 +7,9 @@ import { AppService } from './app.service';
 	template: '<router-outlet></router-outlet>'
 })
 export class AppComponent implements OnInit, AfterViewInit {
+	public title: string;
 	private _isInitialized: boolean;
+
 	constructor(
 		private _electronService: ElectronService,
 		private _appService: AppService,
@@ -19,6 +21,15 @@ export class AppComponent implements OnInit, AfterViewInit {
 		this._isInitialized = false;
 		activityWatchElectronService.setupActivitiesCollection();
 	}
+
+	ngOnInit(): void {
+		const isEmployee = this._store.user && this._store.user.employee;
+		if (!this._isInitialized && isEmployee) {
+			this._electronService.ipcRenderer.send('app_is_init');
+			this._isInitialized = true;
+		}
+	}
+
 	ngAfterViewInit(): void {
 		this.languageElectronService.initialize<void>();
 		this._electronService.ipcRenderer.on('auth_success_tray_init', (event, arg) => {
@@ -207,14 +218,5 @@ export class AppComponent implements OnInit, AfterViewInit {
 				}, 3000);
 			});
 		});
-	}
-
-	ngOnInit(): void {
-		const isEmployee = this._store.user && this._store.user.employee;
-		if (!this._isInitialized && isEmployee) {
-			this._electronService.ipcRenderer.send('app_is_init');
-			this._isInitialized = true;
-		}
-		console.log('on init');
 	}
 }
