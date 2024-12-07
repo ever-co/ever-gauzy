@@ -2,14 +2,13 @@
 	"compilerOptions": {
 		"target": "es2022",
 		"useDefineForClassFields": false,
-		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"strict": false,
 		"noImplicitOverride": false,
 		"noPropertyAccessFromIndexSignature": false,
 		"noImplicitReturns": false,
 		"noFallthroughCasesInSwitch": false,
-		"strictNullChecks": false
+		"types": ["node", "google.maps"]
 	},
 	"files": [],
 	"include": [],

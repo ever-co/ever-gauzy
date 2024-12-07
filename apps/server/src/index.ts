@@ -27,9 +27,12 @@ process.env = Object.assign(process.env, environment);
 
 app.setName(process.env.NAME);
 
-console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
+console.log('Server Node Modules Path', path.join(__dirname, 'node_modules'));
 
 import * as remoteMain from '@electron/remote/main';
+import * as Sentry from '@sentry/electron';
+import { setupTitlebar } from 'custom-electron-titlebar/main';
+import { autoUpdater } from 'electron-updater';
 import {
 	AppError,
 	AppMenu,
@@ -61,9 +64,6 @@ import {
 	createSetupWindow,
 	SplashScreen
 } from '@gauzy/desktop-window';
-import * as Sentry from '@sentry/electron';
-import { setupTitlebar } from 'custom-electron-titlebar/main';
-import { autoUpdater } from 'electron-updater';
 import { initSentry } from './sentry';
 
 remoteMain.initialize();
@@ -109,20 +109,21 @@ const gauzyUIPath = app.isPackaged
 	: path.join(__dirname, './data/ui/index.html');
 console.log('Gauzy UI path', gauzyUIPath);
 
-const uiPath = path.join(__dirname, 'browser', 'index.html');
+const uiPath = path.join(__dirname, 'index.html');
 console.log('UI path', uiPath);
 
 const dirPath = app.isPackaged ? path.join(__dirname, '../data/ui') : path.join(__dirname, './data/ui');
 console.log('Dir path', dirPath);
 
-const timeTrackerUIPath = path.join(__dirname, 'browser', 'index.html');
+const timeTrackerUIPath = path.join(__dirname, 'index.html');
+console.log('Time Tracker UI path', timeTrackerUIPath);
 
 const pathWindow: IPathWindow = {
 	gauzyUi: gauzyUIPath,
 	ui: uiPath,
 	dir: dirPath,
 	timeTrackerUi: timeTrackerUIPath,
-	preloadPath: path.join(__dirname, 'preload.js')
+	preloadPath: path.join(__dirname, 'preload/preload.js')
 };
 
 ipcMain.handle('SAVED_THEME', () => {
@@ -318,7 +319,7 @@ const runServer = async () => {
 
 		// Instantiate API and UI servers
 		await desktopServer.start(
-			{ api: path.join(__dirname, 'api/main.js'), ui: path.join(__dirname, 'ui-server.js') },
+			{ api: path.join(__dirname, 'api/main.js'), ui: path.join(__dirname, 'preload', 'ui-server.js') },
 			envVal,
 			serverWindow,
 			signal,

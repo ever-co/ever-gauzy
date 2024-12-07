@@ -2,7 +2,7 @@
 	"name": "desktop-timer",
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
 	"projectType": "application",
-	"prefix": "app",
+	"prefix": "gauzy",
 	"sourceRoot": "apps/desktop-timer/src",
 	"tags": [],
 	"generators": {
@@ -58,7 +58,11 @@
 					"node_modules/@ng-select/ng-select/themes/default.theme.css"
 				],
 				"scripts": [],
-				"allowedCommonJsDependencies": ["localforage", "rxjs", "rxjs/operators"]
+				"allowedCommonJsDependencies": [
+					"localforage",
+					"rxjs",
+					"rxjs/operators"
+				]
 			},
 			"configurations": {
 				"production": {

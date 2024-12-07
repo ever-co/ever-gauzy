@@ -63,17 +63,17 @@
 					"brace",
 					"brace/mode/handlebars",
 					"camelcase",
+					"eva-icons",
 					"file-saver",
 					"leaflet",
+					"localforage",
 					"mobx",
 					"moment",
 					"moment-range",
 					"moment-timezone",
 					"randomcolor",
-					"underscore.string",
 					"slugify",
-					"eva-icons",
-					"localforage"
+					"underscore.string"
 				]
 			},
 			"configurations": {
@@ -224,18 +224,18 @@
 					"brace",
 					"brace/mode/handlebars",
 					"camelcase",
+					"eva-icons",
 					"file-saver",
 					"leaflet",
+					"localforage",
 					"mobx",
 					"moment",
 					"moment-range",
 					"moment-timezone",
 					"randomcolor",
-					"underscore.string",
+					"rxjs",
 					"slugify",
-					"eva-icons",
-					"localforage",
-					"rxjs"
+					"underscore.string"
 				]
 			},
 			"configurations": {
@@ -314,6 +314,24 @@
 					"node_modules/echarts/dist/echarts.min.js",
 					"node_modules/echarts/dist/extension/bmap.min.js",
 					"node_modules/chart.js/dist/chart.js"
+				],
+				"allowedCommonJsDependencies": [
+					"@gauzy/contracts",
+					"@gauzy/ui-config",
+					"brace",
+					"brace/mode/handlebars",
+					"camelcase",
+					"eva-icons",
+					"file-saver",
+					"leaflet",
+					"localforage",
+					"mobx",
+					"moment",
+					"moment-range",
+					"moment-timezone",
+					"randomcolor",
+					"slugify",
+					"underscore.string"
 				]
 			},
 			"configurations": {

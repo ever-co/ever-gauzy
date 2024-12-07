@@ -109,9 +109,6 @@ window.addEventListener('DOMContentLoaded', async () => {
             -webkit-app-region: no-drag;
             outline: 0;
         }
-
-
-
     `;
     document.head.appendChild(overStyle);
 });

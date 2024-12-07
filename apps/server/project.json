@@ -2,9 +2,10 @@
 	"name": "gauzy-server",
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
 	"projectType": "application",
-	"prefix": "app",
+	"prefix": "gauzy",
 	"sourceRoot": "apps/server/src",
 	"tags": [],
+	"implicitDependencies": [],
 	"generators": {
 		"@nx/angular:component": {
 			"style": "scss"
@@ -12,75 +13,18 @@
 	},
 	"targets": {
 		"build": {
-			"executor": "nx-electron:build",
-			"outputs": [
-				"{options.outputPath}"
-			],
+			"executor": "@angular-builders/custom-webpack:browser",
+			"outputs": ["{options.outputPath}"],
 			"options": {
+				"customWebpackConfig": {
+					"path": "apps/server/config/custom-webpack.config.js"
+				},
 				"outputPath": "dist/apps/gauzy-server",
-				"main": "apps/server/src/index.ts",
-				"tsConfig": "apps/server/tsconfig.app.desktop.json",
-				"deleteOutputPath": false,
-				"assets": [
-					"apps/server/src/assets",
-					{
-						"glob": "**/*",
-						"input": "apps/server/src/",
-						"ignore": [
-							"**/*.ts",
-							"**/*.html"
-						],
-						"output": ""
-					}
-				],
-				"additionalEntryPoints": [
-					{
-						"entryName": "preload",
-						"entryPath": "apps/server/src/preload/preload.ts"
-					},
-					{
-						"entryName": "ui-server",
-						"entryPath": "apps/server/src/preload/ui-server.ts"
-					}
-				]
-			},
-			"configurations": {
-				"production": {
-					"optimization": true,
-					"extractLicenses": true,
-					"inspect": false,
-					"fileReplacements": [
-						{
-							"replace": "apps/server/src/environments/environment.ts",
-							"with": "apps/server/src/environments/environment.prod.ts"
-						}
-					]
-				}
-			}
-		},
-		"serve": {
-			"executor": "nx-electron:execute",
-			"options": {
-				"buildTarget": "gauzy-server:build"
-			}
-		},
-		"build-ui": {
-			"executor": "@angular-devkit/build-angular:application",
-			"outputs": [
-				"{options.outputPath}"
-			],
-			"options": {
-				"baseHref": "./",
-				"aot": true,
-				"preserveSymlinks": true,
-				"outputPath": "dist/apps/gauzy-server",
-				"deleteOutputPath": false,
-				"browser": "apps/server/src/main.ts",
 				"index": "apps/server/src/index.html",
-				"polyfills": [
-					"zone.js"
-				],
+				"main": "apps/server/src/main.ts",
+				"polyfills": "apps/server/src/polyfills.ts",
 				"tsConfig": "apps/server/tsconfig.app.json",
+				"aot": true,
 				"stylePreprocessorOptions": {
 					"includePaths": [
 						"apps/server/src/assets/styles",
@@ -89,10 +33,15 @@
 				},
 				"assets": [
 					"apps/server/src/favicon.ico",
-					"apps/server/src/assets"
+					"apps/server/src/assets",
+					{
+						"glob": "**/*",
+						"input": "apps/server/src/",
+						"ignore": ["**/*.ts"],
+						"output": ""
+					}
 				],
 				"styles": [
-					"apps/server/src/styles.css",
 					"node_modules/@nebular/theme/styles/prebuilt/default.css",
 					"node_modules/bootstrap/dist/css/bootstrap.css",
 					"node_modules/typeface-exo/index.css",
@@ -103,20 +52,23 @@
 					"node_modules/nebular-icons/scss/nebular-icons.scss",
 					"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 					"node_modules/leaflet/dist/leaflet.css",
+					"apps/server/src/styles.css",
 					"apps/server/src/assets/styles/styles.scss",
 					"node_modules/@ng-select/ng-select/themes/default.theme.css"
 				],
 				"scripts": [],
 				"allowedCommonJsDependencies": [
+					"dayjs",
+					"eva-icons",
 					"localforage",
 					"moment",
 					"moment-duration-format",
+					"moment-range",
 					"moment-timezone",
 					"rfdc",
-					"eva-icons",
-					"moment-range",
-					"slugify",
-					"dayjs"
+					"rxjs",
+					"rxjs/operators",
+					"slugify"
 				]
 			},
 			"configurations": {
@@ -135,6 +87,8 @@
 					"sourceMap": true,
 					"namedChunks": false,
 					"extractLicenses": true,
+					"vendorChunk": false,
+					"buildOptimizer": true,
 					"budgets": [
 						{
 							"type": "initial",
@@ -157,14 +111,14 @@
 			},
 			"defaultConfiguration": "production"
 		},
-		"serve-ui": {
+		"serve": {
 			"executor": "@angular-devkit/build-angular:dev-server",
 			"configurations": {
 				"production": {
-					"buildTarget": "gauzy-server:build-ui:production"
+					"buildTarget": "gauzy-server:build:production"
 				},
 				"development": {
-					"buildTarget": "gauzy-server:build-ui:development"
+					"buildTarget": "gauzy-server:build:development"
 				}
 			},
 			"defaultConfiguration": "development"
@@ -180,9 +134,7 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": [
-				"{workspaceRoot}/coverage/{projectRoot}"
-			],
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
 				"jestConfig": "apps/server/jest.config.ts"
 			}
