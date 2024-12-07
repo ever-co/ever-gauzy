@@ -14,7 +14,7 @@ import {
 } from '../../core/decorators/entity';
 import { MikroOrmScreeningTaskRepository } from './repository/mikro-orm-screening-task.repository';
 
-@MultiORMEntity('screening-task', { mikroOrmRepository: () => MikroOrmScreeningTaskRepository })
+@MultiORMEntity('screening_task', { mikroOrmRepository: () => MikroOrmScreeningTaskRepository })
 export class ScreeningTask extends TenantOrganizationBaseEntity implements IScreeningTask {
 	[EntityRepositoryType]?: MikroOrmScreeningTaskRepository;
 
