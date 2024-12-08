@@ -116,10 +116,17 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 		}
 	}
 
+	/**
+	 * Updates an existing screening task and synchronizes related task data and activity logs.
+	 *
+	 * @param {ID} id - The unique identifier of the screening task to update.
+	 * @param {IScreeningTaskUpdateInput} input - The data to update the screening task with.
+	 * @returns {Promise<IScreeningTask>} A promise resolving to the updated screening task.
+	 * @throws {HttpException} a BadRequest exception if the update process fails.
+	 */
 	async update(id: ID, input: IScreeningTaskUpdateInput): Promise<IScreeningTask> {
 		try {
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
-			const userId = RequestContext.currentUserId();
 
 			const screeningTask = await this.findOneByIdString(id, { relations: { task: true } });
 			const task = screeningTask.task;

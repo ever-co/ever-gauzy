@@ -64,6 +64,7 @@ export interface ITask
 
 export interface IGetTaskOptions extends IBasePerTenantAndOrganizationEntityModel {
 	projectId?: ID;
+	isScreeningTask?: boolean;
 }
 
 export interface IGetTaskByEmployeeOptions extends IBaseRelationsEntityModel {
@@ -112,7 +113,7 @@ export interface IGetTasksByViewFilters extends IBasePerTenantAndOrganizationEnt
 
 export interface ITaskDateFilterInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-		Pick<ITask, 'projectId' | 'organizationSprintId' | 'creatorId'>,
+		Pick<ITask, 'isScreeningTask' | 'projectId' | 'organizationSprintId' | 'creatorId'>,
 		IEmployeeEntityInput,
 		IRelationalOrganizationTeam,
 		Pick<IGetTasksByViewFilters, 'relations'> {
