@@ -12,5 +12,6 @@ export const TASK_STATUSES_TEMPLATES: { [key in TaskStatusEnum]: TaskStatusWorkF
 	[TaskStatusEnum.BLOCKED]: { isTodo: false, isInProgress: true, isDone: false },
 	[TaskStatusEnum.DONE]: { isTodo: false, isInProgress: false, isDone: true },
 	[TaskStatusEnum.COMPLETED]: { isTodo: false, isInProgress: false, isDone: true },
+	[TaskStatusEnum.CANCELLED]: { isTodo: false, isInProgress: false, isDone: false },
 	[TaskStatusEnum.CUSTOM]: { isTodo: false, isInProgress: false, isDone: false }
 };

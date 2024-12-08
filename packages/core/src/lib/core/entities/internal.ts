@@ -137,6 +137,7 @@ export * from '../../tasks/priorities/priority.entity';
 export * from '../../tasks/related-issue-type/related-issue-type.entity';
 export * from '../../tasks/sizes/size.entity';
 export * from '../../tasks/statuses/status.entity';
+export * from '../../tasks/screening-tasks/screening-task.entity';
 export * from '../../tasks/task.entity';
 export * from '../../tasks/versions/version.entity';
 export * from '../../tasks/views/view.entity';

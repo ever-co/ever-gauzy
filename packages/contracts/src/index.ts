@@ -130,6 +130,7 @@ export * from './lib/task-version.model';
 export * from './lib/task-view.model';
 export * from './lib/task.model';
 export * from './lib/daily-plan.model';
+export * from './lib/screening-task.model';
 export * from './lib/tenant.model';
 export * from './lib/time-off.model';
 export * from './lib/timesheet-statistics.model';

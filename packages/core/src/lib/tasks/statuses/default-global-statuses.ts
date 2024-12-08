@@ -114,11 +114,25 @@ export const DEFAULT_GLOBAL_STATUSES: ITaskStatus[] = [
 		isDone: true
 	},
 	{
+		name: TaskStatusEnum.CANCELLED,
+		value: TaskStatusEnum.CANCELLED,
+		description: 'The issue/task was cancelled or rejected/closed.',
+		icon: 'task-statuses/blocked.svg',
+		order: 8,
+		color: '#E74C3C',
+		isSystem: true,
+		isCollapsed: false,
+		isDefault: false,
+		isTodo: false,
+		isInProgress: false,
+		isDone: false
+	},
+	{
 		name: TaskStatusEnum.CUSTOM,
 		value: TaskStatusEnum.CUSTOM,
 		description: 'Custom issue type',
 		icon: 'task-statuses/custom.svg',
-		order: 8,
+		order: 9,
 		color: '#D4EFDF',
 		isSystem: true,
 		isCollapsed: false,

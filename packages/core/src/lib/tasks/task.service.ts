@@ -278,7 +278,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	async getEmployeeTasks(options: PaginationParams<Task>) {
 		try {
 			const { where } = options;
-			const { status, title, prefix, isDraft, organizationSprintId = null } = where;
+			const { status, title, prefix, isDraft, isScreeningTask = false, organizationSprintId = null } = where;
 			const { organizationId, projectId, members } = where;
 			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
@@ -352,6 +352,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
 						qb.andWhere(p(`"${query.alias}"."organizationSprintId" IS NULL`));
 					}
+
+					qb.andWhere(p(`"${query.alias}"."isScreeningTask" = :isScreeningTask`), {
+						isScreeningTask
+					});
 				})
 			);
 
@@ -376,6 +380,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.leftJoin(`${query.alias}.members`, 'members');
 			query.leftJoin(`${query.alias}.teams`, 'teams');
+			const { isScreeningTask = false } = options.where;
 			/**
 			 * If additional options found
 			 */
@@ -418,6 +423,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					});
 				})
 			);
+
+			query.andWhere(p(`"${query.alias}"."isScreeningTask" = :isScreeningTask`), {
+				isScreeningTask
+			});
+
 			return await query.getMany();
 		} catch (error) {
 			throw new BadRequestException(error);
@@ -434,7 +444,15 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		try {
 			const { where } = options;
 
-			const { status, teams = [], title, prefix, isDraft, organizationSprintId = null } = where;
+			const {
+				status,
+				teams = [],
+				title,
+				prefix,
+				isDraft,
+				isScreeningTask = false,
+				organizationSprintId = null
+			} = where;
 			const { organizationId, projectId, members } = where;
 			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
@@ -523,6 +541,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
 						qb.andWhere(p(`"${query.alias}"."organizationSprintId" IS NULL`));
 					}
+
+					qb.andWhere(p(`"${query.alias}"."isScreeningTask" = :isScreeningTask`), {
+						isScreeningTask
+					});
 				})
 			);
 			const [items, total] = await query.getManyAndCount();
@@ -545,6 +567,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		// Check if there are any filters in the options
 		if (options?.where) {
 			const { where } = options;
+			const { isScreeningTask = false } = where;
 
 			// Apply filters for task title with like operator
 			if (where.title) {
@@ -572,6 +595,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					id: In(where.teams as string[])
 				};
 			}
+
+			// Apply filter for isScreeningTask
+			where.isScreeningTask = isScreeningTask;
 		}
 
 		// Call the base paginate method
@@ -588,7 +614,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		try {
 			// Extract tenantId from context or options
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
-			const { organizationId, projectId } = options;
+			const { organizationId, projectId, isScreeningTask = false } = options;
 
 			// Create a query builder for the Task entity
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
@@ -610,6 +636,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			} else {
 				query.andWhere(p(`"${query.alias}"."projectId" IS NULL`));
 			}
+
+			// Apply screening tasks filter
+			query.andWhere(p(`"${query.alias}"."isScreeningTask" = :isScreeningTask`), {
+				isScreeningTask
+			});
 
 			// Execute the query and parse the result to a number
 			const result = await query.getRawOne();
@@ -722,6 +753,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				title,
 				prefix,
 				isDraft,
+				isScreeningTask = false,
 				organizationSprintId = null,
 				organizationId,
 				projectId,
@@ -807,6 +839,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (!isUUID(organizationSprintId)) {
 						qb.andWhere(p(`"${query.alias}"."organizationSprintId" IS NULL`));
 					}
+
+					qb.andWhere(p(`"${query.alias}"."isScreeningTask" = :isScreeningTask`), { isScreeningTask });
 				})
 			);
 
@@ -944,6 +978,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				dueDateFrom,
 				dueDateTo,
 				creatorId,
+				isScreeningTask = false,
 				organizationId,
 				employeeId,
 				projectId,
@@ -971,6 +1006,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(creatorId)) {
 						web.andWhere(p(`"${query.alias}"."creatorId" = :creatorId`), { creatorId });
 					}
+
 					if (isNotEmpty(employeeId)) {
 						query.leftJoin(`${query.alias}.members`, 'members');
 						web.andWhere((qb: SelectQueryBuilder<Task>) => {
@@ -980,6 +1016,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 							return p(`"task_members"."taskId" IN (${subQuery.distinct(true).getQuery()})`);
 						});
 					}
+
 					if (isNotEmpty(organizationTeamId)) {
 						query.leftJoin(`${query.alias}.teams`, 'teams');
 						web.andWhere((qb: SelectQueryBuilder<Task>) => {
@@ -994,11 +1031,14 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(projectId)) {
 						web.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
 					}
+
 					if (isNotEmpty(organizationSprintId)) {
 						web.andWhere(p(`"${query.alias}"."organizationSprintId" = :organizationSprintId`), {
 							organizationSprintId
 						});
 					}
+
+					web.andWhere(p(`"${query.alias}"."isScreeningTask" = :isScreeningTask`), { isScreeningTask });
 				})
 			);
 
