@@ -1,14 +1,22 @@
+import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { TaskModule } from '../task.module';
+import { CommandHandlers } from './commands/handlers';
 import { ScreeningTasksService } from './screening-tasks.service';
 import { ScreeningTasksController } from './screening-tasks.controller';
 import { ScreeningTask } from './screening-task.entity';
 import { TypeOrmScreeningTaskRepository } from './repository/type-orm-screening-task.repository';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([ScreeningTask]), MikroOrmModule.forFeature([ScreeningTask])],
-	providers: [ScreeningTasksService, TypeOrmScreeningTaskRepository],
+	imports: [
+		TypeOrmModule.forFeature([ScreeningTask]),
+		MikroOrmModule.forFeature([ScreeningTask]),
+		TaskModule,
+		CqrsModule
+	],
+	providers: [ScreeningTasksService, TypeOrmScreeningTaskRepository, ...CommandHandlers],
 	controllers: [ScreeningTasksController],
 	exports: [ScreeningTasksService, TypeOrmModule, TypeOrmScreeningTaskRepository]
 })
