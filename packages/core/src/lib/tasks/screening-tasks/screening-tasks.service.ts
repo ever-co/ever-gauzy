@@ -4,10 +4,13 @@ import {
 	ActionTypeEnum,
 	ActorTypeEnum,
 	BaseEntityEnum,
+	ID,
 	IScreeningTask,
 	IScreeningTaskCreateInput,
+	IScreeningTaskUpdateInput,
 	ScreeningTaskStatusEnum,
-	SubscriptionTypeEnum
+	SubscriptionTypeEnum,
+	TaskStatusEnum
 } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
 import { TenantAwareCrudService } from '../../core/crud';
@@ -110,6 +113,52 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 			return screeningTask;
 		} catch (error) {
 			throw new HttpException('Screening task creation failed', HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	async update(id: ID, input: IScreeningTaskUpdateInput): Promise<IScreeningTask> {
+		try {
+			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+			const userId = RequestContext.currentUserId();
+
+			const screeningTask = await this.findOneByIdString(id, { relations: { task: true } });
+			const task = screeningTask.task;
+
+			const updatedScreeningTask = await super.create({ ...input, id });
+
+			// Update the task accordingly to the screening status
+			if (input.status !== updatedScreeningTask.status) {
+				const isScreeningTask =
+					[input.status, updatedScreeningTask.status].includes(ScreeningTaskStatusEnum.PENDING) ||
+					[input.status, updatedScreeningTask.status].includes(ScreeningTaskStatusEnum.SNOOZED);
+
+				const taskStatus = [ScreeningTaskStatusEnum.DECLINED, ScreeningTaskStatusEnum.DUPLICATED].includes(
+					input.status
+				)
+					? TaskStatusEnum.CANCELLED
+					: task.status;
+
+				await this.taskService.update(task.id, { isScreeningTask, status: taskStatus });
+			}
+
+			// Generate the activity log
+			this.activityLogService.logActivity<ScreeningTask>(
+				BaseEntityEnum.ScreeningTask,
+				ActionTypeEnum.Updated,
+				ActorTypeEnum.User,
+				updatedScreeningTask.id,
+				`Screening task for #${task.number} ${task.title}`,
+				updatedScreeningTask,
+				updatedScreeningTask.organizationId,
+				tenantId,
+				updatedScreeningTask,
+				input
+			);
+
+			// Return the updated screening task
+			return updatedScreeningTask;
+		} catch (error) {
+			throw new HttpException(`Failed to update screening task with ID ${id}`, HttpStatus.BAD_REQUEST);
 		}
 	}
 }
