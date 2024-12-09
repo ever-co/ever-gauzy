@@ -141,6 +141,7 @@ import { TaskLinkedIssueModule } from '../tasks/linked-issue/task-linked-issue.m
 import { OrganizationTaskSettingModule } from '../organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from '../tasks/estimation/task-estimation.module';
 import { DailyPlanModule } from '../tasks/daily-plan/daily-plan.module';
+import { ScreeningTasksModule } from '../tasks/screening-tasks/screening-tasks.module';
 import { SocialAccountModule } from '../auth/social-account/social-account.module';
 import { OrganizationProjectModuleModule } from '../organization-project-module/organization-project-module.module';
 import { FavoriteModule } from '../favorite/favorite.module';
@@ -412,6 +413,7 @@ if (environment.THROTTLE_ENABLED) {
 		TaskStatusModule,
 		TaskVersionModule,
 		DailyPlanModule,
+		ScreeningTasksModule,
 		OrganizationEmploymentTypeModule,
 		TimeTrackingModule,
 		FeatureModule,

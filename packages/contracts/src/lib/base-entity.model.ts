@@ -92,6 +92,7 @@ export enum BaseEntityEnum {
 	ResourceLink = 'ResourceLink',
 	OrganizationVendor = 'OrganizationVendor',
 	Task = 'Task',
+	ScreeningTask = 'ScreeningTask',
 	TaskView = 'TaskView',
 	TaskLinkedIssue = 'TaskLinkedIssue',
 	User = 'User',
