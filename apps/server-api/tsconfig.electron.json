@@ -1,20 +1,16 @@
 {
-    "extends": "../../tsconfig.json",
     "compilerOptions": {
-        "outDir": "../..",
+        "outDir": "../../dist/apps/gauzy-api-server",
         "sourceMap": true,
         "declaration": false,
         "moduleResolution": "node",
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
+        "downlevelIteration": true,
         "esModuleInterop": true,
+        "module": "commonjs",
         "target": "ES2022",
-        "lib": [
-            "es2020",
-            "es2017",
-            "es2016",
-            "dom"
-        ]
+        "types": []
     },
     "files": [
         "global.d.ts"
@@ -22,5 +18,8 @@
     "include": [
         "src/index.ts",
         "src/preload/*.ts"
+    ],
+    "exclude": [
+        "jest.config.ts"
     ]
 }

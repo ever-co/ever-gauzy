@@ -2,8 +2,10 @@
 	"name": "gauzy-api-server",
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
 	"projectType": "application",
-	"sourceRoot": "apps/server-api/src",
 	"prefix": "gauzy",
+	"sourceRoot": "apps/server-api/src",
+	"tags": [],
+	"implicitDependencies": [],
 	"generators": {
 		"@nx/angular:component": {
 			"style": "scss"
@@ -11,7 +13,8 @@
 	},
 	"targets": {
 		"build": {
-			"executor": "@nx/angular:webpack-browser",
+			"executor": "@angular-builders/custom-webpack:browser",
+			"outputs": ["{options.outputPath}"],
 			"options": {
 				"customWebpackConfig": {
 					"path": "apps/server-api/config/custom-webpack.config.js"
@@ -32,6 +35,12 @@
 						"output": ""
 					}
 				],
+				"stylePreprocessorOptions": {
+					"includePaths": [
+						"apps/server-api/src/assets/styles",
+						"packages/ui-core/static/styles"
+					]
+				},
 				"styles": [
 					"node_modules/@nebular/theme/styles/prebuilt/default.css",
 					"node_modules/bootstrap/dist/css/bootstrap.css",
@@ -43,13 +52,12 @@
 					"node_modules/nebular-icons/scss/nebular-icons.scss",
 					"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 					"node_modules/leaflet/dist/leaflet.css",
+					"apps/server-api/src/styles.css",
 					"apps/server-api/src/assets/styles/styles.scss",
 					"node_modules/@ng-select/ng-select/themes/default.theme.css"
 				],
 				"scripts": [],
-				"stylePreprocessorOptions": {
-					"includePaths": ["apps/server-api/src/assets/styles", "packages/ui-core/static/styles"]
-				}
+				"allowedCommonJsDependencies": []
 			},
 			"configurations": {
 				"production": {
@@ -64,7 +72,6 @@
 						}
 					],
 					"optimization": true,
-					"outputHashing": "all",
 					"sourceMap": true,
 					"namedChunks": false,
 					"extractLicenses": true,
@@ -81,25 +88,33 @@
 							"maximumWarning": "60kb",
 							"maximumError": "120kb"
 						}
-					]
+					],
+					"outputHashing": "all"
+				},
+				"development": {
+					"optimization": false,
+					"extractLicenses": false,
+					"sourceMap": true
 				}
-			}
+			},
+			"defaultConfiguration": "production"
 		},
 		"serve": {
-			"executor": "@nx/angular:dev-server",
-			"options": {
-				"browserTarget": "gauzy-api-server:build"
-			},
+			"executor": "@angular-devkit/build-angular:dev-server",
 			"configurations": {
 				"production": {
-					"browserTarget": "gauzy-api-server:build:production"
+					"buildTarget": "server-api:build:production"
+				},
+				"development": {
+					"buildTarget": "server-api:build:development"
 				}
-			}
+			},
+			"defaultConfiguration": "development"
 		},
 		"extract-i18n": {
-			"executor": "@nx/angular:extract-i18n",
+			"executor": "@angular-devkit/build-angular:extract-i18n",
 			"options": {
-				"browserTarget": "gauzy-api-server:build"
+				"buildTarget": "server-api:build"
 			}
 		},
 		"lint": {
@@ -107,9 +122,9 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
-				"jestConfig": "apps/server-api/jest.config.js",
-				"passWithNoTests": true
+				"jestConfig": "apps/server-api/jest.config.ts"
 			}
 		}
 	}

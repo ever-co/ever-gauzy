@@ -2,7 +2,11 @@
 	"name": "@gauzy/server-api",
 	"version": "0.1.0",
 	"description": "Ever Gauzy API Server",
-	"license": "AGPL-3.0",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
 	"homepage": "https://gauzy.co",
 	"repository": {
 		"type": "git",
@@ -11,13 +15,12 @@
 	"bugs": {
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
+	"license": "AGPL-3.0",
 	"private": true,
-	"author": {
-		"name": "Ever Co. LTD",
-		"email": "ever@ever.co",
-		"url": "https://ever.co"
+	"scripts": {
+		"build": "yarn nx build gauzy-api-server --cofiguration=development",
+		"build:prod": "yarn nx build gauzy-api-server --configuration=production"
 	},
-	"scripts": {},
 	"devDependencies": {
 		"@electron/rebuild": "^3.2.10",
 		"@types/moment-duration-format": "^2.2.3",
@@ -40,8 +43,6 @@
 		"@datorama/akita": "^7.1.1",
 		"@datorama/akita-ngdevtools": "^7.0.0",
 		"@electron/remote": "^2.0.8",
-		"@gauzy/desktop-ui-lib": "^0.1.0",
-		"@gauzy/ui-config": "^0.1.0",
 		"@grpc/grpc-js": "^1.6.7",
 		"@nebular/auth": "^13.0.0",
 		"@nebular/bootstrap": "^9.1.0-rc.6",
