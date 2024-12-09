@@ -1,9 +1,9 @@
+import { IRelationalRole } from './role.model';
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IEmployeeEntityInput, IMemberEntityBased } from './employee.model';
 import { IRelationalOrganizationProject } from './organization-projects.model';
 import { IOrganizationSprint } from './organization-sprint.model';
 import { IOrganizationTeam } from './organization-team.model';
-import { IRelationalRole } from './role.model';
 import { ITask } from './task.model';
 import { IUser } from './user.model';
 
