@@ -18,8 +18,8 @@
 	"license": "AGPL-3.0",
 	"private": true,
 	"scripts": {
-		"build": "yarn nx build desktop-timer",
-		"build:desktop": "yarn nx build desktop-timer --configuration=production"
+		"build": "yarn nx build desktop-timer --configuration=development",
+		"build:prod": "yarn nx build desktop-timer --configuration=production"
 	},
 	"devDependencies": {
 		"@electron/rebuild": "^3.2.10",

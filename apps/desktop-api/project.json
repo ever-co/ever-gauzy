@@ -23,7 +23,7 @@
 						"output": "environments"
 					}
 				],
-				"webpackConfig": "apps/desktop-api/webpack.config.js"
+				"webpackConfig": "apps/desktop-api/config/custom-webpack.config.js"
 			},
 			"configurations": {
 				"development": {},

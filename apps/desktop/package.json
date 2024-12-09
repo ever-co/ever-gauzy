@@ -18,7 +18,8 @@
 	"license": "AGPL-3.0",
 	"private": true,
 	"scripts": {
-		"build": "yarn nx build desktop",
+		"build": "yarn nx build desktop --configuration=development",
+		"build:prod": "yarn nx build desktop --configuration=production",
 		"start": "yarn nx serve desktop"
 	},
 	"devDependencies": {
