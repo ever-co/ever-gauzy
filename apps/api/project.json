@@ -34,7 +34,7 @@
 						"output": "public"
 					}
 				],
-				"webpackConfig": "apps/api/webpack.config.js"
+				"webpackConfig": "apps/api/config/custom-webpack.config.js"
 			},
 			"configurations": {
 				"development": {},
@@ -101,7 +101,7 @@
 						"output": "public"
 					}
 				],
-				"webpackConfig": "apps/api/webpack.config.js"
+				"webpackConfig": "apps/api/config/custom-webpack.config.js"
 			},
 			"configurations": {
 				"development": {},
@@ -141,7 +141,7 @@
 						"output": "public"
 					}
 				],
-				"webpackConfig": "apps/api/webpack.config.js"
+				"webpackConfig": "apps/api/config/custom-webpack.config.js"
 			},
 			"configurations": {
 				"production": {
@@ -180,7 +180,7 @@
 						"output": "public"
 					}
 				],
-				"webpackConfig": "apps/api/webpack.config.js"
+				"webpackConfig": "apps/api/config/custom-webpack.config.js"
 			},
 			"configurations": {
 				"production": {
