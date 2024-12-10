@@ -32,8 +32,6 @@ module.exports = composePlugins(
 			poll: false, // Use polling or not
 		};
 
-		console.log('Using custom Webpack Config -> config: ' + JSON.stringify(config, null, 2));
-
 		// Update the webpack config as needed here.
 		// e.g. `config.plugins.push(new MyPlugin())`
 		return config;

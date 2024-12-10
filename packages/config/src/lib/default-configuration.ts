@@ -34,7 +34,7 @@ if (__dirname.startsWith('/srv/gauzy')) {
 	// Adjust the base path based on the environment
 	const basePath = isDist
 		? path.resolve(process.cwd(), 'dist/apps/api') // For production
-		: path.resolve(process.cwd(), '../../apps/api'); // For development
+		: path.resolve(__dirname, '../../../../apps/api'); // For development
 
 	console.log('Default Config -> basePath: ' + basePath);
 
@@ -46,7 +46,7 @@ if (__dirname.startsWith('/srv/gauzy')) {
 	// Default public directory for assets
 	assetPublicPath = isDist
 		? path.resolve(process.cwd(), 'apps/api/public') // Adjusted for dist structure
-		: path.resolve(process.cwd(), '../../apps/api/public');
+		: path.resolve(__dirname, '../../../../apps/api/public');
 }
 
 console.log('Default Config -> assetPath: ' + assetPath);

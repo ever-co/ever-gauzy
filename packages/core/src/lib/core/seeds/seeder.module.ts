@@ -4,8 +4,11 @@ import * as path from 'path';
 import { ConfigModule, environment } from '@gauzy/config';
 import { getDynamicPluginsModules } from '@gauzy/plugin';
 import { LanguagesEnum } from '@gauzy/contracts';
-import { SeedDataService } from './seed-data.service';
 import { DatabaseModule } from './../../database/database.module';
+import { ActivityLogModule } from '../../activity-log/activity-log.module';
+import { MentionModule } from '../../mention/mention.module';
+import { SubscriptionModule } from '../../subscription/subscription.module';
+import { SeedDataService } from './seed-data.service';
 
 /**
  * Import and provide seeder classes.
@@ -19,26 +22,31 @@ import { DatabaseModule } from './../../database/database.module';
 })
 export class SeederModule {
 	/**
-	 * Creates a dynamic module configuration for SeederModule with plugin support.
-	 * @returns A dynamic module definition.
+	 * Dynamic configuration for SeederModule with plugin support.
+	 * Use this for optional or plugin-related seeding logic.
 	 */
 	static forPlugins(): DynamicModule {
+		const i18nLoaderOptions = {
+			path: path.resolve(__dirname, '../../i18n/'),
+			watch: !environment.production,
+		};
+
 		return {
 			module: SeederModule,
-			providers: [],
 			imports: [
-				DatabaseModule,
 				I18nModule.forRoot({
 					fallbackLanguage: LanguagesEnum.ENGLISH,
-					loaderOptions: {
-						path: path.resolve(__dirname, '../../i18n/'),
-						watch: !environment.production
-					},
-					resolvers: [new HeaderResolver(['language'])]
+					loaderOptions: i18nLoaderOptions,
+					resolvers: [new HeaderResolver(['language'])],
 				}),
+				DatabaseModule,
+				ActivityLogModule,
+				MentionModule,
+				SubscriptionModule,
 				...getDynamicPluginsModules(),
 			],
-			exports: []
-		} as DynamicModule;
+			providers: [],
+			exports: [],
+		};
 	}
 }
