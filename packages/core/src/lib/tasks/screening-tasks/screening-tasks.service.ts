@@ -15,6 +15,7 @@ import {
 import { RequestContext } from '../../core/context';
 import { TenantAwareCrudService } from '../../core/crud';
 import { TaskService } from '../task.service';
+import { OrganizationProjectService } from '../../organization-project';
 import { ActivityLogService } from '../../activity-log/activity-log.service';
 import { MentionService } from '../../mention/mention.service';
 import { CreateSubscriptionEvent } from '../../subscription/events';
@@ -30,6 +31,7 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 		readonly typeOrmScreeningTaskRepository: TypeOrmScreeningTaskRepository,
 		readonly mikroOrmScreeningTaskRepository: MikroOrmScreeningTaskRepository,
 		private readonly taskService: TaskService,
+		private readonly organizationProjectService: OrganizationProjectService,
 		private readonly mentionService: MentionService,
 		private readonly activityLogService: ActivityLogService
 	) {
@@ -46,11 +48,40 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 	async create(input: IScreeningTaskCreateInput): Promise<IScreeningTask> {
 		try {
 			const userId = RequestContext.currentUserId();
-			const tenantId = RequestContext.currentTenantId();
-			const { mentionUserIds = [] } = input;
+			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+			const { organizationId, mentionUserIds = [] } = input;
+
+			// Check if projectId is provided, if not use the provided project object from the input.
+			// If neither is provided, set project to null.
+			const project = input.task.projectId
+				? await this.organizationProjectService.findOneByIdString(input.task.projectId)
+				: input.task.project || null;
+
+			// Check if the project exists and extract the project prefix
+			const prefix = project?.name?.substring(0, 3) ?? null;
+
+			// Log info if both projectId and project are not provided
+			if (!project) {
+				console.warn('No projectId or project provided. Proceeding without project information');
+			}
+
+			// Retrieve the maximum task number for the specified project, or handle null projectId if no project
+			const maxNumber = await this.taskService.getMaxTaskNumberByProject({
+				tenantId,
+				organizationId,
+				projectId: project?.id ?? null
+			});
 
 			// Create task
-			const task = await this.taskService.create({ ...input.task, isScreeningTask: true, creatorId: userId });
+			const task = await this.taskService.create({
+				...input.task,
+				number: maxNumber + 1, // Increment the task number
+				prefix,
+				isScreeningTask: true,
+				creatorId: userId,
+				tenantId,
+				organizationId
+			});
 
 			// Create the screening task
 			const screeningTask = await super.create({
@@ -78,7 +109,7 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 				entityId: task.id,
 				userId: userId,
 				type: SubscriptionTypeEnum.CREATED_ENTITY,
-				organizationId: task.organizationId,
+				organizationId,
 				tenantId
 			});
 			this.eventBus.publish(subscriptionEvent);
@@ -92,7 +123,7 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 					task.id,
 					task.title,
 					task,
-					task.organizationId,
+					organizationId,
 					tenantId
 				),
 				this.activityLogService.logActivity<ScreeningTask>(
@@ -102,7 +133,7 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 					screeningTask.id,
 					`Screening task for #${task.taskNumber} ${task.title}`,
 					screeningTask,
-					task.organizationId,
+					organizationId,
 					tenantId
 				)
 			];
