@@ -1,58 +1,83 @@
 import { RelationId } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { EntityRepositoryType } from '@mikro-orm/core';
+import { IsNotEmpty, IsString, IsNumber, Min, Max, IsEnum, IsOptional, IsUUID } from 'class-validator';
 import {
-	IsNotEmpty,
-	IsString,
-	IsNumber,
-	Min,
-	Max,
-	IsEnum
-} from 'class-validator';
-import { IEmployeeSetting, CurrenciesEnum, IEmployee } from '@gauzy/contracts';
-import {
-	Employee,
-	TenantOrganizationBaseEntity
-} from '../core/entities/internal';
+	IEmployeeSetting,
+	CurrenciesEnum,
+	IEmployee,
+	EmployeeSettingTypeEnum,
+	ID,
+	BaseEntityEnum,
+	JsonData
+} from '@gauzy/contracts';
+import { isMySQL, isPostgres } from '@gauzy/config';
+import { Employee, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmEmployeeSettingRepository } from './repository/mikro-orm-employee-setting.repository';
 
 @MultiORMEntity('employee_setting', { mikroOrmRepository: () => MikroOrmEmployeeSettingRepository })
 export class EmployeeSetting extends TenantOrganizationBaseEntity implements IEmployeeSetting {
+	[EntityRepositoryType]?: MikroOrmEmployeeSettingRepository;
 
-	@ApiProperty({ type: () => Number, minimum: 1, maximum: 12 })
+	@ApiPropertyOptional({ type: () => Number, minimum: 1, maximum: 12 })
 	@IsNumber()
-	@IsNotEmpty()
+	@IsOptional()
 	@Min(1)
 	@Max(12)
-	@MultiORMColumn()
-	month: number;
+	@MultiORMColumn({ nullable: true })
+	month?: number;
 
-	@ApiProperty({ type: () => Number, minimum: 1 })
+	@ApiPropertyOptional({ type: () => Number, minimum: 1 })
 	@IsNumber()
-	@IsNotEmpty()
+	@IsOptional()
 	@Min(0)
-	@MultiORMColumn()
-	year: number;
+	@MultiORMColumn({ nullable: true })
+	year?: number;
 
-	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
+	@ApiPropertyOptional({ type: () => String, enum: EmployeeSettingTypeEnum })
+	@IsEnum(EmployeeSettingTypeEnum)
+	@IsOptional()
 	@ColumnIndex()
-	@MultiORMColumn()
-	settingType: string;
+	@MultiORMColumn({ nullable: true, default: EmployeeSettingTypeEnum.NORMAL })
+	settingType?: EmployeeSettingTypeEnum;
 
-	@ApiProperty({ type: () => Number })
+	@ApiPropertyOptional({ type: () => Number })
 	@IsNumber()
-	@IsNotEmpty()
-	@MultiORMColumn()
-	value: number;
+	@IsOptional()
+	@MultiORMColumn({ nullable: true })
+	value?: number;
 
-	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
+	@ApiPropertyOptional({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
-	@IsNotEmpty()
+	@IsOptional()
 	@ColumnIndex()
-	@MultiORMColumn()
-	currency: string;
+	@MultiORMColumn({ nullable: true })
+	currency?: string;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true })
+	entityId?: ID;
+
+	@ApiPropertyOptional({ type: () => String, enum: BaseEntityEnum })
+	@IsOptional()
+	@IsEnum(BaseEntityEnum)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true })
+	entity?: BaseEntityEnum;
+
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	data?: JsonData;
+
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	defaultData?: JsonData;
 
 	/*
 	|--------------------------------------------------------------------------
