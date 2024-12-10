@@ -1,6 +1,7 @@
-import { RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
+import { RelationId } from 'typeorm';
 import { IsNotEmpty, IsString, IsNumber, Min, Max, IsEnum, IsOptional, IsUUID } from 'class-validator';
 import {
 	IEmployeeSetting,
