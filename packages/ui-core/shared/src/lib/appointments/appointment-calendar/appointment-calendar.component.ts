@@ -188,7 +188,7 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 				selectedEventType: this.selectedEventType,
 				timezone: this.selectedTimeZoneName
 			});
-			this._router.navigate([this.appointmentFormURL || this.getManageRoute(this._selectedEmployeeId)], {
+			this._router.navigate([this.appointmentFormURL || this.getManageRoute(this._selectedEmployeeId, id)], {
 				queryParams: {
 					dateStart: event._instance.range.start.toISOString(),
 					dateEnd: event._instance.range.end.toISOString(),
@@ -198,8 +198,9 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 			});
 		} else {
 			const config = {
-				dateStart: event.start,
-				dateEnd: event.end,
+				dateStart: event._instance.range.start,
+				dateEnd: event._instance.range.end,
+				selectedEventType: this.selectedEventType,
 				timezone: this.selectedTimeZoneName
 			};
 			const prevSlot = this.calendarEvents.find(
@@ -219,7 +220,7 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 				config.dateEnd = new Date(nextSlot.end.toString());
 			}
 
-			this._router.navigate([this.getManageRoute(this._selectedEmployeeId, id)], { state: config });
+			this._router.navigate([this.getManageRoute(this._selectedEmployeeId, id)], { queryParams: config });
 		}
 	}
 	handleEventSelect(info) {
