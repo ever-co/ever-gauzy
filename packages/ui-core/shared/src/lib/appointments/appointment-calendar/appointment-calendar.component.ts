@@ -7,7 +7,7 @@ import { NbDialogService } from '@nebular/theme';
 import { CalendarOptions, EventClickArg, EventInput } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
-import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
+import interactionPlugin from '@fullcalendar/interaction';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import momentTimezonePlugin from '@fullcalendar/moment-timezone';
@@ -139,7 +139,6 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 				if (this.employee && this.employee.id && this.selectedEventType) {
 					return this.renderAppointmentsAndSlots(this.employee.id);
 				}
-				console.log(employee);
 
 				if (employee && employee.id) {
 					this._selectedEmployeeId = employee.id;
@@ -181,8 +180,6 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 	}
 
 	handleEventClick({ event }: EventClickArg) {
-		console.log(this._selectedEmployeeId);
-
 		const id = event._def.extendedProps.id;
 		if (event._def.extendedProps.type !== 'BookedSlot') {
 			this._router.navigate([this.appointmentFormURL || this.getManageRoute(this._selectedEmployeeId, id)], {
@@ -323,8 +320,6 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 	}
 
 	getManageRoute(employeeId: string = '', appointmentId: string = '') {
-		console.log(employeeId, appointmentId);
-
 		return `/pages/employees/appointments/manage/${employeeId}` + (appointmentId ? `/${appointmentId}` : '');
 	}
 
