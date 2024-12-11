@@ -7,7 +7,7 @@ import { NbDialogService } from '@nebular/theme';
 import { CalendarOptions, EventClickArg, EventInput } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
+import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import momentTimezonePlugin from '@fullcalendar/moment-timezone';
@@ -139,6 +139,7 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 				if (this.employee && this.employee.id && this.selectedEventType) {
 					return this.renderAppointmentsAndSlots(this.employee.id);
 				}
+				console.log(employee);
 
 				if (employee && employee.id) {
 					this._selectedEmployeeId = employee.id;
@@ -180,14 +181,10 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 	}
 
 	handleEventClick({ event }: EventClickArg) {
+		console.log(this._selectedEmployeeId);
+
 		const id = event._def.extendedProps.id;
 		if (event._def.extendedProps.type !== 'BookedSlot') {
-			console.log('Navigating with state:', {
-				dateStart: event._instance.range.start,
-				dateEnd: event._instance.range.end,
-				selectedEventType: this.selectedEventType,
-				timezone: this.selectedTimeZoneName
-			});
 			this._router.navigate([this.appointmentFormURL || this.getManageRoute(this._selectedEmployeeId, id)], {
 				queryParams: {
 					dateStart: event._instance.range.start.toISOString(),
@@ -225,7 +222,6 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 	}
 	handleEventSelect(info) {
 		const { start, end } = info; // start and end are the selected date range
-		console.log(info);
 
 		// You can also check additional conditions before processing
 		if (start && end) {
@@ -251,10 +247,10 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 			}
 
 			// Redirect to the event management or booking form
-			this._router.navigate(
-				[this.getManageRoute(this._selectedEmployeeId)], // Use the selected employee ID if needed
-				{ state: config }
-			);
+
+			this._router.navigate([this.getManageRoute(this.employee ? this.employee.id : this._selectedEmployeeId)], {
+				queryParams: config
+			});
 		}
 	}
 
@@ -327,6 +323,8 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 	}
 
 	getManageRoute(employeeId: string = '', appointmentId: string = '') {
+		console.log(employeeId, appointmentId);
+
 		return `/pages/employees/appointments/manage/${employeeId}` + (appointmentId ? `/${appointmentId}` : '');
 	}
 
