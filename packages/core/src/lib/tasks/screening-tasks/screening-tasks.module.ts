@@ -4,6 +4,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { TaskModule } from '../task.module';
+import { OrganizationProjectModule } from '../../organization-project/organization-project.module';
 import { CommandHandlers } from './commands/handlers';
 import { ScreeningTasksService } from './screening-tasks.service';
 import { ScreeningTasksController } from './screening-tasks.controller';
@@ -16,6 +17,7 @@ import { TypeOrmScreeningTaskRepository } from './repository/type-orm-screening-
 		MikroOrmModule.forFeature([ScreeningTask]),
 		RolePermissionModule,
 		TaskModule,
+		OrganizationProjectModule,
 		CqrsModule
 	],
 	providers: [ScreeningTasksService, TypeOrmScreeningTaskRepository, ...CommandHandlers],
