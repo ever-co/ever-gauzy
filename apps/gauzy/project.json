@@ -178,9 +178,7 @@
 				"polyfills": "apps/gauzy/src/polyfills.ts",
 				"tsConfig": "apps/gauzy/tsconfig.app.json",
 				"stylePreprocessorOptions": {
-					"includePaths": [
-						"packages/ui-core/static/styles"
-					]
+					"includePaths": ["packages/ui-core/static/styles"]
 				},
 				"assets": [
 					"apps/gauzy/src/favicon.ico",

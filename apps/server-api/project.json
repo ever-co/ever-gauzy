@@ -36,10 +36,7 @@
 					}
 				],
 				"stylePreprocessorOptions": {
-					"includePaths": [
-						"apps/server-api/src/assets/styles",
-						"packages/ui-core/static/styles"
-					]
+					"includePaths": ["apps/server-api/src/assets/styles", "packages/ui-core/static/styles"]
 				},
 				"styles": [
 					"node_modules/@nebular/theme/styles/prebuilt/default.css",
@@ -57,11 +54,7 @@
 					"node_modules/@ng-select/ng-select/themes/default.theme.css"
 				],
 				"scripts": [],
-				"allowedCommonJsDependencies": [
-					"localforage",
-					"rxjs",
-					"rxjs/operators"
-				]
+				"allowedCommonJsDependencies": ["localforage", "rxjs", "rxjs/operators"]
 			},
 			"configurations": {
 				"production": {

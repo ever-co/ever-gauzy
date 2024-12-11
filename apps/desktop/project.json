@@ -25,15 +25,9 @@
 				"tsConfig": "apps/desktop/tsconfig.app.json",
 				"aot": true,
 				"stylePreprocessorOptions": {
-					"includePaths": [
-						"apps/desktop-timer/src/assets/styles",
-						"packages/ui-core/static/styles"
-					]
+					"includePaths": ["apps/desktop-timer/src/assets/styles", "packages/ui-core/static/styles"]
 				},
-				"assets": [
-					"apps/desktop/src/favicon.ico",
-					"apps/desktop/src/assets"
-				],
+				"assets": ["apps/desktop/src/favicon.ico", "apps/desktop/src/assets"],
 				"styles": [
 					"node_modules/@nebular/theme/styles/prebuilt/default.css",
 					"node_modules/bootstrap/dist/css/bootstrap.css",
@@ -51,12 +45,7 @@
 					"packages/ui-core/static/styles/styles.scss"
 				],
 				"scripts": [],
-				"allowedCommonJsDependencies": [
-					"@datorama/akita",
-					"localforage",
-					"rxjs",
-					"rxjs/operators"
-				]
+				"allowedCommonJsDependencies": ["@datorama/akita", "localforage", "rxjs", "rxjs/operators"]
 			},
 			"configurations": {
 				"production": {

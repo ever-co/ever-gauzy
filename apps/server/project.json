@@ -26,10 +26,7 @@
 				"tsConfig": "apps/server/tsconfig.app.json",
 				"aot": true,
 				"stylePreprocessorOptions": {
-					"includePaths": [
-						"apps/server/src/assets/styles",
-						"packages/ui-core/static/styles"
-					]
+					"includePaths": ["apps/server/src/assets/styles", "packages/ui-core/static/styles"]
 				},
 				"assets": [
 					"apps/server/src/favicon.ico",

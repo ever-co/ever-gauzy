@@ -4,6 +4,7 @@ const path = require('path');
 
 console.log('Using custom Webpack Config -> __dirname: ' + __dirname);
 console.log('Using custom Webpack Config -> process.cwd: ' + process.cwd());
+console.log('Using custom Webpack Config Path -> core path : ' + path.resolve(__dirname, '../../../dist/packages/core'));
 
 // Nx plugins for webpack.
 module.exports = composePlugins(
@@ -22,7 +23,7 @@ module.exports = composePlugins(
 		// Add resolve aliases for Nx libraries
 		config.resolve.alias = {
 			...(config.resolve.alias || {}),
-			'@gauzy/core': path.join(__dirname, '../../dist/packages/core')
+			'@gauzy/core': path.resolve(__dirname, '../../../dist/packages/core')
 		}
 
 		// Disable watch for the 'public' folder
@@ -31,6 +32,8 @@ module.exports = composePlugins(
 			aggregateTimeout: 300, // Delay rebuild after the first change (optional)
 			poll: false, // Use polling or not
 		};
+
+		console.log('Using custom Webpack Config -> config: ' + JSON.stringify(config, null, 2));
 
 		// Update the webpack config as needed here.
 		// e.g. `config.plugins.push(new MyPlugin())`
