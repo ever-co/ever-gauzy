@@ -93,13 +93,15 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 			this.start = this.selectedRange.start;
 			this.end = this.selectedRange.end;
 		} else {
-			this.selectedRange = {
-				start: history.state.dateStart,
-				end: history.state.dateEnd
-			};
+			this._route.queryParams.subscribe((params) => {
+				this.selectedRange = {
+					start: params.dateStart,
+					end: params.dateEnd
+				};
+				this.timezone = this.timezone || params.timezone || timezone.tz.guess();
+			});
 		}
 
-		this.timezone = this.timezone || history.state.timezone || timezone.tz.guess();
 		this.timezoneOffset = timezone.tz(this.timezone).format('Z');
 		timezone.tz.setDefault(this.timezone);
 
