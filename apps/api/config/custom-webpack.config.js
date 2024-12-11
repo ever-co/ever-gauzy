@@ -1,42 +1,29 @@
 const { composePlugins, withNx } = require('@nx/webpack');
-const nodeExternals = require('webpack-node-externals');
 const path = require('path');
 
 console.log('Using custom Webpack Config -> __dirname: ' + __dirname);
 console.log('Using custom Webpack Config -> process.cwd: ' + process.cwd());
-console.log('Using custom Webpack Config Path -> core path : ' + path.resolve(__dirname, '../../../dist/packages/core'));
+console.log('Using custom Webpack Config Core Path: ', path.resolve(__dirname, '../../../dist/packages/core'));
 
-// Nx plugins for webpack.
 module.exports = composePlugins(
 	withNx({
-		target: 'node'
+		target: 'node', // Target for Node.js
 	}),
 	(config) => {
-		// Add externals configuration
+		// Add externals configuration to exclude node_modules
 		config.externals = [
-			...(config.externals || []),
-			nodeExternals({
-				allowlist: [/^@gauzy\/core$/], // Include @gauzy/core explicitly
-			}),
+			...(config.externals || [])
 		];
 
-		// Add resolve aliases for Nx libraries
-		config.resolve.alias = {
-			...(config.resolve.alias || {}),
-			'@gauzy/core': path.resolve(__dirname, '../../../dist/packages/core')
-		}
-
-		// Disable watch for the 'public' folder
+		// Update watch options if necessary
 		config.watchOptions = {
-			ignored: ['**/public/**/*'], // Ignore changes in the 'public' folder
-			aggregateTimeout: 300, // Delay rebuild after the first change (optional)
-			poll: false, // Use polling or not
+			ignored: ['**/node_modules/**', '**/dist/**', '**/public/**/*'], // Ignore node_modules and dist during watch
+			aggregateTimeout: 300, // Delay rebuild slightly
+			poll: false, // Disable polling
 		};
 
-		console.log('Using custom Webpack Config -> config: ' + JSON.stringify(config, null, 2));
+		console.log('Final Webpack config:', JSON.stringify(config, null, 2));
 
-		// Update the webpack config as needed here.
-		// e.g. `config.plugins.push(new MyPlugin())`
 		return config;
 	}
 );
