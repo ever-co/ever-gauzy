@@ -14,6 +14,10 @@ export interface IEmployeeSetting
 	defaultData?: JsonData;
 }
 
+export interface IEmployeeSettingCreateInput extends IEmployeeSetting {}
+
+export interface IEmployeeSettingUpdateInput extends Omit<IEmployeeSettingCreateInput, 'employee' | 'employeeId'> {}
+
 export interface IEmployeeSettingFindInput {
 	employeeId?: string;
 	employee?: IEmployee;

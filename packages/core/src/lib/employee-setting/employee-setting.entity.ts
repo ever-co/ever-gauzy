@@ -97,5 +97,5 @@ export class EmployeeSetting extends TenantOrganizationBaseEntity implements IEm
 	@IsNotEmpty()
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	employeeId: string;
+	employeeId: ID;
 }
