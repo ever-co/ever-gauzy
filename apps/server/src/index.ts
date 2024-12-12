@@ -27,9 +27,12 @@ process.env = Object.assign(process.env, environment);
 
 app.setName(process.env.NAME);
 
-console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
+console.log('Server Node Modules Path', path.join(__dirname, 'node_modules'));
 
 import * as remoteMain from '@electron/remote/main';
+import * as Sentry from '@sentry/electron';
+import { setupTitlebar } from 'custom-electron-titlebar/main';
+import { autoUpdater } from 'electron-updater';
 import {
 	AppError,
 	AppMenu,
@@ -61,9 +64,6 @@ import {
 	createSetupWindow,
 	SplashScreen
 } from '@gauzy/desktop-window';
-import * as Sentry from '@sentry/electron';
-import { setupTitlebar } from 'custom-electron-titlebar/main';
-import { autoUpdater } from 'electron-updater';
 import { initSentry } from './sentry';
 
 remoteMain.initialize();
@@ -116,6 +116,7 @@ const dirPath = app.isPackaged ? path.join(__dirname, '../data/ui') : path.join(
 console.log('Dir path', dirPath);
 
 const timeTrackerUIPath = path.join(__dirname, 'index.html');
+console.log('Time Tracker UI path', timeTrackerUIPath);
 
 const pathWindow: IPathWindow = {
 	gauzyUi: gauzyUIPath,

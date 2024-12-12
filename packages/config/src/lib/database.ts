@@ -278,7 +278,18 @@ switch (dbType) {
 
 	case DatabaseTypeEnum.sqlite:
 	case DatabaseTypeEnum.betterSqlite3:
-		const sqlitePath = process.env.DB_PATH || path.resolve(process.cwd(), 'apps/api/data/gauzy.sqlite3');
+		// Determine if running from dist or source
+		const isDist = __dirname.includes('dist');
+
+		console.log('Better Sqlite3 Path isDist: ->', isDist);
+		console.log('Better Sqlite3 Path process.cwd(): ->', process.cwd());
+		console.log('Better Sqlite3 Path __dirname: ->', __dirname);
+
+		const dbPath = isDist
+			? path.resolve(process.cwd(), 'apps/api/data/gauzy.sqlite3') // For dist structure
+			: path.resolve(__dirname, '../../../../apps/api/data/gauzy.sqlite3'); // For src structure
+
+		const sqlitePath = process.env.DB_PATH || dbPath;
 		console.log('Better Sqlite DB Path: ' + sqlitePath);
 
 		// MikroORM DB Config (Better-SQLite3)

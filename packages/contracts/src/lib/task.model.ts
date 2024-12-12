@@ -15,6 +15,7 @@ import { ITaskPriority, TaskPriorityEnum } from './task-priority.model';
 import { ITaskSize, TaskSizeEnum } from './task-size.model';
 import { IOrganizationProjectModule } from './organization-project-module.model';
 import { TaskTypeEnum } from './issue-type.model';
+import { IMentionUserIds } from './mention.model';
 
 export interface ITask
 	extends IBasePerTenantAndOrganizationEntityModel,
@@ -42,6 +43,7 @@ export interface ITask
 	creator?: IUser;
 	creatorId?: ID;
 	isDraft?: boolean; // Define if task is still draft (E.g : Task description not completed yet)
+	isScreeningTask?: boolean; // Defines if the task still in discussion before to be accepted
 
 	version?: string;
 	issueType?: string;
@@ -62,6 +64,7 @@ export interface ITask
 
 export interface IGetTaskOptions extends IBasePerTenantAndOrganizationEntityModel {
 	projectId?: ID;
+	isScreeningTask?: boolean;
 }
 
 export interface IGetTaskByEmployeeOptions extends IBaseRelationsEntityModel {
@@ -75,7 +78,7 @@ export enum TaskParticipantEnum {
 	TEAMS = 'teams'
 }
 
-export type ITaskCreateInput = ITask;
+export interface ITaskCreateInput extends ITask, IMentionUserIds {}
 
 export interface ITaskUpdateInput extends ITaskCreateInput {
 	id?: string;
@@ -110,7 +113,7 @@ export interface IGetTasksByViewFilters extends IBasePerTenantAndOrganizationEnt
 
 export interface ITaskDateFilterInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-		Pick<ITask, 'projectId' | 'organizationSprintId' | 'creatorId'>,
+		Pick<ITask, 'isScreeningTask' | 'projectId' | 'organizationSprintId' | 'creatorId'>,
 		IEmployeeEntityInput,
 		IRelationalOrganizationTeam,
 		Pick<IGetTasksByViewFilters, 'relations'> {

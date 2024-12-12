@@ -1,22 +1,23 @@
-import { resolve, join } from 'path';
+import * as path from 'path';
 
 /**
- * Resolves a file path based on the environment (production or development).
+ * Resolves a file path based on the current environment (production or development).
  *
- * @param {string} distPath - The path to use in the production (dist) environment.
- * @param {string} devPath - The path to use in the development (src) environment.
- * @returns {string} - The resolved file path based on the current environment.
+ * @param {string} distPath - The relative path for the production environment.
+ * @param {string} devPath - The relative path for the development environment.
+ * @returns {string} - The resolved absolute file path.
  */
 export function resolveEnvironmentPath(distPath: string, devPath: string): string {
-    const basePath = __dirname.includes(join('dist')) ? distPath : devPath;
-    return resolve(process.cwd(), basePath);
+    const isProduction = __dirname.includes(path.join('dist'));
+    const relativePath = isProduction ? distPath : devPath;
+    return path.resolve(process.cwd(), relativePath);
 }
 
 /**
- * Gets the API public path.
+ * Gets the public directory path for the API.
  *
- * @returns {string} - The resolved public path for the API.
+ * @returns {string} - The resolved absolute public directory path.
  */
 export function getApiPublicPath(): string {
-    return resolveEnvironmentPath('apps/api/public', '../../apps/api/public');
+    return resolveEnvironmentPath('apps/api/public', 'apps/api/public');
 }

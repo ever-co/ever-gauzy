@@ -14,7 +14,7 @@ import { formatDate, Location } from '@angular/common';
 import { UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LatLng } from 'leaflet';
-import * as moment from 'moment';
+import moment from 'moment';
 import { filter, tap } from 'rxjs/operators';
 import {
 	BonusTypeEnum,

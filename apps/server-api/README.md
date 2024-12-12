@@ -1,2 +1,3 @@
-# Ever Gauzy API Server 
+# @gauzy/server-api
 
+## Overview

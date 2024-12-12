@@ -1,5 +1,6 @@
 {
 	"compilerOptions": {
+		"baseUrl": ".",
 		"target": "es2022",
 		"useDefineForClassFields": false,
 		"forceConsistentCasingInFileNames": true,
@@ -8,7 +9,6 @@
 		"noPropertyAccessFromIndexSignature": false,
 		"noImplicitReturns": false,
 		"noFallthroughCasesInSwitch": false,
-		"baseUrl": ".",
 		"paths": {
 			"@gauzy/ui-core/*": ["./../../dist/packages/ui-core/*/index.d.ts"]
 		}
@@ -23,7 +23,7 @@
 			"path": "./tsconfig.spec.json"
 		}
 	],
-	"extends": "../../tsconfig.base.json",
+	"extends": "../../tsconfig.json",
 	"angularCompilerOptions": {
 		"enableI18nLegacyMessageIdFormat": false,
 		"strictInjectionParameters": false,

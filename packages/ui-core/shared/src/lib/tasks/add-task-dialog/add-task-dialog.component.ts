@@ -3,7 +3,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
-import * as moment from 'moment';
+import moment from 'moment';
 import { firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -308,7 +308,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	private async loadAvailableModules() {
 		if (!this.organization || !this.form.get('projectId')?.value) return;
 		const modules = await firstValueFrom(
-			this.organizationProjectModuleService.get<IOrganizationProjectModule>({
+			this.organizationProjectModuleService.getAllModulesByProjectId({
 				projectId: this.form.get('projectId')?.value
 			})
 		);

@@ -3,13 +3,7 @@
 	"compilerOptions": {
 		"outDir": "../../dist/out-tsc",
 		"declaration": true,
-		"types": ["node"],
-		"target": "es2021",
-		"strictNullChecks": false,
-		"noImplicitAny": false,
-		"strictBindCallApply": false,
-		"forceConsistentCasingInFileNames": true,
-		"noFallthroughCasesInSwitch": false
+		"types": []
 	},
 	"files": ["global.d.ts"],
 	"include": ["src/**/*.ts", "src/lib/fetch.js"],

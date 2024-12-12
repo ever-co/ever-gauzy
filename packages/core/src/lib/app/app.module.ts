@@ -141,6 +141,7 @@ import { TaskLinkedIssueModule } from '../tasks/linked-issue/task-linked-issue.m
 import { OrganizationTaskSettingModule } from '../organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from '../tasks/estimation/task-estimation.module';
 import { DailyPlanModule } from '../tasks/daily-plan/daily-plan.module';
+import { ScreeningTasksModule } from '../tasks/screening-tasks/screening-tasks.module';
 import { SocialAccountModule } from '../auth/social-account/social-account.module';
 import { OrganizationProjectModuleModule } from '../organization-project-module/organization-project-module.module';
 import { FavoriteModule } from '../favorite/favorite.module';
@@ -152,6 +153,8 @@ import { ActivityLogModule } from '../activity-log/activity-log.module';
 import { ApiCallLogModule } from '../api-call-log/api-call-log.module'; // Global Api Call Log Module
 import { TaskViewModule } from '../tasks/views/view.module';
 import { ResourceLinkModule } from '../resource-link/resource-link.module';
+import { MentionModule } from '../mention/mention.module';
+import { SubscriptionModule } from '../subscription/subscription.module';
 
 const { unleashConfig } = environment;
 
@@ -410,6 +413,7 @@ if (environment.THROTTLE_ENABLED) {
 		TaskStatusModule,
 		TaskVersionModule,
 		DailyPlanModule,
+		ScreeningTasksModule,
 		OrganizationEmploymentTypeModule,
 		TimeTrackingModule,
 		FeatureModule,
@@ -446,13 +450,15 @@ if (environment.THROTTLE_ENABLED) {
 		TaskEstimationModule,
 		FavoriteModule,
 		GlobalFavoriteModule,
-		StatsModule, // Global Stats Module
+		StatsModule,
 		ReactionModule,
 		CommentModule,
 		ActivityLogModule,
 		ApiCallLogModule,
 		TaskViewModule,
-		ResourceLinkModule // Task views Module
+		ResourceLinkModule,
+		MentionModule,
+		SubscriptionModule
 	],
 	controllers: [AppController],
 	providers: [

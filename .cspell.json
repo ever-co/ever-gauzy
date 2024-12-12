@@ -524,7 +524,8 @@
 		"maxlength",
 		"xplatframework",
 		"localforage",
-		"longform"
+		"longform",
+		"rfdc"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

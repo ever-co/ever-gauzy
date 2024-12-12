@@ -13,8 +13,8 @@ import { UntypedFormGroup, UntypedFormBuilder, Validators, AbstractControl } fro
 import { Router, ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { firstValueFrom } from 'rxjs';
-import { filter } from 'rxjs/operators';
-import * as moment from 'moment';
+import { filter, switchMap } from 'rxjs/operators';
+import moment from 'moment';
 import * as timezone from 'moment-timezone';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -93,13 +93,15 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 			this.start = this.selectedRange.start;
 			this.end = this.selectedRange.end;
 		} else {
-			this.selectedRange = {
-				start: history.state.dateStart,
-				end: history.state.dateEnd
-			};
+			this._route.queryParams.subscribe((params) => {
+				this.selectedRange = {
+					start: params.dateStart,
+					end: params.dateEnd
+				};
+				this.timezone = this.timezone || params.timezone || timezone.tz.guess();
+			});
 		}
 
-		this.timezone = this.timezone || history.state.timezone || timezone.tz.guess();
 		this.timezoneOffset = timezone.tz(this.timezone).format('Z');
 		timezone.tz.setDefault(this.timezone);
 
@@ -114,6 +116,24 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 					await this._loadEmployees().then(() => this._parseParams());
 				}
 			});
+
+		this._route.params
+			.pipe(
+				switchMap(async (params) => {
+					if (!params.employeeId) return;
+
+					try {
+						// Get employee by ID
+						this.employee = await firstValueFrom(
+							this._employeeService.getEmployeeById(params.employeeId, ['user'])
+						);
+					} catch (error) {
+						console.log('Error while loading employee', error);
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 
 		this._initializeForm();
 	}

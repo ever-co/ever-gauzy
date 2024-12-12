@@ -2,7 +2,11 @@
 	"name": "@gauzy/desktop-timer",
 	"version": "0.1.0",
 	"description": "Ever Gauzy Desktop Timer App",
-	"license": "AGPL-3.0",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
 	"homepage": "https://gauzy.co",
 	"repository": {
 		"type": "git",
@@ -11,13 +15,12 @@
 	"bugs": {
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
+	"license": "AGPL-3.0",
 	"private": true,
-	"author": {
-		"name": "Ever Co. LTD",
-		"email": "ever@ever.co",
-		"url": "https://ever.co"
+	"scripts": {
+		"build": "yarn nx build desktop-timer --configuration=development",
+		"build:prod": "yarn nx build desktop-timer --configuration=production"
 	},
-	"scripts": {},
 	"devDependencies": {
 		"@electron/rebuild": "^3.2.10",
 		"@types/moment-duration-format": "^2.2.3",
@@ -40,8 +43,6 @@
 		"@datorama/akita": "^7.1.1",
 		"@datorama/akita-ngdevtools": "^7.0.0",
 		"@electron/remote": "^2.0.8",
-		"@gauzy/contracts": "^0.1.0",
-		"@gauzy/desktop-ui-lib": "^0.1.0",
 		"@grpc/grpc-js": "^1.6.7",
 		"@nebular/auth": "^14.0.2",
 		"@nebular/bootstrap": "^9.1.0-rc.6",
@@ -62,13 +63,14 @@
 		"app-root-path": "^3.0.0",
 		"auto-launch": "5.0.5",
 		"consolidate": "^0.16.0",
+		"custom-electron-titlebar": "^4.2.8",
 		"electron-log": "^4.4.8",
 		"electron-notarize": "^1.2.2",
 		"electron-store": "^8.1.0",
 		"electron-updater": "^6.1.7",
-		"electron-util": "^0.17.2",
+		"electron-util": "^0.18.1",
 		"express": "^4.18.2",
-		"mac-screen-capture-permissions": "^2.1.0",
+		"locutus": "^2.0.30",
 		"moment": "^2.30.1",
 		"moment-duration-format": "^2.3.2",
 		"moment-range": "^4.0.2",
@@ -83,14 +85,17 @@
 		"sound-play": "1.1.0",
 		"squirrelly": "^8.0.8",
 		"twing": "^5.0.2",
-		"locutus": "^2.0.30",
 		"underscore": "^1.13.3",
-		"undici": "^6.10.2",
-		"custom-electron-titlebar": "^4.2.8"
+		"undici": "^6.10.2"
 	},
 	"optionalDependencies": {
 		"node-linux": "^0.1.12",
 		"node-mac": "^1.0.1",
 		"node-windows": "^1.0.0-beta.8"
-	}
+	},
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
 }

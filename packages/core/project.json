@@ -12,7 +12,7 @@
 		}
 	},
 	"tags": [],
-	"implicitDependencies": ["contracts", "common", "config", "plugin", "auth"],
+	"implicitDependencies": [],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
@@ -45,6 +45,13 @@
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
 				"jestConfig": "packages/core/jest.config.ts"
+			}
+		},
+		"serve": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "nodemon --restartable rs --ignore .git --ignore node_modules/ --ignore dist/ --ignore coverage/ --ignore src/**/*.spec.ts --watch packages/core/src --exec \"yarn ts-node -r tsconfig-paths/register packages/core/src/lib/main.ts\" --env NODE_ENV=development --ext ts",
+				"cwd": "."
 			}
 		}
 	}

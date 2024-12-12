@@ -17,16 +17,13 @@
 	"homepage": "https://ever.co",
 	"license": "AGPL-3.0",
 	"private": true,
-	"type": "commonjs",
-	"main": "./src/index.js",
-	"typings": "./src/index.d.ts",
 	"scripts": {
 		"lib:build": "yarn nx build ui-config --configuration=development",
 		"lib:build:prod": "cross-env NODE_ENV=production yarn ts-node scripts/replace-env-files.ts --environment=prod && yarn nx build ui-config --configuration=production",
 		"lib:watch": "yarn nx build ui-config --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^17.3.12",
+		"@angular/common": "^18.2.0",
 		"@angular/core": "^18.2.0"
 	},
 	"dependencies": {

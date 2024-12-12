@@ -10,8 +10,6 @@ import { randomSeedConfig } from './../../core/seeds/random-seed-config';
 import { getApiPublicPath } from '../../core/util';
 import { AppsNames } from './../activity/activity.seed';
 
-let fileList: string[] = [];
-
 /**
  * Generates random screenshots for a given tenant and organization within a specified time range.
  *

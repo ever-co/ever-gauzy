@@ -5,6 +5,7 @@
 	"prefix": "lib",
 	"projectType": "library",
 	"tags": [],
+	"implicitDependencies": [],
 	"targets": {
 		"build": {
 			"executor": "@nx/angular:package",
@@ -18,6 +19,19 @@
 				},
 				"development": {
 					"tsConfig": "packages/ui-core/tsconfig.lib.json"
+				}
+			},
+			"defaultConfiguration": "production",
+			"dependsOn": ["^build", "config"]
+		},
+		"config": {
+			"executor": "nx:run-commands",
+			"configurations": {
+				"production": {
+					"commands": ["yarn ts-node .scripts/configure.ts --prod"]
+				},
+				"development": {
+					"commands": ["yarn ts-node .scripts/configure.ts --dev"]
 				}
 			},
 			"defaultConfiguration": "production"

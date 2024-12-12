@@ -1,27 +1,34 @@
+import { EventBus } from '@nestjs/cqrs';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
 import {
+	BaseEntityEnum,
 	ID,
 	IEmployee,
 	IOrganizationTeamEmployeeActiveTaskUpdateInput,
 	IOrganizationTeamEmployeeFindInput,
 	IOrganizationTeamEmployeeUpdateInput,
 	PermissionsEnum,
-	RolesEnum
+	RolesEnum,
+	SubscriptionTypeEnum
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { Role } from './../core/entities/internal';
 import { OrganizationTeamEmployee } from './organization-team-employee.entity';
 import { TaskService } from './../tasks/task.service';
+import { CreateSubscriptionEvent } from '../subscription/events';
+import { SubscriptionService } from '../subscription/subscription.service';
 import { MikroOrmOrganizationTeamEmployeeRepository, TypeOrmOrganizationTeamEmployeeRepository } from './repository';
 
 @Injectable()
 export class OrganizationTeamEmployeeService extends TenantAwareCrudService<OrganizationTeamEmployee> {
 	constructor(
+		private readonly _eventBus: EventBus,
 		readonly typeOrmOrganizationTeamEmployeeRepository: TypeOrmOrganizationTeamEmployeeRepository,
 		readonly mikroOrmOrganizationTeamEmployeeRepository: MikroOrmOrganizationTeamEmployeeRepository,
-		private readonly taskService: TaskService
+		private readonly taskService: TaskService,
+		private readonly subscriptionService: SubscriptionService
 	) {
 		super(typeOrmOrganizationTeamEmployeeRepository, mikroOrmOrganizationTeamEmployeeRepository);
 	}
@@ -64,6 +71,23 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		// 1. Remove members who are no longer in the team
 		if (removedMembers.length > 0) {
 			await this.deleteMemberByIds(removedMembers.map((member) => member.id));
+
+			// Unsubscribe members who were unassigned from team
+			try {
+				await Promise.all(
+					removedMembers.map(
+						async (member) =>
+							await this.subscriptionService.delete({
+								entity: BaseEntityEnum.OrganizationTeam,
+								entityId: organizationTeamId,
+								userId: member.employee.userId,
+								type: SubscriptionTypeEnum.ASSIGNMENT
+							})
+					)
+				);
+			} catch (error) {
+				console.error('Error subscribing new team members:', error);
+			}
 		}
 
 		// 2. Update role for existing members
@@ -96,6 +120,26 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 						roleId: managerIds.includes(employee.id) ? role.id : null
 					})
 			);
+
+			// Subscribe new assignees to the team
+			try {
+				await Promise.all(
+					newMembers.map(({ userId }) =>
+						this._eventBus.publish(
+							new CreateSubscriptionEvent({
+								entity: BaseEntityEnum.OrganizationTeam,
+								entityId: organizationTeamId,
+								userId,
+								type: SubscriptionTypeEnum.ASSIGNMENT,
+								organizationId,
+								tenantId
+							})
+						)
+					)
+				);
+			} catch (error) {
+				console.error('Error subscribing new team members:', error);
+			}
 
 			await this.typeOrmRepository.save(newTeamMembers);
 		}

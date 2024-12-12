@@ -1,6 +1,6 @@
 import { HttpParams } from '@angular/common/http';
-import * as moment from 'moment';
-import * as timezone from 'moment-timezone';
+import moment from 'moment';
+import timezone from 'moment-timezone';
 import { Observable } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
 import slugify from 'slugify';

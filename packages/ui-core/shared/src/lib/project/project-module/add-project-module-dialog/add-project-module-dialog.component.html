@@ -41,7 +41,7 @@
 				<div class="col-sm-12">
 					<div class="form-group">
 						<ga-employee-multi-select
-							[selectedEmployeeIds]="selectedMembers"
+							[selectedEmployeeIds]="selectedEmployeeIds"
 							[allEmployees]="employees"
 							(selectedChange)="onMembersSelected($event)"
 						></ga-employee-multi-select>
@@ -99,20 +99,18 @@
 					</div>
 				</div>
 			</div>
-			<!-- Manager Selection -->
+			<!-- Managers Selection -->
 			<div class="row">
 				<div class="col-sm-6">
 					<div class="form-group">
 						<label class="label">{{ 'PROJECT_MANAGEMENT_PAGE.PROJECT_MODULE.MANAGER' | translate }}</label>
 
-						<ga-employee-selector
-							fullWidth
-							[skipGlobalChange]="true"
+						<ga-employee-multi-select
+							[selectedEmployeeIds]="selectedManagerIds"
+							[allEmployees]="employees"
 							class="employees"
-							[showAllEmployeesOption]="false"
-							[defaultSelected]="true"
-							(selectionChanged)="onManagerSelected($event)"
-						></ga-employee-selector>
+							(selectedChange)="onManagersSelected($event)"
+						></ga-employee-multi-select>
 					</div>
 				</div>
 

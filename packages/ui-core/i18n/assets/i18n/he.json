@@ -3620,7 +3620,10 @@
 			"TIME_LOG_DELETED": "Time log for '{{ name }}' removed from '{{ organization }}'",
 			"TIME_LOGS_DELETED": "Time logs removed from '{{ organization }}'",
 			"BUCKET_CREATED": "'{{ bucket }}' for '{{ region }}' has been created successfully",
-			"AUTHORIZED_TO_WORK": "{{ name }} is authorized to work"
+			"AUTHORIZED_TO_WORK": "{{ name }} is authorized to work",
+			"MODULE_CREATED": "המודול נוצר בהצלחה!",
+			"MODULE_UPDATED": "המודול עודכן בהצלחה!",
+			"MODULE_SAVE_ERROR": "שמירת המודול נכשלה. אנא נסה שוב."
 		}
 	},
 	"ACCEPT_INVITE": {

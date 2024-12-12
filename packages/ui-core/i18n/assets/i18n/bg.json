@@ -3656,7 +3656,10 @@
 			"TIME_LOG_DELETED": "Времевият запис за '{{ name }}' беше премахнат от '{{ organization }}'",
 			"TIME_LOGS_DELETED": "Времевите записи бяха премахнати от '{{ organization }}'",
 			"BUCKET_CREATED": "'{{ bucket }}' за '{{ region }}' беше успешно създаден",
-			"AUTHORIZED_TO_WORK": "{{ name }} има право да работи"
+			"AUTHORIZED_TO_WORK": "{{ name }} има право да работи",
+			"MODULE_CREATED": "Модулът е създаден успешно!",
+			"MODULE_UPDATED": "Модулът е актуализиран успешно!",
+			"MODULE_SAVE_ERROR": "Неуспешно записване на модула. Моля, опитайте отново."
 		}
 	},
 	"ACCEPT_INVITE": {

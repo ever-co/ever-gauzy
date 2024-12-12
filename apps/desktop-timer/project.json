@@ -2,8 +2,9 @@
 	"name": "desktop-timer",
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
 	"projectType": "application",
-	"sourceRoot": "apps/desktop-timer/src",
 	"prefix": "gauzy",
+	"sourceRoot": "apps/desktop-timer/src",
+	"tags": [],
 	"generators": {
 		"@nx/angular:component": {
 			"style": "scss"
@@ -11,7 +12,8 @@
 	},
 	"targets": {
 		"build": {
-			"executor": "@nx/angular:webpack-browser",
+			"executor": "@angular-builders/custom-webpack:browser",
+			"outputs": ["{options.outputPath}"],
 			"options": {
 				"customWebpackConfig": {
 					"path": "apps/desktop-timer/config/custom-webpack.config.js"
@@ -41,6 +43,7 @@
 					}
 				],
 				"styles": [
+					"apps/desktop-timer/src/styles.css",
 					"node_modules/@nebular/theme/styles/prebuilt/default.css",
 					"node_modules/bootstrap/dist/css/bootstrap.css",
 					"node_modules/typeface-exo/index.css",
@@ -54,7 +57,8 @@
 					"apps/desktop-timer/src/assets/styles/styles.scss",
 					"node_modules/@ng-select/ng-select/themes/default.theme.css"
 				],
-				"scripts": []
+				"scripts": [],
+				"allowedCommonJsDependencies": ["localforage", "rxjs", "rxjs/operators"]
 			},
 			"configurations": {
 				"production": {
@@ -69,7 +73,6 @@
 						}
 					],
 					"optimization": true,
-					"outputHashing": "all",
 					"sourceMap": true,
 					"namedChunks": false,
 					"extractLicenses": true,
@@ -86,25 +89,33 @@
 							"maximumWarning": "60kb",
 							"maximumError": "120kb"
 						}
-					]
+					],
+					"outputHashing": "all"
+				},
+				"development": {
+					"optimization": false,
+					"extractLicenses": false,
+					"sourceMap": true
 				}
-			}
+			},
+			"defaultConfiguration": "production"
 		},
 		"serve": {
-			"executor": "@nx/angular:dev-server",
-			"options": {
-				"browserTarget": "desktop-timer:build"
-			},
+			"executor": "@angular-devkit/build-angular:dev-server",
 			"configurations": {
 				"production": {
-					"browserTarget": "desktop-timer:build:production"
+					"buildTarget": "desktop-timer:build:production"
+				},
+				"development": {
+					"buildTarget": "desktop-timer:build:development"
 				}
-			}
+			},
+			"defaultConfiguration": "development"
 		},
 		"extract-i18n": {
-			"executor": "@nx/angular:extract-i18n",
+			"executor": "@angular-devkit/build-angular:extract-i18n",
 			"options": {
-				"browserTarget": "desktop-timer:build"
+				"buildTarget": "desktop-timer:build"
 			}
 		},
 		"lint": {
@@ -112,10 +123,9 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": ["{workspaceRoot}/coverage/apps/desktop-timer"],
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
-				"jestConfig": "apps/desktop-timer/jest.config.js",
-				"passWithNoTests": true
+				"jestConfig": "apps/desktop-timer/jest.config.ts"
 			}
 		}
 	}

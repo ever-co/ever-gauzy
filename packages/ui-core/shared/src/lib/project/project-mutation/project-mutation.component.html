@@ -489,6 +489,9 @@
 						</div>
 					</form>
 				</nb-tab>
+				<nb-tab *ngIf="project?.id" [tabTitle]="'TASKS_PAGE.MODULE' | translate">
+					<ngx-project-module-table [projectId]="project.id"></ngx-project-module-table>
+				</nb-tab>
 			</nb-tabset>
 			<ng-container [ngTemplateOutlet]="actionButtons"></ng-container>
 		</form>
@@ -502,6 +505,9 @@
 		</button>
 		<button class="mr-3" nbButton status="success" [disabled]="form.invalid" (click)="onSubmit()">
 			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+		<button *ngIf="project?.id" class="mr-3" nbButton status="success" (click)="createProjectModuleDialog()">
+			{{ 'BUTTONS.ADD_MODULE' | translate }}
 		</button>
 		<ng-template [ngIf]="project">
 			<button

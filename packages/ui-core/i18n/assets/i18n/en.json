@@ -3734,7 +3734,10 @@
 			"AUTHORIZED_TO_WORK": "{{ name }} is authorized to work",
 			"EMAIL_VERIFICATION_NOT_VALID": "Sorry, this verification link is not valid.",
 			"EMAIL_VERIFICATION_VALID": "Congrats! Your email is now verified.",
-			"SCREEN_CAPTURE_CHANGED": "Screen capture status changed for {{ name }}"
+			"SCREEN_CAPTURE_CHANGED": "Screen capture status changed for {{ name }}",
+			"MODULE_CREATED": "Module created successfully!",
+			"MODULE_UPDATED": "Module updated successfully!",
+			"MODULE_SAVE_ERROR": "Failed to save the module. Please try again."
 		}
 	},
 	"ACCEPT_INVITE": {

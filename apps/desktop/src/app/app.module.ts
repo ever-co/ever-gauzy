@@ -4,6 +4,17 @@ import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { Router, RouterModule } from '@angular/router';
 import {
+	NbButtonModule,
+	NbCardModule,
+	NbDatepickerModule,
+	NbDialogModule,
+	NbDialogService,
+	NbLayoutModule,
+	NbThemeModule,
+	NbToastrModule
+} from '@nebular/theme';
+import * as Sentry from '@sentry/angular-ivy';
+import {
 	AboutModule,
 	ActivityWatchInterceptor,
 	AlwaysOnModule,
@@ -35,17 +46,6 @@ import {
 	NgxDesktopThemeModule
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
-import {
-	NbButtonModule,
-	NbCardModule,
-	NbDatepickerModule,
-	NbDialogModule,
-	NbDialogService,
-	NbLayoutModule,
-	NbThemeModule,
-	NbToastrModule
-} from '@nebular/theme';
-import * as Sentry from '@sentry/angular-ivy';
 import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';

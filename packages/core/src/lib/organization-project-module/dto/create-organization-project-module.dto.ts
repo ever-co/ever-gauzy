@@ -1,6 +1,6 @@
 import { IntersectionType, OmitType } from '@nestjs/swagger';
 import { IOrganizationProjectModuleCreateInput } from '@gauzy/contracts';
-import { TenantOrganizationBaseDTO } from './../../core/dto';
+import { MemberEntityBasedDTO, TenantOrganizationBaseDTO } from './../../core/dto';
 import { OrganizationProjectModule } from './../organization-project-module.entity';
 
 /**
@@ -9,6 +9,6 @@ import { OrganizationProjectModule } from './../organization-project-module.enti
 export class CreateOrganizationProjectModuleDTO
 	extends IntersectionType(
 		TenantOrganizationBaseDTO,
-		OmitType(OrganizationProjectModule, ['organizationId', 'organization'])
+		IntersectionType(OmitType(OrganizationProjectModule, ['organizationId', 'organization']), MemberEntityBasedDTO)
 	)
 	implements IOrganizationProjectModuleCreateInput {}

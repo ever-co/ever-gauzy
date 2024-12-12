@@ -38,6 +38,7 @@ import RedisStore from 'connect-redis';
 import { createClient } from 'redis';
 import helmet from 'helmet';
 import * as chalk from 'chalk';
+import * as fs from 'fs';
 import * as path from 'path';
 import { urlencoded, json } from 'express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -476,18 +477,28 @@ export function getMigrationsConfig() {
 	// Determine if running from dist or source
 	const isDist = __dirname.includes('dist');
 	console.log('Migration isDist: ->', isDist);
+	console.log('Migration process.cwd(): ->', process.cwd());
+	console.log('Migration __dirname: ->', __dirname);
 
 	// Base migrations directory
 	const migrationsDir = isDist
 		? path.resolve(process.cwd(), 'dist/packages/core/src/lib/database/migrations/*{.ts,.js}') // For dist structure
-		: path.resolve(process.cwd(), 'src/lib/database/migrations/*{.ts,.js}'); // For src structure
+		: path.resolve(__dirname, './../database/migrations/*{.ts,.js}'); // For src structure
 	console.log('Migration migrationsDir: ->', migrationsDir);
+
+	if (!fs.existsSync(path.dirname(migrationsDir))) {
+		chalk.red(console.log(`Migrations directory not found: ${migrationsDir}`));
+	}
 
     // CLI Migrations directory path
 	const cliMigrationsDir = isDist
 		? path.resolve(process.cwd(), 'packages/core/src/lib/database/migrations') // Adjusted for dist structure
-		: path.resolve(process.cwd(), 'src/lib/database/migrations'); // Adjusted for src structure
+		: path.resolve(__dirname, './../database/migrations'); // Adjusted for src structure
 	console.log('Migration cliMigrationsDir: ->', cliMigrationsDir);
+
+	if (!fs.existsSync(path.dirname(cliMigrationsDir))) {
+		chalk.red(console.log(`CLI migrations directory not found: ${cliMigrationsDir}`));
+	}
 
     // Return the migration paths
     return {
