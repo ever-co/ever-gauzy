@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, TemplateRef, ViewChild } from '@angular/core';
-import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators, ValidationErrors, AbstractControl } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'angular2-smart-table';
@@ -155,8 +155,9 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 	}
 
 	private _initializeForm() {
+		const existingNames = this.organizationEmploymentTypes.map((type) => type.name.toLowerCase());
 		this.form = this.fb.group({
-			name: ['', Validators.required]
+			name: ['', [Validators.required, this.validateUniqueName(existingNames)]]
 		});
 	}
 
@@ -329,5 +330,14 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 		this.selected.state = res.state;
 		this.selected.employmentType = orgEmpType;
 		this.selectedOrgEmpType = this.selected.employmentType;
+	}
+
+	validateUniqueName(existingNames: string[]) {
+		return (control: AbstractControl): ValidationErrors | null => {
+			if (existingNames.includes(control.value.trim().toLowerCase())) {
+				return { nonUniqueName: true };
+			}
+			return null;
+		};
 	}
 }
