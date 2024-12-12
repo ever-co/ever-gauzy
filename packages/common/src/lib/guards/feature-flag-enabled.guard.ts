@@ -14,7 +14,9 @@ import { FEATURE_METADATA } from '../constants';
  * @param feature - The feature key to check.
  * @returns True if the feature is enabled, otherwise false.
  */
-const featureEnabled = (feature: keyof IAuthenticationFlagFeatures) => process.env[feature] !== 'false';
+const featureEnabled = (feature: Extract<keyof IAuthenticationFlagFeatures, string>) => {
+    return process.env[feature] !== 'false';
+};
 
 /**
  * Object containing flag features for authentication.
@@ -52,9 +54,7 @@ export const flagFeatures: IAuthenticationFlagFeatures = {
  */
 @Injectable()
 export class FeatureFlagEnabledGuard implements CanActivate {
-	constructor(
-		private readonly _reflector: Reflector,
-	) { }
+	constructor(private readonly _reflector: Reflector) {}
 
 	/**
 	 *

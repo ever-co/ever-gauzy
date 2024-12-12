@@ -10,12 +10,17 @@
 	"license": "AGPL-3.0",
 	"private": true,
 	"type": "commonjs",
-	"main": "./src/index.js",
-	"typings": "./src/index.d.ts",
+	"main": "./dist/src/index.js",
+	"exports": {
+		".": {
+			"import": "./dist/src/index.js",
+			"require": "./dist/src/index.js"
+		}
+	},
 	"scripts": {
-		"lib:build": "yarn nx build plugin-knowledge-base --configuration=development",
-		"lib:build:prod": "yarn nx build plugin-knowledge-base --configuration=production",
-		"lib:watch": "yarn nx build plugin-knowledge-base --watch --configuration=development"
+		"lib:build": "yarn nx build plugin-knowledge-base",
+		"lib:build:prod": "yarn nx build plugin-knowledge-base",
+		"lib:watch": "yarn nx build plugin-knowledge-base --watch"
 	},
 	"dependencies": {
 		"@faker-js/faker": "8.0.0-alpha.0",

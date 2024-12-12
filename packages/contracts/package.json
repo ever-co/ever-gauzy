@@ -10,12 +10,17 @@
 	"license": "AGPL-3.0",
 	"private": true,
 	"type": "commonjs",
-	"main": "./src/index.js",
-	"typings": "./src/index.d.ts",
+	"main": "./dist/src/index.js",
+	"exports": {
+		".": {
+			"import": "./dist/src/index.js",
+			"require": "./dist/src/index.js"
+		}
+	},
 	"scripts": {
-		"lib:build": "yarn nx build contracts --configuration=development",
-		"lib:build:prod": "yarn nx build contracts --configuration=production",
-		"lib:watch": "yarn nx build contracts --configuration=development --watch"
+		"lib:build": "yarn nx build contracts",
+		"lib:build:prod": "yarn nx build contracts",
+		"lib:watch": "yarn nx build contracts --watch"
 	},
 	"dependencies": {
 		"tslib": "^2.6.2"

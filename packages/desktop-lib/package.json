@@ -10,12 +10,17 @@
 	"license": "AGPL-3.0",
 	"private": true,
 	"type": "commonjs",
-	"main": "./src/index.js",
-	"typings": "./src/index.d.ts",
+	"main": "./dist/src/index.js",
+	"exports": {
+		".": {
+			"import": "./dist/src/index.js",
+			"require": "./dist/src/index.js"
+		}
+	},
 	"scripts": {
-		"lib:build": "yarn nx build desktop-lib --configuration=development",
-		"lib:build:prod": "yarn nx build desktop-lib --configuration=production",
-		"lib:watch": "yarn nx build desktop-lib --watch --configuration=development",
+		"lib:build": "yarn nx build desktop-lib",
+		"lib:build:prod": "yarn nx build desktop-lib",
+		"lib:watch": "yarn nx build desktop-lib --watch",
 		"knex": "./node_modules/.bin/knex --knexfile src/lib/offline/databases/knexfile.ts"
 	},
 	"dependencies": {

@@ -6,7 +6,7 @@
 	"release": {
 		"version": {
 			"generatorOptions": {
-				"packageRoot": "dist\\{projectRoot}",
+				"packageRoot": "{projectRoot}\\dist",
 				"currentVersionResolver": "git-tag"
 			}
 		}
@@ -18,7 +18,7 @@
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "dist/packages/contracts",
+				"outputPath": "{projectRoot}\\dist",
 				"main": "packages/contracts/src/index.ts",
 				"tsConfig": "packages/contracts/tsconfig.lib.json",
 				"assets": ["packages/contracts/*.md"]
@@ -26,7 +26,7 @@
 		},
 		"nx-release-publish": {
 			"options": {
-				"packageRoot": "dist\\{projectRoot}"
+				"packageRoot": "{projectRoot}\\dist"
 			}
 		},
 		"lint": {

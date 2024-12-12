@@ -18,12 +18,17 @@
 	"license": "AGPL-3.0",
 	"private": true,
 	"type": "commonjs",
-	"main": "./src/index.js",
-	"typings": "./src/index.d.ts",
+	"main": "./dist/src/index.js",
+	"exports": {
+		".": {
+			"import": "./dist/src/index.js",
+			"require": "./dist/src/index.js"
+		}
+	},
 	"scripts": {
-		"lib:build": "yarn nx build config --configuration=development",
-		"lib:build:prod": "cross-env NODE_ENV=production yarn ts-node scripts/replace-env-files.ts --environment=prod && yarn nx build config --configuration=production",
-		"lib:watch": "yarn nx build config --watch --configuration=development"
+		"lib:build": "yarn nx build config",
+		"lib:build:prod": "cross-env NODE_ENV=production yarn ts-node scripts/replace-env-files.ts --environment=prod && yarn nx build config",
+		"lib:watch": "yarn nx build config --watch"
 	},
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",

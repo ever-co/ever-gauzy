@@ -18,12 +18,17 @@
 	"license": "AGPL-3.0",
 	"private": true,
 	"type": "commonjs",
-	"main": "./src/index.js",
-	"typings": "./src/index.d.ts",
+	"main": "./dist/src/index.js",
+	"exports": {
+		".": {
+			"import": "./dist/src/index.js",
+			"require": "./dist/src/index.js"
+		}
+	},
 	"scripts": {
-		"lib:build": "yarn nx build plugin-integration-wakatime --configuration=development",
-		"lib:build:prod": "yarn nx build plugin-integration-wakatime --configuration=production",
-		"lib:watch": "yarn nx build plugin-integration-wakatime --watch --configuration=development"
+		"lib:build": "yarn nx build plugin-integration-wakatime",
+		"lib:build:prod": "yarn nx build plugin-integration-wakatime",
+		"lib:watch": "yarn nx build plugin-integration-wakatime --watch"
 	},
 	"dependencies": {
 		"@gauzy/contracts": "^0.1.0",

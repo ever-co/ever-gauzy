@@ -6,19 +6,19 @@
 	"release": {
 		"version": {
 			"generatorOptions": {
-				"packageRoot": "dist\\{projectRoot}",
+				"packageRoot": "{projectRoot}\\dist",
 				"currentVersionResolver": "git-tag"
 			}
 		}
 	},
 	"tags": [],
-	"implicitDependencies": [],
+	"implicitDependencies": ["contracts", "config", "common"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "dist/packages/core",
+				"outputPath": "{projectRoot}\\dist",
 				"tsConfig": "packages/core/tsconfig.lib.json",
 				"packageJson": "packages/core/package.json",
 				"main": "packages/core/src/index.ts",
@@ -34,7 +34,7 @@
 		},
 		"nx-release-publish": {
 			"options": {
-				"packageRoot": "dist\\{projectRoot}"
+				"packageRoot": "{projectRoot}\\dist"
 			}
 		},
 		"lint": {
