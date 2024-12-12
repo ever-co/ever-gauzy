@@ -155,9 +155,8 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 	}
 
 	private _initializeForm() {
-		const existingNames = this.organizationEmploymentTypes.map((type) => type.name.toLowerCase());
 		this.form = this.fb.group({
-			name: ['', [Validators.required, this.validateUniqueName(existingNames)]]
+			name: ['', Validators.required]
 		});
 	}
 
@@ -206,8 +205,16 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 
 	private async addEmploymentType() {
 		if (!this.form.invalid) {
+			const name: string = this.form.get('name').value;
+			const existingNames = this.organizationEmploymentTypes.map((type) => type.name.toLowerCase());
+
+			if (this.validateUniqueName(existingNames, name)) {
+				this.toastrService.error('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ALREADY_EXISTS', name);
+				return;
+			}
+
 			const newEmploymentType = {
-				name: this.form.get('name').value,
+				name,
 				organizationId: this.organization.id,
 				tenantId: this.organization.tenantId,
 				tags: this.tags
@@ -279,6 +286,15 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 	}
 
 	async editOrgEmpType(id: string, name: string) {
+
+		const existingNames = this.organizationEmploymentTypes
+        .filter((type) => type.id !== id)
+        .map((type) => type.name.toLowerCase());
+
+    	if (this.validateUniqueName(existingNames, name.toLowerCase())) {
+        	this.toastrService.error('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ALREADY_EXISTS',  name );
+        	return;
+    	}
 		const orgEmpTypeForEdit = {
 			name: name,
 			tags: this.tags
@@ -331,13 +347,7 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 		this.selected.employmentType = orgEmpType;
 		this.selectedOrgEmpType = this.selected.employmentType;
 	}
-
-	validateUniqueName(existingNames: string[]) {
-		return (control: AbstractControl): ValidationErrors | null => {
-			if (existingNames.includes(control.value.trim().toLowerCase())) {
-				return { nonUniqueName: true };
-			}
-			return null;
-		};
+	validateUniqueName(existingNames: string[], value: string) {
+		return existingNames.includes(value.trim().toLowerCase());
 	}
 }

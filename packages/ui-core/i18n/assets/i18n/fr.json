@@ -3755,7 +3755,8 @@
 				"ADD_EMPLOYMENT_TYPE": "Le type d'emploi \"{{ name }}\" a été ajouté.",
 				"UPDATE_EMPLOYMENT_TYPE": "Le type d'emploi '{{ name }}' a été modifié.",
 				"INVALID_EMPLOYMENT_TYPE": "Veuillez vérifier le nom de l'entrée du type d'emploi.",
-				"DELETE_EMPLOYMENT_TYPE": "Le type d'emploi '{{ name }}' a été supprimé."
+				"DELETE_EMPLOYMENT_TYPE": "Le type d'emploi '{{ name }}' a été supprimé.",
+				"ALREADY_EXISTS": "Ce type d'emploi existe déjà."
 			},
 			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
 				"ADD_RECURRING_EXPENSE": "La dépense récurrente a été ajoutée pour `{{ name }}`.",
