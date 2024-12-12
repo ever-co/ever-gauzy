@@ -1,3 +1,4 @@
+import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
@@ -13,6 +14,7 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		RouterModule.register([{ path: '/employee-settings', module: EmployeeSettingModule }]),
 		TypeOrmModule.forFeature([EmployeeSetting]),
 		MikroOrmModule.forFeature([EmployeeSetting]),
+		CqrsModule,
 		RolePermissionModule
 	],
 	controllers: [EmployeeSettingController],
