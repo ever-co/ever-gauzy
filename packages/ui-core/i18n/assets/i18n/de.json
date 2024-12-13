@@ -3750,7 +3750,8 @@
 				"ADD_EMPLOYMENT_TYPE": "Beschäftigungsart '{{ name }}' wurde hinzugefügt.",
 				"UPDATE_EMPLOYMENT_TYPE": "Der Beschäftigungstyp '{{ name }}' wurde geändert.",
 				"INVALID_EMPLOYMENT_TYPE": "Bitte überprüfen Sie den Namen für die Eingabe zur Art der Beschäftigung.",
-				"DELETE_EMPLOYMENT_TYPE": "Beschäftigungsart '{{ name }}' wurde entfernt."
+				"DELETE_EMPLOYMENT_TYPE": "Beschäftigungsart '{{ name }}' wurde entfernt.",
+				"ALREADY_EXISTS": "Dieser Beschäftigungstyp existiert bereits."
 			},
 			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
 				"ADD_RECURRING_EXPENSE": "Wiederkehrende Ausgabe wurde für `{{ name }}` hinzugefügt.",

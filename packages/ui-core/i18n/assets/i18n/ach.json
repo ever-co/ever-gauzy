@@ -3496,7 +3496,8 @@
 				"ADD_EMPLOYMENT_TYPE": "crwdns8984:0{{ name }}crwdne8984:0",
 				"UPDATE_EMPLOYMENT_TYPE": "crwdns8986:0{{ name }}crwdne8986:0",
 				"INVALID_EMPLOYMENT_TYPE": "crwdns3067:0crwdne3067:0",
-				"DELETE_EMPLOYMENT_TYPE": "crwdns8988:0{{ name }}crwdne8988:0"
+				"DELETE_EMPLOYMENT_TYPE": "crwdns8988:0{{ name }}crwdne8988:0",
+				"ALREADY_EXISTS": "Kit me jami me tic eni kiyero acel."
 			},
 			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
 				"ADD_RECURRING_EXPENSE": "crwdns8990:0{{ name }}crwdne8990:0",

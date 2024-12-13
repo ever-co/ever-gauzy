@@ -3754,7 +3754,8 @@
 				"ADD_EMPLOYMENT_TYPE": "Type dienstverband '{{ name }}' is toegevoegd",
 				"UPDATE_EMPLOYMENT_TYPE": "Werkgelegenheidstype '{{ name }}' is gewijzigd",
 				"INVALID_EMPLOYMENT_TYPE": "Controleer alstublieft de naam voor het invoerveld 'Type dienstverband'",
-				"DELETE_EMPLOYMENT_TYPE": "Dienstverbandtype '{{ name }}' is verwijderd"
+				"DELETE_EMPLOYMENT_TYPE": "Dienstverbandtype '{{ name }}' is verwijderd",
+				"ALREADY_EXISTS": "Dit type werk bestaat al."
 			},
 			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
 				"ADD_RECURRING_EXPENSE": "Herhalende kosten werden toegevoegd voor `{{ name }}`.",

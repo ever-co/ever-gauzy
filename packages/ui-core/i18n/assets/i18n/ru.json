@@ -3773,7 +3773,8 @@
 				"ADD_EMPLOYMENT_TYPE": "Добавлен тип занятости '{{ name }}' '",
 				"UPDATE_EMPLOYMENT_TYPE": "Изменен тип занятости '{{ name }}' '",
 				"INVALID_EMPLOYMENT_TYPE": "Пожалуйста, проверьте входные данные по типу занятости",
-				"DELETE_EMPLOYMENT_TYPE": "Тип занятости '{{ name }}' ' был удален"
+				"DELETE_EMPLOYMENT_TYPE": "Тип занятости '{{ name }}' ' был удален",
+				"ALREADY_EXISTS": "Этот тип занятости уже существует."
 			},
 			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
 				"ADD_RECURRING_EXPENSE": "Повторяющиеся расходы были добавлены для `{{ name }}`",

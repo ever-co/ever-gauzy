@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, TemplateRef, ViewChild } from '@angular/core';
-import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators, ValidationErrors, AbstractControl } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'angular2-smart-table';
@@ -205,8 +205,16 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 
 	private async addEmploymentType() {
 		if (!this.form.invalid) {
+			const name: string = this.form.get('name').value;
+			const existingNames = this.organizationEmploymentTypes.map((type) => type.name.toLowerCase());
+
+			if (this.validateUniqueName(existingNames, name)) {
+				this.toastrService.error('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ALREADY_EXISTS', name);
+				return;
+			}
+
 			const newEmploymentType = {
-				name: this.form.get('name').value,
+				name,
 				organizationId: this.organization.id,
 				tenantId: this.organization.tenantId,
 				tags: this.tags
@@ -278,6 +286,15 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 	}
 
 	async editOrgEmpType(id: string, name: string) {
+
+		const existingNames = this.organizationEmploymentTypes
+        .filter((type) => type.id !== id)
+        .map((type) => type.name.toLowerCase());
+
+    	if (this.validateUniqueName(existingNames, name.toLowerCase())) {
+        	this.toastrService.error('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ALREADY_EXISTS',  name );
+        	return;
+    	}
 		const orgEmpTypeForEdit = {
 			name: name,
 			tags: this.tags
@@ -329,5 +346,8 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 		this.selected.state = res.state;
 		this.selected.employmentType = orgEmpType;
 		this.selectedOrgEmpType = this.selected.employmentType;
+	}
+	validateUniqueName(existingNames: string[], value: string) {
+		return existingNames.includes(value.trim().toLowerCase());
 	}
 }
