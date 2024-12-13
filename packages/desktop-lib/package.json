@@ -19,6 +19,8 @@
 	},
 	"dependencies": {
 		"@electron/remote": "^2.0.8",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/desktop-window": "^0.1.0",
 		"active-win": "^8.1.0",
 		"better-sqlite3": "9.6.0",
 		"electron-log": "^4.4.8",
