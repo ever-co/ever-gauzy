@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ID, IEmployeeSetting, IEmployeeSettingCreateInput, IEmployeeSettingUpdateInput } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
@@ -34,10 +34,21 @@ export class EmployeeSettingService extends TenantAwareCrudService<EmployeeSetti
 
 			const { entity, entityId, organizationId } = input;
 
-			const employeeSetting = await this.findOneByWhereOptions({ entity, entityId, organizationId, tenantId });
+			// Check if a setting already exists for current employee and for the same entity
+			try {
+				const employeeSetting = await this.findOneByOptions({
+					where: { entity, entityId, employeeId, organizationId, tenantId }
+				});
 
-			if (employeeSetting) {
-				return await super.create({ ...input, id: employeeSetting.id, tenantId });
+				if (employeeSetting) {
+					// If exists, update and return the setting with provided input data
+					return await super.create({ ...input, tenantId, id: employeeSetting.id });
+				}
+			} catch (error) {
+				// If NotFoundException, continue with Employee Setting creation
+				if (!(error instanceof NotFoundException)) {
+					throw error;
+				}
 			}
 
 			return await super.create({ ...input, employeeId, tenantId });
