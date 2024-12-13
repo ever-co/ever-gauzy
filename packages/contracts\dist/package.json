@@ -1,0 +1,51 @@
+{
+  "name": "@gauzy/contracts",
+  "version": "0.1.0",
+  "description": "Ever Gauzy Platform Contracts module",
+  "author": {
+    "name": "Ever Co. LTD",
+    "email": "ever@ever.co",
+    "url": "https://ever.co"
+  },
+  "license": "AGPL-3.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/src/index.js",
+      "require": "./dist/src/index.js"
+    }
+  },
+  "scripts": {
+    "lib:build": "yarn nx build contracts",
+    "lib:build:prod": "yarn nx build contracts",
+    "lib:watch": "yarn nx build contracts --watch"
+  },
+  "dependencies": {
+    "tslib": "^2.6.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.4.4",
+    "@types/node": "^20.14.9",
+    "typescript": "5.4.5"
+  },
+  "keywords": [
+    "nestjs",
+    "typescript",
+    "contracts",
+    "shared-module",
+    "common-module",
+    "ever-gauzy",
+    "platform",
+    "open-source",
+    "enterprise",
+    "agpl",
+    "nx"
+  ],
+  "engines": {
+    "node": ">=20.11.1",
+    "yarn": ">=1.22.19"
+  },
+  "sideEffects": false
+}

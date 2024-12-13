@@ -15,7 +15,7 @@ import {
 	IOrganization,
 	ITag
 } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
+import { API_PREFIX, ComponentEnum, distinctUntilChange, validateUniqueString } from '@gauzy/ui-core/common';
 import { OrganizationDepartmentsService, ServerDataSource, Store, ToastrService } from '@gauzy/ui-core/core';
 import {
 	DeleteConfirmationComponent,
@@ -242,6 +242,19 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent implemen
 
 	public async addOrEditDepartment(input: IOrganizationDepartmentCreateInput) {
 		if (input.name) {
+			     const existingNames = this.departments
+            .filter((department) => !this.selectedDepartment || department.id !== this.selectedDepartment.id)
+            .map((department) => department.name);
+
+        if (validateUniqueString(existingNames, input.name)) {
+            this.toastrService.danger(
+                this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_DEPARTMENTS.ALREADY_EXISTS'),
+                this.getTranslation('TOASTR.MESSAGE.DUPLICATE_DEPARTMENT_NAME')
+            );
+            return;
+        }
+
+
 			this.selectedDepartment
 				? await this.organizationDepartmentsService.update(this.selectedDepartment.id, input)
 				: await this.organizationDepartmentsService.create(input);
