@@ -11,12 +11,6 @@
 	"private": true,
 	"type": "commonjs",
 	"main": "./dist/src/index.js",
-	"exports": {
-		".": {
-			"import": "./dist/src/index.js",
-			"require": "./dist/src/index.js"
-		}
-	},
 	"scripts": {
 		"lib:build": "yarn nx build plugin-knowledge-base",
 		"lib:build:prod": "yarn nx build plugin-knowledge-base",

@@ -19,12 +19,6 @@
 	"private": true,
 	"type": "commonjs",
 	"main": "./dist/src/index.js",
-	"exports": {
-		".": {
-			"import": "./dist/src/index.js",
-			"require": "./dist/src/index.js"
-		}
-	},
 	"scripts": {
 		"lib:build": "yarn nx build config",
 		"lib:build:prod": "cross-env NODE_ENV=production yarn ts-node scripts/replace-env-files.ts --environment=prod && yarn nx build config",
