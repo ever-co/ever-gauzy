@@ -21,9 +21,9 @@
     "main": "index.js",
     "workspaces": {
         "packages": [
-            "../../../packages/contracts/dist",
-            "../../../packages/desktop-lib/dist",
-            "../../../packages/desktop-window/dist",
+            "../../../packages/contracts",
+            "../../../packages/desktop-lib",
+            "../../../packages/desktop-window",
             "../../../dist/packages/ui-config"
         ]
     },

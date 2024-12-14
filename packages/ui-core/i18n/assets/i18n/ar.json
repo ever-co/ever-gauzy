@@ -3752,7 +3752,8 @@
 				"ADD_EMPLOYMENT_TYPE": "تمت إضافة نوع التوظيف '{{ name }}'",
 				"UPDATE_EMPLOYMENT_TYPE": "تم تغيير نوع التوظيف '{{ name }}'",
 				"INVALID_EMPLOYMENT_TYPE": "يرجى التحقق من الاسم المدخل لنوع التوظيف",
-				"DELETE_EMPLOYMENT_TYPE": "تمت إزالة نوع الوظيفة '{{ name }}'"
+				"DELETE_EMPLOYMENT_TYPE": "تمت إزالة نوع الوظيفة '{{ name }}'",
+				"ALREADY_EXISTS": "هذا النوع من التوظيف موجود بالفعل."
 			},
 			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
 				"ADD_RECURRING_EXPENSE": "تم إضافة مصروف متكرر لـ `{{ name }}`",
