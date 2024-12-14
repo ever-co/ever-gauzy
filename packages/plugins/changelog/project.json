@@ -18,7 +18,7 @@
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "{projectRoot}\\dist",
+				"outputPath": "packages/plugins/changelog/dist",
 				"tsConfig": "packages/plugins/changelog/tsconfig.lib.json",
 				"packageJson": "packages/plugins/changelog/package.json",
 				"main": "packages/plugins/changelog/src/index.ts",

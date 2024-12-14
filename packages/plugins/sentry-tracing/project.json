@@ -18,7 +18,7 @@
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "{projectRoot}\\dist",
+				"outputPath": "packages/plugins/sentry-tracing/dist",
 				"tsConfig": "packages/plugins/sentry-tracing/tsconfig.lib.json",
 				"packageJson": "packages/plugins/sentry-tracing/package.json",
 				"main": "packages/plugins/sentry-tracing/src/index.ts",
