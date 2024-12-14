@@ -18,7 +18,7 @@
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "{projectRoot}\\dist",
+				"outputPath": "packages/plugins/job-proposal/dist",
 				"tsConfig": "packages/plugins/job-proposal/tsconfig.lib.json",
 				"packageJson": "packages/plugins/job-proposal/package.json",
 				"main": "packages/plugins/job-proposal/src/index.ts",

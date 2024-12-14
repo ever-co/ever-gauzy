@@ -18,7 +18,7 @@
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "{projectRoot}\\dist",
+				"outputPath": "packages/plugins/integration-jira/dist",
 				"tsConfig": "packages/plugins/integration-jira/tsconfig.lib.json",
 				"packageJson": "packages/plugins/integration-jira/package.json",
 				"main": "packages/plugins/integration-jira/src/index.ts",
