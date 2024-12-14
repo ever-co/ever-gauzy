@@ -10,12 +10,11 @@
 	"license": "AGPL-3.0",
 	"private": true,
 	"type": "commonjs",
-	"main": "./src/index.js",
-	"types": "./src/index.d.ts",
+	"main": "./dist/src/index.js",
 	"scripts": {
-		"lib:build": "yarn nx build common-angular --configuration=development",
-		"lib:build:prod": "yarn nx build common-angular --configuration=production",
-		"lib:watch": "yarn nx build common-angular --watch --configuration=development"
+		"lib:build": "yarn nx build common-angular",
+		"lib:build:prod": "yarn nx build common-angular",
+		"lib:watch": "yarn nx build common-angular --watch"
 	},
 	"dependencies": {
 		"@angular/common": "18.2.12",
@@ -31,7 +30,18 @@
 		"typescript": "5.5.4"
 	},
 	"keywords": [
-
+		"gauzy",
+		"angular",
+		"common",
+		"module",
+		"rxjs",
+		"moment",
+		"typescript",
+		"shared-module",
+		"library",
+		"frontend",
+		"components",
+		"utilities"
 	],
 	"engines": {
 		"node": ">=20.11.1",

@@ -10,12 +10,11 @@
 	"license": "AGPL-3.0",
 	"private": true,
 	"type": "commonjs",
-	"main": "./src/index.js",
-	"typings": "./src/index.d.ts",
+	"main": "./dist/src/index.js",
 	"scripts": {
-		"lib:build": "yarn nx build common --configuration=development",
-		"lib:build:prod": "yarn nx build common --configuration=production",
-		"lib:watch": "yarn nx build common --watch --configuration=development"
+		"lib:build": "yarn nx build common",
+		"lib:build:prod": "yarn nx build common",
+		"lib:watch": "yarn nx build common --watch"
 	},
 	"dependencies": {
 		"@gauzy/contracts": "^0.1.0",

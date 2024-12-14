@@ -6,19 +6,19 @@
 	"release": {
 		"version": {
 			"generatorOptions": {
-				"packageRoot": "dist\\{projectRoot}",
+				"packageRoot": "{projectRoot}\\dist",
 				"currentVersionResolver": "git-tag"
 			}
 		}
 	},
 	"tags": [],
-	"implicitDependencies": [],
+	"implicitDependencies": ["common", "config", "contracts"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "dist/packages/auth",
+				"outputPath": "{projectRoot}\\dist",
 				"tsConfig": "packages/auth/tsconfig.lib.json",
 				"packageJson": "packages/auth/package.json",
 				"main": "packages/auth/src/index.ts",
@@ -27,7 +27,7 @@
 		},
 		"nx-release-publish": {
 			"options": {
-				"packageRoot": "dist\\{projectRoot}"
+				"packageRoot": "{projectRoot}\\dist"
 			}
 		},
 		"lint": {

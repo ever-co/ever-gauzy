@@ -3754,7 +3754,8 @@
 				"ADD_EMPLOYMENT_TYPE": "職業類型'{{ name }}'已被添加",
 				"UPDATE_EMPLOYMENT_TYPE": "雇佣类型“{{ name }}”已变更。",
 				"INVALID_EMPLOYMENT_TYPE": "请检查“雇佣类型”输入框中的名称。",
-				"DELETE_EMPLOYMENT_TYPE": "雇佣类型“{{ name }}”已被删除。"
+				"DELETE_EMPLOYMENT_TYPE": "雇佣类型“{{ name }}”已被删除。",
+				"ALREADY_EXISTS": "该就业类型已存在。"
 			},
 			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
 				"ADD_RECURRING_EXPENSE": "为 `{{ name }}` 添加了重复支出。",

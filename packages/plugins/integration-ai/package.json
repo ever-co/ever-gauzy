@@ -18,12 +18,11 @@
 	"license": "AGPL-3.0",
 	"private": true,
 	"type": "commonjs",
-	"main": "./src/index.js",
-	"typings": "./src/index.d.ts",
+	"main": "./dist/src/index.js",
 	"scripts": {
-		"lib:build": "yarn nx build plugin-integration-ai --configuration=development",
-		"lib:build:prod": "yarn nx build plugin-integration-ai --configuration=production",
-		"lib:watch": "yarn nx build plugin-integration-ai --watch --configuration=development"
+		"lib:build": "yarn nx build plugin-integration-ai",
+		"lib:build:prod": "yarn nx build plugin-integration-ai",
+		"lib:watch": "yarn nx build plugin-integration-ai --watch"
 	},
 	"dependencies": {
 		"@apollo/client": "^3.6.2",

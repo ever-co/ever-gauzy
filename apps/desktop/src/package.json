@@ -21,10 +21,10 @@
     "main": "index.js",
     "workspaces": {
         "packages": [
-            "../../../dist/packages/contracts",
-            "../../../dist/packages/ui-config",
-            "../../../dist/packages/desktop-lib",
-            "../../../dist/packages/desktop-window"
+            "../../../packages/contracts",
+            "../../../packages/desktop-lib",
+            "../../../packages/desktop-window",
+            "../../../dist/packages/ui-config"
         ]
     },
     "build": {
@@ -123,9 +123,9 @@
         "@datorama/akita-ngdevtools": "^7.0.0",
         "@datorama/akita": "^7.1.1",
         "@electron/remote": "^2.0.8",
-        "@gauzy/contracts": "file:../../../dist/packages/contracts",
-        "@gauzy/desktop-lib": "file:../../../dist/packages/desktop-lib",
-        "@gauzy/desktop-window": "file:../../../dist/packages/desktop-window",
+        "@gauzy/contracts": "^0.1.0",
+        "@gauzy/desktop-lib": "^0.1.0",
+        "@gauzy/desktop-window": "^0.1.0",
         "@gauzy/ui-config": "file:../../../dist/packages/ui-config",
         "@nestjs/platform-express": "^10.3.7",
         "@sentry/electron": "^4.18.0",

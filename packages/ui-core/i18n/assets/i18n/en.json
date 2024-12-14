@@ -3883,7 +3883,8 @@
 				"ADD_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was added",
 				"UPDATE_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was changed",
 				"INVALID_EMPLOYMENT_TYPE": "Please check the Name for Employment type input",
-				"DELETE_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was removed"
+				"DELETE_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was removed",
+				"ALREADY_EXISTS": "This employment type already exists."
 			},
 			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
 				"ADD_RECURRING_EXPENSE": "Recurring expense was added for `{{ name }}`",

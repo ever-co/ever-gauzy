@@ -25,7 +25,7 @@ export class SocialAuthService extends BaseSocialAuth {
 		super();
 		this.configService = new ConfigService();
 		this.saltRounds = this.configService.get('USER_PASSWORD_BCRYPT_SALT_ROUNDS') as number;
-		this.clientBaseUrl = this.configService.get('clientBaseUrl') as keyof IEnvironment;
+		this.clientBaseUrl = this.configService.get('clientBaseUrl') as Extract<keyof IEnvironment, string>;
 	}
 
 	public validateOAuthLoginEmail(args: []): any { }

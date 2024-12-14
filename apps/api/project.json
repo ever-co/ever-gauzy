@@ -4,6 +4,7 @@
 	"sourceRoot": "apps/api/src",
 	"projectType": "application",
 	"tags": [],
+	"implicitDependencies": ["core"],
 	"generators": {
 		"@nx/nest:library": {
 			"directory": "api",

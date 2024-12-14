@@ -6,7 +6,7 @@
 	"release": {
 		"version": {
 			"generatorOptions": {
-				"packageRoot": "dist\\{projectRoot}",
+				"packageRoot": "{projectRoot}\\dist",
 				"currentVersionResolver": "git-tag"
 			}
 		}
@@ -18,7 +18,7 @@
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "dist/packages/plugins/integration-github",
+				"outputPath": "{projectRoot}\\dist",
 				"tsConfig": "packages/plugins/integration-github/tsconfig.lib.json",
 				"packageJson": "packages/plugins/integration-github/package.json",
 				"main": "packages/plugins/integration-github/src/index.ts",
@@ -27,7 +27,7 @@
 		},
 		"nx-release-publish": {
 			"options": {
-				"packageRoot": "dist\\{projectRoot}"
+				"packageRoot": "{projectRoot}\\dist"
 			}
 		},
 		"lint": {

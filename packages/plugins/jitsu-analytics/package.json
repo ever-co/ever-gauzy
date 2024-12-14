@@ -18,12 +18,11 @@
 	"homepage": "https://ever.co",
 	"private": true,
 	"type": "commonjs",
-	"main": "./src/index.js",
-	"typings": "./src/index.d.ts",
+	"main": "./dist/src/index.js",
 	"scripts": {
-		"lib:build": "yarn nx build plugin-jitsu-analytics --configuration=development",
-		"lib:build:prod": "yarn nx build plugin-jitsu-analytics --configuration=production",
-		"lib:watch": "yarn nx build plugin-jitsu-analytics --watch --configuration=development"
+		"lib:build": "yarn nx build plugin-jitsu-analytics",
+		"lib:build:prod": "yarn nx build plugin-jitsu-analytics",
+		"lib:watch": "yarn nx build plugin-jitsu-analytics --watch"
 	},
 	"dependencies": {
 		"@gauzy/config": "^0.1.0",
