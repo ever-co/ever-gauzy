@@ -18,7 +18,7 @@
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "{projectRoot}\\dist",
+				"outputPath": "packages/desktop-lib/dist",
 				"main": "packages/desktop-lib/src/index.ts",
 				"tsConfig": "packages/desktop-lib/tsconfig.lib.json",
 				"assets": ["packages/desktop-lib/*.md"]

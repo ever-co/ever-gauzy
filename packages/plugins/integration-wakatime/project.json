@@ -18,7 +18,7 @@
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "{projectRoot}\\dist",
+				"outputPath": "packages/plugins/integration-wakatime/dist",
 				"tsConfig": "packages/plugins/integration-wakatime/tsconfig.lib.json",
 				"packageJson": "packages/plugins/integration-wakatime/package.json",
 				"main": "packages/plugins/integration-wakatime/src/index.ts",

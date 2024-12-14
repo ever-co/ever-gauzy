@@ -18,7 +18,7 @@
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "{projectRoot}\\dist",
+				"outputPath": "packages/plugins/jitsu-analytics/dist",
 				"tsConfig": "packages/plugins/jitsu-analytics/tsconfig.lib.json",
 				"packageJson": "packages/plugins/jitsu-analytics/package.json",
 				"main": "packages/plugins/jitsu-analytics/src/index.ts",

@@ -18,7 +18,7 @@
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "{projectRoot}\\dist",
+				"outputPath": "packages/plugins/integration-github/dist",
 				"tsConfig": "packages/plugins/integration-github/tsconfig.lib.json",
 				"packageJson": "packages/plugins/integration-github/package.json",
 				"main": "packages/plugins/integration-github/src/index.ts",
