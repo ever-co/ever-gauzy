@@ -8,7 +8,6 @@
 			"@env-desktop/environment": ["./apps/desktop/src/environments/environment.ts"],
 			"@gauzy/auth": ["./packages/auth/src/index.ts"],
 			"@gauzy/common": ["./packages/common/src/index.ts"],
-			"@gauzy/common-angular": ["./packages/common-angular/src/index.ts"],
 			"@gauzy/config": ["./packages/config/src/index.ts"],
 			"@gauzy/contracts": ["./packages/contracts/src/index.ts"],
 			"@gauzy/core": ["./packages/core/src/index.ts"],

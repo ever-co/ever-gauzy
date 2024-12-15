@@ -16,12 +16,16 @@
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
-			"outputs": ["{options.outputPath}"],
+			"outputs": [
+				"{options.outputPath}"
+			],
 			"options": {
-				"outputPath": "{projectRoot}\\dist",
+				"outputPath": "packages/common-angular/dist",
 				"main": "packages/common-angular/src/index.ts",
 				"tsConfig": "packages/common-angular/tsconfig.lib.json",
-				"assets": ["packages/common-angular/*.md"]
+				"assets": [
+					"packages/common-angular/*.md"
+				]
 			}
 		},
 		"nx-release-publish": {
@@ -34,7 +38,9 @@
 		},
 		"test": {
 			"executor": "@nx/jest:jest",
-			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"outputs": [
+				"{workspaceRoot}/coverage/{projectRoot}"
+			],
 			"options": {
 				"jestConfig": "packages/common-angular/jest.config.ts"
 			}
