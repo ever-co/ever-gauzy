@@ -143,7 +143,6 @@ COPY --chown=node:node apps/gauzy/package.json ./apps/gauzy/
 COPY --chown=node:node apps/api/package.json ./apps/api/
 
 COPY --chown=node:node packages/common/package.json ./packages/common/
-COPY --chown=node:node packages/common-angular/package.json ./packages/common-angular/
 COPY --chown=node:node packages/config/package.json ./packages/config/
 COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/auth/package.json ./packages/auth/
