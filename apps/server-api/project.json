@@ -25,6 +25,9 @@
 				"polyfills": "apps/server-api/src/polyfills.ts",
 				"tsConfig": "apps/server-api/tsconfig.app.json",
 				"aot": true,
+				"stylePreprocessorOptions": {
+					"includePaths": ["apps/server-api/src/assets/styles", "packages/ui-core/static/styles"]
+				},
 				"assets": [
 					"apps/server-api/src/favicon.ico",
 					"apps/server-api/src/assets",
@@ -35,9 +38,6 @@
 						"output": ""
 					}
 				],
-				"stylePreprocessorOptions": {
-					"includePaths": ["apps/server-api/src/assets/styles", "packages/ui-core/static/styles"]
-				},
 				"styles": [
 					"node_modules/@nebular/theme/styles/prebuilt/default.css",
 					"node_modules/bootstrap/dist/css/bootstrap.css",
@@ -54,7 +54,19 @@
 					"node_modules/@ng-select/ng-select/themes/default.theme.css"
 				],
 				"scripts": [],
-				"allowedCommonJsDependencies": ["localforage", "rxjs", "rxjs/operators"]
+				"allowedCommonJsDependencies": [
+					"dayjs",
+					"eva-icons",
+					"localforage",
+					"moment",
+					"moment-duration-format",
+					"moment-range",
+					"moment-timezone",
+					"rfdc",
+					"rxjs",
+					"rxjs/operators",
+					"slugify"
+				]
 			},
 			"configurations": {
 				"production": {
