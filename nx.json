@@ -89,23 +89,23 @@
     "parallel": 1,
     "targetDefaults": {
         "build": {
-            "cache": false,
+            "cache": true,
             "inputs": [
                 "production",
                 "^production"
             ]
         },
         "lint": {
-            "cache": false
+            "cache": true
         },
         "test": {
-            "cache": false
+            "cache": true
         },
         "e2e": {
-            "cache": false
+            "cache": true
         },
         "@nx/eslint:lint": {
-            "cache": false,
+            "cache": true,
             "inputs": [
                 "default",
                 "{workspaceRoot}/.eslintrc.json",
@@ -113,7 +113,7 @@
             ]
         },
         "@nx/jest:jest": {
-            "cache": false,
+            "cache": true,
             "inputs": [
                 "default",
                 "^production",
@@ -130,7 +130,7 @@
             }
         },
         "@nx/angular:package": {
-            "cache": false,
+            "cache": true,
             "dependsOn": [
                 "^build"
             ],
@@ -140,7 +140,7 @@
             ]
         },
         "@nx/webpack:webpack": {
-            "cache": false,
+            "cache": true,
             "dependsOn": [
                 "^build"
             ],
@@ -150,7 +150,7 @@
             ]
         },
         "@nx/js:tsc": {
-            "cache": false,
+            "cache": true,
             "dependsOn": [
                 "^build"
             ],
@@ -160,7 +160,7 @@
             ]
         },
         "@angular-devkit/build-angular:application": {
-            "cache": false,
+            "cache": true,
             "dependsOn": [
                 "^build"
             ],
