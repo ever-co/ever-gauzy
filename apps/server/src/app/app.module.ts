@@ -85,7 +85,7 @@ if (environment.SENTRY_DSN) {
 		},
 		{
 			provide: APP_INITIALIZER,
-			useFactory: () => {},
+			useFactory: () => () => {},
 			deps: [Sentry.TraceService],
 			multi: true
 		},
