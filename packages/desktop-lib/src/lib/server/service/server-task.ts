@@ -135,13 +135,23 @@ export abstract class ServerTask {
 		await this.start();
 	}
 
+	/**
+	 * Stops the server task gracefully.
+	 *
+	 * @returns {void}
+	 */
 	public stop(): void {
-		console.log('Stop Server Task');
+		console.log('Stopping Server Task...');
 		this.kill();
 	}
 
+	/**
+	 * Starts the server task asynchronously and handles any errors.
+	 *
+	 * @returns {Promise<void>} Resolves when the task starts successfully.
+	 */
 	public async start(): Promise<void> {
-		console.log('Start Server Task');
+		console.log('Starting Server Task...');
 		try {
 			await this.runTask(this.signal);
 		} catch (error) {
@@ -150,6 +160,11 @@ export abstract class ServerTask {
 		}
 	}
 
+	/**
+	 *
+	 * @param error
+	 * @param attemptKill
+	 */
 	protected handleError(error: any, attemptKill: boolean = true) {
 		if (attemptKill) {
 			this.kill(false); // Pass false to indicate that handleError should not attempt to kill again
