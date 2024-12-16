@@ -482,7 +482,7 @@ export function getMigrationsConfig() {
 
 	// Base migrations directory
 	const migrationsDir = isDist
-		? path.resolve(process.cwd(), 'dist/packages/core/src/lib/database/migrations/*{.ts,.js}') // For dist structure
+		? path.resolve(process.cwd(), 'packages/core/src/lib/database/migrations/*{.ts,.js}') // For dist structure
 		: path.resolve(__dirname, './../database/migrations/*{.ts,.js}'); // For src structure
 	console.log('Migration migrationsDir: ->', migrationsDir);
 

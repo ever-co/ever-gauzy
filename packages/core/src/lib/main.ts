@@ -16,10 +16,10 @@ import * as dotenv from 'dotenv';
 dotenv.config({ path: envPaths });
 
 import { bootstrap } from './bootstrap';
-console.log('API Core Bootstrap loaded');
+console.log('API Core Bootstrap Loaded');
 
 import { devConfig } from './dev-config';
-console.log('API Core Dev Config loaded');
+console.log('API Core Dev Config Loaded');
 
 bootstrap(devConfig)
 	.then(() => {
