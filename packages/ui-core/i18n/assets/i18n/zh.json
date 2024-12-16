@@ -3708,7 +3708,9 @@
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "员工级别'{{ name }}'已添加",
 				"REMOVE_EMPLOYEE_LEVEL": "员工级别 '{{ name }}' 已被删除",
-				"INVALID_EMPLOYEE_LEVEL": "请添加员工级别"
+				"INVALID_EMPLOYEE_LEVEL": "请添加员工级别",
+				"ALREADY_EXISTS": "员工级别 已经存在。"
+
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "供应商 \"{{ name }}\" 已添加",
@@ -3726,12 +3728,15 @@
 				"ADD_POSITION": "职位“{{ name }}”已添加",
 				"UPDATED_POSITION": "位置'{{ name }}'已更改",
 				"REMOVE_POSITION": "職位 '{{ name }}' 已被刪除",
-				"INVALID_POSITION_NAME": "请添加职位名称"
+				"INVALID_POSITION_NAME": "请添加职位名称",
+				"ALREADY_EXISTS": "职位 已经存在。"
+
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "部门 '{{ name }}' 已保存",
 				"REMOVE_DEPARTMENT": "部门 '{{ name }}' 已被移除",
-				"INVALID_DEPARTMENT_NAME": "请添加一个部门名称"
+				"INVALID_DEPARTMENT_NAME": "请添加一个部门名称",
+				"ALREADY_EXISTS": "部门 已经存在。"
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "新客戶 '{{ name }}' 成功添加！",
