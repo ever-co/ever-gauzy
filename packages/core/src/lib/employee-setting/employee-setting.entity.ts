@@ -2,11 +2,9 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { RelationId } from 'typeorm';
-import { IsNotEmpty, IsString, IsNumber, Min, Max, IsEnum, IsOptional, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsString, IsEnum, IsOptional, IsUUID } from 'class-validator';
 import {
-	IEmployeeSetting,
-	CurrenciesEnum,
-	IEmployee,
+	IEmployeeSetting, IEmployee,
 	EmployeeSettingTypeEnum,
 	ID,
 	BaseEntityEnum,
@@ -21,40 +19,12 @@ import { MikroOrmEmployeeSettingRepository } from './repository/mikro-orm-employ
 export class EmployeeSetting extends TenantOrganizationBaseEntity implements IEmployeeSetting {
 	[EntityRepositoryType]?: MikroOrmEmployeeSettingRepository;
 
-	@ApiPropertyOptional({ type: () => Number, minimum: 1, maximum: 12 })
-	@IsNumber()
-	@IsOptional()
-	@Min(1)
-	@Max(12)
-	@MultiORMColumn({ nullable: true })
-	month?: number;
-
-	@ApiPropertyOptional({ type: () => Number, minimum: 1 })
-	@IsNumber()
-	@IsOptional()
-	@Min(0)
-	@MultiORMColumn({ nullable: true })
-	year?: number;
-
 	@ApiPropertyOptional({ type: () => String, enum: EmployeeSettingTypeEnum })
 	@IsEnum(EmployeeSettingTypeEnum)
 	@IsOptional()
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, default: EmployeeSettingTypeEnum.NORMAL })
 	settingType?: EmployeeSettingTypeEnum;
-
-	@ApiPropertyOptional({ type: () => Number })
-	@IsNumber()
-	@IsOptional()
-	@MultiORMColumn({ nullable: true })
-	value?: number;
-
-	@ApiPropertyOptional({ type: () => String, enum: CurrenciesEnum })
-	@IsEnum(CurrenciesEnum)
-	@IsOptional()
-	@ColumnIndex()
-	@MultiORMColumn({ nullable: true })
-	currency?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

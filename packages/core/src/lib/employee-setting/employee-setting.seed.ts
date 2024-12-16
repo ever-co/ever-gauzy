@@ -1,7 +1,6 @@
 import { DataSource } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { faker } from '@faker-js/faker';
-import { environment as env } from '@gauzy/config';
 import { EmployeeSetting } from './employee-setting.entity';
 
 export const createRandomEmployeeSetting = async (
@@ -23,13 +22,8 @@ export const createRandomEmployeeSetting = async (
 			const tenantEmployees = organizationEmployeesMap.get(organization);
 			for await (const tenantEmployee of tenantEmployees) {
 				const employee = new EmployeeSetting();
-				const startDate = faker.date.past();
 
 				employee.employeeId = tenantEmployee.id;
-				employee.month = startDate.getMonth() + 1;
-				employee.year = startDate.getFullYear();
-				employee.value = Math.floor(Math.random() * 999) + 1;
-				employee.currency = env.defaultCurrency;
 				employee.employee = tenantEmployee;
 				employee.organization = faker.helpers.arrayElement(organizations);
 				employee.tenant = tenant;
