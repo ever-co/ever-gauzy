@@ -22,9 +22,14 @@
 	"bin": "api/main.js",
 	"workspaces": {
 		"packages": [
+			"../../../packages/auth/dist",
+			"../../../packages/common/dist",
+			"../../../packages/config/dist",
 			"../../../packages/contracts/dist",
+			"../../../packages/core/dist",
 			"../../../packages/desktop-lib/dist",
 			"../../../packages/desktop-window/dist",
+			"../../../packages/plugin/dist",
 			"../../../dist/packages/ui-config"
 		]
 	},
@@ -121,9 +126,14 @@
 		"@datorama/akita-ngdevtools": "^7.0.0",
 		"@datorama/akita": "^7.1.1",
 		"@electron/remote": "^2.0.8",
+		"@gauzy/auth": "^0.1.0",
+		"@gauzy/common": "^0.1.0",
+		"@gauzy/config": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/core": "^0.1.0",
 		"@gauzy/desktop-lib": "^0.1.0",
 		"@gauzy/desktop-window": "^0.1.0",
+		"@gauzy/plugin": "^0.1.0",
 		"@gauzy/ui-config": "file:../../../dist/packages/ui-config",
 		"@nestjs/platform-express": "^10.3.7",
 		"@sentry/electron": "^4.18.0",
