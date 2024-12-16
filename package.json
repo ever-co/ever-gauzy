@@ -38,7 +38,7 @@
 		"start:api:ci": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --frozen-lockfile --cache-folder ~/.cache/yarn ng:ci serve api -c=production --prod",
 		"start:api:forever": "cross-env NODE_OPTIONS=--max-old-space-size=12288 forever start node_modules/@angular/cli/bin/ng serve api --host 0.0.0.0",
 		"start:api:pm2": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn run build:api && yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json ./apps/api/src/pm2bootstrap.ts",
-		"start:api:core": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/core start:api",
+		"start:api:core": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn nx run core:serve",
 		"migration:run": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn run config:dev && yarn build:package:all && yarn --cwd ./apps/api/src/migration.ts migration:run",
 		"migration:revert": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn run config:dev && yarn build:package:all && yarn --cwd ./apps/api/src/migration.ts migration:revert",
 		"migration:generate": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn run config:dev && yarn build:package:all && yarn --cwd ./apps/api/src/migration.ts migration:generate",
