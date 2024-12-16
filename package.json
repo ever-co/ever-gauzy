@@ -407,7 +407,7 @@
 		"@swc/helpers": "~0.5.11",
 		"@types/bcrypt": "^5.0.2",
 		"@types/google.maps": "^3.58.1",
-		"@types/jest": "^29.4.4",
+		"@types/jest": "29.5.14",
 		"@types/jsdom": "^21.1.6",
 		"@types/node": "^20.14.9",
 		"@types/webpack": "^5.28.5",
