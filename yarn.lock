@@ -12847,10 +12847,10 @@
   resolved "https://registry.yarnpkg.com/@types/google.analytics/-/google.analytics-0.0.41.tgz#7905553890bb8651c93927c1ce4c1c4a26e41505"
   integrity sha512-LE6AfJFJtxUl1d56oQ1PvQDEOtU+0fgqTVgmOw+T0eaz7FB4DTqKxbI6x8sq+7FDvAeIXOugZyGHJLR4CAxO4A==
 
-"@types/google.maps@~3.53.0":
-  version "3.53.6"
-  resolved "https://registry.yarnpkg.com/@types/google.maps/-/google.maps-3.53.6.tgz#8e915f21bc4af214ae6c0babf65e1763ac0a8712"
-  integrity sha512-zDU8c7K0YR1Ob7Wn0qCSQvICIuxilZH9KFIDHK6JO/5QzqEMv8e4+9bmyoDEktA9vPNmwP++zzg65h9y53iZ6Q==
+"@types/google.maps@^3.58.1":
+  version "3.58.1"
+  resolved "https://registry.yarnpkg.com/@types/google.maps/-/google.maps-3.58.1.tgz#71ce3dec44de1452f56641d2c87c7dd8ea964b4d"
+  integrity sha512-X9QTSvGJ0nCfMzYOnaVs/k6/4L+7F5uCS+4iUmkLEls6J9S/Phv+m/i3mDeyc49ZBgwab3EFO1HEoBY7k98EGQ==
 
 "@types/graceful-fs@^4.1.3":
   version "4.1.9"
