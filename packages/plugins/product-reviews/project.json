@@ -6,7 +6,7 @@
 	"release": {
 		"version": {
 			"generatorOptions": {
-				"packageRoot": "{projectRoot}/dist",
+				"packageRoot": "dist\\{projectRoot}",
 				"currentVersionResolver": "git-tag"
 			}
 		}
@@ -18,7 +18,7 @@
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "packages/plugins/product-reviews/dist",
+				"outputPath": "dist/packages/plugins/product-reviews",
 				"tsConfig": "packages/plugins/product-reviews/tsconfig.lib.json",
 				"packageJson": "packages/plugins/product-reviews/package.json",
 				"main": "packages/plugins/product-reviews/src/index.ts",
@@ -27,7 +27,7 @@
 		},
 		"nx-release-publish": {
 			"options": {
-				"packageRoot": "{projectRoot}/dist"
+				"packageRoot": "dist\\{projectRoot}"
 			}
 		},
 		"lint": {

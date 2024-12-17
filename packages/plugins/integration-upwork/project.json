@@ -6,7 +6,7 @@
 	"release": {
 		"version": {
 			"generatorOptions": {
-				"packageRoot": "{projectRoot}/dist",
+				"packageRoot": "dist\\{projectRoot}",
 				"currentVersionResolver": "git-tag"
 			}
 		}
@@ -18,7 +18,7 @@
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "packages/plugins/integration-upwork/dist",
+				"outputPath": "dist/packages/plugins/integration-upwork",
 				"tsConfig": "packages/plugins/integration-upwork/tsconfig.lib.json",
 				"packageJson": "packages/plugins/integration-upwork/package.json",
 				"main": "packages/plugins/integration-upwork/src/index.ts",
@@ -27,7 +27,7 @@
 		},
 		"nx-release-publish": {
 			"options": {
-				"packageRoot": "{projectRoot}/dist"
+				"packageRoot": "dist\\{projectRoot}"
 			}
 		},
 		"lint": {

@@ -6,7 +6,7 @@
 	"release": {
 		"version": {
 			"generatorOptions": {
-				"packageRoot": "{projectRoot}/dist",
+				"packageRoot": "dist\\{projectRoot}",
 				"currentVersionResolver": "git-tag"
 			}
 		}
@@ -18,7 +18,7 @@
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "packages/plugins/job-proposal/dist",
+				"outputPath": "dist/packages/plugins/job-proposal",
 				"tsConfig": "packages/plugins/job-proposal/tsconfig.lib.json",
 				"packageJson": "packages/plugins/job-proposal/package.json",
 				"main": "packages/plugins/job-proposal/src/index.ts",
@@ -27,7 +27,7 @@
 		},
 		"nx-release-publish": {
 			"options": {
-				"packageRoot": "{projectRoot}/dist"
+				"packageRoot": "dist\\{projectRoot}"
 			}
 		},
 		"lint": {

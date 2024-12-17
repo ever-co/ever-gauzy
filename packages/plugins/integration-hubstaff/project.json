@@ -6,7 +6,7 @@
 	"release": {
 		"version": {
 			"generatorOptions": {
-				"packageRoot": "{projectRoot}/dist",
+				"packageRoot": "dist\\{projectRoot}",
 				"currentVersionResolver": "git-tag"
 			}
 		}
@@ -18,7 +18,7 @@
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "packages/plugins/integration-hubstaff/dist",
+				"outputPath": "dist/packages/plugins/integration-hubstaff",
 				"tsConfig": "packages/plugins/integration-hubstaff/tsconfig.lib.json",
 				"packageJson": "packages/plugins/integration-hubstaff/package.json",
 				"main": "packages/plugins/integration-hubstaff/src/index.ts",
@@ -27,7 +27,7 @@
 		},
 		"nx-release-publish": {
 			"options": {
-				"packageRoot": "{projectRoot}/dist"
+				"packageRoot": "dist\\{projectRoot}"
 			}
 		},
 		"lint": {

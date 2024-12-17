@@ -9,7 +9,8 @@
     },
     "license": "AGPL-3.0",
     "type": "commonjs",
-	"main": "./dist/src/index.js",
+    "main": "./src/index.js",
+    "typings": "./src/index.d.ts",
     "scripts": {
         "lib:build": "yarn nx build core",
         "lib:build:prod": "yarn nx build core",

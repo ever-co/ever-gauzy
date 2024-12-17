@@ -6,7 +6,7 @@
 	"release": {
 		"version": {
 			"generatorOptions": {
-				"packageRoot": "{projectRoot}/dist",
+				"packageRoot": "dist\\{projectRoot}",
 				"currentVersionResolver": "git-tag"
 			}
 		}
@@ -18,7 +18,7 @@
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "packages/plugins/jitsu-analytics/dist",
+				"outputPath": "dist/packages/plugins/jitsu-analytics",
 				"tsConfig": "packages/plugins/jitsu-analytics/tsconfig.lib.json",
 				"packageJson": "packages/plugins/jitsu-analytics/package.json",
 				"main": "packages/plugins/jitsu-analytics/src/index.ts",
@@ -27,7 +27,7 @@
 		},
 		"nx-release-publish": {
 			"options": {
-				"packageRoot": "{projectRoot}/dist"
+				"packageRoot": "dist\\{projectRoot}"
 			}
 		},
 		"lint": {
