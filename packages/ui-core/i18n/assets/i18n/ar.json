@@ -3683,6 +3683,9 @@
 				"ADD_AWARD": "تمت إضافة جائزة جديدة '{{ name }}'",
 				"INVALID_AWARD_NAME_YEAR": "يرجى التحقق من الاسم والسنة المدخلة للجائزة",
 				"REMOVE_AWARD": "تمت إزالة الجائزة '{{ name }}'"
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "تاريخ الانتهاء ({{ endDate }}) لا يمكن أن يكون قبل تاريخ البدء ({{ startDate }})."
 			}
 		},
 		"ORGANIZATIONS": {

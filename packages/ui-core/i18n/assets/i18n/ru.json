@@ -3704,6 +3704,9 @@
 				"ADD_AWARD": "Новая награда '{{ name }}' была добавлена",
 				"INVALID_AWARD_NAME_YEAR": "Пожалуйста, проверьте имя и год для получения награды",
 				"REMOVE_AWARD": "Награда '{{ name }}' была удалена"
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "Дата окончания ({{ endDate }}) не может быть раньше даты начала ({{ startDate }})."
 			}
 		},
 		"ORGANIZATIONS": {

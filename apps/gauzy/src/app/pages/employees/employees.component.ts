@@ -371,10 +371,13 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 
 		const { id: organizationId, tenantId } = this.organization;
 
+		console.log(this.selectedEmployee.endWork);
+
 		// Open the end work dialog
 		const dialog = this._dialogService.open(EmployeeEndWorkComponent, {
 			context: {
 				endWorkValue: this.selectedEmployee.endWork,
+				startWorkValue: this.selectedEmployee.startedWorkOn,
 				employeeFullName: this.selectedEmployee.fullName
 			}
 		});

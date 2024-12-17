@@ -3687,6 +3687,9 @@
 				"ADD_AWARD": "Nuevo premio '{{ name }}' fue agregado.",
 				"INVALID_AWARD_NAME_YEAR": "Por favor, verifica el nombre y el año de la entrada para el premio.",
 				"REMOVE_AWARD": "El premio '{{ name }}' fue eliminado."
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "La fecha de finalización ({{ endDate }}) no puede ser anterior a la fecha de inicio ({{ startDate }})."
 			}
 		},
 		"ORGANIZATIONS": {

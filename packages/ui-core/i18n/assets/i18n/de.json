@@ -3681,6 +3681,9 @@
 				"ADD_AWARD": "Neue Auszeichnung '{{ name }}' wurde hinzugefügt.",
 				"INVALID_AWARD_NAME_YEAR": "Bitte überprüfen Sie den eingegebenen Namen und das Jahr für die Auszeichnung.",
 				"REMOVE_AWARD": "Auszeichnung '{{ name }}' wurde entfernt"
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "Das Enddatum ({{ endDate }}) darf nicht vor dem Startdatum ({{ startDate }}) liegen."
 			}
 		},
 		"ORGANIZATIONS": {

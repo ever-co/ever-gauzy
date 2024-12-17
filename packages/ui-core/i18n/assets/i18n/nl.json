@@ -3685,6 +3685,9 @@
 				"ADD_AWARD": "Nieuwe award '{{ name }}' is toegevoegd",
 				"INVALID_AWARD_NAME_YEAR": "Controleer alstublieft de Naam en het Jaar voor de Award invoer.",
 				"REMOVE_AWARD": "Prijs '{{ name }}' is verwijderd."
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "De einddatum ({{ endDate }}) mag niet eerder zijn dan de startdatum ({{ startDate }})."
 			}
 		},
 		"ORGANIZATIONS": {
