@@ -3,8 +3,8 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 import { yellow } from 'chalk';
 import { DatabaseTypeEnum } from '@gauzy/config';
 
-export class AlterEmployeeSettingAddSettingFields1734330451158 implements MigrationInterface {
-	name = 'AlterEmployeeSettingAddSettingFields1734330451158';
+export class AlterEmployeeSettingAddSettingJsonFields1734434773692 implements MigrationInterface {
+	name = 'AlterEmployeeSettingAddSettingJsonFields1734434773692';
 
 	/**
 	 * Up Migration
@@ -67,8 +67,10 @@ export class AlterEmployeeSettingAddSettingFields1734330451158 implements Migrat
 		await queryRunner.query(`ALTER TABLE "employee_setting" ADD "entity" character varying`);
 		await queryRunner.query(`ALTER TABLE "employee_setting" ADD "data" jsonb`);
 		await queryRunner.query(`ALTER TABLE "employee_setting" ADD "defaultData" jsonb`);
-		await queryRunner.query(`ALTER TABLE "employee_setting" ALTER COLUMN "settingType" DROP NOT NULL`);
-		await queryRunner.query(`ALTER TABLE "employee_setting" ALTER COLUMN "settingType" SET DEFAULT 'Normal'`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_9537fae454ebebc98ee5adb3a2"`);
+		await queryRunner.query(`ALTER TABLE "employee_setting" DROP COLUMN "settingType"`);
+		await queryRunner.query(`ALTER TABLE "employee_setting" ADD "settingType" integer DEFAULT '0'`);
+		await queryRunner.query(`CREATE INDEX "IDX_9537fae454ebebc98ee5adb3a2" ON "employee_setting" ("settingType") `);
 		await queryRunner.query(`CREATE INDEX "IDX_cb9a229d96e9357c823e0c1940" ON "employee_setting" ("entityId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_4862a2b518e38fe3942e6be210" ON "employee_setting" ("entity") `);
 	}
@@ -81,8 +83,10 @@ export class AlterEmployeeSettingAddSettingFields1734330451158 implements Migrat
 	public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(`DROP INDEX "public"."IDX_4862a2b518e38fe3942e6be210"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_cb9a229d96e9357c823e0c1940"`);
-		await queryRunner.query(`ALTER TABLE "employee_setting" ALTER COLUMN "settingType" DROP DEFAULT`);
-		await queryRunner.query(`ALTER TABLE "employee_setting" ALTER COLUMN "settingType" SET NOT NULL`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_9537fae454ebebc98ee5adb3a2"`);
+		await queryRunner.query(`ALTER TABLE "employee_setting" DROP COLUMN "settingType"`);
+		await queryRunner.query(`ALTER TABLE "employee_setting" ADD "settingType" character varying NOT NULL`);
+		await queryRunner.query(`CREATE INDEX "IDX_9537fae454ebebc98ee5adb3a2" ON "employee_setting" ("settingType") `);
 		await queryRunner.query(`ALTER TABLE "employee_setting" DROP COLUMN "defaultData"`);
 		await queryRunner.query(`ALTER TABLE "employee_setting" DROP COLUMN "data"`);
 		await queryRunner.query(`ALTER TABLE "employee_setting" DROP COLUMN "entity"`);
@@ -152,7 +156,7 @@ export class AlterEmployeeSettingAddSettingFields1734330451158 implements Migrat
 		await queryRunner.query(`DROP INDEX "IDX_9537fae454ebebc98ee5adb3a2"`);
 		await queryRunner.query(`DROP INDEX "IDX_95ea18af6ef8123503d332240c"`);
 		await queryRunner.query(
-			`CREATE TABLE "temporary_employee_setting" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "settingType" varchar DEFAULT ('Normal'), "employeeId" varchar NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "deletedAt" datetime, "archivedAt" datetime, "entityId" varchar, "entity" varchar, "data" text, "defaultData" text, CONSTRAINT "FK_9516a627a131626d2a5738a05a8" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_56e96cd218a185ed59b5a8e7869" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_95ea18af6ef8123503d332240c2" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
+			`CREATE TABLE "temporary_employee_setting" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "settingType" integer DEFAULT (0), "employeeId" varchar NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "deletedAt" datetime, "archivedAt" datetime, "entityId" varchar, "entity" varchar, "data" text, "defaultData" text, CONSTRAINT "FK_9516a627a131626d2a5738a05a8" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_56e96cd218a185ed59b5a8e7869" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_95ea18af6ef8123503d332240c2" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
 		);
 		await queryRunner.query(
 			`INSERT INTO "temporary_employee_setting"("id", "createdAt", "updatedAt", "tenantId", "organizationId", "settingType", "employeeId", "isActive", "isArchived", "deletedAt", "archivedAt", "entityId", "entity", "data", "defaultData") SELECT "id", "createdAt", "updatedAt", "tenantId", "organizationId", "settingType", "employeeId", "isActive", "isArchived", "deletedAt", "archivedAt", "entityId", "entity", "data", "defaultData" FROM "employee_setting"`
@@ -263,8 +267,11 @@ export class AlterEmployeeSettingAddSettingFields1734330451158 implements Migrat
 		await queryRunner.query(`ALTER TABLE \`employee_setting\` ADD \`entity\` varchar(255) NULL`);
 		await queryRunner.query(`ALTER TABLE \`employee_setting\` ADD \`data\` json NULL`);
 		await queryRunner.query(`ALTER TABLE \`employee_setting\` ADD \`defaultData\` json NULL`);
+		await queryRunner.query(`DROP INDEX \`IDX_9537fae454ebebc98ee5adb3a2\` ON \`employee_setting\``);
+		await queryRunner.query(`ALTER TABLE \`employee_setting\` DROP COLUMN \`settingType\``);
+		await queryRunner.query(`ALTER TABLE \`employee_setting\` ADD \`settingType\` int NULL DEFAULT '0'`);
 		await queryRunner.query(
-			`ALTER TABLE \`employee_setting\` CHANGE \`settingType\` \`settingType\` varchar(255) NULL DEFAULT 'Normal'`
+			`CREATE INDEX \`IDX_9537fae454ebebc98ee5adb3a2\` ON \`employee_setting\` (\`settingType\`)`
 		);
 		await queryRunner.query(
 			`CREATE INDEX \`IDX_cb9a229d96e9357c823e0c1940\` ON \`employee_setting\` (\`entityId\`)`
@@ -280,8 +287,11 @@ export class AlterEmployeeSettingAddSettingFields1734330451158 implements Migrat
 	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(`DROP INDEX \`IDX_4862a2b518e38fe3942e6be210\` ON \`employee_setting\``);
 		await queryRunner.query(`DROP INDEX \`IDX_cb9a229d96e9357c823e0c1940\` ON \`employee_setting\``);
+		await queryRunner.query(`DROP INDEX \`IDX_9537fae454ebebc98ee5adb3a2\` ON \`employee_setting\``);
+		await queryRunner.query(`ALTER TABLE \`employee_setting\` DROP COLUMN \`settingType\``);
+		await queryRunner.query(`ALTER TABLE \`employee_setting\` ADD \`settingType\` varchar(255) NOT NULL`);
 		await queryRunner.query(
-			`ALTER TABLE \`employee_setting\` CHANGE \`settingType\` \`settingType\` varchar(255) NOT NULL`
+			`CREATE INDEX \`IDX_9537fae454ebebc98ee5adb3a2\` ON \`employee_setting\` (\`settingType\`)`
 		);
 		await queryRunner.query(`ALTER TABLE \`employee_setting\` DROP COLUMN \`defaultData\``);
 		await queryRunner.query(`ALTER TABLE \`employee_setting\` DROP COLUMN \`data\``);

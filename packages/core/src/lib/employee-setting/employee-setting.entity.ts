@@ -3,27 +3,27 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { RelationId } from 'typeorm';
 import { IsNotEmpty, IsString, IsEnum, IsOptional, IsUUID } from 'class-validator';
-import {
-	IEmployeeSetting, IEmployee,
-	EmployeeSettingTypeEnum,
-	ID,
-	BaseEntityEnum,
-	JsonData
-} from '@gauzy/contracts';
+import { IEmployeeSetting, IEmployee, EmployeeSettingTypeEnum, ID, BaseEntityEnum, JsonData } from '@gauzy/contracts';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import { Employee, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmEmployeeSettingRepository } from './repository/mikro-orm-employee-setting.repository';
+import { EmployeeSettingTypeTransformerPipe } from '../shared/pipes';
 
 @MultiORMEntity('employee_setting', { mikroOrmRepository: () => MikroOrmEmployeeSettingRepository })
 export class EmployeeSetting extends TenantOrganizationBaseEntity implements IEmployeeSetting {
 	[EntityRepositoryType]?: MikroOrmEmployeeSettingRepository;
 
-	@ApiPropertyOptional({ type: () => String, enum: EmployeeSettingTypeEnum })
+	@ApiPropertyOptional({ enum: EmployeeSettingTypeEnum })
 	@IsEnum(EmployeeSettingTypeEnum)
 	@IsOptional()
 	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, default: EmployeeSettingTypeEnum.NORMAL })
+	@MultiORMColumn({
+		type: 'int',
+		nullable: true,
+		default: 0,
+		transformer: new EmployeeSettingTypeTransformerPipe()
+	})
 	settingType?: EmployeeSettingTypeEnum;
 
 	@ApiPropertyOptional({ type: () => String })
