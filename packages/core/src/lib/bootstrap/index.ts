@@ -476,14 +476,13 @@ async function preBootstrapRegisterSubscribers(
 export function getMigrationsConfig() {
 	// Determine if running from dist or source
 	const isDist = __dirname.includes('dist');
+	console.log('Migration process.env.NODE_ENV: ->', process.env.NODE_ENV);
 	console.log('Migration isDist: ->', isDist);
 	console.log('Migration process.cwd(): ->', process.cwd());
 	console.log('Migration __dirname: ->', __dirname);
 
 	// Base migrations directory
-	const migrationsDir = isDist
-		? path.resolve(process.cwd(), 'packages/core/src/lib/database/migrations/*{.ts,.js}') // For dist structure
-		: path.resolve(__dirname, './../database/migrations/*{.ts,.js}'); // For src structure
+	const migrationsDir = path.resolve(__dirname, './../database/migrations/*{.ts,.js}');
 	console.log('Migration migrationsDir: ->', migrationsDir);
 
 	if (!fs.existsSync(path.dirname(migrationsDir))) {
@@ -491,9 +490,7 @@ export function getMigrationsConfig() {
 	}
 
     // CLI Migrations directory path
-	const cliMigrationsDir = isDist
-		? path.resolve(process.cwd(), 'packages/core/src/lib/database/migrations') // Adjusted for dist structure
-		: path.resolve(__dirname, './../database/migrations'); // Adjusted for src structure
+	const cliMigrationsDir = path.resolve(__dirname, './../database/migrations'); // Adjusted for src structure
 	console.log('Migration cliMigrationsDir: ->', cliMigrationsDir);
 
 	if (!fs.existsSync(path.dirname(cliMigrationsDir))) {
