@@ -3685,6 +3685,9 @@
 				"ADD_AWARD": "新奖项'{{ name }}'已添加",
 				"INVALID_AWARD_NAME_YEAR": "请检查奖项输入的名称和年份。",
 				"REMOVE_AWARD": "奖项“{{ name }}”已被移除"
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "结束日期 ({{ endDate }}) 不能早于开始日期 ({{ startDate }})."
 			}
 		},
 		"ORGANIZATIONS": {

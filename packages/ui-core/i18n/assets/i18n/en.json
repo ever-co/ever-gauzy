@@ -3812,6 +3812,9 @@
 				"ADD_AWARD": "New award '{{ name }}' was added",
 				"INVALID_AWARD_NAME_YEAR": "Please check the Name and Year for Award input",
 				"REMOVE_AWARD": "Award '{{ name }}' was removed"
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "The end date ({{ endDate }}) cannot be earlier than the start date ({{ startDate }})."
 			}
 		},
 		"ORGANIZATIONS": {

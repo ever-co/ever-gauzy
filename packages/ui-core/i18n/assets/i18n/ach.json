@@ -3427,6 +3427,9 @@
 				"ADD_AWARD": "crwdns9176:0{{ name }}crwdne9176:0",
 				"INVALID_AWARD_NAME_YEAR": "crwdns8006:0crwdne8006:0",
 				"REMOVE_AWARD": "crwdns9178:0{{ name }}crwdne9178:0"
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "Kare megi ({{ endDate }}) pe kany ni kede kare makare ({{ startDate }})."
 			}
 		},
 		"ORGANIZATIONS": {

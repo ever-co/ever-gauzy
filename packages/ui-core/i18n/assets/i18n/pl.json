@@ -3685,6 +3685,9 @@
 				"ADD_AWARD": "Nowa nagroda '{{ name }}' została dodana",
 				"INVALID_AWARD_NAME_YEAR": "Proszę sprawdzić wprowadzone imię, nazwisko oraz rok otrzymania nagrody",
 				"REMOVE_AWARD": "Nagroda '{{ name }}' została usunięta"
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "Data zakończenia ({{ endDate }}) nie może być wcześniejsza niż data rozpoczęcia ({{ startDate }})."
 			}
 		},
 		"ORGANIZATIONS": {
