@@ -6,7 +6,7 @@
 	"release": {
 		"version": {
 			"generatorOptions": {
-				"packageRoot": "dist\\{projectRoot}",
+				"packageRoot": "dist/{projectRoot}",
 				"currentVersionResolver": "git-tag"
 			}
 		}
@@ -27,7 +27,7 @@
 		},
 		"nx-release-publish": {
 			"options": {
-				"packageRoot": "dist\\{projectRoot}"
+				"packageRoot": "dist/{projectRoot}"
 			}
 		},
 		"lint": {
