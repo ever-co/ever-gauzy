@@ -24,7 +24,6 @@ export class ProxyPluginOriginGuard implements CanActivate {
 
 		// Retrieve the `Origin` header from the request
 		const origin = request.headers.origin;
-		console.log({ origin, allowed: this.allowedOrigin });
 
 		// Check if the origin matches the allowed origin
 		if (origin !== this.allowedOrigin) {
