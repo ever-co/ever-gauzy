@@ -3708,7 +3708,9 @@
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "Poziom pracownika '{{ name }}' został dodany",
 				"REMOVE_EMPLOYEE_LEVEL": "Poziom pracownika '{{ name }}' został usunięty",
-				"INVALID_EMPLOYEE_LEVEL": "Proszę dodać poziom pracownika"
+				"INVALID_EMPLOYEE_LEVEL": "Proszę dodać poziom pracownika",
+				"ALREADY_EXISTS": "Poziom pracownika  już istnieje."
+
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "dostawca '{{ name }}' został dodany",
@@ -3726,12 +3728,15 @@
 				"ADD_POSITION": "Stanowisko '{{ name }}' zostało dodane",
 				"UPDATED_POSITION": "Stanowisko '{{ name }}' zostało zmienione",
 				"REMOVE_POSITION": "Stanowisko '{{ name }}' zostało usunięte",
-				"INVALID_POSITION_NAME": "Proszę dodać nazwę stanowiska"
+				"INVALID_POSITION_NAME": "Proszę dodać nazwę stanowiska",
+				"ALREADY_EXISTS": "Stanowisko  już istnieje."
+
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "Dział '{{ name }}' został zapisany",
 				"REMOVE_DEPARTMENT": "Dział '{{ name }}' został usunięty",
-				"INVALID_DEPARTMENT_NAME": "Proszę podać nazwę działu"
+				"INVALID_DEPARTMENT_NAME": "Proszę podać nazwę działu",
+				"ALREADY_EXISTS": "Dział  już istnieje."
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "Nowy klient '{{ name }}' został pomyślnie dodany!",

@@ -6,7 +6,7 @@ import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { LocalDataSource } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
+import { ComponentEnum, distinctUntilChange, validateUniqueString } from '@gauzy/ui-core/common';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase,
@@ -172,7 +172,15 @@ export class EmployeeLevelComponent extends PaginationFilterBaseComponent implem
 		if (level) {
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
+			const existingNames = this.employeeLevels.map((employeeLevel) => employeeLevel.level);
 
+			if (validateUniqueString(existingNames,level)) {
+				this.toastrService.danger(
+					this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.ALREADY_EXISTS'),
+					level
+				);
+				return;
+			}
 			await this.employeeLevelService.create({
 				level,
 				organizationId,
@@ -181,7 +189,7 @@ export class EmployeeLevelComponent extends PaginationFilterBaseComponent implem
 			});
 
 			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.ADD_EMPLOYEE_LEVEL', {
-				name: level
+				level
 			});
 			this._refresh$.next(true);
 			this.subject$.next(true);
@@ -197,6 +205,15 @@ export class EmployeeLevelComponent extends PaginationFilterBaseComponent implem
 	async editEmployeeLevel(id: string, employeeLevelName: string) {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
+		const existingNames = this.employeeLevels.map((employeeLevel) => employeeLevel.level);
+
+		if (validateUniqueString(existingNames,employeeLevelName)) {
+			this.toastrService.danger(
+				this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.ALREADY_EXISTS'),
+				employeeLevelName
+			);
+			return;
+		}
 
 		const employeeLevel = {
 			level: employeeLevelName,

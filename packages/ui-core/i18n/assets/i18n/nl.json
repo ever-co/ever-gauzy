@@ -3708,7 +3708,9 @@
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "Werknemersniveau '{{ name }}' is toegevoegd",
 				"REMOVE_EMPLOYEE_LEVEL": "Medewerkersniveau '{{ name }}' is verwijderd",
-				"INVALID_EMPLOYEE_LEVEL": "Voeg alstublieft een functieniveau van medewerker toe."
+				"INVALID_EMPLOYEE_LEVEL": "Voeg alstublieft een functieniveau van medewerker toe.",
+				"ALREADY_EXISTS": "Dit werkniveau  bestaat al."
+
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "Leverancier '{{ name }}' is toegevoegd",
@@ -3726,12 +3728,15 @@
 				"ADD_POSITION": "Functie '{{ name }}' is toegevoegd",
 				"UPDATED_POSITION": "De positie '{{ name }}' is gewijzigd.",
 				"REMOVE_POSITION": "Positie '{{ name }}' is verwijderd",
-				"INVALID_POSITION_NAME": "Voeg alstublieft een functienaam toe."
+				"INVALID_POSITION_NAME": "Voeg alstublieft een functienaam toe.",
+				"ALREADY_EXISTS": "Deze functie  bestaat al."
+
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "Afdeling '{{ name }}' is opgeslagen",
 				"REMOVE_DEPARTMENT": "Afdeling '{{ name }}' is verwijderd",
-				"INVALID_DEPARTMENT_NAME": "Voeg alstublieft een afdelingsnaam toe"
+				"INVALID_DEPARTMENT_NAME": "Voeg alstublieft een afdelingsnaam toe",
+				"ALREADY_EXISTS": "Deze afdeling  bestaat al."
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "Nieuwe klant '{{ name }}' succesvol toegevoegd!",

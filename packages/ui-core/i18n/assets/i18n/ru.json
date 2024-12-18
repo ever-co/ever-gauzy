@@ -3727,7 +3727,9 @@
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "Уровень сотрудника '{{ name }}' ' был добавлен",
 				"REMOVE_EMPLOYEE_LEVEL": "Уровень сотрудника '{{ name }}' ' был удален",
-				"INVALID_EMPLOYEE_LEVEL": "Пожалуйста, добавьте уровень сотрудника"
+				"INVALID_EMPLOYEE_LEVEL": "Пожалуйста, добавьте уровень сотрудника",
+				"ALREADY_EXISTS": "Уровень сотрудника уже существует."
+
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "исполнитель '{{ name }}' ' был добавлен",
@@ -3745,12 +3747,15 @@
 				"ADD_POSITION": "Позиция '{{ name }}' ' была добавлена",
 				"UPDATED_POSITION": "Позиция '{{ name }}' ' была изменена",
 				"REMOVE_POSITION": "Позиция '{{ name }}' была удалена",
-				"INVALID_POSITION_NAME": "Пожалуйста, добавьте название позиции"
+				"INVALID_POSITION_NAME": "Пожалуйста, добавьте название позиции",
+				"ALREADY_EXISTS": "Должность уже существует."
+
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "Департамент '{{ name }}' был сохранен",
 				"REMOVE_DEPARTMENT": "Департамент '{{ name }}' был удален",
-				"INVALID_DEPARTMENT_NAME": "Пожалуйста, добавьте название департамента"
+				"INVALID_DEPARTMENT_NAME": "Пожалуйста, добавьте название департамента",
+				"ALREADY_EXISTS": "Отдел уже существует."
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "Новый клиент '{{ name }}' ' ' успешно добавлен!",

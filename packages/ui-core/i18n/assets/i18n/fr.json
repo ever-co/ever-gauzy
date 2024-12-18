@@ -3727,12 +3727,15 @@
 				"ADD_POSITION": "La position '{{ name }}' a été ajoutée.",
 				"UPDATED_POSITION": "La position '{{ name }}' a été modifiée.",
 				"REMOVE_POSITION": "La position '{{ name }}' a été supprimée.",
-				"INVALID_POSITION_NAME": "Veuillez ajouter un nom de poste"
+				"INVALID_POSITION_NAME": "Veuillez ajouter un nom de poste",
+				"ALREADY_EXISTS": "La position existe déjà."
+
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "Le département '{{ name }}' a été enregistré.",
 				"REMOVE_DEPARTMENT": "Le département '{{ name }}' a été supprimé.",
-				"INVALID_DEPARTMENT_NAME": "Veuillez ajouter un nom de département."
+				"INVALID_DEPARTMENT_NAME": "Veuillez ajouter un nom de département.",
+				"ALREADY_EXISTS": "Ce département existe déjà."
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "Nouveau client '{{ name }}' ajouté avec succès !",

@@ -3706,7 +3706,9 @@
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "تمت إضافة مستوى الموظف '{{ name }}'",
 				"REMOVE_EMPLOYEE_LEVEL": "تمت إزالة مستوى الموظف '{{ name }}'",
-				"INVALID_EMPLOYEE_LEVEL": "يرجى إضافة مستوى الموظف"
+				"INVALID_EMPLOYEE_LEVEL": "يرجى إضافة مستوى الموظف",
+				"ALREADY_EXISTS": "المستوى الوظيفي  موجود بالفعل."
+
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "تمت إضافة المورد '{{ name }}'",
@@ -3724,12 +3726,15 @@
 				"ADD_POSITION": "تمت إضافة الموقع '{{ name }}'",
 				"UPDATED_POSITION": "تم تغيير الموقف '{{ name }}'",
 				"REMOVE_POSITION": "تم إزالة الوظيفة '{{ name }}'",
-				"INVALID_POSITION_NAME": "يرجى إضافة اسم المنصب"
+				"INVALID_POSITION_NAME": "يرجى إضافة اسم المنصب",
+				"ALREADY_EXISTS": "الوظيفة  موجودة بالفعل."
+
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "تم حفظ القسم '{{ name }}'",
 				"REMOVE_DEPARTMENT": "تمت إزالة القسم '{{ name }}'",
-				"INVALID_DEPARTMENT_NAME": "يرجى إضافة اسم القسم"
+				"INVALID_DEPARTMENT_NAME": "يرجى إضافة اسم القسم",
+				"ALREADY_EXISTS": "القسم  موجود بالفعل."
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "تمت إضافة العميل الجديد '{{ name }}' بنجاح!",
