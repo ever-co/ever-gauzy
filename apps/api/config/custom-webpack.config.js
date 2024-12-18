@@ -20,45 +20,52 @@ module.exports = composePlugins(
 
 		// Source directory where packages are built
 		const distPackagesDir = path.resolve(__dirname, '../../../dist/packages');
-		console.log('distPackagesDir: ' + distPackagesDir);
-
-		// Target directory where packages are copied to
-		const targetNodeModulesDir = path.resolve(
-			__dirname,
-			'../../../dist/apps/api/node_modules/@gauzy'
-		);
-		console.log('targetNodeModulesDir: ' + targetNodeModulesDir);
+		const targetNodeModulesDir = path.resolve(__dirname, '../../../dist/apps/api/node_modules/@gauzy');
 
 		// Ensure the targetNodeModulesDir exists
 		if (!fs.existsSync(targetNodeModulesDir)) {
 			fs.mkdirSync(targetNodeModulesDir, { recursive: true });
 		}
 
-		// Generate dynamic patterns by reading package.json of each package
-		const packagePatterns = fs
-			.readdirSync(distPackagesDir)
-			.filter((name) => fs.statSync(path.join(distPackagesDir, name)).isDirectory())
-			.map((packageDir) => {
-				console.log('packageDir: ' + packageDir);
-				const packageJsonPath = path.join(distPackagesDir, packageDir, 'package.json');
-				console.log('packageJsonPath: ' + packageJsonPath);
-				let packageName = packageDir; // Fallback to folder name
+		// Helper function to read nested package.json files
+		const getPackages = (baseDir) => {
+			const results = [];
+			// Recursively scan the directory for package.json files
+			const scanDir = (dir) => {
+				fs.readdirSync(dir).forEach((item) => {
+					const fullPath = path.join(dir, item);
+					if (fs.statSync(fullPath).isDirectory()) {
+						const packageJsonPath = path.join(fullPath, 'package.json');
+						if (fs.existsSync(packageJsonPath)) {
+							results.push(fullPath);
+						} else {
+							scanDir(fullPath); // Recurse further into subdirectories
+						}
+					}
+				});
+			};
+			// Start scanning the directory
+			scanDir(baseDir);
+			return results;
+		};
 
-				if (fs.existsSync(packageJsonPath)) {
-					const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
-					console.log('packageJson: ' + JSON.stringify(packageJson));
-					packageName = packageJson.name.split('/').pop(); // Extract name after the slash, if scoped
-					console.log('packageName: ' + packageName);
-				}
+		// Collect all packages (top-level and nested)
+		const allPackageDirs = getPackages(distPackagesDir);
 
-				return {
-					from: path.join(distPackagesDir, packageDir), // Source package folder
-					to: path.join(targetNodeModulesDir, packageName), // Destination folder
-					globOptions: {
-						ignore: ['**/node_modules/**'], // Ignore unnecessary files
-					},
-				};
-			});
+		// Generate dynamic patterns
+		const packagePatterns = allPackageDirs.map((packageDir) => {
+			const packageJsonPath = path.join(packageDir, 'package.json');
+			const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+			const packageName = packageJson.name.split('/').pop(); // Extract name after slash
+
+			return {
+				from: packageDir, // Source package folder
+				to: path.join(targetNodeModulesDir, packageName), // Destination folder
+				globOptions: {
+					ignore: ['**/node_modules/**'], // Ignore unnecessary files
+				},
+			};
+		});
 
 		// Add CopyWebpackPlugin with the generated patterns
 		config.plugins.push(
