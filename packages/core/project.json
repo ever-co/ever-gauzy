@@ -32,6 +32,13 @@
 				]
 			}
 		},
+		"serve": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "nodemon --restartable rs --ignore .git --ignore node_modules/ --ignore dist/ --ignore coverage/ --ignore src/**/*.spec.ts --watch packages/core/src --exec \"yarn ts-node -r tsconfig-paths/register packages/core/src/lib/main.ts\" --env NODE_ENV=development --ext ts",
+				"cwd": "."
+			}
+		},
 		"nx-release-publish": {
 			"options": {
 				"packageRoot": "dist/{projectRoot}"
@@ -45,13 +52,6 @@
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
 				"jestConfig": "packages/core/jest.config.ts"
-			}
-		},
-		"serve": {
-			"executor": "nx:run-commands",
-			"options": {
-				"command": "nodemon --restartable rs --ignore .git --ignore node_modules/ --ignore dist/ --ignore coverage/ --ignore src/**/*.spec.ts --watch packages/core/src --exec \"yarn ts-node -r tsconfig-paths/register packages/core/src/lib/main.ts\" --env NODE_ENV=development --ext ts",
-				"cwd": "."
 			}
 		}
 	}
