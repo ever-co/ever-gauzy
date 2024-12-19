@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, TemplateRef, ViewChild } from '@angular/core';
-import { UntypedFormGroup, UntypedFormBuilder, Validators, ValidationErrors, AbstractControl } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'angular2-smart-table';
@@ -14,7 +14,7 @@ import {
 import { takeUntil } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { OrganizationEmploymentTypesService, Store } from '@gauzy/ui-core/core';
-import { ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
+import { ComponentEnum, distinctUntilChange,validateUniqueString} from '@gauzy/ui-core/common';
 import { Subject, firstValueFrom, filter, debounceTime, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -206,9 +206,9 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 	private async addEmploymentType() {
 		if (!this.form.invalid) {
 			const name: string = this.form.get('name').value;
-			const existingNames = this.organizationEmploymentTypes.map((type) => type.name.toLowerCase());
+			const existingNames = this.organizationEmploymentTypes.map((type) => type.name);
 
-			if (this.validateUniqueName(existingNames, name)) {
+			if (validateUniqueString(existingNames, name)) {
 				this.toastrService.error('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ALREADY_EXISTS', name);
 				return;
 			}
@@ -289,9 +289,9 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 
 		const existingNames = this.organizationEmploymentTypes
         .filter((type) => type.id !== id)
-        .map((type) => type.name.toLowerCase());
+        .map((type) => type.name);
 
-    	if (this.validateUniqueName(existingNames, name.toLowerCase())) {
+    	if (validateUniqueString(existingNames, name)) {
         	this.toastrService.error('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ALREADY_EXISTS',  name );
         	return;
     	}
@@ -347,7 +347,5 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 		this.selected.employmentType = orgEmpType;
 		this.selectedOrgEmpType = this.selected.employmentType;
 	}
-	validateUniqueName(existingNames: string[], value: string) {
-		return existingNames.includes(value.trim().toLowerCase());
-	}
+
 }

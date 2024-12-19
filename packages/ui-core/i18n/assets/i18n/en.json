@@ -3812,6 +3812,9 @@
 				"ADD_AWARD": "New award '{{ name }}' was added",
 				"INVALID_AWARD_NAME_YEAR": "Please check the Name and Year for Award input",
 				"REMOVE_AWARD": "Award '{{ name }}' was removed"
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "The end date ({{ endDate }}) cannot be earlier than the start date ({{ startDate }})."
 			}
 		},
 		"ORGANIZATIONS": {
@@ -3837,7 +3840,10 @@
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "Employee Level '{{ name }}' was added",
 				"REMOVE_EMPLOYEE_LEVEL": "Employee Level '{{ name }}' was removed",
-				"INVALID_EMPLOYEE_LEVEL": "Please add an Employee Level"
+				"INVALID_EMPLOYEE_LEVEL": "Please add an Employee Level",
+				"ALREADY_EXISTS": "This Employee Level already exists."
+
+
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "vendor '{{ name }}' was added",
@@ -3855,12 +3861,15 @@
 				"ADD_POSITION": "Position '{{ name }}' was added",
 				"UPDATED_POSITION": "Position '{{ name }}' was changed",
 				"REMOVE_POSITION": "Position '{{ name }}' was removed",
-				"INVALID_POSITION_NAME": "Please add a Position name"
+				"INVALID_POSITION_NAME": "Please add a Position name",
+				"ALREADY_EXISTS": "This Position already exists."
+
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "Department '{{ name }}' was saved",
 				"REMOVE_DEPARTMENT": "Department '{{ name }}' was removed",
-				"INVALID_DEPARTMENT_NAME": "Please add a Department name"
+				"INVALID_DEPARTMENT_NAME": "Please add a Department name",
+				"ALREADY_EXISTS": "This Department already exists."
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "New client '{{ name }}' successfully added!",

@@ -242,18 +242,17 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent implemen
 
 	public async addOrEditDepartment(input: IOrganizationDepartmentCreateInput) {
 		if (input.name) {
-			     const existingNames = this.departments
-            .filter((department) => !this.selectedDepartment || department.id !== this.selectedDepartment.id)
-            .map((department) => department.name);
+			const existingNames = this.departments
+				.filter((department) => !this.selectedDepartment || department.id !== this.selectedDepartment.id)
+				.map((department) => department.name);
 
-        if (validateUniqueString(existingNames, input.name)) {
-            this.toastrService.danger(
-                this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_DEPARTMENTS.ALREADY_EXISTS'),
-                this.getTranslation('TOASTR.MESSAGE.DUPLICATE_DEPARTMENT_NAME')
-            );
-            return;
-        }
-
+			if (validateUniqueString(existingNames, input.name)) {
+				this.toastrService.danger(
+					this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_DEPARTMENTS.ALREADY_EXISTS'),
+					input.name
+				);
+				return;
+			}
 
 			this.selectedDepartment
 				? await this.organizationDepartmentsService.update(this.selectedDepartment.id, input)
@@ -301,7 +300,11 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent implemen
 				return department;
 			},
 			finalize: () => {
-				if (this._isGridLayout) this.departments.push(...this.smartTableSource.getData());
+				if (this._isGridLayout) {
+					this.departments.push(...this.smartTableSource.getData());
+				} else {
+					this.departments = this.smartTableSource.getData();
+				}
 				this.setPagination({
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
@@ -323,6 +326,7 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent implemen
 
 			if (this._isGridLayout) {
 				await this.smartTableSource.getElements();
+
 				this.setPagination({
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()

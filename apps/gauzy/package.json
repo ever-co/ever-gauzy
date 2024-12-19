@@ -198,7 +198,6 @@
 		"@types/underscore.string": "^0.0.38",
 		"@types/uuid": "^8.3.4",
 		"@types/yargs": "^15.0.9",
-		"copy-webpack-plugin": "^9.0.1",
 		"jasmine-core": "^3.6.0",
 		"jasmine-spec-reporter": "^6.0.0",
 		"jest": "^29.7.0",

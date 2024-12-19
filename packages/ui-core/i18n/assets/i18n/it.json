@@ -3685,6 +3685,9 @@
 				"ADD_AWARD": "Nuovo premio '{{ name }}' è stato aggiunto",
 				"INVALID_AWARD_NAME_YEAR": "Si prega di verificare il Nome e l'Anno per l'inserimento del premio",
 				"REMOVE_AWARD": "Il premio '{{ name }}' è stato rimosso"
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "La data di fine ({{ endDate }}) non può essere precedente alla data di inizio ({{ startDate }})."
 			}
 		},
 		"ORGANIZATIONS": {
@@ -3708,7 +3711,9 @@
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "Il livello dell'impiegato '{{ name }}' è stato aggiunto",
 				"REMOVE_EMPLOYEE_LEVEL": "Il livello di dipendente '{{ name }}' è stato rimosso",
-				"INVALID_EMPLOYEE_LEVEL": "Si prega di aggiungere un livello dipendente"
+				"INVALID_EMPLOYEE_LEVEL": "Si prega di aggiungere un livello dipendente",
+				"ALREADY_EXISTS": "Questo livello di dipendente  esiste già."
+
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "Il fornitore '{{ name }}' è stato aggiunto",
@@ -3726,12 +3731,15 @@
 				"ADD_POSITION": "La posizione '{{ name }}' è stata aggiunta",
 				"UPDATED_POSITION": "La posizione '{{ name }}' è stata modificata",
 				"REMOVE_POSITION": "La posizione '{{ name }}' è stata rimossa",
-				"INVALID_POSITION_NAME": "Per favore aggiungi un nome della posizione"
+				"INVALID_POSITION_NAME": "Per favore aggiungi un nome della posizione",
+				"ALREADY_EXISTS": "Questa posizione  esiste già."
+
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "Il dipartimento '{{ name }}' è stato salvato",
 				"REMOVE_DEPARTMENT": "Il dipartimento '{{ name }}' è stato rimosso",
-				"INVALID_DEPARTMENT_NAME": "Si prega di aggiungere un nome Dipartimento"
+				"INVALID_DEPARTMENT_NAME": "Si prega di aggiungere un nome Dipartimento",
+				"ALREADY_EXISTS": "Questo dipartimento  esiste già."
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "Nuovo cliente '{{ name }}' aggiunto con successo!",

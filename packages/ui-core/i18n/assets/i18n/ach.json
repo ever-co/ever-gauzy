@@ -3427,6 +3427,9 @@
 				"ADD_AWARD": "crwdns9176:0{{ name }}crwdne9176:0",
 				"INVALID_AWARD_NAME_YEAR": "crwdns8006:0crwdne8006:0",
 				"REMOVE_AWARD": "crwdns9178:0{{ name }}crwdne9178:0"
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "Kare megi ({{ endDate }}) pe kany ni kede kare makare ({{ startDate }})."
 			}
 		},
 		"ORGANIZATIONS": {
@@ -3450,7 +3453,9 @@
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "crwdns8950:0{{ name }}crwdne8950:0",
 				"REMOVE_EMPLOYEE_LEVEL": "crwdns8952:0{{ name }}crwdne8952:0",
-				"INVALID_EMPLOYEE_LEVEL": "crwdns3490:0crwdne3490:0"
+				"INVALID_EMPLOYEE_LEVEL": "crwdns3490:0crwdne3490:0",
+				"ALREADY_EXISTS": "Kombedi me Employee tye ka bino."
+
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "crwdns8954:0{{ name }}crwdne8954:0",
@@ -3468,12 +3473,15 @@
 				"ADD_POSITION": "crwdns8966:0{{ name }}crwdne8966:0",
 				"UPDATED_POSITION": "crwdns8968:0{{ name }}crwdne8968:0",
 				"REMOVE_POSITION": "crwdns8970:0{{ name }}crwdne8970:0",
-				"INVALID_POSITION_NAME": "crwdns2825:0crwdne2825:0"
+				"INVALID_POSITION_NAME": "crwdns2825:0crwdne2825:0",
+				"ALREADY_EXISTS": "Kombedi me Position tye ka bino."
+
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "crwdns8972:0{{ name }}crwdne8972:0",
 				"REMOVE_DEPARTMENT": "crwdns8974:0{{ name }}crwdne8974:0",
-				"INVALID_DEPARTMENT_NAME": "crwdns2831:0crwdne2831:0"
+				"INVALID_DEPARTMENT_NAME": "crwdns2831:0crwdne2831:0",
+				"ALREADY_EXISTS": "Dyero me tye ka bino."
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "crwdns9896:0{{ name }}crwdne9896:0",

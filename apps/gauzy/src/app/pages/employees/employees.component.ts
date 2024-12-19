@@ -375,6 +375,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		const dialog = this._dialogService.open(EmployeeEndWorkComponent, {
 			context: {
 				endWorkValue: this.selectedEmployee.endWork,
+				startWorkValue: this.selectedEmployee.startedWorkOn,
 				employeeFullName: this.selectedEmployee.fullName
 			}
 		});

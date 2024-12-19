@@ -3681,6 +3681,9 @@
 				"ADD_AWARD": "Neue Auszeichnung '{{ name }}' wurde hinzugefügt.",
 				"INVALID_AWARD_NAME_YEAR": "Bitte überprüfen Sie den eingegebenen Namen und das Jahr für die Auszeichnung.",
 				"REMOVE_AWARD": "Auszeichnung '{{ name }}' wurde entfernt"
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "Das Enddatum ({{ endDate }}) darf nicht vor dem Startdatum ({{ startDate }}) liegen."
 			}
 		},
 		"ORGANIZATIONS": {
@@ -3704,7 +3707,9 @@
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "Mitarbeiter-Stufe '{{ name }}' wurde hinzugefügt.",
 				"REMOVE_EMPLOYEE_LEVEL": "Der Mitarbeiter mit dem Level '{{ name }}' wurde entfernt.",
-				"INVALID_EMPLOYEE_LEVEL": "Bitte fügen Sie eine Mitarbeiterstufe hinzu."
+				"INVALID_EMPLOYEE_LEVEL": "Bitte fügen Sie eine Mitarbeiterstufe hinzu.",
+				"ALREADY_EXISTS": "Diese Mitarbeiterebene existiert bereits."
+
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "Anbieter '{{ name }}' wurde hinzugefügt.",
@@ -3722,12 +3727,15 @@
 				"ADD_POSITION": "Die Position '{{ name }}' wurde hinzugefügt.",
 				"UPDATED_POSITION": "Die Position '{{ name }}' wurde geändert.",
 				"REMOVE_POSITION": "Die Position '{{ name }}' wurde entfernt.",
-				"INVALID_POSITION_NAME": "Bitte fügen Sie einen Positionsnamen hinzu."
+				"INVALID_POSITION_NAME": "Bitte fügen Sie einen Positionsnamen hinzu.",
+				"ALREADY_EXISTS": "Diese Position existiert bereits."
+
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "Das Department '{{ name }}' wurde gespeichert.",
 				"REMOVE_DEPARTMENT": "Abteilung '{{ name }}' wurde entfernt.",
-				"INVALID_DEPARTMENT_NAME": "Bitte fügen Sie einen Abteilungsnamen hinzu."
+				"INVALID_DEPARTMENT_NAME": "Bitte fügen Sie einen Abteilungsnamen hinzu.",
+				"ALREADY_EXISTS": "Diese Abteilung existiert bereits."
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "Neuer Kunde '{{ name }}' erfolgreich hinzugefügt!",

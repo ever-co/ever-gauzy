@@ -6,7 +6,7 @@
 	"release": {
 		"version": {
 			"generatorOptions": {
-				"packageRoot": "{projectRoot}/dist",
+				"packageRoot": "dist/{projectRoot}",
 				"currentVersionResolver": "git-tag"
 			}
 		}
@@ -18,7 +18,7 @@
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "packages/plugins/integration-ai/dist",
+				"outputPath": "dist/packages/plugins/integration-ai",
 				"tsConfig": "packages/plugins/integration-ai/tsconfig.lib.json",
 				"packageJson": "packages/plugins/integration-ai/package.json",
 				"main": "packages/plugins/integration-ai/src/index.ts",
@@ -27,7 +27,7 @@
 		},
 		"nx-release-publish": {
 			"options": {
-				"packageRoot": "{projectRoot}/dist"
+				"packageRoot": "dist/{projectRoot}"
 			}
 		},
 		"lint": {

@@ -6,7 +6,7 @@
 	"release": {
 		"version": {
 			"generatorOptions": {
-				"packageRoot": "{projectRoot}/dist",
+				"packageRoot": "dist/{projectRoot}",
 				"currentVersionResolver": "git-tag"
 			}
 		}
@@ -18,7 +18,7 @@
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "packages/plugins/sentry-tracing/dist",
+				"outputPath": "dist/packages/plugins/sentry-tracing",
 				"tsConfig": "packages/plugins/sentry-tracing/tsconfig.lib.json",
 				"packageJson": "packages/plugins/sentry-tracing/package.json",
 				"main": "packages/plugins/sentry-tracing/src/index.ts",
@@ -27,7 +27,7 @@
 		},
 		"nx-release-publish": {
 			"options": {
-				"packageRoot": "{projectRoot}/dist"
+				"packageRoot": "dist/{projectRoot}"
 			}
 		},
 		"lint": {
