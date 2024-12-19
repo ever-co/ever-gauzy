@@ -1,4 +1,3 @@
-/* eslint-disable */
 export default {
 	displayName: 'plugin-integration-ai-ui',
 	preset: '../../../jest.preset.js',

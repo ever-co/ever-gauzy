@@ -1,20 +1,8 @@
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { Router, RouterModule } from '@angular/router';
-import {
-	NbButtonModule,
-	NbCardModule,
-	NbDialogModule,
-	NbDialogService,
-	NbLayoutModule,
-	NbMenuModule,
-	NbSidebarModule,
-	NbThemeModule,
-	NbToastrModule
-} from '@nebular/theme';
-import * as Sentry from '@sentry/angular-ivy';
 import {
 	AboutModule,
 	ElectronService,
@@ -28,6 +16,18 @@ import {
 	NgxDesktopThemeModule
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
+import {
+	NbButtonModule,
+	NbCardModule,
+	NbDialogModule,
+	NbDialogService,
+	NbLayoutModule,
+	NbMenuModule,
+	NbSidebarModule,
+	NbThemeModule,
+	NbToastrModule
+} from '@nebular/theme';
+import * as Sentry from '@sentry/angular-ivy';
 import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -45,58 +45,55 @@ if (environment.SENTRY_DSN) {
 
 @NgModule({
 	declarations: [AppComponent],
+    bootstrap: [AppComponent],
 	imports: [
 		NbLayoutModule,
-		NbDialogModule.forRoot(),
-		NbToastrModule.forRoot(),
-		NbCardModule,
-		NbButtonModule,
-		BrowserModule,
-		BrowserAnimationsModule,
-		RouterModule,
-		AppRoutingModule,
-		NbThemeModule,
-		NgxDesktopThemeModule,
-		NbMenuModule.forRoot(),
-		NbSidebarModule.forRoot(),
-		SetupModule,
-		HttpClientModule,
-		SettingsModule,
-		UpdaterModule,
-		ServerDashboardModule,
-		AboutModule,
-		LanguageModule.forRoot()
-	],
-	providers: [
-		AppService,
-		HttpClientModule,
-		NbDialogService,
-		ElectronService,
-		LoggerService,
-		{
-			provide: ErrorHandler,
-			useValue: Sentry.createErrorHandler({
-				showDialog: true
-			})
-		},
-		{
-			provide: Sentry.TraceService,
-			deps: [Router]
-		},
-		{
-			provide: APP_INITIALIZER,
-			useFactory: () => () => {},
-			deps: [Sentry.TraceService],
-			multi: true
-		},
-		{
-			provide: GAUZY_ENV,
-			useValue: {
-				...gauzyEnvironment,
-				...environment
-			}
-		}
-	],
-	bootstrap: [AppComponent]
+        NbDialogModule.forRoot(),
+        NbToastrModule.forRoot(),
+        NbCardModule,
+        NbButtonModule,
+        BrowserModule,
+        BrowserAnimationsModule,
+        RouterModule,
+        AppRoutingModule,
+        NbThemeModule,
+        NgxDesktopThemeModule,
+        NbMenuModule.forRoot(),
+        NbSidebarModule.forRoot(),
+        SetupModule,
+        SettingsModule,
+        UpdaterModule,
+        ServerDashboardModule,
+        AboutModule,
+        LanguageModule.forRoot()], providers: [
+        AppService,
+        NbDialogService,
+        ElectronService,
+        LoggerService,
+        {
+            provide: ErrorHandler,
+            useValue: Sentry.createErrorHandler({
+                showDialog: true
+            })
+        },
+        {
+            provide: Sentry.TraceService,
+            deps: [Router]
+        },
+        {
+            provide: APP_INITIALIZER,
+            useFactory: () => () => { },
+            deps: [Sentry.TraceService],
+            multi: true
+        },
+        {
+            provide: GAUZY_ENV,
+            useValue: {
+                ...gauzyEnvironment,
+                ...environment
+            }
+        },
+        provideHttpClient(withInterceptorsFromDi())
+    ]
 })
 export class AppModule {}

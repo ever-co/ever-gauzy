@@ -45,10 +45,10 @@
 		"typeorm": "^0.3.20"
 	},
 	"devDependencies": {
-		"@types/jest": "^29.4.4",
+		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
 		"cross-env": "^7.0.3",
-		"typescript": "5.4.5"
+		"typescript": "5.5.4"
 	},
 	"keywords": [
 		"api",

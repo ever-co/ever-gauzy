@@ -2,7 +2,7 @@
 // that licensed under the MIT License and Copyright (c) 2017 akveo.com.
 
 import { APP_BASE_HREF } from '@angular/common';
-import { HttpClientModule, HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ExtraOptions, Router, RouterModule } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -117,91 +117,91 @@ const FEATURE_MODULES = [
 
 @NgModule({
 	declarations: [AppComponent],
+    bootstrap: [AppComponent],
 	imports: [
 		BrowserModule,
-		BrowserAnimationsModule,
-		HttpClientModule,
-		RouterModule.forRoot(appRoutes, config),
-		...NB_MODULES,
-		...FEATURE_MODULES,
-		...THIRD_PARTY_MODULES
+        BrowserAnimationsModule,
+        RouterModule.forRoot(appRoutes, config),
+        ...NB_MODULES,
+        ...FEATURE_MODULES,
+        ...THIRD_PARTY_MODULES
 	],
-	bootstrap: [AppComponent],
 	providers: [
-		{
-			provide: Sentry.TraceService,
-			deps: [Router]
-		},
-		{ provide: APP_BASE_HREF, useValue: '/' },
-		{
-			provide: ErrorHandler,
-			useClass: SentryErrorHandler
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: APIInterceptor,
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: HubstaffTokenInterceptor,
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: TokenInterceptor,
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: LanguageInterceptor,
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: TenantInterceptor,
-			multi: true
-		},
-		ServerConnectionService,
-		{
-			provide: APP_INITIALIZER,
-			useFactory: serverConnectionFactory,
-			deps: [ServerConnectionService, Store, Router],
-			multi: true
-		},
-		GoogleMapsLoaderService,
-		{
-			provide: APP_INITIALIZER,
-			useFactory: googleMapsLoaderFactory,
-			deps: [GoogleMapsLoaderService],
-			multi: true
-		},
-		FeatureService,
-		{
-			provide: APP_INITIALIZER,
-			useFactory: featureToggleLoaderFactory,
-			deps: [FeatureService, Store],
-			multi: true
-		},
-		AppInitService,
-		{
-			provide: APP_INITIALIZER,
-			useFactory: initializeApp,
-			deps: [AppInitService],
-			multi: true
-		},
-		{
-			provide: ErrorHandler,
-			useClass: SentryErrorHandler
-		},
-		AppModuleGuard,
-		ColorPickerService,
-		CookieService,
-		{
-			provide: GAUZY_ENV,
-			useValue: environment
-		}
-	]
+        {
+            provide: Sentry.TraceService,
+            deps: [Router]
+        },
+        { provide: APP_BASE_HREF, useValue: '/' },
+        {
+            provide: ErrorHandler,
+            useClass: SentryErrorHandler
+        },
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: APIInterceptor,
+            multi: true
+        },
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: HubstaffTokenInterceptor,
+            multi: true
+        },
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: TokenInterceptor,
+            multi: true
+        },
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: LanguageInterceptor,
+            multi: true
+        },
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: TenantInterceptor,
+            multi: true
+        },
+        ServerConnectionService,
+        {
+            provide: APP_INITIALIZER,
+            useFactory: serverConnectionFactory,
+            deps: [ServerConnectionService, Store, Router],
+            multi: true
+        },
+        GoogleMapsLoaderService,
+        {
+            provide: APP_INITIALIZER,
+            useFactory: googleMapsLoaderFactory,
+            deps: [GoogleMapsLoaderService],
+            multi: true
+        },
+        FeatureService,
+        {
+            provide: APP_INITIALIZER,
+            useFactory: featureToggleLoaderFactory,
+            deps: [FeatureService, Store],
+            multi: true
+        },
+        AppInitService,
+        {
+            provide: APP_INITIALIZER,
+            useFactory: initializeApp,
+            deps: [AppInitService],
+            multi: true
+        },
+        {
+            provide: ErrorHandler,
+            useClass: SentryErrorHandler
+        },
+        AppModuleGuard,
+        ColorPickerService,
+        CookieService,
+        {
+            provide: GAUZY_ENV,
+            useValue: environment
+        },
+        provideHttpClient(withInterceptorsFromDi())
+    ]
 })
 export class AppModule {
 	/**

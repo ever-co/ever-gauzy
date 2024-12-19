@@ -3,12 +3,7 @@
  * Original code author: Harbir Chahal (https://github.com/harbirchahal)
  */
 import { Inject, Injectable, InjectionToken } from '@angular/core';
-import {
-	HttpRequest,
-	HttpHandler,
-	HttpEvent,
-	HttpInterceptor,
-} from '@angular/common/http';
+import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor } from '@angular/common/http';
 import { Observable, throwError, timeout } from 'rxjs';
 import { catchError } from "rxjs/operators";
 

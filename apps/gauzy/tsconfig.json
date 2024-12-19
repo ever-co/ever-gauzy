@@ -1,7 +1,6 @@
 {
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
-		"types": ["node", "jest", "google.maps"],
 		"target": "ES2022",
 		"module": "es2020",
 		"downlevelIteration": true,
