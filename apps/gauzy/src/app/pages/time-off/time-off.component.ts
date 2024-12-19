@@ -136,6 +136,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 				filter(() => this._isGridLayout),
 				tap(() => this.refreshPagination()),
 				tap(() => (this.timeOffs = [])),
+				tap(() => this.getTimeOffs()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -605,7 +606,9 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 	}
 
 	private async _loadGridLayoutData() {
-		if (this._isGridLayout) await this.sourceSmartTable.getElements();
+		if (this._isGridLayout) {
+			this.timeOffs=await this.sourceSmartTable.getElements()
+		};
 	}
 
 	private _createRecord() {
