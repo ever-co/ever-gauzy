@@ -31,7 +31,7 @@ import {
 } from './commands';
 import { RequestContext } from '../core/context';
 import { convertNativeParameters } from '../core/crud/pagination.helper';
-import { AuthRefreshGuard } from './../shared/guards';
+import { AuthRefreshGuard, ProxyPluginOriginGuard } from './../shared/guards';
 import { UseValidationPipe } from '../shared/pipes';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
 import { RegisterUserDTO, UserEmailDTO, UserLoginDTO, UserSigninWorkspaceDTO } from './../user/dto';
@@ -278,6 +278,20 @@ export class AuthController {
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<boolean | BadRequestException> {
 		return await this.authService.requestResetPassword(body, languageCode, origin);
+	}
+
+	/**
+	 * Validate existing user by mail.
+	 *
+	 * @param body - Email to be validate.
+	 * @returns
+	 */
+	@Post('/validate-by-email')
+	@Public()
+	@UseGuards(ProxyPluginOriginGuard)
+	@UseValidationPipe({ whitelist: true })
+	async validateUserByEmail(@Body() body: UserEmailDTO): Promise<boolean | BadRequestException> {
+		return await this.userService.checkIfExistsEmail(body.email);
 	}
 
 	/**
