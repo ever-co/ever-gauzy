@@ -1,4 +1,3 @@
-/* eslint-disable */
 export default {
 	displayName: 'plugin-integration-github-ui',
 	preset: '../../../jest.preset.js',

@@ -22,7 +22,8 @@
             "versionMismatch": false
         },
         "packageManager": "yarn",
-        "analytics": false
+        "analytics": false,
+        "defaultCollection": "@nstudio/xplat"
     },
     "generators": {
         "@nx/angular": {
