@@ -165,6 +165,7 @@ export * from '../../candidate/candidate.subscriber';
 export * from '../../custom-smtp/custom-smtp.subscriber';
 export * from '../../email-reset/email-reset.subscriber';
 export * from '../../email-template/email-template.subscriber';
+export * from '../../employee-setting/employee-setting.subscriber';
 export * from '../../employee/employee.subscriber';
 export * from '../../export-import/import-history/import-history.subscriber';
 export * from '../../feature/feature.subscriber';
