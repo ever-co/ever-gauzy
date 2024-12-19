@@ -607,7 +607,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 
 	private async _loadGridLayoutData() {
 		if (this._isGridLayout) {
-			this.timeOffs=await this.sourceSmartTable.getElements()
+			this.timeOffs = await this.sourceSmartTable.getElements()
 		};
 	}
 
