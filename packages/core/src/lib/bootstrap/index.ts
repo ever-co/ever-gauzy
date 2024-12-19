@@ -476,7 +476,6 @@ async function preBootstrapRegisterSubscribers(
 export function getMigrationsConfig() {
 	// Determine if running from dist or source
 	const isDist = __dirname.includes('dist');
-	console.log('Migration process.env.NODE_ENV: ->', process.env.NODE_ENV);
 	console.log('Migration isDist: ->', isDist);
 	console.log('Migration process.cwd(): ->', process.cwd());
 	console.log('Migration __dirname: ->', __dirname);
