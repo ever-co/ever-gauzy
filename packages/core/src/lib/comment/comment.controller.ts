@@ -14,7 +14,7 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
-import { IComment, ICommentUpdateInput, ID, IPagination } from '@gauzy/contracts';
+import { IComment, ID, IPagination } from '@gauzy/contracts';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { CrudController, OptionParams, PaginationParams } from './../core/crud';
@@ -95,10 +95,7 @@ export class CommentController extends CrudController<Comment> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	@UseValidationPipe({ whitelist: true })
-	async update(
-		@Param('id', UUIDValidationPipe) id: ID,
-		@Body() entity: UpdateCommentDTO
-	): Promise<ICommentUpdateInput> {
+	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateCommentDTO): Promise<IComment> {
 		return await this.commandBus.execute(new CommentUpdateCommand(id, entity));
 	}
 

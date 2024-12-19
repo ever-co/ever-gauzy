@@ -1,58 +1,54 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { EntityRepositoryType } from '@mikro-orm/core';
 import { RelationId } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
-import {
-	IsNotEmpty,
-	IsString,
-	IsNumber,
-	Min,
-	Max,
-	IsEnum
-} from 'class-validator';
-import { IEmployeeSetting, CurrenciesEnum, IEmployee } from '@gauzy/contracts';
-import {
-	Employee,
-	TenantOrganizationBaseEntity
-} from '../core/entities/internal';
+import { IsNotEmpty, IsString, IsEnum, IsOptional, IsUUID } from 'class-validator';
+import { IEmployeeSetting, IEmployee, EmployeeSettingTypeEnum, ID, BaseEntityEnum, JsonData } from '@gauzy/contracts';
+import { isMySQL, isPostgres } from '@gauzy/config';
+import { Employee, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmEmployeeSettingRepository } from './repository/mikro-orm-employee-setting.repository';
+import { EmployeeSettingTypeTransformerPipe } from '../shared/pipes';
 
 @MultiORMEntity('employee_setting', { mikroOrmRepository: () => MikroOrmEmployeeSettingRepository })
 export class EmployeeSetting extends TenantOrganizationBaseEntity implements IEmployeeSetting {
+	[EntityRepositoryType]?: MikroOrmEmployeeSettingRepository;
 
-	@ApiProperty({ type: () => Number, minimum: 1, maximum: 12 })
-	@IsNumber()
-	@IsNotEmpty()
-	@Min(1)
-	@Max(12)
-	@MultiORMColumn()
-	month: number;
-
-	@ApiProperty({ type: () => Number, minimum: 1 })
-	@IsNumber()
-	@IsNotEmpty()
-	@Min(0)
-	@MultiORMColumn()
-	year: number;
-
-	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
+	@ApiPropertyOptional({ enum: EmployeeSettingTypeEnum })
+	@IsEnum(EmployeeSettingTypeEnum)
+	@IsOptional()
 	@ColumnIndex()
-	@MultiORMColumn()
-	settingType: string;
+	@MultiORMColumn({
+		type: 'int',
+		nullable: true,
+		default: 0,
+		transformer: new EmployeeSettingTypeTransformerPipe()
+	})
+	settingType?: EmployeeSettingTypeEnum;
 
-	@ApiProperty({ type: () => Number })
-	@IsNumber()
-	@IsNotEmpty()
-	@MultiORMColumn()
-	value: number;
-
-	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
-	@IsEnum(CurrenciesEnum)
-	@IsNotEmpty()
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@ColumnIndex()
-	@MultiORMColumn()
-	currency: string;
+	@MultiORMColumn({ nullable: true })
+	entityId?: ID;
+
+	@ApiPropertyOptional({ type: () => String, enum: BaseEntityEnum })
+	@IsOptional()
+	@IsEnum(BaseEntityEnum)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true })
+	entity?: BaseEntityEnum;
+
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	data?: JsonData;
+
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	defaultData?: JsonData;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -71,5 +67,5 @@ export class EmployeeSetting extends TenantOrganizationBaseEntity implements IEm
 	@IsNotEmpty()
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	employeeId: string;
+	employeeId: ID;
 }
