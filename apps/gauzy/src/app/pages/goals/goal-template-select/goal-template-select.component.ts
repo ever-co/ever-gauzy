@@ -210,7 +210,7 @@ export class GoalTemplateSelectComponent extends TranslationBaseComponent implem
 					this.closeDialog('done');
 				}
 			} catch (error) {
-				this.toastrService.error(this.getTranslation('TOASTR.MESSAGE.ERROR_OCCURED'));
+				this.toastrService.error(error.message);
 			}
 		}
 	}
