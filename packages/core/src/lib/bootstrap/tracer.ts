@@ -165,7 +165,7 @@ if (process.env.OTEL_ENABLED === 'true') {
 
 		traceExporter = new ZipkinExporter(exporterOptions);
 
-		console.log('Tracing Enabled with Zipkin runnung on URL: ' + url);
+		console.log('Tracing Enabled with Zipkin running on URL: ' + url);
 	}
 
 	console.log('Tracing URL: ' + url);
@@ -184,7 +184,7 @@ if (process.env.OTEL_ENABLED === 'true') {
 
 	if (isAuto) {
 		const autoInst = getNodeAutoInstrumentations({
-			// we recommend disabling fs autoinstrumentation since it can be noisy
+			// we recommend disabling fs autoInstrumentation since it can be noisy
 			// and expensive during startup
 			'@opentelemetry/instrumentation-fs': {
 				enabled: false

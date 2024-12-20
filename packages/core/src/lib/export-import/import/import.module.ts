@@ -7,7 +7,7 @@ import { getConfig } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { ImportController } from './import.controller';
 import { ImportService } from './import.service';
-import { corentities } from '../../core/entities';
+import { coreEntities } from '../../core/entities';
 import { CommandHandlers } from './commands/handlers';
 import { ImportRecordModule } from '../import-record';
 import { ImportHistoryModule } from '../import-history';
@@ -24,11 +24,11 @@ import { UserModule } from '../../user/user.module';
 			}
 		]),
 		TypeOrmModule.forFeature([
-			...corentities,
+			...coreEntities,
 			...getEntitiesFromPlugins(getConfig().plugins)
 		]),
 		MikroOrmModule.forFeature([
-			...corentities,
+			...coreEntities,
 			...getEntitiesFromPlugins(getConfig().plugins)
 		]),
 		RolePermissionModule,

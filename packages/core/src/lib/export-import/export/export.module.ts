@@ -5,7 +5,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { getConfig } from '@gauzy/config';
-import { corentities } from '../../core/entities';
+import { coreEntities } from '../../core/entities';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { ExportController } from './export.controller';
 import { ExportService } from './export.service';
@@ -16,11 +16,11 @@ import { ExportService } from './export.service';
 			{ path: '/export', module: ExportModule }
 		]),
 		TypeOrmModule.forFeature([
-			...corentities,
+			...coreEntities,
 			...getEntitiesFromPlugins(getConfig().plugins)
 		]),
 		MikroOrmModule.forFeature([
-			...corentities,
+			...coreEntities,
 			...getEntitiesFromPlugins(getConfig().plugins)
 		]),
 		RolePermissionModule,

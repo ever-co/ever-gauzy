@@ -152,7 +152,7 @@ import {
 	WarehouseProductVariant
 } from './internal';
 
-export const corentities = [
+export const coreEntities = [
 	AccountingTemplate,
 	Activity,
 	ActivityLog,

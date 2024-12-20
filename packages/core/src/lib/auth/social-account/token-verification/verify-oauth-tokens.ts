@@ -3,7 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 
 export async function verifyGithubToken(httpService: HttpService, token: string) {
-	const [userResponse, emailsresponse] = await Promise.all([
+	const [userResponse, emailsResponse] = await Promise.all([
 		firstValueFrom(
 			httpService.get('https://api.github.com/user', {
 				headers: {
@@ -19,7 +19,7 @@ export async function verifyGithubToken(httpService: HttpService, token: string)
 			})
 		)
 	]);
-	const email = emailsresponse.data.find((email: any) => email.primary).email;
+	const email = emailsResponse.data.find((email: any) => email.primary).email;
 	return {
 		...userResponse.data,
 		email,

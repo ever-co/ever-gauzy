@@ -8,16 +8,16 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { getConfig } from '@gauzy/config';
 import { FactoryResetService } from './factory-reset.service';
-import { corentities } from '../../core/entities';
+import { coreEntities } from '../../core/entities';
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([
-			...corentities,
+			...coreEntities,
 			...getEntitiesFromPlugins(getConfig().plugins)
 		]),
 		MikroOrmModule.forFeature([
-			...corentities,
+			...coreEntities,
 			...getEntitiesFromPlugins(getConfig().plugins)
 		]),
 	],

@@ -38,14 +38,14 @@ export class CandidateTechnologiesController extends CrudController<CandidateTec
 
 	/**
 	 * CREATE bulk candidate technologies
-	 * 
-	 * @param body 
-	 * @returns 
+	 *
+	 * @param body
+	 * @returns
 	 */
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Post('bulk')
-	async createBulkCandidateTechnoglies(
+	async createBulkCandidateTechnologies(
 		@Body() body: any
 	): Promise<ICandidateTechnologies[]> {
 		const { interviewId = null, technologies = [] } = body;
@@ -59,14 +59,14 @@ export class CandidateTechnologiesController extends CrudController<CandidateTec
 
 	/**
 	 * UPDATE bulk candidate technologies
-	 * 
-	 * @param body 
-	 * @returns 
+	 *
+	 * @param body
+	 * @returns
 	 */
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Put('bulk')
-	async updateBulkCandidateTechnoglies(
+	async updateBulkCandidateTechnologies(
 		@Body() body: ICandidateTechnologies[]
 	): Promise<ICandidateTechnologies[]> {
 		return await this.commandBus.execute(
@@ -76,9 +76,9 @@ export class CandidateTechnologiesController extends CrudController<CandidateTec
 
 	/**
 	 * GET candidate technology by feedback id
-	 * 
-	 * @param interviewId 
-	 * @returns 
+	 *
+	 * @param interviewId
+	 * @returns
 	 */
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
@@ -93,10 +93,10 @@ export class CandidateTechnologiesController extends CrudController<CandidateTec
 
 	/**
 	 * DELETE bulk candidate technology by id
-	 * 
-	 * @param id 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param data
+	 * @returns
 	 */
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
@@ -113,9 +113,9 @@ export class CandidateTechnologiesController extends CrudController<CandidateTec
 
 	/**
 	 * GET all candidate technologies
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all candidate technologies.' })
 	@ApiResponse({
@@ -142,9 +142,9 @@ export class CandidateTechnologiesController extends CrudController<CandidateTec
 
 	/**
 	 * CREATE candidate technologies
-	 * 
-	 * @param body 
-	 * @returns 
+	 *
+	 * @param body
+	 * @returns
 	 */
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
@@ -157,9 +157,9 @@ export class CandidateTechnologiesController extends CrudController<CandidateTec
 
 	/**
 	 * DELETE candidate technologies by id
-	 * 
-	 * @param id 
-	 * @returns 
+	 *
+	 * @param id
+	 * @returns
 	 */
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)

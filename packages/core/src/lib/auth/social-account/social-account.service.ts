@@ -40,11 +40,11 @@ export class SocialAccountService extends TenantAwareCrudService<SocialAccount> 
 			const account = await this.findAccountByProvider(input);
 			const user = account?.user;
 			if (!user) {
-				throw new BadRequestException('The user with this accoubt details does not exists');
+				throw new BadRequestException('The user with this account details does not exists');
 			}
 			return user;
 		} catch (error) {
-			throw new BadRequestException('The user with this accoubt details does not exists');
+			throw new BadRequestException('The user with this account details does not exists');
 		}
 	}
 

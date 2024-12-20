@@ -46,7 +46,7 @@ import { EntitySubscriberInterface } from 'typeorm';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { getConfig, setConfig, environment as env } from '@gauzy/config';
 import { getEntitiesFromPlugins, getPluginConfigurations, getSubscribersFromPlugins } from '@gauzy/plugin';
-import { corentities } from '../core/entities';
+import { coreEntities } from '../core/entities';
 import { coreSubscribers } from '../core/entities/subscribers';
 import { AuthGuard } from '../shared/guards';
 import { SharedModule } from '../shared/shared.module';
@@ -399,7 +399,7 @@ async function preBootstrapPluginConfigurations(config: ApplicationPluginConfig)
 async function preBootstrapRegisterEntities(config: Partial<ApplicationPluginConfig>): Promise<Array<Type<any>>> {
 	try {
 		// Retrieve the list of core entities
-		const corentitiesList = corentities as Array<Type<any>>;
+		const coreEntitiesList = coreEntities as Array<Type<any>>;
 
 		// Get the list of entities from the plugin configuration
 		const pluginEntitiesList = getEntitiesFromPlugins(config.plugins);
@@ -409,18 +409,18 @@ async function preBootstrapRegisterEntities(config: Partial<ApplicationPluginCon
 			const entityName = pluginEntity.name;
 
 			// If a core entity has the same name as a plugin entity, throw a conflict exception
-			if (corentitiesList.some((entity) => entity.name === entityName)) {
+			if (coreEntitiesList.some((entity) => entity.name === entityName)) {
 				throw new ConflictException({
 					message: `Error: ${entityName} conflicts with default entities.`
 				});
 			}
 
 			// If no conflict, add the plugin entity to the core entity list
-			corentitiesList.push(pluginEntity);
+			coreEntitiesList.push(pluginEntity);
 		}
 
 		// Return the updated list of registered entities
-		return corentitiesList;
+		return coreEntitiesList;
 	} catch (error) {
 		// Log any errors and re-throw for further handling
 		console.error('Error registering entities:', error);
