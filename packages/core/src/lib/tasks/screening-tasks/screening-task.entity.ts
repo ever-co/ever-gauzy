@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
-import { IsDateString, IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { ID, IScreeningTask, ITask, IUser, ScreeningTaskStatusEnum } from '@gauzy/contracts';
 import { Task, TenantOrganizationBaseEntity, User } from '../../core/entities/internal';
 import {
@@ -18,7 +18,7 @@ import { MikroOrmScreeningTaskRepository } from './repository/mikro-orm-screenin
 export class ScreeningTask extends TenantOrganizationBaseEntity implements IScreeningTask {
 	[EntityRepositoryType]?: MikroOrmScreeningTaskRepository;
 
-	@ApiProperty({ type: () => String, enum: ScreeningTaskStatusEnum })
+	@ApiProperty({ enum: ScreeningTaskStatusEnum })
 	@IsNotEmpty()
 	@IsEnum(ScreeningTaskStatusEnum)
 	@ColumnIndex()
@@ -54,10 +54,11 @@ export class ScreeningTask extends TenantOrganizationBaseEntity implements IScre
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
+	@IsUUID()
 	@RelationId((it: ScreeningTask) => it.task)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	taskId: string;
+	taskId: ID;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -75,8 +76,6 @@ export class ScreeningTask extends TenantOrganizationBaseEntity implements IScre
 	@JoinColumn()
 	creator?: IUser;
 
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
 	@RelationId((it: ScreeningTask) => it.creator)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
