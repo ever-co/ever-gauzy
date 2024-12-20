@@ -1,14 +1,12 @@
 {
 	"name": "@gauzy/plugin-integration-github",
 	"version": "0.1.0",
-	"type": "commonjs",
 	"description": "Ever Gauzy Platform plugin for integration with Github APIs",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
-	"license": "AGPL-3.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ever-co/ever-gauzy"
@@ -17,37 +15,15 @@
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"homepage": "https://ever.co",
-	"keywords": [
-		"github",
-		"plugin",
-		"integration",
-		"Ever Gauzy",
-		"NestJS",
-		"typescript",
-		"API",
-		"automation",
-		"webhooks"
-	],
+	"license": "AGPL-3.0",
 	"private": true,
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"files": [
-		"dist"
-	],
-	"directories": {
-		"lib": "dist",
-		"test": "__test__"
-	},
-	"publishConfig": {
-		"access": "restricted"
-	},
+	"type": "commonjs",
+	"main": "./src/index.js",
+	"typings": "./src/index.d.ts",
 	"scripts": {
-		"test:e2e": "jest --config ./jest.config.ts",
-		"build": "rimraf dist && tsc -p tsconfig.lib.json",
-		"build:prod": "rimraf dist && tsc -p tsconfig.lib.prod.json"
-	},
-	"peerDependencies": {
-		"tslib": "^2.6.2"
+		"lib:build": "yarn nx build plugin-integration-github",
+		"lib:build:prod": "yarn nx build plugin-integration-github",
+		"lib:watch": "yarn nx build plugin-integration-github --watch"
 	},
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",
@@ -65,7 +41,7 @@
 		"@octokit/rest": "^20.0.2",
 		"cache-manager": "^5.3.2",
 		"@nestjs/swagger": "^7.3.0",
-		"chalk": "4.1.2",
+		"chalk": "^4.1.0",
 		"class-transformer": "^0.5.1",
 		"class-validator": "^0.14.0",
 		"express": "^4.18.2",
@@ -73,18 +49,29 @@
 		"octokit": "^3.1.2",
 		"pino-std-serializers": "^6.2.2",
 		"probot": "^12.3.3",
-		"rxjs": "^7.4.0",
+		"rxjs": "^7.8.0",
 		"smee-client": "^1.2.3",
+		"tslib": "^2.6.2",
 		"typeorm": "^0.3.20",
 		"underscore": "^1.13.3",
 		"uuid": "^8.3.0"
 	},
 	"devDependencies": {
-		"@types/jest": "^29.4.4",
+		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
-		"rimraf": "^3.0.2",
-		"typescript": "5.1.6"
+		"typescript": "5.5.4"
 	},
+	"keywords": [
+		"github",
+		"plugin",
+		"integration",
+		"Ever Gauzy",
+		"NestJS",
+		"typescript",
+		"API",
+		"automation",
+		"webhooks"
+	],
 	"engines": {
 		"node": ">=20.11.1",
 		"yarn": ">=1.22.19"

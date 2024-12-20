@@ -2,7 +2,11 @@
 	"name": "@gauzy/desktop",
 	"version": "0.1.0",
 	"description": "Ever Gauzy Desktop App",
-	"license": "AGPL-3.0",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
 	"homepage": "https://gauzy.co",
 	"repository": {
 		"type": "git",
@@ -11,13 +15,13 @@
 	"bugs": {
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
+	"license": "AGPL-3.0",
 	"private": true,
-	"author": {
-		"name": "Ever Co. LTD",
-		"email": "ever@ever.co",
-		"url": "https://ever.co"
+	"scripts": {
+		"build": "yarn nx build desktop --configuration=development",
+		"build:prod": "yarn nx build desktop --configuration=production",
+		"start": "yarn nx serve desktop"
 	},
-	"scripts": {},
 	"devDependencies": {
 		"@electron/rebuild": "^3.2.10",
 		"@types/moment-duration-format": "^2.2.3",
@@ -30,30 +34,27 @@
 		"terser-webpack-plugin": "^5.3.10"
 	},
 	"dependencies": {
-		"@angular/animations": "^16.2.12",
-		"@angular/cdk": "^16.2.12",
-		"@angular/common": "^16.2.12",
-		"@angular/core": "^16.2.12",
-		"@angular/forms": "^16.2.12",
-		"@angular/material": "^16.2.12",
-		"@angular/router": "^16.2.12",
+		"@angular/animations": "18.2.12",
+		"@angular/cdk": "18.2.14",
+		"@angular/common": "18.2.12",
+		"@angular/core": "18.2.12",
+		"@angular/forms": "18.2.12",
+		"@angular/material": "18.2.14",
+		"@angular/router": "18.2.12",
 		"@datorama/akita": "^7.1.1",
 		"@datorama/akita-ngdevtools": "^7.0.0",
 		"@electron/remote": "^2.0.8",
-		"@gauzy/contracts": "^0.1.0",
-		"@gauzy/desktop-ui-lib": "^0.1.0",
-		"@gauzy/ui-config": "^0.1.0",
 		"@grpc/grpc-js": "^1.6.7",
-		"@nebular/auth": "^12.0.0",
+		"@nebular/auth": "^14.0.2",
 		"@nebular/bootstrap": "^9.1.0-rc.6",
-		"@nebular/eva-icons": "^12.0.0",
-		"@nebular/security": "^12.0.0",
-		"@nebular/theme": "^12.0.0",
+		"@nebular/eva-icons": "^14.0.2",
+		"@nebular/security": "^14.0.2",
+		"@nebular/theme": "^14.0.2",
 		"@nestjs/typeorm": "^10.0.2",
-		"@ng-select/ng-select": "^11.2.0",
-		"@ngneat/until-destroy": "^9.2.0",
-		"@ngx-translate/core": "^15.0.0",
-		"@ngx-translate/http-loader": "^8.0.0",
+		"@ng-select/ng-select": "^13.9.0",
+		"@ngneat/until-destroy": "^10.0.0",
+		"@ngx-translate/core": "^16.0.3",
+		"@ngx-translate/http-loader": "^16.0.0",
 		"@sentry/angular-ivy": "^7.101.1",
 		"@sentry/electron": "^4.18.0",
 		"@sentry/node": "^7.101.1",
@@ -68,12 +69,11 @@
 		"electron-notarize": "^1.2.2",
 		"electron-store": "^8.1.0",
 		"electron-updater": "^6.1.7",
-		"electron-util": "^0.17.2",
-		"form-data": "^3.0.0",
+		"electron-util": "^0.18.1",
+		"form-data": "^4.0.1",
 		"knex": "^3.1.0",
 		"libsql": "^0.3.16",
 		"locutus": "^2.0.30",
-		"mac-screen-capture-permissions": "^2.1.0",
 		"moment": "^2.30.1",
 		"moment-duration-format": "^2.3.2",
 		"moment-range": "^4.0.2",
@@ -82,7 +82,7 @@
 		"node-static": "^0.7.11",
 		"pg": "^8.13.1",
 		"pg-query-stream": "^4.7.1",
-		"rxjs": "^7.4.0",
+		"rxjs": "^7.8.0",
 		"screenshot-desktop": "^1.15.0",
 		"sound-play": "1.1.0",
 		"squirrelly": "^8.0.8",
@@ -91,9 +91,15 @@
 		"undici": "^6.10.2",
 		"custom-electron-titlebar": "^4.2.8"
 	},
+	"keywords": [],
 	"optionalDependencies": {
 		"node-linux": "^0.1.12",
 		"node-mac": "^1.0.1",
 		"node-windows": "^1.0.0-beta.8"
-	}
+	},
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
 }

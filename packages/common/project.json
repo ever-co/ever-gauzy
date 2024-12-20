@@ -1,0 +1,44 @@
+{
+	"name": "common",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/common/src",
+	"projectType": "library",
+	"release": {
+		"version": {
+			"generatorOptions": {
+				"packageRoot": "dist/{projectRoot}",
+				"currentVersionResolver": "git-tag"
+			}
+		}
+	},
+	"tags": [],
+	"implicitDependencies": [],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "dist/packages/common",
+				"tsConfig": "packages/common/tsconfig.lib.json",
+				"packageJson": "packages/common/package.json",
+				"main": "packages/common/src/index.ts",
+				"assets": ["packages/common/*.md"]
+			}
+		},
+		"nx-release-publish": {
+			"options": {
+				"packageRoot": "dist/{projectRoot}"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/common/jest.config.ts"
+			}
+		}
+	}
+}

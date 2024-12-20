@@ -1,17 +1,26 @@
 {
-	"extends": "../../tsconfig.json",
-	"compilerOptions": {
-		"outDir": "../..",
-		"sourceMap": true,
-		"declaration": false,
-		"moduleResolution": "node",
-		"emitDecoratorMetadata": true,
-		"experimentalDecorators": true,
-		"esModuleInterop": true,
-		"target": "ES2022",
-		"typeRoots": ["../../node_modules/@types"],
-		"lib": ["es2020", "es2017", "es2016", "dom"]
-	},
-	"files": ["global.d.ts"],
-	"include": ["src/index.ts", "src/preload/"]
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "outDir": "../..",
+        "sourceMap": true,
+        "declaration": false,
+        "moduleResolution": "node",
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "esModuleInterop": true,
+        "target": "ES2022",
+        "lib": [
+            "es2020",
+            "es2017",
+            "es2016",
+            "dom"
+        ]
+    },
+    "files": [
+        "global.d.ts"
+    ],
+    "include": [
+        "src/index.ts",
+        "src/preload/*.ts"
+    ]
 }

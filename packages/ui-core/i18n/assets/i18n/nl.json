@@ -3685,6 +3685,9 @@
 				"ADD_AWARD": "Nieuwe award '{{ name }}' is toegevoegd",
 				"INVALID_AWARD_NAME_YEAR": "Controleer alstublieft de Naam en het Jaar voor de Award invoer.",
 				"REMOVE_AWARD": "Prijs '{{ name }}' is verwijderd."
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "De einddatum ({{ endDate }}) mag niet eerder zijn dan de startdatum ({{ startDate }})."
 			}
 		},
 		"ORGANIZATIONS": {
@@ -3708,7 +3711,9 @@
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "Werknemersniveau '{{ name }}' is toegevoegd",
 				"REMOVE_EMPLOYEE_LEVEL": "Medewerkersniveau '{{ name }}' is verwijderd",
-				"INVALID_EMPLOYEE_LEVEL": "Voeg alstublieft een functieniveau van medewerker toe."
+				"INVALID_EMPLOYEE_LEVEL": "Voeg alstublieft een functieniveau van medewerker toe.",
+				"ALREADY_EXISTS": "Dit werkniveau  bestaat al."
+
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "Leverancier '{{ name }}' is toegevoegd",
@@ -3726,12 +3731,15 @@
 				"ADD_POSITION": "Functie '{{ name }}' is toegevoegd",
 				"UPDATED_POSITION": "De positie '{{ name }}' is gewijzigd.",
 				"REMOVE_POSITION": "Positie '{{ name }}' is verwijderd",
-				"INVALID_POSITION_NAME": "Voeg alstublieft een functienaam toe."
+				"INVALID_POSITION_NAME": "Voeg alstublieft een functienaam toe.",
+				"ALREADY_EXISTS": "Deze functie  bestaat al."
+
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "Afdeling '{{ name }}' is opgeslagen",
 				"REMOVE_DEPARTMENT": "Afdeling '{{ name }}' is verwijderd",
-				"INVALID_DEPARTMENT_NAME": "Voeg alstublieft een afdelingsnaam toe"
+				"INVALID_DEPARTMENT_NAME": "Voeg alstublieft een afdelingsnaam toe",
+				"ALREADY_EXISTS": "Deze afdeling  bestaat al."
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "Nieuwe klant '{{ name }}' succesvol toegevoegd!",
@@ -3754,7 +3762,8 @@
 				"ADD_EMPLOYMENT_TYPE": "Type dienstverband '{{ name }}' is toegevoegd",
 				"UPDATE_EMPLOYMENT_TYPE": "Werkgelegenheidstype '{{ name }}' is gewijzigd",
 				"INVALID_EMPLOYMENT_TYPE": "Controleer alstublieft de naam voor het invoerveld 'Type dienstverband'",
-				"DELETE_EMPLOYMENT_TYPE": "Dienstverbandtype '{{ name }}' is verwijderd"
+				"DELETE_EMPLOYMENT_TYPE": "Dienstverbandtype '{{ name }}' is verwijderd",
+				"ALREADY_EXISTS": "Dit type werk bestaat al."
 			},
 			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
 				"ADD_RECURRING_EXPENSE": "Herhalende kosten werden toegevoegd voor `{{ name }}`.",

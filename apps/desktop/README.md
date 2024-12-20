@@ -1,46 +1,13 @@
-gauzy desktop with nstudio electron
+# Gauzy Desktop Application
 
-how to:
+Gauzy Desktop is a cross-platform application built with [nstudio/electron](https://github.com/nstudio/xplat) for seamless integration with Gauzy. This README provides setup, build, and uninstall instructions for macOS and Windows.
 
--   install dependencies
+---
 
-```bash
+## Prerequisites
 
-yarn install
+- [Node.js](https://nodejs.org/) (version 20 or later recommended)
+- [Yarn](https://yarnpkg.com/) (Package Manager)
+- [nstudio/electron](https://github.com/nstudio/xplat)
 
-```
-
-**build executable for mac**
-
-build desktop
-
-```bash
-yarn build:desktop
-```
-
-build execute app
-
-```bash
-build:desktop:mac:quick
-```
-
-**build execute app for windows**
-
-build desktop
-
-```bash
-yarn build:desktop
-```
-
-build execute app
-
-```bash
-build:desktop:windows:quick
-```
-
-uninstall gauzy desktop macOS
-
-```bash
-- delete app data
-$ rm -rf ~/Library/Application Support/gauzy-desktop
-```
+---

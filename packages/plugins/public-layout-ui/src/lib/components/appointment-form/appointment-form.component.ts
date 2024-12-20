@@ -28,10 +28,12 @@ export class AppointmentFormComponent extends TranslationBaseComponent implement
 	}
 
 	ngOnInit(): void {
-		this.selectedRange = {
-			start: history.state.dateStart,
-			end: history.state.dateEnd
-		};
+		this.route.queryParams.subscribe((params) => {
+			this.selectedRange = {
+				start: params.dateStart,
+				end: params.dateEnd
+			};
+		});
 
 		this.route.params
 			.pipe(

@@ -1,10 +1,13 @@
-export * from './default-configuration';
-export * from './database-helpers';
-export * from './database';
+/**
+ * Public API Surface of @gauzy/config
+ */
+export * from './lib/default-configuration';
+export * from './lib/database-helpers';
+export * from './lib/database';
 
-export * from './config-manager';
-export * from './config.module';
-export * from './config.service';
+export * from './lib/config-manager';
+export * from './lib/config.module';
+export * from './lib/config.service';
 
-export { environment, gauzyToggleFeatures } from './environments/environment';
-export * from './environments/ienvironment';
+export { environment, gauzyToggleFeatures } from './lib/environments/environment';
+export * from './lib/environments/ienvironment';

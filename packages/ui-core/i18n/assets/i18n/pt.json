@@ -3685,6 +3685,9 @@
 				"ADD_AWARD": "Novo prêmio '{{ name }}' foi adicionado.",
 				"INVALID_AWARD_NAME_YEAR": "Por favor, verifique o nome e o ano do prêmio inserido.",
 				"REMOVE_AWARD": "O prêmio '{{ name }}' foi removido."
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "A data de término ({{ endDate }}) não pode ser anterior à data de início ({{ startDate }})."
 			}
 		},
 		"ORGANIZATIONS": {
@@ -3708,7 +3711,9 @@
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "O nível do funcionário '{{ name }}' foi adicionado.",
 				"REMOVE_EMPLOYEE_LEVEL": "O Nível de Funcionário '{{ name }}' foi removido.",
-				"INVALID_EMPLOYEE_LEVEL": "Por favor, adicione um nível de funcionário."
+				"INVALID_EMPLOYEE_LEVEL": "Por favor, adicione um nível de funcionário.",
+				"ALREADY_EXISTS": "Este nível de funcionário já existe."
+
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "o vendedor '{{ name }}' foi adicionado.",
@@ -3726,12 +3731,15 @@
 				"ADD_POSITION": "A posição '{{ name }}' foi adicionada.",
 				"UPDATED_POSITION": "A posição '{{ name }}' foi alterada.",
 				"REMOVE_POSITION": "A posição '{{ name }}' foi removida.",
-				"INVALID_POSITION_NAME": "Por favor, adicione um nome de cargo."
+				"INVALID_POSITION_NAME": "Por favor, adicione um nome de cargo.",
+				"ALREADY_EXISTS": "Esta posição  já existe."
+
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "O departamento '{{ name }}' foi salvo.",
 				"REMOVE_DEPARTMENT": "Departamento '{{ name }}' foi removido.",
-				"INVALID_DEPARTMENT_NAME": "Por favor, adicione um nome de departamento."
+				"INVALID_DEPARTMENT_NAME": "Por favor, adicione um nome de departamento.",
+				"ALREADY_EXISTS": "Este departamento já existe."
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "Novo cliente '{{ name }}' adicionado com sucesso!",
@@ -3754,7 +3762,8 @@
 				"ADD_EMPLOYMENT_TYPE": "O tipo de emprego '{{ name }}' foi adicionado.",
 				"UPDATE_EMPLOYMENT_TYPE": "O tipo de emprego '{{ name }}' foi alterado.",
 				"INVALID_EMPLOYMENT_TYPE": "Por favor, verifique o nome para a entrada do tipo de emprego.",
-				"DELETE_EMPLOYMENT_TYPE": "O tipo de emprego '{{ name }}' foi removido."
+				"DELETE_EMPLOYMENT_TYPE": "O tipo de emprego '{{ name }}' foi removido.",
+				"ALREADY_EXISTS": "Este tipo de emprego já existe."
 			},
 			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
 				"ADD_RECURRING_EXPENSE": "A despesa recorrente foi adicionada para `{{ name }}`.",

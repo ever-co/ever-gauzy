@@ -1,0 +1,78 @@
+{
+	"name": "@gauzy/desktop-lib",
+	"version": "0.1.0",
+	"description": "Ever Gauzy Platform desktop libs",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"license": "AGPL-3.0",
+	"private": true,
+	"type": "commonjs",
+	"main": "./src/index.js",
+	"typings": "./src/index.d.ts",
+	"scripts": {
+		"lib:build": "yarn nx build desktop-lib",
+		"lib:build:prod": "yarn nx build desktop-lib",
+		"lib:watch": "yarn nx build desktop-lib --watch",
+		"knex": "./node_modules/.bin/knex --knexfile src/lib/offline/databases/knexfile.ts"
+	},
+	"dependencies": {
+		"@electron/remote": "^2.0.8",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/desktop-window": "^0.1.0",
+		"active-win": "^8.1.0",
+		"better-sqlite3": "9.6.0",
+		"electron-log": "^4.4.8",
+		"electron-store": "^8.1.0",
+		"electron-util": "^0.18.1",
+		"embedded-queue": "^0.0.11",
+		"express": "^4.18.2",
+		"form-data": "^4.0.1",
+		"http-proxy": "^1.18.1",
+		"knex": "^3.1.0",
+		"libsql": "^0.3.16",
+		"moment": "^2.30.1",
+		"moment-duration-format": "^2.3.2",
+		"moment-range": "^4.0.2",
+		"moment-timezone": "^0.5.45",
+		"mysql": "^2.18.1",
+		"node-notifier": "^8.0.0",
+		"screenshot-desktop": "^1.15.0",
+		"sound-play": "1.1.0",
+		"tar": "^7.4.3",
+		"tslib": "^2.6.2",
+		"underscore": "^1.13.3",
+		"undici": "^6.10.2",
+		"unzipper": "^0.12.1"
+	},
+	"devDependencies": {
+		"@types/node": "^20.14.9",
+		"@types/unzipper": "^0.10.9",
+		"electron": "^30.0.1"
+	},
+	"keywords": [
+		"electron",
+		"desktop",
+		"desktop-lib",
+		"ever-gauzy",
+		"typescript",
+		"sqlite",
+		"knex",
+		"embedded-queue",
+		"moment",
+		"offline-mode",
+		"active-window",
+		"file-management",
+		"enterprise",
+		"platform",
+		"open-source",
+		"agpl"
+	],
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
+}

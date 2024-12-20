@@ -3685,6 +3685,9 @@
 				"ADD_AWARD": "Nowa nagroda '{{ name }}' została dodana",
 				"INVALID_AWARD_NAME_YEAR": "Proszę sprawdzić wprowadzone imię, nazwisko oraz rok otrzymania nagrody",
 				"REMOVE_AWARD": "Nagroda '{{ name }}' została usunięta"
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "Data zakończenia ({{ endDate }}) nie może być wcześniejsza niż data rozpoczęcia ({{ startDate }})."
 			}
 		},
 		"ORGANIZATIONS": {
@@ -3708,7 +3711,9 @@
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "Poziom pracownika '{{ name }}' został dodany",
 				"REMOVE_EMPLOYEE_LEVEL": "Poziom pracownika '{{ name }}' został usunięty",
-				"INVALID_EMPLOYEE_LEVEL": "Proszę dodać poziom pracownika"
+				"INVALID_EMPLOYEE_LEVEL": "Proszę dodać poziom pracownika",
+				"ALREADY_EXISTS": "Poziom pracownika  już istnieje."
+
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "dostawca '{{ name }}' został dodany",
@@ -3726,12 +3731,15 @@
 				"ADD_POSITION": "Stanowisko '{{ name }}' zostało dodane",
 				"UPDATED_POSITION": "Stanowisko '{{ name }}' zostało zmienione",
 				"REMOVE_POSITION": "Stanowisko '{{ name }}' zostało usunięte",
-				"INVALID_POSITION_NAME": "Proszę dodać nazwę stanowiska"
+				"INVALID_POSITION_NAME": "Proszę dodać nazwę stanowiska",
+				"ALREADY_EXISTS": "Stanowisko  już istnieje."
+
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "Dział '{{ name }}' został zapisany",
 				"REMOVE_DEPARTMENT": "Dział '{{ name }}' został usunięty",
-				"INVALID_DEPARTMENT_NAME": "Proszę podać nazwę działu"
+				"INVALID_DEPARTMENT_NAME": "Proszę podać nazwę działu",
+				"ALREADY_EXISTS": "Dział  już istnieje."
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "Nowy klient '{{ name }}' został pomyślnie dodany!",
@@ -3754,7 +3762,8 @@
 				"ADD_EMPLOYMENT_TYPE": "Typ zatrudnienia '{{ name }}' został dodany",
 				"UPDATE_EMPLOYMENT_TYPE": "Zmieniono rodzaj zatrudnienia na '{{ name }}'",
 				"INVALID_EMPLOYMENT_TYPE": "Proszę sprawdzić nazwę wprowadzoną w polu Rodzaj zatrudnienia",
-				"DELETE_EMPLOYMENT_TYPE": "Typ zatrudnienia '{{ name }}' został usunięty"
+				"DELETE_EMPLOYMENT_TYPE": "Typ zatrudnienia '{{ name }}' został usunięty",
+				"ALREADY_EXISTS": "Ten typ zatrudnienia już istnieje."
 			},
 			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
 				"ADD_RECURRING_EXPENSE": "Powtarzający się wydatek został dodany dla `{{ name }}`",

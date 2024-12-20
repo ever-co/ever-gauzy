@@ -2,7 +2,7 @@
 	"restartable": "rs",
 	"ignore": [".git", "node_modules/", "dist/", "coverage/", "src/**/*.spec.ts"],
 	"watch": ["src"],
-	"exec": "yarn ts-node -r tsconfig-paths/register src/main.ts",
+	"exec": "yarn ts-node -r tsconfig-paths/register src/lib/main.ts",
 	"env": {
 		"NODE_ENV": "development"
 	},

@@ -7,7 +7,7 @@
 		"cacheDir": ".changelog",
 		"labels": {}
 	},
-	"packages": ["libs/*", "apps/*", "packages/*", "packages/plugins/*"],
+	"packages": ["apps/*", "packages/*", "packages/plugins/*"],
 	"useNx": true,
 	"useWorkspaces": true,
 	"command": {

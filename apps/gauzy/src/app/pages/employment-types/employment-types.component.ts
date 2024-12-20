@@ -14,7 +14,7 @@ import {
 import { takeUntil } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { OrganizationEmploymentTypesService, Store } from '@gauzy/ui-core/core';
-import { ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
+import { ComponentEnum, distinctUntilChange,validateUniqueString} from '@gauzy/ui-core/common';
 import { Subject, firstValueFrom, filter, debounceTime, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -205,8 +205,16 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 
 	private async addEmploymentType() {
 		if (!this.form.invalid) {
+			const name: string = this.form.get('name').value;
+			const existingNames = this.organizationEmploymentTypes.map((type) => type.name);
+
+			if (validateUniqueString(existingNames, name)) {
+				this.toastrService.error('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ALREADY_EXISTS', name);
+				return;
+			}
+
 			const newEmploymentType = {
-				name: this.form.get('name').value,
+				name,
 				organizationId: this.organization.id,
 				tenantId: this.organization.tenantId,
 				tags: this.tags
@@ -278,6 +286,15 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 	}
 
 	async editOrgEmpType(id: string, name: string) {
+
+		const existingNames = this.organizationEmploymentTypes
+        .filter((type) => type.id !== id)
+        .map((type) => type.name);
+
+    	if (validateUniqueString(existingNames, name)) {
+        	this.toastrService.error('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ALREADY_EXISTS',  name );
+        	return;
+    	}
 		const orgEmpTypeForEdit = {
 			name: name,
 			tags: this.tags
@@ -330,4 +347,5 @@ export class EmploymentTypesComponent extends PaginationFilterBaseComponent impl
 		this.selected.employmentType = orgEmpType;
 		this.selectedOrgEmpType = this.selected.employmentType;
 	}
+
 }

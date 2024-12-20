@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, forwardRef, OnInit } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IOrganizationTeam } from 'packages/contracts/dist';
+import { IOrganizationTeam } from '@gauzy/contracts';
 import { combineLatest, concatMap, filter, map, Observable, of, tap } from 'rxjs';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
 import { AbstractSelectorComponent } from '../../components/abstract/selector.abstract';

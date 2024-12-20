@@ -3698,6 +3698,9 @@
 				"ADD_AWARD": "New award '{{ name }}' was added",
 				"INVALID_AWARD_NAME_YEAR": "Please check the Name and Year for Award input",
 				"REMOVE_AWARD": "Award '{{ name }}' was removed"
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "תאריך הסיום ({{ endDate }}) לא יכול להיות מוקדם מתאריך ההתחלה ({{ startDate }})."
 			}
 		},
 		"ORGANIZATIONS": {
@@ -3721,7 +3724,10 @@
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "Employee Level '{{ name }}' was added",
 				"REMOVE_EMPLOYEE_LEVEL": "Employee Level '{{ name }}' was removed",
-				"INVALID_EMPLOYEE_LEVEL": "Please add an Employee Level"
+				"INVALID_EMPLOYEE_LEVEL": "Please add an Employee Level",
+				"ALREADY_EXISTS": "רמת העובד  כבר קיימת."
+
+
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "vendor '{{ name }}' was added",
@@ -3739,12 +3745,15 @@
 				"ADD_POSITION": "Position '{{ name }}' was added",
 				"UPDATED_POSITION": "Position '{{ name }}' was changed",
 				"REMOVE_POSITION": "Position '{{ name }}' was removed",
-				"INVALID_POSITION_NAME": "Please add a Position name"
+				"INVALID_POSITION_NAME": "Please add a Position name",
+				"ALREADY_EXISTS": "המשרה  כבר קיימת."
+
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "Department '{{ name }}' was saved",
 				"REMOVE_DEPARTMENT": "Department '{{ name }}' was removed",
-				"INVALID_DEPARTMENT_NAME": "Please add a Department name"
+				"INVALID_DEPARTMENT_NAME": "Please add a Department name",
+				"ALREADY_EXISTS": "המחלקה  כבר קיימת."
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "New client '{{ name }}' successfully added!",
@@ -3767,7 +3776,8 @@
 				"ADD_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was added",
 				"UPDATE_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was changed",
 				"INVALID_EMPLOYMENT_TYPE": "Please check the Name for Employment type input",
-				"DELETE_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was removed"
+				"DELETE_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was removed",
+				"ALREADY_EXISTS": "סוג התעסוקה הזה כבר קיים."
 			},
 			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
 				"ADD_RECURRING_EXPENSE": "Recurring expense was added for `{{ name }}`",

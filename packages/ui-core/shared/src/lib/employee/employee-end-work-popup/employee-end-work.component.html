@@ -2,20 +2,12 @@
 	<nb-card-header class="d-flex flex-column">
 		<span class="cancel"><i (click)="closeDialog()" class="fas fa-times"></i></span>
 		<h5 *ngIf="backToWork" class="title">
-			{{
-			employeeFullName.trim()
-				? employeeFullName
-				: ('POP_UPS.EMPLOYEE' | translate)
-			}}
+			{{ employeeFullName.trim() ? employeeFullName : ('POP_UPS.EMPLOYEE' | translate) }}
 			{{ 'POP_UPS.BACK_TO_WORK' | translate }}
 		</h5>
 		<h5 *ngIf="!backToWork" class="title">
 			{{ 'POP_UPS.END_WORK' | translate }}
-			{{
-			employeeFullName.trim()
-				? employeeFullName
-				: ('POP_UPS.EMPLOYEE' | translate)
-			}}
+			{{ employeeFullName.trim() ? employeeFullName : ('POP_UPS.EMPLOYEE' | translate) }}
 		</h5>
 	</nb-card-header>
 	<nb-card-body *ngIf="!backToWork">
@@ -29,6 +21,9 @@
 					placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
 				/>
 				<nb-datepicker #datepicker></nb-datepicker>
+				<div *ngIf="errorMessage" class="error-text">
+					{{ errorMessage }}
+				</div>
 			</div>
 		</div>
 	</nb-card-body>
@@ -37,12 +32,7 @@
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button status="success" (click)="endWork()" nbButton>
-			{{
-				(backToWork
-					? 'EMPLOYEES_PAGE.BACK_TO_WORK'
-					: 'EMPLOYEES_PAGE.END_WORK'
-				) | translate
-			}}
+			{{ (backToWork ? 'EMPLOYEES_PAGE.BACK_TO_WORK' : 'EMPLOYEES_PAGE.END_WORK') | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>
