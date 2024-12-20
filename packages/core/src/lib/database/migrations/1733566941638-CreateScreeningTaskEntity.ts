@@ -231,20 +231,38 @@ export class CreateScreeningTaskEntity1733566941638 implements MigrationInterfac
     }
 
 	/**
-	 * MySQL Up Migration
-	 *
-	 * @param queryRunner
-	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+     * MySQL Up Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`CREATE TABLE \`screening_task\` (\`deletedAt\` datetime(6) NULL, \`id\` varchar(36) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`status\` varchar(255) NOT NULL, \`onHoldUntil\` datetime NULL, \`taskId\` varchar(255) NOT NULL, \`creatorId\` varchar(255) NULL, INDEX \`IDX_7302b47755509285f3a3cadfb2\` (\`isActive\`), INDEX \`IDX_883f6cb113b97044ecfc1007f1\` (\`isArchived\`), INDEX \`IDX_1a12e2142255ff971543d67909\` (\`tenantId\`), INDEX \`IDX_5ec254a71f5c139937772d6b5f\` (\`organizationId\`), INDEX \`IDX_67c4061374b0972628f99e7eff\` (\`status\`), INDEX \`IDX_4f389fca5d5348dfeb573edba8\` (\`taskId\`), INDEX \`IDX_b7864d01ba77b2d96448779925\` (\`creatorId\`), UNIQUE INDEX \`REL_4f389fca5d5348dfeb573edba8\` (\`taskId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+		await queryRunner.query(`ALTER TABLE \`task\` ADD \`isScreeningTask\` tinyint NULL DEFAULT 0`);
+		await queryRunner.query(`ALTER TABLE \`screening_task\` ADD CONSTRAINT \`FK_1a12e2142255ff971543d67909a\` FOREIGN KEY (\`tenantId\`) REFERENCES \`tenant\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+		await queryRunner.query(`ALTER TABLE \`screening_task\` ADD CONSTRAINT \`FK_5ec254a71f5c139937772d6b5fb\` FOREIGN KEY (\`organizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`);
+		await queryRunner.query(`ALTER TABLE \`screening_task\` ADD CONSTRAINT \`FK_4f389fca5d5348dfeb573edba8a\` FOREIGN KEY (\`taskId\`) REFERENCES \`task\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+		await queryRunner.query(`ALTER TABLE \`screening_task\` ADD CONSTRAINT \`FK_b7864d01ba77b2d964487799252\` FOREIGN KEY (\`creatorId\`) REFERENCES \`user\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+    }
 
-	}
-
-	/**
-	 * MySQL Down Migration
-	 *
-	 * @param queryRunner
-	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-
-	}
+    /**
+     * MySQL Down Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE \`screening_task\` DROP FOREIGN KEY \`FK_b7864d01ba77b2d964487799252\``);
+		await queryRunner.query(`ALTER TABLE \`screening_task\` DROP FOREIGN KEY \`FK_4f389fca5d5348dfeb573edba8a\``);
+		await queryRunner.query(`ALTER TABLE \`screening_task\` DROP FOREIGN KEY \`FK_5ec254a71f5c139937772d6b5fb\``);
+		await queryRunner.query(`ALTER TABLE \`screening_task\` DROP FOREIGN KEY \`FK_1a12e2142255ff971543d67909a\``);
+		await queryRunner.query(`ALTER TABLE \`task\` DROP COLUMN \`isScreeningTask\``);
+		await queryRunner.query(`DROP INDEX \`REL_4f389fca5d5348dfeb573edba8\` ON \`screening_task\``);
+		await queryRunner.query(`DROP INDEX \`IDX_b7864d01ba77b2d96448779925\` ON \`screening_task\``);
+		await queryRunner.query(`DROP INDEX \`IDX_4f389fca5d5348dfeb573edba8\` ON \`screening_task\``);
+		await queryRunner.query(`DROP INDEX \`IDX_67c4061374b0972628f99e7eff\` ON \`screening_task\``);
+		await queryRunner.query(`DROP INDEX \`IDX_5ec254a71f5c139937772d6b5f\` ON \`screening_task\``);
+		await queryRunner.query(`DROP INDEX \`IDX_1a12e2142255ff971543d67909\` ON \`screening_task\``);
+		await queryRunner.query(`DROP INDEX \`IDX_883f6cb113b97044ecfc1007f1\` ON \`screening_task\``);
+		await queryRunner.query(`DROP INDEX \`IDX_7302b47755509285f3a3cadfb2\` ON \`screening_task\``);
+		await queryRunner.query(`DROP TABLE \`screening_task\``);
+    }
 }
