@@ -155,12 +155,16 @@ export class GoalTemplateSelectComponent extends TranslationBaseComponent implem
 					: 'organizationId'
 			] = this.form.value.ownerId;
 
-			delete goal.owner;
-			delete goal.keyResults;
+			const { owner, keyResults, ...goalData } = goal;
+			const newGoal = {
+				...goalData,
+				organizationId,
+				tenantId
+			};
 
 			try {
 				// Create the goal
-				const goalCreated = await this.goalService.createGoal(goal);
+				const goalCreated = await this.goalService.createGoal(newGoal);
 				if (!goalCreated) {
 					this.toastrService.error(this.getTranslation('TOASTR.MESSAGE.GOAL_CREATION_FAILED'));
 					return;
@@ -173,33 +177,43 @@ export class GoalTemplateSelectComponent extends TranslationBaseComponent implem
 							...keyResult.kpi,
 							organization: this.orgId
 						};
-						const res = await this.goalSettingsService.createKPI(kpiData);
-						if (res) {
-							keyResult.kpiId = res.id;
+						try {
+							const res = await this.goalSettingsService.createKPI(kpiData);
+							keyResult.kpiId = res?.id;
+							this.toastrService.success(
+								this.getTranslation('TOASTR.MESSAGE.KPI_CREATED', { name: keyResult.name })
+							);
+						} catch (error) {
+							this.toastrService.warning(
+								this.getTranslation('TOASTR.MESSAGE.KPI_CREATION_FAILED', { name: keyResult.name })
+							);
 						}
 						return keyResult;
 					}
 					return keyResult;
 				});
 
+				const KEY_RESULT_DEFAULTS = {
+					description: ' ',
+					progress: 0,
+					status: 'none',
+					weight: KeyResultWeightEnum.DEFAULT
+				};
+
 				// Wait for all KPI promises to complete
 				const updatedKeyResults = await Promise.all(kpiPromises);
 
 				// Prepare Key Results for bulk creation
 				const keyResults = updatedKeyResults.map((keyResult) => {
-					delete keyResult.kpi;
-					delete keyResult.goalId;
+					const { kpi, goalId, ...keyResultData } = keyResult;
 					return {
-						...keyResult,
+						...keyResultData,
+						...KEY_RESULT_DEFAULTS,
 						goalId: goalCreated.id,
-						description: ' ',
-						progress: 0,
 						update: keyResult.initialValue,
 						ownerId: this.form.value.ownerId,
 						organizationId,
-						tenantId,
-						status: 'none',
-						weight: KeyResultWeightEnum.DEFAULT
+						tenantId
 					};
 				});
 
@@ -210,7 +224,12 @@ export class GoalTemplateSelectComponent extends TranslationBaseComponent implem
 					this.closeDialog('done');
 				}
 			} catch (error) {
-				this.toastrService.error(error.message);
+				console.error('Goal creation failed:', error);
+				this.toastrService.error(
+					this.getTranslation('TOASTR.MESSAGE.GOAL_CREATION_ERROR', {
+						error: error.message || 'Unknown error'
+					})
+				);
 			}
 		}
 	}
