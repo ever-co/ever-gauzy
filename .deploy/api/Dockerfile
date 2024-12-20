@@ -194,7 +194,7 @@ ARG NODE_ENV
 # Set Python interpreter for `node-gyp` to use
 ENV PYTHON /usr/bin/python
 
-RUN apk --update add bash && npm i -g npm \
+RUN apk --update add bash && npm i -g npm@9 \
 	&& apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
 	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
 
