@@ -254,8 +254,7 @@ COPY --chown=node:node packages/ui-auth/package.json ./packages/ui-auth/
 
 COPY --chown=node:node package.json yarn.lock ./
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile --production
-# RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
+RUN yarn install --network-timeout 1000000 --frozen-lockfile --production && yarn cache clean
 
 RUN rm -r node_modules/@angular
 
@@ -298,7 +297,7 @@ ENV IS_DOCKER=true
 ENV NX_NO_CLOUD=true
 
 RUN if [ "$NODE_ENV" = "production" ]; then \
-	yarn build:package:api:prod; \
+	yarn build:package:api:docker; \
 	else \
 	yarn build:package:api; \
 	fi
@@ -310,6 +309,7 @@ FROM node:20.11.1-alpine3.19 AS production
 WORKDIR /srv/gauzy
 
 COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint.compose.sh ./
+# COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules/ ./node_modules/
 COPY --chown=node:node --from=build /srv/gauzy/packages/ ./packages/
 
 # Copy static assets files which used for example in the seeds (e.g. images for features, reports, screenshots)
@@ -324,8 +324,6 @@ COPY --chown=node:node apps/api/public apps/api/public
 COPY --chown=node:node apps/api/src/assets/seed apps/api/public
 
 COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
-
-COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules/ ./node_modules/
 
 RUN npm install pm2@4.5.1 -g && \
 	mkdir /import && chown node:node /import && \

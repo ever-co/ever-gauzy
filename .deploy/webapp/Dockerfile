@@ -121,8 +121,7 @@ COPY --chown=node:node packages/ui-auth/package.json ./packages/ui-auth/
 
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile && yarn cache clean
-# RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
+RUN yarn install --network-timeout 1000000 --frozen-lockfile --production && yarn cache clean
 
 FROM node:20.11.1-alpine3.19 AS development
 
