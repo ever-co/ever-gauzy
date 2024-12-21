@@ -117,12 +117,12 @@
     lodash "^4.17.15"
     webpack-merge "^5.7.3"
 
-"@angular-devkit/architect@0.1002.0", "@angular-devkit/architect@0.1802.12", "@angular-devkit/architect@>=0.1800.0 < 0.1900.0", "@angular-devkit/architect@^0.1703.11":
-  version "0.1703.11"
-  resolved "https://registry.yarnpkg.com/@angular-devkit/architect/-/architect-0.1703.11.tgz#c335d8908875d855c030c3bbe98c1e59d4943305"
-  integrity sha512-YNasVZk4rYdcM6M+KRH8PUBhVyJfqzUYLpO98GgRokW+taIDgifckSlmfDZzQRbw45qiwei1IKCLqcpC8nM5Tw==
+"@angular-devkit/architect@0.1002.0", "@angular-devkit/architect@0.1802.12", "@angular-devkit/architect@>=0.1800.0 < 0.1900.0", "@angular-devkit/architect@^0.1802.12":
+  version "0.1802.12"
+  resolved "https://registry.yarnpkg.com/@angular-devkit/architect/-/architect-0.1802.12.tgz#096f8e9cf71f8848c6f0172c03f3f1135509e133"
+  integrity sha512-bepVb2/GtJppYKaeW8yTGE6egmoWZ7zagFDsmBdbF+BYp+HmeoPsclARcdryBPVq68zedyTRdvhWSUTbw1AYuw==
   dependencies:
-    "@angular-devkit/core" "17.3.11"
+    "@angular-devkit/core" "18.2.12"
     rxjs "7.8.1"
 
 "@angular-devkit/build-angular@^18.0.0", "@angular-devkit/build-angular@^18.2.9":
@@ -211,7 +211,7 @@
     "@angular-devkit/architect" "0.1802.12"
     rxjs "7.8.1"
 
-"@angular-devkit/core@16.0.1", "@angular-devkit/core@17.3.10", "@angular-devkit/core@17.3.11", "@angular-devkit/core@17.3.8", "@angular-devkit/core@18.2.12", "@angular-devkit/core@18.2.8", "@angular-devkit/core@18.2.9", "@angular-devkit/core@8.3.29", "@angular-devkit/core@^18.0.0", "@angular-devkit/core@^18.2.9", "@angular-devkit/core@^8.3.8":
+"@angular-devkit/core@16.0.1", "@angular-devkit/core@17.3.10", "@angular-devkit/core@17.3.8", "@angular-devkit/core@18.2.12", "@angular-devkit/core@18.2.8", "@angular-devkit/core@18.2.9", "@angular-devkit/core@8.3.29", "@angular-devkit/core@^18.0.0", "@angular-devkit/core@^18.2.9", "@angular-devkit/core@^8.3.8":
   version "18.2.12"
   resolved "https://registry.yarnpkg.com/@angular-devkit/core/-/core-18.2.12.tgz#fb514e9b3c9ea87ddaa1582d3947f1b094c9b387"
   integrity sha512-NtB6ypsaDyPE6/fqWOdfTmACs+yK5RqfH5tStEzWFeeDsIEDYKsJ06ypuRep7qTjYus5Rmttk0Ds+cFgz8JdUQ==
