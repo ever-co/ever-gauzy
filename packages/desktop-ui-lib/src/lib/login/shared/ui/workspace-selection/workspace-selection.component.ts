@@ -2,9 +2,10 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { IWorkspaceResponse } from '@gauzy/contracts';
 
 @Component({
-	selector: 'ngx-workspace-selection',
-	templateUrl: './workspace-selection.component.html',
-	styleUrls: ['./workspace-selection.component.scss']
+    selector: 'ngx-workspace-selection',
+    templateUrl: './workspace-selection.component.html',
+    styleUrls: ['./workspace-selection.component.scss'],
+    standalone: false
 })
 export class WorkspaceSelectionComponent {
 	selected: IWorkspaceResponse = null;

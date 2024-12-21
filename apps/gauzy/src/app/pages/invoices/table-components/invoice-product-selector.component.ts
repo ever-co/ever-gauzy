@@ -8,7 +8,7 @@ import { ProductService, Store, TranslatableService } from '@gauzy/ui-core/core'
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	template: `
+    template: `
 		<nb-select
 			fullWidth
 			[placeholder]="'INVOICES_PAGE.SELECT_PRODUCT' | translate"
@@ -20,7 +20,8 @@ import { ProductService, Store, TranslatableService } from '@gauzy/ui-core/core'
 			</nb-option>
 		</nb-select>
 	`,
-	styles: []
+    styles: [],
+    standalone: false
 })
 export class InvoiceProductsSelectorComponent extends DefaultEditor implements OnInit, OnDestroy {
 	public product: IProductTranslatable;

@@ -5,9 +5,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @Component({
-	selector: 'ga-add-icon',
-	templateUrl: 'add-icon.component.html',
-	styleUrls: ['add-icon.component.scss']
+    selector: 'ga-add-icon',
+    templateUrl: 'add-icon.component.html',
+    styleUrls: ['add-icon.component.scss'],
+    standalone: false
 })
 export class AddIconComponent extends TranslationBaseComponent implements OnDestroy {
 	private _ngDestroy$ = new Subject<void>();

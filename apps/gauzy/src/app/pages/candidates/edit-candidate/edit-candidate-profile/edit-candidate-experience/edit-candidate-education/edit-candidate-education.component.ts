@@ -11,9 +11,10 @@ import { DateViewComponent, PaginationFilterBaseComponent } from '@gauzy/ui-core
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-edit-candidate-education',
-	templateUrl: './edit-candidate-education.component.html',
-	styleUrls: ['./edit-candidate-education.component.scss']
+    selector: 'ga-edit-candidate-education',
+    templateUrl: './edit-candidate-education.component.html',
+    styleUrls: ['./edit-candidate-education.component.scss'],
+    standalone: false
 })
 export class EditCandidateEducationComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public selectedOrganization: IOrganization;

@@ -15,9 +15,10 @@ import {
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-tenant-onboarding',
-	templateUrl: './tenant-onboarding.component.html',
-	styleUrls: ['./tenant-onboarding.component.scss']
+    selector: 'ga-tenant-onboarding',
+    templateUrl: './tenant-onboarding.component.html',
+    styleUrls: ['./tenant-onboarding.component.scss'],
+    standalone: false
 })
 export class TenantOnboardingComponent implements OnInit, OnDestroy {
 	public loading: boolean = true;

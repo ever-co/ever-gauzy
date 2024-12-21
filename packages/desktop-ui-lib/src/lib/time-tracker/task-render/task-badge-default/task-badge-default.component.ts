@@ -3,9 +3,10 @@ import { TaskStatusEnum } from '@gauzy/contracts';
 import { NbComponentStatus } from '@nebular/theme';
 
 @Component({
-	selector: 'gauzy-task-badge-default',
-	templateUrl: './task-badge-default.component.html',
-	styleUrls: ['./task-badge-default.component.scss'],
+    selector: 'gauzy-task-badge-default',
+    templateUrl: './task-badge-default.component.html',
+    styleUrls: ['./task-badge-default.component.scss'],
+    standalone: false
 })
 export class TaskBadgeDefaultComponent implements OnInit {
 	@Input() taskBadge: string;

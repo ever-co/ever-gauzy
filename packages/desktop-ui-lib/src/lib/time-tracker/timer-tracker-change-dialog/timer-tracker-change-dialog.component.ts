@@ -19,10 +19,11 @@ import { DynamicSelectorValidation } from '../../shared/utils/validation/dynamic
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-timer-tracker-change-dialog',
-	templateUrl: './timer-tracker-change-dialog.component.html',
-	styleUrls: ['./timer-tracker-change-dialog.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'gauzy-timer-tracker-change-dialog',
+    templateUrl: './timer-tracker-change-dialog.component.html',
+    styleUrls: ['./timer-tracker-change-dialog.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class TimerTrackerChangeDialogComponent implements OnInit {
 	private lastSelectorState: ITimeTrackerFormState;

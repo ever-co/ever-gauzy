@@ -6,9 +6,10 @@ import { Store } from '../../services';
 import { UserOrganizationService } from './user-organization.service';
 
 @Component({
-	selector: 'ngx-desktop-timer-organization-selector',
-	templateUrl: './organization-selector.component.html',
-	styleUrls: ['./organization-selector.component.scss']
+    selector: 'ngx-desktop-timer-organization-selector',
+    templateUrl: './organization-selector.component.html',
+    styleUrls: ['./organization-selector.component.scss'],
+    standalone: false
 })
 export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 	public organizations: IOrganization[] = [];

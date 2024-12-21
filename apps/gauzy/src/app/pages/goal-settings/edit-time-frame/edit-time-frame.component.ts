@@ -22,9 +22,10 @@ import { GoalSettingsService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-edit-time-frame',
-	templateUrl: './edit-time-frame.component.html',
-	styleUrls: ['./edit-time-frame.component.scss']
+    selector: 'ga-edit-time-frame',
+    templateUrl: './edit-time-frame.component.html',
+    styleUrls: ['./edit-time-frame.component.scss'],
+    standalone: false
 })
 export class EditTimeFrameComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	timeFrameForm: UntypedFormGroup;

@@ -4,9 +4,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { PictureNameTagsComponent } from '../picture-name-tags/picture-name-tags.component';
 
 @Component({
-	selector: 'gauzy-organization-with-tags',
-	templateUrl: './organization-with-tags.component.html',
-	styleUrls: ['./organization-with-tags.component.scss']
+    selector: 'gauzy-organization-with-tags',
+    templateUrl: './organization-with-tags.component.html',
+    styleUrls: ['./organization-with-tags.component.scss'],
+    standalone: false
 })
 export class OrganizationWithTagsComponent extends PictureNameTagsComponent {
 	constructor(

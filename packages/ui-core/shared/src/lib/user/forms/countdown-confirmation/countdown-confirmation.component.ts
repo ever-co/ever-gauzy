@@ -3,8 +3,8 @@ import { NbDialogRef } from '@nebular/theme';
 import { CountdownConfig, CountdownEvent } from 'ngx-countdown';
 
 @Component({
-	selector: 'ga-countdown-confirmation',
-	template: `
+    selector: 'ga-countdown-confirmation',
+    template: `
 		<nb-card class="center">
 			<nb-card-header>
 				<h6>{{ 'FORM.CONFIRM' | translate }}</h6>
@@ -33,8 +33,8 @@ import { CountdownConfig, CountdownEvent } from 'ngx-countdown';
 			</nb-card-footer>
 		</nb-card>
 	`,
-	styles: [
-		`
+    styles: [
+        `
 			nb-card-body {
 				text-align: center;
 			}
@@ -44,7 +44,8 @@ import { CountdownConfig, CountdownEvent } from 'ngx-countdown';
 				width: 350px;
 			}
 		`
-	]
+    ],
+    standalone: false
 })
 export class CountdownConfirmationComponent {
 	recordType: string;

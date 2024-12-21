@@ -8,9 +8,10 @@ import { Store, ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-teams-mutation',
-	templateUrl: './teams-mutation.component.html',
-	styleUrls: ['./teams-mutation.component.scss']
+    selector: 'ga-teams-mutation',
+    templateUrl: './teams-mutation.component.html',
+    styleUrls: ['./teams-mutation.component.scss'],
+    standalone: false
 })
 export class TeamsMutationComponent implements OnInit {
 	@Input() employees: IEmployee[] = [];

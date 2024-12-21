@@ -1,7 +1,8 @@
 import { Directive, Input, ElementRef, AfterViewInit, OnChanges } from '@angular/core';
 
 @Directive({
-	selector: '[readMore]'
+    selector: '[readMore]',
+    standalone: false
 })
 export class ReadMoreDirective implements AfterViewInit, OnChanges {
 	@Input('readMore-length') private maxLength: number;

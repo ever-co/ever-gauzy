@@ -8,9 +8,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 type JSThemeVariable = string | NbJSThemeVariable | string[];
 
 @Component({
-	selector: 'ngx-proposal-pie-chart',
-	template: `<canvas baseChart [options]="options" class="echart"></canvas>`,
-	styleUrls: ['./proposal-pie-chart.component.scss']
+    selector: 'ngx-proposal-pie-chart',
+    template: `<canvas baseChart [options]="options" class="echart"></canvas>`,
+    styleUrls: ['./proposal-pie-chart.component.scss'],
+    standalone: false
 })
 export class ProposalPieChartComponent extends TranslationBaseComponent implements AfterViewInit, OnDestroy {
 	@Input() values: { name: string; value: number }[];

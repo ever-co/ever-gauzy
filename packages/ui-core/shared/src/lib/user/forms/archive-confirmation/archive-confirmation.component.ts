@@ -2,8 +2,8 @@ import { Component } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 
 @Component({
-	selector: 'ga-archive-confirmation',
-	template: `
+    selector: 'ga-archive-confirmation',
+    template: `
 		<nb-card>
 			<nb-card-header class="d-flex flex-column">
 				<span class="cancel"><i class="fas fa-times" (click)="close()"></i></span>
@@ -26,7 +26,8 @@ import { NbDialogRef } from '@nebular/theme';
 			</nb-card-footer>
 		</nb-card>
 	`,
-	styleUrls: ['../delete-confirmation/delete-confirmation.component.scss']
+    styleUrls: ['../delete-confirmation/delete-confirmation.component.scss'],
+    standalone: false
 })
 export class ArchiveConfirmationComponent {
 	recordType: string;

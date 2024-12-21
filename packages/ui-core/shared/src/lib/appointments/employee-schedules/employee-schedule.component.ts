@@ -14,8 +14,9 @@ export interface EmployeeSchedule {
 }
 
 @Component({
-	selector: 'ga-employee-schedules',
-	templateUrl: './employee-schedule.component.html'
+    selector: 'ga-employee-schedules',
+    templateUrl: './employee-schedule.component.html',
+    standalone: false
 })
 export class EmployeeScheduleComponent extends TranslationBaseComponent implements OnInit {
 	schedule: EmployeeSchedule;

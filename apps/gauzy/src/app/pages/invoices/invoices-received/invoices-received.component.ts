@@ -43,9 +43,10 @@ import { InvoiceDownloadMutationComponent } from '../invoice-download/invoice-do
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-invoices-received',
-	templateUrl: './invoices-received.component.html',
-	styleUrls: ['./invoices-received.component.scss']
+    selector: 'ga-invoices-received',
+    templateUrl: './invoices-received.component.html',
+    styleUrls: ['./invoices-received.component.scss'],
+    standalone: false
 })
 export class InvoicesReceivedComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public loading: boolean = false;

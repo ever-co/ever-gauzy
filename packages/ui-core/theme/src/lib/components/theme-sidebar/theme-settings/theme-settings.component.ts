@@ -5,9 +5,10 @@ import { tap } from 'rxjs/operators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-theme-settings',
-	styleUrls: ['./theme-settings.component.scss'],
-	templateUrl: './theme-settings.component.html'
+    selector: 'ngx-theme-settings',
+    styleUrls: ['./theme-settings.component.scss'],
+    templateUrl: './theme-settings.component.html',
+    standalone: false
 })
 export class ThemeSettingsComponent implements AfterViewChecked, OnDestroy {
 	private state: boolean;

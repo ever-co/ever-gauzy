@@ -3,9 +3,10 @@ import { NbComponentStatus } from '@nebular/theme';
 import { IRole, RolesEnum } from '@gauzy/contracts';
 
 @Component({
-	selector: 'gauzy-role',
-	templateUrl: './role.component.html',
-	styleUrls: ['./role.component.scss']
+    selector: 'gauzy-role',
+    templateUrl: './role.component.html',
+    styleUrls: ['./role.component.scss'],
+    standalone: false
 })
 export class RoleComponent implements OnInit {
 	@Input()

@@ -11,9 +11,10 @@ import { FormHelpers } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-expense-category-mutation',
-	templateUrl: './expense-category-mutation.component.html',
-	styleUrls: ['./expense-category-mutation.component.scss']
+    selector: 'ngx-expense-category-mutation',
+    templateUrl: './expense-category-mutation.component.html',
+    styleUrls: ['./expense-category-mutation.component.scss'],
+    standalone: false
 })
 export class ExpenseCategoryMutationComponent extends TranslationBaseComponent implements OnInit {
 	FormHelpers: typeof FormHelpers = FormHelpers;

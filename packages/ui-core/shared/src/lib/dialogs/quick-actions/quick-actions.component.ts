@@ -83,9 +83,10 @@ const quickActionsCollection = {
 };
 
 @Component({
-	selector: 'ngx-quick-actions',
-	templateUrl: './quick-actions.component.html',
-	styleUrls: ['./quick-actions.component.scss']
+    selector: 'ngx-quick-actions',
+    templateUrl: './quick-actions.component.html',
+    styleUrls: ['./quick-actions.component.scss'],
+    standalone: false
 })
 export class QuickActionsComponent extends TranslationBaseComponent implements OnInit {
 	@Input() items: NbMenuItem[] = [];

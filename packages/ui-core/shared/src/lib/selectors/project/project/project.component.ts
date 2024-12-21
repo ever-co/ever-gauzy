@@ -26,16 +26,17 @@ import { ALL_PROJECT_SELECTED } from './default-project';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-project-selector',
-	templateUrl: './project.component.html',
-	styleUrls: ['./project.component.scss'],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => ProjectSelectorComponent),
-			multi: true
-		}
-	]
+    selector: 'ga-project-selector',
+    templateUrl: './project.component.html',
+    styleUrls: ['./project.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ProjectSelectorComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewInit {
 	public projects: IOrganizationProject[] = [];

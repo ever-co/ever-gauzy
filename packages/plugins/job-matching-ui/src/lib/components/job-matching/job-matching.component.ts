@@ -32,9 +32,10 @@ import { I18nService, TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-job-matching',
-	templateUrl: './job-matching.component.html',
-	styleUrls: ['./job-matching.component.scss']
+    selector: 'ga-job-matching',
+    templateUrl: './job-matching.component.html',
+    styleUrls: ['./job-matching.component.scss'],
+    standalone: false
 })
 export class JobMatchingComponent extends TranslationBaseComponent implements OnInit {
 	public criterionForm = {

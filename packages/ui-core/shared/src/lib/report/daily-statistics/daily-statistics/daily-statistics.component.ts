@@ -18,9 +18,10 @@ import { BaseSelectorFilterComponent, TimeZoneService } from '../../../timesheet
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-daily-statistics',
-	templateUrl: './daily-statistics.component.html',
-	styleUrls: ['./daily-statistics.component.scss']
+    selector: 'ga-daily-statistics',
+    templateUrl: './daily-statistics.component.html',
+    styleUrls: ['./daily-statistics.component.scss'],
+    standalone: false
 })
 export class DailyStatisticsComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);

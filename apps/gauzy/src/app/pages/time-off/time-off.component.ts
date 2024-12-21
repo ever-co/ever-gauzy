@@ -43,9 +43,10 @@ import { ApprovalPolicyComponent } from '../approvals/table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-time-off-list',
-	templateUrl: './time-off.component.html',
-	styleUrls: ['./time-off.component.scss']
+    selector: 'ga-time-off-list',
+    templateUrl: './time-off.component.html',
+    styleUrls: ['./time-off.component.scss'],
+    standalone: false
 })
 export class TimeOffComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public settingsSmartTable: object;

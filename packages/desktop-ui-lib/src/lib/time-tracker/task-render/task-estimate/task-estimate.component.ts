@@ -7,9 +7,10 @@ import { TaskStatusEnum } from '@gauzy/contracts';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-task-estimate',
-	templateUrl: './task-estimate.component.html',
-	styleUrls: ['./task-estimate.component.scss'],
+    selector: 'gauzy-task-estimate',
+    templateUrl: './task-estimate.component.html',
+    styleUrls: ['./task-estimate.component.scss'],
+    standalone: false
 })
 export class TaskEstimateComponent {
 	public isEdit = false;

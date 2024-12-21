@@ -11,9 +11,10 @@ import {
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @Component({
-	selector: 'ga-recurring-expense-block',
-	templateUrl: './recurring-expense-block.component.html',
-	styleUrls: ['./recurring-expense-block.component.scss']
+    selector: 'ga-recurring-expense-block',
+    templateUrl: './recurring-expense-block.component.html',
+    styleUrls: ['./recurring-expense-block.component.scss'],
+    standalone: false
 })
 export class RecurringExpenseBlockComponent extends TranslationBaseComponent implements OnInit {
 	@Input()

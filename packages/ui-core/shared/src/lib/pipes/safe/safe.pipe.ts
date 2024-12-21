@@ -2,7 +2,8 @@ import { Pipe, PipeTransform } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 
 @Pipe({
-	name: 'safeUrl'
+    name: 'safeUrl',
+    standalone: false
 })
 export class SafeUrlPipe implements PipeTransform {
 	constructor(private readonly sanitizer: DomSanitizer) {}
@@ -19,7 +20,8 @@ export class SafeUrlPipe implements PipeTransform {
 }
 
 @Pipe({
-	name: 'safeHtml'
+    name: 'safeHtml',
+    standalone: false
 })
 export class SafeHtmlPipe implements PipeTransform {
 	constructor(private readonly sanitizer: DomSanitizer) {}

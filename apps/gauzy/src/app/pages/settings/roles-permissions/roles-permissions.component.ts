@@ -12,9 +12,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-org-roles-permissions',
-	templateUrl: './roles-permissions.component.html',
-	styleUrls: ['./roles-permissions.component.scss']
+    selector: 'ga-org-roles-permissions',
+    templateUrl: './roles-permissions.component.html',
+    styleUrls: ['./roles-permissions.component.scss'],
+    standalone: false
 })
 export class RolesPermissionsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	rolesEnum = RolesEnum;

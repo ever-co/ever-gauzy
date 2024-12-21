@@ -50,9 +50,10 @@ import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.co
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-tasks',
-	templateUrl: './task.component.html',
-	styleUrls: ['task.component.scss']
+    selector: 'ngx-tasks',
+    templateUrl: './task.component.html',
+    styleUrls: ['task.component.scss'],
+    standalone: false
 })
 export class TaskComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	private _refresh$: Subject<boolean> = new Subject();

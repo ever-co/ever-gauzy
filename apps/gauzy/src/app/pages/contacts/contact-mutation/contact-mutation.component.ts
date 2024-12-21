@@ -23,9 +23,10 @@ import { ErrorHandlingService, OrganizationProjectsService, Store, ToastrService
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-contact-mutation',
-	templateUrl: './contact-mutation.component.html',
-	styleUrls: ['./contact-mutation.component.scss']
+    selector: 'ga-contact-mutation',
+    templateUrl: './contact-mutation.component.html',
+    styleUrls: ['./contact-mutation.component.scss'],
+    standalone: false
 })
 export class ContactMutationComponent extends TranslationBaseComponent implements OnInit {
 	FormHelpers: typeof FormHelpers = FormHelpers;

@@ -2,9 +2,10 @@ import { Component, Input, OnInit } from '@angular/core';
 import { IEmployee, IOrganizationTeam, RolesEnum } from '@gauzy/contracts';
 
 @Component({
-	selector: 'gauzy-team-card',
-	templateUrl: './team-card.component.html',
-	styleUrls: ['./team-card.component.scss']
+    selector: 'gauzy-team-card',
+    templateUrl: './team-card.component.html',
+    styleUrls: ['./team-card.component.scss'],
+    standalone: false
 })
 export class TeamCardComponent implements OnInit {
 	constructor() {}

@@ -30,9 +30,10 @@ import { ckEditorConfig } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-public-page-employee-mutation',
-	templateUrl: './public-page-employee-mutation.component.html',
-	styleUrls: ['./public-page-employee-mutation.component.scss']
+    selector: 'ngx-public-page-employee-mutation',
+    templateUrl: './public-page-employee-mutation.component.html',
+    styleUrls: ['./public-page-employee-mutation.component.scss'],
+    standalone: false
 })
 export class PublicPageEmployeeMutationComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	employee: IEmployee;

@@ -4,9 +4,10 @@ import { OrganizationProjectsService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-all-team',
-	templateUrl: './all-team.component.html',
-	styleUrls: ['./all-team.component.scss']
+    selector: 'gauzy-all-team',
+    templateUrl: './all-team.component.html',
+    styleUrls: ['./all-team.component.scss'],
+    standalone: false
 })
 export class AllTeamComponent implements OnInit {
 	@Input()

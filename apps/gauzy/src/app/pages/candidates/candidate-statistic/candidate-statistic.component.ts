@@ -14,9 +14,10 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-candidate-statistic',
-	templateUrl: './candidate-statistic.component.html',
-	styleUrls: ['./candidate-statistic.component.scss']
+    selector: 'ga-candidate-statistic',
+    templateUrl: './candidate-statistic.component.html',
+    styleUrls: ['./candidate-statistic.component.scss'],
+    standalone: false
 })
 export class CandidateStatisticComponent implements OnInit, OnDestroy {
 	public organization$: Observable<IOrganization>;

@@ -1,8 +1,9 @@
 import { Component, Input } from '@angular/core';
 
 @Component({
-	templateUrl: './paid-icon.html',
-	styleUrls: ['./paid-icon.scss']
+    templateUrl: './paid-icon.html',
+    styleUrls: ['./paid-icon.scss'],
+    standalone: false
 })
 export class PaidIcon {
 	@Input()

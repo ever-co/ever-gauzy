@@ -27,9 +27,10 @@ import { CandidateInterviewInfoComponent, CandidateInterviewMutationComponent } 
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-interview-calendar',
-	templateUrl: './interview-calendar.component.html',
-	styleUrls: ['./interview-calendar.component.scss']
+    selector: 'ga-interview-calendar',
+    templateUrl: './interview-calendar.component.html',
+    styleUrls: ['./interview-calendar.component.scss'],
+    standalone: false
 })
 export class InterviewCalendarComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public calendarOptions: CalendarOptions = { events: [] };

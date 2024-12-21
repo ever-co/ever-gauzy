@@ -13,9 +13,10 @@ import { ckEditorConfig } from '@gauzy/ui-core/shared';
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-add-edit-proposal-template',
-	templateUrl: './add-edit-proposal-template.component.html',
-	styleUrls: ['./add-edit-proposal-template.component.scss']
+    selector: 'ga-add-edit-proposal-template',
+    templateUrl: './add-edit-proposal-template.component.html',
+    styleUrls: ['./add-edit-proposal-template.component.scss'],
+    standalone: false
 })
 export class AddEditProposalTemplateComponent extends TranslationBaseComponent implements OnInit {
 	public organization: IOrganization;

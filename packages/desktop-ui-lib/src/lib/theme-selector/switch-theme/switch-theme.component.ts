@@ -5,10 +5,11 @@ import { ElectronService } from '../../electron/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-switch-theme',
-	templateUrl: './switch-theme.component.html',
-	styleUrls: ['./switch-theme.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'gauzy-switch-theme',
+    templateUrl: './switch-theme.component.html',
+    styleUrls: ['./switch-theme.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class SwitchThemeComponent implements OnInit {
 	private _switch$ = new BehaviorSubject<boolean>(true);

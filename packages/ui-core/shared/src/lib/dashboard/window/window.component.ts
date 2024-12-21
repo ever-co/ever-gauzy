@@ -8,9 +8,10 @@ import { WindowService } from './window.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-window',
-	templateUrl: './window.component.html',
-	styleUrls: ['./window.component.scss']
+    selector: 'ga-window',
+    templateUrl: './window.component.html',
+    styleUrls: ['./window.component.scss'],
+    standalone: false
 })
 export class WindowComponent extends GuiDrag implements OnInit, AfterViewInit, OnDestroy {
 	private _windowDragEnded: Observable<any>;

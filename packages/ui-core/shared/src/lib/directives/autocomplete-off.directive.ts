@@ -2,7 +2,8 @@ import { Directive, ElementRef, NgZone, OnInit, Renderer2 } from '@angular/core'
 import { asapScheduler } from 'rxjs';
 
 @Directive({
-	selector: '[autocomplete-off]'
+    selector: '[autocomplete-off]',
+    standalone: false
 })
 /**
  * Alterates autocomplete="off" attribute on chrome because it's ignoring it in case of credentials, address or credit card data type.

@@ -15,8 +15,8 @@ import { CurrencyPositionPipe } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-employee-horizontal-bar-chart',
-	template: `
+    selector: 'ga-employee-horizontal-bar-chart',
+    template: `
 		<ng-template [ngIf]="employeeStatistics.length" [ngIfElse]="chartNotFoundTemplate">
 			<div class="chart">
 				<canvas baseChart [data]="data" [options]="chartOptions" [type]="chartType"></canvas>
@@ -31,8 +31,8 @@ import { CurrencyPositionPipe } from '@gauzy/ui-core/shared';
 			</div>
 		</ng-template>
 	`,
-	styles: [
-		`
+    styles: [
+        `
 			:host {
 				.chart {
 					width: 500px;
@@ -46,8 +46,9 @@ import { CurrencyPositionPipe } from '@gauzy/ui-core/shared';
 				}
 			}
 		`
-	],
-	providers: [CurrencyPipe, CurrencyPositionPipe]
+    ],
+    providers: [CurrencyPipe, CurrencyPositionPipe],
+    standalone: false
 })
 export class EmployeeHorizontalBarChartComponent
 	extends TranslationBaseComponent

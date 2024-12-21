@@ -10,16 +10,17 @@ import { TimeOffService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-time-off-policy-select',
-	templateUrl: './time-off-policy-select.component.html',
-	styleUrls: [],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => TimeOffPolicySelectComponent),
-			multi: true
-		}
-	]
+    selector: 'ga-time-off-policy-select',
+    templateUrl: './time-off-policy-select.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimeOffPolicySelectComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TimeOffPolicySelectComponent implements OnInit {
 	policies: ITimeOffPolicy[] = [];

@@ -6,9 +6,10 @@ import { NavMenuSectionItem } from '../../services/nav-builder/nav-builder-types
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-settings-nav-menu',
-	templateUrl: './settings-nav-menu.component.html',
-	styleUrls: ['./settings-nav-menu.component.scss']
+    selector: 'ga-settings-nav-menu',
+    templateUrl: './settings-nav-menu.component.html',
+    styleUrls: ['./settings-nav-menu.component.scss'],
+    standalone: false
 })
 export class SettingsNavMenuComponent extends BaseNavMenuComponent implements OnInit {
 	public settingsMenuConfig$: Observable<NavMenuSectionItem[]>;

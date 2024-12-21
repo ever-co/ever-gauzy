@@ -50,9 +50,10 @@ export enum SyncTabsEnum {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	styleUrls: ['./view.component.scss'],
-	templateUrl: './view.component.html',
-	providers: [TitleCasePipe]
+    styleUrls: ['./view.component.scss'],
+    templateUrl: './view.component.html',
+    providers: [TitleCasePipe],
+    standalone: false
 })
 export class GithubViewComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
 	public syncTabsEnum: typeof SyncTabsEnum = SyncTabsEnum;

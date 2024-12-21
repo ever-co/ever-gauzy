@@ -7,8 +7,9 @@ import { ServerConnectionService, Store } from '../services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	styleUrls: ['./server-down.page.scss'],
-	templateUrl: 'server-down.page.html'
+    styleUrls: ['./server-down.page.scss'],
+    templateUrl: 'server-down.page.html',
+    standalone: false
 })
 export class ServerDownPage implements OnInit, OnDestroy {
 	noInternetLogo: string;

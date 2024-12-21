@@ -12,10 +12,11 @@ import { SettingsDialogComponent } from '../settings-dialog/settings-dialog.comp
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-hubstaff',
-	templateUrl: './hubstaff.component.html',
-	styleUrls: ['./hubstaff.component.scss'],
-	providers: [TitleCasePipe]
+    selector: 'ngx-hubstaff',
+    templateUrl: './hubstaff.component.html',
+    styleUrls: ['./hubstaff.component.scss'],
+    providers: [TitleCasePipe],
+    standalone: false
 })
 export class HubstaffComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public settingsSmartTable: any;

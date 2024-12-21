@@ -3,9 +3,10 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { GAUZY_ENV } from '../../../../constants';
 
 @Component({
-	selector: 'gauzy-logo',
-	templateUrl: './logo.component.html',
-	styleUrls: ['./logo.component.scss']
+    selector: 'gauzy-logo',
+    templateUrl: './logo.component.html',
+    styleUrls: ['./logo.component.scss'],
+    standalone: false
 })
 export class LogoComponent {
 	constructor(

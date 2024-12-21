@@ -7,12 +7,13 @@ import { CompareDateValidator, EmployeeStore, Store } from '@gauzy/ui-core/core'
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-edit-employee-hiring',
-	templateUrl: './edit-employee-hiring.component.html',
-	styleUrls: [
-		'../../../../organizations/edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component.scss',
-		'./edit-employee-hiring.component.scss'
-	]
+    selector: 'ga-edit-employee-hiring',
+    templateUrl: './edit-employee-hiring.component.html',
+    styleUrls: [
+        '../../../../organizations/edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component.scss',
+        './edit-employee-hiring.component.scss'
+    ],
+    standalone: false
 })
 export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
 	selectedEmployee: IEmployee;

@@ -46,9 +46,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-interview-panel',
-	templateUrl: './interview-panel.component.html',
-	styleUrls: ['./interview-panel.component.scss']
+    selector: 'ga-interview-panel',
+    templateUrl: './interview-panel.component.html',
+    styleUrls: ['./interview-panel.component.scss'],
+    standalone: false
 })
 export class InterviewPanelComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	interviewList: ICandidateInterview[];

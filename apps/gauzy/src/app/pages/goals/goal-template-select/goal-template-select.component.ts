@@ -29,9 +29,10 @@ import { EditTimeFrameComponent } from '../../../pages/goal-settings/edit-time-f
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-goal-template-select',
-	templateUrl: './goal-template-select.component.html',
-	styleUrls: ['./goal-template-select.component.scss']
+    selector: 'ga-goal-template-select',
+    templateUrl: './goal-template-select.component.html',
+    styleUrls: ['./goal-template-select.component.scss'],
+    standalone: false
 })
 export class GoalTemplateSelectComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	goalTemplates: IGoalTemplate[];

@@ -27,9 +27,10 @@ import { SettingTitlesEnum } from '../integration-setting-card/integration-setti
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	styleUrls: ['./view.component.scss'],
-	templateUrl: './view.component.html',
-	providers: [TitleCasePipe]
+    styleUrls: ['./view.component.scss'],
+    templateUrl: './view.component.html',
+    providers: [TitleCasePipe],
+    standalone: false
 })
 export class IntegrationAIViewComponent extends TranslationBaseComponent implements OnInit {
 	public organization: IOrganization;

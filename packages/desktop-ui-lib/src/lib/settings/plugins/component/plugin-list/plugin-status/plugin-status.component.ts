@@ -1,9 +1,10 @@
 import { Component } from '@angular/core';
 
 @Component({
-	selector: 'ngx-plugin-status',
-	templateUrl: './plugin-status.component.html',
-	styleUrls: ['./plugin-status.component.scss']
+    selector: 'ngx-plugin-status',
+    templateUrl: './plugin-status.component.html',
+    styleUrls: ['./plugin-status.component.scss'],
+    standalone: false
 })
 export class PluginStatusComponent {
 	public rowData: any;

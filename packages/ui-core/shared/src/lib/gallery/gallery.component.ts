@@ -24,10 +24,11 @@ export const fadeInOutAnimation = trigger('fadeInOut', [
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-gallery',
-	templateUrl: './gallery.component.html',
-	styleUrls: ['./gallery.component.scss'],
-	animations: [fadeInOutAnimation]
+    selector: 'ngx-gallery',
+    templateUrl: './gallery.component.html',
+    styleUrls: ['./gallery.component.scss'],
+    animations: [fadeInOutAnimation],
+    standalone: false
 })
 export class GalleryComponent implements OnInit, OnDestroy {
 	public active_index: number;

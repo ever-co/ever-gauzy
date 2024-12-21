@@ -18,9 +18,10 @@ import { patterns } from '../../regex';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-profile',
-	templateUrl: './edit-profile-form.component.html',
-	styleUrls: ['./edit-profile-form.component.scss']
+    selector: 'ngx-profile',
+    templateUrl: './edit-profile-form.component.html',
+    styleUrls: ['./edit-profile-form.component.scss'],
+    standalone: false
 })
 export class EditProfileFormComponent implements OnInit, OnDestroy {
 	FormHelpers: typeof FormHelpers = FormHelpers;

@@ -5,9 +5,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { NbDialogRef } from '@nebular/theme';
 
 @Component({
-	selector: 'gauzy-task-detail',
-	templateUrl: './task-detail.component.html',
-	styleUrls: ['./task-detail.component.scss'],
+    selector: 'gauzy-task-detail',
+    templateUrl: './task-detail.component.html',
+    styleUrls: ['./task-detail.component.scss'],
+    standalone: false
 })
 export class TaskDetailComponent {
 	@Input()

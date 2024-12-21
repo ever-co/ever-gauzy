@@ -17,9 +17,10 @@ import { CandidateInterviewMutationComponent } from '../candidate-interview-muta
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-candidate-interview-info',
-	templateUrl: './candidate-interview-info.component.html',
-	styleUrls: ['./candidate-interview-info.component.scss']
+    selector: 'ga-candidate-interview-info',
+    templateUrl: './candidate-interview-info.component.html',
+    styleUrls: ['./candidate-interview-info.component.scss'],
+    standalone: false
 })
 export class CandidateInterviewInfoComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@Input() interviewId: any; //from calendar

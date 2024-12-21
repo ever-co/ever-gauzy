@@ -3,9 +3,10 @@ import { progressStatus } from '@gauzy/ui-core/common';
 import { IDailyActivity } from '@gauzy/contracts';
 
 @Component({
-	selector: 'ngx-activity-item',
-	templateUrl: './activity-item.component.html',
-	styleUrls: ['./activity-item.component.scss']
+    selector: 'ngx-activity-item',
+    templateUrl: './activity-item.component.html',
+    styleUrls: ['./activity-item.component.scss'],
+    standalone: false
 })
 export class ActivityItemComponent implements OnInit, OnDestroy {
 	childOpen: boolean = false; // Property to track if the child is open or not

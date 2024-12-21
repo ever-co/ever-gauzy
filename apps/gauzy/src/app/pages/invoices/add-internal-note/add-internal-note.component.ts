@@ -9,9 +9,10 @@ import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mu
 import { ToastrService } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ga-add-internal-note',
-	templateUrl: './add-internal-note.component.html',
-	styleUrls: ['./add-internal-note.component.scss']
+    selector: 'ga-add-internal-note',
+    templateUrl: './add-internal-note.component.html',
+    styleUrls: ['./add-internal-note.component.scss'],
+    standalone: false
 })
 export class AddInternalNoteComponent extends TranslationBaseComponent implements OnInit {
 	invoice: IInvoice;

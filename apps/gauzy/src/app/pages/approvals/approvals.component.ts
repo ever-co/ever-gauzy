@@ -33,9 +33,10 @@ import { ApprovalPolicyComponent } from './table-components/approval-policy/appr
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-approvals',
-	templateUrl: './approvals.component.html',
-	styleUrls: ['./approvals.component.scss']
+    selector: 'ngx-approvals',
+    templateUrl: './approvals.component.html',
+    styleUrls: ['./approvals.component.scss'],
+    standalone: false
 })
 export class ApprovalsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public settingsSmartTable: object;

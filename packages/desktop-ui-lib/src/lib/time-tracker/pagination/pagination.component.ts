@@ -14,9 +14,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-pagination',
-	templateUrl: './pagination.component.html',
-	styleUrls: ['./pagination.component.scss'],
+    selector: 'ga-pagination',
+    templateUrl: './pagination.component.html',
+    styleUrls: ['./pagination.component.scss'],
+    standalone: false
 })
 export class PaginationComponent implements OnChanges, OnDestroy {
 	private _source: LocalDataSource;

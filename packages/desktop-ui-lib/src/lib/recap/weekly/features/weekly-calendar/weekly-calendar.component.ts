@@ -4,10 +4,11 @@ import { WeeklyRecapService } from '../../+state/weekly.service';
 import { IDateRangePicker } from '../../../shared/features/date-range-picker/date-picker.interface';
 
 @Component({
-	selector: 'ngx-weekly-calendar',
-	templateUrl: './weekly-calendar.component.html',
-	styleUrls: ['./weekly-calendar.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-weekly-calendar',
+    templateUrl: './weekly-calendar.component.html',
+    styleUrls: ['./weekly-calendar.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class WeeklyCalendarComponent {
 	constructor(private readonly weeklyRecapService: WeeklyRecapService) {}

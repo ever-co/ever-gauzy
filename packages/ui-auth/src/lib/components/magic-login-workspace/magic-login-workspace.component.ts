@@ -9,9 +9,10 @@ import { AuthService, ErrorHandlingService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-magic-sign-in-workspace',
-	templateUrl: './magic-login-workspace.component.html',
-	styleUrls: ['./magic-login-workspace.component.scss']
+    selector: 'ngx-magic-sign-in-workspace',
+    templateUrl: './magic-login-workspace.component.html',
+    styleUrls: ['./magic-login-workspace.component.scss'],
+    standalone: false
 })
 export class NgxMagicSignInWorkspaceComponent implements OnInit {
 	public error: boolean = false;

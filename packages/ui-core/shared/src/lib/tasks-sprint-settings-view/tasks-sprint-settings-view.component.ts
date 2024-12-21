@@ -11,9 +11,10 @@ import { ItemActionType } from '../editable-grid/gauzy-editable-grid.component';
 
 @UntilDestroy()
 @Component({
-	selector: 'ngx-tasks-sprint-settings-view',
-	templateUrl: './tasks-sprint-settings-view.component.html',
-	styleUrls: ['./tasks-sprint-settings-view.component.scss']
+    selector: 'ngx-tasks-sprint-settings-view',
+    templateUrl: './tasks-sprint-settings-view.component.html',
+    styleUrls: ['./tasks-sprint-settings-view.component.scss'],
+    standalone: false
 })
 export class TasksSprintSettingsViewComponent implements OnInit, OnDestroy {
 	@Input() project: IOrganizationProject;

@@ -17,9 +17,10 @@ import { firstValueFrom } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-sidebar',
-	templateUrl: './sidebar.component.html',
-	styleUrls: ['./sidebar.component.scss']
+    selector: 'ga-sidebar',
+    templateUrl: './sidebar.component.html',
+    styleUrls: ['./sidebar.component.scss'],
+    standalone: false
 })
 export class SidebarComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
 	public organization: IOrganization;

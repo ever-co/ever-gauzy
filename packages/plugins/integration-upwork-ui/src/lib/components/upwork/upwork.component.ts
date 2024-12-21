@@ -11,8 +11,9 @@ import { Store, UpworkStoreService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-upwork',
-	templateUrl: './upwork.component.html'
+    selector: 'ngx-upwork',
+    templateUrl: './upwork.component.html',
+    standalone: false
 })
 export class UpworkComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public tabs: NbRouteTab[] = [];

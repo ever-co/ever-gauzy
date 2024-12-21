@@ -3,9 +3,10 @@ import { UntypedFormGroup } from '@angular/forms';
 import { ICandidateInterview, ICandidate, IEmployee } from '@gauzy/contracts';
 import { CandidateEmailComponent } from './candidate-email/candidate-email.component';
 @Component({
-	selector: 'ga-candidate-notification-form',
-	templateUrl: './candidate-notification-form.component.html',
-	styleUrls: ['./candidate-notification-form.component.scss']
+    selector: 'ga-candidate-notification-form',
+    templateUrl: './candidate-notification-form.component.html',
+    styleUrls: ['./candidate-notification-form.component.scss'],
+    standalone: false
 })
 export class CandidateNotificationFormComponent implements OnDestroy {
 	@Input() interview: ICandidateInterview;

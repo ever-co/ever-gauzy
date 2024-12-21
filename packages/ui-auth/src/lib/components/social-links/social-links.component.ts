@@ -26,9 +26,10 @@ export interface ISocialLink {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-social-links',
-	templateUrl: './social-links.component.html',
-	styleUrls: ['./social-links.component.scss']
+    selector: 'ngx-social-links',
+    templateUrl: './social-links.component.html',
+    styleUrls: ['./social-links.component.scss'],
+    standalone: false
 })
 export class SocialLinksComponent implements OnInit {
 	/** */

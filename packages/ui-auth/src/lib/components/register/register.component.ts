@@ -9,9 +9,10 @@ import { patterns } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-register',
-	templateUrl: './register.component.html',
-	styleUrls: ['./register.component.scss']
+    selector: 'ngx-register',
+    templateUrl: './register.component.html',
+    styleUrls: ['./register.component.scss'],
+    standalone: false
 })
 export class NgxRegisterComponent extends NbRegisterComponent implements OnInit {
 	public showPassword: boolean = false;

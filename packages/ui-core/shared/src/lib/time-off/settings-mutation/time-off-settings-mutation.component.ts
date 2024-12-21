@@ -7,9 +7,10 @@ import { EmployeesService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-time-off-settings-mutation',
-	templateUrl: './time-off-settings-mutation.component.html',
-	styleUrls: ['../time-off-mutation.components.scss']
+    selector: 'ngx-time-off-settings-mutation',
+    templateUrl: './time-off-settings-mutation.component.html',
+    styleUrls: ['../time-off-mutation.components.scss'],
+    standalone: false
 })
 export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
 	constructor(

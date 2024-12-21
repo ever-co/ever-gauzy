@@ -46,9 +46,10 @@ import { PaymentMutationComponent } from '../invoices/invoice-payments/payment-m
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-payments',
-	templateUrl: './payments.component.html',
-	styleUrls: ['./payments.component.scss']
+    selector: 'ngx-payments',
+    templateUrl: './payments.component.html',
+    styleUrls: ['./payments.component.scss'],
+    standalone: false
 })
 export class PaymentsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public settingsSmartTable: object;

@@ -1,7 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
-	name: 'removeLodash'
+    name: 'removeLodash',
+    standalone: false
 })
 export class RemoveLodashPipe implements PipeTransform {
 	transform(value: string, args?: any): any {

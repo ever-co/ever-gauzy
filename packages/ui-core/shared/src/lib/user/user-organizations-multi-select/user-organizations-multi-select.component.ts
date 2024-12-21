@@ -2,8 +2,9 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { IOrganization } from '@gauzy/contracts';
 
 @Component({
-	selector: 'ga-user-organizations-multi-select',
-	templateUrl: './user-organizations-multi-select.component.html'
+    selector: 'ga-user-organizations-multi-select',
+    templateUrl: './user-organizations-multi-select.component.html',
+    standalone: false
 })
 export class UserOrganizationsSelectComponent {
 	@Input() selectedOrganizationsId: string[];

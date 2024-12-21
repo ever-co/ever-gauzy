@@ -21,8 +21,9 @@ import { ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	templateUrl: './email-templates.component.html',
-	styleUrls: ['./email-templates.component.scss']
+    templateUrl: './email-templates.component.html',
+    styleUrls: ['./email-templates.component.scss'],
+    standalone: false
 })
 export class EmailTemplatesComponent extends TranslationBaseComponent implements OnInit, AfterViewInit, OnDestroy {
 	templates: string[] = Object.values(EmailTemplateEnum);

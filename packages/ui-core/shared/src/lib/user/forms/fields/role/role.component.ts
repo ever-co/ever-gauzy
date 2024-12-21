@@ -10,16 +10,17 @@ import { RoleService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-role-form-field',
-	templateUrl: './role.component.html',
-	styleUrls: [],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => RoleFormFieldComponent),
-			multi: true
-		}
-	]
+    selector: 'ngx-role-form-field',
+    templateUrl: './role.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => RoleFormFieldComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class RoleFormFieldComponent implements OnInit, OnDestroy {
 	roles: IRole[] = [];

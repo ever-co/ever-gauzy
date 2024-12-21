@@ -25,10 +25,11 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy()
 @Component({
-	selector: 'gz-dynamic-tabs',
-	templateUrl: './dynamic-tabs.component.html',
-	styleUrls: ['./dynamic-tabs.component.scss'],
-	providers: []
+    selector: 'gz-dynamic-tabs',
+    templateUrl: './dynamic-tabs.component.html',
+    styleUrls: ['./dynamic-tabs.component.scss'],
+    providers: [],
+    standalone: false
 })
 export class DynamicTabsComponent implements OnInit, OnDestroy {
 	public tabs: CustomNbRouteTab[] = []; // Define the structure of tabs according to your needs

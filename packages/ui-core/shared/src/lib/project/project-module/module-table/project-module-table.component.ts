@@ -20,9 +20,10 @@ import {
 
 @UntilDestroy()
 @Component({
-	selector: 'ngx-project-module-table',
-	templateUrl: './project-module-table.component.html',
-	styleUrls: ['./project-module-table.component.scss']
+    selector: 'ngx-project-module-table',
+    templateUrl: './project-module-table.component.html',
+    styleUrls: ['./project-module-table.component.scss'],
+    standalone: false
 })
 export class ProjectModuleTableComponent extends TranslationBaseComponent implements OnInit {
 	private _projectId: ID;

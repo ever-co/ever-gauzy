@@ -10,16 +10,17 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy()
 @Component({
-	selector: 'gz-proposal-layout',
-	template: ` <router-outlet></router-outlet>`,
-	styles: [
-		`
+    selector: 'gz-proposal-layout',
+    template: ` <router-outlet></router-outlet>`,
+    styles: [
+        `
 			:host {
 				height: 100%;
 				display: block;
 			}
 		`
-	]
+    ],
+    standalone: false
 })
 export class ProposalLayoutComponent implements OnDestroy {
 	constructor(

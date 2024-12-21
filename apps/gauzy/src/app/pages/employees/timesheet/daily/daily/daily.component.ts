@@ -30,9 +30,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-daily-timesheet',
-	templateUrl: './daily.component.html',
-	styleUrls: ['./daily.component.scss']
+    selector: 'ngx-daily-timesheet',
+    templateUrl: './daily.component.html',
+    styleUrls: ['./daily.component.scss'],
+    standalone: false
 })
 export class DailyComponent extends BaseSelectorFilterComponent implements AfterViewInit, OnInit, OnDestroy {
 	public PermissionsEnum = PermissionsEnum; // Enum for permissions.

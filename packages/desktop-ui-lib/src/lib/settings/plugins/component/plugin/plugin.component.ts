@@ -8,9 +8,10 @@ import { PluginLoaderService } from '../../services/plugin-loader.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-plugin',
-	templateUrl: './plugin.component.html',
-	styleUrls: ['./plugin.component.scss']
+    selector: 'ngx-plugin',
+    templateUrl: './plugin.component.html',
+    styleUrls: ['./plugin.component.scss'],
+    standalone: false
 })
 export class PluginComponent implements AfterViewInit {
 	private readonly loaderService = inject(PluginLoaderService);

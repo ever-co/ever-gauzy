@@ -14,9 +14,10 @@ import { AlertModalComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-confirm-appointment',
-	templateUrl: './confirm-appointment.component.html',
-	providers: [EmployeeAppointmentService]
+    selector: 'ga-confirm-appointment',
+    templateUrl: './confirm-appointment.component.html',
+    providers: [EmployeeAppointmentService],
+    standalone: false
 })
 export class ConfirmAppointmentComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public loading: boolean = false;

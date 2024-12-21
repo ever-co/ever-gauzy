@@ -9,9 +9,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-edit-organization-settings',
-	templateUrl: './edit-organization-settings.component.html',
-	styleUrls: ['./edit-organization-settings.component.scss']
+    selector: 'ngx-edit-organization-settings',
+    templateUrl: './edit-organization-settings.component.html',
+    styleUrls: ['./edit-organization-settings.component.scss'],
+    standalone: false
 })
 export class EditOrganizationSettingsComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	@Input() organization: IOrganization;

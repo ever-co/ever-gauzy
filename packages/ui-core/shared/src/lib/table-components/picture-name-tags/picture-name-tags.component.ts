@@ -2,8 +2,8 @@ import { Component, Input } from '@angular/core';
 import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.component';
 
 @Component({
-	selector: 'ga-picture-name-tags',
-	template: `
+    selector: 'ga-picture-name-tags',
+    template: `
 		<ngx-avatar
 			[src]="avatar?.imageUrl"
 			[name]="avatar?.name"
@@ -31,8 +31,8 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 			></nb-badge>
 		</div>
 	`,
-	styles: [
-		`
+    styles: [
+        `
 			.image-container {
 				width: 70px;
 				height: 63px;
@@ -67,8 +67,9 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 				justify-content: flex-end;
 			}
 		`
-	],
-	styleUrls: ['./picture-name-tags.component.scss']
+    ],
+    styleUrls: ['./picture-name-tags.component.scss'],
+    standalone: false
 })
 export class PictureNameTagsComponent extends NotesWithTagsComponent {
 	/**

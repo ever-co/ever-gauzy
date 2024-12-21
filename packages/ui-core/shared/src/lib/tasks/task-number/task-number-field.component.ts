@@ -12,15 +12,16 @@ import { TasksService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-task-number-field',
-	templateUrl: './task-number-field.component.html',
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => TaskNumberFieldComponent),
-			multi: true
-		}
-	]
+    selector: 'ngx-task-number-field',
+    templateUrl: './task-number-field.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TaskNumberFieldComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TaskNumberFieldComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@Input() formControl: FormControl = new FormControl();

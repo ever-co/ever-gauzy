@@ -8,8 +8,9 @@ import { ImageRowComponent } from '../../inventory-table-components/image-row.co
 import { ManageQuantityComponent } from '../manage-quantity/manage-quantity.component';
 
 @Component({
-	templateUrl: './manage-variants-quantity-form.component.html',
-	styleUrls: ['./manage-variants-quantity-form.component.scss']
+    templateUrl: './manage-variants-quantity-form.component.html',
+    styleUrls: ['./manage-variants-quantity-form.component.scss'],
+    standalone: false
 })
 export class ManageVariantsQuantityFormComponent extends TranslationBaseComponent implements OnInit {
 	variants: IWarehouseProductVariant[] = [];

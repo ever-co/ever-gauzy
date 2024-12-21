@@ -49,9 +49,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-proposal-list',
-	templateUrl: './proposal.component.html',
-	styleUrls: ['./proposal.component.scss']
+    selector: 'ga-proposal-list',
+    templateUrl: './proposal.component.html',
+    styleUrls: ['./proposal.component.scss'],
+    standalone: false
 })
 export class ProposalComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public smartTableSettings: any;

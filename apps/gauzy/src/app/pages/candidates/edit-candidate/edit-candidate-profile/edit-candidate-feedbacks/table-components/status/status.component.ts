@@ -1,8 +1,8 @@
 import { Component, Input } from '@angular/core';
 
 @Component({
-	selector: 'ga-feedback-status',
-	template: `
+    selector: 'ga-feedback-status',
+    template: `
 		<div *ngIf="rowData?.status === 'REJECTED'">
 			<div class="badge badge-danger">
 				{{ 'CANDIDATES_PAGE.REJECTED' | translate }}
@@ -14,8 +14,8 @@ import { Component, Input } from '@angular/core';
 			</div>
 		</div>
 	`,
-	styles: [
-		`
+    styles: [
+        `
 			.badge-danger {
 				background-color: #ff3d71;
 			}
@@ -35,7 +35,8 @@ import { Component, Input } from '@angular/core';
 				text-align: left;
 			}
 		`
-	]
+    ],
+    standalone: false
 })
 export class FeedbackStatusTableComponent {
 	@Input()

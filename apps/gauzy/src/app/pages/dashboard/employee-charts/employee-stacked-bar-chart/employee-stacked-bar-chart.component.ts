@@ -8,8 +8,8 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-employee-stacked-bar-chart',
-	template: `
+    selector: 'ga-employee-stacked-bar-chart',
+    template: `
 		<div *ngIf="noData" style="display: flex; flex-direction: column; align-items: center;">
 			<nb-icon icon="info-outline"></nb-icon>
 			<div>
@@ -24,7 +24,8 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 			[data]="data"
 			[options]="options"
 		></canvas>
-	`
+	`,
+    standalone: false
 })
 export class EmployeeStackedBarChartComponent extends TranslationBaseComponent implements OnInit, OnDestroy, OnChanges {
 	data: any;

@@ -6,9 +6,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { HelpCenterService } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ga-delete-base',
-	templateUrl: 'delete-base.component.html',
-	styleUrls: ['delete-base.component.scss']
+    selector: 'ga-delete-base',
+    templateUrl: 'delete-base.component.html',
+    styleUrls: ['delete-base.component.scss'],
+    standalone: false
 })
 export class DeleteBaseComponent extends TranslationBaseComponent implements OnDestroy {
 	@Input() base: IHelpCenter;

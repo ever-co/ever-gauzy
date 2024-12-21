@@ -21,10 +21,11 @@ import { FileStorageService, TenantService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-file-storage',
-	templateUrl: './file-storage.component.html',
-	styleUrls: ['./file-storage.component.scss'],
-	providers: [FileStorageService, TenantService]
+    selector: 'ga-file-storage',
+    templateUrl: './file-storage.component.html',
+    styleUrls: ['./file-storage.component.scss'],
+    providers: [FileStorageService, TenantService],
+    standalone: false
 })
 export class FileStorageComponent extends TranslationBaseComponent implements OnInit {
 	secureOptions = [

@@ -20,9 +20,10 @@ import { Store, TaskStatusesService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-sprint-task',
-	templateUrl: './task.component.html',
-	styleUrls: ['./task.component.scss']
+    selector: 'ga-sprint-task',
+    templateUrl: './task.component.html',
+    styleUrls: ['./task.component.scss'],
+    standalone: false
 })
 export class SprintTaskComponent extends TranslationBaseComponent implements OnInit, AfterViewInit, OnDestroy {
 	private onDestroy$ = new Subject<void>();

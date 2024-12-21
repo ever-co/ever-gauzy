@@ -37,9 +37,10 @@ import { DepartmentNamesComponent } from './department-names/department-names.co
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-invites',
-	templateUrl: './invites.component.html',
-	styleUrls: ['invites.component.scss']
+    selector: 'ga-invites',
+    templateUrl: './invites.component.html',
+    styleUrls: ['invites.component.scss'],
+    standalone: false
 })
 export class InvitesComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public InviteStatusEnum: typeof InviteStatusEnum = InviteStatusEnum;

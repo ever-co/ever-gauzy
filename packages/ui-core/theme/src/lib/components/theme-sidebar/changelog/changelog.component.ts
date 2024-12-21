@@ -8,9 +8,10 @@ import { ChangelogService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-changelog',
-	templateUrl: './changelog.component.html',
-	styleUrls: ['./changelog.component.scss']
+    selector: 'ngx-changelog',
+    templateUrl: './changelog.component.html',
+    styleUrls: ['./changelog.component.scss'],
+    standalone: false
 })
 export class ChangelogComponent implements OnInit, OnDestroy {
 	learnMore: string;

@@ -34,9 +34,10 @@ import { richTextCKEditorConfig } from '../../../ckeditor.config';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-add-module-dialog',
-	templateUrl: './add-project-module-dialog.component.html',
-	styleUrls: ['./add-project-module-dialog.component.scss']
+    selector: 'ngx-add-module-dialog',
+    templateUrl: './add-project-module-dialog.component.html',
+    styleUrls: ['./add-project-module-dialog.component.scss'],
+    standalone: false
 })
 export class AddProjectModuleDialogComponent extends TranslationBaseComponent implements OnInit {
 	memberIds: ID[] = [];

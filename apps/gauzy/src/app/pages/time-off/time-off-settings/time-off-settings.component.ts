@@ -20,9 +20,10 @@ import { PaidIcon, RequestApprovalIcon } from '../table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-time-off-policy-list',
-	templateUrl: './time-off-settings.component.html',
-	styleUrls: ['./time-off-settings.component.scss']
+    selector: 'ga-time-off-policy-list',
+    templateUrl: './time-off-settings.component.html',
+    styleUrls: ['./time-off-settings.component.scss'],
+    standalone: false
 })
 export class TimeOffSettingsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public smartTableSettings: object;

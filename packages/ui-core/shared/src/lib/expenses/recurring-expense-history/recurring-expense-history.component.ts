@@ -9,9 +9,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-recurring-expense-history',
-	templateUrl: './recurring-expense-history.component.html',
-	styleUrls: ['./recurring-expense-history.component.scss']
+    selector: 'ga-recurring-expense-history',
+    templateUrl: './recurring-expense-history.component.html',
+    styleUrls: ['./recurring-expense-history.component.scss'],
+    standalone: false
 })
 export class RecurringExpenseHistoryComponent extends TranslationBaseComponent implements OnInit {
 	@Input()

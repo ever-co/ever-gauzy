@@ -6,9 +6,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { HelpCenterService } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ga-delete-category',
-	templateUrl: 'delete-category.component.html',
-	styleUrls: ['delete-category.component.scss']
+    selector: 'ga-delete-category',
+    templateUrl: 'delete-category.component.html',
+    styleUrls: ['delete-category.component.scss'],
+    standalone: false
 })
 export class DeleteCategoryComponent extends TranslationBaseComponent implements OnDestroy {
 	@Input() category: IHelpCenter;

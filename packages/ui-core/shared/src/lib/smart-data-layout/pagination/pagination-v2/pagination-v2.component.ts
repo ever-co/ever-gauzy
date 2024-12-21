@@ -6,9 +6,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-pagination',
-	templateUrl: './pagination-v2.component.html',
-	styleUrls: ['./pagination-v2.component.scss']
+    selector: 'ngx-pagination',
+    templateUrl: './pagination-v2.component.html',
+    styleUrls: ['./pagination-v2.component.scss'],
+    standalone: false
 })
 export class PaginationV2Component implements OnChanges, OnDestroy {
 	private _source: LocalDataSource;

@@ -18,9 +18,10 @@ import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } f
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-client-budgets-report',
-	templateUrl: './client-budgets-report.component.html',
-	styleUrls: ['./client-budgets-report.component.scss']
+    selector: 'ga-client-budgets-report',
+    templateUrl: './client-budgets-report.component.html',
+    styleUrls: ['./client-budgets-report.component.scss'],
+    standalone: false
 })
 export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	OrganizationContactBudgetTypeEnum = OrganizationContactBudgetTypeEnum;

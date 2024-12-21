@@ -8,10 +8,10 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-edit-employee-contacts',
-	templateUrl: './edit-employee-contact.component.html',
-	styles: [
-		`
+    selector: 'ga-edit-employee-contacts',
+    templateUrl: './edit-employee-contact.component.html',
+    styles: [
+        `
 			:host {
 				overflow-y: auto;
 				height: calc(100vh - 20.5rem);
@@ -29,7 +29,8 @@ import { Store } from '@gauzy/ui-core/core';
 				}
 			}
 		`
-	]
+    ],
+    standalone: false
 })
 export class EditEmployeeContactComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	organizationContact: IOrganizationContact[] = [];

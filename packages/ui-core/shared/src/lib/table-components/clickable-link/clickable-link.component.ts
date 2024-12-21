@@ -1,9 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
 
 @Component({
-	selector: 'ngx-clickable-link',
-	templateUrl: './clickable-link.component.html',
-	styleUrls: ['./clickable-link.component.scss']
+    selector: 'ngx-clickable-link',
+    templateUrl: './clickable-link.component.html',
+    styleUrls: ['./clickable-link.component.scss'],
+    standalone: false
 })
 export class ClickableLinkComponent implements OnInit {
 

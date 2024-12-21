@@ -9,7 +9,8 @@ import {
 import { NbSpinnerComponent } from '@nebular/theme';
 
 @Directive({
-	selector: '[gauzySpinnerButton]',
+    selector: '[gauzySpinnerButton]',
+    standalone: false
 })
 export class SpinnerButtonDirective {
 	private _isSpinning = null;

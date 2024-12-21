@@ -15,16 +15,17 @@ import { merge } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 
 @Component({
-	selector: 'ngx-timer-range-picker',
-	templateUrl: './timer-range-picker.component.html',
-	styleUrls: ['./timer-range-picker.component.scss'],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => TimerRangePickerComponent),
-			multi: true
-		}
-	]
+    selector: 'ngx-timer-range-picker',
+    templateUrl: './timer-range-picker.component.html',
+    styleUrls: ['./timer-range-picker.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimerRangePickerComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	private _maxDate: Date = null;

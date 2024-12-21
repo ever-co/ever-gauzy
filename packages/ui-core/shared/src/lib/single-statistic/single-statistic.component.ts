@@ -1,9 +1,10 @@
 import { Component, OnInit, Input } from '@angular/core';
 
 @Component({
-	selector: 'ga-single-statistic',
-	templateUrl: './single-statistic.component.html',
-	styleUrls: ['./single-statistic.component.scss']
+    selector: 'ga-single-statistic',
+    templateUrl: './single-statistic.component.html',
+    styleUrls: ['./single-statistic.component.scss'],
+    standalone: false
 })
 export class SingleStatisticComponent implements OnInit {
 	@Input() title: string;

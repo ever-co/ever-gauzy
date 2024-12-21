@@ -2,8 +2,8 @@ import { Component } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 
 @Component({
-	selector: 'ga-resend-confirmation',
-	template: `
+    selector: 'ga-resend-confirmation',
+    template: `
 		<nb-card class="center">
 			<nb-card-header class="d-flex flex-column">
 				<span class="cancel"
@@ -35,14 +35,15 @@ import { NbDialogRef } from '@nebular/theme';
 			</nb-card-footer>
 		</nb-card>
 	`,
-	styles: [
-		`
+    styles: [
+        `
 			.center {
 				width: 300px;
 			}
 		`
-	],
-	styleUrls: ['resend-confirmation.component.scss']
+    ],
+    styleUrls: ['resend-confirmation.component.scss'],
+    standalone: false
 })
 export class ResendConfirmationComponent {
 	email: string;

@@ -8,10 +8,11 @@ import { LoggerService } from '../../../../electron/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-monthly-recap',
-	templateUrl: './monthly-recap.component.html',
-	styleUrls: ['./monthly-recap.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-monthly-recap',
+    templateUrl: './monthly-recap.component.html',
+    styleUrls: ['./monthly-recap.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class MonthlyRecapComponent implements OnInit {
 	public isLoading$ = new BehaviorSubject(false);

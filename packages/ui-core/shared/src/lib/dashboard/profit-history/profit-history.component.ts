@@ -15,9 +15,10 @@ import { DateViewComponent } from '../../table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-profit-history-selector',
-	templateUrl: './profit-history.component.html',
-	styleUrls: ['./profit-history.component.scss']
+    selector: 'ga-profit-history-selector',
+    templateUrl: './profit-history.component.html',
+    styleUrls: ['./profit-history.component.scss'],
+    standalone: false
 })
 export class ProfitHistoryComponent extends PaginationFilterBaseComponent implements OnInit {
 	public organization: IOrganization;

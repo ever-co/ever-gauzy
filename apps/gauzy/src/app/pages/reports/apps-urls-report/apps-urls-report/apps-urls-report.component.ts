@@ -8,9 +8,10 @@ import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } f
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-apps-urls-report',
-	templateUrl: './apps-urls-report.component.html',
-	styleUrls: ['./apps-urls-report.component.scss']
+    selector: 'ga-apps-urls-report',
+    templateUrl: './apps-urls-report.component.html',
+    styleUrls: ['./apps-urls-report.component.scss'],
+    standalone: false
 })
 export class AppsUrlsReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit, OnDestroy {
 	filters: IGetActivitiesInput;

@@ -6,9 +6,10 @@ import { NavMenuCategory, NavMenuSectionItem } from '../../services/nav-builder/
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-main-nav-menu',
-	templateUrl: './main-nav-menu.component.html',
-	styleUrls: ['./main-nav-menu.component.scss']
+    selector: 'ga-main-nav-menu',
+    templateUrl: './main-nav-menu.component.html',
+    styleUrls: ['./main-nav-menu.component.scss'],
+    standalone: false
 })
 export class MainNavMenuComponent extends BaseNavMenuComponent implements OnInit {
 	// Define the input property menuCategory of type NavMenuCategory | undefined

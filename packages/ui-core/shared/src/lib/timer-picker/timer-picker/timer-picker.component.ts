@@ -11,15 +11,16 @@ import moment from 'moment';
 import { IOrganization } from '@gauzy/contracts';
 
 @Component({
-	selector: 'ga-timer-picker',
-	templateUrl: './timer-picker.component.html',
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => TimerPickerComponent),
-			multi: true
-		}
-	]
+    selector: 'ga-timer-picker',
+    templateUrl: './timer-picker.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimerPickerComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TimerPickerComponent implements OnInit {
 	private _max: string = '23:00';

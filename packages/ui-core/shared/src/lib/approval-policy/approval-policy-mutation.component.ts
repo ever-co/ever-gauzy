@@ -12,9 +12,10 @@ import { FormHelpers } from '../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-approval-policy-mutation',
-	templateUrl: './approval-policy-mutation.component.html',
-	styleUrls: ['./approval-policy-mutation.component.scss']
+    selector: 'ngx-approval-policy-mutation',
+    templateUrl: './approval-policy-mutation.component.html',
+    styleUrls: ['./approval-policy-mutation.component.scss'],
+    standalone: false
 })
 export class ApprovalPolicyMutationComponent extends TranslationBaseComponent implements OnInit {
 	FormHelpers: typeof FormHelpers = FormHelpers;

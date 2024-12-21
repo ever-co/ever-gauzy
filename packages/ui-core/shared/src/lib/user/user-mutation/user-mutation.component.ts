@@ -7,9 +7,10 @@ import { BasicInfoFormComponent } from '../forms/basic-info/basic-info-form.comp
 import { filter, tap } from 'rxjs/operators';
 
 @Component({
-	selector: 'ga-user-mutation',
-	templateUrl: './user-mutation.component.html',
-	styleUrls: ['./user-mutation.component.scss']
+    selector: 'ga-user-mutation',
+    templateUrl: './user-mutation.component.html',
+    styleUrls: ['./user-mutation.component.scss'],
+    standalone: false
 })
 export class UserMutationComponent implements OnInit {
 	@ViewChild('userBasicInfo') userBasicInfo: BasicInfoFormComponent;

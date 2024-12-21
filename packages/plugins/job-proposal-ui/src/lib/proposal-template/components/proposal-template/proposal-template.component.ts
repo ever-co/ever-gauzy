@@ -43,9 +43,10 @@ export enum ProposalTemplateTabsEnum {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-proposal-template',
-	templateUrl: './proposal-template.component.html',
-	styleUrls: ['./proposal-template.component.scss']
+    selector: 'ga-proposal-template',
+    templateUrl: './proposal-template.component.html',
+    styleUrls: ['./proposal-template.component.scss'],
+    standalone: false
 })
 export class ProposalTemplateComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public smartTableSettings: any;

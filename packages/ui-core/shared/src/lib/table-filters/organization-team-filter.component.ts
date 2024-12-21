@@ -9,8 +9,8 @@ import { OrganizationTeamsService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-organization-team-select-filter',
-	template: `
+    selector: 'ga-organization-team-select-filter',
+    template: `
 		<ng-select
 			[clearable]="true"
 			[closeOnSelect]="true"
@@ -21,7 +21,8 @@ import { OrganizationTeamsService, Store } from '@gauzy/ui-core/core';
 				{{ team.name }}
 			</ng-option>
 		</ng-select>
-	`
+	`,
+    standalone: false
 })
 export class OrganizationTeamFilterComponent extends DefaultFilter implements OnInit, OnChanges {
 	public teams: IOrganizationTeam[] = [];

@@ -1,7 +1,8 @@
 import { Component, Input } from '@angular/core';
 
 @Component({
-    templateUrl: './employee-bonus.component.html'
+    templateUrl: './employee-bonus.component.html',
+    standalone: false
 })
 export class EmployeeBonusComponent {
     @Input()

@@ -5,10 +5,11 @@ import { RequestQuery } from '../../+state/request/request.query';
 import { RequestStore } from '../../+state/request/request.store';
 
 @Component({
-	selector: 'ngx-filter',
-	templateUrl: './filter.component.html',
-	styleUrls: ['./filter.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-filter',
+    templateUrl: './filter.component.html',
+    styleUrls: ['./filter.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class FilterComponent {
 	constructor(private readonly store: RequestStore, private readonly query: RequestQuery) {}

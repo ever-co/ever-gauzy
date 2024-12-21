@@ -15,9 +15,10 @@ import { FormHelpers, LocationFormComponent, LeafletMapComponent, SelectAssetCom
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-warehouse-form',
-	templateUrl: './warehouse-form.component.html',
-	styleUrls: ['./warehouse-form.component.scss']
+    selector: 'ga-warehouse-form',
+    templateUrl: './warehouse-form.component.html',
+    styleUrls: ['./warehouse-form.component.scss'],
+    standalone: false
 })
 export class WarehouseFormComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	FormHelpers: typeof FormHelpers = FormHelpers;

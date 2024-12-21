@@ -7,7 +7,7 @@ import { OrganizationProjectsService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	template: `
+    template: `
 		<nb-select
 			fullWidth
 			[placeholder]="'INVOICES_PAGE.SELECT_PROJECT' | translate"
@@ -19,7 +19,8 @@ import { OrganizationProjectsService, Store } from '@gauzy/ui-core/core';
 			</nb-option>
 		</nb-select>
 	`,
-	styles: []
+    styles: [],
+    standalone: false
 })
 export class InvoiceProjectsSelectorComponent extends DefaultEditor implements OnInit, OnDestroy {
 	public project: IOrganizationProject;

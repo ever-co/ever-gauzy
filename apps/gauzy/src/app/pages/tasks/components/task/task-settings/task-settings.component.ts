@@ -8,9 +8,10 @@ import { Store, TasksService, TasksStoreService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-task-settings',
-	templateUrl: './task-settings.component.html',
-	styleUrls: ['./task-settings.component.scss']
+    selector: 'ngx-task-settings',
+    templateUrl: './task-settings.component.html',
+    styleUrls: ['./task-settings.component.scss'],
+    standalone: false
 })
 export class TaskSettingsComponent {
 	projects$: Observable<IOrganizationProject[]>;

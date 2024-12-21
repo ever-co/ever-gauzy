@@ -2,11 +2,12 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Cell, DefaultEditor } from 'angular2-smart-table';
 
 @Component({
-	template: `
+    template: `
 		<div>
 			{{ cellValue }}
 		</div>
-	`
+	`,
+    standalone: false
 })
 export class NonEditableNumberEditorComponent extends DefaultEditor implements OnInit {
 	cellValue!: string | number;

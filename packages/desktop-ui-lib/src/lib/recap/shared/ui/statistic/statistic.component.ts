@@ -9,10 +9,11 @@ export interface IStatisticItem {
 }
 
 @Component({
-	selector: 'ngx-statistic',
-	templateUrl: './statistic.component.html',
-	styleUrls: ['./statistic.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-statistic',
+    templateUrl: './statistic.component.html',
+    styleUrls: ['./statistic.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class StatisticComponent {
 	private _items: IStatisticItem[] = [];

@@ -6,9 +6,10 @@ import { ErrorHandlingService, InviteService, ToastrService } from '@gauzy/ui-co
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @Component({
-	selector: 'ga-accept-client-invite',
-	styleUrls: ['./accept-client-invite.component.scss'],
-	templateUrl: './accept-client-invite.component.html'
+    selector: 'ga-accept-client-invite',
+    styleUrls: ['./accept-client-invite.component.scss'],
+    templateUrl: './accept-client-invite.component.html',
+    standalone: false
 })
 export class AcceptClientInviteComponent extends TranslationBaseComponent implements OnInit {
 	public invitation: IInvite;

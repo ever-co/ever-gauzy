@@ -10,9 +10,10 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-product-option-group-translation',
-	templateUrl: './product-option-group-translation.component.html',
-	styleUrls: ['./product-option-group-translation.component.scss']
+    selector: 'ngx-product-option-group-translation',
+    templateUrl: './product-option-group-translation.component.html',
+    styleUrls: ['./product-option-group-translation.component.scss'],
+    standalone: false
 })
 export class ProductOptionGroupTranslationsComponent extends TranslationBaseComponent {
 	form: UntypedFormGroup;

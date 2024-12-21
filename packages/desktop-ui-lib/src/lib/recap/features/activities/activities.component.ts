@@ -10,10 +10,11 @@ import { ActivityStatisticsAdapter } from '../../shared/utils/adapters/activity.
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-activities',
-	templateUrl: './activities.component.html',
-	styleUrls: ['./activities.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-activities',
+    templateUrl: './activities.component.html',
+    styleUrls: ['./activities.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class ActivitiesComponent implements OnInit {
 	constructor(

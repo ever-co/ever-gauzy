@@ -4,8 +4,8 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
-	selector: 'ga-interview-actions',
-	template: `
+    selector: 'ga-interview-actions',
+    template: `
 		<div class="update">
 			<div class="badges">
 				<div class="badge badge-primary" *ngIf="isPastInterview(rowData)">
@@ -75,8 +75,8 @@ import { TranslateService } from '@ngx-translate/core';
 			</div>
 		</div>
 	`,
-	styles: [
-		`
+    styles: [
+        `
 			.badge-warning {
 				background-color: #fa0;
 			}
@@ -127,7 +127,8 @@ import { TranslateService } from '@ngx-translate/core';
 				align-items: center;
 			}
 		`
-	]
+    ],
+    standalone: false
 })
 export class InterviewActionsTableComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@Input() rowData: any;

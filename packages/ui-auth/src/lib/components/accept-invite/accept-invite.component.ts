@@ -9,8 +9,9 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	styleUrls: ['./accept-invite.component.scss'],
-	templateUrl: './accept-invite.component.html'
+    styleUrls: ['./accept-invite.component.scss'],
+    templateUrl: './accept-invite.component.html',
+    standalone: false
 })
 export class AcceptInviteComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public invitation: IInvite;

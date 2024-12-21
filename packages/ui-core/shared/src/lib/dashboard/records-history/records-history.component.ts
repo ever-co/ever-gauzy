@@ -16,9 +16,10 @@ import { ContactLinksComponent, DateViewComponent, IncomeExpenseAmountComponent 
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-records-history',
-	templateUrl: './records-history.component.html',
-	styleUrls: ['./records-history.component.scss']
+    selector: 'ngx-records-history',
+    templateUrl: './records-history.component.html',
+    styleUrls: ['./records-history.component.scss'],
+    standalone: false
 })
 export class RecordsHistoryComponent extends PaginationFilterBaseComponent implements OnInit {
 	type: HistoryType;

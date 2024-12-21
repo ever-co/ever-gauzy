@@ -5,10 +5,11 @@ import { IVisibilityJobPostInput } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @Component({
-	selector: 'job-title-description-details',
-	templateUrl: './job-title-description-details.component.html',
-	styleUrls: ['./job-title-description-details.component.scss'],
-	providers: [CurrencyPipe]
+    selector: 'job-title-description-details',
+    templateUrl: './job-title-description-details.component.html',
+    styleUrls: ['./job-title-description-details.component.scss'],
+    providers: [CurrencyPipe],
+    standalone: false
 })
 export class JobTitleDescriptionDetailsComponent extends TranslationBaseComponent {
 	constructor(translateService: TranslateService) {

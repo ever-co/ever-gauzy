@@ -4,9 +4,10 @@ import { IIntegrationViewModel, IntegrationFilterEnum } from '@gauzy/contracts';
 import { InitialFilter, IntegrationsStoreService } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ngx-integrations',
-	templateUrl: './integrations.component.html',
-	styleUrls: ['./integrations.component.scss']
+    selector: 'ngx-integrations',
+    templateUrl: './integrations.component.html',
+    styleUrls: ['./integrations.component.scss'],
+    standalone: false
 })
 export class IntegrationsComponent implements OnInit {
 	integrations$: Observable<IIntegrationViewModel[]> = this._integrationsStore.integrations$;

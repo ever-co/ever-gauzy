@@ -8,9 +8,10 @@ import { Store } from '@gauzy/ui-core/core';
 import { HelpCenterService } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ga-knowledeg-base-mutation',
-	templateUrl: './knowledeg-base.component.html',
-	styleUrls: ['./knowledeg-base.component.scss']
+    selector: 'ga-knowledeg-base-mutation',
+    templateUrl: './knowledeg-base.component.html',
+    styleUrls: ['./knowledeg-base.component.scss'],
+    standalone: false
 })
 export class KnowledgeBaseComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@Input() base?: IHelpCenter;

@@ -8,9 +8,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-auth',
-	templateUrl: './auth.component.html',
-	styleUrls: ['./auth.component.scss']
+    selector: 'ngx-auth',
+    templateUrl: './auth.component.html',
+    styleUrls: ['./auth.component.scss'],
+    standalone: false
 })
 export class NgxAuthComponent extends NbAuthComponent implements OnInit {
 	public isRegister: boolean = false;

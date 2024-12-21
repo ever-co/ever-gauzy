@@ -10,10 +10,11 @@ import { IMenuItem } from './menu-items/interface/menu-item.interface';
 import { SidebarMenuService } from '../../services';
 
 @Component({
-	selector: 'ga-sidebar-menu',
-	templateUrl: './sidebar-menu.component.html',
-	styleUrls: ['./sidebar-menu.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ga-sidebar-menu',
+    templateUrl: './sidebar-menu.component.html',
+    styleUrls: ['./sidebar-menu.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class SidebarMenuComponent implements AfterContentChecked, AfterViewInit {
 	@Input() items: IMenuItem[] = [];

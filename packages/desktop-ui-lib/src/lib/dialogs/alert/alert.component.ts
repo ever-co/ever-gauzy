@@ -7,9 +7,10 @@ export interface AlertDialogOptions {
 	status?: string;
 }
 @Component({
-	selector: 'ngx-alert',
-	templateUrl: './alert.component.html',
-	styleUrls: ['./alert.component.scss'],
+    selector: 'ngx-alert',
+    templateUrl: './alert.component.html',
+    styleUrls: ['./alert.component.scss'],
+    standalone: false
 })
 export class AlertComponent implements OnInit {
 	@Input() data: AlertDialogOptions;

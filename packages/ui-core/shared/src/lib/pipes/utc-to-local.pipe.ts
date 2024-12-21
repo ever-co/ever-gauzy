@@ -3,7 +3,8 @@ import moment from 'moment';
 import { toLocal } from '@gauzy/ui-core/common';
 
 @Pipe({
-	name: 'utcToLocal'
+    name: 'utcToLocal',
+    standalone: false
 })
 export class UtcToLocalPipe implements PipeTransform {
 	/**

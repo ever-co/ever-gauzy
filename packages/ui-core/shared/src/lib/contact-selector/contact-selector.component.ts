@@ -11,16 +11,17 @@ import { OrganizationContactService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-contact-selector',
-	templateUrl: './contact-selector.component.html',
-	styleUrls: ['./contact-selector.component.scss'],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => ContactSelectorComponent),
-			multi: true
-		}
-	]
+    selector: 'ga-contact-selector',
+    templateUrl: './contact-selector.component.html',
+    styleUrls: ['./contact-selector.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ContactSelectorComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ContactSelectorComponent implements AfterViewInit, OnInit, OnDestroy {
 	public organization: IOrganization;

@@ -24,9 +24,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-amounts-owed-report',
-	templateUrl: './amounts-owed-report.component.html',
-	styleUrls: ['./amounts-owed-report.component.scss']
+    selector: 'ga-amounts-owed-report',
+    templateUrl: './amounts-owed-report.component.html',
+    styleUrls: ['./amounts-owed-report.component.scss'],
+    standalone: false
 })
 export class AmountsOwedReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	public filters: IGetExpenseInput;

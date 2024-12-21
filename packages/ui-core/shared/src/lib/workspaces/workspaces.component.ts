@@ -18,9 +18,10 @@ interface IWorkSpace {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-gauzy-workspaces',
-	templateUrl: './workspaces.component.html',
-	styleUrls: ['./workspaces.component.scss']
+    selector: 'ngx-gauzy-workspaces',
+    templateUrl: './workspaces.component.html',
+    styleUrls: ['./workspaces.component.scss'],
+    standalone: false
 })
 export class WorkspacesComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	public _workspaces$: BehaviorSubject<IWorkSpace[]> = new BehaviorSubject([]);

@@ -8,8 +8,9 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Pipe({
-	name: 'dateTimeFormat',
-	pure: false
+    name: 'dateTimeFormat',
+    pure: false,
+    standalone: false
 })
 export class DateTimeFormatPipe implements PipeTransform {
 	timeFormat: number = TimeFormatEnum.FORMAT_12_HOURS;

@@ -29,9 +29,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-departments',
-	templateUrl: './departments.component.html',
-	styleUrls: ['./departments.component.scss']
+    selector: 'ga-departments',
+    templateUrl: './departments.component.html',
+    styleUrls: ['./departments.component.scss'],
+    standalone: false
 })
 export class DepartmentsComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	@ViewChild('addEditTemplate')

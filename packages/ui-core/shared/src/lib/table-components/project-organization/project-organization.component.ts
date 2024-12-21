@@ -2,9 +2,10 @@ import { Component, Input, OnInit } from '@angular/core';
 import { IOrganization, IProject } from '@gauzy/contracts';
 
 @Component({
-	selector: 'gauzy-project-organization',
-	templateUrl: './project-organization.component.html',
-	styleUrls: ['./project-organization.component.scss']
+    selector: 'gauzy-project-organization',
+    templateUrl: './project-organization.component.html',
+    styleUrls: ['./project-organization.component.scss'],
+    standalone: false
 })
 export class ProjectOrganizationComponent implements OnInit {
 	@Input()

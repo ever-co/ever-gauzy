@@ -1,8 +1,8 @@
 import { Component, Input } from '@angular/core';
 
 @Component({
-	selector: 'ga-interview-criterions',
-	template: `
+    selector: 'ga-interview-criterions',
+    template: `
 		<ul style="padding-left: 10px; margin:0;">
 			<li *ngFor="let tech of rowData.technologies">
 				<span> {{ tech.name }} </span>
@@ -13,13 +13,14 @@ import { Component, Input } from '@angular/core';
 			</li>
 		</ul>
 	`,
-	styles: [
-		`
+    styles: [
+        `
 			ul {
 				list-style-type: '- ';
 			}
 		`
-	]
+    ],
+    standalone: false
 })
 export class InterviewCriterionsTableComponent {
 	@Input()

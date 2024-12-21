@@ -27,8 +27,9 @@ import { DEFAULT_EVENT_TYPE } from './default-event-type';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	templateUrl: './event-type.component.html',
-	styleUrls: ['event-type.component.scss']
+    templateUrl: './event-type.component.html',
+    styleUrls: ['event-type.component.scss'],
+    standalone: false
 })
 export class EventTypeComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	smartTableSource: ServerDataSource;

@@ -8,9 +8,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @Component({
-	selector: 'ga-notes-with-tags',
-	templateUrl: './notes-with-tags.component.html',
-	styleUrls: ['./notes-with-tags.component.scss']
+    selector: 'ga-notes-with-tags',
+    templateUrl: './notes-with-tags.component.html',
+    styleUrls: ['./notes-with-tags.component.scss'],
+    standalone: false
 })
 export class NotesWithTagsComponent extends TranslationBaseComponent implements OnInit {
 	@Input() rowData: any;

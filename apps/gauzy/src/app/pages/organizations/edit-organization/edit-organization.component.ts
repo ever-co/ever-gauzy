@@ -12,8 +12,9 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	templateUrl: './edit-organization.component.html',
-	styleUrls: ['./edit-organization.component.scss', '../../dashboard/dashboard.component.scss']
+    templateUrl: './edit-organization.component.html',
+    styleUrls: ['./edit-organization.component.scss', '../../dashboard/dashboard.component.scss'],
+    standalone: false
 })
 export class EditOrganizationComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public organization: IOrganization;

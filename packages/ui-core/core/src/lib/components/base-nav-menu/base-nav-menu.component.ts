@@ -10,7 +10,8 @@ import { NavMenuBuilderService, NavMenuSectionItem, SidebarMenuService, Store } 
 
 @UntilDestroy()
 @Directive({
-	selector: '[gaBaseNavMenu]'
+    selector: '[gaBaseNavMenu]',
+    standalone: false
 })
 export class BaseNavMenuComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	constructor(

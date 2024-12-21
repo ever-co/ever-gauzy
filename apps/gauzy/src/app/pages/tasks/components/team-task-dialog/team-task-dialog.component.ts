@@ -43,9 +43,10 @@ const initialTaskValue = {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-team-task-dialog',
-	templateUrl: './team-task-dialog.component.html',
-	styleUrls: ['./team-task-dialog.component.scss']
+    selector: 'ngx-team-task-dialog',
+    templateUrl: './team-task-dialog.component.html',
+    styleUrls: ['./team-task-dialog.component.scss'],
+    standalone: false
 })
 export class TeamTaskDialogComponent extends TranslationBaseComponent implements OnInit {
 	selectedTaskId: string;

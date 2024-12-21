@@ -5,8 +5,8 @@ import { ICandidate } from '@gauzy/contracts';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-overall-rating-chart',
-	template: `
+    selector: 'ga-overall-rating-chart',
+    template: `
 		<ng-container *ngIf="rating?.length > 0 && candidates?.length > 0; else noDataTemplate">
 			<canvas
 				style="height: 400px; width: 100%;"
@@ -22,7 +22,8 @@ import { ICandidate } from '@gauzy/contracts';
 				<span>{{ 'CANDIDATES_PAGE.STATISTIC.NO_DATA' | translate }}</span>
 			</div>
 		</ng-template>
-	`
+	`,
+    standalone: false
 })
 export class CandidateRatingChartComponent implements OnInit, OnDestroy {
 	labels: string[] = [];

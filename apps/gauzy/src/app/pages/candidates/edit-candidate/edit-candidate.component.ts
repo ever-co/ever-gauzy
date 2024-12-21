@@ -11,9 +11,10 @@ import { NbDialogService } from '@nebular/theme';
 import { CandidateInterviewInfoComponent } from '@gauzy/ui-core/shared';
 
 @Component({
-	selector: 'ga-edit-candidate',
-	templateUrl: './edit-candidate.component.html',
-	styleUrls: ['../../dashboard/dashboard.component.scss', './edit-candidate.component.scss']
+    selector: 'ga-edit-candidate',
+    templateUrl: './edit-candidate.component.html',
+    styleUrls: ['../../dashboard/dashboard.component.scss', './edit-candidate.component.scss'],
+    standalone: false
 })
 export class EditCandidateComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();

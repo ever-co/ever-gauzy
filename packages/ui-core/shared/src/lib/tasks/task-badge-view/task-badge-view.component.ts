@@ -5,9 +5,10 @@ import { ITaskPriority, ITaskSize, ITaskStatus } from '@gauzy/contracts';
 export type ITaskBadge = ITaskStatus | ITaskSize | ITaskPriority;
 
 @Component({
-	selector: 'gauzy-task-badge-view',
-	templateUrl: './task-badge-view.component.html',
-	styleUrls: ['./task-badge-view.component.scss']
+    selector: 'gauzy-task-badge-view',
+    templateUrl: './task-badge-view.component.html',
+    styleUrls: ['./task-badge-view.component.scss'],
+    standalone: false
 })
 export class TaskBadgeViewComponent {
 	private _taskBadge: ITaskBadge = null;

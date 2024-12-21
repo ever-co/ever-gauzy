@@ -9,9 +9,10 @@ import { WindowModeBlockScrollService } from '../../services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-public-layout',
-	styleUrls: ['./public.layout.scss'],
-	templateUrl: './public.layout.html'
+    selector: 'ngx-public-layout',
+    styleUrls: ['./public.layout.scss'],
+    templateUrl: './public.layout.html',
+    standalone: false
 })
 export class PublicLayoutComponent implements OnInit, AfterViewInit {
 	constructor(

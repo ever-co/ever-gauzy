@@ -1,9 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
 
 @Component({
-	selector: 'gauzy-description',
-	templateUrl: './description.component.html',
-	styleUrls: ['./description.component.css']
+    selector: 'gauzy-description',
+    templateUrl: './description.component.html',
+    styleUrls: ['./description.component.css'],
+    standalone: false
 })
 export class DescriptionComponent implements OnInit {
 

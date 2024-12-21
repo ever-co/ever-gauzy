@@ -10,15 +10,16 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-task-status-select',
-	templateUrl: './task-status-select.component.html',
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => TaskStatusSelectComponent),
-			multi: true
-		}
-	]
+    selector: 'ga-task-status-select',
+    templateUrl: './task-status-select.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TaskStatusSelectComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TaskStatusSelectComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public organization: IOrganization;

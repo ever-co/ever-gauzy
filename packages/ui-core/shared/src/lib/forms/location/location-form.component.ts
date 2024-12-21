@@ -24,9 +24,10 @@ import { FormHelpers } from '../helpers';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-location-form',
-	styleUrls: ['./location-form.component.scss'],
-	templateUrl: 'location-form.component.html'
+    selector: 'ga-location-form',
+    styleUrls: ['./location-form.component.scss'],
+    templateUrl: 'location-form.component.html',
+    standalone: false
 })
 export class LocationFormComponent extends TranslationBaseComponent implements AfterViewInit {
 	FormHelpers: typeof FormHelpers = FormHelpers;

@@ -19,8 +19,9 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	templateUrl: './equipment-sharing-policy.component.html',
-	styleUrls: ['./equipment-sharing-policy.component.scss']
+    templateUrl: './equipment-sharing-policy.component.html',
+    styleUrls: ['./equipment-sharing-policy.component.scss'],
+    standalone: false
 })
 export class EquipmentSharingPolicyComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	settingsSmartTable: object;

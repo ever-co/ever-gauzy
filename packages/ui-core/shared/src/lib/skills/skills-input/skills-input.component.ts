@@ -3,9 +3,10 @@ import { NgModel, UntypedFormGroup } from '@angular/forms';
 import { SkillsService } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ngx-skills-input',
-	templateUrl: './skills-input.component.html',
-	styleUrls: ['./skills-input.component.scss']
+    selector: 'ngx-skills-input',
+    templateUrl: './skills-input.component.html',
+    styleUrls: ['./skills-input.component.scss'],
+    standalone: false
 })
 export class SkillsInputComponent implements OnInit {
 	@ViewChild('shownInput', { static: true })

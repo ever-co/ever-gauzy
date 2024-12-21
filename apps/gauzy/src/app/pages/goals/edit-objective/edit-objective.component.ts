@@ -22,9 +22,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-objective-mutation',
-	templateUrl: './edit-objective.component.html',
-	styleUrls: ['./edit-objective.component.scss']
+    selector: 'ga-objective-mutation',
+    templateUrl: './edit-objective.component.html',
+    styleUrls: ['./edit-objective.component.scss'],
+    standalone: false
 })
 export class EditObjectiveComponent implements OnInit, OnDestroy {
 	employees: IEmployee[] = [];

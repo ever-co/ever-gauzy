@@ -39,9 +39,10 @@ import { InterviewCriterionsTableComponent } from '../../../manage-candidate-int
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-edit-candidate-interview',
-	templateUrl: './edit-candidate-interview.component.html',
-	styleUrls: ['./edit-candidate-interview.component.scss']
+    selector: 'ga-edit-candidate-interview',
+    templateUrl: './edit-candidate-interview.component.html',
+    styleUrls: ['./edit-candidate-interview.component.scss'],
+    standalone: false
 })
 export class EditCandidateInterviewComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	interviewList: ICandidateInterview[];

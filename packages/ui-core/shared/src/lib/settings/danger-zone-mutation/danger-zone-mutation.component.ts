@@ -5,9 +5,10 @@ import { ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @Component({
-	selector: 'ga-danger-zone-mutation',
-	templateUrl: './danger-zone-mutation.component.html',
-	styleUrls: ['./danger-zone-mutation.component.scss']
+    selector: 'ga-danger-zone-mutation',
+    templateUrl: './danger-zone-mutation.component.html',
+    styleUrls: ['./danger-zone-mutation.component.scss'],
+    standalone: false
 })
 export class DangerZoneMutationComponent extends TranslationBaseComponent {
 	recordType: string;

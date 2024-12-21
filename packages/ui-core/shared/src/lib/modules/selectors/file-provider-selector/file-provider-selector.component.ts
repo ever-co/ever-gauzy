@@ -5,16 +5,17 @@ import { FileStorageProviderEnum } from '@gauzy/contracts';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'file-provider-selector',
-	templateUrl: './file-provider-selector.component.html',
-	styleUrls: ['./file-provider-selector.component.scss'],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => FileProviderSelectorComponent),
-			multi: true
-		}
-	]
+    selector: 'file-provider-selector',
+    templateUrl: './file-provider-selector.component.html',
+    styleUrls: ['./file-provider-selector.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => FileProviderSelectorComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class FileProviderSelectorComponent implements OnInit {
 	public fileStorageProviders: { label: FileStorageProviderEnum; value: any }[] = [];

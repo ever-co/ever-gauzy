@@ -9,9 +9,10 @@ import { EmployeeStore } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-edit-employee-settings',
-	templateUrl: './edit-employee-other-settings.component.html',
-	styleUrls: ['./edit-employee-other-settings.component.scss']
+    selector: 'ga-edit-employee-settings',
+    templateUrl: './edit-employee-other-settings.component.html',
+    styleUrls: ['./edit-employee-other-settings.component.scss'],
+    standalone: false
 })
 export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 	listOfTimeFormats = DEFAULT_TIME_FORMATS;

@@ -7,9 +7,10 @@ import { Store, UsersOrganizationsService } from '@gauzy/ui-core/core';
 import { BasicInfoFormComponent } from '@gauzy/ui-core/shared';
 
 @Component({
-	selector: 'ga-edit-user-mutation',
-	templateUrl: './edit-user-mutation.component.html',
-	styleUrls: ['./edit-user-mutation.component.scss']
+    selector: 'ga-edit-user-mutation',
+    templateUrl: './edit-user-mutation.component.html',
+    styleUrls: ['./edit-user-mutation.component.scss'],
+    standalone: false
 })
 export class EditUserMutationComponent extends TranslationBaseComponent implements OnInit {
 	@ViewChild('userBasicInfo') userBasicInfo: BasicInfoFormComponent;

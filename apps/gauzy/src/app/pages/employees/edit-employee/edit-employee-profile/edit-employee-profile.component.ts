@@ -19,10 +19,11 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-edit-employee-profile',
-	templateUrl: './edit-employee-profile.component.html',
-	styleUrls: ['./edit-employee-profile.component.scss'],
-	providers: [EmployeeStore]
+    selector: 'ngx-edit-employee-profile',
+    templateUrl: './edit-employee-profile.component.html',
+    styleUrls: ['./edit-employee-profile.component.scss'],
+    providers: [EmployeeStore],
+    standalone: false
 })
 export class EditEmployeeProfileComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public tabsetId: PageTabsetRegistryId = this._route.snapshot.data.tabsetId; // The identifier for the tabset

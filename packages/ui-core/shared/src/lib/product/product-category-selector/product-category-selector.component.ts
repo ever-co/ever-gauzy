@@ -14,16 +14,17 @@ import { ProductCategoryService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-product-category-selector',
-	templateUrl: './product-category-selector.component.html',
-	styleUrls: ['./product-category-selector.component.scss'],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => ProductCategorySelectorComponent),
-			multi: true
-		}
-	]
+    selector: 'ngx-product-category-selector',
+    templateUrl: './product-category-selector.component.html',
+    styleUrls: ['./product-category-selector.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ProductCategorySelectorComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ProductCategorySelectorComponent implements OnInit, OnDestroy {
 	public organization: IOrganization;

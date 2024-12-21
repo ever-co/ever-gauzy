@@ -7,9 +7,10 @@ import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
 import { Store } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ngx-footer',
-	styleUrls: ['./footer.component.scss'],
-	templateUrl: './footer.component.html'
+    selector: 'ngx-footer',
+    styleUrls: ['./footer.component.scss'],
+    templateUrl: './footer.component.html',
+    standalone: false
 })
 export class FooterComponent extends TranslationBaseComponent implements OnInit {
 	companyName: string;

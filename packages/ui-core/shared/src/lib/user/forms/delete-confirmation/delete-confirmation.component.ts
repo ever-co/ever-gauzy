@@ -2,8 +2,8 @@ import { Component } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 
 @Component({
-	selector: 'ga-delete-confirmation',
-	template: `
+    selector: 'ga-delete-confirmation',
+    template: `
 		<nb-card class="center">
 			<nb-card-header>
 				<span class="cancel"><i class="fas fa-times" (click)="close()"></i></span>
@@ -26,7 +26,8 @@ import { NbDialogRef } from '@nebular/theme';
 			</nb-card-footer>
 		</nb-card>
 	`,
-	styleUrls: ['delete-confirmation.component.scss']
+    styleUrls: ['delete-confirmation.component.scss'],
+    standalone: false
 })
 export class DeleteConfirmationComponent {
 	recordType: string;

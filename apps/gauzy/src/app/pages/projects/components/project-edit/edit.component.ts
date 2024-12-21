@@ -16,9 +16,10 @@ import { ProjectMutationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-project-edit-mutation',
-	templateUrl: './edit.component.html',
-	styleUrls: ['./edit.component.scss']
+    selector: 'ngx-project-edit-mutation',
+    templateUrl: './edit.component.html',
+    styleUrls: ['./edit.component.scss'],
+    standalone: false
 })
 export class ProjectEditMutationComponent extends TranslationBaseComponent implements OnInit {
 	/** Project Mutation Component*/

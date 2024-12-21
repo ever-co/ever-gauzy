@@ -15,9 +15,10 @@ import { CountdownConfirmationComponent } from '../user/forms';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-feature-toggle',
-	templateUrl: './feature-toggle.component.html',
-	styleUrls: ['./feature-toggle.component.scss']
+    selector: 'ga-feature-toggle',
+    templateUrl: './feature-toggle.component.html',
+    styleUrls: ['./feature-toggle.component.scss'],
+    standalone: false
 })
 export class FeatureToggleComponent extends TranslationBaseComponent implements OnInit, OnChanges {
 	@Input() organization: IOrganization;

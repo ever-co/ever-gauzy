@@ -9,10 +9,11 @@ import {
 import { ElectronService } from '../electron/services';
 
 @Component({
-	selector: 'ngx-updater',
-	templateUrl: './updater.component.html',
-	styleUrls: ['./updater.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'ngx-updater',
+    templateUrl: './updater.component.html',
+    styleUrls: ['./updater.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class UpdaterComponent implements OnInit {
 	@ViewChild('logBox') logBox: ElementRef;

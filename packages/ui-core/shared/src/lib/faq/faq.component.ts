@@ -6,9 +6,10 @@ import { faqs } from './faq-setting';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-faq',
-	templateUrl: './faq.component.html',
-	styleUrls: ['./faq.component.scss']
+    selector: 'ngx-faq',
+    templateUrl: './faq.component.html',
+    styleUrls: ['./faq.component.scss'],
+    standalone: false
 })
 export class NgxFaqComponent implements OnInit, OnDestroy {
 	private _faqs$: BehaviorSubject<any> = new BehaviorSubject([]);

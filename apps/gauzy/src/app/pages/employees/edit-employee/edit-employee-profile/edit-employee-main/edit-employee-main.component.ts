@@ -13,12 +13,13 @@ import { EmployeeStore, ErrorHandlingService } from '@gauzy/ui-core/core';
  */
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-edit-employee-main',
-	templateUrl: './edit-employee-main.component.html',
-	styleUrls: [
-		'../../../../organizations/edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component.scss',
-		'./edit-employee-main.component.scss'
-	]
+    selector: 'ga-edit-employee-main',
+    templateUrl: './edit-employee-main.component.html',
+    styleUrls: [
+        '../../../../organizations/edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component.scss',
+        './edit-employee-main.component.scss'
+    ],
+    standalone: false
 })
 export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	organization: IOrganization;

@@ -12,8 +12,9 @@ import { DangerZoneMutationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-danger-zone',
-	templateUrl: './danger-zone.component.html'
+    selector: 'ga-danger-zone',
+    templateUrl: './danger-zone.component.html',
+    standalone: false
 })
 export class DangerZoneComponent extends TranslationBaseComponent implements OnInit {
 	environment: Environment = environment;

@@ -28,9 +28,10 @@ import { CkEditorConfig, ColorAdapter } from '../utils';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-tasks',
-	templateUrl: './tasks.component.html',
-	styleUrls: ['./tasks.component.scss']
+    selector: 'ngx-tasks',
+    templateUrl: './tasks.component.html',
+    styleUrls: ['./tasks.component.scss'],
+    standalone: false
 })
 export class TasksComponent implements OnInit {
 	@Input() userData: IUserOrganization = this.store.user as any;

@@ -7,9 +7,10 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-goal-custom-unit-select',
-	templateUrl: './goal-custom-unit-select.component.html',
-	styleUrls: ['./goal-custom-unit-select.component.scss']
+    selector: 'ga-goal-custom-unit-select',
+    templateUrl: './goal-custom-unit-select.component.html',
+    styleUrls: ['./goal-custom-unit-select.component.scss'],
+    standalone: false
 })
 export class GoalCustomUnitSelectComponent implements OnInit, OnDestroy {
 	@Input() parentFormGroup: UntypedFormGroup;

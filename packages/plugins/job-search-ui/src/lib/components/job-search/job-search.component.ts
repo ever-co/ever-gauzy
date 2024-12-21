@@ -51,9 +51,10 @@ import { JobTitleDescriptionDetailsComponent } from '../job-title-description-de
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-job-search',
-	templateUrl: './job-search.component.html',
-	styleUrls: ['./job-search.component.scss']
+    selector: 'ga-job-search',
+    templateUrl: './job-search.component.html',
+    styleUrls: ['./job-search.component.scss'],
+    standalone: false
 })
 export class JobSearchComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	loading: boolean = false;

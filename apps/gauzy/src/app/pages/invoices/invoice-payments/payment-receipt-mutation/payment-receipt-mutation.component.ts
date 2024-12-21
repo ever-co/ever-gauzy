@@ -6,9 +6,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { IInvoice, IPayment } from '@gauzy/contracts';
 
 @Component({
-	selector: 'ga-payment-receipt-mutation',
-	templateUrl: './payment-receipt-mutation.component.html',
-	styleUrls: ['../payment-mutation/payment-mutation.component.scss']
+    selector: 'ga-payment-receipt-mutation',
+    templateUrl: './payment-receipt-mutation.component.html',
+    styleUrls: ['../payment-mutation/payment-mutation.component.scss'],
+    standalone: false
 })
 export class InvoicePaymentReceiptMutationComponent extends TranslationBaseComponent {
 	constructor(

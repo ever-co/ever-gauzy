@@ -26,16 +26,17 @@ import { ALL_TEAM_SELECTED } from './default-team';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-team-selector',
-	templateUrl: './team.component.html',
-	styleUrls: ['./team.component.scss'],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => TeamSelectorComponent),
-			multi: true
-		}
-	]
+    selector: 'ga-team-selector',
+    templateUrl: './team.component.html',
+    styleUrls: ['./team.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TeamSelectorComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TeamSelectorComponent implements OnInit, OnDestroy {
 	public organization: IOrganization;

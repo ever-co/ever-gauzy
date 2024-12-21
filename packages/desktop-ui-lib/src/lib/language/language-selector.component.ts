@@ -12,9 +12,10 @@ import { ElectronService } from '../electron/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-language-selector',
-	templateUrl: './language-selector.component.html',
-	styleUrls: ['./language-selector.component.scss']
+    selector: 'gauzy-language-selector',
+    templateUrl: './language-selector.component.html',
+    styleUrls: ['./language-selector.component.scss'],
+    standalone: false
 })
 export class LanguageSelectorComponent implements OnInit, AfterViewInit {
 	private _user: IUser;

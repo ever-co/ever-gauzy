@@ -21,13 +21,14 @@ import { ALL_EMPLOYEES_SELECTED, ChartUtil, IChartData } from '@gauzy/ui-core/sh
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-dashboard-accounting',
-	templateUrl: './accounting.component.html',
-	styleUrls: [
-		'../../organizations/edit-organization/edit-organization.component.scss',
-		'./accounting.component.scss'
-	],
-	providers: [CurrencyPipe]
+    selector: 'ga-dashboard-accounting',
+    templateUrl: './accounting.component.html',
+    styleUrls: [
+        '../../organizations/edit-organization/edit-organization.component.scss',
+        './accounting.component.scss'
+    ],
+    providers: [CurrencyPipe],
+    standalone: false
 })
 export class AccountingComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public aggregatedEmployeeStatistics: IAggregatedEmployeeStatistic;

@@ -3,7 +3,8 @@ import * as moment from 'moment';
 import 'moment-duration-format';
 
 @Pipe({
-	name: 'durationFormat'
+    name: 'durationFormat',
+    standalone: false
 })
 export class DurationFormatPipe implements PipeTransform {
 	transform(

@@ -1,7 +1,8 @@
 import { Directive, ElementRef, HostListener } from '@angular/core';
 
 @Directive({
-	selector: '[noSpaceEdges]'
+    selector: '[noSpaceEdges]',
+    standalone: false
 })
 export class NoSpaceEdgesDirective {
 	constructor(private readonly el: ElementRef) {}

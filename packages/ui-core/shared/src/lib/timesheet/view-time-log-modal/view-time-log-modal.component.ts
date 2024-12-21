@@ -10,9 +10,10 @@ import { EditTimeLogModalComponent } from './../edit-time-log-modal';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-view-time-log-modal',
-	templateUrl: './view-time-log-modal.component.html',
-	styleUrls: ['view-time-log-modal.component.scss']
+    selector: 'ngx-view-time-log-modal',
+    templateUrl: './view-time-log-modal.component.html',
+    styleUrls: ['view-time-log-modal.component.scss'],
+    standalone: false
 })
 export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 	organization: IOrganization;

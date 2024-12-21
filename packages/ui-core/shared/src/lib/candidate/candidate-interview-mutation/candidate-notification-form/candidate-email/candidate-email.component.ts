@@ -6,9 +6,10 @@ import { CandidatesService } from '@gauzy/ui-core/core';
 import { ckEditorConfig } from '../../../../ckeditor.config';
 
 @Component({
-	selector: 'ga-candidate-email',
-	templateUrl: 'candidate-email.component.html',
-	styleUrls: ['candidate-email.component.scss']
+    selector: 'ga-candidate-email',
+    templateUrl: 'candidate-email.component.html',
+    styleUrls: ['candidate-email.component.scss'],
+    standalone: false
 })
 export class CandidateEmailComponent implements OnInit {
 	@Input() isCandidate: boolean;

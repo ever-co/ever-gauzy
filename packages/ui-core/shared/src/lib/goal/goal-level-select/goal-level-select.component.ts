@@ -5,9 +5,10 @@ import { Store } from '@gauzy/ui-core/core';
 import { OrganizationTeamsService } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ga-goal-level-select',
-	templateUrl: './goal-level-select.component.html',
-	styleUrls: ['./goal-level-select.component.scss']
+    selector: 'ga-goal-level-select',
+    templateUrl: './goal-level-select.component.html',
+    styleUrls: ['./goal-level-select.component.scss'],
+    standalone: false
 })
 export class GoalLevelSelectComponent {
 	@Input() parentFormGroup: UntypedFormGroup;

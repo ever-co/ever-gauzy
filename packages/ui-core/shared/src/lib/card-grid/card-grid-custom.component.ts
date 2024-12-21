@@ -10,8 +10,9 @@ import {
 import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 
 @Component({
-	selector: 'ga-custom-component',
-	template: ` <ng-template #dynamicTarget></ng-template> `
+    selector: 'ga-custom-component',
+    template: ` <ng-template #dynamicTarget></ng-template> `,
+    standalone: false
 })
 export class CustomViewComponent implements OnInit, OnDestroy {
 	@Input() renderComponent: any;

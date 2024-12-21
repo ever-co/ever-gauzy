@@ -20,9 +20,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-manual-time-report',
-	templateUrl: './manual-time.component.html',
-	styleUrls: ['./manual-time.component.scss']
+    selector: 'ga-manual-time-report',
+    templateUrl: './manual-time.component.html',
+    styleUrls: ['./manual-time.component.scss'],
+    standalone: false
 })
 export class ManualTimeComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	public control = new FormControl();

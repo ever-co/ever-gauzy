@@ -9,9 +9,10 @@ interface ICheckSslResponse {
 }
 
 @Component({
-	selector: 'gauzy-ssl',
-	templateUrl: './ssl.component.html',
-	styleUrls: ['./ssl.component.scss']
+    selector: 'gauzy-ssl',
+    templateUrl: './ssl.component.html',
+    styleUrls: ['./ssl.component.scss'],
+    standalone: false
 })
 export class SslComponent implements OnInit {
 	public isCheckSsl$: BehaviorSubject<boolean>;

@@ -7,9 +7,10 @@ export enum StarsIcon {
 }
 
 @Component({
-	selector: 'ga-star-rating-output',
-	templateUrl: './star-rating-output.component.html',
-	styleUrls: ['./star-rating-output.component.scss']
+    selector: 'ga-star-rating-output',
+    templateUrl: './star-rating-output.component.html',
+    styleUrls: ['./star-rating-output.component.scss'],
+    standalone: false
 })
 export class StarRatingOutputComponent {
 	@Input() isGridView = false;

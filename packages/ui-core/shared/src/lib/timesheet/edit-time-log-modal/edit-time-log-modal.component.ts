@@ -20,9 +20,10 @@ import { Store, TimesheetService, ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-edit-time-log-modal',
-	templateUrl: './edit-time-log-modal.component.html',
-	styleUrls: ['./edit-time-log-modal.component.scss']
+    selector: 'ngx-edit-time-log-modal',
+    templateUrl: './edit-time-log-modal.component.html',
+    styleUrls: ['./edit-time-log-modal.component.scss'],
+    standalone: false
 })
 export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestroy {
 	// Permissions and basic state initialization

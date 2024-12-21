@@ -8,9 +8,10 @@ import { WidgetService } from './widget.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-widget',
-	templateUrl: './widget.component.html',
-	styleUrls: ['./widget.component.scss']
+    selector: 'ga-widget',
+    templateUrl: './widget.component.html',
+    styleUrls: ['./widget.component.scss'],
+    standalone: false
 })
 export class WidgetComponent extends GuiDrag implements OnInit, AfterViewInit, OnDestroy {
 	private _widgetDragEnded: Observable<any>;

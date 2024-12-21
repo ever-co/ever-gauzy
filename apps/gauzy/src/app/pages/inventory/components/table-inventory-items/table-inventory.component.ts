@@ -27,9 +27,10 @@ import { ImageRowComponent, NameWithDescriptionComponent } from '../inventory-ta
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-table-inventory',
-	templateUrl: './table-inventory.component.html',
-	styleUrls: ['./table-inventory.component.scss']
+    selector: 'ngx-table-inventory',
+    templateUrl: './table-inventory.component.html',
+    styleUrls: ['./table-inventory.component.scss'],
+    standalone: false
 })
 export class TableInventoryComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	settingsSmartTable: object;

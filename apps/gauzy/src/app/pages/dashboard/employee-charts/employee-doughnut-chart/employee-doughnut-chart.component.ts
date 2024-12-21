@@ -15,8 +15,8 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-employee-doughnut-chart',
-	template: `
+    selector: 'ga-employee-doughnut-chart',
+    template: `
 		<ng-template [ngIf]="employeeStatistics.length" [ngIfElse]="chartNotFoundTemplate">
 			<!-- <span>{{ displayDate }}</span> -->
 			<canvas
@@ -36,8 +36,8 @@ import { Store } from '@gauzy/ui-core/core';
 			</div>
 		</ng-template>
 	`,
-	styles: [
-		`
+    styles: [
+        `
 			:host {
 				.title {
 					display: flex;
@@ -46,8 +46,9 @@ import { Store } from '@gauzy/ui-core/core';
 				}
 			}
 		`
-	],
-	providers: [CurrencyPipe, CurrencyPositionPipe]
+    ],
+    providers: [CurrencyPipe, CurrencyPositionPipe],
+    standalone: false
 })
 export class EmployeeDoughnutChartComponent extends TranslationBaseComponent implements OnInit, OnDestroy, OnChanges {
 	public chartType: ChartType = 'doughnut';

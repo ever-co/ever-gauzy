@@ -2,8 +2,8 @@ import { Component, Input } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Component({
-	selector: 'ngx-contact-links',
-	template: `
+    selector: 'ngx-contact-links',
+    template: `
 		<div class="contact-links-container">
 			<ng-container *ngIf="value && value?.name">
 				<div [nbTooltip]="value.name" (click)="navigateToContact()" class="inner-wrapper">
@@ -20,7 +20,8 @@ import { Router } from '@angular/router';
 			</ng-container>
 		</div>
 	`,
-	styleUrls: ['./contact-links.component.scss']
+    styleUrls: ['./contact-links.component.scss'],
+    standalone: false
 })
 export class ContactLinksComponent {
 	@Input() rowData: any;

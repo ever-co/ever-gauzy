@@ -30,9 +30,10 @@ interface WeeklyDayData {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-weekly-timesheet',
-	templateUrl: './weekly.component.html',
-	styleUrls: ['./weekly.component.scss']
+    selector: 'ngx-weekly-timesheet',
+    templateUrl: './weekly.component.html',
+    styleUrls: ['./weekly.component.scss'],
+    standalone: false
 })
 export class WeeklyComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {
 	PermissionsEnum = PermissionsEnum;

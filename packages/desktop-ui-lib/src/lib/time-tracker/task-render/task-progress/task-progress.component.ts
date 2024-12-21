@@ -8,9 +8,10 @@ import { map } from 'rxjs/operators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-task-progress',
-	templateUrl: './task-progress.component.html',
-	styleUrls: ['./task-progress.component.scss']
+    selector: 'gauzy-task-progress',
+    templateUrl: './task-progress.component.html',
+    styleUrls: ['./task-progress.component.scss'],
+    standalone: false
 })
 export class TaskProgressComponent extends TaskRenderComponent implements AfterViewInit {
 	public updated: EventEmitter<number>;

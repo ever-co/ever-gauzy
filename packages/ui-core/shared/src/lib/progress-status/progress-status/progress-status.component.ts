@@ -3,9 +3,10 @@ import { progressStatus } from '@gauzy/ui-core/common';
 import { NbComponentOrCustomStatus } from '@nebular/theme';
 
 @Component({
-	selector: 'ngx-progress-status',
-	templateUrl: './progress-status.component.html',
-	styleUrls: ['./progress-status.component.scss']
+    selector: 'ngx-progress-status',
+    templateUrl: './progress-status.component.html',
+    styleUrls: ['./progress-status.component.scss'],
+    standalone: false
 })
 export class ProgressStatusComponent implements OnInit {
 	progressStatus = progressStatus;

@@ -12,9 +12,10 @@ import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } f
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-time-limit-report',
-	templateUrl: './time-limit-report.component.html',
-	styleUrls: ['./time-limit-report.component.scss']
+    selector: 'ga-time-limit-report',
+    templateUrl: './time-limit-report.component.html',
+    styleUrls: ['./time-limit-report.component.scss'],
+    standalone: false
 })
 export class TimeLimitReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	filters: ITimeLogFilters;

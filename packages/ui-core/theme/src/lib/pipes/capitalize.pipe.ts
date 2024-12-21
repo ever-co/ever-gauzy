@@ -1,6 +1,9 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
-@Pipe({ name: 'ngxCapitalize' })
+@Pipe({
+    name: 'ngxCapitalize',
+    standalone: false
+})
 export class CapitalizePipe implements PipeTransform {
 	/**
 	 * Capitalize first letter of every word

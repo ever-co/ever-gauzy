@@ -17,9 +17,10 @@ import {
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-add-article',
-	templateUrl: 'add-article.component.html',
-	styleUrls: ['add-article.component.scss']
+    selector: 'ga-add-article',
+    templateUrl: 'add-article.component.html',
+    styleUrls: ['add-article.component.scss'],
+    standalone: false
 })
 export class AddArticleComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@Input() article?: IHelpCenterArticle;

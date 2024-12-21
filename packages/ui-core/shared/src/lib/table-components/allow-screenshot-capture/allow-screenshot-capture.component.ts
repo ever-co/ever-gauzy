@@ -5,9 +5,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-allow-screenshot-capture',
-	templateUrl: './allow-screenshot-capture.component.html',
-	styleUrls: ['./allow-screenshot-capture.component.scss']
+    selector: 'gauzy-allow-screenshot-capture',
+    templateUrl: './allow-screenshot-capture.component.html',
+    styleUrls: ['./allow-screenshot-capture.component.scss'],
+    standalone: false
 })
 
 export class AllowScreenshotCaptureComponent implements OnInit {

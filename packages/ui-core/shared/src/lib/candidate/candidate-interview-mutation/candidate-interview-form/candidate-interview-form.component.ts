@@ -21,9 +21,10 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-candidate-interview-form',
-	templateUrl: 'candidate-interview-form.component.html',
-	styleUrls: ['candidate-interview-form.component.scss']
+    selector: 'ga-candidate-interview-form',
+    templateUrl: 'candidate-interview-form.component.html',
+    styleUrls: ['candidate-interview-form.component.scss'],
+    standalone: false
 })
 export class CandidateInterviewFormComponent implements AfterViewInit, OnInit, OnDestroy {
 	@Input() editData: ICandidateInterview;

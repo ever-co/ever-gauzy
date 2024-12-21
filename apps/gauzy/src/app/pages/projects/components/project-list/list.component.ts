@@ -47,9 +47,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-project-list',
-	templateUrl: './list.component.html',
-	styleUrls: ['./list.component.scss']
+    selector: 'ga-project-list',
+    templateUrl: './list.component.html',
+    styleUrls: ['./list.component.scss'],
+    standalone: false
 })
 export class ProjectListComponent extends PaginationFilterBaseComponent implements OnInit {
 	public loading: boolean = false;

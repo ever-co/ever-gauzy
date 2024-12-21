@@ -23,10 +23,11 @@ export enum ServerStatus {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-server-dashboard',
-	templateUrl: './server-dashboard.component.html',
-	styleUrls: ['./server-dashboard.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-server-dashboard',
+    templateUrl: './server-dashboard.component.html',
+    styleUrls: ['./server-dashboard.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class ServerDashboardComponent implements OnInit, AfterViewInit {
 	@ViewChild('logBox') logBox: ElementRef;

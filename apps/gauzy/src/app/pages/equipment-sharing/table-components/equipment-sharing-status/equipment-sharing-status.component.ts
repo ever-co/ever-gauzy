@@ -2,8 +2,9 @@ import { Component, Input, OnInit } from '@angular/core';
 import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 
 @Component({
-	selector: 'ngx-equipment-sharing-status',
-	templateUrl: './equipment-sharing-status.component.html'
+    selector: 'ngx-equipment-sharing-status',
+    templateUrl: './equipment-sharing-status.component.html',
+    standalone: false
 })
 export class EquipmentSharingStatusComponent implements OnInit {
 

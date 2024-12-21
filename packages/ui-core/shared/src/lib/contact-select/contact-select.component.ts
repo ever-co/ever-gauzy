@@ -11,15 +11,16 @@ import { OrganizationContactService, ErrorHandlingService, ToastrService } from 
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-contact-select',
-	templateUrl: './contact-select.component.html',
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => ContactSelectComponent),
-			multi: true
-		}
-	]
+    selector: 'ga-contact-select',
+    templateUrl: './contact-select.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ContactSelectComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ContactSelectComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public hasEditEmployee$: Observable<boolean>;

@@ -10,8 +10,9 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-integration-hubstaff-layout',
-	template: `<router-outlet></router-outlet>`
+    selector: 'ngx-integration-hubstaff-layout',
+    template: `<router-outlet></router-outlet>`,
+    standalone: false
 })
 export class IntegrationHubstaffLayoutComponent implements OnInit, OnDestroy {
 	constructor(

@@ -7,10 +7,10 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-header-title',
-	templateUrl: './header-title.component.html',
-	styles: [
-		`
+    selector: 'ngx-header-title',
+    templateUrl: './header-title.component.html',
+    styles: [
+        `
 			.name,
 			.org-name {
 				font-size: 24px;
@@ -27,7 +27,8 @@ import { Store } from '@gauzy/ui-core/core';
 				text-align: left;
 			}
 		`
-	]
+    ],
+    standalone: false
 })
 export class HeaderTitleComponent implements OnInit {
 	PermissionsEnum: typeof PermissionsEnum = PermissionsEnum;

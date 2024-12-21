@@ -13,8 +13,9 @@ import { patterns } from '../regex/regex-patterns.const';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	templateUrl: './smtp.component.html',
-	styleUrls: ['./smtp.component.scss']
+    templateUrl: './smtp.component.html',
+    styleUrls: ['./smtp.component.scss'],
+    standalone: false
 })
 export class SMTPComponent extends TranslationBaseComponent implements OnInit, OnChanges, AfterViewInit {
 	@ViewChild('formDirective') formDirective: FormGroupDirective;

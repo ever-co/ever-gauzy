@@ -13,7 +13,8 @@ import { getAdjustDateRangeFutureAllowed } from '../../../selectors/date-range-p
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	template: ''
+    template: '',
+    standalone: false
 })
 export class BaseSelectorFilterComponent extends TranslationBaseComponent {
 	request: ITimeLogFilters = {

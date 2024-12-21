@@ -34,10 +34,11 @@ import { AlertModalComponent } from '../../components/alert-modal/alert-modal.co
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-manage-appointment',
-	templateUrl: './manage-appointment.component.html',
-	styleUrls: ['./manage-appointment.component.scss'],
-	providers: [AppointmentEmployeesService, AvailabilitySlotsService, EmployeeAppointmentService]
+    selector: 'ga-manage-appointment',
+    templateUrl: './manage-appointment.component.html',
+    styleUrls: ['./manage-appointment.component.scss'],
+    providers: [AppointmentEmployeesService, AvailabilitySlotsService, EmployeeAppointmentService],
+    standalone: false
 })
 export class ManageAppointmentComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
 	form: UntypedFormGroup;
