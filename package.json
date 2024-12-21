@@ -314,8 +314,7 @@
 		]
 	},
 	"resolutions": {
-		"@angular-devkit/architect": "^0.1703.11",
-		"@angular-devkit/build-angular": "^18.2.9",
+		"@angular-devkit/architect": "^0.1802.12",
 		"@angular-devkit/core": "^18.2.9",
 		"camelcase": "^6.3.0",
 		"rxjs": "^7.8.0",
@@ -362,8 +361,9 @@
 	},
 	"devDependencies": {
 		"@angular-builders/custom-webpack": "^18.0.0",
-		"@angular-devkit/architect": "^0.1703.11",
+		"@angular-devkit/architect": "^0.1802.12",
 		"@angular-devkit/build-angular": "^18.2.9",
+		"@angular-devkit/build-ng-packagr": "^0.1002.0",
 		"@angular-devkit/core": "^18.2.9",
 		"@angular-devkit/schematics": "18.2.9",
 		"@angular-eslint/eslint-plugin": "18.0.1",

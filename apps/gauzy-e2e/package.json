@@ -53,13 +53,8 @@
 		"build:package:plugin:product-reviews": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn --cwd ./packages/plugins/product-reviews build",
 		"postinstall.web": "yarn node ./decorate-angular-cli.js && yarn node tools/web/postinstall"
 	},
-	"resolutions": {
-		"@angular-devkit/build-angular": "^18.2.9"
-	},
 	"devDependencies": {
 		"@4tw/cypress-drag-drop": "^2.1.0",
-		"@angular-devkit/build-angular": "^18.2.9",
-		"@angular/cli": "~18.2.0",
 		"@cypress/browserify-preprocessor": "^3.0.2",
 		"@types/jest": "29.5.14",
 		"cypress": "^9.4.1",
