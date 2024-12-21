@@ -1,5 +1,4 @@
 {
-	"lerna": "3.13.0",
 	"npmClient": "yarn",
 	"version": "0.1.0",
 	"changelog": {
