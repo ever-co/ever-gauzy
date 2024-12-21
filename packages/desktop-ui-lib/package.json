@@ -15,16 +15,16 @@
 		"lib:watch": "yarn nx build desktop-ui-lib --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^18.2.0",
-		"@angular/core": "^18.2.0"
+		"@angular/common": "^19.0.0",
+		"@angular/core": "^19.0.0"
 	},
 	"dependencies": {
 		"@angular-slider/ngx-slider": "^18.0.0",
-		"@angular/animations": "18.2.12",
-		"@angular/forms": "18.2.12",
-		"@angular/platform-browser": "18.2.12",
-		"@angular/platform-browser-dynamic": "18.2.12",
-		"@angular/router": "18.2.12",
+		"@angular/animations": "19.0.5",
+		"@angular/forms": "19.0.5",
+		"@angular/platform-browser": "19.0.5",
+		"@angular/platform-browser-dynamic": "19.0.5",
+		"@angular/router": "19.0.5",
 		"@datorama/akita": "^7.1.1",
 		"@datorama/akita-ngdevtools": "^7.0.0",
 		"@electron/remote": "^2.0.8",
@@ -60,7 +60,7 @@
 		"@types/moment-duration-format": "^2.2.3",
 		"@types/node": "^20.14.9",
 		"electron": "^30.0.1",
-		"jest-preset-angular": "14.1.1"
+		"jest-preset-angular": "14.4.2"
 	},
 	"keywords": [],
 	"engines": {

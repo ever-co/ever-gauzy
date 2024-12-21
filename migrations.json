@@ -1,27 +1,132 @@
 {
 	"migrations": [
 		{
-			"version": "20.0.0-beta.7",
-			"description": "Migration for v20.0.0-beta.7",
-			"implementation": "./src/migrations/update-20-0-0/move-use-daemon-process",
-			"package": "nx",
-			"name": "move-use-daemon-process"
+			"version": "20.2.0-beta.5",
+			"description": "Update TypeScript ESLint packages to v8.13.0 if they are already on v8",
+			"implementation": "./src/migrations/update-20-2-0/update-typescript-eslint-v8-13-0",
+			"package": "@nx/eslint",
+			"name": "update-typescript-eslint-v8.13.0"
 		},
 		{
-			"version": "20.0.1",
-			"description": "Set `useLegacyCache` to true for migrating workspaces",
-			"implementation": "./src/migrations/update-20-0-1/use-legacy-cache",
-			"x-repair-skip": true,
-			"package": "nx",
-			"name": "use-legacy-cache"
+			"version": "20.3.0-beta.1",
+			"description": "Update ESLint flat config to include .cjs, .mjs, .cts, and .mts files in overrides (if needed)",
+			"implementation": "./src/migrations/update-20-3-0/add-file-extensions-to-overrides",
+			"package": "@nx/eslint",
+			"name": "add-file-extensions-to-overrides"
 		},
 		{
 			"cli": "nx",
-			"version": "20.0.0-beta.5",
-			"description": "replace getJestProjects with getJestProjectsAsync",
-			"implementation": "./src/migrations/update-20-0-0/replace-getJestProjects-with-getJestProjectsAsync",
-			"package": "@nx/jest",
-			"name": "replace-getJestProjects-with-getJestProjectsAsync"
+			"version": "20.2.0-beta.2",
+			"description": "Update the ModuleFederationConfig import use @nx/module-federation.",
+			"factory": "./src/migrations/update-20-2-0/migrate-mf-imports-to-new-package",
+			"package": "@nx/angular",
+			"name": "update-20-2-0-update-module-federation-config-import"
+		},
+		{
+			"cli": "nx",
+			"version": "20.2.0-beta.2",
+			"description": "Update the withModuleFederation import use @nx/module-federation/angular.",
+			"factory": "./src/migrations/update-20-2-0/migrate-with-mf-import-to-new-package",
+			"package": "@nx/angular",
+			"name": "update-20-2-0-update-with-module-federation-import"
+		},
+		{
+			"cli": "nx",
+			"version": "20.2.0-beta.5",
+			"requires": { "@angular/core": ">=19.0.0" },
+			"description": "Update the @angular/cli package version to ~19.0.0.",
+			"factory": "./src/migrations/update-20-2-0/update-angular-cli",
+			"package": "@nx/angular",
+			"name": "update-angular-cli-version-19-0-0"
+		},
+		{
+			"cli": "nx",
+			"version": "20.2.0-beta.5",
+			"requires": { "@angular/core": ">=19.0.0" },
+			"description": "Add the '@angular/localize/init' polyfill to the 'polyfills' option of targets using esbuild-based executors.",
+			"factory": "./src/migrations/update-20-2-0/add-localize-polyfill-to-targets",
+			"package": "@nx/angular",
+			"name": "add-localize-polyfill-to-targets"
+		},
+		{
+			"cli": "nx",
+			"version": "20.2.0-beta.5",
+			"requires": { "@angular/core": ">=19.0.0" },
+			"description": "Update '@angular/ssr' import paths to use the new '/node' entry point when 'CommonEngine' is detected.",
+			"factory": "./src/migrations/update-20-2-0/update-angular-ssr-imports-to-use-node-entry-point",
+			"package": "@nx/angular",
+			"name": "update-angular-ssr-imports-to-use-node-entry-point"
+		},
+		{
+			"cli": "nx",
+			"version": "20.2.0-beta.6",
+			"requires": { "@angular/core": ">=19.0.0" },
+			"description": "Disable the Angular ESLint prefer-standalone rule if not set.",
+			"factory": "./src/migrations/update-20-2-0/disable-angular-eslint-prefer-standalone",
+			"package": "@nx/angular",
+			"name": "disable-angular-eslint-prefer-standalone"
+		},
+		{
+			"cli": "nx",
+			"version": "20.2.0-beta.8",
+			"requires": { "@angular/core": ">=19.0.0" },
+			"description": "Remove Angular ESLint rules that were removed in v19.0.0.",
+			"factory": "./src/migrations/update-20-2-0/remove-angular-eslint-rules",
+			"package": "@nx/angular",
+			"name": "remove-angular-eslint-rules"
+		},
+		{
+			"cli": "nx",
+			"version": "20.2.0-beta.8",
+			"requires": { "@angular/core": ">=19.0.0" },
+			"description": "Remove the deprecated 'tailwindConfig' option from ng-packagr executors. Tailwind CSS configurations located at the project or workspace root will be picked up automatically.",
+			"factory": "./src/migrations/update-20-2-0/remove-tailwind-config-from-ng-packagr-executors",
+			"package": "@nx/angular",
+			"name": "remove-tailwind-config-from-ng-packagr-executors"
+		},
+		{
+			"cli": "nx",
+			"version": "20.3.0-beta.2",
+			"description": "If workspace includes Module Federation projects, ensure the new @nx/module-federation package is installed.",
+			"factory": "./src/migrations/update-20-3-0/ensure-nx-module-federation-package",
+			"package": "@nx/angular",
+			"name": "ensure-nx-module-federation-package"
+		},
+		{
+			"version": "19.0.0",
+			"description": "Updates non-standalone Directives, Component and Pipes to 'standalone:false' and removes 'standalone:true' from those who are standalone",
+			"factory": "./bundles/explicit-standalone-flag#migrate",
+			"package": "@angular/core",
+			"name": "explicit-standalone-flag"
+		},
+		{
+			"version": "19.0.0",
+			"description": "Updates ExperimentalPendingTasks to PendingTasks",
+			"factory": "./bundles/pending-tasks#migrate",
+			"package": "@angular/core",
+			"name": "pending-tasks"
+		},
+		{
+			"version": "19.0.0",
+			"description": "Replaces `APP_INITIALIZER`, `ENVIRONMENT_INITIALIZER` & `PLATFORM_INITIALIZER` respectively with `provideAppInitializer`, `provideEnvironmentInitializer` & `providePlatformInitializer`.",
+			"factory": "./bundles/provide-initializer#migrate",
+			"optional": true,
+			"package": "@angular/core",
+			"name": "provide-initializer"
+		},
+		{
+			"version": "19.0.0-0",
+			"description": "Updates Angular Material to v19",
+			"factory": "./ng-update/index_bundled#updateToV19",
+			"package": "@angular/material",
+			"name": "migration-v19"
+		},
+		{
+			"version": "19.0.0-0",
+			"description": "Updates the Angular CDK to v19",
+			"factory": "./ng-update/index#updateToV19",
+			"package": "@angular/cdk",
+			"name": "migration-v19"
 		}
 	]
 }

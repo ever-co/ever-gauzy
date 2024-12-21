@@ -23,18 +23,18 @@
 		"lib:watch": "yarn nx build ui-core --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^18.2.0",
-		"@angular/core": "^18.2.0"
+		"@angular/common": "^19.0.0",
+		"@angular/core": "^19.0.0"
 	},
 	"dependencies": {
 		"@ali-hm/angular-tree-component": "^18.0.5",
 		"@angular-slider/ngx-slider": "^18.0.0",
-		"@angular/animations": "18.2.12",
-		"@angular/cdk": "18.2.14",
-		"@angular/forms": "18.2.12",
-		"@angular/material": "18.2.14",
-		"@angular/platform-browser": "18.2.12",
-		"@angular/router": "18.2.12",
+		"@angular/animations": "19.0.5",
+		"@angular/cdk": "19.0.4",
+		"@angular/forms": "19.0.5",
+		"@angular/material": "19.0.4",
+		"@angular/platform-browser": "19.0.5",
+		"@angular/router": "19.0.5",
 		"@asymmetrik/ngx-leaflet": "^18.0.1",
 		"@datorama/akita": "^7.1.1",
 		"@electron/remote": "^2.0.8",
@@ -109,7 +109,7 @@
 		"@types/ckeditor": "^4.9.10",
 		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
-		"jest-preset-angular": "14.1.1"
+		"jest-preset-angular": "14.4.2"
 	},
 	"keywords": [
 		"ui-core",

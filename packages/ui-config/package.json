@@ -23,8 +23,8 @@
 		"lib:watch": "yarn nx build ui-config --watch --configuration=development"
 	},
 	"peerDependencies": {
-		"@angular/common": "^18.2.0",
-		"@angular/core": "^18.2.0"
+		"@angular/common": "^19.0.0",
+		"@angular/core": "^19.0.0"
 	},
 	"dependencies": {
 		"tslib": "^2.6.2"
@@ -33,7 +33,7 @@
 		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
 		"cross-env": "^7.0.3",
-		"jest-preset-angular": "14.1.1"
+		"jest-preset-angular": "14.4.2"
 	},
 	"keywords": [
 		"gauzy",
