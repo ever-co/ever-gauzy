@@ -309,8 +309,11 @@ FROM node:20.11.1-alpine3.19 AS production
 WORKDIR /srv/gauzy
 
 COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint.compose.sh ./
-# COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules/ ./node_modules/
 COPY --chown=node:node --from=build /srv/gauzy/packages/ ./packages/
+
+# Exclude @gauzy directories before copying because we copy those within custom webpack
+RUN find /srv/gauzy/node_modules -depth -type d -name '@gauzy' -exec rm -rf {} +
+COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules/ ./node_modules/
 
 # Copy static assets files which used for example in the seeds (e.g. images for features, reports, screenshots)
 COPY --chown=node:node apps/api/src/assets apps/api/src/assets
