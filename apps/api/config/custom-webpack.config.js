@@ -75,7 +75,7 @@ module.exports = composePlugins(
 		);
 
 		// Log for debugging
-		// console.log('Copy Patterns:', packagePatterns);
+		console.log('Copy Patterns:', packagePatterns);
 
 		// Log final config for debugging
 		// console.log('Final Webpack config:', JSON.stringify(config, null, 2));
