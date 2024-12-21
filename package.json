@@ -343,7 +343,7 @@
 		"@nestjs/core": "^10.3.7",
 		"@nestjs/mapped-types": "^2.0.5",
 		"@nestjs/platform-express": "^10.3.7",
-		"@ng-select/ng-select": "^13.9.0",
+		"@ng-select/ng-select": "^14.1.0",
 		"angular2-smart-table": "^3.4.0",
 		"autoprefixer": "^10.4.20",
 		"bcrypt": "^5.1.1",

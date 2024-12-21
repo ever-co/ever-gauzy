@@ -51,7 +51,7 @@
 		"@nebular/security": "^14.0.2",
 		"@nebular/theme": "^14.0.2",
 		"@nestjs/typeorm": "^10.0.2",
-		"@ng-select/ng-select": "^13.9.0",
+		"@ng-select/ng-select": "^14.1.0",
 		"@ngneat/until-destroy": "^10.0.0",
 		"@ngx-translate/core": "^16.0.3",
 		"@ngx-translate/http-loader": "^16.0.0",
