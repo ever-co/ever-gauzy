@@ -54,7 +54,7 @@
 		"@types/multer": "^1.4.11",
 		"@types/node": "^20.14.9",
 		"@types/uuid": "^3.4.4",
-		"typescript": "5.6.3"
+		"typescript": "5.5.4"
 	},
 	"keywords": [
 		"gauzy",
