@@ -142,7 +142,7 @@ RUN mkdir dist
 
 COPY --chown=node:node --from=development /srv/gauzy .
 
-ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=30000"}
+ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=60000"}
 ENV NODE_ENV=${NODE_ENV:-production}
 
 ENV IS_DOCKER=true

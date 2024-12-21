@@ -288,7 +288,7 @@ ARG NODE_ENV
 ARG DEMO
 ARG NODE_OPTIONS
 
-ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=30000"}
+ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=60000"}
 ENV NODE_ENV=${NODE_ENV}
 ENV DEMO=${DEMO:-false}
 
@@ -310,7 +310,6 @@ FROM node:20.11.1-alpine3.19 AS production
 WORKDIR /srv/gauzy
 
 COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint.compose.sh ./
-COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules/ ./node_modules/
 COPY --chown=node:node --from=build /srv/gauzy/packages/ ./packages/
 
 # Copy static assets files which used for example in the seeds (e.g. images for features, reports, screenshots)
@@ -325,6 +324,8 @@ COPY --chown=node:node apps/api/public apps/api/public
 COPY --chown=node:node apps/api/src/assets/seed apps/api/public
 
 COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
+
+COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules/ ./node_modules/
 
 RUN npm install pm2@4.5.1 -g && \
 	mkdir /import && chown node:node /import && \
