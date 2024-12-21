@@ -11,7 +11,8 @@
 			"executor": "@nx/angular:package",
 			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
 			"options": {
-				"project": "packages/plugins/onboarding-ui/ng-package.json"
+				"project": "packages/plugins/onboarding-ui/ng-package.json",
+				"tsConfig": "packages/plugins/onboarding-ui/tsconfig.json"
 			},
 			"configurations": {
 				"production": {

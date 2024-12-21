@@ -18,7 +18,8 @@
 			"executor": "@nx/angular:package",
 			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
 			"options": {
-				"project": "packages/desktop-ui-lib/ng-package.json"
+				"project": "packages/desktop-ui-lib/ng-package.json",
+				"tsConfig": "packages/desktop-ui-lib/tsconfig.json"
 			},
 			"configurations": {
 				"production": {

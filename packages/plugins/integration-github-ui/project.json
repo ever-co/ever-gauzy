@@ -11,7 +11,8 @@
 			"executor": "@nx/angular:package",
 			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
 			"options": {
-				"project": "packages/plugins/integration-github-ui/ng-package.json"
+				"project": "packages/plugins/integration-github-ui/ng-package.json",
+				"tsConfig": "packages/plugins/integration-github-ui/tsconfig.json"
 			},
 			"configurations": {
 				"production": {
