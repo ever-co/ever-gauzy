@@ -1,1 +1,1 @@
-export * from './project-module';
+export * from './project-mutation/project-mutation.module';
