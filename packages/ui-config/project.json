@@ -31,9 +31,6 @@
 		},
 		"generate-env": {
 			"executor": "nx:run-commands",
-			"options": {
-				"cwd": "."
-			},
 			"configurations": {
 				"production": {
 					"commands": ["yarn run config:prod"]
@@ -52,15 +49,12 @@
 					"projects": "self"
 				}
 			],
-			"options": {
-				"cwd": "."
-			},
 			"configurations": {
 				"production": {
-					"command": "cross-env NODE_ENV=production yarn ts-node packages/ui-config/scripts/replace-env-files.ts --environment=prod"
+					"command": "cross-env NODE_ENV=production yarn ts-node packages/ui-config/scripts/replace-env-files.ts"
 				},
 				"development": {
-					"command": "cross-env NODE_ENV=development yarn ts-node packages/ui-config/scripts/replace-env-files.ts --environment=dev"
+					"command": "cross-env NODE_ENV=development yarn ts-node packages/ui-config/scripts/replace-env-files.ts"
 				}
 			},
 			"defaultConfiguration": "production"

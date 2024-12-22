@@ -10,6 +10,13 @@
 		"build": {
 			"executor": "@nx/angular:package",
 			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"dependsOn": [
+				"^build",
+				{
+					"target": "config",
+					"projects": "self"
+				}
+			],
 			"options": {
 				"project": "packages/ui-core/ng-package.json",
 				"tsConfig": "packages/ui-core/tsconfig.json"
@@ -22,17 +29,16 @@
 					"tsConfig": "packages/ui-core/tsconfig.lib.json"
 				}
 			},
-			"defaultConfiguration": "production",
-			"dependsOn": ["^build", "config"]
+			"defaultConfiguration": "production"
 		},
 		"config": {
 			"executor": "nx:run-commands",
 			"configurations": {
 				"production": {
-					"commands": ["yarn ts-node .scripts/configure.ts --prod"]
+					"commands": ["yarn nx build ui-config --configuration=production"]
 				},
 				"development": {
-					"commands": ["yarn ts-node .scripts/configure.ts --dev"]
+					"commands": ["yarn nx build ui-config --configuration=development"]
 				}
 			},
 			"defaultConfiguration": "production"
