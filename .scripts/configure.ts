@@ -2,10 +2,10 @@
 // We are using dotenv (.env) for consistency with other Platform projects
 // This is Angular app and all settings will be loaded into the client browser!
 
-import { env } from './env';
-import { writeFile, unlinkSync } from 'fs';
+import { existsSync, mkdirSync, writeFile, unlinkSync } from 'fs';
 import * as path from 'path';
 import { argv } from 'yargs';
+import { env } from './env';
 
 const environment = argv.environment;
 const isProd = environment === 'prod';
@@ -364,9 +364,25 @@ try {
 const envFileDest: string = isProd ? 'environment.prod.ts' : 'environment.ts';
 const envFileDestOther: string = !isProd ? 'environment.prod.ts' : 'environment.ts';
 
-writeFile(`./packages/ui-config/src/lib/environments/${envFileDest}`, envFileContent, (error) => {
+console.log(`Generating Angular environment file: ${envFileDest}`);
+console.log(`Generating Second Angular environment file: ${envFileDestOther}`);
+
+// Define the folder paths
+const environmentsFolder = './packages/ui-config/src/lib/environments';
+
+// Ensure the environments folder exists
+if (!existsSync(environmentsFolder)) {
+	mkdirSync(environmentsFolder, { recursive: true });
+	console.log(`Created environments folder: ${environmentsFolder}`);
+}
+
+// Paths to environment files
+const envFilePath = path.resolve(`${environmentsFolder}/${envFileDest}`);
+const envFileOtherPath = path.resolve(`${environmentsFolder}/${envFileDestOther}`);
+
+writeFile(envFilePath, envFileContent, (error) => {
 	if (error) {
-		console.log(error);
+		console.error(`Error writing environment file: ${error}`);
 	} else {
 		// Paths to environment files
 		const envFilePath = path.resolve(`./packages/ui-config/src/lib/environments/${envFileDest}`);
@@ -376,9 +392,9 @@ writeFile(`./packages/ui-config/src/lib/environments/${envFileDest}`, envFileCon
 
 let envFileDestOtherContent = `export const environment = { production: ${!isProd} }`;
 
-writeFile(`./packages/ui-config/src/lib/environments/${envFileDestOther}`, envFileDestOtherContent, (error) => {
+writeFile(envFileOtherPath, envFileDestOtherContent, (error) => {
 	if (error) {
-		console.log(error);
+		console.error(`Error writing environment file: ${error}`);
 	} else {
 		const envFileOtherPath = path.resolve(`./packages/ui-config/src/lib/environments/${envFileDestOther}`);
 		console.log(`Generated Second Empty Angular environment file: ${envFileOtherPath}`);
