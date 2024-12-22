@@ -256,7 +256,12 @@ COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --production && yarn cache clean
 
+# We remove Angular modules as it's not used in APIs
 RUN rm -r node_modules/@angular
+
+# Exclude @gauzy directories before copying because we copy
+# those within custom webpack in apps/api/config/custom-webpack.config.js
+RUN rm -r node_modules/@gauzy
 
 FROM node:20.11.1-alpine3.19 AS development
 
@@ -310,9 +315,6 @@ WORKDIR /srv/gauzy
 
 COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint.compose.sh ./
 COPY --chown=node:node --from=build /srv/gauzy/packages/ ./packages/
-
-# Exclude @gauzy directories before copying because we copy those within custom webpack
-RUN find /srv/gauzy/node_modules -depth -type d -name '@gauzy' -exec rm -rf {} +
 COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules/ ./node_modules/
 
 # Copy static assets files which used for example in the seeds (e.g. images for features, reports, screenshots)
