@@ -9,6 +9,12 @@
 		"build": {
 			"executor": "@nx/angular:package",
 			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"dependsOn": [
+				{
+					"target": "replace-env",
+					"projects": "self"
+				}
+			],
 			"options": {
 				"project": "packages/ui-config/ng-package.json",
 				"tsConfig": "packages/ui-config/tsconfig.json"
@@ -19,6 +25,42 @@
 				},
 				"development": {
 					"tsConfig": "packages/ui-config/tsconfig.lib.json"
+				}
+			},
+			"defaultConfiguration": "production"
+		},
+		"generate-env": {
+			"executor": "nx:run-commands",
+			"options": {
+				"cwd": "."
+			},
+			"configurations": {
+				"production": {
+					"commands": ["yarn run config:prod"]
+				},
+				"development": {
+					"commands": ["yarn run config:dev"]
+				}
+			},
+			"defaultConfiguration": "production"
+		},
+		"replace-env": {
+			"executor": "nx:run-commands",
+			"dependsOn": [
+				{
+					"target": "generate-env",
+					"projects": "self"
+				}
+			],
+			"options": {
+				"cwd": "."
+			},
+			"configurations": {
+				"production": {
+					"command": "cross-env NODE_ENV=production yarn ts-node packages/ui-config/scripts/replace-env-files.ts --environment=prod"
+				},
+				"development": {
+					"command": "cross-env NODE_ENV=development yarn ts-node packages/ui-config/scripts/replace-env-files.ts --environment=dev"
 				}
 			},
 			"defaultConfiguration": "production"
