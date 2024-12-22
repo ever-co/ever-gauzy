@@ -182,7 +182,6 @@ COPY --chown=node:node packages/ui-auth/package.json ./packages/ui-auth/
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile
-# RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
 
 FROM node:20.11.1-alpine3.19 AS prodDependencies
 
@@ -344,8 +343,10 @@ ENV CI=true
 
 ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=12288"}
 ENV NODE_ENV=${NODE_ENV:-production}
+
 ENV API_HOST=${API_HOST:-api}
 ENV API_PORT=${API_PORT:-3000}
+
 ENV API_BASE_URL=${API_BASE_URL:-http://localhost:3000}
 ENV CLIENT_BASE_URL=${CLIENT_BASE_URL:-http://localhost:4200}
 ENV SENTRY_DSN=${SENTRY_DSN}
