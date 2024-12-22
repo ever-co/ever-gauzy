@@ -30,7 +30,7 @@ import { DatabaseModule } from '../database/database.module';
 			},
 			typePaths: [
 				environment.isElectron
-					? path.join(path.resolve(__dirname, '../../../../../../data/'), '*.gql')
+					? path.join(path.resolve(__dirname, '../../../../../../../data/'), '*.gql')
 					: path.join(path.resolve(__dirname, '../**/', 'schema'), '*.gql')
 			],
 			resolverModule: GraphqlApiModule
