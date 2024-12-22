@@ -181,7 +181,7 @@ COPY --chown=node:node packages/ui-auth/package.json ./packages/ui-auth/
 
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile
+RUN yarn install --network-timeout 1000000 --frozen-lockfile && yarn cache clean
 
 FROM node:20.11.1-alpine3.19 AS prodDependencies
 
@@ -344,6 +344,15 @@ RUN npm install pm2@4.5.1 -g && \
 
 # Clean up
 RUN yarn cache clean
+
+# we need node_modules inside each @gauzy package
+RUN cp -r ./packages/auth/node_modules ./node_modules/@gauzy/auth/
+RUN cp -r ./packages/core/node_modules ./node_modules/@gauzy/core/
+RUN cp -r ./packages/plugins/integration-github/node_modules ./node_modules/@gauzy/plugin-integration-github/
+RUN cp -r ./packages/plugins/integration-upwork/node_modules ./node_modules/@gauzy/plugin-integration-upwork/
+
+# we don't need packages folder anymore
+RUN rm -rf ./packages
 
 USER node:node
 
