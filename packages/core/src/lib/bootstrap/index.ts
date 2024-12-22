@@ -28,7 +28,7 @@ export function startTracing(): void {
 startTracing(); // Start tracing if OTEL is enabled.
 
 // import * as csurf from 'csurf';
-import { ConflictException, INestApplication, Type } from '@nestjs/common';
+import { ConflictException, INestApplication, Type, ValidationPipe } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { EventSubscriber } from '@mikro-orm/core';
@@ -110,6 +110,15 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 		allowedHeaders:
 			'Authorization, Language, Tenant-Id, Organization-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
 	});
+
+	// Enable validation globally
+	app.useGlobalPipes(
+		new ValidationPipe({
+			transform: true,
+			whitelist: true,
+			forbidNonWhitelisted: true
+		})
+	);
 
 	// TODO: enable csurf is not good idea because it was deprecated.
 	// Maybe review https://github.com/Psifi-Solutions/csrf-csrf as alternative?
@@ -488,7 +497,7 @@ export function getMigrationsConfig() {
 		chalk.red(console.log(`Migrations directory not found: ${migrationsDir}`));
 	}
 
-    // CLI Migrations directory path
+	// CLI Migrations directory path
 	const cliMigrationsDir = path.resolve(__dirname, './../database/migrations'); // Adjusted for src structure
 	console.log('Migration cliMigrationsDir: ->', cliMigrationsDir);
 
@@ -496,11 +505,11 @@ export function getMigrationsConfig() {
 		chalk.red(console.log(`CLI migrations directory not found: ${cliMigrationsDir}`));
 	}
 
-    // Return the migration paths
-    return {
-        migrations: [migrationsDir],
-        cli: {
-            migrationsDir: cliMigrationsDir
-        }
-    };
+	// Return the migration paths
+	return {
+		migrations: [migrationsDir],
+		cli: {
+			migrationsDir: cliMigrationsDir
+		}
+	};
 }
