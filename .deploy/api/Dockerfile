@@ -334,8 +334,8 @@ COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
 
 # Copy node_modules to a temporary location
 COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules /tmp/node_modules_temp
-# Add a script to merge directories inside the container
-RUN cp -r /tmp/node_modules_temp/* ./node_modules/ && rm -rf /tmp/node_modules_temp
+# Add a script to merge directories inside the container (skip files that already exists)
+RUN cp -rn /tmp/node_modules_temp/* ./node_modules/ && rm -rf /tmp/node_modules_temp
 
 RUN npm install pm2@4.5.1 -g && \
 	mkdir /import && chown node:node /import && \
