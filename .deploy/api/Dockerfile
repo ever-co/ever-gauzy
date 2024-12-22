@@ -310,7 +310,7 @@ RUN yarn build:api:prod:docker
 
 # Exclude @gauzy directories before copying because we copy
 # those within custom webpack in apps/api/config/custom-webpack.config.js
-RUN rm -r dist/apps/api/node_modules/@gauzy
+# RUN rm -r dist/apps/api/node_modules/@gauzy
 
 FROM node:20.11.1-alpine3.19 AS production
 
@@ -318,7 +318,6 @@ WORKDIR /srv/gauzy
 
 COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint.compose.sh ./
 COPY --chown=node:node --from=build /srv/gauzy/packages/ ./packages/
-COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules/ ./node_modules/
 
 # Copy static assets files which used for example in the seeds (e.g. images for features, reports, screenshots)
 COPY --chown=node:node apps/api/src/assets apps/api/src/assets
@@ -332,6 +331,11 @@ COPY --chown=node:node apps/api/public apps/api/public
 COPY --chown=node:node apps/api/src/assets/seed apps/api/public
 
 COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
+
+# Copy node_modules to a temporary location
+COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules /tmp/node_modules_temp
+# Add a script to merge directories inside the container
+RUN cp -r /tmp/node_modules_temp/* ./node_modules/ && rm -rf /tmp/node_modules_temp
 
 RUN npm install pm2@4.5.1 -g && \
 	mkdir /import && chown node:node /import && \
