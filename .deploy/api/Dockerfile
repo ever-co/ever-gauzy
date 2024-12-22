@@ -260,7 +260,7 @@ RUN rm -r node_modules/@angular
 
 # Exclude @gauzy directories before copying because we copy
 # those within custom webpack in apps/api/config/custom-webpack.config.js
-RUN rm -r node_modules/@gauzy
+# RUN rm -r node_modules/@gauzy
 
 FROM node:20.11.1-alpine3.19 AS development
 
@@ -307,6 +307,10 @@ RUN if [ "$NODE_ENV" = "production" ]; then \
 	fi
 
 RUN yarn build:api:prod:docker
+
+# Exclude @gauzy directories before copying because we copy
+# those within custom webpack in apps/api/config/custom-webpack.config.js
+RUN rm -r node_modules/@gauzy
 
 FROM node:20.11.1-alpine3.19 AS production
 
