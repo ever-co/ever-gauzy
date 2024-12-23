@@ -9,7 +9,6 @@ import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { OrganizationProjectModuleService, ToastrService } from '@gauzy/ui-core/core';
 import {
-	AddProjectModuleDialogComponent,
 	DateViewComponent,
 	DeleteConfirmationComponent,
 	EmployeesMergedTeamsComponent,
@@ -17,6 +16,7 @@ import {
 	StatusViewComponent,
 	ToggleSwitcherComponent
 } from '../../../../index';
+import { AddProjectModuleDialogComponent } from '../add-project-module-dialog/add-project-module-dialog.component';
 
 @UntilDestroy()
 @Component({

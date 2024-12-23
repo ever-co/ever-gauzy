@@ -59,7 +59,7 @@ export abstract class ServerTask {
 		});
 	}
 
-	@Timeout(60 * 1000)
+	@Timeout(2 * 60 * 1000)
 	protected async runTask(signal: AbortSignal): Promise<void> {
 		console.log('Run Server Task');
 		return new Promise<void>((resolve, reject) => {

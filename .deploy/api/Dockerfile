@@ -181,8 +181,7 @@ COPY --chown=node:node packages/ui-auth/package.json ./packages/ui-auth/
 
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile
-# RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
+RUN yarn install --network-timeout 1000000 --frozen-lockfile && yarn cache clean
 
 FROM node:20.11.1-alpine3.19 AS prodDependencies
 
@@ -252,12 +251,16 @@ COPY --chown=node:node packages/ui-auth/package.json ./packages/ui-auth/
 # We do not build here Wakatime plugin, because it used in Desktop Apps for now
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
 
-COPY --chown=node:node package.json yarn.lock ./
+COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile --production
-# RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
+RUN yarn install --network-timeout 1000000 --frozen-lockfile --production && yarn cache clean
 
+# We remove Angular modules as it's not used in APIs
 RUN rm -r node_modules/@angular
+
+# Exclude @gauzy directories before copying because we copy
+# those within custom webpack in apps/api/config/custom-webpack.config.js
+# RUN rm -r node_modules/@gauzy
 
 FROM node:20.11.1-alpine3.19 AS development
 
@@ -288,7 +291,7 @@ ARG NODE_ENV
 ARG DEMO
 ARG NODE_OPTIONS
 
-ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=30000"}
+ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=60000"}
 ENV NODE_ENV=${NODE_ENV}
 ENV DEMO=${DEMO:-false}
 
@@ -298,19 +301,22 @@ ENV IS_DOCKER=true
 ENV NX_NO_CLOUD=true
 
 RUN if [ "$NODE_ENV" = "production" ]; then \
-	yarn build:package:api:prod; \
+	yarn build:package:api:docker; \
 	else \
 	yarn build:package:api; \
 	fi
 
 RUN yarn build:api:prod:docker
 
+# Exclude @gauzy directories before copying because we copy
+# those within custom webpack in apps/api/config/custom-webpack.config.js
+# RUN rm -r dist/apps/api/node_modules/@gauzy
+
 FROM node:20.11.1-alpine3.19 AS production
 
 WORKDIR /srv/gauzy
 
 COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint.compose.sh ./
-COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules/ ./node_modules/
 COPY --chown=node:node --from=build /srv/gauzy/packages/ ./packages/
 
 # Copy static assets files which used for example in the seeds (e.g. images for features, reports, screenshots)
@@ -326,6 +332,11 @@ COPY --chown=node:node apps/api/src/assets/seed apps/api/public
 
 COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
 
+# Copy node_modules to a temporary location
+COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules /tmp/node_modules_temp
+# Add a script to merge directories inside the container (skip files that already exists)
+RUN cp -rn /tmp/node_modules_temp/* ./node_modules/ && rm -rf /tmp/node_modules_temp
+
 RUN npm install pm2@4.5.1 -g && \
 	mkdir /import && chown node:node /import && \
 	touch ormlogs.log && chown node:node ormlogs.log && chown node:node wait && \
@@ -334,14 +345,25 @@ RUN npm install pm2@4.5.1 -g && \
 # Clean up
 RUN yarn cache clean
 
+# we need node_modules inside each @gauzy package
+RUN cp -r ./packages/auth/node_modules ./node_modules/@gauzy/auth/
+RUN cp -r ./packages/core/node_modules ./node_modules/@gauzy/core/
+RUN cp -r ./packages/plugins/integration-github/node_modules ./node_modules/@gauzy/plugin-integration-github/
+RUN cp -r ./packages/plugins/integration-upwork/node_modules ./node_modules/@gauzy/plugin-integration-upwork/
+
+# we don't need packages folder anymore
+RUN rm -rf ./packages
+
 USER node:node
 
 ENV CI=true
 
 ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=12288"}
 ENV NODE_ENV=${NODE_ENV:-production}
+
 ENV API_HOST=${API_HOST:-api}
 ENV API_PORT=${API_PORT:-3000}
+
 ENV API_BASE_URL=${API_BASE_URL:-http://localhost:3000}
 ENV CLIENT_BASE_URL=${CLIENT_BASE_URL:-http://localhost:4200}
 ENV SENTRY_DSN=${SENTRY_DSN}

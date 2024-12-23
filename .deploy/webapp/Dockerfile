@@ -64,13 +64,19 @@ LABEL org.opencontainers.image.source https://github.com/ever-co/ever-gauzy
 
 ENV CI=true
 
-RUN apk --update add bash && \
-	apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools dos2unix gcc g++ git make vips-dev && \
+# We need to set to "development", because we are using "yarn install" below to setup
+# devDependencies even for production builds!
+ENV NODE_ENV=development
+
+RUN apk --update add bash && npm i -g npm@9 \
+	&& apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools dos2unix gcc g++ git make vips-dev && \
 	mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 # Verify the Node.js version
 RUN node --version
 RUN npm --version
+
+RUN npm install yarn -g --force
 
 COPY wait .deploy/webapp/entrypoint.compose.sh .deploy/webapp/entrypoint.prod.sh .deploy/webapp/replacements.sed /
 
@@ -121,8 +127,8 @@ COPY --chown=node:node packages/ui-auth/package.json ./packages/ui-auth/
 
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 
+# Must be without --production because we need dev deps installed
 RUN yarn install --network-timeout 1000000 --frozen-lockfile && yarn cache clean
-# RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
 
 FROM node:20.11.1-alpine3.19 AS development
 
@@ -142,15 +148,23 @@ RUN mkdir dist
 
 COPY --chown=node:node --from=development /srv/gauzy .
 
-ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=30000"}
+ENV CI=true
+
+# We make NODE_ENV and other env vars passed as build argument to be available in this stage
+ARG NODE_ENV
+ARG DEMO
+ARG NODE_OPTIONS
+
+ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=60000"}
 ENV NODE_ENV=${NODE_ENV:-production}
+ENV DEMO=${DEMO:-false}
 
 ENV IS_DOCKER=true
 
 # Temporary disable caching in NX Cloud for builds
 ENV NX_NO_CLOUD=true
 
-RUN yarn build:package:gauzy
+RUN yarn build:package:gauzy:docker
 RUN yarn build:gauzy:prod:docker
 
 FROM nginx:alpine AS production
@@ -166,6 +180,14 @@ COPY --chown=nginx:nginx --from=build /srv/gauzy/dist/apps/gauzy .
 
 RUN chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && \
 	chmod a+rw /etc/nginx/conf.d/compose.conf.template /etc/nginx/conf.d/prod.conf.template
+
+# Clean up
+RUN yarn cache clean
+
+ENV CI=true
+
+ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=12288"}
+ENV NODE_ENV=${NODE_ENV:-production}
 
 ENV API_HOST=${API_HOST:-api}
 ENV API_PORT=${API_PORT:-3000}
