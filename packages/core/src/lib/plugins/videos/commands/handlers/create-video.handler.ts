@@ -10,7 +10,7 @@ export class CreateVideoHandler implements ICommandHandler<CreateVideoCommand> {
 	// Execute create video command
 	public async execute(command: CreateVideoCommand): Promise<IVideo> {
 		const { input } = command;
-		// Instanciate new video entity
+		// Instantiate new video entity
 		const video = new Video({
 			...input,
 			file: input.file.key

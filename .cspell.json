@@ -525,7 +525,8 @@
 		"xplatframework",
 		"localforage",
 		"longform",
-		"rfdc"
+		"rfdc",
+		"libx264"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

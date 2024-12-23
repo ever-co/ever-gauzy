@@ -36,7 +36,7 @@ import { PaginationParams } from '../../core';
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class VideosController {
-	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) { }
+	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
 
 	/**
 	 * GET videos
@@ -99,7 +99,7 @@ export class VideosController {
 		})
 	)
 	public async create(@Body() input: CreateVideoDTO, @UploadedFileStorage() file: FileDTO) {
-		// Get proveider
+		// Get provider
 		const provider = new FileStorage().getProvider();
 		// Convert the plain object to a class instance
 		const fileInstance = plainToInstance(FileDTO, file);
