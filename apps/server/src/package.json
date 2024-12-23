@@ -334,7 +334,7 @@
 		"@octokit/rest": "^20.0.2",
 		"upwork-api": "^1.3.8",
 		"html-to-text": "^9.0.5",
-		"@jitsu/js": "^1.8.2"
+		"@jitsu/js": "^1.9.11"
 	},
 	"optionalDependencies": {
 		"node-linux": "^0.1.12",

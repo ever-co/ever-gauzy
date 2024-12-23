@@ -1,4 +1,4 @@
-import { JitsuOptions } from "@jitsu/js";
+import { JitsuOptions } from '@jitsu/js';
 
 // Provider key for Jitsu configuration
 export const JITSU_MODULE_PROVIDER_CONFIG = 'JITSU_MODULE_PROVIDER_CONFIG';

@@ -30,7 +30,7 @@
 		"@angular/router": "19.0.5",
 		"@gauzy/contracts": "^0.1.0",
 		"@nebular/theme": "^14.0.2",
-		"@ngx-translate/core": "^16.0.3",
+		"@ngx-translate/core": "^16.0.4",
 		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
