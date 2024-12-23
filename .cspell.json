@@ -525,7 +525,8 @@
 		"xplatframework",
 		"localforage",
 		"longform",
-		"rfdc"
+		"rfdc",
+		"bluehalo"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

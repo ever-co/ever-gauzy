@@ -54,17 +54,36 @@ export class CountdownConfirmationComponent {
 
 	constructor(protected readonly dialogRef: NbDialogRef<CountdownConfirmationComponent>) {}
 
-	handleActionEvent(e: CountdownEvent) {
-		if (e.action === 'done') {
+	/**
+	 * Handles an action event triggered by the countdown.
+	 *
+	 * @param event - The CountdownEvent object containing details about the action.
+	 *                 Example: { action: 'done', left: 0 }
+	 * - If the action is 'done', this method closes the dialog and emits a 'continue' signal.
+	 */
+	handleActionEvent(event: CountdownEvent): void {
+		if (event.action === 'done') {
 			this.dialogRef.close('continue');
 		}
 	}
 
-	close() {
+	/**
+	 * Closes the current dialog.
+	 *
+	 * This method is typically used to dismiss the dialog without performing
+	 * any additional actions or sending a signal.
+	 */
+	close(): void {
 		this.dialogRef.close();
 	}
 
-	continue() {
+	/**
+	 * Continues the current flow of execution.
+	 *
+	 * This method closes the dialog and sends a 'continue' signal to indicate
+	 * that the user has chosen to proceed with the next step.
+	 */
+	continue(): void {
 		this.dialogRef.close('continue');
 	}
 }
