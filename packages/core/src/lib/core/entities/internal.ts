@@ -156,6 +156,7 @@ export * from '../../user/user.entity';
 export * from '../../warehouse/warehouse-product-variant.entity';
 export * from '../../warehouse/warehouse-product.entity';
 export * from '../../warehouse/warehouse.entity';
+export * from '../../plugins/videos/entities/video.entity';
 
 //core subscribers
 export * from '../../activity-log/activity-log.subscriber';
@@ -201,3 +202,4 @@ export * from '../../time-tracking/screenshot/screenshot.subscriber';
 export * from '../../time-tracking/timesheet/timesheet.subscriber';
 export * from '../../time-tracking/time-slot/time-slot.subscriber';
 export * from '../../user/user.subscriber';
+export * from '../../plugins/videos/subscribers/video.subscriber';
