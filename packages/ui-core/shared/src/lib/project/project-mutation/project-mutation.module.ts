@@ -25,11 +25,10 @@ import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-inp
 import { TeamSelectModule } from '../../selectors/team/team.module';
 import { ProjectMutationComponent } from './project-mutation.component';
 import { RepositorySelectorModule } from '../../integrations/github/repository-selector/repository-selector.module';
-import { ProjectModuleTableComponent } from '../project-module/module-table/project-module-table.component';
 import { SmartDataViewLayoutModule } from '../../smart-data-layout';
 
 @NgModule({
-	declarations: [ProjectMutationComponent, ProjectModuleTableComponent],
+	declarations: [ProjectMutationComponent],
 	exports: [ProjectMutationComponent],
 	imports: [
 		CommonModule,
