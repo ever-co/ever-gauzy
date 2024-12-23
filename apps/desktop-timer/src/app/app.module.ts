@@ -182,9 +182,14 @@ if (environment.SENTRY_DSN) {
             useClass: ErrorHandlerService
         },
         provideAppInitializer(() => {
-        const initializerFn = (serverConnectionFactory)(inject(ServerConnectionService), inject(Store), inject(Router), inject(Injector));
-        return initializerFn();
-      }),
+			const initializerFn = (serverConnectionFactory)(
+				inject(ServerConnectionService),
+				inject(Store),
+				inject(Router),
+				inject(Injector)
+			);
+			return initializerFn();
+		}),
         {
             provide: ErrorHandler,
             useValue: Sentry.createErrorHandler({
@@ -195,10 +200,10 @@ if (environment.SENTRY_DSN) {
             provide: Sentry.TraceService,
             deps: [Router]
         },
-        provideAppInitializer(() => {
-        const initializerFn = (() => () => { })(inject(Sentry.TraceService));
-        return initializerFn();
-      }),
+		provideAppInitializer(() => {
+            const initializerFn = ((trace: Sentry.TraceService) => () => { })(inject(Sentry.TraceService));
+            return initializerFn();
+        }),
         { provide: DEFAULT_TIMEOUT, useValue: 80000 },
         {
             provide: GAUZY_ENV,

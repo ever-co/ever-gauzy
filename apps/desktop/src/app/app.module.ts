@@ -129,9 +129,9 @@ if (environment.SENTRY_DSN) {
 			deps: [Router]
 		},
 		provideAppInitializer(() => {
-        const initializerFn = (() => () => { })(inject(Sentry.TraceService));
-        return initializerFn();
-      }),
+            const initializerFn = ((trace: Sentry.TraceService) => () => { })(inject(Sentry.TraceService));
+            return initializerFn();
+        }),
 		{
 			provide: ErrorHandler,
 			useClass: ErrorHandlerService

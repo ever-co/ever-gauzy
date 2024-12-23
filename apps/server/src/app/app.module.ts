@@ -65,7 +65,9 @@ if (environment.SENTRY_DSN) {
         UpdaterModule,
         ServerDashboardModule,
         AboutModule,
-        LanguageModule.forRoot()], providers: [
+        LanguageModule.forRoot()
+	],
+	providers: [
         AppService,
         NbDialogService,
         ElectronService,
@@ -81,9 +83,9 @@ if (environment.SENTRY_DSN) {
             deps: [Router]
         },
         provideAppInitializer(() => {
-        const initializerFn = (() => () => { })(inject(Sentry.TraceService));
-        return initializerFn();
-      }),
+            const initializerFn = ((trace: Sentry.TraceService) => () => { })(inject(Sentry.TraceService));
+            return initializerFn();
+        }),
         {
             provide: GAUZY_ENV,
             useValue: {
