@@ -1,5 +1,5 @@
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
+import { ErrorHandler, NgModule, inject, provideAppInitializer } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { Router, RouterModule } from '@angular/router';
@@ -128,12 +128,10 @@ if (environment.SENTRY_DSN) {
 			provide: Sentry.TraceService,
 			deps: [Router]
 		},
-		{
-			provide: APP_INITIALIZER,
-			useFactory: () => () => { },
-			deps: [Sentry.TraceService],
-			multi: true
-		},
+		provideAppInitializer(() => {
+        const initializerFn = (() => () => { })(inject(Sentry.TraceService));
+        return initializerFn();
+      }),
 		{
 			provide: ErrorHandler,
 			useClass: ErrorHandlerService

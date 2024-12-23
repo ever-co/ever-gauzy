@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { APP_INITIALIZER, NgModule } from '@angular/core';
+import { NgModule, inject, provideAppInitializer } from '@angular/core';
 import { ElectronService } from '../electron/services';
 import {
     NbThemeModule,
@@ -22,12 +22,10 @@ import {
     ],
     providers: [
         NbThemeService,
-        {
-            provide: APP_INITIALIZER,
-            useFactory: ThemeInitializerFactory,
-            deps: [NbThemeService, ElectronService],
-            multi: true
-        }
+        provideAppInitializer(() => {
+        const initializerFn = (ThemeInitializerFactory)(inject(NbThemeService), inject(ElectronService));
+        return initializerFn();
+      })
     ],
     exports: [NbThemeModule]
 })

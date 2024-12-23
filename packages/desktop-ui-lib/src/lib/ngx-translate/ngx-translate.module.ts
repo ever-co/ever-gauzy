@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { APP_INITIALIZER, NgModule } from '@angular/core';
+import { NgModule, inject, provideAppInitializer } from '@angular/core';
 import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ElectronService } from '../electron/services';
 import { HttpLoaderFactory } from '../ngx-translate';
@@ -20,12 +20,10 @@ import { LanguageInitializerFactory } from './language-initializer.factory';
 	],
 	providers: [
 		TranslateService,
-		{
-			provide: APP_INITIALIZER,
-			useFactory: LanguageInitializerFactory,
-			deps: [TranslateService, ElectronService],
-			multi: true
-		}
+		provideAppInitializer(() => {
+        const initializerFn = (LanguageInitializerFactory)(inject(TranslateService), inject(ElectronService));
+        return initializerFn();
+      })
 	],
 	exports: [TranslateModule]
 })

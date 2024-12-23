@@ -6,7 +6,7 @@ import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromD
 import { ExtraOptions, Router, RouterModule } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { NgModule, APP_INITIALIZER, ErrorHandler } from '@angular/core';
+import { NgModule, ErrorHandler, inject, provideAppInitializer } from '@angular/core';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
 import {
 	NbChatModule,
@@ -162,33 +162,25 @@ const FEATURE_MODULES = [
             multi: true
         },
         ServerConnectionService,
-        {
-            provide: APP_INITIALIZER,
-            useFactory: serverConnectionFactory,
-            deps: [ServerConnectionService, Store, Router],
-            multi: true
-        },
+        provideAppInitializer(() => {
+        const initializerFn = (serverConnectionFactory)(inject(ServerConnectionService), inject(Store), inject(Router));
+        return initializerFn();
+      }),
         GoogleMapsLoaderService,
-        {
-            provide: APP_INITIALIZER,
-            useFactory: googleMapsLoaderFactory,
-            deps: [GoogleMapsLoaderService],
-            multi: true
-        },
+        provideAppInitializer(() => {
+        const initializerFn = (googleMapsLoaderFactory)(inject(GoogleMapsLoaderService));
+        return initializerFn();
+      }),
         FeatureService,
-        {
-            provide: APP_INITIALIZER,
-            useFactory: featureToggleLoaderFactory,
-            deps: [FeatureService, Store],
-            multi: true
-        },
+        provideAppInitializer(() => {
+        const initializerFn = (featureToggleLoaderFactory)(inject(FeatureService), inject(Store));
+        return initializerFn();
+      }),
         AppInitService,
-        {
-            provide: APP_INITIALIZER,
-            useFactory: initializeApp,
-            deps: [AppInitService],
-            multi: true
-        },
+        provideAppInitializer(() => {
+        const initializerFn = (initializeApp)(inject(AppInitService));
+        return initializerFn();
+      }),
         {
             provide: ErrorHandler,
             useClass: SentryErrorHandler

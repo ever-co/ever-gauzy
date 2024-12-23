@@ -1,5 +1,5 @@
 import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { APP_INITIALIZER, ErrorHandler, Injector, NgModule } from '@angular/core';
+import { ErrorHandler, Injector, NgModule, inject, provideAppInitializer } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
@@ -181,12 +181,10 @@ if (environment.SENTRY_DSN) {
             provide: ErrorHandler,
             useClass: ErrorHandlerService
         },
-        {
-            provide: APP_INITIALIZER,
-            useFactory: serverConnectionFactory,
-            deps: [ServerConnectionService, Store, Router, Injector],
-            multi: true
-        },
+        provideAppInitializer(() => {
+        const initializerFn = (serverConnectionFactory)(inject(ServerConnectionService), inject(Store), inject(Router), inject(Injector));
+        return initializerFn();
+      }),
         {
             provide: ErrorHandler,
             useValue: Sentry.createErrorHandler({
@@ -197,12 +195,10 @@ if (environment.SENTRY_DSN) {
             provide: Sentry.TraceService,
             deps: [Router]
         },
-        {
-            provide: APP_INITIALIZER,
-            useFactory: () => () => { },
-            deps: [Sentry.TraceService],
-            multi: true
-        },
+        provideAppInitializer(() => {
+        const initializerFn = (() => () => { })(inject(Sentry.TraceService));
+        return initializerFn();
+      }),
         { provide: DEFAULT_TIMEOUT, useValue: 80000 },
         {
             provide: GAUZY_ENV,
