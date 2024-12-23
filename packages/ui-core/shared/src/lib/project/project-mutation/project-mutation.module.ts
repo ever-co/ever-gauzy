@@ -23,7 +23,7 @@ import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { TeamSelectModule } from '../../selectors/team/team.module';
-import { ProjectModuleMutationModule } from '../../project-module/project-module-mutation/project-module-mutation.module';
+import { ProjectModuleTableModule } from '../../project-module/project-module-table/project-module-table.module';
 import { ProjectMutationComponent } from './project-mutation.component';
 import { RepositorySelectorModule } from '../../integrations/github/repository-selector/repository-selector.module';
 import { SmartDataViewLayoutModule } from '../../smart-data-layout';
@@ -57,7 +57,7 @@ import { SmartDataViewLayoutModule } from '../../smart-data-layout';
 		TeamSelectModule,
 		RepositorySelectorModule,
 		SmartDataViewLayoutModule,
-		ProjectModuleMutationModule
+		ProjectModuleTableModule
 	]
 })
 export class ProjectMutationModule {}

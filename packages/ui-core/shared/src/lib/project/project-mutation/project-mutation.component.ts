@@ -307,14 +307,14 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 		const project: IOrganizationProject = this.project;
 
 		// Selected Members Ids
-		this.selectedEmployeeIds = project.members
+		this.selectedEmployeeIds = (project.members || [])
 			.filter((member: IOrganizationProjectEmployee) => !member.isManager)
 			.map((member: IOrganizationProjectEmployee) => member.employeeId);
 
 		this.memberIds = this.selectedEmployeeIds;
 
 		// Selected Managers Ids
-		this.selectedManagerIds = project.members
+		this.selectedManagerIds = (project.members || [])
 			.filter((member: IOrganizationProjectEmployee) => member.isManager)
 			.map((member: IOrganizationProjectEmployee) => member.employeeId);
 
@@ -342,7 +342,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 			openSource: project.openSource || null,
 			projectUrl: project.projectUrl || null,
 			openSourceProjectUrl: project.openSourceProjectUrl || null,
-			teams: this.project.teams.map((team: IOrganizationTeam) => team.id)
+			teams: (this.project.teams || []).map((team: IOrganizationTeam) => team.id)
 		});
 		this.form.updateValueAndValidity();
 
