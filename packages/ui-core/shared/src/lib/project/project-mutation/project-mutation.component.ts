@@ -2,6 +2,7 @@ import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output, Template
 import { AbstractControl, UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { EMPTY, firstValueFrom, of, switchMap } from 'rxjs';
 import { catchError, debounceTime, filter, finalize, tap } from 'rxjs/operators';
+import { NbDialogService } from '@nebular/theme';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -46,8 +47,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { patterns } from '../../regex/regex-patterns.const';
 import { FormHelpers } from '../../forms/helpers';
 import { ckEditorConfig } from '../../ckeditor.config';
-import { AddProjectModuleDialogComponent } from '../project-module';
-import { NbDialogService } from '@nebular/theme';
+import { ProjectModuleMutationComponent } from '../../project-module/project-module-mutation/project-module-mutation.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -307,14 +307,14 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 		const project: IOrganizationProject = this.project;
 
 		// Selected Members Ids
-		this.selectedEmployeeIds = project.members
+		this.selectedEmployeeIds = (project.members || [])
 			.filter((member: IOrganizationProjectEmployee) => !member.isManager)
 			.map((member: IOrganizationProjectEmployee) => member.employeeId);
 
 		this.memberIds = this.selectedEmployeeIds;
 
 		// Selected Managers Ids
-		this.selectedManagerIds = project.members
+		this.selectedManagerIds = (project.members || [])
 			.filter((member: IOrganizationProjectEmployee) => member.isManager)
 			.map((member: IOrganizationProjectEmployee) => member.employeeId);
 
@@ -342,7 +342,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 			openSource: project.openSource || null,
 			projectUrl: project.projectUrl || null,
 			openSourceProjectUrl: project.openSourceProjectUrl || null,
-			teams: this.project.teams.map((team: IOrganizationTeam) => team.id)
+			teams: (this.project.teams || []).map((team: IOrganizationTeam) => team.id)
 		});
 		this.form.updateValueAndValidity();
 
@@ -721,7 +721,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 	public async createProjectModuleDialog(): Promise<void> {
 		try {
 			await firstValueFrom(
-				this._dialogService.open(AddProjectModuleDialogComponent, {
+				this._dialogService.open(ProjectModuleMutationComponent, {
 					context: {
 						project: this.project,
 						createModule: true

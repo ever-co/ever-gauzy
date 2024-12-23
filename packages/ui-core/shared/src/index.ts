@@ -47,6 +47,7 @@ export * from './lib/pipes';
 export * from './lib/pipes/pipes.module';
 export * from './lib/product';
 export * from './lib/project';
+export * from './lib/project-module';
 export * from './lib/proposal-template-select';
 export * from './lib/remove-lodash';
 export * from './lib/regex';
