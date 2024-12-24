@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
-import { yellow } from 'chalk';
+import * as chalk from 'chalk';
 import { EmailTemplateEnum } from '@gauzy/contracts';
 import { EmailTemplateUtils } from '../../email-template/utils';
 
@@ -12,7 +12,7 @@ export class MigratePasswordResetEmailTemplates1728024420021 implements Migratio
 	 * @param queryRunner
 	 */
 	public async up(queryRunner: QueryRunner): Promise<void> {
-		console.log(yellow(`${this.name} started running!`));
+		console.log(chalk.yellow(this.name + ' start running!'));
 
 		// Migrate each template
 		try {
