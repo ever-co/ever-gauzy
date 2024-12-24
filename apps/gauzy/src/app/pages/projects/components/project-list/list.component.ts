@@ -35,6 +35,7 @@ import {
 	EmployeesMergedTeamsComponent,
 	EmployeeWithLinksComponent,
 	PaginationFilterBaseComponent,
+	ProjectModuleMutationComponent,
 	ProjectOrganizationComponent,
 	ProjectOrganizationEmployeesComponent,
 	ProjectOrganizationGridComponent,
@@ -609,5 +610,32 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 		const path = project ? [basePath, project.id, 'edit'] : [basePath, 'create'];
 		// Navigate to the specified path
 		this._router.navigate(path);
+	}
+
+	/**
+	 * Opens a dialog for creating a new project module
+	 * @param project The project for which to create a module
+	 * @returns Promise that resolves when the dialog is closed
+	 */
+	public async createProjectModuleDialog(project: IOrganizationProject): Promise<void> {
+		try {
+			const result = await firstValueFrom(
+				this._dialogService.open(ProjectModuleMutationComponent, {
+					context: {
+						project,
+						createModule: true
+					}
+				}).onClose
+			);
+
+			if (result) {
+				// Refresh the project list or handle the result as needed
+				this._refresh$.next(true);
+				this.project$.next(true);
+			}
+		} catch (error) {
+			console.error('Error while creating project module', error?.message);
+			this._errorHandlingService.handleError(error);
+		}
 	}
 }

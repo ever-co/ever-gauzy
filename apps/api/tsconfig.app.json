@@ -3,11 +3,12 @@
 	"compilerOptions": {
 		"outDir": "../../dist/out-tsc",
 		"module": "commonjs",
-		"target": "ES2022",
-		"removeComments": true,
 		"types": ["node"],
+		"emitDecoratorMetadata": true,
+		"target": "es2021",
+		"removeComments": true,
 		"resolveJsonModule": true
 	},
-	"exclude": ["**/*.spec.ts", "**/*.test.ts"],
-	"include": ["**/*.ts"]
+	"exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"],
+	"include": ["src/**/*.ts"]
 }

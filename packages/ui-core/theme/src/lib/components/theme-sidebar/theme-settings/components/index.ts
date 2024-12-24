@@ -3,7 +3,7 @@ export * from './layout-selector/layout-selector.module';
 export * from './theme-language-selector/theme-language-selector.component';
 export * from './theme-language-selector/theme-language-selector.module';
 export * from './theme-language-selector/theme-language-selector.service';
-export * from './theme-selector/switch-theme/switch-theme.component';
+export * from './theme-selector/container/theme-selector-container.component';
 export * from './theme-selector/switch-theme/switch-theme.component';
 export * from './theme-selector/theme-selector-image/theme-selector-image.component';
 export * from './theme-selector/theme-selector.component';

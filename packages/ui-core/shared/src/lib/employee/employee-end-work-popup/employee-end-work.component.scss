@@ -1,9 +1,16 @@
 @import 'gauzy/_gauzy-dialogs';
 
 nb-card {
-	width: 375px;
-	nb-card-footer{
-		display: flex;
-		gap: 1rem;
-	}
+  width: 375px;
+  nb-card-footer {
+    display: flex;
+    gap: 1rem;
+  }
+}
+.error-text {
+  margin: 0;
+  color: red;
+  font-size: 0.75rem;
+  font-weight: 300;
+  line-height: initial;
 }

@@ -17,3 +17,4 @@ export * from './organization-task-setting.service';
 export * from './organization-team-store.service';
 export * from './organization-teams.service';
 export * from './organization-vendors.service';
+export * from './organization-projects-module.service';

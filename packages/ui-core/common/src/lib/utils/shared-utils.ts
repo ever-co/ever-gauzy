@@ -1,6 +1,6 @@
 import { HttpParams } from '@angular/common/http';
-import * as moment from 'moment';
-import * as timezone from 'moment-timezone';
+import moment from 'moment';
+import timezone from 'moment-timezone';
 import { Observable } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
 import slugify from 'slugify';
@@ -549,4 +549,15 @@ export function removeDuplicatesByProperty<T>(items: T[], property: keyof T): T[
 export function extractNumber(value: string): number {
 	const numericPart = value.toString().match(/-?\d+(\.\d+)?/); // Matches negative, decimal numbers.
 	return numericPart ? parseFloat(numericPart[0]) : NaN; // Converts the extracted part to a number or returns NaN if not found.
+}
+
+/**
+ * Checks if a given string exists in an array of strings, case-insensitively.
+ * @param existingStrings Array of existing strings to check against.
+ * @param value The string to validate.
+ * @returns `true` if the string already exists in the array (case-insensitive), otherwise `false`.
+ */
+export function validateUniqueString(existingStrings: string[], value: string): boolean {
+	const normalizedStrings = existingStrings.map((str) => str.toLowerCase());
+	return normalizedStrings.includes(value.toLowerCase());
 }

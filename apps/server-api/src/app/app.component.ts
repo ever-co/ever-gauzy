@@ -10,6 +10,5 @@ export class AppComponent implements OnInit {
 
 	ngOnInit(): void {
 		this.languageElectronService.initialize<void>();
-		console.log('on init');
 	}
 }

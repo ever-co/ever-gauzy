@@ -1,10 +1,11 @@
-# `@gauzy/core`
+# core
 
-Gauzy Core - A headless ERP/CRM/HRM framework.
+This library was generated with [Nx](https://nx.dev).
 
-## Usage
+## Building
 
-```
-const core = require('@gauzy/core');
+Run `nx build core` to build the library.
 
-```
+## Running unit tests
+
+Run `nx test core` to execute the unit tests via [Jest](https://jestjs.io).

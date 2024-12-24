@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { Observable, of } from 'rxjs';
-import { socialLinks } from '../../../../auth';
+import { socialLinks } from '../../../../constants';
 
 /**
  * Interface representing a social link.

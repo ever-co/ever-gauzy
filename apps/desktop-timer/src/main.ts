@@ -22,5 +22,5 @@ platformBrowserDynamic()
 	.bootstrapModule(AppModule, {
 		preserveWhitespaces: false
 	})
-	.then((success) => console.log(`Bootstrap success`))
-	.catch((err) => console.error(err));
+	.then(() => console.log(`Bootstrap Success!`))
+	.catch((error) => console.error(error));

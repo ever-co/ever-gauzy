@@ -1,9 +1,9 @@
 import { Component, Input } from '@angular/core';
+import { SafeUrl } from '@angular/platform-browser';
+import { Observable } from 'rxjs';
 import { ITaskPriority, ITaskSize, ITaskStatus } from '@gauzy/contracts';
 import { ColorAdapter } from '../../../utils';
-import { StatusIconService } from '@gauzy/desktop-ui-lib';
-import { Observable } from 'rxjs';
-import { SafeUrl } from '@angular/platform-browser';
+import { StatusIconService } from '../../../services/status-icon-service';
 
 export type ITaskBadge = ITaskStatus | ITaskSize | ITaskPriority;
 

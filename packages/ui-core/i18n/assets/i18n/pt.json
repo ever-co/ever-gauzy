@@ -165,7 +165,8 @@
 		"ACTIVATE": "Ativar",
 		"ADD_PLUGIN": "Adicionar plugin",
 		"LOAD_PLUGIN": "Carregar Plugin",
-		"FROM_CDN": "Do CDN"
+		"FROM_CDN": "Do CDN",
+		"ADD_MODULE": "Adicionar módulo"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -2605,7 +2606,9 @@
 		"SELECT": "Selecionar",
 		"SPRINTS_SETTINGS": "Configurações de sprints",
 		"ARE_YOU_SURE": "Você tem certeza de que deseja excluir a sprint?",
-		"SETTINGS": "Configurações"
+		"SETTINGS": "Configurações",
+		"MODULE": "Módulo",
+		"SELECT_MODULE": "Módulo(s)"
 	},
 	"JOBS": {
 		"EMPLOYEE": "Funcionário",
@@ -3154,7 +3157,26 @@
 		}
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
-		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "Esta aba mostrará gráficos de gerenciamento de projetos e dados agregados."
+		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "Esta aba mostrará gráficos de gerenciamento de projetos e dados agregados.",
+		"PROJECT_MODULE": {
+			"PROJECT": "Projeto",
+			"SELECT_PROJECT": "Selecionar um projeto",
+			"STATUS": "Status",
+			"TEAM_MEMBERS": "Membros da equipe",
+			"TEAMS": "Equipes",
+			"SELECT_TEAMS": "Selecionar equipes",
+			"CHOOSE_TEAMS": "Escolher equipes",
+			"NAME": "Nome",
+			"ENTER_NAME": "Insira o nome",
+			"PARENT_MODULE": "Módulo pai",
+			"SELECT_PARENT": "Selecionar módulo pai",
+			"START_DATE": "Data de início",
+			"SELECT_START_DATE": "Selecionar data de início",
+			"END_DATE": "Data de término",
+			"SELECT_END_DATE": "Selecionar data de término",
+			"DESCRIPTION": "Descrição",
+			"IS_FAVORITE": "Favorito"
+		}
 	},
 	"SETTINGS_FEATURES": {
 		"INVOICE": "Fatura",
@@ -3585,7 +3607,10 @@
 			"AUTHORIZED_TO_WORK": "{{ name }} está autorizado a trabalhar",
 			"EMAIL_VERIFICATION_NOT_VALID": "Desculpe, esse link de verificação não é válido.",
 			"EMAIL_VERIFICATION_VALID": "Parabéns! Seu email foi verificado com sucesso.",
-			"SCREEN_CAPTURE_CHANGED": "Status de captura de tela alterado para {{ name }}"
+			"SCREEN_CAPTURE_CHANGED": "Status de captura de tela alterado para {{ name }}",
+			"MODULE_CREATED": "Módulo criado com sucesso!",
+			"MODULE_UPDATED": "Módulo atualizado com sucesso!",
+			"MODULE_SAVE_ERROR": "Falha ao salvar o módulo. Por favor, tente novamente."
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -3660,6 +3685,9 @@
 				"ADD_AWARD": "Novo prêmio '{{ name }}' foi adicionado.",
 				"INVALID_AWARD_NAME_YEAR": "Por favor, verifique o nome e o ano do prêmio inserido.",
 				"REMOVE_AWARD": "O prêmio '{{ name }}' foi removido."
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "A data de término ({{ endDate }}) não pode ser anterior à data de início ({{ startDate }})."
 			}
 		},
 		"ORGANIZATIONS": {
@@ -3683,7 +3711,9 @@
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "O nível do funcionário '{{ name }}' foi adicionado.",
 				"REMOVE_EMPLOYEE_LEVEL": "O Nível de Funcionário '{{ name }}' foi removido.",
-				"INVALID_EMPLOYEE_LEVEL": "Por favor, adicione um nível de funcionário."
+				"INVALID_EMPLOYEE_LEVEL": "Por favor, adicione um nível de funcionário.",
+				"ALREADY_EXISTS": "Este nível de funcionário já existe."
+
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "o vendedor '{{ name }}' foi adicionado.",
@@ -3701,12 +3731,15 @@
 				"ADD_POSITION": "A posição '{{ name }}' foi adicionada.",
 				"UPDATED_POSITION": "A posição '{{ name }}' foi alterada.",
 				"REMOVE_POSITION": "A posição '{{ name }}' foi removida.",
-				"INVALID_POSITION_NAME": "Por favor, adicione um nome de cargo."
+				"INVALID_POSITION_NAME": "Por favor, adicione um nome de cargo.",
+				"ALREADY_EXISTS": "Esta posição  já existe."
+
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "O departamento '{{ name }}' foi salvo.",
 				"REMOVE_DEPARTMENT": "Departamento '{{ name }}' foi removido.",
-				"INVALID_DEPARTMENT_NAME": "Por favor, adicione um nome de departamento."
+				"INVALID_DEPARTMENT_NAME": "Por favor, adicione um nome de departamento.",
+				"ALREADY_EXISTS": "Este departamento já existe."
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "Novo cliente '{{ name }}' adicionado com sucesso!",
@@ -3729,7 +3762,8 @@
 				"ADD_EMPLOYMENT_TYPE": "O tipo de emprego '{{ name }}' foi adicionado.",
 				"UPDATE_EMPLOYMENT_TYPE": "O tipo de emprego '{{ name }}' foi alterado.",
 				"INVALID_EMPLOYMENT_TYPE": "Por favor, verifique o nome para a entrada do tipo de emprego.",
-				"DELETE_EMPLOYMENT_TYPE": "O tipo de emprego '{{ name }}' foi removido."
+				"DELETE_EMPLOYMENT_TYPE": "O tipo de emprego '{{ name }}' foi removido.",
+				"ALREADY_EXISTS": "Este tipo de emprego já existe."
 			},
 			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
 				"ADD_RECURRING_EXPENSE": "A despesa recorrente foi adicionada para `{{ name }}`.",

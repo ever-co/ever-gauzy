@@ -7,7 +7,6 @@ import { IEmployee } from '@gauzy/contracts';
 	styleUrls: ['./employees-merged-teams.component.scss']
 })
 export class EmployeesMergedTeamsComponent implements OnInit {
-
 	@Input() value: any;
 	@Input() rowData: any;
 

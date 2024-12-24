@@ -10,7 +10,7 @@
 		"importHelpers": true,
 		"target": "ES2022",
 		"module": "commonjs",
-		"lib": ["es2020", "dom", "es2018", "esnext.array"],
+		"lib": ["es2020", "dom", "es2018", "esnext.array", "ES2022"],
 		"skipLibCheck": true,
 		"skipDefaultLibCheck": true,
 		"baseUrl": "."

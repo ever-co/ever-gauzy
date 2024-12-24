@@ -1,6 +1,6 @@
 import { Injectable, NgZone } from '@angular/core';
-import { ActivityWatchEventService, ElectronService } from '@gauzy/desktop-ui-lib';
 import { Observable, mergeMap, tap } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IActivityWatchEventResult,
 	IActivityWatchCollectEventData,
@@ -8,7 +8,8 @@ import {
 	ActivityWatchEventType,
 	ActivityWatchCollectEvent
 } from '@gauzy/contracts';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ElectronService } from '../../electron/services/electron/electron.service';
+import { ActivityWatchEventService } from './activity-watch-event.service';
 
 interface IActivity {
 	type: ActivityWatchEventType;

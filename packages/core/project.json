@@ -1,0 +1,58 @@
+{
+	"name": "core",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/core/src",
+	"projectType": "library",
+	"release": {
+		"version": {
+			"generatorOptions": {
+				"packageRoot": "dist/{projectRoot}",
+				"currentVersionResolver": "git-tag"
+			}
+		}
+	},
+	"tags": [],
+	"implicitDependencies": ["contracts", "config", "common"],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "dist/packages/core",
+				"tsConfig": "packages/core/tsconfig.lib.json",
+				"packageJson": "packages/core/package.json",
+				"main": "packages/core/src/index.ts",
+				"assets": [
+					"packages/core/*.md",
+					{
+						"input": "packages/core/src",
+						"output": "src",
+						"glob": "**/*.{gql,hbs,mjml,csv,json}"
+					}
+				]
+			}
+		},
+		"serve": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "nodemon --restartable rs --ignore .git --ignore node_modules/ --ignore dist/ --ignore coverage/ --ignore src/**/*.spec.ts --watch packages/core/src --exec \"yarn ts-node -r tsconfig-paths/register packages/core/src/lib/main.ts\" --env NODE_ENV=development --ext ts",
+				"cwd": "."
+			}
+		},
+		"nx-release-publish": {
+			"options": {
+				"packageRoot": "dist/{projectRoot}"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/core/jest.config.ts"
+			}
+		}
+	}
+}

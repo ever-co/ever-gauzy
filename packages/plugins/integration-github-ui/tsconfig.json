@@ -10,9 +10,10 @@
 		"noFallthroughCasesInSwitch": false,
 		"baseUrl": ".",
 		"paths": {
-			"@gauzy/ui-core/*": ["./../../../dist/packages/ui-core/*/index.d.ts"],
 			"@ngx-translate/*": ["./node_modules/@ngx-translate/*"],
-			"ngx-permissions": ["./node_modules/ngx-permissions"]
+			"ngx-permissions": ["./node_modules/ngx-permissions"],
+			"@gauzy/ui-core/*": ["./../../../dist/packages/ui-core/*/index.d.ts"],
+			"@gauzy/ui-config": ["./../../../dist/packages/ui-config"]
 		}
 	},
 	"files": [],

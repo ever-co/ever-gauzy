@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, EMPTY } from 'rxjs';
 import { tap, switchMap, map } from 'rxjs/operators';
-import * as moment from 'moment';
+import moment from 'moment';
 import { ID, IEngagement, IOrganization, IUpworkApiConfig, IUpworkDateRange } from '@gauzy/contracts';
 import { UpworkService } from './upwork.service';
 import { Store } from '../store/store.service';

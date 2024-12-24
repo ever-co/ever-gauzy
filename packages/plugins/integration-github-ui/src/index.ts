@@ -1,3 +1,6 @@
+/**
+ * Public API Surface of @gauzy/plugin-integration-github-ui
+ */
 export * from './lib/integration-github-ui.module';
 export * from './lib/github.config';
 export * from './lib/components/installation/installation.component';

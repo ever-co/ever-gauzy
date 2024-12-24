@@ -1,8 +1,11 @@
-export * from './constants';
-export * from './decorators';
-export * from './enums';
-export * from './guards';
-export * from './interfaces';
-export * from './utils';
-export * from './shared-types';
-export * from './custom-embedded-field-types';
+/**
+ * Public API Surface of @gauzy/common
+ */
+export * from './lib/constants';
+export * from './lib/decorators';
+export * from './lib/enums';
+export * from './lib/guards';
+export * from './lib/interfaces';
+export * from './lib/utils';
+export * from './lib/shared-types';
+export * from './lib/custom-embedded-field-types';
