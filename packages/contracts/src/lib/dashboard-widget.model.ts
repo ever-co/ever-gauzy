@@ -9,7 +9,7 @@ export interface IDashboardWidget
 		IEmployeeEntityInput,
 		IRelationalOrganizationProject,
 		IRelationalOrganizationTeam {
-	name?: string;
+	name: string;
 	order?: number;
 	size?: DashboardWidgetWidth[];
 	color?: string;
