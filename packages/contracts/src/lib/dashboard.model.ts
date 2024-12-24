@@ -1,4 +1,4 @@
-import { IBasePerTenantAndOrganizationEntityModel, ID, JsonData } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, JsonData } from './base-entity.model';
 import { ExcludeCreatorFields, IHasCreator } from './user.model';
 
 /**
