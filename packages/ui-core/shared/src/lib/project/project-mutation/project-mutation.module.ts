@@ -23,13 +23,13 @@ import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { TeamSelectModule } from '../../selectors/team/team.module';
+import { ProjectModuleTableModule } from '../../project-module/project-module-table/project-module-table.module';
 import { ProjectMutationComponent } from './project-mutation.component';
 import { RepositorySelectorModule } from '../../integrations/github/repository-selector/repository-selector.module';
-import { ProjectModuleTableComponent } from '../project-module/module-table/project-module-table.component';
 import { SmartDataViewLayoutModule } from '../../smart-data-layout';
 
 @NgModule({
-	declarations: [ProjectMutationComponent, ProjectModuleTableComponent],
+	declarations: [ProjectMutationComponent],
 	exports: [ProjectMutationComponent],
 	imports: [
 		CommonModule,
@@ -56,7 +56,8 @@ import { SmartDataViewLayoutModule } from '../../smart-data-layout';
 		TagsColorInputModule,
 		TeamSelectModule,
 		RepositorySelectorModule,
-		SmartDataViewLayoutModule
+		SmartDataViewLayoutModule,
+		ProjectModuleTableModule
 	]
 })
 export class ProjectMutationModule {}

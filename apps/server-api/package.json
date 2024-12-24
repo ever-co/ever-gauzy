@@ -18,7 +18,7 @@
 	"license": "AGPL-3.0",
 	"private": true,
 	"scripts": {
-		"build": "yarn nx build gauzy-api-server --cofiguration=development",
+		"build": "yarn nx build gauzy-api-server --configuration=development",
 		"build:prod": "yarn nx build gauzy-api-server --configuration=production"
 	},
 	"devDependencies": {

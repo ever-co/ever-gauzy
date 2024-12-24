@@ -347,9 +347,24 @@ RUN yarn cache clean
 
 # we need node_modules inside each @gauzy package
 RUN cp -r ./packages/auth/node_modules ./node_modules/@gauzy/auth/
+RUN cp -r ./packages/common/node_modules ./node_modules/@gauzy/common/
+RUN cp -r ./packages/config/node_modules ./node_modules/@gauzy/config/
+RUN cp -r ./packages/contracts/node_modules ./node_modules/@gauzy/contracts/
 RUN cp -r ./packages/core/node_modules ./node_modules/@gauzy/core/
+
+RUN cp -r ./packages/plugins/changelog/node_modules ./node_modules/@gauzy/plugin-changelog/
+RUN cp -r ./packages/plugins/integration-ai/node_modules ./node_modules/@gauzy/plugin-integration-ai/
 RUN cp -r ./packages/plugins/integration-github/node_modules ./node_modules/@gauzy/plugin-integration-github/
+RUN cp -r ./packages/plugins/integration-hubstaff/node_modules ./node_modules/@gauzy/plugin-integration-hubstaff/
+RUN cp -r ./packages/plugins/integration-jira/node_modules ./node_modules/@gauzy/plugin-integration-jira/
 RUN cp -r ./packages/plugins/integration-upwork/node_modules ./node_modules/@gauzy/plugin-integration-upwork/
+RUN cp -r ./packages/plugins/integration-wakatime/node_modules ./node_modules/@gauzy/plugin-integration-wakatime/
+RUN cp -r ./packages/plugins/jitsu-analytics/node_modules ./node_modules/@gauzy/plugin-jitsu-analytics/
+RUN cp -r ./packages/plugins/job-proposal/node_modules ./node_modules/@gauzy/plugin-job-proposal/
+RUN cp -r ./packages/plugins/job-search/node_modules ./node_modules/@gauzy/plugin-job-search/
+RUN cp -r ./packages/plugins/knowledge-base/node_modules ./node_modules/@gauzy/plugin-knowledge-base/
+RUN cp -r ./packages/plugins/product-reviews/node_modules ./node_modules/@gauzy/plugin-product-reviews/
+RUN cp -r ./packages/plugins/sentry/node_modules ./node_modules/@gauzy/plugin-sentry/
 
 # we don't need packages folder anymore
 RUN rm -rf ./packages
