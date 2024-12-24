@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from 'chalk';
-import { RolePermissionUtils } from '../../role-permission/utils';
 import { DatabaseTypeEnum } from '@gauzy/config';
+import { RolePermissionUtils } from '../../role-permission/utils';
 
 export class MigrateRolePermisisons1679765443208 implements MigrationInterface {
 	name = 'MigrateRolePermisisons1679765443208';

@@ -16,11 +16,11 @@ import {
 import { CKEditorModule } from 'ckeditor4-angular';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
-import { TaskSelectModule, TaskStatusSelectModule } from '../../../tasks';
-import { ProjectSelectModule, SelectorsModule } from '../../../selectors';
-import { TagsColorInputModule } from '../../../tags';
-import { EmployeeMultiSelectModule } from '../../../employee';
-import { AddProjectModuleDialogComponent } from './add-project-module-dialog.component';
+import { TaskSelectModule, TaskStatusSelectModule } from '../../tasks';
+import { ProjectSelectModule, SelectorsModule } from '../../selectors';
+import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
+import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
+import { ProjectModuleMutationComponent } from './project-module-mutation.component';
 
 @NgModule({
 	imports: [
@@ -47,7 +47,7 @@ import { AddProjectModuleDialogComponent } from './add-project-module-dialog.com
 		TaskSelectModule,
 		TaskStatusSelectModule
 	],
-	declarations: [AddProjectModuleDialogComponent],
-	exports: [AddProjectModuleDialogComponent]
+	declarations: [ProjectModuleMutationComponent],
+	exports: [ProjectModuleMutationComponent]
 })
-export class AddProjectModuleDialogModule {}
+export class ProjectModuleMutationModule {}

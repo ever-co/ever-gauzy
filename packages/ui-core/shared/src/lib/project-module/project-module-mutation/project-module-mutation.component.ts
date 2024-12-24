@@ -6,7 +6,6 @@ import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	IEmployee,
 	IOrganization,
@@ -20,7 +19,7 @@ import {
 	ID,
 	IOrganizationProjectModuleEmployee
 } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	EmployeesService,
 	OrganizationTeamsService,
@@ -30,15 +29,16 @@ import {
 	TasksService,
 	ToastrService
 } from '@gauzy/ui-core/core';
-import { richTextCKEditorConfig } from '../../../ckeditor.config';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { richTextCKEditorConfig } from '../../ckeditor.config';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-add-module-dialog',
-	templateUrl: './add-project-module-dialog.component.html',
-	styleUrls: ['./add-project-module-dialog.component.scss']
+	selector: 'ngx-project-module-mutation',
+	templateUrl: './project-module-mutation.component.html',
+	styleUrl: './project-module-mutation.component.scss'
 })
-export class AddProjectModuleDialogComponent extends TranslationBaseComponent implements OnInit {
+export class ProjectModuleMutationComponent extends TranslationBaseComponent implements OnInit {
 	memberIds: ID[] = [];
 	managerIds: ID[] = [];
 	selectedEmployeeIds: ID[] = [];
@@ -78,7 +78,6 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 	}
 	@Input() set projectModule(value: IOrganizationProjectModule) {
 		this._projectModule = value;
-
 		this.populateForm(value);
 	}
 
@@ -92,7 +91,7 @@ export class AddProjectModuleDialogComponent extends TranslationBaseComponent im
 	}
 
 	constructor(
-		public dialogRef: NbDialogRef<AddProjectModuleDialogComponent>,
+		public dialogRef: NbDialogRef<ProjectModuleMutationComponent>,
 		private fb: UntypedFormBuilder,
 		private store: Store,
 		public translateService: TranslateService,

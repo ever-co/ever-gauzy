@@ -1,6 +1,7 @@
 // Some of the code is modified from https://github.com/akveo/ngx-admin/blob/master/src/app/app.module.ts,
 // that licensed under the MIT License and Copyright (c) 2017 akveo.com.
 
+import { VERSION } from '@angular/core';
 import { APP_BASE_HREF } from '@angular/common';
 import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ExtraOptions, Router, RouterModule } from '@angular/router';
@@ -213,6 +214,8 @@ export class AppModule {
 	 * @param {I18nTranslateService} _i18nService - The I18nTranslateService instance.
 	 */
 	constructor(readonly _i18nService: I18nService) {
+		console.log(`Angular Version: ${VERSION.full}`);
+
 		// Initialize UI languages and Update Locale
 		this.initializeUiLanguagesAndLocale();
 	}
