@@ -150,8 +150,7 @@ import {
 	UserOrganization,
 	Warehouse,
 	WarehouseProduct,
-	WarehouseProductVariant,
-	Video
+	WarehouseProductVariant
 } from './internal';
 
 export const coreEntities = [
@@ -304,7 +303,6 @@ export const coreEntities = [
 	TimeSlotMinute,
 	User,
 	UserOrganization,
-	Video,
 	Warehouse,
 	WarehouseProduct,
 	WarehouseProductVariant

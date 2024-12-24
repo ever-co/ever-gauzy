@@ -45,11 +45,11 @@ import {
 	TimeOffRequestSubscriber,
 	TimesheetSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber,
-	VideoSubscriber
+	UserSubscriber
 } from '../internal';
 import { TenantOrganizationBaseEntityEventSubscriber } from './tenant-organization-base-entity.subscriber';
 
+// Get the ORM type from the MultiORMEnum
 const ormType = getORMType();
 
 /**
@@ -100,6 +100,5 @@ export const coreSubscribers = [
 	TimeOffRequestSubscriber,
 	TimesheetSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber,
-	VideoSubscriber
+	UserSubscriber
 ];

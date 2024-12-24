@@ -7,14 +7,19 @@ import { CreateVideoCommand } from '../create-video.command';
 @CommandHandler(CreateVideoCommand)
 export class CreateVideoHandler implements ICommandHandler<CreateVideoCommand> {
 	constructor(private readonly videosService: VideosService) {}
-	// Execute create video command
+
+	/**
+	 * Handles the CreateVideoCommand.
+	 */
 	public async execute(command: CreateVideoCommand): Promise<IVideo> {
 		const { input } = command;
+
 		// Instantiate new video entity
 		const video = new Video({
 			...input,
 			file: input.file.key
 		});
+
 		// Create video
 		return this.videosService.create(video);
 	}

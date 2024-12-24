@@ -1,17 +1,21 @@
+import { NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { DeleteResult } from 'typeorm';
 import { VideosService } from '../../services/videos.service';
 import { DeleteVideoCommand } from '../delete-video.command';
-import { DeleteResult } from 'typeorm';
-import { NotFoundException } from '@nestjs/common';
 
 @CommandHandler(DeleteVideoCommand)
 export class DeleteVideoHandler implements ICommandHandler<DeleteVideoCommand> {
 	constructor(private readonly videosService: VideosService) {}
-	// Execute delete video command
+
+	/**
+	 * Handles the DeleteVideoCommand.
+	 */
 	public async execute(command: DeleteVideoCommand): Promise<DeleteResult> {
 		const {
 			input: { id, options = {} }
 		} = command;
+
 		// Check if the video exists
 		const video = await this.videosService.findOneByWhereOptions({ id, ...options });
 

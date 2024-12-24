@@ -2,7 +2,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RolePermissionModule } from '../../role-permission';
+import { RolePermissionModule } from '@gauzy/core';
 import { commandHandlers } from './commands/handlers';
 import { Video } from './entities/video.entity';
 import { queryHandlers } from './queries/handlers';

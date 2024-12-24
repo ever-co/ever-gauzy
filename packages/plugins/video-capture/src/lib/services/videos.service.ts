@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { TenantAwareCrudService } from '../../../core/crud/tenant-aware-crud.service';
+import { TenantAwareCrudService } from '@gauzy/core';
 import { Video } from '../entities/video.entity';
 import { MikroOrmVideoRepository } from '../repositories/mikro-orm-video.repository';
 import { TypeOrmVideoRepository } from '../repositories/type-orm-video.repository';

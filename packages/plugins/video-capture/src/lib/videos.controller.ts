@@ -1,4 +1,3 @@
-import { FileStorageProviderEnum, ID, IDeleteScreenshot, IPagination, IVideo, PermissionsEnum } from '@gauzy/contracts';
 import {
 	BadRequestException,
 	Body,
@@ -16,20 +15,27 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { RequestContext } from '../../core/context';
-import { FileStorage, FileStorageFactory, UploadedFileStorage } from '../../core/file-storage';
-import { LazyFileInterceptor } from '../../core/interceptors';
-import { PermissionGuard, Permissions, TenantPermissionGuard } from '../../shared';
-import { UseValidationPipe, UUIDValidationPipe } from '../../shared/pipes';
+import { FindOneOptions } from 'typeorm';
+import { FileStorageProviderEnum, ID, IDeleteScreenshot, IPagination, IVideo, PermissionsEnum } from '@gauzy/contracts';
+import {
+	FileStorage,
+	FileStorageFactory,
+	PaginationParams,
+	Permissions,
+	PermissionGuard,
+	UploadedFileStorage,
+	TenantPermissionGuard,
+	UseValidationPipe,
+	RequestContext,
+	UUIDValidationPipe,
+	LazyFileInterceptor
+} from '@gauzy/core';
 import { CreateVideoCommand } from './commands/create-video.command';
 import { DeleteVideoCommand } from './commands/delete-video.command';
-import { CreateVideoDTO, DeleteVideoDTO } from './dto';
-import { FileDTO } from './dto/file.dto';
-import { Video } from './entities/video.entity';
 import { GetVideoQuery } from './queries/get-video.query';
-import { FindOneOptions } from 'typeorm';
 import { GetVideosQuery } from './queries/get-videos.query';
-import { PaginationParams } from '../../core';
+import { CreateVideoDTO, DeleteVideoDTO, FileDTO } from './dto';
+import { Video } from './entities/video.entity';
 
 @ApiTags('Video Plugin')
 @UseGuards(TenantPermissionGuard, PermissionGuard)

@@ -1,4 +1,3 @@
-import { FileStorageProvider, FileStorageProviderEnum, ID, IEmployee, ITimeSlot, IVideo } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude, Transform } from 'class-transformer';
 import {
@@ -17,8 +16,9 @@ import {
 	ValidateIf
 } from 'class-validator';
 import { JoinColumn, RelationId } from 'typeorm';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../../../core/decorators';
-import { Employee, TenantOrganizationBaseEntity, TimeSlot } from '../../../core/entities/internal';
+import { FileStorageProvider, FileStorageProviderEnum, ID, IEmployee, ITimeSlot, IVideo } from '@gauzy/contracts';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '@gauzy/core';
+import { Employee, TenantOrganizationBaseEntity, TimeSlot } from '@gauzy/core';
 import { MikroOrmVideoRepository } from '../repositories/mikro-orm-video.repository';
 
 @MultiORMEntity('videos', { mikroOrmRepository: () => MikroOrmVideoRepository })
@@ -74,7 +74,7 @@ export class Video extends TenantOrganizationBaseEntity implements IVideo {
 		}
 	)
 	@MultiORMColumn({ nullable: true })
-	fullUrl?: string;
+	fullUrl?: string | null;
 
 	@ApiPropertyOptional({ type: () => String, enum: FileStorageProviderEnum })
 	@IsOptional()

@@ -10,7 +10,7 @@ export interface IVideo extends IBasePerTenantAndOrganizationEntityModel {
 	recordedAt?: Date;
 	duration?: number;
 	size?: number;
-	fullUrl?: string;
+	fullUrl?: string | null;
 
 	// Storage and description
 	storageProvider?: FileStorageProvider;

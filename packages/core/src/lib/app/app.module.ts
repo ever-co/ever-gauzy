@@ -155,7 +155,6 @@ import { TaskViewModule } from '../tasks/views/view.module';
 import { ResourceLinkModule } from '../resource-link/resource-link.module';
 import { MentionModule } from '../mention/mention.module';
 import { SubscriptionModule } from '../subscription/subscription.module';
-import { PluginModule } from '../plugins/plugin.module';
 import { DashboardModule } from '../dashboard/dashboard.module';
 
 const { unleashConfig } = environment;
@@ -461,7 +460,6 @@ if (environment.THROTTLE_ENABLED) {
 		ResourceLinkModule,
 		MentionModule,
 		SubscriptionModule,
-		PluginModule,
 		DashboardModule
 	],
 	controllers: [AppController],

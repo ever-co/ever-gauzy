@@ -1,6 +1,6 @@
 import { IVideo } from '@gauzy/contracts';
 import { IQuery } from '@nestjs/cqrs';
-import { PaginationParams } from '../../../core/crud/pagination-params';
+import { PaginationParams } from '@gauzy/core';
 
 export class GetVideosQuery implements IQuery {
 	public static readonly type = '[Videos] Get All';

@@ -41,6 +41,7 @@
 			"@gauzy/plugin-product-reviews": ["./packages/plugins/product-reviews/src/index.ts"],
 			"@gauzy/plugin-public-layout-ui": ["./packages/plugins/public-layout-ui/src/index.ts"],
 			"@gauzy/plugin-sentry": ["./packages/plugins/sentry-tracing/src/index.ts"],
+			"@gauzy/plugin-video-capture": ["./packages/plugins/video-capture/src/index.ts"],
 			"@gauzy/ui-auth": ["./packages/ui-auth/src/index.ts"],
 			"@gauzy/ui-config": ["./packages/ui-config/src/index.ts"],
 			"@gauzy/ui-core": ["./packages/ui-core/src/index.ts"],
