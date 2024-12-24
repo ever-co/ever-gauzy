@@ -40,29 +40,33 @@ import { Video } from './entities/video.entity';
 @ApiTags('Video Plugin')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER)
-@Controller()
+@Controller('/plugins/videos')
 export class VideosController {
 	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
 
 	/**
-	 * GET videos
+	 * Handles the retrieval of all videos with optional pagination and filtering.
 	 *
-	 * @param params
-	 * @returns
+	 * @param params - Pagination and filter parameters for fetching videos.
+	 *
+	 * @returns A promise that resolves to a paginated result of videos, including metadata.
+	 *
+	 * @throws {HttpException} Throws an exception if no videos are found or an error occurs.
 	 */
 	@ApiOperation({
-		summary: 'Find all videos.'
+		summary: 'Retrieve a list of videos with optional pagination and filtering.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found videos.',
-		type: Video
+		description: 'List of videos retrieved successfully.',
+		type: Video,
+		isArray: true
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'No videos found matching the provided criteria.'
 	})
-	@Get()
+	@Get('/')
 	public async findAll(@Query() params: PaginationParams<Video>): Promise<IPagination<IVideo>> {
 		return this.queryBus.execute(new GetVideosQuery(params));
 	}
@@ -77,7 +81,6 @@ export class VideosController {
 	 * @param file - The uploaded video file.
 	 * @returns A Promise that resolves with the details of the created video.
 	 */
-	@Post()
 	@ApiOperation({
 		summary: 'Create video',
 		description: 'This API Endpoint allows uploading the video file along with related metadata.'
@@ -104,6 +107,7 @@ export class VideosController {
 			storage: () => FileStorageFactory.create('videos')
 		})
 	)
+	@Post()
 	public async create(@Body() input: CreateVideoDTO, @UploadedFileStorage() file: FileDTO) {
 		// Get provider
 		const provider = new FileStorage().getProvider();
@@ -141,6 +145,7 @@ export class VideosController {
 
 	/**
 	 * Retrieves a video record by its ID.
+	 *
 	 * @param id - The UUID of the video to retrieve.2024-12-23T08:00:00.000Z
 	 * @param options - Additional query options for finding the video.
 	 * @returns A Promise that resolves with the details of the video.
@@ -197,7 +202,7 @@ export class VideosController {
 	})
 	@Delete(':id')
 	@UseValidationPipe()
-	public async delete(@Param('id', UUIDValidationPipe) id: ID, @Query() options: IDeleteScreenshot): Promise<void> {
+	public async delete(@Param('id', UUIDValidationPipe) id: ID, @Query() options: DeleteVideoDTO): Promise<void> {
 		// Convert the plain object to a class instance
 		const fileInstance = plainToInstance(DeleteVideoDTO, { id, options });
 
