@@ -1,6 +1,6 @@
 {
 	"name": "@gauzy/plugin-video-capture",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"description": "Ever Gauzy Platform plugin for continuous video recording",
 	"author": {
 		"name": "Ever Co. LTD",
