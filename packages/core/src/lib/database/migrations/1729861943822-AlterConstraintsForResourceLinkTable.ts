@@ -1,6 +1,5 @@
-import { Logger } from '@nestjs/common';
 import { MigrationInterface, QueryRunner } from 'typeorm';
-import { yellow } from 'chalk';
+import * as chalk from 'chalk';
 import { DatabaseTypeEnum } from '@gauzy/config';
 
 export class AlterConstraintsForResourceLinkTable1729861943822 implements MigrationInterface {
@@ -12,7 +11,7 @@ export class AlterConstraintsForResourceLinkTable1729861943822 implements Migrat
 	 * @param queryRunner
 	 */
 	public async up(queryRunner: QueryRunner): Promise<void> {
-		Logger.debug(yellow(this.name + ' start running!'), 'Migration');
+		console.log(chalk.yellow(this.name + ' start running!'));
 
 		switch (queryRunner.connection.options.type) {
 			case DatabaseTypeEnum.sqlite:

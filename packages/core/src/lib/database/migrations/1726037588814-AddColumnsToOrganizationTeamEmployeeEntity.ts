@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
-import { yellow } from 'chalk';
+import * as chalk from 'chalk';
 import { DatabaseTypeEnum } from '@gauzy/config';
 
 export class AddColumnsToOrganizationTeamEmployeeEntity1726037588814 implements MigrationInterface {
@@ -11,7 +11,7 @@ export class AddColumnsToOrganizationTeamEmployeeEntity1726037588814 implements 
 	 * @param queryRunner
 	 */
 	public async up(queryRunner: QueryRunner): Promise<void> {
-		console.log(yellow(this.name + ' start running!'));
+		console.log(chalk.yellow(this.name + ' start running!'));
 
 		switch (queryRunner.connection.options.type) {
 			case DatabaseTypeEnum.sqlite:
