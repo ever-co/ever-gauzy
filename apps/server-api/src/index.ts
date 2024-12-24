@@ -52,7 +52,7 @@ import {
 	ServerConfig,
 	TranslateLoader,
 	TranslateService
-} from '@gauzy/desktop-libs';
+} from '@gauzy/desktop-lib';
 import {
 	createAboutWindow,
 	createServerWindow,
@@ -335,6 +335,7 @@ const getEnvApi = () => {
 			DB_USER: config[provider]?.dbUsername,
 			DB_PASS: config[provider]?.dbPassword
 		}),
+		DEBUG: 'true',
 		API_PORT: String(config.port),
 		...addsConfig
 	};

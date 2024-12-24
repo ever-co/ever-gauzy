@@ -5,9 +5,11 @@ import {
 	NbButtonModule,
 	NbCardModule,
 	NbDatepickerModule,
+	NbIconModule,
 	NbInputModule,
 	NbListModule,
 	NbSelectModule,
+	NbSpinnerModule,
 	NbTabsetModule,
 	NbToggleModule
 } from '@nebular/theme';
@@ -21,8 +23,10 @@ import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { TeamSelectModule } from '../../selectors/team/team.module';
+import { ProjectModuleTableModule } from '../../project-module/project-module-table/project-module-table.module';
 import { ProjectMutationComponent } from './project-mutation.component';
 import { RepositorySelectorModule } from '../../integrations/github/repository-selector/repository-selector.module';
+import { SmartDataViewLayoutModule } from '../../smart-data-layout';
 
 @NgModule({
 	declarations: [ProjectMutationComponent],
@@ -37,8 +41,10 @@ import { RepositorySelectorModule } from '../../integrations/github/repository-s
 		NbInputModule,
 		NbListModule,
 		NbSelectModule,
+		NbSpinnerModule,
 		NbTabsetModule,
 		NbToggleModule,
+		NbIconModule,
 		NgSelectModule,
 		CKEditorModule,
 		ColorPickerModule,
@@ -49,7 +55,9 @@ import { RepositorySelectorModule } from '../../integrations/github/repository-s
 		ImageUploaderModule,
 		TagsColorInputModule,
 		TeamSelectModule,
-		RepositorySelectorModule
+		RepositorySelectorModule,
+		SmartDataViewLayoutModule,
+		ProjectModuleTableModule
 	]
 })
 export class ProjectMutationModule {}

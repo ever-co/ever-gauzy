@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import {
 	NbBadgeModule,
@@ -22,29 +22,31 @@ import { ImportComponent } from './import.component';
 import { ImportRoutingModule } from './import-routing.module';
 
 @NgModule({
+	declarations: [ImportComponent],
+    exports: [ImportComponent],
 	imports: [
 		CommonModule,
-		FormsModule,
-		FileUploadModule,
-		HttpClientModule,
-		NbBadgeModule,
-		NbButtonModule,
-		NbCardModule,
-		NbIconModule,
-		NbInputModule,
-		NbRadioModule,
-		NbSpinnerModule,
-		NbToastrModule.forRoot(),
-		NbTooltipModule,
-		ImportRoutingModule,
-		NgxPermissionsModule.forChild(),
-		TranslateModule.forChild(),
-		SharedModule,
-		FileUploaderModule,
-		GauzyButtonActionModule
+        FormsModule,
+        FileUploadModule,
+        NbBadgeModule,
+        NbButtonModule,
+        NbCardModule,
+        NbIconModule,
+        NbInputModule,
+        NbRadioModule,
+        NbSpinnerModule,
+        NbToastrModule.forRoot(),
+        NbTooltipModule,
+        ImportRoutingModule,
+        NgxPermissionsModule.forChild(),
+        TranslateModule.forChild(),
+        SharedModule,
+        FileUploaderModule,
+        GauzyButtonActionModule
 	],
-	declarations: [ImportComponent],
-	exports: [ImportComponent],
-	providers: [ExportAllService]
+	providers: [
+		ExportAllService,
+		provideHttpClient(withInterceptorsFromDi())
+	]
 })
 export class ImportModule {}

@@ -3,7 +3,7 @@ export default {
 	displayName: 'plugin-job-search-ui',
 	preset: '../../../jest.preset.js',
 	setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
-	coverageDirectory: '../../../coverage/packages/plugins/plugin-job-search-ui',
+	coverageDirectory: '../../../coverage/packages/plugins/job-search-ui',
 	transform: {
 		'^.+\\.(ts|mjs|js|html)$': [
 			'jest-preset-angular',

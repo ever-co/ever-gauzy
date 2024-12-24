@@ -1,0 +1,202 @@
+{
+	"name": "api",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "apps/api/src",
+	"projectType": "application",
+	"tags": [],
+	"implicitDependencies": ["core"],
+	"generators": {
+		"@nx/nest:library": {
+			"directory": "api",
+			"unitTestRunner": "jest",
+			"linter": "eslint"
+		}
+	},
+	"targets": {
+		"build": {
+			"executor": "@nx/webpack:webpack",
+			"outputs": ["{options.outputPath}"],
+			"defaultConfiguration": "production",
+			"options": {
+				"target": "node",
+				"compiler": "tsc",
+				"outputPath": "dist/apps/api",
+				"main": "apps/api/src/main.ts",
+				"showCircularDependencies": false,
+				"sourceMap": true,
+				"maxWorkers": 4,
+				"memoryLimit": 7000,
+				"tsConfig": "apps/api/tsconfig.app.json",
+				"assets": [
+					"apps/api/src/assets",
+					{
+						"input": "apps/api/public",
+						"glob": "**/*",
+						"output": "public"
+					}
+				],
+				"webpackConfig": "apps/api/config/custom-webpack.config.js"
+			},
+			"configurations": {
+				"development": {},
+				"production": {
+					"optimization": true,
+					"extractLicenses": true,
+					"inspect": false,
+					"sourceMap": true,
+					"fileReplacements": [
+						{
+							"replace": "packages/config/src/environments/environment.ts",
+							"with": "packages/config/src/environments/environment.prod.ts"
+						}
+					]
+				}
+			}
+		},
+		"serve": {
+			"executor": "@nx/js:node",
+			"defaultConfiguration": "development",
+			"options": {
+				"buildTarget": "api:build",
+				"inspect": true,
+				"port": 9229
+			},
+			"configurations": {
+				"development": {
+					"buildTarget": "api:build:development"
+				},
+				"production": {
+					"buildTarget": "api:build:production"
+				}
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "apps/api/jest.config.ts",
+				"tsConfig": "apps/api/tsconfig.spec.json"
+			}
+		},
+		"desktop-api": {
+			"executor": "@nx/webpack:webpack",
+			"outputs": ["{options.outputPath}"],
+			"defaultConfiguration": "production",
+			"options": {
+				"target": "node",
+				"compiler": "tsc",
+				"outputPath": "dist/apps/desktop/api",
+				"main": "apps/api/src/main.ts",
+				"sourceMap": true,
+				"maxWorkers": 4,
+				"memoryLimit": 7000,
+				"tsConfig": "apps/api/tsconfig.app.json",
+				"assets": [
+					"apps/api/src/assets",
+					{
+						"input": "apps/api/public",
+						"glob": "**/*",
+						"output": "public"
+					}
+				],
+				"webpackConfig": "apps/api/config/custom-webpack.config.js"
+			},
+			"configurations": {
+				"development": {},
+				"production": {
+					"optimization": true,
+					"extractLicenses": false,
+					"inspect": false,
+					"sourceMap": true,
+					"fileReplacements": [
+						{
+							"replace": "packages/config/src/environments/environment.ts",
+							"with": "packages/config/src/environments/environment.prod.ts"
+						}
+					]
+				}
+			}
+		},
+		"server-api": {
+			"executor": "@nx/webpack:webpack",
+			"outputs": ["{options.outputPath}"],
+			"defaultConfiguration": "production",
+			"options": {
+				"target": "node",
+				"compiler": "tsc",
+				"outputPath": "dist/apps/gauzy-api-server/api",
+				"main": "apps/api/src/main.ts",
+				"showCircularDependencies": false,
+				"sourceMap": true,
+				"maxWorkers": 4,
+				"memoryLimit": 7000,
+				"tsConfig": "apps/api/tsconfig.app.json",
+				"assets": [
+					"apps/api/src/assets",
+					{
+						"input": "apps/api/public",
+						"glob": "**/*",
+						"output": "public"
+					}
+				],
+				"webpackConfig": "apps/api/config/custom-webpack.config.js"
+			},
+			"configurations": {
+				"production": {
+					"optimization": true,
+					"extractLicenses": false,
+					"inspect": false,
+					"sourceMap": true,
+					"fileReplacements": [
+						{
+							"replace": "packages/config/src/environments/environment.ts",
+							"with": "packages/config/src/environments/environment.prod.ts"
+						}
+					]
+				}
+			}
+		},
+		"gauzy-server-api": {
+			"executor": "@nx/webpack:webpack",
+			"outputs": ["{options.outputPath}"],
+			"defaultConfiguration": "production",
+			"options": {
+				"target": "node",
+				"compiler": "tsc",
+				"outputPath": "dist/apps/gauzy-server/api",
+				"main": "apps/api/src/main.ts",
+				"showCircularDependencies": false,
+				"sourceMap": true,
+				"maxWorkers": 4,
+				"memoryLimit": 7000,
+				"tsConfig": "apps/api/tsconfig.app.json",
+				"assets": [
+					"apps/api/src/assets",
+					{
+						"input": "apps/api/public",
+						"glob": "**/*",
+						"output": "public"
+					}
+				],
+				"webpackConfig": "apps/api/config/custom-webpack.config.js"
+			},
+			"configurations": {
+				"production": {
+					"optimization": true,
+					"extractLicenses": false,
+					"inspect": false,
+					"sourceMap": true,
+					"fileReplacements": [
+						{
+							"replace": "packages/config/src/environments/environment.ts",
+							"with": "packages/config/src/environments/environment.prod.ts"
+						}
+					]
+				}
+			}
+		}
+	}
+}

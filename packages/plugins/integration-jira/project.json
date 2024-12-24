@@ -3,46 +3,42 @@
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
 	"sourceRoot": "packages/plugins/integration-jira/src",
 	"projectType": "library",
+	"release": {
+		"version": {
+			"generatorOptions": {
+				"packageRoot": "dist/{projectRoot}",
+				"currentVersionResolver": "git-tag"
+			}
+		}
+	},
+	"tags": [],
+	"implicitDependencies": [],
 	"targets": {
 		"build": {
-			"executor": "@nrwl/js:tsc",
+			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "./packages/plugins/integration-jira/dist",
+				"outputPath": "dist/packages/plugins/integration-jira",
 				"tsConfig": "packages/plugins/integration-jira/tsconfig.lib.json",
 				"packageJson": "packages/plugins/integration-jira/package.json",
 				"main": "packages/plugins/integration-jira/src/index.ts",
 				"assets": ["packages/plugins/integration-jira/*.md"]
 			}
 		},
-		"publish": {
-			"executor": "nx:run-commands",
+		"nx-release-publish": {
 			"options": {
-				"command": "node tools/scripts/publish.mjs plugin-integration-jira {args.ver} {args.tag}"
-			},
-			"dependsOn": ["build"]
+				"packageRoot": "dist/{projectRoot}"
+			}
 		},
 		"lint": {
-			"executor": "@nrwl/linter:eslint",
-			"outputs": ["{options.outputFile}"],
-			"options": {
-				"lintFilePatterns": ["packages/plugins/integration-jira/**/*.ts"]
-			}
+			"executor": "@nx/eslint:lint"
 		},
 		"test": {
-			"executor": "@nrwl/jest:jest",
+			"executor": "@nx/jest:jest",
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
-				"jestConfig": "packages/plugins/integration-jira/jest.config.ts",
-				"passWithNoTests": true
-			},
-			"configurations": {
-				"ci": {
-					"ci": true,
-					"codeCoverage": true
-				}
+				"jestConfig": "packages/plugins/integration-jira/jest.config.ts"
 			}
 		}
-	},
-	"tags": []
+	}
 }

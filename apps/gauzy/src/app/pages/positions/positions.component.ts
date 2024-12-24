@@ -6,7 +6,7 @@ import { LocalDataSource } from 'angular2-smart-table';
 import { firstValueFrom, filter, tap, Subject, debounceTime } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { OrganizationPositionsService, Store, ToastrService } from '@gauzy/ui-core/core';
-import { ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
+import { ComponentEnum, distinctUntilChange, validateUniqueString } from '@gauzy/ui-core/common';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase,
@@ -174,6 +174,19 @@ export class PositionsComponent extends PaginationFilterBaseComponent implements
 		if (!this.organization) {
 			return;
 		}
+
+		const existingNames = this.positions
+			.filter((position) => !this.selectedPosition || position.id !== this.selected.position.id)
+			.map((position) => position.name);
+
+		if (validateUniqueString(existingNames, name)) {
+			this.toastrService.danger(
+				this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.ALREADY_EXISTS'),
+				name
+			);
+			return;
+		}
+
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 
@@ -194,6 +207,16 @@ export class PositionsComponent extends PaginationFilterBaseComponent implements
 			if (!this.organization) {
 				return;
 			}
+			const existingNames = this.positions.map((position) => position.name);
+
+			if (validateUniqueString(existingNames, name)) {
+				this.toastrService.danger(
+					this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.ALREADY_EXISTS'),
+					name
+				);
+				return;
+			}
+
 			const { id: organizationId } = this.organization;
 			const { tenantId } = this.store.user;
 

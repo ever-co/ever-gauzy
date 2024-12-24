@@ -1,14 +1,12 @@
 {
 	"name": "@gauzy/plugin-job-search-ui",
 	"version": "0.1.0",
-	"type": "commonjs",
 	"description": "A UI plugin for job search functionality in the Gauzy platform.",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
-	"license": "AGPL-3.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ever-co/ever-gauzy"
@@ -17,6 +15,39 @@
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"homepage": "https://ever.co",
+	"license": "AGPL-3.0",
+	"private": true,
+	"scripts": {
+		"lib:build": "yarn nx build plugin-job-search-ui --configuration=development",
+		"lib:build:prod": "yarn nx build plugin-job-search-ui --configuration=production",
+		"lib:watch": "yarn nx build plugin-job-search-ui --watch --configuration=development"
+	},
+	"peerDependencies": {
+		"@angular/common": "^18.2.0",
+		"@angular/core": "^18.2.0"
+	},
+	"dependencies": {
+		"@angular/forms": "18.2.12",
+		"@angular/router": "18.2.12",
+		"@gauzy/contracts": "^0.1.0",
+		"@nebular/theme": "^14.0.2",
+		"@ngneat/until-destroy": "^10.0.0",
+		"@ngx-translate/core": "^16.0.3",
+		"@ngx-translate/http-loader": "^16.0.0",
+		"angular2-smart-table": "^3.4.0",
+		"ckeditor4-angular": "4.0.1",
+		"ng2-file-upload": "^7.0.1",
+		"ngx-moment": "^6.0.2",
+		"ngx-permissions": "^17.1.0",
+		"rxjs": "^7.8.0",
+		"tslib": "^2.6.2",
+		"underscore": "^1.13.3"
+	},
+	"devDependencies": {
+		"@types/jest": "29.5.14",
+		"@types/node": "^20.14.9",
+		"jest-preset-angular": "14.1.1"
+	},
 	"keywords": [
 		"job search",
 		"UI plugin",
@@ -27,38 +58,6 @@
 		"recruitment",
 		"job listings"
 	],
-	"private": true,
-	"scripts": {
-		"lib:build": "ng build plugin-job-search-ui --configuration=development",
-		"lib:build:prod": "ng build plugin-job-search-ui --configuration=production",
-		"lib:watch": "ng build plugin-job-search-ui --watch --configuration=development"
-	},
-	"peerDependencies": {
-		"@angular/common": "^16.2.12",
-		"@angular/core": "^16.2.12"
-	},
-	"dependencies": {
-		"@angular/forms": "^16.2.12",
-		"@angular/router": "^16.2.12",
-		"@gauzy/contracts": "^0.1.0",
-		"@nebular/theme": "^12.0.0",
-		"@ngneat/until-destroy": "^9.2.0",
-		"@ngx-translate/core": "^15.0.0",
-		"@ngx-translate/http-loader": "^8.0.0",
-		"angular2-smart-table": "^3.3.0",
-		"ckeditor4-angular": "4.0.1",
-		"ng2-file-upload": "^5.0.0",
-		"ngx-moment": "^6.0.2",
-		"ngx-permissions": "^13.0.1",
-		"rxjs": "^7.4.0",
-		"tslib": "^2.6.2",
-		"underscore": "^1.13.3"
-	},
-	"devDependencies": {
-		"@types/jest": "^29.4.4",
-		"@types/node": "^20.14.9",
-		"jest-preset-angular": "^13.1.4"
-	},
 	"engines": {
 		"node": ">=20.11.1",
 		"yarn": ">=1.22.19"

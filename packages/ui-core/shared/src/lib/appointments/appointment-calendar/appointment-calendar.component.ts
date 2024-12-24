@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { debounceTime, filter } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
-import { CalendarOptions, EventInput } from '@fullcalendar/core';
+import { CalendarOptions, EventClickArg, EventInput } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -13,7 +13,7 @@ import { FullCalendarComponent } from '@fullcalendar/angular';
 import momentTimezonePlugin from '@fullcalendar/moment-timezone';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import * as moment from 'moment';
+import moment from 'moment';
 import * as timezone from 'moment-timezone';
 import {
 	IEmployeeAppointment,
@@ -163,46 +163,7 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 			currentDay--;
 		}
 		this.calendarOptions = {
-			eventClick: (event) => {
-				const eventObject = event.event;
-				if (eventObject.extendedProps['type'] !== 'BookedSlot') {
-					this._router.navigate([this.appointmentFormURL || this.getManageRoute(this._selectedEmployeeId)], {
-						state: {
-							dateStart: eventObject.start,
-							dateEnd: eventObject.end,
-							selectedEventType: this.selectedEventType,
-							timezone: this.selectedTimeZoneName
-						}
-					});
-				} else {
-					const config = {
-						dateStart: eventObject.start,
-						dateEnd: eventObject.end,
-						timezone: this.selectedTimeZoneName
-					};
-					const prevSlot = this.calendarEvents.find(
-						(o) => new Date(o.end.toString()).getTime() === eventObject.start.getTime()
-					);
-					const nextSlot = this.calendarEvents.find(
-						(o) => new Date(o.start.toString()).getTime() === eventObject.end.getTime()
-					);
-
-					if (
-						prevSlot &&
-						nextSlot &&
-						nextSlot.extendedProps['type'] !== 'BookedSlot' &&
-						prevSlot.extendedProps['type'] !== 'BookedSlot'
-					) {
-						config.dateStart = new Date(prevSlot.start.toString());
-						config.dateEnd = new Date(nextSlot.end.toString());
-					}
-
-					this._router.navigate(
-						[this.getManageRoute(this._selectedEmployeeId, eventObject.extendedProps['id'])],
-						{ state: config }
-					);
-				}
-			},
+			eventClick: this.handleEventClick.bind(this),
 			events: this.getEvents.bind(this),
 			initialView: 'timeGridWeek',
 			headerToolbar: this.headerToolbarOptions,
@@ -212,8 +173,82 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 			weekends: true,
 			height: 'auto',
 			dayHeaderDidMount: this.headerMount.bind(this),
-			firstDay: dayOfWeekAsString(this._store?.selectedOrganization?.startWeekOn || WeekDaysEnum.MONDAY)
+			firstDay: dayOfWeekAsString(this._store?.selectedOrganization?.startWeekOn || WeekDaysEnum.MONDAY),
+			selectable: true,
+			select: this.handleEventSelect.bind(this)
 		};
+	}
+
+	handleEventClick({ event }: EventClickArg) {
+		const id = event._def.extendedProps.id;
+		if (event._def.extendedProps.type !== 'BookedSlot') {
+			this._router.navigate([this.appointmentFormURL || this.getManageRoute(this._selectedEmployeeId, id)], {
+				queryParams: {
+					dateStart: event._instance.range.start.toISOString(),
+					dateEnd: event._instance.range.end.toISOString(),
+					selectedEventType: this.selectedEventType,
+					timezone: this.selectedTimeZoneName
+				}
+			});
+		} else {
+			const config = {
+				dateStart: event._instance.range.start,
+				dateEnd: event._instance.range.end,
+				selectedEventType: this.selectedEventType,
+				timezone: this.selectedTimeZoneName
+			};
+			const prevSlot = this.calendarEvents.find(
+				(o) => new Date(o.end.toString()).getTime() === event.start.getTime()
+			);
+			const nextSlot = this.calendarEvents.find(
+				(o) => new Date(o.start.toString()).getTime() === event.end.getTime()
+			);
+
+			if (
+				prevSlot &&
+				nextSlot &&
+				nextSlot.extendedProps['type'] !== 'BookedSlot' &&
+				prevSlot.extendedProps['type'] !== 'BookedSlot'
+			) {
+				config.dateStart = new Date(prevSlot.start.toString());
+				config.dateEnd = new Date(nextSlot.end.toString());
+			}
+
+			this._router.navigate([this.getManageRoute(this._selectedEmployeeId, id)], { queryParams: config });
+		}
+	}
+	handleEventSelect(info) {
+		const { start, end } = info; // start and end are the selected date range
+
+		// You can also check additional conditions before processing
+		if (start && end) {
+			const config = {
+				dateStart: start,
+				dateEnd: end,
+				timezone: this.selectedTimeZoneName
+			};
+
+			// Check if there are existing events around the selected range
+			const prevSlot = this.calendarEvents.find((o) => new Date(o.end.toString()).getTime() === start.getTime());
+			const nextSlot = this.calendarEvents.find((o) => new Date(o.start.toString()).getTime() === end.getTime());
+
+			if (
+				prevSlot &&
+				nextSlot &&
+				nextSlot.extendedProps['type'] !== 'BookedSlot' &&
+				prevSlot.extendedProps['type'] !== 'BookedSlot'
+			) {
+				// If the previous and next slots are available, extend the range
+				config.dateStart = new Date(prevSlot.start.toString());
+				config.dateEnd = new Date(nextSlot.end.toString());
+			}
+
+			// Redirect to the event management or booking form
+
+			this._router.navigate([this.getManageRoute(this.employee ? this.employee.id : this._selectedEmployeeId)], {
+				queryParams: config
+			});
+		}
 	}
 
 	async fetchTimeOff() {

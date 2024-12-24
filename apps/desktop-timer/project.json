@@ -1,0 +1,132 @@
+{
+	"name": "desktop-timer",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"projectType": "application",
+	"prefix": "gauzy",
+	"sourceRoot": "apps/desktop-timer/src",
+	"tags": [],
+	"generators": {
+		"@nx/angular:component": {
+			"style": "scss"
+		}
+	},
+	"targets": {
+		"build": {
+			"executor": "@angular-builders/custom-webpack:browser",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"customWebpackConfig": {
+					"path": "apps/desktop-timer/config/custom-webpack.config.js"
+				},
+				"outputPath": "dist/apps/desktop-timer",
+				"index": "apps/desktop-timer/src/index.html",
+				"main": "apps/desktop-timer/src/main.ts",
+				"polyfills": "apps/desktop-timer/src/polyfills.ts",
+				"tsConfig": "apps/desktop-timer/tsconfig.app.json",
+				"aot": true,
+				"stylePreprocessorOptions": {
+					"includePaths": ["apps/desktop-timer/src/assets/styles", "packages/ui-core/static/styles"]
+				},
+				"assets": [
+					"apps/desktop-timer/src/favicon.ico",
+					"apps/desktop-timer/src/assets",
+					{
+						"glob": "**/*",
+						"input": "apps/desktop-timer/src/",
+						"ignore": ["**/*.ts"],
+						"output": ""
+					},
+					{
+						"glob": "**/*",
+						"input": "node_modules/@nebular/eva-icons/icons",
+						"output": "/assets/eva-icons/"
+					}
+				],
+				"styles": [
+					"apps/desktop-timer/src/styles.css",
+					"node_modules/@nebular/theme/styles/prebuilt/default.css",
+					"node_modules/bootstrap/dist/css/bootstrap.css",
+					"node_modules/typeface-exo/index.css",
+					"node_modules/roboto-fontface/css/roboto/roboto-fontface.css",
+					"node_modules/ionicons/dist/scss/ionicons.scss",
+					"node_modules/@fortawesome/fontawesome-free/css/all.css",
+					"node_modules/socicon/css/socicon.css",
+					"node_modules/nebular-icons/scss/nebular-icons.scss",
+					"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
+					"node_modules/leaflet/dist/leaflet.css",
+					"apps/desktop-timer/src/assets/styles/styles.scss",
+					"node_modules/@ng-select/ng-select/themes/default.theme.css"
+				],
+				"scripts": [],
+				"allowedCommonJsDependencies": ["localforage", "rxjs", "rxjs/operators"]
+			},
+			"configurations": {
+				"production": {
+					"fileReplacements": [
+						{
+							"replace": "apps/desktop-timer/src/environments/environment.ts",
+							"with": "apps/desktop-timer/src/environments/environment.prod.ts"
+						},
+						{
+							"replace": "packages/ui-config/src/lib/environments/environment.ts",
+							"with": "packages/ui-config/src/lib/environments/environment.prod.ts"
+						}
+					],
+					"optimization": true,
+					"sourceMap": true,
+					"namedChunks": false,
+					"extractLicenses": true,
+					"vendorChunk": false,
+					"buildOptimizer": true,
+					"budgets": [
+						{
+							"type": "initial",
+							"maximumWarning": "20mb",
+							"maximumError": "40mb"
+						},
+						{
+							"type": "anyComponentStyle",
+							"maximumWarning": "60kb",
+							"maximumError": "120kb"
+						}
+					],
+					"outputHashing": "all"
+				},
+				"development": {
+					"optimization": false,
+					"extractLicenses": false,
+					"sourceMap": true
+				}
+			},
+			"defaultConfiguration": "production"
+		},
+		"serve": {
+			"executor": "@angular-devkit/build-angular:dev-server",
+			"configurations": {
+				"production": {
+					"buildTarget": "desktop-timer:build:production"
+				},
+				"development": {
+					"buildTarget": "desktop-timer:build:development"
+				}
+			},
+			"defaultConfiguration": "development"
+		},
+		"extract-i18n": {
+			"executor": "@angular-devkit/build-angular:extract-i18n",
+			"options": {
+				"buildTarget": "desktop-timer:build"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "apps/desktop-timer/jest.config.ts"
+			}
+		}
+	}
+}

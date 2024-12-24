@@ -165,7 +165,8 @@
 		"ACTIVATE": "Activeren",
 		"ADD_PLUGIN": "Plugin toevoegen",
 		"LOAD_PLUGIN": "Plugin laden",
-		"FROM_CDN": "Van CDN"
+		"FROM_CDN": "Van CDN",
+		"ADD_MODULE": "Module toevoegen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -2605,7 +2606,9 @@
 		"SELECT": "Selecteren",
 		"SPRINTS_SETTINGS": "Sprintinstellingen",
 		"ARE_YOU_SURE": "Weet je zeker dat je de sprint wilt verwijderen?",
-		"SETTINGS": "Instellingen"
+		"SETTINGS": "Instellingen",
+		"MODULE": "Module",
+		"SELECT_MODULE": "Module(s)"
 	},
 	"JOBS": {
 		"EMPLOYEE": "Werknemer",
@@ -3154,7 +3157,26 @@
 		}
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
-		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "Deze tab zal projectbeheersgrafieken en geaggregeerde gegevens laten zien."
+		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "Deze tab zal projectbeheersgrafieken en geaggregeerde gegevens laten zien.",
+		"PROJECT_MODULE": {
+			"PROJECT": "Project",
+			"SELECT_PROJECT": "Selecteer een project",
+			"STATUS": "Status",
+			"TEAM_MEMBERS": "Teamleden",
+			"TEAMS": "Teams",
+			"SELECT_TEAMS": "Selecteer teams",
+			"CHOOSE_TEAMS": "Kies teams",
+			"NAME": "Naam",
+			"ENTER_NAME": "Voer naam in",
+			"PARENT_MODULE": "Hoofdmodule",
+			"SELECT_PARENT": "Selecteer hoofdmodule",
+			"START_DATE": "Startdatum",
+			"SELECT_START_DATE": "Selecteer startdatum",
+			"END_DATE": "Einddatum",
+			"SELECT_END_DATE": "Selecteer einddatum",
+			"DESCRIPTION": "Beschrijving",
+			"IS_FAVORITE": "Favoriet"
+		}
 	},
 	"SETTINGS_FEATURES": {
 		"INVOICE": "Factuur",
@@ -3585,7 +3607,10 @@
 			"AUTHORIZED_TO_WORK": "{{ name }} is gemachtigd om te werken",
 			"EMAIL_VERIFICATION_NOT_VALID": "Sorry, deze verificatielink is niet geldig.",
 			"EMAIL_VERIFICATION_VALID": "Gefeliciteerd! Uw e-mail is nu geverifieerd.",
-			"SCREEN_CAPTURE_CHANGED": "Schermopnamestatus gewijzigd voor {{ name }}"
+			"SCREEN_CAPTURE_CHANGED": "Schermopnamestatus gewijzigd voor {{ name }}",
+			"MODULE_CREATED": "Module succesvol aangemaakt!",
+			"MODULE_UPDATED": "Module succesvol bijgewerkt!",
+			"MODULE_SAVE_ERROR": "Het opslaan van de module is mislukt. Probeer het opnieuw."
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -3660,6 +3685,9 @@
 				"ADD_AWARD": "Nieuwe award '{{ name }}' is toegevoegd",
 				"INVALID_AWARD_NAME_YEAR": "Controleer alstublieft de Naam en het Jaar voor de Award invoer.",
 				"REMOVE_AWARD": "Prijs '{{ name }}' is verwijderd."
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "De einddatum ({{ endDate }}) mag niet eerder zijn dan de startdatum ({{ startDate }})."
 			}
 		},
 		"ORGANIZATIONS": {
@@ -3683,7 +3711,9 @@
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "Werknemersniveau '{{ name }}' is toegevoegd",
 				"REMOVE_EMPLOYEE_LEVEL": "Medewerkersniveau '{{ name }}' is verwijderd",
-				"INVALID_EMPLOYEE_LEVEL": "Voeg alstublieft een functieniveau van medewerker toe."
+				"INVALID_EMPLOYEE_LEVEL": "Voeg alstublieft een functieniveau van medewerker toe.",
+				"ALREADY_EXISTS": "Dit werkniveau  bestaat al."
+
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "Leverancier '{{ name }}' is toegevoegd",
@@ -3701,12 +3731,15 @@
 				"ADD_POSITION": "Functie '{{ name }}' is toegevoegd",
 				"UPDATED_POSITION": "De positie '{{ name }}' is gewijzigd.",
 				"REMOVE_POSITION": "Positie '{{ name }}' is verwijderd",
-				"INVALID_POSITION_NAME": "Voeg alstublieft een functienaam toe."
+				"INVALID_POSITION_NAME": "Voeg alstublieft een functienaam toe.",
+				"ALREADY_EXISTS": "Deze functie  bestaat al."
+
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "Afdeling '{{ name }}' is opgeslagen",
 				"REMOVE_DEPARTMENT": "Afdeling '{{ name }}' is verwijderd",
-				"INVALID_DEPARTMENT_NAME": "Voeg alstublieft een afdelingsnaam toe"
+				"INVALID_DEPARTMENT_NAME": "Voeg alstublieft een afdelingsnaam toe",
+				"ALREADY_EXISTS": "Deze afdeling  bestaat al."
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "Nieuwe klant '{{ name }}' succesvol toegevoegd!",
@@ -3729,7 +3762,8 @@
 				"ADD_EMPLOYMENT_TYPE": "Type dienstverband '{{ name }}' is toegevoegd",
 				"UPDATE_EMPLOYMENT_TYPE": "Werkgelegenheidstype '{{ name }}' is gewijzigd",
 				"INVALID_EMPLOYMENT_TYPE": "Controleer alstublieft de naam voor het invoerveld 'Type dienstverband'",
-				"DELETE_EMPLOYMENT_TYPE": "Dienstverbandtype '{{ name }}' is verwijderd"
+				"DELETE_EMPLOYMENT_TYPE": "Dienstverbandtype '{{ name }}' is verwijderd",
+				"ALREADY_EXISTS": "Dit type werk bestaat al."
 			},
 			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
 				"ADD_RECURRING_EXPENSE": "Herhalende kosten werden toegevoegd voor `{{ name }}`.",

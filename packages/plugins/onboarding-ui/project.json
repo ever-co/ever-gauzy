@@ -2,15 +2,17 @@
 	"name": "plugin-onboarding-ui",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
 	"sourceRoot": "packages/plugins/onboarding-ui/src",
-	"prefix": "gauzy",
-	"tags": [],
+	"prefix": "lib",
 	"projectType": "library",
+	"tags": [],
+	"implicitDependencies": [],
 	"targets": {
 		"build": {
-			"executor": "@nrwl/angular:package",
+			"executor": "@nx/angular:package",
 			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
 			"options": {
-				"project": "packages/plugins/onboarding-ui/ng-package.json"
+				"project": "packages/plugins/onboarding-ui/ng-package.json",
+				"tsConfig": "packages/plugins/onboarding-ui/tsconfig.json"
 			},
 			"configurations": {
 				"production": {
@@ -23,28 +25,14 @@
 			"defaultConfiguration": "production"
 		},
 		"test": {
-			"executor": "@nrwl/jest:jest",
+			"executor": "@nx/jest:jest",
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
-				"jestConfig": "packages/plugins/onboarding-ui/jest.config.ts",
-				"passWithNoTests": true
-			},
-			"configurations": {
-				"ci": {
-					"ci": true,
-					"codeCoverage": true
-				}
+				"jestConfig": "packages/plugins/onboarding-ui/jest.config.ts"
 			}
 		},
 		"lint": {
-			"executor": "@nrwl/linter:eslint",
-			"outputs": ["{options.outputFile}"],
-			"options": {
-				"lintFilePatterns": [
-					"packages/plugins/onboarding-ui/**/*.ts",
-					"packages/plugins/onboarding-ui/**/*.html"
-				]
-			}
+			"executor": "@nx/eslint:lint"
 		}
 	}
 }

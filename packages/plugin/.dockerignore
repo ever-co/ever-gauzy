@@ -1,10 +1,20 @@
+docker
+tmp
+README.md
+.env
+
+# git
+
 .git
 .gitignore
 .gitmodules
-README.md
-docker
+
+# dependencies
+
 node_modules
-tmp
-build
+
+# misc
+
+npm-debug.log
 dist
-.env
+build

@@ -9,6 +9,7 @@ import * as remoteMain from '@electron/remote/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
 import { BrowserWindow, Menu, MenuItemConstructorOptions, app, dialog, ipcMain, nativeTheme, shell } from 'electron';
 import * as path from 'path';
+import Store from 'electron-store';
 
 import { environment } from './environments/environment';
 
@@ -18,9 +19,8 @@ Object.assign(process.env, environment);
 
 app.setName(process.env.NAME);
 
-console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
+console.log('Desktop Node Modules Path', path.join(__dirname, 'node_modules'));
 
-const Store = require('electron-store');
 remoteMain.initialize();
 
 import {
@@ -43,7 +43,7 @@ import {
 	ipcTimer,
 	removeMainListener,
 	removeTimerListener
-} from '@gauzy/desktop-libs';
+} from '@gauzy/desktop-lib';
 import {
 	AlwaysOn,
 	ScreenCaptureNotification,
@@ -815,6 +815,18 @@ ipcMain.on('minimize_on_startup', (event, arg) => {
 
 ipcMain.handle('get-app-path', () => app.getAppPath());
 
+/**
+ * Closes all application windows.
+ *
+ * The function handles two types of windows:
+ * 1. A set of general windows (`notificationWindow`, `splashScreen`, `alwaysOn`), which are closed using the `.close()` method.
+ * 2. Browser windows (e.g., `gauzyWindow`, `timeTrackerWindow`, `settingsWindow`, etc.), which are first checked if they are not destroyed using `.isDestroyed()`
+ *    before being destroyed using the `.destroy()` method.
+ *
+ * Note: This function assumes that the relevant windows are globally defined variables of their respective types.
+ *
+ * @void
+ */
 function closeAllWindows(): void {
 	const windows = [notificationWindow, splashScreen, alwaysOn];
 	const browserWindows: BrowserWindow[] = [
@@ -826,10 +838,12 @@ function closeAllWindows(): void {
 		setupWindow
 	];
 
+	// Close general windows
 	windows.forEach((window) => {
 		if (window) window.close();
 	});
 
+	// Destroy browser windows
 	browserWindows.forEach((window) => {
 		if (!window?.isDestroyed()) window.destroy();
 	});
