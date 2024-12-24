@@ -1,13 +1,18 @@
-import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
-import { IUser } from './user.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID, JsonData } from './base-entity.model';
+import { ExcludeCreatorFields, IHasCreator } from './user.model';
 
-export interface IDashboard extends IBasePerTenantAndOrganizationEntityModel {
-	name?: string;
+/**
+ * Interface representing a Dashboard entity.
+ */
+export interface IDashboard extends IBasePerTenantAndOrganizationEntityModel, IHasCreator {
+	name: string;
+	identifier: string;
 	description?: string;
-	code?: string;
+	contentHtml?: JsonData;
 	isDefault?: boolean;
-	creator?: IUser;
-	creatorId?: ID;
 }
 
-export interface IDashboardCreateInput extends IDashboard {}
+/**
+ * Input interface for creating a Dashboard entity.
+ */
+export interface IDashboardCreateInput extends ExcludeCreatorFields<IDashboard> {}
