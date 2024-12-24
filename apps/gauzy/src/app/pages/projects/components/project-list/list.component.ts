@@ -28,7 +28,6 @@ import {
 	ToastrService
 } from '@gauzy/ui-core/core';
 import {
-	AddProjectModuleDialogComponent,
 	CardGridComponent,
 	ContactLinksComponent,
 	DateViewComponent,
@@ -36,6 +35,7 @@ import {
 	EmployeesMergedTeamsComponent,
 	EmployeeWithLinksComponent,
 	PaginationFilterBaseComponent,
+	ProjectModuleMutationComponent,
 	ProjectOrganizationComponent,
 	ProjectOrganizationEmployeesComponent,
 	ProjectOrganizationGridComponent,
@@ -621,7 +621,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	public async createProjectModuleDialog(project: IOrganizationProject): Promise<void> {
 		try {
 			const result = await firstValueFrom(
-				this._dialogService.open(AddProjectModuleDialogComponent, {
+				this._dialogService.open(ProjectModuleMutationComponent, {
 					context: {
 						project,
 						createModule: true

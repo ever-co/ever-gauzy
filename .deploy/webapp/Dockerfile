@@ -167,6 +167,9 @@ ENV NX_NO_CLOUD=true
 RUN yarn build:package:gauzy:docker
 RUN yarn build:gauzy:prod:docker
 
+# Clean up
+RUN yarn cache clean
+
 FROM nginx:alpine AS production
 
 # USER nginx:nginx
@@ -180,9 +183,6 @@ COPY --chown=nginx:nginx --from=build /srv/gauzy/dist/apps/gauzy .
 
 RUN chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && \
 	chmod a+rw /etc/nginx/conf.d/compose.conf.template /etc/nginx/conf.d/prod.conf.template
-
-# Clean up
-RUN yarn cache clean
 
 ENV CI=true
 
