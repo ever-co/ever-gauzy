@@ -15,4 +15,9 @@ export interface IDashboard extends IBasePerTenantAndOrganizationEntityModel, IH
 /**
  * Input interface for creating a Dashboard entity.
  */
-export interface IDashboardCreateInput extends ExcludeCreatorFields<IDashboard> {}
+export interface IDashboardCreateInput extends ExcludeCreatorFields<IDashboard>, Omit<IDashboard, 'isDefault'> {}
+
+/**
+ * Input interface for updating a Dashboard entity.
+ */
+export interface IDashboardUpdateInput extends ExcludeCreatorFields<Partial<IDashboardCreateInput>> {}
