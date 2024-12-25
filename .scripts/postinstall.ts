@@ -5,6 +5,12 @@ You can run this script from root of mono-repo with command below:
 ```
 yarn ts-node .scripts/postinstall.ts
 ```
+
+Note: if you want to get list of native packages that needs to be added to `nativePackages` const,
+please run below script:
+```
+yarn ts-node .scripts/find-native-deps.ts
+```
 */
 
 import * as fs from 'fs';
@@ -19,6 +25,9 @@ interface PackageScript {
 
 const nodeModulesPath = path.resolve('node_modules');
 const foundScripts: PackageScript[] = [];
+
+// List of native packages to always handle
+const nativePackages = ['@sentry/profiling-node', 'bcrypt', 'better-sqlite3', 'active-win'];
 
 // Function to check for postinstall scripts in a package.json
 function checkPackageScripts(dir: string): void {
@@ -66,9 +75,40 @@ function runScriptsSequentially(): void {
 	for (const { package: packageName, script, directory } of foundScripts) {
 		console.log(`Running postinstall script for ${packageName}: ${script} in directory ${directory}`);
 		try {
+			// Run the package's postinstall script
 			execSync(`yarn run postinstall`, { stdio: 'inherit', cwd: directory });
 		} catch (error) {
 			console.error(`Failed to run postinstall script for ${packageName}:`, error);
+		}
+	}
+}
+
+// Rebuild or force install native packages
+function handleNativePackages(): void {
+	console.log('Handling native packages...');
+	for (const packageName of nativePackages) {
+		const packagePath = path.join(nodeModulesPath, packageName);
+
+		console.log(`Checking path for ${packageName}: ${packagePath}`);
+
+		if (fs.existsSync(packagePath)) {
+			const packageJsonPath = path.join(packagePath, 'package.json');
+			console.log(`Checking package.json for ${packageName}: ${packageJsonPath}`);
+
+			if (fs.existsSync(packageJsonPath)) {
+				console.log(`Rebuilding native package: ${packageName} in ${packagePath}`);
+				try {
+					execSync(`yarn add ${packageName} --force`, { stdio: 'inherit', cwd: packagePath });
+				} catch (error) {
+					console.error(`Failed to rebuild native package ${packageName}:`, error);
+				}
+			} else {
+				console.warn(
+					`Native package ${packageName} does not have a package.json at ${packageJsonPath}. Skipping.`
+				);
+			}
+		} else {
+			console.warn(`Native package ${packageName} is not installed in ${packagePath}. Skipping.`);
 		}
 	}
 }
@@ -82,3 +122,6 @@ if (foundScripts.length > 0) {
 } else {
 	console.log('No postinstall scripts found.');
 }
+
+// Always handle native packages after running postinstall scripts
+handleNativePackages();
