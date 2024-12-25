@@ -9,7 +9,7 @@ import { Video } from './entities/video.entity';
 	providers: [],
 	exports: []
 })
-export class VideoCapturePlugin implements IOnPluginBootstrap, IOnPluginDestroy {
+export class VideosPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 	// We disable by default additional logging for each event to avoid cluttering the logs
 	private logEnabled = true;
 
@@ -18,7 +18,7 @@ export class VideoCapturePlugin implements IOnPluginBootstrap, IOnPluginDestroy 
 	 */
 	onPluginBootstrap(): void | Promise<void> {
 		if (this.logEnabled) {
-			console.log(chalk.green(`${VideoCapturePlugin.name} is being bootstrapped...`));
+			console.log(chalk.green(`${VideosPlugin.name} is being bootstrapped...`));
 		}
 	}
 
@@ -27,7 +27,7 @@ export class VideoCapturePlugin implements IOnPluginBootstrap, IOnPluginDestroy 
 	 */
 	onPluginDestroy(): void | Promise<void> {
 		if (this.logEnabled) {
-			console.log(chalk.red(`${VideoCapturePlugin.name} is being destroyed...`));
+			console.log(chalk.red(`${VideosPlugin.name} is being destroyed...`));
 		}
 	}
 }

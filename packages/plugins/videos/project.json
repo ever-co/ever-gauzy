@@ -1,7 +1,7 @@
 {
-	"name": "plugin-video-capture",
+	"name": "plugin-videos",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
-	"sourceRoot": "packages/plugins/video-capture/src",
+	"sourceRoot": "packages/plugins/videos/src",
 	"projectType": "library",
 	"release": {
 		"version": {
@@ -18,11 +18,11 @@
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "dist/packages/plugins/video-capture",
-				"tsConfig": "packages/plugins/video-capture/tsconfig.lib.json",
-				"packageJson": "packages/plugins/video-capture/package.json",
-				"main": "packages/plugins/video-capture/src/index.ts",
-				"assets": ["packages/plugins/video-capture/*.md"]
+				"outputPath": "dist/packages/plugins/videos",
+				"tsConfig": "packages/plugins/videos/tsconfig.lib.json",
+				"packageJson": "packages/plugins/videos/package.json",
+				"main": "packages/plugins/videos/src/index.ts",
+				"assets": ["packages/plugins/videos/*.md"]
 			}
 		},
 		"nx-release-publish": {
@@ -37,7 +37,7 @@
 			"executor": "@nx/jest:jest",
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
-				"jestConfig": "packages/plugins/video-capture/jest.config.ts"
+				"jestConfig": "packages/plugins/videos/jest.config.ts"
 			}
 		}
 	}

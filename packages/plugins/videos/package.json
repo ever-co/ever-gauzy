@@ -1,7 +1,7 @@
 {
-	"name": "@gauzy/plugin-video-capture",
+	"name": "@gauzy/plugin-videos",
 	"version": "0.1.0",
-	"description": "Ever Gauzy Platform plugin for continuous video recording",
+	"description": "This plugins provides functionality to upload and manage videos",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -21,9 +21,9 @@
 	"main": "./src/index.js",
 	"typings": "./src/index.d.ts",
 	"scripts": {
-		"lib:build": "yarn nx build plugin-video-capture",
-		"lib:build:prod": "yarn nx build plugin-video-capture",
-		"lib:watch": "yarn nx build plugin-video-capture --watch"
+		"lib:build": "yarn nx build plugin-videos",
+		"lib:build:prod": "yarn nx build plugin-videos",
+		"lib:watch": "yarn nx build plugin-videos --watch"
 	},
 	"dependencies": {
 		"@gauzy/contracts": "^0.1.0",
@@ -39,17 +39,15 @@
 	},
 	"keywords": [
 		"video",
-		"capture",
+		"video-upload",
+		"video-management",
+		"media",
+		"media-upload",
+		"video-library",
 		"plugin",
-		"NestJS",
-		"Gauzy",
-		"Ever Gauzy",
-		"platform",
-		"management",
-		"tool",
-		"software",
-		"development",
-		"typescript"
+		"gauzy",
+		"videos-plugin",
+		"video-plugins"
 	],
 	"engines": {
 		"node": ">=20.11.1",
