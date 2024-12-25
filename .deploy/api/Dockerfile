@@ -165,6 +165,7 @@ COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plu
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
 
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
+COPY --chown=node:node .scripts/postinstall.ts ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
 RUN yarn postinstall.manual
@@ -225,6 +226,7 @@ COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plu
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
 
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
+COPY --chown=node:node .scripts/postinstall.ts ./.scripts/
 
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production
 RUN yarn postinstall.manual
