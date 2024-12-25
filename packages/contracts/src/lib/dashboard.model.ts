@@ -20,4 +20,4 @@ export interface IDashboardCreateInput extends ExcludeCreatorFields<IDashboard>,
 /**
  * Input interface for updating a Dashboard entity.
  */
-export interface IDashboardUpdateInput extends ExcludeCreatorFields<Partial<IDashboardCreateInput>> {}
+export interface IDashboardUpdateInput extends Partial<IDashboardCreateInput> {}

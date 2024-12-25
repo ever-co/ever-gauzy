@@ -2104,6 +2104,10 @@
 			"PROJECT_MODULE_READ": "查看项目模块",
 			"PROJECT_MODULE_UPDATE": "更新项目模块",
 			"PROJECT_MODULE_DELETE": "删除项目模块",
+			"DASHBOARD_CREATE": "创建仪表板",
+			"DASHBOARD_READ": "查看仪表板",
+			"DASHBOARD_UPDATE": "更新仪表板",
+			"DASHBOARD_DELETE": "删除仪表板",
 			"ORG_TEAM_ADD": "添加团队",
 			"ORG_TEAM_VIEW": "查看团队",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "编辑活动任务",
@@ -3713,7 +3717,6 @@
 				"REMOVE_EMPLOYEE_LEVEL": "员工级别 '{{ name }}' 已被删除",
 				"INVALID_EMPLOYEE_LEVEL": "请添加员工级别",
 				"ALREADY_EXISTS": "员工级别 已经存在。"
-
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "供应商 \"{{ name }}\" 已添加",
@@ -3733,7 +3736,6 @@
 				"REMOVE_POSITION": "職位 '{{ name }}' 已被刪除",
 				"INVALID_POSITION_NAME": "请添加职位名称",
 				"ALREADY_EXISTS": "职位 已经存在。"
-
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "部门 '{{ name }}' 已保存",

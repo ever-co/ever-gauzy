@@ -2102,6 +2102,10 @@
 			"PROJECT_MODULE_READ": "عرض وحدات المشروع",
 			"PROJECT_MODULE_UPDATE": "تحديث وحدات المشروع",
 			"PROJECT_MODULE_DELETE": "حذف وحدات المشروع",
+			"DASHBOARD_CREATE": "إنشاء لوحة التحكم",
+			"DASHBOARD_READ": "عرض لوحة التحكم",
+			"DASHBOARD_UPDATE": "تحديث لوحة التحكم",
+			"DASHBOARD_DELETE": "حذف لوحة التحكم",
 			"ORG_TEAM_ADD": "إضافة فِرَق",
 			"ORG_TEAM_VIEW": "عرض الفرق",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "تحرير المهام النشطة",
@@ -3711,7 +3715,6 @@
 				"REMOVE_EMPLOYEE_LEVEL": "تمت إزالة مستوى الموظف '{{ name }}'",
 				"INVALID_EMPLOYEE_LEVEL": "يرجى إضافة مستوى الموظف",
 				"ALREADY_EXISTS": "المستوى الوظيفي  موجود بالفعل."
-
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "تمت إضافة المورد '{{ name }}'",
@@ -3731,7 +3734,6 @@
 				"REMOVE_POSITION": "تم إزالة الوظيفة '{{ name }}'",
 				"INVALID_POSITION_NAME": "يرجى إضافة اسم المنصب",
 				"ALREADY_EXISTS": "الوظيفة  موجودة بالفعل."
-
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "تم حفظ القسم '{{ name }}'",
