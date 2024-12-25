@@ -22,7 +22,7 @@ import { Employee, TenantOrganizationBaseEntity, TimeSlot } from '@gauzy/core';
 import { IVideo, VideoCodecEnum, VideoResolutionEnum } from '../video.model';
 import { MikroOrmVideoRepository } from '../repositories/mikro-orm-video.repository';
 
-@MultiORMEntity('videos', { mikroOrmRepository: () => MikroOrmVideoRepository })
+@MultiORMEntity('video', { mikroOrmRepository: () => MikroOrmVideoRepository })
 export class Video extends TenantOrganizationBaseEntity implements IVideo {
 	/**
 	 * Title of the video.

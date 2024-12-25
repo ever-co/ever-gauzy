@@ -1,25 +1,17 @@
-import { Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, EventSubscriber } from 'typeorm';
 import { BaseEntityEventSubscriber, FileStorage } from '@gauzy/core';
 import { Video } from '../entities/video.entity';
 
+@Injectable()
 @EventSubscriber()
 export class VideoSubscriber extends BaseEntityEventSubscriber<Video> {
 	private readonly logger = new Logger('VideoSubscriber');
 
-	constructor(@InjectDataSource() private readonly dataSource: DataSource) {
+	constructor(@InjectDataSource() dataSource: DataSource) {
 		super();
-		this.registerSubscriber();
-	}
-
-	/**
-	 * Registers the subscriber with the DataSource.
-	 */
-	private registerSubscriber(): void {
-		console.log('VideoSubscriber registering with the DataSource...', this.dataSource);
-		this.dataSource.subscribers.push(this);
-		this.logger.log('VideoSubscriber registered with the DataSource.');
+		dataSource.subscribers.push(this);
 	}
 
 	/**
