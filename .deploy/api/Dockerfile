@@ -340,7 +340,7 @@ RUN cp -r ./packages/plugins/job-proposal/node_modules ./node_modules/@gauzy/plu
 RUN cp -r ./packages/plugins/job-search/node_modules ./node_modules/@gauzy/plugin-job-search/
 RUN cp -r ./packages/plugins/knowledge-base/node_modules ./node_modules/@gauzy/plugin-knowledge-base/
 RUN cp -r ./packages/plugins/product-reviews/node_modules ./node_modules/@gauzy/plugin-product-reviews/
-RUN cp -r ./packages/plugins/sentry/node_modules ./node_modules/@gauzy/plugin-sentry/
+RUN cp -r ./packages/plugins/sentry-tracing/node_modules ./node_modules/@gauzy/plugin-sentry/
 RUN cp -r ./packages/plugins/videos/node_modules ./node_modules/@gauzy/plugin-videos/
 
 # We do not copy node_modules here for Wakatime plugin, because it used in Desktop Apps for now
