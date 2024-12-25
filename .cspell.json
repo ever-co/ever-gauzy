@@ -526,7 +526,16 @@
 		"localforage",
 		"longform",
 		"rfdc",
-		"libx264"
+		"libx264",
+		"libx",
+		"WXGA",
+		"SXGA",
+		"UXGA",
+		"NTSC",
+		"libvpx",
+		"libaom",
+		"theora",
+		"Theora"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
