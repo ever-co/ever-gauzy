@@ -59,7 +59,8 @@ export class CreateVideoTable1735058989058 implements MigrationInterface {
     * @param queryRunner
     */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query(`CREATE TABLE "video" ("deletedAt" TIMESTAMP, "id" uuid NOT NULL DEFAULT gen_random_uuid(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "isActive" boolean DEFAULT true, "isArchived" boolean DEFAULT false, "archivedAt" TIMESTAMP, "tenantId" uuid, "organizationId" uuid, "title" character varying NOT NULL, "file" character varying NOT NULL, "recordedAt" TIMESTAMP, "duration" integer, "size" integer, "fullUrl" character varying, "description" character varying, "storageProvider" text, "resolution" text DEFAULT '1920:1080', "codec" text DEFAULT 'libx264', "frameRate" integer DEFAULT '15', "timeSlotId" uuid, "uploadedById" uuid, CONSTRAINT "PK_1a2f3856250765d72e7e1636c8e" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TYPE "public"."video_storageprovider_enum" AS ENUM('LOCAL', 'S3', 'WASABI', 'CLOUDINARY', 'DIGITALOCEAN')`);
+        await queryRunner.query(`CREATE TABLE "video" ("deletedAt" TIMESTAMP, "id" uuid NOT NULL DEFAULT gen_random_uuid(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "isActive" boolean DEFAULT true, "isArchived" boolean DEFAULT false, "archivedAt" TIMESTAMP, "tenantId" uuid, "organizationId" uuid, "title" character varying NOT NULL, "file" character varying NOT NULL, "recordedAt" TIMESTAMP, "duration" integer, "size" integer, "fullUrl" character varying, "description" character varying, "storageProvider" "public"."video_storageprovider_enum", "resolution" character varying DEFAULT '1920:1080', "codec" character varying DEFAULT 'libx264', "frameRate" integer DEFAULT '15', "timeSlotId" uuid, "uploadedById" uuid, CONSTRAINT "PK_1a2f3856250765d72e7e1636c8e" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_f57c7e5cac7c7ab9809bfc9aca" ON "video" ("isActive") `);
         await queryRunner.query(`CREATE INDEX "IDX_158647e790ce90499ed5a53c9b" ON "video" ("isArchived") `);
         await queryRunner.query(`CREATE INDEX "IDX_6fd9144466152ccef62e39d853" ON "video" ("tenantId") `);
@@ -93,6 +94,7 @@ export class CreateVideoTable1735058989058 implements MigrationInterface {
         await queryRunner.query(`DROP INDEX "public"."IDX_158647e790ce90499ed5a53c9b"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_f57c7e5cac7c7ab9809bfc9aca"`);
         await queryRunner.query(`DROP TABLE "video"`);
+        await queryRunner.query(`DROP TYPE "public"."video_storageprovider_enum"`);
     }
 
     /**
@@ -101,7 +103,7 @@ export class CreateVideoTable1735058989058 implements MigrationInterface {
     * @param queryRunner
     */
     public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query(`CREATE TABLE "video" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "title" varchar NOT NULL, "file" varchar NOT NULL, "recordedAt" datetime, "duration" integer, "size" integer, "fullUrl" varchar, "description" varchar, "storageProvider" varchar CHECK( "storageProvider" IN ('LOCAL','S3','WASABI','CLOUDINARY','DIGITALOCEAN') ), "resolution" text DEFAULT ('1920:1080'), "codec" text DEFAULT ('libx264'), "frameRate" integer DEFAULT (15), "timeSlotId" varchar, "uploadedById" varchar)`);
+        await queryRunner.query(`CREATE TABLE "video" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "title" varchar NOT NULL, "file" varchar NOT NULL, "recordedAt" datetime, "duration" integer, "size" integer, "fullUrl" varchar, "description" varchar, "storageProvider" varchar CHECK( "storageProvider" IN ('LOCAL','S3','WASABI','CLOUDINARY','DIGITALOCEAN') ), "resolution" varchar DEFAULT ('1920:1080'), "codec" varchar DEFAULT ('libx264'), "frameRate" integer DEFAULT (15), "timeSlotId" varchar, "uploadedById" varchar)`);
         await queryRunner.query(`CREATE INDEX "IDX_f57c7e5cac7c7ab9809bfc9aca" ON "video" ("isActive") `);
         await queryRunner.query(`CREATE INDEX "IDX_158647e790ce90499ed5a53c9b" ON "video" ("isArchived") `);
         await queryRunner.query(`CREATE INDEX "IDX_6fd9144466152ccef62e39d853" ON "video" ("tenantId") `);
@@ -118,7 +120,7 @@ export class CreateVideoTable1735058989058 implements MigrationInterface {
         await queryRunner.query(`DROP INDEX "IDX_1be826cc802f4cf0abb36ab365"`);
         await queryRunner.query(`DROP INDEX "IDX_a0c8486c125418dc0cc2e38470"`);
         await queryRunner.query(`DROP INDEX "IDX_f42d8d7033aacb69287d0dcfd9"`);
-        await queryRunner.query(`CREATE TABLE "temporary_video" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "title" varchar NOT NULL, "file" varchar NOT NULL, "recordedAt" datetime, "duration" integer, "size" integer, "fullUrl" varchar, "description" varchar, "storageProvider" varchar CHECK( "storageProvider" IN ('LOCAL','S3','WASABI','CLOUDINARY','DIGITALOCEAN') ), "resolution" text DEFAULT ('1920:1080'), "codec" text DEFAULT ('libx264'), "frameRate" integer DEFAULT (15), "timeSlotId" varchar, "uploadedById" varchar, CONSTRAINT "FK_6fd9144466152ccef62e39d853e" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_061902beee13424f6372ac19f02" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_a0c8486c125418dc0cc2e384703" FOREIGN KEY ("timeSlotId") REFERENCES "time_slot" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_f42d8d7033aacb69287d0dcfd9a" FOREIGN KEY ("uploadedById") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`);
+        await queryRunner.query(`CREATE TABLE "temporary_video" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "title" varchar NOT NULL, "file" varchar NOT NULL, "recordedAt" datetime, "duration" integer, "size" integer, "fullUrl" varchar, "description" varchar, "storageProvider" varchar CHECK( "storageProvider" IN ('LOCAL','S3','WASABI','CLOUDINARY','DIGITALOCEAN') ), "resolution" varchar DEFAULT ('1920:1080'), "codec" varchar DEFAULT ('libx264'), "frameRate" integer DEFAULT (15), "timeSlotId" varchar, "uploadedById" varchar, CONSTRAINT "FK_6fd9144466152ccef62e39d853e" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_061902beee13424f6372ac19f02" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_a0c8486c125418dc0cc2e384703" FOREIGN KEY ("timeSlotId") REFERENCES "time_slot" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_f42d8d7033aacb69287d0dcfd9a" FOREIGN KEY ("uploadedById") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`);
         await queryRunner.query(`INSERT INTO "temporary_video"("deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "title", "file", "recordedAt", "duration", "size", "fullUrl", "description", "storageProvider", "resolution", "codec", "frameRate", "timeSlotId", "uploadedById") SELECT "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "title", "file", "recordedAt", "duration", "size", "fullUrl", "description", "storageProvider", "resolution", "codec", "frameRate", "timeSlotId", "uploadedById" FROM "video"`);
         await queryRunner.query(`DROP TABLE "video"`);
         await queryRunner.query(`ALTER TABLE "temporary_video" RENAME TO "video"`);
@@ -147,7 +149,7 @@ export class CreateVideoTable1735058989058 implements MigrationInterface {
         await queryRunner.query(`DROP INDEX "IDX_158647e790ce90499ed5a53c9b"`);
         await queryRunner.query(`DROP INDEX "IDX_f57c7e5cac7c7ab9809bfc9aca"`);
         await queryRunner.query(`ALTER TABLE "video" RENAME TO "temporary_video"`);
-        await queryRunner.query(`CREATE TABLE "video" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "title" varchar NOT NULL, "file" varchar NOT NULL, "recordedAt" datetime, "duration" integer, "size" integer, "fullUrl" varchar, "description" varchar, "storageProvider" varchar CHECK( "storageProvider" IN ('LOCAL','S3','WASABI','CLOUDINARY','DIGITALOCEAN') ), "resolution" text DEFAULT ('1920:1080'), "codec" text DEFAULT ('libx264'), "frameRate" integer DEFAULT (15), "timeSlotId" varchar, "uploadedById" varchar)`);
+        await queryRunner.query(`CREATE TABLE "video" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "title" varchar NOT NULL, "file" varchar NOT NULL, "recordedAt" datetime, "duration" integer, "size" integer, "fullUrl" varchar, "description" varchar, "storageProvider" varchar CHECK( "storageProvider" IN ('LOCAL','S3','WASABI','CLOUDINARY','DIGITALOCEAN') ), "resolution" varchar DEFAULT ('1920:1080'), "codec" varchar DEFAULT ('libx264'), "frameRate" integer DEFAULT (15), "timeSlotId" varchar, "uploadedById" varchar)`);
         await queryRunner.query(`INSERT INTO "video"("deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "title", "file", "recordedAt", "duration", "size", "fullUrl", "description", "storageProvider", "resolution", "codec", "frameRate", "timeSlotId", "uploadedById") SELECT "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "title", "file", "recordedAt", "duration", "size", "fullUrl", "description", "storageProvider", "resolution", "codec", "frameRate", "timeSlotId", "uploadedById" FROM "temporary_video"`);
         await queryRunner.query(`DROP TABLE "temporary_video"`);
         await queryRunner.query(`CREATE INDEX "IDX_f42d8d7033aacb69287d0dcfd9" ON "video" ("uploadedById") `);
@@ -175,7 +177,11 @@ export class CreateVideoTable1735058989058 implements MigrationInterface {
      * @param queryRunner
      */
     public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-
+		await queryRunner.query(`CREATE TABLE \`video\` (\`deletedAt\` datetime(6) NULL, \`id\` varchar(36) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`title\` varchar(255) NOT NULL, \`file\` varchar(255) NOT NULL, \`recordedAt\` datetime NULL, \`duration\` int NULL, \`size\` int NULL, \`fullUrl\` varchar(255) NULL, \`description\` varchar(255) NULL, \`storageProvider\` enum ('LOCAL', 'S3', 'WASABI', 'CLOUDINARY', 'DIGITALOCEAN') NULL, \`resolution\` varchar(255) NULL DEFAULT '1920:1080', \`codec\` varchar(255) NULL DEFAULT 'libx264', \`frameRate\` int NULL DEFAULT '15', \`timeSlotId\` varchar(255) NULL, \`uploadedById\` varchar(255) NULL, INDEX \`IDX_f57c7e5cac7c7ab9809bfc9aca\` (\`isActive\`), INDEX \`IDX_158647e790ce90499ed5a53c9b\` (\`isArchived\`), INDEX \`IDX_6fd9144466152ccef62e39d853\` (\`tenantId\`), INDEX \`IDX_061902beee13424f6372ac19f0\` (\`organizationId\`), INDEX \`IDX_95bba1c05216311bf162f6d835\` (\`recordedAt\`), INDEX \`IDX_1be826cc802f4cf0abb36ab365\` (\`storageProvider\`), INDEX \`IDX_a0c8486c125418dc0cc2e38470\` (\`timeSlotId\`), INDEX \`IDX_f42d8d7033aacb69287d0dcfd9\` (\`uploadedById\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+		await queryRunner.query(`ALTER TABLE \`video\` ADD CONSTRAINT \`FK_6fd9144466152ccef62e39d853e\` FOREIGN KEY (\`tenantId\`) REFERENCES \`tenant\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+		await queryRunner.query(`ALTER TABLE \`video\` ADD CONSTRAINT \`FK_061902beee13424f6372ac19f02\` FOREIGN KEY (\`organizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`);
+		await queryRunner.query(`ALTER TABLE \`video\` ADD CONSTRAINT \`FK_a0c8486c125418dc0cc2e384703\` FOREIGN KEY (\`timeSlotId\`) REFERENCES \`time_slot\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+		await queryRunner.query(`ALTER TABLE \`video\` ADD CONSTRAINT \`FK_f42d8d7033aacb69287d0dcfd9a\` FOREIGN KEY (\`uploadedById\`) REFERENCES \`employee\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
     }
 
     /**
@@ -184,6 +190,18 @@ export class CreateVideoTable1735058989058 implements MigrationInterface {
      * @param queryRunner
      */
     public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-
+		await queryRunner.query(`ALTER TABLE \`video\` DROP FOREIGN KEY \`FK_f42d8d7033aacb69287d0dcfd9a\``);
+		await queryRunner.query(`ALTER TABLE \`video\` DROP FOREIGN KEY \`FK_a0c8486c125418dc0cc2e384703\``);
+		await queryRunner.query(`ALTER TABLE \`video\` DROP FOREIGN KEY \`FK_061902beee13424f6372ac19f02\``);
+		await queryRunner.query(`ALTER TABLE \`video\` DROP FOREIGN KEY \`FK_6fd9144466152ccef62e39d853e\``);
+		await queryRunner.query(`DROP INDEX \`IDX_f42d8d7033aacb69287d0dcfd9\` ON \`video\``);
+		await queryRunner.query(`DROP INDEX \`IDX_a0c8486c125418dc0cc2e38470\` ON \`video\``);
+		await queryRunner.query(`DROP INDEX \`IDX_1be826cc802f4cf0abb36ab365\` ON \`video\``);
+		await queryRunner.query(`DROP INDEX \`IDX_95bba1c05216311bf162f6d835\` ON \`video\``);
+		await queryRunner.query(`DROP INDEX \`IDX_061902beee13424f6372ac19f0\` ON \`video\``);
+		await queryRunner.query(`DROP INDEX \`IDX_6fd9144466152ccef62e39d853\` ON \`video\``);
+		await queryRunner.query(`DROP INDEX \`IDX_158647e790ce90499ed5a53c9b\` ON \`video\``);
+		await queryRunner.query(`DROP INDEX \`IDX_f57c7e5cac7c7ab9809bfc9aca\` ON \`video\``);
+		await queryRunner.query(`DROP TABLE \`video\``);
     }
 }

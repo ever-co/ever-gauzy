@@ -122,44 +122,33 @@ export class Video extends TenantOrganizationBaseEntity implements IVideo {
 	@IsEnum(FileStorageProviderEnum)
 	@Exclude({ toPlainOnly: true })
 	@ColumnIndex()
-	@MultiORMColumn({ type: 'text', nullable: true, enum: FileStorageProviderEnum })
+	@MultiORMColumn({ type: 'simple-enum', nullable: true, enum: FileStorageProviderEnum })
 	storageProvider?: FileStorageProvider;
 
 	/**
 	 * Video resolution in the format WIDTH:HEIGHT.
 	 * Optional and restricted to standard resolutions defined in VideoResolutionEnum.
 	 */
-	@ApiPropertyOptional({
-		type: () => String,
-		enum: VideoResolutionEnum,
-		description: 'Video resolution in format WIDTH:HEIGHT (e.g., 1920:1080, 3840:2160)'
-	})
+	@ApiPropertyOptional({ type: () => String, description: 'Video resolution in format WIDTH:HEIGHT (e.g., 1920:1080, 3840:2160)' })
 	@IsOptional()
-	@IsEnum(VideoResolutionEnum)
-	@MultiORMColumn({
-		type: 'text',
-		nullable: true,
-		default: VideoResolutionEnum.FullHD
+	@Matches(/^\d{3,4}:\d{3,4}$/, {
+		message: 'Resolution must be in format WIDTH:HEIGHT (e.g., 1920:1080)'
 	})
-	resolution?: VideoResolutionEnum;
+	@MultiORMColumn({ nullable: true, default: VideoResolutionEnum.FullHD })
+	resolution?: string;
 
 	/**
 	 * Video codec used for encoding.
 	 * Optional and restricted to standard codecs defined in VideoCodecEnum.
 	 */
-	@ApiPropertyOptional({
-		type: () => String,
-		enum: VideoCodecEnum,
-		description: 'Video codec used for encoding (e.g., libx264, libx265, vp9)'
-	})
+	@ApiPropertyOptional({ type: () => String, description: 'Video codec used for encoding (e.g., libx264, libx265, vp9)' })
 	@IsOptional()
-	@IsEnum(VideoCodecEnum)
-	@MultiORMColumn({
-		type: 'text',
-		nullable: true,
-		default: VideoCodecEnum.libx264
+	@IsString({ message: 'Codec must be a string' })
+	@Matches(/^[a-zA-Z0-9_-]{2,20}$/, {
+		message: 'Codec must be 2-20 characters long and contain only letters, numbers, underscores, and hyphens'
 	})
-	codec?: VideoCodecEnum;
+	@MultiORMColumn({ nullable: true, default: VideoCodecEnum.libx264 })
+	codec?: string;
 
 	/**
 	 * Video frame rate in frames per second.

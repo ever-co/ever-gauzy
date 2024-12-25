@@ -14,8 +14,8 @@ export interface IVideo extends IBasePerTenantAndOrganizationEntityModel {
 	description?: string;
 
 	// Metadata properties
-	resolution?: VideoResolutionEnum; // e.g., '1920x1080' or '1080p'
-	codec?: VideoCodecEnum;
+	resolution?: string; // e.g., '1920x1080' or '1080p'
+	codec?: string;
 	frameRate?: number; // e.g., 30, 60
 
 	// Time slot association
