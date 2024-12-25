@@ -1,5 +1,5 @@
-// Export the main plugin module
+/**
+ * Public API Surface of @gauzy/plugin-video-capture
+ */
 export * from './lib/video-capture.plugin';
-
-// Export individual models
 export * from './lib/video.model';
