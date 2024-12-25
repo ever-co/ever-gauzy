@@ -49,6 +49,7 @@ import {
 } from '../internal';
 import { TenantOrganizationBaseEntityEventSubscriber } from './tenant-organization-base-entity.subscriber';
 
+// Get the ORM type from the MultiORMEnum
 const ormType = getORMType();
 
 /**

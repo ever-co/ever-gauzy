@@ -4,6 +4,7 @@
 export * from './lib/accounting-template.model';
 /** App Setting Model */
 export * from './lib/activity-log.model';
+export * from './lib/activity-watch.model';
 export * from './lib/api-call-log.model';
 export * from './lib/app.model';
 export * from './lib/appointment-employees.model';
@@ -29,6 +30,7 @@ export * from './lib/core.model';
 export * from './lib/country.model';
 export * from './lib/currency.model';
 export * from './lib/custom-smtp.model';
+export * from './lib/daily-plan.model';
 export * from './lib/date-picker.model';
 export * from './lib/dashboard.model';
 export * from './lib/deal.model';
@@ -51,7 +53,6 @@ export * from './lib/equipment.model';
 export * from './lib/estimate-email.model';
 export * from './lib/event-type.model';
 export * from './lib/expense-category.model';
-export * from './lib/expense-category.model';
 export * from './lib/expense.model';
 export * from './lib/favorite.model';
 export * from './lib/feature.model';
@@ -67,8 +68,8 @@ export * from './lib/hubstaff.model';
 export * from './lib/image-asset.model';
 export * from './lib/import-export.model';
 export * from './lib/income.model';
-export * from './lib/integration.model';
 export * from './lib/integration-setting.model';
+export * from './lib/integration.model';
 export * from './lib/invite.model';
 export * from './lib/invoice-estimate-history.model';
 export * from './lib/invoice-item.model';
@@ -87,8 +88,8 @@ export * from './lib/organization-employment-type.model';
 export * from './lib/organization-expense-category.model';
 export * from './lib/organization-language.model';
 export * from './lib/organization-positions.model';
-export * from './lib/organization-projects.model';
 export * from './lib/organization-project-module.model';
+export * from './lib/organization-projects.model';
 export * from './lib/organization-recurring-expense.model';
 export * from './lib/organization-sprint.model';
 export * from './lib/organization-task-setting.model';
@@ -113,6 +114,7 @@ export * from './lib/request-approval.model';
 export * from './lib/resource-link.model';
 export * from './lib/role-permission.model';
 export * from './lib/role.model';
+export * from './lib/screening-task.model';
 export * from './lib/screenshot.model';
 export * from './lib/seed.model';
 export * from './lib/shared-types';
@@ -130,8 +132,6 @@ export * from './lib/task-status.model';
 export * from './lib/task-version.model';
 export * from './lib/task-view.model';
 export * from './lib/task.model';
-export * from './lib/daily-plan.model';
-export * from './lib/screening-task.model';
 export * from './lib/tenant.model';
 export * from './lib/time-off.model';
 export * from './lib/timesheet-statistics.model';
@@ -142,18 +142,17 @@ export * from './lib/upwork.model';
 export * from './lib/user-organization.model';
 export * from './lib/user.model';
 export * from './lib/wakatime.model';
-export * from './lib/activity-watch.model';
 
 export {
+	ActorTypeEnum,
+	BaseEntityEnum,
 	IBaseEntityModel as BaseEntityModel,
-	ID,
 	IBasePerTenantAndOrganizationEntityModel,
 	IBasePerTenantEntityModel,
-	IBaseSoftDeleteEntityModel,
 	IBaseRelationsEntityModel,
-	ActorTypeEnum,
-	JsonData,
-	BaseEntityEnum
+	IBaseSoftDeleteEntityModel,
+	ID,
+	JsonData
 } from './lib/base-entity.model';
 
 export * from './lib/proxy.model';
