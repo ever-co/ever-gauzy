@@ -7,8 +7,14 @@ import { DashboardCreateCommand } from '../dashboard.create.command';
 export class DashboardCreateHandler implements ICommandHandler<DashboardCreateCommand> {
 	constructor(private readonly dashboardService: DashboardService) {}
 
-	public async execute(command: DashboardCreateCommand): Promise<IDashboard> {
-		const { input } = command;
-		return await this.dashboardService.create(input);
-	}
+    /**
+     * Handles the DashboardCreateCommand to create a new dashboard.
+     *
+     * @param command - The command containing the input data for dashboard creation.
+     * @returns A promise that resolves to the created dashboard.
+     */
+    public async execute(command: DashboardCreateCommand): Promise<IDashboard> {
+        const { input } = command;
+        return this.dashboardService.create(input);
+    }
 }

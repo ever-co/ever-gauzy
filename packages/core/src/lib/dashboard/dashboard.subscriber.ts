@@ -5,6 +5,9 @@ import { Dashboard } from './dashboard.entity';
 
 @EventSubscriber()
 export class DashboardSubscriber extends BaseEntityEventSubscriber<Dashboard> {
+	/**
+	 * Indicates that this subscriber only listen to Dashboard events.
+	 */
 	listenTo() {
 		return Dashboard;
 	}
@@ -74,7 +77,7 @@ export class DashboardSubscriber extends BaseEntityEventSubscriber<Dashboard> {
 			}
 		} catch (error) {
 			// Log the error and reset the data to an empty object if JSON parsing fails
-			console.error(error);
+			console.error('Error parsing JSON data in afterEntityLoad:', error);
 			entity.contentHtml = {};
 		}
 	}
