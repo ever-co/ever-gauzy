@@ -11,15 +11,13 @@ export interface IDashboardWidget
 		IRelationalOrganizationTeam {
 	name: string;
 	order?: number;
-	size?: DashboardWidgetWidth[];
+	size?: number;
 	color?: string;
 	isVisible?: boolean;
 	options?: JsonData;
 	dashboardId?: ID;
 	dashboard?: IDashboard;
 }
-
-export type DashboardWidgetWidth = 3 | 4 | 6 | 8 | 12;
 
 export interface IDashboardWidgetCreateInput extends IDashboardWidget {}
 

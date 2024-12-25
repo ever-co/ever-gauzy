@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
-import { IsOptional, IsString, IsNumber, IsBoolean, IsUUID, IsArray, IsNotEmpty } from 'class-validator';
+import { IsOptional, IsString, IsNumber, IsBoolean, IsUUID, IsNotEmpty } from 'class-validator';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import {
 	ID,
@@ -11,8 +11,7 @@ import {
 	IDashboard,
 	IOrganizationTeam,
 	IEmployee,
-	IOrganizationProject,
-	DashboardWidgetWidth
+	IOrganizationProject
 } from '@gauzy/contracts';
 import {
 	Dashboard,
@@ -40,11 +39,11 @@ export class DashboardWidget extends TenantOrganizationBaseEntity implements IDa
 	@MultiORMColumn({ nullable: true })
 	order?: number;
 
-	@ApiPropertyOptional({ type: () => Array })
+	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
-	@IsArray()
-	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
-	size?: DashboardWidgetWidth[];
+	@IsNumber()
+	@MultiORMColumn({ nullable: true })
+	size?: number;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
