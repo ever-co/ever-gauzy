@@ -100,20 +100,6 @@ export class Video extends TenantOrganizationBaseEntity implements IVideo {
 	fullUrl?: string | null;
 
 	/**
-	 * Storage provider used for storing the video file.
-	 * Optional and must match one of the predefined storage providers.
-	 */
-	@ApiPropertyOptional({ type: () => String, enum: FileStorageProviderEnum })
-	@IsOptional()
-	@IsEnum(FileStorageProviderEnum, {
-		message: `Storage provider must be one of: ${Object.values(FileStorageProviderEnum).join(', ')}`
-	})
-	@Exclude({ toPlainOnly: true })
-	@ColumnIndex()
-	@MultiORMColumn({ type: 'simple-enum', nullable: true, enum: FileStorageProviderEnum })
-	storageProvider?: FileStorageProvider;
-
-	/**
 	 * Description of the video.
 	 * Optional with a maximum length of 1000 characters.
 	 */
@@ -128,19 +114,33 @@ export class Video extends TenantOrganizationBaseEntity implements IVideo {
 	description?: string;
 
 	/**
+	 * Storage provider used for storing the video file.
+	 * Optional and must match one of the predefined storage providers.
+	 */
+	@ApiPropertyOptional({ type: () => String, enum: FileStorageProviderEnum })
+	@IsOptional()
+	@IsEnum(FileStorageProviderEnum)
+	@Exclude({ toPlainOnly: true })
+	@ColumnIndex()
+	@MultiORMColumn({ type: 'text', nullable: true, enum: FileStorageProviderEnum })
+	storageProvider?: FileStorageProvider;
+
+	/**
 	 * Video resolution in the format WIDTH:HEIGHT.
 	 * Optional and restricted to standard resolutions defined in VideoResolutionEnum.
 	 */
-	@ApiProperty({
+	@ApiPropertyOptional({
 		type: () => String,
 		enum: VideoResolutionEnum,
 		description: 'Video resolution in format WIDTH:HEIGHT (e.g., 1920:1080, 3840:2160)'
 	})
 	@IsOptional()
-	@IsEnum(VideoResolutionEnum, {
-		message: `Resolution must be one of the following: ${Object.values(VideoResolutionEnum).join(', ')}`
+	@IsEnum(VideoResolutionEnum)
+	@MultiORMColumn({
+		type: 'text',
+		nullable: true,
+		default: VideoResolutionEnum.FullHD
 	})
-	@MultiORMColumn({ nullable: true, default: VideoResolutionEnum.FullHD })
 	resolution?: VideoResolutionEnum;
 
 	/**
@@ -153,10 +153,12 @@ export class Video extends TenantOrganizationBaseEntity implements IVideo {
 		description: 'Video codec used for encoding (e.g., libx264, libx265, vp9)'
 	})
 	@IsOptional()
-	@IsEnum(VideoCodecEnum, {
-		message: `Codec must be one of the following: ${Object.values(VideoCodecEnum).join(', ')}`
+	@IsEnum(VideoCodecEnum)
+	@MultiORMColumn({
+		type: 'text',
+		nullable: true,
+		default: VideoCodecEnum.libx264
 	})
-	@MultiORMColumn({ nullable: true, default: VideoCodecEnum.libx264 })
 	codec?: VideoCodecEnum;
 
 	/**
