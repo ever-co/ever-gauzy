@@ -25,9 +25,9 @@ pm2.connect(function () {
 				PM2_PUBLIC_KEY: PUBLIC_KEY,
 				PM2_SECRET_KEY: PRIVATE_KEY,
 				KEYMETRICS_PUBLIC: PUBLIC_KEY,
-				KEYMETRICS_SECRET: PRIVATE_KEY,
+				KEYMETRICS_SECRET: PRIVATE_KEY
 			},
-			post_update: ['yarn install'], // Commands to execute once we do a pull from Keymetrics
+			post_update: ['yarn install --ignore-scripts && yarn postinstall.manual'] // Commands to execute once we do a pull from Keymetrics
 		},
 		function () {
 			pm2.dump(console.error);
@@ -36,19 +36,11 @@ pm2.connect(function () {
 				console.log('[PM2] Log streaming started');
 
 				bus.on('log:out', function (packet) {
-					console.log(
-						'[App:%s] %s',
-						packet.process.name,
-						packet.data
-					);
+					console.log('[App:%s] %s', packet.process.name, packet.data);
 				});
 
 				bus.on('log:err', function (packet) {
-					console.error(
-						'[App:%s][Err] %s',
-						packet.process.name,
-						packet.data
-					);
+					console.error('[App:%s][Err] %s', packet.process.name, packet.data);
 				});
 			});
 		}

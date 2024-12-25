@@ -2105,6 +2105,10 @@
 			"PROJECT_MODULE_READ": "Voir les modules de projet",
 			"PROJECT_MODULE_UPDATE": "Mettre à jour les modules de projet",
 			"PROJECT_MODULE_DELETE": "Supprimer les modules de projet",
+			"DASHBOARD_CREATE": "Créer un tableau de bord",
+			"DASHBOARD_READ": "Voir le tableau de bord",
+			"DASHBOARD_UPDATE": "Mettre à jour le tableau de bord",
+			"DASHBOARD_DELETE": "Supprimer le tableau de bord",
 			"ORG_TEAM_ADD": "Ajouter des équipes",
 			"ORG_TEAM_VIEW": "Voir les équipes",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "Modifier les tâches actives",
@@ -3732,7 +3736,6 @@
 				"REMOVE_POSITION": "La position '{{ name }}' a été supprimée.",
 				"INVALID_POSITION_NAME": "Veuillez ajouter un nom de poste",
 				"ALREADY_EXISTS": "La position existe déjà."
-
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "Le département '{{ name }}' a été enregistré.",

@@ -2133,6 +2133,10 @@
 			"PROJECT_MODULE_READ": "Просмотреть модули проекта",
 			"PROJECT_MODULE_UPDATE": "Обновить модули проекта",
 			"PROJECT_MODULE_DELETE": "Удалить модули проекта",
+			"DASHBOARD_CREATE": "Создать панель",
+			"DASHBOARD_READ": "Просмотреть панель",
+			"DASHBOARD_UPDATE": "Обновить панель",
+			"DASHBOARD_DELETE": "Удалить панель",
 			"ORG_TEAM_ADD": "Добавить команды",
 			"ORG_TEAM_VIEW": "Посмотреть команды",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "Редактировать активные задачи",
@@ -3732,7 +3736,6 @@
 				"REMOVE_EMPLOYEE_LEVEL": "Уровень сотрудника '{{ name }}' ' был удален",
 				"INVALID_EMPLOYEE_LEVEL": "Пожалуйста, добавьте уровень сотрудника",
 				"ALREADY_EXISTS": "Уровень сотрудника уже существует."
-
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "исполнитель '{{ name }}' ' был добавлен",
@@ -3752,7 +3755,6 @@
 				"REMOVE_POSITION": "Позиция '{{ name }}' была удалена",
 				"INVALID_POSITION_NAME": "Пожалуйста, добавьте название позиции",
 				"ALREADY_EXISTS": "Должность уже существует."
-
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "Департамент '{{ name }}' был сохранен",

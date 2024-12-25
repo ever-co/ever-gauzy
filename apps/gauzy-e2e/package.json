@@ -26,7 +26,6 @@
 		"config": "yarn ts-node ./.scripts/configure.ts",
 		"config:dev": "yarn run config -- --environment=dev",
 		"build:package:all": "yarn run build:package:contracts && yarn run build:package:common && yarn run build:package:config && yarn run build:package:plugin && yarn run build:package:plugins && yarn run build:package:auth && yarn run build:package:core && yarn run build:package:plugin:knowledge-base && yarn run build:package:plugin:changelog && yarn build:package:desktop-lib && yarn build:package:plugin:integration-wakatime && yarn ng build desktop-ui-lib",
-		"bootstrap": "yarn install",
 		"start:api": "yarn ng serve api",
 		"build:package:contracts": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn --cwd ./packages/contracts build",
 		"build:package:config": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn --cwd ./packages/config build",

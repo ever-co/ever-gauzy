@@ -2161,8 +2161,12 @@
 			"PROJECT_MODULE_READ": "Преглед на модули на проекта",
 			"PROJECT_MODULE_UPDATE": "Актуализиране на модули на проекта",
 			"PROJECT_MODULE_DELETE": "Изтриване на модули на проекта",
-			"ORG_TEAM_ADD": "Add Teams",
-			"ORG_TEAM_VIEW": "View Teams",
+			"DASHBOARD_CREATE": "Създаване на табло",
+			"DASHBOARD_READ": "Преглед на табло",
+			"DASHBOARD_UPDATE": "Актуализиране на табло",
+			"DASHBOARD_DELETE": "Изтриване на табло",
+			"ORG_TEAM_ADD": "Създаване на екипи",
+			"ORG_TEAM_VIEW": "Преглед на екипи",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "Редактиране на активни задачи",
 			"ORG_TEAM_EDIT": "Edit Teams",
 			"ORG_TEAM_DELETE": "Delete Teams",
@@ -3762,7 +3766,6 @@
 				"REMOVE_EMPLOYEE_LEVEL": "Employee Level '{{ name }}' was removed",
 				"INVALID_EMPLOYEE_LEVEL": "Please add an Employee Level",
 				"ALREADY_EXISTS": "Нивото на служител вече съществува."
-
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "vendor '{{ name }}' was added",
@@ -3782,7 +3785,6 @@
 				"REMOVE_POSITION": "Position '{{ name }}' was removed",
 				"INVALID_POSITION_NAME": "Please add a Position name",
 				"ALREADY_EXISTS": "Позицията вече съществува."
-
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "Department '{{ name }}' was saved",

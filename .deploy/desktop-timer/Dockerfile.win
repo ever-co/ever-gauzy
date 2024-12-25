@@ -6,11 +6,10 @@ COPY apps/desktop-timer/package.json ./apps/desktop-timer/
 COPY apps/api/package.json ./apps/api/
 COPY package.json yarn.lock ./
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile
+RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
+RUN yarn postinstall.manual
 
 COPY . .
-
-RUN yarn bootstrap
 
 RUN yarn build:desktop-timer:windows
 
