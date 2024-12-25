@@ -33,6 +33,7 @@ export * from './lib/custom-smtp.model';
 export * from './lib/daily-plan.model';
 export * from './lib/date-picker.model';
 export * from './lib/dashboard.model';
+export * from './lib/dashboard-widget.model';
 export * from './lib/deal.model';
 export * from './lib/email-reset.model';
 export * from './lib/email-template.model';

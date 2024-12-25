@@ -30,6 +30,7 @@ export * from '../../country/country.entity';
 export * from '../../currency/currency.entity';
 export * from '../../custom-smtp/custom-smtp.entity';
 export * from '../../dashboard/dashboard.entity';
+export * from '../../dashboard/dashboard-widget/dashboard-widget.entity';
 export * from '../../deal/deal.entity';
 export * from '../../email-history/email-history.entity';
 export * from '../../email-reset/email-reset.entity';
