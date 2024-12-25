@@ -13,6 +13,8 @@ export {
 export * from './lib/logger';
 export * from './lib/core';
 export * from './lib/core/seeds';
+export { LazyFileInterceptor } from './lib/core/interceptors';
+export { FileStorage, FileStorageFactory, UploadedFileStorage } from './lib/core/file-storage';
 export * from './lib/shared';
 export * from './lib/event-bus';
 

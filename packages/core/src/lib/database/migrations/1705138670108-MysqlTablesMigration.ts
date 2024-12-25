@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
+import * as chalk from 'chalk';
 import { DatabaseTypeEnum } from '@gauzy/config';
-import { yellow } from 'chalk';
 
 export class MysqlTablesMigration1705138670108 implements MigrationInterface {
 	name = 'MysqlTablesMigration1705138670108';
@@ -11,7 +11,7 @@ export class MysqlTablesMigration1705138670108 implements MigrationInterface {
 	 * @param queryRunner
 	 */
 	public async up(queryRunner: QueryRunner): Promise<void> {
-		console.log(yellow(this.name + ' start running!'));
+		console.log(chalk.yellow(this.name + ' start running!'));
 
 		switch (queryRunner.connection.options.type) {
 			case DatabaseTypeEnum.sqlite:

@@ -160,6 +160,7 @@ COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages
 COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
 COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
 COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
+COPY --chown=node:node packages/plugins/video-capture/package.json ./packages/plugins/video-capture/
 COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
 COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
@@ -232,6 +233,7 @@ COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages
 COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
 COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
 COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
+COPY --chown=node:node packages/plugins/video-capture/package.json ./packages/plugins/video-capture/
 COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
 COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
@@ -365,6 +367,7 @@ RUN cp -r ./packages/plugins/job-search/node_modules ./node_modules/@gauzy/plugi
 RUN cp -r ./packages/plugins/knowledge-base/node_modules ./node_modules/@gauzy/plugin-knowledge-base/
 RUN cp -r ./packages/plugins/product-reviews/node_modules ./node_modules/@gauzy/plugin-product-reviews/
 RUN cp -r ./packages/plugins/sentry/node_modules ./node_modules/@gauzy/plugin-sentry/
+RUN cp -r ./packages/plugins/video-capture/node_modules ./node_modules/@gauzy/plugin-video-capture/
 
 # we don't need packages folder anymore
 RUN rm -rf ./packages
