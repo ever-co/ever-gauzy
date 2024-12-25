@@ -1,10 +1,13 @@
 # @gauzy/plugin-videos
 
-This library was generated with [Nx](https://nx.dev). This plugins provides functionality to upload and manage videos
+This library was generated with [Nx](https://nx.dev). This plugin provides functionality to upload and manage videos.
 
 ## Overview
 
-This plugins provides functionality to upload and manage videos
+This plugin enables video management capabilities including:
+
+- Video upload and storage
+- Video metadata management
 
 ## Building
 
