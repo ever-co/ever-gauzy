@@ -1,7 +1,4 @@
-import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
-import { IEmployee } from './employee.model';
-import { FileStorageProvider } from './file-provider';
-import { IDeleteEntity, ITimeSlot } from './timesheet.model';
+import { FileStorageProvider, IBasePerTenantAndOrganizationEntityModel, ITimeSlot, IEmployee, ID, IDeleteEntity } from "@gauzy/contracts";
 
 export interface IVideo extends IBasePerTenantAndOrganizationEntityModel {
 	// Core video properties
@@ -19,7 +16,7 @@ export interface IVideo extends IBasePerTenantAndOrganizationEntityModel {
 	// Metadata properties
 	resolution?: VideoResolutionEnum; // e.g., '1920x1080' or '1080p'
 	codec?: VideoCodecEnum;
-	frameRate?: number; // e.g., 30, 60:console.warn();
+	frameRate?: number; // e.g., 30, 60
 
 	// Time slot association
 	timeSlot?: ITimeSlot;

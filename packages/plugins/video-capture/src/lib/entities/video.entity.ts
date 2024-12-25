@@ -16,9 +16,10 @@ import {
 	ValidateIf
 } from 'class-validator';
 import { JoinColumn, RelationId } from 'typeorm';
-import { FileStorageProvider, FileStorageProviderEnum, ID, IEmployee, ITimeSlot, IVideo, VideoCodecEnum, VideoResolutionEnum } from '@gauzy/contracts';
+import { FileStorageProvider, FileStorageProviderEnum, ID, IEmployee, ITimeSlot } from '@gauzy/contracts';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '@gauzy/core';
 import { Employee, TenantOrganizationBaseEntity, TimeSlot } from '@gauzy/core';
+import { IVideo, VideoCodecEnum, VideoResolutionEnum } from '../video.model';
 import { MikroOrmVideoRepository } from '../repositories/mikro-orm-video.repository';
 
 @MultiORMEntity('videos', { mikroOrmRepository: () => MikroOrmVideoRepository })

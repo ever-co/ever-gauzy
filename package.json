@@ -39,7 +39,7 @@
 		"start:api:forever": "cross-env NODE_OPTIONS=--max-old-space-size=12288 forever start node_modules/@angular/cli/bin/ng serve api --host 0.0.0.0",
 		"start:api:pm2": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn run build:api && yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json ./apps/api/src/pm2bootstrap.ts",
 		"start:api:core": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn nx run core:serve",
-		"db:migration": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json ./apps/api/src/migration.ts",
+		"db:migration": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn run build:package:api && yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json ./apps/api/src/migration.ts",
 		"migration:run": "yarn db:migration migration:run",
 		"migration:revert": "yarn db:migration migration:revert",
 		"migration:generate": "yarn db:migration migration:generate",

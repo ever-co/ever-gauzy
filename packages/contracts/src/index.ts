@@ -156,4 +156,3 @@ export {
 } from './lib/base-entity.model';
 
 export * from './lib/proxy.model';
-export * from './lib/video.model';

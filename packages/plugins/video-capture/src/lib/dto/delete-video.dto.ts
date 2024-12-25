@@ -1,6 +1,7 @@
-import { ID, IDeleteVideo } from '@gauzy/contracts';
+import { ID } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IDeleteVideo } from '../video.model';
 
 export class DeleteVideoDTO {
 	/**

@@ -16,7 +16,7 @@ import { ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { FindOneOptions } from 'typeorm';
-import { FileStorageProviderEnum, ID, IDeleteScreenshot, IPagination, IVideo, PermissionsEnum } from '@gauzy/contracts';
+import { FileStorageProviderEnum, ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	FileStorage,
 	FileStorageFactory,
@@ -30,6 +30,7 @@ import {
 	UUIDValidationPipe,
 	LazyFileInterceptor
 } from '@gauzy/core';
+import { IVideo } from './video.model';
 import { CreateVideoCommand } from './commands/create-video.command';
 import { DeleteVideoCommand } from './commands/delete-video.command';
 import { GetVideoQuery } from './queries/get-video.query';
