@@ -139,7 +139,6 @@ USER node:node
 
 WORKDIR /srv/gauzy
 
-COPY --chown=node:node apps/gauzy/package.json ./apps/gauzy/
 COPY --chown=node:node apps/api/package.json ./apps/api/
 
 COPY --chown=node:node packages/common/package.json ./packages/common/
@@ -167,7 +166,9 @@ COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plu
 
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile && yarn cache clean
+RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
+RUN yarn postinstall.manual
+RUN yarn cache clean
 
 FROM node:20.11.1-alpine3.19 AS prodDependencies
 
@@ -225,7 +226,9 @@ COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plu
 
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile --production && yarn cache clean
+RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production
+RUN yarn postinstall.manual
+RUN yarn cache clean
 
 # We remove Angular modules as it's not used in APIs
 RUN rm -r node_modules/@angular

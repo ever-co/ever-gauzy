@@ -225,7 +225,7 @@ Together with Gauzy, Docker Compose (i.e. `docker-compose.yml` and `docker-compo
 
 -   Install [NodeJs](https://nodejs.org/en/download) LTS version or later, e.g. 18.x.
 -   Install [Yarn](https://github.com/yarnpkg/yarn) (if you don't have it) with `npm i -g yarn`.
--   Install NPM packages and bootstrap solution using the command `yarn bootstrap`.
+-   Install NPM packages and Bootstrap solution using the command `yarn bootstrap`.
 -   If you will need to make code changes (and push to Git repo), please run `yarn prepare:husky`.
 -   Adjust settings in the [`.env.local`](https://github.com/ever-co/ever-gauzy/blob/develop/.env.local) which is used in local runs.
 -   Alternatively, you can copy [`.env.sample`](https://github.com/ever-co/ever-gauzy/blob/develop/.env.sample) to `.env` and change default settings there, e.g. database type, name, user, password, etc.

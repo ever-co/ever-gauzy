@@ -27,7 +27,7 @@ pm2.connect(function () {
 				KEYMETRICS_PUBLIC: PUBLIC_KEY,
 				KEYMETRICS_SECRET: PRIVATE_KEY
 			},
-			post_update: ['yarn install'] // Commands to execute once we do a pull from Keymetrics
+			post_update: ['yarn install --ignore-scripts && yarn postinstall.manual'] // Commands to execute once we do a pull from Keymetrics
 		},
 		function () {
 			pm2.dump(console.error);

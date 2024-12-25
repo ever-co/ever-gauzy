@@ -80,7 +80,7 @@ jobs:
           command: nvm use v20.11.1 && node --version
       - run:
           name: Install Dependencies
-          command: nvm use v20.11.1 && yarn install
+          command: nvm use v20.11.1 && yarn bootstrap
           no_output_timeout: 60m
       - run:
           name: Install Sonarqube scanner
@@ -300,7 +300,7 @@ jobs:
           name: 'Installing NPM Packages'
           command: |
             nvm use v20.11.1
-            yarn bootstrap
+            yarn install --ignore-scripts && yarn postinstall.manual
           no_output_timeout: 60m
 
       - pulumi/update:
