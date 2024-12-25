@@ -110,38 +110,52 @@ export class VideosController {
 	)
 	@Post()
 	public async create(@Body() input: CreateVideoDTO, @UploadedFileStorage() file: FileDTO) {
-		// Get provider
-		const provider = new FileStorage().getProvider();
-		// Convert the plain object to a class instance
-		const fileInstance = plainToInstance(FileDTO, file);
-		// Validate the file DTO
-		const errors = await validate(fileInstance);
-
-		// Check for validation errors
-		if (errors.length > 0) {
-			// Delete the uploaded file if validation fails
-			await provider.deleteFile(file.key);
-			// Throw a bad request exception with the validation errors
-			throw new BadRequestException(errors);
+		if (!file.key) {
+			console.warn('Video file key is empty');
+			return;
 		}
 
-		// Extract necessary properties from the request body
-		const tenantId = input.tenantId || RequestContext.currentTenantId();
-		const organizationId = input.organizationId;
-		const uploadedById = input.uploadedById || RequestContext.currentEmployeeId();
-		const storageProvider = provider.name.toUpperCase() as FileStorageProviderEnum;
+		try {
+			const provider = new FileStorage().getProvider();
+			// Convert the plain object to a class instance
+			const fileInstance = plainToInstance(FileDTO, file);
+			// Validate the file DTO
+			const errors = await validate(fileInstance);
 
-		// Create a new video record
-		return this.commandBus.execute(
-			new CreateVideoCommand({
-				...input,
-				tenantId,
-				organizationId,
-				storageProvider,
-				uploadedById,
-				file
-			})
-		);
+			// Check for validation errors
+			if (errors.length > 0) {
+				// Delete the uploaded file if validation fails
+				await provider.deleteFile(file.key);
+				// Throw a bad request exception with the validation errors
+				throw new BadRequestException(errors);
+			}
+
+			// Extract necessary properties from the request body
+			const tenantId = input.tenantId || RequestContext.currentTenantId();
+			const organizationId = input.organizationId;
+			const uploadedById = input.uploadedById || RequestContext.currentEmployeeId();
+			const storageProvider = provider.name.toUpperCase() as FileStorageProviderEnum;
+
+			// Create a new video record
+			return this.commandBus.execute(
+				new CreateVideoCommand({
+					...input,
+					tenantId,
+					organizationId,
+					storageProvider,
+					uploadedById,
+					file
+				})
+			);
+		} catch (error) {
+			// Ensure cleanup of uploaded file
+			if (file?.key) {
+				await new FileStorage().getProvider().deleteFile(file.key);
+			}
+
+			// Throw a bad request exception with the validation errors
+			throw new BadRequestException(error);
+		}
 	}
 
 	/**
@@ -201,21 +215,13 @@ export class VideosController {
 		transform: true,
 		forbidNonWhitelisted: true
 	})
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
 	@Delete(':id')
-	@UseValidationPipe()
 	public async delete(@Param('id', UUIDValidationPipe) id: ID, @Query() options: DeleteVideoDTO): Promise<void> {
-		// Convert the plain object to a class instance
-		const fileInstance = plainToInstance(DeleteVideoDTO, { id, options });
-
-		// Validate the file DTO
-		const errors = await validate(fileInstance);
-
-		// Check for validation errors
-		if (errors.length > 0) {
-			// Throw a bad request exception with the validation errors
-			throw new BadRequestException(errors);
-		}
-
 		// Execute the delete video command
 		return this.commandBus.execute(new DeleteVideoCommand({ id, options }));
 	}

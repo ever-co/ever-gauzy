@@ -32,7 +32,7 @@ export class Video extends TenantOrganizationBaseEntity implements IVideo {
 	@IsNotEmpty({ message: 'Title is required' })
 	@IsString({ message: 'Title must be a string' })
 	@Length(3, 255, { message: 'Title must be between 3 and 255 characters' })
-	@Matches(/^[\w\s-]+$/i, { message: 'Title can only contain letters, numbers, spaces, and hyphens' })
+	@Matches(/^[\p{L}\p{N}\s-]+$/u, { message: 'Title can contain letters, numbers, spaces, and hyphens from any language' })
 	@MultiORMColumn()
 	title: string;
 
