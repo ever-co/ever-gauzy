@@ -177,7 +177,11 @@ export class CreateVideoTable1735058989058 implements MigrationInterface {
      * @param queryRunner
      */
     public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-
+		await queryRunner.query(`CREATE TABLE \`videos\` (\`deletedAt\` datetime(6) NULL, \`id\` varchar(36) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`title\` varchar(255) NOT NULL, \`file\` varchar(255) NOT NULL, \`recordedAt\` datetime NULL, \`duration\` int NULL, \`size\` int NULL, \`fullUrl\` varchar(255) NULL, \`storageProvider\` enum ('LOCAL', 'S3', 'WASABI', 'CLOUDINARY', 'DIGITALOCEAN') NULL, \`description\` varchar(255) NULL, \`resolution\` varchar(255) NULL DEFAULT '1920:1080', \`codec\` varchar(255) NULL DEFAULT 'libx264', \`frameRate\` int NULL DEFAULT '15', \`timeSlotId\` varchar(255) NULL, \`uploadedById\` varchar(255) NULL, INDEX \`IDX_eea665c6f09c4cd9a520a028d1\` (\`isActive\`), INDEX \`IDX_4adb6b1409e7b614d06e44fb84\` (\`isArchived\`), INDEX \`IDX_1f9ad46e9fbeddbc609af9976a\` (\`tenantId\`), INDEX \`IDX_dcbf77e688d65ced41055c3faf\` (\`organizationId\`), INDEX \`IDX_cb34a3e97002e3af9cc219f4e4\` (\`recordedAt\`), INDEX \`IDX_b3e784ea168736c83f4d647abf\` (\`storageProvider\`), INDEX \`IDX_d5a38b4293d90e31a6b1f3189e\` (\`timeSlotId\`), INDEX \`IDX_159f8e5c7959016a0863ec419a\` (\`uploadedById\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+		await queryRunner.query(`ALTER TABLE \`videos\` ADD CONSTRAINT \`FK_1f9ad46e9fbeddbc609af9976ae\` FOREIGN KEY (\`tenantId\`) REFERENCES \`tenant\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+		await queryRunner.query(`ALTER TABLE \`videos\` ADD CONSTRAINT \`FK_dcbf77e688d65ced41055c3fafe\` FOREIGN KEY (\`organizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`);
+		await queryRunner.query(`ALTER TABLE \`videos\` ADD CONSTRAINT \`FK_d5a38b4293d90e31a6b1f3189e1\` FOREIGN KEY (\`timeSlotId\`) REFERENCES \`time_slot\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+		await queryRunner.query(`ALTER TABLE \`videos\` ADD CONSTRAINT \`FK_159f8e5c7959016a0863ec419a3\` FOREIGN KEY (\`uploadedById\`) REFERENCES \`employee\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
     }
 
     /**
@@ -186,6 +190,18 @@ export class CreateVideoTable1735058989058 implements MigrationInterface {
      * @param queryRunner
      */
     public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-
+		await queryRunner.query(`ALTER TABLE \`videos\` DROP FOREIGN KEY \`FK_159f8e5c7959016a0863ec419a3\``);
+		await queryRunner.query(`ALTER TABLE \`videos\` DROP FOREIGN KEY \`FK_d5a38b4293d90e31a6b1f3189e1\``);
+		await queryRunner.query(`ALTER TABLE \`videos\` DROP FOREIGN KEY \`FK_dcbf77e688d65ced41055c3fafe\``);
+		await queryRunner.query(`ALTER TABLE \`videos\` DROP FOREIGN KEY \`FK_1f9ad46e9fbeddbc609af9976ae\``);
+		await queryRunner.query(`DROP INDEX \`IDX_159f8e5c7959016a0863ec419a\` ON \`videos\``);
+		await queryRunner.query(`DROP INDEX \`IDX_d5a38b4293d90e31a6b1f3189e\` ON \`videos\``);
+		await queryRunner.query(`DROP INDEX \`IDX_b3e784ea168736c83f4d647abf\` ON \`videos\``);
+		await queryRunner.query(`DROP INDEX \`IDX_cb34a3e97002e3af9cc219f4e4\` ON \`videos\``);
+		await queryRunner.query(`DROP INDEX \`IDX_dcbf77e688d65ced41055c3faf\` ON \`videos\``);
+		await queryRunner.query(`DROP INDEX \`IDX_1f9ad46e9fbeddbc609af9976a\` ON \`videos\``);
+		await queryRunner.query(`DROP INDEX \`IDX_4adb6b1409e7b614d06e44fb84\` ON \`videos\``);
+		await queryRunner.query(`DROP INDEX \`IDX_eea665c6f09c4cd9a520a028d1\` ON \`videos\``);
+		await queryRunner.query(`DROP TABLE \`videos\``);
     }
 }
