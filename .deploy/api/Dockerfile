@@ -106,7 +106,7 @@ ARG REDIS_URL
 FROM node:20.11.1-alpine3.19 AS dependencies
 
 LABEL maintainer="ever@ever.co"
-LABEL org.opencontainers.image.source https://github.com/ever-co/ever-gauzy
+LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
 
 ENV CI=true
 
@@ -148,14 +148,10 @@ COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/auth/package.json ./packages/auth/
 COPY --chown=node:node packages/core/package.json ./packages/core/
 COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
-COPY --chown=node:node packages/plugins/integration-ai-ui/package.json ./packages/plugins/integration-ai-ui/
 COPY --chown=node:node packages/plugins/integration-ai/package.json ./packages/plugins/integration-ai/
-COPY --chown=node:node packages/plugins/integration-hubstaff-ui/package.json ./packages/plugins/integration-hubstaff-ui/
 COPY --chown=node:node packages/plugins/integration-hubstaff/package.json ./packages/plugins/integration-hubstaff/
-COPY --chown=node:node packages/plugins/integration-upwork-ui/package.json ./packages/plugins/integration-upwork-ui/
 COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
 COPY --chown=node:node packages/plugins/integration-github/package.json ./packages/plugins/integration-github/
-COPY --chown=node:node packages/plugins/integration-github-ui/package.json ./packages/plugins/integration-github-ui/
 COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
 COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
 COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
@@ -165,17 +161,6 @@ COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/p
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
 COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
 COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plugins/job-proposal/
-COPY --chown=node:node packages/plugins/job-employee-ui/package.json ./packages/plugins/job-employee-ui/
-COPY --chown=node:node packages/plugins/job-matching-ui/package.json ./packages/plugins/job-matching-ui/
-COPY --chown=node:node packages/plugins/job-proposal-ui/package.json ./packages/plugins/job-proposal-ui/
-COPY --chown=node:node packages/plugins/job-search-ui/package.json ./packages/plugins/job-search-ui/
-COPY --chown=node:node packages/plugins/legal-ui/package.json ./packages/plugins/legal-ui/
-COPY --chown=node:node packages/plugins/maintenance-ui/package.json ./packages/plugins/maintenance-ui/
-COPY --chown=node:node packages/plugins/onboarding-ui/package.json ./packages/plugins/onboarding-ui/
-COPY --chown=node:node packages/plugins/public-layout-ui/package.json ./packages/plugins/public-layout-ui/
-COPY --chown=node:node packages/ui-core/package.json ./packages/ui-core/
-COPY --chown=node:node packages/ui-config/package.json ./packages/ui-config/
-COPY --chown=node:node packages/ui-auth/package.json ./packages/ui-auth/
 
 # We do not build here Wakatime plugin, because it used in Desktop Apps for now
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
@@ -221,14 +206,10 @@ COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/auth/package.json ./packages/auth/
 COPY --chown=node:node packages/core/package.json ./packages/core/
 COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
-COPY --chown=node:node packages/plugins/integration-ai-ui/package.json ./packages/plugins/integration-ai-ui/
 COPY --chown=node:node packages/plugins/integration-ai/package.json ./packages/plugins/integration-ai/
-COPY --chown=node:node packages/plugins/integration-hubstaff-ui/package.json ./packages/plugins/integration-hubstaff-ui/
 COPY --chown=node:node packages/plugins/integration-hubstaff/package.json ./packages/plugins/integration-hubstaff/
-COPY --chown=node:node packages/plugins/integration-upwork-ui/package.json ./packages/plugins/integration-upwork-ui/
 COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
 COPY --chown=node:node packages/plugins/integration-github/package.json ./packages/plugins/integration-github/
-COPY --chown=node:node packages/plugins/integration-github-ui/package.json ./packages/plugins/integration-github-ui/
 COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
 COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
 COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
@@ -238,17 +219,6 @@ COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/p
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
 COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
 COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plugins/job-proposal/
-COPY --chown=node:node packages/plugins/job-employee-ui/package.json ./packages/plugins/job-employee-ui/
-COPY --chown=node:node packages/plugins/job-matching-ui/package.json ./packages/plugins/job-matching-ui/
-COPY --chown=node:node packages/plugins/job-proposal-ui/package.json ./packages/plugins/job-proposal-ui/
-COPY --chown=node:node packages/plugins/job-search-ui/package.json ./packages/plugins/job-search-ui/
-COPY --chown=node:node packages/plugins/public-layout-ui/package.json ./packages/plugins/public-layout-ui/
-COPY --chown=node:node packages/plugins/legal-ui/package.json ./packages/plugins/legal-ui/
-COPY --chown=node:node packages/plugins/maintenance-ui/package.json ./packages/plugins/maintenance-ui/
-COPY --chown=node:node packages/plugins/onboarding-ui/package.json ./packages/plugins/onboarding-ui/
-COPY --chown=node:node packages/ui-core/package.json ./packages/ui-core/
-COPY --chown=node:node packages/ui-config/package.json ./packages/ui-config/
-COPY --chown=node:node packages/ui-auth/package.json ./packages/ui-auth/
 
 # We do not build here Wakatime plugin, because it used in Desktop Apps for now
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
@@ -360,7 +330,6 @@ RUN cp -r ./packages/plugins/integration-github/node_modules ./node_modules/@gau
 RUN cp -r ./packages/plugins/integration-hubstaff/node_modules ./node_modules/@gauzy/plugin-integration-hubstaff/
 RUN cp -r ./packages/plugins/integration-jira/node_modules ./node_modules/@gauzy/plugin-integration-jira/
 RUN cp -r ./packages/plugins/integration-upwork/node_modules ./node_modules/@gauzy/plugin-integration-upwork/
-RUN cp -r ./packages/plugins/integration-wakatime/node_modules ./node_modules/@gauzy/plugin-integration-wakatime/
 RUN cp -r ./packages/plugins/jitsu-analytics/node_modules ./node_modules/@gauzy/plugin-jitsu-analytics/
 RUN cp -r ./packages/plugins/job-proposal/node_modules ./node_modules/@gauzy/plugin-job-proposal/
 RUN cp -r ./packages/plugins/job-search/node_modules ./node_modules/@gauzy/plugin-job-search/
@@ -368,6 +337,9 @@ RUN cp -r ./packages/plugins/knowledge-base/node_modules ./node_modules/@gauzy/p
 RUN cp -r ./packages/plugins/product-reviews/node_modules ./node_modules/@gauzy/plugin-product-reviews/
 RUN cp -r ./packages/plugins/sentry/node_modules ./node_modules/@gauzy/plugin-sentry/
 RUN cp -r ./packages/plugins/videos/node_modules ./node_modules/@gauzy/plugin-videos/
+
+# We do not copy node_modules here for Wakatime plugin, because it used in Desktop Apps for now
+# RUN cp -r ./packages/plugins/integration-wakatime/node_modules ./node_modules/@gauzy/plugin-integration-wakatime/
 
 # we don't need packages folder anymore
 RUN rm -rf ./packages

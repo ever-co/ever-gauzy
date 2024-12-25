@@ -60,7 +60,7 @@ ARG EXTENSION_DOWNLOAD_LINK
 FROM node:20.11.1-alpine3.19 AS dependencies
 
 LABEL maintainer="ever@ever.co"
-LABEL org.opencontainers.image.source https://github.com/ever-co/ever-gauzy
+LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
 
 ENV CI=true
 
