@@ -525,7 +525,17 @@
 		"xplatframework",
 		"localforage",
 		"longform",
-		"rfdc"
+		"rfdc",
+		"libx264",
+		"libx",
+		"WXGA",
+		"SXGA",
+		"UXGA",
+		"NTSC",
+		"libvpx",
+		"libaom",
+		"theora",
+		"Theora"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

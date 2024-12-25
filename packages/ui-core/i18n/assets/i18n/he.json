@@ -2127,6 +2127,10 @@
 			"PROJECT_MODULE_READ": "צפה במודולי פרויקט",
 			"PROJECT_MODULE_UPDATE": "עדכן מודולי פרויקט",
 			"PROJECT_MODULE_DELETE": "מחק מודולי פרויקט",
+			"DASHBOARD_CREATE": "צור לוח שלט",
+			"DASHBOARD_READ": "צפה בלוח שלט",
+			"DASHBOARD_UPDATE": "עדכן לוח שלט",
+			"DASHBOARD_DELETE": "מחק לוח שלט",
 			"ORG_TEAM_ADD": "Add Teams",
 			"ORG_TEAM_VIEW": "View Teams",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "ערוך משימות פעילות",
@@ -3726,8 +3730,6 @@
 				"REMOVE_EMPLOYEE_LEVEL": "Employee Level '{{ name }}' was removed",
 				"INVALID_EMPLOYEE_LEVEL": "Please add an Employee Level",
 				"ALREADY_EXISTS": "רמת העובד  כבר קיימת."
-
-
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "vendor '{{ name }}' was added",
@@ -3747,7 +3749,6 @@
 				"REMOVE_POSITION": "Position '{{ name }}' was removed",
 				"INVALID_POSITION_NAME": "Please add a Position name",
 				"ALREADY_EXISTS": "המשרה  כבר קיימת."
-
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "Department '{{ name }}' was saved",

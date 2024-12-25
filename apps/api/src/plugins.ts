@@ -11,6 +11,7 @@ import { JobProposalPlugin } from '@gauzy/plugin-job-proposal';
 import { JobSearchPlugin } from '@gauzy/plugin-job-search';
 import { KnowledgeBasePlugin } from '@gauzy/plugin-knowledge-base';
 import { ProductReviewsPlugin } from '@gauzy/plugin-product-reviews';
+import { VideosPlugin } from '@gauzy/plugin-videos';
 
 import { SentryTracing as SentryPlugin } from './sentry';
 
@@ -50,5 +51,7 @@ export const plugins = [
 	// Indicates the inclusion or intention to use the KnowledgeBasePlugin in the codebase.
 	KnowledgeBasePlugin,
 	// Indicates the inclusion or intention to use the ProductReviewsPlugin in the codebase.
-	ProductReviewsPlugin
+	ProductReviewsPlugin,
+	// Indicates the inclusion or intention to use the VideosPlugin in the codebase.
+	VideosPlugin
 ];

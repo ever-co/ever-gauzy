@@ -1,0 +1,57 @@
+{
+	"name": "@gauzy/plugin-videos",
+	"version": "0.1.0",
+	"description": "This plugins provides functionality to upload and manage videos",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"license": "AGPL-3.0",
+	"private": true,
+	"type": "commonjs",
+	"main": "./src/index.js",
+	"typings": "./src/index.d.ts",
+	"scripts": {
+		"lib:build": "yarn nx build plugin-videos",
+		"lib:build:prod": "yarn nx build plugin-videos",
+		"lib:watch": "yarn nx build plugin-videos --watch"
+	},
+	"dependencies": {
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/core": "^0.1.0",
+		"@gauzy/plugin": "^0.1.0",
+		"tslib": "^2.6.2"
+	},
+	"devDependencies": {
+		"@types/express": "^4.17.13",
+		"@types/jest": "29.5.14",
+		"@types/node": "^20.14.9",
+		"typescript": "5.5.4"
+	},
+	"keywords": [
+		"video",
+		"video-upload",
+		"video-management",
+		"media",
+		"media-upload",
+		"video-library",
+		"plugin",
+		"gauzy",
+		"videos-plugin",
+		"video-plugins"
+	],
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
+}
