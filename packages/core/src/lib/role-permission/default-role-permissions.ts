@@ -114,7 +114,13 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.PROJECT_MODULE_READ,
 			PermissionsEnum.PROJECT_MODULE_UPDATE,
 			PermissionsEnum.PROJECT_MODULE_DELETE,
-			/** Project Module Permissions start */
+			/** Project Module Permissions end */
+			/** Dashboard Permissions Start */
+			PermissionsEnum.DASHBOARD_CREATE,
+			PermissionsEnum.DASHBOARD_READ,
+			PermissionsEnum.DASHBOARD_UPDATE,
+			PermissionsEnum.DASHBOARD_DELETE,
+			/** Dashboard Permissions End */
 			/** Organization Team */
 			PermissionsEnum.ORG_TEAM_ADD,
 			PermissionsEnum.ORG_TEAM_VIEW,
@@ -295,7 +301,14 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.PROJECT_MODULE_READ,
 			PermissionsEnum.PROJECT_MODULE_UPDATE,
 			PermissionsEnum.PROJECT_MODULE_DELETE,
-			/** Project Module Permissions start */
+			/** Project Module Permissions end */
+
+			/** Dashboard Permissions Start */
+			PermissionsEnum.DASHBOARD_CREATE,
+			PermissionsEnum.DASHBOARD_READ,
+			PermissionsEnum.DASHBOARD_UPDATE,
+			PermissionsEnum.DASHBOARD_DELETE,
+			/** Dashboard Permissions End */
 
 			/** Organization Team */
 			PermissionsEnum.ORG_TEAM_ADD,
@@ -387,6 +400,10 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.PROJECT_MODULE_READ,
 			PermissionsEnum.PROJECT_MODULE_UPDATE,
 			PermissionsEnum.PROJECT_MODULE_DELETE,
+			PermissionsEnum.DASHBOARD_CREATE,
+			PermissionsEnum.DASHBOARD_READ,
+			PermissionsEnum.DASHBOARD_UPDATE,
+			PermissionsEnum.DASHBOARD_DELETE,
 			PermissionsEnum.ORG_CANDIDATES_TASK_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_INTERVIEW_VIEW,
@@ -446,6 +463,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.PROJECT_MODULE_READ,
 			PermissionsEnum.PROJECT_MODULE_UPDATE,
 			PermissionsEnum.PROJECT_MODULE_DELETE,
+			/** Dashboard */
+			PermissionsEnum.DASHBOARD_CREATE,
+			PermissionsEnum.DASHBOARD_READ,
+			PermissionsEnum.DASHBOARD_UPDATE,
+			PermissionsEnum.DASHBOARD_DELETE,
 			/** Organization Team */
 			PermissionsEnum.ORG_TEAM_ADD,
 			PermissionsEnum.ORG_TEAM_VIEW,

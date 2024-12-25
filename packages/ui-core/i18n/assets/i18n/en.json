@@ -2217,6 +2217,10 @@
 			"PROJECT_MODULE_READ": "View Project Modules",
 			"PROJECT_MODULE_UPDATE": "Update Project Modules",
 			"PROJECT_MODULE_DELETE": "Delete Project Modules",
+			"DASHBOARD_CREATE": "Create Dashboard",
+			"DASHBOARD_READ": "View Dashboard",
+			"DASHBOARD_UPDATE": "Update Dashboard",
+			"DASHBOARD_DELETE": "Delete Dashboard",
 			"ORG_TEAM_ADD": "Add Teams",
 			"ORG_TEAM_VIEW": "View Teams",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "Edit Active Tasks",
@@ -3842,8 +3846,6 @@
 				"REMOVE_EMPLOYEE_LEVEL": "Employee Level '{{ name }}' was removed",
 				"INVALID_EMPLOYEE_LEVEL": "Please add an Employee Level",
 				"ALREADY_EXISTS": "This Employee Level already exists."
-
-
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "vendor '{{ name }}' was added",
@@ -3863,7 +3865,6 @@
 				"REMOVE_POSITION": "Position '{{ name }}' was removed",
 				"INVALID_POSITION_NAME": "Please add a Position name",
 				"ALREADY_EXISTS": "This Position already exists."
-
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "Department '{{ name }}' was saved",

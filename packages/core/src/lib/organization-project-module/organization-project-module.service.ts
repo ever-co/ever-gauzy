@@ -109,7 +109,6 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 				members,
 				creatorId
 			});
-			console.log(input.tasks,projectModule )
 
 			// Generate the activity log
 			this.activityLogService.logActivity<OrganizationProjectModule>(

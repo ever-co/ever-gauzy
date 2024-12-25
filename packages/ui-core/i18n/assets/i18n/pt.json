@@ -2104,6 +2104,10 @@
 			"PROJECT_MODULE_READ": "Ver módulos de projeto",
 			"PROJECT_MODULE_UPDATE": "Atualizar módulos de projeto",
 			"PROJECT_MODULE_DELETE": "Excluir módulos de projeto",
+			"DASHBOARD_CREATE": "Criar um dashboard",
+			"DASHBOARD_READ": "Ver dashboard",
+			"DASHBOARD_UPDATE": "Atualizar dashboard",
+			"DASHBOARD_DELETE": "Excluir dashboard",
 			"ORG_TEAM_ADD": "Adicionar equipes",
 			"ORG_TEAM_VIEW": "Ver Equipes",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "Editar tarefas ativas",
@@ -3713,7 +3717,6 @@
 				"REMOVE_EMPLOYEE_LEVEL": "O Nível de Funcionário '{{ name }}' foi removido.",
 				"INVALID_EMPLOYEE_LEVEL": "Por favor, adicione um nível de funcionário.",
 				"ALREADY_EXISTS": "Este nível de funcionário já existe."
-
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "o vendedor '{{ name }}' foi adicionado.",
@@ -3733,7 +3736,6 @@
 				"REMOVE_POSITION": "A posição '{{ name }}' foi removida.",
 				"INVALID_POSITION_NAME": "Por favor, adicione um nome de cargo.",
 				"ALREADY_EXISTS": "Esta posição  já existe."
-
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "O departamento '{{ name }}' foi salvo.",

@@ -2104,6 +2104,10 @@
 			"PROJECT_MODULE_READ": "Projectmodules bekijken",
 			"PROJECT_MODULE_UPDATE": "Projectmodules bijwerken",
 			"PROJECT_MODULE_DELETE": "Projectmodules verwijderen",
+			"DASHBOARD_CREATE": "Maak een dashboard",
+			"DASHBOARD_READ": "Bekijk het dashboard",
+			"DASHBOARD_UPDATE": "Bewerk het dashboard",
+			"DASHBOARD_DELETE": "Verwijder het dashboard",
 			"ORG_TEAM_ADD": "Voeg Teams toe",
 			"ORG_TEAM_VIEW": "Bekijk Teams",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "Bewerk actieve taken",
@@ -3713,7 +3717,6 @@
 				"REMOVE_EMPLOYEE_LEVEL": "Medewerkersniveau '{{ name }}' is verwijderd",
 				"INVALID_EMPLOYEE_LEVEL": "Voeg alstublieft een functieniveau van medewerker toe.",
 				"ALREADY_EXISTS": "Dit werkniveau  bestaat al."
-
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "Leverancier '{{ name }}' is toegevoegd",
@@ -3733,7 +3736,6 @@
 				"REMOVE_POSITION": "Positie '{{ name }}' is verwijderd",
 				"INVALID_POSITION_NAME": "Voeg alstublieft een functienaam toe.",
 				"ALREADY_EXISTS": "Deze functie  bestaat al."
-
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "Afdeling '{{ name }}' is opgeslagen",
