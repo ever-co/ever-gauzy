@@ -22,8 +22,6 @@
 	"bin": "api/main.js",
 	"workspaces": {
 		"packages": [
-			"../../../dist/packages/plugins/integration-ai",
-			"../../../dist/packages/plugins/job-proposal",
 			"../../../dist/packages/config",
 			"../../../dist/packages/contracts",
 			"../../../dist/packages/desktop-lib",
@@ -32,7 +30,9 @@
 			"../../../dist/packages/auth",
 			"../../../dist/packages/plugin",
 			"../../../dist/packages/core",
-			"../../../dist/packages/common"
+			"../../../dist/packages/common",
+			"../../../dist/packages/plugins/integration-ai",
+			"../../../dist/packages/plugins/job-proposal"
 		]
 	},
 	"build": {
