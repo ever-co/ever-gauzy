@@ -3,8 +3,9 @@
  * Copyright Akveo. All Rights Reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  */
+@use "sass:string";
 
- $theme: (
+$theme: (
    color-primary-100: #e8cbfe,
    color-primary-200: #ce97fd,
    color-primary-300: #ae63f9,
@@ -358,11 +359,11 @@
    text-danger-active-color: color-danger-active,
    text-danger-disabled-color: color-danger-400,
 
-   font-family-primary: unquote('Roboto, sans-serif'),
+   font-family-primary: string.unquote('Roboto, sans-serif'),
 
-   shadow: unquote('0 2px 1px -1px rgba(0,0,0,.2), 0 1px 1px 0 rgba(0,0,0,.14), 0 1px 3px 0 rgba(0,0,0,.12)'),
+   shadow: string.unquote('0 2px 1px -1px rgba(0,0,0,.2), 0 1px 1px 0 rgba(0,0,0,.14), 0 1px 3px 0 rgba(0,0,0,.12)'),
    card-shadow: shadow,
-   header-shadow: unquote(
+   header-shadow: string.unquote(
      '0 3px 5px -1px rgba(0,0,0,.2), 0 6px 10px 0 rgba(0,0,0,.14), 0 1px 18px 0 rgba(0,0,0,.12)'
    ),
 
