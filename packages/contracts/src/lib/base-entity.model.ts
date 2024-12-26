@@ -78,6 +78,7 @@ export enum BaseEntityEnum {
 	Currency = 'Currency',
 	DailyPlan = 'DailyPlan',
 	Dashboard = 'Dashboard',
+	DashboardWidget = 'DashboardWidget',
 	Employee = 'Employee',
 	Expense = 'Expense',
 	Invoice = 'Invoice',
