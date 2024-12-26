@@ -13,6 +13,7 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { DeleteResult } from 'typeorm';
 import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { Permissions } from '../shared/decorators';
@@ -22,7 +23,6 @@ import { Dashboard } from './dashboard.entity';
 import { DashboardService } from './dashboard.service';
 import { DashboardCreateCommand, DashboardUpdateCommand } from './commands';
 import { CreateDashboardDTO, UpdateDashboardDTO } from './dto';
-import { DeleteResult } from 'typeorm';
 
 @ApiTags('Dashboard')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
