@@ -156,7 +156,7 @@ import { ResourceLinkModule } from '../resource-link/resource-link.module';
 import { MentionModule } from '../mention/mention.module';
 import { SubscriptionModule } from '../subscription/subscription.module';
 import { DashboardModule } from '../dashboard/dashboard.module';
-
+import { DashboardWidgetModule } from '../dashboard/dashboard-widget/dashboard-widget.module';
 const { unleashConfig } = environment;
 
 if (unleashConfig.url) {
@@ -460,7 +460,8 @@ if (environment.THROTTLE_ENABLED) {
 		ResourceLinkModule,
 		MentionModule,
 		SubscriptionModule,
-		DashboardModule
+		DashboardModule,
+		DashboardWidgetModule
 	],
 	controllers: [AppController],
 	providers: [

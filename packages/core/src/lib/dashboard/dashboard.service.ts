@@ -64,6 +64,7 @@ export class DashboardService extends TenantAwareCrudService<Dashboard> {
 	/**
 	 * Updates an existing dashboard
 	 *
+	 * 		@param {ID} id - The ID of the dashboard to update
 	 * @param {IDashboardUpdateInput} input - The input data for updating a dashboard
 	 * @returns {Promise<Dashboard>} The updated dashboard
 	 */

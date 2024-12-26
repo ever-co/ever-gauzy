@@ -21,4 +21,4 @@ export interface IDashboardWidget
 
 export interface IDashboardWidgetCreateInput extends IDashboardWidget {}
 
-export interface IDashboardWidgetUpdateInput extends IDashboardWidgetCreateInput {}
+export interface IDashboardWidgetUpdateInput extends Partial<IDashboardWidgetCreateInput> {}
