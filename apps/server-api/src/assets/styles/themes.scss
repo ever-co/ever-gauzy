@@ -1,3 +1,4 @@
+@use "sass:string";
 // @nebular theming framework
 @import '@nebular/theme/styles/theming';
 // @nebular out of the box themes
@@ -5,6 +6,7 @@
 // material themes
 @import './material/material-dark';
 @import './material/material-light';
+
 
 $nb-themes: nb-register-theme(
 		(
@@ -305,8 +307,8 @@ $nb-themes: nb-register-theme(
 			tabset-tab-focus-underline-color: none,
 			tabset-tab-text-transform: capitalize,
 			button-filled-text-transform: none,
-			font-family-primary: unquote('Inter, sans-serif'),
-			font-family-secondary: unquote('Inter, sans-serif'),
+			font-family-primary: string.unquote('Inter, sans-serif'),
+			font-family-secondary: string.unquote('Inter, sans-serif'),
 			button-outline-text-transform: none,
 			gauzy-text-contact: #323232,
 			button-filled-medium-padding: 0.4375rem 0.875rem,
@@ -389,8 +391,8 @@ $nb-themes: nb-register-theme(
 			tabset-tab-focus-underline-color: none,
 			tabset-tab-text-transform: capitalize,
 			button-filled-text-transform: none,
-			font-family-primary: unquote('Inter, sans-serif'),
-			font-family-secondary: unquote('Inter, sans-serif'),
+			font-family-primary: string.unquote('Inter, sans-serif'),
+			font-family-secondary: string.unquote('Inter, sans-serif'),
 			button-outline-text-transform: none,
 			button-filled-medium-padding: 0.4375rem 0.875rem,
 			button-outline-medium-padding: 0.4375rem 0.875rem,

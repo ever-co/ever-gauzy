@@ -13,6 +13,10 @@ import { GraphqlModule } from '../graphql/graphql.module';
 import { GraphqlApiModule } from '../graphql/graphql-api.module';
 import { DatabaseModule } from '../database/database.module';
 
+console.log(path.join(path.resolve(__dirname, '../**/', 'schema'), '*.gql'));
+console.log(path.join(path.resolve(__dirname, '../../../../../../../data/'), '*.gql'));
+console.log(environment.isElectron, 'Environment Is Electron');
+
 @Module({
 	imports: [
 		DatabaseModule,
@@ -22,11 +26,31 @@ import { DatabaseModule } from '../database/database.module';
 			playground: configService.graphqlConfigOptions.playground,
 			debug: configService.graphqlConfigOptions.debug,
 			cors: {
-				methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-				credentials: true,
 				origin: '*',
-				allowedHeaders:
-					'Authorization, Language, Tenant-Id, Organization-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
+				credentials: true,
+				methods: [
+					'GET',
+					'HEAD',
+					'PUT',
+					'PATCH',
+					'POST',
+					'DELETE',
+					'OPTIONS'
+				].join(','),
+				allowedHeaders: [
+					'Authorization',
+					'Language',
+					'Tenant-Id',
+					'Organization-Id',
+					'X-Requested-With',
+					'X-Auth-Token',
+					'X-HTTP-Method-Override',
+					'Content-Type',
+					'Content-Language',
+					'Accept',
+					'Accept-Language',
+					'Observe'
+				].join(', ')
 			},
 			typePaths: [
 				environment.isElectron
@@ -41,7 +65,17 @@ import { DatabaseModule } from '../database/database.module';
 	providers: []
 })
 export class CoreModule implements NestModule {
-	configure(consumer: MiddlewareConsumer) {
+	/**
+	 * Configures middleware for the application.
+	 *
+	 * This method applies the specified middleware to the application using the
+	 * provided `MiddlewareConsumer`. In this case, the `RequestContextMiddleware`
+	 * is applied to all routes in the application.
+	 *
+	 * @param consumer - The `MiddlewareConsumer` provided by NestJS, used to manage
+	 * middleware configurations for the application.
+	 */
+	configure(consumer: MiddlewareConsumer): void {
 		consumer.apply(RequestContextMiddleware).forRoutes('*');
 	}
 }
