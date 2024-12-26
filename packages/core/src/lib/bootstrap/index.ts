@@ -105,10 +105,30 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// Enable CORS with specific settings
 	app.enableCors({
 		origin: '*',
-		methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
 		credentials: true,
-		allowedHeaders:
-			'Authorization, Language, Tenant-Id, Organization-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
+		methods: [
+			'GET',
+			'HEAD',
+			'PUT',
+			'PATCH',
+			'POST',
+			'DELETE',
+			'OPTIONS'
+		].join(','),
+		allowedHeaders: [
+			'Authorization',
+			'Language',
+			'Tenant-Id',
+			'Organization-Id',
+			'X-Requested-With',
+			'X-Auth-Token',
+			'X-HTTP-Method-Override',
+			'Content-Type',
+			'Content-Language',
+			'Accept',
+			'Accept-Language',
+			'Observe'
+		].join(', ')
 	});
 
 	// TODO: enable csurf is not good idea because it was deprecated.
