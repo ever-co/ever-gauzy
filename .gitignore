@@ -62,13 +62,23 @@ ormlogs.log
 
 /.deploy/nginx/log
 
-# Ignore all environment files
-**/environments/environment.ts
-**/environments/environment.prod.ts
+/apps/gauzy/src/environments/environment.prod.ts
+/apps/gauzy/src/environments/environment.ts
 
-# Exclude specific file from being ignored
-!/packages/config/src/lib/environments/environment.ts
-!/packages/config/src/lib/environments/environment.prod.ts
+/packages/ui-config/src/lib/environments/environment.prod.ts
+/packages/ui-config/src/lib/environments/environment.ts
+
+/apps/desktop-timer/src/environments/environment.prod.ts
+/apps/desktop-timer/src/environments/environment.ts
+
+/apps/desktop/src/environments/environment.prod.ts
+/apps/desktop/src/environments/environment.ts
+
+/apps/server/src/environments/environment.prod.ts
+/apps/server/src/environments/environment.ts
+
+/apps/server-api/src/environments/environment.prod.ts
+/apps/server-api/src/environments/environment.ts
 
 /export
 /import
