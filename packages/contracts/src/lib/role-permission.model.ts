@@ -212,7 +212,12 @@ export enum PermissionsEnum {
 	PROJECT_MODULE_DELETE = 'PROJECT_MODULE_DELETE',
 	/** API Call Log */
 	API_CALL_LOG_READ = 'API_CALL_LOG_READ',
-	API_CALL_LOG_DELETE = 'API_CALL_LOG_DELETE'
+	API_CALL_LOG_DELETE = 'API_CALL_LOG_DELETE',
+	/** Dashboard */
+	DASHBOARD_CREATE = 'DASHBOARD_CREATE',
+	DASHBOARD_READ = 'DASHBOARD_READ',
+	DASHBOARD_UPDATE = 'DASHBOARD_UPDATE',
+	DASHBOARD_DELETE = 'DASHBOARD_DELETE'
 }
 
 export const PermissionGroups = {
@@ -325,7 +330,13 @@ export const PermissionGroups = {
 		PermissionsEnum.PROJECT_MODULE_READ,
 		PermissionsEnum.PROJECT_MODULE_UPDATE,
 		PermissionsEnum.PROJECT_MODULE_DELETE,
-		/** Project Module Permissions start */
+		/** Project Module Permissions end */
+		/** Dashboard Permissions Start */
+		PermissionsEnum.DASHBOARD_CREATE,
+		PermissionsEnum.DASHBOARD_READ,
+		PermissionsEnum.DASHBOARD_UPDATE,
+		PermissionsEnum.DASHBOARD_DELETE,
+		/** Dashboard Permissions End */
 		/** Organization Team Permissions Start */
 		PermissionsEnum.ORG_TEAM_ADD,
 		PermissionsEnum.ORG_TEAM_VIEW,

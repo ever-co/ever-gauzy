@@ -2104,6 +2104,10 @@
 			"PROJECT_MODULE_READ": "Zobacz moduły projektu",
 			"PROJECT_MODULE_UPDATE": "Aktualizuj moduły projektu",
 			"PROJECT_MODULE_DELETE": "Usuń moduły projektu",
+			"DASHBOARD_CREATE": "Utwórz dashboard",
+			"DASHBOARD_READ": "Zobacz dashboard",
+			"DASHBOARD_UPDATE": "Aktualizuj dashboard",
+			"DASHBOARD_DELETE": "Usuń dashboard",
 			"ORG_TEAM_ADD": "Dodaj zespoły",
 			"ORG_TEAM_VIEW": "Wyświetl zespoły",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "Edytuj aktywne zadania",
@@ -3713,7 +3717,6 @@
 				"REMOVE_EMPLOYEE_LEVEL": "Poziom pracownika '{{ name }}' został usunięty",
 				"INVALID_EMPLOYEE_LEVEL": "Proszę dodać poziom pracownika",
 				"ALREADY_EXISTS": "Poziom pracownika  już istnieje."
-
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "dostawca '{{ name }}' został dodany",
@@ -3733,7 +3736,6 @@
 				"REMOVE_POSITION": "Stanowisko '{{ name }}' zostało usunięte",
 				"INVALID_POSITION_NAME": "Proszę dodać nazwę stanowiska",
 				"ALREADY_EXISTS": "Stanowisko  już istnieje."
-
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "Dział '{{ name }}' został zapisany",

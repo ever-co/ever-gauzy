@@ -61,6 +61,7 @@ ormlogs.log
 /packages/**/dist
 
 /.deploy/nginx/log
+
 /apps/gauzy/src/environments/environment.prod.ts
 /apps/gauzy/src/environments/environment.ts
 
@@ -75,6 +76,9 @@ ormlogs.log
 
 /apps/server/src/environments/environment.prod.ts
 /apps/server/src/environments/environment.ts
+
+/apps/server-api/src/environments/environment.prod.ts
+/apps/server-api/src/environments/environment.ts
 
 /export
 /import

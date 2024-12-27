@@ -53,6 +53,7 @@
 		"@gauzy/plugin-knowledge-base": "^0.1.0",
 		"@gauzy/plugin-product-reviews": "^0.1.0",
 		"@gauzy/plugin-sentry": "^0.1.0",
+		"@gauzy/plugin-videos": "^0.1.0",
 		"dotenv": "^16.0.3",
 		"yargs": "^17.5.0"
 	},

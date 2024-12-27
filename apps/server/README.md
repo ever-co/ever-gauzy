@@ -2,11 +2,11 @@
 
 how to:
 
--   install dependencies
+-   install dependencies & bootstrap solution
 
 ```bash
 
-yarn install
+yarn bootstrap
 
 ```
 
