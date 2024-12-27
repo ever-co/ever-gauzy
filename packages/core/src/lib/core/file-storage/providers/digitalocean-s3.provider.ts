@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
-import multerS3 from 'multer-s3';
+import * as multerS3 from 'multer-s3';
 import { basename, join } from 'path';
 import * as moment from 'moment';
 import {
@@ -45,7 +45,7 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 	public config: IDigitalOceanProviderConfig;
 	public defaultConfig: IDigitalOceanProviderConfig;
 
-	private readonly _detailedloggingEnabled = false;
+	private readonly _detailedLoggingEnabled= false;
 
 	constructor() {
 		super();
@@ -86,7 +86,7 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 			...this.defaultConfig
 		};
 
-		if (this._detailedloggingEnabled) {
+		if (this._detailedLoggingEnabled) {
 			console.log(`setDigitalOceanConfiguration this config value: ${JSON.stringify(this.config)}`);
 		}
 
@@ -96,14 +96,14 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 				const settings = request['tenantSettings'];
 
 				if (settings) {
-					if (this._detailedloggingEnabled) {
+					if (this._detailedLoggingEnabled) {
 						console.log(`setDigitalOceanConfiguration Tenant Settings Value: ${JSON.stringify(settings)}`);
 					}
 
 					if (trimAndGetValue(settings.digitalocean_access_key_id)) {
 						this.config.digitalocean_access_key_id = trimAndGetValue(settings.digitalocean_access_key_id);
 
-						if (this._detailedloggingEnabled) {
+						if (this._detailedLoggingEnabled) {
 							console.log(`setDigitalOceanConfiguration this.config.digitalocean_access_key_id value: ${this.config.digitalocean_access_key_id}`);
 						}
 					}
@@ -111,7 +111,7 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 					if (trimAndGetValue(settings.digitalocean_secret_access_key)) {
 						this.config.digitalocean_secret_access_key = trimAndGetValue(settings.digitalocean_secret_access_key);
 
-						if (this._detailedloggingEnabled) {
+						if (this._detailedLoggingEnabled) {
 							console.log(`setDigitalOceanConfiguration this.config.digitalocean_secret_access_key value: ${this.config.digitalocean_secret_access_key}`);
 						}
 					}
@@ -119,7 +119,7 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 					if (trimAndGetValue(settings.digitalocean_service_url)) {
 						this.config.digitalocean_service_url = addHttpsPrefix(trimAndGetValue(settings.digitalocean_service_url));
 
-						if (this._detailedloggingEnabled) {
+						if (this._detailedLoggingEnabled) {
 							console.log('setDigitalOceanConfiguration this.config.digitalocean_service_url value: ', this.config.digitalocean_service_url);
 						}
 					}
@@ -127,7 +127,7 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 					if (trimAndGetValue(settings.digitalocean_default_region)) {
 						this.config.digitalocean_default_region = trimAndGetValue(settings.digitalocean_default_region);
 
-						if (this._detailedloggingEnabled) {
+						if (this._detailedLoggingEnabled) {
 							console.log('setDigitalOceanConfiguration this.config.digitalocean_default_region value: ', this.config.digitalocean_default_region);
 						}
 					}
@@ -135,7 +135,7 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 					if (trimAndGetValue(settings.digitalocean_s3_bucket)) {
 						this.config.digitalocean_s3_bucket = trimAndGetValue(settings.digitalocean_s3_bucket);
 
-						if (this._detailedloggingEnabled) {
+						if (this._detailedLoggingEnabled) {
 							console.log('setDigitalOceanConfiguration this.config.digitalocean_s3_bucket value: ', this.config.digitalocean_s3_bucket);
 						}
 					}
@@ -144,7 +144,7 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 					const forcePathStyle = trimAndGetValue(settings.digitalocean_s3_force_path_style);
 					this.config.digitalocean_s3_force_path_style = forcePathStyle === 'true' || forcePathStyle === '1';
 
-					if (this._detailedloggingEnabled) {
+					if (this._detailedLoggingEnabled) {
 						console.log('setDigitalOceanConfiguration this.config.digitalocean_s3_force_path_style value: ', this.config.digitalocean_s3_force_path_style);
 					}
 				}

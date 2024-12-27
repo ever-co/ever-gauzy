@@ -101,6 +101,9 @@ spec:
                         value: '$OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'
                       - name: OTEL_EXPORTER_OTLP_HEADERS
                         value: '$OTEL_EXPORTER_OTLP_HEADERS'
+                      - name: FEATURE_OPEN_STATS
+                        value: '$FEATURE_OPEN_STATS'
+
                   ports:
                       - containerPort: 3000
                         protocol: TCP

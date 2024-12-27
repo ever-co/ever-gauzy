@@ -261,6 +261,8 @@ spec:
                         value: '$COMPANY_LINK'
                       - name: COMPANY_NAME
                         value: '$COMPANY_NAME'
+                      - name: FEATURE_OPEN_STATS
+                        value: '$FEATURE_OPEN_STATS'
 
                   ports:
                       - containerPort: 3000
