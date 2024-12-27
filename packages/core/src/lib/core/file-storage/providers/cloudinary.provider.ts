@@ -21,7 +21,7 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 	public readonly name = FileStorageProviderEnum.CLOUDINARY;
 	public config: ICloudinaryConfig & FileSystem;
 
-	private readonly _detailedloggingEnabled = false;
+	private readonly _detailedLoggingEnabled= false;
 
 	constructor() {
 		super();
@@ -104,7 +104,7 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 				const settings = request['tenantSettings'];
 
 				if (settings) {
-					if (this._detailedloggingEnabled)
+					if (this._detailedLoggingEnabled)
 						console.log(`setWasabiConfiguration Tenant Settings value: ${JSON.stringify(settings)}`);
 
 					if (trimAndGetValue(settings.cloudinary_cloud_name))

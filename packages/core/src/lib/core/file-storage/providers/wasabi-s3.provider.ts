@@ -109,7 +109,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 	public config: IWasabiProviderConfig;
 	public defaultConfig: IWasabiProviderConfig;
 
-	private readonly _detailedloggingEnabled = false;
+	private readonly _detailedLoggingEnabled= false;
 
 	constructor() {
 		super();
@@ -147,7 +147,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 			...this.defaultConfig
 		};
 
-		if (this._detailedloggingEnabled)
+		if (this._detailedLoggingEnabled)
 			console.log(`setWasabiConfiguration this.config value: ${JSON.stringify(this.config)}`);
 
 		try {
@@ -157,14 +157,14 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 				const settings = request['tenantSettings'];
 
 				if (settings) {
-					if (this._detailedloggingEnabled) {
+					if (this._detailedLoggingEnabled) {
 						console.log(`setWasabiConfiguration Tenant Settings Value: ${JSON.stringify(settings)}`);
 					}
 
 					if (trimAndGetValue(settings.wasabi_aws_access_key_id)) {
 						this.config.wasabi_aws_access_key_id = trimAndGetValue(settings.wasabi_aws_access_key_id);
 
-						if (this._detailedloggingEnabled) {
+						if (this._detailedLoggingEnabled) {
 							console.log(`setWasabiConfiguration this.config.wasabi_aws_access_key_id value: ${this.config.wasabi_aws_access_key_id}`);
 						}
 					}
@@ -172,7 +172,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 					if (trimAndGetValue(settings.wasabi_aws_secret_access_key)) {
 						this.config.wasabi_aws_secret_access_key = trimAndGetValue(settings.wasabi_aws_secret_access_key);
 
-						if (this._detailedloggingEnabled) {
+						if (this._detailedLoggingEnabled) {
 							console.log(`setWasabiConfiguration this.config.wasabi_aws_secret_access_key value: ${this.config.wasabi_aws_secret_access_key}`);
 						}
 					}
@@ -180,7 +180,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 					if (trimAndGetValue(settings.wasabi_aws_service_url)) {
 						this.config.wasabi_aws_service_url = addHttpsPrefix(trimAndGetValue(settings.wasabi_aws_service_url));
 
-						if (this._detailedloggingEnabled) {
+						if (this._detailedLoggingEnabled) {
 							console.log('setWasabiConfiguration this.config.wasabi_aws_service_url value: ', this.config.wasabi_aws_service_url);
 						}
 					}
@@ -188,7 +188,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 					if (trimAndGetValue(settings.wasabi_aws_default_region)) {
 						this.config.wasabi_aws_default_region = trimAndGetValue(settings.wasabi_aws_default_region);
 
-						if (this._detailedloggingEnabled) {
+						if (this._detailedLoggingEnabled) {
 							console.log('setWasabiConfiguration this.config.wasabi_aws_default_region value: ', this.config.wasabi_aws_default_region);
 						}
 					}
@@ -196,7 +196,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 					if (trimAndGetValue(settings.wasabi_aws_bucket)) {
 						this.config.wasabi_aws_bucket = trimAndGetValue(settings.wasabi_aws_bucket);
 
-						if (this._detailedloggingEnabled) {
+						if (this._detailedLoggingEnabled) {
 							console.log('setWasabiConfiguration this.config.wasabi_aws_bucket value: ', this.config.wasabi_aws_bucket);
 						}
 					}
@@ -205,7 +205,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 					const forcePathStyle = trimAndGetValue(settings.wasabi_aws_force_path_style);
 					this.config.wasabi_aws_force_path_style = forcePathStyle === 'true' || forcePathStyle === '1';
 
-					if (this._detailedloggingEnabled) {
+					if (this._detailedLoggingEnabled) {
 						console.log('setWasabiConfiguration this.config.wasabi_aws_force_path_style value: ', this.config.wasabi_aws_force_path_style);
 					}
 				}
