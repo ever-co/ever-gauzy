@@ -142,6 +142,7 @@ jobs:
           APP_MAGIC_SIGN_URL: '${{ secrets.APP_MAGIC_SIGN_URL }}'
           COMPANY_LINK: '${{ secrets.COMPANY_LINK }}'
           COMPANY_NAME: '${{ secrets.COMPANY_NAME }}'
+          FEATURE_OPEN_STATS: '${{ vars.FEATURE_OPEN_STATS }}'
 
       - name: Check if App Exists
         id: check-app

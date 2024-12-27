@@ -139,6 +139,7 @@ jobs:
           APP_MAGIC_SIGN_URL: '${{ secrets.APP_MAGIC_SIGN_URL }}'
           COMPANY_LINK: '${{ secrets.COMPANY_LINK }}'
           COMPANY_NAME: '${{ secrets.COMPANY_NAME }}'
+          FEATURE_OPEN_STATS: '${{ vars.FEATURE_OPEN_STATS }}'
 
       # we need this step because for now we just use :latest tag
       # note: for production we will use different strategy later
