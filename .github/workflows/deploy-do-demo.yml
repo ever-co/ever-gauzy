@@ -45,6 +45,7 @@ jobs:
           OTEL_PROVIDER: '${{ secrets.OTEL_PROVIDER }}'
           OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: '${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}'
           OTEL_EXPORTER_OTLP_HEADERS: '${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}'
+          FEATURE_OPEN_STATS: '${{ vars.FEATURE_OPEN_STATS }}'
 
       # we need this step because for now we just use :latest tag
       # note: for production we will use different strategy later
