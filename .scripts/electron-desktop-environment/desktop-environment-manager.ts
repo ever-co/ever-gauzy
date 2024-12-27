@@ -43,8 +43,7 @@ export class DesktopEnvironmentManager {
 	 * @returns {any | null} The environment configuration object or null if the file is not found.
 	 */
 	public static get environment(): any | null {
-		const filePath = path.join(this.instance.fileDir, `${this.instance.fileName}.ts`);
-
+		const filePath = path.join(this.instance.fileDir, this.instance.fileName.concat(`.ts`));
 		if (!fs.existsSync(filePath)) {
 			console.warn(`⚠ Environment file not found at: ${filePath}`);
 			return null;
@@ -52,10 +51,9 @@ export class DesktopEnvironmentManager {
 
 		try {
 			// Dynamically import the environment file
-			const environmentPath = path.resolve('..', '..', this.instance.fileDir, this.instance.fileName);
-			const loadedEnvironment = require(environmentPath);
-			// Return the environment object
-			return loadedEnvironment.environment;
+			const environmentPath = path.join('..', '..', this.instance.fileDir, this.instance.fileName);
+			console.log(`✔ Environment file path: ${environmentPath}`);
+			return require(environmentPath).environment;
 		} catch (error) {
 			console.error(`✖ Error loading environment file (${filePath}): ${error.message}`);
 			return null;
@@ -72,12 +70,12 @@ export class DesktopEnvironmentManager {
 	 */
 	public static update(): void {
 		const environment: IDesktopEnvironment = { ...this.environment };
-		const filePath = path.join(this.instance.fileDir, `${this.instance.fileName}.ts`);
+		const filePath = path.join(this.instance.fileDir, this.instance.fileName.concat(`.ts`));
 
 		try {
 			if (fs.existsSync(filePath)) {
 				fs.unlinkSync(filePath); // Remove the existing file
-				const content = this.instance.content(environment, this.instance.isProd).trim(); // Ensure no extra whitespace
+				const content = this.instance.content(environment, this.instance.isProd).trim();
 				fs.writeFileSync(filePath, content); // Write the updated content
 				console.log(`✔ Environment file updated: ${filePath}`);
 			} else {
@@ -87,7 +85,6 @@ export class DesktopEnvironmentManager {
 			console.error(`✖ Error updating environment file (${filePath}): ${error.message}`);
 		}
 	}
-
 
 	/**
 	 * Generates environment files for production and development.
