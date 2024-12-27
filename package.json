@@ -364,6 +364,9 @@
 	"resolutions": {
 		"@angular-devkit/architect": "^0.1802.12",
 		"@angular-devkit/core": "^18.2.9",
+		"@typescript-eslint/scope-manager": "^8.18.2",
+		"@typescript-eslint/utils": "^8.18.2",
+		"@typescript-eslint/visitor-keys": "^8.18.2",
 		"camelcase": "^6.3.0",
 		"rxjs": "^7.8.0",
 		"autoprefixer": "^10.4.20",
@@ -461,7 +464,6 @@
 		"@types/node": "^20.14.9",
 		"@types/webpack": "^5.28.5",
 		"@types/yargs": "^15.0.9",
-		"@typescript-eslint/utils": "^8.0.0",
 		"ajv-formats": "^2.1.1",
 		"angular-eslint": "^18.3.0",
 		"cloc": "^2.7.0",
