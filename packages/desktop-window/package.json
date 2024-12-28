@@ -22,7 +22,8 @@
 		"@gauzy/desktop-core": "^0.1.0",
 		"electron-log": "^4.4.8",
 		"electron-store": "^8.1.0",
-		"tslib": "^2.6.2"
+		"tslib": "^2.6.2",
+		"@gauzy/desktop-core": "^0.0.1"
 	},
 	"devDependencies": {
 		"@types/node": "^20.14.9",
