@@ -19,6 +19,7 @@
 	},
 	"dependencies": {
 		"@electron/remote": "^2.0.8",
+		"@gauzy/desktop-core": "^0.1.0",
 		"electron-log": "^4.4.8",
 		"electron-store": "^8.1.0",
 		"tslib": "^2.6.2"

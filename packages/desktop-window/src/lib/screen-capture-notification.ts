@@ -1,11 +1,14 @@
 import { screen } from 'electron';
-import { DefaultWindow, WindowConfig } from './concretes';
-import { IBaseWindow } from './interfaces';
-import { BaseWindow } from './interfaces/base-window';
+import {
+	IBaseWindow,
+	BaseWindow,
+	WindowManager,
+	DefaultWindow,
+	WindowConfig,
+	RegisteredWindow
+} from '@gauzy/desktop-core';
 
 import log from 'electron-log';
-import { WindowManager } from './concretes/window.manager';
-import { RegisteredWindow } from './interfaces/iwindow.manager';
 console.log = log.log;
 Object.assign(console, log.functions);
 
