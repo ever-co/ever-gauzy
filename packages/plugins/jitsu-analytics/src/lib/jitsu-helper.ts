@@ -38,8 +38,6 @@ export const createJitsu = (opts: JitsuOptions): AnalyticsInterface => {
 	const config = parseConfig(opts);
 
 	if (!config.host || !config.writeKey) {
-		// Handle the case where 'host' or 'writeKey' is missing
-		console.error('Jitsu Analytics initialization failed: Missing host or writeKey.');
 		return;
 	}
 
