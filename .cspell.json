@@ -536,7 +536,9 @@
 		"libvpx",
 		"libaom",
 		"theora",
-		"Theora"
+		"Theora",
+		"Unregisters",
+		"allwindows"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

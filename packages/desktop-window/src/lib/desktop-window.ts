@@ -4,8 +4,7 @@ import * as url from 'url';
 import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 
 import log from 'electron-log';
-import { WindowManager } from './concretes/window.manager';
-import { RegisteredWindow } from './interfaces/iwindow.manager';
+import { WindowManager, RegisteredWindow } from '@gauzy/desktop-core';
 console.log = log.log;
 Object.assign(console, log.functions);
 

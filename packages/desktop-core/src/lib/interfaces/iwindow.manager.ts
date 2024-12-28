@@ -25,7 +25,7 @@ export interface IWindowManager {
 
 	hide(name: RegisteredWindow): void;
 
-	getOne(name: RegisteredWindow): IWindow;
+	getOne(name: RegisteredWindow): IWindow | null;
 
 	getAll(): IWindow[];
 

@@ -61,7 +61,7 @@ import { AppModule } from '../app/app.module';
  * @returns A promise that resolves to the initialized NestJS application.
  */
 export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>): Promise<INestApplication> {
-	console.time('Application Bootstrap Time'); // Timing the bootstrap process
+	console.time('✔ Total Application Startup Time');
 
 	// Pre-bootstrap the application configuration
 	const config = await preBootstrapApplicationConfig(pluginConfig);
@@ -283,7 +283,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// app.use(addon.middleware());
 
 	await app.listen(port, host, () => {
-		console.timeEnd('Application Bootstrap Time'); // End timing
+		console.log(`Application is running on http://${host}:${port}`);
 
 		// Note: do not change this prefix because we may use it to detect the success message from the running server!
 		const successMessagePrefix = 'Listening at http';

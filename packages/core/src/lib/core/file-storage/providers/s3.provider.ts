@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
-import multerS3 from 'multer-s3';
+import * as multerS3 from 'multer-s3';
 import { basename, join } from 'path';
 import * as moment from 'moment';
 import {
@@ -48,7 +48,7 @@ export class S3Provider extends Provider<S3Provider> {
 	public config: IS3ProviderConfig;
 	public defaultConfig: IS3ProviderConfig;
 
-	private readonly _detailedloggingEnabled = false;
+	private readonly _detailedLoggingEnabled= false;
 
 	constructor() {
 		super();
@@ -93,7 +93,7 @@ export class S3Provider extends Provider<S3Provider> {
 				const settings = request['tenantSettings'];
 
 				if (settings) {
-					if (this._detailedloggingEnabled)
+					if (this._detailedLoggingEnabled)
 						console.log(`setWasabiConfiguration Tenant Settings value: ${JSON.stringify(settings)}`);
 
 					if (trimAndGetValue(settings.aws_access_key_id))
