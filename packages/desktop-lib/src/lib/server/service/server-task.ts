@@ -105,7 +105,11 @@ export abstract class ServerTask {
 	 * @param {Function} reject - Function to reject the promise.
 	 * @returns {void}
 	 */
-	private handleStdout(data: Buffer, resolve: Function, reject: Function): void {
+	private handleStdout(
+		data: Buffer,
+		resolve: (value?: unknown) => void,
+		reject: (reason?: unknown) => void
+	): void {
 		const msg = data.toString();
 		this.loggerObserver.notify(msg);
 
