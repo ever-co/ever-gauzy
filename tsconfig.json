@@ -50,6 +50,7 @@
 			"@gauzy/ui-core/i18n": ["./packages/ui-core/i18n/src/index.ts"],
 			"@gauzy/ui-core/shared": ["./packages/ui-core/shared/src/index.ts"],
 			"@gauzy/ui-core/theme": ["./packages/ui-core/theme/src/index.ts"],
+			"@gauzy/desktop-core": ["packages/desktop-core/src/index.ts"],
 			"@nebular/*": ["./node_modules/@nebular/*"],
 			"ng2-completer": ["./node_modules/@akveo/ng2-completer"],
 			"ngx-daterangepicker-material/*": ["./node_modules/ngx-daterangepicker-material/*"]
