@@ -1,10 +1,39 @@
 {
 	"name": "@gauzy/desktop-core",
-	"version": "0.0.1",
-	"dependencies": {
-		"tslib": "^2.3.0"
+	"version": "0.1.0",
+	"description": "Core library for Gauzy Desktop application",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
 	},
+	"license": "AGPL-3.0",
+	"private": true,
 	"type": "commonjs",
 	"main": "./src/index.js",
-	"typings": "./src/index.d.ts"
+	"typings": "./src/index.d.ts",
+	"scripts": {
+		"lib:build": "yarn nx build desktop-core",
+		"lib:build:prod": "yarn nx build desktop-core",
+		"lib:watch": "yarn nx build desktop-core --watch"
+	},
+	"dependencies": {
+		"tslib": "^2.6.2"
+	},
+	"devDependencies": {
+		"@types/node": "^20.14.9"
+	},
+	"keywords": [
+		"gauzy",
+		"desktop",
+		"electron",
+		"core",
+		"library",
+		"typescript"
+	],
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
 }

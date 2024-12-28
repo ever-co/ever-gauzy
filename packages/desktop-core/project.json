@@ -12,6 +12,7 @@
 		}
 	},
 	"tags": [],
+	"implicitDependencies": [],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
