@@ -32,7 +32,8 @@
 			"../../../dist/packages/core",
 			"../../../dist/packages/common",
 			"../../../dist/packages/plugins/integration-ai",
-			"../../../dist/packages/plugins/job-proposal"
+			"../../../dist/packages/plugins/job-proposal",
+			"../../../dist/packages/desktop-core"
 		]
 	},
 	"build": {
@@ -152,6 +153,7 @@
 		"@gauzy/plugin-sentry": "file:../../../dist/packages/plugins/sentry-tracing",
 		"@gauzy/plugin-videos": "file:../../../dist/packages/plugins/videos",
 		"@gauzy/ui-config": "file:../../../dist/packages/ui-config",
+		"@gauzy/desktop-core": "^0.0.1",
 		"@nestjs/platform-express": "^10.3.7",
 		"@sentry/electron": "^4.18.0",
 		"@sentry/node": "^7.101.1",
