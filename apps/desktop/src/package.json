@@ -22,10 +22,10 @@
 	"workspaces": {
 		"packages": [
 			"../../../dist/packages/contracts",
+			"../../../dist/packages/desktop-core",
 			"../../../dist/packages/desktop-lib",
 			"../../../dist/packages/desktop-window",
-			"../../../dist/packages/ui-config",
-			"../../../dist/packages/desktop-core"
+			"../../../dist/packages/ui-config"
 		]
 	},
 	"build": {

@@ -24,6 +24,7 @@
 		"packages": [
 			"../../../dist/packages/config",
 			"../../../dist/packages/contracts",
+			"../../../dist/packages/desktop-core",
 			"../../../dist/packages/desktop-lib",
 			"../../../dist/packages/desktop-window",
 			"../../../dist/packages/ui-config",
@@ -32,8 +33,7 @@
 			"../../../dist/packages/core",
 			"../../../dist/packages/common",
 			"../../../dist/packages/plugins/integration-ai",
-			"../../../dist/packages/plugins/job-proposal",
-			"../../../dist/packages/desktop-core"
+			"../../../dist/packages/plugins/job-proposal"
 		]
 	},
 	"build": {
