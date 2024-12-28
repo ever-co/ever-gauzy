@@ -153,7 +153,7 @@
 		"@gauzy/plugin-sentry": "file:../../../dist/packages/plugins/sentry-tracing",
 		"@gauzy/plugin-videos": "file:../../../dist/packages/plugins/videos",
 		"@gauzy/ui-config": "file:../../../dist/packages/ui-config",
-		"@gauzy/desktop-core": "^0.0.1",
+		"@gauzy/desktop-core": "^0.1.0",
 		"@nestjs/platform-express": "^10.3.7",
 		"@sentry/electron": "^4.18.0",
 		"@sentry/node": "^7.101.1",
