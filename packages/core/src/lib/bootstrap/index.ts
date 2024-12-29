@@ -502,7 +502,7 @@ export function getMigrationsConfig() {
 
 	// Base migrations directory
 	const includedFiles = env.isElectron ? ['.js'] : ['.ts','.js'];
-	const migrationsDir = path.resolve(__dirname, `./../database/migrations/*{${includedFiles.join('')}}`);
+	const migrationsDir = path.resolve(__dirname, `./../database/migrations/*{${includedFiles.join(',')}}`);
 	console.log('Migration migrationsDir: ->', migrationsDir);
 
 	if (!fs.existsSync(path.dirname(migrationsDir))) {
