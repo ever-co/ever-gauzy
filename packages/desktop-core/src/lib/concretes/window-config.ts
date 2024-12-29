@@ -15,7 +15,7 @@ export class WindowConfig implements IWindowConfig {
 
 	constructor(hash: string, path: string, options?: BrowserWindowConstructorOptions) {
 		this._hash = hash;
-		this.path = path;
+		this._path = path;
 		this.options = {
 			webPreferences: {
 				nodeIntegration: true,
@@ -31,7 +31,7 @@ export class WindowConfig implements IWindowConfig {
 		};
 	}
 
-	public get options(): BrowserWindowConstructorOptions {
+	public get options(): BrowserWindowConstructorOptions | undefined {
 		return this._options;
 	}
 	public set options(value: BrowserWindowConstructorOptions) {

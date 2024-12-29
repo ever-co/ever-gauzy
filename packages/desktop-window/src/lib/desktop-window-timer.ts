@@ -4,8 +4,7 @@ import * as url from 'url';
 import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 
 import log from 'electron-log';
-import { WindowManager } from './concretes/window.manager';
-import { RegisteredWindow } from './interfaces/iwindow.manager';
+import { WindowManager, RegisteredWindow } from '@gauzy/desktop-core';
 console.log = log.log;
 Object.assign(console, log.functions);
 
@@ -16,7 +15,7 @@ function getScreenSize() {
 	const sizes = screen.getPrimaryDisplay().workAreaSize;
 	const width = sizes.height < 768 ? 310 : 360;
 	const height = sizes.height < 768 ? sizes.height - 20 : 768;
-	return { width, height }
+	return { width, height };
 }
 
 export async function createTimeTrackerWindow(timeTrackerWindow, filePath, preloadPath?) {
@@ -75,8 +74,7 @@ const windowSetting = (preloadPath?) => {
 		title: process.env.DESCRIPTION || 'Time Tracker',
 		maximizable: false,
 		show: false,
-		icon: filesPath.iconPath,
-
+		icon: filesPath.iconPath
 	};
 	if (preloadPath) {
 		mainWindowSettings.titleBarStyle = 'hidden';

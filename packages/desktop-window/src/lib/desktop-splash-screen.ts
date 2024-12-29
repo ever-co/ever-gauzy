@@ -1,8 +1,11 @@
-import { DefaultWindow, WindowConfig } from './concretes';
-import { WindowManager } from './concretes/window.manager';
-import { IBaseWindow } from './interfaces';
-import { BaseWindow } from './interfaces/base-window';
-import { RegisteredWindow } from './interfaces/iwindow.manager';
+import {
+	IBaseWindow,
+	BaseWindow,
+	WindowManager,
+	DefaultWindow,
+	WindowConfig,
+	RegisteredWindow
+} from '@gauzy/desktop-core';
 
 export class SplashScreen extends BaseWindow implements IBaseWindow {
 	private readonly manager = WindowManager.getInstance();
