@@ -72,7 +72,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// Create the NestJS application
 	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
 		logger: ['log', 'error', 'warn', 'debug', 'verbose'], // Set logging levels
-		bufferLogs: true // Buffer logs to avoid loss during startup
+		bufferLogs: env.isElectron ? false : true // Buffer logs to avoid loss during startup // set to false when is electron
 	});
 
 	// Register custom entity fields for Mikro ORM
@@ -153,7 +153,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 					? `rediss://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
 					: `redis://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
 
-			console.log('REDIS_URL: ', url);
+					console.log('REDIS_URL: ', url);
 
 			let host, port, username, password;
 
@@ -501,7 +501,8 @@ export function getMigrationsConfig() {
 	console.log('Migration __dirname: ->', __dirname);
 
 	// Base migrations directory
-	const migrationsDir = path.resolve(__dirname, './../database/migrations/*{.ts,.js}');
+	const includedFiles = env.isElectron ? ['.js'] : ['.ts','.js'];
+	const migrationsDir = path.resolve(__dirname, `./../database/migrations/*{${includedFiles.join('')}}`);
 	console.log('Migration migrationsDir: ->', migrationsDir);
 
 	if (!fs.existsSync(path.dirname(migrationsDir))) {
