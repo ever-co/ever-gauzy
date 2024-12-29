@@ -21,11 +21,18 @@
 	"main": "index.js",
 	"workspaces": {
 		"packages": [
+			"../../../dist/packages/plugins/integration-ai",
+			"../../../dist/packages/plugins/job-proposal",
+			"../../../dist/packages/config",
 			"../../../dist/packages/contracts",
 			"../../../dist/packages/desktop-core",
 			"../../../dist/packages/desktop-lib",
 			"../../../dist/packages/desktop-window",
-			"../../../dist/packages/ui-config"
+			"../../../dist/packages/ui-config",
+			"../../../dist/packages/auth",
+			"../../../dist/packages/plugin",
+			"../../../dist/packages/core",
+			"../../../dist/packages/common"
 		]
 	},
 	"build": {
