@@ -6,6 +6,6 @@ export interface IBaseWindow {
 	show(): void;
 	close(): void;
 	hide(): void;
-	get browserWindow(): BrowserWindow;
+	get browserWindow(): BrowserWindow | null;
 	config: IWindowConfig;
 }

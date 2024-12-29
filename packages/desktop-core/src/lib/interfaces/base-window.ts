@@ -25,7 +25,7 @@ export abstract class BaseWindow {
 		this._baseWindow.hide();
 	}
 
-	public get browserWindow(): BrowserWindow {
+	public get browserWindow(): BrowserWindow | null {
 		return this._baseWindow.browserWindow;
 	}
 

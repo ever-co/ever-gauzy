@@ -1,7 +1,4 @@
 export * from './lib/always-on';
-export * from './lib/concretes/default-window';
-export * from './lib/concretes/window-config';
-export * from './lib/concretes/window.manager';
 export * from './lib/desktop-splash-screen';
 export * from './lib/desktop-window';
 export * from './lib/desktop-window-about';
@@ -11,8 +8,4 @@ export * from './lib/desktop-window-setting';
 export * from './lib/desktop-window-setup';
 export * from './lib/desktop-window-timer';
 export * from './lib/desktop-window-updater';
-export * from './lib/interfaces/base-window';
-export * from './lib/interfaces/ibase-window';
-export * from './lib/interfaces/iwindow-config';
-export * from './lib/interfaces/iwindow.manager';
 export * from './lib/screen-capture-notification';

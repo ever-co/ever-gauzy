@@ -1,11 +1,5 @@
-import {
-	getApiBaseUrl,
-	loginPage,
-	RegisteredWindow,
-	settingsPage,
-	timeTrackerPage,
-	WindowManager
-} from '@gauzy/desktop-window';
+import { getApiBaseUrl, loginPage, settingsPage, timeTrackerPage } from '@gauzy/desktop-window';
+import { RegisteredWindow, WindowManager } from '@gauzy/desktop-core';
 import { app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, nativeImage, Tray } from 'electron';
 import { handleLogoutDialog } from './desktop-ipc';
 import { LocalStore } from './desktop-store';

@@ -1,4 +1,5 @@
-import { createAboutWindow, createSettingsWindow, RegisteredWindow, WindowManager } from '@gauzy/desktop-window';
+import { createAboutWindow, createSettingsWindow } from '@gauzy/desktop-window';
+import { RegisteredWindow, WindowManager } from '@gauzy/desktop-core';
 import { BrowserWindow, Menu, MenuItemConstructorOptions, shell } from 'electron';
 import { LocalStore } from './desktop-store';
 import { TimerService } from './offline';
@@ -23,7 +24,10 @@ export class AppMenu {
 						label: TranslateService.instant('MENU.ABOUT'),
 						enabled: true,
 						async click() {
-							const window: BrowserWindow = await createAboutWindow(windowPath.timeTrackerUi, windowPath.preloadPath);
+							const window: BrowserWindow = await createAboutWindow(
+								windowPath.timeTrackerUi,
+								windowPath.preloadPath
+							);
 							window.show();
 						}
 					},

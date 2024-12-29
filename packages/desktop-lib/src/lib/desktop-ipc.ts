@@ -1,5 +1,6 @@
 import { IActivityWatchEventResult } from '@gauzy/contracts';
-import { RegisteredWindow, ScreenCaptureNotification, WindowManager, loginPage } from '@gauzy/desktop-window';
+import { ScreenCaptureNotification, loginPage } from '@gauzy/desktop-window';
+import { RegisteredWindow, WindowManager } from '@gauzy/desktop-core';
 import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences } from 'electron';
 import log from 'electron-log';
 import moment from 'moment';
