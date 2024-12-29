@@ -153,7 +153,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 					? `rediss://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
 					: `redis://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
 
-					console.log('REDIS_URL: ', url);
+			console.log('REDIS_URL: ', url);
 
 			let host, port, username, password;
 
