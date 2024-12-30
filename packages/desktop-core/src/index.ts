@@ -5,3 +5,5 @@ export * from './lib/interfaces/base-window';
 export * from './lib/interfaces/ibase-window';
 export * from './lib/interfaces/iwindow-config';
 export * from './lib/interfaces/iwindow.manager';
+export * from './lib/electron-helpers';
+export * from './lib/interfaces/types';
