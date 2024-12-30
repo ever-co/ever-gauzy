@@ -356,8 +356,7 @@ const getEnvApi = () => {
 			DB_NAME: config[provider]?.dbName,
 			DB_USER: config[provider]?.dbUsername,
 			DB_PASS: config[provider]?.dbPassword
-		}),
-		DB_SYNCHRONIZE: true,
+		}),		
 		DEBUG: process.env.NODE_ENV !== 'production' ? 'true' : 'false',
 		API_PORT: String(config.port),
 		...addsConfig
