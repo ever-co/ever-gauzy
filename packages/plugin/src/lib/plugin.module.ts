@@ -20,16 +20,12 @@ export class PluginModule implements OnModuleInit, OnModuleDestroy {
 	/**
 	 * Configure the plugin module with the provided options. This method is called by the `PluginModule.init()` method.
 	 *
-	 * @param options - An optional object containing additional options for the plugin module.
 	 * @returns An object representing the plugin module.
 	 */
-	static init(options?: any): DynamicModule {
-		// Log any extra options passed into this method
-		console.log('PluginModule init called with options:', options);
-
+	static init(): DynamicModule {
 		// Retrieve your config (and plugins) from wherever they're defined
 		const config = getConfig();
-		console.log('PluginModule in with config.plugins:', config?.plugins);
+		console.log('PluginModule in with config.plugins:', config.plugins);
 
 		return {
 			module: PluginModule,
