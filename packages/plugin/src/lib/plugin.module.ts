@@ -1,32 +1,45 @@
 import {
 	DynamicModule,
+	Inject,
 	Module,
 	OnModuleDestroy,
 	OnModuleInit
 } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import * as chalk from 'chalk';
-import { ConfigService, getConfig } from '@gauzy/config';
+import { ConfigModule, ConfigService, getConfig } from '@gauzy/config';
 import { PluginLifecycleMethods } from './plugin.interface';
 import { getPluginModules, hasLifecycleMethod } from './plugin.helper';
 
-@Module({})
+@Module({
+	imports: [ConfigModule],
+	exports: [],
+	providers: []
+})
 export class PluginModule implements OnModuleInit, OnModuleDestroy {
-
 	/**
-	 * Configure the plugin module with the provided options.
-	 * @returns
+	 * Configure the plugin module with the provided options. This method is called by the `PluginModule.init()` method.
+	 *
+	 * @param options - An optional object containing additional options for the plugin module.
+	 * @returns An object representing the plugin module.
 	 */
-	static init(): DynamicModule {
+	static init(options?: any): DynamicModule {
+		// Log any extra options passed into this method
+		console.log('PluginModule init called with options:', options);
+
+		// Retrieve your config (and plugins) from wherever they're defined
+		const config = getConfig();
+		console.log('PluginModule in with config.plugins:', config?.plugins);
+
 		return {
 			module: PluginModule,
-			imports: [...getConfig().plugins],
+			imports: [...config.plugins]
 		};
 	}
 
 	constructor(
-		private readonly moduleRef: ModuleRef,
-		private readonly configService: ConfigService
+		@Inject() private readonly moduleRef: ModuleRef,
+		@Inject() private readonly configService: ConfigService
 	) { }
 
 	/**
@@ -50,27 +63,38 @@ export class PluginModule implements OnModuleInit, OnModuleDestroy {
 	}
 
 	/**
-	 * Bootstrap plugin lifecycle methods.
-	 * @param lifecycleMethod The lifecycle method to invoke.
-	 * @param closure A closure function to execute after invoking the lifecycle method.
+	 * Invokes a specified lifecycle method on each plugin module, optionally
+	 * running a closure function afterward.
+	 *
+	 * @private
+	 * @async
+	 * @param {keyof PluginLifecycleMethods} lifecycleMethod - The name of the lifecycle method to invoke on each plugin.
+	 * @param {(instance: any) => void} [closure] - An optional callback executed after the lifecycle method finishes on each plugin.
+	 * @returns {Promise<void>} A Promise that resolves once all plugins have been processed.
 	 */
 	private async bootstrapPluginLifecycleMethods(
 		lifecycleMethod: keyof PluginLifecycleMethods,
 		closure?: (instance: any) => void
 	): Promise<void> {
+		// Retrieve all plugin modules based on the configuration
 		const pluginsModules = getPluginModules(this.configService.plugins);
+
+		// Loop through each plugin module asynchronously
 		for await (const pluginModule of pluginsModules) {
 			let pluginInstance: ClassDecorator;
 
 			try {
+				// Attempt to retrieve an instance of the current plugin module
 				pluginInstance = this.moduleRef.get(pluginModule, { strict: false });
 			} catch (e) {
 				console.error(`Error initializing plugin ${pluginModule.name}:`, e.stack);
 			}
 
+			// If the plugin instance exists and it implements the specified lifecycle method, call it
 			if (pluginInstance && hasLifecycleMethod(pluginInstance, lifecycleMethod)) {
 				await pluginInstance[lifecycleMethod]();
 
+				// Execute the closure function if provided
 				if (typeof closure === 'function') {
 					closure(pluginInstance);
 				}
