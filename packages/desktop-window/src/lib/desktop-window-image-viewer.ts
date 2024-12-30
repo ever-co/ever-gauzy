@@ -2,12 +2,13 @@ import * as remoteMain from '@electron/remote/main';
 import { BrowserWindow } from 'electron';
 import * as url from 'url';
 import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
+
 import log from 'electron-log';
-import Store from 'electron-store';
 import { WindowManager, RegisteredWindow } from '@gauzy/desktop-core';
 console.log = log.log;
 Object.assign(console, log.functions);
 
+const Store = require('electron-store');
 const store = new Store();
 
 export async function createImageViewerWindow(imageViewWindow, filePath, preloadPath?) {

@@ -1,7 +1,7 @@
 import * as remoteMain from '@electron/remote/main';
+import { WindowManager, RegisteredWindow, Store } from '@gauzy/desktop-core';
 import { BrowserWindow, Menu } from 'electron';
 import * as url from 'url';
-import { WindowManager, RegisteredWindow, Store } from '@gauzy/desktop-core';
 
 /**
  * Creates or shows the 'About' window for the application.

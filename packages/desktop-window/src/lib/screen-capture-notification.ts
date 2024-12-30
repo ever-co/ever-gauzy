@@ -1,3 +1,4 @@
+import { screen } from 'electron';
 import {
 	IBaseWindow,
 	BaseWindow,
@@ -6,12 +7,12 @@ import {
 	WindowConfig,
 	RegisteredWindow
 } from '@gauzy/desktop-core';
-import { screen } from 'electron';
+
 import log from 'electron-log';
-import Store from 'electron-store';
 console.log = log.log;
 Object.assign(console, log.functions);
 
+const Store = require('electron-store');
 const store = new Store();
 
 export class ScreenCaptureNotification extends BaseWindow implements IBaseWindow {
