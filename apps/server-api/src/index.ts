@@ -238,6 +238,13 @@ eventErrorManager.onShowError(async (message) => {
 	}
 });
 
+const closeSplashScreen = () => {
+	if (splashScreen) {
+		splashScreen.close();
+		splashScreen = null;
+	}
+}
+
 const runSetup = async () => {
 	// Set default configuration
 	LocalStore.setDefaultServerConfig();
@@ -245,7 +252,7 @@ const runSetup = async () => {
 		setupWindow = await createSetupWindow(setupWindow, false, pathWindow.ui);
 	}
 	setupWindow.show();
-	splashScreen.close();
+	closeSplashScreen();
 };
 
 const appState = async () => {
@@ -264,7 +271,7 @@ const runMainWindow = async () => {
 
 	serverWindow.show();
 
-	splashScreen.close();
+	closeSplashScreen();
 
 	if (!tray) {
 		createTray();
@@ -335,6 +342,7 @@ const getEnvApi = () => {
 			DB_USER: config[provider]?.dbUsername,
 			DB_PASS: config[provider]?.dbPassword
 		}),
+		DB_SYNCHRONIZE: true,
 		DEBUG: 'true',
 		API_PORT: String(config.port),
 		...addsConfig

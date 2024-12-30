@@ -272,6 +272,7 @@ async function startServer(value, restart = false) {
 		process.env.DB_USER = value['postgres']?.dbUsername;
 		process.env.DB_PASS = value['postgres']?.dbPassword;
 	}
+	process.env.DB_SYNCHRONIZE = 'true';
 
 	try {
 		const config: any = {
@@ -402,6 +403,13 @@ const getApiBaseUrl = (configs) => {
 	}
 };
 
+const closeSplashScreen = () => {
+	if (splashScreen) {
+		splashScreen.close();
+		splashScreen = null;
+	}
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -486,7 +494,7 @@ app.on('ready', async () => {
 			if (!configs.serverConfigConnected && !configs?.isLocalServer) {
 				setupWindow = await createSetupWindow(setupWindow, false, pathWindow.timeTrackerUi);
 				setupWindow.show();
-				splashScreen.close();
+				closeSplashScreen()
 				setupWindow.webContents.send('setup-data', {
 					...configs
 				});
@@ -501,7 +509,7 @@ app.on('ready', async () => {
 		} else {
 			setupWindow = await createSetupWindow(setupWindow, false, pathWindow.timeTrackerUi);
 			setupWindow.show();
-			splashScreen.close();
+			closeSplashScreen();
 		}
 	} catch (error) {
 		console.error('ERROR: Occurred while create window:' + error);
@@ -717,7 +725,7 @@ app.on('activate', async () => {
 	} else {
 		if (setupWindow) {
 			setupWindow.show();
-			splashScreen.close();
+			closeSplashScreen();
 		}
 	}
 });
