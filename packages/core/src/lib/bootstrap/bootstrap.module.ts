@@ -5,7 +5,14 @@ import { AppModule } from '../app/app.module';
 import { Logger, LoggerModule } from '../logger';
 
 @Module({
-	imports: [ConfigModule, LoggerModule.forRoot(), PluginModule.init(), AppModule]
+	imports: [
+		ConfigModule,
+		LoggerModule.forRoot(),
+		PluginModule.init(),
+		AppModule
+	],
+	providers: [],
+	exports: []
 })
 export class BootstrapModule implements NestModule, OnApplicationShutdown {
 	/**
@@ -17,7 +24,6 @@ export class BootstrapModule implements NestModule, OnApplicationShutdown {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply().forRoutes('*');
 	}
-
 
 	/**
 	 * Handles cleanup and resource shutdown logic when the application receives a termination signal.
