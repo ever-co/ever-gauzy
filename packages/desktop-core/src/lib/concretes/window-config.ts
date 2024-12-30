@@ -21,7 +21,7 @@ export class WindowConfig implements IWindowConfig {
 			title: '',
 			show: false,
 			center: true,
-			icon:  Store.get('filePath').iconPath,
+			icon:  Store.get('filePath')?.iconPath,
 			...options
 		};
 	}
