@@ -20,6 +20,7 @@
 			"options": {
 				"outputPath": "dist/packages/desktop-lib",
 				"main": "packages/desktop-lib/src/index.ts",
+				"packageJson": "packages/desktop-lib/package.json",
 				"tsConfig": "packages/desktop-lib/tsconfig.lib.json",
 				"assets": ["packages/desktop-lib/*.md"]
 			}

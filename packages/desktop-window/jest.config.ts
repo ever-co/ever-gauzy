@@ -1,4 +1,3 @@
-/* eslint-disable */
 export default {
 	displayName: 'desktop-window',
 	preset: '../../jest.preset.js',

@@ -19,8 +19,9 @@
 			"outputs": ["{options.outputPath}"],
 			"options": {
 				"outputPath": "dist/packages/contracts",
-				"main": "packages/contracts/src/index.ts",
 				"tsConfig": "packages/contracts/tsconfig.lib.json",
+				"packageJson": "packages/contracts/package.json",
+				"main": "packages/contracts/src/index.ts",
 				"assets": ["packages/contracts/*.md"]
 			}
 		},
