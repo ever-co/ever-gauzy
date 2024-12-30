@@ -20,6 +20,7 @@
 			"options": {
 				"outputPath": "dist/packages/contracts",
 				"main": "packages/contracts/src/index.ts",
+				"packageJson": "packages/contracts/package.json",
 				"tsConfig": "packages/contracts/tsconfig.lib.json",
 				"assets": ["packages/contracts/*.md"]
 			}
