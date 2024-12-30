@@ -1,12 +1,16 @@
 import { BrowserWindowConstructorOptions } from 'electron';
-import { IWindowConfig } from '../interfaces';
-
+import Store from 'electron-store';
 import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 
-const Store = require('electron-store');
+import { IWindowConfig } from '../interfaces';
+
 const store = new Store();
+
+interface FilePath {
+    iconPath: string;
+}
 
 export class WindowConfig implements IWindowConfig {
 	private _options?: BrowserWindowConstructorOptions;
@@ -16,6 +20,10 @@ export class WindowConfig implements IWindowConfig {
 	constructor(hash: string, path: string, options?: BrowserWindowConstructorOptions) {
 		this._hash = hash;
 		this._path = path;
+
+		const filePath = store.get('filePath') as FilePath;
+		const icon = filePath.iconPath;
+
 		this.options = {
 			webPreferences: {
 				nodeIntegration: true,
@@ -26,7 +34,7 @@ export class WindowConfig implements IWindowConfig {
 			title: '',
 			show: false,
 			center: true,
-			icon: store.get('filePath').iconPath,
+			icon,
 			...options
 		};
 	}

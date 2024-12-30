@@ -1,13 +1,13 @@
+import Store from 'electron-store';
+import { app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, nativeImage, Tray } from 'electron';
 import { getApiBaseUrl, loginPage, settingsPage, timeTrackerPage } from '@gauzy/desktop-window';
 import { RegisteredWindow, WindowManager } from '@gauzy/desktop-core';
-import { app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, nativeImage, Tray } from 'electron';
 import { handleLogoutDialog } from './desktop-ipc';
 import { LocalStore } from './desktop-store';
 import { User, UserService } from './offline';
 import { TranslateService } from './translation';
 import TitleOptions = Electron.TitleOptions;
 
-const Store = require('electron-store');
 
 export class TrayIcon {
 	tray: Tray;
