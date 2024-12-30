@@ -1,8 +1,7 @@
 import * as remoteMain from '@electron/remote/main';
 import { BrowserWindow, Menu } from 'electron';
 import * as url from 'url';
-import { WindowManager, RegisteredWindow } from '@gauzy/desktop-core';
-import { store } from './electron-helpers';
+import { WindowManager, RegisteredWindow, Store } from '@gauzy/desktop-core';
 
 /**
  * Creates or shows the 'About' window for the application.
@@ -39,7 +38,7 @@ export async function createAboutWindow(filePath: string, preloadPath?: string):
 	});
 
 	// Set the window icon from the store
-	window.setIcon(store.get('filePath').iconPath);
+	window.setIcon(Store.get('filePath').iconPath);
 	window.hide();
 
 	await window.loadURL(launchPath);
