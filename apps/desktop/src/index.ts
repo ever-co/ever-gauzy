@@ -271,8 +271,7 @@ async function startServer(value, restart = false) {
 		process.env.DB_NAME = value['postgres']?.dbName;
 		process.env.DB_USER = value['postgres']?.dbUsername;
 		process.env.DB_PASS = value['postgres']?.dbPassword;
-	}
-	process.env.DB_SYNCHRONIZE = 'true';
+	}	
 
 	try {
 		const config: any = {
