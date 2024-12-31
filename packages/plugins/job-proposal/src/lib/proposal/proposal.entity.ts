@@ -44,7 +44,7 @@ export class Proposal extends TenantOrganizationBaseEntity implements IProposal,
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@MultiORMColumn()
-	jobPostContent?: string;
+	jobPostContent: string;
 
 	/**
 	 * The main body or content of the proposal being submitted.
@@ -53,12 +53,12 @@ export class Proposal extends TenantOrganizationBaseEntity implements IProposal,
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@MultiORMColumn()
-	proposalContent?: string;
+	proposalContent: string;
 
 	/**
- * The status of the proposal (e.g., 'SENT', 'ACCEPTED').
-	 * Enum-based property to enforce valid statuses defined by ProposalStatusEnum.
-	 */
+	* The status of the proposal (e.g., 'SENT', 'ACCEPTED').
+	* Enum-based property to enforce valid statuses defined by ProposalStatusEnum.
+	*/
 	@ApiProperty({ type: () => String, enum: ProposalStatusEnum })
 	@IsEnum(ProposalStatusEnum)
 	@MultiORMColumn()
