@@ -6,9 +6,26 @@ import { OrganizationGithubRepository } from './github/repository/github-reposit
 import { OrganizationGithubRepositoryIssue } from './github/repository/issue/github-repository-issue.entity';
 
 @Plugin({
+	/**
+	 * An array of modules that will be imported and registered with the plugin.
+	 */
 	imports: [GithubModule],
+	/**
+	 * An array of Entity classes. The plugin (or ORM) will
+	 * register these entities for use within the application.
+	 */
 	entities: [OrganizationGithubRepository, OrganizationGithubRepositoryIssue],
+	/**
+	 * A callback that receives the main plugin configuration object and allows
+	 * custom modifications before returning the final configuration.
+	 *
+	 * @param {ApplicationPluginConfig} config - The initial plugin configuration object.
+	 * @returns {ApplicationPluginConfig} - The modified plugin configuration object.
+	 *
+	 * In this example, we're adding a custom relation field (`proposals`) to the `Tag` entity.
+	 */
 	configuration: (config: ApplicationPluginConfig) => {
+		// Add a custom field to the OrganizationProject entity
 		config.customFields.OrganizationProject.push({
 			name: 'repository',
 			type: 'relation',
@@ -17,6 +34,8 @@ import { OrganizationGithubRepositoryIssue } from './github/repository/issue/git
 			nullable: true, // Determines whether the relation is nullable.
 			onDelete: 'SET NULL' // Defines the database cascade action on delete.
 		});
+
+		// Add a custom field to the OrganizationProject entity
 		config.customFields.OrganizationProject.push({
 			name: 'repositoryId',
 			type: 'string',
