@@ -373,7 +373,8 @@
 		"camelcase": "^6.3.0",
 		"rxjs": "^7.8.0",
 		"autoprefixer": "^10.4.20",
-		"locutus": "^2.0.30"
+		"locutus": "^2.0.30",
+		"minizlib": "^2.1.2"
 	},
 	"dependencies": {
 		"@angular/animations": "18.2.12",
@@ -406,6 +407,7 @@
 		"electron": "^30.0.1",
 		"jsdom": "^23.0.1",
 		"lodash-es": "^4.17.21",
+		"minizlib": "^2.1.2",
 		"parse5": "^7.1.2",
 		"reflect-metadata": "^0.1.13",
 		"rxjs": "^7.8.0",
