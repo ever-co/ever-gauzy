@@ -507,7 +507,7 @@ export function getMigrationsConfig() {
 	const migrationsDir = path.resolve(
 		__dirname,
 		isElectron
-			? './../database/migrations/*.ts'           // Only .ts if Electron
+			? './../database/migrations/*.js'           // Only .ts if Electron
 			: './../database/migrations/*{.ts,.js}'      // Otherwise .ts or .js
 	);
 	console.log('Migration migrationsDir: ->', migrationsDir);
