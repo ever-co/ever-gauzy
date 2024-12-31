@@ -8,9 +8,26 @@ import { EmployeeProposalTemplate } from './proposal-template/employee-proposal-
 import { ProposalSeederService } from './proposal/proposal-seeder.service';
 
 @Plugin({
+	/**
+	 * An array of modules that will be imported and registered with the plugin.
+	 */
 	imports: [ProposalModule, EmployeeProposalTemplateModule],
+	/**
+	 * An array of Entity classes. The plugin (or ORM) will
+	 * register these entities for use within the application.
+	 */
 	entities: [Proposal, EmployeeProposalTemplate],
+	/**
+	 * A callback that receives the main plugin configuration object and allows
+	 * custom modifications before returning the final configuration.
+	 *
+	 * @param {ApplicationPluginConfig} config - The initial plugin configuration object.
+	 * @returns {ApplicationPluginConfig} - The modified plugin configuration object.
+	 *
+	 * In this example, we're adding a custom relation field (`proposals`) to the `Tag` entity.
+	 */
 	configuration: (config: ApplicationPluginConfig) => {
+		// Add a new 'proposals' tag to the 'Tag' entity
 		config.customFields.Tag.push({
 			name: 'proposals',
 			type: 'relation',
@@ -21,6 +38,7 @@ import { ProposalSeederService } from './proposal/proposal-seeder.service';
 			entity: Proposal,
 			inverseSide: (it: Proposal) => it.tags
 		});
+
 		return config;
 	}
 })

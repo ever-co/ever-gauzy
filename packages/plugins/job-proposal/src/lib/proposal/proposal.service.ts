@@ -5,7 +5,8 @@ import { IPagination } from '@gauzy/contracts';
 import { isPostgres } from '@gauzy/config';
 import { TenantAwareCrudService } from '@gauzy/core';
 import { Proposal } from './proposal.entity';
-import { MikroOrmProposalRepository, TypeOrmProposalRepository } from './repository';
+import { MikroOrmProposalRepository } from './repository/mikro-orm-proposal.repository';
+import { TypeOrmProposalRepository } from './repository/type-orm-proposal.repository';
 
 @Injectable()
 export class ProposalService extends TenantAwareCrudService<Proposal> {
@@ -23,20 +24,20 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 	 * @returns A paginated list of proposals.
 	 */
 	async findAll(filter?: FindManyOptions<Proposal>): Promise<IPagination<Proposal>> {
-		return await this.pagination(filter);
+		return this.pagination(filter);
 	}
 
 	/**
 	 * Paginates data based on the provided filter options.
 	 *
-	 * @param filter The filter options for pagination.
+	 * @param {FindManyOptions} filter - The filter options for pagination.
 	 * @returns The paginated data.
 	 */
 	public async pagination(filter: FindManyOptions) {
 		// Check if 'where' property exists in the filter
 		if (!('where' in filter)) {
 			// If 'where' property is missing, return paginated data without any modification
-			return await super.paginate(filter);
+			return super.paginate(filter);
 		}
 
 		const { where } = filter;
@@ -68,6 +69,6 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 		}
 
 		// Return the paginated data after applying any modifications
-		return await super.paginate(filter);
+		return super.paginate(filter);
 	}
 }
