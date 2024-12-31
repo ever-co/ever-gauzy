@@ -3,20 +3,18 @@ import { CommandBus } from '@nestjs/cqrs';
 import { IIntegrationMapSyncRepository, IOrganizationGithubRepository } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '@gauzy/core';
 import { OrganizationGithubRepository } from './github-repository.entity';
-import { IntegrationSyncGithubRepositoryCommand } from '../commands';
-import {
-	MikroOrmOrganizationGithubRepositoryRepository,
-	TypeOrmOrganizationGithubRepositoryRepository
-} from './repository';
+import { IntegrationSyncGithubRepositoryCommand } from '../commands/integration-sync-github-repository.command';
+import { MikroOrmOrganizationGithubRepositoryRepository } from './repository/mikro-orm-organization-github-repository.repository';
+import { TypeOrmOrganizationGithubRepositoryRepository } from './repository/type-orm-organization-github-repository.repository';
 
 @Injectable()
 export class GithubRepositoryService extends TenantAwareCrudService<OrganizationGithubRepository> {
 	private readonly logger = new Logger('GithubRepositoryService');
 
 	constructor(
+		readonly typeOrmOrganizationGithubRepositoryRepository: TypeOrmOrganizationGithubRepositoryRepository,
+		readonly mikroOrmOrganizationGithubRepositoryRepository: MikroOrmOrganizationGithubRepositoryRepository,
 		private readonly _commandBus: CommandBus,
-		typeOrmOrganizationGithubRepositoryRepository: TypeOrmOrganizationGithubRepositoryRepository,
-		mikroOrmOrganizationGithubRepositoryRepository: MikroOrmOrganizationGithubRepositoryRepository
 	) {
 		super(typeOrmOrganizationGithubRepositoryRepository, mikroOrmOrganizationGithubRepositoryRepository);
 	}

@@ -1,8 +1,8 @@
 import { Controller, Get, HttpException, HttpStatus, Query, Res } from '@nestjs/common';
 import { Response } from 'express';
+import { IGithubIntegrationConfig, Public } from '@gauzy/common';
 import { ConfigService } from '@gauzy/config';
 import { IGithubAppInstallInput } from '@gauzy/contracts';
-import { IGithubIntegrationConfig, Public } from '@gauzy/common';
 
 @Controller('/integration/github')
 export class GitHubAuthorizationController {
