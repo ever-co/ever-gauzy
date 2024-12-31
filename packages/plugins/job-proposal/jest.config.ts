@@ -1,4 +1,3 @@
-/* eslint-disable */
 export default {
 	displayName: 'plugin-job-proposal',
 	preset: '../../../jest.preset.js',

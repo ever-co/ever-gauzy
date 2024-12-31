@@ -15,8 +15,8 @@ export enum ProposalStatusEnum {
 export interface IProposalBase extends IBasePerTenantAndOrganizationEntityModel, ITaggable {
 	jobPostUrl?: string;
 	valueDate?: Date;
-	jobPostContent?: string;
-	proposalContent?: string;
+	jobPostContent: string;
+	proposalContent: string;
 	status?: ProposalStatusEnum;
 }
 
