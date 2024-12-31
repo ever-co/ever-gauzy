@@ -16,8 +16,8 @@ import {
 	MultiORMOneToMany,
 	ColumnNumericTransformerPipe
 } from '@gauzy/core';
-import { MikroOrmOrganizationGithubRepositoryRepository } from './repository/mikro-orm-organization-github-repository.repository';
 import { OrganizationGithubRepositoryIssue } from './issue/github-repository-issue.entity';
+import { MikroOrmOrganizationGithubRepositoryRepository } from './repository/mikro-orm-organization-github-repository.repository';
 
 @MultiORMEntity('organization_github_repository', {
 	mikroOrmRepository: () => MikroOrmOrganizationGithubRepositoryRepository

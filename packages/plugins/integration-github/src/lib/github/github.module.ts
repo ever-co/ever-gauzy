@@ -1,5 +1,5 @@
-import { MiddlewareConsumer, Module, NestModule, RequestMethod, forwardRef } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod, forwardRef } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -12,7 +12,7 @@ import {
 	PluginCommonModule,
 	RolePermissionModule
 } from '@gauzy/core';
-import { environment } from '@gauzy/config';
+import { ConfigModule, environment } from '@gauzy/config';
 import { ProbotModule } from '../probot/probot.module';
 import { CommandHandlers } from './commands/handlers';
 import { GithubEventSubscriber } from './github-event.subscriber';
@@ -30,25 +30,26 @@ import { GithubRepositoryService } from './repository/github-repository.service'
 import { OrganizationGithubRepository } from './repository/github-repository.entity';
 import { OrganizationGithubRepositoryIssue } from './repository/issue/github-repository-issue.entity';
 import { GithubRepositoryIssueService } from './repository/issue/github-repository-issue.service';
-import { TypeOrmOrganizationGithubRepositoryRepository } from './repository/repository';
-import { TypeOrmOrganizationGithubRepositoryIssueRepository } from './repository/issue/repository';
+import { TypeOrmOrganizationGithubRepositoryRepository } from './repository/repository/type-orm-organization-github-repository.repository';
+import { TypeOrmOrganizationGithubRepositoryIssueRepository } from './repository/issue/repository/type-orm-github-repository-issue.repository';
+import { MikroOrmOrganizationGithubRepositoryRepository } from './repository/repository/mikro-orm-organization-github-repository.repository';
+import { MikroOrmOrganizationGithubRepositoryIssueRepository } from './repository/issue/repository/mikro-orm-github-repository-issue.repository';
 
-//
+// Import the Probot configuration module
 const { github } = environment;
 
 @Module({
 	imports: [
 		HttpModule,
-		CqrsModule,
-		TypeOrmModule.forFeature([OrganizationGithubRepository, OrganizationGithubRepositoryIssue]),
-		MikroOrmModule.forFeature([OrganizationGithubRepository, OrganizationGithubRepositoryIssue]),
-		PluginCommonModule,
-		RolePermissionModule,
-		forwardRef(() => OrganizationProjectModule),
-		forwardRef(() => IntegrationModule),
-		forwardRef(() => IntegrationTenantModule),
-		forwardRef(() => IntegrationSettingModule),
-		forwardRef(() => IntegrationMapModule),
+		ConfigModule,
+		TypeOrmModule.forFeature([
+			OrganizationGithubRepository,
+			OrganizationGithubRepositoryIssue
+		]),
+		MikroOrmModule.forFeature([
+			OrganizationGithubRepository,
+			OrganizationGithubRepositoryIssue
+		]),
 		// Probot Configuration
 		ProbotModule.forRoot({
 			isGlobal: true,
@@ -62,7 +63,16 @@ const { github } = environment;
 				privateKey: github.appPrivateKey,
 				webhookSecret: github.webhookSecret
 			}
-		})
+		}),
+		PluginCommonModule,
+		RolePermissionModule,
+		CqrsModule,
+		forwardRef(() => OrganizationProjectModule),
+		forwardRef(() => IntegrationModule),
+		forwardRef(() => IntegrationTenantModule),
+		forwardRef(() => IntegrationSettingModule),
+		forwardRef(() => IntegrationMapModule),
+
 	],
 	controllers: [
 		GitHubAuthorizationController,
@@ -84,7 +94,9 @@ const { github } = environment;
 		GithubRepositoryIssueService,
 		// Define repositories heres
 		TypeOrmOrganizationGithubRepositoryRepository,
+		MikroOrmOrganizationGithubRepositoryRepository,
 		TypeOrmOrganizationGithubRepositoryIssueRepository,
+		MikroOrmOrganizationGithubRepositoryIssueRepository,
 		// Define handlers heres
 		...CommandHandlers
 	],
