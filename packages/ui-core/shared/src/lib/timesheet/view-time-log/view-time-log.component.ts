@@ -1,6 +1,6 @@
 import { Component, OnInit, Input, OnDestroy, Output } from '@angular/core';
 import { IOrganization, ITimeLog, PermissionsEnum, TimeLogSourceEnum } from '@gauzy/contracts';
-import moment from 'moment';
+import * as moment from 'moment';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';

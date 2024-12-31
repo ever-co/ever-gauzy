@@ -13,7 +13,7 @@ import { FullCalendarComponent } from '@fullcalendar/angular';
 import momentTimezonePlugin from '@fullcalendar/moment-timezone';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import moment from 'moment';
+import * as moment from 'moment';
 import * as timezone from 'moment-timezone';
 import {
 	IEmployeeAppointment,

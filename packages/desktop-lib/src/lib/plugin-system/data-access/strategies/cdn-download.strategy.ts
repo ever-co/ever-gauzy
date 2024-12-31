@@ -2,7 +2,7 @@ import * as logger from 'electron-log';
 import { createReadStream } from 'fs';
 import * as fs from 'fs/promises';
 import fetch from 'node-fetch';
-import path, { join } from 'path';
+import * as path from 'path';
 import * as unzipper from 'unzipper';
 import { ICdnDownloadConfig, IPluginDownloadResponse, IPluginDownloadStrategy } from '../../shared';
 
@@ -39,11 +39,11 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 			const tempDirPath = await this.unzip(zipFilePath, pluginPath);
 
 			// Set Path Dirname
-			const pluginDir = join(tempDirPath, fileName.replace(/\.zip$/, ''));
+			const pluginDir = path.join(tempDirPath, fileName.replace(/\.zip$/, ''));
 
 			// Read and parse the metadata
 			const metadata = JSON.parse(
-				await fs.readFile(join(pluginDir, 'manifest.json'), {
+				await fs.readFile(path.join(pluginDir, 'manifest.json'), {
 					encoding: 'utf8'
 				})
 			);

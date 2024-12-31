@@ -1,5 +1,5 @@
 import { IServerConfig } from '../../interfaces';
-import httpProxy from 'http-proxy';
+import * as httpProxy from 'http-proxy';
 import { StaticServer } from '../../server/static-server';
 
 export abstract class BaseReverseProxy extends StaticServer {

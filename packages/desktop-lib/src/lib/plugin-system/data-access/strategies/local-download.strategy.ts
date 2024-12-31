@@ -1,7 +1,7 @@
 import * as logger from 'electron-log';
 import { createReadStream } from 'fs';
 import * as fs from 'fs/promises';
-import path, { join } from 'path';
+import * as path from 'path';
 import * as unzipper from 'unzipper';
 import { ILocalDownloadConfig, IPluginDownloadResponse, IPluginDownloadStrategy } from '../../shared';
 import { LoadPluginDialog } from '../dialog/load-plugin.dialog';
@@ -36,12 +36,12 @@ export class LocalDownloadStrategy implements IPluginDownloadStrategy {
 			const tempDirPath = await this.unzip(zipFilePath, pluginPath);
 
 			// Set Path Dirname
-			const pluginDir = join(tempDirPath, fileName.replace(/\.zip$/, ''));
+			const pluginDir = path.join(tempDirPath, fileName.replace(/\.zip$/, ''));
 
 			// Read and parse the metadata
 			logger.info('Reading manifest.json');
 			const metadata = JSON.parse(
-				await fs.readFile(join(pluginDir, 'manifest.json'), {
+				await fs.readFile(path.join(pluginDir, 'manifest.json'), {
 					encoding: 'utf8'
 				})
 			);

@@ -1,6 +1,6 @@
 import { BrowserWindow } from 'electron';
 import { DesktopServerFactory } from './desktop-server-factory';
-import EventEmitter from 'events';
+import * as EventEmitter from 'events';
 import { Observer } from './server';
 import NotificationDesktop from './desktop-notifier';
 
