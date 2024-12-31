@@ -15,6 +15,8 @@ import {
 import { IntegrationService, IntegrationTenantUpdateOrCreateCommand, RequestContext } from '@gauzy/core';
 import { DEFAULT_ENTITY_SETTINGS, ISSUE_TIED_ENTITIES } from './github-entity-settings';
 import { GITHUB_ACCESS_TOKEN_URL } from './github.config';
+
+// Import the Probot configuration module
 const { github } = environment;
 
 @Injectable()
