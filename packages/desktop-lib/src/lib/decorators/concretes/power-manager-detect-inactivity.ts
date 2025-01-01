@@ -1,5 +1,5 @@
 import { powerMonitor } from 'electron';
-import EventEmitter from 'events';
+import * as EventEmitter from 'events';
 import { SleepTracking } from '../../contexts';
 import { LocalStore } from '../../desktop-store';
 import { IPowerManager } from '../../interfaces';

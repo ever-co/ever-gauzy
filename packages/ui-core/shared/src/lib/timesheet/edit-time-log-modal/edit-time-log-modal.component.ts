@@ -3,7 +3,7 @@ import { FormGroup, FormBuilder } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, debounceTime, filter, Subject, tap } from 'rxjs';
-import moment from 'moment';
+import * as moment from 'moment';
 import { omit } from 'underscore';
 import {
 	IDateRange,

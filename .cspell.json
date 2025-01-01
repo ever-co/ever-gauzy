@@ -537,7 +537,9 @@
 		"theora",
 		"Theora",
 		"Unregisters",
-		"allwindows"
+		"allwindows",
+		"Johndoe",
+		"minizlib"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

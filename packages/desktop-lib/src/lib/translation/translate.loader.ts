@@ -1,4 +1,4 @@
-import fs from 'fs';
+import * as fs from 'fs';
 import { AppError } from '../error-handler';
 import * as path from 'path';
 import { ITranslation } from './i-translation';

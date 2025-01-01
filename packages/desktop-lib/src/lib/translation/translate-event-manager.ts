@@ -1,4 +1,4 @@
-import EventEmitter from 'events';
+import * as EventEmitter from 'events';
 
 enum TranslateEvent {
 	LANGUAGE_CHANGE = 'language_change',

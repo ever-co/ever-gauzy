@@ -1,8 +1,6 @@
 {
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
-		"allowSyntheticDefaultImports": true,
-		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"strict": false,
 		"noImplicitOverride": false,
