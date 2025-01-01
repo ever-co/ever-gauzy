@@ -1,6 +1,9 @@
 import { BrowserWindowConstructorOptions } from 'electron';
-import { Store } from '../electron-helpers'
+import { Store, setupElectronLog } from '../electron-helpers';
 import { IWindowConfig } from '../interfaces';
+
+// Set up Electron log
+setupElectronLog();
 
 export class WindowConfig implements IWindowConfig {
 	private _options?: BrowserWindowConstructorOptions;
@@ -11,7 +14,7 @@ export class WindowConfig implements IWindowConfig {
 		this._hash = hash;
 		this._path = path;
 
-		this.options = {
+		this._options = {
 			webPreferences: {
 				nodeIntegration: true,
 				webSecurity: false,
@@ -21,23 +24,28 @@ export class WindowConfig implements IWindowConfig {
 			title: '',
 			show: false,
 			center: true,
-			icon:  Store.get('filePath')?.iconPath,
+			icon: Store.get('filePath')?.iconPath,
 			...options
 		};
 	}
 
+	// Getter and setter for BrowserWindow options
 	public get options(): BrowserWindowConstructorOptions | undefined {
 		return this._options;
 	}
-	public set options(value: BrowserWindowConstructorOptions) {
+	public set options(value: BrowserWindowConstructorOptions | undefined) {
 		this._options = value;
 	}
+
+	// Getter and setter for the file path
 	public get path(): string {
 		return this._path;
 	}
 	public set path(value: string) {
 		this._path = value;
 	}
+
+	// Getter and setter for the hash
 	public get hash(): string {
 		return this._hash;
 	}

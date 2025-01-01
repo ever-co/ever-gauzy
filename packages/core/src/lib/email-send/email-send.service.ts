@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { IsNull } from "typeorm";
-import Email from 'email-templates';
+import * as Email from 'email-templates';
 import { ISMTPConfig, isEmpty } from "@gauzy/common";
 import { IBasePerTenantAndOrganizationEntityModel, IVerifySMTPTransport } from "@gauzy/contracts";
 import { CustomSmtp } from "./../core/entities/internal";
