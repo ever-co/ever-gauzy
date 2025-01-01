@@ -27,7 +27,15 @@ import {
 	OrganizationProjectBudgetTypeEnum,
 	OrganizationContactBudgetTypeEnum,
 	IActivity,
-	ID
+	ID,
+	ICreateHubstaffIntegrationInput,
+	IHubstaffOrganizationsResponse,
+	IHubstaffOrganization,
+	IHubstaffProject,
+	IHubstaffProjectsResponse,
+	IHubstaffProjectResponse,
+	IHubstaffTimeSlotActivity,
+	IHubstaffLogFromTimeSlots
 } from '@gauzy/contracts';
 import {
 	EmployeeCreateCommand,
@@ -55,16 +63,6 @@ import {
 	mergeOverlappingDateRanges
 } from '@gauzy/core';
 import { HUBSTAFF_AUTHORIZATION_URL } from './hubstaff.config';
-import {
-	ICreateHubstaffIntegrationInput,
-	IHubstaffLogFromTimeSlots,
-	IHubstaffOrganization,
-	IHubstaffProject,
-	IHubstaffOrganizationsResponse,
-	IHubstaffProjectResponse,
-	IHubstaffProjectsResponse,
-	IHubstaffTimeSlotActivity
-} from './hubstaff.model';
 
 @Injectable()
 export class HubstaffService {
