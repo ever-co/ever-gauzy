@@ -1,10 +1,10 @@
+import { faker } from '@faker-js/faker';
 import { QueryRunner } from 'typeorm';
+import { v4 as uuidV4 } from 'uuid';
+import { DatabaseTypeEnum } from '@gauzy/config';
 import { ILanguage, LanguagesEnum } from '@gauzy/contracts';
 import allLanguages from './all-languages';
 import { Language } from './language.entity';
-import { faker } from '@faker-js/faker';
-import { v4 as uuidV4 } from 'uuid';
-import { DatabaseTypeEnum } from '@gauzy/config';
 
 export class LanguageUtils {
 	private static async addLanguages(queryRunner: QueryRunner, languages: ILanguage[]): Promise<void> {

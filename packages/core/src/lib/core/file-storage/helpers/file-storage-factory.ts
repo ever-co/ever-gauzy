@@ -1,4 +1,4 @@
-import multer from 'multer';
+import * as multer from 'multer';
 import * as path from 'path';
 import { FileStorage } from '../file-storage';
 import { DirectoryPathGenerator } from './directory-path-generator';
