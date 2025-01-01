@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { ID, IEmployeeProposalTemplate, IEmployeeProposalTemplateMakeDefaultInput } from '@gauzy/contracts';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { ID, IEmployeeProposalTemplate, IEmployeeProposalTemplateMakeDefaultInput, IPagination } from '@gauzy/contracts';
 import { PaginationParams, TenantAwareCrudService } from '@gauzy/core';
 import { EmployeeProposalTemplate } from './employee-proposal-template.entity';
-import { MikroOrmEmployeeProposalTemplateRepository, TypeOrmEmployeeProposalTemplateRepository } from './repository';
+import { MikroOrmEmployeeProposalTemplateRepository } from './repository/mikro-orm-employee-proposal-template.repository';
+import { TypeOrmEmployeeProposalTemplateRepository } from './repository/type-orm-employee-proposal-template.repository';
 
 @Injectable()
 export class EmployeeProposalTemplateService extends TenantAwareCrudService<EmployeeProposalTemplate> {
@@ -16,32 +17,43 @@ export class EmployeeProposalTemplateService extends TenantAwareCrudService<Empl
 	/**
 	 * Toggles the default status of a proposal template.
 	 *
-	 * @param id - The ID of the proposal template.
-	 * @returns The updated proposal template.
+	 * @param {ID} id - The ID of the proposal template.
+	 * @param {IEmployeeProposalTemplateMakeDefaultInput} input - The object containing the `isDefault` value.
+	 * @returns {Promise<IEmployeeProposalTemplate>} The updated proposal template.
 	 */
-	async makeDefault(id: ID, input: IEmployeeProposalTemplateMakeDefaultInput): Promise<IEmployeeProposalTemplate> {
-		const proposalTemplate: IEmployeeProposalTemplate = await this.findOneByIdString(id);
+	public async makeDefault(
+		id: ID,
+		input: IEmployeeProposalTemplateMakeDefaultInput
+	): Promise<IEmployeeProposalTemplate> {
+		const proposalTemplate = await this.findOneByIdString(id);
+
+		if (!proposalTemplate) {
+			throw new NotFoundException(`Proposal template with ID ${id} not found`);
+		}
+
+		// Update the isDefault property on the target template
 		proposalTemplate.isDefault = input.isDefault;
 
+		// Reset `isDefault` to false on all templates matching these fields
 		const { organizationId, tenantId, employeeId } = proposalTemplate;
 
-		await super.update(
-			{ organizationId, tenantId, employeeId },
-			{
-				isDefault: false
-			}
-		);
+		// Update the isDefault property on all templates matching these fields
+		await super.update({ organizationId, tenantId, employeeId }, { isDefault: false });
 
-		return await super.save(proposalTemplate);
+		// Save and return the updated template
+		return super.save(proposalTemplate);
 	}
 
 	/**
-	 * Finds proposal templates entities that match given find options.
+	 * Finds all proposal templates matching the given pagination params.
 	 *
-	 * @param params - Pagination parameters.
-	 * @returns The list of proposal templates.
+	 * @param {PaginationParams<IEmployeeProposalTemplate>} [params] - Pagination parameters.
+	 * @returns {Promise<IPagination<IEmployeeProposalTemplate>>} Paginated result.
 	 */
-	async findAll(params?: PaginationParams<IEmployeeProposalTemplate>) {
-		return await super.findAll(params);
+	public async findAll(
+		params?: PaginationParams<IEmployeeProposalTemplate>
+	): Promise<IPagination<IEmployeeProposalTemplate>> {
+		// Directly return the result of `super.findAll`.
+		return super.findAll(params);
 	}
 }

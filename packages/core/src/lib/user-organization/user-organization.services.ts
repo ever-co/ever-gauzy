@@ -42,8 +42,8 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 
 				// Extract user IDs from the items array
 				const userIds = items
-					.filter((organization: IUserOrganization) => organization.user) // Filter out user organizations without a user object
-					.map((organization: IUserOrganization) => organization.user.id);
+					.filter((organization: IUserOrganization) => organization?.user) // Filter out user organizations without a user object
+					.map((organization: IUserOrganization) => organization?.user?.id) || [];
 
 				// Fetch all employee details in bulk for the extracted user IDs
 				const employees = await this.employeeService.findEmployeesByUserIds(userIds, tenantId);
@@ -51,13 +51,23 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 				// Map employee details to a dictionary for easier lookup
 				const employeeMap = new Map<string, Employee>();
 				employees.forEach((employee: Employee) => {
-					employeeMap.set(employee.userId, employee);
+					// If user ID is available, add employee details to the map
+					if (employee.userId) {
+						// Add employee details to the map
+						employeeMap.set(employee.userId, employee);
+					}
 				});
 
 				// Merge employee details into each user organization object
 				const itemsWithEmployees = items.map((organization: UserOrganization) => {
-					const employee = employeeMap.get(organization.user.id);
-					return { ...organization, user: { ...organization.user, employee } };
+					// If user ID is available, fetch employee details
+					if (organization.user.id) {
+						// Fetch employee details using the user ID
+						const employee = employeeMap.get(organization.user.id);
+						return { ...organization, user: { ...organization.user, employee } };
+					}
+					// If user ID is not available, return the original organization object
+					return { ...organization };
 				});
 
 				// Return paginated result with employee details

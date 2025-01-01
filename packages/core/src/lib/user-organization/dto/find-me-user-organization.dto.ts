@@ -7,4 +7,4 @@ import { FindMeQueryDTO } from "../../user/dto";
  */
 export class FindMeUserOrganizationDTO extends IntersectionType(
     PickType(FindMeQueryDTO, ['includeEmployee'] as const),
-) { }
+) {}

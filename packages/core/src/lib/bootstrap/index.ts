@@ -31,6 +31,7 @@ startTracing(); // Start tracing if OTEL is enabled.
 import { ConflictException, INestApplication, Type } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { EventSubscriber } from '@mikro-orm/core';
 import { useContainer } from 'class-validator';
 import * as expressSession from 'express-session';
@@ -41,16 +42,15 @@ import * as chalk from 'chalk';
 import * as fs from 'fs';
 import * as path from 'path';
 import { urlencoded, json } from 'express';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { EntitySubscriberInterface } from 'typeorm';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { getConfig, setConfig, environment as env } from '@gauzy/config';
 import { getEntitiesFromPlugins, getPluginConfigurations, getSubscribersFromPlugins } from '@gauzy/plugin';
 import { coreEntities } from '../core/entities';
 import { coreSubscribers } from '../core/entities/subscribers';
+import { registerMikroOrmCustomFields, registerTypeOrmCustomFields } from '../core/entities/custom-entity-fields';
 import { AuthGuard } from '../shared/guards';
 import { SharedModule } from '../shared/shared.module';
-import { registerMikroOrmCustomFields, registerTypeOrmCustomFields } from '../core/entities/custom-entity-fields';
 import { AppService } from '../app/app.service';
 import { AppModule } from '../app/app.module';
 
@@ -72,7 +72,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// Create the NestJS application
 	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
 		logger: ['log', 'error', 'warn', 'debug', 'verbose'], // Set logging levels
-		bufferLogs: true // Buffer logs to avoid loss during startup
+		bufferLogs: env.isElectron ? false : true // Buffer logs to avoid loss during startup // set to false when is electron
 	});
 
 	// Register custom entity fields for Mikro ORM
@@ -496,12 +496,20 @@ async function preBootstrapRegisterSubscribers(
 export function getMigrationsConfig() {
 	// Determine if running from dist or source
 	const isDist = __dirname.includes('dist');
+	const isElectron = !!env.isElectron; // check if electron
+
 	console.log('Migration isDist: ->', isDist);
+	console.log('Migration isElectron: ->', isElectron);
 	console.log('Migration process.cwd(): ->', process.cwd());
 	console.log('Migration __dirname: ->', __dirname);
 
 	// Base migrations directory
-	const migrationsDir = path.resolve(__dirname, './../database/migrations/*{.ts,.js}');
+	const migrationsDir = path.resolve(
+		__dirname,
+		isElectron
+			? './../database/migrations/*.js'           // Only .ts if Electron
+			: './../database/migrations/*{.ts,.js}'      // Otherwise .ts or .js
+	);
 	console.log('Migration migrationsDir: ->', migrationsDir);
 
 	if (!fs.existsSync(path.dirname(migrationsDir))) {

@@ -116,7 +116,10 @@ export class HubstaffController {
 	 * @returns Result of the auto-sync operation
 	 */
 	@Post('/auto-sync/:integrationId')
-	async autoSync(@Param('integrationId', UUIDValidationPipe) integrationId: ID, @Body() body): Promise<any> {
+	async autoSync(
+		@Param('integrationId', UUIDValidationPipe) integrationId: ID,
+		@Body() body
+	): Promise<Object[]> {
 		return await this._hubstaffService.autoSync({
 			...body,
 			integrationId

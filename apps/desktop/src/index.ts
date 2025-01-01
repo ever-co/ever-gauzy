@@ -60,6 +60,34 @@ import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
 import { initSentry } from './sentry';
 
+/**
+ * Describes the configuration for building the Gauzy API base URL.
+ */
+export interface ApiConfig {
+	/**
+	 * A custom server URL, if provided (e.g. 'https://mydomain.com/api').
+	 */
+	serverUrl?: string;
+
+	/**
+	 * The protocol to use (e.g. 'http', 'https').
+	 * Defaults to 'http' if not provided.
+	 */
+	protocol?: string;
+
+	/**
+	 * The hostname or IP address.
+	 * Defaults to '127.0.0.1' if not provided.
+	 */
+	host?: string;
+
+	/**
+	 * The port number for the local environment.
+	 * Defaults to environment.API_DEFAULT_PORT if not provided.
+	 */
+	port?: number;
+}
+
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 // C:\Users\USERNAME\AppData\Roaming\gauzy-desktop
 process.env.GAUZY_USER_PATH = app.getPath('userData');
@@ -271,7 +299,7 @@ async function startServer(value, restart = false) {
 		process.env.DB_NAME = value['postgres']?.dbName;
 		process.env.DB_USER = value['postgres']?.dbUsername;
 		process.env.DB_PASS = value['postgres']?.dbPassword;
-	}
+	}	
 
 	try {
 		const config: any = {
@@ -395,12 +423,43 @@ function setEnvAdditional() {
 	};
 }
 
-const getApiBaseUrl = (configs) => {
-	if (configs.serverUrl) return configs.serverUrl;
-	else {
-		return configs.port ? `http://127.0.0.1:${configs.port}` : `http://127.0.0.1:${environment.API_DEFAULT_PORT}`;
+/**
+ * Retrieves the base URL for the Gauzy API based on a configuration object.
+ *
+ * If `configs.serverUrl` is defined, this function returns that URL directly.
+ * Otherwise, it constructs a local address using `configs.host`, `configs.protocol`,
+ * and `configs.port` or falls back to sensible defaults.
+ *
+ * @param {ApiConfig} configs - The configuration object.
+ * @returns {string} - The resulting base URL for the API.
+ */
+export const getApiBaseUrl = (configs: ApiConfig): string => {
+	console.log('get configs', configs);
+
+	// If a full server URL is provided, return it directly
+	if (configs.serverUrl) {
+		console.log('get configs.serverUrl', configs.serverUrl);
+		return configs.serverUrl;
 	}
+
+	// Otherwise, build the URL dynamically using the host, protocol, and port
+	const protocol = configs.protocol ?? 'http';             // default protocol
+	const host = configs.host ?? '127.0.0.1';               // default host
+	const port = configs.port ?? environment.API_DEFAULT_PORT;
+
+	console.log('get configs.protocol', configs.protocol);
+	console.log('get configs.host', configs.host);
+	console.log('get configs.port', configs.port);
+
+	return `${protocol}://${host}:${port}`;
 };
+
+const closeSplashScreen = () => {
+	if (splashScreen) {
+		splashScreen.close();
+		splashScreen = null;
+	}
+}
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -486,7 +545,7 @@ app.on('ready', async () => {
 			if (!configs.serverConfigConnected && !configs?.isLocalServer) {
 				setupWindow = await createSetupWindow(setupWindow, false, pathWindow.timeTrackerUi);
 				setupWindow.show();
-				splashScreen.close();
+				closeSplashScreen()
 				setupWindow.webContents.send('setup-data', {
 					...configs
 				});
@@ -501,7 +560,7 @@ app.on('ready', async () => {
 		} else {
 			setupWindow = await createSetupWindow(setupWindow, false, pathWindow.timeTrackerUi);
 			setupWindow.show();
-			splashScreen.close();
+			closeSplashScreen();
 		}
 	} catch (error) {
 		console.error('ERROR: Occurred while create window:' + error);
@@ -717,7 +776,7 @@ app.on('activate', async () => {
 	} else {
 		if (setupWindow) {
 			setupWindow.show();
-			splashScreen.close();
+			closeSplashScreen();
 		}
 	}
 });

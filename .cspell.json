@@ -538,7 +538,8 @@
 		"theora",
 		"Theora",
 		"Unregisters",
-		"allwindows"
+		"allwindows",
+		"Johndoe"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

@@ -26,7 +26,6 @@ export interface IHubstaffOrganizationsResponse {
 	organizations: IHubstaffOrganization[]
 }
 
-
 export interface IHubstaffProject {
 	id: number;
 	name: string;
@@ -46,6 +45,7 @@ export interface IHubstaffProjectsResponse {
 export interface IHubstaffProjectResponse {
 	project: IHubstaffProject
 }
+
 export interface IHubstaffTimeSlotActivity {
 	id: number;
 	date: string;
@@ -67,23 +67,6 @@ export interface IHubstaffTimeSlotActivity {
 	immutable: boolean;
 	time_type: string;
 	client: string;
-	employeeId?: string;
-}
-
-export interface IHubstaffScreenshotActivity {
-	id: number;
-	full_url: string;
-	thumb_url: string;
-	date: string,
-	time_slot: string;
-	recorded_at: string;
-	user_id: number;
-	project_id: number;
-	offset_x: number;
-	offset_y: number;
-	width: number;
-	height: number;
-	screen: number;
 	employeeId?: string;
 }
 
