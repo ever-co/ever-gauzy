@@ -1,5 +1,5 @@
 import { BrowserWindow, WebContents } from 'electron';
-import log from 'electron-log';
+import * as log from 'electron-log';
 import { IWindow, IWindowManager, RegisteredWindow } from '../interfaces/iwindow.manager';
 
 export class WindowManager implements IWindowManager {
