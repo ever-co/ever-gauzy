@@ -1,5 +1,5 @@
 {
-	"name": "@gauzy/common-utils",
+	"name": "@gauzy/utils",
 	"version": "0.0.1",
 	"description": "A set of common utility functions for streamlined development in JavaScript and TypeScript, compatible with Angular, NestJS, and other frameworks.",
 	"author": {
@@ -20,9 +20,9 @@
 	"main": "./src/index.js",
 	"typings": "./src/index.d.ts",
 	"scripts": {
-		"lib:build": "yarn nx build common-utils",
-		"lib:build:prod": "yarn nx build common-utils",
-		"lib:watch": "yarn nx build common-utils --watch"
+		"lib:build": "yarn nx build utils",
+		"lib:build:prod": "yarn nx build utils",
+		"lib:watch": "yarn nx build utils --watch"
 	},
 	"dependencies": {
 		"tslib": "^2.6.2"

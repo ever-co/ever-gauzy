@@ -1,7 +1,7 @@
 {
-	"name": "common-utils",
+	"name": "utils",
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
-	"sourceRoot": "packages/common-utils/src",
+	"sourceRoot": "packages/utils/src",
 	"projectType": "library",
 	"release": {
 		"version": {
@@ -18,10 +18,10 @@
 			"executor": "@nx/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "dist/packages/common-utils",
-				"main": "packages/common-utils/src/index.ts",
-				"tsConfig": "packages/common-utils/tsconfig.lib.json",
-				"assets": ["packages/common-utils/*.md"]
+				"outputPath": "dist/packages/utils",
+				"main": "packages/utils/src/index.ts",
+				"tsConfig": "packages/utils/tsconfig.lib.json",
+				"assets": ["packages/utils/*.md"]
 			}
 		},
 		"nx-release-publish": {
@@ -36,7 +36,7 @@
 			"executor": "@nx/jest:jest",
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
-				"jestConfig": "packages/common-utils/jest.config.ts"
+				"jestConfig": "packages/utils/jest.config.ts"
 			}
 		}
 	}

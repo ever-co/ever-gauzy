@@ -8,7 +8,6 @@
 			"@env-desktop/environment": ["./apps/desktop/src/environments/environment.ts"],
 			"@gauzy/auth": ["./packages/auth/src/index.ts"],
 			"@gauzy/common": ["./packages/common/src/index.ts"],
-			"@gauzy/common-utils": ["./packages/common-utils/src/index.ts"],
 			"@gauzy/config": ["./packages/config/src/index.ts"],
 			"@gauzy/contracts": ["./packages/contracts/src/index.ts"],
 			"@gauzy/core": ["./packages/core/src/index.ts"],
@@ -48,6 +47,7 @@
 			"@gauzy/ui-config": ["./packages/ui-config/src/index.ts"],
 			"@gauzy/ui-core": ["./packages/ui-core/src/index.ts"],
 			"@gauzy/ui-core/*": ["./packages/ui-core/*/src/index.ts"],
+			"@gauzy/utils": ["./packages/utils/src/index.ts"],
 			"@nebular/*": ["./node_modules/@nebular/*"],
 			"ng2-completer": ["./node_modules/@akveo/ng2-completer"],
 			"ngx-daterangepicker-material/*": ["./node_modules/ngx-daterangepicker-material/*"]

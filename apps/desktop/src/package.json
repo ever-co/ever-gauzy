@@ -23,7 +23,7 @@
 		"packages": [
 			"../../../dist/packages/auth",
 			"../../../dist/packages/common",
-			"../../../dist/packages/common-utils",
+			"../../../dist/packages/utils",
 			"../../../dist/packages/config",
 			"../../../dist/packages/contracts",
 			"../../../dist/packages/core",
@@ -146,7 +146,7 @@
 		"@electron/remote": "^2.0.8",
 		"@gauzy/auth": "file:../../../dist/packages/auth",
 		"@gauzy/common": "file:../../../dist/packages/common",
-		"@gauzy/common-utils": "file:../../../dist/packages/common-utils",
+		"@gauzy/utils": "file:../../../dist/packages/utils",
 		"@gauzy/config": "file:../../../dist/packages/config",
 		"@gauzy/contracts": "file:../../../dist/packages/contracts",
 		"@gauzy/core": "file:../../../dist/packages/core",
