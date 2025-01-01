@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Directive, Input, OnInit, TemplateRef, ViewContainerRef } from '@angular/core';
 import { filter, tap, map, switchMap, distinctUntilChanged } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import camelcase from 'camelcase';
+import * as camelcase from 'camelcase';
 import { IOrganization, IUser } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { Store } from '@gauzy/ui-core/core';

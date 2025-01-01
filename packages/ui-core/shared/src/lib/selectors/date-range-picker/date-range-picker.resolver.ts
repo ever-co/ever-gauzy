@@ -1,6 +1,6 @@
 import { ActivatedRouteSnapshot, ResolveFn } from '@angular/router';
 import { Observable, of } from 'rxjs';
-import moment from 'moment';
+import * as moment from 'moment';
 import { IDateRangePicker } from '@gauzy/contracts';
 import { parseToBoolean } from '@gauzy/ui-core/common';
 import { IDatePickerConfig } from '@gauzy/ui-core/core';

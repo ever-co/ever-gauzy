@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { ICurrentApplication } from './interfaces';
 import { CurrentApplication, DataApplication } from './contexts';
-import moment from 'moment';
+import * as moment from 'moment';
 import { LocalStore } from './desktop-store';
 
 const activeWindow = require('active-win');

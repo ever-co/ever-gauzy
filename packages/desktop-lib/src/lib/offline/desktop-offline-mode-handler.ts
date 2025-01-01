@@ -1,4 +1,4 @@
-import EventEmitter from 'events';
+import * as EventEmitter from 'events';
 import { NetworkStateManager } from '../contexts';
 import { LocalStore } from '../desktop-store';
 import { IOfflineMode } from '../interfaces';

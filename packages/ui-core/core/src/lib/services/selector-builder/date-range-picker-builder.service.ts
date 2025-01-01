@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import moment from 'moment';
+import * as moment from 'moment';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { isNotEmpty } from '@gauzy/ui-core/common';
 import { IDateRangePicker } from '@gauzy/contracts';

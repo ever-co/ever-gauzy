@@ -1,5 +1,5 @@
-import ElectronLog from 'electron-log';
-import ElectronStore from 'electron-store';
+import * as ElectronLog from 'electron-log';
+import * as ElectronStore from 'electron-store';
 import { StoreSchema } from './interfaces/types';
 
 // Set up the logger

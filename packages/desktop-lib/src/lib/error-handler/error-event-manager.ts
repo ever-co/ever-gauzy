@@ -1,4 +1,4 @@
-import EventEmitter from 'events';
+import * as EventEmitter from 'events';
 
 enum ErrorHandlerEvent {
 	REPORT = 'send_report_error',

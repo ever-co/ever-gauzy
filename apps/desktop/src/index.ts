@@ -9,7 +9,7 @@ import * as remoteMain from '@electron/remote/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
 import { BrowserWindow, Menu, MenuItemConstructorOptions, app, dialog, ipcMain, nativeTheme, shell } from 'electron';
 import * as path from 'path';
-import Store from 'electron-store';
+import * as Store from 'electron-store';
 
 import { environment } from './environments/environment';
 
@@ -299,7 +299,7 @@ async function startServer(value, restart = false) {
 		process.env.DB_NAME = value['postgres']?.dbName;
 		process.env.DB_USER = value['postgres']?.dbUsername;
 		process.env.DB_PASS = value['postgres']?.dbPassword;
-	}	
+	}
 
 	try {
 		const config: any = {

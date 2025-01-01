@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import moment from 'moment';
+import * as moment from 'moment';
 import { toTimezone } from '@gauzy/ui-core/common';
 
 @Pipe({

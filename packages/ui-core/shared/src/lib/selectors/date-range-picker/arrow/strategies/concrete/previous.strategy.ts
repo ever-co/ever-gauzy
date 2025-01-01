@@ -1,4 +1,4 @@
-import moment from 'moment';
+import * as moment from 'moment';
 import { IDateRangePicker } from '@gauzy/contracts';
 import { IArrowStrategy } from '../arrow-strategy.interface';
 
