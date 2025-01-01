@@ -9,6 +9,16 @@ export interface FilePath {
 }
 
 /**
+ * Represents the structure of a project object stored in Electron Store.
+ */
+export interface StoreProject {
+    /**
+     * A note associated with the project.
+     */
+    note: string;
+}
+
+/**
  * Defines the structure of the Electron Store schema for type safety and consistency.
  *
  * The `StoreSchema` interface represents the schema used in the Electron Store.
@@ -29,4 +39,9 @@ export interface StoreSchema {
      * Includes the `iconPath` property which specifies the path to an icon.
      */
     filePath: FilePath;
+
+	/**
+	 * Represents the project configuration stored in the Electron Store.
+	 */
+	project: StoreProject;
 }
