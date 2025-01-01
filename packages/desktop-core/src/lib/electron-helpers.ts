@@ -1,13 +1,18 @@
-import * as ElectronLog from 'electron-log';
+import { log, functions as logFunctions } from 'electron-log';
 import * as ElectronStore from 'electron-store';
 import { StoreSchema } from './interfaces/types';
 
-// Set up the logger
-console.log = ElectronLog.log;
-Object.assign(console, ElectronLog.functions);
+/**
+ * Sets up Electron logging by overriding console methods with Electron Log functions.
+ */
+const setupElectronLog = (): void => {
+    Object.assign(console, { ...logFunctions, log });
+    console.log('Electron logger has been initialized');
+};
 
-// Create a typed store instance
-const Store = new ElectronStore<StoreSchema>();
+/**
+ * Creates and exports a strongly-typed Electron Store instance.
+ */
+const store = new ElectronStore<StoreSchema>();
 
-// Export the logger and store
-export { ElectronLog, Store };
+export { setupElectronLog, store as Store };
