@@ -5,8 +5,6 @@ import { IUpworkApiConfig } from '@gauzy/contracts';
 
 @Injectable()
 export class UpworkJobService {
-	constructor() {}
-
 	/*
 	 * Get job by key
 	 * This call returns the complete job object by job key. It's only available for users with `manage_recruiting` permissions within the team that the job is posted in.

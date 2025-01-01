@@ -1,9 +1,9 @@
 import { Controller, Get, HttpException, HttpStatus, Query, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
+import { IHubstaffConfig, Public, createQueryParamsString } from '@gauzy/common';
 import { ConfigService } from '@gauzy/config';
 import { IntegrationEnum } from '@gauzy/contracts';
-import { IHubstaffConfig, Public, createQueryParamsString } from '@gauzy/common';
 
 @ApiTags('Hubstaff Integrations')
 @Public()

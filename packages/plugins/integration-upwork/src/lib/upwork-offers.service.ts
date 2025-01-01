@@ -6,8 +6,6 @@ import { IUpworkApiConfig, IUpworkProposalStatusEnum, IUpworkOfferStatusEnum } f
 
 @Injectable()
 export class UpworkOffersService {
-	constructor() {}
-
 	/**
 	 * List freelancer’s offers
 	 * This call retrieves a list of offers received by a freelancer.

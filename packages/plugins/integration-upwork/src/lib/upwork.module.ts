@@ -1,5 +1,6 @@
 import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@gauzy/config';
 import {
 	EmployeeModule,
 	ExpenseCategoriesModule,
@@ -38,9 +39,19 @@ import { UpworkController } from './upwork.controller';
 		TimeSlotModule,
 		UserModule,
 		ProposalModule,
+		ConfigModule,
 		CqrsModule
 	],
-	controllers: [UpworkAuthorizationController, UpworkController],
-	providers: [UpworkJobService, UpworkOffersService, UpworkReportService, UpworkTransactionService, UpworkService]
+	controllers: [
+		UpworkAuthorizationController,
+		UpworkController
+	],
+	providers: [
+		UpworkJobService,
+		UpworkOffersService,
+		UpworkReportService,
+		UpworkTransactionService,
+		UpworkService
+	]
 })
 export class UpworkModule {}
