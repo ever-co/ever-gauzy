@@ -30,6 +30,7 @@
 		"build:package:contracts": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn --cwd ./packages/contracts build",
 		"build:package:config": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn --cwd ./packages/config build",
 		"build:package:common": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn --cwd ./packages/common build",
+		"build:package:common-utils": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn --cwd ./packages/common-utils build",
 		"build:package:plugin": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn --cwd ./packages/plugin build",
 		"build:package:plugin:integration-wakatime": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn --cwd ./packages/plugins/integration-wakatime build",
 		"build:package:desktop-lib": "yarn run build:package:desktop-window && cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn nx build desktop-lib --configuration=development",

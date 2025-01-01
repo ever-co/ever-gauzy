@@ -142,6 +142,7 @@ WORKDIR /srv/gauzy
 COPY --chown=node:node apps/api/package.json ./apps/api/
 
 COPY --chown=node:node packages/common/package.json ./packages/common/
+COPY --chown=node:node packages/common-utils/package.json ./packages/common-utils/
 COPY --chown=node:node packages/config/package.json ./packages/config/
 COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/auth/package.json ./packages/auth/
@@ -203,6 +204,7 @@ WORKDIR /srv/gauzy
 COPY --chown=node:node apps/api/package.json ./apps/api/
 
 COPY --chown=node:node packages/common/package.json ./packages/common/
+COPY --chown=node:node packages/common-utils/package.json ./packages/common-utils/
 COPY --chown=node:node packages/config/package.json ./packages/config/
 COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/auth/package.json ./packages/auth/
@@ -325,6 +327,7 @@ RUN yarn cache clean
 # we need node_modules inside each @gauzy package
 RUN cp -r ./packages/auth/node_modules ./node_modules/@gauzy/auth/
 RUN cp -r ./packages/common/node_modules ./node_modules/@gauzy/common/
+RUN cp -r ./packages/common-utils/node_modules ./node_modules/@gauzy/common-utils/
 RUN cp -r ./packages/config/node_modules ./node_modules/@gauzy/config/
 RUN cp -r ./packages/contracts/node_modules ./node_modules/@gauzy/contracts/
 RUN cp -r ./packages/core/node_modules ./node_modules/@gauzy/core/
