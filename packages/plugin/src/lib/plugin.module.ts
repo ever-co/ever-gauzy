@@ -25,7 +25,6 @@ export class PluginModule implements OnModuleInit, OnModuleDestroy {
 	static init(): DynamicModule {
 		// Retrieve your config (and plugins) from wherever they're defined
 		const config = getConfig();
-		console.log('PluginModule in with config.plugins:', config.plugins);
 
 		return {
 			module: PluginModule,

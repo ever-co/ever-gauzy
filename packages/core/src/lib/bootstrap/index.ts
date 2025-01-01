@@ -37,7 +37,7 @@ import { useContainer } from 'class-validator';
 import * as expressSession from 'express-session';
 import RedisStore from 'connect-redis';
 import { createClient } from 'redis';
-import helmet from 'helmet';
+import * as helmet from 'helmet';
 import * as chalk from 'chalk';
 import * as fs from 'fs';
 import * as path from 'path';
