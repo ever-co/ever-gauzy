@@ -1,4 +1,3 @@
-/* eslint-disable */
 export default {
 	displayName: 'plugin-integration-hubstaff',
 	preset: '../../../jest.preset.js',

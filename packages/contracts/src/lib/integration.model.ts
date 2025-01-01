@@ -116,6 +116,23 @@ export interface IIntegrationTenantUpdateInput extends Partial<IIntegrationTenan
 	id?: ID;
 }
 
+export interface IIntegrationMapSyncScreenshot {
+	id: number;
+	full_url: string;
+	thumb_url: string;
+	date: string,
+	time_slot: string;
+	recorded_at: string;
+	user_id: number;
+	project_id: number;
+	offset_x: number;
+	offset_y: number;
+	width: number;
+	height: number;
+	screen: number;
+	employeeId?: string;
+}
+
 export enum IntegrationEnum {
 	IMPORT_EXPORT = 'Import_Export',
 	UPWORK = 'Upwork',
