@@ -14,12 +14,11 @@ import * as Store from 'electron-store';
 import { environment } from './environments/environment';
 
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
+console.log('Desktop Node Modules Path', path.join(__dirname, 'node_modules'));
 
 Object.assign(process.env, environment);
 
 app.setName(process.env.NAME);
-
-console.log('Desktop Node Modules Path', path.join(__dirname, 'node_modules'));
 
 remoteMain.initialize();
 
@@ -325,13 +324,19 @@ async function startServer(value, restart = false) {
 	}
 
 	if (value.isLocalServer) {
+		console.log(`Starting local server on port ${value.port || environment.API_DEFAULT_PORT}`);
 		process.env.API_PORT = value.port || environment.API_DEFAULT_PORT;
 		process.env.API_HOST = '0.0.0.0';
 		process.env.API_BASE_URL = `http://127.0.0.1:${value.port || environment.API_DEFAULT_PORT}`;
 
+		console.log('Setting additional environment variables...', process.env.API_PORT);
+		console.log('Setting additional environment variables...', process.env.API_HOST);
+		console.log('Setting additional environment variables...', process.env.API_BASE_URL);
+
 		setEnvAdditional();
 
 		try {
+			console.log('Starting local server...', path.join(__dirname, 'api/main.js'));
 			await server.start({ api: path.join(__dirname, 'api/main.js') }, process.env, setupWindow, signal);
 		} catch (error) {
 			console.error('ERROR: Occurred while server start:' + error);
@@ -443,17 +448,21 @@ export const getApiBaseUrl = (configs: ApiConfig): string => {
 	}
 
 	// Otherwise, build the URL dynamically using the host, protocol, and port
-	const protocol = configs.protocol ?? 'http';             // default protocol
-	const host = configs.host ?? '127.0.0.1';               // default host
-	const port = configs.port ?? environment.API_DEFAULT_PORT;
+	const protocol = configs.protocol ?? 'http'; // default protocol
+	const host = '127.0.0.1'; // default host
+	const port = configs.port ?? environment.API_DEFAULT_PORT; // default port
 
 	console.log('get configs.protocol', configs.protocol);
 	console.log('get configs.host', configs.host);
 	console.log('get configs.port', configs.port);
 
+	console.log('Building API URL...', `${protocol}://${host}:${port}`);
 	return `${protocol}://${host}:${port}`;
 };
 
+/**
+ * Closes the splash screen.
+ */
 const closeSplashScreen = () => {
 	if (splashScreen) {
 		splashScreen.close();
@@ -481,7 +490,6 @@ app.on('ready', async () => {
 
 	try {
 		splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
-
 		await splashScreen.loadURL();
 
 		splashScreen.show();
