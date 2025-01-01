@@ -1,4 +1,4 @@
-import express from 'express';
+import * as express from 'express';
 import { ILocalUpdateServer } from '../interfaces';
 import { StaticServer } from './static-server';
 import { LOCAL_SERVER_UPDATE_CONFIG } from '../config';

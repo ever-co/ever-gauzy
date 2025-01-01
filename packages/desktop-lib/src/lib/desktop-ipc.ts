@@ -1,6 +1,6 @@
 import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences } from 'electron';
 import log from 'electron-log';
-import moment from 'moment';
+import * as moment from 'moment';
 import * as _ from 'underscore';
 import { IActivityWatchEventResult } from '@gauzy/contracts';
 import { RegisteredWindow, WindowManager } from '@gauzy/desktop-core';

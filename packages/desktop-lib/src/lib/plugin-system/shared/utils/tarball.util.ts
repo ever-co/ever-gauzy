@@ -1,8 +1,8 @@
 import * as logger from 'electron-log';
 import { createReadStream, createWriteStream } from 'fs';
 import * as fs from 'fs/promises';
-import https from 'https';
-import path from 'path';
+import * as https from 'https';
+import * as path from 'path';
 import { pipeline } from 'stream';
 import * as tar from 'tar';
 import { promisify } from 'util';

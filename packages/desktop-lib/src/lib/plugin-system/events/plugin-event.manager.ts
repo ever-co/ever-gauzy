@@ -1,4 +1,4 @@
-import EventEmitter from 'events';
+import * as EventEmitter from 'events';
 
 export enum PluginEvent {
 	NOTIFY = 'on::plugin::notify'

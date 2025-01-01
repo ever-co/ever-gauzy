@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 
-import moment from 'moment';
+import * as moment from 'moment';
 import { Observable } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { IOrganizationSprint, IOrganizationProject, IOrganization } from '@gauzy/contracts';

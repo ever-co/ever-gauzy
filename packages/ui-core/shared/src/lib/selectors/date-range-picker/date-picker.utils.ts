@@ -1,4 +1,4 @@
-import moment from 'moment';
+import * as moment from 'moment';
 import { IDateRangePicker, ISelectedDateRange, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
 import { TimePeriod } from './date-picker.interface';
 
