@@ -1,4 +1,3 @@
-/* eslint-disable */
 export default {
 	displayName: 'plugin-integration-upwork',
 	preset: '../../../jest.preset.js',

@@ -47,6 +47,7 @@
 			"@gauzy/ui-config": ["./packages/ui-config/src/index.ts"],
 			"@gauzy/ui-core": ["./packages/ui-core/src/index.ts"],
 			"@gauzy/ui-core/*": ["./packages/ui-core/*/src/index.ts"],
+			"@gauzy/utils": ["./packages/utils/src/index.ts"],
 			"@nebular/*": ["./node_modules/@nebular/*"],
 			"ng2-completer": ["./node_modules/@akveo/ng2-completer"],
 			"ngx-daterangepicker-material/*": ["./node_modules/ngx-daterangepicker-material/*"]
