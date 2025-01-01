@@ -1,4 +1,5 @@
-import { IBasePerTenantAndOrganizationEntityModel, TimeLogType } from "@gauzy/contracts";
+import { IBasePerTenantAndOrganizationEntityModel } from "./base-entity.model";
+import { TimeLogType } from "./timesheet.model";
 
 export interface IHubstaffAccessTokens {
 	access_token: string;
