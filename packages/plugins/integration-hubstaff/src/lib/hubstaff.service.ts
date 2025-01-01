@@ -3,8 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { CommandBus } from '@nestjs/cqrs';
 import { AxiosError, AxiosResponse } from 'axios';
 import { DeepPartial } from 'typeorm';
-import { firstValueFrom, lastValueFrom } from 'rxjs';
-import { map, catchError, switchMap } from 'rxjs/operators';
+import { catchError, firstValueFrom, lastValueFrom, map, switchMap } from 'rxjs';
 import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
 import { isEmpty, isNotEmpty, isObject } from '@gauzy/common';
@@ -20,8 +19,6 @@ import {
 	CurrenciesEnum,
 	ProjectBillingEnum,
 	TimeLogSourceEnum,
-	IHubstaffOrganization,
-	IHubstaffProject,
 	IIntegrationEntitySetting,
 	IDateRangeActivityFilter,
 	ComponentLayoutStyleEnum,
@@ -29,29 +26,13 @@ import {
 	IDateRange,
 	OrganizationProjectBudgetTypeEnum,
 	OrganizationContactBudgetTypeEnum,
-	IHubstaffProjectsResponse,
-	IHubstaffOrganizationsResponse,
-	IHubstaffProjectResponse,
-	IHubstaffTimeSlotActivity,
 	IActivity,
-	IHubstaffLogFromTimeSlots,
-	ICreateHubstaffIntegrationInput,
 	ID
 } from '@gauzy/contracts';
-import { DEFAULT_ENTITY_SETTINGS, PROJECT_TIED_ENTITIES, mergeOverlappingDateRanges } from '@gauzy/core';
-import {
-	IntegrationMapService,
-	IntegrationService,
-	IntegrationSettingService,
-	IntegrationTenantService,
-	OrganizationService,
-	RequestContext,
-	RoleService,
-	UserService
-} from '@gauzy/core';
 import {
 	EmployeeCreateCommand,
 	EmployeeGetCommand,
+	IntegrationMapService,
 	IntegrationMapSyncActivityCommand,
 	IntegrationMapSyncEntityCommand,
 	IntegrationMapSyncOrganizationCommand,
@@ -59,11 +40,31 @@ import {
 	IntegrationMapSyncScreenshotCommand,
 	IntegrationMapSyncTaskCommand,
 	IntegrationMapSyncTimeLogCommand,
+	IntegrationService,
 	IntegrationMapSyncTimeSlotCommand,
+	IntegrationSettingService,
+	UserService,
+	RoleService,
+	OrganizationService,
+	IntegrationTenantService,
 	IntegrationTenantUpdateOrCreateCommand,
-	OrganizationContactCreateCommand
+	OrganizationContactCreateCommand,
+	RequestContext,
+	DEFAULT_ENTITY_SETTINGS,
+	PROJECT_TIED_ENTITIES,
+	mergeOverlappingDateRanges
 } from '@gauzy/core';
 import { HUBSTAFF_AUTHORIZATION_URL } from './hubstaff.config';
+import {
+	ICreateHubstaffIntegrationInput,
+	IHubstaffLogFromTimeSlots,
+	IHubstaffOrganization,
+	IHubstaffProject,
+	IHubstaffOrganizationsResponse,
+	IHubstaffProjectResponse,
+	IHubstaffProjectsResponse,
+	IHubstaffTimeSlotActivity
+} from './hubstaff.model';
 
 @Injectable()
 export class HubstaffService {
@@ -281,8 +282,8 @@ export class HubstaffService {
 						)
 					)
 				),
-				catchError((err) => {
-					throw new BadRequestException(err);
+				catchError((error) => {
+					throw new BadRequestException(error);
 				})
 			);
 
@@ -363,10 +364,7 @@ export class HubstaffService {
 			const tenantId = RequestContext.currentTenantId();
 			return await Promise.all(
 				projects.map(async ({ sourceId }) => {
-					const { project } = await this.fetchIntegration<IHubstaffProjectResponse>(
-						`projects/${sourceId}`,
-						token
-					);
+					const { project } = await this.fetchIntegration<IHubstaffProjectResponse>(`projects/${sourceId}`, token);
 
 					/** Third Party Organization Project Map */
 					return await this._commandBus.execute(

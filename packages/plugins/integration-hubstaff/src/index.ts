@@ -3,3 +3,4 @@
  */
 export * from './lib/integration-hubstaff.plugin';
 export * from './lib/hubstaff.config';
+export * from './lib/hubstaff.model';

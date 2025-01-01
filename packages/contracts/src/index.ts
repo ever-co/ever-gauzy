@@ -65,7 +65,6 @@ export * from './lib/goals.model';
 export * from './lib/help-center-article.model';
 export * from './lib/help-center.model';
 export * from './lib/http-status.enum';
-export * from './lib/hubstaff.model';
 export * from './lib/image-asset.model';
 export * from './lib/import-export.model';
 export * from './lib/income.model';
