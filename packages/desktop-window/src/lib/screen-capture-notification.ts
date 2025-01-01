@@ -57,7 +57,7 @@ export class ScreenCaptureNotification extends BaseWindow implements IBaseWindow
 		// Keep the window always on top
 		this.browserWindow.setAlwaysOnTop(true);
 
-		// Prevent the window from being full-screenable
+		// Prevent the window from being fullScreenable
 		this.browserWindow.setFullScreenable(false);
 
 		// Register the window with the window manager
