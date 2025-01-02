@@ -39,7 +39,7 @@ export async function createTimeTrackerWindow(
     // Hide the window initially
     timeTrackerWindow.hide();
 
-	// Load the Time Tracker page using the helper function
+    // Load the Time Tracker page using the helper function
     await setLaunchPathAndLoad(timeTrackerWindow, filePath, '/time-tracker');
 
     // Attach the custom title bar if a preload script is provided
@@ -54,8 +54,8 @@ export async function createTimeTrackerWindow(
     // Remove the menu from the window
     timeTrackerWindow.setMenu(null);
 
-	// Attach the close event handler
-	handleWindowClose(timeTrackerWindow);
+    // Attach the close event handler
+    handleWindowClose(timeTrackerWindow);
 
     // Register the Time Tracker window with the WindowManager
     manager.register(RegisteredWindow.TIMER, timeTrackerWindow);
