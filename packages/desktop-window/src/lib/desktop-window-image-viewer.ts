@@ -46,7 +46,7 @@ export async function createImageViewerWindow(
     // imageViewWindow.webContents.toggleDevTools();
 
     // Attach the close event handler
-    handleWindowClose(imageViewWindow);
+    handleCloseEvent(imageViewWindow);
 
     // Register the Image Viewer window with the WindowManager
     manager.register(RegisteredWindow.IMAGE_VIEWER, imageViewWindow);
@@ -95,7 +95,7 @@ async function setLaunchPathAndLoad(
  *
  * @param {BrowserWindow} window - The BrowserWindow instance to handle the 'close' event.
  */
-function handleWindowClose(window: BrowserWindow): void {
+function handleCloseEvent(window: BrowserWindow): void {
     window.on('close', (event) => {
         event.preventDefault();
         window.hide();

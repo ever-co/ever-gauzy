@@ -55,7 +55,7 @@ export async function createTimeTrackerWindow(
     timeTrackerWindow.setMenu(null);
 
     // Attach the close event handler
-    handleWindowClose(timeTrackerWindow);
+    handleCloseEvent(timeTrackerWindow);
 
     // Register the Time Tracker window with the WindowManager
     manager.register(RegisteredWindow.TIMER, timeTrackerWindow);
@@ -99,7 +99,7 @@ async function setLaunchPathAndLoad(
  *
  * @param {Electron.BrowserWindow} window - The BrowserWindow instance to attach the close event handler.
  */
-function handleWindowClose(window: BrowserWindow): void {
+function handleCloseEvent(window: BrowserWindow): void {
     window.on('close', (event) => {
         event.preventDefault();
         window.hide();
