@@ -1,4 +1,10 @@
 import * as chalk from 'chalk';
+import { loadEnv } from './load-env';
+
+// Load environment variables
+console.log('Loading Environment Variables...');
+loadEnv();
+console.log('Environment Variables Loaded');
 
 // Start measuring the overall API startup time
 console.time(chalk.green(`✔ Total API Startup Time`));

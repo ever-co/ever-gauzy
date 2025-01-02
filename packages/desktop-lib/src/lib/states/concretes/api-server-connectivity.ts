@@ -1,9 +1,9 @@
+import { fetch, Agent } from 'undici';
+import * as dns from 'node:dns';
+dns.setDefaultResultOrder('ipv4first');
+
 import { INetworkState } from '../../interfaces';
 import { LocalStore } from '../../desktop-store';
-import { fetch, Agent } from 'undici';
-
-import dns from 'node:dns';
-dns.setDefaultResultOrder('ipv4first');
 
 export class ApiServerConnectivity implements INetworkState {
 	public async established(): Promise<boolean> {

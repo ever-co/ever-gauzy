@@ -8,7 +8,7 @@ import {
 	DaterangepickerDirective as DateRangePickerDirective,
 	LocaleConfig
 } from 'ngx-daterangepicker-material';
-import moment from 'moment';
+import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { IDateRangePicker, IOrganization, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
 import {

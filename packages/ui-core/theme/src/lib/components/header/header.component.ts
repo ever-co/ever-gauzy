@@ -4,7 +4,7 @@ import { NbSidebarService, NbThemeService, NbMenuItem, NbDialogService, NbDialog
 import { combineLatest, firstValueFrom, Observable, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import moment from 'moment';
+import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import hotkeys, { HotkeysEvent } from 'hotkeys-js';
 import {

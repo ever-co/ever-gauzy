@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { NgxDraggableDomMoveEvent, NgxDraggablePoint } from 'ngx-draggable-dom';
 import { NbThemeService } from '@nebular/theme';
-import moment from 'moment';
+import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import moment from 'moment';
+import * as moment from 'moment';
 
 @Component({
     template: `

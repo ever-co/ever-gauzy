@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import timezone from 'moment-timezone';
+import * as timezone from 'moment-timezone';
 
 /**
  * Interface for the employee schedule

@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
-import moment from 'moment';
+import * as moment from 'moment';
 import { IOrganizationSprint } from '@gauzy/contracts';
 
 const DEFAULTS = {

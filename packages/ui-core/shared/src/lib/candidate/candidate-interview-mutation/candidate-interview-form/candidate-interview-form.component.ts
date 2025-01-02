@@ -11,7 +11,7 @@ import {
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import moment from 'moment';
+import * as moment from 'moment';
 import { IEmployee, IDateRange, ICandidateInterview, IOrganization } from '@gauzy/contracts';
 import { EmployeesService } from '@gauzy/ui-core/core';
 import { NbDialogService } from '@nebular/theme';
