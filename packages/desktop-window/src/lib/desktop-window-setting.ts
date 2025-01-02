@@ -3,6 +3,7 @@ import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 import { BrowserWindow } from 'electron';
 import * as url from 'url';
 import { WindowManager, RegisteredWindow, Store, setupElectronLog } from '@gauzy/desktop-core';
+import { handleCloseEvent, setLaunchPathAndLoad } from './utils/desktop-window-utils';
 
 // Set up Electron log
 setupElectronLog();
@@ -58,54 +59,6 @@ export async function createSettingsWindow(
 
     // Return the configured settings window instance
     return settingsWindow;
-}
-
-/**
- * Constructs a URL with the specified file path and hash, and loads it into the given BrowserWindow.
- *
- * @param {BrowserWindow} window - The BrowserWindow instance to load the URL into.
- * @param {string} filePath - The file path to construct the URL.
- * @param {string} [hash] - An optional hash to append to the URL (default: '/settings').
- *
- * @returns {Promise<void>} A promise that resolves when the URL is successfully loaded into the window.
- *
- * @example
- * await setLaunchPathAndLoad(settingsWindow, '/path/to/settings.html', '/settings');
- */
-async function setLaunchPathAndLoad(
-    window: BrowserWindow,
-    filePath: string,
-    hash: string = '/settings'
-): Promise<void> {
-    // Construct the URL
-    const launchPath = url.format({
-        pathname: filePath,
-        protocol: 'file:',
-        slashes: true,
-        hash
-    });
-
-    // Load the constructed URL into the specified BrowserWindow
-    await window.loadURL(launchPath);
-
-    // Log the launched path for debugging purposes
-    console.log('Launched Electron with:', launchPath);
-}
-
-/**
- * Attaches a 'close' event handler to the specified BrowserWindow to prevent its destruction.
- * Instead of closing, the window is hidden when the 'close' event is triggered.
- *
- * @param {BrowserWindow} window - The BrowserWindow instance to attach the 'close' event handler.
- *
- * @example
- * handleCloseEvent(settingsWindow);
- */
-function handleCloseEvent(window: Electron.BrowserWindow): void {
-    window.on('close', (event) => {
-        event.preventDefault(); // Prevent the default close operation
-        window.hide(); // Hide the window instead of destroying it
-    });
 }
 
 /**
