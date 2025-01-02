@@ -2,80 +2,158 @@ import * as remoteMain from '@electron/remote/main';
 import { BrowserWindow, ipcMain, screen } from 'electron';
 import * as url from 'url';
 import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
+import { WindowManager, RegisteredWindow, setupElectronLog, Store } from '@gauzy/desktop-core';
 
-import log from 'electron-log';
-import { WindowManager, RegisteredWindow } from '@gauzy/desktop-core';
-console.log = log.log;
-Object.assign(console, log.functions);
+// Set up Electron log
+setupElectronLog();
 
-const Store = require('electron-store');
-const store = new Store();
-
-export async function createGauzyWindow(gauzyWindow, serve, config, filePath, preloadPath?) {
-	log.info('createGauzyWindow started');
-
+/**
+ * Creates and initializes the Gauzy main window for the Electron application.
+ *
+ * This function sets up a new Electron `BrowserWindow` instance with the specified settings,
+ * loads the appropriate URL or file path, and attaches listeners for close and IPC events.
+ * It also registers the window with the `WindowManager` for centralized control.
+ *
+ * @param {Electron.BrowserWindow | null} gauzyWindow - The Gauzy window instance to initialize or recreate.
+ * @param {boolean} serve - Indicates if the application is running in development mode (serve).
+ * @param {object} config - The configuration object containing app-specific settings.
+ * @param {string} filePath - The path to the local file to load if not in serve mode.
+ * @param {string} [preloadPath] - An optional path to the preload script for the window.
+ * @returns {Promise<Electron.BrowserWindow>} - A promise resolving to the initialized Gauzy window.
+ */
+export async function createGauzyWindow(
+	gauzyWindow: Electron.BrowserWindow | null,
+	serve: boolean,
+	config: any,
+	filePath: string,
+	preloadPath?: string
+): Promise<Electron.BrowserWindow> {
+	console.info('Creating Gauzy main window: Initialization process started');
+	// Get the WindowManager instance
 	const manager = WindowManager.getInstance();
 
-	let mainWindowSettings: Electron.BrowserWindowConstructorOptions = null;
+	// Define window settings
+	const mainWindowSettings = windowSetting(preloadPath);
 
-	mainWindowSettings = windowSetting(preloadPath);
-
+	// Create a new BrowserWindow instance
 	gauzyWindow = new BrowserWindow(mainWindowSettings);
 
+	// Enable remote handling for the window
 	remoteMain.enable(gauzyWindow.webContents);
 
-	let launchPath;
+	// Hide the window if configured to do so in the config
+	hideWindowIfConfigured(gauzyWindow, config);
 
-	if (!config.gauzyWindow) {
-		gauzyWindow.hide();
-	}
-
+	let launchPath: string;
+	// Load the appropriate URL or file path
 	if (serve) {
-		require('electron-reload')(__dirname, {
-			electron: require(`${__dirname}/../../../../node_modules/electron`)
-		});
+		const electronPath = require(`${__dirname}/../../../../node_modules/electron`);
+		require('electron-reload')(__dirname, { electron: electronPath });
 
 		launchPath = `http://localhost:${config.GAUZY_UI_DEFAULT_PORT}`;
-
 		await gauzyWindow.loadURL(launchPath);
 	} else {
-		launchPath = url.format({
-			pathname: filePath,
-			protocol: 'file:',
-			slashes: true
-		});
-
-		await gauzyWindow.loadURL(launchPath);
+		launchPath = await setLaunchPathAndLoad(gauzyWindow, filePath);
 	}
 
-	console.log('launched electron with:', launchPath);
-	// gauzyWindow.webContents.toggleDevTools();
+	console.log('Launched Electron with:', launchPath);
 
-	gauzyWindow.on('close', (e) => {
-		// Dereference the window object, usually you would store windows
-		// in an array if your app supports multi windows, this is the time
-		// when you should delete the corresponding element.
-		e.preventDefault();
-		gauzyWindow.hide(); // gauzyWindow = null;
-	});
-
+	// Handle close event
+	handleCloseEvent(gauzyWindow);
 	initMainListener();
 
-	log.info('createGauzyWindow completed');
+	console.info('Gauzy main window creation completed successfully');
 
+	// Register the window with the WindowManager
 	manager.register(RegisteredWindow.MAIN, gauzyWindow);
+
+	// Additional configuration for preloadPath
 	if (preloadPath) {
 		attachTitlebarToWindow(gauzyWindow);
 		gauzyWindow.webContents.send('adjust_view');
 	}
 
+	// Return the created window
 	return gauzyWindow;
 }
 
-const windowSetting = (preloadPath) => {
-	const sizes = screen.getPrimaryDisplay().workAreaSize;
-	const filesPath = store.get('filePath');
+/**
+ * Conditionally hides the Gauzy window based on the configuration.
+ *
+ * If the `gauzyWindow` property in the `config` object is falsy, this function
+ * hides the provided `BrowserWindow` instance.
+ *
+ * @param {Electron.BrowserWindow} gauzyWindow - The window to be hidden.
+ * @param {{ gauzyWindow?: string }} config - Configuration with an optional `gauzyWindow` property.
+ */
+function hideWindowIfConfigured(gauzyWindow: Electron.BrowserWindow, config: { gauzyWindow?: string }): void {
+	if (!config.gauzyWindow) {
+		gauzyWindow.hide();
+	}
+}
 
+/**
+ * Sets the launch path for the Gauzy window and loads the specified URL.
+ *
+ * This function constructs a `file:` protocol URL using the provided file path and
+ * loads it into the Electron `BrowserWindow` instance.
+ *
+ * @param {Electron.BrowserWindow} window - The BrowserWindow instance to load the URL into.
+ * @param {string} filePath - The local file path to be loaded into the window.
+ * @returns {Promise<void>} - Resolves when the URL is successfully loaded.
+ */
+async function setLaunchPathAndLoad(
+	window: Electron.BrowserWindow,
+	filePath: string
+): Promise<string> {
+	// Construct the file URL
+	const launchPath = url.format({
+		pathname: filePath,
+		protocol: 'file:',
+		slashes: true
+	});
+
+	// Load the constructed URL into the BrowserWindow
+	await window.loadURL(launchPath);
+
+	// Log the loaded URL for debugging purposes
+	console.info(`Loaded URL in Gauzy window: ${launchPath}`);
+	return launchPath;
+}
+
+/**
+ * Attaches a 'close' event handler to the specified BrowserWindow.
+ * Prevents the default close operation and hides the window instead.
+ *
+ * @param {Electron.BrowserWindow} window - The BrowserWindow instance to handle the 'close' event.
+ *
+ * @example
+ * const myWindow = new BrowserWindow({ width: 800, height: 600 });
+ * handleCloseEvent(myWindow);
+ */
+function handleCloseEvent(window: Electron.BrowserWindow): void {
+    window.on('close', (event) => {
+        event.preventDefault(); // Prevent the default close operation
+        window.hide(); // Hide the window instead of closing it
+    });
+}
+
+/**
+ * Generates configuration settings for the main Electron BrowserWindow.
+ *
+ * This function creates a configuration object for initializing a BrowserWindow,
+ * setting properties such as size, position, and web preferences. It also applies
+ * platform-specific settings when necessary.
+ *
+ * @param {string | undefined} preloadPath - The path to the preload script for the BrowserWindow. If not provided, preload-related settings are excluded.
+ * @returns {Electron.BrowserWindowConstructorOptions} - The configuration object for the BrowserWindow.
+ */
+const windowSetting = (preloadPath?: string): Electron.BrowserWindowConstructorOptions => {
+	// Retrieve the screen size and file paths
+	const sizes = screen.getPrimaryDisplay().workAreaSize;
+	const filesPath = Store.get('filePath');
+
+	// Define the base settings for the BrowserWindow
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 		frame: true,
 		resizable: true,
@@ -95,37 +173,47 @@ const windowSetting = (preloadPath) => {
 		show: false,
 		icon: filesPath.iconPath
 	};
+
+	// Apply additional settings if preloadPath is provided
 	if (preloadPath) {
-		mainWindowSettings.webPreferences.preload = preloadPath;
-		mainWindowSettings.titleBarOverlay = true;
-		mainWindowSettings.titleBarStyle = 'hidden';
+		mainWindowSettings.webPreferences.preload = preloadPath; // Set the preload script
+		mainWindowSettings.titleBarOverlay = true; // Enable title bar overlay
+		mainWindowSettings.titleBarStyle = 'hidden'; // Hide the default title bar
+
+		// Adjust settings for Linux platform
 		if (process.platform === 'linux') {
-			mainWindowSettings.frame = false;
+			mainWindowSettings.frame = false; // Disable the window frame
 		}
 	}
+
+	// Return the configured settings
 	return mainWindowSettings;
 };
 
-function initMainListener() {
+/**
+ * Initializes the main IPC listener for Electron's message bridge.
+ *
+ * Listens for the `ELECTRON_BRIDGE_HOST` event from the renderer process.
+ * Responds with a `pong` message when a `ping` message is received.
+ */
+function initMainListener(): void {
 	ipcMain.on('ELECTRON_BRIDGE_HOST', (event, msg) => {
-		console.log('msg received', msg);
+		console.log('Message received from renderer:', msg);
+
+		// Respond with 'pong' if the message is 'ping'
 		if (msg === 'ping') {
 			event.sender.send('ELECTRON_BRIDGE_CLIENT', 'pong');
 		}
 	});
 }
 
-export function getApiBaseUrl(configs, envConfig) {
-	if (configs.serverUrl) return configs.serverUrl;
-	else {
-		return configs.port ? `http://localhost:${configs.port}` : `http://localhost:${envConfig.API_DEFAULT_PORT}`;
-	}
-}
-
-export function gauzyPage(filePath) {
-	return url.format({
-		pathname: filePath,
-		protocol: 'file:',
-		slashes: true
-	});
+/**
+ * Gets the API base URL from configurations or defaults to localhost.
+ *
+ * @param {object} configs - Configurations with optional `serverUrl` or `port`.
+ * @param {object} envConfig - Environment configurations with `API_DEFAULT_PORT`.
+ * @returns {string} - The API base URL.
+ */
+export function getApiBaseUrl(configs: { serverUrl?: string; port?: number }, envConfig: { API_DEFAULT_PORT: number }): string {
+	return configs.serverUrl || `http://localhost:${configs.port || envConfig.API_DEFAULT_PORT}`;
 }
