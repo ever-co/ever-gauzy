@@ -11,7 +11,6 @@ import { setupTitlebar } from 'custom-electron-titlebar/main';
 import { app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, nativeTheme, shell } from 'electron';
 import * as Store from 'electron-store';
 import * as path from 'path';
-import * as Url from 'url';
 import { environment } from './environments/environment';
 
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
@@ -56,7 +55,8 @@ import {
 	createTimeTrackerWindow,
 	createUpdaterWindow,
 	ScreenCaptureNotification,
-	SplashScreen
+	SplashScreen,
+	timeTrackerPage
 } from '@gauzy/desktop-window';
 import { initSentry } from './sentry';
 
@@ -271,12 +271,7 @@ async function startServer(value, restart = false) {
 				);
 			} else {
 				await timeTrackerWindow.loadURL(
-					Url.format({
-						pathname: pathWindow.timeTrackerUi,
-						protocol: 'file:',
-						slashes: true,
-						hash: '/time-tracker'
-					})
+					timeTrackerPage(pathWindow.timeTrackerUi)
 				);
 			}
 			notificationWindow = new ScreenCaptureNotification(pathWindow.timeTrackerUi);
