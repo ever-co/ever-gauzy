@@ -101,7 +101,7 @@ async function setLaunchPathAndLoad(
  * @example
  * handleCloseEvent(settingsWindow);
  */
-function handleCloseEvent(window: BrowserWindow): void {
+function handleCloseEvent(window: Electron.BrowserWindow): void {
     window.on('close', (event) => {
         event.preventDefault(); // Prevent the default close operation
         window.hide(); // Hide the window instead of destroying it

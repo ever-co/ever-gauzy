@@ -101,7 +101,7 @@ async function setLaunchPathAndLoad(
  *
  * @param {BrowserWindow} window - The BrowserWindow instance to attach the 'close' event handler.
  */
-function handleCloseEvent(window: BrowserWindow): void {
+function handleCloseEvent(window: Electron.BrowserWindow): void {
     window.on('close', (event) => {
         event.preventDefault();
         window.hide(); // Optionally, replace with null if managing multiple windows

@@ -98,11 +98,14 @@ function hideWindowIfConfigured(gauzyWindow: Electron.BrowserWindow, config: { g
  * This function constructs a `file:` protocol URL using the provided file path and
  * loads it into the Electron `BrowserWindow` instance.
  *
- * @param {Electron.BrowserWindow} gauzyWindow - The BrowserWindow instance to load the URL into.
+ * @param {Electron.BrowserWindow} window - The BrowserWindow instance to load the URL into.
  * @param {string} filePath - The local file path to be loaded into the window.
  * @returns {Promise<void>} - Resolves when the URL is successfully loaded.
  */
-async function setLaunchPathAndLoad(gauzyWindow: Electron.BrowserWindow, filePath: string): Promise<string> {
+async function setLaunchPathAndLoad(
+	window: Electron.BrowserWindow,
+	filePath: string
+): Promise<string> {
 	// Construct the file URL
 	const launchPath = url.format({
 		pathname: filePath,
@@ -111,7 +114,7 @@ async function setLaunchPathAndLoad(gauzyWindow: Electron.BrowserWindow, filePat
 	});
 
 	// Load the constructed URL into the BrowserWindow
-	await gauzyWindow.loadURL(launchPath);
+	await window.loadURL(launchPath);
 
 	// Log the loaded URL for debugging purposes
 	console.info(`Loaded URL in Gauzy window: ${launchPath}`);
@@ -128,7 +131,7 @@ async function setLaunchPathAndLoad(gauzyWindow: Electron.BrowserWindow, filePat
  * const myWindow = new BrowserWindow({ width: 800, height: 600 });
  * handleCloseEvent(myWindow);
  */
-function handleCloseEvent(window: BrowserWindow): void {
+function handleCloseEvent(window: Electron.BrowserWindow): void {
     window.on('close', (event) => {
         event.preventDefault(); // Prevent the default close operation
         window.hide(); // Hide the window instead of closing it
