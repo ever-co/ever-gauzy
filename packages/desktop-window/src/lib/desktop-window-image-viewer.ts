@@ -1,8 +1,8 @@
 import * as remoteMain from '@electron/remote/main';
 import { BrowserWindow } from 'electron';
-import * as url from 'url';
 import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 import { WindowManager, RegisteredWindow, Store } from '@gauzy/desktop-core';
+import { handleCloseEvent, setLaunchPathAndLoad } from './utils/desktop-window-utils';
 
 /**
  * Creates and configures the Image Viewer window in the Electron application.
@@ -58,48 +58,6 @@ export async function createImageViewerWindow(
 
     // Return the configured Image Viewer window instance
     return imageViewWindow;
-}
-
-/**
- * Constructs a URL and loads it into the specified BrowserWindow.
- *
- * @param {BrowserWindow} window - The BrowserWindow instance to load the URL into.
- * @param {string} filePath - The file path to construct the URL.
- * @param {string} [hash] - An optional hash to append to the URL (e.g., '/viewer').
- *
- * @returns {Promise<void>} A promise that resolves when the URL is successfully loaded into the window.
- *
- * @example
- * await setLaunchPathAndLoad(imageViewWindow, '/path/to/viewer.html', '/viewer');
- */
-async function setLaunchPathAndLoad(
-    window: Electron.BrowserWindow,
-    filePath: string,
-    hash: string = '/viewer'
-): Promise<void> {
-    // Construct the URL with the provided file path and hash
-    const launchPath = url.format({
-        pathname: filePath,
-        protocol: 'file:',
-        slashes: true,
-        hash
-    });
-
-    // Load the constructed URL into the specified BrowserWindow
-    await window.loadURL(launchPath);
-}
-
-/**
- * Attaches a 'close' event handler to prevent the destruction of the window.
- * Instead of being destroyed, the window is hidden when the 'close' event is triggered.
- *
- * @param {BrowserWindow} window - The BrowserWindow instance to handle the 'close' event.
- */
-function handleCloseEvent(window: BrowserWindow): void {
-    window.on('close', (event) => {
-        event.preventDefault();
-        window.hide();
-    });
 }
 
 /**

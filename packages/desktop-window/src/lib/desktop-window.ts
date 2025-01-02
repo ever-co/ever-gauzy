@@ -3,6 +3,7 @@ import { BrowserWindow, ipcMain, screen } from 'electron';
 import * as url from 'url';
 import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 import { WindowManager, RegisteredWindow, setupElectronLog, Store } from '@gauzy/desktop-core';
+import { handleCloseEvent } from './utils/desktop-window-utils';
 
 // Set up Electron log
 setupElectronLog();
@@ -60,6 +61,8 @@ export async function createGauzyWindow(
 
 	// Handle close event
 	handleCloseEvent(gauzyWindow);
+
+	// Init main listener for electron
 	initMainListener();
 
 	console.info('Gauzy main window creation completed successfully');
@@ -119,23 +122,6 @@ async function setLaunchPathAndLoad(
 	// Log the loaded URL for debugging purposes
 	console.info(`Loaded URL in Gauzy window: ${launchPath}`);
 	return launchPath;
-}
-
-/**
- * Attaches a 'close' event handler to the specified BrowserWindow.
- * Prevents the default close operation and hides the window instead.
- *
- * @param {Electron.BrowserWindow} window - The BrowserWindow instance to handle the 'close' event.
- *
- * @example
- * const myWindow = new BrowserWindow({ width: 800, height: 600 });
- * handleCloseEvent(myWindow);
- */
-function handleCloseEvent(window: Electron.BrowserWindow): void {
-    window.on('close', (event) => {
-        event.preventDefault(); // Prevent the default close operation
-        window.hide(); // Hide the window instead of closing it
-    });
 }
 
 /**
