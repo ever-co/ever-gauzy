@@ -1,7 +1,7 @@
 import * as remoteMain from '@electron/remote/main';
 import { WindowManager, RegisteredWindow, Store } from '@gauzy/desktop-core';
 import { BrowserWindow, Menu } from 'electron';
-import * as url from 'url';
+import { setLaunchPathAndLoad } from './utils/desktop-window-utils';
 
 /**
  * Creates or shows the 'About' window for the application.
@@ -55,30 +55,6 @@ export async function createAboutWindow(filePath: string, preloadPath?: string):
 	}
 
 	return window;
-}
-
-/**
- * Constructs and loads a URL into the specified BrowserWindow.
- *
- * @param {Electron.BrowserWindow} window - The BrowserWindow instance to load the URL into.
- * @param {string} filePath - The file path to construct the launch URL.
- * @param {string} [hash] - An optional hash to append to the URL (e.g., '/about').
- *
- * @returns {Promise<void>} A promise that resolves when the URL is loaded into the window.
- */
-async function setLaunchPathAndLoad(
-	window: Electron.BrowserWindow,
-	filePath: string,
-	hash: string = '/about'
-): Promise<void> {
-	// Construct the URL with the provided file path and hash
-    const launchPath = url.format({
-        pathname: filePath,
-        protocol: 'file:',
-        slashes: true,
-        hash
-    });
-    await window.loadURL(launchPath);
 }
 
 /**

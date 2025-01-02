@@ -3,6 +3,7 @@ import { BrowserWindow, screen } from 'electron';
 import * as url from 'url';
 import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 import { WindowManager, RegisteredWindow, Store, setupElectronLog } from '@gauzy/desktop-core';
+import { handleCloseEvent, setLaunchPathAndLoad } from './utils/desktop-window-utils';
 
 // Set up Electron log
 setupElectronLog();
@@ -62,48 +63,6 @@ export async function createTimeTrackerWindow(
 
     // Return the configured Time Tracker window instance
     return timeTrackerWindow;
-}
-
-/**
- * Constructs a launch URL and loads it into the specified BrowserWindow.
- *
- * @param {Electron.BrowserWindow} window - The BrowserWindow instance to load the URL into.
- * @param {string} filePath - The file path to construct the launch URL.
- * @param {string} [hash] - An optional hash to append to the URL (e.g., '/time-tracker').
- *
- * @returns {Promise<void>} A promise that resolves when the URL is loaded into the window.
- *
- * @example
- * await setLaunchPathAndLoad(timeTrackerWindow, '/path/to/file.html', '/time-tracker');
- */
-async function setLaunchPathAndLoad(
-    window: Electron.BrowserWindow,
-    filePath: string,
-    hash: string = '/time-tracker'
-): Promise<void> {
-    // Construct the URL with the provided file path and hash
-    const launchPath = url.format({
-        pathname: filePath,
-        protocol: 'file:',
-        slashes: true,
-        hash
-    });
-
-    // Load the constructed URL into the specified BrowserWindow
-    await window.loadURL(launchPath);
-}
-
-/**
- * Handles the `close` event for a given BrowserWindow to prevent its destruction.
- * Instead, the window is hidden when the event is triggered.
- *
- * @param {Electron.BrowserWindow} window - The BrowserWindow instance to attach the close event handler.
- */
-function handleCloseEvent(window: BrowserWindow): void {
-    window.on('close', (event) => {
-        event.preventDefault();
-        window.hide();
-    });
 }
 
 /**

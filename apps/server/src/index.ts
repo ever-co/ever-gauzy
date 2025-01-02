@@ -276,7 +276,7 @@ const appState = async () => {
 };
 
 const runMainWindow = async () => {
-	serverWindow = await createServerWindow(serverWindow, null, pathWindow.ui, pathWindow.preloadPath);
+	serverWindow = await createServerWindow(serverWindow, pathWindow.ui, pathWindow.preloadPath);
 
 	serverWindow.show();
 
@@ -356,7 +356,7 @@ const getEnvApi = () => {
 			DB_NAME: config[provider]?.dbName,
 			DB_USER: config[provider]?.dbUsername,
 			DB_PASS: config[provider]?.dbPassword
-		}),		
+		}),
 		DEBUG: process.env.NODE_ENV !== 'production' ? 'true' : 'false',
 		API_PORT: String(config.port),
 		...addsConfig
