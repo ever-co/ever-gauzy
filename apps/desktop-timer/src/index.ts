@@ -11,6 +11,7 @@ import { setupTitlebar } from 'custom-electron-titlebar/main';
 import { app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, nativeTheme, shell } from 'electron';
 import * as Store from 'electron-store';
 import * as path from 'path';
+import * as Url from 'url';
 import { environment } from './environments/environment';
 
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));

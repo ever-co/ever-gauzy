@@ -13,8 +13,28 @@ export class AppMenu {
 	private readonly pluginEventManager = PluginEventManager.getInstance();
 	private readonly windowManager = WindowManager.getInstance();
 
-	constructor(timeTrackerWindow, settingsWindow, updaterWindow, knex, windowPath, serverWindow?, isZoomVisible?) {
-		const isZoomEnabled = isZoomVisible;
+	 /**
+     * Constructs and initializes the application menu.
+     *
+     * @param {BrowserWindow | null} timeTrackerWindow - The time tracker window instance.
+     * @param {BrowserWindow | null} settingsWindow - The settings window instance.
+     * @param {BrowserWindow | null} updaterWindow - The updater window instance.
+     * @param {any} knex - Knex database instance (if applicable).
+     * @param {any} windowPath - Paths to the necessary window files.
+     * @param {BrowserWindow | null} [serverWindow] - The server window instance (optional).
+     * @param {boolean} [isZoomVisible] - Flag to enable/disable zoom menu options.
+     */
+	 constructor(
+        timeTrackerWindow: BrowserWindow | null,
+        settingsWindow: BrowserWindow | null,
+        updaterWindow: BrowserWindow | null,
+        knex: any,
+        windowPath: any,
+        serverWindow?: BrowserWindow | null,
+        isZoomVisible?: boolean
+    ) {
+		const isZoomEnabled = isZoomVisible ?? false;
+
 		this.menu = [
 			{
 				label: 'Gauzy',
@@ -168,58 +188,103 @@ export class AppMenu {
 			},
 			this.pluginMenu
 		];
+
+		// Build the menu
 		this.build();
+
+		// Time Tracker Window Menu
 		if (timeTrackerWindow) {
 			timeTrackerWindow.webContents.send('refresh_menu');
 		}
+
+		// Settings Window Menu
 		if (settingsWindow) {
 			settingsWindow.webContents.send('refresh_menu');
 		}
+
+		// Updater Window Menu
 		if (updaterWindow) {
 			updaterWindow.webContents.send('refresh_menu');
 		}
 
+		// Plugin Event Manager Listener
 		this.pluginEventManager.listen(() => {
-			// Determine if the updated menu
-			const updatedMenu = this.menu.map((menu) => (menu.id === 'plugin-menu' ? this.pluginMenu : menu));
-			// Only rebuild the menu if there was an actual change
-			if (!this.deepArrayEqual(this.menu, updatedMenu)) {
-				this.menu = updatedMenu;
-				this.build();
-				console.log('Menu rebuilt after plugin update.');
-			} else {
-				console.log('Plugin update detected, but no changes were made to the menu.');
-			}
+			// Handle Plugin Menus
+			this.handlePluginMenuUpdate();
 		});
 	}
 
+	/**
+	 * Handles updates to the plugin menu and rebuilds the application menu if changes are detected.
+	 */
+	private handlePluginMenuUpdate(): void {
+		const updatedMenu = this.menu.map((menu) =>
+			menu.id === 'plugin-menu' ? this.pluginMenu : menu
+		);
+
+		// Only rebuild the menu if there are actual changes
+		if (!this.deepArrayEqual(this.menu, updatedMenu)) {
+			this.menu = updatedMenu;
+			this.build();
+			console.log('Menu rebuilt after plugin update.');
+		} else {
+			console.log('Plugin update detected, but no changes were made to the menu.');
+		}
+	}
+
+	/**
+	 * Builds the application menu.
+	 */
 	public build(): void {
 		Menu.setApplicationMenu(Menu.buildFromTemplate([...this.menu]));
 	}
 
-	public get pluginMenu(): MenuItemConstructorOptions {
-		const submenu = this.pluginManager.getMenuPlugins();
+	  /**
+     * Dynamically generates the plugin menu for the application.
+     *
+     * @returns {MenuItemConstructorOptions} The menu item for plugins, including a submenu for plugin management.
+     */
+	  public get pluginMenu(): MenuItemConstructorOptions {
+        // Retrieve submenu items from the plugin manager
+        const pluginSubmenu = this.pluginManager.getMenuPlugins();
 
-		return {
-			id: 'plugin-menu',
-			label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGIN'),
-			submenu: [
-				{
-					label: 'Install Plugin',
-					click: () => {
-						const settingWindow = this.windowManager.getOne(RegisteredWindow.SETTINGS);
-						this.windowManager.show(RegisteredWindow.SETTINGS);
-						this.windowManager
-							.webContents(settingWindow)
-							.send('app_setting', LocalStore.getApplicationConfig());
-					}
-				},
-				...submenu
-			]
-		} as MenuItemConstructorOptions;
-	}
+        // Return the plugin menu structure
+        return {
+            id: 'plugin-menu',
+            label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGIN'),
+            submenu: [
+                {
+                    label: TranslateService.instant('MENU.INSTALL_PLUGIN'),
+                    click: () => this.openPluginSettings()
+                },
+                ...pluginSubmenu
+            ]
+        };
+    }
 
+    /**
+     * Opens the plugin settings window and sends the current application configuration to it.
+     */
+    private openPluginSettings(): void {
+        // Retrieve the settings window instance
+        const settingsWindow = this.windowManager.getOne(RegisteredWindow.SETTINGS);
+
+        // Show the settings window
+        this.windowManager.show(RegisteredWindow.SETTINGS);
+
+        // Send the application configuration to the settings window
+        if (settingsWindow) {
+            this.windowManager
+                .webContents(settingsWindow)
+                .send('app_setting', LocalStore.getApplicationConfig());
+        }
+    }
+
+	/**
+	 * Compares two arrays deeply to determine if they are equal.
+	 */
 	private deepArrayEqual<T>(arr1: T, arr2: T) {
+		// Implementation for deep array equality check
 		return JSON.stringify(arr1) === JSON.stringify(arr2);
 	}
 }
