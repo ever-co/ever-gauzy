@@ -38,7 +38,7 @@ export async function createUpdaterWindow(
     updaterWindow.hide();
 
 	// Set the launch path and load it into the updater window
-	await setLaunchPathAndLoad(updaterWindow, filePath);
+	await setLaunchPathAndLoad(updaterWindow, filePath, '/updater');
 
     // Remove the default menu from the window
     updaterWindow.setMenu(null);

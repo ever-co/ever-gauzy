@@ -38,7 +38,7 @@ export async function createAboutWindow(filePath: string, preloadPath?: string):
 	window.hide();
 
 	// Load the URL with the specified file path and hash
-	await setLaunchPathAndLoad(window, filePath);
+	await setLaunchPathAndLoad(window, filePath, '/about');
 
 	window.setMenu(null);
 
