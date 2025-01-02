@@ -79,7 +79,7 @@ export async function createSetupWindow(
  * await setLaunchPathAndLoad(setupWindow, '/path/to/file.html', '/setup');
  */
 async function setLaunchPathAndLoad(
-    window: BrowserWindow,
+    window: Electron.BrowserWindow,
     filePath: string,
     hash: string = '/setup'
 ): Promise<void> {

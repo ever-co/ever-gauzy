@@ -58,8 +58,8 @@ export async function createGauzyWindow(
 
 	console.log('Launched Electron with:', launchPath);
 
-	// Setup event listeners
-	setupCloseListener(gauzyWindow);
+	// Handle close event
+	handleCloseEvent(gauzyWindow);
 	initMainListener();
 
 	console.info('Gauzy main window creation completed successfully');
@@ -119,19 +119,20 @@ async function setLaunchPathAndLoad(gauzyWindow: Electron.BrowserWindow, filePat
 }
 
 /**
- * Handles the 'close' event for the Gauzy window.
+ * Attaches a 'close' event handler to the specified BrowserWindow.
+ * Prevents the default close operation and hides the window instead.
  *
- * Prevents the default close operation and hides the window instead of destroying it.
- * This is useful for applications where windows should remain in memory
- * (e.g., minimized to tray) rather than being completely closed.
+ * @param {Electron.BrowserWindow} window - The BrowserWindow instance to handle the 'close' event.
  *
- * @param {Electron.BrowserWindow} gauzyWindow - The Gauzy window instance.
+ * @example
+ * const myWindow = new BrowserWindow({ width: 800, height: 600 });
+ * handleCloseEvent(myWindow);
  */
-function setupCloseListener(gauzyWindow: Electron.BrowserWindow): void {
-	gauzyWindow.on('close', (e) => {
-		e.preventDefault(); // Prevent the default close operation
-		gauzyWindow.hide(); // Hide the window instead of closing it
-	});
+function handleCloseEvent(window: BrowserWindow): void {
+    window.on('close', (event) => {
+        event.preventDefault(); // Prevent the default close operation
+        window.hide(); // Hide the window instead of closing it
+    });
 }
 
 /**
@@ -151,23 +152,23 @@ const windowSetting = (preloadPath?: string): Electron.BrowserWindowConstructorO
 
 	// Define the base settings for the BrowserWindow
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
-		frame: true, // Display window frame
-		resizable: true, // Allow window resizing
-		focusable: true, // Allow window focus
-		fullscreenable: true, // Allow full-screen mode
+		frame: true,
+		resizable: true,
+		focusable: true,
+		fullscreenable: true,
 		webPreferences: {
-			nodeIntegration: true, // Enable Node.js integration
-			webSecurity: false, // Disable web security
-			contextIsolation: false, // Disable context isolation
+			nodeIntegration: true,
+			webSecurity: false,
+			contextIsolation: false,
 			sandbox: false // Disable sandboxing
 		},
-		width: sizes.width, // Set width to the screen width
-		height: sizes.height, // Set height to the screen height
-		x: 0, // Set the window's x-coordinate
-		y: 0, // Set the window's y-coordinate
-		title: process.env.DESCRIPTION || 'Gauzy Desktop', // Set the window title
-		show: false, // Do not show the window immediately
-		icon: filesPath.iconPath // Set the window icon
+		width: sizes.width,
+		height: sizes.height,
+		x: 0,
+		y: 0,
+		title: process.env.DESCRIPTION || 'Gauzy Desktop',
+		show: false,
+		icon: filesPath.iconPath
 	};
 
 	// Apply additional settings if preloadPath is provided

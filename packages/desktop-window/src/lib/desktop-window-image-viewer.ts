@@ -73,7 +73,7 @@ export async function createImageViewerWindow(
  * await setLaunchPathAndLoad(imageViewWindow, '/path/to/viewer.html', '/viewer');
  */
 async function setLaunchPathAndLoad(
-    window: BrowserWindow,
+    window: Electron.BrowserWindow,
     filePath: string,
     hash: string = '/viewer'
 ): Promise<void> {

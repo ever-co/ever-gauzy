@@ -70,7 +70,12 @@ export async function createUpdaterWindow(
  *
  * @returns {Promise<void>} A promise that resolves when the URL is loaded into the window.
  */
-async function setLaunchPathAndLoad(window: Electron.BrowserWindow, filePath: string, hash: string = '/updater'): Promise<void> {
+async function setLaunchPathAndLoad(
+	window: Electron.BrowserWindow,
+	filePath: string,
+	hash: string = '/updater'
+): Promise<void> {
+	// Construct the URL with the provided file path and hash
     const launchPath = url.format({
         pathname: filePath,
         protocol: 'file:',
