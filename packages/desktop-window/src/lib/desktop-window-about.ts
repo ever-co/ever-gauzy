@@ -30,30 +30,21 @@ export async function createAboutWindow(filePath: string, preloadPath?: string):
 	const window = new BrowserWindow(mainWindowSettings);
 	remoteMain.enable(window.webContents);
 
-	const launchPath = url.format({
-		pathname: filePath,
-		protocol: 'file:',
-		slashes: true,
-		hash: '/about'
-	});
+	// Get the file paths from the application store
+	const filesPath = Store.get('filePath');
 
 	// Set the window icon from the store
-	window.setIcon(Store.get('filePath').iconPath);
+	window.setIcon(filesPath.iconPath);
 	window.hide();
 
-	await window.loadURL(launchPath);
+	// Load the URL with the specified file path and hash
+	await setLaunchPathAndLoad(window, filePath);
+
 	window.setMenu(null);
 
 	// Set up event listeners for the window
-	window.on('show', () => {
-		Menu.getApplicationMenu().getMenuItemById('gauzy-about').enabled = false;
-	});
-
-	window.on('close', (event) => {
-		Menu.getApplicationMenu().getMenuItemById('gauzy-about').enabled = true;
-		window.hide();
-		event.preventDefault();
-	});
+	handleShowEvent(window); // Disable the "About" menu item when the window is shown
+    handleCloseEvent(window); // Hide the window and prevent the default close behavior
 
 	// Register the window with the window manager
 	manager.register(RegisteredWindow.ABOUT, window);
@@ -64,6 +55,58 @@ export async function createAboutWindow(filePath: string, preloadPath?: string):
 	}
 
 	return window;
+}
+
+/**
+ * Constructs and loads a URL into the specified BrowserWindow.
+ *
+ * @param {Electron.BrowserWindow} window - The BrowserWindow instance to load the URL into.
+ * @param {string} filePath - The file path to construct the launch URL.
+ * @param {string} [hash] - An optional hash to append to the URL (e.g., '/about').
+ *
+ * @returns {Promise<void>} A promise that resolves when the URL is loaded into the window.
+ */
+async function setLaunchPathAndLoad(window: Electron.BrowserWindow, filePath: string, hash: string = '/about'): Promise<void> {
+    const launchPath = url.format({
+        pathname: filePath,
+        protocol: 'file:',
+        slashes: true,
+        hash
+    });
+    await window.loadURL(launchPath);
+}
+
+/**
+ * Sets up the `show` event listener for the specified BrowserWindow.
+ * Disables the "About" menu item when the window is shown.
+ *
+ * @param {Electron.BrowserWindow} window - The BrowserWindow instance.
+ */
+function handleShowEvent(window: Electron.BrowserWindow): void {
+    window.on('show', () => {
+        const aboutMenuItem = Menu.getApplicationMenu()?.getMenuItemById('gauzy-about');
+        if (aboutMenuItem) {
+            aboutMenuItem.enabled = false;
+        }
+    });
+}
+
+/**
+ * Sets up the `close` event listener for the specified BrowserWindow.
+ * Hides the window and prevents the default close behavior.
+ * Re-enables the "About" menu item when the window is closed.
+ *
+ * @param {Electron.BrowserWindow} window - The BrowserWindow instance.
+ */
+function handleCloseEvent(window: Electron.BrowserWindow): void {
+    window.on('close', (event) => {
+        const aboutMenuItem = Menu.getApplicationMenu()?.getMenuItemById('gauzy-about');
+        if (aboutMenuItem) {
+            aboutMenuItem.enabled = true;
+        }
+        window.hide();
+        event.preventDefault();
+    });
 }
 
 /**
