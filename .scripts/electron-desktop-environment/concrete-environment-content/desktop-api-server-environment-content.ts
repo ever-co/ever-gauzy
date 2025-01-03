@@ -2,6 +2,21 @@ import { IContentGenerator } from '../interfaces/i-content-generator';
 import { IDesktopEnvironment } from '../interfaces/i-desktop-environment';
 
 export class DesktopApiServerEnvironmentContent implements IContentGenerator {
+	/**
+	 * Generates a string template based on the provided API server environment variables.
+	 * If a specific API server variable is not available, it falls back to a generic one.
+	 *
+	 * @param {Partial<IDesktopEnvironment>} variable - A partial object containing environment variables.
+	 * @returns {string} A string representation of the API server environment configuration.
+	 *
+	 * @example
+	 * const environment = {
+	 *     DESKTOP_API_SERVER_APP_NAME: 'API Server App',
+	 *     NAME: 'Default App',
+	 * };
+	 * const result = generate(environment);
+	 * console.log(result);
+	 */
 	public generate(variable: Partial<IDesktopEnvironment>): string {
 		return `
 			NAME: '${variable.DESKTOP_API_SERVER_APP_NAME || variable.NAME}',
