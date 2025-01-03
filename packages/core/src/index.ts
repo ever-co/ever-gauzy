@@ -100,3 +100,4 @@ export {
 	ExpenseCategoryFirstOrCreateCommand
 } from './lib/expense-categories';
 export { TagModule, TagService, Taggable, AutomationLabelSyncCommand, RelationalTagDTO } from './lib/tags';
+export { TagTypeModule, TagTypeService } from './lib/tag-type';
