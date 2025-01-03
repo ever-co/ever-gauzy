@@ -1,14 +1,13 @@
 {
 	"name": "@gauzy/plugin-changelog",
 	"version": "0.1.0",
-	"type": "commonjs",
 	"description": "Ever Gauzy Platform Change Log plugin",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
-	"license": "AGPL-3.0",
+	"homepage": "https://ever.co",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ever-co/ever-gauzy"
@@ -16,7 +15,36 @@
 	"bugs": {
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
-	"homepage": "https://ever.co",
+	"license": "AGPL-3.0",
+	"private": true,
+	"type": "commonjs",
+	"main": "./src/index.js",
+	"typings": "./src/index.d.ts",
+	"scripts": {
+		"lib:build": "yarn nx build plugin-changelog",
+		"lib:build:prod": "yarn nx build plugin-changelog",
+		"lib:watch": "yarn nx build plugin-changelog --watch"
+	},
+	"dependencies": {
+		"@gauzy/common": "^0.1.0",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/core": "^0.1.0",
+		"@gauzy/plugin": "^0.1.0",
+		"@mikro-orm/nestjs": "^5.2.3",
+		"@nestjs/common": "^10.4.15",
+		"@nestjs/cqrs": "^10.2.8",
+		"@nestjs/swagger": "^8.1.0",
+		"@nestjs/typeorm": "^10.0.2",
+		"chalk": "^4.1.0",
+		"class-validator": "^0.14.0",
+		"tslib": "^2.6.2",
+		"typeorm": "^0.3.20"
+	},
+	"devDependencies": {
+		"@types/jest": "29.5.14",
+		"@types/node": "^20.14.9",
+		"typescript": "5.5.4"
+	},
 	"keywords": [
 		"changelog",
 		"plugin",
@@ -28,47 +56,6 @@
 		"versioning",
 		"documentation"
 	],
-	"private": true,
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"files": [
-		"dist"
-	],
-	"directories": {
-		"lib": "dist",
-		"test": "__test__"
-	},
-	"publishConfig": {
-		"access": "restricted"
-	},
-	"scripts": {
-		"test:e2e": "jest --config ./jest.config.ts",
-		"build": "rimraf dist && tsc -p tsconfig.lib.json",
-		"build:prod": "rimraf dist && tsc -p tsconfig.lib.prod.json"
-	},
-	"peerDependencies": {
-		"tslib": "^2.6.2"
-	},
-	"dependencies": {
-		"@gauzy/common": "^0.1.0",
-		"@gauzy/contracts": "^0.1.0",
-		"@gauzy/core": "^0.1.0",
-		"@gauzy/plugin": "^0.1.0",
-		"@mikro-orm/nestjs": "^5.2.3",
-		"@nestjs/common": "^10.3.7",
-		"@nestjs/cqrs": "^10.2.7",
-		"@nestjs/swagger": "^7.3.0",
-		"@nestjs/typeorm": "^10.0.2",
-		"chalk": "4.1.2",
-		"class-validator": "^0.14.0",
-		"typeorm": "^0.3.20"
-	},
-	"devDependencies": {
-		"@types/jest": "^29.4.4",
-		"@types/node": "^20.14.9",
-		"rimraf": "^3.0.2",
-		"typescript": "5.1.6"
-	},
 	"engines": {
 		"node": ">=20.11.1",
 		"yarn": ">=1.22.19"

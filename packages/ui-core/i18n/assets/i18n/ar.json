@@ -165,7 +165,8 @@
 		"ACTIVATE": "تفعيل",
 		"ADD_PLUGIN": "إضافة ملحق",
 		"LOAD_PLUGIN": "تحميل المكون الإضافي",
-		"FROM_CDN": "من CDN"
+		"FROM_CDN": "من CDN",
+		"ADD_MODULE": "إضافة وحدة"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -2101,6 +2102,10 @@
 			"PROJECT_MODULE_READ": "عرض وحدات المشروع",
 			"PROJECT_MODULE_UPDATE": "تحديث وحدات المشروع",
 			"PROJECT_MODULE_DELETE": "حذف وحدات المشروع",
+			"DASHBOARD_CREATE": "إنشاء لوحة التحكم",
+			"DASHBOARD_READ": "عرض لوحة التحكم",
+			"DASHBOARD_UPDATE": "تحديث لوحة التحكم",
+			"DASHBOARD_DELETE": "حذف لوحة التحكم",
 			"ORG_TEAM_ADD": "إضافة فِرَق",
 			"ORG_TEAM_VIEW": "عرض الفرق",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "تحرير المهام النشطة",
@@ -2603,7 +2608,9 @@
 		"SELECT": "اختر",
 		"SPRINTS_SETTINGS": "إعدادات السبرينت",
 		"ARE_YOU_SURE": "هل أنت متأكد أنك تريد حذف السبرينت؟",
-		"SETTINGS": "الإعدادات"
+		"SETTINGS": "الإعدادات",
+		"MODULE": "وحدة",
+		"SELECT_MODULE": "الوح"
 	},
 	"JOBS": {
 		"EMPLOYEE": "موظف",
@@ -3152,7 +3159,26 @@
 		}
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
-		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "سيعرض هذا الجدول الرسوم البيانية لإدارة المشروع والبيانات المجمعة."
+		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "سيعرض هذا الجدول الرسوم البيانية لإدارة المشروع والبيانات المجمعة.",
+		"PROJECT_MODULE": {
+			"PROJECT": "مشروع",
+			"SELECT_PROJECT": "اختر مشروعًا",
+			"STATUS": "الحالة",
+			"TEAM_MEMBERS": "أعضاء الفريق",
+			"TEAMS": "فرق",
+			"SELECT_TEAMS": "اختر الفرق",
+			"CHOOSE_TEAMS": "اختيار الفرق",
+			"NAME": "الاسم",
+			"ENTER_NAME": "أدخل الاسم",
+			"PARENT_MODULE": "الوحدة الأصلية",
+			"SELECT_PARENT": "اختر الوحدة الأصلية",
+			"START_DATE": "تاريخ البدء",
+			"SELECT_START_DATE": "اختر تاريخ البدء",
+			"END_DATE": "تاريخ الانتهاء",
+			"SELECT_END_DATE": "اختر تاريخ الانتهاء",
+			"DESCRIPTION": "الوصف",
+			"IS_FAVORITE": "مفضل"
+		}
 	},
 	"SETTINGS_FEATURES": {
 		"INVOICE": "فاتورة",
@@ -3583,7 +3609,10 @@
 			"AUTHORIZED_TO_WORK": "{{ name }} مصرح له بالعمل",
 			"EMAIL_VERIFICATION_NOT_VALID": "عذراً، رابط التحقق هذا غير صالح.",
 			"EMAIL_VERIFICATION_VALID": "تهانينا! تم التحقق الآن من عنوان بريدك الإلكتروني.",
-			"SCREEN_CAPTURE_CHANGED": "تم تغيير حالة التقاط الشاشة لـ {{ name }}"
+			"SCREEN_CAPTURE_CHANGED": "تم تغيير حالة التقاط الشاشة لـ {{ name }}",
+			"MODULE_CREATED": "تم إنشاء الوحدة بنجاح!",
+			"MODULE_UPDATED": "تم تحديث الوحدة بنجاح!",
+			"MODULE_SAVE_ERROR": "فشل في حفظ الوحدة. حاول مرة أخرى."
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -3658,6 +3687,9 @@
 				"ADD_AWARD": "تمت إضافة جائزة جديدة '{{ name }}'",
 				"INVALID_AWARD_NAME_YEAR": "يرجى التحقق من الاسم والسنة المدخلة للجائزة",
 				"REMOVE_AWARD": "تمت إزالة الجائزة '{{ name }}'"
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "تاريخ الانتهاء ({{ endDate }}) لا يمكن أن يكون قبل تاريخ البدء ({{ startDate }})."
 			}
 		},
 		"ORGANIZATIONS": {
@@ -3681,7 +3713,8 @@
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "تمت إضافة مستوى الموظف '{{ name }}'",
 				"REMOVE_EMPLOYEE_LEVEL": "تمت إزالة مستوى الموظف '{{ name }}'",
-				"INVALID_EMPLOYEE_LEVEL": "يرجى إضافة مستوى الموظف"
+				"INVALID_EMPLOYEE_LEVEL": "يرجى إضافة مستوى الموظف",
+				"ALREADY_EXISTS": "المستوى الوظيفي  موجود بالفعل."
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "تمت إضافة المورد '{{ name }}'",
@@ -3699,12 +3732,14 @@
 				"ADD_POSITION": "تمت إضافة الموقع '{{ name }}'",
 				"UPDATED_POSITION": "تم تغيير الموقف '{{ name }}'",
 				"REMOVE_POSITION": "تم إزالة الوظيفة '{{ name }}'",
-				"INVALID_POSITION_NAME": "يرجى إضافة اسم المنصب"
+				"INVALID_POSITION_NAME": "يرجى إضافة اسم المنصب",
+				"ALREADY_EXISTS": "الوظيفة  موجودة بالفعل."
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "تم حفظ القسم '{{ name }}'",
 				"REMOVE_DEPARTMENT": "تمت إزالة القسم '{{ name }}'",
-				"INVALID_DEPARTMENT_NAME": "يرجى إضافة اسم القسم"
+				"INVALID_DEPARTMENT_NAME": "يرجى إضافة اسم القسم",
+				"ALREADY_EXISTS": "القسم  موجود بالفعل."
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "تمت إضافة العميل الجديد '{{ name }}' بنجاح!",
@@ -3727,7 +3762,8 @@
 				"ADD_EMPLOYMENT_TYPE": "تمت إضافة نوع التوظيف '{{ name }}'",
 				"UPDATE_EMPLOYMENT_TYPE": "تم تغيير نوع التوظيف '{{ name }}'",
 				"INVALID_EMPLOYMENT_TYPE": "يرجى التحقق من الاسم المدخل لنوع التوظيف",
-				"DELETE_EMPLOYMENT_TYPE": "تمت إزالة نوع الوظيفة '{{ name }}'"
+				"DELETE_EMPLOYMENT_TYPE": "تمت إزالة نوع الوظيفة '{{ name }}'",
+				"ALREADY_EXISTS": "هذا النوع من التوظيف موجود بالفعل."
 			},
 			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
 				"ADD_RECURRING_EXPENSE": "تم إضافة مصروف متكرر لـ `{{ name }}`",

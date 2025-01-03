@@ -2,15 +2,17 @@
 	"name": "plugin-integration-hubstaff-ui",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
 	"sourceRoot": "packages/plugins/integration-hubstaff-ui/src",
-	"prefix": "gauzy",
-	"tags": [],
+	"prefix": "lib",
 	"projectType": "library",
+	"tags": [],
+	"implicitDependencies": [],
 	"targets": {
 		"build": {
-			"executor": "@nrwl/angular:package",
+			"executor": "@nx/angular:package",
 			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
 			"options": {
-				"project": "packages/plugins/integration-hubstaff-ui/ng-package.json"
+				"project": "packages/plugins/integration-hubstaff-ui/ng-package.json",
+				"tsConfig": "packages/plugins/integration-hubstaff-ui/tsconfig.json"
 			},
 			"configurations": {
 				"production": {
@@ -23,28 +25,14 @@
 			"defaultConfiguration": "production"
 		},
 		"test": {
-			"executor": "@nrwl/jest:jest",
+			"executor": "@nx/jest:jest",
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
-				"jestConfig": "packages/plugins/integration-hubstaff-ui/jest.config.ts",
-				"passWithNoTests": true
-			},
-			"configurations": {
-				"ci": {
-					"ci": true,
-					"codeCoverage": true
-				}
+				"jestConfig": "packages/plugins/integration-hubstaff-ui/jest.config.ts"
 			}
 		},
 		"lint": {
-			"executor": "@nrwl/linter:eslint",
-			"outputs": ["{options.outputFile}"],
-			"options": {
-				"lintFilePatterns": [
-					"packages/plugins/integration-hubstaff-ui/**/*.ts",
-					"packages/plugins/integration-hubstaff-ui/**/*.html"
-				]
-			}
+			"executor": "@nx/eslint:lint"
 		}
 	}
 }

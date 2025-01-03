@@ -1,7 +1,12 @@
 {
 	"extends": "../../../tsconfig.json",
 	"compilerOptions": {
-		"module": "commonjs"
+		"forceConsistentCasingInFileNames": true,
+		"strict": false,
+		"noImplicitOverride": false,
+		"noImplicitReturns": false,
+		"noFallthroughCasesInSwitch": false,
+		"noPropertyAccessFromIndexSignature": false
 	},
 	"files": [],
 	"include": [],

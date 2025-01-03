@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { IOrganizationTeam } from '@gauzy/contracts';
-import { TimeTrackerService } from 'packages/desktop-ui-lib/src/lib/time-tracker/time-tracker.service';
+import { TimeTrackerService } from '../../../../time-tracker/time-tracker.service';
 import { SelectorService } from '../../../+state/selector.service';
 import { Store, ToastrNotificationService } from '../../../../services';
 import { ProjectSelectorQuery } from '../../project-selector/+state/project-selector.query';

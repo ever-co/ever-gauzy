@@ -164,7 +164,8 @@
 		"ACTIVATE": "Активировать",
 		"ADD_PLUGIN": "Добавить плагин",
 		"LOAD_PLUGIN": "Загрузить плагин",
-		"FROM_CDN": "Из CDN"
+		"FROM_CDN": "Из CDN",
+		"ADD_MODULE": "Добавить модуль"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -2132,6 +2133,10 @@
 			"PROJECT_MODULE_READ": "Просмотреть модули проекта",
 			"PROJECT_MODULE_UPDATE": "Обновить модули проекта",
 			"PROJECT_MODULE_DELETE": "Удалить модули проекта",
+			"DASHBOARD_CREATE": "Создать панель",
+			"DASHBOARD_READ": "Просмотреть панель",
+			"DASHBOARD_UPDATE": "Обновить панель",
+			"DASHBOARD_DELETE": "Удалить панель",
 			"ORG_TEAM_ADD": "Добавить команды",
 			"ORG_TEAM_VIEW": "Посмотреть команды",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "Редактировать активные задачи",
@@ -2632,7 +2637,9 @@
 		"SELECT": "Выбрать",
 		"SPRINTS_SETTINGS": "Настройки спринта",
 		"ARE_YOU_SURE": "Вы уверены, что хотите удалить спринт",
-		"SETTINGS": "Настройки"
+		"SETTINGS": "Настройки",
+		"MODULE": "Модуль",
+		"SELECT_MODULE": "Модули"
 	},
 	"JOBS": {
 		"EMPLOYEE": "Сотрудник",
@@ -3177,7 +3184,26 @@
 		"CATEGORY_EDIT_DELETED": "Категория была удалена"
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
-		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "На этой вкладке будут показаны диаграммы управления проектами и агрегированные данные."
+		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "На этой вкладке будут показаны диаграммы управления проектами и агрегированные данные.",
+		"PROJECT_MODULE": {
+			"PROJECT": "Проект",
+			"SELECT_PROJECT": "Выбрать проект",
+			"STATUS": "Статус",
+			"TEAM_MEMBERS": "Члены команды",
+			"TEAMS": "Команды",
+			"SELECT_TEAMS": "Выбрать команды",
+			"CHOOSE_TEAMS": "Выберите команды",
+			"NAME": "Имя",
+			"ENTER_NAME": "Введите имя",
+			"PARENT_MODULE": "Родительский модуль",
+			"SELECT_PARENT": "Выбрать родительский модуль",
+			"START_DATE": "Дата начала",
+			"SELECT_START_DATE": "Выбрать дату начала",
+			"END_DATE": "Дата окончания",
+			"SELECT_END_DATE": "Выбрать дату окончания",
+			"DESCRIPTION": "Описание",
+			"IS_FAVORITE": "Избранное"
+		}
 	},
 	"SETTINGS_FEATURES": {
 		"INVOICE": "Счет",
@@ -3604,7 +3630,10 @@
 			"TIME_LOG_DELETED": "Журнал времени для '{{ name }}' ' удален из '{{ organization }}'",
 			"TIME_LOGS_DELETED": "Журналы времени удалены из '{{ organization }}'",
 			"BUCKET_CREATED": "'{{ bucket }}' для '{{ region }}' был успешно создан",
-			"AUTHORIZED_TO_WORK": "{{ name }} авторизован для работы"
+			"AUTHORIZED_TO_WORK": "{{ name }} авторизован для работы",
+			"MODULE_CREATED": "Модуль успешно создан!",
+			"MODULE_UPDATED": "Модуль успешно обновлен!",
+			"MODULE_SAVE_ERROR": "Не удалось сохранить модуль. Попробуйте еще раз."
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -3679,6 +3708,9 @@
 				"ADD_AWARD": "Новая награда '{{ name }}' была добавлена",
 				"INVALID_AWARD_NAME_YEAR": "Пожалуйста, проверьте имя и год для получения награды",
 				"REMOVE_AWARD": "Награда '{{ name }}' была удалена"
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "Дата окончания ({{ endDate }}) не может быть раньше даты начала ({{ startDate }})."
 			}
 		},
 		"ORGANIZATIONS": {
@@ -3702,7 +3734,8 @@
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "Уровень сотрудника '{{ name }}' ' был добавлен",
 				"REMOVE_EMPLOYEE_LEVEL": "Уровень сотрудника '{{ name }}' ' был удален",
-				"INVALID_EMPLOYEE_LEVEL": "Пожалуйста, добавьте уровень сотрудника"
+				"INVALID_EMPLOYEE_LEVEL": "Пожалуйста, добавьте уровень сотрудника",
+				"ALREADY_EXISTS": "Уровень сотрудника уже существует."
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "исполнитель '{{ name }}' ' был добавлен",
@@ -3720,12 +3753,14 @@
 				"ADD_POSITION": "Позиция '{{ name }}' ' была добавлена",
 				"UPDATED_POSITION": "Позиция '{{ name }}' ' была изменена",
 				"REMOVE_POSITION": "Позиция '{{ name }}' была удалена",
-				"INVALID_POSITION_NAME": "Пожалуйста, добавьте название позиции"
+				"INVALID_POSITION_NAME": "Пожалуйста, добавьте название позиции",
+				"ALREADY_EXISTS": "Должность уже существует."
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "Департамент '{{ name }}' был сохранен",
 				"REMOVE_DEPARTMENT": "Департамент '{{ name }}' был удален",
-				"INVALID_DEPARTMENT_NAME": "Пожалуйста, добавьте название департамента"
+				"INVALID_DEPARTMENT_NAME": "Пожалуйста, добавьте название департамента",
+				"ALREADY_EXISTS": "Отдел уже существует."
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "Новый клиент '{{ name }}' ' ' успешно добавлен!",
@@ -3748,7 +3783,8 @@
 				"ADD_EMPLOYMENT_TYPE": "Добавлен тип занятости '{{ name }}' '",
 				"UPDATE_EMPLOYMENT_TYPE": "Изменен тип занятости '{{ name }}' '",
 				"INVALID_EMPLOYMENT_TYPE": "Пожалуйста, проверьте входные данные по типу занятости",
-				"DELETE_EMPLOYMENT_TYPE": "Тип занятости '{{ name }}' ' был удален"
+				"DELETE_EMPLOYMENT_TYPE": "Тип занятости '{{ name }}' ' был удален",
+				"ALREADY_EXISTS": "Этот тип занятости уже существует."
 			},
 			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
 				"ADD_RECURRING_EXPENSE": "Повторяющиеся расходы были добавлены для `{{ name }}`",

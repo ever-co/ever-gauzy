@@ -1,8 +1,4 @@
-<nb-card
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
->
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="main-header pb-0">
 		<div class="main-header">
 			<h4>
@@ -35,9 +31,7 @@
 					</div>
 					<div class="pagination-container">
 						<ng-container *ngIf="smartTableSource">
-							<ngx-pagination
-								[source]="smartTableSource"
-							></ngx-pagination>
+							<ngx-pagination [source]="smartTableSource"></ngx-pagination>
 						</ng-container>
 					</div>
 				</ng-template>
@@ -70,7 +64,13 @@
 
 <!-- Actions Button -->
 <ng-template #actionButtons>
-	<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT, PermissionsEnum.ORG_PROJECT_DELETE]">
+	<ng-template
+		[ngxPermissionsOnly]="[
+			PermissionsEnum.ALL_ORG_EDIT,
+			PermissionsEnum.ORG_PROJECT_EDIT,
+			PermissionsEnum.ORG_PROJECT_DELETE
+		]"
+	>
 		<div class="actions">
 			<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_EDIT']">
 				<button
@@ -83,6 +83,19 @@
 				>
 					<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
 					{{ 'BUTTONS.EDIT' | translate }}
+				</button>
+			</ng-template>
+			<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_EDIT']">
+				<button
+					nbButton
+					status="basic"
+					class="action success"
+					size="small"
+					(click)="createProjectModuleDialog(selectedProject)"
+					[disabled]="disableButton"
+				>
+					<nb-icon class="mr-1" icon="plus-circle-outline"></nb-icon>
+					{{ 'BUTTONS.ADD_MODULE' | translate }}
 				</button>
 			</ng-template>
 			<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_DELETE]">
@@ -105,13 +118,7 @@
 <!-- Visible Button -->
 <ng-template #visibleButton>
 	<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_ADD]">
-		<button
-			type="button"
-			nbButton
-			status="success"
-			size="small"
-			(click)="navigateToProject()"
-		>
+		<button type="button" nbButton status="success" size="small" (click)="navigateToProject()">
 			<nb-icon icon="plus-outline"></nb-icon>
 			{{ 'BUTTONS.ADD' | translate }}
 		</button>

@@ -29,8 +29,8 @@
 		"migration:generate": "yarn ts-node -r tsconfig-paths/register src/migration.ts migration:generate",
 		"start": "yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json src/main.ts",
 		"start:debug": "nodemon --config nodemon-debug.json",
-		"build": "yarn ng build api",
-		"build:prod": "yarn ng build api --prod",
+		"build": "yarn nx build api --configuration=development",
+		"build:prod": "yarn nx build api --configuration=production",
 		"seed": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json src/seed.ts",
 		"seed:build": "yarn ng run api:seed",
 		"seed:all": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json src/seed-all.ts",
@@ -53,15 +53,17 @@
 		"@gauzy/plugin-knowledge-base": "^0.1.0",
 		"@gauzy/plugin-product-reviews": "^0.1.0",
 		"@gauzy/plugin-sentry": "^0.1.0",
+		"@gauzy/plugin-videos": "^0.1.0",
 		"dotenv": "^16.0.3",
 		"yargs": "^17.5.0"
 	},
 	"devDependencies": {
-		"@nestjs/schematics": "^10.1.1",
-		"@nestjs/testing": "^10.3.7",
+		"@nestjs/cli": "^10.4.9",
+		"@nestjs/schematics": "^10.2.3",
+		"@nestjs/testing": "^10.4.15",
 		"nodemon": "^3.1.0",
 		"pm2": "^5.3.1",
 		"ts-node": "^10.9.2",
-		"typescript": "5.1.6"
+		"typescript": "5.5.4"
 	}
 }

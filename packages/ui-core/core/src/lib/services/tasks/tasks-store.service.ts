@@ -18,22 +18,15 @@ export class TasksStoreService {
 		return this._tasks$.getValue();
 	}
 
-	constructor(
-		private readonly _taskService: TasksService
-	) {}
+	constructor(private readonly _taskService: TasksService) {}
 
-	fetchTasks(
-		tenantId: string,
-		organizationId: string
-	): Observable<IPagination<ITask>> {
+	fetchTasks(tenantId: string, organizationId: string): Observable<IPagination<ITask>> {
 		return this._taskService
 			.getAllTasks({
 				tenantId,
 				organizationId
 			})
-			.pipe(
-				tap(({ items }) => this.loadAllTasks(items)),
-			);
+			.pipe(tap(({ items }) => this.loadAllTasks(items)));
 	}
 
 	private _mapToViewModel(tasks) {
@@ -48,16 +41,10 @@ export class TasksStoreService {
 		this._tasks$.next(tasks);
 	}
 
-	updateTasksViewMode(
-		projectId: string,
-		viewModeType: TaskListTypeEnum
-	): void {
+	updateTasksViewMode(projectId: string, viewModeType: TaskListTypeEnum): void {
 		this._tasks$.next([
 			...this.tasks.map((task: ITask) => {
-				if (
-					task.projectId === projectId &&
-					task.project.taskListType !== viewModeType
-				) {
+				if (task.projectId === projectId && task.project.taskListType !== viewModeType) {
 					return {
 						...task,
 						project: { ...task.project, taskListType: viewModeType }
@@ -69,40 +56,32 @@ export class TasksStoreService {
 	}
 
 	createTask(task: ITask): Observable<ITask> {
-		return this._taskService
-			.createTask(task)
-			.pipe(
-				tap((createdTask) => {
-					const tasks = [...this.tasks, createdTask];
-					this._tasks$.next(tasks);
-				})
-			);
+		return this._taskService.createTask(task).pipe(
+			tap((createdTask) => {
+				const tasks = [...this.tasks, createdTask];
+				this._tasks$.next(tasks);
+			})
+		);
 	}
 
 	editTask(task: ITask): Observable<ITask> {
-		return this._taskService
-			.editTask(task)
-			.pipe(
-				tap(() => {
-					const tasks = [...this.tasks];
-					const newState = tasks.map((t) =>
-						t.id === task.id ? { ...t, ...task } : t
-					);
-					this._tasks$.next(newState);
-				})
-			);
+		return this._taskService.editTask(task).pipe(
+			tap(() => {
+				const tasks = [...this.tasks];
+				const newState = tasks.map((t) => (t.id === task.id ? { ...t, ...task } : t));
+				this._tasks$.next(newState);
+			})
+		);
 	}
 
 	delete(id: string): Observable<void> {
-		return this._taskService
-			.deleteTask(id)
-			.pipe(
-				tap(() => {
-					const tasks = [...this.tasks];
-					const newState = tasks.filter((t) => t.id !== id);
-					this._tasks$.next(newState);
-				})
-			);
+		return this._taskService.deleteTask(id).pipe(
+			tap(() => {
+				const tasks = [...this.tasks];
+				const newState = tasks.filter((t) => t.id !== id);
+				this._tasks$.next(newState);
+			})
+		);
 	}
 
 	selectTask(task: ITask) {

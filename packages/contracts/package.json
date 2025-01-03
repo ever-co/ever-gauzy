@@ -9,46 +9,38 @@
 	},
 	"license": "AGPL-3.0",
 	"private": true,
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"files": [
-		"dist"
-	],
-	"directories": {
-		"lib": "dist",
-		"test": "__test__"
-	},
-	"publishConfig": {
-		"access": "restricted"
-	},
+	"type": "commonjs",
+	"main": "./src/index.js",
+	"typings": "./src/index.d.ts",
 	"scripts": {
-		"test": "jest",
-		"test:e2e": "jest --config ./__test__/jest.config.json",
-		"build": "rimraf dist && yarn run compile",
-		"build:prod": "rimraf dist && yarn run compile",
-		"compile": "tsc -p tsconfig.build.json"
+		"lib:build": "yarn nx build contracts",
+		"lib:build:prod": "yarn nx build contracts",
+		"lib:watch": "yarn nx build contracts --watch"
+	},
+	"dependencies": {
+		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
-		"@types/jest": "^29.4.4",
+		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
-		"rimraf": "^3.0.2",
-		"typescript": "5.1.6"
+		"typescript": "5.5.4"
 	},
-	"jest": {
-		"moduleFileExtensions": [
-			"js",
-			"json",
-			"ts"
-		],
-		"rootDir": "src",
-		"testRegex": ".*\\.spec\\.ts$",
-		"transform": {
-			"^.+\\.(t|j)s$": "ts-jest"
-		},
-		"collectCoverageFrom": [
-			"**/*.(t|j)s"
-		],
-		"coverageDirectory": "../coverage/packages/contracts",
-		"testEnvironment": "node"
-	}
+	"keywords": [
+		"nestjs",
+		"typescript",
+		"contracts",
+		"shared-module",
+		"common-module",
+		"ever-gauzy",
+		"platform",
+		"open-source",
+		"enterprise",
+		"agpl",
+		"nx"
+	],
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
 }

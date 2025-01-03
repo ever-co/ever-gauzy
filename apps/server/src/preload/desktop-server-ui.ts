@@ -1,7 +1,7 @@
 import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
-import path from 'path';
+import * as path from 'path';
 import { app } from 'electron';
-import os from 'os';
+import * as os from 'os';
 
 class ServerProcessFactory {
 	public static createUiServerProcess(): ChildProcessWithoutNullStreams {

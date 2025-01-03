@@ -135,9 +135,8 @@ export class GoalTemplateSelectComponent extends TranslationBaseComponent implem
 	}
 
 	async createGoal() {
-		if (!!this.selectedGoalTemplate && !!this.form.valid) {
+		if (!!this.selectedGoalTemplate && this.form.valid) {
 			const formValue = this.form.value;
-			delete formValue.level;
 
 			const { id: organizationId, tenantId } = this.organization;
 			const goal = {
@@ -150,59 +149,90 @@ export class GoalTemplateSelectComponent extends TranslationBaseComponent implem
 			};
 			goal[
 				this.form.value.level === GoalLevelEnum.EMPLOYEE
-					? 'ownerEmployee'
+					? 'ownerEmployeeId'
 					: this.form.value.level === GoalLevelEnum.TEAM
-					? 'ownerTeam'
-					: 'organization'
-			] = this.form.value.owner;
-			delete goal.owner;
-			delete goal.keyResults;
-			const goalCreated = await this.goalService.createGoal(goal);
-			if (goalCreated) {
-				const kpiCreatedPromise = [];
-				this.selectedGoalTemplate.keyResults.forEach(async (keyResult) => {
+					? 'ownerTeamId'
+					: 'organizationId'
+			] = this.form.value.ownerId;
+
+			const { owner, keyResults, ...goalData } = goal;
+			const newGoal = {
+				...goalData,
+				organizationId,
+				tenantId
+			};
+
+			try {
+				// Create the goal
+				const goalCreated = await this.goalService.createGoal(newGoal);
+				if (!goalCreated) {
+					this.toastrService.error(this.getTranslation('TOASTR.MESSAGE.GOAL_CREATION_FAILED'));
+					return;
+				}
+
+				// Create associated KPIs
+				const kpiPromises = this.selectedGoalTemplate.keyResults.map(async (keyResult) => {
 					if (keyResult.type === KeyResultTypeEnum.KPI) {
 						const kpiData = {
 							...keyResult.kpi,
 							organization: this.orgId
 						};
-						await this.goalSettingsService.createKPI(kpiData).then((res) => {
-							if (res) {
-								keyResult.kpiId = res.id;
-							}
-							kpiCreatedPromise.push(keyResult);
-						});
-					}
-				});
-				Promise.all(kpiCreatedPromise).then(async () => {
-					const keyResults = this.selectedGoalTemplate.keyResults.map((keyResult) => {
-						delete keyResult.kpi;
-						delete keyResult.goalId;
-						return {
-							...keyResult,
-							goalId: goalCreated.id,
-							description: ' ',
-							progress: 0,
-							update: keyResult.initialValue,
-							ownerId: this.employees[0].id,
-							organizationId,
-							tenantId,
-							status: 'none',
-							weight: KeyResultWeightEnum.DEFAULT
-						};
-					});
-
-					await this.keyResultService.createBulkKeyResult(keyResults).then((res) => {
-						if (res) {
-							this.toastrService.success(this.getTranslation('TOASTR.MESSAGE.KEY_RESULTS_CREATED'));
-							this.closeDialog('done');
+						try {
+							const res = await this.goalSettingsService.createKPI(kpiData);
+							keyResult.kpiId = res?.id;
+							this.toastrService.success(
+								this.getTranslation('TOASTR.MESSAGE.KPI_CREATED', { name: keyResult.name })
+							);
+						} catch (error) {
+							this.toastrService.warning(
+								this.getTranslation('TOASTR.MESSAGE.KPI_CREATION_FAILED', { name: keyResult.name })
+							);
 						}
-					});
+						return keyResult;
+					}
+					return keyResult;
 				});
+
+				const KEY_RESULT_DEFAULTS = {
+					description: ' ',
+					progress: 0,
+					status: 'none',
+					weight: KeyResultWeightEnum.DEFAULT
+				};
+
+				// Wait for all KPI promises to complete
+				const updatedKeyResults = await Promise.all(kpiPromises);
+
+				// Prepare Key Results for bulk creation
+				const keyResults = updatedKeyResults.map((keyResult) => {
+					const { kpi, goalId, ...keyResultData } = keyResult;
+					return {
+						...keyResultData,
+						...KEY_RESULT_DEFAULTS,
+						goalId: goalCreated.id,
+						update: keyResult.initialValue,
+						ownerId: this.form.value.ownerId,
+						organizationId,
+						tenantId
+					};
+				});
+
+				// Create Key Results in bulk
+				const keyResultsCreated = await this.keyResultService.createBulkKeyResult(keyResults);
+				if (keyResultsCreated) {
+					this.toastrService.success(this.getTranslation('TOASTR.MESSAGE.KEY_RESULTS_CREATED'));
+					this.closeDialog('done');
+				}
+			} catch (error) {
+				console.error('Goal creation failed:', error);
+				this.toastrService.error(
+					this.getTranslation('TOASTR.MESSAGE.GOAL_CREATION_ERROR', {
+						error: error.message || 'Unknown error'
+					})
+				);
 			}
 		}
 	}
-
 	previousStep() {
 		this.stepper.previous();
 	}

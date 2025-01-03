@@ -48,4 +48,20 @@ export class GoalLevelSelectComponent {
 			}
 		}
 	}
+
+	onLevelChange(selectedLevel: GoalLevelEnum) {
+		this.parentFormGroup.patchValue({ level: selectedLevel });
+
+		if (selectedLevel === this.goalLevelEnum.TEAM) {
+			this.getTeams();
+		}
+	}
+
+	isLevelHidden(level: GoalLevelEnum): boolean {
+		return (
+			(this.hideOrg && level === this.goalLevelEnum.ORGANIZATION) ||
+			(this.hideEmployee && level === this.goalLevelEnum.EMPLOYEE) ||
+			(this.hideTeam && level === this.goalLevelEnum.TEAM)
+		);
+	}
 }

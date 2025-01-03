@@ -1,8 +1,9 @@
 // Some of the code is modified from https://github.com/akveo/ngx-admin/blob/master/src/app/app.module.ts,
 // that licensed under the MIT License and Copyright (c) 2017 akveo.com.
 
+import { VERSION } from '@angular/core';
 import { APP_BASE_HREF } from '@angular/common';
-import { HttpClientModule, HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ExtraOptions, Router, RouterModule } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -41,6 +42,7 @@ import {
 	HubstaffTokenInterceptor,
 	LanguageInterceptor,
 	SentryErrorHandler,
+	serverConnectionFactory,
 	ServerConnectionService,
 	Store,
 	TenantInterceptor,
@@ -116,91 +118,91 @@ const FEATURE_MODULES = [
 
 @NgModule({
 	declarations: [AppComponent],
+    bootstrap: [AppComponent],
 	imports: [
 		BrowserModule,
-		BrowserAnimationsModule,
-		HttpClientModule,
-		RouterModule.forRoot(appRoutes, config),
-		...NB_MODULES,
-		...FEATURE_MODULES,
-		...THIRD_PARTY_MODULES
+        BrowserAnimationsModule,
+        RouterModule.forRoot(appRoutes, config),
+        ...NB_MODULES,
+        ...FEATURE_MODULES,
+        ...THIRD_PARTY_MODULES
 	],
-	bootstrap: [AppComponent],
 	providers: [
-		{
-			provide: Sentry.TraceService,
-			deps: [Router]
-		},
-		{ provide: APP_BASE_HREF, useValue: '/' },
-		{
-			provide: ErrorHandler,
-			useClass: SentryErrorHandler
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: APIInterceptor,
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: HubstaffTokenInterceptor,
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: TokenInterceptor,
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: LanguageInterceptor,
-			multi: true
-		},
-		{
-			provide: HTTP_INTERCEPTORS,
-			useClass: TenantInterceptor,
-			multi: true
-		},
-		ServerConnectionService,
-		{
-			provide: APP_INITIALIZER,
-			useFactory: serverConnectionFactory,
-			deps: [ServerConnectionService, Store, Router],
-			multi: true
-		},
-		GoogleMapsLoaderService,
-		{
-			provide: APP_INITIALIZER,
-			useFactory: googleMapsLoaderFactory,
-			deps: [GoogleMapsLoaderService],
-			multi: true
-		},
-		FeatureService,
-		{
-			provide: APP_INITIALIZER,
-			useFactory: featureToggleLoaderFactory,
-			deps: [FeatureService, Store],
-			multi: true
-		},
-		AppInitService,
-		{
-			provide: APP_INITIALIZER,
-			useFactory: initializeApp,
-			deps: [AppInitService],
-			multi: true
-		},
-		{
-			provide: ErrorHandler,
-			useClass: SentryErrorHandler
-		},
-		AppModuleGuard,
-		ColorPickerService,
-		CookieService,
-		{
-			provide: GAUZY_ENV,
-			useValue: environment
-		}
-	]
+        {
+            provide: Sentry.TraceService,
+            deps: [Router]
+        },
+        { provide: APP_BASE_HREF, useValue: '/' },
+        {
+            provide: ErrorHandler,
+            useClass: SentryErrorHandler
+        },
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: APIInterceptor,
+            multi: true
+        },
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: HubstaffTokenInterceptor,
+            multi: true
+        },
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: TokenInterceptor,
+            multi: true
+        },
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: LanguageInterceptor,
+            multi: true
+        },
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: TenantInterceptor,
+            multi: true
+        },
+        ServerConnectionService,
+        {
+            provide: APP_INITIALIZER,
+            useFactory: serverConnectionFactory,
+            deps: [ServerConnectionService, Store, Router],
+            multi: true
+        },
+        GoogleMapsLoaderService,
+        {
+            provide: APP_INITIALIZER,
+            useFactory: googleMapsLoaderFactory,
+            deps: [GoogleMapsLoaderService],
+            multi: true
+        },
+        FeatureService,
+        {
+            provide: APP_INITIALIZER,
+            useFactory: featureToggleLoaderFactory,
+            deps: [FeatureService, Store],
+            multi: true
+        },
+        AppInitService,
+        {
+            provide: APP_INITIALIZER,
+            useFactory: initializeApp,
+            deps: [AppInitService],
+            multi: true
+        },
+        {
+            provide: ErrorHandler,
+            useClass: SentryErrorHandler
+        },
+        AppModuleGuard,
+        ColorPickerService,
+        CookieService,
+        {
+            provide: GAUZY_ENV,
+            useValue: environment
+        },
+        provideHttpClient(withInterceptorsFromDi())
+    ]
 })
 export class AppModule {
 	/**
@@ -212,6 +214,8 @@ export class AppModule {
 	 * @param {I18nTranslateService} _i18nService - The I18nTranslateService instance.
 	 */
 	constructor(readonly _i18nService: I18nService) {
+		console.log(`Angular Version: ${VERSION.full}`);
+
 		// Initialize UI languages and Update Locale
 		this.initializeUiLanguagesAndLocale();
 	}
@@ -242,36 +246,6 @@ export class AppModule {
  */
 export function initializeApp(provider: AppInitService): () => Promise<void> {
 	return () => provider.init();
-}
-
-/**
- * Creates a factory function that checks the server connection and performs actions based on the result.
- *
- * @param {ServerConnectionService} provider - The server connection service instance.
- * @param {Store} store - The store instance.
- * @param {Router} router - The router instance.
- * @return {Function} A function that checks the server connection and performs actions based on the result.
- */
-export function serverConnectionFactory(provider: ServerConnectionService, store: Store, router: Router): Function {
-	return () => {
-		const url = environment.API_BASE_URL;
-		console.log('Checking server connection in serverConnectionFactory on URL: ', url);
-
-		return provider
-			.checkServerConnection(url)
-			.finally(() => {
-				console.log(
-					`Server connection status in serverConnectionFactory for Url ${url} is: ${store.serverConnection}`
-				);
-
-				if (store.serverConnection !== 200) {
-					router.navigate(['server-down']);
-				}
-			})
-			.catch((err) => {
-				console.error(`Error checking server connection in serverConnectionFactory for URL: ${url}`, err);
-			});
-	};
 }
 
 /**

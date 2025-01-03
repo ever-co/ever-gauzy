@@ -421,6 +421,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				'members',
 				'members.user',
 				'project',
+				'modules',
 				'tags',
 				'teams',
 				'teams.members',

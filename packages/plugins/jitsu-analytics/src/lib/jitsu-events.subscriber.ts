@@ -26,7 +26,7 @@ export class JitsuEventsSubscriber extends BaseEntityEventSubscriber {
 
 			// Ensure required configuration properties are present
 			if (!serverHost || !serverWriteKey) {
-				console.error(chalk.yellow('Jitsu Analytics initialization failed: Missing host or writeKey.'));
+				console.error(chalk.yellow('Jitsu Analytics initialization failed at JitsuEventsSubscriber: Missing host or writeKey.'));
 				return;
 			}
 

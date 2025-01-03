@@ -1,16 +1,21 @@
 {
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
-		"declaration": true,
-		"sourceMap": true,
-		"baseUrl": "./src",
-		"rootDir": "./src",
-		"outDir": "./dist",
-		"types": ["node", "jest"],
-		"paths": {
-			"rxjs": ["node_modules/rxjs"],
-			"rxjs/*": ["node_modules/rxjs/*"]
-		}
+		"forceConsistentCasingInFileNames": true,
+		"strict": false,
+		"noImplicitOverride": false,
+		"noImplicitReturns": false,
+		"noFallthroughCasesInSwitch": false,
+		"noPropertyAccessFromIndexSignature": false
 	},
-	"include": ["./src/**/*"]
+	"files": [],
+	"include": [],
+	"references": [
+		{
+			"path": "./tsconfig.lib.json"
+		},
+		{
+			"path": "./tsconfig.spec.json"
+		}
+	]
 }

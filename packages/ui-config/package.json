@@ -1,14 +1,12 @@
 {
 	"name": "@gauzy/ui-config",
 	"version": "0.1.0",
-	"type": "commonjs",
 	"description": "A configuration library for the Gauzy framework, providing environment settings and configurations to be shared across various Angular applications within the Gauzy ecosystem.",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
-	"license": "AGPL-3.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ever-co/ever-gauzy"
@@ -17,6 +15,26 @@
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"homepage": "https://ever.co",
+	"license": "AGPL-3.0",
+	"private": true,
+	"scripts": {
+		"lib:build": "yarn nx build ui-config --configuration=development",
+		"lib:build:prod": "yarn nx build ui-config --configuration=production",
+		"lib:watch": "yarn nx build ui-config --watch --configuration=development"
+	},
+	"peerDependencies": {
+		"@angular/common": "^18.2.0",
+		"@angular/core": "^18.2.0"
+	},
+	"dependencies": {
+		"tslib": "^2.6.2"
+	},
+	"devDependencies": {
+		"@types/jest": "29.5.14",
+		"@types/node": "^20.14.9",
+		"cross-env": "^7.0.3",
+		"jest-preset-angular": "14.1.1"
+	},
 	"keywords": [
 		"gauzy",
 		"angular",
@@ -25,38 +43,6 @@
 		"settings",
 		"library"
 	],
-	"private": true,
-	"main": "src/index.ts",
-	"typings": "src/index.ts",
-	"files": [
-		"dist"
-	],
-	"directories": {
-		"lib": "dist",
-		"test": "__test__"
-	},
-	"publishConfig": {
-		"access": "restricted"
-	},
-	"scripts": {
-		"lib:build": "ng build ui-config --configuration development",
-		"lib:build:prod": "cross-env NODE_ENV=production yarn ts-node scripts/replace-env-files.ts --environment=prod && ng build ui-config --configuration production",
-		"lib:watch": "ng build ui-config --watch --configuration development"
-	},
-	"peerDependencies": {
-		"@angular/common": "^16.2.12",
-		"@angular/core": "^16.2.12"
-	},
-	"dependencies": {
-		"tslib": "^2.6.2",
-		"zone.js": "^0.14.2"
-	},
-	"devDependencies": {
-		"@types/jest": "^29.4.4",
-		"@types/node": "^20.14.9",
-		"cross-env": "^7.0.3",
-		"jest-preset-angular": "^13.1.4"
-	},
 	"engines": {
 		"node": ">=20.11.1",
 		"yarn": ">=1.22.19"

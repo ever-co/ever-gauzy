@@ -106,7 +106,7 @@ ARG REDIS_URL
 FROM node:20.11.1-alpine3.19 AS dependencies
 
 LABEL maintainer="ever@ever.co"
-LABEL org.opencontainers.image.source https://github.com/ever-co/ever-gauzy
+LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
 
 ENV CI=true
 
@@ -117,7 +117,7 @@ ENV NODE_ENV=development
 # Set Python interpreter for `node-gyp` to use
 ENV PYTHON /usr/bin/python
 
-RUN apk --update add bash && npm i -g npm \
+RUN apk --update add bash && npm i -g npm@9 \
 	&& apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
 	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
 
@@ -139,51 +139,38 @@ USER node:node
 
 WORKDIR /srv/gauzy
 
-COPY --chown=node:node apps/gauzy/package.json ./apps/gauzy/
 COPY --chown=node:node apps/api/package.json ./apps/api/
 
 COPY --chown=node:node packages/common/package.json ./packages/common/
-COPY --chown=node:node packages/common-angular/package.json ./packages/common-angular/
+COPY --chown=node:node packages/utils/package.json ./packages/utils/
 COPY --chown=node:node packages/config/package.json ./packages/config/
 COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/auth/package.json ./packages/auth/
 COPY --chown=node:node packages/core/package.json ./packages/core/
 COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
-COPY --chown=node:node packages/plugins/integration-ai-ui/package.json ./packages/plugins/integration-ai-ui/
 COPY --chown=node:node packages/plugins/integration-ai/package.json ./packages/plugins/integration-ai/
-COPY --chown=node:node packages/plugins/integration-hubstaff-ui/package.json ./packages/plugins/integration-hubstaff-ui/
 COPY --chown=node:node packages/plugins/integration-hubstaff/package.json ./packages/plugins/integration-hubstaff/
-COPY --chown=node:node packages/plugins/integration-upwork-ui/package.json ./packages/plugins/integration-upwork-ui/
 COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
 COPY --chown=node:node packages/plugins/integration-github/package.json ./packages/plugins/integration-github/
-COPY --chown=node:node packages/plugins/integration-github-ui/package.json ./packages/plugins/integration-github-ui/
 COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
 COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
 COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
 COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
+COPY --chown=node:node packages/plugins/videos/package.json ./packages/plugins/videos/
 COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
 COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
 COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plugins/job-proposal/
-COPY --chown=node:node packages/plugins/job-employee-ui/package.json ./packages/plugins/job-employee-ui/
-COPY --chown=node:node packages/plugins/job-matching-ui/package.json ./packages/plugins/job-matching-ui/
-COPY --chown=node:node packages/plugins/job-proposal-ui/package.json ./packages/plugins/job-proposal-ui/
-COPY --chown=node:node packages/plugins/job-search-ui/package.json ./packages/plugins/job-search-ui/
-COPY --chown=node:node packages/plugins/legal-ui/package.json ./packages/plugins/legal-ui/
-COPY --chown=node:node packages/plugins/maintenance-ui/package.json ./packages/plugins/maintenance-ui/
-COPY --chown=node:node packages/plugins/onboarding-ui/package.json ./packages/plugins/onboarding-ui/
-COPY --chown=node:node packages/plugins/public-layout-ui/package.json ./packages/plugins/public-layout-ui/
-COPY --chown=node:node packages/ui-core/package.json ./packages/ui-core/
-COPY --chown=node:node packages/ui-config/package.json ./packages/ui-config/
-COPY --chown=node:node packages/ui-auth/package.json ./packages/ui-auth/
 
 # We do not build here Wakatime plugin, because it used in Desktop Apps for now
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
 
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
+COPY --chown=node:node .scripts/postinstall.ts ./.scripts/
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile
-# RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
+RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
+RUN yarn postinstall.manual
+RUN yarn cache clean
 
 FROM node:20.11.1-alpine3.19 AS prodDependencies
 
@@ -195,7 +182,7 @@ ARG NODE_ENV
 # Set Python interpreter for `node-gyp` to use
 ENV PYTHON /usr/bin/python
 
-RUN apk --update add bash && npm i -g npm \
+RUN apk --update add bash && npm i -g npm@9 \
 	&& apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
 	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
 
@@ -217,48 +204,42 @@ WORKDIR /srv/gauzy
 COPY --chown=node:node apps/api/package.json ./apps/api/
 
 COPY --chown=node:node packages/common/package.json ./packages/common/
+COPY --chown=node:node packages/utils/package.json ./packages/utils/
 COPY --chown=node:node packages/config/package.json ./packages/config/
 COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/auth/package.json ./packages/auth/
 COPY --chown=node:node packages/core/package.json ./packages/core/
 COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
-COPY --chown=node:node packages/plugins/integration-ai-ui/package.json ./packages/plugins/integration-ai-ui/
 COPY --chown=node:node packages/plugins/integration-ai/package.json ./packages/plugins/integration-ai/
-COPY --chown=node:node packages/plugins/integration-hubstaff-ui/package.json ./packages/plugins/integration-hubstaff-ui/
 COPY --chown=node:node packages/plugins/integration-hubstaff/package.json ./packages/plugins/integration-hubstaff/
-COPY --chown=node:node packages/plugins/integration-upwork-ui/package.json ./packages/plugins/integration-upwork-ui/
 COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
 COPY --chown=node:node packages/plugins/integration-github/package.json ./packages/plugins/integration-github/
-COPY --chown=node:node packages/plugins/integration-github-ui/package.json ./packages/plugins/integration-github-ui/
 COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
 COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
 COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
 COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
+COPY --chown=node:node packages/plugins/videos/package.json ./packages/plugins/videos/
 COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
 COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
 COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plugins/job-proposal/
-COPY --chown=node:node packages/plugins/job-employee-ui/package.json ./packages/plugins/job-employee-ui/
-COPY --chown=node:node packages/plugins/job-matching-ui/package.json ./packages/plugins/job-matching-ui/
-COPY --chown=node:node packages/plugins/job-proposal-ui/package.json ./packages/plugins/job-proposal-ui/
-COPY --chown=node:node packages/plugins/job-search-ui/package.json ./packages/plugins/job-search-ui/
-COPY --chown=node:node packages/plugins/public-layout-ui/package.json ./packages/plugins/public-layout-ui/
-COPY --chown=node:node packages/plugins/legal-ui/package.json ./packages/plugins/legal-ui/
-COPY --chown=node:node packages/plugins/maintenance-ui/package.json ./packages/plugins/maintenance-ui/
-COPY --chown=node:node packages/plugins/onboarding-ui/package.json ./packages/plugins/onboarding-ui/
-COPY --chown=node:node packages/ui-core/package.json ./packages/ui-core/
-COPY --chown=node:node packages/ui-config/package.json ./packages/ui-config/
-COPY --chown=node:node packages/ui-auth/package.json ./packages/ui-auth/
 
 # We do not build here Wakatime plugin, because it used in Desktop Apps for now
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
 
-COPY --chown=node:node package.json yarn.lock ./
+COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
+COPY --chown=node:node .scripts/postinstall.ts ./.scripts/
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile --production
-# RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
+RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production
+RUN yarn postinstall.manual
+RUN yarn cache clean
 
+# We remove Angular modules as it's not used in APIs
 RUN rm -r node_modules/@angular
+
+# Exclude @gauzy directories before copying because we copy
+# those within custom webpack in apps/api/config/custom-webpack.config.js
+# RUN rm -r node_modules/@gauzy
 
 FROM node:20.11.1-alpine3.19 AS development
 
@@ -289,7 +270,7 @@ ARG NODE_ENV
 ARG DEMO
 ARG NODE_OPTIONS
 
-ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=30000"}
+ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=60000"}
 ENV NODE_ENV=${NODE_ENV}
 ENV DEMO=${DEMO:-false}
 
@@ -299,19 +280,22 @@ ENV IS_DOCKER=true
 ENV NX_NO_CLOUD=true
 
 RUN if [ "$NODE_ENV" = "production" ]; then \
-	yarn build:package:api:prod; \
+	yarn build:package:api:docker; \
 	else \
 	yarn build:package:api; \
 	fi
 
 RUN yarn build:api:prod:docker
 
+# Exclude @gauzy directories before copying because we copy
+# those within custom webpack in apps/api/config/custom-webpack.config.js
+# RUN rm -r dist/apps/api/node_modules/@gauzy
+
 FROM node:20.11.1-alpine3.19 AS production
 
 WORKDIR /srv/gauzy
 
 COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint.compose.sh ./
-COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules/ ./node_modules/
 COPY --chown=node:node --from=build /srv/gauzy/packages/ ./packages/
 
 # Copy static assets files which used for example in the seeds (e.g. images for features, reports, screenshots)
@@ -327,6 +311,11 @@ COPY --chown=node:node apps/api/src/assets/seed apps/api/public
 
 COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
 
+# Copy node_modules to a temporary location
+COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules /tmp/node_modules_temp
+# Add a script to merge directories inside the container (skip files that already exists)
+RUN cp -rn /tmp/node_modules_temp/* ./node_modules/ && rm -rf /tmp/node_modules_temp
+
 RUN npm install pm2@4.5.1 -g && \
 	mkdir /import && chown node:node /import && \
 	touch ormlogs.log && chown node:node ormlogs.log && chown node:node wait && \
@@ -335,14 +324,44 @@ RUN npm install pm2@4.5.1 -g && \
 # Clean up
 RUN yarn cache clean
 
+# we need node_modules inside each @gauzy package
+RUN cp -r ./packages/auth/node_modules ./node_modules/@gauzy/auth/
+RUN cp -r ./packages/common/node_modules ./node_modules/@gauzy/common/
+RUN cp -r ./packages/utils/node_modules ./node_modules/@gauzy/utils/
+RUN cp -r ./packages/config/node_modules ./node_modules/@gauzy/config/
+RUN cp -r ./packages/contracts/node_modules ./node_modules/@gauzy/contracts/
+RUN cp -r ./packages/core/node_modules ./node_modules/@gauzy/core/
+
+RUN cp -r ./packages/plugins/changelog/node_modules ./node_modules/@gauzy/plugin-changelog/
+RUN cp -r ./packages/plugins/integration-ai/node_modules ./node_modules/@gauzy/plugin-integration-ai/
+RUN cp -r ./packages/plugins/integration-github/node_modules ./node_modules/@gauzy/plugin-integration-github/
+RUN cp -r ./packages/plugins/integration-hubstaff/node_modules ./node_modules/@gauzy/plugin-integration-hubstaff/
+RUN cp -r ./packages/plugins/integration-jira/node_modules ./node_modules/@gauzy/plugin-integration-jira/
+RUN cp -r ./packages/plugins/integration-upwork/node_modules ./node_modules/@gauzy/plugin-integration-upwork/
+RUN cp -r ./packages/plugins/jitsu-analytics/node_modules ./node_modules/@gauzy/plugin-jitsu-analytics/
+RUN cp -r ./packages/plugins/job-proposal/node_modules ./node_modules/@gauzy/plugin-job-proposal/
+RUN cp -r ./packages/plugins/job-search/node_modules ./node_modules/@gauzy/plugin-job-search/
+RUN cp -r ./packages/plugins/knowledge-base/node_modules ./node_modules/@gauzy/plugin-knowledge-base/
+RUN cp -r ./packages/plugins/product-reviews/node_modules ./node_modules/@gauzy/plugin-product-reviews/
+RUN cp -r ./packages/plugins/sentry-tracing/node_modules ./node_modules/@gauzy/plugin-sentry/
+RUN cp -r ./packages/plugins/videos/node_modules ./node_modules/@gauzy/plugin-videos/
+
+# We do not copy node_modules here for Wakatime plugin, because it used in Desktop Apps for now
+# RUN cp -r ./packages/plugins/integration-wakatime/node_modules ./node_modules/@gauzy/plugin-integration-wakatime/
+
+# we don't need packages folder anymore
+RUN rm -rf ./packages
+
 USER node:node
 
 ENV CI=true
 
 ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=12288"}
 ENV NODE_ENV=${NODE_ENV:-production}
+
 ENV API_HOST=${API_HOST:-api}
 ENV API_PORT=${API_PORT:-3000}
+
 ENV API_BASE_URL=${API_BASE_URL:-http://localhost:3000}
 ENV CLIENT_BASE_URL=${CLIENT_BASE_URL:-http://localhost:4200}
 ENV SENTRY_DSN=${SENTRY_DSN}

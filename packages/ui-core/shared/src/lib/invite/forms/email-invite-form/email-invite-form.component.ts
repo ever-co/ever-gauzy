@@ -157,9 +157,16 @@ export class EmailInviteFormComponent extends TranslationBaseComponent implement
 	 * SELECT all organization projects
 	 */
 	selectAllProjects() {
-		const organizationProjects = this.organizationProjects.map((project) => project.id).filter(Boolean);
+		const currentValue = this.form.get('projects').value || [];
+		const allProjectIds = this.organizationProjects.map((project) => project.id).filter(Boolean);
 
-		this.form.get('projects').setValue(organizationProjects);
+		if (currentValue.length === allProjectIds.length) {
+			// Deselect all if all are already selected
+			this.form.get('projects').setValue([]);
+		} else {
+			// Select all
+			this.form.get('projects').setValue(allProjectIds);
+		}
 		this.form.get('projects').updateValueAndValidity();
 	}
 
@@ -167,33 +174,45 @@ export class EmailInviteFormComponent extends TranslationBaseComponent implement
 	 * SELECT all organization departments and update form control value
 	 */
 	selectAllDepartments() {
-		const departmentIds = this.organizationDepartments.map((department) => department.id).filter(Boolean);
+		const currentValue = this.form.get('departments').value || [];
+		const allDepartmentIds = this.organizationDepartments.map((department) => department.id).filter(Boolean);
 
-		this.form.patchValue({
-			departments: departmentIds
-		});
+		if (currentValue.length === allDepartmentIds.length) {
+			this.form.get('departments').setValue([]);
+		} else {
+			this.form.get('departments').setValue(allDepartmentIds);
+		}
+		this.form.get('departments').updateValueAndValidity();
 	}
 
 	/**
 	 * SELECT all organization contacts and update form control value
 	 */
 	selectAllOrganizationContacts() {
-		const organizationContactIds = this.organizationContacts.map((contact) => contact.id).filter(Boolean);
+		const currentValue = this.form.get('organizationContacts').value || [];
+		const allContactIds = this.organizationContacts.map((contact) => contact.id).filter(Boolean);
 
-		this.form.patchValue({
-			organizationContacts: organizationContactIds
-		});
+		if (currentValue.length === allContactIds.length) {
+			this.form.get('organizationContacts').setValue([]);
+		} else {
+			this.form.get('organizationContacts').setValue(allContactIds);
+		}
+		this.form.get('organizationContacts').updateValueAndValidity();
 	}
 
 	/**
 	 * SELECT all organization teams and update form control value
 	 */
 	selectAllTeams() {
-		const organizationTeamsIds = this.organizationTeams.map((team) => team.id).filter(Boolean);
+		const currentValue = this.form.get('teams').value || [];
+		const allTeamIds = this.organizationTeams.map((team) => team.id).filter(Boolean);
 
-		this.form.patchValue({
-			teams: organizationTeamsIds
-		});
+		if (currentValue.length === allTeamIds.length) {
+			this.form.get('teams').setValue([]);
+		} else {
+			this.form.get('teams').setValue(allTeamIds);
+		}
+		this.form.get('teams').updateValueAndValidity();
 	}
 
 	/**

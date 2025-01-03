@@ -174,7 +174,8 @@
 		"ACTIVATE": "Активирайте",
 		"ADD_PLUGIN": "Добавете плъгин",
 		"LOAD_PLUGIN": "Зареди плъгин",
-		"FROM_CDN": "От CDN"
+		"FROM_CDN": "От CDN",
+		"ADD_MODULE": "Добавяне на модул"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -2160,8 +2161,12 @@
 			"PROJECT_MODULE_READ": "Преглед на модули на проекта",
 			"PROJECT_MODULE_UPDATE": "Актуализиране на модули на проекта",
 			"PROJECT_MODULE_DELETE": "Изтриване на модули на проекта",
-			"ORG_TEAM_ADD": "Add Teams",
-			"ORG_TEAM_VIEW": "View Teams",
+			"DASHBOARD_CREATE": "Създаване на табло",
+			"DASHBOARD_READ": "Преглед на табло",
+			"DASHBOARD_UPDATE": "Актуализиране на табло",
+			"DASHBOARD_DELETE": "Изтриване на табло",
+			"ORG_TEAM_ADD": "Създаване на екипи",
+			"ORG_TEAM_VIEW": "Преглед на екипи",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "Редактиране на активни задачи",
 			"ORG_TEAM_EDIT": "Edit Teams",
 			"ORG_TEAM_DELETE": "Delete Teams",
@@ -2660,7 +2665,9 @@
 		"SELECT": "Избери",
 		"SPRINTS_SETTINGS": "Настройки на спринтовете",
 		"ARE_YOU_SURE": "Сигурни ли сте, че искате да изтриете спринта",
-		"SETTINGS": "Настройки"
+		"SETTINGS": "Настройки",
+		"MODULE": "Модул",
+		"SELECT_MODULE": "Модули"
 	},
 	"JOBS": {
 		"EMPLOYEE": "Служител",
@@ -3206,7 +3213,26 @@
 		"CATEGORY_EDIT_DELETED": "Category was removed"
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
-		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "This tab will show project management charts and aggregated data."
+		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "This tab will show project management charts and aggregated data.",
+		"PROJECT_MODULE": {
+			"PROJECT": "Проект",
+			"SELECT_PROJECT": "Изберете проект",
+			"STATUS": "Статус",
+			"TEAM_MEMBERS": "Членове на екипа",
+			"TEAMS": "Отбори",
+			"SELECT_TEAMS": "Изберете отбори",
+			"CHOOSE_TEAMS": "Изберете отбори",
+			"NAME": "Име",
+			"ENTER_NAME": "Въведете име",
+			"PARENT_MODULE": "Родителски модул",
+			"SELECT_PARENT": "Изберете родителски модул",
+			"START_DATE": "Начална дата",
+			"SELECT_START_DATE": "Изберете начална дата",
+			"END_DATE": "Крайна дата",
+			"SELECT_END_DATE": "Изберете крайна дата",
+			"DESCRIPTION": "Описание",
+			"IS_FAVORITE": "Любим"
+		}
 	},
 	"SETTINGS_FEATURES": {
 		"INVOICE": "Фактура",
@@ -3634,7 +3660,10 @@
 			"TIME_LOG_DELETED": "Времевият запис за '{{ name }}' беше премахнат от '{{ organization }}'",
 			"TIME_LOGS_DELETED": "Времевите записи бяха премахнати от '{{ organization }}'",
 			"BUCKET_CREATED": "'{{ bucket }}' за '{{ region }}' беше успешно създаден",
-			"AUTHORIZED_TO_WORK": "{{ name }} има право да работи"
+			"AUTHORIZED_TO_WORK": "{{ name }} има право да работи",
+			"MODULE_CREATED": "Модулът е създаден успешно!",
+			"MODULE_UPDATED": "Модулът е актуализиран успешно!",
+			"MODULE_SAVE_ERROR": "Неуспешно записване на модула. Моля, опитайте отново."
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -3709,6 +3738,9 @@
 				"ADD_AWARD": "New award '{{ name }}' was added",
 				"INVALID_AWARD_NAME_YEAR": "Please check the Name and Year for Award input",
 				"REMOVE_AWARD": "Award '{{ name }}' was removed"
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "Крайната дата ({{ endDate }}) не може да бъде преди началната дата ({{ startDate }})."
 			}
 		},
 		"ORGANIZATIONS": {
@@ -3732,7 +3764,8 @@
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "Employee Level '{{ name }}' was added",
 				"REMOVE_EMPLOYEE_LEVEL": "Employee Level '{{ name }}' was removed",
-				"INVALID_EMPLOYEE_LEVEL": "Please add an Employee Level"
+				"INVALID_EMPLOYEE_LEVEL": "Please add an Employee Level",
+				"ALREADY_EXISTS": "Нивото на служител вече съществува."
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "vendor '{{ name }}' was added",
@@ -3750,12 +3783,14 @@
 				"ADD_POSITION": "Position '{{ name }}' was added",
 				"UPDATED_POSITION": "Position '{{ name }}' was changed",
 				"REMOVE_POSITION": "Position '{{ name }}' was removed",
-				"INVALID_POSITION_NAME": "Please add a Position name"
+				"INVALID_POSITION_NAME": "Please add a Position name",
+				"ALREADY_EXISTS": "Позицията вече съществува."
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "Department '{{ name }}' was saved",
 				"REMOVE_DEPARTMENT": "Department '{{ name }}' was removed",
-				"INVALID_DEPARTMENT_NAME": "Please add a Department name"
+				"INVALID_DEPARTMENT_NAME": "Please add a Department name",
+				"ALREADY_EXISTS": "Отделът вече съществува."
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "New client '{{ name }}' successfully added!",
@@ -3778,7 +3813,8 @@
 				"ADD_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was added",
 				"UPDATE_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was changed",
 				"INVALID_EMPLOYMENT_TYPE": "Please check the Name for Employment type input",
-				"DELETE_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was removed"
+				"DELETE_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was removed",
+				"ALREADY_EXISTS": "Този вид заетост вече съществува."
 			},
 			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
 				"ADD_RECURRING_EXPENSE": "Recurring expense was added for `{{ name }}`",

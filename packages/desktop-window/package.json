@@ -9,30 +9,39 @@
 	},
 	"license": "AGPL-3.0",
 	"private": true,
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"files": [
-		"dist"
-	],
-	"directories": {
-		"lib": "dist"
-	},
-	"publishConfig": {
-		"access": "restricted"
-	},
+	"type": "commonjs",
+	"main": "./src/index.js",
+	"typings": "./src/index.d.ts",
 	"scripts": {
-		"build": "rimraf dist && yarn run compile",
-		"build:prod": "rimraf dist && yarn run compile",
-		"compile": "tsc -p tsconfig.build.json"
+		"lib:build": "yarn nx build desktop-window",
+		"lib:build:prod": "yarn nx build desktop-window",
+		"lib:watch": "yarn nx build desktop-window --watch"
 	},
-	"keywords": [],
 	"dependencies": {
 		"@electron/remote": "^2.0.8",
+		"@gauzy/desktop-core": "^0.1.0",
 		"electron-log": "^4.4.8",
-		"electron-store": "^8.1.0"
+		"electron-store": "^8.1.0",
+		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
 		"@types/node": "^20.14.9",
 		"electron": "^30.0.1"
-	}
+	},
+	"keywords": [
+		"desktop",
+		"window",
+		"electron",
+		"desktop-application",
+		"gauzy",
+		"desktop-integration",
+		"remote",
+		"electron-log",
+		"electron-store"
+	],
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
 }

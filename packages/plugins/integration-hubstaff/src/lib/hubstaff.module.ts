@@ -1,6 +1,7 @@
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
+import { ConfigModule } from '@gauzy/config';
 import {
 	IntegrationEntitySettingModule,
 	IntegrationEntitySettingTiedModule,
@@ -24,6 +25,7 @@ import { HubstaffAuthorizationController } from './hubstaff-authorization.contro
 	imports: [
 		HttpModule.register({ baseURL: HUBSTAFF_API_URL }),
 		CqrsModule,
+		ConfigModule,
 		IntegrationEntitySettingModule,
 		IntegrationEntitySettingTiedModule,
 		IntegrationMapModule,

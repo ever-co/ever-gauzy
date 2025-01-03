@@ -1,15 +1,25 @@
 {
 	"name": "ui-core",
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
-	"sourceRoot": "packages/ui-core",
-	"prefix": "gauzy",
+	"sourceRoot": "packages/ui-core/src",
+	"prefix": "lib",
 	"projectType": "library",
+	"tags": [],
+	"implicitDependencies": [],
 	"targets": {
 		"build": {
-			"executor": "@nrwl/angular:ng-packagr-lite",
+			"executor": "@nx/angular:package",
 			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"dependsOn": [
+				"^build",
+				{
+					"target": "config",
+					"projects": "self"
+				}
+			],
 			"options": {
-				"project": "packages/ui-core/ng-package.json"
+				"project": "packages/ui-core/ng-package.json",
+				"tsConfig": "packages/ui-core/tsconfig.json"
 			},
 			"configurations": {
 				"production": {
@@ -21,40 +31,27 @@
 			},
 			"defaultConfiguration": "production"
 		},
+		"config": {
+			"executor": "nx:run-commands",
+			"configurations": {
+				"production": {
+					"commands": ["yarn nx build ui-config --configuration=production"]
+				},
+				"development": {
+					"commands": ["yarn nx build ui-config --configuration=development"]
+				}
+			},
+			"defaultConfiguration": "production"
+		},
 		"test": {
-			"executor": "@nrwl/jest:jest",
+			"executor": "@nx/jest:jest",
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
-				"jestConfig": "packages/ui-core/jest.config.ts",
-				"passWithNoTests": true
-			},
-			"configurations": {
-				"ci": {
-					"ci": true,
-					"codeCoverage": true
-				}
+				"jestConfig": "packages/ui-core/jest.config.ts"
 			}
 		},
 		"lint": {
-			"executor": "@nrwl/linter:eslint",
-			"outputs": ["{options.outputFile}"],
-			"options": {
-				"lintFilePatterns": [
-					"packages/ui-core/**/*.ts",
-					"packages/ui-core/**/*.html",
-					"packages/ui-core/i18n/**/*.ts",
-					"packages/ui-core/i18n/**/*.html",
-					"packages/ui-core/common/**/*.ts",
-					"packages/ui-core/common/**/*.html",
-					"packages/ui-core/core/**/*.ts",
-					"packages/ui-core/core/**/*.html",
-					"packages/ui-core/shared/**/*.ts",
-					"packages/ui-core/shared/**/*.html",
-					"packages/ui-core/theme/**/*.ts",
-					"packages/ui-core/theme/**/*.html"
-				]
-			}
+			"executor": "@nx/eslint:lint"
 		}
-	},
-	"tags": ["scope:ui"]
+	}
 }

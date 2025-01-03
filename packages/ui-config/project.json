@@ -2,15 +2,22 @@
 	"name": "ui-config",
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
 	"sourceRoot": "packages/ui-config/src",
-	"prefix": "gauzy",
-	"tags": [],
+	"prefix": "lib",
 	"projectType": "library",
+	"tags": [],
 	"targets": {
 		"build": {
-			"executor": "@nrwl/angular:ng-packagr-lite",
+			"executor": "@nx/angular:package",
 			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"dependsOn": [
+				{
+					"target": "replace-env",
+					"projects": "self"
+				}
+			],
 			"options": {
-				"project": "packages/ui-config/ng-package.json"
+				"project": "packages/ui-config/ng-package.json",
+				"tsConfig": "packages/ui-config/tsconfig.json"
 			},
 			"configurations": {
 				"production": {
@@ -22,26 +29,45 @@
 			},
 			"defaultConfiguration": "production"
 		},
+		"generate-env": {
+			"executor": "nx:run-commands",
+			"configurations": {
+				"production": {
+					"commands": ["yarn run config:prod"]
+				},
+				"development": {
+					"commands": ["yarn run config:dev"]
+				}
+			},
+			"defaultConfiguration": "production"
+		},
+		"replace-env": {
+			"executor": "nx:run-commands",
+			"dependsOn": [
+				{
+					"target": "generate-env",
+					"projects": "self"
+				}
+			],
+			"configurations": {
+				"production": {
+					"command": "cross-env NODE_ENV=production yarn ts-node packages/ui-config/scripts/replace-env-files.ts"
+				},
+				"development": {
+					"command": "cross-env NODE_ENV=development yarn ts-node packages/ui-config/scripts/replace-env-files.ts"
+				}
+			},
+			"defaultConfiguration": "production"
+		},
 		"test": {
-			"executor": "@nrwl/jest:jest",
+			"executor": "@nx/jest:jest",
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
-				"jestConfig": "packages/ui-config/jest.config.ts",
-				"passWithNoTests": true
-			},
-			"configurations": {
-				"ci": {
-					"ci": true,
-					"codeCoverage": true
-				}
+				"jestConfig": "packages/ui-config/jest.config.ts"
 			}
 		},
 		"lint": {
-			"executor": "@nrwl/linter:eslint",
-			"outputs": ["{options.outputFile}"],
-			"options": {
-				"lintFilePatterns": ["packages/ui-config/**/*.ts", "packages/ui-config/**/*.html"]
-			}
+			"executor": "@nx/eslint:lint"
 		}
 	}
 }

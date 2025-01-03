@@ -71,6 +71,9 @@ const routes: Routes = [
 	}
 ];
 
+/**
+ * Configures the router for the application.
+ */
 const config: ExtraOptions = {
 	useHash: true
 };

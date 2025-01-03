@@ -17,7 +17,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [buildjet-8vcpu-ubuntu-2204]
+        os: [buildjet-16vcpu-ubuntu-2204]
 
     steps:
       - name: Check out Git repository
@@ -45,10 +45,10 @@ jobs:
         run: 'sudo npm install --quiet -g node-gyp@10.2.0'
 
       - name: Install Yarn dependencies
-        run: 'yarn install --network-timeout 1000000 --frozen-lockfile'
+        run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
 
-      - name: Bootstrap Yarn
-        run: 'yarn bootstrap'
+      - name: Run Postinstall Manually
+        run: 'yarn postinstall.manual'
 
       - name: Bump version desktop app
         uses: actions/github-script@v7
@@ -84,7 +84,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [macos-12]
+        os: [macos-latest]
 
     steps:
       - name: Check out Git repository
@@ -97,7 +97,7 @@ jobs:
           cache: 'yarn'
 
       - name: Fix node-gyp and Python
-        run: python3 -m pip install packaging setuptools
+        run: python3 -m pip install --break-system-packages packaging setuptools
 
       - name: Install latest version of NPM
         run: 'sudo npm install -g npm@9'
@@ -106,10 +106,10 @@ jobs:
         run: 'sudo npm install --quiet -g node-gyp@10.2.0'
 
       - name: Install Yarn dependencies
-        run: 'yarn install --network-timeout 1000000 --frozen-lockfile'
+        run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
 
-      - name: Bootstrap Yarn
-        run: 'yarn bootstrap'
+      - name: Run Postinstall Manually
+        run: 'yarn postinstall.manual'
 
       - name: Bump version desktop app
         uses: actions/github-script@v7
@@ -167,10 +167,10 @@ jobs:
         run: 'npm install --quiet -g node-gyp@10.2.0'
 
       - name: Install Yarn dependencies
-        run: 'yarn install --network-timeout 1000000 --frozen-lockfile'
+        run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
 
-      - name: Bootstrap Yarn
-        run: 'yarn bootstrap'
+      - name: Run Postinstall Manually
+        run: 'yarn postinstall.manual'
 
       - name: Bump version desktop app
         uses: actions/github-script@v7

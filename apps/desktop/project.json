@@ -1,0 +1,119 @@
+{
+	"name": "desktop",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"projectType": "application",
+	"sourceRoot": "apps/desktop/src",
+	"tags": [],
+	"implicitDependencies": [],
+	"generators": {
+		"@nx/angular:component": {
+			"style": "scss"
+		}
+	},
+	"targets": {
+		"build": {
+			"executor": "@angular-builders/custom-webpack:browser",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"customWebpackConfig": {
+					"path": "apps/desktop/config/custom-webpack.config.js"
+				},
+				"outputPath": "dist/apps/desktop/ui",
+				"index": "apps/desktop/src/index.html",
+				"main": "apps/desktop/src/main.ts",
+				"polyfills": "apps/desktop/src/polyfills.ts",
+				"tsConfig": "apps/desktop/tsconfig.app.json",
+				"aot": true,
+				"stylePreprocessorOptions": {
+					"includePaths": ["apps/desktop-timer/src/assets/styles", "packages/ui-core/static/styles"]
+				},
+				"assets": ["apps/desktop/src/favicon.ico", "apps/desktop/src/assets"],
+				"styles": [
+					"node_modules/@nebular/theme/styles/prebuilt/default.css",
+					"node_modules/bootstrap/dist/css/bootstrap.css",
+					"node_modules/typeface-exo/index.css",
+					"node_modules/roboto-fontface/css/roboto/roboto-fontface.css",
+					"node_modules/ionicons/dist/scss/ionicons.scss",
+					"node_modules/@fortawesome/fontawesome-free/css/all.css",
+					"node_modules/socicon/css/socicon.css",
+					"node_modules/nebular-icons/scss/nebular-icons.scss",
+					"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
+					"node_modules/leaflet/dist/leaflet.css",
+					"node_modules/@ng-select/ng-select/themes/default.theme.css",
+					"apps/desktop/src/assets/styles/styles.scss",
+					"apps/desktop/src/styles.css",
+					"packages/ui-core/static/styles/styles.scss"
+				],
+				"scripts": [],
+				"allowedCommonJsDependencies": ["@datorama/akita", "localforage", "rxjs", "rxjs/operators"]
+			},
+			"configurations": {
+				"production": {
+					"fileReplacements": [
+						{
+							"replace": "apps/desktop/src/environments/environment.ts",
+							"with": "apps/desktop/src/environments/environment.prod.ts"
+						},
+						{
+							"replace": "packages/ui-config/src/lib/environments/environment.ts",
+							"with": "packages/ui-config/src/lib/environments/environment.prod.ts"
+						}
+					],
+					"optimization": true,
+					"sourceMap": false,
+					"namedChunks": false,
+					"extractLicenses": true,
+					"vendorChunk": false,
+					"buildOptimizer": true,
+					"budgets": [
+						{
+							"type": "initial",
+							"maximumWarning": "20mb",
+							"maximumError": "40mb"
+						},
+						{
+							"type": "anyComponentStyle",
+							"maximumWarning": "60kb",
+							"maximumError": "120kb"
+						}
+					],
+					"outputHashing": "all"
+				},
+				"development": {
+					"optimization": false,
+					"extractLicenses": false,
+					"sourceMap": true
+				}
+			},
+			"defaultConfiguration": "production"
+		},
+		"serve": {
+			"executor": "@angular-devkit/build-angular:dev-server",
+			"configurations": {
+				"production": {
+					"buildTarget": "desktop:build:production"
+				},
+				"development": {
+					"buildTarget": "desktop:build:development"
+				}
+			},
+			"defaultConfiguration": "development"
+		},
+		"extract-i18n": {
+			"executor": "@angular-devkit/build-angular:extract-i18n",
+			"options": {
+				"buildTarget": "desktop:build"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "apps/desktop/jest.config.ts"
+			}
+		}
+	}
+}

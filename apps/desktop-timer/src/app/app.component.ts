@@ -1,4 +1,8 @@
 import { AfterViewInit, Component, NgZone, OnInit, Renderer2 } from '@angular/core';
+import { NbToastrService } from '@nebular/theme';
+import { UntilDestroy } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
+import { firstValueFrom } from 'rxjs';
 import {
 	ActivityWatchElectronService,
 	AuthStrategy,
@@ -7,10 +11,6 @@ import {
 	Store,
 	TimeTrackerDateManager
 } from '@gauzy/desktop-ui-lib';
-import { NbToastrService } from '@nebular/theme';
-import { UntilDestroy } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
-import { firstValueFrom } from 'rxjs';
 import { AppService } from './app.service';
 
 @UntilDestroy({ checkProperties: true })
@@ -36,9 +36,10 @@ export class AppComponent implements OnInit, AfterViewInit {
 	}
 
 	ngOnInit(): void {
-		console.log('On Init');
 		const nebularLinkMedia = document.querySelector('link[media="print"]');
 		if (nebularLinkMedia) this._renderer.setAttribute(nebularLinkMedia, 'media', 'all');
+
+
 		this.electronService.ipcRenderer.send('app_is_init');
 	}
 

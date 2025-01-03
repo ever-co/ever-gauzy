@@ -164,7 +164,8 @@
 		"ACTIVATE": "הפעל",
 		"ADD_PLUGIN": "הוסף תוסף",
 		"LOAD_PLUGIN": "טען תוסף",
-		"FROM_CDN": "מ-CDN"
+		"FROM_CDN": "מ-CDN",
+		"ADD_MODULE": "הוסף מודול"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -2126,6 +2127,10 @@
 			"PROJECT_MODULE_READ": "צפה במודולי פרויקט",
 			"PROJECT_MODULE_UPDATE": "עדכן מודולי פרויקט",
 			"PROJECT_MODULE_DELETE": "מחק מודולי פרויקט",
+			"DASHBOARD_CREATE": "צור לוח שלט",
+			"DASHBOARD_READ": "צפה בלוח שלט",
+			"DASHBOARD_UPDATE": "עדכן לוח שלט",
+			"DASHBOARD_DELETE": "מחק לוח שלט",
 			"ORG_TEAM_ADD": "Add Teams",
 			"ORG_TEAM_VIEW": "View Teams",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "ערוך משימות פעילות",
@@ -2626,7 +2631,9 @@
 		"SELECT": "Select",
 		"SPRINTS_SETTINGS": "Sprints Settings",
 		"ARE_YOU_SURE": "Are you sure you want delete sprint",
-		"SETTINGS": "הגדרות"
+		"SETTINGS": "הגדרות",
+		"MODULE": "מודול",
+		"SELECT_MODULE": "מודולים"
 	},
 	"JOBS": {
 		"EMPLOYEE": "עובד",
@@ -3171,7 +3178,26 @@
 		"CATEGORY_EDIT_DELETED": "Category was removed"
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
-		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "This tab will show project management charts and aggregated data."
+		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "This tab will show project management charts and aggregated data.",
+		"PROJECT_MODULE": {
+			"PROJECT": "פרויקט",
+			"SELECT_PROJECT": "בחר פרויקט",
+			"STATUS": "סטטוס",
+			"TEAM_MEMBERS": "חברי הצוות",
+			"TEAMS": "צוותים",
+			"SELECT_TEAMS": "בחר צוותים",
+			"CHOOSE_TEAMS": "בחר צוותים",
+			"NAME": "שם",
+			"ENTER_NAME": "הכנס שם",
+			"PARENT_MODULE": "מודול הורה",
+			"SELECT_PARENT": "בחר מודול הורה",
+			"START_DATE": "תאריך התחלה",
+			"SELECT_START_DATE": "בחר תאריך התחלה",
+			"END_DATE": "תאריך סיום",
+			"SELECT_END_DATE": "בחר תאריך סיום",
+			"DESCRIPTION": "תיאור",
+			"IS_FAVORITE": "מועדף"
+		}
 	},
 	"SETTINGS_FEATURES": {
 		"INVOICE": "Invoice",
@@ -3598,7 +3624,10 @@
 			"TIME_LOG_DELETED": "Time log for '{{ name }}' removed from '{{ organization }}'",
 			"TIME_LOGS_DELETED": "Time logs removed from '{{ organization }}'",
 			"BUCKET_CREATED": "'{{ bucket }}' for '{{ region }}' has been created successfully",
-			"AUTHORIZED_TO_WORK": "{{ name }} is authorized to work"
+			"AUTHORIZED_TO_WORK": "{{ name }} is authorized to work",
+			"MODULE_CREATED": "המודול נוצר בהצלחה!",
+			"MODULE_UPDATED": "המודול עודכן בהצלחה!",
+			"MODULE_SAVE_ERROR": "שמירת המודול נכשלה. אנא נסה שוב."
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -3673,6 +3702,9 @@
 				"ADD_AWARD": "New award '{{ name }}' was added",
 				"INVALID_AWARD_NAME_YEAR": "Please check the Name and Year for Award input",
 				"REMOVE_AWARD": "Award '{{ name }}' was removed"
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "תאריך הסיום ({{ endDate }}) לא יכול להיות מוקדם מתאריך ההתחלה ({{ startDate }})."
 			}
 		},
 		"ORGANIZATIONS": {
@@ -3696,7 +3728,8 @@
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "Employee Level '{{ name }}' was added",
 				"REMOVE_EMPLOYEE_LEVEL": "Employee Level '{{ name }}' was removed",
-				"INVALID_EMPLOYEE_LEVEL": "Please add an Employee Level"
+				"INVALID_EMPLOYEE_LEVEL": "Please add an Employee Level",
+				"ALREADY_EXISTS": "רמת העובד  כבר קיימת."
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "vendor '{{ name }}' was added",
@@ -3714,12 +3747,14 @@
 				"ADD_POSITION": "Position '{{ name }}' was added",
 				"UPDATED_POSITION": "Position '{{ name }}' was changed",
 				"REMOVE_POSITION": "Position '{{ name }}' was removed",
-				"INVALID_POSITION_NAME": "Please add a Position name"
+				"INVALID_POSITION_NAME": "Please add a Position name",
+				"ALREADY_EXISTS": "המשרה  כבר קיימת."
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "Department '{{ name }}' was saved",
 				"REMOVE_DEPARTMENT": "Department '{{ name }}' was removed",
-				"INVALID_DEPARTMENT_NAME": "Please add a Department name"
+				"INVALID_DEPARTMENT_NAME": "Please add a Department name",
+				"ALREADY_EXISTS": "המחלקה  כבר קיימת."
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "New client '{{ name }}' successfully added!",
@@ -3742,7 +3777,8 @@
 				"ADD_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was added",
 				"UPDATE_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was changed",
 				"INVALID_EMPLOYMENT_TYPE": "Please check the Name for Employment type input",
-				"DELETE_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was removed"
+				"DELETE_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was removed",
+				"ALREADY_EXISTS": "סוג התעסוקה הזה כבר קיים."
 			},
 			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
 				"ADD_RECURRING_EXPENSE": "Recurring expense was added for `{{ name }}`",

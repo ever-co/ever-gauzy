@@ -80,7 +80,7 @@ jobs:
           command: nvm use v20.11.1 && node --version
       - run:
           name: Install Dependencies
-          command: nvm use v20.11.1 && yarn install
+          command: nvm use v20.11.1 && yarn bootstrap
           no_output_timeout: 60m
       - run:
           name: Install Sonarqube scanner
@@ -101,10 +101,7 @@ jobs:
           key: yarn-packages-sonarqube-root-{{ checksum "yarn.lock" }}
           paths:
             - ~/.cache/yarn
-      - persist_to_workspace:
-          root: /tmp/workspace/sonarqube-root
-          paths:
-            - '*'
+
   build-monorepo-root:
     <<: *defaults
     machine:
@@ -131,10 +128,7 @@ jobs:
           key: yarn-packages-monorepo-root-{{ checksum "yarn.lock" }}
           paths:
             - ~/.cache/yarn
-      - persist_to_workspace:
-          root: /tmp/workspace/monorepo-root
-          paths:
-            - '*'
+
   build-desktop:
     <<: *defaults
     machine:
@@ -165,10 +159,7 @@ jobs:
           key: yarn-packages-desktop-{{ checksum "yarn.lock" }}
           paths:
             - ~/.cache/yarn
-      - persist_to_workspace:
-          root: /tmp/workspace/desktop
-          paths:
-            - '*'
+
   build-api:
     <<: *defaults
     machine:
@@ -203,10 +194,7 @@ jobs:
           key: yarn-packages-api-{{ checksum "yarn.lock" }}
           paths:
             - ~/.cache/yarn
-      - persist_to_workspace:
-          root: /tmp/workspace/api
-          paths:
-            - '*'
+
   build-web:
     <<: *defaults
     machine:
@@ -241,10 +229,6 @@ jobs:
           key: yarn-packages-web-{{ checksum "yarn.lock" }}
           paths:
             - ~/.cache/yarn
-      - persist_to_workspace:
-          root: /tmp/workspace/web
-          paths:
-            - '*'
 
   test-e2e:
     <<: *defaults
@@ -289,11 +273,6 @@ jobs:
           name: Kill API Background Process
           command: pgrep node &> /dev/null && killall -w node || true
 
-      - persist_to_workspace:
-          root: /tmp/workspace/test-e2e
-          paths:
-            - '*'
-
   pulumi_deploy:
     <<: *defaults
     machine:
@@ -321,7 +300,7 @@ jobs:
           name: 'Installing NPM Packages'
           command: |
             nvm use v20.11.1
-            yarn bootstrap
+            yarn install --ignore-scripts && yarn postinstall.manual
           no_output_timeout: 60m
 
       - pulumi/update:
@@ -332,11 +311,6 @@ jobs:
           key: yarn-packages-pulumi-{{ checksum "yarn.lock" }}
           paths:
             - ~/.cache/yarn
-
-      - persist_to_workspace:
-          root: /tmp/workspace/pulumi
-          paths:
-            - '*'
 
 workflows:
   version: 2

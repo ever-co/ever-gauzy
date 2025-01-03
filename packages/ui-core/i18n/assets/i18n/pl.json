@@ -165,7 +165,8 @@
 		"ACTIVATE": "Aktywuj",
 		"ADD_PLUGIN": "Dodaj wtyczkę",
 		"LOAD_PLUGIN": "Załaduj wtyczkę",
-		"FROM_CDN": "Z CDN"
+		"FROM_CDN": "Z CDN",
+		"ADD_MODULE": "Dodaj moduł"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -2103,6 +2104,10 @@
 			"PROJECT_MODULE_READ": "Zobacz moduły projektu",
 			"PROJECT_MODULE_UPDATE": "Aktualizuj moduły projektu",
 			"PROJECT_MODULE_DELETE": "Usuń moduły projektu",
+			"DASHBOARD_CREATE": "Utwórz dashboard",
+			"DASHBOARD_READ": "Zobacz dashboard",
+			"DASHBOARD_UPDATE": "Aktualizuj dashboard",
+			"DASHBOARD_DELETE": "Usuń dashboard",
 			"ORG_TEAM_ADD": "Dodaj zespoły",
 			"ORG_TEAM_VIEW": "Wyświetl zespoły",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "Edytuj aktywne zadania",
@@ -2605,7 +2610,9 @@
 		"SELECT": "Wybierz",
 		"SPRINTS_SETTINGS": "Ustawienia sprintów",
 		"ARE_YOU_SURE": "Jesteś pewien, że chcesz usunąć sprint?",
-		"SETTINGS": "Ustawienia"
+		"SETTINGS": "Ustawienia",
+		"MODULE": "Moduł",
+		"SELECT_MODULE": "Moduły"
 	},
 	"JOBS": {
 		"EMPLOYEE": "Pracownik",
@@ -3154,7 +3161,26 @@
 		}
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
-		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "Ta karta pokaże wykresy zarządzania projektem oraz dane agregowane"
+		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "Ta karta pokaże wykresy zarządzania projektem oraz dane agregowane",
+		"PROJECT_MODULE": {
+			"PROJECT": "Projekt",
+			"SELECT_PROJECT": "Wybierz projekt",
+			"STATUS": "Status",
+			"TEAM_MEMBERS": "Członkowie zespołu",
+			"TEAMS": "Zespoły",
+			"SELECT_TEAMS": "Wybierz zespoły",
+			"CHOOSE_TEAMS": "Wybierz zespoły",
+			"NAME": "Nazwa",
+			"ENTER_NAME": "Wpisz nazwę",
+			"PARENT_MODULE": "Moduł nadrzędny",
+			"SELECT_PARENT": "Wybierz moduł nadrzędny",
+			"START_DATE": "Data rozpoczęcia",
+			"SELECT_START_DATE": "Wybierz datę rozpoczęcia",
+			"END_DATE": "Data zakończenia",
+			"SELECT_END_DATE": "Wybierz datę zakończenia",
+			"DESCRIPTION": "Opis",
+			"IS_FAVORITE": "Ulubione"
+		}
 	},
 	"SETTINGS_FEATURES": {
 		"INVOICE": "Faktura",
@@ -3585,7 +3611,10 @@
 			"AUTHORIZED_TO_WORK": "{{ name }} jest uprawniony do pracy",
 			"EMAIL_VERIFICATION_NOT_VALID": "Przepraszam, ten link weryfikacyjny jest nieważny",
 			"EMAIL_VERIFICATION_VALID": "Gratulacje! Twój email został teraz zweryfikowany",
-			"SCREEN_CAPTURE_CHANGED": "Zmieniono stan zrzutu ekranu dla {{ name }}"
+			"SCREEN_CAPTURE_CHANGED": "Zmieniono stan zrzutu ekranu dla {{ name }}",
+			"MODULE_CREATED": "Moduł został pomyślnie utworzony!",
+			"MODULE_UPDATED": "Moduł został pomyślnie zaktualizowany!",
+			"MODULE_SAVE_ERROR": "Nie udało się zapisać modułu. Spróbuj ponownie."
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -3660,6 +3689,9 @@
 				"ADD_AWARD": "Nowa nagroda '{{ name }}' została dodana",
 				"INVALID_AWARD_NAME_YEAR": "Proszę sprawdzić wprowadzone imię, nazwisko oraz rok otrzymania nagrody",
 				"REMOVE_AWARD": "Nagroda '{{ name }}' została usunięta"
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "Data zakończenia ({{ endDate }}) nie może być wcześniejsza niż data rozpoczęcia ({{ startDate }})."
 			}
 		},
 		"ORGANIZATIONS": {
@@ -3683,7 +3715,8 @@
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "Poziom pracownika '{{ name }}' został dodany",
 				"REMOVE_EMPLOYEE_LEVEL": "Poziom pracownika '{{ name }}' został usunięty",
-				"INVALID_EMPLOYEE_LEVEL": "Proszę dodać poziom pracownika"
+				"INVALID_EMPLOYEE_LEVEL": "Proszę dodać poziom pracownika",
+				"ALREADY_EXISTS": "Poziom pracownika  już istnieje."
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "dostawca '{{ name }}' został dodany",
@@ -3701,12 +3734,14 @@
 				"ADD_POSITION": "Stanowisko '{{ name }}' zostało dodane",
 				"UPDATED_POSITION": "Stanowisko '{{ name }}' zostało zmienione",
 				"REMOVE_POSITION": "Stanowisko '{{ name }}' zostało usunięte",
-				"INVALID_POSITION_NAME": "Proszę dodać nazwę stanowiska"
+				"INVALID_POSITION_NAME": "Proszę dodać nazwę stanowiska",
+				"ALREADY_EXISTS": "Stanowisko  już istnieje."
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "Dział '{{ name }}' został zapisany",
 				"REMOVE_DEPARTMENT": "Dział '{{ name }}' został usunięty",
-				"INVALID_DEPARTMENT_NAME": "Proszę podać nazwę działu"
+				"INVALID_DEPARTMENT_NAME": "Proszę podać nazwę działu",
+				"ALREADY_EXISTS": "Dział  już istnieje."
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "Nowy klient '{{ name }}' został pomyślnie dodany!",
@@ -3729,7 +3764,8 @@
 				"ADD_EMPLOYMENT_TYPE": "Typ zatrudnienia '{{ name }}' został dodany",
 				"UPDATE_EMPLOYMENT_TYPE": "Zmieniono rodzaj zatrudnienia na '{{ name }}'",
 				"INVALID_EMPLOYMENT_TYPE": "Proszę sprawdzić nazwę wprowadzoną w polu Rodzaj zatrudnienia",
-				"DELETE_EMPLOYMENT_TYPE": "Typ zatrudnienia '{{ name }}' został usunięty"
+				"DELETE_EMPLOYMENT_TYPE": "Typ zatrudnienia '{{ name }}' został usunięty",
+				"ALREADY_EXISTS": "Ten typ zatrudnienia już istnieje."
 			},
 			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
 				"ADD_RECURRING_EXPENSE": "Powtarzający się wydatek został dodany dla `{{ name }}`",

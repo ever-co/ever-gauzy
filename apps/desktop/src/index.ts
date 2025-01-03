@@ -9,18 +9,17 @@ import * as remoteMain from '@electron/remote/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
 import { BrowserWindow, Menu, MenuItemConstructorOptions, app, dialog, ipcMain, nativeTheme, shell } from 'electron';
 import * as path from 'path';
+import * as Store from 'electron-store';
 
 import { environment } from './environments/environment';
 
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
+console.log('Desktop Node Modules Path', path.join(__dirname, 'node_modules'));
 
 Object.assign(process.env, environment);
 
 app.setName(process.env.NAME);
 
-console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
-
-const Store = require('electron-store');
 remoteMain.initialize();
 
 import {
@@ -43,7 +42,7 @@ import {
 	ipcTimer,
 	removeMainListener,
 	removeTimerListener
-} from '@gauzy/desktop-libs';
+} from '@gauzy/desktop-lib';
 import {
 	AlwaysOn,
 	ScreenCaptureNotification,
@@ -59,6 +58,34 @@ import * as Sentry from '@sentry/electron';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
 import { initSentry } from './sentry';
+
+/**
+ * Describes the configuration for building the Gauzy API base URL.
+ */
+export interface ApiConfig {
+	/**
+	 * A custom server URL, if provided (e.g. 'https://mydomain.com/api').
+	 */
+	serverUrl?: string;
+
+	/**
+	 * The protocol to use (e.g. 'http', 'https').
+	 * Defaults to 'http' if not provided.
+	 */
+	protocol?: string;
+
+	/**
+	 * The hostname or IP address.
+	 * Defaults to '127.0.0.1' if not provided.
+	 */
+	host?: string;
+
+	/**
+	 * The port number for the local environment.
+	 * Defaults to environment.API_DEFAULT_PORT if not provided.
+	 */
+	port?: number;
+}
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 // C:\Users\USERNAME\AppData\Roaming\gauzy-desktop
@@ -297,13 +324,19 @@ async function startServer(value, restart = false) {
 	}
 
 	if (value.isLocalServer) {
+		console.log(`Starting local server on port ${value.port || environment.API_DEFAULT_PORT}`);
 		process.env.API_PORT = value.port || environment.API_DEFAULT_PORT;
 		process.env.API_HOST = '0.0.0.0';
 		process.env.API_BASE_URL = `http://127.0.0.1:${value.port || environment.API_DEFAULT_PORT}`;
 
+		console.log('Setting additional environment variables...', process.env.API_PORT);
+		console.log('Setting additional environment variables...', process.env.API_HOST);
+		console.log('Setting additional environment variables...', process.env.API_BASE_URL);
+
 		setEnvAdditional();
 
 		try {
+			console.log('Starting local server...', path.join(__dirname, 'api/main.js'));
 			await server.start({ api: path.join(__dirname, 'api/main.js') }, process.env, setupWindow, signal);
 		} catch (error) {
 			console.error('ERROR: Occurred while server start:' + error);
@@ -395,12 +428,47 @@ function setEnvAdditional() {
 	};
 }
 
-const getApiBaseUrl = (configs) => {
-	if (configs.serverUrl) return configs.serverUrl;
-	else {
-		return configs.port ? `http://127.0.0.1:${configs.port}` : `http://127.0.0.1:${environment.API_DEFAULT_PORT}`;
+/**
+ * Retrieves the base URL for the Gauzy API based on a configuration object.
+ *
+ * If `configs.serverUrl` is defined, this function returns that URL directly.
+ * Otherwise, it constructs a local address using `configs.host`, `configs.protocol`,
+ * and `configs.port` or falls back to sensible defaults.
+ *
+ * @param {ApiConfig} configs - The configuration object.
+ * @returns {string} - The resulting base URL for the API.
+ */
+export const getApiBaseUrl = (configs: ApiConfig): string => {
+	console.log('get configs', configs);
+
+	// If a full server URL is provided, return it directly
+	if (configs.serverUrl) {
+		console.log('get configs.serverUrl', configs.serverUrl);
+		return configs.serverUrl;
 	}
+
+	// Otherwise, build the URL dynamically using the host, protocol, and port
+	const protocol = configs.protocol ?? 'http'; // default protocol
+	const host = '127.0.0.1'; // default host
+	const port = configs.port ?? environment.API_DEFAULT_PORT; // default port
+
+	console.log('get configs.protocol', configs.protocol);
+	console.log('get configs.host', configs.host);
+	console.log('get configs.port', configs.port);
+
+	console.log('Building API URL...', `${protocol}://${host}:${port}`);
+	return `${protocol}://${host}:${port}`;
 };
+
+/**
+ * Closes the splash screen.
+ */
+const closeSplashScreen = () => {
+	if (splashScreen) {
+		splashScreen.close();
+		splashScreen = null;
+	}
+}
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -422,7 +490,6 @@ app.on('ready', async () => {
 
 	try {
 		splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
-
 		await splashScreen.loadURL();
 
 		splashScreen.show();
@@ -486,7 +553,7 @@ app.on('ready', async () => {
 			if (!configs.serverConfigConnected && !configs?.isLocalServer) {
 				setupWindow = await createSetupWindow(setupWindow, false, pathWindow.timeTrackerUi);
 				setupWindow.show();
-				splashScreen.close();
+				closeSplashScreen()
 				setupWindow.webContents.send('setup-data', {
 					...configs
 				});
@@ -501,7 +568,7 @@ app.on('ready', async () => {
 		} else {
 			setupWindow = await createSetupWindow(setupWindow, false, pathWindow.timeTrackerUi);
 			setupWindow.show();
-			splashScreen.close();
+			closeSplashScreen();
 		}
 	} catch (error) {
 		console.error('ERROR: Occurred while create window:' + error);
@@ -717,7 +784,7 @@ app.on('activate', async () => {
 	} else {
 		if (setupWindow) {
 			setupWindow.show();
-			splashScreen.close();
+			closeSplashScreen();
 		}
 	}
 });
@@ -815,6 +882,18 @@ ipcMain.on('minimize_on_startup', (event, arg) => {
 
 ipcMain.handle('get-app-path', () => app.getAppPath());
 
+/**
+ * Closes all application windows.
+ *
+ * The function handles two types of windows:
+ * 1. A set of general windows (`notificationWindow`, `splashScreen`, `alwaysOn`), which are closed using the `.close()` method.
+ * 2. Browser windows (e.g., `gauzyWindow`, `timeTrackerWindow`, `settingsWindow`, etc.), which are first checked if they are not destroyed using `.isDestroyed()`
+ *    before being destroyed using the `.destroy()` method.
+ *
+ * Note: This function assumes that the relevant windows are globally defined variables of their respective types.
+ *
+ * @void
+ */
 function closeAllWindows(): void {
 	const windows = [notificationWindow, splashScreen, alwaysOn];
 	const browserWindows: BrowserWindow[] = [
@@ -826,10 +905,12 @@ function closeAllWindows(): void {
 		setupWindow
 	];
 
+	// Close general windows
 	windows.forEach((window) => {
 		if (window) window.close();
 	});
 
+	// Destroy browser windows
 	browserWindows.forEach((window) => {
 		if (!window?.isDestroyed()) window.destroy();
 	});

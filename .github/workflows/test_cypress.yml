@@ -83,7 +83,7 @@ jobs:
       - name: Add Yarn to path
         run: echo "C:\Users\Evereq\AppData\Roaming\npm" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-      - name: Bootstrap Yarn
+      - name: Install Packages & Bootstrap
         run: yarn bootstrap
 
       - name: Build all packages

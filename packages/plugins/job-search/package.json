@@ -1,14 +1,12 @@
 {
 	"name": "@gauzy/plugin-job-search",
 	"version": "0.1.0",
-	"type": "commonjs",
 	"description": "Ever Gauzy Platform Job Search Plugin",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
-	"license": "AGPL-3.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ever-co/ever-gauzy"
@@ -17,6 +15,41 @@
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"homepage": "https://ever.co",
+	"license": "AGPL-3.0",
+	"private": true,
+	"type": "commonjs",
+	"main": "./src/index.js",
+	"typings": "./src/index.d.ts",
+	"scripts": {
+		"lib:build": "yarn nx build plugin-job-search",
+		"lib:build:prod": "yarn nx build plugin-job-search",
+		"lib:watch": "yarn nx build plugin-job-search --watch"
+	},
+	"dependencies": {
+		"@faker-js/faker": "8.0.0-alpha.0",
+		"@gauzy/common": "^0.1.0",
+		"@gauzy/config": "^0.1.0",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/core": "^0.1.0",
+		"@gauzy/plugin": "^0.1.0",
+		"@gauzy/plugin-integration-ai": "^0.1.0",
+		"@mikro-orm/nestjs": "^5.2.3",
+		"@nestjs/common": "^10.4.15",
+		"@nestjs/core": "^10.4.15",
+		"@nestjs/cqrs": "^10.2.8",
+		"@nestjs/swagger": "^8.1.0",
+		"@nestjs/typeorm": "^10.0.2",
+		"chalk": "^4.1.0",
+		"class-validator": "^0.14.0",
+		"html-to-text": "^9.0.5",
+		"tslib": "^2.6.2",
+		"typeorm": "^0.3.20"
+	},
+	"devDependencies": {
+		"@types/jest": "29.5.14",
+		"@types/node": "^20.14.9",
+		"typescript": "5.5.4"
+	},
 	"keywords": [
 		"job-search",
 		"plugin",
@@ -29,50 +62,6 @@
 		"recruitment",
 		"platform"
 	],
-	"private": true,
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"files": [
-		"dist"
-	],
-	"directories": {
-		"lib": "dist",
-		"test": "__test__"
-	},
-	"publishConfig": {
-		"access": "restricted"
-	},
-	"scripts": {
-		"test:e2e": "jest --config ./jest.config.ts",
-		"build": "rimraf dist && tsc -p tsconfig.lib.json",
-		"build:prod": "rimraf dist && tsc -p tsconfig.lib.prod.json"
-	},
-	"dependencies": {
-		"@faker-js/faker": "8.0.0-alpha.0",
-		"@gauzy/common": "^0.1.0",
-		"@gauzy/config": "^0.1.0",
-		"@gauzy/contracts": "^0.1.0",
-		"@gauzy/core": "^0.1.0",
-		"@gauzy/plugin-integration-ai": "^0.1.0",
-		"@gauzy/plugin": "^0.1.0",
-		"@mikro-orm/nestjs": "^5.2.3",
-		"@nestjs/common": "^10.3.7",
-		"@nestjs/core": "^10.3.7",
-		"@nestjs/cqrs": "^10.2.7",
-		"@nestjs/typeorm": "^10.0.2",
-		"@nestjs/swagger": "^7.3.0",
-		"chalk": "4.1.2",
-		"class-validator": "^0.14.0",
-		"html-to-text": "^9.0.5",
-		"typeorm": "^0.3.20"
-	},
-	"devDependencies": {
-		"@types/jest": "^29.4.4",
-		"@types/node": "^20.14.9",
-		"rimraf": "^3.0.2",
-		"tslint": "^6.1.3",
-		"typescript": "5.1.6"
-	},
 	"engines": {
 		"node": ">=20.11.1",
 		"yarn": ">=1.22.19"

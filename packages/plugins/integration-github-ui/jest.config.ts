@@ -1,6 +1,5 @@
-/* eslint-disable */
 export default {
-	displayName: 'plugins-integration-github-ui',
+	displayName: 'plugin-integration-github-ui',
 	preset: '../../../jest.preset.js',
 	setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
 	coverageDirectory: '../../../coverage/packages/plugins/integration-github-ui',

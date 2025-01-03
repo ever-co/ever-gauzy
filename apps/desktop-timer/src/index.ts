@@ -9,6 +9,7 @@ import * as remoteMain from '@electron/remote/main';
 import * as Sentry from '@sentry/electron';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
 import { app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, nativeTheme, shell } from 'electron';
+import * as Store from 'electron-store';
 import * as path from 'path';
 import * as Url from 'url';
 import { environment } from './environments/environment';
@@ -19,11 +20,12 @@ process.env = Object.assign(process.env, environment);
 
 app.setName(process.env.NAME);
 
-log.log('Node Modules Path', path.join(__dirname, 'node_modules'));
+log.log('Desktop Timer Node Modules Path', path.join(__dirname, 'node_modules'));
 
-const Store = require('electron-store');
 remoteMain.initialize();
 
+import { fork } from 'child_process';
+import { autoUpdater } from 'electron-updater';
 import {
 	AppError,
 	AppMenu,
@@ -45,7 +47,7 @@ import {
 	TranslateService,
 	TrayIcon,
 	UIError
-} from '@gauzy/desktop-libs';
+} from '@gauzy/desktop-lib';
 import {
 	AlwaysOn,
 	createImageViewerWindow,
@@ -54,13 +56,12 @@ import {
 	createTimeTrackerWindow,
 	createUpdaterWindow,
 	ScreenCaptureNotification,
-	SplashScreen
+	SplashScreen,
+	timeTrackerPage
 } from '@gauzy/desktop-window';
-import { fork } from 'child_process';
-import { autoUpdater } from 'electron-updater';
 import { initSentry } from './sentry';
 
-// Can be like this: import fetch from '@gauzy/desktop-libs' for v3 of node-fetch;
+// Can be like this: import fetch from '@gauzy/desktop-lib' for v3 of node-fetch;
 
 initSentry();
 
@@ -271,12 +272,7 @@ async function startServer(value, restart = false) {
 				);
 			} else {
 				await timeTrackerWindow.loadURL(
-					Url.format({
-						pathname: pathWindow.timeTrackerUi,
-						protocol: 'file:',
-						slashes: true,
-						hash: '/time-tracker'
-					})
+					timeTrackerPage(pathWindow.timeTrackerUi)
 				);
 			}
 			notificationWindow = new ScreenCaptureNotification(pathWindow.timeTrackerUi);

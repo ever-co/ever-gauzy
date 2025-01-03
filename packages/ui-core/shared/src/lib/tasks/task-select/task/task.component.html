@@ -1,6 +1,6 @@
 <div (click)="$event.stopPropagation()">
 	<ng-select
-		[addTag]="((hasPermissionAddTask$ | async) && addTag) ? createNew : null"
+		[addTag]="(hasPermissionAddTask$ | async) && addTag ? createNew : null"
 		[disabled]="disabled"
 		[clearable]="true"
 		[items]="tasks"
@@ -9,5 +9,16 @@
 		bindValue="id"
 		bindLabel="title"
 		appendTo="body"
-	></ng-select>
+		[multiple]="multiple"
+	>
+		<!-- Full title for the dropdown list -->
+		<ng-template ng-option-tmp let-task="item">
+			{{ task.title }}
+		</ng-template>
+
+		<!-- Display only prefix and number after selection if multiple is enabled -->
+		<ng-template ng-label-tmp let-task="item">
+			{{ multiple ? '#' + task.taskNumber : task.title }}
+		</ng-template>
+	</ng-select>
 </div>

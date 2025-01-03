@@ -18,7 +18,7 @@ export class JitsuAnalyticsService {
 				// Initialize the Jitsu Analytics instance
 				this.jitsu = createJitsu(this.config);
 			} else {
-				this.logger.warn(`Jitsu Analytics initialization failed: Missing host or writeKey.`);
+				this.logger.warn(`Jitsu Analytics initialization failed at JitsuAnalyticsService: Missing host or writeKey.`);
 			}
 		} catch (error) {
 			this.logger.error(`Jitsu Analytics initialization failed: ${error.message}`);

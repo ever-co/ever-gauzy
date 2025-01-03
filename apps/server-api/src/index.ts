@@ -52,7 +52,7 @@ import {
 	ServerConfig,
 	TranslateLoader,
 	TranslateService
-} from '@gauzy/desktop-libs';
+} from '@gauzy/desktop-lib';
 import {
 	createAboutWindow,
 	createServerWindow,
@@ -238,6 +238,13 @@ eventErrorManager.onShowError(async (message) => {
 	}
 });
 
+const closeSplashScreen = () => {
+	if (splashScreen) {
+		splashScreen.close();
+		splashScreen = null;
+	}
+}
+
 const runSetup = async () => {
 	// Set default configuration
 	LocalStore.setDefaultServerConfig();
@@ -245,7 +252,7 @@ const runSetup = async () => {
 		setupWindow = await createSetupWindow(setupWindow, false, pathWindow.ui);
 	}
 	setupWindow.show();
-	splashScreen.close();
+	closeSplashScreen();
 };
 
 const appState = async () => {
@@ -260,11 +267,11 @@ const appState = async () => {
 };
 
 const runMainWindow = async () => {
-	serverWindow = await createServerWindow(serverWindow, null, pathWindow.ui, pathWindow.preloadPath);
+	serverWindow = await createServerWindow(serverWindow, pathWindow.ui, pathWindow.preloadPath);
 
 	serverWindow.show();
 
-	splashScreen.close();
+	closeSplashScreen();
 
 	if (!tray) {
 		createTray();
@@ -335,6 +342,7 @@ const getEnvApi = () => {
 			DB_USER: config[provider]?.dbUsername,
 			DB_PASS: config[provider]?.dbPassword
 		}),
+		DEBUG: 'true',
 		API_PORT: String(config.port),
 		...addsConfig
 	};

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ID, IOrganizationProject, IOrganizationProjectCreateInput, ProjectOwnerEnum } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { TimeTrackerService } from 'packages/desktop-ui-lib/src/lib/time-tracker/time-tracker.service';
+import { TimeTrackerService } from '../../../../time-tracker/time-tracker.service';
 import { SelectorService } from '../../../+state/selector.service';
 import { Store, ToastrNotificationService } from '../../../../services';
 import { ClientSelectorQuery } from '../../client-selector/+state/client-selector.query';

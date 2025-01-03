@@ -174,7 +174,8 @@
 		"ACTIVATE": "Activate",
 		"ADD_PLUGIN": "Add Plugin",
 		"LOAD_PLUGIN": "Load Plugin",
-		"FROM_CDN": "From CDN"
+		"FROM_CDN": "From CDN",
+		"ADD_MODULE": "Add Module"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -2216,6 +2217,10 @@
 			"PROJECT_MODULE_READ": "View Project Modules",
 			"PROJECT_MODULE_UPDATE": "Update Project Modules",
 			"PROJECT_MODULE_DELETE": "Delete Project Modules",
+			"DASHBOARD_CREATE": "Create Dashboard",
+			"DASHBOARD_READ": "View Dashboard",
+			"DASHBOARD_UPDATE": "Update Dashboard",
+			"DASHBOARD_DELETE": "Delete Dashboard",
 			"ORG_TEAM_ADD": "Add Teams",
 			"ORG_TEAM_VIEW": "View Teams",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "Edit Active Tasks",
@@ -2728,7 +2733,9 @@
 		"SELECT": "Select",
 		"SPRINTS_SETTINGS": "Sprints Settings",
 		"ARE_YOU_SURE": "Are you sure you want delete sprint",
-		"SETTINGS": "Settings"
+		"SETTINGS": "Settings",
+		"MODULE": "Module",
+		"SELECT_MODULE": "Module(s)"
 	},
 	"JOBS": {
 		"EMPLOYEE": "Employee",
@@ -3277,7 +3284,30 @@
 		}
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
-		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "This tab will show project management charts and aggregated data."
+		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "This tab will show project management charts and aggregated data.",
+		"PROJECT_MODULE": {
+			"PROJECT": "Project",
+			"SELECT_PROJECT": "Select a project",
+			"STATUS": "Status",
+			"TEAM_MEMBERS": "Team Members",
+			"TEAMS": "Teams",
+			"SELECT_TEAMS": "Select Teams",
+			"CHOOSE_TEAMS": "Choose teams",
+			"NAME": "Module Name",
+			"ENTER_NAME": "Enter the module name",
+			"PARENT_MODULE": "Parent Module",
+			"SELECT_PARENT": "Select a parent module",
+			"START_DATE": "Start Date",
+			"SELECT_START_DATE": "Select start date",
+			"END_DATE": "End Date",
+			"SELECT_END_DATE": "Select end date",
+			"DESCRIPTION": "Description",
+			"MANAGER": "Manager",
+			"SELECT_MANAGER": "Select a manager",
+			"ORGANIZATION_SPRINTS": "Organization Sprints",
+			"SELECT_SPRINTS": "Select sprints",
+			"IS_FAVORITE": "Favorite"
+		}
 	},
 	"SETTINGS_FEATURES": {
 		"INVOICE": "Invoice",
@@ -3708,7 +3738,10 @@
 			"AUTHORIZED_TO_WORK": "{{ name }} is authorized to work",
 			"EMAIL_VERIFICATION_NOT_VALID": "Sorry, this verification link is not valid.",
 			"EMAIL_VERIFICATION_VALID": "Congrats! Your email is now verified.",
-			"SCREEN_CAPTURE_CHANGED": "Screen capture status changed for {{ name }}"
+			"SCREEN_CAPTURE_CHANGED": "Screen capture status changed for {{ name }}",
+			"MODULE_CREATED": "Module created successfully!",
+			"MODULE_UPDATED": "Module updated successfully!",
+			"MODULE_SAVE_ERROR": "Failed to save the module. Please try again."
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -3783,6 +3816,9 @@
 				"ADD_AWARD": "New award '{{ name }}' was added",
 				"INVALID_AWARD_NAME_YEAR": "Please check the Name and Year for Award input",
 				"REMOVE_AWARD": "Award '{{ name }}' was removed"
+			},
+			"END_WORK": {
+				"DATE_CONFLICT": "The end date ({{ endDate }}) cannot be earlier than the start date ({{ startDate }})."
 			}
 		},
 		"ORGANIZATIONS": {
@@ -3808,7 +3844,8 @@
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "Employee Level '{{ name }}' was added",
 				"REMOVE_EMPLOYEE_LEVEL": "Employee Level '{{ name }}' was removed",
-				"INVALID_EMPLOYEE_LEVEL": "Please add an Employee Level"
+				"INVALID_EMPLOYEE_LEVEL": "Please add an Employee Level",
+				"ALREADY_EXISTS": "This Employee Level already exists."
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "vendor '{{ name }}' was added",
@@ -3826,12 +3863,14 @@
 				"ADD_POSITION": "Position '{{ name }}' was added",
 				"UPDATED_POSITION": "Position '{{ name }}' was changed",
 				"REMOVE_POSITION": "Position '{{ name }}' was removed",
-				"INVALID_POSITION_NAME": "Please add a Position name"
+				"INVALID_POSITION_NAME": "Please add a Position name",
+				"ALREADY_EXISTS": "This Position already exists."
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "Department '{{ name }}' was saved",
 				"REMOVE_DEPARTMENT": "Department '{{ name }}' was removed",
-				"INVALID_DEPARTMENT_NAME": "Please add a Department name"
+				"INVALID_DEPARTMENT_NAME": "Please add a Department name",
+				"ALREADY_EXISTS": "This Department already exists."
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "New client '{{ name }}' successfully added!",
@@ -3854,7 +3893,8 @@
 				"ADD_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was added",
 				"UPDATE_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was changed",
 				"INVALID_EMPLOYMENT_TYPE": "Please check the Name for Employment type input",
-				"DELETE_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was removed"
+				"DELETE_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was removed",
+				"ALREADY_EXISTS": "This employment type already exists."
 			},
 			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
 				"ADD_RECURRING_EXPENSE": "Recurring expense was added for `{{ name }}`",

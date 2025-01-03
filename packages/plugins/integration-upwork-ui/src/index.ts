@@ -1,3 +1,6 @@
+/**
+ * Public API Surface of @gauzy/plugin-integration-upwork-ui
+ */
 export * from './lib/integration-upwork-ui.module';
 export * from './lib/components/upwork/upwork.component';
 export * from './lib/components/upwork-authorize/upwork-authorize.component';

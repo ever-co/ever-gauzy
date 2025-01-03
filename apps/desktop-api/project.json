@@ -1,0 +1,70 @@
+{
+	"name": "desktop-api",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "apps/desktop-api/src",
+	"projectType": "application",
+	"tags": [],
+	"targets": {
+		"build": {
+			"executor": "@nx/webpack:webpack",
+			"outputs": ["{options.outputPath}"],
+			"defaultConfiguration": "production",
+			"options": {
+				"target": "node",
+				"compiler": "tsc",
+				"outputPath": "dist/apps/desktop/desktop-api",
+				"main": "apps/desktop-api/src/main.ts",
+				"tsConfig": "apps/desktop-api/tsconfig.app.json",
+				"assets": [
+					"apps/desktop-api/src/assets",
+					{
+						"input": "apps/desktop-api/src/environments",
+						"glob": "**/*",
+						"output": "environments"
+					}
+				],
+				"webpackConfig": "apps/desktop-api/config/custom-webpack.config.js"
+			},
+			"configurations": {
+				"development": {},
+				"production": {
+					"optimization": false,
+					"extractLicenses": true,
+					"inspect": false,
+					"sourceMap": true,
+					"fileReplacements": [
+						{
+							"replace": "apps/desktop-api/src/environments/environment.ts",
+							"with": "apps/desktop-api/src/environments/environment.prod.ts"
+						}
+					]
+				}
+			}
+		},
+		"serve": {
+			"executor": "@nx/js:node",
+			"defaultConfiguration": "development",
+			"options": {
+				"buildTarget": "desktop-api:build"
+			},
+			"configurations": {
+				"development": {
+					"buildTarget": "desktop-api:build:development"
+				},
+				"production": {
+					"buildTarget": "desktop-api:build:production"
+				}
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "apps/desktop-api/jest.config.ts"
+			}
+		}
+	}
+}
