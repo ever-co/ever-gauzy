@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { RelationId } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
@@ -74,6 +74,7 @@ import {
 	TypeOrmTagEntityCustomFields
 } from '../core/entities/custom-entity-fields/tag';
 import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
+import { TagType } from '../tag-type/tag-type.entity';
 
 @MultiORMEntity('tag', { mikroOrmRepository: () => MikroOrmTagRepository })
 export class Tag extends TenantOrganizationBaseEntity implements ITag {
@@ -114,6 +115,23 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 
 	@VirtualMultiOrmColumn()
 	fullIconUrl?: string;
+
+	/**
+	 * TagType
+	 */
+	@ApiProperty({ type: () => TagType })
+	@MultiORMManyToOne(() => TagType, (tagType) => tagType.tags, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	tagType?: TagType;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: Tag) => it.tagType)
+	@IsString()
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	tagTypeId?: string;
 
 	/*
 	|--------------------------------------------------------------------------
