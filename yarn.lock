@@ -6074,10 +6074,10 @@
   dependencies:
     regenerator-runtime "^0.13.3"
 
-"@jitsu/js@^1.9.10":
-  version "1.9.10"
-  resolved "https://registry.yarnpkg.com/@jitsu/js/-/js-1.9.10.tgz#da99bf4e48e71e706a7fa918ab728f6453b0464e"
-  integrity sha512-YQOWdkhkKeArdfKWSSegsb6zTx9VxEaWqJJ0jilpAryldMlHuuNK30jVTmCskU/G5TROsxbHoyb78zsJjcOjOg==
+"@jitsu/js@^1.9.12":
+  version "1.9.12"
+  resolved "https://registry.yarnpkg.com/@jitsu/js/-/js-1.9.12.tgz#4215a4b7fef0b91d2efb23b30799aaf4340fed15"
+  integrity sha512-O7K7pRDulcBUIhNJTtctrfF6sMQ8feDjwhpLekppBR+7v3ktWP5iJnrHyOMq/h1UoxDitC6oxvlEX8wkypEwSg==
   dependencies:
     analytics "0.8.9"
 
