@@ -58,8 +58,9 @@
 		"yargs": "^17.5.0"
 	},
 	"devDependencies": {
-		"@nestjs/schematics": "^10.1.1",
-		"@nestjs/testing": "^10.3.7",
+		"@nestjs/cli": "^10.4.9",
+		"@nestjs/schematics": "^10.2.3",
+		"@nestjs/testing": "^10.4.15",
 		"nodemon": "^3.1.0",
 		"pm2": "^5.3.1",
 		"ts-node": "^10.9.2",
