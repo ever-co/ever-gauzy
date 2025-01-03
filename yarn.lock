@@ -21169,7 +21169,7 @@ express-rate-limit@5.5.1:
   resolved "https://registry.yarnpkg.com/express-rate-limit/-/express-rate-limit-5.5.1.tgz#110c23f6a65dfa96ab468eda95e71697bc6987a2"
   integrity sha512-MTjE2eIbHv5DyfuFz4zLYWxpqVhEhkTiwFGuB74Q9CSou2WHO52nlE5y3Zlg6SIsiYUIPj6ifFxnkPz6O3sIUg==
 
-express-session@^1.17.3:
+express-session@^1.18.1:
   version "1.18.1"
   resolved "https://registry.yarnpkg.com/express-session/-/express-session-1.18.1.tgz#88d0bbd41878882840f24ec6227493fcb167e8d5"
   integrity sha512-a5mtTqEaZvBCL9A9aqkrtfz+3SMDhOVUnjafjo+s7A9Txkq+SVX2DLvSp1Zrv4uCXa3lMSK3viWnh9Gg07PBUA==

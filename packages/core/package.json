@@ -121,7 +121,7 @@
         "dotenv": "^16.0.3",
         "email-templates": "^8.0.8",
         "express": "^4.21.2",
-        "express-session": "^1.17.3",
+        "express-session": "^1.18.1",
         "fast-json-stringify": "^2.4.1",
         "fastify-swagger": "^4.12.4",
         "fs-extra": "^10.1.0",
