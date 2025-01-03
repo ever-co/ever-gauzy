@@ -12,6 +12,8 @@ export interface ITag extends IBasePerTenantAndOrganizationEntityModel, IRelatio
 	icon?: string;
 	description?: string;
 	isSystem?: boolean;
+	tagTypeId?: string;
+	tagType?: ITagType;
 }
 
 export interface ITagFindInput extends IBasePerTenantAndOrganizationEntityModel, Pick<ITag, 'organizationTeamId'> {
@@ -20,9 +22,15 @@ export interface ITagFindInput extends IBasePerTenantAndOrganizationEntityModel,
 	textColor?: string;
 	description?: string;
 	isSystem?: boolean;
+	tagTypeId?: string;
 }
 
 export interface ITagCreateInput extends ITag {}
+
+export interface ITagType {
+	type: string;
+	tags?: ITag[];
+}
 
 export interface ITagUpdateInput extends Partial<ITagCreateInput> {
 	id?: string;
