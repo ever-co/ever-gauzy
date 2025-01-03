@@ -19,9 +19,10 @@ import { ckEditorConfig } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-proposal-edit',
-	templateUrl: './proposal-edit.component.html',
-	styleUrls: ['./proposal-edit.component.scss']
+    selector: 'ngx-proposal-edit',
+    templateUrl: './proposal-edit.component.html',
+    styleUrls: ['./proposal-edit.component.scss'],
+    standalone: false
 })
 export class ProposalEditComponent extends TranslationBaseComponent implements OnInit, AfterViewInit {
 	public proposal: IProposal;

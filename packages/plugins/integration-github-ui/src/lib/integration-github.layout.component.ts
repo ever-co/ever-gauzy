@@ -5,8 +5,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: `ngx-integration-github-layout`,
-	template: `<router-outlet></router-outlet>`
+    selector: `ngx-integration-github-layout`,
+    template: `<router-outlet></router-outlet>`,
+    standalone: false
 })
 export class IntegrationGithubLayoutComponent implements OnInit {
 	constructor(private readonly _router: Router, private readonly _activatedRoute: ActivatedRoute) {}

@@ -6,9 +6,10 @@ import { PermissionsEnum } from '@gauzy/contracts';
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-data-entry-shortcuts',
-	templateUrl: './data-entry-shortcuts.component.html',
-	styleUrls: ['./data-entry-shortcuts.component.scss']
+    selector: 'ga-data-entry-shortcuts',
+    templateUrl: './data-entry-shortcuts.component.html',
+    styleUrls: ['./data-entry-shortcuts.component.scss'],
+    standalone: false
 })
 export class DataEntryShortcutsComponent implements OnInit, OnDestroy {
 	constructor(readonly router: Router, readonly store: Store) {}

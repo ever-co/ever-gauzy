@@ -1,7 +1,8 @@
 import { Directive, ElementRef, HostListener, Input, OnDestroy } from '@angular/core';
 
 @Directive({
-	selector: '[gaTooltip]'
+    selector: '[gaTooltip]',
+    standalone: false
 })
 export class TooltipDirective implements OnDestroy {
 	@Input() gaTooltip: string;

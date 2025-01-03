@@ -21,16 +21,17 @@ import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-currency',
-	templateUrl: './currency.component.html',
-	styleUrls: ['./currency.component.scss'],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => CurrencyComponent),
-			multi: true
-		}
-	]
+    selector: 'ga-currency',
+    templateUrl: './currency.component.html',
+    styleUrls: ['./currency.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CurrencyComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class CurrencyComponent extends TranslationBaseComponent implements OnInit, AfterViewInit, ControlValueAccessor {
 	@Input() formControl: FormControl = new FormControl();

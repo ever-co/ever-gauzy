@@ -14,7 +14,8 @@ import { UnderConstructionPopupComponent } from '../components/popup/popup.compo
 
 @UntilDestroy({ checkProperties: true })
 @Directive({
-	selector: '[underConstruction]'
+    selector: '[underConstruction]',
+    standalone: false
 })
 export class UnderConstructionDirective {
 	private _popupComponentRef: ComponentRef<UnderConstructionPopupComponent>;

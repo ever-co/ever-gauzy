@@ -10,8 +10,9 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-estimate-email',
-	templateUrl: './estimate-email.component.html'
+    selector: 'ga-estimate-email',
+    templateUrl: './estimate-email.component.html',
+    standalone: false
 })
 export class EstimateEmailComponent extends TranslationBaseComponent implements OnInit {
 	public errorMessage: string;

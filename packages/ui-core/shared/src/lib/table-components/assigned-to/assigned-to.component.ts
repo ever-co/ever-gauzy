@@ -2,8 +2,9 @@ import { Component, Input } from '@angular/core';
 import { ITask } from '@gauzy/contracts';
 
 @Component({
-	selector: 'ngx-assigned-to',
-	templateUrl: './assigned-to.component.html',
+    selector: 'ngx-assigned-to',
+    templateUrl: './assigned-to.component.html',
+    standalone: false
 })
 export class AssignedToComponent {
 

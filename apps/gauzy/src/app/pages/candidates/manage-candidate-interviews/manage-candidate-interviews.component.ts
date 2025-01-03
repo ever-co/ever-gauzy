@@ -13,9 +13,10 @@ import { CandidateInterviewMutationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-manage-candidate-interviews',
-	templateUrl: './manage-candidate-interviews.component.html',
-	styleUrls: ['./manage-candidate-interviews.component.scss']
+    selector: 'ga-manage-candidate-interviews',
+    templateUrl: './manage-candidate-interviews.component.html',
+    styleUrls: ['./manage-candidate-interviews.component.scss'],
+    standalone: false
 })
 export class ManageCandidateInterviewsComponent
 	extends TranslationBaseComponent

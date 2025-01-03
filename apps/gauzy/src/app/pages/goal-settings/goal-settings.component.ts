@@ -22,9 +22,10 @@ import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.compon
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-goal-settings',
-	templateUrl: './goal-settings.component.html',
-	styleUrls: ['./goal-settings.component.scss']
+    selector: 'ga-goal-settings',
+    templateUrl: './goal-settings.component.html',
+    styleUrls: ['./goal-settings.component.scss'],
+    standalone: false
 })
 export class GoalSettingsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	smartTableData = new LocalDataSource();

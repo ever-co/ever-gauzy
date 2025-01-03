@@ -13,9 +13,10 @@ import { ErrorHandlingService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-edit-employee',
-	templateUrl: './edit-employee.component.html',
-	styleUrls: ['./edit-employee.component.scss', '../../dashboard/dashboard.component.scss']
+    selector: 'ngx-edit-employee',
+    templateUrl: './edit-employee.component.html',
+    styleUrls: ['./edit-employee.component.scss', '../../dashboard/dashboard.component.scss'],
+    standalone: false
 })
 export class EditEmployeeComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
 	organization: IOrganization;

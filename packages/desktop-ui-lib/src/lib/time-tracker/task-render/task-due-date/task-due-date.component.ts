@@ -2,9 +2,10 @@ import { Component, Input } from '@angular/core';
 import * as moment from 'moment';
 
 @Component({
-	selector: 'gauzy-task-due-date',
-	templateUrl: './task-due-date.component.html',
-	styleUrls: ['./task-due-date.component.scss'],
+    selector: 'gauzy-task-due-date',
+    templateUrl: './task-due-date.component.html',
+    styleUrls: ['./task-due-date.component.scss'],
+    standalone: false
 })
 export class TaskDueDateComponent {
 	constructor() {

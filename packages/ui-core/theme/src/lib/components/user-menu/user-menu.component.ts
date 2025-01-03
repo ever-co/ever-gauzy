@@ -8,9 +8,10 @@ import { BehaviorSubject, tap, Observable, filter, firstValueFrom } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-user-menu',
-	templateUrl: './user-menu.component.html',
-	styleUrls: ['./user-menu.component.scss']
+    selector: 'gauzy-user-menu',
+    templateUrl: './user-menu.component.html',
+    styleUrls: ['./user-menu.component.scss'],
+    standalone: false
 })
 export class UserMenuComponent implements OnInit {
 	private _user$: Observable<IUser>;

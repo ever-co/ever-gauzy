@@ -11,9 +11,10 @@ import { ThemeLanguageSelectorService } from '../../components/theme-sidebar/the
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-one-column-layout',
-	styleUrls: ['./one-column.layout.scss'],
-	templateUrl: './one-column.layout.html'
+    selector: 'ngx-one-column-layout',
+    styleUrls: ['./one-column.layout.scss'],
+    templateUrl: './one-column.layout.html',
+    standalone: false
 })
 export class OneColumnLayoutComponent implements OnInit, AfterViewInit, OnDestroy {
 	userMenu = [

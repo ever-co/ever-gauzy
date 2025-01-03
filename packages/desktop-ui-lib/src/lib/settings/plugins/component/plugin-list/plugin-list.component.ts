@@ -14,9 +14,10 @@ import { PluginUpdateComponent } from './plugin-update/plugin-update.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-plugin-list',
-	templateUrl: './plugin-list.component.html',
-	styleUrls: ['./plugin-list.component.scss']
+    selector: 'ngx-plugin-list',
+    templateUrl: './plugin-list.component.html',
+    styleUrls: ['./plugin-list.component.scss'],
+    standalone: false
 })
 export class PluginListComponent implements OnInit {
 	private readonly translateService = inject(TranslateService);

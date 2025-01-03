@@ -8,9 +8,10 @@ export interface IProgressStatusDisplayValue {
 }
 
 @Component({
-	selector: 'ngx-progress-status',
-	templateUrl: './progress-status.component.html',
-	styleUrls: ['./progress-status.component.scss']
+    selector: 'ngx-progress-status',
+    templateUrl: './progress-status.component.html',
+    styleUrls: ['./progress-status.component.scss'],
+    standalone: false
 })
 export class ProgressStatusComponent {
 	/*

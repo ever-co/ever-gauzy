@@ -8,7 +8,7 @@ import { Store, TasksStoreService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	template: `
+    template: `
 		<nb-select
 			fullWidth
 			[placeholder]="'INVOICES_PAGE.SELECT_TASK' | translate"
@@ -20,7 +20,8 @@ import { Store, TasksStoreService } from '@gauzy/ui-core/core';
 			</nb-option>
 		</nb-select>
 	`,
-	styles: []
+    styles: [],
+    standalone: false
 })
 export class InvoiceTasksSelectorComponent extends DefaultEditor implements OnInit, OnDestroy {
 	public tasks: ITask[] = [];

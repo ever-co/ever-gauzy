@@ -3,17 +3,18 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
 
 @Component({
-	selector: 'gauzy-select',
-	templateUrl: './select.component.html',
-	styleUrls: ['./select.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => SelectComponent),
-			multi: true
-		}
-	]
+    selector: 'gauzy-select',
+    templateUrl: './select.component.html',
+    styleUrls: ['./select.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => SelectComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class SelectComponent implements ControlValueAccessor {
 	private _selectedItem: string = null;

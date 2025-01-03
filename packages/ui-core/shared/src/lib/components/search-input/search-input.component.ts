@@ -1,9 +1,9 @@
 import { Component, ElementRef, EventEmitter, Output, ViewChild } from '@angular/core';
 
 @Component({
-	selector: 'ngx-search-input',
-	styleUrls: ['./search-input.component.scss'],
-	template: `
+    selector: 'ngx-search-input',
+    styleUrls: ['./search-input.component.scss'],
+    template: `
 		<i class="control-icon ion ion-ios-search" (click)="showInput()"></i>
 		<input
 			#input
@@ -12,7 +12,8 @@ import { Component, ElementRef, EventEmitter, Output, ViewChild } from '@angular
 			(blur)="hideInput()"
 			(input)="onInput($event)"
 		/>
-	`
+	`,
+    standalone: false
 })
 export class SearchInputComponent {
 	isInputShown = false;

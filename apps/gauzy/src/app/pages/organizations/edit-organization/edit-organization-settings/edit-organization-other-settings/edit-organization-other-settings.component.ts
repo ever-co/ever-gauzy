@@ -49,9 +49,10 @@ import { NotesWithTagsComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-edit-org-other-settings',
-	templateUrl: './edit-organization-other-settings.component.html',
-	styleUrls: ['./edit-organization-other-settings.component.scss']
+    selector: 'ga-edit-org-other-settings',
+    templateUrl: './edit-organization-other-settings.component.html',
+    styleUrls: ['./edit-organization-other-settings.component.scss'],
+    standalone: false
 })
 export class EditOrganizationOtherSettingsComponent
 	extends NotesWithTagsComponent

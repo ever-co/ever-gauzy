@@ -7,7 +7,8 @@ import { CandidatesService, ErrorHandlingService, Store } from '@gauzy/ui-core/c
 
 @UntilDestroy()
 @Component({
-	template: ''
+    template: '',
+    standalone: false
 })
 export class BaseCandidateSelectorComponent implements OnInit {
 	public candidates$: Observable<ICandidate[]>; // Observable for an array of Organization candidates

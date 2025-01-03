@@ -15,7 +15,8 @@ export interface IPaginationBase {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	template: ''
+    template: '',
+    standalone: false
 })
 export class PaginationFilterBaseComponent extends TranslationBaseComponent implements AfterViewInit {
 	public activePage: number = 1;

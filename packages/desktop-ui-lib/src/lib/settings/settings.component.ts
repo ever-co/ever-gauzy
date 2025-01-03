@@ -17,16 +17,17 @@ import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-settings',
-	templateUrl: './settings.component.html',
-	styleUrls: ['./settings.component.scss'],
-	styles: [
-		`
+    selector: 'ngx-settings',
+    templateUrl: './settings.component.html',
+    styleUrls: ['./settings.component.scss'],
+    styles: [
+        `
 			:host nb-tab {
 				padding: 1rem;
 			}
 		`
-	]
+    ],
+    standalone: false
 })
 export class SettingsComponent implements OnInit, AfterViewInit {
 	@ViewChild('selectRef') selectProjectElement: ElementRef;

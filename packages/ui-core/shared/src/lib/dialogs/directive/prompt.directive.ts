@@ -7,7 +7,8 @@ import { PromptComponent, PromptDialogOptions } from '../prompt/prompt.component
 
 @UntilDestroy({ checkProperties: true })
 @Directive({
-	selector: '[ngxPromptDialog]'
+    selector: '[ngxPromptDialog]',
+    standalone: false
 })
 export class PromptDirective extends TranslationBaseComponent implements OnDestroy {
 	/*

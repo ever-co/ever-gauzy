@@ -7,9 +7,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { FormHelpers } from '@gauzy/ui-core/shared';
 
 @Component({
-	selector: 'ga-accept-invite-form',
-	templateUrl: './accept-invite-form.component.html',
-	styleUrls: ['./accept-invite-form.component.scss']
+    selector: 'ga-accept-invite-form',
+    templateUrl: './accept-invite-form.component.html',
+    styleUrls: ['./accept-invite-form.component.scss'],
+    standalone: false
 })
 export class AcceptInviteFormComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	FormHelpers: typeof FormHelpers = FormHelpers;

@@ -3,10 +3,11 @@ import { map } from 'rxjs';
 import { WeeklyRecapService } from '../../+state/weekly.service';
 
 @Component({
-	selector: 'ngx-weekly-statistic',
-	templateUrl: './weekly-statistic.component.html',
-	styleUrls: ['./weekly-statistic.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-weekly-statistic',
+    templateUrl: './weekly-statistic.component.html',
+    styleUrls: ['./weekly-statistic.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class WeeklyStatisticComponent {
 	constructor(private readonly weeklyRecapService: WeeklyRecapService) {}

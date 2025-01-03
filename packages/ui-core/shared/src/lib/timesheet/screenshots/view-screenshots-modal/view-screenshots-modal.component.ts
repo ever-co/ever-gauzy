@@ -20,9 +20,10 @@ import { TimeZoneService } from '../../gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-view-screenshots-modal',
-	templateUrl: './view-screenshots-modal.component.html',
-	styleUrls: ['./view-screenshots-modal.component.scss']
+    selector: 'ngx-view-screenshots-modal',
+    templateUrl: './view-screenshots-modal.component.html',
+    styleUrls: ['./view-screenshots-modal.component.scss'],
+    standalone: false
 })
 export class ViewScreenshotsModalComponent implements OnInit {
 	progressStatus = progressStatus;

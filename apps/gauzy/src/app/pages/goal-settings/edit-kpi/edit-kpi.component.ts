@@ -16,9 +16,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { EmployeesService, GoalSettingsService, Store, ToastrService } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ga-edit-kpi',
-	templateUrl: './edit-kpi.component.html',
-	styleUrls: ['./edit-kpi.component.scss']
+    selector: 'ga-edit-kpi',
+    templateUrl: './edit-kpi.component.html',
+    styleUrls: ['./edit-kpi.component.scss'],
+    standalone: false
 })
 export class EditKpiComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	kpiForm: UntypedFormGroup;

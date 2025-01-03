@@ -10,9 +10,10 @@ import { DynamicTabsComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-dashboard-layout',
-	templateUrl: './dashboard.component.html',
-	styleUrls: ['./dashboard.component.scss']
+    selector: 'ga-dashboard-layout',
+    templateUrl: './dashboard.component.html',
+    styleUrls: ['./dashboard.component.scss'],
+    standalone: false
 })
 export class DashboardComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public tabsetId: PageTabsetRegistryId = this._route.snapshot.data.tabsetId; // The identifier for the tabset

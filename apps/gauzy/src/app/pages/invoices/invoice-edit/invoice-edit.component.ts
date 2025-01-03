@@ -46,9 +46,10 @@ import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-core/s
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-invoice-edit',
-	templateUrl: './invoice-edit.component.html',
-	styleUrls: ['./invoice-edit.component.scss']
+    selector: 'ga-invoice-edit',
+    templateUrl: './invoice-edit.component.html',
+    styleUrls: ['./invoice-edit.component.scss'],
+    standalone: false
 })
 export class InvoiceEditComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	shouldLoadTable = false;

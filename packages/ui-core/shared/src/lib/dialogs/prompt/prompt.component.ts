@@ -18,9 +18,10 @@ export interface PromptDialogOptions {
 }
 
 @Component({
-	selector: 'ngx-prompt',
-	templateUrl: './prompt.component.html',
-	styleUrls: ['./prompt.component.scss']
+    selector: 'ngx-prompt',
+    templateUrl: './prompt.component.html',
+    styleUrls: ['./prompt.component.scss'],
+    standalone: false
 })
 export class PromptComponent implements OnInit {
 	@Input() data: PromptDialogOptions;

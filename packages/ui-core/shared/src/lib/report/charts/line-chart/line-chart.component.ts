@@ -21,10 +21,11 @@ import { ChartUtil } from './chart-utils';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: ' ngx-line-chart',
-	templateUrl: './line-chart.component.html',
-	styleUrls: ['./line-chart.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: ' ngx-line-chart',
+    templateUrl: './line-chart.component.html',
+    styleUrls: ['./line-chart.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class LineChartComponent extends TranslationBaseComponent implements OnChanges, OnDestroy, OnInit {
 	public lineChartType: ChartType = 'line';

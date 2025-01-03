@@ -13,9 +13,10 @@ import { PublicPageEmployeeMutationComponent } from '../mutation/public-page-emp
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-employee-share',
-	templateUrl: './employee.component.html',
-	styleUrls: ['./employee.component.scss']
+    selector: 'ngx-employee-share',
+    templateUrl: './employee.component.html',
+    styleUrls: ['./employee.component.scss'],
+    standalone: false
 })
 export class EmployeeComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public hasEditPermission$: Observable<boolean>;

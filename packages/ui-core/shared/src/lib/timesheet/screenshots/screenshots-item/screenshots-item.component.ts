@@ -13,9 +13,10 @@ import { TimeZoneService } from '../../gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-screenshots-item',
-	templateUrl: './screenshots-item.component.html',
-	styleUrls: ['./screenshots-item.component.scss']
+    selector: 'ngx-screenshots-item',
+    templateUrl: './screenshots-item.component.html',
+    styleUrls: ['./screenshots-item.component.scss'],
+    standalone: false
 })
 export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	public isShowBorder: boolean = false;

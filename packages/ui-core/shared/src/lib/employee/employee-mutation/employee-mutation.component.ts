@@ -16,9 +16,10 @@ import { BasicInfoFormComponent } from '../../user/forms';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-employee-mutation',
-	templateUrl: 'employee-mutation.component.html',
-	styleUrls: ['employee-mutation.component.scss']
+    selector: 'ga-employee-mutation',
+    templateUrl: 'employee-mutation.component.html',
+    styleUrls: ['employee-mutation.component.scss'],
+    standalone: false
 })
 export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 	@ViewChild('userBasicInfo') userBasicInfo: BasicInfoFormComponent;

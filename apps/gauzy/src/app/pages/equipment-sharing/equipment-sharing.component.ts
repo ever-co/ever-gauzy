@@ -35,8 +35,9 @@ import { EquipmentSharingPolicyTableComponent } from './table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	templateUrl: './equipment-sharing.component.html',
-	styleUrls: ['./equipment-sharing.component.scss']
+    templateUrl: './equipment-sharing.component.html',
+    styleUrls: ['./equipment-sharing.component.scss'],
+    standalone: false
 })
 export class EquipmentSharingComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	loading: boolean = false;

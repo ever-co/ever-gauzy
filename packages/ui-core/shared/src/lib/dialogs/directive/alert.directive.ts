@@ -6,7 +6,8 @@ import { AlertComponent, AlertDialogOptions } from '../alert/alert.component';
 
 @UntilDestroy({ checkProperties: true })
 @Directive({
-	selector: '[ngxAlertDialog]'
+    selector: '[ngxAlertDialog]',
+    standalone: false
 })
 export class AlertDirective implements OnDestroy {
 	data: AlertDialogOptions = {};

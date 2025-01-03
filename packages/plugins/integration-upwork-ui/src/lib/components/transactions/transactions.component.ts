@@ -8,9 +8,10 @@ import { ErrorHandlingService, Store, ToastrService, UpworkService } from '@gauz
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-transactions',
-	templateUrl: './transactions.component.html',
-	styleUrls: ['./transactions.component.scss']
+    selector: 'ngx-transactions',
+    templateUrl: './transactions.component.html',
+    styleUrls: ['./transactions.component.scss'],
+    standalone: false
 })
 export class TransactionsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	private _selectedOrganizationId: string;

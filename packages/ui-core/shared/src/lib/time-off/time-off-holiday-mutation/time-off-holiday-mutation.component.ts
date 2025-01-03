@@ -13,9 +13,10 @@ import { FormHelpers } from '../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-time-off-holiday-mutation',
-	templateUrl: './time-off-holiday-mutation.component.html',
-	styleUrls: ['../time-off-mutation.components.scss']
+    selector: 'ngx-time-off-holiday-mutation',
+    templateUrl: './time-off-holiday-mutation.component.html',
+    styleUrls: ['../time-off-mutation.components.scss'],
+    standalone: false
 })
 export class TimeOffHolidayMutationComponent implements OnInit {
 	FormHelpers: typeof FormHelpers = FormHelpers;

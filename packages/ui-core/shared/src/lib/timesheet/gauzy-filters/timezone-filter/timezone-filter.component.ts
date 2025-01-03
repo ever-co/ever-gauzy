@@ -21,9 +21,10 @@ import { TimeZoneService } from './time-zone.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-timezone-filter',
-	templateUrl: './timezone-filter.component.html',
-	styleUrls: ['./timezone-filter.component.scss']
+    selector: 'ga-timezone-filter',
+    templateUrl: './timezone-filter.component.html',
+    styleUrls: ['./timezone-filter.component.scss'],
+    standalone: false
 })
 export class TimezoneFilterComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	timeZoneOptions: { value: TimeZoneEnum; label: string }[] = [

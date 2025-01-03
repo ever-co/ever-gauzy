@@ -9,9 +9,10 @@ import { ToggleSwitcherComponent } from '../toggle-switcher/toggle-switcher.comp
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	template: `
+    template: `
 		<ngx-toggle-switcher [label]="false" (onSwitched)="updateJobSearchAvailability($event)"></ngx-toggle-switcher>
-	`
+	`,
+    standalone: false
 })
 export class JobSearchAvailabilityEditorComponent extends DefaultEditor implements AfterViewInit, OnInit {
 	public organization: IOrganization;

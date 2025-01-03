@@ -20,10 +20,11 @@ import { ErrorHandlerService, Store } from '../services';
 import { SetupService } from './setup.service';
 
 @Component({
-	selector: 'ngx-setup',
-	templateUrl: './setup.component.html',
-	styleUrls: ['./setup.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-setup',
+    templateUrl: './setup.component.html',
+    styleUrls: ['./setup.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class SetupComponent implements OnInit {
 	@ViewChild('dialogOpenBtn') btnDialogOpen: ElementRef<HTMLElement>;

@@ -16,9 +16,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-edit-candidate-documents',
-	templateUrl: './edit-candidate-documents.component.html',
-	styleUrls: ['./edit-candidate-documents.component.scss']
+    selector: 'ga-edit-candidate-documents',
+    templateUrl: './edit-candidate-documents.component.html',
+    styleUrls: ['./edit-candidate-documents.component.scss'],
+    standalone: false
 })
 export class EditCandidateDocumentsComponent
 	extends PaginationFilterBaseComponent

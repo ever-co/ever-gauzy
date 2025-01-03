@@ -2,7 +2,10 @@ import { CurrencyPipe } from '@angular/common';
 import { Pipe, PipeTransform } from '@angular/core';
 import { CurrenciesEnum } from '@gauzy/contracts';
 
-@Pipe({ name: 'budget' })
+@Pipe({
+    name: 'budget',
+    standalone: false
+})
 export class JobBudgetPipe implements PipeTransform {
 	constructor(private readonly currencyPipe: CurrencyPipe) {}
 	/**

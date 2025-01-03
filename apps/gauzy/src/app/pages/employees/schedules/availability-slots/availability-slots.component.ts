@@ -30,9 +30,10 @@ import { AvailabilitySlotsService, TimeOffService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-availability-slots',
-	templateUrl: './availability-slots.component.html',
-	styleUrls: ['./availability-slots.component.scss']
+    selector: 'ngx-availability-slots',
+    templateUrl: './availability-slots.component.html',
+    styleUrls: ['./availability-slots.component.scss'],
+    standalone: false
 })
 export class AvailabilitySlotsComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	@ViewChild('calendar', { static: false })

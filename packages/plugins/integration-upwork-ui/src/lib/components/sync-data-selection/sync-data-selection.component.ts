@@ -10,9 +10,10 @@ import { ErrorHandlingService, ToastrService, UpworkStoreService } from '@gauzy/
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-sync-data-selection',
-	templateUrl: './sync-data-selection.component.html',
-	styleUrls: ['./sync-data-selection.component.scss']
+    selector: 'ngx-sync-data-selection',
+    templateUrl: './sync-data-selection.component.html',
+    styleUrls: ['./sync-data-selection.component.scss'],
+    standalone: false
 })
 export class SyncDataSelectionComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	contractsSettings$: Observable<any> = this._us.contractsSettings$;

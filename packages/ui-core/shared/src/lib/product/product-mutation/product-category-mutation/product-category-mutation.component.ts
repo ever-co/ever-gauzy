@@ -19,9 +19,10 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-product-category-mutation',
-	templateUrl: './product-category-mutation.component.html',
-	styleUrls: ['./product-category-mutation.component.scss']
+    selector: 'ngx-product-category-mutation',
+    templateUrl: './product-category-mutation.component.html',
+    styleUrls: ['./product-category-mutation.component.scss'],
+    standalone: false
 })
 export class ProductCategoryMutationComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@Input() productCategory: IProductCategoryTranslatable;

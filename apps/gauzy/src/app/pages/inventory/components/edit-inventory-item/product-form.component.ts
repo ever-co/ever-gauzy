@@ -19,9 +19,10 @@ import { InventoryStore, ProductService, ProductVariantService, Store, ToastrSer
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-product-form',
-	templateUrl: './product-form.component.html',
-	styleUrls: ['./product-form.component.scss']
+    selector: 'ngx-product-form',
+    templateUrl: './product-form.component.html',
+    styleUrls: ['./product-form.component.scss'],
+    standalone: false
 })
 export class ProductFormComponent extends TranslationBaseComponent implements OnInit {
 	form: UntypedFormGroup;

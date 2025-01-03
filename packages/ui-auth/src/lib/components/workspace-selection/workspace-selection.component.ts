@@ -4,10 +4,11 @@ import { IWorkspaceResponse } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @Component({
-	selector: 'ngx-workspace-selection',
-	templateUrl: './workspace-selection.component.html',
-	styleUrls: ['./workspace-selection.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-workspace-selection',
+    templateUrl: './workspace-selection.component.html',
+    styleUrls: ['./workspace-selection.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class WorkspaceSelectionComponent extends TranslationBaseComponent implements OnInit {
 	/**

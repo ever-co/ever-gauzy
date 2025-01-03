@@ -24,9 +24,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-weekly-time-reports',
-	templateUrl: './weekly-time-reports.component.html',
-	styleUrls: ['./weekly-time-reports.component.scss']
+    selector: 'ga-weekly-time-reports',
+    templateUrl: './weekly-time-reports.component.html',
+    styleUrls: ['./weekly-time-reports.component.scss'],
+    standalone: false
 })
 export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	public filters: ITimeLogFilters;

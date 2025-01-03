@@ -1,8 +1,8 @@
 import { Component, Input } from '@angular/core';
 
 @Component({
-	selector: 'ngx-date-view',
-	template: `
+    selector: 'ngx-date-view',
+    template: `
 		<span>
 			{{ value | dateFormat }}
 			<nb-icon
@@ -12,7 +12,8 @@ import { Component, Input } from '@angular/core';
 			></nb-icon>
 		</span>
 	`,
-	styles: []
+    styles: [],
+    standalone: false
 })
 export class DateViewComponent {
 	@Input() value: Date | string;

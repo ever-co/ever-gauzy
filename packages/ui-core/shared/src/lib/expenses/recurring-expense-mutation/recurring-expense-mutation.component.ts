@@ -32,9 +32,10 @@ import { DEFAULT_CATEGORIES } from './recurring-expense.setting';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-recurring-expense-mutation',
-	templateUrl: './recurring-expense-mutation.component.html',
-	styleUrls: ['./recurring-expense-mutation.component.scss']
+    selector: 'ga-recurring-expense-mutation',
+    templateUrl: './recurring-expense-mutation.component.html',
+    styleUrls: ['./recurring-expense-mutation.component.scss'],
+    standalone: false
 })
 export class RecurringExpenseMutationComponent
 	extends TranslationBaseComponent

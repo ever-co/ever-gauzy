@@ -3,8 +3,9 @@ import { ActivityWatchElectronService, ElectronService, LanguageElectronService,
 import { AppService } from './app.service';
 
 @Component({
-	selector: 'gauzy-root',
-	template: '<router-outlet></router-outlet>'
+    selector: 'gauzy-root',
+    template: '<router-outlet></router-outlet>',
+    standalone: false
 })
 export class AppComponent implements OnInit, AfterViewInit {
 	public title: string;

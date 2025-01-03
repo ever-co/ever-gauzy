@@ -27,10 +27,11 @@ import { EmployeeSelectorComponent, FormHelpers, ckEditorConfig } from '@gauzy/u
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-apply-job-manually',
-	templateUrl: './apply-job-manually.component.html',
-	styleUrls: ['./apply-job-manually.component.scss'],
-	providers: []
+    selector: 'ga-apply-job-manually',
+    templateUrl: './apply-job-manually.component.html',
+    styleUrls: ['./apply-job-manually.component.scss'],
+    providers: [],
+    standalone: false
 })
 export class ApplyJobManuallyComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public JobPostSourceEnum: typeof JobPostSourceEnum = JobPostSourceEnum;

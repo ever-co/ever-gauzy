@@ -41,9 +41,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-contacts-list',
-	templateUrl: './contacts.component.html',
-	styleUrls: ['./contacts.component.scss']
+    selector: 'ngx-contacts-list',
+    templateUrl: './contacts.component.html',
+    styleUrls: ['./contacts.component.scss'],
+    standalone: false
 })
 export class ContactsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	showAddCard: boolean;

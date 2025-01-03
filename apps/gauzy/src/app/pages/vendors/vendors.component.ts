@@ -29,9 +29,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-vendors',
-	templateUrl: './vendors.component.html',
-	styleUrls: ['vendors.component.scss']
+    selector: 'ga-vendors',
+    templateUrl: './vendors.component.html',
+    styleUrls: ['vendors.component.scss'],
+    standalone: false
 })
 export class VendorsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public addEditDialogRef: NbDialogRef<any>;

@@ -10,8 +10,9 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-integration-ai-layout',
-	template: `<router-outlet></router-outlet>`
+    selector: 'ngx-integration-ai-layout',
+    template: `<router-outlet></router-outlet>`,
+    standalone: false
 })
 export class IntegrationAILayoutComponent implements OnInit, OnDestroy {
 	constructor(

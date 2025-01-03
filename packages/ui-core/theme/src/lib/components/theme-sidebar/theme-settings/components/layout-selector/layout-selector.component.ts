@@ -7,9 +7,10 @@ import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-layout-selector',
-	templateUrl: './layout-selector.component.html',
-	styleUrls: ['./layout-selector.component.scss']
+    selector: 'gauzy-layout-selector',
+    templateUrl: './layout-selector.component.html',
+    styleUrls: ['./layout-selector.component.scss'],
+    standalone: false
 })
 export class LayoutSelectorComponent implements OnInit, OnDestroy {
 	user: IUser;

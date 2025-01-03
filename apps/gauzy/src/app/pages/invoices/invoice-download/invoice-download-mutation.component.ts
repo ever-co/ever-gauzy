@@ -10,8 +10,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-invoice-download',
-	templateUrl: './invoice-download-mutation.component.html'
+    selector: 'ga-invoice-download',
+    templateUrl: './invoice-download-mutation.component.html',
+    standalone: false
 })
 export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
 	invoice: IInvoice;

@@ -9,9 +9,10 @@ import {TaskDetailComponent} from "../task-detail/task-detail.component";
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-task-render-cell',
-	templateUrl: './task-render-cell.component.html',
-	styleUrls: ['./task-render-cell.component.scss'],
+    selector: 'gauzy-task-render-cell',
+    templateUrl: './task-render-cell.component.html',
+    styleUrls: ['./task-render-cell.component.scss'],
+    standalone: false
 })
 export class TaskRenderCellComponent extends TaskRenderComponent {
 	private _popover: NbPopoverDirective;

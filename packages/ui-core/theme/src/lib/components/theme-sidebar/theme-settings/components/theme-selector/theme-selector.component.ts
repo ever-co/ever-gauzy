@@ -16,9 +16,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-theme-selector',
-	templateUrl: './theme-selector.component.html',
-	styleUrls: ['./theme-selector.component.scss']
+    selector: 'gauzy-theme-selector',
+    templateUrl: './theme-selector.component.html',
+    styleUrls: ['./theme-selector.component.scss'],
+    standalone: false
 })
 export class ThemeSelectorComponent implements OnInit {
 	_themes = [

@@ -4,9 +4,10 @@ import { progressStatus } from '@gauzy/ui-core/common';
 import { NbThemeService } from '@nebular/theme';
 
 @Component({
-	selector: 'gauzy-counter-point',
-	templateUrl: './counter-point.component.html',
-	styleUrls: ['./counter-point.component.scss']
+    selector: 'gauzy-counter-point',
+    templateUrl: './counter-point.component.html',
+    styleUrls: ['./counter-point.component.scss'],
+    standalone: false
 })
 export class CounterPointComponent implements OnInit, OnChanges {
 	progressStatus = progressStatus;

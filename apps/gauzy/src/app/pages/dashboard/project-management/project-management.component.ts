@@ -8,9 +8,10 @@ import { DateRangePickerBuilderService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-project-management',
-	templateUrl: './project-management.component.html',
-	styleUrls: ['./project-management.component.scss']
+    selector: 'ga-project-management',
+    templateUrl: './project-management.component.html',
+    styleUrls: ['./project-management.component.scss'],
+    standalone: false
 })
 export class ProjectManagementComponent implements OnInit, OnDestroy {
 	public organization: IOrganization;

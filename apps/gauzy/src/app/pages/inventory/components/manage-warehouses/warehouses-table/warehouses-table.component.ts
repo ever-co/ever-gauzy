@@ -21,9 +21,10 @@ import { DescriptionComponent } from '../../inventory-table-components/descripti
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-warehouses',
-	templateUrl: './warehouses-table.component.html',
-	styleUrls: ['./warehouses-table.component.scss']
+    selector: 'ga-warehouses',
+    templateUrl: './warehouses-table.component.html',
+    styleUrls: ['./warehouses-table.component.scss'],
+    standalone: false
 })
 export class WarehousesTableComponent
 	extends PaginationFilterBaseComponent

@@ -18,9 +18,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	templateUrl: './pipeline-deal-form.component.html',
-	selector: 'ga-pipeline-deals-form',
-	styleUrls: ['./pipeline-deal-form.component.scss']
+    templateUrl: './pipeline-deal-form.component.html',
+    selector: 'ga-pipeline-deals-form',
+    styleUrls: ['./pipeline-deal-form.component.scss'],
+    standalone: false
 })
 export class PipelineDealFormComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public selectedClient: IContact;

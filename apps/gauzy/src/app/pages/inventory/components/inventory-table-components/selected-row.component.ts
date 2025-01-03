@@ -10,7 +10,8 @@ import { Component, Input } from '@angular/core';
                 status="basic"
             ></nb-checkbox>
         </div>
-    `
+    `,
+    standalone: false
 })
 export class SelectedRowComponent {
 

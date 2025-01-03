@@ -9,9 +9,10 @@ import { ThemeLanguageSelectorService } from './theme-language-selector.service'
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-theme-language-selector',
-	styleUrls: ['./theme-language-selector.component.scss'],
-	templateUrl: './theme-language-selector.component.html'
+    selector: 'ngx-theme-language-selector',
+    styleUrls: ['./theme-language-selector.component.scss'],
+    templateUrl: './theme-language-selector.component.html',
+    standalone: false
 })
 export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterViewInit {
 	user: IUser;

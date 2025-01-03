@@ -4,9 +4,10 @@ import { Store } from '@gauzy/ui-core/core';
 import { ThemeSelectorComponent } from '../theme-selector.component';
 
 @Component({
-	selector: 'gauzy-theme-selector-image',
-	templateUrl: './theme-selector-image.component.html',
-	styleUrls: ['./theme-selector-image.component.scss']
+    selector: 'gauzy-theme-selector-image',
+    templateUrl: './theme-selector-image.component.html',
+    styleUrls: ['./theme-selector-image.component.scss'],
+    standalone: false
 })
 export class ThemeSelectorImageComponent extends ThemeSelectorComponent {
 	isOpen: boolean = false;

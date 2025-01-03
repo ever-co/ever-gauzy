@@ -10,9 +10,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gz-public-invoice-estimate-view',
-	templateUrl: './invoice-estimate-view.component.html',
-	styleUrls: ['./invoice-estimate-view.component.scss']
+    selector: 'gz-public-invoice-estimate-view',
+    templateUrl: './invoice-estimate-view.component.html',
+    styleUrls: ['./invoice-estimate-view.component.scss'],
+    standalone: false
 })
 export class InvoiceEstimateViewComponent extends TranslationBaseComponent implements OnInit {
 	public invoice$: Observable<IInvoice>;

@@ -5,8 +5,9 @@ import { Subscription } from 'rxjs/internal/Subscription';
 import { DefaultFilter } from 'angular2-smart-table';
 
 @Component({
-	selector: 'ga-input-filter-selector',
-	template: ` <input [formControl]="inputControl" class="form-control" [placeholder]="column.title" /> `
+    selector: 'ga-input-filter-selector',
+    template: ` <input [formControl]="inputControl" class="form-control" [placeholder]="column.title" /> `,
+    standalone: false
 })
 export class InputFilterComponent extends DefaultFilter implements OnInit, OnDestroy, OnChanges {
 	public inputControl = new FormControl();
@@ -21,7 +22,7 @@ export class InputFilterComponent extends DefaultFilter implements OnInit, OnDes
 		this.subscription = this.inputControl.valueChanges
 			.pipe(
 				// Apply a debounce time to reduce the frequency of value changes
-				debounceTime(this.delay),
+				debounceTime(this.debounceTime),
 				// Ensure distinct values to avoid redundant operations
 				distinctUntilChanged(),
 				// Use tap to perform a side effect, invoking the filterFunction of the column

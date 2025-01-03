@@ -7,9 +7,10 @@ import { tap } from 'rxjs/operators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-interview-rating-chart',
-	templateUrl: './interview-rating-chart.component.html',
-	styleUrls: ['./interview-rating-chart.component.scss']
+    selector: 'ga-interview-rating-chart',
+    templateUrl: './interview-rating-chart.component.html',
+    styleUrls: ['./interview-rating-chart.component.scss'],
+    standalone: false
 })
 export class InterviewRatingChartComponent implements OnInit, OnDestroy {
 	labels: string[] = [];

@@ -46,9 +46,10 @@ import { ALL_EMPLOYEES_SELECTED, NO_EMPLOYEE_SELECTED, QuickActionsComponent } f
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-header',
-	styleUrls: ['./header.component.scss'],
-	templateUrl: './header.component.html'
+    selector: 'ngx-header',
+    styleUrls: ['./header.component.scss'],
+    templateUrl: './header.component.html',
+    standalone: false
 })
 export class HeaderComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
 	isEmployee = false;

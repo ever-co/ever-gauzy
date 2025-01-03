@@ -3,8 +3,8 @@ import { DefaultFilter } from 'angular2-smart-table';
 import { IExpenseCategory } from '@gauzy/contracts';
 
 @Component({
-	selector: 'ga-expense-category-select-filter',
-	template: `
+    selector: 'ga-expense-category-select-filter',
+    template: `
 		<ga-expense-category-select
 			[clearable]="true"
 			[searchable]="false"
@@ -12,7 +12,8 @@ import { IExpenseCategory } from '@gauzy/contracts';
 			[placeholder]="'SM_TABLE.CATEGORY' | translate"
 			(onChanged)="selectedExpenseCategoryEvent($event)"
 		></ga-expense-category-select>
-	`
+	`,
+    standalone: false
 })
 export class ExpenseCategoryFilterComponent extends DefaultFilter implements OnChanges {
 	constructor() {

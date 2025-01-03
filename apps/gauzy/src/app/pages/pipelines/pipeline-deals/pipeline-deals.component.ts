@@ -17,9 +17,10 @@ import { PipelineDealProbabilityComponent } from '../table-components/pipeline-d
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-pipeline-deals',
-	templateUrl: './pipeline-deals.component.html',
-	styleUrls: ['./pipeline-deals.component.scss']
+    selector: 'ga-pipeline-deals',
+    templateUrl: './pipeline-deals.component.html',
+    styleUrls: ['./pipeline-deals.component.scss'],
+    standalone: false
 })
 export class PipelineDealsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public viewComponentName: ComponentEnum = ComponentEnum.PIPELINE_DEALS;

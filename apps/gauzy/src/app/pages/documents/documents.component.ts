@@ -22,9 +22,10 @@ import { Subject } from 'rxjs/internal/Subject';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-documents',
-	templateUrl: './documents.component.html',
-	styleUrls: ['documents.component.scss']
+    selector: 'ga-documents',
+    templateUrl: './documents.component.html',
+    styleUrls: ['documents.component.scss'],
+    standalone: false
 })
 export class DocumentsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	@ViewChild('uploadDoc') uploadDoc: UploadDocumentComponent;

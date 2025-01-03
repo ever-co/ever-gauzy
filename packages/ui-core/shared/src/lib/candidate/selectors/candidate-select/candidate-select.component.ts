@@ -10,9 +10,10 @@ import { BaseCandidateSelectorComponent } from '../base-candidate-selector.compo
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-candidate-select',
-	templateUrl: './candidate-select.component.html',
-	styleUrls: ['../base-candidate-selector.component.scss']
+    selector: 'ga-candidate-select',
+    templateUrl: './candidate-select.component.html',
+    styleUrls: ['../base-candidate-selector.component.scss'],
+    standalone: false
 })
 export class CandidateSelectComponent extends BaseCandidateSelectorComponent implements OnInit {
 	public select: FormControl = new FormControl();

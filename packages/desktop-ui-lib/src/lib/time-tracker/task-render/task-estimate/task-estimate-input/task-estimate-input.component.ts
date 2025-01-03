@@ -20,9 +20,10 @@ export interface IEstimateInput {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-task-estimate-input',
-	templateUrl: './task-estimate-input.component.html',
-	styleUrls: ['./task-estimate-input.component.scss'],
+    selector: 'gauzy-task-estimate-input',
+    templateUrl: './task-estimate-input.component.html',
+    styleUrls: ['./task-estimate-input.component.scss'],
+    standalone: false
 })
 export class TaskEstimateInputComponent implements OnInit, AfterViewInit {
 	@Output()

@@ -20,9 +20,10 @@ export interface SelectedProductVariant {
 
 @UntilDestroy()
 @Component({
-	selector: 'ngx-variant-table',
-	templateUrl: './variant-table.component.html',
-	styleUrls: ['./variant-table.component.scss']
+    selector: 'ngx-variant-table',
+    templateUrl: './variant-table.component.html',
+    styleUrls: ['./variant-table.component.scss'],
+    standalone: false
 })
 export class VariantTableComponent extends TranslationBaseComponent implements OnInit {
 	@ViewChild('variantTable') variantTable;

@@ -19,9 +19,10 @@ import { EmailService, EmployeesService, OrganizationContactService, Store, Toas
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-email-history',
-	templateUrl: './email-history.component.html',
-	styleUrls: ['./email-history.component.scss']
+    selector: 'ngx-email-history',
+    templateUrl: './email-history.component.html',
+    styleUrls: ['./email-history.component.scss'],
+    standalone: false
 })
 export class EmailHistoryComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	loading: boolean = false;

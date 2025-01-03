@@ -12,10 +12,11 @@ import { IChartData } from '../../shared/utils/adapters/chart.adapter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-time-tracking-charts',
-	templateUrl: './time-tracking-charts.component.html',
-	styleUrls: ['./time-tracking-charts.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-time-tracking-charts',
+    templateUrl: './time-tracking-charts.component.html',
+    styleUrls: ['./time-tracking-charts.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class TimeTrackingChartsComponent implements OnInit {
 	private readonly _chartData$: BehaviorSubject<IChartData[]> = new BehaviorSubject([]);

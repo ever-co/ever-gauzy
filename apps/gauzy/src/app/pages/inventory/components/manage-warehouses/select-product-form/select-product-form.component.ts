@@ -22,9 +22,10 @@ export interface SelectedRowEvent {
 
 @UntilDestroy()
 @Component({
-	selector: 'ngx-select-product',
-	templateUrl: './select-product-form.component.html',
-	styleUrls: ['./select-product-form.component.scss']
+    selector: 'ngx-select-product',
+    templateUrl: './select-product-form.component.html',
+    styleUrls: ['./select-product-form.component.scss'],
+    standalone: false
 })
 export class SelectProductComponent extends PaginationFilterBaseComponent implements OnInit {
 	products: IProductTranslated[] = [];

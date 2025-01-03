@@ -3,9 +3,10 @@ import { Router } from '@angular/router';
 import { ID, IEmployee } from '@gauzy/contracts';
 
 @Component({
-	selector: 'gauzy-project-organization-employees',
-	templateUrl: './project-organization-employees.component.html',
-	styleUrls: ['./project-organization-employees.component.scss']
+    selector: 'gauzy-project-organization-employees',
+    templateUrl: './project-organization-employees.component.html',
+    styleUrls: ['./project-organization-employees.component.scss'],
+    standalone: false
 })
 export class ProjectOrganizationEmployeesComponent implements OnInit {
 	@Input() value: string | number;

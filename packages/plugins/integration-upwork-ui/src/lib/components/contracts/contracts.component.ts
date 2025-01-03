@@ -15,10 +15,11 @@ import { SyncDataSelectionComponent } from '../sync-data-selection/sync-data-sel
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-contracts',
-	templateUrl: './contracts.component.html',
-	styleUrls: ['./contracts.component.scss'],
-	providers: [TitleCasePipe]
+    selector: 'ngx-contracts',
+    templateUrl: './contracts.component.html',
+    styleUrls: ['./contracts.component.scss'],
+    providers: [TitleCasePipe],
+    standalone: false
 })
 export class ContractsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public smartTableSettings: any;
