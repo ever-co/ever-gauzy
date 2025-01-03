@@ -60,8 +60,8 @@ export class AuthController {
 	 * @returns
 	 */
 	@ApiOperation({ summary: 'Check if user is authenticated' })
-	@ApiOkResponse({ status: HttpStatus.OK, description: 'The success server response' })
-	@ApiBadRequestResponse({ status: HttpStatus.BAD_REQUEST })
+	@ApiOkResponse({ description: 'The success server response' })
+	@ApiBadRequestResponse({ description: 'Bad request response' })
 	@Get('/authenticated')
 	@Public()
 	async authenticated(): Promise<boolean> {

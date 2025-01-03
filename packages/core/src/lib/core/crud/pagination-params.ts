@@ -14,7 +14,7 @@ import { SimpleObjectLiteral, convertNativeParameters, parseObject } from './pag
  * Specifies what columns should be retrieved.
  */
 export class OptionsSelect<T = any> {
-	@ApiPropertyOptional({ type: 'object' })
+	@ApiPropertyOptional({ type: Object })
 	@IsOptional()
 	@Transform(({ value }: TransformFnParams) => parseObject(value, parseToBoolean))
 	readonly select?: FindOptionsSelect<T>;
@@ -24,7 +24,7 @@ export class OptionsSelect<T = any> {
  * Indicates what relations of entity should be loaded (simplified left join form).
  */
 export class OptionsRelations<T = any> extends OptionsSelect<T> {
-	@ApiPropertyOptional({ type: 'object' })
+	@ApiPropertyOptional({ type: Object })
 	@IsOptional()
 	readonly relations?: FindOptionsRelations<T>;
 }
@@ -33,14 +33,14 @@ export class OptionParams<T> extends OptionsRelations<T> {
 	/**
 	 * Order, in which entities should be ordered.
 	 */
-	@ApiPropertyOptional({ type: 'object' })
+	@ApiPropertyOptional({ type: Object })
 	@IsOptional()
 	readonly order: FindOptionsOrder<T>;
 
 	/**
 	 * Simple condition that should be applied to match entities.
 	 */
-	@ApiProperty({ type: 'object' })
+	@ApiProperty({ type: Object })
 	@IsNotEmpty()
 	@ValidateNested({ each: true })
 	@Type(() => TenantOrganizationBaseDTO)
