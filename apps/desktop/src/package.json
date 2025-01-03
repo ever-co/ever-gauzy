@@ -169,7 +169,7 @@
 		"@gauzy/plugin-sentry": "file:../../../dist/packages/plugins/sentry-tracing",
 		"@gauzy/plugin-videos": "file:../../../dist/packages/plugins/videos",
 		"@gauzy/ui-config": "file:../../../dist/packages/ui-config",
-		"@nestjs/platform-express": "^10.3.7",
+		"@nestjs/platform-express": "^10.4.15",
 		"@sentry/electron": "^4.18.0",
 		"@sentry/node": "^7.101.1",
 		"@sentry/profiling-node": "^7.101.1",

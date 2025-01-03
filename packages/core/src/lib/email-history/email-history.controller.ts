@@ -41,16 +41,13 @@ export class EmailHistoryController {
 
 	@ApiOperation({ summary: 'Find all sent emails under specific tenant.' })
 	@ApiOkResponse({
-		status: HttpStatus.OK,
 		description: 'Found emails',
 		type: EmailHistory
 	})
 	@ApiNotFoundResponse({
-		status: HttpStatus.NOT_FOUND,
 		description: 'No records found'
 	})
 	@ApiInternalServerErrorResponse({
-		status: HttpStatus.INTERNAL_SERVER_ERROR,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get()
