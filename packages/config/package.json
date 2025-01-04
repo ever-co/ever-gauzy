@@ -40,7 +40,7 @@
 		"chalk": "^4.1.0",
 		"dotenv": "^16.0.3",
 		"mikro-orm-soft-delete": "^1.0.0-alpha.1",
-		"nest-knexjs": "^0.0.21",
+		"nest-knexjs": "^0.0.25",
 		"tslib": "^2.6.2",
 		"typeorm": "^0.3.20"
 	},
