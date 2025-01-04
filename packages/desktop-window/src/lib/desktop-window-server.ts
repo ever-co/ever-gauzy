@@ -1,11 +1,8 @@
 import * as remoteMain from '@electron/remote/main';
 import { BrowserWindow } from 'electron';
 import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
-import { WindowManager, RegisteredWindow, Store, setupElectronLog } from '@gauzy/desktop-core';
+import { WindowManager, RegisteredWindow, store } from '@gauzy/desktop-core';
 import { handleCloseEvent, setLaunchPathAndLoad } from './utils/desktop-window-utils';
-
-// Set up Electron log
-setupElectronLog();
 
 /**
  * Creates and configures the server dashboard window in the Electron application.
@@ -21,41 +18,41 @@ setupElectronLog();
  * const serverWindow = await createServerWindow(null, {}, '/path/to/server.html', '/path/to/preload.js');
  */
 export async function createServerWindow(
-    serverWindow: Electron.BrowserWindow | null,
-    filePath: string,
-    preloadPath?: string
+	serverWindow: Electron.BrowserWindow | null,
+	filePath: string,
+	preloadPath?: string
 ): Promise<Electron.BrowserWindow> {
-    // Retrieve the window settings using the optional preload script
-    const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting(preloadPath);
+	// Retrieve the window settings using the optional preload script
+	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting(preloadPath);
 
-    // Get the WindowManager instance for managing windows
-    const manager = WindowManager.getInstance();
+	// Get the WindowManager instance for managing windows
+	const manager = WindowManager.getInstance();
 
-    // Create a new BrowserWindow for the server dashboard
-    serverWindow = new BrowserWindow(mainWindowSettings);
+	// Create a new BrowserWindow for the server dashboard
+	serverWindow = new BrowserWindow(mainWindowSettings);
 
-    // Enable remote functionality for the server window
-    remoteMain.enable(serverWindow.webContents);
+	// Enable remote functionality for the server window
+	remoteMain.enable(serverWindow.webContents);
 
 	// Use the helper function to construct and load the URL
 	await setLaunchPathAndLoad(serverWindow, filePath, '/server-dashboard');
 
-    // Optional: Uncomment to open Developer Tools
-    // serverWindow.webContents.toggleDevTools();
+	// Optional: Uncomment to open Developer Tools
+	// serverWindow.webContents.toggleDevTools();
 
 	// Attach the reusable close event handler
 	handleCloseEvent(serverWindow);
 
-    // Attach a custom title bar if a preload script is provided
-    if (preloadPath) {
-        attachTitlebarToWindow(serverWindow);
-    }
+	// Attach a custom title bar if a preload script is provided
+	if (preloadPath) {
+		attachTitlebarToWindow(serverWindow);
+	}
 
-    // Register the server window with the WindowManager
-    manager.register(RegisteredWindow.SERVER, serverWindow);
+	// Register the server window with the WindowManager
+	manager.register(RegisteredWindow.SERVER, serverWindow);
 
-    // Return the configured server window instance
-    return serverWindow;
+	// Return the configured server window instance
+	return serverWindow;
 }
 
 /**
@@ -71,42 +68,42 @@ export async function createServerWindow(
  * const mainWindow = new BrowserWindow(settings);
  */
 const windowSetting = (preloadPath?: string): Electron.BrowserWindowConstructorOptions => {
-    // Default settings for the main application window
-    const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
-        frame: true,
-        resizable: false,
-        focusable: true,
-        fullscreenable: true,
-        webPreferences: {
-            nodeIntegration: true,
-            webSecurity: false,
-            contextIsolation: false,
-            sandbox: false
-        },
-        width: 380,
-        height: 400,
-        title: process.env.DESCRIPTION || '',
-        show: false,
-        center: true
-    };
+	// Default settings for the main application window
+	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
+		frame: true,
+		resizable: false,
+		focusable: true,
+		fullscreenable: true,
+		webPreferences: {
+			nodeIntegration: true,
+			webSecurity: false,
+			contextIsolation: false,
+			sandbox: false
+		},
+		width: 380,
+		height: 400,
+		title: process.env.DESCRIPTION || '',
+		show: false,
+		center: true
+	};
 
-    // Apply additional settings if a preload script is provided
-    if (preloadPath) {
-        mainWindowSettings.webPreferences.preload = preloadPath;
-        mainWindowSettings.titleBarStyle = 'hidden';
-        mainWindowSettings.titleBarOverlay = true;
+	// Apply additional settings if a preload script is provided
+	if (preloadPath) {
+		mainWindowSettings.webPreferences.preload = preloadPath;
+		mainWindowSettings.titleBarStyle = 'hidden';
+		mainWindowSettings.titleBarOverlay = true;
 
-        // Platform-specific adjustments for Linux
-        if (process.platform === 'linux') {
-            mainWindowSettings.frame = false;
-        }
-    }
+		// Platform-specific adjustments for Linux
+		if (process.platform === 'linux') {
+			mainWindowSettings.frame = false;
+		}
+	}
 
-    // Retrieve the icon path from the application's store and assign it
-    const filesPath = Store.get('filePath');
-    if (filesPath?.iconPath) {
-        mainWindowSettings.icon = filesPath.iconPath;
-    }
+	// Retrieve the icon path from the application's store and assign it
+	const filesPath = store.get('filePath');
+	if (filesPath?.iconPath) {
+		mainWindowSettings.icon = filesPath.iconPath;
+	}
 
-    return mainWindowSettings;
+	return mainWindowSettings;
 };

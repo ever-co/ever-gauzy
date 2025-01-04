@@ -2,11 +2,8 @@ import * as remoteMain from '@electron/remote/main';
 import { BrowserWindow, ipcMain, screen } from 'electron';
 import * as url from 'url';
 import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
-import { WindowManager, RegisteredWindow, setupElectronLog, Store } from '@gauzy/desktop-core';
+import { WindowManager, RegisteredWindow, store } from '@gauzy/desktop-core';
 import { handleCloseEvent } from './utils/desktop-window-utils';
-
-// Set up Electron log
-setupElectronLog();
 
 /**
  * Creates and initializes the Gauzy main window for the Electron application.
@@ -105,10 +102,7 @@ function hideWindowIfConfigured(gauzyWindow: Electron.BrowserWindow, config: { g
  * @param {string} filePath - The local file path to be loaded into the window.
  * @returns {Promise<void>} - Resolves when the URL is successfully loaded.
  */
-async function setLaunchPathAndLoad(
-	window: Electron.BrowserWindow,
-	filePath: string
-): Promise<string> {
+async function setLaunchPathAndLoad(window: Electron.BrowserWindow, filePath: string): Promise<string> {
 	// Construct the file URL
 	const launchPath = url.format({
 		pathname: filePath,
@@ -137,7 +131,7 @@ async function setLaunchPathAndLoad(
 const windowSetting = (preloadPath?: string): Electron.BrowserWindowConstructorOptions => {
 	// Retrieve the screen size and file paths
 	const sizes = screen.getPrimaryDisplay().workAreaSize;
-	const filesPath = Store.get('filePath');
+	const filesPath = store.get('filePath');
 
 	// Define the base settings for the BrowserWindow
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
@@ -200,6 +194,9 @@ function initMainListener(): void {
  * @param {object} envConfig - Environment configurations with `API_DEFAULT_PORT`.
  * @returns {string} - The API base URL.
  */
-export function getApiBaseUrl(configs: { serverUrl?: string; port?: number }, envConfig: { API_DEFAULT_PORT: number }): string {
+export function getApiBaseUrl(
+	configs: { serverUrl?: string; port?: number },
+	envConfig: { API_DEFAULT_PORT: number }
+): string {
 	return configs.serverUrl || `http://localhost:${configs.port || envConfig.API_DEFAULT_PORT}`;
 }

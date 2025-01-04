@@ -6,12 +6,8 @@ import {
 	DefaultWindow,
 	WindowConfig,
 	RegisteredWindow,
-	setupElectronLog,
-	Store
+	store
 } from '@gauzy/desktop-core';
-
-// Set up Electron log
-setupElectronLog();
 
 export class ScreenCaptureNotification extends BaseWindow implements IBaseWindow {
 	private static readonly WIDTH: number = 310;
@@ -82,8 +78,8 @@ export class ScreenCaptureNotification extends BaseWindow implements IBaseWindow
 
 		// Send a notification to the renderer process with the project note and optional thumbnail URL
 		this.browserWindow.webContents.send('show_popup_screen_capture', {
-			note: Store.get('project').note, // Retrieves the note from the store
-			...(thumbUrl && { imgUrl: thumbUrl }), // Conditionally include the thumbnail URL if provided
+			note: store.get('project')?.note, // Retrieves the note from the store
+			...(thumbUrl && { imgUrl: thumbUrl }) // Conditionally include the thumbnail URL if provided
 		});
 	}
 
