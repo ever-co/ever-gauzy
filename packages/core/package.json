@@ -125,7 +125,7 @@
         "fast-json-stringify": "^2.4.1",
         "fastify-swagger": "^4.12.4",
         "fs-extra": "^10.1.0",
-        "graphql": "15.7.2",
+        "graphql": "^16.10.0",
         "graphql-playground-middleware-express": "^1.7.23",
         "graphql-subscriptions": "^2.0.0",
         "graphql-tools": "^8.2.0",
