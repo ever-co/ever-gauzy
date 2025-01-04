@@ -24,9 +24,9 @@
         "migration:create": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn ts-node -r tsconfig-paths/register ./src/lib/database/migration.ts migration:create"
     },
     "dependencies": {
-        "@apollo/client": "^3.6.2",
-        "@apollo/server": "^4.9.5",
-        "@apollo/subgraph": "^2.7.1",
+        "@apollo/client": "^3.12.4",
+        "@apollo/server": "^4.11.3",
+        "@apollo/subgraph": "^2.9.3",
         "@aws-sdk/client-s3": "^3.717.0",
         "@aws-sdk/s3-request-presigner": "^3.717.0",
         "@faker-js/faker": "8.0.0-alpha.0",
@@ -127,8 +127,8 @@
         "fs-extra": "^10.1.0",
         "graphql": "^16.10.0",
         "graphql-playground-middleware-express": "^1.7.23",
-        "graphql-subscriptions": "^2.0.0",
-        "graphql-tools": "^8.2.0",
+        "graphql-subscriptions": "^3.0.0",
+        "graphql-tools": "^9.0.10",
         "handlebars": "^4.7.6",
         "helmet": "^4.1.1",
         "jimp": "^0.22.7",
