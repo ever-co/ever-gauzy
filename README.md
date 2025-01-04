@@ -18,12 +18,12 @@ It's built with a React (NextJs) / ReactNative (Expo) stack and connects to head
 
 [DSpot ERP][uri_gauzy] - **Open Business Management Platform** for Collaborative, On-Demand and Sharing Economies.
 
--   **Enterprise Resource Planning** (ERP)
--   **Customer Relationship Management** (CRM)
--   **Human Resource Management** (HRM)
--   **Applicant Tracking System** (ATS)
--   **Work and Project Management** (PM)
--   **Employee Time-Tracking, Activity & Productivity Tracking**
+- **Enterprise Resource Planning** (ERP)
+- **Customer Relationship Management** (CRM)
+- **Human Resource Management** (HRM)
+- **Applicant Tracking System** (ATS)
+- **Work and Project Management** (PM)
+- **Employee Time-Tracking, Activity & Productivity Tracking**
 
 ![overview](https://docs.gauzy.co/overview.png)
 
@@ -33,49 +33,49 @@ DSpot ERP Platform is a part of our larger Open Platform for **Collaborative, On
 
 Main features:
 
--   Human Resources Management (HRM) with Time Management / Tracking and Employees Performance Monitoring
--   Customer Relationship Management (CRM)
--   Enterprise Resource Planning (ERP)
--   Projects / Tasks Management
--   Sales Management
--   Financial and Cost Management (including _Accounting_, _Invoicing_, etc)
--   Inventory, Supply Chain Management, and Production Management
+- Human Resources Management (HRM) with Time Management / Tracking and Employees Performance Monitoring
+- Customer Relationship Management (CRM)
+- Enterprise Resource Planning (ERP)
+- Projects / Tasks Management
+- Sales Management
+- Financial and Cost Management (including _Accounting_, _Invoicing_, etc)
+- Inventory, Supply Chain Management, and Production Management
 
 A more detailed list of the features available in the platform:
 
--   [Headless APIs](https://api.gauzy.co/swg)
--   Dashboard (provides an overview of different metrics, such as company income/expenses, employee bonuses, etc.)
--   Time Management / Time Tracking / Activity Tracking / Timesheets
--   Employees Management (register of company employees/contractors, rates of employees, etc.)
--   Employee Onboarding
--   Applicant Tracking System (ATS) / Candidates Interviews
--   Contacts Management (Clients / Customers / Leads / etc.)
--   Schedules / Appointments / Events
--   Project Management / Tasks
--   Goals / KPI / Objectives / Key Results
--   Sales Pipelines
--   Proposals
--   Accounting / Invoicing / Estimates
--   Billing
--   Payments
--   Income / Expenses Management
--   Time Off Management / Holidays / Approvals
--   Inventory
--   Equipment / Sharing
--   Multiple Organizations Management
--   Organization Departments and Teams
--   Organization Clients and Vendors
--   Help Center / Knowledge Base
--   Tags / Labels
--   Reports / Insights / Analytics
--   Organization and Employee Public Pages
--   Integrations (Upwork, HubStaff, etc.)
--   Email History / Email Templates
--   Data Import / Export
--   Roles / Permissions
--   Multi-currency
--   Multi-lingual
--   Dark / Light / Corporate / Material and other Themes
+- [Headless APIs](https://api.gauzy.co/swg)
+- Dashboard (provides an overview of different metrics, such as company income/expenses, employee bonuses, etc.)
+- Time Management / Time Tracking / Activity Tracking / Timesheets
+- Employees Management (register of company employees/contractors, rates of employees, etc.)
+- Employee Onboarding
+- Applicant Tracking System (ATS) / Candidates Interviews
+- Contacts Management (Clients / Customers / Leads / etc.)
+- Schedules / Appointments / Events
+- Project Management / Tasks
+- Goals / KPI / Objectives / Key Results
+- Sales Pipelines
+- Proposals
+- Accounting / Invoicing / Estimates
+- Billing
+- Payments
+- Income / Expenses Management
+- Time Off Management / Holidays / Approvals
+- Inventory
+- Equipment / Sharing
+- Multiple Organizations Management
+- Organization Departments and Teams
+- Organization Clients and Vendors
+- Help Center / Knowledge Base
+- Tags / Labels
+- Reports / Insights / Analytics
+- Organization and Employee Public Pages
+- Integrations (Upwork, HubStaff, etc.)
+- Email History / Email Templates
+- Data Import / Export
+- Roles / Permissions
+- Multi-currency
+- Multi-lingual
+- Dark / Light / Corporate / Material and other Themes
 
 Read more [about DSpot ERP](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) and [how to use it](https://github.com/ever-co/ever-gauzy/wiki/How-to-use-Gauzy) at your company, on-demand business, freelance business, agency, studio or in-house teams.
 
@@ -100,12 +100,12 @@ Read more [about DSpot ERP](https://github.com/ever-co/ever-gauzy/wiki/About-Gau
 
 ## 🔗 Links
 
--   **<https://gauzy.co>** - check more information about the platform at the official website.
--   **<https://app.gauzy.co>** - SaaS (Important: it's currently in Alpha version/testing mode, please use it cautiously).
--   **<https://demo.gauzy.co>** - Online Demo (see more info below).
--   **<https://gauzy.co/downloads>** - Download Platform & Apps (see also more info below about available downloads).
--   **<https://docs.gauzy.co>** - Platform Documentation (WIP). See also our [Wiki](https://github.com/ever-co/ever-gauzy/wiki).
--   **<https://ever.co>** - get more information about our company products.
+- **<https://gauzy.co>** - check more information about the platform at the official website.
+- **<https://app.gauzy.co>** - SaaS (Important: it's currently in Alpha version/testing mode, please use it cautiously).
+- **<https://demo.gauzy.co>** - Online Demo (see more info below).
+- **<https://gauzy.co/downloads>** - Download Platform & Apps (see also more info below about available downloads).
+- **<https://docs.gauzy.co>** - Platform Documentation (WIP). See also our [Wiki](https://github.com/ever-co/ever-gauzy/wiki).
+- **<https://ever.co>** - get more information about our company products.
 
 ## 📊 Activity
 
@@ -129,10 +129,10 @@ You can download DSpot ERP Platform, DSpot ERP Server, or Desktop Apps (Windows/
 
 In addition, all downloads are also available from the following pages:
 
--   [Platform Releases](https://github.com/ever-co/ever-gauzy/releases)
--   [Server Releases](https://github.com/ever-co/ever-gauzy-server/releases)
--   [Desktop App Releases](https://github.com/ever-co/ever-gauzy-desktop/releases)
--   [Desktop Timer App Releases](https://github.com/ever-co/ever-gauzy-desktop-timer/releases)
+- [Platform Releases](https://github.com/ever-co/ever-gauzy/releases)
+- [Server Releases](https://github.com/ever-co/ever-gauzy-server/releases)
+- [Desktop App Releases](https://github.com/ever-co/ever-gauzy-desktop/releases)
+- [Desktop Timer App Releases](https://github.com/ever-co/ever-gauzy-desktop-timer/releases)
 
 ### Production (SaaS)
 
@@ -168,16 +168,16 @@ More information about our Server & Desktop Apps:
 
 ## 🧱 Technology Stack and Requirements
 
--   [TypeScript](https://www.typescriptlang.org)
--   [NodeJs](https://nodejs.org) / [NestJs](https://github.com/nestjs/nest)
--   [Nx](https://nx.dev) / [Lerna](https://github.com/lerna/lerna)
--   [Angular](https://angular.io) / [RxJS](http://reactivex.io/rxjs) / [Ngx-admin](https://github.com/akveo/ngx-admin)
--   [TypeORM](https://github.com/typeorm/typeorm) / [MikroORM](https://github.com/mikro-orm/mikro-orm) / [Knex](https://github.com/knex/knex)
+- [TypeScript](https://www.typescriptlang.org)
+- [NodeJs](https://nodejs.org) / [NestJs](https://github.com/nestjs/nest)
+- [Nx](https://nx.dev) / [Lerna](https://github.com/lerna/lerna)
+- [Angular](https://angular.io) / [RxJS](http://reactivex.io/rxjs) / [Ngx-admin](https://github.com/akveo/ngx-admin)
+- [TypeORM](https://github.com/typeorm/typeorm) / [MikroORM](https://github.com/mikro-orm/mikro-orm) / [Knex](https://github.com/knex/knex)
 
 For Production, we recommend:
 
--   [PostgreSQL](https://www.postgresql.org) or [MySQL](https://dev.mysql.com)
--   [Kubernetes](https://kubernetes.io), [Docker](https://www.docker.com) or [PM2](https://github.com/Unitech/pm2)
+- [PostgreSQL](https://www.postgresql.org) or [MySQL](https://dev.mysql.com)
+- [Kubernetes](https://kubernetes.io), [Docker](https://www.docker.com)
 
 Note: thanks to TypeORM / MikroORM, DSpot ERP will support lots of DBs: SQLite (default, for demos), PostgreSQL (development/production), MySql (development/production), MariaDb, CockroachDb, MS SQL, Oracle, MongoDb, and others (with minimal changes).
 
@@ -204,20 +204,20 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 
 Notes:
 
--   while demo `docker-compose.demo.yml` runs a minimum amount of containers (API, Web UI, and DB), other Docker Compose files run multiple infrastructure dependencies (see full list below).
--   you can also run ONLY infra dependencies (without our API / Web containers) with `docker-compose -f docker-compose.infra.yml up` command. We already doing it using `include` in our main docker compose files.
+- while demo `docker-compose.demo.yml` runs a minimum amount of containers (API, Web UI, and DB), other Docker Compose files run multiple infrastructure dependencies (see full list below).
+- you can also run ONLY infra dependencies (without our API / Web containers) with `docker-compose -f docker-compose.infra.yml up` command. We already doing it using `include` in our main docker compose files.
 
 Together with DSpot ERP, Docker Compose (i.e. `docker-compose.yml` and `docker-compose.build.yml`, not Demo `docker-compose.demo.yml`) will run the following:
 
--   [PostgreSQL](https://www.postgresql.org) - Primary Database.
--   [Pgweb](https://github.com/sosedoff/pgweb) - Cross-platform client for PostgreSQL DBs, available on <http://localhost:8081>.
--   [ElasticSearch](https://github.com/elastic/elasticsearch) - Search Engine.
--   [Dejavu](https://github.com/appbaseio/dejavu) - Web UI for ElasticSearch, available on <http://localhost:1358>.
--   [MinIO](https://github.com/minio/minio) - Multi-Cloud ☁️ Object Storage (AWS S3 compatible).
--   [Jitsu](https://github.com/jitsucom/jitsu) - Jitsu is an open-source Segment alternative (data ingestion engine).
--   [Redis](https://github.com/redis/redis) - In-memory data store/caching (also used by Jitsu)
--   [Cube](https://github.com/cube-js/cube) - "Semantic Layer" used for Reports, Dashboards, Analytics, and other BI-related features, with UI available on <http://localhost:4000>.
--   [Zipkin](https://github.com/openzipkin/zipkin) - distributed tracing system.
+- [PostgreSQL](https://www.postgresql.org) - Primary Database.
+- [Pgweb](https://github.com/sosedoff/pgweb) - Cross-platform client for PostgreSQL DBs, available on <http://localhost:8081>.
+- [ElasticSearch](https://github.com/elastic/elasticsearch) - Search Engine.
+- [Dejavu](https://github.com/appbaseio/dejavu) - Web UI for ElasticSearch, available on <http://localhost:1358>.
+- [MinIO](https://github.com/minio/minio) - Multi-Cloud ☁️ Object Storage (AWS S3 compatible).
+- [Jitsu](https://github.com/jitsucom/jitsu) - Jitsu is an open-source Segment alternative (data ingestion engine).
+- [Redis](https://github.com/redis/redis) - In-memory data store/caching (also used by Jitsu)
+- [Cube](https://github.com/cube-js/cube) - "Semantic Layer" used for Reports, Dashboards, Analytics, and other BI-related features, with UI available on <http://localhost:4000>.
+- [Zipkin](https://github.com/openzipkin/zipkin) - distributed tracing system.
 
 ### Manually
 
@@ -237,18 +237,18 @@ Together with DSpot ERP, Docker Compose (i.e. `docker-compose.yml` and `docker-c
 
 Notes:
 
--   during the first API start, DB will be automatically seeded with a minimum set of initial data if no users are found.
--   you can run seed any moment manually (e.g. if you changed entities schemas) with the `yarn seed` command to re-initialize DB (warning: unsafe for production!).
--   it is possible to run generation of extremely large amounts of fake data for demo purposes/testing with `yarn seed:all` (warning: takes ~10 min to complete)
+- during the first API start, DB will be automatically seeded with a minimum set of initial data if no users are found.
+- you can run seed any moment manually (e.g. if you changed entities schemas) with the `yarn seed` command to re-initialize DB (warning: unsafe for production!).
+- it is possible to run generation of extremely large amounts of fake data for demo purposes/testing with `yarn seed:all` (warning: takes ~10 min to complete)
 
 #### Optional / Recommended for Production
 
--   Optionally (recommended for production) install and run [PostgreSQL](https://www.postgresql.org) version 14 or later (16.x recommended for production). Note: other DB can be configured manually in TypeORM / MikroORM / Knex. The default DB is set to SQLite (recommended for testing/demo purposes only).
--   Optionally (recommended for production) install and run [Redis](https://github.com/redis/redis). Notes: the platform will work without Redis using an in-memory caching strategy instead of a distributed one (recommended for testing/demo purposes only). Please note however that Redis is required for Jitsu.
--   Optionally (recommended for production) install and run [ElasticSearch](https://github.com/elastic/elasticsearch). Note: the platform will work without ElasticSearch using DB build-in search capabilities (recommended for testing/demo purposes only).
--   Optionally install and run [MinIO](https://github.com/minio/minio) or [LocalStack](https://github.com/localstack/localstack). Note: the platform will work without MinIO / LocalStack or other S3-compatible storage using local filesystem-based storage (recommended for testing/demo purposes only). For production, we recommend using Wasabi or AWS S3 storage or another S3-compatible cloud storage.
--   Optionally (recommended for production) install and run [Jitsu](https://github.com/jitsucom/jitsu). Note: the platform will work without Jitsu, however, data ingestion will be disabled for additional analyses / real-time pipelines.
--   Optionally (recommended for production) install and run [Cube](https://github.com/cube-js/cube). Note: the platform will work without Cube, however some advanced (dynamic) reporting and data processing capabilities will be disabled.
+- Optionally (recommended for production) install and run [PostgreSQL](https://www.postgresql.org) version 14 or later (16.x recommended for production). Note: other DB can be configured manually in TypeORM / MikroORM / Knex. The default DB is set to SQLite (recommended for testing/demo purposes only).
+- Optionally (recommended for production) install and run [Redis](https://github.com/redis/redis). Notes: the platform will work without Redis using an in-memory caching strategy instead of a distributed one (recommended for testing/demo purposes only). Please note however that Redis is required for Jitsu.
+- Optionally (recommended for production) install and run [ElasticSearch](https://github.com/elastic/elasticsearch). Note: the platform will work without ElasticSearch using DB build-in search capabilities (recommended for testing/demo purposes only).
+- Optionally install and run [MinIO](https://github.com/minio/minio) or [LocalStack](https://github.com/localstack/localstack). Note: the platform will work without MinIO / LocalStack or other S3-compatible storage using local filesystem-based storage (recommended for testing/demo purposes only). For production, we recommend using Wasabi or AWS S3 storage or another S3-compatible cloud storage.
+- Optionally (recommended for production) install and run [Jitsu](https://github.com/jitsucom/jitsu). Note: the platform will work without Jitsu, however, data ingestion will be disabled for additional analyses / real-time pipelines.
+- Optionally (recommended for production) install and run [Cube](https://github.com/cube-js/cube). Note: the platform will work without Cube, however some advanced (dynamic) reporting and data processing capabilities will be disabled.
 
 ### Production
 
@@ -263,7 +263,7 @@ Notes:
 
 #### DigitalOcean App Platform
 
--   For the most simple deployment scenarios (e.g. for yourself or your small organization), check our [DigitalOcean App Platform configurations](https://github.com/ever-co/ever-gauzy/tree/develop/.do) and corresponding [GitHub Action](https://github.com/ever-co/ever-gauzy/blob/develop/.github/workflows/deploy-do-app-platform-stage.yml).
+- For the most simple deployment scenarios (e.g. for yourself or your small organization), check our [DigitalOcean App Platform configurations](https://github.com/ever-co/ever-gauzy/tree/develop/.do) and corresponding [GitHub Action](https://github.com/ever-co/ever-gauzy/blob/develop/.github/workflows/deploy-do-app-platform-stage.yml).
 
 #### Virtual Instances / Droplets (via SSH)
 
@@ -322,9 +322,9 @@ All other brand and product names are trademarks, registered trademarks, or serv
 
 ## 🍺 Contribute
 
--   Please give us :star: on Github, it **helps**!
--   You are more than welcome to submit feature requests in the [separate repo](https://github.com/ever-co/feature-requests/issues)
--   Pull requests are always welcome! Please base pull requests against the _develop_ branch and follow the [contributing guide](.github/CONTRIBUTING.md).
+- Please give us :star: on Github, it **helps**!
+- You are more than welcome to submit feature requests in the [separate repo](https://github.com/ever-co/feature-requests/issues)
+- Pull requests are always welcome! Please base pull requests against the _develop_ branch and follow the [contributing guide](.github/CONTRIBUTING.md).
 
 ## 💪 Thanks to our Contributors
 
