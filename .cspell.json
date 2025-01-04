@@ -545,7 +545,8 @@
 		"appplatform",
 		"apistageda",
 		"elif",
-		"appleboy"
+		"appleboy",
+		"apidemoda"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
