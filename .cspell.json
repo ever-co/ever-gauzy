@@ -539,7 +539,14 @@
 		"Unregisters",
 		"allwindows",
 		"Johndoe",
-		"minizlib"
+		"minizlib",
+		"DOCR",
+		"apida",
+		"appplatform",
+		"apistageda",
+		"elif",
+		"appleboy",
+		"apidemoda"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
