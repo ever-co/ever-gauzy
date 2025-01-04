@@ -32,7 +32,7 @@
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
-		"@mikro-orm/nestjs": "^6.0.2",
+		"@mikro-orm/nestjs": "^5.2.3",
 		"@nestjs/common": "^10.4.15",
 		"@nestjs/cqrs": "^10.2.8",
 		"@nestjs/mapped-types": "^2.0.6",
