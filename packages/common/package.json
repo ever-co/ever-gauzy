@@ -19,7 +19,7 @@
 	},
 	"dependencies": {
 		"@gauzy/contracts": "^0.1.0",
-		"@mikro-orm/nestjs": "^5.2.3",
+		"@mikro-orm/nestjs": "^6.0.2",
 		"@nestjs/common": "^10.4.15",
 		"@nestjs/core": "^10.4.15",
 		"@nestjs/typeorm": "^10.0.2",
