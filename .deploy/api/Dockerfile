@@ -118,15 +118,10 @@ RUN apk --update add bash && npm i -g npm@9 \
 	&& apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
 	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
 
-# Verify the Node.js version
-RUN node --version
-RUN npm --version
+# Verify installed versions
+RUN node --version && npm --version && python3 --version
 
-# Output Python3 version
-RUN python3 --version
-
-RUN npm install --quiet node-gyp@10.2.0 -g
-RUN npm install yarn -g --force
+RUN npm install --quiet node-gyp@10.2.0 -g && npm install yarn -g --force
 RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 COPY wait .deploy/api/entrypoint.prod.sh .deploy/api/entrypoint.compose.sh /
@@ -159,15 +154,13 @@ COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugin
 COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
 COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plugins/job-proposal/
 
-# We do not build here Wakatime plugin, because it used in Desktop Apps for now
+# We do not build Wakatime plugin here, because it is used in Desktop Apps for now
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
 
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.ts ./.scripts/
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
-RUN yarn postinstall.manual
-RUN yarn cache clean
+RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts && yarn postinstall.manual && yarn cache clean
 
 FROM node:20.11.1-alpine3.19 AS prodDependencies
 
@@ -183,15 +176,10 @@ RUN apk --update add bash && npm i -g npm@9 \
 	&& apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
 	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
 
-# Verify the Node.js version
-RUN node --version
-RUN npm --version
+# Verify installed versions
+RUN node --version && npm --version && python3 --version
 
-# Output Python3 version
-RUN python3 --version
-
-RUN npm install --quiet node-gyp@10.2.0 -g
-RUN npm install yarn -g --force
+RUN npm install --quiet node-gyp@10.2.0 -g && npm install yarn -g --force
 RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 USER node:node
@@ -227,9 +215,7 @@ COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plu
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.ts ./.scripts/
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production
-RUN yarn postinstall.manual
-RUN yarn cache clean
+RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production && yarn postinstall.manual && yarn cache clean
 
 # We remove Angular modules as it's not used in APIs
 RUN rm -r node_modules/@angular
@@ -313,9 +299,7 @@ COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules /tmp/node
 # Add a script to merge directories inside the container (skip files that already exists)
 RUN cp -rn /tmp/node_modules_temp/* ./node_modules/ && rm -rf /tmp/node_modules_temp
 
-RUN npm install pm2@4.5.1 -g && \
-	mkdir /import && chown node:node /import && \
-	touch ormlogs.log && chown node:node ormlogs.log && chown node:node wait && \
+RUN mkdir /import && chown node:node /import && touch ormlogs.log && chown node:node ormlogs.log && chown node:node wait && \
 	chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && chown -R node:node apps/
 
 # Clean up
@@ -343,7 +327,7 @@ RUN cp -r ./packages/plugins/product-reviews/node_modules ./node_modules/@gauzy/
 RUN cp -r ./packages/plugins/sentry-tracing/node_modules ./node_modules/@gauzy/plugin-sentry/
 RUN cp -r ./packages/plugins/videos/node_modules ./node_modules/@gauzy/plugin-videos/
 
-# We do not copy node_modules here for Wakatime plugin, because it used in Desktop Apps for now
+# We do not copy node_modules for Wakatime plugin here, because it is used in Desktop Apps for now
 # RUN cp -r ./packages/plugins/integration-wakatime/node_modules ./node_modules/@gauzy/plugin-integration-wakatime/
 
 # we don't need packages folder anymore
