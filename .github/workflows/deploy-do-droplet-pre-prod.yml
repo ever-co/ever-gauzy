@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - droplets
+  workflow_dispatch:
 
 jobs:
   deploy:
