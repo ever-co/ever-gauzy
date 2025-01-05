@@ -60,6 +60,7 @@ export interface IConfig {
 	serverUrl: string;
 	autoStart?: boolean;
 	isSetup?: boolean;
+	db?: string;
 	secureProxy?: {
 		secure: boolean;
 		enable: boolean;
