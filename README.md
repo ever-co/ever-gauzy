@@ -1,4 +1,4 @@
-# Ever Gauzy Platform
+# Ever Gauzy Platform :)
 
 [uri_gauzy]: https://gauzy.co
 [uri_license]: https://www.gnu.org/licenses/agpl-3.0.html
