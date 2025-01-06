@@ -127,7 +127,6 @@
 		"keycloak-js": "^11.0.2",
 		"leaflet": "^1.8.0",
 		"locutus": "^2.0.30",
-		"mobx": "^6.13.5",
 		"moment": "^2.30.1",
 		"moment-duration-format": "^2.3.2",
 		"moment-range": "^4.0.2",
@@ -169,7 +168,7 @@
 		"uuid": "^8.3.2",
 		"web-animations-js": "^2.3.2",
 		"yargs": "^17.5.0",
-		"zone.js": "0.14.8"
+		"zone.js": "~0.14.10"
 	},
 	"devDependencies": {
 		"@types/async": "^3.2.5",
