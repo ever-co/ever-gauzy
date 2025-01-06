@@ -2,14 +2,14 @@ import { ApiTags, ApiResponse, ApiOperation } from '@nestjs/swagger';
 import { Controller, HttpStatus, Get, Query, UseGuards, ValidationPipe } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
 import { IPagination } from '@gauzy/contracts';
+import { CrudController, PaginationParams } from '../core/crud';
+import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { TagType } from './tag-type.entity';
 import { TagTypeService } from './tag-type.service';
-import { PermissionGuard, TenantPermissionGuard } from '../shared';
-import { CrudController, PaginationParams } from '../core';
 
 @ApiTags('TagTypes')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Controller()
+@Controller('/tag-types')
 export class TagTypeController extends CrudController<TagType> {
 	constructor(private readonly tagTypesService: TagTypeService) {
 		super(tagTypesService);

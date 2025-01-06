@@ -1,5 +1,5 @@
 import { IRelationalOrganizationTeam } from './organization-team.model';
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 
 export interface ITaggable {
 	tags?: ITag[];
@@ -12,7 +12,7 @@ export interface ITag extends IBasePerTenantAndOrganizationEntityModel, IRelatio
 	icon?: string;
 	description?: string;
 	isSystem?: boolean;
-	tagTypeId?: string;
+	tagTypeId?: ID;
 	tagType?: ITagType;
 }
 
@@ -22,7 +22,7 @@ export interface ITagFindInput extends IBasePerTenantAndOrganizationEntityModel,
 	textColor?: string;
 	description?: string;
 	isSystem?: boolean;
-	tagTypeId?: string;
+	tagTypeId?: ID;
 }
 
 export interface ITagCreateInput extends ITag {}
@@ -33,7 +33,7 @@ export interface ITagType {
 }
 
 export interface ITagUpdateInput extends Partial<ITagCreateInput> {
-	id?: string;
+	id?: ID;
 }
 
 /**

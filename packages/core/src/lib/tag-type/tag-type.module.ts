@@ -1,23 +1,22 @@
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
-import { RouterModule } from '@nestjs/core';
+import { CqrsModule } from '@nestjs/cqrs';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TagType } from './tag-type.entity';
 import { TagTypeService } from './tag-type.service';
 import { TagTypeController } from './tag-type.controller';
+import { TypeOrmTagTypeRepository } from './repository/type-orm-tag-type.repository';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/tag-types', module: TagTypeModule }]),
+		CqrsModule,
 		TypeOrmModule.forFeature([TagType]),
 		MikroOrmModule.forFeature([TagType]),
-		RolePermissionModule,
-		CqrsModule
+		RolePermissionModule
 	],
 	controllers: [TagTypeController],
-	providers: [TagTypeService],
-	exports: [TypeOrmModule, MikroOrmModule, TagTypeService]
+	providers: [TagTypeService, TypeOrmTagTypeRepository],
+	exports: [TagTypeService]
 })
 export class TagTypeModule {}

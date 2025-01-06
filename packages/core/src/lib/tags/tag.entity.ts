@@ -5,6 +5,7 @@ import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	ICandidate,
+	ID,
 	IEmployee,
 	IEmployeeLevel,
 	IEquipment,
@@ -27,6 +28,7 @@ import {
 	IProduct,
 	IRequestApproval,
 	ITag,
+	ITagType,
 	ITask,
 	IUser,
 	IWarehouse
@@ -54,6 +56,7 @@ import {
 	Payment,
 	Product,
 	RequestApproval,
+	TagType,
 	Task,
 	TenantOrganizationBaseEntity,
 	User,
@@ -74,7 +77,6 @@ import {
 	TypeOrmTagEntityCustomFields
 } from '../core/entities/custom-entity-fields/tag';
 import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
-import { TagType } from '../tag-type/tag-type.entity';
 
 @MultiORMEntity('tag', { mikroOrmRepository: () => MikroOrmTagRepository })
 export class Tag extends TenantOrganizationBaseEntity implements ITag {
@@ -120,18 +122,18 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	 * TagType
 	 */
 	@ApiProperty({ type: () => TagType })
-	@MultiORMManyToOne(() => TagType, (tagType) => tagType.tags, {
+	@MultiORMManyToOne(() => TagType, (it) => it.tags, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	tagType?: TagType;
+	tagType?: ITagType;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Tag) => it.tagType)
 	@IsString()
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	tagTypeId?: string;
+	tagTypeId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -157,7 +159,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	@RelationId((it: Tag) => it.organizationTeam)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	organizationTeamId?: IOrganizationTeam['id'];
+	organizationTeamId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
