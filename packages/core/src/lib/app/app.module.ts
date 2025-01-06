@@ -27,8 +27,10 @@ import { TaskStatusModule } from '../tasks/statuses/status.module';
 import { TaskVersionModule } from '../tasks/versions/version.module';
 import { SkillModule } from '../skills/skill.module';
 import { LanguageModule } from '../language/language.module';
+import { AppBootstrapLogger } from './app-bootstrap-logger.service';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ProfilingModule } from '../common/profiling/profiling.module';
 import { UserModule } from '../user/user.module';
 import { EmployeeModule } from '../employee/employee.module';
 import { RoleModule } from '../role/role.module';
@@ -157,6 +159,7 @@ import { MentionModule } from '../mention/mention.module';
 import { SubscriptionModule } from '../subscription/subscription.module';
 import { DashboardModule } from '../dashboard/dashboard.module';
 import { DashboardWidgetModule } from '../dashboard/dashboard-widget/dashboard-widget.module';
+
 const { unleashConfig } = environment;
 
 if (unleashConfig.url) {
@@ -324,6 +327,7 @@ if (environment.THROTTLE_ENABLED) {
 					})
 			  ]
 			: []),
+		ProfilingModule,
 		HealthModule,
 		CoreModule,
 		SharedModule,
@@ -466,6 +470,7 @@ if (environment.THROTTLE_ENABLED) {
 	controllers: [AppController],
 	providers: [
 		AppService,
+		AppBootstrapLogger,
 		...(environment.THROTTLE_ENABLED
 			? [
 					{
