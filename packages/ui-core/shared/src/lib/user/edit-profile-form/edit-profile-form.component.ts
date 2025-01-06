@@ -2,14 +2,14 @@ import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angu
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { IUser, ITag, IRole, IUserUpdateInput, RolesEnum, IImageAsset, DEFAULT_TIME_FORMATS } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Subject, firstValueFrom } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { EmailValidator, Store } from '@gauzy/ui-core/core';
+import { Subject, filter, debounceTime, tap, firstValueFrom } from 'rxjs';
 import {
 	AuthService,
+	EmailValidator,
 	ErrorHandlingService,
 	MatchValidator,
 	RoleService,
+	Store,
 	ToastrService,
 	UsersService
 } from '@gauzy/ui-core/core';
@@ -24,13 +24,11 @@ import { patterns } from '../../regex';
 })
 export class EditProfileFormComponent implements OnInit, OnDestroy {
 	FormHelpers: typeof FormHelpers = FormHelpers;
-
 	hoverState: boolean;
 	loading: boolean;
 	listOfTimeFormats = DEFAULT_TIME_FORMATS;
 	role: IRole;
 	user: IUser;
-
 	user$: Subject<any> = new Subject();
 
 	/*
@@ -57,7 +55,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 
 	@Output() userSubmitted = new EventEmitter<void>();
 
-	public form: UntypedFormGroup = EditProfileFormComponent.buildForm(this.fb);
+	public form: UntypedFormGroup = EditProfileFormComponent.buildForm(this._fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group(
 			{
@@ -84,13 +82,13 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	public excludes: RolesEnum[] = [];
 
 	constructor(
-		private readonly fb: UntypedFormBuilder,
-		private readonly authService: AuthService,
-		private readonly userService: UsersService,
-		private readonly store: Store,
-		private readonly toastrService: ToastrService,
-		private readonly errorHandler: ErrorHandlingService,
-		private readonly roleService: RoleService
+		private readonly _fb: UntypedFormBuilder,
+		private readonly _authService: AuthService,
+		private readonly _userService: UsersService,
+		private readonly _store: Store,
+		private readonly _toastrService: ToastrService,
+		private readonly _errorHandler: ErrorHandlingService,
+		private readonly _roleService: RoleService
 	) {}
 
 	async ngOnInit() {
@@ -102,7 +100,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.store.user$
+		this._store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
 				tap((user: IUser) => (this.user = user)),
@@ -112,31 +110,55 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
-	async excludeRoles() {
-		const hasSuperAdminRole = await firstValueFrom(this.authService.hasRole([RolesEnum.SUPER_ADMIN]));
-		if (!hasSuperAdminRole) {
-			this.excludes.push(RolesEnum.SUPER_ADMIN);
+	/**
+	 * Excludes roles based on the user's permissions.
+	 * Adds the SUPER_ADMIN role to the excludes list if the user lacks SUPER_ADMIN privileges.
+	 */
+	async excludeRoles(): Promise<void> {
+		try {
+			// Check if the user has the SUPER_ADMIN role
+			const hasSuperAdminRole = await firstValueFrom(
+				this._authService.hasRole([RolesEnum.SUPER_ADMIN])
+			);
+
+			// Add SUPER_ADMIN to the excludes list if the user lacks the role
+			if (!hasSuperAdminRole) {
+				this.excludes.push(RolesEnum.SUPER_ADMIN);
+			}
+		} catch (error) {
+			this._errorHandler?.handleError(error); // Optional error handling if applicable
 		}
 	}
 
-	async getUserProfile() {
+	/**
+	 * Retrieves the profile of the selected user or the current user.
+	 * Fetches user details including tags and role, and updates the form.
+	 */
+	async getUserProfile(): Promise<void> {
 		try {
-			const { id: userId } = this.selectedUser || this.user;
-			const user = await this.userService.getUserById(userId, ['tags', 'role']);
+			// Get the user ID from the selected user or fallback to the current user
+			const userId = this.selectedUser?.id || this.user?.id;
+			if (!userId) {
+				throw new Error('User ID is missing.');
+			}
 
+			// Fetch user details with specific relations
+			const user = await this._userService.getUserById(userId, ['tags', 'role']);
+
+			// Patch the form with the retrieved user data
 			this._patchForm({ ...user });
 		} catch (error) {
-			this.errorHandler.handleError(error);
+			this._errorHandler?.handleError(error); // Handle errors gracefully
 		}
 	}
 
 	handleImageUploadError(error: any) {
-		this.toastrService.danger(error);
+		this._toastrService.danger(error);
 	}
 
 	async updateImageAsset(image: IImageAsset) {
-		this.store.user = {
-			...this.store.user,
+		this._store.user = {
+			...this._store.user,
 			imageId: image.id
 		};
 
@@ -145,9 +167,9 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		};
 
 		if (this.allowRoleChange) {
-			const { tenantId } = this.store.user;
+			const { tenantId } = this._store.user;
 			const role = await firstValueFrom(
-				this.roleService.getRoleByOptions({
+				this._roleService.getRoleByOptions({
 					name: this.form.get('role').value.name,
 					tenantId
 				})
@@ -160,23 +182,23 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		}
 
 		try {
-			await this.userService
-				.update(this.selectedUser ? this.selectedUser.id : this.store.userId, request)
+			await this._userService
+				.update(this.selectedUser ? this.selectedUser.id : this._store.userId, request)
 				.then((res: IUser) => {
 					try {
 						if (res) {
-							this.store.user = {
-								...this.store.user,
+							this._store.user = {
+								...this._store.user,
 								imageUrl: res.imageUrl
 							} as IUser;
 						}
-						this.toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
+						this._toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
 					} catch (error) {
 						console.log('Error while uploading profile avatar', error);
 					}
 				});
 		} catch (error) {
-			this.errorHandler.handleError(error);
+			this._errorHandler.handleError(error);
 		}
 	}
 
@@ -185,7 +207,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		const { email, firstName, lastName, tags, preferredLanguage, password, phoneNumber } = this.form.value;
 
 		if (!EmailValidator.isValid(email, patterns.email)) {
-			this.toastrService.error('TOASTR.MESSAGE.EMAIL_SHOULD_BE_REAL');
+			this._toastrService.error('TOASTR.MESSAGE.EMAIL_SHOULD_BE_REAL');
 			return;
 		}
 		let request: IUserUpdateInput = {
@@ -207,9 +229,9 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		}
 
 		if (this.allowRoleChange) {
-			const { tenantId } = this.store.user;
+			const { tenantId } = this._store.user;
 			const role = await firstValueFrom(
-				this.roleService.getRoleByOptions({
+				this._roleService.getRoleByOptions({
 					name: this.form.get('role').value.name,
 					tenantId
 				})
@@ -222,26 +244,26 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		}
 
 		try {
-			await this.userService
-				.update(this.selectedUser ? this.selectedUser.id : this.store.userId, request)
+			await this._userService
+				.update(this.selectedUser ? this.selectedUser.id : this._store.userId, request)
 				.then(() => {
-					if ((this.selectedUser ? this.selectedUser.id : this.store.userId) === this.store.user.id) {
-						this.store.user.email = request.email;
+					if ((this.selectedUser ? this.selectedUser.id : this._store.userId) === this._store.user.id) {
+						this._store.user.email = request.email;
 					}
 
-					this.toastrService.success('TOASTR.MESSAGE.PROFILE_UPDATED');
+					this._toastrService.success('TOASTR.MESSAGE.PROFILE_UPDATED');
 					this.userSubmitted.emit();
 					/**
 					 * selectedUser is null for edit profile and populated in User edit
 					 * Update app language when current user's profile is modified.
 					 */
-					if (this.selectedUser && this.selectedUser.id !== this.store.userId) {
+					if (this.selectedUser && this.selectedUser.id !== this._store.userId) {
 						return;
 					}
-					this.store.preferredLanguage = preferredLanguage;
+					this._store.preferredLanguage = preferredLanguage;
 				});
 		} catch (error) {
-			this.errorHandler.handleError(error);
+			this._errorHandler.handleError(error);
 		}
 	}
 
@@ -266,6 +288,10 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		this.role = user.role;
 	}
 
+	/**
+	 *
+	 * @param tags
+	 */
 	selectedTagsHandler(tags: ITag[]) {
 		this.form.get('tags').setValue(tags);
 		this.form.get('tags').updateValueAndValidity();
