@@ -7,14 +7,6 @@ import { filter, tap } from 'rxjs/operators';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
-	EmployeesService,
-	ErrorHandlingService,
-	Store,
-	ToastrService,
-	UsersOrganizationsService,
-	monthNames
-} from '@gauzy/ui-core/core';
-import {
 	InvitationTypeEnum,
 	PermissionsEnum,
 	IOrganization,
@@ -28,6 +20,13 @@ import {
 	ITag,
 	IEmployee
 } from '@gauzy/contracts';
+import {
+	EmployeesService,
+	ErrorHandlingService,
+	Store,
+	ToastrService,
+	UsersOrganizationsService
+} from '@gauzy/ui-core/core';
 import { ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	DateFormatPipe,
@@ -50,24 +49,21 @@ import { EmployeeWorkStatusComponent } from '../employees/table-components';
 	styleUrls: ['./users.component.scss']
 })
 export class UsersComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-	settingsSmartTable: object;
-	sourceSmartTable = new LocalDataSource();
-	selectedUser: IUserViewModel;
-
-	userName = 'User';
-
-	loading: boolean;
-	hasSuperAdminPermission: boolean = false;
-	organizationInvitesAllowed: boolean = false;
-	showAddCard: boolean;
-	disableButton = true;
-
-	viewComponentName: ComponentEnum;
-	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-
-	users: IUser[] = [];
-	organization: IOrganization;
+	public PermissionsEnum = PermissionsEnum;
+	public users: IUser[] = [];
+	public settingsSmartTable: object;
+	public sourceSmartTable = new LocalDataSource();
+	public selectedUser: IUserViewModel;
+	public userName = 'User';
+	public loading: boolean;
+	public hasSuperAdminPermission: boolean = false;
+	public organizationInvitesAllowed: boolean = false;
+	public showAddCard: boolean;
+	public disableButton = true;
+	public viewComponentName: ComponentEnum;
+	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+	public organization: IOrganization;
 	private _refresh$: Subject<any> = new Subject();
 
 	constructor(
@@ -94,7 +90,6 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 				debounceTime(300),
 				tap(() => this.getUsers()),
 				tap(() => this.cancel()),
-				tap(() => this.clearItem()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -143,94 +138,182 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 			.subscribe();
 	}
 
-	setView() {
+	/**
+	 * Sets the view to the 'Users' component and updates the layout style.
+	 * Subscribes to the layout changes and triggers necessary updates like pagination and data clearing.
+	 */
+	setView(): void {
+		// Set the component view name
 		this.viewComponentName = ComponentEnum.USERS;
+
+		// Listen for layout changes related to the 'Users' component
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
+				// Avoid emitting if the layout style has not changed
 				distinctUntilChange(),
+
+				// Update the data layout style based on the emitted layout
 				tap((componentLayout: ComponentLayoutStyleEnum) => (this.dataLayoutStyle = componentLayout)),
+
+				// Refresh pagination settings whenever the layout changes
 				tap(() => this.refreshPagination()),
+
+				// Only proceed further if the current layout is grid-based
 				filter(() => this._isGridLayout),
+
+				// Clear the users array when switching to grid layout
 				tap(() => (this.users = [])),
+
+				// Trigger a refresh event for components relying on the subject$
 				tap(() => this.subject$.next(true)),
+
+				// Automatically clean up the subscription when the component is destroyed
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
+	/**
+	 * Determines if the current layout style is set to grid (cards grid).
+	 * This getter provides a clean and concise way to check the layout type.
+	 *
+	 * @returns A boolean indicating whether the layout style is 'CARDS_GRID'.
+	 */
 	private get _isGridLayout(): boolean {
 		return this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle;
 	}
 
-	selectUser({ isSelected, data }) {
+	/**
+	 * Handles the selection of a user from the list.
+	 * Updates the selected user, enables/disables the button,
+	 * and checks specific conditions like user role and permissions.
+	 *
+	 * @param param0 - The selection event containing user data.
+	 * @param param0.isSelected - Indicates if the user is selected.
+	 * @param param0.data - The data object of the selected user.
+	 */
+	selectUser({ isSelected, data }: { isSelected: boolean; data: any }): void {
+		// Toggle the button state and update the selected user
 		this.disableButton = !isSelected;
 		this.selectedUser = isSelected ? data : null;
 
-		if (this.selectedUser) {
-			const checkName = data.fullName.trim();
-			this.userName = checkName ? checkName : 'User';
-		}
+		// Set the user's display name or default to 'User'
+		this.userName = data?.fullName?.trim() || 'User';
 
-		if (data && data.role === RolesEnum.SUPER_ADMIN) {
-			this.disableButton = !this.hasSuperAdminPermission;
+		// Handle SUPER_ADMIN role-specific logic
+		if (data?.role?.name === RolesEnum.SUPER_ADMIN) {
+			this.disableButton = this.hasSuperAdminPermission;
 			this.selectedUser = this.hasSuperAdminPermission ? this.selectedUser : null;
 		}
 	}
 
-	async add() {
+	/**
+	 * Opens a dialog to add a new user and handles the response.
+	 * If a user is added successfully, displays a success message and triggers updates for related components.
+	 */
+	async add(): Promise<void> {
+		// Open the user mutation dialog
 		const dialog = this.dialogService.open(UserMutationComponent);
+
+		// Wait for the dialog to close and retrieve the data
 		const data = await firstValueFrom(dialog.onClose);
 
+		// Check if data exists and contains a user
 		if (data && data.user) {
+			// Construct the user's full name if first or last name is provided
 			if (data.user.firstName || data.user.lastName) {
-				this.userName = data.user.firstName + ' ' + data.user.lastName;
+				this.userName = `${data.user.firstName || ''} ${data.user.lastName || ''}`.trim();
 			}
+
+			// Display a success message using ToastrService
 			this.toastrService.success('NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION', {
-				username: this.userName.trim(),
+				username: this.userName,
 				orgname: this.store.selectedOrganization.name
 			});
+
+			// Notify subscribers about the update
 			this._refresh$.next(true);
 			this.subject$.next(true);
 		}
 	}
 
-	async addOrEditUser(user: IUserOrganizationCreateInput) {
+
+	/**
+	 * Adds or edits a user in the organization based on the input data.
+	 * If the user is active, creates the user and triggers updates for related components.
+	 *
+	 * @param user - The user data to be added or edited.
+	 */
+	async addOrEditUser(user: IUserOrganizationCreateInput): Promise<void> {
+		// Check if the user is active
 		if (user.isActive) {
+			// Create the user in the organization and wait for the operation to complete
 			await firstValueFrom(this.userOrganizationsService.create(user));
 
+			// Show a success message using ToastrService
 			this.toastrService.success('NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION', {
 				username: this.userName.trim(),
 				orgname: this.store.selectedOrganization.name
 			});
+
+			// Trigger updates for other components or subscribers
 			this._refresh$.next(true);
 			this.subject$.next(true);
 		}
 	}
 
-	async invite() {
+	/**
+	 * Opens a dialog for inviting a user.
+	 * Uses the `InviteMutationComponent` with the context set to user invitation.
+	 * Waits for the dialog to close before proceeding.
+	 */
+	async invite(): Promise<void> {
+		// Open the invite dialog with the specified context
 		const dialog = this.dialogService.open(InviteMutationComponent, {
 			context: {
 				invitationType: InvitationTypeEnum.USER
 			}
 		});
+
+		// Wait for the dialog to close and handle any resulting actions (if needed)
 		await firstValueFrom(dialog.onClose);
 	}
 
-	edit(selectedItem?: IUser) {
+	/**
+	 * Navigates to the edit page for a selected user.
+	 * If a user is passed as a parameter, it selects that user before navigation.
+	 *
+	 * @param selectedItem - The user object to edit (optional).
+	 */
+	edit(selectedItem?: IUser): void {
+		// If a user is provided, select that user
 		if (selectedItem) {
 			this.selectUser({
 				isSelected: true,
 				data: selectedItem
 			});
 		}
-		this.router.navigate(['/pages/users/edit/' + this.selectedUser.id]);
+
+		// Navigate to the edit page of the selected user
+		if (this.selectedUser?.id) {
+			this.router.navigate(['/pages/users/edit/' + this.selectedUser.id]);
+		}
 	}
 
-	manageInvites() {
+	/**
+	 * Navigates to the user invites management page.
+	 */
+	manageInvites(): void {
 		this.router.navigate(['/pages/users/invites/']);
 	}
 
+	/**
+	 * Opens a dialog for deleting a user.
+	 * If a user is passed as a parameter, it selects that user before navigation.
+	 *
+	 * @param selectedItem
+	 */
 	async delete(selectedItem?: IUser) {
 		if (selectedItem) {
 			this.selectUser({
@@ -248,10 +331,11 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 			.subscribe(async (result) => {
 				if (result) {
 					try {
+						const username = this.userName;
+
 						await this.userOrganizationsService.setUserAsInactive(this.selectedUser.id);
-						this.toastrService.success('NOTES.ORGANIZATIONS.DELETE_USER_FROM_ORGANIZATION', {
-							username: this.userName
-						});
+						this.toastrService.success('NOTES.ORGANIZATIONS.DELETE_USER_FROM_ORGANIZATION', { username });
+
 						this._refresh$.next(true);
 						this.subject$.next(true);
 					} catch (error) {
@@ -261,7 +345,11 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 			});
 	}
 
-	cancel() {
+	/**
+	 * Cancels the current operation and hides the add card form.
+	 * Resets the `showAddCard` flag to `false`.
+	 */
+	cancel(): void {
 		this.showAddCard = false;
 	}
 
@@ -279,8 +367,7 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 		 *	User belongs multiple organizations -> remove user from Organization
 		 */
 		const count = await this.userOrganizationsService.getUserOrganizationCount(userOrganizationId);
-		const confirmationMessage =
-			count === 1 ? 'FORM.DELETE_CONFIRMATION.DELETE_USER' : 'FORM.DELETE_CONFIRMATION.REMOVE_USER';
+		const confirmationMessage = count === 1 ? 'FORM.DELETE_CONFIRMATION.DELETE_USER' : 'FORM.DELETE_CONFIRMATION.REMOVE_USER';
 
 		// Open a confirmation dialog for the hiring action.
 		const dialogRef = this.dialogService.open(DeleteConfirmationComponent, {
@@ -425,6 +512,9 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 		this.users.push(...uniqueUsers);
 	}
 
+	/**
+	 *
+	 */
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
@@ -530,10 +620,9 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 		if (!employee) {
 			return {};
 		}
+
 		const { endWork, startedWorkOn, isTrackingEnabled, id } = employee;
-		/**
-		 * "Range" when was hired and when exit
-		 */
+		// "Range" when was hired and when exit
 		const start = this._dateFormatPipe.transform(startedWorkOn, null, 'LL');
 		const end = this._dateFormatPipe.transform(endWork, null, 'LL');
 
@@ -547,19 +636,6 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 			employee,
 			isTrackingEnabled
 		};
-	}
-
-	/**
-	 * Formats a date in the format "DD Month YYYY".
-	 *
-	 * @param date The date object to be formatted.
-	 * @returns A string representing the formatted date.
-	 */
-	private formatDate(date: Date): string {
-		const day = date.getDate();
-		const month = monthNames[date.getMonth()];
-		const year = date.getFullYear();
-		return `${day} ${month} ${year}`;
 	}
 
 	/**
@@ -592,8 +668,8 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 			return;
 		}
 
-		const { id: organizationId } = this.organization;
-		const { id: userId, tenantId } = this.selectedUser;
+		const { id: organizationId, tenantId } = this.organization;
+		const { id: userId } = this.selectedUser;
 
 		try {
 			await firstValueFrom(
@@ -609,6 +685,11 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 			console.error('Error while converting user to employee:', error);
 			this.toastrService.danger(error);
 		}
+	}
+
+	// Method to toggle the 'showAddCard' state
+	toggleAddCard(): void {
+		this.showAddCard = !this.showAddCard;
 	}
 
 	ngOnDestroy() {}

@@ -274,59 +274,98 @@ export class UserService extends TenantAwareCrudService<User> {
 		return await this.typeOrmRepository.insert(user);
 	}
 
-	async changePassword(id: string, hash: string) {
+	/**
+	 * Updates the password for a user.
+	 *
+	 * @param id - The ID of the user whose password is to be changed.
+	 * @param hash - The new hashed password to set for the user.
+	 * @returns A promise resolving to the updated user entity.
+	 * @throws ForbiddenException if the operation fails.
+	 */
+	async changePassword(id: ID, hash: string): Promise<User> {
 		try {
+			// Fetch the user by ID
 			const user = await this.findOneByIdString(id);
+
+			// Update the user's password hash
 			user.hash = hash;
+
+			// Save the updated user entity
 			return await this.typeOrmRepository.save(user);
 		} catch (error) {
-			throw new ForbiddenException();
+			// Throw a ForbiddenException if any error occurs
+			throw new ForbiddenException('Failed to update the password.');
 		}
 	}
 
-	/*
-	 * Update user profile
+	/**
+	 * Updates the profile of a user.
+	 * Ensures the user has the necessary permissions and applies restrictions to role updates.
+	 *
+	 * @param id - The ID of the user to update.
+	 * @param entity - The user entity with updated data.
+	 * @returns The updated user entity.
+	 * @throws ForbiddenException if the user lacks the required permissions or attempts unauthorized updates.
 	 */
-	async updateProfile(id: string | number, entity: User): Promise<IUser> {
-		/**
-		 * If user has only own profile edit permission
-		 */
+	async updateProfile(id: ID | number, entity: User): Promise<IUser> {
+		// Retrieve the current user's role ID from the RequestContext
+		const currentRoleId = RequestContext.currentRoleId();
+		const currentUserId = RequestContext.currentUserId();
+
+		// Ensure the user has the appropriate permissions
 		if (
 			RequestContext.hasPermission(PermissionsEnum.PROFILE_EDIT) &&
 			!RequestContext.hasPermission(PermissionsEnum.ORG_USERS_EDIT)
 		) {
-			if (RequestContext.currentUserId() !== id) {
+			// Users can only edit their own profile
+			if (currentUserId !== id) {
 				throw new ForbiddenException();
 			}
 		}
+
 		let user: IUser;
+
 		try {
+			// Fetch the user by ID if the ID is a string
 			if (typeof id == 'string') {
-				user = await this.findOneByIdString(id, {
-					relations: {
-						role: true
-					}
-				});
+				user = await this.findOneByIdString(id, { relations: { role: true } });
 			}
-			/**
-			 * If user try to update Super Admin without permission
-			 */
+
+			// Restrict updates to Super Admin role without appropriate permission
 			if (user.role.name === RolesEnum.SUPER_ADMIN) {
 				if (!RequestContext.hasPermission(PermissionsEnum.SUPER_ADMIN_EDIT)) {
 					throw new ForbiddenException();
 				}
 			}
+
+			// Restrict updates to Super Admin role without appropriate permission
+			if (user.role.name === RolesEnum.SUPER_ADMIN) {
+				if (!RequestContext.hasPermission(PermissionsEnum.SUPER_ADMIN_EDIT)) {
+					throw new ForbiddenException();
+				}
+			}
+
+			// Restrict users from updating their own role
+
+			if (currentUserId === id) {
+				if (entity.role && entity.role.id !== currentRoleId) {
+					throw new ForbiddenException();
+				}
+			}
+
+			// Update password hash if provided
 			if (entity['hash']) {
 				entity['hash'] = await this.getPasswordHash(entity['hash']);
 			}
 
+			// Save the updated user entity
 			await this.save(entity);
-			try {
-				return await this.findOneByWhereOptions({
-					id: id as string,
-					tenantId: RequestContext.currentTenantId()
-				});
-			} catch {}
+
+			// Return the updated user
+			return await this.findOneByWhereOptions({
+				id: id as string,
+				tenantId: RequestContext.currentTenantId()
+			});
 		} catch (error) {
 			throw new ForbiddenException();
 		}
