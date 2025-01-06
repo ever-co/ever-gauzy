@@ -5,8 +5,14 @@ import { JoinColumn, RelationId } from 'typeorm';
 import { IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import { ID, IDashboard, IUser, JsonData } from '@gauzy/contracts';
-import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
+import { DashboardWidget, TenantOrganizationBaseEntity, User } from '../core/entities/internal';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToOne,
+	MultiORMOneToMany
+} from '../core/decorators/entity';
 import { MikroOrmDashboardRepository } from './repository/mikro-orm-dashboard.repository';
 
 @MultiORMEntity('dashboard', { mikroOrmRepository: () => MikroOrmDashboardRepository })
@@ -78,4 +84,16 @@ export class Dashboard extends TenantOrganizationBaseEntity implements IDashboar
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	creatorId?: ID;
+
+	/*
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Widgets
+	 */
+	@MultiORMOneToMany(() => DashboardWidget, (it) => it.dashboard)
+	widgets?: DashboardWidget[];
 }
