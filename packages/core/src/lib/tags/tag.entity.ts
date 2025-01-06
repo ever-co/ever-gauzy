@@ -1,10 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { RelationId } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	ICandidate,
+	ID,
 	IEmployee,
 	IEmployeeLevel,
 	IEquipment,
@@ -27,6 +28,7 @@ import {
 	IProduct,
 	IRequestApproval,
 	ITag,
+	ITagType,
 	ITask,
 	IUser,
 	IWarehouse
@@ -54,6 +56,7 @@ import {
 	Payment,
 	Product,
 	RequestApproval,
+	TagType,
 	Task,
 	TenantOrganizationBaseEntity,
 	User,
@@ -112,14 +115,34 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	@MultiORMColumn({ default: false })
 	isSystem?: boolean;
 
+	/** Additional virtual columns */
 	@VirtualMultiOrmColumn()
 	fullIconUrl?: string;
-
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
+
+	/**
+	 * TagType
+	 */
+	@MultiORMManyToOne(() => TagType, (it) => it.tags, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	tagType?: ITagType;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: Tag) => it.tagType)
+	@IsUUID()
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	tagTypeId?: ID;
 
 	/**
 	 * Organization Team
@@ -139,7 +162,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	@RelationId((it: Tag) => it.organizationTeam)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	organizationTeamId?: IOrganizationTeam['id'];
+	organizationTeamId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
