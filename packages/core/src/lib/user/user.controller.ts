@@ -120,7 +120,7 @@ export class UserController extends CrudController<User> {
 	 */
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
-	@Get('count')
+	@Get('/count')
 	async getCount(@Query() options: FindOptionsWhere<User>): Promise<number> {
 		return await this._userService.countBy(options);
 	}
@@ -133,7 +133,7 @@ export class UserController extends CrudController<User> {
 	 */
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
-	@Get('pagination')
+	@Get('/pagination')
 	async pagination(@Query() options: PaginationParams<User>): Promise<IPagination<IUser>> {
 		return await this._userService.paginate(options);
 	}
@@ -156,7 +156,7 @@ export class UserController extends CrudController<User> {
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
-	@Get()
+	@Get('/')
 	async findAll(@Query() options: PaginationParams<User>): Promise<IPagination<IUser>> {
 		return await this._userService.findAll(options);
 	}
@@ -178,7 +178,7 @@ export class UserController extends CrudController<User> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get(':id')
+	@Get('/:id')
 	async findById(@Param('id', UUIDValidationPipe) id: ID, @Query('data', ParseJsonPipe) data?: any): Promise<IUser> {
 		const { relations } = data;
 		return await this._userService.findOneByIdString(id, { relations });
@@ -202,7 +202,7 @@ export class UserController extends CrudController<User> {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	@HttpCode(HttpStatus.CREATED)
-	@Post()
+	@Post('/')
 	@UseValidationPipe()
 	async create(@Body() entity: CreateUserDTO): Promise<IUser> {
 		return await this._commandBus.execute(new UserCreateCommand(entity));
@@ -218,9 +218,12 @@ export class UserController extends CrudController<User> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT, PermissionsEnum.PROFILE_EDIT)
-	@Put(':id')
+	@Put('/:id')
 	@UseValidationPipe({ transform: true })
-	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateUserDTO): Promise<IUser> {
+	async update(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: UpdateUserDTO
+	): Promise<IUser> {
 		return await this._userService.updateProfile(id, {
 			id,
 			...entity
@@ -246,7 +249,7 @@ export class UserController extends CrudController<User> {
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ACCESS_DELETE_ACCOUNT)
-	@Delete(':id')
+	@Delete('/:id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
 		return await this._commandBus.execute(new UserDeleteCommand(id));
 	}
