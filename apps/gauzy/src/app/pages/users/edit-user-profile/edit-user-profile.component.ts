@@ -1,15 +1,13 @@
-import { Location } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { UntypedFormGroup } from '@angular/forms';
+import { FormGroup } from '@angular/forms';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { IUser, ITag, RolesEnum } from '@gauzy/contracts';
-import { firstValueFrom } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
+import { filter, firstValueFrom, tap } from 'rxjs';
+import { NbRouteTab } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { IUser, ITag, RolesEnum } from '@gauzy/contracts';
+import { AuthService, UsersService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { UsersService } from '@gauzy/ui-core/core';
-import { AuthService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -18,17 +16,15 @@ import { AuthService } from '@gauzy/ui-core/core';
 	styleUrls: ['./edit-user-profile.component.scss']
 })
 export class EditUserProfileComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	form: UntypedFormGroup;
+	form: FormGroup;
 	params: Params;
 	user: IUser;
-
-	tabs: any[];
+	tabs: NbRouteTab[];
 	tags: ITag[];
 
 	constructor(
 		private readonly route: ActivatedRoute,
 		private readonly router: Router,
-		private readonly location: Location,
 		public readonly translateService: TranslateService,
 		private readonly usersService: UsersService,
 		private readonly authService: AuthService
@@ -41,7 +37,7 @@ export class EditUserProfileComponent extends TranslationBaseComponent implement
 			.pipe(
 				filter((params) => !!params),
 				tap((params) => (this.params = params)),
-				tap(() => this.loadTabs()),
+				tap(() => this.registerPageTabs()),
 				tap(() => this.getUserProfile()),
 				untilDestroyed(this)
 			)
@@ -52,15 +48,27 @@ export class EditUserProfileComponent extends TranslationBaseComponent implement
 		this._applyTranslationOnTabs();
 	}
 
-	goBack() {
-		this.location.back();
+	/**
+	 * Generates the route for a given tab based on the current user ID.
+	 *
+	 * @param tab - The tab name to append to the route.
+	 * @returns The full route string.
+	 */
+	getRoute(tab: string = ''): string {
+		if (!this.params?.id) {
+			return `/pages/users`;
+		}
+
+		return `/pages/users/edit/${this.params?.id}/${tab}`;
 	}
 
-	getRoute(tab: string): string {
-		return `/pages/users/edit/${this.params.id}/${tab}`;
-	}
-
-	loadTabs() {
+	/**
+	 * Registers page tabs for the dashboard module.
+	 * Ensures that tabs are registered only once.
+	 *
+	 * @returns {void}
+	 */
+	registerPageTabs(): void {
 		this.tabs = [
 			{
 				title: this.getTranslation('USERS_PAGE.EDIT_USER.MAIN'),
@@ -81,26 +89,40 @@ export class EditUserProfileComponent extends TranslationBaseComponent implement
 	 * GET user profile
 	 */
 	private async getUserProfile() {
-		const { id } = this.params;
-		const user = await this.usersService.getUserById(id, ['role', 'tags']);
+		if (!this.params.id) {
+			this.router.navigate(['/pages/users']);
+			return;
+		}
 
-		if (user.role.name === RolesEnum.SUPER_ADMIN) {
+		this.user = await this.usersService.getUserById(this.params.id, ['role', 'tags']);
+
+		if (this.user?.role?.name === RolesEnum.SUPER_ADMIN) {
 			/**
 			 * Redirect If Edit Super Admin Without Permission
 			 */
-			const hasSuperAdminRole = await firstValueFrom(this.authService.hasRole([RolesEnum.SUPER_ADMIN]));
+			const hasSuperAdminRole = await firstValueFrom(
+				this.authService.hasRole([RolesEnum.SUPER_ADMIN])
+			);
+
 			if (!hasSuperAdminRole) {
 				this.router.navigate(['/pages/users']);
 				return;
 			}
 		}
-		this.user = user;
 	}
 
-	private _applyTranslationOnTabs() {
+	/**
+	 * Subscribes to language change events and applies translations to page tabs.
+	 * Ensures the tabs are updated dynamically when the language changes.
+	 * Uses `untilDestroyed` to clean up subscriptions when the component is destroyed.
+	 */
+	private _applyTranslationOnTabs(): void {
 		this.translateService.onLangChange
 			.pipe(
-				tap(() => this.loadTabs()),
+				// Re-register page tabs on language change
+				tap(() => this.registerPageTabs()),
+
+				// Automatically unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			)
 			.subscribe();
