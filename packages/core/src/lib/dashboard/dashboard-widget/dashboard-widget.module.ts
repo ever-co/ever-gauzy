@@ -11,8 +11,8 @@ import { TypeOrmDashboardWidgetRepository } from './repository/type-orm-dashboar
 
 @Module({
 	imports: [
-		MikroOrmModule.forFeature([DashboardWidget]),
 		TypeOrmModule.forFeature([DashboardWidget]),
+		MikroOrmModule.forFeature([DashboardWidget]),
 		RolePermissionModule,
 		CqrsModule
 	],
