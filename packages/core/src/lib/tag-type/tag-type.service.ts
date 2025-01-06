@@ -9,10 +9,10 @@ import { TypeOrmTagTypeRepository } from './repository/type-orm-tag-type.reposit
 export class TagTypeService extends TenantAwareCrudService<TagType> {
 	constructor(
 		@InjectRepository(TagType)
-		typeOrmProductTypeRepository: TypeOrmTagTypeRepository,
+		typeOrmTagTypeRepository: TypeOrmTagTypeRepository,
 
-		mikroOrmProductTypeRepository: MikroOrmTagTypeRepository
+		mikroOrmTagTypeRepository: MikroOrmTagTypeRepository
 	) {
-		super(typeOrmProductTypeRepository, mikroOrmProductTypeRepository);
+		super(typeOrmTagTypeRepository, mikroOrmTagTypeRepository);
 	}
 }
