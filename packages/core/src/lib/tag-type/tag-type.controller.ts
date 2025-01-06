@@ -1,11 +1,25 @@
 import { ApiTags, ApiResponse, ApiOperation } from '@nestjs/swagger';
-import { Controller, HttpStatus, Get, Query, UseGuards, ValidationPipe } from '@nestjs/common';
-import { FindOptionsWhere } from 'typeorm';
-import { IPagination } from '@gauzy/contracts';
+import {
+	Controller,
+	HttpStatus,
+	Get,
+	Query,
+	UseGuards,
+	ValidationPipe,
+	HttpCode,
+	Post,
+	Body,
+	Param,
+	Put
+} from '@nestjs/common';
+import { FindOptionsWhere, UpdateResult } from 'typeorm';
+import { ID, IPagination, ITagType, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from '../core/crud';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { TagType } from './tag-type.entity';
 import { TagTypeService } from './tag-type.service';
+import { Permissions, UseValidationPipe, UUIDValidationPipe } from '../shared';
+import { CreateTagTypeDTO, UpdateTagTypeDTO } from './dto';
 
 @ApiTags('TagTypes')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -57,5 +71,39 @@ export class TagTypeController extends CrudController<TagType> {
 	@Get()
 	async findAll(@Query(new ValidationPipe()) options: PaginationParams<TagType>): Promise<IPagination<TagType>> {
 		return await this.tagTypesService.findAll(options);
+	}
+
+	/**
+	 * Create new tag type
+	 *
+	 * @param entity
+	 * @returns
+	 */
+	@HttpCode(HttpStatus.CREATED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAG_TYPES_ADD)
+	@Post()
+	@UseValidationPipe({ whitelist: true })
+	async create(@Body() entity: CreateTagTypeDTO): Promise<ITagType> {
+		return await this.tagTypesService.create(entity);
+	}
+
+	/**
+	 * Update existing tag Type by ID
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
+	 */
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAG_TYPES_EDIT)
+	@Put(':id')
+	@UseValidationPipe({ whitelist: true })
+	async update(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: UpdateTagTypeDTO
+	): Promise<ITagType | UpdateResult> {
+		return await this.tagTypesService.update(id, entity);
 	}
 }
