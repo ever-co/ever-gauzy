@@ -16,7 +16,7 @@ export class UpdateProjectSettingDTO
 	| Embeddable Columns
 	|--------------------------------------------------------------------------
 	*/
-	@ApiPropertyOptional({ type: 'object' })
+	@ApiPropertyOptional({ type: Object })
 	@IsOptional()
 	readonly customFields?: Record<string, any>;
 }

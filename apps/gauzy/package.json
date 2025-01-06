@@ -64,7 +64,7 @@
 		"@gauzy/plugin-maintenance-ui": "^0.1.0",
 		"@gauzy/plugin-onboarding-ui": "^0.1.0",
 		"@gauzy/plugin-public-layout-ui": "^0.1.0",
-		"@jitsu/js": "^1.9.11",
+		"@jitsu/js": "^1.9.12",
 		"@kurkle/color": "^0.3.2",
 		"@nebular/auth": "^14.0.2",
 		"@nebular/bootstrap": "^9.1.0-rc.6",
@@ -168,7 +168,7 @@
 		"uuid": "^8.3.2",
 		"web-animations-js": "^2.3.2",
 		"yargs": "^17.5.0",
-		"zone.js": "0.14.8"
+		"zone.js": "~0.14.10"
 	},
 	"devDependencies": {
 		"@types/async": "^3.2.5",
@@ -198,7 +198,6 @@
 		"karma-coverage-istanbul-reporter": "^3.0.3",
 		"karma-jasmine": "^4.0.1",
 		"karma-jasmine-html-reporter": "^1.5.4",
-		"pm2": "^5.3.1",
 		"terser": "^5.30.3",
 		"terser-webpack-plugin": "^5.3.10",
 		"webpack": "^5.91.0",

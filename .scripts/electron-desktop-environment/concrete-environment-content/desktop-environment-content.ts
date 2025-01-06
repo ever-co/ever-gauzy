@@ -2,6 +2,21 @@ import { IContentGenerator } from '../interfaces/i-content-generator';
 import { IDesktopEnvironment } from '../interfaces/i-desktop-environment';
 
 export class DesktopEnvironmentContent implements IContentGenerator {
+	/**
+	 * Generates a string template based on the provided desktop application environment variables.
+	 * If a specific desktop variable is not available, it falls back to a generic one.
+	 *
+	 * @param {Partial<IDesktopEnvironment>} variable - A partial object containing environment variables.
+	 * @returns {string} A string representation of the desktop environment configuration.
+	 *
+	 * @example
+	 * const environment = {
+	 *     DESKTOP_APP_NAME: 'Desktop App',
+	 *     NAME: 'Default App',
+	 * };
+	 * const result = generate(environment);
+	 * console.log(result);
+	 */
 	public generate(variable: Partial<IDesktopEnvironment>): string {
 		return `
 			NAME: '${variable.DESKTOP_APP_NAME || variable.NAME}',

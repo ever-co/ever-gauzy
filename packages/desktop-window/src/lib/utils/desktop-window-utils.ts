@@ -36,8 +36,8 @@ export async function setLaunchPathAndLoad(
     filePath: string,
     hash: string = '/settings'
 ): Promise<void> {
-	console.log(`Loading URL: ${filePath}`);
-	console.log(`Set Launch Path Hash: ${hash}`);
+	console.log(`Loading URL: ${filePath} with hash: ${hash}`);
+	console.log(`Loading Window: ${window.getTitle()}`);
 
     // Construct the URL with the provided file path and hash
     const launchPath = url.format({

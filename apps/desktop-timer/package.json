@@ -69,7 +69,7 @@
 		"electron-store": "^8.1.0",
 		"electron-updater": "^6.1.7",
 		"electron-util": "^0.18.1",
-		"express": "^4.18.2",
+		"express": "^4.21.2",
 		"locutus": "^2.0.30",
 		"moment": "^2.30.1",
 		"moment-duration-format": "^2.3.2",

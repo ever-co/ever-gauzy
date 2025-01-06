@@ -52,7 +52,7 @@
 		"@fullcalendar/moment-timezone": "^6.1.15",
 		"@fullcalendar/timegrid": "^6.1.15",
 		"@gauzy/contracts": "^0.1.0",
-		"@jitsu/js": "^1.9.11",
+		"@jitsu/js": "^1.9.12",
 		"@kurkle/color": "^0.3.2",
 		"@nebular/auth": "^14.0.2",
 		"@nebular/bootstrap": "^9.1.0-rc.6",

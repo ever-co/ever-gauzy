@@ -1,8 +1,8 @@
 import * as remoteMain from '@electron/remote/main';
 import { BrowserWindow } from 'electron';
-import * as url from 'url';
 import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 import { WindowManager, RegisteredWindow, Store, setupElectronLog } from '@gauzy/desktop-core';
+import { handleCloseEvent, setLaunchPathAndLoad } from './utils/desktop-window-utils';
 
 // Set up Electron log
 setupElectronLog();
@@ -22,7 +22,6 @@ setupElectronLog();
  */
 export async function createServerWindow(
     serverWindow: Electron.BrowserWindow | null,
-    config: object,
     filePath: string,
     preloadPath?: string
 ): Promise<Electron.BrowserWindow> {
@@ -57,51 +56,6 @@ export async function createServerWindow(
 
     // Return the configured server window instance
     return serverWindow;
-}
-
-/**
- * Constructs a URL with the specified file path and hash, and loads it into the given BrowserWindow.
- *
- * @param {BrowserWindow} window - The BrowserWindow instance to load the URL into.
- * @param {string} filePath - The file path to construct the URL.
- * @param {string} [hash] - An optional hash to append to the URL (default: '/server-dashboard').
- *
- * @returns {Promise<void>} A promise that resolves when the URL is successfully loaded into the window.
- *
- * @example
- * await setLaunchPathAndLoad(serverWindow, '/path/to/server.html', '/server-dashboard');
- */
-async function setLaunchPathAndLoad(
-    window: BrowserWindow,
-    filePath: string,
-    hash: string = '/server-dashboard'
-): Promise<void> {
-    // Construct the URL
-    const launchPath = url.format({
-        pathname: filePath,
-        protocol: 'file:',
-        slashes: true,
-        hash
-    });
-
-    // Load the constructed URL into the specified BrowserWindow
-    await window.loadURL(launchPath);
-
-    // Log the launched path for debugging purposes
-    console.log('Launched Electron with:', launchPath);
-}
-
-/**
- * Attaches a 'close' event handler to prevent the destruction of the specified window.
- * Instead of closing, the window is hidden when the 'close' event is triggered.
- *
- * @param {BrowserWindow} window - The BrowserWindow instance to attach the 'close' event handler.
- */
-function handleCloseEvent(window: Electron.BrowserWindow): void {
-    window.on('close', (event) => {
-        event.preventDefault(); // Prevent the default close operation
-        window.hide(); // Hide the window instead of destroying it
-    });
 }
 
 /**

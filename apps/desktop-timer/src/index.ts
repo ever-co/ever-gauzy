@@ -56,7 +56,8 @@ import {
 	createTimeTrackerWindow,
 	createUpdaterWindow,
 	ScreenCaptureNotification,
-	SplashScreen
+	SplashScreen,
+	timeTrackerPage
 } from '@gauzy/desktop-window';
 import { initSentry } from './sentry';
 
@@ -271,12 +272,7 @@ async function startServer(value, restart = false) {
 				);
 			} else {
 				await timeTrackerWindow.loadURL(
-					Url.format({
-						pathname: pathWindow.timeTrackerUi,
-						protocol: 'file:',
-						slashes: true,
-						hash: '/time-tracker'
-					})
+					timeTrackerPage(pathWindow.timeTrackerUi)
 				);
 			}
 			notificationWindow = new ScreenCaptureNotification(pathWindow.timeTrackerUi);

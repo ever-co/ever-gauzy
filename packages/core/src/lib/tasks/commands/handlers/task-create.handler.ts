@@ -1,9 +1,10 @@
 import { CommandHandler, ICommandHandler, EventBus as CqrsEventBus } from '@nestjs/cqrs';
 import { HttpException, HttpStatus, Logger } from '@nestjs/common';
-import { BaseEntityEnum, ActorTypeEnum, ITask, ActionTypeEnum, SubscriptionTypeEnum } from '@gauzy/contracts';
+import { BaseEntityEnum, ActorTypeEnum, ITask, ActionTypeEnum, SubscriptionTypeEnum, ID, IEmployee } from '@gauzy/contracts';
 import { EventBus } from '../../../event-bus';
 import { TaskEvent } from '../../../event-bus/events';
 import { BaseEntityEventTypeEnum } from '../../../event-bus/base-entity-event';
+import { Employee } from '../../../core/entities/internal';
 import { RequestContext } from './../../../core/context';
 import { OrganizationProjectService } from './../../../organization-project/organization-project.service';
 import { CreateSubscriptionEvent } from '../../../subscription/events';
@@ -43,14 +44,13 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			// Retrieve current tenant ID from request context or use input tenant ID
 			const tenantId = RequestContext.currentTenantId() ?? data.tenantId;
 
-			// Check if projectId is provided, if not use the provided project object from the input.
-			// If neither is provided, set project to null.
+			// Determine the project based on the provided data
 			const project = data.projectId
 				? await this._organizationProjectService.findOneByIdString(data.projectId)
-				: data.project || null;
+				: data.project ?? null;
 
-			// Check if project exists and extract the project prefix (first 3 characters of the project name)
-			const projectPrefix = project?.name?.substring(0, 3) ?? null;
+			// Extract the project prefix (first 3 characters of the project name) if the project exists
+			const projectPrefix = project?.name?.slice(0, 3) || null;
 
 			// Log or throw an exception if both projectId and project are not provided (optional)
 			if (!project) {
@@ -67,6 +67,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			// Create the task with incremented number, project prefix, and other task details
 			const task = await this._taskService.create({
 				...data, // Spread the input properties
+				members: members.map(({ id }) => new Employee({ id })),
 				number: maxNumber + 1, // Increment the task number
 				prefix: projectPrefix, // Use the project prefix, or null if no project
 				tenantId, // Pass the tenant ID
@@ -82,7 +83,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			// Apply mentions if needed
 			if (mentionUserIds.length > 0) {
 				await Promise.all(
-					mentionUserIds.map((mentionedUserId) =>
+					mentionUserIds.map((mentionedUserId: ID) =>
 						this.mentionService.publishMention({
 							entity: BaseEntityEnum.Task,
 							entityId: task.id,
@@ -108,25 +109,28 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			// Subscribe assignees to the task
 			if (members.length > 0) {
 				try {
+					// Map employee IDs to IDs
 					const employeeIds = members.map(({ id }) => id);
+
+					// Find active employees by employee IDs
 					const employees = await this._employeeService.findActiveEmployeesByEmployeeIds(
 						employeeIds,
 						organizationId,
 						tenantId
 					);
+
+					// Publish subscription events for each employee
 					await Promise.all(
-						employees.map(({ userId }) =>
-							this._cqrsEventBus.publish(
-								new CreateSubscriptionEvent({
-									entity: BaseEntityEnum.Task,
-									entityId: task.id,
-									userId,
-									type: SubscriptionTypeEnum.ASSIGNMENT,
-									organizationId,
-									tenantId
-								})
-							)
-						)
+						employees.map(({ userId }: IEmployee) => this._cqrsEventBus.publish(
+							new CreateSubscriptionEvent({
+								entity: BaseEntityEnum.Task,
+								entityId: task.id,
+								userId,
+								type: SubscriptionTypeEnum.ASSIGNMENT,
+								organizationId,
+								tenantId
+							})
+						))
 					);
 				} catch (error) {
 					this.logger.error('Error while subscribing members to task', error);
