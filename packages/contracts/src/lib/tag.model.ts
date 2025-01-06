@@ -36,6 +36,11 @@ export interface ITagUpdateInput extends Partial<ITagCreateInput> {
 	id?: ID;
 }
 
+export interface ITagTypeCreateInput extends ITagType {}
+export interface ITagTypeUpdateInput extends Partial<ITagTypeCreateInput> {
+	id?: ID;
+}
+
 /**
  * Default task tags
  */
