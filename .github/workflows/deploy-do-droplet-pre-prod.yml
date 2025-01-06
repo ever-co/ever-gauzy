@@ -20,6 +20,9 @@ jobs:
           mkdir -p ~/.ssh  # Ensure the .ssh directory exists
           echo "${{ secrets.DO_DROPLET_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          eval "$(ssh-agent -s)"  # Start SSH agent
+          ssh-add ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.DO_DROPLET_PROD_HOST }} >> ~/.ssh/known_hosts
           echo "Host *" > ~/.ssh/config
           echo "  StrictHostKeyChecking no" >> ~/.ssh/config
 
