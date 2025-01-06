@@ -115,14 +115,23 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	@MultiORMColumn({ default: false })
 	isSystem?: boolean;
 
+	/** Additional virtual columns */
 	@VirtualMultiOrmColumn()
 	fullIconUrl?: string;
+	/*
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * TagType
 	 */
-	@ApiProperty({ type: () => TagType })
 	@MultiORMManyToOne(() => TagType, (it) => it.tags, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -130,16 +139,10 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Tag) => it.tagType)
-	@IsString()
+	@IsUUID()
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	tagTypeId?: ID;
-
-	/*
-	|--------------------------------------------------------------------------
-	| @ManyToOne
-	|--------------------------------------------------------------------------
-	*/
 
 	/**
 	 * Organization Team
