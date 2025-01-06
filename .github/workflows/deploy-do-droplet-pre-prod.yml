@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest  # Changed to GitHub's default runner
+    runs-on: ubuntu-latest  # Using GitHub's default runner
 
     environment: prod
 
@@ -17,6 +17,7 @@ jobs:
 
       - name: Set up SSH key
         run: |
+          mkdir -p ~/.ssh  # Ensure the .ssh directory exists
           echo "${{ secrets.DO_DROPLET_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           echo "Host *" > ~/.ssh/config
