@@ -28330,11 +28330,6 @@ mnemonist@0.38.3:
   dependencies:
     obliterator "^1.6.1"
 
-mobx@^6.13.5:
-  version "6.13.5"
-  resolved "https://registry.yarnpkg.com/mobx/-/mobx-6.13.5.tgz#957d9df88c7f8b4baa7c6f8bdcb6d68b432a6ed5"
-  integrity sha512-/HTWzW2s8J1Gqt+WmUj5Y0mddZk+LInejADc79NJadrWla3rHzmRHki/mnEUH1AvOmbNTZ1BRbKxr8DSgfdjMA==
-
 mobx@~4.14.1:
   version "4.14.1"
   resolved "https://registry.yarnpkg.com/mobx/-/mobx-4.14.1.tgz#0dc5622523363f6f5b467a5a0c4c99846b789748"
