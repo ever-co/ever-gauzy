@@ -96,9 +96,6 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_TAG_TYPES_EDIT,
 			PermissionsEnum.ORG_TAG_TYPES_DELETE,
 			/** Tags Types Permissions End */
-			PermissionsEnum.ORG_TAGS_VIEW,
-			PermissionsEnum.ORG_TAGS_EDIT,
-			PermissionsEnum.ORG_TAGS_DELETE,
 			PermissionsEnum.VIEW_ALL_EMAILS,
 			PermissionsEnum.VIEW_ALL_EMAIL_TEMPLATES,
 			PermissionsEnum.VIEW_SALES_PIPELINES,
