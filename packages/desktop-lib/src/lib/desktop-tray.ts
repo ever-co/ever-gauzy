@@ -1,13 +1,11 @@
 import { getApiBaseUrl, loginPage, settingsPage, timeTrackerPage } from '@gauzy/desktop-window';
-import { RegisteredWindow, WindowManager } from '@gauzy/desktop-core';
+import { RegisteredWindow, WindowManager, store } from '@gauzy/desktop-core';
 import { app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, nativeImage, Tray } from 'electron';
 import { handleLogoutDialog } from './desktop-ipc';
 import { LocalStore } from './desktop-store';
 import { User, UserService } from './offline';
 import { TranslateService } from './translation';
 import TitleOptions = Electron.TitleOptions;
-
-const Store = require('electron-store');
 
 export class TrayIcon {
 	tray: Tray;
@@ -18,7 +16,6 @@ export class TrayIcon {
 		let loginPageAlreadyShow = false;
 		const options: TitleOptions = { fontType: 'monospacedDigit' };
 		const appConfig = LocalStore.getStore('configs');
-		const store = new Store();
 		console.log('icon path', iconPath);
 		const iconNativePath = nativeImage.createFromPath(iconPath);
 		iconNativePath.resize({ width: 16, height: 16 });

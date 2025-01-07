@@ -2,10 +2,6 @@ import * as Sentry from '@sentry/electron';
 import { BaseError } from './base.error';
 import { ErrorEventManager } from './error-event-manager';
 
-import log from 'electron-log';
-console.error = log.error;
-Object.assign(console, log.functions);
-
 export class AppError extends BaseError {
 	private errorEventManager = ErrorEventManager.instance;
 

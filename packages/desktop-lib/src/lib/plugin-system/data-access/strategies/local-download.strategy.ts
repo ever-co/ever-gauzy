@@ -1,4 +1,4 @@
-import * as logger from 'electron-log';
+import { logger } from '@gauzy/desktop-core';
 import { createReadStream } from 'fs';
 import * as fs from 'fs/promises';
 import * as path from 'path';

@@ -8,26 +8,26 @@ export class DefaultWindow implements IBaseWindow {
 	private _browserWindow: BrowserWindow;
 
 	/**
- * Initializes a new instance of a window manager.
- *
- * @param {IWindowConfig} config - The configuration object containing window options and navigation details.
- */
-constructor(public readonly config: IWindowConfig) {
-    // Create a new BrowserWindow instance with the provided options
-    this._browserWindow = new BrowserWindow(this.config.options);
+	 * Initializes a new instance of a window manager.
+	 *
+	 * @param {IWindowConfig} config - The configuration object containing window options and navigation details.
+	 */
+	constructor(public readonly config: IWindowConfig) {
+		// Create a new BrowserWindow instance with the provided options
+		this._browserWindow = new BrowserWindow(this.config.options);
 
-    // Enable Electron remote functionality
-    remoteMain.enable(this._browserWindow.webContents);
+		// Enable Electron remote functionality
+		remoteMain.enable(this._browserWindow.webContents);
 
-    // Initially hide the window
-    this._browserWindow.hide();
+		// Initially hide the window
+		this.hide();
 
-    // Set up behavior to hide the window instead of closing it
-    this._browserWindow.on('close', (e) => {
-        e.preventDefault(); // Prevent the default close operation
-        this._browserWindow.hide(); // Hide the window
-    });
-}
+		// Set up behavior to hide the window instead of closing it
+		this.browserWindow.on('close', (e) => {
+			e.preventDefault(); // Prevent the default close operation
+			this.hide(); // Hide the window
+		});
+	}
 
 	/**
 	 * Asynchronously constructs a URL using the provided configuration and loads it into the BrowserWindow.
@@ -49,7 +49,7 @@ constructor(public readonly config: IWindowConfig) {
 			});
 
 			// Load the URL into the BrowserWindow
-			await this._browserWindow.loadURL(launchPath);
+			await this.browserWindow.loadURL(launchPath);
 
 			// Log the constructed path for debugging purposes
 			console.log('launched electron with:', launchPath);
@@ -65,8 +65,8 @@ constructor(public readonly config: IWindowConfig) {
 	 * @returns {void}
 	 */
 	public show(): void {
-		if (!this._browserWindow) return; // Do nothing if the window doesn't exist
-		this._browserWindow.show();
+		if (!this.browserWindow) return; // Do nothing if the window doesn't exist
+		this.browserWindow.show();
 	}
 
 	/**
@@ -75,10 +75,10 @@ constructor(public readonly config: IWindowConfig) {
 	 * @returns {void}
 	 */
 	public hide(): void {
-		if (!this._browserWindow) return; // Do nothing if the window doesn't exist
-		if (this._browserWindow.isDestroyed()) return; // Do nothing if the window is destroyed
+		if (!this.browserWindow) return; // Do nothing if the window doesn't exist
+		if (this.browserWindow.isDestroyed()) return; // Do nothing if the window is destroyed
 
-		this._browserWindow.hide();
+		this.browserWindow.hide();
 	}
 
 	/**
@@ -88,11 +88,11 @@ constructor(public readonly config: IWindowConfig) {
 	 * @returns {void}
 	 */
 	public close(): void {
-		if (!this._browserWindow) return; // Do nothing if the window doesn't exist
-		if (this._browserWindow.isDestroyed()) return; // Do nothing if the window is already destroyed
+		if (!this.browserWindow) return; // Do nothing if the window doesn't exist
+		if (this.browserWindow.isDestroyed()) return; // Do nothing if the window is already destroyed
 
 		this.hide(); // Hide the window first
-		this._browserWindow.destroy(); // Destroy the window
+		this.browserWindow.destroy(); // Destroy the window
 	}
 
 	/**
@@ -101,9 +101,14 @@ constructor(public readonly config: IWindowConfig) {
 	 * @returns {BrowserWindow | null} The BrowserWindow instance if it exists and is not destroyed, otherwise null.
 	 */
 	public get browserWindow(): BrowserWindow | null {
-		if (!this._browserWindow || this._browserWindow.isDestroyed()) {
-			return null; // Return null if the window doesn't exist or is destroyed
+		if (!this._browserWindow) {
+			return null; // Return null if the window doesn't exist
 		}
+
+		if (this._browserWindow.isDestroyed()) {
+			return null; // Do nothing if the window is already destroyed
+		}
+
 		return this._browserWindow; // Return the existing window instance
 	}
 }

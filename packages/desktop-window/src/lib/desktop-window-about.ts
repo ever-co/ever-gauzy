@@ -1,5 +1,5 @@
 import * as remoteMain from '@electron/remote/main';
-import { WindowManager, RegisteredWindow, Store } from '@gauzy/desktop-core';
+import { WindowManager, RegisteredWindow, store } from '@gauzy/desktop-core';
 import { BrowserWindow, Menu } from 'electron';
 import { setLaunchPathAndLoad } from './utils/desktop-window-utils';
 
@@ -31,7 +31,7 @@ export async function createAboutWindow(filePath: string, preloadPath?: string):
 	remoteMain.enable(window.webContents);
 
 	// Get the file paths from the application store
-	const filesPath = Store.get('filePath');
+	const filesPath = store.get('filePath');
 
 	// Set the window icon from the store
 	window.setIcon(filesPath.iconPath);
@@ -44,7 +44,7 @@ export async function createAboutWindow(filePath: string, preloadPath?: string):
 
 	// Set up event listeners for the window
 	handleShowEvent(window); // Disable the "About" menu item when the window is shown
-    handleCloseEvent(window); // Hide the window and prevent the default close behavior
+	handleCloseEvent(window); // Hide the window and prevent the default close behavior
 
 	// Register the window with the window manager
 	manager.register(RegisteredWindow.ABOUT, window);
@@ -64,12 +64,12 @@ export async function createAboutWindow(filePath: string, preloadPath?: string):
  * @param {Electron.BrowserWindow} window - The BrowserWindow instance.
  */
 function handleShowEvent(window: Electron.BrowserWindow): void {
-    window.on('show', () => {
-        const aboutMenuItem = Menu.getApplicationMenu()?.getMenuItemById('gauzy-about');
-        if (aboutMenuItem) {
-            aboutMenuItem.enabled = false;
-        }
-    });
+	window.on('show', () => {
+		const aboutMenuItem = Menu.getApplicationMenu()?.getMenuItemById('gauzy-about');
+		if (aboutMenuItem) {
+			aboutMenuItem.enabled = false;
+		}
+	});
 }
 
 /**
@@ -80,14 +80,14 @@ function handleShowEvent(window: Electron.BrowserWindow): void {
  * @param {Electron.BrowserWindow} window - The BrowserWindow instance.
  */
 function handleCloseEvent(window: Electron.BrowserWindow): void {
-    window.on('close', (event) => {
-        const aboutMenuItem = Menu.getApplicationMenu()?.getMenuItemById('gauzy-about');
-        if (aboutMenuItem) {
-            aboutMenuItem.enabled = true;
-        }
-        window.hide();
-        event.preventDefault();
-    });
+	window.on('close', (event) => {
+		const aboutMenuItem = Menu.getApplicationMenu()?.getMenuItemById('gauzy-about');
+		if (aboutMenuItem) {
+			aboutMenuItem.enabled = true;
+		}
+		window.hide();
+		event.preventDefault();
+	});
 }
 
 /**

@@ -1,4 +1,4 @@
-import * as logger from 'electron-log';
+import { logger } from '@gauzy/desktop-core';
 import { createReadStream, createWriteStream } from 'fs';
 import * as fs from 'fs/promises';
 import * as https from 'https';
@@ -10,7 +10,7 @@ import { promisify } from 'util';
 const pipe = promisify(pipeline);
 
 export class TarballUtil {
-	constructor(private readonly options: https.RequestOptions) {}
+	constructor(private readonly options: https.RequestOptions) { }
 	// Downloads the tarball with retry logic
 	private async retryDownloadTarball(tarballUrl: string, tarballPath: string, retries: number = 3): Promise<void> {
 		for (let attempt = 1; attempt <= retries; attempt++) {

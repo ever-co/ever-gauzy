@@ -174,14 +174,7 @@ ipcMain.removeHandler('PREFERRED_LANGUAGE');
 
 ipcMain.handle('PREFERRED_THEME', () => {
 	const setting = LocalStore.getStore('appSetting');
-	if (!setting) {
-		LocalStore.setDefaultApplicationSetting();
-		const theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
-		LocalStore.updateApplicationSetting({ theme });
-		return theme;
-	} else {
-		return setting.theme;
-	}
+	return !setting ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : setting.theme;
 });
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
@@ -482,6 +475,11 @@ app.on('ready', async () => {
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
 
+	if (!settings) {
+		launchAtStartup(true, false);
+		LocalStore.setAllDefaultConfig();
+	}
+
 	// default global
 	global.variableGlobal = {
 		API_BASE_URL: getApiBaseUrl(configs || {}),
@@ -512,10 +510,6 @@ app.on('ready', async () => {
 	} catch (error) {
 		console.error('ERROR: Occurred while database migration:' + error);
 		throw new AppError('MAINDB', error);
-	}
-
-	if (!settings) {
-		launchAtStartup(true, false);
 	}
 
 	const menu: MenuItemConstructorOptions[] = [
@@ -615,7 +609,7 @@ app.commandLine.appendSwitch('disable-http2');
 ipcMain.on('server_is_ready', async () => {
 	console.log('Server is ready event received');
 
-	LocalStore.setDefaultApplicationSetting();
+	LocalStore.setAllDefaultConfig();
 
 	const appConfig = LocalStore.getStore('configs');
 

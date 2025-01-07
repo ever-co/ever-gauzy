@@ -1,5 +1,5 @@
 import { app, MenuItemConstructorOptions } from 'electron';
-import * as logger from 'electron-log';
+import { logger } from '@gauzy/desktop-core';
 import { existsSync } from 'fs';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -18,7 +18,7 @@ export class PluginManager implements IPluginManager {
 	private eventManager = PluginEventManager.getInstance();
 	private static instance: IPluginManager;
 
-	private constructor() {}
+	private constructor() { }
 
 	public static getInstance(): IPluginManager {
 		if (!this.instance) {

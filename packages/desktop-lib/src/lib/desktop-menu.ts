@@ -1,5 +1,5 @@
 import { createAboutWindow, createSettingsWindow } from '@gauzy/desktop-window';
-import { RegisteredWindow, WindowManager } from '@gauzy/desktop-core';
+import { RegisteredWindow, WindowManager, logger } from '@gauzy/desktop-core';
 import { BrowserWindow, Menu, MenuItemConstructorOptions, shell } from 'electron';
 import { LocalStore } from './desktop-store';
 import { TimerService } from './offline';
@@ -124,7 +124,7 @@ export class AppMenu {
 							timeTrackerWindow.show();
 							const timerService = new TimerService();
 							const lastTime = await timerService.findLastCapture();
-							console.log('Last Capture Time (Desktop Menu):', lastTime);
+							logger.info('Last Capture Time (Desktop Menu):', lastTime);
 							timeTrackerWindow.webContents.send('timer_tracker_show', {
 								...LocalStore.beforeRequestParams(),
 								timeSlotId: lastTime ? lastTime.timeslotId : null
@@ -224,9 +224,9 @@ export class AppMenu {
 		if (!this.deepArrayEqual(this.menu, updatedMenu)) {
 			this.menu = updatedMenu;
 			this.build();
-			console.log('Menu rebuilt after plugin update.');
+			logger.info('Menu rebuilt after plugin update.');
 		} else {
-			console.log('Plugin update detected, but no changes were made to the menu.');
+			logger.info('Plugin update detected, but no changes were made to the menu.');
 		}
 	}
 

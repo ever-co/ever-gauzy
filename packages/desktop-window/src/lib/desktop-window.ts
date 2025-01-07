@@ -2,11 +2,8 @@ import * as remoteMain from '@electron/remote/main';
 import { BrowserWindow, ipcMain, screen } from 'electron';
 import * as url from 'url';
 import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
-import { WindowManager, RegisteredWindow, setupElectronLog, Store } from '@gauzy/desktop-core';
+import { WindowManager, RegisteredWindow, store } from '@gauzy/desktop-core';
 import { handleCloseEvent } from './utils/desktop-window-utils';
-
-// Set up Electron log
-setupElectronLog();
 
 /**
  * Creates and initializes the DSpot ERP main window for the Electron application.
@@ -134,7 +131,7 @@ async function setLaunchPathAndLoad(window: Electron.BrowserWindow, filePath: st
 const windowSetting = (preloadPath?: string): Electron.BrowserWindowConstructorOptions => {
 	// Retrieve the screen size and file paths
 	const sizes = screen.getPrimaryDisplay().workAreaSize;
-	const filesPath = Store.get('filePath');
+	const filesPath = store.get('filePath');
 
 	// Define the base settings for the BrowserWindow
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {

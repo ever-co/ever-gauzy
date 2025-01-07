@@ -1,4 +1,4 @@
-import * as logger from 'electron-log';
+import { logger } from '@gauzy/desktop-core';
 import { existsSync } from 'fs';
 import * as fs from 'fs/promises';
 import * as https from 'https';

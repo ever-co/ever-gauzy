@@ -1,11 +1,8 @@
 import * as remoteMain from '@electron/remote/main';
 import { BrowserWindow } from 'electron';
 import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
-import { WindowManager, RegisteredWindow, setupElectronLog, Store } from '@gauzy/desktop-core';
+import { WindowManager, RegisteredWindow, store } from '@gauzy/desktop-core';
 import { handleCloseEvent, setLaunchPathAndLoad } from './utils/desktop-window-utils';
-
-// Set up Electron log
-setupElectronLog();
 
 /**
  * Creates and configures the updater window in the Electron application.
@@ -73,7 +70,7 @@ export async function createUpdaterWindow(
  */
 const windowSetting = (preloadPath: string): Electron.BrowserWindowConstructorOptions => {
 	// Get the file paths from the application store
-	const filesPath = Store.get('filePath');
+	const filesPath = store.get('filePath');
 	console.log('Store filePath', filesPath);
 
 	// Define the default settings for the main Electron browser window

@@ -19,10 +19,7 @@ import {
 } from './integrations';
 import { IOfflineMode } from './interfaces';
 import { DesktopOfflineModeHandler, Timer, TimerService, UserService } from './offline';
-
-import log from 'electron-log';
-console.log = log.log;
-Object.assign(console, log.functions);
+import { logger } from '@gauzy/desktop-core';
 
 const EmbeddedQueue = require('embedded-queue');
 
@@ -323,8 +320,8 @@ export default class TimerHandler {
 			const appSetting = LocalStore.getStore('appSetting');
 			const config = LocalStore.getStore('configs');
 
-			log.info(`App Setting: ${moment().format()}`, appSetting);
-			log.info(`Config: ${moment().format()}`, config);
+			logger.info(`App Setting: ${moment().format()}`, appSetting);
+			logger.info(`Config: ${moment().format()}`, config);
 
 			const lastTimerId = this.lastTimer ? this.lastTimer.id : null;
 			const awActivities = await this._activityWatchService.activities(lastTimerId);
@@ -343,20 +340,20 @@ export default class TimerHandler {
 				.map((item) => {
 					return item.data
 						? {
-								title: item.data.app || item.data.title,
-								date: moment(item.timestamp).utc().format('YYYY-MM-DD'),
-								time: moment(item.timestamp).utc().format('HH:mm:ss'),
-								duration: Math.floor(item.duration),
-								type: item.data.url ? ActivityType.URL : ActivityType.APP,
-								taskId: params.taskId,
-								projectId: params.projectId,
-								organizationContactId: params.organizationContactId,
-								organizationId: params.organizationId,
-								employeeId: params.employeeId,
-								source: TimeLogSourceEnum.DESKTOP,
-								recordedAt: moment(item.timestamp).utc().toDate(),
-								metaData: item.data
-						  }
+							title: item.data.app || item.data.title,
+							date: moment(item.timestamp).utc().format('YYYY-MM-DD'),
+							time: moment(item.timestamp).utc().format('HH:mm:ss'),
+							duration: Math.floor(item.duration),
+							type: item.data.url ? ActivityType.URL : ActivityType.APP,
+							taskId: params.taskId,
+							projectId: params.projectId,
+							organizationContactId: params.organizationContactId,
+							organizationId: params.organizationId,
+							employeeId: params.employeeId,
+							source: TimeLogSourceEnum.DESKTOP,
+							recordedAt: moment(item.timestamp).utc().toDate(),
+							metaData: item.data
+						}
 						: null;
 				})
 				.filter((item) => !!item);
@@ -388,9 +385,9 @@ export default class TimerHandler {
 					employeeId: params.employeeId,
 					metaData:
 						this.configs &&
-						(this.configs.db === 'sqlite' ||
-							this.configs.db === 'better-sqlite' ||
-							this.configs.db === 'better-sqlite3')
+							(this.configs.db === 'sqlite' ||
+								this.configs.db === 'better-sqlite' ||
+								this.configs.db === 'better-sqlite3')
 							? JSON.stringify(activityMetadata)
 							: activityMetadata
 				};
@@ -423,8 +420,8 @@ export default class TimerHandler {
 		const appSetting = LocalStore.getStore('appSetting');
 		const config = LocalStore.getStore('configs');
 
-		log.info(`App Setting: ${now.format()}`, appSetting);
-		log.info(`Config: ${now.format()}`, config);
+		logger.info(`App Setting: ${now.format()}`, appSetting);
+		logger.info(`Config: ${now.format()}`, config);
 
 		const updatePeriod =
 			parseInt(appSetting.randomScreenshotTime ? this._randomSyncPeriod : appSetting.timer.updatePeriod, 10) * 60;
@@ -725,8 +722,7 @@ export default class TimerHandler {
 						};
 
 						console.log(
-							`Updating Timer Duration ${JSON.stringify(pUpdate)} - Offline Mode: ${
-								this._offlineMode.enabled
+							`Updating Timer Duration ${JSON.stringify(pUpdate)} - Offline Mode: ${this._offlineMode.enabled
 							}`
 						);
 

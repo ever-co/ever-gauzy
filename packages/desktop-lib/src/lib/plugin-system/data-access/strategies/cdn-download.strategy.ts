@@ -1,10 +1,10 @@
-import * as logger from 'electron-log';
 import { createReadStream } from 'fs';
 import * as fs from 'fs/promises';
 import fetch from 'node-fetch';
 import * as path from 'path';
 import * as unzipper from 'unzipper';
 import { ICdnDownloadConfig, IPluginDownloadResponse, IPluginDownloadStrategy } from '../../shared';
+import { logger } from '@gauzy/desktop-core';
 
 export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 	async execute<T>(config: T): Promise<IPluginDownloadResponse> {

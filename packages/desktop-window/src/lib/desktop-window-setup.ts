@@ -1,10 +1,7 @@
 import * as remoteMain from '@electron/remote/main';
 import { BrowserWindow, Menu, app } from 'electron';
-import { WindowManager, RegisteredWindow, setupElectronLog, Store } from '@gauzy/desktop-core';
+import { WindowManager, RegisteredWindow, store } from '@gauzy/desktop-core';
 import { handleCloseEvent, setLaunchPathAndLoad } from './utils/desktop-window-utils';
-
-// Set up Electron log
-setupElectronLog();
 
 /**
  * Creates and configures the Setup window in the Electron application.
@@ -19,51 +16,51 @@ setupElectronLog();
  * const setupWindow = await createSetupWindow(null, true, '/path/to/file.html');
  */
 export async function createSetupWindow(
-    setupWindow: Electron.BrowserWindow | null,
-    value: boolean,
-    filePath: string
+	setupWindow: Electron.BrowserWindow | null,
+	value: boolean,
+	filePath: string
 ): Promise<Electron.BrowserWindow> {
-    // Retrieve the window configuration settings
-    const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
+	// Retrieve the window configuration settings
+	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
 
-    // Get the WindowManager instance for managing application windows
-    const manager = WindowManager.getInstance();
+	// Get the WindowManager instance for managing application windows
+	const manager = WindowManager.getInstance();
 
-    // Create a new BrowserWindow instance
-    setupWindow = new BrowserWindow(mainWindowSettings);
+	// Create a new BrowserWindow instance
+	setupWindow = new BrowserWindow(mainWindowSettings);
 
-    // Enable remote functionality for the Setup window
-    remoteMain.enable(setupWindow.webContents);
+	// Enable remote functionality for the Setup window
+	remoteMain.enable(setupWindow.webContents);
 
-    // Hide the window if the `value` parameter is true
-    if (value) {
-        setupWindow.hide();
-    }
+	// Hide the window if the `value` parameter is true
+	if (value) {
+		setupWindow.hide();
+	}
 
 	// Use the helper function to construct and load the URL
-    await setLaunchPathAndLoad(setupWindow, filePath, '/setup');
+	await setLaunchPathAndLoad(setupWindow, filePath, '/setup');
 
-    // Configure the menu for the Setup window
-    setupWindow.setMenu(
-        Menu.buildFromTemplate([
-            {
-                label: app.getName(),
-                submenu: [{ role: 'quit', label: 'Exit' }]
-            }
-        ])
-    );
+	// Configure the menu for the Setup window
+	setupWindow.setMenu(
+		Menu.buildFromTemplate([
+			{
+				label: app.getName(),
+				submenu: [{ role: 'quit', label: 'Exit' }]
+			}
+		])
+	);
 
-    // Optional: Uncomment the next line to open Developer Tools
-    // setupWindow.webContents.toggleDevTools();
+	// Optional: Uncomment the next line to open Developer Tools
+	// setupWindow.webContents.toggleDevTools();
 
 	// Attach the close event handler
 	handleCloseEvent(setupWindow);
 
-    // Register the Setup window with the WindowManager
-    manager.register(RegisteredWindow.SETUP, setupWindow);
+	// Register the Setup window with the WindowManager
+	manager.register(RegisteredWindow.SETUP, setupWindow);
 
-    // Return the configured Setup window instance
-    return setupWindow;
+	// Return the configured Setup window instance
+	return setupWindow;
 }
 
 /**
@@ -77,31 +74,31 @@ export async function createSetupWindow(
  * const mainWindow = new BrowserWindow(settings);
  */
 const windowSetting = (): Electron.BrowserWindowConstructorOptions => {
-    // Default settings for the main application window
-    const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
-        frame: true,
-        resizable: false,
-        focusable: true,
-        fullscreenable: false,
-        webPreferences: {
-            nodeIntegration: true,
-            webSecurity: false,
-            contextIsolation: false,
-            sandbox: false
-        },
-        width: 960,
-        height: 680,
-        title: 'Setup',
-        autoHideMenuBar: true,
-        maximizable: false,
-        show: false
-    };
+	// Default settings for the main application window
+	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
+		frame: true,
+		resizable: false,
+		focusable: true,
+		fullscreenable: false,
+		webPreferences: {
+			nodeIntegration: true,
+			webSecurity: false,
+			contextIsolation: false,
+			sandbox: false
+		},
+		width: 960,
+		height: 680,
+		title: 'Setup',
+		autoHideMenuBar: true,
+		maximizable: false,
+		show: false
+	};
 
 	// Fetch the icon path from the application's store
-	const filesPath = Store.get('filePath');
+	const filesPath = store.get('filePath');
 	if (filesPath?.iconPath) {
-        mainWindowSettings.icon = filesPath.iconPath;
-    }
+		mainWindowSettings.icon = filesPath.iconPath;
+	}
 
-    return mainWindowSettings;
+	return mainWindowSettings;
 };
