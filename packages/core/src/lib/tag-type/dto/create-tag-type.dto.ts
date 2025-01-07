@@ -1,13 +1,12 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IntersectionType, PickType } from '@nestjs/swagger';
 import { ITagTypeCreateInput } from '@gauzy/contracts';
-import { IsString } from 'class-validator';
-import { Tag, TenantOrganizationBaseDTO } from '../../core';
+import { TenantOrganizationBaseDTO } from '../../core/dto';
+import { TagType } from '../tag-type.entity';
 
-export class CreateTagTypeDTO extends TenantOrganizationBaseDTO implements ITagTypeCreateInput {
-	@ApiProperty({ type: () => String })
-	@IsString()
-	readonly type: string;
-
-	@ApiPropertyOptional({ type: () => Array, isArray: true })
-	readonly tags: Tag[];
-}
+/**
+ * DTO for creating a Tag Type
+ */
+export class CreateTagTypeDTO extends IntersectionType(
+	TenantOrganizationBaseDTO,
+	PickType(TagType, ['type', 'tags'] as const) // Only pick fields once
+) implements ITagTypeCreateInput {}
