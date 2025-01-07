@@ -1,16 +1,16 @@
 import { DynamicModule, Global, Module, OnModuleInit } from '@nestjs/common';
-import { ModuleProfilerService } from './module-profiler.service';
+import { ProfilingService } from './profiling.service';
 
 @Global()
 @Module({})
 export class ProfilingModule implements OnModuleInit {
-	constructor(private readonly profilerService: ModuleProfilerService) {}
+	constructor(readonly profilingService: ProfilingService) {}
 
 	static forRoot(): DynamicModule {
 		return {
 			module: ProfilingModule,
-			providers: [ModuleProfilerService],
-			exports: [ModuleProfilerService]
+			providers: [ProfilingService],
+			exports: [ProfilingService]
 		};
 	}
 
@@ -19,6 +19,6 @@ export class ProfilingModule implements OnModuleInit {
 	 */
 	onModuleInit(): void {
 		const moduleName = this.constructor.name;
-		this.profilerService.markModuleStart(moduleName);
+		this.profilingService.markModuleStart(moduleName);
 	}
 }
