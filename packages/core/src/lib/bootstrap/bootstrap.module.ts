@@ -1,16 +1,11 @@
 import { MiddlewareConsumer, Module, NestModule, OnApplicationShutdown } from '@nestjs/common';
 import { ConfigModule } from '@gauzy/config';
 import { PluginModule } from '@gauzy/plugin';
-import { AppModule } from '../app/app.module';
 import { Logger, LoggerModule } from '../logger';
+import { AppModule } from '../app/app.module';
 
 @Module({
-	imports: [
-		ConfigModule,
-		LoggerModule.forRoot(),
-		PluginModule.init(),
-		AppModule
-	],
+	imports: [ConfigModule, LoggerModule.forRoot(), PluginModule.init(), AppModule],
 	providers: [],
 	exports: []
 })

@@ -1,4 +1,5 @@
 import { Column, JoinColumn, JoinTable, RelationId } from 'typeorm';
+import * as chalk from 'chalk';
 import { ApplicationPluginConfig, CustomEmbeddedFields, RelationCustomEmbeddedFieldConfig } from '@gauzy/common';
 import { getColumnType } from '../../../core/decorators/entity/column.helper';
 import { ColumnIndex, MultiORMColumn, MultiORMManyToMany, MultiORMManyToOne } from '../../../core/decorators';
@@ -132,6 +133,8 @@ async function registerCustomFieldsForEntity<T>(
  * @throws Error if there's a failure during the registration process.
  */
 export async function registerTypeOrmCustomFields(config: ApplicationPluginConfig): Promise<void> {
+	console.time(chalk.yellow('✔ Registering Custom Entity Fields for TypeORM'));
+
 	try {
 		// Loop through the custom field registrations and register each for the corresponding entity
 		for (const registration of typeOrmCustomEntityFieldRegistrations) {
@@ -141,6 +144,8 @@ export async function registerTypeOrmCustomFields(config: ApplicationPluginConfi
 		console.error('Error registering custom entity fields:', error);
 		throw new Error('Failed to register custom entity fields');
 	}
+
+	console.timeEnd(chalk.yellow('✔ Registering Custom Entity Fields for TypeORM'));
 }
 
 /**
@@ -150,6 +155,8 @@ export async function registerTypeOrmCustomFields(config: ApplicationPluginConfi
  * @throws Error if there's a failure during the registration process.
  */
 export async function registerMikroOrmCustomFields(config: ApplicationPluginConfig): Promise<void> {
+	console.time(chalk.yellow('✔ Registering Custom Entity Fields for MikroORM'));
+
 	try {
 		// Loop through the custom field registrations for MikroORM
 		for (const registration of mikroOrmCustomEntityFieldRegistrations) {
@@ -159,4 +166,6 @@ export async function registerMikroOrmCustomFields(config: ApplicationPluginConf
 		console.error('Error registering custom entity fields for MikroORM:', error);
 		throw new Error('Failed to register custom entity fields for MikroORM');
 	}
+
+	console.timeEnd(chalk.yellow('✔ Registering Custom Entity Fields for MikroORM'));
 }

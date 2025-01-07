@@ -1,45 +1,36 @@
-import { Injectable, Logger, OnModuleInit, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { performance } from 'perf_hooks';
 
 @Injectable()
-export class ModuleProfilerService implements OnModuleInit, OnApplicationBootstrap {
+export class ModuleProfilerService implements OnApplicationBootstrap {
     private readonly logger = new Logger(ModuleProfilerService.name);
     private readonly moduleStartTimes = new Map<string, number>();
+    private readonly moduleDurations = new Map<string, number>();
     private readonly appStartTime = performance.now();
 
-    constructor(private readonly moduleRef: ModuleRef) {}
+    constructor(readonly moduleRef: ModuleRef) {}
 
     /**
-     * Automatically called when each module initializes.
+     * Hook to mark the start time of each module.
      */
-    onModuleInit(): void {
-        const moduleName = this.getModuleName();
+    markModuleStart(moduleName: string): void {
         if (!this.moduleStartTimes.has(moduleName)) {
             this.moduleStartTimes.set(moduleName, performance.now());
         }
     }
 
     /**
-     * Called after the application has fully bootstrapped.
+     * Hook to mark the end time of each module and log its duration.
      */
-    onApplicationBootstrap(): void {
-        const bootstrapEndTime = performance.now();
-        this.logInitializationTimes();
-        const totalStartupTime = (bootstrapEndTime - this.appStartTime).toFixed(2);
-        this.logger.log(`Total application startup time: ${totalStartupTime}ms`);
-    }
-
-    /**
-     * Logs the time each module took to initialize.
-     */
-    private logInitializationTimes(): void {
-        const threshold = 100; // Threshold in milliseconds
-
-        for (const [moduleName, startTime] of this.moduleStartTimes.entries()) {
+    markModuleEnd(moduleName: string): void {
+        if (this.moduleStartTimes.has(moduleName)) {
+            const startTime = this.moduleStartTimes.get(moduleName) || 0;
             const duration = performance.now() - startTime;
+            this.moduleDurations.set(moduleName, duration);
 
-            // Log a warning if duration exceeds the threshold
+            // Log the duration with threshold logic
+            const threshold = 100; // Threshold in milliseconds
             if (duration > threshold) {
                 this.logger.warn(`${moduleName} took ${duration.toFixed(2)}ms (exceeds threshold)`);
             } else {
@@ -49,11 +40,14 @@ export class ModuleProfilerService implements OnModuleInit, OnApplicationBootstr
     }
 
     /**
-     * Retrieves the name of the currently initializing module.
+     * Logs the total startup time and all module durations when the application finishes bootstrapping.
      */
-    private getModuleName(): string {
-        const context = this.moduleRef as any;
-        const moduleName = context.constructor?.name || 'UnknownModule';
-        return moduleName;
+    onApplicationBootstrap(): void {
+        const totalStartupTime = (performance.now() - this.appStartTime).toFixed(2);
+        this.logger.log(`Total application startup time: ${totalStartupTime}ms`);
+
+        for (const [moduleName, duration] of this.moduleDurations.entries()) {
+            this.logger.log(`${moduleName} total duration: ${duration.toFixed(2)}ms`);
+        }
     }
 }

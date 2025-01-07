@@ -51,6 +51,17 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
+	 * Counts the total number of records in the current repository/table.
+	 * This method utilizes the base `count` method from the parent class
+	 * to quickly return the total number of records without additional filters or conditions.
+	 *
+	 * @returns {Promise<number>} - A promise that resolves to the total count of records.
+	 */
+	public async countFast(): Promise<number> {
+		return await super.count();
+	}
+
+	/**
 	 * Get the count of users and the number of users who logged in during the last 30 days.
 	 *
 	 * @returns {Promise<UserStats>} - A promise that resolves to an object containing user statistics.

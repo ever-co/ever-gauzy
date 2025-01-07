@@ -327,7 +327,7 @@ if (environment.THROTTLE_ENABLED) {
 					})
 			  ]
 			: []),
-		ProfilingModule,
+		ProfilingModule.forRoot(), // Enables automatic profiling,
 		HealthModule,
 		CoreModule,
 		SharedModule,
