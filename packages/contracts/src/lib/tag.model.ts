@@ -27,7 +27,7 @@ export interface ITagFindInput extends IBasePerTenantAndOrganizationEntityModel,
 
 export interface ITagCreateInput extends ITag {}
 
-export interface ITagType {
+export interface ITagType extends IBasePerTenantAndOrganizationEntityModel {
 	type: string;
 	tags?: ITag[];
 }
@@ -37,9 +37,7 @@ export interface ITagUpdateInput extends Partial<ITagCreateInput> {
 }
 
 export interface ITagTypeCreateInput extends ITagType {}
-export interface ITagTypeUpdateInput extends Partial<ITagTypeCreateInput> {
-	id?: ID;
-}
+export interface ITagTypeUpdateInput extends Partial<ITagTypeCreateInput> {}
 
 /**
  * Default task tags
