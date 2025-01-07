@@ -1,31 +1,32 @@
 // Adapted from https://github.com/maximegris/angular-electron/blob/master/main.ts
-
+import { environment } from './environments/environment';
+// Assign environment variables
+Object.assign(process.env, environment);
 // Import logging for electron and override default console logging
-import log from 'electron-log';
-console.log = log.log;
-Object.assign(console, log.functions);
-
 import * as remoteMain from '@electron/remote/main';
+import { logger as log, store } from '@gauzy/desktop-core';
 import * as Sentry from '@sentry/electron';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
 import { app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, nativeTheme, shell } from 'electron';
-import * as Store from 'electron-store';
 import * as path from 'path';
 import * as Url from 'url';
-import { environment } from './environments/environment';
+import { initSentry } from './sentry';
 
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 
-process.env = Object.assign(process.env, environment);
-
 app.setName(process.env.NAME);
 
-log.log('Desktop Timer Node Modules Path', path.join(__dirname, 'node_modules'));
+// Initialize logging
+log.setup();
+
+// Add node modules path
+log.info('Desktop Timer Node Modules Path', path.join(__dirname, 'node_modules'));
+
+// Initialize Sentry
+initSentry();
 
 remoteMain.initialize();
 
-import { fork } from 'child_process';
-import { autoUpdater } from 'electron-updater';
 import {
 	AppError,
 	AppMenu,
@@ -59,11 +60,8 @@ import {
 	SplashScreen,
 	timeTrackerPage
 } from '@gauzy/desktop-window';
-import { initSentry } from './sentry';
-
-// Can be like this: import fetch from '@gauzy/desktop-lib' for v3 of node-fetch;
-
-initSentry();
+import { fork } from 'child_process';
+import { autoUpdater } from 'electron-updater';
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 // C:\Users\USERNAME\AppData\Roaming\gauzy-desktop-timer
@@ -79,7 +77,6 @@ const knex = provider.connection;
 
 const exeName = path.basename(process.execPath);
 const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
-const store = new Store();
 
 const args = process.argv.slice(1);
 const serverGauzy = null;
@@ -94,14 +91,7 @@ args.some((val) => val === '--serve');
 
 ipcMain.handle('PREFERRED_THEME', () => {
 	const setting = LocalStore.getStore('appSetting');
-	if (!setting) {
-		LocalStore.setDefaultApplicationSetting();
-		const theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
-		LocalStore.updateApplicationSetting({ theme });
-		return theme;
-	} else {
-		return setting.theme;
-	}
+	return !setting ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : setting.theme;
 });
 
 let notificationWindow = null;
@@ -235,26 +225,25 @@ eventErrorManager.onShowError(async (message) => {
 
 async function startServer(value, restart = false) {
 	try {
-		const config: any = {
+		const project = LocalStore.getStore('project') || {};
+		// Ensure that project.aw exists before spreading it
+		if (!project.aw) {
+			project.aw = {};
+		}
+
+		// Update the aw object
+		const aw = {
+			...project.aw,
+			host: value.awHost
+		};
+
+		// Update the project
+		LocalStore.updateConfigProject({ aw });
+
+		// Update the setting
+		LocalStore.updateConfigSetting({
 			...value,
 			isSetup: true
-		};
-		const aw = {
-			host: value.awHost,
-			isAw: !!value.aw?.isAw
-		};
-		const projectConfig = store.get('project');
-		store.set({
-			configs: config,
-			project: projectConfig
-				? projectConfig
-				: {
-						projectId: null,
-						taskId: null,
-						note: null,
-						aw,
-						organizationContactId: null
-				  }
 		});
 	} catch (error) {
 		throw new AppError('MAINSTRSERVER', error);
@@ -356,6 +345,12 @@ const getApiBaseUrl = (configs) => {
 app.on('ready', async () => {
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
+
+	if (!settings) {
+		launchAtStartup(true, false);
+		LocalStore.setAllDefaultConfig();
+	}
+
 	// Set up theme listener for desktop windows
 	new DesktopThemeListener();
 	// default global
@@ -370,9 +365,7 @@ app.on('ready', async () => {
 	} catch (error) {
 		console.error(error);
 	}
-	if (!settings) {
-		launchAtStartup(true, false);
-	}
+
 	if (['sqlite', 'better-sqlite', 'better-sqlite3'].includes(provider.dialect)) {
 		try {
 			const res = await knex.raw(`pragma journal_mode = WAL;`);
@@ -455,13 +448,10 @@ app.on('window-all-closed', () => {
 app.commandLine.appendSwitch('disable-http2');
 
 ipcMain.on('server_is_ready', async () => {
-	console.log('Server is ready event received');
-	LocalStore.setDefaultApplicationSetting();
+	log.info('Server is ready event received');
 	const appConfig = LocalStore.getStore('configs');
 	appConfig.serverConfigConnected = true;
-	store.set({
-		configs: appConfig
-	});
+	LocalStore.updateConfigSetting(appConfig);
 	onWaitingServer = false;
 	if (!isAlreadyRun) {
 		console.log('Server is ready, starting the Desktop API...');

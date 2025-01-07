@@ -1,9 +1,8 @@
 import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences } from 'electron';
-import log from 'electron-log';
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import { IActivityWatchEventResult } from '@gauzy/contracts';
-import { RegisteredWindow, WindowManager } from '@gauzy/desktop-core';
+import { RegisteredWindow, WindowManager, logger as log } from '@gauzy/desktop-core';
 import { ScreenCaptureNotification, loginPage } from '@gauzy/desktop-window';
 import { SleepInactivityTracking } from './contexts';
 import {
@@ -41,10 +40,6 @@ import { RemoteSleepTracking } from './strategies';
 import { TranslateService } from './translation';
 
 const timerHandler = new TimerHandler();
-
-console.log = log.log;
-Object.assign(console, log.functions);
-
 const offlineMode = DesktopOfflineModeHandler.instance;
 const userService = new UserService();
 const intervalService = new IntervalService();
@@ -67,8 +62,8 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			const baseUrl = arg.serverUrl
 				? arg.serverUrl
 				: arg.port
-				? `http://localhost:${arg.port}`
-				: `http://localhost:${config.API_DEFAULT_PORT}`;
+					? `http://localhost:${arg.port}`
+					: `http://localhost:${config.API_DEFAULT_PORT}`;
 
 			global.variableGlobal = {
 				API_BASE_URL: baseUrl,
@@ -651,9 +646,9 @@ export function ipcTimer(
 		}
 	});
 
-	ActivityWatchEventManager.onStatusChange((_, value: boolean) => {
+	ActivityWatchEventManager.onStatusChange((_, awIsConnected: boolean) => {
 		LocalStore.updateApplicationSetting({
-			awIsConnected: value
+			awIsConnected
 		});
 	});
 

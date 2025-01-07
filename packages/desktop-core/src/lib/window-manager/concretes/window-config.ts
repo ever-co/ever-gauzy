@@ -1,9 +1,6 @@
 import { BrowserWindowConstructorOptions } from 'electron';
-import { Store, setupElectronLog } from '../electron-helpers';
+import { store } from '../../store/electron-helpers';
 import { IWindowConfig } from '../interfaces';
-
-// Set up Electron log
-setupElectronLog();
 
 export class WindowConfig implements IWindowConfig {
 	private _options?: BrowserWindowConstructorOptions;
@@ -24,7 +21,7 @@ export class WindowConfig implements IWindowConfig {
 			title: '',
 			show: false,
 			center: true,
-			icon: Store.get('filePath')?.iconPath,
+			icon: store.get('filePath')?.iconPath,
 			...options
 		};
 	}
