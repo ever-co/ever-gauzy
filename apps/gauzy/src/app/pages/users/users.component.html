@@ -1,4 +1,8 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
 			<h4>
@@ -9,10 +13,10 @@
 			<ng-template ngxPermissionsOnly="ORG_USERS_EDIT">
 				<ng-template [ngxPermissionsOnly]="['ORG_INVITE_VIEW', 'ORG_INVITE_EDIT']">
 					<button
+						*ngIf="organizationInvitesAllowed"
 						nbButton
 						class="action"
 						size="small"
-						*ngIf="organizationInvitesAllowed"
 						status="primary"
 						(click)="manageInvites()"
 					>
@@ -34,81 +38,99 @@
 	</nb-card-header>
 	<nb-card-body>
 		<ng-template ngxPermissionsOnly="ORG_USERS_EDIT">
-			<div class="edit-user-mutation" *ngIf="showAddCard">
-				<ng-template ngxPermissionsOnly="TENANT_ADD_EXISTING_USER">
-					<ga-edit-user-mutation
-						[organization]="organization"
-						(addOrEditUser)="addOrEditUser($event)"
-						(canceled)="cancel()"
-					></ga-edit-user-mutation>
+			<ng-template [ngIf]="showAddCard">
+				<div class="edit-user-mutation">
+					<ng-template ngxPermissionsOnly="TENANT_ADD_EXISTING_USER">
+						<ga-edit-user-mutation
+							[organization]="organization"
+							(addOrEditUser)="addOrEditUser($event)"
+							(canceled)="cancel()"
+						></ga-edit-user-mutation>
+					</ng-template>
+				</div>
+			</ng-template>
+		</ng-template>
+
+		<!-- Check if the user has the 'ORG_INVITE_VIEW' permission -->
+		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_USERS_VIEW]">
+			<ng-container [ngSwitch]="dataLayoutStyle">
+				<!-- Table View -->
+				<ng-template [ngSwitchCase]="componentLayoutStyleEnum.TABLE">
+					<div class="table-scroll-container">
+						<angular2-smart-table
+							style="cursor: pointer"
+							[settings]="settingsSmartTable"
+							[source]="sourceSmartTable"
+							(userRowSelect)="selectUser($event)"
+						></angular2-smart-table>
+					</div>
+					<div class="pagination-container">
+						<ng-container *ngIf="smartTableSource">
+							<ngx-pagination [source]="smartTableSource"></ngx-pagination>
+						</ng-container>
+					</div>
 				</ng-template>
-			</div>
-		</ng-template>
-		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="gridLayout">
-			<div class="table-scroll-container">
-				<angular2-smart-table
-					style="cursor: pointer"
-					[settings]="settingsSmartTable"
-					[source]="sourceSmartTable"
-					(userRowSelect)="selectUser($event)"
-				></angular2-smart-table>
-			</div>
-			<div class="pagination-container align-self-end">
-				<ng-container *ngIf="sourceSmartTable">
-					<ngx-pagination [source]="sourceSmartTable"></ngx-pagination>
-				</ng-container>
-			</div>
-		</ng-template>
-		<ng-template #gridLayout>
-			<div class="grid">
-				<ga-card-grid
-					[totalItems]="pagination?.totalItems"
-					[settings]="settingsSmartTable"
-					[source]="users"
-					(scroll)="onScroll()"
-					(onSelectedItem)="selectUser($event)"
-				></ga-card-grid>
-			</div>
+
+				<!-- Card Grid View -->
+				<ng-template [ngSwitchCase]="componentLayoutStyleEnum.CARDS_GRID">
+					<ga-card-grid
+						[totalItems]="pagination?.totalItems"
+						[settings]="settingsSmartTable"
+						[source]="users"
+						(scroll)="onScroll()"
+						(onSelectedItem)="selectUser($event)"
+					></ga-card-grid>
+				</ng-template>
+
+				<!-- Optional: Default case if no specific layout matches -->
+				<ng-template *ngSwitchDefault>
+					<p>{{ 'SETTINGS_MENU.NO_LAYOUT' | translate }}</p>
+				</ng-template>
+			</ng-container>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
 
-<ng-template #actionButtons let-selectedItem="selectedItem">
+<!-- Actions -->
+<ng-template #actionButtons>
 	<ng-template ngxPermissionsOnly="ORG_USERS_EDIT">
 		<div class="actions">
 			<button
 				nbButton
-				[disabled]="!selectedItem && disableButton"
+				[disabled]="disableButton"
 				status="basic"
 				class="action secondary"
 				size="small"
 				underConstruction
 			>
-				<nb-icon class="mr-1" icon="eye-outline"></nb-icon>{{ 'BUTTONS.VIEW' | translate }}
+				<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
+				{{ 'BUTTONS.VIEW' | translate }}
 			</button>
 			<button
 				nbButton
-				[disabled]="!selectedItem && disableButton"
+				[disabled]="disableButton"
 				(click)="edit(selectedItem)"
 				status="basic"
 				class="action primary"
 				size="small"
 			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>{{ 'BUTTONS.EDIT' | translate }}
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
 			<button
 				nbButton
-				[disabled]="(!selectedItem && disableButton) || isEmployee()"
+				[disabled]="disableButton || isEmployee()"
 				(click)="convertUserToEmployee()"
 				status="basic"
 				class="action primary"
 				size="small"
 			>
-				<nb-icon class="mr-1" icon="person"></nb-icon> {{ 'BUTTONS.CONVERT_TO_EMPLOYEE' | translate }}
+				<nb-icon class="mr-1" icon="person"></nb-icon>
+				{{ 'BUTTONS.CONVERT_TO_EMPLOYEE' | translate }}
 			</button>
 			<button
 				nbButton
-				[disabled]="!selectedItem && disableButton"
+				[disabled]="disableButton"
 				(click)="removeUserFromOrganization(selectedUser, selectedItem)"
 				status="basic"
 				class="action"
@@ -120,6 +142,8 @@
 		</div>
 	</ng-template>
 </ng-template>
+
+<!-- Invite -->
 <ng-template #visible>
 	<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
 		<button
@@ -130,15 +154,28 @@
 			class="action info"
 			size="small"
 		>
-			<nb-icon icon="email-outline"></nb-icon>{{ 'BUTTONS.INVITE' | translate }}
+			<nb-icon icon="email-outline"></nb-icon>
+			{{ 'BUTTONS.INVITE' | translate }}
 		</button>
 	</ng-template>
-	<button nbButton status="success" size="small" (click)="add()" class="action">
+	<button
+		nbButton
+		status="success"
+		size="small"
+		class="action"
+		(click)="add()"
+	>
 		<nb-icon icon="plus-outline"></nb-icon>
 		{{ 'BUTTONS.ADD_NEW' | translate }}
 	</button>
 	<ng-template ngxPermissionsOnly="TENANT_ADD_EXISTING_USER">
-		<button (click)="showAddCard = !showAddCard" nbButton status="warning" class="action" size="small">
+		<button
+			(click)="toggleAddCard()"
+			nbButton
+			status="warning"
+			class="action"
+			size="small"
+		>
 			<nb-icon icon="plus-outline"></nb-icon>
 			{{ 'BUTTONS.ADD_EXISTING' | translate }}
 		</button>
