@@ -45,7 +45,8 @@ export class TagTypeController extends CrudController<TagType> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get('count')
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TAG_TYPES_VIEW)
+	@Get('/count')
 	async getCount(@Query() options: FindOptionsWhere<TagType>): Promise<number> {
 		return await this.tagTypesService.countBy(options);
 	}
@@ -68,8 +69,11 @@ export class TagTypeController extends CrudController<TagType> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get()
-	async findAll(@Query(new ValidationPipe()) options: PaginationParams<TagType>): Promise<IPagination<TagType>> {
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TAG_TYPES_VIEW)
+	@Get('/')
+	async findAll(
+		@Query(new ValidationPipe()) options: PaginationParams<TagType>
+	): Promise<IPagination<TagType>> {
 		return await this.tagTypesService.findAll(options);
 	}
 
@@ -80,12 +84,11 @@ export class TagTypeController extends CrudController<TagType> {
 	 * @returns
 	 */
 	@HttpCode(HttpStatus.CREATED)
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAG_TYPES_ADD)
-	@Post()
+	@Post('/')
 	@UseValidationPipe({ whitelist: true })
 	async create(@Body() entity: CreateTagTypeDTO): Promise<ITagType> {
-		return await this.tagTypesService.create(entity);
+		return this.tagTypesService.create(entity);
 	}
 
 	/**
@@ -96,14 +99,13 @@ export class TagTypeController extends CrudController<TagType> {
 	 * @returns
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAG_TYPES_EDIT)
-	@Put(':id')
+	@Put('/:id')
 	@UseValidationPipe({ whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: UpdateTagTypeDTO
 	): Promise<ITagType | UpdateResult> {
-		return await this.tagTypesService.update(id, entity);
+		return this.tagTypesService.update(id, entity);
 	}
 }

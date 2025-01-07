@@ -1,13 +1,10 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { PartialType } from '@nestjs/swagger';
 import { ITagTypeUpdateInput } from '@gauzy/contracts';
-import { Tag, TenantOrganizationBaseDTO } from '../../core';
+import { CreateTagTypeDTO } from './create-tag-type.dto';
 
-export class UpdateTagTypeDTO extends TenantOrganizationBaseDTO implements ITagTypeUpdateInput {
-	@ApiProperty({ type: () => String })
-	@IsString()
-	readonly type: string;
-
-	@ApiPropertyOptional({ type: () => Array, isArray: true })
-	readonly tags: Tag[];
-}
+/**
+ * DTO for updating a Tag Type
+ */
+export class UpdateTagTypeDTO
+    extends PartialType(CreateTagTypeDTO)
+        implements ITagTypeUpdateInput {}

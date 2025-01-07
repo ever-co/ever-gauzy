@@ -1,10 +1,16 @@
 import { IRelationalOrganizationTeam } from './organization-team.model';
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 
+/**
+ * Interface for entities that can have tags.
+ */
 export interface ITaggable {
 	tags?: ITag[];
 }
 
+/**
+ * Interface representing a Tag entity.
+ */
 export interface ITag extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationTeam {
 	name: string;
 	color: string;
@@ -16,37 +22,48 @@ export interface ITag extends IBasePerTenantAndOrganizationEntityModel, IRelatio
 	tagType?: ITagType;
 }
 
-export interface ITagFindInput extends IBasePerTenantAndOrganizationEntityModel, Pick<ITag, 'organizationTeamId'> {
-	name?: string;
-	color?: string;
-	textColor?: string;
-	description?: string;
-	isSystem?: boolean;
-	tagTypeId?: ID;
-}
+/**
+ * Input interface for finding tags with optional filters.
+ */
+export interface ITagFindInput extends IBasePerTenantAndOrganizationEntityModel, Partial<
+	Pick<ITag, 'name' | 'color' | 'textColor' | 'description' | 'isSystem' | 'tagTypeId' | 'organizationTeamId'>
+> {}
 
-export interface ITagCreateInput extends ITag {}
+/**
+ * Input interface for creating a tag.
+ */
+export interface ITagCreateInput extends Omit<ITag, 'createdAt' | 'updatedAt'> {}
 
-export interface ITagType extends IBasePerTenantAndOrganizationEntityModel {
+/**
+ * Input interface for updating a tag.
+ */
+export interface ITagUpdateInput extends Partial<ITagCreateInput> {}
+
+/**
+ * Interface representing a Tag Type entity.
+ */
+export interface ITagType extends IBasePerTenantAndOrganizationEntityModel, ITaggable {
 	type: string;
-	tags?: ITag[];
 }
 
-export interface ITagUpdateInput extends Partial<ITagCreateInput> {
-	id?: ID;
-}
+/**
+ * Input interface for creating a tag type.
+ */
+export interface ITagTypeCreateInput extends Omit<ITagType, 'createdAt' | 'updatedAt'> {}
 
-export interface ITagTypeCreateInput extends ITagType {}
+/**
+ * Input interface for updating a tag type.
+ */
 export interface ITagTypeUpdateInput extends Partial<ITagTypeCreateInput> {}
 
 /**
- * Default task tags
+ * Enum for default task tags.
  */
 export enum TagEnum {
 	MOBILE = 'Mobile',
 	FRONTEND = 'Frontend',
 	BACKEND = 'Backend',
-	WEB = 'WEB',
+	WEB = 'Web',
 	UI_UX = 'UI/UX',
 	FULL_STACK = 'Full-Stack',
 	TABLET = 'Tablet',
