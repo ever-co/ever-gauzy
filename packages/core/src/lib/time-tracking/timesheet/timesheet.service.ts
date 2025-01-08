@@ -84,15 +84,7 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	 * @returns
 	 */
 	async getFilterTimesheetQuery(qb: SelectQueryBuilder<Timesheet>, request: IGetTimesheetInput) {
-		let {
-			organizationId,
-			startDate,
-			endDate,
-			onlyMe: isOnlyMeSelected,
-			employeeIds = [],
-			status = [],
-			taskIds = []
-		} = request;
+		let { organizationId, startDate, endDate, onlyMe: isOnlyMeSelected, employeeIds = [], status = [] } = request;
 
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId; // Retrieve the tenant ID from the request
 		const user = RequestContext.currentUser(); // Retrieve the current user
@@ -121,7 +113,6 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 								status: In(status.filter((s) => Object.values(TimesheetStatus).includes(s)))
 						  }
 						: {}),
-					...(taskIds.length > 0 ? { taskId: In(taskIds) } : {}),
 					...(employeeIds.length > 0 ? { employeeId: In(employeeIds) } : {})
 				});
 			})
