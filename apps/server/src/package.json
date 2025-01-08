@@ -215,7 +215,7 @@
 		"@aws-sdk/client-s3": "^3.717.0",
 		"@aws-sdk/s3-request-presigner": "^3.717.0",
 		"@faker-js/faker": "8.0.0-alpha.0",
-		"@fastify/swagger": "^6.0.0",
+		"@fastify/swagger": "^9.4.0",
 		"@godaddy/terminus": "^4.12.1",
 		"@grpc/grpc-js": "^1.7.3",
 		"@honeycombio/opentelemetry-node": "0.6.1",

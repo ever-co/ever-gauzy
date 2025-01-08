@@ -133,7 +133,7 @@
 		"@datorama/akita-ngdevtools": "^7.0.0",
 		"@datorama/akita": "^7.1.1",
 		"@electron/remote": "^2.0.8",
-		"@fastify/swagger": "^6.0.0",
+		"@fastify/swagger": "^9.4.0",
 		"@gauzy/auth": "file:../../../dist/packages/auth",
 		"@gauzy/utils": "file:../../../dist/packages/utils",
 		"@gauzy/config": "file:../../../dist/packages/config",
