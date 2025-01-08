@@ -10,7 +10,6 @@
 		"noFallthroughCasesInSwitch": true,
 		"baseUrl": ".",
 		"paths": {
-			"@fortawesome/angular-fontawesome": ["./node_modules/@fortawesome/angular-fontawesome"],
 			"@fullcalendar/*": ["./node_modules/@fullcalendar/*"],
 			"@ngx-translate/*": ["./node_modules/@ngx-translate/*"],
 			"ngx-draggable-dom": ["./node_modules/ngx-draggable-dom"],

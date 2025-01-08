@@ -391,6 +391,7 @@
 		"@angular/platform-browser-dynamic": "18.2.12",
 		"@angular/router": "18.2.12",
 		"@angular/service-worker": "18.2.12",
+		"@fortawesome/angular-fontawesome": "^0.15.0",
 		"@nebular/auth": "^14.0.2",
 		"@nebular/bootstrap": "^9.1.0-rc.6",
 		"@nebular/eva-icons": "^14.0.2",
