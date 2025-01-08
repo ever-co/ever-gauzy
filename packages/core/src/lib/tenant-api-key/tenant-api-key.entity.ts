@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsNotEmpty, IsString } from 'class-validator';
@@ -22,16 +22,4 @@ export class TenantApiKey extends TenantBaseEntity implements ITenantApiKey {
 	@IsString()
 	@MultiORMColumn()
 	apiSecret: string;
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsNotEmpty()
-	@IsString()
-	@MultiORMColumn({ nullable: true })
-	openAiSecretKey?: string;
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsNotEmpty()
-	@IsString()
-	@MultiORMColumn({ nullable: true })
-	openAiOrganizationId?: string;
 }
