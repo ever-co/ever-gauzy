@@ -142,7 +142,7 @@
 	},
 	"dependencies": {
 		"@datorama/akita-ngdevtools": "^7.0.0",
-		"@datorama/akita": "^7.1.1",
+		"@datorama/akita": "^8.0.1",
 		"@electron/remote": "^2.0.8",
 		"@gauzy/auth": "file:../../../dist/packages/auth",
 		"@gauzy/common": "file:../../../dist/packages/common",
