@@ -1,2 +1,2 @@
-export * from './mikro-orm-tanant-api-key.repository';
-export * from './type-orm-tanant-api-key.repository';
+export * from './mikro-orm-tenant-api-key.repository';
+export * from './type-orm-tenant-api-key.repository';

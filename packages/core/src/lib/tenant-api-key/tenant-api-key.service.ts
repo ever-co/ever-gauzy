@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
 import { TenantAwareCrudService } from '../core/crud';
 import { TenantApiKey } from './tenant-api-key.entity';
-import { MikroOrmTenantApiKeyRepository } from './repository/mikro-orm-tanant-api-key.repository';
-import { TypeOrmTenantApiKeyRepository } from './repository/type-orm-tanant-api-key.repository';
+import { MikroOrmTenantApiKeyRepository } from './repository/mikro-orm-tenant-api-key.repository';
+import { TypeOrmTenantApiKeyRepository } from './repository/type-orm-tenant-api-key.repository';
 
 @Injectable()
 export class TenantApiKeyService extends TenantAwareCrudService<TenantApiKey> {
