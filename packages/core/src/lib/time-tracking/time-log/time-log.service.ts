@@ -1019,7 +1019,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns The modified query.
 	 */
 	getFilterTimeLogQuery(query: SelectQueryBuilder<TimeLog>, request: IGetTimeLogReportInput, ignoreSlots = false) {
-		const { organizationId, projectIds = [], teamIds = [] } = request;
+		const { organizationId, projectIds = [], teamIds = [], taskIds = [] } = request;
 		let { employeeIds = [] } = request;
 
 		const tenantId = RequestContext.currentTenantId();
@@ -1061,6 +1061,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Filter by organization employee IDs if used in the request
 		if (isNotEmpty(employeeIds)) {
 			query.andWhere(p(`"${query.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
+		}
+
+		// Filter by organization task IDs if used in the request
+		if (isNotEmpty(taskIds)) {
+			query.andWhere(p(`"${query.alias}"."taskId" IN (:...taskIds)`), { taskIds });
 		}
 
 		// Filter by organization project IDs if used in the request
@@ -1134,14 +1139,20 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 	/**
 	 * Checks if the time log will fit the weekly limit taking into account the items that will be removed by conflicts
-	 * 
+	 *
 	 * @param employee - The employee to check the weekly limit for
 	 * @param startedAt - The start date of the time log
 	 * @param stoppedAt - The end date of the time log
 	 * @param conflicts - The conflicts that will be removed from the weekly limit
 	 * @param previousTime - The time that will be removed from the weekly limit by previous time logs
 	 */
-	async checkWeeklyLimitWithConflicts(employee: IEmployee, startedAt: Date, stoppedAt: Date, conflicts: ITimeLog[], previousTime = 0) {
+	async checkWeeklyLimitWithConflicts(
+		employee: IEmployee,
+		startedAt: Date,
+		stoppedAt: Date,
+		conflicts: ITimeLog[],
+		previousTime = 0
+	) {
 		// Calculate the amount of time that will be removed by conflicts
 		let timeToRemove = 0;
 		if (conflicts?.length) {
@@ -1150,15 +1161,25 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				// Entire time log is overlapped
 				if (timeLog.startedAt >= startedAt && timeLog.stoppedAt <= stoppedAt) {
 					timeToRemove += timeLog.duration;
-				} else if (timeLog.startedAt < startedAt && timeLog.stoppedAt > startedAt && timeLog.stoppedAt <= stoppedAt) {
+				} else if (
+					timeLog.startedAt < startedAt &&
+					timeLog.stoppedAt > startedAt &&
+					timeLog.stoppedAt <= stoppedAt
+				) {
 					// Partial time log is overlapped by the left side
 					timeToRemove += moment(timeLog.stoppedAt).diff(startedAt, 'seconds');
-				} else if (timeLog.startedAt >= startedAt && timeLog.startedAt < stoppedAt && timeLog.stoppedAt > stoppedAt) {
+				} else if (
+					timeLog.startedAt >= startedAt &&
+					timeLog.startedAt < stoppedAt &&
+					timeLog.stoppedAt > stoppedAt
+				) {
 					// Partial time log is overlapped by the right side
 					timeToRemove += moment(stoppedAt).diff(timeLog.startedAt, 'seconds');
 				} else {
 					// Time log isn't overlapped
-					this.logger.warn(`Time log ${timeLog.id} isn't overlapped with range [${timeLog.startedAt}, ${timeLog.stoppedAt}]`);
+					this.logger.warn(
+						`Time log ${timeLog.id} isn't overlapped with range [${timeLog.startedAt}, ${timeLog.stoppedAt}]`
+					);
 				}
 			}
 			this.logger.log(`Time to remove from weekly limit due to conflicts: ${timeToRemove} seconds`);
