@@ -5,7 +5,7 @@ import { IsNotEmpty, IsString } from 'class-validator';
 import { ITenantApiKey } from '@gauzy/contracts';
 import { TenantBaseEntity } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from '../core/decorators/entity';
-import { MikroOrmTenantApiKeyRepository } from './repository/mikro-orm-tanant-api-key.repository';
+import { MikroOrmTenantApiKeyRepository } from './repository/mikro-orm-tenant-api-key.repository';
 
 @MultiORMEntity('tenant_api_key', {})
 export class TenantApiKey extends TenantBaseEntity implements ITenantApiKey {
