@@ -303,25 +303,15 @@
   resolved "https://registry.yarnpkg.com/@angular-eslint/builder/-/builder-18.4.2.tgz#28a4833919ede3db0a1d905fd903485588282115"
   integrity sha512-eyI9sreaM9ukA24PCJoSqsjCYOiBf3TZ/Q1WY8PG0SwQWc03qJNqPl5K+/Ptmsc1RtoDCLCU6uaOBFPhb9lDxw==
 
-"@angular-eslint/bundled-angular-compiler@18.0.1":
-  version "18.0.1"
-  resolved "https://registry.yarnpkg.com/@angular-eslint/bundled-angular-compiler/-/bundled-angular-compiler-18.0.1.tgz#94c53b8193de1d630c9f45af2acbcd64757b6b2e"
-  integrity sha512-lr4Ysoo28FBOKcJFQUGTMpbWDcak+gyuYvyggp37ERvazE6EDomPFxzEHNqVT9EI9sZ+GDBOoPR+EdFh0ALGNw==
-
 "@angular-eslint/bundled-angular-compiler@18.4.2":
   version "18.4.2"
   resolved "https://registry.yarnpkg.com/@angular-eslint/bundled-angular-compiler/-/bundled-angular-compiler-18.4.2.tgz#3d9827d6aea627e77a93b223af1dc56a3ea5e258"
   integrity sha512-K7pqmZI3Dl75zlLexyaM7bw4xdgk/3bhP1B6uqDKML9+vIIvccCR2bGvqFurqeFbJlMykzb3H4jytT+HpqV4tg==
 
-"@angular-eslint/eslint-plugin-template@18.0.1":
-  version "18.0.1"
-  resolved "https://registry.yarnpkg.com/@angular-eslint/eslint-plugin-template/-/eslint-plugin-template-18.0.1.tgz#ec740a2381f9745f8bca57b4123370434ffb00c0"
-  integrity sha512-u/eov/CFBb8l35D8dW78Dx5fBLd8FZFibKN9XQknhzXnDMpISuUOMny5g5/wvYYjqLgqEySXMiHKEAxEup7xtA==
-  dependencies:
-    "@angular-eslint/bundled-angular-compiler" "18.0.1"
-    "@angular-eslint/utils" "18.0.1"
-    aria-query "5.3.0"
-    axobject-query "4.0.0"
+"@angular-eslint/bundled-angular-compiler@18.4.3":
+  version "18.4.3"
+  resolved "https://registry.yarnpkg.com/@angular-eslint/bundled-angular-compiler/-/bundled-angular-compiler-18.4.3.tgz#0810f76045b854782e6370953cf5324112a65f80"
+  integrity sha512-zdrA8mR98X+U4YgHzUKmivRU+PxzwOL/j8G7eTOvBuq8GPzsP+hvak+tyxlgeGm9HsvpFj9ERHLtJ0xDUPs8fg==
 
 "@angular-eslint/eslint-plugin-template@18.4.2":
   version "18.4.2"
@@ -333,13 +323,15 @@
     aria-query "5.3.2"
     axobject-query "4.1.0"
 
-"@angular-eslint/eslint-plugin@18.0.1":
-  version "18.0.1"
-  resolved "https://registry.yarnpkg.com/@angular-eslint/eslint-plugin/-/eslint-plugin-18.0.1.tgz#10e8b6da23628513c88a48ed976e3942c233d938"
-  integrity sha512-pS3SYLa9DA+ENklGxEUlcw6/xCxgDk9fgjyaheuSjDxL3TIh1pTa4V2TptODdcPh7XCYXiVmy+e/w79mXlGzOw==
+"@angular-eslint/eslint-plugin-template@18.4.3":
+  version "18.4.3"
+  resolved "https://registry.yarnpkg.com/@angular-eslint/eslint-plugin-template/-/eslint-plugin-template-18.4.3.tgz#3e9820735f087afad193361e3081fad54dbf4e51"
+  integrity sha512-ijGlX2N01ayMXTpeQivOA31AszO8OEbu9ZQUCxnu9AyMMhxyi2q50bujRChAvN9YXQfdQtbxuajxV6+aiWb5BQ==
   dependencies:
-    "@angular-eslint/bundled-angular-compiler" "18.0.1"
-    "@angular-eslint/utils" "18.0.1"
+    "@angular-eslint/bundled-angular-compiler" "18.4.3"
+    "@angular-eslint/utils" "18.4.3"
+    aria-query "5.3.2"
+    axobject-query "4.1.0"
 
 "@angular-eslint/eslint-plugin@18.4.2":
   version "18.4.2"
@@ -348,6 +340,14 @@
   dependencies:
     "@angular-eslint/bundled-angular-compiler" "18.4.2"
     "@angular-eslint/utils" "18.4.2"
+
+"@angular-eslint/eslint-plugin@18.4.3":
+  version "18.4.3"
+  resolved "https://registry.yarnpkg.com/@angular-eslint/eslint-plugin/-/eslint-plugin-18.4.3.tgz#7618bc6056086a98ed4d888f31185fc62e6be2d1"
+  integrity sha512-AyJbupiwTBR81P6T59v+aULEnPpZBCBxL2S5QFWfAhNCwWhcof4GihvdK2Z87yhvzDGeAzUFSWl/beJfeFa+PA==
+  dependencies:
+    "@angular-eslint/bundled-angular-compiler" "18.4.3"
+    "@angular-eslint/utils" "18.4.3"
 
 "@angular-eslint/schematics@18.4.2":
   version "18.4.2"
@@ -360,14 +360,6 @@
     semver "7.6.3"
     strip-json-comments "3.1.1"
 
-"@angular-eslint/template-parser@18.0.1":
-  version "18.0.1"
-  resolved "https://registry.yarnpkg.com/@angular-eslint/template-parser/-/template-parser-18.0.1.tgz#d5e7f89f71913a670ae2a603584d77d1f9b3a95b"
-  integrity sha512-22fKzkWo9Ts8aY/WHL1A6seS2tpltgRRXVfnZnnqvQRyRiuPnx1FC0ly7+QPZkThh8vdLwxU+BvtLq9Uiqh9OQ==
-  dependencies:
-    "@angular-eslint/bundled-angular-compiler" "18.0.1"
-    eslint-scope "^8.0.0"
-
 "@angular-eslint/template-parser@18.4.2":
   version "18.4.2"
   resolved "https://registry.yarnpkg.com/@angular-eslint/template-parser/-/template-parser-18.4.2.tgz#9e7d75b53ac8c50bfffeb01dadb297846ebbbed8"
@@ -376,12 +368,13 @@
     "@angular-eslint/bundled-angular-compiler" "18.4.2"
     eslint-scope "^8.0.2"
 
-"@angular-eslint/utils@18.0.1":
-  version "18.0.1"
-  resolved "https://registry.yarnpkg.com/@angular-eslint/utils/-/utils-18.0.1.tgz#8033830e4faec7f5fb462456868da0e4e4c89cab"
-  integrity sha512-Q9lCySqg+9h2cz08+SoWj48cY1i04tL1k3bsQJmF2TsylAw2mSsNGX2X3h9WkdxY7sUoY0mP7MVW1iU54Gobcg==
+"@angular-eslint/template-parser@18.4.3":
+  version "18.4.3"
+  resolved "https://registry.yarnpkg.com/@angular-eslint/template-parser/-/template-parser-18.4.3.tgz#2c6c396563a278a6f2dfdb3fbe9d4310ad0c6dc6"
+  integrity sha512-JZMPtEB8yNip3kg4WDEWQyObSo2Hwf+opq2ElYuwe85GQkGhfJSJ2CQYo4FSwd+c5MUQAqESNRg9QqGYauDsiw==
   dependencies:
-    "@angular-eslint/bundled-angular-compiler" "18.0.1"
+    "@angular-eslint/bundled-angular-compiler" "18.4.3"
+    eslint-scope "^8.0.2"
 
 "@angular-eslint/utils@18.4.2":
   version "18.4.2"
@@ -389,6 +382,13 @@
   integrity sha512-+c0r33QSkAnGmu/DYAPfzJJk5QDX4TP2d6EFtsenrufqRkZqrOcK4Q5t61J92Ukkr03XoqTzTDSBjlwAfM56Rw==
   dependencies:
     "@angular-eslint/bundled-angular-compiler" "18.4.2"
+
+"@angular-eslint/utils@18.4.3":
+  version "18.4.3"
+  resolved "https://registry.yarnpkg.com/@angular-eslint/utils/-/utils-18.4.3.tgz#1ad0558b21aaa987ce69604a7624d4b213e84d8c"
+  integrity sha512-w0bJ9+ELAEiPBSTPPm9bvDngfu1d8JbzUhvs2vU+z7sIz/HMwUZT5S4naypj2kNN0gZYGYrW0lt+HIbW87zTAQ==
+  dependencies:
+    "@angular-eslint/bundled-angular-compiler" "18.4.3"
 
 "@angular-slider/ngx-slider@^18.0.0":
   version "18.0.0"
@@ -14436,13 +14436,6 @@ argv@0.0.2:
   resolved "https://registry.yarnpkg.com/argv/-/argv-0.0.2.tgz#ecbd16f8949b157183711b1bda334f37840185ab"
   integrity sha512-dEamhpPEwRUBpLNHeuCm/v+g0anFByHahxodVO/BbAarHVBBg2MccCwf9K+o1Pof+2btdnkJelYVUWjW/VrATw==
 
-aria-query@5.3.0:
-  version "5.3.0"
-  resolved "https://registry.yarnpkg.com/aria-query/-/aria-query-5.3.0.tgz#650c569e41ad90b51b3d7df5e5eed1c7549c103e"
-  integrity sha512-b0P0sZPKtyu8HkeRAfCq0IfURZK+SuwMjY1UXGBU27wpAiTwQAIlq56IbIO+ytk/JjS1fMR14ee5WBBfKi5J6A==
-  dependencies:
-    dequal "^2.0.3"
-
 aria-query@5.3.2:
   version "5.3.2"
   resolved "https://registry.yarnpkg.com/aria-query/-/aria-query-5.3.2.tgz#93f81a43480e33a338f19163a3d10a50c01dcd59"
@@ -14834,13 +14827,6 @@ axios@^1.1.3, axios@^1.6.0, axios@^1.7.4:
     follow-redirects "^1.15.6"
     form-data "^4.0.0"
     proxy-from-env "^1.1.0"
-
-axobject-query@4.0.0:
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/axobject-query/-/axobject-query-4.0.0.tgz#04a4c90dce33cc5d606c76d6216e3b250ff70dab"
-  integrity sha512-+60uv1hiVFhHZeO+Lz0RYzsVHy5Wr1ayX0mwda9KPDVLNJgZ1T9Ny7VmFbLDzxsH0D87I86vgj3gFrjTJUYznw==
-  dependencies:
-    dequal "^2.0.3"
 
 axobject-query@4.1.0:
   version "4.1.0"
@@ -19285,11 +19271,6 @@ deps-sort@^2.0.0, deps-sort@^2.0.1:
     subarg "^1.0.0"
     through2 "^2.0.0"
 
-dequal@^2.0.3:
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/dequal/-/dequal-2.0.3.tgz#2644214f1997d39ed0ee0ece72335490a7ac67be"
-  integrity sha512-0je+qPKHEMohvfRTCEo3CrPG6cAzAYgmzKyxRiYSSDkS6eGJdyVJm7WaYA5ECaAD9wLB2T4EEeymA5aFVcYXCA==
-
 des.js@^1.0.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/des.js/-/des.js-1.1.0.tgz#1d37f5766f3bbff4ee9638e871a8768c173b81da"
@@ -20599,7 +20580,7 @@ eslint-scope@5.1.1:
     esrecurse "^4.3.0"
     estraverse "^4.1.1"
 
-eslint-scope@^8.0.0, eslint-scope@^8.0.2:
+eslint-scope@^8.0.2:
   version "8.2.0"
   resolved "https://registry.yarnpkg.com/eslint-scope/-/eslint-scope-8.2.0.tgz#377aa6f1cb5dc7592cfd0b7f892fd0cf352ce442"
   integrity sha512-PHlWUfG6lvPc3yvP5A4PNyBL1W8fkDUccmI21JUu/+GKZBoH/W5u6usENXUrWFRsyoW5ACUjFGgAFQp5gUlb/A==
