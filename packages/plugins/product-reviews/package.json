@@ -32,9 +32,9 @@
 		"@nestjs/common": "^10.4.15",
 		"@nestjs/swagger": "^8.1.0",
 		"@nestjs/typeorm": "^10.0.2",
-		"apollo-server-core": "^3.10.1",
 		"chalk": "^4.1.0",
 		"class-validator": "^0.14.0",
+		"graphql-tag": "^2.12.6",
 		"tslib": "^2.6.2",
 		"typeorm": "^0.3.20"
 	},
