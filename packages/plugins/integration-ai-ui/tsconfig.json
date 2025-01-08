@@ -12,12 +12,6 @@
 		"paths": {
 			"@gauzy/ui-core/*": [
 				"./../../../dist/packages/ui-core/*/index.d.ts"
-			],
-			"@ngx-translate/*": [
-				"./node_modules/@ngx-translate/*"
-			],
-			"ngx-permissions": [
-				"./node_modules/ngx-permissions"
 			]
 		}
 	},

@@ -10,13 +10,12 @@
 		"noFallthroughCasesInSwitch": true,
 		"baseUrl": ".",
 		"paths": {
-			"@fullcalendar/*": ["./node_modules/@fullcalendar/*"],
-			"@ngx-translate/*": ["./node_modules/@ngx-translate/*"],
-			"ngx-draggable-dom": ["./node_modules/ngx-draggable-dom"],
-			"ngx-permissions": ["./node_modules/ngx-permissions"],
-			"ngx-infinite-scroll": ["./node_modules/ngx-infinite-scroll"],
-			"@gauzy/ui-core/*": ["./*/src/index.ts"],
-			"@gauzy/ui-config": ["./../../dist/packages/ui-config"]
+			"@gauzy/ui-core/*": [
+				"./*/src/index.ts"
+			],
+			"@gauzy/ui-config": [
+				"./../../dist/packages/ui-config"
+			]
 		}
 	},
 	"files": [],
