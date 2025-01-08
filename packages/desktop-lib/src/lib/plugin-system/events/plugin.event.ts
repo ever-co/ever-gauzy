@@ -1,5 +1,5 @@
 import { ipcMain, IpcMainEvent } from 'electron';
-import * as logger from 'electron-log';
+import { logger } from '@gauzy/desktop-core';
 import { PluginManager } from '../data-access/plugin-manager';
 import { IPluginManager, PluginChannel, PluginHandlerChannel } from '../shared';
 import { PluginEventManager } from './plugin-event.manager';

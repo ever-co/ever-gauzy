@@ -77,10 +77,16 @@ export enum PermissionsEnum {
 	ORG_CANDIDATES_FEEDBACK_EDIT = 'ORG_CANDIDATES_FEEDBACK_EDIT',
 	ORG_INVENTORY_PRODUCT_EDIT = 'ORG_INVENTORY_PRODUCT_EDIT',
 	ORG_INVENTORY_VIEW = 'ORG_INVENTORY_VIEW',
+	/** Tags CRUD Permissions */
 	ORG_TAGS_ADD = 'ORG_TAGS_ADD',
 	ORG_TAGS_VIEW = 'ORG_TAGS_VIEW',
 	ORG_TAGS_EDIT = 'ORG_TAGS_EDIT',
 	ORG_TAGS_DELETE = 'ORG_TAGS_DELETE',
+	/** Tag Types CRUD Permissions */
+	ORG_TAG_TYPES_ADD = 'ORG_TAG_TYPES_ADD',
+	ORG_TAG_TYPES_VIEW = 'ORG_TAG_TYPES_VIEW',
+	ORG_TAG_TYPES_EDIT = 'ORG_TAG_TYPES_EDIT',
+	ORG_TAG_TYPES_DELETE = 'ORG_TAG_TYPES_DELETE',
 	ORG_USERS_VIEW = 'ORG_USERS_VIEW',
 	ORG_USERS_EDIT = 'ORG_USERS_EDIT',
 	ORG_INVITE_VIEW = 'ORG_INVITE_VIEW',
@@ -369,6 +375,18 @@ export const PermissionGroups = {
 		PermissionsEnum.EQUIPMENT_SHARING_POLICY_EDIT,
 		PermissionsEnum.EQUIPMENT_SHARING_POLICY_DELETE,
 		/** Equipment Sharing Policy Permissions End */
+		/**Tag Permissions Start */
+		PermissionsEnum.ORG_TAGS_ADD,
+		PermissionsEnum.ORG_TAGS_VIEW,
+		PermissionsEnum.ORG_TAGS_EDIT,
+		PermissionsEnum.ORG_TAGS_DELETE,
+		/** Tag Permissions End */
+		/** Tag Type Permissions Start */
+		PermissionsEnum.ORG_TAG_TYPES_ADD,
+		PermissionsEnum.ORG_TAG_TYPES_VIEW,
+		PermissionsEnum.ORG_TAG_TYPES_EDIT,
+		PermissionsEnum.ORG_TAG_TYPES_DELETE,
+		/** Tag Type Permissions End */
 		PermissionsEnum.ORG_PRODUCT_TYPES_VIEW,
 		PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW,
 		PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT,

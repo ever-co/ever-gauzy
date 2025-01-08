@@ -85,7 +85,6 @@
 		"@sentry/utils": "^7.90.0",
 		"@swimlane/ngx-charts": "^20.1.0",
 		"angular2-smart-table": "^3.4.0",
-		"angular2-toaster": "^11.0.1",
 		"bootstrap": "^4.3.1",
 		"brace": "^0.11.1",
 		"camelcase": "^6.3.0",

@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Brackets, FindOptionsRelations, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, FindOptionsRelations, SelectQueryBuilder } from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import { FileStorageProviderEnum, IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
 import { getConfig, isPostgres } from '@gauzy/config';
@@ -20,25 +20,25 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	/**
 	 * GET tags by tenant or organization level
 	 *
-	 * @param input
-	 * @param relations
-	 * @returns
+	 * @param input - Filter criteria for finding tags.
+	 * @param relations - Optional relations to include in the query.
+	 * @returns A pagination object containing the filtered tags and total count.
 	 */
 	async findTagsByLevel(input: ITagFindInput, relations: string[] = []): Promise<IPagination<ITag>> {
 		const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
-		/**
-		 * Defines a special criteria to find specific relations.
-		 */
-		query.setFindOptions({
-			...(relations ? { relations: relations } : {})
-		});
-		/**
-		 * Additionally you can add parameters used in where expression.
-		 */
-		query.where((qb: SelectQueryBuilder<Tag>) => {
-			this.getFilterTagQuery(qb, input);
-		});
+
+		// Add relations if specified
+		if (relations.length) {
+			query.setFindOptions({ relations });
+		}
+
+		// Apply filter criteria
+		this.getFilterTagQuery(query, input);
+
+		// Fetch the filtered data and count
 		const [items, total] = await query.getManyAndCount();
+
+		// Return the paginated result
 		return { items, total };
 	}
 
@@ -166,64 +166,44 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	}
 
 	/**
-	 * Get filter query for tags
+	 * Builds a query to filter tags based on provided criteria.
 	 *
-	 * @param query
-	 * @param request
-	 * @returns
+	 * @param query - The query builder instance for the Tag entity.
+	 * @param request - The input criteria for filtering tags.
+	 * @returns The modified query builder instance.
 	 */
 	getFilterTagQuery(query: SelectQueryBuilder<Tag>, request: ITagFindInput): SelectQueryBuilder<Tag> {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, organizationTeamId, name, color, description } = request;
+
 		const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
+		// Mandatory tenant filter
+		query.andWhere(`${query.alias}.tenantId = :tenantId`, { tenantId });
+
+		// Optional organization filter
 		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+			new Brackets((qb) => {
+				qb.where(`${query.alias}.organizationId IS NULL`).orWhere(`${query.alias}.organizationId = :organizationId`, { organizationId });
 			})
 		);
-		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.where([
-					{
-						organizationId: IsNull()
-					},
-					{
-						organizationId
-					}
-				]);
-			})
-		);
-		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => {
-				if (isNotEmpty(organizationTeamId)) {
-					qb.andWhere(p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), {
-						organizationTeamId
-					});
-				}
-			})
-		);
-		query.andWhere(p(`"${query.alias}"."isSystem" = :isSystem`), {
-			isSystem: false
+
+		// Optional organization team filter
+		if (isNotEmpty(organizationTeamId)) {
+			query.andWhere(`${query.alias}.organizationTeamId = :organizationTeamId`, { organizationTeamId });
+		}
+
+		// System tag filter (non-system tags only)
+		query.andWhere(`${query.alias}.isSystem = :isSystem`, { isSystem: false });
+
+		// Dynamic filters for name, color, and description
+		const dynamicFilters = { name, color, description };
+		Object.entries(dynamicFilters).forEach(([key, value]) => {
+			if (isNotEmpty(value)) {
+				query.andWhere(`${query.alias}.${key} ${likeOperator} :${key}`, { [key]: `%${value}%` });
+			}
 		});
-		/**
-		 * Additionally you can add parameters used in where expression.
-		 */
-		if (isNotEmpty(name)) {
-			query.andWhere(p(`"${query.alias}"."name" ${likeOperator} :name`), {
-				name: `%${name}%`
-			});
-		}
-		if (isNotEmpty(color)) {
-			query.andWhere(p(`"${query.alias}"."color" ${likeOperator} :color`), {
-				color: `%${color}%`
-			});
-		}
-		if (isNotEmpty(description)) {
-			query.andWhere(p(`"${query.alias}"."description" ${likeOperator} :description`), {
-				description: `%${description}%`
-			});
-		}
+
 		return query;
 	}
 }
