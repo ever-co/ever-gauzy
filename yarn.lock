@@ -4883,6 +4883,31 @@
     fastify-plugin "^3.0.0"
     vary "^1.1.2"
 
+"@fastify/static@^5.0.0":
+  version "5.0.2"
+  resolved "https://registry.yarnpkg.com/@fastify/static/-/static-5.0.2.tgz#46cee887393b422f4b10a46a14e970a64dd086d4"
+  integrity sha512-HvyXZ5a7hUHoSBRq9jKUuKIUCkHMkCDcmiAeEmixXlGOx8pEWx3NYOIaiivcjWa6/NLvfdUT+t/jzfVQ2PA7Gw==
+  dependencies:
+    content-disposition "^0.5.3"
+    encoding-negotiator "^2.0.1"
+    fastify-plugin "^3.0.0"
+    glob "^7.1.4"
+    p-limit "^3.1.0"
+    readable-stream "^3.4.0"
+    send "^0.17.1"
+
+"@fastify/swagger@^6.0.0":
+  version "6.1.1"
+  resolved "https://registry.yarnpkg.com/@fastify/swagger/-/swagger-6.1.1.tgz#29086eb6116897c2f3ca38d02c5640230579c569"
+  integrity sha512-i+6UzvJf9tWT9+Cg+Tb/sM/+LMGpc2yGh+dvZYM2jT5p71PVK7YiEac93mJpLW9CH3RDOXV70PFey5pWpL6SJA==
+  dependencies:
+    "@fastify/static" "^5.0.0"
+    fastify-plugin "^3.0.0"
+    js-yaml "^4.0.0"
+    json-schema-resolver "^1.3.0"
+    openapi-types "^10.0.0"
+    rfdc "^1.3.0"
+
 "@foliojs-fork/fontkit@^1.9.1":
   version "1.9.2"
   resolved "https://registry.yarnpkg.com/@foliojs-fork/fontkit/-/fontkit-1.9.2.tgz#94241c195bc6204157bc84c33f34bdc967eca9c3"
@@ -21261,38 +21286,6 @@ fastify-plugin@^3.0.0:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/fastify-plugin/-/fastify-plugin-3.0.1.tgz#79e84c29f401020f38b524f59f2402103fd21ed2"
   integrity sha512-qKcDXmuZadJqdTm6vlCqioEbyewF60b/0LOFCcYN1B6BIZGlYJumWWOYs70SFYLDAH4YqdE1cxH/RKMG7rFxgA==
-
-"fastify-static-deprecated@npm:fastify-static@4.6.1":
-  version "4.6.1"
-  resolved "https://registry.yarnpkg.com/fastify-static/-/fastify-static-4.6.1.tgz#687131da76f1d4391fb8b47f71ea2118cdc85803"
-  integrity sha512-vy7N28U4AMhuOim12ZZWHulEE6OQKtzZbHgiB8Zj4llUuUQXPka0WHAQI3njm1jTCx4W6fixUHfpITxweMtAIA==
-  dependencies:
-    content-disposition "^0.5.3"
-    encoding-negotiator "^2.0.1"
-    fastify-plugin "^3.0.0"
-    glob "^7.1.4"
-    p-limit "^3.1.0"
-    readable-stream "^3.4.0"
-    send "^0.17.1"
-
-fastify-static@^4.0.0:
-  version "4.7.0"
-  resolved "https://registry.yarnpkg.com/fastify-static/-/fastify-static-4.7.0.tgz#e802658d69c1dcddb380b9afc2456d467a3494be"
-  integrity sha512-zZhCfJv/hkmud2qhWqpU3K9XVAuy3+IV8Tp9BC5J5U+GyA2XwoB6h8lh9GqpEIqdXOw01WyWQllV7dOWVyAlXg==
-  dependencies:
-    fastify-static-deprecated "npm:fastify-static@4.6.1"
-    process-warning "^1.0.0"
-
-fastify-swagger@^4.12.4:
-  version "4.17.1"
-  resolved "https://registry.yarnpkg.com/fastify-swagger/-/fastify-swagger-4.17.1.tgz#bf256a53ed8974a17e25eaa3b98d14362b72c023"
-  integrity sha512-VUo8W7C+YIw/e+YbNTc15Nhl5xa9MpRMPFDKkRgwvgh0cn1mvGgT34sk77mlDclKwiEO471ayW+EFSL0OYXE1A==
-  dependencies:
-    fastify-plugin "^3.0.0"
-    fastify-static "^4.0.0"
-    js-yaml "^4.0.0"
-    json-schema-resolver "^1.3.0"
-    openapi-types "^10.0.0"
 
 fastq@^1.6.0:
   version "1.17.1"
