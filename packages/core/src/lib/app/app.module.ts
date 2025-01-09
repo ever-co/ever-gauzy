@@ -157,6 +157,7 @@ import { MentionModule } from '../mention/mention.module';
 import { SubscriptionModule } from '../subscription/subscription.module';
 import { DashboardModule } from '../dashboard/dashboard.module';
 import { DashboardWidgetModule } from '../dashboard/dashboard-widget/dashboard-widget.module';
+import { TagTypeModule } from '../tag-type';
 const { unleashConfig } = environment;
 
 if (unleashConfig.url) {
@@ -387,6 +388,7 @@ if (environment.THROTTLE_ENABLED) {
 		TenantModule,
 		TenantSettingModule,
 		TagModule,
+		TagTypeModule,
 		SkillModule,
 		LanguageModule,
 		InvoiceModule,
