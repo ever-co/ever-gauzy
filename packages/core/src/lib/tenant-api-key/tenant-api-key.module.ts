@@ -6,7 +6,13 @@ import { TenantApiKeyService } from './tenant-api-key.service';
 import { TypeOrmTenantApiKeyRepository } from './repository/type-orm-tenant-api-key.repository';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([TenantApiKey]), MikroOrmModule.forFeature([TenantApiKey])],
-	providers: [TenantApiKeyService, TypeOrmTenantApiKeyRepository]
+	imports: [
+		TypeOrmModule.forFeature([TenantApiKey]),
+		MikroOrmModule.forFeature([TenantApiKey])
+	],
+	providers: [
+		TenantApiKeyService,
+		TypeOrmTenantApiKeyRepository
+	]
 })
 export class TenantApiKeyModule {}
