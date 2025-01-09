@@ -57,6 +57,7 @@ export * from './server-connection';
 export * from './skill';
 export * from './state';
 export * from './tag';
+export * from './tag-type';
 export * from './tasks';
 export * from './tenant';
 export * from './time-off';

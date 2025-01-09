@@ -11,7 +11,7 @@
 						<nb-list-item
 							*ngFor="let option of filterOptions"
 							class="filter-item"
-							(click)="selectedFilterOption(option.property)"
+							(click)="selectedFilterOption(option.value)"
 						>
 							{{ option.displayName }}
 						</nb-list-item>

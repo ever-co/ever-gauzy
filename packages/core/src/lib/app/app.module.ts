@@ -159,6 +159,7 @@ import { SubscriptionModule } from '../subscription/subscription.module';
 import { DashboardModule } from '../dashboard/dashboard.module';
 import { DashboardWidgetModule } from '../dashboard/dashboard-widget/dashboard-widget.module';
 import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
+import { TagTypeModule } from '../tag-type';
 
 const { unleashConfig } = environment;
 
@@ -232,12 +233,12 @@ if (environment.THROTTLE_ENABLED) {
 							const isTls = url.startsWith('rediss://');
 
 							// Removing the protocol part
-							let authPart = url.split('://')[1];
+							const authPart = url.split('://')[1];
 
 							// Check if the URL contains '@' (indicating the presence of username/password)
 							if (authPart.includes('@')) {
 								// Splitting user:password and host:port
-								let [userPass, hostPort] = authPart.split('@');
+								const [userPass, hostPort] = authPart.split('@');
 								[username, password] = userPass.split(':');
 								[host, port] = hostPort.split(':');
 							} else {
@@ -390,6 +391,7 @@ if (environment.THROTTLE_ENABLED) {
 		TenantModule,
 		TenantSettingModule,
 		TagModule,
+		TagTypeModule,
 		SkillModule,
 		LanguageModule,
 		InvoiceModule,

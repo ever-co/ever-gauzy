@@ -6,9 +6,9 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ITag, IOrganization, ComponentLayoutStyleEnum } from '@gauzy/contracts';
+import { ITag, IOrganization, ComponentLayoutStyleEnum, ITagType } from '@gauzy/contracts';
 import { ComponentEnum, distinctUntilChange, splitCamelCase } from '@gauzy/ui-core/common';
-import { Store, TagsService, ToastrService } from '@gauzy/ui-core/core';
+import { Store, TagsService, TagTypesService, ToastrService } from '@gauzy/ui-core/core';
 import {
 	DeleteConfirmationComponent,
 	IPaginationBase,
@@ -35,6 +35,7 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	tags: ITag[] = [];
+	tagTypes: ITagType[] = [];
 
 	private organization: IOrganization;
 	tags$: Subject<any> = this.subject$;
@@ -44,6 +45,7 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 	constructor(
 		private readonly dialogService: NbDialogService,
 		private readonly tagsService: TagsService,
+		private readonly tagTypesService: TagTypesService,
 		public readonly translateService: TranslateService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store,
@@ -61,6 +63,7 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 				debounceTime(300),
 				tap(() => (this.loading = true)),
 				tap(() => this.getTags()),
+				tap(() => this.getTagTypes()),
 				tap(() => this.clearItem()),
 				untilDestroyed(this)
 			)
@@ -277,9 +280,39 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 		return counter;
 	};
 
+	async getTagTypes() {
+		this.loading = true;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		try {
+			const { items } = await this.tagTypesService.getTagTypes({
+				tenantId,
+				organizationId
+			});
+
+			this.tagTypes = items;
+
+			this.filterOptions.push(
+				...this.tagTypes.map((tagType) => {
+					return {
+						value: tagType.id,
+						displayName: tagType.type
+					};
+				})
+			);
+			this.loading = false;
+		} catch (error) {
+			this.loading = false;
+			console.log(error);
+
+			this.toastrService.danger('TAGS_PAGE.TAGS_FETCH_FAILED', 'Error fetching tag types');
+		}
+	}
+
 	async getTags() {
 		this.allTags = [];
-		this.filterOptions = [{ property: 'all', displayName: 'All' }];
+		this.filterOptions = [{ value: '', displayName: 'All' }];
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
@@ -293,7 +326,6 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 
 		this.allTags = items;
 
-		this._generateUniqueTags(this.allTags);
 		this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 		if (!this._isFiltered) {
 			this.smartTableSource.load(this.allTags);
@@ -327,41 +359,19 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 	 * @returns
 	 */
 	selectedFilterOption(value: string) {
-		if (value === 'all') {
+		if (value === '') {
 			this._isFiltered = false;
 			this._refresh$.next(true);
 			this.tags$.next(true);
 			return;
 		}
 		if (value) {
-			const tags = this.allTags.filter((tag) => tag[value] && parseInt(tag[value]) > 0);
+			const tags = this.allTags.filter((tag) => tag.tagId === value);
 			this._isFiltered = true;
 			this._refresh$.next(true);
 			this.smartTableSource.load(tags);
 			this.tags$.next(true);
 		}
-	}
-
-	/**
-	 * Generate Unique Tags
-	 *
-	 * @param tags
-	 */
-	private _generateUniqueTags(tags: any[]) {
-		tags.forEach((tag) => {
-			for (const property in tag) {
-				const substring = '_counter';
-				if (property.includes(substring) && parseInt(tag[property]) > 0) {
-					const options = this.filterOptions.find((option) => option.property === property);
-					if (!options) {
-						this.filterOptions.push({
-							property,
-							displayName: splitCamelCase(property.replace(substring, ''))
-						});
-					}
-				}
-			}
-		});
 	}
 
 	private _applyTranslationOnSmartTable() {

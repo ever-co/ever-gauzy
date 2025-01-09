@@ -23,7 +23,8 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 			name: [null, Validators.required],
 			color: [null, Validators.required],
 			isTenantLevel: [false],
-			description: []
+			description: [],
+			tagId: []
 		});
 	}
 
@@ -65,7 +66,7 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.store.selectedOrganization;
-		const { name, description, color, isTenantLevel } = this.form.getRawValue();
+		const { name, description, color, isTenantLevel, tagTypeId } = this.form.getRawValue();
 
 		const tag = await firstValueFrom(
 			this.tagsService.create({
@@ -73,6 +74,7 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 				description,
 				color,
 				tenantId,
+				tagTypeId,
 				...(isTenantLevel
 					? {
 							organizationId: null
@@ -93,7 +95,7 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.store.selectedOrganization;
 
-		const { name, description, color, isTenantLevel } = this.form.getRawValue();
+		const { name, description, color, isTenantLevel, tagTypeId } = this.form.getRawValue();
 
 		const tag = await firstValueFrom(
 			this.tagsService.update(this.tag.id, {
@@ -101,6 +103,7 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 				description,
 				color,
 				tenantId,
+				tagTypeId,
 				...(isTenantLevel
 					? {
 							organizationId: null
@@ -119,12 +122,13 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 
 	private _patchFormValue() {
 		if (this.tag) {
-			const { name, color, description, organizationId } = this.tag;
+			const { name, color, description, organizationId, tagTypeId } = this.tag;
 			this.form.patchValue({
 				name,
 				color,
 				description,
-				isTenantLevel: organizationId ? false : true
+				isTenantLevel: organizationId ? false : true,
+				tagTypeId
 			});
 		}
 	}
