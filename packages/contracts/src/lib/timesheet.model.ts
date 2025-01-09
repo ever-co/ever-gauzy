@@ -90,7 +90,6 @@ export interface IGetTimesheetInput extends IBasePerTenantAndOrganizationEntityM
 	clientId?: ID[];
 	employeeIds?: ID[];
 	status?: TimesheetStatus[];
-	taskIds?: ID[];
 }
 
 export interface IDateRange {

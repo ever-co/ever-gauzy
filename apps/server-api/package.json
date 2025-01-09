@@ -40,7 +40,7 @@
 		"@angular/forms": "19.0.5",
 		"@angular/material": "19.0.4",
 		"@angular/router": "19.0.5",
-		"@datorama/akita": "^7.1.1",
+		"@datorama/akita": "^8.0.1",
 		"@datorama/akita-ngdevtools": "^7.0.0",
 		"@electron/remote": "^2.0.8",
 		"@grpc/grpc-js": "^1.6.7",

@@ -10,7 +10,9 @@
 		"noImplicitReturns": false,
 		"noFallthroughCasesInSwitch": false,
 		"paths": {
-			"@gauzy/ui-core/*": ["./../../dist/packages/ui-core/*/index.d.ts"]
+			"@gauzy/ui-core/*": [
+				"./../../dist/packages/ui-core/*/index.d.ts"
+			]
 		}
 	},
 	"files": [],

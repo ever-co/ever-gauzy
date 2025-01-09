@@ -84,10 +84,18 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ESTIMATES_VIEW,
 			PermissionsEnum.ESTIMATES_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT,
+			/** Tags Permissions Start */
 			PermissionsEnum.ORG_TAGS_ADD,
 			PermissionsEnum.ORG_TAGS_VIEW,
 			PermissionsEnum.ORG_TAGS_EDIT,
 			PermissionsEnum.ORG_TAGS_DELETE,
+			/** Tags Permissions End */
+			/** Tags Types Permissions Start */
+			PermissionsEnum.ORG_TAG_TYPES_ADD,
+			PermissionsEnum.ORG_TAG_TYPES_VIEW,
+			PermissionsEnum.ORG_TAG_TYPES_EDIT,
+			PermissionsEnum.ORG_TAG_TYPES_DELETE,
+			/** Tags Types Permissions End */
 			PermissionsEnum.VIEW_ALL_EMAILS,
 			PermissionsEnum.VIEW_ALL_EMAIL_TEMPLATES,
 			PermissionsEnum.VIEW_SALES_PIPELINES,
@@ -269,10 +277,18 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ESTIMATES_VIEW,
 			PermissionsEnum.ESTIMATES_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT,
+			/** Tags Permissions Start */
 			PermissionsEnum.ORG_TAGS_ADD,
 			PermissionsEnum.ORG_TAGS_VIEW,
 			PermissionsEnum.ORG_TAGS_EDIT,
 			PermissionsEnum.ORG_TAGS_DELETE,
+			/** Tags Permissions End */
+			/** Tags Types Permissions Start */
+			PermissionsEnum.ORG_TAG_TYPES_ADD,
+			PermissionsEnum.ORG_TAG_TYPES_VIEW,
+			PermissionsEnum.ORG_TAG_TYPES_EDIT,
+			PermissionsEnum.ORG_TAG_TYPES_DELETE,
+			/** Tags Types Permissions End */
 			PermissionsEnum.VIEW_ALL_EMAILS,
 			PermissionsEnum.VIEW_ALL_EMAIL_TEMPLATES,
 			PermissionsEnum.VIEW_SALES_PIPELINES,
@@ -476,10 +492,18 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_TEAM_EDIT_ACTIVE_TASK,
 			PermissionsEnum.ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER,
 			PermissionsEnum.ORG_TEAM_JOIN_REQUEST_VIEW,
+			/** Tags Permissions Start */
 			PermissionsEnum.ORG_TAGS_ADD,
 			PermissionsEnum.ORG_TAGS_VIEW,
 			PermissionsEnum.ORG_TAGS_EDIT,
 			PermissionsEnum.ORG_TAGS_DELETE,
+			/** Tags Permissions End */
+			/** Tags Types Permissions Start */
+			PermissionsEnum.ORG_TAG_TYPES_ADD,
+			PermissionsEnum.ORG_TAG_TYPES_VIEW,
+			PermissionsEnum.ORG_TAG_TYPES_EDIT,
+			PermissionsEnum.ORG_TAG_TYPES_DELETE,
+			/** Tags Types Permissions End */
 			PermissionsEnum.EMPLOYEE_EXPENSES_VIEW,
 			PermissionsEnum.EMPLOYEE_EXPENSES_EDIT,
 			PermissionsEnum.INVENTORY_GALLERY_ADD,
