@@ -21,15 +21,16 @@ export class TenantApiKey extends TenantBaseEntity implements ITenantApiKey {
 	 * - **Purpose**: To store a user-friendly name for identifying API consumers.
 	 * - **Example**: `"MyClientApp"` or `"ServiceA"`
 	 */
-	@ApiProperty({
+	@ApiPropertyOptional({
 		type: () => String,
 		description: 'The name or identifier of the client or user consuming the API.',
 		minLength: 1,
 		maxLength: 255
 	})
-	@Length(1, 255)
+	@IsOptional()
 	@IsString()
-	@MultiORMColumn()
+	@Length(1, 255)
+	@MultiORMColumn({ nullable: true })
 	name: string;
 
 	/**
@@ -69,6 +70,6 @@ export class TenantApiKey extends TenantBaseEntity implements ITenantApiKey {
 	@IsString()
 	@IsSecret()
 	@Exclude() // Exclude from serialization
-	@MultiORMColumn()
+	@MultiORMColumn({ type: 'text' })
 	apiSecret: string;
 }
