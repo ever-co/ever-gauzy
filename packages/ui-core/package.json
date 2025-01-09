@@ -37,7 +37,6 @@
 		"@angular/router": "19.0.5",
 		"@bluehalo/ngx-leaflet": "^19.0.0",
 		"@fullcalendar/angular": "^6.1.16",
-		"@asymmetrik/ngx-leaflet": "^18.0.1",
 		"@datorama/akita": "^8.0.1",
 		"@electron/remote": "^2.0.8",
 		"@fortawesome/angular-fontawesome": "^0.15.0",
