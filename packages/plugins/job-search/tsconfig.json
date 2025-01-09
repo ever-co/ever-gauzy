@@ -10,7 +10,9 @@
 		"noFallthroughCasesInSwitch": false,
 		"baseUrl": ".",
 		"paths": {
-			"@gauzy/plugin-integration-ai": ["./../../../dist/packages/plugins/integration-ai/*/index.d.ts"],
+			"@gauzy/plugin-integration-ai": [
+				"./../../../dist/packages/plugins/integration-ai/*/index.d.ts"
+			]
 		}
 	},
 	"files": [],

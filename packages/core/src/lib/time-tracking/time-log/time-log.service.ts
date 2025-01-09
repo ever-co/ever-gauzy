@@ -934,7 +934,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns The modified query.
 	 */
 	getFilterTimeLogQuery(query: SelectQueryBuilder<TimeLog>, request: IGetTimeLogReportInput) {
-		const { organizationId, projectIds = [], teamIds = [] } = request;
+		const { organizationId, projectIds = [], teamIds = [], taskIds = [] } = request;
 		let { employeeIds = [] } = request;
 
 		const tenantId = RequestContext.currentTenantId();
@@ -976,6 +976,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Filter by organization employee IDs if used in the request
 		if (isNotEmpty(employeeIds)) {
 			query.andWhere(p(`"${query.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
+		}
+
+		// Filter by organization task IDs if used in the request
+		if (isNotEmpty(taskIds)) {
+			query.andWhere(p(`"${query.alias}"."taskId" IN (:...taskIds)`), { taskIds });
 		}
 
 		// Filter by organization project IDs if used in the request
