@@ -836,7 +836,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(prefix)) {
 						qb.andWhere(p(`"${query.alias}"."prefix" ${likeOperator} :prefix`), { prefix: `%${prefix}%` });
 					}
-					if (!isUUID(organizationSprintId)) {
+					if (isUUID(organizationSprintId)) {
+						qb.andWhere(p(`"${query.alias}"."organizationSprintId" = :organizationSprintId`), {
+							organizationSprintId
+						});
+					} else {
 						qb.andWhere(p(`"${query.alias}"."organizationSprintId" IS NULL`));
 					}
 
