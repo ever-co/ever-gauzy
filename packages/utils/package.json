@@ -32,6 +32,7 @@
 		"lib:watch": "yarn nx build utils --watch"
 	},
 	"dependencies": {
+		"generate-password": "^1.7.1",
 		"slugify": "^1.6.6",
 		"tslib": "^2.6.2"
 	},
