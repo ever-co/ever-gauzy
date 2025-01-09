@@ -547,7 +547,9 @@
 		"elif",
 		"appleboy",
 		"apidemoda",
-		"forin"
+		"forin",
+		"distutils",
+		"loggable"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
