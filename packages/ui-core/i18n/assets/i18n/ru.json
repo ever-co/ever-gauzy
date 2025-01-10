@@ -4177,9 +4177,10 @@
 			"HELP": "Помощь",
 			"LEARN_MORE": "Узнать больше",
 			"OPEN_MAIN_WINDOW": "Открыть главное окно",
-			"DAILY_RECAP": "Ежедневный отчет",
-			"WEEKLY_RECAP": "Еженедельный отчет",
-			"MONTHLY_RECAP": "Ежемесячный отчет"
+			"DAILY_RECAP": "Ежедневный обзор",
+			"WEEKLY_RECAP": "Еженедельный Обзор",
+			"MONTHLY_RECAP": "Ежемесячный Обзор",
+			"INSTALL_PLUGIN": "Установить плагин"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Почасовое отслеживание времени",

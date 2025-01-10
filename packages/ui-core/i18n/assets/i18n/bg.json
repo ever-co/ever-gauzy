@@ -4179,7 +4179,8 @@
 			"OPEN_MAIN_WINDOW": "Отвори главния прозорец",
 			"DAILY_RECAP": "Дневен обзор",
 			"WEEKLY_RECAP": "Седмичен обзор",
-			"MONTHLY_RECAP": "Месечен обзор"
+			"MONTHLY_RECAP": "Месечен обзор",
+			"INSTALL_PLUGIN": "Инсталиране на плъгин"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Почасово проследяване на време",

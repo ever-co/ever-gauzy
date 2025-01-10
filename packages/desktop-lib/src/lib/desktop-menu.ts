@@ -252,7 +252,7 @@ export class AppMenu {
 			label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGIN'),
 			submenu: [
 				{
-					label: TranslateService.instant('MENU.INSTALL_PLUGIN'),
+					label: TranslateService.instant('TIMER_TRACKER.MENU.INSTALL_PLUGIN'),
 					click: () => this.openPluginSettings()
 				},
 				...pluginSubmenu

@@ -4177,9 +4177,10 @@
 			"HELP": "Pomoc",
 			"LEARN_MORE": "Dowiedz się więcej",
 			"OPEN_MAIN_WINDOW": "Otwórz główne okno",
-			"DAILY_RECAP": "Podsumowanie dzienne",
-			"WEEKLY_RECAP": "Podsumowanie tygodniowe",
-			"MONTHLY_RECAP": "Podsumowanie miesięczne"
+			"DAILY_RECAP": "Podsumowanie Dziennie",
+			"WEEKLY_RECAP": "Cotygodniowe Podsumowanie",
+			"MONTHLY_RECAP": "Miesięczne Podsumowanie",
+			"INSTALL_PLUGIN": "Zainstaluj wtyczkę"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Śledzenie czasu godzinowego",

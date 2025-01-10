@@ -4178,8 +4178,9 @@
 			"LEARN_MORE": "Saiba Mais",
 			"OPEN_MAIN_WINDOW": "Abrir Janela Principal",
 			"DAILY_RECAP": "Resumo Diário",
-			"WEEKLY_RECAP": "Resumo Semanal",
-			"MONTHLY_RECAP": "Resumo Mensal"
+			"WEEKLY_RECAP": "Recapitulação Semanal",
+			"MONTHLY_RECAP": "Recapitulação Mensal",
+			"INSTALL_PLUGIN": "Instalar plugin"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Rastreamento de Tempo por Hora",

@@ -4177,9 +4177,10 @@
 			"HELP": "Aide",
 			"LEARN_MORE": "En savoir plus",
 			"OPEN_MAIN_WINDOW": "Ouvrir la fenêtre principale",
-			"DAILY_RECAP": "Récapitulatif quotidien",
-			"WEEKLY_RECAP": "Récapitulatif hebdomadaire",
-			"MONTHLY_RECAP": "Récapitulatif mensuel"
+			"DAILY_RECAP": "Récapitulatif journalier",
+			"WEEKLY_RECAP": "Récapitulatif Hebdomadaire",
+			"MONTHLY_RECAP": "Récapitulatif Mensuel",
+			"INSTALL_PLUGIN": "Installer le plugin"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Suivi du temps horaire",

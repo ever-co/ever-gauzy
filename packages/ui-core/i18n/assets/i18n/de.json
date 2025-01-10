@@ -4179,7 +4179,8 @@
 			"OPEN_MAIN_WINDOW": "Hauptfenster öffnen",
 			"DAILY_RECAP": "Tägliche Zusammenfassung",
 			"WEEKLY_RECAP": "Wöchentliche Zusammenfassung",
-			"MONTHLY_RECAP": "Monatliche Zusammenfassung"
+			"MONTHLY_RECAP": "Monatliche Zusammenfassung",
+			"INSTALL_PLUGIN": "Plugin installieren"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Stündliche Zeiterfassung",
