@@ -7,7 +7,7 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ITag, IOrganization, ComponentLayoutStyleEnum, ITagType } from '@gauzy/contracts';
-import { ComponentEnum, distinctUntilChange, splitCamelCase } from '@gauzy/ui-core/common';
+import { ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import { Store, TagsService, TagTypesService, ToastrService } from '@gauzy/ui-core/core';
 import {
 	DeleteConfirmationComponent,
@@ -235,10 +235,17 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 						instance.value = cell.getValue();
 					}
 				},
+				type: {
+					title: 'Type',
+					type: 'string',
+					width: '70%',
+					isFilterable: false
+				},
 				description: {
 					title: this.getTranslation('TAGS_PAGE.TAGS_DESCRIPTION'),
 					type: 'string',
-					width: '70%'
+					width: '70%',
+					isFilterable: false
 				},
 				counter: {
 					title: this.getTranslation('Counter'),
@@ -317,14 +324,22 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const { items } = await this.tagsService.getTags({
-			tenantId,
-			organizationId
-		});
+		const { items } = await this.tagsService.getTags(
+			{
+				tenantId,
+				organizationId
+			},
+			['tagType']
+		);
 
 		const { activePage, itemsPerPage } = this.getPagination();
 
-		this.allTags = items;
+		this.allTags = items.map((item) => {
+			return {
+				...item,
+				type: item.tagType?.type || '-'
+			};
+		});
 
 		this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 		if (!this._isFiltered) {

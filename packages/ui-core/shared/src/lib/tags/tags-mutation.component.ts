@@ -3,8 +3,8 @@ import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms
 import { NbDialogRef, NbThemeService } from '@nebular/theme';
 import { firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { ITag } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/core';
+import { ITag, ITagType } from '@gauzy/contracts';
+import { Store, TagTypesService, ToastrService } from '@gauzy/ui-core/core';
 import { TagsService } from '@gauzy/ui-core/core';
 import { NotesWithTagsComponent } from '../table-components';
 
@@ -24,9 +24,14 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 			color: [null, Validators.required],
 			isTenantLevel: [false],
 			description: [],
-			tagId: []
+			tagTypeId: []
 		});
 	}
+
+	/**
+	 * List of tag types
+	 */
+	public tagTypes: ITagType[] = [];
 
 	/*
 	 * Getter & Setter for tag to edit
@@ -41,7 +46,8 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 	}
 
 	/**
-	 * Getter for color form control
+	 * Getter fr
+	 * or color form control
 	 */
 	get color() {
 		return this.form.get('color').value || '';
@@ -50,15 +56,40 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 	constructor(
 		protected readonly dialogRef: NbDialogRef<TagsMutationComponent>,
 		private readonly tagsService: TagsService,
+		private readonly tagTypeService: TagTypesService,
 		private readonly fb: UntypedFormBuilder,
 		public readonly translateService: TranslateService,
 		public readonly themeService: NbThemeService,
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly toastrService: ToastrService
 	) {
 		super(themeService, translateService);
 	}
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+		this._loadTagTypes();
+	}
+
+	/**
+	 * Fetch all tag types from the TagTypeService
+	 */
+	private async _loadTagTypes() {
+		const { tenantId } = this.store.user;
+		const organizationId = this.store.organizationId;
+
+		try {
+			const { items } = await this.tagTypeService.getTagTypes({
+				tenantId,
+				organizationId
+			});
+
+			this.tagTypes = items;
+		} catch (error) {
+			console.log(error);
+
+			this.toastrService.danger('TAGS_PAGE.TAGS_FETCH_FAILED', 'Error fetching tag types');
+		}
+	}
 
 	async addTag() {
 		if (!this.store.selectedOrganization) {

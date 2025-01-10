@@ -4,9 +4,7 @@
 			<i class="fas fa-times" (click)="closeDialog()"></i>
 		</span>
 		<h5 class="title">
-			{{
-				(tag ? 'TAGS_PAGE.EDIT_TAGS' : 'TAGS_PAGE.ADD_TAGS') | translate
-			}}
+			{{ (tag ? 'TAGS_PAGE.EDIT_TAGS' : 'TAGS_PAGE.ADD_TAGS') | translate }}
 		</h5>
 	</nb-card-header>
 	<nb-card-body class="body">
@@ -22,9 +20,7 @@
 							class="select-name"
 							type="text"
 							nbInput
-							[placeholder]="
-								'TAGS_PAGE.TAGS_SELECT_NAME' | translate
-							"
+							[placeholder]="'TAGS_PAGE.TAGS_SELECT_NAME' | translate"
 							id="inputName"
 							fullWidth
 						/>
@@ -78,24 +74,32 @@
 					</div>
 				</div>
 			</div>
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="form-group">
+						<label for="tagTypeId" class="label">
+							{{ 'TAGS_PAGE.TAGS_SELECT_TYPE' | translate }}
+						</label>
+						<nb-select
+							formControlName="tagTypeId"
+							fullWidth
+							id="tagTypeId"
+							[placeholder]="'TAGS_PAGE.TAGS_SELECT_TYPE' | translate"
+						>
+							<nb-option *ngFor="let tagType of tagTypes" [value]="tagType.id">
+								{{ tagType.type }}
+							</nb-option>
+						</nb-select>
+					</div>
+				</div>
+			</div>
 		</form>
 	</nb-card-body>
 	<nb-card-footer class="text-left">
-		<button
-			(click)="closeDialog()"
-			status="basic"
-			class="mr-3"
-			outline
-			nbButton
-		>
+		<button (click)="closeDialog()" status="basic" class="mr-3" outline nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button
-			[disabled]="form.invalid"
-			(click)="tag ? editTag() : addTag()"
-			status="success"
-			nbButton
-		>
+		<button [disabled]="form.invalid" (click)="tag ? editTag() : addTag()" status="success" nbButton>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>
