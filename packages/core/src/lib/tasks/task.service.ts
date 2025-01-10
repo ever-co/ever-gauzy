@@ -811,14 +811,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			);
 
 			// Filter by projectId and modules
-			if (isNotEmpty(projectId)) {
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						if (isEmpty(modules)) {
-							qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
-						}
-					})
-				);
+			if (isNotEmpty(projectId) && isEmpty(modules)) {
+				query.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
 			}
 
 			// Add additional filters (status, draft, title, etc.)
@@ -836,10 +830,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(prefix)) {
 						qb.andWhere(p(`"${query.alias}"."prefix" ${likeOperator} :prefix`), { prefix: `%${prefix}%` });
 					}
-					if (!isUUID(organizationSprintId)) {
+					if (isUUID(organizationSprintId)) {
+						qb.andWhere(p(`"${query.alias}"."organizationSprintId" = :organizationSprintId`), { organizationSprintId });
+					} else {
 						qb.andWhere(p(`"${query.alias}"."organizationSprintId" IS NULL`));
 					}
-
 					qb.andWhere(p(`"${query.alias}"."isScreeningTask" = :isScreeningTask`), { isScreeningTask });
 				})
 			);
