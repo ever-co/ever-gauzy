@@ -96,9 +96,6 @@ export class TenantApiKeyService extends TenantAwareCrudService<TenantApiKey> {
 	 */
 	async getApiKey(apiKey: string): Promise<TenantApiKey | null> {
 		try {
-			console.log('Validating API Key:', apiKey);
-			console.log(`API Key length: ${apiKey.length}`);
-
 			// Perform a database query to find an active and non-archived API key
 			return await this.findOneByOptions({
 				where: {
