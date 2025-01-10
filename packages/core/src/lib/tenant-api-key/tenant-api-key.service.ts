@@ -1,6 +1,6 @@
 import { HttpStatus, HttpException, Injectable } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
-import { IGenerateApiKey, IGenerateApiKeyResponse, ITenantApiKey } from '@gauzy/contracts';
+import { IGenerateApiKey, IGenerateApiKeyResponse } from '@gauzy/contracts';
 import { generatePassword, generateUuidWithoutDashes } from '@gauzy/utils';
 import { EncryptionService } from '../common/encryption/encryption.service';
 import { RequestContext } from '../core/context';
@@ -47,7 +47,7 @@ export class TenantApiKeyService extends TenantAwareCrudService<TenantApiKey> {
 			const existingKey = await this.findByTenantId(tenantId);
 
 			if (existingKey) {
-				throw new HttpException(`API key already exists for tenant with ID ${tenantId}.`, HttpStatus.CONFLICT);
+				throw new HttpException(`API key already exists for tenant.`, HttpStatus.CONFLICT);
 			}
 
 			// Generate API key and secret
@@ -72,10 +72,7 @@ export class TenantApiKeyService extends TenantAwareCrudService<TenantApiKey> {
 				apiSecret, // Return plain text secret for immediate use
 			};
 		} catch (error) {
-			throw new HttpException(
-				`Failed to generate API key. Please try again: ${error.message}`,
-				HttpStatus.BAD_REQUEST
-			);
+			throw new HttpException(`Failed to generate API key. Please try again: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
 

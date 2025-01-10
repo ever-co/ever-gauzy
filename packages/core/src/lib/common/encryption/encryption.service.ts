@@ -24,7 +24,7 @@ export class EncryptionService {
      *
      * This function generates a random initialization vector (IV) and uses it
      * along with the predefined encryption algorithm and key to securely encrypt
-     * the given plaintext. The resulting ciphertext is combined with the IV and
+     * the given plaintext. The resulting cipher text is combined with the IV and
      * the authentication tag to ensure integrity and confidentiality.
      *
      * @param {string} text - The plaintext string to encrypt.
@@ -50,7 +50,7 @@ export class EncryptionService {
      * Decrypts an encrypted string back into plaintext.
      *
      * This function reverses the encryption process by extracting the initialization vector (IV),
-     * authentication tag, and the ciphertext from the input string. It uses the AES-256-GCM
+     * authentication tag, and the cipher text from the input string. It uses the AES-256-GCM
      * algorithm and the predefined encryption key to securely decrypt the data. The authentication
      * tag ensures the integrity of the encrypted data.
      *
@@ -72,7 +72,7 @@ export class EncryptionService {
         const decipher = createDecipheriv(this.algorithm, this.key, iv); // Create decipher instance
         decipher.setAuthTag(authTag); // Set the authentication tag for integrity verification
 
-        let decrypted = decipher.update(encryptedText, 'hex', 'utf8'); // Decrypt the ciphertext
+        let decrypted = decipher.update(encryptedText, 'hex', 'utf8'); // Decrypt the cipher text
         decrypted += decipher.final('utf8'); // Finalize decryption
 
         return decrypted; // Return the plaintext result
