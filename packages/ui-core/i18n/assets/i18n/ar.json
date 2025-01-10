@@ -4071,7 +4071,8 @@
 			"OPEN_MAIN_WINDOW": "افتح النافذة الرئيسية",
 			"DAILY_RECAP": "ملخص يومي",
 			"WEEKLY_RECAP": "ملخص أسبوعي",
-			"MONTHLY_RECAP": "ملخص شهري"
+			"MONTHLY_RECAP": "ملخص شهري",
+			"INSTALL_PLUGIN": "تثبيت الإضافة"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "تتبع الوقت بالساعة",

@@ -4085,7 +4085,8 @@
 			"OPEN_MAIN_WINDOW": "פתח חלון ראשי",
 			"DAILY_RECAP": "סיכום יומי",
 			"WEEKLY_RECAP": "סיכום שבועי",
-			"MONTHLY_RECAP": "סיכום חודשי"
+			"MONTHLY_RECAP": "סיכום חודשי",
+			"INSTALL_PLUGIN": "התקנת תוסף"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "מעקב זמן לפי שעות",

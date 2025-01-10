@@ -4075,7 +4075,8 @@
 			"OPEN_MAIN_WINDOW": "Abrir ventana principal",
 			"DAILY_RECAP": "Resumen Diario",
 			"WEEKLY_RECAP": "Resumen Semanal",
-			"MONTHLY_RECAP": "Resumen Mensual"
+			"MONTHLY_RECAP": "Resumen Mensual",
+			"INSTALL_PLUGIN": "Instalar complemento"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Seguimiento del tiempo por hora",

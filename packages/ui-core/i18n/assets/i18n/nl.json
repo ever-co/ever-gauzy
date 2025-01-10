@@ -4073,7 +4073,8 @@
 			"OPEN_MAIN_WINDOW": "Open hoofdvenster",
 			"DAILY_RECAP": "Dagelijkse Samenvatting",
 			"WEEKLY_RECAP": "Wekelijks Overzicht",
-			"MONTHLY_RECAP": "Maandelijks Overzicht"
+			"MONTHLY_RECAP": "Maandelijks Overzicht",
+			"INSTALL_PLUGIN": "Plugin installeren"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Uurlijkse tijdregistratie",
