@@ -1,210 +1,108 @@
-const Store = require('electron-store');
-const store = new Store();
+import {
+	IAdditionalSetting,
+	IApplicationSetting,
+	IConfig,
+	IProject,
+	IAuth,
+	localStore,
+	store
+} from '@gauzy/desktop-core';
 
+/**
+ * Local Store Facade for Desktop App
+ */
 export const LocalStore = {
 	getStore: (source) => {
 		return store.get(source);
 	},
-	getServerUrl: () => {
-		const configs = store.get('configs');
-		return configs.isLocalServer ? `http://localhost:${configs.port}` : configs.serverUrl;
+
+	getServerUrl: (): string => {
+		const { config } = localStore.find();
+		return config?.isLocalServer ? `http://localhost:${config.port}` : config.serverUrl;
 	},
 
 	beforeRequestParams: () => {
 		try {
-			const configs = store.get('configs');
-			const auth = store.get('auth');
-			const projectInfo = store.get('project');
-			const settings = store.get('appSetting');
+			const { config, auth, project, setting } = localStore.find();
+
 			return {
-				apiHost: configs.isLocalServer ? `http://localhost:${configs.port}` : configs.serverUrl,
-				token: auth ? auth.token : null,
-				employeeId: auth ? auth.employeeId : null,
-				projectId: projectInfo ? projectInfo.projectId : null,
-				taskId: projectInfo ? projectInfo.taskId : null,
-				organizationId: auth ? auth.organizationId : null,
-				tenantId: auth ? auth.tenantId : null,
-				note: projectInfo ? projectInfo.note : null,
-				aw: projectInfo ? projectInfo.aw : null,
-				organizationContactId: projectInfo ? projectInfo.organizationContactId : null,
-				organizationTeamId: projectInfo ? projectInfo.organizationTeamId : null,
-				settings
+				apiHost: config?.isLocalServer ? `http://localhost:${config.port}` : config.serverUrl,
+				token: auth?.token || null,
+				employeeId: auth?.employeeId || null,
+				organizationId: auth?.organizationId || null,
+				tenantId: auth?.tenantId || null,
+				projectId: project?.projectId || null,
+				taskId: project?.taskId || null,
+				note: project?.note || null,
+				aw: project?.aw || null,
+				organizationContactId: project?.organizationContactId || null,
+				organizationTeamId: project?.organizationTeamId || null,
+				settings: setting
 			};
 		} catch (error) {
-			console.log(error);
+			console.error('Error in beforeRequestParams:', error);
+			return null;
 		}
 	},
 
-	setDefaultApplicationSetting: () => {
+	setDefaultApplicationSetting: (): void => {
 		try {
-			const config = store.get('appSetting');
-			const authConfig = store.get('auth');
-			if (!authConfig) {
-				const defaultConfig = {
-					allowScreenshotCapture: true,
-					isLogout: true
-				};
-				store.set({
-					auth: defaultConfig
-				});
-			} else {
-				authConfig.auth = typeof authConfig.isLogout === 'undefined' ? true : authConfig.isLogout;
-				authConfig.allowScreenshotCapture =
-					typeof authConfig.allowScreenshotCapture === 'undefined' ? true : authConfig.allowScreenshotCapture;
-				store.set({
-					auth: authConfig
-				});
-			}
-			const projectConfig = store.get('project');
-			if (!projectConfig) {
-				const config = {
-					aw: {
-						isAw: true
-					}
-				};
-				store.set({
-					project: config
-				});
-			} else {
-				projectConfig.aw = typeof projectConfig.aw === 'undefined' ? { isAw: true } : projectConfig.aw;
-				store.set({
-					appSetting: projectConfig
-				});
-			}
-			if (!config) {
-				const defaultAppSetting = {
-					monitor: {
-						captured: 'all' // ['all', 'active-only']
-					},
-					timer: {
-						updatePeriod: 10 // [1, 5, 10]
-					},
-					SCREENSHOTS_ENGINE_METHOD: 'ElectronDesktopCapturer',
-					screenshotNotification: true,
-					simpleScreenshotNotification: false,
-					mutedNotification: false,
-					autoLaunch: true,
-					visibleAwOption: true,
-					randomScreenshotTime: false,
-					visibleWakatimeOption: false,
-					trackOnPcSleep: false,
-					awIsConnected: true,
-					preventDisplaySleep: false,
-					automaticUpdate: true,
-					automaticUpdateDelay: 1, //hour
-					cdnUpdater: {
-						github: false,
-						digitalOcean: true
-					},
-					prerelease: false,
-					preferredLanguage: 'en',
-					zone: 'local',
-					alwaysOn: true,
-					enforced: false,
-					theme: 'light'
-				};
-				store.set({
-					appSetting: defaultAppSetting
-				});
-			} else {
-				config.screenshotNotification =
-					typeof config.screenshotNotification === 'undefined' ? true : config.screenshotNotification;
-				config.awIsConnected = true;
-				store.set({
-					appSetting: config
-				});
-			}
+			localStore.setDefaults();
 		} catch (error) {
 			console.log('error set store', error);
 		}
 	},
 
-	updateApplicationSetting: (values) => {
-		const appSetting = store.get('appSetting');
-		store.set({
-			appSetting: { ...appSetting, ...values }
-		});
+	setAllDefaultConfig: (): void => {
+		localStore.projectService.setDefault();
+		localStore.authService.setDefault();
+		localStore.applicationSettingService.setDefault();
+		localStore.configService.setDefault();
 	},
 
-	updateConfigSetting: (values) => {
-		let configs = store.get('configs');
-		configs = { ...configs, ...values };
-		store.set({
-			configs: configs
-		});
+	updateApplicationSetting: (values: Partial<IApplicationSetting>): void => {
+		localStore.applicationSettingService.update(values);
 	},
 
-	updateConfigProject: (values) => {
-		const projects = store.get('project');
-		store.set({
-			project: { ...projects, ...values }
-		});
+	updateConfigSetting: (values: Partial<IConfig>): void => {
+		localStore.configService.update(values);
 	},
 
-	updateAuthSetting: (values) => {
-		const auth = store.get('auth');
-		store.set({
-			auth: {
-				...auth,
-				...values
-			}
-		});
+	updateConfigProject: (values: Partial<IProject>): void => {
+		localStore.projectService.update(values);
 	},
 
-	updateAdditionalSetting: (values) => {
-		const addSetting = store.get('additionalSetting');
-		store.set({
-			additionalSetting: { ...addSetting, ...values }
-		});
+	updateAuthSetting: (values: Partial<IAuth>): void => {
+		localStore.authService.update(values);
 	},
 
-	getAdditionalConfig: () => {
-		const addSetting = store.get('additionalSetting');
-		const values = {};
-		if (addSetting) {
-			Object.keys(addSetting).forEach((value) => {
-				if (addSetting[value]) {
-					values[value] = addSetting[value];
-				}
-			});
-		}
-		return values;
+	updateAdditionalSetting: (values: Partial<IAdditionalSetting>): void => {
+		localStore.additionalSettingService.update(values);
+	},
+
+	getAdditionalConfig: (): IAdditionalSetting => {
+		return localStore.find().additionalSetting;
 	},
 
 	getApplicationConfig: () => {
-		const configs = store.get('configs');
-		const auth = store.get('auth');
-		const projectInfo = store.get('project');
-		const settings = store.get('appSetting');
-		const addSetting = LocalStore.getStore('additionalSetting');
+		const { config, auth, project: activeProject, setting, additionalSetting } = localStore.find();
 
 		return {
-			setting: settings,
-			config: configs,
+			config,
 			auth,
-			additionalSetting: addSetting,
-			activeProject: projectInfo
+			activeProject,
+			setting,
+			additionalSetting
 		};
 	},
 
-	setFilePath: (filePath) => {
+	setFilePath: (filePath): void => {
 		store.set({
-			filePath: filePath
+			filePath
 		});
 	},
 
-	setDefaultServerConfig: () => {
-		const configs = {
-			autoStart: true,
-			secureProxy: {
-				secure: true,
-				enable: false,
-				ssl: {
-					key: '',
-					cert: ''
-				}
-			}
-		};
-		store.set({ configs });
+	setDefaultServerConfig: (): void => {
+		localStore.configService.setDefault();
 	}
 };

@@ -1,7 +1,7 @@
 import * as remoteMain from '@electron/remote/main';
 import { BrowserWindow } from 'electron';
 import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
-import { WindowManager, RegisteredWindow, Store } from '@gauzy/desktop-core';
+import { WindowManager, RegisteredWindow, store } from '@gauzy/desktop-core';
 import { handleCloseEvent, setLaunchPathAndLoad } from './utils/desktop-window-utils';
 
 /**
@@ -17,47 +17,47 @@ import { handleCloseEvent, setLaunchPathAndLoad } from './utils/desktop-window-u
  * const imageViewWindow = await createImageViewerWindow(null, '/path/to/viewer.html', '/path/to/preload.js');
  */
 export async function createImageViewerWindow(
-    imageViewWindow: Electron.BrowserWindow | null,
-    filePath: string,
-    preloadPath?: string
+	imageViewWindow: Electron.BrowserWindow | null,
+	filePath: string,
+	preloadPath?: string
 ): Promise<Electron.BrowserWindow> {
-    // Get the WindowManager instance for managing windows
-    const manager = WindowManager.getInstance();
+	// Get the WindowManager instance for managing windows
+	const manager = WindowManager.getInstance();
 
-    // Retrieve the main window settings, passing in the optional preload path
-    const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting(preloadPath);
+	// Retrieve the main window settings, passing in the optional preload path
+	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting(preloadPath);
 
-    // Create the BrowserWindow for the Image Viewer
-    imageViewWindow = new BrowserWindow(mainWindowSettings);
+	// Create the BrowserWindow for the Image Viewer
+	imageViewWindow = new BrowserWindow(mainWindowSettings);
 
-    // Enable remote functionality for the window
-    remoteMain.enable(imageViewWindow.webContents);
+	// Enable remote functionality for the window
+	remoteMain.enable(imageViewWindow.webContents);
 
-    // Hide the window initially
-    imageViewWindow.hide();
+	// Hide the window initially
+	imageViewWindow.hide();
 
 	// Use the helper function to construct and load the URL
 	await setLaunchPathAndLoad(imageViewWindow, filePath, '/viewer');
 
-    // Remove the menu from the window
-    imageViewWindow.setMenu(null);
+	// Remove the menu from the window
+	imageViewWindow.setMenu(null);
 
-    // Optional: Uncomment to open Developer Tools
-    // imageViewWindow.webContents.toggleDevTools();
+	// Optional: Uncomment to open Developer Tools
+	// imageViewWindow.webContents.toggleDevTools();
 
-    // Attach the close event handler
-    handleCloseEvent(imageViewWindow);
+	// Attach the close event handler
+	handleCloseEvent(imageViewWindow);
 
-    // Register the Image Viewer window with the WindowManager
-    manager.register(RegisteredWindow.IMAGE_VIEWER, imageViewWindow);
+	// Register the Image Viewer window with the WindowManager
+	manager.register(RegisteredWindow.IMAGE_VIEWER, imageViewWindow);
 
-    // Attach a custom title bar if a preload script is provided
-    if (preloadPath) {
-        attachTitlebarToWindow(imageViewWindow);
-    }
+	// Attach a custom title bar if a preload script is provided
+	if (preloadPath) {
+		attachTitlebarToWindow(imageViewWindow);
+	}
 
-    // Return the configured Image Viewer window instance
-    return imageViewWindow;
+	// Return the configured Image Viewer window instance
+	return imageViewWindow;
 }
 
 /**
@@ -73,43 +73,43 @@ export async function createImageViewerWindow(
  * const mainWindow = new BrowserWindow(settings);
  */
 const windowSetting = (preloadPath?: string): Electron.BrowserWindowConstructorOptions => {
-    // Default settings for the main application window
-    const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
-        frame: true,
-        resizable: true,
-        focusable: true,
-        fullscreenable: true,
-        webPreferences: {
-            nodeIntegration: true,
-            webSecurity: false,
-            devTools: true,
-            contextIsolation: false,
-            sandbox: false
-        },
-        width: 1000,
-        height: 728,
-        title: '',
-        maximizable: true,
-        show: false
-    };
+	// Default settings for the main application window
+	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
+		frame: true,
+		resizable: true,
+		focusable: true,
+		fullscreenable: true,
+		webPreferences: {
+			nodeIntegration: true,
+			webSecurity: false,
+			devTools: true,
+			contextIsolation: false,
+			sandbox: false
+		},
+		width: 1000,
+		height: 728,
+		title: '',
+		maximizable: true,
+		show: false
+	};
 
-    // Fetch the icon path from the application's store
-    const filesPath = Store.get('filePath');
-    if (filesPath?.iconPath) {
-        mainWindowSettings.icon = filesPath.iconPath;
-    }
+	// Fetch the icon path from the application's store
+	const filesPath = store.get('filePath');
+	if (filesPath?.iconPath) {
+		mainWindowSettings.icon = filesPath.iconPath;
+	}
 
-    // Additional settings when a preload script is provided
-    if (preloadPath) {
-        mainWindowSettings.titleBarStyle = 'hidden';
-        mainWindowSettings.titleBarOverlay = true;
-        mainWindowSettings.webPreferences.preload = preloadPath;
+	// Additional settings when a preload script is provided
+	if (preloadPath) {
+		mainWindowSettings.titleBarStyle = 'hidden';
+		mainWindowSettings.titleBarOverlay = true;
+		mainWindowSettings.webPreferences.preload = preloadPath;
 
-        // Platform-specific adjustments
-        if (process.platform === 'linux') {
-            mainWindowSettings.frame = false;
-        }
-    }
+		// Platform-specific adjustments
+		if (process.platform === 'linux') {
+			mainWindowSettings.frame = false;
+		}
+	}
 
-    return mainWindowSettings;
+	return mainWindowSettings;
 };

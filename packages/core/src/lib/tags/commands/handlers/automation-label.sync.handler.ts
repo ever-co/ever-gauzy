@@ -1,6 +1,6 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IOrganization, ITag, ITagCreateInput, ITagUpdateInput } from '@gauzy/contracts';
+import { ID, ITag, ITagCreateInput, ITagUpdateInput } from '@gauzy/contracts';
 import { IntegrationMap } from '../../../core/entities/internal';
 import { RequestContext } from '../../../core/context';
 import { Tag } from './../../tag.entity';
@@ -89,8 +89,8 @@ export class AutomationLabelSyncHandler implements ICommandHandler<AutomationLab
 	 */
 	async createTag(
 		options: {
-			organizationId: IOrganization['id'];
-			tenantId: IOrganization['tenantId'];
+			organizationId: ID;
+			tenantId: ID;
 		},
 		entity: ITagCreateInput | ITagUpdateInput
 	): Promise<ITag> {

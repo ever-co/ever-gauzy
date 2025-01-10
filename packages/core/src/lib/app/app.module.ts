@@ -159,6 +159,7 @@ import { MentionModule } from '../mention/mention.module';
 import { SubscriptionModule } from '../subscription/subscription.module';
 import { DashboardModule } from '../dashboard/dashboard.module';
 import { DashboardWidgetModule } from '../dashboard/dashboard-widget/dashboard-widget.module';
+import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
 
 const { unleashConfig } = environment;
 
@@ -465,7 +466,8 @@ if (environment.THROTTLE_ENABLED) {
 		MentionModule,
 		SubscriptionModule,
 		DashboardModule,
-		DashboardWidgetModule
+		DashboardWidgetModule,
+		TenantApiKeyModule
 	],
 	controllers: [AppController],
 	providers: [
