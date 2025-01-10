@@ -127,3 +127,7 @@ export interface ITaskAdvancedFilter {
 	// Relations
 	relations?: string[];
 }
+
+export interface IAdvancedTaskFiltering {
+	filters?: ITaskAdvancedFilter;
+}
