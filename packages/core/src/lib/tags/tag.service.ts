@@ -88,6 +88,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 			query.leftJoin(`${query.alias}.tasks`, 'task');
 			query.leftJoin(`${query.alias}.users`, 'user');
 			query.leftJoin(`${query.alias}.warehouses`, 'warehouse');
+			query.leftJoin(`${query.alias}.tagType`, 'tagType');
 
 			// Custom Entity Fields: Add left joins for each custom field if they exist
 			if (customFields.length > 0) {
@@ -184,7 +185,10 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		// Optional organization filter
 		query.andWhere(
 			new Brackets((qb) => {
-				qb.where(`${query.alias}.organizationId IS NULL`).orWhere(`${query.alias}.organizationId = :organizationId`, { organizationId });
+				qb.where(`${query.alias}.organizationId IS NULL`).orWhere(
+					`${query.alias}.organizationId = :organizationId`,
+					{ organizationId }
+				);
 			})
 		);
 
