@@ -8,9 +8,7 @@ import { UserService } from './../../user/user.service';
 
 @Injectable()
 export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-refresh-token') {
-	constructor(
-		private readonly userService: UserService
-	) {
+	constructor(private readonly userService: UserService) {
 		super({
 			jwtFromRequest: ExtractJwt.fromBodyField('refresh_token'),
 			secretOrKey: environment.JWT_REFRESH_TOKEN_SECRET,

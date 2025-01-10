@@ -10,7 +10,7 @@ export * from './lib/deduplicate';
 export * from './lib/deep-clone';
 export * from './lib/deep-merge';
 export * from './lib/generate-encryption-key';
-export * from './lib/generate-uuid-without-dashes';
+export * from './lib/generate-sha256-hash';
 export * from './lib/extract-name-from-email';
 export * from './lib/password-generator';
 export * from './lib/is-array';

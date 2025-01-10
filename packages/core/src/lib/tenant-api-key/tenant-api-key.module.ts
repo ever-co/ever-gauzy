@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { EncryptionService } from '../common/encryption/encryption.service';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { UserModule } from '../user/user.module';
 import { TenantApiKeyController } from './tenant-api-key.controller';
 import { TenantApiKey } from './tenant-api-key.entity';
 import { TenantApiKeyService } from './tenant-api-key.service';
 import { TypeOrmTenantApiKeyRepository } from './repository/type-orm-tenant-api-key.repository';
-import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { UserModule } from '../user/user.module';
 
 @Module({
 	imports: [
@@ -21,8 +20,10 @@ import { UserModule } from '../user/user.module';
 	],
 	providers: [
 		TenantApiKeyService,
-		EncryptionService,
 		TypeOrmTenantApiKeyRepository
+	],
+	exports: [
+		TenantApiKeyService
 	]
 })
 export class TenantApiKeyModule {}
