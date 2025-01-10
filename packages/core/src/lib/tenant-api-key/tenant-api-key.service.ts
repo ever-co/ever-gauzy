@@ -1,8 +1,6 @@
 import { HttpStatus, HttpException, Injectable } from '@nestjs/common';
-import { FindOptionsWhere } from 'typeorm';
 import { IGenerateApiKey, IGenerateApiKeyResponse } from '@gauzy/contracts';
-import { generatePassword, generateUuidWithoutDashes } from '@gauzy/utils';
-import { EncryptionService } from '../common/encryption/encryption.service';
+import { generatePassword, generateSha256Hash } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
 import { TenantApiKey } from './tenant-api-key.entity';
@@ -13,8 +11,7 @@ import { TypeOrmTenantApiKeyRepository } from './repository/type-orm-tenant-api-
 export class TenantApiKeyService extends TenantAwareCrudService<TenantApiKey> {
 	constructor(
 		readonly typeOrmTenantApiKeyRepository: TypeOrmTenantApiKeyRepository,
-		readonly mikroOrmTenantApiKeyRepository: MikroOrmTenantApiKeyRepository,
-		private readonly _encryptionService: EncryptionService
+		readonly mikroOrmTenantApiKeyRepository: MikroOrmTenantApiKeyRepository
 	) {
 		super(typeOrmTenantApiKeyRepository, mikroOrmTenantApiKeyRepository);
 	}
@@ -51,17 +48,15 @@ export class TenantApiKeyService extends TenantAwareCrudService<TenantApiKey> {
 			}
 
 			// Generate API key and secret
-			const apiKey = generateUuidWithoutDashes(); // Generate UUID without dashes
+			const apiKey = generatePassword(32); // Generate a random password
 			const apiSecret = generatePassword(64); // Generate a random password
-
-			// Encrypt the API secret
-			const encryptedSecret = this.encryptSecret(apiSecret);
+			const hashedApiSecret = generateSha256Hash(apiSecret); // Encrypt the API secret
 
 			// Save the API key and encrypted secret to the database
 			const tenantApiKey = await this.create({
 				name: input.name,
 				apiKey,
-				apiSecret: encryptedSecret, // Store encrypted secret
+				apiSecret: hashedApiSecret, // Store encrypted secret
 			});
 
 			// Return the generated API key object
@@ -93,41 +88,28 @@ export class TenantApiKeyService extends TenantAwareCrudService<TenantApiKey> {
 	}
 
 	/**
-	 * Encrypts the API secret using the encryption service.
+	 * Retrieves the `TenantApiKey` record associated with the provided API Key.
+	 * Ensures that the API Key is active and not archived.
 	 *
-	 * @param {string} apiSecret - The plain text API secret to encrypt.
-	 * @returns {string} The encrypted API secret.
+	 * @param apiKey - The API Key to look up in the database.
+	 * @returns A promise resolving to the matched `TenantApiKey` object if found, or `null` if no match is found.
 	 */
-	private encryptSecret(apiSecret: string): string {
-		return this._encryptionService.encrypt(apiSecret);
-	}
-
-	/**
-	 * Find a TenantApiKey based on the provided API key.
-	 * @param options The FindOptionsWhere object specifying the search criteria.
-	 * @returns A Promise that resolves to a TenantApiKey or null if not found.
-	 */
-	async findApiKeyByOptions(options: FindOptionsWhere<TenantApiKey>): Promise<TenantApiKey | null> {
+	async getApiKey(apiKey: string): Promise<TenantApiKey | null> {
 		try {
-			const tenantApiKey = await this.findOneByOptions({
+			console.log('Validating API Key:', apiKey);
+			console.log(`API Key length: ${apiKey.length}`);
+
+			// Perform a database query to find an active and non-archived API key
+			return await this.findOneByOptions({
 				where: {
-					...options,
-					isActive: true,
-					isArchived: false,
-					// Also Filter by Tenant's isActive & isArchived flag
-					tenant: {
-						isActive: true, // Filter by related Tenant's isActive being true
-						isArchived: false // Filter by related Tenant's isArchived being false
-					}
+					apiKey, // Match the provided API Key
+					isActive: true, // Ensure the API key is active
+					isArchived: false, // Ensure the API key is not archived
 				},
-				relations: {
-					tenant: true // Include the related Tenant entity in the result
-				}
 			});
-			return tenantApiKey || null;
 		} catch (error) {
-			// Handle any errors that may occur during the database query
-			console.error('Error fetching tenant_api_key: %s', error.message);
+			// Log any errors that occur during the query
+			console.error('Error fetching tenant_api_key:', error.message);
 			return null;
 		}
 	}

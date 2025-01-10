@@ -24,9 +24,19 @@ import { FeatureModule } from '../feature/feature.module';
 import { SocialAccountService } from './social-account/social-account.service';
 import { SocialAccountModule } from './social-account/social-account.module';
 
-const providers = [AuthService, EmailConfirmationService, SocialAccountService, UserOrganizationService];
+// Core service providers for handling authentication and related functionalities
+const providers = [
+	AuthService,
+	EmailConfirmationService,
+	SocialAccountService,
+	UserOrganizationService,
+];
 
-const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
+// Authentication strategies for token validation and management
+const strategies = [
+	JwtStrategy,
+	JwtRefreshTokenStrategy,
+];
 
 @Module({
 	imports: [
