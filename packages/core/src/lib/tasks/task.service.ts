@@ -1111,7 +1111,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 */
 	private buildAdvancedWhereCondition(
 		filters?: ITaskAdvancedFilter | IGetTasksByViewFilters,
-		where?: FindOptionsWhere<Task>
+		where: FindOptionsWhere<Task> = {}
 	): FindOptionsWhere<Task> {
 		// Destructuring filter params
 		const {
