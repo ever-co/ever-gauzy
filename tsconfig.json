@@ -16,6 +16,7 @@
 			"@gauzy/desktop-lib": ["./packages/desktop-lib/src/index.ts"],
 			"@gauzy/desktop-ui-lib": ["./packages/desktop-ui-lib/src/index.ts"],
 			"@gauzy/desktop-window": ["./packages/desktop-window/src/index.ts"],
+			"@gauzy/file-local-provider": ["./packages/modules/providers/file-local/src/index.ts"],
 			"@gauzy/plugin": ["./packages/plugin/src/index.ts"],
 			"@gauzy/plugin-changelog": ["./packages/plugins/changelog/src/index.ts"],
 			"@gauzy/plugin-integration-ai": ["./packages/plugins/integration-ai/src/index.ts"],

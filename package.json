@@ -357,6 +357,8 @@
 			"apps/*",
 			"tools",
 			"packages/*",
+			"packages/modules/*",
+			"packages/modules/providers/*",
 			"packages/plugins/*"
 		],
 		"nohoist": [

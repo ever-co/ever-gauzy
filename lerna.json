@@ -6,7 +6,13 @@
 		"cacheDir": ".changelog",
 		"labels": {}
 	},
-	"packages": ["apps/*", "packages/*", "packages/plugins/*"],
+	"packages": [
+		"apps/*",
+		"packages/*",
+		"packages/modules/*",
+		"packages/modules/providers/*",
+		"packages/plugins/*"
+	],
 	"useNx": true,
 	"command": {
 		"exec": {

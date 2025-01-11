@@ -1,0 +1,42 @@
+{
+	"name": "file-local-provider",
+	"$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/modules/providers/file-local/src",
+	"projectType": "library",
+	"release": {
+		"version": {
+			"generatorOptions": {
+				"packageRoot": "dist/{projectRoot}",
+				"currentVersionResolver": "git-tag"
+			}
+		}
+	},
+	"tags": [],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "dist/packages/modules/providers/file-local",
+				"main": "packages/modules/providers/file-local/src/index.ts",
+				"tsConfig": "packages/modules/providers/file-local/tsconfig.lib.json",
+				"assets": ["packages/modules/providers/file-local/*.md"]
+			}
+		},
+		"nx-release-publish": {
+			"options": {
+				"packageRoot": "dist/{projectRoot}"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/modules/providers/file-local/jest.config.ts"
+			}
+		}
+	}
+}
