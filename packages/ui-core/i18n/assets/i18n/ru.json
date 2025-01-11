@@ -4091,7 +4091,8 @@
 			"OPEN_MAIN_WINDOW": "Открыть главное окно",
 			"DAILY_RECAP": "Ежедневный обзор",
 			"WEEKLY_RECAP": "Еженедельный Обзор",
-			"MONTHLY_RECAP": "Ежемесячный Обзор"
+			"MONTHLY_RECAP": "Ежемесячный Обзор",
+			"INSTALL_PLUGIN": "Установить плагин"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Часовой учет времени",
