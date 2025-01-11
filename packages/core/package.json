@@ -4,7 +4,8 @@
 	"description": "DSpot ERP Platform Core - a headless ERP/CRM/HRM framework",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/DSpotDevelopers/gauzy"
+		"url": "https://github.com/DSpotDevelopers/gauzy",
+		"directory": "packages/core"
 	},
 	"bugs": {
 		"url": "https://github.com/DSpotDevelopers/gauzy/issues"

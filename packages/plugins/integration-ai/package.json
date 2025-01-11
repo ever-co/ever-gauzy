@@ -9,7 +9,8 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/DSpotDevelopers/gauzy"
+		"url": "https://github.com/DSpotDevelopers/gauzy",
+		"directory": "packages/plugins/integration-ai"
 	},
 	"bugs": {
 		"url": "https://github.com/DSpotDevelopers/gauzy/issues"
