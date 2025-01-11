@@ -10,7 +10,8 @@
 	"homepage": "https://ever.co",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ever-co/ever-gauzy"
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/plugins/changelog"
 	},
 	"bugs": {
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
