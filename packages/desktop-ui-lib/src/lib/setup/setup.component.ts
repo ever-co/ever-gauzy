@@ -16,7 +16,7 @@ import { GAUZY_ENV } from '../constants';
 import { ElectronService, LoggerService } from '../electron/services';
 import { LanguageElectronService } from '../language/language-electron.service';
 import { LanguageSelectorComponent } from '../language/language-selector.component';
-import { ErrorHandlerService, Store } from '../services';
+import { ErrorHandlerService, Store, ToastrNotificationService } from '../services';
 import { SetupService } from './setup.service';
 
 @Component({
@@ -44,9 +44,10 @@ export class SetupComponent implements OnInit {
 		@Inject(GAUZY_ENV)
 		private readonly _environment: any,
 		private readonly _domSanitizer: DomSanitizer,
-		private languageElectronService: LanguageElectronService
+		private languageElectronService: LanguageElectronService,
+		private readonly _notifier: ToastrNotificationService
 	) {
-		electronService.ipcRenderer.on('setup-data', (event, arg) => {
+		electronService.ipcRenderer.on('setup-data', (_, arg) => {
 			this.desktopFeatures.gauzyPlatform = arg.gauzyWindow;
 			this.desktopFeatures.timeTracking = arg.timeTrackerWindow;
 			this.connectivity.integrated = arg.isLocalServer;
@@ -71,7 +72,7 @@ export class SetupComponent implements OnInit {
 			}
 		});
 
-		electronService.ipcRenderer.on('log_state', (event, arg) => {
+		electronService.ipcRenderer.on('log_state', (_, arg) => {
 			const validMessage = this.defaultMessage.findIndex((item) => arg.msg.indexOf(item) > -1);
 			if (validMessage > -1) {
 				if (validMessage === 0 && arg.msg.indexOf('Found 0 users in DB') < 0) {
@@ -253,6 +254,13 @@ export class SetupComponent implements OnInit {
 		};
 	}
 
+	sanitizeServerPort(host, port) {
+		if (!host.includes(port)) {
+			return `${host}${port}`
+		}
+		return host;
+	}
+
 	getServerConfig() {
 		if (this.connectivity.integrated) {
 			return {
@@ -264,8 +272,9 @@ export class SetupComponent implements OnInit {
 		if (this.connectivity.custom) {
 			const protocol = this.serverConfig.custom.apiHost.indexOf('http') === 0 ? '' : 'https://';
 			const port = this.serverConfig.custom.port ? ':' + this.serverConfig.custom.port : '';
+			const apiHost = `${protocol}${this.serverConfig.custom.apiHost}`;
 			return {
-				serverUrl: protocol + this.serverConfig.custom.apiHost + port,
+				serverUrl: this.sanitizeServerPort(apiHost, port),
 				isLocalServer: false
 			};
 		}
@@ -437,28 +446,18 @@ export class SetupComponent implements OnInit {
 				if (this.runApp) {
 					await this.saveAndRun();
 				} else {
-					this.dialogData = {
-						title: 'TOASTR.TITLE.SUCCESS',
-						message: this._translateService.instant('TIMER_TRACKER.SETTINGS.MESSAGES.CONNECTION_SUCCEEDS', {
-							url: serverHostOptions.serverUrl
-						}),
-						status: 'success'
-					};
-					const elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
-					elBtn.click();
+					this._notifier.success(this._translateService.instant('TIMER_TRACKER.SETTINGS.MESSAGES.CONNECTION_SUCCEEDS', {
+						url: serverHostOptions.serverUrl
+					}))
 					this.isCheckConnection = false;
+					this._cdr.detectChanges();
 				}
 			})
 			.catch((e) => {
-				this.dialogData = {
-					title: 'TOASTR.TITLE.ERROR',
-					message: e.message,
-					status: 'danger'
-				};
-				const elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
-				elBtn.click();
+				this._notifier.error(e.message);
 				this.isSaving = false;
 				this.isCheckConnection = false;
+				this._cdr.detectChanges();
 			});
 	}
 
