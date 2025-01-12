@@ -3981,9 +3981,10 @@
 			"DB_PORT": "Puerto de la base de datos",
 			"USER": "Usuario",
 			"PASSWORD": "Contraseña",
-			"UI_HOSTNAME": "Nombre de host/IP de la UI",
-			"TITLE_SERVER_API": "Asistente de instalación del servidor API de DSpot ERP",
-			"LABEL_SERVER_API": "La aplicación de escritorio del servidor API de DSpot ERP proporciona toda la funcionalidad de la plataforma DSpot ERP disponible directamente en su computadora de escritorio o portátil. Además, permite el seguimiento del tiempo de trabajo, el registro de actividad y la capacidad de recibir recordatorios/notificaciones de seguimiento."
+			"UI_HOSTNAME": "Nombre de host de IU / Dirección IP",
+			"TITLE_SERVER_API": "Asistente de instalación del servidor API de Ever Gauzy",
+			"LABEL_SERVER_API": "La aplicación de escritorio Ever Gauzy API Server proporciona la funcionalidad completa de la plataforma Gauzy disponible directamente en su computadora de escritorio o portátil. Además, permite realizar un seguimiento del tiempo de trabajo, registrar actividades y recibir recordatorios/notificaciones de seguimiento.",
+			"UNABLE_TO_CONNECT": "No se puede conectar al servidor. Por favor verifique su host API o conexión a internet."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Captura de pantalla",
