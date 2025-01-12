@@ -424,14 +424,15 @@ export class SetupComponent implements OnInit {
 			const resp = await this.setupService.pingServer({
 				host: url.origin
 			});
-			this.serverConfig.custom.apiHost = url.origin;
+			this.serverConfig.custom.apiHost = `${url.protocol}//${url.hostname}`;
+			this.serverConfig.custom.port = url.port;
 			return resp;
 		} catch (error) {
 			if (!retry) {
 				url.protocol = url.protocol === 'http:' ? 'https' : 'http';
 				return this.serverProtocolCheck(url.origin, true);
 			}
-			throw new Error('TIMER_TRACKER.SETUP.UNABLE_TO_CONNECT');
+			throw new Error(this._translateService.instant('TIMER_TRACKER.SETUP.UNABLE_TO_CONNECT'));
 		}
 	}
 
@@ -442,9 +443,11 @@ export class SetupComponent implements OnInit {
 				if (this.runApp) {
 					await this.saveAndRun();
 				} else {
-					this._notifier.success(this._translateService.instant('TIMER_TRACKER.SETTINGS.MESSAGES.CONNECTION_SUCCEEDS', {
-						url: serverHostOptions.serverUrl
-					}))
+					this._notifier.success(
+						this._translateService.instant('TIMER_TRACKER.SETTINGS.MESSAGES.CONNECTION_SUCCEEDS', {
+							url: serverHostOptions.serverUrl
+						})
+					);
 					this.isCheckConnection = false;
 					this._cdr.detectChanges();
 				}
@@ -489,7 +492,7 @@ export class SetupComponent implements OnInit {
 			if (arg.status) {
 				this._notifier.success(arg.message);
 			} else {
-				this._notifier.warn(arg.message)
+				this._notifier.warn(arg.message);
 			}
 
 			if (arg.status && this.runApp) {
