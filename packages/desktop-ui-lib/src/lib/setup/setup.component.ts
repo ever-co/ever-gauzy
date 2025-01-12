@@ -258,7 +258,8 @@ export class SetupComponent implements OnInit {
 		if (!host.includes(port)) {
 			return `${host}${port}`
 		}
-		return host;
+
+		return url.origin;
 	}
 
 	getServerConfig() {
