@@ -7,6 +7,15 @@
         "email": "ever@ever.co",
         "url": "https://ever.co"
     },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/ever-co/ever-gauzy",
+        "directory": "packages/core"
+    },
+    "bugs": {
+        "url": "https://github.com/ever-co/ever-gauzy/issues"
+    },
+    "homepage": "https://ever.co",
     "license": "AGPL-3.0",
     "type": "commonjs",
     "main": "./src/index.js",
@@ -30,6 +39,7 @@
         "@aws-sdk/client-s3": "^3.717.0",
         "@aws-sdk/s3-request-presigner": "^3.717.0",
         "@faker-js/faker": "8.0.0-alpha.0",
+        "@fastify/swagger": "^9.4.0",
         "@gauzy/auth": "^0.1.0",
         "@gauzy/common": "^0.1.0",
         "@gauzy/config": "^0.1.0",
@@ -94,9 +104,6 @@
         "@sentry/profiling-node": "^7.101.1",
         "@sentry/tracing": "^7.101.1",
         "@sentry/types": "^7.101.1",
-        "apollo-server-core": "^3.10.1",
-        "apollo-server-express": "^3.5.0",
-        "apollo-server-fastify": "^3.5.0",
         "app-root-path": "^3.0.0",
         "archiver": "^5.3.0",
         "atlassian-connect-express": "^8.5.0",
@@ -123,7 +130,6 @@
         "express": "^4.21.2",
         "express-session": "^1.18.1",
         "fast-json-stringify": "^2.4.1",
-        "fastify-swagger": "^4.12.4",
         "fs-extra": "^10.1.0",
         "graphql": "^16.10.0",
         "graphql-playground-middleware-express": "^1.7.23",

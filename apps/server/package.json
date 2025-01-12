@@ -37,7 +37,7 @@
 		"@angular/forms": "18.2.12",
 		"@angular/material": "18.2.14",
 		"@angular/router": "18.2.12",
-		"@datorama/akita": "^7.1.1",
+		"@datorama/akita": "^8.0.1",
 		"@datorama/akita-ngdevtools": "^7.0.0",
 		"@electron/remote": "^2.0.8",
 		"@grpc/grpc-js": "^1.6.7",

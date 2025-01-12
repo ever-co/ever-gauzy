@@ -2,7 +2,7 @@ import { DynamicModule, Type } from '@nestjs/common';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { MikroOrmModuleOptions } from '@mikro-orm/nestjs';
 import { KnexModuleOptions } from 'nest-knexjs';
-import { PluginDefinition } from 'apollo-server-core';
+import { ApolloServerPlugin } from '@apollo/server';
 import { AbstractLogger } from './IAbstractLogger';
 import { CustomEmbeddedFields } from '../custom-embedded-field-types';
 
@@ -32,7 +32,7 @@ export interface GraphqlConfigurationOptions {
 	 * An array of Apollo Server plugins.
 	 * @description Defines an array of plugins for Apollo Server.
 	 */
-	apolloServerPlugins?: PluginDefinition[];
+	apolloServerPlugins?: ApolloServerPlugin[];
 }
 
 /**

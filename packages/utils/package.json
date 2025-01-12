@@ -10,7 +10,8 @@
 	"license": "AGPL-3.0",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ever-co/ever-gauzy"
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/utils"
 	},
 	"bugs": {
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
@@ -25,6 +26,7 @@
 		"lib:watch": "yarn nx build utils --watch"
 	},
 	"dependencies": {
+		"generate-password": "^1.7.1",
 		"slugify": "^1.6.6",
 		"tslib": "^2.6.2"
 	},

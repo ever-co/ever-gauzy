@@ -4074,7 +4074,8 @@
 			"OPEN_MAIN_WINDOW": "打开主窗口",
 			"DAILY_RECAP": "每日总结",
 			"WEEKLY_RECAP": "每周回顾",
-			"MONTHLY_RECAP": "每月回顾"
+			"MONTHLY_RECAP": "每月回顾",
+			"INSTALL_PLUGIN": "安装插件"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "按小时跟踪时间",

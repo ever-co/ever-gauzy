@@ -4074,7 +4074,8 @@
 			"OPEN_MAIN_WINDOW": "Apri la finestra principale",
 			"DAILY_RECAP": "Riepilogo Giornaliero",
 			"WEEKLY_RECAP": "Riepilogo Settimanale",
-			"MONTHLY_RECAP": "Riepilogo Mensile"
+			"MONTHLY_RECAP": "Riepilogo Mensile",
+			"INSTALL_PLUGIN": "Installa plugin"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Tracciamento del tempo orario",

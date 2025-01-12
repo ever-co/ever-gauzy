@@ -4074,7 +4074,8 @@
 			"OPEN_MAIN_WINDOW": "Ouvrir la fenêtre principale",
 			"DAILY_RECAP": "Récapitulatif journalier",
 			"WEEKLY_RECAP": "Récapitulatif Hebdomadaire",
-			"MONTHLY_RECAP": "Récapitulatif Mensuel"
+			"MONTHLY_RECAP": "Récapitulatif Mensuel",
+			"INSTALL_PLUGIN": "Installer plugin"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Suivi du temps horaire",

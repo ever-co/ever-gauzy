@@ -131,7 +131,7 @@
 		]
 	},
 	"dependencies": {
-		"@datorama/akita": "^7.1.1",
+		"@datorama/akita": "^8.0.1",
 		"@datorama/akita-ngdevtools": "^7.0.0",
 		"@electron/remote": "^2.0.8",
 		"@gauzy/contracts": "file:../../../dist/packages/contracts",
