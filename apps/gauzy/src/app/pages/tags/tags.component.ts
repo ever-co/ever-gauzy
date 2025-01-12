@@ -311,8 +311,6 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 			this.loading = false;
 		} catch (error) {
 			this.loading = false;
-			console.log(error);
-
 			this.toastrService.danger('TAGS_PAGE.TAGS_FETCH_FAILED', 'Error fetching tag types');
 		}
 	}
