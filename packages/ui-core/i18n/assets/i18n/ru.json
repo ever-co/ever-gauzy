@@ -2388,7 +2388,8 @@
 		"TAGS_SELECT_DESCRIPTION": "Описание метки",
 		"ADD_NEW_TAG": "Добавить новый тег",
 		"TENANT_LEVEL": "Уровень владельца",
-		"TAGS_TYPE": "Тип тегов"
+		"TAGS_TYPE": "Тип тегов",
+		"TAGS_SELECT_TYPE": "Выберите тип тега"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Навыки"

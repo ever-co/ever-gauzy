@@ -235,10 +235,10 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 						instance.value = cell.getValue();
 					}
 				},
-				type: {
+				tagTypeName: {
 					title: 'Type',
 					type: 'string',
-					width: '70%',
+					width: '20%',
 					isFilterable: false
 				},
 				description: {
@@ -334,12 +334,7 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 
 		const { activePage, itemsPerPage } = this.getPagination();
 
-		this.allTags = items.map((item) => {
-			return {
-				...item,
-				type: item.tagType?.type || '-'
-			};
-		});
+		this.allTags = items;
 
 		this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 		if (!this._isFiltered) {
@@ -381,7 +376,7 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 			return;
 		}
 		if (value) {
-			const tags = this.allTags.filter((tag) => tag.tagId === value);
+			const tags = this.allTags.filter((tag) => tag.tagTypeId === value);
 			this._isFiltered = true;
 			this._refresh$.next(true);
 			this.smartTableSource.load(tags);

@@ -2353,7 +2353,8 @@
 		"TAGS_SELECT_DESCRIPTION": "Tag Beschreibung",
 		"ADD_NEW_TAG": "Neuen Tag hinzufügen",
 		"TENANT_LEVEL": "Mieterstufe",
-		"TAGS_TYPE": "Tags-Typ"
+		"TAGS_TYPE": "Tags-Typ",
+		"TAGS_SELECT_TYPE": "Tag-Typ auswählen"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Fähigkeiten"

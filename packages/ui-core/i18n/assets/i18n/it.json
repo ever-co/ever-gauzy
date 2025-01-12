@@ -2357,7 +2357,8 @@
 		"TAGS_SELECT_DESCRIPTION": "Descrizione del tag",
 		"ADD_NEW_TAG": "Aggiungi nuovo Tag",
 		"TENANT_LEVEL": "Livello dell'inquilino",
-		"TAGS_TYPE": "Tipo di tag"
+		"TAGS_TYPE": "Tipo di tag",
+		"TAGS_SELECT_TYPE": "Seleziona il tipo di tag"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Abilità"

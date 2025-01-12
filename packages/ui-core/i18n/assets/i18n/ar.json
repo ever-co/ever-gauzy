@@ -2355,7 +2355,8 @@
 		"TAGS_SELECT_DESCRIPTION": "وصف العلامة",
 		"ADD_NEW_TAG": "إضافة وسم جديد",
 		"TENANT_LEVEL": "مستوى المستأجر",
-		"TAGS_TYPE": "نوع العلامات"
+		"TAGS_TYPE": "نوع العلامات",
+		"TAGS_SELECT_TYPE": "اختر نوع العلامات"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "مهارات"
