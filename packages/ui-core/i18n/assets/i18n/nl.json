@@ -2493,9 +2493,10 @@
 		"TAGS_SELECT_NAME": "Tagnaam",
 		"TAGS_SELECT_COLOR": "Tagkleur",
 		"TAGS_SELECT_DESCRIPTION": "Tagbeschrijving",
-		"ADD_NEW_TAG": "Nieuwe tag toevoegen",
-		"TENANT_LEVEL": "Huurderniveau",
-		"TAGS_TYPE": "Tagstype"
+		"ADD_NEW_TAG": "Voeg nieuwe tag toe",
+		"TENANT_LEVEL": "Huurdersniveau",
+		"TAGS_TYPE": "Tagstype",
+		"TAGS_SELECT_TYPE": "Selecteer tagtype"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Vaardigheden"

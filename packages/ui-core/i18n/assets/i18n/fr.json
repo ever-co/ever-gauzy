@@ -2495,7 +2495,8 @@
 		"TAGS_SELECT_DESCRIPTION": "Description de l'étiquette",
 		"ADD_NEW_TAG": "Ajouter une nouvelle étiquette",
 		"TENANT_LEVEL": "Niveau du locataire",
-		"TAGS_TYPE": "Type d'étiquettes"
+		"TAGS_TYPE": "Catégories de balises",
+		"TAGS_SELECT_TYPE": "Sélectionnez le type de balise"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Compétences"

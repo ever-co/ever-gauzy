@@ -2171,7 +2171,8 @@
 		"TAGS_SELECT_DESCRIPTION": "crwdns3166:0crwdne3166:0",
 		"ADD_NEW_TAG": "crwdns4306:0crwdne4306:0",
 		"TENANT_LEVEL": "crwdns4726:0crwdne4726:0",
-		"TAGS_TYPE": "crwdns10274:0crwdne10274:0"
+		"TAGS_TYPE": "crwdns10274:0crwdne10274:0",
+		"TAGS_SELECT_TYPE": "Yeny tags kikome"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "crwdns3920:0crwdne3920:0"

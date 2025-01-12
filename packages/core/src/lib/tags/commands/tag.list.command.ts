@@ -7,6 +7,6 @@ export class TagListCommand implements ICommand {
 
 	constructor(
 		public readonly input: FindOptionsWhere<Tag>,
-		public readonly relations: string[] | FindOptionsRelations<Tag>,
-	) { }
+		public readonly relations: string[] | FindOptionsRelations<Tag>
+	) {}
 }

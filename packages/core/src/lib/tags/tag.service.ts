@@ -62,7 +62,9 @@ export class TagService extends TenantAwareCrudService<Tag> {
 			query.setFindOptions({
 				...(relations ? { relations: relations } : {})
 			});
+
 			// Left join all relational tables with tag table
+			query.leftJoin(`${query.alias}.tagType`, 'tagType');
 			query.leftJoin(`${query.alias}.candidates`, 'candidate');
 			query.leftJoin(`${query.alias}.employees`, 'employee');
 			query.leftJoin(`${query.alias}.employeeLevels`, 'employeeLevel');
@@ -88,7 +90,6 @@ export class TagService extends TenantAwareCrudService<Tag> {
 			query.leftJoin(`${query.alias}.tasks`, 'task');
 			query.leftJoin(`${query.alias}.users`, 'user');
 			query.leftJoin(`${query.alias}.warehouses`, 'warehouse');
-			query.leftJoin(`${query.alias}.tagType`, 'tagType');
 
 			// Custom Entity Fields: Add left joins for each custom field if they exist
 			if (customFields.length > 0) {
@@ -101,6 +102,8 @@ export class TagService extends TenantAwareCrudService<Tag> {
 
 			// Add new selection to the SELECT query
 			query.select(`${query.alias}.*`);
+
+			query.addSelect(p(`"tagType"."type"`), `tagTypeName`);
 			// Add the select statement for counting, and cast it to integer
 			query.addSelect(p(`CAST(COUNT("candidate"."id") AS INTEGER)`), `candidate_counter`);
 			query.addSelect(p(`CAST(COUNT("employee"."id") AS INTEGER)`), `employee_counter`);
@@ -146,6 +149,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 
 			// Adds GROUP BY condition in the query builder.
 			query.addGroupBy(`${query.alias}.id`);
+			query.addGroupBy(`tagType.type`);
 			// Additionally you can add parameters used in where expression.
 			query.where((qb: SelectQueryBuilder<Tag>) => {
 				this.getFilterTagQuery(qb, input);

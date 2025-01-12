@@ -2487,15 +2487,16 @@
 		"TAGS_NAME": "Nome",
 		"TAGS_DESCRIPTION": "Descrizione",
 		"TAGS_COLOR": "Colore",
-		"TAGS_ADD_TAG": "Tag '{{ name }}' aggiunto",
-		"TAGS_EDIT_TAG": "Tag '{{ name }}' modificato",
-		"TAGS_DELETE_TAG": "Tag '{{ name }}' rimosso",
-		"TAGS_SELECT_NAME": "Nome tag",
-		"TAGS_SELECT_COLOR": "Colore tag",
-		"TAGS_SELECT_DESCRIPTION": "Descrizione tag",
-		"ADD_NEW_TAG": "Aggiungi nuovo tag",
-		"TENANT_LEVEL": "Livello tenant",
-		"TAGS_TYPE": "Tipo tag"
+		"TAGS_ADD_TAG": "Il tag '{{ name }}' è stato aggiunto",
+		"TAGS_EDIT_TAG": "Il tag '{{ name }}' è stato cambiato",
+		"TAGS_DELETE_TAG": "Il tag '{{ name }}' è stato rimosso",
+		"TAGS_SELECT_NAME": "Nome del tag",
+		"TAGS_SELECT_COLOR": "Colore del tag",
+		"TAGS_SELECT_DESCRIPTION": "Descrizione del tag",
+		"ADD_NEW_TAG": "Aggiungi nuovo Tag",
+		"TENANT_LEVEL": "Livello dell'inquilino",
+		"TAGS_TYPE": "Tipo di tag",
+		"TAGS_SELECT_TYPE": "Seleziona il tipo di tag"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Competenze"
