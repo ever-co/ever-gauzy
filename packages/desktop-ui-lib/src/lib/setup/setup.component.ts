@@ -254,9 +254,10 @@ export class SetupComponent implements OnInit {
 		};
 	}
 
-	sanitizeServerPort(host, port) {
-		if (!host.includes(port)) {
-			return `${host}${port}`
+	sanitizeServerPort(host: string, port: string) {
+		const url = new URL(host);
+		if (port) {
+			url.port = port;
 		}
 
 		return url.origin;
@@ -272,7 +273,7 @@ export class SetupComponent implements OnInit {
 
 		if (this.connectivity.custom) {
 			const protocol = this.serverConfig.custom.apiHost.indexOf('http') === 0 ? '' : 'https://';
-			const port = this.serverConfig.custom.port ? ':' + this.serverConfig.custom.port : '';
+			const port = this.serverConfig.custom.port;
 			const apiHost = `${protocol}${this.serverConfig.custom.apiHost}`;
 			return {
 				serverUrl: this.sanitizeServerPort(apiHost, port),
@@ -436,7 +437,7 @@ export class SetupComponent implements OnInit {
 				url.protocol = url.protocol === 'http:' ? 'https' : 'http';
 				return this.serverProtocolCheck(url.origin, true);
 			}
-			throw error;
+			throw new Error('TIMER_TRACKER.SETUP.UNABLE_TO_CONNECT');
 		}
 	}
 
@@ -492,17 +493,9 @@ export class SetupComponent implements OnInit {
 		this.electronService.ipcRenderer.on('database_status', (event, arg) => {
 			// this.open(true);
 			if (arg.status) {
-				this.dialogData = {
-					title: 'TOASTR.TITLE.SUCCESS',
-					message: arg.message,
-					status: 'success'
-				};
+				this._notifier.success(arg.message);
 			} else {
-				this.dialogData = {
-					title: 'TOASTR.TITLE.WARNING',
-					message: arg.message,
-					status: 'danger'
-				};
+				this._notifier.warn(arg.message)
 			}
 
 			if (arg.status && this.runApp) {
