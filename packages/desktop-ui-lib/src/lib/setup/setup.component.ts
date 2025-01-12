@@ -430,14 +430,15 @@ export class SetupComponent implements OnInit {
 			const resp = await this.setupService.pingServer({
 				host: url.origin
 			})
-			this.serverConfig.custom.apiHost = url.origin;
+			this.serverConfig.custom.apiHost = `${url.protocol}//${url.hostname}`;
+			this.serverConfig.custom.port = url.port;
 			return resp;
 		} catch (error) {
 			if (!retry) {
 				url.protocol = url.protocol === 'http:' ? 'https' : 'http';
 				return this.serverProtocolCheck(url.origin, true);
 			}
-			throw new Error('TIMER_TRACKER.SETUP.UNABLE_TO_CONNECT');
+			throw new Error(this._translateService.instant('TIMER_TRACKER.SETUP.UNABLE_TO_CONNECT'));
 		}
 	}
 

@@ -3880,7 +3880,7 @@
 			"UI_HOSTNAME": "Nome host dell'interfaccia utente / indirizzo IP",
 			"TITLE_SERVER_API": "Procedura guidata di installazione del server API Ever Gauzy",
 			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App fornisce la piena funzionalità della piattaforma Gauzy disponibile direttamente sul tuo computer desktop o laptop. Inoltre, consente di tracciare il tempo di lavoro, registrare le attività e ricevere promemoria/notifiche di tracciamento.",
-			"UNABLE_TO_CONNECT": "Unable to connect to the server. Please check your API host or internet connection."
+			"UNABLE_TO_CONNECT": "Impossibile connettersi al server. Controlla il tuo host API o la connessione internet."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Cattura dello schermo",
