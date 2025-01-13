@@ -133,7 +133,10 @@ const parseDate = (dateString?: string): Date | null => {
 /**
  * Fetches default employees for the given tenant.
  */
-export const getDefaultEmployees = async (dataSource: DataSource, tenant: ITenant): Promise<IEmployee[]> => {
+export const getDefaultEmployees = async (
+	dataSource: DataSource,
+	tenant: ITenant
+): Promise<IEmployee[]> => {
 	// Get the default organization for the given tenant
 	const organization = await getDefaultOrganization(dataSource, tenant);
 
