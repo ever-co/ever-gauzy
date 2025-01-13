@@ -30,6 +30,10 @@ export class EmployeeWithLinksComponent implements OnInit {
 	 * @return {void} This function does not return anything.
 	 */
 	initializeGrouping(): void {
+		if (!this.value) {
+			return;
+		}
+
 		const GROUP = 3;
 		const SIZE = this.value.length;
 		let count = 0;
