@@ -15,6 +15,7 @@ import {
 	IContact
 } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
+import { getRandomElement } from '@gauzy/utils';
 import { getDummyImage } from '../core/utils';
 import { Contact, Organization, Skill } from '../core/entities/internal';
 
@@ -116,7 +117,7 @@ export const createDefaultOrganizations = async (
             timezone.tz.names().filter((zone) => zone.includes('/'))
         );
         defaultOrganization.dateFormat = faker.helpers.arrayElement(DEFAULT_DATE_FORMATS);
-        defaultOrganization.contact = faker.helpers.arrayElement(contacts);
+        defaultOrganization.contact = getRandomElement(contacts);
         defaultOrganization.defaultAlignmentType = faker.helpers.arrayElement(Object.keys(AlignmentOptions));
         defaultOrganization.fiscalStartDate = moment().add(faker.number.int(10), 'days').toDate();
         defaultOrganization.fiscalEndDate = moment(defaultOrganization.fiscalStartDate)
@@ -236,7 +237,7 @@ const generateRandomOrganization = async (
     organization.banner = faker.lorem.sentence();
     organization.skills = skills;
     organization.brandColor = faker.internet.color();
-    organization.contact = faker.helpers.arrayElement(contacts);
+    organization.contact = getRandomElement(contacts);
     organization.timeZone = timeZone;
     organization.dateFormat = faker.helpers.arrayElement(DEFAULT_DATE_FORMATS);
     organization.defaultAlignmentType = faker.helpers.arrayElement(Object.keys(AlignmentOptions));
@@ -348,6 +349,10 @@ const getRandomSkills = async (
     dataSource: DataSource,
     count: number
 ): Promise<ISkill[]> => {
+    if (!dataSource) {
+        throw new Error('Invalid data source: DataSource is required.');
+    }
+
     // Retrieve all skills from the database
     const skills = await dataSource.manager.find(Skill, {});
 
