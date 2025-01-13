@@ -77,8 +77,7 @@ export const createDefaultTimeSheet = async (
 
 	try {
 		console.log(chalk.green(`SEEDING Default TimeLogs & Activities`));
-		const { id: tenantId } = tenant;
-		const { id: organizationId } = organization;
+		const { id: organizationId, tenantId } = organization;
 		const createdTimesheets = await dataSource.manager.findBy(Timesheet, {
 			tenantId,
 			organizationId
@@ -183,31 +182,42 @@ export const createRandomTimesheet = async (
 
 	try {
 		console.log(chalk.green(`SEEDING Random TimeLogs & Activities`));
-		for await (const tenant of tenants) {
-			const { id: tenantId } = tenant;
-			const createdTimesheets = await dataSource.manager.findBy(Timesheet, {
-				tenantId
-			});
-			const timeSlots: ITimeSlot[] = await createRandomTimeLogs(
-				dataSource,
-				config,
-				tenant,
-				createdTimesheets
-			);
-			/**
-			 * Recalculate Timesheet Activities
-			 */
-			await recalculateTimesheetActivity(
-				dataSource,
-				createdTimesheets
-			);
-			await createRandomActivities(
-				dataSource,
-				tenant,
-				timeSlots
-			);
+
+		for (const tenant of tenants) {
+			await seedTimeLogsAndActivities(dataSource, config, tenant);
 		}
+
+		console.log(chalk.green(`SEEDING Random TimeLogs & Activities completed successfully.`));
 	} catch (error) {
-		console.log(chalk.red(`SEEDING Random TimeLogs & Activities`, error));
+		console.error(chalk.red(`Error occurred during SEEDING Random TimeLogs & Activities:`, error));
 	}
+};
+
+/**
+ * Seeds random time logs and activities for a tenant.
+ *
+ * @param dataSource - The TypeORM data source.
+ * @param config - The configuration object.
+ * @param tenant - The tenant for which the time logs and activities are seeded.
+ */
+const seedTimeLogsAndActivities = async (
+    dataSource: DataSource,
+    config: any,
+    tenant: any
+): Promise<void> => {
+    const { id: tenantId } = tenant;
+
+    // Fetch all timesheets for the current tenant
+    const createdTimesheets = await dataSource.manager.findBy(Timesheet, { tenantId });
+
+    // Create random time logs for the tenant
+    const timeSlots = await createRandomTimeLogs(dataSource, config, tenant, createdTimesheets);
+
+    // Recalculate timesheet activities
+    await recalculateTimesheetActivity(dataSource, createdTimesheets);
+
+    // Create random activities for the tenant
+    await createRandomActivities(dataSource, tenant, timeSlots);
+
+    console.log(chalk.green(`Seeded TimeLogs and Activities for tenant: ${tenantId}`));
 };
