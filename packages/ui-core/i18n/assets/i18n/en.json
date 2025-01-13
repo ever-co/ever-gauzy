@@ -4009,7 +4009,8 @@
 			"PASSWORD": "Password",
 			"UI_HOSTNAME": "UI Hostname / IP Address",
 			"TITLE_SERVER_API": "Ever Gauzy API Server Installation Wizard",
-			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App provides the full functionality of the Gauzy Platform available directly on your desktop computer or a laptop. In addition, it allows tracking work time, activity recording, and the ability to receive tracking reminders/notifications."
+			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App provides the full functionality of the Gauzy Platform available directly on your desktop computer or a laptop. In addition, it allows tracking work time, activity recording, and the ability to receive tracking reminders/notifications.",
+			"UNABLE_TO_CONNECT": "Unable to connect to the server. Please check your API host or internet connection."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Screen Capture",

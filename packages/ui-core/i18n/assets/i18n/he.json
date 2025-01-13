@@ -3893,7 +3893,9 @@
 			"PASSWORD": "סיסמה",
 			"UI_HOSTNAME": "שם מארח יישום ממשק משתמש / כתובת IP",
 			"TITLE_SERVER_API": "אשף התקנת שרת API של Ever Gauzy",
-			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App מספקת את הפונקציונליות המלאה של פלטפורמת Gauzy הזמינה ישירות במחשב השולחני או במחשב הנייד שלך. בנוסף, הוא מאפשר מעקב אחר זמן עבודה, רישום פעילות ויכולת לקבל תזכורות/הודעות מעקב."
+			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App מספקת את הפונקציונליות המלאה של פלטפורמת Gauzy הזמינה ישירות במחשב השולחני או במחשב הנייד שלך. בנוסף, הוא מאפשר מעקב אחר זמן עבודה, רישום פעילות ויכולת לקבל תזכורות/הודעות מעקב.",
+			"UNABLE_TO_CONNECT": "Unable to connect to the server. Please check your API host or internet connection."
+
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "לכידת מסך",

@@ -807,7 +807,12 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Payment',
-			createDefaultPayment(this.dataSource, this.tenant, this.defaultEmployees, this.organizations)
+			createDefaultPayment(
+				this.dataSource,
+				this.tenant,
+				this.defaultEmployees,
+				this.organizations
+			)
 		);
 
 		await this.tryExecute(

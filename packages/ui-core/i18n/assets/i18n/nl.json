@@ -3880,7 +3880,8 @@
 			"PASSWORD": "Wachtwoord",
 			"UI_HOSTNAME": "UI Hostnaam / IP-adres",
 			"TITLE_SERVER_API": "Ever Gauzy API Server-installatiewizard",
-			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App biedt de volledige functionaliteit van het Gauzy Platform direct beschikbaar op uw desktopcomputer of laptop. Daarnaast kunt u hiermee werktijd bijhouden, activiteiten registreren en trackingherinneringen/meldingen ontvangen."
+			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App biedt de volledige functionaliteit van het Gauzy Platform direct beschikbaar op uw desktopcomputer of laptop. Daarnaast kunt u hiermee werktijd bijhouden, activiteiten registreren en trackingherinneringen/meldingen ontvangen.",
+			"UNABLE_TO_CONNECT": "Kan geen verbinding maken met de server. Controleer uw API-host of internetverbinding."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Schermopname",

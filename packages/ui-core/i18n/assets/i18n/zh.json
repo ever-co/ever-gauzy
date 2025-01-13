@@ -3880,7 +3880,8 @@
 			"PASSWORD": "密码",
 			"UI_HOSTNAME": "界面主机名/ IP地址",
 			"TITLE_SERVER_API": "Ever Gauzy API 服务器安装向导",
-			"LABEL_SERVER_API": "Ever Gauzy API Server 桌面应用程序提供 Gauzy 平台的全部功能，可直接在您的台式计算机或笔记本电脑上使用。此外，它还允许跟踪工作时间、活动记录以及接收跟踪提醒/通知的功能。"
+			"LABEL_SERVER_API": "Ever Gauzy API Server 桌面应用程序提供 Gauzy 平台的全部功能，可直接在您的台式计算机或笔记本电脑上使用。此外，它还允许跟踪工作时间、活动记录以及接收跟踪提醒/通知的功能。",
+			"UNABLE_TO_CONNECT": "Unable to connect to the server. Please check your API host or internet connection."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "屏幕捕获",

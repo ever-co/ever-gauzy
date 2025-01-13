@@ -3882,7 +3882,9 @@
 			"PASSWORD": "Contraseña",
 			"UI_HOSTNAME": "Nombre de host de IU / Dirección IP",
 			"TITLE_SERVER_API": "Asistente de instalación del servidor API de Ever Gauzy",
-			"LABEL_SERVER_API": "La aplicación de escritorio Ever Gauzy API Server proporciona la funcionalidad completa de la plataforma Gauzy disponible directamente en su computadora de escritorio o portátil. Además, permite realizar un seguimiento del tiempo de trabajo, registrar actividades y recibir recordatorios/notificaciones de seguimiento."
+			"LABEL_SERVER_API": "La aplicación de escritorio Ever Gauzy API Server proporciona la funcionalidad completa de la plataforma Gauzy disponible directamente en su computadora de escritorio o portátil. Además, permite realizar un seguimiento del tiempo de trabajo, registrar actividades y recibir recordatorios/notificaciones de seguimiento.",
+			"UNABLE_TO_CONNECT": "Unable to connect to the server. Please check your API host or internet connection."
+
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Captura de pantalla",
