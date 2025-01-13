@@ -7,14 +7,18 @@ import { IDirectoryPathGenerator } from './directory-path-generator.interface';
 
 export class DirectoryPathGenerator implements IDirectoryPathGenerator {
 	/**
-	 * Generates the base directory path with the given name.
-	 * Includes a timestamped subdirectory in the format `YYYY/MM/DD`.
+	 * Generates a base directory path by appending the current date in `YYYY/MM/DD` format
+	 * to the provided base directory name.
 	 *
-	 * @param name - The name to be used as the base directory.
-	 * @returns The full base directory path including the timestamped subdirectory.
+	 * @param baseDirname - The base directory name to which the date-based subdirectory will be appended.
+	 * @returns The full directory path including the date-based subdirectory.
+	 * @throws Error if the `baseDirname` parameter is empty or undefined.
 	 */
-	public getBaseDirectory(name: string): string {
-		return path.join(name, moment().format('YYYY/MM/DD'));
+	public getBaseDirectory(baseDirname: string): string {
+		if (!baseDirname) {
+			throw new Error('baseDirname cannot be empty');
+		}
+		return path.join(baseDirname, moment().format('YYYY/MM/DD'));
 	}
 
 	/**
