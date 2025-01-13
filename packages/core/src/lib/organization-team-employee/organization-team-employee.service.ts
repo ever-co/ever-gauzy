@@ -233,7 +233,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			// Admins and Super Admins can update the activeTaskId of any employee
 			if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 				const member = await this.typeOrmRepository.findOneOrFail({
-					where: { id: memberId, ...whereClause }
+					where: { employeeId: memberId, ...whereClause }
 				});
 
 				// Update the active task ID
@@ -260,7 +260,6 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 
 				// Find the organization team employee
 				const member = await this.typeOrmRepository.findOneByOrFail(whereClause);
-
 				// Update the active task ID
 				return await this.typeOrmRepository.update(
 					{ id: member.id, organizationId, organizationTeamId, tenantId },
