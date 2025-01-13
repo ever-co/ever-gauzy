@@ -203,7 +203,7 @@ export const createRandomTimesheet = async (
 const seedTimeLogsAndActivities = async (
     dataSource: DataSource,
     config: Partial<ApplicationPluginConfig>,
-    tenant: ITenat
+    tenant: ITenant
 ): Promise<void> => {
     const { id: tenantId } = tenant;
 
