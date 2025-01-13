@@ -22,7 +22,7 @@ export const createDefaultEmployees = async (
 	users: IUser[],
 	defaultEmployees: any
 ): Promise<IEmployee[]> => {
-	// Precompute the organization's currency or use the default currency
+	// Pre compute the organization's currency or use the default currency
 	const currency = organization.currency || env.defaultCurrency;
 
 	// Use the default employee configurations to generate employees
