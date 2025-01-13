@@ -236,7 +236,7 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 					}
 				},
 				tagTypeName: {
-					title: this.getTranslation('TAGS_PAGE.TAG_TYPE'),
+					title: this.getTranslation('TAGS_PAGE.TAGS_TYPE'),
 					type: 'string',
 					width: '20%',
 					isFilterable: false
