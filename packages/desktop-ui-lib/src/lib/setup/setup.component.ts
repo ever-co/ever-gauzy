@@ -254,13 +254,28 @@ export class SetupComponent implements OnInit {
 		};
 	}
 
-	sanitizeServerPort(host: string, port: string) {
-		const url = new URL(host);
-		if (port) {
-			url.port = port;
+	/**
+	 * Sanitizes and constructs the server URL with the provided host and port.
+	 *
+	 * @param host - The host URL (e.g., "http://localhost").
+	 * @param port - The port to append to the host URL (e.g., "3000").
+	 * @returns The sanitized server URL as a string (e.g., "http://localhost:3000").
+	 * @throws Error if the `host` parameter is missing or invalid.
+	 */
+	sanitizeServerPort(host: string, port: string): string {
+		if (!host) {
+			throw new Error('Host is required');
 		}
 
-		return url.origin;
+		try {
+			const url = new URL(host);
+			if (port) {
+				url.port = port; // Set the port if provided
+			}
+			return url.origin; // Return the sanitized origin
+		} catch (error) {
+			throw new Error('Invalid server URL format');
+		}
 	}
 
 	getServerConfig() {
