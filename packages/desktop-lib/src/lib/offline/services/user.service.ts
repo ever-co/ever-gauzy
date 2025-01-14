@@ -1,5 +1,6 @@
 import { AppError } from '../../error-handler';
 import { IUserService } from '../../interfaces';
+import { isJSON } from '../../utilities/util';
 import { UserDAO } from '../dao';
 import { UserTO } from '../dto';
 import { User } from '../models';
@@ -37,7 +38,9 @@ export class UserService implements IUserService<UserTO> {
 		try {
 			const userDao = await this._userDAO.current();
 			const user = new User(userDao);
-			user.employee = JSON.parse(user.employee as string);
+			if (isJSON(user.employee)) {
+				user.employee = JSON.parse(user.employee as string);
+			}
 			return user;
 		} catch (error) {
 			console.error(error);
