@@ -159,30 +159,20 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent i
 	}
 
 	closeDialog(requestApproval?: IRequestApproval) {
-		const members: any[] = [];
-		const listEmployees: any[] = [];
+		if (!requestApproval) {
+			return this.dialogRef.close(requestApproval);
+		}
 
-		if (requestApproval?.teams && this.teams) {
-			this.teams.forEach((i) => {
-				requestApproval.teams.forEach((e: any) => {
-					if (e === i.id) {
-						i.members?.forEach((id) => {
-							members.push(id.employeeId);
-						});
-					}
-				});
-			});
-		}
-		if (requestApproval?.employees) {
-			requestApproval.employees.forEach((e) => {
-				if (!members.includes(e)) {
-					listEmployees.push(e);
-				}
-			});
-		}
-		if (requestApproval) {
-			requestApproval.employees = listEmployees;
-		}
+		const teamMemberIds = new Set(
+			requestApproval.teams
+				?.flatMap((reqTeam) =>
+					this.teams?.find((team) => team.id === reqTeam.id)?.members?.map((member) => member.employeeId)
+				)
+				.filter(Boolean) ?? []
+		);
+
+		requestApproval.employees =
+			requestApproval.employees?.filter((reqEmployee) => !teamMemberIds.has(reqEmployee.id)) ?? [];
 
 		this.onReset();
 		this.dialogRef.close(requestApproval);
