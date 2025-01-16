@@ -2358,7 +2358,8 @@
 		"TAGS_SELECT_DESCRIPTION": "Description du tag",
 		"ADD_NEW_TAG": "Ajouter un nouveau Tag",
 		"TENANT_LEVEL": "Niveau du locataire",
-		"TAGS_TYPE": "Catégories de balises"
+		"TAGS_TYPE": "Catégories de balises",
+		"TAGS_SELECT_TYPE": "Sélectionnez le type de balise"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Compétences"

@@ -25,9 +25,11 @@ export interface ITag extends IBasePerTenantAndOrganizationEntityModel, IRelatio
 /**
  * Input interface for finding tags with optional filters.
  */
-export interface ITagFindInput extends IBasePerTenantAndOrganizationEntityModel, Partial<
-	Pick<ITag, 'name' | 'color' | 'textColor' | 'description' | 'isSystem' | 'tagTypeId' | 'organizationTeamId'>
-> {}
+export interface ITagFindInput
+	extends IBasePerTenantAndOrganizationEntityModel,
+		Partial<
+			Pick<ITag, 'name' | 'color' | 'textColor' | 'description' | 'isSystem' | 'tagTypeId' | 'organizationTeamId'>
+		> {}
 
 /**
  * Input interface for creating a tag.
@@ -55,6 +57,11 @@ export interface ITagTypeCreateInput extends Omit<ITagType, 'createdAt' | 'updat
  * Input interface for updating a tag type.
  */
 export interface ITagTypeUpdateInput extends Partial<ITagTypeCreateInput> {}
+
+/**
+ * Input interface for finding tag Type with optional filters.
+ */
+export interface ITagTypesFindInput extends IBasePerTenantAndOrganizationEntityModel, Partial<Pick<ITagType, 'type'>> {}
 
 /**
  * Enum for default task tags.

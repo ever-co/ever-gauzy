@@ -2359,7 +2359,8 @@
 		"TAGS_SELECT_DESCRIPTION": "Descripción de etiqueta",
 		"ADD_NEW_TAG": "Agregar nueva etiqueta.",
 		"TENANT_LEVEL": "Nivel de inquilino",
-		"TAGS_TYPE": "Tipo de etiquetas"
+		"TAGS_TYPE": "Tipo de etiquetas",
+		"TAGS_SELECT_TYPE": "Seleccionar tipo de etiqueta"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Habilidades."

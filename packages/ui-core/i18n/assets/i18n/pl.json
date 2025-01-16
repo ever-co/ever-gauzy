@@ -2357,7 +2357,8 @@
 		"TAGS_SELECT_DESCRIPTION": "Opis tagu",
 		"ADD_NEW_TAG": "Dodaj nową etykietę",
 		"TENANT_LEVEL": "Poziom najemcy",
-		"TAGS_TYPE": "Typy tagów"
+		"TAGS_TYPE": "Typy tagów",
+		"TAGS_SELECT_TYPE": "Wybierz typ tagu"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Umiejętności"

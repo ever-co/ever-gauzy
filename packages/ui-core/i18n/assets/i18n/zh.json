@@ -2357,7 +2357,8 @@
 		"TAGS_SELECT_DESCRIPTION": "标签描述",
 		"ADD_NEW_TAG": "添加新标签",
 		"TENANT_LEVEL": "租户级别",
-		"TAGS_TYPE": "标签类型"
+		"TAGS_TYPE": "标签类型",
+		"TAGS_SELECT_TYPE": "选择标签类型"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "技能 (Jìnéng)"

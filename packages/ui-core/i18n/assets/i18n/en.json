@@ -2480,7 +2480,8 @@
 		"TAGS_SELECT_DESCRIPTION": "Tag description",
 		"ADD_NEW_TAG": "Add new Tag",
 		"TENANT_LEVEL": "Tenant level",
-		"TAGS_TYPE": "Tags type"
+		"TAGS_TYPE": "Tags type",
+		"TAGS_SELECT_TYPE": "Select tag type"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Skills"

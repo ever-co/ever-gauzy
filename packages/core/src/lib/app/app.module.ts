@@ -158,6 +158,7 @@ import { SubscriptionModule } from '../subscription/subscription.module';
 import { DashboardModule } from '../dashboard/dashboard.module';
 import { DashboardWidgetModule } from '../dashboard/dashboard-widget/dashboard-widget.module';
 import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
+import { TagTypeModule } from '../tag-type';
 
 const { unleashConfig } = environment;
 
@@ -389,6 +390,7 @@ if (environment.THROTTLE_ENABLED) {
 		TenantModule,
 		TenantSettingModule,
 		TagModule,
+		TagTypeModule,
 		SkillModule,
 		LanguageModule,
 		InvoiceModule,
