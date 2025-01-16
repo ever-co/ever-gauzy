@@ -1,13 +1,14 @@
+import { Knex } from 'knex';
+import { logger } from '@gauzy/desktop-core';
+import { DatabaseTypeEnum } from '@gauzy/config';
 import { DatabaseProviderContext } from '../../contexts/database-provider-context';
 import { IDatabaseProvider } from '../../interfaces/i-database-provider';
 import { SqliteProvider } from './sqlite-provider';
-import { Knex } from 'knex';
 import { PostgresProvider } from './postgres-provider';
 import { MysqlProvider } from './mysql-provider';
 import { LocalStore } from '../../desktop-store';
 import { AppError } from '../../error-handler';
 import { BetterSqliteProvider } from './better-sqlite-provider';
-import { logger } from '@gauzy/desktop-core';
 
 export class ProviderFactory implements IDatabaseProvider {
 	private _dbContext: DatabaseProviderContext;
@@ -30,7 +31,7 @@ export class ProviderFactory implements IDatabaseProvider {
 
 	private _defineProvider() {
 		switch (this.dialect) {
-			case 'postgres':
+			case DatabaseTypeEnum.postgres:
 				this._dbContext.provider = PostgresProvider.instance;
 				break;
 			case 'mysql':
