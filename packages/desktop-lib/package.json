@@ -29,6 +29,7 @@
 	},
 	"dependencies": {
 		"@electron/remote": "^2.0.8",
+		"@gauzy/config": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/desktop-core": "^0.1.0",
 		"@gauzy/desktop-window": "^0.1.0",
