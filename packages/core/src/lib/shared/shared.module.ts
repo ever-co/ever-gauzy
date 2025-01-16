@@ -6,4 +6,4 @@ import { ValidatorModule } from './validators/validator.module';
 	providers: [],
 	exports: []
 })
-export class SharedModule { }
+export class SharedModule {}
