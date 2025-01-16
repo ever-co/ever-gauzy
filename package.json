@@ -48,7 +48,7 @@
 		"migration:generate": "yarn db:migration migration:generate",
 		"migration:create": "yarn db:migration migration:create",
 		"migration:command": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/core",
-		"seed:base": "cross-env NODE_OPTIONS=--max-old-space-size=12288 yarn run config:dev && yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json",
+		"seed:base": "cross-env NODE_OPTIONS=--max-old-space-size=12288 yarn run config:dev && yarn build:package:all && yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json",
 		"seed": "yarn seed:base ./apps/api/src/seed.ts",
 		"seed:ever": "yarn seed:base ./apps/api/src/seed-ever.ts",
 		"seed:all": "yarn seed:base ./apps/api/src/seed-all.ts",

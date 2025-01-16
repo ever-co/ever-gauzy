@@ -9,7 +9,7 @@ import { EventBus } from '../../event-bus/event-bus';
 import { ScreenshotEvent } from '../../event-bus/events/screenshot.event';
 import { BaseEntityEventTypeEnum } from '../../event-bus/base-entity-event';
 import { RequestContext } from './../../core/context';
-import { FileStorage, UploadedFileStorage } from '../../core/file-storage';
+import { FileStorage, FileStorageFactory, UploadedFileStorage } from '../../core/file-storage';
 import { tempFile } from '../../core/utils';
 import { LazyFileInterceptor } from './../../core/interceptors';
 import { Permissions } from './../../shared/decorators';
@@ -18,7 +18,6 @@ import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { DeleteScreenshotDTO } from './dto/delete-screenshot.dto';
 import { Screenshot } from './screenshot.entity';
 import { ScreenshotService } from './screenshot.service';
-import { createFileStorage } from './screenshot-file-storage.helper';
 
 @ApiTags('Screenshot')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -55,7 +54,7 @@ export class ScreenshotController {
 		// Use LazyFileInterceptor for handling file uploads with custom storage settings
 		LazyFileInterceptor('file', {
 			// Define storage settings for uploaded files
-			storage: () => createFileStorage()
+			storage: () => FileStorageFactory.create('screenshots')
 		})
 	)
 	async create(@Body() input: Screenshot, @UploadedFileStorage() file: UploadedFile) {

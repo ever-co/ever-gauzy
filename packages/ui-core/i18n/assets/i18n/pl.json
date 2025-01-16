@@ -2357,7 +2357,8 @@
 		"TAGS_SELECT_DESCRIPTION": "Opis tagu",
 		"ADD_NEW_TAG": "Dodaj nową etykietę",
 		"TENANT_LEVEL": "Poziom najemcy",
-		"TAGS_TYPE": "Typy tagów"
+		"TAGS_TYPE": "Typy tagów",
+		"TAGS_SELECT_TYPE": "Wybierz typ tagu"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Umiejętności"
@@ -3879,7 +3880,8 @@
 			"PASSWORD": "Hasło",
 			"UI_HOSTNAME": "Nazwa hosta interfejsu użytkownika / Adres IP",
 			"TITLE_SERVER_API": "Kreator instalacji serwera API Ever Gauzy",
-			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App zapewnia pełną funkcjonalność platformy Gauzy dostępną bezpośrednio na komputerze stacjonarnym lub laptopie. Ponadto umożliwia śledzenie czasu pracy, rejestrowanie aktywności i możliwość otrzymywania przypomnień/powiadomień o śledzeniu."
+			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App zapewnia pełną funkcjonalność platformy Gauzy dostępną bezpośrednio na komputerze stacjonarnym lub laptopie. Ponadto umożliwia śledzenie czasu pracy, rejestrowanie aktywności i możliwość otrzymywania przypomnień/powiadomień o śledzeniu.",
+			"UNABLE_TO_CONNECT": "Impossibile connettersi al server. Controlla il tuo host API o la connessione internet."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Zrzut ekranu",
@@ -4073,7 +4075,8 @@
 			"OPEN_MAIN_WINDOW": "Otwórz główne okno",
 			"DAILY_RECAP": "Podsumowanie Dziennie",
 			"WEEKLY_RECAP": "Cotygodniowe Podsumowanie",
-			"MONTHLY_RECAP": "Miesięczne Podsumowanie"
+			"MONTHLY_RECAP": "Miesięczne Podsumowanie",
+			"INSTALL_PLUGIN": "Zainstaluj wtyczkę"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Śledzenie czasu według godzin",

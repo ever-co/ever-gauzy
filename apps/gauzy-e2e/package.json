@@ -18,7 +18,7 @@
 		"url": "https://ever.co"
 	},
 	"dependencies": {
-		"@faker-js/faker": "8.0.0-alpha.0",
+		"@faker-js/faker": "^9.3.0",
 		"dayjs": "^1.11.4",
 		"resolve": "^1.20.0"
 	},

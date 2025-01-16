@@ -14,16 +14,16 @@ export class AppMenu {
 	private readonly windowManager = WindowManager.getInstance();
 
 	/**
-	* Constructs and initializes the application menu.
-	*
-	* @param {BrowserWindow | null} timeTrackerWindow - The time tracker window instance.
-	* @param {BrowserWindow | null} settingsWindow - The settings window instance.
-	* @param {BrowserWindow | null} updaterWindow - The updater window instance.
-	* @param {any} knex - Knex database instance (if applicable).
-	* @param {any} windowPath - Paths to the necessary window files.
-	* @param {BrowserWindow | null} [serverWindow] - The server window instance (optional).
-	* @param {boolean} [isZoomVisible] - Flag to enable/disable zoom menu options.
-	*/
+	 * Constructs and initializes the application menu.
+	 *
+	 * @param {BrowserWindow | null} timeTrackerWindow - The time tracker window instance.
+	 * @param {BrowserWindow | null} settingsWindow - The settings window instance.
+	 * @param {BrowserWindow | null} updaterWindow - The updater window instance.
+	 * @param {any} knex - Knex database instance (if applicable).
+	 * @param {any} windowPath - Paths to the necessary window files.
+	 * @param {BrowserWindow | null} [serverWindow] - The server window instance (optional).
+	 * @param {boolean} [isZoomVisible] - Flag to enable/disable zoom menu options.
+	 */
 	constructor(
 		timeTrackerWindow: BrowserWindow | null,
 		settingsWindow: BrowserWindow | null,
@@ -218,9 +218,7 @@ export class AppMenu {
 	 * Handles updates to the plugin menu and rebuilds the application menu if changes are detected.
 	 */
 	private handlePluginMenuUpdate(): void {
-		const updatedMenu = this.menu.map((menu) =>
-			menu.id === 'plugin-menu' ? this.pluginMenu : menu
-		);
+		const updatedMenu = this.menu.map((menu) => (menu.id === 'plugin-menu' ? this.pluginMenu : menu));
 
 		// Only rebuild the menu if there are actual changes
 		if (!this.deepArrayEqual(this.menu, updatedMenu)) {
@@ -240,10 +238,10 @@ export class AppMenu {
 	}
 
 	/**
-   * Dynamically generates the plugin menu for the application.
-   *
-   * @returns {MenuItemConstructorOptions} The menu item for plugins, including a submenu for plugin management.
-   */
+	 * Dynamically generates the plugin menu for the application.
+	 *
+	 * @returns {MenuItemConstructorOptions} The menu item for plugins, including a submenu for plugin management.
+	 */
 	public get pluginMenu(): MenuItemConstructorOptions {
 		// Retrieve submenu items from the plugin manager
 		const pluginSubmenu = this.pluginManager.getMenuPlugins();
@@ -254,7 +252,7 @@ export class AppMenu {
 			label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGIN'),
 			submenu: [
 				{
-					label: TranslateService.instant('MENU.INSTALL_PLUGIN'),
+					label: TranslateService.instant('TIMER_TRACKER.MENU.INSTALL_PLUGIN'),
 					click: () => this.openPluginSettings()
 				},
 				...pluginSubmenu
@@ -274,9 +272,7 @@ export class AppMenu {
 
 		// Send the application configuration to the settings window
 		if (settingsWindow) {
-			this.windowManager
-				.webContents(settingsWindow)
-				.send('app_setting', LocalStore.getApplicationConfig());
+			this.windowManager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 		}
 	}
 

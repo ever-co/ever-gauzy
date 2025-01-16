@@ -2382,7 +2382,9 @@
 		"TAGS_SELECT_DESCRIPTION": "Tag description",
 		"ADD_NEW_TAG": "Add new Tag",
 		"TENANT_LEVEL": "Tenant level",
-		"TAGS_TYPE": "Tags type"
+		"TAGS_TYPE": "Tags type",
+		"TAGS_SELECT_TYPE": "בחר סוג תג"
+
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Skills"
@@ -3891,7 +3893,9 @@
 			"PASSWORD": "סיסמה",
 			"UI_HOSTNAME": "שם מארח יישום ממשק משתמש / כתובת IP",
 			"TITLE_SERVER_API": "אשף התקנת שרת API של Ever Gauzy",
-			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App מספקת את הפונקציונליות המלאה של פלטפורמת Gauzy הזמינה ישירות במחשב השולחני או במחשב הנייד שלך. בנוסף, הוא מאפשר מעקב אחר זמן עבודה, רישום פעילות ויכולת לקבל תזכורות/הודעות מעקב."
+			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App מספקת את הפונקציונליות המלאה של פלטפורמת Gauzy הזמינה ישירות במחשב השולחני או במחשב הנייד שלך. בנוסף, הוא מאפשר מעקב אחר זמן עבודה, רישום פעילות ויכולת לקבל תזכורות/הודעות מעקב.",
+			"UNABLE_TO_CONNECT": "Unable to connect to the server. Please check your API host or internet connection."
+
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "לכידת מסך",
@@ -4085,7 +4089,8 @@
 			"OPEN_MAIN_WINDOW": "פתח חלון ראשי",
 			"DAILY_RECAP": "סיכום יומי",
 			"WEEKLY_RECAP": "סיכום שבועי",
-			"MONTHLY_RECAP": "סיכום חודשי"
+			"MONTHLY_RECAP": "סיכום חודשי",
+			"INSTALL_PLUGIN": "התקנת תוסף"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "מעקב זמן לפי שעות",

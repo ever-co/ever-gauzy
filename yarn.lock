@@ -4909,10 +4909,10 @@
   dependencies:
     eslint-visitor-keys "^3.4.3"
 
-"@faker-js/faker@8.0.0-alpha.0":
-  version "8.0.0-alpha.0"
-  resolved "https://registry.yarnpkg.com/@faker-js/faker/-/faker-8.0.0-alpha.0.tgz#4df0010d728d2fd5ffa47c2d30e73cdd6fcd5ca5"
-  integrity sha512-w/1f2Q95azPcDlQU+cPoWm5uS7wrUWWlfXIaQYFPO5MRnNJJfjd6E1oR2emzl22pS/Y8iRmODI5645xTwQkYyg==
+"@faker-js/faker@^9.3.0":
+  version "9.3.0"
+  resolved "https://registry.yarnpkg.com/@faker-js/faker/-/faker-9.3.0.tgz#ef398dab34c67faaa0e348318c905eae3564fa58"
+  integrity sha512-r0tJ3ZOkMd9xsu3VRfqlFR6cz0V/jFYRswAIpC+m/DIfAUXq7g8N7wTAlhSANySXYGKzGryfDXwtwsY8TxEIDw==
 
 "@fastify/swagger@^9.4.0":
   version "9.4.0"
@@ -22499,6 +22499,11 @@ generate-object-property@^1.1.0:
   integrity sha512-TuOwZWgJ2VAMEGJvAyPWvpqxSANF0LDpmyHauMjFYzaACvn+QTT/AZomvPCzVBV7yDN3OmwHQ5OvHaeLKre3JQ==
   dependencies:
     is-property "^1.0.0"
+
+generate-password@^1.7.1:
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/generate-password/-/generate-password-1.7.1.tgz#b354255893da7755b033999821d3f1f1a97c1cb4"
+  integrity sha512-9bVYY+16m7W7GczRBDqXE+VVuCX+bWNrfYKC/2p2JkZukFb2sKxT6E3zZ3mJGz7GMe5iRK0A/WawSL3jQfJuNQ==
 
 generic-pool@3.9.0:
   version "3.9.0"

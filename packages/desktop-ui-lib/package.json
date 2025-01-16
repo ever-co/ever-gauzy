@@ -7,6 +7,15 @@
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/desktop-ui-lib"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
 	"license": "AGPL-3.0",
 	"private": true,
 	"scripts": {
@@ -62,7 +71,23 @@
 		"electron": "^30.0.1",
 		"jest-preset-angular": "14.4.2"
 	},
-	"keywords": [],
+	"keywords": [
+		"angular",
+		"desktop-ui",
+		"ui-library",
+		"electron",
+		"ngx",
+		"angular-library",
+		"ever-gauzy",
+		"gauzy",
+		"akita",
+		"nebular",
+		"smart-table",
+		"charts",
+		"ngx-translate",
+		"angular-ui",
+		"electron-angular"
+	],
 	"engines": {
 		"node": ">=20.11.1",
 		"yarn": ">=1.22.19"

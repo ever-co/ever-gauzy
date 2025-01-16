@@ -2357,7 +2357,8 @@
 		"TAGS_SELECT_DESCRIPTION": "Descrição da tag",
 		"ADD_NEW_TAG": "Adicionar nova Tag",
 		"TENANT_LEVEL": "Nível do inquilino",
-		"TAGS_TYPE": "Tipo de etiquetas"
+		"TAGS_TYPE": "Tipo de etiquetas",
+		"TAGS_SELECT_TYPE": "Selecionar tipo de tag"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Habilidades"
@@ -3879,7 +3880,8 @@
 			"PASSWORD": "Senha",
 			"UI_HOSTNAME": "Nome do Host da Interface do Usuário / Endereço IP",
 			"TITLE_SERVER_API": "Ever Gauzy API Server Instalation Wizard",
-			"LABEL_SERVER_API": "A aplicação Gauzy API Server Desktop fornece a funcionalidade completa da plataforma Gauzy disponível diretamente no seu computador de secretária ou portátil. Além disso, permite o tempo de trabalho de rastreio, o registo de atividades e a capacidade de receber lembretes/notificações de rastreio."
+			"LABEL_SERVER_API": "A aplicação Gauzy API Server Desktop fornece a funcionalidade completa da plataforma Gauzy disponível diretamente no seu computador de secretária ou portátil. Além disso, permite o tempo de trabalho de rastreio, o registo de atividades e a capacidade de receber lembretes/notificações de rastreio.",
+			"UNABLE_TO_CONNECT": "Unable to connect to the server. Please check your API host or internet connection."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Captura de tela",
@@ -4073,7 +4075,8 @@
 			"OPEN_MAIN_WINDOW": "Abrir janela principal",
 			"DAILY_RECAP": "Resumo Diário",
 			"WEEKLY_RECAP": "Recapitulação Semanal",
-			"MONTHLY_RECAP": "Recapitulação Mensal"
+			"MONTHLY_RECAP": "Recapitulação Mensal",
+			"INSTALL_PLUGIN": "Instalar plugin"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Rastreamento de Tempo Horário",

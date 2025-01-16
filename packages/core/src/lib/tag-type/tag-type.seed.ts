@@ -56,6 +56,61 @@ export const createTagTypes = async (
 };
 
 /**
+ * Creates random organization tag types for given tenants and their organizations.
+ *
+ * @function createRandomOrganizationTagTypes
+ * @async
+ * @param {DataSource} dataSource - The TypeORM `DataSource` instance used for database operations.
+ * @param {ITenant[]} tenants - An array of tenant entities for which random tag types are being created.
+ * @param {Map<ITenant, IOrganization[]>} tenantOrganizationsMap - A map linking each tenant to its associated organizations.
+ * @returns {Promise<ITagType[]>} - A promise that resolves to an array of created and saved `ITagType` entities.
+ *
+ * @description
+ * This function generates random tag types for multiple tenants and their organizations.
+ * For each tenant, it retrieves the associated organizations from the `tenantOrganizationsMap`.
+ * It iterates over the organizations and creates `TagType` entities based on predefined
+ * `DEFAULT_TAG_TYPES`. The generated entities are saved in bulk into the database.
+ *
+ * If a tenant does not have any organizations, the function logs a warning and skips the tenant.
+ *
+ * @throws Will throw an error if the database save operation fails.
+ */
+export const createRandomOrganizationTagTypes = async (
+	dataSource: DataSource,
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
+): Promise<ITagType[]> => {
+	let tagTypes: TagType[] = [];
+
+	for (const tenant of tenants) {
+		// Fetch organizations for the current tenant
+		const organizations = tenantOrganizationsMap.get(tenant);
+
+		if (!organizations || organizations.length === 0) {
+			console.warn(`No organizations found for tenant ID: ${tenant.id}`);
+			continue; // Skip to the next tenant if no organizations are found
+		}
+
+		for (const organization of organizations) {
+			// Create TagType instances for the current organization
+			const organizationTagTypes: TagType[] = DEFAULT_TAG_TYPES.map(({ type }) => {
+				const tagType = new TagType();
+				tagType.type = type;
+				tagType.organization = organization;
+				tagType.tenantId = tenant.id;
+				return tagType;
+			});
+
+			// Add the new TagType entities to the tagTypes array
+			tagTypes.push(...organizationTagTypes);
+		}
+	}
+
+	// Bulk save all created tag types into the database
+	return await dataSource.manager.save(tagTypes);
+};
+
+/**
  * Inserts an array of tag types into the database.
  *
  * @function insertTagTypes
