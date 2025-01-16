@@ -427,7 +427,7 @@ export const PermissionGroups = {
 		PermissionsEnum.API_CALL_LOG_DELETE,
 		/** Tenant API Key */
 		PermissionsEnum.TENANT_API_KEY_CREATE,
-		PermissionsEnum.TENANT_API_KEY_READ,
+		PermissionsEnum.TENANT_API_KEY_VIEW,
 		PermissionsEnum.TENANT_API_KEY_DELETE
 	]
 };
