@@ -2138,7 +2138,10 @@
 			"ORG_TASK_EDIT": "Modifica Compiti",
 			"ORG_TASK_DELETE": "Elimina compiti",
 			"ORG_TASK_SETTING": "Impostazioni attività",
-			"ORG_MEMBER_LAST_LOG_VIEW": "Visualizza l'ultimo registro"
+			"ORG_MEMBER_LAST_LOG_VIEW": "Visualizza l'ultimo registro",
+			"TENANT_API_KEY_CREATE": "Create API Key",
+			"TENANT_API_KEY_VIEW": "View API Key",
+			"TENANT_API_KEY_DELETE": "Delete API Key"
 		},
 		"BILLING": "Fatturazione",
 		"BUDGET": "Bilancio",

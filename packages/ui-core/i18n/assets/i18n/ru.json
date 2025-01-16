@@ -2169,7 +2169,10 @@
 			"ALLOW_MANUAL_TIME": "Разрешить ручное время",
 			"DELETE_SCREENSHOTS": "Разрешить удаление скриншота",
 			"ORG_TASK_SETTING": "Параметры задачи",
-			"ORG_MEMBER_LAST_LOG_VIEW": "Посмотреть последний журнал"
+			"ORG_MEMBER_LAST_LOG_VIEW": "Посмотреть последний журнал",
+			"TENANT_API_KEY_CREATE": "Create API Key",
+			"TENANT_API_KEY_VIEW": "View API Key",
+			"TENANT_API_KEY_DELETE": "Delete API Key"
 		},
 		"BILLING": "Биллинг",
 		"BUDGET": "Бюджет",

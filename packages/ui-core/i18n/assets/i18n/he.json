@@ -2163,7 +2163,10 @@
 			"ALLOW_MANUAL_TIME": "Allow Manual Time",
 			"DELETE_SCREENSHOTS": "Allow Delete Screenshot",
 			"ORG_TASK_SETTING": "Task Settings",
-			"ORG_MEMBER_LAST_LOG_VIEW": "צפה ביומן האחרון"
+			"ORG_MEMBER_LAST_LOG_VIEW": "צפה ביומן האחרון",
+			"TENANT_API_KEY_CREATE": "Create API Key",
+			"TENANT_API_KEY_VIEW": "View API Key",
+			"TENANT_API_KEY_DELETE": "Delete API Key"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",

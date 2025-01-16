@@ -2138,7 +2138,10 @@
 			"ORG_TASK_EDIT": "Taken bewerken",
 			"ORG_TASK_DELETE": "Taken verwijderen",
 			"ORG_TASK_SETTING": "Taakinstellingen",
-			"ORG_MEMBER_LAST_LOG_VIEW": "Bekijk laatste logboek"
+			"ORG_MEMBER_LAST_LOG_VIEW": "Bekijk laatste logboek",
+			"TENANT_API_KEY_CREATE": "Create API Key",
+			"TENANT_API_KEY_VIEW": "View API Key",
+			"TENANT_API_KEY_DELETE": "Delete API Key"
 		},
 		"BILLING": "Facturatie",
 		"BUDGET": "Budget",

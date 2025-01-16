@@ -2139,7 +2139,10 @@
 			"ORG_TASK_EDIT": "Modifier les tâches",
 			"ORG_TASK_DELETE": "Supprimer les tâches",
 			"ORG_TASK_SETTING": "Paramètres de tâche",
-			"ORG_MEMBER_LAST_LOG_VIEW": "Voir le dernier journal"
+			"ORG_MEMBER_LAST_LOG_VIEW": "Voir le dernier journal",
+			"TENANT_API_KEY_CREATE": "Create API Key",
+			"TENANT_API_KEY_VIEW": "View API Key",
+			"TENANT_API_KEY_DELETE": "Delete API Key"
 		},
 		"BILLING": "Facturation",
 		"BUDGET": "Budget",
