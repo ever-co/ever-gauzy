@@ -4776,10 +4776,10 @@
   dependencies:
     eslint-visitor-keys "^3.4.3"
 
-"@faker-js/faker@8.0.0-alpha.0":
-  version "8.0.0-alpha.0"
-  resolved "https://registry.yarnpkg.com/@faker-js/faker/-/faker-8.0.0-alpha.0.tgz#4df0010d728d2fd5ffa47c2d30e73cdd6fcd5ca5"
-  integrity sha512-w/1f2Q95azPcDlQU+cPoWm5uS7wrUWWlfXIaQYFPO5MRnNJJfjd6E1oR2emzl22pS/Y8iRmODI5645xTwQkYyg==
+"@faker-js/faker@^9.3.0":
+  version "9.3.0"
+  resolved "https://registry.yarnpkg.com/@faker-js/faker/-/faker-9.3.0.tgz#ef398dab34c67faaa0e348318c905eae3564fa58"
+  integrity sha512-r0tJ3ZOkMd9xsu3VRfqlFR6cz0V/jFYRswAIpC+m/DIfAUXq7g8N7wTAlhSANySXYGKzGryfDXwtwsY8TxEIDw==
 
 "@fastify/swagger@^9.4.0":
   version "9.4.0"
