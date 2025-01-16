@@ -17,6 +17,7 @@ import { ThrottlerBehindProxyGuard } from '../throttler/throttler-behind-proxy.g
 import { CoreModule } from '../core/core.module';
 import { RequestContext } from '../core/context/request-context';
 import { SharedModule } from '../shared/shared.module';
+import { ApiKeyAuthGuard } from '../shared/guards/api-key-auth.guard';
 import { HealthModule } from '../health/health.module';
 import { CandidateInterviewersModule } from '../candidate-interviewers/candidate-interviewers.module';
 import { CandidateSkillModule } from '../candidate-skill/candidate-skill.module';
@@ -29,6 +30,7 @@ import { SkillModule } from '../skills/skill.module';
 import { LanguageModule } from '../language/language.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { EmailCheckModule } from '../email-check/email-check.module';
 import { UserModule } from '../user/user.module';
 import { EmployeeModule } from '../employee/employee.module';
 import { RoleModule } from '../role/role.module';
@@ -158,7 +160,7 @@ import { SubscriptionModule } from '../subscription/subscription.module';
 import { DashboardModule } from '../dashboard/dashboard.module';
 import { DashboardWidgetModule } from '../dashboard/dashboard-widget/dashboard-widget.module';
 import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
-import { TagTypeModule } from '../tag-type';
+import { TagTypeModule } from '../tag-type/tag-type.module';
 
 const { unleashConfig } = environment;
 
@@ -207,6 +209,8 @@ if (environment.THROTTLE_ENABLED) {
 	const limit = environment.THROTTLE_LIMIT;
 	console.log('Throttle Limit: ', limit);
 }
+
+const GUARDS = [ApiKeyAuthGuard];
 
 @Module({
 	imports: [
@@ -331,6 +335,7 @@ if (environment.THROTTLE_ENABLED) {
 		CoreModule,
 		SharedModule,
 		AuthModule,
+		EmailCheckModule,
 		UserModule,
 		SocialAccountModule,
 		EmployeeModule,
@@ -482,7 +487,8 @@ if (environment.THROTTLE_ENABLED) {
 		{
 			provide: APP_INTERCEPTOR,
 			useClass: TransformInterceptor
-		}
+		},
+		...GUARDS
 	],
 	exports: []
 })

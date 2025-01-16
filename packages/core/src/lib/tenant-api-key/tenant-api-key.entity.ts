@@ -44,7 +44,7 @@ export class TenantApiKey extends TenantBaseEntity implements ITenantApiKey {
 	 */
 	@ApiProperty({
 		type: () => String,
-		description: 'The API Key for authentication.',
+		description: 'The API Key for authentication.'
 	})
 	@IsNotEmpty()
 	@IsString()
@@ -64,7 +64,7 @@ export class TenantApiKey extends TenantBaseEntity implements ITenantApiKey {
 	 */
 	@ApiProperty({
 		type: () => String,
-		description: 'The API Secret for secure authentication.',
+		description: 'The API Secret for secure authentication.'
 	})
 	@IsNotEmpty()
 	@IsString()

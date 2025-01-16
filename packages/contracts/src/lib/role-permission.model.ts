@@ -223,7 +223,12 @@ export enum PermissionsEnum {
 	DASHBOARD_CREATE = 'DASHBOARD_CREATE',
 	DASHBOARD_READ = 'DASHBOARD_READ',
 	DASHBOARD_UPDATE = 'DASHBOARD_UPDATE',
-	DASHBOARD_DELETE = 'DASHBOARD_DELETE'
+	DASHBOARD_DELETE = 'DASHBOARD_DELETE',
+
+	/** Tenant API Key */
+	TENANT_API_KEY_CREATE = 'TENANT_API_KEY_CREATE',
+	TENANT_API_KEY_VIEW = 'TENANT_API_KEY_VIEW',
+	TENANT_API_KEY_DELETE = 'TENANT_API_KEY_DELETE'
 }
 
 export const PermissionGroups = {
@@ -419,6 +424,10 @@ export const PermissionGroups = {
 		PermissionsEnum.ACCESS_DELETE_ALL_DATA,
 		PermissionsEnum.TENANT_SETTING,
 		PermissionsEnum.API_CALL_LOG_READ,
-		PermissionsEnum.API_CALL_LOG_DELETE
+		PermissionsEnum.API_CALL_LOG_DELETE,
+		/** Tenant API Key */
+		PermissionsEnum.TENANT_API_KEY_CREATE,
+		PermissionsEnum.TENANT_API_KEY_READ,
+		PermissionsEnum.TENANT_API_KEY_DELETE
 	]
 };
