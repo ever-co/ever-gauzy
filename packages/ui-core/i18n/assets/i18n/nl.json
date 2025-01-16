@@ -2273,9 +2273,10 @@
 			"ORG_TASK_EDIT": "Taken bewerken",
 			"ORG_TASK_DELETE": "Taken verwijderen",
 			"ORG_TASK_SETTING": "Taakinstellingen",
-			"IMPORT_ADD": "Mogelijkheid om uw gegevens te importeren",
-			"EXPORT_ADD": "Mogelijkheid om uw gegevens te exporteren",
-			"ORG_MEMBER_LAST_LOG_VIEW": "Laatste log bekijken"
+			"ORG_MEMBER_LAST_LOG_VIEW": "Bekijk laatste logboek",
+			"TENANT_API_KEY_CREATE": "Create API Key",
+			"TENANT_API_KEY_VIEW": "View API Key",
+			"TENANT_API_KEY_DELETE": "Delete API Key"
 		},
 		"BILLING": "Facturering",
 		"BUDGET": "Budget",

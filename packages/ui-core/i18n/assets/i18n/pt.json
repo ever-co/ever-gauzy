@@ -2271,11 +2271,12 @@
 			"ORG_TASK_ADD": "Criar Tarefas",
 			"ORG_TASK_VIEW": "Ver Tarefas",
 			"ORG_TASK_EDIT": "Editar Tarefas",
-			"ORG_TASK_DELETE": "Excluir Tarefas",
-			"ORG_TASK_SETTING": "Configurações de Tarefa",
-			"IMPORT_ADD": "Capacidade de importar seus dados",
-			"EXPORT_ADD": "Capacidade de exportar seus dados",
-			"ORG_MEMBER_LAST_LOG_VIEW": "Ver Último Log"
+			"ORG_TASK_DELETE": "Excluir tarefas",
+			"ORG_TASK_SETTING": "Configurações da tarefa",
+			"ORG_MEMBER_LAST_LOG_VIEW": "Ver último registro",
+			"TENANT_API_KEY_CREATE": "Create API Key",
+			"TENANT_API_KEY_VIEW": "View API Key",
+			"TENANT_API_KEY_DELETE": "Delete API Key"
 		},
 		"BILLING": "Faturamento",
 		"BUDGET": "Orçamento",

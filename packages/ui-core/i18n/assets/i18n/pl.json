@@ -2272,10 +2272,11 @@
 			"ORG_TASK_VIEW": "Wyświetl zadania",
 			"ORG_TASK_EDIT": "Edytuj zadania",
 			"ORG_TASK_DELETE": "Usuń zadania",
-			"ORG_TASK_SETTING": "Ustawienia zadań",
-			"IMPORT_ADD": "Możliwość importu danych",
-			"EXPORT_ADD": "Możliwość eksportu danych",
-			"ORG_MEMBER_LAST_LOG_VIEW": "Wyświetl ostatni dziennik"
+			"ORG_TASK_SETTING": "Ustawienia zadania",
+			"ORG_MEMBER_LAST_LOG_VIEW": "Zobacz ostatni dziennik",
+			"TENANT_API_KEY_CREATE": "Create API Key",
+			"TENANT_API_KEY_VIEW": "View API Key",
+			"TENANT_API_KEY_DELETE": "Delete API Key"
 		},
 		"BILLING": "Rozliczenia",
 		"BUDGET": "Budżet",

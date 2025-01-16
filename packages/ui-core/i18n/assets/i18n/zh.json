@@ -2273,9 +2273,10 @@
 			"ORG_TASK_EDIT": "编辑任务",
 			"ORG_TASK_DELETE": "删除任务",
 			"ORG_TASK_SETTING": "任务设置",
-			"IMPORT_ADD": "导入您的数据",
-			"EXPORT_ADD": "导出您的数据",
-			"ORG_MEMBER_LAST_LOG_VIEW": "查看最后日志"
+			"ORG_MEMBER_LAST_LOG_VIEW": "查看最后日志",
+			"TENANT_API_KEY_CREATE": "Create API Key",
+			"TENANT_API_KEY_VIEW": "View API Key",
+			"TENANT_API_KEY_DELETE": "Delete API Key"
 		},
 		"BILLING": "账单",
 		"BUDGET": "预算",

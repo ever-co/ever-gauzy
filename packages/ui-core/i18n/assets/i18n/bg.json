@@ -2273,9 +2273,10 @@
 			"ORG_TASK_EDIT": "Редактирай задачи",
 			"ORG_TASK_DELETE": "Изтрий задачи",
 			"ORG_TASK_SETTING": "Настройки на задачите",
-			"IMPORT_ADD": "Възможност за импорт на вашите данни",
-			"EXPORT_ADD": "Възможност за експорт на вашите данни",
-			"ORG_MEMBER_LAST_LOG_VIEW": "Виж последен лог"
+			"ORG_MEMBER_LAST_LOG_VIEW": "Преглед на последния запис",
+			"TENANT_API_KEY_CREATE": "Create API Key",
+			"TENANT_API_KEY_VIEW": "View API Key",
+			"TENANT_API_KEY_DELETE": "Delete API Key"
 		},
 		"BILLING": "Фактуриране",
 		"BUDGET": "Бюджет",
