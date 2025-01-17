@@ -94,7 +94,9 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 							entity: BaseEntityEnum.Task,
 							entityId: task.id,
 							mentionedUserId,
-							mentionById: task.creatorId
+							mentionById: task.creatorId,
+							organizationId,
+							tenantId
 						})
 					)
 				);
