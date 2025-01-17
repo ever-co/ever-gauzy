@@ -1,5 +1,6 @@
-import { Controller, Post, Body, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, HttpException, HttpStatus, UseGuards, Logger } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ValidationError } from 'class-validator';
 import { IGenerateApiKeyResponse, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { Permissions } from '../shared/decorators';
@@ -11,6 +12,8 @@ import { TenantApiKeyService } from './tenant-api-key.service';
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('/tenant-api-key')
 export class TenantApiKeyController {
+	private readonly logger = new Logger(TenantApiKeyController.name);
+
 	constructor(private readonly tenantApiKeyService: TenantApiKeyService) {}
 
 	/**
@@ -29,7 +32,10 @@ export class TenantApiKeyController {
 		try {
 			return await this.tenantApiKeyService.generateApiKey(input);
 		} catch (error) {
-			throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+			if (error instanceof ValidationError) {
+				throw new HttpException('Invalid API key parameters', HttpStatus.BAD_REQUEST);
+			}
+			throw new HttpException('Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 }

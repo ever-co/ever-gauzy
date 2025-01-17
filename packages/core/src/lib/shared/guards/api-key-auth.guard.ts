@@ -15,26 +15,27 @@ export class ApiKeyAuthGuard implements CanActivate {
 	 * @throws `UnauthorizedException` if API Key or Secret is missing or invalid.
 	 */
 	async canActivate(context: ExecutionContext): Promise<boolean> {
+		// Retrieve the API Key and Secret from the request headers
 		const request = this.getRequest(context);
 		const apiKey = request.header('X-APP-ID');
 		const apiSecret = request.header('X-API-KEY');
 
 		if (!apiKey || !apiSecret) {
-			throw new UnauthorizedException('Missing API Key or Secret for access APIs');
+			throw new UnauthorizedException(
+				'Missing API credentials. Please provide a valid X-APP-ID and X-API-KEY in the request headers to proceed.'
+			);
 		}
-
-		console.log('API KEY', apiKey);
-		console.log('API SECRET', apiSecret);
 
 		// Proceed with API Key authentication if both are present
-		const isValid = await this._tenantApiKeyService.validateApiKeyAndSecret(apiKey, apiSecret);
-		console.log('isValid', isValid);
+		const isValidKey = await this._tenantApiKeyService.validateApiKeyAndSecret(apiKey, apiSecret);
 
-		if (!isValid) {
-			throw new UnauthorizedException('Invalid API Key or Secret');
+		if (!isValidKey) {
+			throw new UnauthorizedException(
+				'Access Denied: The provided X-APP-ID or X-API-KEY is invalid or does not have the required permissions.'
+			);
 		}
 
-		return true;
+		return isValidKey;
 	}
 
 	/**
