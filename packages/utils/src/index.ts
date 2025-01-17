@@ -34,3 +34,4 @@ export * from './lib/uc-first';
 export * from './lib/slugify';
 export * from './lib/sleep';
 export * from './lib/version';
+export * from './lib/is-json';

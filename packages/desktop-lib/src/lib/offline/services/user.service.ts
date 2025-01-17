@@ -1,6 +1,6 @@
 import { AppError } from '../../error-handler';
 import { IUserService } from '../../interfaces';
-import { isJSON } from '../../utilities/util';
+import { isJSON } from '@gauzy/utils';
 import { UserDAO } from '../dao';
 import { UserTO } from '../dto';
 import { User } from '../models';
