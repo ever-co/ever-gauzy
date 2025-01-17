@@ -2163,7 +2163,10 @@
 			"ALLOW_MANUAL_TIME": "Allow Manual Time",
 			"DELETE_SCREENSHOTS": "Allow Delete Screenshot",
 			"ORG_TASK_SETTING": "Task Settings",
-			"ORG_MEMBER_LAST_LOG_VIEW": "צפה ביומן האחרון"
+			"ORG_MEMBER_LAST_LOG_VIEW": "צפה ביומן האחרון",
+			"TENANT_API_KEY_CREATE": "יצירת מפתח API",
+			"TENANT_API_KEY_VIEW": "הצגת מפתח API",
+			"TENANT_API_KEY_DELETE": "מחיקת מפתח API"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
@@ -2382,7 +2385,9 @@
 		"TAGS_SELECT_DESCRIPTION": "Tag description",
 		"ADD_NEW_TAG": "Add new Tag",
 		"TENANT_LEVEL": "Tenant level",
-		"TAGS_TYPE": "Tags type"
+		"TAGS_TYPE": "Tags type",
+		"TAGS_SELECT_TYPE": "בחר סוג תג"
+
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Skills"

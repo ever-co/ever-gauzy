@@ -1,6 +1,14 @@
 import { CommandHandler, ICommandHandler, EventBus as CqrsEventBus } from '@nestjs/cqrs';
 import { HttpException, HttpStatus, Logger } from '@nestjs/common';
-import { BaseEntityEnum, ActorTypeEnum, ITask, ActionTypeEnum, SubscriptionTypeEnum, ID, IEmployee } from '@gauzy/contracts';
+import {
+	BaseEntityEnum,
+	ActorTypeEnum,
+	ITask,
+	ActionTypeEnum,
+	SubscriptionTypeEnum,
+	ID,
+	IEmployee
+} from '@gauzy/contracts';
 import { EventBus } from '../../../event-bus';
 import { TaskEvent } from '../../../event-bus/events';
 import { BaseEntityEventTypeEnum } from '../../../event-bus/base-entity-event';
@@ -88,7 +96,9 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 							entity: BaseEntityEnum.Task,
 							entityId: task.id,
 							mentionedUserId,
-							mentionById: task.creatorId
+							mentionById: task.creatorId,
+							organizationId,
+							tenantId
 						})
 					)
 				);
@@ -121,16 +131,18 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 
 					// Publish subscription events for each employee
 					await Promise.all(
-						employees.map(({ userId }: IEmployee) => this._cqrsEventBus.publish(
-							new CreateSubscriptionEvent({
-								entity: BaseEntityEnum.Task,
-								entityId: task.id,
-								userId,
-								type: SubscriptionTypeEnum.ASSIGNMENT,
-								organizationId,
-								tenantId
-							})
-						))
+						employees.map(({ userId }: IEmployee) =>
+							this._cqrsEventBus.publish(
+								new CreateSubscriptionEvent({
+									entity: BaseEntityEnum.Task,
+									entityId: task.id,
+									userId,
+									type: SubscriptionTypeEnum.ASSIGNMENT,
+									organizationId,
+									tenantId
+								})
+							)
+						)
 					);
 				} catch (error) {
 					this.logger.error('Error while subscribing members to task', error);

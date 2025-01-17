@@ -10,6 +10,7 @@ export * from './lib/app.model';
 export * from './lib/appointment-employees.model';
 export * from './lib/approval-policy.model';
 export * from './lib/availability-slots.model';
+export * from './lib/auth.model';
 export * from './lib/candidate-criterions-rating.model';
 export * from './lib/candidate-document.model';
 export * from './lib/candidate-education.model';

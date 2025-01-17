@@ -2260,7 +2260,10 @@
 			"ORG_TASK_SETTING": "Task Settings",
 			"IMPORT_ADD": "Ability to import your data",
 			"EXPORT_ADD": "Ability to export your data",
-			"ORG_MEMBER_LAST_LOG_VIEW": "View Last Log"
+			"ORG_MEMBER_LAST_LOG_VIEW": "View Last Log",
+			"TENANT_API_KEY_CREATE": "Create API Key",
+			"TENANT_API_KEY_VIEW": "View API Key",
+			"TENANT_API_KEY_DELETE": "Delete API Key"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
@@ -2480,7 +2483,8 @@
 		"TAGS_SELECT_DESCRIPTION": "Tag description",
 		"ADD_NEW_TAG": "Add new Tag",
 		"TENANT_LEVEL": "Tenant level",
-		"TAGS_TYPE": "Tags type"
+		"TAGS_TYPE": "Tags type",
+		"TAGS_SELECT_TYPE": "Select tag type"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Skills"

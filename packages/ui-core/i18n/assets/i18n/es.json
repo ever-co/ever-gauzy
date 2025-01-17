@@ -2140,7 +2140,10 @@
 			"ORG_TASK_EDIT": "Editar tareas",
 			"ORG_TASK_DELETE": "Eliminar tareas",
 			"ORG_TASK_SETTING": "Configuración de tarea",
-			"ORG_MEMBER_LAST_LOG_VIEW": "Ver último registro"
+			"ORG_MEMBER_LAST_LOG_VIEW": "Ver último registro",
+			"TENANT_API_KEY_CREATE": "Crear clave API",
+			"TENANT_API_KEY_VIEW": "Ver clave API",
+			"TENANT_API_KEY_DELETE": "Eliminar clave API"
 		},
 		"BILLING": "Facturación",
 		"BUDGET": "Presupuesto",
@@ -2359,7 +2362,8 @@
 		"TAGS_SELECT_DESCRIPTION": "Descripción de etiqueta",
 		"ADD_NEW_TAG": "Agregar nueva etiqueta.",
 		"TENANT_LEVEL": "Nivel de inquilino",
-		"TAGS_TYPE": "Tipo de etiquetas"
+		"TAGS_TYPE": "Tipo de etiquetas",
+		"TAGS_SELECT_TYPE": "Seleccionar tipo de etiqueta"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Habilidades."

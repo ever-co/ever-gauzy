@@ -2138,7 +2138,10 @@
 			"ORG_TASK_EDIT": "编辑任务",
 			"ORG_TASK_DELETE": "删除任务",
 			"ORG_TASK_SETTING": "任务设置",
-			"ORG_MEMBER_LAST_LOG_VIEW": "查看最后日志"
+			"ORG_MEMBER_LAST_LOG_VIEW": "查看最后日志",
+			"TENANT_API_KEY_CREATE": "创建 API 密钥",
+			"TENANT_API_KEY_VIEW": "查看 API 密钥",
+			"TENANT_API_KEY_DELETE": "删除 API 密钥"
 		},
 		"BILLING": "计费",
 		"BUDGET": "预算",
@@ -2357,7 +2360,8 @@
 		"TAGS_SELECT_DESCRIPTION": "标签描述",
 		"ADD_NEW_TAG": "添加新标签",
 		"TENANT_LEVEL": "租户级别",
-		"TAGS_TYPE": "标签类型"
+		"TAGS_TYPE": "标签类型",
+		"TAGS_SELECT_TYPE": "选择标签类型"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "技能 (Jìnéng)"
