@@ -62,7 +62,9 @@ export class TagService extends TenantAwareCrudService<Tag> {
 			query.setFindOptions({
 				...(relations ? { relations: relations } : {})
 			});
+
 			// Left join all relational tables with tag table
+			query.leftJoin(`${query.alias}.tagType`, 'tagType');
 			query.leftJoin(`${query.alias}.candidates`, 'candidate');
 			query.leftJoin(`${query.alias}.employees`, 'employee');
 			query.leftJoin(`${query.alias}.employeeLevels`, 'employeeLevel');
@@ -100,6 +102,8 @@ export class TagService extends TenantAwareCrudService<Tag> {
 
 			// Add new selection to the SELECT query
 			query.select(`${query.alias}.*`);
+
+			query.addSelect(p(`"tagType"."type"`), `tagTypeName`);
 			// Add the select statement for counting, and cast it to integer
 			query.addSelect(p(`CAST(COUNT("candidate"."id") AS INTEGER)`), `candidate_counter`);
 			query.addSelect(p(`CAST(COUNT("employee"."id") AS INTEGER)`), `employee_counter`);
@@ -145,6 +149,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 
 			// Adds GROUP BY condition in the query builder.
 			query.addGroupBy(`${query.alias}.id`);
+			query.addGroupBy(`tagType.type`);
 			// Additionally you can add parameters used in where expression.
 			query.where((qb: SelectQueryBuilder<Tag>) => {
 				this.getFilterTagQuery(qb, input);
@@ -184,7 +189,10 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		// Optional organization filter
 		query.andWhere(
 			new Brackets((qb) => {
-				qb.where(`${query.alias}.organizationId IS NULL`).orWhere(`${query.alias}.organizationId = :organizationId`, { organizationId });
+				qb.where(`${query.alias}.organizationId IS NULL`).orWhere(
+					`${query.alias}.organizationId = :organizationId`,
+					{ organizationId }
+				);
 			})
 		);
 

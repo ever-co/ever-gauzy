@@ -2155,7 +2155,8 @@
 		"TAGS_SELECT_DESCRIPTION": "crwdns3166:0crwdne3166:0",
 		"ADD_NEW_TAG": "crwdns4306:0crwdne4306:0",
 		"TENANT_LEVEL": "crwdns4726:0crwdne4726:0",
-		"TAGS_TYPE": "crwdns10274:0crwdne10274:0"
+		"TAGS_TYPE": "crwdns10274:0crwdne10274:0",
+		"TAGS_SELECT_TYPE": "Yeny tags kikome"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "crwdns3920:0crwdne3920:0"
@@ -3455,7 +3456,6 @@
 				"REMOVE_EMPLOYEE_LEVEL": "crwdns8952:0{{ name }}crwdne8952:0",
 				"INVALID_EMPLOYEE_LEVEL": "crwdns3490:0crwdne3490:0",
 				"ALREADY_EXISTS": "Kombedi me Employee tye ka bino."
-
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "crwdns8954:0{{ name }}crwdne8954:0",
@@ -3475,7 +3475,6 @@
 				"REMOVE_POSITION": "crwdns8970:0{{ name }}crwdne8970:0",
 				"INVALID_POSITION_NAME": "crwdns2825:0crwdne2825:0",
 				"ALREADY_EXISTS": "Kombedi me Position tye ka bino."
-
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "crwdns8972:0{{ name }}crwdne8972:0",

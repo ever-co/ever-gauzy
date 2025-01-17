@@ -62,8 +62,8 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent i
 
 	ngOnInit(): void {
 		if (this.requestApproval) {
-			this.selectedTeams = this.requestApproval.teamApprovals.map((team) => team.teamId);
-			this.selectedEmployees = this.requestApproval.employeeApprovals.map((emp) => emp.employeeId);
+			this.selectedTeams = this.requestApproval.teamApprovals?.map((team) => team.teamId) ?? [];
+			this.selectedEmployees = this.requestApproval.employeeApprovals?.map((emp) => emp.employeeId) ?? [];
 		}
 		this.initializeForm();
 		this.loadSelectedOrganization();
@@ -137,77 +137,43 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent i
 
 	async initializeForm() {
 		this.form = this.fb.group({
-			name: [
-				this.requestApproval && this.requestApproval.name ? this.requestApproval.name : '',
-				Validators.required
-			],
-			employees: [
-				this.requestApproval &&
-				this.requestApproval.employeeApprovals &&
-				this.requestApproval.employeeApprovals.length > 0
-					? this.requestApproval.employeeApprovals.map((emp) => emp.id)
-					: []
-			],
-			teams: [
-				this.requestApproval &&
-				this.requestApproval.teamApprovals &&
-				this.requestApproval.teamApprovals.length > 0
-					? this.requestApproval.teamApprovals.map((team) => team.id)
-					: []
-			],
-			min_count: [
-				this.requestApproval && this.requestApproval.min_count ? this.requestApproval.min_count : 1,
-				Validators.required
-			],
-			approvalPolicyId: [
-				this.requestApproval && this.requestApproval.approvalPolicyId
-					? this.requestApproval.approvalPolicyId
-					: '',
-				Validators.required
-			],
-			id: [this.requestApproval && this.requestApproval.id ? this.requestApproval.id : null],
-			tags: this.requestApproval && this.requestApproval.tags ? [this.requestApproval.tags] : []
+			name: [this.requestApproval?.name ?? '', Validators.required],
+			employees: [this.requestApproval?.employeeApprovals?.map((emp) => emp.id) ?? []],
+			teams: [this.requestApproval?.teamApprovals?.map((team) => team.id) ?? []],
+			min_count: [this.requestApproval?.min_count ?? 1, Validators.required],
+			approvalPolicyId: [this.requestApproval?.approvalPolicyId ?? '', Validators.required],
+			id: [this.requestApproval?.id ?? null],
+			tags: [this.requestApproval?.tags ?? []]
 		});
-		this.participants =
-			this.requestApproval && this.requestApproval.teamApprovals.length > 0 ? 'teams' : 'employees';
+		this.participants = this.requestApproval?.teamApprovals?.length > 0 ? 'teams' : 'employees';
 		this.tags = this.form.get('tags').value || [];
 
-		if (this.requestApproval) {
-			if (this.requestApproval.approvalPolicy) {
-				switch (this.requestApproval.approvalPolicy.approvalType) {
-					case ApprovalPolicyTypesStringEnum.TIME_OFF:
-					case ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING:
-						this.form.get('approvalPolicyId').disable();
-						break;
-				}
+		if (this.requestApproval?.approvalPolicy) {
+			switch (this.requestApproval.approvalPolicy.approvalType) {
+				case ApprovalPolicyTypesStringEnum.TIME_OFF:
+				case ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING:
+					this.form.get('approvalPolicyId').disable();
+					break;
 			}
 		}
 	}
 
-	async closeDialog(requestApproval?: IRequestApproval) {
-		const members: any[] = [];
-		const listEmployees: any[] = [];
-		if (requestApproval) {
-			if (requestApproval.teams) {
-				this.teams.forEach((i) => {
-					requestApproval.teams.forEach((e: any) => {
-						if (e === i.id) {
-							i.members.forEach((id) => {
-								members.push(id.employeeId);
-							});
-						}
-					});
-				});
-			}
-			if (requestApproval.employees) {
-				requestApproval.employees.forEach((e) => {
-					if (!members.includes(e)) {
-						listEmployees.push(e);
-					}
-				});
-			}
-			requestApproval.employees = listEmployees;
+	closeDialog(requestApproval?: IRequestApproval) {
+		if (!requestApproval) {
+			return this.dialogRef.close(requestApproval);
 		}
+
+		const teamMemberIds = new Set(
+			requestApproval.teams
+				?.flatMap((reqTeam) =>
+					this.teams?.find((team) => team.id === reqTeam.id)?.members?.map((member) => member.employeeId)
+				)
+				.filter(Boolean) ?? []
+		);
+
+		requestApproval.employees =
+			requestApproval.employees?.filter((reqEmployee) => !teamMemberIds.has(reqEmployee.id)) ?? [];
+
 		this.onReset();
 		this.dialogRef.close(requestApproval);
 	}
