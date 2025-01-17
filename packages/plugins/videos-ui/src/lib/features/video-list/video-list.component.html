@@ -1,0 +1,11 @@
+@if(isAvailable$ | async) {
+<div class="video-container">
+	@for(video of videos$ | async; track video.id) {
+	<div class="video-item">
+		<plug-video-item [video]="video"></plug-video-item>
+	</div>
+	}
+</div>
+}@else {
+<ngx-no-data-message [message]="(isLoading$ | async) ? 'Loading...' : 'No Video'"></ngx-no-data-message>
+}

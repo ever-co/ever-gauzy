@@ -81,6 +81,20 @@ export class ActivityLayoutComponent implements OnInit, OnDestroy {
 			permissions: [PermissionsEnum.TIME_TRACKER, PermissionsEnum.TIME_TRACKING_DASHBOARD] // The permissions required to display the tab
 		});
 
+		// Register the video tab
+		this._pageTabRegistryService.registerPageTab({
+			tabsetId: this.tabsetId, // The identifier for the tabset
+			tabId: 'videos', // The identifier for the tab
+			tabsetType: 'route', // The type of tabset to use
+			tabTitle: (_i18n) => _i18n.getTranslation('Videos'), // The title for the tab
+			responsive: true, // Whether the tab is responsive
+			route: '/pages/employees/activity/videos', // The route for the tab
+			queryParamsHandling: 'merge' as QueryParamsHandling,
+			activeLinkOptions: { exact: false }, // The options for the active link
+			order: 3, // The order of the tab
+			permissions: [PermissionsEnum.TIME_TRACKER, PermissionsEnum.TIME_TRACKING_DASHBOARD] // The permissions required to display the tab
+		});
+
 		// Register the app activity tab
 		this._pageTabRegistryService.registerPageTab({
 			tabsetId: this.tabsetId, // The identifier for the tabset
@@ -91,7 +105,7 @@ export class ActivityLayoutComponent implements OnInit, OnDestroy {
 			route: '/pages/employees/activity/apps', // The route for the tab
 			queryParamsHandling: 'merge' as QueryParamsHandling,
 			activeLinkOptions: { exact: false }, // The options for the active link
-			order: 3, // The order of the tab
+			order: 4, // The order of the tab
 			permissions: [PermissionsEnum.TIME_TRACKER, PermissionsEnum.TIME_TRACKING_DASHBOARD] // The permissions required to display the tab
 		});
 
@@ -105,7 +119,7 @@ export class ActivityLayoutComponent implements OnInit, OnDestroy {
 			route: '/pages/employees/activity/urls', // The route for the tab
 			queryParamsHandling: 'merge' as QueryParamsHandling,
 			activeLinkOptions: { exact: false }, // The options for the active link
-			order: 4, // The order of the tab
+			order: 5, // The order of the tab
 			permissions: [PermissionsEnum.TIME_TRACKER, PermissionsEnum.TIME_TRACKING_DASHBOARD] // The permissions required to display the tab
 		});
 	}

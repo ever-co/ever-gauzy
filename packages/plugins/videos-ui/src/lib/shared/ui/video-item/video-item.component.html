@@ -1,0 +1,32 @@
+@if(video) {
+<div id="item">
+	@if(video.fullUrl){
+	<div (click)="open(video)" class="video-player">
+		<plug-video-player [src]="video.fullUrl"></plug-video-player>
+		<div class="duration">
+			{{ video.duration }}
+		</div>
+	</div>
+
+	}
+	<div class="video-info">
+		@if(video.uploadedBy) {
+		<ngx-avatar [src]="video.uploadedBy?.user.imageUrl" [employee]="video.uploadedBy"></ngx-avatar>
+		}
+		<div class="info">
+			<div class="title">
+				{{ video.title }}
+			</div>
+			<div class="author">
+				{{ video.uploadedBy?.fullName }}
+			</div>
+			<div class="date">
+				{{ video.recordedAt | date : 'medium' }}
+			</div>
+		</div>
+		<nb-icon icon="more-vertical-outline" [options]="{ animation: { type: 'zoom' } }"></nb-icon>
+	</div>
+</div>
+}@else {
+<div>No video</div>
+}

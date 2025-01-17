@@ -1,0 +1,30 @@
+@if(video$ | async; as video){
+<div class="video">
+	<plug-video-player [src]="video.fullUrl" [controls]="true"></plug-video-player>
+	<div class="info">
+		<div class="title">
+			{{ video.title }}
+		</div>
+
+		@if(video.uploadedBy) {
+		<div class="author">
+			<ngx-avatar
+				[src]="video.uploadedBy?.user.imageUrl"
+				[name]="video.uploadedBy?.fullName"
+				[id]="video.uploadedBy?.id"
+				[employee]="video.uploadedBy"
+				class="avatar-dashboard"
+			></ngx-avatar>
+		</div>
+		}
+		<div class="date">
+			{{ video.recordedAt | date : 'medium' }}
+		</div>
+		@if(video.description) {
+		<div class="description">
+			{{ video.description }}
+		</div>
+		}
+	</div>
+</div>
+}
