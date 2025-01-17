@@ -12,11 +12,7 @@ import {
 	Delete,
 	BadRequestException
 } from '@nestjs/common';
-import {
-	ApiOperation,
-	ApiResponse,
-	ApiTags
-} from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { QueryBus } from '@nestjs/cqrs';
 import { FindOptionsWhere, UpdateResult } from 'typeorm';
 import {
@@ -38,11 +34,11 @@ import { AccountingTemplateQueryDTO, SaveAccountingTemplateDTO } from './dto';
 @ApiTags('Accounting Template')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES)
-@Controller()
+@Controller('/accounting-template')
 export class AccountingTemplateController extends CrudController<AccountingTemplate> {
 	constructor(
 		private readonly accountingTemplateService: AccountingTemplateService,
-		private readonly queryBus: QueryBus,
+		private readonly queryBus: QueryBus
 	) {
 		super(accountingTemplateService);
 	}
@@ -55,9 +51,12 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 	 */
 	@Get('count')
 	async getCount(
-		@Query(new ValidationPipe({
-			transform: true
-		})) options: FindOptionsWhere<AccountingTemplate>
+		@Query(
+			new ValidationPipe({
+				transform: true
+			})
+		)
+		options: FindOptionsWhere<AccountingTemplate>
 	): Promise<number> {
 		return await this.accountingTemplateService.countBy(options);
 	}
@@ -70,9 +69,12 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 	 */
 	@Get('pagination')
 	async pagination(
-		@Query(new ValidationPipe({
-			transform: true
-		})) options: PaginationParams<AccountingTemplate>
+		@Query(
+			new ValidationPipe({
+				transform: true
+			})
+		)
+		options: PaginationParams<AccountingTemplate>
 	): Promise<IPagination<IAccountingTemplate>> {
 		return await this.accountingTemplateService.paginate(options);
 	}
@@ -98,16 +100,16 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 	})
 	@Get('template')
 	async getAccountingTemplate(
-		@Query(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) options: AccountingTemplateQueryDTO,
+		@Query(
+			new ValidationPipe({
+				transform: true,
+				whitelist: true
+			})
+		)
+		options: AccountingTemplateQueryDTO,
 		@LanguageDecorator() themeLanguage: LanguagesEnum
 	): Promise<IAccountingTemplate> {
-		return await this.accountingTemplateService.getAccountTemplate(
-			options,
-			themeLanguage
-		)
+		return await this.accountingTemplateService.getAccountTemplate(options, themeLanguage);
 	}
 
 	@ApiOperation({
@@ -149,12 +151,8 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 	}
 
 	@Get()
-	async findAll(
-		@Query() options: PaginationParams<AccountingTemplate>
-	): Promise<IPagination<IAccountingTemplate>> {
-		return await this.queryBus.execute(
-			new AccountingTemplateQuery(options)
-		);
+	async findAll(@Query() options: PaginationParams<AccountingTemplate>): Promise<IPagination<IAccountingTemplate>> {
+		return await this.queryBus.execute(new AccountingTemplateQuery(options));
 	}
 
 	@ApiOperation({
@@ -166,9 +164,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 		type: AccountingTemplate
 	})
 	@Get(':id')
-	async findById(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<IAccountingTemplate> {
+	async findById(@Param('id', UUIDValidationPipe) id: string): Promise<IAccountingTemplate> {
 		try {
 			return await this.accountingTemplateService.findOneByIdString(id);
 		} catch (error) {
@@ -187,7 +183,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() input: IAccountingTemplateUpdateInput,
+		@Body() input: IAccountingTemplateUpdateInput
 	): Promise<IAccountingTemplate> {
 		try {
 			await this.accountingTemplateService.create({

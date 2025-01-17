@@ -11,14 +11,14 @@ import { TypeOrmRolePermissionRepository } from './repository';
 
 @Module({
 	imports: [
+		CqrsModule,
+		CacheModule.register({ isGlobal: true }),
 		TypeOrmModule.forFeature([RolePermission]),
 		MikroOrmModule.forFeature([RolePermission]),
-		forwardRef(() => RoleModule),
-		CqrsModule,
-		CacheModule.register({ isGlobal: true })
+		forwardRef(() => RoleModule)
 	],
 	controllers: [RolePermissionController],
 	providers: [RolePermissionService, TypeOrmRolePermissionRepository],
-	exports: [TypeOrmModule, MikroOrmModule, CacheModule, RolePermissionService, TypeOrmRolePermissionRepository]
+	exports: [CacheModule, RolePermissionService, TypeOrmRolePermissionRepository]
 })
 export class RolePermissionModule {}

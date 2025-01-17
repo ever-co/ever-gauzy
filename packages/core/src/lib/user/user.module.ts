@@ -4,7 +4,6 @@
 
 import { CqrsModule } from '@nestjs/cqrs';
 import { forwardRef, Module } from '@nestjs/common';
-import { RouterModule } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { CommandHandlers } from './commands/handlers';
@@ -19,7 +18,6 @@ import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/user', module: UserModule }]),
 		forwardRef(() => TypeOrmModule.forFeature([User])),
 		forwardRef(() => MikroOrmModule.forFeature([User])),
 		forwardRef(() => RolePermissionModule),
