@@ -901,8 +901,6 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						qb.andWhere(p(`"${query.alias}"."organizationSprintId" = :organizationSprintId`), {
 							organizationSprintId
 						});
-					} else {
-						qb.andWhere(p(`"${query.alias}"."organizationSprintId" IS NULL`));
 					}
 					qb.andWhere(p(`"${query.alias}"."isScreeningTask" = :isScreeningTask`), { isScreeningTask });
 				})
