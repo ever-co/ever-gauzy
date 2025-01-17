@@ -2138,7 +2138,10 @@
 			"ORG_TASK_EDIT": "Editar Tarefas",
 			"ORG_TASK_DELETE": "Excluir tarefas",
 			"ORG_TASK_SETTING": "Configurações da tarefa",
-			"ORG_MEMBER_LAST_LOG_VIEW": "Ver último registro"
+			"ORG_MEMBER_LAST_LOG_VIEW": "Ver último registro",
+			"TENANT_API_KEY_CREATE": "Criar chave API",
+			"TENANT_API_KEY_VIEW": "Visualizar chave API",
+			"TENANT_API_KEY_DELETE": "Excluir chave API"
 		},
 		"BILLING": "Faturamento",
 		"BUDGET": "Orçamento",

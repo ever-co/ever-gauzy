@@ -15,15 +15,8 @@ import { TypeOrmTenantApiKeyRepository } from './repository/type-orm-tenant-api-
 		RolePermissionModule,
 		UserModule
 	],
-	controllers: [
-		TenantApiKeyController
-	],
-	providers: [
-		TenantApiKeyService,
-		TypeOrmTenantApiKeyRepository
-	],
-	exports: [
-		TenantApiKeyService
-	]
+	controllers: [TenantApiKeyController],
+	providers: [TenantApiKeyService, TypeOrmTenantApiKeyRepository],
+	exports: [TenantApiKeyService, TypeOrmTenantApiKeyRepository]
 })
 export class TenantApiKeyModule {}
