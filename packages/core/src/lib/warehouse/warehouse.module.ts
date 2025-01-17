@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { RouterModule } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { WarehouseService } from './warehouse.service';
@@ -12,24 +11,14 @@ import { WarehouseProductService } from './warehouse-product-service';
 import { TypeOrmWarehouseRepository } from './repository/type-orm-warehouse.repository';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 
-const forFeatureEntities = [
-	Warehouse,
-	Product,
-	WarehouseProduct,
-	WarehouseProductVariant
-];
-
 @Module({
 	imports: [
-		RouterModule.register([
-			{ path: '/warehouses', module: WarehouseModule }
-		]),
-		TypeOrmModule.forFeature(forFeatureEntities),
-		MikroOrmModule.forFeature(forFeatureEntities),
-		RolePermissionModule,
+		TypeOrmModule.forFeature([Warehouse, Product, WarehouseProduct, WarehouseProductVariant]),
+		MikroOrmModule.forFeature([Warehouse, Product, WarehouseProduct, WarehouseProductVariant]),
+		RolePermissionModule
 	],
 	controllers: [WarehouseController],
 	providers: [WarehouseService, WarehouseProductService, TypeOrmWarehouseRepository],
 	exports: [WarehouseService, WarehouseProductService, TypeOrmWarehouseRepository]
 })
-export class WarehouseModule { }
+export class WarehouseModule {}

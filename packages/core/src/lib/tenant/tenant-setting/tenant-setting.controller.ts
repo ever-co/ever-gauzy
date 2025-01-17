@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards, } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { ITenantSetting, PermissionsEnum } from '@gauzy/contracts';
@@ -14,7 +14,7 @@ import { CreateTenantSettingDTO, WasabiS3ProviderConfigDTO } from './dto';
 @ApiTags('TenantSetting')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TENANT_SETTING)
-@Controller()
+@Controller('/tenant-setting')
 export class TenantSettingController extends CrudController<TenantSetting> {
 	constructor(private readonly tenantSettingService: TenantSettingService, private readonly commandBus: CommandBus) {
 		super(tenantSettingService);
@@ -33,7 +33,7 @@ export class TenantSettingController extends CrudController<TenantSetting> {
 		description: 'Tenant not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Get()
+	@Get('/')
 	async getSettings() {
 		return await this.commandBus.execute(new TenantSettingGetCommand());
 	}
@@ -51,7 +51,7 @@ export class TenantSettingController extends CrudController<TenantSetting> {
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@UseValidationPipe({ transform: true, whitelist: true })
-	@Post()
+	@Post('/')
 	async saveSettings(@Body() entity: CreateTenantSettingDTO): Promise<ITenantSetting> {
 		return await this.commandBus.execute(new TenantSettingSaveCommand(entity));
 	}
@@ -68,7 +68,7 @@ export class TenantSettingController extends CrudController<TenantSetting> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseValidationPipe({ transform: true, whitelist: true })
-	@Post('wasabi/validate')
+	@Post('/wasabi/validate')
 	async validateWasabiConfiguration(@Body() entity: WasabiS3ProviderConfigDTO): Promise<void | any> {
 		return await this.tenantSettingService.verifyWasabiConfiguration(entity);
 	}
