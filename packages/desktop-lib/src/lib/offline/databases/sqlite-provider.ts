@@ -2,6 +2,7 @@ import { IServerLessProvider } from '../../interfaces';
 import { Knex } from 'knex';
 import * as path from 'path';
 import { app } from 'electron';
+import { DatabaseTypeEnum } from '@gauzy/config';
 
 export class SqliteProvider implements IServerLessProvider {
 	private static _instance: IServerLessProvider;
@@ -27,7 +28,7 @@ export class SqliteProvider implements IServerLessProvider {
 		return {
 			// Here we can use 'sqlite' if we want native SQlite3 driver
 			// But we need to install it manually and instead we prefer to use 'better-sqlite3'
-			client: 'better-sqlite3',
+			client: DatabaseTypeEnum.betterSqlite3,
 			connection: {
 				filename: path.resolve(app?.getPath('userData') || __dirname, 'gauzy.sqlite3'),
 				timezone: 'utc'

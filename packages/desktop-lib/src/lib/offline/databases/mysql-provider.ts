@@ -2,6 +2,7 @@ import { Knex } from 'knex';
 import { AppError } from '../../error-handler';
 import { LocalStore } from '../../desktop-store';
 import { IClientServerProvider } from '../../interfaces';
+import { DatabaseTypeEnum } from '@gauzy/config';
 
 export class MysqlProvider implements IClientServerProvider {
 	private _connectionConfig: Knex.StaticConnectionConfig;
@@ -49,7 +50,7 @@ export class MysqlProvider implements IClientServerProvider {
 
 	private _initialization() {
 		this._database = 'gauzy_timer_db';
-		const cfg = LocalStore.getApplicationConfig().config['mysql'];
+		const cfg = LocalStore.getApplicationConfig().config[DatabaseTypeEnum.mysql];
 		this._connectionConfig = {
 			host: cfg.dbHost,
 			port: cfg.dbPort,
