@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { Observable, combineLatest, map } from 'rxjs';
 import { VideoQuery } from '../../+state/video.query';
 import { IVideo } from '../../shared/models/video.model';
@@ -10,6 +10,8 @@ import { IVideo } from '../../shared/models/video.model';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VideoListComponent {
+	@Input() vertical = false;
+
 	constructor(private readonly videoQuery: VideoQuery) {}
 
 	public get videos$(): Observable<IVideo[]> {

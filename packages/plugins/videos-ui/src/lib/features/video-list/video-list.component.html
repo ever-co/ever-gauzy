@@ -1,8 +1,8 @@
 @if(isAvailable$ | async) {
-<div class="video-container">
+<div class="video-container" [ngClass]="{ vertical: vertical }">
 	@for(video of videos$ | async; track video.id) {
 	<div class="video-item">
-		<plug-video-item [video]="video"></plug-video-item>
+		<plug-video-item [ngClass]="{ vertical: vertical }" [video]="video"></plug-video-item>
 	</div>
 	}
 </div>

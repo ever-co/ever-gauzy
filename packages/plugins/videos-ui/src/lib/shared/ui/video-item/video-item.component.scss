@@ -20,8 +20,8 @@
     background: #000000b3;
     border-radius: 4px;
     position: absolute;
-    right: 1rem;
-    bottom: 1rem;
+    right: 8px;
+    bottom: 8px;
   }
 }
 
@@ -115,5 +115,43 @@ ngx-avatar {
 
   .date {
     font-size: 11px;
+  }
+}
+
+:host(.vertical) {
+  #item {
+    flex-direction: row;
+
+    .video-player {
+      min-width: 200px;
+    }
+
+    .info {
+      min-width: 150px;
+    }
+
+    .title {
+      font-size: 14px;
+    }
+
+    ngx-avatar {
+      display: none;
+    }
+  }
+
+  @media (max-width: 1435px) {
+    #item {
+      max-width: unset;
+
+      .title {
+        font-size: 16px;
+      }
+
+      .video-player,
+      .info,
+      .video-info {
+        width: 100%;
+      }
+    }
   }
 }

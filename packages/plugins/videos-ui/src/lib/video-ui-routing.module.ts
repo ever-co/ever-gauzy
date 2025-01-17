@@ -35,10 +35,17 @@ const routes: Routes = [
 		data: {
 			title: 'Video Detail',
 			selectors: {
-				date: false,
-				employee: false,
+				date: true,
+				employee: true,
 				project: false,
 				team: false
+			},
+			datePicker: {
+				unitOfTime: 'day',
+				isLockDatePicker: true,
+				isSaveDatePicker: true,
+				isSingleDatePicker: true,
+				isDisableFutureDate: true
 			}
 		},
 		component: VideoDetailPageComponent

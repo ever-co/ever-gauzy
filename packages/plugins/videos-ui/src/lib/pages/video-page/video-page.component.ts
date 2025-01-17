@@ -1,8 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Actions } from '@ngneat/effects-ng';
-import { Observable, combineLatest, map } from 'rxjs';
-import { VideoQuery } from '../../+state/video.query';
-import { IVideo } from '../../shared/models/video.model';
 import { VideoActions } from '../../+state/video.action';
 
 @Component({
