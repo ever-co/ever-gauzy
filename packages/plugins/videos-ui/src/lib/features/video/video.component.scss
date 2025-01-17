@@ -6,6 +6,15 @@
   width: 100%;
   overflow-y: auto;
 }
+
+.video-title-container {
+  display: flex;
+  justify-content: space-between;
+
+  nb-icon {
+    cursor: pointer;
+  }
+}
 // Info section styling
 .info {
   color: var(--gauzy-text-color-1); // Dark text for better contrast

@@ -33,7 +33,7 @@ const routes: Routes = [
 	{
 		path: ':id',
 		data: {
-			title: 'Video Detail',
+			title: 'Video',
 			selectors: {
 				date: true,
 				employee: true,
