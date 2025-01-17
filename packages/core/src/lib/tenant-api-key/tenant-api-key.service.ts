@@ -1,4 +1,4 @@
-import { HttpStatus, HttpException, Injectable, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import { HttpStatus, HttpException, Injectable } from '@nestjs/common';
 import { createHash, timingSafeEqual } from 'crypto';
 import { ID, IGenerateApiKey, IGenerateApiKeyResponse } from '@gauzy/contracts';
 import { generatePassword, generateSha256Hash } from '@gauzy/utils';
