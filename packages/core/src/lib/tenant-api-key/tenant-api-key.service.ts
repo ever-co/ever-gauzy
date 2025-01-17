@@ -1,6 +1,6 @@
-import { HttpStatus, HttpException, Injectable, ForbiddenException } from '@nestjs/common';
+import { HttpStatus, HttpException, Injectable, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { createHash, timingSafeEqual } from 'crypto';
-import { IGenerateApiKey, IGenerateApiKeyResponse } from '@gauzy/contracts';
+import { ID, IGenerateApiKey, IGenerateApiKeyResponse } from '@gauzy/contracts';
 import { generatePassword, generateSha256Hash } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
@@ -76,18 +76,20 @@ export class TenantApiKeyService extends TenantAwareCrudService<TenantApiKey> {
 	}
 
 	/**
-	 * Checks if an API key exists for a tenant by tenant ID.
+	 * Checks whether an API key exists for the given tenant ID.
 	 *
-	 * @param {string} tenantId - The ID of the tenant.
-	 * @returns {Promise<boolean>} Returns true if an API key exists, false otherwise.
+	 * @param tenantId - The unique identifier of the tenant.
+	 * @returns A promise resolving to `true` if an API key exists for the tenant, otherwise `false`.
 	 */
-	private async findByTenantId(tenantId: string): Promise<boolean> {
+	private async findByTenantId(tenantId: ID): Promise<boolean> {
 		try {
 			const count = await this.countBy({ tenantId });
-			return count > 0; // Return true if count is greater than 0
+			return count > 0; // Return true if there are matching API keys
 		} catch (error) {
-			console.log(`Error checking API key existence: ${error.message}`);
-			return false; // Return false in case of an error
+			console.error(
+				`Database Error: Failed to check API key existence for tenant ${tenantId}. Reason: ${error.message}`
+			);
+			return false; // Return false if an error occurs
 		}
 	}
 
@@ -98,7 +100,7 @@ export class TenantApiKeyService extends TenantAwareCrudService<TenantApiKey> {
 	 * @param apiKey - The API Key to look up in the database.
 	 * @returns A promise resolving to the matched `TenantApiKey` object if found, or `null` if no match is found.
 	 */
-	async getApiKey(apiKey: string): Promise<TenantApiKey | null> {
+	private async getApiKey(apiKey: string): Promise<TenantApiKey | null> {
 		try {
 			// Perform a database query to find an active and non-archived API key
 			return await this.findOneByOptions({
@@ -120,21 +122,23 @@ export class TenantApiKeyService extends TenantAwareCrudService<TenantApiKey> {
 	 *
 	 * @param apiKey - The API Key to validate.
 	 * @param apiSecret - The API Secret to validate.
-	 * @returns A promise resolving to the matched `TenantApiKey` object if valid, or `null` if no match is found.
+	 * @returns A promise resolving to `true` if valid, otherwise `false`.
 	 */
-	async validateApiKeyAndSecret(apiKey: string, apiSecret: string): Promise<TenantApiKey | null> {
+	async validateApiKeyAndSecret(apiKey: string, apiSecret: string): Promise<boolean> {
 		try {
 			// Retrieve the corresponding tenant_api_key record based on the apiKey
 			const tenantApiKey = await this.getApiKey(apiKey);
-			console.log('tenantApiKey', tenantApiKey);
 
-			// Check if the API Key and Secret match
+			// If the API Key is not found or validation fails, return false
 			if (!tenantApiKey || !this.validateApiKey(apiSecret, tenantApiKey.apiSecret)) {
-				throw new ForbiddenException('Not Authorized');
+				console.warn(`Unauthorized: Invalid API Key (X-APP-ID) or Secret (X-API-KEY) for API Key: ${apiKey}`);
+				return false;
 			}
+
+			return true; // Return true if API Key and Secret are valid
 		} catch (error) {
-			console.error('Error fetching tenant_api_key:', error.message);
-			return null;
+			console.error(`Database Error: Failed to retrieve tenant API key. Reason: ${error.message}`);
+			return false;
 		}
 	}
 
@@ -146,9 +150,9 @@ export class TenantApiKeyService extends TenantAwareCrudService<TenantApiKey> {
 	 * @returns `true` if the secrets match, otherwise `false`.
 	 */
 	private validateApiKey(secretKey: string, apiSecret: string): boolean {
+		// Hash the provided secret key
 		const hashedApiSecret = this.hashApiSecret(secretKey);
-		console.log('hashedApiSecret', hashedApiSecret);
-		console.log('apiSecret', apiSecret);
+		// Compare the hashed secret with the stored hash
 		return timingSafeEqual(Buffer.from(hashedApiSecret), Buffer.from(apiSecret));
 	}
 
@@ -159,6 +163,7 @@ export class TenantApiKeyService extends TenantAwareCrudService<TenantApiKey> {
 	 * @returns The SHA-256 hashed hexadecimal representation of the secret key.
 	 */
 	private hashApiSecret(secretKey: string): string {
+		// Hash the secret using SHA-256
 		return createHash('sha256').update(secretKey).digest('hex');
 	}
 }
