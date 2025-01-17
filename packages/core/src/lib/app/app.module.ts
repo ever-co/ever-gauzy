@@ -28,10 +28,9 @@ import { TaskStatusModule } from '../tasks/statuses/status.module';
 import { TaskVersionModule } from '../tasks/versions/version.module';
 import { SkillModule } from '../skills/skill.module';
 import { LanguageModule } from '../language/language.module';
-import { AppBootstrapLogger } from './app-bootstrap-logger.service';
+import { AppBootstrapLogger } from './app-bootstrap-logger';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ProfilingModule } from '../common/profiling/profiling.module';
 import { EmailCheckModule } from '../email-check/email-check.module';
 import { UserModule } from '../user/user.module';
 import { EmployeeModule } from '../employee/employee.module';
@@ -192,7 +191,7 @@ if (unleashConfig.url) {
 	const instance = initializeUnleash(unleashInstanceConfig);
 
 	// metrics hooks
-	instance.on('registered', (client) => {
+	instance.on('registered', () => {
 		console.log('Unleash Client Registered');
 	});
 
@@ -333,7 +332,6 @@ const GUARDS = [ApiKeyAuthGuard];
 					})
 			  ]
 			: []),
-		ProfilingModule.forRoot(), // Enables automatic profiling,
 		HealthModule,
 		CoreModule,
 		SharedModule,
