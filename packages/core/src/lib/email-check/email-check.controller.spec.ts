@@ -58,14 +58,26 @@ describe('EmailCheckController', () => {
 	it('should handle invalid email format', async () => {
 		const email = 'invalid-email';
 
-		// Expect a validation error when calling the controller
-		await expect(controller.checkEmail({ email })).rejects.toThrow();
+		await expect(controller.checkEmail({ email })).rejects.toThrow('Invalid email format');
+		await expect(controller.checkEmail({ email })).rejects.toMatchObject({
+			response: {
+				statusCode: 400,
+				error: 'Bad Request',
+				message: 'Invalid email format'
+			}
+		});
 	});
 
 	it('should handle empty email field', async () => {
 		const email = '';
 
-		// Expect a validation error for empty email
-		await expect(controller.checkEmail({ email })).rejects.toThrow();
+		await expect(controller.checkEmail({ email })).rejects.toThrow('Email is required');
+		await expect(controller.checkEmail({ email })).rejects.toMatchObject({
+			response: {
+				statusCode: 400,
+				error: 'Bad Request',
+				message: 'Email is required'
+			}
+		});
 	});
 });
