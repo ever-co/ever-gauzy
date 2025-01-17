@@ -86,9 +86,7 @@ export class TenantApiKeyService extends TenantAwareCrudService<TenantApiKey> {
 			const count = await this.countBy({ tenantId });
 			return count > 0; // Return true if there are matching API keys
 		} catch (error) {
-			console.error(
-				`Database Error: Failed to check API key existence for tenant ${tenantId}. Reason: ${error.message}`
-			);
+			console.error(`Database Error: Failed to check API key existence. Reason: ${error.message}`);
 			return false; // Return false if an error occurs
 		}
 	}
