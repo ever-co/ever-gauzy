@@ -164,7 +164,6 @@
         "passport": "^0.6.0",
         "passport-jwt": "^4.0.0",
         "pdfmake": "^0.2.0",
-        "perf_hooks": "^0.0.1",
         "pg": "^8.13.1",
         "pg-query-stream": "^4.7.1",
         "prettier": "^2.8.4",
