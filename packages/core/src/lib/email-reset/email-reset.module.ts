@@ -26,6 +26,6 @@ import { AuthModule } from './../auth/auth.module';
 	],
 	controllers: [EmailResetController],
 	providers: [EmailResetService, ...CommandHandlers, ...QueryHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, EmailResetService],
+	exports: [EmailResetService]
 })
-export class EmailResetModule { }
+export class EmailResetModule {}

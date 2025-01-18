@@ -27,6 +27,6 @@ import { TaskModule } from '../tasks/task.module';
 	],
 	controllers: [EmployeeRecurringExpenseController],
 	providers: [EmployeeRecurringExpenseService, ...QueryHandlers, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, EmployeeRecurringExpenseService]
+	exports: [EmployeeRecurringExpenseService]
 })
-export class EmployeeRecurringExpenseModule { }
+export class EmployeeRecurringExpenseModule {}

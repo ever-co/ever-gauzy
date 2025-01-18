@@ -11,7 +11,7 @@ import { TenantController } from './tenant.controller';
 import { Tenant } from './tenant.entity';
 import { TenantService } from './tenant.service';
 import { CommandHandlers } from './commands/handlers';
-import { TypeOrmTenantRepository } from './repository';
+import { TypeOrmTenantRepository } from './repository/type-orm-tenant.repository';
 
 @Module({
 	imports: [

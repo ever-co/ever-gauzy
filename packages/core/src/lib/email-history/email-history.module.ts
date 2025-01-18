@@ -22,6 +22,6 @@ import { TypeOrmEmailHistoryRepository } from './repository/type-orm-email-histo
 	],
 	controllers: [EmailHistoryController],
 	providers: [EmailHistoryService, TypeOrmEmailHistoryRepository, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, EmailHistoryService, TypeOrmEmailHistoryRepository]
+	exports: [EmailHistoryService, TypeOrmEmailHistoryRepository]
 })
 export class EmailHistoryModule {}

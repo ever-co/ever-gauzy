@@ -15,6 +15,6 @@ import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
 	],
 	controllers: [EquipmentSharingPolicyController],
 	providers: [EquipmentSharingPolicyService, TypeOrmEquipmentSharingPolicyRepository],
-	exports: [TypeOrmModule, MikroOrmModule, EquipmentSharingPolicyService, TypeOrmEquipmentSharingPolicyRepository]
+	exports: []
 })
 export class EquipmentSharingPolicyModule {}

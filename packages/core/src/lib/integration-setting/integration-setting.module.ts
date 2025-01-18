@@ -17,6 +17,6 @@ import { IntegrationSetting } from './integration-setting.entity';
 	],
 	controllers: [IntegrationSettingController],
 	providers: [IntegrationSettingService, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, IntegrationSettingService]
+	exports: [IntegrationSettingService]
 })
 export class IntegrationSettingModule {}

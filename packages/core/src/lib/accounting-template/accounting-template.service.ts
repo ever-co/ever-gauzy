@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as mjml2html from 'mjml';
 import * as Handlebars from 'handlebars';
@@ -22,9 +21,7 @@ import { MikroOrmAccountingTemplateRepository } from './repository/mikro-orm-acc
 @Injectable()
 export class AccountingTemplateService extends TenantAwareCrudService<AccountingTemplate> {
 	constructor(
-		@InjectRepository(AccountingTemplate)
 		typeOrmAccountingTemplateRepository: TypeOrmAccountingTemplateRepository,
-
 		mikroOrmAccountingTemplateRepository: MikroOrmAccountingTemplateRepository
 	) {
 		super(typeOrmAccountingTemplateRepository, mikroOrmAccountingTemplateRepository);
@@ -36,7 +33,7 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 		try {
 			const mjmlTohtml = mjml2html(data);
 			textToHtml = mjmlTohtml.errors.length ? data : mjmlTohtml.html;
-		} catch (error) { }
+		} catch (error) {}
 
 		const handlebarsTemplate = Handlebars.compile(textToHtml);
 
@@ -248,13 +245,13 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 			},
 			...(params && params.relations
 				? {
-					relations: params.relations
-				}
+						relations: params.relations
+				  }
 				: {}),
 			...(params && params.order
 				? {
-					order: params.order
-				}
+						order: params.order
+				  }
 				: {})
 		});
 		query.where((qb: SelectQueryBuilder<AccountingTemplate>) => {

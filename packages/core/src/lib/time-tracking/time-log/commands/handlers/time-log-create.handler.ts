@@ -8,7 +8,8 @@ import { RequestContext } from '../../../../core/context';
 import { TimeLogService } from '../../time-log.service';
 import { TimeLog } from '../../time-log.entity';
 import { TimeLogCreateCommand } from '../time-log-create.command';
-import { MikroOrmTimeLogRepository, TypeOrmTimeLogRepository } from '../../repository';
+import { MikroOrmTimeLogRepository } from '../../repository/mikro-orm-time-log.repository';
+import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 
 @CommandHandler(TimeLogCreateCommand)
 export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateCommand> {

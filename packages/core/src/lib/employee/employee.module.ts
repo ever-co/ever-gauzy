@@ -14,6 +14,7 @@ import { UserOrganizationModule } from '../user-organization/user-organization.m
 import { RoleModule } from './../role/role.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
+import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 
 @Module({
 	imports: [
@@ -28,7 +29,7 @@ import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.reposi
 		CqrsModule
 	],
 	controllers: [EmployeeController],
-	providers: [EmployeeService, TypeOrmEmployeeRepository, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, EmployeeService, TypeOrmEmployeeRepository]
+	providers: [EmployeeService, TypeOrmEmployeeRepository, MikroOrmEmployeeRepository, ...CommandHandlers],
+	exports: [EmployeeService, TypeOrmEmployeeRepository, MikroOrmEmployeeRepository]
 })
 export class EmployeeModule {}

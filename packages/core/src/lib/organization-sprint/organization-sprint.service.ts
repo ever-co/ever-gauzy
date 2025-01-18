@@ -24,7 +24,7 @@ import { EmployeeService } from '../employee/employee.service';
 import { SubscriptionService } from '../subscription/subscription.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { OrganizationSprint } from './organization-sprint.entity';
-import { TypeOrmEmployeeRepository } from '../employee/repository';
+import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import {
 	MikroOrmOrganizationSprintEmployeeRepository,
 	MikroOrmOrganizationSprintRepository,

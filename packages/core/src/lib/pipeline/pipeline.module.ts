@@ -13,9 +13,6 @@ import { TypeOrmPipelineRepository } from './repository';
 
 @Module({
 	imports: [
-		RouterModule.register([
-			{ path: '/pipelines', module: PipelineModule }
-		]),
 		TypeOrmModule.forFeature([Pipeline]),
 		MikroOrmModule.forFeature([Pipeline]),
 		StageModule,
@@ -25,6 +22,6 @@ import { TypeOrmPipelineRepository } from './repository';
 	],
 	controllers: [PipelineController],
 	providers: [PipelineService, TypeOrmPipelineRepository],
-	exports: [PipelineService, TypeOrmPipelineRepository]
+	exports: []
 })
-export class PipelineModule { }
+export class PipelineModule {}

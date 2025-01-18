@@ -27,6 +27,6 @@ import { TypeOrmInvoiceRepository } from './repository/type-orm-invoice.reposito
 	],
 	controllers: [InvoiceController],
 	providers: [InvoiceService, PdfmakerService, TypeOrmInvoiceRepository, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, InvoiceService, PdfmakerService, TypeOrmInvoiceRepository]
+	exports: [InvoiceService, PdfmakerService, TypeOrmInvoiceRepository]
 })
 export class InvoiceModule {}

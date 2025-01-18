@@ -7,6 +7,7 @@ import { AccountingTemplate } from './accounting-template.entity';
 import { AccountingTemplateController } from './accounting-template.controller';
 import { AccountingTemplateService } from './accounting-template.service';
 import { QueryHandlers } from './queries/handlers';
+import { TypeOrmAccountingTemplateRepository } from './repository/type-orm-accounting-template.repository';
 
 @Module({
 	imports: [
@@ -16,7 +17,7 @@ import { QueryHandlers } from './queries/handlers';
 		CqrsModule
 	],
 	controllers: [AccountingTemplateController],
-	providers: [AccountingTemplateService, ...QueryHandlers],
-	exports: [AccountingTemplateService]
+	providers: [AccountingTemplateService, TypeOrmAccountingTemplateRepository, ...QueryHandlers],
+	exports: []
 })
 export class AccountingTemplateModule {}

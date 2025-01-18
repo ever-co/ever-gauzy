@@ -37,7 +37,7 @@ import { CreateApprovalPolicyDTO, UpdateApprovalPolicyDTO } from './dto';
 @ApiTags('ApprovalPolicy')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.APPROVAL_POLICY_EDIT)
-@Controller()
+@Controller('/approval-policy')
 export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 	constructor(
 		private readonly approvalPolicyService: ApprovalPolicyService,
@@ -53,8 +53,7 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 	 * @returns
 	 */
 	@ApiOperation({
-		summary:
-			'Find all approval policies except time off and equipment sharing policy.'
+		summary: 'Find all approval policies except time off and equipment sharing policy.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -72,9 +71,7 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 		@Query('data', ParseJsonPipe)
 		data: IListQueryInput<IRequestApprovalFindInput>
 	): Promise<IPagination<IApprovalPolicy>> {
-		return await this.commandBus.execute(
-			new RequestApprovalPolicyGetCommand(data)
-		);
+		return await this.commandBus.execute(new RequestApprovalPolicyGetCommand(data));
 	}
 
 	/**
@@ -113,9 +110,7 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 	async findAll(
 		@Query(new ValidationPipe()) options: PaginationParams<ApprovalPolicy>
 	): Promise<IPagination<IApprovalPolicy>> {
-		return await this.commandBus.execute(
-			new ApprovalPolicyGetCommand(options)
-		);
+		return await this.commandBus.execute(new ApprovalPolicyGetCommand(options));
 	}
 
 	/**
@@ -131,19 +126,19 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	async create(
-		@Body(new ValidationPipe({
-			whitelist: true
-		})) entity: CreateApprovalPolicyDTO
+		@Body(
+			new ValidationPipe({
+				whitelist: true
+			})
+		)
+		entity: CreateApprovalPolicyDTO
 	): Promise<IApprovalPolicy> {
-		return await this.commandBus.execute(
-			new ApprovalPolicyCreateCommand(entity)
-		);
+		return await this.commandBus.execute(new ApprovalPolicyCreateCommand(entity));
 	}
 
 	/**
@@ -164,19 +159,19 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body(new ValidationPipe({
-			whitelist: true
-		})) entity: UpdateApprovalPolicyDTO
+		@Body(
+			new ValidationPipe({
+				whitelist: true
+			})
+		)
+		entity: UpdateApprovalPolicyDTO
 	): Promise<IApprovalPolicy> {
-		return await this.commandBus.execute(
-			new ApprovalPolicyUpdateCommand(id, entity)
-		);
+		return await this.commandBus.execute(new ApprovalPolicyUpdateCommand(id, entity));
 	}
 }

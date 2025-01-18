@@ -25,6 +25,6 @@ import { TypeOrmOrganizationTaskSettingRepository } from './repository';
 	],
 	controllers: [OrganizationTaskSettingController],
 	providers: [OrganizationTaskSettingService, TypeOrmOrganizationTaskSettingRepository, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, OrganizationTaskSettingService, TypeOrmOrganizationTaskSettingRepository]
+	exports: [OrganizationTaskSettingService, TypeOrmOrganizationTaskSettingRepository]
 })
-export class OrganizationTaskSettingModule { }
+export class OrganizationTaskSettingModule {}

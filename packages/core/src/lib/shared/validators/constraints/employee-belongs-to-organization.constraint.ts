@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
 import { ID, IEmployee } from '@gauzy/contracts';
-import { isEmpty } from '@gauzy/common';
+import { isEmpty } from '@gauzy/utils';
 import { RequestContext } from '../../../core/context';
 import { MultiORM, MultiORMEnum, getORMType } from '../../../core/utils';
-import { MikroOrmEmployeeRepository, TypeOrmEmployeeRepository } from '../../../employee/repository';
+import { TypeOrmEmployeeRepository } from '../../../employee/repository/type-orm-employee.repository';
+import { MikroOrmEmployeeRepository } from '../../../employee/repository/mikro-orm-employee.repository';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();

@@ -24,6 +24,6 @@ import { TypeOrmOrganizationRepository } from './repository';
 	],
 	controllers: [OrganizationController],
 	providers: [OrganizationService, TypeOrmOrganizationRepository, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, OrganizationService, TypeOrmOrganizationRepository]
+	exports: [OrganizationService, TypeOrmOrganizationRepository]
 })
 export class OrganizationModule {}

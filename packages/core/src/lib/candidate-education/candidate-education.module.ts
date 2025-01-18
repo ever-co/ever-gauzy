@@ -16,6 +16,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 	],
 	controllers: [CandidateEducationController],
 	providers: [CandidateEducationService],
-	exports: [TypeOrmModule, MikroOrmModule, CandidateEducationService]
+	exports: [CandidateEducationService]
 })
-export class CandidateEducationModule { }
+export class CandidateEducationModule {}

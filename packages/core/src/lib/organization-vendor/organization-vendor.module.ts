@@ -17,6 +17,6 @@ import { CommandHandlers } from './commands/handlers';
 	],
 	controllers: [OrganizationVendorController],
 	providers: [OrganizationVendorService, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, OrganizationVendorService]
+	exports: [OrganizationVendorService]
 })
-export class OrganizationVendorModule { }
+export class OrganizationVendorModule {}

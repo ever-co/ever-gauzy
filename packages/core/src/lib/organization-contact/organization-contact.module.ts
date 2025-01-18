@@ -31,6 +31,6 @@ import { TypeOrmOrganizationContactRepository } from './repository';
 	],
 	controllers: [OrganizationContactController],
 	providers: [OrganizationContactService, TypeOrmOrganizationContactRepository, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, OrganizationContactService, TypeOrmOrganizationContactRepository]
+	exports: [OrganizationContactService, TypeOrmOrganizationContactRepository]
 })
-export class OrganizationContactModule { }
+export class OrganizationContactModule {}

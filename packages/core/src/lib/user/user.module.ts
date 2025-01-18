@@ -28,6 +28,6 @@ import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 	],
 	controllers: [UserController],
 	providers: [UserService, TypeOrmUserRepository, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, UserService, TypeOrmUserRepository]
+	exports: [UserService, TypeOrmUserRepository]
 })
 export class UserModule {}

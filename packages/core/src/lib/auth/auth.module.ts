@@ -6,7 +6,7 @@ import { HttpModule } from '@nestjs/axios';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { SocialAuthModule } from '@gauzy/auth';
 import { EventBusModule } from '../event-bus/event-bus.module';
-import { OrganizationTeam, UserOrganization } from '../core/entities/internal';
+import { UserOrganization } from '../core/entities/internal';
 import { EmailSendModule } from '../email-send/email-send.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
@@ -17,6 +17,7 @@ import { UserModule } from '../user/user.module';
 import { EmployeeModule } from '../employee/employee.module';
 import { RoleModule } from '../role/role.module';
 import { OrganizationModule } from '../organization/organization.module';
+import { OrganizationTeamModule } from '../organization-team/organization-team.module';
 import { PasswordResetModule } from '../password-reset/password-reset.module';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { EmailVerificationController } from './email-verification.controller';
@@ -40,8 +41,6 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 		]),
 		SocialAuthModule.registerAsync({
 			imports: [
-				TypeOrmModule.forFeature([OrganizationTeam]),
-				MikroOrmModule.forFeature([OrganizationTeam]),
 				HttpModule,
 				AuthModule,
 				EmailSendModule,
@@ -49,6 +48,7 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 				EmployeeModule,
 				RoleModule,
 				OrganizationModule,
+				OrganizationTeamModule,
 				PasswordResetModule,
 				CqrsModule,
 				SocialAccountModule,
@@ -56,13 +56,14 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 			],
 			useClass: AuthService
 		}),
-		TypeOrmModule.forFeature([UserOrganization, OrganizationTeam]),
-		MikroOrmModule.forFeature([UserOrganization, OrganizationTeam]),
+		TypeOrmModule.forFeature([UserOrganization]),
+		MikroOrmModule.forFeature([UserOrganization]),
 		EmailSendModule,
 		UserModule,
 		EmployeeModule,
 		RoleModule,
 		OrganizationModule,
+		OrganizationTeamModule,
 		PasswordResetModule,
 		FeatureModule,
 		CqrsModule,

@@ -7,7 +7,8 @@ import { OrganizationTeamEmployeeController } from './organization-team-employee
 import { OrganizationTeamEmployee } from './organization-team-employee.entity';
 import { OrganizationTeamEmployeeService } from './organization-team-employee.service';
 import { TaskModule } from './../tasks/task.module';
-import { TypeOrmOrganizationTeamEmployeeRepository } from './repository';
+import { TypeOrmOrganizationTeamEmployeeRepository } from './repository/type-orm-organization-team-employee.repository';
+import { MikroOrmOrganizationTeamEmployeeRepository } from './repository/mikro-orm-organization-team-employee.repository';
 
 @Module({
 	imports: [
@@ -18,7 +19,15 @@ import { TypeOrmOrganizationTeamEmployeeRepository } from './repository';
 		TaskModule
 	],
 	controllers: [OrganizationTeamEmployeeController],
-	providers: [OrganizationTeamEmployeeService, TypeOrmOrganizationTeamEmployeeRepository],
-	exports: [TypeOrmModule, MikroOrmModule, OrganizationTeamEmployeeService, TypeOrmOrganizationTeamEmployeeRepository]
+	providers: [
+		OrganizationTeamEmployeeService,
+		TypeOrmOrganizationTeamEmployeeRepository,
+		MikroOrmOrganizationTeamEmployeeRepository
+	],
+	exports: [
+		OrganizationTeamEmployeeService,
+		TypeOrmOrganizationTeamEmployeeRepository,
+		MikroOrmOrganizationTeamEmployeeRepository
+	]
 })
 export class OrganizationTeamEmployeeModule {}

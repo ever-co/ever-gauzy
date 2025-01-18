@@ -17,7 +17,6 @@ const ormType: MultiORM = getORMType();
 @ValidatorConstraint({ name: "IsTeamAlreadyExist", async: true })
 @Injectable()
 export class TeamAlreadyExistConstraint implements ValidatorConstraintInterface {
-
 	constructor(
 		readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
 		readonly mikroOrmOrganizationTeamRepository: MikroOrmOrganizationTeamRepository

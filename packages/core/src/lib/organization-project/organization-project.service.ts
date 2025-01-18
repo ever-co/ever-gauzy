@@ -30,24 +30,22 @@ import { EmployeeService } from '../employee/employee.service';
 import { CreateSubscriptionEvent } from '../subscription/events';
 import { OrganizationProject } from './organization-project.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
-import { TypeOrmEmployeeRepository } from '../employee/repository';
 import {
-	MikroOrmOrganizationProjectEmployeeRepository,
 	MikroOrmOrganizationProjectRepository,
 	TypeOrmOrganizationProjectEmployeeRepository,
 	TypeOrmOrganizationProjectRepository
 } from './repository';
+import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 
 @FavoriteService(BaseEntityEnum.OrganizationProject)
 @Injectable()
 export class OrganizationProjectService extends TenantAwareCrudService<OrganizationProject> {
 	constructor(
-		private readonly _eventBus: EventBus,
 		readonly typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
 		readonly mikroOrmOrganizationProjectRepository: MikroOrmOrganizationProjectRepository,
 		readonly typeOrmOrganizationProjectEmployeeRepository: TypeOrmOrganizationProjectEmployeeRepository,
-		readonly mikroOrmOrganizationProjectEmployeeRepository: MikroOrmOrganizationProjectEmployeeRepository,
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+		private readonly _eventBus: EventBus,
 		private readonly _roleService: RoleService,
 		private readonly _employeeService: EmployeeService,
 		private readonly _subscriptionService: SubscriptionService,

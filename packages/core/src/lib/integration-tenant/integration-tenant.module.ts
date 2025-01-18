@@ -26,6 +26,6 @@ import { TypeOrmIntegrationTenantRepository } from './repository';
 	],
 	controllers: [IntegrationTenantController],
 	providers: [IntegrationTenantService, TypeOrmIntegrationTenantRepository, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, IntegrationTenantService, TypeOrmIntegrationTenantRepository]
+	exports: [IntegrationTenantService, TypeOrmIntegrationTenantRepository]
 })
 export class IntegrationTenantModule {}

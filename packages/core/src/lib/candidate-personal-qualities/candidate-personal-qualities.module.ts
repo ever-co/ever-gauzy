@@ -24,6 +24,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 	],
 	providers: [CandidatePersonalQualitiesService, ...CommandHandlers],
 	controllers: [CandidatePersonalQualitiesController],
-	exports: [TypeOrmModule, MikroOrmModule, CandidatePersonalQualitiesService]
+	exports: [CandidatePersonalQualitiesService]
 })
-export class CandidatePersonalQualitiesModule { }
+export class CandidatePersonalQualitiesModule {}

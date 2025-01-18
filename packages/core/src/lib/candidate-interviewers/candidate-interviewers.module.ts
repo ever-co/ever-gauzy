@@ -24,6 +24,6 @@ import { CommandHandlers } from './commands/handlers';
 	],
 	controllers: [CandidateInterviewersController],
 	providers: [CandidateInterviewersService, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, CandidateInterviewersService]
+	exports: [CandidateInterviewersService]
 })
-export class CandidateInterviewersModule { }
+export class CandidateInterviewersModule {}

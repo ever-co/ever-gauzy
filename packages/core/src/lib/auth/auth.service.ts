@@ -7,7 +7,6 @@ import {
 	NotFoundException,
 	UnauthorizedException
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
@@ -72,11 +71,8 @@ import { SocialAccountService } from './social-account/social-account.service';
 @Injectable()
 export class AuthService extends SocialAuthService {
 	constructor(
-		@InjectRepository(User)
 		private readonly typeOrmUserRepository: TypeOrmUserRepository,
-		@InjectRepository(Employee)
 		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
-		@InjectRepository(OrganizationTeam)
 		private readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
 		private readonly emailConfirmationService: EmailConfirmationService,
 		private readonly userService: UserService,

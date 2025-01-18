@@ -47,6 +47,6 @@ import { TypeOrmInviteRepository } from './repository';
 	],
 	controllers: [InviteController],
 	providers: [InviteService, TypeOrmInviteRepository, ...CommandHandlers, ...QueryHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, InviteService, TypeOrmInviteRepository]
+	exports: [InviteService, TypeOrmInviteRepository]
 })
 export class InviteModule {}

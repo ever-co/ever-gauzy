@@ -16,6 +16,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 	],
 	providers: [CandidateInterviewService],
 	controllers: [CandidateInterviewController],
-	exports: [TypeOrmModule, MikroOrmModule, CandidateInterviewService]
+	exports: [CandidateInterviewService]
 })
-export class CandidateInterviewModule { }
+export class CandidateInterviewModule {}

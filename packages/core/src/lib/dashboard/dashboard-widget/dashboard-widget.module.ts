@@ -16,8 +16,8 @@ import { TypeOrmDashboardWidgetRepository } from './repository/type-orm-dashboar
 		RolePermissionModule,
 		CqrsModule
 	],
-	providers: [DashboardWidgetService, TypeOrmDashboardWidgetRepository, ...CommandHandlers],
 	controllers: [DashboardWidgetController],
-	exports: [TypeOrmModule, DashboardWidgetService, TypeOrmDashboardWidgetRepository]
+	providers: [DashboardWidgetService, TypeOrmDashboardWidgetRepository, ...CommandHandlers],
+	exports: []
 })
 export class DashboardWidgetModule {}

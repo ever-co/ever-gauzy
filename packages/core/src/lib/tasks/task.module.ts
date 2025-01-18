@@ -33,6 +33,6 @@ import { TypeOrmTaskRepository } from './repository';
 	],
 	controllers: [TaskController],
 	providers: [TaskService, TypeOrmTaskRepository, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, TaskService, TypeOrmTaskRepository]
+	exports: [TaskService, TypeOrmTaskRepository]
 })
 export class TaskModule {}
