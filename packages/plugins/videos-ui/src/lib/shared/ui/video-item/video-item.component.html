@@ -24,8 +24,18 @@
 				{{ video.recordedAt | date : 'medium' }}
 			</div>
 		</div>
-		<nb-icon icon="more-vertical-outline" [options]="{ animation: { type: 'zoom' } }"></nb-icon>
+		<div class="actions">
+			<nb-icon
+				nbPopoverPlacement="bottom"
+				[nbPopover]="actions"
+				icon="more-vertical-outline"
+				[options]="{ animation: { type: 'zoom' } }"
+			></nb-icon>
+		</div>
 	</div>
+	<ng-template #actions>
+		<plug-action-button-group [buttons]="buttons" [data]="video"></plug-action-button-group>
+	</ng-template>
 </div>
 }@else {
 <div>No video</div>

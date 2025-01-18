@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { Actions } from '@ngneat/effects-ng';
 import { ActivatedRoute } from '@angular/router';
+import { Actions } from '@ngneat/effects-ng';
 import { VideoActions } from '../../+state/video.action';
 
 @Component({

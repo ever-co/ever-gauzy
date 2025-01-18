@@ -7,7 +7,13 @@
 				{{ video.title }}
 			</div>
 			<div class="actions">
-				<nb-icon icon="more-vertical-outline" [options]="{ animation: { type: 'zoom' } }"></nb-icon>
+				<plug-action-button [button]="downloadButton"></plug-action-button>
+				<nb-icon
+					nbPopoverPlacement="bottom"
+					[nbPopover]="actions"
+					icon="more-vertical-outline"
+					[options]="{ animation: { type: 'zoom' } }"
+				></nb-icon>
 			</div>
 		</div>
 
@@ -32,4 +38,7 @@
 		}
 	</div>
 </div>
+<ng-template #actions>
+	<plug-action-button-group [buttons]="buttons" [data]="video"></plug-action-button-group>
+</ng-template>
 }
