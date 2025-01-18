@@ -4,7 +4,7 @@
 	<div (click)="open(video)" class="video-player">
 		<plug-video-player [src]="video.fullUrl"></plug-video-player>
 		<div class="duration">
-			{{ video.duration }}
+			{{ video.duration | durationFormat }}
 		</div>
 	</div>
 
