@@ -15,7 +15,7 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { FindOptionsWhere } from 'typeorm';
 import { I18nLang } from 'nestjs-i18n';
-import { LanguagesEnum, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { LanguagesEnum, IPagination, PermissionsEnum, ID } from '@gauzy/contracts';
 import { ProductTypeService } from './product-type.service';
 import { ProductType } from './product-type.entity';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
@@ -28,7 +28,7 @@ import { ProductTypeCreateCommand } from './commands';
 @ApiTags('ProductTypes')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_PRODUCT_TYPES_EDIT)
-@Controller()
+@Controller('/product-types')
 export class ProductTypeController extends CrudController<ProductType> {
 	constructor(private readonly productTypesService: ProductTypeService, private readonly commandBus: CommandBus) {
 		super(productTypesService);
@@ -161,16 +161,9 @@ export class ProductTypeController extends CrudController<ProductType> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseValidationPipe({ transform: true })
 	@Put(':id')
-	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body(
-			new ValidationPipe({
-				transform: true
-			})
-		)
-		entity: ProductTypeDTO
-	): Promise<ProductType> {
+	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: ProductTypeDTO): Promise<ProductType> {
 		return await this.productTypesService.updateProductType(id, entity);
 	}
 }

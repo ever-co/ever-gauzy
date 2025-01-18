@@ -20,6 +20,6 @@ import { IntegrationTenantModule } from '../integration-tenant/integration-tenan
 	],
 	controllers: [IntegrationController],
 	providers: [IntegrationService, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, IntegrationService]
+	exports: [IntegrationService]
 })
 export class IntegrationModule {}

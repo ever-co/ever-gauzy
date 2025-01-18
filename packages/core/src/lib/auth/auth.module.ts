@@ -21,22 +21,13 @@ import { PasswordResetModule } from '../password-reset/password-reset.module';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { EmailVerificationController } from './email-verification.controller';
 import { FeatureModule } from '../feature/feature.module';
-import { SocialAccountService } from './social-account/social-account.service';
 import { SocialAccountModule } from './social-account/social-account.module';
 
 // Core service providers for handling authentication and related functionalities
-const providers = [
-	AuthService,
-	EmailConfirmationService,
-	SocialAccountService,
-	UserOrganizationService,
-];
+const providers = [AuthService, EmailConfirmationService, UserOrganizationService];
 
 // Authentication strategies for token validation and management
-const strategies = [
-	JwtStrategy,
-	JwtRefreshTokenStrategy,
-];
+const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 
 @Module({
 	imports: [
@@ -75,6 +66,7 @@ const strategies = [
 		PasswordResetModule,
 		FeatureModule,
 		CqrsModule,
+		SocialAccountModule,
 		EventBusModule
 	],
 	controllers: [AuthController, EmailVerificationController],

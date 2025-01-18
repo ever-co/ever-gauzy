@@ -28,7 +28,7 @@ export class SeederModule {
 	static forPlugins(): DynamicModule {
 		const i18nLoaderOptions = {
 			path: path.resolve(__dirname, '../../i18n/'),
-			watch: !environment.production,
+			watch: !environment.production
 		};
 
 		return {
@@ -37,16 +37,16 @@ export class SeederModule {
 				I18nModule.forRoot({
 					fallbackLanguage: LanguagesEnum.ENGLISH,
 					loaderOptions: i18nLoaderOptions,
-					resolvers: [new HeaderResolver(['language'])],
+					resolvers: [new HeaderResolver(['language'])]
 				}),
 				DatabaseModule,
 				ActivityLogModule,
 				MentionModule,
 				SubscriptionModule,
-				...getDynamicPluginsModules(),
+				...getDynamicPluginsModules()
 			],
 			providers: [],
-			exports: [],
+			exports: []
 		};
 	}
 }

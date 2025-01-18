@@ -46,15 +46,11 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 	constructor(
 		private readonly inviteService: InviteService,
 		private readonly authService: AuthService,
-		@InjectRepository(User) private readonly typeOrmUserRepository: TypeOrmUserRepository,
-		@InjectRepository(Employee) private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
-		@InjectRepository(OrganizationProject)
+		private readonly typeOrmUserRepository: TypeOrmUserRepository,
+		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		private readonly typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
-		@InjectRepository(OrganizationContact)
 		private readonly typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
-		@InjectRepository(OrganizationDepartment)
 		private readonly typeOrmOrganizationDepartmentRepository: TypeOrmOrganizationDepartmentRepository,
-		@InjectRepository(OrganizationTeam)
 		private readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository
 	) {}
 

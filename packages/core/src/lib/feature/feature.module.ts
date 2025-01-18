@@ -21,7 +21,13 @@ import { TypeOrmFeatureOrganizationRepository, TypeOrmFeatureRepository } from '
 		CqrsModule
 	],
 	controllers: [FeatureToggleController],
-	providers: [FeatureService, FeatureOrganizationService, TypeOrmFeatureRepository, TypeOrmFeatureOrganizationRepository, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, FeatureService, FeatureOrganizationService]
+	providers: [
+		FeatureService,
+		FeatureOrganizationService,
+		TypeOrmFeatureRepository,
+		TypeOrmFeatureOrganizationRepository,
+		...CommandHandlers
+	],
+	exports: [FeatureService, FeatureOrganizationService]
 })
-export class FeatureModule { }
+export class FeatureModule {}

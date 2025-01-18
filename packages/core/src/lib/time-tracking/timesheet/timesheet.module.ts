@@ -24,6 +24,6 @@ import { TypeOrmTimesheetRepository } from './repository/type-orm-timesheet.repo
 		EmployeeModule
 	],
 	providers: [TimeSheetService, TypeOrmTimesheetRepository, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, TimeSheetService, TypeOrmTimesheetRepository]
+	exports: [TimeSheetService, TypeOrmTimesheetRepository]
 })
 export class TimesheetModule {}

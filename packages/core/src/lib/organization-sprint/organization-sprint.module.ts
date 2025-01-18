@@ -41,8 +41,6 @@ import { TypeOrmOrganizationSprintTaskHistoryRepository } from './repository/typ
 		...CommandHandlers
 	],
 	exports: [
-		TypeOrmModule,
-		MikroOrmModule,
 		OrganizationSprintService,
 		TypeOrmOrganizationSprintRepository,
 		TypeOrmOrganizationSprintEmployeeRepository,

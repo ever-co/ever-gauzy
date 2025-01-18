@@ -1,7 +1,6 @@
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
-import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { ProductType } from './product-type.entity';
 import { ProductTypeController } from './product-type.controller';
@@ -12,7 +11,6 @@ import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/product-types', module: ProductTypeModule }]),
 		TypeOrmModule.forFeature([ProductType, ProductTypeTranslation]),
 		MikroOrmModule.forFeature([ProductType, ProductTypeTranslation]),
 		RolePermissionModule,
@@ -20,6 +18,6 @@ import { CommandHandlers } from './commands/handlers';
 	],
 	controllers: [ProductTypeController],
 	providers: [ProductTypeService, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, ProductTypeService]
+	exports: [ProductTypeService]
 })
-export class ProductTypeModule { }
+export class ProductTypeModule {}

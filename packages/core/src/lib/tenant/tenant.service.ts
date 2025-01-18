@@ -13,7 +13,7 @@ import { TenantTaskPriorityBulkCreateCommand } from './../tasks/priorities/comma
 import { TenantIssueTypeBulkCreateCommand } from './../tasks/issue-type/commands';
 import { MikroOrmTenantRepository, TypeOrmTenantRepository } from './repository';
 import { MikroOrmUserRepository, TypeOrmUserRepository } from '../user/repository';
-import { MikroOrmRoleRepository, TypeOrmRoleRepository } from '../role/repository';
+import { TypeOrmRoleRepository } from '../role/repository/type-orm-role.repository';
 import { Tenant } from './tenant.entity';
 
 @Injectable()
@@ -22,7 +22,6 @@ export class TenantService extends CrudService<Tenant> {
 		readonly typeOrmTenantRepository: TypeOrmTenantRepository,
 		readonly mikroOrmTenantRepository: MikroOrmTenantRepository,
 		readonly typeOrmRoleRepository: TypeOrmRoleRepository,
-		readonly mikroOrmRoleRepository: MikroOrmRoleRepository,
 		readonly typeOrmUserRepository: TypeOrmUserRepository,
 		readonly mikroOrmUserRepository: MikroOrmUserRepository,
 		readonly commandBus: CommandBus,

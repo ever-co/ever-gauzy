@@ -28,7 +28,7 @@ import { ProductCategoryCreateCommand } from './commands';
 @ApiTags('ProductCategories')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT)
-@Controller()
+@Controller('/product-categories')
 export class ProductCategoryController extends CrudController<ProductCategory> {
 	constructor(
 		private readonly productCategoryService: ProductCategoryService,

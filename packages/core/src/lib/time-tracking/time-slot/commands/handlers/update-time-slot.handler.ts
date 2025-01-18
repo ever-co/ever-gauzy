@@ -11,24 +11,16 @@ import { TypeOrmActivityRepository } from '../../../activity/repository/type-orm
 
 @CommandHandler(UpdateTimeSlotCommand)
 export class UpdateTimeSlotHandler implements ICommandHandler<UpdateTimeSlotCommand> {
-
 	constructor(
-		@InjectRepository(TimeSlot)
 		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
-
-		@InjectRepository(Activity)
-		private readonly typeOrmActivityRepository: TypeOrmActivityRepository,
-	) { }
+		private readonly typeOrmActivityRepository: TypeOrmActivityRepository
+	) {}
 
 	public async execute(command: UpdateTimeSlotCommand): Promise<TimeSlot> {
 		const { input, id } = command;
 
 		let employeeId = input.employeeId;
-		if (
-			!RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
+		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			const user = RequestContext.currentUser();
 			employeeId = user.employeeId;
 		}
@@ -57,9 +49,7 @@ export class UpdateTimeSlotHandler implements ICommandHandler<UpdateTimeSlotComm
 					return activity;
 				});
 				await this.typeOrmActivityRepository.save(newActivities);
-				input.activities = (timeSlot.activities || []).concat(
-					newActivities
-				);
+				input.activities = (timeSlot.activities || []).concat(newActivities);
 			}
 			await this.typeOrmTimeSlotRepository.update(id, input);
 

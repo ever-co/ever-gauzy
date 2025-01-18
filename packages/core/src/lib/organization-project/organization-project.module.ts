@@ -32,8 +32,6 @@ import { TypeOrmOrganizationProjectEmployeeRepository } from './repository/type-
 		...CommandHandlers
 	],
 	exports: [
-		TypeOrmModule,
-		MikroOrmModule,
 		OrganizationProjectService,
 		TypeOrmOrganizationProjectRepository,
 		TypeOrmOrganizationProjectEmployeeRepository

@@ -21,6 +21,6 @@ import { GlobalFavoriteModule } from './global-favorite-service.module';
 	],
 	controllers: [FavoriteController],
 	providers: [FavoriteService, TypeOrmFavoriteRepository],
-	exports: [FavoriteService, TypeOrmModule, TypeOrmFavoriteRepository]
+	exports: [FavoriteService, TypeOrmFavoriteRepository]
 })
 export class FavoriteModule {}
