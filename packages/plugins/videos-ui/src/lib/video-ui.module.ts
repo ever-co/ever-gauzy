@@ -1,7 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { GauzyFiltersModule, NoDataMessageModule, SharedModule } from '@gauzy/ui-core/shared';
-import { NbButtonModule, NbCardModule, NbIconModule, NbPopoverModule } from '@nebular/theme';
+import {
+	NbButtonModule,
+	NbCardModule,
+	NbDialogModule,
+	NbIconModule,
+	NbInputModule,
+	NbPopoverModule
+} from '@nebular/theme';
 import { provideEffects, provideEffectsManager } from '@ngneat/effects-ng';
 import { VideoEffects } from './+state/video.effect';
 import { VideoQuery } from './+state/video.query';
@@ -17,6 +24,8 @@ import { ActionButtonComponent } from './shared/ui/video-actions/buttons/action-
 import { VideoItemComponent } from './shared/ui/video-item/video-item.component';
 import { VideoPlayerComponent } from './shared/ui/video-player/video-player.component';
 import { VideoUiRoutingModule } from './video-ui-routing.module';
+import { VideoEditComponent } from './features/video-edit/video-edit.component';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @NgModule({
 	declarations: [
@@ -28,7 +37,8 @@ import { VideoUiRoutingModule } from './video-ui-routing.module';
 		VideoPageComponent,
 		VideoDetailPageComponent,
 		ActionButtonComponent,
-		ActionButtonGroupComponent
+		ActionButtonGroupComponent,
+		VideoEditComponent
 	],
 	imports: [
 		CommonModule,
@@ -39,7 +49,11 @@ import { VideoUiRoutingModule } from './video-ui-routing.module';
 		VideoUiRoutingModule,
 		GauzyFiltersModule,
 		NbButtonModule,
-		NbPopoverModule
+		NbPopoverModule,
+		FormsModule,
+		ReactiveFormsModule,
+		NbDialogModule,
+		NbInputModule
 	],
 	providers: [provideEffectsManager(), provideEffects(VideoEffects), VideoQuery, VideoStore, VideoService]
 })

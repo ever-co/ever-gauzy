@@ -6,7 +6,7 @@ import { VideoService } from '../shared/services/video.service';
 import { VideoActions } from './video.action';
 import { VideoStore } from './video.store';
 import { VideoQuery } from './video.query';
-import { ErrorHandlingService } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, ToastrService } from '@gauzy/ui-core/core';
 
 @Injectable({ providedIn: 'root' })
 export class VideoEffects {
@@ -15,7 +15,8 @@ export class VideoEffects {
 		private readonly videoStore: VideoStore,
 		private readonly videoQuery: VideoQuery,
 		private readonly videoService: VideoService,
-		private readonly errorHandler: ErrorHandlingService
+		private readonly errorHandler: ErrorHandlingService,
+		private readonly toastrService: ToastrService
 	) {}
 
 	fetchVideos$ = createEffect(() =>
@@ -65,6 +66,7 @@ export class VideoEffects {
 	updateVideo$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(VideoActions.updateVideo),
+			tap((pay) => console.log(pay)),
 			switchMap(({ id, video }) =>
 				this.videoService.update(id, video).pipe(
 					tap((video) => {
@@ -72,6 +74,7 @@ export class VideoEffects {
 						this.videoStore.update({
 							videos: [...new Map([...videos, video].map((item) => [item.id, item])).values()]
 						});
+						this.toastrService.success('Video updated successfully');
 					}),
 					catchError((error) => of(this.errorHandler.handleError(error)))
 				)
@@ -89,6 +92,7 @@ export class VideoEffects {
 						this.videoStore.update({
 							videos: videos.filter((video) => video.id !== id)
 						});
+						this.toastrService.success('Video deleted successfully');
 					}),
 					catchError((error) => of(this.errorHandler.handleError(error)))
 				)
