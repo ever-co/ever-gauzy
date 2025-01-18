@@ -9,6 +9,7 @@ import { CommandHandlers } from './commands/handlers';
 import { IntegrationMapController } from './integration-map.controller';
 import { IntegrationMapService } from './integration-map.service';
 import { IntegrationMap } from './integration-map.entity';
+import { TypeOrmIntegrationMapRepository } from './repository/type-orm-integration-map.repository';
 
 @Module({
 	imports: [
@@ -20,7 +21,7 @@ import { IntegrationMap } from './integration-map.entity';
 		CqrsModule
 	],
 	controllers: [IntegrationMapController],
-	providers: [IntegrationMapService, ...CommandHandlers],
+	providers: [IntegrationMapService, TypeOrmIntegrationMapRepository, ...CommandHandlers],
 	exports: [IntegrationMapService]
 })
 export class IntegrationMapModule {}

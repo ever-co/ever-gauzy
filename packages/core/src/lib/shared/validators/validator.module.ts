@@ -24,7 +24,6 @@ import {
 		TeamAlreadyExistConstraint,
 		ExpenseCategoryAlreadyExistConstraint,
 		OrganizationBelongsToUserConstraint
-	],
-	exports: []
+	]
 })
 export class ValidatorModule {}

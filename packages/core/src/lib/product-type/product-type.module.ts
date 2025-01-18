@@ -8,6 +8,7 @@ import { ProductTypeService } from './product-type.service';
 import { ProductTypeTranslation } from './product-type-translation.entity';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
+import { TypeOrmProductTypeRepository } from './repository/type-orm-product-type.repository';
 
 @Module({
 	imports: [
@@ -17,7 +18,6 @@ import { CommandHandlers } from './commands/handlers';
 		CqrsModule
 	],
 	controllers: [ProductTypeController],
-	providers: [ProductTypeService, ...CommandHandlers],
-	exports: [ProductTypeService]
+	providers: [ProductTypeService, TypeOrmProductTypeRepository, ...CommandHandlers]
 })
 export class ProductTypeModule {}

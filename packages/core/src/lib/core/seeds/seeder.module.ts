@@ -44,9 +44,7 @@ export class SeederModule {
 				MentionModule,
 				SubscriptionModule,
 				...getDynamicPluginsModules()
-			],
-			providers: [],
-			exports: []
+			]
 		};
 	}
 }

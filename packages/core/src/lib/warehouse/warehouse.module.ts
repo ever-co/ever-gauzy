@@ -28,7 +28,6 @@ import { TypeOrmWarehouseProductVariantRepository } from './repository/type-orm-
 		TypeOrmWarehouseRepository,
 		TypeOrmWarehouseProductRepository,
 		TypeOrmWarehouseProductVariantRepository
-	],
-	exports: []
+	]
 })
 export class WarehouseModule {}

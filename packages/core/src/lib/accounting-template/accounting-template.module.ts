@@ -17,7 +17,6 @@ import { TypeOrmAccountingTemplateRepository } from './repository/type-orm-accou
 		CqrsModule
 	],
 	controllers: [AccountingTemplateController],
-	providers: [AccountingTemplateService, TypeOrmAccountingTemplateRepository, ...QueryHandlers],
-	exports: []
+	providers: [AccountingTemplateService, TypeOrmAccountingTemplateRepository, ...QueryHandlers]
 })
 export class AccountingTemplateModule {}

@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, Between, In, Raw } from 'typeorm';
 import * as moment from 'moment';
 import { IDateRangePicker, IPagination } from '@gauzy/contracts';
@@ -11,12 +10,7 @@ import { TypeOrmIncomeRepository } from './repository/type-orm-income.repository
 
 @Injectable()
 export class IncomeService extends TenantAwareCrudService<Income> {
-	constructor(
-		@InjectRepository(Income)
-		typeOrmIncomeRepository: TypeOrmIncomeRepository,
-
-		mikroOrmIncomeRepository: MikroOrmIncomeRepository
-	) {
+	constructor(typeOrmIncomeRepository: TypeOrmIncomeRepository, mikroOrmIncomeRepository: MikroOrmIncomeRepository) {
 		super(typeOrmIncomeRepository, mikroOrmIncomeRepository);
 	}
 
@@ -26,17 +20,17 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 			const endOfMonth = moment(moment(filterDate).endOf('month').format('YYYY-MM-DD hh:mm:ss')).toDate();
 			return filter
 				? await this.findAll({
-					where: {
-						valueDate: Between<Date>(startOfMonth, endOfMonth),
-						...(filter.where as Object)
-					},
-					relations: filter.relations
-				})
+						where: {
+							valueDate: Between<Date>(startOfMonth, endOfMonth),
+							...(filter.where as Object)
+						},
+						relations: filter.relations
+				  })
 				: await this.findAll({
-					where: {
-						valueDate: Between(startOfMonth, endOfMonth)
-					}
-				});
+						where: {
+							valueDate: Between(startOfMonth, endOfMonth)
+						}
+				  });
 		}
 		return await this.findAll(filter || {});
 	}

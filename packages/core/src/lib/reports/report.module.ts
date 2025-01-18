@@ -12,6 +12,7 @@ import { CommandHandlers } from './commands/handlers';
 import { ReportOrganizationService } from './report-organization.service';
 import { TypeOrmReportOrganizationRepository } from './repository/type-orm-report-organization.repository';
 import { TypeOrmReportRepository } from './repository/type-orm-report.repository';
+import { TypeOrmReportCategoryRepository } from './repository/type-orm-report-category.repository';
 
 @Module({
 	imports: [
@@ -24,6 +25,7 @@ import { TypeOrmReportRepository } from './repository/type-orm-report.repository
 		ReportCategoryService,
 		ReportOrganizationService,
 		TypeOrmReportRepository,
+		TypeOrmReportCategoryRepository,
 		TypeOrmReportOrganizationRepository,
 		...CommandHandlers
 	]

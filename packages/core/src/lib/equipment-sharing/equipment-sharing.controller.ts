@@ -17,7 +17,7 @@ import { Permissions } from './../shared/decorators';
 
 @ApiTags('EquipmentSharing')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/equipment-sharing')
 export class EquipmentSharingController extends CrudController<EquipmentSharing> {
 	constructor(private readonly equipmentSharingService: EquipmentSharingService, private commandBus: CommandBus) {
 		super(equipmentSharingService);

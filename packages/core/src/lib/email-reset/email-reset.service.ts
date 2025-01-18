@@ -1,6 +1,5 @@
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, MoreThanOrEqual, SelectQueryBuilder } from 'typeorm';
 import { IEmailReset, IEmailResetFindInput, LanguagesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
@@ -23,11 +22,8 @@ import { MikroOrmEmailResetRepository } from './repository/mikro-orm-email-reset
 @Injectable()
 export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 	constructor(
-		@InjectRepository(EmailReset)
 		typeOrmEmailResetRepository: TypeOrmEmailResetRepository,
-
 		mikroOrmEmailResetRepository: MikroOrmEmailResetRepository,
-
 		private readonly userService: UserService,
 		private readonly commandBus: CommandBus,
 		private readonly queryBus: QueryBus,

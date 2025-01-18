@@ -23,14 +23,8 @@ import { UserModule } from '../../user/user.module';
 				children: [{ path: '/history', module: ImportHistoryModule }]
 			}
 		]),
-		TypeOrmModule.forFeature([
-			...coreEntities,
-			...getEntitiesFromPlugins(getConfig().plugins)
-		]),
-		MikroOrmModule.forFeature([
-			...coreEntities,
-			...getEntitiesFromPlugins(getConfig().plugins)
-		]),
+		TypeOrmModule.forFeature([...coreEntities, ...getEntitiesFromPlugins(getConfig().plugins)]),
+		MikroOrmModule.forFeature([...coreEntities, ...getEntitiesFromPlugins(getConfig().plugins)]),
 		RolePermissionModule,
 		UserModule,
 		ImportRecordModule,
@@ -38,7 +32,6 @@ import { UserModule } from '../../user/user.module';
 		CqrsModule
 	],
 	controllers: [ImportController],
-	providers: [ImportService, ...CommandHandlers],
-	exports: []
+	providers: [ImportService, ...CommandHandlers]
 })
-export class ImportModule { }
+export class ImportModule {}

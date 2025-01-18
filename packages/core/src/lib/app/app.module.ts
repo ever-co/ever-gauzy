@@ -491,8 +491,7 @@ const GUARDS = [ApiKeyAuthGuard];
 			useClass: TransformInterceptor
 		},
 		...GUARDS
-	],
-	exports: []
+	]
 })
 export class AppModule implements OnModuleInit {
 	constructor(private readonly clsService: ClsService) {

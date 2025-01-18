@@ -8,6 +8,7 @@ import { ProductCategoryController } from './product-category.controller';
 import { ProductCategoryTranslation } from './product-category-translation.entity';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
+import { TypeOrmProductCategoryRepository } from './repository/type-orm-product-category.repository';
 
 @Module({
 	imports: [
@@ -17,7 +18,7 @@ import { CommandHandlers } from './commands/handlers';
 		CqrsModule
 	],
 	controllers: [ProductCategoryController],
-	providers: [ProductCategoryService, ...CommandHandlers],
+	providers: [ProductCategoryService, TypeOrmProductCategoryRepository, ...CommandHandlers],
 	exports: [ProductCategoryService]
 })
 export class ProductCategoryModule {}

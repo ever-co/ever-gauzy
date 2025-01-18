@@ -1,5 +1,4 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, FindOptionsWhere } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
@@ -31,7 +30,6 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 	logger = new Logger('TaskStatusService'); // Update with your service name
 
 	constructor(
-		@InjectRepository(TaskStatus)
 		readonly typeOrmTaskStatusRepository: TypeOrmTaskStatusRepository,
 		readonly mikroOrmTaskStatusRepository: MikroOrmTaskStatusRepository,
 		@InjectConnection() readonly knexConnection: KnexConnection

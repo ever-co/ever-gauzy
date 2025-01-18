@@ -7,6 +7,7 @@ import { CommandHandlers } from './commands/handlers';
 import { IntegrationSettingController } from './integration-setting.controller';
 import { IntegrationSettingService } from './integration-setting.service';
 import { IntegrationSetting } from './integration-setting.entity';
+import { TypeOrmIntegrationSettingRepository } from './repository/type-orm-integration-setting.repository';
 
 @Module({
 	imports: [
@@ -16,7 +17,7 @@ import { IntegrationSetting } from './integration-setting.entity';
 		CqrsModule
 	],
 	controllers: [IntegrationSettingController],
-	providers: [IntegrationSettingService, ...CommandHandlers],
+	providers: [IntegrationSettingService, TypeOrmIntegrationSettingRepository, ...CommandHandlers],
 	exports: [IntegrationSettingService]
 })
 export class IntegrationSettingModule {}

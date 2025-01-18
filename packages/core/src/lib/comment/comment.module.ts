@@ -21,7 +21,6 @@ import { TypeOrmCommentRepository } from './repository/type-orm.comment.reposito
 		CqrsModule
 	],
 	controllers: [CommentController],
-	providers: [CommentService, TypeOrmCommentRepository, ...CommandHandlers],
-	exports: []
+	providers: [CommentService, TypeOrmCommentRepository, ...CommandHandlers]
 })
 export class CommentModule {}

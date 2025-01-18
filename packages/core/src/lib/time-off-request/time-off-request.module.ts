@@ -1,28 +1,24 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TimeOffRequestService } from './time-off-request.service';
 import { TimeOffRequest } from './time-off-request.entity';
-import { Employee } from '../employee/employee.entity';
 import { TimeOffRequestController } from './time-off-request.controller';
-import { TimeOffPolicy } from '../time-off-policy/time-off-policy.entity';
-import { RequestApproval } from '../request-approval/request-approval.entity';
-import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { RequestApprovalModule } from '../request-approval/request-approval.module';
 import { CommandHandlers } from './commands/handlers';
+import { TypeOrmTimeOffRequestRepository } from './repository/type-orm-time-off-request.repository';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: 'time-off-request', module: TimeOffRequestModule }]),
-		TypeOrmModule.forFeature([TimeOffRequest, Employee, TimeOffPolicy, RequestApproval, ApprovalPolicy]),
-		MikroOrmModule.forFeature([TimeOffRequest, Employee, TimeOffPolicy, RequestApproval, ApprovalPolicy]),
+		TypeOrmModule.forFeature([TimeOffRequest]),
+		MikroOrmModule.forFeature([TimeOffRequest]),
 		RolePermissionModule,
+		forwardRef(() => RequestApprovalModule),
 		CqrsModule
 	],
 	controllers: [TimeOffRequestController],
-	providers: [TimeOffRequestService, ...CommandHandlers],
-	exports: [TimeOffRequestService, TypeOrmModule]
+	providers: [TimeOffRequestService, TypeOrmTimeOffRequestRepository, ...CommandHandlers]
 })
-export class TimeOffRequestModule { }
+export class TimeOffRequestModule {}

@@ -29,7 +29,6 @@ import { CommandHandlers } from './commands/handlers';
 		RolePermissionModule
 	],
 	controllers: [GauzyCloudController],
-	providers: [GauzyCloudService, ...CommandHandlers],
-	exports: []
+	providers: [GauzyCloudService, ...CommandHandlers]
 })
-export class GauzyCloudModule { }
+export class GauzyCloudModule {}

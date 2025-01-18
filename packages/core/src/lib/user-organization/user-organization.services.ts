@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { ID, IOrganization, IPagination, IUser, IUserOrganization, RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { PaginationParams, TenantAwareCrudService } from '../core/crud';
@@ -7,12 +6,12 @@ import { Employee } from '../core/entities/internal';
 import { EmployeeService } from '../employee/employee.service';
 import { TypeOrmOrganizationRepository } from '../organization/repository';
 import { UserOrganization } from './user-organization.entity';
-import { MikroOrmUserOrganizationRepository, TypeOrmUserOrganizationRepository } from './repository';
+import { TypeOrmUserOrganizationRepository } from './repository/type-orm-user-organization.repository';
+import { MikroOrmUserOrganizationRepository } from './repository/mikro-orm-user-organization.repository';
 
 @Injectable()
 export class UserOrganizationService extends TenantAwareCrudService<UserOrganization> {
 	constructor(
-		@InjectRepository(UserOrganization)
 		readonly typeOrmUserOrganizationRepository: TypeOrmUserOrganizationRepository,
 		readonly mikroOrmUserOrganizationRepository: MikroOrmUserOrganizationRepository,
 		readonly typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
@@ -41,9 +40,10 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 				const tenantId = RequestContext.currentTenantId();
 
 				// Extract user IDs from the items array
-				const userIds = items
-					.filter((organization: IUserOrganization) => organization?.user) // Filter out user organizations without a user object
-					.map((organization: IUserOrganization) => organization?.user?.id) || [];
+				const userIds =
+					items
+						.filter((organization: IUserOrganization) => organization?.user) // Filter out user organizations without a user object
+						.map((organization: IUserOrganization) => organization?.user?.id) || [];
 
 				// Fetch all employee details in bulk for the extracted user IDs
 				const employees = await this.employeeService.findEmployeesByUserIds(userIds, tenantId);

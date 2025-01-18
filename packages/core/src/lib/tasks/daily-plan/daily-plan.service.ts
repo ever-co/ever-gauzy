@@ -1,5 +1,4 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { SelectQueryBuilder, UpdateResult } from 'typeorm';
 import {
 	ID,
@@ -23,7 +22,7 @@ import { DailyPlan } from './daily-plan.entity';
 @Injectable()
 export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	constructor(
-		@InjectRepository(DailyPlan) readonly typeOrmDailyPlanRepository: TypeOrmDailyPlanRepository,
+		readonly typeOrmDailyPlanRepository: TypeOrmDailyPlanRepository,
 		readonly mikroOrmDailyPlanRepository: MikroOrmDailyPlanRepository,
 		private readonly employeeService: EmployeeService,
 		private readonly taskService: TaskService

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -32,14 +32,14 @@ import { TypeOrmRequestApprovalRepository } from './repository/type-orm-request-
 		OrganizationTeamModule,
 		RoleModule,
 		OrganizationModule,
-		EquipmentSharingModule,
-		TimeOffRequestModule,
+		forwardRef(() => TimeOffRequestModule),
+		forwardRef(() => EquipmentSharingModule),
 		TaskModule,
 		TimerModule,
 		StatisticModule
 	],
 	controllers: [RequestApprovalController],
 	providers: [RequestApprovalService, TypeOrmRequestApprovalRepository, ...CommandHandlers],
-	exports: []
+	exports: [RequestApprovalService, TypeOrmRequestApprovalRepository]
 })
 export class RequestApprovalModule {}

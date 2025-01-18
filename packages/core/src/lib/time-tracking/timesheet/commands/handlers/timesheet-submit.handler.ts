@@ -1,5 +1,4 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import { NotAcceptableException } from '@nestjs/common';
 import { Repository, In, Not, IsNull } from 'typeorm';
 import { ITimesheet } from '@gauzy/contracts';
@@ -10,17 +9,13 @@ import { Timesheet } from './../../timesheet.entity';
 import { TimesheetSubmitCommand } from '../timesheet-submit.command';
 
 @CommandHandler(TimesheetSubmitCommand)
-export class TimesheetSubmitHandler
-	implements ICommandHandler<TimesheetSubmitCommand> {
+export class TimesheetSubmitHandler implements ICommandHandler<TimesheetSubmitCommand> {
 	constructor(
-		@InjectRepository(Timesheet)
 		private readonly timeSheetRepository: Repository<Timesheet>,
 		private readonly emailService: EmailService
-	) { }
+	) {}
 
-	public async execute(
-		command: TimesheetSubmitCommand
-	): Promise<ITimesheet[]> {
+	public async execute(command: TimesheetSubmitCommand): Promise<ITimesheet[]> {
 		const { input } = command;
 		let { ids, status, organizationId } = input;
 		if (isEmpty(ids)) {
@@ -36,13 +31,13 @@ export class TimesheetSubmitHandler
 				tenantId: RequestContext.currentTenantId()
 			},
 			{
-				...(
-					(status === 'submit') ? {
-						submittedAt: new Date()
-					} : {
-						submittedAt: null
-					}
-				),
+				...(status === 'submit'
+					? {
+							submittedAt: new Date()
+					  }
+					: {
+							submittedAt: null
+					  })
 			}
 		);
 		const timesheets = await this.timeSheetRepository.find({
@@ -73,10 +68,7 @@ export class TimesheetSubmitHandler
 		timesheets.forEach((timesheet) => {
 			if (status === 'submit') {
 				if (timesheet.employee && timesheet.employee.user) {
-					this.emailService.timesheetSubmit(
-						timesheet.employee.user.email,
-						timesheet
-					);
+					this.emailService.timesheetSubmit(timesheet.employee.user.email, timesheet);
 				}
 			}
 		});

@@ -19,7 +19,6 @@ import { TypeOrmIssueTypeRepository } from './repository/type-orm-issue-type.rep
 		CqrsModule
 	],
 	controllers: [IssueTypeController],
-	providers: [IssueTypeService, TypeOrmIssueTypeRepository, ...CommandHandlers],
-	exports: []
+	providers: [IssueTypeService, TypeOrmIssueTypeRepository, ...CommandHandlers]
 })
 export class IssueTypeModule {}

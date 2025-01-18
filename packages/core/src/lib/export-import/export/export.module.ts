@@ -12,22 +12,13 @@ import { ExportService } from './export.service';
 
 @Module({
 	imports: [
-		RouterModule.register([
-			{ path: '/export', module: ExportModule }
-		]),
-		TypeOrmModule.forFeature([
-			...coreEntities,
-			...getEntitiesFromPlugins(getConfig().plugins)
-		]),
-		MikroOrmModule.forFeature([
-			...coreEntities,
-			...getEntitiesFromPlugins(getConfig().plugins)
-		]),
+		RouterModule.register([{ path: '/export', module: ExportModule }]),
+		TypeOrmModule.forFeature([...coreEntities, ...getEntitiesFromPlugins(getConfig().plugins)]),
+		MikroOrmModule.forFeature([...coreEntities, ...getEntitiesFromPlugins(getConfig().plugins)]),
 		RolePermissionModule,
 		CqrsModule
 	],
 	controllers: [ExportController],
-	providers: [ExportService],
-	exports: []
+	providers: [ExportService]
 })
-export class ExportModule { }
+export class ExportModule {}

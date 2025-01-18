@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { IIntegrationSetting, IIntegrationTenant } from '@gauzy/contracts';
+import { ID, IIntegrationSetting, IIntegrationTenant } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { IntegrationSetting } from './integration-setting.entity';
 import { TypeOrmIntegrationSettingRepository } from './repository/type-orm-integration-setting.repository';
@@ -9,9 +8,7 @@ import { MikroOrmIntegrationSettingRepository } from './repository/mikro-orm-int
 @Injectable()
 export class IntegrationSettingService extends TenantAwareCrudService<IntegrationSetting> {
 	constructor(
-		@InjectRepository(IntegrationSetting)
 		readonly typeOrmIntegrationSettingRepository: TypeOrmIntegrationSettingRepository,
-
 		readonly mikroOrmIntegrationSettingRepository: MikroOrmIntegrationSettingRepository
 	) {
 		super(typeOrmIntegrationSettingRepository, mikroOrmIntegrationSettingRepository);
@@ -25,7 +22,7 @@ export class IntegrationSettingService extends TenantAwareCrudService<Integratio
 	 * @returns {Promise<IIntegrationSetting[]>} - A promise that resolves with an array of updated or created integration settings.
 	 */
 	async bulkUpdateOrCreate(
-		integrationId: IIntegrationTenant['id'],
+		integrationId: ID,
 		input: IIntegrationSetting | IIntegrationSetting[]
 	): Promise<IIntegrationSetting[]> {
 		try {

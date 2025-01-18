@@ -18,14 +18,7 @@ import { TypeOrmOrganizationTeamRepository } from '../../organization-team/repos
 		StatisticModule,
 		TimerModule
 	],
-	controllers: [
-		PublicTeamController
-	],
-	providers: [
-		PublicTeamService,
-		TypeOrmOrganizationTeamRepository,
-		...QueryHandlers
-	],
-	exports: []
+	controllers: [PublicTeamController],
+	providers: [PublicTeamService, TypeOrmOrganizationTeamRepository, ...QueryHandlers]
 })
-export class PublicTeamModule { }
+export class PublicTeamModule {}

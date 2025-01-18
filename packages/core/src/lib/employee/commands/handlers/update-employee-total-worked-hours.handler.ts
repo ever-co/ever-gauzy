@@ -1,9 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService, DatabaseTypeEnum } from '@gauzy/config';
 import { ID } from '@gauzy/contracts';
 import { prepareSQLQuery as p } from './../../../database/database.helper';
-import { TimeLog, TimeSlot } from './../../../core/entities/internal';
 import { RequestContext } from './../../../core/context';
 import { EmployeeService } from '../../employee.service';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
@@ -13,8 +11,8 @@ import { TypeOrmTimeSlotRepository } from '../../../time-tracking/time-slot/repo
 @CommandHandler(UpdateEmployeeTotalWorkedHoursCommand)
 export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<UpdateEmployeeTotalWorkedHoursCommand> {
 	constructor(
-		@InjectRepository(TimeLog) readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
-		@InjectRepository(TimeSlot) readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
+		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
+		readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
 		private readonly _employeeService: EmployeeService,
 		private readonly _configService: ConfigService
 	) {}

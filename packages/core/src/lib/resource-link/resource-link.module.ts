@@ -20,8 +20,8 @@ import { TypeOrmResourceLinkRepository } from './repository/type-orm-resource-li
 		UserModule,
 		CqrsModule
 	],
-	providers: [ResourceLinkService, TypeOrmResourceLinkRepository, ...CommandHandlers],
 	controllers: [ResourceLinkController],
-	exports: [ResourceLinkService, TypeOrmModule, TypeOrmResourceLinkRepository]
+	providers: [ResourceLinkService, TypeOrmResourceLinkRepository, ...CommandHandlers],
+	exports: [ResourceLinkService, TypeOrmResourceLinkRepository]
 })
 export class ResourceLinkModule {}

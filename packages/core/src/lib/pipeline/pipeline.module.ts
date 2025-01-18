@@ -21,7 +21,6 @@ import { TypeOrmPipelineRepository } from './repository';
 		UserModule
 	],
 	controllers: [PipelineController],
-	providers: [PipelineService, TypeOrmPipelineRepository],
-	exports: []
+	providers: [PipelineService, TypeOrmPipelineRepository]
 })
 export class PipelineModule {}

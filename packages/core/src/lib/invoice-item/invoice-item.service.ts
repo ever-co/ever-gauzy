@@ -1,4 +1,3 @@
-import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 import { IInvoiceItemCreateInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
@@ -9,9 +8,7 @@ import { TypeOrmInvoiceItemRepository } from './repository/type-orm-invoice-item
 @Injectable()
 export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	constructor(
-		@InjectRepository(InvoiceItem)
 		typeOrmInvoiceItemRepository: TypeOrmInvoiceItemRepository,
-
 		mikroOrmInvoiceItemRepository: MikroOrmInvoiceItemRepository
 	) {
 		super(typeOrmInvoiceItemRepository, mikroOrmInvoiceItemRepository);

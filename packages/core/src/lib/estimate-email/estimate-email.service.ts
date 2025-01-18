@@ -1,4 +1,3 @@
-import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, MoreThan } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import * as moment from 'moment';
@@ -7,32 +6,19 @@ import { environment } from '@gauzy/config';
 import { IEstimateEmail, IEstimateEmailFindInput, IInvoice, IOrganization } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
-import { Invoice, Organization } from './../core/entities/internal';
 import { EstimateEmail } from './estimate-email.entity';
 import { TypeOrmEstimateEmailRepository } from './repository/type-orm-estimate-email.repository';
 import { MikroOrmEstimateEmailRepository } from './repository/mikro-orm-estimate-email.repository';
 import { TypeOrmInvoiceRepository } from './../invoice/repository/type-orm-invoice.repository';
-import { MikroOrmInvoiceRepository } from './../invoice/repository/mikro-orm-invoice.repository';
 import { TypeOrmOrganizationRepository } from './../organization/repository/type-orm-organization.repository';
-import { MikroOrmOrganizationRepository } from './../organization/repository/mikro-orm-organization.repository';
 
 @Injectable()
 export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> {
 	constructor(
-		@InjectRepository(EstimateEmail)
 		typeOrmEstimateEmailRepository: TypeOrmEstimateEmailRepository,
-
 		mikroOrmEstimateEmailRepository: MikroOrmEstimateEmailRepository,
-
-		@InjectRepository(Invoice)
 		private typeOrmInvoiceRepository: TypeOrmInvoiceRepository,
-
-		mikroOrmInvoiceRepository: MikroOrmInvoiceRepository,
-
-		@InjectRepository(Organization)
-		private typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
-
-		mikroOrmOrganizationRepository: MikroOrmOrganizationRepository
+		private typeOrmOrganizationRepository: TypeOrmOrganizationRepository
 	) {
 		super(typeOrmEstimateEmailRepository, mikroOrmEstimateEmailRepository);
 	}
@@ -104,8 +90,8 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 				},
 				...(relations
 					? {
-						relations: relations
-					}
+							relations: relations
+					  }
 					: {})
 			});
 		} catch (error) {

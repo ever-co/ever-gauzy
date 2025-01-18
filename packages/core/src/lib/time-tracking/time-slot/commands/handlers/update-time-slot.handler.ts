@@ -1,5 +1,4 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import * as moment from 'moment';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../../../core/context';

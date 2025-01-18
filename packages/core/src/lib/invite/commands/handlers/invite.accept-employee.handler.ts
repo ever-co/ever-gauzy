@@ -1,6 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import { UpdateResult } from 'typeorm';
 import { IAppIntegrationConfig } from '@gauzy/common';
 import {

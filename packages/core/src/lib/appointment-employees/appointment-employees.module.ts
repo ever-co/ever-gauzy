@@ -14,7 +14,6 @@ import { TypeOrmAppointmentEmployeeRepository } from './repository/type-orm-appo
 		RolePermissionModule
 	],
 	controllers: [AppointmentEmployeesController],
-	providers: [AppointmentEmployeesService, TypeOrmAppointmentEmployeeRepository],
-	exports: []
+	providers: [AppointmentEmployeesService, TypeOrmAppointmentEmployeeRepository]
 })
 export class AppointmentEmployeesModule {}

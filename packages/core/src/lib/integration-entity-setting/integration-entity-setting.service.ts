@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { IIntegrationEntitySetting, IIntegrationTenant, IPagination } from '@gauzy/contracts';
+import { ID, IIntegrationEntitySetting, IIntegrationTenant, IPagination } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { IntegrationEntitySetting } from './integration-entity-setting.entity';
 import { MikroOrmIntegrationEntitySettingRepository } from './repository/mikro-orm-integration-entity-setting.repository';
@@ -9,10 +8,8 @@ import { TypeOrmIntegrationEntitySettingRepository } from './repository/type-orm
 @Injectable()
 export class IntegrationEntitySettingService extends TenantAwareCrudService<IntegrationEntitySetting> {
 	constructor(
-		@InjectRepository(IntegrationEntitySetting)
 		readonly typeOrmIntegrationEntitySettingRepository: TypeOrmIntegrationEntitySettingRepository,
-
-		mikroOrmIntegrationEntitySettingRepository: MikroOrmIntegrationEntitySettingRepository
+		readonly mikroOrmIntegrationEntitySettingRepository: MikroOrmIntegrationEntitySettingRepository
 	) {
 		super(typeOrmIntegrationEntitySettingRepository, mikroOrmIntegrationEntitySettingRepository);
 	}
@@ -23,9 +20,7 @@ export class IntegrationEntitySettingService extends TenantAwareCrudService<Inte
 	 * @param integrationId - The ID of the integration.
 	 * @returns A promise resolving to an array of integration entity settings.
 	 */
-	async getIntegrationEntitySettings(
-		integrationId: IIntegrationTenant['id']
-	): Promise<IPagination<IntegrationEntitySetting>> {
+	async getIntegrationEntitySettings(integrationId: ID): Promise<IPagination<IntegrationEntitySetting>> {
 		return await super.findAll({
 			where: {
 				integrationId
@@ -46,7 +41,6 @@ export class IntegrationEntitySettingService extends TenantAwareCrudService<Inte
 	async bulkUpdateOrCreate(
 		input: IIntegrationEntitySetting | IIntegrationEntitySetting[]
 	): Promise<IIntegrationEntitySetting[]> {
-
 		// Prepare an array of settings to be saved
 		const settings: IIntegrationEntitySetting[] = Array.isArray(input) ? input : [input];
 

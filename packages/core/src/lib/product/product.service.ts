@@ -1,6 +1,5 @@
 import { FindManyOptions } from 'typeorm';
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import {
 	IImageAsset,
 	IPagination,
@@ -16,7 +15,6 @@ import { Product } from './product.entity';
 import { ProductTranslation } from './product-translation.entity';
 import { TypeOrmProductRepository } from './repository/type-orm-product.repository';
 import { MikroOrmProductRepository } from './repository/mikro-orm-product.repository';
-import { MikroOrmProductTranslationRepository } from './repository/mikro-orm-product-translation.repository';
 import { TypeOrmProductTranslationRepository } from './repository/type-orm-product-translation.repository';
 
 @Injectable()
@@ -44,15 +42,9 @@ export class ProductService extends TenantAwareCrudService<Product> {
 	];
 
 	constructor(
-		@InjectRepository(Product)
 		typeOrmProductRepository: TypeOrmProductRepository,
-
 		mikroOrmProductRepository: MikroOrmProductRepository,
-
-		@InjectRepository(ProductTranslation)
-		private typeOrmProductTranslationRepository: TypeOrmProductTranslationRepository,
-
-		mikroOrmProductTranslationRepository: MikroOrmProductTranslationRepository
+		readonly typeOrmProductTranslationRepository: TypeOrmProductTranslationRepository
 	) {
 		super(typeOrmProductRepository, mikroOrmProductRepository);
 	}

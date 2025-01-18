@@ -17,7 +17,6 @@ import { TypeOrmDashboardWidgetRepository } from './repository/type-orm-dashboar
 		CqrsModule
 	],
 	controllers: [DashboardWidgetController],
-	providers: [DashboardWidgetService, TypeOrmDashboardWidgetRepository, ...CommandHandlers],
-	exports: []
+	providers: [DashboardWidgetService, TypeOrmDashboardWidgetRepository, ...CommandHandlers]
 })
 export class DashboardWidgetModule {}

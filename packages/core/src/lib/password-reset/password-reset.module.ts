@@ -8,7 +8,6 @@ import { TypeOrmPasswordResetRepository } from './repository/type-orm-password-r
 
 @Module({
 	imports: [TypeOrmModule.forFeature([PasswordReset]), MikroOrmModule.forFeature([PasswordReset])],
-	providers: [PasswordResetService, TypeOrmPasswordResetRepository, ...CommandHandlers],
-	exports: []
+	providers: [PasswordResetService, TypeOrmPasswordResetRepository, ...CommandHandlers]
 })
 export class PasswordResetModule {}

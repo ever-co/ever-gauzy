@@ -23,11 +23,9 @@ import { CreateKeyresultDTO, KeyresultBultInputDTO, UpdateKeyresultDTO } from '.
 
 @ApiTags('KeyResults')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/key-results')
 export class KeyResultController extends CrudController<KeyResult> {
-	constructor(
-		private readonly keyResultService: KeyResultService
-	) {
+	constructor(private readonly keyResultService: KeyResultService) {
 		super(keyResultService);
 	}
 
@@ -43,9 +41,7 @@ export class KeyResultController extends CrudController<KeyResult> {
 	})
 	@Post()
 	@UsePipes(new ValidationPipe({ transform: true }))
-	async create(
-		@Body() entity: CreateKeyresultDTO
-	): Promise<KeyResult> {
+	async create(@Body() entity: CreateKeyresultDTO): Promise<KeyResult> {
 		return this.keyResultService.create(entity);
 	}
 
@@ -95,16 +91,12 @@ export class KeyResultController extends CrudController<KeyResult> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	@UseValidationPipe({ transform: true })
-	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateKeyresultDTO
-	): Promise<IKeyResult> {
+	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: UpdateKeyresultDTO): Promise<IKeyResult> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
 		try {
@@ -120,9 +112,7 @@ export class KeyResultController extends CrudController<KeyResult> {
 
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<any> {
+	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
 		return this.keyResultService.delete(id);
 	}
 }

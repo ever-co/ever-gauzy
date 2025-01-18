@@ -6,9 +6,7 @@ import { AppModule } from '../app/app.module';
 import { ProfilingModule } from '../common/profiling/profiling.module';
 
 @Module({
-	imports: [ConfigModule, LoggerModule.forRoot(), PluginModule.init(), AppModule, ProfilingModule.forRoot()],
-	providers: [],
-	exports: []
+	imports: [ConfigModule, LoggerModule.forRoot(), PluginModule.init(), AppModule, ProfilingModule.forRoot()]
 })
 export class BootstrapModule implements NestModule, OnApplicationShutdown {
 	/**

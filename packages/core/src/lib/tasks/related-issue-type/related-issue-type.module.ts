@@ -8,6 +8,7 @@ import { TaskRelatedIssueTypeController } from './related-issue-type.controller'
 import { TaskRelatedIssueTypeService } from './related-issue-type.service';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
+import { TypeOrmTaskRelatedIssueTypeRepository } from './repository/type-orm-related-issue-type.repository';
 
 @Module({
 	imports: [
@@ -17,7 +18,11 @@ import { QueryHandlers } from './queries/handlers';
 		CqrsModule
 	],
 	controllers: [TaskRelatedIssueTypeController],
-	providers: [TaskRelatedIssueTypeService, ...QueryHandlers, ...CommandHandlers],
-	exports: [TaskRelatedIssueTypeService]
+	providers: [
+		TaskRelatedIssueTypeService,
+		TypeOrmTaskRelatedIssueTypeRepository,
+		...QueryHandlers,
+		...CommandHandlers
+	]
 })
 export class TaskRelatedIssueTypeModule {}

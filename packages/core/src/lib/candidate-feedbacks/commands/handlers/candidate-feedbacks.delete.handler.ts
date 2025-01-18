@@ -4,8 +4,7 @@ import { CandidateFeedbacksService } from '../../candidate-feedbacks.service';
 import { CandidateInterviewService } from '../../../candidate-interview/candidate-interview.service';
 
 @CommandHandler(FeedbackDeleteCommand)
-export class FeedbackDeleteHandler
-	implements ICommandHandler<FeedbackDeleteCommand> {
+export class FeedbackDeleteHandler implements ICommandHandler<FeedbackDeleteCommand> {
 	constructor(
 		private readonly candidateFeedbackService: CandidateFeedbacksService,
 		private readonly candidateInterviewService: CandidateInterviewService
@@ -17,14 +16,10 @@ export class FeedbackDeleteHandler
 
 		if (feedback && interviewId) {
 			const id = interviewId;
-			const feedbacks = await this.candidateFeedbackService.getFeedbacksByInterviewId(
-				id
-			);
+			const feedbacks = await this.candidateFeedbackService.getFeedbacksByInterviewId(id);
 			let interviewRating: number;
 			if (feedbacks.length > 0) {
-				interviewRating = this.candidateFeedbackService.calcRating(
-					feedbacks
-				);
+				interviewRating = this.candidateFeedbackService.calcRating(feedbacks);
 				await this.candidateInterviewService.create({
 					id: id,
 					rating: interviewRating

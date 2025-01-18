@@ -23,9 +23,6 @@ import { PublicTeamModule } from './team/public-team.module';
 		PublicInvoiceModule,
 		PublicOrganizationModule,
 		PublicTeamModule
-	],
-	controllers: [],
-	providers: [],
-	exports: []
+	]
 })
 export class PublicShareModule {}

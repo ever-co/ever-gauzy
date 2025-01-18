@@ -11,7 +11,7 @@ import { RoleModule } from './../role/role.module';
 import { UserOrganizationService } from './user-organization.services';
 import { UserOrganizationController } from './user-organization.controller';
 import { UserOrganization } from './user-organization.entity';
-import { TypeOrmUserOrganizationRepository } from './repository';
+import { MikroOrmUserOrganizationRepository, TypeOrmUserOrganizationRepository } from './repository';
 import { CommandHandlers } from './commands/handlers';
 
 @Module({
@@ -27,7 +27,12 @@ import { CommandHandlers } from './commands/handlers';
 		CqrsModule
 	],
 	controllers: [UserOrganizationController],
-	providers: [UserOrganizationService, TypeOrmUserOrganizationRepository, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, UserOrganizationService, TypeOrmUserOrganizationRepository]
+	providers: [
+		UserOrganizationService,
+		TypeOrmUserOrganizationRepository,
+		MikroOrmUserOrganizationRepository,
+		...CommandHandlers
+	],
+	exports: [UserOrganizationService, TypeOrmUserOrganizationRepository, MikroOrmUserOrganizationRepository]
 })
 export class UserOrganizationModule {}

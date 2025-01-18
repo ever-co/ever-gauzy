@@ -5,6 +5,7 @@ import { OrganizationDocument } from './organization-document.entity';
 import { OrganizationDocumentService } from './organization-document.service';
 import { OrganizationDocumentController } from './organization-document.controller';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { TypeOrmOrganizationDocumentRepository } from './repository/type-orm-organization-document.repository';
 
 @Module({
 	imports: [
@@ -13,7 +14,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		RolePermissionModule
 	],
 	controllers: [OrganizationDocumentController],
-	providers: [OrganizationDocumentService],
-	exports: []
+	providers: [OrganizationDocumentService, TypeOrmOrganizationDocumentRepository]
 })
 export class OrganizationDocumentModule {}
