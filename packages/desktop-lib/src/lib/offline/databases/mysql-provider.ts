@@ -51,11 +51,18 @@ export class MysqlProvider implements IClientServerProvider {
 	private _initialization() {
 		this._database = 'gauzy_timer_db';
 		const cfg = LocalStore.getApplicationConfig().config[DatabaseTypeEnum.mysql];
+		if (!cfg) {
+			throw new AppError('MYSQL', 'MysqlSQL configuration is missing');
+		}
+		if (!cfg.dbHost || !cfg.dbPort || !cfg.dbUsername || !cfg.dbPassword) {
+			throw new AppError('MYSQL', 'Required MySQL configuration fields are missing');
+		}
 		this._connectionConfig = {
 			host: cfg.dbHost,
 			port: cfg.dbPort,
 			user: cfg.dbUsername,
-			password: cfg.dbPassword
+			password: cfg.dbPassword,
+			timezone: '+00:00'
 		};
 	}
 
