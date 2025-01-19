@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
-import { switchMap, tap, filter, catchError, of, finalize, EMPTY } from 'rxjs';
+import { switchMap, tap, filter, catchError, of, finalize, EMPTY, concatMap } from 'rxjs';
 import { VideoService } from '../shared/services/video.service';
 import { VideoActions } from './video.action';
 import { VideoStore } from './video.store';
 import { VideoQuery } from './video.query';
 import { ErrorHandlingService, ToastrService } from '@gauzy/ui-core/core';
+import { WebShareService } from '../shared/services/web-share.service';
 
 @Injectable({ providedIn: 'root' })
 export class VideoEffects {
@@ -16,7 +17,8 @@ export class VideoEffects {
 		private readonly videoQuery: VideoQuery,
 		private readonly videoService: VideoService,
 		private readonly errorHandler: ErrorHandlingService,
-		private readonly toastrService: ToastrService
+		private readonly toastrService: ToastrService,
+		private readonly webShareService: WebShareService
 	) {}
 
 	fetchVideos$ = createEffect(() =>
@@ -96,6 +98,13 @@ export class VideoEffects {
 					catchError((error) => of(this.errorHandler.handleError(error)))
 				)
 			)
+		)
+	);
+
+	shareVideos$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(VideoActions.shareVideos),
+			concatMap(({ payload }) => this.webShareService.share(payload))
 		)
 	);
 }

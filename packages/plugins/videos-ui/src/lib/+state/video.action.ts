@@ -1,5 +1,6 @@
 import { createAction } from '@ngneat/effects';
 import { IVideo } from '../shared/models/video.model';
+import { IShareData } from '../shared/models/share-video.model';
 
 export class VideoActions {
 	public static fetchVideos = createAction('[Videos] Fetch Videos', (params?: any) => ({ params }));
@@ -15,4 +16,6 @@ export class VideoActions {
 	}));
 
 	public static deleteVideo = createAction('[Videos] Delete Video', (id: string) => ({ id }));
+
+	public static shareVideos = createAction('[Videos] Share Videos', (payload: IShareData) => ({ payload }));
 }
