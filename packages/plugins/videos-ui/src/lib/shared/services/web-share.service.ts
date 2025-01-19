@@ -1,7 +1,8 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { ToastrService } from '@gauzy/ui-core/core';
 import { BehaviorSubject, Observable, firstValueFrom, from, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { HttpClient } from '@angular/common/http';
 import { IShareData } from '../models/share-video.model';
 
 @Injectable({
@@ -11,7 +12,7 @@ export class WebShareService {
 	private shareStatusSubject = new BehaviorSubject<boolean | null>(null);
 	public shareStatus$: Observable<boolean | null> = this.shareStatusSubject.asObservable();
 
-	constructor(private readonly http: HttpClient) {
+	constructor(private readonly http: HttpClient, private readonly toastrService: ToastrService) {
 		this.checkShareSupport();
 	}
 
@@ -93,7 +94,7 @@ export class WebShareService {
 			await navigator.share(sharePayload);
 
 			// Track successful share
-			this.trackShareEvent(sharePayload);
+			this.trackShareEvent();
 
 			return true;
 		} catch (error) {
@@ -130,28 +131,28 @@ export class WebShareService {
 	private handleShareError(error: any): void {
 		switch (error.name) {
 			case 'AbortError':
-				console.log('Share was canceled');
+				this.toastrService.error('Share was canceled', error.name);
 				break;
 			case 'DataError':
-				console.error('Invalid share data');
+				this.toastrService.error('Invalid share data', error.name);
 				break;
 			case 'NotAllowedError':
-				console.error('Share not allowed');
+				this.toastrService.error('Share not allowed', error.name);
 				break;
 			default:
-				console.error('Unexpected sharing error', error);
+				this.toastrService.error('Unexpected sharing error', error);
 		}
 	}
 
 	// Share Event Tracking
-	private trackShareEvent(data: ShareData): void {
+	private trackShareEvent(): void {
 		// Implement your analytics tracking
-		console.log('Content Shared:', data);
+		this.toastrService.success('Video shared successfully');
 	}
 
 	// Fallback Notification
 	private showFallbackNotification(): void {
 		// You can integrate with your preferred notification system
-		// alert('Link copied to clipboard');
+		this.toastrService.success('Has been copied to clipboard');
 	}
 }
