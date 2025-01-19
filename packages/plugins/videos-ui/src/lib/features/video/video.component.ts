@@ -7,7 +7,7 @@ import { VideoActions } from '../../+state/video.action';
 import { VideoQuery } from '../../+state/video.query';
 import { IActionButton } from '../../shared/models/action-button.model';
 import { IVideo } from '../../shared/models/video.model';
-import { VideoEditComponent } from '../video-edit/video-edit.component';
+import { VideoEditComponent } from '../../shared/ui/video-edit/video-edit.component';
 
 @Component({
 	selector: 'plug-video',

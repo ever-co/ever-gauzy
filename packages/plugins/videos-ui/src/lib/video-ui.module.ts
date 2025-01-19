@@ -24,7 +24,7 @@ import { ActionButtonComponent } from './shared/ui/video-actions/buttons/action-
 import { VideoItemComponent } from './shared/ui/video-item/video-item.component';
 import { VideoPlayerComponent } from './shared/ui/video-player/video-player.component';
 import { VideoUiRoutingModule } from './video-ui-routing.module';
-import { VideoEditComponent } from './features/video-edit/video-edit.component';
+import { VideoEditComponent } from './shared/ui/video-edit/video-edit.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @NgModule({

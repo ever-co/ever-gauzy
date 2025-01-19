@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { IVideoEditForm } from '../../shared/models/video-edit-form.model';
+import { IVideoEditForm } from '../../models/video-edit-form.model';
 import { NbDialogRef } from '@nebular/theme';
-import { IVideo } from '../../shared/models/video.model';
+import { IVideo } from '../../models/video.model';
 
 @Component({
 	selector: 'plug-video-edit',
