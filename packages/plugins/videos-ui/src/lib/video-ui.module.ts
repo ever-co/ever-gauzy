@@ -26,6 +26,8 @@ import { VideoPlayerComponent } from './shared/ui/video-player/video-player.comp
 import { VideoUiRoutingModule } from './video-ui-routing.module';
 import { VideoEditComponent } from './shared/ui/video-edit/video-edit.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { VideoMetadataComponent } from './shared/ui/video-metadata/video-metadata.component';
+import { VideoShareComponent } from './shared/ui/video-share/video-share.component';
 
 @NgModule({
 	declarations: [
@@ -38,7 +40,9 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 		VideoDetailPageComponent,
 		ActionButtonComponent,
 		ActionButtonGroupComponent,
-		VideoEditComponent
+		VideoEditComponent,
+  VideoMetadataComponent,
+  VideoShareComponent
 	],
 	imports: [
 		CommonModule,

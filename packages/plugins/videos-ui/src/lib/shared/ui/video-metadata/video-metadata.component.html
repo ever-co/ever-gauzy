@@ -1,0 +1,102 @@
+<div class="video-details-container">
+	@if(video) {
+	<div class="video-details-wrapper">
+		<!-- Header Section -->
+		<header class="video-header">
+			<div class="header-content">
+				<span class="cancel mb-3"><i (click)="close()" class="fas fa-times"></i></span>
+				<h2 class="title video-title">{{ video.title }}</h2>
+			</div>
+		</header>
+
+		<!-- Video Preview (Optional) -->
+		@if(video.fullUrl) {
+		<div class="video-preview mb-3">
+			<plug-video-player
+				[src]="video.fullUrl"
+				alt="{{ video.title }} thumbnail"
+				class="video-thumbnail"
+			></plug-video-player>
+		</div>
+		}
+
+		<!-- Details Grid -->
+		<div class="video-details-grid">
+			<!-- Core Details -->
+			<div class="details-section core-details">
+				<div class="section-header">
+					<h3>Core Information</h3>
+				</div>
+				<div class="section-content">
+					<div class="detail-item">
+						<span class="label">Recorded</span>
+						<span class="value">{{ video.recordedAt | date : 'medium' }}</span>
+					</div>
+					<div class="detail-item">
+						<span class="label">Duration</span>
+						<span class="value">{{ video.duration | durationFormat }}</span>
+					</div>
+					<div class="detail-item">
+						<span class="label">Size</span>
+						<span class="value">{{ video.size | fileSize }}</span>
+					</div>
+					@if(video.fullUrl) {
+					<div class="detail-item full-url">
+						<a [href]="video.fullUrl" target="_blank" class="url-link">
+							View Full Video
+							<i class="fas fa-external-link-alt"></i>
+						</a>
+					</div>
+					}
+				</div>
+			</div>
+
+			<!-- Metadata Section -->
+			<div class="details-section metadata-details">
+				<div class="section-header">
+					<h3>Technical Details</h3>
+				</div>
+				<div class="section-content">
+					<div class="detail-item">
+						<span class="label">Resolution</span>
+						<span class="value">{{ video.resolution }}</span>
+					</div>
+					<div class="detail-item">
+						<span class="label">Codec</span>
+						<span class="value">{{ video.codec }}</span>
+					</div>
+					<div class="detail-item">
+						<span class="label">Frame Rate</span>
+						<span class="value">{{ video.frameRate }} FPS</span>
+					</div>
+				</div>
+			</div>
+
+			<!-- Uploader Section -->
+			@if(video.uploadedBy) {
+			<div class="details-section uploader-details">
+				<div class="section-header">
+					<h3>Uploaded By</h3>
+				</div>
+				<div class="section-content uploader-profile">
+					<ngx-avatar
+						[src]="video.uploadedBy?.user.imageUrl"
+						[name]="video.uploadedBy?.fullName"
+						[id]="video.uploadedBy?.id"
+						[employee]="video.uploadedBy"
+						class="uploader-avatar"
+					></ngx-avatar>
+				</div>
+			</div>
+			}
+		</div>
+
+		<!-- Action Footer -->
+		<nb-card-footer class="text-right p-0">
+			<button nbButton type="button" (click)="close()" outline status="basic">Close</button>
+		</nb-card-footer>
+	</div>
+	} @else {
+	<ngx-no-data-message message="No Video Available"></ngx-no-data-message>
+	}
+</div>

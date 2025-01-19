@@ -8,6 +8,8 @@ import { VideoQuery } from '../../+state/video.query';
 import { IActionButton } from '../../shared/models/action-button.model';
 import { IVideo } from '../../shared/models/video.model';
 import { VideoEditComponent } from '../../shared/ui/video-edit/video-edit.component';
+import { VideoMetadataComponent } from '../../shared/ui/video-metadata/video-metadata.component';
+import { VideoShareComponent } from '../../shared/ui/video-share/video-share.component';
 
 @Component({
 	selector: 'plug-video',
@@ -37,14 +39,12 @@ export class VideoComponent {
 			action: this.edit.bind(this)
 		},
 		{
-			label: 'Metadata',
+			label: 'Get Info',
 			icon: 'settings-2-outline',
-			status: 'warning',
+			status: 'info',
 			hidden: false,
 			disabled: false,
-			action: (video: IVideo) => {
-				console.log(video);
-			}
+			action: this.metadata.bind(this)
 		},
 		{
 			label: 'Share',
@@ -52,9 +52,7 @@ export class VideoComponent {
 			status: 'success',
 			hidden: false,
 			disabled: false,
-			action: (video: IVideo) => {
-				console.log(video);
-			}
+			action: this.share.bind(this)
 		},
 
 		{
@@ -95,6 +93,14 @@ export class VideoComponent {
 				tap((update: Partial<IVideo>) => this.actions.dispatch(VideoActions.updateVideo(video.id, update)))
 			)
 			.subscribe();
+	}
+
+	public metadata(video: IVideo): void {
+		this.dialogService.open(VideoMetadataComponent, { hasBackdrop: true, context: { video } });
+	}
+
+	public share(video: IVideo): void {
+		this.dialogService.open(VideoShareComponent, { hasBackdrop: true, context: { video } });
 	}
 
 	public delete(video: IVideo): void {
