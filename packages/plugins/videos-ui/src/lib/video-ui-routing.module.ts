@@ -22,7 +22,8 @@ const routes: Routes = [
 				isSaveDatePicker: true,
 				isSingleDatePicker: true,
 				isDisableFutureDate: true
-			}
+			},
+			reuseRoute: false
 		},
 		resolve: {
 			dates: DateRangePickerResolver,
@@ -46,7 +47,8 @@ const routes: Routes = [
 				isSaveDatePicker: true,
 				isSingleDatePicker: true,
 				isDisableFutureDate: true
-			}
+			},
+			reuseRoute: true
 		},
 		component: VideoDetailPageComponent
 	}

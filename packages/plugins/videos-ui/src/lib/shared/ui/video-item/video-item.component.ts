@@ -58,6 +58,7 @@ export class VideoItemComponent {
 	constructor(private readonly router: Router, private readonly route: ActivatedRoute) {}
 
 	public async open({ id }: IVideo): Promise<void> {
-		await this.router.navigate([id], { relativeTo: this.route });
+		const { reuseRoute } = this.route.snapshot.data;
+		await this.router.navigate(reuseRoute ? ['..', id] : [id], { relativeTo: this.route });
 	}
 }
