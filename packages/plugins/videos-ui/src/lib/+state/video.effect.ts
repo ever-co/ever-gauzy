@@ -66,7 +66,6 @@ export class VideoEffects {
 	updateVideo$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(VideoActions.updateVideo),
-			tap((pay) => console.log(pay)),
 			switchMap(({ id, video }) =>
 				this.videoService.update(id, video).pipe(
 					tap((video) => {
