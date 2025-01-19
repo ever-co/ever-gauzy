@@ -1,15 +1,15 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
 import { NbDialogService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { combineLatest, filter, map, Observable, tap } from 'rxjs';
+import { WebShareService } from '../../shared/services/web-share.service';
 import { VideoActions } from '../../+state/video.action';
 import { VideoQuery } from '../../+state/video.query';
 import { IActionButton } from '../../shared/models/action-button.model';
 import { IVideo } from '../../shared/models/video.model';
 import { VideoEditComponent } from '../../shared/ui/video-edit/video-edit.component';
 import { VideoMetadataComponent } from '../../shared/ui/video-metadata/video-metadata.component';
-import { VideoShareComponent } from '../../shared/ui/video-share/video-share.component';
 
 @Component({
 	selector: 'plug-video',
@@ -17,7 +17,7 @@ import { VideoShareComponent } from '../../shared/ui/video-share/video-share.com
 	styleUrl: './video.component.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class VideoComponent {
+export class VideoComponent implements OnInit {
 	public readonly downloadButton: IActionButton = {
 		label: 'Download',
 		icon: 'download-outline',
@@ -68,8 +68,15 @@ export class VideoComponent {
 	constructor(
 		private readonly videoQuery: VideoQuery,
 		private readonly dialogService: NbDialogService,
-		private readonly actions: Actions
+		private readonly actions: Actions,
+		private readonly webShareService: WebShareService
 	) {}
+
+	public ngOnInit(): void {
+		this.webShareService.shareStatus$.subscribe((supported) => {
+			this.buttons[2].hidden = !supported;
+		});
+	}
 
 	public get video$(): Observable<IVideo> {
 		return this.videoQuery.video$;
@@ -99,8 +106,15 @@ export class VideoComponent {
 		this.dialogService.open(VideoMetadataComponent, { hasBackdrop: true, context: { video } });
 	}
 
-	public share(video: IVideo): void {
-		this.dialogService.open(VideoShareComponent, { hasBackdrop: true, context: { video } });
+	public async share(video: IVideo): Promise<void> {
+		if (!this.webShareService.isSupported()) {
+			return;
+		}
+		await this.webShareService.share({
+			title: video.title,
+			text: video.description,
+			fileUrls: [video.fullUrl]
+		});
 	}
 
 	public delete(video: IVideo): void {

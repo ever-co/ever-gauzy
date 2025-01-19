@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { GauzyFiltersModule, NoDataMessageModule, SharedModule } from '@gauzy/ui-core/shared';
 import {
 	NbButtonModule,
@@ -19,15 +20,14 @@ import { VideoComponent } from './features/video/video.component';
 import { VideoDetailPageComponent } from './pages/video-detail-page/video-detail-page.component';
 import { VideoPageComponent } from './pages/video-page/video-page.component';
 import { VideoService } from './shared/services/video.service';
+import { WebShareService } from './shared/services/web-share.service';
 import { ActionButtonGroupComponent } from './shared/ui/video-actions/buttons/action-button-group/action-button-group.component';
 import { ActionButtonComponent } from './shared/ui/video-actions/buttons/action-button/action-button.component';
+import { VideoEditComponent } from './shared/ui/video-edit/video-edit.component';
 import { VideoItemComponent } from './shared/ui/video-item/video-item.component';
+import { VideoMetadataComponent } from './shared/ui/video-metadata/video-metadata.component';
 import { VideoPlayerComponent } from './shared/ui/video-player/video-player.component';
 import { VideoUiRoutingModule } from './video-ui-routing.module';
-import { VideoEditComponent } from './shared/ui/video-edit/video-edit.component';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { VideoMetadataComponent } from './shared/ui/video-metadata/video-metadata.component';
-import { VideoShareComponent } from './shared/ui/video-share/video-share.component';
 
 @NgModule({
 	declarations: [
@@ -41,8 +41,7 @@ import { VideoShareComponent } from './shared/ui/video-share/video-share.compone
 		ActionButtonComponent,
 		ActionButtonGroupComponent,
 		VideoEditComponent,
-  VideoMetadataComponent,
-  VideoShareComponent
+		VideoMetadataComponent
 	],
 	imports: [
 		CommonModule,
@@ -59,6 +58,13 @@ import { VideoShareComponent } from './shared/ui/video-share/video-share.compone
 		NbDialogModule,
 		NbInputModule
 	],
-	providers: [provideEffectsManager(), provideEffects(VideoEffects), VideoQuery, VideoStore, VideoService]
+	providers: [
+		provideEffectsManager(),
+		provideEffects(VideoEffects),
+		VideoQuery,
+		VideoStore,
+		VideoService,
+		WebShareService
+	]
 })
 export class VideoUiModule {}
