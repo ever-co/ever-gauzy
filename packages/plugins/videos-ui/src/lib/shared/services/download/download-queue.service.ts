@@ -12,11 +12,11 @@ import { FileDownloadService } from './file-download.service';
 
 @Injectable({ providedIn: 'root' })
 export class DownloadQueueService {
-	private queueSubject = new BehaviorSubject<IFileDownloadOptions[]>([]);
-	public queue$ = this.queueSubject.asObservable();
+	private _queue$ = new BehaviorSubject<IFileDownloadOptions[]>([]);
+	public queue$ = this._queue$.asObservable();
 
-	private downloadStatusSubject = new BehaviorSubject<IDownload>({});
-	public downloadStatus$ = this.downloadStatusSubject.asObservable();
+	private _downloadStatus$ = new BehaviorSubject<IDownload>({});
+	public downloadStatus$ = this._downloadStatus$.asObservable();
 
 	private readonly MAX_CONCURRENT_DOWNLOADS = 3;
 	private state: IDownloadState = DownloadStateFactory.getState(DownloadStatus.PENDING);
@@ -43,7 +43,7 @@ export class DownloadQueueService {
 			.filter((item) => !this.isDownloading(item.url));
 
 		if (newItems.length > 0) {
-			this.queueSubject.next([...this.queueSubject.value, ...newItems]);
+			this._queue$.next([...this._queue$.value, ...newItems]);
 			return true;
 		}
 
@@ -57,13 +57,13 @@ export class DownloadQueueService {
 
 	public remove(url: string): void {
 		// Remove the URL from the queue
-		const updatedQueue = this.queueSubject.value.filter((item) => item.url !== url);
-		this.queueSubject.next(updatedQueue);
+		const updatedQueue = this._queue$.value.filter((item) => item.url !== url);
+		this._queue$.next(updatedQueue);
 
 		// Remove the status associated with the URL
-		const updatedStatus = { ...this.downloadStatusSubject.value };
+		const updatedStatus = { ...this._downloadStatus$.value };
 		delete updatedStatus[url];
-		this.downloadStatusSubject.next(updatedStatus);
+		this._downloadStatus$.next(updatedStatus);
 
 		// Trigger the process to ensure downloads continue if needed
 		this.process();
@@ -71,7 +71,7 @@ export class DownloadQueueService {
 
 	private process(): void {
 		const activeDownloads = this.getActiveCount();
-		const pendingDownloads = this.queueSubject.value.filter(
+		const pendingDownloads = this._queue$.value.filter(
 			(item) => this.getStatus(item.url).status === DownloadStatus.PENDING
 		);
 
@@ -99,7 +99,7 @@ export class DownloadQueueService {
 	}
 
 	public updateStatus(url: string, download: IDownloadItem): void {
-		const current = this.downloadStatusSubject.value;
+		const current = this._downloadStatus$.value;
 		const currentStatus = {
 			...current,
 			[url]: {
@@ -107,7 +107,7 @@ export class DownloadQueueService {
 				...download
 			}
 		};
-		this.downloadStatusSubject.next(currentStatus);
+		this._downloadStatus$.next(currentStatus);
 	}
 
 	private getStatus(url: string): IDownloadItem {
@@ -119,11 +119,11 @@ export class DownloadQueueService {
 				total: 0
 			}
 		};
-		return this.downloadStatusSubject.value[url] || fallBackDownload;
+		return this._downloadStatus$.value[url] || fallBackDownload;
 	}
 
 	private getActiveCount(): number {
-		return Object.values(this.downloadStatusSubject.value).filter(
+		return Object.values(this._downloadStatus$.value).filter(
 			({ status }) => status === DownloadStatus.DOWNLOADING
 		).length;
 	}
