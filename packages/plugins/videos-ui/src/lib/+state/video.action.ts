@@ -18,4 +18,12 @@ export class VideoActions {
 	public static deleteVideo = createAction('[Videos] Delete Video', (id: string) => ({ id }));
 
 	public static shareVideos = createAction('[Videos] Share Videos', (payload: IShareData) => ({ payload }));
+
+	public static addToQueue = createAction('[Videos] Add to Queue', (urls: string[] | string) => ({
+		urls
+	}));
+
+	public static removeFromQueue = createAction('[Videos] Remove from Queue', (url: string) => ({
+		url
+	}));
 }

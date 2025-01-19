@@ -1,0 +1,57 @@
+import { HttpClient, HttpEventType } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { ErrorHandlingService } from '@gauzy/ui-core/core';
+import { Observable } from 'rxjs';
+import { IDownloadProgress, IFileDownloadOptions } from '../../models/video-download.model';
+import { FileSaveStrategy } from './strategies/file-save.strategy';
+
+@Injectable({ providedIn: 'root' })
+export class FileDownloadService {
+	constructor(
+		private readonly http: HttpClient,
+		private readonly fileSaveStrategy: FileSaveStrategy,
+		private readonly errorHandler: ErrorHandlingService
+	) {}
+
+	public execute(options: IFileDownloadOptions): Observable<IDownloadProgress> {
+		return new Observable((observer) => {
+			const req = this.http.get(options.url, {
+				reportProgress: true,
+				observe: 'events',
+				responseType: 'blob',
+				headers: options.headers
+			});
+
+			const subscription = req.subscribe({
+				next: (event) => {
+					if (event.type === HttpEventType.DownloadProgress && event.total !== undefined) {
+						observer.next({
+							percentage: Math.round((100 * event.loaded) / event.total),
+							loaded: event.loaded,
+							total: event.total
+						});
+					} else if (event.type === HttpEventType.Response) {
+						const filename = options.filename || this.extractFilename(options.url);
+						this.fileSaveStrategy.save(event.body as Blob, filename);
+						observer.complete();
+					}
+				},
+				error: (error) => {
+					this.errorHandler.handleError(error);
+					observer.error(error);
+				}
+			});
+
+			return () => subscription.unsubscribe();
+		});
+	}
+
+	private extractFilename(url: string): string {
+		try {
+			const parsedUrl = new URL(url);
+			return parsedUrl.pathname.split('/').pop() || 'download';
+		} catch {
+			return 'download';
+		}
+	}
+}

@@ -8,6 +8,7 @@ import { VideoStore } from './video.store';
 import { VideoQuery } from './video.query';
 import { ErrorHandlingService, ToastrService } from '@gauzy/ui-core/core';
 import { WebShareService } from '../shared/services/web-share.service';
+import { DownloadQueueService } from '../shared/services/download/download-queue.service';
 
 @Injectable({ providedIn: 'root' })
 export class VideoEffects {
@@ -18,7 +19,8 @@ export class VideoEffects {
 		private readonly videoService: VideoService,
 		private readonly errorHandler: ErrorHandlingService,
 		private readonly toastrService: ToastrService,
-		private readonly webShareService: WebShareService
+		private readonly webShareService: WebShareService,
+		private readonly downloadQueueService: DownloadQueueService
 	) {}
 
 	fetchVideos$ = createEffect(() =>
@@ -105,6 +107,28 @@ export class VideoEffects {
 		this.action$.pipe(
 			ofType(VideoActions.shareVideos),
 			concatMap(({ payload }) => this.webShareService.share(payload))
+		)
+	);
+
+	addToQueue$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(VideoActions.addToQueue),
+			tap(({ urls }) => {
+				const isAdded = this.downloadQueueService.add(urls);
+				if (isAdded) {
+					this.toastrService.info('Video added to queue', 'Download');
+				}
+			})
+		)
+	);
+
+	removeFromQueue$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(VideoActions.removeFromQueue),
+			tap(({ url }) => {
+				this.toastrService.info('Video removed from queue', 'Download');
+				this.downloadQueueService.remove(url);
+			})
 		)
 	);
 }

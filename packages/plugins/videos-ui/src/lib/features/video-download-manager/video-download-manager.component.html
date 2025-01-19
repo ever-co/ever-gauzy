@@ -1,0 +1,11 @@
+<!-- Download Queue -->
+<div class="download-queue">
+	@for (item of (downloadQueue$ | async); track item.url) {
+	<div class="download-item">
+		<span>{{ item.filename || item.url }}</span>
+		<span>Status: {{ (downloadStatus$ | async)[item.url]?.status }}</span>
+		<span>Progress: {{ (downloadStatus$ | async)[item.url]?.progress?.percentage }}%</span>
+		<button (click)="removeFromQueue(item.url)">Remove</button>
+	</div>
+	}
+</div>

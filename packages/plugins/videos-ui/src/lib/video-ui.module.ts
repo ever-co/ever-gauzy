@@ -28,6 +28,10 @@ import { VideoItemComponent } from './shared/ui/video-item/video-item.component'
 import { VideoMetadataComponent } from './shared/ui/video-metadata/video-metadata.component';
 import { VideoPlayerComponent } from './shared/ui/video-player/video-player.component';
 import { VideoUiRoutingModule } from './video-ui-routing.module';
+import { DownloadQueueService } from './shared/services/download/download-queue.service';
+import { FileDownloadService } from './shared/services/download/file-download.service';
+import { VideoDownloadManagerComponent } from './features/video-download-manager/video-download-manager.component';
+import { FileSaveStrategy } from './shared/services/download/strategies/file-save.strategy';
 
 @NgModule({
 	declarations: [
@@ -41,7 +45,8 @@ import { VideoUiRoutingModule } from './video-ui-routing.module';
 		ActionButtonComponent,
 		ActionButtonGroupComponent,
 		VideoEditComponent,
-		VideoMetadataComponent
+		VideoMetadataComponent,
+		VideoDownloadManagerComponent
 	],
 	imports: [
 		CommonModule,
@@ -64,7 +69,10 @@ import { VideoUiRoutingModule } from './video-ui-routing.module';
 		VideoQuery,
 		VideoStore,
 		VideoService,
-		WebShareService
+		WebShareService,
+		DownloadQueueService,
+		FileDownloadService,
+		FileSaveStrategy
 	]
 })
 export class VideoUiModule {}

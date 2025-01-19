@@ -23,9 +23,7 @@ export class VideoComponent {
 		status: 'primary',
 		hidden: false,
 		disabled: false,
-		action: (video: IVideo) => {
-			console.log(video);
-		}
+		action: this.download.bind(this)
 	};
 
 	public readonly buttons: IActionButton[] = [
@@ -122,5 +120,9 @@ export class VideoComponent {
 				tap(() => this.actions.dispatch(VideoActions.deleteVideo(video.id)))
 			)
 			.subscribe();
+	}
+
+	public download({ fullUrl }: IVideo): void {
+		this.actions.dispatch(VideoActions.addToQueue(fullUrl));
 	}
 }
