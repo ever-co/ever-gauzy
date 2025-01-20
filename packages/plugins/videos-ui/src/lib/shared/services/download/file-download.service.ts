@@ -1,12 +1,14 @@
 import { HttpClient, HttpEventType } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ErrorHandlingService } from '@gauzy/ui-core/core';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { IDownloadProgress, IFileDownloadOptions } from '../../models/video-download.model';
 import { FileSaveStrategy } from './strategies/file-save.strategy';
 
 @Injectable({ providedIn: 'root' })
 export class FileDownloadService {
+	private activeDownloads = new Map<string, Subscription>();
+
 	constructor(
 		private readonly http: HttpClient,
 		private readonly fileSaveStrategy: FileSaveStrategy,
@@ -42,8 +44,18 @@ export class FileDownloadService {
 				}
 			});
 
-			return () => subscription.unsubscribe();
+			this.activeDownloads.set(options.url, subscription);
+
+			return () => this.cancel(options.url);
 		});
+	}
+
+	public cancel(url: string): void {
+		const subscription = this.activeDownloads.get(url);
+		if (subscription) {
+			subscription.unsubscribe();
+			this.activeDownloads.delete(url);
+		}
 	}
 
 	private extractFilename(url: string): string {

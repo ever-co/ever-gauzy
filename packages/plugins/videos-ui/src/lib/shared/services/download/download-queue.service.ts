@@ -30,7 +30,7 @@ export class DownloadQueueService {
 			)
 			.subscribe(([download, queues]) => {
 				queues.forEach((options) => {
-					const { status = DownloadStatus.PENDING } = download[options.url];
+					const { status = DownloadStatus.PENDING } = download[options.url] || {};
 					this.state = DownloadStateFactory.getState(status);
 					this.state.handle(options, this);
 				});
@@ -38,24 +38,30 @@ export class DownloadQueueService {
 	}
 
 	public add(urls: string | string[]): boolean {
-		const newItems = (Array.isArray(urls) ? urls : [urls])
-			.map((url) => ({ url }))
-			.filter((item) => !this.isDownloading(item.url));
+		// Ensure we have valid input
+		if (!urls || (Array.isArray(urls) && urls.length === 0)) {
+			return false;
+		}
 
-		if (newItems.length > 0) {
-			this._queue$.next([...this._queue$.value, ...newItems]);
+		const currentQueue = this._queue$.value;
+		const newUrls = Array.isArray(urls) ? urls : [urls];
+
+		// Filter out URLs already in the queue
+		const uniqueUrls = newUrls.filter((url) => !currentQueue.some((item) => item.url === url));
+
+		if (uniqueUrls.length > 0) {
+			// Add new unique URLs to the queue
+			const updatedQueue = [...currentQueue, ...uniqueUrls.map((url) => ({ url }))];
+			this._queue$.next(updatedQueue);
 			return true;
 		}
 
 		return false;
 	}
 
-	private isDownloading(url: string): boolean {
-		const download = this.getStatus(url);
-		return download.status === DownloadStatus.DOWNLOADING;
-	}
-
 	public remove(url: string): void {
+		// Cancel the download
+		this.fileDownloadService.cancel(url);
 		// Remove the URL from the queue
 		const updatedQueue = this._queue$.value.filter((item) => item.url !== url);
 		this._queue$.next(updatedQueue);
@@ -123,8 +129,7 @@ export class DownloadQueueService {
 	}
 
 	private getActiveCount(): number {
-		return Object.values(this._downloadStatus$.value).filter(
-			({ status }) => status === DownloadStatus.DOWNLOADING
-		).length;
+		return Object.values(this._downloadStatus$.value).filter(({ status }) => status === DownloadStatus.DOWNLOADING)
+			.length;
 	}
 }
