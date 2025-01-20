@@ -12,7 +12,7 @@
 				<div class="file-info">
 					<nb-icon icon="file-text-outline"></nb-icon>
 					<div class="file-details">
-						<h4 class="file-name">{{ extractFilename(item.url) }}</h4>
+						<h6 class="file-name">{{ extractFilename(item.url) }}</h6>
 						<p class="file-size">
 							{{ (downloadStatus$ | async)[item.url]?.progress?.loaded || 0 | fileSize }} /
 							{{ ((downloadStatus$ | async)[item.url]?.progress?.total | fileSize) || '---' }}
