@@ -1,28 +1,17 @@
+import { Query, HttpStatus, UseGuards, Get, Post, Body, HttpCode, Put, Param, Controller } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { CommandBus } from '@nestjs/cqrs';
 import {
 	PermissionsEnum,
 	IPagination,
 	IApprovalPolicy,
 	IListQueryInput,
-	IRequestApprovalFindInput
+	IRequestApprovalFindInput,
+	ID
 } from '@gauzy/contracts';
-import {
-	Query,
-	HttpStatus,
-	UseGuards,
-	Get,
-	Post,
-	Body,
-	HttpCode,
-	Put,
-	Param,
-	Controller,
-	ValidationPipe
-} from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CommandBus } from '@nestjs/cqrs';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { ParseJsonPipe, UseValidationPipe, UUIDValidationPipe } from './../shared/pipes';
 import { CrudController, PaginationParams } from '../core';
 import { ApprovalPolicy } from './approval-policy.entity';
 import { ApprovalPolicyService } from './approval-policy.service';
@@ -66,7 +55,7 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 	})
 	@Permissions(PermissionsEnum.APPROVAL_POLICY_VIEW)
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Get('request-approval')
+	@Get('/request-approval')
 	async findApprovalPoliciesForRequestApproval(
 		@Query('data', ParseJsonPipe)
 		data: IListQueryInput<IRequestApprovalFindInput>
@@ -81,10 +70,9 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 	 * @returns
 	 */
 	@Permissions(PermissionsEnum.APPROVAL_POLICY_VIEW)
-	@Get('pagination')
-	async pagination(
-		@Query(new ValidationPipe()) options: PaginationParams<ApprovalPolicy>
-	): Promise<IPagination<IApprovalPolicy>> {
+	@Get('/pagination')
+	@UseValidationPipe()
+	async pagination(@Query() options: PaginationParams<ApprovalPolicy>): Promise<IPagination<IApprovalPolicy>> {
 		return this.approvalPolicyService.pagination(options);
 	}
 
@@ -106,10 +94,9 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 	})
 	@Permissions(PermissionsEnum.APPROVAL_POLICY_VIEW)
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Get()
-	async findAll(
-		@Query(new ValidationPipe()) options: PaginationParams<ApprovalPolicy>
-	): Promise<IPagination<IApprovalPolicy>> {
+	@Get('/')
+	@UseValidationPipe()
+	async findAll(@Query() options: PaginationParams<ApprovalPolicy>): Promise<IPagination<IApprovalPolicy>> {
 		return await this.commandBus.execute(new ApprovalPolicyGetCommand(options));
 	}
 
@@ -129,15 +116,9 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
-	@Post()
-	async create(
-		@Body(
-			new ValidationPipe({
-				whitelist: true
-			})
-		)
-		entity: CreateApprovalPolicyDTO
-	): Promise<IApprovalPolicy> {
+	@Post('/')
+	@UseValidationPipe({ whitelist: true })
+	async create(@Body() entity: CreateApprovalPolicyDTO): Promise<IApprovalPolicy> {
 		return await this.commandBus.execute(new ApprovalPolicyCreateCommand(entity));
 	}
 
@@ -162,15 +143,11 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Put(':id')
+	@Put('/:id')
+	@UseValidationPipe({ whitelist: true })
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body(
-			new ValidationPipe({
-				whitelist: true
-			})
-		)
-		entity: UpdateApprovalPolicyDTO
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: UpdateApprovalPolicyDTO
 	): Promise<IApprovalPolicy> {
 		return await this.commandBus.execute(new ApprovalPolicyUpdateCommand(id, entity));
 	}

@@ -28,6 +28,7 @@ import { TypeOrmIntegrationTypeRepository } from './repository/type-orm-integrat
 		TypeOrmIntegrationRepository,
 		TypeOrmIntegrationTypeRepository,
 		...CommandHandlers
-	]
+	],
+	exports: [IntegrationService]
 })
 export class IntegrationModule {}

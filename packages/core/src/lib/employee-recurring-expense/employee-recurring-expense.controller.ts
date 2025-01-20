@@ -3,7 +3,8 @@ import {
 	PermissionsEnum,
 	IRecurringExpenseEditInput,
 	IEmployeeRecurringExpense,
-	IPagination
+	IPagination,
+	ID
 } from '@gauzy/contracts';
 import {
 	BadRequestException,
@@ -17,15 +18,14 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards,
-	ValidationPipe
+	UseGuards
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController, PaginationParams } from './../core/crud';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { ParseJsonPipe, UseValidationPipe, UUIDValidationPipe } from './../shared/pipes';
 import {
 	EmployeeRecurringExpenseCreateCommand,
 	EmployeeRecurringExpenseDeleteCommand,
@@ -62,8 +62,9 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 	})
 	@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_VIEW)
 	@Get('month')
+	@UseValidationPipe()
 	async findAllByMonth(
-		@Query(new ValidationPipe()) options: EmployeeRecurringExpenseQueryDTO
+		@Query() options: EmployeeRecurringExpenseQueryDTO
 	): Promise<IPagination<IEmployeeRecurringExpense>> {
 		return await this.queryBus.execute(new EmployeeRecurringExpenseByMonthQuery(options, options.relations));
 	}
@@ -100,8 +101,9 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 	})
 	@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_VIEW)
 	@Get()
+	@UseValidationPipe()
 	async findAll(
-		@Query(new ValidationPipe()) params: PaginationParams<EmployeeRecurringExpense>
+		@Query() params: PaginationParams<EmployeeRecurringExpense>
 	): Promise<IPagination<IEmployeeRecurringExpense>> {
 		try {
 			return this.employeeRecurringExpenseService.findAll({
@@ -137,14 +139,8 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	async create(
-		@Body(
-			new ValidationPipe({
-				transform: true
-			})
-		)
-		entity: CreateEmployeeRecurringExpenseDTO
-	): Promise<IEmployeeRecurringExpense> {
+	@UseValidationPipe({ transform: true })
+	async create(@Body() entity: CreateEmployeeRecurringExpenseDTO): Promise<IEmployeeRecurringExpense> {
 		return await this.commandBus.execute(new EmployeeRecurringExpenseCreateCommand(entity));
 	}
 
@@ -163,14 +159,10 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UseValidationPipe({ transform: true })
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body(
-			new ValidationPipe({
-				transform: true
-			})
-		)
-		entity: UpdateEmployeeRecurringExpenseDTO
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: UpdateEmployeeRecurringExpenseDTO
 	): Promise<IRecurringExpenseEditInput> {
 		return await this.commandBus.execute(new EmployeeRecurringExpenseEditCommand(id, entity));
 	}
@@ -186,7 +178,7 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async delete(@Param('id', UUIDValidationPipe) id: string, @Query('data', ParseJsonPipe) data: any): Promise<any> {
+	async delete(@Param('id', UUIDValidationPipe) id: ID, @Query('data', ParseJsonPipe) data: any): Promise<any> {
 		const { deleteInput } = data;
 		return await this.commandBus.execute(new EmployeeRecurringExpenseDeleteCommand(id, deleteInput));
 	}

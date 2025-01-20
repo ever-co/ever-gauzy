@@ -15,6 +15,7 @@ import { TypeOrmOrganizationVendorRepository } from './repository/type-orm-organ
 		RolePermissionModule
 	],
 	controllers: [OrganizationVendorController],
-	providers: [OrganizationVendorService, TypeOrmOrganizationVendorRepository, ...CommandHandlers]
+	providers: [OrganizationVendorService, TypeOrmOrganizationVendorRepository, ...CommandHandlers],
+	exports: [OrganizationVendorService]
 })
 export class OrganizationVendorModule {}

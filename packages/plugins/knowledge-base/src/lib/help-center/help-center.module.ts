@@ -1,5 +1,4 @@
 import { forwardRef, Module, OnModuleInit } from '@nestjs/common';
-import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -12,7 +11,6 @@ import { TypeOrmHelpCenterRepository } from './repository';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/help-center', module: HelpCenterModule }]),
 		forwardRef(() => TypeOrmModule.forFeature([HelpCenter])),
 		forwardRef(() => MikroOrmModule.forFeature([HelpCenter])),
 		RolePermissionModule,
@@ -23,7 +21,7 @@ import { TypeOrmHelpCenterRepository } from './repository';
 	exports: [HelpCenterService, TypeOrmHelpCenterRepository]
 })
 export class HelpCenterModule implements OnModuleInit {
-	constructor() { }
+	constructor() {}
 
-	onModuleInit() { }
+	onModuleInit() {}
 }

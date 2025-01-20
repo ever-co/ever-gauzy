@@ -15,6 +15,7 @@ import { FactoryResetModule } from './factory-reset/factory-reset.module';
 import { TaskModule } from './../tasks/task.module';
 import { EmployeeModule } from './../employee/employee.module';
 import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
+import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 
 @Module({
 	imports: [
@@ -27,7 +28,7 @@ import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 		FactoryResetModule
 	],
 	controllers: [UserController],
-	providers: [UserService, TypeOrmUserRepository, ...CommandHandlers],
-	exports: [UserService, TypeOrmUserRepository]
+	providers: [UserService, TypeOrmUserRepository, MikroOrmUserRepository, ...CommandHandlers],
+	exports: [UserService, TypeOrmUserRepository, MikroOrmUserRepository]
 })
 export class UserModule {}

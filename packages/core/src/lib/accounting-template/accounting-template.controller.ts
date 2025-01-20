@@ -8,7 +8,6 @@ import {
 	Body,
 	Put,
 	Param,
-	ValidationPipe,
 	Delete,
 	BadRequestException
 } from '@nestjs/common';
@@ -18,13 +17,14 @@ import { FindOptionsWhere, UpdateResult } from 'typeorm';
 import {
 	IAccountingTemplate,
 	IAccountingTemplateUpdateInput,
+	ID,
 	IPagination,
 	LanguagesEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from '../core/crud';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UseValidationPipe, UUIDValidationPipe } from './../shared/pipes';
 import { Permissions, LanguageDecorator } from './../shared/decorators';
 import { AccountingTemplateQuery } from './queries';
 import { AccountingTemplate } from './accounting-template.entity';
@@ -49,15 +49,9 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 	 * @param options
 	 * @returns
 	 */
-	@Get('count')
-	async getCount(
-		@Query(
-			new ValidationPipe({
-				transform: true
-			})
-		)
-		options: FindOptionsWhere<AccountingTemplate>
-	): Promise<number> {
+	@Get('/count')
+	@UseValidationPipe({ transform: true })
+	async getCount(@Query() options: FindOptionsWhere<AccountingTemplate>): Promise<number> {
 		return await this.accountingTemplateService.countBy(options);
 	}
 
@@ -67,14 +61,10 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 	 * @param options
 	 * @returns
 	 */
-	@Get('pagination')
+	@Get('/pagination')
+	@UseValidationPipe({ transform: true })
 	async pagination(
-		@Query(
-			new ValidationPipe({
-				transform: true
-			})
-		)
-		options: PaginationParams<AccountingTemplate>
+		@Query() options: PaginationParams<AccountingTemplate>
 	): Promise<IPagination<IAccountingTemplate>> {
 		return await this.accountingTemplateService.paginate(options);
 	}
@@ -98,15 +88,13 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get('template')
+	@Get('/template')
+	@UseValidationPipe({
+		transform: true,
+		whitelist: true
+	})
 	async getAccountingTemplate(
-		@Query(
-			new ValidationPipe({
-				transform: true,
-				whitelist: true
-			})
-		)
-		options: AccountingTemplateQueryDTO,
+		@Query() options: AccountingTemplateQueryDTO,
 		@LanguageDecorator() themeLanguage: LanguagesEnum
 	): Promise<IAccountingTemplate> {
 		return await this.accountingTemplateService.getAccountTemplate(options, themeLanguage);
@@ -120,7 +108,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 		description: 'text converted to html',
 		type: AccountingTemplate
 	})
-	@Post('template/preview')
+	@Post('/template/preview')
 	async generatePreview(@Body() input: any): Promise<any> {
 		return this.accountingTemplateService.generatePreview(input);
 	}
@@ -139,10 +127,9 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 		description: 'text converted to html',
 		type: AccountingTemplate
 	})
-	@Post('template/save')
-	async saveTemplate(
-		@Body(new ValidationPipe()) entity: SaveAccountingTemplateDTO
-	): Promise<IAccountingTemplate | UpdateResult> {
+	@Post('/template/save')
+	@UseValidationPipe()
+	async saveTemplate(@Body() entity: SaveAccountingTemplateDTO): Promise<IAccountingTemplate | UpdateResult> {
 		try {
 			return await this.accountingTemplateService.saveTemplate(entity);
 		} catch (error) {
@@ -164,7 +151,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 		type: AccountingTemplate
 	})
 	@Get(':id')
-	async findById(@Param('id', UUIDValidationPipe) id: string): Promise<IAccountingTemplate> {
+	async findById(@Param('id', UUIDValidationPipe) id: ID): Promise<IAccountingTemplate> {
 		try {
 			return await this.accountingTemplateService.findOneByIdString(id);
 		} catch (error) {
@@ -182,7 +169,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 	})
 	@Put(':id')
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() input: IAccountingTemplateUpdateInput
 	): Promise<IAccountingTemplate> {
 		try {
@@ -209,7 +196,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 		description: 'Accounting template not found'
 	})
 	@Delete(':id')
-	async delete(@Param('id', UUIDValidationPipe) id: string) {
+	async delete(@Param('id', UUIDValidationPipe) id: ID) {
 		try {
 			return await this.accountingTemplateService.delete(id);
 		} catch (error) {

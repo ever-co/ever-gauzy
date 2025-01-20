@@ -109,8 +109,9 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW)
 	@Get()
+	@UseValidationPipe()
 	async findAll(
-		@Query(new ValidationPipe()) options: PaginationParams<ProductCategory>,
+		@Query() options: PaginationParams<ProductCategory>,
 		@LanguageDecorator() themeLanguage: LanguagesEnum,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IPagination<ProductCategory>> {

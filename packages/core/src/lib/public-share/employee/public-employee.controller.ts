@@ -9,6 +9,7 @@ import { Employee } from './../../core/entities/internal';
 import { FindOnePublicEmployeeQuery, FindPublicEmployeesByOrganizationQuery } from './queries';
 import { PublicEmployeeQueryDTO } from './dto/public-employee-query.dto';
 import { PublicTransformInterceptor } from './../public-transform.interceptor';
+import { UseValidationPipe } from '../../shared/pipes';
 
 @Public()
 @UseInterceptors(PublicTransformInterceptor)
@@ -35,21 +36,10 @@ export class PublicEmployeeController {
 		description: 'Records not found'
 	})
 	@Get()
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async findPublicEmployeesByOrganization(
-		@Query(
-			new ValidationPipe({
-				transform: true,
-				whitelist: true
-			})
-		)
-		conditions: TenantOrganizationBaseDTO,
-		@Query(
-			new ValidationPipe({
-				transform: true,
-				whitelist: true
-			})
-		)
-		options: PublicEmployeeQueryDTO
+		@Query() conditions: TenantOrganizationBaseDTO,
+		@Query() options: PublicEmployeeQueryDTO
 	): Promise<IPagination<IEmployee>> {
 		return await this.queryBus.execute(
 			new FindPublicEmployeesByOrganizationQuery(conditions as FindOptionsWhere<Employee>, options.relations)
@@ -75,15 +65,10 @@ export class PublicEmployeeController {
 		description: 'Record not found'
 	})
 	@Get('/:profile_link/:id')
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async findPublicEmployeeByProfileLink(
 		@Param() params: FindOptionsWhere<Employee>,
-		@Query(
-			new ValidationPipe({
-				transform: true,
-				whitelist: true
-			})
-		)
-		options: PublicEmployeeQueryDTO
+		@Query() options: PublicEmployeeQueryDTO
 	): Promise<IEmployee> {
 		return await this.queryBus.execute(new FindOnePublicEmployeeQuery(params, options.relations));
 	}

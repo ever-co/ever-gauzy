@@ -9,8 +9,7 @@ import {
 	Param,
 	UseGuards,
 	Delete,
-	ValidationPipe,
-	UsePipes
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { KeyResult } from './keyresult.entity';
@@ -18,7 +17,7 @@ import { CrudController } from './../core/crud';
 import { KeyResultService } from './keyresult.service';
 import { TenantPermissionGuard } from './../shared/guards';
 import { BulkBodyLoadTransformPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
-import { IKeyResult } from '@gauzy/contracts';
+import { ID, IKeyResult } from '@gauzy/contracts';
 import { CreateKeyresultDTO, KeyresultBultInputDTO, UpdateKeyresultDTO } from './dto';
 
 @ApiTags('KeyResults')
@@ -40,7 +39,7 @@ export class KeyResultController extends CrudController<KeyResult> {
 		description: 'Key Result not found'
 	})
 	@Post()
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UseValidationPipe({ transform: true })
 	async create(@Body() entity: CreateKeyresultDTO): Promise<KeyResult> {
 		return this.keyResultService.create(entity);
 	}
@@ -96,7 +95,7 @@ export class KeyResultController extends CrudController<KeyResult> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	@UseValidationPipe({ transform: true })
-	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: UpdateKeyresultDTO): Promise<IKeyResult> {
+	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateKeyresultDTO): Promise<IKeyResult> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
 		try {
@@ -112,7 +111,7 @@ export class KeyResultController extends CrudController<KeyResult> {
 
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
+	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<any> {
 		return this.keyResultService.delete(id);
 	}
 }

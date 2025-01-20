@@ -71,7 +71,8 @@ export class TagTypeController extends CrudController<TagType> {
 	})
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TAG_TYPES_VIEW)
 	@Get('/')
-	async findAll(@Query(new ValidationPipe()) options: PaginationParams<TagType>): Promise<IPagination<TagType>> {
+	@UseValidationPipe()
+	async findAll(@Query() options: PaginationParams<TagType>): Promise<IPagination<TagType>> {
 		return await this.tagTypesService.findAll(options);
 	}
 

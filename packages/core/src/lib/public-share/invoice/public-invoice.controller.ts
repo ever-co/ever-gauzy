@@ -1,10 +1,11 @@
-import { UseInterceptors, Controller, Get, Param, Query, ValidationPipe, Put, Body } from '@nestjs/common';
+import { UseInterceptors, Controller, Get, Param, Query, Put, Body } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Public } from '@gauzy/common';
 import { FindOptionsWhere, UpdateResult } from 'typeorm';
 import { HttpStatus, IInvoice } from '@gauzy/contracts';
 import { Invoice } from './../../core/entities/internal';
+import { UseValidationPipe } from '../../shared/pipes';
 import { PublicTransformInterceptor } from './../public-transform.interceptor';
 import { FindPublicInvoiceQuery } from './queries';
 import { PublicInvoiceUpdateCommand } from './commands';
@@ -33,15 +34,10 @@ export class PublicInvoiceController {
 		description: 'Record not found'
 	})
 	@Get(':id/:token')
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async findOneByPublicLink(
 		@Param() params: FindOptionsWhere<Invoice>,
-		@Query(
-			new ValidationPipe({
-				transform: true,
-				whitelist: true
-			})
-		)
-		query: PublicInvoiceQueryDTO
+		@Query() query: PublicInvoiceQueryDTO
 	): Promise<IInvoice> {
 		return await this.queryBus.execute(new FindPublicInvoiceQuery(params, query.relations));
 	}
@@ -63,9 +59,10 @@ export class PublicInvoiceController {
 		description: 'Record not found.'
 	})
 	@Put(':id/:token')
+	@UseValidationPipe({ whitelist: true })
 	async updateInvoiceByEstimateEmailToken(
 		@Param() params: IInvoice,
-		@Body(new ValidationPipe({ whitelist: true })) entity: PublicEstimateUpdateDTO
+		@Body() entity: PublicEstimateUpdateDTO
 	): Promise<IInvoice | UpdateResult> {
 		return await this.commandBus.execute(new PublicInvoiceUpdateCommand(params, entity));
 	}
