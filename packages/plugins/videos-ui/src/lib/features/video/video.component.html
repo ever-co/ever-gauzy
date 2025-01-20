@@ -1,4 +1,4 @@
-@if(video$ | async; as video){
+@let video = video$ | async; @defer{
 <div class="video">
 	<plug-video-player [src]="video.fullUrl" [controls]="true"></plug-video-player>
 	<div class="info">
@@ -47,6 +47,8 @@
 <ng-template #actions>
 	<plug-action-button-group [buttons]="buttons" [data]="video"></plug-action-button-group>
 </ng-template>
+} @placeholder{
+<plug-video-skeleton></plug-video-skeleton>
 }
 
 <ng-template #manager>

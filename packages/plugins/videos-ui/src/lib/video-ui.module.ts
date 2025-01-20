@@ -35,6 +35,8 @@ import { DownloadQueueService } from './shared/services/download/download-queue.
 import { FileDownloadService } from './shared/services/download/file-download.service';
 import { VideoDownloadManagerComponent } from './features/video-download-manager/video-download-manager.component';
 import { FileSaveStrategy } from './shared/services/download/strategies/file-save.strategy';
+import { VideoItemSkeletonComponent } from './shared/ui/video-item-skeleton/video-item-skeleton.component';
+import { VideoSkeletonComponent } from './shared/ui/video-skeleton/video-skeleton.component';
 
 @NgModule({
 	declarations: [
@@ -49,7 +51,9 @@ import { FileSaveStrategy } from './shared/services/download/strategies/file-sav
 		ActionButtonGroupComponent,
 		VideoEditComponent,
 		VideoMetadataComponent,
-		VideoDownloadManagerComponent
+		VideoDownloadManagerComponent,
+  VideoItemSkeletonComponent,
+  VideoSkeletonComponent
 	],
 	imports: [
 		CommonModule,
