@@ -9,103 +9,105 @@
 	</nb-card-header>
 	<nb-card-body class="card-body">
 		<form [formGroup]="form" #proposalForm="ngForm" (ngSubmit)="registerProposal()">
-			<div class="row">
-				<div class="col-sm-3">
-					<div class="form-group">
-						<label class="label">
-							{{ 'PROPOSALS_PAGE.REGISTER.AUTHOR' | translate }}
-						</label>
-						<ga-employee-selector
-							id="authorInput"
-							class="employees"
-							[skipGlobalChange]="true"
-							[defaultSelected]="true"
-							(selectionChanged)="selectionEmployee($event)"
-						></ga-employee-selector>
+			<div class="container">
+				<div class="row">
+					<div class="col-sm-3">
+						<div class="form-group">
+							<label class="label">
+								{{ 'PROPOSALS_PAGE.REGISTER.AUTHOR' | translate }}
+							</label>
+							<ga-employee-selector
+								id="authorInput"
+								class="employees"
+								[skipGlobalChange]="true"
+								[defaultSelected]="true"
+								(selectionChanged)="selectionEmployee($event)"
+							></ga-employee-selector>
+						</div>
 					</div>
 				</div>
-			</div>
-			<div class="row">
-				<div class="col-sm-3">
-					<div class="form-group">
-						<label class="label"> {{ 'PROPOSALS_PAGE.REGISTER.TEMPLATE' | translate }}</label>
-						<ngx-proposal-template-select
-							(selectedChange)="onProposalTemplateChange($event)"
-							[ngModelOptions]="{ standalone: true }"
-							[(ngModel)]="proposalTemplateId"
-							[employeeId]="selectedEmployee?.id"
-						></ngx-proposal-template-select>
+				<div class="row">
+					<div class="col-sm-3">
+						<div class="form-group">
+							<label class="label"> {{ 'PROPOSALS_PAGE.REGISTER.TEMPLATE' | translate }}</label>
+							<ngx-proposal-template-select
+								(selectedChange)="onProposalTemplateChange($event)"
+								[ngModelOptions]="{ standalone: true }"
+								[(ngModel)]="proposalTemplateId"
+								[employeeId]="selectedEmployee?.id"
+							></ngx-proposal-template-select>
+						</div>
+					</div>
+					<div class="col-sm-3">
+						<div class="form-group">
+							<label class="label">{{ 'POP_UPS.CONTACT' | translate }}</label>
+							<ga-contact-select
+								[addTag]="true"
+								[searchable]="true"
+								(onChanged)="selectOrganizationContact($event)"
+								[placeholder]="'POP_UPS.CONTACT' | translate"
+								formControlName="organizationContact"
+							>
+							</ga-contact-select>
+						</div>
 					</div>
 				</div>
-				<div class="col-sm-3">
-					<div class="form-group">
-						<label class="label">{{ 'POP_UPS.CONTACT' | translate }}</label>
-						<ga-contact-select
-							[addTag]="true"
-							[searchable]="true"
-							(onChanged)="selectOrganizationContact($event)"
-							[placeholder]="'POP_UPS.CONTACT' | translate"
-							formControlName="organizationContact"
-						>
-						</ga-contact-select>
+				<div class="row">
+					<div class="col-xl-6">
+						<div class="form-group">
+							<label class="label">{{ 'PROPOSALS_PAGE.REGISTER.JOB_POST_URL' | translate }} </label>
+							<input
+								nbInput
+								fullWidth
+								type="text"
+								[placeholder]="'PROPOSALS_PAGE.REGISTER.JOB_POST_URL' | translate"
+								formControlName="jobPostUrl"
+								autocomplete="on"
+							/>
+						</div>
+					</div>
+					<div class="col-sm-3">
+						<div class="form-group">
+							<label class="label">{{ 'PROPOSALS_PAGE.REGISTER.PROPOSAL_DATE' | translate }} </label>
+							<input
+								formControlName="valueDate"
+								nbInput
+								fullWidth
+								[placeholder]="'PROPOSALS_PAGE.REGISTER.PROPOSAL_DATE' | translate"
+								[nbDatepicker]="valueDatePicker"
+							/>
+							<nb-datepicker [min]="minDate" #valueDatePicker></nb-datepicker>
+						</div>
+					</div>
+					<div class="col-sm-3">
+						<ga-tags-color-input
+							[selectedTags]="form.get('tags').value"
+							(selectedTagsEvent)="selectedTagsEvent($event)"
+							[isOrgLevel]="true"
+						></ga-tags-color-input>
 					</div>
 				</div>
-			</div>
-			<div class="row">
-				<div class="col-xl-6">
-					<div class="form-group">
-						<label class="label">{{ 'PROPOSALS_PAGE.REGISTER.JOB_POST_URL' | translate }} </label>
-						<input
-							nbInput
-							fullWidth
-							type="text"
-							[placeholder]="'PROPOSALS_PAGE.REGISTER.JOB_POST_URL' | translate"
-							formControlName="jobPostUrl"
-							autocomplete="on"
-						/>
+				<div class="row">
+					<div class="col-xl-6">
+						<nb-card>
+							<nb-card-header>
+								{{ 'PROPOSALS_PAGE.REGISTER.JOB_POST_CONTENT' | translate }}
+							</nb-card-header>
+							<nb-card-body>
+								<ckeditor formControlName="jobPostContent" [config]="ckConfig"></ckeditor>
+							</nb-card-body>
+						</nb-card>
 					</div>
-				</div>
-				<div class="col-sm-3">
-					<div class="form-group">
-						<label class="label">{{ 'PROPOSALS_PAGE.REGISTER.PROPOSAL_DATE' | translate }} </label>
-						<input
-							formControlName="valueDate"
-							nbInput
-							fullWidth
-							[placeholder]="'PROPOSALS_PAGE.REGISTER.PROPOSAL_DATE' | translate"
-							[nbDatepicker]="valueDatePicker"
-						/>
-						<nb-datepicker [min]="minDate" #valueDatePicker></nb-datepicker>
+					<div div class="col-xl-6">
+						<nb-card>
+							<nb-card-header>
+								{{ 'PROPOSALS_PAGE.REGISTER.PROPOSALS_CONTENT' | translate }}
+							</nb-card-header>
+							<nb-card-body>
+								<ckeditor formControlName="proposalContent" [config]="ckConfig"></ckeditor>
+							</nb-card-body>
+						</nb-card>
 					</div>
-				</div>
-				<div class="col-sm-3">
-					<ga-tags-color-input
-						[selectedTags]="form.get('tags').value"
-						(selectedTagsEvent)="selectedTagsEvent($event)"
-						[isOrgLevel]="true"
-					></ga-tags-color-input>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-xl-6">
-					<nb-card>
-						<nb-card-header>
-							{{ 'PROPOSALS_PAGE.REGISTER.JOB_POST_CONTENT' | translate }}
-						</nb-card-header>
-						<nb-card-body>
-							<ckeditor formControlName="jobPostContent" [config]="ckConfig"></ckeditor>
-						</nb-card-body>
-					</nb-card>
-				</div>
-				<div div class="col-xl-6">
-					<nb-card>
-						<nb-card-header>
-							{{ 'PROPOSALS_PAGE.REGISTER.PROPOSALS_CONTENT' | translate }}
-						</nb-card-header>
-						<nb-card-body>
-							<ckeditor formControlName="proposalContent" [config]="ckConfig"></ckeditor>
-						</nb-card-body>
-					</nb-card>
 				</div>
 			</div>
 		</form>
