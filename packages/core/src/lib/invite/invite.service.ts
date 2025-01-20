@@ -52,7 +52,8 @@ import { UserOrganizationService } from './../user-organization/user-organizatio
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
-import { MikroOrmInviteRepository, TypeOrmInviteRepository } from './repository';
+import { TypeOrmInviteRepository } from './repository/type-orm-invite.repository';
+import { MikroOrmInviteRepository } from './repository/mikro-orm-invite.repository';
 import { Invite } from './invite.entity';
 import { InviteAcceptCommand } from './commands';
 

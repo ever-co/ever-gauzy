@@ -7,7 +7,7 @@ import { HelpCenterController } from './help-center.controller';
 import { HelpCenter } from './help-center.entity';
 import { HelpCenterService } from './help-center.service';
 import { CommandHandlers } from './commands/handlers';
-import { TypeOrmHelpCenterRepository } from './repository';
+import { TypeOrmHelpCenterRepository } from './repository/type-orm-help-center.repository';
 
 @Module({
 	imports: [

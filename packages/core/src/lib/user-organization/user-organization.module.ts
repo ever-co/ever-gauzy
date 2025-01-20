@@ -11,8 +11,9 @@ import { RoleModule } from './../role/role.module';
 import { UserOrganizationService } from './user-organization.services';
 import { UserOrganizationController } from './user-organization.controller';
 import { UserOrganization } from './user-organization.entity';
-import { MikroOrmUserOrganizationRepository, TypeOrmUserOrganizationRepository } from './repository';
 import { CommandHandlers } from './commands/handlers';
+import { TypeOrmUserOrganizationRepository } from './repository/type-orm-user-organization.repository';
+import { MikroOrmUserOrganizationRepository } from './repository/mikro-orm-user-organization.repository';
 
 @Module({
 	imports: [

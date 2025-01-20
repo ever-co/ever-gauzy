@@ -22,7 +22,8 @@ import { TaskStatusPrioritySizeService } from '../task-status-priority-size.serv
 import { TaskStatus } from './status.entity';
 import { DEFAULT_GLOBAL_STATUSES } from './default-global-statuses';
 import { TASK_STATUSES_TEMPLATES } from './standard-statuses-template';
-import { MikroOrmTaskStatusRepository, TypeOrmTaskStatusRepository } from './repository';
+import { TypeOrmTaskStatusRepository } from './repository/type-orm-task-status.repository';
+import { MikroOrmTaskStatusRepository } from './repository/mikro-orm-task-status.repository';
 
 @Injectable()
 export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus> {

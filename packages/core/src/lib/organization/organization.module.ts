@@ -10,7 +10,7 @@ import { CommandHandlers } from './commands/handlers';
 import { OrganizationController } from './organization.controller';
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
-import { TypeOrmOrganizationRepository } from './repository';
+import { TypeOrmOrganizationRepository } from './repository/type-orm-organization.repository';
 
 @Module({
 	imports: [

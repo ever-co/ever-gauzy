@@ -10,7 +10,7 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 import { OrganizationModule } from './../organization/organization.module';
 import { OrganizationProjectModule } from './../organization-project/organization-project.module';
 import { ContactModule } from '../contact/contact.module';
-import { TypeOrmOrganizationContactRepository } from './repository';
+import { TypeOrmOrganizationContactRepository } from './repository/type-orm-organization-contact.repository';
 
 @Module({
 	imports: [

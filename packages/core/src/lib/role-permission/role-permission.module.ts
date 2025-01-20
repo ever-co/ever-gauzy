@@ -7,7 +7,7 @@ import { RolePermissionController } from './role-permission.controller';
 import { RolePermission } from './role-permission.entity';
 import { RolePermissionService } from './role-permission.service';
 import { RoleModule } from './../role/role.module';
-import { TypeOrmRolePermissionRepository } from './repository';
+import { TypeOrmRolePermissionRepository } from './repository/type-orm-role-permission.repository';
 
 @Module({
 	imports: [

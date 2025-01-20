@@ -9,7 +9,8 @@ import { FeatureService } from './feature.service';
 import { FeatureOrganizationService } from './feature-organization.service';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
-import { TypeOrmFeatureOrganizationRepository, TypeOrmFeatureRepository } from './repository';
+import { TypeOrmFeatureRepository } from './repository/type-orm-feature.repository';
+import { TypeOrmFeatureOrganizationRepository } from './repository/type-orm-feature-organization.repository';
 
 @Module({
 	imports: [

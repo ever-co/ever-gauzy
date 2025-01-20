@@ -35,7 +35,8 @@ import { RequestContext } from './../core/context';
 import { freshTimestamp, MultiORMEnum } from './../core/utils';
 import { EmployeeService } from '../employee/employee.service';
 import { TaskService } from '../tasks/task.service';
-import { MikroOrmUserRepository, TypeOrmUserRepository } from './repository';
+import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
+import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 import { User } from './user.entity';
 
 @Injectable()

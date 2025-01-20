@@ -11,7 +11,7 @@ import { IntegrationEntitySettingModule } from './../integration-entity-setting/
 import { RoleModule } from '../role/role.module';
 import { CommandHandlers } from './commands/handlers';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { TypeOrmIntegrationTenantRepository } from './repository';
+import { TypeOrmIntegrationTenantRepository } from './repository/type-orm-integration-tenant.repository';
 
 @Module({
 	imports: [

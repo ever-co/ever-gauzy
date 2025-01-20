@@ -4,7 +4,7 @@ import { RequestContext } from '../core/context';
 import { PaginationParams, TenantAwareCrudService } from '../core/crud';
 import { Employee } from '../core/entities/internal';
 import { EmployeeService } from '../employee/employee.service';
-import { TypeOrmOrganizationRepository } from '../organization/repository';
+import { TypeOrmOrganizationRepository } from '../organization/repository/type-orm-organization.repository';
 import { UserOrganization } from './user-organization.entity';
 import { TypeOrmUserOrganizationRepository } from './repository/type-orm-user-organization.repository';
 import { MikroOrmUserOrganizationRepository } from './repository/mikro-orm-user-organization.repository';

@@ -13,7 +13,8 @@ import { Public } from '@gauzy/common';
 import { getORMType, MultiORM, MultiORMEnum } from '../core/utils';
 import { CacheHealthIndicator } from './indicators/cache-health.indicator';
 import { RedisHealthIndicator } from './indicators/redis-health.indicator';
-import { MikroOrmUserRepository, TypeOrmUserRepository } from '../user/repository';
+import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
+import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
 
 @Controller('/health')
 export class HealthController {

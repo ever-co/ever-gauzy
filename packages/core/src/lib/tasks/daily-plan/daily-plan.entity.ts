@@ -13,7 +13,7 @@ import {
 	MultiORMManyToOne
 } from '../../core/decorators/entity';
 import { Employee, OrganizationTeam, Task, TenantOrganizationBaseEntity } from '../../core/entities/internal';
-import { MikroOrmDailyPlanRepository } from './repository';
+import { MikroOrmDailyPlanRepository } from './repository/mikro-orm-daily-plan.repository';
 
 @MultiORMEntity('daily_plan', { mikroOrmRepository: () => MikroOrmDailyPlanRepository })
 export class DailyPlan extends TenantOrganizationBaseEntity implements IDailyPlan {

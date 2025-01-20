@@ -25,12 +25,10 @@ import { SubscriptionService } from '../subscription/subscription.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { OrganizationSprint } from './organization-sprint.entity';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
-import {
-	MikroOrmOrganizationSprintEmployeeRepository,
-	MikroOrmOrganizationSprintRepository,
-	TypeOrmOrganizationSprintEmployeeRepository,
-	TypeOrmOrganizationSprintRepository
-} from './repository';
+import { TypeOrmOrganizationSprintRepository } from './repository/type-orm-organization-sprint.repository';
+import { TypeOrmOrganizationSprintEmployeeRepository } from './repository/type-orm-organization-sprint-employee.repository';
+import { MikroOrmOrganizationSprintRepository } from './repository/mikro-orm-organization-sprint.repository';
+import { MikroOrmOrganizationSprintEmployeeRepository } from './repository/mikro-orm-organization-sprint-employee.repository';
 
 @FavoriteService(BaseEntityEnum.OrganizationSprint)
 @Injectable()

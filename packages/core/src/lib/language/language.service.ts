@@ -1,7 +1,8 @@
-import { Language } from './language.entity';
-import { CrudService } from '../core';
 import { Injectable } from '@nestjs/common';
-import { MikroOrmLanguageRepository, TypeOrmLanguageRepository } from './repository';
+import { CrudService } from '../core/crud/crud.service';
+import { TypeOrmLanguageRepository } from './repository/type-orm-language.repository';
+import { MikroOrmLanguageRepository } from './repository/mikro-orm-language.repository';
+import { Language } from './language.entity';
 
 @Injectable()
 export class LanguageService extends CrudService<Language> {

@@ -4,10 +4,8 @@ import { IOrganization } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/common';
 import { RequestContext } from '../../../core/context';
 import { MultiORM, MultiORMEnum, getORMType } from '../../../core/utils';
-import {
-	MikroOrmUserOrganizationRepository,
-	TypeOrmUserOrganizationRepository
-} from '../../../user-organization/repository';
+import { TypeOrmUserOrganizationRepository } from '../../../user-organization/repository/type-orm-user-organization.repository';
+import { MikroOrmUserOrganizationRepository } from '../../../user-organization/repository/mikro-orm-user-organization.repository';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();

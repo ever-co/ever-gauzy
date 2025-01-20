@@ -16,8 +16,9 @@ import { PaginationParams, TenantAwareCrudService } from '../../core/crud';
 import { RequestContext } from '../../core/context';
 import { EmployeeService } from '../../employee/employee.service';
 import { TaskService } from '../task.service';
-import { MikroOrmDailyPlanRepository, TypeOrmDailyPlanRepository } from './repository';
 import { DailyPlan } from './daily-plan.entity';
+import { MikroOrmDailyPlanRepository } from './repository/mikro-orm-daily-plan.repository';
+import { TypeOrmDailyPlanRepository } from './repository/type-orm-daily-plan.repository';
 
 @Injectable()
 export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {

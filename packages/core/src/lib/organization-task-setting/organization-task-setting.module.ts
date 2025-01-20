@@ -7,7 +7,7 @@ import { OrganizationTaskSettingService } from './organization-task-setting.serv
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { OrganizationTaskSetting } from './organization-task-setting.entity';
 import { CommandHandlers } from './commands/handlers';
-import { TypeOrmOrganizationTaskSettingRepository } from './repository';
+import { TypeOrmOrganizationTaskSettingRepository } from './repository/type-orm-organization-task-setting.repository';
 
 @Module({
 	imports: [

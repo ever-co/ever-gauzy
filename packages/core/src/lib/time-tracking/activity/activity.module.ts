@@ -11,7 +11,7 @@ import { ActivityService } from './activity.service';
 import { Activity } from './activity.entity';
 import { ActivityMapService } from './activity.map.service';
 import { TimeSlotModule } from './../time-slot/time-slot.module';
-import { TypeOrmActivityRepository } from './repository';
+import { TypeOrmActivityRepository } from './repository/type-orm-activity.repository';
 
 @Module({
 	controllers: [ActivityController],

@@ -15,7 +15,7 @@ import { TaskViewModule } from './views/view.module';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskController } from './task.controller';
-import { TypeOrmTaskRepository } from './repository';
+import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
 
 @Module({
 	imports: [
