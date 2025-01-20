@@ -12,7 +12,7 @@ export const createDefaultTags = async (
 ): Promise<Tag[]> => {
 	let tags: Tag[] = [];
 	for (const organization of organizations) {
-		const organizationTags: Tag[] = Object.values(DEFAULT_GLOBAL_TAGS).map((name, index) => {
+		const organizationTags: Tag[] = Object.values(DEFAULT_GLOBAL_TAGS).map((name) => {
 			const orgTags = new Tag();
 			orgTags.name = name;
 			orgTags.description = '';
@@ -80,7 +80,7 @@ export const createRandomOrganizationTags = async (
 				: Object.values(DEFAULT_ORGANIZATION_TAGS);
 
 			// Create Tag instances for the current organization
-			const organizationTags: Tag[] = tags.map((name: string, index: number) => {
+			const organizationTags: Tag[] = tags.map((name: string) => {
 				const tag = new Tag();
 				tag.name = name;
 				tag.description = ''; // Consider adding meaningful descriptions if applicable
