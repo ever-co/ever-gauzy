@@ -1,6 +1,6 @@
 @let video = video$ | async; @defer{
 <div class="video">
-	<plug-video-player [src]="video.fullUrl" [controls]="true"></plug-video-player>
+	<plug-video-player #videoPlayer [src]="video.fullUrl" [controls]="true"></plug-video-player>
 	<div class="info">
 		<div class="video-title-container">
 			<div class="title">

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, Input, ViewChild } from '@angular/core';
 
 @Component({
 	selector: 'plug-video-player',
@@ -7,6 +7,14 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VideoPlayerComponent {
-	@Input() src!: string;
-	@Input() controls = false;
+	@ViewChild('video')
+	private video!: ElementRef<HTMLVideoElement>;
+	@Input()
+	public src!: string;
+	@Input()
+	public controls = false;
+
+	public get player(): HTMLVideoElement {
+		return this.video.nativeElement;
+	}
 }

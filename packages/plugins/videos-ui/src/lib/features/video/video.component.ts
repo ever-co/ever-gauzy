@@ -1,22 +1,25 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
 import { NbDialogService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
-import { combineLatest, filter, map, Observable, tap } from 'rxjs';
+import { combineLatest, distinctUntilChanged, filter, map, Observable, tap } from 'rxjs';
 import { VideoActions } from '../../+state/video.action';
 import { VideoQuery } from '../../+state/video.query';
 import { IActionButton } from '../../shared/models/action-button.model';
 import { IVideo } from '../../shared/models/video.model';
 import { VideoEditComponent } from '../../shared/ui/video-edit/video-edit.component';
 import { VideoMetadataComponent } from '../../shared/ui/video-metadata/video-metadata.component';
+import { VideoPlayerComponent } from '../../shared/ui/video-player/video-player.component';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'plug-video',
 	templateUrl: './video.component.html',
 	styleUrl: './video.component.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class VideoComponent {
+export class VideoComponent implements AfterViewInit {
 	public readonly downloadButton: IActionButton = {
 		label: 'Download',
 		icon: 'download-outline',
@@ -62,11 +65,24 @@ export class VideoComponent {
 		}
 	];
 
+	@ViewChild('videoPlayer') video!: VideoPlayerComponent;
+
 	constructor(
 		private readonly videoQuery: VideoQuery,
 		private readonly dialogService: NbDialogService,
 		private readonly actions: Actions
 	) {}
+
+	ngAfterViewInit(): void {
+		this.video$
+			.pipe(
+				filter((video) => !!this.video && !!video),
+				distinctUntilChanged(),
+				tap(() => this.video.player.load()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 
 	public get video$(): Observable<IVideo> {
 		return this.videoQuery.video$;
