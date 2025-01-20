@@ -192,7 +192,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW,
 			/** API Call Log */
 			PermissionsEnum.API_CALL_LOG_READ,
-			PermissionsEnum.API_CALL_LOG_DELETE
+			PermissionsEnum.API_CALL_LOG_DELETE,
+			/** Tenant API Key */
+			PermissionsEnum.TENANT_API_KEY_CREATE,
+			PermissionsEnum.TENANT_API_KEY_VIEW,
+			PermissionsEnum.TENANT_API_KEY_DELETE
 		]
 	},
 	{
@@ -391,7 +395,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW,
 			/** API Call Log */
 			PermissionsEnum.API_CALL_LOG_READ,
-			PermissionsEnum.API_CALL_LOG_DELETE
+			PermissionsEnum.API_CALL_LOG_DELETE,
+			/** Tenant API Key */
+			PermissionsEnum.TENANT_API_KEY_CREATE,
+			PermissionsEnum.TENANT_API_KEY_VIEW,
+			PermissionsEnum.TENANT_API_KEY_DELETE
 		]
 	},
 	{

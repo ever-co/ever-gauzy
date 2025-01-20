@@ -2134,7 +2134,10 @@
 			"ORG_TASK_EDIT": "Aufgaben bearbeiten",
 			"ORG_TASK_DELETE": "Aufgaben löschen",
 			"ORG_TASK_SETTING": "Aufgabeeinstellungen",
-			"ORG_MEMBER_LAST_LOG_VIEW": "Letztes Protokoll anzeigen"
+			"ORG_MEMBER_LAST_LOG_VIEW": "Letztes Protokoll anzeigen",
+			"TENANT_API_KEY_CREATE": "API-Schlüssel erstellen",
+			"TENANT_API_KEY_VIEW": "API-Schlüssel anzeigen",
+			"TENANT_API_KEY_DELETE": "API-Schlüssel löschen"
 		},
 		"BILLING": "Rechnungsstellung",
 		"BUDGET": "Budget",

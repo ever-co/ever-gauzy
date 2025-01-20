@@ -106,15 +106,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	app.enableCors({
 		origin: '*',
 		credentials: true,
-		methods: [
-			'GET',
-			'HEAD',
-			'PUT',
-			'PATCH',
-			'POST',
-			'DELETE',
-			'OPTIONS'
-		].join(','),
+		methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'].join(','),
 		allowedHeaders: [
 			'Authorization',
 			'Language',
@@ -507,8 +499,8 @@ export function getMigrationsConfig() {
 	const migrationsDir = path.resolve(
 		__dirname,
 		isElectron
-			? './../database/migrations/*.js'           // Only .ts if Electron
-			: './../database/migrations/*{.ts,.js}'      // Otherwise .ts or .js
+			? './../database/migrations/*.js' // Only .ts if Electron
+			: './../database/migrations/*{.ts,.js}' // Otherwise .ts or .js
 	);
 	console.log('Migration migrationsDir: ->', migrationsDir);
 
@@ -516,7 +508,7 @@ export function getMigrationsConfig() {
 		chalk.red(console.log(`Migrations directory not found: ${migrationsDir}`));
 	}
 
-    // CLI Migrations directory path
+	// CLI Migrations directory path
 	const cliMigrationsDir = path.resolve(__dirname, './../database/migrations'); // Adjusted for src structure
 	console.log('Migration cliMigrationsDir: ->', cliMigrationsDir);
 
@@ -524,11 +516,11 @@ export function getMigrationsConfig() {
 		chalk.red(console.log(`CLI migrations directory not found: ${cliMigrationsDir}`));
 	}
 
-    // Return the migration paths
-    return {
-        migrations: [migrationsDir],
-        cli: {
-            migrationsDir: cliMigrationsDir
-        }
-    };
+	// Return the migration paths
+	return {
+		migrations: [migrationsDir],
+		cli: {
+			migrationsDir: cliMigrationsDir
+		}
+	};
 }
