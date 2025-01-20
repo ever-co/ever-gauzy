@@ -1,5 +1,6 @@
 import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Response, Request } from 'express';
 import { FeatureFlagEnabledGuard, FeatureFlag, Public } from '@gauzy/common';
 import { SocialAuthService } from './../social-auth.service';
 import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
@@ -18,7 +19,7 @@ export class GoogleController {
 	 * @param req
 	 */
 	@Get('/google')
-	googleLogin(@Req() req: any) {}
+	googleLogin(@Req() _: Request) {}
 
 	/**
 	 * Google login callback endpoint.
@@ -28,7 +29,7 @@ export class GoogleController {
 	 * @returns The result of the Google login callback.
 	 */
 	@Get('/google/callback')
-	async googleLoginCallback(@RequestCtx() requestCtx: IIncomingRequest, @Res() res) {
+	async googleLoginCallback(@RequestCtx() requestCtx: IIncomingRequest, @Res() res: Response) {
 		const { user } = requestCtx;
 		const { success, authData } = await this.service.validateOAuthLoginEmail(user.emails);
 		return this.service.routeRedirect(success, authData, res);

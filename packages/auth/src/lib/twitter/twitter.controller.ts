@@ -1,5 +1,6 @@
 import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Response, Request } from 'express';
 import { FeatureFlagEnabledGuard, FeatureFlag, Public } from '@gauzy/common';
 import { FeatureEnum } from '@gauzy/contracts';
 import { SocialAuthService } from './../social-auth.service';
@@ -18,7 +19,7 @@ export class TwitterController {
 	 * @param req
 	 */
 	@Get('/twitter')
-	twitterLogin(@Req() req: any) {}
+	twitterLogin(@Req() _: Request) {}
 
 	/**
 	 * Twitter login callback endpoint.
@@ -28,7 +29,7 @@ export class TwitterController {
 	 * @returns The result of the Twitter login callback.
 	 */
 	@Get('/twitter/callback')
-	async twitterLoginCallback(@RequestCtx() requestCtx: IIncomingRequest, @Res() res: any) {
+	async twitterLoginCallback(@RequestCtx() requestCtx: IIncomingRequest, @Res() res: Response) {
 		const { user } = requestCtx;
 		const { success, authData } = await this.service.validateOAuthLoginEmail(user.emails);
 		return this.service.routeRedirect(success, authData, res);

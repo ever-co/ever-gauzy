@@ -1,5 +1,6 @@
 import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Response, Request } from 'express';
 import { FeatureFlagEnabledGuard, FeatureFlag, Public } from '@gauzy/common';
 import { FeatureEnum } from '@gauzy/contracts';
 import { SocialAuthService } from './../social-auth.service';
@@ -18,7 +19,7 @@ export class FacebookController {
 	 * @param req
 	 */
 	@Get('/facebook')
-	facebookLogin(@Req() req: any) {}
+	facebookLogin(@Req() _: Request) {}
 
 	/**
 	 * Facebook login callback endpoint.
@@ -28,7 +29,7 @@ export class FacebookController {
 	 * @returns The result of the Facebook login callback.
 	 */
 	@Get('/facebook/callback')
-	async facebookLoginCallback(@RequestCtx() requestCtx: IIncomingRequest, @Res() res) {
+	async facebookLoginCallback(@RequestCtx() requestCtx: IIncomingRequest, @Res() res: Response) {
 		const { user } = requestCtx;
 		const { success, authData } = await this.service.validateOAuthLoginEmail(user.emails);
 		return this.service.routeRedirect(success, authData, res);

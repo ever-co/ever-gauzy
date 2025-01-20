@@ -1,5 +1,6 @@
 import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Response, Request } from 'express';
 import { FeatureFlagEnabledGuard, FeatureFlag, Public } from '@gauzy/common';
 import { FeatureEnum } from '@gauzy/contracts';
 import { SocialAuthService } from './../social-auth.service';
@@ -18,7 +19,7 @@ export class LinkedinController {
 	 * @param req
 	 */
 	@Get('/linkedin')
-	linkedinLogin(@Req() req: any) {}
+	linkedinLogin(@Req() _: Request) {}
 
 	/**
 	 * LinkedIn login callback endpoint.
@@ -28,7 +29,7 @@ export class LinkedinController {
 	 * @returns The result of the LinkedIn login callback.
 	 */
 	@Get('/linkedin/callback')
-	async linkedinLoginCallback(@RequestCtx() requestCtx: IIncomingRequest, @Res() res) {
+	async linkedinLoginCallback(@RequestCtx() requestCtx: IIncomingRequest, @Res() res: Response) {
 		const { user } = requestCtx;
 		const { success, authData } = await this.service.validateOAuthLoginEmail(user.emails);
 

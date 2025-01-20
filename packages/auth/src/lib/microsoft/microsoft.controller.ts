@@ -1,5 +1,6 @@
 import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Response, Request } from 'express';
 import { FeatureFlagEnabledGuard, FeatureFlag, Public } from '@gauzy/common';
 import { FeatureEnum } from '@gauzy/contracts';
 import { SocialAuthService } from './../social-auth.service';
@@ -18,7 +19,7 @@ export class MicrosoftController {
 	 * @param req
 	 */
 	@Get('/microsoft')
-	microsoftLogin(@Req() req: any) {}
+	microsoftLogin(@Req() _: Request) {}
 
 	/**
 	 * Microsoft login callback endpoint.
@@ -28,7 +29,7 @@ export class MicrosoftController {
 	 * @returns The result of the Microsoft login callback.
 	 */
 	@Get('/microsoft/callback')
-	async microsoftLoginCallback(@RequestCtx() requestCtx: IIncomingRequest, @Res() res) {
+	async microsoftLoginCallback(@RequestCtx() requestCtx: IIncomingRequest, @Res() res: Response) {
 		const { user } = requestCtx;
 		const { success, authData } = await this.service.validateOAuthLoginEmail(user.emails);
 		return this.service.routeRedirect(success, authData, res);
