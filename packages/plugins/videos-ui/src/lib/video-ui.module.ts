@@ -3,12 +3,15 @@ import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { GauzyFiltersModule, NoDataMessageModule, SharedModule } from '@gauzy/ui-core/shared';
 import {
+	NbBadgeModule,
 	NbButtonModule,
 	NbCardModule,
 	NbDialogModule,
 	NbIconModule,
 	NbInputModule,
-	NbPopoverModule
+	NbListModule,
+	NbPopoverModule,
+	NbProgressBarModule
 } from '@nebular/theme';
 import { provideEffects, provideEffectsManager } from '@ngneat/effects-ng';
 import { VideoEffects } from './+state/video.effect';
@@ -61,7 +64,10 @@ import { FileSaveStrategy } from './shared/services/download/strategies/file-sav
 		FormsModule,
 		ReactiveFormsModule,
 		NbDialogModule,
-		NbInputModule
+		NbInputModule,
+		NbBadgeModule,
+		NbProgressBarModule,
+		NbListModule
 	],
 	providers: [
 		provideEffectsManager(),

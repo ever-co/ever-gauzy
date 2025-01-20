@@ -131,4 +131,16 @@ export class VideoEffects {
 			})
 		)
 	);
+
+	retryDownload$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(VideoActions.retryDownload),
+			tap(({ url }) => {
+				const isRetry = this.downloadQueueService.retry(url);
+				if (isRetry) {
+					this.toastrService.info('Video retried', 'Download');
+				}
+			})
+		)
+	);
 }

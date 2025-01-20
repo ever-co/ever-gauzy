@@ -75,6 +75,16 @@ export class DownloadQueueService {
 		this.process();
 	}
 
+	public retry(url: string): boolean {
+		const options = this._queue$.value.find((item) => item.url === url);
+		if (options) {
+			this.start(options);
+			return true;
+		}
+
+		return false;
+	}
+
 	private process(): void {
 		const activeDownloads = this.getActiveCount();
 		const pendingDownloads = this._queue$.value.filter(

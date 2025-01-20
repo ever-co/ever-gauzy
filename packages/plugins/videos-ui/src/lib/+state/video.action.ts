@@ -26,4 +26,8 @@ export class VideoActions {
 	public static removeFromQueue = createAction('[Videos] Remove from Queue', (url: string) => ({
 		url
 	}));
+
+	public static retryDownload = createAction('[Videos] Retry Download', (url: string) => ({
+		url
+	}));
 }
