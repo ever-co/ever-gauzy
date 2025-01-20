@@ -60,8 +60,15 @@ nb-progress-bar {
   width: 100%;
 }
 
-:host ::ng-deep {
-  .progress-container {
-    height: 5px !important;
+:host {
+  ::ng-deep {
+    .progress-container {
+      height: 5px !important;
+    }
   }
+}
+
+.no-downloads,
+.main {
+  min-width: 400px;
 }

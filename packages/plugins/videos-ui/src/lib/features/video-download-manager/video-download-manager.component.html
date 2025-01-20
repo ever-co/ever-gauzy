@@ -1,6 +1,7 @@
-<nb-card>
+@if((downloadQueue$ | async)?.length > 0) {
+<nb-card class="main">
 	<nb-card-header class="pb-0">
-		<h3>Downloads</h3>
+		<h4>Downloads</h4>
 	</nb-card-header>
 
 	<nb-card-body>
@@ -42,3 +43,8 @@
 		}
 	</nb-card-body>
 </nb-card>
+}@else {
+<div class="no-downloads">
+	<ngx-no-data-message message="No video download"></ngx-no-data-message>
+</div>
+}
