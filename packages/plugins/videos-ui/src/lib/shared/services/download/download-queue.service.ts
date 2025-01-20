@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, filter, map, withLatestFrom } from 'rxjs';
+import { ToastrService } from '@gauzy/ui-core/core';
+import { BehaviorSubject, filter, switchMap, withLatestFrom } from 'rxjs';
 import {
 	DownloadStatus,
 	IDownload,
@@ -21,20 +22,22 @@ export class DownloadQueueService {
 	private readonly MAX_CONCURRENT_DOWNLOADS = 3;
 	private state: IDownloadState = DownloadStateFactory.getState(DownloadStatus.PENDING);
 
-	constructor(private fileDownloadService: FileDownloadService) {
+	constructor(private fileDownloadService: FileDownloadService, readonly toastrService: ToastrService) {
 		this.queue$.pipe(filter((queue) => queue.length > 0)).subscribe(() => this.process());
 		this.downloadStatus$
 			.pipe(
-				map((download) => download),
-				withLatestFrom(this.queue$)
+				withLatestFrom(this.queue$),
+				switchMap(([download, queues]) =>
+					queues
+						.filter((options) => !!download[options.url])
+						.map((options) => {
+							const { status } = download[options.url];
+							this.state = DownloadStateFactory.getState(status);
+							this.state.handle(options, this);
+						})
+				)
 			)
-			.subscribe(([download, queues]) => {
-				queues.forEach((options) => {
-					const { status = DownloadStatus.PENDING } = download[options.url] || {};
-					this.state = DownloadStateFactory.getState(status);
-					this.state.handle(options, this);
-				});
-			});
+			.subscribe();
 	}
 
 	public add(urls: string | string[]): boolean {

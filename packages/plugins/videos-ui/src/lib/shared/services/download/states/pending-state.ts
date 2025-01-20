@@ -3,7 +3,7 @@ import { DownloadQueueService } from '../download-queue.service';
 
 export class PendingState implements IDownloadState {
 	public handle(options: IFileDownloadOptions, contextService: DownloadQueueService): void {
-		console.log(`Starting download for: ${options.url}`);
+		contextService.toastrService.info(`Starting download for: ${options.url}`, 'Download');
 		contextService.start(options);
 	}
 }
