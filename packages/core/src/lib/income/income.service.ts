@@ -10,7 +10,10 @@ import { TypeOrmIncomeRepository } from './repository/type-orm-income.repository
 
 @Injectable()
 export class IncomeService extends TenantAwareCrudService<Income> {
-	constructor(typeOrmIncomeRepository: TypeOrmIncomeRepository, mikroOrmIncomeRepository: MikroOrmIncomeRepository) {
+	constructor(
+		readonly typeOrmIncomeRepository: TypeOrmIncomeRepository,
+		readonly mikroOrmIncomeRepository: MikroOrmIncomeRepository
+	) {
 		super(typeOrmIncomeRepository, mikroOrmIncomeRepository);
 	}
 

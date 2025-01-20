@@ -14,13 +14,13 @@ import { TypeOrmProductVariantRepository } from './repository/type-orm-product-v
 
 @Module({
 	imports: [
+		CqrsModule,
 		TypeOrmModule.forFeature([ProductVariant]),
 		MikroOrmModule.forFeature([ProductVariant]),
 		RolePermissionModule,
 		ProductVariantPriceModule,
 		ProductVariantSettingModule,
-		forwardRef(() => ProductModule),
-		CqrsModule
+		forwardRef(() => ProductModule)
 	],
 	controllers: [ProductVariantController],
 	providers: [ProductVariantService, TypeOrmProductVariantRepository, ...CommandHandlers],

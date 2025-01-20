@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { OrganizationContact } from './organization-contact.entity';
 import { OrganizationContactController } from './organization-contact.controller';
@@ -15,12 +14,6 @@ import { TypeOrmOrganizationContactRepository } from './repository';
 
 @Module({
 	imports: [
-		RouterModule.register([
-			{
-				path: '/organization-contact',
-				module: OrganizationContactModule
-			}
-		]),
 		TypeOrmModule.forFeature([OrganizationContact]),
 		MikroOrmModule.forFeature([OrganizationContact]),
 		RolePermissionModule,

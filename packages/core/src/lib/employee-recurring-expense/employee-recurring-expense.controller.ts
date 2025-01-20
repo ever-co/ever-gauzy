@@ -35,15 +35,12 @@ import { CreateEmployeeRecurringExpenseDTO, UpdateEmployeeRecurringExpenseDTO } 
 import { EmployeeRecurringExpenseQueryDTO } from './dto/employee-recurring-expense-query.dto';
 import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
 import { EmployeeRecurringExpenseService } from './employee-recurring-expense.service';
-import {
-	EmployeeRecurringExpenseByMonthQuery,
-	EmployeeRecurringExpenseStartDateUpdateTypeQuery
-} from './queries';
+import { EmployeeRecurringExpenseByMonthQuery, EmployeeRecurringExpenseStartDateUpdateTypeQuery } from './queries';
 
 @ApiTags('EmployeeRecurringExpense')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_EDIT)
-@Controller()
+@Controller('/employee-recurring-expense')
 export class EmployeeRecurringExpenseController extends CrudController<EmployeeRecurringExpense> {
 	constructor(
 		private readonly employeeRecurringExpenseService: EmployeeRecurringExpenseService,
@@ -68,12 +65,7 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 	async findAllByMonth(
 		@Query(new ValidationPipe()) options: EmployeeRecurringExpenseQueryDTO
 	): Promise<IPagination<IEmployeeRecurringExpense>> {
-		return await this.queryBus.execute(
-			new EmployeeRecurringExpenseByMonthQuery(
-				options,
-				options.relations
-			)
-		);
+		return await this.queryBus.execute(new EmployeeRecurringExpenseByMonthQuery(options, options.relations));
 	}
 
 	@ApiOperation({
@@ -89,13 +81,9 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 	})
 	@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_VIEW)
 	@Get('date-update-type')
-	async findStartDateUpdateType(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IStartUpdateTypeInfo> {
+	async findStartDateUpdateType(@Query('data', ParseJsonPipe) data: any): Promise<IStartUpdateTypeInfo> {
 		const { findInput } = data;
-		return this.queryBus.execute(
-			new EmployeeRecurringExpenseStartDateUpdateTypeQuery(findInput)
-		);
+		return this.queryBus.execute(new EmployeeRecurringExpenseStartDateUpdateTypeQuery(findInput));
 	}
 
 	@ApiOperation({
@@ -113,25 +101,25 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 	@Permissions(PermissionsEnum.EMPLOYEE_EXPENSES_VIEW)
 	@Get()
 	async findAll(
-		@Query(new ValidationPipe()) params: PaginationParams<EmployeeRecurringExpense>,
+		@Query(new ValidationPipe()) params: PaginationParams<EmployeeRecurringExpense>
 	): Promise<IPagination<IEmployeeRecurringExpense>> {
 		try {
 			return this.employeeRecurringExpenseService.findAll({
-				...(
-					(params && params.relations) ? {
-						relations: params.relations
-					} : {}
-				),
-				...(
-					(params && params.where) ? {
-						where: params.where
-					} : {}
-				),
-				...(
-					(params && params.order) ? {
-						order: params.order
-					} : {}
-				),
+				...(params && params.relations
+					? {
+							relations: params.relations
+					  }
+					: {}),
+				...(params && params.where
+					? {
+							where: params.where
+					  }
+					: {}),
+				...(params && params.order
+					? {
+							order: params.order
+					  }
+					: {})
 			});
 		} catch (error) {
 			throw new BadRequestException(error);
@@ -145,19 +133,19 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	async create(
-		@Body(new ValidationPipe({
-			transform: true
-		})) entity: CreateEmployeeRecurringExpenseDTO
+		@Body(
+			new ValidationPipe({
+				transform: true
+			})
+		)
+		entity: CreateEmployeeRecurringExpenseDTO
 	): Promise<IEmployeeRecurringExpense> {
-		return await this.commandBus.execute(
-			new EmployeeRecurringExpenseCreateCommand(entity)
-		);
+		return await this.commandBus.execute(new EmployeeRecurringExpenseCreateCommand(entity));
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })
@@ -171,20 +159,20 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body(new ValidationPipe({
-			transform: true
-		})) entity: UpdateEmployeeRecurringExpenseDTO
+		@Body(
+			new ValidationPipe({
+				transform: true
+			})
+		)
+		entity: UpdateEmployeeRecurringExpenseDTO
 	): Promise<IRecurringExpenseEditInput> {
-		return await this.commandBus.execute(
-			new EmployeeRecurringExpenseEditCommand(id, entity)
-		);
+		return await this.commandBus.execute(new EmployeeRecurringExpenseEditCommand(id, entity));
 	}
 
 	@ApiOperation({ summary: 'Delete record' })
@@ -198,13 +186,8 @@ export class EmployeeRecurringExpenseController extends CrudController<EmployeeR
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<any> {
+	async delete(@Param('id', UUIDValidationPipe) id: string, @Query('data', ParseJsonPipe) data: any): Promise<any> {
 		const { deleteInput } = data;
-		return await this.commandBus.execute(
-			new EmployeeRecurringExpenseDeleteCommand(id, deleteInput)
-		);
+		return await this.commandBus.execute(new EmployeeRecurringExpenseDeleteCommand(id, deleteInput));
 	}
 }

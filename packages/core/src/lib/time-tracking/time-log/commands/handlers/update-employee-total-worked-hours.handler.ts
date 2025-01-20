@@ -1,18 +1,16 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ConfigService, DatabaseTypeEnum } from '@gauzy/config';
 import { ID } from '@gauzy/contracts';
-import { prepareSQLQuery as p } from './../../../database/database.helper';
-import { RequestContext } from './../../../core/context';
-import { EmployeeService } from '../../employee.service';
+import { prepareSQLQuery as p } from './../../../../database/database.helper';
+import { RequestContext } from './../../../../core/context';
+import { EmployeeService } from '../../../../employee/employee.service';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
-import { TypeOrmTimeLogRepository } from '../../../time-tracking/time-log/repository/type-orm-time-log.repository';
-import { TypeOrmTimeSlotRepository } from '../../../time-tracking/time-slot/repository/type-orm-time-slot.repository';
+import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 
 @CommandHandler(UpdateEmployeeTotalWorkedHoursCommand)
 export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<UpdateEmployeeTotalWorkedHoursCommand> {
 	constructor(
 		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
-		readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
 		private readonly _employeeService: EmployeeService,
 		private readonly _configService: ConfigService
 	) {}

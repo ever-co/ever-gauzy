@@ -38,6 +38,7 @@ import { TypeOrmProductOptionGroupTranslationRepository } from './repository/typ
 		TypeOrmProductOptionTranslationRepository,
 		TypeOrmProductOptionGroupRepository,
 		TypeOrmProductOptionGroupTranslationRepository
-	]
+	],
+	exports: [ProductOptionService, ProductOptionGroupService]
 })
 export class ProductOptionModule {}

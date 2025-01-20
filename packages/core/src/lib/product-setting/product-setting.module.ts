@@ -14,6 +14,7 @@ import { TypeOrmProductVariantSettingRepository } from './repository/type-orm-pr
 		RolePermissionModule
 	],
 	controllers: [ProductVariantSettingController],
-	providers: [ProductVariantSettingService, TypeOrmProductVariantSettingRepository]
+	providers: [ProductVariantSettingService, TypeOrmProductVariantSettingRepository],
+	exports: [ProductVariantSettingService]
 })
 export class ProductVariantSettingModule {}

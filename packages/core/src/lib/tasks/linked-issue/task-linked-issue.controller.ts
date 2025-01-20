@@ -27,7 +27,7 @@ import { TaskLinkedIssueCreateCommand, TaskLinkedIssueUpdateCommand } from './co
 @ApiTags('Linked Issue')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)
-@Controller()
+@Controller('/task-linked-issue')
 export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
 	constructor(
 		private readonly taskLinkedIssueService: TaskLinkedIssueService,

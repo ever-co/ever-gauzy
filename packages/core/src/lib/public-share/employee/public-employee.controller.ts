@@ -12,12 +12,9 @@ import { PublicTransformInterceptor } from './../public-transform.interceptor';
 
 @Public()
 @UseInterceptors(PublicTransformInterceptor)
-@Controller()
+@Controller('/public/employee')
 export class PublicEmployeeController {
-
-	constructor(
-		private readonly queryBus: QueryBus
-	) {}
+	constructor(private readonly queryBus: QueryBus) {}
 
 	/**
 	 * GET public employees in the specific organization
@@ -39,20 +36,23 @@ export class PublicEmployeeController {
 	})
 	@Get()
 	async findPublicEmployeesByOrganization(
-		@Query(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) conditions: TenantOrganizationBaseDTO,
-		@Query(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) options: PublicEmployeeQueryDTO
+		@Query(
+			new ValidationPipe({
+				transform: true,
+				whitelist: true
+			})
+		)
+		conditions: TenantOrganizationBaseDTO,
+		@Query(
+			new ValidationPipe({
+				transform: true,
+				whitelist: true
+			})
+		)
+		options: PublicEmployeeQueryDTO
 	): Promise<IPagination<IEmployee>> {
 		return await this.queryBus.execute(
-			new FindPublicEmployeesByOrganizationQuery(
-				conditions as FindOptionsWhere<Employee>,
-				options.relations
-			)
+			new FindPublicEmployeesByOrganizationQuery(conditions as FindOptionsWhere<Employee>, options.relations)
 		);
 	}
 
@@ -63,7 +63,7 @@ export class PublicEmployeeController {
 	 * @param profile_link
 	 * @returns
 	 */
-	 @ApiOperation({
+	@ApiOperation({
 		summary: 'Find public information for one employee by profile link in the organization.'
 	})
 	@ApiResponse({
@@ -77,13 +77,14 @@ export class PublicEmployeeController {
 	@Get('/:profile_link/:id')
 	async findPublicEmployeeByProfileLink(
 		@Param() params: FindOptionsWhere<Employee>,
-		@Query(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) options: PublicEmployeeQueryDTO
+		@Query(
+			new ValidationPipe({
+				transform: true,
+				whitelist: true
+			})
+		)
+		options: PublicEmployeeQueryDTO
 	): Promise<IEmployee> {
-		return await this.queryBus.execute(
-			new FindOnePublicEmployeeQuery(params, options.relations)
-		);
+		return await this.queryBus.execute(new FindOnePublicEmployeeQuery(params, options.relations));
 	}
 }

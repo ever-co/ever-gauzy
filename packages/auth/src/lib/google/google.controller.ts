@@ -5,20 +5,20 @@ import { SocialAuthService } from './../social-auth.service';
 import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
 import { FeatureEnum } from '@gauzy/contracts';
 
-@Controller()
 @UseGuards(FeatureFlagEnabledGuard, AuthGuard('google'))
 @FeatureFlag(FeatureEnum.FEATURE_GOOGLE_LOGIN)
 @Public()
+@Controller('/auth')
 export class GoogleController {
-	constructor(public readonly service: SocialAuthService) { }
+	constructor(public readonly service: SocialAuthService) {}
 
 	/**
 	 * Initiates Google login.
 	 *
 	 * @param req
 	 */
-	@Get('google')
-	googleLogin(@Req() req: any) { }
+	@Get('/google')
+	googleLogin(@Req() req: any) {}
 
 	/**
 	 * Google login callback endpoint.
@@ -27,11 +27,8 @@ export class GoogleController {
 	 * @param res - The response object.
 	 * @returns The result of the Google login callback.
 	 */
-	@Get('google/callback')
-	async googleLoginCallback(
-		@RequestCtx() requestCtx: IIncomingRequest,
-		@Res() res
-	) {
+	@Get('/google/callback')
+	async googleLoginCallback(@RequestCtx() requestCtx: IIncomingRequest, @Res() res) {
 		const { user } = requestCtx;
 		const { success, authData } = await this.service.validateOAuthLoginEmail(user.emails);
 		return this.service.routeRedirect(success, authData, res);

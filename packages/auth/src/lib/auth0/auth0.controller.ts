@@ -4,7 +4,7 @@ import { Public } from '@gauzy/common';
 import { SocialAuthService } from './../social-auth.service';
 import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
 
-@Controller('auth0')
+@Controller('/auth')
 @Public()
 export class Auth0Controller {
 	constructor(public readonly service: SocialAuthService) {}
@@ -14,7 +14,7 @@ export class Auth0Controller {
 	 *
 	 * @param req - The incoming request object, typically used to access request data or user information.
 	 */
-	@Get('')
+	@Get('/auth0')
 	@UseGuards(AuthGuard('auth0'))
 	auth0Login(@Req() req: any) {}
 
@@ -25,17 +25,11 @@ export class Auth0Controller {
 	 * @param res - The response object used to send a redirect or response to the client.
 	 * @returns {Promise<void>} - A promise that resolves after redirecting the user.
 	 */
-	@Get('callback')
+	@Get('auth0/callback')
 	@UseGuards(AuthGuard('auth0'))
-	async auth0LoginCallback(
-		@RequestCtx() requestCtx: IIncomingRequest,
-		@Res() res
-	) {
+	async auth0LoginCallback(@RequestCtx() requestCtx: IIncomingRequest, @Res() res) {
 		const { user } = requestCtx;
-		const {
-			success,
-			authData
-		} = await this.service.validateOAuthLoginEmail(user.emails);
+		const { success, authData } = await this.service.validateOAuthLoginEmail(user.emails);
 		return this.service.routeRedirect(success, authData, res);
 	}
 }

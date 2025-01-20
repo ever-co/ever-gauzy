@@ -12,7 +12,7 @@ import { TimesheetSubmitCommand, TimesheetUpdateStatusCommand } from './commands
 @ApiTags('TimeSheet')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.CAN_APPROVE_TIMESHEET)
-@Controller()
+@Controller('/timesheet')
 export class TimeSheetController {
 	constructor(private readonly _commandBus: CommandBus, private readonly _timeSheetService: TimeSheetService) {}
 

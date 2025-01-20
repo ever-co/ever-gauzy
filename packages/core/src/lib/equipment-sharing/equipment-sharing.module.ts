@@ -19,6 +19,7 @@ import { RequestApprovalModule } from '../request-approval/request-approval.modu
 		RolePermissionModule
 	],
 	controllers: [EquipmentSharingController],
-	providers: [EquipmentSharingService, TypeOrmEquipmentSharingRepository, ...CommandHandlers]
+	providers: [EquipmentSharingService, TypeOrmEquipmentSharingRepository, ...CommandHandlers],
+	exports: [EquipmentSharingService]
 })
 export class EquipmentSharingModule {}

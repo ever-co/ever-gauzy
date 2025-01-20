@@ -27,7 +27,7 @@ import { CreateProductDTO, UpdateProductDTO } from './dto';
 
 @ApiTags('Product')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/products')
 export class ProductController extends CrudController<Product> {
 	constructor(private readonly productService: ProductService, private readonly commandBus: CommandBus) {
 		super(productService);

@@ -1,11 +1,11 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IIntegrationType } from '@gauzy/contracts';
 import { IntegrationTypeGetCommand } from '../integration-type.get.command';
-import { TypeOrmIntegrationTypeRepository } from '../../repository/type-orm-integration-type.repository';
+import { IntegrationTypeService } from '../../integration-type.service';
 
 @CommandHandler(IntegrationTypeGetCommand)
 export class IntegrationTypeGetHandler implements ICommandHandler<IntegrationTypeGetCommand> {
-	constructor(readonly typeOrmIntegrationTypeRepository: TypeOrmIntegrationTypeRepository) {}
+	constructor(private readonly _integrationTypeService: IntegrationTypeService) {}
 
 	/**
 	 * Executes the `IntegrationTypeGetCommand` to retrieve all integration types.
@@ -23,7 +23,7 @@ export class IntegrationTypeGetHandler implements ICommandHandler<IntegrationTyp
 	 * ```
 	 */
 	public async execute(command: IntegrationTypeGetCommand): Promise<IIntegrationType[]> {
-		return this.typeOrmIntegrationTypeRepository.find({
+		return this._integrationTypeService.find({
 			order: { order: 'ASC' }
 		});
 	}

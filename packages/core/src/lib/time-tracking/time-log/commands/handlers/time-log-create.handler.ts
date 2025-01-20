@@ -3,7 +3,7 @@ import * as moment from 'moment';
 import { TimeLogType, TimeLogSourceEnum, ID, ITimeSlot, ITimesheet } from '@gauzy/contracts';
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from '../../../timesheet/commands';
-import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
+import { UpdateEmployeeTotalWorkedHoursCommand } from '../../commands/update-employee-total-worked-hours.command';
 import { RequestContext } from '../../../../core/context';
 import { TimeLogService } from '../../time-log.service';
 import { TimeLog } from '../../time-log.entity';

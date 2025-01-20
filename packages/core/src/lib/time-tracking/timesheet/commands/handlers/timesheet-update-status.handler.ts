@@ -1,19 +1,16 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { NotAcceptableException } from '@nestjs/common';
-import { Repository, In } from 'typeorm';
+import { In } from 'typeorm';
 import { ITimesheet, TimesheetStatus } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../../../core/context';
 import { EmailService } from './../../../../email-send/email.service';
 import { TimesheetUpdateStatusCommand } from '../timesheet-update-status.command';
-import { Timesheet } from './../../timesheet.entity';
+import { TimeSheetService } from '../../timesheet.service';
 
 @CommandHandler(TimesheetUpdateStatusCommand)
 export class TimesheetUpdateStatusHandler implements ICommandHandler<TimesheetUpdateStatusCommand> {
-	constructor(
-		private readonly timeSheetRepository: Repository<Timesheet>,
-		private readonly emailService: EmailService
-	) {}
+	constructor(readonly _timeSheetService: TimeSheetService, readonly _emailService: EmailService) {}
 
 	/**
 	 * Updates the status of one or multiple timesheets.
@@ -27,13 +24,6 @@ export class TimesheetUpdateStatusHandler implements ICommandHandler<TimesheetUp
 	 * This method updates the status of multiple timesheets based on the provided `ids`.
 	 * If the status is changed to `APPROVED`, it records the approver's ID and approval timestamp.
 	 * After updating, it fetches the updated timesheets and sends email notifications to employees.
-	 *
-	 * @example
-	 * ```ts
-	 * const command = new TimesheetUpdateStatusCommand({ ids: ['123'], status: TimesheetStatus.APPROVED });
-	 * const updatedTimesheets = await timesheetService.execute(command);
-	 * console.log(updatedTimesheets);
-	 * ```
 	 */
 	public async execute(command: TimesheetUpdateStatusCommand): Promise<ITimesheet[]> {
 		const { input } = command;
@@ -57,10 +47,12 @@ export class TimesheetUpdateStatusHandler implements ICommandHandler<TimesheetUp
 		const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
 		// Update timesheets
-		await this.timeSheetRepository.update({ id: In(ids), organizationId, tenantId }, updatePayload);
+		await this._timeSheetService.update({ id: In(ids), organizationId, tenantId }, updatePayload);
 
 		// Fetch updated timesheets with employee and user details
-		const timesheets = await this.timeSheetRepository.find({
+		const timesheets = await this._timeSheetService.find({
+			relations: { employee: { user: true } },
+			where: { id: In(ids), organizationId },
 			select: {
 				employee: {
 					id: true,
@@ -72,16 +64,16 @@ export class TimesheetUpdateStatusHandler implements ICommandHandler<TimesheetUp
 						email: true
 					}
 				}
-			},
-			where: { id: In(ids), organizationId, tenantId: RequestContext.currentTenantId() },
-			relations: { employee: { user: true } }
+			}
 		});
 
 		// Send email notifications
 		timesheets.forEach((timesheet: ITimesheet) => {
-			const { employee } = timesheet;
+			// Retrieve employee and user details
+			const employee = timesheet.employee;
+			// Send email notification to employee
 			if (employee?.user?.email) {
-				this.emailService.setTimesheetAction(employee.user.email, timesheet);
+				this._emailService.setTimesheetAction(employee.user.email, timesheet);
 			}
 		});
 

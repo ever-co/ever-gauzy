@@ -1,7 +1,6 @@
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { OrganizationTaskSettingController } from './organization-task-setting.controller';
 import { OrganizationTaskSettingService } from './organization-task-setting.service';
@@ -12,12 +11,6 @@ import { TypeOrmOrganizationTaskSettingRepository } from './repository';
 
 @Module({
 	imports: [
-		RouterModule.register([
-			{
-				path: '/organization-task-setting',
-				module: OrganizationTaskSettingModule
-			}
-		]),
 		TypeOrmModule.forFeature([OrganizationTaskSetting]),
 		MikroOrmModule.forFeature([OrganizationTaskSetting]),
 		RolePermissionModule,

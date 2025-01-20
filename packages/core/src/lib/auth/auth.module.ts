@@ -1,12 +1,8 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from '@nestjs/core';
 import { HttpModule } from '@nestjs/axios';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { SocialAuthModule } from '@gauzy/auth';
 import { EventBusModule } from '../event-bus/event-bus.module';
-import { UserOrganization } from '../core/entities/internal';
 import { EmailSendModule } from '../email-send/email-send.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
@@ -23,6 +19,7 @@ import { EmailConfirmationService } from './email-confirmation.service';
 import { EmailVerificationController } from './email-verification.controller';
 import { FeatureModule } from '../feature/feature.module';
 import { SocialAccountModule } from './social-account/social-account.module';
+import { UserOrganizationModule } from '../user-organization/user-organization.module';
 
 // Core service providers for handling authentication and related functionalities
 const providers = [AuthService, EmailConfirmationService, UserOrganizationService];
@@ -32,19 +29,13 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 
 @Module({
 	imports: [
-		RouterModule.register([
-			{
-				path: '/auth',
-				module: AuthModule,
-				children: [{ path: '/', module: SocialAuthModule }]
-			}
-		]),
 		SocialAuthModule.registerAsync({
 			imports: [
 				HttpModule,
 				AuthModule,
 				EmailSendModule,
 				UserModule,
+				forwardRef(() => UserOrganizationModule),
 				EmployeeModule,
 				RoleModule,
 				OrganizationModule,
@@ -56,10 +47,9 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 			],
 			useClass: AuthService
 		}),
-		TypeOrmModule.forFeature([UserOrganization]),
-		MikroOrmModule.forFeature([UserOrganization]),
 		EmailSendModule,
 		UserModule,
+		forwardRef(() => UserOrganizationModule),
 		EmployeeModule,
 		RoleModule,
 		OrganizationModule,

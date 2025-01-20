@@ -1,7 +1,6 @@
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { OrganizationSprintEmployee } from './organization-sprint-employee.entity';
 import { OrganizationSprintTaskHistory } from './organization-sprint-task-history.entity';
@@ -19,7 +18,6 @@ import { TypeOrmOrganizationSprintTaskHistoryRepository } from './repository/typ
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/organization-sprint', module: OrganizationSprintModule }]),
 		TypeOrmModule.forFeature([OrganizationSprint, Task, OrganizationSprintEmployee, OrganizationSprintTaskHistory]),
 		MikroOrmModule.forFeature([
 			OrganizationSprint,

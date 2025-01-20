@@ -19,13 +19,18 @@ import { EmployeeAggregatedStatisticByMonthQueryDTO } from './dto';
 
 @ApiTags('EmployeeStatistics')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/employee-statistics')
 export class EmployeeStatisticsController {
 	constructor(
 		private readonly employeeStatisticsService: EmployeeStatisticsService,
 		private readonly queryBus: QueryBus
-	) { }
+	) {}
 
+	/**
+	 *
+	 * @param data
+	 * @returns
+	 */
 	@ApiOperation({
 		summary: 'Find aggregate for all employees by organization id'
 	})
@@ -42,6 +47,12 @@ export class EmployeeStatisticsController {
 		return this.queryBus.execute(new AggregatedEmployeeStatisticQuery(findInput));
 	}
 
+	/**
+	 *
+	 * @param id
+	 * @param data
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find by id' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Found one record' })
 	@ApiResponse({
@@ -57,6 +68,11 @@ export class EmployeeStatisticsController {
 		return this.employeeStatisticsService.getStatisticsByEmployeeId(id, findInput);
 	}
 
+	/**
+	 *
+	 * @param options
+	 * @returns
+	 */
 	@ApiOperation({
 		summary: 'Find Aggregated Statistics by Employee id, valueDate and past N months'
 	})
@@ -72,6 +88,12 @@ export class EmployeeStatisticsController {
 	): Promise<IMonthAggregatedEmployeeStatistics> {
 		return await this.queryBus.execute(new MonthAggregatedEmployeeStatisticsQuery(options));
 	}
+
+	/**
+	 *
+	 * @param data
+	 * @returns
+	 */
 	@ApiOperation({
 		summary: 'Find Statistics History by Employee id, valueDate and past N months'
 	})

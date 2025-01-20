@@ -5,23 +5,20 @@ import { FeatureEnum } from '@gauzy/contracts';
 import { SocialAuthService } from './../social-auth.service';
 import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
 
-@Controller()
 @UseGuards(FeatureFlagEnabledGuard, AuthGuard('microsoft'))
 @FeatureFlag(FeatureEnum.FEATURE_MICROSOFT_LOGIN)
 @Public()
+@Controller('/auth')
 export class MicrosoftController {
-
-	constructor(
-		public readonly service: SocialAuthService
-	) { }
+	constructor(public readonly service: SocialAuthService) {}
 
 	/**
 	 * Initiates Microsoft login.
 	 *
 	 * @param req
 	 */
-	@Get('microsoft')
-	microsoftLogin(@Req() req: any) { }
+	@Get('/microsoft')
+	microsoftLogin(@Req() req: any) {}
 
 	/**
 	 * Microsoft login callback endpoint.
@@ -30,11 +27,8 @@ export class MicrosoftController {
 	 * @param res - The response object.
 	 * @returns The result of the Microsoft login callback.
 	 */
-	@Get('microsoft/callback')
-	async microsoftLoginCallback(
-		@RequestCtx() requestCtx: IIncomingRequest,
-		@Res() res
-	) {
+	@Get('/microsoft/callback')
+	async microsoftLoginCallback(@RequestCtx() requestCtx: IIncomingRequest, @Res() res) {
 		const { user } = requestCtx;
 		const { success, authData } = await this.service.validateOAuthLoginEmail(user.emails);
 		return this.service.routeRedirect(success, authData, res);

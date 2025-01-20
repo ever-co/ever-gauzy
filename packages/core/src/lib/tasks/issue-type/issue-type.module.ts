@@ -1,5 +1,4 @@
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from '@nestjs/core';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -12,7 +11,6 @@ import { TypeOrmIssueTypeRepository } from './repository/type-orm-issue-type.rep
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/issue-types', module: IssueTypeModule }]),
 		TypeOrmModule.forFeature([IssueType]),
 		MikroOrmModule.forFeature([IssueType]),
 		RolePermissionModule,

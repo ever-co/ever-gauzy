@@ -5,23 +5,20 @@ import { FeatureEnum } from '@gauzy/contracts';
 import { SocialAuthService } from './../social-auth.service';
 import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
 
-@Controller()
 @UseGuards(FeatureFlagEnabledGuard, AuthGuard('linkedin'))
 @FeatureFlag(FeatureEnum.FEATURE_LINKEDIN_LOGIN)
 @Public()
+@Controller('/auth')
 export class LinkedinController {
-
-	constructor(
-		public readonly service: SocialAuthService
-	) { }
+	constructor(public readonly service: SocialAuthService) {}
 
 	/**
 	 * Initiates LinkedIn login.
 	 *
 	 * @param req
 	 */
-	@Get('linkedin')
-	linkedinLogin(@Req() req: any) { }
+	@Get('/linkedin')
+	linkedinLogin(@Req() req: any) {}
 
 	/**
 	 * LinkedIn login callback endpoint.
@@ -30,11 +27,8 @@ export class LinkedinController {
 	 * @param res - The response object.
 	 * @returns The result of the LinkedIn login callback.
 	 */
-	@Get('linkedin/callback')
-	async linkedinLoginCallback(
-		@RequestCtx() requestCtx: IIncomingRequest,
-		@Res() res
-	) {
+	@Get('/linkedin/callback')
+	async linkedinLoginCallback(@RequestCtx() requestCtx: IIncomingRequest, @Res() res) {
 		const { user } = requestCtx;
 		const { success, authData } = await this.service.validateOAuthLoginEmail(user.emails);
 

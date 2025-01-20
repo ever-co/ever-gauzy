@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { RouterModule } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
@@ -12,7 +11,6 @@ import { GlobalFavoriteModule } from './global-favorite-service.module';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/favorite', module: FavoriteModule }]),
 		TypeOrmModule.forFeature([Favorite]),
 		MikroOrmModule.forFeature([Favorite]),
 		RolePermissionModule,

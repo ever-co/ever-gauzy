@@ -1,13 +1,4 @@
-import {
-	BadRequestException,
-	Body,
-	Controller,
-	Get,
-	HttpStatus,
-	Post,
-	Query,
-	UseGuards
-} from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, HttpStatus, Post, Query, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FeatureInterface } from 'unleash-client/lib/feature';
@@ -29,15 +20,15 @@ import { FeatureOrganizationQueryDTO } from './dto/feature-organization-query.dt
 const { unleashConfig } = environment;
 
 @ApiTags('Feature')
-@Controller()
+@Controller('/feature/toggle')
 export class FeatureToggleController {
 	constructor(
 		private readonly _featureService: FeatureService,
 		private readonly _featureOrganizationService: FeatureOrganizationService,
 		private readonly _commandBus: CommandBus
-	) { }
+	) {}
 
-	@Get('definition')
+	@Get('/definition')
 	@Public()
 	async getFeatureToggleDefinitions() {
 		let featureToggles: FeatureInterface[] = [];
@@ -70,7 +61,7 @@ export class FeatureToggleController {
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
-	@Get('parent')
+	@Get('/parent')
 	async getParentFeatureList(@Query() options: RelationsQueryDTO): Promise<IPagination<IFeature>> {
 		try {
 			return await this._featureService.getParentFeatures(options.relations);
@@ -101,13 +92,13 @@ export class FeatureToggleController {
 				where: {
 					...(params.tenantId
 						? {
-							tenantId: params.tenantId
-						}
+								tenantId: params.tenantId
+						  }
 						: {}),
 					...(params.organizationId
 						? {
-							organizationId: params.organizationId
-						}
+								organizationId: params.organizationId
+						  }
 						: {})
 				},
 				relations: params.relations || []
@@ -129,7 +120,7 @@ export class FeatureToggleController {
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
-	@Get()
+	@Get('/')
 	async findAll(): Promise<IPagination<IFeature>> {
 		try {
 			return await this._featureService.findAll();
@@ -149,7 +140,7 @@ export class FeatureToggleController {
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
-	@Post()
+	@Post('/')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async enabledDisabledFeature(@Body() input: CreateFeatureToggleDTO): Promise<boolean> {
 		return await this._commandBus.execute(new FeatureToggleUpdateCommand(input));

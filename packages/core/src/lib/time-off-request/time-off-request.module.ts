@@ -19,6 +19,7 @@ import { TypeOrmTimeOffRequestRepository } from './repository/type-orm-time-off-
 		CqrsModule
 	],
 	controllers: [TimeOffRequestController],
-	providers: [TimeOffRequestService, TypeOrmTimeOffRequestRepository, ...CommandHandlers]
+	providers: [TimeOffRequestService, TypeOrmTimeOffRequestRepository, ...CommandHandlers],
+	exports: [TimeOffRequestService]
 })
 export class TimeOffRequestModule {}

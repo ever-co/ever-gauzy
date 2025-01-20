@@ -1,6 +1,5 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Feature } from './feature.entity';
@@ -14,7 +13,6 @@ import { TypeOrmFeatureOrganizationRepository, TypeOrmFeatureRepository } from '
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/feature/toggle', module: FeatureModule }]),
 		TypeOrmModule.forFeature([Feature, FeatureOrganization]),
 		MikroOrmModule.forFeature([Feature, FeatureOrganization]),
 		forwardRef(() => RolePermissionModule),

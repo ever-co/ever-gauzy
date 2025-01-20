@@ -42,8 +42,8 @@ export class ProductService extends TenantAwareCrudService<Product> {
 	];
 
 	constructor(
-		typeOrmProductRepository: TypeOrmProductRepository,
-		mikroOrmProductRepository: MikroOrmProductRepository,
+		readonly typeOrmProductRepository: TypeOrmProductRepository,
+		readonly mikroOrmProductRepository: MikroOrmProductRepository,
 		readonly typeOrmProductTranslationRepository: TypeOrmProductTranslationRepository
 	) {
 		super(typeOrmProductRepository, mikroOrmProductRepository);

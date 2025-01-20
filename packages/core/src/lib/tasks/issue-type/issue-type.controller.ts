@@ -18,7 +18,7 @@ import { CreateIssueTypeDTO, IssueTypeQueryDTO, UpdateIssueTypeDTO } from './dto
 
 @UseGuards(TenantPermissionGuard)
 @ApiTags('Issue Type')
-@Controller()
+@Controller('/issue-types')
 export class IssueTypeController extends CrudFactory<
 	IssueType,
 	IPaginationParam,

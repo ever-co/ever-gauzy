@@ -14,6 +14,7 @@ import { TypeOrmProductVariantPriceRepository } from './repository/type-orm-prod
 		RolePermissionModule
 	],
 	controllers: [ProductVariantPriceController],
-	providers: [ProductVariantPriceService, TypeOrmProductVariantPriceRepository]
+	providers: [ProductVariantPriceService, TypeOrmProductVariantPriceRepository],
+	exports: [ProductVariantPriceService]
 })
 export class ProductVariantPriceModule {}
