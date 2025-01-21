@@ -1,15 +1,5 @@
 import { CandidateSource } from './candidate-source.entity';
-import {
-	Post,
-	UseGuards,
-	HttpStatus,
-	Get,
-	Query,
-	Body,
-	Controller,
-	Put,
-	Param
-} from '@nestjs/common';
+import { Post, UseGuards, HttpStatus, Get, Query, Body, Controller, Put, Param } from '@nestjs/common';
 import { UpdateResult } from 'typeorm';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ICandidateSource, IPagination, PermissionsEnum } from '@gauzy/contracts';
@@ -23,7 +13,7 @@ import { CreateCandidateSourceDTO, UpdateCandidateSourceDTO } from './dto';
 @ApiTags('CandidateSource')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
-@Controller()
+@Controller('/candidate-source')
 export class CandidateSourceController extends CrudController<CandidateSource> {
 	constructor(private readonly candidateSourceService: CandidateSourceService) {
 		super(candidateSourceService);

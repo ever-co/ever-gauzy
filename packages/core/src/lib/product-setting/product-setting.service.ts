@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { TenantAwareCrudService } from '../core/crud';
 import { ProductVariantSetting } from './product-setting.entity';
 import { TypeOrmProductVariantSettingRepository } from './repository/type-orm-product-setting.repository';
@@ -8,9 +7,7 @@ import { MikroOrmProductVariantSettingRepository } from './repository/mikro-orm-
 @Injectable()
 export class ProductVariantSettingService extends TenantAwareCrudService<ProductVariantSetting> {
 	constructor(
-		@InjectRepository(ProductVariantSetting)
 		typeOrmProductVariantSettingRepository: TypeOrmProductVariantSettingRepository,
-
 		mikroOrmProductVariantSettingRepository: MikroOrmProductVariantSettingRepository
 	) {
 		super(typeOrmProductVariantSettingRepository, mikroOrmProductVariantSettingRepository);

@@ -22,6 +22,6 @@ import { TypeOrmScreeningTaskRepository } from './repository/type-orm-screening-
 	],
 	providers: [ScreeningTasksService, TypeOrmScreeningTaskRepository, ...CommandHandlers],
 	controllers: [ScreeningTasksController],
-	exports: [ScreeningTasksService, TypeOrmModule, TypeOrmScreeningTaskRepository]
+	exports: [ScreeningTasksService, TypeOrmScreeningTaskRepository]
 })
 export class ScreeningTasksModule {}

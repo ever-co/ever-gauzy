@@ -14,12 +14,12 @@ import { FindPublicClientsByOrganizationQuery, FindPublicOrganizationQuery } fro
 
 @Public()
 @UseInterceptors(PublicTransformInterceptor)
-@Controller()
+@Controller('/public/organization')
 export class PublicOrganizationController {
 	constructor(
 		private readonly queryBus: QueryBus,
 		private readonly publicOrganizationService: PublicOrganizationService
-	) { }
+	) {}
 
 	/**
 	 * GET public clients in the specific organization

@@ -12,7 +12,7 @@ import { ActivityQueryDTO } from './dto';
 @ApiTags('Activity')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.TIMESHEET_EDIT_TIME)
-@Controller()
+@Controller('/timesheet/activity')
 export class ActivityController {
 	constructor(
 		private readonly activityService: ActivityService,

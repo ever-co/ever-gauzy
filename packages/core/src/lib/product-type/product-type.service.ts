@@ -1,6 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { IPagination, IProductTypeTranslatable, LanguagesEnum } from '@gauzy/contracts';
+import { ID, IPagination, IProductTypeTranslatable, LanguagesEnum } from '@gauzy/contracts';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { ProductType } from './product-type.entity';
 import { MikroOrmProductTypeRepository } from './repository/mikro-orm-product-type.repository';
@@ -9,9 +8,7 @@ import { TypeOrmProductTypeRepository } from './repository/type-orm-product-type
 @Injectable()
 export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 	constructor(
-		@InjectRepository(ProductType)
 		typeOrmProductTypeRepository: TypeOrmProductTypeRepository,
-
 		mikroOrmProductTypeRepository: MikroOrmProductTypeRepository
 	) {
 		super(typeOrmProductTypeRepository, mikroOrmProductTypeRepository);
@@ -38,7 +35,7 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 	 * @param entity
 	 * @returns
 	 */
-	async updateProductType(id: string, entity: ProductType): Promise<ProductType> {
+	async updateProductType(id: ID, entity: ProductType): Promise<ProductType> {
 		try {
 			await this.typeOrmRepository.delete(id);
 			return this.typeOrmRepository.save(entity);

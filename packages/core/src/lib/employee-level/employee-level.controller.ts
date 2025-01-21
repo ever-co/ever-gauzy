@@ -1,13 +1,4 @@
-import {
-	Controller,
-	Get,
-	Param,
-	UseGuards,
-	Query,
-	Body,
-	Put,
-	BadRequestException
-} from '@nestjs/common';
+import { Controller, Get, Param, UseGuards, Query, Body, Put, BadRequestException } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { IEmployeeLevel, IPagination } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
@@ -18,18 +9,14 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('EmployeeLevel')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/employee-level')
 export class EmployeeLevelController extends CrudController<EmployeeLevel> {
-	constructor(
-		private readonly employeeLevelService: EmployeeLevelService
-	) {
+	constructor(private readonly employeeLevelService: EmployeeLevelService) {
 		super(employeeLevelService);
 	}
 
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any,
-	): Promise<IPagination<IEmployeeLevel>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IEmployeeLevel>> {
 		const { relations, findInput } = data;
 		return await this.employeeLevelService.findAll({
 			where: {

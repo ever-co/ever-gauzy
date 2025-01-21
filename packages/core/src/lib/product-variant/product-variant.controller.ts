@@ -1,25 +1,11 @@
-import {
-	Controller,
-	HttpStatus,
-	Post,
-	Body,
-	Get,
-	HttpCode,
-	Put,
-	Param,
-	UseGuards,
-	Delete
-} from '@nestjs/common';
+import { Controller, HttpStatus, Post, Body, Get, HttpCode, Put, Param, UseGuards, Delete } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from './../core/crud';
 import { ProductVariant } from './product-variant.entity';
 import { ProductVariantService } from './product-variant.service';
-import {
-	ProductVariantCreateCommand,
-	ProductVariantDeleteCommand
-} from './commands';
+import { ProductVariantCreateCommand, ProductVariantDeleteCommand } from './commands';
 import { Product } from '../product/product.entity';
 import { IPagination, IProductVariant, IVariantCreateInput } from '@gauzy/contracts';
 import { TenantPermissionGuard } from './../shared/guards';
@@ -27,7 +13,7 @@ import { UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('ProductVariant')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/product-variants')
 export class ProductVariantController extends CrudController<ProductVariant> {
 	constructor(
 		private readonly productVariantService: ProductVariantService,
@@ -58,21 +44,15 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 	@ApiOperation({ summary: 'Create product variants' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description:
-			'These records have been successfully created.' /*, type: T*/
+		description: 'These records have been successfully created.' /*, type: T*/
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('variants')
-	async createProductVariants(
-		@Body() entity: IVariantCreateInput
-	): Promise<IProductVariant[]> {
-		return await this.commandBus.execute(
-			new ProductVariantCreateCommand(entity)
-		);
+	async createProductVariants(@Body() entity: IVariantCreateInput): Promise<IProductVariant[]> {
+		return await this.commandBus.execute(new ProductVariantCreateCommand(entity));
 	}
 
 	@ApiOperation({
@@ -105,9 +85,7 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 		description: 'Record not found'
 	})
 	@Get(':id')
-	async findById(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<IProductVariant> {
+	async findById(@Param('id', UUIDValidationPipe) id: string): Promise<IProductVariant> {
 		return this.productVariantService.findOneByIdString(id);
 	}
 
@@ -122,8 +100,7 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
@@ -145,12 +122,8 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<DeleteResult> {
-		return await this.commandBus.execute(
-			new ProductVariantDeleteCommand(id)
-		);
+	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<DeleteResult> {
+		return await this.commandBus.execute(new ProductVariantDeleteCommand(id));
 	}
 
 	@ApiOperation({ summary: 'Delete featured image' })
@@ -164,9 +137,7 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete('/featured-image/:variantId')
-	async deleteFeaturedImage(
-		@Param('variantId', UUIDValidationPipe) variantId: string
-	): Promise<IProductVariant> {
+	async deleteFeaturedImage(@Param('variantId', UUIDValidationPipe) variantId: string): Promise<IProductVariant> {
 		return this.productVariantService.deleteFeaturedImage(variantId);
 	}
 }

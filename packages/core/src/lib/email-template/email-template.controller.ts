@@ -29,7 +29,7 @@ import { EmailTemplateQueryDTO, SaveEmailTemplateDTO } from './dto';
 @ApiTags('EmailTemplate')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.VIEW_ALL_EMAIL_TEMPLATES)
-@Controller()
+@Controller('/email-template')
 export class EmailTemplateController extends CrudController<EmailTemplate> {
 	constructor(
 		private readonly emailTemplateService: EmailTemplateService,

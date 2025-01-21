@@ -1,11 +1,9 @@
 import { InviteStatusEnum, IUser } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import { AuthService } from '../../../auth/auth.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptUserCommand } from '../invite.accept-user.command';
 import { OrganizationService } from '../../../organization/organization.service';
-import { User } from './../../../core/entities/internal';
 import { TypeOrmUserRepository } from '../../../user/repository/type-orm-user.repository';
 
 /**
@@ -15,18 +13,14 @@ import { TypeOrmUserRepository } from '../../../user/repository/type-orm-user.re
  */
 @CommandHandler(InviteAcceptUserCommand)
 export class InviteAcceptUserHandler implements ICommandHandler<InviteAcceptUserCommand> {
-
 	constructor(
-		@InjectRepository(User)
 		private readonly typeOrmUserRepository: TypeOrmUserRepository,
 		private readonly inviteService: InviteService,
 		private readonly authService: AuthService,
 		private readonly organizationService: OrganizationService
-	) { }
+	) {}
 
-	public async execute(
-		command: InviteAcceptUserCommand
-	): Promise<IUser> {
+	public async execute(command: InviteAcceptUserCommand): Promise<IUser> {
 		const { input, languageCode } = command;
 		const { inviteId } = input;
 

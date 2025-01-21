@@ -8,6 +8,7 @@ import { TaskStatusController } from './status.controller';
 import { TaskStatusService } from './status.service';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
+import { TypeOrmTaskStatusRepository } from './repository/type-orm-task-status.repository';
 
 @Module({
 	imports: [
@@ -17,7 +18,6 @@ import { QueryHandlers } from './queries/handlers';
 		CqrsModule
 	],
 	controllers: [TaskStatusController],
-	providers: [TaskStatusService, ...QueryHandlers, ...CommandHandlers],
-	exports: [TaskStatusService]
+	providers: [TaskStatusService, TypeOrmTaskStatusRepository, ...QueryHandlers, ...CommandHandlers]
 })
 export class TaskStatusModule {}

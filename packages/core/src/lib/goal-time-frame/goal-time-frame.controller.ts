@@ -23,12 +23,11 @@ import { CreateGoalTimeFrameDTO, UpdateGoalTimeFrameDTO } from './dto';
 
 @ApiTags('GoalTimeFrame')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/goal-time-frame')
 export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 	constructor(private readonly goalTimeFrameService: GoalTimeFrameService) {
 		super(goalTimeFrameService);
 	}
-
 
 	@ApiOperation({ summary: 'Get all Goal Time Frames' })
 	@ApiResponse({
@@ -40,9 +39,7 @@ export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 		description: 'No Time Frame found'
 	})
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IGoalTimeFrame>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IGoalTimeFrame>> {
 		const { findInput } = data;
 		return this.goalTimeFrameService.findAll({
 			where: { ...findInput }
@@ -57,12 +54,9 @@ export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 	})
 	@Post()
 	@UseValidationPipe({ transform: true })
-	async create(
-		@Body() entity: CreateGoalTimeFrameDTO
-	): Promise<IGoalTimeFrame> {
+	async create(@Body() entity: CreateGoalTimeFrameDTO): Promise<IGoalTimeFrame> {
 		return this.goalTimeFrameService.create(entity);
 	}
-
 
 	@ApiOperation({ summary: 'Find Goal Time Frames with name' })
 	@ApiResponse({
@@ -74,9 +68,7 @@ export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 		description: 'No Time Frame found'
 	})
 	@Get(':name')
-	async getByName(
-		@Param('name') name: string
-	): Promise<IPagination<IGoalTimeFrame>> {
+	async getByName(@Param('name') name: string): Promise<IPagination<IGoalTimeFrame>> {
 		return this.goalTimeFrameService.findAll({ where: { name: name } });
 	}
 
@@ -91,8 +83,7 @@ export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
@@ -107,15 +98,13 @@ export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 				...entity
 			});
 		} catch (error) {
-			throw new BadRequestException(error)
+			throw new BadRequestException(error);
 		}
 	}
 
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<any> {
+	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
 		return this.goalTimeFrameService.delete(id);
 	}
 }

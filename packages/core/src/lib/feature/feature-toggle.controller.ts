@@ -20,7 +20,7 @@ import { FeatureOrganizationQueryDTO } from './dto/feature-organization-query.dt
 const { unleashConfig } = environment;
 
 @ApiTags('Feature')
-@Controller()
+@Controller('/feature/toggle')
 export class FeatureToggleController {
 	constructor(
 		private readonly _featureService: FeatureService,
@@ -28,7 +28,7 @@ export class FeatureToggleController {
 		private readonly _commandBus: CommandBus
 	) {}
 
-	@Get('definition')
+	@Get('/definition')
 	@Public()
 	async getFeatureToggleDefinitions() {
 		let featureToggles: FeatureInterface[] = [];
@@ -61,7 +61,7 @@ export class FeatureToggleController {
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
-	@Get('parent')
+	@Get('/parent')
 	async getParentFeatureList(@Query() options: RelationsQueryDTO): Promise<IPagination<IFeature>> {
 		try {
 			return await this._featureService.getParentFeatures(options.relations);
@@ -120,7 +120,7 @@ export class FeatureToggleController {
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
-	@Get()
+	@Get('/')
 	async findAll(): Promise<IPagination<IFeature>> {
 		try {
 			return await this._featureService.findAll();
@@ -140,7 +140,7 @@ export class FeatureToggleController {
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
-	@Post()
+	@Post('/')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async enabledDisabledFeature(@Body() input: CreateFeatureToggleDTO): Promise<boolean> {
 		return await this._commandBus.execute(new FeatureToggleUpdateCommand(input));

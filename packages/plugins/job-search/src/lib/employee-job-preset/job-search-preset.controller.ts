@@ -9,7 +9,7 @@ import { JobPresetUpworkJobSearchCriterion } from './job-preset-upwork-job-searc
 import { CreateJobPresetDTO, JobPresetQueryDTO, SaveJobPresetCriterionDTO } from './dto';
 
 @ApiTags('JobSearchPreset')
-@Controller()
+@Controller('/job-preset')
 export class JobSearchPresetController {
 	constructor(
 		private readonly jobPresetService: JobPresetService,
@@ -33,7 +33,7 @@ export class JobSearchPresetController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get()
+	@Get('/')
 	@UseValidationPipe({ whitelist: true })
 	async getAll(@Query() input: JobPresetQueryDTO) {
 		console.log('GetAll Presets called. We will sync all employees now');
@@ -63,7 +63,7 @@ export class JobSearchPresetController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get(':id')
+	@Get('/:id')
 	async get(@Param('id', UUIDValidationPipe) presetId: ID, @Query() request: IGetJobPresetCriterionInput) {
 		return await this.jobPresetService.get(presetId, request);
 	}
@@ -84,7 +84,7 @@ export class JobSearchPresetController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get(':id/criterion')
+	@Get('/:id/criterion')
 	async getJobPresetCriterion(@Param('id', UUIDValidationPipe) presetId: ID) {
 		return await this.jobPresetService.getJobPresetCriterion(presetId);
 	}
@@ -105,7 +105,7 @@ export class JobSearchPresetController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid job preset data'
 	})
-	@Post()
+	@Post('/')
 	@UseValidationPipe()
 	async createJobPreset(@Body() request: CreateJobPresetDTO) {
 		return await this.jobPresetService.createJobPreset(request);
@@ -128,7 +128,7 @@ export class JobSearchPresetController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid job preset criteria data'
 	})
-	@Post(':jobPresetId/criterion')
+	@Post('/:jobPresetId/criterion')
 	@UseValidationPipe()
 	async saveUpdate(
 		@Param('jobPresetId', UUIDValidationPipe) jobPresetId: ID,
@@ -156,7 +156,7 @@ export class JobSearchPresetController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Job preset criterion not found'
 	})
-	@Delete('criterion/:criterionId')
+	@Delete('/criterion/:criterionId')
 	async deleteJobPresetCriterion(@Param('criterionId', UUIDValidationPipe) criterionId: ID) {
 		return await this.jobPresetService.deleteJobPresetCriterion(criterionId);
 	}

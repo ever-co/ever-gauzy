@@ -6,11 +6,11 @@ import { Changelog } from './changelog.entity';
 import { ChangelogController } from './changelog.controller';
 import { ChangelogService } from './changelog.service';
 import { CommandHandlers } from './commands/handlers';
+import { TypeOrmChangelogRepository } from './repository/type-orm-changelog.repository';
 
 @Module({
 	controllers: [ChangelogController],
 	imports: [TypeOrmModule.forFeature([Changelog]), MikroOrmModule.forFeature([Changelog]), CqrsModule],
-	providers: [ChangelogService, ...CommandHandlers],
-	exports: [ChangelogService]
+	providers: [ChangelogService, TypeOrmChangelogRepository, ...CommandHandlers]
 })
 export class ChangelogModule {}

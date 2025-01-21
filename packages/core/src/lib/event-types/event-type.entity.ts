@@ -1,28 +1,20 @@
-import {
-	RelationId,
-	JoinColumn,
-	JoinTable
-} from 'typeorm';
+import { RelationId, JoinColumn, JoinTable } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	IsNotEmpty,
-	IsString,
-	IsNumber,
-	IsOptional,
-} from 'class-validator';
-import { IEmployee, IEventType, ITag } from '@gauzy/contracts';
-import {
-	Employee,
-	Tag,
-	TenantOrganizationBaseEntity
-} from '../core/entities/internal';
+import { IsNotEmpty, IsString, IsNumber, IsOptional } from 'class-validator';
+import { ID, IEmployee, IEventType, ITag } from '@gauzy/contracts';
+import { Employee, Tag, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne } from './../core/decorators/entity';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne
+} from './../core/decorators/entity';
 import { MikroOrmEventTypeRepository } from './repository/mikro-orm-event-type.repository';
 
 @MultiORMEntity('event_type', { mikroOrmRepository: () => MikroOrmEventTypeRepository })
 export class EventType extends TenantOrganizationBaseEntity implements IEventType {
-
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsNotEmpty()
@@ -50,7 +42,6 @@ export class EventType extends TenantOrganizationBaseEntity implements IEventTyp
 	@MultiORMColumn({ nullable: true })
 	description?: string;
 
-
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne
@@ -61,7 +52,7 @@ export class EventType extends TenantOrganizationBaseEntity implements IEventTyp
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@MultiORMManyToOne(() => Employee, { onDelete: 'CASCADE' })
+	@MultiORMManyToOne(() => Employee, { onDelete: 'CASCADE', nullable: true })
 	@JoinColumn()
 	employee?: IEmployee;
 
@@ -71,7 +62,7 @@ export class EventType extends TenantOrganizationBaseEntity implements IEventTyp
 	@IsString()
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	readonly employeeId?: string;
+	readonly employeeId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -89,7 +80,7 @@ export class EventType extends TenantOrganizationBaseEntity implements IEventTyp
 		owner: true,
 		pivotTable: 'tag_event_type',
 		joinColumn: 'tagEventId',
-		inverseJoinColumn: 'tagId',
+		inverseJoinColumn: 'tagId'
 	})
 	@JoinTable({
 		name: 'tag_event_type'

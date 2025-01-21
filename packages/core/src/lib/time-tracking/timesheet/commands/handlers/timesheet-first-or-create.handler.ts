@@ -1,30 +1,24 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Between, Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Between, Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { ITimesheet } from '@gauzy/contracts';
-import { Employee, Timesheet } from './../../../../core/entities/internal';
 import { RequestContext } from './../../../../core/context';
+import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { TimesheetFirstOrCreateCommand } from './../timesheet-first-or-create.command';
 import { TimesheetCreateCommand } from './../timesheet-create.command';
-import { prepareSQLQuery as p } from './../../../../database/database.helper';
+import { TypeOrmTimesheetRepository } from '../../repository/type-orm-timesheet.repository';
+import { TypeOrmEmployeeRepository } from '../../../../employee/repository/type-orm-employee.repository';
+import { Timesheet } from './../../timesheet.entity';
 
 @CommandHandler(TimesheetFirstOrCreateCommand)
-export class TimesheetFirstOrCreateHandler
-	implements ICommandHandler<TimesheetFirstOrCreateCommand> {
+export class TimesheetFirstOrCreateHandler implements ICommandHandler<TimesheetFirstOrCreateCommand> {
 	constructor(
-		@InjectRepository(Timesheet)
-		private readonly timeSheetRepository: Repository<Timesheet>,
-
-		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>,
-
+		private readonly timeSheetRepository: TypeOrmTimesheetRepository,
+		private readonly employeeRepository: TypeOrmEmployeeRepository,
 		private readonly commandBus: CommandBus
-	) { }
+	) {}
 
-	public async execute(
-		command: TimesheetFirstOrCreateCommand
-	): Promise<ITimesheet> {
+	public async execute(command: TimesheetFirstOrCreateCommand): Promise<ITimesheet> {
 		const { date, employeeId } = command;
 		let { organizationId } = command;
 		const tenantId = RequestContext.currentTenantId();
@@ -51,22 +45,14 @@ export class TimesheetFirstOrCreateHandler
 			query.where((query: SelectQueryBuilder<Timesheet>) => {
 				query.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
-						qb.where(
-							[
-								{
-									startedAt: Between(
-										startedAt.toDate(),
-										stoppedAt.toDate()
-									)
-								},
-								{
-									stoppedAt: Between(
-										startedAt.toDate(),
-										stoppedAt.toDate()
-									)
-								}
-							]
-						);
+						qb.where([
+							{
+								startedAt: Between(startedAt.toDate(), stoppedAt.toDate())
+							},
+							{
+								stoppedAt: Between(startedAt.toDate(), stoppedAt.toDate())
+							}
+						]);
 					})
 				);
 				query.andWhere(
@@ -79,7 +65,6 @@ export class TimesheetFirstOrCreateHandler
 			});
 			return await query.getOneOrFail();
 		} catch (error) {
-
 			/**
 			 * Create employee current week working timesheet
 			 */

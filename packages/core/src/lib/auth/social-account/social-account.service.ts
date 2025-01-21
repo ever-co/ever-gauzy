@@ -1,22 +1,25 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial } from 'typeorm';
-import { ISocialAccount, ISocialAccountBase } from '@gauzy/contracts';
+import { ISocialAccount, ISocialAccountBase, IUser } from '@gauzy/contracts';
+import { UserService } from '../../user/user.service';
 import { TenantAwareCrudService } from '../../core/crud';
 import { SocialAccount } from './social-account.entity';
-import { MicroOrmSocialAccountRepository, TypeOrmSocialAccountRepository } from './repository';
-import { User, UserService } from '../../user';
+import { TypeOrmSocialAccountRepository } from './repository/type-orm-social-account.repository';
+import { MicroOrmSocialAccountRepository } from './repository/micro-orm-social-account.repository';
 
 @Injectable()
 export class SocialAccountService extends TenantAwareCrudService<SocialAccount> {
 	constructor(
-		@InjectRepository(SocialAccount) readonly typeOrmSocialAccountRepository: TypeOrmSocialAccountRepository,
+		readonly typeOrmSocialAccountRepository: TypeOrmSocialAccountRepository,
 		readonly mikroOrmSocialAccountRepository: MicroOrmSocialAccountRepository,
 		private readonly userService: UserService
 	) {
 		super(typeOrmSocialAccountRepository, mikroOrmSocialAccountRepository);
 	}
 
+	/**
+	 *
+	 */
 	async registerSocialAccount(partialEntity: DeepPartial<ISocialAccount>): Promise<ISocialAccount> {
 		try {
 			return await this.typeOrmRepository.save(partialEntity);
@@ -35,7 +38,7 @@ export class SocialAccountService extends TenantAwareCrudService<SocialAccount> 
 		});
 	}
 
-	async findUserBySocialId(input: ISocialAccountBase): Promise<User> {
+	async findUserBySocialId(input: ISocialAccountBase): Promise<IUser> {
 		try {
 			const account = await this.findAccountByProvider(input);
 			const user = account?.user;

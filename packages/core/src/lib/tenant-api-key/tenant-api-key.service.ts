@@ -129,7 +129,7 @@ export class TenantApiKeyService extends TenantAwareCrudService<TenantApiKey> {
 
 			// If the API Key is not found or validation fails, return false
 			if (!tenantApiKey || !this.validateApiKey(apiSecret, tenantApiKey.apiSecret)) {
-				console.warn(`Unauthorized: Invalid API Key (X-APP-ID) or Secret (X-API-KEY) for API Key: ${apiKey}`);
+				console.warn(`Unauthorized: Invalid API Key (X-APP-ID) or Secret (X-API-KEY) for API Key`);
 				return false;
 			}
 

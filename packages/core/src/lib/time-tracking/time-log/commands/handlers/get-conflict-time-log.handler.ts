@@ -1,5 +1,4 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import * as moment from 'moment';
 import { ConfigService, DatabaseTypeEnum } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
@@ -10,17 +9,12 @@ import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.rep
 
 @CommandHandler(IGetConflictTimeLogCommand)
 export class GetConflictTimeLogHandler implements ICommandHandler<IGetConflictTimeLogCommand> {
-
 	constructor(
-		@InjectRepository(TimeLog)
 		private readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
-
 		private readonly configService: ConfigService
-	) { }
+	) {}
 
-	public async execute(
-		command: IGetConflictTimeLogCommand
-	): Promise<TimeLog[]> {
+	public async execute(command: IGetConflictTimeLogCommand): Promise<TimeLog[]> {
 		const { input } = command;
 
 		const tenantId = RequestContext.currentTenantId() || input.tenantId;
@@ -41,11 +35,14 @@ export class GetConflictTimeLogHandler implements ICommandHandler<IGetConflictTi
 				query = `("${conflictQuery.alias}"."startedAt", "${conflictQuery.alias}"."stoppedAt") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`;
 				break;
 			case DatabaseTypeEnum.mysql:
-				query = p(`"${conflictQuery.alias}"."startedAt" BETWEEN '${startedAt}' AND '${stoppedAt}' AND "${conflictQuery.alias}"."stoppedAt" BETWEEN '${startedAt}' AND '${stoppedAt}'`);
+				query = p(
+					`"${conflictQuery.alias}"."startedAt" BETWEEN '${startedAt}' AND '${stoppedAt}' AND "${conflictQuery.alias}"."stoppedAt" BETWEEN '${startedAt}' AND '${stoppedAt}'`
+				);
 				break;
 			default:
-				throw Error(`cannot get conflict time log due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
-
+				throw Error(
+					`cannot get conflict time log due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
+				);
 		}
 		conflictQuery = conflictQuery
 			.innerJoinAndSelect(`${conflictQuery.alias}.timeSlots`, 'timeSlots')
@@ -55,22 +52,13 @@ export class GetConflictTimeLogHandler implements ICommandHandler<IGetConflictTi
 			.andWhere(query);
 		if (input.relations) {
 			input.relations.forEach((relation) => {
-				conflictQuery = conflictQuery.leftJoinAndSelect(
-					`${conflictQuery.alias}.${relation}`,
-					relation
-				);
+				conflictQuery = conflictQuery.leftJoinAndSelect(`${conflictQuery.alias}.${relation}`, relation);
 			});
 		}
 		if (input.ignoreId) {
-			conflictQuery = conflictQuery.andWhere(
-				`${conflictQuery.alias}.id NOT IN (:...id)`,
-				{
-					id:
-						input.ignoreId instanceof Array
-							? input.ignoreId
-							: [input.ignoreId]
-				}
-			);
+			conflictQuery = conflictQuery.andWhere(`${conflictQuery.alias}.id NOT IN (:...id)`, {
+				id: input.ignoreId instanceof Array ? input.ignoreId : [input.ignoreId]
+			});
 		}
 		return await conflictQuery.getMany();
 	}

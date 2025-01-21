@@ -1,15 +1,5 @@
 import { CandidateInterviewers } from './candidate-interviewers.entity';
-import {
-	Controller,
-	HttpStatus,
-	Get,
-	Query,
-	Body,
-	Post,
-	UseGuards,
-	Param,
-	Delete
-} from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, Body, Post, UseGuards, Param, Delete } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import {
@@ -32,7 +22,7 @@ import {
 @ApiTags('CandidateInterviewer')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)
-@Controller()
+@Controller('/candidate-interviewers')
 export class CandidateInterviewersController extends CrudController<CandidateInterviewers> {
 	constructor(
 		private readonly candidateInterviewersService: CandidateInterviewersService,
@@ -54,16 +44,11 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('bulk')
-	async createBulk(
-		@Body() body: ICandidateInterviewersCreateInput
-	): Promise<ICandidateInterviewers[]> {
-		return await this.commandBus.execute(
-			new CandidateInterviewersBulkCreateCommand(body)
-		);
+	async createBulk(@Body() body: ICandidateInterviewersCreateInput): Promise<ICandidateInterviewers[]> {
+		return await this.commandBus.execute(new CandidateInterviewersBulkCreateCommand(body));
 	}
 
 	/**
@@ -89,9 +74,7 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 	async findByInterviewId(
 		@Param('interviewId', UUIDValidationPipe) interviewId: string
 	): Promise<ICandidateInterviewers[]> {
-		return await this.candidateInterviewersService.getInterviewersByInterviewId(
-			interviewId
-		);
+		return await this.candidateInterviewersService.getInterviewersByInterviewId(interviewId);
 	}
 
 	/**
@@ -113,12 +96,8 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 		description: 'Record not found'
 	})
 	@Delete('interview/:interviewId')
-	async deleteBulkByInterviewId(
-		@Param('interviewId', UUIDValidationPipe) id: string
-	): Promise<any> {
-		return await this.commandBus.execute(
-			new CandidateInterviewersInterviewBulkDeleteCommand(id)
-		);
+	async deleteBulkByInterviewId(@Param('interviewId', UUIDValidationPipe) id: string): Promise<any> {
+		return await this.commandBus.execute(new CandidateInterviewersInterviewBulkDeleteCommand(id));
 	}
 
 	/**
@@ -140,13 +119,9 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 		description: 'Record not found'
 	})
 	@Delete('deleteBulkByEmployeeId')
-	async deleteBulkByEmployeeId(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<any> {
+	async deleteBulkByEmployeeId(@Query('data', ParseJsonPipe) data: any): Promise<any> {
 		const { deleteInput = null } = data;
-		return this.commandBus.execute(
-			new CandidateInterviewersEmployeeBulkDeleteCommand(deleteInput)
-		);
+		return this.commandBus.execute(new CandidateInterviewersEmployeeBulkDeleteCommand(deleteInput));
 	}
 
 	/**
@@ -169,9 +144,7 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 	})
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_VIEW)
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<ICandidateInterviewers>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<ICandidateInterviewers>> {
 		const { findInput = null } = data;
 		return this.candidateInterviewersService.findAll({ where: findInput });
 	}
@@ -191,9 +164,7 @@ export class CandidateInterviewersController extends CrudController<CandidateInt
 		type: CandidateInterviewers
 	})
 	@Post()
-	async create(
-		@Body() body: ICandidateInterviewersCreateInput
-	): Promise<ICandidateInterviewers> {
+	async create(@Body() body: ICandidateInterviewersCreateInput): Promise<ICandidateInterviewers> {
 		return this.candidateInterviewersService.create(body);
 	}
 }

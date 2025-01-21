@@ -9,8 +9,7 @@ import {
 	Param,
 	UseGuards,
 	Delete,
-	ValidationPipe,
-	UsePipes
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { KeyResult } from './keyresult.entity';
@@ -18,16 +17,15 @@ import { CrudController } from './../core/crud';
 import { KeyResultService } from './keyresult.service';
 import { TenantPermissionGuard } from './../shared/guards';
 import { BulkBodyLoadTransformPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
-import { IKeyResult } from '@gauzy/contracts';
-import { CreateKeyresultDTO, KeyresultBultInputDTO, UpdateKeyresultDTO } from './dto';
+import { ID, IKeyResult } from '@gauzy/contracts';
+import { CreateKeyResultDTO, KeyResultBulkInputDTO, UpdateKeyResultDTO } from './dto';
+import { DeleteResult } from 'typeorm';
 
 @ApiTags('KeyResults')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/key-results')
 export class KeyResultController extends CrudController<KeyResult> {
-	constructor(
-		private readonly keyResultService: KeyResultService
-	) {
+	constructor(private readonly keyResultService: KeyResultService) {
 		super(keyResultService);
 	}
 
@@ -42,10 +40,8 @@ export class KeyResultController extends CrudController<KeyResult> {
 		description: 'Key Result not found'
 	})
 	@Post()
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async create(
-		@Body() entity: CreateKeyresultDTO
-	): Promise<KeyResult> {
+	@UseValidationPipe({ transform: true })
+	async create(@Body() entity: CreateKeyResultDTO): Promise<KeyResult> {
 		return this.keyResultService.create(entity);
 	}
 
@@ -61,7 +57,7 @@ export class KeyResultController extends CrudController<KeyResult> {
 	})
 	@Post('/bulk')
 	async createBulkKeyResults(
-		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform: true })) entity: KeyresultBultInputDTO
+		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform: true })) entity: KeyResultBulkInputDTO
 	): Promise<KeyResult[]> {
 		return this.keyResultService.createBulk(entity.list);
 	}
@@ -95,34 +91,23 @@ export class KeyResultController extends CrudController<KeyResult> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	@UseValidationPipe({ transform: true })
-	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateKeyresultDTO
-	): Promise<IKeyResult> {
+	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateKeyResultDTO): Promise<IKeyResult> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
-		try {
-			return await this.keyResultService.create({
-				id,
-				...entity
-			});
-		} catch (error) {
-			console.log(error);
-			return;
-		}
+		return await this.keyResultService.create({
+			id,
+			...entity
+		});
 	}
 
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<any> {
+	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
 		return this.keyResultService.delete(id);
 	}
 }

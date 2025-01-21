@@ -1,6 +1,5 @@
 import { CqrsModule } from '@nestjs/cqrs';
 import { Module, forwardRef } from '@nestjs/common';
-import { RouterModule } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TenantModule } from '../tenant/tenant.module';
@@ -12,14 +11,12 @@ import { RoleModule } from './../role/role.module';
 import { UserOrganizationService } from './user-organization.services';
 import { UserOrganizationController } from './user-organization.controller';
 import { UserOrganization } from './user-organization.entity';
-import { TypeOrmUserOrganizationRepository } from './repository';
 import { CommandHandlers } from './commands/handlers';
+import { TypeOrmUserOrganizationRepository } from './repository/type-orm-user-organization.repository';
+import { MikroOrmUserOrganizationRepository } from './repository/mikro-orm-user-organization.repository';
 
 @Module({
 	imports: [
-		RouterModule.register([
-			{ path: '/user-organization', module: UserOrganizationModule }
-		]),
 		forwardRef(() => TypeOrmModule.forFeature([UserOrganization])),
 		forwardRef(() => MikroOrmModule.forFeature([UserOrganization])),
 		forwardRef(() => TenantModule),
@@ -31,7 +28,12 @@ import { CommandHandlers } from './commands/handlers';
 		CqrsModule
 	],
 	controllers: [UserOrganizationController],
-	providers: [UserOrganizationService, TypeOrmUserOrganizationRepository, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, UserOrganizationService, TypeOrmUserOrganizationRepository]
+	providers: [
+		UserOrganizationService,
+		TypeOrmUserOrganizationRepository,
+		MikroOrmUserOrganizationRepository,
+		...CommandHandlers
+	],
+	exports: [UserOrganizationService, TypeOrmUserOrganizationRepository, MikroOrmUserOrganizationRepository]
 })
-export class UserOrganizationModule { }
+export class UserOrganizationModule {}

@@ -24,6 +24,6 @@ import { TypeOrmScreenshotRepository } from './repository/type-orm-screenshot.re
 		EventBusModule
 	],
 	providers: [ScreenshotService, TypeOrmScreenshotRepository, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, ScreenshotService, TypeOrmScreenshotRepository]
+	exports: [ScreenshotService, TypeOrmScreenshotRepository]
 })
 export class ScreenshotModule {}

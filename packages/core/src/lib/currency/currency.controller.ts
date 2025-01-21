@@ -6,12 +6,10 @@ import { Currency } from './currency.entity';
 import { CurrencyService } from './currency.service';
 
 @ApiTags('Currency')
-@Controller()
+@Controller('/currency')
 @Public()
 export class CurrencyController {
-	constructor(
-		private readonly currencyService: CurrencyService
-	) { }
+	constructor(private readonly currencyService: CurrencyService) {}
 
 	@ApiOperation({ summary: 'Find all currencies.' })
 	@ApiResponse({

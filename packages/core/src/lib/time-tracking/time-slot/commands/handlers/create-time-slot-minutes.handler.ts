@@ -1,5 +1,4 @@
 import { CommandHandler, ICommandHandler, CommandBus } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import { CreateTimeSlotMinutesCommand } from '../create-time-slot-minutes.command';
 import { TimeSlotMinute } from './../../time-slot-minute.entity';
 import { UpdateTimeSlotMinutesCommand } from '../update-time-slot-minutes.command';
@@ -8,17 +7,12 @@ import { TypeOrmTimeSlotMinuteRepository } from '../../repository/type-orm-time-
 
 @CommandHandler(CreateTimeSlotMinutesCommand)
 export class CreateTimeSlotMinutesHandler implements ICommandHandler<CreateTimeSlotMinutesCommand> {
-
 	constructor(
-		@InjectRepository(TimeSlotMinute)
 		private readonly typeOrmTimeSlotMinuteRepository: TypeOrmTimeSlotMinuteRepository,
-
 		private readonly commandBus: CommandBus
-	) { }
+	) {}
 
-	public async execute(
-		command: CreateTimeSlotMinutesCommand
-	): Promise<TimeSlotMinute> {
+	public async execute(command: CreateTimeSlotMinutesCommand): Promise<TimeSlotMinute> {
 		const { input } = command;
 		const { id: timeSlotId } = input.timeSlot;
 

@@ -4,17 +4,13 @@ import { FindOptionsWhere } from 'typeorm';
 import { IEmployee, IPagination } from '@gauzy/contracts';
 import { Employee } from './../../core/entities/internal';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
-import { MikroOrmEmployeeRepository } from '../../employee/repository/mikro-orm-employee.repository';
 
 @Injectable()
 export class PublicEmployeeService {
-
 	constructor(
 		@InjectRepository(Employee)
-		private typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
-
-		mikroOrmEmployeeRepository: MikroOrmEmployeeRepository
-	) { }
+		private typeOrmEmployeeRepository: TypeOrmEmployeeRepository
+	) {}
 
 	/**
 	 * GET all public employees by organization condition
@@ -34,7 +30,7 @@ export class PublicEmployeeService {
 			});
 			return { items, total };
 		} catch (error) {
-			throw new BadRequestException(error, `Error while gettting public employees`);
+			throw new BadRequestException(error, `Error while getting public employees`);
 		}
 	}
 
@@ -45,10 +41,7 @@ export class PublicEmployeeService {
 	 * @param relations
 	 * @returns
 	 */
-	async findOneByConditions(
-		where: FindOptionsWhere<Employee>,
-		relations: string[]
-	): Promise<IEmployee> {
+	async findOneByConditions(where: FindOptionsWhere<Employee>, relations: string[]): Promise<IEmployee> {
 		try {
 			return await this.typeOrmEmployeeRepository.findOneOrFail({
 				where,

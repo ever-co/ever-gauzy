@@ -11,9 +11,10 @@ import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { InvoiceItemBulkInputDTO } from './dto';
 import { InvoiceService } from '../invoice/invoice.service';
+
 @ApiTags('InvoiceItem')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Controller()
+@Controller('/invoice-item')
 export class InvoiceItemController extends CrudController<InvoiceItem> {
 	constructor(
 		private readonly invoiceItemService: InvoiceItemService,

@@ -5,5 +5,6 @@ export * from './employee.module';
 export * from './employee.service';
 export * from './employee.seed';
 export * from './dto/employee-feature.dto';
-export * from './repository';
+export { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
+export { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 export { EmployeeCreateCommand, EmployeeGetCommand } from './commands';

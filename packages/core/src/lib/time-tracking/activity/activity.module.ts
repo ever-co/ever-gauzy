@@ -11,12 +11,10 @@ import { ActivityService } from './activity.service';
 import { Activity } from './activity.entity';
 import { ActivityMapService } from './activity.map.service';
 import { TimeSlotModule } from './../time-slot/time-slot.module';
-import { TypeOrmActivityRepository } from './repository';
+import { TypeOrmActivityRepository } from './repository/type-orm-activity.repository';
 
 @Module({
-	controllers: [
-		ActivityController
-	],
+	controllers: [ActivityController],
 	imports: [
 		TypeOrmModule.forFeature([Activity]),
 		MikroOrmModule.forFeature([Activity]),
@@ -26,12 +24,7 @@ import { TypeOrmActivityRepository } from './repository';
 		forwardRef(() => TimeSlotModule),
 		CqrsModule
 	],
-	providers: [
-		ActivityService,
-		ActivityMapService,
-		TypeOrmActivityRepository,
-		...CommandHandlers
-	],
-	exports: [TypeOrmModule, MikroOrmModule, ActivityService, ActivityMapService, TypeOrmActivityRepository]
+	providers: [ActivityService, ActivityMapService, TypeOrmActivityRepository, ...CommandHandlers],
+	exports: [ActivityService, ActivityMapService, TypeOrmActivityRepository]
 })
-export class ActivityModule { }
+export class ActivityModule {}

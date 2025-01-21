@@ -2,16 +2,12 @@ import { JoinColumn } from 'typeorm';
 import { IProductVariantPrice, CurrenciesEnum } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsEnum } from 'class-validator';
-import {
-	ProductVariant,
-	TenantOrganizationBaseEntity
-} from '../core/entities/internal';
+import { ProductVariant, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity, MultiORMOneToOne } from './../core/decorators/entity';
 import { MikroOrmProductVariantPriceRepository } from './repository/mikro-orm-product-variant-price.repository';
 
 @MultiORMEntity('product_variant_price', { mikroOrmRepository: () => MikroOrmProductVariantPriceRepository })
 export class ProductVariantPrice extends TenantOrganizationBaseEntity implements IProductVariantPrice {
-
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@MultiORMColumn({ default: 0 })

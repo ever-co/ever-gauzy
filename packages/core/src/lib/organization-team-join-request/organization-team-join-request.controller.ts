@@ -20,7 +20,7 @@ import { OrganizationTeamJoinRequestService } from './organization-team-join-req
 import { ValidateJoinRequestDTO } from './dto';
 
 @ApiTags('OrganizationTeamJoinRequest')
-@Controller()
+@Controller('/organization-team-join')
 export class OrganizationTeamJoinRequestController {
 	constructor(
 		private readonly _commandBus: CommandBus,

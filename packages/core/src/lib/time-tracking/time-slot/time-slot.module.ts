@@ -26,12 +26,6 @@ import { TypeOrmTimeSlotMinuteRepository } from './repository/type-orm-time-slot
 		CqrsModule
 	],
 	providers: [TimeSlotService, TypeOrmTimeSlotRepository, TypeOrmTimeSlotMinuteRepository, ...CommandHandlers],
-	exports: [
-		TypeOrmModule,
-		MikroOrmModule,
-		TimeSlotService,
-		TypeOrmTimeSlotRepository,
-		TypeOrmTimeSlotMinuteRepository
-	]
+	exports: [TimeSlotService, TypeOrmTimeSlotRepository, TypeOrmTimeSlotMinuteRepository]
 })
 export class TimeSlotModule {}

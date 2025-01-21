@@ -35,7 +35,7 @@ import { PaymentReportQueryDTO } from './dto/query';
 @ApiTags('Payment')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
-@Controller()
+@Controller('/payments')
 export class PaymentController extends CrudController<Payment> {
 	constructor(
 		private readonly paymentService: PaymentService,

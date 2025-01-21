@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { ID, IEmployeeSetting, IEmployeeSettingCreateInput, IEmployeeSettingUpdateInput } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
@@ -10,9 +9,7 @@ import { MikroOrmEmployeeSettingRepository } from './repository/mikro-orm-employ
 @Injectable()
 export class EmployeeSettingService extends TenantAwareCrudService<EmployeeSetting> {
 	constructor(
-		@InjectRepository(EmployeeSetting)
 		typeOrmEmployeeSettingRepository: TypeOrmEmployeeSettingRepository,
-
 		mikroOrmEmployeeSettingRepository: MikroOrmEmployeeSettingRepository
 	) {
 		super(typeOrmEmployeeSettingRepository, mikroOrmEmployeeSettingRepository);

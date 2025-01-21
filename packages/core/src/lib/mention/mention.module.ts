@@ -19,8 +19,8 @@ import { TypeOrmMentionRepository } from './repository/type-orm-mention.reposito
 		RolePermissionModule,
 		SubscriptionModule
 	],
-	providers: [MentionService, TypeOrmMentionRepository, ...EventHandlers],
 	controllers: [MentionController],
-	exports: [TypeOrmModule, MikroOrmModule, MentionService, TypeOrmMentionRepository]
+	providers: [MentionService, TypeOrmMentionRepository, ...EventHandlers],
+	exports: [MentionService]
 })
 export class MentionModule {}

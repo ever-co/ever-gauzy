@@ -1,6 +1,5 @@
 import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
-import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
@@ -12,22 +11,12 @@ import { ExportService } from './export.service';
 
 @Module({
 	imports: [
-		RouterModule.register([
-			{ path: '/export', module: ExportModule }
-		]),
-		TypeOrmModule.forFeature([
-			...coreEntities,
-			...getEntitiesFromPlugins(getConfig().plugins)
-		]),
-		MikroOrmModule.forFeature([
-			...coreEntities,
-			...getEntitiesFromPlugins(getConfig().plugins)
-		]),
+		TypeOrmModule.forFeature([...coreEntities, ...getEntitiesFromPlugins(getConfig().plugins)]),
+		MikroOrmModule.forFeature([...coreEntities, ...getEntitiesFromPlugins(getConfig().plugins)]),
 		RolePermissionModule,
 		CqrsModule
 	],
 	controllers: [ExportController],
-	providers: [ExportService],
-	exports: []
+	providers: [ExportService]
 })
-export class ExportModule { }
+export class ExportModule {}

@@ -11,7 +11,7 @@ import { TypeOrmApiCallLogRepository } from './repository/type-orm-api-call-log.
 @Module({
 	imports: [TypeOrmModule.forFeature([ApiCallLog]), MikroOrmModule.forFeature([ApiCallLog]), RolePermissionModule],
 	controllers: [ApiCallLogController],
-	providers: [ApiCallLogService, ApiCallLogMiddleware, TypeOrmApiCallLogRepository],
+	providers: [ApiCallLogService, TypeOrmApiCallLogRepository, ApiCallLogMiddleware],
 	exports: [ApiCallLogService]
 })
 export class ApiCallLogModule implements NestModule {

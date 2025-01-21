@@ -1,17 +1,16 @@
 import { ApiTags } from '@nestjs/swagger';
-import { Controller, Get, Query, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { Public } from '@gauzy/common';
+import { IEstimateEmail } from '@gauzy/contracts';
+import { UseValidationPipe } from '../shared/pipes';
 import { EstimateEmailService } from './estimate-email.service';
 import { FindEstimateEmailQueryDTO } from './dto';
 
 @ApiTags('EstimateEmail')
 @Public()
-@Controller()
+@Controller('/estimate-email')
 export class EstimateEmailController {
-
-	constructor(
-		private readonly estimateEmailService: EstimateEmailService
-	) {}
+	constructor(private readonly estimateEmailService: EstimateEmailService) {}
 
 	/**
 	 * Validate estimate email request
@@ -19,16 +18,9 @@ export class EstimateEmailController {
 	 * @param params
 	 * @returns
 	 */
-	@Get('validate')
-	async validateEstimateEmail(
-		@Query(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) params: FindEstimateEmailQueryDTO
-	) {
-		return await this.estimateEmailService.validate(
-			params,
-			params.relations
-		);
+	@Get('/validate')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async validateEstimateEmail(@Query() params: FindEstimateEmailQueryDTO): Promise<IEstimateEmail> {
+		return await this.estimateEmailService.validate(params, params.relations);
 	}
 }

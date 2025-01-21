@@ -9,19 +9,17 @@ import { ParseJsonPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationDocument')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/organization-documents')
 export class OrganizationDocumentController extends CrudController<OrganizationDocument> {
-	constructor(
-		private readonly organizationDocumentService: OrganizationDocumentService
-	) {
+	constructor(private readonly organizationDocumentService: OrganizationDocumentService) {
 		super(organizationDocumentService);
 	}
 
 	/**
 	 * GET all organization documents
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all organization document.'
@@ -36,9 +34,7 @@ export class OrganizationDocumentController extends CrudController<OrganizationD
 		description: 'Record not found'
 	})
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IOrganizationDocument>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IOrganizationDocument>> {
 		const { findInput } = data;
 		return this.organizationDocumentService.findAll({ where: findInput });
 	}

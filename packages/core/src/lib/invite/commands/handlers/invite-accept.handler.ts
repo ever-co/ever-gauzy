@@ -1,6 +1,5 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { IInvite, IUser, RolesEnum } from '@gauzy/contracts';
 import { AuthService } from './../../../auth/auth.service';
 import { UserService } from './../../../user/user.service';
@@ -16,8 +15,7 @@ import { TypeOrmUserRepository } from './../../../user/repository/type-orm-user.
 @CommandHandler(InviteAcceptCommand)
 export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand> {
 	constructor(
-		@InjectRepository(User) private readonly typeOrmUserRepository: TypeOrmUserRepository,
-
+		private readonly typeOrmUserRepository: TypeOrmUserRepository,
 		private readonly commandBus: CommandBus,
 		private readonly inviteService: InviteService,
 		private readonly authService: AuthService,

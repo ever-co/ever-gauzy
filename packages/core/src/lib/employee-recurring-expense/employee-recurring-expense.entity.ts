@@ -1,28 +1,15 @@
-import { CurrenciesEnum, IEmployee, IEmployeeRecurringExpense } from '@gauzy/contracts';
+import { CurrenciesEnum, ID, IEmployee, IEmployeeRecurringExpense } from '@gauzy/contracts';
 import { Optional } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
-import {
-	IsEnum,
-	IsNotEmpty,
-	IsNumber,
-	IsString,
-	Max,
-	Min,
-	IsDate,
-	IsOptional
-} from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsString, Max, Min, IsDate, IsOptional } from 'class-validator';
 import { RelationId } from 'typeorm';
-import {
-	Employee,
-	TenantOrganizationBaseEntity
-} from '../core/entities/internal';
+import { Employee, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmEmployeeRecurringExpenseRepository } from './repository/mikro-orm-employee-recurring-expense.repository';
 
 @MultiORMEntity('employee_recurring_expense', { mikroOrmRepository: () => MikroOrmEmployeeRecurringExpenseRepository })
 export class EmployeeRecurringExpense extends TenantOrganizationBaseEntity implements IEmployeeRecurringExpense {
-
 	@ApiProperty({ type: () => Number, minimum: 1, maximum: 31 })
 	@IsNumber()
 	@IsNotEmpty()
@@ -107,8 +94,7 @@ export class EmployeeRecurringExpense extends TenantOrganizationBaseEntity imple
 	@IsString()
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
-	parentRecurringExpenseId?: string;
-
+	parentRecurringExpenseId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -117,7 +103,8 @@ export class EmployeeRecurringExpense extends TenantOrganizationBaseEntity imple
 	*/
 	@ApiProperty({ type: () => Employee })
 	@MultiORMManyToOne(() => Employee, {
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		nullable: true
 	})
 	employee?: IEmployee;
 
@@ -125,5 +112,5 @@ export class EmployeeRecurringExpense extends TenantOrganizationBaseEntity imple
 	@RelationId((it: EmployeeRecurringExpense) => it.employee)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	employeeId: string;
+	employeeId: ID;
 }

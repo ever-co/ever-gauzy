@@ -1,27 +1,24 @@
 import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { Request, Response } from 'express';
+import { Response, Request } from 'express';
 import { FeatureFlag, FeatureFlagEnabledGuard, Public } from '@gauzy/common';
 import { FeatureEnum } from '@gauzy/contracts';
 import { SocialAuthService } from './../social-auth.service';
 import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
 
-@Controller()
+@UseGuards(FeatureFlagEnabledGuard, AuthGuard('github'))
 @FeatureFlag(FeatureEnum.FEATURE_GITHUB_LOGIN)
 @Public()
+@Controller('/auth')
 export class GithubController {
-
-	constructor(
-		public readonly service: SocialAuthService
-	) { }
+	constructor(public readonly service: SocialAuthService) {}
 
 	/**
 	 * Initiates GitHub login.
 	 *
 	 * @param req
 	 */
-	@Get('github')
-	@UseGuards(FeatureFlagEnabledGuard, AuthGuard('github'))
+	@Get('/github')
 	githubLogin(@Req() _req: Request) {
 		// This method is empty because AuthGuard('github') initiates the GitHub login
 		// The user will be redirected to the GitHub login page by Passport
@@ -34,12 +31,8 @@ export class GithubController {
 	 * @param _res - The response object.
 	 * @returns The result of the GitHub login callback.
 	 */
-	@Get('github/callback')
-	@UseGuards(FeatureFlagEnabledGuard, AuthGuard('github'))
-	async githubLoginCallback(
-		@RequestCtx() _req: IIncomingRequest,
-		@Res() _res: Response
-	) {
+	@Get('/github/callback')
+	async githubLoginCallback(@RequestCtx() _req: IIncomingRequest, @Res() _res: Response) {
 		const { user } = _req;
 
 		// To-DO: Determine the frontend URL based on the request

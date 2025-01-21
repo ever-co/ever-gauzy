@@ -11,7 +11,7 @@ import { IntegrationEntitySettingTiedUpdateCommand } from './commands';
 @ApiTags('IntegrationEntitySettingTied')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_EDIT)
-@Controller()
+@Controller('/integration-entity-setting-tied')
 export class IntegrationEntitySettingTiedController {
 	constructor(private readonly _commandBus: CommandBus) {}
 

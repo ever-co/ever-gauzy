@@ -1,7 +1,6 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RequestApproval } from './request-approval.entity';
 import { RequestApprovalController } from './request-approval.controller';
@@ -19,10 +18,10 @@ import { CommandHandlers } from './commands/handlers';
 import { TaskModule } from './../tasks/task.module';
 import { StatisticModule } from '../time-tracking/statistic/statistic.module';
 import { TimerModule } from '../time-tracking/timer/timer.module';
+import { TypeOrmRequestApprovalRepository } from './repository/type-orm-request-approval.repository';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/request-approval', module: RequestApprovalModule }]),
 		TypeOrmModule.forFeature([RequestApproval]),
 		MikroOrmModule.forFeature([RequestApproval]),
 		CqrsModule,
@@ -33,14 +32,14 @@ import { TimerModule } from '../time-tracking/timer/timer.module';
 		OrganizationTeamModule,
 		RoleModule,
 		OrganizationModule,
-		EquipmentSharingModule,
-		TimeOffRequestModule,
+		forwardRef(() => TimeOffRequestModule),
+		forwardRef(() => EquipmentSharingModule),
 		TaskModule,
 		TimerModule,
 		StatisticModule
 	],
 	controllers: [RequestApprovalController],
-	providers: [RequestApprovalService, ...CommandHandlers],
-	exports: [RequestApprovalService]
+	providers: [RequestApprovalService, TypeOrmRequestApprovalRepository, ...CommandHandlers],
+	exports: [RequestApprovalService, TypeOrmRequestApprovalRepository]
 })
 export class RequestApprovalModule {}

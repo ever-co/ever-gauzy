@@ -1,15 +1,4 @@
-import {
-	Body,
-	Controller,
-	Get,
-	HttpCode,
-	HttpStatus,
-	Param,
-	Post,
-	Put,
-	Query,
-	UseGuards
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
@@ -36,7 +25,7 @@ import { CreateOrganizationContactDTO, UpdateOrganizationContactDTO } from './dt
 
 @ApiTags('OrganizationContact')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/organization-contact')
 export class OrganizationContactController extends CrudController<OrganizationContact> {
 	constructor(
 		private readonly organizationContactService: OrganizationContactService,

@@ -14,7 +14,7 @@ import { JobPreset } from './job-preset.entity';
 import { SaveJobPresetCriterionDTO } from './dto';
 
 @ApiTags('EmployeeJobPreset')
-@Controller('employee')
+@Controller('/job-preset/employee')
 export class EmployeePresetController {
 	constructor(private readonly jobPresetService: JobPresetService) {}
 
@@ -34,7 +34,7 @@ export class EmployeePresetController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get(':employeeId')
+	@Get('/:employeeId')
 	async getEmployeePreset(@Param('employeeId', UUIDValidationPipe) employeeId: ID): Promise<IJobPreset[]> {
 		return await this.jobPresetService.getEmployeePreset(employeeId);
 	}
@@ -56,7 +56,7 @@ export class EmployeePresetController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get(':employeeId/criterion')
+	@Get('/:employeeId/criterion')
 	async getEmployeeCriterion(
 		@Param('employeeId', UUIDValidationPipe) employeeId: ID,
 		@Query() request: IGetMatchingCriterions
@@ -84,7 +84,7 @@ export class EmployeePresetController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Post(':employeeId/criterion')
+	@Post('/:employeeId/criterion')
 	async saveUpdateEmployeeCriterion(
 		@Param('employeeId', UUIDValidationPipe) employeeId: ID,
 		@Body() request: SaveJobPresetCriterionDTO
@@ -111,7 +111,7 @@ export class EmployeePresetController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Post()
+	@Post('/')
 	async saveEmployeePreset(@Body() request: IEmployeePresetInput): Promise<IJobPreset[]> {
 		return await this.jobPresetService.saveEmployeePreset(request);
 	}
@@ -133,7 +133,7 @@ export class EmployeePresetController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Delete(':employeeId/criterion/:criterionId')
+	@Delete('/:employeeId/criterion/:criterionId')
 	async deleteEmployeeCriterion(
 		@Param('criterionId', UUIDValidationPipe) criterionId: ID,
 		@Param('employeeId', UUIDValidationPipe) employeeId: ID

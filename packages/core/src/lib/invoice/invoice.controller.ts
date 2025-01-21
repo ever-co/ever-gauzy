@@ -62,7 +62,7 @@ class InvoicePaginationParams<T> extends PaginationParams<T> {
 @ApiTags('Invoice')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.INVOICES_EDIT)
-@Controller()
+@Controller('/invoices')
 export class InvoiceController extends CrudController<Invoice> {
 	constructor(private readonly invoiceService: InvoiceService, private readonly commandBus: CommandBus) {
 		super(invoiceService);

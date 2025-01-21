@@ -3,9 +3,11 @@ import { In } from 'typeorm';
 import { ID, ITimeOffPolicyCreateInput, ITimeOffPolicyUpdateInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
-import { MikroOrmEmployeeRepository, TypeOrmEmployeeRepository } from '../employee/repository';
+import { MikroOrmEmployeeRepository } from '../employee/repository/mikro-orm-employee.repository';
+import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
+import { TypeOrmTimeOffPolicyRepository } from './repository/type-orm-time-off-policy.repository';
+import { MikroOrmTimeOffPolicyRepository } from './repository/mikro-orm-time-off-policy.repository';
 import { TimeOffPolicy } from './time-off-policy.entity';
-import { MikroOrmTimeOffPolicyRepository, TypeOrmTimeOffPolicyRepository } from './repository';
 
 @Injectable()
 export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> {

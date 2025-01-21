@@ -39,7 +39,7 @@ export class EmployeeStatisticsService {
 		private readonly employeeRecurringExpenseService: EmployeeRecurringExpenseService,
 		private readonly employeeService: EmployeeService,
 		private readonly organizationRecurringExpenseService: OrganizationRecurringExpenseService
-	) { }
+	) {}
 
 	async getStatisticsByEmployeeId(
 		employeeId: string,
@@ -115,15 +115,13 @@ export class EmployeeStatisticsService {
 		let expenseStatistics = [];
 
 		this._getLast12months().forEach((month) => {
-			const incomeStatForTheMonth = sortedEmployeeIncome.find(
-				(incomeStat) => Object.hasOwn(incomeStat, month)
-			);
+			const incomeStatForTheMonth = sortedEmployeeIncome.find((incomeStat) => Object.hasOwn(incomeStat, month));
 			incomeStatistics.push(incomeStatForTheMonth ? incomeStatForTheMonth[month] : 0);
-			
-			const expenseStatForTheMonth = sortedEmployeeExpenses.find(
-				(expenseStat) => Object.hasOwn(expenseStat, month)
+
+			const expenseStatForTheMonth = sortedEmployeeExpenses.find((expenseStat) =>
+				Object.hasOwn(expenseStat, month)
 			);
-			expenseStatistics.push(expenseStatForTheMonth? expenseStatForTheMonth[month]: 0);
+			expenseStatistics.push(expenseStatForTheMonth ? expenseStatForTheMonth[month] : 0);
 		});
 
 		const {
@@ -138,12 +136,7 @@ export class EmployeeStatisticsService {
 		expenseStatistics.forEach((expenseStat, index) => {
 			const income = incomeStatistics[index];
 			const profit = income - expenseStat;
-			const bonus = this.calculateEmployeeBonus(
-				bonusType,
-				bonusPercentage,
-				income,
-				profit
-			);
+			const bonus = this.calculateEmployeeBonus(bonusType, bonusPercentage, income, profit);
 			profitStatistics.push(profit);
 			bonusStatistics.push(bonus);
 		});
@@ -171,9 +164,7 @@ export class EmployeeStatisticsService {
 
 		for (let i = start; i <= end; i++) {
 			if (i > 11) {
-				monthsNeeded.push(
-					this._monthNames[i - 12] + ` '${currentYear}`
-				);
+				monthsNeeded.push(this._monthNames[i - 12] + ` '${currentYear}`);
 			} else {
 				monthsNeeded.push(this._monthNames[i] + ` '${currentYear - 1}`);
 			}
@@ -190,30 +181,17 @@ export class EmployeeStatisticsService {
 	 * For revenue based bonus, bonus is calculated based on income
 	 * For profit based bonus, bonus is calculated based on profit
 	 */
-	calculateEmployeeBonus = (
-		bonusType: string,
-		bonusPercentage: number,
-		income: number,
-		profit: number
-	) => {
+	calculateEmployeeBonus = (bonusType: string, bonusPercentage: number, income: number, profit: number) => {
 		bonusType = bonusType ?? BonusTypeEnum.PROFIT_BASED_BONUS;
 		switch (bonusType) {
 			case BonusTypeEnum.PROFIT_BASED_BONUS:
-				return (
-					(profit * (bonusPercentage || DEFAULT_PROFIT_BASED_BONUS)) /
-					100
-				);
+				return (profit * (bonusPercentage || DEFAULT_PROFIT_BASED_BONUS)) / 100;
 			case BonusTypeEnum.REVENUE_BASED_BONUS:
-				return (
-					(income *
-						(bonusPercentage || DEFAULT_REVENUE_BASED_BONUS)) /
-					100
-				);
+				return (income * (bonusPercentage || DEFAULT_REVENUE_BASED_BONUS)) / 100;
 			default:
 				return 0;
 		}
 	};
-
 
 	/**
 	 * Gets all income records of one or more employees(using employeeId)
@@ -227,14 +205,7 @@ export class EmployeeStatisticsService {
 		organizationId: string
 	) =>
 		await this.incomeService.findAll({
-			select: [
-				'employeeId',
-				'valueDate',
-				'amount',
-				'currency',
-				'notes',
-				'isBonus'
-			],
+			select: ['employeeId', 'valueDate', 'amount', 'currency', 'notes', 'isBonus'],
 			join: {
 				alias: 'income',
 				leftJoinAndSelect: {
@@ -248,7 +219,7 @@ export class EmployeeStatisticsService {
 				},
 				valueDate: Between<Date>(
 					moment(moment(startDate).format('YYYY-MM-DD HH:mm:ss.SSS')).toDate(),
-					moment(moment(endDate).format('YYYY-MM-DD HH:mm:ss.SSS')).toDate(),
+					moment(moment(endDate).format('YYYY-MM-DD HH:mm:ss.SSS')).toDate()
 				)
 			},
 			order: {
@@ -268,15 +239,7 @@ export class EmployeeStatisticsService {
 		organizationId: string
 	) =>
 		await this.expenseService.findAll({
-			select: [
-				'employeeId',
-				'valueDate',
-				'amount',
-				'currency',
-				'notes',
-				'vendor',
-				'category'
-			],
+			select: ['employeeId', 'valueDate', 'amount', 'currency', 'notes', 'vendor', 'category'],
 			where: {
 				organizationId,
 				employee: {
@@ -285,7 +248,7 @@ export class EmployeeStatisticsService {
 				splitExpense: false,
 				valueDate: Between<Date>(
 					moment(moment(startDate).format('YYYY-MM-DD HH:mm:ss.SSS')).toDate(),
-					moment(moment(endDate).format('YYYY-MM-DD HH:mm:ss.SSS')).toDate(),
+					moment(moment(endDate).format('YYYY-MM-DD HH:mm:ss.SSS')).toDate()
 				)
 			},
 			order: {
@@ -303,14 +266,7 @@ export class EmployeeStatisticsService {
 		organizationId: string
 	) =>
 		await this.employeeRecurringExpenseService.findAll({
-			select: [
-				'employeeId',
-				'currency',
-				'value',
-				'categoryName',
-				'startDate',
-				'endDate'
-			],
+			select: ['employeeId', 'currency', 'value', 'categoryName', 'startDate', 'endDate'],
 			where: [
 				{
 					employeeId: In(employeeIds),
@@ -357,18 +313,12 @@ export class EmployeeStatisticsService {
 			where: {
 				organization: { id: employee.organization.id },
 				splitExpense: true,
-				valueDate: Between(
-					moment(startDate).toDate(),
-					moment(endDate).toDate()
-				)
+				valueDate: Between(moment(startDate).toDate(), moment(endDate).toDate())
 			},
 			relations: ['category']
 		});
 
-		const monthlySplitExpenseMap: Map<
-			string,
-			IMonthAggregatedSplitExpense
-		> = new Map();
+		const monthlySplitExpenseMap: Map<string, IMonthAggregatedSplitExpense> = new Map();
 
 		// 3 Find the number of active employees for each month, and split the expenses among the active employees for each month
 		for (const expense of items) {
@@ -379,9 +329,7 @@ export class EmployeeStatisticsService {
 				// Update expense statistics values in map if key pre-exists
 				const stat = monthlySplitExpenseMap.get(key);
 				const splitAmount = amount / stat.splitAmong;
-				stat.splitExpense = Number(
-					(splitAmount + stat.splitExpense).toFixed(2)
-				);
+				stat.splitExpense = Number((splitAmount + stat.splitExpense).toFixed(2));
 				stat.expense.push(expense);
 			} else {
 				// Add a new map entry if the key(month-year) does not already exist
@@ -420,16 +368,8 @@ export class EmployeeStatisticsService {
 		});
 
 		// 2 Fetch all split recurring expenses of the Employee's Organization
-		const {
-			items
-		} = await this.organizationRecurringExpenseService.findAll({
-			select: [
-				'currency',
-				'value',
-				'categoryName',
-				'startDate',
-				'endDate'
-			],
+		const { items } = await this.organizationRecurringExpenseService.findAll({
+			select: ['currency', 'value', 'categoryName', 'startDate', 'endDate'],
 			where: [
 				{
 					organizationId: employee.organization.id,
@@ -446,10 +386,7 @@ export class EmployeeStatisticsService {
 			]
 		});
 
-		const monthlySplitExpenseMap: Map<
-			string,
-			IMonthAggregatedSplitExpense
-		> = new Map();
+		const monthlySplitExpenseMap: Map<string, IMonthAggregatedSplitExpense> = new Map();
 
 		/**
 		 * Add Organization split recurring expense from the
@@ -470,10 +407,7 @@ export class EmployeeStatisticsService {
 			 * OR
 			 * past N months to each month's expense, whichever is more recent
 			 */
-			const requiredStartDate =
-				expense.startDate > inputStartDate
-					? expense.startDate
-					: inputStartDate;
+			const requiredStartDate = expense.startDate > inputStartDate ? expense.startDate : inputStartDate;
 
 			for (
 				const date = new Date(requiredStartDate);
@@ -489,13 +423,13 @@ export class EmployeeStatisticsService {
 					// Update expense statistics values in map if key pre-exists
 					const stat = monthlySplitExpenseMap.get(key);
 					const splitExpense = amount / stat.splitAmong;
-					stat.splitExpense = Number(
-						(splitExpense + stat.splitExpense).toFixed(2)
-					);
+					stat.splitExpense = Number((splitExpense + stat.splitExpense).toFixed(2));
 					stat.recurringExpense.push(expense);
 					stat.valueDate = date;
 				} else {
-					const { total: splitAmong } = await this.employeeService.findWorkingEmployees(employee.organization.id);
+					const { total: splitAmong } = await this.employeeService.findWorkingEmployees(
+						employee.organization.id
+					);
 
 					// Add a new map entry if the key(month-year) does not already exist
 					const newStat: IMonthAggregatedSplitExpense = {

@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { ICandidateInterviewersDeleteInput, ICandidateInterviewersCreateInput } from '@gauzy/contracts';
+import { ICandidateInterviewersDeleteInput, ICandidateInterviewersCreateInput, ID } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { TypeOrmCandidateInterviewersRepository } from './repository/type-orm-candidate-interviewers.repository';
 import { MikroOrmCandidateInterviewersRepository } from './repository/mikro-orm-candidate-interviewers.repository';
@@ -9,9 +8,7 @@ import { CandidateInterviewers } from './candidate-interviewers.entity';
 @Injectable()
 export class CandidateInterviewersService extends TenantAwareCrudService<CandidateInterviewers> {
 	constructor(
-		@InjectRepository(CandidateInterviewers)
 		typeOrmCandidateInterviewersRepository: TypeOrmCandidateInterviewersRepository,
-
 		mikroOrmCandidateInterviewersRepository: MikroOrmCandidateInterviewersRepository
 	) {
 		super(typeOrmCandidateInterviewersRepository, mikroOrmCandidateInterviewersRepository);
@@ -22,7 +19,7 @@ export class CandidateInterviewersService extends TenantAwareCrudService<Candida
 	 * @param interviewId
 	 * @returns
 	 */
-	async getInterviewersByInterviewId(interviewId: string): Promise<CandidateInterviewers[]> {
+	async getInterviewersByInterviewId(interviewId: ID): Promise<CandidateInterviewers[]> {
 		return await this.typeOrmRepository
 			.createQueryBuilder('candidate_interviewer')
 			.where('candidate_interviewer.interviewId = :interviewId', {

@@ -20,7 +20,7 @@ import { CreateVersionDTO, VersionQueryDTO, UpdatesVersionDTO } from './dto';
 
 @UseGuards(TenantPermissionGuard)
 @ApiTags('Task Version')
-@Controller()
+@Controller('/task-versions')
 export class TaskVersionController extends CrudFactory<
 	TaskVersion,
 	IPaginationParam,

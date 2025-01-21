@@ -22,7 +22,8 @@ import { RolePermission } from './role-permission.entity';
 import { Role } from '../role/role.entity';
 import { RoleService } from './../role/role.service';
 import { DEFAULT_ROLE_PERMISSIONS } from './default-role-permissions';
-import { MikroOrmRolePermissionRepository, TypeOrmRolePermissionRepository } from './repository';
+import { MikroOrmRolePermissionRepository } from './repository/mikro-orm-role-permission.repository';
+import { TypeOrmRolePermissionRepository } from './repository/type-orm-role-permission.repository';
 
 @Injectable()
 export class RolePermissionService extends TenantAwareCrudService<RolePermission> {

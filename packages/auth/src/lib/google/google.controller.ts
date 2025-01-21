@@ -1,4 +1,5 @@
 import { Controller, Get, Logger, Req, Res, UseGuards } from '@nestjs/common';
+import { Response, Request } from 'express';
 import { FeatureFlagEnabledGuard, FeatureFlag, Public } from '@gauzy/common';
 import { SocialAuthService } from './../social-auth.service';
 import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
@@ -9,9 +10,10 @@ import { GoogleAuthGuard } from './google-auth-guard';
 @UseGuards(FeatureFlagEnabledGuard, GoogleAuthGuard)
 @FeatureFlag(FeatureEnum.FEATURE_GOOGLE_LOGIN)
 @Public()
+@Controller('/auth')
 export class GoogleController {
 	private readonly logger = new Logger(`GZY - ${GoogleController.name}`);
-	constructor(public readonly service: SocialAuthService) { }
+	constructor(public readonly service: SocialAuthService) {}
 
 	/**
 	 * Initiates Google login.
@@ -20,7 +22,7 @@ export class GoogleController {
 	 */
 	@Get('google')
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	googleLogin(@Req() req) {
+	googleLogin(@Req() _: Request) {
 		// Initiate Google login
 	}
 
@@ -31,17 +33,16 @@ export class GoogleController {
 	 * @param res - The response object.
 	 * @returns The result of the Google login callback.
 	 */
-	@Get('google/callback')
-	async googleLoginCallback(
-		@RequestCtx() requestCtx: IIncomingRequest,
-		@Res() res
-	) {
+	@Get('/google/callback')
+	async googleLoginCallback(@RequestCtx() requestCtx: IIncomingRequest, @Res() res: Response) {
 		const { user } = requestCtx;
 		let response = await this.service.validateOAuthLoginEmail(user.emails);
 
 		// User doesn't exist in the database, new account will be created
 		if (!response.success) {
-			this.logger.verbose(`User doesn't exist in the database, new account will be created: ${JSON.stringify(user)}`);
+			this.logger.verbose(
+				`User doesn't exist in the database, new account will be created: ${JSON.stringify(user)}`
+			);
 			response = await this.service.registerOAuth({
 				emails: user.emails,
 				firstName: user.firstName,

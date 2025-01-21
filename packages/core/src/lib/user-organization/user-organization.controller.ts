@@ -13,7 +13,7 @@ import { FindMeUserOrganizationDTO } from './dto/find-me-user-organization.dto';
 
 @ApiTags('UserOrganization')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/user-organization')
 export class UserOrganizationController extends CrudController<UserOrganization> {
 	constructor(
 		private readonly userOrganizationService: UserOrganizationService,

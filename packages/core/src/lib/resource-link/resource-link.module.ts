@@ -1,6 +1,5 @@
 import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
-import { RouterModule } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
@@ -13,15 +12,14 @@ import { TypeOrmResourceLinkRepository } from './repository/type-orm-resource-li
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/resource-link', module: ResourceLinkModule }]),
 		TypeOrmModule.forFeature([ResourceLink]),
 		MikroOrmModule.forFeature([ResourceLink]),
 		RolePermissionModule,
 		UserModule,
 		CqrsModule
 	],
-	providers: [ResourceLinkService, TypeOrmResourceLinkRepository, ...CommandHandlers],
 	controllers: [ResourceLinkController],
-	exports: [ResourceLinkService, TypeOrmModule, TypeOrmResourceLinkRepository]
+	providers: [ResourceLinkService, TypeOrmResourceLinkRepository, ...CommandHandlers],
+	exports: [ResourceLinkService, TypeOrmResourceLinkRepository]
 })
 export class ResourceLinkModule {}

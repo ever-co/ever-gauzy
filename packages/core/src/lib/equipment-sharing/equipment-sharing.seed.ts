@@ -27,10 +27,7 @@ export const createDefaultEquipmentSharing = async (
 			sharing.equipment = equipment;
 			sharing.shareRequestDay = faker.date.recent({ days: 30 });
 			sharing.shareStartDay = faker.date.future({ years: 0.5 });
-			sharing.shareEndDay = addDays(
-				sharing.shareStartDay,
-				faker.number.int(15)
-			);
+			sharing.shareEndDay = addDays(sharing.shareStartDay, faker.number.int(15));
 			sharing.status = faker.number.int({ min: 1, max: 3 });
 			sharing.employees = [faker.helpers.arrayElement(defaultEmployees)];
 			sharing.organization = organization;
@@ -65,16 +62,12 @@ export const createRandomEquipmentSharing = async (
 			});
 			for (let i = 0; i < noOfEquipmentSharingPerTenant; i++) {
 				for await (const equipment of equipments) {
-
 					const sharing = new EquipmentSharing();
 					sharing.name = faker.company.name();
 					sharing.equipment = equipment;
 					sharing.shareRequestDay = faker.date.recent({ days: 30 });
 					sharing.shareStartDay = faker.date.future({ years: 0.5 });
-					sharing.shareEndDay = addDays(
-						sharing.shareStartDay,
-						faker.number.int(15)
-					);
+					sharing.shareEndDay = addDays(sharing.shareStartDay, faker.number.int(15));
 					sharing.status = faker.number.int({ min: 1, max: 3 });
 					sharing.employees = [faker.helpers.arrayElement(employees)];
 					sharing.organization = organization;

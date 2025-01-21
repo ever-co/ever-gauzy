@@ -25,7 +25,7 @@ import { CreateEmployeeSettingDTO, UpdateEmployeeSettingDTO } from './dto';
 
 @ApiTags('EmployeeSetting')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/employee-settings')
 export class EmployeeSettingController extends CrudController<EmployeeSetting> {
 	constructor(
 		private readonly employeeSettingService: EmployeeSettingService,

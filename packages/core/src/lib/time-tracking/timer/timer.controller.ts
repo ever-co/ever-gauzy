@@ -10,7 +10,7 @@ import { StartTimerDTO, StopTimerDTO, TimerStatusQueryDTO } from './dto';
 @ApiTags('Timer Tracker')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER)
-@Controller()
+@Controller('/timesheet/timer')
 export class TimerController {
 	constructor(private readonly timerService: TimerService) {}
 

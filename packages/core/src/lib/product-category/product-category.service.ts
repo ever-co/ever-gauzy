@@ -1,5 +1,4 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { IPagination, IProductCategoryTranslatable, LanguagesEnum } from '@gauzy/contracts';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { ProductCategory } from './product-category.entity';
@@ -9,9 +8,7 @@ import { MikroOrmProductCategoryRepository } from './repository/mikro-orm-produc
 @Injectable()
 export class ProductCategoryService extends TenantAwareCrudService<ProductCategory> {
 	constructor(
-		@InjectRepository(ProductCategory)
 		typeOrmProductCategoryRepository: TypeOrmProductCategoryRepository,
-
 		mikroOrmProductCategoryRepository: MikroOrmProductCategoryRepository
 	) {
 		super(typeOrmProductCategoryRepository, mikroOrmProductCategoryRepository);

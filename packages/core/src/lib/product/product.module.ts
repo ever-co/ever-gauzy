@@ -1,6 +1,5 @@
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { forwardRef, Module } from '@nestjs/common';
-import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Product } from './product.entity';
@@ -13,10 +12,11 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 import { ProductTranslation } from './product-translation.entity';
 import { ProductOptionModule } from './../product-option/product-option-module';
 import { CommandHandlers } from './commands/handlers';
+import { TypeOrmProductRepository } from './repository/type-orm-product.repository';
+import { TypeOrmProductTranslationRepository } from './repository/type-orm-product-translation.repository';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/products', module: ProductModule }]),
 		TypeOrmModule.forFeature([Product, ProductTranslation]),
 		MikroOrmModule.forFeature([Product, ProductTranslation]),
 		CqrsModule,
@@ -27,7 +27,7 @@ import { CommandHandlers } from './commands/handlers';
 		forwardRef(() => ProductVariantModule)
 	],
 	controllers: [ProductController],
-	providers: [ProductService, ...CommandHandlers],
+	providers: [ProductService, TypeOrmProductRepository, TypeOrmProductTranslationRepository, ...CommandHandlers],
 	exports: [ProductService]
 })
-export class ProductModule { }
+export class ProductModule {}

@@ -1,6 +1,5 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Expense } from './expense.entity';
@@ -15,22 +14,22 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 import { ExpenseMapService } from './expense.map.service';
 import { EmployeeModule } from './../employee/employee.module';
 import { OrganizationRecurringExpenseModule } from './../organization-recurring-expense/organization-recurring-expense.module';
+import { TypeOrmExpenseRepository } from './repository/type-orm-expense.repository';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/expense', module: ExpenseModule }]),
 		TypeOrmModule.forFeature([Expense]),
 		MikroOrmModule.forFeature([Expense]),
+		RolePermissionModule,
+		EmployeeModule,
 		forwardRef(() => EmployeeStatisticsModule),
 		forwardRef(() => EmployeeRecurringExpenseModule),
 		forwardRef(() => OrganizationRecurringExpenseModule),
 		forwardRef(() => IncomeModule),
-		forwardRef(() => RolePermissionModule),
-		forwardRef(() => EmployeeModule),
 		CqrsModule
 	],
 	controllers: [ExpenseController],
-	providers: [ExpenseService, ExpenseMapService, ...CommandHandlers, ...QueryHandlers],
+	providers: [ExpenseService, ExpenseMapService, TypeOrmExpenseRepository, ...CommandHandlers, ...QueryHandlers],
 	exports: [ExpenseService, ExpenseMapService]
 })
-export class ExpenseModule { }
+export class ExpenseModule {}

@@ -1,21 +1,15 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Equipment } from './equipment.entity';
 import { EquipmentController } from './equipment.controller';
 import { EquipmentService } from './equipment.service';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { TypeOrmEquipmentRepository } from './repository/type-orm-equipment.repository';
 
 @Module({
-	imports: [
-		RouterModule.register([{ path: '/equipment', module: EquipmentModule }]),
-		TypeOrmModule.forFeature([Equipment]),
-		MikroOrmModule.forFeature([Equipment]),
-		RolePermissionModule
-	],
+	imports: [TypeOrmModule.forFeature([Equipment]), MikroOrmModule.forFeature([Equipment]), RolePermissionModule],
 	controllers: [EquipmentController],
-	providers: [EquipmentService],
-	exports: [EquipmentService]
+	providers: [EquipmentService, TypeOrmEquipmentRepository]
 })
-export class EquipmentModule { }
+export class EquipmentModule {}

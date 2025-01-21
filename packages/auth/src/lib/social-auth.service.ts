@@ -17,12 +17,11 @@ export abstract class BaseSocialAuth {
 
 	/**
 	 * Register a new user with OAuth data
-	 * 
+	 *
 	 * @param userInfo - The user information to register.
 	 * @returns The result of the registration.
 	 */
 	public abstract registerOAuth(userInfo: IOAuthCreateUser): Promise<IOAuthValidateResponse>;
-
 }
 
 @Injectable()
@@ -74,7 +73,7 @@ export class SocialAuthService extends BaseSocialAuth {
 	async routeRedirect(success: boolean, auth: { jwt: string; userId: string }, res: any, error?: string) {
 		const { userId, jwt } = auth;
 
-		const redirectPath = success ? `#/sign-in/success?jwt=${jwt}&userId=${userId}` : `#/auth/login?error=${error}`
+		const redirectPath = success ? `#/sign-in/success?jwt=${jwt}&userId=${userId}` : `#/auth/login?error=${error}`;
 		const redirectUrl = `${this.clientBaseUrl}/${redirectPath}`;
 
 		return res.redirect(redirectUrl);

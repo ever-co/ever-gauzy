@@ -1,19 +1,16 @@
 import { ConsoleLogger, Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { User } from '../core/entities/internal';
+import { DatabaseModule } from '../database/database.module';
+import { UserModule } from '../user/user.module';
 import { CacheHealthIndicator } from './indicators/cache-health.indicator';
 import { RedisHealthIndicator } from './indicators/redis-health.indicator';
 import { HealthController } from './health.controller';
-import { DatabaseModule } from '../database/database.module';
 
 @Module({
 	controllers: [HealthController],
 	imports: [
 		// We need to import the TypeOrmModule and MikroOrmModule here to use Repositories in Health Service
-		TypeOrmModule.forFeature([User]),
-		MikroOrmModule.forFeature([User]),
+		UserModule,
 		DatabaseModule,
 		TerminusModule.forRoot({
 			logger: ConsoleLogger

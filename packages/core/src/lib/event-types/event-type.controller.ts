@@ -1,16 +1,5 @@
 import { IEventType, IEventTypeCreateInput, IPagination } from '@gauzy/contracts';
-import {
-	Body,
-	Controller,
-	Get,
-	HttpCode,
-	HttpStatus,
-	Param,
-	Put,
-	Post,
-	Query,
-	UseGuards
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Put, Post, Query, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { FindOptionsWhere } from 'typeorm';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -23,7 +12,7 @@ import { EventTypeService } from './event-type.service';
 
 @ApiTags('EventType')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/event-type')
 export class EventTypeController extends CrudController<EventType> {
 	constructor(private readonly eventTypeService: EventTypeService, private readonly commandBus: CommandBus) {
 		super(eventTypeService);

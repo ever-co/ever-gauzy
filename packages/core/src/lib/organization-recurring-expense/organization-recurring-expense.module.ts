@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { CommandHandlers } from './commands/handlers';
 import { OrganizationRecurringExpenseController } from './organization-recurring-expense.controller';
@@ -11,15 +10,10 @@ import { QueryHandlers } from './queries/handlers';
 import { EmployeeModule } from '../employee/employee.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { TypeOrmOrganizationRecurringExpenseRepository } from './repository/type-orm-organization-recurring-expense.repository';
 
 @Module({
 	imports: [
-		RouterModule.register([
-			{
-				path: '/organization-recurring-expense',
-				module: OrganizationRecurringExpenseModule
-			}
-		]),
 		TypeOrmModule.forFeature([OrganizationRecurringExpense]),
 		MikroOrmModule.forFeature([OrganizationRecurringExpense]),
 		RolePermissionModule,
@@ -30,9 +24,10 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 	controllers: [OrganizationRecurringExpenseController],
 	providers: [
 		OrganizationRecurringExpenseService,
+		TypeOrmOrganizationRecurringExpenseRepository,
 		...QueryHandlers,
 		...CommandHandlers
 	],
 	exports: [OrganizationRecurringExpenseService]
 })
-export class OrganizationRecurringExpenseModule { }
+export class OrganizationRecurringExpenseModule {}

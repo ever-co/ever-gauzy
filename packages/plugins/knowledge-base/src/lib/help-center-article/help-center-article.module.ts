@@ -1,4 +1,3 @@
-import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { forwardRef, Module, OnModuleInit } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -8,11 +7,10 @@ import { HelpCenterArticle } from './help-center-article.entity';
 import { HelpCenterArticleService } from './help-center-article.service';
 import { HelpCenterArticleController } from './help-center-article.controller';
 import { CommandHandlers } from './commands/handlers';
-import { TypeOrmHelpCenterArticleRepository } from './repository';
+import { TypeOrmHelpCenterArticleRepository } from './repository/type-orm-help-center-article.repository';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/help-center-article', module: HelpCenterArticleModule }]),
 		forwardRef(() => TypeOrmModule.forFeature([HelpCenterArticle])),
 		forwardRef(() => MikroOrmModule.forFeature([HelpCenterArticle])),
 		RolePermissionModule,
@@ -23,7 +21,7 @@ import { TypeOrmHelpCenterArticleRepository } from './repository';
 	exports: [HelpCenterArticleService, TypeOrmHelpCenterArticleRepository]
 })
 export class HelpCenterArticleModule implements OnModuleInit {
-	constructor() { }
+	constructor() {}
 
-	onModuleInit() { }
+	onModuleInit() {}
 }

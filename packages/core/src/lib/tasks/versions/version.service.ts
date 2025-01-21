@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
@@ -24,13 +23,9 @@ import { setFullIconUrl } from '../utils';
 @Injectable()
 export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersion> {
 	constructor(
-		@InjectRepository(TaskVersion)
 		readonly typeOrmTaskVersionRepository: TypeOrmTaskVersionRepository,
-
 		readonly mikroOrmTaskVersionRepository: MikroOrmTaskVersionRepository,
-
-		@InjectConnection()
-		readonly knexConnection: KnexConnection
+		@InjectConnection() readonly knexConnection: KnexConnection
 	) {
 		super(typeOrmTaskVersionRepository, mikroOrmTaskVersionRepository, knexConnection);
 	}

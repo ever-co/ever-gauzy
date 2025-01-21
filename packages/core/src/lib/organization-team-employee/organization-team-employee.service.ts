@@ -19,14 +19,15 @@ import { OrganizationTeamEmployee } from './organization-team-employee.entity';
 import { TaskService } from './../tasks/task.service';
 import { CreateSubscriptionEvent } from '../subscription/events';
 import { SubscriptionService } from '../subscription/subscription.service';
-import { MikroOrmOrganizationTeamEmployeeRepository, TypeOrmOrganizationTeamEmployeeRepository } from './repository';
+import { TypeOrmOrganizationTeamEmployeeRepository } from './repository/type-orm-organization-team-employee.repository';
+import { MikroOrmOrganizationTeamEmployeeRepository } from './repository/mikro-orm-organization-team-employee.repository';
 
 @Injectable()
 export class OrganizationTeamEmployeeService extends TenantAwareCrudService<OrganizationTeamEmployee> {
 	constructor(
-		private readonly _eventBus: EventBus,
 		readonly typeOrmOrganizationTeamEmployeeRepository: TypeOrmOrganizationTeamEmployeeRepository,
 		readonly mikroOrmOrganizationTeamEmployeeRepository: MikroOrmOrganizationTeamEmployeeRepository,
+		private readonly _eventBus: EventBus,
 		private readonly taskService: TaskService,
 		private readonly subscriptionService: SubscriptionService
 	) {

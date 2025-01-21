@@ -1,9 +1,5 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
-import {
-	RequestApprovalStatusTypesEnum,
-	ApprovalPolicyTypesStringEnum
-} from '@gauzy/contracts';
+import { RequestApprovalStatusTypesEnum, ApprovalPolicyTypesStringEnum } from '@gauzy/contracts';
 import { EquipmentSharing } from '../../equipment-sharing.entity';
 import { EquipmentSharingCreateCommand } from '../equipment-sharing.create.command';
 import { RequestApproval } from '../../../request-approval/request-approval.entity';
@@ -13,19 +9,12 @@ import { TypeOrmRequestApprovalRepository } from '../../../request-approval/repo
 
 @CommandHandler(EquipmentSharingCreateCommand)
 export class EquipmentSharingCreateHandler implements ICommandHandler<EquipmentSharingCreateCommand> {
-
 	constructor(
-		@InjectRepository(EquipmentSharing)
 		private readonly typeOrmEquipmentSharingRepository: TypeOrmEquipmentSharingRepository,
-
-		@InjectRepository(RequestApproval)
 		private readonly typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository
-	) { }
+	) {}
 
-	public async execute(
-		command?: EquipmentSharingCreateCommand
-	): Promise<EquipmentSharing> {
-
+	public async execute(command?: EquipmentSharingCreateCommand): Promise<EquipmentSharing> {
 		const { orgId, equipmentSharing } = command;
 		equipmentSharing.createdBy = RequestContext.currentUser().id;
 		equipmentSharing.createdByName = RequestContext.currentUser().name;
@@ -35,7 +24,9 @@ export class EquipmentSharingCreateHandler implements ICommandHandler<EquipmentS
 		const requestApproval = new RequestApproval();
 		requestApproval.requestId = equipmentSharingSaved.id;
 		requestApproval.requestType = ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING;
-		requestApproval.status = equipmentSharingSaved.status ? equipmentSharingSaved.status : RequestApprovalStatusTypesEnum.REQUESTED;
+		requestApproval.status = equipmentSharingSaved.status
+			? equipmentSharingSaved.status
+			: RequestApprovalStatusTypesEnum.REQUESTED;
 		requestApproval.createdBy = RequestContext.currentUser().id;
 		requestApproval.createdByName = RequestContext.currentUser().name;
 		requestApproval.name = equipmentSharing.name;

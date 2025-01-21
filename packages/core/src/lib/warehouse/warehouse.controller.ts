@@ -34,7 +34,7 @@ import { CreateWarehouseDTO, UpdateWarehouseDTO } from './dto';
 @ApiTags('Warehouses')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
-@Controller()
+@Controller('/warehouses')
 export class WarehouseController extends CrudController<Warehouse> {
 	constructor(
 		private readonly warehouseService: WarehouseService,

@@ -1,6 +1,5 @@
 import { IHelpCenterAuthor } from '@gauzy/contracts';
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { TenantAwareCrudService } from '@gauzy/core';
 import { isNotEmpty } from '@gauzy/common';
 import { HelpCenterAuthor } from './help-center-author.entity';
@@ -10,9 +9,7 @@ import { MikroOrmHelpCenterAuthorRepository } from './repository/mikro-orm-help-
 @Injectable()
 export class HelpCenterAuthorService extends TenantAwareCrudService<HelpCenterAuthor> {
 	constructor(
-		@InjectRepository(HelpCenterAuthor)
 		typeOrmHelpCenterAuthorRepository: TypeOrmHelpCenterAuthorRepository,
-
 		mikroOrmHelpCenterAuthorRepository: MikroOrmHelpCenterAuthorRepository
 	) {
 		super(typeOrmHelpCenterAuthorRepository, mikroOrmHelpCenterAuthorRepository);

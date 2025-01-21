@@ -1,6 +1,5 @@
 import { IPagination } from '@gauzy/contracts';
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import { CandidateExperience } from './candidate-experience.entity';
@@ -10,9 +9,7 @@ import { MikroOrmCandidateExperienceRepository } from './repository/mikro-orm-ca
 @Injectable()
 export class CandidateExperienceService extends TenantAwareCrudService<CandidateExperience> {
 	constructor(
-		@InjectRepository(CandidateExperience)
 		typeOrmCandidateExperienceRepository: TypeOrmCandidateExperienceRepository,
-
 		mikroOrmCandidateExperienceRepository: MikroOrmCandidateExperienceRepository
 	) {
 		super(typeOrmCandidateExperienceRepository, mikroOrmCandidateExperienceRepository);

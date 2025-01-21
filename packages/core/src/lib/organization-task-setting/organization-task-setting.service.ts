@@ -4,7 +4,8 @@ import { IOrganizationTaskSetting, IOrganizationTaskSettingFindInput } from '@ga
 import { RequestContext } from './../core/context';
 import { TenantAwareCrudService } from '../core/crud';
 import { OrganizationTaskSetting } from './organization-task-setting.entity';
-import { MikroOrmOrganizationTaskSettingRepository, TypeOrmOrganizationTaskSettingRepository } from './repository';
+import { TypeOrmOrganizationTaskSettingRepository } from './repository/type-orm-organization-task-setting.repository';
+import { MikroOrmOrganizationTaskSettingRepository } from './repository/mikro-orm-organization-task-setting.repository';
 
 @Injectable()
 export class OrganizationTaskSettingService extends TenantAwareCrudService<OrganizationTaskSetting> {

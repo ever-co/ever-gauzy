@@ -9,11 +9,9 @@ import { TenantPermissionGuard } from './../shared/guards';
 
 @ApiTags('AppointmentEmployee')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/appointment-employees')
 export class AppointmentEmployeesController extends CrudController<AppointmentEmployee> {
-	constructor(
-		private readonly appointmentEmployeesService: AppointmentEmployeesService
-	) {
+	constructor(private readonly appointmentEmployeesService: AppointmentEmployeesService) {
 		super(appointmentEmployeesService);
 	}
 

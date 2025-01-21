@@ -1,15 +1,4 @@
-import {
-	Controller,
-	UseGuards,
-	Post,
-	Body,
-	Delete,
-	Param,
-	Get,
-	Put,
-	Query,
-	HttpStatus
-} from '@nestjs/common';
+import { Controller, UseGuards, Post, Body, Delete, Param, Get, Put, Query, HttpStatus } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { RolesEnum, ICandidateTechnologies, IPagination } from '@gauzy/contracts';
@@ -27,7 +16,7 @@ import {
 
 @ApiTags('CandidateTechnology')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/candidate-technologies')
 export class CandidateTechnologiesController extends CrudController<CandidateTechnologies> {
 	constructor(
 		private readonly candidateTechnologiesService: CandidateTechnologiesService,
@@ -45,16 +34,9 @@ export class CandidateTechnologiesController extends CrudController<CandidateTec
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Post('bulk')
-	async createBulkCandidateTechnologies(
-		@Body() body: any
-	): Promise<ICandidateTechnologies[]> {
+	async createBulkCandidateTechnologies(@Body() body: any): Promise<ICandidateTechnologies[]> {
 		const { interviewId = null, technologies = [] } = body;
-		return await this.commandBus.execute(
-			new CandidateTechnologiesBulkCreateCommand(
-				interviewId,
-				technologies
-			)
-		);
+		return await this.commandBus.execute(new CandidateTechnologiesBulkCreateCommand(interviewId, technologies));
 	}
 
 	/**
@@ -66,12 +48,8 @@ export class CandidateTechnologiesController extends CrudController<CandidateTec
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Put('bulk')
-	async updateBulkCandidateTechnologies(
-		@Body() body: ICandidateTechnologies[]
-	): Promise<ICandidateTechnologies[]> {
-		return await this.commandBus.execute(
-			new CandidateTechnologiesBulkUpdateCommand(body)
-		);
+	async updateBulkCandidateTechnologies(@Body() body: ICandidateTechnologies[]): Promise<ICandidateTechnologies[]> {
+		return await this.commandBus.execute(new CandidateTechnologiesBulkUpdateCommand(body));
 	}
 
 	/**
@@ -86,9 +64,7 @@ export class CandidateTechnologiesController extends CrudController<CandidateTec
 	async findByInterviewId(
 		@Param('interviewId', UUIDValidationPipe) interviewId: string
 	): Promise<ICandidateTechnologies[]> {
-		return await this.candidateTechnologiesService.getTechnologiesByInterviewId(
-			interviewId
-		);
+		return await this.candidateTechnologiesService.getTechnologiesByInterviewId(interviewId);
 	}
 
 	/**
@@ -106,9 +82,7 @@ export class CandidateTechnologiesController extends CrudController<CandidateTec
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<any> {
 		const { technologies = null } = data;
-		return await this.commandBus.execute(
-			new CandidateTechnologiesBulkDeleteCommand(id, technologies)
-		);
+		return await this.commandBus.execute(new CandidateTechnologiesBulkDeleteCommand(id, technologies));
 	}
 
 	/**
@@ -130,9 +104,7 @@ export class CandidateTechnologiesController extends CrudController<CandidateTec
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Get()
-	findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<ICandidateTechnologies>> {
+	findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<ICandidateTechnologies>> {
 		const { findInput, relations } = data;
 		return this.candidateTechnologiesService.findAll({
 			where: findInput,
@@ -149,9 +121,7 @@ export class CandidateTechnologiesController extends CrudController<CandidateTec
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Post()
-	async create(
-		@Body() body: CandidateTechnologies
-	): Promise<ICandidateTechnologies> {
+	async create(@Body() body: CandidateTechnologies): Promise<ICandidateTechnologies> {
 		return this.candidateTechnologiesService.create(body);
 	}
 
@@ -164,9 +134,7 @@ export class CandidateTechnologiesController extends CrudController<CandidateTec
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Delete(':id')
-	delete(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<any> {
+	delete(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
 		return this.candidateTechnologiesService.delete(id);
 	}
 }

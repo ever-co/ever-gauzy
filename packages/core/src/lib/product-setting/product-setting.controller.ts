@@ -7,11 +7,9 @@ import { TenantPermissionGuard } from '../shared/guards';
 
 @ApiTags('ProductVariantSetting')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/product-variant-settings')
 export class ProductVariantSettingController extends CrudController<ProductVariantSetting> {
-	constructor(
-		private readonly productVariantSettingService: ProductVariantSettingService
-	) {
+	constructor(readonly productVariantSettingService: ProductVariantSettingService) {
 		super(productVariantSettingService);
 	}
 }

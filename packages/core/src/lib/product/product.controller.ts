@@ -14,7 +14,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
-import { PermissionsEnum, IProductTranslated, IImageAsset, IPagination, LanguagesEnum } from '@gauzy/contracts';
+import { PermissionsEnum, IProductTranslated, IImageAsset, IPagination, LanguagesEnum, ID } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { ProductService } from './product.service';
@@ -27,7 +27,7 @@ import { CreateProductDTO, UpdateProductDTO } from './dto';
 
 @ApiTags('Product')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/products')
 export class ProductController extends CrudController<Product> {
 	constructor(private readonly productService: ProductService, private readonly commandBus: CommandBus) {
 		super(productService);
@@ -100,7 +100,7 @@ export class ProductController extends CrudController<Product> {
 	}
 
 	/**
-	 * CRAETE product image gallery
+	 * Create product image gallery
 	 *
 	 * @param productId
 	 * @param images
@@ -165,9 +165,9 @@ export class ProductController extends CrudController<Product> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Delete(':productId/gallery-image/:imageId')
-	async deleteGaleryImage(
-		@Param('productId', UUIDValidationPipe) productId: string,
-		@Param('imageId', UUIDValidationPipe) imageId: string
+	async deleteGalleryImage(
+		@Param('productId', UUIDValidationPipe) productId: ID,
+		@Param('imageId', UUIDValidationPipe) imageId: ID
 	): Promise<Product> {
 		return this.productService.deleteGalleryImage(productId, imageId);
 	}

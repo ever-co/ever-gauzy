@@ -5,7 +5,5 @@ import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
-@Controller()
-export class IntegrationMapController {
-	constructor() {}
-}
+@Controller('/integration-map')
+export class IntegrationMapController {}

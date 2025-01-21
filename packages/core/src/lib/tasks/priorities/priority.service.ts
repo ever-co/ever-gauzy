@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
@@ -24,13 +23,9 @@ import { setFullIconUrl } from '../utils';
 @Injectable()
 export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPriority> {
 	constructor(
-		@InjectRepository(TaskPriority)
 		readonly typeOrmTaskPriorityRepository: TypeOrmTaskPriorityRepository,
-
 		readonly mikroOrmTaskPriorityRepository: MikroOrmTaskPriorityRepository,
-
-		@InjectConnection()
-		readonly knexConnection: KnexConnection
+		@InjectConnection() readonly knexConnection: KnexConnection
 	) {
 		super(typeOrmTaskPriorityRepository, mikroOrmTaskPriorityRepository, knexConnection);
 	}
@@ -67,7 +62,14 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 			await setFullIconUrl(result.items);
 			return result;
 		} catch (error) {
-			throw new BadRequestException(error);
+			console.log(
+				'Failed to retrieve task priorities. Ensure that the provided parameters are valid and complete.',
+				error
+			);
+			throw new BadRequestException(
+				'Failed to retrieve task priorities. Ensure that the provided parameters are valid and complete.',
+				error
+			);
 		}
 	}
 

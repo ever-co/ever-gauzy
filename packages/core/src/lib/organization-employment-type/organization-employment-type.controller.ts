@@ -1,14 +1,4 @@
-import {
-	Controller,
-	HttpStatus,
-	Get,
-	Query,
-	UseGuards,
-	Put,
-	Param,
-	Body,
-	BadRequestException
-} from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, UseGuards, Put, Param, Body, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IOrganizationEmploymentType, IPagination } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
@@ -19,19 +9,17 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationEmploymentType')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/organization-employment-type')
 export class OrganizationEmploymentTypeController extends CrudController<OrganizationEmploymentType> {
-	constructor(
-		private readonly organizationEmploymentTypeService: OrganizationEmploymentTypeService
-	) {
+	constructor(private readonly organizationEmploymentTypeService: OrganizationEmploymentTypeService) {
 		super(organizationEmploymentTypeService);
 	}
 
 	/**
 	 * GET all organization employment types
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all organization employment types.'
@@ -46,9 +34,7 @@ export class OrganizationEmploymentTypeController extends CrudController<Organiz
 		description: 'Record not found'
 	})
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IOrganizationEmploymentType>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IOrganizationEmploymentType>> {
 		const { findInput, relations } = data;
 		return this.organizationEmploymentTypeService.findAll({
 			where: findInput,
@@ -58,10 +44,10 @@ export class OrganizationEmploymentTypeController extends CrudController<Organiz
 
 	/**
 	 * UPDATE organization employment type by id
-	 * 
-	 * @param id 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
 	 */
 	@Put(':id')
 	async update(

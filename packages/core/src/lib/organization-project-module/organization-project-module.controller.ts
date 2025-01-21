@@ -31,7 +31,7 @@ import { OrganizationProjectModuleCreateCommand, OrganizationProjectModuleUpdate
 @ApiTags('Project Modules')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
-@Controller()
+@Controller('/organization-project-modules')
 export class OrganizationProjectModuleController extends CrudController<OrganizationProjectModule> {
 	constructor(
 		private readonly organizationProjectModuleService: OrganizationProjectModuleService,

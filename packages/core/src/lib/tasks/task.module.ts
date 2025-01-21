@@ -15,8 +15,9 @@ import { TaskViewModule } from './views/view.module';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskController } from './task.controller';
-import { TypeOrmTaskRepository } from './repository';
 import { TaskProjectSequenceModule } from './project-sequence/project-sequence.module';
+import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
+
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([Task, TaskStatus, IntegrationMap]),
@@ -34,6 +35,6 @@ import { TaskProjectSequenceModule } from './project-sequence/project-sequence.m
 	],
 	controllers: [TaskController],
 	providers: [TaskService, TypeOrmTaskRepository, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, TaskService, TypeOrmTaskRepository]
+	exports: [TaskService, TypeOrmTaskRepository]
 })
 export class TaskModule {}

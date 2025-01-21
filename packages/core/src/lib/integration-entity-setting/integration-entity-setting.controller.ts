@@ -11,7 +11,7 @@ import { IntegrationEntitySettingGetCommand, IntegrationEntitySettingUpdateOrCre
 @ApiTags('IntegrationsEntitySetting')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
-@Controller()
+@Controller('/integration-entity-setting')
 export class IntegrationEntitySettingController {
 	constructor(private readonly _commandBus: CommandBus) {}
 

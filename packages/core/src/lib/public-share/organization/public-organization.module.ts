@@ -10,24 +10,10 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 @Module({
 	imports: [
 		CqrsModule,
-		TypeOrmModule.forFeature([
-			Organization,
-			OrganizationContact,
-			OrganizationProject
-		]),
-		MikroOrmModule.forFeature([
-			Organization,
-			OrganizationContact,
-			OrganizationProject
-		]),
+		TypeOrmModule.forFeature([Organization, OrganizationContact, OrganizationProject]),
+		MikroOrmModule.forFeature([Organization, OrganizationContact, OrganizationProject])
 	],
-	controllers: [
-		PublicOrganizationController
-	],
-	providers: [
-		PublicOrganizationService,
-		...QueryHandlers
-	],
-	exports: []
+	controllers: [PublicOrganizationController],
+	providers: [PublicOrganizationService, ...QueryHandlers]
 })
-export class PublicOrganizationModule { }
+export class PublicOrganizationModule {}

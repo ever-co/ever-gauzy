@@ -25,7 +25,7 @@ import { CreatePipelineDTO, UpdatePipelineDTO } from './dto';
 @ApiTags('Pipeline')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
-@Controller()
+@Controller('/pipelines')
 export class PipelineController extends CrudController<Pipeline> {
 	constructor(protected readonly pipelineService: PipelineService) {
 		super(pipelineService);

@@ -17,7 +17,7 @@ import {
 @ApiTags('CandidateCriterionRating')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT)
-@Controller()
+@Controller('/candidate-criterions-rating')
 export class CandidateCriterionsRatingController extends CrudController<CandidateCriterionsRating> {
 	constructor(
 		private readonly candidateCriterionsRatingService: CandidateCriterionsRatingService,

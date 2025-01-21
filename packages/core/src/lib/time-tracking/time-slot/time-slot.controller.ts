@@ -13,7 +13,7 @@ import { DeleteTimeSlotDTO, TimeSlotQueryDTO } from './dto';
 @ApiTags('TimeSlot')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ALL_ORG_VIEW)
-@Controller()
+@Controller('/timesheet/time-slot')
 export class TimeSlotController {
 	constructor(private readonly _timeSlotService: TimeSlotService, private readonly _commandBus: CommandBus) {}
 

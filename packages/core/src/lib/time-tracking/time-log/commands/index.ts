@@ -8,3 +8,4 @@ export * from './time-log-delete.command';
 export * from './time-log-update.command';
 export * from './delete-time-span.command';
 export * from './schedule-time-log-entries.command';
+export * from './update-employee-total-worked-hours.command';

@@ -1,16 +1,22 @@
 import { NestModule, MiddlewareConsumer, Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { TenantSetting } from '../../tenant/tenant-setting/tenant-setting.entity';
-import { TenantSettingService } from '../../tenant/tenant-setting/tenant-setting.service';
 import { TenantSettingsMiddleware } from './tenant-settings.middleware';
+import { TenantSettingModule } from '../../tenant/tenant-setting/tenant-setting.module';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([TenantSetting]), MikroOrmModule.forFeature([TenantSetting])],
-	controllers: [],
-	providers: [TenantSettingsMiddleware, TenantSettingService]
+	imports: [TenantSettingModule],
+	providers: [TenantSettingsMiddleware]
 })
 export class FileStorageModule implements NestModule {
+	/**
+	 * Configures middleware for the application.
+	 *
+	 * @param {MiddlewareConsumer} consumer - The NestJS `MiddlewareConsumer` instance used to apply middleware.
+	 *
+	 * @description
+	 * This method applies the `TenantSettingsMiddleware` to all routes (`'*'`).
+	 * The middleware will be executed for every incoming request, allowing tenant-specific settings
+	 * to be processed before handling requests.
+	 */
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(TenantSettingsMiddleware).forRoutes('*');
 	}

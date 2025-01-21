@@ -9,8 +9,9 @@ import * as camelcase from 'camelcase';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { isEmpty, PERMISSIONS_METADATA, removeDuplicates } from '@gauzy/common';
 import { RequestContext } from './../../core/context';
-import { MikroOrmEmployeeRepository, TypeOrmEmployeeRepository } from '../../employee/repository';
 import { MultiORMEnum, getORMType } from '../../core/utils';
+import { MikroOrmEmployeeRepository } from '../../employee/repository/mikro-orm-employee.repository';
+import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();

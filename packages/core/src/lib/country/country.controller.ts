@@ -6,12 +6,10 @@ import { Country } from './country.entity';
 import { CountryService } from './country.service';
 
 @ApiTags('Country')
-@Controller()
+@Controller('/country')
 @Public()
 export class CountryController {
-	constructor(
-		private readonly countryService: CountryService
-	) {}
+	constructor(private readonly countryService: CountryService) {}
 
 	@ApiOperation({ summary: 'Find all countries.' })
 	@ApiResponse({

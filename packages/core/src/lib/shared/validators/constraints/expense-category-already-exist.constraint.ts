@@ -3,10 +3,8 @@ import { ILike, Not } from 'typeorm';
 import { ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
 import { RequestContext } from '../../../core/context';
 import { MultiORM, MultiORMEnum, getORMType } from '../../../core/utils';
-import {
-	MikroOrmExpenseCategoryRepository,
-	TypeOrmExpenseCategoryRepository
-} from '../../../expense-categories/repository';
+import { TypeOrmExpenseCategoryRepository } from '../../../expense-categories/repository/type-orm-expense-category.repository';
+import { MikroOrmExpenseCategoryRepository } from '../../../expense-categories/repository/mikro-orm-expense-category.repository';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();

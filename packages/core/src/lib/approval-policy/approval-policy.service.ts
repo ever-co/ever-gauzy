@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Not, In } from 'typeorm';
 import {
 	IApprovalPolicy,
@@ -18,9 +17,7 @@ import { MikroOrmApprovalPolicyRepository } from './repository/mikro-orm-approva
 @Injectable()
 export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy> {
 	constructor(
-		@InjectRepository(ApprovalPolicy)
 		typeOrmApprovalPolicyRepository: TypeOrmApprovalPolicyRepository,
-
 		mikroOrmApprovalPolicyRepository: MikroOrmApprovalPolicyRepository
 	) {
 		super(typeOrmApprovalPolicyRepository, mikroOrmApprovalPolicyRepository);
@@ -49,13 +46,13 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 		return await super.findAll({
 			...(options && options.where
 				? {
-					where: options.where
-				}
+						where: options.where
+				  }
 				: {}),
 			...(options && options.relations
 				? {
-					relations: options.relations
-				}
+						relations: options.relations
+				  }
 				: {})
 		});
 	}
@@ -76,8 +73,8 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 			},
 			...(relations
 				? {
-					relations: relations
-				}
+						relations: relations
+				  }
 				: {})
 		};
 		return await super.findAll(query);

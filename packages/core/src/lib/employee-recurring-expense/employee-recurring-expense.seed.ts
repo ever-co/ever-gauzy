@@ -1,10 +1,5 @@
 import { DataSource } from 'typeorm';
-import {
-	IEmployee,
-	IOrganization,
-	ITenant,
-	RecurringExpenseDefaultCategoriesEnum
-} from '@gauzy/contracts';
+import { IEmployee, IOrganization, ITenant, RecurringExpenseDefaultCategoriesEnum } from '@gauzy/contracts';
 import { faker } from '@faker-js/faker';
 import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
@@ -17,15 +12,11 @@ export const createRandomEmployeeRecurringExpense = async (
 	organizationEmployeesMap: Map<IOrganization, IEmployee[]>
 ): Promise<EmployeeRecurringExpense[]> => {
 	if (!tenantOrganizationsMap) {
-		console.warn(
-			'Warning: tenantOrganizationsMap not found, Employee Recurring Expense  will not be created'
-		);
+		console.warn('Warning: tenantOrganizationsMap not found, Employee Recurring Expense  will not be created');
 		return;
 	}
 	if (!organizationEmployeesMap) {
-		console.warn(
-			'Warning: organizationEmployeesMap not found, Employee Recurring Expense  will not be created'
-		);
+		console.warn('Warning: organizationEmployeesMap not found, Employee Recurring Expense  will not be created');
 		return;
 	}
 	const employeeRecurringExpenses: EmployeeRecurringExpense[] = [];
@@ -56,8 +47,7 @@ export const createRandomEmployeeRecurringExpense = async (
 					employeeRecurringExpense.endDate = endDate;
 				}
 				// TODO: seed with random Categories from that enum, but make sure that SALARY exists in most of employees anyway (except contractors)
-				employeeRecurringExpense.categoryName =
-					RecurringExpenseDefaultCategoriesEnum.SALARY;
+				employeeRecurringExpense.categoryName = RecurringExpenseDefaultCategoriesEnum.SALARY;
 
 				employeeRecurringExpense.value = faker.number.int(999); // new changes
 				employeeRecurringExpense.currency = env.defaultCurrency; // new changes
@@ -76,14 +66,6 @@ export const createRandomEmployeeRecurringExpense = async (
 	return employeeRecurringExpenses;
 };
 
-const insertRandomEmployeeRecurringExpense = async (
-	dataSource: DataSource,
-	Employees: EmployeeRecurringExpense[]
-) => {
-	await dataSource
-		.createQueryBuilder()
-		.insert()
-		.into(EmployeeRecurringExpense)
-		.values(Employees)
-		.execute();
+const insertRandomEmployeeRecurringExpense = async (dataSource: DataSource, Employees: EmployeeRecurringExpense[]) => {
+	await dataSource.createQueryBuilder().insert().into(EmployeeRecurringExpense).values(Employees).execute();
 };

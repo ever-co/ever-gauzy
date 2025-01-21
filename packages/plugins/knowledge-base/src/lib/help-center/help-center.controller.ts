@@ -1,16 +1,6 @@
 import { IHelpCenter, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import {
-	Controller,
-	HttpStatus,
-	Post,
-	Body,
-	UseGuards,
-	Get,
-	Query,
-	Delete,
-	Param
-} from '@nestjs/common';
+import { Controller, HttpStatus, Post, Body, UseGuards, Get, Query, Delete, Param } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CommandBus } from '@nestjs/cqrs';
 import {
@@ -23,19 +13,13 @@ import {
 } from '@gauzy/core';
 import { HelpCenterService } from './help-center.service';
 import { HelpCenter } from './help-center.entity';
-import {
-	HelpCenterUpdateCommand,
-	KnowledgeBaseBulkDeleteCommand
-} from './commands';
+import { HelpCenterUpdateCommand, KnowledgeBaseBulkDeleteCommand } from './commands';
 
 @ApiTags('KnowledgeBase')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
-@Controller()
+@Controller('/help-center')
 export class HelpCenterController extends CrudController<HelpCenter> {
-	constructor(
-		private readonly helpCenterService: HelpCenterService,
-		private readonly commandBus: CommandBus
-	) {
+	constructor(private readonly helpCenterService: HelpCenterService, private readonly commandBus: CommandBus) {
 		super(helpCenterService);
 	}
 
@@ -52,9 +36,7 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IHelpCenter>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IHelpCenter>> {
 		const { relations = [], findInput = null } = data;
 		return this.helpCenterService.findAll({
 			relations,
@@ -84,17 +66,14 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)
 	@Post('updateBulk')
 	async updateBulk(@Body() input: any): Promise<IHelpCenter[]> {
 		const { oldChildren = [], newChildren = [] } = input;
-		return await this.commandBus.execute(
-			new HelpCenterUpdateCommand(oldChildren, newChildren)
-		);
+		return await this.commandBus.execute(new HelpCenterUpdateCommand(oldChildren, newChildren));
 	}
 
 	@ApiOperation({
@@ -110,9 +89,7 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 		description: 'Record not found'
 	})
 	@Get('base/:baseId')
-	async findByBaseId(
-		@Param('baseId', UUIDValidationPipe) baseId: string
-	): Promise<IHelpCenter[]> {
+	async findByBaseId(@Param('baseId', UUIDValidationPipe) baseId: string): Promise<IHelpCenter[]> {
 		return this.helpCenterService.getCategoriesByBaseId(baseId);
 	}
 
@@ -129,11 +106,7 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 		description: 'Record not found'
 	})
 	@Delete('base/:baseId')
-	async deleteBulkByBaseId(
-		@Param('baseId', UUIDValidationPipe) baseId: string
-	): Promise<any> {
-		return await this.commandBus.execute(
-			new KnowledgeBaseBulkDeleteCommand(baseId)
-		);
+	async deleteBulkByBaseId(@Param('baseId', UUIDValidationPipe) baseId: string): Promise<any> {
+		return await this.commandBus.execute(new KnowledgeBaseBulkDeleteCommand(baseId));
 	}
 }

@@ -3,7 +3,7 @@ import { In, DeleteResult, UpdateResult } from 'typeorm';
 import { pluck } from 'underscore';
 import { ID } from '@gauzy/contracts';
 import { TimesheetRecalculateCommand } from './../../../timesheet/commands/timesheet-recalculate.command';
-import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
+import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
 import { TimeSlotBulkDeleteCommand } from './../../../time-slot/commands';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import { TimeLog } from './../../time-log.entity';

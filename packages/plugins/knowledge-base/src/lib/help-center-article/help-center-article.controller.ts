@@ -19,7 +19,7 @@ import { UpdateHelpCenterArticleDTO } from './dto';
 
 @ApiTags('KnowledgeBaseArticle')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
-@Controller()
+@Controller('/help-center-article')
 export class HelpCenterArticleController extends CrudController<HelpCenterArticle> {
 	constructor(
 		private readonly helpCenterArticleService: HelpCenterArticleService,

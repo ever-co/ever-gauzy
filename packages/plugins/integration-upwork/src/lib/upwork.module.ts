@@ -42,16 +42,7 @@ import { UpworkController } from './upwork.controller';
 		ConfigModule,
 		CqrsModule
 	],
-	controllers: [
-		UpworkAuthorizationController,
-		UpworkController
-	],
-	providers: [
-		UpworkJobService,
-		UpworkOffersService,
-		UpworkReportService,
-		UpworkTransactionService,
-		UpworkService
-	]
+	controllers: [UpworkAuthorizationController, UpworkController],
+	providers: [UpworkJobService, UpworkOffersService, UpworkReportService, UpworkTransactionService, UpworkService]
 })
 export class UpworkModule {}

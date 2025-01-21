@@ -10,15 +10,11 @@ export const createRandomEventType = async (
 	organizationEmployeesMap: Map<IOrganization, IEmployee[]>
 ): Promise<EventType[]> => {
 	if (!tenantOrganizationsMap) {
-		console.warn(
-			'Warning: tenantOrganizationsMap not found, deal  will not be created'
-		);
+		console.warn('Warning: tenantOrganizationsMap not found, deal  will not be created');
 		return;
 	}
 	if (!organizationEmployeesMap) {
-		console.warn(
-			'Warning: organizationEmployeesMap not found, deal  will not be created'
-		);
+		console.warn('Warning: organizationEmployeesMap not found, deal  will not be created');
 		return;
 	}
 
@@ -92,9 +88,6 @@ export const createDefaultEventTypes = async (
 	return await insertEventTypes(dataSource, eventTypes);
 };
 
-const insertEventTypes = async (
-	dataSource: DataSource,
-	eventTypes: EventType[]
-): Promise<EventType[]> => {
+const insertEventTypes = async (dataSource: DataSource, eventTypes: EventType[]): Promise<EventType[]> => {
 	return await dataSource.manager.save(eventTypes);
 };

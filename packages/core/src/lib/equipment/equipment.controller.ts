@@ -1,16 +1,6 @@
 import { CrudController, PaginationParams } from './../core/crud';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import {
-	Controller,
-	UseGuards,
-	HttpStatus,
-	Get,
-	Put,
-	Param,
-	Body,
-	Query,
-	Post
-} from '@nestjs/common';
+import { Controller, UseGuards, HttpStatus, Get, Put, Param, Body, Query, Post } from '@nestjs/common';
 import { IEquipment, IPagination } from '@gauzy/contracts';
 import { Equipment } from './equipment.entity';
 import { EquipmentService } from './equipment.service';
@@ -20,7 +10,7 @@ import { CreateEquipmentDTO, UpdateEquipmentDTO } from './dto';
 
 @ApiTags('Equipment')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/equipment')
 export class EquipmentController extends CrudController<Equipment> {
 	constructor(private readonly equipmentService: EquipmentService) {
 		super(equipmentService);

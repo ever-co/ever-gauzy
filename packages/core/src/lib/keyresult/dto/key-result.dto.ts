@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
 import { KeyResultUpdate } from '../../core/entities/internal';
 
-export abstract class KeyresultDTO {
+export abstract class KeyResultDTO {
 	@ApiProperty({ type: () => String, readOnly: true })
 	@IsOptional()
 	@IsString()

@@ -118,7 +118,7 @@ export class AutomationLabelSyncHandler implements ICommandHandler<AutomationLab
 	 * @param entity - The new data for the tag.
 	 * @returns A Promise that resolves to the updated tag.
 	 */
-	async updateTag(id: ITagUpdateInput['id'], entity: ITagUpdateInput): Promise<ITag> {
+	async updateTag(id: ID, entity: ITagUpdateInput): Promise<ITag> {
 		try {
 			// Find the existing tag by its ID
 			const existingTag = await this._tagService.findOneByIdString(id);

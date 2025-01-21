@@ -7,11 +7,12 @@ import { ConnectionEntityManager } from '../database/connection-entity-manager';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { Pipeline } from './pipeline.entity';
 import { PipelineStage } from './../core/entities/internal';
-import { RequestContext } from '../core/context';
-import { TenantAwareCrudService } from './../core/crud';
-import { TypeOrmDealRepository } from '../deal/repository';
-import { TypeOrmUserRepository } from '../user/repository';
-import { MikroOrmPipelineRepository, TypeOrmPipelineRepository } from './repository';
+import { RequestContext } from '../core/context/request-context';
+import { TenantAwareCrudService } from './../core/crud/tenant-aware-crud.service';
+import { TypeOrmDealRepository } from '../deal/repository/type-orm-deal.repository';
+import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
+import { TypeOrmPipelineRepository } from './repository/type-orm-pipeline.repository';
+import { MikroOrmPipelineRepository } from './repository/mikro-orm-pipeline.repository';
 
 @Injectable()
 export class PipelineService extends TenantAwareCrudService<Pipeline> {

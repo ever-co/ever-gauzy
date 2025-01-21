@@ -25,7 +25,7 @@ import { CreateReactionDTO, UpdateReactionDTO } from './dto';
 
 @ApiTags('Reactions')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Controller()
+@Controller('/reaction')
 export class ReactionController extends CrudController<Reaction> {
 	constructor(private readonly reactionService: ReactionService, private readonly commandBus: CommandBus) {
 		super(reactionService);

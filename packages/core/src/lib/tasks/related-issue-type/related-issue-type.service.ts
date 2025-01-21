@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
@@ -22,13 +21,9 @@ import { setFullIconUrl } from '../utils';
 @Injectable()
 export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<TaskRelatedIssueType> {
 	constructor(
-		@InjectRepository(TaskRelatedIssueType)
 		readonly typeOrmTaskRelatedIssueTypeRepository: TypeOrmTaskRelatedIssueTypeRepository,
-
 		readonly mikroOrmTaskRelatedIssueTypeRepository: MikroOrmTaskRelatedIssueTypeRepository,
-
-		@InjectConnection()
-		readonly knexConnection: KnexConnection
+		@InjectConnection() readonly knexConnection: KnexConnection
 	) {
 		super(typeOrmTaskRelatedIssueTypeRepository, mikroOrmTaskRelatedIssueTypeRepository, knexConnection);
 	}
@@ -51,7 +46,14 @@ export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<T
 			await setFullIconUrl(result.items);
 			return result;
 		} catch (error) {
-			throw new BadRequestException(error);
+			console.log(
+				'Failed to retrieve related issue types for tasks. Please ensure that the provided parameters are valid and complete.',
+				error
+			);
+			throw new BadRequestException(
+				'Failed to retrieve related issue types for tasks. Please ensure that the provided parameters are valid and complete.',
+				error
+			);
 		}
 	}
 

@@ -1,21 +1,15 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { GoalController } from './goal.controller';
 import { Goal } from './goal.entity';
 import { GoalService } from './goal.service';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { TypeOrmGoalRepository } from './repository/type-orm-goal.repository';
 
 @Module({
-	imports: [
-		RouterModule.register([{ path: '/goals', module: GoalModule }]),
-		TypeOrmModule.forFeature([Goal]),
-		MikroOrmModule.forFeature([Goal]),
-		RolePermissionModule
-	],
+	imports: [TypeOrmModule.forFeature([Goal]), MikroOrmModule.forFeature([Goal]), RolePermissionModule],
 	controllers: [GoalController],
-	providers: [GoalService],
-	exports: [GoalService]
+	providers: [GoalService, TypeOrmGoalRepository]
 })
-export class GoalModule { }
+export class GoalModule {}

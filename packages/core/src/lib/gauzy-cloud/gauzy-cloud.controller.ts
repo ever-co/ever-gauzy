@@ -19,7 +19,7 @@ import {
 @UseInterceptors(CloudMigrateInterceptor)
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.MIGRATE_GAUZY_CLOUD)
-@Controller()
+@Controller('/cloud/migrate')
 export class GauzyCloudController {
 	constructor(private readonly commandBus: CommandBus) {}
 

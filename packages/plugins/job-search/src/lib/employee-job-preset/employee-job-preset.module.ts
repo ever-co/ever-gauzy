@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from '@nestjs/core';
 import { GauzyAIModule } from '@gauzy/plugin-integration-ai';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { EmployeeModule } from '@gauzy/core';
@@ -34,7 +33,6 @@ export const entities = [
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/job-preset', module: EmployeeJobPresetModule }]),
 		TypeOrmModule.forFeature([...entities]),
 		MikroOrmModule.forFeature([...entities]),
 		EmployeeModule,
@@ -58,6 +56,6 @@ export const entities = [
 		TypeOrmEmployeeUpworkJobsSearchCriterionRepository,
 		...CommandHandlers
 	],
-	exports: [TypeOrmModule, MikroOrmModule, JobPresetService, JobSearchCategoryService, JobSearchOccupationService]
+	exports: [JobPresetService, JobSearchCategoryService, JobSearchOccupationService]
 })
 export class EmployeeJobPresetModule {}

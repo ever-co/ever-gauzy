@@ -25,7 +25,6 @@ import { MikroOrmInvoiceItemRepository } from './repository/mikro-orm-invoice-it
 
 @MultiORMEntity('invoice_item', { mikroOrmRepository: () => MikroOrmInvoiceItemRepository })
 export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoiceItem {
-
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@MultiORMColumn({ nullable: true })
@@ -138,7 +137,7 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 		nullable: true,
 
 		/** Defines the database cascade action on delete. */
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	project?: IOrganizationProject;

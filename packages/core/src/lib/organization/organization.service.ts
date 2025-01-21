@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { Organization } from './organization.entity';
-import { TypeOrmOrganizationRepository, MikroOrmOrganizationRepository } from './repository';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { TypeOrmOrganizationRepository } from './repository/type-orm-organization.repository';
+import { MikroOrmOrganizationRepository } from './repository/mikro-orm-organization.repository';
 
 @Injectable()
 export class OrganizationService extends TenantAwareCrudService<Organization> {
@@ -19,7 +20,7 @@ export class OrganizationService extends TenantAwareCrudService<Organization> {
 			select: {
 				id: true,
 				tenantId: true
-			},
+			}
 		});
 		query.where(p(`"${query.alias}"."emailDomain" = :emailDomain`), { emailDomain });
 		return await query.getOne();

@@ -5,10 +5,9 @@ import { Skill } from './skill.entity';
 import { SkillService } from './skill.service';
 import { TenantPermissionGuard } from './../shared/guards';
 
-
 @ApiTags('Skills')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/skills')
 export class SkillController extends CrudController<Skill> {
 	constructor(private readonly skillService: SkillService) {
 		super(skillService);

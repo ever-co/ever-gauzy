@@ -1,12 +1,4 @@
-import {
-	Controller,
-	UseGuards,
-	HttpStatus,
-	Get,
-	Body,
-	Post,
-	Query
-} from '@nestjs/common';
+import { Controller, UseGuards, HttpStatus, Get, Body, Post, Query } from '@nestjs/common';
 import { ApiTags, ApiResponse, ApiOperation } from '@nestjs/swagger';
 import { IGoalTemplate, IPagination } from '@gauzy/contracts';
 import { GoalTemplateService } from './goal-template.service';
@@ -17,20 +9,17 @@ import { ParseJsonPipe } from './../shared/pipes';
 
 @ApiTags('GoalTemplates')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/goal-templates')
 export class GoalTemplateController extends CrudController<GoalTemplate> {
-
-	constructor(
-		private readonly goalTemplateService: GoalTemplateService
-	) {
+	constructor(private readonly goalTemplateService: GoalTemplateService) {
 		super(goalTemplateService);
 	}
 
 	/**
 	 * GET all goal templates
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find goal templates.' })
 	@ApiResponse({
@@ -43,9 +32,7 @@ export class GoalTemplateController extends CrudController<GoalTemplate> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IGoalTemplate>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IGoalTemplate>> {
 		const { findInput } = data;
 		return this.goalTemplateService.findAll({
 			relations: ['keyResults', 'keyResults.kpi'],
@@ -55,9 +42,9 @@ export class GoalTemplateController extends CrudController<GoalTemplate> {
 
 	/**
 	 * CREATE goal template
-	 * 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Create Goal Template' })
 	@ApiResponse({
@@ -66,9 +53,7 @@ export class GoalTemplateController extends CrudController<GoalTemplate> {
 		type: GoalTemplate
 	})
 	@Post()
-	async create(
-		@Body() entity: GoalTemplate
-	): Promise<IGoalTemplate> {
+	async create(@Body() entity: GoalTemplate): Promise<IGoalTemplate> {
 		return this.goalTemplateService.create(entity);
 	}
 }

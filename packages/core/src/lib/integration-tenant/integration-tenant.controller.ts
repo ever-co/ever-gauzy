@@ -29,7 +29,7 @@ import { IntegrationTenantDeleteCommand, IntegrationTenantUpdateCommand } from '
 @ApiTags('IntegrationTenant')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
-@Controller()
+@Controller('/integration-tenant')
 export class IntegrationTenantController extends CrudController<IntegrationTenant> {
 	constructor(
 		private readonly _commandBus: CommandBus,

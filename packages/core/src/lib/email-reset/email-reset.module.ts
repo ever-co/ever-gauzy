@@ -12,6 +12,7 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 import { EmailSendModule } from './../email-send/email-send.module';
 import { EmployeeModule } from './../employee/employee.module';
 import { AuthModule } from './../auth/auth.module';
+import { TypeOrmEmailResetRepository } from './repository/type-orm-email-reset.repository';
 
 @Module({
 	imports: [
@@ -25,7 +26,7 @@ import { AuthModule } from './../auth/auth.module';
 		AuthModule
 	],
 	controllers: [EmailResetController],
-	providers: [EmailResetService, ...CommandHandlers, ...QueryHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, EmailResetService],
+	providers: [EmailResetService, TypeOrmEmailResetRepository, ...CommandHandlers, ...QueryHandlers],
+	exports: [EmailResetService]
 })
-export class EmailResetModule { }
+export class EmailResetModule {}

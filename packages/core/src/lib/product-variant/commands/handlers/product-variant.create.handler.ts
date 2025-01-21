@@ -1,33 +1,27 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
+import { IVariantCreateInput } from '@gauzy/contracts';
 import { ProductVariant } from '../../product-variant.entity';
 import { ProductVariantCreateCommand } from '../product-variant.create.command';
 import { ProductVariantService } from '../../product-variant.service';
 import { ProductVariantPriceService } from '../../../product-variant-price/product-variant-price.service';
 import { ProductVariantSettingService } from '../../../product-setting/product-setting.service';
-import { IVariantCreateInput } from '@gauzy/contracts';
 import { ProductService } from '../../../product/product.service';
 
 @CommandHandler(ProductVariantCreateCommand)
-export class ProductVariantCreateHandler
-	implements ICommandHandler<ProductVariantCreateCommand> {
+export class ProductVariantCreateHandler implements ICommandHandler<ProductVariantCreateCommand> {
 	constructor(
-		private productService: ProductService,
-		private productVariantService: ProductVariantService,
-		private productVariantPriceService: ProductVariantPriceService,
-		private productVariantSettingsService: ProductVariantSettingService
+		private readonly productService: ProductService,
+		private readonly productVariantService: ProductVariantService,
+		private readonly productVariantPriceService: ProductVariantPriceService,
+		private readonly productVariantSettingsService: ProductVariantSettingService
 	) {}
 
-	public async execute(
-		command?: ProductVariantCreateCommand
-	): Promise<ProductVariant[]> {
+	public async execute(command?: ProductVariantCreateCommand): Promise<ProductVariant[]> {
 		const variantCreateInput: IVariantCreateInput = command.productInput;
 
-		const product = await this.productService.findById(
-			variantCreateInput.product.id,
-			{
-				relations: ['optionGroups']
-			}
-		);
+		const product = await this.productService.findById(variantCreateInput.product.id, {
+			relations: ['optionGroups']
+		});
 
 		let productOptions = [];
 
@@ -47,35 +41,23 @@ export class ProductVariantCreateHandler
 
 			await productOptions.forEach((dbOption, i) => {
 				return optionCombination.options.forEach((option) => {
-					if (
-						!!dbOption.translations.find(
-							(translation) => translation.name == option
-						)
-					) {
+					if (!!dbOption.translations.find((translation) => translation.name == option)) {
 						variantOptions.push(dbOption);
 					}
 				});
 			});
 
 			newProductVariant.options = variantOptions;
-			newProductVariant.internalReference = variantOptions
-				.map((option) => option.name)
-				.join('-');
+			newProductVariant.internalReference = variantOptions.map((option) => option.name).join('-');
 
 			newProductVariant.organizationId = organizationId;
 			newProductVariant.tenantId = tenantId;
 
 			newProductVariant.setting = await this.productVariantSettingsService.createDefaultVariantSettings();
 			newProductVariant.price = await this.productVariantPriceService.createDefaultProductVariantPrice();
-			newProductVariant.product = await this.productService.findOneByIdString(
-				variantCreateInput.product.id
-			);
+			newProductVariant.product = await this.productService.findOneByIdString(variantCreateInput.product.id);
 
-			arrVariants.push(
-				await this.productVariantService.createVariant(
-					newProductVariant
-				)
-			);
+			arrVariants.push(await this.productVariantService.createVariant(newProductVariant));
 		}
 
 		return arrVariants;

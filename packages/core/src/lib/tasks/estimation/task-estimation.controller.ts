@@ -15,7 +15,7 @@ import { DeleteResult } from 'typeorm';
 @ApiTags('Task Estimation')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
-@Controller()
+@Controller('/task-estimation')
 export class TaskEstimationController extends CrudController<TaskEstimation> {
 	constructor(
 		protected readonly taskEstimationService: TaskEstimationService,

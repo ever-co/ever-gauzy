@@ -19,7 +19,7 @@ import { CreateDealDTO } from './dto';
 @ApiTags('Deal')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
-@Controller()
+@Controller('/deals')
 export class DealController extends CrudController<Deal> {
 	constructor(private readonly _dealService: DealService) {
 		super(_dealService);

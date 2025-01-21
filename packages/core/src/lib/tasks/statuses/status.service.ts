@@ -1,5 +1,4 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, FindOptionsWhere } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
@@ -22,13 +21,13 @@ import { TaskStatusPrioritySizeService } from '../task-status-priority-size.serv
 import { TaskStatus } from './status.entity';
 import { DEFAULT_GLOBAL_STATUSES } from './default-global-statuses';
 import { TASK_STATUSES_TEMPLATES } from './standard-statuses-template';
-import { MikroOrmTaskStatusRepository, TypeOrmTaskStatusRepository } from './repository';
 import { setFullIconUrl } from '../utils';
+import { TypeOrmTaskStatusRepository } from './repository/type-orm-task-status.repository';
+import { MikroOrmTaskStatusRepository } from './repository/mikro-orm-task-status.repository';
 
 @Injectable()
 export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus> {
 	constructor(
-		@InjectRepository(TaskStatus)
 		readonly typeOrmTaskStatusRepository: TypeOrmTaskStatusRepository,
 		readonly mikroOrmTaskStatusRepository: MikroOrmTaskStatusRepository,
 		@InjectConnection() readonly knexConnection: KnexConnection

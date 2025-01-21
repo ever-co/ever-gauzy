@@ -23,21 +23,19 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationAward')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/organization-awards')
 export class OrganizationAwardController extends CrudController<OrganizationAward> {
-	constructor(
-		private readonly organizationAwardService: OrganizationAwardService
-	) {
+	constructor(private readonly organizationAwardService: OrganizationAwardService) {
 		super(organizationAwardService);
 	}
 
 	/**
 	 * GET organization award
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
-	 @ApiOperation({
+	@ApiOperation({
 		summary: 'Find Organization Awards.'
 	})
 	@ApiResponse({
@@ -50,9 +48,7 @@ export class OrganizationAwardController extends CrudController<OrganizationAwar
 		description: 'Record not found'
 	})
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IOrganizationAward>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IOrganizationAward>> {
 		const { findInput } = data;
 		return this.organizationAwardService.findAll({
 			where: findInput
@@ -61,9 +57,9 @@ export class OrganizationAwardController extends CrudController<OrganizationAwar
 
 	/**
 	 * CREATE organization award
-	 * 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
@@ -72,23 +68,20 @@ export class OrganizationAwardController extends CrudController<OrganizationAwar
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	async create(
-		@Body() entity: DeepPartial<OrganizationAward>
-	): Promise<OrganizationAward> {
+	async create(@Body() entity: DeepPartial<OrganizationAward>): Promise<OrganizationAward> {
 		return this.organizationAwardService.create(entity);
 	}
 
 	/**
 	 * UPDATE organization award by id
-	 * 
-	 * @param id 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
@@ -101,8 +94,7 @@ export class OrganizationAwardController extends CrudController<OrganizationAwar
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
@@ -115,9 +107,9 @@ export class OrganizationAwardController extends CrudController<OrganizationAwar
 
 	/**
 	 * DELETE organization award by id
-	 * 
-	 * @param id 
-	 * @returns 
+	 *
+	 * @param id
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Delete record' })
 	@ApiResponse({
@@ -130,9 +122,7 @@ export class OrganizationAwardController extends CrudController<OrganizationAwar
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<any> {
+	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
 		return this.organizationAwardService.delete(id);
 	}
 }

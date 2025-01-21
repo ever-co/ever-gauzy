@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { In, Like } from 'typeorm';
 import { OrganizationDepartment } from './organization-department.entity';
 import { TenantAwareCrudService } from './../core/crud';
@@ -9,9 +8,7 @@ import { MikroOrmOrganizationDepartmentRepository } from './repository/mikro-orm
 @Injectable()
 export class OrganizationDepartmentService extends TenantAwareCrudService<OrganizationDepartment> {
 	constructor(
-		@InjectRepository(OrganizationDepartment)
 		typeOrmOrganizationDepartmentRepository: TypeOrmOrganizationDepartmentRepository,
-
 		mikroOrmOrganizationDepartmentRepository: MikroOrmOrganizationDepartmentRepository
 	) {
 		super(typeOrmOrganizationDepartmentRepository, mikroOrmOrganizationDepartmentRepository);

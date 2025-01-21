@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
 import {
+	ID,
 	IOrganization,
 	IPagination,
 	ITaskSize,
@@ -24,13 +24,9 @@ import { setFullIconUrl } from '../utils';
 @Injectable()
 export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 	constructor(
-		@InjectRepository(TaskSize)
 		readonly typeOrmTaskSizeRepository: TypeOrmTaskSizeRepository,
-
 		readonly mikroOrmTaskSizeRepository: MikroOrmTaskSizeRepository,
-
-		@InjectConnection()
-		readonly knexConnection: KnexConnection
+		@InjectConnection() readonly knexConnection: KnexConnection
 	) {
 		super(typeOrmTaskSizeRepository, mikroOrmTaskSizeRepository, knexConnection);
 	}
@@ -41,7 +37,7 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 	 * @param id
 	 * @returns
 	 */
-	async delete(id: ITaskSize['id']): Promise<DeleteResult> {
+	async delete(id: ID): Promise<DeleteResult> {
 		return await super.delete(id, {
 			where: {
 				isSystem: false

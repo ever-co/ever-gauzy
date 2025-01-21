@@ -1,21 +1,15 @@
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
-import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { LanguageService } from './language.service';
 import { LanguageController } from './language.controller';
 import { Language } from './language.entity';
+import { TypeOrmLanguageRepository } from './repository/type-orm-language.repository';
 
 @Module({
-	imports: [
-		RouterModule.register([
-			{ path: '/languages', module: LanguageModule }
-		]),
-		TypeOrmModule.forFeature([Language]),
-		MikroOrmModule.forFeature([Language]),
-	],
+	imports: [TypeOrmModule.forFeature([Language]), MikroOrmModule.forFeature([Language])],
 	controllers: [LanguageController],
-	providers: [LanguageService],
+	providers: [LanguageService, TypeOrmLanguageRepository],
 	exports: [LanguageService]
 })
-export class LanguageModule { }
+export class LanguageModule {}
