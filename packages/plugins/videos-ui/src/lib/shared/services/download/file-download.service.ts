@@ -4,6 +4,7 @@ import { ErrorHandlingService } from '@gauzy/ui-core/core';
 import { Observable, Subscription } from 'rxjs';
 import { IDownloadProgress, IFileDownloadOptions } from '../../models/video-download.model';
 import { FileSaveStrategy } from './strategies/file-save.strategy';
+import { extractFilenameFromUrl } from '../../utilities/extract-filename-from-url';
 
 @Injectable({ providedIn: 'root' })
 export class FileDownloadService {
@@ -33,7 +34,7 @@ export class FileDownloadService {
 							total: event.total
 						});
 					} else if (event.type === HttpEventType.Response) {
-						const filename = options.filename || this.extractFilename(options.url);
+						const filename = options.filename || extractFilenameFromUrl(options.url, 'download.mp4');
 						this.fileSaveStrategy.save(event.body as Blob, filename);
 						observer.complete();
 					}
@@ -55,15 +56,6 @@ export class FileDownloadService {
 		if (subscription) {
 			subscription.unsubscribe();
 			this.activeDownloads.delete(url);
-		}
-	}
-
-	private extractFilename(url: string): string {
-		try {
-			const parsedUrl = new URL(url);
-			return parsedUrl.pathname.split('/').pop() || 'download';
-		} catch {
-			return 'download';
 		}
 	}
 }
