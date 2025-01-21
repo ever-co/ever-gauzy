@@ -34,10 +34,10 @@ export class ProviderFactory implements IDatabaseProvider {
 			case DatabaseTypeEnum.postgres:
 				this._dbContext.provider = PostgresProvider.instance;
 				break;
-			case DatabaseTypeEnum.mysql:
+			case 'mysql':
 				this._dbContext.provider = MysqlProvider.instance;
 				break;
-			case DatabaseTypeEnum.sqlite:
+			case 'sqlite':
 				this._dbContext.provider = SqliteProvider.instance;
 				break;
 			default:
@@ -110,21 +110,21 @@ export class ProviderFactory implements IDatabaseProvider {
 		let databaseOptions: Knex.Config = {};
 		let driver = '';
 		switch (dialect) {
-			case DatabaseTypeEnum.postgres:
+			case 'postgres':
 				driver = 'PostgresSQL';
 				databaseOptions = {
 					client: 'pg',
 					connection
 				};
 				break;
-			case DatabaseTypeEnum.mysql:
+			case 'mysql':
 				driver = 'MySQL';
 				databaseOptions = {
 					client: 'mysql2',
 					connection
 				};
 				break;
-			case DatabaseTypeEnum.sqlite:
+			case 'sqlite':
 				driver = 'SQLite';
 				databaseOptions = SqliteProvider.instance.config;
 				break;
