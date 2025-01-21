@@ -2,7 +2,13 @@
 	<div class="custom-card-header">
 		<ngx-gauzy-filters [isTimeFormat]="true"></ngx-gauzy-filters>
 	</div>
-	<div class="custom-card-body">
+	<div
+		nbInfiniteList
+		[threshold]="500"
+		[throttleTime]="300"
+		(bottomThreshold)="fetchMoreVideos()"
+		class="custom-card-body"
+	>
 		<plug-video-list></plug-video-list>
 	</div>
 </div>

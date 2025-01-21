@@ -29,12 +29,42 @@ export class VideoEffects {
 			tap(() => this.videoStore.setLoading(true)), // Start loading state
 			switchMap(({ params = {} }) =>
 				this.videoService.getAll(params).pipe(
-					tap(({ items, total }) =>
+					tap(({ items, total }) => {
+						const videos = this.videoQuery.videos;
 						this.videoStore.update({
-							videos: items,
+							videos: [...new Map([...videos, ...items].map((item) => [item.id, item])).values()],
 							count: total
-						})
-					),
+						});
+					}),
+					catchError((error) => {
+						this.errorHandler.handleError(error); // Handle error properly
+						return EMPTY; // Return a fallback observable
+					}),
+					finalize(() => this.videoStore.setLoading(false)) // Always stop loading
+				)
+			)
+		)
+	);
+
+	fetchVideosAndExlude$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(VideoActions.fetchVideosAndExclude),
+			tap(() => this.videoStore.setLoading(true)), // Start loading state
+			switchMap(({ id, params = {} }) =>
+				this.videoService.getAll(params).pipe(
+					tap(({ items, total }) => {
+						const videos = this.videoQuery.videos;
+						this.videoStore.update({
+							videos: Array.from(
+								new Map(
+									[...videos, ...items]
+										.filter(({ id: videoId }) => videoId !== id)
+										.map((item) => [item.id, item])
+								).values()
+							),
+							count: total
+						});
+					}),
 					catchError((error) => {
 						this.errorHandler.handleError(error); // Handle error properly
 						return EMPTY; // Return a fallback observable

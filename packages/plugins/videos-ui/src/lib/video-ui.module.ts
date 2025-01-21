@@ -8,6 +8,7 @@ import {
 	NbCardModule,
 	NbDialogModule,
 	NbIconModule,
+	NbInfiniteListDirective,
 	NbInputModule,
 	NbListModule,
 	NbPopoverModule,
@@ -52,8 +53,8 @@ import { VideoSkeletonComponent } from './shared/ui/video-skeleton/video-skeleto
 		VideoEditComponent,
 		VideoMetadataComponent,
 		VideoDownloadManagerComponent,
-  VideoItemSkeletonComponent,
-  VideoSkeletonComponent
+		VideoItemSkeletonComponent,
+		VideoSkeletonComponent
 	],
 	imports: [
 		CommonModule,
@@ -82,7 +83,8 @@ import { VideoSkeletonComponent } from './shared/ui/video-skeleton/video-skeleto
 		WebShareService,
 		DownloadQueueService,
 		FileDownloadService,
-		FileSaveStrategy
+		FileSaveStrategy,
+		NbInfiniteListDirective
 	]
 })
 export class VideoUiModule {}

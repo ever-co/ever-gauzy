@@ -30,4 +30,9 @@ export class VideoActions {
 	public static retryDownload = createAction('[Videos] Retry Download', (url: string) => ({
 		url
 	}));
+
+	public static fetchVideosAndExclude = createAction(
+		'[Videos] Fetch Videos and Exclude',
+		(id: string, params?: any) => ({ id, params })
+	);
 }
