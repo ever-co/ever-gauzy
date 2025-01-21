@@ -1,17 +1,5 @@
 import { ApiTags, ApiResponse, ApiOperation } from '@nestjs/swagger';
-import {
-	Controller,
-	HttpStatus,
-	Get,
-	Query,
-	UseGuards,
-	Body,
-	HttpCode,
-	Put,
-	Param,
-	ValidationPipe,
-	Post
-} from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, UseGuards, Body, HttpCode, Put, Param, Post } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { FindOptionsWhere } from 'typeorm';
 import { I18nLang } from 'nestjs-i18n';

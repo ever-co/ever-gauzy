@@ -45,7 +45,7 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 			});
 
 			// Define token expiration
-			const tokenExpiryPeriod = invoice?.organization?.inviteExpiryPeriod ?? 7;
+			const tokenExpiryPeriod = invoice.organization?.inviteExpiryPeriod ?? 7;
 			const expireDate = moment().add(tokenExpiryPeriod, 'days').toDate();
 
 			// Create payload for JWT
@@ -68,7 +68,7 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 					tenantId: RequestContext.currentTenantId(),
 					email,
 					expireDate,
-					convertAcceptedEstimates: invoice?.organization?.convertAcceptedEstimates ?? false,
+					convertAcceptedEstimates: invoice.organization?.convertAcceptedEstimates ?? false,
 					token
 				})
 			);

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ID, IIntegrationEntitySetting, IIntegrationTenant, IPagination } from '@gauzy/contracts';
+import { ID, IIntegrationEntitySetting, IPagination } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { IntegrationEntitySetting } from './integration-entity-setting.entity';
 import { MikroOrmIntegrationEntitySettingRepository } from './repository/mikro-orm-integration-entity-setting.repository';

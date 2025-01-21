@@ -54,7 +54,7 @@ import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-rec
 import { PasswordResetCreateCommand, PasswordResetGetCommand } from './../password-reset/commands';
 import { RequestContext } from './../core/context';
 import { freshTimestamp, generateRandomAlphaNumericCode } from './../core/utils';
-import { Employee, OrganizationTeam, Tenant, User } from './../core/entities/internal';
+import { OrganizationTeam, Tenant, User } from './../core/entities/internal';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';

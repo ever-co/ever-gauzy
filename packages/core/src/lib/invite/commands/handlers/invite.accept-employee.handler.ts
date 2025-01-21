@@ -18,16 +18,7 @@ import {
 import { AuthService } from '../../../auth/auth.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptEmployeeCommand } from '../invite.accept-employee.command';
-import {
-	Employee,
-	OrganizationContact,
-	OrganizationDepartment,
-	OrganizationProject,
-	OrganizationProjectEmployee,
-	OrganizationTeam,
-	OrganizationTeamEmployee,
-	User
-} from './../../../core/entities/internal';
+import { OrganizationProjectEmployee, OrganizationTeamEmployee } from './../../../core/entities/internal';
 import { TypeOrmEmployeeRepository } from '../../../employee/repository/type-orm-employee.repository';
 import { TypeOrmOrganizationContactRepository } from '../../../organization-contact/repository/type-orm-organization-contact.repository';
 import { TypeOrmOrganizationDepartmentRepository } from '../../../organization-department/repository/type-orm-organization-department.repository';
