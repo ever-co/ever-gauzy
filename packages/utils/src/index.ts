@@ -31,4 +31,3 @@ export * from './lib/boolean-mapper';
 export * from './lib/parse-to-boolean';
 export * from './lib/trim-if-not-empty';
 export * from './lib/uc-first';
-export * from './lib/is-json';
