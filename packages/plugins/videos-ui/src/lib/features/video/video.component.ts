@@ -2,7 +2,7 @@ import { AfterViewInit, ChangeDetectionStrategy, Component, ViewChild } from '@a
 import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
 import { NbDialogService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
-import { combineLatest, distinctUntilChanged, filter, map, Observable, tap } from 'rxjs';
+import { combineLatest, distinctUntilChanged, filter, map, Observable, take, tap } from 'rxjs';
 import { VideoActions } from '../../+state/video.action';
 import { VideoQuery } from '../../+state/video.query';
 import { IActionButton } from '../../shared/models/action-button.model';
@@ -102,6 +102,7 @@ export class VideoComponent implements AfterViewInit {
 		this.dialogService
 			.open(VideoEditComponent, { hasBackdrop: true, context: { video } })
 			.onClose.pipe(
+				take(1),
 				filter(Boolean),
 				tap((update: Partial<IVideo>) => this.actions.dispatch(VideoActions.updateVideo(video.id, update)))
 			)
@@ -132,6 +133,7 @@ export class VideoComponent implements AfterViewInit {
 				}
 			})
 			.onClose.pipe(
+				take(1),
 				filter(Boolean),
 				tap(() => this.actions.dispatch(VideoActions.deleteVideo(video.id)))
 			)

@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
 import { NbDialogService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
-import { filter, tap } from 'rxjs';
+import { filter, take, tap } from 'rxjs';
 import { VideoActions } from '../../../+state/video.action';
 import { IActionButton } from '../../models/action-button.model';
 import { IVideo } from '../../models/video.model';
@@ -84,6 +84,7 @@ export class VideoItemComponent {
 				}
 			})
 			.onClose.pipe(
+				take(1),
 				filter(Boolean),
 				tap(() => this.actions.dispatch(VideoActions.deleteVideo(video.id)))
 			)

@@ -5,6 +5,7 @@ import { VideoActions } from '../../+state/video.action';
 import { IActionButton } from '../../shared/models/action-button.model';
 import { DownloadStatus, IDownload, IFileDownloadOptions } from '../../shared/models/video-download.model';
 import { DownloadQueueService } from '../../shared/services/download/download-queue.service';
+import { extractFilenameFromUrl } from '../../shared/utilities/extract-filename-from-url';
 
 @Component({
 	selector: 'plug-video-download-manager',
@@ -43,12 +44,7 @@ export class VideoDownloadManagerComponent {
 	}
 
 	public extractFilename(url: string): string {
-		try {
-			const parsedUrl = new URL(url);
-			return parsedUrl.pathname.split('/').pop() || 'download';
-		} catch {
-			return 'download';
-		}
+		return extractFilenameFromUrl(url);
 	}
 
 	public getStatusColor(status: DownloadStatus): string {

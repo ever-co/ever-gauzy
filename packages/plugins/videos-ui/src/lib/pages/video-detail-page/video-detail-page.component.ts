@@ -46,38 +46,48 @@ export class VideoDetailPageComponent implements OnInit, AfterViewInit, OnDestro
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.route.params.subscribe(({ id }) => {
-			this.actions.dispatch(
-				VideoActions.fetchOneVideo(id, {
-					relations: ['uploadedBy', 'uploadedBy.user']
-				})
-			);
-		});
+		this.route.params
+			.pipe(
+				tap(({ id }) => {
+					this.actions.dispatch(
+						VideoActions.fetchOneVideo(id, {
+							relations: ['uploadedBy', 'uploadedBy.user']
+						})
+					);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngAfterViewInit() {
-		this.router.events.subscribe((evt) => {
-			if (evt instanceof NavigationEnd) {
-				// Check if there's a card
-				if (!this.card) {
-					return;
-				}
-				// trick the Router into believing it's last link wasn't previously loaded
-				this.router.navigated = false;
-				// Get element
-				const element = this.card.nativeElement;
-				// Check if it exists
-				if (!element) {
-					return;
-				}
-				// Scroll back to top
-				element.scroll({ top: 0, behavior: 'smooth' });
-				// Reset skip
-				this.skip = 0;
-				// fetch videos
-				this.fetchVideos();
-			}
-		});
+		this.router.events
+			.pipe(
+				tap((evt) => {
+					if (evt instanceof NavigationEnd) {
+						// Check if there's a card
+						if (!this.card) {
+							return;
+						}
+						// trick the Router into believing it's last link wasn't previously loaded
+						this.router.navigated = false;
+						// Get element
+						const element = this.card.nativeElement;
+						// Check if it exists
+						if (!element) {
+							return;
+						}
+						// Scroll back to top
+						element.scroll({ top: 0, behavior: 'smooth' });
+						// Reset skip
+						this.skip = 1;
+						// fetch videos
+						this.fetchVideos();
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	public fetchVideos(): void {
