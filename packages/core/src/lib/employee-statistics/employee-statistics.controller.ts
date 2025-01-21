@@ -2,7 +2,8 @@ import {
 	IAggregatedEmployeeStatistic,
 	IEmployeeStatistics,
 	IMonthAggregatedEmployeeStatistics,
-	IEmployeeStatisticsHistory
+	IEmployeeStatisticsHistory,
+	ID
 } from '@gauzy/contracts';
 import { Controller, Get, HttpStatus, Param, Query, UseGuards } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
@@ -60,8 +61,8 @@ export class EmployeeStatisticsController {
 		description: 'Record not found'
 	})
 	@Get('/months/:id')
-	async findAllByEmloyeeId(
-		@Param('id', UUIDValidationPipe) id: string,
+	async findAllByEmployeeId(
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<IEmployeeStatistics> {
 		const { findInput } = data;

@@ -30,7 +30,7 @@ export class PublicEmployeeService {
 			});
 			return { items, total };
 		} catch (error) {
-			throw new BadRequestException(error, `Error while gettting public employees`);
+			throw new BadRequestException(error, `Error while getting public employees`);
 		}
 	}
 

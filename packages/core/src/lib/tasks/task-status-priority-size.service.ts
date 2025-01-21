@@ -92,7 +92,7 @@ export class TaskStatusPrioritySizeService<
 	 */
 	async fetchAll(params: FindEntityByParams): Promise<IPagination<BaseEntity>> {
 		try {
-			// Destructures the organizationId, projectId, and organizationTeamId from the provided parameters.
+			// Destructuring the organizationId, projectId, and organizationTeamId from the provided parameters.
 			const { organizationId, projectId, organizationTeamId } = params;
 
 			// Convert the where clause to FindManyOptions<BaseEntity>

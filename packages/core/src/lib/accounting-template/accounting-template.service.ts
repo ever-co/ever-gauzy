@@ -31,8 +31,8 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 		const { data, organization } = input.request;
 		let textToHtml = data;
 		try {
-			const mjmlTohtml = mjml2html(data);
-			textToHtml = mjmlTohtml.errors.length ? data : mjmlTohtml.html;
+			const mjmlToHtml = mjml2html(data);
+			textToHtml = mjmlToHtml.errors.length ? data : mjmlToHtml.html;
 		} catch (error) {}
 
 		const handlebarsTemplate = Handlebars.compile(textToHtml);

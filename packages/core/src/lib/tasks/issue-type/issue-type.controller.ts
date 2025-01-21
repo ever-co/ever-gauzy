@@ -39,7 +39,7 @@ export class IssueTypeController extends CrudFactory<
 	@ApiOperation({ summary: 'Make issue type default.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Task issue type maked as default'
+		description: 'Task issue type marked as default'
 	})
 	@HttpCode(HttpStatus.OK)
 	@Put(':id/default')

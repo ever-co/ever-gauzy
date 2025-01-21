@@ -211,8 +211,6 @@ if (environment.THROTTLE_ENABLED) {
 	console.log('Throttle Limit: ', limit);
 }
 
-const GUARDS = [ApiKeyAuthGuard];
-
 @Module({
 	imports: [
 		ClsModule.forRoot({
@@ -478,6 +476,7 @@ const GUARDS = [ApiKeyAuthGuard];
 	providers: [
 		AppService,
 		AppBootstrapLogger,
+		ApiKeyAuthGuard,
 		...(environment.THROTTLE_ENABLED
 			? [
 					{
@@ -489,8 +488,7 @@ const GUARDS = [ApiKeyAuthGuard];
 		{
 			provide: APP_INTERCEPTOR,
 			useClass: TransformInterceptor
-		},
-		...GUARDS
+		}
 	]
 })
 export class AppModule implements OnModuleInit {

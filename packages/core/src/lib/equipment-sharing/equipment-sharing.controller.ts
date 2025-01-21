@@ -1,11 +1,11 @@
+import { Controller, HttpStatus, Get, HttpCode, UseGuards, Put, Param, Body, Query, Post } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Controller, HttpStatus, Get, HttpCode, UseGuards, Put, Param, Body, Query } from '@nestjs/common';
+import { ID, IEquipmentSharing, IPagination, PermissionsEnum, RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { EquipmentSharingService } from './equipment-sharing.service';
-import { IEquipmentSharing, IPagination, PermissionsEnum, RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
-import { Post } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
+
 import {
 	EquipmentSharingStatusCommand,
 	EquipmentSharingCreateCommand,
@@ -24,13 +24,13 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	}
 
 	/**
-	 * GET equipment sharings by orgization id
+	 * GET equipment sharings by organization id
 	 *
 	 * @param orgId
 	 * @returns
 	 */
 	@ApiOperation({
-		summary: 'Find equipment sharings By Orgization Id'
+		summary: 'Find equipment sharings By Organization Id'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -45,7 +45,7 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@Permissions(PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW)
 	@Get('/organization/:id')
 	async findEquipmentSharingsByOrgId(
-		@Param('id', UUIDValidationPipe) organizationId: string
+		@Param('id', UUIDValidationPipe) organizationId: ID
 	): Promise<IPagination<IEquipmentSharing>> {
 		return this.equipmentSharingService.findEquipmentSharingsByOrgId(organizationId);
 	}
@@ -72,7 +72,7 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@Permissions(PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW)
 	@Get('employee/:id')
 	async findEquipmentSharingsByEmployeeId(
-		@Param('id', UUIDValidationPipe) employeeId: string
+		@Param('id', UUIDValidationPipe) employeeId: ID
 	): Promise<IPagination<IEquipmentSharing>> {
 		return this.equipmentSharingService.findRequestApprovalsByEmployeeId(employeeId);
 	}
@@ -102,7 +102,7 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@Permissions(PermissionsEnum.EQUIPMENT_MAKE_REQUEST, PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT)
 	@Post('organization/:id')
 	async createEquipmentSharing(
-		@Param('id', UUIDValidationPipe) organizationId: string,
+		@Param('id', UUIDValidationPipe) organizationId: ID,
 		@Body() equipmentSharing: EquipmentSharing
 	): Promise<IEquipmentSharing> {
 		return await this.commandBus.execute(new EquipmentSharingCreateCommand(organizationId, equipmentSharing));
@@ -128,7 +128,7 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.EQUIPMENT_APPROVE_REQUEST, PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT)
 	@Put('approval/:id')
-	async equipmentSharingsRequestApproval(@Param('id', UUIDValidationPipe) id: string): Promise<IEquipmentSharing> {
+	async equipmentSharingsRequestApproval(@Param('id', UUIDValidationPipe) id: ID): Promise<IEquipmentSharing> {
 		return await this.commandBus.execute(
 			new EquipmentSharingStatusCommand(id, RequestApprovalStatusTypesEnum.APPROVED)
 		);
@@ -154,7 +154,7 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.EQUIPMENT_APPROVE_REQUEST, PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT)
 	@Put('refuse/:id')
-	async equipmentSharingsRequestRefuse(@Param('id', UUIDValidationPipe) id: string): Promise<IEquipmentSharing> {
+	async equipmentSharingsRequestRefuse(@Param('id', UUIDValidationPipe) id: ID): Promise<IEquipmentSharing> {
 		return this.commandBus.execute(new EquipmentSharingStatusCommand(id, RequestApprovalStatusTypesEnum.REFUSED));
 	}
 
@@ -226,7 +226,7 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@Permissions(PermissionsEnum.EQUIPMENT_APPROVE_REQUEST, PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT)
 	@Put(':id')
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() equipmentSharing: EquipmentSharing
 	): Promise<IEquipmentSharing> {
 		return await this.commandBus.execute(new EquipmentSharingUpdateCommand(id, equipmentSharing));
