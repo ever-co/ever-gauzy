@@ -1,6 +1,11 @@
 <div class="custom-card">
 	<div class="custom-card-header">
-		<ngx-gauzy-filters [isTimeFormat]="true"></ngx-gauzy-filters>
+		<ngx-gauzy-filters
+			[isTimeFormat]="true"
+			[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
+			(filtersChange)="filtersChange($event)"
+		>
+		</ngx-gauzy-filters>
 	</div>
 	<div
 		nbInfiniteList

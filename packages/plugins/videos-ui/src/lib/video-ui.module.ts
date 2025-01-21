@@ -37,6 +37,8 @@ import { VideoMetadataComponent } from './shared/ui/video-metadata/video-metadat
 import { VideoPlayerComponent } from './shared/ui/video-player/video-player.component';
 import { VideoSkeletonComponent } from './shared/ui/video-skeleton/video-skeleton.component';
 import { VideoUiRoutingModule } from './video-ui-routing.module';
+import { TranslateModule } from '@ngx-translate/core';
+import { MomentModule } from 'ngx-moment';
 
 @NgModule({
 	declarations: [
@@ -70,7 +72,9 @@ import { VideoUiRoutingModule } from './video-ui-routing.module';
 		NbInputModule,
 		NbBadgeModule,
 		NbProgressBarModule,
-		NbListModule
+		NbListModule,
+		MomentModule,
+		TranslateModule.forChild()
 	],
 	providers: [
 		provideEffectsManager(),
