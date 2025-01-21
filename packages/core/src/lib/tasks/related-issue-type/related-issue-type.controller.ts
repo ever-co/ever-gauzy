@@ -20,7 +20,7 @@ import { CreateRelatedIssueTypeDTO, RelatedIssueTypeQueryDTO, UpdatesRelatedIssu
 
 @UseGuards(TenantPermissionGuard)
 @ApiTags('Task RelatedIssueTypes')
-@Controller()
+@Controller('/task-related-issue-types')
 export class TaskRelatedIssueTypeController extends CrudFactory<
 	TaskRelatedIssueType,
 	IPaginationParam,

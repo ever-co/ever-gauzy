@@ -29,7 +29,7 @@ import { CreateIncomeDTO, DeleteIncomeDTO, UpdateIncomeDTO } from './dto';
 @ApiTags('Income')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_INCOMES_EDIT)
-@Controller()
+@Controller('/income')
 export class IncomeController extends CrudController<Income> {
 	constructor(
 		private readonly incomeService: IncomeService,

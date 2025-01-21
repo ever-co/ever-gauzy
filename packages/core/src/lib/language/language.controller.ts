@@ -6,11 +6,9 @@ import { Language } from './language.entity';
 import { LanguageService } from './language.service';
 
 @ApiTags('Languages')
-@Controller()
+@Controller('/languages')
 export class LanguageController {
-	constructor(
-		private readonly languageService: LanguageService
-	) { }
+	constructor(private readonly languageService: LanguageService) {}
 
 	@ApiOperation({ summary: 'Find all language.' })
 	@ApiResponse({
@@ -24,9 +22,7 @@ export class LanguageController {
 	})
 	@Get()
 	@Public()
-	async findAll(
-		@Query() query: any
-	): Promise<IPagination<ILanguage>> {
+	async findAll(@Query() query: any): Promise<IPagination<ILanguage>> {
 		return this.languageService.findAll(query);
 	}
 

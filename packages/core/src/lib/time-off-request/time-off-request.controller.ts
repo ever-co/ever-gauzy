@@ -22,7 +22,7 @@ import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../share
 @ApiTags('TimeOffRequest')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.TIME_OFF_EDIT)
-@Controller()
+@Controller('/time-off-request')
 export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	constructor(
 		private readonly timeOffRequestService: TimeOffRequestService,

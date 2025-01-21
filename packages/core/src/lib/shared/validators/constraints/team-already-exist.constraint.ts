@@ -1,27 +1,23 @@
-import { Injectable } from "@nestjs/common";
-import { Not } from "typeorm";
-import {
-	ValidationArguments,
-	ValidatorConstraint,
-	ValidatorConstraintInterface
-} from "class-validator";
-import { isEmpty } from "@gauzy/common";
-import { IOrganizationTeam } from "@gauzy/contracts";
-import { RequestContext } from "../../../core/context";
-import { MikroOrmOrganizationTeamRepository, TypeOrmOrganizationTeamRepository } from "../../../organization-team/repository";
-import { MultiORM, MultiORMEnum, getORMType, parseTypeORMFindToMikroOrm } from "../../../core/utils";
+import { Injectable } from '@nestjs/common';
+import { Not } from 'typeorm';
+import { ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
+import { isEmpty } from '@gauzy/common';
+import { IOrganizationTeam } from '@gauzy/contracts';
+import { RequestContext } from '../../../core/context';
+import { MultiORM, MultiORMEnum, getORMType, parseTypeORMFindToMikroOrm } from '../../../core/utils';
+import { TypeOrmOrganizationTeamRepository } from '../../../organization-team/repository/type-orm-organization-team.repository';
+import { MikroOrmOrganizationTeamRepository } from '../../../organization-team/repository/mikro-orm-organization-team.repository';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
 
-@ValidatorConstraint({ name: "IsTeamAlreadyExist", async: true })
+@ValidatorConstraint({ name: 'IsTeamAlreadyExist', async: true })
 @Injectable()
 export class TeamAlreadyExistConstraint implements ValidatorConstraintInterface {
-
 	constructor(
 		readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
 		readonly mikroOrmOrganizationTeamRepository: MikroOrmOrganizationTeamRepository
-	) { }
+	) {}
 
 	/**
 	 * Validates if a given name is not already in use in the specified organization.
@@ -35,7 +31,7 @@ export class TeamAlreadyExistConstraint implements ValidatorConstraintInterface 
 			return true; // Empty value is considered valid
 		}
 
-		const payload = args.object as { organizationId?: string, organization?: { id: string }, id?: string };
+		const payload = args.object as { organizationId?: string; organization?: { id: string }; id?: string };
 		const organizationId = payload.organizationId || payload.organization?.id;
 
 		if (!organizationId) {
@@ -52,10 +48,12 @@ export class TeamAlreadyExistConstraint implements ValidatorConstraintInterface 
 		try {
 			switch (ormType) {
 				case MultiORMEnum.MikroORM:
-					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<IOrganizationTeam>({ where: queryConditions });
-					return !await this.mikroOrmOrganizationTeamRepository.findOneOrFail(where, mikroOptions);
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<IOrganizationTeam>({
+						where: queryConditions
+					});
+					return !(await this.mikroOrmOrganizationTeamRepository.findOneOrFail(where, mikroOptions));
 				case MultiORMEnum.TypeORM:
-					return !await this.typeOrmOrganizationTeamRepository.findOneByOrFail(queryConditions);
+					return !(await this.typeOrmOrganizationTeamRepository.findOneByOrFail(queryConditions));
 				default:
 					throw new Error(`Not implemented for ${ormType}`);
 			}

@@ -1,11 +1,4 @@
-import {
-	Controller,
-	HttpStatus,
-	Get,
-	Res,
-	Query,
-	UseGuards
-} from '@nestjs/common';
+import { Controller, HttpStatus, Get, Res, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { ParseJsonPipe } from '../../shared/pipes/parse-json.pipe';
@@ -16,11 +9,9 @@ import { ExportService } from './export.service';
 @ApiTags('Download')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.EXPORT_ADD)
-@Controller()
+@Controller('/export')
 export class ExportController {
-	constructor(
-		private readonly _exportService: ExportService
-	) { }
+	constructor(private readonly _exportService: ExportService) {}
 
 	@ApiOperation({ summary: 'Find all exports.' })
 	@ApiResponse({
@@ -32,10 +23,7 @@ export class ExportController {
 		description: 'Record not found'
 	})
 	@Get()
-	async exportAll(
-		@Query('data', ParseJsonPipe) data: any,
-		@Res() res
-	): Promise<any> {
+	async exportAll(@Query('data', ParseJsonPipe) data: any, @Res() res): Promise<any> {
 		await this._exportService.createFolders();
 		await this._exportService.exportTables();
 		await this._exportService.archiveAndDownload();
@@ -54,9 +42,7 @@ export class ExportController {
 		description: 'Record not found'
 	})
 	@Get('template')
-	async downloadTemplate(
-		@Res() res
-	): Promise<any> {
+	async downloadTemplate(@Res() res): Promise<any> {
 		await this._exportService.createFolders();
 		await this._exportService.exportSpecificTablesSchema();
 		await this._exportService.archiveAndDownload();
@@ -75,11 +61,10 @@ export class ExportController {
 		description: 'Record not found'
 	})
 	@Get('filter')
-	async exportByName(
-		@Query('data', ParseJsonPipe) data: any,
-		@Res() res
-	): Promise<any> {
-		const { entities: { names } } = data;
+	async exportByName(@Query('data', ParseJsonPipe) data: any, @Res() res): Promise<any> {
+		const {
+			entities: { names }
+		} = data;
 		await this._exportService.createFolders();
 		await this._exportService.exportSpecificTables(names);
 		await this._exportService.archiveAndDownload();

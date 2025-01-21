@@ -7,7 +7,7 @@ import { TenantPermissionGuard } from './../shared/guards';
 
 @ApiTags('ProductOption')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/product-options')
 export class ProductOptionController extends CrudController<ProductOption> {
 	constructor(private readonly productOptionService: ProductOptionService) {
 		super(productOptionService);

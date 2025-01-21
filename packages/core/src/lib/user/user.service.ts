@@ -35,7 +35,8 @@ import { RequestContext } from './../core/context';
 import { freshTimestamp, MultiORMEnum } from './../core/utils';
 import { EmployeeService } from '../employee/employee.service';
 import { TaskService } from '../tasks/task.service';
-import { MikroOrmUserRepository, TypeOrmUserRepository } from './repository';
+import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
+import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 import { User } from './user.entity';
 
 @Injectable()
@@ -48,6 +49,17 @@ export class UserService extends TenantAwareCrudService<User> {
 		private readonly _taskService: TaskService
 	) {
 		super(typeOrmUserRepository, mikroOrmUserRepository);
+	}
+
+	/**
+	 * Counts the total number of records in the current repository/table.
+	 * This method utilizes the base `count` method from the parent class
+	 * to quickly return the total number of records without additional filters or conditions.
+	 *
+	 * @returns {Promise<number>} - A promise that resolves to the total count of records.
+	 */
+	public async countFast(): Promise<number> {
+		return await super.count();
 	}
 
 	/**

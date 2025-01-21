@@ -1,12 +1,4 @@
-import {
-	Controller,
-	UseGuards,
-	HttpStatus,
-	Post,
-	Body,
-	Get,
-	Query
-} from '@nestjs/common';
+import { Controller, UseGuards, HttpStatus, Post, Body, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IGoalKPITemplate, IPagination } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
@@ -17,19 +9,17 @@ import { ParseJsonPipe } from './../shared/pipes';
 
 @ApiTags('GoalKpiTemplate')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/goal-kpi-template')
 export class GoalKpiTemplateController extends CrudController<GoalKPITemplate> {
-	constructor(
-		private readonly goalKpiTemplateService: GoalKpiTemplateService
-	) {
+	constructor(private readonly goalKpiTemplateService: GoalKpiTemplateService) {
 		super(goalKpiTemplateService);
 	}
 
 	/**
 	 * GET all goal kpi templates
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find all goal kpi templates.' })
 	@ApiResponse({
@@ -42,9 +32,7 @@ export class GoalKpiTemplateController extends CrudController<GoalKPITemplate> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IGoalKPITemplate>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IGoalKPITemplate>> {
 		const { relations, findInput } = data;
 		return this.goalKpiTemplateService.findAll({
 			where: findInput,
@@ -54,9 +42,9 @@ export class GoalKpiTemplateController extends CrudController<GoalKPITemplate> {
 
 	/**
 	 * CREATE goal kpi template
-	 * 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Create goal kpi template' })
 	@ApiResponse({
@@ -65,9 +53,7 @@ export class GoalKpiTemplateController extends CrudController<GoalKPITemplate> {
 		type: GoalKPITemplate
 	})
 	@Post()
-	async create(
-		@Body() entity: GoalKPITemplate
-	): Promise<IGoalKPITemplate> {
+	async create(@Body() entity: GoalKPITemplate): Promise<IGoalKPITemplate> {
 		return this.goalKpiTemplateService.create(entity);
-	}	
+	}
 }

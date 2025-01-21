@@ -59,12 +59,7 @@ export class CandidateController extends CrudController<Candidate> {
 	})
 	@Post('/bulk')
 	async createBulk(
-		@Body(
-			BulkBodyLoadTransformPipe,
-			new ValidationPipe({
-				transform: true
-			})
-		)
+		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform: true }))
 		entity: CandidateBulkInputDTO,
 		@LanguageDecorator() themeLanguage: LanguagesEnum,
 		@I18nLang() languageCode: LanguagesEnum,

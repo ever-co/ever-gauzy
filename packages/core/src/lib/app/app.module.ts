@@ -28,6 +28,7 @@ import { TaskStatusModule } from '../tasks/statuses/status.module';
 import { TaskVersionModule } from '../tasks/versions/version.module';
 import { SkillModule } from '../skills/skill.module';
 import { LanguageModule } from '../language/language.module';
+import { AppBootstrapLogger } from './app-bootstrap-logger';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { EmailCheckModule } from '../email-check/email-check.module';
@@ -190,7 +191,7 @@ if (unleashConfig.url) {
 	const instance = initializeUnleash(unleashInstanceConfig);
 
 	// metrics hooks
-	instance.on('registered', (client) => {
+	instance.on('registered', () => {
 		console.log('Unleash Client Registered');
 	});
 
@@ -209,8 +210,6 @@ if (environment.THROTTLE_ENABLED) {
 	const limit = environment.THROTTLE_LIMIT;
 	console.log('Throttle Limit: ', limit);
 }
-
-const GUARDS = [ApiKeyAuthGuard];
 
 @Module({
 	imports: [
@@ -476,6 +475,8 @@ const GUARDS = [ApiKeyAuthGuard];
 	controllers: [AppController],
 	providers: [
 		AppService,
+		AppBootstrapLogger,
+		ApiKeyAuthGuard,
 		...(environment.THROTTLE_ENABLED
 			? [
 					{
@@ -487,10 +488,8 @@ const GUARDS = [ApiKeyAuthGuard];
 		{
 			provide: APP_INTERCEPTOR,
 			useClass: TransformInterceptor
-		},
-		...GUARDS
-	],
-	exports: []
+		}
+	]
 })
 export class AppModule implements OnModuleInit {
 	constructor(private readonly clsService: ClsService) {

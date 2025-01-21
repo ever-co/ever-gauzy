@@ -35,9 +35,9 @@ import { EmailHistoryResendCommand } from './commands';
 @ApiTags('Email')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.VIEW_ALL_EMAILS)
-@Controller()
+@Controller('/email')
 export class EmailHistoryController {
-	constructor(private readonly _emailHistoryService: EmailHistoryService, private readonly commandBus: CommandBus) { }
+	constructor(private readonly _emailHistoryService: EmailHistoryService, private readonly commandBus: CommandBus) {}
 
 	@ApiOperation({ summary: 'Find all sent emails under specific tenant.' })
 	@ApiOkResponse({

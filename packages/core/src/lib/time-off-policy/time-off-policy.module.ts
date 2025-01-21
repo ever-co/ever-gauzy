@@ -17,6 +17,6 @@ import { TypeOrmTimeOffPolicyRepository } from './repository/type-orm-time-off-p
 	],
 	controllers: [TimeOffPolicyController],
 	providers: [TimeOffPolicyService, TypeOrmTimeOffPolicyRepository],
-	exports: [TypeOrmModule, MikroOrmModule, TimeOffPolicyService, TypeOrmTimeOffPolicyRepository]
+	exports: [TimeOffPolicyService, TypeOrmTimeOffPolicyRepository]
 })
 export class TimeOffPolicyModule {}

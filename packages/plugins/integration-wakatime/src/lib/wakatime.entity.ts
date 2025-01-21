@@ -2,7 +2,7 @@ import { PrimaryGeneratedColumn, Unique } from 'typeorm';
 import { PrimaryKey } from '@mikro-orm/core';
 import { MultiORMColumn, MultiORMEntity } from '@gauzy/core';
 import { IWakatime } from '@gauzy/contracts';
-import { MikroOrmWakatimeRepository } from './repository';
+import { MikroOrmWakatimeRepository } from './repository/mikro-orm-wakatime.repository';
 
 @MultiORMEntity('heartbeats', { mikroOrmRepository: () => MikroOrmWakatimeRepository })
 @Unique(['time', 'entities']) // named; multiple fields

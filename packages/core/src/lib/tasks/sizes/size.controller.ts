@@ -18,7 +18,7 @@ import { CreateTaskSizeDTO, TaskSizeQueryDTO, UpdateTaskSizeDTO } from './dto';
 
 @UseGuards(TenantPermissionGuard)
 @ApiTags('Task Size')
-@Controller()
+@Controller('/task-sizes')
 export class TaskSizeController extends CrudFactory<
 	TaskSize,
 	IPaginationParam,

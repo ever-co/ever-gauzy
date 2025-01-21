@@ -26,7 +26,7 @@ import { OrganizationTaskSettingService } from './organization-task-setting.serv
 @ApiTags('OrganizationTaskSetting')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
-@Controller()
+@Controller('/organization-task-setting')
 export class OrganizationTaskSettingController {
 	constructor(
 		private readonly commandBus: CommandBus,

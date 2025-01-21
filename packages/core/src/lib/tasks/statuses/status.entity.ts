@@ -12,7 +12,7 @@ import {
 	MultiORMManyToOne,
 	VirtualMultiOrmColumn
 } from '../../core/decorators/entity';
-import { MikroOrmTaskStatusRepository } from './repository';
+import { MikroOrmTaskStatusRepository } from './repository/mikro-orm-task-status.repository';
 
 @MultiORMEntity('task_status', { mikroOrmRepository: () => MikroOrmTaskStatusRepository })
 export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskStatus {

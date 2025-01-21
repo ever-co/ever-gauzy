@@ -1,6 +1,5 @@
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, MoreThanOrEqual, SelectQueryBuilder } from 'typeorm';
 import { IEmailReset, IEmailResetFindInput, LanguagesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
@@ -23,11 +22,8 @@ import { MikroOrmEmailResetRepository } from './repository/mikro-orm-email-reset
 @Injectable()
 export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 	constructor(
-		@InjectRepository(EmailReset)
-		typeOrmEmailResetRepository: TypeOrmEmailResetRepository,
-
-		mikroOrmEmailResetRepository: MikroOrmEmailResetRepository,
-
+		readonly typeOrmEmailResetRepository: TypeOrmEmailResetRepository,
+		readonly mikroOrmEmailResetRepository: MikroOrmEmailResetRepository,
 		private readonly userService: UserService,
 		private readonly commandBus: CommandBus,
 		private readonly queryBus: QueryBus,
@@ -43,9 +39,7 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 			let user = RequestContext.currentUser();
 
 			user = await this.userService.findOneByIdString(user.id, {
-				relations: {
-					role: true
-				}
+				relations: { role: true }
 			});
 
 			const token = await this.authService.getJwtAccessToken(user);
@@ -73,9 +67,7 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 			);
 
 			const employee = await this.employeeService.findOneByIdString(user.employeeId, {
-				relations: {
-					organization: true
-				}
+				relations: { organization: true }
 			});
 
 			const { organization } = employee;

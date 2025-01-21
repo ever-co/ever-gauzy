@@ -1,5 +1,4 @@
 import { BadRequestException, ConflictException, Injectable, HttpStatus, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { MoreThanOrEqual, SelectQueryBuilder, IsNull, FindManyOptions } from 'typeorm';
 import { JwtPayload, sign } from 'jsonwebtoken';
 import { environment } from '@gauzy/config';
@@ -19,7 +18,7 @@ import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
 import { TenantAwareCrudService } from './../core/crud';
 import { generateRandomAlphaNumericCode } from './../core/utils';
 import { RequestContext } from './../core/context';
-import { OrganizationTeamEmployee, User } from './../core/entities/internal';
+import { User } from './../core/entities/internal';
 import { EmailService } from './../email-send/email.service';
 import { OrganizationTeamJoinRequest } from './organization-team-join-request.entity';
 import { OrganizationTeamService } from './../organization-team/organization-team.service';
@@ -29,28 +28,15 @@ import { EmployeeService } from './../employee/employee.service';
 import { TypeOrmOrganizationTeamJoinRequestRepository } from './repository/type-orm-organization-team-join-request.repository';
 import { MikroOrmOrganizationTeamJoinRequestRepository } from './repository/mikro-orm-organization-team-join-request.repository';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
-import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
 import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
-import { MikroOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/mikro-orm-organization-team-employee.repository';
 
 @Injectable()
 export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<OrganizationTeamJoinRequest> {
 	constructor(
-		@InjectRepository(OrganizationTeamJoinRequest)
-		typeOrmOrganizationTeamJoinRequestRepository: TypeOrmOrganizationTeamJoinRequestRepository,
-
-		mikroOrmOrganizationTeamJoinRequestRepository: MikroOrmOrganizationTeamJoinRequestRepository,
-
-		@InjectRepository(User)
-		private typeOrmUserRepository: TypeOrmUserRepository,
-
-		mikroOrmUserRepository: MikroOrmUserRepository,
-
-		@InjectRepository(OrganizationTeamEmployee)
-		protected readonly typeOrmOrganizationTeamEmployeeRepository: TypeOrmOrganizationTeamEmployeeRepository,
-
-		mikroOrmOrganizationTeamEmployeeRepository: MikroOrmOrganizationTeamEmployeeRepository,
-
+		readonly typeOrmOrganizationTeamJoinRequestRepository: TypeOrmOrganizationTeamJoinRequestRepository,
+		readonly mikroOrmOrganizationTeamJoinRequestRepository: MikroOrmOrganizationTeamJoinRequestRepository,
+		private readonly typeOrmUserRepository: TypeOrmUserRepository,
+		private readonly typeOrmOrganizationTeamEmployeeRepository: TypeOrmOrganizationTeamEmployeeRepository,
 		private readonly _employeeService: EmployeeService,
 		private readonly _organizationTeamService: OrganizationTeamService,
 		private readonly _emailService: EmailService,

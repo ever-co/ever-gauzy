@@ -1,19 +1,14 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from '@nestjs/core';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Country } from './country.entity';
 import { CountryController } from './country.controller';
 import { CountryService } from './country.service';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { TypeOrmCountryRepository } from './repository/type-orm-country.repository';
 
 @Module({
-	imports: [
-		RouterModule.register([{ path: '/country', module: CountryModule }]),
-		TypeOrmModule.forFeature([Country]),
-		MikroOrmModule.forFeature([Country]),
-	],
+	imports: [TypeOrmModule.forFeature([Country]), MikroOrmModule.forFeature([Country])],
 	controllers: [CountryController],
-	providers: [CountryService],
-	exports: [CountryService]
+	providers: [CountryService, TypeOrmCountryRepository]
 })
-export class CountryModule { }
+export class CountryModule {}

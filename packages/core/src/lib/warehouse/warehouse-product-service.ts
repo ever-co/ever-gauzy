@@ -1,41 +1,28 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { In } from 'typeorm';
-import { IPagination, IWarehouseProduct, IWarehouseProductCreateInput, IWarehouseProductVariant } from '@gauzy/contracts';
+import {
+	IPagination,
+	IWarehouseProduct,
+	IWarehouseProductCreateInput,
+	IWarehouseProductVariant
+} from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { WarehouseProduct, WarehouseProductVariant, Product, Warehouse } from './../core/entities/internal';
+import { WarehouseProduct, WarehouseProductVariant } from './../core/entities/internal';
 import { TypeOrmWarehouseProductVariantRepository } from './repository/type-orm-warehouse-product-variant.repository';
 import { MikroOrmWarehouseProductRepository } from './repository/mikro-orm-warehouse-product.repository ';
 import { TypeOrmWarehouseRepository } from './repository/type-orm-warehouse.repository';
-import { MikroOrmWarehouseRepository } from './repository/mikro-orm-warehouse.repository';
-import { MikroOrmWarehouseProductVariantRepository } from './repository/mikro-orm-warehouse-product-variant.repository';
 import { TypeOrmWarehouseProductRepository } from './repository/type-orm-warehouse-product.repository ';
 import { TypeOrmProductRepository } from './../product/repository/type-orm-product.repository';
-import { MikroOrmProductRepository } from './../product/repository/mikro-orm-product.repository';
 
 @Injectable()
 export class WarehouseProductService extends TenantAwareCrudService<WarehouseProduct> {
 	constructor(
-		@InjectRepository(WarehouseProduct)
-		typeOrmWarehouseProductRepository: TypeOrmWarehouseProductRepository,
-
-		mikroOrmWarehouseProductRepository: MikroOrmWarehouseProductRepository,
-
-		@InjectRepository(Warehouse)
-		private typeOrmWarehouseRepository: TypeOrmWarehouseRepository,
-
-		mikroOrmWarehouseRepository: MikroOrmWarehouseRepository,
-
-		@InjectRepository(WarehouseProductVariant)
-		private typeOrmWarehouseProductVariantRepository: TypeOrmWarehouseProductVariantRepository,
-
-		mikroOrmWarehouseProductVariantRepository: MikroOrmWarehouseProductVariantRepository,
-
-		@InjectRepository(Product)
-		private typeOrmProductRepository: TypeOrmProductRepository,
-
-		mikroOrmProductRepository: MikroOrmProductRepository,
+		readonly typeOrmWarehouseProductRepository: TypeOrmWarehouseProductRepository,
+		readonly mikroOrmWarehouseProductRepository: MikroOrmWarehouseProductRepository,
+		private readonly typeOrmWarehouseRepository: TypeOrmWarehouseRepository,
+		private readonly typeOrmWarehouseProductVariantRepository: TypeOrmWarehouseProductVariantRepository,
+		private readonly typeOrmProductRepository: TypeOrmProductRepository
 	) {
 		super(typeOrmWarehouseProductRepository, mikroOrmWarehouseProductRepository);
 	}

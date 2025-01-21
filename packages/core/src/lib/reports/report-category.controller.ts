@@ -6,7 +6,7 @@ import { ReportCategory } from './report-category.entity';
 import { ReportCategoryService } from './report-category.service';
 
 @ApiTags('Report Category')
-@Controller('category')
+@Controller('/report/category')
 export class ReportCategoryController {
 	constructor(private reportCategoryService: ReportCategoryService) {}
 
@@ -15,10 +15,8 @@ export class ReportCategoryController {
 		status: HttpStatus.OK,
 		description: 'Found records'
 	})
-	@Get()
-	async findAll(
-		@Query() filter?: PaginationParams<ReportCategory>
-	): Promise<IPagination<ReportCategory>> {
+	@Get('/')
+	async findAll(@Query() filter?: PaginationParams<ReportCategory>): Promise<IPagination<ReportCategory>> {
 		return this.reportCategoryService.findAll(filter);
 	}
 }
