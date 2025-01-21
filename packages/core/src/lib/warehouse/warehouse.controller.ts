@@ -19,7 +19,8 @@ import {
 	IWarehouseProduct,
 	IWarehouseProductCreateInput,
 	IWarehouseProductVariant,
-	IWarehouse
+	IWarehouse,
+	ID
 } from '@gauzy/contracts';
 import { WarehouseService } from './warehouse.service';
 import { Warehouse } from './warehouse.entity';
@@ -88,9 +89,9 @@ export class WarehouseController extends CrudController<Warehouse> {
 	})
 	@Post('inventory/:warehouseId')
 	async addWarehouseProducts(
-		@Body() entity: IWarehouseProductCreateInput[],
-		@Param('warehouseId', UUIDValidationPipe) warehouseId: IWarehouse['id']
-	): Promise<IPagination<IWarehouseProduct[]>> {
+		@Param('warehouseId', UUIDValidationPipe) warehouseId: ID,
+		@Body() entity: IWarehouseProductCreateInput[]
+	): Promise<IPagination<IWarehouseProduct>> {
 		return await this.warehouseProductsService.createWarehouseProductBulk(entity, warehouseId);
 	}
 
