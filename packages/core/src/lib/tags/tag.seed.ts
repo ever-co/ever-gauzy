@@ -1,13 +1,14 @@
 import { DataSource } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { DEFAULT_GLOBAL_TAGS, DEFAULT_ORGANIZATION_TAGS } from './default-tags';
-import { IOrganization, ITenant } from '@gauzy/contracts';
+import { IOrganization, ITagType, ITenant } from '@gauzy/contracts';
 import { Tag } from './../core/entities/internal';
 
 export const createDefaultTags = async (
 	dataSource: DataSource,
 	tenant: ITenant,
-	organizations: IOrganization[]
+	organizations: IOrganization[],
+	organizationTagTypes: ITagType[]
 ): Promise<Tag[]> => {
 	let tags: Tag[] = [];
 	for (const organization of organizations) {
@@ -21,6 +22,7 @@ export const createDefaultTags = async (
 			}
 			orgTags.organization = organization;
 			orgTags.tenant = tenant;
+			orgTags.tagTypeId = organizationTagTypes[Math.floor(Math.random() * organizationTagTypes.length)]?.id;
 			return orgTags;
 		});
 		tags = [...tags, ...organizationTags];
@@ -57,7 +59,8 @@ export const createTags = async (dataSource: DataSource): Promise<Tag[]> => {
 export const createRandomOrganizationTags = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
-	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	organizationTagTypes: ITagType[]
 ): Promise<Tag[]> => {
 	let tags: Tag[] = [];
 
@@ -84,6 +87,8 @@ export const createRandomOrganizationTags = async (
 				tag.color = faker.color.human();
 				tag.organization = organization;
 				tag.tenant = tenant;
+				tag.tagTypeId = organizationTagTypes[Math.floor(Math.random() * organizationTagTypes.length)]?.id;
+
 				return tag;
 			});
 
