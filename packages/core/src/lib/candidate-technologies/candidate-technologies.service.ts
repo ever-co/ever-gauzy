@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { ICandidateTechnologies, ICandidateTechnologiesCreateInput } from '@gauzy/contracts';
+import { ICandidateTechnologies, ICandidateTechnologiesCreateInput, ID } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { CandidateTechnologies } from './candidate-technologies.entity';
 import { TypeOrmCandidateTechnologiesRepository } from './repository/type-orm-candidate-technologies.repository';
@@ -9,9 +8,7 @@ import { MikroOrmCandidateTechnologiesRepository } from './repository/mikro-orm-
 @Injectable()
 export class CandidateTechnologiesService extends TenantAwareCrudService<CandidateTechnologies> {
 	constructor(
-		@InjectRepository(CandidateTechnologies)
 		typeOrmCandidateTechnologiesRepository: TypeOrmCandidateTechnologiesRepository,
-
 		mikroOrmCandidateTechnologiesRepository: MikroOrmCandidateTechnologiesRepository
 	) {
 		super(typeOrmCandidateTechnologiesRepository, mikroOrmCandidateTechnologiesRepository);
@@ -45,7 +42,7 @@ export class CandidateTechnologiesService extends TenantAwareCrudService<Candida
 	 * @param ids
 	 * @returns
 	 */
-	async deleteBulk(ids: string[]) {
+	async deleteBulk(ids: ID[]) {
 		return await this.typeOrmRepository.delete(ids);
 	}
 }

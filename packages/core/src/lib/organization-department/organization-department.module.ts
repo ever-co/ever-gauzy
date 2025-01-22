@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { OrganizationDepartment } from './organization-department.entity';
@@ -8,22 +7,17 @@ import { OrganizationDepartmentController } from './organization-department.cont
 import { OrganizationDepartmentService } from './organization-department.service';
 import { CommandHandlers } from './commands/handlers';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { TypeOrmOrganizationDepartmentRepository } from './repository/type-orm-organization-department.repository';
 
 @Module({
 	imports: [
-		RouterModule.register([
-			{
-				path: '/organization-department',
-				module: OrganizationDepartmentModule
-			}
-		]),
 		TypeOrmModule.forFeature([OrganizationDepartment]),
 		MikroOrmModule.forFeature([OrganizationDepartment]),
 		RolePermissionModule,
 		CqrsModule
 	],
 	controllers: [OrganizationDepartmentController],
-	providers: [OrganizationDepartmentService, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, OrganizationDepartmentService]
+	providers: [OrganizationDepartmentService, TypeOrmOrganizationDepartmentRepository, ...CommandHandlers],
+	exports: [OrganizationDepartmentService, TypeOrmOrganizationDepartmentRepository]
 })
-export class OrganizationDepartmentModule { }
+export class OrganizationDepartmentModule {}

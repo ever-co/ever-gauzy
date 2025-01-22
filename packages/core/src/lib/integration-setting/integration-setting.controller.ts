@@ -11,7 +11,7 @@ import { UpdateIntegrationSettingDTO } from './dto/update-integration-setting.dt
 @ApiTags('IntegrationSetting')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
-@Controller('integration-setting')
+@Controller('/integration-setting')
 export class IntegrationSettingController {
 	constructor(private readonly integrationSettingService: IntegrationSettingService) {}
 

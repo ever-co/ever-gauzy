@@ -8,9 +8,9 @@ import { Activity, Screenshot, TimeSlot } from './../../../../core/entities/inte
 import { RequestContext } from './../../../../core/context';
 import { getDateRangeFormat } from './../../../../core/utils';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
+import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../time-log/commands/update-employee-total-worked-hours.command';
+import { TimesheetRecalculateCommand } from './../../../timesheet/commands/timesheet-recalculate.command';
 import { TimeSlotMergeCommand } from '../time-slot-merge.command';
-import { TimesheetRecalculateCommand } from './../../../timesheet/commands';
-import { UpdateEmployeeTotalWorkedHoursCommand } from './../../../../employee/commands';
 import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.repository';
 
 interface IAggregatedTimeSlot {

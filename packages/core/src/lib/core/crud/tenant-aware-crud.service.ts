@@ -176,10 +176,6 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		return await super.count(this.findManyWithTenant(options));
 	}
 
-	public async countFast(): Promise<number> {
-		return await super.count();
-	}
-
 	/**
 	 * Counts entities that match given options.
 	 * Useful for pagination.

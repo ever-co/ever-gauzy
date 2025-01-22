@@ -16,7 +16,8 @@ import { CommandHandlers } from './commands/handlers';
 import { TimerModule } from './../time-tracking/timer/timer.module';
 import { StatisticModule } from './../time-tracking/statistic/statistic.module';
 import { TaskModule } from './../tasks/task.module';
-import { TypeOrmOrganizationTeamRepository } from './repository';
+import { TypeOrmOrganizationTeamRepository } from './repository/type-orm-organization-team.repository';
+import { MikroOrmOrganizationTeamRepository } from './repository/mikro-orm-organization-team.repository';
 
 @Module({
 	imports: [
@@ -34,7 +35,13 @@ import { TypeOrmOrganizationTeamRepository } from './repository';
 		TaskModule
 	],
 	controllers: [OrganizationTeamController],
-	providers: [...QueryHandlers, ...CommandHandlers, OrganizationTeamService, TypeOrmOrganizationTeamRepository],
-	exports: [TypeOrmModule, MikroOrmModule, OrganizationTeamService, TypeOrmOrganizationTeamRepository]
+	providers: [
+		OrganizationTeamService,
+		TypeOrmOrganizationTeamRepository,
+		MikroOrmOrganizationTeamRepository,
+		...QueryHandlers,
+		...CommandHandlers
+	],
+	exports: [OrganizationTeamService, TypeOrmOrganizationTeamRepository, MikroOrmOrganizationTeamRepository]
 })
 export class OrganizationTeamModule {}

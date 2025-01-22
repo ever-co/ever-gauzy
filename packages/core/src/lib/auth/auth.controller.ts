@@ -46,7 +46,7 @@ import {
 import { FindUserBySocialLoginDTO, SocialLoginBodyRequestDTO } from './social-account/dto';
 
 @ApiTags('Auth')
-@Controller()
+@Controller('/auth')
 export class AuthController {
 	constructor(
 		private readonly authService: AuthService,

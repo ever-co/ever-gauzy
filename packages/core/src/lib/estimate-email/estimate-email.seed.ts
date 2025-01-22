@@ -13,15 +13,11 @@ export const createRandomEstimateEmail = async (
 	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
 ): Promise<EstimateEmail[]> => {
 	if (!tenantEmployeeMap) {
-		console.warn(
-			'Warning: tenantEmployeeMap not found, deal  will not be created'
-		);
+		console.warn('Warning: tenantEmployeeMap not found, deal  will not be created');
 		return;
 	}
 	if (!tenantOrganizationsMap) {
-		console.warn(
-			'Warning: tenantOrganizationsMap not found, deal  will not be created'
-		);
+		console.warn('Warning: tenantOrganizationsMap not found, deal  will not be created');
 		return;
 	}
 

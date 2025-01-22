@@ -573,9 +573,15 @@ export class SeedDataService {
 			createDefaultEmployeeInviteSent(this.dataSource, this.tenant, this.organizations, this.superAdminUsers)
 		);
 
-		await this.tryExecute('Default Tags', createDefaultTags(this.dataSource, this.tenant, this.organizations));
+		const defaultTagTypes = await this.tryExecute(
+			'Default Tag Types',
+			createTagTypes(this.dataSource, this.tenant, this.organizations)
+		);
 
-		await this.tryExecute('Default Tag Types', createTagTypes(this.dataSource, this.tenant, this.organizations));
+		await this.tryExecute(
+			'Default Tags',
+			createDefaultTags(this.dataSource, this.tenant, this.organizations, defaultTagTypes || [])
+		);
 
 		// Organization level inserts which need connection, tenant, role, organizations
 		const categories = await this.tryExecute(
@@ -807,12 +813,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Payment',
-			createDefaultPayment(
-				this.dataSource,
-				this.tenant,
-				this.defaultEmployees,
-				this.organizations
-			)
+			createDefaultPayment(this.dataSource, this.tenant, this.defaultEmployees, this.organizations)
 		);
 
 		await this.tryExecute(
@@ -1008,14 +1009,19 @@ export class SeedDataService {
 			organizationUsersMap
 		);
 
-		const tags = await this.tryExecute(
-			'Random Organization Tags',
-			createRandomOrganizationTags(this.dataSource, this.randomTenants, this.randomTenantOrganizationsMap)
-		);
-
-		await this.tryExecute(
+		const randomOrganizationTagTypes = await this.tryExecute(
 			'Random Organization Tag Types',
 			createRandomOrganizationTagTypes(this.dataSource, this.randomTenants, this.randomTenantOrganizationsMap)
+		);
+
+		const tags = await this.tryExecute(
+			'Random Organization Tags',
+			createRandomOrganizationTags(
+				this.dataSource,
+				this.randomTenants,
+				this.randomTenantOrganizationsMap,
+				randomOrganizationTagTypes || []
+			)
 		);
 
 		await this.tryExecute(

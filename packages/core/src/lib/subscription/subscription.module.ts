@@ -20,6 +20,6 @@ import { TypeOrmSubscriptionRepository } from './repository/type-orm-subscriptio
 	],
 	providers: [SubscriptionService, TypeOrmSubscriptionRepository, ...CommandHandlers, ...EventHandlers],
 	controllers: [SubscriptionController],
-	exports: [TypeOrmModule, MikroOrmModule, SubscriptionService, TypeOrmSubscriptionRepository]
+	exports: [SubscriptionService, TypeOrmSubscriptionRepository]
 })
 export class SubscriptionModule {}

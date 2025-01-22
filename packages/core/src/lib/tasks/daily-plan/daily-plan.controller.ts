@@ -25,7 +25,7 @@ import { DailyPlanService } from './daily-plan.service';
 @ApiTags('Daily Plan')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.DAILY_PLAN_UPDATE)
-@Controller()
+@Controller('/daily-plan')
 export class DailyPlanController extends CrudController<DailyPlan> {
 	constructor(private readonly dailyPlanService: DailyPlanService) {
 		super(dailyPlanService);

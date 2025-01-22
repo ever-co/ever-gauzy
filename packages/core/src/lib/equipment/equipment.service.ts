@@ -1,4 +1,3 @@
-import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 import { Like } from 'typeorm';
 import { IPagination } from '@gauzy/contracts';
@@ -11,9 +10,7 @@ import { Equipment } from './equipment.entity';
 @Injectable()
 export class EquipmentService extends TenantAwareCrudService<Equipment> {
 	constructor(
-		@InjectRepository(Equipment)
 		typeOrmEquipmentRepository: TypeOrmEquipmentRepository,
-
 		mikroOrmEquipmentRepository: MikroOrmEquipmentRepository
 	) {
 		super(typeOrmEquipmentRepository, mikroOrmEquipmentRepository);

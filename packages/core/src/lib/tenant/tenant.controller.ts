@@ -21,9 +21,9 @@ import { CreateTenantDTO, UpdateTenantDTO } from './dto';
 import { TenantService } from './tenant.service';
 
 @ApiTags('Tenant')
-@Controller()
+@Controller('/tenant')
 export class TenantController {
-	constructor(private readonly tenantService: TenantService) { }
+	constructor(private readonly tenantService: TenantService) {}
 
 	/**
 	 * GET Owner Tenant
@@ -39,7 +39,7 @@ export class TenantController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Tenant record not found'
 	})
-	@Get()
+	@Get('/')
 	async findById(): Promise<ITenant> {
 		const tenantId = RequestContext.currentTenantId();
 		return await this.tenantService.findOneByIdString(tenantId);
@@ -66,7 +66,7 @@ export class TenantController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Post()
+	@Post('/')
 	@UseValidationPipe()
 	async create(@Body() entity: CreateTenantDTO): Promise<ITenant> {
 		const user = RequestContext.currentUser();
@@ -99,11 +99,12 @@ export class TenantController {
 	})
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.SUPER_ADMIN)
-	@Put()
+	@Put('/')
 	@UseValidationPipe({ whitelist: true })
 	async update(@Body() entity: UpdateTenantDTO): Promise<ITenant | UpdateResult> {
 		try {
-			return await this.tenantService.update(RequestContext.currentTenantId(), entity);
+			const tenantId = RequestContext.currentTenantId();
+			return await this.tenantService.update(tenantId, entity);
 		} catch (error) {
 			throw new ForbiddenException();
 		}
@@ -132,10 +133,11 @@ export class TenantController {
 	})
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.SUPER_ADMIN)
-	@Delete()
+	@Delete('/')
 	async delete(): Promise<DeleteResult> {
 		try {
-			return await this.tenantService.delete(RequestContext.currentTenantId());
+			const tenantId = RequestContext.currentTenantId();
+			return await this.tenantService.delete(tenantId);
 		} catch (error) {
 			throw new ForbiddenException();
 		}

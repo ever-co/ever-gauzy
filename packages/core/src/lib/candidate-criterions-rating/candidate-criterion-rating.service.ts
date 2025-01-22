@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { ICandidateCriterionsRating, ICandidateCriterionsRatingCreateInput } from '@gauzy/contracts';
+import { ICandidateCriterionsRating, ICandidateCriterionsRatingCreateInput, ID } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { CandidateCriterionsRating } from './candidate-criterion-rating.entity';
 import { TypeOrmCandidateCriterionsRatingRepository } from './repository/type-orm-candidate-criterions-rating.repository';
@@ -9,9 +8,7 @@ import { MikroOrmCandidateCriterionsRatingRepository } from './repository/mikro-
 @Injectable()
 export class CandidateCriterionsRatingService extends TenantAwareCrudService<CandidateCriterionsRating> {
 	constructor(
-		@InjectRepository(CandidateCriterionsRating)
 		typeOrmCandidateCriterionsRatingRepository: TypeOrmCandidateCriterionsRatingRepository,
-
 		mikroOrmCandidateCriterionsRatingRepository: MikroOrmCandidateCriterionsRatingRepository
 	) {
 		super(typeOrmCandidateCriterionsRatingRepository, mikroOrmCandidateCriterionsRatingRepository);
@@ -27,13 +24,16 @@ export class CandidateCriterionsRatingService extends TenantAwareCrudService<Can
 		technologyCreateInput: ICandidateCriterionsRatingCreateInput[],
 		qualityCreateInput: ICandidateCriterionsRatingCreateInput[]
 	) {
-		return [await this.typeOrmRepository.save(technologyCreateInput), await this.typeOrmRepository.save(qualityCreateInput)];
+		return [
+			await this.typeOrmRepository.save(technologyCreateInput),
+			await this.typeOrmRepository.save(qualityCreateInput)
+		];
 	}
 
 	/***
 	 *
 	 */
-	async getCriterionsByFeedbackId(feedbackId: string): Promise<CandidateCriterionsRating[]> {
+	async getCriterionsByFeedbackId(feedbackId: ID): Promise<CandidateCriterionsRating[]> {
 		return await this.typeOrmRepository
 			.createQueryBuilder('candidate_feedback')
 			.where('candidate_feedback.feedbackId = :feedbackId', {
@@ -47,7 +47,7 @@ export class CandidateCriterionsRatingService extends TenantAwareCrudService<Can
 	 * @param ids
 	 * @returns
 	 */
-	async deleteBulk(ids: string[]) {
+	async deleteBulk(ids: ID[]) {
 		return await this.typeOrmRepository.delete(ids);
 	}
 

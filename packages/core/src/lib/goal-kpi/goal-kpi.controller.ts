@@ -22,11 +22,9 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('GoalKpi')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/goal-kpi')
 export class GoalKpiController extends CrudController<GoalKPI> {
-	constructor(
-		private readonly goalKpiService: GoalKpiService
-	) {
+	constructor(private readonly goalKpiService: GoalKpiService) {
 		super(goalKpiService);
 	}
 
@@ -40,9 +38,7 @@ export class GoalKpiController extends CrudController<GoalKPI> {
 		description: 'No KPI found'
 	})
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IKPI>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IKPI>> {
 		const { findInput } = data;
 		return this.goalKpiService.findAll({
 			where: { ...findInput },
@@ -57,9 +53,7 @@ export class GoalKpiController extends CrudController<GoalKPI> {
 		type: GoalKPI
 	})
 	@Post()
-	async create(
-		@Body() entity: GoalKPI
-	): Promise<IKPI> {
+	async create(@Body() entity: GoalKPI): Promise<IKPI> {
 		return this.goalKpiService.create(entity);
 	}
 
@@ -74,15 +68,11 @@ export class GoalKpiController extends CrudController<GoalKPI> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: GoalKPI
-	): Promise<IKPI> {
+	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: GoalKPI): Promise<IKPI> {
 		try {
 			return await this.goalKpiService.create({
 				id,
@@ -95,9 +85,7 @@ export class GoalKpiController extends CrudController<GoalKPI> {
 
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<any> {
+	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
 		return this.goalKpiService.delete(id);
 	}
 }

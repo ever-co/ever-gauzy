@@ -25,7 +25,7 @@ import { CreateCommentDTO, UpdateCommentDTO } from './dto';
 
 @ApiTags('Comments')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Controller()
+@Controller('/comment')
 export class CommentController extends CrudController<Comment> {
 	constructor(private readonly commentService: CommentService, private readonly commandBus: CommandBus) {
 		super(commentService);

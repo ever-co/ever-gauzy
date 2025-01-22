@@ -3,8 +3,8 @@ import { IEmailHistory, IPagination } from '@gauzy/contracts';
 import { PaginationParams, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { EmailHistory } from './email-history.entity';
-import { MikroOrmEmailHistoryRepository, TypeOrmEmailHistoryRepository } from './repository';
-
+import { TypeOrmEmailHistoryRepository } from './repository/type-orm-email-history.repository';
+import { MikroOrmEmailHistoryRepository } from './repository/mikro-orm-email-history.repository';
 @Injectable()
 export class EmailHistoryService extends TenantAwareCrudService<EmailHistory> {
 	constructor(

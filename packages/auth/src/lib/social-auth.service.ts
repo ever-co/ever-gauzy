@@ -28,7 +28,7 @@ export class SocialAuthService extends BaseSocialAuth {
 		this.clientBaseUrl = this.configService.get('clientBaseUrl') as Extract<keyof IEnvironment, string>;
 	}
 
-	public validateOAuthLoginEmail(args: []): any { }
+	public validateOAuthLoginEmail(args: []): any {}
 
 	/**
 	 * Generate a hash for the provided password.

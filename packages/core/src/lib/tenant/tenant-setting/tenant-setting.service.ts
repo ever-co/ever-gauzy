@@ -1,5 +1,4 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, In } from 'typeorm';
 import { indexBy, keys, object, pluck } from 'underscore';
 import { S3Client, CreateBucketCommand, CreateBucketCommandInput, CreateBucketCommandOutput } from '@aws-sdk/client-s3';
@@ -13,9 +12,7 @@ import { MikroOrmTenantSettingRepository } from './repository/mikro-orm-tenant-s
 @Injectable()
 export class TenantSettingService extends TenantAwareCrudService<TenantSetting> {
 	constructor(
-		@InjectRepository(TenantSetting)
 		typeOrmTenantSettingRepository: TypeOrmTenantSettingRepository,
-
 		mikroOrmTenantSettingRepository: MikroOrmTenantSettingRepository
 	) {
 		super(typeOrmTenantSettingRepository, mikroOrmTenantSettingRepository);
@@ -36,7 +33,7 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 				settings = items.map((entity: TenantSetting) => this.serialize(entity)) as TenantSetting[];
 				break;
 			case MultiORMEnum.TypeORM:
-				settings = await await this.typeOrmRepository.find(request);
+				settings = await this.typeOrmRepository.find(request);
 				break;
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);

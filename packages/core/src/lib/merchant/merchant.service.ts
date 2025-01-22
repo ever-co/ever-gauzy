@@ -1,4 +1,3 @@
-import { InjectRepository } from '@nestjs/typeorm';
 import { IMerchant } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { Merchant } from './merchant.entity';
@@ -7,9 +6,7 @@ import { TypeOrmMerchantRepository } from './repository/type-orm-merchant.reposi
 
 export class MerchantService extends TenantAwareCrudService<Merchant> {
 	constructor(
-		@InjectRepository(Merchant)
 		typeOrmMerchantRepository: TypeOrmMerchantRepository,
-
 		mikroOrmMerchantRepository: MikroOrmMerchantRepository
 	) {
 		super(typeOrmMerchantRepository, mikroOrmMerchantRepository);

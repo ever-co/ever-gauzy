@@ -1,22 +1,19 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { RelationId } from 'typeorm';
-import {
-	IOrganizationProject,
-	IOrganizationTeam,
-	ITaskRelatedIssueType,
-} from '@gauzy/contracts';
+import { IOrganizationProject, IOrganizationTeam, ITaskRelatedIssueType } from '@gauzy/contracts';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { OrganizationProject, OrganizationTeam, TenantOrganizationBaseEntity } from '../../core/entities/internal';
 import {
-	OrganizationProject,
-	OrganizationTeam,
-	TenantOrganizationBaseEntity,
-} from '../../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, VirtualMultiOrmColumn } from './../../core/decorators/entity';
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToOne,
+	VirtualMultiOrmColumn
+} from './../../core/decorators/entity';
 import { MikroOrmTaskRelatedIssueTypeRepository } from './repository/mikro-orm-related-issue-type.repository';
 
 @MultiORMEntity('task_related_issue_type', { mikroOrmRepository: () => MikroOrmTaskRelatedIssueTypeRepository })
 export class TaskRelatedIssueType extends TenantOrganizationBaseEntity implements ITaskRelatedIssueType {
-
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
@@ -65,7 +62,7 @@ export class TaskRelatedIssueType extends TenantOrganizationBaseEntity implement
 		nullable: true,
 
 		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	project?: IOrganizationProject;
 
@@ -88,7 +85,7 @@ export class TaskRelatedIssueType extends TenantOrganizationBaseEntity implement
 		nullable: true,
 
 		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	organizationTeam?: IOrganizationTeam;
 

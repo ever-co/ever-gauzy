@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { IIntegrationEntitySettingTied } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { IntegrationEntitySettingTied } from './integration-entity-setting-tied.entity';
@@ -9,10 +8,8 @@ import { TypeOrmIntegrationEntitySettingTiedRepository } from './repository/type
 @Injectable()
 export class IntegrationEntitySettingTiedService extends TenantAwareCrudService<IntegrationEntitySettingTied> {
 	constructor(
-		@InjectRepository(IntegrationEntitySettingTied)
 		readonly typeOrmIntegrationEntitySettingTiedRepository: TypeOrmIntegrationEntitySettingTiedRepository,
-
-		mikroOrmIntegrationEntitySettingTiedRepository: MikroOrmIntegrationEntitySettingTiedRepository
+		readonly mikroOrmIntegrationEntitySettingTiedRepository: MikroOrmIntegrationEntitySettingTiedRepository
 	) {
 		super(typeOrmIntegrationEntitySettingTiedRepository, mikroOrmIntegrationEntitySettingTiedRepository);
 	}
@@ -30,7 +27,8 @@ export class IntegrationEntitySettingTiedService extends TenantAwareCrudService<
 		const settings: IIntegrationEntitySettingTied[] = Array.isArray(input) ? input : [input];
 
 		// Save the array of integration entity settings to the database
-		const savedSettings: IIntegrationEntitySettingTied[] = await this.typeOrmIntegrationEntitySettingTiedRepository.save(settings);
+		const savedSettings: IIntegrationEntitySettingTied[] =
+			await this.typeOrmIntegrationEntitySettingTiedRepository.save(settings);
 
 		// Return the array of created or updated integration entity settings
 		return savedSettings;

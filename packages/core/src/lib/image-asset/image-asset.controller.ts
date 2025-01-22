@@ -37,7 +37,7 @@ import { UploadImageAsset } from './dto';
 @ApiTags('ImageAsset')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.MEDIA_GALLERY_ADD)
-@Controller()
+@Controller('/image-assets')
 export class ImageAssetController extends CrudController<ImageAsset> {
 	constructor(private readonly _commandBus: CommandBus, private readonly _imageAssetService: ImageAssetService) {
 		super(_imageAssetService);
