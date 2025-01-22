@@ -10,7 +10,7 @@ import {
 	ID,
 	IPagination
 } from '@gauzy/contracts';
-import { isNotNullOrUndefined } from '@gauzy/common';
+import { isNotNullOrUndefined } from '@gauzy/utils';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { activityLogUpdatedFieldsAndValues, generateActivityLogDescription } from './activity-log.helper';

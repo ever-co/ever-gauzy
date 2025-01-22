@@ -1,6 +1,7 @@
 import { EventSubscriber } from 'typeorm';
+import { IDBConnectionOptions } from '@gauzy/common';
 import { getConfig } from '@gauzy/config';
-import { isJsObject, IDBConnectionOptions } from '@gauzy/common';
+import { isJsObject } from '@gauzy/utils';
 import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';
 import { Screenshot } from './screenshot.entity';
 import { FileStorage } from './../../core/file-storage';

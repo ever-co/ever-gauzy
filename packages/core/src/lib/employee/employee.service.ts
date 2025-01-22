@@ -10,7 +10,7 @@ import {
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { MultiORMEnum, getDateRangeFormat, parseTypeORMFindToMikroOrm } from './../core/utils';

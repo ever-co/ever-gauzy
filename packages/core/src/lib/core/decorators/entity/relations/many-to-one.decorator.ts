@@ -1,7 +1,6 @@
 import { Cascade, EntityName, ManyToOneOptions } from '@mikro-orm/core';
 import { omit } from 'underscore';
-import { deepClone } from '@gauzy/common';
-import { isObject } from '@gauzy/utils';
+import { deepClone, isObject } from '@gauzy/utils';
 import { TypeOrmManyToOne } from './type-orm';
 import { MikroOrmManyToOne } from './mikro-orm';
 import {

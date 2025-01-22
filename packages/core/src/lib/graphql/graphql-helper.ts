@@ -2,7 +2,7 @@ import { GqlModuleOptions, GraphQLTypesLoader } from '@nestjs/graphql';
 import { ApolloDriver } from '@nestjs/apollo';
 import { buildSchema, extendSchema, printSchema } from 'graphql';
 import * as path from 'path';
-import { GraphQLApiConfigurationOptions, isNotEmpty } from '@gauzy/common';
+import { GraphQLApiConfigurationOptions, isNotEmpty } from '@gauzy/utils';
 import { ConfigService } from '@gauzy/config';
 import { getPluginExtensions } from '@gauzy/plugin';
 
@@ -27,15 +27,7 @@ export async function createGraphqlModuleOptions(
 		cors: {
 			origin: '*',
 			credentials: true,
-			methods: [
-				'GET',
-				'HEAD',
-				'PUT',
-				'PATCH',
-				'POST',
-				'DELETE',
-				'OPTIONS'
-			].join(','),
+			methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'].join(','),
 			allowedHeaders: [
 				'Authorization',
 				'Language',
@@ -67,18 +59,14 @@ async function createTypeDefs(
 	options: GraphQLApiConfigurationOptions,
 	typesLoader: GraphQLTypesLoader
 ): Promise<string> {
-	const normalizedPaths = options.typePaths.map((p) =>
-		p.split(path.sep).join('/')
-	);
+	const normalizedPaths = options.typePaths.map((p) => p.split(path.sep).join('/'));
 	const typeDefs = await typesLoader.mergeTypesByPaths(normalizedPaths);
 	let schema = buildSchema(typeDefs);
 
 	getPluginExtensions(configService.plugins)
 		.map((e) => (typeof e.schema === 'function' ? e.schema() : e.schema))
 		.filter(isNotEmpty)
-		.forEach(
-			(documentNode) => (schema = extendSchema(schema, documentNode))
-		);
+		.forEach((documentNode) => (schema = extendSchema(schema, documentNode)));
 
 	return printSchema(schema);
 }

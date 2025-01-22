@@ -1,7 +1,7 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ComponentLayoutStyleEnum, IEmployee, LanguagesEnum, RolesEnum } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
-import { isEmpty } from '@gauzy/common';
+import { isEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../../core/context';
 import { AuthService } from '../../../auth/auth.service';
 import { UserOrganizationService } from '../../../user-organization/user-organization.services';

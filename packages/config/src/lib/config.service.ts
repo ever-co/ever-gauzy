@@ -35,14 +35,12 @@ export class ConfigService {
 		return this.config.apiConfigOptions;
 	}
 
-
 	/**
 	 * Get the GraphQL configuration options.
 	 */
 	get graphqlConfigOptions(): Readonly<GraphqlConfigurationOptions> {
 		return this.config.apiConfigOptions.graphqlConfigOptions;
 	}
-
 
 	/**
 	 * Get the TypeORM connection options.

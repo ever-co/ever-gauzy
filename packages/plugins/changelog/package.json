@@ -27,10 +27,10 @@
 		"lib:watch": "yarn nx build plugin-changelog --watch"
 	},
 	"dependencies": {
-		"@gauzy/common": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
+		"@gauzy/utils": "^0.1.0",
 		"@mikro-orm/nestjs": "^6.0.2",
 		"@nestjs/common": "^10.4.15",
 		"@nestjs/cqrs": "^10.2.8",

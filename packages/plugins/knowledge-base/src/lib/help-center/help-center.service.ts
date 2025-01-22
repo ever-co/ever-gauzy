@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { IHelpCenter } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '@gauzy/core';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { HelpCenter } from './help-center.entity';
 import { TypeOrmHelpCenterRepository } from './repository/type-orm-help-center.repository';
 import { MikroOrmHelpCenterRepository } from './repository/mikro-orm-help-center.repository';

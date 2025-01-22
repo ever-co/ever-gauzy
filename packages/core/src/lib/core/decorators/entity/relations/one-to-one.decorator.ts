@@ -1,7 +1,6 @@
 import { Cascade, EntityName, OneToOneOptions } from '@mikro-orm/core';
 import { omit } from 'underscore';
-import { deepClone } from '@gauzy/common';
-import { isObject } from '@gauzy/utils';
+import { deepClone, isObject } from '@gauzy/utils';
 import { MultiORMEnum } from '../../../../core/utils';
 import {
 	MikroORMInverseSide,

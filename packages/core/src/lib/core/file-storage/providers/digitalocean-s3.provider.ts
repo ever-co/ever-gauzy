@@ -15,7 +15,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { StorageEngine } from 'multer';
 import { environment } from '@gauzy/config';
 import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
-import { addHttpsPrefix, trimAndGetValue } from '@gauzy/common';
+import { ensureHttpPrefix, trimIfNotEmpty } from '@gauzy/utils';
 import { Provider } from './provider';
 import { RequestContext } from '../../context';
 
@@ -99,8 +99,8 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 						console.log(`setDigitalOceanConfiguration Tenant Settings Value: ${JSON.stringify(settings)}`);
 					}
 
-					if (trimAndGetValue(settings.digitalocean_access_key_id)) {
-						this.config.digitalocean_access_key_id = trimAndGetValue(settings.digitalocean_access_key_id);
+					if (trimIfNotEmpty(settings.digitalocean_access_key_id)) {
+						this.config.digitalocean_access_key_id = trimIfNotEmpty(settings.digitalocean_access_key_id);
 
 						if (this._detailedLoggingEnabled) {
 							console.log(
@@ -109,8 +109,8 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 						}
 					}
 
-					if (trimAndGetValue(settings.digitalocean_secret_access_key)) {
-						this.config.digitalocean_secret_access_key = trimAndGetValue(
+					if (trimIfNotEmpty(settings.digitalocean_secret_access_key)) {
+						this.config.digitalocean_secret_access_key = trimIfNotEmpty(
 							settings.digitalocean_secret_access_key
 						);
 
@@ -121,9 +121,9 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 						}
 					}
 
-					if (trimAndGetValue(settings.digitalocean_service_url)) {
-						this.config.digitalocean_service_url = addHttpsPrefix(
-							trimAndGetValue(settings.digitalocean_service_url)
+					if (trimIfNotEmpty(settings.digitalocean_service_url)) {
+						this.config.digitalocean_service_url = ensureHttpPrefix(
+							trimIfNotEmpty(settings.digitalocean_service_url)
 						);
 
 						if (this._detailedLoggingEnabled) {
@@ -134,8 +134,8 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 						}
 					}
 
-					if (trimAndGetValue(settings.digitalocean_default_region)) {
-						this.config.digitalocean_default_region = trimAndGetValue(settings.digitalocean_default_region);
+					if (trimIfNotEmpty(settings.digitalocean_default_region)) {
+						this.config.digitalocean_default_region = trimIfNotEmpty(settings.digitalocean_default_region);
 
 						if (this._detailedLoggingEnabled) {
 							console.log(
@@ -145,8 +145,8 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 						}
 					}
 
-					if (trimAndGetValue(settings.digitalocean_s3_bucket)) {
-						this.config.digitalocean_s3_bucket = trimAndGetValue(settings.digitalocean_s3_bucket);
+					if (trimIfNotEmpty(settings.digitalocean_s3_bucket)) {
+						this.config.digitalocean_s3_bucket = trimIfNotEmpty(settings.digitalocean_s3_bucket);
 
 						if (this._detailedLoggingEnabled) {
 							console.log(
@@ -156,8 +156,8 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 						}
 					}
 
-					// Assuming trimAndGetValue() function trims and retrieves the value from settings
-					const forcePathStyle = trimAndGetValue(settings.digitalocean_s3_force_path_style);
+					// Assuming trimIfNotEmpty() function trims and retrieves the value from settings
+					const forcePathStyle = trimIfNotEmpty(settings.digitalocean_s3_force_path_style);
 					this.config.digitalocean_s3_force_path_style = forcePathStyle === 'true' || forcePathStyle === '1';
 
 					if (this._detailedLoggingEnabled) {
@@ -410,7 +410,7 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 			this.setDigitalOceanConfiguration();
 
 			if (this.config && this.config.digitalocean_access_key_id && this.config.digitalocean_secret_access_key) {
-				const endpoint = addHttpsPrefix(this.config.digitalocean_service_url);
+				const endpoint = ensureHttpPrefix(this.config.digitalocean_service_url);
 
 				const s3Client = new S3Client({
 					/**
