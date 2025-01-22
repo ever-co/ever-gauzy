@@ -12,7 +12,7 @@ import { ImportHistoryCreateCommand } from '../import-history';
 @ApiTags('Import')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.IMPORT_ADD)
-@Controller()
+@Controller('/import')
 export class ImportController {
 	constructor(private readonly _importService: ImportService, private readonly _commandBus: CommandBus) {}
 

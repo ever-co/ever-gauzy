@@ -11,7 +11,7 @@ import { CreateFavoriteDTO } from './dto';
 
 @ApiTags('Favorites')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/favorite')
 export class FavoriteController extends CrudController<Favorite> {
 	constructor(private readonly favoriteService: FavoriteService) {
 		super(favoriteService);

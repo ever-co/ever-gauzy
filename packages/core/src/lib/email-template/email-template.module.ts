@@ -1,7 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { EmailTemplate } from './email-template.entity';
 import { EmailTemplateService } from './email-template.service';
@@ -14,7 +13,6 @@ import { TypeOrmEmailTemplateRepository } from './repository/type-orm-email-temp
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/email-template', module: EmailTemplateModule }]),
 		forwardRef(() => TypeOrmModule.forFeature([EmailTemplate])),
 		forwardRef(() => MikroOrmModule.forFeature([EmailTemplate])),
 		forwardRef(() => RolePermissionModule),
@@ -28,6 +26,6 @@ import { TypeOrmEmailTemplateRepository } from './repository/type-orm-email-temp
 		...QueryHandlers,
 		...CommandHandlers
 	],
-	exports: [TypeOrmModule, MikroOrmModule, EmailTemplateService, TypeOrmEmailTemplateRepository]
+	exports: [EmailTemplateService, TypeOrmEmailTemplateRepository]
 })
 export class EmailTemplateModule {}

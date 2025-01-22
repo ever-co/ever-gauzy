@@ -1,9 +1,15 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
-import { IOrganization, IPagination, ITaskPriority, ITaskPriorityCreateInput, ITaskPriorityFindInput, ITenant } from '@gauzy/contracts';
+import {
+	IOrganization,
+	IPagination,
+	ITaskPriority,
+	ITaskPriorityCreateInput,
+	ITaskPriorityFindInput,
+	ITenant
+} from '@gauzy/contracts';
 import { isPostgres } from '@gauzy/config';
 import { RequestContext } from '../../core/context';
 import { MultiORMEnum } from '../../core/utils';
@@ -15,15 +21,10 @@ import { TypeOrmTaskPriorityRepository } from './repository/type-orm-task-priori
 
 @Injectable()
 export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPriority> {
-
 	constructor(
-		@InjectRepository(TaskPriority)
 		readonly typeOrmTaskPriorityRepository: TypeOrmTaskPriorityRepository,
-
 		readonly mikroOrmTaskPriorityRepository: MikroOrmTaskPriorityRepository,
-
-		@InjectConnection()
-		readonly knexConnection: KnexConnection
+		@InjectConnection() readonly knexConnection: KnexConnection
 	) {
 		super(typeOrmTaskPriorityRepository, mikroOrmTaskPriorityRepository, knexConnection);
 	}
@@ -38,7 +39,7 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 		return await super.delete(id, {
 			where: {
 				isSystem: false
-			},
+			}
 		});
 	}
 
@@ -57,8 +58,14 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 				return await super.fetchAll(params);
 			}
 		} catch (error) {
-			console.log('Failed to retrieve task priorities. Ensure that the provided parameters are valid and complete.', error);
-			throw new BadRequestException('Failed to retrieve task priorities. Ensure that the provided parameters are valid and complete.', error);
+			console.log(
+				'Failed to retrieve task priorities. Ensure that the provided parameters are valid and complete.',
+				error
+			);
+			throw new BadRequestException(
+				'Failed to retrieve task priorities. Ensure that the provided parameters are valid and complete.',
+				error
+			);
 		}
 	}
 

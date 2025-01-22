@@ -4,7 +4,7 @@ import { ID, ITimeLog, ITimeSlot, ITimesheet, TimeLogSourceEnum } from '@gauzy/c
 import { isEmpty } from '@gauzy/common';
 import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from './../../../timesheet/commands';
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
-import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
+import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
 import { RequestContext } from './../../../../core/context';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { TimeLog } from './../../time-log.entity';

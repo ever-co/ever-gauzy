@@ -17,7 +17,8 @@ import { activityLogUpdatedFieldsAndValues, generateActivityLogDescription } fro
 import { ActivityLogEvent } from './events/activity-log.event';
 import { GetActivityLogsDTO, allowedOrderDirections, allowedOrderFields } from './dto/get-activity-logs.dto';
 import { ActivityLog } from './activity-log.entity';
-import { MikroOrmActivityLogRepository, TypeOrmActivityLogRepository } from './repository';
+import { TypeOrmActivityLogRepository } from './repository/type-orm-activity-log.repository';
+import { MikroOrmActivityLogRepository } from './repository/mikro-orm-activity-log.repository';
 
 @Injectable()
 export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {

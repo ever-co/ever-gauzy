@@ -5,29 +5,27 @@ import {
 	DiskHealthIndicator,
 	MikroOrmHealthIndicator
 } from '@nestjs/terminus';
-import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
 import { v4 as uuid } from 'uuid';
 import * as path from 'path';
 import { DataSource, QueryRunner } from 'typeorm';
 import { Public } from '@gauzy/common';
-import { User } from '../core/entities/internal';
+import { getORMType, MultiORM, MultiORMEnum } from '../core/utils';
 import { CacheHealthIndicator } from './indicators/cache-health.indicator';
 import { RedisHealthIndicator } from './indicators/redis-health.indicator';
-import { getORMType, MultiORM, MultiORMEnum } from '../core/utils';
-import { MikroOrmUserRepository, TypeOrmUserRepository } from '../user/repository';
+import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
+import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
 
-@Controller('health')
+@Controller('/health')
 export class HealthController {
 	constructor(
-		@InjectDataSource()
-		private readonly dataSource: DataSource,
+		@InjectDataSource() private readonly dataSource: DataSource,
+		private readonly disk: DiskHealthIndicator,
 		private readonly health: HealthCheckService,
 		private readonly typeOrmHealthIndicator: TypeOrmHealthIndicator,
 		private readonly mikroOrmHealthIndicator: MikroOrmHealthIndicator,
-		private readonly disk: DiskHealthIndicator,
 		private readonly cacheHealthIndicator: CacheHealthIndicator,
 		private readonly redisHealthIndicator: RedisHealthIndicator,
-		@InjectRepository(User)
 		private readonly typeOrmUserRepository: TypeOrmUserRepository,
 		private readonly mikroOrmUserRepository: MikroOrmUserRepository
 	) {

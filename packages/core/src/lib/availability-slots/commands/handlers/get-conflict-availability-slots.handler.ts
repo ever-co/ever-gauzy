@@ -1,9 +1,7 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import * as moment from 'moment';
 import { ConfigService } from '@gauzy/config';
 import { IAvailabilitySlot } from '@gauzy/contracts';
-import { AvailabilitySlot } from '../../availability-slots.entity';
 import { GetConflictAvailabilitySlotsCommand } from '../get-conflict-availability-slots.command';
 import { RequestContext } from './../../../core/context';
 import { DatabaseTypeEnum } from '@gauzy/config';
@@ -13,20 +11,13 @@ import { MikroOrmAvailabilitySlotRepository } from '../../repository/mikro-orm-a
 
 @CommandHandler(GetConflictAvailabilitySlotsCommand)
 export class GetConflictAvailabilitySlotsHandler implements ICommandHandler<GetConflictAvailabilitySlotsCommand> {
-
 	constructor(
-		@InjectRepository(AvailabilitySlot)
 		readonly typeOrmAvailabilitySlotRepository: TypeOrmAvailabilitySlotRepository,
-
 		readonly mikroOrmAvailabilitySlotRepository: MikroOrmAvailabilitySlotRepository,
-
 		private readonly configService: ConfigService
-	) { }
+	) {}
 
-	public async execute(
-		command: GetConflictAvailabilitySlotsCommand
-	): Promise<IAvailabilitySlot[]> {
-
+	public async execute(command: GetConflictAvailabilitySlotsCommand): Promise<IAvailabilitySlot[]> {
 		const { input } = command;
 		const { startTime, endTime, employeeId, organizationId } = input;
 		const tenantId = RequestContext.currentTenantId() || input.tenantId;
@@ -45,7 +36,9 @@ export class GetConflictAvailabilitySlotsHandler implements ICommandHandler<GetC
 		switch (this.configService.dbConnectionOptions.type) {
 			case DatabaseTypeEnum.sqlite:
 			case DatabaseTypeEnum.betterSqlite3:
-				query.andWhere(`'${startedAt}' >= "${query.alias}"."startTime" AND '${startedAt}' <= "${query.alias}"."endTime"`);
+				query.andWhere(
+					`'${startedAt}' >= "${query.alias}"."startTime" AND '${startedAt}' <= "${query.alias}"."endTime"`
+				);
 				break;
 			case DatabaseTypeEnum.postgres:
 				query.andWhere(
@@ -86,23 +79,14 @@ export class GetConflictAvailabilitySlotsHandler implements ICommandHandler<GetC
 
 		if (input.relations) {
 			input.relations.forEach((relation) => {
-				query.leftJoinAndSelect(
-					`${query.alias}.${relation}`,
-					relation
-				);
+				query.leftJoinAndSelect(`${query.alias}.${relation}`, relation);
 			});
 		}
 
 		if (input.ignoreId) {
-			query.andWhere(
-				`${query.alias}.id NOT IN (:...id)`,
-				{
-					id:
-						input.ignoreId instanceof Array
-							? input.ignoreId
-							: [input.ignoreId]
-				}
-			);
+			query.andWhere(`${query.alias}.id NOT IN (:...id)`, {
+				id: input.ignoreId instanceof Array ? input.ignoreId : [input.ignoreId]
+			});
 		}
 
 		return await query.getMany();

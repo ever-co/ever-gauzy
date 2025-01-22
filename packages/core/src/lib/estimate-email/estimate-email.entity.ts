@@ -6,9 +6,7 @@ import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEstimateEmailRepository } from './repository/mikro-orm-estimate-email.repository';
 
 @MultiORMEntity('estimate_email', { mikroOrmRepository: () => MikroOrmEstimateEmailRepository })
-export class EstimateEmail extends TenantOrganizationBaseEntity
-	implements IEstimateEmail {
-
+export class EstimateEmail extends TenantOrganizationBaseEntity implements IEstimateEmail {
 	@ApiProperty({ type: () => String })
 	@MultiORMColumn({
 		...(isMySQL() ? { type: 'text' } : {})

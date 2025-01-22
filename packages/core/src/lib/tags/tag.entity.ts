@@ -137,9 +137,10 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	@JoinColumn()
 	tagType?: ITagType;
 
-	@ApiProperty({ type: () => String })
-	@RelationId((it: Tag) => it.tagType)
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@IsUUID()
+	@RelationId((it: Tag) => it.tagType)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	tagTypeId?: ID;

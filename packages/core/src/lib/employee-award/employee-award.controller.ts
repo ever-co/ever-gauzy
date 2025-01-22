@@ -25,7 +25,7 @@ import { CreateEmployeeAwardDTO, UpdateEmployeeAwardDTO } from './dto';
 @ApiTags('EmployeeAward')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.PUBLIC_PAGE_EDIT, PermissionsEnum.ALL_ORG_EDIT)
-@Controller()
+@Controller('/employee-award')
 export class EmployeeAwardController extends CrudController<EmployeeAward> {
 	constructor(private readonly employeeAwardService: EmployeeAwardService) {
 		super(employeeAwardService);

@@ -49,13 +49,11 @@ import { OrganizationProjectService } from './../organization-project/organizati
 import { AuthService } from './../auth/auth.service';
 import { User } from './../user/user.entity';
 import { UserOrganizationService } from './../user-organization/user-organization.services';
-import { MikroOrmUserRepository, TypeOrmUserRepository } from '../user/repository';
-import { MikroOrmEmployeeRepository, TypeOrmEmployeeRepository } from '../employee/repository';
-import {
-	MikroOrmOrganizationTeamEmployeeRepository,
-	TypeOrmOrganizationTeamEmployeeRepository
-} from '../organization-team-employee/repository';
-import { MikroOrmInviteRepository, TypeOrmInviteRepository } from './repository';
+import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
+import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
+import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
+import { TypeOrmInviteRepository } from './repository/type-orm-invite.repository';
+import { MikroOrmInviteRepository } from './repository/mikro-orm-invite.repository';
 import { Invite } from './invite.entity';
 import { InviteAcceptCommand } from './commands';
 
@@ -65,11 +63,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		readonly typeOrmInviteRepository: TypeOrmInviteRepository,
 		readonly mikroOrmInviteRepository: MikroOrmInviteRepository,
 		readonly typeOrmUserRepository: TypeOrmUserRepository,
-		readonly mikroOrmUserRepository: MikroOrmUserRepository,
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
-		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 		readonly typeOrmOrganizationTeamEmployeeRepository: TypeOrmOrganizationTeamEmployeeRepository,
-		readonly mikroOrmOrganizationTeamEmployeeRepository: MikroOrmOrganizationTeamEmployeeRepository,
 		private readonly configService: ConfigService,
 		private readonly emailService: EmailService,
 		private readonly organizationContactService: OrganizationContactService,

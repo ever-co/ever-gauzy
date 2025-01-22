@@ -15,7 +15,7 @@ import { TaskViewModule } from './views/view.module';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskController } from './task.controller';
-import { TypeOrmTaskRepository } from './repository';
+import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
 
 @Module({
 	imports: [
@@ -33,6 +33,6 @@ import { TypeOrmTaskRepository } from './repository';
 	],
 	controllers: [TaskController],
 	providers: [TaskService, TypeOrmTaskRepository, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, TaskService, TypeOrmTaskRepository]
+	exports: [TaskService, TypeOrmTaskRepository]
 })
 export class TaskModule {}

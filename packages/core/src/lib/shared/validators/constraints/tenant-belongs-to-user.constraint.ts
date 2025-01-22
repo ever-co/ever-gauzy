@@ -5,7 +5,7 @@ import {
 	ValidatorConstraintInterface
 } from "class-validator";
 import { isEmpty } from "underscore";
-import { ITenant } from "@gauzy/contracts";
+import { ID, ITenant } from "@gauzy/contracts";
 import { RequestContext } from "../../../core/context";
 
 /**
@@ -22,7 +22,7 @@ export class TenantBelongsToUserConstraint implements ValidatorConstraintInterfa
 	 * @param value - The tenant ID or tenant object to be validated.
 	 * @returns A boolean indicating whether the specified tenant belongs to the current user.
 	 */
-	async validate(value: ITenant['id'] | ITenant): Promise<boolean> {
+	async validate(value: ID | ITenant): Promise<boolean> {
 		if (isEmpty(value)) return true;
 
 		const currentTenantId = RequestContext.currentTenantId();

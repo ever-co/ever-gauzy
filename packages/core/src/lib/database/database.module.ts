@@ -55,6 +55,6 @@ import { ConnectionEntityManager } from './connection-entity-manager';
 		})
 	],
 	providers: [ConnectionEntityManager],
-	exports: [TypeOrmModule, MikroOrmModule, ConnectionEntityManager]
+	exports: [ConnectionEntityManager]
 })
-export class DatabaseModule { }
+export class DatabaseModule {}

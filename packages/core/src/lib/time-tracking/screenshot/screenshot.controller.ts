@@ -22,7 +22,7 @@ import { ScreenshotService } from './screenshot.service';
 @ApiTags('Screenshot')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER)
-@Controller()
+@Controller('/timesheet/screenshot')
 export class ScreenshotController {
 	private logging: boolean = true;
 

@@ -13,10 +13,6 @@ import { GraphqlModule } from '../graphql/graphql.module';
 import { GraphqlApiModule } from '../graphql/graphql-api.module';
 import { DatabaseModule } from '../database/database.module';
 
-console.log(path.join(path.resolve(__dirname, '../**/', 'schema'), '*.gql'));
-console.log(path.join(path.resolve(__dirname, '../../../../../../../data/'), '*.gql'));
-console.log(environment.isElectron, 'Environment Is Electron');
-
 @Module({
 	imports: [
 		DatabaseModule,

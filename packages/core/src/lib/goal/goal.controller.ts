@@ -23,7 +23,7 @@ import { CreateGoalDTO, UpdateGoalDTO } from './dto';
 
 @ApiTags('Goals')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/goals')
 export class GoalController extends CrudController<Goal> {
 	constructor(private readonly goalService: GoalService) {
 		super(goalService);
@@ -37,9 +37,7 @@ export class GoalController extends CrudController<Goal> {
 	})
 	@Post()
 	@UseValidationPipe({ transform: true })
-	async create(
-		@Body() entity: CreateGoalDTO
-	): Promise<IGoal> {
+	async create(@Body() entity: CreateGoalDTO): Promise<IGoal> {
 		return this.goalService.create(entity);
 	}
 
@@ -48,9 +46,7 @@ export class GoalController extends CrudController<Goal> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IGoal>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IGoal>> {
 		const { relations, findInput } = data;
 		return this.goalService.findAll({
 			where: { ...findInput },
@@ -70,16 +66,12 @@ export class GoalController extends CrudController<Goal> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	@UseValidationPipe({ transform: true })
-	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateGoalDTO
-	): Promise<IGoal> {
+	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: UpdateGoalDTO): Promise<IGoal> {
 		try {
 			//We are using create here because create calls the method save()
 			//We need save() to save ManyToMany relations
@@ -95,9 +87,7 @@ export class GoalController extends CrudController<Goal> {
 
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<DeleteResult> {
+	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<DeleteResult> {
 		return this.goalService.delete(id);
 	}
 }

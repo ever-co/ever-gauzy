@@ -40,7 +40,7 @@ import { ExpenseReportQueryDTO } from './dto/query';
 @ApiTags('Expense')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
-@Controller()
+@Controller('/expense')
 export class ExpenseController extends CrudController<Expense> {
 	constructor(
 		private readonly expenseService: ExpenseService,

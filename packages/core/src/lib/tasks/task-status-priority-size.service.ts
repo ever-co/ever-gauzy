@@ -24,16 +24,17 @@ export type FindEntityByParams =
 	| ITaskPriorityFindInput
 	| ITaskSizeFindInput
 	| IIssueTypeFindInput
-	| ITaskVersionFindInput
+	| ITaskVersionFindInput;
 
 @Injectable()
-export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> extends TenantAwareCrudService<BaseEntity> {
+export class TaskStatusPrioritySizeService<
+	BaseEntity extends TenantBaseEntity
+> extends TenantAwareCrudService<BaseEntity> {
 	constructor(
 		readonly typeOrmBaseEntityRepository: TypeOrmBaseEntityRepository<BaseEntity>,
 		readonly mikroOrmBaseEntityRepository: MikroOrmBaseEntityRepository<BaseEntity>,
 		readonly knexConnection: KnexConnection
 	) {
-		console.log(`TaskStatusPrioritySizeService initialized.`);
 		super(typeOrmBaseEntityRepository, mikroOrmBaseEntityRepository);
 	}
 
@@ -91,17 +92,19 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 	 */
 	async fetchAll(params: FindEntityByParams): Promise<IPagination<BaseEntity>> {
 		try {
-			// Destructures the organizationId, projectId, and organizationTeamId from the provided parameters.
+			// Destructuring the organizationId, projectId, and organizationTeamId from the provided parameters.
 			const { organizationId, projectId, organizationTeamId } = params;
 
 			// Convert the where clause to FindManyOptions<BaseEntity>
 			const options: FindManyOptions<FindEntityByParams> = {
 				// Construct the where clause based on parameters
 				where: {
-					tenantId: isNotEmpty(params.tenantId) ? (RequestContext.currentTenantId() || params.tenantId) : IsNull(),
+					tenantId: isNotEmpty(params.tenantId)
+						? RequestContext.currentTenantId() || params.tenantId
+						: IsNull(),
 					organizationId: isNotEmpty(organizationId) ? organizationId : IsNull(),
 					projectId: isNotEmpty(projectId) ? projectId : IsNull(),
-					organizationTeamId: isNotEmpty(organizationTeamId) ? organizationTeamId : IsNull(),
+					organizationTeamId: isNotEmpty(organizationTeamId) ? organizationTeamId : IsNull()
 				}
 			};
 
@@ -113,7 +116,9 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					// Parse the where clause for MikroORM
-					const mikroOrmOptions = parseTypeORMFindToMikroOrm<BaseEntity>(options as FindManyOptions<BaseEntity>);
+					const mikroOrmOptions = parseTypeORMFindToMikroOrm<BaseEntity>(
+						options as FindManyOptions<BaseEntity>
+					);
 					// Retrieve entities and their count
 					[items, total] = await this.mikroOrmRepository.findAndCount(mikroOrmOptions.where);
 					// Optionally serialize the items
@@ -134,7 +139,10 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 
 			return { items, total };
 		} catch (error) {
-			console.log(`No entities found matching the specified parameters ${JSON.stringify(params)} for ${this.ormType}: `, error?.message);
+			console.log(
+				`No entities found matching the specified parameters ${JSON.stringify(params)} for ${this.ormType}: `,
+				error?.message
+			);
 			// If an error occurs during the retrieval, fallback to default entities
 			return await this.getDefaultEntities();
 		}

@@ -1,14 +1,4 @@
-import {
-	Controller,
-	HttpStatus,
-	Get,
-	Query,
-	UseGuards,
-	Post,
-	Body,
-	Put,
-	Param
-} from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, UseGuards, Post, Body, Put, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UpdateResult } from 'typeorm';
 import { ICandidateEducation, IPagination, PermissionsEnum } from '@gauzy/contracts';
@@ -23,7 +13,7 @@ import { CreateCandidateEducationDTO, UpdateCandidateEducationDTO } from './dto'
 @ApiTags('CandidateEducation')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
-@Controller()
+@Controller('/candidate-educations')
 export class CandidateEducationController extends CrudController<CandidateEducation> {
 	constructor(private readonly candidateEducationService: CandidateEducationService) {
 		super(candidateEducationService);

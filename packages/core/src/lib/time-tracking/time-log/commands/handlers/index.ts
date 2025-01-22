@@ -8,6 +8,7 @@ import { GetTimeLogGroupByEmployeeHandler } from './get-time-log-group-by-employ
 import { GetTimeLogGroupByProjectHandler } from './get-time-log-group-by-project.handler';
 import { GetTimeLogGroupByClientHandler } from './get-time-log-group-by-client.handler';
 import { ScheduleTimeLogEntriesHandler } from './schedule-time-log-entries.handler';
+import { UpdateEmployeeTotalWorkedHoursHandler } from './update-employee-total-worked-hours.handler';
 
 export const CommandHandlers = [
 	TimeLogCreateHandler,
@@ -19,5 +20,6 @@ export const CommandHandlers = [
 	GetTimeLogGroupByProjectHandler,
 	GetTimeLogGroupByEmployeeHandler,
 	GetTimeLogGroupByClientHandler,
-	ScheduleTimeLogEntriesHandler
+	ScheduleTimeLogEntriesHandler,
+	UpdateEmployeeTotalWorkedHoursHandler
 ];

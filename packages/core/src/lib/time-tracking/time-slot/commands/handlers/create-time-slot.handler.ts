@@ -10,7 +10,7 @@ import { RequestContext } from '../../../../core/context';
 import { CreateTimeSlotCommand } from '../create-time-slot.command';
 import { BulkActivitiesSaveCommand } from '../../../activity/commands';
 import { TimeSlotMergeCommand } from './../time-slot-merge.command';
-import { TypeOrmEmployeeRepository } from '../../../../employee/repository';
+import { TypeOrmEmployeeRepository } from '../../../../employee/repository/type-orm-employee.repository';
 import { TypeOrmTimeLogRepository } from '../../../time-log/repository/type-orm-time-log.repository';
 import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.repository';
 import { TimeSlot } from './../../time-slot.entity';

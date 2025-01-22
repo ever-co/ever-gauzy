@@ -1,15 +1,4 @@
-import {
-	Controller,
-	Get,
-	HttpStatus,
-	Query,
-	UseGuards,
-	HttpCode,
-	Delete,
-	Param,
-	Put,
-	Body
-} from '@nestjs/common';
+import { Controller, Get, HttpStatus, Query, UseGuards, HttpCode, Delete, Param, Put, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IOrganizationVendor, IPagination } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
@@ -20,7 +9,7 @@ import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../share
 
 @ApiTags('OrganizationVendor')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/organization-vendors')
 export class OrganizationVendorController extends CrudController<OrganizationVendor> {
 	constructor(private readonly organizationVendorService: OrganizationVendorService) {
 		super(organizationVendorService);

@@ -1,12 +1,4 @@
-import {
-	Controller,
-	UseGuards,
-	HttpStatus,
-	Post,
-	Body,
-	Get,
-	Query
-} from '@nestjs/common';
+import { Controller, UseGuards, HttpStatus, Post, Body, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IKeyResultTemplate, IPagination } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
@@ -18,11 +10,9 @@ import { CreateKeyresultTemplateDTO } from './dto';
 
 @ApiTags('keyResultTemplate')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/key-result-templates')
 export class KeyresultTemplateController extends CrudController<KeyResultTemplate> {
-	constructor(
-		private readonly keyResultTemplateService: KeyresultTemplateService
-	) {
+	constructor(private readonly keyResultTemplateService: KeyresultTemplateService) {
 		super(keyResultTemplateService);
 	}
 
@@ -43,9 +33,7 @@ export class KeyresultTemplateController extends CrudController<KeyResultTemplat
 		description: 'Record not found'
 	})
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IKeyResultTemplate>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IKeyResultTemplate>> {
 		const { relations, findInput } = data;
 		return this.keyResultTemplateService.findAll({
 			where: findInput,
@@ -67,9 +55,7 @@ export class KeyresultTemplateController extends CrudController<KeyResultTemplat
 	})
 	@Post()
 	@UseValidationPipe({ transform: true })
-	async create(
-		@Body() entity: CreateKeyresultTemplateDTO
-	): Promise<IKeyResultTemplate> {
+	async create(@Body() entity: CreateKeyresultTemplateDTO): Promise<IKeyResultTemplate> {
 		return this.keyResultTemplateService.create(entity);
 	}
 }
