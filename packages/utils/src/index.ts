@@ -20,6 +20,7 @@ export * from './lib/is-date';
 export * from './lib/is-defined';
 export * from './lib/is-empty';
 export * from './lib/is-function';
+export * from './lib/is-json';
 export * from './lib/is-js-object';
 export * from './lib/is-not-empty';
 export * from './lib/is-not-null-or-undefined';
