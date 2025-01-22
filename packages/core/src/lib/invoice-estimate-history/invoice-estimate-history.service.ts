@@ -1,4 +1,3 @@
-import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { InvoiceEstimateHistory } from './invoice-estimate-history.entity';
@@ -8,9 +7,7 @@ import { MikroOrmInvoiceEstimateHistoryRepository } from './repository/mikro-orm
 @Injectable()
 export class InvoiceEstimateHistoryService extends TenantAwareCrudService<InvoiceEstimateHistory> {
 	constructor(
-		@InjectRepository(InvoiceEstimateHistory)
 		typeOrmInvoiceEstimateHistoryRepository: TypeOrmInvoiceEstimateHistoryRepository,
-
 		mikroOrmInvoiceEstimateHistoryRepository: MikroOrmInvoiceEstimateHistoryRepository
 	) {
 		super(typeOrmInvoiceEstimateHistoryRepository, mikroOrmInvoiceEstimateHistoryRepository);

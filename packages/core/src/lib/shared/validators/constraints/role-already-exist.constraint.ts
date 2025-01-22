@@ -1,13 +1,10 @@
-import { Injectable } from "@nestjs/common";
-import {
-	ValidationArguments,
-	ValidatorConstraint,
-	ValidatorConstraintInterface
-} from "class-validator";
-import { isEmpty } from "@gauzy/common";
-import { RequestContext } from "../../../core/context";
-import { MultiORM, MultiORMEnum, getORMType } from "../../../core/utils";
-import { MikroOrmRoleRepository, TypeOrmRoleRepository } from "../../../role/repository";
+import { Injectable } from '@nestjs/common';
+import { ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
+import { isEmpty } from '@gauzy/common';
+import { RequestContext } from '../../../core/context/request-context';
+import { MultiORM, MultiORMEnum, getORMType } from '../../../core/utils';
+import { TypeOrmRoleRepository } from '../../../role/repository/type-orm-role.repository';
+import { MikroOrmRoleRepository } from '../../../role/repository/mikro-orm-role.repository';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
@@ -18,14 +15,13 @@ const ormType: MultiORM = getORMType();
  * @param validationOptions
  * @returns
  */
-@ValidatorConstraint({ name: "IsRoleAlreadyExist", async: true })
+@ValidatorConstraint({ name: 'IsRoleAlreadyExist', async: true })
 @Injectable()
 export class RoleAlreadyExistConstraint implements ValidatorConstraintInterface {
-
 	constructor(
 		readonly typeOrmRoleRepository: TypeOrmRoleRepository,
-		readonly mikroOrmRoleRepository: MikroOrmRoleRepository,
-	) { }
+		readonly mikroOrmRoleRepository: MikroOrmRoleRepository
+	) {}
 
 	/**
 	 * Validates if a role with the given name does not exist for the current tenant.
@@ -40,9 +36,9 @@ export class RoleAlreadyExistConstraint implements ValidatorConstraintInterface 
 		try {
 			switch (ormType) {
 				case MultiORMEnum.MikroORM:
-					return !await this.mikroOrmRoleRepository.findOneOrFail({ name, tenantId });
+					return !(await this.mikroOrmRoleRepository.findOneOrFail({ name, tenantId }));
 				case MultiORMEnum.TypeORM:
-					return !await this.typeOrmRoleRepository.findOneByOrFail({ name, tenantId });
+					return !(await this.typeOrmRoleRepository.findOneByOrFail({ name, tenantId }));
 				default:
 					throw new Error(`Not implemented for ${ormType}`);
 			}

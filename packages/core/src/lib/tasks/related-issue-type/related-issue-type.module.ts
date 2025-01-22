@@ -1,6 +1,5 @@
 import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
-import { RouterModule } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
@@ -9,28 +8,21 @@ import { TaskRelatedIssueTypeController } from './related-issue-type.controller'
 import { TaskRelatedIssueTypeService } from './related-issue-type.service';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
+import { TypeOrmTaskRelatedIssueTypeRepository } from './repository/type-orm-related-issue-type.repository';
 
 @Module({
 	imports: [
-		RouterModule.register([
-			{
-				path: '/task-related-issue-types',
-				module: TaskRelatedIssueTypeModule
-			}
-		]),
 		TypeOrmModule.forFeature([TaskRelatedIssueType]),
 		MikroOrmModule.forFeature([TaskRelatedIssueType]),
 		RolePermissionModule,
 		CqrsModule
 	],
-	controllers: [
-		TaskRelatedIssueTypeController
-	],
+	controllers: [TaskRelatedIssueTypeController],
 	providers: [
 		TaskRelatedIssueTypeService,
+		TypeOrmTaskRelatedIssueTypeRepository,
 		...QueryHandlers,
 		...CommandHandlers
-	],
-	exports: [TypeOrmModule, MikroOrmModule, TaskRelatedIssueTypeService]
+	]
 })
-export class TaskRelatedIssueTypeModule { }
+export class TaskRelatedIssueTypeModule {}

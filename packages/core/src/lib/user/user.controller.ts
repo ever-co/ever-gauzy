@@ -37,7 +37,7 @@ import {
 
 @ApiTags('User')
 @ApiBearerAuth()
-@Controller()
+@Controller('/user')
 export class UserController extends CrudController<User> {
 	constructor(
 		private readonly _userService: UserService,
@@ -220,10 +220,7 @@ export class UserController extends CrudController<User> {
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT, PermissionsEnum.PROFILE_EDIT)
 	@Put('/:id')
 	@UseValidationPipe({ transform: true })
-	async update(
-		@Param('id', UUIDValidationPipe) id: ID,
-		@Body() entity: UpdateUserDTO
-	): Promise<IUser> {
+	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateUserDTO): Promise<IUser> {
 		return await this._userService.updateProfile(id, {
 			id,
 			...entity

@@ -2,7 +2,8 @@ import {
 	IAggregatedEmployeeStatistic,
 	IEmployeeStatistics,
 	IMonthAggregatedEmployeeStatistics,
-	IEmployeeStatisticsHistory
+	IEmployeeStatisticsHistory,
+	ID
 } from '@gauzy/contracts';
 import { Controller, Get, HttpStatus, Param, Query, UseGuards } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
@@ -19,13 +20,18 @@ import { EmployeeAggregatedStatisticByMonthQueryDTO } from './dto';
 
 @ApiTags('EmployeeStatistics')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/employee-statistics')
 export class EmployeeStatisticsController {
 	constructor(
 		private readonly employeeStatisticsService: EmployeeStatisticsService,
 		private readonly queryBus: QueryBus
-	) { }
+	) {}
 
+	/**
+	 *
+	 * @param data
+	 * @returns
+	 */
 	@ApiOperation({
 		summary: 'Find aggregate for all employees by organization id'
 	})
@@ -42,6 +48,12 @@ export class EmployeeStatisticsController {
 		return this.queryBus.execute(new AggregatedEmployeeStatisticQuery(findInput));
 	}
 
+	/**
+	 *
+	 * @param id
+	 * @param data
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find by id' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Found one record' })
 	@ApiResponse({
@@ -49,14 +61,19 @@ export class EmployeeStatisticsController {
 		description: 'Record not found'
 	})
 	@Get('/months/:id')
-	async findAllByEmloyeeId(
-		@Param('id', UUIDValidationPipe) id: string,
+	async findAllByEmployeeId(
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<IEmployeeStatistics> {
 		const { findInput } = data;
 		return this.employeeStatisticsService.getStatisticsByEmployeeId(id, findInput);
 	}
 
+	/**
+	 *
+	 * @param options
+	 * @returns
+	 */
 	@ApiOperation({
 		summary: 'Find Aggregated Statistics by Employee id, valueDate and past N months'
 	})
@@ -72,6 +89,12 @@ export class EmployeeStatisticsController {
 	): Promise<IMonthAggregatedEmployeeStatistics> {
 		return await this.queryBus.execute(new MonthAggregatedEmployeeStatisticsQuery(options));
 	}
+
+	/**
+	 *
+	 * @param data
+	 * @returns
+	 */
 	@ApiOperation({
 		summary: 'Find Statistics History by Employee id, valueDate and past N months'
 	})

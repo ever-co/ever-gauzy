@@ -7,7 +7,8 @@ import { EmailTemplate } from './email-template.entity';
 import { CrudService, PaginationParams } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { prepareSQLQuery as p } from './../database/database.helper';
-import { MikroOrmEmailTemplateRepository, TypeOrmEmailTemplateRepository } from './repository';
+import { MikroOrmEmailTemplateRepository } from './repository/mikro-orm-email-template.repository';
+import { TypeOrmEmailTemplateRepository } from './repository/type-orm-email-template.repository';
 
 @Injectable()
 export class EmailTemplateService extends CrudService<EmailTemplate> {

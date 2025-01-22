@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { ICandidateFeedback, ICandidateInterview } from '@gauzy/contracts';
 import { RequestContext } from './../core/context';
 import { TenantAwareCrudService } from './../core/crud';
@@ -10,9 +9,7 @@ import { TypeOrmCandidateFeedbackRepository } from './repository/type-orm-candid
 @Injectable()
 export class CandidateFeedbacksService extends TenantAwareCrudService<CandidateFeedback> {
 	constructor(
-		@InjectRepository(CandidateFeedback)
 		typeOrmCandidateFeedbackRepository: TypeOrmCandidateFeedbackRepository,
-
 		mikroOrmCandidateFeedbackRepository: MikroOrmCandidateFeedbackRepository
 	) {
 		super(typeOrmCandidateFeedbackRepository, mikroOrmCandidateFeedbackRepository);

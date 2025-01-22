@@ -1,15 +1,4 @@
-import {
-	Controller,
-	HttpStatus,
-	Get,
-	Query,
-	UseGuards,
-	Post,
-	Body,
-	Put,
-	Param,
-	Delete
-} from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, UseGuards, Post, Body, Put, Param, Delete } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { FindOptionsWhere } from 'typeorm';
@@ -24,7 +13,7 @@ import { FeedbackDeleteCommand, FeedbackUpdateCommand } from './commands';
 
 @ApiTags('CandidateFeedback')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/candidate-feedbacks')
 export class CandidateFeedbacksController extends CrudController<CandidateFeedback> {
 	constructor(
 		private readonly candidateFeedbacksService: CandidateFeedbacksService,

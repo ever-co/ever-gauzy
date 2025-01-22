@@ -27,7 +27,7 @@ import { IGetConflictTimeLogCommand } from './commands';
 @ApiTags('TimeLog')
 @UseGuards(TenantBaseGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ALL_ORG_VIEW)
-@Controller()
+@Controller('/timesheet/time-log')
 export class TimeLogController {
 	constructor(private readonly _timeLogService: TimeLogService, private readonly _commandBus: CommandBus) {}
 

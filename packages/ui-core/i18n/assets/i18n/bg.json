@@ -2197,7 +2197,10 @@
 			"ALLOW_MANUAL_TIME": "Allow Manual Time",
 			"DELETE_SCREENSHOTS": "Allow Delete Screenshot",
 			"ORG_TASK_SETTING": "Настройки на задачите",
-			"ORG_MEMBER_LAST_LOG_VIEW": "Преглед на последния запис"
+			"ORG_MEMBER_LAST_LOG_VIEW": "Преглед на последния запис",
+			"TENANT_API_KEY_CREATE": "Create API Key",
+			"TENANT_API_KEY_VIEW": "View API Key",
+			"TENANT_API_KEY_DELETE": "Delete API Key"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
@@ -2416,7 +2419,8 @@
 		"TAGS_SELECT_DESCRIPTION": "Tag description",
 		"ADD_NEW_TAG": "Add new Tag",
 		"TENANT_LEVEL": "Tenant level",
-		"TAGS_TYPE": "Tags type"
+		"TAGS_TYPE": "Tags type",
+		"TAGS_SELECT_TYPE": "Изберете тип на етикетите"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Skills"
@@ -3927,7 +3931,8 @@
 			"PASSWORD": "Парола",
 			"UI_HOSTNAME": "Име на хост на потребителския интерфейс / IP адрес",
 			"TITLE_SERVER_API": "Съветник за инсталиране на Ever Gauzy API сървър",
-			"LABEL_SERVER_API": "Приложението Ever Gauzy API Server Desktop предоставя пълната функционалност на платформата Gauzy, достъпна директно на вашия настолен компютър или лаптоп. Освен това позволява проследяване на работното време, записване на дейността и възможност за получаване на напомняния/известия за проследяване"
+			"LABEL_SERVER_API": "Приложението Ever Gauzy API Server Desktop предоставя пълната функционалност на платформата Gauzy, достъпна директно на вашия настолен компютър или лаптоп. Освен това позволява проследяване на работното време, записване на дейността и възможност за получаване на напомняния/известия за проследяване",
+			"UNABLE_TO_CONNECT": "Не може да се осъществи връзка със сървъра. Моля, проверете вашия API хост или интернет връзка."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Захващане на екран",

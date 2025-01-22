@@ -1,5 +1,4 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 import { EquipmentSharing } from '../../equipment-sharing.entity';
 import { RequestApproval } from '../../../request-approval/request-approval.entity';
@@ -11,21 +10,16 @@ import { TypeOrmRequestApprovalRepository } from '../../../request-approval/repo
 @CommandHandler(EquipmentSharingUpdateCommand)
 export class EquipmentSharingUpdateHandler implements ICommandHandler<EquipmentSharingUpdateCommand> {
 	constructor(
-		@InjectRepository(EquipmentSharing)
 		private readonly typeOrmEquipmentSharingRepository: TypeOrmEquipmentSharingRepository,
-
-		@InjectRepository(RequestApproval)
 		private readonly typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository
-	) { }
+	) {}
 
 	/**
 	 *
 	 * @param command
 	 * @returns
 	 */
-	public async execute(
-		command?: EquipmentSharingUpdateCommand
-	): Promise<EquipmentSharing> {
+	public async execute(command?: EquipmentSharingUpdateCommand): Promise<EquipmentSharing> {
 		const { id, equipmentSharing } = command;
 		await this.typeOrmEquipmentSharingRepository.delete(id);
 
@@ -37,7 +31,9 @@ export class EquipmentSharingUpdateHandler implements ICommandHandler<EquipmentS
 
 		const requestApproval = new RequestApproval();
 		requestApproval.requestId = equipmentSharingSaved.id;
-		requestApproval.status = equipmentSharingSaved.status ? equipmentSharingSaved.status : RequestApprovalStatusTypesEnum.REQUESTED;
+		requestApproval.status = equipmentSharingSaved.status
+			? equipmentSharingSaved.status
+			: RequestApprovalStatusTypesEnum.REQUESTED;
 		requestApproval.createdBy = RequestContext.currentUser().id;
 		requestApproval.createdByName = RequestContext.currentUser().name;
 		requestApproval.name = equipmentSharing.name;

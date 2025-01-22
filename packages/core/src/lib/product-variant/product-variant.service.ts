@@ -1,7 +1,6 @@
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { IPagination, IProductVariant } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { ProductVariant } from './product-variant.entity';
 import { MikroOrmProductVariantRepository } from './repository/mikro-orm-product-variant.repository';
 import { TypeOrmProductVariantRepository } from './repository/type-orm-product-variant.repository';
@@ -9,9 +8,7 @@ import { TypeOrmProductVariantRepository } from './repository/type-orm-product-v
 @Injectable()
 export class ProductVariantService extends TenantAwareCrudService<ProductVariant> {
 	constructor(
-		@InjectRepository(ProductVariant)
 		typeOrmProductVariantRepository: TypeOrmProductVariantRepository,
-
 		mikroOrmProductVariantRepository: MikroOrmProductVariantRepository
 	) {
 		super(typeOrmProductVariantRepository, mikroOrmProductVariantRepository);

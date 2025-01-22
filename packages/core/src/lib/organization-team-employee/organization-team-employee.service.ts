@@ -19,14 +19,15 @@ import { OrganizationTeamEmployee } from './organization-team-employee.entity';
 import { TaskService } from './../tasks/task.service';
 import { CreateSubscriptionEvent } from '../subscription/events';
 import { SubscriptionService } from '../subscription/subscription.service';
-import { MikroOrmOrganizationTeamEmployeeRepository, TypeOrmOrganizationTeamEmployeeRepository } from './repository';
+import { TypeOrmOrganizationTeamEmployeeRepository } from './repository/type-orm-organization-team-employee.repository';
+import { MikroOrmOrganizationTeamEmployeeRepository } from './repository/mikro-orm-organization-team-employee.repository';
 
 @Injectable()
 export class OrganizationTeamEmployeeService extends TenantAwareCrudService<OrganizationTeamEmployee> {
 	constructor(
-		private readonly _eventBus: EventBus,
 		readonly typeOrmOrganizationTeamEmployeeRepository: TypeOrmOrganizationTeamEmployeeRepository,
 		readonly mikroOrmOrganizationTeamEmployeeRepository: MikroOrmOrganizationTeamEmployeeRepository,
+		private readonly _eventBus: EventBus,
 		private readonly taskService: TaskService,
 		private readonly subscriptionService: SubscriptionService
 	) {
@@ -233,7 +234,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			// Admins and Super Admins can update the activeTaskId of any employee
 			if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 				const member = await this.typeOrmRepository.findOneOrFail({
-					where: { id: memberId, ...whereClause }
+					where: { employeeId: memberId, ...whereClause }
 				});
 
 				// Update the active task ID
@@ -260,7 +261,6 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 
 				// Find the organization team employee
 				const member = await this.typeOrmRepository.findOneByOrFail(whereClause);
-
 				// Update the active task ID
 				return await this.typeOrmRepository.update(
 					{ id: member.id, organizationId, organizationTeamId, tenantId },

@@ -25,7 +25,7 @@ import { CreateResourceLinkDTO, UpdateResourceLinkDTO } from './dto';
 
 @ApiTags('Resource Links')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Controller()
+@Controller('/resource-link')
 export class ResourceLinkController extends CrudController<ResourceLink> {
 	constructor(private readonly resourceLinkService: ResourceLinkService, private readonly commandBus: CommandBus) {
 		super(resourceLinkService);

@@ -210,6 +210,7 @@ import { createDefaultPriorities } from './../../tasks/priorities/priority.seed'
 import { createDefaultSizes } from './../../tasks/sizes/size.seed';
 import { createDefaultIssueTypes } from './../../tasks/issue-type/issue-type.seed';
 import { getDBType } from './../../core/utils';
+import { createRandomOrganizationTagTypes, createTagTypes } from '../../tag-type/tag-type.seed';
 
 export enum SeederTypeEnum {
 	ALL = 'all',
@@ -572,7 +573,15 @@ export class SeedDataService {
 			createDefaultEmployeeInviteSent(this.dataSource, this.tenant, this.organizations, this.superAdminUsers)
 		);
 
-		await this.tryExecute('Default Tags', createDefaultTags(this.dataSource, this.tenant, this.organizations));
+		const defaultTagTypes = await this.tryExecute(
+			'Default Tag Types',
+			createTagTypes(this.dataSource, this.tenant, this.organizations)
+		);
+
+		await this.tryExecute(
+			'Default Tags',
+			createDefaultTags(this.dataSource, this.tenant, this.organizations, defaultTagTypes || [])
+		);
 
 		// Organization level inserts which need connection, tenant, role, organizations
 		const categories = await this.tryExecute(
@@ -1000,9 +1009,19 @@ export class SeedDataService {
 			organizationUsersMap
 		);
 
+		const randomOrganizationTagTypes = await this.tryExecute(
+			'Random Organization Tag Types',
+			createRandomOrganizationTagTypes(this.dataSource, this.randomTenants, this.randomTenantOrganizationsMap)
+		);
+
 		const tags = await this.tryExecute(
 			'Random Organization Tags',
-			createRandomOrganizationTags(this.dataSource, this.randomTenants, this.randomTenantOrganizationsMap)
+			createRandomOrganizationTags(
+				this.dataSource,
+				this.randomTenants,
+				this.randomTenantOrganizationsMap,
+				randomOrganizationTagTypes || []
+			)
 		);
 
 		await this.tryExecute(

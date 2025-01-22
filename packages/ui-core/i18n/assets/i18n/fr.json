@@ -2139,7 +2139,10 @@
 			"ORG_TASK_EDIT": "Modifier les tâches",
 			"ORG_TASK_DELETE": "Supprimer les tâches",
 			"ORG_TASK_SETTING": "Paramètres de tâche",
-			"ORG_MEMBER_LAST_LOG_VIEW": "Voir le dernier journal"
+			"ORG_MEMBER_LAST_LOG_VIEW": "Voir le dernier journal",
+			"TENANT_API_KEY_CREATE": "Créer une clé API",
+			"TENANT_API_KEY_VIEW": "Afficher la clé API",
+			"TENANT_API_KEY_DELETE": "Supprimer la clé API"
 		},
 		"BILLING": "Facturation",
 		"BUDGET": "Budget",
@@ -2358,7 +2361,8 @@
 		"TAGS_SELECT_DESCRIPTION": "Description du tag",
 		"ADD_NEW_TAG": "Ajouter un nouveau Tag",
 		"TENANT_LEVEL": "Niveau du locataire",
-		"TAGS_TYPE": "Catégories de balises"
+		"TAGS_TYPE": "Catégories de balises",
+		"TAGS_SELECT_TYPE": "Sélectionnez le type de balise"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Compétences"
@@ -3879,7 +3883,8 @@
 			"PASSWORD": "Mot de passe",
 			"UI_HOSTNAME": "Nom d'hôte de l'interface utilisateur / Adresse IP",
 			"TITLE_SERVER_API": "Assistant d'installation du serveur API Ever Gauzy",
-			"LABEL_SERVER_API": "L'application de bureau Ever Gauzy API Server fournit toutes les fonctionnalités de la plateforme Gauzy disponibles directement sur votre ordinateur de bureau ou votre ordinateur portable. De plus, elle permet de suivre le temps de travail, d'enregistrer les activités et de recevoir des rappels/notifications de suivi."
+			"LABEL_SERVER_API": "L'application de bureau Ever Gauzy API Server fournit toutes les fonctionnalités de la plateforme Gauzy disponibles directement sur votre ordinateur de bureau ou votre ordinateur portable. De plus, elle permet de suivre le temps de travail, d'enregistrer les activités et de recevoir des rappels/notifications de suivi.",
+			"UNABLE_TO_CONNECT": "Impossible de se connecter au serveur. Veuillez vérifier votre hôte API ou votre connexion Internet."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Capture d'écran",

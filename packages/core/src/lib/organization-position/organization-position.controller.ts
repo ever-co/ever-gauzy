@@ -1,14 +1,4 @@
-import {
-	Controller,
-	Get,
-	HttpStatus,
-	Query,
-	UseGuards,
-	Put,
-	Param,
-	Body,
-	BadRequestException
-} from '@nestjs/common';
+import { Controller, Get, HttpStatus, Query, UseGuards, Put, Param, Body, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IOrganizationPosition, IPagination } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
@@ -20,7 +10,7 @@ import { UpdateOrganizationPositionDTO } from './dto';
 
 @ApiTags('OrganizationPositions')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/organization-positions')
 export class OrganizationPositionController extends CrudController<OrganizationPosition> {
 	constructor(private readonly organizationPositionService: OrganizationPositionService) {
 		super(organizationPositionService);

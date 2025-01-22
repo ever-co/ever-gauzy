@@ -2138,7 +2138,10 @@
 			"ORG_TASK_EDIT": "Taken bewerken",
 			"ORG_TASK_DELETE": "Taken verwijderen",
 			"ORG_TASK_SETTING": "Taakinstellingen",
-			"ORG_MEMBER_LAST_LOG_VIEW": "Bekijk laatste logboek"
+			"ORG_MEMBER_LAST_LOG_VIEW": "Bekijk laatste logboek",
+			"TENANT_API_KEY_CREATE": "API-sleutel maken",
+			"TENANT_API_KEY_VIEW": "API-sleutel bekijken",
+			"TENANT_API_KEY_DELETE": "API-sleutel verwijderen"
 		},
 		"BILLING": "Facturatie",
 		"BUDGET": "Budget",
@@ -2357,7 +2360,8 @@
 		"TAGS_SELECT_DESCRIPTION": "Tagbeschrijving",
 		"ADD_NEW_TAG": "Voeg nieuwe tag toe",
 		"TENANT_LEVEL": "Huurdersniveau",
-		"TAGS_TYPE": "Tagstype"
+		"TAGS_TYPE": "Tagstype",
+		"TAGS_SELECT_TYPE": "Selecteer tagtype"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Vaardigheden"
@@ -3879,7 +3883,8 @@
 			"PASSWORD": "Wachtwoord",
 			"UI_HOSTNAME": "UI Hostnaam / IP-adres",
 			"TITLE_SERVER_API": "Ever Gauzy API Server-installatiewizard",
-			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App biedt de volledige functionaliteit van het Gauzy Platform direct beschikbaar op uw desktopcomputer of laptop. Daarnaast kunt u hiermee werktijd bijhouden, activiteiten registreren en trackingherinneringen/meldingen ontvangen."
+			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App biedt de volledige functionaliteit van het Gauzy Platform direct beschikbaar op uw desktopcomputer of laptop. Daarnaast kunt u hiermee werktijd bijhouden, activiteiten registreren en trackingherinneringen/meldingen ontvangen.",
+			"UNABLE_TO_CONNECT": "Kan geen verbinding maken met de server. Controleer uw API-host of internetverbinding."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Schermopname",

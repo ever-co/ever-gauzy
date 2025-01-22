@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { ICandidatePersonalQualities, ICandidatePersonalQualitiesCreateInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { TypeOrmCandidatePersonalQualitiesRepository } from './repository/type-orm-candidate-personal-qualities.repository';
@@ -9,9 +8,7 @@ import { CandidatePersonalQualities } from './candidate-personal-qualities.entit
 @Injectable()
 export class CandidatePersonalQualitiesService extends TenantAwareCrudService<CandidatePersonalQualities> {
 	constructor(
-		@InjectRepository(CandidatePersonalQualities)
 		typeOrmCandidatePersonalQualitiesRepository: TypeOrmCandidatePersonalQualitiesRepository,
-
 		mikroOrmCandidatePersonalQualitiesRepository: MikroOrmCandidatePersonalQualitiesRepository
 	) {
 		super(typeOrmCandidatePersonalQualitiesRepository, mikroOrmCandidatePersonalQualitiesRepository);

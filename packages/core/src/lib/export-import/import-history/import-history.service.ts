@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { IPagination } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../../core/crud';
 import { ImportHistory } from './import-history.entity';
@@ -9,9 +8,7 @@ import { MikroOrmImportHistoryRepository } from './repository/mikro-orm-import-h
 @Injectable()
 export class ImportHistoryService extends TenantAwareCrudService<ImportHistory> {
 	constructor(
-		@InjectRepository(ImportHistory)
 		typeOrmImportHistoryRepository: TypeOrmImportHistoryRepository,
-
 		mikroOrmImportHistoryRepository: MikroOrmImportHistoryRepository
 	) {
 		super(typeOrmImportHistoryRepository, mikroOrmImportHistoryRepository);

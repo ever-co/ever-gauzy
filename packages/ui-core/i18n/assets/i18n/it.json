@@ -2138,7 +2138,10 @@
 			"ORG_TASK_EDIT": "Modifica Compiti",
 			"ORG_TASK_DELETE": "Elimina compiti",
 			"ORG_TASK_SETTING": "Impostazioni attività",
-			"ORG_MEMBER_LAST_LOG_VIEW": "Visualizza l'ultimo registro"
+			"ORG_MEMBER_LAST_LOG_VIEW": "Visualizza l'ultimo registro",
+			"TENANT_API_KEY_CREATE": "Crea chiave API",
+			"TENANT_API_KEY_VIEW": "Visualizza chiave API",
+			"TENANT_API_KEY_DELETE": "Elimina chiave API"
 		},
 		"BILLING": "Fatturazione",
 		"BUDGET": "Bilancio",
@@ -2357,7 +2360,8 @@
 		"TAGS_SELECT_DESCRIPTION": "Descrizione del tag",
 		"ADD_NEW_TAG": "Aggiungi nuovo Tag",
 		"TENANT_LEVEL": "Livello dell'inquilino",
-		"TAGS_TYPE": "Tipo di tag"
+		"TAGS_TYPE": "Tipo di tag",
+		"TAGS_SELECT_TYPE": "Seleziona il tipo di tag"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Abilità"
@@ -3879,7 +3883,8 @@
 			"PASSWORD": "Password",
 			"UI_HOSTNAME": "Nome host dell'interfaccia utente / indirizzo IP",
 			"TITLE_SERVER_API": "Procedura guidata di installazione del server API Ever Gauzy",
-			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App fornisce la piena funzionalità della piattaforma Gauzy disponibile direttamente sul tuo computer desktop o laptop. Inoltre, consente di tracciare il tempo di lavoro, registrare le attività e ricevere promemoria/notifiche di tracciamento."
+			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App fornisce la piena funzionalità della piattaforma Gauzy disponibile direttamente sul tuo computer desktop o laptop. Inoltre, consente di tracciare il tempo di lavoro, registrare le attività e ricevere promemoria/notifiche di tracciamento.",
+			"UNABLE_TO_CONNECT": "Impossibile connettersi al server. Controlla il tuo host API o la connessione internet."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Cattura dello schermo",

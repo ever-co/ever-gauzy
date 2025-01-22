@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
 import { ICandidateCreateInput } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
@@ -13,10 +12,8 @@ import { MikroOrmCandidateRepository } from './repository/mikro-orm-candidate.re
 @Injectable()
 export class CandidateService extends TenantAwareCrudService<Candidate> {
 	constructor(
-		@InjectRepository(Candidate)
-		typeOrmCandidateRepository: TypeOrmCandidateRepository,
-
-		mikroOrmCandidateRepository: MikroOrmCandidateRepository
+		readonly typeOrmCandidateRepository: TypeOrmCandidateRepository,
+		readonly mikroOrmCandidateRepository: MikroOrmCandidateRepository
 	) {
 		super(typeOrmCandidateRepository, mikroOrmCandidateRepository);
 	}
@@ -51,13 +48,13 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 				take: options && options.take ? options.take : 10,
 				...(options && options.relations
 					? {
-						relations: options.relations
-					}
+							relations: options.relations
+					  }
 					: {}),
 				...(options && options.join
 					? {
-						join: options.join
-					}
+							join: options.join
+					  }
 					: {})
 			});
 			query.where((qb: SelectQueryBuilder<Candidate>) => {

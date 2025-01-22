@@ -8,6 +8,7 @@ import { RoleController } from './role.controller';
 import { RolePermissionModule } from './../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmRoleRepository } from './repository/type-orm-role.repository';
+import { MikroOrmRoleRepository } from './repository/mikro-orm-role.repository';
 
 @Module({
 	imports: [
@@ -17,7 +18,7 @@ import { TypeOrmRoleRepository } from './repository/type-orm-role.repository';
 		CqrsModule
 	],
 	controllers: [RoleController],
-	providers: [...CommandHandlers, RoleService, TypeOrmRoleRepository],
-	exports: [TypeOrmModule, MikroOrmModule, RoleService, TypeOrmRoleRepository]
+	providers: [RoleService, TypeOrmRoleRepository, MikroOrmRoleRepository, ...CommandHandlers],
+	exports: [RoleService, TypeOrmRoleRepository, MikroOrmRoleRepository]
 })
 export class RoleModule {}

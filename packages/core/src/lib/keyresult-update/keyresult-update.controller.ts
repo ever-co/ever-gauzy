@@ -22,10 +22,9 @@ import { KeyResultUpdateBulkDeleteCommand } from './commands';
 import { TenantPermissionGuard } from './../shared/guards';
 import { CreateKeyresultUpdateDTO, UpdateKeyresultUpdateDTO } from './dto';
 
-
 @ApiTags('KeyResultsUpdate')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/key-result-updates')
 export class KeyResultUpdateController extends CrudController<KeyResultUpdate> {
 	constructor(
 		private readonly commandBus: CommandBus,
@@ -42,14 +41,11 @@ export class KeyResultUpdateController extends CrudController<KeyResultUpdate> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
 	@UseValidationPipe({ transform: true })
-	async create(
-		@Body() entity: CreateKeyresultUpdateDTO
-	): Promise<IKeyResultUpdate> {
+	async create(@Body() entity: CreateKeyresultUpdateDTO): Promise<IKeyResultUpdate> {
 		return this.keyResultUpdateService.create(entity);
 	}
 
@@ -82,8 +78,7 @@ export class KeyResultUpdateController extends CrudController<KeyResultUpdate> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
@@ -118,12 +113,8 @@ export class KeyResultUpdateController extends CrudController<KeyResultUpdate> {
 		description: 'updates not found'
 	})
 	@Delete('deleteBulkByKeyResultId')
-	async deleteBulkByKeyResultId(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<any> {
+	async deleteBulkByKeyResultId(@Query('data', ParseJsonPipe) data: any): Promise<any> {
 		const { id = null } = data;
-		return this.commandBus.execute(
-			new KeyResultUpdateBulkDeleteCommand(id)
-		);
+		return this.commandBus.execute(new KeyResultUpdateBulkDeleteCommand(id));
 	}
 }
