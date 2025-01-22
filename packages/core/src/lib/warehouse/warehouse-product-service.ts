@@ -189,10 +189,8 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 		// Calculate total quantity of all variants
 		const sumQuantity = warehouseProduct.variants?.reduce((sum, v) => sum + Number(v.quantity), 0) || 0;
 
-		// Adjust total warehouse product quantity
-		if (warehouseProduct.quantity < sumQuantity) {
-			warehouseProduct.quantity = sumQuantity;
-		}
+		// Synchronize warehouse product quantity with total variant quantities
+		warehouseProduct.quantity = sumQuantity;
 
 		// Save updated warehouse product
 		await this.typeOrmRepository.save(warehouseProduct);
