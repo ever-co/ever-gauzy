@@ -21,7 +21,7 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 	public readonly name = FileStorageProviderEnum.CLOUDINARY;
 	public config: ICloudinaryConfig & FileSystem;
 
-	private readonly _detailedLoggingEnabled= false;
+	private readonly _detailedLoggingEnabled = false;
 
 	constructor() {
 		super();

@@ -48,7 +48,7 @@ export class S3Provider extends Provider<S3Provider> {
 	public config: IS3ProviderConfig;
 	public defaultConfig: IS3ProviderConfig;
 
-	private readonly _detailedLoggingEnabled= false;
+	private readonly _detailedLoggingEnabled = false;
 
 	constructor() {
 		super();
