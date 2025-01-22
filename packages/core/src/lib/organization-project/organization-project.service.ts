@@ -18,7 +18,7 @@ import {
 	SubscriptionTypeEnum
 } from '@gauzy/contracts';
 import { getConfig } from '@gauzy/config';
-import { CustomEmbeddedFieldConfig, isNotEmpty } from '@gauzy/common';
+import { CustomEmbeddedFieldConfig, isNotEmpty } from '@gauzy/utils';
 import { PaginationParams, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationProjectEmployee } from '../core/entities/internal';

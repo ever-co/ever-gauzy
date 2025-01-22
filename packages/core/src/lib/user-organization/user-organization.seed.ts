@@ -1,12 +1,6 @@
 import { DataSource } from 'typeorm';
-import {
-	IOrganization,
-	IUser,
-	IUserOrganization,
-	ISeedUsers,
-	ITenant
-} from '@gauzy/contracts';
-import { chunks } from '@gauzy/common';
+import { IOrganization, IUser, IUserOrganization, ISeedUsers, ITenant } from '@gauzy/contracts';
+import { chunks } from '@gauzy/utils';
 import { UserOrganization } from './user-organization.entity';
 
 export const createDefaultUsersOrganizations = async (
@@ -48,11 +42,7 @@ export const createRandomUsersOrganizations = async (
 		for await (const [key, organization] of Object.entries(organizations)) {
 			const employees: IUser[] = chunks(employeeUsers, employeesPerOrganization)[key] || [];
 			const admins: IUser[] = chunks(adminUsers, adminPerOrganization)[key] || [];
-			const users = [
-				...superAdmins || [],
-				...admins,
-				...employees
-			];
+			const users = [...(superAdmins || []), ...admins, ...employees];
 			for await (const user of users) {
 				if (user.id) {
 					const userOrganization = new UserOrganization();

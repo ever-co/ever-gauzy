@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as mjml2html from 'mjml';
 import { EmailTemplateEnum, IEmailTemplate, IPagination, LanguagesEnum } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { EmailTemplate } from './email-template.entity';
 import { CrudService, PaginationParams } from './../core/crud';
 import { RequestContext } from './../core/context';

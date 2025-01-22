@@ -1,7 +1,7 @@
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { omit } from 'underscore';
 import { ID, ITimeLog, ITimeSlot } from '@gauzy/contracts';
-import { isEmpty, isNotEmpty } from '@gauzy/common';
+import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { moment } from '../../../../core/moment-extend';
 import { TimesheetRecalculateCommand } from './../../../timesheet/commands';
 import { TimeLog } from './../../time-log.entity';

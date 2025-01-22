@@ -17,8 +17,9 @@ import {
 	ID,
 	ITimerStatusWithWeeklyLimits
 } from '@gauzy/contracts';
-import { isNotEmpty, SortOrderEnum } from '@gauzy/common';
+import { SortOrderEnum } from '@gauzy/common';
 import { environment as env } from '@gauzy/config';
+import { isNotEmpty } from '@gauzy/utils';
 import { TimeLog } from '../../core/entities/internal';
 import { RequestContext } from '../../core/context';
 import {

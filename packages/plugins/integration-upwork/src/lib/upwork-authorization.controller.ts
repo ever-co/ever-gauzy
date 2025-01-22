@@ -1,9 +1,9 @@
 import { Controller, Get, HttpException, HttpStatus, Query, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
+import { Public } from '@gauzy/common';
 import { ConfigService } from '@gauzy/config';
 import { IntegrationEnum } from '@gauzy/contracts';
-import { IUpworkConfig, Public, createQueryParamsString } from '@gauzy/common';
 
 @ApiTags('Upwork Integrations')
 @Public()
@@ -29,7 +29,7 @@ export class UpworkAuthorizationController {
 			const upwork = this._config.get<IUpworkConfig>('upwork') as IUpworkConfig;
 
 			// Convert query params object to string
-			const queryParamsString = createQueryParamsString({
+			const queryParamsString = buildQueryString({
 				oauth_token: query.oauth_token,
 				oauth_verifier: query.oauth_verifier
 			});

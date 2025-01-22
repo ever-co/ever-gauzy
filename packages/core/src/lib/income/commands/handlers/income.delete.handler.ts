@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { IncomeService } from '../../income.service';
 import { EmployeeService } from '../../../employee/employee.service';

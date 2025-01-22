@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, TransformFnParams } from 'class-transformer';
 import { IsOptional, IsBoolean } from 'class-validator';
-import { parseToBoolean } from '@gauzy/common';
+import { parseToBoolean } from '@gauzy/utils';
 import { DeleteQueryDTO } from '../../shared/dto';
 
 /**

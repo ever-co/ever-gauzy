@@ -33,7 +33,7 @@ import {
 	IAmountOwedReportChart,
 	IDailyReportChart
 } from '@gauzy/contracts';
-import { isEmpty, isNotEmpty } from '@gauzy/common';
+import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { TenantAwareCrudService } from './../../core/crud';
 import {
 	DeleteTimeSpanCommand,

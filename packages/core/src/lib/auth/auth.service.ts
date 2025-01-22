@@ -15,6 +15,7 @@ import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
 import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
 import { pick } from 'underscore';
+import { environment } from '@gauzy/config';
 import {
 	IUserRegistrationInput,
 	LanguagesEnum,
@@ -46,17 +47,9 @@ import {
 	RolesEnum,
 	AuthError
 } from '@gauzy/contracts';
-import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
-import {
-	IAppIntegrationConfig,
-	IOAuthCreateUser,
-	IOAuthEmail,
-	IOAuthValidateResponse,
-	createQueryParamsString,
-	deepMerge,
-	isNotEmpty
-} from '@gauzy/common';
+import { IAppIntegrationConfig, IOAuthCreateUser, IOAuthEmail, IOAuthValidateResponse } from '@gauzy/common';
+import { buildQueryString, deepMerge, isNotEmpty } from '@gauzy/utils';
 import { AccountRegistrationEvent } from '../event-bus/events';
 import { EventBus } from '../event-bus/event-bus';
 import { ALPHA_NUMERIC_CODE_LENGTH, DEMO_PASSWORD_LESS_MAGIC_CODE } from './../constants';
@@ -523,7 +516,7 @@ export class AuthService extends SocialAuthService {
 		}
 
 		// Convert query params object to a string
-		const queryString = createQueryParamsString(params);
+		const queryString = buildQueryString(params);
 
 		// Combine base URL with query params
 		return `${baseURL}?${queryString}`;

@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IExpense } from '@gauzy/contracts';
 import { BadRequestException } from '@nestjs/common';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { ExpenseCreateCommand } from '../expense.create.command';
 import { ExpenseService } from '../../expense.service';
 import { EmployeeService } from '../../../employee/employee.service';
@@ -9,7 +9,6 @@ import { EmployeeStatisticsService } from '../../../employee-statistics';
 
 @CommandHandler(ExpenseCreateCommand)
 export class ExpenseCreateHandler implements ICommandHandler<ExpenseCreateCommand> {
-
 	constructor(
 		private readonly expenseService: ExpenseService,
 		private readonly employeeService: EmployeeService,
@@ -23,12 +22,8 @@ export class ExpenseCreateHandler implements ICommandHandler<ExpenseCreateComman
 			let averageExpense = 0;
 			if (isNotEmpty(expense.employeeId)) {
 				const { employeeId } = expense;
-				const stat = await this.employeeStatisticsService.getStatisticsByEmployeeId(
-					employeeId
-				);
-				averageExpense = this.expenseService.countStatistic(
-					stat.expenseStatistics
-				);
+				const stat = await this.employeeStatisticsService.getStatisticsByEmployeeId(employeeId);
+				averageExpense = this.expenseService.countStatistic(stat.expenseStatistics);
 				await this.employeeService.create({
 					id: employeeId,
 					averageExpenses: averageExpense

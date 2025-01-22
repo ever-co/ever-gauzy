@@ -18,7 +18,7 @@
  * // totalDuration: 10
  * ```
  */
-export const ArraySum = (a: number | string = 0, b: number | string = 0): number => {
+export const ArraySum = (a: number = 0, b: number = 0): number => {
 	const numA = typeof a === 'number' ? a : parseFloat(a) || 0;
 	const numB = typeof b === 'number' ? b : parseFloat(b) || 0;
 	return numA + numB;

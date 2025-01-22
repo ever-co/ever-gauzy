@@ -3,7 +3,7 @@ import { Between, In, Brackets, WhereExpressionBuilder, Raw, SelectQueryBuilder 
 import { chain } from 'underscore';
 import * as moment from 'moment';
 import { IDateRangePicker, IGetPaymentInput, IInvoice, IPayment, LanguagesEnum, PaymentStats } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { isPostgres } from '@gauzy/config';
 import { Payment } from './payment.entity';
 import { getDateRangeFormat, getDaysBetweenDates } from '../core/utils';

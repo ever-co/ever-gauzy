@@ -10,7 +10,7 @@ import { ExtractJwt } from 'passport-jwt';
 import { JsonWebTokenError, verify } from 'jsonwebtoken';
 import { IUser, PermissionsEnum, LanguagesEnum, RolesEnum, ID } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { SerializedRequestContext } from './types';
 
 export class RequestContext {

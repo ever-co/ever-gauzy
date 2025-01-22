@@ -1,5 +1,5 @@
 import { EventSubscriber } from 'typeorm';
-import { sluggable } from '@gauzy/common';
+import { sluggable } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
 import { getDummyImage } from '../core/utils';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';

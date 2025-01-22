@@ -9,13 +9,11 @@ import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmCustomSmtpRepository } from './repository/mikro-orm-custom-smtp.repository';
 
 @MultiORMEntity('custom_smtp', { mikroOrmRepository: () => MikroOrmCustomSmtpRepository })
-export class CustomSmtp extends TenantOrganizationBaseEntity
-	implements ICustomSmtp {
-
+export class CustomSmtp extends TenantOrganizationBaseEntity implements ICustomSmtp {
 	@ApiProperty({ type: () => String, examples: ['noreply@domain.com'] })
 	@IsEmail()
 	@MultiORMColumn({ nullable: true })
-	fromAddress?: string
+	fromAddress?: string;
 
 	@ApiProperty({ type: () => String, examples: ['smtp.postmarkapp.com', 'smtp.gmail.com'] })
 	@IsString()

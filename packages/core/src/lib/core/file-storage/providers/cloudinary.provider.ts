@@ -7,9 +7,10 @@ import * as streamifier from 'streamifier';
 import axios from 'axios';
 import { ConfigOptions, UploadApiErrorResponse, UploadApiResponse, v2 as cloudinaryV2 } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import { ICloudinaryConfig } from '@gauzy/common';
 import { environment } from '@gauzy/config';
 import { FileStorageOption, FileStorageProviderEnum, FileSystem, UploadedFile } from '@gauzy/contracts';
-import { ICloudinaryConfig, isNotEmpty, trimAndGetValue } from '@gauzy/common';
+import { isNotEmpty, trimIfNotEmpty } from '@gauzy/utils';
 import { Provider } from './provider';
 import { RequestContext } from './../../../core/context';
 
@@ -18,8 +19,8 @@ const { cloudinary } = environment;
 
 export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 	public instance: CloudinaryProvider;
-	public readonly name = FileStorageProviderEnum.CLOUDINARY;
 	public config: ICloudinaryConfig & FileSystem;
+	public readonly name = FileStorageProviderEnum.CLOUDINARY;
 
 	private readonly _detailedLoggingEnabled = false;
 
@@ -107,14 +108,14 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 					if (this._detailedLoggingEnabled)
 						console.log(`setWasabiConfiguration Tenant Settings value: ${JSON.stringify(settings)}`);
 
-					if (trimAndGetValue(settings.cloudinary_cloud_name))
-						this.config.cloud_name = trimAndGetValue(settings.cloudinary_cloud_name);
+					if (trimIfNotEmpty(settings.cloudinary_cloud_name))
+						this.config.cloud_name = trimIfNotEmpty(settings.cloudinary_cloud_name);
 
-					if (trimAndGetValue(settings.cloudinary_api_key))
-						this.config.api_key = trimAndGetValue(settings.cloudinary_api_key);
+					if (trimIfNotEmpty(settings.cloudinary_api_key))
+						this.config.api_key = trimIfNotEmpty(settings.cloudinary_api_key);
 
-					if (trimAndGetValue(settings.cloudinary_api_secret))
-						this.config.api_secret = trimAndGetValue(settings.cloudinary_api_secret);
+					if (trimIfNotEmpty(settings.cloudinary_api_secret))
+						this.config.api_secret = trimIfNotEmpty(settings.cloudinary_api_secret);
 
 					if (isNotEmpty(settings.cloudinary_api_secure)) {
 						if (settings.cloudinary_api_secure == 'true') this.config.secure = true;

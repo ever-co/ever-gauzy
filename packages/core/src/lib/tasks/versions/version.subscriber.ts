@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { EventSubscriber } from 'typeorm';
 import { faker } from '@faker-js/faker';
-import { sluggable } from '@gauzy/common';
+import { sluggable } from '@gauzy/utils';
 import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';
 import { TaskVersion } from './version.entity';
 import { setFullIconUrl } from '../utils';

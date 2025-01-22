@@ -2,7 +2,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { NotAcceptableException } from '@nestjs/common';
 import { In, Not, IsNull } from 'typeorm';
 import { ITimesheet } from '@gauzy/contracts';
-import { isEmpty } from '@gauzy/common';
+import { isEmpty } from '@gauzy/utils';
 import { EmailService } from './../../../../email-send/email.service';
 import { TimesheetSubmitCommand } from '../timesheet-submit.command';
 import { TimeSheetService } from '../../timesheet.service';

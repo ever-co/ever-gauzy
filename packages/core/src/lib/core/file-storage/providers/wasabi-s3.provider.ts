@@ -15,7 +15,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { StorageEngine } from 'multer';
 import { environment } from '@gauzy/config';
 import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
-import { addHttpsPrefix, trimAndGetValue } from '@gauzy/common';
+import { ensureHttpPrefix, trimIfNotEmpty } from '@gauzy/utils';
 import { Provider } from './provider';
 import { RequestContext } from '../../context';
 
@@ -119,7 +119,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 			wasabi_aws_secret_access_key: wasabi.secretAccessKey,
 			wasabi_aws_bucket: wasabi.s3.bucket,
 			wasabi_aws_force_path_style: wasabi.s3.forcePathStyle,
-			...this._mapDefaultWasabiServiceUrl(wasabi.region, addHttpsPrefix(wasabi.serviceUrl))
+			...this._mapDefaultWasabiServiceUrl(wasabi.region, ensureHttpPrefix(wasabi.serviceUrl))
 		};
 	}
 
@@ -161,8 +161,8 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 						console.log(`setWasabiConfiguration Tenant Settings Value: ${JSON.stringify(settings)}`);
 					}
 
-					if (trimAndGetValue(settings.wasabi_aws_access_key_id)) {
-						this.config.wasabi_aws_access_key_id = trimAndGetValue(settings.wasabi_aws_access_key_id);
+					if (trimIfNotEmpty(settings.wasabi_aws_access_key_id)) {
+						this.config.wasabi_aws_access_key_id = trimIfNotEmpty(settings.wasabi_aws_access_key_id);
 
 						if (this._detailedLoggingEnabled) {
 							console.log(
@@ -171,8 +171,8 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 						}
 					}
 
-					if (trimAndGetValue(settings.wasabi_aws_secret_access_key)) {
-						this.config.wasabi_aws_secret_access_key = trimAndGetValue(
+					if (trimIfNotEmpty(settings.wasabi_aws_secret_access_key)) {
+						this.config.wasabi_aws_secret_access_key = trimIfNotEmpty(
 							settings.wasabi_aws_secret_access_key
 						);
 
@@ -183,9 +183,9 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 						}
 					}
 
-					if (trimAndGetValue(settings.wasabi_aws_service_url)) {
-						this.config.wasabi_aws_service_url = addHttpsPrefix(
-							trimAndGetValue(settings.wasabi_aws_service_url)
+					if (trimIfNotEmpty(settings.wasabi_aws_service_url)) {
+						this.config.wasabi_aws_service_url = ensureHttpPrefix(
+							trimIfNotEmpty(settings.wasabi_aws_service_url)
 						);
 
 						if (this._detailedLoggingEnabled) {
@@ -196,8 +196,8 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 						}
 					}
 
-					if (trimAndGetValue(settings.wasabi_aws_default_region)) {
-						this.config.wasabi_aws_default_region = trimAndGetValue(settings.wasabi_aws_default_region);
+					if (trimIfNotEmpty(settings.wasabi_aws_default_region)) {
+						this.config.wasabi_aws_default_region = trimIfNotEmpty(settings.wasabi_aws_default_region);
 
 						if (this._detailedLoggingEnabled) {
 							console.log(
@@ -207,8 +207,8 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 						}
 					}
 
-					if (trimAndGetValue(settings.wasabi_aws_bucket)) {
-						this.config.wasabi_aws_bucket = trimAndGetValue(settings.wasabi_aws_bucket);
+					if (trimIfNotEmpty(settings.wasabi_aws_bucket)) {
+						this.config.wasabi_aws_bucket = trimIfNotEmpty(settings.wasabi_aws_bucket);
 
 						if (this._detailedLoggingEnabled) {
 							console.log(
@@ -218,8 +218,8 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 						}
 					}
 
-					// Assuming trimAndGetValue() function trims and retrieves the value from settings
-					const forcePathStyle = trimAndGetValue(settings.wasabi_aws_force_path_style);
+					// Assuming trimIfNotEmpty() function trims and retrieves the value from settings
+					const forcePathStyle = trimIfNotEmpty(settings.wasabi_aws_force_path_style);
 					this.config.wasabi_aws_force_path_style = forcePathStyle === 'true' || forcePathStyle === '1';
 
 					if (this._detailedLoggingEnabled) {
@@ -476,7 +476,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 				this.config.wasabi_aws_access_key_id &&
 				this.config.wasabi_aws_secret_access_key
 			) {
-				const endpoint = addHttpsPrefix(this.config.wasabi_aws_service_url);
+				const endpoint = ensureHttpPrefix(this.config.wasabi_aws_service_url);
 
 				const s3Client = new S3Client({
 					credentials: {

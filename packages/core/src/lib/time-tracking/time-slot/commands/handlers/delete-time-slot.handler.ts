@@ -2,7 +2,7 @@ import { CommandHandler, ICommandHandler, CommandBus } from '@nestjs/cqrs';
 import { NotAcceptableException } from '@nestjs/common';
 import * as chalk from 'chalk';
 import { ID, ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
-import { isEmpty, isNotEmpty } from '@gauzy/common';
+import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { DeleteTimeSpanCommand } from '../../../time-log/commands/delete-time-span.command';
 import { DeleteTimeSlotCommand } from '../delete-time-slot.command';
 import { RequestContext } from './../../../../core/context';

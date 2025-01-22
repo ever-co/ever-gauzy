@@ -24,7 +24,7 @@ import {
 	SYNC_TAG_GAUZY,
 	SYNC_TAG_GITHUB
 } from '@gauzy/contracts';
-import { isNotEmpty, sleep } from '@gauzy/common';
+import { isNotEmpty, sleep } from '@gauzy/utils';
 import {
 	AutomationLabelSyncCommand,
 	AutomationTaskSyncCommand,

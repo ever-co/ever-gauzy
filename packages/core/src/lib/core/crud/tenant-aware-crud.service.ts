@@ -2,7 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere, FindManyOptions, FindOneOptions, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { RequestContext } from '../context';
 import { TenantBaseEntity } from '../entities/internal';

@@ -17,7 +17,7 @@ export class FeatureFlagGuard implements CanActivate {
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		private readonly _reflector: Reflector,
 		private readonly featureFlagService: FeatureService
-	) { }
+	) {}
 
 	/**
 	 * Determines if the current request can be activated based on feature flag metadata.

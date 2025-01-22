@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable, NotFoundException, Type } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { FEATURE_METADATA } from '@gauzy/common';
+import { FEATURE_METADATA } from '@gauzy/utils';
 import { gauzyToggleFeatures } from '@gauzy/config';
 import { FeatureEnum } from '@gauzy/contracts';
 

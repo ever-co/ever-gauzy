@@ -1,4 +1,4 @@
-import { sluggable } from '@gauzy/common';
+import { sluggable } from '@gauzy/utils';
 import { IntegrationEnum, IntegrationTypeEnum } from '@gauzy/contracts';
 
 /**

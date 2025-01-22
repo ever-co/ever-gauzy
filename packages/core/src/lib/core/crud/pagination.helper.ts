@@ -1,4 +1,4 @@
-import { isClassInstance, isObject } from '@gauzy/common';
+import { isClassInstance, isObject } from '@gauzy/utils';
 import { isDateString } from 'class-validator';
 
 /**

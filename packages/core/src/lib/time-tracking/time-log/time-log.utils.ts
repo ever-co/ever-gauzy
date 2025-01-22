@@ -1,6 +1,6 @@
-import { reduce } from "underscore";
-import { ArraySum } from "@gauzy/common";
-import { ITimeLog, TimeLogType } from "@gauzy/contracts";
+import { reduce } from 'underscore';
+import { ArraySum } from '@gauzy/utils';
+import { ITimeLog, TimeLogType } from '@gauzy/contracts';
 
 /**
  * Calculates the average of an array of numbers.
@@ -8,7 +8,7 @@ import { ITimeLog, TimeLogType } from "@gauzy/contracts";
  * @returns The calculated average.
  */
 export const calculateAverage = (values: number[]): number => {
-    return reduce(values, ArraySum, 0);
+	return reduce(values, ArraySum, 0);
 };
 
 /**
@@ -18,8 +18,8 @@ export const calculateAverage = (values: number[]): number => {
  * @returns The calculated average activity.
  */
 export const calculateAverageActivity = (logs: ITimeLog[], logActivity: Record<string, number>): number => {
-    let avgActivity = logs.reduce((total, log) => total + (logActivity[log.id] || 0), 0);
-    return logs.length ? avgActivity / logs.length : 0;
+	let avgActivity = logs.reduce((total, log) => total + (logActivity[log.id] || 0), 0);
+	return logs.length ? avgActivity / logs.length : 0;
 };
 
 /**
@@ -29,5 +29,7 @@ export const calculateAverageActivity = (logs: ITimeLog[], logActivity: Record<s
  * @returns Total duration of the specified log type in seconds.
  */
 export const calculateDuration = (logs: ITimeLog[], logType: TimeLogType): number => {
-    return logs.filter((log) => log.logType === logType).reduce((totalDuration, log) => totalDuration + log.duration, 0);
+	return logs
+		.filter((log) => log.logType === logType)
+		.reduce((totalDuration, log) => totalDuration + log.duration, 0);
 };

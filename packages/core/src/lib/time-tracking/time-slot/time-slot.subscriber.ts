@@ -1,7 +1,7 @@
 import { EventSubscriber } from 'typeorm';
 import * as moment from 'moment';
 import { IScreenshot, ITimeSlot } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { TimeSlot } from './time-slot.entity';
 import { FileStorage } from './../../core/file-storage';
 import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';

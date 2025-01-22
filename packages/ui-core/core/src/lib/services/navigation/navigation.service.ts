@@ -80,7 +80,7 @@ export class NavigationService {
 			}
 		}
 
-		const queryParamsString = this.createQueryParamsString(uniqueQueryParams); // Convert query params object to string
+		const queryParamsString = this.buildQueryString(uniqueQueryParams); // Convert query params object to string
 		const newUrl = [currentUrlTree, queryParamsString].filter(Boolean).join('?'); // Combine current URL with updated query params
 
 		// Replace the browser's URL without triggering navigation
@@ -92,7 +92,7 @@ export class NavigationService {
 	 * @param queryParams An object containing query parameters.
 	 * @returns A string representation of the query parameters.
 	 */
-	private createQueryParamsString(queryParams: { [key: string]: string | string[] | boolean }): string {
+	private buildQueryString(queryParams: { [key: string]: string | string[] | boolean }): string {
 		return Object.keys(queryParams)
 			.map((key) => {
 				const value = queryParams[key];

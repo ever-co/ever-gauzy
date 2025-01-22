@@ -1,6 +1,7 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { Observable, Subject, filter, takeUntil } from 'rxjs';
-import { isNotNullOrUndefined, Type } from '@gauzy/common';
+import { Type } from '@gauzy/common';
+import { isNotNullOrUndefined } from '@gauzy/utils';
 import { BaseEvent } from './base-event';
 
 @Injectable()

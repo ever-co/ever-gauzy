@@ -1,7 +1,7 @@
 import { DynamicModule, Type } from '@nestjs/common';
 import { MODULE_METADATA } from '@nestjs/common/constants';
-import { isNotEmpty } from '@gauzy/common';
 import { getConfig } from '@gauzy/config';
+import { isNotEmpty } from '@gauzy/utils';
 import { PLUGIN_METADATA } from './plugin-metadata';
 import { PluginLifecycleMethods } from './plugin.interface';
 

@@ -1,4 +1,5 @@
-import { deepMerge, ApplicationPluginConfig } from '@gauzy/common';
+import { ApplicationPluginConfig } from '@gauzy/common';
+import { deepMerge } from '@gauzy/utils';
 import { defaultConfiguration } from './default-configuration';
 
 let defaultApplicationPluginConfig: ApplicationPluginConfig = defaultConfiguration;

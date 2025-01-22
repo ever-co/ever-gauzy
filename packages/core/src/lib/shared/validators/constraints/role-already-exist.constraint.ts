@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
-import { isEmpty } from '@gauzy/common';
+import { isEmpty } from '@gauzy/utils';
 import { RequestContext } from '../../../core/context/request-context';
 import { MultiORM, MultiORMEnum, getORMType } from '../../../core/utils';
 import { TypeOrmRoleRepository } from '../../../role/repository/type-orm-role.repository';

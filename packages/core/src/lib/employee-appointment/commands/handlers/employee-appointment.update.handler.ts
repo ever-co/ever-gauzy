@@ -5,30 +5,21 @@ import { EmployeeAppointment } from '../../employee-appointment.entity';
 import { UpdateResult } from 'typeorm';
 import { EmployeeService } from '../../../employee/employee.service';
 import { OrganizationService } from '../../../organization/organization.service';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 
 @CommandHandler(EmployeeAppointmentUpdateCommand)
-export class EmployeeAppointmentUpdateHandler
-	implements ICommandHandler<EmployeeAppointmentUpdateCommand> {
+export class EmployeeAppointmentUpdateHandler implements ICommandHandler<EmployeeAppointmentUpdateCommand> {
 	constructor(
 		private employeeAppointmentService: EmployeeAppointmentService,
 		private employeeService: EmployeeService,
 		private organizationService: OrganizationService
 	) {}
 
-	public async execute(
-		command?: EmployeeAppointmentUpdateCommand
-	): Promise<UpdateResult | EmployeeAppointment> {
+	public async execute(command?: EmployeeAppointmentUpdateCommand): Promise<UpdateResult | EmployeeAppointment> {
 		const { id, employeeAppointmentUpdateRequest: data } = command;
-		const employee = data.employeeId
-			? await this.employeeService.findOneByIdString(
-					data.employeeId
-			  )
-			: null;
+		const employee = data.employeeId ? await this.employeeService.findOneByIdString(data.employeeId) : null;
 		const organization = data.organizationId
-			? await this.organizationService.findOneByIdString(
-					data.organizationId
-			  )
+			? await this.organizationService.findOneByIdString(data.organizationId)
 			: null;
 		const tenantId = organization?.tenantId ? organization.tenantId : null;
 		const newAppointment = {
@@ -38,7 +29,7 @@ export class EmployeeAppointmentUpdateHandler
 			...(isNotEmpty(data.agenda) ? { agenda: data.agenda } : {}),
 			...(isNotEmpty(data['emails']) ? { emails: data['emails'] } : {}),
 			...(isNotEmpty(data['status']) ? { status: data['status'] } : {}),
-			...(isNotEmpty(data.description) ? { description: data.description } : {} ),
+			...(isNotEmpty(data.description) ? { description: data.description } : {}),
 			...(isNotEmpty(data.location) ? { location: data.location } : {}),
 			...(isNotEmpty(data.breakStartTime) ? { breakStartTime: data.breakStartTime } : {}),
 			...(isNotEmpty(data.breakTimeInMins) ? { breakTimeInMins: +data.breakTimeInMins } : {}),
@@ -46,8 +37,8 @@ export class EmployeeAppointmentUpdateHandler
 			...(isNotEmpty(data.bufferTimeEnd) ? { bufferTimeEnd: data.bufferTimeEnd } : {}),
 			...(isNotEmpty(data.bufferTimeInMins) ? { bufferTimeInMins: +data.bufferTimeInMins } : {}),
 			...(isNotEmpty(data.startDateTime) ? { startDateTime: data.startDateTime } : {}),
-			...(isNotEmpty(data.endDateTime) ? { endDateTime: data.endDateTime } : {}),
-		}
+			...(isNotEmpty(data.endDateTime) ? { endDateTime: data.endDateTime } : {})
+		};
 		const updatedAppointment = await this.employeeAppointmentService.update(id, newAppointment);
 
 		return updatedAppointment;

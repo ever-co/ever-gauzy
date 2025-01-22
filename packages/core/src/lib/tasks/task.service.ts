@@ -33,7 +33,7 @@ import {
 	ITaskAdvancedFilter,
 	IAdvancedTaskFiltering
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { isPostgres, isSqlite } from '@gauzy/config';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { addBetween } from './../core/util';

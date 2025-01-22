@@ -1,6 +1,6 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { IFeature, IFeatureOrganization, IFeatureOrganizationUpdateInput, ITenant } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { FeatureOrganization } from './feature-organization.entity';
@@ -81,11 +81,14 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 
 		for (const feature of features) {
 			const isEnabled = feature.isEnabled;
-			const tenantFeatureOrganizations = tenants.map((tenant) => new FeatureOrganization({
-				isEnabled,
-				tenant,
-				feature
-			}));
+			const tenantFeatureOrganizations = tenants.map(
+				(tenant) =>
+					new FeatureOrganization({
+						isEnabled,
+						tenant,
+						feature
+					})
+			);
 
 			featureOrganizations.push(...tenantFeatureOrganizations);
 		}

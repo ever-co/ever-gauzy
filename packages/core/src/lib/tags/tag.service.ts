@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Brackets, FindOptionsRelations, SelectQueryBuilder } from 'typeorm';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { FileStorageProviderEnum, IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
 import { getConfig, isPostgres } from '@gauzy/config';
 import { RequestContext } from '../core/context';

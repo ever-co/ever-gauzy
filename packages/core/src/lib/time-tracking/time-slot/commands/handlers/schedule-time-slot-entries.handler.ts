@@ -1,6 +1,6 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { SelectQueryBuilder } from 'typeorm';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { TimeSlot } from './../../time-slot.entity';
 import { ScheduleTimeSlotEntriesCommand } from '../schedule-time-slot-entries.command';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';

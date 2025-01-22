@@ -12,7 +12,7 @@ import * as path from 'path';
 import * as chalk from 'chalk';
 import { ConfigService } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
-import { isFunction, isNotEmpty } from '@gauzy/common';
+import { isFunction, isNotEmpty } from '@gauzy/utils';
 import { ConnectionEntityManager } from '../../database/connection-entity-manager';
 import { convertToDatetime } from '../../core/utils';
 import { FileStorage } from '../../core/file-storage';
@@ -369,7 +369,7 @@ import { TypeOrmWarehouseRepository } from '../../warehouse/repository/type-orm-
 
 export interface IForeignKey<T> {
 	column: string;
-	repository: Repository<T>
+	repository: Repository<T>;
 }
 
 export interface IColumnRelationMetadata<T> {
@@ -391,7 +391,6 @@ export interface IRepositoryModel<T> {
 
 @Injectable()
 export class ImportService implements OnModuleInit {
-
 	private _dirname: string;
 	private _extractPath: string;
 
@@ -977,7 +976,7 @@ export class ImportService implements OnModuleInit {
 		private readonly configService: ConfigService,
 		private readonly _connectionEntityManager: ConnectionEntityManager,
 		private readonly commandBus: CommandBus
-	) { }
+	) {}
 
 	async onModuleInit() {
 		//base import csv directory path
@@ -996,24 +995,20 @@ export class ImportService implements OnModuleInit {
 	}
 
 	public async unzipAndParse(filePath: string, cleanup: boolean = false) {
-
 		//extracted import csv directory path
 		this._extractPath = path.join(path.join(this._dirname, filePath), '../csv');
 
 		const file = await new FileStorage().getProvider().getFile(filePath);
-		await unzipper.Open.buffer(file).then((d) =>
-			d.extract({ path: this._extractPath })
-		);
+		await unzipper.Open.buffer(file).then((d) => d.extract({ path: this._extractPath }));
 		await this.parse(cleanup);
 	}
 
 	async parse(cleanup: boolean = false) {
 		/**
-		  * Can only run in a particular order
-		*/
+		 * Can only run in a particular order
+		 */
 		const tenantId = RequestContext.currentTenantId();
 		for await (const item of this.repositories) {
-
 			const { repository, isStatic = false, relations = [] } = item;
 			const nameFile = repository.metadata.tableName;
 			const csvPath = path.join(this._extractPath, `${nameFile}.csv`);
@@ -1029,9 +1024,9 @@ export class ImportService implements OnModuleInit {
 			await new Promise(async (resolve, reject) => {
 				try {
 					/**
-					* This will first collect all the data and then insert
-					* If cleanup flag is set then it will also delete current tenant related data from the database table with CASCADE
-					*/
+					 * This will first collect all the data and then insert
+					 * If cleanup flag is set then it will also delete current tenant related data from the database table with CASCADE
+					 */
 					if (cleanup && isStatic !== true) {
 						try {
 							let sql = `DELETE FROM "${masterTable}" WHERE "${masterTable}"."tenantId" = '${tenantId}'`;
@@ -1045,7 +1040,9 @@ export class ImportService implements OnModuleInit {
 
 					let results = [];
 					const stream = fs.createReadStream(csvPath, 'utf8').pipe(csv());
-					stream.on('data', (data) => { results.push(data); });
+					stream.on('data', (data) => {
+						results.push(data);
+					});
 					stream.on('error', (error) => {
 						console.log(chalk.red(`Failed to parse CSV for table: ${masterTable}`), error);
 						reject(error);
@@ -1055,10 +1052,7 @@ export class ImportService implements OnModuleInit {
 						try {
 							for await (const data of results) {
 								if (isNotEmpty(data)) {
-									await this.migrateImportEntityRecord(
-										item,
-										data
-									);
+									await this.migrateImportEntityRecord(item, data);
 								}
 							}
 							console.log(chalk.green(`Success to inserts data for table: ${masterTable}`));
@@ -1081,10 +1075,7 @@ export class ImportService implements OnModuleInit {
 		}
 	}
 
-	async parseRelationalTables(
-		entity: IRepositoryModel<any>,
-		cleanup: boolean = false
-	) {
+	async parseRelationalTables(entity: IRepositoryModel<any>, cleanup: boolean = false) {
 		const { relations } = entity;
 		for await (const item of relations) {
 			const { joinTableName } = item;
@@ -1101,7 +1092,9 @@ export class ImportService implements OnModuleInit {
 				try {
 					let results = [];
 					const stream = fs.createReadStream(csvPath, 'utf8').pipe(csv());
-					stream.on('data', (data) => { results.push(data); });
+					stream.on('data', (data) => {
+						results.push(data);
+					});
 					stream.on('error', (error) => {
 						console.log(chalk.red(`Failed to parse CSV for table: ${joinTableName}`), error);
 						reject(error);
@@ -1113,7 +1106,9 @@ export class ImportService implements OnModuleInit {
 							try {
 								if (isNotEmpty(data)) {
 									const fields = await this.mapRelationFields(item, data);
-									const sql = `INSERT INTO "${joinTableName}" (${'"' + Object.keys(fields).join(`", "`) + '"'}) VALUES ("$1", "$2")`;
+									const sql = `INSERT INTO "${joinTableName}" (${
+										'"' + Object.keys(fields).join(`", "`) + '"'
+									}) VALUES ("$1", "$2")`;
 									// const items = await getManager().query(sql, Object.values(fields));
 									console.log(sql);
 									// console.log(chalk.green(`Success to inserts data for table: ${joinTableName}`));
@@ -1130,17 +1125,13 @@ export class ImportService implements OnModuleInit {
 					reject(error);
 				}
 			});
-
 		}
 	}
 
 	/*
-	* Map static tables import record before insert data
-	*/
-	async migrateImportEntityRecord(
-		item: IRepositoryModel<any>,
-		entity: any
-	): Promise<any> {
+	 * Map static tables import record before insert data
+	 */
+	async migrateImportEntityRecord(item: IRepositoryModel<any>, entity: any): Promise<any> {
 		const { repository, uniqueIdentifier = [] } = item;
 		const masterTable = repository.metadata.tableName;
 
@@ -1165,28 +1156,20 @@ export class ImportService implements OnModuleInit {
 					)
 				);
 				if (destination) {
-					await this.mappedImportRecord(
-						item,
-						destination,
-						source
-					);
+					await this.mappedImportRecord(item, destination, source);
 				}
-				resolve(true)
+				resolve(true);
 			} catch (error) {
 				console.log(chalk.red(`Failed to migrate import entity data for table: ${masterTable}`), error, entity);
-				reject(error)
+				reject(error);
 			}
 		});
 	}
 
 	/*
-	* Map import record after find or insert data
-	*/
-	async mappedImportRecord(
-		item: IRepositoryModel<any>,
-		destination: any,
-		row: any
-	): Promise<any> {
+	 * Map import record after find or insert data
+	 */
+	async mappedImportRecord(item: IRepositoryModel<any>, destination: any, row: any): Promise<any> {
 		const { repository } = item;
 		const entityType = repository.metadata.tableName;
 
@@ -1205,19 +1188,16 @@ export class ImportService implements OnModuleInit {
 				resolve(true);
 			} catch (error) {
 				console.log(chalk.red(`Failed to map import record for table: ${entityType}`), error);
-				reject(error)
+				reject(error);
 			}
 		});
 	}
 
 	/*
-	* Map tenant & organization base fields here
-	* Notice: Please add timestamp field here if missing
-	*/
-	async mapFields(
-		item: IRepositoryModel<any>,
-		data: any
-	) {
+	 * Map tenant & organization base fields here
+	 * Notice: Please add timestamp field here if missing
+	 */
+	async mapFields(item: IRepositoryModel<any>, data: any) {
 		if ('id' in data && isNotEmpty(data['id'])) {
 			delete data['id'];
 		}
@@ -1242,20 +1222,18 @@ export class ImportService implements OnModuleInit {
 				data['organizationId'] = record ? record.destinationId : IsNull().value;
 			}
 		}
-		return await this.mapTimeStampsFields(
-			item, await this.mapRelationFields(item, data)
-		);
+		return await this.mapTimeStampsFields(item, await this.mapRelationFields(item, data));
 	}
 
 	/*
-	* Map timestamps fields here
-	*/
+	 * Map timestamps fields here
+	 */
 	async mapTimeStampsFields(item: IRepositoryModel<any>, data: any) {
 		const { repository } = item;
 		for await (const column of repository.metadata.columns as ColumnMetadata[]) {
 			const { propertyName, type } = column;
 			if (`${propertyName}` in data && isNotEmpty(data[`${propertyName}`])) {
-				if ((type.valueOf() === Date) || (type === 'datetime' || type === 'timestamp')) {
+				if (type.valueOf() === Date || type === 'datetime' || type === 'timestamp') {
 					data[`${propertyName}`] = convertToDatetime(data[`${propertyName}`]);
 				} else if (data[`${propertyName}`] === 'true') {
 					data[`${propertyName}`] = true;
@@ -1268,12 +1246,9 @@ export class ImportService implements OnModuleInit {
 	}
 
 	/*
-	* Map relation fields here
-	*/
-	async mapRelationFields(
-		item: IRepositoryModel<any> | IColumnRelationMetadata<any>,
-		data: any
-	): Promise<any> {
+	 * Map relation fields here
+	 */
+	async mapRelationFields(item: IRepositoryModel<any> | IColumnRelationMetadata<any>, data: any): Promise<any> {
 		return await new Promise(async (resolve, reject) => {
 			try {
 				const { foreignKeys = [], isCheckRelation = false } = item;
@@ -1301,9 +1276,7 @@ export class ImportService implements OnModuleInit {
 
 	//load plugins entities for import data
 	private async createDynamicInstanceForPluginEntities() {
-		for await (const entity of getEntitiesFromPlugins(
-			this.configService.plugins
-		)) {
+		for await (const entity of getEntitiesFromPlugins(this.configService.plugins)) {
 			if (!isFunction(entity)) {
 				continue;
 			}
@@ -1317,14 +1290,14 @@ export class ImportService implements OnModuleInit {
 	}
 
 	/*
-	* Load all entities repository after create instance
-	* Warning: Changing position here can be FATAL
-	*/
+	 * Load all entities repository after create instance
+	 * Warning: Changing position here can be FATAL
+	 */
 	private async registerCoreRepositories() {
 		this.repositories = [
 			/**
-			* These entities do not have any other dependency so need to be mapped first
-			*/
+			 * These entities do not have any other dependency so need to be mapped first
+			 */
 			{
 				repository: this.typeOrmReportCategoryRepository,
 				isStatic: true,
@@ -1366,8 +1339,8 @@ export class ImportService implements OnModuleInit {
 				]
 			},
 			/**
-			* These entities need TENANT
-			*/
+			 * These entities need TENANT
+			 */
 			{
 				repository: this.typeOrmTenantSettingRepository
 			},
@@ -1377,30 +1350,24 @@ export class ImportService implements OnModuleInit {
 			{
 				repository: this.typeOrmRolePermissionRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'roleId', repository: this.typeOrmRoleRepository }
-				]
+				foreignKeys: [{ column: 'roleId', repository: this.typeOrmRoleRepository }]
 			},
 			{
 				repository: this.typeOrmOrganizationRepository
 			},
 			/**
-			* These entities need TENANT and ORGANIZATION
-			*/
+			 * These entities need TENANT and ORGANIZATION
+			 */
 			{
 				repository: this.typeOrmUserRepository,
 				isStatic: true,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'roleId', repository: this.typeOrmRoleRepository }
-				]
+				foreignKeys: [{ column: 'roleId', repository: this.typeOrmRoleRepository }]
 			},
 			{
 				repository: this.typeOrmUserOrganizationRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'userId', repository: this.typeOrmUserRepository }
-				]
+				foreignKeys: [{ column: 'userId', repository: this.typeOrmUserRepository }]
 			},
 			//Organization & Related Entities
 			{
@@ -1440,9 +1407,7 @@ export class ImportService implements OnModuleInit {
 			{
 				repository: this.typeOrmOrganizationSprintRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'projectId', repository: this.typeOrmOrganizationProjectRepository }
-				]
+				foreignKeys: [{ column: 'projectId', repository: this.typeOrmOrganizationProjectRepository }]
 			},
 			{
 				repository: this.typeOrmOrganizationRecurringExpenseRepository
@@ -1456,13 +1421,11 @@ export class ImportService implements OnModuleInit {
 			{
 				repository: this.typeOrmReportOrganizationRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'reportId', repository: this.typeOrmReportRepository }
-				]
+				foreignKeys: [{ column: 'reportId', repository: this.typeOrmReportRepository }]
 			},
 			/**
-			* These entities need TENANT, ORGANIZATION & USER
-			*/
+			 * These entities need TENANT, ORGANIZATION & USER
+			 */
 			{
 				repository: this.typeOrmEmployeeRepository,
 				isCheckRelation: true,
@@ -1476,14 +1439,20 @@ export class ImportService implements OnModuleInit {
 					{
 						joinTableName: 'organization_department_employee',
 						foreignKeys: [
-							{ column: 'organizationDepartmentId', repository: this.typeOrmOrganizationDepartmentRepository },
+							{
+								column: 'organizationDepartmentId',
+								repository: this.typeOrmOrganizationDepartmentRepository
+							},
 							{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }
 						]
 					},
 					{
 						joinTableName: 'organization_employment_type_employee',
 						foreignKeys: [
-							{ column: 'organizationEmploymentTypeId', repository: this.typeOrmOrganizationEmploymentTypeRepository },
+							{
+								column: 'organizationEmploymentTypeId',
+								repository: this.typeOrmOrganizationEmploymentTypeRepository
+							},
 							{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }
 						]
 					},
@@ -1504,8 +1473,8 @@ export class ImportService implements OnModuleInit {
 				]
 			},
 			/**
-			* These entities need TENANT, ORGANIZATION & CANDIDATE
-			*/
+			 * These entities need TENANT, ORGANIZATION & CANDIDATE
+			 */
 			{
 				repository: this.typeOrmCandidateRepository,
 				isCheckRelation: true,
@@ -1518,14 +1487,20 @@ export class ImportService implements OnModuleInit {
 						joinTableName: 'candidate_department',
 						foreignKeys: [
 							{ column: 'candidateId', repository: this.typeOrmCandidateRepository },
-							{ column: 'organizationDepartmentId', repository: this.typeOrmOrganizationDepartmentRepository }
+							{
+								column: 'organizationDepartmentId',
+								repository: this.typeOrmOrganizationDepartmentRepository
+							}
 						]
 					},
 					{
 						joinTableName: 'candidate_employment_type',
 						foreignKeys: [
 							{ column: 'candidateId', repository: this.typeOrmCandidateRepository },
-							{ column: 'organizationEmploymentTypeId', repository: this.typeOrmOrganizationEmploymentTypeRepository }
+							{
+								column: 'organizationEmploymentTypeId',
+								repository: this.typeOrmOrganizationEmploymentTypeRepository
+							}
 						]
 					}
 				]
@@ -1533,37 +1508,27 @@ export class ImportService implements OnModuleInit {
 			{
 				repository: this.typeOrmCandidateDocumentRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'candidateId', repository: this.typeOrmCandidateRepository }
-				]
+				foreignKeys: [{ column: 'candidateId', repository: this.typeOrmCandidateRepository }]
 			},
 			{
 				repository: this.typeOrmCandidateEducationRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'candidateId', repository: this.typeOrmCandidateRepository }
-				]
+				foreignKeys: [{ column: 'candidateId', repository: this.typeOrmCandidateRepository }]
 			},
 			{
 				repository: this.typeOrmCandidateSkillRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'candidateId', repository: this.typeOrmCandidateRepository }
-				]
+				foreignKeys: [{ column: 'candidateId', repository: this.typeOrmCandidateRepository }]
 			},
 			{
 				repository: this.typeOrmCandidateSourceRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'candidateId', repository: this.typeOrmCandidateRepository }
-				]
+				foreignKeys: [{ column: 'candidateId', repository: this.typeOrmCandidateRepository }]
 			},
 			{
 				repository: this.typeOrmCandidateInterviewRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'candidateId', repository: this.typeOrmCandidateRepository }
-				]
+				foreignKeys: [{ column: 'candidateId', repository: this.typeOrmCandidateRepository }]
 			},
 			{
 				repository: this.typeOrmCandidateInterviewersRepository,
@@ -1576,9 +1541,7 @@ export class ImportService implements OnModuleInit {
 			{
 				repository: this.typeOrmCandidateExperienceRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'candidateId', repository: this.typeOrmCandidateRepository }
-				]
+				foreignKeys: [{ column: 'candidateId', repository: this.typeOrmCandidateRepository }]
 			},
 			{
 				repository: this.typeOrmCandidateFeedbackRepository,
@@ -1592,16 +1555,12 @@ export class ImportService implements OnModuleInit {
 			{
 				repository: this.typeOrmCandidatePersonalQualitiesRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'interviewId', repository: this.typeOrmCandidateInterviewRepository }
-				]
+				foreignKeys: [{ column: 'interviewId', repository: this.typeOrmCandidateInterviewRepository }]
 			},
 			{
 				repository: this.typeOrmCandidateTechnologiesRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'interviewId', repository: this.typeOrmCandidateInterviewRepository }
-				]
+				foreignKeys: [{ column: 'interviewId', repository: this.typeOrmCandidateInterviewRepository }]
 			},
 			{
 				repository: this.typeOrmCandidateCriterionsRatingRepository,
@@ -1609,12 +1568,12 @@ export class ImportService implements OnModuleInit {
 				foreignKeys: [
 					{ column: 'feedbackId', repository: this.typeOrmCandidateFeedbackRepository },
 					{ column: 'technologyId', repository: this.typeOrmCandidateTechnologiesRepository },
-					{ column: 'personalQualityId', repository: this.typeOrmCandidatePersonalQualitiesRepository },
+					{ column: 'personalQualityId', repository: this.typeOrmCandidatePersonalQualitiesRepository }
 				]
 			},
 			/**
-			* These entities need TENANT and ORGANIZATION
-			*/
+			 * These entities need TENANT and ORGANIZATION
+			 */
 			{
 				repository: this.typeOrmSkillRepository,
 				uniqueIdentifier: [{ column: 'name' }],
@@ -1644,16 +1603,12 @@ export class ImportService implements OnModuleInit {
 			{
 				repository: this.typeOrmAvailabilitySlotRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }
-				]
+				foreignKeys: [{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }]
 			},
 			{
 				repository: this.typeOrmEmployeeAppointmentRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }
-				]
+				foreignKeys: [{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }]
 			},
 			{
 				repository: this.typeOrmAppointmentEmployeeRepository,
@@ -1664,8 +1619,8 @@ export class ImportService implements OnModuleInit {
 				]
 			},
 			/*
-			* Email & Template
-			*/
+			 * Email & Template
+			 */
 			{
 				repository: this.typeOrmEmailTemplateRepository
 			},
@@ -1681,35 +1636,29 @@ export class ImportService implements OnModuleInit {
 				repository: this.typeOrmEstimateEmailRepository
 			},
 			/*
-			* Employee & Related Entities
-			*/
+			 * Employee & Related Entities
+			 */
 			{
 				repository: this.typeOrmEmployeeAwardRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }
-				]
+				foreignKeys: [{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }]
 			},
 			{
 				repository: this.typeOrmEmployeeRecurringExpenseRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }
-				]
+				foreignKeys: [{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }]
 			},
 			{
 				repository: this.typeOrmEmployeeSettingRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }
-				]
+				foreignKeys: [{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }]
 			},
 			{
 				repository: this.typeOrmEmployeeLevelRepository
 			},
 			/*
-			* Equipment & Related Entities
-			*/
+			 * Equipment & Related Entities
+			 */
 			{
 				repository: this.typeOrmEquipmentSharingPolicyRepository
 			},
@@ -1741,18 +1690,16 @@ export class ImportService implements OnModuleInit {
 				]
 			},
 			/*
-			* Event Type & Related Entities
-			*/
+			 * Event Type & Related Entities
+			 */
 			{
 				repository: this.typeOrmEventTypeRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }
-				]
+				foreignKeys: [{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }]
 			},
 			/*
-			* Invoice & Related Entities
-			*/
+			 * Invoice & Related Entities
+			 */
 			{
 				repository: this.typeOrmInvoiceRepository,
 				isCheckRelation: true,
@@ -1784,8 +1731,8 @@ export class ImportService implements OnModuleInit {
 				]
 			},
 			/*
-			* Expense & Related Entities
-			*/
+			 * Expense & Related Entities
+			 */
 			{
 				repository: this.typeOrmExpenseCategoryRepository
 			},
@@ -1800,24 +1747,20 @@ export class ImportService implements OnModuleInit {
 				]
 			},
 			/*
-			* Income
-			*/
+			 * Income
+			 */
 			{
 				repository: this.typeOrmIncomeRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }
-				]
+				foreignKeys: [{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }]
 			},
 			/*
-			* Feature & Related Entities
-			*/
+			 * Feature & Related Entities
+			 */
 			{
 				repository: this.typeOrmFeatureOrganizationRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'featureId', repository: this.typeOrmFeatureRepository }
-				]
+				foreignKeys: [{ column: 'featureId', repository: this.typeOrmFeatureRepository }]
 			},
 			{
 				repository: this.typeOrmGoalRepository,
@@ -1829,8 +1772,8 @@ export class ImportService implements OnModuleInit {
 				]
 			},
 			/*
-			* Key Result & Related Entities
-			*/
+			 * Key Result & Related Entities
+			 */
 			{
 				repository: this.typeOrmKeyResultRepository,
 				isCheckRelation: true,
@@ -1849,21 +1792,17 @@ export class ImportService implements OnModuleInit {
 				repository: this.typeOrmKeyResultUpdateRepository
 			},
 			/*
-			* Goal KPI & Related Entities
-			*/
+			 * Goal KPI & Related Entities
+			 */
 			{
 				repository: this.typeOrmGoalKPIRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'leadId', repository: this.typeOrmEmployeeRepository }
-				]
+				foreignKeys: [{ column: 'leadId', repository: this.typeOrmEmployeeRepository }]
 			},
 			{
 				repository: this.typeOrmGoalKPITemplateRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'leadId', repository: this.typeOrmEmployeeRepository }
-				]
+				foreignKeys: [{ column: 'leadId', repository: this.typeOrmEmployeeRepository }]
 			},
 			{
 				repository: this.typeOrmGoalTemplateRepository
@@ -1875,31 +1814,25 @@ export class ImportService implements OnModuleInit {
 				repository: this.typeOrmGoalGeneralSettingRepository
 			},
 			/*
-			* Integration & Related Entities
-			*/
+			 * Integration & Related Entities
+			 */
 			{
 				repository: this.typeOrmIntegrationTenantRepository
 			},
 			{
 				repository: this.typeOrmIntegrationSettingRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'integrationId', repository: this.typeOrmIntegrationTenantRepository }
-				]
+				foreignKeys: [{ column: 'integrationId', repository: this.typeOrmIntegrationTenantRepository }]
 			},
 			{
 				repository: this.typeOrmIntegrationMapRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'integrationId', repository: this.typeOrmIntegrationTenantRepository }
-				]
+				foreignKeys: [{ column: 'integrationId', repository: this.typeOrmIntegrationTenantRepository }]
 			},
 			{
 				repository: this.typeOrmIntegrationEntitySettingRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'integrationId', repository: this.typeOrmIntegrationTenantRepository }
-				]
+				foreignKeys: [{ column: 'integrationId', repository: this.typeOrmIntegrationTenantRepository }]
 			},
 			{
 				repository: this.typeOrmIntegrationEntitySettingTiedRepository,
@@ -1909,8 +1842,8 @@ export class ImportService implements OnModuleInit {
 				]
 			},
 			/*
-			* Invite & Related Entities
-			*/
+			 * Invite & Related Entities
+			 */
 			{
 				repository: this.typeOrmInviteRepository,
 				isCheckRelation: true,
@@ -1931,7 +1864,10 @@ export class ImportService implements OnModuleInit {
 						joinTableName: 'invite_organization_department',
 						foreignKeys: [
 							{ column: 'inviteId', repository: this.typeOrmEquipmentSharingRepository },
-							{ column: 'organizationDepartmentId', repository: this.typeOrmOrganizationDepartmentRepository }
+							{
+								column: 'organizationDepartmentId',
+								repository: this.typeOrmOrganizationDepartmentRepository
+							}
 						]
 					},
 					{
@@ -1953,17 +1889,15 @@ export class ImportService implements OnModuleInit {
 				]
 			},
 			/*
-			* Pipeline & Stage Entities
-			*/
+			 * Pipeline & Stage Entities
+			 */
 			{
 				repository: this.typeOrmPipelineRepository
 			},
 			{
 				repository: this.typeOrmPipelineStageRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'pipelineId', repository: this.typeOrmPipelineRepository }
-				]
+				foreignKeys: [{ column: 'pipelineId', repository: this.typeOrmPipelineRepository }]
 			},
 			{
 				repository: this.typeOrmDealRepository,
@@ -1975,17 +1909,15 @@ export class ImportService implements OnModuleInit {
 				]
 			},
 			/*
-			* Product & Related Entities
-			*/
+			 * Product & Related Entities
+			 */
 			{
 				repository: this.typeOrmProductCategoryRepository
 			},
 			{
 				repository: this.typeOrmProductCategoryTranslationRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'referenceId', repository: this.typeOrmProductCategoryRepository }
-				]
+				foreignKeys: [{ column: 'referenceId', repository: this.typeOrmProductCategoryRepository }]
 			},
 			{
 				repository: this.typeOrmProductTypeRepository
@@ -1993,9 +1925,7 @@ export class ImportService implements OnModuleInit {
 			{
 				repository: this.typeOrmProductTypeTranslationRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'referenceId', repository: this.typeOrmProductTypeRepository }
-				]
+				foreignKeys: [{ column: 'referenceId', repository: this.typeOrmProductTypeRepository }]
 			},
 			{
 				repository: this.typeOrmProductOptionGroupRepository
@@ -2003,23 +1933,17 @@ export class ImportService implements OnModuleInit {
 			{
 				repository: this.typeOrmProductOptionRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'groupId', repository: this.typeOrmProductOptionGroupRepository }
-				]
+				foreignKeys: [{ column: 'groupId', repository: this.typeOrmProductOptionGroupRepository }]
 			},
 			{
 				repository: this.typeOrmProductOptionTranslationRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'referenceId', repository: this.typeOrmProductOptionRepository }
-				]
+				foreignKeys: [{ column: 'referenceId', repository: this.typeOrmProductOptionRepository }]
 			},
 			{
 				repository: this.typeOrmProductOptionGroupTranslationRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'referenceId', repository: this.typeOrmProductOptionGroupRepository }
-				]
+				foreignKeys: [{ column: 'referenceId', repository: this.typeOrmProductOptionGroupRepository }]
 			},
 			{
 				repository: this.typeOrmImageAssetRepository
@@ -2032,16 +1956,12 @@ export class ImportService implements OnModuleInit {
 					{ column: 'typeId', repository: this.typeOrmProductTypeRepository },
 					{ column: 'categoryId', repository: this.typeOrmProductCategoryRepository }
 				],
-				relations: [
-					{ joinTableName: 'product_gallery_item' }
-				]
+				relations: [{ joinTableName: 'product_gallery_item' }]
 			},
 			{
 				repository: this.typeOrmProductTranslationRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'referenceId', repository: this.typeOrmProductRepository }
-				]
+				foreignKeys: [{ column: 'referenceId', repository: this.typeOrmProductRepository }]
 			},
 			{
 				repository: this.typeOrmProductVariantPriceRepository,
@@ -2059,9 +1979,7 @@ export class ImportService implements OnModuleInit {
 					{ column: 'priceId', repository: this.typeOrmProductVariantPriceRepository },
 					{ column: 'settingsId', repository: this.typeOrmProductVariantSettingRepository }
 				],
-				relations: [
-					{ joinTableName: 'product_variant_options_product_option' }
-				]
+				relations: [{ joinTableName: 'product_variant_options_product_option' }]
 			},
 			{
 				repository: this.typeOrmWarehouseRepository,
@@ -2080,9 +1998,7 @@ export class ImportService implements OnModuleInit {
 					{ column: 'logoId', repository: this.typeOrmImageAssetRepository },
 					{ column: 'contactId', repository: this.typeOrmContactRepository }
 				],
-				relations: [
-					{ joinTableName: 'warehouse_merchant' }
-				]
+				relations: [{ joinTableName: 'warehouse_merchant' }]
 			},
 			{
 				repository: this.typeOrmWarehouseProductRepository,
@@ -2090,7 +2006,7 @@ export class ImportService implements OnModuleInit {
 				foreignKeys: [
 					{ column: 'warehouseId', repository: this.typeOrmWarehouseRepository },
 					{ column: 'productId', repository: this.typeOrmProductRepository }
-				],
+				]
 			},
 			{
 				repository: this.typeOrmWarehouseProductVariantRepository,
@@ -2098,11 +2014,11 @@ export class ImportService implements OnModuleInit {
 				foreignKeys: [
 					{ column: 'variantId', repository: this.typeOrmProductVariantRepository },
 					{ column: 'warehouseProductId', repository: this.typeOrmWarehouseProductRepository }
-				],
+				]
 			},
 			/*
-			* Payment & Related Entities
-			*/
+			 * Payment & Related Entities
+			 */
 			{
 				repository: this.typeOrmPaymentRepository,
 				isCheckRelation: true,
@@ -2115,14 +2031,12 @@ export class ImportService implements OnModuleInit {
 				]
 			},
 			/*
-			* Request Approval & Related Entities
-			*/
+			 * Request Approval & Related Entities
+			 */
 			{
 				repository: this.typeOrmRequestApprovalRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'approvalPolicyId', repository: this.typeOrmApprovalPolicyRepository }
-				]
+				foreignKeys: [{ column: 'approvalPolicyId', repository: this.typeOrmApprovalPolicyRepository }]
 			},
 			{
 				repository: this.typeOrmRequestApprovalEmployeeRepository,
@@ -2141,8 +2055,8 @@ export class ImportService implements OnModuleInit {
 				]
 			},
 			/*
-			* Tasks & Related Entities
-			*/
+			 * Tasks & Related Entities
+			 */
 			{
 				repository: this.typeOrmTaskRepository,
 				isCheckRelation: true,
@@ -2151,33 +2065,24 @@ export class ImportService implements OnModuleInit {
 					{ column: 'creatorId', repository: this.typeOrmUserRepository },
 					{ column: 'organizationSprintId', repository: this.typeOrmOrganizationSprintRepository }
 				],
-				relations: [
-					{ joinTableName: 'task_employee' },
-					{ joinTableName: 'task_team' },
-				]
+				relations: [{ joinTableName: 'task_employee' }, { joinTableName: 'task_team' }]
 			},
 			/*
-			* Timeoff & Related Entities
-			*/
+			 * Timeoff & Related Entities
+			 */
 			{
 				repository: this.typeOrmTimeOffPolicyRepository,
-				relations: [
-					{ joinTableName: 'time_off_policy_employee' }
-				]
+				relations: [{ joinTableName: 'time_off_policy_employee' }]
 			},
 			{
 				repository: this.typeOrmTimeOffRequestRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'policyId', repository: this.typeOrmTimeOffPolicyRepository }
-				],
-				relations: [
-					{ joinTableName: 'time_off_request_employee' }
-				]
+				foreignKeys: [{ column: 'policyId', repository: this.typeOrmTimeOffPolicyRepository }],
+				relations: [{ joinTableName: 'time_off_request_employee' }]
 			},
 			/*
-			* Timesheet & Related Entities
-			*/
+			 * Timesheet & Related Entities
+			 */
 			{
 				repository: this.typeOrmTimesheetRepository,
 				isCheckRelation: true,
@@ -2196,30 +2101,22 @@ export class ImportService implements OnModuleInit {
 					{ column: 'taskId', repository: this.typeOrmTaskRepository },
 					{ column: 'organizationContactId', repository: this.typeOrmOrganizationContactRepository }
 				],
-				relations: [
-					{ joinTableName: 'time_slot_time_logs' }
-				]
+				relations: [{ joinTableName: 'time_slot_time_logs' }]
 			},
 			{
 				repository: this.typeOrmTimeSlotRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }
-				]
+				foreignKeys: [{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }]
 			},
 			{
 				repository: this.typeOrmTimeSlotMinuteRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'timeSlotId', repository: this.typeOrmTimeSlotRepository }
-				]
+				foreignKeys: [{ column: 'timeSlotId', repository: this.typeOrmTimeSlotRepository }]
 			},
 			{
 				repository: this.typeOrmScreenshotRepository,
 				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'timeSlotId', repository: this.typeOrmTimeSlotRepository }
-				]
+				foreignKeys: [{ column: 'timeSlotId', repository: this.typeOrmTimeSlotRepository }]
 			},
 			{
 				repository: this.typeOrmActivityRepository,
@@ -2232,8 +2129,8 @@ export class ImportService implements OnModuleInit {
 				]
 			},
 			/*
-			* Tag & Related Entities
-			*/
+			 * Tag & Related Entities
+			 */
 			{
 				repository: this.typeOrmTagRepository,
 				relations: [

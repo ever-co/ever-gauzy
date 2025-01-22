@@ -4,11 +4,7 @@ import * as path from 'path';
 import * as rimraf from 'rimraf';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { environment as env, DatabaseTypeEnum } from '@gauzy/config';
-import {
-	IFeature,
-	IFeatureOrganization,
-	ITenant
-} from '@gauzy/contracts';
+import { IFeature, IFeatureOrganization, ITenant } from '@gauzy/contracts';
 import { DEFAULT_FEATURES } from './default-features';
 import { FeatureOrganization } from './feature-organization.entity';
 import { Feature } from './feature.entity';
@@ -65,10 +61,7 @@ export const createDefaultFeatureToggle = async (
  * @param {ITenant[]} tenants - A list of tenants for which random feature toggles will be created.
  * @returns {Promise<IFeature[]>} - A promise resolving to a list of all features in the database.
  */
-export const createRandomFeatureToggle = async (
-	dataSource: DataSource,
-	tenants: ITenant[]
-): Promise<IFeature[]> => {
+export const createRandomFeatureToggle = async (dataSource: DataSource, tenants: ITenant[]): Promise<IFeature[]> => {
 	// Retrieve all features
 	const features: IFeature[] = await dataSource.getRepository(Feature).find();
 	const featureOrganizations: IFeatureOrganization[] = [];
@@ -104,9 +97,9 @@ export const createRandomFeatureToggle = async (
  * @returns {Promise<IFeature>} - A promise resolving to the created feature entity.
  */
 async function createFeature(
-    item: IFeature,
-    tenant: ITenant,
-    config: Partial<ApplicationPluginConfig>
+	item: IFeature,
+	tenant: ITenant,
+	config: Partial<ApplicationPluginConfig>
 ): Promise<IFeature> {
 	const { name, code, description, image, link, isEnabled, status, icon } = item;
 	const feature: IFeature = new Feature({
@@ -117,9 +110,7 @@ async function createFeature(
 		link,
 		status,
 		icon,
-		featureOrganizations: [
-			new FeatureOrganization({ isEnabled, tenant })
-		]
+		featureOrganizations: [new FeatureOrganization({ isEnabled, tenant })]
 	});
 	return feature;
 }

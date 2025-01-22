@@ -22,7 +22,7 @@ import {
 	IWeeklyStatisticsActivities,
 	ITodayStatisticsActivities,
 } from '@gauzy/contracts';
-import { ArraySum, isNotEmpty } from '@gauzy/common';
+import { ArraySum, isNotEmpty } from '@gauzy/utils';
 import {
 	ConfigService,
 	DatabaseTypeEnum,

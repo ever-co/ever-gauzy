@@ -6,7 +6,7 @@ import { v4 as uuidV4 } from 'uuid';
 import * as chalk from 'chalk';
 import * as moment from 'moment';
 import { EmailTemplateEnum } from '@gauzy/contracts';
-import { isEmpty } from '@gauzy/common';
+import { isEmpty } from '@gauzy/utils';
 import { DatabaseTypeEnum } from '@gauzy/config';
 import { replacePlaceholders } from '../core/utils';
 import { prepareSQLQuery as p } from '../database/database.helper';
