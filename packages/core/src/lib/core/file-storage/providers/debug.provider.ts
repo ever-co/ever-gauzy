@@ -14,7 +14,10 @@ export class DebugProvider extends Provider<DebugProvider> {
 	public instance: DebugProvider;
 	public readonly name = 'DEBUG';
 	public config = {
-		rootPath: (environment.isElectron ? resolve(environment.gauzyUserPath, 'public') : config.assetOptions.assetPublicPath) || apiPublicPath,
+		rootPath:
+			(environment.isElectron
+				? resolve(environment.gauzyUserPath, 'public')
+				: config.assetOptions.assetPublicPath) || apiPublicPath,
 		baseUrl: environment.baseUrl
 	};
 

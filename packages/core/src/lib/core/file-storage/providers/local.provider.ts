@@ -22,7 +22,10 @@ export class LocalProvider extends Provider<LocalProvider> {
 	public instance: LocalProvider;
 	public readonly name = FileStorageProviderEnum.LOCAL;
 	public config = {
-		rootPath: (environment.isElectron ? resolve(environment.gauzyUserPath, 'public') : config.assetOptions.assetPublicPath) || apiPublicPath,
+		rootPath:
+			(environment.isElectron
+				? resolve(environment.gauzyUserPath, 'public')
+				: config.assetOptions.assetPublicPath) || apiPublicPath,
 		baseUrl: environment.baseUrl
 	};
 

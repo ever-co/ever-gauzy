@@ -109,7 +109,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 	public config: IWasabiProviderConfig;
 	public defaultConfig: IWasabiProviderConfig;
 
-	private readonly _detailedLoggingEnabled= false;
+	private readonly _detailedLoggingEnabled = false;
 
 	constructor() {
 		super();
@@ -165,23 +165,34 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 						this.config.wasabi_aws_access_key_id = trimAndGetValue(settings.wasabi_aws_access_key_id);
 
 						if (this._detailedLoggingEnabled) {
-							console.log(`setWasabiConfiguration this.config.wasabi_aws_access_key_id value: ${this.config.wasabi_aws_access_key_id}`);
+							console.log(
+								`setWasabiConfiguration this.config.wasabi_aws_access_key_id value: ${this.config.wasabi_aws_access_key_id}`
+							);
 						}
 					}
 
 					if (trimAndGetValue(settings.wasabi_aws_secret_access_key)) {
-						this.config.wasabi_aws_secret_access_key = trimAndGetValue(settings.wasabi_aws_secret_access_key);
+						this.config.wasabi_aws_secret_access_key = trimAndGetValue(
+							settings.wasabi_aws_secret_access_key
+						);
 
 						if (this._detailedLoggingEnabled) {
-							console.log(`setWasabiConfiguration this.config.wasabi_aws_secret_access_key value: ${this.config.wasabi_aws_secret_access_key}`);
+							console.log(
+								`setWasabiConfiguration this.config.wasabi_aws_secret_access_key value: ${this.config.wasabi_aws_secret_access_key}`
+							);
 						}
 					}
 
 					if (trimAndGetValue(settings.wasabi_aws_service_url)) {
-						this.config.wasabi_aws_service_url = addHttpsPrefix(trimAndGetValue(settings.wasabi_aws_service_url));
+						this.config.wasabi_aws_service_url = addHttpsPrefix(
+							trimAndGetValue(settings.wasabi_aws_service_url)
+						);
 
 						if (this._detailedLoggingEnabled) {
-							console.log('setWasabiConfiguration this.config.wasabi_aws_service_url value: ', this.config.wasabi_aws_service_url);
+							console.log(
+								'setWasabiConfiguration this.config.wasabi_aws_service_url value: ',
+								this.config.wasabi_aws_service_url
+							);
 						}
 					}
 
@@ -189,7 +200,10 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 						this.config.wasabi_aws_default_region = trimAndGetValue(settings.wasabi_aws_default_region);
 
 						if (this._detailedLoggingEnabled) {
-							console.log('setWasabiConfiguration this.config.wasabi_aws_default_region value: ', this.config.wasabi_aws_default_region);
+							console.log(
+								'setWasabiConfiguration this.config.wasabi_aws_default_region value: ',
+								this.config.wasabi_aws_default_region
+							);
 						}
 					}
 
@@ -197,7 +211,10 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 						this.config.wasabi_aws_bucket = trimAndGetValue(settings.wasabi_aws_bucket);
 
 						if (this._detailedLoggingEnabled) {
-							console.log('setWasabiConfiguration this.config.wasabi_aws_bucket value: ', this.config.wasabi_aws_bucket);
+							console.log(
+								'setWasabiConfiguration this.config.wasabi_aws_bucket value: ',
+								this.config.wasabi_aws_bucket
+							);
 						}
 					}
 
@@ -206,7 +223,10 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 					this.config.wasabi_aws_force_path_style = forcePathStyle === 'true' || forcePathStyle === '1';
 
 					if (this._detailedLoggingEnabled) {
-						console.log('setWasabiConfiguration this.config.wasabi_aws_force_path_style value: ', this.config.wasabi_aws_force_path_style);
+						console.log(
+							'setWasabiConfiguration this.config.wasabi_aws_force_path_style value: ',
+							this.config.wasabi_aws_force_path_style
+						);
 					}
 				}
 			}
@@ -296,7 +316,10 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 						if (filename) {
 							fileName = typeof filename === 'string' ? filename : filename(file, extension);
 						} else {
-							fileName = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
+							fileName = `${prefix}-${moment().unix()}-${parseInt(
+								'' + Math.random() * 1000,
+								10
+							)}.${extension}`;
 						}
 
 						// Replace double backslashes with single forward slashes

@@ -39,13 +39,12 @@ export interface IDigitalOceanProviderConfig {
 }
 
 export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
-
 	public readonly name = FileStorageProviderEnum.DIGITALOCEAN;
 	public instance: DigitalOceanS3Provider;
 	public config: IDigitalOceanProviderConfig;
 	public defaultConfig: IDigitalOceanProviderConfig;
 
-	private readonly _detailedLoggingEnabled= false;
+	private readonly _detailedLoggingEnabled = false;
 
 	constructor() {
 		super();
@@ -57,7 +56,7 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 			digitalocean_service_url: digitalOcean.serviceUrl,
 			digitalocean_cdn_url: digitalOcean.cdnUrl,
 			digitalocean_s3_bucket: digitalOcean.s3.bucket,
-			digitalocean_s3_force_path_style: digitalOcean.s3.forcePathStyle,
+			digitalocean_s3_force_path_style: digitalOcean.s3.forcePathStyle
 		};
 	}
 
@@ -104,23 +103,34 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 						this.config.digitalocean_access_key_id = trimAndGetValue(settings.digitalocean_access_key_id);
 
 						if (this._detailedLoggingEnabled) {
-							console.log(`setDigitalOceanConfiguration this.config.digitalocean_access_key_id value: ${this.config.digitalocean_access_key_id}`);
+							console.log(
+								`setDigitalOceanConfiguration this.config.digitalocean_access_key_id value: ${this.config.digitalocean_access_key_id}`
+							);
 						}
 					}
 
 					if (trimAndGetValue(settings.digitalocean_secret_access_key)) {
-						this.config.digitalocean_secret_access_key = trimAndGetValue(settings.digitalocean_secret_access_key);
+						this.config.digitalocean_secret_access_key = trimAndGetValue(
+							settings.digitalocean_secret_access_key
+						);
 
 						if (this._detailedLoggingEnabled) {
-							console.log(`setDigitalOceanConfiguration this.config.digitalocean_secret_access_key value: ${this.config.digitalocean_secret_access_key}`);
+							console.log(
+								`setDigitalOceanConfiguration this.config.digitalocean_secret_access_key value: ${this.config.digitalocean_secret_access_key}`
+							);
 						}
 					}
 
 					if (trimAndGetValue(settings.digitalocean_service_url)) {
-						this.config.digitalocean_service_url = addHttpsPrefix(trimAndGetValue(settings.digitalocean_service_url));
+						this.config.digitalocean_service_url = addHttpsPrefix(
+							trimAndGetValue(settings.digitalocean_service_url)
+						);
 
 						if (this._detailedLoggingEnabled) {
-							console.log('setDigitalOceanConfiguration this.config.digitalocean_service_url value: ', this.config.digitalocean_service_url);
+							console.log(
+								'setDigitalOceanConfiguration this.config.digitalocean_service_url value: ',
+								this.config.digitalocean_service_url
+							);
 						}
 					}
 
@@ -128,7 +138,10 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 						this.config.digitalocean_default_region = trimAndGetValue(settings.digitalocean_default_region);
 
 						if (this._detailedLoggingEnabled) {
-							console.log('setDigitalOceanConfiguration this.config.digitalocean_default_region value: ', this.config.digitalocean_default_region);
+							console.log(
+								'setDigitalOceanConfiguration this.config.digitalocean_default_region value: ',
+								this.config.digitalocean_default_region
+							);
 						}
 					}
 
@@ -136,7 +149,10 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 						this.config.digitalocean_s3_bucket = trimAndGetValue(settings.digitalocean_s3_bucket);
 
 						if (this._detailedLoggingEnabled) {
-							console.log('setDigitalOceanConfiguration this.config.digitalocean_s3_bucket value: ', this.config.digitalocean_s3_bucket);
+							console.log(
+								'setDigitalOceanConfiguration this.config.digitalocean_s3_bucket value: ',
+								this.config.digitalocean_s3_bucket
+							);
 						}
 					}
 
@@ -145,7 +161,10 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 					this.config.digitalocean_s3_force_path_style = forcePathStyle === 'true' || forcePathStyle === '1';
 
 					if (this._detailedLoggingEnabled) {
-						console.log('setDigitalOceanConfiguration this.config.digitalocean_s3_force_path_style value: ', this.config.digitalocean_s3_force_path_style);
+						console.log(
+							'setDigitalOceanConfiguration this.config.digitalocean_s3_force_path_style value: ',
+							this.config.digitalocean_s3_force_path_style
+						);
 					}
 				}
 			}
@@ -235,7 +254,10 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 						if (filename) {
 							fileName = typeof filename === 'string' ? filename : filename(file, extension);
 						} else {
-							fileName = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
+							fileName = `${prefix}-${moment().unix()}-${parseInt(
+								'' + Math.random() * 1000,
+								10
+							)}.${extension}`;
 						}
 
 						// Replace double backslashes with single forward slashes
@@ -401,12 +423,14 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 					credentials: {
 						accessKeyId: this.config.digitalocean_access_key_id,
 						secretAccessKey: this.config.digitalocean_secret_access_key
-					},
+					}
 				});
 
 				return s3Client;
 			} else {
-				console.warn(`Can't retrieve ${FileStorageProviderEnum.DIGITALOCEAN} instance for tenant: this.config.digitalocean_service_url, digitalocean_access_key_id or digitalocean_secret_access_key undefined in that tenant settings`);
+				console.warn(
+					`Can't retrieve ${FileStorageProviderEnum.DIGITALOCEAN} instance for tenant: this.config.digitalocean_service_url, digitalocean_access_key_id or digitalocean_secret_access_key undefined in that tenant settings`
+				);
 				return null;
 			}
 		} catch (error) {

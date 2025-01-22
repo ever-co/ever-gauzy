@@ -28,7 +28,9 @@ export class FileStorage {
 	constructor(option?: FileStorageOption) {
 		if (!isDebug) {
 			if (!this._fileStorageProviderDefault) {
-				this._fileStorageProviderDefault = (environment.fileSystem.name.toUpperCase() as FileStorageProviderEnum) || FileStorageProviderEnum.LOCAL;
+				this._fileStorageProviderDefault =
+					(environment.fileSystem.name.toUpperCase() as FileStorageProviderEnum) ||
+					FileStorageProviderEnum.LOCAL;
 			}
 
 			this.initProvider();

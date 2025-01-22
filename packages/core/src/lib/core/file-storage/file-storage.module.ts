@@ -1,6 +1,6 @@
 import { NestModule, MiddlewareConsumer, Module } from '@nestjs/common';
-import { TenantSettingsMiddleware } from './tenant-settings.middleware';
 import { TenantSettingModule } from '../../tenant/tenant-setting/tenant-setting.module';
+import { TenantSettingsMiddleware } from '../../tenant/tenant-setting/tenant-settings.middleware';
 
 @Module({
 	imports: [TenantSettingModule],
