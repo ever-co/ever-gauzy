@@ -4,6 +4,7 @@ import { RequestContext } from '../../../core/context';
 import { EmployeeAvailabilityService } from '../../employee-availability.service';
 import { EmployeeAvailability } from '../../employee-availability.entity';
 import { EmployeeAvailabilityCreateCommand } from '../employee-availability.create.command';
+import { BadRequestException } from '@nestjs/common';
 
 @CommandHandler(EmployeeAvailabilityCreateCommand)
 export class EmployeeAvailabilityCreateHandler implements ICommandHandler<EmployeeAvailabilityCreateCommand> {
@@ -12,7 +13,9 @@ export class EmployeeAvailabilityCreateHandler implements ICommandHandler<Employ
 	public async execute(command: EmployeeAvailabilityCreateCommand): Promise<IEmployeeAvailability> {
 		const { input } = command;
 		const { startDate, endDate } = input;
-		if (!startDate || !endDate) return;
+		if (!startDate || !endDate) {
+			throw new BadRequestException('Start date and end date are required.');
+		}
 		const tenantId = RequestContext.currentTenantId();
 
 		const availability = new EmployeeAvailability({

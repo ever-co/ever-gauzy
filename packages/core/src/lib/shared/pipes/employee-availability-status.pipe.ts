@@ -1,5 +1,5 @@
-import { AvailabilityStatusEnum } from '@gauzy/contracts';
 import { ValueTransformer } from 'typeorm';
+import { AvailabilityStatusEnum } from '@gauzy/contracts';
 
 /**
  * Transformer to handle the conversion between the enum values

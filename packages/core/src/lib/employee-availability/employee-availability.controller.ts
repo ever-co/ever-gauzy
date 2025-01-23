@@ -1,12 +1,12 @@
+import { UpdateResult } from 'typeorm';
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ID, IEmployeeAvailability, IEmployeeAvailabilityCreateInput, IPagination } from '@gauzy/contracts';
 import { EmployeeAvailabilityService } from './employee-availability.service';
 import { EmployeeAvailability } from './employee-availability.entity';
-import { CrudController } from '../core';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ParseJsonPipe, TenantPermissionGuard, UUIDValidationPipe } from '../shared';
-import { ID, IEmployeeAvailability, IEmployeeAvailabilityCreateInput, IPagination } from '@gauzy/contracts';
-import { UpdateResult } from 'typeorm';
+import { CrudController, PaginationParams } from '../core';
+import { TenantPermissionGuard, UUIDValidationPipe } from '../shared';
 import { EmployeeAvailabilityBulkCreateCommand, EmployeeAvailabilityCreateCommand } from './commands';
 
 @ApiTags('EmployeeAvailability')
@@ -57,9 +57,10 @@ export class EmployeeAvailabilityController extends CrudController<EmployeeAvail
 		description: 'No availability records found.'
 	})
 	@Get()
-	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IEmployeeAvailability>> {
-		const { relations, findInput } = data;
-		return this.availabilityService.findAll({ where: findInput, relations });
+	async findAll(
+		@Query() filter: PaginationParams<EmployeeAvailability>
+	): Promise<IPagination<IEmployeeAvailability>> {
+		return this.availabilityService.findAll(filter);
 	}
 
 	/**

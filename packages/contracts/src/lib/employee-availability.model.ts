@@ -1,6 +1,5 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IEmployee } from './employee.model';
-import { IOrganization } from './organization.model';
 
 /**
  * Enum representing the availability status of an employee.
@@ -13,7 +12,7 @@ export enum AvailabilityStatusEnum {
 
 export interface IEmployeeAvailability extends IBasePerTenantAndOrganizationEntityModel {
 	employee: IEmployee;
-	employeeId: string;
+	employeeId: ID;
 	startDate: Date;
 	endDate: Date;
 	dayOfWeek: number; // 0 = Sunday, 6 = Saturday
@@ -25,7 +24,7 @@ export interface IEmployeeAvailability extends IBasePerTenantAndOrganizationEnti
  * Input interface for finding Employee Availability records.
  */
 export interface IEmployeeAvailabilityFindInput {
-	employeeId?: string;
+	employeeId?: ID;
 	availabilityStatus?: AvailabilityStatusEnum;
 	startDate?: Date;
 	endDate?: Date;
@@ -35,7 +34,7 @@ export interface IEmployeeAvailabilityFindInput {
  * Input interface for creating new Employee Availability records.
  */
 export interface IEmployeeAvailabilityCreateInput extends IBasePerTenantAndOrganizationEntityModel {
-	employeeId: string;
+	employeeId: ID;
 	startDate: Date;
 	endDate: Date;
 	dayOfWeek: number; // 0 = Sunday, 6 = Saturday
@@ -47,7 +46,7 @@ export interface IEmployeeAvailabilityCreateInput extends IBasePerTenantAndOrgan
  * Input interface for updating Employee Availability records.
  */
 export interface IEmployeeAvailabilityUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
-	employeeId?: string;
+	employeeId?: ID;
 	startDate?: Date;
 	endDate?: Date;
 	dayOfWeek?: number; // 0 = Sunday, 6 = Saturday

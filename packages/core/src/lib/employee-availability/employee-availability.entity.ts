@@ -23,15 +23,13 @@ export class EmployeeAvailability extends TenantOrganizationBaseEntity implement
 	@ApiProperty({ type: () => Number, description: 'Day of the week (0 = Sunday, 6 = Saturday)' })
 	@IsInt()
 	@IsNotEmpty()
-	@MultiORMColumn({ type: 'int', check: 'day_of_week BETWEEN 0 AND 6' })
+	@MultiORMColumn({ check: 'day_of_week BETWEEN 0 AND 6' })
 	dayOfWeek: number;
 
 	@ApiProperty({ enum: AvailabilityStatusEnum })
 	@IsOptional()
 	@IsEnum(AvailabilityStatusEnum)
 	@MultiORMColumn({
-		type: 'int',
-		nullable: true,
 		transformer: new AvailabilityStatusTransformer()
 	})
 	availabilityStatus: AvailabilityStatusEnum;
@@ -43,7 +41,7 @@ export class EmployeeAvailability extends TenantOrganizationBaseEntity implement
 	})
 	@IsString()
 	@IsOptional()
-	@MultiORMColumn({ type: 'text', nullable: true })
+	@MultiORMColumn({ nullable: true })
 	availabilityNotes?: string;
 
 	/*
@@ -56,7 +54,6 @@ export class EmployeeAvailability extends TenantOrganizationBaseEntity implement
 	 * Employee
 	 */
 	@MultiORMManyToOne(() => Employee, {
-		nullable: false,
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -64,6 +61,6 @@ export class EmployeeAvailability extends TenantOrganizationBaseEntity implement
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: EmployeeAvailability) => it.employee)
-	@MultiORMColumn({ type: 'uuid' })
+	@MultiORMColumn()
 	employeeId: ID;
 }
