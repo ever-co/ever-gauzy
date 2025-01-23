@@ -1,11 +1,13 @@
 import { CanActivate, ExecutionContext, Injectable, NotFoundException, Type } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { FEATURE_METADATA } from '@gauzy/utils';
+import { FEATURE_METADATA } from '@gauzy/common';
 import { gauzyToggleFeatures } from '@gauzy/config';
 import { FeatureEnum } from '@gauzy/contracts';
 
 @Injectable()
 export class StatsGuard implements CanActivate {
+	public loggingEnabled: boolean = false;
+
 	constructor(private readonly _reflector: Reflector) {}
 
 	/**
@@ -28,8 +30,10 @@ export class StatsGuard implements CanActivate {
 			// Check if the feature is enabled
 			const isEnabled = !!gauzyToggleFeatures[featureFlag];
 
-			// Log the feature flag and its status
-			console.log(`Guard: FeatureFlag ${featureFlag} is ${isEnabled ? 'enabled' : 'disabled'}`);
+			if (this.loggingEnabled) {
+				// Log the feature flag and its status
+				console.log(`Guard: FeatureFlag ${featureFlag} is ${isEnabled ? 'enabled' : 'disabled'}`);
+			}
 
 			// If the feature is enabled, proceed with the request
 			if (isEnabled) {
