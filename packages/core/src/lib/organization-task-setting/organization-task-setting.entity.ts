@@ -1,29 +1,14 @@
 import { RelationId } from 'typeorm';
-import {
-	IOrganizationProject,
-	IOrganizationTaskSetting,
-	IOrganizationTeam,
-	TaskProofOfCompletionTypeEnum,
-} from '@gauzy/contracts';
+import { TaskProofOfCompletionTypeEnum } from '@gauzy/constants';
+import { ID, IOrganizationProject, IOrganizationTaskSetting, IOrganizationTeam } from '@gauzy/contracts';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	IsBoolean,
-	IsEnum,
-	IsNumber,
-	IsOptional,
-	IsUUID,
-} from 'class-validator';
-import {
-	OrganizationProject,
-	OrganizationTeam,
-	TenantOrganizationBaseEntity,
-} from '../core/entities/internal';
+import { IsBoolean, IsEnum, IsNumber, IsOptional, IsUUID } from 'class-validator';
+import { OrganizationProject, OrganizationTeam, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmOrganizationTaskSettingRepository } from './repository/mikro-orm-organization-task-setting.repository';
 
 @MultiORMEntity('organization_task_setting', { mikroOrmRepository: () => MikroOrmOrganizationTaskSettingRepository })
 export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implements IOrganizationTaskSetting {
-
 	/**
 	 * Indicates whether tasks privacy features are enabled.
 	 * When true, tasks have privacy features such as restricted visibility.
@@ -239,7 +224,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@RelationId((it: OrganizationTaskSetting) => it.project)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	projectId?: IOrganizationProject['id'];
+	projectId?: ID;
 
 	/**
 	 * Organization Team
@@ -259,5 +244,5 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@RelationId((it: OrganizationTaskSetting) => it.organizationTeam)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	organizationTeamId?: IOrganizationTeam['id'];
+	organizationTeamId?: ID;
 }
