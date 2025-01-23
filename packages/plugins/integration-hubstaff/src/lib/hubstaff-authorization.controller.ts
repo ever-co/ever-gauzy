@@ -1,9 +1,10 @@
 import { Controller, Get, HttpException, HttpStatus, Query, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
-import { IHubstaffConfig, Public, createQueryParamsString } from '@gauzy/common';
+import { IHubstaffConfig, Public } from '@gauzy/common';
 import { ConfigService } from '@gauzy/config';
 import { IntegrationEnum } from '@gauzy/contracts';
+import { buildQueryString } from '@gauzy/utils';
 
 @ApiTags('Hubstaff Integrations')
 @Public()
@@ -29,7 +30,7 @@ export class HubstaffAuthorizationController {
 			const hubstaff = this._config.get<IHubstaffConfig>('hubstaff') as IHubstaffConfig;
 
 			// Convert query params object to string
-			const queryParamsString = createQueryParamsString({
+			const queryParamsString = buildQueryString({
 				code: query.code,
 				state: query.state
 			});

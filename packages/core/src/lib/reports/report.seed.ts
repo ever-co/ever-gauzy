@@ -1,10 +1,10 @@
-import { ApplicationPluginConfig } from '@gauzy/common';
-import { environment as env, DatabaseTypeEnum } from '@gauzy/config';
-import { IReport, IReportCategory, IReportOrganization, ITenant } from '@gauzy/contracts';
 import * as chalk from 'chalk';
 import * as path from 'path';
 import * as rimraf from 'rimraf';
 import { DataSource } from 'typeorm';
+import { ApplicationPluginConfig } from '@gauzy/common';
+import { environment as env, DatabaseTypeEnum } from '@gauzy/config';
+import { IReport, IReportCategory, IReportOrganization, ITenant } from '@gauzy/contracts';
 import { Organization } from './../core/entities/internal';
 import { getDefaultOrganizations } from './../organization/organization.seed';
 import { ReportCategory } from './report-category.entity';
@@ -26,28 +26,28 @@ import { copyAssets } from '../core/seeds/utils';
  * @returns {Promise<IReport[]>} - A promise resolving to the list of created reports.
  */
 export const createDefaultReport = async (
-    dataSource: DataSource,
-    config: Partial<ApplicationPluginConfig>,
-    tenant: ITenant
+	dataSource: DataSource,
+	config: Partial<ApplicationPluginConfig>,
+	tenant: ITenant
 ): Promise<IReport[]> => {
-    // Clean up existing reports and categories
-    await cleanReport(dataSource, config);
+	// Clean up existing reports and categories
+	await cleanReport(dataSource, config);
 
-    // Define default categories
-    const defaultCategories: IReportCategory[] = [
-        new ReportCategory({ name: 'Time Tracking', iconClass: 'fa-clock' }),
-        new ReportCategory({ name: 'Payments', iconClass: 'fa-credit-card' }),
-        new ReportCategory({ name: 'Time Off', iconClass: 'fa-stopwatch' }),
-        new ReportCategory({ name: 'Invoicing', iconClass: 'fa-file-invoice-dollar' }),
-    ];
+	// Define default categories
+	const defaultCategories: IReportCategory[] = [
+		new ReportCategory({ name: 'Time Tracking', iconClass: 'fa-clock' }),
+		new ReportCategory({ name: 'Payments', iconClass: 'fa-credit-card' }),
+		new ReportCategory({ name: 'Time Off', iconClass: 'fa-stopwatch' }),
+		new ReportCategory({ name: 'Invoicing', iconClass: 'fa-file-invoice-dollar' })
+	];
 
-    // Save categories in the database
-    await dataSource.manager.save(defaultCategories);
+	// Save categories in the database
+	await dataSource.manager.save(defaultCategories);
 
-    // Map categories by name for easier assignment
-    const categoryByName = Object.fromEntries(defaultCategories.map((cat) => [cat.name, cat]));
+	// Map categories by name for easier assignment
+	const categoryByName = Object.fromEntries(defaultCategories.map((cat) => [cat.name, cat]));
 
-    // Define default reports
+	// Define default reports
 	const reports: IReport[] = [
 		new Report({
 			name: 'Time & Activity',
@@ -141,15 +141,14 @@ export const createDefaultReport = async (
 		})
 	];
 
-    // Save reports in the database
-    await dataSource.manager.save(reports);
+	// Save reports in the database
+	await dataSource.manager.save(reports);
 
-    // Link reports to the tenant
-    await createDefaultOrganizationsReport(dataSource, reports, tenant);
+	// Link reports to the tenant
+	await createDefaultOrganizationsReport(dataSource, reports, tenant);
 
-    return reports;
+	return reports;
 };
-
 
 /**
  * Cleans up the `report` and `report_category` tables and deletes associated report images.
@@ -161,7 +160,7 @@ export const createDefaultReport = async (
  * @param {Partial<ApplicationPluginConfig>} config - Configuration for the application, including database options.
  * @returns {Promise<void>} - Resolves when the cleanup operation is complete.
  */
-async function cleanReport(dataSource: DataSource, config: Partial<ApplicationPluginConfig>):Promise<void> {
+async function cleanReport(dataSource: DataSource, config: Partial<ApplicationPluginConfig>): Promise<void> {
 	const report = dataSource.getRepository(Report).metadata.tableName;
 	const reportCategory = dataSource.getRepository(ReportCategory).metadata.tableName;
 
@@ -185,7 +184,6 @@ async function cleanReport(dataSource: DataSource, config: Partial<ApplicationPl
 			break;
 		default:
 			throw Error(`cannot clean report, report_category tables due to unsupported database type: ${dbType}`);
-
 	}
 
 	console.log(chalk.green(`CLEANING UP REPORT IMAGES...`));
@@ -229,22 +227,22 @@ async function cleanReport(dataSource: DataSource, config: Partial<ApplicationPl
  * @returns {Promise<IReportOrganization[]>} - A promise resolving to the list of saved report-to-organization associations.
  */
 async function createDefaultOrganizationsReport(
-    dataSource: DataSource,
-    reports: IReport[],
-    tenant: ITenant
+	dataSource: DataSource,
+	reports: IReport[],
+	tenant: ITenant
 ): Promise<IReportOrganization[]> {
-    const organizations = await getDefaultOrganizations(dataSource, tenant);
-    const reportOrganizations = organizations.flatMap((organization) =>
-        reports.map(
-            (report) =>
-                new ReportOrganization({
-                    report,
-                    organization,
-                    tenant,
-                })
-        )
-    );
-    return await dataSource.manager.save(reportOrganizations);
+	const organizations = await getDefaultOrganizations(dataSource, tenant);
+	const reportOrganizations = organizations.flatMap((organization) =>
+		reports.map(
+			(report) =>
+				new ReportOrganization({
+					report,
+					organization,
+					tenant
+				})
+		)
+	);
+	return await dataSource.manager.save(reportOrganizations);
 }
 
 /**
@@ -256,35 +254,32 @@ async function createDefaultOrganizationsReport(
  * @param {ITenant[]} tenants - A list of tenants for which associations are created.
  * @returns {Promise<void>} - Resolves when the associations are saved.
  */
-export async function createRandomTenantOrganizationsReport(
-    dataSource: DataSource,
-    tenants: ITenant[]
-): Promise<void> {
-    try {
-        // Fetch all existing reports
-        const reports = await dataSource.manager.find(Report);
+export async function createRandomTenantOrganizationsReport(dataSource: DataSource, tenants: ITenant[]): Promise<void> {
+	try {
+		// Fetch all existing reports
+		const reports = await dataSource.manager.find(Report);
 
-        for (const tenant of tenants) {
-            const organizations = await dataSource.getRepository(Organization).find({
-                where: { tenantId: tenant.id },
-            });
+		for (const tenant of tenants) {
+			const organizations = await dataSource.getRepository(Organization).find({
+				where: { tenantId: tenant.id }
+			});
 
-            // Generate report-to-organization associations
-            const reportOrganizations = organizations.flatMap((organization) =>
-                reports.map(
-                    (report) =>
-                        new ReportOrganization({
-                            report,
-                            organization,
-                            tenant,
-                        })
-                )
-            );
+			// Generate report-to-organization associations
+			const reportOrganizations = organizations.flatMap((organization) =>
+				reports.map(
+					(report) =>
+						new ReportOrganization({
+							report,
+							organization,
+							tenant
+						})
+				)
+			);
 
-            // Save the associations
-            await dataSource.manager.save(reportOrganizations);
-        }
-    } catch (error) {
-        console.log(chalk.red(`Error seeding random reports:`, error));
-    }
+			// Save the associations
+			await dataSource.manager.save(reportOrganizations);
+		}
+	} catch (error) {
+		console.log(chalk.red(`Error seeding random reports:`, error));
+	}
 }

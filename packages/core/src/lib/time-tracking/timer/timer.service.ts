@@ -17,7 +17,7 @@ import {
 	IEmployeeFindInput,
 	ID
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { TimeLog } from '../../core/entities/internal';
 import { RequestContext } from '../../core/context';
 import {

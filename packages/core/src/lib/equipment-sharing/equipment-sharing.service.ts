@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { Brackets, WhereExpressionBuilder } from 'typeorm';
 import { IEquipmentSharing, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { ConfigService, DatabaseTypeEnum } from '@gauzy/config';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { RequestContext } from '../core/context';

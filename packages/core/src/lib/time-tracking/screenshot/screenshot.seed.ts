@@ -21,23 +21,23 @@ import { AppsNames } from './../activity/activity.seed';
  * @returns {Promise<Screenshot[]>} - A promise that resolves with an array of generated screenshots.
  */
 export const createRandomScreenshot = async (
-    config: Partial<ApplicationPluginConfig>,
-    tenantId: ID,
-    organizationId: ID,
+	config: Partial<ApplicationPluginConfig>,
+	tenantId: ID,
+	organizationId: ID,
 	employeeId: ID,
-    startedAt: Date,
-    stoppedAt: Date,
+	startedAt: Date,
+	stoppedAt: Date
 ): Promise<Screenshot[]> => {
-    // Determine directories based on environment
-    const isElectron = env.isElectron;
-    const isDist = __dirname.includes('dist');
+	// Determine directories based on environment
+	const isElectron = env.isElectron;
+	const isDist = __dirname.includes('dist');
 
 	// Helper to resolve paths based on environment
 	const resolvePath = (isDist: boolean, distPath: string, devPath: string) =>
-    	isDist ? path.resolve(process.cwd(), distPath) : path.resolve(__dirname, devPath);
+		isDist ? path.resolve(process.cwd(), distPath) : path.resolve(__dirname, devPath);
 
 	// Resolve public directory
-	const publicDir = getApiPublicPath();;
+	const publicDir = getApiPublicPath();
 
 	// Resolve asset public directory
 	const assetPublicDir = isElectron
@@ -52,50 +52,50 @@ export const createRandomScreenshot = async (
 		? path.resolve(env.gauzySeedPath, 'screenshots')
 		: path.resolve(config.assetOptions.assetPath || assetPath, 'seed/screenshots');
 
-    const screenshotsDir = path.join('screenshots', moment().format('YYYY/MM/DD'), tenantId, employeeId);
-    const destinationDir = path.join(assetPublicDir, screenshotsDir);
+	const screenshotsDir = path.join('screenshots', moment().format('YYYY/MM/DD'), tenantId, employeeId);
+	const destinationDir = path.join(assetPublicDir, screenshotsDir);
 
-    // Ensure the destination directory exists
-    mkdirSync(destinationDir, { recursive: true });
+	// Ensure the destination directory exists
+	mkdirSync(destinationDir, { recursive: true });
 
-    // Retrieve the list of files from the source directory
-    const fileList = await getList(seedSourceDir);
+	// Retrieve the list of files from the source directory
+	const fileList = await getList(seedSourceDir);
 
-    const screenshots: Screenshot[] = [];
+	const screenshots: Screenshot[] = [];
 
-    // Generate random screenshots
-    for (let i = 0; i < randomSeedConfig.noOfScreenshotPerTimeSlot; i++) {
+	// Generate random screenshots
+	for (let i = 0; i < randomSeedConfig.noOfScreenshotPerTimeSlot; i++) {
 		// Get a random file from the file list
-        const sourceFile = faker.helpers.arrayElement(fileList);
+		const sourceFile = faker.helpers.arrayElement(fileList);
 		// Get the full path to the file
-        const sourceFilePath = path.join(seedSourceDir, sourceFile);
+		const sourceFilePath = path.join(seedSourceDir, sourceFile);
 		// Generate a unique file name for the screenshot
-        const fileName = `screenshot-${moment().unix()}-${faker.number.int(9999)}.png`;
+		const fileName = `screenshot-${moment().unix()}-${faker.number.int(9999)}.png`;
 		// Get the full path to the destination file
-        const destFilePath = path.join(destinationDir, fileName);
-        // Copy the screenshot file to the destination directory
-        copyFileSync(sourceFilePath, destFilePath);
+		const destFilePath = path.join(destinationDir, fileName);
+		// Copy the screenshot file to the destination directory
+		copyFileSync(sourceFilePath, destFilePath);
 		// Get the relative path to the destination file
-        const relativePath = path.join(screenshotsDir, fileName);
+		const relativePath = path.join(screenshotsDir, fileName);
 
-        // Construct the screenshot metadata
-        const screenshot = new Screenshot();
-        screenshot.tenantId = tenantId;
-        screenshot.organizationId = organizationId;
-        screenshot.fullUrl = relativePath;
-        screenshot.file = relativePath;
-        screenshot.thumb = relativePath;
-        screenshot.thumbUrl = relativePath;
-        screenshot.recordedAt = faker.date.between({ from: startedAt, to: stoppedAt });
-        screenshot.storageProvider = FileStorageProviderEnum.LOCAL;
-        screenshot.isWorkRelated = faker.helpers.arrayElement([true, false]);
-        screenshot.apps = faker.helpers.arrayElements(AppsNames, 2);
-        screenshot.description = faker.lorem.sentences({ min: 1, max: 3 });
+		// Construct the screenshot metadata
+		const screenshot = new Screenshot();
+		screenshot.tenantId = tenantId;
+		screenshot.organizationId = organizationId;
+		screenshot.fullUrl = relativePath;
+		screenshot.file = relativePath;
+		screenshot.thumb = relativePath;
+		screenshot.thumbUrl = relativePath;
+		screenshot.recordedAt = faker.date.between({ from: startedAt, to: stoppedAt });
+		screenshot.storageProvider = FileStorageProviderEnum.LOCAL;
+		screenshot.isWorkRelated = faker.helpers.arrayElement([true, false]);
+		screenshot.apps = faker.helpers.arrayElements(AppsNames, 2);
+		screenshot.description = faker.lorem.sentences({ min: 1, max: 3 });
 
-        screenshots.push(screenshot);
-    }
+		screenshots.push(screenshot);
+	}
 
-    return screenshots;
+	return screenshots;
 };
 
 /**

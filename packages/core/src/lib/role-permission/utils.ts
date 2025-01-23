@@ -4,7 +4,7 @@ import * as chalk from 'chalk';
 import * as moment from 'moment';
 import { DatabaseTypeEnum, environment } from '@gauzy/config';
 import { ID, IRole, ITenant, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from '../database/database.helper';
 import { replacePlaceholders } from '../core/utils';
 import { DEFAULT_ROLE_PERMISSIONS } from './default-role-permissions';

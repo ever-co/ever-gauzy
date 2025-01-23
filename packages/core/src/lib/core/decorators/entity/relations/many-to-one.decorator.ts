@@ -1,7 +1,6 @@
 import { Cascade, EntityName, ManyToOneOptions } from '@mikro-orm/core';
 import { omit } from 'underscore';
-import { deepClone } from '@gauzy/common';
-import { ObjectUtils } from '../../../../core/util/object-utils';
+import { deepClone, isObject } from '@gauzy/utils';
 import { TypeOrmManyToOne } from './type-orm';
 import { MikroOrmManyToOne } from './mikro-orm';
 import {
@@ -57,10 +56,10 @@ export function MultiORMManyToOne<T, O>(
 	// Normalize parameters.
 	let inverseSideProperty: InverseSide<T>;
 
-	if (ObjectUtils.isObject(inverseSideOrOptions)) {
+	if (isObject(inverseSideOrOptions)) {
 		options = <RelationOptions<T, O>>inverseSideOrOptions;
 	} else {
-		inverseSideProperty = inverseSideOrOptions as any;
+		inverseSideProperty = inverseSideOrOptions as InverseSide<T>;
 	}
 
 	return (target: any, propertyKey: string) => {

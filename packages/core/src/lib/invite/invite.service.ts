@@ -27,7 +27,8 @@ import {
 	IUserRegistrationInput,
 	IPagination
 } from '@gauzy/contracts';
-import { IAppIntegrationConfig, isNotEmpty } from '@gauzy/common';
+import { IAppIntegrationConfig } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
 import { RequestContext } from './../core/context';
@@ -256,7 +257,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 
 			if (input.inviteType === InvitationTypeEnum.TEAM && callbackUrl) {
 				// Convert query params object to string
-				const queryParamsString = this.createQueryParamsString({
+				const queryParamsString = this.buildQueryString({
 					email: item.email,
 					code: item.code
 				});
@@ -320,7 +321,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	 */
 	private createAcceptInvitationUrl(origin: string, email: string, token: string): string {
 		const acceptInviteUrl = `${origin}/#/auth/accept-invite`;
-		const queryParamsString = this.createQueryParamsString({ email, token });
+		const queryParamsString = this.buildQueryString({ email, token });
 		return [acceptInviteUrl, queryParamsString].filter(Boolean).join('?'); // Combine current URL with updated query params
 	}
 
@@ -329,7 +330,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	 * @param queryParams An object containing query parameters.
 	 * @returns A string representation of the query parameters.
 	 */
-	private createQueryParamsString(queryParams: { [key: string]: string | string[] | boolean }): string {
+	private buildQueryString(queryParams: { [key: string]: string | string[] | boolean }): string {
 		return Object.keys(queryParams)
 			.map((key) => {
 				const value = queryParams[key];

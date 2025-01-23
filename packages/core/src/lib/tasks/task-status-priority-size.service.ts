@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Repository as TypeOrmBaseEntityRepository, SelectQueryBuilder, IsNull, FindManyOptions } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import {
 	FileStorageProviderEnum,
 	IIssueTypeFindInput,

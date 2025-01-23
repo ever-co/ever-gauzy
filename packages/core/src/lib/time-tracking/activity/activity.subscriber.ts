@@ -1,5 +1,5 @@
 import { EventSubscriber } from 'typeorm';
-import { isJsObject } from '@gauzy/common';
+import { isJsObject } from '@gauzy/utils';
 import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';
 import { Activity } from './activity.entity';
