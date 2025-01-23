@@ -1,8 +1,9 @@
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { IUser, ITag, IRole, IUserUpdateInput, RolesEnum, IImageAsset, DEFAULT_TIME_FORMATS } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject, filter, debounceTime, tap, firstValueFrom } from 'rxjs';
+import { DEFAULT_TIME_FORMATS } from '@gauzy/constants';
+import { IUser, ITag, IRole, IUserUpdateInput, RolesEnum, IImageAsset } from '@gauzy/contracts';
 import {
 	AuthService,
 	EmailValidator,
@@ -117,9 +118,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	async excludeRoles(): Promise<void> {
 		try {
 			// Check if the user has the SUPER_ADMIN role
-			const hasSuperAdminRole = await firstValueFrom(
-				this._authService.hasRole([RolesEnum.SUPER_ADMIN])
-			);
+			const hasSuperAdminRole = await firstValueFrom(this._authService.hasRole([RolesEnum.SUPER_ADMIN]));
 
 			// Add SUPER_ADMIN to the excludes list if the user lacks the role
 			if (!hasSuperAdminRole) {
