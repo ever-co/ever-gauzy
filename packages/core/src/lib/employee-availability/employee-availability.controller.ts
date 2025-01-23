@@ -2,7 +2,7 @@ import { UpdateResult } from 'typeorm';
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ID, IEmployeeAvailability, IEmployeeAvailabilityCreateInput, IPagination } from '@gauzy/contracts';
+import { ID, IEmployeeAvailability, IPagination } from '@gauzy/contracts';
 import { EmployeeAvailabilityService } from './employee-availability.service';
 import { EmployeeAvailability } from './employee-availability.entity';
 import { CrudController, PaginationParams } from '../core';
