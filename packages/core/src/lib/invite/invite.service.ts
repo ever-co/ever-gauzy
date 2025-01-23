@@ -5,6 +5,7 @@ import { FindManyOptions, FindOptionsWhere, In, IsNull, MoreThanOrEqual, Not, Se
 import { addDays } from 'date-fns';
 import { pick } from 'underscore';
 import { ConfigService, environment } from '@gauzy/config';
+import { DEFAULT_INVITE_EXPIRY_PERIOD } from '@gauzy/constants';
 import {
 	ICreateEmailInvitesInput,
 	ICreateEmailInvitesOutput,
@@ -14,7 +15,6 @@ import {
 	ICreateOrganizationContactInviteInput,
 	RolesEnum,
 	LanguagesEnum,
-	DEFAULT_INVITE_EXPIRY_PERIOD,
 	IOrganization,
 	IEmployee,
 	IRole,

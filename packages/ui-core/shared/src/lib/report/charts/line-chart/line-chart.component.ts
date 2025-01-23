@@ -15,7 +15,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActiveElement, Chart, ChartConfiguration, ChartDataset, ChartEvent, ChartType, TooltipItem } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import annotationPlugin, { AnnotationPluginOptions } from 'chartjs-plugin-annotation';
-import { DEFAULT_STANDARD_WORK_HOURS_PER_DAY } from '@gauzy/contracts';
+import { DEFAULT_STANDARD_WORK_HOURS_PER_DAY } from '@gauzy/constants';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ChartUtil } from './chart-utils';
 

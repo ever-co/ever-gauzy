@@ -1,1 +1,1 @@
-export const placeholder = '@gauzy/constants';
+export * from './lib/organization';

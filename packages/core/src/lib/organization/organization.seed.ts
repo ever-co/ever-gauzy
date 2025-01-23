@@ -3,6 +3,7 @@ import * as moment from 'moment';
 import * as timezone from 'moment-timezone';
 import { DataSource } from 'typeorm';
 import { faker } from '@faker-js/faker';
+import { DEFAULT_DATE_FORMATS } from '@gauzy/constants';
 import {
 	DefaultValueDateTypeEnum,
 	BonusTypeEnum,
@@ -10,7 +11,6 @@ import {
 	AlignmentOptions,
 	IOrganization,
 	ITenant,
-	DEFAULT_DATE_FORMATS,
 	ISkill,
 	IContact
 } from '@gauzy/contracts';

@@ -3,8 +3,9 @@ import { FormBuilder, FormGroup, NgForm } from '@angular/forms';
 import { filter, tap } from 'rxjs';
 import { NbAccordionComponent, NbAccordionItemComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import moment from 'moment';
-import { DEFAULT_TIME_FORMATS, IEmployee } from '@gauzy/contracts';
+import * as moment from 'moment';
+import { DEFAULT_TIME_FORMATS } from '@gauzy/constants';
+import { IEmployee } from '@gauzy/contracts';
 import { EmployeeStore } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
