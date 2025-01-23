@@ -32,4 +32,5 @@ export * from './lib/parse-to-boolean';
 export * from './lib/trim-if-not-empty';
 export * from './lib/uc-first';
 export * from './lib/slugify';
+export * from './lib/sleep';
 export * from './lib/version';
