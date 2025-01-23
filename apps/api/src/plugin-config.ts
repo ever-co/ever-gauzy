@@ -6,7 +6,7 @@ import {
 	DEFAULT_GRAPHQL_API_PATH,
 	DEFAULT_API_HOST,
 	DEFAULT_API_BASE_URL
-} from '@gauzy/utils';
+} from '@gauzy/common';
 import {
 	dbTypeOrmConnectionConfig,
 	dbMikroOrmConnectionConfig,
