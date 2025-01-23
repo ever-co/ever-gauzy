@@ -43,6 +43,7 @@
         "@gauzy/auth": "^0.1.0",
         "@gauzy/common": "^0.1.0",
         "@gauzy/config": "^0.1.0",
+        "@gauzy/constants": "^0.1.0",
         "@gauzy/contracts": "^0.1.0",
         "@gauzy/plugin": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
