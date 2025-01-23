@@ -111,6 +111,14 @@ export class VideoPageComponent extends BaseSelectorFilterComponent implements O
 		this.videoStore.update({ videos: [] });
 	}
 
+	public get count$(): Observable<number> {
+		return this.videoQuery.count$;
+	}
+
+	public get isLoading$(): Observable<boolean> {
+		return this.videoQuery.isLoading$;
+	}
+
 	ngOnDestroy() {
 		this.reset();
 	}

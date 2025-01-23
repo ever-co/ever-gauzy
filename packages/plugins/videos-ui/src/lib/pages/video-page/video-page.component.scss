@@ -14,4 +14,10 @@
     padding: 1rem;
     overflow-y: auto;
   }
+
+  ::ng-deep ngx-no-data-message {
+    nb-spinner {
+      border-radius: var(--border-radius);
+    }
+  }
 }

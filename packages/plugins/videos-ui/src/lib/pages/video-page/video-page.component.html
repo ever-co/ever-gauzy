@@ -1,4 +1,7 @@
+@let count = count$ | async; @let isLoading = isLoading$ | async;
+
 <div class="custom-card">
+	@if(count) {
 	<div class="custom-card-header">
 		<ngx-gauzy-filters
 			[isTimeFormat]="true"
@@ -17,7 +20,11 @@
 	>
 		<plug-video-list></plug-video-list>
 	</div>
-	}@error{
-	<ngx-no-data-message message="No video found"></ngx-no-data-message>
+	}@error{ <ngx-no-data-message message="No video found"></ngx-no-data-message> } }@else {
+	<ngx-no-data-message
+		[nbSpinner]="isLoading"
+		[message]="isLoading ? 'Loading videos...' : 'No video found'"
+		nbSpinnerStatus="primary"
+	></ngx-no-data-message>
 	}
 </div>
