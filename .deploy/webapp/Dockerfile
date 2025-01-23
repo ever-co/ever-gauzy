@@ -91,6 +91,7 @@ COPY --chown=node:node apps/gauzy/package.json ./apps/gauzy/
 COPY --chown=node:node packages/common/package.json ./packages/common/
 COPY --chown=node:node packages/utils/package.json ./packages/utils/
 COPY --chown=node:node packages/config/package.json ./packages/config/
+COPY --chown=node:node packages/constants/package.json ./packages/constants/
 COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/auth/package.json ./packages/auth/
 COPY --chown=node:node packages/core/package.json ./packages/core/

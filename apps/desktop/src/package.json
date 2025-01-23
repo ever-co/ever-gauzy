@@ -23,7 +23,6 @@
 		"packages": [
 			"../../../dist/packages/auth",
 			"../../../dist/packages/common",
-			"../../../dist/packages/utils",
 			"../../../dist/packages/config",
 			"../../../dist/packages/contracts",
 			"../../../dist/packages/core",
@@ -45,7 +44,8 @@
 			"../../../dist/packages/plugins/product-reviews",
 			"../../../dist/packages/plugins/sentry-tracing",
 			"../../../dist/packages/plugins/videos",
-			"../../../dist/packages/ui-config"
+			"../../../dist/packages/ui-config",
+			"../../../dist/packages/utils"
 		]
 	},
 	"build": {
