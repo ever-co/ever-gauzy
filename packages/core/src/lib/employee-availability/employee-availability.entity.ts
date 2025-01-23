@@ -30,6 +30,7 @@ export class EmployeeAvailability extends TenantOrganizationBaseEntity implement
 	@IsOptional()
 	@IsEnum(AvailabilityStatusEnum)
 	@MultiORMColumn({
+		type: 'int',
 		transformer: new AvailabilityStatusTransformer()
 	})
 	availabilityStatus: AvailabilityStatusEnum;
