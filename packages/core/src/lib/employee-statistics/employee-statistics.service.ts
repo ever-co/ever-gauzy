@@ -1,14 +1,13 @@
+import { Injectable } from '@nestjs/common';
+import * as moment from 'moment';
+import { DEFAULT_PROFIT_BASED_BONUS, DEFAULT_REVENUE_BASED_BONUS } from '@gauzy/constants';
 import {
 	BonusTypeEnum,
 	IEmployeeStatistics,
 	IEmployeeStatisticsFindInput,
-	DEFAULT_PROFIT_BASED_BONUS,
-	DEFAULT_REVENUE_BASED_BONUS,
 	IMonthAggregatedSplitExpense,
 	IDateRangePicker
 } from '@gauzy/contracts';
-import { Injectable } from '@nestjs/common';
-import * as moment from 'moment';
 import { EmployeeService } from '../employee/employee.service';
 import { ExpenseService } from '../expense/expense.service';
 import { IncomeService } from '../income/income.service';

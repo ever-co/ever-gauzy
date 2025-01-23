@@ -23,7 +23,7 @@ import {
 	ID,
 	SubscriptionTypeEnum
 } from '@gauzy/contracts';
-import { isNotEmpty, parseToBoolean } from '@gauzy/common';
+import { isNotEmpty, parseToBoolean } from '@gauzy/utils';
 import { FavoriteService } from '../core/decorators';
 import { Employee, OrganizationTeamEmployee } from '../core/entities/internal';
 import { MultiORMEnum, enhanceWhereWithTenantId, parseTypeORMFindToMikroOrm } from '../core/utils';

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
 import { IOrganization } from '@gauzy/contracts';
-import { isEmpty } from '@gauzy/common';
+import { isEmpty } from '@gauzy/utils';
 import { RequestContext } from '../../../core/context';
 import { MultiORM, MultiORMEnum, getORMType } from '../../../core/utils';
 import { TypeOrmUserOrganizationRepository } from '../../../user-organization/repository/type-orm-user-organization.repository';

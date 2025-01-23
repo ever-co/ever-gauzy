@@ -1,13 +1,6 @@
 import { DataSource } from 'typeorm';
 import { faker } from '@faker-js/faker';
-import {
-	TimesheetStatus,
-	ITimeSlot,
-	ITenant,
-	IEmployee,
-	ITimesheet,
-	IOrganization
-} from '@gauzy/contracts';
+import { TimesheetStatus, ITimeSlot, ITenant, IEmployee, ITimesheet, IOrganization } from '@gauzy/contracts';
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import * as chalk from 'chalk';
@@ -32,9 +25,7 @@ export const createDefaultTimeSheet = async (
 			const stoppedAt = moment(date).endOf('week').toDate();
 
 			for await (const employee of employees) {
-				const status = faker.helpers.arrayElement(
-					Object.keys(TimesheetStatus)
-				);
+				const status = faker.helpers.arrayElement(Object.keys(TimesheetStatus));
 
 				let isBilled = false;
 				let approvedAt: Date = null;
@@ -82,24 +73,12 @@ export const createDefaultTimeSheet = async (
 			tenantId,
 			organizationId
 		});
-		const timeSlots: ITimeSlot[] = await createRandomTimeLogs(
-			dataSource,
-			config,
-			tenant,
-			createdTimesheets
-		);
+		const timeSlots: ITimeSlot[] = await createRandomTimeLogs(dataSource, config, tenant, createdTimesheets);
 		/**
 		 * Recalculate Timesheet Activities
 		 */
-		await recalculateTimesheetActivity(
-			dataSource,
-			createdTimesheets
-		);
-		await createRandomActivities(
-			dataSource,
-			tenant,
-			timeSlots
-		);
+		await recalculateTimesheetActivity(dataSource, createdTimesheets);
+		await createRandomActivities(dataSource, tenant, timeSlots);
 	} catch (error) {
 		console.log(chalk.red(`SEEDING Default TimeLogs & Activities`, error));
 	}
@@ -131,9 +110,7 @@ export const createRandomTimesheet = async (
 					.shuffle()
 					.take(faker.number.int(employees.length))
 					.each((employee) => {
-						const status = faker.helpers.arrayElement(
-							Object.keys(TimesheetStatus)
-						);
+						const status = faker.helpers.arrayElement(Object.keys(TimesheetStatus));
 
 						let isBilled = false;
 						let approvedAt: Date = null;
@@ -142,14 +119,10 @@ export const createRandomTimesheet = async (
 						if (TimesheetStatus[status] === TimesheetStatus.PENDING) {
 							approvedAt = null;
 							submittedAt = faker.date.past();
-						} else if (
-							TimesheetStatus[status] === TimesheetStatus.IN_REVIEW
-						) {
+						} else if (TimesheetStatus[status] === TimesheetStatus.IN_REVIEW) {
 							approvedAt = null;
 							submittedAt = faker.date.between({ from: startedAt, to: new Date() });
-						} else if (
-							TimesheetStatus[status] === TimesheetStatus.APPROVED
-						) {
+						} else if (TimesheetStatus[status] === TimesheetStatus.APPROVED) {
 							isBilled = faker.helpers.arrayElement([true, false]);
 							approvedAt = faker.date.between({ from: startedAt, to: new Date() });
 							submittedAt = faker.date.between({ from: startedAt, to: approvedAt });
@@ -201,23 +174,23 @@ export const createRandomTimesheet = async (
  * @param tenant - The tenant for which the time logs and activities are seeded.
  */
 const seedTimeLogsAndActivities = async (
-    dataSource: DataSource,
-    config: Partial<ApplicationPluginConfig>,
-    tenant: ITenant
+	dataSource: DataSource,
+	config: Partial<ApplicationPluginConfig>,
+	tenant: ITenant
 ): Promise<void> => {
-    const { id: tenantId } = tenant;
+	const { id: tenantId } = tenant;
 
-    // Fetch all timesheets for the current tenant
-    const createdTimesheets = await dataSource.manager.findBy(Timesheet, { tenantId });
+	// Fetch all timesheets for the current tenant
+	const createdTimesheets = await dataSource.manager.findBy(Timesheet, { tenantId });
 
-    // Create random time logs for the tenant
-    const timeSlots = await createRandomTimeLogs(dataSource, config, tenant, createdTimesheets);
+	// Create random time logs for the tenant
+	const timeSlots = await createRandomTimeLogs(dataSource, config, tenant, createdTimesheets);
 
-    // Recalculate timesheet activities
-    await recalculateTimesheetActivity(dataSource, createdTimesheets);
+	// Recalculate timesheet activities
+	await recalculateTimesheetActivity(dataSource, createdTimesheets);
 
-    // Create random activities for the tenant
-    await createRandomActivities(dataSource, tenant, timeSlots);
+	// Create random activities for the tenant
+	await createRandomActivities(dataSource, tenant, timeSlots);
 
-    console.log(chalk.green(`Seeded TimeLogs and Activities for tenant: ${tenantId}`));
+	console.log(chalk.green(`Seeded TimeLogs and Activities for tenant: ${tenantId}`));
 };

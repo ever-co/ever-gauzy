@@ -1,28 +1,22 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CommandBus } from '@nestjs/cqrs';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../../../core';
 import { ImportRecordFindOrFailCommand } from './../../../import-record';
 import { ImportEntityFieldMapOrCreateCommand } from './../import-entity-field-map-or-create.command';
 
 @CommandHandler(ImportEntityFieldMapOrCreateCommand)
-export class ImportEntityFieldMapOrCreateHandler 
-	implements ICommandHandler<ImportEntityFieldMapOrCreateCommand> {
-	
-	constructor(
-		private readonly _commandBus: CommandBus
-	) {}
+export class ImportEntityFieldMapOrCreateHandler implements ICommandHandler<ImportEntityFieldMapOrCreateCommand> {
+	constructor(private readonly _commandBus: CommandBus) {}
 
-	public async execute(
-		event: ImportEntityFieldMapOrCreateCommand
-	): Promise<any> {
+	public async execute(event: ImportEntityFieldMapOrCreateCommand): Promise<any> {
 		const { repository, where, entity, sourceId } = event;
 		try {
 			if (isNotEmpty(where)) {
 				return await repository.findOneOrFail({
 					where,
-					order : {
+					order: {
 						createdAt: 'DESC'
 					}
 				});
@@ -39,9 +33,9 @@ export class ImportEntityFieldMapOrCreateHandler
 				);
 				if (success && record) {
 					const { destinationId } = record;
-					return await repository.save({ 
-						id: destinationId, 
-						...entity 
+					return await repository.save({
+						id: destinationId,
+						...entity
 					});
 				}
 				throw new NotFoundException(`The import record was not found`);

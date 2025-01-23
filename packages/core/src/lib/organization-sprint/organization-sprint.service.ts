@@ -12,7 +12,7 @@ import {
 	ActionTypeEnum,
 	SubscriptionTypeEnum
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationSprintEmployee } from '../core/entities/internal';

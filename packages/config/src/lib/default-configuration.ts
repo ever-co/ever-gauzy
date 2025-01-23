@@ -23,12 +23,12 @@ console.log('Default Config -> process.cwd: ' + process.cwd());
 
 // For Docker environment
 if (__dirname.startsWith('/srv/gauzy')) {
-    // Set paths specific to Docker deployment
-    assetPath = '/srv/gauzy/apps/api/src/assets';
-    assetPublicPath = '/srv/gauzy/apps/api/public';
+	// Set paths specific to Docker deployment
+	assetPath = '/srv/gauzy/apps/api/src/assets';
+	assetPublicPath = '/srv/gauzy/apps/api/public';
 } else {
-    // Determine if running in production (dist) or development (src)
-    const isDist = __dirname.includes(path.join('dist'));
+	// Determine if running in production (dist) or development (src)
+	const isDist = __dirname.includes(path.join('dist'));
 	console.log('Default Config -> isDist: ' + isDist);
 
 	// Adjust the base path based on the environment

@@ -9,7 +9,7 @@ import { Auth } from 'upwork-api/lib/routers/auth.js';
 import { Users } from 'upwork-api/lib/routers/organization/users.js';
 import { pluck, map, sortBy } from 'underscore';
 import * as moment from 'moment';
-import { isEmpty, isNotEmpty, isObject } from '@gauzy/common';
+import { isEmpty, isNotEmpty, isObject } from '@gauzy/utils';
 import { environment } from '@gauzy/config';
 import {
 	IAccessTokenSecretPair,

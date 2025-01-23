@@ -2,7 +2,7 @@ import { Brackets, DataSource, WhereExpressionBuilder } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { filter, uniq } from 'underscore';
 import { lastValueFrom, map } from 'rxjs';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
 import { IGetTaskOptions, IOrganization, ITag, ITenant } from '@gauzy/contracts';

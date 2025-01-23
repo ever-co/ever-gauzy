@@ -15,7 +15,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { StorageEngine } from 'multer';
 import { environment } from '@gauzy/config';
 import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
-import { trimAndGetValue } from '@gauzy/common';
+import { trimIfNotEmpty } from '@gauzy/utils';
 import { Provider } from './provider';
 import { RequestContext } from '../../context';
 
@@ -48,7 +48,7 @@ export class S3Provider extends Provider<S3Provider> {
 	public config: IS3ProviderConfig;
 	public defaultConfig: IS3ProviderConfig;
 
-	private readonly _detailedLoggingEnabled= false;
+	private readonly _detailedLoggingEnabled = false;
 
 	constructor() {
 		super();
@@ -96,19 +96,19 @@ export class S3Provider extends Provider<S3Provider> {
 					if (this._detailedLoggingEnabled)
 						console.log(`setWasabiConfiguration Tenant Settings value: ${JSON.stringify(settings)}`);
 
-					if (trimAndGetValue(settings.aws_access_key_id))
-						this.config.aws_access_key_id = trimAndGetValue(settings.aws_access_key_id);
+					if (trimIfNotEmpty(settings.aws_access_key_id))
+						this.config.aws_access_key_id = trimIfNotEmpty(settings.aws_access_key_id);
 
-					if (trimAndGetValue(settings.aws_secret_access_key))
-						this.config.aws_secret_access_key = trimAndGetValue(settings.aws_secret_access_key);
+					if (trimIfNotEmpty(settings.aws_secret_access_key))
+						this.config.aws_secret_access_key = trimIfNotEmpty(settings.aws_secret_access_key);
 
-					if (trimAndGetValue(settings.aws_default_region))
-						this.config.aws_default_region = trimAndGetValue(settings.aws_default_region);
+					if (trimIfNotEmpty(settings.aws_default_region))
+						this.config.aws_default_region = trimIfNotEmpty(settings.aws_default_region);
 
-					if (trimAndGetValue(settings.aws_bucket))
-						this.config.aws_bucket = trimAndGetValue(settings.aws_bucket);
+					if (trimIfNotEmpty(settings.aws_bucket))
+						this.config.aws_bucket = trimIfNotEmpty(settings.aws_bucket);
 
-					const forcePathStyle = trimAndGetValue(settings.aws_force_path_style);
+					const forcePathStyle = trimIfNotEmpty(settings.aws_force_path_style);
 
 					if (forcePathStyle) {
 						this.config.aws_force_path_style = forcePathStyle === 'true' || forcePathStyle === '1';

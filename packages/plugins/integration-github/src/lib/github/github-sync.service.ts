@@ -11,8 +11,6 @@ import {
 	IGithubInstallationDeletedPayload,
 	IIntegrationEntitySetting,
 	IIntegrationEntitySettingTied,
-	IIntegrationTenant,
-	IOrganization,
 	IOrganizationProject,
 	ITag,
 	IntegrationEntity,
@@ -22,9 +20,9 @@ import {
 	IIntegrationMap,
 	GithubRepositoryStatusEnum,
 	SYNC_TAG_GAUZY,
-	SYNC_TAG_GITHUB
+	SYNC_TAG_GITHUB,
+	ID
 } from '@gauzy/contracts';
-import { isNotEmpty, sleep } from '@gauzy/common';
 import {
 	AutomationLabelSyncCommand,
 	AutomationTaskSyncCommand,
@@ -35,6 +33,7 @@ import {
 	RequestContext,
 	arrayToObject
 } from '@gauzy/core';
+import { isNotEmpty, sleep } from '@gauzy/utils';
 import { OctokitService } from '../probot/octokit.service';
 import { GithubRepositoryService } from './repository/github-repository.service';
 import { IntegrationSyncGithubRepositoryIssueCommand } from './repository/issue/commands';
@@ -54,13 +53,13 @@ export class GithubSyncService {
 	/**
 	 * Automatically synchronize GitHub issues with a repository.
 	 *
-	 * @param {IIntegrationTenant['id']} integrationId - The ID of the integration tenant.
+	 * @param {ID} integrationId - The ID of the integration tenant.
 	 * @param {IGithubSyncIssuePayload} input - The payload containing GitHub repository details and issues.
 	 * @param {Request} request - The HTTP request object.
 	 * @returns {Promise<boolean>} A Promise that indicates whether the synchronization was successful.
 	 */
 	public async autoSyncGithubIssues(
-		integrationId: IIntegrationTenant['id'],
+		integrationId: ID,
 		input: IGithubSyncIssuePayload,
 		request: Request
 	): Promise<boolean> {
@@ -137,13 +136,13 @@ export class GithubSyncService {
 	/**
 	 * Manually synchronize GitHub issues with a repository.
 	 *
-	 * @param {IIntegrationTenant['id']} integrationId - The ID of the integration tenant.
+	 * @param {ID} integrationId - The ID of the integration tenant.
 	 * @param {IGithubSyncIssuePayload} input - The payload containing GitHub repository details and issues.
 	 * @param {Request} request - The HTTP request object.
 	 * @returns {Promise<boolean>} A Promise indicating whether the synchronization was successful.
 	 */
 	public async manualSyncGithubIssues(
-		integrationId: IIntegrationTenant['id'],
+		integrationId: ID,
 		input: IGithubSyncIssuePayload,
 		request: Request
 	): Promise<boolean> {
@@ -198,7 +197,7 @@ export class GithubSyncService {
 	 * @throws {HttpException} Throws an HTTP exception if synchronization fails.
 	 */
 	public async syncingGithubIssues(
-		integrationId: IIntegrationTenant['id'],
+		integrationId: ID,
 		input: IGithubSyncIssuePayload,
 		delay: number = 100,
 		successCallback?: (success: boolean) => void,
@@ -356,9 +355,9 @@ export class GithubSyncService {
 		repository,
 		issue
 	}: {
-		organizationId: IOrganization['id'];
-		tenantId: IOrganization['tenantId'];
-		integrationId: IIntegrationTenant['id'];
+		organizationId: ID;
+		tenantId: ID;
+		integrationId: ID;
 		repository: IOrganizationGithubRepository;
 		issue: IGithubIssue;
 	}): Promise<ITag[]> {

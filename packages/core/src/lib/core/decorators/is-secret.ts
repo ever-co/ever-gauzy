@@ -1,4 +1,4 @@
-import { isClassInstance, isNotEmpty, isObject } from "@gauzy/common";
+import { isClassInstance, isNotEmpty, isObject } from '@gauzy/utils';
 
 /**
  * Checks if value is needs to be wrap with specific character.
@@ -8,12 +8,8 @@ import { isClassInstance, isNotEmpty, isObject } from "@gauzy/common";
  */
 export function IsSecret(boolean: boolean = true): PropertyDecorator {
 	return (target, property) => {
-		Reflect.defineMetadata(
-			property,
-			boolean,
-			target
-		);
-	}
+		Reflect.defineMetadata(property, boolean, target);
+	};
 }
 
 /**
@@ -25,12 +21,7 @@ export function IsSecret(boolean: boolean = true): PropertyDecorator {
  * @param character - The character used for replacement.
  * @returns The object with specified keys wrapped.
  */
-export function WrapSecrets(
-	secrets: Record<string, any>,
-	targets: any | any[],
-	percentage = 35,
-	character = '*'
-) {
+export function WrapSecrets(secrets: Record<string, any>, targets: any | any[], percentage = 35, character = '*') {
 	// Check if found class target, convert it into array to use for loop
 	if (isClassInstance(targets)) {
 		targets = [targets];

@@ -7,7 +7,7 @@ import {
 	IOrganizationTeamStatisticInput,
 	ITimerStatus
 } from '@gauzy/contracts';
-import { parseToBoolean } from '@gauzy/common';
+import { parseToBoolean } from '@gauzy/utils';
 import { OrganizationTeam } from './../../core/entities/internal';
 import { StatisticService } from './../../time-tracking/statistic';
 import { TimerService } from './../../time-tracking/timer/timer.service';

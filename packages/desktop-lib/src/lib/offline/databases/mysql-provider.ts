@@ -8,6 +8,7 @@ export class MysqlProvider implements IClientServerProvider {
 	private static _instance: IClientServerProvider;
 	private _connection: Knex;
 	private _database: string;
+	private readonly CLIENT = 'mysql2';
 
 	private constructor() {
 		this._initialization();
@@ -17,13 +18,13 @@ export class MysqlProvider implements IClientServerProvider {
 
 	public get config(): Knex.Config {
 		return {
-			client: 'mysql',
+			client: this.CLIENT,
 			connection: {
 				...this._connectionConfig,
-				database: this._database,
+				database: this._database
 			},
 			migrations: {
-				directory: __dirname + '/migrations',
+				directory: __dirname + '/migrations'
 			},
 			pool: {
 				min: 2,
@@ -32,10 +33,10 @@ export class MysqlProvider implements IClientServerProvider {
 				acquireTimeoutMillis: 60 * 1000 * 2,
 				idleTimeoutMillis: 30000,
 				reapIntervalMillis: 1000,
-				createRetryIntervalMillis: 100,
+				createRetryIntervalMillis: 100
 			},
 			useNullAsDefault: true,
-			asyncStackTraces: true,
+			asyncStackTraces: true
 		};
 	}
 
@@ -49,26 +50,30 @@ export class MysqlProvider implements IClientServerProvider {
 	private _initialization() {
 		this._database = 'gauzy_timer_db';
 		const cfg = LocalStore.getApplicationConfig().config['mysql'];
+		if (!cfg) {
+			throw new AppError('MYSQL', 'MysqlSQL configuration is missing');
+		}
+		if (!cfg.dbHost || !cfg.dbPort || !cfg.dbUsername || !cfg.dbPassword) {
+			throw new AppError('MYSQL', 'Required MySQL configuration fields are missing');
+		}
 		this._connectionConfig = {
 			host: cfg.dbHost,
 			port: cfg.dbPort,
 			user: cfg.dbUsername,
 			password: cfg.dbPassword,
-			timezone: 'utc'
+			timezone: '+00:00'
 		};
 	}
 
 	public async createDatabase() {
 		try {
 			const connection: Knex = require('knex')({
-				client: 'mysql',
-				connection: this._connectionConfig,
+				client: this.CLIENT,
+				connection: this._connectionConfig
 			});
-			await connection
-				.raw('CREATE DATABASE IF NOT EXISTS ??', this._database)
-				.finally(async () => {
-					await connection.destroy();
-				});
+			await connection.raw('CREATE DATABASE IF NOT EXISTS ??', this._database).finally(async () => {
+				await connection.destroy();
+			});
 		} catch (error) {
 			throw new AppError('MYSQL', error);
 		}
