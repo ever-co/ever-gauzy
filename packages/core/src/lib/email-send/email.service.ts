@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { IsNull } from 'typeorm';
+import { IAppIntegrationConfig } from '@gauzy/common';
 import {
 	IInviteEmployeeModel,
 	IInviteUserModel,
@@ -21,7 +22,7 @@ import {
 	ITenant
 } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
-import { deepMerge, IAppIntegrationConfig } from '@gauzy/utils';
+import { deepMerge } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
 import { EmailSendService } from './../email-send/email-send.service';
 import { Organization, EmailHistory } from './../core/entities/internal';

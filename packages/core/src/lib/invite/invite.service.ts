@@ -27,7 +27,8 @@ import {
 	IUserRegistrationInput,
 	IPagination
 } from '@gauzy/contracts';
-import { IAppIntegrationConfig, isNotEmpty } from '@gauzy/utils';
+import { IAppIntegrationConfig } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
 import { RequestContext } from './../core/context';
