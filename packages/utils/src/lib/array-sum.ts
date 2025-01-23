@@ -1,9 +1,9 @@
 /**
- * Sums two numbers, handling numeric strings, null, undefined, and other invalid values gracefully.
+ * Sums two numbers, handling numeric strings or undefined values gracefully.
  *
- * @param {number | string | null | undefined} a - The first number to sum.
- * @param {number | string | null | undefined} b - The second number to sum.
- * @returns {number} The sum of the two values as a number.
+ * @param a - The first number to sum.
+ * @param b - The second number to sum.
+ * @returns The sum of the two values as a number.
  *
  * @example
  * ```typescript
@@ -18,13 +18,8 @@
  * // totalDuration: 10
  * ```
  */
-export const ArraySum = (
-	a: number | string | null | undefined = 0,
-	b: number | string | null | undefined = 0
-): number => {
-	// Convert valid number strings to floats; otherwise, default to 0
-	const numA = typeof a === 'number' ? a : typeof a === 'string' && !isNaN(parseFloat(a)) ? parseFloat(a) : 0;
-	const numB = typeof b === 'number' ? b : typeof b === 'string' && !isNaN(parseFloat(b)) ? parseFloat(b) : 0;
-
+export const ArraySum = (a: number = 0, b: number = 0): number => {
+	const numA = typeof a === 'number' ? a : parseFloat(a) || 0;
+	const numB = typeof b === 'number' ? b : parseFloat(b) || 0;
 	return numA + numB;
 };
