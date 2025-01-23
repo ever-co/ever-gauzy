@@ -16,6 +16,7 @@ $skeleton-gap: 1rem; // Gap between elements
   display: flex;
   flex-direction: column;
   gap: $skeleton-gap;
+  border-radius: var(--border-radius);
 
   .skeleton-line {
     height: $skeleton-line-height;

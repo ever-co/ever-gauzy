@@ -12,7 +12,8 @@ import {
 	NbInputModule,
 	NbListModule,
 	NbPopoverModule,
-	NbProgressBarModule
+	NbProgressBarModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { provideEffects, provideEffectsManager } from '@ngneat/effects-ng';
 import { VideoEffects } from './+state/video.effect';
@@ -74,7 +75,8 @@ import { MomentModule } from 'ngx-moment';
 		NbProgressBarModule,
 		NbListModule,
 		MomentModule,
-		TranslateModule.forChild()
+		TranslateModule.forChild(),
+		NbSpinnerModule
 	],
 	providers: [
 		provideEffectsManager(),

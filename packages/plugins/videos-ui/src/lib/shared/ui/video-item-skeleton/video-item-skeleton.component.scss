@@ -3,6 +3,7 @@
   flex-direction: column;
   gap: 10px;
   animation: pulse 1.5s infinite;
+  border-radius: var(--border-radius);
 
   .video-player {
     .video-placeholder {
