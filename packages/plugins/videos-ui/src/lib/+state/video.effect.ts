@@ -46,7 +46,7 @@ export class VideoEffects {
 		)
 	);
 
-	fetchVideosAndExlude$ = createEffect(() =>
+	fetchVideosAndExclude$ = createEffect(() =>
 		this.action$.pipe(
 			ofType(VideoActions.fetchVideosAndExclude),
 			tap(() => this.videoStore.setLoading(true)), // Start loading state

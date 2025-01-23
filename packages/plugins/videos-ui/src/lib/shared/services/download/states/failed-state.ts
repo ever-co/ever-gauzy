@@ -5,7 +5,7 @@ import { DownloadQueueService } from '../download-queue.service';
 export class FailedState implements IDownloadState {
 	public handle(options: IFileDownloadOptions, contextService: DownloadQueueService): void {
 		contextService.toastrService.error(
-			`Download faild for: ${extractFilenameFromUrl(options.url)}, retry`,
+			`Download fails for: ${extractFilenameFromUrl(options.url)}, retry`,
 			'Download'
 		);
 	}
