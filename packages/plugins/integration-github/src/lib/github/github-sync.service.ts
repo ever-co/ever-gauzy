@@ -11,7 +11,6 @@ import {
 	IGithubInstallationDeletedPayload,
 	IIntegrationEntitySetting,
 	IIntegrationEntitySettingTied,
-	IOrganization,
 	IOrganizationProject,
 	ITag,
 	IntegrationEntity,
