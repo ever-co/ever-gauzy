@@ -9,6 +9,7 @@ import {
 	PageTabsetRegistryId,
 	RouteUtil
 } from '@gauzy/ui-core/core';
+import { VideoService } from '@gauzy/videos-ui';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -27,12 +28,41 @@ export class ActivityLayoutComponent implements OnInit, OnDestroy {
 		private readonly _cdr: ChangeDetectorRef,
 		private readonly _routeUtil: RouteUtil,
 		private readonly _pageTabRegistryService: PageTabRegistryService,
-		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
+		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
+		private readonly _videoService: VideoService
 	) {}
 
 	ngOnInit(): void {
 		// Register the page tabs
 		this.registerPageTabs();
+		// Subscribe to video availability
+		this._videoService.isAvailable$
+			.pipe(
+				tap((isAvailable) => {
+					const tabId = 'videos';
+					if (!isAvailable) {
+						this._pageTabRegistryService.removePageTab(this.tabsetId, tabId);
+						return;
+					}
+					this._pageTabRegistryService.addPageTab(
+						{
+							tabsetId: this.tabsetId, // The identifier for the tabset
+							tabId, // The identifier for the tab
+							tabsetType: 'route', // The type of tabset to use
+							tabTitle: (_i18n) => _i18n.getTranslation('Videos'), // The title for the tab
+							responsive: true, // Whether the tab is responsive
+							route: '/pages/employees/activity/videos', // The route for the tab
+							queryParamsHandling: 'merge' as QueryParamsHandling,
+							activeLinkOptions: { exact: false }, // The options for the active link
+							order: 3, // The order of the tab
+							permissions: [PermissionsEnum.TIME_TRACKER, PermissionsEnum.TIME_TRACKING_DASHBOARD] // The permissions required to display the tab
+						},
+						this.tabsetId
+					);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 
 		this._routeUtil.data$
 			.pipe(
@@ -78,20 +108,6 @@ export class ActivityLayoutComponent implements OnInit, OnDestroy {
 			queryParamsHandling: 'merge' as QueryParamsHandling,
 			activeLinkOptions: { exact: false }, // The options for the active link
 			order: 2, // The order of the tab
-			permissions: [PermissionsEnum.TIME_TRACKER, PermissionsEnum.TIME_TRACKING_DASHBOARD] // The permissions required to display the tab
-		});
-
-		// Register the video tab
-		this._pageTabRegistryService.registerPageTab({
-			tabsetId: this.tabsetId, // The identifier for the tabset
-			tabId: 'videos', // The identifier for the tab
-			tabsetType: 'route', // The type of tabset to use
-			tabTitle: (_i18n) => _i18n.getTranslation('Videos'), // The title for the tab
-			responsive: true, // Whether the tab is responsive
-			route: '/pages/employees/activity/videos', // The route for the tab
-			queryParamsHandling: 'merge' as QueryParamsHandling,
-			activeLinkOptions: { exact: false }, // The options for the active link
-			order: 3, // The order of the tab
 			permissions: [PermissionsEnum.TIME_TRACKER, PermissionsEnum.TIME_TRACKING_DASHBOARD] // The permissions required to display the tab
 		});
 

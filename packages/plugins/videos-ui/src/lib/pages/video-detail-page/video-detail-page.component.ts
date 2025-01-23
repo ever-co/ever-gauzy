@@ -10,7 +10,7 @@ import {
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChanged, map, tap } from 'rxjs';
+import { distinctUntilChanged, map, Observable, tap } from 'rxjs';
 import { VideoActions } from '../../+state/video.action';
 import { VideoQuery } from '../../+state/video.query';
 import { VideoStore } from '../../+state/video.store';
@@ -112,6 +112,13 @@ export class VideoDetailPageComponent implements OnInit, AfterViewInit, OnDestro
 		this.skip = 0;
 		this.hasNext = false;
 		this.videoStore.update({ videos: [] });
+	}
+
+	public get showList$(): Observable<boolean> {
+		return this.videoQuery.count$.pipe(
+			map((count) => count > 1),
+			untilDestroyed(this)
+		);
 	}
 
 	ngOnDestroy() {

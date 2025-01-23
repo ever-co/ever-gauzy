@@ -1,10 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { toParams } from '@gauzy/ui-core/common';
-import { API_PREFIX } from '@gauzy/ui-core/common';
-import { IVideo } from '../models/video.model';
 import { IPagination } from '@gauzy/contracts';
-import { Observable } from 'rxjs';
+import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
+import { map, Observable } from 'rxjs';
+import { IVideo } from '../models/video.model';
 
 @Injectable({
 	providedIn: 'root'
@@ -29,5 +28,9 @@ export class VideoService {
 
 	public delete(id: string): Observable<void> {
 		return this.http.delete<void>(`${this.API_ENDPOINT}/${id}`);
+	}
+
+	public get isAvailable$(): Observable<boolean> {
+		return this.getAll({}).pipe(map(({ total }) => total > 0));
 	}
 }
