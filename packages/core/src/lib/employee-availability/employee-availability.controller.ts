@@ -8,6 +8,8 @@ import { EmployeeAvailability } from './employee-availability.entity';
 import { CrudController, PaginationParams } from '../core';
 import { TenantPermissionGuard, UUIDValidationPipe } from '../shared';
 import { EmployeeAvailabilityBulkCreateCommand, EmployeeAvailabilityCreateCommand } from './commands';
+import { CreateEmployeeAvailabilityDTO } from './dto/create-employee-availability.dto';
+import { UpdateEmployeeAvailabilityDTO } from './dto/update-employee-availability.dto';
 
 @ApiTags('EmployeeAvailability')
 @UseGuards(TenantPermissionGuard)
@@ -37,7 +39,7 @@ export class EmployeeAvailabilityController extends CrudController<EmployeeAvail
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post('/bulk')
-	async createBulk(@Body() entities: IEmployeeAvailabilityCreateInput[]): Promise<IEmployeeAvailability[]> {
+	async createBulk(@Body() entities: CreateEmployeeAvailabilityDTO[]): Promise<IEmployeeAvailability[]> {
 		return await this.commandBus.execute(new EmployeeAvailabilityBulkCreateCommand(entities));
 	}
 
@@ -80,7 +82,7 @@ export class EmployeeAvailabilityController extends CrudController<EmployeeAvail
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	async create(@Body() entity: IEmployeeAvailabilityCreateInput): Promise<IEmployeeAvailability> {
+	async create(@Body() entity: CreateEmployeeAvailabilityDTO): Promise<IEmployeeAvailability> {
 		return await this.commandBus.execute(new EmployeeAvailabilityCreateCommand(entity));
 	}
 
@@ -104,7 +106,7 @@ export class EmployeeAvailabilityController extends CrudController<EmployeeAvail
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Body() entity: IEmployeeAvailability
+		@Body() entity: UpdateEmployeeAvailabilityDTO
 	): Promise<IEmployeeAvailability | UpdateResult> {
 		return this.availabilityService.update(id, { ...entity });
 	}

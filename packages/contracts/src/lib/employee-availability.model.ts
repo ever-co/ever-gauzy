@@ -10,6 +10,12 @@ export enum AvailabilityStatusEnum {
 	Unavailable = 'Unavailable'
 }
 
+export enum AvailabilityStatusValue {
+	Available = 0,
+	Partial = 1,
+	Unavailable = 2
+}
+
 export interface IEmployeeAvailability extends IBasePerTenantAndOrganizationEntityModel {
 	employee: IEmployee;
 	employeeId: ID;

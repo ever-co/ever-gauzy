@@ -23,11 +23,10 @@ export class EmployeeAvailability extends TenantOrganizationBaseEntity implement
 	@ApiProperty({ type: () => Number, description: 'Day of the week (0 = Sunday, 6 = Saturday)' })
 	@IsInt()
 	@IsNotEmpty()
-	@MultiORMColumn({ check: 'day_of_week BETWEEN 0 AND 6' })
+	@MultiORMColumn({ type: 'int', check: 'day_of_week BETWEEN 0 AND 6' })
 	dayOfWeek: number;
 
 	@ApiProperty({ enum: AvailabilityStatusEnum })
-	@IsOptional()
 	@IsEnum(AvailabilityStatusEnum)
 	@MultiORMColumn({
 		type: 'int',
@@ -37,12 +36,11 @@ export class EmployeeAvailability extends TenantOrganizationBaseEntity implement
 
 	@ApiPropertyOptional({
 		type: () => String,
-		description: 'Optional notes (e.g., "Available until 2 PM")',
-		required: false
+		description: 'Optional notes (e.g., "Available until 2 PM")'
 	})
 	@IsString()
 	@IsOptional()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ type: 'text', nullable: true })
 	availabilityNotes?: string;
 
 	/*

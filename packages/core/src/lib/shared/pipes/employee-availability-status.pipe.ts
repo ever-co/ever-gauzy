@@ -1,5 +1,5 @@
 import { ValueTransformer } from 'typeorm';
-import { AvailabilityStatusEnum } from '@gauzy/contracts';
+import { AvailabilityStatusEnum, AvailabilityStatusValue } from '@gauzy/contracts';
 
 /**
  * Transformer to handle the conversion between the enum values
@@ -16,13 +16,13 @@ export class AvailabilityStatusTransformer implements ValueTransformer {
 	to(value: AvailabilityStatusEnum): number {
 		switch (value) {
 			case AvailabilityStatusEnum.Available:
-				return 0;
+				return AvailabilityStatusValue.Available;
 			case AvailabilityStatusEnum.Partial:
-				return 1;
+				return AvailabilityStatusValue.Partial;
 			case AvailabilityStatusEnum.Unavailable:
-				return 2;
+				return AvailabilityStatusValue.Unavailable;
 			default:
-				return null;
+				throw new Error(`Invalid availability status: ${value}`);
 		}
 	}
 
@@ -35,14 +35,14 @@ export class AvailabilityStatusTransformer implements ValueTransformer {
 	 */
 	from(value: number): AvailabilityStatusEnum {
 		switch (value) {
-			case 0:
+			case AvailabilityStatusValue.Available:
 				return AvailabilityStatusEnum.Available;
-			case 1:
+			case AvailabilityStatusValue.Partial:
 				return AvailabilityStatusEnum.Partial;
-			case 2:
+			case AvailabilityStatusValue.Unavailable:
 				return AvailabilityStatusEnum.Unavailable;
 			default:
-				return null;
+				throw new Error(`Invalid status value: ${value}`);
 		}
 	}
 }
