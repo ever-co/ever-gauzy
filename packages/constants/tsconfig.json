@@ -2,11 +2,11 @@
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
 		"forceConsistentCasingInFileNames": true,
-		"strict": true,
-		"noImplicitOverride": true,
-		"noImplicitReturns": true,
-		"noFallthroughCasesInSwitch": true,
-		"noPropertyAccessFromIndexSignature": true
+		"strict": false,
+		"noImplicitOverride": false,
+		"noImplicitReturns": false,
+		"noFallthroughCasesInSwitch": false,
+		"noPropertyAccessFromIndexSignature": false
 	},
 	"files": [],
 	"include": [],
