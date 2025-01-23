@@ -27,6 +27,7 @@
 		"lib:watch": "yarn nx build contracts --watch"
 	},
 	"dependencies": {
+		"@gauzy/constants": "*",
 		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
