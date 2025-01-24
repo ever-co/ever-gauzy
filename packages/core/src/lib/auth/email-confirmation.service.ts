@@ -5,7 +5,6 @@ import { JwtPayload, sign, verify } from 'jsonwebtoken';
 import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
 import { IAppIntegrationConfig } from '@gauzy/common';
-import { deepMerge } from '@gauzy/utils';
 import {
 	FeatureEnum,
 	IBasePerTenantEntityModel,
@@ -15,12 +14,11 @@ import {
 	IUserTokenInput,
 	IVerificationTokenPayload
 } from '@gauzy/contracts';
-import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
+import { deepMerge, generateAlphaNumericCode } from '@gauzy/utils';
+import { RequestContext } from './../core/context/request-context';
 import { EmailService } from './../email-send/email.service';
 import { UserService } from './../user/user.service';
 import { FeatureService } from './../feature/feature.service';
-import { RequestContext } from './../core/context';
-import { generateRandomAlphaNumericCode } from './../core/utils';
 
 @Injectable()
 export class EmailConfirmationService {
@@ -54,7 +52,7 @@ export class EmailConfirmationService {
 			const appIntegration = deepMerge(environment.appIntegrationConfig, integration);
 
 			const verificationLink = `${appIntegration.appEmailConfirmationUrl}?email=${email}&token=${token}`;
-			const verificationCode = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
+			const verificationCode = generateAlphaNumericCode();
 
 			// Update user's email token field and verification code
 			await this.userService.update(id, {

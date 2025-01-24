@@ -2,13 +2,12 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { IsNull, MoreThanOrEqual, SelectQueryBuilder } from 'typeorm';
 import { IEmailReset, IEmailResetFindInput, LanguagesEnum } from '@gauzy/contracts';
+import { generateAlphaNumericCode } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
 import { UserService } from '../user/user.service';
 import { TenantAwareCrudService } from '../core/crud';
 import { EmailReset } from './email-reset.entity';
 import { UserEmailDTO } from '../user/dto';
-import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
-import { generateRandomAlphaNumericCode } from './../core/utils';
 import { EmailResetCreateCommand } from './commands';
 import { EmailResetGetQuery } from './queries';
 import { VerifyEmailResetRequestDTO } from './dto/verify-email-reset-request.dto';
@@ -54,7 +53,7 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 				});
 			}
 
-			const verificationCode = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
+			const verificationCode = generateAlphaNumericCode();
 
 			await this.commandBus.execute(
 				new EmailResetCreateCommand({

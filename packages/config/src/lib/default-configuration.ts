@@ -2,13 +2,9 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import * as path from 'path';
-import {
-	DEFAULT_API_HOST,
-	DEFAULT_API_PORT,
-	DEFAULT_API_BASE_URL,
-	DEFAULT_GRAPHQL_API_PATH,
-	ApplicationPluginConfig
-} from '@gauzy/common';
+import { ApplicationPluginConfig } from '@gauzy/common';
+import { DEFAULT_API_HOST, DEFAULT_API_PORT, DEFAULT_API_BASE_URL, DEFAULT_GRAPHQL_API_PATH } from '@gauzy/constants';
+import {} from '@gauzy/contracts';
 import { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig, dbKnexConnectionConfig } from './database';
 
 process.cwd();

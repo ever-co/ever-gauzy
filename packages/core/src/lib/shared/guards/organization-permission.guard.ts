@@ -6,7 +6,7 @@ import { Cache } from 'cache-manager';
 import { Brackets, WhereExpressionBuilder } from 'typeorm';
 import { verify } from 'jsonwebtoken';
 import * as camelcase from 'camelcase';
-import { PERMISSIONS_METADATA } from '@gauzy/common';
+import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { deduplicate, isEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../core/context';

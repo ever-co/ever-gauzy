@@ -2,22 +2,15 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import * as Handlebars from 'handlebars';
 import * as mjml2html from 'mjml';
 import { ConfigService, environment } from '@gauzy/config';
-import { ALPHA_NUMERIC_CODE_LENGTH } from './../../../constants';
+import { generateAlphaNumericCode } from '@gauzy/utils';
 import { EmailTemplateGeneratePreviewQuery } from '../email-template.generate-preview.query';
 import { moment } from '../../../core/moment-extend';
-import { generateRandomAlphaNumericCode } from './../../../core/utils';
 
 @QueryHandler(EmailTemplateGeneratePreviewQuery)
-export class EmailTemplateGeneratePreviewHandler
-	implements IQueryHandler<EmailTemplateGeneratePreviewQuery> {
+export class EmailTemplateGeneratePreviewHandler implements IQueryHandler<EmailTemplateGeneratePreviewQuery> {
+	constructor(private readonly configService: ConfigService) {}
 
-	constructor(
-		private readonly configService: ConfigService
-	) { }
-
-	public async execute(
-		command: EmailTemplateGeneratePreviewQuery
-	): Promise<{ html: string }> {
+	public async execute(command: EmailTemplateGeneratePreviewQuery): Promise<{ html: string }> {
 		const { input } = command;
 		let textToHtml = input;
 
@@ -80,18 +73,18 @@ export class EmailTemplateGeneratePreviewHandler
 			task_update_project: 'Gauzy Project',
 			task_update_assign_by: 'Ruslan Konviser',
 			task_update_url: 'https://github.com/ever-co/ever-gauzy/issues/1688',
-			inviteCode: generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH),
+			inviteCode: generateAlphaNumericCode(),
 			teams: 'Gauzy Team',
-			verificationCode: generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH),
+			verificationCode: generateAlphaNumericCode(),
 			appName: appName,
 			appLogo: appLogo,
 			appSignature: appSignature,
 			appLink: appLink,
 			items: [
 				{
-					tenantName: "Default",
-					userName: "Default",
-					resetLink: "https://github.com/ever-co/ever-gauzy"
+					tenantName: 'Default',
+					userName: 'Default',
+					resetLink: 'https://github.com/ever-co/ever-gauzy'
 				}
 			],
 			companyLink,

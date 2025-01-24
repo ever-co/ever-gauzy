@@ -2,7 +2,7 @@ import { Injectable, CanActivate, ExecutionContext, Type, Inject } from '@nestjs
 import { Reflector } from '@nestjs/core';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { PERMISSIONS_METADATA } from '@gauzy/common';
+import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { environment as env } from '@gauzy/config';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { isNotEmpty, deduplicate } from '@gauzy/utils';
