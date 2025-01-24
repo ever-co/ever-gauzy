@@ -19,14 +19,14 @@ export class ConfigService {
 	private config: Partial<ApplicationPluginConfig>;
 
 	constructor() {
-		void this.init(); // Calls the async init() method without awaiting
+		void this.initConfig();
 	}
 
 	/**
 	 * Initializes the configuration and environment variables.
 	 * Uses an async method since constructors cannot be async.
 	 */
-	private async init(): Promise<void> {
+	private async initConfig(): Promise<void> {
 		this.config = getConfig();
 
 		// Assign environment variables dynamically
