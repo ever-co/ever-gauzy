@@ -2,7 +2,7 @@ import { ContextType, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
-import { PUBLIC_METHOD_METADATA } from '@gauzy/common';
+import { PUBLIC_METHOD_METADATA } from '@gauzy/constants';
 
 @Injectable()
 export class AuthGuard extends PassportAuthGuard('jwt') {

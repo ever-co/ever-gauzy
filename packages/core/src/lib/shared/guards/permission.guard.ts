@@ -3,7 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { verify } from 'jsonwebtoken';
-import { PERMISSIONS_METADATA } from '@gauzy/common';
+import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { environment as env } from '@gauzy/config';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { deduplicate, isEmpty } from '@gauzy/utils';

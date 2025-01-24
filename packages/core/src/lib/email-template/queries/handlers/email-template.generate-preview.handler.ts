@@ -2,10 +2,10 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import * as Handlebars from 'handlebars';
 import * as mjml2html from 'mjml';
 import { ConfigService, environment } from '@gauzy/config';
-import { ALPHA_NUMERIC_CODE_LENGTH } from './../../../constants';
+import { generateAlphaNumericCode } from '@gauzy/utils';
 import { EmailTemplateGeneratePreviewQuery } from '../email-template.generate-preview.query';
 import { moment } from '../../../core/moment-extend';
-import { generateRandomAlphaNumericCode } from './../../../core/utils';
+import { ALPHA_NUMERIC_CODE_LENGTH } from 'packages/constants/src/lib/code';
 
 @QueryHandler(EmailTemplateGeneratePreviewQuery)
 export class EmailTemplateGeneratePreviewHandler implements IQueryHandler<EmailTemplateGeneratePreviewQuery> {
@@ -74,9 +74,9 @@ export class EmailTemplateGeneratePreviewHandler implements IQueryHandler<EmailT
 			task_update_project: 'DSpot ERP Project',
 			task_update_assign_by: 'Ruslan Konviser',
 			task_update_url: 'https://github.com/DSpotDevelopers/gauzy/issues/1688',
-			inviteCode: generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH),
+			inviteCode: generateAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH),
 			teams: 'DSpot ERP Team',
-			verificationCode: generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH),
+			verificationCode: generateAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH),
 			appName: appName,
 			appLogo: appLogo,
 			appSignature: appSignature,

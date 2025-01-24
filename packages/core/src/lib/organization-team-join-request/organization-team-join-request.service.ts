@@ -1,8 +1,9 @@
 import { BadRequestException, ConflictException, Injectable, HttpStatus, NotFoundException } from '@nestjs/common';
 import { MoreThanOrEqual, SelectQueryBuilder, IsNull, FindManyOptions } from 'typeorm';
 import { JwtPayload, sign } from 'jsonwebtoken';
-import { environment } from '@gauzy/config';
+import * as moment from 'moment';
 import { IAppIntegrationConfig } from '@gauzy/common';
+import { environment } from '@gauzy/config';
 import {
 	IOrganizationTeamJoinRequest,
 	IOrganizationTeamJoinRequestCreateInput,
@@ -13,10 +14,8 @@ import {
 	OrganizationTeamJoinRequestStatusEnum,
 	RolesEnum
 } from '@gauzy/contracts';
-import * as moment from 'moment';
-import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
+import { generateAlphaNumericCode } from '@gauzy/utils';
 import { TenantAwareCrudService } from './../core/crud';
-import { generateRandomAlphaNumericCode } from './../core/utils';
 import { RequestContext } from './../core/context';
 import { User } from './../core/entities/internal';
 import { EmailService } from './../email-send/email.service';
@@ -92,7 +91,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				}
 			});
 			const { organization, organizationId, tenantId } = organizationTeam;
-			const code = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
+			const code = generateAlphaNumericCode();
 
 			const payload: JwtPayload = {
 				email,
@@ -213,7 +212,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				}
 			});
 
-			const code = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
+			const code = generateAlphaNumericCode();
 
 			const payload: JwtPayload = {
 				email,

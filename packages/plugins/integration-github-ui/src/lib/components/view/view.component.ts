@@ -8,6 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NbPopoverDirective, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
+import { SyncTags } from '@gauzy/constants';
 import {
 	GithubRepositoryStatusEnum,
 	HttpStatus,
@@ -19,7 +20,6 @@ import {
 	IOrganizationGithubRepository,
 	IOrganizationProject,
 	IUser,
-	SYNC_TAG_GAUZY,
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import {
@@ -595,7 +595,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 							organizationId,
 							tenantId,
 							customFields: { repositoryId },
-							syncTag: SYNC_TAG_GAUZY
+							syncTag: SyncTags.GAUZY
 						});
 						const issues$ = this._githubService.autoSyncIssues(integrationId, repository, {
 							projectId,
@@ -682,7 +682,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 							organizationId,
 							tenantId,
 							customFields: { repositoryId },
-							syncTag: SYNC_TAG_GAUZY
+							syncTag: SyncTags.GAUZY
 						})
 					),
 					mergeMap(() =>

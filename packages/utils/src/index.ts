@@ -1,3 +1,4 @@
+export * from './lib/array-to-object';
 export * from './lib/array-sum';
 export * from './lib/array-random-element';
 export * from './lib/average';
@@ -5,6 +6,7 @@ export * from './lib/build-query-string';
 export * from './lib/camel-to-snake-case';
 export * from './lib/chunks';
 export * from './lib/class-mixins';
+export * from './lib/code-generator';
 export * from './lib/convert-to-hex';
 export * from './lib/deduplicate';
 export * from './lib/deep-clone';

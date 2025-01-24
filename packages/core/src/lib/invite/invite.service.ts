@@ -5,7 +5,7 @@ import { FindManyOptions, FindOptionsWhere, In, IsNull, MoreThanOrEqual, Not, Se
 import { addDays } from 'date-fns';
 import { pick } from 'underscore';
 import { ConfigService, environment } from '@gauzy/config';
-import { DEFAULT_INVITE_EXPIRY_PERIOD } from '@gauzy/constants';
+import { ALPHA_NUMERIC_CODE_LENGTH, DEFAULT_INVITE_EXPIRY_PERIOD } from '@gauzy/constants';
 import {
 	ICreateEmailInvitesInput,
 	ICreateEmailInvitesOutput,
@@ -28,17 +28,10 @@ import {
 	IPagination
 } from '@gauzy/contracts';
 import { IAppIntegrationConfig } from '@gauzy/common';
-import { isNotEmpty } from '@gauzy/utils';
+import { generateAlphaNumericCode, isNotEmpty } from '@gauzy/utils';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
-import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
 import { RequestContext } from './../core/context';
-import {
-	MultiORMEnum,
-	freshTimestamp,
-	generateRandomAlphaNumericCode,
-	getArrayIntersection,
-	parseTypeORMFindToMikroOrm
-} from './../core/utils';
+import { MultiORMEnum, freshTimestamp, getArrayIntersection, parseTypeORMFindToMikroOrm } from './../core/utils';
 import { EmailService } from './../email-send/email.service';
 import { UserService } from '../user/user.service';
 import { RoleService } from './../role/role.service';
@@ -177,7 +170,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		const invites: Invite[] = [];
 		for await (const email of emailIds) {
 			let alreadyInTeamIds: string[] = [];
-			const code = generateRandomAlphaNumericCode(6);
+			const code = generateAlphaNumericCode();
 			const token: string = sign({ email, code }, environment.JWT_SECRET, {});
 
 			const organizationTeamEmployees = await this.typeOrmOrganizationTeamEmployeeRepository.find({
@@ -370,7 +363,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		 */
 		const invitedBy: IUser = await this.userService.findOneByIdString(RequestContext.currentUserId());
 		try {
-			const code = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
+			const code = generateAlphaNumericCode();
 			const token: string = sign({ email, code }, environment.JWT_SECRET, {});
 
 			const registerUrl = `${originUrl}/#/auth/accept-invite?email=${encodeURIComponent(email)}&token=${token}`;

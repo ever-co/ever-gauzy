@@ -3,6 +3,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import * as moment from 'moment';
 import * as chalk from 'chalk';
 import { Request } from 'express';
+import { SyncTags } from '@gauzy/constants';
 import {
 	IGithubAutomationIssuePayload,
 	IGithubIssue,
@@ -19,8 +20,6 @@ import {
 	IOrganizationGithubRepository,
 	IIntegrationMap,
 	GithubRepositoryStatusEnum,
-	SYNC_TAG_GAUZY,
-	SYNC_TAG_GITHUB,
 	ID
 } from '@gauzy/contracts';
 import {
@@ -379,7 +378,7 @@ export class GithubSyncService {
 				let labels = issue.labels;
 
 				// List of labels to check and create if missing
-				const labelsToCheck = [SYNC_TAG_GITHUB, SYNC_TAG_GAUZY];
+				const labelsToCheck = [SyncTags.GITHUB, SyncTags.GAUZY];
 				const labelsToCreate = labelsToCheck.filter(
 					(name) => !labels.find((label: IGithubIssueLabel) => label.name === name)
 				);

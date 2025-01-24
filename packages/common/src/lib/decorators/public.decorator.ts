@@ -1,5 +1,5 @@
 import { CustomDecorator, SetMetadata } from '@nestjs/common';
-import { PUBLIC_METHOD_METADATA } from './../constants';
+import { PUBLIC_METHOD_METADATA } from '@gauzy/constants';
 
 /**
  * Decorator that assigns metadata to the class/function using the

@@ -1,5 +1,5 @@
 import { Injectable, CanActivate, ExecutionContext, Type } from '@nestjs/common';
-import { ROLES_METADATA } from '@gauzy/common';
+import { ROLES_METADATA } from '@gauzy/constants';
 import { RolesEnum } from '@gauzy/contracts';
 import { Reflector } from '@nestjs/core';
 import { isEmpty } from '@gauzy/utils';
