@@ -219,7 +219,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 						})
 					);
 				} else {
-					ignoreInvites++;
+					ignoreInvites;
 				}
 			} else {
 				invites.push(
@@ -336,6 +336,22 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			.join('&');
 	}
 
+	/**
+	 * Generates an invite code and a secure JWT token for email-based invites.
+	 *
+	 * @param {string} email - The email address for which the invite code and token are generated.
+	 * @returns {{ code: string; token: string }} - An object containing the invite code and JWT token.
+	 */
+	private generateInviteCodeAndToken(email: string): { code: string; token: string } {
+		// Generate a unique invite code
+		const code = generateAlphaNumericCode();
+
+		// Generate a JWT token containing the email and invite code
+		const token = sign({ email, code }, environment.JWT_SECRET, {});
+
+		return { code, token };
+	}
+
 	async resendEmail(input: IInviteResendInput, languageCode: LanguagesEnum) {
 		const originUrl = this.configService.get('clientBaseUrl') as string;
 		const { inviteId, inviteType, callbackUrl } = input;
@@ -363,8 +379,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		 */
 		const invitedBy: IUser = await this.userService.findOneByIdString(RequestContext.currentUserId());
 		try {
-			const code = generateAlphaNumericCode();
-			const token: string = sign({ email, code }, environment.JWT_SECRET, {});
+			const { code, token } = this.generateInviteCodeAndToken(email);
 
 			const registerUrl = `${originUrl}/#/auth/accept-invite?email=${encodeURIComponent(email)}&token=${token}`;
 			if (inviteType === InvitationTypeEnum.USER) {
