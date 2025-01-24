@@ -409,7 +409,7 @@ export class SeedDataService {
 
 			await this.tryExecute(
 				'Default Report Category & Report',
-				createDefaultReport(this.dataSource, this.configService.config, this.tenant)
+				createDefaultReport(this.dataSource, this.configService.getConfig(), this.tenant)
 			);
 
 			this.log(chalk.green(`✅ SEEDED ${env.production ? 'PRODUCTION' : ''} REPORTS DATABASE`));
@@ -473,7 +473,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Feature Toggle',
-			createDefaultFeatureToggle(this.dataSource, this.configService.config, this.tenant)
+			createDefaultFeatureToggle(this.dataSource, this.configService.getConfig(), this.tenant)
 		);
 
 		await this.tryExecute('Default Email Templates', createDefaultEmailTemplates(this.dataSource));
@@ -923,7 +923,7 @@ export class SeedDataService {
 			'Default TimeSheets',
 			createDefaultTimeSheet(
 				this.dataSource,
-				this.configService.config,
+				this.configService.getConfig(),
 				this.tenant,
 				this.defaultOrganization,
 				this.defaultEmployees
@@ -1528,7 +1528,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Random TimeSheets',
-			createRandomTimesheet(this.dataSource, this.configService.config, this.randomTenants)
+			createRandomTimesheet(this.dataSource, this.configService.getConfig(), this.randomTenants)
 		);
 
 		// run all plugins random seed method
