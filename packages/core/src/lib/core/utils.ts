@@ -15,7 +15,6 @@ import { sample } from 'underscore';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
-import { ALPHA_NUMERIC_CODE_LENGTH } from '@gauzy/constants';
 import { DateRange, IDateRange, IUser } from '@gauzy/contracts';
 import { IDBConnectionOptions } from '@gauzy/common';
 import { getConfig, DatabaseTypeEnum } from '@gauzy/config';
