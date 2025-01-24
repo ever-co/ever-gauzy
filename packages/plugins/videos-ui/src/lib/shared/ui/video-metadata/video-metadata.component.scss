@@ -1,0 +1,64 @@
+@import '../video-edit/video-edit.component';
+
+.video-details-container {
+  border-radius: var(--border-radius);
+  background-color: var(--gauzy-card-1);
+
+  h2 {
+    font-size: 22px;
+  }
+
+  h3 {
+    font-size: 18px;
+  }
+
+  .video-details-wrapper {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 1rem;
+    background-color: var(--card-background);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .video-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+
+    .header-content {
+      width: 100%;
+    }
+  }
+
+  .video-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+  }
+
+  .details-section {
+    background-color: var(--gauzy-card-2);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+
+    .section-header {
+      border-bottom: 2px solid var(--color-primary-default);
+      margin-bottom: 1rem;
+    }
+
+    .detail-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+  }
+
+  // Responsive and interactive styles
+  @media (max-width: 768px) {
+    .video-details-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}

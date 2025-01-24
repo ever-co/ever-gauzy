@@ -1,0 +1,158 @@
+#item {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 420px;
+  overflow: hidden;
+  gap: 16px;
+}
+
+.video-player {
+  position: relative;
+
+  .duration {
+    color: white;
+    width: fit-content;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 0px 4px;
+    background: #000000b3;
+    border-radius: 4px;
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+  }
+}
+
+plug-video-player {
+  display: block;
+  width: 100%;
+  height: auto;
+  cursor: pointer;
+}
+
+.video-info {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+
+  nb-icon {
+    cursor: pointer;
+  }
+}
+
+ngx-avatar {
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gauzy-text-color-1);
+  margin-bottom: 8px;
+}
+
+.author {
+  font-size: 14px;
+  color: var(--gauzy-text-color-2);
+  margin-bottom: 4px;
+}
+
+.date {
+  font-size: 12px;
+  color: var(--gauzy-text-color-2);
+}
+
+/* Placeholder for No Video */
+#item + div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  width: 100%;
+  max-width: 600px;
+  background: #f2f2f2;
+  border: 1px dashed #ccc;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #666;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 768px) {
+  #item {
+    max-width: 100%;
+    border-radius: 8px;
+  }
+
+  .video-info {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  ngx-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .title {
+    font-size: 16px;
+  }
+
+  .author {
+    font-size: 13px;
+  }
+
+  .date {
+    font-size: 11px;
+  }
+}
+
+:host(.vertical) {
+  #item {
+    flex-direction: row;
+
+    .video-player {
+      min-width: 200px;
+      max-width: 300px;
+    }
+
+    .info {
+      min-width: 150px;
+    }
+
+    .title {
+      font-size: 14px;
+    }
+
+    ngx-avatar {
+      display: none;
+    }
+  }
+
+  @media (max-width: 1435px) {
+    #item {
+      max-width: unset;
+
+      .title {
+        font-size: 16px;
+      }
+
+      .video-player,
+      .info,
+      .video-info {
+        width: 100%;
+      }
+    }
+  }
+}

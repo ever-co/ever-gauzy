@@ -1,0 +1,5 @@
+<div class="action-button-group">
+	@for(button of buttons; track button) { @if(button.hidden === false) {
+	<plug-action-button [data]="data" [button]="button"></plug-action-button>
+	} }
+</div>

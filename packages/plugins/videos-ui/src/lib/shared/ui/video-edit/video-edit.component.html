@@ -1,0 +1,33 @@
+<form [formGroup]="form" (ngSubmit)="submit()">
+	<nb-card>
+		<nb-card-header class="mb-0">
+			<span class="cancel"><i (click)="close()" class="fas fa-times"></i></span>
+			<h5 class="title">Edit Video Metadata</h5>
+		</nb-card-header>
+		<nb-card-body class="form">
+			<!-- Title Input -->
+			<div class="title">
+				<input nbInput fullWidth placeholder="Title" formControlName="title" />
+				<div *ngIf="form.controls.title.invalid && form.controls.title.touched" class="error">
+					<span *ngIf="form.controls.title.errors?.required">Title is required.</span>
+					<span *ngIf="form.controls.title.errors?.minlength">Title must be at least 3 characters long.</span>
+					<span *ngIf="form.controls.title.errors?.maxlength">Title cannot exceed 255 characters.</span>
+				</div>
+			</div>
+
+			<!-- Description Input -->
+			<div class="description">
+				<textarea nbInput fullWidth placeholder="Description" formControlName="description" rows="5"></textarea>
+				<div *ngIf="form.controls.description.invalid && form.controls.description.touched" class="error">
+					<span *ngIf="form.controls.description.errors?.maxlength"
+						>Description cannot exceed 1000 characters.</span
+					>
+				</div>
+			</div>
+		</nb-card-body>
+		<nb-card-footer class="text-right mt-0">
+			<button nbButton type="button" (click)="close()" outline status="basic">Cancel</button>
+			<button nbButton type="submit" [disabled]="form.invalid" status="success">Save</button>
+		</nb-card-footer>
+	</nb-card>
+</form>

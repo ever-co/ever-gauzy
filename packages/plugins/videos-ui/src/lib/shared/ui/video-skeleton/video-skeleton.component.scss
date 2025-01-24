@@ -1,0 +1,86 @@
+$skeleton-bg: var(--gauzy-card-1); // Skeleton background color
+$skeleton-shimmer: linear-gradient(
+  90deg,
+  var(--gauzy-card-1) 25%,
+  var(--gauzy-card-2) 50%,
+  var(--gauzy-card-1) 75%
+); // Shimmer gradient
+$skeleton-animation-duration: 1.5s; // Animation speed
+$skeleton-radius: var(--border-radius); // Border radius
+$skeleton-circle-size: 2rem; // Size of circular skeletons
+$skeleton-line-height: 1rem; // Height of skeleton lines
+$skeleton-block-height: 6rem; // Height of large skeleton blocks
+$skeleton-gap: 1rem; // Gap between elements
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: $skeleton-gap;
+  border-radius: var(--border-radius);
+
+  .skeleton-line {
+    height: $skeleton-line-height;
+    background-color: $skeleton-bg;
+    border-radius: $skeleton-radius;
+    margin-bottom: 0.5rem;
+    animation: shimmer $skeleton-animation-duration infinite linear;
+  }
+
+  .skeleton-circle {
+    width: $skeleton-circle-size;
+    height: $skeleton-circle-size;
+    background-color: $skeleton-bg;
+    border-radius: 50%;
+    animation: shimmer $skeleton-animation-duration infinite linear;
+  }
+
+  .skeleton-block {
+    height: $skeleton-block-height;
+    background-color: $skeleton-bg;
+    border-radius: $skeleton-radius;
+    animation: shimmer $skeleton-animation-duration infinite linear;
+  }
+
+  .video-player-placeholder {
+    height: 12rem;
+    background-color: $skeleton-bg;
+    border-radius: $skeleton-radius;
+    animation: shimmer $skeleton-animation-duration infinite linear;
+  }
+
+  .video-title-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .title-placeholder {
+      width: 60%;
+    }
+
+    .actions {
+      display: flex;
+      gap: $skeleton-gap;
+    }
+  }
+
+  .author-placeholder {
+    width: 40%;
+  }
+
+  .date-placeholder {
+    width: 30%;
+  }
+
+  .description-placeholder {
+    width: 100%;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}

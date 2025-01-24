@@ -1,0 +1,22 @@
+@import '../video-page/video-page.component';
+
+.custom-card-body {
+  display: flex;
+  gap: 1rem;
+
+  .list {
+    overflow-y: auto;
+    min-width: 416px;
+    padding-inline-end: 1rem;
+  }
+}
+
+@media (max-width: 1435px) {
+  .custom-card-body {
+    flex-direction: column;
+
+    .list {
+      min-height: -webkit-fill-available;
+    }
+  }
+}

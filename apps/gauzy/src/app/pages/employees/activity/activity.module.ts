@@ -71,6 +71,13 @@ export class ActivityModule {
 			loadChildren: () => import('./screenshot/screenshot.module').then((m) => m.ScreenshotModule)
 		});
 
+		// Register Screenshot Page Routes
+		this._pageRouteRegistryService.registerPageRoute({
+			location: 'time-activity',
+			path: 'videos',
+			loadChildren: () => import('@gauzy/videos-ui').then((m) => m.VideoUiModule)
+		});
+
 		// Register App Activity Page Routes
 		this._pageRouteRegistryService.registerPageRoute({
 			location: 'time-activity',

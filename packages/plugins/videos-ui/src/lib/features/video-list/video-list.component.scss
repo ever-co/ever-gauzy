@@ -1,0 +1,40 @@
+.video-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  width: 100%;
+
+  &.vertical {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    min-width: 400px;
+  }
+}
+
+.video-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+  }
+
+  plug-video-item {
+    width: 100%;
+    height: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .video-container {
+    grid-template-columns: 1fr;
+  }
+
+  .video-item {
+    padding: 8px;
+  }
+}

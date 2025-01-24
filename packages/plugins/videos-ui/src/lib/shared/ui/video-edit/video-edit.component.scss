@@ -1,0 +1,29 @@
+@import 'gauzy/_gauzy-dialogs';
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+nb-card {
+  width: 400px;
+}
+
+nb-card-body,
+nb-card-footer,
+nb-card-header {
+  padding: 1rem;
+}
+
+nb-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.error {
+  color: red;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
