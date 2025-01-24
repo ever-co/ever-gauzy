@@ -10,9 +10,7 @@ import { PLUGIN_METADATA } from './plugin-metadata';
  * @param pluginMetadata Metadata to be applied to the target class.
  * @returns Class decorator function.
  */
-export function GauzyCorePlugin(
-	pluginMetadata: PluginMetadata
-): ClassDecorator {
+export function GauzyCorePlugin(pluginMetadata: PluginMetadata): ClassDecorator {
 	return (targetClass) => {
 		// Iterate over properties in PLUGIN_METADATA
 		for (const metadataProperty of Object.values(PLUGIN_METADATA)) {

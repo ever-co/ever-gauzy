@@ -1,11 +1,11 @@
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 import { DynamicModule, Module } from '@nestjs/common';
+import { GAUZY_AI_CONFIG_TOKEN } from '@gauzy/constants';
 import { GauzyAIService } from './gauzy-ai.service';
 import gauzyAI from './config/gauzy-ai';
 import { IConfigurationOptions } from './configuration.interface';
 import { RequestConfigProvider } from './request-config.provider';
-import { GAUZY_AI_CONFIG_OPTIONS } from './constants';
 
 @Module({
 	imports: [
@@ -41,7 +41,7 @@ export class GauzyAIModule {
 			imports: [ConfigModule], // Make sure to import ConfigModule here
 			providers: [
 				{
-					provide: GAUZY_AI_CONFIG_OPTIONS,
+					provide: GAUZY_AI_CONFIG_TOKEN,
 					useFactory: (config: ConfigService): IConfigurationOptions => ({
 						apiKey: config.get<string>('gauzyAI.gauzyAiApiKey'),
 						apiSecret: config.get<string>('gauzyAI.gauzyAiApiSecret'),
@@ -50,7 +50,7 @@ export class GauzyAIModule {
 					inject: [ConfigService]
 				}
 			],
-			exports: [GAUZY_AI_CONFIG_OPTIONS]
+			exports: [GAUZY_AI_CONFIG_TOKEN]
 		};
 	}
 }

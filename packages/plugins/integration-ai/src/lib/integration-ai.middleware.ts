@@ -3,8 +3,8 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Request, Response, NextFunction } from 'express';
 import { IIntegrationSetting, IntegrationEnum } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/utils';
-import { arrayToObject, IntegrationTenantService } from '@gauzy/core';
+import { arrayToObject, isNotEmpty } from '@gauzy/utils';
+import { IntegrationTenantService } from '@gauzy/core';
 import { RequestConfigProvider } from './request-config.provider';
 
 @Injectable()

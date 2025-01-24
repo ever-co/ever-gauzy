@@ -1,13 +1,10 @@
-import {
-	DEFAULT_API_BASE_URL,
-	DEFAULT_API_HOST,
-	DEFAULT_API_PORT,
-	DEFAULT_GRAPHQL_API_PATH,
-	ApplicationPluginConfig
-} from '@gauzy/common';
+import { ApplicationPluginConfig } from '@gauzy/common';
+import { DEFAULT_API_BASE_URL, DEFAULT_API_HOST, DEFAULT_API_PORT, DEFAULT_GRAPHQL_API_PATH } from '@gauzy/constants';
 import { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig, dbKnexConnectionConfig } from '@gauzy/config';
 
-// Define the dev configuration
+/**
+ * Application plugin configuration for development environment.
+ */
 export const devConfig: ApplicationPluginConfig = {
 	apiConfigOptions: {
 		host: process.env.API_HOST || DEFAULT_API_HOST,
