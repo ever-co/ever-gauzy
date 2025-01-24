@@ -19,20 +19,13 @@ export class EmployeeAvailabilityBulkCreateHandler implements ICommandHandler<Em
 		const allAvailability: IEmployeeAvailability[] = [];
 		const tenantId = RequestContext.currentTenantId();
 
-		try {
-			// Process items in parallel with Promise.all
-			const results = await Promise.all(
-				input.map(async (item) => {
-					const availability = new EmployeeAvailability({
-						...item,
-						tenantId
-					});
-					return this.commandBus.execute(new EmployeeAvailabilityCreateCommand(availability));
-				})
-			);
-			allAvailability.push(...results);
-		} catch (error) {
-			throw new BadRequestException('Failed to create some availability records: ' + error.message);
+		for (const item of input) {
+			let availability = new EmployeeAvailability({
+				...item,
+				tenantId
+			});
+			availability = await this.commandBus.execute(new EmployeeAvailabilityCreateCommand(availability));
+			allAvailability.push(availability);
 		}
 		return allAvailability;
 	}

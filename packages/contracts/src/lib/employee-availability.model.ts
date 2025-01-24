@@ -45,7 +45,6 @@ interface IBaseEmployeeAvailability extends IBasePerTenantAndOrganizationEntityM
  * Represents an Employee Availability record.
  */
 export interface IEmployeeAvailability extends IBaseEmployeeAvailability {
-	employeeId: ID;
 	employee: IEmployee;
 }
 

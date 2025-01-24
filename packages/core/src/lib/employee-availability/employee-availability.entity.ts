@@ -1,10 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsDate, IsInt, IsOptional, IsEnum, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsString, IsDate, IsInt, IsOptional, IsEnum, IsUUID, Min, Max } from 'class-validator';
 import { JoinColumn, RelationId } from 'typeorm';
 import { AvailabilityStatusEnum, ID, IEmployee, IEmployeeAvailability } from '@gauzy/contracts';
 import { Employee, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
-import { AvailabilityStatusTransformer } from '../shared/pipes/employee-availability-status.pipe';
+import { AvailabilityStatusTransformer } from './pipes/employee-availability-status.pipe';
+import { IsBeforeDate } from '../shared/validators';
 
 @MultiORMEntity('employee_availability')
 export class EmployeeAvailability extends TenantOrganizationBaseEntity implements IEmployeeAvailability {
@@ -15,6 +16,9 @@ export class EmployeeAvailability extends TenantOrganizationBaseEntity implement
 	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@IsNotEmpty()
+	@IsBeforeDate(EmployeeAvailability, (it) => it.endDate, {
+		message: 'Start date must be before to the end date'
+	})
 	@MultiORMColumn()
 	startDate: Date;
 
@@ -35,6 +39,8 @@ export class EmployeeAvailability extends TenantOrganizationBaseEntity implement
 	@ApiProperty({ type: () => Number, description: 'Day of the week (0 = Sunday, 6 = Saturday)' })
 	@IsInt()
 	@IsNotEmpty()
+	@Min(0, { message: 'Day of week must be between 0 and 6' })
+	@Max(6, { message: 'Day of week must be between 0 and 6' })
 	@MultiORMColumn()
 	dayOfWeek: number;
 
