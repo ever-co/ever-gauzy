@@ -2,6 +2,7 @@ import * as multer from 'multer';
 import { join, resolve } from 'path';
 import { FileStorageOption, UploadedFile } from '@gauzy/contracts';
 import { environment, getConfig } from '@gauzy/config';
+import { getApiPublicPath } from '../../util/path-util';
 import { Provider } from './provider';
 
 export class DebugProvider extends Provider<DebugProvider> {
