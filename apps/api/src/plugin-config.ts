@@ -1,12 +1,7 @@
 import { Logger } from '@nestjs/common';
 import * as path from 'path';
-import {
-	ApplicationPluginConfig,
-	DEFAULT_API_PORT,
-	DEFAULT_GRAPHQL_API_PATH,
-	DEFAULT_API_HOST,
-	DEFAULT_API_BASE_URL
-} from '@gauzy/common';
+import { ApplicationPluginConfig } from '@gauzy/common';
+import { DEFAULT_API_PORT, DEFAULT_GRAPHQL_API_PATH, DEFAULT_API_HOST, DEFAULT_API_BASE_URL } from '@gauzy/constants';
 import {
 	dbTypeOrmConnectionConfig,
 	dbMikroOrmConnectionConfig,
@@ -34,7 +29,7 @@ logger.verbose('DB Synchronize: ' + process.env.DB_SYNCHRONIZE);
 logger.verbose('Plugins loaded: ' + plugins.length);
 
 /**
- * Application plugin configuration
+ * Application plugin configuration for production environment.
  */
 export const pluginConfig: ApplicationPluginConfig = {
 	apiConfigOptions: {

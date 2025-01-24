@@ -459,27 +459,6 @@ export function sleep(ms: number) {
 }
 
 /**
- * Convert an array of objects to an object with specified key-value pairs.
- *
- * @param array - The array of objects.
- * @param key - The property to use as the key in the resulting object.
- * @param value - The property to use as the value in the resulting object.
- * @returns An object with key-value pairs based on the specified properties.
- */
-export function arrayToObject<T extends Record<string, any>>(
-	array: T[],
-	key: keyof T,
-	value: keyof T
-): Record<string, any> {
-	return array.reduce((prev, current) => {
-		return {
-			...prev,
-			[String(current[key])]: current[value]
-		};
-	}, {});
-}
-
-/**
  * Converts a given input into a boolean value.
  * If the input is `undefined` or `null`, it returns `false`.
  *

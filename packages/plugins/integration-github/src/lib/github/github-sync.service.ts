@@ -29,10 +29,9 @@ import {
 	IntegrationMapSyncLabelCommand,
 	IntegrationTenantService,
 	OrganizationProjectService,
-	RequestContext,
-	arrayToObject
+	RequestContext
 } from '@gauzy/core';
-import { isNotEmpty, sleep } from '@gauzy/utils';
+import { arrayToObject, isNotEmpty, sleep } from '@gauzy/utils';
 import { OctokitService } from '../probot/octokit.service';
 import { GithubRepositoryService } from './repository/github-repository.service';
 import { IntegrationSyncGithubRepositoryIssueCommand } from './repository/issue/commands';

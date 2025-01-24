@@ -14,9 +14,9 @@ import {
 	IntegrationMapSyncEntityCommand,
 	IntegrationTenantGetCommand,
 	OrganizationProjectService,
-	RequestContext,
-	arrayToObject
+	RequestContext
 } from '@gauzy/core';
+import { arrayToObject } from '@gauzy/utils';
 import { GithubRepositoryIssueService } from './../../repository/issue/github-repository-issue.service';
 import { IntegrationSyncGithubRepositoryIssueCommand } from '../../repository/issue/commands';
 import { GithubSyncService } from '../../github-sync.service';
