@@ -13,13 +13,29 @@ export class FileSaveStrategy implements IFileSaveStrategy {
 	 * @returns {void}
 	 * */
 	public save(blob: Blob, filename: string): void {
+		if (!(blob instanceof Blob)) {
+			throw new Error('Invalid blob object');
+		}
+
+		if (!filename) {
+			throw new Error('Filename is required');
+		}
+
 		const link = document.createElement('a');
 		const blobUrl = URL.createObjectURL(blob);
-		link.href = blobUrl;
-		link.download = filename;
-		document.body.appendChild(link);
-		link.click();
-		document.body.removeChild(link);
-		URL.revokeObjectURL(blobUrl);
+
+		try {
+			link.href = blobUrl;
+			link.download = filename;
+			document.body.appendChild(link);
+			link.click();
+		} catch (e) {
+			throw e;
+		} finally {
+			if (link.parentNode) {
+				document.body.removeChild(link);
+			}
+			URL.revokeObjectURL(blobUrl);
+		}
 	}
 }
