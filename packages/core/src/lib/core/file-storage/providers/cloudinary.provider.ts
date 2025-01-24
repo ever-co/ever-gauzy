@@ -18,15 +18,28 @@ import { RequestContext } from './../../../core/context';
 const { cloudinary } = environment;
 
 export class CloudinaryProvider extends Provider<CloudinaryProvider> {
+	private readonly detailedLoggingEnabled = false;
 	public instance: CloudinaryProvider;
 	public config: ICloudinaryConfig & FileSystem;
 	public readonly name = FileStorageProviderEnum.CLOUDINARY;
 
-	private readonly _detailedLoggingEnabled = false;
-
 	constructor() {
 		super();
-		this.setDefaultConfiguration();
+		void this.initConfig();
+	}
+
+	/**
+	 * Initializes the configuration asynchronously.
+	 */
+	private async initConfig(): Promise<void> {
+		this.config = {
+			rootPath: '',
+			baseUrl: cloudinary?.delivery_url ?? '',
+			cloud_name: cloudinary?.cloud_name ?? '',
+			api_key: cloudinary?.api_key ?? '',
+			api_secret: cloudinary?.api_secret ?? '',
+			secure: cloudinary?.secure ?? true // Default to `true` for secure connections
+		};
 	}
 
 	/**
@@ -71,23 +84,6 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 	}
 
 	/**
-	 * Sets default Cloudinary configuration values based on environment settings.
-	 * This function initializes the configuration object with values such as rootPath, baseUrl,
-	 * cloud_name, api_key, api_secret, and secure, using the provided environment configuration.
-	 */
-	setDefaultConfiguration(): void {
-		// Set default values for the Cloudinary configuration object
-		this.config = {
-			rootPath: '',
-			baseUrl: cloudinary.delivery_url,
-			cloud_name: cloudinary.cloud_name,
-			api_key: cloudinary.api_key,
-			api_secret: cloudinary.api_secret,
-			secure: cloudinary.secure
-		};
-	}
-
-	/**
 	 * Sets Cloudinary configuration by updating the existing configuration with values from the current request's tenant settings.
 	 * The function uses default values and trims/validates the obtained settings before updating the configuration.
 	 */
@@ -105,8 +101,9 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 				const settings = request['tenantSettings'];
 
 				if (settings) {
-					if (this._detailedLoggingEnabled)
+					if (this.detailedLoggingEnabled) {
 						console.log(`setWasabiConfiguration Tenant Settings value: ${JSON.stringify(settings)}`);
+					}
 
 					if (trimIfNotEmpty(settings.cloudinary_cloud_name))
 						this.config.cloud_name = trimIfNotEmpty(settings.cloudinary_cloud_name);

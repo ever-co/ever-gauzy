@@ -39,25 +39,34 @@ export interface IDigitalOceanProviderConfig {
 }
 
 export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
+	private readonly detailedLoggingEnabled = false;
 	public readonly name = FileStorageProviderEnum.DIGITALOCEAN;
 	public instance: DigitalOceanS3Provider;
 	public config: IDigitalOceanProviderConfig;
 	public defaultConfig: IDigitalOceanProviderConfig;
 
-	private readonly _detailedLoggingEnabled = false;
-
 	constructor() {
 		super();
-		this.config = this.defaultConfig = {
+		void this.initConfig();
+	}
+
+	/**
+	 * Initializes the configuration asynchronously.
+	 */
+	private async initConfig(): Promise<void> {
+		this.defaultConfig = {
 			rootPath: '',
-			digitalocean_access_key_id: digitalOcean.accessKeyId,
-			digitalocean_secret_access_key: digitalOcean.secretAccessKey,
-			digitalocean_default_region: digitalOcean.region,
-			digitalocean_service_url: digitalOcean.serviceUrl,
-			digitalocean_cdn_url: digitalOcean.cdnUrl,
-			digitalocean_s3_bucket: digitalOcean.s3.bucket,
-			digitalocean_s3_force_path_style: digitalOcean.s3.forcePathStyle
+			digitalocean_access_key_id: digitalOcean?.accessKeyId ?? '',
+			digitalocean_secret_access_key: digitalOcean?.secretAccessKey ?? '',
+			digitalocean_default_region: digitalOcean?.region ?? 'us-east-1',
+			digitalocean_service_url: digitalOcean?.serviceUrl ?? '',
+			digitalocean_cdn_url: digitalOcean?.cdnUrl ?? '',
+			digitalocean_s3_bucket: digitalOcean?.s3?.bucket ?? '',
+			digitalocean_s3_force_path_style: digitalOcean?.s3?.forcePathStyle ?? false
 		};
+
+		// Assign the initialized config
+		this.config = { ...this.defaultConfig };
 	}
 
 	/**
@@ -80,87 +89,91 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 	 * If they have DigitalOcean details, use them to override the default configuration.
 	 */
 	private setDigitalOceanConfiguration() {
-		// Use the default configuration as a starting point
-		this.config = {
-			...this.defaultConfig
-		};
+		if (this.detailedLoggingEnabled) {
+			// Use the default configuration as a starting point
+			this.config = {
+				...this.defaultConfig
+			};
 
-		if (this._detailedLoggingEnabled) {
 			console.log(`setDigitalOceanConfiguration this config value: ${JSON.stringify(this.config)}`);
 		}
 
 		try {
-			const request = RequestContext.currentRequest();
-			if (request) {
-				const settings = request['tenantSettings'];
+			if (this.detailedLoggingEnabled) {
+				const request = RequestContext.currentRequest();
+				if (request) {
+					const settings = request['tenantSettings'];
 
-				if (settings) {
-					if (this._detailedLoggingEnabled) {
+					if (settings) {
 						console.log(`setDigitalOceanConfiguration Tenant Settings Value: ${JSON.stringify(settings)}`);
-					}
+						if (this.detailedLoggingEnabled) {
+						}
 
-					if (trimIfNotEmpty(settings.digitalocean_access_key_id)) {
-						this.config.digitalocean_access_key_id = trimIfNotEmpty(settings.digitalocean_access_key_id);
+						if (trimIfNotEmpty(settings.digitalocean_access_key_id)) {
+							this.config.digitalocean_access_key_id = trimIfNotEmpty(
+								settings.digitalocean_access_key_id
+							);
 
-						if (this._detailedLoggingEnabled) {
 							console.log(
 								`setDigitalOceanConfiguration this.config.digitalocean_access_key_id value: ${this.config.digitalocean_access_key_id}`
 							);
 						}
 					}
 
-					if (trimIfNotEmpty(settings.digitalocean_secret_access_key)) {
-						this.config.digitalocean_secret_access_key = trimIfNotEmpty(
-							settings.digitalocean_secret_access_key
-						);
+					if (this.detailedLoggingEnabled) {
+						if (trimIfNotEmpty(settings.digitalocean_secret_access_key)) {
+							this.config.digitalocean_secret_access_key = trimIfNotEmpty(
+								settings.digitalocean_secret_access_key
+							);
 
-						if (this._detailedLoggingEnabled) {
 							console.log(
 								`setDigitalOceanConfiguration this.config.digitalocean_secret_access_key value: ${this.config.digitalocean_secret_access_key}`
 							);
 						}
 					}
 
-					if (trimIfNotEmpty(settings.digitalocean_service_url)) {
-						this.config.digitalocean_service_url = ensureHttpPrefix(
-							trimIfNotEmpty(settings.digitalocean_service_url)
-						);
+					if (this.detailedLoggingEnabled) {
+						if (trimIfNotEmpty(settings.digitalocean_service_url)) {
+							this.config.digitalocean_service_url = ensureHttpPrefix(
+								trimIfNotEmpty(settings.digitalocean_service_url)
+							);
 
-						if (this._detailedLoggingEnabled) {
 							console.log(
 								'setDigitalOceanConfiguration this.config.digitalocean_service_url value: ',
 								this.config.digitalocean_service_url
 							);
 						}
-					}
+						if (this.detailedLoggingEnabled) {
+						}
 
-					if (trimIfNotEmpty(settings.digitalocean_default_region)) {
-						this.config.digitalocean_default_region = trimIfNotEmpty(settings.digitalocean_default_region);
+						if (trimIfNotEmpty(settings.digitalocean_default_region)) {
+							this.config.digitalocean_default_region = trimIfNotEmpty(
+								settings.digitalocean_default_region
+							);
 
-						if (this._detailedLoggingEnabled) {
 							console.log(
 								'setDigitalOceanConfiguration this.config.digitalocean_default_region value: ',
 								this.config.digitalocean_default_region
 							);
 						}
-					}
+						if (this.detailedLoggingEnabled) {
+						}
 
-					if (trimIfNotEmpty(settings.digitalocean_s3_bucket)) {
-						this.config.digitalocean_s3_bucket = trimIfNotEmpty(settings.digitalocean_s3_bucket);
+						if (trimIfNotEmpty(settings.digitalocean_s3_bucket)) {
+							this.config.digitalocean_s3_bucket = trimIfNotEmpty(settings.digitalocean_s3_bucket);
 
-						if (this._detailedLoggingEnabled) {
 							console.log(
 								'setDigitalOceanConfiguration this.config.digitalocean_s3_bucket value: ',
 								this.config.digitalocean_s3_bucket
 							);
 						}
 					}
+					if (this.detailedLoggingEnabled) {
+						// Assuming trimIfNotEmpty() function trims and retrieves the value from settings
+						const forcePathStyle = trimIfNotEmpty(settings.digitalocean_s3_force_path_style);
+						this.config.digitalocean_s3_force_path_style =
+							forcePathStyle === 'true' || forcePathStyle === '1';
 
-					// Assuming trimIfNotEmpty() function trims and retrieves the value from settings
-					const forcePathStyle = trimIfNotEmpty(settings.digitalocean_s3_force_path_style);
-					this.config.digitalocean_s3_force_path_style = forcePathStyle === 'true' || forcePathStyle === '1';
-
-					if (this._detailedLoggingEnabled) {
 						console.log(
 							'setDigitalOceanConfiguration this.config.digitalocean_s3_force_path_style value: ',
 							this.config.digitalocean_s3_force_path_style
