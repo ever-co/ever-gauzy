@@ -5,8 +5,8 @@ import { basename, join, resolve } from 'path';
 import * as moment from 'moment';
 import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
 import { environment, getConfig } from '@gauzy/config';
-import { Provider } from './provider';
 import { getApiPublicPath } from '../../util/path-util';
+import { Provider } from './provider';
 
 /**
  * Local file storage provider
@@ -18,7 +18,7 @@ export class LocalProvider extends Provider<LocalProvider> {
 
 	constructor() {
 		super();
-		void this.initConfig(); // Calls async method without awaiting
+		void this.initConfig();
 	}
 
 	/**
@@ -27,7 +27,6 @@ export class LocalProvider extends Provider<LocalProvider> {
 	private async initConfig(): Promise<void> {
 		const config = getConfig(); // Fetch the config inside an async function
 		const apiPublicPath = getApiPublicPath(); // Get the public path for the API
-		console.log(`API Public Path: ${apiPublicPath}`);
 
 		this.config = {
 			baseUrl: environment.baseUrl,

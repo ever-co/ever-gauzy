@@ -43,23 +43,31 @@ export interface IS3ProviderConfig {
 }
 
 export class S3Provider extends Provider<S3Provider> {
+	private readonly detailedLoggingEnabled = false;
 	public instance: S3Provider;
 	public readonly name = FileStorageProviderEnum.S3;
 	public config: IS3ProviderConfig;
 	public defaultConfig: IS3ProviderConfig;
 
-	private readonly _detailedLoggingEnabled = false;
-
 	constructor() {
 		super();
-		this.config = this.defaultConfig = {
+		void this.initConfig();
+	}
+
+	/**
+	 * Initializes the configuration asynchronously.
+	 */
+	private async initConfig(): Promise<void> {
+		this.defaultConfig = {
 			rootPath: '',
-			aws_access_key_id: environment.awsConfig.accessKeyId,
-			aws_secret_access_key: environment.awsConfig.secretAccessKey,
-			aws_default_region: environment.awsConfig.region,
-			aws_bucket: environment.awsConfig.s3.bucket,
-			aws_force_path_style: environment.awsConfig.s3.forcePathStyle
+			aws_access_key_id: environment.awsConfig?.accessKeyId ?? '',
+			aws_secret_access_key: environment.awsConfig?.secretAccessKey ?? '',
+			aws_default_region: environment.awsConfig?.region ?? 'us-east-1',
+			aws_bucket: environment.awsConfig?.s3?.bucket ?? '',
+			aws_force_path_style: environment.awsConfig?.s3?.forcePathStyle ?? false
 		};
+		// Assign the initialized config
+		this.config = { ...this.defaultConfig };
 	}
 
 	/**
@@ -88,35 +96,34 @@ export class S3Provider extends Provider<S3Provider> {
 
 		try {
 			const request = RequestContext.currentRequest();
+			if (this.detailedLoggingEnabled)
+				if (request) {
+					const settings = request['tenantSettings'];
 
-			if (request) {
-				const settings = request['tenantSettings'];
-
-				if (settings) {
-					if (this._detailedLoggingEnabled)
+					if (settings) {
 						console.log(`setWasabiConfiguration Tenant Settings value: ${JSON.stringify(settings)}`);
 
-					if (trimIfNotEmpty(settings.aws_access_key_id))
-						this.config.aws_access_key_id = trimIfNotEmpty(settings.aws_access_key_id);
+						if (trimIfNotEmpty(settings.aws_access_key_id))
+							this.config.aws_access_key_id = trimIfNotEmpty(settings.aws_access_key_id);
 
-					if (trimIfNotEmpty(settings.aws_secret_access_key))
-						this.config.aws_secret_access_key = trimIfNotEmpty(settings.aws_secret_access_key);
+						if (trimIfNotEmpty(settings.aws_secret_access_key))
+							this.config.aws_secret_access_key = trimIfNotEmpty(settings.aws_secret_access_key);
 
-					if (trimIfNotEmpty(settings.aws_default_region))
-						this.config.aws_default_region = trimIfNotEmpty(settings.aws_default_region);
+						if (trimIfNotEmpty(settings.aws_default_region))
+							this.config.aws_default_region = trimIfNotEmpty(settings.aws_default_region);
 
-					if (trimIfNotEmpty(settings.aws_bucket))
-						this.config.aws_bucket = trimIfNotEmpty(settings.aws_bucket);
+						if (trimIfNotEmpty(settings.aws_bucket))
+							this.config.aws_bucket = trimIfNotEmpty(settings.aws_bucket);
 
-					const forcePathStyle = trimIfNotEmpty(settings.aws_force_path_style);
+						const forcePathStyle = trimIfNotEmpty(settings.aws_force_path_style);
 
-					if (forcePathStyle) {
-						this.config.aws_force_path_style = forcePathStyle === 'true' || forcePathStyle === '1';
-					} else {
-						this.config.aws_force_path_style = false;
+						if (forcePathStyle) {
+							this.config.aws_force_path_style = forcePathStyle === 'true' || forcePathStyle === '1';
+						} else {
+							this.config.aws_force_path_style = false;
+						}
 					}
 				}
-			}
 		} catch (error) {
 			console.error('Error while setting S3 configuration. Default configuration will be used', error);
 		}

@@ -12,7 +12,7 @@ export class DebugProvider extends Provider<DebugProvider> {
 
 	constructor() {
 		super();
-		void this.initConfig(); // Calls async method without awaiting
+		void this.initConfig();
 	}
 
 	/**
