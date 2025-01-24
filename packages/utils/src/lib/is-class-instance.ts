@@ -1,4 +1,4 @@
-import { isObject } from './is-object';
+import { isPlainObject } from './is-plain-object';
 
 /**
  * Check if the item is a class instance (not a plain object).
@@ -7,5 +7,5 @@ import { isObject } from './is-object';
  * @returns {boolean} - Returns true if the item is a class instance, otherwise false.
  */
 export function isClassInstance(item: any): boolean {
-	return isObject(item) && item.constructor.name !== 'Object';
+	return isPlainObject(item) && item.constructor.name !== 'Object';
 }

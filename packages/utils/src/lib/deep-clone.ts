@@ -1,6 +1,6 @@
 import { isClassInstance } from './is-class-instance';
 import { isEmpty } from './is-empty';
-import { isObject } from './is-object';
+import { isPlainObject } from './is-plain-object';
 
 /**
  * Deeply clones an input value.
@@ -10,7 +10,7 @@ import { isObject } from './is-object';
  */
 export function deepClone<T extends string | number | any[] | Object>(input: T): T {
 	// Return the input itself if it's not an object or is empty
-	if (!isObject(input) || isEmpty(input)) {
+	if (!isPlainObject(input) || isEmpty(input)) {
 		return input;
 	}
 

@@ -1,6 +1,7 @@
 import { deepClone } from './deep-clone';
 import { isClassInstance } from './is-class-instance';
-import { isObject } from './is-object';
+import { isPlainObject } from './is-plain-object';
+
 /**
  * Deeply merges two objects.
  *
@@ -21,11 +22,11 @@ export function deepMerge(target: any, source: any, depth = 0): any {
 	}
 
 	// Merge objects recursively
-	if (isObject(target) && isObject(source)) {
+	if (isPlainObject(target) && isPlainObject(source)) {
 		for (const key in source) {
 			if (Object.prototype.hasOwnProperty.call(source, key)) {
 				// If the source value is an object, recursively merge
-				if (isObject(source[key])) {
+				if (isPlainObject(source[key])) {
 					if (!target[key]) {
 						target[key] = {};
 					}
