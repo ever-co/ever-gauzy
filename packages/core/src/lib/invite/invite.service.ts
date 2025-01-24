@@ -5,7 +5,7 @@ import { FindManyOptions, FindOptionsWhere, In, IsNull, MoreThanOrEqual, Not, Se
 import { addDays } from 'date-fns';
 import { pick } from 'underscore';
 import { ConfigService, environment } from '@gauzy/config';
-import { ALPHA_NUMERIC_CODE_LENGTH, DEFAULT_INVITE_EXPIRY_PERIOD } from '@gauzy/constants';
+import { DEFAULT_INVITE_EXPIRY_PERIOD } from '@gauzy/constants';
 import {
 	ICreateEmailInvitesInput,
 	ICreateEmailInvitesOutput,
