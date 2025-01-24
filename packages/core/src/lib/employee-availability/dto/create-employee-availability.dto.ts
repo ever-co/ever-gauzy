@@ -1,8 +1,12 @@
 import { IsUUID, IsDateString, IsEnum, IsOptional, IsString, IsInt } from 'class-validator';
 import { AvailabilityStatusEnum, ID, IEmployeeAvailabilityCreateInput } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { TenantOrganizationBaseDTO } from '../../core/dto/tenant-organization-base.dto';
 
-export class CreateEmployeeAvailabilityDTO implements IEmployeeAvailabilityCreateInput {
+export class CreateEmployeeAvailabilityDTO
+	extends TenantOrganizationBaseDTO
+	implements IEmployeeAvailabilityCreateInput
+{
 	@ApiProperty({ type: () => String })
 	@IsUUID()
 	employeeId: ID;

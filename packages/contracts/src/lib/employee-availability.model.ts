@@ -2,7 +2,7 @@ import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.mode
 import { IEmployee } from './employee.model';
 
 /**
- * Enum representing the availability status of an employee.
+ * Enum representing different availability statuses.
  */
 export enum AvailabilityStatusEnum {
 	Available = 'Available',
@@ -10,52 +10,56 @@ export enum AvailabilityStatusEnum {
 	Unavailable = 'Unavailable'
 }
 
+/**
+ * Enum mapping availability statuses to numerical values.
+ */
 export enum AvailabilityStatusValue {
 	Available = 0,
 	Partial = 1,
 	Unavailable = 2
 }
 
-export interface IEmployeeAvailability extends IBasePerTenantAndOrganizationEntityModel {
-	employee: IEmployee;
+/**
+ * A mapping object to relate status labels to their respective numerical values.
+ */
+export const AvailabilityStatusMap: Record<AvailabilityStatusEnum, AvailabilityStatusValue> = {
+	[AvailabilityStatusEnum.Available]: AvailabilityStatusValue.Available,
+	[AvailabilityStatusEnum.Partial]: AvailabilityStatusValue.Partial,
+	[AvailabilityStatusEnum.Unavailable]: AvailabilityStatusValue.Unavailable
+};
+
+/**
+ * Base interface for Employee Availability data.
+ * Includes common properties shared across different input types.
+ */
+interface IBaseEmployeeAvailability extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId: ID;
 	startDate: Date;
 	endDate: Date;
 	dayOfWeek: number; // 0 = Sunday, 6 = Saturday
 	availabilityStatus: AvailabilityStatusEnum;
 	availabilityNotes?: string;
+}
+
+/**
+ * Represents an Employee Availability record.
+ */
+export interface IEmployeeAvailability extends IBaseEmployeeAvailability {
+	employeeId: ID;
+	employee: IEmployee;
 }
 
 /**
  * Input interface for finding Employee Availability records.
  */
-export interface IEmployeeAvailabilityFindInput {
-	employeeId?: ID;
-	availabilityStatus?: AvailabilityStatusEnum;
-	startDate?: Date;
-	endDate?: Date;
-}
+export interface IEmployeeAvailabilityFindInput extends Partial<IBaseEmployeeAvailability> {}
 
 /**
  * Input interface for creating new Employee Availability records.
  */
-export interface IEmployeeAvailabilityCreateInput extends IBasePerTenantAndOrganizationEntityModel {
-	employeeId: ID;
-	startDate: Date;
-	endDate: Date;
-	dayOfWeek: number; // 0 = Sunday, 6 = Saturday
-	availabilityStatus: AvailabilityStatusEnum;
-	availabilityNotes?: string;
-}
+export interface IEmployeeAvailabilityCreateInput extends IBaseEmployeeAvailability {}
 
 /**
  * Input interface for updating Employee Availability records.
  */
-export interface IEmployeeAvailabilityUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
-	employeeId?: ID;
-	startDate?: Date;
-	endDate?: Date;
-	dayOfWeek?: number; // 0 = Sunday, 6 = Saturday
-	availabilityStatus?: AvailabilityStatusEnum;
-	availabilityNotes?: string;
-}
+export interface IEmployeeAvailabilityUpdateInput extends Partial<IBaseEmployeeAvailability> {}

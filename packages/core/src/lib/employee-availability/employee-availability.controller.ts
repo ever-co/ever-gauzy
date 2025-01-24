@@ -6,13 +6,13 @@ import { ID, IEmployeeAvailability, IPagination } from '@gauzy/contracts';
 import { EmployeeAvailabilityService } from './employee-availability.service';
 import { EmployeeAvailability } from './employee-availability.entity';
 import { CrudController, PaginationParams } from '../core';
-import { TenantPermissionGuard, UUIDValidationPipe } from '../shared';
+import { PermissionGuard, TenantPermissionGuard, UUIDValidationPipe } from '../shared';
 import { EmployeeAvailabilityBulkCreateCommand, EmployeeAvailabilityCreateCommand } from './commands';
 import { CreateEmployeeAvailabilityDTO } from './dto/create-employee-availability.dto';
 import { UpdateEmployeeAvailabilityDTO } from './dto/update-employee-availability.dto';
 
 @ApiTags('EmployeeAvailability')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('/employee-availability')
 export class EmployeeAvailabilityController extends CrudController<EmployeeAvailability> {
 	constructor(

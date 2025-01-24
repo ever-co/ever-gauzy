@@ -10,6 +10,13 @@ import { EmployeeAvailabilityCreateCommand } from '../employee-availability.crea
 export class EmployeeAvailabilityCreateHandler implements ICommandHandler<EmployeeAvailabilityCreateCommand> {
 	constructor(private readonly availabilityService: EmployeeAvailabilityService) {}
 
+	/**
+	 * Handles the creation of an employee availability record.
+	 *
+	 * @param {EmployeeAvailabilityCreateCommand} command - The command containing employee availability details.
+	 * @returns {Promise<IEmployeeAvailability>} - The newly created employee availability record.
+	 * @throws {BadRequestException} - If any validation fails (e.g., missing fields, invalid dates).
+	 */
 	public async execute(command: EmployeeAvailabilityCreateCommand): Promise<IEmployeeAvailability> {
 		const { input } = command;
 		const { startDate, endDate, employeeId, dayOfWeek, availabilityStatus } = input;
