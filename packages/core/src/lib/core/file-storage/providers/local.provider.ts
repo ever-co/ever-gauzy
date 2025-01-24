@@ -8,26 +8,35 @@ import { environment, getConfig } from '@gauzy/config';
 import { Provider } from './provider';
 import { getApiPublicPath } from '../../util/path-util';
 
-// Get the application configuration
-const config = getConfig();
-
-// Get the public path for the API
-const apiPublicPath = getApiPublicPath();
-console.log(`API Public Path: ${apiPublicPath}`);
-
 /**
  * Local file storage provider
  */
 export class LocalProvider extends Provider<LocalProvider> {
 	public instance: LocalProvider;
 	public readonly name = FileStorageProviderEnum.LOCAL;
-	public config = {
-		rootPath:
-			(environment.isElectron
-				? resolve(environment.gauzyUserPath, 'public')
-				: config.assetOptions.assetPublicPath) || apiPublicPath,
-		baseUrl: environment.baseUrl
-	};
+	public config: { rootPath: string; baseUrl: string };
+
+	constructor() {
+		super();
+		void this.initConfig(); // Calls async method without awaiting
+	}
+
+	/**
+	 * Initializes the configuration asynchronously.
+	 */
+	private async initConfig(): Promise<void> {
+		const config = getConfig(); // Fetch the config inside an async function
+		const apiPublicPath = getApiPublicPath(); // Get the public path for the API
+		console.log(`API Public Path: ${apiPublicPath}`);
+
+		this.config = {
+			baseUrl: environment.baseUrl,
+			rootPath:
+				(environment.isElectron
+					? resolve(environment.gauzyUserPath, 'public')
+					: config.assetOptions?.assetPublicPath) || apiPublicPath
+		};
+	}
 
 	/**
 	 * Get the singleton instance of LocalProvider
