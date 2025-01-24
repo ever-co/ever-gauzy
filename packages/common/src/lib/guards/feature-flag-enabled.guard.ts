@@ -1,12 +1,7 @@
-import {
-	CanActivate,
-	ExecutionContext,
-	Injectable,
-	NotFoundException,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { FEATURE_METADATA } from '@gauzy/constants';
 import { FeatureEnum, IAuthenticationFlagFeatures } from '@gauzy/contracts';
-import { FEATURE_METADATA } from '../constants';
 
 /**
  * Check if a specific feature is enabled based on the environment variable.
@@ -15,7 +10,7 @@ import { FEATURE_METADATA } from '../constants';
  * @returns True if the feature is enabled, otherwise false.
  */
 const featureEnabled = (feature: Extract<keyof IAuthenticationFlagFeatures, string>) => {
-    return process.env[feature] !== 'false';
+	return process.env[feature] !== 'false';
 };
 
 /**
@@ -44,7 +39,7 @@ export const flagFeatures: IAuthenticationFlagFeatures = {
 	FEATURE_MICROSOFT_LOGIN: featureEnabled(FeatureEnum.FEATURE_MICROSOFT_LOGIN),
 
 	/** Flag indicating whether LinkedIn login is enabled. */
-	FEATURE_LINKEDIN_LOGIN: featureEnabled(FeatureEnum.FEATURE_LINKEDIN_LOGIN),
+	FEATURE_LINKEDIN_LOGIN: featureEnabled(FeatureEnum.FEATURE_LINKEDIN_LOGIN)
 };
 
 /**
@@ -63,19 +58,19 @@ export class FeatureFlagEnabledGuard implements CanActivate {
 	 */
 	async canActivate(context: ExecutionContext) {
 		/*
-		* Retrieve metadata for a specified key for a specified set of features
-		*/
+		 * Retrieve metadata for a specified key for a specified set of features
+		 */
 		const flag = this._reflector.getAllAndOverride<FeatureEnum>(FEATURE_METADATA, [
 			context.getHandler(), // Returns a reference to the handler (method) that will be invoked next in the request pipeline.
-			context.getClass(), // Returns the *type* of the controller class which the current handler belongs to.
+			context.getClass() // Returns the *type* of the controller class which the current handler belongs to.
 		]);
 		if (!!flagFeatures[flag]) {
 			return true;
 		}
 
 		/**
-		* If the feature is not enabled, throw a NotFoundException.
-		*/
+		 * If the feature is not enabled, throw a NotFoundException.
+		 */
 		const httpContext = context.switchToHttp();
 		const request = httpContext.getRequest();
 		throw new NotFoundException(`Cannot ${request.method} ${request.url}`);

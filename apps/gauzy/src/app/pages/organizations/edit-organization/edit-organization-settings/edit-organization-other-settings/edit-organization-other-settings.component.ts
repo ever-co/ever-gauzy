@@ -16,7 +16,12 @@ import {
 	DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS,
 	DEFAULT_TIME_FORMATS,
 	DEFAULT_STANDARD_WORK_HOURS_PER_DAY,
-	DEFAULT_INVITE_EXPIRY_PERIOD
+	DEFAULT_INVITE_EXPIRY_PERIOD,
+	TaskProofOfCompletionTypeEnum,
+	DEFAULT_PROOF_COMPLETION_TYPE,
+	DEFAULT_TASK_NOTIFY_PERIOD,
+	DEFAULT_AUTO_CLOSE_ISSUE_PERIOD,
+	DEFAULT_AUTO_ARCHIVE_ISSUE_PERIOD
 } from '@gauzy/constants';
 import {
 	AccountingTemplateTypeEnum,
@@ -25,18 +30,13 @@ import {
 	CrudActionEnum,
 	CurrenciesEnum,
 	CurrencyPosition,
-	DEFAULT_TASK_NOTIFY_PERIOD,
-	DEFAULT_PROOF_COMPLETION_TYPE,
 	DefaultValueDateTypeEnum,
 	IAccountingTemplate,
 	IKeyValuePair,
 	IOrganization,
 	RegionsEnum,
 	WeekDaysEnum,
-	IOrganizationTaskSetting,
-	TaskProofOfCompletionTypeEnum,
-	DEFAULT_AUTO_CLOSE_ISSUE_PERIOD,
-	DEFAULT_AUTO_ARCHIVE_ISSUE_PERIOD
+	IOrganizationTaskSetting
 } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/ui-core/common';
 import {

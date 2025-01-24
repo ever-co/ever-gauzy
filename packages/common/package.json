@@ -28,6 +28,7 @@
 	},
 	"dependencies": {
 		"@apollo/server": "^4.11.3",
+		"@gauzy/constants": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@mikro-orm/nestjs": "^6.0.2",
 		"@nestjs/common": "^10.4.15",

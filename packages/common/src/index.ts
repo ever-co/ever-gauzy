@@ -1,7 +1,6 @@
 /**
  * Public API Surface of @gauzy/common
  */
-export * from './lib/constants';
 export * from './lib/decorators';
 export * from './lib/enums';
 export * from './lib/guards';
