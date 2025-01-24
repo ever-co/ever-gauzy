@@ -1,6 +1,6 @@
 import { Entity as MikroOrmEntity } from '@mikro-orm/core';
 import { Entity as TypeOrmEntity } from 'typeorm';
-import { isObject } from '@gauzy/utils';
+import { isPlainObject } from '@gauzy/utils';
 import { MikroOrmEntityOptions, TypeOrmEntityOptions } from './entity-options.types';
 import { parseMikroOrmEntityOptions } from './entity.helper';
 
@@ -31,14 +31,16 @@ export function MultiORMEntity<T>(
 	maybeOptions?: TypeOrmEntityOptions
 ): ClassDecorator {
 	// Extract MikroORM options based on the type of nameOrOptions
-	const mikroOrmOptions: any = isObject(nameOrOptions)
+	const mikroOrmOptions: any = isPlainObject(nameOrOptions)
 		? nameOrOptions
 		: typeof nameOrOptions === 'string'
 		? { tableName: nameOrOptions, ...maybeOptions }
 		: {};
 
 	// Extract TypeORM options based on the type of nameOrOptions
-	const typeOrmOptions: any = isObject(nameOrOptions) ? (nameOrOptions as TypeOrmEntityOptions) : nameOrOptions || {};
+	const typeOrmOptions: any = isPlainObject(nameOrOptions)
+		? (nameOrOptions as TypeOrmEntityOptions)
+		: nameOrOptions || {};
 
 	/**
 	 * Class decorator for creating entities with both MikroORM and TypeORM decorators.
