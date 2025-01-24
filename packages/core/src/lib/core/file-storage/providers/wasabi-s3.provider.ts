@@ -104,9 +104,9 @@ const WASABI_REGION_SERVICE_URLS: IWasabiRegionServiceURL[] = [
 ];
 
 export class WasabiS3Provider extends Provider<WasabiS3Provider> {
+	public readonly name = FileStorageProviderEnum.WASABI;
 	private readonly detailedLoggingEnabled = false;
 	public instance: WasabiS3Provider;
-	public readonly name = FileStorageProviderEnum.WASABI;
 	public config: IWasabiProviderConfig;
 	public defaultConfig: IWasabiProviderConfig;
 

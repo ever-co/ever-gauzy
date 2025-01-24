@@ -18,10 +18,10 @@ import { RequestContext } from './../../../core/context';
 const { cloudinary } = environment;
 
 export class CloudinaryProvider extends Provider<CloudinaryProvider> {
+	public readonly name = FileStorageProviderEnum.CLOUDINARY;
 	private readonly detailedLoggingEnabled = false;
 	public instance: CloudinaryProvider;
 	public config: ICloudinaryConfig & FileSystem;
-	public readonly name = FileStorageProviderEnum.CLOUDINARY;
 
 	constructor() {
 		super();

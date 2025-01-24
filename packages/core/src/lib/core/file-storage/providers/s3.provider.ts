@@ -43,9 +43,9 @@ export interface IS3ProviderConfig {
 }
 
 export class S3Provider extends Provider<S3Provider> {
+	public readonly name = FileStorageProviderEnum.S3;
 	private readonly detailedLoggingEnabled = false;
 	public instance: S3Provider;
-	public readonly name = FileStorageProviderEnum.S3;
 	public config: IS3ProviderConfig;
 	public defaultConfig: IS3ProviderConfig;
 
@@ -96,34 +96,36 @@ export class S3Provider extends Provider<S3Provider> {
 
 		try {
 			const request = RequestContext.currentRequest();
-			if (this.detailedLoggingEnabled)
-				if (request) {
-					const settings = request['tenantSettings'];
 
-					if (settings) {
+			if (request) {
+				const settings = request['tenantSettings'];
+
+				if (settings) {
+					if (this.detailedLoggingEnabled) {
 						console.log(`setWasabiConfiguration Tenant Settings value: ${JSON.stringify(settings)}`);
+					}
 
-						if (trimIfNotEmpty(settings.aws_access_key_id))
-							this.config.aws_access_key_id = trimIfNotEmpty(settings.aws_access_key_id);
+					if (trimIfNotEmpty(settings.aws_access_key_id))
+						this.config.aws_access_key_id = trimIfNotEmpty(settings.aws_access_key_id);
 
-						if (trimIfNotEmpty(settings.aws_secret_access_key))
-							this.config.aws_secret_access_key = trimIfNotEmpty(settings.aws_secret_access_key);
+					if (trimIfNotEmpty(settings.aws_secret_access_key))
+						this.config.aws_secret_access_key = trimIfNotEmpty(settings.aws_secret_access_key);
 
-						if (trimIfNotEmpty(settings.aws_default_region))
-							this.config.aws_default_region = trimIfNotEmpty(settings.aws_default_region);
+					if (trimIfNotEmpty(settings.aws_default_region))
+						this.config.aws_default_region = trimIfNotEmpty(settings.aws_default_region);
 
-						if (trimIfNotEmpty(settings.aws_bucket))
-							this.config.aws_bucket = trimIfNotEmpty(settings.aws_bucket);
+					if (trimIfNotEmpty(settings.aws_bucket))
+						this.config.aws_bucket = trimIfNotEmpty(settings.aws_bucket);
 
-						const forcePathStyle = trimIfNotEmpty(settings.aws_force_path_style);
+					const forcePathStyle = trimIfNotEmpty(settings.aws_force_path_style);
 
-						if (forcePathStyle) {
-							this.config.aws_force_path_style = forcePathStyle === 'true' || forcePathStyle === '1';
-						} else {
-							this.config.aws_force_path_style = false;
-						}
+					if (forcePathStyle) {
+						this.config.aws_force_path_style = forcePathStyle === 'true' || forcePathStyle === '1';
+					} else {
+						this.config.aws_force_path_style = false;
 					}
 				}
+			}
 		} catch (error) {
 			console.error('Error while setting S3 configuration. Default configuration will be used', error);
 		}
