@@ -38,7 +38,7 @@ export function isNotNullOrUndefinedOrEmpty<T>(value: T | undefined | null): boo
 export function toParams(query: any) {
 	let params: HttpParams = new HttpParams();
 	Object.keys(query).forEach((key) => {
-		if (isJsObject(query[key])) {
+		if (isObject(query[key])) {
 			params = toSubParams(params, key, query[key]);
 		} else {
 			params = params.append(key.toString(), query[key]);
@@ -52,7 +52,7 @@ export function toParams(query: any) {
  * @param object The value to check.
  * @returns `true` if the value is a JavaScript object, `false` otherwise.
  */
-export function isJsObject(object: any): boolean {
+export function isObject(object: any): boolean {
 	return object !== null && object !== undefined && typeof object === 'object';
 }
 
@@ -88,7 +88,7 @@ export function isEmpty(item: any): boolean {
 
 function toSubParams(params: HttpParams, key: string, object: any) {
 	Object.keys(object).forEach((childKey) => {
-		if (isJsObject(object[childKey])) {
+		if (isObject(object[childKey])) {
 			params = toSubParams(params, `${key}[${childKey}]`, object[childKey]);
 		} else {
 			params = params.append(`${key}[${childKey}]`, object[childKey]);
@@ -305,9 +305,9 @@ export function mergeDeep(target: any, ...sources: any) {
 	if (!sources.length) return target;
 	const source = sources.shift();
 
-	if (isJsObject(target) && isJsObject(source)) {
+	if (isObject(target) && isObject(source)) {
 		for (const key in source) {
-			if (isJsObject(source[key])) {
+			if (isObject(source[key])) {
 				if (!target[key])
 					Object.assign(target, {
 						[key]: {}
