@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, Between, Brackets, WhereExpressionBuilder, In, ILike } from 'typeorm';
 import * as moment from 'moment';
 import { chain } from 'underscore';
 import { IDateRangePicker, IExpense, IGetExpenseInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { Expense } from './expense.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
@@ -16,9 +15,7 @@ import { MikroOrmExpenseRepository } from './repository/mikro-orm-expense.reposi
 @Injectable()
 export class ExpenseService extends TenantAwareCrudService<Expense> {
 	constructor(
-		@InjectRepository(Expense)
 		typeOrmExpenseRepository: TypeOrmExpenseRepository,
-
 		mikroOrmExpenseRepository: MikroOrmExpenseRepository
 	) {
 		super(typeOrmExpenseRepository, mikroOrmExpenseRepository);
@@ -39,17 +36,17 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 			const endOfMonth = moment(moment(filterDate).endOf('month').format('YYYY-MM-DD hh:mm:ss')).toDate();
 			return filter
 				? await this.findAll({
-					where: {
-						valueDate: Between<Date>(startOfMonth, endOfMonth),
-						...(filter.where as Object)
-					},
-					relations: filter.relations
-				})
+						where: {
+							valueDate: Between<Date>(startOfMonth, endOfMonth),
+							...(filter.where as Object)
+						},
+						relations: filter.relations
+				  })
 				: await this.findAll({
-					where: {
-						valueDate: Between(startOfMonth, endOfMonth)
-					}
-				});
+						where: {
+							valueDate: Between(startOfMonth, endOfMonth)
+						}
+				  });
 		}
 		return await this.findAll(filter || {});
 	}

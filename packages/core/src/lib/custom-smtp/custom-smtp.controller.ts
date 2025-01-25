@@ -1,18 +1,8 @@
-import {
-	Body,
-	Controller,
-	Get,
-	HttpStatus,
-	Param,
-	Post,
-	Put,
-	Query,
-	UseGuards
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ICustomSmtp, PermissionsEnum } from '@gauzy/contracts';
 import { ISMTPConfig } from '@gauzy/common';
+import { ICustomSmtp, PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from './../shared/decorators';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -25,7 +15,7 @@ import { CreateCustomSmtpDTO, CustomSmtpQueryDTO, UpdateCustomSmtpDTO, ValidateC
 @ApiTags('CustomSmtp')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.CUSTOM_SMTP_VIEW)
-@Controller()
+@Controller('/smtp')
 export class CustomSmtpController extends CrudController<CustomSmtp> {
 	constructor(private readonly _customSmtpService: CustomSmtpService, private readonly _commandBus: CommandBus) {
 		super(_customSmtpService);

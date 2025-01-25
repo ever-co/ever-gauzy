@@ -1,6 +1,5 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Feature } from './feature.entity';
@@ -10,18 +9,24 @@ import { FeatureService } from './feature.service';
 import { FeatureOrganizationService } from './feature-organization.service';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
-import { TypeOrmFeatureOrganizationRepository, TypeOrmFeatureRepository } from './repository';
+import { TypeOrmFeatureRepository } from './repository/type-orm-feature.repository';
+import { TypeOrmFeatureOrganizationRepository } from './repository/type-orm-feature-organization.repository';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/feature/toggle', module: FeatureModule }]),
 		TypeOrmModule.forFeature([Feature, FeatureOrganization]),
 		MikroOrmModule.forFeature([Feature, FeatureOrganization]),
 		forwardRef(() => RolePermissionModule),
 		CqrsModule
 	],
 	controllers: [FeatureToggleController],
-	providers: [FeatureService, FeatureOrganizationService, TypeOrmFeatureRepository, TypeOrmFeatureOrganizationRepository, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, FeatureService, FeatureOrganizationService]
+	providers: [
+		FeatureService,
+		FeatureOrganizationService,
+		TypeOrmFeatureRepository,
+		TypeOrmFeatureOrganizationRepository,
+		...CommandHandlers
+	],
+	exports: [FeatureService, FeatureOrganizationService]
 })
-export class FeatureModule { }
+export class FeatureModule {}

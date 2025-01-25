@@ -22,7 +22,7 @@ import { InviteController } from './invite.controller';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
 import { EmailSendModule } from './../email-send/email-send.module';
-import { TypeOrmInviteRepository } from './repository';
+import { TypeOrmInviteRepository } from './repository/type-orm-invite.repository';
 
 @Module({
 	imports: [
@@ -47,6 +47,6 @@ import { TypeOrmInviteRepository } from './repository';
 	],
 	controllers: [InviteController],
 	providers: [InviteService, TypeOrmInviteRepository, ...CommandHandlers, ...QueryHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, InviteService, TypeOrmInviteRepository]
+	exports: [InviteService, TypeOrmInviteRepository]
 })
 export class InviteModule {}

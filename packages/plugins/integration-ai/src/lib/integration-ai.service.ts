@@ -7,9 +7,8 @@ import {
 	IIntegrationTenantUpdateInput,
 	IntegrationEnum
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { arrayToObject, isNotEmpty } from '@gauzy/utils';
 import {
-	arrayToObject,
 	IntegrationService,
 	IntegrationTenantService,
 	IntegrationTenantUpdateOrCreateCommand,

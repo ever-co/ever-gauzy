@@ -6,11 +6,13 @@ import { Cache } from 'cache-manager';
 import { Brackets, WhereExpressionBuilder } from 'typeorm';
 import { verify } from 'jsonwebtoken';
 import * as camelcase from 'camelcase';
+import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
-import { isEmpty, PERMISSIONS_METADATA, removeDuplicates } from '@gauzy/common';
+import { deduplicate, isEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../core/context';
-import { MikroOrmEmployeeRepository, TypeOrmEmployeeRepository } from '../../employee/repository';
 import { MultiORMEnum, getORMType } from '../../core/utils';
+import { MikroOrmEmployeeRepository } from '../../employee/repository/mikro-orm-employee.repository';
+import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
@@ -36,7 +38,7 @@ export class OrganizationPermissionGuard implements CanActivate {
 		const targets: Array<Function | Type<any>> = [context.getHandler(), context.getClass()];
 
 		const permissions =
-			removeDuplicates(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
+			deduplicate(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
 
 		// If no specific permissions are required, consider it authorized
 		if (isEmpty(permissions)) {

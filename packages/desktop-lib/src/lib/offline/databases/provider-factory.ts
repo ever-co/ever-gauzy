@@ -7,6 +7,7 @@ import { MysqlProvider } from './mysql-provider';
 import { LocalStore } from '../../desktop-store';
 import { AppError } from '../../error-handler';
 import { BetterSqliteProvider } from './better-sqlite-provider';
+import { logger } from '@gauzy/desktop-core';
 
 export class ProviderFactory implements IDatabaseProvider {
 	private _dbContext: DatabaseProviderContext;
@@ -56,20 +57,22 @@ export class ProviderFactory implements IDatabaseProvider {
 
 	public async migrate(): Promise<void> {
 		const connection = require('knex')(this.config);
-		await connection.migrate
-			.latest()
-			.then(([, log]) => {
-				if (!log.length) {
-					console.info('Database is already up to date...✅');
-				} else {
-					console.info('⚓️ Ran migrations: ' + log.join(', '));
-					console.log('Migration completed... 💯');
-				}
-			})
-			.catch((error) => { throw new AppError('PRMIG', error) })
-			.finally(async () => {
-				await connection.destroy();
-			});
+
+		try {
+			const [, log] = await connection.migrate.latest();
+
+			if (log.length === 0) {
+				logger.info('✅ Database is already up to date.');
+			} else {
+				logger.info(`⚓️ Ran migrations: ${log.join(', ')}`);
+				logger.info('💯 Migration completed successfully.');
+			}
+		} catch (error) {
+			logger.error('❌ Migration failed:', error.message);
+			throw new AppError('PRMIG', `Migration error: ${error.message}`);
+		} finally {
+			await connection.destroy();
+		}
 	}
 
 	public static get instance(): ProviderFactory {
@@ -101,7 +104,7 @@ export class ProviderFactory implements IDatabaseProvider {
 			user: arg[dialect]?.dbUsername,
 			password: arg[dialect]?.dbPassword,
 			database: arg[dialect]?.dbName,
-			port: arg[dialect]?.dbPort,
+			port: arg[dialect]?.dbPort
 		};
 		let databaseOptions: Knex.Config = {};
 		let driver = '';
@@ -110,14 +113,14 @@ export class ProviderFactory implements IDatabaseProvider {
 				driver = 'PostgresSQL';
 				databaseOptions = {
 					client: 'pg',
-					connection,
+					connection
 				};
 				break;
 			case 'mysql':
 				driver = 'MySQL';
 				databaseOptions = {
-					client: 'mysql',
-					connection,
+					client: 'mysql2',
+					connection
 				};
 				break;
 			case 'sqlite':

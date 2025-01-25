@@ -1,18 +1,12 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import { IIntegration } from '@gauzy/contracts';
 import { IntegrationGetCommand } from './../integration.get.command';
-import { Integration } from '../../integration.entity';
 import { prepareSQLQuery as p } from './../../../database/database.helper';
 import { TypeOrmIntegrationRepository } from '../../repository/type-orm-integration.repository';
 
 @CommandHandler(IntegrationGetCommand)
 export class IntegrationGetHandler implements ICommandHandler<IntegrationGetCommand> {
-
-	constructor(
-		@InjectRepository(Integration)
-		private readonly typeOrmIntegrationRepository: TypeOrmIntegrationRepository
-	) { }
+	constructor(private readonly typeOrmIntegrationRepository: TypeOrmIntegrationRepository) {}
 
 	/**
 	 *
@@ -25,7 +19,7 @@ export class IntegrationGetHandler implements ICommandHandler<IntegrationGetComm
 
 		const query = this.typeOrmIntegrationRepository.createQueryBuilder('integration');
 		query.leftJoinAndSelect('integration.integrationTypes', 'integrationTypes');
-		query.where(p('"integrationTypes"."id" = :id'), { id: integrationTypeId })
+		query.where(p('"integrationTypes"."id" = :id'), { id: integrationTypeId });
 		query.andWhere(`LOWER(${query.alias}.name) LIKE :name`, { name: `${searchQuery.toLowerCase()}%` });
 
 		if (filter === 'true' || filter === 'false') {

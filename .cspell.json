@@ -59,7 +59,6 @@
 		"Codacy",
 		"codecov",
 		"Codegen",
-		"codelyzer",
 		"Codementor",
 		"codeql",
 		"commitlint",
@@ -539,7 +538,16 @@
 		"Unregisters",
 		"allwindows",
 		"Johndoe",
-		"minizlib"
+		"minizlib",
+		"DOCR",
+		"apida",
+		"appplatform",
+		"apistageda",
+		"elif",
+		"appleboy",
+		"apidemoda",
+		"forin",
+		"inversed"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

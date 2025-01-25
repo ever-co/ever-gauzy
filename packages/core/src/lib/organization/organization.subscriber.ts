@@ -1,6 +1,6 @@
 import { EventSubscriber } from 'typeorm';
 import { faker } from '@faker-js/faker';
-import { sluggable } from '@gauzy/common';
+import { sluggable } from '@gauzy/utils';
 import { Organization } from './organization.entity';
 import { getOrganizationDummyImage } from '../core/utils';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';

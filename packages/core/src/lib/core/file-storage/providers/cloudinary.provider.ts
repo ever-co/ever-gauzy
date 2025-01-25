@@ -7,9 +7,10 @@ import * as streamifier from 'streamifier';
 import axios from 'axios';
 import { ConfigOptions, UploadApiErrorResponse, UploadApiResponse, v2 as cloudinaryV2 } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import { ICloudinaryConfig } from '@gauzy/common';
 import { environment } from '@gauzy/config';
 import { FileStorageOption, FileStorageProviderEnum, FileSystem, UploadedFile } from '@gauzy/contracts';
-import { ICloudinaryConfig, isNotEmpty, trimAndGetValue } from '@gauzy/common';
+import { isNotEmpty, trimIfNotEmpty } from '@gauzy/utils';
 import { Provider } from './provider';
 import { RequestContext } from './../../../core/context';
 
@@ -17,15 +18,28 @@ import { RequestContext } from './../../../core/context';
 const { cloudinary } = environment;
 
 export class CloudinaryProvider extends Provider<CloudinaryProvider> {
-	public instance: CloudinaryProvider;
 	public readonly name = FileStorageProviderEnum.CLOUDINARY;
+	private readonly detailedLoggingEnabled = false;
+	public instance: CloudinaryProvider;
 	public config: ICloudinaryConfig & FileSystem;
-
-	private readonly _detailedLoggingEnabled= false;
 
 	constructor() {
 		super();
-		this.setDefaultConfiguration();
+		void this.initConfig();
+	}
+
+	/**
+	 * Initializes the configuration asynchronously.
+	 */
+	private async initConfig(): Promise<void> {
+		this.config = {
+			rootPath: '',
+			baseUrl: cloudinary?.delivery_url ?? '',
+			cloud_name: cloudinary?.cloud_name ?? '',
+			api_key: cloudinary?.api_key ?? '',
+			api_secret: cloudinary?.api_secret ?? '',
+			secure: cloudinary?.secure ?? true // Default to `true` for secure connections
+		};
 	}
 
 	/**
@@ -70,23 +84,6 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 	}
 
 	/**
-	 * Sets default Cloudinary configuration values based on environment settings.
-	 * This function initializes the configuration object with values such as rootPath, baseUrl,
-	 * cloud_name, api_key, api_secret, and secure, using the provided environment configuration.
-	 */
-	setDefaultConfiguration(): void {
-		// Set default values for the Cloudinary configuration object
-		this.config = {
-			rootPath: '',
-			baseUrl: cloudinary.delivery_url,
-			cloud_name: cloudinary.cloud_name,
-			api_key: cloudinary.api_key,
-			api_secret: cloudinary.api_secret,
-			secure: cloudinary.secure
-		};
-	}
-
-	/**
 	 * Sets Cloudinary configuration by updating the existing configuration with values from the current request's tenant settings.
 	 * The function uses default values and trims/validates the obtained settings before updating the configuration.
 	 */
@@ -104,17 +101,18 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 				const settings = request['tenantSettings'];
 
 				if (settings) {
-					if (this._detailedLoggingEnabled)
+					if (this.detailedLoggingEnabled) {
 						console.log(`setWasabiConfiguration Tenant Settings value: ${JSON.stringify(settings)}`);
+					}
 
-					if (trimAndGetValue(settings.cloudinary_cloud_name))
-						this.config.cloud_name = trimAndGetValue(settings.cloudinary_cloud_name);
+					if (trimIfNotEmpty(settings.cloudinary_cloud_name))
+						this.config.cloud_name = trimIfNotEmpty(settings.cloudinary_cloud_name);
 
-					if (trimAndGetValue(settings.cloudinary_api_key))
-						this.config.api_key = trimAndGetValue(settings.cloudinary_api_key);
+					if (trimIfNotEmpty(settings.cloudinary_api_key))
+						this.config.api_key = trimIfNotEmpty(settings.cloudinary_api_key);
 
-					if (trimAndGetValue(settings.cloudinary_api_secret))
-						this.config.api_secret = trimAndGetValue(settings.cloudinary_api_secret);
+					if (trimIfNotEmpty(settings.cloudinary_api_secret))
+						this.config.api_secret = trimIfNotEmpty(settings.cloudinary_api_secret);
 
 					if (isNotEmpty(settings.cloudinary_api_secure)) {
 						if (settings.cloudinary_api_secure == 'true') this.config.secure = true;

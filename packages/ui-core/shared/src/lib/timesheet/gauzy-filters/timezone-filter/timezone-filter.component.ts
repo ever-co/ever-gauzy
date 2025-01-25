@@ -6,14 +6,8 @@ import { tap } from 'rxjs/operators';
 import { NbPopoverDirective } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment-timezone';
-import {
-	DEFAULT_TIME_FORMATS,
-	IOrganization,
-	IUser,
-	PermissionsEnum,
-	TimeFormatEnum,
-	TimeZoneEnum
-} from '@gauzy/contracts';
+import { DEFAULT_TIME_FORMATS } from '@gauzy/constants';
+import { IOrganization, IUser, PermissionsEnum, TimeFormatEnum, TimeZoneEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { NavigationService, Store } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';

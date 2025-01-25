@@ -1,5 +1,4 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { In } from 'typeorm';
 import { OrganizationVendor } from './organization-vendor.entity';
 import { Expense } from '../expense/expense.entity';
@@ -10,9 +9,7 @@ import { MikroOrmOrganizationVendorRepository } from './repository/mikro-orm-org
 @Injectable()
 export class OrganizationVendorService extends TenantAwareCrudService<OrganizationVendor> {
 	constructor(
-		@InjectRepository(OrganizationVendor)
 		typeOrmOrganizationVendorRepository: TypeOrmOrganizationVendorRepository,
-
 		mikroOrmOrganizationVendorRepository: MikroOrmOrganizationVendorRepository
 	) {
 		super(typeOrmOrganizationVendorRepository, mikroOrmOrganizationVendorRepository);

@@ -1,4 +1,5 @@
 @import 'gauzy/_gauzy-cards';
+@import 'gauzy/_gauzy-overrides';
 
 .register-btn {
   margin: 20px;
@@ -56,13 +57,10 @@
       @include nb-rtl(margin, 3px 0 0 0 !important);
     }
   }
-  @include card-overrides(
-    overlay,
-    calc($default-card-height + 1.5rem),
-    $default-radius
-  );
+  @include card-overrides(overlay, calc($default-card-height + 1.5rem), $default-radius);
   .card,
   .card-body {
     background: var(--gauzy-card-2);
   }
+  @include input-appearance(42px, var(--gauzy-card-1));
 }

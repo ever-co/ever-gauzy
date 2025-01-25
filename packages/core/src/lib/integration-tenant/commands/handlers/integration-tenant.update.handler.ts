@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IIntegrationSetting, IIntegrationTenant, IIntegrationTenantUpdateInput } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../../../core/context';
 import { IntegrationTenantUpdateCommand } from '../../commands';
 import { IntegrationTenantService } from '../../integration-tenant.service';

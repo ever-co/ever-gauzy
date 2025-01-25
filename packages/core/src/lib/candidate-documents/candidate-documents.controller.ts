@@ -11,7 +11,7 @@ import { UseValidationPipe } from '../shared/pipes';
 @ApiTags('CandidateDocument')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
-@Controller()
+@Controller('/candidate-documents')
 export class CandidateDocumentsController extends CrudController<CandidateDocument> {
 	constructor(private readonly candidateDocumentsService: CandidateDocumentsService) {
 		super(candidateDocumentsService);

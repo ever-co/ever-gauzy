@@ -3,6 +3,11 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, TransformFnParams } from 'class-transformer';
 import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
 import {
+	DEFAULT_INVITE_EXPIRY_PERIOD,
+	DEFAULT_PROFIT_BASED_BONUS,
+	DEFAULT_STANDARD_WORK_HOURS_PER_DAY
+} from '@gauzy/constants';
+import {
 	DefaultValueDateTypeEnum,
 	IOrganization,
 	WeekDaysEnum,
@@ -23,11 +28,8 @@ import {
 	IReportOrganization,
 	IImageAsset,
 	ID,
-	DEFAULT_PROFIT_BASED_BONUS,
 	BonusTypeEnum,
-	CurrenciesEnum,
-	DEFAULT_INVITE_EXPIRY_PERIOD,
-	DEFAULT_STANDARD_WORK_HOURS_PER_DAY
+	CurrenciesEnum
 } from '@gauzy/contracts';
 import {
 	AccountingTemplate,

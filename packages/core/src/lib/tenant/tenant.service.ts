@@ -11,9 +11,10 @@ import { TenantSettingSaveCommand } from './tenant-setting/commands';
 import { TenantTaskSizeBulkCreateCommand } from './../tasks/sizes/commands';
 import { TenantTaskPriorityBulkCreateCommand } from './../tasks/priorities/commands';
 import { TenantIssueTypeBulkCreateCommand } from './../tasks/issue-type/commands';
-import { MikroOrmTenantRepository, TypeOrmTenantRepository } from './repository';
-import { MikroOrmUserRepository, TypeOrmUserRepository } from '../user/repository';
-import { MikroOrmRoleRepository, TypeOrmRoleRepository } from '../role/repository';
+import { TypeOrmRoleRepository } from '../role/repository/type-orm-role.repository';
+import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
+import { TypeOrmTenantRepository } from './repository/type-orm-tenant.repository';
+import { MikroOrmTenantRepository } from './repository/mikro-orm-tenant.repository';
 import { Tenant } from './tenant.entity';
 
 @Injectable()
@@ -22,9 +23,7 @@ export class TenantService extends CrudService<Tenant> {
 		readonly typeOrmTenantRepository: TypeOrmTenantRepository,
 		readonly mikroOrmTenantRepository: MikroOrmTenantRepository,
 		readonly typeOrmRoleRepository: TypeOrmRoleRepository,
-		readonly mikroOrmRoleRepository: MikroOrmRoleRepository,
 		readonly typeOrmUserRepository: TypeOrmUserRepository,
-		readonly mikroOrmUserRepository: MikroOrmUserRepository,
 		readonly commandBus: CommandBus,
 		readonly configService: ConfigService
 	) {

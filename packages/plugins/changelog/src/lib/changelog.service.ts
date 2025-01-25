@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions } from 'typeorm';
 import { IChangelog, IPagination } from '@gauzy/contracts';
 import { CrudService } from '@gauzy/core';
@@ -10,9 +9,7 @@ import { MikroOrmChangelogRepository } from './repository/mikro-orm-changelog.re
 @Injectable()
 export class ChangelogService extends CrudService<Changelog> {
 	constructor(
-		@InjectRepository(Changelog)
 		typeOrmChangelogRepository: TypeOrmChangelogRepository,
-
 		mikroOrmChangelogRepository: MikroOrmChangelogRepository
 	) {
 		super(typeOrmChangelogRepository, mikroOrmChangelogRepository);
@@ -24,9 +21,7 @@ export class ChangelogService extends CrudService<Changelog> {
 	 * @param filter
 	 * @returns
 	 */
-	public async findAllChangelogs(
-		filter?: FindManyOptions<Changelog>,
-	): Promise<IPagination<IChangelog>> {
+	public async findAllChangelogs(filter?: FindManyOptions<Changelog>): Promise<IPagination<IChangelog>> {
 		return await this.findAll(filter || {});
 	}
 }

@@ -9,7 +9,6 @@ import { Auth } from 'upwork-api/lib/routers/auth.js';
 import { Users } from 'upwork-api/lib/routers/organization/users.js';
 import { pluck, map, sortBy } from 'underscore';
 import * as moment from 'moment';
-import { isEmpty, isNotEmpty, isObject } from '@gauzy/common';
 import { environment } from '@gauzy/config';
 import {
 	IAccessTokenSecretPair,
@@ -37,9 +36,10 @@ import {
 	IPagination,
 	IDateRange,
 	ComponentLayoutStyleEnum,
-	ITimeLog
+	ITimeLog,
+	IIntegrationSetting
 } from '@gauzy/contracts';
-import { RequestContext, arrayToObject, mergeOverlappingDateRanges, unixTimestampToDate } from '@gauzy/core';
+import { RequestContext, mergeOverlappingDateRanges, unixTimestampToDate } from '@gauzy/core';
 import {
 	ExpenseService,
 	IncomeService,
@@ -70,6 +70,7 @@ import {
 	TimeLogCreateCommand,
 	TimeSlotCreateCommand
 } from '@gauzy/core';
+import { arrayToObject, isEmpty, isNotEmpty, isObject } from '@gauzy/utils';
 import { ProposalCreateCommand } from '@gauzy/plugin-job-proposal';
 import { UpworkReportService } from './upwork-report.service';
 import { UpworkJobService } from './upwork-job.service';
@@ -107,7 +108,7 @@ export class UpworkService {
 			return false;
 		}
 
-		const integrationSettings = await this._commandBus.execute(
+		const integrationSettings: IIntegrationSetting[] = await this._commandBus.execute(
 			new IntegrationSettingGetManyCommand({
 				where: {
 					integration: integrationSetting.integration,
@@ -120,6 +121,7 @@ export class UpworkService {
 		}
 
 		const integrationSettingMap = arrayToObject(integrationSettings, 'settingsName', 'settingsValue');
+
 		if (integrationSettingMap.accessToken && integrationSettingMap.accessTokenSecret) {
 			return {
 				integrationId: integrationSetting.integration.id,
@@ -139,7 +141,7 @@ export class UpworkService {
 		// access token live forever, if user already registered app, return the access token;
 		if (consumerAccessToken) {
 			console.log('consumerAccessToken already exits and will be reused');
-			return consumerAccessToken;
+			return;
 		}
 		const tenantId = RequestContext.currentTenantId();
 
@@ -217,7 +219,7 @@ export class UpworkService {
 					relations: ['integration']
 				})
 			);
-			const integrationSettings = await this._commandBus.execute(
+			const integrationSettings: IIntegrationSetting[] = await this._commandBus.execute(
 				new IntegrationSettingGetManyCommand({
 					where: {
 						integration,
@@ -276,7 +278,7 @@ export class UpworkService {
 				}
 			})
 		);
-		const integrationSettings = await this._commandBus.execute(
+		const integrationSettings: IIntegrationSetting[] = await this._commandBus.execute(
 			new IntegrationSettingGetManyCommand({
 				where: {
 					integration,

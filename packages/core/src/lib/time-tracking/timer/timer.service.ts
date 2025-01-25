@@ -17,7 +17,7 @@ import {
 	IEmployeeFindInput,
 	ID
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { TimeLog } from '../../core/entities/internal';
 import { RequestContext } from '../../core/context';
 import {
@@ -38,8 +38,10 @@ import {
 	TimeLogCreateCommand,
 	TimeLogUpdateCommand
 } from '../time-log/commands';
-import { MikroOrmTimeLogRepository, TypeOrmTimeLogRepository } from '../time-log/repository';
-import { TypeOrmEmployeeRepository, MikroOrmEmployeeRepository } from '../../employee/repository';
+import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
+import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
+import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
+import { MikroOrmEmployeeRepository } from '../../employee/repository/mikro-orm-employee.repository';
 import { addRelationsToQuery, buildCommonQueryParameters, buildLogQueryParameters } from './timer.helper';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.

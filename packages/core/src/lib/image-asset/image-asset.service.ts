@@ -1,5 +1,4 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial } from 'typeorm';
 import { IImageAsset } from '@gauzy/contracts';
 import { RequestContext } from './../core/context';
@@ -11,9 +10,7 @@ import { ImageAsset } from './image-asset.entity';
 @Injectable()
 export class ImageAssetService extends TenantAwareCrudService<ImageAsset> {
 	constructor(
-		@InjectRepository(ImageAsset)
 		typeOrmImageAssetRepository: TypeOrmImageAssetRepository,
-
 		mikroOrmImageAssetRepository: MikroOrmImageAssetRepository
 	) {
 		super(typeOrmImageAssetRepository, mikroOrmImageAssetRepository);

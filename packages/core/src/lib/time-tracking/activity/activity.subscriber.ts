@@ -1,5 +1,5 @@
 import { EventSubscriber } from 'typeorm';
-import { isJsObject } from '@gauzy/common';
+import { isObject } from '@gauzy/utils';
 import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';
 import { Activity } from './activity.entity';
@@ -24,7 +24,7 @@ export class ActivitySubscriber extends BaseEntityEventSubscriber<Activity> {
 	async beforeEntityCreate(entity: Activity): Promise<void> {
 		try {
 			// Check if the database is SQLite and the entity's metaData is a JavaScript object
-			if ((isSqlite() || isBetterSqlite3()) && isJsObject(entity.metaData)) {
+			if ((isSqlite() || isBetterSqlite3()) && isObject(entity.metaData)) {
 				entity.metaData = JSON.stringify(entity.metaData);
 			}
 		} catch (error) {

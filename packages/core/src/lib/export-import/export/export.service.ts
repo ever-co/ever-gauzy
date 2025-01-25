@@ -12,7 +12,7 @@ import * as path from 'path';
 import * as fse from 'fs-extra';
 import { ConfigService } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
-import { isFunction, isNotEmpty } from '@gauzy/common';
+import { isFunction, isNotEmpty } from '@gauzy/utils';
 import { ConnectionEntityManager } from '../../database/connection-entity-manager';
 import {
 	AccountingTemplate,
@@ -371,7 +371,6 @@ import { MikroOrmWarehouseRepository } from '../../warehouse/repository/mikro-or
 import { TypeOrmWarehouseProductVariantRepository } from '../../warehouse/repository/type-orm-warehouse-product-variant.repository';
 import { TypeOrmWarehouseProductRepository } from '../../warehouse/repository/type-orm-warehouse-product.repository ';
 import { TypeOrmWarehouseRepository } from '../../warehouse/repository/type-orm-warehouse.repository';
-
 
 export interface IColumnRelationMetadata {
 	joinTableName: string;
@@ -987,7 +986,7 @@ export class ExportService implements OnModuleInit {
 
 		private readonly configService: ConfigService,
 		private readonly _connectionEntityManager: ConnectionEntityManager
-	) { }
+	) {}
 
 	async onModuleInit() {
 		const public_path = this.configService.assetOptions.assetPublicPath || __dirname;
@@ -1006,14 +1005,10 @@ export class ExportService implements OnModuleInit {
 				if (!error) {
 					return null;
 				} else {
-					fs.mkdir(
-						`${this._dirname}/${id}/csv`,
-						{ recursive: true },
-						(err) => {
-							if (err) reject(err);
-							resolve('');
-						}
-					);
+					fs.mkdir(`${this._dirname}/${id}/csv`, { recursive: true }, (err) => {
+						if (err) reject(err);
+						resolve('');
+					});
 				}
 			});
 		});
@@ -1064,22 +1059,21 @@ export class ExportService implements OnModuleInit {
 		});
 	}
 
-	async getAsCsv(
-		item: IRepositoryModel<any>,
-		where: { tenantId: string; }
-	): Promise<any> {
+	async getAsCsv(item: IRepositoryModel<any>, where: { tenantId: string }): Promise<any> {
 		const conditions = {};
 		if (item.tenantBase !== false) {
 			conditions['where'] = {
 				tenantId: where['tenantId']
-			}
+			};
 		}
 
 		/*
-		* Replace condition with default condition
-		*/
+		 * Replace condition with default condition
+		 */
 		if (isNotEmpty(item.condition) && isNotEmpty(conditions['where'])) {
-			const { condition: { replace = 'tenantId', column = 'id' } } = item;
+			const {
+				condition: { replace = 'tenantId', column = 'id' }
+			} = item;
 			if (`${replace}` in conditions['where']) {
 				delete conditions['where'][replace];
 				conditions['where'][column] = where[replace];
@@ -1097,10 +1091,7 @@ export class ExportService implements OnModuleInit {
 		return false;
 	}
 
-	async csvWriter(
-		filename: string,
-		items: any[]
-	): Promise<boolean | any> {
+	async csvWriter(filename: string, items: any[]): Promise<boolean | any> {
 		return new Promise((resolve, reject) => {
 			try {
 				const createCsvWriter = csv.createObjectCsvWriter;
@@ -1125,15 +1116,12 @@ export class ExportService implements OnModuleInit {
 					resolve(items);
 				});
 			} catch (error) {
-				reject(error)
+				reject(error);
 			}
 		});
 	}
 
-	async csvTemplateWriter(
-		filename: string,
-		columns: any
-	): Promise<any> {
+	async csvTemplateWriter(filename: string, columns: any): Promise<any> {
 		if (columns) {
 			return new Promise((resolve) => {
 				const createCsvWriter = csv.createObjectCsvWriter;
@@ -1227,7 +1215,7 @@ export class ExportService implements OnModuleInit {
 				}
 				resolve(true);
 			} catch (error) {
-				reject(error)
+				reject(error);
 			}
 		});
 	}
@@ -1252,23 +1240,22 @@ export class ExportService implements OnModuleInit {
 				}
 				resolve(true);
 			} catch (error) {
-				reject(error)
+				reject(error);
 			}
 		});
 	}
 
 	/*
-	* Export Many To Many Pivot Table Using TypeORM Relations
-	*/
-	async exportRelationalTables(
-		entity: IRepositoryModel<any>,
-		where: { tenantId: string; }
-	) {
+	 * Export Many To Many Pivot Table Using TypeORM Relations
+	 */
+	async exportRelationalTables(entity: IRepositoryModel<any>, where: { tenantId: string }) {
 		const { repository, relations } = entity;
 		const masterTable = repository.metadata.givenTableName as string;
 
 		for await (const item of repository.metadata.manyToManyRelations) {
-			const relation = relations.find((relation: IColumnRelationMetadata) => relation.joinTableName === item.joinTableName);
+			const relation = relations.find(
+				(relation: IColumnRelationMetadata) => relation.joinTableName === item.joinTableName
+			);
 			if (relation) {
 				const [joinColumn] = item.joinColumns as ColumnMetadata[];
 				if (joinColumn) {
@@ -1314,20 +1301,22 @@ export class ExportService implements OnModuleInit {
 				}
 				resolve(true);
 			} catch (error) {
-				reject(error)
+				reject(error);
 			}
 		});
 	}
 
-	async exportRelationalTablesSchema(
-		entity: IRepositoryModel<any>,
-	) {
+	async exportRelationalTablesSchema(entity: IRepositoryModel<any>) {
 		const { repository, relations } = entity;
 		for await (const item of repository.metadata.manyToManyRelations) {
-			const relation = relations.find((relation: IColumnRelationMetadata) => relation.joinTableName === item.joinTableName);
+			const relation = relations.find(
+				(relation: IColumnRelationMetadata) => relation.joinTableName === item.joinTableName
+			);
 			if (relation) {
 				const referenceTableName = item.junctionEntityMetadata.givenTableName;
-				const columns = item.junctionEntityMetadata.columns.map((column: ColumnMetadata) => column.propertyName);
+				const columns = item.junctionEntityMetadata.columns.map(
+					(column: ColumnMetadata) => column.propertyName
+				);
 
 				await this.csvTemplateWriter(referenceTableName, columns);
 			}
@@ -1338,9 +1327,7 @@ export class ExportService implements OnModuleInit {
 	 * Load all plugins entities for export data
 	 */
 	private async createDynamicInstanceForPluginEntities() {
-		for await (const entity of getEntitiesFromPlugins(
-			this.configService.plugins
-		)) {
+		for await (const entity of getEntitiesFromPlugins(this.configService.plugins)) {
 			if (!isFunction(entity)) {
 				continue;
 			}
@@ -1445,27 +1432,21 @@ export class ExportService implements OnModuleInit {
 			},
 			{
 				repository: this.typeOrmEmployeeLevelRepository,
-				relations: [
-					{ joinTableName: 'tag_organization_employee_level' }
-				]
+				relations: [{ joinTableName: 'tag_organization_employee_level' }]
 			},
 			{
 				repository: this.typeOrmEmployeeRecurringExpenseRepository
 			},
 			{
 				repository: this.typeOrmEmployeeRepository,
-				relations: [
-					{ joinTableName: 'tag_employee' }
-				]
+				relations: [{ joinTableName: 'tag_employee' }]
 			},
 			{
 				repository: this.typeOrmEmployeeSettingRepository
 			},
 			{
 				repository: this.typeOrmEquipmentRepository,
-				relations: [
-					{ joinTableName: 'tag_equipment' }
-				]
+				relations: [{ joinTableName: 'tag_equipment' }]
 			},
 			{
 				repository: this.typeOrmEquipmentSharingRepository,
@@ -1482,21 +1463,15 @@ export class ExportService implements OnModuleInit {
 			},
 			{
 				repository: this.typeOrmEventTypeRepository,
-				relations: [
-					{ joinTableName: 'tag_event_type' }
-				]
+				relations: [{ joinTableName: 'tag_event_type' }]
 			},
 			{
 				repository: this.typeOrmExpenseCategoryRepository,
-				relations: [
-					{ joinTableName: 'tag_organization_expense_category' }
-				]
+				relations: [{ joinTableName: 'tag_organization_expense_category' }]
 			},
 			{
 				repository: this.typeOrmExpenseRepository,
-				relations: [
-					{ joinTableName: 'tag_expense' }
-				]
+				relations: [{ joinTableName: 'tag_expense' }]
 			},
 			{
 				repository: this.typeOrmFeatureRepository,
@@ -1525,9 +1500,7 @@ export class ExportService implements OnModuleInit {
 			},
 			{
 				repository: this.typeOrmIncomeRepository,
-				relations: [
-					{ joinTableName: 'tag_income' }
-				]
+				relations: [{ joinTableName: 'tag_income' }]
 			},
 			{
 				repository: this.typeOrmIntegrationEntitySettingRepository
@@ -1541,10 +1514,7 @@ export class ExportService implements OnModuleInit {
 			{
 				repository: this.typeOrmIntegrationRepository,
 				tenantBase: false,
-				relations: [
-					{ joinTableName: 'integration_integration_type' },
-					{ joinTableName: 'tag_integration' }
-				]
+				relations: [{ joinTableName: 'integration_integration_type' }, { joinTableName: 'tag_integration' }]
 			},
 			{
 				repository: this.typeOrmIntegrationSettingRepository
@@ -1572,9 +1542,7 @@ export class ExportService implements OnModuleInit {
 			},
 			{
 				repository: this.typeOrmInvoiceRepository,
-				relations: [
-					{ joinTableName: 'tag_invoice' }
-				]
+				relations: [{ joinTableName: 'tag_invoice' }]
 			},
 			{
 				repository: this.typeOrmKeyResultRepository
@@ -1621,9 +1589,7 @@ export class ExportService implements OnModuleInit {
 			},
 			{
 				repository: this.typeOrmOrganizationPositionRepository,
-				relations: [
-					{ joinTableName: 'tag_organization_position' }
-				]
+				relations: [{ joinTableName: 'tag_organization_position' }]
 			},
 			{
 				repository: this.typeOrmOrganizationProjectRepository,
@@ -1637,9 +1603,7 @@ export class ExportService implements OnModuleInit {
 			},
 			{
 				repository: this.typeOrmOrganizationRepository,
-				relations: [
-					{ joinTableName: 'tag_organization' }
-				]
+				relations: [{ joinTableName: 'tag_organization' }]
 			},
 			{
 				repository: this.typeOrmOrganizationSprintRepository
@@ -1649,21 +1613,15 @@ export class ExportService implements OnModuleInit {
 			},
 			{
 				repository: this.typeOrmOrganizationTeamRepository,
-				relations: [
-					{ joinTableName: 'tag_organization_team' }
-				]
+				relations: [{ joinTableName: 'tag_organization_team' }]
 			},
 			{
 				repository: this.typeOrmOrganizationVendorRepository,
-				relations: [
-					{ joinTableName: 'tag_organization_vendor' }
-				]
+				relations: [{ joinTableName: 'tag_organization_vendor' }]
 			},
 			{
 				repository: this.typeOrmPaymentRepository,
-				relations: [
-					{ joinTableName: 'tag_payment' }
-				]
+				relations: [{ joinTableName: 'tag_payment' }]
 			},
 			{
 				repository: this.typeOrmPipelineRepository
@@ -1688,10 +1646,7 @@ export class ExportService implements OnModuleInit {
 			},
 			{
 				repository: this.typeOrmProductRepository,
-				relations: [
-					{ joinTableName: 'product_gallery_item' },
-					{ joinTableName: 'tag_product' }
-				]
+				relations: [{ joinTableName: 'product_gallery_item' }, { joinTableName: 'tag_product' }]
 			},
 			{
 				repository: this.typeOrmProductTranslationRepository
@@ -1707,9 +1662,7 @@ export class ExportService implements OnModuleInit {
 			},
 			{
 				repository: this.typeOrmProductVariantRepository,
-				relations: [
-					{ joinTableName: 'product_variant_options_product_option' }
-				]
+				relations: [{ joinTableName: 'product_variant_options_product_option' }]
 			},
 			{
 				repository: this.typeOrmProductVariantSettingRepository
@@ -1719,16 +1672,11 @@ export class ExportService implements OnModuleInit {
 			},
 			{
 				repository: this.typeOrmWarehouseRepository,
-				relations: [
-					{ joinTableName: 'tag_warehouse' }
-				]
+				relations: [{ joinTableName: 'tag_warehouse' }]
 			},
 			{
 				repository: this.typeOrmMerchantRepository,
-				relations: [
-					{ joinTableName: 'warehouse_merchant' },
-					{ joinTableName: 'tag_merchant' }
-				]
+				relations: [{ joinTableName: 'warehouse_merchant' }, { joinTableName: 'tag_merchant' }]
 			},
 			{
 				repository: this.typeOrmWarehouseProductRepository
@@ -1749,9 +1697,7 @@ export class ExportService implements OnModuleInit {
 			},
 			{
 				repository: this.typeOrmRequestApprovalRepository,
-				relations: [
-					{ joinTableName: 'tag_request_approval' }
-				]
+				relations: [{ joinTableName: 'tag_request_approval' }]
 			},
 			{
 				repository: this.typeOrmRequestApprovalEmployeeRepository
@@ -1770,10 +1716,7 @@ export class ExportService implements OnModuleInit {
 			},
 			{
 				repository: this.typeOrmSkillRepository,
-				relations: [
-					{ joinTableName: 'skill_employee' },
-					{ joinTableName: 'skill_organization' }
-				]
+				relations: [{ joinTableName: 'skill_employee' }, { joinTableName: 'skill_organization' }]
 			},
 			{
 				repository: this.typeOrmPipelineStageRepository
@@ -1786,7 +1729,7 @@ export class ExportService implements OnModuleInit {
 				relations: [
 					{ joinTableName: 'task_employee' },
 					{ joinTableName: 'task_team' },
-					{ joinTableName: 'tag_task' },
+					{ joinTableName: 'tag_task' }
 				]
 			},
 			{
@@ -1798,21 +1741,15 @@ export class ExportService implements OnModuleInit {
 			},
 			{
 				repository: this.typeOrmTimeLogRepository,
-				relations: [
-					{ joinTableName: 'time_slot_time_logs' }
-				]
+				relations: [{ joinTableName: 'time_slot_time_logs' }]
 			},
 			{
 				repository: this.typeOrmTimeOffPolicyRepository,
-				relations: [
-					{ joinTableName: 'time_off_policy_employee' }
-				]
+				relations: [{ joinTableName: 'time_off_policy_employee' }]
 			},
 			{
 				repository: this.typeOrmTimeOffRequestRepository,
-				relations: [
-					{ joinTableName: 'time_off_request_employee' }
-				]
+				relations: [{ joinTableName: 'time_off_request_employee' }]
 			},
 			{
 				repository: this.typeOrmTimesheetRepository

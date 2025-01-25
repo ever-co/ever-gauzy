@@ -18,36 +18,33 @@ import {
 	SubscriptionTypeEnum
 } from '@gauzy/contracts';
 import { getConfig } from '@gauzy/config';
-import { CustomEmbeddedFieldConfig, isNotEmpty } from '@gauzy/common';
+import { CustomEmbeddedFieldConfig } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { PaginationParams, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationProjectEmployee } from '../core/entities/internal';
 import { FavoriteService } from '../core/decorators';
+import { prepareSQLQuery as p } from './../database/database.helper';
 import { RoleService } from '../role/role.service';
 import { SubscriptionService } from '../subscription/subscription.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { EmployeeService } from '../employee/employee.service';
 import { CreateSubscriptionEvent } from '../subscription/events';
 import { OrganizationProject } from './organization-project.entity';
-import { prepareSQLQuery as p } from './../database/database.helper';
-import { TypeOrmEmployeeRepository } from '../employee/repository';
-import {
-	MikroOrmOrganizationProjectEmployeeRepository,
-	MikroOrmOrganizationProjectRepository,
-	TypeOrmOrganizationProjectEmployeeRepository,
-	TypeOrmOrganizationProjectRepository
-} from './repository';
+import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
+import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-organization-project.repository';
+import { MikroOrmOrganizationProjectRepository } from './repository/mikro-orm-organization-project.repository';
+import { TypeOrmOrganizationProjectEmployeeRepository } from './repository/type-orm-organization-project-employee.repository';
 
 @FavoriteService(BaseEntityEnum.OrganizationProject)
 @Injectable()
 export class OrganizationProjectService extends TenantAwareCrudService<OrganizationProject> {
 	constructor(
-		private readonly _eventBus: EventBus,
 		readonly typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
 		readonly mikroOrmOrganizationProjectRepository: MikroOrmOrganizationProjectRepository,
 		readonly typeOrmOrganizationProjectEmployeeRepository: TypeOrmOrganizationProjectEmployeeRepository,
-		readonly mikroOrmOrganizationProjectEmployeeRepository: MikroOrmOrganizationProjectEmployeeRepository,
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+		private readonly _eventBus: EventBus,
 		private readonly _roleService: RoleService,
 		private readonly _employeeService: EmployeeService,
 		private readonly _subscriptionService: SubscriptionService,

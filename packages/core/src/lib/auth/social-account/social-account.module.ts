@@ -1,21 +1,20 @@
 import { Module } from '@nestjs/common';
-import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserModule } from '../../user/user.module';
+import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { SocialAccountService } from './social-account.service';
-import { RolePermissionModule } from '../../role-permission';
 import { SocialAccount } from './social-account.entity';
-import { UserModule } from '../../user';
+import { TypeOrmSocialAccountRepository } from './repository/type-orm-social-account.repository';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/social-account', module: SocialAccountModule }]),
 		TypeOrmModule.forFeature([SocialAccount]),
 		MikroOrmModule.forFeature([SocialAccount]),
 		UserModule,
 		RolePermissionModule
 	],
-	providers: [SocialAccountService],
-	exports: [TypeOrmModule, MikroOrmModule, SocialAccountService]
+	providers: [SocialAccountService, TypeOrmSocialAccountRepository],
+	exports: [SocialAccountService]
 })
 export class SocialAccountModule {}

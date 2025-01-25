@@ -1,5 +1,4 @@
 import { Injectable, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Brackets, Like, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import {
@@ -11,13 +10,12 @@ import {
 	IPagination,
 	ITimeOffFindInput
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { TimeOffRequest } from './time-off-request.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { prepareSQLQuery as p } from './../database/database.helper';
-import { MikroOrmRequestApprovalRepository } from '../request-approval/repository/mikro-orm-request-approval.repository';
 import { TypeOrmRequestApprovalRepository } from '../request-approval/repository/type-orm-request-approval.repository';
 import { MikroOrmTimeOffRequestRepository } from './repository/mikro-orm-time-off-request.repository';
 import { TypeOrmTimeOffRequestRepository } from './repository/type-orm-time-off-request.repository';
@@ -25,15 +23,9 @@ import { TypeOrmTimeOffRequestRepository } from './repository/type-orm-time-off-
 @Injectable()
 export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest> {
 	constructor(
-		@InjectRepository(TimeOffRequest)
-		typeOrmTimeOffRequestRepository: TypeOrmTimeOffRequestRepository,
-
-		mikroOrmTimeOffRequestRepository: MikroOrmTimeOffRequestRepository,
-
-		@InjectRepository(RequestApproval)
-		private typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository,
-
-		mikroOrmRequestApprovalRepository: MikroOrmRequestApprovalRepository
+		readonly typeOrmTimeOffRequestRepository: TypeOrmTimeOffRequestRepository,
+		readonly mikroOrmTimeOffRequestRepository: MikroOrmTimeOffRequestRepository,
+		readonly typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository
 	) {
 		super(typeOrmTimeOffRequestRepository, mikroOrmTimeOffRequestRepository);
 	}

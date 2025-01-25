@@ -1,12 +1,10 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { ITimesheet } from '@gauzy/contracts';
 import { TimeSheetService } from '../../timesheet.service';
 import { TimesheetRecalculateCommand } from '../timesheet-recalculate.command';
-import { TimeSlot } from './../../../../core/entities/internal';
 import { RequestContext } from './../../../../core/context';
 import { getDateRangeFormat } from './../../../../core/utils';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
@@ -14,23 +12,30 @@ import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-or
 
 @CommandHandler(TimesheetRecalculateCommand)
 export class TimesheetRecalculateHandler implements ICommandHandler<TimesheetRecalculateCommand> {
-
 	constructor(
 		private readonly timesheetService: TimeSheetService,
-
-		@InjectRepository(TimeSlot)
 		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository
-	) { }
+	) {}
 
 	/**
+	 * Executes the `TimesheetRecalculateCommand` to recalculate timesheet data.
 	 *
-	 * @param command
-	 * @returns
+	 * @param {TimesheetRecalculateCommand} command - The command containing necessary parameters for recalculating a timesheet.
+	 * @returns {Promise<ITimesheet>} - A promise resolving to the updated timesheet after recalculations.
+	 *
+	 * @description
+	 * This method processes the given command to recalculate the timesheet based on updated time logs,
+	 * adjustments, or other relevant criteria. It ensures that the total worked hours, breaks,
+	 * and billable time are accurately computed.
+	 *
+	 * @example
+	 * ```ts
+	 * const command = new TimesheetRecalculateCommand(timesheetId);
+	 * const updatedTimesheet = await timesheetService.execute(command);
+	 * console.log(updatedTimesheet);
+	 * ```
 	 */
-	public async execute(
-		command: TimesheetRecalculateCommand
-	): Promise<ITimesheet> {
-
+	public async execute(command: TimesheetRecalculateCommand): Promise<ITimesheet> {
 		const { id } = command;
 		const timesheet = await this.timesheetService.findOneByIdString(id);
 
@@ -50,19 +55,14 @@ export class TimesheetRecalculateHandler implements ICommandHandler<TimesheetRec
 			.addSelect('AVG(overall)', 'overall')
 			.where(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), {
-						employeeId
-					});
-					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), {
-						organizationId
-					});
-					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), {
-						tenantId
-					});
-					qb.andWhere(p(`"${query.alias}"."startedAt" >= :startedAt AND "${query.alias}"."startedAt" < :stoppedAt`), {
-						startedAt,
-						stoppedAt
-					});
+					qb.where(
+						p(`"${query.alias}"."employeeId" = :employeeId
+						   AND "${query.alias}"."organizationId" = :organizationId
+						   AND "${query.alias}"."tenantId" = :tenantId
+						   AND "${query.alias}"."startedAt" >= :startedAt
+						   AND "${query.alias}"."startedAt" < :stoppedAt`),
+						{ employeeId, organizationId, tenantId, startedAt, stoppedAt }
+					);
 				})
 			)
 			.getRawOne();
@@ -75,7 +75,9 @@ export class TimesheetRecalculateHandler implements ICommandHandler<TimesheetRec
 				overall: Math.round(timeSlot.overall)
 			});
 		} catch (error) {
-			throw new BadRequestException(`Can\'t update timesheet for employee-${employeeId} of organization-${organizationId}`);
+			throw new BadRequestException(
+				`Can\'t update timesheet for employee-${employeeId} of organization-${organizationId}`
+			);
 		}
 
 		return await this.timesheetService.findOneByIdString(id);

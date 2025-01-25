@@ -10,14 +10,15 @@ import {
 	ID,
 	IPagination
 } from '@gauzy/contracts';
-import { isNotNullOrUndefined } from '@gauzy/common';
+import { isNotNullOrUndefined } from '@gauzy/utils';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { activityLogUpdatedFieldsAndValues, generateActivityLogDescription } from './activity-log.helper';
 import { ActivityLogEvent } from './events/activity-log.event';
 import { GetActivityLogsDTO, allowedOrderDirections, allowedOrderFields } from './dto/get-activity-logs.dto';
 import { ActivityLog } from './activity-log.entity';
-import { MikroOrmActivityLogRepository, TypeOrmActivityLogRepository } from './repository';
+import { TypeOrmActivityLogRepository } from './repository/type-orm-activity-log.repository';
+import { MikroOrmActivityLogRepository } from './repository/mikro-orm-activity-log.repository';
 
 @Injectable()
 export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {

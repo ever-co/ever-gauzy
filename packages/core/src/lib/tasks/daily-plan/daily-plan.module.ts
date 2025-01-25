@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DailyPlanService } from './daily-plan.service';
@@ -8,11 +7,10 @@ import { RolePermissionModule } from '../../role-permission/role-permission.modu
 import { DailyPlan } from './daily-plan.entity';
 import { EmployeeModule } from '../../employee/employee.module';
 import { TaskModule } from '../task.module';
-import { TypeOrmDailyPlanRepository } from './repository';
+import { TypeOrmDailyPlanRepository } from './repository/type-orm-daily-plan.repository';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/daily-plan', module: DailyPlanModule }]),
 		TypeOrmModule.forFeature([DailyPlan]),
 		MikroOrmModule.forFeature([DailyPlan]),
 		RolePermissionModule,
@@ -21,6 +19,6 @@ import { TypeOrmDailyPlanRepository } from './repository';
 	],
 	controllers: [DailyPlanController],
 	providers: [DailyPlanService, TypeOrmDailyPlanRepository],
-	exports: [TypeOrmModule, MikroOrmModule, DailyPlanService]
+	exports: [DailyPlanService]
 })
 export class DailyPlanModule {}

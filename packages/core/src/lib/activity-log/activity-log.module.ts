@@ -19,6 +19,6 @@ import { TypeOrmActivityLogRepository } from './repository/type-orm-activity-log
 	],
 	controllers: [ActivityLogController],
 	providers: [ActivityLogService, TypeOrmActivityLogRepository, ...EventHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, ActivityLogService, TypeOrmActivityLogRepository]
+	exports: [ActivityLogService, TypeOrmActivityLogRepository]
 })
 export class ActivityLogModule {}

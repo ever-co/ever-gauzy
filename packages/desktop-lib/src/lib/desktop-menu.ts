@@ -1,5 +1,5 @@
 import { createAboutWindow, createSettingsWindow } from '@gauzy/desktop-window';
-import { RegisteredWindow, WindowManager } from '@gauzy/desktop-core';
+import { RegisteredWindow, WindowManager, logger } from '@gauzy/desktop-core';
 import { BrowserWindow, Menu, MenuItemConstructorOptions, shell } from 'electron';
 import { LocalStore } from './desktop-store';
 import { TimerService } from './offline';
@@ -13,26 +13,26 @@ export class AppMenu {
 	private readonly pluginEventManager = PluginEventManager.getInstance();
 	private readonly windowManager = WindowManager.getInstance();
 
-	 /**
-     * Constructs and initializes the application menu.
-     *
-     * @param {BrowserWindow | null} timeTrackerWindow - The time tracker window instance.
-     * @param {BrowserWindow | null} settingsWindow - The settings window instance.
-     * @param {BrowserWindow | null} updaterWindow - The updater window instance.
-     * @param {any} knex - Knex database instance (if applicable).
-     * @param {any} windowPath - Paths to the necessary window files.
-     * @param {BrowserWindow | null} [serverWindow] - The server window instance (optional).
-     * @param {boolean} [isZoomVisible] - Flag to enable/disable zoom menu options.
-     */
-	 constructor(
-        timeTrackerWindow: BrowserWindow | null,
-        settingsWindow: BrowserWindow | null,
-        updaterWindow: BrowserWindow | null,
-        knex: any,
-        windowPath: any,
-        serverWindow?: BrowserWindow | null,
-        isZoomVisible?: boolean
-    ) {
+	/**
+	 * Constructs and initializes the application menu.
+	 *
+	 * @param {BrowserWindow | null} timeTrackerWindow - The time tracker window instance.
+	 * @param {BrowserWindow | null} settingsWindow - The settings window instance.
+	 * @param {BrowserWindow | null} updaterWindow - The updater window instance.
+	 * @param {any} knex - Knex database instance (if applicable).
+	 * @param {any} windowPath - Paths to the necessary window files.
+	 * @param {BrowserWindow | null} [serverWindow] - The server window instance (optional).
+	 * @param {boolean} [isZoomVisible] - Flag to enable/disable zoom menu options.
+	 */
+	constructor(
+		timeTrackerWindow: BrowserWindow | null,
+		settingsWindow: BrowserWindow | null,
+		updaterWindow: BrowserWindow | null,
+		knex: any,
+		windowPath: any,
+		serverWindow?: BrowserWindow | null,
+		isZoomVisible?: boolean
+	) {
 		const isZoomEnabled = isZoomVisible ?? false;
 
 		this.menu = [
@@ -124,7 +124,7 @@ export class AppMenu {
 							timeTrackerWindow.show();
 							const timerService = new TimerService();
 							const lastTime = await timerService.findLastCapture();
-							console.log('Last Capture Time (Desktop Menu):', lastTime);
+							logger.info('Last Capture Time (Desktop Menu):', lastTime);
 							timeTrackerWindow.webContents.send('timer_tracker_show', {
 								...LocalStore.beforeRequestParams(),
 								timeSlotId: lastTime ? lastTime.timeslotId : null
@@ -218,17 +218,15 @@ export class AppMenu {
 	 * Handles updates to the plugin menu and rebuilds the application menu if changes are detected.
 	 */
 	private handlePluginMenuUpdate(): void {
-		const updatedMenu = this.menu.map((menu) =>
-			menu.id === 'plugin-menu' ? this.pluginMenu : menu
-		);
+		const updatedMenu = this.menu.map((menu) => (menu.id === 'plugin-menu' ? this.pluginMenu : menu));
 
 		// Only rebuild the menu if there are actual changes
 		if (!this.deepArrayEqual(this.menu, updatedMenu)) {
 			this.menu = updatedMenu;
 			this.build();
-			console.log('Menu rebuilt after plugin update.');
+			logger.info('Menu rebuilt after plugin update.');
 		} else {
-			console.log('Plugin update detected, but no changes were made to the menu.');
+			logger.info('Plugin update detected, but no changes were made to the menu.');
 		}
 	}
 
@@ -239,46 +237,44 @@ export class AppMenu {
 		Menu.setApplicationMenu(Menu.buildFromTemplate([...this.menu]));
 	}
 
-	  /**
-     * Dynamically generates the plugin menu for the application.
-     *
-     * @returns {MenuItemConstructorOptions} The menu item for plugins, including a submenu for plugin management.
-     */
-	  public get pluginMenu(): MenuItemConstructorOptions {
-        // Retrieve submenu items from the plugin manager
-        const pluginSubmenu = this.pluginManager.getMenuPlugins();
+	/**
+	 * Dynamically generates the plugin menu for the application.
+	 *
+	 * @returns {MenuItemConstructorOptions} The menu item for plugins, including a submenu for plugin management.
+	 */
+	public get pluginMenu(): MenuItemConstructorOptions {
+		// Retrieve submenu items from the plugin manager
+		const pluginSubmenu = this.pluginManager.getMenuPlugins();
 
-        // Return the plugin menu structure
-        return {
-            id: 'plugin-menu',
-            label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGIN'),
-            submenu: [
-                {
-                    label: TranslateService.instant('MENU.INSTALL_PLUGIN'),
-                    click: () => this.openPluginSettings()
-                },
-                ...pluginSubmenu
-            ]
-        };
-    }
+		// Return the plugin menu structure
+		return {
+			id: 'plugin-menu',
+			label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGIN'),
+			submenu: [
+				{
+					label: TranslateService.instant('TIMER_TRACKER.MENU.INSTALL_PLUGIN'),
+					click: () => this.openPluginSettings()
+				},
+				...pluginSubmenu
+			]
+		};
+	}
 
-    /**
-     * Opens the plugin settings window and sends the current application configuration to it.
-     */
-    private openPluginSettings(): void {
-        // Retrieve the settings window instance
-        const settingsWindow = this.windowManager.getOne(RegisteredWindow.SETTINGS);
+	/**
+	 * Opens the plugin settings window and sends the current application configuration to it.
+	 */
+	private openPluginSettings(): void {
+		// Retrieve the settings window instance
+		const settingsWindow = this.windowManager.getOne(RegisteredWindow.SETTINGS);
 
-        // Show the settings window
-        this.windowManager.show(RegisteredWindow.SETTINGS);
+		// Show the settings window
+		this.windowManager.show(RegisteredWindow.SETTINGS);
 
-        // Send the application configuration to the settings window
-        if (settingsWindow) {
-            this.windowManager
-                .webContents(settingsWindow)
-                .send('app_setting', LocalStore.getApplicationConfig());
-        }
-    }
+		// Send the application configuration to the settings window
+		if (settingsWindow) {
+			this.windowManager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
+		}
+	}
 
 	/**
 	 * Compares two arrays deeply to determine if they are equal.

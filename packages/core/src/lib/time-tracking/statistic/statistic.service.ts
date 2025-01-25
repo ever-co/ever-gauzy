@@ -23,7 +23,7 @@ import {
 	IWeeklyStatisticsActivities,
 	ITodayStatisticsActivities
 } from '@gauzy/contracts';
-import { ArraySum, isNotEmpty } from '@gauzy/common';
+import { ArraySum, isNotEmpty } from '@gauzy/utils';
 import {
 	ConfigService,
 	DatabaseTypeEnum,
@@ -46,7 +46,8 @@ import { MultiORMEnum, getDateRangeFormat, getORMType } from './../../core/utils
 import { TypeOrmTimeSlotRepository } from '../../time-tracking/time-slot/repository/type-orm-time-slot.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
 import { TypeOrmActivityRepository } from '../activity/repository/type-orm-activity.repository';
-import { MikroOrmTimeLogRepository, TypeOrmTimeLogRepository } from '../time-log/repository';
+import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
+import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();

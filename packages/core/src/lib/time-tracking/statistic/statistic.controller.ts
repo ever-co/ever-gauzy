@@ -25,7 +25,7 @@ import { StatisticService } from './statistic.service';
 	PermissionsEnum.ALL_ORG_EDIT,
 	PermissionsEnum.ALL_ORG_VIEW
 )
-@Controller()
+@Controller('/timesheet/statistics')
 export class StatisticController {
 	constructor(private readonly statisticService: StatisticService) {}
 

@@ -8,6 +8,6 @@ import { TypeOrmPipelineStageRepository } from './repository/type-orm-pipeline-s
 @Module({
 	imports: [TypeOrmModule.forFeature([PipelineStage]), MikroOrmModule.forFeature([PipelineStage])],
 	providers: [StageService, TypeOrmPipelineStageRepository],
-	exports: [TypeOrmModule, MikroOrmModule, StageService, TypeOrmPipelineStageRepository]
+	exports: [StageService, TypeOrmPipelineStageRepository]
 })
 export class StageModule {}

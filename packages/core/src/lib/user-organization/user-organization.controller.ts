@@ -1,7 +1,7 @@
 import { Controller, HttpStatus, Get, Query, UseGuards, HttpCode, Delete, Param } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { parseToBoolean } from '@gauzy/common';
+import { parseToBoolean } from '@gauzy/utils';
 import { IUserOrganization, IPagination, ID } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import { UUIDValidationPipe } from './../shared/pipes';
@@ -13,7 +13,7 @@ import { FindMeUserOrganizationDTO } from './dto/find-me-user-organization.dto';
 
 @ApiTags('UserOrganization')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/user-organization')
 export class UserOrganizationController extends CrudController<UserOrganization> {
 	constructor(
 		private readonly userOrganizationService: UserOrganizationService,

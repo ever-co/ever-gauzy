@@ -14,16 +14,16 @@ export type ColumnEmbeddedOptions = TypeOrmEmbeddedOptions & MikroOrmEmbeddedOpt
  * Options for embedding columns in entities.
  */
 export type EntityColumnEmbeddedOptions = {
-    /**
-     * Function returning the Type of the MikroORM embeddable entity.
-     * Allows dynamic referencing of the embedded class in MikroORM.
-     */
-    mikroOrmEmbeddableEntity?: () => Type;
-    /**
-     * Function returning the Type of the TypeORM embeddable entity.
-     * Used to reference the embedded class in TypeORM.
-     */
-    typeOrmEmbeddableEntity?: () => Type;
+	/**
+	 * Function returning the Type of the MikroORM embeddable entity.
+	 * Allows dynamic referencing of the embedded class in MikroORM.
+	 */
+	mikroOrmEmbeddableEntity?: () => Type;
+	/**
+	 * Function returning the Type of the TypeORM embeddable entity.
+	 * Used to reference the embedded class in TypeORM.
+	 */
+	typeOrmEmbeddableEntity?: () => Type;
 };
 
 /**
@@ -31,8 +31,8 @@ export type EntityColumnEmbeddedOptions = {
  * @param options Options for the entity.
  */
 export function EmbeddedColumn(
-    typeOrTarget?: EntityColumnEmbeddedOptions,
-    options?: ColumnEmbeddedOptions
+	typeOrTarget?: EntityColumnEmbeddedOptions,
+	options?: ColumnEmbeddedOptions
 ): PropertyDecorator;
 
 /**
@@ -42,22 +42,22 @@ export function EmbeddedColumn(
  * @returns A property decorator.
  */
 export function EmbeddedColumn<T>(
-    typeOrTarget?: EntityColumnEmbeddedOptions,
-    options?: ColumnEmbeddedOptions
+	typeOrTarget?: EntityColumnEmbeddedOptions,
+	options?: ColumnEmbeddedOptions
 ): PropertyDecorator {
-    // If options are not provided, initialize an empty object
-    if (!options) options = { prefix: false } as ColumnEmbeddedOptions;
+	// If options are not provided, initialize an empty object
+	if (!options) options = { prefix: false } as ColumnEmbeddedOptions;
 
-    // Return a property decorator function
-    return (target: any, propertyKey: string) => {
-        // Apply the @Embedded decorator with mapped Mikro ORM options
-        const mikroOrmOptions = parseMikroOrmEmbeddableColumnOptions(typeOrTarget, options);
-        Embedded(mikroOrmOptions)(target, propertyKey);
+	// Return a property decorator function
+	return (target: any, propertyKey: string) => {
+		// Apply the @Embedded decorator with mapped Mikro ORM options
+		const mikroOrmOptions = parseMikroOrmEmbeddableColumnOptions(typeOrTarget, options);
+		Embedded(mikroOrmOptions)(target, propertyKey);
 
-        // Apply the @Column decorator with mapped Type ORM options
-        const typeOrmOptions = parseTypeOrmEmbeddableColumnOptions(options);
-        Column(typeOrTarget.typeOrmEmbeddableEntity, typeOrmOptions)(target, propertyKey);
-    };
+		// Apply the @Column decorator with mapped Type ORM options
+		const typeOrmOptions = parseTypeOrmEmbeddableColumnOptions(options);
+		Column(typeOrTarget.typeOrmEmbeddableEntity, typeOrmOptions)(target, propertyKey);
+	};
 }
 
 /**
@@ -68,17 +68,17 @@ export function EmbeddedColumn<T>(
  * @returns A new object with only key-value pairs where the value is defined.
  */
 export const parseMikroOrmEmbeddableColumnOptions = (
-    { mikroOrmEmbeddableEntity }: EntityColumnEmbeddedOptions,
-    restOptions: MikroOrmEmbeddedOptions
+	{ mikroOrmEmbeddableEntity }: EntityColumnEmbeddedOptions,
+	restOptions: MikroOrmEmbeddedOptions
 ): Record<string, any> => {
-    // Create a new object with entity and other options, filtering out undefined values
-    const filteredOptions = filterOptions({
-        entity: mikroOrmEmbeddableEntity,
-        ...restOptions
-    });
+	// Create a new object with entity and other options, filtering out undefined values
+	const filteredOptions = filterOptions({
+		entity: mikroOrmEmbeddableEntity,
+		...restOptions
+	});
 
-    // Return the new object with only defined properties
-    return filteredOptions;
+	// Return the new object with only defined properties
+	return filteredOptions;
 };
 
 /**
@@ -87,14 +87,12 @@ export const parseMikroOrmEmbeddableColumnOptions = (
  * @param restOptions The TypeORM embedded column options to be filtered and processed.
  * @returns A new object with only key-value pairs where the value is defined.
  */
-export const parseTypeOrmEmbeddableColumnOptions = (
-    restOptions: TypeOrmEmbeddedOptions
-): Record<string, any> => {
-    // Filter out undefined options from the given object
-    const filteredOptions = filterOptions({
-        ...restOptions
-    });
+export const parseTypeOrmEmbeddableColumnOptions = (restOptions: TypeOrmEmbeddedOptions): Record<string, any> => {
+	// Filter out undefined options from the given object
+	const filteredOptions = filterOptions({
+		...restOptions
+	});
 
-    // Return the filtered object with only defined properties
-    return filteredOptions;
+	// Return the filtered object with only defined properties
+	return filteredOptions;
 };

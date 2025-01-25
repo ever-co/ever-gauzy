@@ -1,6 +1,7 @@
 import { EventSubscriber } from 'typeorm';
+import { IDBConnectionOptions } from '@gauzy/common';
 import { getConfig } from '@gauzy/config';
-import { isJsObject, IDBConnectionOptions } from '@gauzy/common';
+import { isObject } from '@gauzy/utils';
 import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';
 import { Screenshot } from './screenshot.entity';
 import { FileStorage } from './../../core/file-storage';
@@ -39,7 +40,7 @@ export class ScreenshotSubscriber extends BaseEntityEventSubscriber<Screenshot> 
 				const options: Partial<IDBConnectionOptions> = em.connection.options || getConfig().dbConnectionOptions;
 
 				// If the database is SQLite and the entity has an 'apps' property, convert it to a JSON string
-				if (isSqliteDB(options) && isJsObject(entity.apps)) {
+				if (isSqliteDB(options) && isObject(entity.apps)) {
 					try {
 						entity.apps = JSON.stringify(entity.apps);
 					} catch (error) {
@@ -79,7 +80,7 @@ export class ScreenshotSubscriber extends BaseEntityEventSubscriber<Screenshot> 
 				const options: Partial<IDBConnectionOptions> = em.connection.options || getConfig().dbConnectionOptions;
 
 				// If the database is SQLite and the entity has an 'apps' property, convert it to a JSON string
-				if (isSqliteDB(options) && isJsObject(entity.apps)) {
+				if (isSqliteDB(options) && isObject(entity.apps)) {
 					try {
 						entity.apps = JSON.stringify(entity.apps);
 					} catch (error) {

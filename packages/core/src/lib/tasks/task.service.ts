@@ -26,9 +26,11 @@ import {
 	PermissionsEnum,
 	ActionTypeEnum,
 	ITaskDateFilterInput,
-	SubscriptionTypeEnum
+	SubscriptionTypeEnum,
+	ITaskAdvancedFilter,
+	IAdvancedTaskFiltering
 } from '@gauzy/contracts';
-import { isEmpty, isNotEmpty } from '@gauzy/common';
+import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { isPostgres, isSqlite } from '@gauzy/config';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { addBetween } from './../core/util';
@@ -229,6 +231,29 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	}
 
 	/**
+	 * Retrieves a paginated list of tasks, with optional advanced filters applied.
+	 *
+	 * @param options - Pagination options including limit, page, and sorting.
+	 * @param filters - Optional filters for advanced task filtering.
+	 * @returns A promise that resolves to a paginated list of tasks.
+	 * @throws If an error occurs during the retrieval process.
+	 */
+	async findAll(options: PaginationParams<Task> & IAdvancedTaskFiltering): Promise<IPagination<Task>> {
+		try {
+			const { filters } = options;
+			let advancedFilters: FindOptionsWhere<Task> = {};
+			if (filters) {
+				advancedFilters = this.buildAdvancedWhereCondition(filters, options.where);
+			}
+
+			return super.findAll({ ...options, where: { ...advancedFilters, ...options.where } });
+		} catch (error) {
+			console.log(error);
+			throw new BadRequestException(error);
+		}
+	}
+
+	/**
 	 * Recursively searches for the parent epic of a given task (issue) using a SQL recursive query.
 	 *
 	 * @param issueId The ID of the task (issue) to start the search from.
@@ -272,12 +297,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	/**
 	 * Find employee tasks
 	 *
-	 * @param options
+	 * @param options - Pagination options including limit, page, and sorting.
+	 * @param filters - Optional filters for advanced task filtering.
 	 * @returns
 	 */
-	async getEmployeeTasks(options: PaginationParams<Task>) {
+	async getEmployeeTasks(options: PaginationParams<Task> & IAdvancedTaskFiltering) {
 		try {
-			const { where } = options;
+			const { where, filters } = options;
 			const { status, title, prefix, isDraft, isScreeningTask = false, organizationSprintId = null } = where;
 			const { organizationId, projectId, members } = where;
 			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
@@ -298,6 +324,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					...(options.relations ? { relations: options.relations } : {})
 				});
 			}
+
+			// Apply advanced filters
+			if (filters) {
+				const advancedWhere = this.buildAdvancedWhereCondition(filters, where);
+				query.setFindOptions({ where: advancedWhere });
+			}
+
 			query.andWhere((qb: SelectQueryBuilder<Task>) => {
 				const subQuery = qb.subQuery();
 				subQuery.select(p('"task_employee"."taskId"')).from(p('task_employee'), p('task_employee'));
@@ -371,16 +404,25 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	/**
 	 * GET all tasks by employee
 	 *
-	 * @param employeeId
-	 * @param filter
+	 * @param employeeId - The employee ID for whom retrieve tasks
+	 * @param options - Pagination options including limit, page, and sorting.
+	 * @param filters - Optional filters for advanced task filtering.
 	 * @returns
 	 */
-	async getAllTasksByEmployee(employeeId: IEmployee['id'], options: PaginationParams<Task>) {
+	async getAllTasksByEmployee(employeeId: IEmployee['id'], options: PaginationParams<Task> & IAdvancedTaskFiltering) {
 		try {
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.leftJoin(`${query.alias}.members`, 'members');
 			query.leftJoin(`${query.alias}.teams`, 'teams');
 			const { isScreeningTask = false } = options.where;
+			const { filters } = options;
+
+			// Apply advanced filters
+			if (filters) {
+				const advancedWhere = this.buildAdvancedWhereCondition(filters, options.where);
+				query.setFindOptions({ where: advancedWhere });
+			}
+
 			/**
 			 * If additional options found
 			 */
@@ -394,6 +436,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						relations: options.relations
 					})
 			});
+
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					const tenantId = RequestContext.currentTenantId();
@@ -437,12 +480,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	/**
 	 * GET team tasks
 	 *
-	 * @param options
+	 * @param options - Pagination options including limit, page, and sorting.
+	 * @param filters - Optional filters for advanced task filtering.
 	 * @returns
 	 */
-	async findTeamTasks(options: PaginationParams<Task>): Promise<IPagination<ITask>> {
+	async findTeamTasks(options: PaginationParams<Task> & IAdvancedTaskFiltering): Promise<IPagination<ITask>> {
 		try {
-			const { where } = options;
+			const { where, filters } = options;
 
 			const {
 				status,
@@ -475,6 +519,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					...(options.order ? { order: options.order } : {})
 				});
 			}
+
+			// Apply advanced filters
+			if (filters) {
+				const advancedWhere = this.buildAdvancedWhereCondition(filters, options.where);
+				query.setFindOptions({ where: advancedWhere });
+			}
+
 			query.andWhere((qb: SelectQueryBuilder<Task>) => {
 				const subQuery = qb.subQuery();
 				subQuery.select(p('"task_team"."taskId"')).from(p('task_team'), p('task_team'));
@@ -558,11 +609,14 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * GET tasks by pagination with filtering options.
 	 *
 	 * @param options The pagination and filtering parameters.
+	 * @param filters - Optional filters for advanced task filtering.
 	 * @returns A Promise that resolves to a paginated list of tasks.
 	 */
-	public async pagination(options: PaginationParams<Task>): Promise<IPagination<ITask>> {
+	public async pagination(options: PaginationParams<Task> & IAdvancedTaskFiltering): Promise<IPagination<ITask>> {
 		// Define the like operator based on the database type
 		const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+
+		const filters = options?.filters;
 
 		// Check if there are any filters in the options
 		if (options?.where) {
@@ -600,8 +654,14 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			where.isScreeningTask = isScreeningTask;
 		}
 
+		// Apply Advanced filters
+		let advancedFilters: FindOptionsWhere<Task> = {};
+		if (filters) {
+			advancedFilters = this.buildAdvancedWhereCondition(filters, options?.where);
+		}
+
 		// Call the base paginate method
-		return await super.paginate(options);
+		return await super.paginate({ ...options, where: { ...advancedFilters, ...options?.where } });
 	}
 
 	/**
@@ -741,12 +801,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	/**
 	 * Retrieves module tasks based on the provided options.
 	 *
-	 * @param {PaginationParams<Task>} options - The pagination options and filters for querying tasks.
-	 * @returns {Promise<IPagination<ITask>>} A promise that resolves with pagination task items and total count.
+	 * @param options - The pagination options and filters for querying tasks.
+	 * @param filters - Optional filters for advanced task filtering.
+	 * @returns A promise that resolves with pagination task items and total count.
 	 */
-	async findModuleTasks(options: PaginationParams<Task>): Promise<IPagination<ITask>> {
+	async findModuleTasks(options: PaginationParams<Task> & IAdvancedTaskFiltering): Promise<IPagination<ITask>> {
 		try {
-			const { where } = options;
+			const { where, filters } = options;
 			const {
 				status,
 				modules = [],
@@ -773,6 +834,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					...(options.relations && { relations: options.relations }),
 					...(options.order && { order: options.order })
 				});
+			}
+
+			// Apply advanced filters
+			if (filters) {
+				const advancedWhere = this.buildAdvancedWhereCondition(filters, where);
+				query.setFindOptions({ where: advancedWhere });
 			}
 
 			// Filter by project_module_task with a sub query
@@ -811,14 +878,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			);
 
 			// Filter by projectId and modules
-			if (isNotEmpty(projectId)) {
-				query.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						if (isEmpty(modules)) {
-							qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
-						}
-					})
-				);
+			if (isNotEmpty(projectId) && isEmpty(modules)) {
+				query.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
 			}
 
 			// Add additional filters (status, draft, title, etc.)
@@ -836,10 +897,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(prefix)) {
 						qb.andWhere(p(`"${query.alias}"."prefix" ${likeOperator} :prefix`), { prefix: `%${prefix}%` });
 					}
-					if (!isUUID(organizationSprintId)) {
-						qb.andWhere(p(`"${query.alias}"."organizationSprintId" IS NULL`));
+					if (isUUID(organizationSprintId)) {
+						qb.andWhere(p(`"${query.alias}"."organizationSprintId" = :organizationSprintId`), {
+							organizationSprintId
+						});
 					}
-
 					qb.andWhere(p(`"${query.alias}"."isScreeningTask" = :isScreeningTask`), { isScreeningTask });
 				})
 			);
@@ -881,20 +943,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 			// Extract filters
 			const {
-				projects = [],
-				teams = [],
-				members = [],
-				modules = [],
-				sprints = [],
-				statusIds = [],
 				statuses = [],
-				priorityIds = [],
 				priorities = [],
-				sizeIds = [],
 				sizes = [],
-				tags = [],
 				types = [],
-				creators = [],
 				startDates = [],
 				dueDates = [],
 				organizationId,
@@ -926,21 +978,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const [minDueDate, maxDueDate] = getMinMaxDates(dueDates);
 
 			// Build the 'where' condition
+			const mainWhereCondition = this.buildAdvancedWhereCondition(viewFilters);
 			const where: FindOptionsWhere<Task> = {
-				...(projects.length && { projectId: In(projects) }),
-				...(teams.length && { teams: { id: In(teams) } }),
-				...(members.length && { members: { id: In(members) } }),
-				...(modules.length && { modules: { id: In(modules) } }),
-				...(sprints.length && { organizationSprintId: In(sprints) }),
-				...(statusIds.length && { taskStatusId: In(statusIds) }),
+				...mainWhereCondition,
 				...(statuses.length && { status: In(statuses) }),
-				...(priorityIds.length && { taskPriorityId: In(priorityIds) }),
 				...(priorities.length && { priority: In(priorities) }),
-				...(sizeIds.length && { taskSizeId: In(sizeIds) }),
 				...(sizes.length && { size: In(sizes) }),
-				...(tags.length && { tags: { id: In(tags) } }),
 				...(types.length && { issueType: In(types) }),
-				...(creators.length && { creatorId: In(creators) }),
 				...(minStartDate && maxStartDate && { startDate: Between(minStartDate, maxStartDate) }),
 				...(minDueDate && maxDueDate && { dueDate: Between(minDueDate, maxDueDate) }),
 				organizationId: taskView.organizationId || organizationId,
@@ -1053,5 +1097,50 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
+	}
+
+	/**
+	 * Constructs advanced `where` conditions for filtering tasks based on the provided filters and existing conditions.
+	 *
+	 * @private
+	 * @param {ITaskAdvancedFilter | IGetTasksByViewFilters} [filters] - Advanced filtering criteria for tasks, including projects, teams, sprints, and more.
+	 * @param {FindOptionsWhere<Task>} [where] - Existing `where` conditions to be merged with the filters.
+	 * @returns {FindOptionsWhere<Task>} A `where` condition object to be used in database queries.
+	 */
+	private buildAdvancedWhereCondition(
+		filters?: ITaskAdvancedFilter | IGetTasksByViewFilters,
+		where: FindOptionsWhere<Task> = {}
+	): FindOptionsWhere<Task> {
+		// Destructuring filter params
+		const {
+			projects = [],
+			teams = [],
+			modules = [],
+			sprints = [],
+			members = [],
+			tags = [],
+			statusIds = [],
+			priorityIds = [],
+			sizeIds = [],
+			parentIds = [],
+			creators = [],
+			dailyPlans = []
+		} = filters;
+
+		// Build the 'where' condition
+		return {
+			...(projects.length && !where.projectId ? { projectId: In(projects) } : {}),
+			...(teams.length && !where.teams ? { teams: { id: In(teams) } } : {}),
+			...(modules.length && !where.modules ? { modules: { id: In(modules) } } : {}),
+			...(sprints.length && !where.organizationSprintId ? { organizationSprintId: In(sprints) } : {}),
+			...(members.length && !where.members ? { members: { id: In(members) } } : {}),
+			...(tags.length && !where.tags ? { tags: { id: In(tags) } } : {}),
+			...(statusIds.length && !where.taskStatusId ? { taskStatusId: In(statusIds) } : {}),
+			...(priorityIds.length && !where.taskPriorityId ? { taskPriorityId: In(priorityIds) } : {}),
+			...(sizeIds.length && !where.taskSizeId ? { taskSizeId: In(sizeIds) } : {}),
+			...(parentIds.length && !where.parentId ? { parentId: In(parentIds) } : {}),
+			...(creators.length && !where.creatorId ? { creatorId: In(creators) } : {}),
+			...(dailyPlans.length && !where.dailyPlans ? { dailyPlans: { id: In(dailyPlans) } } : {})
+		};
 	}
 }

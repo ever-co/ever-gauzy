@@ -11,13 +11,12 @@ import { TypeOrmDashboardWidgetRepository } from './repository/type-orm-dashboar
 
 @Module({
 	imports: [
-		MikroOrmModule.forFeature([DashboardWidget]),
 		TypeOrmModule.forFeature([DashboardWidget]),
+		MikroOrmModule.forFeature([DashboardWidget]),
 		RolePermissionModule,
 		CqrsModule
 	],
-	providers: [DashboardWidgetService, TypeOrmDashboardWidgetRepository, ...CommandHandlers],
 	controllers: [DashboardWidgetController],
-	exports: [TypeOrmModule, DashboardWidgetService, TypeOrmDashboardWidgetRepository]
+	providers: [DashboardWidgetService, TypeOrmDashboardWidgetRepository, ...CommandHandlers]
 })
 export class DashboardWidgetModule {}

@@ -16,6 +16,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LatLng } from 'leaflet';
 import * as moment from 'moment';
 import { filter, tap } from 'rxjs/operators';
+import { DEFAULT_DATE_FORMATS } from '@gauzy/constants';
 import {
 	BonusTypeEnum,
 	ICountry,
@@ -26,7 +27,6 @@ import {
 	ICurrency,
 	IUser,
 	CurrenciesEnum,
-	DEFAULT_DATE_FORMATS,
 	IImageAsset
 } from '@gauzy/contracts';
 import { environment as ENV } from '@gauzy/ui-config';

@@ -5,6 +5,7 @@ import { FindManyOptions, FindOptionsWhere, In, IsNull, MoreThanOrEqual, Not, Se
 import { addDays } from 'date-fns';
 import { pick } from 'underscore';
 import { ConfigService, environment } from '@gauzy/config';
+import { DEFAULT_INVITE_EXPIRY_PERIOD } from '@gauzy/constants';
 import {
 	ICreateEmailInvitesInput,
 	ICreateEmailInvitesOutput,
@@ -14,7 +15,6 @@ import {
 	ICreateOrganizationContactInviteInput,
 	RolesEnum,
 	LanguagesEnum,
-	DEFAULT_INVITE_EXPIRY_PERIOD,
 	IOrganization,
 	IEmployee,
 	IRole,
@@ -27,17 +27,11 @@ import {
 	IUserRegistrationInput,
 	IPagination
 } from '@gauzy/contracts';
-import { IAppIntegrationConfig, isNotEmpty } from '@gauzy/common';
+import { IAppIntegrationConfig } from '@gauzy/common';
+import { generateAlphaNumericCode, isNotEmpty } from '@gauzy/utils';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
-import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
 import { RequestContext } from './../core/context';
-import {
-	MultiORMEnum,
-	freshTimestamp,
-	generateRandomAlphaNumericCode,
-	getArrayIntersection,
-	parseTypeORMFindToMikroOrm
-} from './../core/utils';
+import { MultiORMEnum, freshTimestamp, getArrayIntersection, parseTypeORMFindToMikroOrm } from './../core/utils';
 import { EmailService } from './../email-send/email.service';
 import { UserService } from '../user/user.service';
 import { RoleService } from './../role/role.service';
@@ -49,13 +43,11 @@ import { OrganizationProjectService } from './../organization-project/organizati
 import { AuthService } from './../auth/auth.service';
 import { User } from './../user/user.entity';
 import { UserOrganizationService } from './../user-organization/user-organization.services';
-import { MikroOrmUserRepository, TypeOrmUserRepository } from '../user/repository';
-import { MikroOrmEmployeeRepository, TypeOrmEmployeeRepository } from '../employee/repository';
-import {
-	MikroOrmOrganizationTeamEmployeeRepository,
-	TypeOrmOrganizationTeamEmployeeRepository
-} from '../organization-team-employee/repository';
-import { MikroOrmInviteRepository, TypeOrmInviteRepository } from './repository';
+import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
+import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
+import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
+import { TypeOrmInviteRepository } from './repository/type-orm-invite.repository';
+import { MikroOrmInviteRepository } from './repository/mikro-orm-invite.repository';
 import { Invite } from './invite.entity';
 import { InviteAcceptCommand } from './commands';
 
@@ -65,11 +57,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		readonly typeOrmInviteRepository: TypeOrmInviteRepository,
 		readonly mikroOrmInviteRepository: MikroOrmInviteRepository,
 		readonly typeOrmUserRepository: TypeOrmUserRepository,
-		readonly mikroOrmUserRepository: MikroOrmUserRepository,
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
-		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 		readonly typeOrmOrganizationTeamEmployeeRepository: TypeOrmOrganizationTeamEmployeeRepository,
-		readonly mikroOrmOrganizationTeamEmployeeRepository: MikroOrmOrganizationTeamEmployeeRepository,
 		private readonly configService: ConfigService,
 		private readonly emailService: EmailService,
 		private readonly organizationContactService: OrganizationContactService,
@@ -181,7 +170,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		const invites: Invite[] = [];
 		for await (const email of emailIds) {
 			let alreadyInTeamIds: string[] = [];
-			const code = generateRandomAlphaNumericCode(6);
+			const code = generateAlphaNumericCode();
 			const token: string = sign({ email, code }, environment.JWT_SECRET, {});
 
 			const organizationTeamEmployees = await this.typeOrmOrganizationTeamEmployeeRepository.find({
@@ -230,7 +219,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 						})
 					);
 				} else {
-					ignoreInvites++;
+					ignoreInvites;
 				}
 			} else {
 				invites.push(
@@ -261,7 +250,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 
 			if (input.inviteType === InvitationTypeEnum.TEAM && callbackUrl) {
 				// Convert query params object to string
-				const queryParamsString = this.createQueryParamsString({
+				const queryParamsString = this.buildQueryString({
 					email: item.email,
 					code: item.code
 				});
@@ -325,7 +314,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	 */
 	private createAcceptInvitationUrl(origin: string, email: string, token: string): string {
 		const acceptInviteUrl = `${origin}/#/auth/accept-invite`;
-		const queryParamsString = this.createQueryParamsString({ email, token });
+		const queryParamsString = this.buildQueryString({ email, token });
 		return [acceptInviteUrl, queryParamsString].filter(Boolean).join('?'); // Combine current URL with updated query params
 	}
 
@@ -334,7 +323,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	 * @param queryParams An object containing query parameters.
 	 * @returns A string representation of the query parameters.
 	 */
-	private createQueryParamsString(queryParams: { [key: string]: string | string[] | boolean }): string {
+	private buildQueryString(queryParams: { [key: string]: string | string[] | boolean }): string {
 		return Object.keys(queryParams)
 			.map((key) => {
 				const value = queryParams[key];
@@ -345,6 +334,22 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				}
 			})
 			.join('&');
+	}
+
+	/**
+	 * Generates an invite code and a secure JWT token for email-based invites.
+	 *
+	 * @param {string} email - The email address for which the invite code and token are generated.
+	 * @returns {{ code: string; token: string }} - An object containing the invite code and JWT token.
+	 */
+	private generateInviteCodeAndToken(email: string): { code: string; token: string } {
+		// Generate a unique invite code
+		const code = generateAlphaNumericCode();
+
+		// Generate a JWT token containing the email and invite code
+		const token = sign({ email, code }, environment.JWT_SECRET, {});
+
+		return { code, token };
 	}
 
 	async resendEmail(input: IInviteResendInput, languageCode: LanguagesEnum) {
@@ -374,8 +379,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		 */
 		const invitedBy: IUser = await this.userService.findOneByIdString(RequestContext.currentUserId());
 		try {
-			const code = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
-			const token: string = sign({ email, code }, environment.JWT_SECRET, {});
+			const { code, token } = this.generateInviteCodeAndToken(email);
 
 			const registerUrl = `${originUrl}/#/auth/accept-invite?email=${encodeURIComponent(email)}&token=${token}`;
 			if (inviteType === InvitationTypeEnum.USER) {

@@ -11,7 +11,7 @@ export function getControllerClass({ path }): Type<any> {
 	@Public()
 	@Controller()
 	class HookController {
-		constructor(private readonly probotDiscovery: ProbotDiscovery) { }
+		constructor(private readonly probotDiscovery: ProbotDiscovery) {}
 
 		/**
 		 * Endpoint for receiving webhook requests.
