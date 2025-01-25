@@ -9,7 +9,7 @@ import {
 	PageTabsetRegistryId,
 	RouteUtil
 } from '@gauzy/ui-core/core';
-import { VideoService } from '@gauzy/videos-ui';
+import { VideoService } from '@gauzy/plugin-videos-ui';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

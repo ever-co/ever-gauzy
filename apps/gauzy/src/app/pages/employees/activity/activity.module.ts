@@ -75,7 +75,7 @@ export class ActivityModule {
 		this._pageRouteRegistryService.registerPageRoute({
 			location: 'time-activity',
 			path: 'videos',
-			loadChildren: () => import('@gauzy/videos-ui').then((m) => m.VideoUiModule)
+			loadChildren: () => import('@gauzy/plugin-videos-ui').then((m) => m.VideoUiModule)
 		});
 
 		// Register App Activity Page Routes

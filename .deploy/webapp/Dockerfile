@@ -120,6 +120,7 @@ COPY --chown=node:node packages/plugins/legal-ui/package.json ./packages/plugins
 COPY --chown=node:node packages/plugins/maintenance-ui/package.json ./packages/plugins/maintenance-ui/
 COPY --chown=node:node packages/plugins/onboarding-ui/package.json ./packages/plugins/onboarding-ui/
 COPY --chown=node:node packages/plugins/public-layout-ui/package.json ./packages/plugins/public-layout-ui/
+COPY --chown=node:node packages/plugins/videos-ui/package.json ./packages/plugins/videos-ui/
 COPY --chown=node:node packages/ui-core/package.json ./packages/ui-core/
 COPY --chown=node:node packages/ui-config/package.json ./packages/ui-config/
 COPY --chown=node:node packages/ui-auth/package.json ./packages/ui-auth/
