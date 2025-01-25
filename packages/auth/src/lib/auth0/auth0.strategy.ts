@@ -25,7 +25,7 @@ export const parseAuth0Config = (configService: ConfigService): Record<string, s
 
 	// Validate required configurations
 	if (!auth0Config.clientID || !auth0Config.clientSecret || !auth0Config.domain) {
-		console.warn('Auth0 configuration is missing some required values. Defaulting to "disabled".');
+		console.warn('⚠️ Auth0 configuration is missing some required values. Defaulting to "disabled".');
 	}
 
 	// Construct and return the Auth0 configuration object

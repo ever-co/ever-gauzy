@@ -51,7 +51,7 @@ export const parseFiverrConfig = (configService: ConfigService): Record<string, 
 
 	// Validate required Fiverr configurations
 	if (!fiverrConfig?.clientId || !fiverrConfig?.clientSecret) {
-		console.warn('Fiverr authentication configuration is incomplete. Defaulting to "disabled".');
+		console.warn('⚠️ Fiverr authentication configuration is incomplete. Defaulting to "disabled".');
 	}
 
 	return {
