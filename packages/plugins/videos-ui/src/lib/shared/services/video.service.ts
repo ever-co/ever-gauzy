@@ -3,14 +3,16 @@ import { Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { IPagination } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
+import { catchError, map, Observable, of, tap } from 'rxjs';
 import { IVideo } from '../models/video.model';
+import { Store } from '@gauzy/ui-core/core';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class VideoService {
 	private readonly API_ENDPOINT = `${API_PREFIX}/plugins/videos`;
-	constructor(private readonly http: HttpClient) {}
+	constructor(private readonly http: HttpClient, private readonly store: Store) {}
 
 	public getAll<T>(params?: T): Observable<IPagination<IVideo>> {
 		return this.http.get<IPagination<IVideo>>(this.API_ENDPOINT, {
@@ -30,7 +32,23 @@ export class VideoService {
 		return this.http.delete<void>(`${this.API_ENDPOINT}/${id}`);
 	}
 
+	public getCount<T>(params?: T): Observable<number> {
+		return this.http.get<number>(`${this.API_ENDPOINT}/count`, {
+			params: toParams(params)
+		});
+	}
+
 	public get isAvailable$(): Observable<boolean> {
-		return this.getAll({}).pipe(map(({ total }) => total > 0));
+		const organizationId = this.store.organizationId;
+		const tenantId = this.store.tenantId;
+
+		if (!organizationId || !tenantId) {
+			return of(false);
+		}
+
+		return this.getCount({ organizationId, tenantId }).pipe(
+			map((count) => count > 0),
+			catchError(() => of(false))
+		);
 	}
 }
