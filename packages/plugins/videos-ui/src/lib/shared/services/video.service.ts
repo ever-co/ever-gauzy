@@ -1,11 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { map, Observable } from 'rxjs';
 import { IPagination } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
-import { catchError, map, Observable, of, tap } from 'rxjs';
-import { IVideo } from '../models/video.model';
 import { Store } from '@gauzy/ui-core/core';
+import { catchError, map, Observable, of } from 'rxjs';
+import { IVideo } from '../models/video.model';
 
 @Injectable({
 	providedIn: 'root'
