@@ -28,6 +28,9 @@ export class VideoPlayerComponent {
 	 * The video player element.
 	 */
 	public get player(): HTMLVideoElement {
+		if (!this.video?.nativeElement) {
+			throw new Error('Video element not initialized');
+		}
 		return this.video.nativeElement;
 	}
 
