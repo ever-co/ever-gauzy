@@ -123,6 +123,7 @@ const pathWindow = {
 LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png')
 });
+
 // Instance detection
 const gotTheLock = app.requestSingleInstanceLock();
 
