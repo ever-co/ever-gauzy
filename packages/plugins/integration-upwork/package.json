@@ -10,7 +10,8 @@
 	"license": "AGPL-3.0",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ever-co/ever-gauzy"
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/plugins/integration-upwork"
 	},
 	"bugs": {
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
@@ -26,12 +27,12 @@
 		"lib:watch": "yarn nx build plugin-integration-upwork --watch"
 	},
 	"dependencies": {
-		"@gauzy/common": "^0.1.0",
 		"@gauzy/config": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@gauzy/plugin-job-proposal": "^0.1.0",
+		"@gauzy/utils": "^0.1.0",
 		"@nestjs/common": "^10.4.15",
 		"@nestjs/cqrs": "^10.2.8",
 		"@nestjs/platform-express": "^10.4.15",

@@ -2,7 +2,6 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { FileStorageProviderEnum } from '@gauzy/contracts';
 import {
 	IAppIntegrationConfig,
 	IAuth0Config,
@@ -20,6 +19,7 @@ import {
 	IJiraIntegrationConfig,
 	IDigitalOceanConfig
 } from '@gauzy/common';
+import { FileStorageProviderEnum } from '@gauzy/contracts';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 

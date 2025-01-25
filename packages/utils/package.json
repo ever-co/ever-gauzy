@@ -1,21 +1,23 @@
 {
 	"name": "@gauzy/utils",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"description": "A set of common utility functions for streamlined development in JavaScript and TypeScript, compatible with Angular, NestJS, and other frameworks.",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
-	"license": "AGPL-3.0",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ever-co/ever-gauzy"
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/utils"
 	},
 	"bugs": {
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"homepage": "https://ever.co",
+	"license": "AGPL-3.0",
+	"private": true,
 	"type": "commonjs",
 	"main": "./src/index.js",
 	"typings": "./src/index.d.ts",
@@ -25,13 +27,14 @@
 		"lib:watch": "yarn nx build utils --watch"
 	},
 	"dependencies": {
+		"@gauzy/constants": "^0.1.0",
+		"generate-password": "^1.7.1",
 		"slugify": "^1.6.6",
 		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
-		"rimraf": "^3.0.2",
 		"typescript": "5.5.4"
 	},
 	"keywords": [

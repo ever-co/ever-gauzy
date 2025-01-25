@@ -1,9 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
-import { IOrganization, IPagination, ITaskSize, ITaskSizeCreateInput, ITaskSizeFindInput, ITenant } from '@gauzy/contracts';
+import {
+	ID,
+	IOrganization,
+	IPagination,
+	ITaskSize,
+	ITaskSizeCreateInput,
+	ITaskSizeFindInput,
+	ITenant
+} from '@gauzy/contracts';
 import { isPostgres } from '@gauzy/config';
 import { RequestContext } from '../../core/context';
 import { MultiORMEnum } from '../../core/utils';
@@ -13,18 +20,12 @@ import { DEFAULT_GLOBAL_SIZES } from './default-global-sizes';
 import { TypeOrmTaskSizeRepository } from './repository/type-orm-task-size.repository';
 import { MikroOrmTaskSizeRepository } from './repository/mikro-orm-task-size.repository';
 
-
 @Injectable()
 export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
-
 	constructor(
-		@InjectRepository(TaskSize)
 		readonly typeOrmTaskSizeRepository: TypeOrmTaskSizeRepository,
-
 		readonly mikroOrmTaskSizeRepository: MikroOrmTaskSizeRepository,
-
-		@InjectConnection()
-		readonly knexConnection: KnexConnection
+		@InjectConnection() readonly knexConnection: KnexConnection
 	) {
 		super(typeOrmTaskSizeRepository, mikroOrmTaskSizeRepository, knexConnection);
 	}
@@ -35,11 +36,11 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 	 * @param id
 	 * @returns
 	 */
-	async delete(id: ITaskSize['id']): Promise<DeleteResult> {
+	async delete(id: ID): Promise<DeleteResult> {
 		return await super.delete(id, {
 			where: {
 				isSystem: false
-			},
+			}
 		});
 	}
 
@@ -57,8 +58,14 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 				return await super.fetchAll(params);
 			}
 		} catch (error) {
-			console.log('Failed to retrieve task sizes. Please ensure that all required parameters are provided correctly.', error);
-			throw new BadRequestException('Failed to retrieve task sizes. Ensure that the provided parameters are valid and complete.', error);
+			console.log(
+				'Failed to retrieve task sizes. Please ensure that all required parameters are provided correctly.',
+				error
+			);
+			throw new BadRequestException(
+				'Failed to retrieve task sizes. Ensure that the provided parameters are valid and complete.',
+				error
+			);
 		}
 	}
 

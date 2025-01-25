@@ -2,7 +2,7 @@ import { ApiPropertyOptional, IntersectionType } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
 import { Transform, TransformFnParams } from 'class-transformer';
 import { IDateRangePicker, IOrganizationTeamStatisticInput } from '@gauzy/contracts';
-import { parseToBoolean } from '@gauzy/common';
+import { parseToBoolean } from '@gauzy/utils';
 import { DateRangeQueryDTO, RelationsQueryDTO } from './../../shared/dto';
 
 /**

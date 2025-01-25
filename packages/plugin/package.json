@@ -7,6 +7,15 @@
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/plugin"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
 	"license": "AGPL-3.0",
 	"private": true,
 	"type": "commonjs",
@@ -18,8 +27,8 @@
 		"lib:watch": "yarn nx build plugin --watch"
 	},
 	"dependencies": {
-		"@gauzy/common": "^0.1.0",
 		"@gauzy/config": "^0.1.0",
+		"@gauzy/utils": "^0.1.0",
 		"@nestjs/common": "^10.4.15",
 		"@nestjs/core": "^10.4.15",
 		"chalk": "^4.1.0",

@@ -34,9 +34,6 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { EventSubscriber } from '@mikro-orm/core';
 import { useContainer } from 'class-validator';
-import * as expressSession from 'express-session';
-import RedisStore from 'connect-redis';
-import { createClient } from 'redis';
 import * as helmet from 'helmet';
 import * as chalk from 'chalk';
 import * as fs from 'fs';
@@ -44,7 +41,7 @@ import * as path from 'path';
 import { urlencoded, json } from 'express';
 import { EntitySubscriberInterface } from 'typeorm';
 import { ApplicationPluginConfig } from '@gauzy/common';
-import { getConfig, setConfig, environment as env } from '@gauzy/config';
+import { getConfig, defineConfig, environment as env } from '@gauzy/config';
 import { getEntitiesFromPlugins, getPluginConfigurations, getSubscribersFromPlugins } from '@gauzy/plugin';
 import { coreEntities } from '../core/entities';
 import { coreSubscribers } from '../core/entities/subscribers';
@@ -53,6 +50,7 @@ import { AuthGuard } from '../shared/guards';
 import { SharedModule } from '../shared/shared.module';
 import { AppService } from '../app/app.service';
 import { AppModule } from '../app/app.module';
+import { configureRedisSession } from './redis-store';
 
 /**
  * Bootstrap the NestJS application, configuring various settings and initializing the server.
@@ -61,19 +59,23 @@ import { AppModule } from '../app/app.module';
  * @returns A promise that resolves to the initialized NestJS application.
  */
 export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>): Promise<INestApplication> {
-	console.time('✔ Total Application Startup Time');
+	console.time(chalk.yellow('✔ Total Application Bootstrap Time'));
 
 	// Pre-bootstrap the application configuration
 	const config = await preBootstrapApplicationConfig(pluginConfig);
 
 	// Import the BootstrapModule dynamically
+	console.time(chalk.yellow('✔ Import BootstrapModule Time'));
 	const { BootstrapModule } = await import('./bootstrap.module');
+	console.timeEnd(chalk.yellow('✔ Import BootstrapModule Time'));
 
 	// Create the NestJS application
+	console.time(chalk.yellow('✔ Create NestJS Application Time'));
 	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
 		logger: ['log', 'error', 'warn', 'debug', 'verbose'], // Set logging levels
 		bufferLogs: env.isElectron ? false : true // Buffer logs to avoid loss during startup // set to false when is electron
 	});
+	console.timeEnd(chalk.yellow('✔ Create NestJS Application Time'));
 
 	// Register custom entity fields for Mikro ORM
 	await registerMikroOrmCustomFields(config);
@@ -106,15 +108,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	app.enableCors({
 		origin: '*',
 		credentials: true,
-		methods: [
-			'GET',
-			'HEAD',
-			'PUT',
-			'PATCH',
-			'POST',
-			'DELETE',
-			'OPTIONS'
-		].join(','),
+		methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'].join(','),
 		allowedHeaders: [
 			'Authorization',
 			'Language',
@@ -141,114 +135,8 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// For production we use RedisStore
 	// https://github.com/tj/connect-redis
 
-	// Manage sessions with Redis or in-memory fallback
-	let redisWorked = false;
-	console.log('REDIS_ENABLED: ', process.env.REDIS_ENABLED);
-
-	if (process.env.REDIS_ENABLED === 'true') {
-		try {
-			const url =
-				process.env.REDIS_URL ||
-				(process.env.REDIS_TLS === 'true'
-					? `rediss://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
-					: `redis://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
-
-			console.log('REDIS_URL: ', url);
-
-			let host, port, username, password;
-
-			const isTls = url.startsWith('rediss://');
-
-			// Removing the protocol part
-			let authPart = url.split('://')[1];
-
-			// Check if the URL contains '@' (indicating the presence of username/password)
-			if (authPart.includes('@')) {
-				// Splitting user:password and host:port
-				let [userPass, hostPort] = authPart.split('@');
-				[username, password] = userPass.split(':');
-				[host, port] = hostPort.split(':');
-			} else {
-				// If there is no '@', it means there is no username/password
-				[host, port] = authPart.split(':');
-			}
-
-			port = parseInt(port);
-
-			const redisConnectionOptions = {
-				url: url,
-				username: username,
-				password: password,
-				isolationPoolOptions: {
-					min: 1,
-					max: 100
-				},
-				socket: {
-					tls: isTls,
-					host: host,
-					port: port,
-					passphrase: password,
-					rejectUnauthorized: process.env.NODE_ENV === 'production'
-				},
-				ttl: 60 * 60 * 24 * 7 // 1 week
-			};
-
-			const redisClient = createClient(redisConnectionOptions)
-				.on('error', (err) => {
-					console.log('Redis Session Store Client Error: ', err);
-				})
-				.on('connect', () => {
-					console.log('Redis Session Store Client Connected');
-				})
-				.on('ready', () => {
-					console.log('Redis Session Store Client Ready');
-				})
-				.on('reconnecting', () => {
-					console.log('Redis Session Store Client Reconnecting');
-				})
-				.on('end', () => {
-					console.log('Redis Session Store Client End');
-				});
-
-			// connecting to Redis
-			await redisClient.connect();
-
-			// ping Redis
-			const res = await redisClient.ping();
-			console.log('Redis Session Store Client Sessions Ping: ', res);
-
-			const redisStore = new RedisStore({
-				client: redisClient,
-				prefix: env.production ? 'gauzyprodsess:' : 'gauzydevsess:'
-			});
-
-			app.use(
-				expressSession({
-					store: redisStore,
-					secret: env.EXPRESS_SESSION_SECRET,
-					resave: false, // required: force lightweight session keep alive (touch)
-					saveUninitialized: true
-					// cookie: { secure: true } // TODO
-				})
-			);
-
-			redisWorked = true;
-		} catch (error) {
-			console.error(error);
-		}
-	}
-
-	if (!redisWorked) {
-		app.use(
-			// this runs in memory, so we lose sessions on restart of server/pod
-			expressSession({
-				secret: env.EXPRESS_SESSION_SECRET,
-				resave: true, // we use this because Memory store does not support 'touch' method
-				saveUninitialized: true
-				// cookie: { secure: true } // TODO
-			})
-		);
-	}
+	// Configure Redis or in-memory sessions
+	await configureRedisSession(app);
 
 	// let's use helmet for security in production
 	if (env.envName === 'prod') {
@@ -301,6 +189,8 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 		}
 	});
 
+	console.timeEnd(chalk.yellow('✔ Total Application Bootstrap Time'));
+
 	return app;
 }
 
@@ -344,27 +234,29 @@ export async function registerPluginConfig(config: Partial<ApplicationPluginConf
  * @returns A promise that resolves to the final application configuration after pre-bootstrap operations.
  */
 export async function preBootstrapApplicationConfig(applicationConfig: Partial<ApplicationPluginConfig>) {
+	console.time(chalk.yellow('✔ Pre Bootstrap Application Config Time'));
+
 	if (Object.keys(applicationConfig).length > 0) {
 		// Set initial configuration if any properties are provided
-		setConfig(applicationConfig);
+		await defineConfig(applicationConfig);
 	}
 
 	// Configure migration settings
-	setConfig({
+	await defineConfig({
 		dbConnectionOptions: {
 			...getMigrationsConfig()
 		}
 	});
 
 	// Log the current database configuration (for debugging or informational purposes)
-	console.log(chalk.green(`DB Config: ${JSON.stringify(getConfig().dbConnectionOptions)}`));
+	await logDBConfig();
 
 	// Register core and plugin entities and subscribers
 	const entities = await preBootstrapRegisterEntities(applicationConfig);
 	const subscribers = await preBootstrapRegisterSubscribers(applicationConfig);
 
 	// Update configuration with registered entities and subscribers
-	setConfig({
+	await defineConfig({
 		dbConnectionOptions: {
 			entities: entities as Array<Type<any>>, // Core and plugin entities
 			subscribers: subscribers as Array<Type<EntitySubscriberInterface>> // Core and plugin subscribers
@@ -381,6 +273,8 @@ export async function preBootstrapApplicationConfig(applicationConfig: Partial<A
 	// Register custom entity fields for Type ORM
 	await registerTypeOrmCustomFields(config);
 
+	console.timeEnd(chalk.yellow('✔ Pre Bootstrap Application Config Time'));
+
 	// Return the final configuration after all pre-bootstrap operations
 	return config;
 }
@@ -393,6 +287,8 @@ export async function preBootstrapApplicationConfig(applicationConfig: Partial<A
  * @returns A promise that resolves to the updated application configuration.
  */
 async function preBootstrapPluginConfigurations(config: ApplicationPluginConfig): Promise<ApplicationPluginConfig> {
+	console.time(chalk.yellow('✔ Pre Bootstrap Plugin Configurations Time'));
+
 	// Retrieve a list of plugin configuration functions based on the provided config
 	const pluginConfigurations = getPluginConfigurations(config.plugins);
 
@@ -405,6 +301,8 @@ async function preBootstrapPluginConfigurations(config: ApplicationPluginConfig)
 		}
 	}
 
+	console.timeEnd(chalk.yellow('✔ Pre Bootstrap Plugin Configurations Time'));
+
 	// Return the modified configuration
 	return config;
 }
@@ -416,36 +314,45 @@ async function preBootstrapPluginConfigurations(config: ApplicationPluginConfig)
  * @param config - Plugin configuration containing plugin entities.
  * @returns A promise that resolves to an array of registered entity types.
  */
-async function preBootstrapRegisterEntities(config: Partial<ApplicationPluginConfig>): Promise<Array<Type<any>>> {
+export async function preBootstrapRegisterEntities(
+	config: Partial<ApplicationPluginConfig>
+): Promise<Array<Type<any>>> {
 	try {
-		// Retrieve the list of core entities
-		const coreEntitiesList = coreEntities as Array<Type<any>>;
-
-		// Get the list of entities from the plugin configuration
+		console.time(chalk.yellow('✔ Pre Bootstrap Register Entities Time'));
+		// Retrieve core entities and plugin entities
+		const coreEntitiesList = [...coreEntities] as Array<Type<any>>;
 		const pluginEntitiesList = getEntitiesFromPlugins(config.plugins);
 
-		// Check for conflicts and register plugin entities
-		for (const pluginEntity of pluginEntitiesList) {
-			const entityName = pluginEntity.name;
+		// Check for conflicts and merge entities
+		const registeredEntities = mergeEntities(coreEntitiesList, pluginEntitiesList);
 
-			// If a core entity has the same name as a plugin entity, throw a conflict exception
-			if (coreEntitiesList.some((entity) => entity.name === entityName)) {
-				throw new ConflictException({
-					message: `Error: ${entityName} conflicts with default entities.`
-				});
-			}
+		console.timeEnd(chalk.yellow('✔ Pre Bootstrap Register Entities Time'));
+		return registeredEntities;
+	} catch (error) {
+		console.log(chalk.red('Error registering entities:'), error);
+	}
+}
 
-			// If no conflict, add the plugin entity to the core entity list
-			coreEntitiesList.push(pluginEntity);
+/**
+ * Merges core entities and plugin entities, ensuring no conflicts.
+ *
+ * @param coreEntities - Array of core entities.
+ * @param pluginEntities - Array of plugin entities from the plugins.
+ * @returns The merged array of entities.
+ * @throws ConflictException if a plugin entity conflicts with a core entity.
+ */
+function mergeEntities(coreEntities: Array<Type<any>>, pluginEntities: Array<Type<any>>): Array<Type<any>> {
+	for (const pluginEntity of pluginEntities) {
+		const entityName = pluginEntity.name;
+
+		if (coreEntities.some((entity) => entity.name === entityName)) {
+			throw new ConflictException({ message: `Entity conflict: ${entityName} conflicts with core entities.` });
 		}
 
-		// Return the updated list of registered entities
-		return coreEntitiesList;
-	} catch (error) {
-		// Log any errors and re-throw for further handling
-		console.error('Error registering entities:', error);
-		throw error;
+		coreEntities.push(pluginEntity);
 	}
+
+	return coreEntities;
 }
 
 /**
@@ -457,6 +364,8 @@ async function preBootstrapRegisterEntities(config: Partial<ApplicationPluginCon
 async function preBootstrapRegisterSubscribers(
 	config: Partial<ApplicationPluginConfig>
 ): Promise<Array<Type<EntitySubscriberInterface>>> {
+	console.time(chalk.yellow('✔ Pre Bootstrap Register Subscribers Time'));
+
 	try {
 		// List of core subscribers
 		const subscribers = coreSubscribers as Array<Type<EntitySubscriberInterface>>;
@@ -480,11 +389,12 @@ async function preBootstrapRegisterSubscribers(
 			}
 		}
 
+		console.timeEnd(chalk.yellow('✔ Pre Bootstrap Register Subscribers Time'));
+
 		// Return the updated list of subscribers
 		return subscribers;
 	} catch (error) {
-		// Handle errors and log to console
-		console.error('Error registering subscribers:', error.message);
+		console.log(chalk.red('Error registering subscribers:'), error);
 	}
 }
 
@@ -507,8 +417,8 @@ export function getMigrationsConfig() {
 	const migrationsDir = path.resolve(
 		__dirname,
 		isElectron
-			? './../database/migrations/*.js'           // Only .ts if Electron
-			: './../database/migrations/*{.ts,.js}'      // Otherwise .ts or .js
+			? './../database/migrations/*.js' // Only .ts if Electron
+			: './../database/migrations/*{.ts,.js}' // Otherwise .ts or .js
 	);
 	console.log('Migration migrationsDir: ->', migrationsDir);
 
@@ -516,7 +426,7 @@ export function getMigrationsConfig() {
 		chalk.red(console.log(`Migrations directory not found: ${migrationsDir}`));
 	}
 
-    // CLI Migrations directory path
+	// CLI Migrations directory path
 	const cliMigrationsDir = path.resolve(__dirname, './../database/migrations'); // Adjusted for src structure
 	console.log('Migration cliMigrationsDir: ->', cliMigrationsDir);
 
@@ -524,11 +434,19 @@ export function getMigrationsConfig() {
 		chalk.red(console.log(`CLI migrations directory not found: ${cliMigrationsDir}`));
 	}
 
-    // Return the migration paths
-    return {
-        migrations: [migrationsDir],
-        cli: {
-            migrationsDir: cliMigrationsDir
-        }
-    };
+	// Return the migration paths
+	return {
+		migrations: [migrationsDir],
+		cli: {
+			migrationsDir: cliMigrationsDir
+		}
+	};
+}
+
+/**
+ * Logs the current database configuration for debugging or informational purposes.
+ */
+async function logDBConfig(): Promise<void> {
+	const config = getConfig(); // Await the config first
+	console.log(chalk.green(`DB Config: ${JSON.stringify(config.dbConnectionOptions)}`));
 }

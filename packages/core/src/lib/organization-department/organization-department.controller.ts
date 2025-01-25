@@ -1,21 +1,12 @@
 import {
+	ID,
 	IEditEntityByMemberInput,
 	IOrganizationDepartment,
 	IOrganizationDepartmentCreateInput,
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import {
-	Body,
-	Controller,
-	Get,
-	HttpCode,
-	HttpStatus,
-	Param,
-	Put,
-	Query,
-	UseGuards
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Put, Query, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController, PaginationParams } from './../core/crud';
@@ -28,7 +19,7 @@ import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../share
 
 @ApiTags('OrganizationDepartment')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/organization-department')
 export class OrganizationDepartmentController extends CrudController<OrganizationDepartment> {
 	constructor(
 		private readonly organizationDepartmentService: OrganizationDepartmentService,
@@ -56,7 +47,7 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 		description: 'Record not found'
 	})
 	@Get('employee/:id')
-	async findByEmployee(@Param('id', UUIDValidationPipe) id: string): Promise<IPagination<OrganizationDepartment>> {
+	async findByEmployee(@Param('id', UUIDValidationPipe) id: ID): Promise<IPagination<OrganizationDepartment>> {
 		return this.organizationDepartmentService.findByEmployee(id);
 	}
 
@@ -83,7 +74,7 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Put('employee')
-	async updateByEmployee(@Body() entity: IEditEntityByMemberInput): Promise<any> {
+	async updateByEmployee(@Body() entity: IEditEntityByMemberInput): Promise<void> {
 		return this.commandBus.execute(new OrganizationDepartmentEditByEmployeeCommand(entity));
 	}
 
@@ -155,9 +146,9 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: IOrganizationDepartmentCreateInput
-	): Promise<any> {
+	): Promise<IOrganizationDepartment> {
 		return this.commandBus.execute(new OrganizationDepartmentUpdateCommand(id, entity));
 	}
 }

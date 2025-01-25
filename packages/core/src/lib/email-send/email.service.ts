@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { IsNull } from 'typeorm';
+import { IAppIntegrationConfig } from '@gauzy/common';
 import {
 	IInviteEmployeeModel,
 	IInviteUserModel,
@@ -21,16 +22,13 @@ import {
 	ITenant
 } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
-import { deepMerge, IAppIntegrationConfig } from '@gauzy/common';
+import { deepMerge } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
 import { EmailSendService } from './../email-send/email-send.service';
 import { Organization, EmailHistory } from './../core/entities/internal';
 import { TypeOrmEmailHistoryRepository } from './../email-history/repository/type-orm-email-history.repository';
-import { MikroOrmEmailHistoryRepository } from './../email-history/repository/mikro-orm-email-history.repository';
 import { TypeOrmEmailTemplateRepository } from './../email-template/repository/type-orm-email-template.repository';
-import { MikroOrmEmailTemplateRepository } from './../email-template/repository/mikro-orm-email-template.repository';
-import { TypeOrmOrganizationRepository } from './../organization/repository';
-import { MikroOrmOrganizationRepository } from './../organization/repository/mikro-orm-organization.repository';
+import { TypeOrmOrganizationRepository } from './../organization/repository/type-orm-organization.repository';
 
 const DISALLOW_EMAIL_SERVER_DOMAIN: string[] = ['@example.com'];
 
@@ -38,11 +36,8 @@ const DISALLOW_EMAIL_SERVER_DOMAIN: string[] = ['@example.com'];
 export class EmailService {
 	constructor(
 		readonly typeOrmEmailHistoryRepository: TypeOrmEmailHistoryRepository,
-		readonly mikroOrmEmailHistoryRepository: MikroOrmEmailHistoryRepository,
 		readonly typeOrmEmailTemplateRepository: TypeOrmEmailTemplateRepository,
-		readonly mikroOrmEmailTemplateRepository: MikroOrmEmailTemplateRepository,
 		readonly typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
-		readonly mikroOrmOrganizationRepository: MikroOrmOrganizationRepository,
 		readonly emailSendService: EmailSendService
 	) {}
 

@@ -23,7 +23,7 @@ import { ConnectionEntityManager } from './connection-entity-manager';
 			inject: [ConfigService],
 			// Use useFactory, useClass, or useExisting
 			useFactory: async (configService: ConfigService) => {
-				const { dbMikroOrmConnectionOptions } = configService.config;
+				const dbMikroOrmConnectionOptions = configService.getConfigValue('dbMikroOrmConnectionOptions');
 				return dbMikroOrmConnectionOptions;
 			}
 		}),
@@ -37,7 +37,7 @@ import { ConnectionEntityManager } from './connection-entity-manager';
 			inject: [ConfigService],
 			// Use useFactory, useClass, or useExisting
 			useFactory: async (configService: ConfigService) => {
-				const { dbConnectionOptions } = configService.config;
+				const dbConnectionOptions = configService.getConfigValue('dbConnectionOptions');
 				return dbConnectionOptions;
 			}
 		}),
@@ -49,12 +49,12 @@ import { ConnectionEntityManager } from './connection-entity-manager';
 			inject: [ConfigService],
 			// Use useFactory, useClass, or useExisting
 			useFactory: async (configService: ConfigService) => {
-				const { dbKnexConnectionOptions } = configService.config;
+				const dbKnexConnectionOptions = configService.getConfigValue('dbKnexConnectionOptions');
 				return dbKnexConnectionOptions;
 			}
 		})
 	],
 	providers: [ConnectionEntityManager],
-	exports: [TypeOrmModule, MikroOrmModule, ConnectionEntityManager]
+	exports: [ConnectionEntityManager]
 })
-export class DatabaseModule { }
+export class DatabaseModule {}

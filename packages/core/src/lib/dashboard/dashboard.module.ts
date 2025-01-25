@@ -17,7 +17,6 @@ import { TypeOrmDashboardRepository } from './repository/type-orm-dashboard.repo
 		CqrsModule
 	],
 	controllers: [DashboardController],
-	providers: [DashboardService, TypeOrmDashboardRepository, ...CommandHandlers],
-	exports: [TypeOrmModule, DashboardService, TypeOrmDashboardRepository]
+	providers: [DashboardService, TypeOrmDashboardRepository, ...CommandHandlers]
 })
 export class DashboardModule {}

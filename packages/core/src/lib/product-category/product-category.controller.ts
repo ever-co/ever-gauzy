@@ -1,17 +1,5 @@
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import {
-	Controller,
-	Get,
-	HttpStatus,
-	Query,
-	UseGuards,
-	HttpCode,
-	Put,
-	Param,
-	Body,
-	ValidationPipe,
-	Post
-} from '@nestjs/common';
+import { Controller, Get, HttpStatus, Query, UseGuards, HttpCode, Put, Param, Body, Post } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { FindOptionsWhere } from 'typeorm';
 import { I18nLang } from 'nestjs-i18n';
@@ -28,7 +16,7 @@ import { ProductCategoryCreateCommand } from './commands';
 @ApiTags('ProductCategories')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT)
-@Controller()
+@Controller('/product-categories')
 export class ProductCategoryController extends CrudController<ProductCategory> {
 	constructor(
 		private readonly productCategoryService: ProductCategoryService,
@@ -109,8 +97,9 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW)
 	@Get()
+	@UseValidationPipe()
 	async findAll(
-		@Query(new ValidationPipe()) options: PaginationParams<ProductCategory>,
+		@Query() options: PaginationParams<ProductCategory>,
 		@LanguageDecorator() themeLanguage: LanguagesEnum,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IPagination<ProductCategory>> {

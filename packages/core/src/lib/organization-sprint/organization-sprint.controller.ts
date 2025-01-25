@@ -27,7 +27,7 @@ import { CreateOrganizationSprintDTO, UpdateOrganizationSprintDTO } from './dto'
 @ApiTags('OrganizationSprint')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
-@Controller()
+@Controller('/organization-sprint')
 export class OrganizationSprintController extends CrudController<OrganizationSprint> {
 	constructor(
 		private readonly organizationSprintService: OrganizationSprintService,

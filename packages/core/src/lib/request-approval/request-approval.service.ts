@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, FindManyOptions, In } from 'typeorm';
 import {
 	IRequestApproval,
@@ -15,33 +14,21 @@ import {
 import { isBetterSqlite3, isMySQL, isPostgres, isSqlite } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { RequestContext } from '../core/context';
-import { Employee, OrganizationTeam, RequestApprovalEmployee, RequestApprovalTeam } from './../core/entities/internal';
+import { RequestApprovalEmployee, RequestApprovalTeam } from './../core/entities/internal';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestApproval } from './request-approval.entity';
 import { MikroOrmRequestApprovalRepository } from './repository/mikro-orm-request-approval.repository';
 import { TypeOrmRequestApprovalRepository } from './repository/type-orm-request-approval.repository';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
-import { MikroOrmEmployeeRepository } from '../employee/repository/mikro-orm-employee.repository';
 import { TypeOrmOrganizationTeamRepository } from '../organization-team/repository/type-orm-organization-team.repository';
-import { MikroOrmOrganizationTeamRepository } from '../organization-team/repository/mikro-orm-organization-team.repository';
 
 @Injectable()
 export class RequestApprovalService extends TenantAwareCrudService<RequestApproval> {
 	constructor(
-		@InjectRepository(RequestApproval)
-		typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository,
-
-		mikroOrmRequestApprovalRepository: MikroOrmRequestApprovalRepository,
-
-		@InjectRepository(Employee)
-		private typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
-
-		mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
-
-		@InjectRepository(OrganizationTeam)
-		private typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
-
-		mikroOrmOrganizationTeamRepository: MikroOrmOrganizationTeamRepository
+		readonly typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository,
+		readonly mikroOrmRequestApprovalRepository: MikroOrmRequestApprovalRepository,
+		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+		readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository
 	) {
 		super(typeOrmRequestApprovalRepository, mikroOrmRequestApprovalRepository);
 	}
@@ -53,26 +40,28 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		const query = this.typeOrmRepository.createQueryBuilder('request_approval');
 		query.leftJoinAndSelect(`${query.alias}.approvalPolicy`, 'approvalPolicy');
 
-		const timeOffRequestCheckIdQuery = `${isSqlite() || isBetterSqlite3()
-			? '"time_off_request"."id" = "request_approval"."requestId"'
-			: isPostgres()
+		const timeOffRequestCheckIdQuery = `${
+			isSqlite() || isBetterSqlite3()
+				? '"time_off_request"."id" = "request_approval"."requestId"'
+				: isPostgres()
 				? '"time_off_request"."id"::"varchar" = "request_approval"."requestId"'
 				: isMySQL()
-					? p(
+				? p(
 						`CAST("time_off_request"."id" AS CHAR) COLLATE utf8mb4_unicode_ci = "request_approval"."requestId" COLLATE utf8mb4_unicode_ci`
-					)
-					: '"time_off_request"."id" = "request_approval"."requestId"'
-			}`;
-		const equipmentSharingCheckIdQuery = `${isSqlite() || isBetterSqlite3()
-			? '"equipment_sharing"."id" = "request_approval"."requestId"'
-			: isPostgres()
+				  )
+				: '"time_off_request"."id" = "request_approval"."requestId"'
+		}`;
+		const equipmentSharingCheckIdQuery = `${
+			isSqlite() || isBetterSqlite3()
+				? '"equipment_sharing"."id" = "request_approval"."requestId"'
+				: isPostgres()
 				? '"equipment_sharing"."id"::"varchar" = "request_approval"."requestId"'
 				: isMySQL()
-					? p(
+				? p(
 						`CAST(CONVERT("time_off_request"."id" USING utf8mb4) AS CHAR) = CAST(CONVERT("request_approval"."requestId" USING utf8mb4) AS CHAR)`
-					)
-					: '"equipment_sharing"."id" = "request_approval"."requestId"'
-			}`;
+				  )
+				: '"equipment_sharing"."id" = "request_approval"."requestId"'
+		}`;
 
 		query.leftJoinAndSelect('time_off_request', 'time_off_request', timeOffRequestCheckIdQuery);
 		query.leftJoinAndSelect('equipment_sharing', 'equipment_sharing', equipmentSharingCheckIdQuery);

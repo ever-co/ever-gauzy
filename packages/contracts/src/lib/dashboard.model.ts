@@ -1,4 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel, JsonData } from './base-entity.model';
+import { IDashboardWidget } from './dashboard-widget.model';
 import { ExcludeCreatorFields, IHasCreator } from './user.model';
 
 /**
@@ -10,6 +11,7 @@ export interface IDashboard extends IBasePerTenantAndOrganizationEntityModel, IH
 	description?: string;
 	contentHtml?: JsonData;
 	isDefault?: boolean;
+	widgets?: IDashboardWidget[];
 }
 
 /**

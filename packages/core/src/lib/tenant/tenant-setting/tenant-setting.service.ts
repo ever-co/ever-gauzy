@@ -1,9 +1,8 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, In } from 'typeorm';
 import { indexBy, keys, object, pluck } from 'underscore';
 import { S3Client, CreateBucketCommand, CreateBucketCommandInput, CreateBucketCommandOutput } from '@aws-sdk/client-s3';
-import { ITenantSetting, IWasabiFileStorageProviderConfig } from '@gauzy/contracts';
+import { ID, ITenantSetting, IWasabiFileStorageProviderConfig } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../../core/crud';
 import { MultiORMEnum, parseTypeORMFindToMikroOrm } from '../../core/utils';
 import { TenantSetting } from './tenant-setting.entity';
@@ -13,20 +12,21 @@ import { MikroOrmTenantSettingRepository } from './repository/mikro-orm-tenant-s
 @Injectable()
 export class TenantSettingService extends TenantAwareCrudService<TenantSetting> {
 	constructor(
-		@InjectRepository(TenantSetting)
 		typeOrmTenantSettingRepository: TypeOrmTenantSettingRepository,
-
 		mikroOrmTenantSettingRepository: MikroOrmTenantSettingRepository
 	) {
 		super(typeOrmTenantSettingRepository, mikroOrmTenantSettingRepository);
 	}
 
 	/**
+	 * Retrieves tenant settings from the database based on the ORM type being used.
 	 *
-	 * @param request
-	 * @returns
+	 * @param {FindManyOptions} [request] - Optional query options for filtering settings.
+	 * @returns {Promise<Record<string, any>>} - A key-value pair object where keys are setting names and values are setting values.
+	 *
+	 * @throws {Error} - Throws an error if the ORM type is not implemented.
 	 */
-	async get(request?: FindManyOptions) {
+	async getSettings(request?: FindManyOptions<TenantSetting>): Promise<Record<string, any>> {
 		let settings: TenantSetting[];
 
 		switch (this.ormType) {
@@ -36,7 +36,7 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 				settings = items.map((entity: TenantSetting) => this.serialize(entity)) as TenantSetting[];
 				break;
 			case MultiORMEnum.TypeORM:
-				settings = await await this.typeOrmRepository.find(request);
+				settings = await this.typeOrmRepository.find(request);
 				break;
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
@@ -46,22 +46,23 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 	}
 
 	/**
+	 * Saves or updates tenant settings in the database.
 	 *
-	 * @param input
-	 * @param tenantId
-	 * @returns
+	 * @param {ITenantSetting} input - An object containing tenant settings where keys are setting names and values are setting values.
+	 * @param {ID} tenantId - The unique identifier of the tenant.
+	 * @returns {Promise<ITenantSetting>} - Returns the updated settings as a key-value object.
+	 *
+	 * @throws {Error} - Throws an error if the operation fails.
 	 */
-	async saveSettings(input: ITenantSetting, tenantId: string): Promise<ITenantSetting> {
-		const settingsName = keys(input);
-		const settings: TenantSetting[] = await this.typeOrmRepository.find({
-			where: {
-				name: In(settingsName),
-				tenantId
-			}
+	async saveSettings(input: ITenantSetting, tenantId: ID): Promise<ITenantSetting> {
+		const settings: TenantSetting[] = await this.typeOrmRepository.findBy({
+			name: In(keys(input)),
+			tenantId
 		});
 
 		const settingsByName = indexBy(settings, 'name');
 		const saveInput = [];
+
 		for (const key in input) {
 			if (Object.prototype.hasOwnProperty.call(input, key)) {
 				const setting = settingsByName[key];

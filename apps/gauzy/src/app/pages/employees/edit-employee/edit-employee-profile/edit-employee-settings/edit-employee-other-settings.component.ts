@@ -4,7 +4,8 @@ import { filter, tap } from 'rxjs';
 import { NbAccordionComponent, NbAccordionItemComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
-import { DEFAULT_TIME_FORMATS, IEmployee } from '@gauzy/contracts';
+import { DEFAULT_TIME_FORMATS } from '@gauzy/constants';
+import { IEmployee } from '@gauzy/contracts';
 import { EmployeeStore } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
@@ -82,7 +83,15 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 	private _patchFormValue(employee: IEmployee): void {
 		if (!employee) return;
 
-		const { user, upworkId, linkedInId, allowManualTime, allowDeleteTime, allowModifyTime, allowScreenshotCapture } = employee;
+		const {
+			user,
+			upworkId,
+			linkedInId,
+			allowManualTime,
+			allowDeleteTime,
+			allowModifyTime,
+			allowScreenshotCapture
+		} = employee;
 		this.form.patchValue({
 			timeZone: user?.timeZone ?? moment.tz.guess(),
 			timeFormat: user?.timeFormat,
@@ -129,7 +138,6 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			allowScreenshotCapture
 		});
 	}
-
 
 	/**
 	 *

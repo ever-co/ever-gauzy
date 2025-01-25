@@ -1,10 +1,11 @@
 import { Injectable, CanActivate, ExecutionContext, Type, Inject } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { Cache } from 'cache-manager';
+import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { environment as env } from '@gauzy/config';
-import { isNotEmpty, PERMISSIONS_METADATA, removeDuplicates } from '@gauzy/common';
+import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { isNotEmpty, deduplicate } from '@gauzy/utils';
 import { RequestContext } from './../../core/context';
 import { TenantBaseGuard } from './tenant-base.guard';
 import { RolePermissionService } from '../../role-permission/role-permission.service';
@@ -53,7 +54,7 @@ export class TenantPermissionGuard extends TenantBaseGuard implements CanActivat
 		const targets: Array<Function | Type<any>> = [context.getHandler(), context.getClass()];
 
 		const permissions =
-			removeDuplicates(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
+			deduplicate(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
 
 		// Check if permissions are not empty
 		if (isNotEmpty(permissions)) {

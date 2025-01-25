@@ -1,4 +1,3 @@
-
-export { CreateKeyresultDTO } from "./create-keyresult.dto";
-export { UpdateKeyresultDTO } from "./update-keyresult.dto";
-export { KeyresultBultInputDTO } from "./keyresult-bulk-input.dto"
+export { CreateKeyResultDTO } from './create-key-result.dto';
+export { UpdateKeyResultDTO } from './update-key-result.dto';
+export { KeyResultBulkInputDTO } from './key-result-bulk-input.dto';

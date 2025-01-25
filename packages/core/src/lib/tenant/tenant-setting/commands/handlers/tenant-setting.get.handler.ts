@@ -12,27 +12,30 @@ import {
 } from './../../dto';
 
 @CommandHandler(TenantSettingGetCommand)
-export class TenantSettingGetHandler
-	implements ICommandHandler<TenantSettingGetCommand> {
-
+export class TenantSettingGetHandler implements ICommandHandler<TenantSettingGetCommand> {
 	constructor(
 		@Inject(forwardRef(() => TenantSettingService))
 		private readonly _tenantSettingService: TenantSettingService
-	) { }
+	) {}
 
-	public async execute() {
-		const tenantId = RequestContext.currentTenantId();
-		let settings = await this._tenantSettingService.get({
-			where: {
-				tenantId
-			}
+	/**
+	 * Executes the retrieval and processing of tenant settings.
+	 *
+	 * @returns {Promise<Record<string, any>>} - Returns an object containing the tenant settings with secrets wrapped for various cloud storage providers.
+	 *
+	 * @throws {Error} - Throws an error if the operation fails.
+	 */
+	public async execute(): Promise<Record<string, any>> {
+		let settings = await this._tenantSettingService.getSettings({
+			where: { tenantId: RequestContext.currentTenantId() }
 		});
+
 		return Object.assign(
 			{},
 			WrapSecrets(settings, new WasabiS3ProviderConfigDTO()),
 			WrapSecrets(settings, new AwsS3ProviderConfigDTO()),
 			WrapSecrets(settings, new CloudinaryProviderConfigDTO()),
-			WrapSecrets(settings, new DigitalOceanS3ProviderConfigDTO()),
+			WrapSecrets(settings, new DigitalOceanS3ProviderConfigDTO())
 		);
 	}
 }

@@ -1,6 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import * as moment from 'moment';
 import { IntegrationEntity, ITimeSlot } from '@gauzy/contracts';
 import { TimeSlotCreateCommand } from './../time-slot-create.command';
@@ -10,25 +9,13 @@ import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.r
 
 @CommandHandler(TimeSlotCreateCommand)
 export class TimeSlotCreateHandler implements ICommandHandler<TimeSlotCreateCommand> {
-
-	constructor(
-		@InjectRepository(TimeSlot)
-		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
-	) { }
+	constructor(private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository) {}
 
 	public async execute(command: TimeSlotCreateCommand): Promise<ITimeSlot> {
 		const { input } = command;
 		const tenantId = RequestContext.currentTenantId();
 
-		const {
-			employeeId,
-			duration,
-			keyboard,
-			mouse,
-			overall,
-			time_slot,
-			organizationId
-		}: ITimeSlot = input;
+		const { employeeId, duration, keyboard, mouse, overall, time_slot, organizationId }: ITimeSlot = input;
 
 		try {
 			const entity = this.typeOrmTimeSlotRepository.create({

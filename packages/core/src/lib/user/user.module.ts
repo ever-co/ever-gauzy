@@ -4,7 +4,6 @@
 
 import { CqrsModule } from '@nestjs/cqrs';
 import { forwardRef, Module } from '@nestjs/common';
-import { RouterModule } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { CommandHandlers } from './commands/handlers';
@@ -16,10 +15,10 @@ import { FactoryResetModule } from './factory-reset/factory-reset.module';
 import { TaskModule } from './../tasks/task.module';
 import { EmployeeModule } from './../employee/employee.module';
 import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
+import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/user', module: UserModule }]),
 		forwardRef(() => TypeOrmModule.forFeature([User])),
 		forwardRef(() => MikroOrmModule.forFeature([User])),
 		forwardRef(() => RolePermissionModule),
@@ -29,7 +28,7 @@ import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 		FactoryResetModule
 	],
 	controllers: [UserController],
-	providers: [UserService, TypeOrmUserRepository, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, UserService, TypeOrmUserRepository]
+	providers: [UserService, TypeOrmUserRepository, MikroOrmUserRepository, ...CommandHandlers],
+	exports: [UserService, TypeOrmUserRepository, MikroOrmUserRepository]
 })
 export class UserModule {}

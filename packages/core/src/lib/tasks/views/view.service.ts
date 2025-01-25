@@ -1,5 +1,4 @@
 import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import {
 	ActionTypeEnum,
 	ActorTypeEnum,
@@ -21,11 +20,8 @@ import { MikroOrmTaskViewRepository } from './repository/mikro-orm-task-view.rep
 @Injectable()
 export class TaskViewService extends TenantAwareCrudService<TaskView> {
 	constructor(
-		@InjectRepository(TaskView)
 		typeOrmTaskViewRepository: TypeOrmTaskViewRepository,
-
 		mikroOrmTaskViewRepository: MikroOrmTaskViewRepository,
-
 		private readonly activityLogService: ActivityLogService
 	) {
 		super(typeOrmTaskViewRepository, mikroOrmTaskViewRepository);

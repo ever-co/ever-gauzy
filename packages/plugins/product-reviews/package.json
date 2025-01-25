@@ -9,7 +9,8 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ever-co/ever-gauzy"
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/plugins/product-reviews"
 	},
 	"bugs": {
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
@@ -32,9 +33,9 @@
 		"@nestjs/common": "^10.4.15",
 		"@nestjs/swagger": "^8.1.0",
 		"@nestjs/typeorm": "^10.0.2",
-		"apollo-server-core": "^3.10.1",
 		"chalk": "^4.1.0",
 		"class-validator": "^0.14.0",
+		"graphql-tag": "^2.12.6",
 		"tslib": "^2.6.2",
 		"typeorm": "^0.3.20"
 	},

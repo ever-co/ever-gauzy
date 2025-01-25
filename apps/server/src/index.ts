@@ -167,14 +167,7 @@ ipcMain.removeHandler('PREFERRED_LANGUAGE');
 
 ipcMain.handle('PREFERRED_THEME', () => {
 	const setting = LocalStore.getStore('appSetting');
-	if (!setting) {
-		LocalStore.setDefaultApplicationSetting();
-		const theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
-		LocalStore.updateApplicationSetting({ theme });
-		return theme;
-	} else {
-		return setting.theme;
-	}
+	return !setting ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : setting.theme;
 });
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
@@ -252,7 +245,7 @@ const closeSplashScreen = () => {
 		splashScreen.close();
 		splashScreen = null;
 	}
-}
+};
 
 const runSetup = async () => {
 	// Set default configuration

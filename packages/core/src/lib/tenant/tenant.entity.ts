@@ -1,15 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, RelationId } from 'typeorm';
 import { IsNumber, IsOptional, IsUUID, Max, Min } from 'class-validator';
-import {
-	ITenant,
-	IOrganization,
-	IRolePermission,
-	IFeatureOrganization,
-	DEFAULT_STANDARD_WORK_HOURS_PER_DAY,
-	ID,
-	IImageAsset
-} from '@gauzy/contracts';
+import { DEFAULT_STANDARD_WORK_HOURS_PER_DAY } from '@gauzy/constants';
+import { ITenant, IOrganization, IRolePermission, IFeatureOrganization, ID, IImageAsset } from '@gauzy/contracts';
 import { BaseEntity, FeatureOrganization, ImageAsset, Organization, RolePermission } from '../core/entities/internal';
 import {
 	ColumnIndex,

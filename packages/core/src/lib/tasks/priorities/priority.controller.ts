@@ -18,7 +18,7 @@ import { CreateTaskPriorityDTO, TaskPriorityQueryDTO, UpdateTaskPriorityDTO } fr
 
 @UseGuards(TenantPermissionGuard)
 @ApiTags('Task Priority')
-@Controller()
+@Controller('/task-priorities')
 export class TaskPriorityController extends CrudFactory<
 	TaskPriority,
 	IPaginationParam,

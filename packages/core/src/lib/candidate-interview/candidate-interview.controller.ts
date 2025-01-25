@@ -18,7 +18,7 @@ import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 @ApiTags('CandidateInterview')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT)
-@Controller()
+@Controller('/candidate-interview')
 export class CandidateInterviewController extends CrudController<CandidateInterview> {
 	constructor(private readonly candidateInterviewService: CandidateInterviewService) {
 		super(candidateInterviewService);

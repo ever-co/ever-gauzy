@@ -1,6 +1,6 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IOrganization, ITag, ITagCreateInput, ITagUpdateInput } from '@gauzy/contracts';
+import { ID, ITag, ITagCreateInput, ITagUpdateInput } from '@gauzy/contracts';
 import { IntegrationMap } from '../../../core/entities/internal';
 import { RequestContext } from '../../../core/context';
 import { Tag } from './../../tag.entity';
@@ -89,8 +89,8 @@ export class AutomationLabelSyncHandler implements ICommandHandler<AutomationLab
 	 */
 	async createTag(
 		options: {
-			organizationId: IOrganization['id'];
-			tenantId: IOrganization['tenantId'];
+			organizationId: ID;
+			tenantId: ID;
 		},
 		entity: ITagCreateInput | ITagUpdateInput
 	): Promise<ITag> {
@@ -118,7 +118,7 @@ export class AutomationLabelSyncHandler implements ICommandHandler<AutomationLab
 	 * @param entity - The new data for the tag.
 	 * @returns A Promise that resolves to the updated tag.
 	 */
-	async updateTag(id: ITagUpdateInput['id'], entity: ITagUpdateInput): Promise<ITag> {
+	async updateTag(id: ID, entity: ITagUpdateInput): Promise<ITag> {
 		try {
 			// Find the existing tag by its ID
 			const existingTag = await this._tagService.findOneByIdString(id);

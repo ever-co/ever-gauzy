@@ -12,7 +12,7 @@ import {
 	ActionTypeEnum,
 	SubscriptionTypeEnum
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationSprintEmployee } from '../core/entities/internal';
@@ -24,13 +24,11 @@ import { EmployeeService } from '../employee/employee.service';
 import { SubscriptionService } from '../subscription/subscription.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { OrganizationSprint } from './organization-sprint.entity';
-import { TypeOrmEmployeeRepository } from '../employee/repository';
-import {
-	MikroOrmOrganizationSprintEmployeeRepository,
-	MikroOrmOrganizationSprintRepository,
-	TypeOrmOrganizationSprintEmployeeRepository,
-	TypeOrmOrganizationSprintRepository
-} from './repository';
+import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
+import { TypeOrmOrganizationSprintRepository } from './repository/type-orm-organization-sprint.repository';
+import { TypeOrmOrganizationSprintEmployeeRepository } from './repository/type-orm-organization-sprint-employee.repository';
+import { MikroOrmOrganizationSprintRepository } from './repository/mikro-orm-organization-sprint.repository';
+import { MikroOrmOrganizationSprintEmployeeRepository } from './repository/mikro-orm-organization-sprint-employee.repository';
 
 @FavoriteService(BaseEntityEnum.OrganizationSprint)
 @Injectable()

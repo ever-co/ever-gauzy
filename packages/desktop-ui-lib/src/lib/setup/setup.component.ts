@@ -16,7 +16,7 @@ import { GAUZY_ENV } from '../constants';
 import { ElectronService, LoggerService } from '../electron/services';
 import { LanguageElectronService } from '../language/language-electron.service';
 import { LanguageSelectorComponent } from '../language/language-selector.component';
-import { ErrorHandlerService, Store } from '../services';
+import { ErrorHandlerService, Store, ToastrNotificationService } from '../services';
 import { SetupService } from './setup.service';
 
 @Component({
@@ -44,9 +44,10 @@ export class SetupComponent implements OnInit {
 		@Inject(GAUZY_ENV)
 		private readonly _environment: any,
 		private readonly _domSanitizer: DomSanitizer,
-		private languageElectronService: LanguageElectronService
+		private languageElectronService: LanguageElectronService,
+		private readonly _notifier: ToastrNotificationService
 	) {
-		electronService.ipcRenderer.on('setup-data', (event, arg) => {
+		electronService.ipcRenderer.on('setup-data', (_, arg) => {
 			this.desktopFeatures.gauzyPlatform = arg.gauzyWindow;
 			this.desktopFeatures.timeTracking = arg.timeTrackerWindow;
 			this.connectivity.integrated = arg.isLocalServer;
@@ -71,7 +72,7 @@ export class SetupComponent implements OnInit {
 			}
 		});
 
-		electronService.ipcRenderer.on('log_state', (event, arg) => {
+		electronService.ipcRenderer.on('log_state', (_, arg) => {
 			const validMessage = this.defaultMessage.findIndex((item) => arg.msg.indexOf(item) > -1);
 			if (validMessage > -1) {
 				if (validMessage === 0 && arg.msg.indexOf('Found 0 users in DB') < 0) {
@@ -253,6 +254,30 @@ export class SetupComponent implements OnInit {
 		};
 	}
 
+	/**
+	 * Sanitizes and constructs the server URL with the provided host and port.
+	 *
+	 * @param host - The host URL (e.g., "http://localhost").
+	 * @param port - The port to append to the host URL (e.g., "3000").
+	 * @returns The sanitized server URL as a string (e.g., "http://localhost:3000").
+	 * @throws Error if the `host` parameter is missing or invalid.
+	 */
+	sanitizeServerPort(host: string, port: string): string {
+		if (!host) {
+			throw new Error('Host is required');
+		}
+
+		try {
+			const url = new URL(host);
+			if (port) {
+				url.port = port; // Set the port if provided
+			}
+			return url.origin; // Return the sanitized origin
+		} catch (error) {
+			throw new Error('Invalid server URL format');
+		}
+	}
+
 	getServerConfig() {
 		if (this.connectivity.integrated) {
 			return {
@@ -263,9 +288,10 @@ export class SetupComponent implements OnInit {
 
 		if (this.connectivity.custom) {
 			const protocol = this.serverConfig.custom.apiHost.indexOf('http') === 0 ? '' : 'https://';
-			const port = this.serverConfig.custom.port ? ':' + this.serverConfig.custom.port : '';
+			const port = this.serverConfig.custom.port;
+			const apiHost = `${protocol}${this.serverConfig.custom.apiHost}`;
 			return {
-				serverUrl: protocol + this.serverConfig.custom.apiHost + port,
+				serverUrl: this.sanitizeServerPort(apiHost, port),
 				isLocalServer: false
 			};
 		}
@@ -419,14 +445,15 @@ export class SetupComponent implements OnInit {
 			const resp = await this.setupService.pingServer({
 				host: url.origin
 			})
-			this.serverConfig.custom.apiHost = url.origin;
+			this.serverConfig.custom.apiHost = `${url.protocol}//${url.hostname}`;
+			this.serverConfig.custom.port = url.port;
 			return resp;
 		} catch (error) {
 			if (!retry) {
 				url.protocol = url.protocol === 'http:' ? 'https' : 'http';
 				return this.serverProtocolCheck(url.origin, true);
 			}
-			throw error;
+			throw new Error(this._translateService.instant('TIMER_TRACKER.SETUP.UNABLE_TO_CONNECT'));
 		}
 	}
 
@@ -437,28 +464,18 @@ export class SetupComponent implements OnInit {
 				if (this.runApp) {
 					await this.saveAndRun();
 				} else {
-					this.dialogData = {
-						title: 'TOASTR.TITLE.SUCCESS',
-						message: this._translateService.instant('TIMER_TRACKER.SETTINGS.MESSAGES.CONNECTION_SUCCEEDS', {
-							url: serverHostOptions.serverUrl
-						}),
-						status: 'success'
-					};
-					const elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
-					elBtn.click();
+					this._notifier.success(this._translateService.instant('TIMER_TRACKER.SETTINGS.MESSAGES.CONNECTION_SUCCEEDS', {
+						url: serverHostOptions.serverUrl
+					}))
 					this.isCheckConnection = false;
+					this._cdr.detectChanges();
 				}
 			})
 			.catch((e) => {
-				this.dialogData = {
-					title: 'TOASTR.TITLE.ERROR',
-					message: e.message,
-					status: 'danger'
-				};
-				const elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
-				elBtn.click();
+				this._notifier.error(e.message);
 				this.isSaving = false;
 				this.isCheckConnection = false;
+				this._cdr.detectChanges();
 			});
 	}
 
@@ -492,17 +509,9 @@ export class SetupComponent implements OnInit {
 		this.electronService.ipcRenderer.on('database_status', (event, arg) => {
 			// this.open(true);
 			if (arg.status) {
-				this.dialogData = {
-					title: 'TOASTR.TITLE.SUCCESS',
-					message: arg.message,
-					status: 'success'
-				};
+				this._notifier.success(arg.message);
 			} else {
-				this.dialogData = {
-					title: 'TOASTR.TITLE.WARNING',
-					message: arg.message,
-					status: 'danger'
-				};
+				this._notifier.warn(arg.message)
 			}
 
 			if (arg.status && this.runApp) {

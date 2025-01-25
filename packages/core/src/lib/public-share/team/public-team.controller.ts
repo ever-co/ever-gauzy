@@ -12,9 +12,9 @@ import { UseValidationPipe } from '../../shared/pipes';
 
 @Public()
 @UseInterceptors(PublicTransformInterceptor)
-@Controller()
+@Controller('/public/team')
 export class PublicTeamController {
-	constructor(private readonly _queryBus: QueryBus) { }
+	constructor(private readonly _queryBus: QueryBus) {}
 
 	/**
 	 * GET team by profile link
@@ -38,8 +38,6 @@ export class PublicTeamController {
 		@Param() params: FindOptionsWhere<OrganizationTeam>,
 		@Query() options: PublicTeamQueryDTO
 	): Promise<IOrganizationTeam> {
-		return await this._queryBus.execute(
-			new FindPublicTeamQuery(params, options)
-		);
+		return await this._queryBus.execute(new FindPublicTeamQuery(params, options));
 	}
 }

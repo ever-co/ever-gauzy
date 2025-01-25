@@ -17,6 +17,7 @@ import { ThrottlerBehindProxyGuard } from '../throttler/throttler-behind-proxy.g
 import { CoreModule } from '../core/core.module';
 import { RequestContext } from '../core/context/request-context';
 import { SharedModule } from '../shared/shared.module';
+import { ApiKeyAuthGuard } from '../shared/guards/api-key-auth.guard';
 import { HealthModule } from '../health/health.module';
 import { CandidateInterviewersModule } from '../candidate-interviewers/candidate-interviewers.module';
 import { CandidateSkillModule } from '../candidate-skill/candidate-skill.module';
@@ -27,8 +28,10 @@ import { TaskStatusModule } from '../tasks/statuses/status.module';
 import { TaskVersionModule } from '../tasks/versions/version.module';
 import { SkillModule } from '../skills/skill.module';
 import { LanguageModule } from '../language/language.module';
+import { AppBootstrapLogger } from './app-bootstrap-logger';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { EmailCheckModule } from '../email-check/email-check.module';
 import { UserModule } from '../user/user.module';
 import { EmployeeModule } from '../employee/employee.module';
 import { RoleModule } from '../role/role.module';
@@ -157,6 +160,9 @@ import { MentionModule } from '../mention/mention.module';
 import { SubscriptionModule } from '../subscription/subscription.module';
 import { DashboardModule } from '../dashboard/dashboard.module';
 import { DashboardWidgetModule } from '../dashboard/dashboard-widget/dashboard-widget.module';
+import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
+import { TagTypeModule } from '../tag-type/tag-type.module';
+
 const { unleashConfig } = environment;
 
 if (unleashConfig.url) {
@@ -185,7 +191,7 @@ if (unleashConfig.url) {
 	const instance = initializeUnleash(unleashInstanceConfig);
 
 	// metrics hooks
-	instance.on('registered', (client) => {
+	instance.on('registered', () => {
 		console.log('Unleash Client Registered');
 	});
 
@@ -328,6 +334,7 @@ if (environment.THROTTLE_ENABLED) {
 		CoreModule,
 		SharedModule,
 		AuthModule,
+		EmailCheckModule,
 		UserModule,
 		SocialAccountModule,
 		EmployeeModule,
@@ -387,6 +394,7 @@ if (environment.THROTTLE_ENABLED) {
 		TenantModule,
 		TenantSettingModule,
 		TagModule,
+		TagTypeModule,
 		SkillModule,
 		LanguageModule,
 		InvoiceModule,
@@ -461,11 +469,14 @@ if (environment.THROTTLE_ENABLED) {
 		MentionModule,
 		SubscriptionModule,
 		DashboardModule,
-		DashboardWidgetModule
+		DashboardWidgetModule,
+		TenantApiKeyModule
 	],
 	controllers: [AppController],
 	providers: [
 		AppService,
+		AppBootstrapLogger,
+		ApiKeyAuthGuard,
 		...(environment.THROTTLE_ENABLED
 			? [
 					{
@@ -478,8 +489,7 @@ if (environment.THROTTLE_ENABLED) {
 			provide: APP_INTERCEPTOR,
 			useClass: TransformInterceptor
 		}
-	],
-	exports: []
+	]
 })
 export class AppModule implements OnModuleInit {
 	constructor(private readonly clsService: ClsService) {

@@ -1,6 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import { UpdateResult } from 'typeorm';
 import { IAppIntegrationConfig } from '@gauzy/common';
 import {
@@ -19,16 +18,7 @@ import {
 import { AuthService } from '../../../auth/auth.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptEmployeeCommand } from '../invite.accept-employee.command';
-import {
-	Employee,
-	OrganizationContact,
-	OrganizationDepartment,
-	OrganizationProject,
-	OrganizationProjectEmployee,
-	OrganizationTeam,
-	OrganizationTeamEmployee,
-	User
-} from './../../../core/entities/internal';
+import { OrganizationProjectEmployee, OrganizationTeamEmployee } from './../../../core/entities/internal';
 import { TypeOrmEmployeeRepository } from '../../../employee/repository/type-orm-employee.repository';
 import { TypeOrmOrganizationContactRepository } from '../../../organization-contact/repository/type-orm-organization-contact.repository';
 import { TypeOrmOrganizationDepartmentRepository } from '../../../organization-department/repository/type-orm-organization-department.repository';
@@ -46,15 +36,11 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 	constructor(
 		private readonly inviteService: InviteService,
 		private readonly authService: AuthService,
-		@InjectRepository(User) private readonly typeOrmUserRepository: TypeOrmUserRepository,
-		@InjectRepository(Employee) private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
-		@InjectRepository(OrganizationProject)
+		private readonly typeOrmUserRepository: TypeOrmUserRepository,
+		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		private readonly typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
-		@InjectRepository(OrganizationContact)
 		private readonly typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
-		@InjectRepository(OrganizationDepartment)
 		private readonly typeOrmOrganizationDepartmentRepository: TypeOrmOrganizationDepartmentRepository,
-		@InjectRepository(OrganizationTeam)
 		private readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository
 	) {}
 

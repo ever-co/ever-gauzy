@@ -1,6 +1,5 @@
 import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
-import { RouterModule } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
@@ -13,15 +12,14 @@ import { TypeOrmReactionRepository } from './repository/type-orm-reaction.reposi
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/reaction', module: ReactionModule }]),
 		TypeOrmModule.forFeature([Reaction]),
 		MikroOrmModule.forFeature([Reaction]),
 		RolePermissionModule,
 		UserModule,
 		CqrsModule
 	],
-	providers: [ReactionService, TypeOrmReactionRepository, ...CommandHandlers],
 	controllers: [ReactionController],
-	exports: [ReactionService, TypeOrmModule, TypeOrmReactionRepository]
+	providers: [ReactionService, TypeOrmReactionRepository, ...CommandHandlers],
+	exports: [ReactionService, TypeOrmReactionRepository]
 })
 export class ReactionModule {}

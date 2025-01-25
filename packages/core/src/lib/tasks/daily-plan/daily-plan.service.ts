@@ -1,5 +1,4 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { SelectQueryBuilder, UpdateResult } from 'typeorm';
 import {
 	ID,
@@ -11,19 +10,20 @@ import {
 	IEmployee,
 	IPagination
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { PaginationParams, TenantAwareCrudService } from '../../core/crud';
 import { RequestContext } from '../../core/context';
 import { EmployeeService } from '../../employee/employee.service';
 import { TaskService } from '../task.service';
-import { MikroOrmDailyPlanRepository, TypeOrmDailyPlanRepository } from './repository';
 import { DailyPlan } from './daily-plan.entity';
+import { MikroOrmDailyPlanRepository } from './repository/mikro-orm-daily-plan.repository';
+import { TypeOrmDailyPlanRepository } from './repository/type-orm-daily-plan.repository';
 
 @Injectable()
 export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	constructor(
-		@InjectRepository(DailyPlan) readonly typeOrmDailyPlanRepository: TypeOrmDailyPlanRepository,
+		readonly typeOrmDailyPlanRepository: TypeOrmDailyPlanRepository,
 		readonly mikroOrmDailyPlanRepository: MikroOrmDailyPlanRepository,
 		private readonly employeeService: EmployeeService,
 		private readonly taskService: TaskService

@@ -23,7 +23,7 @@ import {
 	ID,
 	SubscriptionTypeEnum
 } from '@gauzy/contracts';
-import { isNotEmpty, parseToBoolean } from '@gauzy/common';
+import { isNotEmpty, parseToBoolean } from '@gauzy/utils';
 import { FavoriteService } from '../core/decorators';
 import { Employee, OrganizationTeamEmployee } from '../core/entities/internal';
 import { MultiORMEnum, enhanceWhereWithTenantId, parseTypeORMFindToMikroOrm } from '../core/utils';
@@ -34,25 +34,26 @@ import { UserService } from './../user/user.service';
 import { OrganizationTeamEmployeeService } from '../organization-team-employee/organization-team-employee.service';
 import { TaskService } from './../tasks/task.service';
 import { prepareSQLQuery as p } from './../database/database.helper';
-import { TypeOrmEmployeeRepository } from '../employee/repository';
+import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { EmployeeService } from './../employee/employee.service';
 import { TimerService } from '../time-tracking/timer/timer.service';
 import { StatisticService } from '../time-tracking/statistic';
 import { CreateSubscriptionEvent } from '../subscription/events';
 import { GetOrganizationTeamStatisticQuery } from './queries';
-import { MikroOrmOrganizationTeamRepository, TypeOrmOrganizationTeamRepository } from './repository';
 import { OrganizationTeam } from './organization-team.entity';
+import { TypeOrmOrganizationTeamRepository } from './repository/type-orm-organization-team.repository';
+import { MikroOrmOrganizationTeamRepository } from './repository/mikro-orm-organization-team.repository';
 import { MikroOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/mikro-orm-organization-team-employee.repository';
 
 @FavoriteService(BaseEntityEnum.OrganizationTeam)
 @Injectable()
 export class OrganizationTeamService extends TenantAwareCrudService<OrganizationTeam> {
 	constructor(
-		private readonly _eventBus: EventBus,
 		readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
 		readonly mikroOrmOrganizationTeamRepository: MikroOrmOrganizationTeamRepository,
 		readonly mikroOrmOrganizationTeamEmployeeRepository: MikroOrmOrganizationTeamEmployeeRepository,
 		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+		private readonly _eventBus: EventBus,
 		private readonly statisticService: StatisticService,
 		private readonly timerService: TimerService,
 		private readonly roleService: RoleService,

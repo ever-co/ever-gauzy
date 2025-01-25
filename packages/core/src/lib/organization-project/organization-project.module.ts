@@ -15,10 +15,8 @@ import { TypeOrmOrganizationProjectEmployeeRepository } from './repository/type-
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([OrganizationProject]),
-		MikroOrmModule.forFeature([OrganizationProject]),
-		TypeOrmModule.forFeature([OrganizationProjectEmployee]),
-		MikroOrmModule.forFeature([OrganizationProjectEmployee]),
+		TypeOrmModule.forFeature([OrganizationProject, OrganizationProjectEmployee]),
+		MikroOrmModule.forFeature([OrganizationProject, OrganizationProjectEmployee]),
 		RoleModule,
 		EmployeeModule,
 		RolePermissionModule,
@@ -32,8 +30,6 @@ import { TypeOrmOrganizationProjectEmployeeRepository } from './repository/type-
 		...CommandHandlers
 	],
 	exports: [
-		TypeOrmModule,
-		MikroOrmModule,
 		OrganizationProjectService,
 		TypeOrmOrganizationProjectRepository,
 		TypeOrmOrganizationProjectEmployeeRepository
