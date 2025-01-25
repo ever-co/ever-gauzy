@@ -102,7 +102,7 @@ export class S3Provider extends Provider<S3Provider> {
 
 				if (settings) {
 					if (this.detailedLoggingEnabled) {
-						console.log(`setWasabiConfiguration Tenant Settings value: ${JSON.stringify(settings)}`);
+						console.log(`setAwsS3Configuration Tenant Settings value: ${JSON.stringify(settings)}`);
 					}
 
 					if (trimIfNotEmpty(settings.aws_access_key_id))

@@ -102,7 +102,7 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 
 				if (settings) {
 					if (this.detailedLoggingEnabled) {
-						console.log(`setWasabiConfiguration Tenant Settings value: ${JSON.stringify(settings)}`);
+						console.log(`setCloudinaryConfiguration Tenant Settings value: ${JSON.stringify(settings)}`);
 					}
 
 					if (trimIfNotEmpty(settings.cloudinary_cloud_name))
