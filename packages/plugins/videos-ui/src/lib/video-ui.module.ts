@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { GauzyFiltersModule, NoDataMessageModule, SharedModule } from '@gauzy/ui-core/shared';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -16,6 +15,9 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { provideEffects, provideEffectsManager } from '@ngneat/effects-ng';
+import { TranslateModule } from '@ngx-translate/core';
+import { MomentModule } from 'ngx-moment';
+import { GauzyFiltersModule, NoDataMessageModule, SharedModule } from '@gauzy/ui-core/shared';
 import { VideoEffects } from './+state/video.effect';
 import { VideoQuery } from './+state/video.query';
 import { VideoStore } from './+state/video.store';
@@ -38,8 +40,6 @@ import { VideoMetadataComponent } from './shared/ui/video-metadata/video-metadat
 import { VideoPlayerComponent } from './shared/ui/video-player/video-player.component';
 import { VideoSkeletonComponent } from './shared/ui/video-skeleton/video-skeleton.component';
 import { VideoUiRoutingModule } from './video-ui-routing.module';
-import { TranslateModule } from '@ngx-translate/core';
-import { MomentModule } from 'ngx-moment';
 
 @NgModule({
 	declarations: [

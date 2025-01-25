@@ -1,5 +1,5 @@
 {
-	"name": "videos-ui",
+	"name": "plugin-videos-ui",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
 	"sourceRoot": "packages/plugins/videos-ui/src",
 	"prefix": "lib",

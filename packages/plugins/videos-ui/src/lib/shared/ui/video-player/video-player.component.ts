@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, ElementRef, Input, ViewChild } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-
 @Component({
 	selector: 'plug-video-player',
 	templateUrl: './video-player.component.html',
@@ -8,24 +7,29 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VideoPlayerComponent {
+	/**
+	 * The video source URL.
+	 */
 	private _src!: string;
-	@ViewChild('video')
-	private video!: ElementRef<HTMLVideoElement>;
-	@Input()
-	public controls = false;
+	public get src(): SafeUrl {
+		return this.sanitizer.bypassSecurityTrustUrl(this._src);
+	}
+	@Input() public set src(value: string) {
+		this._src = value;
+	}
 
-	constructor(private readonly sanitizer: DomSanitizer) {}
+	@Input() public controls = false;
+	@Input() alt: string = '';
 
+	// Video element
+	@ViewChild('video') private video!: ElementRef<HTMLVideoElement>;
+
+	/**
+	 * The video player element.
+	 */
 	public get player(): HTMLVideoElement {
 		return this.video.nativeElement;
 	}
 
-	public get src(): SafeUrl {
-		return this.sanitizer.bypassSecurityTrustUrl(this._src);
-	}
-
-	@Input()
-	public set src(value: string) {
-		this._src = value;
-	}
+	constructor(private readonly sanitizer: DomSanitizer) {}
 }

@@ -1,6 +1,28 @@
 {
-	"name": "@gauzy/videos-ui",
-	"version": "0.0.1",
+	"name": "@gauzy/plugin-videos-ui",
+	"version": "0.1.0",
+	"description": "A UI plugin for managing and displaying videos within the Gauzy ecosystem.",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/plugins/videos-ui"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"private": true,
+	"scripts": {
+		"lib:build": "yarn nx build plugin-videos-ui --configuration=development",
+		"lib:build:prod": "yarn nx build plugin-videos-ui --configuration=production",
+		"lib:watch": "yarn nx build plugin-videos-ui --watch --configuration=development"
+	},
 	"peerDependencies": {
 		"@angular/common": "^18.2.0",
 		"@angular/core": "^18.2.0"
@@ -17,6 +39,27 @@
 		"@ngneat/effects-ng": "3.1.4",
 		"rxjs": "^7.8.0",
 		"tslib": "^2.6.2"
+	},
+	"devDependencies": {
+		"@types/jest": "29.5.14",
+		"@types/node": "^20.14.9",
+		"jest-preset-angular": "14.1.1"
+	},
+	"keywords": [
+		"gauzy",
+		"video",
+		"video-management",
+		"video-ui",
+		"angular",
+		"ngx",
+		"nebular",
+		"plugin",
+		"ui-plugin",
+		"media"
+	],
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
 	},
 	"sideEffects": false
 }
