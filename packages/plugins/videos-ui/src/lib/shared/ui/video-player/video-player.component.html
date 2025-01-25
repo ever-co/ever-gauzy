@@ -1,9 +1,9 @@
 <div class="video-player">
 	@if(src) {
-	<video #video preload="metadata" [controls]="controls">
-		<source [src]="src" type="video/mp4" />
-	</video>
-	}@else {
-	<div class="no-video">No video</div>
+		<video #video preload="metadata" [controls]="controls">
+			<source [src]="src" type="video/mp4" />
+		</video>
+	} @else {
+		<div class="no-video">No video</div>
 	}
 </div>

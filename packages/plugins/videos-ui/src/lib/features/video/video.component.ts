@@ -2,6 +2,7 @@ import { AfterViewInit, ChangeDetectionStrategy, Component, ViewChild } from '@a
 import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
 import { NbDialogService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, distinctUntilChanged, filter, map, Observable, take, tap } from 'rxjs';
 import { VideoActions } from '../../+state/video.action';
 import { VideoQuery } from '../../+state/video.query';
@@ -10,7 +11,6 @@ import { IVideo } from '../../shared/models/video.model';
 import { VideoEditComponent } from '../../shared/ui/video-edit/video-edit.component';
 import { VideoMetadataComponent } from '../../shared/ui/video-metadata/video-metadata.component';
 import { VideoPlayerComponent } from '../../shared/ui/video-player/video-player.component';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
