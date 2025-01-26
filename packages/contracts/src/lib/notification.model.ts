@@ -4,6 +4,7 @@ import { IUser } from './user.model';
 export interface INotification extends IBasePerTenantAndOrganizationEntityModel, IBasePerEntityType {
 	title?: string;
 	message?: string;
+	type?: NotificationTypeEnum;
 	sentById?: ID;
 	sentBy?: IUser;
 	isRead?: boolean;
@@ -13,12 +14,12 @@ export interface INotification extends IBasePerTenantAndOrganizationEntityModel,
 }
 
 export enum NotificationTypeEnum {
-	PAYMENT = 0,
-	ASSIGNEMENT = 1,
-	INVITATION = 2,
-	MENTION = 3,
-	COMMENT = 4,
-	MESSAGE = 5
+	PAYMENT = 'Payment', // Will be stored as 0 in DB
+	ASSIGNEMENT = 'Assignement', // Will be stored as 1 in DB
+	INVITATION = 'Invitation', // Will be stored as 2 in DB
+	MENTION = 'Mention', // Will be stored as 3 in DB
+	COMMENT = 'Comment', // Will be stored as 4 in DB
+	MESSAGE = 'Message' // Will be stored as 5 in DB
 }
 
 export interface INotificationCreateInput extends Omit<INotification, 'isRead' | 'readedAt'> {}
