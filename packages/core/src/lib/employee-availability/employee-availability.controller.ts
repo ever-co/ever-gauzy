@@ -3,10 +3,12 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, U
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ID, IEmployeeAvailability, IPagination } from '@gauzy/contracts';
+import { CrudController, PaginationParams } from '../core/crud';
+import { Permissions } from '../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { UseValidationPipe, UUIDValidationPipe } from '../shared/pipes';
 import { EmployeeAvailabilityService } from './employee-availability.service';
 import { EmployeeAvailability } from './employee-availability.entity';
-import { CrudController, PaginationParams } from '../core';
-import { PermissionGuard, TenantPermissionGuard, UUIDValidationPipe } from '../shared';
 import { EmployeeAvailabilityBulkCreateCommand, EmployeeAvailabilityCreateCommand } from './commands';
 import { CreateEmployeeAvailabilityDTO } from './dto/create-employee-availability.dto';
 import { UpdateEmployeeAvailabilityDTO } from './dto/update-employee-availability.dto';
@@ -38,7 +40,9 @@ export class EmployeeAvailabilityController extends CrudController<EmployeeAvail
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
 	@HttpCode(HttpStatus.CREATED)
+	@Permissions()
 	@Post('/bulk')
+	@UseValidationPipe()
 	async createBulk(@Body() entities: CreateEmployeeAvailabilityDTO[]): Promise<IEmployeeAvailability[]> {
 		return await this.commandBus.execute(new EmployeeAvailabilityBulkCreateCommand(entities));
 	}
@@ -58,7 +62,9 @@ export class EmployeeAvailabilityController extends CrudController<EmployeeAvail
 		status: HttpStatus.NOT_FOUND,
 		description: 'No availability records found.'
 	})
+	@Permissions()
 	@Get()
+	@UseValidationPipe()
 	async findAll(
 		@Query() filter: PaginationParams<EmployeeAvailability>
 	): Promise<IPagination<IEmployeeAvailability>> {
@@ -81,9 +87,11 @@ export class EmployeeAvailabilityController extends CrudController<EmployeeAvail
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
 	@HttpCode(HttpStatus.CREATED)
+	@Permissions()
 	@Post()
+	@UseValidationPipe()
 	async create(@Body() entity: CreateEmployeeAvailabilityDTO): Promise<IEmployeeAvailability> {
-		return await this.commandBus.execute(new EmployeeAvailabilityCreateCommand(entity));
+		return this.commandBus.execute(new EmployeeAvailabilityCreateCommand(entity));
 	}
 
 	/**
@@ -103,7 +111,9 @@ export class EmployeeAvailabilityController extends CrudController<EmployeeAvail
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions()
 	@Put(':id')
+	@UseValidationPipe()
 	async update(
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: UpdateEmployeeAvailabilityDTO

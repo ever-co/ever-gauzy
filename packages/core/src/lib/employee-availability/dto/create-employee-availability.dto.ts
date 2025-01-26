@@ -1,11 +1,11 @@
+import { IntersectionType, PickType } from '@nestjs/swagger';
 import { IEmployeeAvailabilityCreateInput } from '@gauzy/contracts';
+import { TenantOrganizationBaseDTO } from '../../core/dto';
 import { EmployeeAvailability } from '../employee-availability.entity';
-import { TenantOrganizationBaseDTO } from '../../core';
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger';
 
 export class CreateEmployeeAvailabilityDTO
 	extends IntersectionType(
-		PartialType(TenantOrganizationBaseDTO),
+		TenantOrganizationBaseDTO,
 		PickType(EmployeeAvailability, [
 			'dayOfWeek',
 			'startDate',
