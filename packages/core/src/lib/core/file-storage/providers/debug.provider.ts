@@ -2,24 +2,34 @@ import * as multer from 'multer';
 import { join, resolve } from 'path';
 import { FileStorageOption, UploadedFile } from '@gauzy/contracts';
 import { environment, getConfig } from '@gauzy/config';
+import { getApiPublicPath } from '../../util/path-util';
 import { Provider } from './provider';
 
-const config = getConfig();
-const apiPublicPath = resolve(process.cwd(), 'apps', 'api', 'public');
-
-/**
- *
- */
 export class DebugProvider extends Provider<DebugProvider> {
-	public instance: DebugProvider;
 	public readonly name = 'DEBUG';
-	public config = {
-		rootPath:
-			(environment.isElectron
-				? resolve(environment.gauzyUserPath, 'public')
-				: config.assetOptions.assetPublicPath) || apiPublicPath,
-		baseUrl: environment.baseUrl
-	};
+	public instance: DebugProvider;
+	public config: { rootPath: string; baseUrl: string };
+
+	constructor() {
+		super();
+		void this.initConfig();
+	}
+
+	/**
+	 * Initializes the configuration asynchronously.
+	 */
+	private async initConfig(): Promise<void> {
+		const config = getConfig(); // Fetch the config inside an async function
+		const apiPublicPath = getApiPublicPath(); // Get the public path for the API
+
+		this.config = {
+			rootPath:
+				(environment.isElectron
+					? resolve(environment.gauzyUserPath, 'public')
+					: config.assetOptions?.assetPublicPath) || apiPublicPath,
+			baseUrl: environment.baseUrl
+		};
+	}
 
 	/**
 	 * Get the singleton instance of LocalProvider

@@ -1,6 +1,6 @@
 import { Index as TypeOrmIndex, IndexOptions as TypeOrmIndexOptions } from 'typeorm';
 import { Index as MikroOrmIndex, IndexOptions as MikroOrmIndexOptions, Unique as MikroUnique } from '@mikro-orm/core';
-import { isObject } from '@gauzy/utils';
+import { isPlainObject } from '@gauzy/utils';
 
 // Extend your TypeOrmIndexOptions to include MikroOrm options as well
 type CombinedIndexOptions<T> =
@@ -40,10 +40,10 @@ export function ColumnIndex<T>(
 			? <string[]>maybeFieldsOrOptions
 			: (nameOrFieldsOrOptions as string[]);
 
-	let options = isObject ? nameOrFieldsOrOptions : maybeOptions;
+	let options = isPlainObject(nameOrFieldsOrOptions) ? nameOrFieldsOrOptions : maybeOptions;
 
 	if (!options) {
-		options = isObject ? (maybeFieldsOrOptions as TypeOrmIndexOptions) : maybeOptions;
+		options = isPlainObject(maybeFieldsOrOptions) ? (maybeFieldsOrOptions as TypeOrmIndexOptions) : maybeOptions;
 	}
 
 	/**

@@ -120,7 +120,6 @@ export async function configureRedisSession(app: any): Promise<void> {
 	}
 
 	if (!redisWorked) {
-		console.warn('Falling back to in-memory session store.');
 		app.use(
 			expressSession({
 				secret: environment.EXPRESS_SESSION_SECRET,

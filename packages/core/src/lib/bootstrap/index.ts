@@ -41,7 +41,7 @@ import * as path from 'path';
 import { urlencoded, json } from 'express';
 import { EntitySubscriberInterface } from 'typeorm';
 import { ApplicationPluginConfig } from '@gauzy/common';
-import { getConfig, setConfig, environment as env } from '@gauzy/config';
+import { getConfig, defineConfig, environment as env } from '@gauzy/config';
 import { getEntitiesFromPlugins, getPluginConfigurations, getSubscribersFromPlugins } from '@gauzy/plugin';
 import { coreEntities } from '../core/entities';
 import { coreSubscribers } from '../core/entities/subscribers';
@@ -238,25 +238,25 @@ export async function preBootstrapApplicationConfig(applicationConfig: Partial<A
 
 	if (Object.keys(applicationConfig).length > 0) {
 		// Set initial configuration if any properties are provided
-		setConfig(applicationConfig);
+		await defineConfig(applicationConfig);
 	}
 
 	// Configure migration settings
-	setConfig({
+	await defineConfig({
 		dbConnectionOptions: {
 			...getMigrationsConfig()
 		}
 	});
 
 	// Log the current database configuration (for debugging or informational purposes)
-	console.log(chalk.green(`DB Config: ${JSON.stringify(getConfig().dbConnectionOptions)}`));
+	await logDBConfig();
 
 	// Register core and plugin entities and subscribers
 	const entities = await preBootstrapRegisterEntities(applicationConfig);
 	const subscribers = await preBootstrapRegisterSubscribers(applicationConfig);
 
 	// Update configuration with registered entities and subscribers
-	setConfig({
+	await defineConfig({
 		dbConnectionOptions: {
 			entities: entities as Array<Type<any>>, // Core and plugin entities
 			subscribers: subscribers as Array<Type<EntitySubscriberInterface>> // Core and plugin subscribers
@@ -441,4 +441,12 @@ export function getMigrationsConfig() {
 			migrationsDir: cliMigrationsDir
 		}
 	};
+}
+
+/**
+ * Logs the current database configuration for debugging or informational purposes.
+ */
+async function logDBConfig(): Promise<void> {
+	const config = getConfig(); // Await the config first
+	console.log(chalk.green(`DB Config: ${JSON.stringify(config.dbConnectionOptions)}`));
 }

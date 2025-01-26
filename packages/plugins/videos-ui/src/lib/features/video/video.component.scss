@@ -1,0 +1,72 @@
+.video {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: 100%;
+  width: 100%;
+  overflow-y: auto;
+}
+
+.video-title-container {
+  display: flex;
+  justify-content: space-between;
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  nb-icon {
+    cursor: pointer;
+  }
+}
+// Info section styling
+.info {
+  color: var(--gauzy-text-color-1); // Dark text for better contrast
+
+  .title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: var(--gauzy-text-color-1); // Slightly darker for emphasis
+    line-height: 30px;
+  }
+
+  .author {
+    font-size: 1rem;
+    color: var(--gauzy-text-color-2); // Muted text for less emphasis
+    margin-bottom: 4px;
+  }
+
+  .date {
+    font-size: 0.875rem;
+    color: var(--gauzy-text-color-2); // Subtle text for less prominent info
+    margin-bottom: 16px;
+  }
+
+  .description {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--gauzy-text-color-1); // Slightly lighter than title for readability
+    background-color: var(--gauzy-card-2); // White background for better focus
+    padding: 1rem;
+    border-radius: var(--border-radius);
+  }
+}
+
+// Responsive styles for smaller screens
+@media (max-width: 768px) {
+  .title {
+    font-size: 1.25rem;
+  }
+
+  .author,
+  .date {
+    font-size: 0.875rem;
+  }
+
+  .description {
+    font-size: 0.9rem;
+  }
+}

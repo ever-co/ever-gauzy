@@ -123,6 +123,7 @@ const pathWindow = {
 LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png')
 });
+
 // Instance detection
 const gotTheLock = app.requestSingleInstanceLock();
 
@@ -260,9 +261,7 @@ async function startServer(value, restart = false) {
 					pathWindow.preloadPath
 				);
 			} else {
-				await timeTrackerWindow.loadURL(
-					timeTrackerPage(pathWindow.timeTrackerUi)
-				);
+				await timeTrackerWindow.loadURL(timeTrackerPage(pathWindow.timeTrackerUi));
 			}
 			notificationWindow = new ScreenCaptureNotification(pathWindow.timeTrackerUi);
 			await notificationWindow.loadURL();

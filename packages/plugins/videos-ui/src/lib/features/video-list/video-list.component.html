@@ -1,0 +1,9 @@
+<div class="video-container" [ngClass]="{ vertical: vertical }">
+	@for(video of videos$ | async; track video.id) { @defer(on viewport){
+	<div class="video-item">
+		<plug-video-item [ngClass]="{ vertical: vertical }" [video]="video"></plug-video-item>
+	</div>
+	}@placeholder(minimum 500ms) {
+	<plug-video-item-skeleton [ngClass]="{ vertical: vertical }"></plug-video-item-skeleton>
+	} }
+</div>

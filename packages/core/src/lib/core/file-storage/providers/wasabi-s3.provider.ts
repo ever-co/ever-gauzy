@@ -104,16 +104,22 @@ const WASABI_REGION_SERVICE_URLS: IWasabiRegionServiceURL[] = [
 ];
 
 export class WasabiS3Provider extends Provider<WasabiS3Provider> {
-	public instance: WasabiS3Provider;
 	public readonly name = FileStorageProviderEnum.WASABI;
+	private readonly detailedLoggingEnabled = false;
+	public instance: WasabiS3Provider;
 	public config: IWasabiProviderConfig;
 	public defaultConfig: IWasabiProviderConfig;
 
-	private readonly _detailedLoggingEnabled = false;
-
 	constructor() {
 		super();
-		this.config = this.defaultConfig = {
+		void this.initConfig();
+	}
+
+	/**
+	 * Initializes the configuration asynchronously.
+	 */
+	private async initConfig(): Promise<void> {
+		this.defaultConfig = {
 			rootPath: '',
 			wasabi_aws_access_key_id: wasabi.accessKeyId,
 			wasabi_aws_secret_access_key: wasabi.secretAccessKey,
@@ -121,6 +127,9 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 			wasabi_aws_force_path_style: wasabi.s3.forcePathStyle,
 			...this._mapDefaultWasabiServiceUrl(wasabi.region, ensureHttpPrefix(wasabi.serviceUrl))
 		};
+
+		// Assign the initialized config
+		this.config = { ...this.defaultConfig };
 	}
 
 	/**
@@ -147,7 +156,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 			...this.defaultConfig
 		};
 
-		if (this._detailedLoggingEnabled)
+		if (this.detailedLoggingEnabled)
 			console.log(`setWasabiConfiguration this.config value: ${JSON.stringify(this.config)}`);
 
 		try {
@@ -157,14 +166,14 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 				const settings = request['tenantSettings'];
 
 				if (settings) {
-					if (this._detailedLoggingEnabled) {
+					if (this.detailedLoggingEnabled) {
 						console.log(`setWasabiConfiguration Tenant Settings Value: ${JSON.stringify(settings)}`);
 					}
 
 					if (trimIfNotEmpty(settings.wasabi_aws_access_key_id)) {
 						this.config.wasabi_aws_access_key_id = trimIfNotEmpty(settings.wasabi_aws_access_key_id);
 
-						if (this._detailedLoggingEnabled) {
+						if (this.detailedLoggingEnabled) {
 							console.log(
 								`setWasabiConfiguration this.config.wasabi_aws_access_key_id value: ${this.config.wasabi_aws_access_key_id}`
 							);
@@ -176,7 +185,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 							settings.wasabi_aws_secret_access_key
 						);
 
-						if (this._detailedLoggingEnabled) {
+						if (this.detailedLoggingEnabled) {
 							console.log(
 								`setWasabiConfiguration this.config.wasabi_aws_secret_access_key value: ${this.config.wasabi_aws_secret_access_key}`
 							);
@@ -188,7 +197,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 							trimIfNotEmpty(settings.wasabi_aws_service_url)
 						);
 
-						if (this._detailedLoggingEnabled) {
+						if (this.detailedLoggingEnabled) {
 							console.log(
 								'setWasabiConfiguration this.config.wasabi_aws_service_url value: ',
 								this.config.wasabi_aws_service_url
@@ -199,7 +208,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 					if (trimIfNotEmpty(settings.wasabi_aws_default_region)) {
 						this.config.wasabi_aws_default_region = trimIfNotEmpty(settings.wasabi_aws_default_region);
 
-						if (this._detailedLoggingEnabled) {
+						if (this.detailedLoggingEnabled) {
 							console.log(
 								'setWasabiConfiguration this.config.wasabi_aws_default_region value: ',
 								this.config.wasabi_aws_default_region
@@ -210,7 +219,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 					if (trimIfNotEmpty(settings.wasabi_aws_bucket)) {
 						this.config.wasabi_aws_bucket = trimIfNotEmpty(settings.wasabi_aws_bucket);
 
-						if (this._detailedLoggingEnabled) {
+						if (this.detailedLoggingEnabled) {
 							console.log(
 								'setWasabiConfiguration this.config.wasabi_aws_bucket value: ',
 								this.config.wasabi_aws_bucket
@@ -222,7 +231,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 					const forcePathStyle = trimIfNotEmpty(settings.wasabi_aws_force_path_style);
 					this.config.wasabi_aws_force_path_style = forcePathStyle === 'true' || forcePathStyle === '1';
 
-					if (this._detailedLoggingEnabled) {
+					if (this.detailedLoggingEnabled) {
 						console.log(
 							'setWasabiConfiguration this.config.wasabi_aws_force_path_style value: ',
 							this.config.wasabi_aws_force_path_style

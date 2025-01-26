@@ -1,0 +1,60 @@
+@let video = video$ | async; @defer(on viewport; prefetch on idle){
+<div class="video">
+	<plug-video-player #videoPlayer [src]="video.fullUrl" [controls]="true"></plug-video-player>
+	<div class="info">
+		<div class="video-title-container">
+			<div class="title">
+				{{ video.title }}
+			</div>
+			<div class="actions">
+				<plug-action-button
+					[nbPopover]="manager"
+					nbPopoverTrigger="hover"
+					nbPopoverPlacement="bottom"
+					[data]="video"
+					[button]="downloadButton"
+				></plug-action-button>
+				<nb-icon
+					nbPopoverPlacement="bottom"
+					[nbPopover]="actions"
+					icon="more-vertical-outline"
+					[options]="{ animation: { type: 'zoom' } }"
+				></nb-icon>
+			</div>
+		</div>
+
+		@if(video.uploadedBy) {
+		<div class="author">
+			<ngx-avatar
+				[src]="video.uploadedBy?.user.imageUrl"
+				[name]="video.uploadedBy?.fullName"
+				[id]="video.uploadedBy?.id"
+				[employee]="video.uploadedBy"
+				class="avatar-dashboard"
+			></ngx-avatar>
+		</div>
+		}
+		<div class="date">
+			{{ video.recordedAt | date : 'medium' }}
+		</div>
+		@if(video.description) {
+		<div class="description">
+			{{ video.description }}
+		</div>
+		}
+	</div>
+</div>
+<ng-template #actions>
+	<plug-action-button-group [buttons]="buttons" [data]="video"></plug-action-button-group>
+</ng-template>
+} @placeholder(minimum 500ms){
+<plug-video-skeleton></plug-video-skeleton>
+} @loading (minimum 1s; after 300ms) {
+<ngx-no-data-message [nbSpinner]="true" status="primary" message="Loading video..."></ngx-no-data-message>
+} @error {
+<ngx-no-data-message status="danger" message="Video not found"></ngx-no-data-message>
+}
+
+<ng-template #manager>
+	<plug-video-download-manager></plug-video-download-manager>
+</ng-template>
