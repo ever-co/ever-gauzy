@@ -2137,7 +2137,11 @@
 			"ORG_MEMBER_LAST_LOG_VIEW": "Letztes Protokoll anzeigen",
 			"TENANT_API_KEY_CREATE": "API-Schlüssel erstellen",
 			"TENANT_API_KEY_VIEW": "API-Schlüssel anzeigen",
-			"TENANT_API_KEY_DELETE": "API-Schlüssel löschen"
+			"TENANT_API_KEY_DELETE": "API-Schlüssel löschen",
+			"EMPLOYEE_AVAILABILITY_CREATE": "Mitarbeiterverfügbarkeit erstellen",
+			"EMPLOYEE_AVAILABILITY_READ": "Mitarbeiterverfügbarkeit anzeigen",
+			"EMPLOYEE_AVAILABILITY_UPDATE": "Mitarbeiterverfügbarkeit aktualisieren",
+			"EMPLOYEE_AVAILABILITY_DELETE": "Mitarbeiterverfügbarkeit löschen"
 		},
 		"BILLING": "Rechnungsstellung",
 		"BUDGET": "Budget",

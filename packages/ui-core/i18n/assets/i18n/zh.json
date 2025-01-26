@@ -2141,7 +2141,11 @@
 			"ORG_MEMBER_LAST_LOG_VIEW": "查看最后日志",
 			"TENANT_API_KEY_CREATE": "创建 API 密钥",
 			"TENANT_API_KEY_VIEW": "查看 API 密钥",
-			"TENANT_API_KEY_DELETE": "删除 API 密钥"
+			"TENANT_API_KEY_DELETE": "删除 API 密钥",
+			"EMPLOYEE_AVAILABILITY_CREATE": "创建员工可用性",
+			"EMPLOYEE_AVAILABILITY_READ": "查看员工可用性",
+			"EMPLOYEE_AVAILABILITY_UPDATE": "更新员工可用性",
+			"EMPLOYEE_AVAILABILITY_DELETE": "删除员工可用性"
 		},
 		"BILLING": "计费",
 		"BUDGET": "预算",

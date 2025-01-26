@@ -2172,7 +2172,11 @@
 			"ORG_MEMBER_LAST_LOG_VIEW": "Посмотреть последний журнал",
 			"TENANT_API_KEY_CREATE": "Создать API-ключ",
 			"TENANT_API_KEY_VIEW": "Просмотр API-ключа",
-			"TENANT_API_KEY_DELETE": "Удалить API-ключ"
+			"TENANT_API_KEY_DELETE": "Удалить API-ключ",
+			"EMPLOYEE_AVAILABILITY_CREATE": "Создать доступность сотрудника",
+			"EMPLOYEE_AVAILABILITY_READ": "Просмотреть доступность сотрудника",
+			"EMPLOYEE_AVAILABILITY_UPDATE": "Обновить доступность сотрудника",
+			"EMPLOYEE_AVAILABILITY_DELETE": "Удалить доступность сотрудника"
 		},
 		"BILLING": "Биллинг",
 		"BUDGET": "Бюджет",

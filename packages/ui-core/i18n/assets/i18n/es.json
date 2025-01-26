@@ -2143,7 +2143,11 @@
 			"ORG_MEMBER_LAST_LOG_VIEW": "Ver último registro",
 			"TENANT_API_KEY_CREATE": "Crear clave API",
 			"TENANT_API_KEY_VIEW": "Ver clave API",
-			"TENANT_API_KEY_DELETE": "Eliminar clave API"
+			"TENANT_API_KEY_DELETE": "Eliminar clave API",
+			"EMPLOYEE_AVAILABILITY_CREATE": "Crear disponibilidad del empleado",
+			"EMPLOYEE_AVAILABILITY_READ": "Ver disponibilidad del empleado",
+			"EMPLOYEE_AVAILABILITY_UPDATE": "Actualizar disponibilidad del empleado",
+			"EMPLOYEE_AVAILABILITY_DELETE": "Eliminar disponibilidad del empleado"
 		},
 		"BILLING": "Facturación",
 		"BUDGET": "Presupuesto",

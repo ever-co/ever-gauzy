@@ -2,19 +2,20 @@ import { UpdateResult } from 'typeorm';
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ID, IEmployeeAvailability, IPagination } from '@gauzy/contracts';
+import { ID, IEmployeeAvailability, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from '../core/crud';
 import { Permissions } from '../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { UseValidationPipe, UUIDValidationPipe } from '../shared/pipes';
 import { EmployeeAvailabilityService } from './employee-availability.service';
 import { EmployeeAvailability } from './employee-availability.entity';
-import { EmployeeAvailabilityBulkCreateCommand, EmployeeAvailabilityCreateCommand } from './commands';
+import { EmployeeAvailabilityBulkCreateCommand, EMPLOYEE_AVAILABILITY_CREATECommand } from './commands';
 import { CreateEmployeeAvailabilityDTO } from './dto/create-employee-availability.dto';
 import { UpdateEmployeeAvailabilityDTO } from './dto/update-employee-availability.dto';
 
 @ApiTags('EmployeeAvailability')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE, PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE)
 @Controller('/employee-availability')
 export class EmployeeAvailabilityController extends CrudController<EmployeeAvailability> {
 	constructor(
@@ -40,7 +41,7 @@ export class EmployeeAvailabilityController extends CrudController<EmployeeAvail
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
 	@HttpCode(HttpStatus.CREATED)
-	@Permissions()
+	@Permissions(PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE)
 	@Post('/bulk')
 	@UseValidationPipe()
 	async createBulk(@Body() entities: CreateEmployeeAvailabilityDTO[]): Promise<IEmployeeAvailability[]> {
@@ -62,8 +63,8 @@ export class EmployeeAvailabilityController extends CrudController<EmployeeAvail
 		status: HttpStatus.NOT_FOUND,
 		description: 'No availability records found.'
 	})
-	@Permissions()
-	@Get()
+	@Permissions(PermissionsEnum.EmployeeAvailabilityRead)
+	@Get('/')
 	@UseValidationPipe()
 	async findAll(
 		@Query() filter: PaginationParams<EmployeeAvailability>
@@ -87,11 +88,11 @@ export class EmployeeAvailabilityController extends CrudController<EmployeeAvail
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
 	@HttpCode(HttpStatus.CREATED)
-	@Permissions()
-	@Post()
+	@Permissions(PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE)
+	@Post('/')
 	@UseValidationPipe()
 	async create(@Body() entity: CreateEmployeeAvailabilityDTO): Promise<IEmployeeAvailability> {
-		return this.commandBus.execute(new EmployeeAvailabilityCreateCommand(entity));
+		return this.commandBus.execute(new EMPLOYEE_AVAILABILITY_CREATECommand(entity));
 	}
 
 	/**
@@ -111,8 +112,8 @@ export class EmployeeAvailabilityController extends CrudController<EmployeeAvail
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Permissions()
-	@Put(':id')
+	@Permissions(PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE)
+	@Put('/:id')
 	@UseValidationPipe()
 	async update(
 		@Param('id', UUIDValidationPipe) id: ID,
