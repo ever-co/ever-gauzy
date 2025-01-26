@@ -18,7 +18,7 @@ export class EmployeeAvailabilityCreateHandler implements ICommandHandler<Employ
 	 */
 	public async execute(command: EmployeeAvailabilityCreateCommand): Promise<IEmployeeAvailability> {
 		const { input } = command;
-		const tenantId = RequestContext.currentTenantId();
+		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 
 		return await this._availabilityService.create(new EmployeeAvailability({
 			...input,
