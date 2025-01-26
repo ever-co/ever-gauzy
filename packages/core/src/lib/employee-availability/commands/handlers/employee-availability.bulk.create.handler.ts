@@ -20,7 +20,7 @@ export class EmployeeAvailabilityBulkCreateHandler implements ICommandHandler<Em
 	 */
 	public async execute(command: EmployeeAvailabilityBulkCreateCommand): Promise<IEmployeeAvailability[]> {
 		const { input } = command;
-		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+		const tenantId = RequestContext.currentTenantId();
 
 		// Prepare employee availability records with tenantId
 		const employeeAvailabilities = input.map(item =>
