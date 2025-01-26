@@ -37,8 +37,8 @@ export class EmployeeAvailability extends TenantOrganizationBaseEntity implement
 	 * Values range from `0` (Sunday) to `6` (Saturday).
 	 */
 	@ApiProperty({ type: () => Number, description: 'Day of the week (0 = Sunday, 6 = Saturday)' })
-	@IsInt()
 	@IsNotEmpty()
+	@IsInt()
 	@Min(0, { message: 'Day of week must be between 0 and 6' })
 	@Max(6, { message: 'Day of week must be between 0 and 6' })
 	@MultiORMColumn()
@@ -50,10 +50,7 @@ export class EmployeeAvailability extends TenantOrganizationBaseEntity implement
 	 */
 	@ApiProperty({ enum: AvailabilityStatusEnum })
 	@IsEnum(AvailabilityStatusEnum)
-	@MultiORMColumn({
-		type: 'int',
-		transformer: new AvailabilityStatusTransformer()
-	})
+	@MultiORMColumn({ type: 'int', transformer: new AvailabilityStatusTransformer() })
 	availabilityStatus: AvailabilityStatusEnum;
 
 	/**

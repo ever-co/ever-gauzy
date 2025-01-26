@@ -1,32 +1,36 @@
-import { BadRequestException } from '@nestjs/common';
-import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IEmployeeAvailability } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
+import { EmployeeAvailabilityService } from '../../employee-availability.service';
 import { EmployeeAvailabilityBulkCreateCommand } from '../employee-availability.bulk.create.command';
 import { EmployeeAvailability } from '../../employee-availability.entity';
-import { EmployeeAvailabilityCreateCommand } from '../employee-availability.create.command';
 
+/**
+ * Handles the bulk creation of employee availability records.
+ */
 @CommandHandler(EmployeeAvailabilityBulkCreateCommand)
 export class EmployeeAvailabilityBulkCreateHandler implements ICommandHandler<EmployeeAvailabilityBulkCreateCommand> {
-	constructor(private readonly commandBus: CommandBus) {}
+	constructor(private readonly _availabilityService: EmployeeAvailabilityService) {}
 
+	/**
+	 * Executes the bulk creation command for employee availability.
+	 *
+	 * @param command The command containing the list of availability records to create.
+	 * @returns A promise resolving to the list of created employee availability records.
+	 */
 	public async execute(command: EmployeeAvailabilityBulkCreateCommand): Promise<IEmployeeAvailability[]> {
 		const { input } = command;
-		if (!Array.isArray(input) || input.length === 0) {
-			throw new BadRequestException('Input must be a non-empty array of availability records.');
-		}
-
-		const allAvailability: IEmployeeAvailability[] = [];
 		const tenantId = RequestContext.currentTenantId();
 
-		for (const item of input) {
-			let availability = new EmployeeAvailability({
+		// Prepare employee availability records with tenantId
+		const employeeAvailabilities = input.map(item =>
+			new EmployeeAvailability({
 				...item,
 				tenantId
-			});
-			availability = await this.commandBus.execute(new EmployeeAvailabilityCreateCommand(availability));
-			allAvailability.push(availability);
-		}
-		return allAvailability;
+			})
+		);
+
+		// Perform bulk insert using the availability service
+		return await this._availabilityService.bulkCreate(employeeAvailabilities);
 	}
 }
