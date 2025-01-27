@@ -9,7 +9,7 @@ import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { UseValidationPipe, UUIDValidationPipe } from '../shared/pipes';
 import { EmployeeAvailabilityService } from './employee-availability.service';
 import { EmployeeAvailability } from './employee-availability.entity';
-import { EmployeeAvailabilityBulkCreateCommand, EMPLOYEE_AVAILABILITY_CREATECommand } from './commands';
+import { EmployeeAvailabilityBulkCreateCommand, EmployeeAvailabilityCreateCommand } from './commands';
 import { CreateEmployeeAvailabilityDTO } from './dto/create-employee-availability.dto';
 import { UpdateEmployeeAvailabilityDTO } from './dto/update-employee-availability.dto';
 
@@ -63,7 +63,7 @@ export class EmployeeAvailabilityController extends CrudController<EmployeeAvail
 		status: HttpStatus.NOT_FOUND,
 		description: 'No availability records found.'
 	})
-	@Permissions(PermissionsEnum.EmployeeAvailabilityRead)
+	@Permissions(PermissionsEnum.EMPLOYEE_AVAILABILITY_READ)
 	@Get('/')
 	@UseValidationPipe()
 	async findAll(
@@ -92,7 +92,7 @@ export class EmployeeAvailabilityController extends CrudController<EmployeeAvail
 	@Post('/')
 	@UseValidationPipe()
 	async create(@Body() entity: CreateEmployeeAvailabilityDTO): Promise<IEmployeeAvailability> {
-		return this.commandBus.execute(new EMPLOYEE_AVAILABILITY_CREATECommand(entity));
+		return this.commandBus.execute(new EmployeeAvailabilityCreateCommand(entity));
 	}
 
 	/**
