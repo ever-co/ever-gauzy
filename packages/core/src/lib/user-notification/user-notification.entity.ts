@@ -3,15 +3,15 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
 import { IsBoolean, IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-import { BaseEntityEnum, ID, INotification, IUser, NotificationTypeEnum } from '@gauzy/contracts';
+import { BaseEntityEnum, ID, IUser, IUserNotification, UserNotificationTypeEnum } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
-import { NotificationTypeTransformerPipe } from '../shared';
-import { MikroOrmNotificationRepository } from './repository/mikro-orm-notification.repository';
+import { UserNotificationTypeTransformerPipe } from '../shared/pipes';
+import { MikroOrmUserNotificationRepository } from './repository/mikro-orm-user-notification.repository';
 
-@MultiORMEntity('notification', { mikroOrmRepository: () => MikroOrmNotificationRepository })
-export class Notification extends TenantOrganizationBaseEntity implements INotification {
-	[EntityRepositoryType]: MikroOrmNotificationRepository;
+@MultiORMEntity('user_notification', { mikroOrmRepository: () => MikroOrmUserNotificationRepository })
+export class UserNotification extends TenantOrganizationBaseEntity implements IUserNotification {
+	[EntityRepositoryType]?: MikroOrmUserNotificationRepository;
 
 	/**
 	 * The type of entity type record from which notification was created
@@ -51,12 +51,12 @@ export class Notification extends TenantOrganizationBaseEntity implements INotif
 	@MultiORMColumn()
 	message: string;
 
-	@ApiPropertyOptional({ enum: NotificationTypeEnum })
+	@ApiPropertyOptional({ enum: UserNotificationTypeEnum })
 	@IsOptional()
-	@IsEnum(NotificationTypeEnum)
+	@IsEnum(UserNotificationTypeEnum)
 	@ColumnIndex()
-	@MultiORMColumn({ type: 'int', nullable: true, transformer: new NotificationTypeTransformerPipe() })
-	type?: NotificationTypeEnum; // Will be stored as 0, 1, 2, 3, etc in DB
+	@MultiORMColumn({ type: 'int', nullable: true, transformer: new UserNotificationTypeTransformerPipe() })
+	type?: UserNotificationTypeEnum; // Will be stored as 0, 1, 2, 3, etc in DB
 
 	/**
 	 * Indicates if the notification is read
@@ -76,7 +76,7 @@ export class Notification extends TenantOrganizationBaseEntity implements INotif
 	@MultiORMColumn({ nullable: true })
 	readedAt?: Date;
 
-	/*
+    /*
 	|--------------------------------------------------------------------------
 	| @ManyToOne
 	|--------------------------------------------------------------------------
@@ -100,7 +100,7 @@ export class Notification extends TenantOrganizationBaseEntity implements INotif
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((it: Notification) => it.sentBy)
+	@RelationId((it: UserNotification) => it.sentBy)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	sentById?: ID;
@@ -123,7 +123,7 @@ export class Notification extends TenantOrganizationBaseEntity implements INotif
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((it: Notification) => it.receiver)
+	@RelationId((it: UserNotification) => it.receiver)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	receiverId?: ID;

@@ -79,7 +79,7 @@ export * from '../../keyresult/keyresult.entity';
 export * from '../../language/language.entity';
 export * from '../../mention/mention.entity';
 export * from '../../merchant/merchant.entity';
-export * from '../../notification/notification.entity';
+export * from '../../user-notification/user-notification.entity';
 export * from '../../organization-award/organization-award.entity';
 export * from '../../organization-contact/organization-contact.entity';
 export * from '../../organization-department/organization-department.entity';

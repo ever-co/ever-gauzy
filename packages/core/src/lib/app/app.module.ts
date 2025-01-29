@@ -162,7 +162,7 @@ import { DashboardModule } from '../dashboard/dashboard.module';
 import { DashboardWidgetModule } from '../dashboard/dashboard-widget/dashboard-widget.module';
 import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
 import { TagTypeModule } from '../tag-type/tag-type.module';
-import { NotificationModule } from '../notification/notification.module';
+import { UserNotificationModule } from '../user-notification/user-notification.module';
 
 const { unleashConfig } = environment;
 
@@ -470,7 +470,7 @@ if (environment.THROTTLE_ENABLED) {
 		MentionModule,
 		SubscriptionModule,
 		DashboardModule,
-		NotificationModule,
+		UserNotificationModule,
 		DashboardWidgetModule,
 		TenantApiKeyModule,
 	],
