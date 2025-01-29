@@ -470,9 +470,9 @@ if (environment.THROTTLE_ENABLED) {
 		MentionModule,
 		SubscriptionModule,
 		DashboardModule,
+		NotificationModule,
 		DashboardWidgetModule,
 		TenantApiKeyModule,
-		NotificationModule
 	],
 	controllers: [AppController],
 	providers: [
