@@ -5,7 +5,7 @@ export interface IUserNotificationSetting extends IBasePerTenantAndOrganizationE
 	userId: ID;
 	user?: IUser;
 	payment?: boolean;
-	assignement?: boolean;
+	assignment?: boolean;
 	invitation?: boolean;
 	mention?: boolean;
 	comment?: boolean;

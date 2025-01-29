@@ -1,30 +1,30 @@
 import { ValueTransformer } from 'typeorm';
-import { NotificationTypeEnum } from '@gauzy/contracts';
+import { UserNotificationTypeEnum } from '@gauzy/contracts';
 
 /**
- * NotificationTypeTransformerPipe handles the conversion between the enum string values
+ * UserNotificationTypeTransformerPipe handles the conversion between the enum string values
  * (used in the application) and the integer values (stored in the database).
  */
-export class NotificationTypeTransformerPipe implements ValueTransformer {
+export class UserNotificationTypeTransformerPipe implements ValueTransformer {
 	/**
 	 * Converts the enum string value to its integer representation when writing to the database.
 	 *
-	 * @param value - The `NotificationTypeEnum` value.
+	 * @param value - The `UserNotificationTypeEnum` value.
 	 * @returns The corresponding integer value to be stored in the database.
 	 */
-	to(value: NotificationTypeEnum): number {
+	to(value: UserNotificationTypeEnum): number {
 		switch (value) {
-			case NotificationTypeEnum.PAYMENT:
+			case UserNotificationTypeEnum.PAYMENT:
 				return 0;
-			case NotificationTypeEnum.ASSIGNEMENT:
+			case UserNotificationTypeEnum.ASSIGNMENT:
 				return 1;
-			case NotificationTypeEnum.INVITATION:
+			case UserNotificationTypeEnum.INVITATION:
 				return 2;
-			case NotificationTypeEnum.MENTION:
+			case UserNotificationTypeEnum.MENTION:
 				return 3;
-			case NotificationTypeEnum.COMMENT:
+			case UserNotificationTypeEnum.COMMENT:
 				return 4;
-			case NotificationTypeEnum.MESSAGE:
+			case UserNotificationTypeEnum.MESSAGE:
 				return 5;
 			default:
 				throw new Error(`Unknown notification type: ${value}`);
@@ -32,25 +32,25 @@ export class NotificationTypeTransformerPipe implements ValueTransformer {
 	}
 
 	/**
-	 * Converts the integer value to its corresponding `NotificationTypeEnum` string when reading from the database.
+	 * Converts the integer value to its corresponding `UserNotificationTypeEnum` string when reading from the database.
 	 *
 	 * @param value - The integer value from the database.
-	 * @returns The corresponding `NotificationTypeEnum`.
+	 * @returns The corresponding `UserNotificationTypeEnum`.
 	 */
-	from(value: number): NotificationTypeEnum {
+	from(value: number): UserNotificationTypeEnum {
 		switch (value) {
 			case 0:
-				return NotificationTypeEnum.PAYMENT;
+				return UserNotificationTypeEnum.PAYMENT;
 			case 1:
-				return NotificationTypeEnum.ASSIGNEMENT;
+				return UserNotificationTypeEnum.ASSIGNMENT;
 			case 2:
-				return NotificationTypeEnum.INVITATION;
+				return UserNotificationTypeEnum.INVITATION;
 			case 3:
-				return NotificationTypeEnum.MENTION;
+				return UserNotificationTypeEnum.MENTION;
 			case 4:
-				return NotificationTypeEnum.COMMENT;
+				return UserNotificationTypeEnum.COMMENT;
 			case 5:
-				return NotificationTypeEnum.MESSAGE;
+				return UserNotificationTypeEnum.MESSAGE;
 			default:
 				throw new Error(`Unknown notification type value: ${value}`);
 		}
