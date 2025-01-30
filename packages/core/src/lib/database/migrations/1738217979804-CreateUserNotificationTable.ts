@@ -103,7 +103,38 @@ export class CreateUserNotificationTable1738217979804 implements MigrationInterf
     * @param queryRunner
     */
     public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-
+        await queryRunner.query(`CREATE TABLE "user_notification" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "entity" varchar NOT NULL, "entityId" varchar NOT NULL, "title" varchar NOT NULL, "message" varchar NOT NULL, "type" integer, "isRead" boolean NOT NULL DEFAULT (0), "readedAt" datetime, "sentById" varchar, "receiverId" varchar)`);
+        await queryRunner.query(`CREATE INDEX "IDX_6c5f59af45edf24ebe1fb9290a" ON "user_notification" ("isActive") `);
+        await queryRunner.query(`CREATE INDEX "IDX_1162ba6e6e4a847017c1edc88b" ON "user_notification" ("isArchived") `);
+        await queryRunner.query(`CREATE INDEX "IDX_6b218dc20d7822e0e4d85d81a2" ON "user_notification" ("tenantId") `);
+        await queryRunner.query(`CREATE INDEX "IDX_758686e0a822303c4791999a77" ON "user_notification" ("organizationId") `);
+        await queryRunner.query(`CREATE INDEX "IDX_6af19d4e214ca45b5fb57d7fc2" ON "user_notification" ("entity") `);
+        await queryRunner.query(`CREATE INDEX "IDX_a6de2f2e523b7428765d9fabbe" ON "user_notification" ("entityId") `);
+        await queryRunner.query(`CREATE INDEX "IDX_fc3e6d279904252599ae41f5bf" ON "user_notification" ("type") `);
+        await queryRunner.query(`CREATE INDEX "IDX_08d1dae7d71c5eb56d06edf10f" ON "user_notification" ("sentById") `);
+        await queryRunner.query(`CREATE INDEX "IDX_ff2d84b36dcf89af3e9b13f643" ON "user_notification" ("receiverId") `);
+        await queryRunner.query(`DROP INDEX "IDX_6c5f59af45edf24ebe1fb9290a"`);
+        await queryRunner.query(`DROP INDEX "IDX_1162ba6e6e4a847017c1edc88b"`);
+        await queryRunner.query(`DROP INDEX "IDX_6b218dc20d7822e0e4d85d81a2"`);
+        await queryRunner.query(`DROP INDEX "IDX_758686e0a822303c4791999a77"`);
+        await queryRunner.query(`DROP INDEX "IDX_6af19d4e214ca45b5fb57d7fc2"`);
+        await queryRunner.query(`DROP INDEX "IDX_a6de2f2e523b7428765d9fabbe"`);
+        await queryRunner.query(`DROP INDEX "IDX_fc3e6d279904252599ae41f5bf"`);
+        await queryRunner.query(`DROP INDEX "IDX_08d1dae7d71c5eb56d06edf10f"`);
+        await queryRunner.query(`DROP INDEX "IDX_ff2d84b36dcf89af3e9b13f643"`);
+        await queryRunner.query(`CREATE TABLE "temporary_user_notification" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "entity" varchar NOT NULL, "entityId" varchar NOT NULL, "title" varchar NOT NULL, "message" varchar NOT NULL, "type" integer, "isRead" boolean NOT NULL DEFAULT (0), "readedAt" datetime, "sentById" varchar, "receiverId" varchar, CONSTRAINT "FK_6b218dc20d7822e0e4d85d81a2a" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_758686e0a822303c4791999a778" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_08d1dae7d71c5eb56d06edf10f0" FOREIGN KEY ("sentById") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_ff2d84b36dcf89af3e9b13f643f" FOREIGN KEY ("receiverId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`);
+        await queryRunner.query(`INSERT INTO "temporary_user_notification"("deletedAt", "createdAt", "updatedAt", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "entity", "entityId", "title", "message", "type", "isRead", "readedAt", "sentById", "receiverId") SELECT "deletedAt", "createdAt", "updatedAt", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "entity", "entityId", "title", "message", "type", "isRead", "readedAt", "sentById", "receiverId" FROM "user_notification"`);
+        await queryRunner.query(`DROP TABLE "user_notification"`);
+        await queryRunner.query(`ALTER TABLE "temporary_user_notification" RENAME TO "user_notification"`);
+        await queryRunner.query(`CREATE INDEX "IDX_6c5f59af45edf24ebe1fb9290a" ON "user_notification" ("isActive") `);
+        await queryRunner.query(`CREATE INDEX "IDX_1162ba6e6e4a847017c1edc88b" ON "user_notification" ("isArchived") `);
+        await queryRunner.query(`CREATE INDEX "IDX_6b218dc20d7822e0e4d85d81a2" ON "user_notification" ("tenantId") `);
+        await queryRunner.query(`CREATE INDEX "IDX_758686e0a822303c4791999a77" ON "user_notification" ("organizationId") `);
+        await queryRunner.query(`CREATE INDEX "IDX_6af19d4e214ca45b5fb57d7fc2" ON "user_notification" ("entity") `);
+        await queryRunner.query(`CREATE INDEX "IDX_a6de2f2e523b7428765d9fabbe" ON "user_notification" ("entityId") `);
+        await queryRunner.query(`CREATE INDEX "IDX_fc3e6d279904252599ae41f5bf" ON "user_notification" ("type") `);
+        await queryRunner.query(`CREATE INDEX "IDX_08d1dae7d71c5eb56d06edf10f" ON "user_notification" ("sentById") `);
+        await queryRunner.query(`CREATE INDEX "IDX_ff2d84b36dcf89af3e9b13f643" ON "user_notification" ("receiverId") `);
     }
 
     /**
@@ -112,7 +143,38 @@ export class CreateUserNotificationTable1738217979804 implements MigrationInterf
     * @param queryRunner
     */
     public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-
+        await queryRunner.query(`DROP INDEX "IDX_ff2d84b36dcf89af3e9b13f643"`);
+        await queryRunner.query(`DROP INDEX "IDX_08d1dae7d71c5eb56d06edf10f"`);
+        await queryRunner.query(`DROP INDEX "IDX_fc3e6d279904252599ae41f5bf"`);
+        await queryRunner.query(`DROP INDEX "IDX_a6de2f2e523b7428765d9fabbe"`);
+        await queryRunner.query(`DROP INDEX "IDX_6af19d4e214ca45b5fb57d7fc2"`);
+        await queryRunner.query(`DROP INDEX "IDX_758686e0a822303c4791999a77"`);
+        await queryRunner.query(`DROP INDEX "IDX_6b218dc20d7822e0e4d85d81a2"`);
+        await queryRunner.query(`DROP INDEX "IDX_1162ba6e6e4a847017c1edc88b"`);
+        await queryRunner.query(`DROP INDEX "IDX_6c5f59af45edf24ebe1fb9290a"`);
+        await queryRunner.query(`ALTER TABLE "user_notification" RENAME TO "temporary_user_notification"`);
+        await queryRunner.query(`CREATE TABLE "user_notification" ("deletedAt" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "id" varchar PRIMARY KEY NOT NULL, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "entity" varchar NOT NULL, "entityId" varchar NOT NULL, "title" varchar NOT NULL, "message" varchar NOT NULL, "type" integer, "isRead" boolean NOT NULL DEFAULT (0), "readedAt" datetime, "sentById" varchar, "receiverId" varchar)`);
+        await queryRunner.query(`INSERT INTO "user_notification"("deletedAt", "createdAt", "updatedAt", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "entity", "entityId", "title", "message", "type", "isRead", "readedAt", "sentById", "receiverId") SELECT "deletedAt", "createdAt", "updatedAt", "id", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "entity", "entityId", "title", "message", "type", "isRead", "readedAt", "sentById", "receiverId" FROM "temporary_user_notification"`);
+        await queryRunner.query(`DROP TABLE "temporary_user_notification"`);
+        await queryRunner.query(`CREATE INDEX "IDX_ff2d84b36dcf89af3e9b13f643" ON "user_notification" ("receiverId") `);
+        await queryRunner.query(`CREATE INDEX "IDX_08d1dae7d71c5eb56d06edf10f" ON "user_notification" ("sentById") `);
+        await queryRunner.query(`CREATE INDEX "IDX_fc3e6d279904252599ae41f5bf" ON "user_notification" ("type") `);
+        await queryRunner.query(`CREATE INDEX "IDX_a6de2f2e523b7428765d9fabbe" ON "user_notification" ("entityId") `);
+        await queryRunner.query(`CREATE INDEX "IDX_6af19d4e214ca45b5fb57d7fc2" ON "user_notification" ("entity") `);
+        await queryRunner.query(`CREATE INDEX "IDX_758686e0a822303c4791999a77" ON "user_notification" ("organizationId") `);
+        await queryRunner.query(`CREATE INDEX "IDX_6b218dc20d7822e0e4d85d81a2" ON "user_notification" ("tenantId") `);
+        await queryRunner.query(`CREATE INDEX "IDX_1162ba6e6e4a847017c1edc88b" ON "user_notification" ("isArchived") `);
+        await queryRunner.query(`CREATE INDEX "IDX_6c5f59af45edf24ebe1fb9290a" ON "user_notification" ("isActive") `);
+        await queryRunner.query(`DROP INDEX "IDX_ff2d84b36dcf89af3e9b13f643"`);
+        await queryRunner.query(`DROP INDEX "IDX_08d1dae7d71c5eb56d06edf10f"`);
+        await queryRunner.query(`DROP INDEX "IDX_fc3e6d279904252599ae41f5bf"`);
+        await queryRunner.query(`DROP INDEX "IDX_a6de2f2e523b7428765d9fabbe"`);
+        await queryRunner.query(`DROP INDEX "IDX_6af19d4e214ca45b5fb57d7fc2"`);
+        await queryRunner.query(`DROP INDEX "IDX_758686e0a822303c4791999a77"`);
+        await queryRunner.query(`DROP INDEX "IDX_6b218dc20d7822e0e4d85d81a2"`);
+        await queryRunner.query(`DROP INDEX "IDX_1162ba6e6e4a847017c1edc88b"`);
+        await queryRunner.query(`DROP INDEX "IDX_6c5f59af45edf24ebe1fb9290a"`);
+        await queryRunner.query(`DROP TABLE "user_notification"`);
     }
 
     /**
