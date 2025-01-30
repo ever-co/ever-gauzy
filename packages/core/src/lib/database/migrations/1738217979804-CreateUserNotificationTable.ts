@@ -121,7 +121,11 @@ export class CreateUserNotificationTable1738217979804 implements MigrationInterf
      * @param queryRunner
      */
     public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-
+        await queryRunner.query(`CREATE TABLE \`user_notification\` (\`deletedAt\` datetime(6) NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`id\` varchar(36) NOT NULL, \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`archivedAt\` datetime NULL, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`entity\` varchar(255) NOT NULL, \`entityId\` varchar(255) NOT NULL, \`title\` varchar(255) NOT NULL, \`message\` varchar(255) NOT NULL, \`type\` int NULL, \`isRead\` tinyint NOT NULL DEFAULT 0, \`readedAt\` datetime NULL, \`sentById\` varchar(255) NULL, \`receiverId\` varchar(255) NULL, INDEX \`IDX_6c5f59af45edf24ebe1fb9290a\` (\`isActive\`), INDEX \`IDX_1162ba6e6e4a847017c1edc88b\` (\`isArchived\`), INDEX \`IDX_6b218dc20d7822e0e4d85d81a2\` (\`tenantId\`), INDEX \`IDX_758686e0a822303c4791999a77\` (\`organizationId\`), INDEX \`IDX_6af19d4e214ca45b5fb57d7fc2\` (\`entity\`), INDEX \`IDX_a6de2f2e523b7428765d9fabbe\` (\`entityId\`), INDEX \`IDX_fc3e6d279904252599ae41f5bf\` (\`type\`), INDEX \`IDX_08d1dae7d71c5eb56d06edf10f\` (\`sentById\`), INDEX \`IDX_ff2d84b36dcf89af3e9b13f643\` (\`receiverId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`ALTER TABLE \`user_notification\` ADD CONSTRAINT \`FK_6b218dc20d7822e0e4d85d81a2a\` FOREIGN KEY (\`tenantId\`) REFERENCES \`tenant\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`user_notification\` ADD CONSTRAINT \`FK_758686e0a822303c4791999a778\` FOREIGN KEY (\`organizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`);
+        await queryRunner.query(`ALTER TABLE \`user_notification\` ADD CONSTRAINT \`FK_08d1dae7d71c5eb56d06edf10f0\` FOREIGN KEY (\`sentById\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`user_notification\` ADD CONSTRAINT \`FK_ff2d84b36dcf89af3e9b13f643f\` FOREIGN KEY (\`receiverId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
     }
 
     /**
@@ -130,6 +134,19 @@ export class CreateUserNotificationTable1738217979804 implements MigrationInterf
      * @param queryRunner
      */
     public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-
+        await queryRunner.query(`ALTER TABLE \`user_notification\` DROP FOREIGN KEY \`FK_ff2d84b36dcf89af3e9b13f643f\``);
+        await queryRunner.query(`ALTER TABLE \`user_notification\` DROP FOREIGN KEY \`FK_08d1dae7d71c5eb56d06edf10f0\``);
+        await queryRunner.query(`ALTER TABLE \`user_notification\` DROP FOREIGN KEY \`FK_758686e0a822303c4791999a778\``);
+        await queryRunner.query(`ALTER TABLE \`user_notification\` DROP FOREIGN KEY \`FK_6b218dc20d7822e0e4d85d81a2a\``);
+        await queryRunner.query(`DROP INDEX \`IDX_ff2d84b36dcf89af3e9b13f643\` ON \`user_notification\``);
+        await queryRunner.query(`DROP INDEX \`IDX_08d1dae7d71c5eb56d06edf10f\` ON \`user_notification\``);
+        await queryRunner.query(`DROP INDEX \`IDX_fc3e6d279904252599ae41f5bf\` ON \`user_notification\``);
+        await queryRunner.query(`DROP INDEX \`IDX_a6de2f2e523b7428765d9fabbe\` ON \`user_notification\``);
+        await queryRunner.query(`DROP INDEX \`IDX_6af19d4e214ca45b5fb57d7fc2\` ON \`user_notification\``);
+        await queryRunner.query(`DROP INDEX \`IDX_758686e0a822303c4791999a77\` ON \`user_notification\``);
+        await queryRunner.query(`DROP INDEX \`IDX_6b218dc20d7822e0e4d85d81a2\` ON \`user_notification\``);
+        await queryRunner.query(`DROP INDEX \`IDX_1162ba6e6e4a847017c1edc88b\` ON \`user_notification\``);
+        await queryRunner.query(`DROP INDEX \`IDX_6c5f59af45edf24ebe1fb9290a\` ON \`user_notification\``);
+        await queryRunner.query(`DROP TABLE \`user_notification\``);
     }
 }
