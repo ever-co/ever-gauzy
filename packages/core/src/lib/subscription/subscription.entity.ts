@@ -3,28 +3,14 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
 import { IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
-import { BaseEntityEnum, ID, ISubscription, IUser, SubscriptionTypeEnum } from '@gauzy/contracts';
-import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
+import { ID, ISubscription, IUser, SubscriptionTypeEnum } from '@gauzy/contracts';
+import { BasePerEntityType, User } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
 import { MikroOrmSubscriptionRepository } from './repository/mikro-orm-subscription.repository';
 
 @MultiORMEntity('subscription', { mikroOrmRepository: () => MikroOrmSubscriptionRepository })
-export class Subscription extends TenantOrganizationBaseEntity implements ISubscription {
-	[EntityRepositoryType]?: MikroOrmSubscriptionRepository;
-
-	@ApiProperty({ type: () => String })
-	@IsNotEmpty()
-	@IsUUID()
-	@ColumnIndex()
-	@MultiORMColumn()
-	entityId: ID;
-
-	@ApiProperty({ type: () => String, enum: BaseEntityEnum })
-	@IsNotEmpty()
-	@IsEnum(BaseEntityEnum)
-	@ColumnIndex()
-	@MultiORMColumn()
-	entity: BaseEntityEnum;
+export class Subscription extends BasePerEntityType implements ISubscription {
+	[ EntityRepositoryType ]?: MikroOrmSubscriptionRepository;
 
 	@ApiProperty({ type: () => String, enum: SubscriptionTypeEnum })
 	@IsNotEmpty()

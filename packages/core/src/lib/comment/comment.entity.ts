@@ -4,8 +4,8 @@ import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { IsArray, IsBoolean, IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ActorTypeEnum, BaseEntityEnum, IComment, ID, IEmployee, IOrganizationTeam, IUser } from '@gauzy/contracts';
-import { Employee, OrganizationTeam, TenantOrganizationBaseEntity, User } from '../core/entities/internal';
+import { ActorTypeEnum, IComment, ID, IEmployee, IOrganizationTeam, IUser } from '@gauzy/contracts';
+import { BasePerEntityType, Employee, OrganizationTeam, User } from '../core/entities/internal';
 import {
 	ColumnIndex,
 	MultiORMColumn,
@@ -18,23 +18,8 @@ import { ActorTypeTransformerPipe } from '../shared/pipes';
 import { MikroOrmCommentRepository } from './repository/mikro-orm-comment.repository';
 
 @MultiORMEntity('comment', { mikroOrmRepository: () => MikroOrmCommentRepository })
-export class Comment extends TenantOrganizationBaseEntity implements IComment {
-	[EntityRepositoryType]?: MikroOrmCommentRepository;
-
-	@ApiProperty({ type: () => String, enum: BaseEntityEnum })
-	@IsNotEmpty()
-	@IsEnum(BaseEntityEnum)
-	@ColumnIndex()
-	@MultiORMColumn()
-	entity: BaseEntityEnum;
-
-	// Indicate the ID of entity record commented
-	@ApiProperty({ type: () => String })
-	@IsNotEmpty()
-	@IsUUID()
-	@ColumnIndex()
-	@MultiORMColumn()
-	entityId: ID;
+export class Comment extends BasePerEntityType implements IComment {
+	[ EntityRepositoryType ]?: MikroOrmCommentRepository;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()

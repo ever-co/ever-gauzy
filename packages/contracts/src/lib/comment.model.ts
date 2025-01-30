@@ -1,10 +1,10 @@
-import { ActorTypeEnum, IBasePerEntityType, IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
+import { ActorTypeEnum, IBasePerEntityType, ID } from './base-entity.model';
 import { IUser } from './user.model';
 import { IEmployee } from './employee.model';
 import { IOrganizationTeam } from './organization-team.model';
 import { IMentionUserIds } from './mention.model';
 
-export interface IComment extends IBasePerTenantAndOrganizationEntityModel, IBasePerEntityType {
+export interface IComment extends IBasePerEntityType {
 	comment: string;
 	creator?: IUser;
 	creatorId?: ID; // The comment's user author ID
@@ -30,6 +30,6 @@ export interface ICommentCreateInput extends IBasePerEntityType, IMentionUserIds
 
 export interface ICommentUpdateInput
 	extends IMentionUserIds,
-		Partial<Omit<IComment, 'entity' | 'entityId' | 'creatorId' | 'creator'>> {}
+	Partial<Omit<IComment, 'entity' | 'entityId' | 'creatorId' | 'creator'>> { }
 
-export interface ICommentFindInput extends Pick<IComment, 'entity' | 'entityId'> {}
+export interface ICommentFindInput extends Pick<IComment, 'entity' | 'entityId'> { }

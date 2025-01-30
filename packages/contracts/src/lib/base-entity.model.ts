@@ -60,7 +60,7 @@ export interface IBasePerTenantAndOrganizationEntityMutationInput extends Partia
 }
 
 // Represents a base structure for generic entities, linking their unique ID with their type.
-export interface IBasePerEntityType {
+export interface IBasePerEntityType extends IBasePerTenantAndOrganizationEntityModel {
 	entityId: ID; // Unique ID of the entity
 	entity: BaseEntityEnum; // The type of the entity, defined in BaseEntityEnum enumeration.
 }

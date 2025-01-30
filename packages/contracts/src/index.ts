@@ -158,7 +158,8 @@ export {
 	IBaseRelationsEntityModel,
 	IBaseSoftDeleteEntityModel,
 	ID,
-	JsonData
+	JsonData,
+	IBasePerEntityType
 } from './lib/base-entity.model';
 
 export * from './lib/proxy.model';

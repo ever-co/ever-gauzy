@@ -3,6 +3,7 @@ export * from './base.entity';
 export * from './tenant-base.entity';
 export * from './tenant-organization-base.entity';
 export * from './translate-base';
+export * from './entity-type-base.entity';
 
 //core entities
 export * from '../../accounting-template/accounting-template.entity';
