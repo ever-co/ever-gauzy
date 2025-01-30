@@ -1,7 +1,7 @@
-import { IBasePerEntityType, IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
+import { IBasePerEntityType, ID } from './base-entity.model';
 import { IUser } from './user.model';
 
-export interface ISubscription extends IBasePerTenantAndOrganizationEntityModel, IBasePerEntityType {
+export interface ISubscription extends IBasePerEntityType {
 	type: SubscriptionTypeEnum;
 	userId: ID;
 	user?: IUser;
@@ -17,6 +17,6 @@ export enum SubscriptionTypeEnum {
 
 export interface ISubscriptionCreateInput
 	extends Omit<ISubscription, 'user' | 'userId'>,
-		Partial<Pick<ISubscription, 'userId'>> {}
+	Partial<Pick<ISubscription, 'userId'>> { }
 
-export interface ISubscriptionFindInput extends Partial<ISubscription> {}
+export interface ISubscriptionFindInput extends Partial<ISubscription> { }

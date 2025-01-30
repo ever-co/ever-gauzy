@@ -1,8 +1,6 @@
 import {
 	ActorTypeEnum,
-	IBasePerEntityType,
-	IBasePerTenantAndOrganizationEntityModel,
-	ID,
+	IBasePerEntityType, ID,
 	JsonData
 } from './base-entity.model';
 import { IUser } from './user.model';
@@ -10,7 +8,7 @@ import { IUser } from './user.model';
 /**
  * Interface representing an activity log entry.
  */
-export interface IActivityLog extends IBasePerTenantAndOrganizationEntityModel, IBasePerEntityType {
+export interface IActivityLog extends IBasePerEntityType {
 	action: ActionTypeEnum;
 	actorType?: ActorTypeEnum;
 	description?: string; // A short sentence describing the action performed. (E.g John Doe created this on 22.09.2024)
@@ -25,7 +23,7 @@ export interface IActivityLog extends IBasePerTenantAndOrganizationEntityModel, 
 }
 
 export interface IActivityLogUpdatedValues {
-	[x: string]: Record<string, any>;
+	[ x: string ]: Record<string, any>;
 }
 
 /**
@@ -40,4 +38,4 @@ export enum ActionTypeEnum {
 /**
  * Input type for activity log creation, excluding `creatorId` and `creator`.
  */
-export interface IActivityLogInput extends Omit<IActivityLog, 'creatorId' | 'creator'> {}
+export interface IActivityLogInput extends Omit<IActivityLog, 'creatorId' | 'creator'> { }

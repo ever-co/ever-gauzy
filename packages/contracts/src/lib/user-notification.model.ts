@@ -1,7 +1,7 @@
-import { IBasePerEntityType, IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
+import { IBasePerEntityType, ID } from './base-entity.model';
 import { IUser } from './user.model';
 
-export interface IUserNotification extends IBasePerTenantAndOrganizationEntityModel, IBasePerEntityType {
+export interface IUserNotification extends IBasePerEntityType {
 	title?: string;
 	message?: string;
 	type?: UserNotificationTypeEnum;
@@ -22,7 +22,7 @@ export enum UserNotificationTypeEnum {
 	MESSAGE = 'Message' // Will be stored as 5 in DB
 }
 
-export interface IUserNotificationCreateInput extends Omit<IUserNotification, 'isRead' | 'readedAt'> {}
+export interface IUserNotificationCreateInput extends Omit<IUserNotification, 'isRead' | 'readedAt'> { }
 
 export interface INotificationUpdateInput
-	extends Omit<IUserNotification, 'receiverId' | 'receiver' | 'sentById' | 'sentBy'> {}
+	extends Omit<IUserNotification, 'receiverId' | 'receiver' | 'sentById' | 'sentBy'> { }
