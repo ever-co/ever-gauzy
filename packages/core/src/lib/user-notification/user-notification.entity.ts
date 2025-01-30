@@ -1,9 +1,9 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
-import { IsBoolean, IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-import { BaseEntityEnum, ID, IUser, IUserNotification, UserNotificationTypeEnum } from '@gauzy/contracts';
+import { IsBoolean, IsDateString, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { ID, IUser, IUserNotification, UserNotificationTypeEnum } from '@gauzy/contracts';
 import { BasePerEntityType, User } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
 import { UserNotificationTypeTransformerPipe } from '../shared/pipes';
@@ -14,42 +14,22 @@ export class UserNotification extends BasePerEntityType implements IUserNotifica
     [ EntityRepositoryType ]?: MikroOrmUserNotificationRepository;
 
     /**
-     * The type of entity type record from which notification was created
-     */
-    @ApiProperty({ type: () => String, enum: BaseEntityEnum })
-    @IsNotEmpty()
-    @IsEnum(BaseEntityEnum)
-    @ColumnIndex()
-    @MultiORMColumn()
-    entity: BaseEntityEnum;
-
-    /**
-     * The ID of entity record from which notification was created
-     */
-    @ApiProperty({ type: () => String })
-    @IsNotEmpty()
-    @IsUUID()
-    @ColumnIndex()
-    @MultiORMColumn()
-    entityId: ID;
-
-    /**
      * The notification title
      */
-    @ApiProperty({ type: () => String })
-    @IsNotEmpty()
+    @ApiPropertyOptional({ type: () => String })
+    @IsOptional()
     @IsString()
     @MultiORMColumn()
-    title: string;
+    title?: string;
 
     /**
      * The notification message
      */
-    @ApiProperty({ type: () => String })
-    @IsNotEmpty()
+    @ApiPropertyOptional({ type: () => String })
+    @IsOptional()
     @IsString()
     @MultiORMColumn()
-    message: string;
+    message?: string;
 
     @ApiPropertyOptional({ enum: UserNotificationTypeEnum })
     @IsOptional()
