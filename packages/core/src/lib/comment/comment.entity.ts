@@ -19,7 +19,7 @@ import { MikroOrmCommentRepository } from './repository/mikro-orm-comment.reposi
 
 @MultiORMEntity('comment', { mikroOrmRepository: () => MikroOrmCommentRepository })
 export class Comment extends BasePerEntityType implements IComment {
-	[ EntityRepositoryType ]?: MikroOrmCommentRepository;
+	[EntityRepositoryType]?: MikroOrmCommentRepository;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()

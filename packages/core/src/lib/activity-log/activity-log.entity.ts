@@ -12,7 +12,7 @@ import { MikroOrmActivityLogRepository } from './repository/mikro-orm-activity-l
 
 @MultiORMEntity('activity_log', { mikroOrmRepository: () => MikroOrmActivityLogRepository })
 export class ActivityLog extends BasePerEntityType implements IActivityLog {
-	[ EntityRepositoryType ]?: MikroOrmActivityLogRepository;
+	[EntityRepositoryType]?: MikroOrmActivityLogRepository;
 
 	@ApiProperty({ enum: ActionTypeEnum })
 	@IsNotEmpty()

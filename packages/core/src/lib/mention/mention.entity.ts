@@ -10,7 +10,7 @@ import { MikroOrmMentionRepository } from './repository/mikro-orm-mention.reposi
 
 @MultiORMEntity('mention', { mikroOrmRepository: () => MikroOrmMentionRepository })
 export class Mention extends BasePerEntityType implements IMention {
-	[ EntityRepositoryType ]?: MikroOrmMentionRepository;
+	[EntityRepositoryType]?: MikroOrmMentionRepository;
 
 	/**
 	 * The parent entity ID

@@ -10,7 +10,7 @@ import { MikroOrmFavoriteRepository } from './repository/mikro-orm-favorite.repo
 
 @MultiORMEntity('favorite', { mikroOrmRepository: () => MikroOrmFavoriteRepository })
 export class Favorite extends BasePerEntityType implements IFavorite {
-	[ EntityRepositoryType ]?: MikroOrmFavoriteRepository;
+	[EntityRepositoryType]?: MikroOrmFavoriteRepository;
 
 	/*
 	|--------------------------------------------------------------------------

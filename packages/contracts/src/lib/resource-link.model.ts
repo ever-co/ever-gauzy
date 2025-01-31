@@ -10,8 +10,8 @@ export interface IResourceLink extends IBasePerEntityType {
 	metaData?: string | IURLMetaData;
 }
 
-export interface IResourceLinkCreateInput extends Omit<IResourceLink, 'creator' | 'creatorId'> { }
+export interface IResourceLinkCreateInput extends Omit<IResourceLink, 'creator' | 'creatorId'> {}
 
-export interface IResourceLinkUpdateInput extends Partial<Omit<IResourceLinkCreateInput, 'entity' | 'entityId'>> { }
+export interface IResourceLinkUpdateInput extends Partial<Omit<IResourceLinkCreateInput, 'entity' | 'entityId'>> {}
 
-export interface IResourceLinkFindInput extends Pick<IResourceLink, 'entity' | 'entityId'> { }
+export interface IResourceLinkFindInput extends Pick<IResourceLink, 'entity' | 'entityId'> {}

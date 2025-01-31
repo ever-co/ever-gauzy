@@ -10,7 +10,7 @@ import { MikroOrmSubscriptionRepository } from './repository/mikro-orm-subscript
 
 @MultiORMEntity('subscription', { mikroOrmRepository: () => MikroOrmSubscriptionRepository })
 export class Subscription extends BasePerEntityType implements ISubscription {
-	[ EntityRepositoryType ]?: MikroOrmSubscriptionRepository;
+	[EntityRepositoryType]?: MikroOrmSubscriptionRepository;
 
 	@ApiProperty({ type: () => String, enum: SubscriptionTypeEnum })
 	@IsNotEmpty()

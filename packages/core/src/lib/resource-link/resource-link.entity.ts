@@ -11,7 +11,7 @@ import { MikroOrmResourceLinkRepository } from './repository/mikro-orm-resource-
 
 @MultiORMEntity('resource_link', { mikroOrmRepository: () => MikroOrmResourceLinkRepository })
 export class ResourceLink extends BasePerEntityType implements IResourceLink {
-	[ EntityRepositoryType ]?: MikroOrmResourceLinkRepository;
+	[EntityRepositoryType]?: MikroOrmResourceLinkRepository;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
