@@ -28,7 +28,9 @@ import {
 	ITaskDateFilterInput,
 	SubscriptionTypeEnum,
 	ITaskAdvancedFilter,
-	IAdvancedTaskFiltering
+	IAdvancedTaskFiltering,
+	UserNotificationTypeEnum,
+	NotificationActionTypeEnum
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { isPostgres, isSqlite } from '@gauzy/config';
@@ -46,6 +48,7 @@ import { GetTaskByIdDTO } from './dto';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
 import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
+import { UserNotificationService } from '../user-notification/user-notification.service';
 
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
@@ -57,7 +60,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		private readonly taskViewService: TaskViewService,
 		private readonly _subscriptionService: SubscriptionService,
 		private readonly mentionService: MentionService,
-		private readonly activityLogService: ActivityLogService
+		private readonly activityLogService: ActivityLogService,
+		private readonly userNotificationService: UserNotificationService
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
 	}
@@ -73,6 +77,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		try {
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 			const userId = RequestContext.currentUserId();
+
+			const user = RequestContext.currentUser();
 			const { mentionUserIds, ...data } = input;
 
 			// Find task relations
@@ -172,7 +178,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			if (newMembers.length) {
 				try {
 					await Promise.all(
-						newMembers.map(({ userId }) =>
+						newMembers.map(({ userId }) => {
 							this._eventBus.publish(
 								new CreateSubscriptionEvent({
 									entity: BaseEntityEnum.Task,
@@ -182,8 +188,23 @@ export class TaskService extends TenantAwareCrudService<Task> {
 									organizationId,
 									tenantId
 								})
-							)
-						)
+							);
+
+							this.userNotificationService.publishNotificationEvent(
+								{
+									entity: BaseEntityEnum.Task,
+									entityId: task.id,
+									type: UserNotificationTypeEnum.ASSIGNMENT,
+									sentById: user.id,
+									receiverId: userId,
+									organizationId,
+									tenantId
+								},
+								NotificationActionTypeEnum.Assigned,
+								task.title,
+								`${user.firstName} ${user.lastName}`
+							);
+						})
 					);
 				} catch (error) {
 					console.error('Error publishing CreateSubscriptionEvent:', error);

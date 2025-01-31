@@ -23,6 +23,7 @@ export interface IComment extends IBasePerEntityType {
 
 export interface ICommentCreateInput extends IBasePerEntityType, IMentionUserIds {
 	comment: string;
+	entityName?: string;
 	parentId?: ID;
 	members?: IEmployee[];
 	teams?: IOrganizationTeam[];

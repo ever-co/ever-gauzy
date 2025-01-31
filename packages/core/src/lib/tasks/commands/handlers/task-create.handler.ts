@@ -7,7 +7,9 @@ import {
 	ActionTypeEnum,
 	SubscriptionTypeEnum,
 	ID,
-	IEmployee
+	IEmployee,
+	UserNotificationTypeEnum,
+	NotificationActionTypeEnum
 } from '@gauzy/contracts';
 import { EventBus } from '../../../event-bus';
 import { TaskEvent } from '../../../event-bus/events';
@@ -22,6 +24,7 @@ import { Task } from './../../task.entity';
 import { EmployeeService } from '../../../employee/employee.service';
 import { MentionService } from '../../../mention/mention.service';
 import { ActivityLogService } from '../../../activity-log/activity-log.service';
+import { UserNotificationService } from '../../../user-notification/user-notification.service';
 
 @CommandHandler(TaskCreateCommand)
 export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
@@ -34,7 +37,8 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 		private readonly _organizationProjectService: OrganizationProjectService,
 		private readonly _employeeService: EmployeeService,
 		private readonly mentionService: MentionService,
-		private readonly activityLogService: ActivityLogService
+		private readonly activityLogService: ActivityLogService,
+		private readonly userNotificationService: UserNotificationService
 	) {}
 
 	/**
@@ -51,6 +55,9 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 
 			// Retrieve current tenant ID from request context or use input tenant ID
 			const tenantId = RequestContext.currentTenantId() ?? data.tenantId;
+
+			// Retrieve current user from the request context
+			const user = RequestContext.currentUser();
 
 			// Determine the project based on the provided data
 			const project = data.projectId
@@ -98,7 +105,8 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 							mentionedUserId,
 							mentionById: task.creatorId,
 							organizationId,
-							tenantId
+							tenantId,
+							entityName: task.title
 						})
 					)
 				);
@@ -129,9 +137,9 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 						tenantId
 					);
 
-					// Publish subscription events for each employee
+					// Publish subscription events for each employee and send internal notification to users
 					await Promise.all(
-						employees.map(({ userId }: IEmployee) =>
+						employees.map(({ userId }: IEmployee) => {
 							this._cqrsEventBus.publish(
 								new CreateSubscriptionEvent({
 									entity: BaseEntityEnum.Task,
@@ -141,8 +149,23 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 									organizationId,
 									tenantId
 								})
-							)
-						)
+							);
+
+							this.userNotificationService.publishNotificationEvent(
+								{
+									entity: BaseEntityEnum.Task,
+									entityId: task.id,
+									type: UserNotificationTypeEnum.ASSIGNMENT,
+									sentById: task.creatorId,
+									receiverId: userId,
+									organizationId,
+									tenantId
+								},
+								NotificationActionTypeEnum.Assigned,
+								task.title,
+								`${user.firstName} ${user.lastName}`
+							);
+						})
 					);
 				} catch (error) {
 					this.logger.error('Error while subscribing members to task', error);

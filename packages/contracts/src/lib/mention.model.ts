@@ -10,7 +10,9 @@ export interface IMention extends IBasePerEntityType {
 	parentEntityType?: BaseEntityEnum;
 }
 
-export interface IMentionCreateInput extends Omit<IMention, 'mentionBy'> {}
+export interface IMentionCreateInput extends Omit<IMention, 'mentionBy'> {
+	entityName?: string;
+}
 
 export interface IMentionUserIds {
 	mentionUserIds?: ID[];
