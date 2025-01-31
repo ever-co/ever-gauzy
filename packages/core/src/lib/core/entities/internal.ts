@@ -209,3 +209,4 @@ export * from '../../time-tracking/screenshot/screenshot.subscriber';
 export * from '../../time-tracking/timesheet/timesheet.subscriber';
 export * from '../../time-tracking/time-slot/time-slot.subscriber';
 export * from '../../user/user.subscriber';
+export * from '../../user-notification/user-notification-setting/user-notification-setting.subscriber';
