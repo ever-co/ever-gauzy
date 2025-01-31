@@ -5,7 +5,7 @@ const UserNotificationTemplates = {
 	[NotificationActionTypeEnum.Commented]: `{user} {action} on {entity} "{entityName}"`,
 	[NotificationActionTypeEnum.Assigned]: `{user} {action} you to the {entity} "{entityName}"`,
 	[NotificationActionTypeEnum.Invited]: `{user} {action} you to join the {entity} "{entityName}"`,
-	[NotificationActionTypeEnum.Mentioned]: `{user} {action} you on {entity} "{entityName}"`,
+	[NotificationActionTypeEnum.Mentioned]: `{user} {action} you on the {entity} "{entityName}"`,
 	[NotificationActionTypeEnum.Messaged]: `{user} {action} you a new message"`
 };
 
