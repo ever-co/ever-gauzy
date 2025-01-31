@@ -17,6 +17,7 @@ import { TaskService } from './task.service';
 import { TaskController } from './task.controller';
 import { TaskProjectSequenceModule } from './project-sequence/project-sequence.module';
 import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
+import { UserNotificationModule } from '../user-notification/user-notification.module';
 
 @Module({
 	imports: [
@@ -29,6 +30,7 @@ import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
 		OrganizationProjectModule,
 		OrganizationSprintModule,
 		TaskViewModule,
+		UserNotificationModule,
 		CqrsModule,
 		EventBusModule,
 		TaskProjectSequenceModule

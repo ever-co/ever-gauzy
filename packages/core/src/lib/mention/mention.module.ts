@@ -9,6 +9,7 @@ import { MentionController } from './mention.controller';
 import { Mention } from './mention.entity';
 import { EventHandlers } from './events/handlers';
 import { TypeOrmMentionRepository } from './repository/type-orm-mention.repository';
+import { UserNotificationModule } from '../user-notification/user-notification.module';
 
 @Global()
 @Module({
@@ -17,7 +18,8 @@ import { TypeOrmMentionRepository } from './repository/type-orm-mention.reposito
 		MikroOrmModule.forFeature([Mention]),
 		CqrsModule,
 		RolePermissionModule,
-		SubscriptionModule
+		SubscriptionModule,
+		UserNotificationModule
 	],
 	controllers: [MentionController],
 	providers: [MentionService, TypeOrmMentionRepository, ...EventHandlers],

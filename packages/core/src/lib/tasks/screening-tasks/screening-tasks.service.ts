@@ -99,7 +99,8 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 					entity: BaseEntityEnum.Task,
 					entityId: task.id,
 					mentionedUserId,
-					mentionById: userId
+					mentionById: userId,
+					entityName: task.title
 				})
 			);
 

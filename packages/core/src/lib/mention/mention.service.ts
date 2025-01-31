@@ -1,7 +1,15 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 import { In } from 'typeorm';
-import { BaseEntityEnum, ID, IMention, IMentionCreateInput, SubscriptionTypeEnum } from '@gauzy/contracts';
+import {
+	BaseEntityEnum,
+	ID,
+	IMention,
+	IMentionCreateInput,
+	NotificationActionTypeEnum,
+	SubscriptionTypeEnum,
+	UserNotificationTypeEnum
+} from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { Mention } from './mention.entity';
@@ -9,12 +17,14 @@ import { TypeOrmMentionRepository } from './repository/type-orm-mention.reposito
 import { MikroOrmMentionRepository } from './repository/mikro-orm-mention.repository';
 import { CreateMentionEvent } from './events';
 import { CreateSubscriptionEvent } from '../subscription/events';
+import { UserNotificationService } from '../user-notification/user-notification.service';
 
 @Injectable()
 export class MentionService extends TenantAwareCrudService<Mention> {
 	constructor(
 		readonly typeOrmMentionRepository: TypeOrmMentionRepository,
 		readonly mikroOrmMentionRepository: MikroOrmMentionRepository,
+		private readonly userNotificationService: UserNotificationService,
 		private readonly _eventBus: EventBus
 	) {
 		super(typeOrmMentionRepository, mikroOrmMentionRepository);
@@ -30,16 +40,17 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 	 */
 	async create(input: IMentionCreateInput): Promise<IMention> {
 		try {
-			const { entity, entityId, parentEntityId, parentEntityType, mentionedUserId, organizationId } = input;
+			const { entity, entityId, parentEntityId, parentEntityType, mentionedUserId, organizationId, entityName } =
+				input;
 
-			// Retrieve the ID of the currently logged-in user
-			const mentionById = RequestContext.currentUserId();
+			// Retrieve currently logged-in user
+			const user = RequestContext.currentUser();
 
 			// Get the tenant ID from the current request context or use the one from the entity
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
 			// Create the mention entry using the provided input along with the tenantId and mentionById.
-			const mention = await super.create({ ...input, tenantId, mentionById });
+			const mention = await super.create({ ...input, tenantId, mentionById: user.id });
 
 			// Create an user subscription for provided entity
 			this._eventBus.publish(
@@ -53,9 +64,25 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 				})
 			);
 
+			// Trigger internal system notification for mentioned user
+			this.userNotificationService.publishNotificationEvent(
+				{
+					entity: parentEntityType ?? entity,
+					entityId: parentEntityId ?? entityId,
+					type: UserNotificationTypeEnum.MENTION,
+					sentById: user.id,
+					receiverId: mentionedUserId,
+					organizationId,
+					tenantId
+				},
+				NotificationActionTypeEnum.Mentioned,
+				entityName,
+				`${user.firstName} ${user.lastName}`
+			);
+
 			/**
 			 * TODO
-			 * 1. Send email notifications and trigger internal system notifications for both mention and optional subscription
+			 * 1. Send email notifications for both mention and optional subscription
 			 */
 
 			// Return the created mention.
