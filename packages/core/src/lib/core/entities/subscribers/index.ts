@@ -46,7 +46,8 @@ import {
 	TimeOffRequestSubscriber,
 	TimesheetSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber
+	UserSubscriber,
+	UserNotificationSettingSubscriber
 } from '../internal';
 import { TenantOrganizationBaseEntityEventSubscriber } from './tenant-organization-base-entity.subscriber';
 
@@ -102,5 +103,6 @@ export const coreSubscribers = [
 	TimeOffRequestSubscriber,
 	TimesheetSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber
+	UserSubscriber,
+	UserNotificationSettingSubscriber
 ];
