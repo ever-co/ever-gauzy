@@ -19,7 +19,7 @@ export class UserNotification extends BasePerEntityType implements IUserNotifica
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@MultiORMColumn()
+	@MultiORMColumn({ nullable: true })
 	title?: string;
 
 	/**
@@ -28,7 +28,7 @@ export class UserNotification extends BasePerEntityType implements IUserNotifica
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@MultiORMColumn()
+	@MultiORMColumn({ nullable: true })
 	message?: string;
 
 	@ApiPropertyOptional({ enum: UserNotificationTypeEnum })
@@ -54,7 +54,7 @@ export class UserNotification extends BasePerEntityType implements IUserNotifica
 	@IsOptional()
 	@IsDateString()
 	@MultiORMColumn({ nullable: true })
-	readedAt?: Date;
+	readAt?: Date;
 
 	/*
     |--------------------------------------------------------------------------
