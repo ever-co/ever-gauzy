@@ -37,7 +37,7 @@ export enum NotificationActionTypeEnum {
 	Messaged = 'Sent'
 }
 
-export interface IUserNotificationCreateInput extends Omit<IUserNotification, 'isRead' | 'readedAt'> {}
+export interface IUserNotificationCreateInput extends Omit<IUserNotification, 'isRead' | 'readAt'> {}
 
 export interface INotificationUpdateInput
 	extends Omit<IUserNotification, 'receiverId' | 'receiver' | 'sentById' | 'sentBy'> {}
