@@ -17,6 +17,6 @@ export enum SubscriptionTypeEnum {
 
 export interface ISubscriptionCreateInput
 	extends Omit<ISubscription, 'user' | 'userId'>,
-	Partial<Pick<ISubscription, 'userId'>> { }
+		Partial<Pick<ISubscription, 'userId'>> {}
 
-export interface ISubscriptionFindInput extends Partial<ISubscription> { }
+export interface ISubscriptionFindInput extends Partial<ISubscription> {}

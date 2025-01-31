@@ -13,6 +13,9 @@ export interface IUserNotification extends IBasePerEntityType {
 	receiver?: IUser;
 }
 
+/**
+ * Enum for notification types.
+ */
 export enum UserNotificationTypeEnum {
 	PAYMENT = 'Payment', // Will be stored as 0 in DB
 	ASSIGNMENT = 'Assignment', // Will be stored as 1 in DB
@@ -22,7 +25,19 @@ export enum UserNotificationTypeEnum {
 	MESSAGE = 'Message' // Will be stored as 5 in DB
 }
 
-export interface IUserNotificationCreateInput extends Omit<IUserNotification, 'isRead' | 'readedAt'> { }
+/**
+ * Enum for notification action types.
+ */
+export enum NotificationActionTypeEnum {
+	Paid = 'Paid',
+	Assigned = 'Assigned',
+	Invited = 'Invited',
+	Mentioned = 'Mentioned',
+	Commented = 'Commented',
+	Messaged = 'Sent'
+}
+
+export interface IUserNotificationCreateInput extends Omit<IUserNotification, 'isRead' | 'readedAt'> {}
 
 export interface INotificationUpdateInput
-	extends Omit<IUserNotification, 'receiverId' | 'receiver' | 'sentById' | 'sentBy'> { }
+	extends Omit<IUserNotification, 'receiverId' | 'receiver' | 'sentById' | 'sentBy'> {}
