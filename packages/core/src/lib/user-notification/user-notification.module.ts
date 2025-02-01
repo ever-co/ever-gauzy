@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { UserNotification } from './user-notification.entity';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { UserNotificationSettingModule } from './user-notification-setting/user-notification-setting.module';
 import { UserNotificationService } from './user-notification.service';
 import { UserNotificationController } from './user-notification.controller';
 import { EventHandlers } from './events/handlers';
@@ -14,7 +15,8 @@ import { TypeOrmUserNotificationRepository } from './repository/type-orm-user-no
 		TypeOrmModule.forFeature([UserNotification]),
 		MikroOrmModule.forFeature([UserNotification]),
 		CqrsModule,
-		RolePermissionModule
+		RolePermissionModule,
+		UserNotificationSettingModule
 	],
 	controllers: [UserNotificationController],
 	providers: [UserNotificationService, TypeOrmUserNotificationRepository, ...EventHandlers],
