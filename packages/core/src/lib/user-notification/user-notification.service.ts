@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 import {
 	IUserNotification,
@@ -40,12 +40,30 @@ export class UserNotificationService extends TenantAwareCrudService<UserNotifica
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
 			// Search for the receiver notification setting
-			const userSetting = await this.userNotificationSettingService.findOneByWhereOptions({
-				userId: input.receiverId,
-				tenantId,
-				organizationId: input.organizationId
-			});
-
+			let userSetting: IUserNotificationSetting;
+			try {
+				userSetting = await this.userNotificationSettingService.findOneByWhereOptions({
+					userId: input.receiverId,
+					tenantId,
+					organizationId: input.organizationId
+				});
+			} catch (error) {
+				if (error instanceof NotFoundException) {
+					userSetting = await this.userNotificationSettingService.create({
+						userId: input.receiverId,
+						assignment: true,
+						comment: true,
+						invitation: true,
+						mention: true,
+						message: true,
+						payment: true,
+						preferences: {
+							email: true,
+							inApp: true
+						}
+					});
+				}
+			}
 			// Check if the receiver user has activated the notification for the current notification type
 			const isAllowedNotification = this.shouldCreateUserNotification(userSetting, input.type);
 			if (!isAllowedNotification) {

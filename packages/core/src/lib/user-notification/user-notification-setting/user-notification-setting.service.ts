@@ -23,7 +23,7 @@ export class UserNotificationSettingService extends TenantAwareCrudService<UserN
 	 */
 	async create(input: IUserNotificationSetting): Promise<UserNotificationSetting> {
 		try {
-			const userId = RequestContext.currentUserId();
+			const userId = input.userId || RequestContext.currentUserId();
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
 			return super.create({ ...input, userId, tenantId });
