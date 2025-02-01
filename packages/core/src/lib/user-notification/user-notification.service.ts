@@ -1,6 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
-import { IUserNotification, IUserNotificationCreateInput, NotificationActionTypeEnum } from '@gauzy/contracts';
+import {
+	IUserNotification,
+	IUserNotificationCreateInput,
+	IUserNotificationSetting,
+	NotificationActionTypeEnum,
+	UserNotificationTypeEnum
+} from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { UserNotificationEvent } from './events/user-notification.event';
@@ -8,12 +14,14 @@ import { UserNotification } from './user-notification.entity';
 import { TypeOrmUserNotificationRepository } from './repository/type-orm-user-notification.repository';
 import { MikroOrmUserNotificationRepository } from './repository/mikro-orm-user-notification.repository';
 import { generateNotificationTitle } from './user-notification.helper';
+import { UserNotificationSettingService } from './user-notification-setting/user-notification-setting.service';
 
 @Injectable()
 export class UserNotificationService extends TenantAwareCrudService<UserNotification> {
 	constructor(
 		readonly typeOrmUserNotificationRepository: TypeOrmUserNotificationRepository,
 		readonly mikroOrmUserNotificationRepository: MikroOrmUserNotificationRepository,
+		private readonly userNotificationSettingService: UserNotificationSettingService,
 		private readonly _eventBus: EventBus
 	) {
 		super(typeOrmUserNotificationRepository, mikroOrmUserNotificationRepository);
@@ -30,6 +38,19 @@ export class UserNotificationService extends TenantAwareCrudService<UserNotifica
 		try {
 			// Retrieve the current tenant ID from the request context or use the provided tenantId
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+
+			// Search for the receiver notification setting
+			const userSetting = await this.userNotificationSettingService.findOneByWhereOptions({
+				userId: input.receiverId,
+				tenantId,
+				organizationId: input.organizationId
+			});
+
+			// Check if the receiver user has activated the notification for the current notification type
+			const isAllowedNotification = this.shouldCreateUserNotification(userSetting, input.type);
+			if (!isAllowedNotification) {
+				return; // Do nothing if notification is not allowed
+			}
 
 			// Create the notification entry using the provided input along with the tenantId and return the created notification
 			return await super.create({ ...input, tenantId });
@@ -60,5 +81,34 @@ export class UserNotificationService extends TenantAwareCrudService<UserNotifica
 				title: generateNotificationTitle(actionType, input.entity, entityName, userName)
 			})
 		);
+	}
+
+	/**
+	 * Determines whether a user notification should be created based on the user's notification settings and the notification type.
+	 *
+	 * @param userNotificationSetting - The user's notification settings.
+	 * @param type - The type of notification.
+	 * @returns {boolean} True if a user notification should be created, false otherwise.
+	 */
+	private shouldCreateUserNotification(
+		userNotificationSetting: IUserNotificationSetting,
+		type: UserNotificationTypeEnum
+	): boolean {
+		switch (type) {
+			case UserNotificationTypeEnum.PAYMENT:
+				return userNotificationSetting.payment ?? true;
+			case UserNotificationTypeEnum.ASSIGNMENT:
+				return userNotificationSetting.assignment ?? true;
+			case UserNotificationTypeEnum.INVITATION:
+				return userNotificationSetting.invitation ?? true;
+			case UserNotificationTypeEnum.MENTION:
+				return userNotificationSetting.mention ?? true;
+			case UserNotificationTypeEnum.COMMENT:
+				return userNotificationSetting.comment ?? true;
+			case UserNotificationTypeEnum.MESSAGE:
+				return userNotificationSetting.message ?? true;
+			default:
+				return false;
+		}
 	}
 }

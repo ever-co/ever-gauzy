@@ -16,6 +16,7 @@ import { TypeOrmUserNotificationSettingRepository } from './repository/type-orm-
 		CqrsModule
 	],
 	controllers: [UserNotificationSettingController],
-	providers: [UserNotificationSettingService, TypeOrmUserNotificationSettingRepository]
+	providers: [UserNotificationSettingService, TypeOrmUserNotificationSettingRepository],
+	exports: [UserNotificationSettingService, TypeOrmUserNotificationSettingRepository]
 })
 export class UserNotificationSettingModule {}

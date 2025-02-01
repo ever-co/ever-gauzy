@@ -163,6 +163,7 @@ import { DashboardWidgetModule } from '../dashboard/dashboard-widget/dashboard-w
 import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
 import { TagTypeModule } from '../tag-type/tag-type.module';
 import { UserNotificationModule } from '../user-notification/user-notification.module';
+import { UserNotificationSettingModule } from '../user-notification/user-notification-setting/user-notification-setting.module';
 
 const { unleashConfig } = environment;
 
@@ -472,6 +473,7 @@ if (environment.THROTTLE_ENABLED) {
 		DashboardModule,
 		DashboardWidgetModule,
 		UserNotificationModule,
+		UserNotificationSettingModule,
 		TenantApiKeyModule
 	],
 	controllers: [AppController],
