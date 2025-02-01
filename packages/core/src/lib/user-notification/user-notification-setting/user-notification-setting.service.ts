@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { IUserNotificationSetting } from '@gauzy/contracts';
+import { IUserNotificationSetting, IUserNotificationSettingCreateInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../../core/crud';
 import { RequestContext } from '../../core/context';
 import { UserNotificationSetting } from './user-notification-setting.entity';
@@ -21,7 +21,7 @@ export class UserNotificationSettingService extends TenantAwareCrudService<UserN
 	 * @param {IUserNotificationSetting} input - The input data for creating a notification setting
 	 * @returns {Promise<UserNotificationSetting>} The created notification setting
 	 */
-	async create(input: IUserNotificationSetting): Promise<UserNotificationSetting> {
+	async create(input: IUserNotificationSettingCreateInput): Promise<UserNotificationSetting> {
 		try {
 			const userId = input.userId || RequestContext.currentUserId();
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
