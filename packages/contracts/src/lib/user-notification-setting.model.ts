@@ -2,6 +2,8 @@ import { IBasePerTenantAndOrganizationEntityModel, ID, JsonData } from './base-e
 import { IUser } from './user.model';
 
 export interface IUserNotificationSetting extends IBasePerTenantAndOrganizationEntityModel {
+	userId: ID;
+	user?: IUser;
 	payment?: boolean;
 	assignment?: boolean;
 	invitation?: boolean;
@@ -9,6 +11,9 @@ export interface IUserNotificationSetting extends IBasePerTenantAndOrganizationE
 	comment?: boolean;
 	message?: boolean;
 	preferences?: JsonData;
-	userId: ID;
-	user?: IUser;
 }
+
+export interface IUserNotificationSettingCreateInput extends IUserNotificationSetting {}
+
+export interface IUserNotificationSettingUpdateInput
+	extends Omit<IUserNotificationSettingCreateInput, 'userId' | 'user'> {}

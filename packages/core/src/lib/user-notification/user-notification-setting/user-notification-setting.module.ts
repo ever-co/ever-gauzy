@@ -3,6 +3,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
+import { CommandHandlers } from './commands/handlers';
 import { UserNotificationSettingService } from './user-notification-setting.service';
 import { UserNotificationSettingController } from './user-notification-setting.controller';
 import { UserNotificationSetting } from './user-notification-setting.entity';
@@ -16,7 +17,7 @@ import { TypeOrmUserNotificationSettingRepository } from './repository/type-orm-
 		CqrsModule
 	],
 	controllers: [UserNotificationSettingController],
-	providers: [UserNotificationSettingService, TypeOrmUserNotificationSettingRepository],
+	providers: [UserNotificationSettingService, TypeOrmUserNotificationSettingRepository, ...CommandHandlers],
 	exports: [UserNotificationSettingService, TypeOrmUserNotificationSettingRepository]
 })
 export class UserNotificationSettingModule {}
