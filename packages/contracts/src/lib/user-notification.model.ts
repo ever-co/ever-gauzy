@@ -9,6 +9,7 @@ export interface IUserNotification extends IBasePerEntityType {
 	sentBy?: IUser;
 	isRead?: boolean;
 	readAt?: Date;
+	onHoldUntil?: Date;
 	receiverId?: ID;
 	receiver?: IUser;
 }
