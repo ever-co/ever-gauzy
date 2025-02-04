@@ -56,6 +56,15 @@ export class UserNotification extends BasePerEntityType implements IUserNotifica
 	@MultiORMColumn({ nullable: true })
 	readAt?: Date;
 
+	/**
+	 * The date till the notification is supposed to be in snooze status
+	 */
+	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
+	@IsDateString()
+	@MultiORMColumn({ nullable: true })
+	onHoldUntil?: Date;
+
 	/*
     |--------------------------------------------------------------------------
     | @ManyToOne
