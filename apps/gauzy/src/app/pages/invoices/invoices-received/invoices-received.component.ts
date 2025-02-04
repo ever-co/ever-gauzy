@@ -33,6 +33,7 @@ import {
 	InvoiceTotalValueComponent,
 	NotesWithTagsComponent,
 	PaginationFilterBaseComponent,
+	RangeFilterComponent,
 	StatusBadgeComponent,
 	TagsColorFilterComponent,
 	TagsOnlyComponent,
@@ -384,10 +385,14 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 					width: '12%',
 					filter: {
 						type: 'custom',
-						component: InputFilterComponent
+						component: RangeFilterComponent
 					},
-					filterFunction: (totalValue) => {
-						this.setFilter({ field: 'totalValue', search: totalValue });
+					filterFunction: (range) => {
+						const { min, max } = range;
+						this.setFilter({
+							field: 'totalValue',
+							search: { min, max }
+						});
 					},
 					componentInitFunction: (instance: InvoiceTotalValueComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
