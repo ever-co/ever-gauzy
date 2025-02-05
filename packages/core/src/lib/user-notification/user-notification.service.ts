@@ -79,6 +79,28 @@ export class UserNotificationService extends TenantAwareCrudService<UserNotifica
 	}
 
 	/**
+	 * Marks all unread and unarchived notifications for the current user as read.
+	 *
+	 * @throws {BadRequestException} If an error occurs while updating notifications.
+	 * @returns {Promise<any>} A promise that resolves when the operation is complete.
+	 */
+	async markAllAsRead(): Promise<any> {
+		try {
+			// Retrieve the current user ID
+			const userId = RequestContext.currentUserId();
+
+			const readAt = new Date();
+			// Update all user's unread and un archived notifications
+			return await super.update(
+				{ isRead: false, isArchived: false, receiverId: userId },
+				{ isRead: true, readAt }
+			);
+		} catch (error) {
+			throw new BadRequestException('Error while updating notifications', error);
+		}
+	}
+
+	/**
 	 * Publishes a user notification event to create a new notification.
 	 *
 	 * @param input - The input data required to create the notification.
