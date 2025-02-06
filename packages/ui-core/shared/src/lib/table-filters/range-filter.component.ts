@@ -14,6 +14,7 @@ import { DefaultFilter } from 'angular2-smart-table';
 				placeholder="Min"
 				type="number"
 			/>
+			<span>-</span>
 			<input [formControl]="rangeControl.controls.max" class="form-control" placeholder="Max" type="number" />
 		</div>
 	`

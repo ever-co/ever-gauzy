@@ -199,6 +199,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
 				},
+
 				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (invoice: IInvoice) => ({
