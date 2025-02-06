@@ -301,8 +301,12 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				}
 			}
 
-			if ('totalValue' in where) {
-				const { min, max } = where.totalValue;
+			if ('totalValue' in where && where.totalValue) {
+				const { min, max } = where.totalValue as { min?: number; max?: number };
+
+				if (min !== undefined && max !== undefined && min > max) {
+					throw new BadRequestException('Minimum value cannot be greater than maximum value');
+				}
 
 				if (min !== undefined && max !== undefined) {
 					filter.where.totalValue = Between(min, max);

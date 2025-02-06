@@ -13,9 +13,17 @@ import { DefaultFilter } from 'angular2-smart-table';
 				class="form-control me-2"
 				placeholder="Min"
 				type="number"
+				aria-label="Minimum value"
 			/>
-			<span>-</span>
-			<input [formControl]="rangeControl.controls.max" class="form-control" placeholder="Max" type="number" />
+
+			<span aria-hidden="true">-</span>
+			<input
+				[formControl]="rangeControl.controls.max"
+				class="form-control"
+				placeholder="Max"
+				type="number"
+				aria-label="Maximum value"
+			/>
 		</div>
 	`
 })

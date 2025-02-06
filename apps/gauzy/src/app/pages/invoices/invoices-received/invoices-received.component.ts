@@ -388,8 +388,15 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 						type: 'custom',
 						component: RangeFilterComponent
 					},
-					filterFunction: (range) => {
+					filterFunction: (range: { min?: number; max?: number }) => {
 						const { min, max } = range;
+						// Validate range values
+						if ((min !== undefined && min < 0) || (max !== undefined && max < 0)) {
+							return;
+						}
+						if (min !== undefined && max !== undefined && min > max) {
+							return;
+						}
 						this.setFilter({
 							field: 'totalValue',
 							search: { min, max }
