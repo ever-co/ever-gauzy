@@ -262,7 +262,9 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 			.open(AttachReceiptComponent, {
 				context: {
 					currentReceipt: this.form.value.receipt
-				}
+				},
+				closeOnBackdropClick: false,
+				closeOnEsc: false
 			})
 			.onClose.pipe(
 				tap((receipt) => {
