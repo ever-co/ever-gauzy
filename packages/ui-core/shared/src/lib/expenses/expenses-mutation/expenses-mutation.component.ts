@@ -112,6 +112,14 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		this.form
+			.get('typeOfExpense')
+			.valueChanges.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.form.get('status').setValue(null);
+				this.form.get('status').updateValueAndValidity();
+			});
 	}
 
 	ngAfterViewInit() {}
