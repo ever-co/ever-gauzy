@@ -20,6 +20,7 @@ import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.
 import { ContactSelectModule } from '../contact-select/contact-select.module';
 import { TaskStatusSelectModule } from '../tasks/task-status-select/task-status-select.module';
 import { DateFilterComponent } from './date-filter.component';
+import { RangeFilterComponent } from './range-filter.component';
 
 @NgModule({
 	imports: [
@@ -44,6 +45,7 @@ import { DateFilterComponent } from './date-filter.component';
 		VendorFilterComponent,
 		ExpenseCategoryFilterComponent,
 		InputFilterComponent,
+		RangeFilterComponent,
 		OrganizationTeamFilterComponent,
 		TaskStatusFilterComponent,
 		ToggleFilterComponent,

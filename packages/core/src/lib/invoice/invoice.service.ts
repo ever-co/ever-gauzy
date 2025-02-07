@@ -1,6 +1,6 @@
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { Invoice } from './invoice.entity';
-import { Between, In, Not, IsNull } from 'typeorm';
+import { Between, In, Not, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { EmailService } from './../email-send/email.service';
 import {
@@ -432,6 +432,22 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 						moment().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss'),
 						moment().endOf('month').utc().format('YYYY-MM-DD HH:mm:ss')
 					);
+				}
+			}
+
+			if ('totalValue' in where && where.totalValue) {
+				const { min, max } = where.totalValue as { min?: number; max?: number };
+
+				if (min !== undefined && max !== undefined && min > max) {
+					throw new BadRequestException('Minimum value cannot be greater than maximum value');
+				}
+
+				if (min !== undefined && max !== undefined) {
+					filter.where.totalValue = Between(min, max);
+				} else if (min !== undefined) {
+					filter.where.totalValue = MoreThanOrEqual(min);
+				} else if (max !== undefined) {
+					filter.where.totalValue = LessThanOrEqual(max);
 				}
 			}
 		}
