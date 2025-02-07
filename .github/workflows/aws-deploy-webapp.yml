@@ -6,6 +6,7 @@ on:
     paths:
       - 'apps/webapp/**'
       - '.deploy/webapp/**'
+      - '.github/workflows/aws-deploy-webapp.yml'
   workflow_dispatch:
 
 jobs:
