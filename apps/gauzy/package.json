@@ -202,6 +202,7 @@
 		"webpack": "^5.91.0",
 		"webpack-cli": "^4.9.1",
 		"webpack-merge": "^5.10.0",
-		"webpack-node-externals": "^3.0.0"
+		"webpack-node-externals": "^3.0.0",
+		"private": true
 	}
 }
