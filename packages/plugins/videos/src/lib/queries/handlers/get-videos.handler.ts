@@ -30,16 +30,20 @@ export class GetVideosQueryHandler implements IQueryHandler<GetVideosQuery> {
 			timeZone = 'UTC'
 		} = (params || {}) as any;
 
-		// Convert startDate and endDate to UTC based on the provided timeZone
-		const startDateUtc = moment.tz(startDate, timeZone).utc().toDate();
-		const endDateUtc = moment.tz(endDate, timeZone).utc().toDate();
-
 		// Build the dynamic WHERE clause for the query
 		const where: Record<string, any> = {
-			recordedAt: Between(startDateUtc, endDateUtc),
 			tenantId,
 			organizationId
 		};
+
+		// Add recordedAt only if startDate and endDate are provided
+		if (startDate && endDate) {
+			// Convert startDate and endDate to UTC based on the provided timeZone
+			const startDateUtc = moment.tz(startDate, timeZone).utc().toDate();
+			const endDateUtc = moment.tz(endDate, timeZone).utc().toDate();
+			// Update the 'valueDate' property to filter records between the specified dates
+			where.recordedAt = Between(startDateUtc, endDateUtc);
+		}
 
 		// Add employee filter only if employeeIds is provided and non-empty
 		if (employeeIds.length > 0) {
