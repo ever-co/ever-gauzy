@@ -7,6 +7,9 @@
 			[isTimeFormat]="true"
 			[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 			(filtersChange)="filtersChange($event)"
+			[hasLogTypeFilter]="false"
+			[hasSourceFilter]="false"
+			[hasActivityLevelFilter]="false"
 		>
 		</ngx-gauzy-filters>
 	</div>
