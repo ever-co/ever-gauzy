@@ -1,6 +1,8 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { VideosService } from '../../services/videos.service';
 import { GetVideoCountQuery } from '../get-video-count.query';
+import { RequestContext } from '@gauzy/core';
+import { PermissionsEnum } from '@gauzy/contracts';
 
 @QueryHandler(GetVideoCountQuery)
 export class GetVideoCountQueryHandler implements IQueryHandler<GetVideoCountQuery> {
@@ -19,9 +21,12 @@ export class GetVideoCountQueryHandler implements IQueryHandler<GetVideoCountQue
 		const { options } = query || {};
 		// Fetch the video entity from the database
 		const { organizationId, tenantId } = options;
+		// Check if the current user has the permission
+		const permission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 		// Fetch the count of video entities from the database
 		return this.videosService.count({
 			where: {
+				...(!permission && { uploadedById: RequestContext.currentEmployeeId() }),
 				organizationId,
 				tenantId
 			}

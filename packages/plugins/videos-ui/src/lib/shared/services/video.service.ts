@@ -38,7 +38,8 @@ export class VideoService {
 	}
 
 	public get isAvailable$(): Observable<boolean> {
-		const organizationId = this.store.organizationId;
+		const { id: selectedOrganizationId } = this.store.selectedOrganization;
+		const organizationId = selectedOrganizationId || this.store.organizationId;
 		const tenantId = this.store.tenantId;
 
 		if (!organizationId || !tenantId) {
