@@ -34,13 +34,13 @@ import { FindOneOptions } from 'typeorm';
 import { CreateVideoCommand } from './commands/create-video.command';
 import { DeleteVideoCommand } from './commands/delete-video.command';
 import { UpdateVideoCommand } from './commands/update-video.command';
-import { CreateVideoDTO, DeleteVideoDTO, FileDTO, UpdateVideoDTO } from './dto';
+import { CreateVideoDTO, FileDTO, UpdateVideoDTO } from './dto';
 import { CountVideoDTO } from './dto/count-video.dto';
 import { Video } from './entities/video.entity';
 import { GetVideoCountQuery } from './queries/get-video-count.query';
 import { GetVideoQuery } from './queries/get-video.query';
 import { GetVideosQuery } from './queries/get-videos.query';
-import { IVideo } from './video.model';
+import { IDeleteVideo, IVideo } from './video.model';
 
 @ApiTags('Video Plugin')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -289,7 +289,7 @@ export class VideosController {
 		forbidNonWhitelisted: true
 	})
 	@Delete(':id')
-	public async delete(@Param('id', UUIDValidationPipe) id: ID, @Query() options: DeleteVideoDTO): Promise<void> {
+	public async delete(@Param('id', UUIDValidationPipe) id: ID, @Query() options?: IDeleteVideo): Promise<void> {
 		// Execute the delete video command
 		return this.commandBus.execute(new DeleteVideoCommand({ id, options }));
 	}
