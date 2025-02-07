@@ -228,7 +228,7 @@ export class VideosController {
 	})
 	@Put(':id')
 	public async update(@Param('id', UUIDValidationPipe) id: ID, @Body() input: UpdateVideoDTO): Promise<IVideo> {
-		return this.commandBus.execute(new UpdateVideoCommand({ ...input, id }));
+		return this.commandBus.execute(new UpdateVideoCommand(id, input));
 	}
 
 	/**
