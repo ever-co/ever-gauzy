@@ -1,27 +1,22 @@
-name: [DEPRECATED] Deploy to AWS ECR and ECS
-
-# This workflow is deprecated. Please use aws-deploy-api.yml or aws-deploy-webapp.yml instead.
-# This file will be removed in future updates.
+name: Deploy WebApp to AWS
 
 on:
   push:
     branches: [ master, dev ]
+    paths:
+      - 'apps/webapp/**'
+      - '.deploy/webapp/**'
   workflow_dispatch:
 
 jobs:
-  deploy:
-    name: Deploy to AWS
+  deploy-webapp:
+    name: Deploy WebApp to AWS
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
 
     steps:
-      - name: Deprecated Warning
-        run: |
-          echo "This workflow is deprecated. Please use aws-deploy-api.yml or aws-deploy-webapp.yml instead."
-          exit 1
-
       - name: Checkout Repository
         uses: actions/checkout@v3
 
@@ -35,14 +30,6 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build, tag, and push API image to Amazon ECR
-        env:
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker build -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }}:$IMAGE_TAG -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }}:latest -f .deploy/api/Dockerfile .
-          docker push ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }} --all-tags
-          echo "api_image=${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }}:$IMAGE_TAG" >> $GITHUB_ENV
-
       - name: Build, tag, and push webapp image to Amazon ECR
         env:
           IMAGE_TAG: ${{ github.sha }}
@@ -51,21 +38,13 @@ jobs:
           docker push ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_WEBAPP }} --all-tags
           echo "webapp_image=${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_WEBAPP }}:$IMAGE_TAG" >> $GITHUB_ENV
 
-      - name: Update ECS services
+      - name: Update WebApp ECS service
         run: |
-          # Update API service
-          aws ecs update-service \
-            --cluster ${{ vars.ECS_CLUSTER }} \
-            --service ${{ vars.ECS_SERVICE_API }} \
-            --force-new-deployment
-
-          # Update webapp service
           aws ecs update-service \
             --cluster ${{ vars.ECS_CLUSTER }} \
             --service ${{ vars.ECS_SERVICE_WEBAPP }} \
             --force-new-deployment
 
-          # Wait for services to be stable
           aws ecs wait services-stable \
             --cluster ${{ vars.ECS_CLUSTER }} \
-            --services ${{ vars.ECS_SERVICE_API }} ${{ vars.ECS_SERVICE_WEBAPP }}
+            --services ${{ vars.ECS_SERVICE_WEBAPP }}
