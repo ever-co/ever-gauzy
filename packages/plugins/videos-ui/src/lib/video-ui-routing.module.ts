@@ -36,7 +36,7 @@ const routes: Routes = [
 		data: {
 			title: 'Video',
 			selectors: {
-				date: true,
+				date: false,
 				employee: false,
 				project: false,
 				team: false

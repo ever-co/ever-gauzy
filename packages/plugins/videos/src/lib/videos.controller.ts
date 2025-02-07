@@ -1,3 +1,17 @@
+import { FileStorageProviderEnum, ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import {
+	FileStorage,
+	FileStorageFactory,
+	LazyFileInterceptor,
+	PaginationParams,
+	PermissionGuard,
+	Permissions,
+	RequestContext,
+	TenantPermissionGuard,
+	UploadedFileStorage,
+	UseValidationPipe,
+	UUIDValidationPipe
+} from '@gauzy/core';
 import {
 	BadRequestException,
 	Body,
@@ -7,6 +21,7 @@ import {
 	HttpStatus,
 	Param,
 	Post,
+	Put,
 	Query,
 	UseGuards,
 	UseInterceptors
@@ -16,27 +31,16 @@ import { ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { FindOneOptions } from 'typeorm';
-import { FileStorageProviderEnum, ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import {
-	FileStorage,
-	FileStorageFactory,
-	PaginationParams,
-	Permissions,
-	PermissionGuard,
-	UploadedFileStorage,
-	TenantPermissionGuard,
-	UseValidationPipe,
-	RequestContext,
-	UUIDValidationPipe,
-	LazyFileInterceptor
-} from '@gauzy/core';
-import { IVideo } from './video.model';
 import { CreateVideoCommand } from './commands/create-video.command';
 import { DeleteVideoCommand } from './commands/delete-video.command';
+import { UpdateVideoCommand } from './commands/update-video.command';
+import { CreateVideoDTO, FileDTO, UpdateVideoDTO } from './dto';
+import { CountVideoDTO } from './dto/count-video.dto';
+import { Video } from './entities/video.entity';
+import { GetVideoCountQuery } from './queries/get-video-count.query';
 import { GetVideoQuery } from './queries/get-video.query';
 import { GetVideosQuery } from './queries/get-videos.query';
-import { CreateVideoDTO, DeleteVideoDTO, FileDTO } from './dto';
-import { Video } from './entities/video.entity';
+import { IDeleteVideo, IVideo } from './video.model';
 
 @ApiTags('Video Plugin')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -159,6 +163,75 @@ export class VideosController {
 	}
 
 	/**
+	 * GET video count in the same tenant.
+	 *
+	 * This endpoint retrieves the count of videos within a specific tenant.
+	 * It takes query parameters to filter the video count by certain criteria.
+	 *
+	 * @param options Query parameters to filter the video count.
+	 * @returns A promise resolving to the total count of videos in the tenant.
+	 */
+	@ApiOperation({ summary: 'Get video count in the same tenant' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Successfully retrieved the video count.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid query parameters. Please check your input.'
+	})
+	@ApiResponse({
+		status: HttpStatus.INTERNAL_SERVER_ERROR,
+		description: 'An error occurred while retrieving the video count.'
+	})
+	@Get('count')
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
+	async getCount(@Query() options: CountVideoDTO): Promise<number> {
+		return this.queryBus.execute(new GetVideoCountQuery(options));
+	}
+
+	/**
+	 * Updates an existing video record.
+	 *
+	 * This endpoint allows authorized users to update an existing video record by providing its ID
+	 * and the necessary updated metadata.
+	 *
+	 * @param id - The UUID of the video to update.
+	 * @param input - The updated video metadata.
+	 * @returns A Promise that resolves with the details of the updated video.
+	 */
+	@ApiOperation({
+		summary: 'Update a video by ID',
+		description: 'Updates an existing video record based on the provided ID and metadata.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'The video has been successfully updated.',
+		type: Video
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Video record not found.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input, The response body may contain clues as to what went wrong.'
+	})
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
+	@Put(':id')
+	public async update(@Param('id', UUIDValidationPipe) id: ID, @Body() input: UpdateVideoDTO): Promise<IVideo> {
+		return this.commandBus.execute(new UpdateVideoCommand(id, input));
+	}
+
+	/**
 	 * Retrieves a video record by its ID.
 	 *
 	 * @param id - The UUID of the video to retrieve.2024-12-23T08:00:00.000Z
@@ -215,13 +288,8 @@ export class VideosController {
 		transform: true,
 		forbidNonWhitelisted: true
 	})
-	@UseValidationPipe({
-		whitelist: true,
-		transform: true,
-		forbidNonWhitelisted: true
-	})
 	@Delete(':id')
-	public async delete(@Param('id', UUIDValidationPipe) id: ID, @Query() options: DeleteVideoDTO): Promise<void> {
+	public async delete(@Param('id', UUIDValidationPipe) id: ID, @Query() options?: IDeleteVideo): Promise<void> {
 		// Execute the delete video command
 		return this.commandBus.execute(new DeleteVideoCommand({ id, options }));
 	}

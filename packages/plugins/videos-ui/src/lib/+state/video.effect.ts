@@ -105,7 +105,8 @@ export class VideoEffects {
 					tap((video) => {
 						const videos = this.videoQuery.videos;
 						this.videoStore.update({
-							videos: [...new Map([...videos, video].map((item) => [item.id, item])).values()]
+							videos: [...new Map([...videos, video].map((item) => [item.id, item])).values()],
+							video
 						});
 						this.toastrService.success('Video updated successfully');
 					}),
