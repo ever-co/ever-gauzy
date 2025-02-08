@@ -1,4 +1,5 @@
-import { IPagination } from '@gauzy/contracts';
+import { IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { RequestContext } from '@gauzy/core';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import * as moment from 'moment-timezone';
 import { Between, In } from 'typeorm';
@@ -35,6 +36,12 @@ export class GetVideosQueryHandler implements IQueryHandler<GetVideosQuery> {
 			tenantId,
 			organizationId
 		};
+
+		const permission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+		// If the current user doesn't have the permission to select employee, filter by uploadedById
+		if (!permission) {
+			where.uploadedById = RequestContext.currentEmployeeId();
+		}
 
 		// Add recordedAt only if startDate and endDate are provided
 		if (startDate && endDate) {
