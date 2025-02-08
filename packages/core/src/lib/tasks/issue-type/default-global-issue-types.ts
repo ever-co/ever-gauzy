@@ -35,7 +35,7 @@ export const DEFAULT_GLOBAL_ISSUE_TYPES: IIssueType[] = [
 		value: TaskTypeEnum.MEMO,
 		description:
 			'Memos are short notes used to document ideas, discussions, or important details within a project.',
-		icon: 'task-issue-types/category.svg',
+		icon: 'task-issue-types/memo.svg',
 		color: '#8154BA',
 		isSystem: true,
 		isDefault: false
