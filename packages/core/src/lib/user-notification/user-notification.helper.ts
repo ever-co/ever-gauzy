@@ -6,7 +6,7 @@ const UserNotificationTemplates = {
 	[NotificationActionTypeEnum.Assigned]: `{userName} {action} you to the {entity} "{entityName}"`,
 	[NotificationActionTypeEnum.Invited]: `{userName} {action} you to join the {entity} "{entityName}"`,
 	[NotificationActionTypeEnum.Mentioned]: `{userName} {action} you on the {entity} "{entityName}"`,
-	[NotificationActionTypeEnum.Messaged]: `{userName} {action} you a new message"`
+	[NotificationActionTypeEnum.Messaged]: `{userName} sent you a new message"`
 };
 
 export function generateNotificationTitle(

@@ -35,7 +35,7 @@ export enum NotificationActionTypeEnum {
 	Invited = 'Invited',
 	Mentioned = 'Mentioned',
 	Commented = 'Commented',
-	Messaged = 'Sent'
+	Messaged = 'Messaged'
 }
 
 export interface IUserNotificationCreateInput extends Omit<IUserNotification, 'isRead' | 'readAt'> {}
