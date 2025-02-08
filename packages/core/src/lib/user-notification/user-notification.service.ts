@@ -79,7 +79,7 @@ export class UserNotificationService extends TenantAwareCrudService<UserNotifica
 	}
 
 	/**
-	 * Marks all unread and unarchived notifications for the current user as read.
+	 * Marks all unread and un-archived notifications for the current user as read.
 	 *
 	 * @throws {BadRequestException} If an error occurs while updating notifications.
 	 * @returns {Promise<any>} A promise that resolves when the operation is complete.
