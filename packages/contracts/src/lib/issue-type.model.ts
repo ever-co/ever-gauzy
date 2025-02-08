@@ -32,5 +32,6 @@ export enum TaskTypeEnum {
 	EPIC = 'epic',
 	STORY = 'story',
 	TASK = 'task',
-	BUG = 'bug'
+	BUG = 'bug',
+	MEMO = 'memo'
 }
