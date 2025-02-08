@@ -60,7 +60,9 @@ export class UserNotificationService extends TenantAwareCrudService<UserNotifica
 						preferences: {
 							email: true,
 							inApp: true
-						}
+						},
+						organizationId: input.organizationId,
+						tenantId
 					});
 				}
 			}
