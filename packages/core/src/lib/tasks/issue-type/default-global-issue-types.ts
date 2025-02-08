@@ -31,6 +31,16 @@ export const DEFAULT_GLOBAL_ISSUE_TYPES: IIssueType[] = [
 		isDefault: false
 	},
 	{
+		name: 'Memo',
+		value: TaskTypeEnum.MEMO,
+		description:
+			'Memos are short notes used to document ideas, discussions, or important details within a project.',
+		icon: 'task-issue-types/category.svg',
+		color: '#8154BA',
+		isSystem: true,
+		isDefault: true
+	},
+	{
 		name: 'Epic',
 		value: TaskTypeEnum.EPIC,
 		description: 'An "epic type issue" typically refers to an issue related to an Epic in software development.',
