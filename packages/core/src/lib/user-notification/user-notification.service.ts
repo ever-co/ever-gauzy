@@ -34,7 +34,7 @@ export class UserNotificationService extends TenantAwareCrudService<UserNotifica
 	 * @returns The created notification entry.
 	 * @throws BadRequestException when the log creation fails.
 	 */
-	async create(input: IUserNotificationCreateInput): Promise<IUserNotification> {
+	async create(input: IUserNotificationCreateInput): Promise<IUserNotification | undefined> {
 		try {
 			// Retrieve the current tenant ID from the request context or use the provided tenantId
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
@@ -69,7 +69,7 @@ export class UserNotificationService extends TenantAwareCrudService<UserNotifica
 			// Check if the receiver user has activated the notification for the current notification type
 			const isAllowedNotification = this.shouldCreateUserNotification(userSetting, input.type);
 			if (!isAllowedNotification) {
-				return; // Do nothing if notification is not allowed
+				return undefined; // Do nothing if notification is not allowed
 			}
 
 			// Create the notification entry using the provided input along with the tenantId and return the created notification
@@ -86,17 +86,16 @@ export class UserNotificationService extends TenantAwareCrudService<UserNotifica
 	 * @throws {BadRequestException} If an error occurs while updating notifications.
 	 * @returns {Promise<any>} A promise that resolves when the operation is complete.
 	 */
-	async markAllAsRead(): Promise<any> {
+	async markAllAsRead(): Promise<{ message: string }> {
 		try {
 			// Retrieve the current user ID
 			const userId = RequestContext.currentUserId();
 
 			const readAt = new Date();
 			// Update all user's unread and un archived notifications
-			return await super.update(
-				{ isRead: false, isArchived: false, receiverId: userId },
-				{ isRead: true, readAt }
-			);
+			await super.update({ isRead: false, isArchived: false, receiverId: userId }, { isRead: true, readAt });
+
+			return { message: 'successful' };
 		} catch (error) {
 			throw new BadRequestException('Error while updating notifications', error);
 		}
