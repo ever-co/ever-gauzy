@@ -53,6 +53,7 @@ export class VideoPageComponent extends BaseSelectorFilterComponent implements O
 						distinctUntilChange(),
 						tap(() => {
 							this.skip = 1;
+							this.videoStore.update({ videos: [] });
 							this.fetchVideos();
 							this.hasNext = hasNext;
 						})
