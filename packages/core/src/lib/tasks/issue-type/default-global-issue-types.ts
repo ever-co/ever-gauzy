@@ -38,7 +38,7 @@ export const DEFAULT_GLOBAL_ISSUE_TYPES: IIssueType[] = [
 		icon: 'task-issue-types/category.svg',
 		color: '#8154BA',
 		isSystem: true,
-		isDefault: true
+		isDefault: false
 	},
 	{
 		name: 'Epic',
