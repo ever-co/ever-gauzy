@@ -196,7 +196,12 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			/** Tenant API Key */
 			PermissionsEnum.TENANT_API_KEY_CREATE,
 			PermissionsEnum.TENANT_API_KEY_VIEW,
-			PermissionsEnum.TENANT_API_KEY_DELETE
+			PermissionsEnum.TENANT_API_KEY_DELETE,
+			/** Employee Availability */
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE,
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_READ,
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE,
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE
 		]
 	},
 	{
@@ -399,7 +404,12 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			/** Tenant API Key */
 			PermissionsEnum.TENANT_API_KEY_CREATE,
 			PermissionsEnum.TENANT_API_KEY_VIEW,
-			PermissionsEnum.TENANT_API_KEY_DELETE
+			PermissionsEnum.TENANT_API_KEY_DELETE,
+			/** Employee Availability */
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE,
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_READ,
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE,
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE
 		]
 	},
 	{
@@ -534,7 +544,12 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ALLOW_MODIFY_TIME,
 			PermissionsEnum.ALLOW_MANUAL_TIME,
 			PermissionsEnum.DELETE_SCREENSHOTS,
-			PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW
+			PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW,
+			/** Employee Availability */
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE,
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_READ,
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE,
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE
 		]
 	},
 	{

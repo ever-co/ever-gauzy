@@ -36,6 +36,7 @@ export * from '../../email-history/email-history.entity';
 export * from '../../email-reset/email-reset.entity';
 export * from '../../email-template/email-template.entity';
 export * from '../../employee-appointment/employee-appointment.entity';
+export * from '../../employee-availability/employee-availability.entity';
 export * from '../../employee-award/employee-award.entity';
 export * from '../../employee-level/employee-level.entity';
 export * from '../../employee-phone/employee-phone.entity';
