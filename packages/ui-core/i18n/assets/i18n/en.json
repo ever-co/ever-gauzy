@@ -2263,7 +2263,11 @@
 			"ORG_MEMBER_LAST_LOG_VIEW": "View Last Log",
 			"TENANT_API_KEY_CREATE": "Create API Key",
 			"TENANT_API_KEY_VIEW": "View API Key",
-			"TENANT_API_KEY_DELETE": "Delete API Key"
+			"TENANT_API_KEY_DELETE": "Delete API Key",
+			"EMPLOYEE_AVAILABILITY_CREATE": "Create Employee Availability",
+			"EMPLOYEE_AVAILABILITY_READ": "View Employee Availability",
+			"EMPLOYEE_AVAILABILITY_UPDATE": "Update Employee Availability",
+			"EMPLOYEE_AVAILABILITY_DELETE": "Delete Employee Availability"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",

@@ -16,7 +16,7 @@ import {
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { Collection, CreateOptions, FilterQuery as MikroFilterQuery, RequiredEntityData, wrap } from '@mikro-orm/core';
 import { AssignOptions } from '@mikro-orm/knex';
-import { IPagination } from '@gauzy/contracts';
+import { ID, IPagination } from '@gauzy/contracts';
 import { BaseEntity, SoftDeletableBaseEntity } from '../entities/internal';
 import { multiORMCreateQueryBuilder } from '../../core/orm/query-builder/query-builder.factory';
 import { IQueryBuilder } from '../../core/orm/query-builder/iquery-builder';
@@ -45,7 +45,6 @@ import { ITryRequest } from './try-request';
 const ormType: MultiORM = getORMType();
 
 export abstract class CrudService<T extends BaseEntity> implements ICrudService<T> {
-
 	constructor(
 		protected readonly typeOrmRepository: Repository<T>,
 		protected readonly mikroOrmRepository: MikroOrmBaseEntityRepository<T>
@@ -347,7 +346,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @param options
 	 * @returns
 	 */
-	public async findOneByIdString(id: T['id'], options?: IFindOneOptions<T>): Promise<T> {
+	public async findOneByIdString(id: ID, options?: IFindOneOptions<T>): Promise<T> {
 		let record: T;
 
 		switch (this.ormType) {
@@ -645,7 +644,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @param saveOptions - Additional save options for the ORM operation (specific to TypeORM).
 	 * @returns A promise that resolves to the softly removed entity.
 	 */
-	public async softRemove(id: T['id'], options?: IFindOneOptions<T>, saveOptions?: SaveOptions): Promise<T> {
+	public async softRemove(id: ID, options?: IFindOneOptions<T>, saveOptions?: SaveOptions): Promise<T> {
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
@@ -681,7 +680,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @param options - Optional settings for database save operations.
 	 * @returns A promise that resolves with the recovered entity.
 	 */
-	public async softRecover(id: T['id'], options?: IFindOneOptions<T>, saveOptions?: SaveOptions): Promise<T> {
+	public async softRecover(id: ID, options?: IFindOneOptions<T>, saveOptions?: SaveOptions): Promise<T> {
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
