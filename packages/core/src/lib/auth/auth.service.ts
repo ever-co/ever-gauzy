@@ -12,6 +12,9 @@ import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
 import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
 import { pick } from 'underscore';
+import { IAppIntegrationConfig } from '@gauzy/common';
+import { environment } from '@gauzy/config';
+import { DEMO_PASSWORD_LESS_MAGIC_CODE } from '@gauzy/constants';
 import {
 	IUserRegistrationInput,
 	LanguagesEnum,
@@ -39,12 +42,10 @@ import {
 	ILastOrganization,
 	ID
 } from '@gauzy/contracts';
-import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
-import { IAppIntegrationConfig, createQueryParamsString, deepMerge, isNotEmpty } from '@gauzy/common';
+import { buildQueryString, deepMerge, generateAlphaNumericCode, isNotEmpty } from '@gauzy/utils';
 import { AccountRegistrationEvent } from '../event-bus/events';
 import { EventBus } from '../event-bus/event-bus';
-import { ALPHA_NUMERIC_CODE_LENGTH, DEMO_PASSWORD_LESS_MAGIC_CODE } from './../constants';
 import { EmailService } from './../email-send/email.service';
 import { UserService } from '../user/user.service';
 import { EmployeeService } from '../employee/employee.service';
@@ -53,7 +54,7 @@ import { UserOrganizationService } from '../user-organization/user-organization.
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
 import { PasswordResetCreateCommand, PasswordResetGetCommand } from './../password-reset/commands';
 import { RequestContext } from './../core/context';
-import { freshTimestamp, generateRandomAlphaNumericCode } from './../core/utils';
+import { freshTimestamp } from './../core/utils';
 import { OrganizationTeam, Tenant, User } from './../core/entities/internal';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -180,7 +181,7 @@ export class AuthService extends SocialAuthService {
 			throw new UnauthorizedException();
 		}
 
-		const code = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
+		const code = generateAlphaNumericCode();
 		const codeExpireAt = moment().add(environment.MAGIC_CODE_EXPIRATION_TIME, 'seconds').toDate();
 
 		// Update all users with a single query
@@ -305,7 +306,7 @@ export class AuthService extends SocialAuthService {
 			);
 		}
 
-		const code = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
+		const code = generateAlphaNumericCode();
 		const codeExpireAt = moment().add(environment.MAGIC_CODE_EXPIRATION_TIME, 'seconds').toDate();
 
 		// Update all users with a single query
@@ -489,7 +490,7 @@ export class AuthService extends SocialAuthService {
 		}
 
 		// Convert query params object to a string
-		const queryString = createQueryParamsString(params);
+		const queryString = buildQueryString(params);
 
 		// Combine base URL with query params
 		return `${baseURL}?${queryString}`;
@@ -954,7 +955,7 @@ export class AuthService extends SocialAuthService {
 			}
 
 			if (!isDemoCode) {
-				magicCode = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
+				magicCode = generateAlphaNumericCode();
 			}
 
 			// Calculate the expiration time for the code

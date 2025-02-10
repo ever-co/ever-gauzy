@@ -52,6 +52,7 @@
 		"@fullcalendar/interaction": "^6.1.15",
 		"@fullcalendar/moment-timezone": "^6.1.15",
 		"@fullcalendar/timegrid": "^6.1.15",
+		"@gauzy/constants": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@jitsu/js": "^1.9.12",
 		"@kurkle/color": "^0.3.2",

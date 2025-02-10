@@ -3,7 +3,7 @@ import { In } from 'typeorm';
 import * as moment from 'moment';
 import { chain, omit, pluck, uniq } from 'underscore';
 import { DateRange, IActivity, ID, IScreenshot, ITimeLog, ITimeSlot } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { Activity, Screenshot, TimeSlot } from './../../../../core/entities/internal';
 import { RequestContext } from './../../../../core/context';
 import { getDateRangeFormat } from './../../../../core/utils';

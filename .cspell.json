@@ -549,7 +549,8 @@
 		"apidemoda",
 		"forin",
 		"distutils",
-		"loggable"
+		"loggable",
+		"inversed"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

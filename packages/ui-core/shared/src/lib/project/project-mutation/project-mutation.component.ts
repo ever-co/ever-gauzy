@@ -8,7 +8,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { uniq } from 'underscore';
-import { environment } from '@gauzy/ui-config';
+import { SyncTags } from '@gauzy/constants';
 import {
 	IOrganization,
 	IOrganizationContact,
@@ -28,10 +28,11 @@ import {
 	IOrganizationProjectSetting,
 	IIntegrationMapSyncRepository,
 	IOrganizationGithubRepository,
-	SYNC_TAG_GAUZY,
 	IOrganizationProjectEmployee,
 	ID
 } from '@gauzy/contracts';
+import { environment } from '@gauzy/ui-config';
+import { DUMMY_PROFILE_IMAGE, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	GithubService,
 	OrganizationContactService,
@@ -42,7 +43,6 @@ import {
 	ToastrService,
 	Store
 } from '@gauzy/ui-core/core';
-import { DUMMY_PROFILE_IMAGE, distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { patterns } from '../../regex/regex-patterns.const';
 import { FormHelpers } from '../../forms/helpers';
@@ -623,7 +623,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 							organizationId,
 							tenantId,
 							customFields: { repositoryId },
-							...(!this.projectSettingForm.get('syncTag').value ? { syncTag: SYNC_TAG_GAUZY } : {})
+							...(!this.projectSettingForm.get('syncTag').value ? { syncTag: SyncTags.GAUZY } : {})
 						});
 					}),
 					tap(() => {

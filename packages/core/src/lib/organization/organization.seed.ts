@@ -3,6 +3,7 @@ import * as moment from 'moment';
 import * as timezone from 'moment-timezone';
 import { DataSource } from 'typeorm';
 import { faker } from '@faker-js/faker';
+import { DEFAULT_DATE_FORMATS } from '@gauzy/constants';
 import {
 	DefaultValueDateTypeEnum,
 	BonusTypeEnum,
@@ -10,7 +11,6 @@ import {
 	AlignmentOptions,
 	IOrganization,
 	ITenant,
-	DEFAULT_DATE_FORMATS,
 	ISkill,
 	IContact
 } from '@gauzy/contracts';
@@ -27,16 +27,16 @@ import { Contact, Organization, Skill } from '../core/entities/internal';
  * @returns A promise that resolves to the default organization if it exists, otherwise `null`.
  */
 export const getDefaultOrganization = async (
-    dataSource: DataSource,
-    tenant: ITenant
+	dataSource: DataSource,
+	tenant: ITenant
 ): Promise<IOrganization | null> => {
-    if (!tenant?.id) {
-        throw new Error('Invalid tenant: Tenant ID is required.');
-    }
+	if (!tenant?.id) {
+		throw new Error('Invalid tenant: Tenant ID is required.');
+	}
 
-    return dataSource.getRepository(Organization).findOne({
-        where: { tenantId: tenant.id, isDefault: true },
-    });
+	return dataSource.getRepository(Organization).findOne({
+		where: { tenantId: tenant.id, isDefault: true }
+	});
 };
 
 /**
@@ -47,17 +47,14 @@ export const getDefaultOrganization = async (
  * @returns A promise that resolves to an array of organizations for the specified tenant.
  * @throws Error if the tenant ID is not provided or invalid.
  */
-export const getDefaultOrganizations = async (
-    dataSource: DataSource,
-    tenant: ITenant
-): Promise<IOrganization[]> => {
-    if (!tenant?.id) {
-        throw new Error('Invalid tenant: Tenant ID is required.');
-    }
+export const getDefaultOrganizations = async (dataSource: DataSource, tenant: ITenant): Promise<IOrganization[]> => {
+	if (!tenant?.id) {
+		throw new Error('Invalid tenant: Tenant ID is required.');
+	}
 
-    return dataSource.getRepository(Organization).find({
-        where: { tenantId: tenant.id },
-    });
+	return dataSource.getRepository(Organization).find({
+		where: { tenantId: tenant.id }
+	});
 };
 
 let defaultOrganizationsInserted = [];
@@ -76,64 +73,64 @@ export const createDefaultOrganizations = async (
 	organizations: any
 ): Promise<Organization[]> => {
 	if (!tenant) {
-        throw new Error('Tenant is required to create default organizations.');
-    }
+		throw new Error('Tenant is required to create default organizations.');
+	}
 
 	const defaultOrganizations: IOrganization[] = [];
 	const skills = await getRandomSkills(dataSource, faker.number.int({ min: 1, max: 4 }));
-    const contacts = await getRandomContacts(dataSource);
+	const contacts = await getRandomContacts(dataSource);
 
 	for (const organization of organizations) {
-        const { name, currency, defaultValueDateType, imageUrl, isDefault, totalEmployees } = organization;
+		const { name, currency, defaultValueDateType, imageUrl, isDefault, totalEmployees } = organization;
 
-        const defaultOrganization = new Organization();
-        defaultOrganization.name = name;
-        defaultOrganization.isDefault = isDefault || false;
-        defaultOrganization.totalEmployees = totalEmployees || 0;
-        defaultOrganization.profile_link = generateLink(name);
-        defaultOrganization.currency = currency || 'USD';
-        defaultOrganization.defaultValueDateType = defaultValueDateType || 'CURRENT_DATE';
+		const defaultOrganization = new Organization();
+		defaultOrganization.name = name;
+		defaultOrganization.isDefault = isDefault || false;
+		defaultOrganization.totalEmployees = totalEmployees || 0;
+		defaultOrganization.profile_link = generateLink(name);
+		defaultOrganization.currency = currency || 'USD';
+		defaultOrganization.defaultValueDateType = defaultValueDateType || 'CURRENT_DATE';
 		defaultOrganization.imageUrl = imageUrl;
-        defaultOrganization.invitesAllowed = true;
-        defaultOrganization.bonusType = BonusTypeEnum.REVENUE_BASED_BONUS;
-        defaultOrganization.bonusPercentage = 10;
-        defaultOrganization.registrationDate = faker.date.past({ years: 5 });
-        defaultOrganization.overview = faker.lorem.sentence();
-        defaultOrganization.short_description = faker.lorem.sentence();
-        defaultOrganization.client_focus = faker.lorem.sentence();
-        defaultOrganization.show_profits = false;
-        defaultOrganization.show_bonuses_paid = false;
-        defaultOrganization.show_income = false;
-        defaultOrganization.show_total_hours = false;
-        defaultOrganization.show_projects_count = true;
-        defaultOrganization.show_minimum_project_size = true;
-        defaultOrganization.show_clients_count = true;
-        defaultOrganization.show_clients = true;
-        defaultOrganization.show_employees_count = true;
-        defaultOrganization.banner = faker.lorem.sentence();
-        defaultOrganization.skills = skills;
-        defaultOrganization.brandColor = faker.internet.color();
-        defaultOrganization.timeZone = faker.helpers.arrayElement(
-            timezone.tz.names().filter((zone) => zone.includes('/'))
-        );
-        defaultOrganization.dateFormat = faker.helpers.arrayElement(DEFAULT_DATE_FORMATS);
-        defaultOrganization.contact = getRandomElement(contacts);
-        defaultOrganization.defaultAlignmentType = faker.helpers.arrayElement(Object.keys(AlignmentOptions));
-        defaultOrganization.fiscalStartDate = moment().add(faker.number.int(10), 'days').toDate();
-        defaultOrganization.fiscalEndDate = moment(defaultOrganization.fiscalStartDate)
-            .add(faker.number.int({ min: 10, max: 20 }), 'days')
-            .toDate();
-        defaultOrganization.futureDateAllowed = true;
-        defaultOrganization.inviteExpiryPeriod = faker.number.int(50);
-        defaultOrganization.numberFormat = faker.helpers.arrayElement(['USD', 'BGN', 'ILS']);
-        defaultOrganization.officialName = faker.company.name();
-        defaultOrganization.separateInvoiceItemTaxAndDiscount = faker.datatype.boolean();
-        defaultOrganization.startWeekOn = WeekDaysEnum.MONDAY;
-        defaultOrganization.tenant = tenant;
-        defaultOrganization.valueDate = moment().add(faker.number.int(10), 'days').toDate();
+		defaultOrganization.invitesAllowed = true;
+		defaultOrganization.bonusType = BonusTypeEnum.REVENUE_BASED_BONUS;
+		defaultOrganization.bonusPercentage = 10;
+		defaultOrganization.registrationDate = faker.date.past({ years: 5 });
+		defaultOrganization.overview = faker.lorem.sentence();
+		defaultOrganization.short_description = faker.lorem.sentence();
+		defaultOrganization.client_focus = faker.lorem.sentence();
+		defaultOrganization.show_profits = false;
+		defaultOrganization.show_bonuses_paid = false;
+		defaultOrganization.show_income = false;
+		defaultOrganization.show_total_hours = false;
+		defaultOrganization.show_projects_count = true;
+		defaultOrganization.show_minimum_project_size = true;
+		defaultOrganization.show_clients_count = true;
+		defaultOrganization.show_clients = true;
+		defaultOrganization.show_employees_count = true;
+		defaultOrganization.banner = faker.lorem.sentence();
+		defaultOrganization.skills = skills;
+		defaultOrganization.brandColor = faker.internet.color();
+		defaultOrganization.timeZone = faker.helpers.arrayElement(
+			timezone.tz.names().filter((zone) => zone.includes('/'))
+		);
+		defaultOrganization.dateFormat = faker.helpers.arrayElement(DEFAULT_DATE_FORMATS);
+		defaultOrganization.contact = getRandomElement(contacts);
+		defaultOrganization.defaultAlignmentType = faker.helpers.arrayElement(Object.keys(AlignmentOptions));
+		defaultOrganization.fiscalStartDate = moment().add(faker.number.int(10), 'days').toDate();
+		defaultOrganization.fiscalEndDate = moment(defaultOrganization.fiscalStartDate)
+			.add(faker.number.int({ min: 10, max: 20 }), 'days')
+			.toDate();
+		defaultOrganization.futureDateAllowed = true;
+		defaultOrganization.inviteExpiryPeriod = faker.number.int(50);
+		defaultOrganization.numberFormat = faker.helpers.arrayElement(['USD', 'BGN', 'ILS']);
+		defaultOrganization.officialName = faker.company.name();
+		defaultOrganization.separateInvoiceItemTaxAndDiscount = faker.datatype.boolean();
+		defaultOrganization.startWeekOn = WeekDaysEnum.MONDAY;
+		defaultOrganization.tenant = tenant;
+		defaultOrganization.valueDate = moment().add(faker.number.int(10), 'days').toDate();
 
-        defaultOrganizations.push(defaultOrganization);
-    }
+		defaultOrganizations.push(defaultOrganization);
+	}
 
 	await insertOrganizations(dataSource, defaultOrganizations);
 	defaultOrganizationsInserted = [...defaultOrganizations];
@@ -150,43 +147,42 @@ export const createDefaultOrganizations = async (
  * @returns A promise that resolves to a map of tenants and their corresponding organizations.
  */
 export const createRandomOrganizations = async (
-    dataSource: DataSource,
-    tenants: ITenant[],
-    organizationsPerTenant: number
+	dataSource: DataSource,
+	tenants: ITenant[],
+	organizationsPerTenant: number
 ): Promise<Map<ITenant, IOrganization[]>> => {
-    if (!tenants || tenants.length === 0) {
-        throw new Error('Tenants are required to create random organizations.');
-    }
+	if (!tenants || tenants.length === 0) {
+		throw new Error('Tenants are required to create random organizations.');
+	}
 
-    const skills = await getRandomSkills(dataSource, faker.number.int({ min: 1, max: 4 }));
-    const defaultDateTypes = Object.values(DefaultValueDateTypeEnum);
-    const tenantOrganizations: Map<ITenant, IOrganization[]> = new Map();
+	const skills = await getRandomSkills(dataSource, faker.number.int({ min: 1, max: 4 }));
+	const defaultDateTypes = Object.values(DefaultValueDateTypeEnum);
+	const tenantOrganizations: Map<ITenant, IOrganization[]> = new Map();
 
-    for await (const tenant of tenants) {
-        const randomOrganizations: IOrganization[] = [];
+	for await (const tenant of tenants) {
+		const randomOrganizations: IOrganization[] = [];
 
-        if (tenant.name === 'Ever') {
-            tenantOrganizations.set(tenant, defaultOrganizationsInserted);
-        } else {
-            for (let index = 0; index < organizationsPerTenant; index++) {
-                const organization = await generateRandomOrganization(
-                    tenant,
-                    index === 0, // Set the first organization as default
-                    defaultDateTypes[index % defaultDateTypes.length],
-                    skills,
-                    dataSource
-                );
-                randomOrganizations.push(organization);
-            }
+		if (tenant.name === 'Ever') {
+			tenantOrganizations.set(tenant, defaultOrganizationsInserted);
+		} else {
+			for (let index = 0; index < organizationsPerTenant; index++) {
+				const organization = await generateRandomOrganization(
+					tenant,
+					index === 0, // Set the first organization as default
+					defaultDateTypes[index % defaultDateTypes.length],
+					skills,
+					dataSource
+				);
+				randomOrganizations.push(organization);
+			}
 
 			await insertOrganizations(dataSource, randomOrganizations);
-            tenantOrganizations.set(tenant, randomOrganizations);
-        }
-    }
+			tenantOrganizations.set(tenant, randomOrganizations);
+		}
+	}
 
-    return tenantOrganizations;
+	return tenantOrganizations;
 };
-
 
 /**
  * Generates a random organization entity.
@@ -199,62 +195,60 @@ export const createRandomOrganizations = async (
  * @returns A randomly generated organization entity.
  */
 const generateRandomOrganization = async (
-    tenant: ITenant,
-    isDefault: boolean,
-    defaultValueDateType: DefaultValueDateTypeEnum,
-    skills: ISkill[],
-    dataSource: DataSource
+	tenant: ITenant,
+	isDefault: boolean,
+	defaultValueDateType: DefaultValueDateTypeEnum,
+	skills: ISkill[],
+	dataSource: DataSource
 ): Promise<IOrganization> => {
-    const timeZone = faker.helpers.arrayElement(timezone.tz.names().filter((zone) => zone.includes('/')));
-    const companyName = faker.company.name();
-    const logoAbbreviation = _extractLogoAbbreviation(companyName);
-    const contacts = await getRandomContacts(dataSource);
-    const { bonusType, bonusPercentage } = randomBonus();
+	const timeZone = faker.helpers.arrayElement(timezone.tz.names().filter((zone) => zone.includes('/')));
+	const companyName = faker.company.name();
+	const logoAbbreviation = _extractLogoAbbreviation(companyName);
+	const contacts = await getRandomContacts(dataSource);
+	const { bonusType, bonusPercentage } = randomBonus();
 
-    const organization = new Organization();
-    organization.name = companyName;
-    organization.isDefault = isDefault;
-    organization.totalEmployees = 5;
-    organization.profile_link = generateLink(companyName);
-    organization.currency = env.defaultCurrency;
-    organization.defaultValueDateType = defaultValueDateType;
-    organization.imageUrl = getDummyImage(330, 300, logoAbbreviation);
-    organization.invitesAllowed = true;
-    organization.bonusType = bonusType;
-    organization.bonusPercentage = bonusPercentage;
-    organization.registrationDate = faker.date.past({ years: Math.floor(Math.random() * 10) + 1 });
-    organization.overview = faker.lorem.sentence();
-    organization.short_description = faker.lorem.sentence();
-    organization.client_focus = faker.lorem.sentence();
-    organization.show_profits = false;
-    organization.show_bonuses_paid = false;
-    organization.show_income = false;
-    organization.show_total_hours = false;
-    organization.show_projects_count = true;
-    organization.show_minimum_project_size = true;
-    organization.show_clients_count = true;
-    organization.show_employees_count = true;
-    organization.banner = faker.lorem.sentence();
-    organization.skills = skills;
-    organization.brandColor = faker.internet.color();
-    organization.contact = getRandomElement(contacts);
-    organization.timeZone = timeZone;
-    organization.dateFormat = faker.helpers.arrayElement(DEFAULT_DATE_FORMATS);
-    organization.defaultAlignmentType = faker.helpers.arrayElement(Object.keys(AlignmentOptions));
-    organization.fiscalStartDate = moment().add(faker.number.int(10), 'days').toDate();
-    organization.fiscalEndDate = moment(organization.fiscalStartDate)
-        .add(faker.number.int(10), 'days')
-        .toDate();
-    organization.futureDateAllowed = true;
-    organization.inviteExpiryPeriod = faker.number.int(50);
-    organization.numberFormat = faker.helpers.arrayElement(['USD', 'BGN', 'ILS']);
-    organization.officialName = faker.company.name();
-    organization.separateInvoiceItemTaxAndDiscount = faker.datatype.boolean();
-    organization.startWeekOn = WeekDaysEnum.MONDAY;
-    organization.tenant = tenant;
-    organization.valueDate = moment().add(faker.number.int(10), 'days').toDate();
+	const organization = new Organization();
+	organization.name = companyName;
+	organization.isDefault = isDefault;
+	organization.totalEmployees = 5;
+	organization.profile_link = generateLink(companyName);
+	organization.currency = env.defaultCurrency;
+	organization.defaultValueDateType = defaultValueDateType;
+	organization.imageUrl = getDummyImage(330, 300, logoAbbreviation);
+	organization.invitesAllowed = true;
+	organization.bonusType = bonusType;
+	organization.bonusPercentage = bonusPercentage;
+	organization.registrationDate = faker.date.past({ years: Math.floor(Math.random() * 10) + 1 });
+	organization.overview = faker.lorem.sentence();
+	organization.short_description = faker.lorem.sentence();
+	organization.client_focus = faker.lorem.sentence();
+	organization.show_profits = false;
+	organization.show_bonuses_paid = false;
+	organization.show_income = false;
+	organization.show_total_hours = false;
+	organization.show_projects_count = true;
+	organization.show_minimum_project_size = true;
+	organization.show_clients_count = true;
+	organization.show_employees_count = true;
+	organization.banner = faker.lorem.sentence();
+	organization.skills = skills;
+	organization.brandColor = faker.internet.color();
+	organization.contact = getRandomElement(contacts);
+	organization.timeZone = timeZone;
+	organization.dateFormat = faker.helpers.arrayElement(DEFAULT_DATE_FORMATS);
+	organization.defaultAlignmentType = faker.helpers.arrayElement(Object.keys(AlignmentOptions));
+	organization.fiscalStartDate = moment().add(faker.number.int(10), 'days').toDate();
+	organization.fiscalEndDate = moment(organization.fiscalStartDate).add(faker.number.int(10), 'days').toDate();
+	organization.futureDateAllowed = true;
+	organization.inviteExpiryPeriod = faker.number.int(50);
+	organization.numberFormat = faker.helpers.arrayElement(['USD', 'BGN', 'ILS']);
+	organization.officialName = faker.company.name();
+	organization.separateInvoiceItemTaxAndDiscount = faker.datatype.boolean();
+	organization.startWeekOn = WeekDaysEnum.MONDAY;
+	organization.tenant = tenant;
+	organization.valueDate = moment().add(faker.number.int(10), 'days').toDate();
 
-    return organization;
+	return organization;
 };
 
 /**
@@ -265,19 +259,16 @@ const generateRandomOrganization = async (
  * @returns A promise that resolves once the organizations are successfully inserted.
  * @throws Error if the `organizations` array is empty or invalid.
  */
-const insertOrganizations = async (
-    dataSource: DataSource,
-    organizations: IOrganization[]
-): Promise<void> => {
-    if (!organizations || organizations.length === 0) {
-        throw new Error('The organizations array must not be empty.');
-    }
+const insertOrganizations = async (dataSource: DataSource, organizations: IOrganization[]): Promise<void> => {
+	if (!organizations || organizations.length === 0) {
+		throw new Error('The organizations array must not be empty.');
+	}
 
-    try {
-        await dataSource.manager.save(organizations);
-    } catch (error) {
-        throw new Error(`Failed to insert organizations: ${error.message}`);
-    }
+	try {
+		await dataSource.manager.save(organizations);
+	} catch (error) {
+		throw new Error(`Failed to insert organizations: ${error.message}`);
+	}
 };
 
 /**
@@ -290,22 +281,21 @@ const insertOrganizations = async (
  * @throws Error if `companyName` is empty or not a valid string.
  */
 const _extractLogoAbbreviation = (companyName: string): string => {
-    if (!companyName || typeof companyName !== 'string') {
-        throw new Error('Invalid company name. A non-empty string is required.');
-    }
+	if (!companyName || typeof companyName !== 'string') {
+		throw new Error('Invalid company name. A non-empty string is required.');
+	}
 
-    const trimmedName = companyName.trim();
-    const words = trimmedName.split(/\s+/); // Split by one or more spaces
+	const trimmedName = companyName.trim();
+	const words = trimmedName.split(/\s+/); // Split by one or more spaces
 
-    // Get the first letter of the first word
-    const firstLetter = words[0][0];
+	// Get the first letter of the first word
+	const firstLetter = words[0][0];
 
-    // Get the first letter of the last word if there are multiple words
-    const lastLetter = words.length > 1 ? words[words.length - 1][0] : '';
+	// Get the first letter of the last word if there are multiple words
+	const lastLetter = words.length > 1 ? words[words.length - 1][0] : '';
 
-    return `${firstLetter}${lastLetter}`.toUpperCase();
+	return `${firstLetter}${lastLetter}`.toUpperCase();
 };
-
 
 /**
  * Generates a random bonus type and percentage.
@@ -313,15 +303,13 @@ const _extractLogoAbbreviation = (companyName: string): string => {
  * @returns An object containing the bonus type and the corresponding percentage.
  */
 const randomBonus = (): { bonusType: BonusTypeEnum; bonusPercentage: number } => {
-    const randomNumberBetween = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1) + min);
+	const randomNumberBetween = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1) + min);
 
-    const bonusType = Object.values(BonusTypeEnum)[randomNumberBetween(0, 1)];
-    const bonusPercentage =
-        bonusType === BonusTypeEnum.PROFIT_BASED_BONUS
-            ? randomNumberBetween(65, 75)
-            : randomNumberBetween(5, 10);
+	const bonusType = Object.values(BonusTypeEnum)[randomNumberBetween(0, 1)];
+	const bonusPercentage =
+		bonusType === BonusTypeEnum.PROFIT_BASED_BONUS ? randomNumberBetween(65, 75) : randomNumberBetween(5, 10);
 
-    return { bonusType, bonusPercentage };
+	return { bonusType, bonusPercentage };
 };
 
 /**
@@ -331,10 +319,10 @@ const randomBonus = (): { bonusType: BonusTypeEnum; bonusPercentage: number } =>
  * @returns The generated slug as a string.
  */
 const generateLink = (name: string): string => {
-    if (!name) {
-        throw new Error('Name is required to generate a link.');
-    }
-    return name.replace(/[^A-Z0-9]+/gi, '-').toLowerCase();
+	if (!name) {
+		throw new Error('Name is required to generate a link.');
+	}
+	return name.replace(/[^A-Z0-9]+/gi, '-').toLowerCase();
 };
 
 /**
@@ -345,19 +333,16 @@ const generateLink = (name: string): string => {
  * @returns A promise that resolves to an array of randomly selected skills.
  * @throws Error if there is an issue retrieving skills from the database.
  */
-const getRandomSkills = async (
-    dataSource: DataSource,
-    count: number
-): Promise<ISkill[]> => {
-    if (!dataSource) {
-        throw new Error('Invalid data source: DataSource is required.');
-    }
+const getRandomSkills = async (dataSource: DataSource, count: number): Promise<ISkill[]> => {
+	if (!dataSource) {
+		throw new Error('Invalid data source: DataSource is required.');
+	}
 
-    // Retrieve all skills from the database
-    const skills = await dataSource.manager.find(Skill, {});
+	// Retrieve all skills from the database
+	const skills = await dataSource.manager.find(Skill, {});
 
-    // Shuffle and select a subset of skills
-    return chain(skills).shuffle().take(count).value();
+	// Shuffle and select a subset of skills
+	return chain(skills).shuffle().take(count).value();
 };
 
 /**
@@ -368,10 +353,10 @@ const getRandomSkills = async (
  * @throws Error if the data source is invalid or contacts cannot be retrieved.
  */
 const getRandomContacts = async (dataSource: DataSource): Promise<IContact[]> => {
-    if (!dataSource) {
-        throw new Error('Invalid data source: DataSource is required.');
-    }
+	if (!dataSource) {
+		throw new Error('Invalid data source: DataSource is required.');
+	}
 
-    // Retrieve all contacts from the database
-    return await dataSource.getRepository(Contact).find();
+	// Retrieve all contacts from the database
+	return await dataSource.getRepository(Contact).find();
 };

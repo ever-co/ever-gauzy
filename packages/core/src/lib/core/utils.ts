@@ -19,7 +19,6 @@ import { DateRange, IDateRange, IUser } from '@gauzy/contracts';
 import { IDBConnectionOptions } from '@gauzy/common';
 import { getConfig, DatabaseTypeEnum } from '@gauzy/config';
 import { moment } from './../core/moment-extend';
-import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
 
 namespace Utils {
 	export function generatedLogoColor() {
@@ -54,15 +53,6 @@ export function reflect(promise) {
  */
 export function getLastDayOfMonth(year, month) {
 	return new Date(year, month + 1, 0).getDate();
-}
-
-export function arrayToObject(array, key, value) {
-	return array.reduce((prev, current) => {
-		return {
-			...prev,
-			[current[key]]: current[value]
-		};
-	}, {});
 }
 
 /*
@@ -267,32 +257,6 @@ export function getDaysBetweenDates(
 
 	// Generate an array of dates within the range, formatted as 'YYYY-MM-DD'
 	return Array.from(ranges.by('day')).map((date: moment.Moment) => date.format('YYYY-MM-DD'));
-}
-
-/**
- * Generating a random integer number with flexible length
- *
- * @param length
- */
-export function generateRandomInteger(length = 6) {
-	return Math.floor(Math.pow(10, length - 1) + Math.random() * (Math.pow(10, length) - Math.pow(10, length - 1) - 1));
-}
-
-/**
- * Generate a random alphanumeric code.
- * @param length The length of the code. Default is 6.
- * @returns The generated code.
- */
-export function generateRandomAlphaNumericCode(length: number = ALPHA_NUMERIC_CODE_LENGTH): string {
-	const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-	let code = '';
-
-	for (let i = 0; i < length; i++) {
-		const index = Math.floor(Math.random() * characters.length);
-		code += characters[index];
-	}
-
-	return code;
 }
 
 /**

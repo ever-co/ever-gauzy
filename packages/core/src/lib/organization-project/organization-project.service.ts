@@ -18,18 +18,19 @@ import {
 	SubscriptionTypeEnum
 } from '@gauzy/contracts';
 import { getConfig } from '@gauzy/config';
-import { CustomEmbeddedFieldConfig, isNotEmpty } from '@gauzy/common';
+import { CustomEmbeddedFieldConfig } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { PaginationParams, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationProjectEmployee } from '../core/entities/internal';
 import { FavoriteService } from '../core/decorators';
+import { prepareSQLQuery as p } from './../database/database.helper';
 import { RoleService } from '../role/role.service';
 import { SubscriptionService } from '../subscription/subscription.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { EmployeeService } from '../employee/employee.service';
 import { CreateSubscriptionEvent } from '../subscription/events';
 import { OrganizationProject } from './organization-project.entity';
-import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-organization-project.repository';
 import { MikroOrmOrganizationProjectRepository } from './repository/mikro-orm-organization-project.repository';

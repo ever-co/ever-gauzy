@@ -3,7 +3,7 @@ import { FindManyOptions, Between, Brackets, WhereExpressionBuilder, In, ILike }
 import * as moment from 'moment';
 import { chain } from 'underscore';
 import { IDateRangePicker, IExpense, IGetExpenseInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { Expense } from './expense.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';

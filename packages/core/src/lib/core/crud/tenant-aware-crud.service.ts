@@ -1,8 +1,8 @@
 import { NotFoundException } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere, FindManyOptions, FindOneOptions, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { ID, IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/utils';
 import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { RequestContext } from '../context';
 import { TenantBaseEntity } from '../entities/internal';
@@ -239,7 +239,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async findOneOrFailByIdString(id: T['id'], options?: FindOneOptions<T>): Promise<ITryRequest<T>> {
+	public async findOneOrFailByIdString(id: ID, options?: FindOneOptions<T>): Promise<ITryRequest<T>> {
 		return await super.findOneOrFailByIdString(id, this.findOneWithTenant(options));
 	}
 
@@ -282,7 +282,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async findOneByIdString(id: T['id'], options?: FindOneOptions<T>): Promise<T> {
+	public async findOneByIdString(id: ID, options?: FindOneOptions<T>): Promise<T> {
 		return await super.findOneByIdString(id, this.findOneWithTenant(options));
 	}
 

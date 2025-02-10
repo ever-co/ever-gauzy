@@ -33,6 +33,7 @@ import {
 	InvoiceTotalValueComponent,
 	NotesWithTagsComponent,
 	PaginationFilterBaseComponent,
+	RangeFilterComponent,
 	StatusBadgeComponent,
 	TagsColorFilterComponent,
 	TagsOnlyComponent,
@@ -199,6 +200,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
 				},
+
 				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (invoice: IInvoice) => ({
@@ -385,10 +387,21 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 					width: '12%',
 					filter: {
 						type: 'custom',
-						component: InputFilterComponent
+						component: RangeFilterComponent
 					},
-					filterFunction: (totalValue) => {
-						this.setFilter({ field: 'totalValue', search: totalValue });
+					filterFunction: (range: { min?: number; max?: number }) => {
+						const { min, max } = range;
+						// Validate range values
+						if ((min !== undefined && min < 0) || (max !== undefined && max < 0)) {
+							return;
+						}
+						if (min !== undefined && max !== undefined && min > max) {
+							return;
+						}
+						this.setFilter({
+							field: 'totalValue',
+							search: { min, max }
+						});
 					},
 					componentInitFunction: (instance: InvoiceTotalValueComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();

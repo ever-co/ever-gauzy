@@ -3,14 +3,14 @@ import { CommandBus } from '@nestjs/cqrs';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom, switchMap } from 'rxjs';
 import { environment } from '@gauzy/config';
+import { SyncTags } from '@gauzy/constants';
 import {
 	GithubPropertyMapEnum,
 	IGithubAppInstallInput,
 	IIntegrationTenant,
 	IOAuthAppInstallInput,
 	IntegrationEntity,
-	IntegrationEnum,
-	SYNC_TAG_GITHUB
+	IntegrationEnum
 } from '@gauzy/contracts';
 import { IntegrationService, IntegrationTenantUpdateOrCreateCommand, RequestContext } from '@gauzy/core';
 import { DEFAULT_ENTITY_SETTINGS, ISSUE_TIED_ENTITIES } from './github-entity-settings';
@@ -98,7 +98,7 @@ export class GithubService {
 							},
 							{
 								settingsName: GithubPropertyMapEnum.SYNC_TAG,
-								settingsValue: SYNC_TAG_GITHUB
+								settingsValue: SyncTags.GITHUB
 							}
 						].map((setting) => ({
 							...setting,

@@ -16,7 +16,7 @@ import {
 	IURLMetaData
 } from '@gauzy/contracts';
 import { ActivityService, DateRangePickerBuilderService, Store, TimesheetFilterService } from '@gauzy/ui-core/core';
-import { distinctUntilChange, isEmpty, isJsObject, toLocal, toUTC } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isEmpty, isObject, toLocal, toUTC } from '@gauzy/ui-core/common';
 import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
@@ -159,7 +159,7 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 
 			if (typeof activity.metaData === 'string') {
 				metaData = JSON.parse(activity.metaData) as IURLMetaData;
-			} else if (isJsObject(activity.metaData)) {
+			} else if (isObject(activity.metaData)) {
 				metaData = activity.metaData as IURLMetaData;
 			}
 

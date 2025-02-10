@@ -1,0 +1,36 @@
+@let count = count$ | async; @let isLoading = isLoading$ | async;
+
+<div class="custom-card">
+	@if(count) {
+	<div class="custom-card-header">
+		<ngx-gauzy-filters
+			[isTimeFormat]="true"
+			[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
+			(filtersChange)="filtersChange($event)"
+			[hasLogTypeFilter]="false"
+			[hasSourceFilter]="false"
+			[hasActivityLevelFilter]="false"
+		>
+		</ngx-gauzy-filters>
+	</div>
+	@defer{
+	<div
+		nbInfiniteList
+		[threshold]="500"
+		[throttleTime]="300"
+		(bottomThreshold)="fetchMoreVideos()"
+		class="custom-card-body"
+	>
+		<plug-video-list></plug-video-list>
+	</div>
+	}@error{
+	<ngx-no-data-message message="No video found"></ngx-no-data-message> } }@else {
+	<div class="no-data">
+		<ngx-no-data-message
+			[nbSpinner]="isLoading"
+			[message]="isLoading ? 'Loading videos...' : 'No video found'"
+			nbSpinnerStatus="primary"
+		></ngx-no-data-message>
+	</div>
+	}
+</div>

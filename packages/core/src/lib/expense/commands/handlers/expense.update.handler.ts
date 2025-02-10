@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { IExpense } from '@gauzy/contracts';
 import { ExpenseService } from '../../expense.service';
 import { EmployeeService } from '../../../employee/employee.service';
@@ -9,7 +9,6 @@ import { ExpenseUpdateCommand } from '../expense.update.command';
 
 @CommandHandler(ExpenseUpdateCommand)
 export class ExpenseUpdateHandler implements ICommandHandler<ExpenseUpdateCommand> {
-
 	constructor(
 		private readonly expenseService: ExpenseService,
 		private readonly employeeService: EmployeeService,
@@ -27,12 +26,8 @@ export class ExpenseUpdateHandler implements ICommandHandler<ExpenseUpdateComman
 			let averageExpense = 0;
 			if (isNotEmpty(expense.employeeId)) {
 				const { employeeId } = expense;
-				const statistic = await this.employeeStatisticsService.getStatisticsByEmployeeId(
-					employeeId
-				);
-				averageExpense = this.expenseService.countStatistic(
-					statistic.expenseStatistics
-				);
+				const statistic = await this.employeeStatisticsService.getStatisticsByEmployeeId(employeeId);
+				averageExpense = this.expenseService.countStatistic(statistic.expenseStatistics);
 				await this.employeeService.create({
 					id: employeeId,
 					averageExpenses: averageExpense

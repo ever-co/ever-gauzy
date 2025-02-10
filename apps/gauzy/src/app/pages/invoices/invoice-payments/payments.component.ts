@@ -155,12 +155,8 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 
 		this.barWidth = +((this.totalPaid / this.invoice.totalValue) * 100).toFixed(2);
 
-		if (this.barWidth > 100) {
-			this.barWidth = 100;
-		}
-
 		const progressBar = document.getElementById('progress-bar-inner');
-		progressBar.style.width = `${this.barWidth}%`;
+		progressBar.style.width = this.barWidth > 100 ? '100%' : `${this.barWidth}%`;
 
 		if (this.totalPaid >= this.invoice.totalValue) {
 			if (!this.invoice.paid) {

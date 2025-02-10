@@ -10,7 +10,7 @@ import {
 	IEmployee,
 	IPagination
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { PaginationParams, TenantAwareCrudService } from '../../core/crud';
 import { RequestContext } from '../../core/context';

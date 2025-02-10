@@ -1,6 +1,6 @@
 import * as chalk from 'chalk';
-import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { ApplicationPluginConfig } from '@gauzy/common';
+import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { GithubModule } from './github/github.module';
 import { OrganizationGithubRepository } from './github/repository/github-repository.entity';
 import { OrganizationGithubRepositoryIssue } from './github/repository/issue/github-repository-issue.entity';

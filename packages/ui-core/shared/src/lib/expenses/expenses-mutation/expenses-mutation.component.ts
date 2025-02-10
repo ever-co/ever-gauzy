@@ -113,6 +113,14 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		this.form
+			.get('typeOfExpense')
+			.valueChanges.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.form.get('status').setValue(null);
+				this.form.get('status').updateValueAndValidity();
+			});
 	}
 
 	ngAfterViewInit() {}
@@ -263,7 +271,9 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 			.open(AttachReceiptComponent, {
 				context: {
 					currentReceipt: this.form.value.receipt
-				}
+				},
+				closeOnBackdropClick: false,
+				closeOnEsc: false
 			})
 			.onClose.pipe(
 				tap((receipt) => {

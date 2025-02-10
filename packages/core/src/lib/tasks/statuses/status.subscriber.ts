@@ -1,6 +1,6 @@
 import { EventSubscriber } from 'typeorm';
 import { faker } from '@faker-js/faker';
-import { sluggable } from '@gauzy/common';
+import { sluggable } from '@gauzy/utils';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { FileStorage } from '../../core/file-storage';
 import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';

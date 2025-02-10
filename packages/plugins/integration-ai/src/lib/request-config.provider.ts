@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { GAUZY_AI_CONFIG_TOKEN } from '@gauzy/constants';
 import { IConfigurationOptions } from './configuration.interface';
-import { GAUZY_AI_CONFIG_OPTIONS } from './constants';
 
 @Injectable()
 export class RequestConfigProvider {
@@ -8,7 +8,7 @@ export class RequestConfigProvider {
 	private config: IConfigurationOptions = new Object();
 
 	constructor(
-		@Inject(GAUZY_AI_CONFIG_OPTIONS)
+		@Inject(GAUZY_AI_CONFIG_TOKEN)
 		protected readonly options: IConfigurationOptions
 	) {
 		this.setDefaultConfig(options);

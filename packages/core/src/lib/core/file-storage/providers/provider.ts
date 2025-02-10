@@ -2,12 +2,11 @@ import { StorageEngine } from 'multer';
 import { FileStorageOption, FileStorageProvider, FileSystem, UploadedFile } from '@gauzy/contracts';
 
 export abstract class Provider<T> {
-
 	public abstract instance: any | undefined;
 	public abstract readonly name: FileStorageProvider;
 	public abstract config: FileSystem;
 
-	constructor() { }
+	constructor() {}
 
 	/**
 	 * Get the URL for a given file path.

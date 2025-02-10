@@ -1,0 +1,50 @@
+@if((downloadQueue$ | async)?.length > 0) {
+<nb-card class="main">
+	<nb-card-header class="pb-0">
+		<h4>Downloads</h4>
+	</nb-card-header>
+
+	<nb-card-body>
+		@for(item of downloadQueue$ | async; track item.url) {
+		<div class="download-container">
+			<div class="download-item">
+				<!-- File Icon and Details -->
+				<div class="file-info">
+					<nb-icon icon="file-text-outline"></nb-icon>
+					<div class="file-details">
+						<h6 class="file-name">{{ extractFilename(item.url) }}</h6>
+						<p class="file-size">
+							{{ (downloadStatus$ | async)[item.url]?.progress?.loaded || 0 | fileSize }} /
+							{{ ((downloadStatus$ | async)[item.url]?.progress?.total | fileSize) || '---' }}
+						</p>
+					</div>
+				</div>
+
+				<!-- Actions -->
+				<div class="actions">
+					@if((downloadStatus$ | async)[item.url]?.status === 'FAILED') {
+					<plug-action-button [button]="retryButton" [data]="item.url"></plug-action-button>
+					}
+					<plug-action-button [button]="removeButton" [data]="item.url"></plug-action-button>
+				</div>
+			</div>
+
+			<!-- Progress Bar -->
+			<div class="progress-section">
+				<nb-progress-bar
+					[value]="(downloadStatus$ | async)[item.url]?.progress?.percentage || 0"
+					[status]="getStatusColor((downloadStatus$ | async)[item.url]?.status)"
+				></nb-progress-bar>
+				<span class="progress-percentage">
+					{{ (downloadStatus$ | async)[item.url]?.progress?.percentage || 0 }}%
+				</span>
+			</div>
+		</div>
+		}
+	</nb-card-body>
+</nb-card>
+}@else {
+<div class="no-downloads">
+	<ngx-no-data-message message="No video download"></ngx-no-data-message>
+</div>
+}

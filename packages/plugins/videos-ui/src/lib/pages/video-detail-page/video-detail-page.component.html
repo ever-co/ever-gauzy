@@ -1,0 +1,10 @@
+<div class="custom-card">
+	<div #detail class="custom-card-body">
+		<plug-video class="w-100"></plug-video>
+		@if(showList$ | async) {
+		<div nbInfiniteList [threshold]="500" [throttleTime]="300" (bottomThreshold)="fetchMoreVideos()" class="list">
+			<plug-video-list [vertical]="true"></plug-video-list>
+		</div>
+		}
+	</div>
+</div>

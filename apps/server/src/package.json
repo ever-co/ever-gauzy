@@ -24,8 +24,8 @@
 		"packages": [
 			"../../../dist/packages/auth",
 			"../../../dist/packages/common",
-			"../../../dist/packages/utils",
 			"../../../dist/packages/config",
+			"../../../dist/packages/constants",
 			"../../../dist/packages/contracts",
 			"../../../dist/packages/core",
 			"../../../dist/packages/desktop-core",
@@ -34,7 +34,8 @@
 			"../../../dist/packages/plugin",
 			"../../../dist/packages/plugins/integration-ai",
 			"../../../dist/packages/plugins/job-proposal",
-			"../../../dist/packages/ui-config"
+			"../../../dist/packages/ui-config",
+			"../../../dist/packages/utils"
 		]
 	},
 	"build": {
@@ -134,8 +135,8 @@
 		"@datorama/akita": "^8.0.1",
 		"@electron/remote": "^2.0.8",
 		"@gauzy/auth": "file:../../../dist/packages/auth",
-		"@gauzy/utils": "file:../../../dist/packages/utils",
 		"@gauzy/config": "file:../../../dist/packages/config",
+		"@gauzy/constants": "file:../../../dist/packages/constants",
 		"@gauzy/contracts": "file:../../../dist/packages/contracts",
 		"@gauzy/core": "file:../../../dist/packages/core",
 		"@gauzy/desktop-core": "file:../../../dist/packages/desktop-core",
@@ -157,6 +158,7 @@
 		"@gauzy/plugin-sentry": "file:../../../dist/packages/plugins/sentry-tracing",
 		"@gauzy/plugin-videos": "file:../../../dist/packages/plugins/videos",
 		"@gauzy/ui-config": "file:../../../dist/packages/ui-config",
+		"@gauzy/utils": "file:../../../dist/packages/utils",
 		"@sentry/electron": "^4.18.0",
 		"@sentry/node": "^7.101.1",
 		"@sentry/profiling-node": "^7.101.1",

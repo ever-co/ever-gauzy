@@ -305,16 +305,6 @@ export interface IKeyValuePair {
 	value: boolean | string;
 }
 
-export const DEFAULT_STANDARD_WORK_HOURS_PER_DAY = 8; // Adjust the default value if needed
-export const DEFAULT_TIME_FORMATS: number[] = [TimeFormatEnum.FORMAT_12_HOURS, TimeFormatEnum.FORMAT_24_HOURS];
-export const DEFAULT_PROFIT_BASED_BONUS = 75;
-export const DEFAULT_REVENUE_BASED_BONUS = 10;
-export const DEFAULT_INVITE_EXPIRY_PERIOD = 7;
-export const DEFAULT_DATE_FORMATS: string[] = ['L', 'LL', 'dddd, LL'];
-export const DEFAULT_INACTIVITY_TIME_LIMITS: number[] = [1, 5, 10, 20, 30];
-export const DEFAULT_ACTIVITY_PROOF_DURATIONS: number[] = [1, 3, 5, 10];
-export const DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS: number[] = [1, 3, 5, 10];
-
 export interface IOrganizationTimerSetting {
 	allowTrackInactivity?: boolean;
 	inactivityTimeLimit?: number;
