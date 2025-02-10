@@ -3,13 +3,13 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
 import { IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
-import { ID, ISubscription, IUser, SubscriptionTypeEnum } from '@gauzy/contracts';
+import { ID, IEntitySubscription, IUser, SubscriptionTypeEnum } from '@gauzy/contracts';
 import { BasePerEntityType, User } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
 import { MikroOrmSubscriptionRepository } from './repository/mikro-orm-subscription.repository';
 
 @MultiORMEntity('subscription', { mikroOrmRepository: () => MikroOrmSubscriptionRepository })
-export class Subscription extends BasePerEntityType implements ISubscription {
+export class Subscription extends BasePerEntityType implements IEntitySubscription {
 	[EntityRepositoryType]?: MikroOrmSubscriptionRepository;
 
 	@ApiProperty({ type: () => String, enum: SubscriptionTypeEnum })

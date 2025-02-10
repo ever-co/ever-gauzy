@@ -9,7 +9,7 @@ import {
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
-import { UserNotificationEvent } from './events/user-notification.event';
+import { UserCreateNotificationEvent } from './events/user-notification.event';
 import { UserNotification } from './user-notification.entity';
 import { TypeOrmUserNotificationRepository } from './repository/type-orm-user-notification.repository';
 import { MikroOrmUserNotificationRepository } from './repository/mikro-orm-user-notification.repository';
@@ -117,7 +117,7 @@ export class UserNotificationService extends TenantAwareCrudService<UserNotifica
 	) {
 		// Emit the event to create the notification
 		this._eventBus.publish(
-			new UserNotificationEvent({
+			new UserCreateNotificationEvent({
 				...input,
 				title: generateNotificationTitle(actionType, input.entity, entityName, userName)
 			})

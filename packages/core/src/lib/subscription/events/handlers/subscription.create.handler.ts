@@ -1,5 +1,5 @@
 import { CommandBus, EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import { ISubscription } from '@gauzy/contracts';
+import { IEntitySubscription } from '@gauzy/contracts';
 import { CreateSubscriptionEvent } from '../subscription.create.event';
 import { SubscriptionCreateCommand } from '../../commands';
 
@@ -11,10 +11,10 @@ export class CreateSubscriptionHandler implements IEventHandler<CreateSubscripti
 	 * Handles the `CreateSubscriptionEvent` by delegating the subscription creation process to the appropriate command.
 	 *
 	 * @param {CreateSubscriptionEvent} event - The event object containing the subscription input data.
-	 * @returns {Promise<ISubscription>} A promise that resolves to the created subscription.
+	 * @returns {Promise<IEntitySubscription>} A promise that resolves to the created subscription.
 	 *
 	 */
-	async handle(event: CreateSubscriptionEvent): Promise<ISubscription> {
+	async handle(event: CreateSubscriptionEvent): Promise<IEntitySubscription> {
 		const { input } = event;
 		return await this.commandBus.execute(new SubscriptionCreateCommand(input));
 	}

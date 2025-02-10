@@ -1,9 +1,9 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import { UserNotificationEvent } from '../user-notification.event';
+import { UserCreateNotificationEvent } from '../user-notification.event';
 import { UserNotificationService } from '../../user-notification.service';
 
-@EventsHandler(UserNotificationEvent)
-export class UserNotificationEventHandler implements IEventHandler<UserNotificationEvent> {
+@EventsHandler(UserCreateNotificationEvent)
+export class UserCreateNotificationEventHandler implements IEventHandler<UserCreateNotificationEvent> {
 	constructor(readonly userNotificationService: UserNotificationService) {}
 
 	/**
@@ -13,7 +13,7 @@ export class UserNotificationEventHandler implements IEventHandler<UserNotificat
 	 * @returns A promise that resolves with the created user notification entry.
 	 *
 	 */
-	async handle(event: UserNotificationEvent) {
+	async handle(event: UserCreateNotificationEvent) {
 		return await this.userNotificationService.create(event.input);
 	}
 }

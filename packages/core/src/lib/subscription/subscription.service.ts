@@ -1,5 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { ID, ISubscription, ISubscriptionCreateInput, ISubscriptionFindInput } from '@gauzy/contracts';
+import {
+	ID,
+	IEntitySubscription,
+	IEntitySubscriptionCreateInput,
+	IEntitySubscriptionFindInput
+} from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { Subscription } from './subscription.entity';
@@ -19,11 +24,11 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	/**
 	 * Creates a new subscription for the specified entity and user.
 	 *
-	 * @param {ISubscriptionCreateInput} input - The input object containing subscription details, including the entity type, entity ID, and optional tenant ID.
-	 * @returns {Promise<ISubscription>} A promise resolving to the created subscription, or the existing subscription if it already exists.
+	 * @param {IEntitySubscriptionCreateInput} input - The input object containing subscription details, including the entity type, entity ID, and optional tenant ID.
+	 * @returns {Promise<IEntitySubscription>} A promise resolving to the created subscription, or the existing subscription if it already exists.
 	 * @throws {BadRequestException} Throws a BadRequestException if the subscription creation fails due to an error.
 	 */
-	async create(input: ISubscriptionCreateInput): Promise<ISubscription> {
+	async create(input: IEntitySubscriptionCreateInput): Promise<IEntitySubscription> {
 		try {
 			const userId = input.userId || RequestContext.currentUserId();
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
@@ -63,14 +68,14 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 	 * Unsubscribes a user from a specific entity by deleting the corresponding subscription.
 	 *
 	 * @param {ID} id - The unique identifier of the subscription to delete.
-	 * @param {ISubscriptionFindInput} options - Additional options to refine the deletion query.
+	 * @param {IEntitySubscriptionFindInput} options - Additional options to refine the deletion query.
 	 *   - `entity`: The type of entity the subscription is associated with (e.g., "project").
 	 *   - `entityId`: The unique identifier of the associated entity.
 	 * @returns {Promise<DeleteResult>} A promise that resolves to the result of the delete operation.
 	 *
 	 * @throws {BadRequestException} Throws an exception if an error occurs during the unsubscribe process.
 	 */
-	async unsubscribe(id: ID, options?: ISubscriptionFindInput): Promise<DeleteResult> {
+	async unsubscribe(id: ID, options?: IEntitySubscriptionFindInput): Promise<DeleteResult> {
 		try {
 			const { entity, entityId } = options || {};
 			const userId = RequestContext.currentUserId();
