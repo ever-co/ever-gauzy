@@ -321,7 +321,8 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsOptional()
 	@IsObject()
 	@MultiORMManyToOne(() => IssueType, {
-		onDelete: 'SET NULL'
+		onDelete: 'SET NULL',
+		nullable: true
 	})
 	@JoinColumn()
 	taskType?: IIssueType;
