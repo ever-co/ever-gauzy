@@ -14,7 +14,7 @@ export interface IUserNotificationSetting extends IBasePerTenantAndOrganizationE
 }
 
 export interface IUserNotificationSettingCreateInput
-	extends Omit<IUserNotificationSetting, 'id' | 'createdAt' | 'updatedAt' | 'user' | 'userId'> {}
+	extends Partial<Omit<IUserNotificationSetting, 'id' | 'createdAt' | 'updatedAt'>> {}
 
 export interface IUserNotificationSettingUpdateInput
 	extends Omit<IUserNotificationSettingCreateInput, 'userId' | 'user'> {}
