@@ -103,16 +103,16 @@ ARG OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
 ARG REDIS_ENABLED
 ARG REDIS_URL
 
-FROM node:20.11.1-alpine3.19 AS dependencies
+FROM node:20.11.1-alpine3.19 AS build
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
 
 ENV CI=true
 
-# We need to set to "development", because we are using "yarn install" below to setup
-# devDependencies even for production builds!
-ENV NODE_ENV=development
+ARG NODE_ENV
+
+ENV NODE_ENV_ARG=${NODE_ENV}
 
 # Set Python interpreter for `node-gyp` to use
 ENV PYTHON /usr/bin/python
@@ -139,131 +139,53 @@ USER node:node
 
 WORKDIR /srv/gauzy
 
-COPY --chown=node:node apps/api/package.json ./apps/api/
+# Copy related project files
+COPY --chown=node:node apps/api ./apps/api
+COPY --chown=node:node packages/common ./packages/common
+COPY --chown=node:node packages/utils ./packages/utils
+COPY --chown=node:node packages/config ./packages/config
+COPY --chown=node:node packages/contracts ./packages/contracts
+COPY --chown=node:node packages/auth ./packages/auth
+COPY --chown=node:node packages/core ./packages/core
+COPY --chown=node:node packages/plugin ./packages/plugin
+COPY --chown=node:node packages/plugins/integration-ai ./packages/plugins/integration-ai
+COPY --chown=node:node packages/plugins/integration-hubstaff ./packages/plugins/integration-hubstaff
+COPY --chown=node:node packages/plugins/integration-upwork ./packages/plugins/integration-upwork
+COPY --chown=node:node packages/plugins/integration-github ./packages/plugins/integration-github
+COPY --chown=node:node packages/plugins/integration-jira ./packages/plugins/integration-jira
+COPY --chown=node:node packages/plugins/jitsu-analytics ./packages/plugins/jitsu-analytics
+COPY --chown=node:node packages/plugins/sentry-tracing ./packages/plugins/sentry-tracing
+COPY --chown=node:node packages/plugins/product-reviews ./packages/plugins/product-reviews
+COPY --chown=node:node packages/plugins/videos ./packages/plugins/videos
+COPY --chown=node:node packages/plugins/knowledge-base ./packages/plugins/knowledge-base
+COPY --chown=node:node packages/plugins/changelog ./packages/plugins/changelog
+COPY --chown=node:node packages/plugins/job-search ./packages/plugins/job-search
+COPY --chown=node:node packages/plugins/job-proposal ./packages/plugins/job-proposal
 
-COPY --chown=node:node packages/common/package.json ./packages/common/
-COPY --chown=node:node packages/utils/package.json ./packages/utils/
-COPY --chown=node:node packages/config/package.json ./packages/config/
-COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
-COPY --chown=node:node packages/auth/package.json ./packages/auth/
-COPY --chown=node:node packages/core/package.json ./packages/core/
-COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
-COPY --chown=node:node packages/plugins/integration-ai/package.json ./packages/plugins/integration-ai/
-COPY --chown=node:node packages/plugins/integration-hubstaff/package.json ./packages/plugins/integration-hubstaff/
-COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
-COPY --chown=node:node packages/plugins/integration-github/package.json ./packages/plugins/integration-github/
-COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
-COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
-COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
-COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
-COPY --chown=node:node packages/plugins/videos/package.json ./packages/plugins/videos/
-COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
-COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
-COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
-COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plugins/job-proposal/
-
-# We do not build here Wakatime plugin, because it used in Desktop Apps for now
-# COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
-
-COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
+# Copy project configuration files
+COPY --chown=node:node tsconfig.json tsconfig.base.json nx.json nest-cli.json migrations.json project.json package.workspaces.json decorate-angular-cli.js lerna.json package.json yarn.lock ./
 COPY --chown=node:node .scripts/postinstall.ts ./.scripts/
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
-RUN yarn postinstall.manual
-RUN yarn cache clean
+# Set the NODE_ENV environment variable
+ENV NODE_ENV=${NODE_ENV_ARG}
 
-FROM node:20.11.1-alpine3.19 AS prodDependencies
-
-ENV CI=true
-
-# We make NODE_ENV passed as build argument to be available in this stage
-ARG NODE_ENV
-
-# Set Python interpreter for `node-gyp` to use
-ENV PYTHON /usr/bin/python
-
-RUN apk --update add bash && npm i -g npm@9 \
-	&& apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
-	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
-
-# Verify the Node.js version
-RUN node --version
-RUN npm --version
-
-# Output Python3 version
-RUN python3 --version
-
-RUN npm install --quiet node-gyp@10.2.0 -g
-RUN npm install yarn -g --force
-RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
-
-USER node:node
-
-WORKDIR /srv/gauzy
-
-COPY --chown=node:node apps/api/package.json ./apps/api/
-
-COPY --chown=node:node packages/common/package.json ./packages/common/
-COPY --chown=node:node packages/utils/package.json ./packages/utils/
-COPY --chown=node:node packages/config/package.json ./packages/config/
-COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
-COPY --chown=node:node packages/auth/package.json ./packages/auth/
-COPY --chown=node:node packages/core/package.json ./packages/core/
-COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
-COPY --chown=node:node packages/plugins/integration-ai/package.json ./packages/plugins/integration-ai/
-COPY --chown=node:node packages/plugins/integration-hubstaff/package.json ./packages/plugins/integration-hubstaff/
-COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
-COPY --chown=node:node packages/plugins/integration-github/package.json ./packages/plugins/integration-github/
-COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
-COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
-COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
-COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
-COPY --chown=node:node packages/plugins/videos/package.json ./packages/plugins/videos/
-COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
-COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
-COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
-COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plugins/job-proposal/
-
-# We do not build here Wakatime plugin, because it used in Desktop Apps for now
-# COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
-
-COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
-COPY --chown=node:node .scripts/postinstall.ts ./.scripts/
-
+# Install production dependencies
 RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production
 RUN yarn postinstall.manual
-RUN yarn cache clean
 
 # We remove Angular modules as it's not used in APIs
 RUN rm -r node_modules/@angular
 
-# Exclude @gauzy directories before copying because we copy
-# those within custom webpack in apps/api/config/custom-webpack.config.js
-# RUN rm -r node_modules/@gauzy
+# Temporary copy the production node_modules to a temporary location
+RUN cp -r ./node_modules ./node_modules_prod
 
-FROM node:20.11.1-alpine3.19 AS development
+# We need to set to "development", because we are using "yarn install" below to setup
+# devDependencies even for production builds!
+ENV NODE_ENV=development
 
-USER node:node
-
-WORKDIR /srv/gauzy
-
-COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint.compose.sh /
-COPY --chown=node:node --from=dependencies /srv/gauzy .
-COPY . .
-
-FROM node:20.11.1-alpine3.19 AS build
-
-WORKDIR /srv/gauzy
-
-RUN mkdir dist
-
-# Copy the node_modules from the dependencies stage
-COPY --from=dependencies /srv/gauzy/node_modules ./node_modules
-
-# Copy the compiled packages from the development stage
-COPY --chown=node:node --from=development /srv/gauzy .
-
-ENV CI=true
+RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts
+RUN yarn postinstall.manual
+RUN yarn cache clean
 
 # We make NODE_ENV and other env vars passed as build argument to be available in this stage
 ARG NODE_ENV
@@ -271,7 +193,7 @@ ARG DEMO
 ARG NODE_OPTIONS
 
 ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=60000"}
-ENV NODE_ENV=${NODE_ENV}
+ENV NODE_ENV=${NODE_ENV_ARG}
 ENV DEMO=${DEMO:-false}
 
 ENV IS_DOCKER=true
@@ -279,24 +201,18 @@ ENV IS_DOCKER=true
 # Temporary disable caching in NX Cloud for builds
 ENV NX_NO_CLOUD=true
 
-RUN if [ "$NODE_ENV" = "production" ]; then \
-	yarn build:package:api:docker; \
-	else \
-	yarn build:package:api; \
-	fi
-
+# Build the API service for production
 RUN yarn build:api:prod:docker
 
-# Exclude @gauzy directories before copying because we copy
-# those within custom webpack in apps/api/config/custom-webpack.config.js
-# RUN rm -r dist/apps/api/node_modules/@gauzy
+# Remove node_modules from build stage
+RUN rm -rf ./node_modules
 
 FROM node:20.11.1-alpine3.19 AS production
 
 WORKDIR /srv/gauzy
 
-COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint.compose.sh ./
-COPY --chown=node:node --from=build /srv/gauzy/packages/ ./packages/
+COPY --chown=node:node --from=build /wait /entrypoint.prod.sh /entrypoint.compose.sh ./
+COPY --chown=node:node --from=build /srv/gauzy/dist/packages/ ./packages/
 
 # Copy static assets files which used for example in the seeds (e.g. images for features, reports, screenshots)
 COPY --chown=node:node apps/api/src/assets apps/api/src/assets
@@ -309,57 +225,68 @@ COPY --chown=node:node apps/api/public apps/api/public
 # docker container rebuilds, we will not have images unless we copy them during docker build manually here.
 COPY --chown=node:node apps/api/src/assets/seed apps/api/public
 
-COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
-
-# Copy node_modules to a temporary location
-COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules /tmp/node_modules_temp
-# Add a script to merge directories inside the container (skip files that already exists)
-RUN cp -rn /tmp/node_modules_temp/* ./node_modules/ && rm -rf /tmp/node_modules_temp
+# Copy API built items
+COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api/assets ./assets
+COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api/public ./public
+COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api/main.js ./main.js
+COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api/main.js.map ./main.js.map
 
 RUN npm install pm2@4.5.1 -g && \
 	mkdir /import && chown node:node /import && \
 	touch ormlogs.log && chown node:node ormlogs.log && chown node:node wait && \
 	chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && chown -R node:node apps/
 
-# Clean up
+# Clean up yarn cache
 RUN yarn cache clean
 
-# we need node_modules inside each @gauzy package
-RUN cp -r ./packages/auth/node_modules ./node_modules/@gauzy/auth/
-RUN cp -r ./packages/common/node_modules ./node_modules/@gauzy/common/
-RUN cp -r ./packages/utils/node_modules ./node_modules/@gauzy/utils/
-RUN cp -r ./packages/config/node_modules ./node_modules/@gauzy/config/
-RUN cp -r ./packages/contracts/node_modules ./node_modules/@gauzy/contracts/
-RUN cp -r ./packages/core/node_modules ./node_modules/@gauzy/core/
-
-RUN cp -r ./packages/plugins/changelog/node_modules ./node_modules/@gauzy/plugin-changelog/
-RUN cp -r ./packages/plugins/integration-ai/node_modules ./node_modules/@gauzy/plugin-integration-ai/
-RUN cp -r ./packages/plugins/integration-github/node_modules ./node_modules/@gauzy/plugin-integration-github/
-RUN cp -r ./packages/plugins/integration-hubstaff/node_modules ./node_modules/@gauzy/plugin-integration-hubstaff/
-RUN cp -r ./packages/plugins/integration-jira/node_modules ./node_modules/@gauzy/plugin-integration-jira/
-RUN cp -r ./packages/plugins/integration-upwork/node_modules ./node_modules/@gauzy/plugin-integration-upwork/
-RUN cp -r ./packages/plugins/jitsu-analytics/node_modules ./node_modules/@gauzy/plugin-jitsu-analytics/
-RUN cp -r ./packages/plugins/job-proposal/node_modules ./node_modules/@gauzy/plugin-job-proposal/
-RUN cp -r ./packages/plugins/job-search/node_modules ./node_modules/@gauzy/plugin-job-search/
-RUN cp -r ./packages/plugins/knowledge-base/node_modules ./node_modules/@gauzy/plugin-knowledge-base/
-RUN cp -r ./packages/plugins/product-reviews/node_modules ./node_modules/@gauzy/plugin-product-reviews/
-RUN cp -r ./packages/plugins/sentry-tracing/node_modules ./node_modules/@gauzy/plugin-sentry/
-RUN cp -r ./packages/plugins/videos/node_modules ./node_modules/@gauzy/plugin-videos/
-
-# We do not copy node_modules here for Wakatime plugin, because it used in Desktop Apps for now
-# RUN cp -r ./packages/plugins/integration-wakatime/node_modules ./node_modules/@gauzy/plugin-integration-wakatime/
-
-# we don't need packages folder anymore
-RUN rm -rf ./packages
+# Copy node_modules from production dependencies
+COPY --chown=node:node --from=build /srv/gauzy/node_modules_prod ./node_modules
 
 USER node:node
 
 ENV CI=true
 
+# Remove and recreate the @gauzy directory structure first
+RUN rm -rf ./node_modules/@gauzy
+RUN mkdir -p ./node_modules/@gauzy
+
+# Move all @gauzy core packages
+RUN for pkg in auth common utils config contracts core plugin; do \
+    mv "./packages/$pkg" "./node_modules/@gauzy/$pkg"; \
+    done
+# Move all @gauzy plugin packages
+RUN for plugin in changelog integration-ai integration-github integration-hubstaff integration-jira integration-upwork jitsu-analytics job-proposal job-search knowledge-base product-reviews sentry-tracing videos; do \
+    mv "./packages/plugins/$plugin" "./node_modules/@gauzy/plugin-$plugin"; \
+	done
+
+# Note: sentry-tracing is moved to plugin-sentry, so we rename it
+RUN mv "./node_modules/@gauzy/plugin-sentry-tracing" "./node_modules/@gauzy/plugin-sentry" || true
+
+# we need node_modules inside each @gauzy package
+COPY --chown=node:node --from=build /srv/gauzy/packages/auth/node_modules ./node_modules/@gauzy/auth/node_modules
+COPY --chown=node:node --from=build /srv/gauzy/packages/common/node_modules ./node_modules/@gauzy/common/node_modules
+COPY --chown=node:node --from=build /srv/gauzy/packages/utils/node_modules ./node_modules/@gauzy/utils/node_modules
+COPY --chown=node:node --from=build /srv/gauzy/packages/config/node_modules ./node_modules/@gauzy/config/node_modules
+COPY --chown=node:node --from=build /srv/gauzy/packages/contracts/node_modules ./node_modules/@gauzy/contracts/node_modules
+COPY --chown=node:node --from=build /srv/gauzy/packages/core/node_modules ./node_modules/@gauzy/core/node_modules
+COPY --chown=node:node --from=build /srv/gauzy/packages/plugins/changelog/node_modules ./node_modules/@gauzy/plugin-changelog/node_modules
+COPY --chown=node:node --from=build /srv/gauzy/packages/plugins/integration-ai/node_modules ./node_modules/@gauzy/plugin-integration-ai/node_modules
+COPY --chown=node:node --from=build /srv/gauzy/packages/plugins/integration-github/node_modules ./node_modules/@gauzy/plugin-integration-github/node_modules
+COPY --chown=node:node --from=build /srv/gauzy/packages/plugins/integration-hubstaff/node_modules ./node_modules/@gauzy/plugin-integration-hubstaff/node_modules
+COPY --chown=node:node --from=build /srv/gauzy/packages/plugins/integration-jira/node_modules ./node_modules/@gauzy/plugin-integration-jira/node_modules
+COPY --chown=node:node --from=build /srv/gauzy/packages/plugins/integration-upwork/node_modules ./node_modules/@gauzy/plugin-integration-upwork/node_modules
+COPY --chown=node:node --from=build /srv/gauzy/packages/plugins/jitsu-analytics/node_modules ./node_modules/@gauzy/plugin-jitsu-analytics/node_modules
+COPY --chown=node:node --from=build /srv/gauzy/packages/plugins/job-proposal/node_modules ./node_modules/@gauzy/plugin-job-proposal/node_modules
+COPY --chown=node:node --from=build /srv/gauzy/packages/plugins/job-search/node_modules ./node_modules/@gauzy/plugin-job-search/node_modules
+COPY --chown=node:node --from=build /srv/gauzy/packages/plugins/knowledge-base/node_modules ./node_modules/@gauzy/plugin-knowledge-base/node_modules
+COPY --chown=node:node --from=build /srv/gauzy/packages/plugins/product-reviews/node_modules ./node_modules/@gauzy/plugin-product-reviews/node_modules
+COPY --chown=node:node --from=build /srv/gauzy/packages/plugins/sentry-tracing/node_modules ./node_modules/@gauzy/plugin-sentry/node_modules
+COPY --chown=node:node --from=build /srv/gauzy/packages/plugins/videos/node_modules ./node_modules/@gauzy/plugin-videos/node_modules
+
 ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=12288"}
 ENV NODE_ENV=${NODE_ENV:-production}
 
-ENV API_HOST=${API_HOST:-api}
+ENV API_HOST=${API_HOST:-localhost}
 ENV API_PORT=${API_PORT:-3000}
 
 ENV API_BASE_URL=${API_BASE_URL:-http://localhost:3000}
