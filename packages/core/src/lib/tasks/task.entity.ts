@@ -9,6 +9,7 @@ import {
 	IDailyPlan,
 	IEmployee,
 	IInvoiceItem,
+	IIssueType,
 	IOrganizationProject,
 	IOrganizationProjectModule,
 	IOrganizationSprint,
@@ -23,7 +24,8 @@ import {
 	IUser,
 	TaskPriorityEnum,
 	TaskSizeEnum,
-	TaskStatusEnum
+	TaskStatusEnum,
+	TaskTypeEnum
 } from '@gauzy/contracts';
 import { isMySQL } from '@gauzy/config';
 import {
@@ -31,6 +33,7 @@ import {
 	DailyPlan,
 	Employee,
 	InvoiceItem,
+	IssueType,
 	OrganizationProject,
 	OrganizationProjectModule,
 	OrganizationSprint,
@@ -114,7 +117,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsString()
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
-	issueType?: string;
+	issueType?: TaskTypeEnum;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
@@ -310,6 +313,26 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, type: 'varchar', relationId: true })
 	taskPriorityId?: ID;
+
+	/**
+	 * Task Type
+	 */
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@IsObject()
+	@MultiORMManyToOne(() => IssueType, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	taskType?: IIssueType;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: Task) => it.taskType)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	taskTypeId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
