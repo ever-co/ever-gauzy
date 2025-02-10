@@ -14,7 +14,7 @@ import { ITaskStatus, TaskStatusEnum } from './task-status.model';
 import { ITaskPriority, TaskPriorityEnum } from './task-priority.model';
 import { ITaskSize, TaskSizeEnum } from './task-size.model';
 import { IOrganizationProjectModule } from './organization-project-module.model';
-import { TaskTypeEnum } from './issue-type.model';
+import { IIssueType, TaskTypeEnum } from './issue-type.model';
 import { IMentionUserIds } from './mention.model';
 
 export interface ITask
@@ -46,7 +46,7 @@ export interface ITask
 	isScreeningTask?: boolean; // Defines if the task still in discussion before to be accepted
 
 	version?: string;
-	issueType?: string;
+	issueType?: TaskTypeEnum;
 
 	parent?: ITask;
 	parentId?: ID; // Optional field for specifying the parent task ID
@@ -55,9 +55,11 @@ export interface ITask
 	taskStatus?: ITaskStatus;
 	taskSize?: ITaskSize;
 	taskPriority?: ITaskPriority;
+	taskType?: IIssueType;
 	taskStatusId?: ID;
 	taskSizeId?: ID;
 	taskPriorityId?: ID;
+	taskTypeId?: ID;
 
 	rootEpic?: ITask;
 }
@@ -81,7 +83,6 @@ export enum TaskParticipantEnum {
 export interface ITaskCreateInput extends ITask, IMentionUserIds {}
 
 export interface ITaskUpdateInput extends ITaskCreateInput {
-	id?: string;
 	taskSprintMoveReason?: string;
 }
 
