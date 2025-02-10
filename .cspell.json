@@ -550,7 +550,8 @@
 		"forin",
 		"distutils",
 		"loggable",
-		"inversed"
+		"inversed",
+		"iquery"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
