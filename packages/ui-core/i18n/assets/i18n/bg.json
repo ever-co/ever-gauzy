@@ -2200,7 +2200,11 @@
 			"ORG_MEMBER_LAST_LOG_VIEW": "Преглед на последния запис",
 			"TENANT_API_KEY_CREATE": "Create API Key",
 			"TENANT_API_KEY_VIEW": "View API Key",
-			"TENANT_API_KEY_DELETE": "Delete API Key"
+			"TENANT_API_KEY_DELETE": "Delete API Key",
+			"EMPLOYEE_AVAILABILITY_CREATE": "Създаване на наличност на служител",
+			"EMPLOYEE_AVAILABILITY_READ": "Преглед на наличността на служител",
+			"EMPLOYEE_AVAILABILITY_UPDATE": "Актуализиране на наличността на служител",
+			"EMPLOYEE_AVAILABILITY_DELETE": "Изтриване на наличността на служител"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",

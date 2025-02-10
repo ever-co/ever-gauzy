@@ -19,6 +19,7 @@ import { ToggleFilterComponent } from './toggle-filter/toggle-filter.component';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
 import { ContactSelectModule } from '../contact-select/contact-select.module';
 import { TaskStatusSelectModule } from '../tasks/task-status-select/task-status-select.module';
+import { RangeFilterComponent } from './range-filter.component';
 
 @NgModule({
 	imports: [
@@ -42,6 +43,7 @@ import { TaskStatusSelectModule } from '../tasks/task-status-select/task-status-
 		VendorFilterComponent,
 		ExpenseCategoryFilterComponent,
 		InputFilterComponent,
+		RangeFilterComponent,
 		OrganizationTeamFilterComponent,
 		TaskStatusFilterComponent,
 		ToggleFilterComponent

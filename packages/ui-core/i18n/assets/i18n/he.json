@@ -2166,7 +2166,11 @@
 			"ORG_MEMBER_LAST_LOG_VIEW": "צפה ביומן האחרון",
 			"TENANT_API_KEY_CREATE": "יצירת מפתח API",
 			"TENANT_API_KEY_VIEW": "הצגת מפתח API",
-			"TENANT_API_KEY_DELETE": "מחיקת מפתח API"
+			"TENANT_API_KEY_DELETE": "מחיקת מפתח API",
+			"EMPLOYEE_AVAILABILITY_CREATE": "יצירת זמינות לעובד",
+			"EMPLOYEE_AVAILABILITY_READ": "צפה בזמינות העובד",
+			"EMPLOYEE_AVAILABILITY_UPDATE": "עדכן זמינות לעובד",
+			"EMPLOYEE_AVAILABILITY_DELETE": "מחק זמינות לעובד"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",

@@ -2141,7 +2141,11 @@
 			"ORG_MEMBER_LAST_LOG_VIEW": "Bekijk laatste logboek",
 			"TENANT_API_KEY_CREATE": "API-sleutel maken",
 			"TENANT_API_KEY_VIEW": "API-sleutel bekijken",
-			"TENANT_API_KEY_DELETE": "API-sleutel verwijderen"
+			"TENANT_API_KEY_DELETE": "API-sleutel verwijderen",
+			"EMPLOYEE_AVAILABILITY_CREATE": "Werknemersbeschikbaarheid aanmaken",
+			"EMPLOYEE_AVAILABILITY_READ": "Bekijk werknemersbeschikbaarheid",
+			"EMPLOYEE_AVAILABILITY_UPDATE": "Werknemersbeschikbaarheid bijwerken",
+			"EMPLOYEE_AVAILABILITY_DELETE": "Werknemersbeschikbaarheid verwijderen"
 		},
 		"BILLING": "Facturatie",
 		"BUDGET": "Budget",
