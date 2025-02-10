@@ -6,8 +6,8 @@ import { IsBoolean, IsDateString, IsEnum, IsOptional, IsString, IsUUID } from 'c
 import { ID, IUser, IUserNotification, UserNotificationTypeEnum } from '@gauzy/contracts';
 import { BasePerEntityType, User } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
-import { UserNotificationTypeTransformerPipe } from '../shared/pipes';
 import { MikroOrmUserNotificationRepository } from './repository/mikro-orm-user-notification.repository';
+import { UserNotificationTypeTransformerPipe } from './pipes/notification-type-transform.pipe';
 
 @MultiORMEntity('user_notification', { mikroOrmRepository: () => MikroOrmUserNotificationRepository })
 export class UserNotification extends BasePerEntityType implements IUserNotification {

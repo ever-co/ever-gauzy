@@ -2,7 +2,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
-import { ID, IPagination, ISubscription } from '@gauzy/contracts';
+import { ID, IPagination, IEntitySubscription } from '@gauzy/contracts';
 import { UseValidationPipe, UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { CrudController, OptionParams, PaginationParams } from './../core/crud';
@@ -33,7 +33,7 @@ export class SubscriptionController extends CrudController<Subscription> {
 	})
 	@Get()
 	@UseValidationPipe()
-	async findAll(@Query() params: PaginationParams<Subscription>): Promise<IPagination<ISubscription>> {
+	async findAll(@Query() params: PaginationParams<Subscription>): Promise<IPagination<IEntitySubscription>> {
 		return await this.subscriptionService.findAll(params);
 	}
 
@@ -67,7 +67,7 @@ export class SubscriptionController extends CrudController<Subscription> {
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	@UseValidationPipe({ whitelist: true })
-	async create(@Body() entity: CreateSubscriptionDTO): Promise<ISubscription> {
+	async create(@Body() entity: CreateSubscriptionDTO): Promise<IEntitySubscription> {
 		return await this.commandBus.execute(new SubscriptionCreateCommand(entity));
 	}
 

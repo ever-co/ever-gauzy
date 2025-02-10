@@ -1,7 +1,7 @@
 import { IBasePerEntityType, ID } from './base-entity.model';
 import { IUser } from './user.model';
 
-export interface ISubscription extends IBasePerEntityType {
+export interface IEntitySubscription extends IBasePerEntityType {
 	type: SubscriptionTypeEnum;
 	userId: ID;
 	user?: IUser;
@@ -15,8 +15,8 @@ export enum SubscriptionTypeEnum {
 	CREATED_ENTITY = 'created-entity'
 }
 
-export interface ISubscriptionCreateInput
-	extends Omit<ISubscription, 'user' | 'userId'>,
-		Partial<Pick<ISubscription, 'userId'>> {}
+export interface IEntitySubscriptionCreateInput
+	extends Omit<IEntitySubscription, 'user' | 'userId'>,
+		Partial<Pick<IEntitySubscription, 'userId'>> {}
 
-export interface ISubscriptionFindInput extends Partial<ISubscription> {}
+export interface IEntitySubscriptionFindInput extends Partial<IEntitySubscription> {}

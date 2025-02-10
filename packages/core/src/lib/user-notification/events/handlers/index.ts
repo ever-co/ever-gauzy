@@ -1,3 +1,3 @@
-import { UserNotificationEventHandler } from './user-notification.handler';
+import { UserCreateNotificationEventHandler } from './user-notification.handler';
 
-export const EventHandlers = [UserNotificationEventHandler];
+export const EventHandlers = [UserCreateNotificationEventHandler];

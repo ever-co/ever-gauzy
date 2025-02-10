@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { DeleteResult } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
-import { TenantPermissionGuard } from '../../shared/guards';
+import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { Permissions } from '../../shared/decorators';
 import { UUIDValidationPipe, UseValidationPipe } from '../../shared/pipes';
 import { CrudController, PaginationParams } from '../../core/crud';
@@ -24,7 +24,7 @@ import { UserNotificationSettingService } from './user-notification-setting.serv
 import { UserNotificationSettingCreateCommand, UserNotificationSettingUpdateCommand } from './commands';
 import { CreateUserNotificationSettingDTO, UpdateUserNotificationSettingDTO } from './dto';
 
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions()
 @Controller('/user-notification-setting')
 export class UserNotificationSettingController extends CrudController<UserNotificationSetting> {
