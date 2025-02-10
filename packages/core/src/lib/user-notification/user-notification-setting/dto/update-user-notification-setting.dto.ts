@@ -1,4 +1,4 @@
-import { OmitType, PartialType } from '@nestjs/swagger';
+import { PartialType } from '@nestjs/swagger';
 import { IUserNotificationSettingUpdateInput } from '@gauzy/contracts';
 import { CreateUserNotificationSettingDTO } from './create-user-notification-setting.dto';
 
@@ -6,5 +6,5 @@ import { CreateUserNotificationSettingDTO } from './create-user-notification-set
  * Update UserNotificationSetting validation request DTO
  */
 export class UpdateUserNotificationSettingDTO
-	extends PartialType(OmitType(CreateUserNotificationSettingDTO, ['user', 'userId']))
+	extends PartialType(CreateUserNotificationSettingDTO)
 	implements IUserNotificationSettingUpdateInput {}
