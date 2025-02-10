@@ -114,104 +114,66 @@ ARG NODE_OPTIONS
 
 ENV CI=true \
 	NODE_ENV_ARG=${NODE_ENV} \
+	# Set Python interpreter for `node-gyp` to use
 	PYTHON=/usr/bin/python
 
-# Set Python interpreter for `node-gyp` to use
-ENV PYTHON /usr/bin/python
-
-# RUN apk --update add bash && npm i -g npm@9 \
-# 	&& apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
-# 	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
-
-
+#  snappy libheif snappy-dev vips-dev vips
 RUN apk --update add bash \
-	&& apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
-	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips \
+	&& apk add --no-cache build-base \
 	&& npm i -g npm@9 node-gyp@10.2.0 yarn --force \
 	&& mkdir /srv/gauzy \
 	&& chown -R node:node /srv/gauzy \
 	&& rm -rf /var/cache/apk/*
 
-COPY wait .deploy/api/entrypoint.prod.sh .deploy/api/entrypoint.compose.sh /
-RUN chmod +x /wait /entrypoint.compose.sh /entrypoint.prod.sh && dos2unix /entrypoint.prod.sh && dos2unix /entrypoint.compose.sh
+COPY --chmod=755 wait .deploy/api/entrypoint.prod.sh .deploy/api/entrypoint.compose.sh /
 
 USER node:node
 WORKDIR /srv/gauzy
 
-# Copy related project files
-COPY --chown=node:node apps/api ./apps/api
-COPY --chown=node:node packages ./packages
+# Copy related project files and configuration files
+COPY --chown=node:node . .
 
-# Copy project configuration files
-COPY --chown=node:node tsconfig.json tsconfig.base.json nx.json nest-cli.json migrations.json project.json package.workspaces.json decorate-angular-cli.js lerna.json package.json yarn.lock ./
-COPY --chown=node:node .scripts/postinstall.ts ./.scripts/
-
-# Set the NODE_ENV environment variable
-ENV NODE_ENV=${NODE_ENV_ARG}
-
-# Install project production dependencies
-RUN rm -rf packages/desktop-*  packages/ui-* packages/plugins/*-ui packages/plugins/*-wakatime \
-	&& yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production \
-	&& yarn postinstall.manual \
-	&& rm -rf node_modules/@angular \
-	&& cp -r ./node_modules ./node_modules_prod
-
-# We need to set to "development", because we are using "yarn install" below to setup
-# devDependencies even for production builds!
-ENV NODE_ENV=development
-
-# Install project development dependencies
-RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts \
-	&& yarn postinstall.manual \
-	&& yarn cache clean
-
+# Set the environment variables
 ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=60000"} \
-	NODE_ENV=${NODE_ENV_ARG} \
+	NODE_ENV=${NODE_ENV_ARG:-"development"} \
 	DEMO=${DEMO:-false} \
 	IS_DOCKER=true \
 	NX_NO_CLOUD=true
 
-# Build the API service for production and remove node_modules
-RUN yarn build:api:prod:docker \
+# Install project production dependencies
+RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production \
+	&& yarn postinstall.manual \
+	&& rm -rf node_modules/@angular \
+	&& cp -r ./node_modules ./node_modules_prod \
+	# Install project development dependencies
+	&& NODE_ENV=development yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts \
+	&& yarn postinstall.manual \
+	&& yarn cache clean \
+	# Build the API service for production
+	&& yarn build:api:prod:docker \
 	&& rm -rf ./node_modules
 
 FROM node:20.11.1-alpine3.19 AS production
-
-WORKDIR /srv/gauzy
-
-COPY --chown=node:node --from=builder /wait /entrypoint.prod.sh /entrypoint.compose.sh ./
-COPY --chown=node:node --from=builder /srv/gauzy/dist/packages/ ./packages/
-
-# Copy static assets files which used for example in the seeds (e.g. images for features, reports, screenshots)
-COPY --chown=node:node apps/api/src/assets apps/api/src/assets
-
-# Copy folder to which we later move static assets (e.g. images for features, reports, screenshots)
-COPY --chown=node:node apps/api/public apps/api/public
-
-# Copy static assets used in seeds (e.g. reports screenshots images, see report.seed.ts) to public folder.
-# We are doing it in the seed code too, however if DB seed already was done one time and
-# docker container rebuilds, we will not have images unless we copy them during docker build manually here.
-COPY --chown=node:node apps/api/src/assets/seed apps/api/public
-
-# Copy API built items
-COPY --chown=node:node --from=builder /srv/gauzy/dist/apps/api .
-
+# Prepare PM2 and dependencies
 RUN npm install pm2@4.5.1 -g \
 	&& mkdir /import \
 	&& chown node:node /import \
 	&& touch ormlogs.log \
 	&& chown node:node ormlogs.log \
-	&& chown node:node wait \
-	&& chmod +x wait entrypoint.compose.sh entrypoint.prod.sh \
-	&& rm -rf node_modules \
 	&& yarn cache clean
 
-# Copy node_modules from production dependencies
+USER node:node
+WORKDIR /srv/gauzy
+
+# Copy the entrypoint scripts
+COPY --from=builder --chmod=755 /wait /entrypoint.prod.sh /entrypoint.compose.sh ./
+
+# Copy the built API items and prepare dependencies
+COPY --chown=node:node --from=builder /srv/gauzy/dist/apps/api/assets /srv/gauzy/dist/apps/api/public /srv/gauzy/dist/apps/api/main.* ./
+COPY --chown=node:node --from=builder /srv/gauzy/dist/packages/ ./packages/
 COPY --chown=node:node --from=builder /srv/gauzy/node_modules_prod ./node_modules
 
-USER node:node
-
-# Prepare @gauzy package dependencies
+# Fix @guazy dependencies
 RUN rm -rf ./node_modules/@gauzy \
 	&& mkdir -p ./node_modules/@gauzy \
 	&& for pkg in auth common utils config contracts core plugin; do \
@@ -220,7 +182,8 @@ RUN rm -rf ./node_modules/@gauzy \
 	&& for plugin in changelog integration-ai integration-github integration-hubstaff integration-jira integration-upwork jitsu-analytics job-proposal job-search knowledge-base product-reviews sentry-tracing videos; do \
 	mv "./packages/plugins/$plugin" "./node_modules/@gauzy/plugin-$plugin"; \
 	done \
-	&& mv "./node_modules/@gauzy/plugin-sentry-tracing" "./node_modules/@gauzy/plugin-sentry" || true
+	&& mv "./node_modules/@gauzy/plugin-sentry-tracing" "./node_modules/@gauzy/plugin-sentry" || true \
+	&& rm -rf /tmp/gauzy
 
 # we need node_modules inside each @gauzy package
 COPY --chown=node:node --from=builder /srv/gauzy/packages/auth/node_modules ./node_modules/@gauzy/auth/node_modules
