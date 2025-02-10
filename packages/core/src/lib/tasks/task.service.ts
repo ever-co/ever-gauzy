@@ -32,7 +32,7 @@ import {
 	IUser,
 	ITaskAdvancedFilter,
 	IAdvancedTaskFiltering,
-	UserNotificationTypeEnum,
+	EmployeeNotificationTypeEnum,
 	NotificationActionTypeEnum
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
@@ -44,6 +44,7 @@ import { TaskViewService } from './views/view.service';
 import { SubscriptionService } from '../subscription/subscription.service';
 import { MentionService } from '../mention/mention.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
+import { EmployeeNotificationService } from '../employee-notification/employee-notification.service';
 import { CreateSubscriptionEvent } from '../subscription/events';
 import { Task } from './task.entity';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
@@ -52,23 +53,22 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
 import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 import { TaskProjectSequenceService } from './project-sequence/project-sequence.service';
-import { UserNotificationService } from '../user-notification/user-notification.service';
 
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
 	private readonly logger = new Logger(TaskService.name);
 
 	constructor(
-		private readonly _eventBus: EventBus,
 		readonly typeOrmTaskRepository: TypeOrmTaskRepository,
 		readonly mikroOrmTaskRepository: MikroOrmTaskRepository,
 		readonly typeOrmOrganizationSprintTaskHistoryRepository: TypeOrmOrganizationSprintTaskHistoryRepository,
+		private readonly _eventBus: EventBus,
 		private readonly taskViewService: TaskViewService,
 		private readonly _subscriptionService: SubscriptionService,
 		private readonly mentionService: MentionService,
 		private readonly activityLogService: ActivityLogService,
 		private readonly taskProjectSequenceService: TaskProjectSequenceService,
-		private readonly userNotificationService: UserNotificationService
+		private readonly employeeNotificationService: EmployeeNotificationService
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
 	}
@@ -193,11 +193,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 								})
 							);
 
-							this.userNotificationService.publishNotificationEvent(
+							this.employeeNotificationService.publishNotificationEvent(
 								{
 									entity: BaseEntityEnum.Task,
 									entityId: task.id,
-									type: UserNotificationTypeEnum.ASSIGNMENT,
+									type: EmployeeNotificationTypeEnum.ASSIGNMENT,
 									sentById: user.id,
 									receiverId: userId,
 									organizationId,

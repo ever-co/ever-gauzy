@@ -5,6 +5,15 @@ import { IOrganization } from './organization.model';
 export type JsonData = Record<string, any> | string;
 
 /**
+ * Dynamically excludes the default system-managed fields ('id', 'createdAt', 'updatedAt')
+ * along with any additional keys provided.
+ *
+ * @template T - The original type.
+ * @template K - (Optional) Additional keys to omit from T.
+ */
+export type OmitFields<T, K extends keyof T = never> = Omit<T, 'id' | 'createdAt' | 'updatedAt' | K>;
+
+/**
  * @description
  * An entity ID. Represents a unique identifier as a string.
  *

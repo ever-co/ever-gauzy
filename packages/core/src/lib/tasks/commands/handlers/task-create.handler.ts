@@ -8,7 +8,7 @@ import {
 	SubscriptionTypeEnum,
 	ID,
 	IEmployee,
-	UserNotificationTypeEnum,
+	EmployeeNotificationTypeEnum,
 	NotificationActionTypeEnum
 } from '@gauzy/contracts';
 import { EventBus } from '../../../event-bus';
@@ -25,7 +25,7 @@ import { EmployeeService } from '../../../employee/employee.service';
 import { MentionService } from '../../../mention/mention.service';
 import { ActivityLogService } from '../../../activity-log/activity-log.service';
 import { TaskProjectSequenceService } from '../../project-sequence/project-sequence.service';
-import { UserNotificationService } from '../../../user-notification/user-notification.service';
+import { EmployeeNotificationService } from '../../../employee-notification/employee-notification.service';
 
 @CommandHandler(TaskCreateCommand)
 export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
@@ -40,7 +40,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 		private readonly mentionService: MentionService,
 		private readonly activityLogService: ActivityLogService,
 		private readonly taskProjectSequenceService: TaskProjectSequenceService,
-		private readonly userNotificationService: UserNotificationService
+		private readonly EmployeeNotificationService: EmployeeNotificationService
 	) {}
 
 	/**
@@ -149,11 +149,11 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 								})
 							);
 
-							this.userNotificationService.publishNotificationEvent(
+							this.EmployeeNotificationService.publishNotificationEvent(
 								{
 									entity: BaseEntityEnum.Task,
 									entityId: task.id,
-									type: UserNotificationTypeEnum.ASSIGNMENT,
+									type: EmployeeNotificationTypeEnum.ASSIGNMENT,
 									sentById: task.creatorId,
 									receiverId: userId,
 									organizationId,

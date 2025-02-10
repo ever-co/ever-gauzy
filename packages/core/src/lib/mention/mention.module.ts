@@ -9,7 +9,7 @@ import { MentionController } from './mention.controller';
 import { Mention } from './mention.entity';
 import { EventHandlers } from './events/handlers';
 import { TypeOrmMentionRepository } from './repository/type-orm-mention.repository';
-import { UserNotificationModule } from '../user-notification/user-notification.module';
+import { EmployeeNotificationModule } from '../employee-notification/employee-notification.module';
 
 @Global()
 @Module({
@@ -19,7 +19,7 @@ import { UserNotificationModule } from '../user-notification/user-notification.m
 		CqrsModule,
 		RolePermissionModule,
 		SubscriptionModule,
-		UserNotificationModule
+		EmployeeNotificationModule
 	],
 	controllers: [MentionController],
 	providers: [MentionService, TypeOrmMentionRepository, ...EventHandlers],

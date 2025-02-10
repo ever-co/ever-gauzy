@@ -8,7 +8,7 @@ import {
 	IMentionCreateInput,
 	NotificationActionTypeEnum,
 	SubscriptionTypeEnum,
-	UserNotificationTypeEnum
+	EmployeeNotificationTypeEnum
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
@@ -17,15 +17,15 @@ import { TypeOrmMentionRepository } from './repository/type-orm-mention.reposito
 import { MikroOrmMentionRepository } from './repository/mikro-orm-mention.repository';
 import { CreateMentionEvent } from './events';
 import { CreateSubscriptionEvent } from '../subscription/events';
-import { UserNotificationService } from '../user-notification/user-notification.service';
+import { EmployeeNotificationService } from '../employee-notification/employee-notification.service';
 
 @Injectable()
 export class MentionService extends TenantAwareCrudService<Mention> {
 	constructor(
 		readonly typeOrmMentionRepository: TypeOrmMentionRepository,
 		readonly mikroOrmMentionRepository: MikroOrmMentionRepository,
-		private readonly userNotificationService: UserNotificationService,
-		private readonly _eventBus: EventBus
+		private readonly _eventBus: EventBus,
+		private readonly _employeeNotificationService: EmployeeNotificationService
 	) {
 		super(typeOrmMentionRepository, mikroOrmMentionRepository);
 	}
@@ -65,11 +65,11 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 			);
 
 			// Trigger internal system notification for mentioned user
-			this.userNotificationService.publishNotificationEvent(
+			this._employeeNotificationService.publishNotificationEvent(
 				{
 					entity: parentEntityType ?? entity,
 					entityId: parentEntityId ?? entityId,
-					type: UserNotificationTypeEnum.MENTION,
+					type: EmployeeNotificationTypeEnum.MENTION,
 					sentById: user.id,
 					receiverId: mentionedUserId,
 					organizationId,

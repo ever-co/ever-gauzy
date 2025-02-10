@@ -1,5 +1,5 @@
 export * from './abstract-validation.pipe';
-export * from './actor-type-transform.pipe';
+export * from './actor-type-transform';
 export * from './bulk-body-load-transform.pipe';
 export * from './column-numeric-transformer.pipe';
 export * from './employee-setting-type-transformer.pipe';
