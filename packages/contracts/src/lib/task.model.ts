@@ -83,7 +83,6 @@ export enum TaskParticipantEnum {
 export interface ITaskCreateInput extends ITask, IMentionUserIds {}
 
 export interface ITaskUpdateInput extends ITaskCreateInput {
-	id?: string;
 	taskSprintMoveReason?: string;
 }
 
