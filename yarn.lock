@@ -7502,6 +7502,26 @@
   dependencies:
     tslib "^2.3.1"
 
+"@ngneat/effects-ng@3.1.4":
+  version "3.1.4"
+  resolved "https://registry.yarnpkg.com/@ngneat/effects-ng/-/effects-ng-3.1.4.tgz#245e3922acc4189e9ae3bda8054911877f9e9e41"
+  integrity sha512-uIVivXP+cfu+lEnuihWYPh3wFrnEJ8kdxT8iMP9ar3/pnyo12Vyvzo6UHOLGRKeqMgH/KBoivpyHexTOwddkMQ==
+  dependencies:
+    "@ngneat/effects" "*"
+    rxjs "*"
+    ts-action "11.0.0"
+    ts-action-operators "9.1.2"
+    tslib "^2.3.0"
+
+"@ngneat/effects@*":
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/@ngneat/effects/-/effects-2.1.2.tgz#1da0e443b935fb12cad3ecab102eb5e78f7db34a"
+  integrity sha512-LCjcQ+65vwOCUgQ9PL82xWZQjSryM7S4sGd6tvj0hjK/MRF+clm15y5ID97BAhENwZvnXUaWUOZhzjtF9iqd/A==
+  dependencies:
+    rxjs "*"
+    ts-action "11.0.0"
+    ts-action-operators "9.1.2"
+
 "@ngneat/until-destroy@^10.0.0":
   version "10.0.0"
   resolved "https://registry.yarnpkg.com/@ngneat/until-destroy/-/until-destroy-10.0.0.tgz#105db43d858bc1cec2f36272a296af68bed7bf43"
@@ -13699,8 +13719,8 @@
   resolved "https://registry.yarnpkg.com/@typescript-eslint/scope-manager/-/scope-manager-8.19.1.tgz#794cfc8add4f373b9cd6fa32e367e7565a0e231b"
   integrity sha512-60L9KIuN/xgmsINzonOcMDSB8p82h95hoBfSBtXuO4jlR1R9L1xSkmVZKgCPVfavDlXihh4ARNjXhh1gGnLC7Q==
   dependencies:
-    "@typescript-eslint/types" "8.21.0"
-    "@typescript-eslint/visitor-keys" "8.21.0"
+    "@typescript-eslint/types" "8.19.1"
+    "@typescript-eslint/visitor-keys" "8.19.1"
 
 "@typescript-eslint/type-utils@^8.0.0":
   version "8.15.0"
@@ -13770,7 +13790,7 @@
   resolved "https://registry.yarnpkg.com/@typescript-eslint/visitor-keys/-/visitor-keys-8.19.1.tgz#fce54d7cfa5351a92387d6c0c5be598caee072e0"
   integrity sha512-fzmjU8CHK853V/avYZAvuVut3ZTfwN5YtMaoi+X9Y9MA9keaWNHC3zEQ9zvyX/7Hj+5JkNyK1l7TOR2hevHB6Q==
   dependencies:
-    "@typescript-eslint/types" "8.21.0"
+    "@typescript-eslint/types" "8.19.1"
     eslint-visitor-keys "^4.2.0"
 
 "@upwork/node-upwork-oauth2@^2.0.3":
