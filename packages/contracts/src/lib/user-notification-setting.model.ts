@@ -13,7 +13,8 @@ export interface IUserNotificationSetting extends IBasePerTenantAndOrganizationE
 	preferences?: JsonData;
 }
 
-export interface IUserNotificationSettingCreateInput extends Omit<IUserNotificationSetting, 'user' | 'userId'> {}
+export interface IUserNotificationSettingCreateInput
+	extends Omit<IUserNotificationSetting, 'id' | 'createdAt' | 'updatedAt' | 'user' | 'userId'> {}
 
 export interface IUserNotificationSettingUpdateInput
 	extends Omit<IUserNotificationSettingCreateInput, 'userId' | 'user'> {}
