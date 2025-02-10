@@ -2,8 +2,8 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from 'chalk';
 import { DatabaseTypeEnum } from '@gauzy/config';
 
-export class AlterTaskTableAddTypeField1739019933858 implements MigrationInterface {
-	name = 'AlterTaskTableAddTypeField1739019933858';
+export class AlterTaskTableAddIssueTypeColumn1739189295026 implements MigrationInterface {
+	name = 'AlterTaskTableAddIssueTypeColumn1739189295026';
 
 	/**
 	 * Up Migration

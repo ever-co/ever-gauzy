@@ -2,6 +2,7 @@ import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	IActivity,
@@ -187,6 +188,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsOptional()
 	@IsObject()
 	@MultiORMManyToOne(() => Task, (task) => task.children, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'SET NULL'
 	})
 	parent?: Task;
@@ -225,7 +230,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	 * Creator
 	 */
 	@MultiORMManyToOne(() => User, {
+		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -242,7 +250,13 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsObject()
-	@MultiORMManyToOne(() => OrganizationSprint, { onDelete: 'SET NULL' })
+	@MultiORMManyToOne(() => OrganizationSprint, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	organizationSprint?: IOrganizationSprint;
 
@@ -261,6 +275,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsOptional()
 	@IsObject()
 	@MultiORMManyToOne(() => TaskStatus, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -281,6 +299,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsOptional()
 	@IsObject()
 	@MultiORMManyToOne(() => TaskSize, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -291,7 +313,11 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsUUID()
 	@RelationId((it: Task) => it.taskSize)
 	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, type: 'varchar', relationId: true })
+	@MultiORMColumn({
+		nullable: true,
+		type: 'varchar',
+		relationId: true
+	})
 	taskSizeId?: ID;
 
 	/**
@@ -301,6 +327,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsOptional()
 	@IsObject()
 	@MultiORMManyToOne(() => TaskPriority, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -317,12 +347,15 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	/**
 	 * Task Type
 	 */
-	@ApiPropertyOptional({ type: () => Object })
+	@ApiPropertyOptional({ type: () => IssueType }) // Specify the type for Swagger documentation
 	@IsOptional()
-	@IsObject()
+	@Type(() => IssueType) // Use @Type() to ensure proper transformation
 	@MultiORMManyToOne(() => IssueType, {
-		onDelete: 'SET NULL',
-		nullable: true
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	taskType?: IIssueType;
@@ -363,28 +396,24 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	 * InvoiceItem
 	 */
 	@MultiORMOneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.task)
-	@JoinColumn()
 	invoiceItems?: IInvoiceItem[];
 
 	/**
 	 * TimeLog
 	 */
 	@MultiORMOneToMany(() => TimeLog, (it) => it.task)
-	@JoinColumn()
 	timeLogs?: ITimeLog[];
 
 	/**
 	 * Activity
 	 */
 	@MultiORMOneToMany(() => Activity, (activity) => activity.task)
-	@JoinColumn()
 	activities?: IActivity[];
 
 	/**
 	 * Linked Task Issues
 	 */
 	@MultiORMOneToMany(() => TaskLinkedIssue, (it) => it.taskTo)
-	@JoinColumn()
 	linkedIssues?: TaskLinkedIssue[];
 
 	/*
