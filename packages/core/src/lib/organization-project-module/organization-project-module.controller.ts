@@ -170,6 +170,8 @@ export class OrganizationProjectModuleController extends CrudController<Organiza
 	@Post()
 	@UseValidationPipe({ whitelist: true })
 	async create(@Body() entity: CreateOrganizationProjectModuleDTO): Promise<IOrganizationProjectModule> {
+		console.log('Voici les data:', entity);
+
 		return await this.commandBus.execute(new OrganizationProjectModuleCreateCommand(entity));
 	}
 
