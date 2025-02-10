@@ -162,8 +162,8 @@ import { DashboardModule } from '../dashboard/dashboard.module';
 import { DashboardWidgetModule } from '../dashboard/dashboard-widget/dashboard-widget.module';
 import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
 import { TagTypeModule } from '../tag-type/tag-type.module';
-import { UserNotificationModule } from '../user-notification/user-notification.module';
-import { UserNotificationSettingModule } from '../user-notification/user-notification-setting/user-notification-setting.module';
+import { EmployeeNotificationModule } from '../employee-notification/employee-notification.module';
+import { EmployeeNotificationSettingModule } from '../employee-notification/employee-notification-setting/employee-notification-setting.module';
 
 const { unleashConfig } = environment;
 
@@ -472,8 +472,8 @@ if (environment.THROTTLE_ENABLED) {
 		SubscriptionModule,
 		DashboardModule,
 		DashboardWidgetModule,
-		UserNotificationModule,
-		UserNotificationSettingModule,
+		EmployeeNotificationModule,
+		EmployeeNotificationSettingModule,
 		TenantApiKeyModule
 	],
 	controllers: [AppController],

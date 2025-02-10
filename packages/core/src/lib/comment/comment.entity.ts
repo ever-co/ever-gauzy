@@ -14,7 +14,7 @@ import {
 	MultiORMManyToOne,
 	MultiORMOneToMany
 } from '../core/decorators/entity';
-import { ActorTypeTransformerPipe } from '../shared/pipes';
+import { ActorTypeTransformer } from '../shared/pipes';
 import { MikroOrmCommentRepository } from './repository/mikro-orm-comment.repository';
 
 @MultiORMEntity('comment', { mikroOrmRepository: () => MikroOrmCommentRepository })
@@ -31,7 +31,7 @@ export class Comment extends BasePerEntityType implements IComment {
 	@IsOptional()
 	@IsEnum(ActorTypeEnum)
 	@ColumnIndex()
-	@MultiORMColumn({ type: 'int', nullable: true, transformer: new ActorTypeTransformerPipe() })
+	@MultiORMColumn({ type: 'int', nullable: true, transformer: new ActorTypeTransformer() })
 	actorType?: ActorTypeEnum; // Will be stored as 0 or 1 in DB
 
 	@ApiPropertyOptional({ type: Boolean })

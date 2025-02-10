@@ -16,7 +16,7 @@ import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskController } from './task.controller';
 import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
-import { UserNotificationModule } from '../user-notification/user-notification.module';
+import { EmployeeNotificationModule } from '../employee-notification/employee-notification.module';
 
 @Module({
 	imports: [
@@ -29,7 +29,7 @@ import { UserNotificationModule } from '../user-notification/user-notification.m
 		OrganizationProjectModule,
 		OrganizationSprintModule,
 		TaskViewModule,
-		UserNotificationModule,
+		EmployeeNotificationModule,
 		CqrsModule,
 		EventBusModule
 	],
