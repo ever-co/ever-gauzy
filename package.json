@@ -517,7 +517,7 @@
 		"cz-conventional-changelog": "^3.3.0",
 		"electron-builder": "^24.13.3",
 		"envalid": "^6.0.2",
-		"esbuild": "0.19.2",
+		"esbuild": "0.25.0",
 		"eslint": "^9.0.0",
 		"eslint-plugin-cypress": "4.2.0",
 		"fork-ts-checker-webpack-plugin": "^5.2.0",
