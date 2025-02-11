@@ -4,7 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { EmployeeNotification } from './employee-notification.entity';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { EmployeeNotificationSettingModule } from './employee-notification-setting/employee-notification-setting.module';
+import { EmployeeNotificationSettingModule } from '../employee-notification-setting/employee-notification-setting.module';
 import { EmployeeNotificationService } from './employee-notification.service';
 import { EmployeeNotificationController } from './employee-notification.controller';
 import { EventHandlers } from './events/handlers';
@@ -15,11 +15,11 @@ import { TypeOrmEmployeeNotificationRepository } from './repository/type-orm-emp
 		CqrsModule,
 		TypeOrmModule.forFeature([EmployeeNotification]),
 		MikroOrmModule.forFeature([EmployeeNotification]),
-		RolePermissionModule,
-		EmployeeNotificationSettingModule
+		EmployeeNotificationSettingModule,
+		RolePermissionModule
 	],
 	controllers: [EmployeeNotificationController],
 	providers: [EmployeeNotificationService, TypeOrmEmployeeNotificationRepository, ...EventHandlers],
-	exports: [EmployeeNotificationService, TypeOrmEmployeeNotificationRepository]
+	exports: [EmployeeNotificationService]
 })
 export class EmployeeNotificationModule {}

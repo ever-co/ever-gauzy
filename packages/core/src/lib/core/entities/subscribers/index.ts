@@ -11,8 +11,9 @@ import {
 	DashboardSubscriber,
 	EmailResetSubscriber,
 	EmailTemplateSubscriber,
-	EmployeeSettingSubscriber,
 	EmployeeSubscriber,
+	EmployeeSettingSubscriber,
+	EmployeeNotificationSettingSubscriber,
 	FeatureSubscriber,
 	ImageAssetSubscriber,
 	ImportHistorySubscriber,
@@ -46,8 +47,7 @@ import {
 	TimeOffRequestSubscriber,
 	TimesheetSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber,
-	EmployeeNotificationSettingSubscriber
+	UserSubscriber
 } from '../internal';
 import { TenantOrganizationBaseEntityEventSubscriber } from './tenant-organization-base-entity.subscriber';
 
@@ -70,6 +70,7 @@ export const coreSubscribers = [
 	EmailTemplateSubscriber,
 	EmployeeSettingSubscriber,
 	EmployeeSubscriber,
+	EmployeeNotificationSettingSubscriber,
 	FeatureSubscriber,
 	ImageAssetSubscriber,
 	ImportHistorySubscriber,
@@ -103,6 +104,5 @@ export const coreSubscribers = [
 	TimeOffRequestSubscriber,
 	TimesheetSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber,
-	EmployeeNotificationSettingSubscriber
+	UserSubscriber
 ];

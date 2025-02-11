@@ -163,7 +163,7 @@ import { DashboardWidgetModule } from '../dashboard/dashboard-widget/dashboard-w
 import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
 import { TagTypeModule } from '../tag-type/tag-type.module';
 import { EmployeeNotificationModule } from '../employee-notification/employee-notification.module';
-import { EmployeeNotificationSettingModule } from '../employee-notification/employee-notification-setting/employee-notification-setting.module';
+import { EmployeeNotificationSettingModule } from '../employee-notification-setting/employee-notification-setting.module';
 
 const { unleashConfig } = environment;
 
