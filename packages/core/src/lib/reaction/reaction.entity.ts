@@ -3,8 +3,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
 import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-import { ID, IReaction, IUser, ReactionEntityEnum } from '@gauzy/contracts';
-import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
+import { ID, IEmployee, IReaction, IUser, ReactionEntityEnum } from '@gauzy/contracts';
+import { Employee, TenantOrganizationBaseEntity, User } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
 import { MikroOrmReactionRepository } from './repository/mikro-orm-reaction.repository';
 
@@ -39,8 +39,28 @@ export class Reaction extends TenantOrganizationBaseEntity implements IReaction 
 	|--------------------------------------------------------------------------
 	*/
 
+	@MultiORMManyToOne(() => Employee, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on update. */
+		onUpdate: 'CASCADE',
+
+		/** Database cascade action on delete. */
+		onDelete: 'CASCADE'
+	})
+	employee?: IEmployee;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: Reaction) => it.employee)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	employeeId?: ID;
+
 	/**
-	 * User reaction author
+	 * User reaction creator
 	 */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
@@ -52,13 +72,13 @@ export class Reaction extends TenantOrganizationBaseEntity implements IReaction 
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	creator?: IUser;
+	createdBy?: IUser;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((it: Reaction) => it.creator)
+	@RelationId((it: Reaction) => it.createdBy)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	creatorId?: ID;
+	createdById?: ID;
 }

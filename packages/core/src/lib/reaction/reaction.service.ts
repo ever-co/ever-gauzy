@@ -28,6 +28,7 @@ export class ReactionService extends TenantAwareCrudService<Reaction> {
 		try {
 			const { entity, entityId, emoji, organizationId } = input;
 			const userId = RequestContext.currentUserId();
+			const employeeId = RequestContext.currentEmployeeId();
 			const tenantId = RequestContext.currentTenantId();
 
 			// Employee existence validation
@@ -41,7 +42,8 @@ export class ReactionService extends TenantAwareCrudService<Reaction> {
 				tenantId,
 				organizationId,
 				emoji,
-				creatorId: user.id,
+				employeeId,
+				createdById: user.id,
 				entity,
 				entityId
 			};
@@ -56,7 +58,8 @@ export class ReactionService extends TenantAwareCrudService<Reaction> {
 			return await super.create({
 				...input,
 				tenantId,
-				creatorId: user.id
+				employeeId,
+				createdById: user.id
 			});
 		} catch (error) {
 			console.log(error); // Debug Logging
@@ -73,10 +76,12 @@ export class ReactionService extends TenantAwareCrudService<Reaction> {
 	async update(id: ID, input: IReactionUpdateInput): Promise<IReaction | UpdateResult> {
 		try {
 			const userId = RequestContext.currentUserId();
+			const employeeId = RequestContext.currentEmployeeId();
 			const reaction = await this.findOneByOptions({
 				where: {
 					id,
-					creatorId: userId
+					employeeId,
+					createdById: userId
 				}
 			});
 
@@ -97,8 +102,9 @@ export class ReactionService extends TenantAwareCrudService<Reaction> {
 	async delete(id: ID): Promise<DeleteResult> {
 		try {
 			const userId = RequestContext.currentUserId();
+			const employeeId = RequestContext.currentEmployeeId();
 			return await super.delete(id, {
-				where: { creatorId: userId }
+				where: { createdById: userId, employeeId }
 			});
 		} catch (error) {
 			throw new BadRequestException(error);

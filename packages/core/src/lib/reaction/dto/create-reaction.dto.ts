@@ -7,5 +7,5 @@ import { Reaction } from '../reaction.entity';
  * Create Reaction data validation request DTO
  */
 export class CreateReactionDTO
-	extends IntersectionType(TenantOrganizationBaseDTO, OmitType(Reaction, ['creatorId']))
+	extends IntersectionType(TenantOrganizationBaseDTO, OmitType(Reaction, ['createdById']))
 	implements IReactionCreateInput {}
