@@ -50,7 +50,7 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 			const resourceLink = await super.create({
 				...entity,
 				tenantId,
-				creatorId: user.id
+				createdById: user.id
 			});
 
 			// Generate the activity log

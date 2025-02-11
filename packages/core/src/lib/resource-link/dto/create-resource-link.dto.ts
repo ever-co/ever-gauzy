@@ -7,5 +7,5 @@ import { ResourceLink } from '../resource-link.entity';
  * Create ResourceLink data validation request DTO
  */
 export class CreateResourceLinkDTO
-	extends IntersectionType(TenantOrganizationBaseDTO, OmitType(ResourceLink, ['creatorId', 'creator']))
+	extends IntersectionType(TenantOrganizationBaseDTO, OmitType(ResourceLink, ['createdBy', 'createdById']))
 	implements IResourceLinkCreateInput {}
