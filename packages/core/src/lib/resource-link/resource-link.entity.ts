@@ -60,10 +60,10 @@ export class ResourceLink extends TenantOrganizationBaseEntity implements IResou
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	creator?: IUser;
+	createdBy?: IUser;
 
-	@RelationId((it: ResourceLink) => it.creator)
+	@RelationId((it: ResourceLink) => it.createdBy)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	creatorId?: ID;
+	createdById?: ID;
 }
