@@ -68,7 +68,31 @@
 				"production": {
 					"buildTarget": "api:build:production"
 				}
-			}
+			},
+			"dependsOn": [
+				"contracts:build",
+				"common:build",
+				"utils:build",
+				"config:build",
+				"plugin:build",
+				"auth:build",
+				"core:build",
+				"desktop-lib:build",
+				"plugin-sentry:build",
+				"plugin-changelog:build",
+				"plugin-integration-ai:build",
+				"plugin-integration-github:build",
+				"plugin-integration-hubstaff:build",
+				"plugin-integration-jira:build",
+				"plugin-integration-upwork:build",
+				"plugin-integration-wakatime:build",
+				"plugin-jitsu-analytics:build",
+				"plugin-job-proposal:build",
+				"plugin-job-search:build",
+				"plugin-product-reviews:build",
+				"plugin-knowledge-base:build",
+				"plugin-videos:build"
+			]
 		},
 		"lint": {
 			"executor": "@nx/eslint:lint"
