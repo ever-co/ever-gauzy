@@ -124,7 +124,7 @@ export class EmployeeNotificationSetting extends TenantOrganizationBaseEntity im
 		owner: true
 	})
 	@JoinColumn()
-	employee: IEmployee;
+	employee?: IEmployee;
 
 	/**
 	 * The UUID of the associated employee.
@@ -137,5 +137,5 @@ export class EmployeeNotificationSetting extends TenantOrganizationBaseEntity im
 	@RelationId((it: EmployeeNotificationSetting) => it.employee)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	employeeId: ID;
+	employeeId?: ID;
 }
