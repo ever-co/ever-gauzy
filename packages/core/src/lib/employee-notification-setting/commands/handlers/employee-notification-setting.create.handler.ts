@@ -17,6 +17,16 @@ export class EmployeeNotificationSettingCreateHandler
 	 */
 	public async execute(command: EmployeeNotificationSettingCreateCommand): Promise<IEmployeeNotificationSetting> {
 		const { input } = command;
-		return this.employeeNotificationSettingService.create(input);
+
+		if (!input) {
+			throw new Error('Input is required for creating notification setting');
+		}
+
+		try {
+			return this.employeeNotificationSettingService.create(input);
+		} catch (error) {
+			// Log error details
+			throw new Error(`Failed to create notification setting: ${error.message}`);
+		}
 	}
 }

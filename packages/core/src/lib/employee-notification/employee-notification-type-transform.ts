@@ -27,7 +27,7 @@ export class EmployeeNotificationTypeTransformer implements ValueTransformer {
 			case EmployeeNotificationTypeEnum.MESSAGE:
 				return 5;
 			default:
-				throw new Error(`Unknown notification type: ${value}`);
+				throw new Error(`Unsupported notification type: ${value}`);
 		}
 	}
 

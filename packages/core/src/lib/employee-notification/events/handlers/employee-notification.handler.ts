@@ -1,9 +1,12 @@
+import { Logger } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { EmployeeCreateNotificationEvent } from '../employee-notification.event';
 import { EmployeeNotificationService } from '../../employee-notification.service';
 
 @EventsHandler(EmployeeCreateNotificationEvent)
 export class EmployeeCreateNotificationEventHandler implements IEventHandler<EmployeeCreateNotificationEvent> {
+	private readonly logger = new Logger(EmployeeCreateNotificationEventHandler.name);
+
 	constructor(readonly employeeNotificationService: EmployeeNotificationService) {}
 
 	/**
@@ -14,6 +17,12 @@ export class EmployeeCreateNotificationEventHandler implements IEventHandler<Emp
 	 *
 	 */
 	async handle(event: EmployeeCreateNotificationEvent) {
-		return await this.employeeNotificationService.create(event.input);
+		try {
+			this.logger.debug(`Creating notification for employee: ${event.input.receiverId}`);
+			return await this.employeeNotificationService.create(event.input);
+		} catch (error) {
+			this.logger.error(`Failed to create notification: ${error.message}`, error.stack);
+			throw new Error(`Failed to create employee notification: ${error.message}`);
+		}
 	}
 }
