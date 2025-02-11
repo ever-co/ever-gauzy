@@ -5,12 +5,12 @@ import { IUser } from './user.model';
 export interface IResourceLink extends IBasePerTenantAndOrganizationEntityModel, IBasePerEntityType {
 	title: string;
 	url: string;
-	creator?: IUser;
-	creatorId?: ID;
+	createdBy?: IUser;
+	createdById?: ID;
 	metaData?: string | IURLMetaData;
 }
 
-export interface IResourceLinkCreateInput extends Omit<IResourceLink, 'creator' | 'creatorId'> {}
+export interface IResourceLinkCreateInput extends Omit<IResourceLink, 'createdBy' | 'createdById'> {}
 
 export interface IResourceLinkUpdateInput extends Partial<Omit<IResourceLinkCreateInput, 'entity' | 'entityId'>> {}
 
