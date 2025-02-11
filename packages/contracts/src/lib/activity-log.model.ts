@@ -2,15 +2,17 @@ import {
 	ActorTypeEnum,
 	IBasePerEntityType,
 	IBasePerTenantAndOrganizationEntityModel,
-	ID,
 	JsonData
 } from './base-entity.model';
-import { IUser } from './user.model';
+import { IEmployeeEntityInput } from './employee.model';
 
 /**
  * Interface representing an activity log entry.
  */
-export interface IActivityLog extends IBasePerTenantAndOrganizationEntityModel, IBasePerEntityType {
+export interface IActivityLog
+	extends IBasePerTenantAndOrganizationEntityModel,
+		IEmployeeEntityInput,
+		IBasePerEntityType {
 	action: ActionTypeEnum;
 	actorType?: ActorTypeEnum;
 	description?: string; // A short sentence describing the action performed. (E.g John Doe created this on 22.09.2024)
@@ -19,8 +21,6 @@ export interface IActivityLog extends IBasePerTenantAndOrganizationEntityModel, 
 	updatedValues?: IActivityLogUpdatedValues[]; // Values after update (E.g For task : {title: ' First Task Updated', members: ['Member4Name', 'Member3Name'], projectId: 'project2UUId'})
 	previousEntities?: IActivityLogUpdatedValues[]; // Stores previous IDs or other values for related entities. Eg : {members: ['member_1_ID', 'member_2_ID']}
 	updatedEntities?: IActivityLogUpdatedValues[]; // Stores updated IDs, or other values for related entities. Eg : {members: ['member_1_ID', 'member_2_ID']},
-	creator?: IUser;
-	creatorId?: ID;
 	data?: JsonData;
 }
 
@@ -38,6 +38,6 @@ export enum ActionTypeEnum {
 }
 
 /**
- * Input type for activity log creation, excluding `creatorId` and `creator`.
+ * Input type for activity log creation, excluding `employeeId` and `employee`.
  */
-export interface IActivityLogInput extends Omit<IActivityLog, 'creatorId' | 'creator'> {}
+export interface IActivityLogInput extends Omit<IActivityLog, 'employeeId' | 'employee'> {}

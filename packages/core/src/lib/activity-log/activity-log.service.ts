@@ -40,13 +40,13 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 	async create(input: IActivityLogInput): Promise<IActivityLog> {
 		try {
 			// Retrieve the current user's ID from the request context
-			const creatorId = RequestContext.currentUserId();
+			const employeeId = RequestContext.currentEmployeeId();
 
 			// Retrieve the current tenant ID from the request context or use the provided tenantId
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
 			// Create the activity log entry using the provided input along with the tenantId and creatorId
-			return await super.create({ ...input, tenantId, creatorId });
+			return await super.create({ ...input, tenantId, employeeId });
 		} catch (error) {
 			console.log('Error while creating activity log:', error);
 			throw new BadRequestException('Error while creating activity log', error);

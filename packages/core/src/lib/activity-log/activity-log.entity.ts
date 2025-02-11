@@ -4,8 +4,8 @@ import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
 import { IsArray, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { isMySQL, isPostgres } from '@gauzy/config';
-import { BaseEntityEnum, ActionTypeEnum, ActorTypeEnum, IActivityLog, ID, IUser, JsonData } from '@gauzy/contracts';
-import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
+import { BaseEntityEnum, ActionTypeEnum, ActorTypeEnum, IActivityLog, ID, JsonData, IEmployee } from '@gauzy/contracts';
+import { Employee, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
 import { ActorTypeTransformerPipe } from '../shared/pipes';
 import { MikroOrmActivityLogRepository } from './repository/mikro-orm-activity-log.repository';
@@ -91,9 +91,9 @@ export class ActivityLog extends TenantOrganizationBaseEntity implements IActivi
 	*/
 
 	/**
-	 * User performed action
+	 * Employee performed action
 	 */
-	@MultiORMManyToOne(() => User, {
+	@MultiORMManyToOne(() => Employee, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
 
@@ -101,10 +101,10 @@ export class ActivityLog extends TenantOrganizationBaseEntity implements IActivi
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	creator?: IUser;
+	employee?: IEmployee;
 
-	@RelationId((it: ActivityLog) => it.creator)
+	@RelationId((it: ActivityLog) => it.employee)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	creatorId?: ID;
+	employeeId?: ID;
 }
