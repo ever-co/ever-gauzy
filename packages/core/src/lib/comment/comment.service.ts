@@ -66,7 +66,8 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 						parentEntityId: comment.entityId,
 						parentEntityType: comment.entity,
 						organizationId: comment.organizationId,
-						tenantId
+						tenantId,
+						entityName: input.entityName
 					})
 				)
 			);
