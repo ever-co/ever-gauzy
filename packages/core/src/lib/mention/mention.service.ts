@@ -81,7 +81,7 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 	 *
 	 * This method handles adding new mentions and removing outdated mentions
 	 * for an entity (e.g., comments, tasks, or projects). It ensures that only
-	 * the specified user mentions (`newmentionEmployeeIds`) are associated with the entity.
+	 * the specified user mentions (`newMentionEmployeeIds`) are associated with the entity.
 	 *
 	 * @param entity - The type of entity being updated (e.g., Comment, Task, etc.).
 	 * @param entityId - The ID of the entity being updated.
@@ -106,13 +106,13 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 			});
 
 			// Extract the IDs of currently mentioned users
-			const existingmentionEmployeeIds = new Set(existingMentions.map((mention) => mention.mentionedUserId));
+			const existingMentionEmployeeIds = new Set(existingMentions.map((mention) => mention.mentionedUserId));
 
 			// Determine mentions to add (not present in existing mentions)
-			const mentionsToAdd = mentionEmployeeIds.filter((id) => !existingmentionEmployeeIds.has(id));
+			const mentionsToAdd = mentionEmployeeIds.filter((id) => !existingMentionEmployeeIds.has(id));
 
 			// Determine mentions to remove (present in existing mentions but not in mentionsIds)
-			const mentionsToRemove = [...existingmentionEmployeeIds].filter((id) => !mentionEmployeeIds.includes(id));
+			const mentionsToRemove = [...existingMentionEmployeeIds].filter((id) => !mentionEmployeeIds.includes(id));
 
 			// Add new mentions
 			if (mentionsToAdd.length > 0) {
