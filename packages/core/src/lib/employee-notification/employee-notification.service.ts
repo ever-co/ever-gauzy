@@ -1,12 +1,14 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 import {
 	IEmployeeNotification,
 	IEmployeeNotificationCreateInput,
 	IEmployeeNotificationSetting,
 	NotificationActionTypeEnum,
-	EmployeeNotificationTypeEnum
+	EmployeeNotificationTypeEnum,
+	IMarkAllAsReadResponse
 } from '@gauzy/contracts';
+import { UpdateResult } from 'typeorm';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { RequestContext } from '../core/context/request-context';
 import { EmployeeNotificationSettingService } from '../employee-notification-setting/employee-notification-setting.service';
@@ -18,6 +20,8 @@ import { generateNotificationTitle } from './employee-notification.helper';
 
 @Injectable()
 export class EmployeeNotificationService extends TenantAwareCrudService<EmployeeNotification> {
+	readonly logger = new Logger(EmployeeNotificationService.name);
+
 	constructor(
 		readonly typeOrmEmployeeNotificationRepository: TypeOrmEmployeeNotificationRepository,
 		readonly mikroOrmEmployeeNotificationRepository: MikroOrmEmployeeNotificationRepository,
@@ -80,7 +84,7 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			// Create the notification entry using the provided input along with the tenantId and return the created notification
 			return await super.create({ ...input, tenantId });
 		} catch (error) {
-			console.log('Error while creating notification:', error);
+			this.logger.error('Error while creating employee notification:', error);
 			throw new BadRequestException('Error while creating notification', error);
 		}
 	}
@@ -89,17 +93,24 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 	 * Marks all unread and un-archived notifications for the current employee as read.
 	 *
 	 * @throws {BadRequestException} If an error occurs while updating notifications.
-	 * @returns {Promise<any>} A promise that resolves when the operation is complete.
+	 * @returns {Promise<{ success: boolean; count: number }>} A promise that resolves to an object indicating the success status and the count of notifications updated.
 	 */
-	async markAllAsRead(): Promise<{ message: string }> {
+	async markAllAsRead(): Promise<IMarkAllAsReadResponse> {
 		try {
 			// Retrieve the current employee ID
 			const receiverId = RequestContext.currentEmployeeId();
 
-			// Update all employee's unread and un archived notifications
-			await super.update({ isRead: false, isArchived: false, receiverId }, { isRead: true, readAt: new Date() });
+			// Update all unread and unarchived notifications for the current employee
+			// Assume super.update returns an object with an "affected" property that represents the number of records updated.
+			const updateResult = (await super.update(
+				{ isRead: false, isArchived: false, receiverId },
+				{ isRead: true, readAt: new Date() }
+			)) as UpdateResult;
 
-			return { message: 'successful' };
+			// Extract the count of notifications that were updated.
+			const count = updateResult?.affected || 0;
+
+			return { success: true, count };
 		} catch (error) {
 			throw new BadRequestException('Error while updating notifications', error);
 		}
@@ -153,7 +164,7 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			case EmployeeNotificationTypeEnum.MESSAGE:
 				return employeeNotificationSetting.message ?? true;
 			default:
-				return false;
+				throw new Error(`Unsupported notification type: ${type}`);
 		}
 	}
 }

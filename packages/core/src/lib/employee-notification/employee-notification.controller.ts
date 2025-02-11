@@ -1,6 +1,6 @@
 import { Controller, Get, HttpCode, HttpStatus, Param, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { ID, IPagination } from '@gauzy/contracts';
+import { ID, IEmployeeNotification, IMarkAllAsReadResponse, IPagination } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from '../core/crud';
 import { Permissions } from '../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
@@ -33,7 +33,9 @@ export class EmployeeNotificationController extends CrudController<EmployeeNotif
 		description: 'Records not found'
 	})
 	@Get('/')
-	async findAll(@Query() params: PaginationParams<EmployeeNotification>): Promise<IPagination<EmployeeNotification>> {
+	async findAll(
+		@Query() params: PaginationParams<EmployeeNotification>
+	): Promise<IPagination<IEmployeeNotification>> {
 		return this._employeeNotificationService.findAll(params);
 	}
 
@@ -59,7 +61,7 @@ export class EmployeeNotificationController extends CrudController<EmployeeNotif
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Query() params: PaginationParams<EmployeeNotification>
-	): Promise<EmployeeNotification> {
+	): Promise<IEmployeeNotification> {
 		return this._employeeNotificationService.findOneByIdString(id, params);
 	}
 
@@ -70,12 +72,12 @@ export class EmployeeNotificationController extends CrudController<EmployeeNotif
 	 */
 	@ApiOperation({ summary: 'Mark all notifications as read' })
 	@ApiResponse({
-		status: HttpStatus.CREATED,
+		status: HttpStatus.ACCEPTED,
 		description: 'The records have been successfully updated.'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put('/mark-all-read')
-	async markAllAsRead(): Promise<any> {
+	async markAllAsRead(): Promise<IMarkAllAsReadResponse> {
 		return await this._employeeNotificationService.markAllAsRead();
 	}
 }

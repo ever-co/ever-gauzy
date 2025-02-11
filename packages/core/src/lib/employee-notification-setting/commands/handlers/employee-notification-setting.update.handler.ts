@@ -20,6 +20,25 @@ export class EmployeeNotificationSettingUpdateHandler
 		command: EmployeeNotificationSettingUpdateCommand
 	): Promise<IEmployeeNotificationSetting | UpdateResult> {
 		const { id, input } = command;
-		return this.employeeNotificationSettingService.update(id, input);
+
+		if (!id || !input) {
+			throw new Error('Both id and input are required for updating notification setting');
+		}
+
+		try {
+			// Update the employee notification setting
+			const employeeNotificationSetting = await this.employeeNotificationSettingService.update(id, input);
+
+			// Check if the result is an instance of UpdateResult
+			if (employeeNotificationSetting instanceof UpdateResult) {
+				// Fetch and return the updated entity
+				return this.employeeNotificationSettingService.findOneByIdString(id);
+			}
+
+			return employeeNotificationSetting;
+		} catch (error) {
+			// Log error details
+			throw new Error(`Failed to update notification setting: ${error.message}`);
+		}
 	}
 }

@@ -57,3 +57,11 @@ export interface IEmployeeNotificationCreateInput extends OmitFields<IEmployeeNo
  */
 export interface IEmployeeNotificationUpdateInput
 	extends OmitFields<IEmployeeNotification, 'receiverId' | 'receiver' | 'sentById' | 'sentBy'> {}
+
+/**
+ * Interface representing the result of marking notifications as read.
+ */
+export interface IMarkAllAsReadResponse {
+	success: boolean;
+	count: number;
+}
