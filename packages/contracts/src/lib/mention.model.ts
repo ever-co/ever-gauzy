@@ -12,6 +12,6 @@ export interface IMention extends IBasePerTenantAndOrganizationEntityModel, IBas
 
 export interface IMentionCreateInput extends Omit<IMention, 'mentionBy'> {}
 
-export interface IMentionUserIds {
-	mentionUserIds?: ID[];
+export interface IMentionEmployeeIds {
+	mentionEmployeeIds?: ID[];
 }

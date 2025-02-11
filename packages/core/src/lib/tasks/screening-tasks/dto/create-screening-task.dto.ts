@@ -1,7 +1,7 @@
 import { IntersectionType, OmitType } from '@nestjs/swagger';
 import { IScreeningTaskCreateInput } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '../../../core/dto';
-import { MentionUserIdsDTO } from '../../../mention/dto';
+import { MentionEmployeeIdsDTO } from '../../../mention/dto';
 import { ScreeningTask } from '../screening-task.entity';
 
 /**
@@ -10,6 +10,6 @@ import { ScreeningTask } from '../screening-task.entity';
 export class CreateScreeningTaskDTO
 	extends IntersectionType(
 		TenantOrganizationBaseDTO,
-		IntersectionType(OmitType(ScreeningTask, ['status']), MentionUserIdsDTO)
+		IntersectionType(OmitType(ScreeningTask, ['status']), MentionEmployeeIdsDTO)
 	)
 	implements IScreeningTaskCreateInput {}

@@ -1,17 +1,15 @@
 import { ActorTypeEnum, IBasePerEntityType, IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IUser } from './user.model';
-import { IEmployee } from './employee.model';
+import { IEmployee, IEmployeeEntityInput } from './employee.model';
 import { IOrganizationTeam } from './organization-team.model';
-import { IMentionUserIds } from './mention.model';
+import { IMentionEmployeeIds } from './mention.model';
 
-export interface IComment extends IBasePerTenantAndOrganizationEntityModel, IBasePerEntityType {
+export interface IComment extends IBasePerTenantAndOrganizationEntityModel, IBasePerEntityType, IEmployeeEntityInput {
 	comment: string;
-	creator?: IUser;
-	creatorId?: ID; // The comment's user author ID
 	actorType?: ActorTypeEnum;
 	resolved?: boolean;
 	resolvedAt?: Date;
-	resolvedBy?: IUser;
+	resolvedBy?: IEmployee;
 	resolvedById?: ID;
 	editedAt?: Date;
 	members?: IEmployee[]; // Indicates members assigned to comment
@@ -19,9 +17,15 @@ export interface IComment extends IBasePerTenantAndOrganizationEntityModel, IBas
 	parent?: IComment;
 	parentId?: ID; // Specify the parent comment if current one is a reply
 	replies?: IComment[];
+
+	createdBy?: IUser;
+	createdById?: ID; // The comment's user creator ID
 }
 
-export interface ICommentCreateInput extends IBasePerEntityType, IMentionUserIds {
+export interface ICommentCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel,
+		IBasePerEntityType,
+		IMentionEmployeeIds {
 	comment: string;
 	parentId?: ID;
 	members?: IEmployee[];
@@ -29,7 +33,7 @@ export interface ICommentCreateInput extends IBasePerEntityType, IMentionUserIds
 }
 
 export interface ICommentUpdateInput
-	extends IMentionUserIds,
-		Partial<Omit<IComment, 'entity' | 'entityId' | 'creatorId' | 'creator'>> {}
+	extends IMentionEmployeeIds,
+		Partial<Omit<IComment, 'entity' | 'entityId' | 'createdById' | 'createdBy' | 'employeeId' | 'employee'>> {}
 
 export interface ICommentFindInput extends Pick<IComment, 'entity' | 'entityId'> {}

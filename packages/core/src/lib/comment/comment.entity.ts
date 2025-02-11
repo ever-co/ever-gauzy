@@ -76,34 +76,34 @@ export class Comment extends TenantOrganizationBaseEntity implements IComment {
 	*/
 
 	/**
-	 * User comment author
+	 * Employee comment author
 	 */
-	@ApiPropertyOptional({ type: () => Object })
-	@IsOptional()
-	@MultiORMManyToOne(() => User, {
+	@MultiORMManyToOne(() => Employee, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
+
+		/** Database cascade action on update. */
+		onUpdate: 'CASCADE',
 
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
-	@JoinColumn()
-	creator?: IUser;
+	employee?: IEmployee;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((it: Comment) => it.creator)
+	@RelationId((it: Comment) => it.employee)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	creatorId?: ID;
+	employeeId?: ID;
 
 	/**
 	 * User marked comment as resolved
 	 */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
-	@MultiORMManyToOne(() => User, {
+	@MultiORMManyToOne(() => Employee, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
 
@@ -111,7 +111,7 @@ export class Comment extends TenantOrganizationBaseEntity implements IComment {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	resolvedBy?: IUser;
+	resolvedBy?: IEmployee;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
@@ -137,6 +137,29 @@ export class Comment extends TenantOrganizationBaseEntity implements IComment {
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	parentId?: ID;
+
+	/**
+	 * User comment creator
+	 */
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@MultiORMManyToOne(() => User, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	createdBy?: IUser;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: Comment) => it.createdBy)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	createdById?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
