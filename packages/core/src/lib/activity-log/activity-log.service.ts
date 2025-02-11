@@ -39,7 +39,7 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 	 */
 	async create(input: IActivityLogInput): Promise<IActivityLog> {
 		try {
-			// Retrieve the current user's ID from the request context
+			// Retrieve the current employee's ID from the request context
 			const employeeId = RequestContext.currentEmployeeId();
 
 			// Retrieve the current tenant ID from the request context or use the provided tenantId
