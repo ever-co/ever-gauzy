@@ -1,6 +1,6 @@
 import { EventSubscriber } from 'typeorm';
 import { isBetterSqlite3, isSqlite } from '@gauzy/config';
-import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';
+import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { EmployeeNotificationSetting } from './employee-notification-setting.entity';
 
 @EventSubscriber()

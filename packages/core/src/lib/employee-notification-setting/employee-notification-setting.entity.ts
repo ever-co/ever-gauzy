@@ -5,8 +5,8 @@ import { JoinColumn, RelationId } from 'typeorm';
 import { IsBoolean, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import { ID, IEmployeeNotificationSetting, JsonData, IEmployee } from '@gauzy/contracts';
-import { Employee, TenantOrganizationBaseEntity } from '../../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMOneToOne } from '../../core/decorators/entity';
+import { Employee, TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMOneToOne } from '../core/decorators/entity';
 import { MikroOrmEmployeeNotificationSettingRepository } from './repository/mikro-orm-employee-notification-setting.repository';
 
 @MultiORMEntity('employee_notification_setting', {

@@ -9,12 +9,12 @@ import {
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { RequestContext } from '../core/context/request-context';
+import { EmployeeNotificationSettingService } from '../employee-notification-setting/employee-notification-setting.service';
 import { EmployeeCreateNotificationEvent } from './events/employee-notification.event';
 import { EmployeeNotification } from './employee-notification.entity';
 import { TypeOrmEmployeeNotificationRepository } from './repository/type-orm-employee-notification.repository';
 import { MikroOrmEmployeeNotificationRepository } from './repository/mikro-orm-employee-notification.repository';
 import { generateNotificationTitle } from './employee-notification.helper';
-import { EmployeeNotificationSettingService } from './employee-notification-setting/employee-notification-setting.service';
 
 @Injectable()
 export class EmployeeNotificationService extends TenantAwareCrudService<EmployeeNotification> {

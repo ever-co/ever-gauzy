@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { IEmployeeNotificationSettingCreateInput } from '@gauzy/contracts';
-import { TenantAwareCrudService } from '../../core/crud/tenant-aware-crud.service';
-import { RequestContext } from '../../core/context/request-context';
+import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { RequestContext } from '../core/context/request-context';
 import { EmployeeNotificationSetting } from './employee-notification-setting.entity';
 import { TypeOrmEmployeeNotificationSettingRepository } from './repository/type-orm-employee-notification-setting.repository';
 import { MikroOrmEmployeeNotificationSettingRepository } from './repository/mikro-orm-employee-notification-setting.repository';

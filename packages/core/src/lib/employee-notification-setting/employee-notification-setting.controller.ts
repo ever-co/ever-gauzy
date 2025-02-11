@@ -15,10 +15,10 @@ import {
 } from '@nestjs/common';
 import { DeleteResult } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
-import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
-import { Permissions } from '../../shared/decorators';
-import { UUIDValidationPipe, UseValidationPipe } from '../../shared/pipes';
-import { CrudController, PaginationParams } from '../../core/crud';
+import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { Permissions } from '../shared/decorators';
+import { UUIDValidationPipe, UseValidationPipe } from '../shared/pipes';
+import { CrudController, PaginationParams } from '../core/crud';
 import { EmployeeNotificationSetting } from './employee-notification-setting.entity';
 import { EmployeeNotificationSettingService } from './employee-notification-setting.service';
 import { EmployeeNotificationSettingCreateCommand, EmployeeNotificationSettingUpdateCommand } from './commands';
@@ -29,16 +29,21 @@ import { CreateEmployeeNotificationSettingDTO, UpdateEmployeeNotificationSetting
 @Controller('/employee-notification-setting')
 export class EmployeeNotificationSettingController extends CrudController<EmployeeNotificationSetting> {
 	constructor(
-		readonly employeeNotificationSettingService: EmployeeNotificationSettingService,
-		private readonly commandBus: CommandBus
+		protected readonly _employeeNotificationSettingService: EmployeeNotificationSettingService,
+		private readonly _commandBus: CommandBus
 	) {
-		super(employeeNotificationSettingService);
+		super(_employeeNotificationSettingService);
 	}
 
 	/**
+	 * Retrieves paginated employee notification settings.
 	 *
-	 * @param params
-	 * @returns
+	 * This endpoint returns a list of employee notification settings based on the provided pagination parameters.
+	 * The query parameters are defined by `PaginationParams<EmployeeNotificationSetting>`, and the response is
+	 * a paginated object containing employee notification settings.
+	 *
+	 * @param {PaginationParams<EmployeeNotificationSetting>} params - The pagination and filter parameters.
+	 * @returns {Promise<IPagination<EmployeeNotificationSetting>>} A promise that resolves to the paginated employee notification settings.
 	 */
 	@ApiOperation({ summary: 'Get employees notification settings.' })
 	@ApiResponse({
@@ -54,14 +59,15 @@ export class EmployeeNotificationSettingController extends CrudController<Employ
 	async findAll(
 		@Query() params: PaginationParams<EmployeeNotificationSetting>
 	): Promise<IPagination<EmployeeNotificationSetting>> {
-		return this.employeeNotificationSettingService.findAll(params);
+		return this._employeeNotificationSettingService.findAll(params);
 	}
 
 	/**
+	 * Retrieves a single employee notification setting by its unique identifier.
 	 *
-	 * @param id
-	 * @param params
-	 * @returns
+	 * @param {ID} id - The UUID of the employee notification setting.
+	 * @param {PaginationParams<EmployeeNotificationSetting>} params - Additional query parameters for pagination.
+	 * @returns {Promise<EmployeeNotificationSetting>} The employee notification setting if found.
 	 */
 	@ApiOperation({ summary: 'Find by id.' })
 	@ApiResponse({
@@ -79,13 +85,17 @@ export class EmployeeNotificationSettingController extends CrudController<Employ
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Query() params: PaginationParams<EmployeeNotificationSetting>
 	): Promise<EmployeeNotificationSetting> {
-		return this.employeeNotificationSettingService.findOneByIdString(id, params);
+		return this._employeeNotificationSettingService.findOneByIdString(id, params);
 	}
 
 	/**
+	 * Creates a new employee notification setting.
 	 *
-	 * @param entity
-	 * @returns
+	 * Accepts a data transfer object containing the necessary details for creating a notification setting,
+	 * validates the input, and dispatches a command to persist the new setting.
+	 *
+	 * @param {CreateEmployeeNotificationSettingDTO} entity - The data for creating the employee notification setting.
+	 * @returns {Promise<EmployeeNotificationSetting>} A promise that resolves to the newly created notification setting.
 	 */
 	@ApiOperation({ summary: 'Create employee notification setting.' })
 	@ApiResponse({
@@ -95,14 +105,18 @@ export class EmployeeNotificationSettingController extends CrudController<Employ
 	@Post()
 	@UseValidationPipe()
 	async create(@Body() entity: CreateEmployeeNotificationSettingDTO): Promise<EmployeeNotificationSetting> {
-		return await this.commandBus.execute(new EmployeeNotificationSettingCreateCommand(entity));
+		return await this._commandBus.execute(new EmployeeNotificationSettingCreateCommand(entity));
 	}
 
 	/**
+	 * Updates an existing employee notification setting.
 	 *
-	 * @param id
-	 * @param entity
-	 * @returns
+	 * This endpoint validates the provided ID and update data before dispatching an update command
+	 * via the command bus. If the operation is successful, it returns the updated employee notification setting.
+	 *
+	 * @param {ID} id - The UUID of the employee notification setting to update.
+	 * @param {UpdateEmployeeNotificationSettingDTO} entity - The data transfer object containing the update details.
+	 * @returns {Promise<EmployeeNotificationSetting>} A promise that resolves to the updated employee notification setting.
 	 */
 	@ApiOperation({ summary: 'Update employee notification setting.' })
 	@ApiResponse({
@@ -124,13 +138,14 @@ export class EmployeeNotificationSettingController extends CrudController<Employ
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: UpdateEmployeeNotificationSettingDTO
 	): Promise<EmployeeNotificationSetting> {
-		return await this.commandBus.execute(new EmployeeNotificationSettingUpdateCommand(id, entity));
+		return await this._commandBus.execute(new EmployeeNotificationSettingUpdateCommand(id, entity));
 	}
 
 	/**
+	 * Deletes an employee notification setting by its unique identifier.
 	 *
-	 * @param id
-	 * @returns
+	 * @param {ID} id - The UUID of the employee notification setting to delete.
+	 * @returns {Promise<DeleteResult>} A promise that resolves to the result of the delete operation.
 	 */
 	@ApiOperation({ summary: 'Delete employee notification setting.' })
 	@ApiResponse({
@@ -143,6 +158,6 @@ export class EmployeeNotificationSettingController extends CrudController<Employ
 	})
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
-		return await this.employeeNotificationSettingService.delete(id);
+		return await this._employeeNotificationSettingService.delete(id);
 	}
 }

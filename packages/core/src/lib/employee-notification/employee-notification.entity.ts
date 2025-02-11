@@ -86,7 +86,6 @@ export class EmployeeNotification extends BasePerEntityType implements IEmployee
 	@MultiORMManyToOne(() => Employee, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
-
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -112,7 +111,6 @@ export class EmployeeNotification extends BasePerEntityType implements IEmployee
 	@MultiORMManyToOne(() => Employee, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
-
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
