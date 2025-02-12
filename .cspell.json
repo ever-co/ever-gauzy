@@ -547,7 +547,8 @@
 		"appleboy",
 		"apidemoda",
 		"forin",
-		"inversed"
+		"inversed",
+		"iquery"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
