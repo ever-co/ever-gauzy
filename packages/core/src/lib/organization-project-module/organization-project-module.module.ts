@@ -12,6 +12,7 @@ import { RoleModule } from '../role/role.module';
 import { EmployeeModule } from '../employee/employee.module';
 import { OrganizationProjectModuleEmployee } from './organization-project-module-employee.entity';
 import { TypeOrmOrganizationProjectModuleEmployeeRepository } from './repository/type-orm-organization-project-module-employee.repository';
+import { TaskModule } from '../tasks';
 
 @Module({
 	imports: [
@@ -21,6 +22,7 @@ import { TypeOrmOrganizationProjectModuleEmployeeRepository } from './repository
 		RolePermissionModule,
 		RoleModule,
 		EmployeeModule,
+		TaskModule,
 		CqrsModule
 	],
 	controllers: [OrganizationProjectModuleController],

@@ -1,5 +1,5 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Brackets, FindManyOptions, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, FindManyOptions, In, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
 import {
 	BaseEntityEnum,
 	ActorTypeEnum,
@@ -13,7 +13,8 @@ import {
 	ProjectModuleStatusEnum,
 	ActionTypeEnum,
 	RolesEnum,
-	IEmployee
+	IEmployee,
+	ITask
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { isPostgres } from '@gauzy/config';
@@ -29,6 +30,7 @@ import { EmployeeService } from '../employee/employee.service';
 import { OrganizationProjectModuleEmployee } from './organization-project-module-employee.entity';
 import { TypeOrmOrganizationProjectModuleEmployeeRepository } from './repository/type-orm-organization-project-module-employee.repository';
 import { MikroOrmOrganizationProjectModuleEmployeeRepository } from './repository/mikro-orm-organization-project-module-employee.repository';
+import { TaskService } from '../tasks';
 
 @Injectable()
 export class OrganizationProjectModuleService extends TenantAwareCrudService<OrganizationProjectModule> {
@@ -39,7 +41,8 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		readonly mikroOrmOrganizationProjectModuleEmployeeRepository: MikroOrmOrganizationProjectModuleEmployeeRepository,
 		private readonly activityLogService: ActivityLogService,
 		private readonly _roleService: RoleService,
-		private readonly _employeeService: EmployeeService
+		private readonly _employeeService: EmployeeService,
+		private readonly _taskService: TaskService
 	) {
 		super(typeOrmProjectModuleRepository, mikroOrmProjectModuleRepository);
 	}
@@ -56,53 +59,20 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		const currentRoleId = RequestContext.currentRoleId();
 		const { organizationId } = entity;
 
-		// Destructure the input data
-		const { memberIds = [], managerIds = [], ...input } = entity;
+		const { memberIds = [], managerIds = [], tasks = [], ...input } = entity;
 
 		try {
-			try {
-				await this._roleService.findOneByIdString(currentRoleId, { where: { name: RolesEnum.EMPLOYEE } });
+			await this.addCurrentEmployeeToManagers(managerIds, currentRoleId, employeeId);
 
-				// Add the current employee to the managerIds if they have the EMPLOYEE role and are not already included.
-				if (!managerIds.includes(employeeId)) {
-					// If not included, add the employeeId to the managerIds array.
-					managerIds.push(employeeId);
-				}
-			} catch (error) {}
-
-			// Combine memberIds and managerIds into a single array.
 			const employeeIds = [...memberIds, ...managerIds].filter(Boolean);
-
-			// Retrieve a collection of employees based on specified criteria.
 			const employees = await this._employeeService.findActiveEmployeesByEmployeeIds(
 				employeeIds,
 				organizationId,
 				tenantId
 			);
 
-			// Find the manager role
-			const managerRole = await this._roleService.findOneByWhereOptions({
-				name: RolesEnum.MANAGER
-			});
-
-			// Create a Set for faster membership checks
-			const managerIdsSet = new Set(managerIds);
-
-			// Use destructuring to directly extract 'id' from 'employee'
-			const members = employees.map(({ id: employeeId }) => {
-				// If the employee is a manager, assign the existing manager with the latest assignedAt date
-				const isManager = managerIdsSet.has(employeeId);
-				const assignedAt = new Date();
-
-				return new OrganizationProjectModuleEmployee({
-					employeeId,
-					organizationId,
-					tenantId,
-					isManager,
-					assignedAt,
-					role: isManager ? managerRole : null
-				});
-			});
+			const existingTasks = await this.getExistingTasks(tasks);
+			const members = await this.buildModuleMembers(employees, managerIds, organizationId, tenantId);
 
 			const projectModule = await super.create({
 				...input,
@@ -110,21 +80,16 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 				creatorId
 			});
 
-			// Generate the activity log
-			this.activityLogService.logActivity<OrganizationProjectModule>(
-				BaseEntityEnum.OrganizationProjectModule,
-				ActionTypeEnum.Created,
-				ActorTypeEnum.User,
-				projectModule.id,
-				projectModule.name,
-				projectModule,
-				organizationId,
-				tenantId
-			);
+			await this.assignTasksToModule(existingTasks, projectModule);
 
+			this.logModuleActivity(
+				ActionTypeEnum.Created,
+				projectModule,
+				undefined, // No previous module (creation case)
+				entity
+			);
 			return projectModule;
 		} catch (error) {
-			// Handle errors and return an appropriate error response
 			throw new HttpException(
 				`Failed to create organization project module: ${error.message}`,
 				HttpStatus.BAD_REQUEST
@@ -146,23 +111,22 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		const tenantId = RequestContext.currentTenantId() || entity.tenantId;
 
 		try {
-			const { memberIds, managerIds, organizationId } = entity;
+			const { memberIds, managerIds, organizationId, tasks = [] } = entity;
 
-			// Retrieve existing module.
+			// Retrieve existing module
 			const existingProjectModule = await this.findOneByIdString(id, {
-				relations: { parent: true, project: true, teams: true, members: true }
+				relations: { parent: true, project: true, teams: true, members: true, tasks: true }
 			});
 
 			if (!existingProjectModule) {
 				throw new BadRequestException('Module not found');
 			}
-			console.log(Array.isArray(memberIds), Array.isArray(managerIds));
-			if (Array.isArray(memberIds) || Array.isArray(managerIds)) {
-				// Retrieve members and managers IDs
-				// Combine memberIds and managerIds into a single array
-				const employeeIds = [...memberIds, ...managerIds].filter(Boolean);
 
-				// Retrieves a collection of employees based on specified criteria.
+			// Update members and managers if applicable
+			if (Array.isArray(memberIds) || Array.isArray(managerIds)) {
+				const employeeIds = [...(memberIds || []), ...(managerIds || [])].filter(Boolean);
+
+				// Retrieves a collection of employees based on specified criteria
 				const projectModuleMembers = await this._employeeService.findActiveEmployeesByEmployeeIds(
 					employeeIds,
 					organizationId,
@@ -179,28 +143,42 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 				);
 			}
 
-			// Update module with new values
+			// Update tasks logic
+			if (Array.isArray(tasks)) {
+				const existingTasks = await this.getExistingTasks(tasks);
+
+				// Determine tasks to add
+				const existingTaskIds = new Set(existingTasks.map((task) => task.id));
+				const newTasks = tasks.filter((task) => !existingTaskIds.has(task.id));
+
+				// Determine tasks to remove
+				const tasksToRemove = existingProjectModule.tasks.filter(
+					(task) => !tasks.some((updatedTask) => updatedTask.id === task.id)
+				);
+
+				// Add new tasks
+				for (const task of newTasks) {
+					task.modules = [...(task.modules || []), existingProjectModule];
+					await this._taskService.update(task.id, task);
+				}
+
+				// Remove tasks
+				for (const task of tasksToRemove) {
+					task.modules = task.modules?.filter((module) => module.id !== existingProjectModule.id) || [];
+					await this._taskService.update(task.id, task);
+				}
+			}
+
+			// Update the project module with new values
 			const updatedProjectModule = await super.create({
 				...entity,
 				id
 			});
 
 			// Generate the activity log
+			this.logModuleActivity(ActionTypeEnum.Updated, updatedProjectModule, existingProjectModule, entity);
 
-			this.activityLogService.logActivity<OrganizationProjectModule>(
-				BaseEntityEnum.OrganizationProjectModule,
-				ActionTypeEnum.Updated,
-				ActorTypeEnum.User,
-				updatedProjectModule.id,
-				updatedProjectModule.name,
-				updatedProjectModule,
-				organizationId,
-				tenantId,
-				existingProjectModule,
-				entity
-			);
-
-			// return updated Module
+			// Return updated module
 			return updatedProjectModule;
 		} catch (error) {
 			throw new BadRequestException(error);
@@ -593,5 +571,116 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 
 		// Wait for all deletions to complete
 		await Promise.all(deletePromises);
+	}
+
+	/**
+	 * Add the current employee to managerIds if applicable.
+	 * @param managerIds List of manager IDs.
+	 * @param currentRoleId The current role ID of the user.
+	 * @param employeeId The current employee ID.
+	 */
+	private async addCurrentEmployeeToManagers(
+		managerIds: string[],
+		currentRoleId: string,
+		employeeId: string
+	): Promise<void> {
+		try {
+			const currentRole = await this._roleService.findOneByIdString(currentRoleId, {
+				where: { name: RolesEnum.EMPLOYEE }
+			});
+			if (currentRole && !managerIds.includes(employeeId)) {
+				managerIds.push(employeeId);
+			}
+		} catch {
+			// Role is not "EMPLOYEE" or no action needed.
+		}
+	}
+
+	/**
+	 * Fetch existing tasks related to the project module.
+	 * @param tasks List of tasks to check.
+	 * @returns A list of existing tasks found in the database.
+	 */
+	private async getExistingTasks(tasks: ITask[]): Promise<ITask[]> {
+		const taskIds = tasks.map((task) => task.id);
+		return this._taskService.find({
+			where: { id: In(taskIds) },
+			relations: { modules: true }
+		});
+	}
+
+	/**
+	 * Build module members from employees and assign manager roles.
+	 * @param employees List of employees to assign as members.
+	 * @param managerIds List of manager IDs.
+	 * @param organizationId The ID of the organization.
+	 * @param tenantId The ID of the tenant.
+	 * @returns A list of organization project module members.
+	 */
+	private async buildModuleMembers(
+		employees: IEmployee[],
+		managerIds: string[],
+		organizationId: string,
+		tenantId: string
+	): Promise<OrganizationProjectModuleEmployee[]> {
+		const managerRole = await this._roleService.findOneByWhereOptions({ name: RolesEnum.MANAGER });
+		const managerIdsSet = new Set(managerIds);
+
+		return employees.map(({ id: employeeId }) => {
+			const isManager = managerIdsSet.has(employeeId);
+			return new OrganizationProjectModuleEmployee({
+				employeeId,
+				organizationId,
+				tenantId,
+				isManager,
+				assignedAt: new Date(),
+				role: isManager ? managerRole : null
+			});
+		});
+	}
+
+	/**
+	 * Assign tasks to the project module.
+	 * @param tasks List of tasks to associate with the module.
+	 * @param projectModule The project module to assign tasks to.
+	 */
+	private async assignTasksToModule(tasks: ITask[], projectModule: IOrganizationProjectModule): Promise<void> {
+		const taskUpdates = tasks.map((task) => {
+			if (!task.modules) {
+				task.modules = [];
+			}
+			task.modules.push(projectModule);
+			return this._taskService.update(task.id, { ...task });
+		});
+		await Promise.all(taskUpdates);
+	}
+
+	/**
+	 * Log activity for a project module.
+	 * @param projectModule The project module to log.
+	 * @param organizationId The ID of the organization.
+	 * @param tenantId The ID of the tenant.
+	 */
+	private logModuleActivity(
+		action: ActionTypeEnum,
+		updatedModule: IOrganizationProjectModule,
+		existingModule?: IOrganizationProjectModule,
+		changes?: Partial<IOrganizationProjectModuleUpdateInput>
+	): void {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = updatedModule.organizationId;
+
+		this.activityLogService.logActivity<OrganizationProjectModule>(
+			BaseEntityEnum.OrganizationProjectModule,
+			action,
+			ActorTypeEnum.User,
+			updatedModule.id,
+			updatedModule.name,
+			updatedModule,
+			organizationId,
+			tenantId,
+			existingModule,
+			changes
+		);
 	}
 }
