@@ -31,18 +31,18 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	}
 
 	/**
-	 * Creates a new comment and handles related actions such as publishing mentions
-	 * and subscribing the creator to the comment's entity.
+	 * Creates a new comment with the provided input, handling employee validation,
+	 * publishing mention notifications, and subscribing the comment creator to the related entity.
 	 *
-	 * This function retrieves the current user, employee, and tenant IDs from the RequestContext.
-	 * It validates that the user exists, creates a comment record, publishes any provided mentions,
-	 * and then publishes a subscription event for the creator. If any step fails, a BadRequestException
-	 * is thrown.
+	 * This function retrieves context-specific IDs from the RequestContext (tenant, employee)
+	 * and falls back to the values in the input if necessary. It verifies that the employee exists,
+	 * creates the comment, publishes mention notifications for each mentioned employee, and
+	 * triggers a subscription event for the creator.
 	 *
-	 * @param {ICommentCreateInput} input - The data required to create a comment.
+	 * @param {ICommentCreateInput} input - The input data required to create a comment, including text, mentions, and organization details.
 	 * @returns {Promise<IComment>} A promise that resolves to the newly created comment.
-	 * @throws {NotFoundException} If the current user is not found.
-	 * @throws {BadRequestException} If the comment creation or related processes fail.
+	 * @throws {NotFoundException} If the employee associated with the comment is not found.
+	 * @throws {BadRequestException} If any error occurs during the creation of the comment.
 	 */
 	async create(input: ICommentCreateInput): Promise<IComment> {
 		try {
@@ -51,7 +51,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			const employeeId = RequestContext.currentEmployeeId() ?? input.employeeId;
 			const { mentionEmployeeIds = [], organizationId, ...data } = input;
 
-			// Validate that the user exists.
+			// Validate that the employee exists.
 			const employee = await this._employeeService.findOneByIdString(employeeId);
 			if (!employee) {
 				throw new NotFoundException(`Employee with id ${employeeId} not found`);

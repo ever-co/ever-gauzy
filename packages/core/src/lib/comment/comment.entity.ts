@@ -94,7 +94,7 @@ export class Comment extends BasePerEntityType implements IComment {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	resolvedBy?: IEmployee;
+	resolvedByEmployee?: IEmployee;
 
 	/**
 	 * Resolved by ID
@@ -102,10 +102,10 @@ export class Comment extends BasePerEntityType implements IComment {
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((it: Comment) => it.resolvedBy)
+	@RelationId((it: Comment) => it.resolvedByEmployee)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	resolvedById?: ID;
+	resolvedByEmployeeId?: ID;
 
 	/**
 	 * Comment parent-child relationship

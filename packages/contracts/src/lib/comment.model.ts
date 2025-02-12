@@ -14,8 +14,8 @@ export interface IComment extends IBasePerEntityType, ICommentAuthor {
 	parent?: IComment;
 	parentId?: ID; // Specify the parent comment if current one is a reply
 	replies?: IComment[];
-	resolvedBy?: IEmployee; // Indicates the employee who resolved the comment
-	resolvedById?: ID; // Indicates the employee ID who resolved the comment
+	resolvedByEmployee?: IEmployee; // Indicates the employee who resolved the comment
+	resolvedByEmployeeId?: ID; // Indicates the employee ID who resolved the comment
 }
 
 export interface ICommentCreateInput extends IBasePerEntityType, ICommentAuthor, IMentionEmployeeIds {
