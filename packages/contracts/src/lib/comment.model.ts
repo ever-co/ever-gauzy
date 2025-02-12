@@ -18,7 +18,7 @@ export interface IComment extends IBasePerEntityType, ICommentAuthor {
 	resolvedById?: ID; // Indicates the employee ID who resolved the comment
 }
 
-export interface ICommentCreateInput extends IBasePerEntityType, IMentionEmployeeIds {
+export interface ICommentCreateInput extends IBasePerEntityType, ICommentAuthor, IMentionEmployeeIds {
 	comment: string;
 	entityName?: string;
 	parent?: IComment;

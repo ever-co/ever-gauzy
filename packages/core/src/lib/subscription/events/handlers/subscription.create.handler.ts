@@ -8,14 +8,35 @@ export class CreateSubscriptionHandler implements IEventHandler<CreateSubscripti
 	constructor(private readonly commandBus: CommandBus) {}
 
 	/**
-	 * Handles the `CreateSubscriptionEvent` by delegating the subscription creation process to the appropriate command.
+	 * Handles a subscription creation event.
 	 *
-	 * @param {CreateSubscriptionEvent} event - The event object containing the subscription input data.
+	 * Extracts subscription details from the event input and uses the command bus to execute a SubscriptionCreateCommand,
+	 * which creates a new subscription for the specified entity.
+	 *
+	 * @param {CreateSubscriptionEvent} event - The event containing the input data for subscription creation.
 	 * @returns {Promise<IEntitySubscription>} A promise that resolves to the created subscription.
-	 *
+	 * @throws An error if the subscription creation process fails.
 	 */
 	async handle(event: CreateSubscriptionEvent): Promise<IEntitySubscription> {
-		const { input } = event;
-		return await this.commandBus.execute(new SubscriptionCreateCommand(input));
+		try {
+			// Retrieve the input data from the event.
+			const { entity, entityId, userId, type, organizationId, tenantId } = event.input;
+
+			// Execute the subscription creation command.
+			const subscription = await this.commandBus.execute(
+				new SubscriptionCreateCommand({
+					entity,
+					entityId,
+					userId,
+					type,
+					organizationId,
+					tenantId
+				})
+			);
+
+			return subscription;
+		} catch (error) {
+			console.log(`Error while creating subscription: ${error.message}`, error);
+		}
 	}
 }

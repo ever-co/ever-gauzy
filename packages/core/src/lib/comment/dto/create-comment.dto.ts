@@ -9,10 +9,7 @@ import { Comment } from '../comment.entity';
  * Create Comment data validation request DTO
  */
 export class CreateCommentDTO
-	extends IntersectionType(
-		TenantOrganizationBaseDTO,
-		IntersectionType(OmitType(Comment, ['createdById', 'createdBy']), MentionEmployeeIdsDTO)
-	)
+	extends IntersectionType(TenantOrganizationBaseDTO, Comment, MentionEmployeeIdsDTO)
 	implements ICommentCreateInput
 {
 	@ApiPropertyOptional({ type: () => String })
