@@ -107,8 +107,8 @@ services:
       bootstrap.memory_lock: 'true'
       xpack.security.enabled: 'false'
     ports:
-      - '9200'
-      - '9300'
+      - '9200:9200'
+      - '9300:9300'
     ulimits:
       memlock:
         soft: -1
@@ -143,7 +143,7 @@ services:
       interval: 1s
       timeout: 30s
     ports:
-      - '6379'
+      - '6379:6379'
     volumes:
       - ./.deploy/redis/data:/data
     networks:
@@ -159,7 +159,7 @@ services:
       interval: 1s
       timeout: 30s
     ports:
-      - '6380'
+      - '6380:6380'
     volumes:
       - ./.deploy/redis/jitsu_users_recognition/data:/data
       - ./.deploy/redis/jitsu_users_recognition/redis.conf:/usr/local/etc/redis/redis.conf
