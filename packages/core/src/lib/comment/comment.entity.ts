@@ -69,6 +69,7 @@ export class Comment extends BasePerEntityType implements IComment {
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
+	@JoinColumn()
 	employee?: IEmployee;
 
 	/**
@@ -116,6 +117,7 @@ export class Comment extends BasePerEntityType implements IComment {
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL'
 	})
+	@JoinColumn()
 	parent?: IComment;
 
 	/**
@@ -145,29 +147,29 @@ export class Comment extends BasePerEntityType implements IComment {
 	|--------------------------------------------------------------------------
 	*/
 	/**
-	 *
+	 * Comment members
 	 */
 	@MultiORMManyToMany(() => Employee, (employee) => employee.assignedComments, {
-		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
-		owner: true,
-		pivotTable: 'comment_employee',
-		joinColumn: 'commentId',
-		inverseJoinColumn: 'employeeId'
+		onUpdate: 'CASCADE', // Cascade action on update
+		onDelete: 'CASCADE', // Cascade action on delete
+		owner: true, // Ownership
+		pivotTable: 'comment_employee', // Table name for pivot table
+		joinColumn: 'commentId', // Column name for join table
+		inverseJoinColumn: 'employeeId' // Column name for inverse join table
 	})
 	@JoinTable({ name: 'comment_employee' })
 	members?: IEmployee[];
 
 	/**
-	 *
+	 * Comment teams
 	 */
 	@MultiORMManyToMany(() => OrganizationTeam, (team) => team.assignedComments, {
-		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
-		owner: true,
-		pivotTable: 'comment_team',
-		joinColumn: 'commentId',
-		inverseJoinColumn: 'organizationTeamId'
+		onUpdate: 'CASCADE', // Cascade action on update
+		onDelete: 'CASCADE', // Cascade action on delete
+		owner: true, // Ownership
+		pivotTable: 'comment_team', // Table name for pivot table
+		joinColumn: 'commentId', // Column name for join table
+		inverseJoinColumn: 'organizationTeamId' // Column name for inverse join table
 	})
 	@JoinTable({ name: 'comment_team' })
 	teams?: IOrganizationTeam[];
