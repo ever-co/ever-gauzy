@@ -80,6 +80,7 @@ export enum ActorTypeEnum {
 	User = 'User' // User performed the action
 }
 
+// BaseEntityEnum defines the type of the entity, used in BaseEntity model
 export enum BaseEntityEnum {
 	Candidate = 'Candidate',
 	Comment = 'Comment',

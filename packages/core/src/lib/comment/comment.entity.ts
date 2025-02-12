@@ -2,10 +2,10 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
-import { IsArray, IsBoolean, IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ActorTypeEnum, IComment, ID, IEmployee, IOrganizationTeam, IUser } from '@gauzy/contracts';
-import { BasePerEntityType, Employee, OrganizationTeam, User } from '../core/entities/internal';
+import { ActorTypeEnum, IComment, ID, IEmployee, IOrganizationTeam } from '@gauzy/contracts';
+import { BasePerEntityType, Employee, OrganizationTeam } from '../core/entities/internal';
 import {
 	ColumnIndex,
 	MultiORMColumn,
@@ -59,22 +59,21 @@ export class Comment extends BasePerEntityType implements IComment {
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
-
 	/**
-	 * Employee comment author
+	 * Comment author
 	 */
 	@MultiORMManyToOne(() => Employee, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
-
-		/** Database cascade action on update. */
-		onUpdate: 'CASCADE',
 
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	employee?: IEmployee;
 
+	/**
+	 * Comment author ID
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
@@ -84,10 +83,8 @@ export class Comment extends BasePerEntityType implements IComment {
 	employeeId?: ID;
 
 	/**
-	 * User marked comment as resolved
+	 * Resolved by
 	 */
-	@ApiPropertyOptional({ type: () => Object })
-	@IsOptional()
 	@MultiORMManyToOne(() => Employee, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
@@ -98,6 +95,9 @@ export class Comment extends BasePerEntityType implements IComment {
 	@JoinColumn()
 	resolvedBy?: IEmployee;
 
+	/**
+	 * Resolved by ID
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
@@ -109,13 +109,18 @@ export class Comment extends BasePerEntityType implements IComment {
 	/**
 	 * Comment parent-child relationship
 	 */
-	@ApiPropertyOptional({ type: () => Comment })
-	@IsOptional()
 	@MultiORMManyToOne(() => Comment, (comment) => comment.replies, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
 		onDelete: 'SET NULL'
 	})
 	parent?: IComment;
 
+	/**
+	 * Parent ID of comment
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
@@ -123,35 +128,11 @@ export class Comment extends BasePerEntityType implements IComment {
 	@MultiORMColumn({ nullable: true, relationId: true })
 	parentId?: ID;
 
-	/**
-	 * User comment creator
-	 */
-	@ApiPropertyOptional({ type: () => Object })
-	@IsOptional()
-	@MultiORMManyToOne(() => User, {
-		/** Indicates if relation column value can be nullable or not. */
-		nullable: true,
-
-		/** Database cascade action on delete. */
-		onDelete: 'CASCADE'
-	})
-	@JoinColumn()
-	createdBy?: IUser;
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@IsUUID()
-	@RelationId((it: Comment) => it.createdBy)
-	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, relationId: true })
-	createdById?: ID;
-
 	/*
 	|--------------------------------------------------------------------------
 	| @OneToMany
 	|--------------------------------------------------------------------------
 	*/
-
 	/**
 	 * Replies comments
 	 */
@@ -164,11 +145,8 @@ export class Comment extends BasePerEntityType implements IComment {
 	|--------------------------------------------------------------------------
 	*/
 	/**
-	 * Members
+	 *
 	 */
-	@ApiPropertyOptional({ type: () => Array, isArray: true })
-	@IsOptional()
-	@IsArray()
 	@MultiORMManyToMany(() => Employee, (employee) => employee.assignedComments, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
@@ -177,17 +155,12 @@ export class Comment extends BasePerEntityType implements IComment {
 		joinColumn: 'commentId',
 		inverseJoinColumn: 'employeeId'
 	})
-	@JoinTable({
-		name: 'comment_employee'
-	})
+	@JoinTable({ name: 'comment_employee' })
 	members?: IEmployee[];
 
 	/**
-	 * OrganizationTeam
+	 *
 	 */
-	@ApiPropertyOptional({ type: () => Array, isArray: true })
-	@IsOptional()
-	@IsArray()
 	@MultiORMManyToMany(() => OrganizationTeam, (team) => team.assignedComments, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
@@ -196,8 +169,6 @@ export class Comment extends BasePerEntityType implements IComment {
 		joinColumn: 'commentId',
 		inverseJoinColumn: 'organizationTeamId'
 	})
-	@JoinTable({
-		name: 'comment_team'
-	})
+	@JoinTable({ name: 'comment_team' })
 	teams?: IOrganizationTeam[];
 }
