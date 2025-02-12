@@ -5,7 +5,7 @@ import { MentionEmployeeIdsDTO } from '../../../mention/dto';
 import { ScreeningTask } from '../screening-task.entity';
 
 /**
- * Create Sreening Task data validation request DTO
+ * Create Screening Task data validation request DTO
  */
 export class CreateScreeningTaskDTO
 	extends IntersectionType(
