@@ -100,7 +100,7 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			// Retrieve the current employee ID
 			const receiverId = RequestContext.currentEmployeeId();
 
-			// Update all unread and unarchived notifications for the current employee
+			// Update all unread and un-archived notifications for the current employee
 			// Assume super.update returns an object with an "affected" property that represents the number of records updated.
 			const updateResult = (await super.update(
 				{ isRead: false, isArchived: false, receiverId },
