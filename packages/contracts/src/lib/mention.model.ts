@@ -1,7 +1,7 @@
-import { BaseEntityEnum, IBasePerEntityType, IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
+import { BaseEntityEnum, IBasePerEntityType, ID } from './base-entity.model';
 import { IUser } from './user.model';
 
-export interface IMention extends IBasePerTenantAndOrganizationEntityModel, IBasePerEntityType {
+export interface IMention extends IBasePerEntityType {
 	mentionedUserId: ID;
 	mentionedUser?: IUser;
 	mentionById: ID;
@@ -10,7 +10,9 @@ export interface IMention extends IBasePerTenantAndOrganizationEntityModel, IBas
 	parentEntityType?: BaseEntityEnum;
 }
 
-export interface IMentionCreateInput extends Omit<IMention, 'mentionBy'> {}
+export interface IMentionCreateInput extends Omit<IMention, 'mentionBy'> {
+	entityName?: string;
+}
 
 export interface IMentionEmployeeIds {
 	mentionEmployeeIds?: ID[];

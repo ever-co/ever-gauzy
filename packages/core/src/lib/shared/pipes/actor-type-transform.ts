@@ -2,10 +2,10 @@ import { ValueTransformer } from 'typeorm';
 import { ActorTypeEnum } from '@gauzy/contracts';
 
 /**
- * ActorTypeTransformerPipe handles the conversion between the enum string values
+ * ActorTypeTransformer handles the conversion between the enum string values
  * (used in the application) and the integer values (stored in the database).
  */
-export class ActorTypeTransformerPipe implements ValueTransformer {
+export class ActorTypeTransformer implements ValueTransformer {
 	/**
 	 * Converts the enum string value to its integer representation when writing to the database.
 	 *

@@ -1,10 +1,10 @@
-import { ActorTypeEnum, IBasePerEntityType, IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
+import { ActorTypeEnum, IBasePerEntityType, ID } from './base-entity.model';
 import { IUser } from './user.model';
 import { IEmployee, IEmployeeEntityInput } from './employee.model';
 import { IOrganizationTeam } from './organization-team.model';
 import { IMentionEmployeeIds } from './mention.model';
 
-export interface IComment extends IBasePerTenantAndOrganizationEntityModel, IBasePerEntityType, IEmployeeEntityInput {
+export interface IComment extends IBasePerEntityType, IEmployeeEntityInput {
 	comment: string;
 	actorType?: ActorTypeEnum;
 	resolved?: boolean;
@@ -22,11 +22,9 @@ export interface IComment extends IBasePerTenantAndOrganizationEntityModel, IBas
 	createdById?: ID; // The comment's user creator ID
 }
 
-export interface ICommentCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel,
-		IBasePerEntityType,
-		IMentionEmployeeIds {
+export interface ICommentCreateInput extends IBasePerEntityType, IMentionEmployeeIds {
 	comment: string;
+	entityName?: string;
 	parentId?: ID;
 	members?: IEmployee[];
 	teams?: IOrganizationTeam[];

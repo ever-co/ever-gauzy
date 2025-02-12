@@ -1,4 +1,5 @@
-import { IntersectionType, OmitType } from '@nestjs/swagger';
+import { ApiPropertyOptional, IntersectionType, OmitType } from '@nestjs/swagger';
+import { IsOptional, IsString } from 'class-validator';
 import { ICommentCreateInput } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
 import { MentionEmployeeIdsDTO } from '../../mention/dto';
@@ -12,4 +13,10 @@ export class CreateCommentDTO
 		TenantOrganizationBaseDTO,
 		IntersectionType(OmitType(Comment, ['createdById', 'createdBy']), MentionEmployeeIdsDTO)
 	)
-	implements ICommentCreateInput {}
+	implements ICommentCreateInput
+{
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	entityName?: string;
+}
