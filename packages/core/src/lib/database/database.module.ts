@@ -19,13 +19,13 @@ import { ConnectionEntityManager } from './connection-entity-manager';
 		 * @type {MikroORMModuleOptions}
 		 */
 		MikroOrmModule.forRootAsync({
-			imports: [ConfigModule],
-			inject: [ConfigService],
 			// Use useFactory, useClass, or useExisting
 			useFactory: async (configService: ConfigService) => {
 				const dbMikroOrmConnectionOptions = configService.getConfigValue('dbMikroOrmConnectionOptions');
 				return dbMikroOrmConnectionOptions;
-			}
+			},
+			imports: [ConfigModule],
+			inject: [ConfigService]
 		}),
 		/**
 		 * Configuration for TypeORM database connection.
@@ -33,25 +33,25 @@ import { ConnectionEntityManager } from './connection-entity-manager';
 		 * @type {TypeOrmModuleOptions}
 		 */
 		TypeOrmModule.forRootAsync({
-			imports: [ConfigModule],
-			inject: [ConfigService],
 			// Use useFactory, useClass, or useExisting
 			useFactory: async (configService: ConfigService) => {
 				const dbConnectionOptions = configService.getConfigValue('dbConnectionOptions');
 				return dbConnectionOptions;
-			}
+			},
+			imports: [ConfigModule],
+			inject: [ConfigService]
 		}),
 		/**
 		 * Configure the Knex.js module for the application using asynchronous options.
 		 */
 		KnexModule.forRootAsync({
-			imports: [ConfigModule],
-			inject: [ConfigService],
 			// Use useFactory, useClass, or useExisting
 			useFactory: async (configService: ConfigService) => {
 				const dbKnexConnectionOptions = configService.getConfigValue('dbKnexConnectionOptions');
 				return dbKnexConnectionOptions;
-			}
+			},
+			imports: [ConfigModule],
+			inject: [ConfigService]
 		})
 	],
 	providers: [ConnectionEntityManager],

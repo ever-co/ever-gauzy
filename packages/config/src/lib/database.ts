@@ -1,5 +1,3 @@
-import * as path from 'path';
-import * as chalk from 'chalk';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { MikroOrmModuleOptions } from '@mikro-orm/nestjs';
 import { EntityCaseNamingStrategy } from '@mikro-orm/core';
@@ -8,9 +6,11 @@ import { BetterSqliteDriver, Options as MikroOrmBetterSqliteOptions } from '@mik
 import { PostgreSqlDriver, Options as MikroOrmPostgreSqlOptions } from '@mikro-orm/postgresql';
 import { Options as MikroOrmMySqlOptions, MySqlDriver } from '@mikro-orm/mysql';
 import { DataSourceOptions } from 'typeorm';
-import { KnexModuleOptions } from 'nest-knexjs';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOptions';
+import { KnexModuleOptions } from 'nest-knexjs';
+import * as path from 'path';
+import * as chalk from 'chalk';
 import { DatabaseTypeEnum, getLoggingMikroOptions, getLoggingOptions, getTlsOptions } from './database-helpers';
 
 /**
