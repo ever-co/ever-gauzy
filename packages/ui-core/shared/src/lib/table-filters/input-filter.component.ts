@@ -21,7 +21,7 @@ export class InputFilterComponent extends DefaultFilter implements OnInit, OnDes
 		this.subscription = this.inputControl.valueChanges
 			.pipe(
 				// Apply a debounce time to reduce the frequency of value changes
-				debounceTime(this.delay),
+				debounceTime(this.debounceTime),
 				// Ensure distinct values to avoid redundant operations
 				distinctUntilChanged(),
 				// Use tap to perform a side effect, invoking the filterFunction of the column
