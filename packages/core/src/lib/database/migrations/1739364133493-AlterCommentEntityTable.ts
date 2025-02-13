@@ -227,7 +227,9 @@ export class AlterCommentEntityTable1739364133493 implements MigrationInterface 
 				"resolvedByEmployeeId" varchar,
 				CONSTRAINT "FK_8f58834bed39f0f9e85f048eafe" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
 				CONSTRAINT "FK_a3422826753d4e6b079dea98342" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-				CONSTRAINT "FK_e3aebe2bd1c53467a07109be596" FOREIGN KEY ("parentId") REFERENCES "comment" ("id") ON DELETE SET NULL ON UPDATE NO ACTION
+				CONSTRAINT "FK_e3aebe2bd1c53467a07109be596" FOREIGN KEY ("parentId") REFERENCES "comment" ("id") ON DELETE SET NULL ON UPDATE NO ACTION,
+				CONSTRAINT "FK_7a88834dadfa6fe261268bfceef" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
+				CONSTRAINT "FK_35cddb3e66a46587966b68a9217" FOREIGN KEY ("resolvedByEmployeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
 			)
 		`);
 
@@ -304,15 +306,10 @@ export class AlterCommentEntityTable1739364133493 implements MigrationInterface 
 			WHERE "resolvedById" IS NOT NULL
 		`);
 
-		// Step 6: Drop the old "comment" table and rename the temporary table to it.
-		console.log('Step 6: Dropping the old "comment" table and renaming the temporary table to it...');
-		await queryRunner.query(`DROP TABLE "comment"`);
-		await queryRunner.query(`ALTER TABLE "temporary_comment" RENAME TO "comment"`);
-
-		// Step 7: Recreate the "comment" table without the old columns.
-		console.log('Step 7: Recreating "comment" table without old columns...');
+		// Step 6: Recreate the "clean_comment" table without the old columns.
+		console.log('Step 6: Recreating "clean_comment" table without old columns...');
 		await queryRunner.query(`
-			CREATE TABLE "temporary_comment" (
+			CREATE TABLE "clean_comment" (
 				"deletedAt"           datetime,
 				"id"                  varchar PRIMARY KEY NOT NULL,
 				"createdAt"           datetime NOT NULL DEFAULT (datetime('now')),
@@ -341,9 +338,9 @@ export class AlterCommentEntityTable1739364133493 implements MigrationInterface 
 		`);
 
 		// Step 8: Copy data from the temporary table (which now has the new columns) into the new clean table.
-		console.log('Step 8: Copying data into the new "comment" table without old columns...');
+		console.log('Step 8: Copying data into the new "clean_comment" table without old columns...');
 		await queryRunner.query(`
-			INSERT INTO "temporary_comment" (
+			INSERT INTO "clean_comment" (
 				"deletedAt",
 				"id",
 				"createdAt",
@@ -388,9 +385,12 @@ export class AlterCommentEntityTable1739364133493 implements MigrationInterface 
 		`);
 
 		// Step 9: Drop the old "comment" table and rename the new clean table.
-		console.log('Step 9: Dropping old "comment" table and renaming "temporary_comment" to "comment"...');
+		console.log(
+			'Step 9: Dropping old "comment" table and renaming "clean_comment" to "comment" and dropping "temporary_comment"...'
+		);
 		await queryRunner.query(`DROP TABLE "comment"`);
-		await queryRunner.query(`ALTER TABLE "temporary_comment" RENAME TO "comment"`);
+		await queryRunner.query(`ALTER TABLE "clean_comment" RENAME TO "comment"`);
+		await queryRunner.query(`DROP TABLE "temporary_comment"`);
 
 		// Step 10: Create final indexes on the new "comment" table.
 		console.log('Step 10: Creating indexes on the new "comment" table...');
