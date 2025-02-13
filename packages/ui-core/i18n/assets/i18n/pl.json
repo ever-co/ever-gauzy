@@ -758,6 +758,7 @@
 			"PROJECT_NAME": "Nazwa projektu jest wymagana.",
 			"PROJECT_URL": "URL projektu jest nieprawidłowy.",
 			"OPEN_SOURCE_PROJECT_URL": "URL projektu open-source jest nieprawidłowy.",
+			"INVALID_IMAGE_URL": "Nieprawidłowy adres URL obrazu.",
 			"PROJECT_EMPLOYEE": "To pole jest wymagane. Wybierz co najmniej jednego pracownika.",
 			"PROJECT_ORGANIZATION_CONTACT": "To pole jest wymagane. Wybierz klienta.",
 			"PROJECT_OWNER": "Właściciel projektu jest wymagany."
@@ -3712,17 +3713,18 @@
 			"RECURRING_EXPENSE_DELETED": "Powtarzający się wydatek został usunięty dla '{{ name }}'",
 			"IMAGE_UPDATED": "Obraz został zaktualizowany",
 			"ORGANIZATION_PAGE_UPDATED": "Strona została zmieniona dla '{{ name }}'",
-			"SCREENSHOT_DELETED": "Zrzut ekranu dla '{{ name }}' usunięty z '{{ organization }}'",
-			"TIME_LOG_DELETED": "Dziennik czasu dla '{{ name }}' usunięty z '{{ organization }}'",
-			"TIME_LOGS_DELETED": "Dzienniki czasu usunięte z '{{ organization }}'",
-			"BUCKET_CREATED": "'{{ bucket }}' dla '{{ region }}' został pomyślnie utworzony",
-			"AUTHORIZED_TO_WORK": "{{ name }} jest upoważniony do pracy",
-			"EMAIL_VERIFICATION_NOT_VALID": "Przepraszamy, ten link weryfikacyjny jest nieprawidłowy.",
-			"EMAIL_VERIFICATION_VALID": "Gratulacje! Twój e-mail został teraz zweryfikowany.",
-			"SCREEN_CAPTURE_CHANGED": "Status zrzutów ekranu zmieniony dla {{ name }}",
-			"MODULE_CREATED": "Moduł utworzony pomyślnie!",
-			"MODULE_UPDATED": "Moduł zaktualizowany pomyślnie!",
-			"MODULE_SAVE_ERROR": "Nie udało się zapisać modułu. Spróbuj ponownie."
+			"SCREENSHOT_DELETED": "Zrzut ekranu dla '{{ name }}' został usunięty z '{{ organization }}'",
+			"TIME_LOG_DELETED": "Dziennik czasu pracy dla '{{ name }}' został usunięty z '{{ organization }}'",
+			"TIME_LOGS_DELETED": "Usunięto dzienniki czasu z '{{ organization }}'",
+			"BUCKET_CREATED": "'{{ bucket }}' dla '{{ region }}' zostało pomyślnie utworzone",
+			"AUTHORIZED_TO_WORK": "{{ name }} jest uprawniony do pracy",
+			"EMAIL_VERIFICATION_NOT_VALID": "Przepraszam, ten link weryfikacyjny jest nieważny",
+			"EMAIL_VERIFICATION_VALID": "Gratulacje! Twój email został teraz zweryfikowany",
+			"SCREEN_CAPTURE_CHANGED": "Zmieniono stan zrzutu ekranu dla {{ name }}",
+			"MODULE_CREATED": "Moduł został pomyślnie utworzony!",
+			"MODULE_UPDATED": "Moduł został pomyślnie zaktualizowany!",
+			"MODULE_SAVE_ERROR": "Nie udało się zapisać modułu. Spróbuj ponownie.",
+			"PASSWORD_REQUIRED": "Hasło jest wymagane."
 		}
 	},
 	"ACCEPT_INVITE": {

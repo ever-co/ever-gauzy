@@ -758,6 +758,7 @@
 			"PROJECT_NAME": "Il nome del progetto è obbligatorio.",
 			"PROJECT_URL": "L'URL del progetto non è valido.",
 			"OPEN_SOURCE_PROJECT_URL": "L'URL del progetto open source non è valido.",
+			"INVALID_IMAGE_URL": "URL immagine non valido.",
 			"PROJECT_EMPLOYEE": "Questo campo è obbligatorio. Seleziona almeno un dipendente.",
 			"PROJECT_ORGANIZATION_CONTACT": "Questo campo è obbligatorio. Seleziona un cliente.",
 			"PROJECT_OWNER": "Il proprietario del progetto è obbligatorio."
@@ -3722,7 +3723,8 @@
 			"SCREEN_CAPTURE_CHANGED": "Stato cattura schermo cambiato per {{ name }}",
 			"MODULE_CREATED": "Modulo creato con successo!",
 			"MODULE_UPDATED": "Modulo aggiornato con successo!",
-			"MODULE_SAVE_ERROR": "Impossibile salvare il modulo. Riprova."
+			"MODULE_SAVE_ERROR": "Salvataggio del modulo non riuscito. Riprova.",
+			"PASSWORD_REQUIRED": "La password è obbligatoria."
 		}
 	},
 	"ACCEPT_INVITE": {

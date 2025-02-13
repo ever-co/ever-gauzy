@@ -758,6 +758,7 @@
 			"PROJECT_NAME": "اسم المشروع مطلوب.",
 			"PROJECT_URL": "رابط المشروع غير صالح.",
 			"OPEN_SOURCE_PROJECT_URL": "رابط المشروع مفتوح المصدر غير صالح.",
+			"INVALID_IMAGE_URL": "عنوان URL للصورة غير صالح.",
 			"PROJECT_EMPLOYEE": "هذا الحقل مطلوب. يرجى اختيار موظف واحد على الأقل.",
 			"PROJECT_ORGANIZATION_CONTACT": "هذا الحقل مطلوب. يرجى اختيار عميل.",
 			"PROJECT_OWNER": "مالك المشروع مطلوب."
@@ -3717,7 +3718,8 @@
 			"SCREEN_CAPTURE_CHANGED": "تم تغيير حالة التقاط الشاشة لـ {{ name }}",
 			"MODULE_CREATED": "تم إنشاء الوحدة بنجاح!",
 			"MODULE_UPDATED": "تم تحديث الوحدة بنجاح!",
-			"MODULE_SAVE_ERROR": "فشل في حفظ الوحدة. يرجى المحاولة مرة أخرى."
+			"MODULE_SAVE_ERROR": "فشل في حفظ الوحدة. حاول مرة أخرى.",
+			"PASSWORD_REQUIRED": "كلمة المرور مطلوبة."
 		}
 	},
 	"ACCEPT_INVITE": {

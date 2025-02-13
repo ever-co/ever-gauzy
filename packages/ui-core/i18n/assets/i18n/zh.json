@@ -758,6 +758,7 @@
 			"PROJECT_NAME": "项目名称为必填项。",
 			"PROJECT_URL": "项目网址无效。",
 			"OPEN_SOURCE_PROJECT_URL": "开源项目网址无效。",
+			"INVALID_IMAGE_URL": "无效的图片 URL。"	,
 			"PROJECT_EMPLOYEE": "此字段为必填项。请选择至少一名员工。",
 			"PROJECT_ORGANIZATION_CONTACT": "此字段为必填项。请选择一个客户。",
 			"PROJECT_OWNER": "项目所有者为必填项。"
@@ -3722,7 +3723,8 @@
 			"SCREEN_CAPTURE_CHANGED": "'{{ name }}'的屏幕截图状态已更改",
 			"MODULE_CREATED": "模块创建成功！",
 			"MODULE_UPDATED": "模块更新成功！",
-			"MODULE_SAVE_ERROR": "保存模块失败，请重试。"
+			"MODULE_SAVE_ERROR": "模块保存失败。请再试一次。",
+			"PASSWORD_REQUIRED": "需要密码。"
 		}
 	},
 	"ACCEPT_INVITE": {

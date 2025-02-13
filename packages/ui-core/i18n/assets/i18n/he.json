@@ -758,6 +758,7 @@
 			"PROJECT_NAME": "נדרש שם פרויקט.",
 			"PROJECT_URL": "כתובת פרויקט לא תקינה.",
 			"OPEN_SOURCE_PROJECT_URL": "כתובת פרויקט קוד פתוח לא תקינה.",
+			"INVALID_IMAGE_URL": "כתובת URL של התמונה אינה תקינה.",
 			"PROJECT_EMPLOYEE": "שדה זה נדרש. אנא בחר לפחות עובד אחד.",
 			"PROJECT_ORGANIZATION_CONTACT": "שדה זה נדרש. אנא בחר לקוח.",
 			"PROJECT_OWNER": "נדרש בעל פרויקט."

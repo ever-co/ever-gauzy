@@ -758,6 +758,7 @@
 			"PROJECT_NAME": "Projektname ist erforderlich.",
 			"PROJECT_URL": "Projekt-URL ist ungültig.",
 			"OPEN_SOURCE_PROJECT_URL": "Open-Source-Projekt-URL ist ungültig.",
+			"INVALID_IMAGE_URL": "Ungültige Bild-URL.",
 			"PROJECT_EMPLOYEE": "Dieses Feld ist erforderlich. Bitte wählen Sie mindestens einen Mitarbeiter aus.",
 			"PROJECT_ORGANIZATION_CONTACT": "Dieses Feld ist erforderlich. Bitte wählen Sie einen Kunden aus.",
 			"PROJECT_OWNER": "Projektinhaber ist erforderlich."
@@ -3722,7 +3723,8 @@
 			"SCREEN_CAPTURE_CHANGED": "Screenshot-Status für {{ name }} geändert",
 			"MODULE_CREATED": "Modul erfolgreich erstellt!",
 			"MODULE_UPDATED": "Modul erfolgreich aktualisiert!",
-			"MODULE_SAVE_ERROR": "Modul konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
+			"MODULE_SAVE_ERROR": "Das Speichern des Moduls ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
+			"PASSWORD_REQUIRED": "Passwort erforderlich."
 		}
 	},
 	"ACCEPT_INVITE": {
