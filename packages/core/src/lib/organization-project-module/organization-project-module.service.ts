@@ -138,8 +138,8 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 					id,
 					organizationId,
 					projectModuleMembers,
-					managerIds,
-					memberIds
+					managerIds||[],
+					memberIds||[]
 				);
 			}
 
