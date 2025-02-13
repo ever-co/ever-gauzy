@@ -493,6 +493,7 @@
 		"electron-builder": "^24.13.3",
 		"envalid": "^6.0.2",
 		"esbuild": "0.19.2",
+		"eslint": "^9.0.0",
 		"eslint-plugin-cypress": "2.13.4",
 		"fork-ts-checker-webpack-plugin": "^5.2.0",
 		"gulp-tag-version": "^1.3.1",
@@ -535,6 +536,7 @@
 		"tslint-language-service": "^0.9.9",
 		"typedoc": "^0.23.24",
 		"typescript": "5.5.4",
+		"typescript-eslint": "^8.24.0",
 		"verdaccio": "^5.0.4",
 		"webpack": "^5.91.0",
 		"webpack-bundle-analyzer": "^4.10.2",
@@ -588,5 +590,6 @@
 	},
 	"nx": {
 		"includedScripts": []
-	}
+	},
+	"packageManager": "yarn@1.22.22"
 }
