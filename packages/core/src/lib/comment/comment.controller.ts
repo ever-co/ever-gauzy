@@ -15,9 +15,9 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
 import { IComment, ID, IPagination } from '@gauzy/contracts';
-import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
+import { CrudController, OptionParams, PaginationParams } from '../core/crud';
+import { UUIDValidationPipe, UseValidationPipe } from '../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
-import { CrudController, OptionParams, PaginationParams } from './../core/crud';
 import { Comment } from './comment.entity';
 import { CommentService } from './comment.service';
 import { CommentCreateCommand, CommentUpdateCommand } from './commands';
@@ -31,9 +31,10 @@ export class CommentController extends CrudController<Comment> {
 		super(commentService);
 	}
 
-	@ApiOperation({
-		summary: 'Find all comments filtered by type.'
-	})
+	/**
+	 * Find all comments filtered by type.
+	 */
+	@ApiOperation({ summary: 'Find all comments filtered by type.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found comments',
@@ -43,26 +44,33 @@ export class CommentController extends CrudController<Comment> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get()
+	@Get('/')
 	@UseValidationPipe()
 	async findAll(@Query() params: PaginationParams<Comment>): Promise<IPagination<IComment>> {
 		return await this.commentService.findAll(params);
 	}
 
+	/**
+	 * Find by id
+	 */
 	@ApiOperation({ summary: 'Find by id' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found one record' /*, type: T*/
+		description: 'Found one record'
+		// You can specify a type here if needed: type: Comment,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get(':id')
+	@Get('/:id')
 	async findById(@Param('id', UUIDValidationPipe) id: ID, @Query() params: OptionParams<Comment>): Promise<Comment> {
 		return this.commentService.findOneByIdString(id, params);
 	}
 
+	/**
+	 * Create/Post a comment
+	 */
 	@ApiOperation({ summary: 'Create/Post a comment' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -73,12 +81,15 @@ export class CommentController extends CrudController<Comment> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Post()
+	@Post('/')
 	@UseValidationPipe({ whitelist: true })
 	async create(@Body() entity: CreateCommentDTO): Promise<IComment> {
 		return await this.commandBus.execute(new CommentCreateCommand(entity));
 	}
 
+	/**
+	 * Update an existing comment
+	 */
 	@ApiOperation({ summary: 'Update an existing comment' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -93,12 +104,15 @@ export class CommentController extends CrudController<Comment> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Put(':id')
+	@Put('/:id')
 	@UseValidationPipe({ whitelist: true })
 	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateCommentDTO): Promise<IComment> {
 		return await this.commandBus.execute(new CommentUpdateCommand(id, entity));
 	}
 
+	/**
+	 * Delete comment
+	 */
 	@ApiOperation({ summary: 'Delete comment' })
 	@ApiResponse({
 		status: HttpStatus.NO_CONTENT,
