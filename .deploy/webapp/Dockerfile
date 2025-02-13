@@ -99,7 +99,6 @@ RUN yarn build:gauzy:prod:docker \
 
 FROM nginx:alpine AS production
 
-USER nginx:nginx
 WORKDIR /srv/gauzy
 
 COPY --chown=nginx:nginx --from=builder /wait /entrypoint.compose.sh /entrypoint.prod.sh /replacements.sed ./
