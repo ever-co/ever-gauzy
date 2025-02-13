@@ -32,7 +32,10 @@ export class CommentController extends CrudController<Comment> {
 	}
 
 	/**
-	 * Find all comments filtered by type.
+	 * Finds all comments filtered by type (or other criteria) with pagination.
+	 *
+	 * @param params - Pagination and filter parameters.
+	 * @returns A promise that resolves with paginated comments.
 	 */
 	@ApiOperation({ summary: 'Find all comments filtered by type.' })
 	@ApiResponse({
@@ -51,13 +54,16 @@ export class CommentController extends CrudController<Comment> {
 	}
 
 	/**
-	 * Find by id
+	 * Finds a comment by its id.
+	 *
+	 * @param id - The id of the comment.
+	 * @param params - Optional parameters (e.g., relations to load).
+	 * @returns The found comment record.
 	 */
 	@ApiOperation({ summary: 'Find by id' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found one record'
-		// You can specify a type here if needed: type: Comment,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
@@ -69,7 +75,10 @@ export class CommentController extends CrudController<Comment> {
 	}
 
 	/**
-	 * Create/Post a comment
+	 * Creates a new comment using the provided DTO.
+	 *
+	 * @param createCommentDto - Data transfer object containing comment data.
+	 * @returns A promise resolving to the created comment.
 	 */
 	@ApiOperation({ summary: 'Create/Post a comment' })
 	@ApiResponse({
@@ -80,7 +89,7 @@ export class CommentController extends CrudController<Comment> {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@HttpCode(HttpStatus.ACCEPTED)
+	@HttpCode(HttpStatus.CREATED)
 	@Post('/')
 	@UseValidationPipe({ whitelist: true })
 	async create(@Body() entity: CreateCommentDTO): Promise<IComment> {
@@ -88,7 +97,12 @@ export class CommentController extends CrudController<Comment> {
 	}
 
 	/**
-	 * Update an existing comment
+	 * Updates an existing comment identified by the provided id.
+	 *
+	 * @param id - The unique identifier of the comment.
+	 * @param updateCommentDto - The data transfer object containing update data.
+	 * @returns The updated comment.
+	 * @throws NotFoundException if the comment does not exist.
 	 */
 	@ApiOperation({ summary: 'Update an existing comment' })
 	@ApiResponse({
@@ -111,7 +125,11 @@ export class CommentController extends CrudController<Comment> {
 	}
 
 	/**
-	 * Delete comment
+	 * Deletes a comment identified by the given id.
+	 *
+	 * @param id - The unique identifier of the comment to delete.
+	 * @returns A promise resolving to the result of the delete operation.
+	 * @throws NotFoundException if the comment is not found.
 	 */
 	@ApiOperation({ summary: 'Delete comment' })
 	@ApiResponse({
