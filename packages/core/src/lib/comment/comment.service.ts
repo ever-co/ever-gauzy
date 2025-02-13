@@ -1,8 +1,6 @@
 import { EventBus } from '@nestjs/cqrs';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateResult } from 'typeorm';
-import { TenantAwareCrudService } from './../core/crud';
-import { RequestContext } from '../core/context';
 import {
 	BaseEntityEnum,
 	IComment,
@@ -11,8 +9,10 @@ import {
 	ID,
 	SubscriptionTypeEnum
 } from '@gauzy/contracts';
+import { TenantAwareCrudService } from './../core/crud';
+import { RequestContext } from '../core/context';
 import { CreateSubscriptionEvent } from '../subscription/events';
-import { UserService } from '../user/user.service';
+import { EmployeeService } from '../employee/employee.service';
 import { MentionService } from '../mention/mention.service';
 import { Comment } from './comment.entity';
 import { TypeOrmCommentRepository } from './repository/type-orm.comment.repository';
@@ -24,114 +24,129 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		readonly typeOrmCommentRepository: TypeOrmCommentRepository,
 		readonly mikroOrmCommentRepository: MikroOrmCommentRepository,
 		private readonly _eventBus: EventBus,
-		private readonly userService: UserService,
-		private readonly mentionService: MentionService
+		private readonly _employeeService: EmployeeService,
+		private readonly _mentionService: MentionService
 	) {
 		super(typeOrmCommentRepository, mikroOrmCommentRepository);
 	}
 
 	/**
-	 * @description Create / Post comment - Note
-	 * @param {ICommentCreateInput} input - Data to creating comment
-	 * @returns A promise that resolves to the created comment
-	 * @memberof CommentService
+	 * Creates a new comment with the provided input, handling employee validation,
+	 * publishing mention notifications, and subscribing the comment creator to the related entity.
+	 *
+	 * This function retrieves context-specific IDs from the RequestContext (tenant, employee)
+	 * and falls back to the values in the input if necessary. It verifies that the employee exists,
+	 * creates the comment, publishes mention notifications for each mentioned employee, and
+	 * triggers a subscription event for the creator.
+	 *
+	 * @param {ICommentCreateInput} input - The input data required to create a comment, including text, mentions, and organization details.
+	 * @returns {Promise<IComment>} A promise that resolves to the newly created comment.
+	 * @throws {NotFoundException} If the employee associated with the comment is not found.
+	 * @throws {BadRequestException} If any error occurs during the creation of the comment.
 	 */
 	async create(input: ICommentCreateInput): Promise<IComment> {
 		try {
-			const userId = RequestContext.currentUserId();
-			const tenantId = RequestContext.currentTenantId();
-			const { mentionUserIds = [], ...data } = input;
+			// Retrieve context-specific IDs.
+			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+			const employeeId = RequestContext.currentEmployeeId() ?? input.employeeId;
+			const { mentionEmployeeIds = [], organizationId, ...data } = input;
 
-			// Employee existence validation
-			const user = await this.userService.findOneByIdString(userId);
-			if (!user) {
-				throw new NotFoundException('User not found');
+			// Validate that the employee exists.
+			const employee = await this._employeeService.findOneByIdString(employeeId);
+			if (!employee) {
+				throw new NotFoundException(`Employee with id ${employeeId} not found`);
 			}
 
-			// create comment
+			// Create the comment.
 			const comment = await super.create({
 				...data,
+				employeeId,
 				tenantId,
-				creatorId: user.id
+				organizationId
 			});
 
-			// Apply mentions if needed
+			// Publish mentions for each mentioned employee, if any.
 			await Promise.all(
-				mentionUserIds.map((mentionedUserId) =>
-					this.mentionService.publishMention({
+				mentionEmployeeIds.map((mentionedUserId) =>
+					this._mentionService.publishMention({
 						entity: BaseEntityEnum.Comment,
 						entityId: comment.id,
+						entityName: input.entityName,
 						mentionedUserId,
-						mentionById: user.id,
+						mentionById: employee.id,
 						parentEntityId: comment.entityId,
 						parentEntityType: comment.entity,
 						organizationId: comment.organizationId,
-						tenantId,
-						entityName: input.entityName
+						tenantId: comment.tenantId
 					})
 				)
 			);
 
-			// Subscribe creator to the entity
+			// Subscribe the comment creator to the entity.
 			this._eventBus.publish(
 				new CreateSubscriptionEvent({
 					entity: input.entity,
 					entityId: input.entityId,
-					userId: user.id,
 					type: SubscriptionTypeEnum.COMMENT,
 					organizationId: comment.organizationId,
-					tenantId
+					tenantId: comment.tenantId
 				})
 			);
 
-			// Return created Comment
+			// Return the newly created comment.
 			return comment;
 		} catch (error) {
-			console.log(error); // Debug Logging
+			console.log(`Error while creating comment: ${error.message}`, error);
 			throw new BadRequestException('Comment post failed', error);
 		}
 	}
 
 	/**
-	 * @description Update comment - Note
-	 * @param id - The comment ID to be updated.
-	 * @param {ICommentUpdateInput} input - Data to update comment.
-	 * @returns A promise that resolves to the updated comment OR Update result.
-	 * @memberof CommentService
+	 * Updates an existing comment based on the provided id and update input.
+	 *
+	 * This function first retrieves the current employee's ID from the request context,
+	 * then attempts to locate the comment matching the provided id and employeeId.
+	 * If the comment is found, it creates an updated version of the comment using the input data.
+	 * Additionally, it synchronizes any mention updates via the _mentionService.
+	 *
+	 * @param {ID} id - The unique identifier of the comment to update.
+	 * @param {ICommentUpdateInput} input - The update data for the comment, including any mention updates.
+	 * @returns {Promise<IComment | UpdateResult>} A promise that resolves to the updated comment or an update result.
+	 * @throws {BadRequestException} If the comment is not found or if the update operation fails.
 	 */
 	async update(id: ID, input: ICommentUpdateInput): Promise<IComment | UpdateResult> {
 		try {
-			const { mentionUserIds = [] } = input;
+			const employeeId = RequestContext.currentEmployeeId();
+			const { mentionEmployeeIds = [] } = input;
 
-			const userId = RequestContext.currentUserId();
-			const comment = await this.findOneByOptions({
-				where: {
-					id,
-					creatorId: userId
-				}
+			// Find the comment for the current employee with the given id.
+			const comment = await this.findOneByWhereOptions({
+				id,
+				employeeId
 			});
 
 			if (!comment) {
-				throw new BadRequestException('Comment not found');
+				throw new BadRequestException(`Comment with id ${id} not found`);
 			}
 
+			// Update the comment with the new input data.
 			const updatedComment = await super.create({
 				...input,
 				id
 			});
 
-			// Synchronize mentions
-			await this.mentionService.updateEntityMentions(
+			// Synchronize any mention updates for the comment.
+			await this._mentionService.updateEntityMentions(
 				BaseEntityEnum.Comment,
 				id,
-				mentionUserIds,
+				mentionEmployeeIds,
 				updatedComment.entityId,
 				updatedComment.entity
 			);
 
 			return updatedComment;
 		} catch (error) {
-			console.log(error); // Debug Logging
+			console.log(`Error while updating comment: ${error.message}`, error);
 			throw new BadRequestException('Comment update failed', error);
 		}
 	}
