@@ -306,10 +306,15 @@ export class AlterCommentEntityTable1739364133493 implements MigrationInterface 
 			WHERE "resolvedById" IS NOT NULL
 		`);
 
-		// Step 6: Recreate the "clean_comment" table without the old columns.
-		console.log('Step 6: Recreating "clean_comment" table without old columns...');
+		// Step 6: Drop the old "comment" table and rename the temporary table to it.
+		console.log('Step 6: Dropping the old "comment" table and renaming the temporary table to it...');
+		await queryRunner.query(`DROP TABLE "comment"`);
+		await queryRunner.query(`ALTER TABLE "temporary_comment" RENAME TO "comment"`);
+
+		// Step 7: Recreate the "temporary_comment" table without the old columns.
+		console.log('Step 7: Recreating "temporary_comment" table without old columns...');
 		await queryRunner.query(`
-			CREATE TABLE "clean_comment" (
+			CREATE TABLE "temporary_comment" (
 				"deletedAt"           datetime,
 				"id"                  varchar PRIMARY KEY NOT NULL,
 				"createdAt"           datetime NOT NULL DEFAULT (datetime('now')),
@@ -338,9 +343,9 @@ export class AlterCommentEntityTable1739364133493 implements MigrationInterface 
 		`);
 
 		// Step 8: Copy data from the temporary table (which now has the new columns) into the new clean table.
-		console.log('Step 8: Copying data into the new "clean_comment" table without old columns...');
+		console.log('Step 8: Copying data into the new "temporary_comment" table without old columns...');
 		await queryRunner.query(`
-			INSERT INTO "clean_comment" (
+			INSERT INTO "temporary_comment" (
 				"deletedAt",
 				"id",
 				"createdAt",
@@ -381,16 +386,13 @@ export class AlterCommentEntityTable1739364133493 implements MigrationInterface 
 				"parentId",
 				"employeeId",
 				"resolvedByEmployeeId"
-			FROM "temporary_comment"
+			FROM "comment"
 		`);
 
 		// Step 9: Drop the old "comment" table and rename the new clean table.
-		console.log(
-			'Step 9: Dropping old "comment" table and renaming "clean_comment" to "comment" and dropping "temporary_comment"...'
-		);
+		console.log('Step 9: Dropping old "comment" table and renaming "temporary_comment" to "comment"...');
 		await queryRunner.query(`DROP TABLE "comment"`);
-		await queryRunner.query(`ALTER TABLE "clean_comment" RENAME TO "comment"`);
-		await queryRunner.query(`DROP TABLE "temporary_comment"`);
+		await queryRunner.query(`ALTER TABLE "temporary_comment" RENAME TO "comment"`);
 
 		// Step 10: Create final indexes on the new "comment" table.
 		console.log('Step 10: Creating indexes on the new "comment" table...');
