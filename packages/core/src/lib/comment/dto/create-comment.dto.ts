@@ -1,4 +1,4 @@
-import { ApiPropertyOptional, IntersectionType, OmitType } from '@nestjs/swagger';
+import { ApiPropertyOptional, IntersectionType } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { ICommentCreateInput } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
