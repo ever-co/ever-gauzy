@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandBus, EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { IEntitySubscription } from '@gauzy/contracts';
 import { CreateSubscriptionEvent } from '../subscription.create.event';
@@ -37,6 +38,8 @@ export class CreateSubscriptionHandler implements IEventHandler<CreateSubscripti
 			return subscription;
 		} catch (error) {
 			console.log(`Error while creating subscription: ${error.message}`, error);
+			// Re-throw the error with additional context
+			throw new BadRequestException('Failed to create subscription', error);
 		}
 	}
 }
