@@ -36,7 +36,7 @@ export type ExcludeCreatorFields<T> = Omit<T, 'creator' | 'creatorId'>;
  * Interface representing a relationship with a creator.
  */
 export interface IHasCreator {
-	creator?: IUser;
+	creator?: IUser; // TODO : Replace these properties with `createdBy` and `createdById`
 	creatorId?: ID;
 }
 

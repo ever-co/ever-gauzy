@@ -1,5 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
-import { IMentionUserIds } from './mention.model';
+import { IMentionEmployeeIds } from './mention.model';
 import { ITask } from './task.model';
 import { IUser } from './user.model';
 
@@ -20,6 +20,6 @@ export enum ScreeningTaskStatusEnum {
 	PENDING = 'pending'
 }
 
-export interface IScreeningTaskCreateInput extends Omit<IScreeningTask, 'status'>, IMentionUserIds {}
+export interface IScreeningTaskCreateInput extends Omit<IScreeningTask, 'status'>, IMentionEmployeeIds {}
 
 export interface IScreeningTaskUpdateInput extends Omit<IScreeningTask, 'task' | 'taskId'> {}
