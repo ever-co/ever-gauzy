@@ -1,6 +1,7 @@
 import { HttpStatus, HttpException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { IReaction } from '@gauzy/contracts';
+import { ActorTypeEnum, IReaction } from '@gauzy/contracts';
+import { RequestContext } from '../../../core/context/request-context';
 import { ReactionService } from '../../reaction.service';
 import { ReactionCreateCommand } from '../reaction.create.command';
 
@@ -9,16 +10,32 @@ export class ReactionCreateHandler implements ICommandHandler<ReactionCreateComm
 	constructor(private readonly reactionService: ReactionService) {}
 
 	/**
-	 * Executes the ReactionCreateCommand to create a reaction.
-	 * If an error occurs, logs the error and rethrows it.
+	 * Executes the ReactionCreateCommand to create a new reaction.
+	 * It extracts necessary properties from the command input and the current request context,
+	 * then delegates the creation process to the reactionService.
 	 *
-	 * @param command - The command object containing the reaction creation input.
-	 * @returns A Promise that resolves to the created reaction.
+	 * @param command - The command containing the reaction creation input.
+	 * @returns A Promise resolving to the newly created reaction.
+	 * @throws HttpException with BAD_REQUEST status if reaction creation fails.
 	 */
 	public async execute(command: ReactionCreateCommand): Promise<IReaction> {
 		try {
 			const { input } = command;
-			return await this.reactionService.create(input);
+			// Resolve tenantId from the current request context, or fall back to the input tenantId
+			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+
+			// Destructure the required properties from the input
+			const { organizationId, entity, entityId, emoji } = input;
+
+			// Delegate reaction creation to the reactionService
+			return await this.reactionService.create({
+				entity,
+				entityId,
+				emoji,
+				actorType: ActorTypeEnum.User,
+				organizationId,
+				tenantId
+			});
 		} catch (error) {
 			console.log('[ReactionExecute] Error while executing ReactionCreateCommand:', error);
 			throw new HttpException(

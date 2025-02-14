@@ -7,5 +7,5 @@ import { TenantOrganizationBaseDTO } from '../../core/dto';
  * Update Reaction data validation request DTO
  */
 export class UpdateReactionDTO
-	extends IntersectionType(TenantOrganizationBaseDTO, PickType(Reaction, ['emoji']))
+	extends IntersectionType(TenantOrganizationBaseDTO, PickType(Reaction, ['emoji'] as const))
 	implements IReactionUpdateInput {}
