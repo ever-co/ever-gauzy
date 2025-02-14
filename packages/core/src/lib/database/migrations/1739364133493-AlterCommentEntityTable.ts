@@ -432,7 +432,6 @@ export class AlterCommentEntityTable1739364133493 implements MigrationInterface 
 		await queryRunner.query(`ALTER TABLE "comment" RENAME TO "temporary_comment"`);
 
 		// Step 3: Create a new "comment" table with the old schema.
-		// This new table includes "creatorId" and "resolvedById" with their foreign key constraints.
 		console.log('Step 3: Creating new "comment" table with old schema (with "creatorId" and "resolvedById")...');
 		await queryRunner.query(`
 			CREATE TABLE "comment" (
