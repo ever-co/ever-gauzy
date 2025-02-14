@@ -77,9 +77,15 @@ export class AlterReactionEntityTable1739519495586 implements MigrationInterface
 		console.log('Step 5: Copying data from "creatorId" to "employeeId"...');
 		await queryRunner.query(`
 			UPDATE "reaction" r
-			SET "employeeId" = e.id, "actorType" = 1
-			FROM "employee" e
-			WHERE r."creatorId" = e."userId" AND r."creatorId" IS NOT NULL
+			SET "employeeId" = (
+				SELECT id
+				FROM "employee" e
+				WHERE e."userId" = r."creatorId"
+				ORDER BY e."createdAt" DESC
+				LIMIT 1
+			),
+			"actorType" = 1
+			WHERE r."creatorId" IS NOT NULL
 		`);
 
 		// Step 6: Drop the old "creatorId" column.
