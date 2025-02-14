@@ -151,14 +151,347 @@ export class AlterReactionEntityTable1739519495586 implements MigrationInterface
 	 *
 	 * @param queryRunner
 	 */
-	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		// Step 1: Drop existing indexes from the current "reaction" table.
+		console.log('Step 1: Dropping existing indexes from "reaction"...');
+		await queryRunner.query(`DROP INDEX "IDX_58350b19ecd6a1e287a09d36a2"`);
+		await queryRunner.query(`DROP INDEX "IDX_6cbd023426eaa8c22a894ba7c3"`);
+		await queryRunner.query(`DROP INDEX "IDX_0617390fab6cec8855f601b293"`);
+		await queryRunner.query(`DROP INDEX "IDX_0f320e545c0e01268d5094c433"`);
+		await queryRunner.query(`DROP INDEX "IDX_f27bb1170c29785595c6ea142a"`);
+		await queryRunner.query(`DROP INDEX "IDX_910d87dc5f24fdc66b90c4b23e"`);
+		await queryRunner.query(`DROP INDEX "IDX_dc28f2b25544432f3d0fddbc3b"`);
+
+		// Step 2: Create the temporary table "temporary_reaction" with extra columns.
+		console.log('Step 2: Creating temporary table "temporary_reaction" with new columns...');
+		await queryRunner.query(`
+			CREATE TABLE "temporary_reaction" (
+				"deletedAt"           datetime,
+				"id"                  varchar PRIMARY KEY NOT NULL,
+				"createdAt"           datetime NOT NULL DEFAULT (datetime('now')),
+				"updatedAt"           datetime NOT NULL DEFAULT (datetime('now')),
+				"isActive"            boolean DEFAULT (1),
+				"isArchived"          boolean DEFAULT (0),
+				"archivedAt"          datetime,
+				"tenantId"            varchar,
+				"organizationId"      varchar,
+				"entity"              varchar NOT NULL,
+				"entityId"            varchar NOT NULL,
+				"emoji"               varchar NOT NULL,
+				"creatorId"           varchar,
+				"actorType"           integer,
+				"employeeId"          varchar,
+				CONSTRAINT "FK_0f320e545c0e01268d5094c4339" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+				CONSTRAINT "FK_f27bb1170c29785595c6ea142a8" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
+				CONSTRAINT "FK_b58c2c0e374c57e48dbddc93e1e" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+			)
+		`);
+
+		// Step 3: Copy data from the old "reaction" table into "temporary_reaction".
+		console.log('Step 3: Copying data from the existing "reaction" table into "temporary_reaction"...');
+		await queryRunner.query(`
+			INSERT INTO "temporary_reaction" (
+				"deletedAt",
+				"id",
+				"createdAt",
+				"updatedAt",
+				"isActive",
+				"isArchived",
+				"archivedAt",
+				"tenantId",
+				"organizationId",
+				"entity",
+				"entityId",
+				"emoji",
+				"creatorId"
+			)
+			SELECT
+				"deletedAt",
+				"id",
+				"createdAt",
+				"updatedAt",
+				"isActive",
+				"isArchived",
+				"archivedAt",
+				"tenantId",
+				"organizationId",
+				"entity",
+				"entityId",
+				"emoji",
+				"creatorId"
+			FROM "reaction"
+		`);
+
+		// Step 4: Copy data from "employeeId" and "actorType" using employee mapping.
+		console.log('Step 4: Updating "employeeId" from "creatorId" and setting "actorType"...');
+		await queryRunner.query(`
+			UPDATE "temporary_reaction"
+			SET "employeeId" = (
+				SELECT e."id"
+				FROM "employee" e
+				WHERE e."userId" = "temporary_reaction"."creatorId"
+				LIMIT 1
+			),
+			"actorType" = 1
+			WHERE "creatorId" IS NOT NULL
+		`);
+
+		// Step 5: Drop the old "reaction" table and rename the temporary table to it.
+		console.log('Step 5: Dropping the old "reaction" table and renaming the temporary table to it...');
+		await queryRunner.query(`DROP TABLE "reaction"`);
+		await queryRunner.query(`ALTER TABLE "temporary_reaction" RENAME TO "reaction"`);
+
+		// Step 6: Creating temporary table "temporary_reaction" with additional columns...
+		console.log('Step 6: Creating temporary table "temporary_reaction" with additional columns...');
+		await queryRunner.query(`
+			CREATE TABLE "temporary_reaction" (
+				"deletedAt"           datetime,
+				"id"                  varchar PRIMARY KEY NOT NULL,
+				"createdAt"           datetime NOT NULL DEFAULT (datetime('now')),
+				"updatedAt"           datetime NOT NULL DEFAULT (datetime('now')),
+				"isActive"            boolean DEFAULT (1),
+				"isArchived"          boolean DEFAULT (0),
+				"archivedAt"          datetime,
+				"tenantId"            varchar,
+				"organizationId"      varchar,
+				"entity"              varchar NOT NULL,
+				"entityId"            varchar NOT NULL,
+				"emoji"               varchar NOT NULL,
+				"actorType"           integer,
+				"employeeId"          varchar,
+				CONSTRAINT "FK_0f320e545c0e01268d5094c4339" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+				CONSTRAINT "FK_f27bb1170c29785595c6ea142a8" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
+				CONSTRAINT "FK_b58c2c0e374c57e48dbddc93e1e" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+			)
+		`);
+
+		// Step 7: Copy data from the old "reaction" table into "temporary_reaction".
+		console.log('Step 7: Copying data from "reaction" into "temporary_reaction"...');
+		await queryRunner.query(`
+			INSERT INTO "temporary_reaction" (
+				"deletedAt",
+				"id",
+				"createdAt",
+				"updatedAt",
+				"isActive",
+				"isArchived",
+				"archivedAt",
+				"tenantId",
+				"organizationId",
+				"entity",
+				"entityId",
+				"emoji",
+				"actorType",
+				"employeeId"
+			)
+			SELECT
+				"deletedAt",
+				"id",
+				"createdAt",
+				"updatedAt",
+				"isActive",
+				"isArchived",
+				"archivedAt",
+				"tenantId",
+				"organizationId",
+				"entity",
+				"entityId",
+				"emoji",
+				"actorType",
+				"employeeId"
+			FROM "reaction"
+		`);
+
+		// Step 8: Drop the old "reaction" table and rename the new clean table.
+		console.log('Step 8: Dropping old "reaction" table and renaming "temporary_reaction" to "reaction"...');
+		await queryRunner.query(`DROP TABLE "reaction"`);
+		await queryRunner.query(`ALTER TABLE "temporary_reaction" RENAME TO "reaction"`);
+
+		// Step 9: Create final indexes on the new "reaction" table.
+		console.log('Step 9: Creating indexes on the new "reaction" table...');
+		await queryRunner.query(`CREATE INDEX "IDX_6cbd023426eaa8c22a894ba7c3" ON "reaction" ("entityId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_0617390fab6cec8855f601b293" ON "reaction" ("entity") `);
+		await queryRunner.query(`CREATE INDEX "IDX_0f320e545c0e01268d5094c433" ON "reaction" ("organizationId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_f27bb1170c29785595c6ea142a" ON "reaction" ("tenantId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_910d87dc5f24fdc66b90c4b23e" ON "reaction" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_dc28f2b25544432f3d0fddbc3b" ON "reaction" ("isActive") `);
+		await queryRunner.query(`CREATE INDEX "IDX_72b52e83a89835be1b2b95aa84" ON "reaction" ("actorType") `);
+		await queryRunner.query(`CREATE INDEX "IDX_b58c2c0e374c57e48dbddc93e1" ON "reaction" ("employeeId") `);
+	}
 
 	/**
 	 * SqliteDB and BetterSQlite3DB Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		// Step 1: Drop existing indexes from the final "reaction" table.
+		console.log('Step 1: Dropping existing indexes from "reaction"...');
+		await queryRunner.query(`DROP INDEX "IDX_b58c2c0e374c57e48dbddc93e1"`);
+		await queryRunner.query(`DROP INDEX "IDX_72b52e83a89835be1b2b95aa84"`);
+		await queryRunner.query(`DROP INDEX "IDX_dc28f2b25544432f3d0fddbc3b"`);
+		await queryRunner.query(`DROP INDEX "IDX_910d87dc5f24fdc66b90c4b23e"`);
+		await queryRunner.query(`DROP INDEX "IDX_f27bb1170c29785595c6ea142a"`);
+		await queryRunner.query(`DROP INDEX "IDX_0f320e545c0e01268d5094c433"`);
+		await queryRunner.query(`DROP INDEX "IDX_0617390fab6cec8855f601b293"`);
+		await queryRunner.query(`DROP INDEX "IDX_6cbd023426eaa8c22a894ba7c3"`);
+
+		// Step 2: Rename the current "reaction" table to "temporary_reaction".
+		console.log('Step 2: Renaming "reaction" to "temporary_reaction"...');
+		await queryRunner.query(`ALTER TABLE "reaction" RENAME TO "temporary_reaction"`);
+
+		// Step 3: Create a new "reaction" table with the old schema.
+		console.log('Step 3: Creating new "reaction" table with old schema (with "creatorId")...');
+		await queryRunner.query(`
+			CREATE TABLE "reaction" (
+				"deletedAt"       datetime,
+				"id"              varchar PRIMARY KEY NOT NULL,
+				"createdAt"       datetime NOT NULL DEFAULT (datetime('now')),
+				"updatedAt"       datetime NOT NULL DEFAULT (datetime('now')),
+				"isActive"        boolean DEFAULT (1),
+				"isArchived"      boolean DEFAULT (0),
+				"archivedAt"      datetime,
+				"tenantId"        varchar,
+				"organizationId"  varchar,
+				"entity"          varchar NOT NULL,
+				"entityId"        varchar NOT NULL,
+				"emoji"           varchar NOT NULL,
+				"creatorId"       varchar,
+				"actorType"       integer,
+				"employeeId"      varchar,
+				CONSTRAINT "FK_58350b19ecd6a1e287a09d36a2e" FOREIGN KEY ("creatorId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
+				CONSTRAINT "FK_0f320e545c0e01268d5094c4339" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+				CONSTRAINT "FK_f27bb1170c29785595c6ea142a8" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
+			)
+		`);
+
+		// Step 4: Copy data from the old "temporary_reaction" table into the "reaction" table.
+		console.log('Step 4: Copying data from the existing "temporary_reaction" table into "reaction"...');
+		await queryRunner.query(`
+			INSERT INTO "reaction" (
+				"deletedAt",
+				"id",
+				"createdAt",
+				"updatedAt",
+				"isActive",
+				"isArchived",
+				"archivedAt",
+				"tenantId",
+				"organizationId",
+				"entity",
+				"entityId",
+				"emoji",
+				"actorType",
+				"employeeId"
+			)
+			SELECT
+				"deletedAt",
+				"id",
+				"createdAt",
+				"updatedAt",
+				"isActive",
+				"isArchived",
+				"archivedAt",
+				"tenantId",
+				"organizationId",
+				"entity",
+				"entityId",
+				"emoji",
+				"actorType",
+				"employeeId"
+			FROM "temporary_reaction"
+		`);
+
+		// Step 5: Update "creatorId" from "employeeId" using employee table mapping
+		console.log('Step 5: Updating "creatorId" from "employeeId" via employee table mapping...');
+		await queryRunner.query(`
+			UPDATE "reaction"
+			SET "creatorId" = (
+				SELECT e."userId"
+				FROM "employee" e
+				WHERE e."id" = "reaction"."employeeId"
+				LIMIT 1
+			)
+			WHERE "employeeId" IS NOT NULL
+		`);
+
+		// Step 6: Drop the old "reaction" table and rename the temporary table to it.
+		console.log('Step 6: Dropping the old "temporary_reaction" table and renaming the "reaction" table to it...');
+		await queryRunner.query(`DROP TABLE "temporary_reaction"`);
+		await queryRunner.query(`ALTER TABLE "reaction" RENAME TO "temporary_reaction"`);
+
+		// Step 7: Recreating "reaction" table with the new columns.
+		console.log('Step 7: Recreating "reaction" table with the new columns...');
+		await queryRunner.query(`
+			CREATE TABLE "reaction" (
+				"deletedAt"       datetime,
+				"id"              varchar PRIMARY KEY NOT NULL,
+				"createdAt"       datetime NOT NULL DEFAULT (datetime('now')),
+				"updatedAt"       datetime NOT NULL DEFAULT (datetime('now')),
+				"isActive"        boolean DEFAULT (1),
+				"isArchived"      boolean DEFAULT (0),
+				"archivedAt"      datetime,
+				"tenantId"        varchar,
+				"organizationId"  varchar,
+				"entity"          varchar NOT NULL,
+				"entityId"        varchar NOT NULL,
+				"emoji"           varchar NOT NULL,
+				"creatorId"       varchar,
+				CONSTRAINT "FK_58350b19ecd6a1e287a09d36a2e" FOREIGN KEY ("creatorId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
+				CONSTRAINT "FK_0f320e545c0e01268d5094c4339" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+				CONSTRAINT "FK_f27bb1170c29785595c6ea142a8" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
+			)
+		`);
+
+		// Step 8: Copy data from the old "temporary_reaction" table into the "reaction" table.
+		console.log('Step 8: Copying data from the existing "temporary_reaction" table into "reaction"...');
+		await queryRunner.query(`
+			INSERT INTO "reaction" (
+				"deletedAt",
+				"id",
+				"createdAt",
+				"updatedAt",
+				"isActive",
+				"isArchived",
+				"archivedAt",
+				"tenantId",
+				"organizationId",
+				"entity",
+				"entityId",
+				"emoji",
+				"creatorId"
+			)
+			SELECT
+				"deletedAt",
+				"id",
+				"createdAt",
+				"updatedAt",
+				"isActive",
+				"isArchived",
+				"archivedAt",
+				"tenantId",
+				"organizationId",
+				"entity",
+				"entityId",
+				"emoji",
+				"creatorId"
+			FROM "temporary_reaction"
+		`);
+
+		// Step 9: Dropping the old "temporary_reaction" table.
+		console.log('Step 9: Dropping the old "temporary_reaction" table...');
+		await queryRunner.query(`DROP TABLE "temporary_reaction"`);
+
+		// Step 10: Create final indexes on the new "reaction" table.
+		console.log('Step 10: Creating indexes on the new "reaction" table...');
+		await queryRunner.query(`CREATE INDEX "IDX_dc28f2b25544432f3d0fddbc3b" ON "reaction" ("isActive") `);
+		await queryRunner.query(`CREATE INDEX "IDX_910d87dc5f24fdc66b90c4b23e" ON "reaction" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_f27bb1170c29785595c6ea142a" ON "reaction" ("tenantId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_0f320e545c0e01268d5094c433" ON "reaction" ("organizationId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_0617390fab6cec8855f601b293" ON "reaction" ("entity") `);
+		await queryRunner.query(`CREATE INDEX "IDX_6cbd023426eaa8c22a894ba7c3" ON "reaction" ("entityId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_58350b19ecd6a1e287a09d36a2" ON "reaction" ("creatorId") `);
+	}
 
 	/**
 	 * MySQL Up Migration
