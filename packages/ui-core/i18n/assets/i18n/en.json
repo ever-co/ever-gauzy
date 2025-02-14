@@ -754,7 +754,8 @@
 		"ERROR": {
 			"PROJECT_NAME": "Project name is required.",
 			"PROJECT_URL": "Project url is invalid.",
-			"OPEN_SOURCE_PROJECT_URL": "Open source project url is invalid."
+			"OPEN_SOURCE_PROJECT_URL": "Open source project url is invalid.",
+			"INVALID_IMAGE_URL": "Invalid image URL."
 		}
 	},
 	"POP_UPS": {
@@ -3749,7 +3750,8 @@
 			"SCREEN_CAPTURE_CHANGED": "Screen capture status changed for {{ name }}",
 			"MODULE_CREATED": "Module created successfully!",
 			"MODULE_UPDATED": "Module updated successfully!",
-			"MODULE_SAVE_ERROR": "Failed to save the module. Please try again."
+			"MODULE_SAVE_ERROR": "Failed to save the module. Please try again.",
+			"PASSWORD_REQUIRED": "Password is required."
 		}
 	},
 	"ACCEPT_INVITE": {
