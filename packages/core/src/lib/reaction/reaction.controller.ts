@@ -13,8 +13,8 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
-import { DeleteResult } from 'typeorm';
-import { IReaction, IReactionUpdateInput, ID, IPagination } from '@gauzy/contracts';
+import { DeleteResult, UpdateResult } from 'typeorm';
+import { IReaction, ID, IPagination } from '@gauzy/contracts';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { CrudController, OptionParams, PaginationParams } from './../core/crud';
@@ -31,9 +31,13 @@ export class ReactionController extends CrudController<Reaction> {
 		super(reactionService);
 	}
 
-	@ApiOperation({
-		summary: 'Find all reactions filtered by type.'
-	})
+	/**
+	 * Retrieves a paginated list of reactions filtered by type.
+	 *
+	 * @param params - Pagination and filtering parameters for retrieving reactions.
+	 * @returns A Promise resolving to a paginated list of reactions.
+	 */
+	@ApiOperation({ summary: 'Find all reactions filtered by type.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found reactions',
@@ -43,29 +47,45 @@ export class ReactionController extends CrudController<Reaction> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get()
+	@Get('/')
 	@UseValidationPipe()
 	async findAll(@Query() params: PaginationParams<Reaction>): Promise<IPagination<IReaction>> {
 		return await this.reactionService.findAll(params);
 	}
 
-	@ApiOperation({ summary: 'Find by id' })
+	/**
+	 * Retrieves a reaction by its unique identifier.
+	 *
+	 * @param id - The unique identifier of the reaction.
+	 * @param params - Optional query parameters for filtering the reaction.
+	 * @returns A Promise that resolves to the found Reaction.
+	 * @throws NotFoundException if the reaction is not found.
+	 */
+	@ApiOperation({ summary: 'Find reaction by id' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found one record' /*, type: T*/
+		description: 'Found one record',
+		type: Reaction // Ensure that Reaction is imported and annotated properly
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get(':id')
+	@Get('/:id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Query() params: OptionParams<Reaction>
 	): Promise<Reaction> {
-		return this.reactionService.findOneByIdString(id, params);
+		// Retrieve the reaction using the service
+		return await this.reactionService.findOneByIdString(id, params);
 	}
 
+	/**
+	 * Creates a new reaction.
+	 *
+	 * @param entity - The reaction data to create.
+	 * @returns A promise that resolves with the created reaction.
+	 */
 	@ApiOperation({ summary: 'Create reaction' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -73,50 +93,65 @@ export class ReactionController extends CrudController<Reaction> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, the response body may contain clues as to what went wrong.'
 	})
-	@HttpCode(HttpStatus.ACCEPTED)
-	@Post()
+	@Post('/')
 	@UseValidationPipe({ whitelist: true })
+	@HttpCode(HttpStatus.CREATED)
 	async create(@Body() entity: CreateReactionDTO): Promise<IReaction> {
 		return await this.commandBus.execute(new ReactionCreateCommand(entity));
 	}
 
+	/**
+	 * Updates an existing reaction.
+	 *
+	 * @param id - The unique identifier of the reaction to update.
+	 * @param entity - The updated reaction data.
+	 * @returns The updated reaction.
+	 */
 	@ApiOperation({ summary: 'Update an existing reaction' })
 	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'The record has been successfully edited.'
+		status: HttpStatus.OK,
+		description: 'The reaction has been successfully updated.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Reaction not found.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
-	@HttpCode(HttpStatus.ACCEPTED)
-	@Put(':id')
+	@HttpCode(HttpStatus.OK)
+	@Put('/:id')
 	@UseValidationPipe({ whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: UpdateReactionDTO
-	): Promise<IReactionUpdateInput> {
+	): Promise<IReaction | UpdateResult> {
 		return await this.commandBus.execute(new ReactionUpdateCommand(id, entity));
 	}
 
-	@ApiOperation({ summary: 'Delete reaction' })
+	/**
+	 * Deletes a reaction by its ID, ensuring that it belongs to the current employee and tenant.
+	 *
+	 * @param id - The unique identifier of the reaction to be deleted.
+	 * @returns A Promise that resolves with no content upon successful deletion.
+	 * @throws NotFoundException if the reaction is not found.
+	 */
+	@ApiOperation({ summary: 'Delete a reaction by its ID' })
 	@ApiResponse({
 		status: HttpStatus.NO_CONTENT,
-		description: 'The record has been successfully deleted'
+		description: 'The reaction has been successfully deleted.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Reaction not found.'
 	})
-	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete('/:id')
+	@HttpCode(HttpStatus.NO_CONTENT)
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
+		// The reactionService.delete method should throw an exception if deletion fails.
 		return await this.reactionService.delete(id);
 	}
 }
