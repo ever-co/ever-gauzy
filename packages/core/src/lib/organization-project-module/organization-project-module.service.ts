@@ -30,7 +30,7 @@ import { EmployeeService } from '../employee/employee.service';
 import { OrganizationProjectModuleEmployee } from './organization-project-module-employee.entity';
 import { TypeOrmOrganizationProjectModuleEmployeeRepository } from './repository/type-orm-organization-project-module-employee.repository';
 import { MikroOrmOrganizationProjectModuleEmployeeRepository } from './repository/mikro-orm-organization-project-module-employee.repository';
-import { TaskService } from '../tasks';
+import { TaskService } from '../tasks/task.service';
 
 @Injectable()
 export class OrganizationProjectModuleService extends TenantAwareCrudService<OrganizationProjectModule> {
