@@ -14,6 +14,6 @@ export interface IMentionCreateInput extends Omit<IMention, 'mentionBy'> {
 	entityName?: string;
 }
 
-export interface IMentionUserIds {
-	mentionUserIds?: ID[];
+export interface IMentionEmployeeIds {
+	mentionEmployeeIds?: ID[];
 }
