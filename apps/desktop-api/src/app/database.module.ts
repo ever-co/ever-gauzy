@@ -20,7 +20,8 @@ const dbPath = process.env.GAUZY_USER_PATH ? `${process.env.GAUZY_USER_PATH}/gau
 				logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
 				synchronize: true,
 				entities: coreEntities
-			})
+			}),
+			inject: []
 		}),
 		// MikroORM DB Config (SQLite3)
 		MikroOrmModule.forRootAsync({
@@ -30,7 +31,9 @@ const dbPath = process.env.GAUZY_USER_PATH ? `${process.env.GAUZY_USER_PATH}/gau
 				entities: coreEntities,
 				namingStrategy: EntityCaseNamingStrategy,
 				debug: ['query'] // by default set to false only
-			})
+			}),
+			driver: BetterSqliteDriver,
+			inject: []
 		})
 	]
 })

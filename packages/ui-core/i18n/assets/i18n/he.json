@@ -720,7 +720,8 @@
 		"ERROR": {
 			"PROJECT_NAME": "נדרש שם הפרויקט.",
 			"PROJECT_URL": "כתובת האתר של הפרויקט אינה חוקית.",
-			"OPEN_SOURCE_PROJECT_URL": "כתובת האתר של פרוייקט קוד פתוח אינה חוקית."
+			"OPEN_SOURCE_PROJECT_URL": "כתובת האתר של פרוייקט קוד פתוח אינה חוקית.",
+			"INVALID_IMAGE_URL": "כתובת URL של התמונה אינה תקינה."
 		}
 	},
 	"POP_UPS": {
@@ -2391,7 +2392,6 @@
 		"TENANT_LEVEL": "Tenant level",
 		"TAGS_TYPE": "Tags type",
 		"TAGS_SELECT_TYPE": "בחר סוג תג"
-
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Skills"
@@ -3636,7 +3636,8 @@
 			"AUTHORIZED_TO_WORK": "{{ name }} is authorized to work",
 			"MODULE_CREATED": "המודול נוצר בהצלחה!",
 			"MODULE_UPDATED": "המודול עודכן בהצלחה!",
-			"MODULE_SAVE_ERROR": "שמירת המודול נכשלה. אנא נסה שוב."
+			"MODULE_SAVE_ERROR": "שמירת המודול נכשלה. אנא נסה שוב.",
+			"PASSWORD_REQUIRED": "נדרשת סיסמה."
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -3902,7 +3903,6 @@
 			"TITLE_SERVER_API": "אשף התקנת שרת API של Ever Gauzy",
 			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App מספקת את הפונקציונליות המלאה של פלטפורמת Gauzy הזמינה ישירות במחשב השולחני או במחשב הנייד שלך. בנוסף, הוא מאפשר מעקב אחר זמן עבודה, רישום פעילות ויכולת לקבל תזכורות/הודעות מעקב.",
 			"UNABLE_TO_CONNECT": "Unable to connect to the server. Please check your API host or internet connection."
-
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "לכידת מסך",
