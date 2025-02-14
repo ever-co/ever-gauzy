@@ -37,7 +37,24 @@ module.exports = [
 					prefix: 'lib',
 					style: 'kebab-case'
 				}
-			]
+			],
+			"prettier/prettier": [
+				"error",
+				{
+					"singleQuote": true,
+					"semi": true
+				}
+			],
+			"@angular-eslint/no-host-metadata-property": "error",
+			"@angular-eslint/no-input-rename": "error",
+			"@angular-eslint/no-output-rename": "error",
+			"@angular-eslint/no-lifecycle-call": "error",
+			"@angular-eslint/use-lifecycle-interface": "error",
+			"@angular-eslint/no-pipe-impure": "error",
+			"@angular-eslint/template/eqeqeq": ["error", "smart"],
+			"@angular-eslint/template/no-call-expression": "warn",
+			"@angular-eslint/template/accessibility-alt-text": "warn",
+			"@angular-eslint/template/accessibility-valid-aria": "warn"
 		}
 	},
 	{
