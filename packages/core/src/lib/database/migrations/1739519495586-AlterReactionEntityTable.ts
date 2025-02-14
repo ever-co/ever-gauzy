@@ -564,8 +564,11 @@ export class AlterReactionEntityTable1739519495586 implements MigrationInterface
 		await queryRunner.query(`
 			UPDATE \`reaction\` r
 			JOIN \`employee\` e ON r.\`employeeId\` = e.\`id\`
+			LEFT JOIN \`user\` u ON e.\`userId\` = u.\`id\`
 			SET r.\`creatorId\` = e.\`userId\`
 			WHERE r.\`employeeId\` IS NOT NULL
+			AND e.\`userId\` IS NOT NULL
+			AND u.\`id\` IS NOT NULL
 		`);
 
 		// Step 5: Drop the new columns "employeeId" and "actorType".
