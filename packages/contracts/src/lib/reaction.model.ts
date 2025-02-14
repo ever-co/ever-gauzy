@@ -1,4 +1,4 @@
-import { IBasePerTenantAndOrganizationEntityModel, ID, OmitFields } from './base-entity.model';
+import { ActorTypeEnum, IBasePerTenantAndOrganizationEntityModel, ID, OmitFields } from './base-entity.model';
 import { IEmployeeEntityInput } from './employee.model';
 
 /**
@@ -8,6 +8,7 @@ export interface IReaction extends IBasePerTenantAndOrganizationEntityModel, IEm
 	entity: ReactionEntityEnum;
 	entityId: ID; // Indicate the ID of entity record reaction related to
 	emoji: string;
+	actorType?: ActorTypeEnum; // Will be stored as 0 or 1 in DB
 }
 
 /**
