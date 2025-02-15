@@ -168,12 +168,96 @@ export class AlterActivityLogEntityTable1739602849367 implements MigrationInterf
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		// Step 1: Drop the existing foreign key constraint on "creatorId".
+		console.log('Step 1: Dropping foreign key constraint on "creatorId" from "activity_log"...');
+		await queryRunner.query(`ALTER TABLE \`activity_log\` DROP FOREIGN KEY \`FK_b6e9a5c3e1ee65a3bcb8a00de2b\``);
+
+		// Step 2: Drop the existing index on "creatorId".
+		console.log('Step 2: Dropping index "creatorId" from "activity_log"...');
+		await queryRunner.query(`DROP INDEX \`IDX_b6e9a5c3e1ee65a3bcb8a00de2\` ON \`activity_log\``);
+
+		// Step 3: Add new column "employeeId".
+		console.log('Step 3: Adding new column "employeeId" to "activity_log"...');
+		await queryRunner.query(`ALTER TABLE \`activity_log\` ADD \`employeeId\` varchar(255) NULL`);
+
+		// Step 4: Copy data from "creatorId" to "employeeId" using employee mapping.
+		console.log('Step 4: Copying data from "creatorId" to "employeeId" via employee table mapping...');
+		await queryRunner.query(`
+			UPDATE \`activity_log\` AS al
+			SET al.\`employeeId\` = (
+				SELECT e.\`id\`
+				FROM \`employee\` AS e
+				WHERE al.\`creatorId\` = e.\`userId\`
+				ORDER BY e.\`createdAt\` DESC
+				LIMIT 1
+			)
+			WHERE al.\`creatorId\` IS NOT NULL
+		`);
+
+		// Step 5: Drop the old "creatorId" column.
+		console.log('Step 5: Dropping column "creatorId" from "activity_log"...');
+		await queryRunner.query(`ALTER TABLE \`activity_log\` DROP COLUMN \`creatorId\``);
+
+		// Step 6: Recreate the index on "employeeId" in "activity_log".
+		console.log('Step 6: Recreate the index on "employeeId" in "activity_log"...');
+		await queryRunner.query(`CREATE INDEX \`IDX_071945a9d4a2322fde08010292\` ON \`activity_log\` (\`employeeId\`)`);
+
+		// Step 7: Add a new foreign key constraint on "employeeId" referencing "employee"(id).
+		console.log('Step 7: Adding foreign key constraint on "employeeId" referencing "employee"(id)...');
+		await queryRunner.query(`
+			ALTER TABLE \`activity_log\`
+			ADD CONSTRAINT \`FK_071945a9d4a2322fde08010292c\`
+			FOREIGN KEY (\`employeeId\`) REFERENCES \`employee\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION
+		`);
+	}
 
 	/**
 	 * MySQL Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		// Step 1: Drop the foreign key constraint on "employeeId".
+		console.log('Step 1: Dropping foreign key constraint on "employeeId" from "activity_log"...');
+		await queryRunner.query(`ALTER TABLE \`activity_log\` DROP FOREIGN KEY \`FK_071945a9d4a2322fde08010292c\``);
+
+		// Step 2: Drop the index on "employeeId".
+		console.log('Step 2: Dropping index "IDX_071945a9d4a2322fde08010292" from "activity_log"...');
+		await queryRunner.query(`DROP INDEX \`IDX_071945a9d4a2322fde08010292\` ON \`activity_log\``);
+
+		// Step 3: Add back the old column "creatorId" back to "activity_log".
+		console.log('Step 3: Adding column "creatorId" back to "activity_log"...');
+		await queryRunner.query(`ALTER TABLE \`activity_log\` ADD \`creatorId\` varchar(255) NULL`);
+
+		// Step 4: Copy data from "employeeId" to "creatorId" using employee mapping.
+		console.log('Step 4: Copying data from "employeeId" to "creatorId" via employee table mapping...');
+		await queryRunner.query(`
+			UPDATE \`activity_log\` AS al
+			SET al.\`creatorId\` = (
+				SELECT e.\`userId\`
+				FROM \`employee\` AS e
+				WHERE e.\`id\` = al.\`employeeId\`
+				ORDER BY e.\`createdAt\` DESC
+				LIMIT 1
+			)
+			WHERE al.\`employeeId\` IS NOT NULL
+		`);
+
+		// Step 5: Drop the new column "employeeId".
+		console.log('Step 5: Dropping column "employeeId" from "activity_log"...');
+		await queryRunner.query(`ALTER TABLE \`activity_log\` DROP COLUMN \`employeeId\``);
+
+		// Step 6: Recreate the index on the restored "creatorId" column.
+		console.log('Step 6: Recreate the index on "creatorId" in "activity_log"...');
+		await queryRunner.query(`CREATE INDEX \`IDX_b6e9a5c3e1ee65a3bcb8a00de2\` ON \`activity_log\` (\`creatorId\`)`);
+
+		// Step 7: Re-add the original foreign key constraint on "creatorId" referencing "user"(id).
+		console.log('Step 7: Adding foreign key constraint on "creatorId" referencing "user"(id) in "activity_log"...');
+		await queryRunner.query(`
+			ALTER TABLE \`activity_log\`
+			ADD CONSTRAINT \`FK_b6e9a5c3e1ee65a3bcb8a00de2b\`
+			FOREIGN KEY (\`creatorId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION
+		`);
+	}
 }
