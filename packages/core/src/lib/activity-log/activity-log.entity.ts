@@ -89,7 +89,7 @@ export class ActivityLog extends BasePerEntityType implements IActivityLog {
 	employee?: IEmployee;
 
 	/**
-	 * Actvity Log Author ID
+	 * Activity Log Author ID
 	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

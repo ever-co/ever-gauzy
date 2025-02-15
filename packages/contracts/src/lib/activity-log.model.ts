@@ -32,4 +32,4 @@ export enum ActionTypeEnum {
 /**
  * Input type for activity log creation, excluding `employeeId` and `employee`.
  */
-export interface IActivityLogInput extends OmitFields<IActivityLog, 'employeeId' | 'employee'> {}
+export interface IActivityLogInput extends OmitFields<IActivityLog> {}
