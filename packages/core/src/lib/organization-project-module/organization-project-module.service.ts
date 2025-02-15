@@ -1,5 +1,14 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Brackets, FindManyOptions, In, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
+import {
+	Brackets,
+	DataSource,
+	FindManyOptions,
+	In,
+	SelectQueryBuilder,
+	UpdateResult,
+	WhereExpressionBuilder
+} from 'typeorm';
 import {
 	BaseEntityEnum,
 	ActorTypeEnum,
@@ -35,6 +44,7 @@ import { TaskService } from '../tasks/task.service';
 @Injectable()
 export class OrganizationProjectModuleService extends TenantAwareCrudService<OrganizationProjectModule> {
 	constructor(
+		@InjectDataSource() private readonly dataSource: DataSource,
 		readonly typeOrmProjectModuleRepository: TypeOrmOrganizationProjectModuleRepository,
 		readonly mikroOrmProjectModuleRepository: MikroOrmOrganizationProjectModuleRepository,
 		readonly typeOrmOrganizationProjectModuleEmployeeRepository: TypeOrmOrganizationProjectModuleEmployeeRepository,
@@ -61,15 +71,20 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 
 		const { memberIds = [], managerIds = [], tasks = [], ...input } = entity;
 
-		try {
-			await this.addCurrentEmployeeToManagers(managerIds, currentRoleId, employeeId);
+		await this.addCurrentEmployeeToManagers(managerIds, currentRoleId, employeeId);
 
-			const employeeIds = [...memberIds, ...managerIds].filter(Boolean);
-			const employees = await this._employeeService.findActiveEmployeesByEmployeeIds(
-				employeeIds,
-				organizationId,
-				tenantId
-			);
+		const employeeIds = [...memberIds, ...managerIds].filter(Boolean);
+		const employees = await this._employeeService.findActiveEmployeesByEmployeeIds(
+			employeeIds,
+			organizationId,
+			tenantId
+		);
+
+		const queryRunner = this.dataSource.createQueryRunner();
+		await queryRunner.connect();
+
+		try {
+			await queryRunner.startTransaction();
 
 			const existingTasks = await this.getExistingTasks(tasks);
 			const members = await this.buildModuleMembers(employees, managerIds, organizationId, tenantId);
@@ -81,19 +96,19 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 			});
 
 			await this.assignTasksToModule(existingTasks, projectModule);
+			await queryRunner.commitTransaction();
 
-			this.logModuleActivity(
-				ActionTypeEnum.Created,
-				projectModule,
-				undefined, // No previous module (creation case)
-				entity
-			);
+			this.logModuleActivity(ActionTypeEnum.Created, projectModule, undefined, entity);
+
 			return projectModule;
 		} catch (error) {
+			await queryRunner.rollbackTransaction();
 			throw new HttpException(
 				`Failed to create organization project module: ${error.message}`,
 				HttpStatus.BAD_REQUEST
 			);
+		} finally {
+			await queryRunner.release();
 		}
 	}
 
