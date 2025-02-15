@@ -1,18 +1,10 @@
-import {
-	ActorTypeEnum,
-	IBasePerEntityType,
-	IBasePerTenantAndOrganizationEntityModel,
-	JsonData
-} from './base-entity.model';
+import { ActorTypeEnum, IBasePerEntityType, JsonData, OmitFields } from './base-entity.model';
 import { IEmployeeEntityInput } from './employee.model';
 
 /**
  * Interface representing an activity log entry.
  */
-export interface IActivityLog
-	extends IBasePerTenantAndOrganizationEntityModel,
-		IEmployeeEntityInput,
-		IBasePerEntityType {
+export interface IActivityLog extends IEmployeeEntityInput, IBasePerEntityType {
 	action: ActionTypeEnum;
 	actorType?: ActorTypeEnum;
 	description?: string; // A short sentence describing the action performed. (E.g John Doe created this on 22.09.2024)
@@ -40,4 +32,4 @@ export enum ActionTypeEnum {
 /**
  * Input type for activity log creation, excluding `employeeId` and `employee`.
  */
-export interface IActivityLogInput extends Omit<IActivityLog, 'employeeId' | 'employee'> {}
+export interface IActivityLogInput extends OmitFields<IActivityLog, 'employeeId' | 'employee'> {}

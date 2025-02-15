@@ -716,7 +716,8 @@
 		"ERROR": {
 			"PROJECT_NAME": "Le nom du projet est requis.",
 			"PROJECT_URL": "L'URL du projet est invalide.",
-			"OPEN_SOURCE_PROJECT_URL": "L'URL du projet open source est invalide."
+			"OPEN_SOURCE_PROJECT_URL": "L'URL du projet open source est invalide.",
+			"INVALID_IMAGE_URL": "URL de l'image invalide."
 		}
 	},
 	"POP_UPS": {
@@ -3623,7 +3624,8 @@
 			"SCREEN_CAPTURE_CHANGED": "Statut de capture d'écran modifié pour {{ name }}.",
 			"MODULE_CREATED": "Module créé avec succès !",
 			"MODULE_UPDATED": "Module mis à jour avec succès !",
-			"MODULE_SAVE_ERROR": "Échec de l'enregistrement du module. Veuillez réessayer."
+			"MODULE_SAVE_ERROR": "Échec de l'enregistrement du module. Veuillez réessayer.",
+			"PASSWORD_REQUIRED": "Le mot de passe est requis."
 		}
 	},
 	"ACCEPT_INVITE": {

@@ -14,7 +14,7 @@ export interface IEmployeeSettingCreateInput extends IEmployeeSetting {}
 
 export interface IEmployeeSettingUpdateInput extends Omit<IEmployeeSettingCreateInput, 'employee' | 'employeeId'> {}
 
-export interface IEmployeeSettingFindInput extends Partial<IBasePerEntityType>{
+export interface IEmployeeSettingFindInput extends Partial<IBasePerEntityType> {
 	employeeId?: string;
 	employee?: IEmployee;
 	settingType?: EmployeeSettingTypeEnum;

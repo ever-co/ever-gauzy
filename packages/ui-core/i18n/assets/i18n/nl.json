@@ -715,7 +715,8 @@
 		"ERROR": {
 			"PROJECT_NAME": "Projectnaam is verplicht.",
 			"PROJECT_URL": "Project-URL is ongeldig.",
-			"OPEN_SOURCE_PROJECT_URL": "De URL van het open-source project is ongeldig."
+			"OPEN_SOURCE_PROJECT_URL": "De URL van het open-source project is ongeldig.",
+			"INVALID_IMAGE_URL": "Ongeldige afbeelding-URL."
 		}
 	},
 	"POP_UPS": {
@@ -3622,7 +3623,8 @@
 			"SCREEN_CAPTURE_CHANGED": "Schermopnamestatus gewijzigd voor {{ name }}",
 			"MODULE_CREATED": "Module succesvol aangemaakt!",
 			"MODULE_UPDATED": "Module succesvol bijgewerkt!",
-			"MODULE_SAVE_ERROR": "Het opslaan van de module is mislukt. Probeer het opnieuw."
+			"MODULE_SAVE_ERROR": "Het opslaan van de module is mislukt. Probeer het opnieuw.",
+			"PASSWORD_REQUIRED": "Wachtwoord is vereist."
 		}
 	},
 	"ACCEPT_INVITE": {

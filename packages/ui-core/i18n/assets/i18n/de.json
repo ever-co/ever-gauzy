@@ -715,7 +715,8 @@
 		"ERROR": {
 			"PROJECT_NAME": "Projektname ist erforderlich.",
 			"PROJECT_URL": "Die Projekt-URL ist ungültig.",
-			"OPEN_SOURCE_PROJECT_URL": "Die URL des Open-Source-Projekts ist ungültig."
+			"OPEN_SOURCE_PROJECT_URL": "Die URL des Open-Source-Projekts ist ungültig.",
+			"INVALID_IMAGE_URL": "Ungültige Bild-URL."
 		}
 	},
 	"POP_UPS": {
@@ -3618,7 +3619,8 @@
 			"SCREEN_CAPTURE_CHANGED": "Bildschirmaufnahme-Status geändert für {{ name }}",
 			"MODULE_CREATED": "Modul erfolgreich erstellt!",
 			"MODULE_UPDATED": "Modul erfolgreich aktualisiert!",
-			"MODULE_SAVE_ERROR": "Das Speichern des Moduls ist fehlgeschlagen. Bitte versuchen Sie es erneut."
+			"MODULE_SAVE_ERROR": "Das Speichern des Moduls ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
+			"PASSWORD_REQUIRED": "Passwort erforderlich."
 		}
 	},
 	"ACCEPT_INVITE": {
