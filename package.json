@@ -316,7 +316,7 @@
 		"copy-files-gauzy-api-server": "copyfiles -f packages/core/src/**/*.gql dist/apps/gauzy-api-server/data/",
 		"quick:build:gauzy-api-server": "yarn electron-builder -c.electronVersion=30.0.1 -c.extraMetadata.author.name=Ever build --mac --project dist/apps/gauzy-api-server",
 		"generate:icons:server-api": "yarn run generate:icons --desktop=server-api",
-		"api:dev": "nodemon --watch 'packages/**/*' --ext ts,json --exec 'yarn nx run api:serve' --ignore 'dist/' --signal SIGTERM"
+		"api:dev": "nodemon --watch 'apps/api' --watch 'packages' --ignore 'packages/ui-*/**/*.*' --ignore 'packages/desktop-*/**/*.*' --ignore 'packages/plugins/*-ui/**/*.*' --ext ts,json --exec 'yarn nx run api:serve' --ignore 'dist/' --signal SIGTERM"
 	},
 	"config": {
 		"commitizen": {
