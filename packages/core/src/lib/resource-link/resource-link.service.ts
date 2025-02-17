@@ -9,9 +9,9 @@ import {
 	ActorTypeEnum,
 	ActionTypeEnum
 } from '@gauzy/contracts';
-import { TenantAwareCrudService } from './../core/crud';
-import { RequestContext } from '../core/context';
-import { UserService } from '../user/user.service';
+import { TenantAwareCrudService } from './../core/crud/tenant-aware-crud.service';
+import { RequestContext } from '../core/context/request-context';
+import { EmployeeService } from '../employee/employee.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { ResourceLink } from './resource-link.entity';
 import { TypeOrmResourceLinkRepository } from './repository/type-orm-resource-link.repository';
@@ -22,39 +22,44 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 	constructor(
 		readonly typeOrmResourceLinkRepository: TypeOrmResourceLinkRepository,
 		readonly mikroOrmResourceLinkRepository: MikroOrmResourceLinkRepository,
-		private readonly userService: UserService,
-		private readonly activityLogService: ActivityLogService
+		private readonly _employeeService: EmployeeService,
+		private readonly _activityLogService: ActivityLogService
 	) {
 		super(typeOrmResourceLinkRepository, mikroOrmResourceLinkRepository);
 	}
 
 	/**
-	 * @description Create Resource Link
-	 * @param {IResourceLinkCreateInput} input - Data to creating resource link
-	 * @returns A promise that resolves to the created resource link
+	 * @description Create a new Resource Link
+	 * @param {IResourceLinkCreateInput} input - The data required to create a resource link.
+	 * @returns A promise that resolves to the created resource link entity.
 	 * @memberof ResourceLinkService
 	 */
 	async create(input: IResourceLinkCreateInput): Promise<IResourceLink> {
 		try {
-			const userId = RequestContext.currentUserId();
-			const tenantId = RequestContext.currentTenantId();
+			// Retrieve the tenantId from the request context or fall back to input value
+			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+
+			// Retrieve the employeeId from the request context or fall back to input value
+			const employeeId = RequestContext.currentEmployeeId() ?? input.employeeId;
+
+			// Destructure the input data to use in entity creation
 			const { ...entity } = input;
 
-			// Employee existence validation
-			const user = await this.userService.findOneByIdString(userId);
-			if (!user) {
-				throw new NotFoundException('User not found');
+			// Validate that the employee exists.
+			const employee = await this._employeeService.findOneByIdString(employeeId);
+			if (!employee) {
+				throw new NotFoundException(`Employee with id ${employeeId} not found`);
 			}
 
-			// return created resource link
+			// Create and return the resource link, passing the necessary entity data
 			const resourceLink = await super.create({
 				...entity,
-				tenantId,
-				createdById: user.id
+				employeeId,
+				tenantId // Ensure tenantId is included in the entity
 			});
 
 			// Generate the activity log
-			this.activityLogService.logActivity<ResourceLink>(
+			this._activityLogService.logActivity<ResourceLink>(
 				BaseEntityEnum.ResourceLink,
 				ActionTypeEnum.Created,
 				ActorTypeEnum.User,
@@ -67,33 +72,37 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 
 			return resourceLink;
 		} catch (error) {
-			console.log(error); // Debug Logging
-			throw new BadRequestException('Resource Link creation failed', error);
+			console.log(`Error creating resource link: ${error.message}`, error);
+			throw new BadRequestException('Error creating resource link', error);
 		}
 	}
 
 	/**
-	 * @description Update Resource Link
-	 * @param {IResourceLinkUpdateInput} input - Data to update Resource Link
-	 * @returns A promise that resolves to the updated resource link OR Update result
+	 * @description Update an existing Resource Link
+	 * @param {ID} id - The ID of the resource link to update.
+	 * @param {IResourceLinkUpdateInput} input - The data to update the resource link.
+	 * @returns A promise that resolves to the updated resource link entity, or an update result.
 	 * @memberof ResourceLinkService
 	 */
 	async update(id: ID, input: IResourceLinkUpdateInput): Promise<IResourceLink | UpdateResult> {
 		try {
+			// Retrieve the existing resource link by ID
 			const resourceLink = await this.findOneByIdString(id);
 
 			if (!resourceLink) {
+				// If the resource link is not found, throw an exception
 				throw new BadRequestException('Resource Link not found');
 			}
 
+			// Perform the update by creating a new resource link with the updated data
 			const updatedResourceLink = await super.create({
 				...input,
-				id
+				id // Ensure the ID is passed along with the updated data
 			});
 
-			// Generate the activity log
+			// Generate the activity log for the update action
 			const { organizationId, tenantId } = updatedResourceLink;
-			this.activityLogService.logActivity<ResourceLink>(
+			this._activityLogService.logActivity<ResourceLink>(
 				BaseEntityEnum.ResourceLink,
 				ActionTypeEnum.Updated,
 				ActorTypeEnum.User,
@@ -106,11 +115,12 @@ export class ResourceLinkService extends TenantAwareCrudService<ResourceLink> {
 				input
 			);
 
-			// return updated Resource Link
+			// Return the updated resource link entity or update result
 			return updatedResourceLink;
 		} catch (error) {
-			console.log(error); // Debug Logging
-			throw new BadRequestException('Resource Link update failed', error);
+			// Handle any errors appropriately
+			console.log(`An error occurred while updating the resource link: ${error.message}`, error);
+			throw new BadRequestException('An error occurred while updating the resource link', error);
 		}
 	}
 }
