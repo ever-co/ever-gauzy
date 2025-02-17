@@ -28,7 +28,7 @@ import {
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { isPostgres } from '@gauzy/config';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
-import { RequestContext } from '../core/context';
+import { RequestContext } from '../core/context/request-context';
 import { OrganizationProjectModule } from './organization-project-module.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { ActivityLogService } from '../activity-log/activity-log.service';
@@ -49,7 +49,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		readonly mikroOrmProjectModuleRepository: MikroOrmOrganizationProjectModuleRepository,
 		readonly typeOrmOrganizationProjectModuleEmployeeRepository: TypeOrmOrganizationProjectModuleEmployeeRepository,
 		readonly mikroOrmOrganizationProjectModuleEmployeeRepository: MikroOrmOrganizationProjectModuleEmployeeRepository,
-		private readonly activityLogService: ActivityLogService,
+		private readonly _activityLogService: ActivityLogService,
 		private readonly _roleService: RoleService,
 		private readonly _employeeService: EmployeeService,
 		private readonly _taskService: TaskService
@@ -71,9 +71,13 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 
 		const { memberIds = [], managerIds = [], tasks = [], ...input } = entity;
 
+		// Add current employee to managerIds if applicable
 		await this.addCurrentEmployeeToManagers(managerIds, currentRoleId, employeeId);
 
+		// Retrieves a collection of employees based on specified criteria
 		const employeeIds = [...memberIds, ...managerIds].filter(Boolean);
+
+		// Retrieves a collection of employees based on specified criteria
 		const employees = await this._employeeService.findActiveEmployeesByEmployeeIds(
 			employeeIds,
 			organizationId,
@@ -516,12 +520,12 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 				options.select = params.select;
 			}
 
-			if (params.relations) {
-				options.relations = params.relations;
-			}
-
 			if (params.order) {
 				options.order = params.order;
+			}
+
+			if (params.relations) {
+				options.relations = params.relations;
 			}
 
 			// Apply pagination and query options
@@ -529,7 +533,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		}
 	}
 
-	/**'
+	/**
 	 * Apply optional filters to the query builder
 	 */
 	private applyOptionalFilters(
@@ -682,10 +686,10 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		existingModule?: IOrganizationProjectModule,
 		changes?: Partial<IOrganizationProjectModuleUpdateInput>
 	): void {
-		const tenantId = RequestContext.currentTenantId();
+		const tenantId = RequestContext.currentTenantId() ?? updatedModule.tenantId;
 		const organizationId = updatedModule.organizationId;
 
-		this.activityLogService.logActivity<OrganizationProjectModule>(
+		this._activityLogService.logActivity<OrganizationProjectModule>(
 			BaseEntityEnum.OrganizationProjectModule,
 			action,
 			ActorTypeEnum.User,
