@@ -181,6 +181,9 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	/**
 	 * Task
 	 */
+	@ApiPropertyOptional({ type: () => Array, isArray: true, description: 'List of task IDs' })
+	@IsOptional()
+	@IsArray()
 	@MultiORMManyToMany(() => Task, (it) => it.modules, {
 		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
