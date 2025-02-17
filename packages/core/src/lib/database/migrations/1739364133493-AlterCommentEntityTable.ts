@@ -105,7 +105,9 @@ export class AlterCommentEntityTable1739364133493 implements MigrationInterface 
 		await queryRunner.query(`
 			ALTER TABLE "comment"
 			ADD CONSTRAINT "FK_7a88834dadfa6fe261268bfceef"
-			FOREIGN KEY ("employeeId") REFERENCES "employee"("id") ON DELETE CASCADE ON UPDATE NO ACTION
+			FOREIGN KEY ("employeeId") REFERENCES "employee"("id")
+			ON DELETE CASCADE
+			ON UPDATE NO ACTION
 		`);
 
 		// Step 9: Add foreign key constraint for "resolvedByEmployeeId"
@@ -113,7 +115,9 @@ export class AlterCommentEntityTable1739364133493 implements MigrationInterface 
 		await queryRunner.query(`
 			ALTER TABLE "comment"
 			ADD CONSTRAINT "FK_35cddb3e66a46587966b68a9217"
-			FOREIGN KEY ("resolvedByEmployeeId") REFERENCES "employee"("id") ON DELETE CASCADE ON UPDATE NO ACTION
+			FOREIGN KEY ("resolvedByEmployeeId") REFERENCES "employee"("id")
+			ON DELETE CASCADE
+			ON UPDATE NO ACTION
 		`);
 	}
 
@@ -169,15 +173,21 @@ export class AlterCommentEntityTable1739364133493 implements MigrationInterface 
 		// Step 8: Add foreign key constraint for "resolvedById" referencing "user"
 		console.log('Step 8: Adding foreign key constraint for "resolvedById" referencing "user"...');
 		await queryRunner.query(`
-			ALTER TABLE "comment" ADD CONSTRAINT "FK_c9409c81aa283c1aae70fd5f4c3"
-			FOREIGN KEY ("resolvedById") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION
+			ALTER TABLE "comment"
+			ADD CONSTRAINT "FK_c9409c81aa283c1aae70fd5f4c3"
+			FOREIGN KEY ("resolvedById") REFERENCES "user"("id")
+			ON DELETE CASCADE
+			ON UPDATE NO ACTION
     	`);
 
 		// Step 9: Add foreign key constraint for "creatorId" referencing "user"
 		console.log('Step 9: Adding foreign key constraint for "creatorId" referencing "user"...');
 		await queryRunner.query(`
-			ALTER TABLE "comment" ADD CONSTRAINT "FK_b6bf60ecb9f6c398e349adff52f"
-			FOREIGN KEY ("creatorId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION
+			ALTER TABLE "comment"
+			ADD CONSTRAINT "FK_b6bf60ecb9f6c398e349adff52f"
+			FOREIGN KEY ("creatorId") REFERENCES "user"("id")
+			ON DELETE CASCADE
+			ON UPDATE NO ACTION
 		`);
 	}
 
@@ -690,15 +700,21 @@ export class AlterCommentEntityTable1739364133493 implements MigrationInterface 
 		// Step 8: Add foreign key constraint for "employeeId"
 		console.log('Step 8: Adding foreign key constraint for "employeeId"...');
 		await queryRunner.query(`
-		   ALTER TABLE \`comment\` ADD CONSTRAINT \`FK_7a88834dadfa6fe261268bfceef\`
-		   FOREIGN KEY (\`employeeId\`) REFERENCES \`employee\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION
+			ALTER TABLE \`comment\`
+			ADD CONSTRAINT \`FK_7a88834dadfa6fe261268bfceef\`
+			FOREIGN KEY (\`employeeId\`) REFERENCES \`employee\`(\`id\`)
+			ON DELETE CASCADE
+			ON UPDATE NO ACTION
 		`);
 
 		// Step 9: Add foreign key constraint for "resolvedByEmployeeId"
 		console.log('Step 9: Adding foreign key constraint for "resolvedByEmployeeId"...');
 		await queryRunner.query(`
-		   ALTER TABLE \`comment\` ADD CONSTRAINT \`FK_35cddb3e66a46587966b68a9217\`
-		   FOREIGN KEY (\`resolvedByEmployeeId\`) REFERENCES \`employee\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION
+			ALTER TABLE \`comment\`
+			ADD CONSTRAINT \`FK_35cddb3e66a46587966b68a9217\`
+			FOREIGN KEY (\`resolvedByEmployeeId\`) REFERENCES \`employee\`(\`id\`)
+			ON DELETE CASCADE
+			ON UPDATE NO ACTION
 		`);
 	}
 
@@ -754,13 +770,21 @@ export class AlterCommentEntityTable1739364133493 implements MigrationInterface 
 		// Step 8: Add foreign key constraint for "resolvedById" referencing "user"
 		console.log('Step 8: Adding foreign key constraint for "resolvedById" referencing "user"...');
 		await queryRunner.query(
-			`ALTER TABLE \`comment\` ADD CONSTRAINT \`FK_c9409c81aa283c1aae70fd5f4c3\` FOREIGN KEY (\`resolvedById\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+			`ALTER TABLE \`comment\`
+			ADD CONSTRAINT \`FK_c9409c81aa283c1aae70fd5f4c3\`
+			FOREIGN KEY (\`resolvedById\`) REFERENCES \`user\`(\`id\`)
+			ON DELETE CASCADE
+			ON UPDATE NO ACTION`
 		);
 
 		// Step 9: Add foreign key constraint for "creatorId" referencing "user"
 		console.log('Step 9: Adding foreign key constraint for "creatorId" referencing "user"...');
 		await queryRunner.query(
-			`ALTER TABLE \`comment\` ADD CONSTRAINT \`FK_b6bf60ecb9f6c398e349adff52f\` FOREIGN KEY (\`creatorId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+			`ALTER TABLE \`comment\`
+			ADD CONSTRAINT \`FK_b6bf60ecb9f6c398e349adff52f\`
+			FOREIGN KEY (\`creatorId\`) REFERENCES \`user\`(\`id\`)
+			ON DELETE CASCADE
+			ON UPDATE NO ACTION`
 		);
 	}
 }

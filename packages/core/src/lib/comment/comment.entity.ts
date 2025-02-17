@@ -27,6 +27,7 @@ export class Comment extends BasePerEntityType implements IComment {
 	@MultiORMColumn({ type: 'text' })
 	comment: string;
 
+	// Indicate the actor type
 	@ApiPropertyOptional({ enum: ActorTypeEnum })
 	@IsOptional()
 	@IsEnum(ActorTypeEnum)
