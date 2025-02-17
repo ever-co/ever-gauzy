@@ -158,4 +158,10 @@ export interface IEnvironment {
 	 * Jitsu Configuration
 	 */
 	jitsu: IJitsuConfig;
+
+	/**
+	 * Periodic Time Save
+	 */
+	periodicTimeSave: boolean;
+	periodicTimeSaveTimeframe: number;
 }
