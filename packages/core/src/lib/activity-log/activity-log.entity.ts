@@ -2,10 +2,10 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
-import { IsArray, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { isMySQL, isPostgres } from '@gauzy/config';
-import { ActionTypeEnum, ActorTypeEnum, IActivityLog, ID, IUser, JsonData } from '@gauzy/contracts';
-import { BasePerEntityType, User } from '../core/entities/internal';
+import { ActionTypeEnum, ActorTypeEnum, IActivityLog, ID, JsonData, IEmployee } from '@gauzy/contracts';
+import { BasePerEntityType, Employee } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
 import { ActorTypeTransformer } from '../shared/pipes';
 import { MikroOrmActivityLogRepository } from './repository/mikro-orm-activity-log.repository';
@@ -77,20 +77,25 @@ export class ActivityLog extends BasePerEntityType implements IActivityLog {
 	*/
 
 	/**
-	 * User performed action
+	 * Activity Log Author
 	 */
-	@MultiORMManyToOne(() => User, {
+	@MultiORMManyToOne(() => Employee, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
-
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	creator?: IUser;
+	employee?: IEmployee;
 
-	@RelationId((it: ActivityLog) => it.creator)
+	/**
+	 * Activity Log Author ID
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: ActivityLog) => it.employee)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	creatorId?: ID;
+	employeeId?: ID;
 }
