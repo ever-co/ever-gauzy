@@ -92,13 +92,13 @@ export class AlterResourceLinkEntityTable1739782998215 implements MigrationInter
 
 		// Step 7: Add a new foreign key constraint for the employeeId column
 		console.log('Step 7: Adding foreign key constraint for "employeeId"...');
-		await queryRunner.query(`
-			ALTER TABLE "resource_link"
+		await queryRunner.query(
+			`ALTER TABLE "resource_link"
 			ADD CONSTRAINT "FK_32a8e7615f4c28255bb50af1098"
-			FOREIGN KEY ("employeeId") REFERENCES "employee" ("id")
+			FOREIGN KEY ("employeeId") REFERENCES "employee"("id")
 			ON DELETE CASCADE
-			ON UPDATE NO ACTION
-		`);
+			ON UPDATE NO ACTION`
+		);
 	}
 
 	/**
@@ -140,12 +140,12 @@ export class AlterResourceLinkEntityTable1739782998215 implements MigrationInter
 		console.log('Step 6: Creating index on "creatorId"');
 		await queryRunner.query(`CREATE INDEX "IDX_df91a85b49f78544da67aa9d9a" ON "resource_link" ("creatorId")`);
 
-		// Step 5: Add the original foreign key constraint for "creatorId"
-		console.log('Step 5: Adding the foreign key constraint for "creatorId"');
+		// Step 7: Add the original foreign key constraint for "creatorId"
+		console.log('Step 7: Adding the foreign key constraint for "creatorId"');
 		await queryRunner.query(
 			`ALTER TABLE "resource_link"
 			ADD CONSTRAINT "FK_df91a85b49f78544da67aa9d9ad"
-			FOREIGN KEY ("creatorId") REFERENCES "user" ("id")
+			FOREIGN KEY ("creatorId") REFERENCES "user"("id")
 			ON DELETE CASCADE
 			ON UPDATE NO ACTION`
 		);
@@ -244,12 +244,12 @@ export class AlterResourceLinkEntityTable1739782998215 implements MigrationInter
 		console.log('Step 5: Dropping column "employeeId" from "resource_link"...');
 		await queryRunner.query(`ALTER TABLE \`resource_link\` DROP COLUMN \`employeeId\``);
 
-		// Step 5: Recreate the old index on "creatorId"
-		console.log('Step 5: Recreating index for "creatorId"');
+		// Step 6: Recreate the old index on "creatorId"
+		console.log('Step 6: Recreating index for "creatorId"');
 		await queryRunner.query(`CREATE INDEX \`IDX_df91a85b49f78544da67aa9d9a\` ON \`resource_link\` (\`creatorId\`)`);
 
-		// Step 6: Add back the old foreign key constraint
-		console.log('Step 6: Recreating foreign key for "creatorId"');
+		// Step 7: Add back the old foreign key constraint
+		console.log('Step 7: Recreating foreign key for "creatorId"');
 		await queryRunner.query(
 			`ALTER TABLE \`resource_link\`
 			ADD CONSTRAINT \`FK_df91a85b49f78544da67aa9d9ad\`
