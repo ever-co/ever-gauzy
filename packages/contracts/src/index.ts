@@ -40,6 +40,7 @@ export * from './lib/email-reset.model';
 export * from './lib/email-template.model';
 export * from './lib/email.model';
 export * from './lib/employee-appointment.model';
+export * from './lib/employee-availability.model';
 export * from './lib/employee-award.model';
 export * from './lib/employee-job.model';
 export * from './lib/employee-phone.model';
@@ -142,6 +143,8 @@ export * from './lib/timesheet.model';
 export * from './lib/translation.model';
 export * from './lib/tree-node.model';
 export * from './lib/upwork.model';
+export * from './lib/employee-notification.model';
+export * from './lib/employee-notification-setting.model';
 export * from './lib/user-organization.model';
 export * from './lib/user.model';
 export * from './lib/wakatime.model';
@@ -155,7 +158,8 @@ export {
 	IBaseRelationsEntityModel,
 	IBaseSoftDeleteEntityModel,
 	ID,
-	JsonData
+	JsonData,
+	IBasePerEntityType
 } from './lib/base-entity.model';
 
 export * from './lib/proxy.model';

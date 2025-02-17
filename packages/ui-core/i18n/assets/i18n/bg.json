@@ -175,7 +175,10 @@
 		"ADD_PLUGIN": "Добавете плъгин",
 		"LOAD_PLUGIN": "Зареди плъгин",
 		"FROM_CDN": "От CDN",
-		"ADD_MODULE": "Добавяне на модул"
+		"ADD_MODULE": "Добавяне на модул",
+		"SHARE": "Споделяне",
+		"GET_INFO": "Получаване на информация",
+		"RETRY": "Опитайте отново"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -745,7 +748,8 @@
 		"ERROR": {
 			"PROJECT_NAME": "Името на проекта е задължително.",
 			"PROJECT_URL": "URL адресът на проекта е невалиден.",
-			"OPEN_SOURCE_PROJECT_URL": "URL адресът на проекта с отворен код е невалиден."
+			"OPEN_SOURCE_PROJECT_URL": "URL адресът на проекта с отворен код е невалиден.",
+			"INVALID_IMAGE_URL": "Невалиден URL адрес на изображението."
 		}
 	},
 	"POP_UPS": {
@@ -2200,7 +2204,11 @@
 			"ORG_MEMBER_LAST_LOG_VIEW": "Преглед на последния запис",
 			"TENANT_API_KEY_CREATE": "Create API Key",
 			"TENANT_API_KEY_VIEW": "View API Key",
-			"TENANT_API_KEY_DELETE": "Delete API Key"
+			"TENANT_API_KEY_DELETE": "Delete API Key",
+			"EMPLOYEE_AVAILABILITY_CREATE": "Създаване на наличност на служител",
+			"EMPLOYEE_AVAILABILITY_READ": "Преглед на наличността на служител",
+			"EMPLOYEE_AVAILABILITY_UPDATE": "Актуализиране на наличността на служител",
+			"EMPLOYEE_AVAILABILITY_DELETE": "Изтриване на наличността на служител"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
@@ -3667,7 +3675,8 @@
 			"AUTHORIZED_TO_WORK": "{{ name }} има право да работи",
 			"MODULE_CREATED": "Модулът е създаден успешно!",
 			"MODULE_UPDATED": "Модулът е актуализиран успешно!",
-			"MODULE_SAVE_ERROR": "Неуспешно записване на модула. Моля, опитайте отново."
+			"MODULE_SAVE_ERROR": "Неуспешно записване на модула. Моля, опитайте отново.",
+			"PASSWORD_REQUIRED": "Изисква се парола."
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -4730,5 +4739,49 @@
 	},
 	"SERVER_API": "API сървър",
 	"SERVER_API_LOG": "Дневник на API сървъра",
-	"COMING_SOON": "Тази страница ще бъде скоро!"
+	"COMING_SOON": "Тази страница ще бъде скоро!",
+	"PLUGIN": {
+		"VIDEO": {
+			"SINGLE": "Видео",
+			"PLURAL": "Видеа",
+			"DOWNLOAD": "Изтегляне",
+			"NOT_FOUND": "Видеото не е намерено",
+			"NO_VIDEO": "Няма видео",
+			"DOWNLOADS": "Изтегляния",
+			"NO_VIDEO_DOWNLOAD": "Няма изтегляне на видео",
+			"LOADING_VIDEOS": "Зареждане на видеа...",
+			"EDIT_METADATA": "Редактиране на метаданни на видеото",
+			"STARTING_DOWNLOAD_FOR": "Започване на изтегляне за: {{ url }}",
+			"DOWNLOAD_FAILED_FOR": "Неуспешно изтегляне за: {{ url }}, опитайте отново",
+			"DOWNLOAD_COMPLETED_FOR": "Изтеглянето завърши за: {{ url }}",
+			"SHARED_SUCCESSFULLY": "Видеото беше успешно споделено",
+			"COPIED_SUCCESSFULLY": "Видеото беше успешно копирано",
+			"CORE_INFO": "Основна информация",
+			"RECORDED": "Записано",
+			"DURATION": "Продължителност",
+			"SIZE": "Размер",
+			"VIEW_FULL": "Вижте пълното видео",
+			"TECHNICAL_DETAILS": "Технически детайли",
+			"RESOLUTION": "Резолюция",
+			"CODEC": "Кодек",
+			"FRAME_RATE": "Честота на кадрите",
+			"UPLOADED_BY": "Качено от",
+			"NO_VIDEO_AVAILABLE": "Няма налично видео",
+			"RETRIED": "Видео опитано отново",
+			"REMOVED_FROM_QUEUE": "Видеото е премахнато от опашката",
+			"ADDED_TO_QUEUE": "Видеото е добавено в опашката",
+			"DELETE_SUCCESSFULLY": "Видеото е изтрито успешно",
+			"UPDATE_SUCCESSFULLY": "Видеото е актуализирано успешно",
+			"ERROR": {
+				"REQUIRED": "Заглавието е задължително.",
+				"AT_LEAST_3": "Заглавието трябва да е поне 3 символа.",
+				"AT_MOST_255": "Заглавието не може да надвишава 255 символа.",
+				"AT_MOST_1000": "Описанието не може да надвишава 1000 символа.",
+				"SHARE_CANCELED": "Споделянето беше отменено",
+				"INVALID_SHARE_DATA": "Невалидни данни за споделяне",
+				"SHARE_NOT_ALLOWED": "Споделянето не е позволено",
+				"UNEXPECTED_SHARING_ERROR": "Неочаквана грешка при споделяне"
+			}
+		}
+	}
 }

@@ -12,9 +12,7 @@ export const seedDefaultEmploymentTypes = async (
 	const defaultTeams = DEFAULT_ORGANIZATION_TEAMS;
 	const fullTimeEmployees = defaultTeams[0].defaultMembers;
 	const contractors = defaultTeams[1].defaultMembers;
-	const employmentTypes: OrganizationEmploymentType[] = Object.values(
-		GenericEmploymentTypes
-	).map((name: string) => {
+	const employmentTypes: OrganizationEmploymentType[] = Object.values(GenericEmploymentTypes).map((name: string) => {
 		const employmentType = new OrganizationEmploymentType();
 		employmentType.name = name;
 		employmentType.organizationId = defaultOrganization.id;
@@ -22,13 +20,9 @@ export const seedDefaultEmploymentTypes = async (
 		if (name === GenericEmploymentTypes.CONTRACT) {
 			employmentType.members = employees;
 		} else if (name === GenericEmploymentTypes.FULL_TIME) {
-			employmentType.members = employees.filter((e) =>
-				fullTimeEmployees.includes(e.user.email)
-			);
+			employmentType.members = employees.filter((e) => fullTimeEmployees.includes(e.user.email));
 		} else if (name === GenericEmploymentTypes.CONTRACTOR) {
-			employmentType.members = employees.filter((e) =>
-				contractors.includes(e.user.email)
-			);
+			employmentType.members = employees.filter((e) => contractors.includes(e.user.email));
 		} else {
 			employmentType.members = [];
 		}
@@ -48,19 +42,16 @@ export const seedRandomEmploymentTypes = async (
 	for (const tenant of tenants) {
 		const organizations = tenantOrganizationsMap.get(tenant);
 		for (const organization of organizations) {
-			const organizationEmploymentTypes: OrganizationEmploymentType[] = Object.values(
-				GenericEmploymentTypes
-			).map((name: string) => {
-				const employmentType = new OrganizationEmploymentType();
-				employmentType.name = name;
-				employmentType.organization = organization;
-				employmentType.tenant = tenant;
-				return employmentType;
-			});
-			employmentTypes = [
-				...employmentTypes,
-				...organizationEmploymentTypes
-			];
+			const organizationEmploymentTypes: OrganizationEmploymentType[] = Object.values(GenericEmploymentTypes).map(
+				(name: string) => {
+					const employmentType = new OrganizationEmploymentType();
+					employmentType.name = name;
+					employmentType.organization = organization;
+					employmentType.tenant = tenant;
+					return employmentType;
+				}
+			);
+			employmentTypes = [...employmentTypes, ...organizationEmploymentTypes];
 		}
 		await insertEmploymentType(dataSource, employmentTypes);
 	}
@@ -68,7 +59,11 @@ export const seedRandomEmploymentTypes = async (
 
 const insertEmploymentType = async (
 	dataSource: DataSource,
-	employmentType: OrganizationEmploymentType[]
+	employmentTypes: OrganizationEmploymentType[]
 ): Promise<void> => {
-	await dataSource.manager.save(employmentType);
+	await dataSource.transaction(async (manager) => {
+		for (const employmentType of employmentTypes) {
+			await manager.save(employmentType);
+		}
+	});
 };

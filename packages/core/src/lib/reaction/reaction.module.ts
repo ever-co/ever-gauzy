@@ -3,7 +3,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { UserModule } from '../user/user.module';
+import { EmployeeModule } from '../employee/employee.module';
 import { CommandHandlers } from './commands/handlers';
 import { ReactionService } from './reaction.service';
 import { ReactionController } from './reaction.controller';
@@ -12,14 +12,14 @@ import { TypeOrmReactionRepository } from './repository/type-orm-reaction.reposi
 
 @Module({
 	imports: [
+		CqrsModule,
 		TypeOrmModule.forFeature([Reaction]),
 		MikroOrmModule.forFeature([Reaction]),
 		RolePermissionModule,
-		UserModule,
-		CqrsModule
+		EmployeeModule
 	],
 	controllers: [ReactionController],
 	providers: [ReactionService, TypeOrmReactionRepository, ...CommandHandlers],
-	exports: [ReactionService, TypeOrmReactionRepository]
+	exports: []
 })
 export class ReactionModule {}

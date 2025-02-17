@@ -28,7 +28,9 @@ import {
 	ITaskDateFilterInput,
 	SubscriptionTypeEnum,
 	ITaskAdvancedFilter,
-	IAdvancedTaskFiltering
+	IAdvancedTaskFiltering,
+	EmployeeNotificationTypeEnum,
+	NotificationActionTypeEnum
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { isPostgres, isSqlite } from '@gauzy/config';
@@ -39,6 +41,7 @@ import { TaskViewService } from './views/view.service';
 import { SubscriptionService } from '../subscription/subscription.service';
 import { MentionService } from '../mention/mention.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
+import { EmployeeNotificationService } from '../employee-notification/employee-notification.service';
 import { CreateSubscriptionEvent } from '../subscription/events';
 import { Task } from './task.entity';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
@@ -50,14 +53,15 @@ import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
 	constructor(
-		private readonly _eventBus: EventBus,
 		readonly typeOrmTaskRepository: TypeOrmTaskRepository,
 		readonly mikroOrmTaskRepository: MikroOrmTaskRepository,
 		readonly typeOrmOrganizationSprintTaskHistoryRepository: TypeOrmOrganizationSprintTaskHistoryRepository,
+		private readonly _eventBus: EventBus,
 		private readonly taskViewService: TaskViewService,
 		private readonly _subscriptionService: SubscriptionService,
 		private readonly mentionService: MentionService,
-		private readonly activityLogService: ActivityLogService
+		private readonly activityLogService: ActivityLogService,
+		private readonly employeeNotificationService: EmployeeNotificationService
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
 	}
@@ -73,7 +77,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		try {
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 			const userId = RequestContext.currentUserId();
-			const { mentionUserIds, ...data } = input;
+
+			const user = RequestContext.currentUser();
+			const { mentionEmployeeIds, ...data } = input;
 
 			// Find task relations
 			const relations: FindOptionsRelations<Task> = {
@@ -142,7 +148,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Synchronize mentions
 			if (data.description) {
 				try {
-					await this.mentionService.updateEntityMentions(BaseEntityEnum.Task, id, mentionUserIds);
+					await this.mentionService.updateEntityMentions(BaseEntityEnum.Task, id, mentionEmployeeIds);
 				} catch (error) {
 					console.error('Error synchronizing mentions:', error);
 				}
@@ -172,7 +178,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			if (newMembers.length) {
 				try {
 					await Promise.all(
-						newMembers.map(({ userId }) =>
+						newMembers.map(({ userId }) => {
 							this._eventBus.publish(
 								new CreateSubscriptionEvent({
 									entity: BaseEntityEnum.Task,
@@ -182,8 +188,23 @@ export class TaskService extends TenantAwareCrudService<Task> {
 									organizationId,
 									tenantId
 								})
-							)
-						)
+							);
+
+							this.employeeNotificationService.publishNotificationEvent(
+								{
+									entity: BaseEntityEnum.Task,
+									entityId: task.id,
+									type: EmployeeNotificationTypeEnum.ASSIGNMENT,
+									sentById: user.id,
+									receiverId: userId,
+									organizationId,
+									tenantId
+								},
+								NotificationActionTypeEnum.Assigned,
+								task.title,
+								`${user.firstName} ${user.lastName}`
+							);
+						})
 					);
 				} catch (error) {
 					console.error('Error publishing CreateSubscriptionEvent:', error);

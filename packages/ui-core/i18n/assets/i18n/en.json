@@ -175,7 +175,10 @@
 		"ADD_PLUGIN": "Add Plugin",
 		"LOAD_PLUGIN": "Load Plugin",
 		"FROM_CDN": "From CDN",
-		"ADD_MODULE": "Add Module"
+		"ADD_MODULE": "Add Module",
+		"SHARE": "Share",
+		"GET_INFO": "Get Info",
+		"RETRY": "Retry"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -754,7 +757,8 @@
 		"ERROR": {
 			"PROJECT_NAME": "Project name is required.",
 			"PROJECT_URL": "Project url is invalid.",
-			"OPEN_SOURCE_PROJECT_URL": "Open source project url is invalid."
+			"OPEN_SOURCE_PROJECT_URL": "Open source project url is invalid.",
+			"INVALID_IMAGE_URL": "Invalid image URL."
 		}
 	},
 	"POP_UPS": {
@@ -2263,7 +2267,11 @@
 			"ORG_MEMBER_LAST_LOG_VIEW": "View Last Log",
 			"TENANT_API_KEY_CREATE": "Create API Key",
 			"TENANT_API_KEY_VIEW": "View API Key",
-			"TENANT_API_KEY_DELETE": "Delete API Key"
+			"TENANT_API_KEY_DELETE": "Delete API Key",
+			"EMPLOYEE_AVAILABILITY_CREATE": "Create Employee Availability",
+			"EMPLOYEE_AVAILABILITY_READ": "View Employee Availability",
+			"EMPLOYEE_AVAILABILITY_UPDATE": "Update Employee Availability",
+			"EMPLOYEE_AVAILABILITY_DELETE": "Delete Employee Availability"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
@@ -3745,7 +3753,8 @@
 			"SCREEN_CAPTURE_CHANGED": "Screen capture status changed for {{ name }}",
 			"MODULE_CREATED": "Module created successfully!",
 			"MODULE_UPDATED": "Module updated successfully!",
-			"MODULE_SAVE_ERROR": "Failed to save the module. Please try again."
+			"MODULE_SAVE_ERROR": "Failed to save the module. Please try again.",
+			"PASSWORD_REQUIRED": "Password is required."
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -4856,5 +4865,49 @@
 	},
 	"SERVER_API": "API Server",
 	"SERVER_API_LOG": "API Server Log",
-	"COMING_SOON": "This page is coming soon!"
+	"COMING_SOON": "This page is coming soon!",
+	"PLUGIN": {
+		"VIDEO": {
+			"SINGLE": "Video",
+			"PLURAL": "Videos",
+			"DOWNLOAD": "Download",
+			"NOT_FOUND": "Video not found",
+			"NO_VIDEO": "No video",
+			"DOWNLOADS": "Downloads",
+			"NO_VIDEO_DOWNLOAD": "No video download",
+			"LOADING_VIDEOS": "Loading videos...",
+			"EDIT_METADATA": "Edit video metadata",
+			"STARTING_DOWNLOAD_FOR": "Starting download for: {{ url }}",
+			"DOWNLOAD_FAILED_FOR": "Download failed for: {{ url }}, retry",
+			"DOWNLOAD_COMPLETED_FOR": "Download completed for: {{ url }}",
+			"SHARED_SUCCESSFULLY": "Video shared successfully",
+			"COPIED_SUCCESSFULLY": "Video has been copied successfully",
+			"CORE_INFO": "Core Information",
+			"RECORDED": "Recorded",
+			"DURATION": "Duration",
+			"SIZE": "Size",
+			"VIEW_FULL": "View Full Video",
+			"TECHNICAL_DETAILS": "Technical Details",
+			"RESOLUTION": "Resolution",
+			"CODEC": "Codec",
+			"FRAME_RATE": "Frame Rate",
+			"UPLOADED_BY": "Uploaded By",
+			"NO_VIDEO_AVAILABLE": "No video available",
+			"RETRIED": "Video retried",
+			"REMOVED_FROM_QUEUE": "Video removed from queue",
+			"ADDED_TO_QUEUE": "Video added to queue",
+			"DELETE_SUCCESSFULLY": "Video deleted successfully",
+			"UPDATE_SUCCESSFULLY": "Video updated successfully",
+			"ERROR": {
+				"REQUIRED": "Title is required.",
+				"AT_LEAST_3": "Title must be at least 3 characters long.",
+				"AT_MOST_255": "Title cannot exceed 255 characters.",
+				"AT_MOST_1000": "Description cannot exceed 1000 characters.",
+				"SHARE_CANCELED": "Share was canceled",
+				"INVALID_SHARE_DATA": "Invalid share data",
+				"SHARE_NOT_ALLOWED": "Share is not allowed",
+				"UNEXPECTED_SHARING_ERROR": "Unexpected sharing error"
+			}
+		}
+	}
 }
