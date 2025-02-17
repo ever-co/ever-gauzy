@@ -165,7 +165,10 @@
 		"ADD_PLUGIN": "הוסף תוסף",
 		"LOAD_PLUGIN": "טען תוסף",
 		"FROM_CDN": "מ-CDN",
-		"ADD_MODULE": "הוסף מודול"
+		"ADD_MODULE": "הוסף מודול",
+		"SHARE": "שיתוף",
+		"GET_INFO": "קבל מידע",
+		"RETRY": "נסה שוב"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4699,5 +4702,49 @@
 	},
 	"SERVER_API": "API Server",
 	"SERVER_API_LOG": "API Server Log",
-	"COMING_SOON": "דף זה יגיע בקרוב!"
+	"COMING_SOON": "דף זה יגיע בקרוב!",
+	"PLUGIN": {
+		"VIDEO": {
+			"SINGLE": "וידאו",
+			"PLURAL": "סרטונים",
+			"DOWNLOAD": "הורדה",
+			"NOT_FOUND": "הווידאו לא נמצא",
+			"NO_VIDEO": "אין וידאו",
+			"DOWNLOADS": "הורדות",
+			"NO_VIDEO_DOWNLOAD": "אין הורדת וידאו",
+			"LOADING_VIDEOS": "טוען סרטונים...",
+			"EDIT_METADATA": "עריכת מטא-נתונים של וידאו",
+			"STARTING_DOWNLOAD_FOR": "מתחיל הורדה עבור: {{ url }}",
+			"DOWNLOAD_FAILED_FOR": "הורדה נכשלה עבור: {{ url }}, נסה שוב",
+			"DOWNLOAD_COMPLETED_FOR": "ההורדה הושלמה עבור: {{ url }}",
+			"SHARED_SUCCESSFULLY": "הווידאו שותף בהצלחה",
+			"COPIED_SUCCESSFULLY": "הווידאו הועתק בהצלחה",
+			"CORE_INFO": "מידע ליבה",
+			"RECORDED": "הוקלט",
+			"DURATION": "משך",
+			"SIZE": "גודל",
+			"VIEW_FULL": "צפה בסרטון המלא",
+			"TECHNICAL_DETAILS": "פרטים טכניים",
+			"RESOLUTION": "רזולוציה",
+			"CODEC": "קודק",
+			"FRAME_RATE": "קצב פריימים",
+			"UPLOADED_BY": "הועלה על ידי",
+			"NO_VIDEO_AVAILABLE": "אין וידאו זמין",
+			"RETRIED": "ניסיון חוזר של וידאו",
+			"REMOVED_FROM_QUEUE": "הווידאו הוסר מהתור",
+			"ADDED_TO_QUEUE": "הווידאו נוסף לתור",
+			"DELETE_SUCCESSFULLY": "הווידאו נמחק בהצלחה",
+			"UPDATE_SUCCESSFULLY": "הווידאו עודכן בהצלחה",
+			"ERROR": {
+				"REQUIRED": "הכותרת נדרשת.",
+				"AT_LEAST_3": "הכותרת חייבת להכיל לפחות 3 תווים.",
+				"AT_MOST_255": "הכותרת לא יכולה להכיל יותר מ-255 תווים.",
+				"AT_MOST_1000": "התיאור לא יכול להכיל יותר מ-1000 תווים.",
+				"SHARE_CANCELED": "השיתוף בוטל",
+				"INVALID_SHARE_DATA": "נתוני שיתוף לא תקינים",
+				"SHARE_NOT_ALLOWED": "השיתוף אינו מותר",
+				"UNEXPECTED_SHARING_ERROR": "שגיאה בלתי צפויה בשיתוף"
+			}
+		}
+	}
 }

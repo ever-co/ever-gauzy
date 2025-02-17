@@ -166,7 +166,10 @@
 		"ADD_PLUGIN": "Plugin toevoegen",
 		"LOAD_PLUGIN": "Plugin laden",
 		"FROM_CDN": "Van CDN",
-		"ADD_MODULE": "Module toevoegen"
+		"ADD_MODULE": "Module toevoegen",
+		"SHARE": "Delen",
+		"GET_INFO": "Informatie ophalen",
+		"RETRY": "Opnieuw proberen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4709,5 +4712,49 @@
 	},
 	"SERVER_API": "API Server",
 	"SERVER_API_LOG": "API Server Log",
-	"COMING_SOON": "This page is coming soon!"
+	"COMING_SOON": "This page is coming soon!",
+	"PLUGIN": {
+		"VIDEO": {
+			"SINGLE": "Video",
+			"PLURAL": "Video's",
+			"DOWNLOAD": "Download",
+			"NOT_FOUND": "Video niet gevonden",
+			"NO_VIDEO": "Geen video",
+			"DOWNLOADS": "Downloads",
+			"NO_VIDEO_DOWNLOAD": "Geen video-download",
+			"LOADING_VIDEOS": "Video's laden...",
+			"EDIT_METADATA": "Videometagegevens bewerken",
+			"STARTING_DOWNLOAD_FOR": "Download starten voor: {{ url }}",
+			"DOWNLOAD_FAILED_FOR": "Download mislukt voor: {{ url }}, opnieuw proberen",
+			"DOWNLOAD_COMPLETED_FOR": "Download voltooid voor: {{ url }}",
+			"SHARED_SUCCESSFULLY": "Video succesvol gedeeld",
+			"COPIED_SUCCESSFULLY": "Video succesvol gekopieerd",
+			"CORE_INFO": "Kerninformatie",
+			"RECORDED": "Opgenomen",
+			"DURATION": "Duur",
+			"SIZE": "Grootte",
+			"VIEW_FULL": "Volledige video bekijken",
+			"TECHNICAL_DETAILS": "Technische details",
+			"RESOLUTION": "Resolutie",
+			"CODEC": "Codec",
+			"FRAME_RATE": "Framerate",
+			"UPLOADED_BY": "Geüpload door",
+			"NO_VIDEO_AVAILABLE": "Geen video beschikbaar",
+			"RETRIED": "Video opnieuw geprobeerd",
+			"REMOVED_FROM_QUEUE": "Video uit de wachtrij verwijderd",
+			"ADDED_TO_QUEUE": "Video aan de wachtrij toegevoegd",
+			"DELETE_SUCCESSFULLY": "Video succesvol verwijderd",
+			"UPDATE_SUCCESSFULLY": "Video succesvol bijgewerkt",
+			"ERROR": {
+				"REQUIRED": "Titel is verplicht.",
+				"AT_LEAST_3": "Titel moet minstens 3 tekens lang zijn.",
+				"AT_MOST_255": "Titel mag niet langer zijn dan 255 tekens.",
+				"AT_MOST_1000": "Beschrijving mag niet langer zijn dan 1000 tekens.",
+				"SHARE_CANCELED": "Delen geannuleerd",
+				"INVALID_SHARE_DATA": "Ongeldige deelgegevens",
+				"SHARE_NOT_ALLOWED": "Delen is niet toegestaan",
+				"UNEXPECTED_SHARING_ERROR": "Onverwachte fout bij delen"
+			}
+		}
+	}
 }

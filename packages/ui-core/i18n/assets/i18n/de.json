@@ -166,7 +166,10 @@
 		"ADD_PLUGIN": "Plugin hinzufügen",
 		"LOAD_PLUGIN": "Plugin laden",
 		"FROM_CDN": "Von CDN",
-		"ADD_MODULE": "Modul hinzufügen"
+		"ADD_MODULE": "Modul hinzufügen",
+		"SHARE": "Teilen",
+		"GET_INFO": "Informationen abrufen",
+		"RETRY": "Erneut versuchen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4705,5 +4708,49 @@
 	},
 	"SERVER_API": "API Server",
 	"SERVER_API_LOG": "API Server Log",
-	"COMING_SOON": "This page is coming soon!"
+	"COMING_SOON": "This page is coming soon!",
+	"PLUGIN": {
+		"VIDEO": {
+			"SINGLE": "Video",
+			"PLURAL": "Videos",
+			"DOWNLOAD": "Herunterladen",
+			"NOT_FOUND": "Video nicht gefunden",
+			"NO_VIDEO": "Kein Video",
+			"DOWNLOADS": "Downloads",
+			"NO_VIDEO_DOWNLOAD": "Kein Video-Download",
+			"LOADING_VIDEOS": "Videos werden geladen...",
+			"EDIT_METADATA": "Videometadaten bearbeiten",
+			"STARTING_DOWNLOAD_FOR": "Download starten für: {{ url }}",
+			"DOWNLOAD_FAILED_FOR": "Download fehlgeschlagen für: {{ url }}, erneut versuchen",
+			"DOWNLOAD_COMPLETED_FOR": "Download abgeschlossen für: {{ url }}",
+			"SHARED_SUCCESSFULLY": "Video erfolgreich geteilt",
+			"COPIED_SUCCESSFULLY": "Video erfolgreich kopiert",
+			"CORE_INFO": "Kerninformationen",
+			"RECORDED": "Aufgenommen",
+			"DURATION": "Dauer",
+			"SIZE": "Größe",
+			"VIEW_FULL": "Ganzes Video ansehen",
+			"TECHNICAL_DETAILS": "Technische Details",
+			"RESOLUTION": "Auflösung",
+			"CODEC": "Codec",
+			"FRAME_RATE": "Bildrate",
+			"UPLOADED_BY": "Hochgeladen von",
+			"NO_VIDEO_AVAILABLE": "Kein Video verfügbar",
+			"RETRIED": "Video erneut versucht",
+			"REMOVED_FROM_QUEUE": "Video aus der Warteschlange entfernt",
+			"ADDED_TO_QUEUE": "Video zur Warteschlange hinzugefügt",
+			"DELETE_SUCCESSFULLY": "Video erfolgreich gelöscht",
+			"UPDATE_SUCCESSFULLY": "Video erfolgreich aktualisiert",
+			"ERROR": {
+				"REQUIRED": "Titel ist erforderlich.",
+				"AT_LEAST_3": "Titel muss mindestens 3 Zeichen lang sein.",
+				"AT_MOST_255": "Titel darf 255 Zeichen nicht überschreiten.",
+				"AT_MOST_1000": "Beschreibung darf 1000 Zeichen nicht überschreiten.",
+				"SHARE_CANCELED": "Teilen wurde abgebrochen",
+				"INVALID_SHARE_DATA": "Ungültige Teilungsdaten",
+				"SHARE_NOT_ALLOWED": "Teilen ist nicht erlaubt",
+				"UNEXPECTED_SHARING_ERROR": "Unerwarteter Fehler beim Teilen"
+			}
+		}
+	}
 }
