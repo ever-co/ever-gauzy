@@ -119,8 +119,6 @@ export class AlterResourceLinkEntityTable1739782998215 implements MigrationInter
 		console.log('Step 3: Adding new column "creatorId" to "resource_link"...');
 		await queryRunner.query(`ALTER TABLE "resource_link" ADD "creatorId" uuid`);
 
-		// Step 4: Copy data from "creatorId" to "employeeId" using employee mapping.
-		console.log('Step 4: Copying data from "employeeId" to "creatorId" via employee table mapping...');
 		// Step 4: Copy data from "employeeId" to "creatorId" via employee table mapping
 		console.log('Step 4: Copying data from "employeeId" to "creatorId" via employee table mapping...');
 		await queryRunner.query(`
@@ -138,8 +136,8 @@ export class AlterResourceLinkEntityTable1739782998215 implements MigrationInter
 		console.log('Step 5: Dropping column "employeeId" from "resource_link"...');
 		await queryRunner.query(`ALTER TABLE "resource_link" DROP COLUMN "employeeId"`);
 
-		// Step 4: Recreate the index for "creatorId"
-		console.log('Step 4: Creating index on "creatorId"');
+		// Step 6: Recreate the index for "creatorId"
+		console.log('Step 6: Creating index on "creatorId"');
 		await queryRunner.query(`CREATE INDEX "IDX_df91a85b49f78544da67aa9d9a" ON "resource_link" ("creatorId")`);
 
 		// Step 5: Add the original foreign key constraint for "creatorId"
@@ -147,7 +145,7 @@ export class AlterResourceLinkEntityTable1739782998215 implements MigrationInter
 		await queryRunner.query(
 			`ALTER TABLE "resource_link"
 			ADD CONSTRAINT "FK_df91a85b49f78544da67aa9d9ad"
-			FOREIGN KEY ("creatorId") REFERENCES "employee" ("userId")
+			FOREIGN KEY ("creatorId") REFERENCES "user" ("id")
 			ON DELETE CASCADE
 			ON UPDATE NO ACTION`
 		);
@@ -172,12 +170,92 @@ export class AlterResourceLinkEntityTable1739782998215 implements MigrationInter
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		// Step 1: Drop the old foreign key constraint
+		console.log(`Step 1: Dropping the old foreign key constraint`);
+		await queryRunner.query(`ALTER TABLE \`resource_link\` DROP FOREIGN KEY \`FK_df91a85b49f78544da67aa9d9ad\``);
+
+		// Step 2: Drop the index associated with the old creatorId
+		console.log('Step 2: Dropping index "creatorId" from "resource_link"...');
+		await queryRunner.query(`DROP INDEX \`IDX_df91a85b49f78544da67aa9d9a\` ON \`resource_link\``);
+
+		// Step 3: Add new column "employeeId" to "resource_link"
+		console.log('Step 3: Adding new column "employeeId" to "resource_link"...');
+		await queryRunner.query(`ALTER TABLE \`resource_link\` ADD \`employeeId\` varchar(255) NULL`);
+
+		// Step 4: Copy data from "creatorId" to "employeeId" via employee table mapping
+		console.log('Step 4: Copying data from "creatorId" to "employeeId" via employee table mapping...');
+		await queryRunner.query(`
+			UPDATE \`resource_link\` rl
+			JOIN \`employee\` e ON rl.\`creatorId\` = e.\`userId\`
+			SET rl.\`employeeId\` = e.\`id\`
+			WHERE rl.\`creatorId\` IS NOT NULL
+		`);
+
+		// Step 5: Drop the "creatorId" column from "resource_link"
+		console.log('Step 5: Dropping the "creatorId" column from "resource_link"...');
+		await queryRunner.query(`ALTER TABLE \`resource_link\` DROP COLUMN \`creatorId\``);
+
+		// Step 6: Create a new index for the "employeeId" column
+		console.log('Step 6: Creating new index for "employeeId"...');
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_32a8e7615f4c28255bb50af109\` ON \`resource_link\` (\`employeeId\`)`
+		);
+
+		// Step 7: Add foreign key constraint for "employeeId"
+		console.log('Step 7: Adding foreign key constraint for "employeeId"...');
+		await queryRunner.query(
+			`ALTER TABLE \`resource_link\`
+			ADD CONSTRAINT \`FK_32a8e7615f4c28255bb50af1098\`
+			FOREIGN KEY (\`employeeId\`) REFERENCES \`employee\`(\`id\`)
+			ON DELETE CASCADE
+			ON UPDATE NO ACTION`
+		);
+	}
 
 	/**
 	 * MySQL Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		// Step 1: Drop the foreign key constraint on "employeeId"
+		console.log('Step 1: Dropping the foreign key constraint on "employeeId"');
+		await queryRunner.query(`ALTER TABLE \`resource_link\` DROP FOREIGN KEY \`FK_32a8e7615f4c28255bb50af1098\``);
+
+		// Step 2: Drop the index associated with "employeeId"
+		console.log('Step 2: Dropping index "employeeId" from "resource_link"');
+		await queryRunner.query(`DROP INDEX \`IDX_32a8e7615f4c28255bb50af109\` ON \`resource_link\``);
+
+		// Step 3: Add new column "creatorId" to "resource_link"
+		console.log('Step 3: Adding new column "creatorId" to "resource_link"...');
+		await queryRunner.query(`ALTER TABLE \`resource_link\` ADD \`creatorId\` varchar(255) NULL`);
+
+		// Step 4: Copy data from "employeeId" back to "creatorId" via employee table mapping
+		console.log('Step 4: Copying data from "employeeId" back to "creatorId" via employee table mapping...');
+		await queryRunner.query(`
+			UPDATE \`resource_link\` rl
+			JOIN \`employee\` e ON rl.\`employeeId\` = e.\`id\`
+			SET rl.\`creatorId\` = e.\`userId\`
+			WHERE rl.\`employeeId\` IS NOT NULL
+		`);
+
+		// Step 5: Drop the new column "employeeId" from "resource_link"
+		console.log('Step 5: Dropping column "employeeId" from "resource_link"...');
+		await queryRunner.query(`ALTER TABLE \`resource_link\` DROP COLUMN \`employeeId\``);
+
+		// Step 5: Recreate the old index on "creatorId"
+		console.log('Step 5: Recreating index for "creatorId"');
+		await queryRunner.query(`CREATE INDEX \`IDX_df91a85b49f78544da67aa9d9a\` ON \`resource_link\` (\`creatorId\`)`);
+
+		// Step 6: Add back the old foreign key constraint
+		console.log('Step 6: Recreating foreign key for "creatorId"');
+		await queryRunner.query(
+			`ALTER TABLE \`resource_link\`
+			ADD CONSTRAINT \`FK_df91a85b49f78544da67aa9d9ad\`
+			FOREIGN KEY (\`creatorId\`) REFERENCES \`user\`(\`id\`)
+			ON DELETE CASCADE
+			ON UPDATE NO ACTION`
+		);
+	}
 }
