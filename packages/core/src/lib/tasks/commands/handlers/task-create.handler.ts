@@ -56,8 +56,29 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			// Retrieve current tenant ID from request context or use input tenant ID
 			const tenantId = RequestContext.currentTenantId() ?? data.tenantId;
 
-			// Retrieve current user from the request context
+			// Retrieve current user and employee from the request context
 			const user = RequestContext.currentUser();
+			const employeeId = RequestContext.currentEmployeeId();
+
+			if (employeeId) {
+				try {
+					const employee = await this._employeeService.findOneByIdString(employeeId);
+
+					// Automatically add the current employee to members if not already included
+					if (employee && !members.find((member) => member.id === employeeId)) {
+						members.push(employee);
+					}
+				} catch (error) {
+					this.logger.error(
+						`Unable to retrieve employee for ID: ${employeeId}. Error: ${error.message}`,
+						error.stack
+					);
+					throw new HttpException(
+						'Error while retrieving employee information',
+						HttpStatus.INTERNAL_SERVER_ERROR
+					);
+				}
+			}
 
 			// Determine the project based on the provided data
 			const project = data.projectId
