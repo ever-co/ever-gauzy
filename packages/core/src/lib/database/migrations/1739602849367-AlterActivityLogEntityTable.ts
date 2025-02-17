@@ -96,7 +96,9 @@ export class AlterActivityLogEntityTable1739602849367 implements MigrationInterf
 		await queryRunner.query(`
 		   ALTER TABLE "activity_log"
 		   ADD CONSTRAINT "FK_071945a9d4a2322fde08010292c"
-		   FOREIGN KEY ("employeeId") REFERENCES "employee"("id") ON DELETE CASCADE ON UPDATE NO ACTION
+		   FOREIGN KEY ("employeeId") REFERENCES "employee"("id")
+		   ON DELETE CASCADE
+		   ON UPDATE NO ACTION
 		`);
 	}
 
@@ -145,7 +147,9 @@ export class AlterActivityLogEntityTable1739602849367 implements MigrationInterf
 		await queryRunner.query(`
 			ALTER TABLE "activity_log"
 			ADD CONSTRAINT "FK_b6e9a5c3e1ee65a3bcb8a00de2b"
-			FOREIGN KEY ("creatorId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION
+			FOREIGN KEY ("creatorId") REFERENCES "user"("id")
+			ON DELETE CASCADE
+			ON UPDATE NO ACTION
 		`);
 	}
 
@@ -637,7 +641,9 @@ export class AlterActivityLogEntityTable1739602849367 implements MigrationInterf
 		await queryRunner.query(`
 			ALTER TABLE \`activity_log\`
 			ADD CONSTRAINT \`FK_071945a9d4a2322fde08010292c\`
-			FOREIGN KEY (\`employeeId\`) REFERENCES \`employee\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION
+			FOREIGN KEY (\`employeeId\`) REFERENCES \`employee\`(\`id\`)
+			ON DELETE CASCADE
+			ON UPDATE NO ACTION
 		`);
 	}
 
@@ -686,7 +692,9 @@ export class AlterActivityLogEntityTable1739602849367 implements MigrationInterf
 		await queryRunner.query(`
 			ALTER TABLE \`activity_log\`
 			ADD CONSTRAINT \`FK_b6e9a5c3e1ee65a3bcb8a00de2b\`
-			FOREIGN KEY (\`creatorId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION
+			FOREIGN KEY (\`creatorId\`) REFERENCES \`user\`(\`id\`)
+			ON DELETE CASCADE
+			ON UPDATE NO ACTION
 		`);
 	}
 }

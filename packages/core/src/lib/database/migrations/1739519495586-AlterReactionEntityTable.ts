@@ -102,7 +102,9 @@ export class AlterReactionEntityTable1739519495586 implements MigrationInterface
 		await queryRunner.query(
 			`ALTER TABLE "reaction"
 			ADD CONSTRAINT "FK_b58c2c0e374c57e48dbddc93e1e"
-			FOREIGN KEY ("employeeId") REFERENCES "employee"("id") ON DELETE CASCADE ON UPDATE CASCADE`
+			FOREIGN KEY ("employeeId") REFERENCES "employee"("id")
+			ON DELETE CASCADE
+			ON UPDATE CASCADE`
 		);
 	}
 
@@ -148,7 +150,9 @@ export class AlterReactionEntityTable1739519495586 implements MigrationInterface
 		await queryRunner.query(`
 			ALTER TABLE "reaction"
 			ADD CONSTRAINT "FK_58350b19ecd6a1e287a09d36a2e"
-			FOREIGN KEY ("creatorId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION
+			FOREIGN KEY ("creatorId") REFERENCES "user"("id")
+			ON DELETE CASCADE
+			ON UPDATE NO ACTION
 		`);
 	}
 
@@ -506,17 +510,17 @@ export class AlterReactionEntityTable1739519495586 implements MigrationInterface
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		// Step 1: Drop the foreign key constraint on "creatorId".
-		console.log('Step 1: Dropping foreign key constraint "FK_58350b19ecd6a1e287a09d36a2e" from "reaction"...');
+		console.log('Step 1: Dropping foreign key constraint "creatorId" from "reaction"...');
 		await queryRunner.query(`ALTER TABLE \`reaction\` DROP FOREIGN KEY \`FK_58350b19ecd6a1e287a09d36a2e\``);
 
 		// Step 2: Drop the index on "creatorId".
-		console.log('Step 2: Dropping index "IDX_58350b19ecd6a1e287a09d36a2" from "reaction"...');
+		console.log('Step 2: Dropping index "creatorId" from "reaction"...');
 		await queryRunner.query(`DROP INDEX \`IDX_58350b19ecd6a1e287a09d36a2\` ON \`reaction\``);
 
 		// Step 3: Add new columns "actorType" and "employeeId".
 		console.log('Step 3: Adding new columns "actorType" and "employeeId" to "reaction"...');
 		// Here, we set actorType's default value to 1 (i.e. ActorTypeEnum.User).
-		await queryRunner.query(`ALTER TABLE \`reaction\` ADD \`actorType\` int DEFAULT 1`);
+		await queryRunner.query(`ALTER TABLE \`reaction\` ADD \`actorType\` int NULL`);
 		await queryRunner.query(`ALTER TABLE \`reaction\` ADD \`employeeId\` varchar(255) NULL`);
 
 		// Step 4: Copy data from "creatorId" to "employeeId" using employee mapping.
@@ -539,11 +543,13 @@ export class AlterReactionEntityTable1739519495586 implements MigrationInterface
 
 		// Step 7: Add foreign key constraint on "employeeId" referencing "employee"(id).
 		console.log('Step 7: Adding foreign key constraint on "employeeId" referencing "employee"(id)...');
-		await queryRunner.query(`
-			ALTER TABLE \`reaction\`
+		await queryRunner.query(
+			`ALTER TABLE \`reaction\`
 			ADD CONSTRAINT \`FK_b58c2c0e374c57e48dbddc93e1e\`
-			FOREIGN KEY (\`employeeId\`) REFERENCES \`employee\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE
-		`);
+			FOREIGN KEY (\`employeeId\`) REFERENCES \`employee\`(\`id\`)
+			ON DELETE CASCADE
+			ON UPDATE CASCADE`
+		);
 	}
 
 	/**
@@ -588,10 +594,12 @@ export class AlterReactionEntityTable1739519495586 implements MigrationInterface
 
 		// Step 7: Re-add the original foreign key constraint on "creatorId" referencing "user"(id).
 		console.log('Step 7: Adding foreign key constraint on "creatorId" referencing "user"(id)...');
-		await queryRunner.query(`
-		   ALTER TABLE \`reaction\`
-		   ADD CONSTRAINT \`FK_58350b19ecd6a1e287a09d36a2e\`
-		   FOREIGN KEY (\`creatorId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION
-		`);
+		await queryRunner.query(
+			`ALTER TABLE \`reaction\`
+			ADD CONSTRAINT \`FK_58350b19ecd6a1e287a09d36a2e\`
+			FOREIGN KEY (\`creatorId\`) REFERENCES \`user\`(\`id\`)
+			ON DELETE CASCADE
+			ON UPDATE NO ACTION`
+		);
 	}
 }

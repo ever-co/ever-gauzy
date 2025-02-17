@@ -21,6 +21,7 @@ export class ActivityLog extends BasePerEntityType implements IActivityLog {
 	@MultiORMColumn()
 	action: ActionTypeEnum;
 
+	// Indicate the actor type
 	@ApiPropertyOptional({ enum: ActorTypeEnum })
 	@IsOptional()
 	@IsEnum(ActorTypeEnum)
