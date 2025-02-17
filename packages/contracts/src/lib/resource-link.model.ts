@@ -1,8 +1,8 @@
 import { IURLMetaData } from './timesheet.model';
-import { IBasePerEntityType, IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
+import { IBasePerEntityType, ID } from './base-entity.model';
 import { IUser } from './user.model';
 
-export interface IResourceLink extends IBasePerTenantAndOrganizationEntityModel, IBasePerEntityType {
+export interface IResourceLink extends IBasePerEntityType {
 	title: string;
 	url: string;
 	createdBy?: IUser;

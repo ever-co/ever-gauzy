@@ -714,7 +714,8 @@
 		"ERROR": {
 			"PROJECT_NAME": "اسم المشروع مطلوب.",
 			"PROJECT_URL": "عنوان مشروع غير صالح.",
-			"OPEN_SOURCE_PROJECT_URL": "عنوان URL لمشروع البرمجيات مفتوحة المصدر غير صالح."
+			"OPEN_SOURCE_PROJECT_URL": "عنوان URL لمشروع البرمجيات مفتوحة المصدر غير صالح.",
+			"INVALID_IMAGE_URL": "عنوان URL للصورة غير صالح."
 		}
 	},
 	"POP_UPS": {
@@ -3613,7 +3614,8 @@
 			"SCREEN_CAPTURE_CHANGED": "تم تغيير حالة التقاط الشاشة لـ {{ name }}",
 			"MODULE_CREATED": "تم إنشاء الوحدة بنجاح!",
 			"MODULE_UPDATED": "تم تحديث الوحدة بنجاح!",
-			"MODULE_SAVE_ERROR": "فشل في حفظ الوحدة. حاول مرة أخرى."
+			"MODULE_SAVE_ERROR": "فشل في حفظ الوحدة. حاول مرة أخرى.",
+			"PASSWORD_REQUIRED": "كلمة المرور مطلوبة."
 		}
 	},
 	"ACCEPT_INVITE": {

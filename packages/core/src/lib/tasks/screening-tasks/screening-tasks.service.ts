@@ -49,7 +49,7 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 		try {
 			const userId = RequestContext.currentUserId();
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
-			const { organizationId, mentionUserIds = [] } = input;
+			const { organizationId, mentionEmployeeIds = [] } = input;
 
 			// Check if projectId is provided, if not use the provided project object from the input.
 			// If neither is provided, set project to null.
@@ -94,12 +94,13 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 			});
 
 			// Apply mentions if needed
-			const mentionPromises = mentionUserIds.map((mentionedUserId) =>
+			const mentionPromises = mentionEmployeeIds.map((mentionedUserId) =>
 				this.mentionService.publishMention({
 					entity: BaseEntityEnum.Task,
 					entityId: task.id,
 					mentionedUserId,
-					mentionById: userId
+					mentionById: userId,
+					entityName: task.title
 				})
 			);
 

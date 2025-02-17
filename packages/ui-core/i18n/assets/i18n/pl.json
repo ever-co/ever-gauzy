@@ -715,7 +715,8 @@
 		"ERROR": {
 			"PROJECT_NAME": "Nazwa projektu jest wymagana",
 			"PROJECT_URL": "Adres URL projektu jest nieprawidłowy",
-			"OPEN_SOURCE_PROJECT_URL": "Adres URL projektu open source jest nieprawidłowy"
+			"OPEN_SOURCE_PROJECT_URL": "Adres URL projektu open source jest nieprawidłowy",
+			"INVALID_IMAGE_URL": "Nieprawidłowy adres URL obrazu."
 		}
 	},
 	"POP_UPS": {
@@ -3622,7 +3623,8 @@
 			"SCREEN_CAPTURE_CHANGED": "Zmieniono stan zrzutu ekranu dla {{ name }}",
 			"MODULE_CREATED": "Moduł został pomyślnie utworzony!",
 			"MODULE_UPDATED": "Moduł został pomyślnie zaktualizowany!",
-			"MODULE_SAVE_ERROR": "Nie udało się zapisać modułu. Spróbuj ponownie."
+			"MODULE_SAVE_ERROR": "Nie udało się zapisać modułu. Spróbuj ponownie.",
+			"PASSWORD_REQUIRED": "Hasło jest wymagane."
 		}
 	},
 	"ACCEPT_INVITE": {

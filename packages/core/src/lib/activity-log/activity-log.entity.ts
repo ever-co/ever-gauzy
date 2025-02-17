@@ -4,29 +4,15 @@ import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
 import { IsArray, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { isMySQL, isPostgres } from '@gauzy/config';
-import { BaseEntityEnum, ActionTypeEnum, ActorTypeEnum, IActivityLog, ID, IUser, JsonData } from '@gauzy/contracts';
-import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
+import { ActionTypeEnum, ActorTypeEnum, IActivityLog, ID, JsonData, IEmployee } from '@gauzy/contracts';
+import { BasePerEntityType, Employee } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
-import { ActorTypeTransformerPipe } from '../shared/pipes';
+import { ActorTypeTransformer } from '../shared/pipes';
 import { MikroOrmActivityLogRepository } from './repository/mikro-orm-activity-log.repository';
 
 @MultiORMEntity('activity_log', { mikroOrmRepository: () => MikroOrmActivityLogRepository })
-export class ActivityLog extends TenantOrganizationBaseEntity implements IActivityLog {
+export class ActivityLog extends BasePerEntityType implements IActivityLog {
 	[EntityRepositoryType]?: MikroOrmActivityLogRepository;
-
-	@ApiProperty({ enum: BaseEntityEnum })
-	@IsNotEmpty()
-	@IsEnum(BaseEntityEnum)
-	@ColumnIndex()
-	@MultiORMColumn()
-	entity: BaseEntityEnum;
-
-	@ApiProperty({ type: () => String })
-	@IsNotEmpty()
-	@IsUUID()
-	@ColumnIndex()
-	@MultiORMColumn()
-	entityId: ID;
 
 	@ApiProperty({ enum: ActionTypeEnum })
 	@IsNotEmpty()
@@ -39,7 +25,7 @@ export class ActivityLog extends TenantOrganizationBaseEntity implements IActivi
 	@IsOptional()
 	@IsEnum(ActorTypeEnum)
 	@ColumnIndex()
-	@MultiORMColumn({ type: 'int', nullable: true, transformer: new ActorTypeTransformerPipe() })
+	@MultiORMColumn({ type: 'int', nullable: true, transformer: new ActorTypeTransformer() })
 	actorType?: ActorTypeEnum; // Will be stored as 0 or 1 in DB
 
 	@ApiPropertyOptional({ type: () => String })
@@ -91,20 +77,25 @@ export class ActivityLog extends TenantOrganizationBaseEntity implements IActivi
 	*/
 
 	/**
-	 * User performed action
+	 * Activity Log Author
 	 */
-	@MultiORMManyToOne(() => User, {
+	@MultiORMManyToOne(() => Employee, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
-
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	creator?: IUser;
+	employee?: IEmployee;
 
-	@RelationId((it: ActivityLog) => it.creator)
+	/**
+	 * Activity Log Author ID
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: ActivityLog) => it.employee)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	creatorId?: ID;
+	employeeId?: ID;
 }
