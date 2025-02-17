@@ -18,6 +18,7 @@ import {
 	ID
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
+import { environment as env } from '@gauzy/config';
 import { TimeLog } from '../../core/entities/internal';
 import { RequestContext } from '../../core/context';
 import {
@@ -186,6 +187,30 @@ export class TimerService {
 		}
 
 		return status;
+	}
+
+	/**
+	 * Check timelogs running object for periodic time log save
+	 * The end time will be updated to allow the UI to reflect the time saved
+	 *
+	 * @param lastLog
+	 * @returns
+	 */
+	async checkForPeriodicSave(lastLog: TimeLog) {
+		// Check if periodic time save is enabled and the timer is running and the source is WEB_TIMER
+		if(!env.periodicTimeSave || !lastLog.isRunning || lastLog.source != TimeLogSourceEnum.WEB_TIMER) return;
+
+		const now = moment();
+		const durationSinceLastEndTime = Math.abs(now.diff(moment(lastLog.stoppedAt), 'seconds'));
+		if(durationSinceLastEndTime > env.periodicTimeSaveTimeframe) {
+			const newStoppedAt = now.toDate();
+			const partialTimeLog: Partial<ITimeLog> = {
+				stoppedAt: newStoppedAt,
+			};
+			await this._commandBus.execute(
+				new TimeLogUpdateCommand(partialTimeLog, lastLog.id)
+			);
+		}
 	}
 
 	/**
