@@ -15,7 +15,7 @@ import { extractFilenameFromUrl } from '../../shared/utilities/extract-filename-
 export class VideoDownloadManagerComponent {
 	public readonly retryButton: IActionButton = {
 		icon: 'refresh-outline',
-		label: 'Retry',
+		label: 'BUTTONS.RETRY',
 		status: 'primary',
 		action: this.retryDownload.bind(this)
 	};

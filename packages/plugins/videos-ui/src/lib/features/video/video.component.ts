@@ -21,7 +21,7 @@ import { VideoPlayerComponent } from '../../shared/ui/video-player/video-player.
 })
 export class VideoComponent implements AfterViewInit {
 	public readonly downloadButton: IActionButton = {
-		label: 'Download',
+		label: 'BUTTONS.DOWNLOAD',
 		icon: 'download-outline',
 		status: 'primary',
 		hidden: false,
@@ -31,7 +31,7 @@ export class VideoComponent implements AfterViewInit {
 
 	public readonly buttons: IActionButton[] = [
 		{
-			label: 'Edit',
+			label: 'BUTTONS.EDIT',
 			icon: 'edit-outline',
 			status: 'primary',
 			hidden: false,
@@ -39,7 +39,7 @@ export class VideoComponent implements AfterViewInit {
 			action: this.edit.bind(this)
 		},
 		{
-			label: 'Get Info',
+			label: 'BUTTONS.GET_INFO',
 			icon: 'settings-2-outline',
 			status: 'info',
 			hidden: false,
@@ -47,7 +47,7 @@ export class VideoComponent implements AfterViewInit {
 			action: this.metadata.bind(this)
 		},
 		{
-			label: 'Share',
+			label: 'BUTTONS.SHARE',
 			icon: 'share-outline',
 			status: 'success',
 			hidden: false,
@@ -56,7 +56,7 @@ export class VideoComponent implements AfterViewInit {
 		},
 
 		{
-			label: 'Delete',
+			label: 'BUTTONS.DELETE',
 			icon: 'trash-2-outline',
 			status: 'danger',
 			hidden: false,

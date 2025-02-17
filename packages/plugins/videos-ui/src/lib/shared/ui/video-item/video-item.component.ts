@@ -19,7 +19,7 @@ export class VideoItemComponent {
 
 	public readonly buttons: IActionButton[] = [
 		{
-			label: 'Watch',
+			label: 'BUTTONS.VIEW',
 			icon: 'eye-outline',
 			status: 'basic',
 			hidden: false,
@@ -27,7 +27,7 @@ export class VideoItemComponent {
 			action: this.open.bind(this)
 		},
 		{
-			label: 'Download',
+			label: 'BUTTONS.DOWNLOAD',
 			icon: 'download-outline',
 			status: 'primary',
 			hidden: false,
@@ -35,7 +35,7 @@ export class VideoItemComponent {
 			action: this.download.bind(this)
 		},
 		{
-			label: 'Share',
+			label: 'BUTTONS.SHARE',
 			icon: 'share-outline',
 			status: 'success',
 			hidden: false,
@@ -43,7 +43,7 @@ export class VideoItemComponent {
 			action: this.share.bind(this)
 		},
 		{
-			label: 'Delete',
+			label: 'BUTTONS.DELETE',
 			icon: 'trash-2-outline',
 			status: 'danger',
 			hidden: false,

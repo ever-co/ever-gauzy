@@ -4,9 +4,8 @@ import { DownloadQueueService } from '../download-queue.service';
 
 export class FailedState implements IDownloadState {
 	public handle(options: IFileDownloadOptions, contextService: DownloadQueueService): void {
-		contextService.toastrService.error(
-			`Download failed for: ${extractFilenameFromUrl(options.url)}, retry`,
-			'Download'
-		);
+		contextService.toastrService.error('PLUGIN.VIDEO.DOWNLOAD_FAILED_FOR', 'PLUGIN.VIDEO.DOWNLOAD', {
+			url: extractFilenameFromUrl(options.url)
+		});
 	}
 }

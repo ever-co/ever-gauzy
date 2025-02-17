@@ -5,8 +5,9 @@ import { DownloadQueueService } from '../download-queue.service';
 export class CompletedState implements IDownloadState {
 	public handle(options: IFileDownloadOptions, contextService: DownloadQueueService): void {
 		contextService.toastrService.success(
-			`Download completed for: ${extractFilenameFromUrl(options.url)}`,
-			'Download'
+			'PLUGIN.VIDEO.DOWNLOAD_COMPLETED_FOR',
+			{ url: extractFilenameFromUrl(options.url) },
+			'PLUGIN.VIDEO.DOWNLOAD'
 		);
 		contextService.remove(options.url);
 	}
