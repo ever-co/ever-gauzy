@@ -548,7 +548,8 @@
 		"apidemoda",
 		"forin",
 		"inversed",
-		"iquery"
+		"iquery",
+		"nodownload"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
