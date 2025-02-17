@@ -1,6 +1,7 @@
 import { Route } from '@angular/router';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { ActivityLayoutComponent } from './layout/layout.component';
+import { VideoAvailabilityResolver } from '@gauzy/plugin-videos-ui';
 
 /**
  * Create and configures routes for the activity module.
@@ -12,6 +13,7 @@ export const createActivityRoutes = (_pageRouteRegistryService: PageRouteRegistr
 	{
 		path: '',
 		component: ActivityLayoutComponent,
+		resolve: { videoAvailability: VideoAvailabilityResolver },
 		data: {
 			tabsetId: 'time-activity'
 		},
