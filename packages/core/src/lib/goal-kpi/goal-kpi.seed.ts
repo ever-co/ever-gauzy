@@ -27,25 +27,16 @@ export const createDefaultGoalKpi = async (
 			goalKpis.push(goalKpi);
 		});
 	});
-	// Insert in batches to prevent deadlocks
-	return await insertRandomGoalKpiInBatches(dataSource, goalKpis, 100);
+	// Insert all GoalKPI in a single transaction to avoid deadlocks
+	return await insertGoalKpisInSingleTransaction(dataSource, goalKpis);
 };
 
-const insertRandomGoalKpiInBatches = async (
-	dataSource: DataSource,
-	goalKpis: GoalKPI[],
-	batchSize: number
-): Promise<GoalKPI[]> => {
+const insertGoalKpisInSingleTransaction = async (dataSource: DataSource, goalKpis: GoalKPI[]): Promise<GoalKPI[]> => {
+	// Insert all goalKpis in a single transaction to avoid deadlocks
 	const insertedGoalKpis: GoalKPI[] = [];
-
-	// Insert records in batches to avoid deadlocks
-	for (let i = 0; i < goalKpis.length; i += batchSize) {
-		const batch = goalKpis.slice(i, i + batchSize);
-		await dataSource.transaction(async (manager) => {
-			await manager.save(batch);
-		});
-		insertedGoalKpis.push(...batch);
-	}
-
+	await dataSource.transaction(async (manager) => {
+		// Insert all records at once
+		insertedGoalKpis.push(...(await manager.save(GoalKPI, goalKpis)));
+	});
 	return insertedGoalKpis;
 };
