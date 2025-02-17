@@ -147,7 +147,7 @@ export class VideoEffects {
 			tap(({ urls }) => {
 				const isAdded = this.downloadQueueService.add(urls);
 				if (isAdded) {
-					this.toastrService.info('PLUGIN.VIDEO.ADD_TO_QUEUE', 'PLUGIN.VIDEO.DOWNLOAD');
+					this.toastrService.info('PLUGIN.VIDEO.ADDED_TO_QUEUE', 'PLUGIN.VIDEO.DOWNLOAD');
 				}
 			})
 		)
