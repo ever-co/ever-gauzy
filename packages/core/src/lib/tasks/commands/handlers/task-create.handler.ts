@@ -60,10 +60,21 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			const user = RequestContext.currentUser();
 			const employeeId = RequestContext.currentEmployeeId();
 
-			const employee = await this._employeeService.findOneByIdString(employeeId);
-			// Ensure the current employee is added to the members list
-			if (employee && !members.some((member) => member.id === employeeId)) {
-				members.push(employee);
+			if (employeeId) {
+				try {
+					const employee = await this._employeeService.findOneByIdString(employeeId);
+
+					// Automatically add the current employee to members if not already included
+					if (employee && !members.some((member) => member.id === employeeId)) {
+						members.push(employee);
+					}
+				} catch (error) {
+					this.logger.error(`Unable to retrieve employee for ID: ${employeeId}. Reason: ${error.message}`);
+					throw new HttpException(
+						'Error while retrieving employee information',
+						HttpStatus.INTERNAL_SERVER_ERROR
+					);
+				}
 			}
 
 			// Determine the project based on the provided data
