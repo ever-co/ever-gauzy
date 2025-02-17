@@ -156,14 +156,366 @@ export class AlterResourceLinkEntityTable1739782998215 implements MigrationInter
 	 *
 	 * @param queryRunner
 	 */
-	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		// Step 1: Drop existing indexes from the current "resource_link" table.
+		console.log('Step 1: Dropping existing indexes from "resource_link"...');
+		await queryRunner.query(`DROP INDEX "IDX_df91a85b49f78544da67aa9d9a"`);
+		await queryRunner.query(`DROP INDEX "IDX_61dc38c01dfd2fe25cd934a0d1"`);
+		await queryRunner.query(`DROP INDEX "IDX_ada8b0cf4463e653a756fc6db2"`);
+		await queryRunner.query(`DROP INDEX "IDX_b3caaf70dcd98d572c0fe09c59"`);
+		await queryRunner.query(`DROP INDEX "IDX_64d90b997156b7de382fd8a88f"`);
+		await queryRunner.query(`DROP INDEX "IDX_2efdd5f6dc5d0c483edbc932ff"`);
+		await queryRunner.query(`DROP INDEX "IDX_e891dad6f91b8eb04a47f42a06"`);
+
+		// Step 2: Create the temporary table "temporary_resource_link" with extra columns.
+		console.log('Step 2: Creating temporary table "temporary_resource_link" with new columns...');
+		await queryRunner.query(`
+			CREATE TABLE "temporary_resource_link" (
+				"deletedAt" datetime,
+				"id" varchar PRIMARY KEY NOT NULL,
+				"createdAt" datetime NOT NULL DEFAULT (datetime('now')),
+				"updatedAt" datetime NOT NULL DEFAULT (datetime('now')),
+				"isActive" boolean DEFAULT (1),
+				"isArchived" boolean DEFAULT (0),
+				"archivedAt" datetime,
+				"tenantId" varchar,
+				"organizationId" varchar,
+				"entity" varchar NOT NULL,
+				"entityId" varchar NOT NULL,
+				"title" varchar NOT NULL,
+				"url" text NOT NULL,
+				"metaData" text,
+				"creatorId" varchar,
+				"employeeId" varchar,
+				CONSTRAINT "FK_b3caaf70dcd98d572c0fe09c59f" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+				CONSTRAINT "FK_64d90b997156b7de382fd8a88f2" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
+				CONSTRAINT "FK_32a8e7615f4c28255bb50af1098" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
+			)
+		`);
+
+		// Step 3: Copy data from the old "resource_link" table into "temporary_resource_link".
+		console.log('Step 3: Copying data from "resource_link" into "temporary_resource_link"...');
+		await queryRunner.query(`
+			INSERT INTO "temporary_resource_link" (
+				"deletedAt",
+				"id",
+				"createdAt",
+				"updatedAt",
+				"isActive",
+				"isArchived",
+				"archivedAt",
+				"tenantId",
+				"organizationId",
+				"entity",
+				"entityId",
+				"title",
+				"url",
+				"metaData",
+				"creatorId"
+			)
+			SELECT
+				"deletedAt",
+				"id",
+				"createdAt",
+				"updatedAt",
+				"isActive",
+				"isArchived",
+				"archivedAt",
+				"tenantId",
+				"organizationId",
+				"entity",
+				"entityId",
+				"title",
+				"url",
+				"metaData",
+				"creatorId"
+			FROM "resource_link"
+		`);
+
+		// Step 4: Copy data from "creatorId" to "employeeId" using employee mapping.
+		console.log('Step 4: Updating "employeeId" from "creatorId"...');
+		await queryRunner.query(`
+			UPDATE "temporary_resource_link"
+			SET "employeeId" = (
+				SELECT e."id"
+				FROM "employee" e
+				WHERE e."userId" = "temporary_resource_link"."creatorId"
+				LIMIT 1
+			)
+			WHERE "creatorId" IS NOT NULL
+		`);
+
+		// Step 5: Drop the old "resource_link" table and rename the temporary table.
+		console.log('Step 5: Dropping the old "resource_link" table and renaming the temporary table...');
+		await queryRunner.query(`DROP TABLE "resource_link"`);
+		await queryRunner.query(`ALTER TABLE "temporary_resource_link" RENAME TO "resource_link"`);
+
+		// Step 6: Create the temporary table "temporary_resource_link" with the extended schema.
+		console.log('Step 6: Creating temporary table "temporary_resource_link" with extended schema...');
+		await queryRunner.query(
+			`CREATE TABLE "temporary_resource_link" (
+				"deletedAt" datetime,
+				"id" varchar PRIMARY KEY NOT NULL,
+				"createdAt" datetime NOT NULL DEFAULT (datetime('now')),
+				"updatedAt" datetime NOT NULL DEFAULT (datetime('now')),
+				"isActive" boolean DEFAULT (1),
+				"isArchived" boolean DEFAULT (0),
+				"archivedAt" datetime,
+				"tenantId" varchar,
+				"organizationId" varchar,
+				"entity" varchar NOT NULL,
+				"entityId" varchar NOT NULL,
+				"title" varchar NOT NULL,
+				"url" text NOT NULL,
+				"metaData" text,
+				"employeeId" varchar,
+				CONSTRAINT "FK_b3caaf70dcd98d572c0fe09c59f" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+				CONSTRAINT "FK_64d90b997156b7de382fd8a88f2" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
+				CONSTRAINT "FK_32a8e7615f4c28255bb50af1098" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
+			)`
+		);
+
+		// Step 7: Copy data from the existing "resource_link" table into "temporary_resource_link".
+		console.log('Step 7: Copying data from "resource_link" into "temporary_resource_link"...');
+		await queryRunner.query(`
+			INSERT INTO "temporary_resource_link"(
+				"deletedAt",
+				"id",
+				"createdAt",
+				"updatedAt",
+				"isActive",
+				"isArchived",
+				"archivedAt",
+				"tenantId",
+				"organizationId",
+				"entity",
+				"entityId",
+				"title",
+				"url",
+				"metaData",
+				"employeeId"
+			)
+			SELECT
+				"deletedAt",
+				"id",
+				"createdAt",
+				"updatedAt",
+				"isActive",
+				"isArchived",
+				"archivedAt",
+				"tenantId",
+				"organizationId",
+				"entity",
+				"entityId",
+				"title",
+				"url",
+				"metaData",
+				"employeeId"
+			FROM "resource_link"
+		`);
+
+		// Step 8: Drop the old "resource_link" table and rename the new clean table.
+		console.log(
+			'Step 8: Dropping old "resource_link" table and renaming "temporary_resource_link" to "resource_link"...'
+		);
+		await queryRunner.query(`DROP TABLE "resource_link"`);
+		await queryRunner.query(`ALTER TABLE "temporary_resource_link" RENAME TO "resource_link"`);
+
+		// Step 9: Create final indexes on the new "resource_link" table.
+		console.log('Step 9: Creating indexes on the new "resource_link" table...');
+		await queryRunner.query(`CREATE INDEX "IDX_61dc38c01dfd2fe25cd934a0d1" ON "resource_link" ("entityId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_ada8b0cf4463e653a756fc6db2" ON "resource_link" ("entity") `);
+		await queryRunner.query(`CREATE INDEX "IDX_b3caaf70dcd98d572c0fe09c59" ON "resource_link" ("organizationId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_64d90b997156b7de382fd8a88f" ON "resource_link" ("tenantId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_2efdd5f6dc5d0c483edbc932ff" ON "resource_link" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_e891dad6f91b8eb04a47f42a06" ON "resource_link" ("isActive") `);
+		await queryRunner.query(`CREATE INDEX "IDX_32a8e7615f4c28255bb50af109" ON "resource_link" ("employeeId") `);
+	}
 
 	/**
 	 * SqliteDB and BetterSQlite3DB Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		// Step 1: Drop existing indexes from the final "resource_link" table.
+		console.log('Step 1: Dropping existing indexes from "resource_link"...');
+		await queryRunner.query(`DROP INDEX "IDX_32a8e7615f4c28255bb50af109"`);
+		await queryRunner.query(`DROP INDEX "IDX_e891dad6f91b8eb04a47f42a06"`);
+		await queryRunner.query(`DROP INDEX "IDX_2efdd5f6dc5d0c483edbc932ff"`);
+		await queryRunner.query(`DROP INDEX "IDX_64d90b997156b7de382fd8a88f"`);
+		await queryRunner.query(`DROP INDEX "IDX_b3caaf70dcd98d572c0fe09c59"`);
+		await queryRunner.query(`DROP INDEX "IDX_ada8b0cf4463e653a756fc6db2"`);
+		await queryRunner.query(`DROP INDEX "IDX_61dc38c01dfd2fe25cd934a0d1"`);
+
+		// Step 2: Rename the current "resource_link" table to "temporary_resource_link".
+		console.log('Step 2: Renaming "resource_link" to "temporary_resource_link"...');
+		await queryRunner.query(`ALTER TABLE "resource_link" RENAME TO "temporary_resource_link"`);
+
+		// Step 3: Create the new "resource_link" table with the restored schema.
+		console.log('Step 3: Creating new "resource_link" table with restored schema...');
+		await queryRunner.query(
+			`CREATE TABLE "resource_link" (
+				"deletedAt" datetime,
+				"id" varchar PRIMARY KEY NOT NULL,
+				"createdAt" datetime NOT NULL DEFAULT (datetime('now')),
+				"updatedAt" datetime NOT NULL DEFAULT (datetime('now')),
+				"isActive" boolean DEFAULT (1),
+				"isArchived" boolean DEFAULT (0),
+				"archivedAt" datetime,
+				"tenantId" varchar,
+				"organizationId" varchar,
+				"entity" varchar NOT NULL,
+				"entityId" varchar NOT NULL,
+				"title" varchar NOT NULL,
+				"url" text NOT NULL,
+				"metaData" text,
+				"creatorId" varchar,
+				"employeeId" varchar,
+				CONSTRAINT "FK_df91a85b49f78544da67aa9d9ad" FOREIGN KEY ("creatorId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
+				CONSTRAINT "FK_b3caaf70dcd98d572c0fe09c59f" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+				CONSTRAINT "FK_64d90b997156b7de382fd8a88f2" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
+			)`
+		);
+
+		// Step 4: Insert data into the new "resource_link" table from "temporary_resource_link".
+		console.log('Step 4: Inserting data into "resource_link" from "temporary_resource_link"...');
+		await queryRunner.query(
+			`INSERT INTO "resource_link"(
+				"deletedAt",
+				"id",
+				"createdAt",
+				"updatedAt",
+				"isActive",
+				"isArchived",
+				"archivedAt",
+				"tenantId",
+				"organizationId",
+				"entity",
+				"entityId",
+				"title",
+				"url",
+				"metaData",
+				"employeeId"
+			)
+			SELECT
+				"deletedAt",
+				"id",
+				"createdAt",
+				"updatedAt",
+				"isActive",
+				"isArchived",
+				"archivedAt",
+				"tenantId",
+				"organizationId",
+				"entity",
+				"entityId",
+				"title",
+				"url",
+				"metaData",
+				"employeeId"
+			FROM "temporary_resource_link"`
+		);
+
+		// Step 5: Update "creatorId" from "employeeId" using employee table mapping
+		console.log('Step 5: Updating "creatorId" from "employeeId" via employee table mapping...');
+		await queryRunner.query(`
+			UPDATE "resource_link"
+			SET "creatorId" = (
+				SELECT e."userId"
+				FROM "employee" e
+				WHERE e."id" = "resource_link"."employeeId"
+				LIMIT 1
+			)
+			WHERE "employeeId" IS NOT NULL
+		`);
+
+		// Step 6: Drop the old "resource_link" table and rename the temporary table.
+		console.log(
+			'Step 6: Dropping the old "temporary_resource_link" table and renaming the "resource_link" table...'
+		);
+		await queryRunner.query(`DROP TABLE "temporary_resource_link"`);
+		await queryRunner.query(`ALTER TABLE "resource_link" RENAME TO "temporary_resource_link"`);
+
+		// Step 7: Create the new "resource_link" table with the restored original schema.
+		console.log('Step 7: Creating new "resource_link" table with restored schema (including "creatorId")...');
+		await queryRunner.query(`
+			CREATE TABLE "resource_link" (
+				"deletedAt" datetime,
+				"id" varchar PRIMARY KEY NOT NULL,
+				"createdAt" datetime NOT NULL DEFAULT (datetime('now')),
+				"updatedAt" datetime NOT NULL DEFAULT (datetime('now')),
+				"isActive" boolean DEFAULT (1),
+				"isArchived" boolean DEFAULT (0),
+				"archivedAt" datetime,
+				"tenantId" varchar,
+				"organizationId" varchar,
+				"entity" varchar NOT NULL,
+				"entityId" varchar NOT NULL,
+				"title" varchar NOT NULL,
+				"url" text NOT NULL,
+				"metaData" text,
+				"creatorId" varchar,
+				CONSTRAINT "FK_df91a85b49f78544da67aa9d9ad" FOREIGN KEY ("creatorId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
+				CONSTRAINT "FK_b3caaf70dcd98d572c0fe09c59f" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+				CONSTRAINT "FK_64d90b997156b7de382fd8a88f2" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
+			)
+		`);
+
+		// Step 8: Copy data from "temporary_resource_link" into the new "resource_link" table.
+		console.log('Step 8: Inserting data into "resource_link" from "temporary_resource_link"...');
+		await queryRunner.query(`
+			INSERT INTO "resource_link" (
+				"deletedAt",
+				"id",
+				"createdAt",
+				"updatedAt",
+				"isActive",
+				"isArchived",
+				"archivedAt",
+				"tenantId",
+				"organizationId",
+				"entity",
+				"entityId",
+				"title",
+				"url",
+				"metaData",
+				"creatorId"
+			)
+			SELECT
+				"deletedAt",
+				"id",
+				"createdAt",
+				"updatedAt",
+				"isActive",
+				"isArchived",
+				"archivedAt",
+				"tenantId",
+				"organizationId",
+				"entity",
+				"entityId",
+				"title",
+				"url",
+				"metaData",
+				"creatorId"
+			FROM
+				"temporary_resource_link"
+		`);
+
+		// Step 9: Dropping the old "temporary_resource_link" table.
+		console.log('Step 9: Dropping the old "temporary_resource_link" table...');
+		await queryRunner.query(`DROP TABLE "temporary_resource_link"`);
+
+		// Step 10: Create final indexes on the new "resource_link" table.
+		console.log('Step 10: Creating indexes on the new "resource_link" table...');
+		await queryRunner.query(`CREATE INDEX "IDX_e891dad6f91b8eb04a47f42a06" ON "resource_link" ("isActive") `);
+		await queryRunner.query(`CREATE INDEX "IDX_2efdd5f6dc5d0c483edbc932ff" ON "resource_link" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_64d90b997156b7de382fd8a88f" ON "resource_link" ("tenantId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_b3caaf70dcd98d572c0fe09c59" ON "resource_link" ("organizationId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_ada8b0cf4463e653a756fc6db2" ON "resource_link" ("entity") `);
+		await queryRunner.query(`CREATE INDEX "IDX_61dc38c01dfd2fe25cd934a0d1" ON "resource_link" ("entityId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_df91a85b49f78544da67aa9d9a" ON "resource_link" ("creatorId") `);
+	}
 
 	/**
 	 * MySQL Up Migration
