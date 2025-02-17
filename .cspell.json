@@ -551,7 +551,8 @@
 		"distutils",
 		"loggable",
 		"inversed",
-		"iquery"
+		"iquery",
+		"nodownload"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

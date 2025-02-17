@@ -1,19 +1,30 @@
-import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
-import { IUser } from './user.model';
+import { ActorTypeEnum, IBasePerTenantAndOrganizationEntityModel, ID, OmitFields } from './base-entity.model';
+import { IEmployeeEntityInput } from './employee.model';
 
-export interface IReaction extends IBasePerTenantAndOrganizationEntityModel {
+/**
+ * Reaction entity interface
+ */
+export interface IReaction extends IBasePerTenantAndOrganizationEntityModel, IEmployeeEntityInput {
 	entity: ReactionEntityEnum;
 	entityId: ID; // Indicate the ID of entity record reaction related to
 	emoji: string;
-	creator?: IUser;
-	creatorId?: ID; // The reaction's employee author ID
+	actorType?: ActorTypeEnum; // Will be stored as 0 or 1 in DB
 }
 
+/**
+ * Reaction entity enum
+ */
 export enum ReactionEntityEnum {
 	Comment = 'Comment',
 	Task = 'Task'
 }
 
-export interface IReactionCreateInput extends Omit<IReaction, 'creatorId'> {}
+/**
+ * Reaction create input interface
+ */
+export interface IReactionCreateInput extends OmitFields<IReaction, 'employee' | 'employeeId'> {}
 
-export interface IReactionUpdateInput extends Pick<IReaction, 'emoji'> {}
+/**
+ * Reaction update input interface
+ */
+export interface IReactionUpdateInput extends IBasePerTenantAndOrganizationEntityModel, Pick<IReaction, 'emoji'> {}

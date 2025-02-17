@@ -5,6 +5,15 @@ import { IOrganization } from './organization.model';
 export type JsonData = Record<string, any> | string;
 
 /**
+ * Dynamically excludes the default system-managed fields ('id', 'createdAt', 'updatedAt')
+ * along with any additional keys provided.
+ *
+ * @template T - The original type.
+ * @template K - (Optional) Additional keys to omit from T.
+ */
+export type OmitFields<T, K extends keyof T = never> = Omit<T, 'id' | 'createdAt' | 'updatedAt' | K>;
+
+/**
  * @description
  * An entity ID. Represents a unique identifier as a string.
  *
@@ -60,7 +69,7 @@ export interface IBasePerTenantAndOrganizationEntityMutationInput extends Partia
 }
 
 // Represents a base structure for generic entities, linking their unique ID with their type.
-export interface IBasePerEntityType {
+export interface IBasePerEntityType extends IBasePerTenantAndOrganizationEntityModel {
 	entityId: ID; // Unique ID of the entity
 	entity: BaseEntityEnum; // The type of the entity, defined in BaseEntityEnum enumeration.
 }
@@ -71,6 +80,7 @@ export enum ActorTypeEnum {
 	User = 'User' // User performed the action
 }
 
+// BaseEntityEnum defines the type of the entity, used in BaseEntity model
 export enum BaseEntityEnum {
 	Candidate = 'Candidate',
 	Comment = 'Comment',

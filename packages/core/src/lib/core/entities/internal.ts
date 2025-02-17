@@ -3,6 +3,7 @@ export * from './base.entity';
 export * from './tenant-base.entity';
 export * from './tenant-organization-base.entity';
 export * from './translate-base';
+export * from './entity-type-base.entity';
 
 //core entities
 export * from '../../accounting-template/accounting-template.entity';
@@ -156,6 +157,8 @@ export * from '../../time-tracking/time-log/time-log.entity';
 export * from '../../time-tracking/time-slot/time-slot-minute.entity';
 export * from '../../time-tracking/time-slot/time-slot.entity';
 export * from '../../time-tracking/timesheet/timesheet.entity';
+export * from '../../employee-notification/employee-notification.entity';
+export * from '../../employee-notification-setting/employee-notification-setting.entity';
 export * from '../../user-organization/user-organization.entity';
 export * from '../../user/user.entity';
 export * from '../../warehouse/warehouse-product-variant.entity';
@@ -170,8 +173,9 @@ export * from '../../custom-smtp/custom-smtp.subscriber';
 export * from '../../dashboard/dashboard.subscriber';
 export * from '../../email-reset/email-reset.subscriber';
 export * from '../../email-template/email-template.subscriber';
-export * from '../../employee-setting/employee-setting.subscriber';
 export * from '../../employee/employee.subscriber';
+export * from '../../employee-setting/employee-setting.subscriber';
+export * from '../../employee-notification-setting/employee-notification-setting.subscriber';
 export * from '../../export-import/import-history/import-history.subscriber';
 export * from '../../feature/feature.subscriber';
 export * from '../../image-asset/image-asset.subscriber';
