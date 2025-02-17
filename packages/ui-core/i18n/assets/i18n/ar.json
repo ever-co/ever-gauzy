@@ -166,7 +166,10 @@
 		"ADD_PLUGIN": "إضافة ملحق",
 		"LOAD_PLUGIN": "تحميل المكون الإضافي",
 		"FROM_CDN": "من CDN",
-		"ADD_MODULE": "إضافة وحدة"
+		"ADD_MODULE": "إضافة وحدة",
+		"SHARE": "مشاركة",
+		"GET_INFO": "الحصول على المعلومات",
+		"RETRY": "إعادة المحاولة"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4700,5 +4703,49 @@
 	},
 	"SERVER_API": "خادم واجهة برمجة التطبيقات",
 	"SERVER_API_LOG": "سجل خادم API",
-	"COMING_SOON": "This page is coming soon!"
+	"COMING_SOON": "This page is coming soon!",
+	"PLUGIN": {
+		"VIDEO": {
+			"SINGLE": "فيديو",
+			"PLURAL": "فيديوهات",
+			"DOWNLOAD": "تحميل",
+			"NOT_FOUND": "لم يتم العثور على الفيديو",
+			"NO_VIDEO": "لا يوجد فيديو",
+			"DOWNLOADS": "التنزيلات",
+			"NO_VIDEO_DOWNLOAD": "لا يوجد تنزيل للفيديو",
+			"LOADING_VIDEOS": "جارٍ تحميل الفيديوهات...",
+			"EDIT_METADATA": "تحرير بيانات الفيديو",
+			"STARTING_DOWNLOAD_FOR": "بدء التنزيل لـ: {{ url }}",
+			"DOWNLOAD_FAILED_FOR": "فشل التنزيل لـ: {{ url }}، إعادة المحاولة",
+			"DOWNLOAD_COMPLETED_FOR": "تم اكتمال التنزيل لـ: {{ url }}",
+			"SHARED_SUCCESSFULLY": "تمت مشاركة الفيديو بنجاح",
+			"COPIED_SUCCESSFULLY": "تم نسخ الفيديو بنجاح",
+			"CORE_INFO": "المعلومات الأساسية",
+			"RECORDED": "مسجل",
+			"DURATION": "المدة",
+			"SIZE": "الحجم",
+			"VIEW_FULL": "عرض الفيديو بالكامل",
+			"TECHNICAL_DETAILS": "التفاصيل التقنية",
+			"RESOLUTION": "الدقة",
+			"CODEC": "الترميز",
+			"FRAME_RATE": "معدل الإطارات",
+			"UPLOADED_BY": "تم الرفع بواسطة",
+			"NO_VIDEO_AVAILABLE": "لا يوجد فيديو متاح",
+			"RETRIED": "إعادة محاولة الفيديو",
+			"REMOVED_FROM_QUEUE": "تمت إزالة الفيديو من القائمة",
+			"ADDED_TO_QUEUE": "تمت إضافة الفيديو إلى القائمة",
+			"DELETE_SUCCESSFULLY": "تم حذف الفيديو بنجاح",
+			"UPDATE_SUCCESSFULLY": "تم تحديث الفيديو بنجاح",
+			"ERROR": {
+				"REQUIRED": "العنوان مطلوب.",
+				"AT_LEAST_3": "يجب أن يكون العنوان على الأقل 3 أحرف.",
+				"AT_MOST_255": "لا يمكن أن يتجاوز العنوان 255 حرفًا.",
+				"AT_MOST_1000": "لا يمكن أن يتجاوز الوصف 1000 حرف.",
+				"SHARE_CANCELED": "تم إلغاء المشاركة",
+				"INVALID_SHARE_DATA": "بيانات المشاركة غير صالحة",
+				"SHARE_NOT_ALLOWED": "المشاركة غير مسموحة",
+				"UNEXPECTED_SHARING_ERROR": "خطأ غير متوقع في المشاركة"
+			}
+		}
+	}
 }

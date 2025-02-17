@@ -166,7 +166,10 @@
 		"ADD_PLUGIN": "Añadir plugin",
 		"LOAD_PLUGIN": "Cargar Plugin",
 		"FROM_CDN": "Desde CDN",
-		"ADD_MODULE": "Añadir módulo"
+		"ADD_MODULE": "Añadir módulo",
+		"SHARE": "Compartir",
+		"GET_INFO": "Obtener información",
+		"RETRY": "Reintentar"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4711,5 +4714,49 @@
 	},
 	"SERVER_API": "Servidor API",
 	"SERVER_API_LOG": "Registro del servidor API",
-	"COMING_SOON": "¡Esta página estará disponible pronto!"
+	"COMING_SOON": "¡Esta página estará disponible pronto!",
+	"PLUGIN": {
+		"VIDEO": {
+			"SINGLE": "Vídeo",
+			"PLURAL": "Vídeos",
+			"DOWNLOAD": "Descargar",
+			"NOT_FOUND": "Vídeo no encontrado",
+			"NO_VIDEO": "No hay vídeo",
+			"DOWNLOADS": "Descargas",
+			"NO_VIDEO_DOWNLOAD": "No hay descarga de vídeo",
+			"LOADING_VIDEOS": "Cargando vídeos...",
+			"EDIT_METADATA": "Editar metadatos del vídeo",
+			"STARTING_DOWNLOAD_FOR": "Iniciando descarga para: {{ url }}",
+			"DOWNLOAD_FAILED_FOR": "Fallo en la descarga para: {{ url }}, reintentar",
+			"DOWNLOAD_COMPLETED_FOR": "Descarga completada para: {{ url }}",
+			"SHARED_SUCCESSFULLY": "Vídeo compartido con éxito",
+			"COPIED_SUCCESSFULLY": "Vídeo copiado con éxito",
+			"CORE_INFO": "Información básica",
+			"RECORDED": "Grabado",
+			"DURATION": "Duración",
+			"SIZE": "Tamaño",
+			"VIEW_FULL": "Ver video completo",
+			"TECHNICAL_DETAILS": "Detalles técnicos",
+			"RESOLUTION": "Resolución",
+			"CODEC": "Códec",
+			"FRAME_RATE": "Frecuencia de cuadros",
+			"UPLOADED_BY": "Subido por",
+			"NO_VIDEO_AVAILABLE": "No hay video disponible",
+			"RETRIED": "Video reintentado",
+			"REMOVED_FROM_QUEUE": "Video eliminado de la cola",
+			"ADDED_TO_QUEUE": "Video agregado a la cola",
+			"DELETE_SUCCESSFULLY": "Video eliminado con éxito",
+			"UPDATE_SUCCESSFULLY": "Video actualizado con éxito",
+			"ERROR": {
+				"REQUIRED": "El título es obligatorio.",
+				"AT_LEAST_3": "El título debe tener al menos 3 caracteres.",
+				"AT_MOST_255": "El título no puede superar los 255 caracteres.",
+				"AT_MOST_1000": "La descripción no puede superar los 1000 caracteres.",
+				"SHARE_CANCELED": "El compartido fue cancelado",
+				"INVALID_SHARE_DATA": "Datos de compartición inválidos",
+				"SHARE_NOT_ALLOWED": "No se permite compartir",
+				"UNEXPECTED_SHARING_ERROR": "Error inesperado al compartir"
+			}
+		}
+	}
 }

@@ -131,28 +131,28 @@ export class WebShareService {
 	private handleShareError(error: any): void {
 		switch (error.name) {
 			case 'AbortError':
-				this.toastrService.error('Share was canceled', error.name);
+				this.toastrService.error('PLUGIN.VIDEO.ERROR.SHARE_CANCELED', error.name);
 				break;
 			case 'DataError':
-				this.toastrService.error('Invalid share data', error.name);
+				this.toastrService.error('PLUGIN.VIDEO.ERROR.INVALID_SHARE_DATA', error.name);
 				break;
 			case 'NotAllowedError':
-				this.toastrService.error('Share not allowed', error.name);
+				this.toastrService.error('PLUGIN.VIDEO.ERROR.SHARE_NOT_ALLOWED', error.name);
 				break;
 			default:
-				this.toastrService.error('Unexpected sharing error', error);
+				this.toastrService.error('PLUGIN.VIDEO.ERROR.UNEXPECTED_SHARING_ERROR', error);
 		}
 	}
 
 	// Share Event Tracking
 	private trackShareEvent(): void {
 		// Implement your analytics tracking
-		this.toastrService.success('Video shared successfully');
+		this.toastrService.success('PLUGIN.VIDEO.SHARED_SUCCESSFULLY');
 	}
 
 	// Fallback Notification
 	private showFallbackNotification(): void {
 		// You can integrate with your preferred notification system
-		this.toastrService.success('Has been copied to clipboard');
+		this.toastrService.success('PLUGIN.VIDEO.COPIED_SUCCESSFULLY');
 	}
 }

@@ -1,7 +1,7 @@
 @if((downloadQueue$ | async)?.length > 0) {
 <nb-card class="main">
 	<nb-card-header class="pb-0">
-		<h4>Downloads</h4>
+		<h4>{{ 'PLUGIN.VIDEO.DOWNLOADS' | translate }}</h4>
 	</nb-card-header>
 
 	<nb-card-body>
@@ -45,6 +45,6 @@
 </nb-card>
 }@else {
 <div class="no-downloads">
-	<ngx-no-data-message message="No video download"></ngx-no-data-message>
+	<ngx-no-data-message [message]="'PLUGIN.VIDEO.NO_VIDEO_DOWNLOAD' | translate"></ngx-no-data-message>
 </div>
 }

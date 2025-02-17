@@ -108,7 +108,7 @@ export class VideoEffects {
 							videos: [...new Map([...videos, video].map((item) => [item.id, item])).values()],
 							video
 						});
-						this.toastrService.success('Video updated successfully');
+						this.toastrService.success('PLUGIN.VIDEO.UPDATE_SUCCESSFULLY', null, 'PLUGIN.VIDEO.DOWNLOAD');
 					}),
 					catchError((error) => of(this.errorHandler.handleError(error)))
 				)
@@ -126,7 +126,7 @@ export class VideoEffects {
 						this.videoStore.update({
 							videos: videos.filter((video) => video.id !== id)
 						});
-						this.toastrService.success('Video deleted successfully');
+						this.toastrService.success('PLUGIN.VIDEO.DELETE_SUCCESSFULLY', null, 'PLUGIN.VIDEO.DOWNLOAD');
 					}),
 					catchError((error) => of(this.errorHandler.handleError(error)))
 				)
@@ -147,7 +147,7 @@ export class VideoEffects {
 			tap(({ urls }) => {
 				const isAdded = this.downloadQueueService.add(urls);
 				if (isAdded) {
-					this.toastrService.info('Video added to queue', 'Download');
+					this.toastrService.info('PLUGIN.VIDEO.ADDED_TO_QUEUE', 'PLUGIN.VIDEO.DOWNLOAD');
 				}
 			})
 		)
@@ -157,7 +157,7 @@ export class VideoEffects {
 		this.action$.pipe(
 			ofType(VideoActions.removeFromQueue),
 			tap(({ url }) => {
-				this.toastrService.info('Video removed from queue', 'Download');
+				this.toastrService.info('PLUGIN.VIDEO.REMOVED_FROM_QUEUE', 'PLUGIN.VIDEO.DOWNLOAD');
 				this.downloadQueueService.remove(url);
 			})
 		)
@@ -169,7 +169,7 @@ export class VideoEffects {
 			tap(({ url }) => {
 				const isRetry = this.downloadQueueService.retry(url);
 				if (isRetry) {
-					this.toastrService.info('Video retried', 'Download');
+					this.toastrService.info('PLUGIN.VIDEO.RETRIED', 'PLUGIN.VIDEO.DOWNLOAD');
 				}
 			})
 		)

@@ -85,7 +85,7 @@ export class ActivityLayoutComponent implements OnInit, OnDestroy {
 			tabsetId: this.tabsetId, // The identifier for the tabset
 			tabId: 'videos', // The identifier for the tab
 			tabsetType: 'route', // The type of tabset to use
-			tabTitle: (_i18n) => _i18n.getTranslation('Videos'), // The title for the tab
+			tabTitle: (_i18n) => _i18n.getTranslation('PLUGIN.VIDEO.PLURAL'), // The title for the tab
 			responsive: true, // Whether the tab is responsive
 			route: '/pages/employees/activity/videos', // The route for the tab
 			queryParamsHandling: 'merge' as QueryParamsHandling,
