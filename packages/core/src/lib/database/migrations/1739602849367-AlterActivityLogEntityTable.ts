@@ -155,6 +155,8 @@ export class AlterActivityLogEntityTable1739602849367 implements MigrationInterf
 	 * @param queryRunner
 	 */
 	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		// Step 1: Drop existing indexes from the current "activity_log" table.
+		console.log('Step 1: Dropping existing indexes from "activity_log"...');
 		await queryRunner.query(`DROP INDEX "IDX_4a88f1b97dd306d919f844828d"`);
 		await queryRunner.query(`DROP INDEX "IDX_eb63f18992743f35225ae4e77c"`);
 		await queryRunner.query(`DROP INDEX "IDX_d42f36e39404cb6455254deb36"`);
@@ -165,6 +167,8 @@ export class AlterActivityLogEntityTable1739602849367 implements MigrationInterf
 		await queryRunner.query(`DROP INDEX "IDX_691ba0d5b57cd5adea2c9cc285"`);
 		await queryRunner.query(`DROP INDEX "IDX_b6e9a5c3e1ee65a3bcb8a00de2"`);
 
+		// Step 2: Create the temporary table "temporary_activity_log" with extra columns.
+		console.log('Step 2: Creating temporary table "temporary_activity_log" with new columns...');
 		await queryRunner.query(`
 			CREATE TABLE "temporary_activity_log" (
 				"deletedAt"           datetime,
@@ -188,119 +192,15 @@ export class AlterActivityLogEntityTable1739602849367 implements MigrationInterf
 				"updatedEntities"     text,
 				"data"                text,
 				"creatorId"           varchar,
-				CONSTRAINT "FK_d42f36e39404cb6455254deb360" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
-				CONSTRAINT "FK_3e7ec906ac1026a6c9779e82a21" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-			)
-		`);
-
-		// Step: Copy data from the existing "activity_log" table into "temporary_activity_log".
-		console.log('Inserting data into "temporary_activity_log" from "activity_log"...');
-		await queryRunner.query(`
-			INSERT INTO "temporary_activity_log" (
-				"deletedAt",
-				"id",
-				"createdAt",
-				"updatedAt",
-				"isActive",
-				"isArchived",
-				"archivedAt",
-				"tenantId",
-				"organizationId",
-				"entity",
-				"entityId",
-				"action",
-				"actorType",
-				"description",
-				"updatedFields",
-				"previousValues",
-				"updatedValues",
-				"previousEntities",
-				"updatedEntities",
-				"data",
-				"creatorId"
-			)
-			SELECT
-				"deletedAt",
-				"id",
-				"createdAt",
-				"updatedAt",
-				"isActive",
-				"isArchived",
-				"archivedAt",
-				"tenantId",
-				"organizationId",
-				"entity",
-				"entityId",
-				"action",
-				"actorType",
-				"description",
-				"updatedFields",
-				"previousValues",
-				"updatedValues",
-				"previousEntities",
-				"updatedEntities",
-				"data",
-				"creatorId"
-			FROM "activity_log"
-		`);
-
-		await queryRunner.query(`DROP TABLE "activity_log"`);
-		await queryRunner.query(`ALTER TABLE "temporary_activity_log" RENAME TO "activity_log"`);
-
-		await queryRunner.query(`CREATE INDEX "IDX_4a88f1b97dd306d919f844828d" ON "activity_log" ("isActive") `);
-		await queryRunner.query(`CREATE INDEX "IDX_eb63f18992743f35225ae4e77c" ON "activity_log" ("isArchived") `);
-		await queryRunner.query(`CREATE INDEX "IDX_d42f36e39404cb6455254deb36" ON "activity_log" ("tenantId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_3e7ec906ac1026a6c9779e82a2" ON "activity_log" ("organizationId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_c60ac1ac95c2d901afd2f68909" ON "activity_log" ("entity") `);
-		await queryRunner.query(`CREATE INDEX "IDX_ef0a3bcee9c0305f755d5add13" ON "activity_log" ("entityId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_695624cb02a5da0e86cd4489c0" ON "activity_log" ("action") `);
-		await queryRunner.query(`CREATE INDEX "IDX_691ba0d5b57cd5adea2c9cc285" ON "activity_log" ("actorType") `);
-		await queryRunner.query(`CREATE INDEX "IDX_b6e9a5c3e1ee65a3bcb8a00de2" ON "activity_log" ("creatorId") `);
-
-		await queryRunner.query(`DROP INDEX "IDX_b6e9a5c3e1ee65a3bcb8a00de2"`);
-		await queryRunner.query(`DROP INDEX "IDX_4a88f1b97dd306d919f844828d"`);
-		await queryRunner.query(`DROP INDEX "IDX_eb63f18992743f35225ae4e77c"`);
-		await queryRunner.query(`DROP INDEX "IDX_d42f36e39404cb6455254deb36"`);
-		await queryRunner.query(`DROP INDEX "IDX_3e7ec906ac1026a6c9779e82a2"`);
-		await queryRunner.query(`DROP INDEX "IDX_c60ac1ac95c2d901afd2f68909"`);
-		await queryRunner.query(`DROP INDEX "IDX_ef0a3bcee9c0305f755d5add13"`);
-		await queryRunner.query(`DROP INDEX "IDX_695624cb02a5da0e86cd4489c0"`);
-		await queryRunner.query(`DROP INDEX "IDX_691ba0d5b57cd5adea2c9cc285"`);
-
-		// Step 1: Create the temporary table "temporary_activity_log" with the extended schema,
-		// where "employeeId" will be populated from the old "creatorId" column.
-		console.log('Step 1: Creating temporary table "temporary_activity_log" with extended schema...');
-		await queryRunner.query(`
-			CREATE TABLE "temporary_activity_log" (
-				"deletedAt"           datetime,
-				"id"                  varchar PRIMARY KEY NOT NULL,
-				"createdAt"           datetime NOT NULL DEFAULT (datetime('now')),
-				"updatedAt"           datetime NOT NULL DEFAULT (datetime('now')),
-				"isActive"            boolean DEFAULT (1),
-				"isArchived"          boolean DEFAULT (0),
-				"archivedAt"          datetime,
-				"tenantId"            varchar,
-				"organizationId"      varchar,
-				"entity"              varchar NOT NULL,
-				"entityId"            varchar NOT NULL,
-				"action"              varchar NOT NULL,
-				"actorType"           integer,
-				"description"         text,
-				"updatedFields"       text,
-				"previousValues"      text,
-				"updatedValues"       text,
-				"previousEntities"    text,
-				"updatedEntities"     text,
-				"data"                text,
 				"employeeId"          varchar,
 				CONSTRAINT "FK_d42f36e39404cb6455254deb360" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
-				CONSTRAINT "FK_3e7ec906ac1026a6c9779e82a21" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+				CONSTRAINT "FK_3e7ec906ac1026a6c9779e82a21" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+				CONSTRAINT "FK_071945a9d4a2322fde08010292c" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
 			)
 		`);
 
-		// Step 2: Copy data from the existing "activity_log" table into "temporary_activity_log".
-		// Here, we map the old "creatorId" to the new "employeeId" column.
-		console.log('Step 2: Copying data from "activity_log" into "temporary_activity_log"...');
+		// Step 3: Copy data from the old "activity_log" table into "temporary_activity_log".
+		console.log('Step 3: Copying data from "activity_log" into "temporary_activity_log"...');
 		await queryRunner.query(`
 			INSERT INTO "temporary_activity_log" (
 				"deletedAt",
@@ -323,7 +223,7 @@ export class AlterActivityLogEntityTable1739602849367 implements MigrationInterf
 				"previousEntities",
 				"updatedEntities",
 				"data",
-				"employeeId"
+				"creatorId"
 			)
 			SELECT
 				"deletedAt",
@@ -350,31 +250,26 @@ export class AlterActivityLogEntityTable1739602849367 implements MigrationInterf
 			FROM "activity_log"
 		`);
 
+		// Step 4: Copy data from "creatorId" to "employeeId" using employee mapping.
+		console.log('Step 4: Updating "employeeId" from "creatorId"...');
+		await queryRunner.query(`
+			UPDATE "temporary_activity_log"
+			SET "employeeId" = (
+				SELECT e."id"
+				FROM "employee" e
+				WHERE e."userId" = "temporary_activity_log"."creatorId"
+				LIMIT 1
+			)
+			WHERE "creatorId" IS NOT NULL
+		`);
+
+		// Step 5: Drop the old "activity_log" table and rename the temporary table.
+		console.log('Step 5: Dropping the old "activity_log" table and renaming the temporary table...');
 		await queryRunner.query(`DROP TABLE "activity_log"`);
 		await queryRunner.query(`ALTER TABLE "temporary_activity_log" RENAME TO "activity_log"`);
 
-		await queryRunner.query(`CREATE INDEX "IDX_4a88f1b97dd306d919f844828d" ON "activity_log" ("isActive") `);
-		await queryRunner.query(`CREATE INDEX "IDX_eb63f18992743f35225ae4e77c" ON "activity_log" ("isArchived") `);
-		await queryRunner.query(`CREATE INDEX "IDX_d42f36e39404cb6455254deb36" ON "activity_log" ("tenantId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_3e7ec906ac1026a6c9779e82a2" ON "activity_log" ("organizationId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_c60ac1ac95c2d901afd2f68909" ON "activity_log" ("entity") `);
-		await queryRunner.query(`CREATE INDEX "IDX_ef0a3bcee9c0305f755d5add13" ON "activity_log" ("entityId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_695624cb02a5da0e86cd4489c0" ON "activity_log" ("action") `);
-		await queryRunner.query(`CREATE INDEX "IDX_691ba0d5b57cd5adea2c9cc285" ON "activity_log" ("actorType") `);
-		await queryRunner.query(`CREATE INDEX "IDX_071945a9d4a2322fde08010292" ON "activity_log" ("employeeId") `);
-
-		await queryRunner.query(`DROP INDEX "IDX_4a88f1b97dd306d919f844828d"`);
-		await queryRunner.query(`DROP INDEX "IDX_eb63f18992743f35225ae4e77c"`);
-		await queryRunner.query(`DROP INDEX "IDX_d42f36e39404cb6455254deb36"`);
-		await queryRunner.query(`DROP INDEX "IDX_3e7ec906ac1026a6c9779e82a2"`);
-		await queryRunner.query(`DROP INDEX "IDX_c60ac1ac95c2d901afd2f68909"`);
-		await queryRunner.query(`DROP INDEX "IDX_ef0a3bcee9c0305f755d5add13"`);
-		await queryRunner.query(`DROP INDEX "IDX_695624cb02a5da0e86cd4489c0"`);
-		await queryRunner.query(`DROP INDEX "IDX_691ba0d5b57cd5adea2c9cc285"`);
-		await queryRunner.query(`DROP INDEX "IDX_071945a9d4a2322fde08010292"`);
-
-		// Step 1: Create the temporary table "temporary_activity_log" with the extended schema.
-		console.log('Step 1: Creating temporary table "temporary_activity_log" with extended schema...');
+		// Step 6: Create the temporary table "temporary_activity_log" with the extended schema.
+		console.log('Step 6: Creating temporary table "temporary_activity_log" with extended schema...');
 		await queryRunner.query(`
 			CREATE TABLE "temporary_activity_log" (
 				"deletedAt"           datetime,
@@ -404,8 +299,8 @@ export class AlterActivityLogEntityTable1739602849367 implements MigrationInterf
 			)
 		`);
 
-		// Step 2: Copy data from the existing "activity_log" table into "temporary_activity_log".
-		console.log('Step 2: Copying data from "activity_log" into "temporary_activity_log"...');
+		// Step 7: Copy data from the existing "activity_log" table into "temporary_activity_log".
+		console.log('Step 7: Copying data from "activity_log" into "temporary_activity_log"...');
 		await queryRunner.query(`
 			INSERT INTO "temporary_activity_log" (
 				"deletedAt",
@@ -455,9 +350,15 @@ export class AlterActivityLogEntityTable1739602849367 implements MigrationInterf
 			FROM "activity_log"
 		`);
 
+		// Step 8: Drop the old "activity_log" table and rename the new clean table.
+		console.log(
+			'Step 8: Dropping old "activity_log" table and renaming "temporary_activity_log" to "activity_log"...'
+		);
 		await queryRunner.query(`DROP TABLE "activity_log"`);
 		await queryRunner.query(`ALTER TABLE "temporary_activity_log" RENAME TO "activity_log"`);
 
+		// Step 9: Create final indexes on the new "activity_log" table.
+		console.log('Step 9: Creating indexes on the new "activity_log" table...');
 		await queryRunner.query(`CREATE INDEX "IDX_4a88f1b97dd306d919f844828d" ON "activity_log" ("isActive") `);
 		await queryRunner.query(`CREATE INDEX "IDX_eb63f18992743f35225ae4e77c" ON "activity_log" ("isArchived") `);
 		await queryRunner.query(`CREATE INDEX "IDX_d42f36e39404cb6455254deb36" ON "activity_log" ("tenantId") `);
@@ -475,6 +376,8 @@ export class AlterActivityLogEntityTable1739602849367 implements MigrationInterf
 	 * @param queryRunner
 	 */
 	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		// Step 1: Drop existing indexes from the final "activity_log" table.
+		console.log('Step 1: Dropping existing indexes from "activity_log"...');
 		await queryRunner.query(`DROP INDEX "IDX_071945a9d4a2322fde08010292"`);
 		await queryRunner.query(`DROP INDEX "IDX_691ba0d5b57cd5adea2c9cc285"`);
 		await queryRunner.query(`DROP INDEX "IDX_695624cb02a5da0e86cd4489c0"`);
@@ -485,117 +388,12 @@ export class AlterActivityLogEntityTable1739602849367 implements MigrationInterf
 		await queryRunner.query(`DROP INDEX "IDX_eb63f18992743f35225ae4e77c"`);
 		await queryRunner.query(`DROP INDEX "IDX_4a88f1b97dd306d919f844828d"`);
 
+		// Step 2: Rename the current "activity_log" table to "temporary_activity_log".
+		console.log('Step 2: Renaming "activity_log" to "temporary_activity_log"...');
 		await queryRunner.query(`ALTER TABLE "activity_log" RENAME TO "temporary_activity_log"`);
 
-		// Step 1: Create the new "activity_log" table with the restored schema.
-		console.log('Step 1: Creating new "activity_log" table with restored schema...');
-		await queryRunner.query(`
-			CREATE TABLE "activity_log" (
-				"deletedAt"       datetime,
-				"id"              varchar PRIMARY KEY NOT NULL,
-				"createdAt"       datetime NOT NULL DEFAULT (datetime('now')),
-				"updatedAt"       datetime NOT NULL DEFAULT (datetime('now')),
-				"isActive"        boolean DEFAULT (1),
-				"isArchived"      boolean DEFAULT (0),
-				"archivedAt"      datetime,
-				"tenantId"        varchar,
-				"organizationId"  varchar,
-				"entity"          varchar NOT NULL,
-				"entityId"        varchar NOT NULL,
-				"action"          varchar NOT NULL,
-				"actorType"       integer,
-				"description"     text,
-				"updatedFields"   text,
-				"previousValues"  text,
-				"updatedValues"   text,
-				"previousEntities" text,
-				"updatedEntities" text,
-				"data"            text,
-				"employeeId"      varchar,
-				CONSTRAINT "FK_d42f36e39404cb6455254deb360"
-				FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
-				CONSTRAINT "FK_3e7ec906ac1026a6c9779e82a21"
-				FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-			)
-		`);
-
-		// Step 2: Insert data into the new "activity_log" table from "temporary_activity_log".
-		console.log('Step 2: Inserting data into "activity_log" from "temporary_activity_log"...');
-		await queryRunner.query(`
-			INSERT INTO "activity_log" (
-				"deletedAt",
-				"id",
-				"createdAt",
-				"updatedAt",
-				"isActive",
-				"isArchived",
-				"archivedAt",
-				"tenantId",
-				"organizationId",
-				"entity",
-				"entityId",
-				"action",
-				"actorType",
-				"description",
-				"updatedFields",
-				"previousValues",
-				"updatedValues",
-				"previousEntities",
-				"updatedEntities",
-				"data",
-				"employeeId"
-			)
-			SELECT
-				"deletedAt",
-				"id",
-				"createdAt",
-				"updatedAt",
-				"isActive",
-				"isArchived",
-				"archivedAt",
-				"tenantId",
-				"organizationId",
-				"entity",
-				"entityId",
-				"action",
-				"actorType",
-				"description",
-				"updatedFields",
-				"previousValues",
-				"updatedValues",
-				"previousEntities",
-				"updatedEntities",
-				"data",
-				"employeeId"
-			FROM "temporary_activity_log"
-		`);
-
-		await queryRunner.query(`DROP TABLE "temporary_activity_log"`);
-
-		await queryRunner.query(`CREATE INDEX "IDX_071945a9d4a2322fde08010292" ON "activity_log" ("employeeId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_691ba0d5b57cd5adea2c9cc285" ON "activity_log" ("actorType") `);
-		await queryRunner.query(`CREATE INDEX "IDX_695624cb02a5da0e86cd4489c0" ON "activity_log" ("action") `);
-		await queryRunner.query(`CREATE INDEX "IDX_ef0a3bcee9c0305f755d5add13" ON "activity_log" ("entityId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_c60ac1ac95c2d901afd2f68909" ON "activity_log" ("entity") `);
-		await queryRunner.query(`CREATE INDEX "IDX_3e7ec906ac1026a6c9779e82a2" ON "activity_log" ("organizationId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_d42f36e39404cb6455254deb36" ON "activity_log" ("tenantId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_eb63f18992743f35225ae4e77c" ON "activity_log" ("isArchived") `);
-		await queryRunner.query(`CREATE INDEX "IDX_4a88f1b97dd306d919f844828d" ON "activity_log" ("isActive") `);
-
-		await queryRunner.query(`DROP INDEX "IDX_071945a9d4a2322fde08010292"`);
-		await queryRunner.query(`DROP INDEX "IDX_691ba0d5b57cd5adea2c9cc285"`);
-		await queryRunner.query(`DROP INDEX "IDX_695624cb02a5da0e86cd4489c0"`);
-		await queryRunner.query(`DROP INDEX "IDX_ef0a3bcee9c0305f755d5add13"`);
-		await queryRunner.query(`DROP INDEX "IDX_c60ac1ac95c2d901afd2f68909"`);
-		await queryRunner.query(`DROP INDEX "IDX_3e7ec906ac1026a6c9779e82a2"`);
-		await queryRunner.query(`DROP INDEX "IDX_d42f36e39404cb6455254deb36"`);
-		await queryRunner.query(`DROP INDEX "IDX_eb63f18992743f35225ae4e77c"`);
-		await queryRunner.query(`DROP INDEX "IDX_4a88f1b97dd306d919f844828d"`);
-
-		await queryRunner.query(`ALTER TABLE "activity_log" RENAME TO "temporary_activity_log"`);
-
-		// Step 1: Create the new "activity_log" table with the original schema.
-		console.log('Step 1: Creating new "activity_log" table with restored schema (including "creatorId")...');
+		// Step 3: Create the new "activity_log" table with the restored schema.
+		console.log('Step 3: Creating new "activity_log" table with restored schema...');
 		await queryRunner.query(`
 			CREATE TABLE "activity_log" (
 				"deletedAt"       datetime,
@@ -619,14 +417,15 @@ export class AlterActivityLogEntityTable1739602849367 implements MigrationInterf
 				"updatedEntities" text,
 				"data"            text,
 				"creatorId"       varchar,
+				"employeeId"      varchar,
 				CONSTRAINT "FK_d42f36e39404cb6455254deb360" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
-				CONSTRAINT "FK_3e7ec906ac1026a6c9779e82a21" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+				CONSTRAINT "FK_3e7ec906ac1026a6c9779e82a21" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+				CONSTRAINT "FK_b6e9a5c3e1ee65a3bcb8a00de2b" FOREIGN KEY ("creatorId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
 			)
 		`);
 
-		// Step 2: Copy data from "temporary_activity_log" into the new "activity_log" table.
-		// Note: Here we map the old "employeeId" column from temporary table to "creatorId" in the new table.
-		console.log('Step 2: Inserting data into "activity_log" from "temporary_activity_log"...');
+		// Step 4: Insert data into the new "activity_log" table from "temporary_activity_log".
+		console.log('Step 4: Inserting data into "activity_log" from "temporary_activity_log"...');
 		await queryRunner.query(`
 			INSERT INTO "activity_log" (
 				"deletedAt",
@@ -649,7 +448,7 @@ export class AlterActivityLogEntityTable1739602849367 implements MigrationInterf
 				"previousEntities",
 				"updatedEntities",
 				"data",
-				"creatorId"
+				"employeeId"
 			)
 			SELECT
 				"deletedAt",
@@ -676,32 +475,26 @@ export class AlterActivityLogEntityTable1739602849367 implements MigrationInterf
 			FROM "temporary_activity_log"
 		`);
 
+		// Step 5: Update "creatorId" from "employeeId" using employee table mapping
+		console.log('Step 5: Updating "creatorId" from "employeeId" via employee table mapping...');
+		await queryRunner.query(`
+			UPDATE "activity_log"
+			SET "creatorId" = (
+				SELECT e."userId"
+				FROM "employee" e
+				WHERE e."id" = "activity_log"."employeeId"
+				LIMIT 1
+			)
+			WHERE "employeeId" IS NOT NULL
+		`);
+
+		// Step 6: Drop the old "activity_log" table and rename the temporary table.
+		console.log('Step 6: Dropping the old "temporary_activity_log" table and renaming the "activity_log" table...');
 		await queryRunner.query(`DROP TABLE "temporary_activity_log"`);
-
-		await queryRunner.query(`CREATE INDEX "IDX_691ba0d5b57cd5adea2c9cc285" ON "activity_log" ("actorType") `);
-		await queryRunner.query(`CREATE INDEX "IDX_695624cb02a5da0e86cd4489c0" ON "activity_log" ("action") `);
-		await queryRunner.query(`CREATE INDEX "IDX_ef0a3bcee9c0305f755d5add13" ON "activity_log" ("entityId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_c60ac1ac95c2d901afd2f68909" ON "activity_log" ("entity") `);
-		await queryRunner.query(`CREATE INDEX "IDX_3e7ec906ac1026a6c9779e82a2" ON "activity_log" ("organizationId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_d42f36e39404cb6455254deb36" ON "activity_log" ("tenantId") `);
-		await queryRunner.query(`CREATE INDEX "IDX_eb63f18992743f35225ae4e77c" ON "activity_log" ("isArchived") `);
-		await queryRunner.query(`CREATE INDEX "IDX_4a88f1b97dd306d919f844828d" ON "activity_log" ("isActive") `);
-		await queryRunner.query(`CREATE INDEX "IDX_b6e9a5c3e1ee65a3bcb8a00de2" ON "activity_log" ("creatorId") `);
-
-		await queryRunner.query(`DROP INDEX "IDX_b6e9a5c3e1ee65a3bcb8a00de2"`);
-		await queryRunner.query(`DROP INDEX "IDX_691ba0d5b57cd5adea2c9cc285"`);
-		await queryRunner.query(`DROP INDEX "IDX_695624cb02a5da0e86cd4489c0"`);
-		await queryRunner.query(`DROP INDEX "IDX_ef0a3bcee9c0305f755d5add13"`);
-		await queryRunner.query(`DROP INDEX "IDX_c60ac1ac95c2d901afd2f68909"`);
-		await queryRunner.query(`DROP INDEX "IDX_3e7ec906ac1026a6c9779e82a2"`);
-		await queryRunner.query(`DROP INDEX "IDX_d42f36e39404cb6455254deb36"`);
-		await queryRunner.query(`DROP INDEX "IDX_eb63f18992743f35225ae4e77c"`);
-		await queryRunner.query(`DROP INDEX "IDX_4a88f1b97dd306d919f844828d"`);
-
 		await queryRunner.query(`ALTER TABLE "activity_log" RENAME TO "temporary_activity_log"`);
 
-		// Step 1: Create the new "activity_log" table with the restored original schema.
-		console.log('Step 1: Creating new "activity_log" table with restored schema (including "creatorId")...');
+		// Step 7: Create the new "activity_log" table with the restored original schema.
+		console.log('Step 7: Creating new "activity_log" table with restored schema (including "creatorId")...');
 		await queryRunner.query(`
 			CREATE TABLE "activity_log" (
 				"deletedAt"       datetime,
@@ -731,8 +524,8 @@ export class AlterActivityLogEntityTable1739602849367 implements MigrationInterf
 			)
 		`);
 
-		// Step 2: Copy data from "temporary_activity_log" into the new "activity_log" table.
-		console.log('Step 2: Inserting data into "activity_log" from "temporary_activity_log"...');
+		// Step 8: Copy data from "temporary_activity_log" into the new "activity_log" table.
+		console.log('Step 8: Inserting data into "activity_log" from "temporary_activity_log"...');
 		await queryRunner.query(`
 			INSERT INTO "activity_log" (
 				"deletedAt",
@@ -782,8 +575,12 @@ export class AlterActivityLogEntityTable1739602849367 implements MigrationInterf
 			FROM "temporary_activity_log"
 		`);
 
+		// Step 9: Dropping the old "temporary_activity_log" table.
+		console.log('Step 9: Dropping the old "temporary_activity_log" table...');
 		await queryRunner.query(`DROP TABLE "temporary_activity_log"`);
 
+		// Step 10: Create final indexes on the new "activity_log" table.
+		console.log('Step 10: Creating indexes on the new "activity_log" table...');
 		await queryRunner.query(`CREATE INDEX "IDX_b6e9a5c3e1ee65a3bcb8a00de2" ON "activity_log" ("creatorId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_691ba0d5b57cd5adea2c9cc285" ON "activity_log" ("actorType") `);
 		await queryRunner.query(`CREATE INDEX "IDX_695624cb02a5da0e86cd4489c0" ON "activity_log" ("action") `);
