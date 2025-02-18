@@ -44,6 +44,7 @@ import {
 	TagsOnlyComponent,
 	VisibilityComponent
 } from '@gauzy/ui-core/shared';
+import { NgxPermissionsService } from 'ngx-permissions';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -86,7 +87,8 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 		private readonly _toastrService: ToastrService,
 		private readonly _store: Store,
 		private readonly _dialogService: NbDialogService,
-		private readonly _organizationProjectStore: OrganizationProjectStore
+		private readonly _organizationProjectStore: OrganizationProjectStore,
+		private readonly _permissionsService: NgxPermissionsService
 	) {
 		super(translateService);
 		this.setView();
@@ -277,6 +279,10 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 		return project.members
 			.filter((member: IOrganizationProjectEmployee) => member.isManager)
 			.map((member: IOrganizationProjectEmployee) => member.employee);
+	}
+
+	isManagerOfProject(project: IOrganizationProject): boolean {
+		return project.members.some((member) => member.isManager && member.employee.userId === this._store.user.id);
 	}
 
 	/**
@@ -538,6 +544,24 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 			this.disableButton = !isSelected;
 			this.selectedProject = isSelected ? data : null;
 
+			if (isSelected && this.selectedProject) {
+				// Check if the user is manager of the selected project
+				const isManager = this.isManagerOfProject(this.selectedProject);
+
+				// Check if the user has all the required permissions
+				const hasAllPermissions = this.hasAllPermissions([
+					PermissionsEnum.ALL_ORG_EDIT,
+					PermissionsEnum.ORG_PROJECT_EDIT,
+					PermissionsEnum.ORG_PROJECT_DELETE
+				]);
+
+				// Dynamically assign the CAN_MANAGE_PROJECT permission if either condition is true
+				if (isManager || hasAllPermissions) {
+					this._permissionsService.addPermission('CAN_MANAGE_PROJECT');
+				} else {
+					this._permissionsService.removePermission('CAN_MANAGE_PROJECT');
+				}
+			}
 			if (this._isGridCardLayout && this._grid) {
 				if (this._grid.customComponentInstance().constructor === ProjectOrganizationGridComponent) {
 					this.disableButton = true;
@@ -585,6 +609,10 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 			console.error('Error while updating project visibility', error?.message);
 			this._errorHandlingService.handleError(error);
 		}
+	}
+
+	hasAllPermissions(permissions: PermissionsEnum[]): boolean {
+		return permissions.every((permission) => this._permissionsService.getPermission(permission));
 	}
 
 	/**
