@@ -12,7 +12,7 @@ import { Store } from '@gauzy/ui-core/core';
 	pure: false
 })
 export class DateFormatPipe implements PipeTransform {
-	dateFormat: string = 'd MMMM, y';
+	dateFormat = 'd MMMM, y';
 	regionCode: string = RegionsEnum.EN;
 	locale: string;
 

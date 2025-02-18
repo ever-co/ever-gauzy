@@ -13,6 +13,8 @@ import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { DateRangePickerBuilderService, Store, TimesheetService } from '@gauzy/ui-core/core';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import { BaseSelectorFilterComponent, TimeZoneService } from '../../timesheet/gauzy-filters';
+import { DateFormatPipe, DurationFormatPipe } from '../../pipes';
+import { generateCsv } from '../../generate-csv-pdf';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -45,7 +47,9 @@ export class AmountsOwedGridComponent extends BaseSelectorFilterComponent implem
 		public readonly translateService: TranslateService,
 		protected readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		protected readonly timeZoneService: TimeZoneService
+		protected readonly timeZoneService: TimeZoneService,
+		private readonly dateFormatPipe: DateFormatPipe,
+		private readonly durationFormatPipe: DurationFormatPipe
 	) {
 		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
@@ -132,5 +136,52 @@ export class AmountsOwedGridComponent extends BaseSelectorFilterComponent implem
 			// Set the loading flag to false, regardless of success or failure
 			this.loading = false;
 		}
+	}
+
+	exportToCsv() {
+		const data = [];
+		if (!this.dailyData || !Array.isArray(this.dailyData)) {
+			//TODO: replace with GZY-108: Error Handling on the Web Page
+			console.error('dailyData is undefined or not an array', this.dailyData);
+			return;
+		}
+
+		this.dailyData.forEach((entry) => {
+			if (!entry.employees || !Array.isArray(entry.employees)) {
+				console.log('No employees found for entry:', entry);
+				return;
+			}
+
+			entry.employees.forEach((employee) => {
+				const employeeFullName = employee?.employee?.fullName || 'N/A';
+				const billRateValue = employee?.employee?.billRateValue || 'N/A';
+
+				const rowData = {
+					date: this.dateFormatPipe.transform(entry?.date),
+					employee: employeeFullName,
+					currentRate: billRateValue,
+					hours: this.durationFormatPipe.transform(employee?.duration) || 0,
+					amount: employee?.amount || '0.00'
+				};
+
+				data.push(rowData);
+			});
+		});
+
+		if (!data || data.length === 0) {
+			console.error('No valid data to export');
+			return;
+		}
+
+		const headers = [
+			this.getTranslation('REPORT_PAGE.DATE'),
+			this.getTranslation('REPORT_PAGE.EMPLOYEE'),
+			this.getTranslation('REPORT_PAGE.CURRENT_RATE'),
+			this.getTranslation('REPORT_PAGE.HOURS'),
+			this.getTranslation('REPORT_PAGE.AMOUNT')
+		];
+
+		const fileName = this.getTranslation('REPORT_PAGE.AMOUNT_OWED');
+		generateCsv(data, headers, fileName);
 	}
 }

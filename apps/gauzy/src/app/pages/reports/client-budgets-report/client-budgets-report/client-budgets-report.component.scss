@@ -1,58 +1,63 @@
 @import 'report';
 
 .contact-column {
-    width: 15%;
-    min-width: 165px;
-    max-width: 200px;
+  width: 15%;
+  min-width: 165px;
+  max-width: 200px;
 }
 .project-column {
-    width: 20%;
-    min-width: 20%;
+  width: 20%;
+  min-width: 20%;
 }
 .employees-column {
-    width: 15%;
+  width: 15%;
 }
 .spent-column {
-    width: 10%;
+  width: 10%;
 }
 .remaining-column {
-    width: 10%;
+  width: 10%;
 }
 .budget-column {
-    width: 30%;
+  width: 30%;
+}
+.label-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .budget-row {
-    @include nb-ltr(padding-right, 5%);
-    @include nb-rtl(padding-left, 5%);
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
+  @include nb-ltr(padding-right, 5%);
+  @include nb-rtl(padding-left, 5%);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
 
-    .progress-wrapper {
-        width: 68%;
-        margin-left: 2%;
-    }
+  .progress-wrapper {
+    width: 68%;
+    margin-left: 2%;
+  }
 
-    .currency-span {
-        white-space: nowrap;
-        @include nb-ltr(text-align, right);
-        @include nb-rtl(text-align, left);
-    }
+  .currency-span {
+    white-space: nowrap;
+    @include nb-ltr(text-align, right);
+    @include nb-rtl(text-align, left);
+  }
 }
 
 @include respond(dsk) {
-    .budget-row  {
-        .progress-wrapper {
-            width: 100%;
-        }
+  .budget-row {
+    .progress-wrapper {
+      width: 100%;
     }
+  }
 }
 @include respond(md) {
-    .employees-header {
-        display: inline;
-        text-overflow: ellipsis;
-        overflow: hidden;
-        white-space: nowrap;
-    }
+  .employees-header {
+    display: inline;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
 }

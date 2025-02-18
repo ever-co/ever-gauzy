@@ -1,85 +1,95 @@
 @import 'report';
-@import "var";
+@import 'var';
 
 .project-row {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background-color: nb-theme(gauzy-card-1);
+  border-radius: nb-theme(border-radius);
+
+  .table-row-custom {
+    background-color: nb-theme(gauzy-card-1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     padding-top: 10px;
     padding-bottom: 10px;
-    background-color: nb-theme(gauzy-card-1);
-    border-radius: nb-theme(border-radius);
+  }
 
-    .table-row-custom {
-        background-color: nb-theme(gauzy-card-1);
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        padding-top: 10px;
-        padding-bottom: 10px;
-    }
-
-    .activity-row, .table-inner-wrapper {
-        min-height: 37px;
-    }
+  .activity-row,
+  .table-inner-wrapper {
+    min-height: 37px;
+  }
 }
 
 .weekly-logs {
-	height: calc(100% - 2.7rem);
+  height: calc(100% - 2.7rem);
 }
 
 // column proportions
 .employee-column {
-    width: 20%;
-    min-width: 155px;
-    max-width: 200px;
+  width: 20%;
+  min-width: 155px;
+  max-width: 200px;
 }
-.project-column, .title-column {
-    width: 20%;
-    min-width: 20%;
-    max-width: 20%;
+.project-column,
+.title-column {
+  width: 20%;
+  min-width: 20%;
+  max-width: 20%;
 }
 .duration-column {
-    width: 10%;
+  width: 10%;
 }
 .progress-bar-column {
-    width: 35%;
+  width: 35%;
 }
 
 :host {
-	height: 100%;
-    ::ng-deep {
-        .progress-percentage {
-            @include nb-rtl(padding-left, 0);
-            @include nb-ltr(padding-right, 0);
-            width: auto;
-        }
-
-        .group-by-wrapper{
-            display: flex;
-            gap: 1rem;
-        }
+  height: 100%;
+  ::ng-deep {
+    .progress-percentage {
+      @include nb-rtl(padding-left, 0);
+      @include nb-ltr(padding-right, 0);
+      width: auto;
     }
+
+    .group-by-wrapper {
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+
+      .label-wrapper {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+    }
+  }
 }
 
 .no-height {
-    height: 0;
-    padding: 0;
+  height: 0;
+  padding: 0;
 }
 
-@include respond(lg){
-    .project-row {
-        margin-bottom: 20px;
-    }
-    .main-column-responsive {
-        background-color: nb-theme(background-basic-color-3);
-    }
-    .progress-bar-column  {
-        justify-content: flex-end;
-    }
-    .progress-bar-column, .no-height {
-        border-left: none;
-    }
+@include respond(lg) {
+  .project-row {
+    margin-bottom: 20px;
+  }
+  .main-column-responsive {
+    background-color: nb-theme(background-basic-color-3);
+  }
+  .progress-bar-column {
+    justify-content: flex-end;
+  }
+  .progress-bar-column,
+  .no-height {
+    border-left: none;
+  }
 }
 
 .activities-container {
-	padding-bottom: 6px !important;
+  padding-bottom: 6px !important;
 }

@@ -8,8 +8,8 @@
 		</ng-template>
 	</div>
 	<div class="headers-wrapper">
-		<div class="main-header" [title]="project?.name">{{ project?.name }} </div>
-		<div class="employees-count">Members count {{ project?.membersCount }}</div>
+		<div class="main-header" [title]="project?.name">{{ project?.name }}</div>
+		<div class="employees-count">{{ 'SM_TABLE.MEMBERS_COUNT' | translate }} {{ project?.membersCount }}</div>
 	</div>
 </div>
 <ng-template #noProject>

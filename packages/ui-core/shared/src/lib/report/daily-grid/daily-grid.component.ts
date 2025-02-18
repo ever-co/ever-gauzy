@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { TranslateService } from '@ngx-translate/core';
@@ -7,6 +7,7 @@ import { pick } from 'underscore';
 import {
 	IGetTimeLogReportInput,
 	IReportDayData,
+	IReportDayGroupByDate,
 	ITimeLogFilters,
 	ReportGroupByFilter,
 	ReportGroupFilterEnum
@@ -15,6 +16,8 @@ import { Environment, environment } from '@gauzy/ui-config';
 import { distinctUntilChange, isEmpty, progressStatus } from '@gauzy/ui-core/common';
 import { DateRangePickerBuilderService, Store, TimesheetService } from '@gauzy/ui-core/core';
 import { BaseSelectorFilterComponent, TimeZoneService } from '../../timesheet/gauzy-filters';
+import { DateFormatPipe, DurationFormatPipe, TruncatePipe } from '../../pipes';
+import { generateCsv } from '../../generate-csv-pdf';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -22,7 +25,7 @@ import { BaseSelectorFilterComponent, TimeZoneService } from '../../timesheet/ga
 	templateUrl: './daily-grid.component.html',
 	styleUrls: ['./daily-grid.component.scss']
 })
-export class DailyGridComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit, OnDestroy {
+export class DailyGridComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	// This constant holds the URL for downloading content from the platform's website.
 	readonly PLATFORM_WEBSITE_DOWNLOAD_URL: Environment['PLATFORM_WEBSITE_DOWNLOAD_URL'] =
 		environment.PLATFORM_WEBSITE_DOWNLOAD_URL;
@@ -53,7 +56,10 @@ export class DailyGridComponent extends BaseSelectorFilterComponent implements O
 		private readonly timesheetService: TimesheetService,
 		protected readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		protected readonly timeZoneService: TimeZoneService
+		protected readonly timeZoneService: TimeZoneService,
+		private readonly dateFormatPipe: DateFormatPipe,
+		private readonly durationFormatPipe: DurationFormatPipe,
+		private readonly truncatePipe: TruncatePipe
 	) {
 		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
@@ -154,5 +160,68 @@ export class DailyGridComponent extends BaseSelectorFilterComponent implements O
 		return progressStatus(value);
 	}
 
-	ngOnDestroy() {}
+	exportToCsv() {
+		const data = [];
+		//TODO: fix with GZY-106: Custom Grouping Options for CSV Export in Time and Activity Report
+		const dailyData = this.dailyLogs as unknown as IReportDayGroupByDate;
+
+		if (!dailyData || !Array.isArray(dailyData)) {
+			//TODO: replace with GZY-108: Error Handling on the Web Page
+			console.error('dailyData is undefined or not an array', dailyData);
+			return;
+		}
+
+		dailyData.forEach((entry) => {
+			if (!entry.logs?.length) {
+				console.log('No logs found for entry:', entry);
+				return;
+			}
+
+			entry.logs.forEach((log) => {
+				const projectName = log?.project?.name;
+				const membersCount = log?.project?.membersCount || 'N/A';
+				const client = log?.project?.organizationContact?.name || 'N/A';
+
+				log.employeeLogs?.forEach((employee) => {
+					const employeeFullName = employee?.employee?.fullName || 'N/A';
+
+					employee.tasks?.forEach((task) => {
+						data.push({
+							date: this.dateFormatPipe.transform(entry.date),
+							totalTime: this.durationFormatPipe.transform(entry?.sum || 0),
+							averageActivity: `${entry?.activity || 0}%`,
+							employee: employeeFullName,
+							client,
+							project: `${projectName} ${this.getTranslation('SM_TABLE.MEMBERS_COUNT')}: ${membersCount}`,
+							title: task?.task?.title || 'N/A',
+							notes: this.truncatePipe.transform(task?.description || 'N/A', 40),
+							time: this.durationFormatPipe.transform(employee?.sum || 0),
+							activity: `${employee?.activity || 0}%`
+						});
+					});
+				});
+			});
+		});
+
+		if (!data || data.length === 0) {
+			console.error('No valid data to export');
+			return;
+		}
+
+		const headers = [
+			this.getTranslation('REPORT_PAGE.DATE'),
+			this.getTranslation('REPORT_PAGE.TOTAL_TIME'),
+			this.getTranslation('REPORT_PAGE.AVERAGE_ACTIVITY'),
+			this.getTranslation('REPORT_PAGE.EMPLOYEE'),
+			this.getTranslation('REPORT_PAGE.CLIENT'),
+			this.getTranslation('REPORT_PAGE.PROJECT'),
+			this.getTranslation('REPORT_PAGE.TO_DO'),
+			this.getTranslation('REPORT_PAGE.NOTES'),
+			this.getTranslation('REPORT_PAGE.TIME'),
+			this.getTranslation('REPORT_PAGE.ACTIVITY')
+		];
+
+		const fileName = this.getTranslation('REPORT_PAGE.TIME_AND_ACTIVITY_REPORT');
+		generateCsv(data, headers, fileName);
+	}
 }

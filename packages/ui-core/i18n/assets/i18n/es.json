@@ -169,6 +169,7 @@
 		"ADD_MODULE": "Añadir módulo"
 	},
 	"SM_TABLE": {
+		"MEMBERS_COUNT": "Cantidad de miembros",
 		"NO_DATA": {
 			"RECEIVE_ESTIMATE": "No has recibido ningún presupuesto.",
 			"INCOME": "No has creado ningún ingreso.",
@@ -1129,6 +1130,8 @@
 		"GAUZY_FEATURES": "Características difuminadas"
 	},
 	"REPORT_PAGE": {
+		"TOTAL_TIME": "Tiempo total",
+		"AVERAGE_ACTIVITY": "Actividad promedio",
 		"MEMBERS_WORKED": "Miembros trabajaron",
 		"MANUAL_TIME_EDIT_REPORT": "Informe de edición manual de tiempo",
 		"GROUP_BY": "Grupo",
@@ -1186,6 +1189,7 @@
 		"PAYMENT": "Pago",
 		"NO_EMPLOYEES_WORKED": "Ningún empleado trabajó.",
 		"WEEKLY_TOTAL": "Total semanal",
+		"DURATION_PERCENTAGE": "Porcentaje de duración",
 		"NO_DATA": {
 			"APP_AND_URL_ACTIVITY": "No se encontraron registros. Por favor, seleccione un rango de fechas, empleado o proyecto.",
 			"MANUAL_ACTIVITY": "No se encontraron registros. Por favor, seleccione un rango de fechas, empleado o proyecto.",

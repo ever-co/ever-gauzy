@@ -168,6 +168,7 @@
 		"ADD_MODULE": "הוסף מודול"
 	},
 	"SM_TABLE": {
+		"MEMBERS_COUNT": "מספר חברים",
 		"NO_DATA": {
 			"LOADING": "טוען, אנא המתן...",
 			"RECEIVE_ESTIMATE": "לא קיבלתם אף הערכה.",
@@ -1131,6 +1132,8 @@
 		"GAUZY_FEATURES": "Gauzy features"
 	},
 	"REPORT_PAGE": {
+		"TOTAL_TIME": "זמן כולל",
+		"AVERAGE_ACTIVITY": "פעילות ממוצעת",
 		"MEMBERS_WORKED": "Members Worked",
 		"MANUAL_TIME_EDIT_REPORT": "Manual Time Edit Report",
 		"GROUP_BY": "Group",
@@ -1188,6 +1191,7 @@
 		"PAYMENT": "Payment",
 		"NO_EMPLOYEES_WORKED": "No employees worked",
 		"WEEKLY_TOTAL": "Weekly Total",
+		"DURATION_PERCENTAGE": "אחוז משך הזמן",
 		"NO_DATA": {
 			"APP_AND_URL_ACTIVITY": "No records found. Please select date range, employee or project.",
 			"MANUAL_ACTIVITY": "No records found. Please select date range, employee or project.",

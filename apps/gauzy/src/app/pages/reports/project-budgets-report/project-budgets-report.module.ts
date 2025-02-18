@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
+import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule, NbButtonModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	GauzyFiltersModule,
@@ -26,7 +26,8 @@ import { ProjectBudgetsReportComponent } from './project-budgets-report/project-
 		ProgressStatusModule,
 		GauzyFiltersModule,
 		ProjectColumnViewModule,
-		NoDataMessageModule
+		NoDataMessageModule,
+		NbButtonModule
 	]
 })
 export class ProjectBudgetsReportModule {}

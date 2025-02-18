@@ -18,7 +18,7 @@ import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } f
 })
 export class TimeLimitReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	filters: ITimeLogFilters;
-	loading: boolean = false;
+	loading = false;
 	dailyData: any;
 	title: string;
 	duration: 'day' | 'week' | 'month';

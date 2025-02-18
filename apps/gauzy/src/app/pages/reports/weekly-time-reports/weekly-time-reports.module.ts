@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { NbIconModule, NbSpinnerModule, NbCardModule, NbBadgeModule } from '@nebular/theme';
+import { NbIconModule, NbSpinnerModule, NbCardModule, NbBadgeModule, NbButtonModule } from '@nebular/theme';
 import {
 	DailyStatisticsModule,
 	GauzyFiltersModule,
@@ -24,7 +24,8 @@ import { WeeklyTimeReportsComponent } from './weekly-time-reports/weekly-time-re
 		NbCardModule,
 		GauzyFiltersModule,
 		NbBadgeModule,
-		NoDataMessageModule
+		NoDataMessageModule,
+		NbButtonModule
 	]
 })
 export class WeeklyTimeReportsModule {}

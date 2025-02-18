@@ -169,6 +169,7 @@
 		"ADD_MODULE": "إضافة وحدة"
 	},
 	"SM_TABLE": {
+		"MEMBERS_COUNT": "عدد الأعضاء",
 		"NO_DATA": {
 			"RECEIVE_ESTIMATE": "لم تتلقَ أي تقدير.",
 			"INCOME": "لم تقم بإنشاء أي دخل.",
@@ -1126,6 +1127,8 @@
 		"GAUZY_FEATURES": "ميزات Gauzy"
 	},
 	"REPORT_PAGE": {
+		"TOTAL_TIME": "إجمالي الوقت",
+		"AVERAGE_ACTIVITY": "متوسط النشاط",
 		"MEMBERS_WORKED": "أعضاء العمل",
 		"MANUAL_TIME_EDIT_REPORT": "تقرير تحرير الوقت يدويًا",
 		"GROUP_BY": "مجموعة",
@@ -1183,6 +1186,7 @@
 		"PAYMENT": "الدفع",
 		"NO_EMPLOYEES_WORKED": "لم يعمل أي موظفين",
 		"WEEKLY_TOTAL": "الإجمالي الأسبوعي",
+		"DURATION_PERCENTAGE": "نسبة المدة",
 		"NO_DATA": {
 			"APP_AND_URL_ACTIVITY": "لم يتم العثور على سجلات. يرجى تحديد نطاق التاريخ أو الموظف أو المشروع.",
 			"MANUAL_ACTIVITY": "لم يتم العثور على أي سجلات. يرجى تحديد نطاق التاريخ، الموظف، أو المشروع.",

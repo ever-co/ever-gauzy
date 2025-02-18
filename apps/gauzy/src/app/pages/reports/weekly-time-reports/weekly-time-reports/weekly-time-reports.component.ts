@@ -17,7 +17,10 @@ import { distinctUntilChange, isEmpty, progressStatus } from '@gauzy/ui-core/com
 import {
 	BaseSelectorFilterComponent,
 	ChartUtil,
+	DateFormatPipe,
+	DurationFormatPipe,
 	GauzyFiltersComponent,
+	generateCsv,
 	IChartData,
 	TimeZoneService
 } from '@gauzy/ui-core/shared';
@@ -32,7 +35,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent impl
 	public filters: ITimeLogFilters;
 	public weekLogs: ReportDayData[] = [];
 	public weekDays: string[] = [];
-	public loading: boolean = false;
+	public loading = false;
 	public charts: IChartData;
 
 	public datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
@@ -47,7 +50,9 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent impl
 		public readonly translateService: TranslateService,
 		protected readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		protected readonly timeZoneService: TimeZoneService
+		protected readonly timeZoneService: TimeZoneService,
+		private readonly dateFormatPipe: DateFormatPipe,
+		private readonly durationFormatPipe: DurationFormatPipe
 	) {
 		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
@@ -231,5 +236,50 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent impl
 	 */
 	public getStatus(value: number) {
 		return progressStatus(value);
+	}
+
+	exportToCsv() {
+		const data = [];
+
+		if (!this.weekLogs || !Array.isArray(this.weekLogs)) {
+			//TODO: replace with GZY-108: Error Handling on the Web Page
+			console.error('weekLogs is undefined or not an array', this.weekLogs);
+			return;
+		}
+
+		const dates = Object.keys(this.weekLogs[0].dates);
+
+		this.weekLogs.forEach((entry) => {
+			const employeeFullName = entry.employee?.fullName || 'N/A';
+
+			const rowData = {
+				employee: employeeFullName,
+				...dates.reduce((acc, date) => {
+					acc[date] = entry.dates[date]?.sum ? this.durationFormatPipe.transform(entry.dates[date].sum) : '-';
+					return acc;
+				}, {}),
+				sum: this.durationFormatPipe.transform(entry?.sum || 0),
+				durationPercentage: `${entry?.activity || 0}%`,
+				spent: '-'
+			};
+
+			data.push(rowData);
+		});
+
+		if (!data.length) {
+			console.error('No valid data to export');
+			return;
+		}
+
+		const headers = [
+			this.getTranslation('REPORT_PAGE.EMPLOYEE'),
+			...dates.map((date) => this.dateFormatPipe.transform(date)),
+			this.getTranslation('REPORT_PAGE.WEEKLY_TOTAL'),
+			this.getTranslation('REPORT_PAGE.ACTIVITY'),
+			this.getTranslation('REPORT_PAGE.SPENT')
+		];
+
+		const fileName = this.getTranslation('MENU.REPORTS');
+		generateCsv(data, headers, fileName);
 	}
 }

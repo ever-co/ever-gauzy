@@ -1,20 +1,12 @@
 <div *ngIf="project" class="project-render">
-	<img
-		*ngIf="project?.imageUrl"
-		src="{{ project.imageUrl }}"
-	/>
+	<img *ngIf="project?.imageUrl" src="{{ project.imageUrl }}" />
 	<span>
 		<div class="name">{{ project?.name }}</div>
-		<div class="member" *ngIf="project?.count">
-			Members count {{ project?.count }}
-		</div>
+		<div class="member" *ngIf="project?.count">{{ 'SM_TABLE.MEMBERS_COUNT' | translate }} {{ project?.count }}</div>
 	</span>
 </div>
 <div *ngIf="projects" class="project-render">
 	<ng-container *ngFor="let project of projects">
-		<img
-			*ngIf="project?.imageUrl"
-			src="{{ project.imageUrl }}"
-		/>
+		<img *ngIf="project?.imageUrl" src="{{ project.imageUrl }}" />
 	</ng-container>
 </div>

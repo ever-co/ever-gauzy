@@ -2,58 +2,64 @@
 @import 'themes';
 
 :host {
-    .employee-column {
-        width: 14%;
-        min-width: 150px;
-        margin-right: 10px;
-    }
-    .day-column {
-        width: 11%;
-    }
-    .table-inner-wrapper {
-        height: 100%;
-        align-items: center;
-    }
-    .avatar-wrapper {
-        display: inline-flex;
-        max-width: 99%;
-    }
-    ::ng-deep .weekly-time-grid .no-data-found {
-		max-height: calc(100vh - 45rem);
-	}
+  .employee-column {
+    width: 14%;
+    min-width: 150px;
+    margin-right: 10px;
+  }
+  .day-column {
+    width: 11%;
+  }
+  .table-inner-wrapper {
+    height: 100%;
+    align-items: center;
+  }
+  .avatar-wrapper {
+    display: inline-flex;
+    max-width: 99%;
+  }
+  ::ng-deep .weekly-time-grid .no-data-found {
+    max-height: calc(100vh - 45rem);
+  }
 }
 
 @include respond(lg) {
-    .weekly-main-header {
-        display: none;
-    }
-    .weekly-logs nb-card-body {
-        padding-right: 0;
-        padding-left: 0;
-    }
-    .responsive-table-content .avatar-wrapper {
-        width: unset;
-		max-width: 100%;
-		display: block;
-	}
+  .weekly-main-header {
+    display: none;
+  }
+  .weekly-logs nb-card-body {
+    padding-right: 0;
+    padding-left: 0;
+  }
+  .responsive-table-content .avatar-wrapper {
+    width: unset;
+    max-width: 100%;
+    display: block;
+  }
 }
 
 @include respond(md) {
-	.mobile-padding {
-		padding-left: 10px;
-	}
+  .mobile-padding {
+    padding-left: 10px;
+  }
 }
 
-.table.card, .weekly-logs {
-	&.not-found {
-		height: 100%;
-	}
-	.weekly-time-container {
-		padding-bottom: 6px !important;
-		background-color: unset !important;
-	}
+.table.card,
+.weekly-logs {
+  &.not-found {
+    height: 100%;
+  }
+  .weekly-time-container {
+    padding-bottom: 6px !important;
+    background-color: unset !important;
+  }
+  .label-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 }
 
 nb-card-body.report-body {
-	height: calc(100% - 8rem) !important;
+  height: calc(100% - 8rem) !important;
 }

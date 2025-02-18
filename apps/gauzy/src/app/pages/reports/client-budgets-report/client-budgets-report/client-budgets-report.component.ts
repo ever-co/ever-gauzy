@@ -14,7 +14,13 @@ import {
 } from '@gauzy/contracts';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import { DateRangePickerBuilderService, Store, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
-import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
+import {
+	BaseSelectorFilterComponent,
+	DurationFormatPipe,
+	GauzyFiltersComponent,
+	generateCsv,
+	TimeZoneService
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -24,7 +30,7 @@ import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } f
 })
 export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	OrganizationContactBudgetTypeEnum = OrganizationContactBudgetTypeEnum;
-	loading: boolean = false;
+	loading = false;
 	filters: IGetPaymentInput;
 	clients: IClientBudgetLimitReport[] = [];
 
@@ -39,7 +45,8 @@ export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent im
 		private readonly timesheetFilterService: TimesheetFilterService,
 		protected readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		protected readonly timeZoneService: TimeZoneService
+		protected readonly timeZoneService: TimeZoneService,
+		private readonly durationFormatPipe: DurationFormatPipe
 	) {
 		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
@@ -136,5 +143,54 @@ export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent im
 			// Set the loading flag to false, regardless of success or failure
 			this.loading = false;
 		}
+	}
+
+	exportToCsv() {
+		const data = [];
+		this.clients.forEach((entry) => {
+			const spent =
+				entry.budgetType === OrganizationContactBudgetTypeEnum.HOURS
+					? `${this.durationFormatPipe.transform(entry?.spent * 3600 || 0)} ${this.getTranslation(
+							'REPORT_PAGE.HOURS'
+					  )}`
+					: entry?.spent || 0;
+			const remaining =
+				entry.budgetType === OrganizationContactBudgetTypeEnum.HOURS
+					? `${this.durationFormatPipe.transform(entry?.remainingBudget * 3600 || 0)} ${this.getTranslation(
+							'REPORT_PAGE.HOURS'
+					  )}`
+					: entry?.remainingBudget || 0;
+			const budget =
+				entry.budgetType === OrganizationContactBudgetTypeEnum.HOURS
+					? `${this.durationFormatPipe.transform(entry?.budget * 3600 || 0)} ${this.getTranslation(
+							'REPORT_PAGE.HOURS'
+					  )}`
+					: entry?.budget || 0;
+
+			const rowData = {
+				client: entry.organizationContact.name || 'N/A',
+				employeesOrTeams: '-',
+				spent: spent,
+				remaining: remaining,
+				spentPercentage: budget + ` ${entry?.spentPercentage || 0}%`
+			};
+
+			data.push(rowData);
+		});
+
+		if (!data.length) {
+			console.error('No valid data to export');
+			return;
+		}
+		const headers = [
+			this.getTranslation('REPORT_PAGE.CLIENT'),
+			this.getTranslation('REPORT_PAGE.EMPLOYEES/TEAMS'),
+			this.getTranslation('REPORT_PAGE.SPENT'),
+			this.getTranslation('REPORT_PAGE.REMAINING'),
+			this.getTranslation('REPORT_PAGE.BUDGET')
+		];
+
+		const fileName = this.getTranslation('REPORT_PAGE.CLIENT_BUDGET_REPORTS');
+		generateCsv(data, headers, fileName);
 	}
 }

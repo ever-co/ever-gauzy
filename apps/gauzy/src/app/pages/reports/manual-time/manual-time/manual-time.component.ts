@@ -9,7 +9,14 @@ import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { chain } from 'underscore';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
-import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
+import {
+	BaseSelectorFilterComponent,
+	DateFormatPipe,
+	DurationFormatPipe,
+	GauzyFiltersComponent,
+	generateCsv,
+	TimeZoneService
+} from '@gauzy/ui-core/shared';
 import {
 	DateRangePickerBuilderService,
 	ErrorHandlingService,
@@ -45,7 +52,9 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 		private readonly _timesheetFilterService: TimesheetFilterService,
 		protected readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		protected readonly timeZoneService: TimeZoneService
+		protected readonly timeZoneService: TimeZoneService,
+		private readonly dateFormatPipe: DateFormatPipe,
+		private readonly durationFormatPipe: DurationFormatPipe
 	) {
 		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
@@ -160,5 +169,63 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 			// Set loading state to false regardless of success or failure
 			this.loading = false;
 		}
+	}
+
+	exportToCsv() {
+		const data = [];
+
+		if (!this.dailyData || !Array.isArray(this.dailyData)) {
+			//TODO: replace with GZY-108: Error Handling on the Web Page
+			console.error('dailyData is undefined or not an array', this.dailyData);
+			return;
+		}
+
+		this.dailyData.forEach((entry) => {
+			if (!entry.timeLogs || !Array.isArray(entry.timeLogs)) {
+				console.log('No timeLogs found for entry:', entry);
+				return;
+			}
+
+			entry.timeLogs.forEach((logs) => {
+				const employeeFullName = logs?.employee?.fullName || 'N/A';
+				const projectName = logs?.project.name;
+				const membersCount = logs?.project?.membersCount || 'N/A';
+				const title = logs?.task?.title || 'N/A';
+
+				const rowData = {
+					date: this.dateFormatPipe.transform(entry?.date),
+					employee: employeeFullName,
+					project: `${projectName} ${this.getTranslation('SM_TABLE.MEMBERS_COUNT')}: ${membersCount}`,
+					title: title,
+					reason: logs.reason || '-',
+					from: this.dateFormatPipe.transform(logs?.createdAt) || '-',
+					duration: this.durationFormatPipe.transform(logs?.duration || 0),
+					editedAt: logs?.editedAt || 'N/A',
+					edited: logs?.isEdited ? `${ManualTimeLogAction.EDITED}` : `${ManualTimeLogAction.ADDED}`
+				};
+
+				data.push(rowData);
+			});
+		});
+
+		if (!data.length) {
+			console.error('No valid data to export');
+			return;
+		}
+
+		const headers = [
+			this.getTranslation('REPORT_PAGE.DATE'),
+			this.getTranslation('REPORT_PAGE.EMPLOYEE'),
+			this.getTranslation('REPORT_PAGE.PROJECT'),
+			this.getTranslation('REPORT_PAGE.TO_DO'),
+			this.getTranslation('REPORT_PAGE.REASON'),
+			this.getTranslation('REPORT_PAGE.FROM'),
+			this.getTranslation('REPORT_PAGE.TIME_SPAN'),
+			this.getTranslation('REPORT_PAGE.CHANGED_AT'),
+			this.getTranslation('REPORT_PAGE.ACTION')
+		];
+
+		const fileName = this.getTranslation('REPORT_PAGE.MANUAL_TIME_EDIT_REPORT');
+		generateCsv(data, headers, fileName);
 	}
 }

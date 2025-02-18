@@ -178,6 +178,7 @@
 		"ADD_MODULE": "Добавяне на модул"
 	},
 	"SM_TABLE": {
+		"MEMBERS_COUNT": "Брой членове",
 		"NO_DATA": {
 			"LOADING": "Зареждане, моля изчакайте...",
 			"RECEIVE_ESTIMATE": "Не сте получили никакви оценки.",
@@ -1156,6 +1157,8 @@
 		"GAUZY_FEATURES": "Функции на Gauzy"
 	},
 	"REPORT_PAGE": {
+		"TOTAL_TIME": "Общо време",
+		"AVERAGE_ACTIVITY": "Средна активност",
 		"MEMBERS_WORKED": "Работили членове",
 		"MANUAL_TIME_EDIT_REPORT": "Доклад за ръчно редактиране на времето",
 		"GROUP_BY": "Групиране по",
@@ -1213,6 +1216,7 @@
 		"PAYMENT": "Плащане",
 		"NO_EMPLOYEES_WORKED": "Няма работили служители",
 		"WEEKLY_TOTAL": "Седмичен общо",
+		"DURATION_PERCENTAGE": "Процент на продължителността",
 		"NO_DATA": {
 			"APP_AND_URL_ACTIVITY": "Няма намерени записи. Моля, изберете период, служител или проект.",
 			"MANUAL_ACTIVITY": "Няма намерени записи. Моля, изберете период, служител или проект.",

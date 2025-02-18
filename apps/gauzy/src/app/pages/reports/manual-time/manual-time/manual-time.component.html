@@ -51,9 +51,23 @@
 					nbSpinnerStatus="primary"
 				>
 					<ng-template class="table-template" [ngIf]="dailyData?.length > 0" [ngIfElse]="notFound">
-						<nb-card class="card" *ngFor="let day of dailyData">
+						<nb-card class="card" *ngFor="let day of dailyData; let i = index">
 							<nb-card-header class="card-title">
-								{{ day.date | dateFormat }}
+								<div class="label-wrapper">
+									{{ day.date | dateFormat }}
+									<button
+										*ngIf="i === 0"
+										nbButton
+										size="small"
+										status="basic"
+										class="action info-text-1"
+										(click)="exportToCsv()"
+										[disabled]="dailyData && dailyData.length ? dailyData.length <= 0 : true"
+									>
+										<nb-icon icon="file-text-outline"></nb-icon>
+										{{ 'BUTTONS.EXPORT_TO_CSV' | translate }}
+									</button>
+								</div>
 							</nb-card-header>
 							<nb-card-body class="manual-time-container">
 								<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>

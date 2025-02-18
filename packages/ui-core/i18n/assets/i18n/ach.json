@@ -133,6 +133,7 @@
 		"ADD_MODULE": "Yamo Module"
 	},
 	"SM_TABLE": {
+		"MEMBERS_COUNT": "crwdns10538:0crwdne10538:0",
 		"NO_DATA": {
 			"RECEIVE_ESTIMATE": "crwdns11329:0crwdne11329:0",
 			"INCOME": "crwdns11331:0crwdne11331:0",
@@ -1036,6 +1037,8 @@
 		"GAUZY_FEATURES": "crwdns11168:0crwdne11168:0"
 	},
 	"REPORT_PAGE": {
+		"TOTAL_TIME": "crwdns10538:0crwdne10538:0",
+		"AVERAGE_ACTIVITY": "crwdns10539:0crwdne10539:0",
 		"MEMBERS_WORKED": "crwdns8242:0crwdne8242:0",
 		"MANUAL_TIME_EDIT_REPORT": "crwdns8488:0crwdne8488:0",
 		"GROUP_BY": "crwdns11056:0crwdne11056:0",
@@ -1092,6 +1095,7 @@
 		"PAYMENT": "crwdns10264:0crwdne10264:0",
 		"NO_EMPLOYEES_WORKED": "crwdns9496:0crwdne9496:0",
 		"WEEKLY_TOTAL": "crwdns11193:0crwdne11193:0",
+		"DURATION_PERCENTAGE": "crwdns10536:0crwdne10536:0",
 		"NO_DATA": {
 			"APP_AND_URL_ACTIVITY": "crwdns11421:0crwdne11421:0",
 			"MANUAL_ACTIVITY": "crwdns11423:0crwdne11423:0",

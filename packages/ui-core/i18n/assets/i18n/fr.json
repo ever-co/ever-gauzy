@@ -169,6 +169,7 @@
 		"ADD_MODULE": "Ajouter un module"
 	},
 	"SM_TABLE": {
+		"MEMBERS_COUNT": "Nombre de membres",
 		"NO_DATA": {
 			"RECEIVE_ESTIMATE": "Vous n'avez reçu aucun devis.",
 			"INCOME": "Vous n'avez créé aucun revenu.",
@@ -1128,6 +1129,8 @@
 		"GAUZY_FEATURES": "Caractéristiques vaporeuses"
 	},
 	"REPORT_PAGE": {
+		"TOTAL_TIME": "Temps total",
+		"AVERAGE_ACTIVITY": "Activité moyenne",
 		"MEMBERS_WORKED": "Membres ont travaillé",
 		"MANUAL_TIME_EDIT_REPORT": "Rapport de modification manuelle de l'heure",
 		"GROUP_BY": "Groupe",
@@ -1185,6 +1188,7 @@
 		"PAYMENT": "Paiement",
 		"NO_EMPLOYEES_WORKED": "Aucun employé n'a travaillé.",
 		"WEEKLY_TOTAL": "Total hebdomadaire",
+		"DURATION_PERCENTAGE": "Pourcentage de durée",
 		"NO_DATA": {
 			"APP_AND_URL_ACTIVITY": "Aucun enregistrement trouvé. Veuillez sélectionner une plage de dates, un employé ou un projet.",
 			"MANUAL_ACTIVITY": "Aucun enregistrement trouvé. Veuillez sélectionner une plage de dates, un employé ou un projet.",

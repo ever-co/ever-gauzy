@@ -1,5 +1,5 @@
 @import 'report';
-@import "var";
+@import 'var';
 
 .employees-column {
   width: 25%;
@@ -23,6 +23,11 @@
 .remaining-column {
   width: 10%;
 }
+.label-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
 
 :host .budget-row {
   @include nb-ltr(padding-right, 5%);
@@ -32,7 +37,7 @@
   justify-content: space-between;
 
   .progress-wrapper {
-    width: 65%
+    width: 65%;
   }
 
   .currency-span {

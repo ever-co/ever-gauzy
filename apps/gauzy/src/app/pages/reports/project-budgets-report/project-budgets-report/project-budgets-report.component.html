@@ -42,6 +42,21 @@
 			>
 				<ng-template [ngIf]="projects?.length > 0" [ngIfElse]="notFound">
 					<nb-card class="card">
+						<nb-card-header>
+							<div class="label-wrapper">
+								<button
+									nbButton
+									size="small"
+									status="basic"
+									class="action info-text-1"
+									(click)="exportToCsv()"
+									[disabled]="projects && projects.length ? projects.length <= 0 : true"
+								>
+									<nb-icon icon="file-text-outline"></nb-icon>
+									{{ 'BUTTONS.EXPORT_TO_CSV' | translate }}
+								</button>
+							</div></nb-card-header
+						>
 						<nb-card-body class="budget-container">
 							<div class="columns-header">
 								<div class="table-inner-wrapper font-weight-bold align-items-center">

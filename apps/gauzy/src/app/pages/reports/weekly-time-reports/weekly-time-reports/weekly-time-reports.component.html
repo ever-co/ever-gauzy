@@ -51,8 +51,21 @@
 				>
 					<nb-card class="m-0" *ngIf="weekLogs?.length > 0; else notFound">
 						<nb-card-header>
-							{{ 'MENU.REPORTS' | translate }}
-						</nb-card-header>
+							<div class="label-wrapper">
+								{{ 'MENU.REPORTS' | translate }}
+								<button
+									nbButton
+									size="small"
+									status="basic"
+									class="action info-text-1"
+									(click)="exportToCsv()"
+									[disabled]="weekLogs && weekLogs.length ? weekLogs.length <= 0 : true"
+								>
+									<nb-icon icon="file-text-outline"></nb-icon>
+									{{ 'BUTTONS.EXPORT_TO_CSV' | translate }}
+								</button>
+							</div></nb-card-header
+						>
 						<nb-card-body class="weekly-time-container">
 							<div class="columns-header weekly-main-header">
 								<div class="table-inner-wrapper">

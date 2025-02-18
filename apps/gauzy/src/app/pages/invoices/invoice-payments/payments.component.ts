@@ -437,7 +437,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 	}
 
 	exportToCsv() {
-		let data = [];
+		const data = [];
 
 		this.payments.forEach((payment) => {
 			data.push({

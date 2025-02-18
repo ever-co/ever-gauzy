@@ -169,6 +169,7 @@
 		"ADD_MODULE": "Module toevoegen"
 	},
 	"SM_TABLE": {
+		"MEMBERS_COUNT": "Aantal leden",
 		"NO_DATA": {
 			"RECEIVE_ESTIMATE": "Je hebt geen offerte ontvangen.",
 			"INCOME": "Je hebt geen enkel inkomen gecreëerd.",
@@ -1127,6 +1128,8 @@
 		"GAUZY_FEATURES": "Gauzy functies"
 	},
 	"REPORT_PAGE": {
+		"TOTAL_TIME": "Totale tijd",
+		"AVERAGE_ACTIVITY": "Gemiddelde activiteit",
 		"MEMBERS_WORKED": "Gewerkte leden",
 		"MANUAL_TIME_EDIT_REPORT": "Handmatig Tijd Bewerkingsrapport",
 		"GROUP_BY": "Groep",
@@ -1184,6 +1187,7 @@
 		"PAYMENT": "Betaling",
 		"NO_EMPLOYEES_WORKED": "Er hebben geen werknemers gewerkt.",
 		"WEEKLY_TOTAL": "Wekelijks totaal",
+		"DURATION_PERCENTAGE": "Duurpercentage",
 		"NO_DATA": {
 			"APP_AND_URL_ACTIVITY": "Geen records gevonden. Selecteer alstublieft een datumbereik, werknemer of project.",
 			"MANUAL_ACTIVITY": "Geen records gevonden. Selecteer alstublieft een datumbereik, medewerker of project.",

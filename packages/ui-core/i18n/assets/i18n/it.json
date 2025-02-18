@@ -169,6 +169,7 @@
 		"ADD_MODULE": "Aggiungi modulo"
 	},
 	"SM_TABLE": {
+		"MEMBERS_COUNT": "Conteggio membri",
 		"NO_DATA": {
 			"RECEIVE_ESTIMATE": "Non hai ricevuto alcuna stima",
 			"INCOME": "Non hai creato alcun reddito",
@@ -1127,6 +1128,8 @@
 		"GAUZY_FEATURES": "Caratteristiche di Gauzy"
 	},
 	"REPORT_PAGE": {
+		"TOTAL_TIME": "Tempo totale",
+		"AVERAGE_ACTIVITY": "Attività media",
 		"MEMBERS_WORKED": "Membri che hanno lavorato",
 		"MANUAL_TIME_EDIT_REPORT": "Rapporto di modifica manuale del tempo",
 		"GROUP_BY": "Gruppo",
@@ -1184,6 +1187,7 @@
 		"PAYMENT": "Pagamento",
 		"NO_EMPLOYEES_WORKED": "Nessun dipendente ha lavorato",
 		"WEEKLY_TOTAL": "Totale settimanale",
+		"DURATION_PERCENTAGE": "Percentuale di durata",
 		"NO_DATA": {
 			"APP_AND_URL_ACTIVITY": "Nessun record trovato. Selezionare l'intervallo di date, l'impiegato o il progetto",
 			"MANUAL_ACTIVITY": "Nessun record trovato. Selezionare intervallo di date, dipendente o progetto",

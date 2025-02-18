@@ -1,546 +1,578 @@
 <div class="group-by-wrapper">
-	<div class="label">
-		{{ 'REPORT_PAGE.GROUP_BY' | translate }}
+	<div class="label-wrapper">
+		<div class="label">
+			{{ 'REPORT_PAGE.GROUP_BY' | translate }}
+			<nb-select [(ngModel)]="groupBy" (selectedChange)="groupByChange()" optionsListClass="nb-options">
+				<nb-option [value]="ReportGroupFilterEnum.date">
+					{{ 'REPORT_PAGE.DATE' | translate }}
+				</nb-option>
+				<nb-option [value]="ReportGroupFilterEnum.employee">
+					{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+				</nb-option>
+				<nb-option [value]="ReportGroupFilterEnum.project">
+					{{ 'REPORT_PAGE.PROJECT' | translate }}
+				</nb-option>
+				<nb-option [value]="ReportGroupFilterEnum.client">
+					{{ 'REPORT_PAGE.CLIENT' | translate }}
+				</nb-option>
+			</nb-select>
+		</div>
+		<div class="label">
+			<!--TODO: fix with GZY-106: Custom Grouping Options for CSV Export in Time and Activity Report-->
+			<button
+				nbButton
+				size="small"
+				status="basic"
+				class="action info-text-1"
+				(click)="exportToCsv()"
+				[disabled]="
+					dailyLogs && dailyLogs.length && groupBy === ReportGroupFilterEnum.date
+						? dailyLogs.length <= 0
+						: true
+				"
+			>
+				<nb-icon icon="file-text-outline"></nb-icon>
+				{{ 'BUTTONS.EXPORT_TO_CSV' | translate }}
+			</button>
+		</div>
 	</div>
-	<div>
-		<nb-select [(ngModel)]="groupBy" (selectedChange)="groupByChange()" optionsListClass="nb-options">
-			<nb-option [value]="ReportGroupFilterEnum.date">
-				{{ 'REPORT_PAGE.DATE' | translate }}
-			</nb-option>
-			<nb-option [value]="ReportGroupFilterEnum.employee">
-				{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-			</nb-option>
-			<nb-option [value]="ReportGroupFilterEnum.project">
-				{{ 'REPORT_PAGE.PROJECT' | translate }}
-			</nb-option>
-			<nb-option [value]="ReportGroupFilterEnum.client">
-				{{ 'REPORT_PAGE.CLIENT' | translate }}
-			</nb-option>
-		</nb-select>
-	</div>
-</div>
-<div
-	class="row-table tables-wrapper day-grid-container"
-	[nbSpinner]="loading"
-	[nbSpinnerSize]="'giant'"
-	[nbSpinnerStatus]="'primary'"
->
-	<ng-template [ngIf]="dailyLogs?.length > 0" [ngIfElse]="notFound">
-		<nb-accordion [multi]="true">
-			<nb-accordion-item *ngFor="let day of dailyLogs" [ngSwitch]="groupBy" [expanded]="true" class="card">
-				<nb-accordion-item-header class="card-title">
-					<ng-container *ngSwitchCase="ReportGroupFilterEnum.employee">
-						<div class="responsive-table-row employee-column">
-							<ng-container
-								*ngTemplateOutlet="employeeEl; context: { $implicit: day?.employee }"
-							></ng-container>
-						</div>
-						<div class="responsive-table-row project-column"></div>
-						<div class="responsive-table-row project-column"></div>
-						<div class="responsive-table-row todo-column header"></div>
-						<div class="responsive-table-row time-column">
-							<span>{{ day?.sum | durationFormat }}</span>
-						</div>
-						<div class="responsive-table-row activity-column">
-							<nb-badge
-								[status]="getStatus(day?.activity || 0)"
-								[text]="(day?.activity || 0) + '%'"
-							></nb-badge>
-						</div>
-					</ng-container>
-					<ng-container *ngSwitchCase="ReportGroupFilterEnum.project">
-						<div class="responsive-table-row employee-column">
-							<ng-container
-								*ngTemplateOutlet="projectEl; context: { $implicit: day?.project }"
-							></ng-container>
-						</div>
-						<div class="responsive-table-row project-column"></div>
-						<div class="responsive-table-row project-column"></div>
-						<div class="responsive-table-row todo-column header"></div>
-						<div class="responsive-table-row time-column">
-							<span>{{ day?.sum | durationFormat }}</span>
-						</div>
-						<div class="responsive-table-row activity-column">
-							<nb-badge
-								[status]="getStatus(day?.activity || 0)"
-								[text]="(day?.activity || 0) + '%'"
-							></nb-badge>
-						</div>
-					</ng-container>
-					<ng-container *ngSwitchCase="ReportGroupFilterEnum.client">
-						<div class="responsive-table-row employee-column">
-							<ng-container
-								*ngTemplateOutlet="clientEl; context: { $implicit: day?.client }"
-							></ng-container>
-						</div>
-						<div class="responsive-table-row project-column"></div>
-						<div class="responsive-table-row project-column"></div>
-						<div class="responsive-table-row todo-column header client"></div>
-						<div class="responsive-table-row time-column">
-							<span>{{ day?.sum | durationFormat }}</span>
-						</div>
-						<div class="responsive-table-row activity-column">
-							<nb-badge
-								[status]="getStatus(day?.activity || 0)"
-								[text]="(day?.activity || 0) + '%'"
-							></nb-badge>
-						</div>
-					</ng-container>
-					<ng-container *ngSwitchDefault>
-						<div class="responsive-table-row employee-column">
-							<ng-container
-								*ngTemplateOutlet="
-									dateEl;
-									context: {
-										$implicit: day?.date
-									}
-								"
-							></ng-container>
-						</div>
-						<div class="responsive-table-row project-column"></div>
-						<div class="responsive-table-row project-column"></div>
-						<div class="responsive-table-row todo-column header"></div>
-						<div class="responsive-table-row time-column">
-							<span>{{ day?.sum | durationFormat }}</span>
-						</div>
-						<div class="responsive-table-row activity-column">
-							<nb-badge
-								[status]="getStatus(day?.activity || 0)"
-								[text]="(day?.activity || 0) + '%'"
-							></nb-badge>
-						</div>
-					</ng-container>
-				</nb-accordion-item-header>
-				<nb-accordion-item-body>
-					<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
-					<ng-container *ngSwitchCase="ReportGroupFilterEnum.employee">
-						<ng-container
-							*ngTemplateOutlet="groupByEmployeeCardEl; context: { $implicit: day }"
-						></ng-container>
-					</ng-container>
-					<ng-container *ngSwitchCase="ReportGroupFilterEnum.project">
-						<ng-container
-							*ngTemplateOutlet="groupByProjectCardEl; context: { $implicit: day }"
-						></ng-container>
-					</ng-container>
-					<ng-container *ngSwitchCase="ReportGroupFilterEnum.client">
-						<ng-container
-							*ngTemplateOutlet="groupByClientCardEl; context: { $implicit: day }"
-						></ng-container>
-					</ng-container>
-					<ng-container *ngSwitchDefault>
-						<ng-container *ngTemplateOutlet="groupByDateCardEl; context: { $implicit: day }"></ng-container>
-					</ng-container>
-				</nb-accordion-item-body>
-			</nb-accordion-item>
-		</nb-accordion>
-	</ng-template>
-	<ng-template #notFound>
-		<div class="no-data">
-			<ngx-no-data-message>
-				<div
-					message
-					[innerHTML]="
-						'REPORT_PAGE.NO_DATA.DAILY_TIME_AND_ACTIVITY'
-							| translate : { downloadURL: PLATFORM_WEBSITE_DOWNLOAD_URL }
-					"
-				></div>
-			</ngx-no-data-message>
-		</div>
-	</ng-template>
-</div>
-<ng-template class="table-template" let-day #groupByDateCardEl>
-	<ng-container *ngFor="let logs of day.logs">
-		<div class="cart-body project-row" *ngFor="let employeeLog of logs.employeeLogs">
-			<div class="table-row" *ngFor="let task of employeeLog.tasks">
-				<div class="table-inner-wrapper">
-					<div class="responsive-table-row employee-column">
-						<div class="responsive-table-header">
-							{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-						</div>
-						<div class="responsive-table-content employee-column">
-							<ng-container *ngTemplateOutlet="employeeEl; context: { $implicit: employeeLog?.employee }">
-							</ng-container>
-						</div>
-					</div>
-					<div class="responsive-table-row project-column">
-						<div class="responsive-table-header">
-							{{ 'REPORT_PAGE.CLIENT' | translate }}
-						</div>
-						<div class="responsive-table-content project-name">
-							<ng-container *ngTemplateOutlet="clientEl; context: { $implicit: task?.client }">
-							</ng-container>
-						</div>
-					</div>
-					<div class="responsive-table-row project-column">
-						<div class="responsive-table-header">
-							{{ 'REPORT_PAGE.PROJECT' | translate }}
-						</div>
-						<div class="responsive-table-content project-name">
-							<ng-container *ngTemplateOutlet="projectEl; context: { $implicit: logs?.project }">
-							</ng-container>
-						</div>
-					</div>
-					<div class="responsive-table-row todo-column">
-						<div class="responsive-table-header">
-							{{ 'REPORT_PAGE.TO_DO' | translate }}
-						</div>
-						<div class="responsive-table-content day-col">
-							<ng-container *ngTemplateOutlet="taskEl; context: { $implicit: task?.task }">
-							</ng-container>
-						</div>
-					</div>
-					<div class="responsive-table-row todo-column">
-						<div class="responsive-table-header">
-							{{ 'REPORT_PAGE.NOTES' | translate }}
-						</div>
-						<div class="responsive-table-content day-col" [nbTooltip]="task?.description">
-							{{ task?.description | truncate : 40 }}
-						</div>
-					</div>
-					<div class="responsive-table-row time-column">
-						<div class="responsive-table-header">
-							{{ 'REPORT_PAGE.TIME' | translate }}
-						</div>
-						<div class="responsive-table-content day-col">
-							{{ task.duration | durationFormat }}
-						</div>
-					</div>
-					<div class="responsive-table-row activity-column">
-						<div class="responsive-table-header">
-							{{ 'REPORT_PAGE.ACTIVITY' | translate }}
-						</div>
-						<div class="responsive-table-content day-col">
-							<nb-badge
-								[status]="getStatus(employeeLog?.activity || 0)"
-								[text]="(employeeLog?.activity || 0) + '%'"
-							></nb-badge>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</ng-container>
-</ng-template>
-
-<ng-template class="table-template" let-employee #groupByEmployeeCardEl>
-	<ng-container *ngFor="let day of employee.logs">
-		<div class="cart-body project-row" *ngFor="let projectLog of day.projectLogs">
-			<div class="table-row" *ngFor="let task of projectLog.tasks">
-				<div class="table-inner-wrapper">
-					<div class="responsive-table-row employee-column">
-						<div class="responsive-table-header">
-							{{ 'REPORT_PAGE.DATE' | translate }}
-						</div>
-						<div class="responsive-table-content">
-							<ng-container *ngTemplateOutlet="dateEl; context: { $implicit: day?.date }"></ng-container>
-						</div>
-					</div>
-					<div class="responsive-table-row project-column">
-						<div class="responsive-table-header">
-							{{ 'REPORT_PAGE.CLIENT' | translate }}
-						</div>
-						<div class="responsive-table-content">
-							<ng-container
-								*ngTemplateOutlet="clientEl; context: { $implicit: task?.client }"
-							></ng-container>
-						</div>
-					</div>
-					<div class="responsive-table-row project-column">
-						<div class="responsive-table-header">
-							{{ 'REPORT_PAGE.PROJECT' | translate }}
-						</div>
-						<div class="responsive-table-content">
-							<ng-container
-								*ngTemplateOutlet="projectEl; context: { $implicit: projectLog?.project }"
-							></ng-container>
-						</div>
-					</div>
-					<div class="responsive-table-row todo-column">
-						<div class="responsive-table-header">
-							{{ 'REPORT_PAGE.TO_DO' | translate }}
-						</div>
-						<div class="responsive-table-content day-col">
-							<ng-container *ngTemplateOutlet="taskEl; context: { $implicit: task?.task }"></ng-container>
-						</div>
-					</div>
-					<div class="responsive-table-row todo-column">
-						<div class="responsive-table-header">
-							{{ 'REPORT_PAGE.NOTES' | translate }}
-						</div>
-						<div class="responsive-table-content day-col" [nbTooltip]="task?.description">
-							{{ task?.description | truncate : 40 }}
-						</div>
-					</div>
-					<div class="responsive-table-row time-column">
-						<div class="responsive-table-header">
-							{{ 'REPORT_PAGE.TIME' | translate }}
-						</div>
-						<div class="responsive-table-content day-col">
-							{{ task.duration | durationFormat }}
-						</div>
-					</div>
-					<div class="responsive-table-row activity-column">
-						<div class="responsive-table-header">
-							{{ 'REPORT_PAGE.ACTIVITY' | translate }}
-						</div>
-						<div class="responsive-table-content day-col">
-							<nb-badge
-								[status]="getStatus(projectLog?.activity || 0)"
-								[text]="(projectLog?.activity || 0) + '%'"
-							></nb-badge>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</ng-container>
-</ng-template>
-
-<ng-template class="table-template" let-project #groupByProjectCardEl>
-	<ng-container *ngFor="let day of project.logs">
-		<div class="cart-body project-row" *ngFor="let employeeLog of day.employeeLogs">
-			<div class="table-row" *ngFor="let task of employeeLog.tasks">
-				<div class="table-inner-wrapper">
-					<div class="responsive-table-row employee-column">
-						<div class="responsive-table-header">
-							{{ 'REPORT_PAGE.DATE' | translate }}
-						</div>
-						<div class="responsive-table-content project-name">
-							<ng-container *ngTemplateOutlet="dateEl; context: { $implicit: day?.date }"></ng-container>
-						</div>
-					</div>
-					<div class="responsive-table-row project-column">
-						<div class="responsive-table-header">
-							{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-						</div>
-						<div class="responsive-table-content project-name">
-							<ng-container *ngTemplateOutlet="employeeEl; context: { $implicit: employeeLog?.employee }">
-							</ng-container>
-						</div>
-					</div>
-					<div class="responsive-table-row project-column">
-						<div class="responsive-table-header">
-							{{ 'REPORT_PAGE.CLIENT' | translate }}
-						</div>
-						<div class="responsive-table-content project-name">
-							<ng-container *ngTemplateOutlet="clientEl; context: { $implicit: task?.client }">
-							</ng-container>
-						</div>
-					</div>
-					<div class="responsive-table-row todo-column">
-						<div class="responsive-table-header">
-							{{ 'REPORT_PAGE.TO_DO' | translate }}
-						</div>
-						<div class="responsive-table-content day-col">
-							<ng-container *ngTemplateOutlet="taskEl; context: { $implicit: task?.task }"></ng-container>
-						</div>
-					</div>
-					<div class="responsive-table-row todo-column">
-						<div class="responsive-table-header">
-							{{ 'REPORT_PAGE.NOTES' | translate }}
-						</div>
-						<div class="responsive-table-content day-col" [nbTooltip]="task?.description">
-							{{ task?.description | truncate : 40 }}
-						</div>
-					</div>
-					<div class="responsive-table-row time-column">
-						<div class="responsive-table-header">
-							{{ 'REPORT_PAGE.TIME' | translate }}
-						</div>
-						<div class="responsive-table-content day-col">
-							{{ task?.duration | durationFormat }}
-						</div>
-					</div>
-					<div class="responsive-table-row activity-column">
-						<div class="responsive-table-header">
-							{{ 'REPORT_PAGE.ACTIVITY' | translate }}
-						</div>
-						<div class="responsive-table-content day-col">
-							<nb-badge
-								[status]="getStatus(employeeLog?.activity || 0)"
-								[text]="(employeeLog?.activity || 0) + '%'"
-							></nb-badge>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</ng-container>
-</ng-template>
-
-<ng-template class="table-template" let-client #groupByClientCardEl>
-	<div class="cart-body project-row">
-		<ng-template ngFor let-clientLogs [ngForOf]="client.logs">
-			<ng-template ngFor let-day [ngForOf]="clientLogs.logs">
-				<ng-container *ngFor="let projectLog of day.projectLogs">
-					<div class="table-row" *ngFor="let task of projectLog.tasks">
-						<div class="table-inner-wrapper">
+	<div
+		class="row-table tables-wrapper day-grid-container"
+		[nbSpinner]="loading"
+		[nbSpinnerSize]="'giant'"
+		[nbSpinnerStatus]="'primary'"
+	>
+		<ng-template [ngIf]="dailyLogs?.length > 0" [ngIfElse]="notFound">
+			<nb-accordion [multi]="true">
+				<nb-accordion-item *ngFor="let day of dailyLogs" [ngSwitch]="groupBy" [expanded]="true" class="card">
+					<nb-accordion-item-header class="card-title">
+						<ng-container *ngSwitchCase="ReportGroupFilterEnum.employee">
 							<div class="responsive-table-row employee-column">
-								<div class="responsive-table-header">
-									{{ 'REPORT_PAGE.DATE' | translate }}
-								</div>
-								<div class="responsive-table-content project-name">
-									<ng-container
-										*ngTemplateOutlet="dateEl; context: { $implicit: day?.date }"
-									></ng-container>
-								</div>
+								<ng-container
+									*ngTemplateOutlet="employeeEl; context: { $implicit: day?.employee }"
+								></ng-container>
 							</div>
-							<div class="responsive-table-row employee-column">
-								<div class="responsive-table-header">
-									{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-								</div>
-								<div class="responsive-table-content project-name">
-									<ng-container
-										*ngTemplateOutlet="
-											employeeEl;
-											context: {
-												$implicit: projectLog?.employee
-											}
-										"
-									>
-									</ng-container>
-								</div>
-							</div>
-							<div class="responsive-table-row project-column">
-								<div class="responsive-table-header">
-									{{ 'REPORT_PAGE.PROJECT' | translate }}
-								</div>
-								<div class="responsive-table-content project-name">
-									<ng-container
-										*ngTemplateOutlet="
-											projectEl;
-											context: {
-												$implicit: clientLogs?.project
-											}
-										"
-									>
-									</ng-container>
-								</div>
-							</div>
-							<div class="responsive-table-row todo-column">
-								<div class="responsive-table-header">
-									{{ 'REPORT_PAGE.TO_DO' | translate }}
-								</div>
-								<div class="responsive-table-content day-col">
-									<ng-container
-										*ngTemplateOutlet="taskEl; context: { $implicit: task?.task }"
-									></ng-container>
-								</div>
-							</div>
-							<div class="responsive-table-row todo-column">
-								<div class="responsive-table-header">
-									{{ 'REPORT_PAGE.NOTES' | translate }}
-								</div>
-								<div class="responsive-table-content day-col" [nbTooltip]="task?.description">
-									{{ task?.description | truncate : 40 }}
-								</div>
-							</div>
+							<div class="responsive-table-row project-column"></div>
+							<div class="responsive-table-row project-column"></div>
+							<div class="responsive-table-row todo-column header"></div>
 							<div class="responsive-table-row time-column">
-								<div class="responsive-table-header">
-									{{ 'REPORT_PAGE.TIME' | translate }}
-								</div>
-								<div class="responsive-table-content day-col">
-									{{ task.duration | durationFormat }}
-								</div>
+								<span>{{ day?.sum | durationFormat }}</span>
 							</div>
 							<div class="responsive-table-row activity-column">
-								<div class="responsive-table-header">
-									{{ 'REPORT_PAGE.ACTIVITY' | translate }}
-								</div>
-								<div class="responsive-table-content day-col">
-									<nb-badge
-										[status]="getStatus(projectLog?.activity || 0)"
-										[text]="(projectLog?.activity || 0) + '%'"
-									></nb-badge>
-								</div>
+								<nb-badge
+									[status]="getStatus(day?.activity || 0)"
+									[text]="(day?.activity || 0) + '%'"
+								></nb-badge>
+							</div>
+						</ng-container>
+						<ng-container *ngSwitchCase="ReportGroupFilterEnum.project">
+							<div class="responsive-table-row employee-column">
+								<ng-container
+									*ngTemplateOutlet="projectEl; context: { $implicit: day?.project }"
+								></ng-container>
+							</div>
+							<div class="responsive-table-row project-column"></div>
+							<div class="responsive-table-row project-column"></div>
+							<div class="responsive-table-row todo-column header"></div>
+							<div class="responsive-table-row time-column">
+								<span>{{ day?.sum | durationFormat }}</span>
+							</div>
+							<div class="responsive-table-row activity-column">
+								<nb-badge
+									[status]="getStatus(day?.activity || 0)"
+									[text]="(day?.activity || 0) + '%'"
+								></nb-badge>
+							</div>
+						</ng-container>
+						<ng-container *ngSwitchCase="ReportGroupFilterEnum.client">
+							<div class="responsive-table-row employee-column">
+								<ng-container
+									*ngTemplateOutlet="clientEl; context: { $implicit: day?.client }"
+								></ng-container>
+							</div>
+							<div class="responsive-table-row project-column"></div>
+							<div class="responsive-table-row project-column"></div>
+							<div class="responsive-table-row todo-column header client"></div>
+							<div class="responsive-table-row time-column">
+								<span>{{ day?.sum | durationFormat }}</span>
+							</div>
+							<div class="responsive-table-row activity-column">
+								<nb-badge
+									[status]="getStatus(day?.activity || 0)"
+									[text]="(day?.activity || 0) + '%'"
+								></nb-badge>
+							</div>
+						</ng-container>
+						<ng-container *ngSwitchDefault>
+							<div class="responsive-table-row employee-column">
+								<ng-container
+									*ngTemplateOutlet="
+										dateEl;
+										context: {
+											$implicit: day?.date
+										}
+									"
+								></ng-container>
+							</div>
+							<div class="responsive-table-row project-column"></div>
+							<div class="responsive-table-row project-column"></div>
+							<div class="responsive-table-row todo-column header"></div>
+							<div class="responsive-table-row time-column">
+								<span>{{ day?.sum | durationFormat }}</span>
+							</div>
+							<div class="responsive-table-row activity-column">
+								<nb-badge
+									[status]="getStatus(day?.activity || 0)"
+									[text]="(day?.activity || 0) + '%'"
+								></nb-badge>
+							</div>
+						</ng-container>
+					</nb-accordion-item-header>
+					<nb-accordion-item-body>
+						<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
+						<ng-container *ngSwitchCase="ReportGroupFilterEnum.employee">
+							<ng-container
+								*ngTemplateOutlet="groupByEmployeeCardEl; context: { $implicit: day }"
+							></ng-container>
+						</ng-container>
+						<ng-container *ngSwitchCase="ReportGroupFilterEnum.project">
+							<ng-container
+								*ngTemplateOutlet="groupByProjectCardEl; context: { $implicit: day }"
+							></ng-container>
+						</ng-container>
+						<ng-container *ngSwitchCase="ReportGroupFilterEnum.client">
+							<ng-container
+								*ngTemplateOutlet="groupByClientCardEl; context: { $implicit: day }"
+							></ng-container>
+						</ng-container>
+						<ng-container *ngSwitchDefault>
+							<ng-container
+								*ngTemplateOutlet="groupByDateCardEl; context: { $implicit: day }"
+							></ng-container>
+						</ng-container>
+					</nb-accordion-item-body>
+				</nb-accordion-item>
+			</nb-accordion>
+		</ng-template>
+		<ng-template #notFound>
+			<div class="no-data">
+				<ngx-no-data-message>
+					<div
+						message
+						[innerHTML]="
+							'REPORT_PAGE.NO_DATA.DAILY_TIME_AND_ACTIVITY'
+								| translate : { downloadURL: PLATFORM_WEBSITE_DOWNLOAD_URL }
+						"
+					></div>
+				</ngx-no-data-message>
+			</div>
+		</ng-template>
+	</div>
+	<ng-template class="table-template" let-day #groupByDateCardEl>
+		<ng-container *ngFor="let logs of day.logs">
+			<div class="cart-body project-row" *ngFor="let employeeLog of logs.employeeLogs">
+				<div class="table-row" *ngFor="let task of employeeLog.tasks">
+					<div class="table-inner-wrapper">
+						<div class="responsive-table-row employee-column">
+							<div class="responsive-table-header">
+								{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+							</div>
+							<div class="responsive-table-content employee-column">
+								<ng-container
+									*ngTemplateOutlet="employeeEl; context: { $implicit: employeeLog?.employee }"
+								>
+								</ng-container>
+							</div>
+						</div>
+						<div class="responsive-table-row project-column">
+							<div class="responsive-table-header">
+								{{ 'REPORT_PAGE.CLIENT' | translate }}
+							</div>
+							<div class="responsive-table-content project-name">
+								<ng-container *ngTemplateOutlet="clientEl; context: { $implicit: task?.client }">
+								</ng-container>
+							</div>
+						</div>
+						<div class="responsive-table-row project-column">
+							<div class="responsive-table-header">
+								{{ 'REPORT_PAGE.PROJECT' | translate }}
+							</div>
+							<div class="responsive-table-content project-name">
+								<ng-container *ngTemplateOutlet="projectEl; context: { $implicit: logs?.project }">
+								</ng-container>
+							</div>
+						</div>
+						<div class="responsive-table-row todo-column">
+							<div class="responsive-table-header">
+								{{ 'REPORT_PAGE.TO_DO' | translate }}
+							</div>
+							<div class="responsive-table-content day-col">
+								<ng-container *ngTemplateOutlet="taskEl; context: { $implicit: task?.task }">
+								</ng-container>
+							</div>
+						</div>
+						<div class="responsive-table-row todo-column">
+							<div class="responsive-table-header">
+								{{ 'REPORT_PAGE.NOTES' | translate }}
+							</div>
+							<div class="responsive-table-content day-col" [nbTooltip]="task?.description">
+								{{ task?.description | truncate : 40 }}
+							</div>
+						</div>
+						<div class="responsive-table-row time-column">
+							<div class="responsive-table-header">
+								{{ 'REPORT_PAGE.TIME' | translate }}
+							</div>
+							<div class="responsive-table-content day-col">
+								{{ task.duration | durationFormat }}
+							</div>
+						</div>
+						<div class="responsive-table-row activity-column">
+							<div class="responsive-table-header">
+								{{ 'REPORT_PAGE.ACTIVITY' | translate }}
+							</div>
+							<div class="responsive-table-content day-col">
+								<nb-badge
+									[status]="getStatus(employeeLog?.activity || 0)"
+									[text]="(employeeLog?.activity || 0) + '%'"
+								></nb-badge>
 							</div>
 						</div>
 					</div>
-				</ng-container>
+				</div>
+			</div>
+		</ng-container>
+	</ng-template>
+
+	<ng-template class="table-template" let-employee #groupByEmployeeCardEl>
+		<ng-container *ngFor="let day of employee.logs">
+			<div class="cart-body project-row" *ngFor="let projectLog of day.projectLogs">
+				<div class="table-row" *ngFor="let task of projectLog.tasks">
+					<div class="table-inner-wrapper">
+						<div class="responsive-table-row employee-column">
+							<div class="responsive-table-header">
+								{{ 'REPORT_PAGE.DATE' | translate }}
+							</div>
+							<div class="responsive-table-content">
+								<ng-container
+									*ngTemplateOutlet="dateEl; context: { $implicit: day?.date }"
+								></ng-container>
+							</div>
+						</div>
+						<div class="responsive-table-row project-column">
+							<div class="responsive-table-header">
+								{{ 'REPORT_PAGE.CLIENT' | translate }}
+							</div>
+							<div class="responsive-table-content">
+								<ng-container
+									*ngTemplateOutlet="clientEl; context: { $implicit: task?.client }"
+								></ng-container>
+							</div>
+						</div>
+						<div class="responsive-table-row project-column">
+							<div class="responsive-table-header">
+								{{ 'REPORT_PAGE.PROJECT' | translate }}
+							</div>
+							<div class="responsive-table-content">
+								<ng-container
+									*ngTemplateOutlet="projectEl; context: { $implicit: projectLog?.project }"
+								></ng-container>
+							</div>
+						</div>
+						<div class="responsive-table-row todo-column">
+							<div class="responsive-table-header">
+								{{ 'REPORT_PAGE.TO_DO' | translate }}
+							</div>
+							<div class="responsive-table-content day-col">
+								<ng-container
+									*ngTemplateOutlet="taskEl; context: { $implicit: task?.task }"
+								></ng-container>
+							</div>
+						</div>
+						<div class="responsive-table-row todo-column">
+							<div class="responsive-table-header">
+								{{ 'REPORT_PAGE.NOTES' | translate }}
+							</div>
+							<div class="responsive-table-content day-col" [nbTooltip]="task?.description">
+								{{ task?.description | truncate : 40 }}
+							</div>
+						</div>
+						<div class="responsive-table-row time-column">
+							<div class="responsive-table-header">
+								{{ 'REPORT_PAGE.TIME' | translate }}
+							</div>
+							<div class="responsive-table-content day-col">
+								{{ task.duration | durationFormat }}
+							</div>
+						</div>
+						<div class="responsive-table-row activity-column">
+							<div class="responsive-table-header">
+								{{ 'REPORT_PAGE.ACTIVITY' | translate }}
+							</div>
+							<div class="responsive-table-content day-col">
+								<nb-badge
+									[status]="getStatus(projectLog?.activity || 0)"
+									[text]="(projectLog?.activity || 0) + '%'"
+								></nb-badge>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</ng-container>
+	</ng-template>
+
+	<ng-template class="table-template" let-project #groupByProjectCardEl>
+		<ng-container *ngFor="let day of project.logs">
+			<div class="cart-body project-row" *ngFor="let employeeLog of day.employeeLogs">
+				<div class="table-row" *ngFor="let task of employeeLog.tasks">
+					<div class="table-inner-wrapper">
+						<div class="responsive-table-row employee-column">
+							<div class="responsive-table-header">
+								{{ 'REPORT_PAGE.DATE' | translate }}
+							</div>
+							<div class="responsive-table-content project-name">
+								<ng-container
+									*ngTemplateOutlet="dateEl; context: { $implicit: day?.date }"
+								></ng-container>
+							</div>
+						</div>
+						<div class="responsive-table-row project-column">
+							<div class="responsive-table-header">
+								{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+							</div>
+							<div class="responsive-table-content project-name">
+								<ng-container
+									*ngTemplateOutlet="employeeEl; context: { $implicit: employeeLog?.employee }"
+								>
+								</ng-container>
+							</div>
+						</div>
+						<div class="responsive-table-row project-column">
+							<div class="responsive-table-header">
+								{{ 'REPORT_PAGE.CLIENT' | translate }}
+							</div>
+							<div class="responsive-table-content project-name">
+								<ng-container *ngTemplateOutlet="clientEl; context: { $implicit: task?.client }">
+								</ng-container>
+							</div>
+						</div>
+						<div class="responsive-table-row todo-column">
+							<div class="responsive-table-header">
+								{{ 'REPORT_PAGE.TO_DO' | translate }}
+							</div>
+							<div class="responsive-table-content day-col">
+								<ng-container
+									*ngTemplateOutlet="taskEl; context: { $implicit: task?.task }"
+								></ng-container>
+							</div>
+						</div>
+						<div class="responsive-table-row todo-column">
+							<div class="responsive-table-header">
+								{{ 'REPORT_PAGE.NOTES' | translate }}
+							</div>
+							<div class="responsive-table-content day-col" [nbTooltip]="task?.description">
+								{{ task?.description | truncate : 40 }}
+							</div>
+						</div>
+						<div class="responsive-table-row time-column">
+							<div class="responsive-table-header">
+								{{ 'REPORT_PAGE.TIME' | translate }}
+							</div>
+							<div class="responsive-table-content day-col">
+								{{ task?.duration | durationFormat }}
+							</div>
+						</div>
+						<div class="responsive-table-row activity-column">
+							<div class="responsive-table-header">
+								{{ 'REPORT_PAGE.ACTIVITY' | translate }}
+							</div>
+							<div class="responsive-table-content day-col">
+								<nb-badge
+									[status]="getStatus(employeeLog?.activity || 0)"
+									[text]="(employeeLog?.activity || 0) + '%'"
+								></nb-badge>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</ng-container>
+	</ng-template>
+
+	<ng-template class="table-template" let-client #groupByClientCardEl>
+		<div class="cart-body project-row">
+			<ng-template ngFor let-clientLogs [ngForOf]="client.logs">
+				<ng-template ngFor let-day [ngForOf]="clientLogs.logs">
+					<ng-container *ngFor="let projectLog of day.projectLogs">
+						<div class="table-row" *ngFor="let task of projectLog.tasks">
+							<div class="table-inner-wrapper">
+								<div class="responsive-table-row employee-column">
+									<div class="responsive-table-header">
+										{{ 'REPORT_PAGE.DATE' | translate }}
+									</div>
+									<div class="responsive-table-content project-name">
+										<ng-container
+											*ngTemplateOutlet="dateEl; context: { $implicit: day?.date }"
+										></ng-container>
+									</div>
+								</div>
+								<div class="responsive-table-row employee-column">
+									<div class="responsive-table-header">
+										{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+									</div>
+									<div class="responsive-table-content project-name">
+										<ng-container
+											*ngTemplateOutlet="
+												employeeEl;
+												context: {
+													$implicit: projectLog?.employee
+												}
+											"
+										>
+										</ng-container>
+									</div>
+								</div>
+								<div class="responsive-table-row project-column">
+									<div class="responsive-table-header">
+										{{ 'REPORT_PAGE.PROJECT' | translate }}
+									</div>
+									<div class="responsive-table-content project-name">
+										<ng-container
+											*ngTemplateOutlet="
+												projectEl;
+												context: {
+													$implicit: clientLogs?.project
+												}
+											"
+										>
+										</ng-container>
+									</div>
+								</div>
+								<div class="responsive-table-row todo-column">
+									<div class="responsive-table-header">
+										{{ 'REPORT_PAGE.TO_DO' | translate }}
+									</div>
+									<div class="responsive-table-content day-col">
+										<ng-container
+											*ngTemplateOutlet="taskEl; context: { $implicit: task?.task }"
+										></ng-container>
+									</div>
+								</div>
+								<div class="responsive-table-row todo-column">
+									<div class="responsive-table-header">
+										{{ 'REPORT_PAGE.NOTES' | translate }}
+									</div>
+									<div class="responsive-table-content day-col" [nbTooltip]="task?.description">
+										{{ task?.description | truncate : 40 }}
+									</div>
+								</div>
+								<div class="responsive-table-row time-column">
+									<div class="responsive-table-header">
+										{{ 'REPORT_PAGE.TIME' | translate }}
+									</div>
+									<div class="responsive-table-content day-col">
+										{{ task.duration | durationFormat }}
+									</div>
+								</div>
+								<div class="responsive-table-row activity-column">
+									<div class="responsive-table-header">
+										{{ 'REPORT_PAGE.ACTIVITY' | translate }}
+									</div>
+									<div class="responsive-table-content day-col">
+										<nb-badge
+											[status]="getStatus(projectLog?.activity || 0)"
+											[text]="(projectLog?.activity || 0) + '%'"
+										></nb-badge>
+									</div>
+								</div>
+							</div>
+						</div>
+					</ng-container>
+				</ng-template>
 			</ng-template>
+		</div>
+	</ng-template>
+
+	<ng-template let-project #projectEl>
+		<ga-project-column-view [project]="project"></ga-project-column-view>
+	</ng-template>
+
+	<ng-template let-task #taskEl>
+		<span *ngIf="task?.title; else noTasks" [nbTooltip]="task?.title">
+			{{ task?.title | truncate : 40 }}
+		</span>
+		<ng-template #noTasks>
+			<span>{{ 'REPORT_PAGE.NO_TASK' | translate }}</span>
 		</ng-template>
-	</div>
-</ng-template>
-
-<ng-template let-project #projectEl>
-	<ga-project-column-view [project]="project"></ga-project-column-view>
-</ng-template>
-
-<ng-template let-task #taskEl>
-	<span *ngIf="task?.title; else noTasks" [nbTooltip]="task?.title">
-		{{ task?.title | truncate : 40 }}
-	</span>
-	<ng-template #noTasks>
-		<span>{{ 'REPORT_PAGE.NO_TASK' | translate }}</span>
 	</ng-template>
-</ng-template>
 
-<ng-template let-client #clientEl>
-	<span *ngIf="client; else noClient">
-		<ngx-contact-links [value]="client"></ngx-contact-links>
-	</span>
-	<ng-template #noClient>
-		<span>{{ 'REPORT_PAGE.NO_CLIENT' | translate }}</span>
+	<ng-template let-client #clientEl>
+		<span *ngIf="client; else noClient">
+			<ngx-contact-links [value]="client"></ngx-contact-links>
+		</span>
+		<ng-template #noClient>
+			<span>{{ 'REPORT_PAGE.NO_CLIENT' | translate }}</span>
+		</ng-template>
 	</ng-template>
-</ng-template>
 
-<ng-template let-employee #employeeEl>
-	<div class="avatar-wrapper-outer">
-		<ngx-avatar
-			class="report-table"
-			*ngIf="employee"
-			[src]="employee?.user?.imageUrl"
-			[name]="employee?.user?.name"
-			[id]="employee?.id"
-			[employee]="employee"
-		></ngx-avatar>
-	</div>
-	<ng-template #noEmployee>
-		<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
+	<ng-template let-employee #employeeEl>
+		<div class="avatar-wrapper-outer">
+			<ngx-avatar
+				class="report-table"
+				*ngIf="employee"
+				[src]="employee?.user?.imageUrl"
+				[name]="employee?.user?.name"
+				[id]="employee?.id"
+				[employee]="employee"
+			></ngx-avatar>
+		</div>
+		<ng-template #noEmployee>
+			<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
+		</ng-template>
 	</ng-template>
-</ng-template>
 
-<ng-template let-date #dateEl>
-	<span>{{ date | dateFormat }}</span>
-</ng-template>
+	<ng-template let-date #dateEl>
+		<span>{{ date | dateFormat }}</span>
+	</ng-template>
 
-<ng-template #columnsHeader>
-	<div class="columns-header">
-		<div class="table-inner-wrapper font-weight-bold align-items-center">
-			<div *ngIf="groupBy != ReportGroupFilterEnum.date" class="responsive-table-row employee-column">
-				{{ 'REPORT_PAGE.DATE' | translate }}
-			</div>
-			<div
-				*ngIf="groupBy != ReportGroupFilterEnum.employee && groupBy !== ReportGroupFilterEnum.project"
-				class="responsive-table-row employee-column"
-			>
-				{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-			</div>
-			<div
-				*ngIf="groupBy != ReportGroupFilterEnum.employee && groupBy === ReportGroupFilterEnum.project"
-				class="responsive-table-row project-column"
-			>
-				{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-			</div>
-			<div *ngIf="groupBy != ReportGroupFilterEnum.client" class="responsive-table-row project-column">
-				{{ 'REPORT_PAGE.CLIENT' | translate }}
-			</div>
-			<div *ngIf="groupBy != ReportGroupFilterEnum.project" class="responsive-table-row project-column">
-				{{ 'REPORT_PAGE.PROJECT' | translate }}
-			</div>
-			<div class="responsive-table-row todo-column day-col">
-				{{ 'REPORT_PAGE.TO_DO' | translate }}
-			</div>
-			<div class="responsive-table-row todo-column day-col">
-				{{ 'REPORT_PAGE.NOTES' | translate }}
-			</div>
-			<div class="responsive-table-row time-column day-col">
-				{{ 'REPORT_PAGE.TIME' | translate }}
-			</div>
-			<div class="responsive-table-row activity-column day-col">
-				{{ 'REPORT_PAGE.ACTIVITY' | translate }}
+	<ng-template #columnsHeader>
+		<div class="columns-header">
+			<div class="table-inner-wrapper font-weight-bold align-items-center">
+				<div *ngIf="groupBy != ReportGroupFilterEnum.date" class="responsive-table-row employee-column">
+					{{ 'REPORT_PAGE.DATE' | translate }}
+				</div>
+				<div
+					*ngIf="groupBy != ReportGroupFilterEnum.employee && groupBy !== ReportGroupFilterEnum.project"
+					class="responsive-table-row employee-column"
+				>
+					{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+				</div>
+				<div
+					*ngIf="groupBy != ReportGroupFilterEnum.employee && groupBy === ReportGroupFilterEnum.project"
+					class="responsive-table-row project-column"
+				>
+					{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+				</div>
+				<div *ngIf="groupBy != ReportGroupFilterEnum.client" class="responsive-table-row project-column">
+					{{ 'REPORT_PAGE.CLIENT' | translate }}
+				</div>
+				<div *ngIf="groupBy != ReportGroupFilterEnum.project" class="responsive-table-row project-column">
+					{{ 'REPORT_PAGE.PROJECT' | translate }}
+				</div>
+				<div class="responsive-table-row todo-column day-col">
+					{{ 'REPORT_PAGE.TO_DO' | translate }}
+				</div>
+				<div class="responsive-table-row todo-column day-col">
+					{{ 'REPORT_PAGE.NOTES' | translate }}
+				</div>
+				<div class="responsive-table-row time-column day-col">
+					{{ 'REPORT_PAGE.TIME' | translate }}
+				</div>
+				<div class="responsive-table-row activity-column day-col">
+					{{ 'REPORT_PAGE.ACTIVITY' | translate }}
+				</div>
 			</div>
 		</div>
-	</div>
-</ng-template>
+	</ng-template>
+</div>

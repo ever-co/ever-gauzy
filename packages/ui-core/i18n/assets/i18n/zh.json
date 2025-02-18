@@ -169,6 +169,7 @@
 		"ADD_MODULE": "添加模块"
 	},
 	"SM_TABLE": {
+		"MEMBERS_COUNT": "成员计数",
 		"NO_DATA": {
 			"RECEIVE_ESTIMATE": "您尚未收到任何估计。",
 			"INCOME": "您还没有创造任何收入。",
@@ -1127,6 +1128,8 @@
 		"GAUZY_FEATURES": "薄厚特徵"
 	},
 	"REPORT_PAGE": {
+		"TOTAL_TIME": "总时间",
+		"AVERAGE_ACTIVITY": "平均活动",
 		"MEMBERS_WORKED": "成员工作",
 		"MANUAL_TIME_EDIT_REPORT": "手动时间编辑报告",
 		"GROUP_BY": "组",
@@ -1184,6 +1187,7 @@
 		"PAYMENT": "付款",
 		"NO_EMPLOYEES_WORKED": "没有员工工作",
 		"WEEKLY_TOTAL": "每周总数",
+		"DURATION_PERCENTAGE": "持续时间百分比",
 		"NO_DATA": {
 			"APP_AND_URL_ACTIVITY": "未找到任何记录。请选择日期范围、员工或项目。",
 			"MANUAL_ACTIVITY": "未找到记录。请选择日期范围、员工或项目。",

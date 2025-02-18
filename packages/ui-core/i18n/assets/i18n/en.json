@@ -178,6 +178,7 @@
 		"ADD_MODULE": "Add Module"
 	},
 	"SM_TABLE": {
+		"MEMBERS_COUNT": "Members count",
 		"NO_DATA": {
 			"LOADING": "Loading, Please wait...",
 			"RECEIVE_ESTIMATE": "You have not received any estimates.",
@@ -1166,6 +1167,8 @@
 		"GAUZY_FEATURES": "Gauzy features"
 	},
 	"REPORT_PAGE": {
+		"TOTAL_TIME": "Total time",
+		"AVERAGE_ACTIVITY": "Average activity",
 		"MEMBERS_WORKED": "Members Worked",
 		"MANUAL_TIME_EDIT_REPORT": "Manual Time Edit Report",
 		"GROUP_BY": "Group",
@@ -1223,6 +1226,7 @@
 		"PAYMENT": "Payment",
 		"NO_EMPLOYEES_WORKED": "No employees worked",
 		"WEEKLY_TOTAL": "Weekly Total",
+		"DURATION_PERCENTAGE": "Duration percentage",
 		"NO_DATA": {
 			"APP_AND_URL_ACTIVITY": "No records found. Please select date range, employee or project.",
 			"MANUAL_ACTIVITY": "No records found. Please select date range, employee or project.",

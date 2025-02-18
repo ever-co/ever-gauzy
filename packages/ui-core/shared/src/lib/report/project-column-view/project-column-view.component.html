@@ -1,21 +1,17 @@
 <div *ngIf="project; else noProject" class="single-project-template">
-    <div class="logo-wrapper">
-        <ng-template [ngIf]="project?.imageUrl" [ngIfElse]="noImageEl">
-            <img draggable="false" [src]="project?.imageUrl" />
-        </ng-template>
-        <ng-template #noImageEl>
-            <img
-                draggable="false"
-                [src]="fallbackSvg"
-                class="default-image"
-            />
-        </ng-template>
-    </div>
-    <div class="headers-wrapper">
-        <div class="main-header" [title]="project?.name">{{ project?.name }} </div>
-        <div class="employees-count">Members count {{ project?.membersCount }}</div>
-    </div>
+	<div class="logo-wrapper">
+		<ng-template [ngIf]="project?.imageUrl" [ngIfElse]="noImageEl">
+			<img draggable="false" [src]="project?.imageUrl" />
+		</ng-template>
+		<ng-template #noImageEl>
+			<img draggable="false" [src]="fallbackSvg" class="default-image" />
+		</ng-template>
+	</div>
+	<div class="headers-wrapper">
+		<div class="main-header" [title]="project?.name">{{ project?.name }}</div>
+		<div class="employees-count">{{ 'SM_TABLE.MEMBERS_COUNT' | translate }} {{ project?.membersCount }}</div>
+	</div>
 </div>
 <ng-template #noProject>
-    <span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
+	<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
 </ng-template>

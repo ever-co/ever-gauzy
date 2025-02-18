@@ -168,6 +168,7 @@
 		"ADD_MODULE": "Добавить модуль"
 	},
 	"SM_TABLE": {
+		"MEMBERS_COUNT": "Количество участников",
 		"NO_DATA": {
 			"LOADING": "Загрузка, пожалуйста, подождите...",
 			"RECEIVE_ESTIMATE": "Вы не получили ни одной оценки.",
@@ -1135,6 +1136,8 @@
 		"GAUZY_FEATURES": "Функции Gauzy"
 	},
 	"REPORT_PAGE": {
+		"TOTAL_TIME": "Общее время",
+		"AVERAGE_ACTIVITY": "Средняя активность",
 		"MEMBERS_WORKED": "Участники Раболи",
 		"MANUAL_TIME_EDIT_REPORT": "Отчет о времени вручную",
 		"GROUP_BY": "Группа",
@@ -1192,6 +1195,7 @@
 		"PAYMENT": "Оплата",
 		"NO_EMPLOYEES_WORKED": "Сотрудники не работали",
 		"WEEKLY_TOTAL": "Итого за неделю",
+		"DURATION_PERCENTAGE": "Процент длительности",
 		"NO_DATA": {
 			"APP_AND_URL_ACTIVITY": "Записи не найдены. Пожалуйста, выберите диапазон дат, сотрудник или проект.",
 			"MANUAL_ACTIVITY": "Записи не найдены. Пожалуйста, выберите диапазон дат, сотрудник или проект.",

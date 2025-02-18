@@ -7,7 +7,7 @@
     min-height: 56px;
   }
   ::ng-deep .amount-owed-grid .no-data-found {
-	  height: calc(100vh - 45.75rem) !important;
+    height: calc(100vh - 45.75rem) !important;
   }
 }
 
@@ -28,11 +28,17 @@
 }
 
 .weekly-logs {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.amounts-owed-container{
-	padding-bottom: 6px !important;
+.amounts-owed-container {
+  padding-bottom: 6px !important;
+}
+
+.label-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }

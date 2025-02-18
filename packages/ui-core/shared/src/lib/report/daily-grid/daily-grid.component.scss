@@ -4,6 +4,23 @@
   display: flex;
   align-items: center;
   gap: 18px;
+  flex-direction: column;
+
+  .label-wrapper {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+
+    .label:first-child {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+  }
+}
+
+.row-table {
+  width: 100%;
 }
 
 :host {

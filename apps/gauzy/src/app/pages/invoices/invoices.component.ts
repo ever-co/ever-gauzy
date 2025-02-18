@@ -2,7 +2,6 @@ import {
 	Component,
 	OnInit,
 	ViewChild,
-	OnDestroy,
 	Input,
 	QueryList,
 	ViewChildren,
@@ -26,7 +25,6 @@ import {
 	EstimateColumnsEnum,
 	IInvoiceEstimateHistory,
 	PermissionsEnum,
-	ICurrency,
 	IInvoiceItemCreateInput,
 	InvoiceTabsEnum,
 	DiscountTaxTypeEnum,
@@ -74,13 +72,13 @@ import { PublicLinkComponent } from './public-link/public-link.component';
 	templateUrl: './invoices.component.html',
 	styleUrls: ['invoices.component.scss']
 })
-export class InvoicesComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
+export class InvoicesComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
 	settingsSmartTable: object;
 	smartTableSource: ServerDataSource;
 	selectedInvoice: IInvoice;
-	loading: boolean = false;
-	disableButton: boolean = true;
-	canBeSend: boolean = true;
+	loading = false;
+	disableButton = true;
+	canBeSend = true;
 	invoices: IInvoice[] = [];
 	organization: IOrganization;
 	selectedDateRange: IDateRangePicker;
@@ -92,7 +90,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	settingsContextMenu: NbMenuItem[];
 	contextMenus = [];
 	columns: string[] = [];
-	perPage: number = 10;
+	perPage = 10;
 	histories: IInvoiceEstimateHistory[] = [];
 	includeArchived = false;
 	invoices$: Subject<any> = this.subject$;
@@ -103,7 +101,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	/*
 	 * getter setter for check estimate or invoice
 	 */
-	private _isEstimate: boolean = false;
+	private _isEstimate = false;
 	@Input() set isEstimate(val: boolean) {
 		this._isEstimate = val;
 	}
@@ -1202,11 +1200,6 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 		});
 	}
 
-	/*
-	 * On Changed Currency Event Emitter
-	 */
-	currencyChanged($event: ICurrency) {}
-
 	/**
 	 * On change number of item per page option
 	 * @param $event is a number
@@ -1227,6 +1220,4 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 		// Close popover after click any button inside
 		if (event) this.toggleActionsPopover();
 	}
-
-	ngOnDestroy() {}
 }

@@ -14,7 +14,13 @@ import {
 } from '@gauzy/contracts';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import { DateRangePickerBuilderService, Store, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
-import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
+import {
+	BaseSelectorFilterComponent,
+	DurationFormatPipe,
+	GauzyFiltersComponent,
+	generateCsv,
+	TimeZoneService
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -23,7 +29,7 @@ import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } f
 	styleUrls: ['./project-budgets-report.component.scss']
 })
 export class ProjectBudgetsReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
-	public loading: boolean = false;
+	public loading = false;
 	public groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 	public OrganizationProjectBudgetTypeEnum = OrganizationProjectBudgetTypeEnum;
 	public projects: IProjectBudgetLimitReport[] = [];
@@ -40,7 +46,8 @@ export class ProjectBudgetsReportComponent extends BaseSelectorFilterComponent i
 		public readonly translateService: TranslateService,
 		protected readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		protected readonly timeZoneService: TimeZoneService
+		protected readonly timeZoneService: TimeZoneService,
+		private readonly durationFormatPipe: DurationFormatPipe
 	) {
 		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
@@ -134,5 +141,56 @@ export class ProjectBudgetsReportComponent extends BaseSelectorFilterComponent i
 			// Set the loading flag to false, regardless of success or failure
 			this.loading = false;
 		}
+	}
+
+	exportToCsv() {
+		const data = [];
+		this.projects.forEach((entry) => {
+			const projectName = entry?.project.name;
+			const membersCount = entry?.project?.membersCount || 'N/A';
+			const spent =
+				entry.project.budgetType === OrganizationProjectBudgetTypeEnum.HOURS
+					? `${this.durationFormatPipe.transform(entry?.spent * 3600 || 0)} ${this.getTranslation(
+							'REPORT_PAGE.HOURS'
+					  )}`
+					: entry?.spent || 0;
+			const remaining =
+				entry.project.budgetType === OrganizationProjectBudgetTypeEnum.HOURS
+					? `${this.durationFormatPipe.transform(entry?.remainingBudget * 3600 || 0)} ${this.getTranslation(
+							'REPORT_PAGE.HOURS'
+					  )}`
+					: entry?.remainingBudget || 0;
+			const budget =
+				entry.project.budgetType === OrganizationProjectBudgetTypeEnum.HOURS
+					? `${this.durationFormatPipe.transform(entry?.budget * 3600 || 0)} ${this.getTranslation(
+							'REPORT_PAGE.HOURS'
+					  )}`
+					: entry?.budget || 0;
+
+			const rowData = {
+				project: `${projectName} ${this.getTranslation('SM_TABLE.MEMBERS_COUNT')}: ${membersCount}`,
+				employeesOrTeams: '-',
+				spent: spent,
+				remaining: remaining,
+				spentPercentage: budget + ` ${entry?.spentPercentage || 0}%`
+			};
+
+			data.push(rowData);
+		});
+
+		if (!data.length) {
+			console.error('No valid data to export');
+			return;
+		}
+		const headers = [
+			this.getTranslation('REPORT_PAGE.PROJECT'),
+			this.getTranslation('REPORT_PAGE.EMPLOYEES/TEAMS'),
+			this.getTranslation('REPORT_PAGE.SPENT'),
+			this.getTranslation('REPORT_PAGE.REMAINING'),
+			this.getTranslation('REPORT_PAGE.BUDGET')
+		];
+
+		const fileName = this.getTranslation('REPORT_PAGE.PROJECT_BUDGET_REPORTS');
+		generateCsv(data, headers, fileName);
 	}
 }

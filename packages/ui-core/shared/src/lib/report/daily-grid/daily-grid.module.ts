@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import {
 	NbAccordionModule,
 	NbBadgeModule,
+	NbButtonModule,
 	NbCardModule,
 	NbIconModule,
 	NbSelectModule,
@@ -32,7 +33,8 @@ import { NoDataMessageModule } from '../../smart-data-layout/no-data-message/no-
 		SharedModule,
 		ProjectColumnViewModule,
 		TableComponentsModule,
-		NoDataMessageModule
+		NoDataMessageModule,
+		NbButtonModule
 	],
 	declarations: [DailyGridComponent],
 	exports: [DailyGridComponent]

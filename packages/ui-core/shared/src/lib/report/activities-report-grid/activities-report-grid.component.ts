@@ -2,6 +2,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit } from '@ang
 import {
 	IGetTimeLogReportInput,
 	IReportDayData,
+	IReportDayGroupByDate,
 	ITimeLogFilters,
 	ReportGroupByFilter,
 	ReportGroupFilterEnum
@@ -14,6 +15,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivityService, DateRangePickerBuilderService, Store } from '@gauzy/ui-core/core';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import { BaseSelectorFilterComponent, TimeZoneService } from '../../timesheet/gauzy-filters';
+import { generateCsv } from '../../generate-csv-pdf';
+import { DateFormatPipe, DurationFormatPipe } from '../../pipes';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -25,6 +28,7 @@ export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent i
 	dailyData: IReportDayData[] = [];
 	loading: boolean;
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
+	ReportGroupFilterEnum = ReportGroupFilterEnum;
 
 	private _filters: ITimeLogFilters;
 	get filters(): ITimeLogFilters {
@@ -43,7 +47,9 @@ export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent i
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		private readonly cdr: ChangeDetectorRef,
 		public readonly translateService: TranslateService,
-		public readonly timeZoneService: TimeZoneService
+		public readonly timeZoneService: TimeZoneService,
+		private readonly dateFormatPipe: DateFormatPipe,
+		private readonly durationFormatPipe: DurationFormatPipe
 	) {
 		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
@@ -129,5 +135,70 @@ export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent i
 			// Ensure loading is set to false after completion
 			this.loading = false;
 		}
+	}
+
+	exportToCsv() {
+		const data = [];
+		//TODO: fix with GZY-106: Custom Grouping Options for CSV Export in Time and Activity Report
+		const dailyData = this.dailyData as unknown as IReportDayGroupByDate;
+		if (!dailyData || !Array.isArray(dailyData)) {
+			//TODO: replace with GZY-108: Error Handling on the Web Page
+			console.error('dailyData is undefined or not an array', dailyData);
+			return;
+		}
+
+		dailyData.forEach((entry) => {
+			if (!entry.employees || !Array.isArray(entry.employees)) {
+				console.log('No employees found for entry:', entry);
+				return;
+			}
+
+			entry.employees.forEach((employeeData) => {
+				const employeeFullName = employeeData?.employee?.fullName || 'N/A';
+
+				if (!employeeData.projects || !Array.isArray(employeeData.projects)) {
+					console.log('No projects found for employee:', employeeData);
+					return;
+				}
+
+				employeeData.projects.forEach((project) => {
+					const projectName = project?.project.name;
+					const membersCount = project?.project?.membersCount || 'N/A';
+
+					if (!project.activity || !Array.isArray(project.activity)) {
+						console.log('No activity found for project:', project);
+						return;
+					}
+
+					project.activity.forEach((activity) => {
+						data.push({
+							date: this.dateFormatPipe.transform(entry.date, null, null),
+							employee: employeeFullName,
+							project: `${projectName} ${this.getTranslation('SM_TABLE.MEMBERS_COUNT')}: ${membersCount}`,
+							title: activity?.title || 'N/A',
+							duration: this.durationFormatPipe.transform(activity?.duration || 0),
+							durationPercentage: `${activity?.duration_percentage || 0}%`
+						});
+					});
+				});
+			});
+		});
+
+		if (!data || data.length === 0) {
+			console.error('No valid data to export');
+			return;
+		}
+
+		const headers = [
+			this.getTranslation('REPORT_PAGE.DATE'),
+			this.getTranslation('REPORT_PAGE.EMPLOYEE'),
+			this.getTranslation('REPORT_PAGE.PROJECT'),
+			this.getTranslation('REPORT_PAGE.TITLE'),
+			this.getTranslation('REPORT_PAGE.DURATION'),
+			this.getTranslation('REPORT_PAGE.DURATION_PERCENTAGE')
+		];
+
+		const fileName = this.getTranslation('REPORT_PAGE.APPS_AND_URLS_REPORT');
+		generateCsv(data, headers, fileName);
 	}
 }
