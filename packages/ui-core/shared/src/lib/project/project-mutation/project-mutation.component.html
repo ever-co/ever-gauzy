@@ -129,6 +129,12 @@
 											>{{ 'SM_TABLE.' + owner | translate }}
 										</nb-option>
 									</nb-select>
+									<p
+										class="caption status-danger"
+										*ngIf="FormHelpers.isInvalidControl(form, 'owner')"
+									>
+										{{ 'FORM.ERROR.PROJECT_OWNER' | translate }}
+									</p>
 								</div>
 								<div class="form-group col-6">
 									<label for="organizationContacts" class="label">
@@ -144,14 +150,27 @@
 										[placeholder]="'FORM.PLACEHOLDERS.CLIENTS' | translate"
 										appendTo="body"
 									></ng-select>
+									<p class="caption status-danger" *ngIf="projectOrganizationContact.invalid">
+										{{ 'FORM.ERROR.PROJECT_ORGANIZATION_CONTACT' | translate }}
+									</p>
 								</div>
 							</div>
 							<div class="row">
 								<div class="form-group col-6">
 									<ga-employee-multi-select
+										formControlName="memberIds"
 										[selectedEmployeeIds]="selectedEmployeeIds"
 										(selectedChange)="onMembersSelected($event)"
 									></ga-employee-multi-select>
+									<p
+										class="caption status-danger"
+										*ngIf="
+											FormHelpers.isInvalidControl(form, 'memberIds') &&
+											form.get('memberIds').touched
+										"
+									>
+										{{ 'FORM.ERROR.PROJECT_EMPLOYEE' | translate }}
+									</p>
 								</div>
 								<div class="form-group col-6">
 									<ga-team-selector

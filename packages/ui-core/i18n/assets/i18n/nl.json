@@ -715,7 +715,10 @@
 		"ERROR": {
 			"PROJECT_NAME": "Projectnaam is verplicht.",
 			"PROJECT_URL": "Project-URL is ongeldig.",
-			"OPEN_SOURCE_PROJECT_URL": "De URL van het open-source project is ongeldig."
+			"OPEN_SOURCE_PROJECT_URL": "De URL van het open-source project is ongeldig.",
+			"PROJECT_EMPLOYEE": "Dit veld is verplicht. Selecteer minstens één medewerker.",
+			"PROJECT_ORGANIZATION_CONTACT": "Dit veld is verplicht. Selecteer een klant.",
+			"PROJECT_OWNER": "Projecteigenaar is verplicht."
 		}
 	},
 	"POP_UPS": {

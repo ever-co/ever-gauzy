@@ -715,7 +715,10 @@
 		"ERROR": {
 			"PROJECT_NAME": "Projektname ist erforderlich.",
 			"PROJECT_URL": "Die Projekt-URL ist ungültig.",
-			"OPEN_SOURCE_PROJECT_URL": "Die URL des Open-Source-Projekts ist ungültig."
+			"OPEN_SOURCE_PROJECT_URL": "Die URL des Open-Source-Projekts ist ungültig.",
+			"PROJECT_EMPLOYEE": "Feld ist erforderlich. Wählen Sie mindestens einen Mitarbeiter aus.",
+			"PROJECT_ORGANIZATION_CONTACT": "Feld ist erforderlich. Wählen Sie einen Kunden aus.",
+			"PROJECT_OWNER": "Projektinhaber ist erforderlich."
 		}
 	},
 	"POP_UPS": {

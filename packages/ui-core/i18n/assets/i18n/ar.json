@@ -714,7 +714,10 @@
 		"ERROR": {
 			"PROJECT_NAME": "اسم المشروع مطلوب.",
 			"PROJECT_URL": "عنوان مشروع غير صالح.",
-			"OPEN_SOURCE_PROJECT_URL": "عنوان URL لمشروع البرمجيات مفتوحة المصدر غير صالح."
+			"OPEN_SOURCE_PROJECT_URL": "عنوان URL لمشروع البرمجيات مفتوحة المصدر غير صالح.",
+			"PROJECT_EMPLOYEE": "هذا الحقل مطلوب. يرجى اختيار موظف واحد على الأقل.",
+			"PROJECT_ORGANIZATION_CONTACT": "هذا الحقل مطلوب. يرجى اختيار عميل.",
+			"PROJECT_OWNER": "مالك المشروع مطلوب."
 		}
 	},
 	"POP_UPS": {

@@ -129,6 +129,11 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
+	markAsTouchedOnInteraction(): void {
+		this.select.markAsTouched();
+		this.onTouched();
+	}
+
 	checkForMultiSelectValue(val): void {
 		if (this.multiple) {
 			this.val = val instanceof Array ? val : [val];

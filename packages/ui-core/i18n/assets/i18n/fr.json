@@ -716,7 +716,10 @@
 		"ERROR": {
 			"PROJECT_NAME": "Le nom du projet est requis.",
 			"PROJECT_URL": "L'URL du projet est invalide.",
-			"OPEN_SOURCE_PROJECT_URL": "L'URL du projet open source est invalide."
+			"OPEN_SOURCE_PROJECT_URL": "L'URL du projet open source est invalide.",
+			"PROJECT_EMPLOYEE": "Ce champ est requis. Veuillez sélectionner au moins un employé.",
+			"PROJECT_ORGANIZATION_CONTACT": "Ce champ est requis. Veuillez sélectionner un client.",
+			"PROJECT_OWNER": "Le propriétaire du projet est requis."
 		}
 	},
 	"POP_UPS": {

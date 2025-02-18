@@ -717,7 +717,10 @@
 		"ERROR": {
 			"PROJECT_NAME": "Se requiere el nombre del proyecto.",
 			"PROJECT_URL": "La URL del proyecto es inválida.",
-			"OPEN_SOURCE_PROJECT_URL": "La URL del proyecto de código abierto es inválida."
+			"OPEN_SOURCE_PROJECT_URL": "La URL del proyecto de código abierto es inválida.",
+			"PROJECT_EMPLOYEE": "Este campo es obligatorio. Selecciona al menos un empleado.",
+			"PROJECT_ORGANIZATION_CONTACT": "Este campo es obligatorio. Selecciona un cliente.",
+			"PROJECT_OWNER": "El propietario del proyecto es obligatorio."
 		}
 	},
 	"POP_UPS": {

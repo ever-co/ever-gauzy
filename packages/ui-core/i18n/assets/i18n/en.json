@@ -754,7 +754,10 @@
 		"ERROR": {
 			"PROJECT_NAME": "Project name is required.",
 			"PROJECT_URL": "Project url is invalid.",
-			"OPEN_SOURCE_PROJECT_URL": "Open source project url is invalid."
+			"OPEN_SOURCE_PROJECT_URL": "Open source project url is invalid.",
+			"PROJECT_EMPLOYEE": "This field is required. Please select at least one employee.",
+			"PROJECT_ORGANIZATION_CONTACT": "This field is required. Please select a client.",
+			"PROJECT_OWNER": "Project owner is required."
 		}
 	},
 	"POP_UPS": {

@@ -720,7 +720,10 @@
 		"ERROR": {
 			"PROJECT_NAME": "נדרש שם הפרויקט.",
 			"PROJECT_URL": "כתובת האתר של הפרויקט אינה חוקית.",
-			"OPEN_SOURCE_PROJECT_URL": "כתובת האתר של פרוייקט קוד פתוח אינה חוקית."
+			"OPEN_SOURCE_PROJECT_URL": "כתובת האתר של פרוייקט קוד פתוח אינה חוקית.",
+			"PROJECT_EMPLOYEE": "שדה זה נדרש. אנא בחר לפחות עובד אחד.",
+			"PROJECT_ORGANIZATION_CONTACT": "שדה זה נדרש. אנא בחר לקוח.",
+			"PROJECT_OWNER": "בעל פרויקט נדרש."
 		}
 	},
 	"POP_UPS": {

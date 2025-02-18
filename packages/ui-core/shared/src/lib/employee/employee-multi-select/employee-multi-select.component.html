@@ -4,6 +4,7 @@
 		[formControl]="select"
 		[multiple]="multiple"
 		(selectedChange)="onMembersSelected($event)"
+		(click)="markAsTouchedOnInteraction()"
 		fullWidth
 		[disabled]="disabled"
 		[(selected)]="preSelected"

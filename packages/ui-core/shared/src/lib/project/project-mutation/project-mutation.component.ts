@@ -92,7 +92,8 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 				currency: [environment.DEFAULT_CURRENCY],
 				startDate: [],
 				endDate: [],
-				owner: [ProjectOwnerEnum.CLIENT],
+				owner: [null, Validators.required],
+				memberIds: [[], Validators.required],
 				taskListType: [TaskListTypeEnum.GRID],
 				description: [],
 				code: [],
@@ -162,16 +163,16 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 	 */
 	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
 
-	public get projectName(): AbstractControl {
-		return this.form.get('name');
-	}
-
 	public get projectUrl(): AbstractControl {
 		return this.form.get('projectUrl');
 	}
 
 	public get openSourceProjectUrl(): AbstractControl {
 		return this.form.get('openSourceProjectUrl');
+	}
+
+	public get projectOrganizationContact(): AbstractControl {
+		return this.form.get('organizationContact');
 	}
 
 	constructor(
@@ -289,9 +290,15 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 
 	changeProjectOwner(owner: ProjectOwnerEnum) {
 		const clientControl = this.form.get('client');
+		const organizationContactControl = this.form.get('organizationContact');
+		organizationContactControl.setValidators(owner === ProjectOwnerEnum.CLIENT ? [Validators.required] : null);
+
 		if (owner === ProjectOwnerEnum.INTERNAL && clientControl) {
 			clientControl.setValue('');
 		}
+
+		organizationContactControl.updateValueAndValidity();
+		clientControl?.updateValueAndValidity();
 	}
 
 	/**
@@ -333,6 +340,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 			startDate: project.startDate ? new Date(project.startDate) : null,
 			endDate: project.endDate ? new Date(project.endDate) : null,
 			owner: project.owner || ProjectOwnerEnum.CLIENT,
+			memberIds: (project.members || []).map((member: IOrganizationProjectEmployee) => member.id),
 			taskListType: project.taskListType || TaskListTypeEnum.GRID,
 			description: project.description || null,
 			code: project.code || null,
@@ -564,7 +572,11 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) {}
+	currencyChanged($event: ICurrency) {
+		// Added to avoid lint error.
+		// TODO: To be removed after clarifying the logic.
+		console.log($event);
+	}
 
 	/**
 	 * Upload project logo

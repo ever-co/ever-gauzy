@@ -715,7 +715,10 @@
 		"ERROR": {
 			"PROJECT_NAME": "需要填写项目名称。",
 			"PROJECT_URL": "项目网址无效。",
-			"OPEN_SOURCE_PROJECT_URL": "开源项目网址无效。"
+			"OPEN_SOURCE_PROJECT_URL": "开源项目网址无效。",
+			"PROJECT_EMPLOYEE": "此字段为必填项。请至少选择一名员工。",
+			"PROJECT_ORGANIZATION_CONTACT": "此字段为必填项。请至少选择一个客户。",
+			"PROJECT_OWNER": "项目所有者是必需的。"
 		}
 	},
 	"POP_UPS": {

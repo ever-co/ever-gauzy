@@ -713,9 +713,12 @@
 			"WAIT_UNTIL_RELOAD": "Per favore, attendi che l'applicazione si ricarichi"
 		},
 		"ERROR": {
-			"PROJECT_NAME": "Il nome del progetto è obbligatorio",
-			"PROJECT_URL": "L'URL del progetto non è valido",
-			"OPEN_SOURCE_PROJECT_URL": "L'URL del progetto open source non è valido"
+			"PROJECT_NAME": "Il nome del progetto è obbligatorio.",
+			"PROJECT_URL": "L'URL del progetto non è valido.",
+			"OPEN_SOURCE_PROJECT_URL": "L'URL del progetto open source non è valido.",
+			"PROJECT_EMPLOYEE": "Questo campo è obbligatorio. Seleziona almeno un dipendente.",
+			"PROJECT_ORGANIZATION_CONTACT": "Questo campo è obbligatorio. Seleziona un cliente.",
+			"PROJECT_OWNER": "Il proprietario del progetto è obbligatorio."
 		}
 	},
 	"POP_UPS": {

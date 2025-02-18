@@ -713,9 +713,12 @@
 			"WAIT_UNTIL_RELOAD": "Proszę poczekać, aż aplikacja się ponownie załaduje"
 		},
 		"ERROR": {
-			"PROJECT_NAME": "Nazwa projektu jest wymagana",
-			"PROJECT_URL": "Adres URL projektu jest nieprawidłowy",
-			"OPEN_SOURCE_PROJECT_URL": "Adres URL projektu open source jest nieprawidłowy"
+			"PROJECT_NAME": "Nazwa projektu jest wymagana.",
+			"PROJECT_URL": "Adres URL projektu jest nieprawidłowy.",
+			"OPEN_SOURCE_PROJECT_URL": "Adres URL projektu open source jest nieprawidłowy.",
+			"PROJECT_EMPLOYEE": "Pole jest wymagane. Wybierz co najmniej jednego pracownika.",
+			"PROJECT_ORGANIZATION_CONTACT": "Pole jest wymagane. Wybierz klienta.",
+			"PROJECT_OWNER": "Właściciel projektu jest wymagany."
 		}
 	},
 	"POP_UPS": {

@@ -634,6 +634,14 @@
 			"ENABLED": "crwdns10537:0crwdne10537:0",
 			"DISABLED": "crwdns10539:0crwdne10539:0",
 			"WAIT_UNTIL_RELOAD": "crwdns10541:0crwdne10541:0"
+		},
+		"ERROR": {
+			"PROJECT_NAME": "crwdns8332:0crwdne8332:0",
+			"PROJECT_URL": "crwdns138:0crwdne138:0",
+			"OPEN_SOURCE_PROJECT_URL": "crwdns140:0crwdne140:0",
+			"PROJECT_EMPLOYEE": "crwdns7984:0crwdne7984:0",
+			"PROJECT_ORGANIZATION_CONTACT": "crwdns10535:0crwdne10535:0",
+			"PROJECT_OWNER": "crwdns10535:0crwdne10535:0"
 		}
 	},
 	"POP_UPS": {
@@ -3455,7 +3463,6 @@
 				"REMOVE_EMPLOYEE_LEVEL": "crwdns8952:0{{ name }}crwdne8952:0",
 				"INVALID_EMPLOYEE_LEVEL": "crwdns3490:0crwdne3490:0",
 				"ALREADY_EXISTS": "Kombedi me Employee tye ka bino."
-
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "crwdns8954:0{{ name }}crwdne8954:0",
@@ -3475,7 +3482,6 @@
 				"REMOVE_POSITION": "crwdns8970:0{{ name }}crwdne8970:0",
 				"INVALID_POSITION_NAME": "crwdns2825:0crwdne2825:0",
 				"ALREADY_EXISTS": "Kombedi me Position tye ka bino."
-
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
 				"ADD_DEPARTMENT": "crwdns8972:0{{ name }}crwdne8972:0",
