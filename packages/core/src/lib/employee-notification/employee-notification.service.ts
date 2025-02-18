@@ -98,12 +98,12 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 	async markAllAsRead(): Promise<IMarkAllAsReadResponse> {
 		try {
 			// Retrieve the current employee ID
-			const receiverId = RequestContext.currentEmployeeId();
+			const receiverEmployeeId = RequestContext.currentEmployeeId();
 
 			// Update all unread and un-archived notifications for the current employee
 			// Assume super.update returns an object with an "affected" property that represents the number of records updated.
 			const updateResult = (await super.update(
-				{ isRead: false, isArchived: false, receiverId },
+				{ isRead: false, isArchived: false, receiverEmployeeId },
 				{ isRead: true, readAt: new Date() }
 			)) as UpdateResult;
 

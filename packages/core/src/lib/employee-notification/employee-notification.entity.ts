@@ -79,52 +79,68 @@ export class EmployeeNotification extends BasePerEntityType implements IEmployee
     */
 
 	/**
-	 * Optional Employee notification author
+	 * The employee who sent the notification.
+	 *
+	 * This property establishes a many-to-one relationship to the Employee entity
+	 * representing the sender of the notification. The relation is optional and
+	 * is configured to cascade delete the notification if the employee is removed.
 	 */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@MultiORMManyToOne(() => Employee, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
+
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	sentBy?: IEmployee;
+	sentByEmployee?: IEmployee;
 
 	/**
-	 * The UUID of the associated employee.
+	 * The ID of the employee who sent the notification.
+	 *
+	 * This column stores the UUID of the employee linked to the `sentByEmployee` relation.
+	 * It is optional, indexed for performance, and automatically populated via the relation.
 	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((it: EmployeeNotification) => it.sentBy)
+	@RelationId((it: EmployeeNotification) => it.sentByEmployee)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	sentById?: ID;
+	sentByEmployeeId?: ID;
 
 	/**
-	 * Optional Employee notification receiver
+	 * The employee who is set to receive the notification.
+	 *
+	 * This property establishes a many-to-one relationship to the Employee entity
+	 * representing the receiver of the notification. The relation is optional and
+	 * is configured to cascade delete the notification if the employee is removed.
 	 */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@MultiORMManyToOne(() => Employee, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
+
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	receiver?: IEmployee;
+	receiverEmployee?: IEmployee;
 
 	/**
-	 * The UUID of the associated employee.
+	 * The ID of the employee who is set to receive the notification.
+	 *
+	 * This column stores the UUID of the employee linked to the `receiverEmployee` relation.
+	 * It is optional, indexed for performance, and automatically populated via the relation.
 	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((it: EmployeeNotification) => it.receiver)
+	@RelationId((it: EmployeeNotification) => it.receiverEmployee)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	receiverId?: ID;
+	receiverEmployeeId?: ID;
 }
