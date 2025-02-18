@@ -32,7 +32,7 @@
 		"@fullcalendar/angular": "^6.1.16",
 		"@gauzy/contracts": "^0.1.0",
 		"@nebular/theme": "^15.0.0",
-		"@ng-select/ng-select": "^14.1.0",
+		"@ng-select/ng-select": "^14.2.2",
 		"@ngneat/until-destroy": "^10.0.0",
 		"@ngx-translate/core": "^16.0.4",
 		"ckeditor4-angular": "4.0.1",

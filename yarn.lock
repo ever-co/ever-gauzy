@@ -7107,17 +7107,10 @@
   dependencies:
     tslib "^2.0.0"
 
-"@ng-select/ng-select@^13.9.0":
-  version "13.9.1"
-  resolved "https://registry.yarnpkg.com/@ng-select/ng-select/-/ng-select-13.9.1.tgz#0456eef5e4a7dae0b336db02b15542b0d8f4e95f"
-  integrity sha512-+DzQkQp8coGWZREflJM/qx7BXipV6HEVpZCXoa6fJJRHJfmUMsxa5uV6kUVmClUE98Rkffk9CPHt6kZcj8PuqQ==
-  dependencies:
-    tslib "^2.3.1"
-
-"@ng-select/ng-select@^14.1.0":
-  version "14.1.0"
-  resolved "https://registry.yarnpkg.com/@ng-select/ng-select/-/ng-select-14.1.0.tgz#f90a8cd5a90c8644a8d0208e293ee97db3d96e94"
-  integrity sha512-cE/e7WIqLAgUF83mpmDWbgmy7OvzWTjCTjtcIzhabRbhN0RDqp7u39noC12kSN+viAfYnA1TS7rBru+IouNt1g==
+"@ng-select/ng-select@^14.2.2":
+  version "14.2.2"
+  resolved "https://registry.yarnpkg.com/@ng-select/ng-select/-/ng-select-14.2.2.tgz#31a8c6adea192388ab0a8cb0a33be5dd046e13e9"
+  integrity sha512-K7AAeaVpWiwkkWXQFb4+ywoSRDMazCcqptAtpVnJ5+A1W/RJsYOZwf0xLR2Lqe/8PykbQg5+fw6pVve+FFv6eg==
   dependencies:
     tslib "^2.3.1"
 

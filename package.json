@@ -408,7 +408,7 @@
 		"@nestjs/core": "^10.4.15",
 		"@nestjs/mapped-types": "^2.0.6",
 		"@nestjs/platform-express": "^10.4.15",
-		"@ng-select/ng-select": "^13.9.0",
+		"@ng-select/ng-select": "^14.2.2",
 		"@ngx-translate/core": "^16.0.4",
 		"@ngx-translate/http-loader": "^16.0.1",
 		"angular2-smart-table": "^3.4.0",

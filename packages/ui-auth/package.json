@@ -35,7 +35,7 @@
 		"@nebular/theme": "^15.0.0",
 		"@ngneat/until-destroy": "^10.0.0",
 		"@ngx-translate/core": "^16.0.4",
-		"@ng-select/ng-select": "^14.1.0",
+		"@ng-select/ng-select": "^14.2.2",
 		"ngx-cookie-service": "^19.0.0",
 		"ngx-permissions": "^19.0.0",
 		"rxjs": "^7.8.0",
