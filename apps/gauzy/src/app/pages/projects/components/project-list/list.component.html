@@ -64,15 +64,9 @@
 
 <!-- Actions Button -->
 <ng-template #actionButtons>
-	<ng-template
-		[ngxPermissionsOnly]="[
-			PermissionsEnum.ALL_ORG_EDIT,
-			PermissionsEnum.ORG_PROJECT_EDIT,
-			PermissionsEnum.ORG_PROJECT_DELETE
-		]"
-	>
+	<ng-template [ngxPermissionsOnly]="['CAN_MANAGE_PROJECT']">
 		<div class="actions">
-			<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_EDIT']">
+			<ng-template [ngxPermissionsOnly]="['CAN_MANAGE_PROJECT']">
 				<button
 					nbButton
 					status="basic"
@@ -85,7 +79,7 @@
 					{{ 'BUTTONS.EDIT' | translate }}
 				</button>
 			</ng-template>
-			<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_EDIT']">
+			<ng-template [ngxPermissionsOnly]="['CAN_MANAGE_PROJECT']">
 				<button
 					nbButton
 					status="basic"
@@ -98,7 +92,7 @@
 					{{ 'BUTTONS.ADD_MODULE' | translate }}
 				</button>
 			</ng-template>
-			<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_DELETE]">
+			<ng-template [ngxPermissionsOnly]="['CAN_MANAGE_PROJECT']">
 				<button
 					[nbTooltip]="'BUTTONS.DELETE' | translate"
 					nbButton

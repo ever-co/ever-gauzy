@@ -51,6 +51,7 @@ export class TeamsMutationComponent implements OnInit {
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => (this.organization = organization)),
+				tap(() => this.initializeManager()),
 				tap(() => this.patchFormValue()),
 				untilDestroyed(this)
 			)
@@ -71,6 +72,18 @@ export class TeamsMutationComponent implements OnInit {
 		});
 	}
 
+	/**
+	 * Automatically sets the current user as a manager if they are an employee
+	 */
+	initializeManager() {
+		const { employee } = this.store.user;
+		if (employee) {
+			this.form.patchValue({
+				managerIds: [employee.id] // Set the logged-in user's employeeId as the default manager
+			});
+			this.form.get('managerIds').updateValueAndValidity();
+		}
+	}
 	/**
 	 * Set Form Values based on an existing team.
 	 */
