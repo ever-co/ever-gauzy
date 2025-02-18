@@ -2,10 +2,13 @@ name: Deploy WebApp to AWS
 
 on:
   push:
-    branches: [ master, dev ]
+    branches: [master, dev]
     paths:
-      - 'apps/webapp/**'
-      - '.deploy/webapp/**'
+      - 'apps/gauzy/**/*.*'
+      - 'packages/contracts/**/*.*'
+      - 'packages/ui-*/**/*.*'
+      - 'packages/plugins/*-ui/**/*.*'
+      - '.deploy/webapp/**/*.*'
       - '.github/workflows/aws-deploy-webapp.yml'
   workflow_dispatch:
 
