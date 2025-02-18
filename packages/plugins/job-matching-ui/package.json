@@ -28,8 +28,8 @@
 		"@angular/core": "^19.0.0"
 	},
 	"dependencies": {
-		"@angular/forms": "19.1.5",
-		"@angular/router": "19.1.5",
+		"@angular/forms": "^19.1.6",
+		"@angular/router": "^19.1.6",
 		"@gauzy/contracts": "^0.1.0",
 		"@nebular/theme": "^14.0.2",
 		"@ng-select/ng-select": "^14.1.0",
