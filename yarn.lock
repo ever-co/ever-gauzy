@@ -431,10 +431,10 @@
   dependencies:
     "@angular-eslint/bundled-angular-compiler" "19.0.2"
 
-"@angular-slider/ngx-slider@^18.0.0":
-  version "18.0.0"
-  resolved "https://registry.yarnpkg.com/@angular-slider/ngx-slider/-/ngx-slider-18.0.0.tgz#262befda815d7273e2a5f5f360134653118ab8aa"
-  integrity sha512-QR5zP3B++cLCqUkfg7j65y+4wrt5xPrua6mANoClj2iaoHaAzf3qi+/ANgYTeZ9StoFu22r35uy5Qg0GigjhxQ==
+"@angular-slider/ngx-slider@^19.0.0":
+  version "19.0.0"
+  resolved "https://registry.yarnpkg.com/@angular-slider/ngx-slider/-/ngx-slider-19.0.0.tgz#02c278d732bb076ecfc9f700096787b9c24a8469"
+  integrity sha512-VVJ+Fij5SKnbltxh6TdoBAUAKWfCnSLRPZ7e+r2uO88t8qte5/KHqVOdK4DWCjBr3rEr4YrPR4ylqBCuAWPsKQ==
   dependencies:
     detect-passive-events "^2.0.3"
     rxjs "^7.8.1"

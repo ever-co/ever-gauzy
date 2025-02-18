@@ -25,7 +25,7 @@
 	"dependencies": {
 		"@akveo/ng2-completer": "^9.0.1",
 		"@ali-hm/angular-tree-component": "^19.0.1",
-		"@angular-slider/ngx-slider": "^18.0.0",
+		"@angular-slider/ngx-slider": "^19.0.0",
 		"@angular/animations": "^19.1.6",
 		"@angular/cdk": "^19.1.4",
 		"@angular/common": "^19.1.6",
