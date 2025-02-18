@@ -41,7 +41,7 @@
 		"moment": "^2.30.1",
 		"ngx-infinite-scroll": "^19.0.0",
 		"ng2-charts": "^5.0.4",
-		"ngx-permissions": "^17.1.0",
+		"ngx-permissions": "^19.0.0",
 		"rxjs": "^7.8.0",
 		"tslib": "^2.6.2"
 	},

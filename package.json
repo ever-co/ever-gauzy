@@ -424,7 +424,7 @@
 		"ng2-file-upload": "^7.0.1",
 		"ngx-draggable-dom": "^3.4.1",
 		"ngx-infinite-scroll": "^19.0.0",
-		"ngx-permissions": "^17.1.0",
+		"ngx-permissions": "^19.0.0",
 		"parse5": "^7.1.2",
 		"reflect-metadata": "^0.2.2",
 		"rxjs": "^7.8.0",

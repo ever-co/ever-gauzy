@@ -97,7 +97,7 @@
 		"ngx-draggable-dom": "^3.4.1",
 		"ngx-infinite-scroll": "^19.0.0",
 		"ngx-moment": "^6.0.2",
-		"ngx-permissions": "^17.1.0",
+		"ngx-permissions": "^19.0.0",
 		"randomcolor": "^0.6.2",
 		"rxjs": "^7.8.0",
 		"slugify": "^1.6.6",

@@ -36,7 +36,7 @@
 		"@ngneat/until-destroy": "^10.0.0",
 		"@ngx-translate/core": "^16.0.4",
 		"angular2-smart-table": "^3.5.0",
-		"ngx-permissions": "^17.1.0",
+		"ngx-permissions": "^19.0.0",
 		"rxjs": "^7.8.0",
 		"tslib": "^2.6.2"
 	},
