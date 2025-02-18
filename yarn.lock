@@ -28761,17 +28761,17 @@ ngx-moment@^6.0.2:
   dependencies:
     tslib "^2.3.0"
 
-ngx-page-scroll-core@^13.0.0:
-  version "13.0.0"
-  resolved "https://registry.yarnpkg.com/ngx-page-scroll-core/-/ngx-page-scroll-core-13.0.0.tgz#d898bdbf4d0620998e04aa30c612a6a588b37064"
-  integrity sha512-/gb1WsjkwQSidbOBVSY/qIlzxuwht22joBeNyy7ia+gf+qwUfDOCd+QWCpWZAJSU1VQjH5ePNMxALVVHpsa9dg==
+ngx-page-scroll-core@^14.0.0:
+  version "14.0.0"
+  resolved "https://registry.yarnpkg.com/ngx-page-scroll-core/-/ngx-page-scroll-core-14.0.0.tgz#436c5296f818d9ea278ac2ebce03e462d3d789ea"
+  integrity sha512-XeHHQHfRJyCyPO5bqN5Qpi/tRlCbH1nGXEiIVuBi+2lo5pIVgXHnW2sFo9uQRwL/J5kNPDE8aIysL0Z+Preo2w==
   dependencies:
     tslib "^2.6.2"
 
-ngx-page-scroll@^13.0.0:
-  version "13.0.0"
-  resolved "https://registry.yarnpkg.com/ngx-page-scroll/-/ngx-page-scroll-13.0.0.tgz#db82f3a667a865d1cd25f449d322b2854dd5ff11"
-  integrity sha512-eKXhvfdXLzv943gM/aHeHne02lCfghg3aQngYN6kWmMvHPmb4QPdp0DTPPm1UxE0SBXoR5dY23xsqJtQdVZUrw==
+ngx-page-scroll@^14.0.0:
+  version "14.0.0"
+  resolved "https://registry.yarnpkg.com/ngx-page-scroll/-/ngx-page-scroll-14.0.0.tgz#1631a13b62e0f0d8e110d9d3b89d3455f22c0921"
+  integrity sha512-26HynBDqU7lBRvjzuEN57rKDr2/MJZ9enBNuSuvDbOw+V44HrOg3P6sWjGEeQOnwOjm/S+yHFxeqHW7PXJWLgg==
   dependencies:
     tslib "^2.6.2"
 
