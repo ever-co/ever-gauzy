@@ -37,7 +37,7 @@ export const createDefaultEmployeeNotifications = async (
 	}
 
 	// Insert the generated notifications into the database
-	return insertEmployeeNotification(dataSource, employeeNotifications);
+	return insertEmployeeNotifications(dataSource, employeeNotifications);
 };
 
 /**
@@ -76,7 +76,7 @@ export const createRandomEmployeeNotifications = async (
 	}
 
 	// Insert the generated notifications into the database
-	return await insertEmployeeNotification(dataSource, employeeNotifications);
+	return await insertEmployeeNotifications(dataSource, employeeNotifications);
 };
 
 /**
@@ -138,7 +138,7 @@ function getRandomNotificationType(): EmployeeNotificationTypeEnum {
  * @returns A promise that resolves once the insertion is complete.
  * @throws An error if the insertion fails.
  */
-const insertEmployeeNotification = async (
+const insertEmployeeNotifications = async (
 	dataSource: DataSource,
 	notifications: EmployeeNotification[]
 ): Promise<EmployeeNotification[]> => {
