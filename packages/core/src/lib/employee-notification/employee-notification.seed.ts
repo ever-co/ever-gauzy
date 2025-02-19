@@ -22,19 +22,16 @@ import { EmployeeNotification } from './employee-notification.entity';
 export const createDefaultEmployeeNotifications = async (
 	dataSource: DataSource,
 	tenant: ITenant,
-	organizations: IOrganization[],
+	organization: IOrganization,
 	organizationEmployees: IEmployee[]
 ): Promise<IEmployeeNotification[]> => {
 	// Initialize an array to hold the generated notifications
 	const employeeNotifications: IEmployeeNotification[] = [];
 
-	// Iterate over each organization
-	for (const organization of organizations) {
-		// Generate notifications for the current organization
-		const notifications = generateEmployeeNotifications(tenant, organization, organizationEmployees);
+	// Generate notifications for the current organization
+	const notifications = generateEmployeeNotifications(tenant, organization, organizationEmployees);
 
-		employeeNotifications.push(...notifications);
-	}
+	employeeNotifications.push(...notifications);
 
 	// Insert the generated notifications into the database
 	return insertEmployeeNotifications(dataSource, employeeNotifications);
@@ -140,7 +137,8 @@ function getRandomNotificationType(): EmployeeNotificationTypeEnum {
  */
 const insertEmployeeNotifications = async (
 	dataSource: DataSource,
-	notifications: EmployeeNotification[]
+	notifications: EmployeeNotification[],
+	batchSize = 100 // Define the batch size to control the number of records inserted per query
 ): Promise<EmployeeNotification[]> => {
 	if (!notifications.length) {
 		console.warn('No notifications to insert. Please check the input data and try again');
@@ -148,12 +146,8 @@ const insertEmployeeNotifications = async (
 	}
 
 	try {
-		// Define the batch size to control the number of records inserted per query
-		const batchSize = 100;
-
 		// Get the repository for EmployeeNotification
 		const notificationRepository = dataSource.getRepository(EmployeeNotification);
-
 		// Insert the notifications in batches
 		return await notificationRepository.save(notifications, { chunk: batchSize });
 	} catch (error) {
