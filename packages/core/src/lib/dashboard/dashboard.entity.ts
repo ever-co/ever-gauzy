@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
-import { IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsArray, IsBoolean, IsNotEmpty, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import { ID, IDashboard, IEmployee, IUser, JsonData } from '@gauzy/contracts';
 import { DashboardWidget, Employee, TenantOrganizationBaseEntity, User } from '../core/entities/internal';
@@ -13,6 +13,7 @@ import {
 	MultiORMManyToOne,
 	MultiORMOneToMany
 } from '../core/decorators/entity';
+import { IsEmployeeBelongsToOrganization } from '../shared/validators';
 import { MikroOrmDashboardRepository } from './repository/mikro-orm-dashboard.repository';
 
 @MultiORMEntity('dashboard', { mikroOrmRepository: () => MikroOrmDashboardRepository })
@@ -62,7 +63,7 @@ export class Dashboard extends TenantOrganizationBaseEntity implements IDashboar
 	@IsOptional()
 	@IsBoolean()
 	@MultiORMColumn({ default: false })
-	isDefault: boolean;
+	isDefault?: boolean;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -72,6 +73,10 @@ export class Dashboard extends TenantOrganizationBaseEntity implements IDashboar
 	/**
 	 * The employee for whom the dashboard is created
 	 */
+	@ApiPropertyOptional({ type: () => Employee })
+	@IsOptional()
+	@IsObject()
+	@IsEmployeeBelongsToOrganization()
 	@MultiORMManyToOne(() => Employee, {
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
@@ -85,7 +90,8 @@ export class Dashboard extends TenantOrganizationBaseEntity implements IDashboar
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((it: Dashboard) => it.employee)
+	@IsEmployeeBelongsToOrganization()
+	@RelationId((dashboard: Dashboard) => dashboard.employee)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	employeeId?: ID;
@@ -103,7 +109,7 @@ export class Dashboard extends TenantOrganizationBaseEntity implements IDashboar
 	/**
 	 * The user ID who created the dashboard
 	 */
-	@RelationId((it: Dashboard) => it.createdByUser)
+	@RelationId((dashboard: Dashboard) => dashboard.createdByUser)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	createdByUserId?: ID;
