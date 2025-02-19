@@ -121,7 +121,7 @@ export class Dashboard extends TenantOrganizationBaseEntity implements IDashboar
 	*/
 
 	/**
-	 * Dashbaord Widgets
+	 * Dashboard Widgets
 	 */
 	@MultiORMOneToMany(() => DashboardWidget, (it) => it.dashboard)
 	widgets?: DashboardWidget[];
