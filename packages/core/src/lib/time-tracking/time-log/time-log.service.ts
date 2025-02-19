@@ -22,7 +22,10 @@ import {
 	IOrganizationContact,
 	IEmployee,
 	IOrganization,
-	ID
+	ID,
+	BaseEntityEnum,
+	ActionTypeEnum,
+	ActorTypeEnum
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../../core/crud';
@@ -51,6 +54,7 @@ import { MikroOrmOrganizationProjectRepository } from '../../organization-projec
 import { TypeOrmOrganizationContactRepository } from '../../organization-contact/repository/type-orm-organization-contact.repository';
 import { MikroOrmOrganizationContactRepository } from '../../organization-contact/repository/mikro-orm-organization-contact.repository';
 import { TimeLog } from './time-log.entity';
+import { ActivityLogService } from '../../activity-log/activity-log.service';
 
 @Injectable()
 export class TimeLogService extends TenantAwareCrudService<TimeLog> {
@@ -63,7 +67,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		readonly mikroOrmOrganizationProjectRepository: MikroOrmOrganizationProjectRepository,
 		readonly typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
 		readonly mikroOrmOrganizationContactRepository: MikroOrmOrganizationContactRepository,
-		private readonly commandBus: CommandBus
+		private readonly commandBus: CommandBus,
+		private readonly activityLogService: ActivityLogService
 	) {
 		super(typeOrmTimeLogRepository, mikroOrmTimeLogRepository);
 	}
@@ -1105,9 +1110,24 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 
 			// Create the new time log entry
-			return await this.commandBus.execute(new TimeLogCreateCommand(request));
+			const timeLog = await this.commandBus.execute(new TimeLogCreateCommand(request));
+
+			// Generate the activity log
+			this.activityLogService.logActivity<TimeLog>(
+				BaseEntityEnum.TimeLog,
+				ActionTypeEnum.Created,
+				ActorTypeEnum.User,
+				timeLog.id,
+				timeLog.reason,
+				timeLog,
+				organizationId,
+				tenantId
+			);
+
+			return timeLog;
 		} catch (error) {
 			// Handle exceptions appropriately
+			console.error(error);
 			throw new BadRequestException('Failed to add manual time log');
 		}
 	}
