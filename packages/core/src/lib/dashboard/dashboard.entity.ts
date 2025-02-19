@@ -78,8 +78,8 @@ export class Dashboard extends TenantOrganizationBaseEntity implements IDashboar
 	@IsObject()
 	@IsEmployeeBelongsToOrganization()
 	@MultiORMManyToOne(() => Employee, {
-		/** Database cascade action on delete. */
-		onDelete: 'CASCADE'
+		nullable: true, // Indicates if relation column value can be nullable or not.
+		onDelete: 'CASCADE' // Database cascade action on delete.
 	})
 	@JoinColumn()
 	employee?: IEmployee;
@@ -93,7 +93,7 @@ export class Dashboard extends TenantOrganizationBaseEntity implements IDashboar
 	@IsEmployeeBelongsToOrganization()
 	@RelationId((dashboard: Dashboard) => dashboard.employee)
 	@ColumnIndex()
-	@MultiORMColumn({ relationId: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	employeeId?: ID;
 
 	/**
