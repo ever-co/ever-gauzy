@@ -30,8 +30,6 @@ export class DashboardSubscriber extends BaseEntityEventSubscriber<Dashboard> {
 				}
 			}
 		} catch (error) {
-			// Log the error and reset the data to an empty object if JSON parsing fails
-			console.error(error);
 			entity.contentHtml = '{}';
 		}
 	}
@@ -76,8 +74,6 @@ export class DashboardSubscriber extends BaseEntityEventSubscriber<Dashboard> {
 				}
 			}
 		} catch (error) {
-			// Log the error and reset the data to an empty object if JSON parsing fails
-			console.error('Error parsing JSON data in afterEntityLoad:', error);
 			entity.contentHtml = {};
 		}
 	}

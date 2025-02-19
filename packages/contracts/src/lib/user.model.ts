@@ -28,16 +28,16 @@ export interface IFindMeUser extends IBaseRelationsEntityModel {
 }
 
 /**
- * Utility type to exclude `creator` and `creatorId` fields.
+ * Utility type to exclude `createdByUser` and `createdByUserId` fields.
  */
-export type ExcludeCreatorFields<T> = Omit<T, 'creator' | 'creatorId'>;
+export type ExcludeUserCreatorFields<T, K extends keyof T = never> = Omit<T, 'createdByUser' | 'createdByUserId' | K>;
 
 /**
- * Interface representing a relationship with a creator.
+ * Interface representing an entity with a creator association.
  */
-export interface IHasCreator {
-	creator?: IUser; // TODO : Replace these properties with `createdBy` and `createdById`
-	creatorId?: ID;
+export interface IHasUserCreator {
+	createdByUser?: IUser;
+	createdByUserId?: ID;
 }
 
 export interface IRelationalUser {
