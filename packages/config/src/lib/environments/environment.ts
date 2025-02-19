@@ -268,7 +268,7 @@ export const environment: IEnvironment = {
 	/**
 	 * Periodic Time Save
 	 */
-	periodicTimeSave: process.env.PERIODIC_TIME_SAVE === 'true' ? true : false,
+	periodicTimeSave: process.env.PERIODIC_TIME_SAVE === 'true',
 	periodicTimeSaveTimeframe: parseInt(process.env.PERIODIC_TIME_SAVE_TIMEFRAME) || 600 // 10 minutes
 };
 
