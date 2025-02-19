@@ -2,10 +2,10 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
-import { IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { isMySQL, isPostgres } from '@gauzy/config';
-import { ID, IDashboard, IUser, JsonData } from '@gauzy/contracts';
-import { DashboardWidget, TenantOrganizationBaseEntity, User } from '../core/entities/internal';
+import { ID, IDashboard, IEmployee, IUser, JsonData } from '@gauzy/contracts';
+import { DashboardWidget, Employee, TenantOrganizationBaseEntity, User } from '../core/entities/internal';
 import {
 	ColumnIndex,
 	MultiORMColumn,
@@ -69,21 +69,44 @@ export class Dashboard extends TenantOrganizationBaseEntity implements IDashboar
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
+	/**
+	 * The employee for whom the dashboard is created
+	 */
+	@MultiORMManyToOne(() => Employee, {
+		/** Database cascade action on delete. */
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	employee?: IEmployee;
 
 	/**
-	 * Who created the dashboard
+	 * The employee ID for whom the dashboard is created
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: Dashboard) => it.employee)
+	@ColumnIndex()
+	@MultiORMColumn({ relationId: true })
+	employeeId?: ID;
+
+	/**
+	 * The user who created the dashboard
 	 */
 	@MultiORMManyToOne(() => User, {
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	creator?: IUser;
+	createdByUser?: IUser;
 
-	@RelationId((it: Dashboard) => it.creator)
+	/**
+	 * The user ID who created the dashboard
+	 */
+	@RelationId((it: Dashboard) => it.createdByUser)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	creatorId?: ID;
+	createdByUserId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -92,7 +115,7 @@ export class Dashboard extends TenantOrganizationBaseEntity implements IDashboar
 	*/
 
 	/**
-	 * Widgets
+	 * Dashbaord Widgets
 	 */
 	@MultiORMOneToMany(() => DashboardWidget, (it) => it.dashboard)
 	widgets?: DashboardWidget[];
