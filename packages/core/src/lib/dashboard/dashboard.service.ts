@@ -7,44 +7,49 @@ import {
 	IDashboardUpdateInput,
 	ID
 } from '@gauzy/contracts';
-import { TenantAwareCrudService } from '../core/crud';
-import { RequestContext } from '../core/context';
+import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { RequestContext } from '../core/context/request-context';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import { Dashboard } from './dashboard.entity';
 import { TypeOrmDashboardRepository } from './repository/type-orm-dashboard.repository';
 import { MikroOrmDashboardRepository } from './repository/mikro-orm-dashboard.repository';
-import { ActivityLogService } from '../activity-log/activity-log.service';
 
 @Injectable()
 export class DashboardService extends TenantAwareCrudService<Dashboard> {
 	constructor(
 		readonly typeOrmDashboardRepository: TypeOrmDashboardRepository,
 		readonly mikroOrmDashboardRepository: MikroOrmDashboardRepository,
-		private readonly activityLogService: ActivityLogService
+		private readonly _activityLogService: ActivityLogService
 	) {
 		super(typeOrmDashboardRepository, mikroOrmDashboardRepository);
 	}
 
 	/**
-	 * Creates a new dashboard
+	 * Creates a new dashboard.
 	 *
-	 * @param {IDashboardCreateInput} input - The input data for creating a dashboard
-	 * @returns {Promise<Dashboard>} The created dashboard
+	 * @param input - The data required to create a new dashboard.
+	 * @returns The created Dashboard entity.
+	 * @throws {HttpException} If the creation process fails.
 	 */
 	async create(input: IDashboardCreateInput): Promise<Dashboard> {
 		try {
-			const userId = RequestContext.currentUserId();
-			const tenantId = RequestContext.currentTenantId();
-			const { organizationId } = input;
+			// Retrieve the current user ID from the request context
+			const createdByUserId = RequestContext.currentUserId();
+			// Retrieve the tenant ID from the request context or fallback to the input tenantId
+			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+			// Destructure organizationId and the rest of the input data
+			const { organizationId, ...data } = input;
 
-			// create dashboard
+			// Create the dashboard entity using the base service's create method
 			const dashboard = await super.create({
-				...input,
+				...data,
+				organizationId,
 				tenantId,
-				creatorId: userId
+				createdByUserId
 			});
 
-			// Generate the activity log
-			this.activityLogService.logActivity<Dashboard>(
+			// Log the creation activity
+			this._activityLogService.logActivity<Dashboard>(
 				BaseEntityEnum.Dashboard,
 				ActionTypeEnum.Created,
 				ActorTypeEnum.User,
@@ -57,38 +62,48 @@ export class DashboardService extends TenantAwareCrudService<Dashboard> {
 
 			return dashboard;
 		} catch (error) {
+			// Log the error for debugging purposes
+			console.error(`Failed to create dashboard: ${error.message}`);
+			// Throw an HTTP exception with a BAD_REQUEST status
 			throw new HttpException(`Failed to create dashboard: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
 
 	/**
-	 * Updates an existing dashboard
+	 * Updates an existing dashboard.
 	 *
-	 * @param {ID} id - The ID of the dashboard to update
-	 * @param {IDashboardUpdateInput} input - The input data for updating a dashboard
-	 * @returns {Promise<Dashboard>} The updated dashboard
+	 * @param id - The unique identifier of the dashboard to update.
+	 * @param input - The data to update the dashboard with.
+	 * @returns A promise that resolves to the updated Dashboard entity.
+	 * @throws {NotFoundException} If the dashboard with the given ID does not exist.
+	 * @throws {HttpException} If the update process fails.
 	 */
 	async update(id: ID, input: IDashboardUpdateInput): Promise<Dashboard> {
-		const tenantId = RequestContext.currentTenantId() || input.tenantId;
-
 		try {
-			const { organizationId } = input;
+			// Retrieve the tenant ID from the request context or fallback to the input tenantId
+			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+			// Destructure organizationId and the rest of the input data
+			const { organizationId, ...data } = input;
 
-			// Retrieve existing dashboard
-			const existingDashboard = await this.findOneByIdString(id);
+			// Retrieve the existing dashboard by ID
+			const dashboard = await this.findOneByIdString(id);
 
-			if (!existingDashboard) {
-				throw new NotFoundException('Dashboard not found');
+			// If the dashboard does not exist, throw a NotFoundException
+			if (!dashboard) {
+				console.log(`Dashboard with ID ${id} does not exist`);
+				throw new NotFoundException(`Dashboard with ID ${id} does not exist`);
 			}
 
-			// Update dashboard
+			// Update the dashboard using the base service's create method
 			const updatedDashboard = await super.create({
-				...input,
+				...data,
+				tenantId,
+				organizationId,
 				id
 			});
 
-			// Generate the activity log
-			this.activityLogService.logActivity<Dashboard>(
+			// Log the update activity
+			this._activityLogService.logActivity<Dashboard>(
 				BaseEntityEnum.Dashboard,
 				ActionTypeEnum.Updated,
 				ActorTypeEnum.User,
@@ -97,13 +112,15 @@ export class DashboardService extends TenantAwareCrudService<Dashboard> {
 				updatedDashboard,
 				organizationId,
 				tenantId,
-				existingDashboard,
+				dashboard,
 				input
 			);
 
 			// Return the updated dashboard
 			return updatedDashboard;
 		} catch (error) {
+			// Log the error and throw an HttpException
+			console.error('Error while updating dashboard:', error);
 			throw new HttpException(`Failed to update dashboard: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
