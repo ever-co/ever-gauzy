@@ -198,7 +198,7 @@ export class TimerService {
 	 */
 	async checkForPeriodicSave(lastLog: TimeLog) {
 		// Check if periodic time save is enabled and the timer is running and the source is WEB_TIMER
-		if(!env.periodicTimeSave || !lastLog.isRunning || lastLog.source != TimeLogSourceEnum.WEB_TIMER) return;
+		if(!env.periodicTimeSave || !lastLog.isRunning || lastLog.source !== TimeLogSourceEnum.WEB_TIMER) return;
 
 		const now = moment();
 		const durationSinceLastEndTime = Math.abs(now.diff(moment(lastLog.stoppedAt), 'seconds'));
@@ -384,7 +384,7 @@ export class TimerService {
 		lastLog: ITimeLog,
 		tenantId: ID,
 		organizationId: ID,
-		forceDelete: boolean = false
+		forceDelete = false
 	): Promise<void> {
 		try {
 			// Validate the date range and check if the timer is running
@@ -641,8 +641,8 @@ export class TimerService {
 	 * @returns A single time log if `fetchAll` is `false`, or an array of time logs if `fetchAll` is `true`
 	 */
 	private async getRunningLogs(
-		fetchAll: boolean = false,
-		includeTimeSlots: boolean = false
+		fetchAll = false,
+		includeTimeSlots = false
 	): Promise<ITimeLog | ITimeLog[]> {
 		const tenantId = RequestContext.currentTenantId(); // Retrieve the tenant ID from the current context
 
@@ -677,7 +677,7 @@ export class TimerService {
 	 *
 	 * @returns The last running ITimeLog entry for the current employee
 	 */
-	private async getLastRunningLog(includeTimeSlots: boolean = false): Promise<ITimeLog> {
+	private async getLastRunningLog(includeTimeSlots = false): Promise<ITimeLog> {
 		// Retrieve the last running log by using the `getRunningLogs` method with `fetchAll` set to false
 		const lastRunningLog = await this.getRunningLogs(false, includeTimeSlots);
 
