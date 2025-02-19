@@ -99,5 +99,6 @@ export enum BaseEntityEnum {
 	TaskLinkedIssue = 'TaskLinkedIssue',
 	TaskView = 'TaskView',
 	User = 'User',
-	Tenant = 'Tenant'
+	Tenant = 'Tenant',
+	TimeLog = 'TimeLog'
 }
