@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, Logger } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IOrganizationTeam } from '@gauzy/contracts';
 import { OrganizationTeamCreateCommand } from '../organization-team.create.command';
@@ -9,44 +9,52 @@ import { OrganizationTeamTaskStatusBulkCreateCommand } from './../../../tasks/st
 import { OrganizationTeamIssueTypeBulkCreateCommand } from './../../../tasks/issue-type/commands';
 
 @CommandHandler(OrganizationTeamCreateCommand)
-export class OrganizationTeamCreateHandler
-	implements ICommandHandler<OrganizationTeamCreateCommand>
-{
+export class OrganizationTeamCreateHandler implements ICommandHandler<OrganizationTeamCreateCommand> {
+	private readonly logger = new Logger(OrganizationTeamCreateHandler.name);
+
 	constructor(
 		private readonly _commandBus: CommandBus,
 		private readonly _organizationTeamService: OrganizationTeamService
 	) {}
 
-	public async execute(
-		command: OrganizationTeamCreateCommand
-	): Promise<IOrganizationTeam> {
+	/**
+	 * Handles the creation of an organization team and initiates related background tasks.
+	 *
+	 * @param command - The command containing the input data for creating the team.
+	 * @returns The created organization team.
+	 */
+	public async execute(command: OrganizationTeamCreateCommand): Promise<IOrganizationTeam> {
 		try {
 			const { input } = command;
 			const team = await this._organizationTeamService.create(input);
 
-			// 1. Create task statuses for relative organization team.
-			this._commandBus.execute(
-				new OrganizationTeamTaskStatusBulkCreateCommand(team)
-			);
-
-			// 2. Create task priorities for relative organization team.
-			this._commandBus.execute(
-				new OrganizationTeamTaskPriorityBulkCreateCommand(team)
-			);
-
-			// 3. Create task sizes for relative organization team.
-			this._commandBus.execute(
-				new OrganizationTeamTaskSizeBulkCreateCommand(team)
-			);
-
-			// 4. Create issue types for relative organization team.
-			this._commandBus.execute(
-				new OrganizationTeamIssueTypeBulkCreateCommand(team)
-			);
+			// Execute related commands in the background
+			this.executeBackgroundTasks(team);
 
 			return team;
 		} catch (error) {
-			throw new BadRequestException(error);
+			this.logger.error('Error while creating organization team', error.stack);
+			throw new BadRequestException(`Error while creating organization team: ${error.message}`);
+		}
+	}
+
+	/**
+	 * Executes related commands concurrently in the background.
+	 *
+	 * @param team - The organization team for which to execute the commands.
+	 */
+	private async executeBackgroundTasks(team: IOrganizationTeam): Promise<void> {
+		try {
+			const commands = [
+				new OrganizationTeamTaskStatusBulkCreateCommand(team),
+				new OrganizationTeamTaskPriorityBulkCreateCommand(team),
+				new OrganizationTeamTaskSizeBulkCreateCommand(team),
+				new OrganizationTeamIssueTypeBulkCreateCommand(team)
+			];
+
+			await Promise.all(commands.map((command) => this._commandBus.execute(command)));
+		} catch (error) {
+			console.log('Error while executing background tasks:', error);
 		}
 	}
 }
