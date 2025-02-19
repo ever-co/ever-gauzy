@@ -6,14 +6,7 @@ import * as path from 'path';
 import * as moment from 'moment';
 import { chain } from 'underscore';
 import { environment as env } from '@gauzy/config';
-import {
-	IOrganization,
-	IEmployee,
-	ITenant,
-	ContactType,
-	OrganizationContactBudgetTypeEnum,
-	IIncome
-} from '@gauzy/contracts';
+import { IOrganization, IEmployee, ITenant, ContactType, OrganizationContactBudgetTypeEnum } from '@gauzy/contracts';
 import { Income, OrganizationContact, Tag } from './../core/entities/internal';
 import { getDummyImage } from './../core/utils';
 
