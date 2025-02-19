@@ -9,8 +9,13 @@ import { CrudActionEnum } from './organization.model';
 import { IOrganizationProject, IOrganizationProjectCreateInput } from './organization-projects.model';
 import { IOrganizationProjectModule } from './organization-project-module.model';
 import { IComment } from './comment.model';
+import { IHasUserCreator } from './user.model';
 
-export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset, ITaggable {
+export interface IOrganizationTeam
+	extends IBasePerTenantAndOrganizationEntityModel,
+		IRelationalImageAsset,
+		ITaggable,
+		IHasUserCreator {
 	name: string;
 	color?: string;
 	emoji?: string;
