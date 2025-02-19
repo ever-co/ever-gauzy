@@ -60,23 +60,15 @@ export class AlterDashboardEntityTable1739950092274 implements MigrationInterfac
 		await queryRunner.query(`ALTER TABLE "dashboard" DROP CONSTRAINT "FK_d343751cf98e2bfd85754a35a12"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_d343751cf98e2bfd85754a35a1"`);
 		await queryRunner.query(`ALTER TABLE "dashboard" DROP COLUMN "creatorId"`);
-		await queryRunner.query(`ALTER TABLE "dashboard" ADD "employeeId" uuid NOT NULL`);
+		await queryRunner.query(`ALTER TABLE "dashboard" ADD "employeeId" uuid`);
 		await queryRunner.query(`ALTER TABLE "dashboard" ADD "createdByUserId" uuid NOT NULL`);
 		await queryRunner.query(`CREATE INDEX "IDX_b34e5ae765e0f8d674e0604621" ON "dashboard" ("employeeId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_30613c8cd1a1df1b176dfb696b" ON "dashboard" ("createdByUserId") `);
 		await queryRunner.query(
-			`ALTER TABLE "dashboard"
-			ADD CONSTRAINT "FK_b34e5ae765e0f8d674e06046210"
-			FOREIGN KEY ("employeeId") REFERENCES "employee"("id")
-			ON DELETE CASCADE
-			ON UPDATE NO ACTION`
+			`ALTER TABLE "dashboard" ADD CONSTRAINT "FK_b34e5ae765e0f8d674e06046210" FOREIGN KEY ("employeeId") REFERENCES "employee"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
 		await queryRunner.query(
-			`ALTER TABLE "dashboard"
-			ADD CONSTRAINT "FK_30613c8cd1a1df1b176dfb696ba"
-			FOREIGN KEY ("createdByUserId") REFERENCES "user"("id")
-			ON DELETE CASCADE
-			ON UPDATE NO ACTION`
+			`ALTER TABLE "dashboard" ADD CONSTRAINT "FK_30613c8cd1a1df1b176dfb696ba" FOREIGN KEY ("createdByUserId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
 	}
 
@@ -95,11 +87,7 @@ export class AlterDashboardEntityTable1739950092274 implements MigrationInterfac
 		await queryRunner.query(`ALTER TABLE "dashboard" ADD "creatorId" uuid NOT NULL`);
 		await queryRunner.query(`CREATE INDEX "IDX_d343751cf98e2bfd85754a35a1" ON "dashboard" ("creatorId") `);
 		await queryRunner.query(
-			`ALTER TABLE "dashboard"
-			ADD CONSTRAINT "FK_d343751cf98e2bfd85754a35a12"
-			FOREIGN KEY ("creatorId") REFERENCES "user"("id")
-			ON DELETE CASCADE
-			ON UPDATE NO ACTION`
+			`ALTER TABLE "dashboard" ADD CONSTRAINT "FK_d343751cf98e2bfd85754a35a12" FOREIGN KEY ("creatorId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
 	}
 
@@ -263,7 +251,7 @@ export class AlterDashboardEntityTable1739950092274 implements MigrationInterfac
 				"description" text,
 				"contentHtml" text,
 				"isDefault" boolean NOT NULL DEFAULT (0),
-				"employeeId" varchar NOT NULL,
+				"employeeId" varchar,
 				"createdByUserId" varchar NOT NULL,
 				CONSTRAINT "FK_458f459afdb1dbb19c5d80c2767" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
 				CONSTRAINT "FK_c35744fa39ab7f9326a0b07a812" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
@@ -333,7 +321,7 @@ export class AlterDashboardEntityTable1739950092274 implements MigrationInterfac
 				"description" text,
 				"contentHtml" text,
 				"isDefault" boolean NOT NULL DEFAULT (0),
-				"employeeId" varchar NOT NULL,
+				"employeeId" varchar,
 				"createdByUserId" varchar NOT NULL,
 				CONSTRAINT "FK_458f459afdb1dbb19c5d80c2767" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
 				CONSTRAINT "FK_c35744fa39ab7f9326a0b07a812" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
@@ -681,25 +669,17 @@ export class AlterDashboardEntityTable1739950092274 implements MigrationInterfac
 		await queryRunner.query(`ALTER TABLE \`dashboard\` DROP FOREIGN KEY \`FK_d343751cf98e2bfd85754a35a12\``);
 		await queryRunner.query(`DROP INDEX \`IDX_d343751cf98e2bfd85754a35a1\` ON \`dashboard\``);
 		await queryRunner.query(`ALTER TABLE \`dashboard\` DROP COLUMN \`creatorId\``);
-		await queryRunner.query(`ALTER TABLE \`dashboard\` ADD \`employeeId\` varchar(255) NOT NULL`);
+		await queryRunner.query(`ALTER TABLE \`dashboard\` ADD \`employeeId\` varchar(255)`);
 		await queryRunner.query(`ALTER TABLE \`dashboard\` ADD \`createdByUserId\` varchar(255) NOT NULL`);
 		await queryRunner.query(`CREATE INDEX \`IDX_b34e5ae765e0f8d674e0604621\` ON \`dashboard\` (\`employeeId\`)`);
 		await queryRunner.query(
 			`CREATE INDEX \`IDX_30613c8cd1a1df1b176dfb696b\` ON \`dashboard\` (\`createdByUserId\`)`
 		);
 		await queryRunner.query(
-			`ALTER TABLE \`dashboard\`
-			ADD CONSTRAINT \`FK_b34e5ae765e0f8d674e06046210\`
-			FOREIGN KEY (\`employeeId\`) REFERENCES \`employee\`(\`id\`)
-			ON DELETE CASCADE
-			ON UPDATE NO ACTION`
+			`ALTER TABLE \`dashboard\` ADD CONSTRAINT \`FK_b34e5ae765e0f8d674e06046210\` FOREIGN KEY (\`employeeId\`) REFERENCES \`employee\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
 		await queryRunner.query(
-			`ALTER TABLE \`dashboard\`
-			ADD CONSTRAINT \`FK_30613c8cd1a1df1b176dfb696ba\`
-			FOREIGN KEY (\`createdByUserId\`) REFERENCES \`user\`(\`id\`)
-			ON DELETE CASCADE
-			ON UPDATE NO ACTION`
+			`ALTER TABLE \`dashboard\` ADD CONSTRAINT \`FK_30613c8cd1a1df1b176dfb696ba\` FOREIGN KEY (\`createdByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
 	}
 
@@ -718,11 +698,7 @@ export class AlterDashboardEntityTable1739950092274 implements MigrationInterfac
 		await queryRunner.query(`ALTER TABLE \`dashboard\` ADD \`creatorId\` varchar(255) NOT NULL`);
 		await queryRunner.query(`CREATE INDEX \`IDX_d343751cf98e2bfd85754a35a1\` ON \`dashboard\` (\`creatorId\`)`);
 		await queryRunner.query(
-			`ALTER TABLE \`dashboard\`
-			ADD CONSTRAINT \`FK_d343751cf98e2bfd85754a35a12\`
-			FOREIGN KEY (\`creatorId\`) REFERENCES \`user\`(\`id\`)
-			ON DELETE CASCADE
-			ON UPDATE NO ACTION`
+			`ALTER TABLE \`dashboard\` ADD CONSTRAINT \`FK_d343751cf98e2bfd85754a35a12\` FOREIGN KEY (\`creatorId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
 	}
 }
