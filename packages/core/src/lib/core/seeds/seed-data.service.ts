@@ -733,15 +733,15 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Incomes',
-			createDefaultIncomes(this.dataSource, this.tenant, [this.defaultOrganization], this.defaultEmployees)
+			createDefaultIncomes(this.dataSource, this.tenant, this.defaultOrganization, this.defaultEmployees)
 		);
 
 		await this.tryExecute(
 			'Default Expenses',
 			createDefaultExpenses(
 				this.dataSource,
-				this.organizations,
 				this.tenant,
+				this.organizations,
 				this.defaultEmployees,
 				categories,
 				organizationVendors
