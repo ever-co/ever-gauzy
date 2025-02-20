@@ -1267,7 +1267,23 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const timeLogs = await query.getMany();
 
 		// Invoke the command bus to delete the time logs
-		return await this.commandBus.execute(new TimeLogDeleteCommand(timeLogs, forceDelete));
+		const deleted = await this.commandBus.execute(new TimeLogDeleteCommand(timeLogs, forceDelete));
+
+		// Generate the activity log
+		for (const timeLog of timeLogs) {
+			this.activityLogService.logActivity<TimeLog>(
+				BaseEntityEnum.TimeLog,
+				ActionTypeEnum.Deleted,
+				ActorTypeEnum.User,
+				timeLog.id,
+				timeLog.reason,
+				timeLog,
+				organizationId,
+				tenantId
+			);
+		}
+
+		return deleted;
 	}
 
 	/**
