@@ -136,12 +136,72 @@ export class AlterOrganizationTeamEntityTable1740034146994 implements MigrationI
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		// Step 1: Drop the existing foreign key constraint on "createdById" in the "organization_team" table.
+		console.log('Step 1: Dropping foreign key constraint on "createdById" from "organization_team"...');
+		await queryRunner.query(
+			`ALTER TABLE \`organization_team\` DROP FOREIGN KEY \`FK_da625f694eb1e23e585f3010082\``
+		);
+
+		// Step 2: Drop the existing index on "createdById".
+		console.log('Step 2: Dropping index "createdById" from "organization_team"...');
+		await queryRunner.query(`DROP INDEX \`IDX_da625f694eb1e23e585f301008\` ON \`organization_team\``);
+
+		// Step 3: Renaming column "createdById" to "createdByUserId" in the "organization_team" table.
+		console.log('Step 3: Renaming column "createdById" to "createdByUserId" in "organization_team"...');
+		await queryRunner.query(
+			`ALTER TABLE \`organization_team\` CHANGE \`createdById\` \`createdByUserId\` varchar(255) NULL`
+		);
+
+		// Step 4: Create a new index for the "createdByUserId" column.
+		console.log('Step 4: Creating index "createdByUserId" on "organization_team"...');
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_507bfec137b2f8bf283cb1f08d\` ON \`organization_team\` (\`createdByUserId\`)`
+		);
+
+		// Step 5: Add a new foreign key constraint for the "createdByUserId" column.
+		console.log(`Step 5: Adding foreign key constraint for "createdByUserId"...`);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_team\`
+			ADD CONSTRAINT \`FK_507bfec137b2f8bf283cb1f08d0\` FOREIGN KEY (\`createdByUserId\`) REFERENCES \`user\`(\`id\`)
+			ON DELETE SET NULL ON UPDATE NO ACTION`
+		);
+	}
 
 	/**
 	 * MySQL Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		// Step 1: Drop the foreign key constraint on "createdByUserId" in the "organization_team" table.
+		console.log(`Step 1: Dropping foreign key constraint on "createdByUserId" from "organization_team"...`);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_team\` DROP FOREIGN KEY \`FK_507bfec137b2f8bf283cb1f08d0\``
+		);
+
+		// Step 2: Drop the index associated with the "createdByUserId" column.
+		console.log('Step 2: Dropping index "createdByUserId" from "organization_team"...');
+		await queryRunner.query(`DROP INDEX \`IDX_507bfec137b2f8bf283cb1f08d\` ON \`organization_team\``);
+
+		// Step 3: Rename the column "createdByUserId" to "createdById" in the "organization_team" table.
+		console.log('Step 3: Renaming column "createdByUserId" to "createdById" in "organization_team"...');
+		await queryRunner.query(
+			`ALTER TABLE \`organization_team\` CHANGE \`createdByUserId\` \`createdById\` varchar(255) NULL`
+		);
+
+		// Step 4: Create a new index for the "createdById" column.
+		console.log('Step 4: Creating index "createdById" on "organization_team"...');
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_da625f694eb1e23e585f301008\` ON \`organization_team\` (\`createdById\`)`
+		);
+
+		// Step 5: Add a new foreign key constraint for the "createdById" column.
+		console.log(`Step 5: Adding foreign key constraint for "createdById"...`);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_team\`
+			ADD CONSTRAINT \`FK_da625f694eb1e23e585f3010082\` FOREIGN KEY (\`createdById\`) REFERENCES \`user\`(\`id\`)
+			ON DELETE SET NULL ON UPDATE NO ACTION`
+		);
+	}
 }
