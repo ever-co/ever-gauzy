@@ -195,7 +195,7 @@ export class DailyGridComponent extends BaseSelectorFilterComponent implements O
 							project: `${projectName} ${this.getTranslation('SM_TABLE.MEMBERS_COUNT')}: ${membersCount}`,
 							title: task?.task?.title || 'N/A',
 							notes: this.truncatePipe.transform(task?.description || 'N/A', 40),
-							time: this.durationFormatPipe.transform(employee?.sum || 0),
+							time: this.durationFormatPipe.transform(task?.duration || 0),
 							activity: `${employee?.activity || 0}%`
 						});
 					});

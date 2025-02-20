@@ -162,7 +162,7 @@ export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent i
 				}
 
 				employeeData.projects.forEach((project) => {
-					const projectName = project?.project.name;
+					const projectName = project?.project?.name || 'N/A';
 					const membersCount = project?.project?.membersCount || 'N/A';
 
 					if (!project.activity || !Array.isArray(project.activity)) {

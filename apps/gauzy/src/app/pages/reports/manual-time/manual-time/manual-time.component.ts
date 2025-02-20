@@ -15,6 +15,7 @@ import {
 	DurationFormatPipe,
 	GauzyFiltersComponent,
 	generateCsv,
+	TimeFormatPipe,
 	TimeZoneService
 } from '@gauzy/ui-core/shared';
 import {
@@ -54,7 +55,8 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		protected readonly timeZoneService: TimeZoneService,
 		private readonly dateFormatPipe: DateFormatPipe,
-		private readonly durationFormatPipe: DurationFormatPipe
+		private readonly durationFormatPipe: DurationFormatPipe,
+		private readonly timeFormatPipe: TimeFormatPipe
 	) {
 		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
@@ -188,7 +190,7 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 
 			entry.timeLogs.forEach((logs) => {
 				const employeeFullName = logs?.employee?.fullName || 'N/A';
-				const projectName = logs?.project.name;
+				const projectName = logs?.project?.name || 'N/A';
 				const membersCount = logs?.project?.membersCount || 'N/A';
 				const title = logs?.task?.title || 'N/A';
 
@@ -198,7 +200,7 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 					project: `${projectName} ${this.getTranslation('SM_TABLE.MEMBERS_COUNT')}: ${membersCount}`,
 					title: title,
 					reason: logs.reason || '-',
-					from: this.dateFormatPipe.transform(logs?.createdAt) || '-',
+					from: this.timeFormatPipe.transform(logs?.createdAt) || '-',
 					duration: this.durationFormatPipe.transform(logs?.duration || 0),
 					editedAt: logs?.editedAt || 'N/A',
 					edited: logs?.isEdited ? `${ManualTimeLogAction.EDITED}` : `${ManualTimeLogAction.ADDED}`
