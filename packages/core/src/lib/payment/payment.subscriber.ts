@@ -22,7 +22,7 @@ export class PaymentSubscriber extends BaseEntityEventSubscriber<Payment> {
 	async beforeEntityCreate(entity: Payment): Promise<void> {
 		try {
 			// Assign the current user's ID to recordedById
-			entity.recordedById = RequestContext.currentUserId();
+			entity.createdByUserId = RequestContext.currentUserId();
 		} catch (error) {
 			console.error('Error in PaymentSubscriber beforeEntityCreate:', error.message);
 		}

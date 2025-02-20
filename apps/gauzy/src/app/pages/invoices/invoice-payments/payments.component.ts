@@ -118,7 +118,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 				'toContact',
 				'payments',
 				'payments.invoice',
-				'payments.recordedBy'
+				'payments.createdByUser'
 			];
 
 			// Fetch invoice details
@@ -441,7 +441,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 				contact: this.invoice.toContact ? this.invoice.toContact.name : '',
 				paymentDate: payment.paymentDate.toString().slice(0, 10),
 				amount: `${payment.currency + ' ' + payment.amount}`,
-				recordedBy: payment.recordedBy.firstName + payment.recordedBy.lastName,
+				recordedBy: payment.createdByUser.fullName,
 				note: payment.note || '',
 				paymentMethod: payment.paymentMethod
 					? this.getTranslation(`INVOICES_PAGE.PAYMENTS.${payment.paymentMethod}`)

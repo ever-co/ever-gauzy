@@ -21,41 +21,45 @@ import { Invoice, OrganizationProject, Tag, User } from './../core/entities/inte
  * @returns An array of generated payments.
  */
 const generatePaymentsForInvoices = (
-    invoices: Invoice[],
-    tenant: ITenant,
-    organization: IOrganization,
-    tags: Tag[],
-    employees: IEmployee[],
-    users: User[],
-    projects: OrganizationProject[]
+	invoices: Invoice[],
+	tenant: ITenant,
+	organization: IOrganization,
+	tags: Tag[],
+	employees: IEmployee[],
+	users: User[],
+	projects: OrganizationProject[]
 ): Payment[] => {
-    const payments: Payment[] = [];
+	const payments: Payment[] = [];
 
-    invoices.forEach((invoice) => {
+	invoices.forEach((invoice) => {
 		const range = faker.date.between({
-            from: new Date(),
-            to: moment(new Date()).add(1, 'month').toDate()
-        })
+			from: new Date(),
+			to: moment(new Date()).add(1, 'month').toDate()
+		});
 
-        const payment = new Payment();
-        payment.invoice = invoice;
-        payment.paymentDate = moment(range).startOf('day').toDate();
-        payment.amount = faker.number.int({ min: 500, max: 5000 });
-        payment.note = faker.lorem.sentence();
-        payment.currency = organization.currency || env.defaultCurrency;
-        payment.paymentMethod = faker.helpers.arrayElement(Object.values(PaymentMethodEnum)) as PaymentMethodEnum;
-        payment.overdue = faker.datatype.boolean();
-        payment.organization = organization;
-        payment.tenant = tenant;
-        payment.tags =  chain(tags).shuffle().take(faker.number.int({ min: 1, max: 3 })).values().value();
+		const payment = new Payment();
+		payment.invoice = invoice;
+		payment.paymentDate = moment(range).startOf('day').toDate();
+		payment.amount = faker.number.int({ min: 500, max: 5000 });
+		payment.note = faker.lorem.sentence();
+		payment.currency = organization.currency || env.defaultCurrency;
+		payment.paymentMethod = faker.helpers.arrayElement(Object.values(PaymentMethodEnum)) as PaymentMethodEnum;
+		payment.overdue = faker.datatype.boolean();
+		payment.organization = organization;
+		payment.tenant = tenant;
+		payment.tags = chain(tags)
+			.shuffle()
+			.take(faker.number.int({ min: 1, max: 3 }))
+			.values()
+			.value();
 		payment.employee = getRandomElement(employees);
-        payment.recordedBy = getRandomElement(users);
-        payment.project = getRandomElement(projects);
-        payment.organizationContact = invoice.toContact;
-        payments.push(payment);
-    });
+		payment.createdByUser = getRandomElement(users);
+		payment.project = getRandomElement(projects);
+		payment.organizationContact = invoice.toContact;
+		payments.push(payment);
+	});
 
-    return payments;
+	return payments;
 };
 
 /**
@@ -68,47 +72,46 @@ const generatePaymentsForInvoices = (
  * @returns A promise that resolves to an array of created payments.
  */
 export const createDefaultPayment = async (
-    dataSource: DataSource,
-    tenant: ITenant,
-    employees: IEmployee[],
-    organizations: IOrganization[]
+	dataSource: DataSource,
+	tenant: ITenant,
+	employees: IEmployee[],
+	organizations: IOrganization[]
 ): Promise<Payment[]> => {
-    if (!tenant || !employees.length || !organizations.length) {
-        throw new Error('Invalid input: Tenant, employees, and organizations are required.');
-    }
+	if (!tenant || !employees.length || !organizations.length) {
+		throw new Error('Invalid input: Tenant, employees, and organizations are required.');
+	}
 
-    const payments: Payment[] = [];
-    const users = await dataSource.manager.findBy(User, { tenantId: tenant.id });
+	const payments: Payment[] = [];
+	const users = await dataSource.manager.findBy(User, { tenantId: tenant.id });
 
-    for await (const organization of organizations) {
-        const { id: organizationId } = organization;
+	for await (const organization of organizations) {
+		const { id: organizationId } = organization;
 
-        const [projects, tags, invoices] = await Promise.all([
-            dataSource.manager.findBy(OrganizationProject, { tenantId: tenant.id, organizationId }),
-            dataSource.manager.findBy(Tag, { tenantId: tenant.id, organizationId }),
-            dataSource.manager.find(Invoice, {
-                where: { tenantId: tenant.id, organizationId, isEstimate: false },
-                relations: { toContact: true }
-            })
-        ]);
+		const [projects, tags, invoices] = await Promise.all([
+			dataSource.manager.findBy(OrganizationProject, { tenantId: tenant.id, organizationId }),
+			dataSource.manager.findBy(Tag, { tenantId: tenant.id, organizationId }),
+			dataSource.manager.find(Invoice, {
+				where: { tenantId: tenant.id, organizationId, isEstimate: false },
+				relations: { toContact: true }
+			})
+		]);
 
-        const organizationPayments = generatePaymentsForInvoices(
-            invoices,
-            tenant,
-            organization,
-            tags,
-            employees,
-            users,
-            projects
-        );
+		const organizationPayments = generatePaymentsForInvoices(
+			invoices,
+			tenant,
+			organization,
+			tags,
+			employees,
+			users,
+			projects
+		);
 
-        payments.push(...organizationPayments);
-    }
+		payments.push(...organizationPayments);
+	}
 
-    await dataSource.manager.save(payments, { chunk: 100 });
-    return payments;
+	await dataSource.manager.save(payments, { chunk: 100 });
+	return payments;
 };
-
 
 /**
  * Creates random payments for multiple tenants and their organizations.
@@ -120,50 +123,50 @@ export const createDefaultPayment = async (
  * @returns A promise that resolves to an array of created payments.
  */
 export const createRandomPayment = async (
-    dataSource: DataSource,
-    tenants: ITenant[],
-    tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
-    organizationEmployeesMap: Map<IOrganization, IEmployee[]>
+	dataSource: DataSource,
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	organizationEmployeesMap: Map<IOrganization, IEmployee[]>
 ): Promise<Payment[]> => {
-    if (!tenantOrganizationsMap) {
-        console.warn('Warning: tenantOrganizationsMap not found, payments will not be created.');
-        return [];
-    }
+	if (!tenantOrganizationsMap) {
+		console.warn('Warning: tenantOrganizationsMap not found, payments will not be created.');
+		return [];
+	}
 
-    const allPayments: Payment[] = [];
+	const allPayments: Payment[] = [];
 
-    for await (const tenant of tenants) {
-        const { id: tenantId } = tenant;
-        const tenantOrgs = tenantOrganizationsMap.get(tenant) || [];
-        const users = await dataSource.manager.findBy(User, { tenantId });
+	for await (const tenant of tenants) {
+		const { id: tenantId } = tenant;
+		const tenantOrgs = tenantOrganizationsMap.get(tenant) || [];
+		const users = await dataSource.manager.findBy(User, { tenantId });
 
-        for await (const organization of tenantOrgs) {
-            const tenantEmployees = organizationEmployeesMap.get(organization) || [];
-            const { id: organizationId } = organization;
+		for await (const organization of tenantOrgs) {
+			const tenantEmployees = organizationEmployeesMap.get(organization) || [];
+			const { id: organizationId } = organization;
 
-            const [projects, tags, invoices] = await Promise.all([
-                dataSource.manager.findBy(OrganizationProject, { tenantId, organizationId }),
-                dataSource.manager.findBy(Tag, { tenantId, organizationId }),
-                dataSource.manager.find(Invoice, {
-                    where: { tenantId: tenant.id, organizationId, isEstimate: false },
-                	relations: { toContact: true }
-                })
-            ]);
+			const [projects, tags, invoices] = await Promise.all([
+				dataSource.manager.findBy(OrganizationProject, { tenantId, organizationId }),
+				dataSource.manager.findBy(Tag, { tenantId, organizationId }),
+				dataSource.manager.find(Invoice, {
+					where: { tenantId: tenant.id, organizationId, isEstimate: false },
+					relations: { toContact: true }
+				})
+			]);
 
-            const organizationPayments = generatePaymentsForInvoices(
-                invoices,
-                tenant,
-                organization,
-                tags,
-                tenantEmployees,
-                users,
-                projects
-            );
+			const organizationPayments = generatePaymentsForInvoices(
+				invoices,
+				tenant,
+				organization,
+				tags,
+				tenantEmployees,
+				users,
+				projects
+			);
 
-            allPayments.push(...organizationPayments);
-        }
-    }
+			allPayments.push(...organizationPayments);
+		}
+	}
 
-    await dataSource.manager.save(allPayments, { chunk: 100 });
-    return allPayments;
+	await dataSource.manager.save(allPayments, { chunk: 100 });
+	return allPayments;
 };
