@@ -117,7 +117,7 @@ export class TimerService {
 	 * @param request
 	 * @returns
 	 */
-	private async _getTimerStatusImplementation(request: ITimerStatusInput): Promise<ITimerStatus> {
+	async _getTimerStatusImplementation(request: ITimerStatusInput): Promise<ITimerStatus> {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, source, todayStart, todayEnd } = request;
 
