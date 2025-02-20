@@ -37,6 +37,9 @@ interface IBasePaymentProperties extends IBasePerTenantAndOrganizationEntityMode
 // Main Payment interface
 export interface IPayment extends IBasePaymentProperties {}
 
+// Input interface for creating a payment
+export interface IPaymentCreateInput extends IBasePaymentProperties {}
+
 // Input interface for updating a payment
 export interface IPaymentUpdateInput
 	extends Pick<IPayment, 'amount' | 'note' | 'currency' | 'paymentDate'>,
