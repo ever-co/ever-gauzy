@@ -31,6 +31,7 @@ import {
 } from '../../core/utils';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { EmployeeService } from '../../employee/employee.service';
+import { WebhookService } from '@gauzy/plugin-make-com';
 import {
 	DeleteTimeSpanCommand,
 	IGetConflictTimeLogCommand,
@@ -57,8 +58,40 @@ export class TimerService {
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 		private readonly _employeeService: EmployeeService,
-		private readonly _commandBus: CommandBus
+		private readonly _commandBus: CommandBus,
+		private readonly webhookService: WebhookService
 	) {}
+
+	/**
+	 * Timer tracking for employee
+	 */
+
+	async startTimer(request: ITimerToggleInput): Promise<ITimeLog> {
+        const timeLog = await this._startTimerImplementation(request);
+        // Emit webhook event after successful timer start
+        await this.webhookService.emitTimerEvent('start', timeLog);
+        return timeLog;
+    }
+
+    /**
+     * Stop time tracking for the current employee.
+     */
+    async stopTimer(request: ITimerToggleInput): Promise<ITimeLog> {
+        const timeLog = await this._stopTimerImplementation(request);
+        // Emit webhook event after successful timer stop
+        await this.webhookService.emitTimerEvent('stop', timeLog);
+        return timeLog;
+    }
+
+    /**
+     * Get timer status
+     */
+    async getTimerStatus(request: ITimerStatusInput): Promise<ITimerStatus> {
+        const status = await this._getTimerStatusImplementation(request);
+        // Emit webhook event after getting timer status
+        await this.webhookService.emitTimerEvent('status', status as any);
+        return status;
+    }
 
 	/**
 	 * Fetches an employee based on the provided query.
@@ -84,7 +117,7 @@ export class TimerService {
 	 * @param request
 	 * @returns
 	 */
-	async getTimerStatus(request: ITimerStatusInput): Promise<ITimerStatus> {
+	private async _getTimerStatusImplementation(request: ITimerStatusInput): Promise<ITimerStatus> {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, source, todayStart, todayEnd } = request;
 
@@ -196,7 +229,7 @@ export class TimerService {
 	 * @param request The timer toggle input details.
 	 * @returns A Promise resolving to the created ITimeLog entry.
 	 */
-	async startTimer(request: ITimerToggleInput): Promise<ITimeLog> {
+	async _startTimerImplementation(request: ITimerToggleInput): Promise<ITimeLog> {
 		console.log(
 			`-------------Start Timer Request (${moment.utc(request.startedAt).toDate()})-------------`,
 			JSON.stringify(request)
@@ -276,7 +309,7 @@ export class TimerService {
 	 * @param request The input data for stopping the timer.
 	 * @returns A Promise resolving to the updated ITimeLog entry.
 	 */
-	async stopTimer(request: ITimerToggleInput): Promise<ITimeLog> {
+	async _stopTimerImplementation(request: ITimerToggleInput): Promise<ITimeLog> {
 		console.log(
 			`-------------Stop Timer Request (${moment.utc(request.stoppedAt).toDate()})-------------`,
 			JSON.stringify(request)
