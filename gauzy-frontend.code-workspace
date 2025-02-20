@@ -1,0 +1,57 @@
+{
+    "folders": [
+        {
+            "name": "gauzy",
+            "path": "apps/gauzy"
+        },
+        {
+            "path": "packages",
+        }
+    ],
+    "launch": {
+        "configurations": [
+            {
+                "type": "node-terminal",
+                "name": "Start Gauzy WebApp Server",
+                "request": "launch",
+                "command": "yarn start:gauzy",
+                "cwd": "${workspaceFolder}/../../",
+            }
+        ]
+    },
+    "settings": {
+        "cSpell.words": [
+            "Upwork",
+            "timesheet",
+            "toastr"
+        ],
+        "checkpoints.showActiveFileOnly": true,
+        "debug.node.autoAttach": "off",
+        "git.ignoreLimitWarning": true,
+        "typescript.tsdk": "./node_modules/typescript/lib",
+        "files.exclude": {
+            "auth": true,
+            "common": true,
+            "config": true,
+            "core": true,
+            "plugin": true,
+            "utils": true,
+            "desktop-*": true,
+            "plugins/changelog": true,
+            "plugins/integration-ai": true,
+            "plugins/integration-github": true,
+            "plugins/integration-hubstaff": true,
+            "plugins/integration-jira": true,
+            "plugins/integration-upwork": true,
+            "plugins/integration-wakatime": true,
+            "plugins/jitsu-analytics": true,
+            "plugins/job-proposal": true,
+            "plugins/job-search": true,
+            "plugins/knowledge-base": true,
+            "plugins/product-reviews": true,
+            "plugins/sentry-tracing": true,
+            "plugins/videos": true,
+            "**/node_modules": true,
+        }
+    }
+}
