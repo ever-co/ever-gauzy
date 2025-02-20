@@ -1,15 +1,8 @@
-import { IPaymentUpdateInput } from "@gauzy/contracts";
-import { IntersectionType } from "@nestjs/mapped-types";
-import { RelationalCurrencyDTO } from "./../../currency/dto";
-import { RelationalTagDTO } from "./../../tags/dto";
-import { PaymentDTO } from "./payment.dto";
+import { OmitType } from '@nestjs/swagger';
+import { IPaymentUpdateInput } from '@gauzy/contracts';
+import { PaymentDTO } from './payment.dto';
 
 /**
- * Update payment request DTO validation
- *
+ * Update payment request DTO validation.
  */
-export class UpdatePaymentDTO extends IntersectionType(
-    PaymentDTO,
-    RelationalTagDTO,
-    RelationalCurrencyDTO
-) implements IPaymentUpdateInput {}
+export class UpdatePaymentDTO extends OmitType(PaymentDTO, ['employee', 'employeeId']) implements IPaymentUpdateInput {}

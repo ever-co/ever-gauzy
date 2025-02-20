@@ -1,8 +1,6 @@
-import {
-	JoinColumn,
-	JoinTable,
-	RelationId
-} from 'typeorm';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { JoinColumn, JoinTable, RelationId } from 'typeorm';
+import { IsArray, IsBoolean, IsEnum, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	IPayment,
 	CurrenciesEnum,
@@ -12,9 +10,9 @@ import {
 	ITag,
 	IOrganizationContact,
 	IOrganizationProject,
-	IUser
+	IUser,
+	ID
 } from '@gauzy/contracts';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	Employee,
 	Invoice,
@@ -24,43 +22,67 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from '../core/entities/internal';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne
+} from './../core/decorators/entity';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { IsOptional, IsUUID } from 'class-validator';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmPaymentRepository } from './repository/mikro-orm-payment.repository';
 
 @MultiORMEntity('payment', { mikroOrmRepository: () => MikroOrmPaymentRepository })
 export class Payment extends TenantOrganizationBaseEntity implements IPayment {
-
+	/**
+	 * The date of the payment.
+	 */
 	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
 	@MultiORMColumn({ nullable: true })
 	paymentDate?: Date;
 
-	@ApiPropertyOptional({ type: () => Number })
-	@MultiORMColumn({
-		nullable: true,
-		type: 'numeric',
-		transformer: new ColumnNumericTransformerPipe()
-	})
+	/**
+	 * The amount of the payment.
+	 */
+	@ApiProperty({ type: () => Number })
+	@IsNumber()
+	@MultiORMColumn({ nullable: true, type: 'numeric', transformer: new ColumnNumericTransformerPipe() })
 	amount?: number;
 
+	/**
+	 * A note associated with the payment.
+	 */
 	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@MultiORMColumn({ nullable: true })
 	note?: string;
 
+	/**
+	 * The currency of the payment.
+	 */
 	@ApiPropertyOptional({ type: () => String, enum: CurrenciesEnum })
+	@IsOptional()
+	@IsEnum(CurrenciesEnum)
 	@MultiORMColumn()
 	currency?: string;
 
+	/**
+	 * The payment method of the payment.
+	 */
 	@ApiPropertyOptional({ type: () => String, enum: PaymentMethodEnum })
-	@MultiORMColumn({
-		type: 'simple-enum',
-		nullable: true,
-		enum: PaymentMethodEnum
-	})
+	@IsOptional()
+	@IsEnum(PaymentMethodEnum)
+	@MultiORMColumn({ type: 'simple-enum', nullable: true, enum: PaymentMethodEnum })
 	paymentMethod?: PaymentMethodEnum;
 
+	/**
+	 * The overdue status of the payment.
+	 */
 	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ nullable: true })
 	overdue?: boolean;
 
@@ -69,69 +91,66 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
-
 	/**
-	 * Employee
+	 * The employee associated with this payment.
 	 */
-	@ApiProperty({ type: () => String })
-	@RelationId((it: Payment) => it.employee)
-	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, relationId: true })
-	employeeId?: string;
-
-	@ApiProperty({ type: () => Employee })
 	@MultiORMManyToOne(() => Employee, {
-		onDelete: 'SET NULL'
+		nullable: true, // Indicates if the relation column value can be nullable or not.
+		onDelete: 'SET NULL' // Database cascade action on delete.
 	})
 	@JoinColumn()
 	employee?: IEmployee;
 
 	/**
-	 * Invoice
+	 * The employee ID associated with this payment.
 	 */
-	@ApiPropertyOptional({ type: () => String })
-	@RelationId((it: Payment) => it.invoice)
+	@ApiProperty({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: Payment) => it.employee)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	invoiceId?: string;
+	employeeId?: ID;
 
+	/**
+	 * The invoice associated with this payment.
+	 */
 	@ApiPropertyOptional({ type: () => Invoice })
+	@IsOptional()
+	@IsObject()
 	@MultiORMManyToOne(() => Invoice, (invoice) => invoice.payments, {
-		onDelete: 'SET NULL'
+		nullable: true, // Indicates if the relation column value can be nullable or not.
+		onDelete: 'SET NULL' // Database cascade action on delete.
 	})
 	@JoinColumn()
 	invoice?: IInvoice;
 
 	/**
-	 * User
+	 * The invoice ID associated with this payment.
 	 */
-	@ApiPropertyOptional({ type: () => User })
-	@MultiORMManyToOne(() => User)
-	@JoinColumn()
-	recordedBy?: IUser;
-
-	@ApiProperty({ type: () => String })
-	@RelationId((it: Payment) => it.recordedBy)
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: Payment) => it.invoice)
 	@ColumnIndex()
-	@MultiORMColumn({ relationId: true })
-	recordedById?: IUser['id'];
+	@MultiORMColumn({ nullable: true, relationId: true })
+	invoiceId?: ID;
 
 	/**
-	 * Organization Project Relationship
+	 * The project associated with this payment.
 	 */
 	@ApiPropertyOptional({ type: () => OrganizationProject })
+	@IsOptional()
+	@IsObject()
 	@MultiORMManyToOne(() => OrganizationProject, (it) => it.payments, {
-		/** Indicates if the relation column value can be nullable or not. */
-		nullable: true,
-
-		/** Defines the database cascade action on delete. */
-		onDelete: 'SET NULL'
+		nullable: true, // Indicates if the relation column value can be nullable or not.
+		onDelete: 'SET NULL' // Defines the database cascade action on delete.
 	})
 	@JoinColumn()
 	project?: IOrganizationProject;
 
 	/**
-	 * Organization Project ID
+	 * The project ID associated with this payment.
 	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
@@ -139,40 +158,67 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@RelationId((it: Payment) => it.project)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	projectId?: IOrganizationProject['id'];
+	projectId?: ID;
 
 	/**
-	 * OrganizationContact
+	 * The organization contact associated with this payment.
 	 */
 	@ApiPropertyOptional({ type: () => OrganizationContact })
-	@MultiORMManyToOne(() => OrganizationContact, (organizationContact) => organizationContact.payments, {
-		onDelete: 'SET NULL'
+	@IsOptional()
+	@IsObject()
+	@MultiORMManyToOne(() => OrganizationContact, (it) => it.payments, {
+		nullable: true, // Indicates if the relation column value can be nullable or not.
+		onDelete: 'SET NULL' // Database cascade action on delete.
 	})
 	@JoinColumn()
 	organizationContact?: IOrganizationContact;
 
+	/**
+	 * The organization contact ID associated with this payment.
+	 */
 	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((it: Payment) => it.organizationContact)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	organizationContactId?: string;
+	organizationContactId?: ID;
+
+	/**
+	 * The user associated with this payment.
+	 */
+	@MultiORMManyToOne(() => User)
+	@JoinColumn()
+	recordedBy?: IUser;
+
+	/**
+	 * The user ID associated with this payment.
+	 */
+	@ApiProperty({ type: () => String })
+	@RelationId((it: Payment) => it.recordedBy)
+	@ColumnIndex()
+	@MultiORMColumn({ relationId: true })
+	recordedById?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToMany
 	|--------------------------------------------------------------------------
 	*/
-	@ApiProperty({ type: () => Tag, isArray: true })
-	@MultiORMManyToMany(() => Tag, (tag) => tag.payments, {
-		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
-		owner: true,
-		pivotTable: 'tag_payment',
-		joinColumn: 'paymentId',
-		inverseJoinColumn: 'tagId',
+	/**
+	 * Payment Tags
+	 */
+	@ApiPropertyOptional({ type: () => Array, isArray: true })
+	@IsOptional()
+	@IsArray()
+	@MultiORMManyToMany(() => Tag, (it) => it.payments, {
+		onUpdate: 'CASCADE', // Defines the database action to perform on update.
+		onDelete: 'CASCADE', // Defines the database cascade action on delete.
+		owner: true, // Defines the database relation as owner.
+		pivotTable: 'tag_payment', // Defines the pivot table name.
+		joinColumn: 'paymentId', // Defines the join column name.
+		inverseJoinColumn: 'tagId' // Defines the inverse join column name.
 	})
-	@JoinTable({
-		name: 'tag_payment'
-	})
+	@JoinTable({ name: 'tag_payment' })
 	tags?: ITag[];
 }
