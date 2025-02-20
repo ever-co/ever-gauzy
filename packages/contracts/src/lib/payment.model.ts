@@ -1,12 +1,13 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IInvoice } from './invoice.model';
-import { ITag } from './tag.model';
+import { ITag, ITaggable } from './tag.model';
 import { IUser } from './user.model';
 import { IOrganizationContact } from './organization-contact.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IPaginationInput } from './core.model';
 import { IEmployee } from './employee.model';
 import { IGetTimeLogReportInput } from './timesheet.model';
+import { CurrenciesEnum } from './currency.model';
 
 /**
  * Interface representing payment statistics.
@@ -16,13 +17,12 @@ export interface PaymentStats {
 	amount: number; // The total amount of all payments
 }
 
-export interface IPayment extends IBasePerTenantAndOrganizationEntityModel {
+export interface IPayment extends IBasePerTenantAndOrganizationEntityModel, ITaggable {
 	invoice?: IInvoice;
-	invoiceId?: string;
-	tags?: ITag[];
+	invoiceId?: ID;
 	note?: string;
 	recordedBy?: IUser;
-	employeeId?: string;
+	employeeId?: ID;
 	employee?: IEmployee;
 	paymentDate?: Date;
 	amount?: number;
@@ -30,21 +30,16 @@ export interface IPayment extends IBasePerTenantAndOrganizationEntityModel {
 	overdue?: boolean;
 	paymentMethod?: PaymentMethodEnum;
 	organizationContact?: IOrganizationContact;
-	organizationContactId?: string;
+	organizationContactId?: ID;
 	project?: IOrganizationProject;
-	projectId?: string;
+	projectId?: ID;
 }
 
-export interface IPaymentUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
-	amount?: number;
-	note?: string;
-	currency?: string;
-	paymentDate?: Date;
-}
+export interface IPaymentUpdateInput
+	extends Pick<IPayment, 'amount' | 'note' | 'currency' | 'paymentDate'>,
+		IBasePerTenantAndOrganizationEntityModel {}
 
-export interface IPaymentFindInput extends IBasePerTenantAndOrganizationEntityModel {
-	invoiceId?: string;
-}
+export interface IPaymentFindInput extends Pick<IPayment, 'invoiceId'>, IBasePerTenantAndOrganizationEntityModel {}
 
 export enum PaymentMethodEnum {
 	BANK_TRANSFER = 'BANK_TRANSFER',
