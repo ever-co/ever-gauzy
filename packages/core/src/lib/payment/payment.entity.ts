@@ -189,16 +189,15 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	 */
 	@MultiORMManyToOne(() => User)
 	@JoinColumn()
-	recordedBy?: IUser;
+	createdByUser?: IUser;
 
 	/**
 	 * The user ID associated with this payment.
 	 */
-	@ApiProperty({ type: () => String })
-	@RelationId((it: Payment) => it.recordedBy)
+	@RelationId((it: Payment) => it.createdByUser)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	recordedById?: ID;
+	createdByUserId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------

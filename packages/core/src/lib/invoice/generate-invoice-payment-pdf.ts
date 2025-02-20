@@ -1,9 +1,4 @@
-import {
-	IPayment,
-	IOrganization,
-	IOrganizationContact,
-	IInvoice
-} from '@gauzy/contracts';
+import { IPayment, IOrganization, IOrganizationContact, IInvoice } from '@gauzy/contracts';
 
 import * as moment from 'moment';
 
@@ -21,11 +16,9 @@ export async function generateInvoicePaymentPdfDefinition(
 		const currentPayment = [
 			`${moment(invoice.dueDate).format(organization.dateFormat)}`,
 			`${payment.amount}`,
-			`${payment.recordedBy.name}`,
-			`${payment.note ? payment.note : '-' }`,
-			`${
-				payment.overdue ? translatedText.overdue : translatedText.onTime
-			}`
+			`${payment.createdByUser.name}`,
+			`${payment.note ? payment.note : '-'}`,
+			`${payment.overdue ? translatedText.overdue : translatedText.onTime}`
 		];
 		body.push(currentPayment);
 	}
@@ -45,7 +38,7 @@ export async function generateInvoicePaymentPdfDefinition(
 			color: '#B7D7E8',
 			opacity: 0.2,
 			bold: true,
-      		fontSize: 108,
+			fontSize: 108,
 			italics: false
 		},
 		content: [
@@ -56,7 +49,7 @@ export async function generateInvoicePaymentPdfDefinition(
 						bold: true,
 						width: '*',
 						alignment: 'left',
-						text: `${translatedText.paymentsForInvoice} ${invoice.invoiceNumber}`,
+						text: `${translatedText.paymentsForInvoice} ${invoice.invoiceNumber}`
 					}
 				]
 			},
@@ -73,7 +66,7 @@ export async function generateInvoicePaymentPdfDefinition(
 							},
 							`${organizationContact.name}`
 						]
-					},
+					}
 				]
 			},
 			' ',
