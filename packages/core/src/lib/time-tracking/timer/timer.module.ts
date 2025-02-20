@@ -8,6 +8,8 @@ import { TimerService } from './timer.service';
 import { StatisticModule } from '../statistic/statistic.module';
 import { TimerWeeklyLimitService } from './timer-weekly-limit.service';
 import { TaskModule } from '../../tasks';
+import { WebhookModule } from '@gauzy/plugin-make-com'
+
 @Module({
 	imports: [
 		RolePermissionModule,
@@ -15,7 +17,8 @@ import { TaskModule } from '../../tasks';
 		forwardRef(() => TimeLogModule),
 		forwardRef(() => StatisticModule),
 		TaskModule,
-		CqrsModule
+		CqrsModule,
+		WebhookModule
 	],
 	controllers: [TimerController],
 	exports: [TimerService, TimerWeeklyLimitService],
