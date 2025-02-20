@@ -62,7 +62,7 @@ export class AlterActivityLogEntityTable1739602849367 implements MigrationInterf
 		await queryRunner.query(`ALTER TABLE "activity_log" DROP CONSTRAINT "FK_b6e9a5c3e1ee65a3bcb8a00de2b"`);
 
 		// Step 2: Drop the existing index on "creatorId".
-		console.log('Step 2: Dropping index "IDX_b6e9a5c3e1ee65a3bcb8a00de2" from "activity_log"...');
+		console.log('Step 2: Dropping index "creatorId" from "activity_log"...');
 		await queryRunner.query(`DROP INDEX "public"."IDX_b6e9a5c3e1ee65a3bcb8a00de2"`);
 
 		// Step 3: Add new column "employeeId" of type uuid.
