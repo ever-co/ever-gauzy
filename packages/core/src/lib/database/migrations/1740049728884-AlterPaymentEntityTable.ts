@@ -104,12 +104,32 @@ export class AlterPaymentEntityTable1740049728884 implements MigrationInterface 
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE \`payment\` DROP FOREIGN KEY \`FK_3f13c738eff604a85700746ec7d\``);
+		await queryRunner.query(`DROP INDEX \`IDX_3f13c738eff604a85700746ec7\` ON \`payment\``);
+		await queryRunner.query(
+			`ALTER TABLE \`payment\` CHANGE \`recordedById\` \`createdByUserId\` varchar(255) NOT NULL`
+		);
+		await queryRunner.query(`CREATE INDEX \`IDX_6337f8d52d8eea1055ca8e3570\` ON \`payment\` (\`createdByUserId\`)`);
+		await queryRunner.query(
+			`ALTER TABLE \`payment\` ADD CONSTRAINT \`FK_6337f8d52d8eea1055ca8e3570b\` FOREIGN KEY (\`createdByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`
+		);
+	}
 
 	/**
 	 * MySQL Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE \`payment\` DROP FOREIGN KEY \`FK_6337f8d52d8eea1055ca8e3570b\``);
+		await queryRunner.query(`DROP INDEX \`IDX_6337f8d52d8eea1055ca8e3570\` ON \`payment\``);
+		await queryRunner.query(
+			`ALTER TABLE \`payment\` CHANGE \`createdByUserId\` \`recordedById\` varchar(255) NOT NULL`
+		);
+		await queryRunner.query(`CREATE INDEX \`IDX_3f13c738eff604a85700746ec7\` ON \`payment\` (\`recordedById\`)`);
+		await queryRunner.query(
+			`ALTER TABLE \`payment\` ADD CONSTRAINT \`FK_3f13c738eff604a85700746ec7d\` FOREIGN KEY (\`recordedById\`) REFERENCES \`user\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`
+		);
+	}
 }
