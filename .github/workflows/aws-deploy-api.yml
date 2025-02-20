@@ -2,10 +2,32 @@ name: Deploy API to AWS
 
 on:
   push:
-    branches: [ master, dev ]
+    branches: [master, dev]
     paths:
-      - 'apps/api/**'
-      - '.deploy/api/**'
+      - 'apps/api/**/*.*'
+      - 'packages/auth/**/*.*'
+      - 'packages/common/**/*.*'
+      - 'packages/config/**/*.*'
+      - 'packages/contracts/**/*.*'
+      - 'packages/core/**/*.*'
+      - 'packages/desktop-lib/**/*.*'
+      - 'packages/plugin/**/*.*'
+      - 'packages/utils/**/*.*'
+      - 'packages/plugins/changelog/**/*.*'
+      - 'packages/plugins/integration-ai/**/*.*'
+      - 'packages/plugins/integration-github/**/*.*'
+      - 'packages/plugins/integration-hubstaff/**/*.*'
+      - 'packages/plugins/integration-jira/**/*.*'
+      - 'packages/plugins/integration-upwork/**/*.*'
+      - 'packages/plugins/integration-wakatime/**/*.*'
+      - 'packages/plugins/jitsu-analytics/**/*.*'
+      - 'packages/plugins/job-proposal/**/*.*'
+      - 'packages/plugins/job-search/**/*.*'
+      - 'packages/plugins/knowledge-base/**/*.*'
+      - 'packages/plugins/product-reviews/**/*.*'
+      - 'packages/plugins/sentry-tracing/**/*.*'
+      - 'packages/plugins/videos/**/*.*'
+      - '.deploy/api/**/*.*'
       - '.github/workflows/aws-deploy-api.yml'
   workflow_dispatch:
 

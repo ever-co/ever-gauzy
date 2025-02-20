@@ -263,7 +263,13 @@ export const environment: IEnvironment = {
 		adminPassword: process.env.DEMO_ADMIN_PASSWORD || `admin`,
 		employeeEmail: process.env.DEMO_EMPLOYEE_EMAIL || `employee@ever.co`,
 		employeePassword: process.env.DEMO_EMPLOYEE_PASSWORD || `123456`
-	}
+	},
+
+	/**
+	 * Periodic Time Save
+	 */
+	periodicTimeSave: process.env.PERIODIC_TIME_SAVE === 'true',
+	periodicTimeSaveTimeframe: parseInt(process.env.PERIODIC_TIME_SAVE_TIMEFRAME) || 600 // 10 minutes
 };
 
 /**

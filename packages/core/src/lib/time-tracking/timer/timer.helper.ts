@@ -77,13 +77,14 @@ export function addJoinToQueryParams(queryParams: TimeLogQueryParams, includeJoi
 
 /**
  * Builds log-specific query parameters.
+ * Currently we will allow to get the running log entry to get the partial
+ * saved time to be reflected in timer status
  *
  * @param params - Parameters used to build query conditions.
  * @returns Query parameters tailored for log retrieval.
  */
 export function buildLogQueryParameters(params: TimeLogParams): TimeLogQueryParams {
     const queryParams = buildCommonQueryParameters(params, true);
-    queryParams.where.isRunning = false;
     return queryParams;
 }
 
