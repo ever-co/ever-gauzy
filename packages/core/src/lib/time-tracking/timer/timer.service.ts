@@ -197,8 +197,8 @@ export class TimerService {
 	 * @returns
 	 */
 	async checkForPeriodicSave(lastLog: TimeLog) {
-		// Check if periodic time save is enabled and the timer is running and the source is WEB_TIMER
-		if(!env.periodicTimeSave || !lastLog.isRunning || lastLog.source !== TimeLogSourceEnum.WEB_TIMER) return;
+		// Check if periodic time save is enabled and the timer is valid and running for the source WEB_TIMER
+		if(!env.periodicTimeSave || !lastLog || !lastLog.isRunning || lastLog.source !== TimeLogSourceEnum.WEB_TIMER) return;
 
 		const now = moment();
 		const durationSinceLastEndTime = Math.abs(now.diff(moment(lastLog.stoppedAt), 'seconds'));
