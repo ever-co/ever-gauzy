@@ -27,7 +27,7 @@ export async function generateInvoicePaymentPdfDefinition(
 	const tableHeader = [
 		translatedText.paymentDate,
 		translatedText.amount,
-		translatedText.recordedBy,
+		translatedText.createdByUser,
 		translatedText.note,
 		translatedText.status
 	];

@@ -213,7 +213,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/payments/pagination`,
-			relations: ['invoice', 'invoice.toContact', 'recordedBy', 'organizationContact', 'project', 'tags'],
+			relations: ['invoice', 'invoice.toContact', 'createdByUser', 'organizationContact', 'project', 'tags'],
 			join: {
 				alias: 'payment',
 				leftJoin: {
@@ -242,7 +242,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 						overdue: this.statusMapper(overdue),
 						invoiceNumber: invoice?.invoiceNumber || null,
 						projectName: project?.name || null,
-						createdByUser: createdByUser?.fullName || null,
+						createdByUser: createdByUser?.name || null,
 						paymentMethodEnum: paymentMethod
 							? this.getTranslation(`INVOICES_PAGE.PAYMENTS.${paymentMethod}`)
 							: null,

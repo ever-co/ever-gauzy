@@ -330,7 +330,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				'toContact',
 				'payments',
 				'payments.invoice',
-				'payments.recordedBy'
+				'payments.createdByUser'
 			]
 		});
 
@@ -341,7 +341,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				lang: language
 			}),
 			amount: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.AMOUNT', { lang: language }),
-			recordedBy: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.RECORDED_BY', {
+			createdByUser: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.RECORDED_BY', {
 				lang: language
 			}),
 			note: this.i18n.translate('USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.NOTE', { lang: language }),
