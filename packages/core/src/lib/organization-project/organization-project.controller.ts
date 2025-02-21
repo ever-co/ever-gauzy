@@ -277,6 +277,26 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	}
 
 	/**
+	 * CHECK if an employee is a manager of a project
+	 */
+	@ApiOperation({
+		summary: 'Check if an employee is a manager of a specific project.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Returns true if the employee is a manager of the project, otherwise false.',
+		type: Boolean
+	})
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW)
+	@Get('/:projectId/is-manager/:employeeId')
+	async isManager(
+		@Param('projectId', UUIDValidationPipe) projectId: ID,
+		@Param('employeeId', UUIDValidationPipe) employeeId: ID
+	): Promise<boolean> {
+		return await this.organizationProjectService.isManagerOfProject(projectId, employeeId);
+	}
+
+	/**
 	 * UPDATE organization project by id
 	 *
 	 * @param id

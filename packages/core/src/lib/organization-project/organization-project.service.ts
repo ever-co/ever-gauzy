@@ -652,4 +652,23 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			throw new HttpException({ message: 'Error while updating project by employee' }, HttpStatus.BAD_REQUEST);
 		}
 	}
+
+	/**
+	 * Checks if a given employee is a manager of a specific project.
+	 *
+	 * @param projectId - The ID of the project.
+	 * @param employeeId - The ID of the employee.
+	 * @returns A boolean indicating whether the employee is a manager of the project.
+	 */
+	async isManagerOfProject(projectId: ID, employeeId: ID): Promise<boolean> {
+		const project = await this.typeOrmRepository
+			.createQueryBuilder('project')
+			.innerJoin('project.members', 'members')
+			.where('project.id = :projectId', { projectId })
+			.andWhere('members.employeeId = :employeeId', { employeeId })
+			.andWhere('members.isManager = true')
+			.getOne();
+
+		return !!project;
+	}
 }
