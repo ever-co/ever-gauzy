@@ -42,8 +42,8 @@ import {
 	MultiORMManyToOne,
 	MultiORMOneToMany
 } from '../core/decorators/entity';
-import { MikroOrmOrganizationProjectModuleRepository } from './repository/mikro-orm-organization-project-module.repository';
 import { OrganizationProjectModuleEmployee } from './organization-project-module-employee.entity';
+import { MikroOrmOrganizationProjectModuleRepository } from './repository/mikro-orm-organization-project-module.repository';
 
 @MultiORMEntity('organization_project_module', {
 	mikroOrmRepository: () => MikroOrmOrganizationProjectModuleRepository
@@ -51,18 +51,27 @@ import { OrganizationProjectModuleEmployee } from './organization-project-module
 export class OrganizationProjectModule extends TenantOrganizationBaseEntity implements IOrganizationProjectModule {
 	[EntityRepositoryType]?: MikroOrmOrganizationProjectModuleRepository;
 
+	/**
+	 * Name of the project module
+	 */
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
 	@MultiORMColumn()
 	name: string;
 
+	/**
+	 * Description of the project module
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@MultiORMColumn({ nullable: true, type: 'text' })
 	description?: string;
 
+	/**
+	 * Status of the project module
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsEnum(ProjectModuleStatusEnum)
@@ -70,24 +79,36 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	@MultiORMColumn({ nullable: true })
 	status?: ProjectModuleStatusEnum;
 
+	/**
+	 * Start date of the project module
+	 */
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDateString()
 	@MultiORMColumn({ nullable: true })
 	startDate?: Date;
 
+	/**
+	 * End date of the project module
+	 */
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsDateString()
 	@MultiORMColumn({ nullable: true })
 	endDate?: Date;
 
+	/**
+	 * Indicates if the project module is public
+	 */
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
 	@MultiORMColumn({ nullable: true, default: false })
 	public?: boolean;
 
+	/**
+	 * Indicates if the project module is favorite
+	 */
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
@@ -99,38 +120,44 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
-
-	// Define the parent-child relationship
+	/**
+	 * The parent module. This property is used to determine the hierarchy of modules.
+	 */
 	@ApiPropertyOptional({ type: () => OrganizationProjectModule })
 	@IsOptional()
 	@IsObject()
 	@MultiORMManyToOne(() => OrganizationProjectModule, (module) => module.children, {
-		onDelete: 'SET NULL'
+		nullable: true, // Indicates if the relation column value can be nullable or not.
+		onDelete: 'SET NULL' // Defines the database cascade action on delete.
 	})
 	parent?: OrganizationProjectModule;
 
-	// Define the parent-child relationship
+	/**
+	 * The ID of the parent module.
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
+	@RelationId((it: OrganizationProjectModule) => it.parent)
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	parentId?: ID;
 
 	/**
-	 * Organization Project
+	 * The project associated with the module.
 	 */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsObject()
 	@MultiORMManyToOne(() => OrganizationProject, (it) => it.modules, {
-		/** Indicates if the relation column value can be nullable or not. */
-		nullable: true,
-
-		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE'
+		nullable: true, // Indicates if the relation column value can be nullable or not.
+		onDelete: 'CASCADE' // Defines the database cascade action on delete.
 	})
 	project?: IOrganizationProject;
 
+	/**
+	 * The ID of the project associated with the module.
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
@@ -140,99 +167,47 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	projectId?: ID;
 
 	/**
-	 * Creator
+	 * The creator of the module.
 	 */
 	@MultiORMManyToOne(() => User, {
-		nullable: true,
-		onDelete: 'CASCADE'
+		nullable: true, // Indicates if the relation column value can be nullable or not.
+		onDelete: 'CASCADE' // Defines the database cascade action on delete.
 	})
 	@JoinColumn()
-	creator?: IUser;
+	createdByUser?: IUser;
 
-	@RelationId((it: OrganizationProjectModule) => it.creator)
+	/**
+	 * The ID of the creator of the module.
+	 */
+	@RelationId((it: OrganizationProjectModule) => it.createdByUser)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	creatorId?: ID;
-
+	createdByUserId?: ID;
 	/*
 	|--------------------------------------------------------------------------
 	| @OneToMany
 	|--------------------------------------------------------------------------
 	*/
-
 	/**
-	 * Children modules
+	 * The children modules.
 	 */
+	@ApiPropertyOptional({ type: () => Array, isArray: true })
+	@IsOptional()
+	@IsArray()
 	@MultiORMOneToMany(() => OrganizationProjectModule, (module) => module.parent)
 	children?: OrganizationProjectModule[];
 
 	/**
-	 * Project Module views
+	 * The views of the module.
 	 */
+	@ApiPropertyOptional({ type: () => Array, isArray: true })
+	@IsOptional()
+	@IsArray()
 	@MultiORMOneToMany(() => TaskView, (module) => module.projectModule)
 	views?: ITaskView[];
 
-	/*
-	|--------------------------------------------------------------------------
-	| @ManyToMany
-	|--------------------------------------------------------------------------
-	*/
-
 	/**
-	 * Task
-	 */
-	@ApiPropertyOptional({ type: () => Array, isArray: true, description: 'List of task IDs' })
-	@IsOptional()
-	@IsArray()
-	@MultiORMManyToMany(() => Task, (it) => it.modules, {
-		/** Defines the database action to perform on update. */
-		onUpdate: 'CASCADE',
-		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE'
-	})
-	@JoinTable({ name: 'project_module_task' })
-	tasks?: ITask[];
-
-	/**
-	 * Organization Sprint
-	 */
-	@ApiPropertyOptional({ type: () => Array, isArray: true })
-	@IsOptional()
-	@IsArray()
-	@MultiORMManyToMany(() => OrganizationSprint, (it) => it.modules, {
-		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
-		owner: true,
-		pivotTable: 'project_module_sprint',
-		joinColumn: 'organizationProjectModuleId',
-		inverseJoinColumn: 'organizationSprintId'
-	})
-	@JoinTable({
-		name: 'project_module_sprint'
-	})
-	organizationSprints?: IOrganizationSprint[];
-
-	/**
-	 * OrganizationTeam
-	 */
-	@ApiPropertyOptional({ type: () => Array, isArray: true })
-	@IsOptional()
-	@IsArray()
-	@MultiORMManyToMany(() => OrganizationTeam, (it) => it.modules, {
-		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
-		owner: true,
-		pivotTable: 'project_module_team',
-		joinColumn: 'organizationProjectModuleId',
-		inverseJoinColumn: 'organizationTeamId'
-	})
-	@JoinTable({
-		name: 'project_module_team'
-	})
-	teams?: IOrganizationTeam[];
-
-	/**
-	 * Members
+	 * The members of the module.
 	 */
 	@ApiPropertyOptional({ type: () => Array, isArray: true })
 	@IsOptional()
@@ -242,4 +217,55 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 		cascade: true
 	})
 	members?: IOrganizationProjectModuleEmployee[];
+	/*
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
+	/**
+	 * The tasks of the module.
+	 */
+	@ApiPropertyOptional({ type: () => Array, isArray: true, description: 'List of task IDs' })
+	@IsOptional()
+	@IsArray()
+	@MultiORMManyToMany(() => Task, (it) => it.modules, {
+		onUpdate: 'CASCADE', // Defines the database action to perform on update.
+		onDelete: 'CASCADE' // Defines the database cascade action on delete.
+	})
+	@JoinTable({ name: 'project_module_task' })
+	tasks?: ITask[];
+
+	/**
+	 * The organization sprints of the module.
+	 */
+	@ApiPropertyOptional({ type: () => Array, isArray: true })
+	@IsOptional()
+	@IsArray()
+	@MultiORMManyToMany(() => OrganizationSprint, (it) => it.modules, {
+		onUpdate: 'CASCADE', // Defines the database action to perform on update.
+		onDelete: 'CASCADE', // Defines the database cascade action on delete.
+		owner: true, // This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.
+		pivotTable: 'project_module_sprint', // The name of the pivot table.
+		joinColumn: 'organizationProjectModuleId', // The name of the join column in the pivot table.
+		inverseJoinColumn: 'organizationSprintId' // The name of the inverse join column in the pivot table.
+	})
+	@JoinTable({ name: 'project_module_sprint' })
+	organizationSprints?: IOrganizationSprint[];
+
+	/**
+	 * The organization teams of the module.
+	 */
+	@ApiPropertyOptional({ type: () => Array, isArray: true })
+	@IsOptional()
+	@IsArray()
+	@MultiORMManyToMany(() => OrganizationTeam, (it) => it.modules, {
+		onUpdate: 'CASCADE', // Defines the database action to perform on update.
+		onDelete: 'CASCADE', // Defines the database cascade action on delete.
+		owner: true, // This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.
+		pivotTable: 'project_module_team', // The name of the pivot table.
+		joinColumn: 'organizationProjectModuleId', // The name of the join column in the pivot table.
+		inverseJoinColumn: 'organizationTeamId' // The name of the inverse join column in the pivot table.
+	})
+	@JoinTable({ name: 'project_module_team' })
+	teams?: IOrganizationTeam[];
 }

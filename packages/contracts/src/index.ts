@@ -26,6 +26,7 @@ export * from './lib/candidate.model';
 export * from './lib/changelog.model';
 export * from './lib/chart.model';
 export * from './lib/comment.model';
+export * from './lib/common.model';
 export * from './lib/contact.model';
 export * from './lib/core.model';
 export * from './lib/country.model';
