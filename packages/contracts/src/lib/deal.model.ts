@@ -1,24 +1,23 @@
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
-import { IUser } from './user.model';
+import { IHasUserCreator } from './user.model';
 import { IPipelineStage } from './pipeline-stage.model';
-import { IContact } from './contact.model';
+import { IOrganizationContact } from './organization-contact.model';
 
-export interface IDeal extends IBasePerTenantAndOrganizationEntityModel {
+// Common base interface for deal fields
+interface IDealBase extends IBasePerTenantAndOrganizationEntityModel {
 	title: string;
-	probability?: number;
-	createdBy: IUser;
-	createdByUserId: ID;
+	probability: number;
 	stage: IPipelineStage;
 	stageId: ID;
-	client?: IContact;
+	client?: IOrganizationContact;
 	clientId?: ID;
 }
 
-export type IDealFindInput = Partial<IDealCreateInput>;
+// IDeal interface with the additional stage and user creator properties
+export interface IDeal extends IDealBase, IHasUserCreator {}
 
-export interface IDealCreateInput extends IBasePerTenantAndOrganizationEntityModel {
-	stageId: ID;
-	clientId?: ID;
-	title: string;
-	probability?: number;
-}
+// IDealCreateInput interface, omitting user-related fields from IDeal
+export interface IDealCreateInput extends IDealBase {}
+
+// IDealFindInput type, based on IDealCreateInput
+export type IDealFindInput = Partial<IDealBase>;
