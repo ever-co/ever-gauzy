@@ -200,7 +200,7 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 					project: `${projectName} ${this.getTranslation('SM_TABLE.MEMBERS_COUNT')}: ${membersCount}`,
 					title: title,
 					reason: logs.reason || '-',
-					from: this.timeFormatPipe.transform(logs?.createdAt) || '-',
+					from: this.timeFormatPipe.transform(logs?.startedAt) || '-',
 					duration: this.durationFormatPipe.transform(logs?.duration || 0),
 					editedAt: logs?.editedAt || 'N/A',
 					edited: logs?.isEdited ? `${ManualTimeLogAction.EDITED}` : `${ManualTimeLogAction.ADDED}`
