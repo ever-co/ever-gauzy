@@ -14,52 +14,42 @@ import { MikroOrmDealRepository } from './repository/mikro-orm-deal.repository';
 
 @MultiORMEntity('deal', { mikroOrmRepository: () => MikroOrmDealRepository })
 export class Deal extends TenantOrganizationBaseEntity implements IDeal {
+	/**
+	 * The title of the deal.
+	 */
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
 	@MultiORMColumn()
 	title: string;
 
+	/**
+	 * The probability of the deal.
+	 */
 	@ApiProperty({ type: () => Number })
 	@IsInt()
 	@Min(0)
 	@Max(5)
 	@MultiORMColumn()
-	probability?: number;
+	probability: number;
 
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
-
 	/**
-	 * User
-	 */
-	@MultiORMManyToOne(() => User, {
-		joinColumn: 'createdByUserId'
-	})
-	@JoinColumn({ name: 'createdByUserId' })
-	createdBy: IUser;
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@IsUUID()
-	@ColumnIndex()
-	@RelationId((it: Deal) => it.createdBy)
-	@MultiORMColumn({ relationId: true })
-	createdByUserId: ID;
-
-	/**
-	 * PipelineStage
+	 * The pipeline stage associated with this deal.
 	 */
 	@MultiORMManyToOne(() => PipelineStage, {
-		/** Database cascade action on delete. */
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE' // Database cascade action on delete.
 	})
 	@JoinColumn()
 	stage: IPipelineStage;
 
+	/**
+	 * The ID for the associated pipeline stage.
+	 */
 	@ApiProperty({ type: () => String })
 	@IsUUID()
 	@ColumnIndex()
@@ -67,28 +57,40 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	@MultiORMColumn({ relationId: true })
 	stageId: ID;
 
+	/**
+	 * The user who created the deal.
+	 */
+	@MultiORMManyToOne(() => User)
+	@JoinColumn()
+	createdByUser: IUser;
+
+	/**
+	 * The ID for the user who created the deal.
+	 */
+	@RelationId((deal: Deal) => deal.createdByUser)
+	@ColumnIndex()
+	@MultiORMColumn({ relationId: true })
+	createdByUserId: ID;
+
 	/*
 	|--------------------------------------------------------------------------
 	| @OneToOne
 	|--------------------------------------------------------------------------
 	*/
-
 	/**
-	 * OrganizationContact
+	 * The associated client (OrganizationContact) for the deal.
 	 */
 	@MultiORMOneToOne(() => OrganizationContact, {
-		/** Indicates if relation column value can be nullable or not. */
-		nullable: true,
-
-		/** Database cascade action on delete. */
-		onDelete: 'CASCADE',
-
-		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
-		owner: true
+		nullable: true, // Indicates if relation column value can be nullable or not.
+		onDelete: 'CASCADE', // Database cascade action on delete.
+		owner: true // This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.
 	})
 	@JoinColumn()
 	client?: IOrganizationContact;
 
+	/**
+	 * The ID of the associated client (OrganizationContact) for the deal.
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()

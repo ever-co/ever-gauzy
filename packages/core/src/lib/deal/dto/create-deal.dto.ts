@@ -4,11 +4,20 @@ import { Deal } from '../../core/entities/internal';
 import { TenantOrganizationBaseDTO } from '../../core/dto';
 
 /**
- * Deal DTO
+ * Base deal DTO
  */
 export class DealDTO extends IntersectionType(
 	TenantOrganizationBaseDTO,
-	PickType(Deal, ['title', 'probability', 'clientId', 'stageId', 'isActive', 'isArchived'])
+	PickType(Deal, [
+		'title',
+		'probability',
+		'client',
+		'clientId',
+		'stageId',
+		'stage',
+		'isActive',
+		'isArchived'
+	] as const)
 ) {}
 
 /**
