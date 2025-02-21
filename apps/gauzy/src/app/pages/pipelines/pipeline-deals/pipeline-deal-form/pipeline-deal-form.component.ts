@@ -1,13 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { catchError, map, Observable, of, switchMap, tap } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { catchError, filter, map, Observable, of, switchMap, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { IPipeline, IContact, IOrganization, IDeal, IPagination } from '@gauzy/contracts';
+import { IPipeline, IOrganization, IDeal, IPagination, IOrganizationContact } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
 	DealsService,
 	ErrorHandlingService,
@@ -15,16 +13,16 @@ import {
 	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    templateUrl: './pipeline-deal-form.component.html',
     selector: 'ga-pipeline-deals-form',
-    styleUrls: ['./pipeline-deal-form.component.scss'],
+	  templateUrl: './pipeline-deal-form.component.html',
+	  styleUrls: ['./pipeline-deal-form.component.scss'],
     standalone: false
 })
 export class PipelineDealFormComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	public selectedClient: IContact;
 	public probabilities = [0, 1, 2, 3, 4, 5];
 	public selectedProbability: number;
 	public organization: IOrganization;
@@ -32,19 +30,17 @@ export class PipelineDealFormComponent extends TranslationBaseComponent implemen
 	public deal$: Observable<IDeal>;
 	public pipeline: IPipeline;
 	public pipeline$: Observable<IPipeline>;
-	public clients: IContact[] = [];
-	public clients$: Observable<IContact[]>;
+	public selectedClient: IOrganizationContact;
+	public clients: IOrganizationContact[] = [];
+	public clients$: Observable<IOrganizationContact[]>;
 
-	// Form Builder
-	public form: UntypedFormGroup = PipelineDealFormComponent.buildForm(this._fb);
-	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
-		return fb.group({
-			stageId: [null, Validators.required],
-			title: [null, Validators.required],
-			clientId: [null],
-			probability: [null, Validators.required]
-		});
-	}
+	// Form Builders
+	public form: UntypedFormGroup = this._fb.group({
+		stageId: [null, Validators.required],
+		title: [null, Validators.required],
+		clientId: [null],
+		probability: [null, Validators.required]
+	});
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -80,7 +76,7 @@ export class PipelineDealFormComponent extends TranslationBaseComponent implemen
 				});
 			}),
 			// Map the contacts to the clients property
-			map(({ items }: IPagination<IContact>) => items),
+			map(({ items }: IPagination<IOrganizationContact>) => items),
 			// Handle errors
 			catchError((error) => {
 				console.error('Error fetching organization contacts:', error);
@@ -133,11 +129,10 @@ export class PipelineDealFormComponent extends TranslationBaseComponent implemen
 	 * @param deal The deal object containing data to patch into the form
 	 */
 	patchFormValue(deal: IDeal) {
-		const { title, stageId, createdBy, probability, clientId } = deal;
+		const { title, stageId, probability, clientId } = deal;
 		this.form.patchValue({
 			title,
 			stageId,
-			createdBy,
 			probability,
 			clientId
 		});

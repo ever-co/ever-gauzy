@@ -166,7 +166,10 @@
 		"ADD_PLUGIN": "Dodaj wtyczkę",
 		"LOAD_PLUGIN": "Załaduj wtyczkę",
 		"FROM_CDN": "Z CDN",
-		"ADD_MODULE": "Dodaj moduł"
+		"ADD_MODULE": "Dodaj moduł",
+		"SHARE": "Udostępnij",
+		"GET_INFO": "Pobierz informacje",
+		"RETRY": "Spróbuj ponownie"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4709,5 +4712,49 @@
 	},
 	"SERVER_API": "Serwer API",
 	"SERVER_API_LOG": "Dziennik serwera API",
-	"COMING_SOON": "This page is coming soon!"
+	"COMING_SOON": "This page is coming soon!",
+	"PLUGIN": {
+		"VIDEO": {
+			"SINGLE": "Wideo",
+			"PLURAL": "Filmy",
+			"DOWNLOAD": "Pobierz",
+			"NOT_FOUND": "Nie znaleziono wideo",
+			"NO_VIDEO": "Brak wideo",
+			"DOWNLOADS": "Pobrane",
+			"NO_VIDEO_DOWNLOAD": "Brak pobranego wideo",
+			"LOADING_VIDEOS": "Ładowanie filmów...",
+			"EDIT_METADATA": "Edytuj metadane wideo",
+			"STARTING_DOWNLOAD_FOR": "Rozpoczynanie pobierania dla: {{ url }}",
+			"DOWNLOAD_FAILED_FOR": "Nieudane pobieranie dla: {{ url }}, spróbuj ponownie",
+			"DOWNLOAD_COMPLETED_FOR": "Pobieranie zakończone dla: {{ url }}",
+			"SHARED_SUCCESSFULLY": "Wideo udostępniono pomyślnie",
+			"COPIED_SUCCESSFULLY": "Wideo skopiowano pomyślnie",
+			"CORE_INFO": "Informacje podstawowe",
+			"RECORDED": "Nagrane",
+			"DURATION": "Czas trwania",
+			"SIZE": "Rozmiar",
+			"VIEW_FULL": "Zobacz pełne wideo",
+			"TECHNICAL_DETAILS": "Szczegóły techniczne",
+			"RESOLUTION": "Rozdzielczość",
+			"CODEC": "Kodek",
+			"FRAME_RATE": "Liczba klatek na sekundę",
+			"UPLOADED_BY": "Przesłane przez",
+			"NO_VIDEO_AVAILABLE": "Brak dostępnego wideo",
+			"RETRIED": "Ponowiono próbę wideo",
+			"REMOVED_FROM_QUEUE": "Wideo usunięte z kolejki",
+			"ADDED_TO_QUEUE": "Wideo dodane do kolejki",
+			"DELETE_SUCCESSFULLY": "Wideo pomyślnie usunięte",
+			"UPDATE_SUCCESSFULLY": "Wideo pomyślnie zaktualizowane",
+			"ERROR": {
+				"REQUIRED": "Tytuł jest wymagany.",
+				"AT_LEAST_3": "Tytuł musi mieć co najmniej 3 znaki.",
+				"AT_MOST_255": "Tytuł nie może przekraczać 255 znaków.",
+				"AT_MOST_1000": "Opis nie może przekraczać 1000 znaków.",
+				"SHARE_CANCELED": "Udostępnianie anulowane",
+				"INVALID_SHARE_DATA": "Nieprawidłowe dane udostępniania",
+				"SHARE_NOT_ALLOWED": "Udostępnianie nie jest dozwolone",
+				"UNEXPECTED_SHARING_ERROR": "Nieoczekiwany błąd udostępniania"
+			}
+		}
+	}
 }

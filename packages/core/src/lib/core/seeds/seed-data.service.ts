@@ -29,6 +29,7 @@ import {
 	DEFAULT_EVER_ORGANIZATIONS,
 	DEFAULT_ORGANIZATIONS
 } from '../../organization';
+import { createDefaultEmployeeDashboards, createRandomEmployeeDashboards } from '../../dashboard/dashboard.seed';
 import { createDefaultIncomes, createRandomIncomes } from '../../income/income.seed';
 import { createDefaultExpenses, createRandomExpenses } from '../../expense/expense.seed';
 import {
@@ -151,6 +152,14 @@ import {
 } from '../../candidate-criterions-rating/candidate-criterion-rating.seed';
 import { createDefaultGoalKpi } from '../../goal-kpi/goal-kpi.seed';
 import { createRandomEmployeeSetting } from '../../employee-setting/employee-setting.seed';
+import {
+	createDefaultEmployeeNotificationSettings,
+	createRandomEmployeeNotificationSettings
+} from '../../employee-notification-setting/employee-notification-setting.seed';
+import {
+	createDefaultEmployeeNotifications,
+	createRandomEmployeeNotifications
+} from '../../employee-notification/employee-notification.seed';
 import { createRandomEmployeeRecurringExpense } from '../../employee-recurring-expense/employee-recurring-expense.seed';
 import {
 	createDefaultCandidateInterviewers,
@@ -713,16 +722,26 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
+			'Default Employee Dashboards',
+			createDefaultEmployeeDashboards(
+				this.dataSource,
+				this.tenant,
+				this.defaultOrganization,
+				this.defaultEmployees
+			)
+		);
+
+		await this.tryExecute(
 			'Default Incomes',
-			createDefaultIncomes(this.dataSource, this.tenant, [this.defaultOrganization], this.defaultEmployees)
+			createDefaultIncomes(this.dataSource, this.tenant, this.defaultOrganization, this.defaultEmployees)
 		);
 
 		await this.tryExecute(
 			'Default Expenses',
 			createDefaultExpenses(
 				this.dataSource,
-				this.organizations,
 				this.tenant,
+				this.organizations,
 				this.defaultEmployees,
 				categories,
 				organizationVendors
@@ -732,6 +751,26 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Default Employment Types',
 			seedDefaultEmploymentTypes(this.dataSource, this.tenant, this.defaultEmployees, this.defaultOrganization)
+		);
+
+		await this.tryExecute(
+			'Default Employee Notification Settings',
+			createDefaultEmployeeNotificationSettings(
+				this.dataSource,
+				this.tenant,
+				this.defaultOrganization,
+				this.defaultEmployees
+			)
+		);
+
+		await this.tryExecute(
+			'Default Employee Notifications',
+			createDefaultEmployeeNotifications(
+				this.dataSource,
+				this.tenant,
+				this.defaultOrganization,
+				this.defaultEmployees
+			)
 		);
 
 		await this.tryExecute(
@@ -1383,6 +1422,16 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
+			'Random Employee Dashboards',
+			createRandomEmployeeDashboards(
+				this.dataSource,
+				this.randomTenants,
+				this.randomTenantOrganizationsMap,
+				this.randomOrganizationEmployeesMap
+			)
+		);
+
+		await this.tryExecute(
 			'Random Employee Recurring Expenses',
 			createRandomEmployeeRecurringExpense(
 				this.dataSource,
@@ -1395,6 +1444,26 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Random Employee Settings',
 			createRandomEmployeeSetting(
+				this.dataSource,
+				this.randomTenants,
+				this.randomTenantOrganizationsMap,
+				this.randomOrganizationEmployeesMap
+			)
+		);
+
+		await this.tryExecute(
+			'Random Employee Notification Settings',
+			createRandomEmployeeNotificationSettings(
+				this.dataSource,
+				this.randomTenants,
+				this.randomTenantOrganizationsMap,
+				this.randomOrganizationEmployeesMap
+			)
+		);
+
+		await this.tryExecute(
+			'Random Employee Notifications',
+			createRandomEmployeeNotifications(
 				this.dataSource,
 				this.randomTenants,
 				this.randomTenantOrganizationsMap,

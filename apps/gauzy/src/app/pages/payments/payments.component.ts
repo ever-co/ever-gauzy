@@ -214,7 +214,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/payments/pagination`,
-			relations: ['invoice', 'invoice.toContact', 'recordedBy', 'organizationContact', 'project', 'tags'],
+			relations: ['invoice', 'invoice.toContact', 'createdByUser', 'organizationContact', 'project', 'tags'],
 			join: {
 				alias: 'payment',
 				leftJoin: {
@@ -235,7 +235,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 			},
 			resultMap: (payment: IPayment) => {
 				try {
-					const { invoice, project, recordedBy, paymentMethod, overdue } = payment;
+					const { invoice, project, createdByUser, paymentMethod, overdue } = payment;
 					const organizationContact = payment.organizationContact || (invoice && invoice.toContact);
 
 					return {
@@ -243,7 +243,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 						overdue: this.statusMapper(overdue),
 						invoiceNumber: invoice?.invoiceNumber || null,
 						projectName: project?.name || null,
-						recordedByName: recordedBy?.name || null,
+						createdByUser: createdByUser?.name || null,
 						paymentMethodEnum: paymentMethod
 							? this.getTranslation(`INVOICES_PAGE.PAYMENTS.${paymentMethod}`)
 							: null,
@@ -537,7 +537,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 						this.setFilter({ field: 'paymentMethod', search: value });
 					}
 				},
-				recordedByName: {
+				createdByUser: {
 					title: this.getTranslation('PAYMENTS_PAGE.RECORDED_BY'),
 					type: 'text',
 					isFilterable: false,

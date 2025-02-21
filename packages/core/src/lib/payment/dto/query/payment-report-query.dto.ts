@@ -1,5 +1,5 @@
-import { IGetPaymentInput } from '@gauzy/contracts';
 import { IntersectionType, PickType } from '@nestjs/swagger';
+import { IGetPaymentInput } from '@gauzy/contracts';
 import { RelationsQueryDTO, SelectorsQueryDTO } from './../../../shared/dto';
 import { TimeLogQueryDTO } from '../../../time-tracking/time-log/dto/query';
 
