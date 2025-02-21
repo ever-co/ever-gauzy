@@ -175,14 +175,10 @@
 		"ADD_PLUGIN": "Добави плъгин",
 		"LOAD_PLUGIN": "Зареди плъгин",
 		"FROM_CDN": "От CDN",
-<<<<<<< HEAD
-		"ADD_MODULE": "Добави модул"
-=======
 		"ADD_MODULE": "Добавяне на модул",
 		"SHARE": "Споделяне",
 		"GET_INFO": "Получаване на информация",
 		"RETRY": "Опитайте отново"
->>>>>>> c5582a0d24 ([Feat] Localizes video plugin UI elements and messages (#8786))
 	},
 	"SM_TABLE": {
 		"MEMBERS_COUNT": "Брой членове",

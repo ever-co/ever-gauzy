@@ -175,14 +175,10 @@
 		"ADD_PLUGIN": "Agregar plugin",
 		"LOAD_PLUGIN": "Cargar plugin",
 		"FROM_CDN": "Desde CDN",
-<<<<<<< HEAD
-		"ADD_MODULE": "Agregar módulo"
-=======
 		"ADD_MODULE": "Añadir módulo",
 		"SHARE": "Compartir",
 		"GET_INFO": "Obtener información",
 		"RETRY": "Reintentar"
->>>>>>> c5582a0d24 ([Feat] Localizes video plugin UI elements and messages (#8786))
 	},
 	"SM_TABLE": {
 		"MEMBERS_COUNT": "Cantidad de miembros",

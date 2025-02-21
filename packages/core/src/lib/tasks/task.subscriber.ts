@@ -49,7 +49,7 @@ export class TaskSubscriber extends BaseEntityEventSubscriber<Task> {
 		try {
 			// Retrieve the current user's ID from RequestContext and assign it as the creator
 			if (entity) {
-				entity.creatorId = RequestContext.currentUserId();
+				entity.createdByUserId = RequestContext.currentUserId();
 			}
 		} catch (error) {
 			console.error('TaskSubscriber: An error occurred during the beforeEntityCreate process:', error);
