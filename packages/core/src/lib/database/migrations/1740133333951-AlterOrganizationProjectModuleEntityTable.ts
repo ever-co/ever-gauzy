@@ -358,12 +358,44 @@ export class AlterOrganizationProjectModuleEntityTable1740133333951 implements M
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_module\` DROP FOREIGN KEY \`FK_8f2054a6a2d4b9c17624b9c8a01\``
+		);
+		await queryRunner.query(`DROP INDEX \`IDX_8f2054a6a2d4b9c17624b9c8a0\` ON \`organization_project_module\``);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_module\` CHANGE \`creatorId\` \`createdByUserId\` varchar(255) NULL`
+		);
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_4bb6fbfa64cf5d5977c2e5346a\` ON \`organization_project_module\` (\`parentId\`)`
+		);
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_1b1fecc4a41d0a5c4d9493bd9d\` ON \`organization_project_module\` (\`createdByUserId\`)`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_module\` ADD CONSTRAINT \`FK_1b1fecc4a41d0a5c4d9493bd9de\` FOREIGN KEY (\`createdByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+	}
 
 	/**
 	 * MySQL Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_module\` DROP FOREIGN KEY \`FK_1b1fecc4a41d0a5c4d9493bd9de\``
+		);
+		await queryRunner.query(`DROP INDEX \`IDX_1b1fecc4a41d0a5c4d9493bd9d\` ON \`organization_project_module\``);
+		await queryRunner.query(`DROP INDEX \`IDX_4bb6fbfa64cf5d5977c2e5346a\` ON \`organization_project_module\``);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_module\` CHANGE \`createdByUserId\` \`creatorId\` varchar(255) NULL`
+		);
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_8f2054a6a2d4b9c17624b9c8a0\` ON \`organization_project_module\` (\`creatorId\`)`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_module\` ADD CONSTRAINT \`FK_8f2054a6a2d4b9c17624b9c8a01\` FOREIGN KEY (\`creatorId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+	}
 }
