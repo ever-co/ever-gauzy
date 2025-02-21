@@ -18,6 +18,7 @@
 		bindLabel="name"
 		appendTo="body"
 		fullWidth
+		(click)="markAsTouchedOnInteraction()"
 	>
 		<ng-container *ngIf="shortened">
 			<ng-template ng-option-tmp let-item="item" let-index="index">

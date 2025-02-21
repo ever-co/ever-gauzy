@@ -13,7 +13,7 @@ import { Store } from '@gauzy/ui-core/core';
 })
 export class DateTimeFormatPipe implements PipeTransform {
 	timeFormat: number = TimeFormatEnum.FORMAT_12_HOURS;
-	dateFormat: string = 'd MMMM, y H:mm';
+	dateFormat = 'd MMMM, y H:mm';
 	regionCode: string = RegionsEnum.EN;
 
 	constructor(private readonly store: Store) {
@@ -49,7 +49,7 @@ export class DateTimeFormatPipe implements PipeTransform {
 		value: Date | string | number | null | undefined,
 		format?: string,
 		locale?: string,
-		seconds: boolean = true
+		seconds = true
 	): string | undefined {
 		if (!value) {
 			return;

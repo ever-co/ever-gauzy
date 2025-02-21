@@ -1,0 +1,6 @@
+@import 'var';
+
+.required-asterisk::after {
+  content: '*';
+  color: nb-theme(color-danger-default);
+}

@@ -15,7 +15,7 @@ import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { richTextCKEditorConfig } from '@gauzy/ui-core/shared';
+import { FormHelpers, richTextCKEditorConfig } from '@gauzy/ui-core/shared';
 import {
 	ErrorHandlingService,
 	OrganizationProjectModuleService,
@@ -48,6 +48,7 @@ const initialTaskValue = {
 	styleUrls: ['./team-task-dialog.component.scss']
 })
 export class TeamTaskDialogComponent extends TranslationBaseComponent implements OnInit {
+	FormHelpers: typeof FormHelpers = FormHelpers;
 	selectedTaskId: string;
 	projects: IOrganizationProject[];
 	employees: IEmployee[] = [];
@@ -85,7 +86,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 			number: [{ value: '', disabled: true }],
 			title: [null, Validators.required],
 			project: [],
-			projectId: [],
+			projectId: [null, Validators.required],
 			modules: [],
 			status: [TaskStatusEnum.OPEN],
 			priority: [],
@@ -210,6 +211,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent implements
 				.map((id) => this.availableModules?.find((e) => e?.id === id))
 				.filter(Boolean);
 			this.form.get('modules')?.setValue(mappedModules);
+			this.form.get('projectId').setValue(this.form.get('projectId').value);
 			this.form.get('status').setValue(this.form.get('taskStatus').value?.name);
 			this.form.get('priority').setValue(this.form.get('taskPriority').value?.name);
 			this.form.get('size').setValue(this.form.get('taskSize').value?.name);

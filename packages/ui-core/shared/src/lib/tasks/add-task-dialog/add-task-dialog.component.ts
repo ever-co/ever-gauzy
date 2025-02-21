@@ -29,6 +29,7 @@ import {
 	TasksService
 } from '@gauzy/ui-core/core';
 import { richTextCKEditorConfig } from '../../ckeditor.config';
+import { FormHelpers } from '../../forms';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -37,6 +38,7 @@ import { richTextCKEditorConfig } from '../../ckeditor.config';
 	styleUrls: ['./add-task-dialog.component.scss']
 })
 export class AddTaskDialogComponent extends TranslationBaseComponent implements OnInit {
+	FormHelpers: typeof FormHelpers = FormHelpers;
 	employees: IEmployee[] = [];
 	teams: IOrganizationTeam[] = [];
 	selectedMembers: string[] = [];
@@ -72,7 +74,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 			number: [{ value: '', disabled: true }],
 			title: [null, Validators.required],
 			project: [],
-			projectId: [],
+			projectId: [null, Validators.required],
 			status: [TaskStatusEnum.OPEN, Validators.required],
 			priority: [],
 			size: [],
@@ -229,7 +231,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 				.map((id) => this.availableModules?.find((e) => e?.id === id))
 				.filter(Boolean);
 			this.form.get('modules')?.setValue(mappedModules);
-
+			this.form.get('projectId').setValue(this.form.get('projectId').value);
 			this.form.get('status').setValue(this.form.get('taskStatus').value?.name);
 			this.form.get('priority').setValue(this.form.get('taskPriority').value?.name);
 			this.form.get('size').setValue(this.form.get('taskSize').value?.name);
@@ -237,7 +239,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 
 			const estimate = estimateDays * 24 * 60 * 60 + estimateHours * 60 * 60 + estimateMinutes * 60;
 
-			estimate ? (this.form.value.estimate = estimate) : (this.form.value.estimate = null);
+			this.form.value.estimate = estimate || null;
 
 			if (this.createTask) {
 				firstValueFrom(this.tasksService.createTask(this.form.value)).then((task) => {

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, forwardRef, AfterViewInit, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, forwardRef, AfterViewInit, Output, EventEmitter } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { combineLatest, from, map, Observable, of, Subject, switchMap } from 'rxjs';
@@ -37,7 +37,7 @@ import { ALL_PROJECT_SELECTED } from './default-project';
 		}
 	]
 })
-export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewInit {
+export class ProjectSelectorComponent implements OnInit, AfterViewInit {
 	public projects: IOrganizationProject[] = [];
 	public selectedProject: IOrganizationProject;
 	public hasAddProject$: Observable<boolean>;
@@ -54,7 +54,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	 *
 	 * @default false
 	 */
-	@Input() shortened: boolean = false;
+	@Input() shortened = false;
 
 	/**
 	 * Determines whether the component is disabled and non-interactive.
@@ -62,7 +62,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	 *
 	 * @default false
 	 */
-	@Input() disabled: boolean = false;
+	@Input() disabled = false;
 
 	/**
 	 * Allows multiple selections if set to `true`.
@@ -70,7 +70,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	 *
 	 * @default false
 	 */
-	@Input() multiple: boolean = false;
+	@Input() multiple = false;
 
 	/**
 	 * The label text to be displayed alongside the component.
@@ -93,7 +93,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	 *
 	 * @default false
 	 */
-	@Input() skipGlobalChange: boolean = false;
+	@Input() skipGlobalChange = false;
 
 	/**
 	 * Enables the default selection behavior.
@@ -101,7 +101,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	 *
 	 * @default true
 	 */
-	@Input() defaultSelected: boolean = true;
+	@Input() defaultSelected = true;
 
 	/**
 	 * Determines whether to display the "Show All" option in the selector.
@@ -109,7 +109,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	 *
 	 * @default true
 	 */
-	@Input() showAllOption: boolean = true;
+	@Input() showAllOption = true;
 
 	/**
 	 * Sets the project ID and triggers change and touch events.
@@ -564,5 +564,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 		}
 	}
 
-	ngOnDestroy(): void {}
+	markAsTouchedOnInteraction(): void {
+		this.onTouched();
+	}
 }

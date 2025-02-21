@@ -24,7 +24,7 @@
 			<div class="row">
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label class="label">{{ 'CONTEXT_MENU.PROJECT' | translate }}</label>
+						<label class="label required-asterisk">{{ 'CONTEXT_MENU.PROJECT' | translate }}</label>
 						<ga-project-selector
 							formControlName="projectId"
 							[placeholder]="'CONTEXT_MENU.PROJECT' | translate"
@@ -33,6 +33,13 @@
 							[showAllOption]="false"
 							(onChanged)="selectedProject($event)"
 						></ga-project-selector>
+						<ng-container
+							*ngIf="FormHelpers.isInvalidControl(form, 'projectId') && form.get('projectId').touched"
+						>
+							<p class="caption status-danger mt-1">
+								{{ 'FORM.ERROR.PROJECT_NAME' | translate }}
+							</p>
+						</ng-container>
 					</div>
 				</div>
 				<div class="col-sm-6">
@@ -108,7 +115,7 @@
 			<div class="row">
 				<div class="col-sm-12">
 					<div class="form-group">
-						<label class="label">{{ 'TASKS_PAGE.TASKS_TITLE' | translate }}</label>
+						<label class="label required-asterisk">{{ 'TASKS_PAGE.TASKS_TITLE' | translate }}</label>
 						<input
 							class="name-input"
 							formControlName="title"
@@ -116,6 +123,11 @@
 							nbInput
 							[placeholder]="'FORM.PLACEHOLDERS.ADD_TITLE' | translate"
 						/>
+						<ng-container *ngIf="FormHelpers.isInvalidControl(form, 'title')">
+							<p class="caption status-danger mt-1">
+								{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+							</p>
+						</ng-container>
 					</div>
 				</div>
 				<div class="col-sm-6">
