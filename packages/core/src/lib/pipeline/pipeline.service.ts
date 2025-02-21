@@ -161,29 +161,32 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 	 * @returns The paginated result.
 	 */
 	public async pagination(filter: FindManyOptions<Pipeline>): Promise<IPagination<IPipeline>> {
-		const { where } = filter;
+		const whereFilter = filter.where as FindOptionsWhere<Pipeline>;
+		const whereOptions: FindOptionsWhere<Pipeline> = {};
 
-		if (where) {
+		if (whereFilter) {
 			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
-			const { name, description, stages } = where as any;
-
-			const conditions = {};
+			const { name, description, stages } = whereFilter as FindOptionsWhere<Pipeline>;
 
 			if (name) {
-				conditions['name'] = Raw((alias) => `${alias} ${likeOperator} '%${name}%'`);
+				whereOptions['name'] = Raw((alias) => `${alias} ${likeOperator} '%${name}%'`);
 			}
 
 			if (description) {
-				conditions['description'] = Raw((alias) => `${alias} ${likeOperator} '%${description}%'`);
+				whereOptions['description'] = Raw((alias) => `${alias} ${likeOperator} '%${description}%'`);
 			}
 
 			if (stages) {
-				conditions['stages'] = {
+				whereOptions['stages'] = {
 					name: Raw((alias) => `${alias} ${likeOperator} '%${stages}%'`)
 				};
 			}
 
-			filter.where = conditions;
+			// Merge existing 'where' conditions with the new 'conditions'
+			filter.where = {
+				...whereFilter,
+				...whereOptions
+			};
 		}
 
 		return await super.paginate(filter);
