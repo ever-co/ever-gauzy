@@ -250,6 +250,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (project: IOrganizationProject) => {
+				console.log(project);
 				return Object.assign({}, project, {
 					...this.privatePublicProjectMapper(project),
 					managers: this.getProjectManagers(project),
@@ -361,7 +362,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	 */
 	private filterProjectMembers(project: IOrganizationProject): IOrganizationProject {
 		project.members = project.members.filter(
-			(member: IOrganizationProjectEmployee) => member.employeeId === this._store.user?.employeeId
+			(member: IOrganizationProjectEmployee) => member.employeeId === this._store.user?.employee?.id
 		);
 		return project;
 	}
@@ -554,12 +555,16 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 					PermissionsEnum.ORG_PROJECT_EDIT,
 					PermissionsEnum.ORG_PROJECT_DELETE
 				]);
+				console.log(isManager, hasAllPermissions);
+				// Dynamically assign or remove the CAN_MANAGE_PROJECT permissions if either condition is true
+				if (!hasAllPermissions) {
+					const permissions = [PermissionsEnum.ORG_PROJECT_EDIT, PermissionsEnum.ORG_PROJECT_DELETE];
 
-				// Dynamically assign the CAN_MANAGE_PROJECT permission if either condition is true
-				if (isManager || hasAllPermissions) {
-					this._permissionsService.addPermission('CAN_MANAGE_PROJECT');
-				} else {
-					this._permissionsService.removePermission('CAN_MANAGE_PROJECT');
+					permissions.forEach((permission) =>
+						isManager
+							? this._permissionsService.addPermission(permission)
+							: this._permissionsService.removePermission(permission)
+					);
 				}
 			}
 			if (this._isGridCardLayout && this._grid) {
