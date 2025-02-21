@@ -5,7 +5,9 @@ import { EmployeeModule } from './../../employee/employee.module';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { TimerController } from './timer.controller';
 import { TimerService } from './timer.service';
-import { WebhookModule } from '@gauzy/plugin-make-com'
+
+import { WebhookModule } from '@gauzy/plugin-integration-make-com';
+
 @Module({
 	imports: [RolePermissionModule, TimeLogModule, EmployeeModule, CqrsModule, WebhookModule],
 	controllers: [TimerController],

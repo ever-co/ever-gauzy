@@ -31,7 +31,7 @@ import {
 } from '../../core/utils';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { EmployeeService } from '../../employee/employee.service';
-import { WebhookService } from '@gauzy/plugin-make-com';
+import { WebhookService } from '@gauzy/plugin-integration-make-com';
 import {
 	DeleteTimeSpanCommand,
 	IGetConflictTimeLogCommand,
