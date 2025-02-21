@@ -3,6 +3,7 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import {
 	Brackets,
 	DataSource,
+	DeleteResult,
 	FindManyOptions,
 	In,
 	SelectQueryBuilder,
@@ -28,18 +29,18 @@ import {
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { isPostgres } from '@gauzy/config';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
-import { RequestContext } from '../core/context/request-context';
+import { RequestContext } from '../core/context';
 import { OrganizationProjectModule } from './organization-project-module.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { ActivityLogService } from '../activity-log/activity-log.service';
-import { TypeOrmOrganizationProjectModuleRepository } from './repository/type-orm-organization-project-module.repository';
-import { MikroOrmOrganizationProjectModuleRepository } from './repository/mikro-orm-organization-project-module.repository';
 import { RoleService } from '../role/role.service';
 import { EmployeeService } from '../employee/employee.service';
+import { TaskService } from '../tasks/task.service';
 import { OrganizationProjectModuleEmployee } from './organization-project-module-employee.entity';
+import { TypeOrmOrganizationProjectModuleRepository } from './repository/type-orm-organization-project-module.repository';
+import { MikroOrmOrganizationProjectModuleRepository } from './repository/mikro-orm-organization-project-module.repository';
 import { TypeOrmOrganizationProjectModuleEmployeeRepository } from './repository/type-orm-organization-project-module-employee.repository';
 import { MikroOrmOrganizationProjectModuleEmployeeRepository } from './repository/mikro-orm-organization-project-module-employee.repository';
-import { TaskService } from '../tasks/task.service';
 
 @Injectable()
 export class OrganizationProjectModuleService extends TenantAwareCrudService<OrganizationProjectModule> {
@@ -56,28 +57,28 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 	) {
 		super(typeOrmProjectModuleRepository, mikroOrmProjectModuleRepository);
 	}
+
 	/**
-	 * @description Create project Module
-	 * @param {IOrganizationProjectModuleCreateInput} entity Body Request data
-	 * @returns A promise resolved to created project module
-	 * @memberof OrganizationProjectModuleService
+	 * Creates a new organization project module with the provided input.
+	 *
+	 * @param entity - The input data to create the project module.
+	 * @returns The created organization project module.
 	 */
 	async create(entity: IOrganizationProjectModuleCreateInput): Promise<IOrganizationProjectModule> {
-		const tenantId = RequestContext.currentTenantId() || entity.tenantId;
+		const tenantId = RequestContext.currentTenantId() ?? entity.tenantId;
+		const createdByUserId = RequestContext.currentUserId();
 		const employeeId = RequestContext.currentEmployeeId();
-		const creatorId = RequestContext.currentUserId();
 		const currentRoleId = RequestContext.currentRoleId();
-		const { organizationId } = entity;
 
-		const { memberIds = [], managerIds = [], tasks = [], ...input } = entity;
+		const { organizationId, memberIds = [], managerIds = [], tasks = [], ...data } = entity;
 
-		// Add current employee to managerIds if applicable
+		// Add the current employee to managerIds if they have the appropriate role
 		await this.addCurrentEmployeeToManagers(managerIds, currentRoleId, employeeId);
 
-		// Retrieves a collection of employees based on specified criteria
+		// Merge memberIds and managerIds to form the complete list of employee IDs
 		const employeeIds = [...memberIds, ...managerIds].filter(Boolean);
 
-		// Retrieves a collection of employees based on specified criteria
+		// Fetch the list of active employees based on the provided employee IDs
 		const employees = await this._employeeService.findActiveEmployeesByEmployeeIds(
 			employeeIds,
 			organizationId,
@@ -90,13 +91,16 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		try {
 			await queryRunner.startTransaction();
 
+			// Get existing tasks
 			const existingTasks = await this.getExistingTasks(tasks);
 			const members = await this.buildModuleMembers(employees, managerIds, organizationId, tenantId);
 
 			const projectModule = await super.create({
-				...input,
+				...data,
 				members,
-				creatorId
+				organizationId,
+				tenantId,
+				createdByUserId
 			});
 
 			await this.assignTasksToModule(existingTasks, projectModule);
@@ -127,7 +131,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		id: ID,
 		entity: IOrganizationProjectModuleUpdateInput
 	): Promise<IOrganizationProjectModule | UpdateResult> {
-		const tenantId = RequestContext.currentTenantId() || entity.tenantId;
+		const tenantId = RequestContext.currentTenantId() ?? entity.tenantId;
 
 		try {
 			const { memberIds, managerIds, organizationId, tasks = [] } = entity;
@@ -216,7 +220,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		try {
 			const { where } = options;
 			const { name, status, organizationId, projectId, members } = where;
-			const tenantId = RequestContext.currentTenantId() || options.where.tenantId;
+			const tenantId = RequestContext.currentTenantId() ?? options.where.tenantId;
 
 			// Create query builder
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
@@ -582,27 +586,24 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 	 * @param memberIds - Array of member IDs to delete
 	 * @returns A promise that resolves when all deletions are complete
 	 */
-	async deleteMemberByIds(memberIds: ID[]): Promise<void> {
+	async deleteMemberByIds(memberIds: ID[]): Promise<DeleteResult[]> {
 		// Map member IDs to deletion promises
 		const deletePromises = memberIds.map((memberId: ID) =>
 			this.typeOrmOrganizationProjectModuleEmployeeRepository.delete(memberId)
 		);
 
 		// Wait for all deletions to complete
-		await Promise.all(deletePromises);
+		return await Promise.all(deletePromises);
 	}
 
 	/**
 	 * Add the current employee to managerIds if applicable.
+	 *
 	 * @param managerIds List of manager IDs.
 	 * @param currentRoleId The current role ID of the user.
 	 * @param employeeId The current employee ID.
 	 */
-	private async addCurrentEmployeeToManagers(
-		managerIds: string[],
-		currentRoleId: string,
-		employeeId: string
-	): Promise<void> {
+	private async addCurrentEmployeeToManagers(managerIds: ID[], currentRoleId: ID, employeeId: ID): Promise<void> {
 		try {
 			const currentRole = await this._roleService.findOneByIdString(currentRoleId, {
 				where: { name: RolesEnum.EMPLOYEE }
@@ -616,35 +617,50 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 	}
 
 	/**
-	 * Fetch existing tasks related to the project module.
-	 * @param tasks List of tasks to check.
-	 * @returns A list of existing tasks found in the database.
+	 * Retrieve existing tasks from the database that match the provided list.
+	 *
+	 * @param tasks - Array of task objects to check.
+	 * @returns A promise resolving to an array of existing tasks found in the database.
 	 */
 	private async getExistingTasks(tasks: ITask[]): Promise<ITask[]> {
-		const taskIds = tasks.map((task) => task.id);
+		// Extract unique task IDs from the provided tasks
+		const taskIds = [...new Set(tasks.map((task) => task.id))];
+
+		// If no valid task IDs are present, return an empty array
+		if (taskIds.length === 0) {
+			return [];
+		}
+
+		// Fetch tasks from the database that match the extracted IDs, including their associated modules
 		return this._taskService.find({
 			where: { id: In(taskIds) },
-			relations: { modules: true }
+			relations: ['modules']
 		});
 	}
 
 	/**
-	 * Build module members from employees and assign manager roles.
-	 * @param employees List of employees to assign as members.
-	 * @param managerIds List of manager IDs.
-	 * @param organizationId The ID of the organization.
-	 * @param tenantId The ID of the tenant.
-	 * @returns A list of organization project module members.
+	 * Constructs an array of OrganizationProjectModuleEmployee instances,
+	 * marking specified employees as managers.
+	 *
+	 * @param employees - Array of employee entities.
+	 * @param managerIds - Array of employee IDs designated as managers.
+	 * @param organizationId - The ID of the organization.
+	 * @param tenantId - The ID of the tenant.
+	 * @returns Promise resolving to an array of OrganizationProjectModuleEmployee instances.
 	 */
 	private async buildModuleMembers(
 		employees: IEmployee[],
-		managerIds: string[],
-		organizationId: string,
-		tenantId: string
+		managerIds: ID[],
+		organizationId: ID,
+		tenantId: ID
 	): Promise<OrganizationProjectModuleEmployee[]> {
+		// Retrieve the manager role once to avoid redundant database calls
 		const managerRole = await this._roleService.findOneByWhereOptions({ name: RolesEnum.MANAGER });
+
+		// Convert managerIds array to a Set for efficient lookup
 		const managerIdsSet = new Set(managerIds);
 
+		// Map employees to OrganizationProjectModuleEmployee instances
 		return employees.map(({ id: employeeId }) => {
 			const isManager = managerIdsSet.has(employeeId);
 			return new OrganizationProjectModuleEmployee({
@@ -653,7 +669,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 				tenantId,
 				isManager,
 				assignedAt: new Date(),
-				role: isManager ? managerRole : null
+				role: isManager ? managerRole : undefined // Assign role only if the employee is a manager
 			});
 		});
 	}
@@ -665,12 +681,14 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 	 */
 	private async assignTasksToModule(tasks: ITask[], projectModule: IOrganizationProjectModule): Promise<void> {
 		const taskUpdates = tasks.map((task) => {
-			if (!task.modules) {
-				task.modules = [];
-			}
+			task.modules = task.modules || []; // Ensure task has modules initialized
 			task.modules.push(projectModule);
-			return this._taskService.update(task.id, { ...task });
+
+			// Only update the relevant fields instead of the entire task
+			return this._taskService.update(task.id, { modules: task.modules });
 		});
+
+		// Await all updates concurrently
 		await Promise.all(taskUpdates);
 	}
 

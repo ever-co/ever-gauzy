@@ -11,6 +11,11 @@ import { IOrganizationProjectModule } from './organization-project-module.model'
 import { IComment } from './comment.model';
 import { IHasUserCreator } from './user.model';
 
+export interface IRelationalOrganizationTeam {
+	organizationTeam?: IOrganizationTeam;
+	organizationTeamId?: ID;
+}
+
 // Base interface for common properties
 interface IBaseTeamProperties extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset, ITaggable {
 	name: string;
@@ -57,11 +62,6 @@ export interface IOrganizationTeamUpdateInput extends Partial<IOrganizationTeamC
 
 export interface IOrganizationTeamStatisticInput extends ITimerStatusInput {
 	withLastWorkedTask: boolean;
-}
-
-export interface IRelationalOrganizationTeam {
-	organizationTeam?: IOrganizationTeam;
-	organizationTeamId?: ID;
 }
 
 export interface IOrganizationTeamStoreState {
