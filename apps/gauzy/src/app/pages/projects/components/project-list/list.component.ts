@@ -555,7 +555,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 					PermissionsEnum.ORG_PROJECT_EDIT,
 					PermissionsEnum.ORG_PROJECT_DELETE
 				]);
-				console.log(isManager, hasAllPermissions);
+
 				// Dynamically assign or remove the CAN_MANAGE_PROJECT permissions if either condition is true
 				if (!hasAllPermissions) {
 					const permissions = [PermissionsEnum.ORG_PROJECT_EDIT, PermissionsEnum.ORG_PROJECT_DELETE];
