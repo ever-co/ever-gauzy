@@ -1200,8 +1200,25 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			await this.commandBus.execute(new TimeLogUpdateCommand(request, timeLog));
 
 			// Retrieve the updated time log entry
-			return await this.typeOrmRepository.findOneBy({ id: request.id });
+			const newTimeLog = await this.typeOrmRepository.findOneBy({ id });
+
+			// Generate the activity log
+			this.activityLogService.logActivity<TimeLog>(
+				BaseEntityEnum.TimeLog,
+				ActionTypeEnum.Updated,
+				ActorTypeEnum.User,
+				newTimeLog.id,
+				newTimeLog.reason,
+				newTimeLog,
+				organizationId,
+				tenantId,
+				timeLog,
+				request
+			);
+
+			return newTimeLog;
 		} catch (error) {
+			console.error(error);
 			// Handle exceptions appropriately
 			throw new BadRequestException('Failed to update manual time log');
 		}
@@ -1250,7 +1267,23 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const timeLogs = await query.getMany();
 
 		// Invoke the command bus to delete the time logs
-		return await this.commandBus.execute(new TimeLogDeleteCommand(timeLogs, forceDelete));
+		const deleted = await this.commandBus.execute(new TimeLogDeleteCommand(timeLogs, forceDelete));
+
+		// Generate the activity log
+		for (const timeLog of timeLogs) {
+			this.activityLogService.logActivity<TimeLog>(
+				BaseEntityEnum.TimeLog,
+				ActionTypeEnum.Deleted,
+				ActorTypeEnum.User,
+				timeLog.id,
+				timeLog.reason,
+				timeLog,
+				organizationId,
+				tenantId
+			);
+		}
+
+		return deleted;
 	}
 
 	/**
