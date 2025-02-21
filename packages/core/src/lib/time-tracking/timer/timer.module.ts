@@ -8,7 +8,7 @@ import { TimerService } from './timer.service';
 import { StatisticModule } from '../statistic/statistic.module';
 import { TimerWeeklyLimitService } from './timer-weekly-limit.service';
 import { TaskModule } from '../../tasks';
-import { WebhookModule } from '@gauzy/plugin-make-com'
+import { WebhookModule } from '@gauzy/plugin-integration-make-com';
 
 @Module({
 	imports: [
