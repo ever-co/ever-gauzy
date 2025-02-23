@@ -5,6 +5,7 @@ import { ITask } from './task.model';
 import { IEmployeeEntityInput, IMemberEntityBased } from './employee.model';
 import { IRelationalRole } from './role.model';
 import { IUser } from './user.model';
+import { IManagerAssignable } from './common.model';
 
 // Base interface with optional properties
 export interface IRelationalOrganizationSprint {
@@ -62,11 +63,10 @@ export interface IOrganizationSprintUpdateInput extends IOrganizationSprintCreat
 export interface IOrganizationSprintEmployee
 	extends IBasePerTenantAndOrganizationEntityModel,
 		IEmployeeEntityInput,
-		IRelationalRole {
+		IRelationalRole,
+		IManagerAssignable {
 	organizationSprint: IOrganizationSprint;
 	organizationSprintId: ID;
-	isManager?: boolean;
-	assignedAt?: Date;
 }
 
 export interface IOrganizationSprintTask extends IBasePerTenantAndOrganizationEntityModel {
