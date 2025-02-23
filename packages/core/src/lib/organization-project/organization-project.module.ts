@@ -12,6 +12,7 @@ import { RoleModule } from './../role/role.module';
 import { EmployeeModule } from './../employee/employee.module';
 import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-organization-project.repository';
 import { TypeOrmOrganizationProjectEmployeeRepository } from './repository/type-orm-organization-project-employee.repository';
+import { PermissionGuard } from '../shared';
 
 @Module({
 	imports: [
@@ -27,6 +28,7 @@ import { TypeOrmOrganizationProjectEmployeeRepository } from './repository/type-
 		OrganizationProjectService,
 		TypeOrmOrganizationProjectRepository,
 		TypeOrmOrganizationProjectEmployeeRepository,
+		PermissionGuard,
 		...CommandHandlers
 	],
 	exports: [

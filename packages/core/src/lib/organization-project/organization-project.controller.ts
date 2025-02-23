@@ -42,9 +42,11 @@ import {
 	UpdateProjectSettingDTO,
 	UpdateTaskModeDTO
 } from './dto';
+import { ManagerOrPermissions } from './decorators/manager-or-permission.decorator';
+import { ManagerOrPermissionGuard } from './guards/manager-or-permission.guard';
 
 @ApiTags('OrganizationProject')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, ManagerOrPermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
 @Controller('/organization-projects')
 export class OrganizationProjectController extends CrudController<OrganizationProject> {
