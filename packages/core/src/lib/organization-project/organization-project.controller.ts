@@ -31,7 +31,7 @@ import {
 } from './commands';
 import { OrganizationProject } from './organization-project.entity';
 import { OrganizationProjectService } from './organization-project.service';
-import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { CountQueryDTO, RelationsQueryDTO } from './../shared/dto';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
@@ -42,7 +42,7 @@ import {
 	UpdateProjectSettingDTO,
 	UpdateTaskModeDTO
 } from './dto';
-import { ManagerOrPermissions } from './decorators/manager-or-permission.decorator';
+
 import { ManagerOrPermissionGuard } from './guards/manager-or-permission.guard';
 
 @ApiTags('OrganizationProject')
