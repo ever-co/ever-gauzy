@@ -350,12 +350,30 @@ export class AlterTaskEntityTable1740374349632 implements MigrationInterface {
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE \`task\` DROP FOREIGN KEY \`FK_94fe6b3a5aec5f85427df4f8cd7\``);
+		await queryRunner.query(`DROP INDEX \`IDX_94fe6b3a5aec5f85427df4f8cd\` ON \`task\``);
+		await queryRunner.query(`ALTER TABLE \`task\` CHANGE \`creatorId\` \`createdByUserId\` varchar(255) NULL`);
+		await queryRunner.query(`CREATE INDEX \`IDX_8c9920b5fb32c3d8453f64b705\` ON \`task\` (\`parentId\`)`);
+		await queryRunner.query(`CREATE INDEX \`IDX_b5dae9857187a41d7d09e07b7e\` ON \`task\` (\`createdByUserId\`)`);
+		await queryRunner.query(
+			`ALTER TABLE \`task\` ADD CONSTRAINT \`FK_b5dae9857187a41d7d09e07b7e3\` FOREIGN KEY (\`createdByUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+	}
 
 	/**
 	 * MySQL Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE \`task\` DROP FOREIGN KEY \`FK_b5dae9857187a41d7d09e07b7e3\``);
+		await queryRunner.query(`DROP INDEX \`IDX_b5dae9857187a41d7d09e07b7e\` ON \`task\``);
+		await queryRunner.query(`DROP INDEX \`IDX_8c9920b5fb32c3d8453f64b705\` ON \`task\``);
+		await queryRunner.query(`ALTER TABLE \`task\` CHANGE \`createdByUserId\` \`creatorId\` varchar(255) NULL`);
+		await queryRunner.query(`CREATE INDEX \`IDX_94fe6b3a5aec5f85427df4f8cd\` ON \`task\` (\`creatorId\`)`);
+		await queryRunner.query(
+			`ALTER TABLE \`task\` ADD CONSTRAINT \`FK_94fe6b3a5aec5f85427df4f8cd7\` FOREIGN KEY (\`creatorId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+	}
 }
