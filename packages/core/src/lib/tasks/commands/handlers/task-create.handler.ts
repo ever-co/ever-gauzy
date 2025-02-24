@@ -50,7 +50,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 				: data.project ?? null;
 
 			// Extract the project prefix (first 3 characters of the project name) if the project exists
-			const projectPrefix = project?.name?.slice(0, 3) || null;
+			const projectPrefix = project?.code || project?.name?.slice(0, 3) || null;
 
 			// Log or throw an exception if both projectId and project are not provided (optional)
 			if (!project) {
@@ -67,7 +67,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			// Create the task with incremented number, project prefix, and other task details
 			const task = await this._taskService.create({
 				...data, // Spread the input properties
-				members: members.map(({ id }) => new Employee({ id })),
+				members: (members || []).map(({ id }) => new Employee({ id })),
 				number: maxNumber + 1, // Increment the task number
 				prefix: projectPrefix, // Use the project prefix, or null if no project
 				tenantId, // Pass the tenant ID
@@ -107,7 +107,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			);
 
 			// Subscribe assignees to the task
-			if (members.length > 0) {
+			if (members?.length > 0) {
 				try {
 					// Map employee IDs to IDs
 					const employeeIds = members.map(({ id }) => id);
