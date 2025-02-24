@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, switchMap, of, tap, catchError } from 'rxjs';
 import { ProjectManagerGuard } from './project-manager.guard';
 import { PermissionsGuard } from '@gauzy/ui-core/core';
 
@@ -24,27 +24,20 @@ export class ProjectManagerPermissionGuard {
 	 * @returns Observable<boolean> - True if either the manager check passes or permissions check passes, false otherwise.
 	 */
 	canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
-		return new Observable<boolean>((observer) => {
-			// First, check if the user is a manager of the project using ProjectManagerGuard
-			this._projectManagerGuard.canActivate(route, state).subscribe((isManager) => {
-				if (isManager) {
-					// If the user is a manager, allow access without checking permissions
-					observer.next(true);
-					observer.complete();
-				} else {
-					// If the user is not a manager, check if they have the required permissions
-					this._permissionsGuard.canActivate(route, state).subscribe((hasPermissions) => {
-						if (hasPermissions) {
-							observer.next(true);
-						} else {
-							// Redirect if neither manager check nor permissions pass
-							this._router.navigate([route.data['permissions'].redirectTo || '/pages/dashboard']);
-							observer.next(false);
-						}
-						observer.complete();
-					});
+		const redirectPath = route.data?.['permissions']?.redirectTo || '/pages/dashboard';
+
+		return this._projectManagerGuard.canActivate(route, state).pipe(
+			switchMap((isManager) => (isManager ? of(true) : this._permissionsGuard.canActivate(route, state))),
+			tap((hasAccess) => {
+				if (!hasAccess) {
+					this._router.navigate([redirectPath]);
 				}
-			});
-		});
+			}),
+			catchError((error) => {
+				console.error('Access check failed:', error);
+				this._router.navigate([redirectPath]);
+				return of(false);
+			})
+		);
 	}
 }
