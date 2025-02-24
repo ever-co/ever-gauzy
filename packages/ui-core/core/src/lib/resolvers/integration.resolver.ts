@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { ActivatedRouteSnapshot, ResolveFn, Router } from '@angular/router';
-import { catchError, EMPTY, Observable, of } from 'rxjs';
+import { catchError, Observable, of } from 'rxjs';
 import { IIntegrationTenant } from '@gauzy/contracts';
 import { IntegrationsService, Store } from '../services';
 

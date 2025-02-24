@@ -1,7 +1,6 @@
-// src/app/guards/project-manager-permission.guard.ts
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { ProjectManagerGuard } from './project-manager.guard';
 import { PermissionsGuard } from '@gauzy/ui-core/core';
 
