@@ -41,17 +41,17 @@ export const IntegrationResolver: ResolveFn<Observable<IIntegrationTenant | bool
 
 		// Handle errors and redirect if an error occurs
 		return integration$.pipe(
-			catchError(() => {
-				// Redirect to the "new integration" page if an error occurs
-				_router.navigate(['/pages/integrations/new']);
-				// Return an empty observable to prevent further actions
-				return EMPTY;
+			catchError((error) => {
+				if (error.status === 403) {
+					console.warn('Access to integration is forbidden (403), continuing without integration data.');
+					return of(null);
+				}
+				console.error('Unexpected error in IntegrationResolver:', error);
+				return of(null);
 			})
 		);
 	} catch (error) {
-		// Handle any synchronous errors and redirect to "new integration" page
-		_router.navigate(['/pages/integrations/new']);
-		// Return an empty observable
-		return EMPTY;
+		console.error('Unexpected error in IntegrationResolver:', error);
+		return of(null);
 	}
 };

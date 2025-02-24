@@ -250,7 +250,6 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (project: IOrganizationProject) => {
-				console.log(project);
 				return Object.assign({}, project, {
 					...this.privatePublicProjectMapper(project),
 					managers: this.getProjectManagers(project),
