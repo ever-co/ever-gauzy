@@ -81,7 +81,7 @@ export class ScreeningTask extends TenantOrganizationBaseEntity implements IScre
 	/**
 	 * The ID of the creator of the screening task.
 	 */
-	@RelationId((it: Task) => it.createdByUser)
+	@RelationId((it: ScreeningTask) => it.createdByUser)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	createdByUserId?: ID;
