@@ -100,19 +100,31 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		organizationContacts: any[];
 		organizationTeams: any[];
 	}> {
+async function retryQuery<T>(query: () => Promise<T>, retries = 3): Promise<T> {
+  try {
+    return await query();
+  } catch (error) {
+    if (retries > 0) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return retryQuery(query, retries - 1);
+    }
+    throw error;
+  }
+}
+
 		const [projects, departments, organizationContacts, organizationTeams] = await Promise.all([
-			this.organizationProjectService.find({
+			retryQuery(() => this.organizationProjectService.find({
 				where: { id: In(projectIds ?? []), organizationId, tenantId }
-			}),
-			this.organizationDepartmentService.find({
+			})),
+			retryQuery(() => this.organizationDepartmentService.find({
 				where: { id: In(departmentIds ?? []), organizationId, tenantId }
-			}),
-			this.organizationContactService.find({
+			})),
+			retryQuery(() => this.organizationContactService.find({
 				where: { id: In(organizationContactIds ?? []), organizationId, tenantId }
-			}),
-			this.organizationTeamService.find({
+			})),
+			retryQuery(() => this.organizationTeamService.find({
 				where: { id: In(teamIds ?? []), organizationId, tenantId }
-			})
+			}))
 		]);
 
 		return { projects, departments, organizationContacts, organizationTeams };
