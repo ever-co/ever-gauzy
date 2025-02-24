@@ -8,8 +8,5 @@ import { ScreeningTask } from '../screening-task.entity';
  * Create Screening Task data validation request DTO
  */
 export class CreateScreeningTaskDTO
-	extends IntersectionType(
-		TenantOrganizationBaseDTO,
-		IntersectionType(OmitType(ScreeningTask, ['status']), MentionEmployeeIdsDTO)
-	)
+	extends IntersectionType(TenantOrganizationBaseDTO, MentionEmployeeIdsDTO, OmitType(ScreeningTask, ['status']))
 	implements IScreeningTaskCreateInput {}

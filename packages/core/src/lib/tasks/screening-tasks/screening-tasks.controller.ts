@@ -1,4 +1,4 @@
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import {
 	Body,
@@ -27,7 +27,7 @@ import { ScreeningTaskCreateCommand, ScreeningTaskUpdateCommand } from './comman
 @ApiTags('Screening Tasks')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions()
-@Controller('screening-tasks')
+@Controller('/screening-tasks')
 export class ScreeningTasksController extends CrudController<ScreeningTask> {
 	constructor(
 		private readonly screeningTasksService: ScreeningTasksService,
@@ -36,34 +36,46 @@ export class ScreeningTasksController extends CrudController<ScreeningTask> {
 		super(screeningTasksService);
 	}
 
-	@ApiOperation({
-		summary: 'Find all screening tasks'
-	})
+	/**
+	 * Find all screening tasks with pagination.
+	 *
+	 * @param params - Pagination parameters and optional filters.
+	 * @returns A paginated response containing screening tasks.
+	 */
+	@ApiOperation({ summary: 'Find all screening tasks' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found screening tasks',
+		description: 'Found screening tasks.',
 		type: ScreeningTask
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get()
+	@Get('/')
 	@UseValidationPipe()
 	async findAll(@Query() params: PaginationParams<ScreeningTask>): Promise<IPagination<IScreeningTask>> {
 		return await this.screeningTasksService.findAll(params);
 	}
 
-	@ApiOperation({ summary: 'Find by id' })
+	/**
+	 * Find a screening task by its unique identifier.
+	 *
+	 * @param id - The UUID of the screening task.
+	 * @param params - Optional query parameters for additional filtering.
+	 * @returns The screening task that matches the given ID.
+	 */
+	@ApiOperation({ summary: 'Find screening task by id' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found one record' /*, type: T*/
+		description: 'Found one screening task',
+		type: ScreeningTask
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Screening task not found'
 	})
-	@Get(':id')
+	@Get('/:id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Query() params: OptionParams<ScreeningTask>
@@ -71,6 +83,12 @@ export class ScreeningTasksController extends CrudController<ScreeningTask> {
 		return this.screeningTasksService.findOneByIdString(id, params);
 	}
 
+	/**
+	 * Creates a new screening task.
+	 *
+	 * @param entity - The DTO containing data required to create a new screening task.
+	 * @returns A promise that resolves to the newly created screening task.
+	 */
 	@ApiOperation({ summary: 'Creates Screening Task' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -81,12 +99,19 @@ export class ScreeningTasksController extends CrudController<ScreeningTask> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Post()
+	@Post('/')
 	@UseValidationPipe()
 	async create(@Body() entity: CreateScreeningTaskDTO): Promise<IScreeningTask> {
 		return await this.commandBus.execute(new ScreeningTaskCreateCommand(entity));
 	}
 
+	/**
+	 * Updates an existing screening task.
+	 *
+	 * @param id - The UUID of the screening task to update.
+	 * @param entity - The DTO containing updated screening task data.
+	 * @returns A promise that resolves to the updated screening task.
+	 */
 	@ApiOperation({ summary: 'Updates an existing screening task' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -101,7 +126,7 @@ export class ScreeningTasksController extends CrudController<ScreeningTask> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Put(':id')
+	@Put('/:id')
 	@UseValidationPipe()
 	async update(
 		@Param('id', UUIDValidationPipe) id: ID,
@@ -110,6 +135,12 @@ export class ScreeningTasksController extends CrudController<ScreeningTask> {
 		return await this.commandBus.execute(new ScreeningTaskUpdateCommand(id, entity));
 	}
 
+	/**
+	 * Delete a screening task by its unique identifier.
+	 *
+	 * @param id - The UUID of the screening task to delete.
+	 * @returns A DeleteResult indicating the outcome of the deletion.
+	 */
 	@ApiOperation({ summary: 'Delete screening task' })
 	@ApiResponse({
 		status: HttpStatus.NO_CONTENT,
