@@ -19,7 +19,10 @@ export class ScreeningTaskUpdateHandler implements ICommandHandler<ScreeningTask
 			const { id, input } = command;
 			return await this.screeningTasksService.update(id, input);
 		} catch (error) {
-			throw new HttpException('Screening task update failed', HttpStatus.BAD_REQUEST);
+			throw new HttpException(
+				`Screening task update failed: ${error.message}`,
+				error instanceof HttpException ? error.getStatus() : HttpStatus.BAD_REQUEST
+			);
 		}
 	}
 }
