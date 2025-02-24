@@ -45,7 +45,7 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 			// Retrieve the current employee's ID from the request context
 			const employeeId = RequestContext.currentEmployeeId() ?? input.employeeId;
 
-			// Create the activity log entry using the provided input along with the tenantId and creatorId
+			// Create the activity log entry using the provided input along with the employeeId and tenantId
 			return await super.create({ ...input, employeeId, tenantId });
 		} catch (error) {
 			console.log('Error while creating activity log:', error);
