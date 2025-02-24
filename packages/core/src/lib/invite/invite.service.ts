@@ -32,7 +32,13 @@ import { IAppIntegrationConfig } from '@gauzy/common';
 import { generateAlphaNumericCode, isEmpty, isNotEmpty } from '@gauzy/utils';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { MultiORMEnum, freshTimestamp, getArrayIntersection, parseTypeORMFindToMikroOrm } from './../core/utils';
+import {
+	MultiORMEnum,
+	freshTimestamp,
+	getArrayIntersection,
+	parseTypeORMFindToMikroOrm,
+	retryQuery
+} from './../core/utils';
 import { EmailService } from './../email-send/email.service';
 import { UserService } from '../user/user.service';
 import { RoleService } from './../role/role.service';
@@ -100,31 +106,27 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		organizationContacts: any[];
 		organizationTeams: any[];
 	}> {
-async function retryQuery<T>(query: () => Promise<T>, retries = 3): Promise<T> {
-  try {
-    return await query();
-  } catch (error) {
-    if (retries > 0) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return retryQuery(query, retries - 1);
-    }
-    throw error;
-  }
-}
-
 		const [projects, departments, organizationContacts, organizationTeams] = await Promise.all([
-			retryQuery(() => this.organizationProjectService.find({
-				where: { id: In(projectIds ?? []), organizationId, tenantId }
-			})),
-			retryQuery(() => this.organizationDepartmentService.find({
-				where: { id: In(departmentIds ?? []), organizationId, tenantId }
-			})),
-			retryQuery(() => this.organizationContactService.find({
-				where: { id: In(organizationContactIds ?? []), organizationId, tenantId }
-			})),
-			retryQuery(() => this.organizationTeamService.find({
-				where: { id: In(teamIds ?? []), organizationId, tenantId }
-			}))
+			retryQuery(() =>
+				this.organizationProjectService.find({
+					where: { id: In(projectIds ?? []), organizationId, tenantId }
+				})
+			),
+			retryQuery(() =>
+				this.organizationDepartmentService.find({
+					where: { id: In(departmentIds ?? []), organizationId, tenantId }
+				})
+			),
+			retryQuery(() =>
+				this.organizationContactService.find({
+					where: { id: In(organizationContactIds ?? []), organizationId, tenantId }
+				})
+			),
+			retryQuery(() =>
+				this.organizationTeamService.find({
+					where: { id: In(teamIds ?? []), organizationId, tenantId }
+				})
+			)
 		]);
 
 		return { projects, departments, organizationContacts, organizationTeams };
