@@ -29,7 +29,7 @@ import {
 	ID
 } from '@gauzy/contracts';
 import { IAppIntegrationConfig } from '@gauzy/common';
-import { generateAlphaNumericCode, isNotEmpty } from '@gauzy/utils';
+import { generateAlphaNumericCode, isEmpty, isNotEmpty } from '@gauzy/utils';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { MultiORMEnum, freshTimestamp, getArrayIntersection, parseTypeORMFindToMikroOrm } from './../core/utils';
@@ -142,6 +142,9 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			callbackUrl
 		} = input;
 
+		/**
+		 * Fetch organization-related data in parallel.
+		 */
 		const { projects, departments, organizationContacts, organizationTeams } = await this.fetchInvitesRelations(
 			projectIds,
 			departmentIds,
@@ -151,16 +154,13 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			tenantId
 		);
 
-		// Invited User
+		/**
+		 * Retrieve the invited user and organization.
+		 */
 		const invitedByUserId = RequestContext.currentUserId();
-
-		// Retrieve the invited user
 		const invitedByUser: IUser = await this.userService.findOneByIdString(invitedByUserId, {
 			relations: { role: true }
 		});
-
-		// Invited Organization
-		const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
 
 		// Invited Role
 		let role: IRole;
@@ -182,6 +182,10 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			}
 		}
 
+		// Invited Organization
+		const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
+
+		// Build the "where" clause based on provided conditions.
 		const expireDate =
 			invitationExpirationPeriod === InvitationExpirationEnum.NEVER
 				? null
@@ -191,17 +195,14 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 							DEFAULT_INVITE_EXPIRY_PERIOD
 				  );
 
-		// Build the "where" clause based on provided conditions.
-		const whereClause = {
-			tenantId,
-			...(isNotEmpty(organizationId) && { organizationId }),
-			...(isNotEmpty(emailIds) && { email: In(emailIds) })
-		};
-
 		// Build the overall query options.
 		const queryOptions = {
-			...(isNotEmpty(teamIds) && { relations: { teams: true } }),
-			where: whereClause
+			where: {
+				tenantId,
+				...(isNotEmpty(organizationId) && { organizationId }),
+				...(isNotEmpty(emailIds) && { email: In(emailIds) })
+			},
+			...(isNotEmpty(teamIds) && { relations: { teams: true } })
 		};
 
 		const { items: existedInvites } = await this.findAll(queryOptions);
@@ -211,7 +212,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 
 		for await (const email of emailIds) {
 			const code = generateAlphaNumericCode();
-			const token: string = sign({ email, code }, environment.JWT_SECRET, {});
+			const token = sign({ email, code }, environment.JWT_SECRET, {});
 
 			// Retrieve organization team employees for the email.
 			const organizationTeamEmployees = await this.typeOrmOrganizationTeamEmployeeRepository.findBy({
@@ -231,60 +232,48 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					inviteEmail === email && getArrayIntersection(teams?.map(({ id }) => id) ?? [], teamIds).length > 0
 			);
 
+			// Determine teams to invite.
+			let teamsToInvite: IOrganizationTeam[];
+
 			if (isNotEmpty(matchedInvites)) {
-				// Check if all invites are already sent
+				// Check if all invites are already sent.
 				const allInvitesNotSent = matchedInvites.every((invite) => invite.status !== InviteStatusEnum.INVITED);
 
-				// Retrieve the teams that need to be invited
-				const needsToInviteTeams = allInvitesNotSent
-					? organizationTeams.filter((team: IOrganizationTeam) => !alreadyInTeamIds.includes(team.id))
+				// Determine teams to invite.
+				teamsToInvite = allInvitesNotSent
+					? organizationTeams.filter((team) => !alreadyInTeamIds.includes(team.id))
 					: [];
 
-				if (isNotEmpty(needsToInviteTeams)) {
-					invites.push(
-						new Invite({
-							token,
-							email,
-							status: InviteStatusEnum.INVITED,
-							actionDate: startedWorkOn ?? appliedDate,
-							expireDate,
-							code,
-							fullName,
-							roleId,
-							invitedByUserId,
-							organizationId,
-							tenantId,
-							projects,
-							teams: needsToInviteTeams,
-							departments,
-							organizationContacts
-						})
-					);
-				} else {
+				if (isEmpty(teamsToInvite)) {
 					ignoreInvites++;
+					continue;
 				}
 			} else {
-				invites.push(
-					new Invite({
-						token,
-						email,
-						roleId,
-						organizationId,
-						tenantId,
-						invitedByUserId,
-						status: InviteStatusEnum.INVITED,
-						expireDate,
-						projects,
-						teams: organizationTeams,
-						departments,
-						organizationContacts,
-						actionDate: startedWorkOn || appliedDate,
-						code,
-						fullName
-					})
-				);
+				teamsToInvite = organizationTeams;
 			}
+
+			// Create a new Invite instance with common properties.
+			invites.push(
+				new Invite({
+					token,
+					email,
+					roleId,
+					organizationId,
+					tenantId,
+					invitedByUserId,
+					status: InviteStatusEnum.INVITED,
+					expireDate,
+					actionDate: startedWorkOn ?? appliedDate,
+					code,
+					fullName,
+					projects,
+					teams: teamsToInvite,
+					departments,
+					organizationContacts
+				})
+			);
 		}
+
 		const items = await this.typeOrmRepository.save(invites);
 
 		items.forEach((item: IInvite) => {
