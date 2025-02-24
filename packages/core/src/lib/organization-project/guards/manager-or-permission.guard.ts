@@ -1,13 +1,10 @@
-import { CanActivate, ExecutionContext, Inject, Injectable } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { OrganizationProjectService } from '../organization-project.service';
 import { PermissionGuard } from '../../shared';
 
 @Injectable()
 export class ManagerOrPermissionGuard implements CanActivate {
 	constructor(
-		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		private readonly _projectService: OrganizationProjectService,
 		private readonly _permissionGuard: PermissionGuard
 	) {}
