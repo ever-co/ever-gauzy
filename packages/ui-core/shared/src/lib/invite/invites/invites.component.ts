@@ -247,7 +247,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 		// Create a new server data source with the specified endpoint and relations
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/invite`,
-			relations: ['projects', 'invitedBy', 'role', 'organizationContacts', 'departments'],
+			relations: ['projects', 'invitedByUser', 'role', 'organizationContacts', 'departments'],
 			where: {
 				organizationId,
 				tenantId,
@@ -266,25 +266,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 					  }
 					: {})
 			},
-			resultMap: (invite: IInvite) => {
-				return Object.assign({}, invite, {
-					email: invite.email,
-					expireDate: invite.expireDate
-						? moment(invite.expireDate).fromNow()
-						: InvitationExpirationEnum.NEVER,
-					createdDate: invite.createdAt,
-					imageUrl: invite.invitedBy ? invite.invitedBy.imageUrl : '',
-					fullName: invite.invitedBy ? invite.invitedBy.name : '',
-					roleName: invite.role ? invite.role.name : '',
-					projectNames: (invite.projects || []).map((project) => project.name),
-					clientNames: (invite.organizationContacts || []).map(
-						(organizationContact) => organizationContact.name
-					),
-					departmentNames: (invite.departments || []).map((department) => department.name),
-					id: invite.id,
-					token: invite.token
-				});
-			},
+			resultMap: (invite: IInvite) => this.transformInvite(invite),
 			finalize: () => {
 				this.setPagination({
 					...this.getPagination(),
@@ -293,6 +275,29 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 				this.loading = false;
 			}
 		});
+	}
+
+	/**
+	 * Transforms an Invite entity into an object with computed properties.
+	 *
+	 * @param invite - The Invite entity to transform.
+	 * @returns A transformed invite object with additional computed properties.
+	 */
+	transformInvite(invite: IInvite): any {
+		return {
+			...invite,
+			email: invite.email,
+			expireDate: invite.expireDate ? moment(invite.expireDate).fromNow() : InvitationExpirationEnum.NEVER,
+			createdDate: invite.createdAt,
+			imageUrl: invite.invitedByUser?.imageUrl ?? '',
+			fullName: invite.invitedByUser?.name ?? '',
+			roleName: invite.role?.name ?? '',
+			projectNames: invite.projects?.map((project) => project.name) ?? [],
+			clientNames: invite.organizationContacts?.map((contact) => contact.name) ?? [],
+			departmentNames: invite.departments?.map((department) => department.name) ?? [],
+			id: invite.id,
+			token: invite.token
+		};
 	}
 
 	/***

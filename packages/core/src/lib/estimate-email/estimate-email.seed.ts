@@ -41,7 +41,13 @@ export const createRandomEstimateEmail = async (
 	await dataSource.manager.save(estimateEmails);
 };
 
-function createToken(email): string {
+/**
+ * Creates a JWT token containing the provided email as payload.
+ *
+ * @param email - The email address to embed in the token.
+ * @returns A JWT token string.
+ */
+export function createToken(email: string): string {
 	const token: string = sign({ email }, env.JWT_SECRET, {});
 	return token;
 }
