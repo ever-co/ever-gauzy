@@ -78,7 +78,7 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 				number: maxNumber + 1, // Increment the task number
 				prefix,
 				isScreeningTask: true,
-				creatorId: userId,
+				createdByUserId: userId,
 				tenantId,
 				organizationId
 			});
