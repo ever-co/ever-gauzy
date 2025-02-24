@@ -179,7 +179,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 */
 	async update(id: ID, input: IOrganizationProjectUpdateInput): Promise<IOrganizationProject> {
 		const tenantId = RequestContext.currentTenantId() || input.tenantId;
-		const { memberIds = [], managerIds = [], organizationId } = input;
+		const { memberIds, managerIds, organizationId } = input;
 
 		const organizationProject = await super.findOneByIdString(id, {
 			where: { organizationId, tenantId },
@@ -189,16 +189,16 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		try {
 			// Retrieve members and managers IDs
 			// Combine memberIds and managerIds into a single array
-			const employeeIds = [...memberIds, ...managerIds].filter(Boolean);
-
-			// Retrieves a collection of employees based on specified criteria.
-			const projectMembers = await this._employeeService.findActiveEmployeesByEmployeeIds(
-				employeeIds,
-				organizationId,
-				tenantId
-			);
-
 			if (Array.isArray(managerIds) || Array.isArray(memberIds)) {
+				const employeeIds = [...memberIds, ...managerIds].filter(Boolean);
+
+				// Retrieves a collection of employees based on specified criteria.
+				const projectMembers = await this._employeeService.findActiveEmployeesByEmployeeIds(
+					employeeIds,
+					organizationId,
+					tenantId
+				);
+
 				await this.updateOrganizationProjectMembers(id, organizationId, projectMembers, managerIds, memberIds);
 			}
 			// Update nested entity (Organization Project Members)
