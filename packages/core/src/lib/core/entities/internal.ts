@@ -200,6 +200,7 @@ export * from '../../tags/tag.subscriber';
 export * from '../../tasks/issue-type/issue-type.subscriber';
 export * from '../../tasks/priorities/priority.subscriber';
 export * from '../../tasks/related-issue-type/related-issue-type.subscriber';
+export * from '../../tasks/screening-tasks/screening-task.subscriber';
 export * from '../../tasks/sizes/size.subscriber';
 export * from '../../tasks/statuses/status.subscriber';
 export * from '../../tasks/task.subscriber';
