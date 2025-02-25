@@ -206,7 +206,7 @@ COPY --chown=node:node --from=builder /srv/gauzy/packages/plugins/product-review
 COPY --chown=node:node --from=builder /srv/gauzy/packages/plugins/sentry-tracing/node_modules ./node_modules/@gauzy/plugin-sentry/node_modules
 COPY --chown=node:node --from=builder /srv/gauzy/packages/plugins/videos/node_modules ./node_modules/@gauzy/plugin-videos/node_modules
 
-ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=12288"} \
+ENV NODE_OPTIONS="--max-old-space-size=1024" \
 	NODE_ENV=${NODE_ENV:-production} \
 	API_HOST=${API_HOST:-localhost} \
 	API_PORT=${API_PORT:-3000} \
@@ -312,7 +312,10 @@ ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=12288"} \
 	REDIS_ENABLED=${REDIS_ENABLED} \
 	REDIS_URL=${REDIS_URL} \
 	PERIODIC_TIME_SAVE="true" \
-	PERIODIC_TIME_SAVE_TIMEFRAME="60"
+	PERIODIC_TIME_SAVE_TIMEFRAME="60" \
+	DB_ORM=${DB_ORM:-"mikro-orm"} \
+	MIKRO_ORM_ALLOW_GLOBAL_CONTEXT=${MIKRO_ORM_ALLOW_GLOBAL_CONTEXT:-true}
+
 
 EXPOSE ${API_PORT}
 
