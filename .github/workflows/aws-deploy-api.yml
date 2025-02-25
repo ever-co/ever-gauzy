@@ -27,7 +27,7 @@ on:
       - 'packages/plugins/product-reviews/**/*.*'
       - 'packages/plugins/sentry-tracing/**/*.*'
       - 'packages/plugins/videos/**/*.*'
-      - '.deploy/api/**/*.*'
+      - '.deploy/api/**/*'
       - '.github/workflows/aws-deploy-api.yml'
   workflow_dispatch:
 
