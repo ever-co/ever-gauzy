@@ -117,7 +117,9 @@ export function createInvite({ superAdmins, organizationId, tenantId, roles }: I
 	const invite = new Invite();
 	invite.email = getEmailWithPostfix(faker.internet.exampleEmail());
 	invite.expireDate = faker.date.between({ from: now, to: expireDateEnd });
-	invite.invitedByUser = faker.helpers.arrayElement(superAdmins);
+	invite.invitedByUser = superAdmins.length
+		? faker.helpers.arrayElement(superAdmins)
+		: undefined; // Or fallback to a known user
 	invite.organizationId = organizationId;
 	invite.tenantId = tenantId;
 	invite.role = faker.helpers.arrayElement(roles);
