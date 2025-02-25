@@ -10,7 +10,6 @@ import {
 	ICreateEmailInvitesInput,
 	ICreateEmailInvitesOutput,
 	InviteStatusEnum,
-	IOrganizationContact,
 	IUser,
 	ICreateOrganizationContactInviteInput,
 	RolesEnum,
@@ -48,7 +47,6 @@ import { OrganizationDepartmentService } from './../organization-department/orga
 import { OrganizationContactService } from './../organization-contact/organization-contact.service';
 import { OrganizationProjectService } from './../organization-project/organization-project.service';
 import { AuthService } from './../auth/auth.service';
-import { User } from './../user/user.entity';
 import { UserOrganizationService } from './../user-organization/user-organization.services';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
@@ -825,7 +823,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	 * @returns A promise that resolves to the updated invitation.
 	 */
 	async handleInvitationResponse(
-		id: string,
+		id: ID,
 		action: InviteActionEnum,
 		origin: string,
 		languageCode: LanguagesEnum
@@ -890,15 +888,12 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				teams
 			} = invitation;
 
-			let invitedTenantUser: User;
+			let invitedTenantUser: IUser;
 
 			if (currentTenantId !== tenantId) {
 				invitedTenantUser = await this.typeOrmUserRepository.findOne({
 					where: { email, tenantId },
-					relations: {
-						tenant: true,
-						role: true
-					}
+					relations: { tenant: true, role: true }
 				});
 			}
 
@@ -1015,9 +1010,9 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	 */
 	async createUser(
 		input: IUserRegistrationInput & Partial<IAppIntegrationConfig>,
-		organizationTeamId: string,
+		organizationTeamId: ID,
 		languageCode: LanguagesEnum
-	): Promise<User> {
+	): Promise<IUser> {
 		let tenant = input.user.tenant;
 
 		if (input.createdById) {
