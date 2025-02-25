@@ -96,7 +96,7 @@ export interface ICreateOrganizationContactInviteInput extends IBasePerTenantAnd
 	emailId: string;
 	organizationContactId: ID;
 	roleId: ID;
-	invitedById: ID;
+	invitedByUserId: ID;
 	originalUrl: string;
 	languageCode: LanguagesEnum;
 }
