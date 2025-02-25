@@ -1849,7 +1849,7 @@ export class ImportService implements OnModuleInit {
 				isCheckRelation: true,
 				foreignKeys: [
 					{ column: 'roleId', repository: this.typeOrmRoleRepository },
-					{ column: 'invitedById', repository: this.typeOrmUserRepository },
+					{ column: 'invitedByUserId', repository: this.typeOrmUserRepository },
 					{ column: 'organizationContactId', repository: this.typeOrmOrganizationContactRepository }
 				],
 				relations: [
