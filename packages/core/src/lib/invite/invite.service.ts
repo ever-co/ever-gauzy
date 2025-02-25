@@ -468,70 +468,101 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				});
 			}
 
-			return await this.update(inviteId, {
-				status: InviteStatusEnum.INVITED,
-				invitedById: RequestContext.currentUserId(),
-				token,
-				code
-			});
+			return await super.update(inviteId, { status: InviteStatusEnum.INVITED, invitedByUserId, token, code });
 		} catch (error) {
 			return error;
 		}
 	}
 
+	/**
+	 * Sends an acceptance invitation email to all super admin users of the given organization.
+	 *
+	 * @param organization - The organization details.
+	 * @param employee - The employee who accepted the invitation.
+	 * @param languageCode - The language code for the email.
+	 * @returns A promise that resolves when all emails have been sent.
+	 */
 	async sendAcceptInvitationEmail(
 		organization: IOrganization,
 		employee: IEmployee,
 		languageCode: LanguagesEnum
-	): Promise<any> {
-		const superAdminUsers: IUser[] = await this.userService.getAdminUsers(organization.tenantId);
-
+	): Promise<void> {
 		try {
-			for await (const superAdmin of superAdminUsers) {
-				this.emailService.sendAcceptInvitationEmail({
-					email: superAdmin.email,
-					employee,
-					organization,
-					languageCode
-				});
+			const superAdminUsers: IUser[] = await this.userService.getAdminUsers(organization.tenantId);
+
+			if (!superAdminUsers.length) {
+				console.warn(`No super admin users found for tenant ${organization.tenantId}`);
+				return;
 			}
-		} catch (e) {
-			console.log('caught', e);
+
+			// Send emails concurrently to all super admin users.
+			await Promise.all(
+				superAdminUsers.map(async (superAdmin) =>
+					this.emailService.sendAcceptInvitationEmail({
+						email: superAdmin.email,
+						employee,
+						organization,
+						languageCode,
+					})
+				)
+			);
+		} catch (error: any) {
+			console.error(`Error sending accept invitation email: ${error.message}`, error);
+			throw new Error(`Error sending accept invitation email: ${error.message}`);
 		}
 	}
 
-	async createOrganizationContactInvite(inviteInput: ICreateOrganizationContactInviteInput): Promise<Invite> {
-		const { emailId, roleId, organizationContactId, organizationId, invitedById, originalUrl, languageCode } =
-			inviteInput;
-		const organizationContact: IOrganizationContact = await this.organizationContactService.findOneByIdString(
-			organizationContactId
-		);
-		const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
-		const inviterUser: IUser = await this.userService.findOneByIdString(invitedById);
 
-		const inviteExpiryPeriod =
-			organization && organization.inviteExpiryPeriod
-				? organization.inviteExpiryPeriod
-				: DEFAULT_INVITE_EXPIRY_PERIOD;
+	/**
+	 * Creates an invite for an organization contact and sends an invitation email.
+	 *
+	 * @param input - The invitation input containing email, role, organization contact,
+	 *                organization, and inviter details.
+	 * @returns A promise that resolves with the created invite.
+	 */
+	async  createOrganizationContactInvite(
+		input: ICreateOrganizationContactInviteInput
+	): Promise<Invite> {
+		const {
+			emailId,
+			roleId,
+			organizationContactId,
+			organizationId,
+			invitedByUserId,
+			originalUrl,
+			languageCode,
+		} = input;
 
+		// Fetch organization contact, organization, and inviting user concurrently.
+		const [organizationContact, organization, invitedByUser] = await Promise.all([
+			this.organizationContactService.findOneByIdString(organizationContactId),
+			this.organizationService.findOneByIdString(organizationId),
+			this.userService.findOneByIdString(invitedByUserId),
+		]);
+
+		// Determine the invite expiry period (use default if not provided).
+		const inviteExpiryPeriod = organization?.inviteExpiryPeriod ?? DEFAULT_INVITE_EXPIRY_PERIOD;
 		const expireDate = addDays(new Date(), inviteExpiryPeriod);
 
+		// Create and populate the invite object.
 		const invite = new Invite();
 		invite.token = this.createToken(emailId);
 		invite.email = emailId;
 		invite.roleId = roleId;
 		invite.organizationId = organizationId;
 		invite.tenantId = RequestContext.currentTenantId();
-		invite.invitedById = invitedById;
+		invite.invitedByUserId = invitedByUserId;
 		invite.status = InviteStatusEnum.INVITED;
 		invite.expireDate = expireDate;
 		invite.organizationContacts = [organizationContact];
 
+		// Save the invite to the repository.
 		const createdInvite = await this.typeOrmRepository.save(invite);
 
+		// Send the invitation email (fire-and-forget).
 		this.emailService.inviteOrganizationContact(
 			organizationContact,
-			inviterUser,
+			invitedByUser,
 			organization,
 			createdInvite,
 			languageCode,
@@ -812,7 +843,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					email: true,
 					fullName: true,
 					organizationId: true,
-					invitedById: true,
+					invitedByUserId: true,
 					tenantId: true,
 					teams: {
 						id: true,
@@ -852,7 +883,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				tenantId,
 				role,
 				organizationId,
-				invitedById,
+				invitedByUserId,
 				id: inviteId,
 				token,
 				code,
@@ -942,7 +973,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 							},
 							organizationId,
 							inviteId,
-							createdById: invitedById
+							createdById: invitedByUserId
 						},
 						team.id,
 						languageCode

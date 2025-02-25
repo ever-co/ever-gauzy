@@ -34,7 +34,6 @@ import { MikroOrmInviteRepository } from './repository/mikro-orm-invite.reposito
 
 @MultiORMEntity('invite', { mikroOrmRepository: () => MikroOrmInviteRepository })
 export class Invite extends TenantOrganizationBaseEntity implements IInvite {
-	invitedById: string;
 	/**
 	 * Invite Token
 	 */
