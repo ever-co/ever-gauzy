@@ -33,7 +33,6 @@ import {
 } from '../../core/utils';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { EmployeeService } from '../../employee/employee.service';
-import { WebhookService } from '@gauzy/plugin-integration-make-com';
 import {
 	DeleteTimeSpanCommand,
 	IGetConflictTimeLogCommand,
@@ -41,6 +40,7 @@ import {
 	TimeLogCreateCommand,
 	TimeLogUpdateCommand
 } from '../time-log/commands';
+import { StartTimerCommand, StopTimerCommand, GetTimerStatusCommand } from './commands';
 import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
@@ -65,8 +65,7 @@ export class TimerService {
 		private readonly _employeeService: EmployeeService,
 		private readonly _timerWeeklyLimitService: TimerWeeklyLimitService,
 		private readonly _commandBus: CommandBus,
-		private readonly _taskService: TaskService,
-		private readonly webhookService: WebhookService
+		private readonly _taskService: TaskService
 	) {}
 
 	/**
@@ -74,31 +73,22 @@ export class TimerService {
 	 */
 
 	async startTimer(request: ITimerToggleInput): Promise<ITimeLog> {
-        const timeLog = await this._startTimerImplementation(request);
-        // Emit webhook event after successful timer start
-        await this.webhookService.emitTimerEvent('start', timeLog);
-        return timeLog;
-    }
+		return this._commandBus.execute(new StartTimerCommand(request));
+	}
 
     /**
      * Stop time tracking for the current employee.
      */
-    async stopTimer(request: ITimerToggleInput): Promise<ITimeLog> {
-        const timeLog = await this._stopTimerImplementation(request);
-        // Emit webhook event after successful timer stop
-        await this.webhookService.emitTimerEvent('stop', timeLog);
-        return timeLog;
-    }
+	async stopTimer(request: ITimerToggleInput): Promise<ITimeLog> {
+		return this._commandBus.execute(new StopTimerCommand(request));
+	}
 
     /**
      * Get timer status
      */
-    async getTimerStatus(request: ITimerStatusInput): Promise<ITimerStatusWithWeeklyLimits> {
-        const status = await this._getTimerStatusImplementation(request);
-        // Emit webhook event after getting timer status
-        await this.webhookService.emitTimerEvent('status', status as any);
-        return status;
-    }
+	async getTimerStatus(request: ITimerStatusInput): Promise<ITimerStatusWithWeeklyLimits> {
+		return this._commandBus.execute(new GetTimerStatusCommand(request));
+	}
 
 	/**
 	 * Fetches an employee based on the provided query.

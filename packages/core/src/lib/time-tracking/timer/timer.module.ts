@@ -9,6 +9,7 @@ import { StatisticModule } from '../statistic/statistic.module';
 import { TimerWeeklyLimitService } from './timer-weekly-limit.service';
 import { TaskModule } from '../../tasks';
 import { WebhookModule } from '@gauzy/plugin-integration-make-com';
+import { StartTimerHandler, StopTimerHandler, GetTimerStatusHandler } from './handlers';
 
 @Module({
 	imports: [
@@ -22,6 +23,6 @@ import { WebhookModule } from '@gauzy/plugin-integration-make-com';
 	],
 	controllers: [TimerController],
 	exports: [TimerService, TimerWeeklyLimitService],
-	providers: [TimerService, TimerWeeklyLimitService]
+	providers: [TimerService, TimerWeeklyLimitService, StartTimerHandler, StopTimerHandler, GetTimerStatusHandler]
 })
 export class TimerModule {}
