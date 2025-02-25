@@ -1,3 +1,4 @@
+import { IManagerAssignable } from './common.model';
 import { IEmployee, IEmployeeEntityInput, IMemberEntityBased } from './employee.model';
 import { IRelationalOrganizationContact } from './organization-contact.model';
 import { ITaggable } from './tag.model';
@@ -101,11 +102,10 @@ export interface IOrganizationProjectEmployeeFindInput extends Partial<IOrganiza
 export interface IOrganizationProjectEmployee
 	extends IBasePerTenantAndOrganizationEntityModel,
 		IEmployeeEntityInput,
-		IRelationalRole {
+		IRelationalRole,
+		IManagerAssignable {
 	organizationProject: IOrganizationProject;
 	organizationProjectId: ID;
-	isManager?: boolean;
-	assignedAt?: Date;
 }
 
 // Task List Type Enum

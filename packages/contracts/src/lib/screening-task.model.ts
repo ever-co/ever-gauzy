@@ -1,16 +1,7 @@
-import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID, OmitFields } from './base-entity.model';
 import { IMentionEmployeeIds } from './mention.model';
 import { ITask } from './task.model';
-import { IUser } from './user.model';
-
-export interface IScreeningTask extends IBasePerTenantAndOrganizationEntityModel {
-	status: ScreeningTaskStatusEnum;
-	taskId: ID;
-	task: ITask;
-	onHoldUntil?: Date;
-	creatorId?: ID;
-	creator?: IUser;
-}
+import { IHasUserCreator } from './user.model';
 
 export enum ScreeningTaskStatusEnum {
 	ACCEPTED = 'accepted',
@@ -20,6 +11,18 @@ export enum ScreeningTaskStatusEnum {
 	PENDING = 'pending'
 }
 
-export interface IScreeningTaskCreateInput extends Omit<IScreeningTask, 'status'>, IMentionEmployeeIds {}
+interface IScreeningTaskBase extends IBasePerTenantAndOrganizationEntityModel {
+	status: ScreeningTaskStatusEnum; // Represents the current state or phase of the screening task.
+	onHoldUntil?: Date; // The date and time until which the screening task is temporarily paused or put on hold.
+}
 
-export interface IScreeningTaskUpdateInput extends Omit<IScreeningTask, 'task' | 'taskId'> {}
+interface IScreeningTaskAssociations extends IHasUserCreator {
+	task: ITask;
+	taskId: ID;
+}
+
+export interface IScreeningTask extends IScreeningTaskBase, IScreeningTaskAssociations {}
+
+export interface IScreeningTaskCreateInput extends OmitFields<IScreeningTask, 'status'>, IMentionEmployeeIds {}
+
+export interface IScreeningTaskUpdateInput extends IScreeningTaskBase {}

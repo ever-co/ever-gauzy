@@ -1042,7 +1042,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				startDateTo,
 				dueDateFrom,
 				dueDateTo,
-				creatorId,
+				createdByUserId,
 				isScreeningTask = false,
 				organizationId,
 				employeeId,
@@ -1068,8 +1068,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Add Optional additional filters by
 			query.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
-					if (isNotEmpty(creatorId)) {
-						web.andWhere(p(`"${query.alias}"."creatorId" = :creatorId`), { creatorId });
+					if (isNotEmpty(createdByUserId)) {
+						web.andWhere(p(`"${query.alias}"."createdByUserId" = :createdByUserId`), { createdByUserId });
 					}
 
 					if (isNotEmpty(employeeId)) {
@@ -1144,7 +1144,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			priorityIds = [],
 			sizeIds = [],
 			parentIds = [],
-			creators = [],
+			createdByUserIds = [],
 			dailyPlans = []
 		} = filters;
 
@@ -1160,7 +1160,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			...(priorityIds.length && !where.taskPriorityId ? { taskPriorityId: In(priorityIds) } : {}),
 			...(sizeIds.length && !where.taskSizeId ? { taskSizeId: In(sizeIds) } : {}),
 			...(parentIds.length && !where.parentId ? { parentId: In(parentIds) } : {}),
-			...(creators.length && !where.creatorId ? { creatorId: In(creators) } : {}),
+			...(createdByUserIds.length && !where.createdByUserId ? { createdByUserId: In(createdByUserIds) } : {}),
 			...(dailyPlans.length && !where.dailyPlans ? { dailyPlans: { id: In(dailyPlans) } } : {})
 		};
 	}

@@ -80,7 +80,7 @@ export class InviteController {
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT, PermissionsEnum.ORG_TEAM_ADD)
 	@Post('/emails')
 	@UseValidationPipe()
-	async createManyWithEmailsId(
+	async createManyInvitesWithEmails(
 		@Body() entity: CreateInviteDTO,
 		@LanguageDecorator() languageCode: LanguagesEnum
 	): Promise<ICreateEmailInvitesOutput> {

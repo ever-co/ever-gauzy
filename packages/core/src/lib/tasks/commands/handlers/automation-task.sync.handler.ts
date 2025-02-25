@@ -159,7 +159,7 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 				new CreateSubscriptionEvent({
 					entity: BaseEntityEnum.Task,
 					entityId: createdTask.id,
-					userId: createdTask.creatorId,
+					userId: createdTask.createdByUserId,
 					type: SubscriptionTypeEnum.CREATED_ENTITY,
 					organizationId,
 					tenantId

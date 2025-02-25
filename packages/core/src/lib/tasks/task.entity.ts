@@ -68,21 +68,33 @@ import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 export class Task extends TenantOrganizationBaseEntity implements ITask {
 	[EntityRepositoryType]?: MikroOrmTaskRepository;
 
-	@MultiORMColumn({
-		nullable: true,
-		...(isMySQL() ? { type: 'bigint' } : {})
-	})
-	number?: number;
-
-	@MultiORMColumn({ nullable: true })
-	prefix?: string;
-
+	/**
+	 * Represents the title of the task or entity.
+	 */
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
 	@MultiORMColumn()
 	title: string;
 
+	/**
+	 * Represents a unique identifier or reference number associated with the task.
+	 */
+	@MultiORMColumn({
+		nullable: true,
+		...(isMySQL() ? { type: 'bigint' } : {})
+	})
+	number?: number;
+
+	/**
+	 * A prefix string associated with the task.
+	 */
+	@MultiORMColumn({ nullable: true })
+	prefix?: string;
+
+	/**
+	 * A brief summary or explanation of the task.
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
@@ -92,6 +104,9 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	})
 	description?: string;
 
+	/**
+	 * The current status of the task.
+	 */
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
@@ -99,6 +114,9 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@MultiORMColumn({ nullable: true })
 	status?: TaskStatusEnum;
 
+	/**
+	 * Indicates the priority level of the task.
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
@@ -106,6 +124,9 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@MultiORMColumn({ nullable: true })
 	priority?: TaskPriorityEnum;
 
+	/**
+	 * Specifies the size or complexity of the task.
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
@@ -113,6 +134,9 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@MultiORMColumn({ nullable: true })
 	size?: TaskSizeEnum;
 
+	/**
+	 * Defines the type or category of the task.
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
@@ -120,12 +144,18 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@MultiORMColumn({ nullable: true })
 	issueType?: TaskTypeEnum;
 
+	/**
+	 * Estimates the amount of time, in hours, required to complete the task.
+	 */
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
 	@MultiORMColumn({ nullable: true })
 	estimate?: number;
 
+	/**
+	 * The due date by which the task should be completed.
+	 */
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsString()
@@ -133,7 +163,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	dueDate?: Date;
 
 	/**
-	 * task privacy should be boolean true/false
+	 * Indicates whether the task is public or private.
 	 */
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
@@ -141,39 +171,55 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@MultiORMColumn({ nullable: true, default: true })
 	public?: boolean;
 
+	/**
+	 * The date when work on the task is scheduled to begin.
+	 */
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@MultiORMColumn({ nullable: true })
 	startDate?: Date;
 
+	/**
+	 * The date and time when the task was marked as resolved.
+	 */
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@MultiORMColumn({ nullable: true })
 	resolvedAt?: Date;
 
+	/**
+	 * The version identifier associated with the task.
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@MultiORMColumn({ nullable: true })
 	version?: string;
 
+	/**
+	 * Indicates whether the task is in draft status.
+	 */
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
 	@MultiORMColumn({ nullable: true, default: false })
 	isDraft?: boolean;
 
+	/**
+	 * Specifies if the task is designated for screening purposes.
+	 */
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
 	@MultiORMColumn({ nullable: true, default: false })
 	isScreeningTask?: boolean;
 
-	/** Additional virtual columns */
+	/**
+	 * Additional virtual columns
+	 */
 	@VirtualMultiOrmColumn()
 	taskNumber?: string;
 
-	/** Additional virtual columns */
 	@VirtualMultiOrmColumn()
 	rootEpic?: ITask;
 
@@ -182,42 +228,44 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
-
-	// Define the parent-child relationship
+	/**
+	 * The parent task to which this task is related.
+	 */
 	@ApiPropertyOptional({ type: () => Task })
 	@IsOptional()
 	@IsObject()
 	@MultiORMManyToOne(() => Task, (task) => task.children, {
-		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
-
-		/** Defines the database cascade action on delete. */
 		onDelete: 'SET NULL'
 	})
 	parent?: Task;
 
-	// Define the parent-child relationship
+	/**
+	 * The ID unique identifier of the parent task.
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
+	@RelationId((it: Task) => it.parent)
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	parentId?: ID;
 
 	/**
-	 * Organization Project
+	 * The project associated with this task.
 	 */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsObject()
 	@MultiORMManyToOne(() => OrganizationProject, (it) => it.tasks, {
-		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
-
-		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	project?: IOrganizationProject;
 
+	/**
+	 * The ID unique identifier of the associated project.
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
@@ -227,39 +275,21 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	projectId?: ID;
 
 	/**
-	 * Creator
-	 */
-	@MultiORMManyToOne(() => User, {
-		/** Indicates if the relation column value can be nullable or not. */
-		nullable: true,
-
-		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE'
-	})
-	@JoinColumn()
-	creator?: IUser;
-
-	@RelationId((it: Task) => it.creator)
-	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, relationId: true })
-	creatorId?: ID;
-
-	/**
-	 * Organization Sprint
+	 * The sprint within the organization to which this task is assigned.
 	 */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsObject()
 	@MultiORMManyToOne(() => OrganizationSprint, {
-		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
-
-		/** Defines the database cascade action on delete. */
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	organizationSprint?: IOrganizationSprint;
 
+	/**
+	 * The ID unique identifier of the associated sprint.
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
@@ -269,97 +299,93 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	organizationSprintId?: ID;
 
 	/**
-	 * Task Status
+	 * The current status of the task.
 	 */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsObject()
 	@MultiORMManyToOne(() => TaskStatus, {
-		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
-
-		/** Defines the database cascade action on delete. */
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	taskStatus?: ITaskStatus;
 
+	/**
+	 * The ID unique identifier of the task's status.
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: Task) => it.taskStatus)
 	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, type: 'varchar', relationId: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	taskStatusId?: ID;
 
 	/**
-	 * Task Size
+	 * The size classification of the task.
 	 */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsObject()
 	@MultiORMManyToOne(() => TaskSize, {
-		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
-
-		/** Defines the database cascade action on delete. */
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	taskSize?: ITaskSize;
 
+	/**
+	 * The ID unique identifier of the task's size classification.
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: Task) => it.taskSize)
 	@ColumnIndex()
-	@MultiORMColumn({
-		nullable: true,
-		type: 'varchar',
-		relationId: true
-	})
+	@MultiORMColumn({ nullable: true, relationId: true })
 	taskSizeId?: ID;
 
 	/**
-	 * Task Priority
+	 * The priority level assigned to the task.
 	 */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsObject()
 	@MultiORMManyToOne(() => TaskPriority, {
-		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
-
-		/** Defines the database cascade action on delete. */
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	taskPriority?: ITaskPriority;
 
+	/**
+	 * The ID unique identifier of the task's priority level.
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: Task) => it.taskPriority)
 	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, type: 'varchar', relationId: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	taskPriorityId?: ID;
 
 	/**
-	 * Task Type
+	 * The type of the task.
 	 */
-	@ApiPropertyOptional({ type: () => IssueType }) // Specify the type for Swagger documentation
+	@ApiPropertyOptional({ type: () => IssueType })
 	@IsOptional()
-	@Type(() => IssueType) // Use @Type() to ensure proper transformation
+	@Type(() => IssueType)
 	@MultiORMManyToOne(() => IssueType, {
-		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
-
-		/** Defines the database cascade action on delete. */
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	taskType?: IIssueType;
 
+	/**
+	 * The ID unique identifier of the task's type or category.
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
@@ -368,12 +394,29 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@MultiORMColumn({ nullable: true, relationId: true })
 	taskTypeId?: ID;
 
+	/**
+	 * The creator of the task
+	 */
+	@MultiORMManyToOne(() => User, {
+		nullable: true, // Indicates if the relation column value can be nullable or not.
+		onDelete: 'CASCADE' // Defines the database cascade action on delete.
+	})
+	@JoinColumn()
+	createdByUser?: IUser;
+
+	/**
+	 * The ID of the creator of the task.
+	 */
+	@RelationId((it: Task) => it.createdByUser)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	createdByUserId?: ID;
+
 	/*
 	|--------------------------------------------------------------------------
 	| @OneToMany
 	|--------------------------------------------------------------------------
 	*/
-
 	/**
 	 * Organization Team Employees
 	 */
@@ -437,17 +480,16 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	| @ManyToMany
 	|--------------------------------------------------------------------------
 	*/
-
 	/**
-	 * Daily planned Tasks
+	 * Daily Planned Tasks
 	 */
 	@MultiORMManyToMany(() => DailyPlan, (dailyPlan) => dailyPlan.tasks, {
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE' // Defines the database cascade action on delete.
 	})
 	dailyPlans?: IDailyPlan[];
 
 	/**
-	 * Tags
+	 * Task Tags
 	 */
 	@ApiPropertyOptional({ type: () => Array, isArray: true })
 	@IsOptional()
@@ -460,9 +502,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 		joinColumn: 'taskId',
 		inverseJoinColumn: 'tagId'
 	})
-	@JoinTable({
-		name: 'tag_task'
-	})
+	@JoinTable({ name: 'tag_task' })
 	tags?: ITag[];
 
 	/**
@@ -479,9 +519,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 		joinColumn: 'taskId',
 		inverseJoinColumn: 'employeeId'
 	})
-	@JoinTable({
-		name: 'task_employee'
-	})
+	@JoinTable({ name: 'task_employee' })
 	members?: IEmployee[];
 
 	/**
@@ -498,9 +536,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 		joinColumn: 'taskId',
 		inverseJoinColumn: 'organizationTeamId'
 	})
-	@JoinTable({
-		name: 'task_team'
-	})
+	@JoinTable({ name: 'task_team' })
 	teams?: IOrganizationTeam[];
 
 	/**
@@ -510,9 +546,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsOptional()
 	@IsArray()
 	@MultiORMManyToMany(() => OrganizationProjectModule, (module) => module.tasks, {
-		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
-		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'project_module_task',

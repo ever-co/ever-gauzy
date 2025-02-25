@@ -124,7 +124,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 							entity: BaseEntityEnum.Task,
 							entityId: task.id,
 							mentionedUserId,
-							mentionById: task.creatorId,
+							mentionById: task.createdByUserId,
 							organizationId,
 							tenantId,
 							entityName: task.title
@@ -138,7 +138,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 				new CreateSubscriptionEvent({
 					entity: BaseEntityEnum.Task,
 					entityId: task.id,
-					userId: task.creatorId,
+					userId: task.createdByUserId,
 					type: SubscriptionTypeEnum.CREATED_ENTITY,
 					organizationId,
 					tenantId
@@ -177,7 +177,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 									entity: BaseEntityEnum.Task,
 									entityId: task.id,
 									type: EmployeeNotificationTypeEnum.ASSIGNMENT,
-									sentById: task.creatorId,
+									sentById: task.createdByUserId,
 									receiverId: userId,
 									organizationId,
 									tenantId
