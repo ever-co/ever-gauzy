@@ -1,0 +1,47 @@
+{
+    "folders": [
+        {
+            "name": "api",
+            "path": "apps/api"
+        },
+        {
+            "path": "packages",
+        }
+    ],
+    "launch": {
+        "configurations": [
+            {
+                "type": "node-terminal",
+                "name": "Start API Server",
+                "request": "launch",
+                "command": "yarn start:api",
+                "cwd": "${workspaceFolder}/../../",
+            },
+            {
+                "type": "node-terminal",
+                "name": "Start API Development Server",
+                "request": "launch",
+                "command": "yarn api:dev",
+                "cwd": "${workspaceFolder}/../../"
+            }
+        ]
+    },
+    "settings": {
+        "cSpell.words": [
+            "Upwork",
+            "timesheet",
+            "toastr"
+        ],
+        "checkpoints.showActiveFileOnly": true,
+        "debug.node.autoAttach": "off",
+        "git.ignoreLimitWarning": true,
+        "typescript.tsdk": "./node_modules/typescript/lib",
+        "files.exclude": {
+            "desktop-*": true,
+            "ui-*": true,
+            "*-ui": true,
+            "plugins/*-ui": true,
+            "**/node_modules": true,
+        }
+    }
+}
