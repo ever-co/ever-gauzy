@@ -181,13 +181,15 @@ export class EmailService {
 	}
 
 	/**
+	 * Sends an invitation email to an organization contact.
 	 *
-	 * @param organizationContact
-	 * @param inviterUser
-	 * @param organization
-	 * @param invite
-	 * @param languageCode
-	 * @param originUrl
+	 * @param organizationContact - The contact to invite.
+	 * @param inviterUser - The user sending the invitation.
+	 * @param organization - The organization details.
+	 * @param invite - The invitation details containing the token.
+	 * @param languageCode - The locale for the email.
+	 * @param originUrl - Optional override for the base URL.
+	 * @returns {Promise<void>}
 	 */
 	async inviteOrganizationContact(
 		organizationContact: IOrganizationContact,
@@ -196,14 +198,16 @@ export class EmailService {
 		invite: IInvite,
 		languageCode: LanguagesEnum,
 		originUrl?: string
-	) {
-		const tenantId = RequestContext.currentTenantId();
-		const { id: organizationId } = organization;
+	): Promise<void> {
 		const baseUrl = originUrl || env.clientBaseUrl;
+		const { id: organizationId, tenantId = RequestContext.currentTenantId() } = organization;
+		const { primaryEmail } = organizationContact;
+
+		// Define the email sending options.
 		const sendOptions = {
 			template: EmailTemplateEnum.INVITE_ORGANIZATION_CLIENT,
 			message: {
-				to: `${organizationContact.primaryEmail}`
+				to: primaryEmail
 			},
 			locals: {
 				locale: languageCode,
@@ -214,9 +218,11 @@ export class EmailService {
 				organizationName: organization.name,
 				organizationId,
 				tenantId,
-				generatedUrl: `${baseUrl}#/auth/accept-client-invite?email=${organizationContact.primaryEmail}&token=${invite.token}`
+				generatedUrl: `${baseUrl}#/auth/accept-client-invite?email=${primaryEmail}&token=${invite.token}`
 			}
 		};
+
+		// Prepare the body for the email record.
 		const body = {
 			templateName: sendOptions.template,
 			email: sendOptions.message.to,
@@ -224,13 +230,16 @@ export class EmailService {
 			message: '',
 			organization
 		};
-		const isEmailBlocked = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
-		if (!isEmailBlocked) {
+
+		// Check if the email domain is allowed.
+		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+
+		if (!match) {
 			try {
+				// Get an email instance and send the email.
 				const instance = await this.emailSendService.getEmailInstance({ organizationId, tenantId });
 				const send = await instance.send(sendOptions);
-
-				body['message'] = send.originalMessage;
+				body.message = send.originalMessage;
 			} catch (error) {
 				console.log(`Error while sending invite organization contact: %s`, error?.message);
 				throw new BadRequestException(`Error while sending invite organization contact: ${error?.message}`);
@@ -248,13 +257,13 @@ export class EmailService {
 	 */
 	async inviteUser(inviteUserModel: IInviteUserModel) {
 		const { email, role, organization, registerUrl, originUrl, languageCode, invitedByUser } = inviteUserModel;
-		const { id: organizationId, tenantId } = organization;
+		const { id: organizationId, tenantId = RequestContext.currentTenantId() } = organization;
 
 		// Define the email sending options.
 		const sendOptions = {
 			template: EmailTemplateEnum.INVITE_USER,
 			message: {
-				to: `${email}`
+				to: email
 			},
 			locals: {
 				locale: languageCode,
@@ -282,13 +291,13 @@ export class EmailService {
 
 		if (!match) {
 			try {
-				// Get the email instance and send the email.
+				// Get an email instance and send the email.
 				const instance = await this.emailSendService.getEmailInstance({ organizationId, tenantId });
 				const send = await instance.send(sendOptions);
-
-				body['message'] = send.originalMessage;
+				body.message = send.originalMessage;
 			} catch (error) {
 				console.log(`Error while sending invite user: %s`, error);
+				throw new BadRequestException(`Error while sending invite user: ${error?.message}`);
 			} finally {
 				await this.createEmailRecord(body);
 			}
@@ -303,13 +312,13 @@ export class EmailService {
 	 */
 	public async inviteTeamMember(invite: IInviteTeamMemberModel): Promise<void> {
 		const { email, organization, languageCode, invitedByUser, teams, inviteCode, inviteLink, originUrl } = invite;
-		const { id: organizationId, tenantId } = organization;
+		const { id: organizationId, tenantId = RequestContext.currentTenantId() } = organization;
 
 		// Define the email send options.
 		const sendOptions = {
 			template: EmailTemplateEnum.INVITE_GAUZY_TEAMS,
 			message: {
-				to: `${email}`
+				to: email
 			},
 			locals: {
 				email,
@@ -338,11 +347,13 @@ export class EmailService {
 
 		if (!match) {
 			try {
+				// Get an email instance and send the email.
 				const instance = await this.emailSendService.getEmailInstance({ organizationId, tenantId });
 				const send = await instance.send(sendOptions);
 				body.message = send.originalMessage;
 			} catch (error) {
-				console.error(`Error while inviting team: ${error}`);
+				console.log(`Error while sending invite team: %s`, error);
+				throw new BadRequestException(`Error while sending invite team: ${error?.message}`);
 			} finally {
 				await this.createEmailRecord(body);
 			}
@@ -357,19 +368,21 @@ export class EmailService {
 	 */
 	public async inviteEmployee(inviteEmployeeModel: IInviteEmployeeModel): Promise<void> {
 		const { email, registerUrl, organization, originUrl, languageCode, invitedByUser } = inviteEmployeeModel;
-		const { id: organizationId, tenantId } = organization;
+		const { id: organizationId, tenantId = RequestContext.currentTenantId() } = organization;
 
 		// Build email send options.
 		const sendOptions = {
 			template: EmailTemplateEnum.INVITE_EMPLOYEE,
-			message: { to: `${email}` },
+			message: {
+				to: email
+			},
 			locals: {
 				locale: languageCode,
 				organizationName: organization.name,
 				organizationId,
 				tenantId,
 				generatedUrl: registerUrl,
-				host: originUrl || env.clientBaseUrl
+				host: originUrl ?? env.clientBaseUrl
 			}
 		};
 
@@ -394,6 +407,7 @@ export class EmailService {
 				body.message = send.originalMessage;
 			} catch (error) {
 				console.error('Error while sending invite employee email:', error);
+				throw new BadRequestException(`Error while sending invite employee email: ${error?.message}`);
 			} finally {
 				// Create the email record regardless of success or failure.
 				await this.createEmailRecord(body);
@@ -410,16 +424,16 @@ export class EmailService {
 	 */
 	public async sendAcceptInvitationEmail(joinEmployeeModel: IJoinEmployeeModel, originUrl?: string): Promise<void> {
 		const { email, employee, organization, languageCode } = joinEmployeeModel;
-		const { id: organizationId, tenantId } = organization;
+		const { id: organizationId, tenantId = RequestContext.currentTenantId() } = organization;
 
 		// Define the email sending options.
 		const sendOptions = {
 			template: EmailTemplateEnum.EMPLOYEE_JOIN,
 			message: {
-				to: `${email}`
+				to: email
 			},
 			locals: {
-				host: originUrl || env.clientBaseUrl,
+				host: originUrl ?? env.clientBaseUrl,
 				locale: languageCode,
 				organizationName: organization.name,
 				employeeName: employee.user.firstName
