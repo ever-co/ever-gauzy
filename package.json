@@ -397,7 +397,7 @@
 		"@angular/platform-browser-dynamic": "^19.1.6",
 		"@angular/router": "^19.1.6",
 		"@angular/service-worker": "^19.1.6",
-		"@fortawesome/angular-fontawesome": "^0.15.0",
+		"@fortawesome/angular-fontawesome": "^1.0.0",
 		"@fullcalendar/angular": "^6.1.16",
 		"@nebular/auth": "^15.0.0",
 		"@nebular/bootstrap": "^9.1.0-rc.6",

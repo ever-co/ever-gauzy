@@ -43,7 +43,7 @@
 		"@datorama/akita": "^8.0.1",
 		"@datorama/akita-ngdevtools": "^7.0.0",
 		"@electron/remote": "^2.0.8",
-		"@fortawesome/angular-fontawesome": "^0.15.0",
+		"@fortawesome/angular-fontawesome": "^1.0.0",
 		"@fortawesome/fontawesome-free": "^6.7.2",
 		"@fortawesome/fontawesome-svg-core": "^6.7.2",
 		"@fortawesome/free-brands-svg-icons": "^6.7.2",
