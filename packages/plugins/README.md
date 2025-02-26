@@ -1,1 +1,0 @@
-# Ever Gauzy Plugins
