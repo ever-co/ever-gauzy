@@ -51,7 +51,6 @@ export class TeamsMutationComponent implements OnInit {
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => (this.organization = organization)),
-				tap(() => this.initializeManager()),
 				tap(() => this.patchFormValue()),
 				untilDestroyed(this)
 			)
@@ -70,6 +69,12 @@ export class TeamsMutationComponent implements OnInit {
 			}
 			members.updateValueAndValidity();
 		});
+
+		/**
+		 * Using setTimeout to prevents the "ExpressionChangedAfterItHasBeenCheckedError" which occurs
+		 * when updating the form after the view has been initialized.
+		 */
+		setTimeout(() => this.initializeManager());
 	}
 
 	/**

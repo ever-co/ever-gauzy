@@ -68,7 +68,6 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 	private _getGithubIntegrationTenant() {
 		this.integration$ = this._activatedRoute.data.pipe(
 			map(({ integration }) => {
-				console.log(integration);
 				return integration;
 			}),
 			untilDestroyed(this) // Automatically unsubscribes when the component is destroyed
