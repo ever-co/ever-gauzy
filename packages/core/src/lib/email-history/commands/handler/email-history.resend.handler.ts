@@ -8,8 +8,14 @@ import { EmailHistoryResendCommand } from '../email-history.resend.command';
 export class EmailHistoryResendHandler implements ICommandHandler<EmailHistoryResendCommand> {
 	constructor(private readonly emailService: EmailService) {}
 
-	public async execute(command: EmailHistoryResendCommand): Promise<UpdateResult | IEmailHistory> {
-		const { input, languageCode } = command;
-		return await this.emailService.resendEmail(input, languageCode);
+	/**
+	 * Executes the EmailHistoryResendCommand to resend an email.
+	 *
+	 * @param command - The command containing email input and language code.
+	 * @returns A promise that resolves with either an UpdateResult or an updated IEmailHistory.
+	 */
+	public execute(command: EmailHistoryResendCommand): Promise<UpdateResult | IEmailHistory> {
+		const { id, input, languageCode } = command;
+		return this.emailService.resendEmail(id, input, languageCode);
 	}
 }
