@@ -102,6 +102,9 @@ ARG OTEL_EXPORTER_OTLP_HEADERS
 ARG OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
 ARG REDIS_ENABLED
 ARG REDIS_URL
+ARG DB_ORM
+ARG MIKRO_ORM_ALLOW_GLOBAL_CONTEXT
+
 
 FROM node:20.11.1-alpine3.19 AS builder
 
@@ -206,7 +209,7 @@ COPY --chown=node:node --from=builder /srv/gauzy/packages/plugins/product-review
 COPY --chown=node:node --from=builder /srv/gauzy/packages/plugins/sentry-tracing/node_modules ./node_modules/@gauzy/plugin-sentry/node_modules
 COPY --chown=node:node --from=builder /srv/gauzy/packages/plugins/videos/node_modules ./node_modules/@gauzy/plugin-videos/node_modules
 
-ENV NODE_OPTIONS="--max-old-space-size=1024" \
+ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=12288"} \
 	NODE_ENV=${NODE_ENV:-production} \
 	API_HOST=${API_HOST:-localhost} \
 	API_PORT=${API_PORT:-3000} \
@@ -313,8 +316,8 @@ ENV NODE_OPTIONS="--max-old-space-size=1024" \
 	REDIS_URL=${REDIS_URL} \
 	PERIODIC_TIME_SAVE="true" \
 	PERIODIC_TIME_SAVE_TIMEFRAME="60" \
-	DB_ORM=${DB_ORM:-"mikro-orm"} \
-	MIKRO_ORM_ALLOW_GLOBAL_CONTEXT=${MIKRO_ORM_ALLOW_GLOBAL_CONTEXT:-true}
+	DB_ORM=${DB_ORM:-"typeorm"} \
+	MIKRO_ORM_ALLOW_GLOBAL_CONTEXT=${MIKRO_ORM_ALLOW_GLOBAL_CONTEXT:-false}
 
 
 EXPOSE ${API_PORT}
