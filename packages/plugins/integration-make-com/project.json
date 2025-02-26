@@ -1,5 +1,5 @@
 {
-	"name": "plugin-make-com",
+	"name": "plugin-integration-make-com",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
 	"sourceRoot": "packages/plugins/integration-make-com/src",
 	"projectType": "library",
@@ -12,7 +12,6 @@
 		}
 	},
 	"tags": [],
-	"implicitDependencies": [],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
@@ -20,7 +19,9 @@
 			"options": {
 				"outputPath": "dist/packages/plugins/integration-make-com",
 				"tsConfig": "packages/plugins/integration-make-com/tsconfig.lib.json",
-				"main": "packages/plugins/integration-make-com/src/index.ts"
+				"packageJson": "packages/plugins/integration-make-com/package.json",
+				"main": "packages/plugins/integration-make-com/src/index.ts",
+				"assets": ["packages/plugins/integration-make-com/*.md"]
 			}
 		},
 		"nx-release-publish": {

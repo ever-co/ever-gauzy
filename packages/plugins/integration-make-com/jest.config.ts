@@ -1,5 +1,5 @@
 export default {
-	displayName: 'plugin-make-com',
+	displayName: 'integration-make-com',
 	preset: '../../../jest.preset.js',
 	testEnvironment: 'node',
 	transform: {
