@@ -29,9 +29,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-equipment-sharing-mutation',
-	templateUrl: './equipment-sharing-mutation.component.html',
-	styleUrls: ['./equipment-sharing-mutation.component.scss']
+    selector: 'ngx-equipment-sharing-mutation',
+    templateUrl: './equipment-sharing-mutation.component.html',
+    styleUrls: ['./equipment-sharing-mutation.component.scss'],
+    standalone: false
 })
 export class EquipmentSharingMutationComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	constructor(

@@ -17,9 +17,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-pipeline-deals-form',
-	templateUrl: './pipeline-deal-form.component.html',
-	styleUrls: ['./pipeline-deal-form.component.scss']
+    selector: 'ga-pipeline-deals-form',
+	  templateUrl: './pipeline-deal-form.component.html',
+	  styleUrls: ['./pipeline-deal-form.component.scss'],
+    standalone: false
 })
 export class PipelineDealFormComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public probabilities = [0, 1, 2, 3, 4, 5];

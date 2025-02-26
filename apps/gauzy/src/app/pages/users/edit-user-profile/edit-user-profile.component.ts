@@ -11,9 +11,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-edit-user-profile',
-	templateUrl: './edit-user-profile.component.html',
-	styleUrls: ['./edit-user-profile.component.scss']
+    selector: 'ngx-edit-user-profile',
+    templateUrl: './edit-user-profile.component.html',
+    styleUrls: ['./edit-user-profile.component.scss'],
+    standalone: false
 })
 export class EditUserProfileComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	form: FormGroup;

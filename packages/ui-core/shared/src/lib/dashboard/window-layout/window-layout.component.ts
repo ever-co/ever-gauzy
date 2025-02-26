@@ -19,9 +19,10 @@ import { WindowService } from '../window/window.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-window-layout',
-	templateUrl: './window-layout.component.html',
-	styleUrls: ['./window-layout.component.scss']
+    selector: 'ga-window-layout',
+    templateUrl: './window-layout.component.html',
+    styleUrls: ['./window-layout.component.scss'],
+    standalone: false
 })
 export class WindowLayoutComponent
 	extends LayoutWithDraggableObject

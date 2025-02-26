@@ -26,9 +26,10 @@ import { RecurringExpenseDeleteConfirmationComponent, RecurringExpenseMutationCo
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-expense-recurring',
-	templateUrl: './expense-recurring.component.html',
-	styleUrls: ['./expense-recurring.component.scss', '../dashboard/dashboard.component.scss']
+    selector: 'ga-expense-recurring',
+    templateUrl: './expense-recurring.component.html',
+    styleUrls: ['./expense-recurring.component.scss', '../dashboard/dashboard.component.scss'],
+    standalone: false
 })
 export class ExpenseRecurringComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	selectedDateRange: IDateRangePicker;

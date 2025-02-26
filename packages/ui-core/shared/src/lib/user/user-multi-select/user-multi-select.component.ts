@@ -2,8 +2,9 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { IUser } from '@gauzy/contracts';
 
 @Component({
-	selector: 'ga-user-multi-select',
-	templateUrl: './user-multi-select.component.html'
+    selector: 'ga-user-multi-select',
+    templateUrl: './user-multi-select.component.html',
+    standalone: false
 })
 export class UserSelectComponent {
 	@Input() selectedUserIds: string[];

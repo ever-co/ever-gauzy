@@ -4,9 +4,10 @@ import { IBaseEntityWithMembers, IEditEntityByMemberInput, IEmployee, IOrganizat
 import { Store } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ga-edit-employee-membership',
-	templateUrl: './edit-employee-membership-form.component.html',
-	styleUrls: ['./edit-employee-membership-form.component.scss']
+    selector: 'ga-edit-employee-membership',
+    templateUrl: './edit-employee-membership-form.component.html',
+    styleUrls: ['./edit-employee-membership-form.component.scss'],
+    standalone: false
 })
 export class EditEmployeeMembershipFormComponent implements OnInit {
 	@Input() organizationEntities: IBaseEntityWithMembers[] = [];

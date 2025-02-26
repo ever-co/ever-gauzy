@@ -12,9 +12,10 @@ import { ExportAllService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-export',
-	templateUrl: './export.component.html',
-	styleUrls: ['./export.component.scss']
+    selector: 'ngx-export',
+    templateUrl: './export.component.html',
+    styleUrls: ['./export.component.scss'],
+    standalone: false
 })
 export class ExportComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	entities: Array<IEntityModel> = [];

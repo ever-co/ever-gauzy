@@ -9,9 +9,10 @@ import { TagsService } from '@gauzy/ui-core/core';
 import { NotesWithTagsComponent } from '../table-components';
 
 @Component({
-	selector: 'ngx-tags-mutation',
-	templateUrl: './tags-mutation.component.html',
-	styleUrls: ['./tags-mutation.component.scss']
+    selector: 'ngx-tags-mutation',
+    templateUrl: './tags-mutation.component.html',
+    styleUrls: ['./tags-mutation.component.scss'],
+    standalone: false
 })
 export class TagsMutationComponent extends NotesWithTagsComponent implements OnInit {
 	/**

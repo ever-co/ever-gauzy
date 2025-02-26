@@ -5,9 +5,10 @@ import { ICandidate, IEmployee } from '@gauzy/contracts';
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-candidate-interviewer-select',
-	templateUrl: './candidate-interviewer-select.component.html',
-	styleUrls: ['../base-candidate-selector.component.scss']
+    selector: 'ga-candidate-interviewer-select',
+    templateUrl: './candidate-interviewer-select.component.html',
+    styleUrls: ['../base-candidate-selector.component.scss'],
+    standalone: false
 })
 export class CandidateInterviewerSelectComponent {
 	public select: FormControl = new FormControl();

@@ -7,10 +7,11 @@ import { IDateRangePicker } from '../../shared/features/date-range-picker/date-p
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-recap',
-	templateUrl: './recap.component.html',
-	styleUrls: ['./recap.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-recap',
+    templateUrl: './recap.component.html',
+    styleUrls: ['./recap.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class RecapComponent {
 	private readonly basePath = ['/', 'time-tracker', 'daily'];

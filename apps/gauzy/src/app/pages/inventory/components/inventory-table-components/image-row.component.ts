@@ -2,14 +2,14 @@ import { Component, Input } from '@angular/core';
 import { DEFAULT_SVG } from '@gauzy/ui-core/common';
 
 @Component({
-	template: `
+    template: `
 		<div class="img-container">
 			<img *ngIf="imageUrl" [src]="imageUrl" alt="feature img" />
 			<ga-no-image class="no-image" *ngIf="!imageUrl"></ga-no-image>
 		</div>
 	`,
-	styles: [
-		`
+    styles: [
+        `
 			.img-container {
 				width: 74px;
 				display: flex;
@@ -30,7 +30,8 @@ import { DEFAULT_SVG } from '@gauzy/ui-core/common';
 				height: 60px;
 			}
 		`
-	]
+    ],
+    standalone: false
 })
 export class ImageRowComponent {
 	@Input()

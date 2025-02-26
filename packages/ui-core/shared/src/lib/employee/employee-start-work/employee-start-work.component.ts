@@ -3,9 +3,10 @@ import { NbDialogRef } from '@nebular/theme';
 import { EmployeeEndWorkComponent } from '../employee-end-work-popup/employee-end-work.component';
 
 @Component({
-	selector: 'ga-employee-start-work',
-	templateUrl: './employee-start-work.component.html',
-	styleUrls: ['./employee-start-work.component.scss']
+    selector: 'ga-employee-start-work',
+    templateUrl: './employee-start-work.component.html',
+    styleUrls: ['./employee-start-work.component.scss'],
+    standalone: false
 })
 export class EmployeeStartWorkComponent {
 	startWorkValue: Date;

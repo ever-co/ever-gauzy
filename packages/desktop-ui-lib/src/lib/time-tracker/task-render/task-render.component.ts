@@ -9,7 +9,8 @@ export interface ITaskRender extends ITasksStatistics {
 }
 
 @Component({
-	template: '',
+    template: '',
+    standalone: false
 })
 export abstract class TaskRenderComponent {
 	private readonly _task$: BehaviorSubject<ITaskRender>;

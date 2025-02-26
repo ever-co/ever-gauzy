@@ -10,9 +10,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-onboarding-complete',
-	templateUrl: './onboarding-complete.component.html',
-	styleUrls: ['./onboarding-complete.component.scss']
+    selector: 'ga-onboarding-complete',
+    templateUrl: './onboarding-complete.component.html',
+    styleUrls: ['./onboarding-complete.component.scss'],
+    standalone: false
 })
 export class OnboardingCompleteComponent extends TranslationBaseComponent implements OnInit {
 	blocks$: Observable<IFeature[][]> = this._featureStoreService.blocks$;

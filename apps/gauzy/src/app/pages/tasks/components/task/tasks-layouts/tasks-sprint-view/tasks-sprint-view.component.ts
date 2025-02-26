@@ -11,9 +11,10 @@ import { GauzyEditableGridComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-tasks-sprint-view',
-	templateUrl: './tasks-sprint-view.component.html',
-	styleUrls: ['./tasks-sprint-view.component.scss']
+    selector: 'ga-tasks-sprint-view',
+    templateUrl: './tasks-sprint-view.component.html',
+    styleUrls: ['./tasks-sprint-view.component.scss'],
+    standalone: false
 })
 export class TasksSprintViewComponent extends GauzyEditableGridComponent<ITask> implements OnInit, OnChanges {
 	sprints: IOrganizationSprint[] = [];

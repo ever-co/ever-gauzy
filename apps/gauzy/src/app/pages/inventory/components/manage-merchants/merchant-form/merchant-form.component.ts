@@ -15,9 +15,10 @@ import { FormHelpers, LocationFormComponent, LeafletMapComponent, SelectAssetCom
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-merchant-form',
-	templateUrl: './merchant-form.component.html',
-	styleUrls: ['./merchant-form.component.scss']
+    selector: 'ga-merchant-form',
+    templateUrl: './merchant-form.component.html',
+    styleUrls: ['./merchant-form.component.scss'],
+    standalone: false
 })
 export class MerchantFormComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	FormHelpers: typeof FormHelpers = FormHelpers;

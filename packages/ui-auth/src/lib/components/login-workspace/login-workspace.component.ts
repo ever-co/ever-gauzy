@@ -10,9 +10,10 @@ import { PasswordFormFieldComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-login-workspace',
-	templateUrl: './login-workspace.component.html',
-	styleUrls: ['./login-workspace.component.scss']
+    selector: 'ngx-login-workspace',
+    templateUrl: './login-workspace.component.html',
+    styleUrls: ['./login-workspace.component.scss'],
+    standalone: false
 })
 export class NgxLoginWorkspaceComponent implements OnInit {
 	public confirmed_email: string;

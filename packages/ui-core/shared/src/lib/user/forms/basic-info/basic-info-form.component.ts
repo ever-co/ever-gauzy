@@ -33,9 +33,10 @@ import { FormHelpers } from '../../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-user-basic-info-form',
-	templateUrl: 'basic-info-form.component.html',
-	styleUrls: ['basic-info-form.component.scss']
+    selector: 'ga-user-basic-info-form',
+    templateUrl: 'basic-info-form.component.html',
+    styleUrls: ['basic-info-form.component.scss'],
+    standalone: false
 })
 export class BasicInfoFormComponent extends TranslationBaseComponent implements OnInit, AfterViewInit {
 	FormHelpers: typeof FormHelpers = FormHelpers;

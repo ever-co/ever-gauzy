@@ -33,8 +33,9 @@ import { CandidateStatusComponent, CandidateSourceComponent } from './table-comp
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	templateUrl: './candidates.component.html',
-	styleUrls: ['./candidates.component.scss']
+    templateUrl: './candidates.component.html',
+    styleUrls: ['./candidates.component.scss'],
+    standalone: false
 })
 export class CandidatesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	includeArchived: boolean = false;

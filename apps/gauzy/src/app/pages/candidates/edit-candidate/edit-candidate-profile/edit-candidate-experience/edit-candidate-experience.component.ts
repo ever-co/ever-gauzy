@@ -5,8 +5,8 @@ export interface ICandidateSkill {
 	candidateId: string;
 }
 @Component({
-	selector: 'ga-edit-candidate-experience',
-	template: `
+    selector: 'ga-edit-candidate-experience',
+    template: `
 		<nb-tabset style="padding: 1rem;">
 			<nb-tab
         class="custom-tab"
@@ -35,6 +35,7 @@ export interface ICandidateSkill {
 			</nb-tab>
 		</nb-tabset>
 	`,
-	styleUrls: ['./edit-candidate-experience.component.scss']
+    styleUrls: ['./edit-candidate-experience.component.scss'],
+    standalone: false
 })
 export class EditCandidateExperienceComponent {}

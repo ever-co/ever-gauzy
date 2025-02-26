@@ -6,9 +6,10 @@ import { IInvoice, ITag, InvoiceStatusTypesEnum } from '@gauzy/contracts';
 import { InvoiceEstimateHistoryService, InvoicesService, Store, ToastrService } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ga-invoice-send',
-	templateUrl: './invoice-send-mutation.component.html',
-	styleUrls: ['./invoice-send-mutation.component.scss']
+    selector: 'ga-invoice-send',
+    templateUrl: './invoice-send-mutation.component.html',
+    styleUrls: ['./invoice-send-mutation.component.scss'],
+    standalone: false
 })
 export class InvoiceSendMutationComponent extends TranslationBaseComponent implements OnInit {
 	invoice: IInvoice;

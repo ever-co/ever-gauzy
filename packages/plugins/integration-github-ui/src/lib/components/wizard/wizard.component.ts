@@ -10,8 +10,9 @@ import { GITHUB_AUTHORIZATION_URL } from '../../github.config';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-integration-github-wizard',
-	templateUrl: './wizard.component.html'
+    selector: 'ngx-integration-github-wizard',
+    templateUrl: './wizard.component.html',
+    standalone: false
 })
 export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 	/**

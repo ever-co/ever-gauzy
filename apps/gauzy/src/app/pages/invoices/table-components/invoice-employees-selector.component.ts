@@ -8,7 +8,7 @@ import { DateRangePickerBuilderService, EmployeesService, Store } from '@gauzy/u
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	template: `
+    template: `
 		<nb-select
 			fullWidth
 			[placeholder]="'INVOICES_PAGE.SELECT_EMPLOYEE' | translate"
@@ -27,7 +27,8 @@ import { DateRangePickerBuilderService, EmployeesService, Store } from '@gauzy/u
 			</nb-option>
 		</nb-select>
 	`,
-	styles: []
+    styles: [],
+    standalone: false
 })
 export class InvoiceEmployeesSelectorComponent extends DefaultEditor implements OnInit, OnDestroy {
 	public employee: IEmployee;

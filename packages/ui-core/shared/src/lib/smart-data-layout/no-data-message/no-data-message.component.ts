@@ -5,9 +5,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-no-data-message',
-	templateUrl: './no-data-message.component.html',
-	styleUrls: ['./no-data-message.component.scss']
+    selector: 'ngx-no-data-message',
+    templateUrl: './no-data-message.component.html',
+    styleUrls: ['./no-data-message.component.scss'],
+    standalone: false
 })
 export class NoDataMessageComponent extends TranslationBaseComponent implements OnInit {
 	@Input() title: string = this.getTranslation('SM_TABLE.NO_DATA_MESSAGE');

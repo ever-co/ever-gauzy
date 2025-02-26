@@ -18,9 +18,10 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-edit-org-main',
-	templateUrl: './edit-organization-main.component.html',
-	styleUrls: ['./edit-organization-main.component.scss']
+    selector: 'ga-edit-org-main',
+    templateUrl: './edit-organization-main.component.html',
+    styleUrls: ['./edit-organization-main.component.scss'],
+    standalone: false
 })
 export class EditOrganizationMainComponent
 	extends TranslationBaseComponent

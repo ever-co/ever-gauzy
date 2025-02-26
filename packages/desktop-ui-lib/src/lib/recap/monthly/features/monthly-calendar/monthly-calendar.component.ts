@@ -4,10 +4,11 @@ import { MonthlyRecapService } from '../../+state/monthly.service';
 import { IDateRangePicker } from '../../../shared/features/date-range-picker/date-picker.interface';
 
 @Component({
-	selector: 'ngx-monthly-calendar',
-	templateUrl: './monthly-calendar.component.html',
-	styleUrls: ['./monthly-calendar.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-monthly-calendar',
+    templateUrl: './monthly-calendar.component.html',
+    styleUrls: ['./monthly-calendar.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class MonthlyCalendarComponent {
 	constructor(private readonly monthlyRecapService: MonthlyRecapService) {}

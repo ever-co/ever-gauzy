@@ -21,9 +21,10 @@ import { PublicPageOrganizationMutationComponent } from '../mutation/public-page
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-public-organization',
-	templateUrl: './organization.component.html',
-	styleUrls: ['./organization.component.scss']
+    selector: 'ngx-public-organization',
+    templateUrl: './organization.component.html',
+    styleUrls: ['./organization.component.scss'],
+    standalone: false
 })
 export class OrganizationComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public hasEditPublicPage$: Observable<boolean> = of(false);

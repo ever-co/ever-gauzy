@@ -6,9 +6,10 @@ import { CandidateFeedbacksService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-criterions-rating-chart',
-	templateUrl: './criterions-rating-chart.component.html',
-	styleUrls: ['./criterions-rating-chart.component.scss']
+    selector: 'ga-criterions-rating-chart',
+    templateUrl: './criterions-rating-chart.component.html',
+    styleUrls: ['./criterions-rating-chart.component.scss'],
+    standalone: false
 })
 export class CriterionsRatingChartComponent implements OnDestroy {
 	labels: string[] = [];

@@ -30,9 +30,10 @@ import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-date-range-picker',
-	templateUrl: './date-range-picker.component.html',
-	styleUrls: ['./date-range-picker.component.scss']
+    selector: 'ngx-date-range-picker',
+    templateUrl: './date-range-picker.component.html',
+    styleUrls: ['./date-range-picker.component.scss'],
+    standalone: false
 })
 export class DateRangePickerComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public picker: NgxDateRangePickerComponent;

@@ -16,9 +16,10 @@ import { ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-warehouse-products-table',
-	templateUrl: './warehouse-products-table.component.html',
-	styleUrls: ['./warehouse-products-table.component.scss']
+    selector: 'ga-warehouse-products-table',
+    templateUrl: './warehouse-products-table.component.html',
+    styleUrls: ['./warehouse-products-table.component.scss'],
+    standalone: false
 })
 export class WarehouseProductsTableComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
 	loading: boolean = true;

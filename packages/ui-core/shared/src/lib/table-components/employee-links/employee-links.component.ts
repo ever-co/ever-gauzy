@@ -2,8 +2,8 @@ import { Component, Input } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Component({
-	selector: 'ngx-employee-links',
-	template: `
+    selector: 'ngx-employee-links',
+    template: `
 		<ng-container *ngIf="value">
 			<a
 				*ngIf="value?.name"
@@ -22,8 +22,8 @@ import { Router } from '@angular/router';
 			</a>
 		</ng-container>
 	`,
-	styles: [
-		`
+    styles: [
+        `
 			.link-text {
 				cursor: pointer;
 				text-decoration: none;
@@ -32,8 +32,9 @@ import { Router } from '@angular/router';
 				text-decoration: underline;
 			}
 		`
-	],
-	styleUrls: ['./employee-links.component.scss']
+    ],
+    styleUrls: ['./employee-links.component.scss'],
+    standalone: false
 })
 export class EmployeeLinksComponent {
 

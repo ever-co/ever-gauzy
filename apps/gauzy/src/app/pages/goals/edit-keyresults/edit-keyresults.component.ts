@@ -30,9 +30,10 @@ import { Store } from '@gauzy/ui-core/core';
 import { endOfTomorrow } from 'date-fns';
 
 @Component({
-	selector: 'ga-edit-keyresults',
-	templateUrl: './edit-keyresults.component.html',
-	styleUrls: ['./edit-keyresults.component.scss']
+    selector: 'ga-edit-keyresults',
+    templateUrl: './edit-keyresults.component.html',
+    styleUrls: ['./edit-keyresults.component.scss'],
+    standalone: false
 })
 export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	employees: IEmployee[];

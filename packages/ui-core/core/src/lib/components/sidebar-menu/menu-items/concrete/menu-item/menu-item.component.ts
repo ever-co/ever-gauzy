@@ -8,9 +8,10 @@ import { JitsuAnalyticsEvents, JitsuAnalyticsEventsEnum, JitsuService, Store } f
 import { IMenuItem } from '../../interface/menu-item.interface';
 
 @Component({
-	selector: 'ga-menu-item',
-	templateUrl: './menu-item.component.html',
-	styleUrls: ['./menu-item.component.scss']
+    selector: 'ga-menu-item',
+    templateUrl: './menu-item.component.html',
+    styleUrls: ['./menu-item.component.scss'],
+    standalone: false
 })
 export class MenuItemComponent implements OnInit, AfterViewChecked {
 	private _user: IUser;

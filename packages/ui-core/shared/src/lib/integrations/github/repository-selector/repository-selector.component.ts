@@ -9,16 +9,17 @@ import { ErrorHandlingService, GithubService, Store } from '@gauzy/ui-core/core'
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-github-repository-selector',
-	templateUrl: './repository-selector.component.html',
-	styleUrls: ['./repository-selector.component.scss'],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => RepositorySelectorComponent),
-			multi: true
-		}
-	]
+    selector: 'ngx-github-repository-selector',
+    templateUrl: './repository-selector.component.html',
+    styleUrls: ['./repository-selector.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => RepositorySelectorComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class RepositorySelectorComponent implements OnInit, OnDestroy {
 	public preSelected: boolean = false;

@@ -4,9 +4,10 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 @Component({
-	selector: 'ngx-avatar',
-	templateUrl: './avatar.component.html',
-	styleUrls: ['./avatar.component.scss']
+    selector: 'ngx-avatar',
+    templateUrl: './avatar.component.html',
+    styleUrls: ['./avatar.component.scss'],
+    standalone: false
 })
 export class AvatarComponent implements OnInit {
 	public online$: Observable<boolean>;

@@ -2,16 +2,17 @@ import { Component } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
-	selector: 'ga-star-rating-input',
-	templateUrl: './star-rating-input.component.html',
-	styleUrls: ['./star-rating-input.component.scss'],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: StarRatingInputComponent,
-			multi: true
-		}
-	]
+    selector: 'ga-star-rating-input',
+    templateUrl: './star-rating-input.component.html',
+    styleUrls: ['./star-rating-input.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: StarRatingInputComponent,
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class StarRatingInputComponent implements ControlValueAccessor {
 	public stars = [1, 2, 3, 4, 5];

@@ -1,7 +1,8 @@
 @use '@angular/material' as mat;
 
  @mixin angular-material() {
-   @include mat.core();
+   @include mat.elevation-classes();
+   @include mat.app-background();
 
    @include nb-for-theme(material-dark) {
      $custom-dark-theme: mat.define-dark-theme(

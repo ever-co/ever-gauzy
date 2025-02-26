@@ -45,10 +45,11 @@ export enum JobSearchTabsEnum {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-job-employees',
-	templateUrl: './job-employee.component.html',
-	styleUrls: ['./job-employee.component.scss'],
-	providers: [CurrencyPipe]
+    selector: 'ga-job-employees',
+    templateUrl: './job-employee.component.html',
+    styleUrls: ['./job-employee.component.scss'],
+    providers: [CurrencyPipe],
+    standalone: false
 })
 export class JobEmployeeComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public tabsetId: PageTabsetRegistryId = this._route.snapshot.data.tabsetId; // The identifier for the tabset

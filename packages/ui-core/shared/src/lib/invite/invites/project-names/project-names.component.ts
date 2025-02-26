@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 
 @Component({
-	template: `
+    template: `
 		<div>
 			<div
 				class="project-badge mr-2 mb-2 text-alternate"
@@ -11,7 +11,8 @@ import { Component, Input } from '@angular/core';
 			</div>
 		</div>
 	`,
-	styleUrls: ['./project-names.component.scss']
+    styleUrls: ['./project-names.component.scss'],
+    standalone: false
 })
 export class ProjectNamesComponent {
 	@Input()

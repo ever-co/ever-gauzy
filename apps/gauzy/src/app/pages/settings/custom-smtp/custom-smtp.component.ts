@@ -7,9 +7,10 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-custom-smtp',
-	templateUrl: './custom-smtp.component.html',
-	styleUrls: ['./custom-smtp.component.scss']
+    selector: 'ga-custom-smtp',
+    templateUrl: './custom-smtp.component.html',
+    styleUrls: ['./custom-smtp.component.scss'],
+    standalone: false
 })
 export class CustomSmtpComponent extends TranslationBaseComponent implements OnInit {
 	tabs: NbRouteTab[] = [];

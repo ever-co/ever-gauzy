@@ -1,7 +1,8 @@
 import { Directive, ElementRef, HostListener } from '@angular/core';
 
 @Directive({
-	selector: '[triggerParentClick]'
+    selector: '[triggerParentClick]',
+    standalone: false
 })
 export class TriggerParentClickDirective {
 	constructor(private readonly el: ElementRef) {}

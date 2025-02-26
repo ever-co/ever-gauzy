@@ -25,9 +25,10 @@ import { ExpenseCategoryMutationComponent } from './expense-category-mutation/ex
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-expense-categories',
-	templateUrl: './expense-categories.component.html',
-	styleUrls: ['expense-categories.component.scss']
+    selector: 'ga-expense-categories',
+    templateUrl: './expense-categories.component.html',
+    styleUrls: ['expense-categories.component.scss'],
+    standalone: false
 })
 export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	loading: boolean = false;

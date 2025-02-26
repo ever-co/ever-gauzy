@@ -36,7 +36,8 @@ import { richTextCKEditorConfig } from '../../ckeditor.config';
 @Component({
 	selector: 'ngx-project-module-mutation',
 	templateUrl: './project-module-mutation.component.html',
-	styleUrl: './project-module-mutation.component.scss'
+	styleUrl: './project-module-mutation.component.scss',
+	standalone: false
 })
 export class ProjectModuleMutationComponent extends TranslationBaseComponent implements OnInit {
 	memberIds: ID[] = [];

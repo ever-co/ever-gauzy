@@ -8,9 +8,10 @@ import { CustomViewComponent } from './card-grid-custom.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-card-grid',
-	templateUrl: './card-grid.component.html',
-	styleUrls: ['./card-grid.component.scss']
+    selector: 'ga-card-grid',
+    templateUrl: './card-grid.component.html',
+    styleUrls: ['./card-grid.component.scss'],
+    standalone: false
 })
 export class CardGridComponent implements OnInit, OnDestroy {
 	source$: BehaviorSubject<any> = new BehaviorSubject([]);

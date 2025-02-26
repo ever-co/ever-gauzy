@@ -70,9 +70,10 @@ import { PublicLinkComponent } from './public-link/public-link.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-invoices',
-	templateUrl: './invoices.component.html',
-	styleUrls: ['invoices.component.scss']
+    selector: 'ngx-invoices',
+    templateUrl: './invoices.component.html',
+    styleUrls: ['invoices.component.scss'],
+    standalone: false
 })
 export class InvoicesComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	settingsSmartTable: object;

@@ -8,7 +8,10 @@
 import { Pipe, ChangeDetectorRef, PipeTransform, OnDestroy, NgZone } from '@angular/core';
 import * as moment from 'moment';
 
-@Pipe({ name: 'humanize', pure: false })
+@Pipe({
+    name: 'humanize', pure: false,
+    standalone: false
+})
 export class HumanizePipe implements PipeTransform, OnDestroy {
 	private _currentTimer: number | null;
 	private _lastTime: Number;

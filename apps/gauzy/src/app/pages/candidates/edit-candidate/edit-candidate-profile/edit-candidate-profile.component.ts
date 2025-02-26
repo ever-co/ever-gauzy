@@ -26,10 +26,11 @@ import { firstValueFrom } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-edit-candidate-profile',
-	templateUrl: './edit-candidate-profile.component.html',
-	styleUrls: ['./edit-candidate-profile.component.scss'],
-	providers: [CandidateStore]
+    selector: 'ga-edit-candidate-profile',
+    templateUrl: './edit-candidate-profile.component.html',
+    styleUrls: ['./edit-candidate-profile.component.scss'],
+    providers: [CandidateStore],
+    standalone: false
 })
 export class EditCandidateProfileComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	routeParams: Params;

@@ -1,12 +1,13 @@
 import { Component, Input, OnInit } from '@angular/core';
 
 @Component({
-	selector: 'ga-document-date',
-	template: `
+    selector: 'ga-document-date',
+    template: `
 		<div *ngIf="rowData?.updatedAt">
 			{{ rowData.updatedAt | dateTimeFormat }}
 		</div>
-	`
+	`,
+    standalone: false
 })
 export class DocumentDateTableComponent implements OnInit {
 	@Input()

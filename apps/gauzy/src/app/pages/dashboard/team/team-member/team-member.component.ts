@@ -4,9 +4,10 @@ import { IOrganizationTeamEmployee } from '@gauzy/contracts';
 import { progressStatus } from '@gauzy/ui-core/common';
 
 @Component({
-	selector: 'gauzy-team-member',
-	templateUrl: './team-member.component.html',
-	styleUrls: ['./team-member.component.scss']
+    selector: 'gauzy-team-member',
+    templateUrl: './team-member.component.html',
+    styleUrls: ['./team-member.component.scss'],
+    standalone: false
 })
 export class TeamMemberComponent implements OnInit {
 	private _member: IOrganizationTeamEmployee | any;

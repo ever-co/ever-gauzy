@@ -18,9 +18,10 @@ import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-edit-user-organization',
-	templateUrl: './edit-user-organizations.component.html',
-	styleUrls: ['./edit-user-organizations.component.scss']
+    selector: 'ngx-edit-user-organization',
+    templateUrl: './edit-user-organizations.component.html',
+    styleUrls: ['./edit-user-organizations.component.scss'],
+    standalone: false
 })
 export class EditUserOrganizationsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	showAddCard: boolean;

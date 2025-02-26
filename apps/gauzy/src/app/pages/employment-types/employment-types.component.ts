@@ -27,9 +27,10 @@ import { ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-employment-types',
-	templateUrl: './employment-types.component.html',
-	styleUrls: ['./employment-types.component.scss']
+    selector: 'ga-employment-types',
+    templateUrl: './employment-types.component.html',
+    styleUrls: ['./employment-types.component.scss'],
+    standalone: false
 })
 export class EmploymentTypesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	@ViewChild('editableTemplate') public editableTemplateRef: TemplateRef<any>;

@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 @Component({
-	selector: 'ga-organizations-mutation',
-	templateUrl: './organizations-mutation.component.html',
-	styleUrls: ['./organizations-mutation.component.scss']
+    selector: 'ga-organizations-mutation',
+    templateUrl: './organizations-mutation.component.html',
+    styleUrls: ['./organizations-mutation.component.scss'],
+    standalone: false
 })
 export class OrganizationsMutationComponent implements OnInit {
 	constructor(protected readonly dialogRef: NbDialogRef<OrganizationsMutationComponent>) {}

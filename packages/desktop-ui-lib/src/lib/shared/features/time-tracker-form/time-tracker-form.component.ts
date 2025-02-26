@@ -6,10 +6,11 @@ import { IgnitionState, TimerStartMode, TimeTrackerStore } from '../../../time-t
 import { TeamSelectorService } from './../team-selector/+state/team-selector.service';
 
 @Component({
-	selector: 'gauzy-time-tracker-form',
-	templateUrl: './time-tracker-form.component.html',
-	styleUrls: ['./time-tracker-form.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'gauzy-time-tracker-form',
+    templateUrl: './time-tracker-form.component.html',
+    styleUrls: ['./time-tracker-form.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class TimeTrackerFormComponent {
 	constructor(

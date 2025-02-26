@@ -4,9 +4,10 @@ import { debounceTime } from 'rxjs/operators';
 import { WarehouseService } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ga-manage-warehouse-quantity-selector',
-	templateUrl: './manage-quantity.component.html',
-	styles: ['input { width: 80px }']
+    selector: 'ga-manage-warehouse-quantity-selector',
+    templateUrl: './manage-quantity.component.html',
+    styles: ['input { width: 80px }'],
+    standalone: false
 })
 export class ManageQuantityComponent implements AfterViewInit {
 	value: any;

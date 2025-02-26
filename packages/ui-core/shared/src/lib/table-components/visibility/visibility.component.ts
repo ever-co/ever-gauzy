@@ -4,9 +4,10 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-visibility',
-	templateUrl: './visibility.component.html',
-	styleUrls: ['./visibility.component.scss']
+    selector: 'gauzy-visibility',
+    templateUrl: './visibility.component.html',
+    styleUrls: ['./visibility.component.scss'],
+    standalone: false
 })
 export class VisibilityComponent implements OnInit {
 	@Input() value: string | number;

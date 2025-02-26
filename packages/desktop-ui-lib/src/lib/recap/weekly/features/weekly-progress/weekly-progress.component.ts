@@ -4,10 +4,11 @@ import { WeeklyRecapService } from '../../+state/weekly.service';
 import { updateWeekDays } from '../../../shared/features/date-range-picker';
 
 @Component({
-	selector: 'ngx-weekly-progress',
-	templateUrl: './weekly-progress.component.html',
-	styleUrls: ['./weekly-progress.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-weekly-progress',
+    templateUrl: './weekly-progress.component.html',
+    styleUrls: ['./weekly-progress.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class WeeklyProgressComponent {
 	public weekDays: string[] = [];

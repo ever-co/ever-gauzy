@@ -4,8 +4,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-toggle-switcher',
-	templateUrl: './toggle-switcher.component.html'
+    selector: 'ngx-toggle-switcher',
+    templateUrl: './toggle-switcher.component.html',
+    standalone: false
 })
 export class ToggleSwitcherComponent implements OnInit {
 	/**

@@ -3,10 +3,11 @@ import { map } from 'rxjs';
 import { MonthlyRecapService } from '../../+state/monthly.service';
 
 @Component({
-	selector: 'ngx-monthly-statistic',
-	templateUrl: './monthly-statistic.component.html',
-	styleUrls: ['./monthly-statistic.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-monthly-statistic',
+    templateUrl: './monthly-statistic.component.html',
+    styleUrls: ['./monthly-statistic.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class MonthlyStatisticComponent {
 	constructor(private readonly monthlyRecapService: MonthlyRecapService) {}

@@ -27,9 +27,10 @@ import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-integration-list',
-	templateUrl: './list.component.html',
-	styleUrls: ['./list.component.scss']
+    selector: 'ga-integration-list',
+    templateUrl: './list.component.html',
+    styleUrls: ['./list.component.scss'],
+    standalone: false
 })
 export class IntegrationListComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	public loading: boolean = false; // Flag to indicate if data loading is in progress

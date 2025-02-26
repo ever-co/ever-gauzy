@@ -5,10 +5,11 @@ import { SegmentControlService } from './+state/segment-control.service';
 import { ISegmentControlState } from './+state/segment-control.store';
 
 @Component({
-	selector: 'ngx-segmented-control',
-	templateUrl: './segmented-control.component.html',
-	styleUrls: ['./segmented-control.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'ngx-segmented-control',
+    templateUrl: './segmented-control.component.html',
+    styleUrls: ['./segmented-control.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class SegmentedControlComponent implements OnInit {
 	@Input()

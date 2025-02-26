@@ -9,7 +9,8 @@ interface IMaskConfig {
 }
 
 @Directive({
-	selector: '[gaTextMask]'
+    selector: '[gaTextMask]',
+    standalone: false
 })
 export class TextMaskDirective {
 	// Default configuration for text masking

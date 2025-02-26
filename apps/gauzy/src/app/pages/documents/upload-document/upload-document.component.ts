@@ -3,8 +3,9 @@ import { Validators, UntypedFormBuilder, UntypedFormGroup, AbstractControl } fro
 import { IImageAsset } from '@gauzy/contracts';
 
 @Component({
-	selector: 'ga-upload-doc',
-	templateUrl: './upload-document.component.html'
+    selector: 'ga-upload-doc',
+    templateUrl: './upload-document.component.html',
+    standalone: false
 })
 export class UploadDocumentComponent implements OnInit {
 

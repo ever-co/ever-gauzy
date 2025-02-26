@@ -5,9 +5,10 @@ import { environment } from '@gauzy/ui-config';
 import { convertPrecisionFloatDigit } from '@gauzy/ui-core/common';
 
 @Component({
-	selector: 'ga-leaflet-map',
-	templateUrl: './leaflet.component.html',
-	styleUrls: ['./leaflet.component.scss']
+    selector: 'ga-leaflet-map',
+    templateUrl: './leaflet.component.html',
+    styleUrls: ['./leaflet.component.scss'],
+    standalone: false
 })
 export class LeafletMapComponent implements AfterViewInit {
 	public loaded: boolean;

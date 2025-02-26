@@ -7,9 +7,10 @@ import { AlwaysOnService, AlwaysOnStateEnum, ITimeCounter } from './always-on.se
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-always-on',
-	templateUrl: './always-on.component.html',
-	styleUrls: ['./always-on.component.scss']
+    selector: 'gauzy-always-on',
+    templateUrl: './always-on.component.html',
+    styleUrls: ['./always-on.component.scss'],
+    standalone: false
 })
 export class AlwaysOnComponent implements OnInit {
 	public start$: BehaviorSubject<boolean> = new BehaviorSubject(false);

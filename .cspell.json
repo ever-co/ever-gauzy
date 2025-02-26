@@ -525,6 +525,7 @@
 		"localforage",
 		"longform",
 		"rfdc",
+		"bluehalo",
 		"libx264",
 		"libx",
 		"WXGA",
@@ -547,6 +548,8 @@
 		"appleboy",
 		"apidemoda",
 		"forin",
+		"distutils",
+		"loggable",
 		"inversed",
 		"iquery",
 		"nodownload"

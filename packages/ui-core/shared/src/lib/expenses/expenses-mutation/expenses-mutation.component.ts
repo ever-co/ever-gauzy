@@ -25,9 +25,10 @@ import { ALL_EMPLOYEES_SELECTED } from '../../selectors/employee/default-employe
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-expenses-mutation',
-	templateUrl: './expenses-mutation.component.html',
-	styleUrls: ['./expenses-mutation.component.scss']
+    selector: 'ga-expenses-mutation',
+    templateUrl: './expenses-mutation.component.html',
+    styleUrls: ['./expenses-mutation.component.scss'],
+    standalone: false
 })
 export class ExpensesMutationComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	FormHelpers: typeof FormHelpers = FormHelpers;

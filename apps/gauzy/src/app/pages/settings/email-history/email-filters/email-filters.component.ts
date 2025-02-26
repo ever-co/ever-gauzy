@@ -8,9 +8,10 @@ import { EmailService, EmailTemplateService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-email-filters',
-	templateUrl: './email-filters.component.html',
-	styleUrls: ['./email-filters.component.scss']
+    selector: 'ngx-email-filters',
+    templateUrl: './email-filters.component.html',
+    styleUrls: ['./email-filters.component.scss'],
+    standalone: false
 })
 export class EmailFiltersComponent implements OnInit, OnDestroy {
 	constructor(

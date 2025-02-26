@@ -32,9 +32,10 @@ import { TimeTrackerStatusService } from '../components/time-tracker-status/time
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-web-time-tracker',
-	templateUrl: './time-tracker.component.html',
-	styleUrls: ['./time-tracker.component.scss']
+    selector: 'ngx-web-time-tracker',
+    templateUrl: './time-tracker.component.html',
+    styleUrls: ['./time-tracker.component.scss'],
+    standalone: false
 })
 export class TimeTrackerComponent implements OnInit, OnDestroy {
 	// This constant holds the URL for downloading content from the platform's website.

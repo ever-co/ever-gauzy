@@ -12,16 +12,17 @@ import {
 	ToggleSwitcherComponent,
 	DateViewComponent,
 	EmployeesMergedTeamsComponent,
-	EmployeeWithLinksComponent,
+	EmployeeWithLinksComponent
 } from '../../table-components';
 import { DeleteConfirmationComponent } from '../../user/forms/delete-confirmation/delete-confirmation.component';
 import { ProjectModuleMutationComponent } from '../project-module-mutation/project-module-mutation.component';
 
-@UntilDestroy({ checkProperties: true})
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-project-module-table',
 	templateUrl: './project-module-table.component.html',
-	styleUrl: './project-module-table.component.scss'
+	styleUrl: './project-module-table.component.scss',
+	standalone: false
 })
 export class ProjectModuleTableComponent extends TranslationBaseComponent implements OnInit {
 	public modules: IOrganizationProjectModule[] = [];
@@ -123,7 +124,7 @@ export class ProjectModuleTableComponent extends TranslationBaseComponent implem
 
 						// Update the module's isFavorite status
 						instance.onSwitched.subscribe((toggle: boolean) => {
-							this.updateModule(module.id, { ...module,isFavorite:toggle});
+							this.updateModule(module.id, { ...module, isFavorite: toggle });
 						});
 					}
 				},

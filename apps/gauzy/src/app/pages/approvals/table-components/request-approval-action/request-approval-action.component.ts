@@ -3,8 +3,9 @@ import { RequestApprovalStatusTypesEnum, ComponentLayoutStyleEnum, RolesEnum } f
 import { Store } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ngx-request-approval-action',
-	templateUrl: './request-approval-action.component.html'
+    selector: 'ngx-request-approval-action',
+    templateUrl: './request-approval-action.component.html',
+    standalone: false
 })
 export class RequestApprovalActionComponent implements OnInit {
 	@Input()

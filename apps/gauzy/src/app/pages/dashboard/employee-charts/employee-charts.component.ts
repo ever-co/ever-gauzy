@@ -8,9 +8,10 @@ export enum EmployeeChartEnum {
 }
 
 @Component({
-	selector: 'ga-employee-charts',
-	templateUrl: './employee-charts.component.html',
-	styleUrls: ['./employee-charts.component.scss']
+    selector: 'ga-employee-charts',
+    templateUrl: './employee-charts.component.html',
+    styleUrls: ['./employee-charts.component.scss'],
+    standalone: false
 })
 export class EmployeeChartsComponent implements OnInit {
 	selectedChart = EmployeeChartEnum.BAR;

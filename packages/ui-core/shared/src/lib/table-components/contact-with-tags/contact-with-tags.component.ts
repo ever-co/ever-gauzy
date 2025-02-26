@@ -5,9 +5,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { PictureNameTagsComponent } from '../picture-name-tags/picture-name-tags.component';
 
 @Component({
-	selector: 'ga-contact-link-with-tags',
-	templateUrl: './contact-with-tags.component.html',
-	styleUrls: ['./contact-with-tags.component.scss']
+    selector: 'ga-contact-link-with-tags',
+    templateUrl: './contact-with-tags.component.html',
+    styleUrls: ['./contact-with-tags.component.scss'],
+    standalone: false
 })
 export class ContactWithTagsComponent extends PictureNameTagsComponent {
 	constructor(

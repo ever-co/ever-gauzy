@@ -23,9 +23,10 @@ import { MyTaskDialogComponent } from '../../../tasks/components/my-task-dialog/
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-project-management-details',
-	templateUrl: './project-management-details.component.html',
-	styleUrls: ['./project-management-details.component.scss']
+    selector: 'gauzy-project-management-details',
+    templateUrl: './project-management-details.component.html',
+    styleUrls: ['./project-management-details.component.scss'],
+    standalone: false
 })
 export class ProjectManagementDetailsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	private _smartTableSource: ServerDataSource;

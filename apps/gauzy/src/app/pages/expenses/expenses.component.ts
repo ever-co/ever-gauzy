@@ -47,8 +47,9 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	templateUrl: './expenses.component.html',
-	styleUrls: ['./expenses.component.scss']
+    templateUrl: './expenses.component.html',
+    styleUrls: ['./expenses.component.scss'],
+    standalone: false
 })
 export class ExpensesComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public smartTableSettings: object;

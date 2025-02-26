@@ -25,9 +25,10 @@ import { EmailInviteFormComponent } from '../forms/email-invite-form/email-invit
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-invite-mutation',
-	templateUrl: './invite-mutation.component.html',
-	styleUrls: ['./invite-mutation.component.scss']
+    selector: 'ga-invite-mutation',
+    templateUrl: './invite-mutation.component.html',
+    styleUrls: ['./invite-mutation.component.scss'],
+    standalone: false
 })
 export class InviteMutationComponent extends TranslationBaseComponent implements OnInit {
 	/*

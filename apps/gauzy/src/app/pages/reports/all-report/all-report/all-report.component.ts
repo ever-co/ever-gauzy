@@ -8,9 +8,10 @@ import { ReportService } from '../report.service';
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-all-report',
-	templateUrl: './all-report.component.html',
-	styleUrls: ['./all-report.component.scss']
+    selector: 'ga-all-report',
+    templateUrl: './all-report.component.html',
+    styleUrls: ['./all-report.component.scss'],
+    standalone: false
 })
 export class AllReportComponent implements OnInit {
 	PermissionsEnum = PermissionsEnum;

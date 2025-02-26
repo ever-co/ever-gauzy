@@ -5,8 +5,9 @@ import { Subscription } from 'rxjs/internal/Subscription';
 import { DefaultFilter } from 'angular2-smart-table';
 
 @Component({
-	selector: 'ga-input-filter-selector',
-	template: ` <input [formControl]="inputControl" class="form-control" [placeholder]="column.title" /> `
+    selector: 'ga-input-filter-selector',
+    template: ` <input [formControl]="inputControl" class="form-control" [placeholder]="column.title" /> `,
+    standalone: false
 })
 export class InputFilterComponent extends DefaultFilter implements OnInit, OnDestroy, OnChanges {
 	public inputControl = new FormControl();

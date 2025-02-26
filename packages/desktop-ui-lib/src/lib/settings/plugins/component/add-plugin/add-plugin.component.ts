@@ -7,9 +7,10 @@ import { PluginElectronService } from '../../services/plugin-electron.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-add-plugin',
-	templateUrl: './add-plugin.component.html',
-	styleUrls: ['./add-plugin.component.scss']
+    selector: 'ngx-add-plugin',
+    templateUrl: './add-plugin.component.html',
+    styleUrls: ['./add-plugin.component.scss'],
+    standalone: false
 })
 export class AddPluginComponent implements OnInit {
 	private readonly pluginElectronService = inject(PluginElectronService);

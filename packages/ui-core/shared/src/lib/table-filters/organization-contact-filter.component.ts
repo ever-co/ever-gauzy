@@ -3,14 +3,15 @@ import { DefaultFilter } from 'angular2-smart-table';
 import { IOrganizationContact } from '@gauzy/contracts';
 
 @Component({
-	selector: 'ga-contact-select-filter',
-	template: `
+    selector: 'ga-contact-select-filter',
+    template: `
 		<ga-contact-select
 			[clearable]="true"
 			[placeholder]="'PAYMENTS_PAGE.CONTACT' | translate"
 			(onChanged)="onChange($event)"
 		></ga-contact-select>
-	`
+	`,
+    standalone: false
 })
 export class OrganizationContactFilterComponent extends DefaultFilter implements OnChanges {
 	constructor() {

@@ -16,9 +16,10 @@ import { IntegrationEntitySettingService, IntegrationEntitySettingServiceStoreSe
 
 @UntilDestroy()
 @Component({
-	selector: 'ngx-github-settings',
-	templateUrl: './settings.component.html',
-	styleUrls: ['./settings.component.scss']
+    selector: 'ngx-github-settings',
+    templateUrl: './settings.component.html',
+    styleUrls: ['./settings.component.scss'],
+    standalone: false
 })
 export class GithubSettingsComponent extends TranslationBaseComponent implements OnInit, AfterViewInit {
 	// Define a public property 'IntegrationEntity' that appears to be an enum.

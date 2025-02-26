@@ -10,9 +10,10 @@ export interface ConfirmDialogOptions {
 }
 
 @Component({
-	selector: 'ngx-confirm',
-	templateUrl: './confirm.component.html',
-	styleUrls: ['./confirm.component.scss']
+    selector: 'ngx-confirm',
+    templateUrl: './confirm.component.html',
+    styleUrls: ['./confirm.component.scss'],
+    standalone: false
 })
 export class ConfirmComponent implements OnInit {
 	@Input() data: ConfirmDialogOptions;

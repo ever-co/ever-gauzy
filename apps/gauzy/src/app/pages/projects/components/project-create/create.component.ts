@@ -9,9 +9,10 @@ import { ProjectMutationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-project-create-mutation',
-	templateUrl: './create.component.html',
-	styleUrls: ['./create.component.scss']
+    selector: 'ngx-project-create-mutation',
+    templateUrl: './create.component.html',
+    styleUrls: ['./create.component.scss'],
+    standalone: false
 })
 export class ProjectCreateMutationComponent extends TranslationBaseComponent implements OnInit {
 	/** Project Mutation Component*/

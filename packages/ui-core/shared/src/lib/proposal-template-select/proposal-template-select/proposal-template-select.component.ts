@@ -9,16 +9,17 @@ import { ErrorHandlingService, ProposalTemplateService, Store } from '@gauzy/ui-
 
 @UntilDestroy()
 @Component({
-	selector: 'ngx-proposal-template-select',
-	templateUrl: './proposal-template-select.component.html',
-	styleUrls: ['./proposal-template-select.component.scss'],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => ProposalTemplateSelectComponent),
-			multi: true
-		}
-	]
+    selector: 'ngx-proposal-template-select',
+    templateUrl: './proposal-template-select.component.html',
+    styleUrls: ['./proposal-template-select.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ProposalTemplateSelectComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ProposalTemplateSelectComponent implements OnInit {
 	proposalTemplates: IEmployeeProposalTemplate[] = [];

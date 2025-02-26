@@ -7,17 +7,18 @@ import { NoteSelectorStore } from './+state/note-selector.store';
 import { NoteService } from './+state/note.service';
 
 @Component({
-	selector: 'gauzy-note',
-	templateUrl: './note.component.html',
-	styleUrls: ['./note.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => NoteComponent),
-			multi: true
-		}
-	]
+    selector: 'gauzy-note',
+    templateUrl: './note.component.html',
+    styleUrls: ['./note.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => NoteComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class NoteComponent implements ControlValueAccessor {
 	private onChange: (value: string) => void;

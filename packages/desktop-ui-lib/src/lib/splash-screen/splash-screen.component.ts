@@ -7,9 +7,10 @@ import { LanguageElectronService } from '../language/language-electron.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-splash-screen',
-	templateUrl: './splash-screen.component.html',
-	styleUrls: ['./splash-screen.component.scss']
+    selector: 'ngx-splash-screen',
+    templateUrl: './splash-screen.component.html',
+    styleUrls: ['./splash-screen.component.scss'],
+    standalone: false
 })
 export class SplashScreenComponent implements OnInit {
 	private _application = {

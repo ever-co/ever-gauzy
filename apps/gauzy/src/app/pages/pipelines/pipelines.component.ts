@@ -36,9 +36,10 @@ import { StageComponent } from './stage/stage.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-pipelines',
-	templateUrl: './pipelines.component.html',
-	styleUrls: ['./pipelines.component.scss']
+    selector: 'ga-pipelines',
+    templateUrl: './pipelines.component.html',
+    styleUrls: ['./pipelines.component.scss'],
+    standalone: false
 })
 export class PipelinesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public smartTableSettings: object;

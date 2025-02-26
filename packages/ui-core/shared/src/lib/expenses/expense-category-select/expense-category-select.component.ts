@@ -10,16 +10,17 @@ import { removeDuplicatesByProperty } from '@gauzy/ui-core/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-expense-category-select',
-	templateUrl: './expense-category-select.component.html',
-	styleUrls: ['./expense-category-select.component.scss'],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => ExpenseCategorySelectComponent),
-			multi: true
-		}
-	]
+    selector: 'ga-expense-category-select',
+    templateUrl: './expense-category-select.component.html',
+    styleUrls: ['./expense-category-select.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ExpenseCategorySelectComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ExpenseCategorySelectComponent implements OnInit, OnDestroy {
 	categories: IExpenseCategory[] = [];

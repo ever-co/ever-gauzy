@@ -8,7 +8,10 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { Pipe, PipeTransform } from '@angular/core';
 import { icons } from 'eva-icons';
 
-@Pipe({ name: 'eva' })
+@Pipe({
+    name: 'eva',
+    standalone: false
+})
 export class EvaIconsPipe implements PipeTransform {
 	private defaultOptions = {
 		height: 24,

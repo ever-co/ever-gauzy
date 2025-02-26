@@ -9,9 +9,10 @@ import { ElectronService } from '@gauzy/ui-core/core';
 import { patterns } from '@gauzy/ui-core/shared';
 
 @Component({
-	selector: 'ngx-login',
-	templateUrl: './login.component.html',
-	styleUrls: ['./login.component.scss']
+    selector: 'ngx-login',
+    templateUrl: './login.component.html',
+    styleUrls: ['./login.component.scss'],
+    standalone: false
 })
 export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	@ViewChild('form') private readonly form: FormGroupDirective;

@@ -8,9 +8,10 @@ import { NbDialogRef } from '@nebular/theme';
 import { InvoiceEstimateHistoryService, InvoicesService, Store, ToastrService } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ga-invoice-email',
-	templateUrl: './invoice-email-mutation.component.html',
-	styleUrls: ['./invoice-email-mutation.component.scss']
+    selector: 'ga-invoice-email',
+    templateUrl: './invoice-email-mutation.component.html',
+    styleUrls: ['./invoice-email-mutation.component.scss'],
+    standalone: false
 })
 export class InvoiceEmailMutationComponent extends TranslationBaseComponent implements OnInit {
 	invoice: IInvoice;

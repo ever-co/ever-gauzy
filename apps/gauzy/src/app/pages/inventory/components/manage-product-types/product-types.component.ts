@@ -20,9 +20,10 @@ import { IconRowComponent } from '../inventory-table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-product-types',
-	templateUrl: './product-types.component.html',
-	styleUrls: ['./product-types.component.scss']
+    selector: 'ngx-product-types',
+    templateUrl: './product-types.component.html',
+    styleUrls: ['./product-types.component.scss'],
+    standalone: false
 })
 export class ProductTypesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	smartTableSource: ServerDataSource;

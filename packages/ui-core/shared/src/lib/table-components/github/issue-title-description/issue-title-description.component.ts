@@ -3,9 +3,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @Component({
-	selector: 'issue-title-description',
-	templateUrl: './issue-title-description.component.html',
-	styleUrls: ['./issue-title-description.component.scss']
+    selector: 'issue-title-description',
+    templateUrl: './issue-title-description.component.html',
+    styleUrls: ['./issue-title-description.component.scss'],
+    standalone: false
 })
 export class GithubIssueTitleDescriptionComponent extends TranslationBaseComponent {
 	@Input() rowData: any;

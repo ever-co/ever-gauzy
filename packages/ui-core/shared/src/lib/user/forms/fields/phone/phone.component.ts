@@ -4,15 +4,16 @@ import { UntilDestroy } from "@ngneat/until-destroy";
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-phone-form-input',
-	templateUrl: './phone.component.html',
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => PhoneFormInputComponent),
-			multi: true
-		}
-	]
+    selector: 'ngx-phone-form-input',
+    templateUrl: './phone.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => PhoneFormInputComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class PhoneFormInputComponent implements OnInit, OnDestroy {
 

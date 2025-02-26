@@ -29,9 +29,10 @@ const initialTaskValue = {
 };
 
 @Component({
-	selector: 'ngx-my-task-dialog',
-	templateUrl: './my-task-dialog.component.html',
-	styleUrls: ['./my-task-dialog.component.scss']
+    selector: 'ngx-my-task-dialog',
+    templateUrl: './my-task-dialog.component.html',
+    styleUrls: ['./my-task-dialog.component.scss'],
+    standalone: false
 })
 export class MyTaskDialogComponent extends TranslationBaseComponent implements OnInit {
 	selectedTaskId: string;

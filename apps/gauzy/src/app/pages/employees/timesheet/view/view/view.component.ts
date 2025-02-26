@@ -15,9 +15,10 @@ import { EditTimeLogModalComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-timesheet-view',
-	templateUrl: './view.component.html',
-	styleUrls: ['../../daily/daily/daily.component.scss', './view.component.scss']
+    selector: 'ngx-timesheet-view',
+    templateUrl: './view.component.html',
+    styleUrls: ['../../daily/daily/daily.component.scss', './view.component.scss'],
+    standalone: false
 })
 export class TimesheetViewComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	PermissionsEnum = PermissionsEnum;
