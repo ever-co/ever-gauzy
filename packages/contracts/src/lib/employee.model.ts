@@ -28,6 +28,11 @@ import { IFavorite } from './favorite.model';
 import { IComment } from './comment.model';
 import { IOrganizationSprint } from './organization-sprint.model';
 
+/**
+ * Utility type to exclude `employee` and `employeeId` fields.
+ */
+export type ExcludeEmployeeAuthorFields<T, K extends keyof T = never> = Omit<T, 'employee' | 'employeeId' | K>;
+
 export interface IFindMembersInput extends IBasePerTenantAndOrganizationEntityModel {
 	organizationTeamId: ID;
 	organizationProjectId: ID;
