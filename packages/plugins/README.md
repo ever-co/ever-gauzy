@@ -1,1 +1,0 @@
-# DSpot ERP Plugins
