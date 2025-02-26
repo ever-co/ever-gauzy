@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
 import { Observable, switchMap, of, tap, catchError } from 'rxjs';
-import { ProjectManagerGuard } from './project-manager.guard';
 import { PermissionsGuard } from '@gauzy/ui-core/core';
+import { ProjectManagerGuard } from './project-manager.guard';
 
 @Injectable({
 	providedIn: 'root'

@@ -1,13 +1,21 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Inject, Injectable } from '@nestjs/common';
+import { Cache } from 'cache-manager';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Reflector } from '@nestjs/core';
 import { OrganizationProjectService } from '../organization-project.service';
 import { PermissionGuard } from '../../shared';
+import { RolePermissionService } from '../../role-permission';
 
 @Injectable()
-export class ManagerOrPermissionGuard implements CanActivate {
+export class ManagerOrPermissionGuard extends PermissionGuard implements CanActivate {
 	constructor(
-		private readonly _projectService: OrganizationProjectService,
-		private readonly _permissionGuard: PermissionGuard
-	) {}
+		@Inject(CACHE_MANAGER) cacheManager: Cache,
+		reflector: Reflector,
+		rolePermissionService: RolePermissionService,
+		private readonly _projectService: OrganizationProjectService
+	) {
+		super(cacheManager, reflector, rolePermissionService);
+	}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		console.log('✅ ManagerOrPermissionGuard canActivate called');
@@ -30,6 +38,6 @@ export class ManagerOrPermissionGuard implements CanActivate {
 
 		// If the user is not a manager, delegate the check to PermissionGuard
 		console.log(`🔄 User is not a manager, deferring to PermissionGuard.`);
-		return this._permissionGuard.canActivate(context);
+		return super.canActivate(context);
 	}
 }
