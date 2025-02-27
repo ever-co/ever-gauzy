@@ -63,8 +63,7 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 				mentionedEmployeeId,
 				organizationId,
 				tenantId,
-				employeeId: user?.employeeId,
-				createdByUserId: user?.id
+				employeeId: user?.employeeId
 			});
 
 			// Create an user subscription for provided entity
@@ -145,15 +144,15 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 			});
 
 			// Extract the IDs of currently mentioned users
-			const existingMentionEmployeeIds = new Set(existingMentions.map(
-				(mention) => mention.mentionedEmployeeId)
-			);
+			const existingMentionEmployeeIds = new Set(existingMentions.map((mention) => mention.mentionedEmployeeId));
 
 			// Determine mentions to add (not present in existing mentions)
 			const mentionsToAddEmployeeIds = mentionEmployeeIds.filter((id) => !existingMentionEmployeeIds.has(id));
 
 			// Determine mentions to remove (present in existing mentions but not in mentionsIds)
-			const mentionsToRemoveIds = [...existingMentionEmployeeIds].filter((id) => !mentionEmployeeIds.includes(id));
+			const mentionsToRemoveIds = [...existingMentionEmployeeIds].filter(
+				(id) => !mentionEmployeeIds.includes(id)
+			);
 
 			// Add new mentions
 			if (mentionsToAddEmployeeIds.length > 0) {
@@ -166,8 +165,7 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 							parentEntityType,
 							mentionedEmployeeId,
 							actorType: ActorTypeEnum.User,
-							employeeId: user?.employeeId,
-							createdByUserId: user?.id
+							employeeId: user?.employeeId
 						})
 					)
 				);
