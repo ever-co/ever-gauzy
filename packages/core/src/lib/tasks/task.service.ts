@@ -197,7 +197,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 									type: EmployeeNotificationTypeEnum.ASSIGNMENT,
 									organizationId,
 									tenantId,
-									receiverEmployeeId: member?.id,
+									receiverEmployeeId: member.id,
 									sentByEmployeeId: user?.employeeId
 								},
 								NotificationActionTypeEnum.Assigned,
