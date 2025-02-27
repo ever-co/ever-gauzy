@@ -18,7 +18,7 @@ export class EmployeeCreateNotificationEventHandler implements IEventHandler<Emp
 	 */
 	async handle(event: EmployeeCreateNotificationEvent) {
 		try {
-			this.logger.debug(`Creating notification for employee: ${event.input.receiverEmployeeID}`);
+			this.logger.debug(`Creating notification for employee: ${event.input.receiverEmployeeId}`);
 			return await this.employeeNotificationService.create(event.input);
 		} catch (error) {
 			this.logger.error(`Failed to create notification: ${error.message}`, error.stack);
