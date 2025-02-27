@@ -26,7 +26,7 @@ import {
 	PermissionsEnum,
 	ActionTypeEnum,
 	ITaskDateFilterInput,
-	SubscriptionTypeEnum,
+	EntitySubscriptionTypeEnum,
 	ITaskAdvancedFilter,
 	IAdvancedTaskFiltering,
 	EmployeeNotificationTypeEnum,
@@ -38,11 +38,11 @@ import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { addBetween } from './../core/util';
 import { RequestContext } from '../core/context';
 import { TaskViewService } from './views/view.service';
-import { SubscriptionService } from '../subscription/subscription.service';
+import { EntitySubscriptionService } from '../entity-subscription/entity-subscription.service';
 import { MentionService } from '../mention/mention.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { EmployeeNotificationService } from '../employee-notification/employee-notification.service';
-import { CreateSubscriptionEvent } from '../subscription/events';
+import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
 import { Task } from './task.entity';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
 import { GetTaskByIdDTO } from './dto';
@@ -58,7 +58,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		readonly typeOrmOrganizationSprintTaskHistoryRepository: TypeOrmOrganizationSprintTaskHistoryRepository,
 		private readonly _eventBus: EventBus,
 		private readonly taskViewService: TaskViewService,
-		private readonly _subscriptionService: SubscriptionService,
+		private readonly _entitySubscriptionService: EntitySubscriptionService,
 		private readonly mentionService: MentionService,
 		private readonly activityLogService: ActivityLogService,
 		private readonly employeeNotificationService: EmployeeNotificationService
@@ -161,11 +161,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					await Promise.all(
 						removedMembers.map(
 							async (member) =>
-								await this._subscriptionService.delete({
+								await this._entitySubscriptionService.delete({
 									entity: BaseEntityEnum.Task,
 									entityId: updatedTask.id,
-									userId: member.userId,
-									type: SubscriptionTypeEnum.ASSIGNMENT
+									employeeId: member.id,
+									type: EntitySubscriptionTypeEnum.ASSIGNMENT
 								})
 						)
 					);
@@ -180,11 +180,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					await Promise.all(
 						newMembers.map((member: IEmployee) => {
 							this._eventBus.publish(
-								new CreateSubscriptionEvent({
+								new CreateEntitySubscriptionEvent({
 									entity: BaseEntityEnum.Task,
 									entityId: updatedTask.id,
-									userId: member.userId,
-									type: SubscriptionTypeEnum.ASSIGNMENT,
+									employeeId: member.id,
+									type: EntitySubscriptionTypeEnum.ASSIGNMENT,
 									organizationId,
 									tenantId
 								})

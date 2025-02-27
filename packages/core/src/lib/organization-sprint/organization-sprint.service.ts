@@ -10,7 +10,7 @@ import {
 	IOrganizationSprintUpdateInput,
 	RolesEnum,
 	ActionTypeEnum,
-	SubscriptionTypeEnum
+	EntitySubscriptionTypeEnum
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { TenantAwareCrudService } from './../core/crud';
@@ -18,10 +18,10 @@ import { RequestContext } from '../core/context';
 import { OrganizationSprintEmployee } from '../core/entities/internal';
 import { FavoriteService } from '../core/decorators';
 // import { prepareSQLQuery as p } from './../database/database.helper';
-import { CreateSubscriptionEvent } from '../subscription/events';
+import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
+import { EntitySubscriptionService } from '../entity-subscription/entity-subscription.service';
 import { RoleService } from '../role/role.service';
 import { EmployeeService } from '../employee/employee.service';
-import { SubscriptionService } from '../subscription/subscription.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { OrganizationSprint } from './organization-sprint.entity';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
@@ -34,16 +34,16 @@ import { MikroOrmOrganizationSprintEmployeeRepository } from './repository/mikro
 @Injectable()
 export class OrganizationSprintService extends TenantAwareCrudService<OrganizationSprint> {
 	constructor(
-		private readonly _eventBus: EventBus,
 		readonly typeOrmOrganizationSprintRepository: TypeOrmOrganizationSprintRepository,
 		readonly mikroOrmOrganizationSprintRepository: MikroOrmOrganizationSprintRepository,
 		readonly typeOrmOrganizationSprintEmployeeRepository: TypeOrmOrganizationSprintEmployeeRepository,
 		readonly mikroOrmOrganizationSprintEmployeeRepository: MikroOrmOrganizationSprintEmployeeRepository,
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+		private readonly _eventBus: EventBus,
 		private readonly _roleService: RoleService,
 		private readonly _employeeService: EmployeeService,
-		private readonly subscriptionService: SubscriptionService,
-		private readonly activityLogService: ActivityLogService
+		private readonly _entitySubscriptionService: EntitySubscriptionService,
+		private readonly _activityLogService: ActivityLogService
 	) {
 		super(typeOrmOrganizationSprintRepository, mikroOrmOrganizationSprintRepository);
 	}
@@ -122,14 +122,14 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 				await Promise.all(
 					employees.map(({ id, userId }) =>
 						this._eventBus.publish(
-							new CreateSubscriptionEvent({
+							new CreateEntitySubscriptionEvent({
 								entity: BaseEntityEnum.OrganizationSprint,
 								entityId: sprint.id,
-								userId,
+								employeeId: id,
 								type:
 									id === employeeId
-										? SubscriptionTypeEnum.CREATED_ENTITY
-										: SubscriptionTypeEnum.ASSIGNMENT,
+										? EntitySubscriptionTypeEnum.CREATED_ENTITY
+										: EntitySubscriptionTypeEnum.ASSIGNMENT,
 								organizationId,
 								tenantId
 							})
@@ -139,7 +139,7 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 			} catch (error) {}
 
 			// Generate the activity log
-			this.activityLogService.logActivity<OrganizationSprint>(
+			this._activityLogService.logActivity<OrganizationSprint>(
 				BaseEntityEnum.OrganizationSprint,
 				ActionTypeEnum.Created,
 				ActorTypeEnum.User,
@@ -204,7 +204,7 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 				});
 
 				// Generate the activity log
-				this.activityLogService.logActivity<OrganizationSprint>(
+				this._activityLogService.logActivity<OrganizationSprint>(
 					BaseEntityEnum.OrganizationSprint,
 					ActionTypeEnum.Updated,
 					ActorTypeEnum.User,
@@ -289,11 +289,11 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 				await Promise.all(
 					removedMembers.map(
 						async (member) =>
-							await this.subscriptionService.delete({
+							await this._entitySubscriptionService.delete({
 								entity: BaseEntityEnum.OrganizationSprint,
 								entityId: organizationSprintId,
-								userId: member.employee.userId,
-								type: SubscriptionTypeEnum.ASSIGNMENT
+								employeeId: member.employee.id,
+								type: EntitySubscriptionTypeEnum.ASSIGNMENT
 							})
 					)
 				);
@@ -330,13 +330,13 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 			// Subscribe new assignees to the sprint
 			try {
 				await Promise.all(
-					newMembers.map(({ userId }) =>
+					newMembers.map((member: IEmployee) =>
 						this._eventBus.publish(
-							new CreateSubscriptionEvent({
+							new CreateEntitySubscriptionEvent({
 								entity: BaseEntityEnum.OrganizationSprint,
 								entityId: organizationSprintId,
-								userId,
-								type: SubscriptionTypeEnum.ASSIGNMENT,
+								employeeId: member.id,
+								type: EntitySubscriptionTypeEnum.ASSIGNMENT,
 								organizationId,
 								tenantId
 							})
