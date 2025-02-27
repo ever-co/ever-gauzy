@@ -55,7 +55,11 @@ export interface IEmployeeNotificationCreateInput extends OmitFields<IEmployeeNo
  * Excludes immutable fields (`receiverId`, `receiver`, `sentById`, and `sentBy`)
  * to prevent altering relationships after creation.
  */
-export interface IEmployeeNotificationUpdateInput extends OmitFields<IEmployeeNotification> {}
+export interface IEmployeeNotificationUpdateInput
+	extends OmitFields<
+		IEmployeeNotification,
+		'receiverEmployee' | 'receiverEmployeeID' | 'sentByEmployee' | 'sentByEmployeeId'
+	> {}
 
 /**
  * Interface representing the result of marking notifications as read.

@@ -346,12 +346,52 @@ export class AlterMentionEntityTable1740664768528 implements MigrationInterface 
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE \`mention\` DROP FOREIGN KEY \`FK_16a2deee0d7ea361950eed1b944\``);
+		await queryRunner.query(`ALTER TABLE \`mention\` DROP FOREIGN KEY \`FK_34b0087a30379c86b470a4298ca\``);
+		await queryRunner.query(`DROP INDEX \`IDX_34b0087a30379c86b470a4298c\` ON \`mention\``);
+		await queryRunner.query(`DROP INDEX \`IDX_16a2deee0d7ea361950eed1b94\` ON \`mention\``);
+		await queryRunner.query(`ALTER TABLE \`mention\` DROP COLUMN \`mentionById\``);
+		await queryRunner.query(`ALTER TABLE \`mention\` DROP COLUMN \`mentionedUserId\``);
+		await queryRunner.query(`ALTER TABLE \`mention\` ADD \`actorType\` int NULL`);
+		await queryRunner.query(`ALTER TABLE \`mention\` ADD \`mentionedEmployeeId\` varchar(255) NOT NULL`);
+		await queryRunner.query(`ALTER TABLE \`mention\` ADD \`employeeId\` varchar(255) NULL`);
+		await queryRunner.query(`CREATE INDEX \`IDX_8a71b1017f6ea51d1913adcae4\` ON \`mention\` (\`actorType\`)`);
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_a123435acf8d70e5df978e759f\` ON \`mention\` (\`mentionedEmployeeId\`)`
+		);
+		await queryRunner.query(`CREATE INDEX \`IDX_465f1a9281f338ae38cc961c2a\` ON \`mention\` (\`employeeId\`)`);
+		await queryRunner.query(
+			`ALTER TABLE \`mention\` ADD CONSTRAINT \`FK_a123435acf8d70e5df978e759f9\` FOREIGN KEY (\`mentionedEmployeeId\`) REFERENCES \`employee\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`mention\` ADD CONSTRAINT \`FK_465f1a9281f338ae38cc961c2a5\` FOREIGN KEY (\`employeeId\`) REFERENCES \`employee\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+	}
 
 	/**
 	 * MySQL Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE \`mention\` DROP FOREIGN KEY \`FK_465f1a9281f338ae38cc961c2a5\``);
+		await queryRunner.query(`ALTER TABLE \`mention\` DROP FOREIGN KEY \`FK_a123435acf8d70e5df978e759f9\``);
+		await queryRunner.query(`DROP INDEX \`IDX_465f1a9281f338ae38cc961c2a\` ON \`mention\``);
+		await queryRunner.query(`DROP INDEX \`IDX_a123435acf8d70e5df978e759f\` ON \`mention\``);
+		await queryRunner.query(`DROP INDEX \`IDX_8a71b1017f6ea51d1913adcae4\` ON \`mention\``);
+		await queryRunner.query(`ALTER TABLE \`mention\` DROP COLUMN \`employeeId\``);
+		await queryRunner.query(`ALTER TABLE \`mention\` DROP COLUMN \`mentionedEmployeeId\``);
+		await queryRunner.query(`ALTER TABLE \`mention\` DROP COLUMN \`actorType\``);
+		await queryRunner.query(`ALTER TABLE \`mention\` ADD \`mentionedUserId\` varchar(255) NOT NULL`);
+		await queryRunner.query(`ALTER TABLE \`mention\` ADD \`mentionById\` varchar(255) NOT NULL`);
+		await queryRunner.query(`CREATE INDEX \`IDX_16a2deee0d7ea361950eed1b94\` ON \`mention\` (\`mentionedUserId\`)`);
+		await queryRunner.query(`CREATE INDEX \`IDX_34b0087a30379c86b470a4298c\` ON \`mention\` (\`mentionById\`)`);
+		await queryRunner.query(
+			`ALTER TABLE \`mention\` ADD CONSTRAINT \`FK_34b0087a30379c86b470a4298ca\` FOREIGN KEY (\`mentionById\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`mention\` ADD CONSTRAINT \`FK_16a2deee0d7ea361950eed1b944\` FOREIGN KEY (\`mentionedUserId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+	}
 }
