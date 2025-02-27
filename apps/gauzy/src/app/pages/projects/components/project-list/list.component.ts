@@ -557,7 +557,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 				const isManager = this.isManagerOfProject(this.selectedProject);
 
 				// Check if the user has all the required permissions
-				const hasAllPermissions = this.hasAllPermissions([
+				const hasAllPermissions = this._hasAllPermissions([
 					PermissionsEnum.ALL_ORG_EDIT,
 					PermissionsEnum.ORG_PROJECT_EDIT,
 					PermissionsEnum.ORG_PROJECT_DELETE
@@ -625,7 +625,14 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 		}
 	}
 
-	hasAllPermissions(permissions: PermissionsEnum[]): boolean {
+	/**
+	 * Checks if the current user has all the specified permissions.
+	 *
+	 * @param permissions - An array of permissions to verify.
+	 * @returns true if the user has every permission in the list, otherwise false.
+	 */
+	private _hasAllPermissions(permissions: PermissionsEnum[]): boolean {
+		// Using Array.prototype.every ensures early termination on the first failure.
 		return permissions.every((permission) => this._permissionsService.getPermission(permission));
 	}
 
