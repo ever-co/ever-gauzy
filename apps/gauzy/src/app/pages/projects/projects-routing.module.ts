@@ -45,6 +45,7 @@ const routes: Routes = [
 			{
 				path: ':id',
 				data: {
+					allowMissingIntegration: true,
 					integration: IntegrationEnum.GITHUB, // Custom data associated with this route
 					relations: ['integration'],
 					selectors: {
@@ -56,8 +57,9 @@ const routes: Routes = [
 				},
 				resolve: {
 					project: ProjectResolver,
-					integration: IntegrationResolver
+					integration: IntegrationResolver || null
 				},
+
 				children: [
 					{
 						path: 'edit',
