@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException, NotAcceptableException } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { IsNull, Between, Not, In } from 'typeorm';
 import * as moment from 'moment';
 import * as chalk from 'chalk';
@@ -38,7 +38,7 @@ import {
 	TimeLogCreateCommand,
 	TimeLogUpdateCommand
 } from '../time-log/commands';
-import { StartTimerCommand, StopTimerCommand, GetTimerStatusCommand } from './commands';
+import { StartTimerCommand, StopTimerCommand, GetTimerStatusQuery } from './commands';
 import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
@@ -59,28 +59,40 @@ export class TimerService {
 		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 		private readonly _employeeService: EmployeeService,
 		private readonly _commandBus: CommandBus,
+		private readonly _queryBus: QueryBus
 	) {}
 
 	/**
-	 * Timer tracking for employee
+	 * Public API: Start timer tracking for employee
+	 *
+	 * This is the method exposed to controllers and external clients.
+	 * It uses the command bus to delegate to the handler, which will then
+	 * call the internal startTimer implementation method directly.
 	 */
-
-	async startTimer(request: ITimerToggleInput): Promise<ITimeLog> {
+	async startTimerPublic(request: ITimerToggleInput): Promise<ITimeLog> {
 		return this._commandBus.execute(new StartTimerCommand(request));
 	}
 
     /**
-     * Stop time tracking for the current employee.
+     * Public API: Stop time tracking for the current employee
+     *
+     * This is the method exposed to controllers and external clients.
+     * It uses the command bus to delegate to the handler, which will then
+     * call the internal stopTimer implementation method directly.
      */
-	async stopTimer(request: ITimerToggleInput): Promise<ITimeLog> {
+	async stopTimerPublic(request: ITimerToggleInput): Promise<ITimeLog> {
 		return this._commandBus.execute(new StopTimerCommand(request));
 	}
 
     /**
-     * Get timer status
+     * Public API: Get timer status
+     *
+     * This is the method exposed to controllers and external clients.
+     * It uses the query bus to delegate to the handler, which will then
+     * call the internal getTimerStatus implementation method directly.
      */
-	async getTimerStatus(request: ITimerStatusInput): Promise<ITimerStatus> {
-		return this._commandBus.execute(new GetTimerStatusCommand(request));
+	async getTimerStatusPublic(request: ITimerStatusInput): Promise<ITimerStatus> {
+		return this._queryBus.execute(new GetTimerStatusQuery(request));
 	}
 
 	/**
@@ -102,12 +114,10 @@ export class TimerService {
 	}
 
 	/**
-	 * Get timer status
-	 *
-	 * @param request
-	 * @returns
+	 * Implementation of timer status logic
+	 * This is intended to be used directly by the command handler
 	 */
-	async _getTimerStatusImplementation(request: ITimerStatusInput): Promise<ITimerStatus> {
+	async getTimerStatus(request: ITimerStatusInput): Promise<ITimerStatus> {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, source, todayStart, todayEnd } = request;
 
@@ -214,12 +224,10 @@ export class TimerService {
 	}
 
 	/**
-	 * Start time tracking for an employee.
-	 *
-	 * @param request The timer toggle input details.
-	 * @returns A Promise resolving to the created ITimeLog entry.
+	 * Implementation of start timer logic
+	 * This is intended to be used directly by the command handler
 	 */
-	async _startTimerImplementation(request: ITimerToggleInput): Promise<ITimeLog> {
+	async startTimer(request: ITimerToggleInput): Promise<ITimeLog> {
 		console.log(
 			`-------------Start Timer Request (${moment.utc(request.startedAt).toDate()})-------------`,
 			JSON.stringify(request)
@@ -294,12 +302,10 @@ export class TimerService {
 	}
 
 	/**
-	 * Stop time tracking for the current employee.
-	 *
-	 * @param request The input data for stopping the timer.
-	 * @returns A Promise resolving to the updated ITimeLog entry.
+	 * Implementation of stop timer logic
+	 * This is intended to be used directly by the command handler
 	 */
-	async _stopTimerImplementation(request: ITimerToggleInput): Promise<ITimeLog> {
+	async stopTimer(request: ITimerToggleInput): Promise<ITimeLog> {
 		console.log(
 			`-------------Stop Timer Request (${moment.utc(request.stoppedAt).toDate()})-------------`,
 			JSON.stringify(request)
