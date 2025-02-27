@@ -7,7 +7,7 @@ import { ProjectResolver } from './project.resolver';
 import { ProjectCreateMutationComponent } from './components/project-create/create.component';
 import { ProjectEditMutationComponent } from './components/project-edit/edit.component';
 import { ProjectListComponent } from './components/project-list/list.component';
-import { ProjectManagerPermissionGuard } from './guards/project-manager-permission.guard';
+import { ProjectManagerOrPermissionGuard } from './guards/project-manager-or-permission.guard';
 
 const routes: Routes = [
 	{
@@ -62,7 +62,7 @@ const routes: Routes = [
 					{
 						path: 'edit',
 						component: ProjectEditMutationComponent,
-						canActivate: [ProjectManagerPermissionGuard],
+						canActivate: [ProjectManagerOrPermissionGuard],
 						data: {
 							permissions: {
 								only: [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT],
