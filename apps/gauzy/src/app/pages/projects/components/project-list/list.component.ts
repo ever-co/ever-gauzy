@@ -3,10 +3,10 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { combineLatest, debounceTime, firstValueFrom, Subject } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
+import { combineLatest, debounceTime, filter, firstValueFrom, Subject, tap } from 'rxjs';
 import { Cell } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { NgxPermissionsService } from 'ngx-permissions';
 import {
 	IOrganization,
 	PermissionsEnum,
@@ -44,7 +44,6 @@ import {
 	TagsOnlyComponent,
 	VisibilityComponent
 } from '@gauzy/ui-core/shared';
-import { NgxPermissionsService } from 'ngx-permissions';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -281,8 +280,17 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 			.map((member: IOrganizationProjectEmployee) => member.employee);
 	}
 
+	/**
+	 * Checks if the current user is a manager of a project.
+	 * @param project - The project to check.
+	 *
+	 * @returns `true` if the current user is a manager of the project, `false` otherwise.
+	 */
 	isManagerOfProject(project: IOrganizationProject): boolean {
-		return project.members.some((member) => member.isManager && member.employee.userId === this._store.user.id);
+		const manager = project.members.find(
+			(member) => member.isManager && member.employee.userId === this._store.user.id
+		);
+		return !!manager;
 	}
 
 	/**
@@ -559,19 +567,21 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 				if (!hasAllPermissions) {
 					const permissions = [PermissionsEnum.ORG_PROJECT_EDIT, PermissionsEnum.ORG_PROJECT_DELETE];
 
-					permissions.forEach((permission) =>
+					permissions.forEach((permission: PermissionsEnum) =>
 						isManager
 							? this._permissionsService.addPermission(permission)
 							: this._permissionsService.removePermission(permission)
 					);
 				}
 			}
+
 			if (this._isGridCardLayout && this._grid) {
 				if (this._grid.customComponentInstance().constructor === ProjectOrganizationGridComponent) {
 					this.disableButton = true;
-					const projectOrganizationGrid: ProjectOrganizationGridComponent =
-						this._grid.customComponentInstance<ProjectOrganizationGridComponent>();
-					await this.updateProjectVisibility(data.id, !projectOrganizationGrid.visibility);
+
+					// Get the instance of the ProjectOrganizationGridComponent
+					const instance = this._grid.customComponentInstance<ProjectOrganizationGridComponent>();
+					await this.updateProjectVisibility(data.id, !instance.visibility);
 				}
 			}
 		} catch (error) {

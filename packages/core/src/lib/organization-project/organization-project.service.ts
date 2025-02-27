@@ -57,10 +57,9 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * Creates an organization project based on the provided input.
 	 * @param input - Input data for creating the organization project.
 	 * @returns A Promise resolving to the created organization project.
-	 * @throws BadRequestException if there is an error in the creation process.
 	 */
 	async create(input: IOrganizationProjectCreateInput): Promise<IOrganizationProject> {
-		const tenantId = RequestContext.currentTenantId() || input.tenantId;
+		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 		const employeeId = RequestContext.currentEmployeeId();
 		const currentRoleId = RequestContext.currentRoleId();
 
@@ -174,12 +173,10 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * @param id - The ID of the organization project to be updated.
 	 * @param input - The updated information for the organization project.
 	 * @returns A Promise resolving to the updated organization project.
-	 * @throws ForbiddenException if the user lacks permission or if certain conditions are not met.
-	 * @throws BadRequestException if there's an error during the update process.
 	 */
 	async update(id: ID, input: IOrganizationProjectUpdateInput): Promise<IOrganizationProject> {
-		const tenantId = RequestContext.currentTenantId() || input.tenantId;
-		const { memberIds, managerIds, organizationId } = input;
+		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+		const { memberIds, managerIds, organizationId, ...entity } = input;
 
 		const organizationProject = await super.findOneByIdString(id, {
 			where: { organizationId, tenantId },
@@ -199,7 +196,14 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 					tenantId
 				);
 
-				await this.updateOrganizationProjectMembers(id, organizationId, projectMembers, managerIds, memberIds);
+				await this.updateOrganizationProjectMembers(
+					id,
+					organizationId,
+					tenantId,
+					projectMembers,
+					managerIds,
+					memberIds
+				);
 			}
 			// Update nested entity (Organization Project Members)
 
@@ -207,7 +211,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 
 			// Update the organization project with the prepared members
 			const updatedProject = await super.create({
-				...input,
+				...entity,
 				organizationId,
 				tenantId,
 				id: organizationProjectId
@@ -263,11 +267,11 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	async updateOrganizationProjectMembers(
 		organizationProjectId: ID,
 		organizationId: ID,
+		tenantId: ID,
 		employees: IEmployee[],
 		managerIds: ID[],
 		memberIds: ID[]
 	): Promise<void> {
-		const tenantId = RequestContext.currentTenantId();
 		const membersToUpdate = new Set([...managerIds, ...memberIds].filter(Boolean));
 
 		// Find the manager role
@@ -370,7 +374,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * @returns A promise that resolves with a list of projects assigned to the employee.
 	 */
 	async findByEmployee(employeeId: ID, input: IOrganizationProjectsFindInput): Promise<IOrganizationProject[]> {
-		const tenantId = RequestContext.currentTenantId() || input.tenantId; // Use the current tenant ID or fallback to input tenantId
+		const tenantId = RequestContext.currentTenantId() ?? input.tenantId; // Use the current tenant ID or fallback to input tenantId
 		const { organizationId, organizationContactId, organizationTeamId, relations = [] } = input;
 
 		// Create a query to fetch organization projects
@@ -668,7 +672,9 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			.innerJoin('project.members', 'members')
 			.where('project.id = :projectId', { projectId })
 			.andWhere('members.employeeId = :employeeId', { employeeId })
-			.andWhere('members.isManager = true')
+			.andWhere('members.isActive = :isActive', { isActive: true })
+			.andWhere('members.isArchived = :isArchived', { isArchived: false })
+			.andWhere('members.isManager = :isManager', { isManager: true })
 			.getOne();
 
 		return !!project;
