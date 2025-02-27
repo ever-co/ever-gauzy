@@ -2,7 +2,16 @@ import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
 import { UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IEmployee, IOrganization, IImageAsset, IOrganizationProject, IOrganizationTeam, ITag } from '@gauzy/contracts';
+import {
+	IEmployee,
+	IOrganization,
+	IImageAsset,
+	IOrganizationProject,
+	IOrganizationTeam,
+	ITag,
+	IUser,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import { DUMMY_PROFILE_IMAGE, distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 
@@ -70,25 +79,30 @@ export class TeamsMutationComponent implements OnInit {
 			members.updateValueAndValidity();
 		});
 
-		/**
-		 * Using setTimeout to prevents the "ExpressionChangedAfterItHasBeenCheckedError" which occurs
-		 * when updating the form after the view has been initialized.
-		 */
-		setTimeout(() => this.initializeManager());
+		if (!this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			this.setDefaultManagerIfEmployee();
+		}
 	}
 
 	/**
-	 * Automatically sets the current user as a manager if they are an employee
+	 * Automatically sets the current user as a manager if they are an employee.
 	 */
-	initializeManager() {
-		const { employee } = this.store.user;
-		if (employee) {
-			this.form.patchValue({
-				managerIds: [employee.id] // Set the logged-in user's employeeId as the default manager
-			});
-			this.form.get('managerIds').updateValueAndValidity();
-		}
+	setDefaultManagerIfEmployee(): void {
+		this.store.user$
+			.pipe(
+				filter((user) => !!user?.employee),
+				tap(({ employee }) => {
+					const managerControl = this.form.get('managerIds');
+					if (managerControl) {
+						managerControl.patchValue([employee.id]);
+						managerControl.updateValueAndValidity();
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
+
 	/**
 	 * Set Form Values based on an existing team.
 	 */
