@@ -178,12 +178,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			if (newMembers.length) {
 				try {
 					await Promise.all(
-						newMembers.map(({ userId }) => {
+						newMembers.map((member: IEmployee) => {
 							this._eventBus.publish(
 								new CreateSubscriptionEvent({
 									entity: BaseEntityEnum.Task,
 									entityId: updatedTask.id,
-									userId,
+									userId: member.userId,
 									type: SubscriptionTypeEnum.ASSIGNMENT,
 									organizationId,
 									tenantId
@@ -196,7 +196,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 									entityId: task.id,
 									type: EmployeeNotificationTypeEnum.ASSIGNMENT,
 									organizationId,
-									tenantId
+									tenantId,
+									receiverEmployeeId: member?.id,
+									sentByEmployeeId: user?.employeeId
 								},
 								NotificationActionTypeEnum.Assigned,
 								task.title,

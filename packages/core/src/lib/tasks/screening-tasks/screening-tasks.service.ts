@@ -47,12 +47,10 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 	 */
 	async create(input: IScreeningTaskCreateInput): Promise<IScreeningTask> {
 		try {
-			// Extract the current user ID and tenant ID from the request context
-			const createdByUserId = RequestContext.currentUserId();
-
+			// Extract the current user from the request context
+			const user = RequestContext.currentUser();
 			// Extract the current tenant ID from the request context or use the provided tenant ID
 			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
-
 			// Extract the organization ID from the input or use the current organization ID
 			const { organizationId, mentionEmployeeIds = [], ...data } = input;
 
@@ -97,11 +95,13 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 			});
 
 			// Apply mentions if needed
-			const mentionPromises = mentionEmployeeIds.map((mentionedUserId: ID) =>
+			const mentionPromises = mentionEmployeeIds.map((mentionedEmployeeId: ID) =>
 				this.mentionService.publishMention({
 					entity: BaseEntityEnum.Task,
 					entityId: task.id,
 					entityName: task.title,
+					mentionedEmployeeId,
+					employeeId: user?.employeeId
 				})
 			);
 
@@ -110,7 +110,7 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 				new CreateSubscriptionEvent({
 					entity: BaseEntityEnum.Task,
 					entityId: task.id,
-					userId: createdByUserId,
+					userId: user?.id,
 					type: SubscriptionTypeEnum.CREATED_ENTITY,
 					organizationId,
 					tenantId
