@@ -63,7 +63,7 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 				mentionedEmployeeId,
 				organizationId,
 				tenantId,
-				employeeId: user?.employeeId
+				employeeId: user.employeeId
 			});
 
 			// Create an user subscription for provided entity
@@ -165,7 +165,7 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 							parentEntityType,
 							mentionedEmployeeId,
 							actorType: ActorTypeEnum.User,
-							employeeId: user?.employeeId
+							employeeId: user.employeeId
 						})
 					)
 				);
