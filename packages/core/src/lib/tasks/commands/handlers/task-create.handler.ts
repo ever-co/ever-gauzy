@@ -38,7 +38,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 		private readonly _employeeService: EmployeeService,
 		private readonly mentionService: MentionService,
 		private readonly activityLogService: ActivityLogService,
-		private readonly EmployeeNotificationService: EmployeeNotificationService
+		private readonly employeeNotificationService: EmployeeNotificationService
 	) {}
 
 	/**
@@ -119,13 +119,15 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			// Apply mentions if needed
 			if (mentionEmployeeIds.length > 0) {
 				await Promise.all(
-					mentionEmployeeIds.map((mentionEmployeeId: ID) =>
+					mentionEmployeeIds.map((mentionedEmployeeId: ID) =>
 						this.mentionService.publishMention({
 							entity: BaseEntityEnum.Task,
 							entityId: task.id,
+							mentionedEmployeeId,
+							entityName: task.title,
+							employeeId: user?.employeeId,
 							organizationId,
-							tenantId,
-							entityName: task.title
+							tenantId
 						})
 					)
 				);
@@ -170,7 +172,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 								})
 							);
 
-							this.EmployeeNotificationService.publishNotificationEvent(
+							this.employeeNotificationService.publishNotificationEvent(
 								{
 									entity: BaseEntityEnum.Task,
 									entityId: task.id,
