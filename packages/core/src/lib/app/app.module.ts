@@ -164,7 +164,6 @@ import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
 import { TagTypeModule } from '../tag-type/tag-type.module';
 import { EmployeeNotificationModule } from '../employee-notification/employee-notification.module';
 import { EmployeeNotificationSettingModule } from '../employee-notification-setting/employee-notification-setting.module';
-import { MakeComIntegrationModule } from '@gauzy/plugin-integration-make-com';
 
 const { unleashConfig } = environment;
 
@@ -310,9 +309,6 @@ if (environment.THROTTLE_ENABLED) {
 			inject: [ConfigService]
 		}),
 		MulterModule.register(),
-		MakeComIntegrationModule.forRoot({
-			isGlobal: true
-		  }),
 		I18nModule.forRoot({
 			fallbackLanguage: LanguagesEnum.ENGLISH,
 			loaderOptions: {

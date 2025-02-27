@@ -139,7 +139,8 @@ export enum IntegrationEnum {
 	HUBSTAFF = 'Hubstaff',
 	GAUZY_AI = 'Gauzy_AI',
 	GITHUB = 'Github',
-	JIRA = 'Jira'
+	JIRA = 'Jira',
+	MAKE_COM = 'Make_Com'
 }
 
 export enum IntegrationEntity {
