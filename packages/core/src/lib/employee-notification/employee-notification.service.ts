@@ -43,7 +43,7 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			// Retrieve the current tenant ID from the request context or use the provided tenantId
 			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 			const organizationId = input.organizationId;
-			const employeeId = input.receiverEmployeeID;
+			const employeeId = input.receiverEmployeeId;
 
 			// Search for the receiver notification setting
 			let employeeNotificationSetting: IEmployeeNotificationSetting;

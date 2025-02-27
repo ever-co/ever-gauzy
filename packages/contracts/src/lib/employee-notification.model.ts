@@ -14,7 +14,7 @@ export interface IEmployeeNotification extends IBasePerEntityType {
 	onHoldUntil?: Date;
 	sentByEmployeeId?: ID;
 	sentByEmployee?: IEmployee;
-	receiverEmployeeID?: ID;
+	receiverEmployeeId?: ID;
 	receiverEmployee?: IEmployee;
 }
 
@@ -58,7 +58,7 @@ export interface IEmployeeNotificationCreateInput extends OmitFields<IEmployeeNo
 export interface IEmployeeNotificationUpdateInput
 	extends OmitFields<
 		IEmployeeNotification,
-		'receiverEmployee' | 'receiverEmployeeID' | 'sentByEmployee' | 'sentByEmployeeId'
+		'receiverEmployee' | 'receiverEmployeeId' | 'sentByEmployee' | 'sentByEmployeeId'
 	> {}
 
 /**
