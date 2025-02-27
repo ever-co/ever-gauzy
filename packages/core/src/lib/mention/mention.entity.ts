@@ -3,8 +3,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
 import { IsEnum, IsNotEmpty, IsObject, IsOptional, IsUUID } from 'class-validator';
-import { ActorTypeEnum, BaseEntityEnum, ID, IEmployee, IMention, IUser } from '@gauzy/contracts';
-import { BasePerEntityType, Employee, User } from '../core/entities/internal';
+import { ActorTypeEnum, BaseEntityEnum, ID, IEmployee, IMention } from '@gauzy/contracts';
+import { BasePerEntityType, Employee } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
 import { ActorTypeTransformer } from '../shared/pipes';
 import { MikroOrmMentionRepository } from './repository/mikro-orm-mention.repository';
@@ -55,7 +55,7 @@ export class Mention extends BasePerEntityType implements IMention {
 	@IsOptional()
 	@IsObject()
 	@MultiORMManyToOne(() => Employee, {
-		onDelete: 'CASCADE', // Database cascade action on delete.
+		onDelete: 'CASCADE' // Database cascade action on delete.
 	})
 	@JoinColumn()
 	mentionedEmployee?: IEmployee;
@@ -78,7 +78,7 @@ export class Mention extends BasePerEntityType implements IMention {
 	@IsOptional()
 	@MultiORMManyToOne(() => Employee, {
 		nullable: true, // Indicates if relation column value can be nullable or not.
-		onDelete: 'CASCADE', // Database cascade action on delete.
+		onDelete: 'CASCADE' // Database cascade action on delete.
 	})
 	@JoinColumn()
 	employee?: IEmployee;
@@ -93,22 +93,4 @@ export class Mention extends BasePerEntityType implements IMention {
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	employeeId?: ID;
-
-	/**
-	 * The user who created this mention.
-	 */
-	@MultiORMManyToOne(() => User, {
-		nullable: true, // The relation can be null.
-		onDelete: 'SET NULL' // If the User is deleted, set this field to null.
-	})
-	@JoinColumn()
-	createdByUser?: IUser;
-
-	/**
-	 * The ID of the user who created this mention.
-	 */
-	@RelationId((it: Mention) => it.createdByUser)
-	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, relationId: true })
-	createdByUserId?: ID;
 }

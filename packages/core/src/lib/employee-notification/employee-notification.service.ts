@@ -41,9 +41,9 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 	async create(input: IEmployeeNotificationCreateInput): Promise<IEmployeeNotification | undefined> {
 		try {
 			// Retrieve the current tenant ID from the request context or use the provided tenantId
-			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 			const organizationId = input.organizationId;
-			const employeeId = input.receiverId;
+			const employeeId = input.receiverEmployeeID;
 
 			// Search for the receiver notification setting
 			let employeeNotificationSetting: IEmployeeNotificationSetting;
@@ -57,7 +57,6 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			} catch (error) {
 				if (error instanceof NotFoundException) {
 					employeeNotificationSetting = await this._employeeNotificationSettingService.create({
-						employeeId,
 						assignment: true,
 						comment: true,
 						invitation: true,
@@ -65,6 +64,7 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 						message: true,
 						payment: true,
 						preferences: { email: true, inApp: true },
+						employeeId,
 						organizationId,
 						tenantId
 					});

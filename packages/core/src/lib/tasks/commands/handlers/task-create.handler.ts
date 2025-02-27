@@ -119,7 +119,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			// Apply mentions if needed
 			if (mentionEmployeeIds.length > 0) {
 				await Promise.all(
-					mentionEmployeeIds.map((mentionedUserId: ID) =>
+					mentionEmployeeIds.map((mentionEmployeeId: ID) =>
 						this.mentionService.publishMention({
 							entity: BaseEntityEnum.Task,
 							entityId: task.id,
@@ -175,14 +175,12 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 									entity: BaseEntityEnum.Task,
 									entityId: task.id,
 									type: EmployeeNotificationTypeEnum.ASSIGNMENT,
-									sentById: task.createdByUserId,
-									receiverId: userId,
 									organizationId,
 									tenantId
 								},
 								NotificationActionTypeEnum.Assigned,
 								task.title,
-								`${user.firstName} ${user.lastName}`
+								user.name
 							);
 						})
 					);

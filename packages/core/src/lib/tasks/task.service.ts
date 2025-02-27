@@ -195,14 +195,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 									entity: BaseEntityEnum.Task,
 									entityId: task.id,
 									type: EmployeeNotificationTypeEnum.ASSIGNMENT,
-									sentById: user.id,
-									receiverId: userId,
 									organizationId,
 									tenantId
 								},
 								NotificationActionTypeEnum.Assigned,
 								task.title,
-								`${user.firstName} ${user.lastName}`
+								user.name
 							);
 						})
 					);
