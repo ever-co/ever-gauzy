@@ -1,11 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
 import { firstValueFrom } from 'rxjs';
-import { RequestContext } from '../../../../core/src/lib/core/index';
-import { MakeComIntegrationSetting } from './make-com-settings.entity';
+import { RequestContext } from '@gauzy/core';
+import {
+  ITimerWebhookEvent,
+  TimerEventType,
+  TimerEventDataType
+} from './interfaces/timer-webwook.interface';
+import { MakeComSettingsService } from './make-com-settings.service';
 
 @Injectable()
 export class WebhookService {
@@ -14,8 +17,7 @@ export class WebhookService {
     constructor(
         private readonly configService: ConfigService,
         private readonly httpService: HttpService,
-        @InjectRepository(MakeComIntegrationSetting)
-        private readonly settingsRepository: Repository<MakeComIntegrationSetting>
+        private readonly settingsService: MakeComSettingsService
     ) {}
 
     /**
@@ -26,11 +28,11 @@ export class WebhookService {
         const tenantId = RequestContext.currentTenantId();
 
         if (tenantId) {
-            const settings = await this.settingsRepository.findOne({
-                where: { tenantId, isEnabled: true, organizationId: null }
-            });
+            // Get settings using the settings service
+            const settings = await this.settingsService.getSettingsForTenant(tenantId);
 
-            if (settings?.webhookUrl) {
+            // Check if settings exist and are enabled with a webhook URL
+            if (settings.isEnabled && settings.webhookUrl) {
                 return settings.webhookUrl;
             }
         }
@@ -46,23 +48,31 @@ export class WebhookService {
         const tenantId = RequestContext.currentTenantId();
 
         if (tenantId) {
-            const settings = await this.settingsRepository.findOne({
-                where: { tenantId, organizationId: null }
-            });
+            try {
+                // Get settings using the settings service
+                const settings = await this.settingsService.getSettingsForTenant(tenantId);
 
-            if (settings) {
-                return settings.isEnabled;
+                if (settings.isEnabled) {
+                    return true;
+                }
+            } catch (error) {
+                this.logger.error('Error checking if Make.com integration is enabled for tenant', error);
             }
         }
 
         // If no tenant settings found, check if global webhook URL exists
-        return !!this.configService.get<string>('MAKE_WEBHOOK_URL');
+        const hasGlobalUrl = !!this.configService.get<string>('MAKE_WEBHOOK_URL');
+        this.logger.debug(`No tenant settings found, using global configuration: ${hasGlobalUrl ? 'enabled' : 'disabled'}`);
+        return hasGlobalUrl;
     }
 
     /**
      * Emit timer event to Make.com webhook
      */
-    async emitTimerEvent(eventType: 'start' | 'stop' | 'status', data: any): Promise<void> {
+    async emitTimerEvent<T extends TimerEventDataType>(
+        eventType: TimerEventType,
+        data: T
+    ): Promise<void> {
         try {
             // Check if integration is enabled for the current tenant
             const isEnabled = await this.isEnabled();
@@ -78,17 +88,24 @@ export class WebhookService {
                 return;
             }
 
+            const tenantId = RequestContext.currentTenantId();
+
             // Prepare payload
-            const payload = {
+            const payload: ITimerWebhookEvent<T> = {
                 event: `timer.${eventType}`,
                 data,
                 timestamp: new Date().toISOString(),
-                tenantId: RequestContext.currentTenantId()
+                tenantId
             };
 
             // Send to webhook
-            await firstValueFrom(this.httpService.post(webhookUrl, payload));
-            this.logger.log(`Timer ${eventType} event sent to Make.com webhook for tenant ${RequestContext.currentTenantId()}`);
+            await firstValueFrom(this.httpService.post(webhookUrl, payload, {
+                timeout: 10000,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }));
+            this.logger.log(`Timer ${eventType} event sent to Make.com webhook for tenant ${tenantId}`);
         } catch (error) {
             this.logger.error(`Failed to emit timer ${eventType} event to Make.com:`, error);
         }
