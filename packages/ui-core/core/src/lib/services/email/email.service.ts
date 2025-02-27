@@ -51,7 +51,7 @@ export class EmailService {
 	}
 
 	/**
-	 * Resends an email based on the provided input.
+	 * Resend an email based on the provided input.
 	 *
 	 * @param id - The unique identifier of the email record to resend.
 	 * @param input - The payload containing resend details.
