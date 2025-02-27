@@ -125,7 +125,7 @@ export * from './lib/shared-types';
 export * from './lib/skill-entity.model';
 export * from './lib/sms.model';
 export * from './lib/social-account.model';
-export * from './lib/subscription.model';
+export * from './lib/entity-subscription.model';
 export * from './lib/tag.model';
 export * from './lib/task-estimation.model';
 export * from './lib/task-linked-issue.model';

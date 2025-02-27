@@ -6,17 +6,20 @@ import { ID, IPagination, IEntitySubscription } from '@gauzy/contracts';
 import { UseValidationPipe, UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { CrudController, OptionParams, PaginationParams } from './../core/crud';
-import { Subscription } from './subscription.entity';
-import { SubscriptionService } from './subscription.service';
-import { SubscriptionCreateCommand } from './commands';
-import { CreateSubscriptionDTO, SubscriptionFindInputDTO } from './dto';
+import { EntitySubscription } from './entity-subscription.entity';
+import { EntitySubscriptionService } from './entity-subscription.service';
+import { EntitySubscriptionCreateCommand } from './commands/entity-subscription.create.command';
+import { CreateEntitySubscriptionDTO, EntitySubscriptionFindInputDTO } from './dto';
 
-@ApiTags('Subscriptions')
+@ApiTags('EntitySubscriptions')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Controller('/subscription')
-export class SubscriptionController extends CrudController<Subscription> {
-	constructor(private readonly subscriptionService: SubscriptionService, private readonly commandBus: CommandBus) {
-		super(subscriptionService);
+@Controller('/entity-subscription')
+export class EntitySubscriptionController extends CrudController<EntitySubscription> {
+	constructor(
+		private readonly entitySubscriptionService: EntitySubscriptionService,
+		private readonly commandBus: CommandBus
+	) {
+		super(entitySubscriptionService);
 	}
 
 	@ApiOperation({
@@ -25,7 +28,7 @@ export class SubscriptionController extends CrudController<Subscription> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found subscriptions',
-		type: Subscription
+		type: EntitySubscription
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
@@ -33,8 +36,8 @@ export class SubscriptionController extends CrudController<Subscription> {
 	})
 	@Get()
 	@UseValidationPipe()
-	async findAll(@Query() params: PaginationParams<Subscription>): Promise<IPagination<IEntitySubscription>> {
-		return await this.subscriptionService.findAll(params);
+	async findAll(@Query() params: PaginationParams<EntitySubscription>): Promise<IPagination<IEntitySubscription>> {
+		return await this.entitySubscriptionService.findAll(params);
 	}
 
 	@ApiOperation({ summary: 'Find by id' })
@@ -50,9 +53,9 @@ export class SubscriptionController extends CrudController<Subscription> {
 	@UseValidationPipe()
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() params: OptionParams<Subscription>
-	): Promise<Subscription> {
-		return this.subscriptionService.findOneByIdString(id, params);
+		@Query() params: OptionParams<EntitySubscription>
+	): Promise<EntitySubscription> {
+		return this.entitySubscriptionService.findOneByIdString(id, params);
 	}
 
 	@ApiOperation({ summary: 'Subscribe to an entity' })
@@ -67,8 +70,8 @@ export class SubscriptionController extends CrudController<Subscription> {
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	@UseValidationPipe({ whitelist: true })
-	async create(@Body() entity: CreateSubscriptionDTO): Promise<IEntitySubscription> {
-		return await this.commandBus.execute(new SubscriptionCreateCommand(entity));
+	async create(@Body() entity: CreateEntitySubscriptionDTO): Promise<IEntitySubscription> {
+		return await this.commandBus.execute(new EntitySubscriptionCreateCommand(entity));
 	}
 
 	@ApiOperation({ summary: 'Unsubscribe from entity' })
@@ -85,8 +88,8 @@ export class SubscriptionController extends CrudController<Subscription> {
 	@UseValidationPipe({ whitelist: true })
 	async delete(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Query() options: SubscriptionFindInputDTO
+		@Query() options: EntitySubscriptionFindInputDTO
 	): Promise<DeleteResult> {
-		return await this.subscriptionService.unsubscribe(id, options);
+		return await this.entitySubscriptionService.unsubscribe(id, options);
 	}
 }

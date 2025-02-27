@@ -7,7 +7,7 @@ import { LanguagesEnum } from '@gauzy/contracts';
 import { DatabaseModule } from './../../database/database.module';
 import { ActivityLogModule } from '../../activity-log/activity-log.module';
 import { MentionModule } from '../../mention/mention.module';
-import { SubscriptionModule } from '../../subscription/subscription.module';
+import { EntitySubscriptionModule } from '../../entity-subscription/entity-subscription.module';
 import { SeedDataService } from './seed-data.service';
 
 /**
@@ -42,7 +42,7 @@ export class SeederModule {
 				DatabaseModule,
 				ActivityLogModule,
 				MentionModule,
-				SubscriptionModule,
+				EntitySubscriptionModule,
 				...getDynamicPluginsModules()
 			]
 		};
