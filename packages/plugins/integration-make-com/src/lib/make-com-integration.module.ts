@@ -9,7 +9,7 @@ import {
   TimerStatusUpdatedHandler
 } from './handlers';
 import { WebhookService } from './webhook.service';
-import { MakeComIntegrationSetting } from './make-com-settings.entity';
+import { IntegrationModule, IntegrationSetting, IntegrationSettingModule, IntegrationTenantModule, UserModule } from '@gauzy/core';
 import { MakeComSettingsController } from './make-com-settings.controller';
 import { MakeComSettingsService } from './make-com-settings.service';
 
@@ -23,7 +23,11 @@ export class MakeComIntegrationModule {
         HttpModule,
         ConfigModule,
         CqrsModule,
-        TypeOrmModule.forFeature([MakeComIntegrationSetting])
+        TypeOrmModule.forFeature([IntegrationSetting]),
+        IntegrationModule,
+        IntegrationSettingModule,
+        IntegrationTenantModule,
+        UserModule
       ],
       controllers: [MakeComSettingsController],
       providers: [
