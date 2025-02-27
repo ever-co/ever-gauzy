@@ -121,8 +121,6 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 						this.mentionService.publishMention({
 							entity: BaseEntityEnum.Task,
 							entityId: task.id,
-							mentionedUserId,
-							mentionById: task.createdByUserId,
 							organizationId,
 							tenantId,
 							entityName: task.title

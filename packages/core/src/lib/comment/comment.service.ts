@@ -67,15 +67,14 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 
 			// Publish mentions for each mentioned employee, if any.
 			await Promise.all(
-				mentionEmployeeIds.map((mentionedUserId) =>
+				mentionEmployeeIds.map((mentionedEmployeeId: ID) =>
 					this._mentionService.publishMention({
 						entity: BaseEntityEnum.Comment,
 						entityId: comment.id,
 						entityName: input.entityName,
-						mentionedUserId,
-						mentionById: employee.id,
 						parentEntityId: comment.entityId,
 						parentEntityType: comment.entity,
+						mentionedEmployeeId,
 						organizationId: comment.organizationId,
 						tenantId: comment.tenantId
 					})
