@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
-import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, Observable, of, tap } from 'rxjs';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { OrganizationProjectsService, Store } from '@gauzy/ui-core/core';
 
@@ -26,30 +25,35 @@ export class ProjectManagerGuard implements CanActivate {
 	 * @returns An observable that resolves to a boolean indicating whether the user is allowed to activate the route.
 	 */
 	canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
-		if (
-			!this._store.user?.employee &&
-			this._store.hasAllPermissions(PermissionsEnum.ORG_PROJECT_EDIT, PermissionsEnum.ORG_PROJECT_DELETE)
-		) {
+		// Check if the user is an employee
+		const employee = this._store.user?.employee;
+
+		// Check if the user can manage the project
+		const canManageProject = this._store.hasAllPermissions(
+			PermissionsEnum.ORG_PROJECT_EDIT,
+			PermissionsEnum.ORG_PROJECT_DELETE
+		);
+
+		// If the user is not an employee and can manage the project, allow access
+		if (!employee && canManageProject) {
 			return of(true);
 		}
+
 		// Get the project ID from the route parameters
-
 		const projectId = route.paramMap.get('id');
-		const employeeId = this._store.user?.employee?.id;
-
 		if (!projectId) {
 			this._router.navigate(['/pages/dashboard']);
 			return of(false);
 		}
 
+		// Get the employee ID from the user
+		const employeeId = employee?.id;
+
 		// Check if the user has the necessary permissions or is a manager of the project
 		return this._projectService.isManagerOfProject(projectId, employeeId).pipe(
-			map((isManager) => {
-				if (isManager) {
-					return true; // Allow access if the user is a manager or has the necessary permissions
-				} else {
+			tap((isManager) => {
+				if (!isManager) {
 					this._router.navigate(['/pages/dashboard']); // Redirect to dashboard if not a manager or does not have permission
-					return false;
 				}
 			}),
 			catchError(() => {
