@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Inject, Injectable, Type } from '@nestjs/common';
+import { CanActivate, ContextType, ExecutionContext, Inject, Injectable, Type } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
@@ -8,15 +8,18 @@ import { environment as env } from '@gauzy/config';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { deduplicate, isEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../core/context';
+import { BaseGuard } from './base.guard';
 import { RolePermissionService } from '../../role-permission/role-permission.service';
 
 @Injectable()
-export class PermissionGuard implements CanActivate {
+export class PermissionGuard extends BaseGuard implements CanActivate {
 	constructor(
-		@Inject(CACHE_MANAGER) private cacheManager: Cache,
-		private readonly _reflector: Reflector,
-		private readonly _rolePermissionService: RolePermissionService
-	) {}
+		@Inject(CACHE_MANAGER) protected _cacheManager: Cache,
+		protected readonly _reflector: Reflector,
+		protected readonly _rolePermissionService: RolePermissionService
+	) {
+		super();
+	}
 
 	/**
 	 * Checks if the user is authorized based on specified permissions.
@@ -51,7 +54,7 @@ export class PermissionGuard implements CanActivate {
 
 		let isAuthorized = false;
 
-		const fromCache = await this.cacheManager.get<boolean | null>(cacheKey);
+		const fromCache = await this._cacheManager.get<boolean | null>(cacheKey);
 
 		if (fromCache == null) {
 			console.log('User Permissions NOT loaded from Cache with key:', cacheKey);
@@ -59,7 +62,7 @@ export class PermissionGuard implements CanActivate {
 			// Check if user has the required permissions
 			isAuthorized = await this._rolePermissionService.checkRolePermission(tenantId, roleId, permissions, true);
 
-			await this.cacheManager.set(
+			await this._cacheManager.set(
 				cacheKey,
 				isAuthorized,
 				5 * 60 * 1000 // 5 minutes cache expiration time for User Permissions
