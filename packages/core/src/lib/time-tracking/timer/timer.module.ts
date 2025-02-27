@@ -8,7 +8,7 @@ import { TimerService } from './timer.service';
 import { StatisticModule } from '../statistic/statistic.module';
 import { TimerWeeklyLimitService } from './timer-weekly-limit.service';
 import { TaskModule } from '../../tasks';
-import { WebhookModule } from '@gauzy/plugin-integration-make-com';
+import { MakeComIntegrationModule } from '@gauzy/plugin-integration-make-com';
 import { StartTimerHandler, StopTimerHandler, GetTimerStatusHandler } from './handlers';
 
 @Module({
@@ -19,7 +19,7 @@ import { StartTimerHandler, StopTimerHandler, GetTimerStatusHandler } from './ha
 		forwardRef(() => StatisticModule),
 		TaskModule,
 		CqrsModule,
-		WebhookModule
+		MakeComIntegrationModule
 	],
 	controllers: [TimerController],
 	exports: [TimerService, TimerWeeklyLimitService],

@@ -30,7 +30,7 @@ export class TimerController {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_TRACKER)
 	@UseValidationPipe({ whitelist: true })
 	async getTimerStatus(@Query() query: TimerStatusQueryDTO): Promise<ITimerStatusWithWeeklyLimits> {
-		const status = await this.timerService.getTimerStatus(query);
+		const status = await this.timerService.getTimerStatusPublic(query);
 		this.timerService.checkForPeriodicSave(status.lastLog);
 		return status;
 	}
@@ -85,7 +85,7 @@ export class TimerController {
 	@Post('/start')
 	@UseValidationPipe()
 	async startTimer(@Body() entity: StartTimerDTO): Promise<ITimeLog> {
-		return await this.timerService.startTimer(entity);
+		return await this.timerService.startTimerPublic(entity);
 	}
 
 	/**
@@ -105,6 +105,6 @@ export class TimerController {
 	@Post('/stop')
 	@UseValidationPipe()
 	async stopTimer(@Body() entity: StopTimerDTO): Promise<ITimeLog | null> {
-		return await this.timerService.stopTimer(entity);
+		return await this.timerService.stopTimerPublic(entity);
 	}
 }

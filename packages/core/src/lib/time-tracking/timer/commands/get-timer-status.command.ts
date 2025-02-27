@@ -1,6 +1,6 @@
-import { ICommand } from '@nestjs/cqrs';
+import { IQuery } from '@nestjs/cqrs';
 import { ITimerStatusInput } from '@gauzy/contracts';
 
-export class GetTimerStatusCommand implements ICommand {
+export class GetTimerStatusQuery implements IQuery {
   constructor(public readonly input: ITimerStatusInput) {}
 }
