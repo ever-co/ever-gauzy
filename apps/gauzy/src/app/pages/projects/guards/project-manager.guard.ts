@@ -25,20 +25,6 @@ export class ProjectManagerGuard implements CanActivate {
 	 * @returns An observable that resolves to a boolean indicating whether the user is allowed to activate the route.
 	 */
 	canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
-		// Check if the user is an employee
-		const employee = this._store.user?.employee;
-
-		// Check if the user can manage the project
-		const canManageProject = this._store.hasAllPermissions(
-			PermissionsEnum.ORG_PROJECT_EDIT,
-			PermissionsEnum.ORG_PROJECT_DELETE
-		);
-
-		// If the user is not an employee and can manage the project, allow access
-		if (!employee && canManageProject) {
-			return of(true);
-		}
-
 		// Get the project ID from the route parameters
 		const projectId = route.paramMap.get('id');
 		if (!projectId) {
@@ -46,8 +32,25 @@ export class ProjectManagerGuard implements CanActivate {
 			return of(false);
 		}
 
+		// Check if the user can manage the project
+		const canEditProject = this._store.hasAnyPermission(
+			PermissionsEnum.ALL_ORG_EDIT,
+			PermissionsEnum.ORG_PROJECT_EDIT
+		);
+
+		// Check if the user can view the project
+		const isAbleToChangeSelectedEmployee = this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+
+		// Check if the user is an employee
+		const employee = this._store.user?.employee;
 		// Get the employee ID from the user
 		const employeeId = employee?.id;
+
+		// If the user is not an employee and can manage the project, allow access
+		if (isAbleToChangeSelectedEmployee && canEditProject) {
+			console.log(`✅ Access granted: User (employeeId: ${employee?.id}) is manager of project ${projectId}.`);
+			return of(true);
+		}
 
 		// Check if the user has the necessary permissions or is a manager of the project
 		return this._projectService.isManagerOfProject(projectId, employeeId).pipe(
