@@ -9,13 +9,13 @@ export interface IEmployeeNotification extends IBasePerEntityType {
 	title?: string;
 	message?: string;
 	type?: EmployeeNotificationTypeEnum;
-	sentById?: ID;
-	sentBy?: IEmployee;
 	isRead?: boolean;
 	readAt?: Date;
 	onHoldUntil?: Date;
-	receiverId?: ID;
-	receiver?: IEmployee;
+	sentByEmployeeId?: ID;
+	sentByEmployee?: IEmployee;
+	receiverEmployeeId?: ID;
+	receiverEmployee?: IEmployee;
 }
 
 /**
@@ -56,7 +56,10 @@ export interface IEmployeeNotificationCreateInput extends OmitFields<IEmployeeNo
  * to prevent altering relationships after creation.
  */
 export interface IEmployeeNotificationUpdateInput
-	extends OmitFields<IEmployeeNotification, 'receiverId' | 'receiver' | 'sentById' | 'sentBy'> {}
+	extends OmitFields<
+		IEmployeeNotification,
+		'receiverEmployee' | 'receiverEmployeeId' | 'sentByEmployee' | 'sentByEmployeeId'
+	> {}
 
 /**
  * Interface representing the result of marking notifications as read.
