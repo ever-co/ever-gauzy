@@ -53,7 +53,7 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 	private _getEditProject() {
 		this.project$ = this._activatedRoute.data.pipe(
 			filter((data: Data) => !!data && !!data.project),
-			map(({ project }: ) => project),
+			map(({ project }) => project),
 			tap((project) => (this.project = project)), // Assuming 'project' is a component property
 			untilDestroyed(this) // Automatically unsubscribes when the component is destroyed
 		);
