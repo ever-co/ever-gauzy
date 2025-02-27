@@ -83,7 +83,7 @@ export class EmailHistoryController {
 	}
 
 	/**
-	 * Resends an email invitation.
+	 * Resend an email invitation.
 	 *
 	 * @param entity - The DTO containing the email details to be resent.
 	 * @param languageCode - The language code to determine the email content language.

@@ -1101,7 +1101,7 @@ export class EmailService {
 	}
 
 	/**
-	 * Resends an email based on the provided email history ID, input details, and language code.
+	 * Resend an email based on the provided email history ID, input details, and language code.
 	 *
 	 * @param id - The unique identifier of the email history record.
 	 * @param input - The input object containing organization and tenant details for resending the email.
