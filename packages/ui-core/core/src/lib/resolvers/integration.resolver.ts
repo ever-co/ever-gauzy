@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { ActivatedRouteSnapshot, ResolveFn, Router } from '@angular/router';
-import { catchError, Observable, of } from 'rxjs';
+import { catchError, EMPTY, Observable, of } from 'rxjs';
 import { IIntegrationTenant } from '@gauzy/contracts';
 import { IntegrationsService, Store } from '../services';
 
@@ -41,17 +41,21 @@ export const IntegrationResolver: ResolveFn<Observable<IIntegrationTenant | bool
 
 		// Handle errors and redirect if an error occurs
 		return integration$.pipe(
-			catchError((error) => {
-				if (error.status === 403) {
-					console.warn('Access to integration is forbidden (403), continuing without integration data.');
-					return of(null);
+			catchError(() => {
+				if (route.data.allowMissingIntegration) {
+					return of(false);
 				}
-				console.error('Unexpected error in IntegrationResolver:', error);
-				return of(null);
+
+				// Redirect to the "new integration" page if an error occurs
+				_router.navigate(['/pages/integrations/new']);
+				// Return an empty observable to prevent further actions
+				return EMPTY;
 			})
 		);
 	} catch (error) {
-		console.error('Unexpected error in IntegrationResolver:', error);
-		return of(null);
+		// Handle any synchronous errors and redirect to "new integration" page
+		_router.navigate(['/pages/integrations/new']);
+		// Return an empty observable
+		return EMPTY;
 	}
 };
