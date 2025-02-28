@@ -4203,7 +4203,8 @@
 			"TASK": "Veuillez sélectionner une tâche.",
 			"PROJECT": "Veuillez sélectionner un projet.",
 			"EMPLOYEE": "Veuillez sélectionner un employé.",
-			"REASON": "Veuillez sélectionner une raison."
+			"REASON": "Veuillez sélectionner une raison.",
+			"DATE_START_END_TIME_REQUIRED": "La date, l'heure de début et l'heure de fin sont requises."
 		},
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Captures d'écran",

@@ -4199,7 +4199,8 @@
 			"TASK": "Bitte wählen Sie eine Aufgabe aus",
 			"PROJECT": "Bitte wählen Sie das Projekt aus.",
 			"EMPLOYEE": "Bitte wählen Sie einen Mitarbeiter aus.",
-			"REASON": "Bitte wählen Sie einen Grund aus"
+			"REASON": "Bitte wählen Sie einen Grund aus",
+			"DATE_START_END_TIME_REQUIRED": "Datum, Startzeit und Endzeit sind erforderlich."
 		},
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Fotos des Bildschirms",

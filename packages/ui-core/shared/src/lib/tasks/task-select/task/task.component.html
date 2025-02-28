@@ -10,6 +10,7 @@
 		bindLabel="title"
 		appendTo="body"
 		[multiple]="multiple"
+		(click)="markAsTouchedOnInteraction()"
 	>
 		<!-- Full title for the dropdown list -->
 		<ng-template ng-option-tmp let-task="item">

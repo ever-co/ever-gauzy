@@ -4203,7 +4203,8 @@
 			"TASK": "Proszę wybierz zadanie",
 			"PROJECT": "Proszę wybierz projekt",
 			"EMPLOYEE": "Proszę wybrać pracownika",
-			"REASON": "Proszę wybierz powód"
+			"REASON": "Proszę wybierz powód",
+			"DATE_START_END_TIME_REQUIRED": "Data, godzina rozpoczęcia i godzina zakończenia są wymagane."
 		},
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Zrzuty ekranu",

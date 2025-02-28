@@ -4216,7 +4216,8 @@
 			"TASK": "יש לבחור משימה",
 			"PROJECT": "יש לבחור פרויקט",
 			"EMPLOYEE": "יש לבחור עובד",
-			"REASON": "יש לבחור סיבה"
+			"REASON": "יש לבחור סיבה",
+			"DATE_START_END_TIME_REQUIRED": "תאריך, שעת התחלה ושעת סיום נדרשים."
 		},
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "תמונות מסך",

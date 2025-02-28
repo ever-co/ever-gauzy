@@ -4203,7 +4203,8 @@
 			"TASK": "请选择任务",
 			"PROJECT": "请选择项目",
 			"EMPLOYEE": "请选择员工",
-			"REASON": "请选择原因"
+			"REASON": "请选择原因",
+			"DATE_START_END_TIME_REQUIRED": "日期、开始时间和结束时间是必填项。"
 		},
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "截图",

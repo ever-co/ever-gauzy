@@ -4205,7 +4205,8 @@
 			"TASK": "Por favor, seleccione una tarea.",
 			"PROJECT": "Por favor, seleccionar proyecto.",
 			"EMPLOYEE": "Por favor, selecciona un empleado.",
-			"REASON": "Por favor, seleccione una razón."
+			"REASON": "Por favor, seleccione una razón.",
+			"DATE_START_END_TIME_REQUIRED": "La fecha, la hora de inicio y la hora de finalización son obligatorias."
 		},
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Capturas de pantalla",

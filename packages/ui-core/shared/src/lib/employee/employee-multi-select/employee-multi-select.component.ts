@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnInit, forwardRef, OnDestroy } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, forwardRef } from '@angular/core';
 import { NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
 import { combineLatest, filter, Subject, tap } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -20,7 +20,7 @@ import { Store } from '@gauzy/ui-core/core';
 		}
 	]
 })
-export class EmployeeSelectComponent implements OnInit, OnDestroy {
+export class EmployeeSelectComponent implements OnInit {
 	loaded: boolean;
 	preSelected: string[] | string;
 
@@ -87,6 +87,7 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	@Input() label = 'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES';
 	@Input() disabled = false;
 	@Input() placeholder = 'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES';
+	@Input() customClass?: string = '';
 	select: FormControl = new FormControl();
 
 	private _allEmployees: IEmployee[];
@@ -99,6 +100,7 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	public selectedDateRange: IDateRangePicker;
 
 	async ngOnInit(): Promise<void> {
+		this.select = new FormControl({ value: this.val, disabled: this.disabled });
 		this.changeValue$.pipe(debounceTime(100), untilDestroyed(this)).subscribe((value) => {
 			this.checkForMultiSelectValue(value);
 			this.onChange(this.val);
@@ -160,6 +162,16 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 
 	setDisabledState(isDisabled: boolean): void {
 		this.disabled = isDisabled;
+		if (isDisabled) {
+			this.select.disable();
+		} else {
+			this.select.enable();
+		}
+	}
+
+	// Removed direct binding from the template
+	set disabledState(isDisabled: boolean) {
+		this.setDisabledState(isDisabled);
 	}
 
 	/**
@@ -180,6 +192,4 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 		);
 		this.employees = items;
 	}
-
-	ngOnDestroy(): void {}
 }

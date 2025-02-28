@@ -6,28 +6,11 @@ import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { NgxPermissionsService } from 'ngx-permissions';
 import { faStopwatch, faPlay, faPause } from '@fortawesome/free-solid-svg-icons';
 import { Environment, environment } from '@gauzy/ui-config';
-import {
-	IOrganization,
-	IUser,
-	IDateRange,
-	TimeLogType,
-	PermissionsEnum,
-	TimeLogSourceEnum,
-	IEmployee,
-	ITimerToggleInput
-} from '@gauzy/contracts';
-import { distinctUntilChange, toLocal, toUTC } from '@gauzy/ui-core/common';
-import {
-	ErrorHandlingService,
-	ITimerSynced,
-	Store,
-	TimeTrackerService,
-	TimesheetService,
-	ToastrService
-} from '@gauzy/ui-core/core';
+import { IOrganization, IUser, TimeLogType, IEmployee, ITimerToggleInput } from '@gauzy/contracts';
+import { distinctUntilChange, toLocal } from '@gauzy/ui-core/common';
+import { ErrorHandlingService, ITimerSynced, Store, TimeTrackerService } from '@gauzy/ui-core/core';
 import { TimeTrackerStatusService } from '../components/time-tracker-status/time-tracker-status.service';
 
 @UntilDestroy({ checkProperties: true })
@@ -51,12 +34,9 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	todaySessionTime = moment().set({ hour: 0, minute: 0, second: 0 }).format('HH:mm:ss');
 	currentSessionTime = moment().set({ hour: 0, minute: 0, second: 0 }).format('HH:mm:ss');
 	running: boolean;
-	today: Date = new Date();
-	selectedRange: IDateRange = { start: null, end: null };
 	user: IUser;
 	employee: IEmployee;
 	organization: IOrganization;
-	PermissionsEnum = PermissionsEnum;
 	timeLogType = TimeLogType;
 	hideAlert = false;
 
@@ -67,12 +47,9 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private readonly timeTrackerService: TimeTrackerService,
-		private readonly timesheetService: TimesheetService,
-		private readonly toastrService: ToastrService,
 		private readonly store: Store,
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly themeService: NbThemeService,
-		private readonly ngxPermissionsService: NgxPermissionsService,
 		private readonly _timeTrackerStatusService: TimeTrackerStatusService
 	) {
 		this._timeTrackerStatusService.external$
@@ -335,52 +312,6 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 			this._errorHandlingService.handleError(error);
 		}
 		this.isDisable = false;
-	}
-
-	async addTime() {
-		if (!this.organization || this.form.invalid) {
-			return;
-		}
-		const { allowManualTime, id: organizationId } = this.organization;
-		const { tenantId } = this.store.user;
-
-		if (!(allowManualTime && (await this.ngxPermissionsService.hasPermission(PermissionsEnum.ALLOW_MANUAL_TIME)))) {
-			return;
-		}
-
-		const startedAt = toUTC(this.selectedRange.start).toDate();
-		const stoppedAt = toUTC(this.selectedRange.end).toDate();
-		const payload = Object.assign(
-			{
-				startedAt,
-				stoppedAt,
-				organizationId,
-				tenantId
-			},
-			this.timeTrackerService.timerConfig
-		);
-
-		this.timesheetService
-			.addTime(payload)
-			.then((timeLog) => {
-				this.timesheetService.updateLogs(true);
-				this.timeTrackerService.checkTimerStatus({
-					organizationId,
-					tenantId,
-					source: TimeLogSourceEnum.WEB_TIMER
-				});
-				if (moment.utc(timeLog.startedAt).local().isSame(new Date(), 'day')) {
-					this.timeTrackerService.duration = this.timeTrackerService.duration + timeLog.duration;
-				}
-
-				this.form.resetForm();
-				this.selectedRange = { start: null, end: null };
-
-				this.toastrService.success('TIMER_TRACKER.ADD_TIME_SUCCESS');
-			})
-			.catch((error) => {
-				this.toastrService.danger(error);
-			});
 	}
 
 	setTimeType(type: string) {

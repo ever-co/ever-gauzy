@@ -1,8 +1,8 @@
-import { Component, OnInit, Input, OnDestroy, AfterViewInit, ChangeDetectorRef } from '@angular/core';
-import { FormGroup, FormBuilder } from '@angular/forms';
+import { Component, OnInit, Input, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { combineLatest, debounceTime, filter, Subject, tap } from 'rxjs';
+import { combineLatest, debounceTime, filter, Subject, Subscription, tap } from 'rxjs';
 import * as moment from 'moment';
 import { omit } from 'underscore';
 import {
@@ -24,13 +24,13 @@ import { Store, TimesheetService, ToastrService } from '@gauzy/ui-core/core';
 	templateUrl: './edit-time-log-modal.component.html',
 	styleUrls: ['./edit-time-log-modal.component.scss']
 })
-export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestroy {
+export class EditTimeLogModalComponent implements OnInit, AfterViewInit {
 	// Permissions and basic state initialization
 	PermissionsEnum = PermissionsEnum;
 	organization: IOrganization;
 	today: Date = new Date();
 	mode: 'create' | 'update' = 'create';
-	loading: boolean = false;
+	loading = false;
 	overlaps: ITimeLog[] = [];
 
 	// Date range and time-related properties
@@ -39,12 +39,13 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 
 	// Employee-related properties
 	employee: ISelectedEmployee;
-	futureDateAllowed: boolean = false;
-	subject$: Subject<any> = new Subject();
+	futureDateAllowed = false;
+	subject$: Subject<boolean> = new Subject();
 
 	// Additional properties
 	reasons: string[] = ['Worked offline', 'Internet issue', 'Forgot to track', 'Usability issue', 'App issue'];
-	selectedReason: string = '';
+	selectedReason = '';
+	selectedRangeSubscription: Subscription;
 
 	// Time log state management
 	private _timeLog: ITimeLog | Partial<ITimeLog> = {};
@@ -63,7 +64,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 	static buildForm(fb: FormBuilder, self: EditTimeLogModalComponent): FormGroup {
 		return fb.group({
 			isBillable: [true],
-			employeeId: [],
+			employeeId: [null, Validators.required],
 			projectId: [],
 			organizationContactId: [],
 			organizationTeamId: [],
@@ -115,6 +116,9 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 
 		const employeeId$ = this.form.get('employeeId').valueChanges;
 		const selectedRange$ = this.form.get('selectedRange').valueChanges;
+		this.selectedRangeSubscription = selectedRange$.subscribe((selectedRange) => {
+			this.selectedRange = selectedRange;
+		});
 
 		// Combine employeeId and selectedRange value changes
 		combineLatest([employeeId$, selectedRange$])
@@ -127,11 +131,16 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 					this.selectedRange = selectedRange;
 
 					const { start, end } = selectedRange;
-					const startMoment = moment(start);
-					const endMoment = moment(end);
 
-					if (startMoment.isValid() && endMoment.isValid()) {
-						this.timeDiff = new Date(endMoment.diff(startMoment, 'seconds'));
+					if (start && end) {
+						const startMoment = moment(start);
+						const endMoment = moment(end);
+
+						if (startMoment.isValid() && endMoment.isValid()) {
+							this.timeDiff = new Date(endMoment.diff(startMoment, 'seconds'));
+						} else {
+							this.timeDiff = null;
+						}
 					} else {
 						this.timeDiff = null;
 					}
@@ -151,6 +160,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 
 		// Initialize form with the time log values
 		this.populateFormWithTimeLog(this._timeLog);
+		this._cdr.detectChanges();
 	}
 
 	/**
@@ -247,7 +257,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 					const timeLogStoppedAt = toLocal(timeLog.stoppedAt);
 
 					// Calculate overlap duration
-					let overlapDuration = this.calculateOverlapDuration(
+					const overlapDuration = this.calculateOverlapDuration(
 						timeLogStartedAt.toDate(),
 						timeLogStoppedAt.toDate(),
 						startDate,
@@ -309,9 +319,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 	 * @returns {Promise<void>} - Resolves after the time log is added or updated.
 	 */
 	async addTime(): Promise<void> {
-		if (this.form.invalid) {
-			return;
-		}
+		if (this.loading || this.isButtonDisabled) return;
 
 		try {
 			this.loading = true;
@@ -413,5 +421,25 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 		return formControl ? formControl.value : '';
 	}
 
-	ngOnDestroy(): void {}
+	isValidSelectedRange(selectedRange: IDateRange) {
+		const { start, end } = selectedRange;
+		const startMoment = moment(start);
+		const endMoment = moment(end);
+
+		if (startMoment.isValid() && endMoment.isValid()) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	get isButtonDisabled(): boolean {
+		return this.form.invalid || !this.isValidSelectedRange(this.selectedRange) || this.overlaps?.length > 0;
+	}
+
+	ngOnDestroy(): void {
+		if (this.selectedRangeSubscription) {
+			this.selectedRangeSubscription.unsubscribe();
+		}
+	}
 }

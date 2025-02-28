@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
+import { Component, OnInit, Input, forwardRef } from '@angular/core';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 import { Subject, firstValueFrom, Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
@@ -19,8 +19,8 @@ import { AuthService, Store, TasksService, ToastrService } from '@gauzy/ui-core/
 		}
 	]
 })
-export class TaskSelectorComponent implements OnInit, OnDestroy, ControlValueAccessor {
-	private _multiple: boolean = false;
+export class TaskSelectorComponent implements OnInit, ControlValueAccessor {
+	private _multiple = false;
 	public get multiple(): boolean {
 		return this._multiple;
 	}
@@ -31,7 +31,7 @@ export class TaskSelectorComponent implements OnInit, OnDestroy, ControlValueAcc
 	/*
 	 * Getter & Setter for dynamic enabled/disabled element
 	 */
-	_disabled: boolean = false;
+	_disabled = false;
 	public get disabled(): boolean {
 		return this._disabled;
 	}
@@ -42,7 +42,7 @@ export class TaskSelectorComponent implements OnInit, OnDestroy, ControlValueAcc
 	/*
 	 * Getter & Setter for dynamic add task option
 	 */
-	_addTag: boolean = true;
+	_addTag = true;
 	get addTag(): boolean {
 		return this._addTag;
 	}
@@ -84,7 +84,6 @@ export class TaskSelectorComponent implements OnInit, OnDestroy, ControlValueAcc
 	public set taskId(value: string) {
 		this._taskId = value;
 		this.onChange(value);
-		this.onTouched(value);
 	}
 
 	public organization: IOrganization;
@@ -219,5 +218,7 @@ export class TaskSelectorComponent implements OnInit, OnDestroy, ControlValueAcc
 		}
 	}
 
-	ngOnDestroy(): void {}
+	markAsTouchedOnInteraction(): void {
+		this.onTouched();
+	}
 }

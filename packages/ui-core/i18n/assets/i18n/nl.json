@@ -4203,7 +4203,8 @@
 			"TASK": "Selecteer alstublieft een taak",
 			"PROJECT": "Selecteer alstublieft het project.",
 			"EMPLOYEE": "Selecteer alstublieft een medewerker.",
-			"REASON": "Selecteer alstublieft de reden"
+			"REASON": "Selecteer alstublieft de reden",
+			"DATE_START_END_TIME_REQUIRED": "Datum, starttijd en eindtijd zijn vereist."
 		},
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Screenshots",

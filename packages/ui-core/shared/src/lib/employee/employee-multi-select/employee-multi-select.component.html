@@ -1,4 +1,4 @@
-<label class="label" *ngIf="label">{{ label | translate }}</label>
+<label class="label" [ngClass]="customClass" *ngIf="label">{{ label | translate }}</label>
 <ng-template [ngIf]="loaded">
 	<nb-select
 		[formControl]="select"
@@ -6,7 +6,6 @@
 		(selectedChange)="onMembersSelected($event)"
 		(click)="markAsTouchedOnInteraction()"
 		fullWidth
-		[disabled]="disabled"
 		[(selected)]="preSelected"
 		[placeholder]="placeholder | translate"
 	>

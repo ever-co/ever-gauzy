@@ -4335,7 +4335,8 @@
 			"TASK": "Please select task",
 			"PROJECT": "Please select project",
 			"EMPLOYEE": "Please select employee",
-			"REASON": "Please select reason"
+			"REASON": "Please select reason",
+			"DATE_START_END_TIME_REQUIRED": "Date, start time, and end time are required."
 		},
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Screenshots",

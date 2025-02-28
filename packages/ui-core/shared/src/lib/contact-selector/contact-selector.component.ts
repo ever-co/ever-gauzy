@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, forwardRef, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit, Input, forwardRef, AfterViewInit } from '@angular/core';
 import { ContactType, IEmployee, IOrganization, IOrganizationContact, PermissionsEnum } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, Subject } from 'rxjs';
@@ -22,7 +22,7 @@ import { OrganizationContactService } from '@gauzy/ui-core/core';
 		}
 	]
 })
-export class ContactSelectorComponent implements AfterViewInit, OnInit, OnDestroy {
+export class ContactSelectorComponent implements AfterViewInit, OnInit {
 	public organization: IOrganization;
 	contacts: IOrganizationContact[] = [];
 
@@ -162,5 +162,7 @@ export class ContactSelectorComponent implements AfterViewInit, OnInit, OnDestro
 		}
 	};
 
-	ngOnDestroy(): void {}
+	markAsTouchedOnInteraction(): void {
+		this.onTouched();
+	}
 }

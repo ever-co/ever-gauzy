@@ -6,7 +6,7 @@
   right: 20px;
   top: 80px;
   .status {
-	position: absolute;
+    position: absolute;
     left: 9.5rem;
     top: 0;
   }
@@ -38,6 +38,7 @@
   .timer-container {
     display: flex;
     align-items: flex-start;
+    align-items: center;
 
     .time-tracker {
       width: 100%;
@@ -118,8 +119,7 @@
       color: #ffffff;
       opacity: 0.4;
     }
-    .timer,
-    .time-manual {
+    .timer {
       display: flex;
       flex-direction: column;
       width: 100%;
@@ -232,35 +232,35 @@ h6 {
   @include dialog(var(--gauzy-card-1), var(--gauzy-sidebar-background-4));
 }
 
-nb-card-footer{
+nb-card-footer {
   position: absolute;
   width: calc(100% + 48px);
   left: -24px;
   bottom: -128px;
 
-    .alert {
-      width: 100%;
-      display: flex;
-      flex-direction: row;
-      align-items: flex-start;
-      gap: 0.25rem;
-      font-size: 12px;
-      border-radius: var(--border-radius);
+  .alert {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 0.25rem;
+    font-size: 12px;
+    border-radius: var(--border-radius);
 
-      nb-icon {
-        width: 30px;
-        height: 18px;
-      }
+    nb-icon {
+      width: 30px;
+      height: 18px;
+    }
 
-      div {
-        line-height: 1.5em;
-      }
+    div {
+      line-height: 1.5em;
+    }
 
-      ::ng-deep {
-        .close {
-          padding: 4px 8px;
-          font-size: 1rem;
-        }
+    ::ng-deep {
+      .close {
+        padding: 4px 8px;
+        font-size: 1rem;
       }
     }
+  }
 }

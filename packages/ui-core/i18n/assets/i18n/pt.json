@@ -4203,7 +4203,8 @@
 			"TASK": "Por favor, selecione a tarefa.",
 			"PROJECT": "Por favor, selecione o projeto.",
 			"EMPLOYEE": "Por favor, selecione o funcionário.",
-			"REASON": "Por favor, selecione o motivo."
+			"REASON": "Por favor, selecione o motivo.",
+			"DATE_START_END_TIME_REQUIRED": "A data, a hora de início e a hora de término são obrigatórias."
 		},
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Capturas de tela",
