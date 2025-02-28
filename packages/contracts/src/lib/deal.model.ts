@@ -1,5 +1,4 @@
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
-import { IHasUserCreator } from './user.model';
 import { IPipelineStage } from './pipeline-stage.model';
 import { IOrganizationContact } from './organization-contact.model';
 
@@ -14,7 +13,7 @@ interface IDealBase extends IBasePerTenantAndOrganizationEntityModel {
 }
 
 // IDeal interface with the additional stage and user creator properties
-export interface IDeal extends IDealBase, IHasUserCreator {}
+export interface IDeal extends IDealBase {}
 
 // IDealCreateInput interface, omitting user-related fields from IDeal
 export interface IDealCreateInput extends IDealBase {}
