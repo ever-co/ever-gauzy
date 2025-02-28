@@ -310,7 +310,7 @@
 				</div>
 				<div class="block">
 					<div class="row group d-flex flex-column">
-						<div class="label label-group">{{ 'INVOICES_PAGE.DISCOUNT' | translate }}</div>
+						<label class="label label-group">{{ 'INVOICES_PAGE.DISCOUNT' | translate }}</label>
 						<div class="col-sm-6">
 							<div class="form-group">
 								<label for="inputDiscountValue" class="label">{{
@@ -352,7 +352,7 @@
 					</div>
 
 					<div class="row group d-flex flex-column">
-						<div class="label label-group">{{ 'INVOICES_PAGE.INVOICES_TAXES' | translate }}</div>
+						<label class="label label-group">{{ 'INVOICES_PAGE.INVOICES_TAXES' | translate }}</label>
 						<div class="row">
 							<div class="col-sm-6">
 								<div class="form-group">
@@ -426,6 +426,32 @@
 											value="{{ discountTaxType }}"
 										>
 											{{ 'INVOICES_PAGE.' + discountTaxType | translate }}
+										</nb-option>
+									</nb-select>
+								</div>
+							</div>
+						</div>
+						<div
+							class="row"
+							*ngIf="form.get('taxType').value === 'PERCENT' && form.get('tax2Type').value === 'PERCENT'"
+						>
+							<div class="col-sm-12">
+								<div class="form-group">
+									<label for="inputTaxCalculationType" class="label">{{
+										'INVOICES_PAGE.TAX_CALCULATION_TYPE' | translate
+									}}</label>
+									<nb-select
+										formControlName="taxCalculationType"
+										placeholder="{{ 'INVOICES_PAGE.TAX_CALCULATION_TYPE' | translate }}"
+										(ngModelChange)="calculateTotal()"
+										id="inputTaxCalculationType"
+										fullWidth
+									>
+										<nb-option
+											*ngFor="let taxCalculationType of taxCalculationTypes"
+											value="{{ taxCalculationType }}"
+										>
+											{{ 'INVOICES_PAGE.' + taxCalculationType | translate }}
 										</nb-option>
 									</nb-select>
 								</div>

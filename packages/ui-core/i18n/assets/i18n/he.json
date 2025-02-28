@@ -2279,7 +2279,7 @@
 			"ORG_TASK_SETTING": "Task Settings",
 			"ORG_MEMBER_LAST_LOG_VIEW": "צפה ביומן האחרון",
 			"API_CALL_LOG_READ": "קרא יומן קריאות API",
-  			"API_CALL_LOG_DELETE": "מחק יומן קריאות API",
+			"API_CALL_LOG_DELETE": "מחק יומן קריאות API",
 			"TENANT_API_KEY_CREATE": "יצירת מפתח API",
 			"TENANT_API_KEY_VIEW": "הצגת מפתח API",
 			"TENANT_API_KEY_DELETE": "מחיקת מפתח API",
@@ -3092,6 +3092,9 @@
 		"ALREADY_PAID": "כבר שולם",
 		"AMOUNT_DUE": "סכום לתשלום",
 		"INVOICED_REMAINING_AMOUNT": "סכום שנותר בחשבונית",
+		"TAX_CALCULATION_TYPE": "סוג חישוב מס",
+		"SIMPLE": "פשוט",
+		"COMPOSED": "מורכב",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "סוג חשבונית",
 			"ESTIMATE_TYPE": "סוג הערכה",
