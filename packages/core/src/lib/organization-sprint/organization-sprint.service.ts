@@ -293,7 +293,9 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 								entity: BaseEntityEnum.OrganizationSprint,
 								entityId: organizationSprintId,
 								employeeId: member.employee.id,
-								type: EntitySubscriptionTypeEnum.ASSIGNMENT
+								type: EntitySubscriptionTypeEnum.ASSIGNMENT,
+								organizationId,
+								tenantId
 							})
 					)
 				);

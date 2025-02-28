@@ -86,7 +86,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 */
 	async update(id: ID, input: Partial<ITaskUpdateInput>): Promise<ITask> {
 		try {
-			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 			const userId = RequestContext.currentUserId();
 
 			const user = RequestContext.currentUser();
@@ -162,6 +162,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			}
 
 			const { organizationId } = updatedTask;
+
 			// Unsubscribe members who were unassigned from task
 			if (removedMembers.length > 0) {
 				try {
@@ -172,7 +173,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 									entity: BaseEntityEnum.Task,
 									entityId: updatedTask.id,
 									employeeId: member.id,
-									type: EntitySubscriptionTypeEnum.ASSIGNMENT
+									type: EntitySubscriptionTypeEnum.ASSIGNMENT,
+									organizationId,
+									tenantId
 								})
 						)
 					);
