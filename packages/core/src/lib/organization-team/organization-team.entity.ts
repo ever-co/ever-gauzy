@@ -19,8 +19,7 @@ import {
 	ITaskSize,
 	ITaskStatus,
 	ITaskVersion,
-	ITaskView,
-	IUser
+	ITaskView
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
@@ -43,8 +42,7 @@ import {
 	TaskStatus,
 	TaskVersion,
 	TaskView,
-	TenantOrganizationBaseEntity,
-	User
+	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import {
 	ColumnIndex,
