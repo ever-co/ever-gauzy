@@ -4,7 +4,6 @@ import { Repository } from 'typeorm';
 import { IntegrationSetting } from '@gauzy/core';
 import { UpdateMakeComSettingsDTO } from './dto/update-make-com-settings.dto';
 import { ID } from '@gauzy/contracts';
-import { RequestContext } from '@gauzy/core';
 
 // Define Make.com integration setting names
 export enum MakeSettingName {
@@ -13,8 +12,8 @@ export enum MakeSettingName {
 }
 
 @Injectable()
-export class MakeComSettingsService {
-  private readonly logger = new Logger(MakeComSettingsService.name);
+export class MakeComService {
+  private readonly logger = new Logger(MakeComService.name);
 
   constructor(
     @InjectRepository(IntegrationSetting)
@@ -42,7 +41,6 @@ export class MakeComSettingsService {
         organizationId,
         MakeSettingName.WEBHOOK_URL
       );
-      console.log('enabledSetting############', enabledSetting);
 
       return {
         isEnabled: enabledSetting?.settingsValue === 'true',

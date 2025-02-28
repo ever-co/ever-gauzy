@@ -28,11 +28,23 @@
 	},
 	"dependencies": {
 		"tslib": "^2.3.0",
-		"@gauzy/config": "^0.1.0",
+		"@nestjs/axios": "^2.0.0",
+		"@nestjs/common": "^9.2.1",
+		"@nestjs/config": "^2.3.1",
+		"@nestjs/core": "^9.2.1",
+		"@nestjs/cqrs": "^9.0.3",
+		"@nestjs/swagger": "^6.2.1",
+		"@nestjs/typeorm": "^9.0.1",
+		"@gauzy/common": "^0.1.0",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
-		"@gauzy/utils": "^0.1.0",
-		"@nestjs/common": "^10.4.15",
-		"@nestjs/core": "^10.4.15"
+		"axios": "^1.3.4",
+		"chalk": "4.1.2",
+		"class-transformer": "^0.5.1",
+		"class-validator": "^0.14.0",
+		"rxjs": "^7.5.7",
+		"typeorm": "^0.3.11"
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",
@@ -40,9 +52,10 @@
 		"typescript": "5.5.4"
 	},
 	"keywords": [
-		"make",
+		"make.com",
 		"webhook",
 		"integration",
+		"plugin",
 		"Ever Gauzy",
 		"NestJS",
 		"typescript",

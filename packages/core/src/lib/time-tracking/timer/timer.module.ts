@@ -6,10 +6,9 @@ import { RolePermissionModule } from '../../role-permission/role-permission.modu
 import { TimerController } from './timer.controller';
 import { TimerService } from './timer.service';
 import { StartTimerHandler, StopTimerHandler, GetTimerStatusHandler } from './commands/handlers';
-import { MakeComIntegrationModule } from '@gauzy/plugin-integration-make-com';
 
 @Module({
-	imports: [RolePermissionModule, TimeLogModule, EmployeeModule, CqrsModule, MakeComIntegrationModule],
+	imports: [RolePermissionModule, TimeLogModule, EmployeeModule, CqrsModule],
 	controllers: [TimerController],
 	exports: [TimerService],
 	providers: [TimerService, StartTimerHandler, StopTimerHandler, GetTimerStatusHandler]
