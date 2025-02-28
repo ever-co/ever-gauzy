@@ -16,12 +16,17 @@ export class GetTimerStatusHandler implements ICommandHandler<GetTimerStatusQuer
   async execute(command: GetTimerStatusQuery): Promise<ITimerStatus> {
     const { input } = command;
 
-    // Use the existing implementation
-    const status = await this.timerService.getTimerStatus(input);
+    try {
+       // Get timer status
+      const status = await this.timerService.getTimerStatus(input);
 
-    // Publish the event
-    this.eventBus.publish(new TimerStatusUpdatedEvent(status));
-
-    return status;
+        // Publish the event
+      this.eventBus.publish(new TimerStatusUpdatedEvent(status));
+        return status;
+      } catch (error) {
+        // Log the error
+      console.error('Error getting timer status:', error);
+      throw error;
+    }
   }
 }

@@ -3,7 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { RequestContext } from '@gauzy/core';
-import { ITimerWebhookEvent, TimerEventType, TimerEventDataType } from './interfaces/timer-webwook.interface';
+import { ITimerWebhookEvent, TimerEventType, TimerEventDataType } from './interfaces/timer-webhook.interface';
 import { MakeComService } from './make-com.service';
 
 @Injectable()
