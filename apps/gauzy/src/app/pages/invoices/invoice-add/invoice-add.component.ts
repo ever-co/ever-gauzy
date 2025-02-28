@@ -1015,10 +1015,8 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 		if (this.discountAfterTax && this.form.value.discountType === DiscountTaxTypeEnum.PERCENT) {
 			totalDiscount = (this.subtotal + totalTax) * (+discountValue / 100);
 		}
-		console.log(this.subtotal, totalTax);
 
 		this.total = this.subtotal - totalDiscount + totalTax;
-		console.log(this.total);
 
 		if (this.total < 0) {
 			this.total = 0;
