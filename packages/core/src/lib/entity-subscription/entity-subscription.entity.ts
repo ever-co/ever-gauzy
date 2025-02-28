@@ -2,14 +2,14 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
-import { IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsObject, IsOptional, IsUUID } from 'class-validator';
 import { ActorTypeEnum, ID, IEmployee, IEntitySubscription, EntitySubscriptionTypeEnum } from '@gauzy/contracts';
 import { BasePerEntityType, Employee } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
 import { ActorTypeTransformer } from '../shared/pipes';
 import { MikroOrmEntitySubscriptionRepository } from './repository/mikro-orm-entity-subscription.repository';
 
-@MultiORMEntity('entity_subscription', { mikroOrmRepository: () => MikroOrmEntitySubscriptionRepository })
+@MultiORMEntity('subscription', { mikroOrmRepository: () => MikroOrmEntitySubscriptionRepository })
 export class EntitySubscription extends BasePerEntityType implements IEntitySubscription {
 	[EntityRepositoryType]?: MikroOrmEntitySubscriptionRepository;
 
@@ -39,6 +39,9 @@ export class EntitySubscription extends BasePerEntityType implements IEntitySubs
 	/**
 	 * The employee who subscribed to the entity.
 	 */
+	@ApiPropertyOptional({ type: () => Employee })
+	@IsOptional()
+	@IsObject()
 	@MultiORMManyToOne(() => Employee, {
 		onDelete: 'CASCADE' // Database cascade action on delete.
 	})

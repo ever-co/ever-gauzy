@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { DeleteResult } from 'typeorm';
 import {
 	ID,
@@ -47,15 +47,10 @@ export class EntitySubscriptionService extends TenantAwareCrudService<EntitySubs
 				if (entitySubscription) {
 					return entitySubscription;
 				}
-			} catch (e) {
-				// If NotFoundException, continue with subscription creation
-				if (!(e instanceof NotFoundException)) {
-					throw e;
-				}
-			}
+			} catch (e) {}
 
 			// Create a new subscription if none exists
-			const subscription = await super.create({ ...input, tenantId, employeeId });
+			const subscription = await super.create({ ...input, employeeId, tenantId });
 
 			/**
 			 * TODO : Optional subscription notification if needed
@@ -87,15 +82,15 @@ export class EntitySubscriptionService extends TenantAwareCrudService<EntitySubs
 			// Extract the employee ID from the user
 			const employeeId = user.employeeId;
 			// Extract the entity ID and type from the input
-			const { entity, entityId, organizationId } = input || {};
+			const { entity, entityId, organizationId } = input;
 			// Delete the subscription
 			return await super.delete(id, {
 				where: {
 					entity,
 					entityId,
+					employeeId,
 					organizationId,
-					tenantId,
-					employeeId
+					tenantId
 				}
 			});
 		} catch (error) {
