@@ -1,4 +1,3 @@
-// plugin-integration-make-com/interfaces/timer-webhook.interface.ts
 import { ITimeLog, ITimerStatus } from '@gauzy/contracts';
 
 /**
