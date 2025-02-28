@@ -2944,6 +2944,9 @@
 		"ALREADY_PAID": "Déjà payé",
 		"AMOUNT_DUE": "Montant dû",
 		"INVOICED_REMAINING_AMOUNT": "Montant restant à payer sur facture",
+		"TAX_CALCULATION_TYPE": "Type de calcul de la taxe",
+		"SIMPLE": "Simple",
+		"COMPOSED": "Composé",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Type de facture",
 			"ESTIMATE_TYPE": "Type d'estimation",

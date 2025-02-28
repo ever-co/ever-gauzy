@@ -16,7 +16,8 @@ import {
 	InvoiceStatusTypesEnum,
 	IInvoiceItemCreateInput,
 	IProductTranslatable,
-	ExpenseStatusesEnum
+	ExpenseStatusesEnum,
+	TaxCalculationTypeEnum
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { compareDate, distinctUntilChange, extractNumber, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
@@ -64,6 +65,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 	formInvoiceNumber: number;
 	invoiceTypes = Object.values(InvoiceTypeEnum);
 	discountTaxTypes = Object.values(DiscountTaxTypeEnum);
+	taxCalculationTypes = Object.values(TaxCalculationTypeEnum);
 	smartTableSource = new LocalDataSource();
 	generatedTask: string;
 	organization: IOrganization;
@@ -186,6 +188,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			organizationContact: ['', Validators.required],
 			discountType: [],
 			taxType: [],
+			taxCalculationType: [TaxCalculationTypeEnum.SIMPLE],
 			tax2Type: [],
 			invoiceType: [],
 			project: [],
@@ -955,6 +958,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			this.form.value.discountValue && this.form.value.discountValue > 0 ? this.form.value.discountValue : 0;
 		const tax = this.form.value.tax && this.form.value.tax > 0 ? this.form.value.tax : 0;
 		const tax2 = this.form.value.tax2 && this.form.value.tax2 > 0 ? this.form.value.tax2 : 0;
+		const taxCalculationType = this.form.value.taxCalculationType;
 
 		let totalDiscount = 0;
 		let totalTax = 0;
@@ -976,7 +980,11 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				}
 				switch (this.form.value.tax2Type) {
 					case DiscountTaxTypeEnum.PERCENT:
-						totalTax += item.totalValue * (+tax2 / 100);
+						if (taxCalculationType === TaxCalculationTypeEnum.COMPOSED) {
+							totalTax += (item.totalValue + totalTax) * (tax2 / 100);
+						} else {
+							totalTax += item.totalValue * (tax2 / 100);
+						}
 						break;
 					case DiscountTaxTypeEnum.FLAT_VALUE:
 						totalTax += +tax2;
@@ -1007,8 +1015,10 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 		if (this.discountAfterTax && this.form.value.discountType === DiscountTaxTypeEnum.PERCENT) {
 			totalDiscount = (this.subtotal + totalTax) * (+discountValue / 100);
 		}
+		console.log(this.subtotal, totalTax);
 
 		this.total = this.subtotal - totalDiscount + totalTax;
+		console.log(this.total);
 
 		if (this.total < 0) {
 			this.total = 0;
