@@ -3,15 +3,9 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
 import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
-import { ID, IScreeningTask, ITask, IUser, ScreeningTaskStatusEnum } from '@gauzy/contracts';
-import { Task, TenantOrganizationBaseEntity, User } from '../../core/entities/internal';
-import {
-	ColumnIndex,
-	MultiORMColumn,
-	MultiORMEntity,
-	MultiORMManyToOne,
-	MultiORMOneToOne
-} from '../../core/decorators/entity';
+import { ID, IScreeningTask, ITask, ScreeningTaskStatusEnum } from '@gauzy/contracts';
+import { Task, TenantOrganizationBaseEntity } from '../../core/entities/internal';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMOneToOne } from '../../core/decorators/entity';
 import { MikroOrmScreeningTaskRepository } from './repository/mikro-orm-screening-task.repository';
 
 @MultiORMEntity('screening_task', { mikroOrmRepository: () => MikroOrmScreeningTaskRepository })
@@ -63,26 +57,4 @@ export class ScreeningTask extends TenantOrganizationBaseEntity implements IScre
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	taskId: ID;
-
-	/*
-	|--------------------------------------------------------------------------
-	| @ManyToOne
-	|--------------------------------------------------------------------------
-	*/
-	/**
-	 * The creator of the screening task.
-	 */
-	@MultiORMManyToOne(() => User, {
-		nullable: true // Indicates if the relation column value can be nullable or not.
-	})
-	@JoinColumn()
-	createdByUser?: IUser;
-
-	/**
-	 * The ID of the creator of the screening task.
-	 */
-	@RelationId((it: ScreeningTask) => it.createdByUser)
-	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, relationId: true })
-	createdByUserId?: ID;
 }

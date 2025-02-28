@@ -1,4 +1,4 @@
-import { JoinColumn, JoinTable, RelationId } from 'typeorm';
+import { JoinTable, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
@@ -22,7 +22,6 @@ import {
 	IOrganizationTeam,
 	ITask,
 	ITaskView,
-	IUser,
 	ProjectModuleStatusEnum
 } from '@gauzy/contracts';
 import {
@@ -31,8 +30,7 @@ import {
 	OrganizationTeam,
 	Task,
 	TaskView,
-	TenantOrganizationBaseEntity,
-	User
+	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import {
 	ColumnIndex,
@@ -165,24 +163,6 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: ID;
-
-	/**
-	 * The creator of the module.
-	 */
-	@MultiORMManyToOne(() => User, {
-		nullable: true, // Indicates if the relation column value can be nullable or not.
-		onDelete: 'CASCADE' // Defines the database cascade action on delete.
-	})
-	@JoinColumn()
-	createdByUser?: IUser;
-
-	/**
-	 * The ID of the creator of the module.
-	 */
-	@RelationId((it: OrganizationProjectModule) => it.createdByUser)
-	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, relationId: true })
-	createdByUserId?: ID;
 	/*
 	|--------------------------------------------------------------------------
 	| @OneToMany

@@ -9,7 +9,6 @@ import { CrudActionEnum } from './organization.model';
 import { IOrganizationProject, IOrganizationProjectCreateInput } from './organization-projects.model';
 import { IOrganizationProjectModule } from './organization-project-module.model';
 import { IComment } from './comment.model';
-import { IHasUserCreator } from './user.model';
 
 export interface IRelationalOrganizationTeam {
 	organizationTeam?: IOrganizationTeam;
@@ -41,7 +40,7 @@ interface ITeamAssociations {
 }
 
 // Main Organization Team interface
-export interface IOrganizationTeam extends IBaseTeamProperties, ITeamAssociations, IHasUserCreator {}
+export interface IOrganizationTeam extends IBaseTeamProperties, ITeamAssociations {}
 
 // Input interface for finding an organization team
 export interface IOrganizationTeamFindInput extends IBasePerTenantAndOrganizationEntityModel, IEmployeeEntityInput {

@@ -9,7 +9,6 @@ import {
 } from './organization-sprint.model';
 import { IOrganizationTeam, IRelationalOrganizationTeam } from './organization-team.model';
 import { ITaggable } from './tag.model';
-import { IHasUserCreator } from './user.model';
 import { ITaskStatus, TaskStatusEnum } from './task-status.model';
 import { ITaskPriority, TaskPriorityEnum } from './task-priority.model';
 import { ITaskSize, TaskSizeEnum } from './task-size.model';
@@ -22,7 +21,7 @@ export enum TaskParticipantEnum {
 	TEAMS = 'teams'
 }
 
-export interface IBaseTaskProperties extends IBasePerTenantAndOrganizationEntityModel, IHasUserCreator {
+export interface IBaseTaskProperties extends IBasePerTenantAndOrganizationEntityModel {
 	title: string;
 	number?: number;
 	public?: boolean;
