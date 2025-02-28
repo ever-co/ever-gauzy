@@ -4,12 +4,12 @@ import {
 	ActionTypeEnum,
 	ActorTypeEnum,
 	BaseEntityEnum,
+	EntitySubscriptionTypeEnum,
 	ID,
 	IScreeningTask,
 	IScreeningTaskCreateInput,
 	IScreeningTaskUpdateInput,
 	ScreeningTaskStatusEnum,
-	SubscriptionTypeEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
@@ -18,7 +18,7 @@ import { TaskService } from '../task.service';
 import { OrganizationProjectService } from '../../organization-project';
 import { ActivityLogService } from '../../activity-log/activity-log.service';
 import { MentionService } from '../../mention/mention.service';
-import { CreateSubscriptionEvent } from '../../subscription/events';
+import { CreateEntitySubscriptionEvent } from '../../entity-subscription/events';
 import { Task } from '../task.entity';
 import { ScreeningTask } from './screening-task.entity';
 import { TypeOrmScreeningTaskRepository } from './repository/type-orm-screening-task.repository';
@@ -107,11 +107,11 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 
 			// Subscribe creator to the task
 			this.eventBus.publish(
-				new CreateSubscriptionEvent({
+				new CreateEntitySubscriptionEvent({
 					entity: BaseEntityEnum.Task,
 					entityId: task.id,
-					userId: user?.id,
-					type: SubscriptionTypeEnum.CREATED_ENTITY,
+					employeeId: user?.employeeId,
+					type: EntitySubscriptionTypeEnum.CREATED_ENTITY,
 					organizationId,
 					tenantId
 				})
