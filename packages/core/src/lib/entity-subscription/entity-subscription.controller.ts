@@ -154,7 +154,7 @@ export class EntitySubscriptionController extends CrudController<EntitySubscript
 	})
 	@ApiResponse({
 		status: HttpStatus.ACCEPTED,
-		description: 'Unsubscription request accepted.'
+		description: 'Unsubscribe request accepted.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
