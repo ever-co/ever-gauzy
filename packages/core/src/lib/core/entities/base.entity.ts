@@ -120,6 +120,23 @@ export abstract class BaseEntityActionByUser extends AccessTimestamps {
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	createdByUserId?: ID;
+
+	/**
+	 * The user who last updated the record.
+	 */
+	@MultiORMManyToOne(() => User, {
+		nullable: true, // Allows the relation column to be null if no updater is specified.
+		onDelete: 'CASCADE' // Cascades the delete operation if the related User is removed.
+	})
+	updatedByUser?: IUser;
+
+	/**
+	 * The ID of the user who last updated the record.
+	 */
+	@RelationId((it: BaseEntityActionByUser) => it.updatedByUser)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	updatedByUserId?: ID;
 }
 
 /**
