@@ -11,7 +11,7 @@ export class CreateSubscriptionHandler implements IEventHandler<CreateEntitySubs
 	/**
 	 * Handles a subscription creation event.
 	 *
-	 * Extracts subscription details from the event input and uses the command bus to execute a SubscriptionCreateCommand,
+	 * Extracts subscription details from the event input and uses the command bus to execute a EntitySubscriptionCreateCommand,
 	 * which creates a new subscription for the specified entity.
 	 *
 	 * @param {CreateEntitySubscriptionEvent} event - The event containing the input data for subscription creation.
