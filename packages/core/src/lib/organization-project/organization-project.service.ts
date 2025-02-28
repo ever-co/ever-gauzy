@@ -299,7 +299,9 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 								entity: BaseEntityEnum.OrganizationProject,
 								entityId: organizationProjectId,
 								employeeId: member.employee.id,
-								type: EntitySubscriptionTypeEnum.ASSIGNMENT
+								type: EntitySubscriptionTypeEnum.ASSIGNMENT,
+								organizationId,
+								tenantId
 							})
 					)
 				);

@@ -265,7 +265,9 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 									entity: BaseEntityEnum.Task,
 									entityId: updatedTask.id,
 									employeeId: member.id,
-									type: EntitySubscriptionTypeEnum.ASSIGNMENT
+									type: EntitySubscriptionTypeEnum.ASSIGNMENT,
+									organizationId,
+									tenantId
 								})
 						)
 					);

@@ -82,7 +82,9 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 								entity: BaseEntityEnum.OrganizationTeam,
 								entityId: organizationTeamId,
 								employeeId: member.employee.id,
-								type: EntitySubscriptionTypeEnum.ASSIGNMENT
+								type: EntitySubscriptionTypeEnum.ASSIGNMENT,
+								organizationId,
+								tenantId
 							})
 					)
 				);
