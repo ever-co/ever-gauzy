@@ -9,7 +9,7 @@ import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '
 import { ActorTypeTransformer } from '../shared/pipes';
 import { MikroOrmEntitySubscriptionRepository } from './repository/mikro-orm-entity-subscription.repository';
 
-@MultiORMEntity('subscription', { mikroOrmRepository: () => MikroOrmEntitySubscriptionRepository })
+@MultiORMEntity('entity_subscription', { mikroOrmRepository: () => MikroOrmEntitySubscriptionRepository })
 export class EntitySubscription extends BasePerEntityType implements IEntitySubscription {
 	[EntityRepositoryType]?: MikroOrmEntitySubscriptionRepository;
 
