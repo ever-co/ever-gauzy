@@ -1012,6 +1012,7 @@ export class InvoiceAddByOrganizationComponent extends PaginationFilterBaseCompo
 		if (this.discountAfterTax && this.form.value.discountType === DiscountTaxTypeEnum.PERCENT) {
 			totalDiscount = (this.subtotal + totalTax) * (+discountValue / 100);
 		}
+
 		this.total = this.subtotal - totalDiscount + totalTax;
 		if (this.total < 0) {
 			this.total = 0;
