@@ -476,7 +476,7 @@ if (environment.THROTTLE_ENABLED) {
 		DashboardWidgetModule,
 		EmployeeNotificationModule,
 		EmployeeNotificationSettingModule,
-		TenantApiKeyModule
+		TenantApiKeyModule,
 	],
 	controllers: [AppController],
 	providers: [

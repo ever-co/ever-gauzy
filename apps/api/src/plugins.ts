@@ -4,6 +4,7 @@ import { IntegrationAIPlugin } from '@gauzy/plugin-integration-ai';
 import { IntegrationGithubPlugin } from '@gauzy/plugin-integration-github';
 import { IntegrationJiraPlugin } from '@gauzy/plugin-integration-jira';
 import { IntegrationHubstaffPlugin } from '@gauzy/plugin-integration-hubstaff';
+import { IntegrationMakeComPlugin } from '@gauzy/plugin-integration-make-com';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork';
 import { JitsuAnalyticsPlugin } from '@gauzy/plugin-jitsu-analytics';
 import { JobProposalPlugin } from '@gauzy/plugin-job-proposal';
@@ -43,6 +44,8 @@ export const plugins = [
 	...(github?.clientId && github?.clientSecret ? [IntegrationGithubPlugin] : []),
 	// Indicates the inclusion or intention to use the IntegrationHubstaffPlugin in the codebase.
 	...(hubstaff?.clientId && hubstaff?.clientSecret ? [IntegrationHubstaffPlugin] : []),
+	// Indicates the inclusion or intention to use the IntegrationMakeComPlugin in the codebase.
+	IntegrationMakeComPlugin,
 	// Indicates the inclusion or intention to use the IntegrationJiraPlugin in the codebase.
 	...(jira?.appKey && jira?.baseUrl ? [IntegrationJiraPlugin] : []),
 	// Indicates the inclusion or intention to use the IntegrationUpworkPlugin in the codebase.
