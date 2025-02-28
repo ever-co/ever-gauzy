@@ -1,34 +1,34 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus, EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { IEntitySubscription } from '@gauzy/contracts';
-import { CreateSubscriptionEvent } from '../subscription.create.event';
-import { SubscriptionCreateCommand } from '../../commands';
+import { CreateEntitySubscriptionEvent } from '../entity-subscription.create.event';
+import { EntitySubscriptionCreateCommand } from '../../commands';
 
-@EventsHandler(CreateSubscriptionEvent)
-export class CreateSubscriptionHandler implements IEventHandler<CreateSubscriptionEvent> {
+@EventsHandler(CreateEntitySubscriptionEvent)
+export class CreateSubscriptionHandler implements IEventHandler<CreateEntitySubscriptionEvent> {
 	constructor(private readonly commandBus: CommandBus) {}
 
 	/**
 	 * Handles a subscription creation event.
 	 *
-	 * Extracts subscription details from the event input and uses the command bus to execute a SubscriptionCreateCommand,
+	 * Extracts subscription details from the event input and uses the command bus to execute a EntitySubscriptionCreateCommand,
 	 * which creates a new subscription for the specified entity.
 	 *
-	 * @param {CreateSubscriptionEvent} event - The event containing the input data for subscription creation.
+	 * @param {CreateEntitySubscriptionEvent} event - The event containing the input data for subscription creation.
 	 * @returns {Promise<IEntitySubscription>} A promise that resolves to the created subscription.
 	 * @throws An error if the subscription creation process fails.
 	 */
-	async handle(event: CreateSubscriptionEvent): Promise<IEntitySubscription> {
+	async handle(event: CreateEntitySubscriptionEvent): Promise<IEntitySubscription> {
 		try {
 			// Retrieve the input data from the event.
-			const { entity, entityId, userId, type, organizationId, tenantId } = event.input;
+			const { entity, entityId, employeeId, type, organizationId, tenantId } = event.input;
 
 			// Execute the subscription creation command.
 			const subscription = await this.commandBus.execute(
-				new SubscriptionCreateCommand({
+				new EntitySubscriptionCreateCommand({
 					entity,
 					entityId,
-					userId,
+					employeeId,
 					type,
 					organizationId,
 					tenantId

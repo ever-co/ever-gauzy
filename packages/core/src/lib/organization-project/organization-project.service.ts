@@ -15,7 +15,7 @@ import {
 	IOrganizationProjectUpdateInput,
 	IPagination,
 	RolesEnum,
-	SubscriptionTypeEnum
+	EntitySubscriptionTypeEnum
 } from '@gauzy/contracts';
 import { getConfig } from '@gauzy/config';
 import { CustomEmbeddedFieldConfig } from '@gauzy/common';
@@ -26,10 +26,10 @@ import { OrganizationProjectEmployee } from '../core/entities/internal';
 import { FavoriteService } from '../core/decorators';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { RoleService } from '../role/role.service';
-import { SubscriptionService } from '../subscription/subscription.service';
+import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
+import { EntitySubscriptionService } from '../entity-subscription/entity-subscription.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { EmployeeService } from '../employee/employee.service';
-import { CreateSubscriptionEvent } from '../subscription/events';
 import { OrganizationProject } from './organization-project.entity';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-organization-project.repository';
@@ -47,7 +47,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		private readonly _eventBus: EventBus,
 		private readonly _roleService: RoleService,
 		private readonly _employeeService: EmployeeService,
-		private readonly _subscriptionService: SubscriptionService,
+		private readonly _entitySubscriptionService: EntitySubscriptionService,
 		private readonly _activityLogService: ActivityLogService
 	) {
 		super(typeOrmOrganizationProjectRepository, mikroOrmOrganizationProjectRepository);
@@ -128,16 +128,16 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			// Subscribe creator and assignees to the project
 			try {
 				await Promise.all(
-					employees.map(({ id, userId }) =>
+					employees.map(({ id }: IEmployee) =>
 						this._eventBus.publish(
-							new CreateSubscriptionEvent({
+							new CreateEntitySubscriptionEvent({
 								entity: BaseEntityEnum.OrganizationProject,
 								entityId: project.id,
-								userId,
+								employeeId: id,
 								type:
 									id === employeeId
-										? SubscriptionTypeEnum.CREATED_ENTITY
-										: SubscriptionTypeEnum.ASSIGNMENT,
+										? EntitySubscriptionTypeEnum.CREATED_ENTITY
+										: EntitySubscriptionTypeEnum.ASSIGNMENT,
 								organizationId,
 								tenantId
 							})
@@ -295,11 +295,13 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				await Promise.all(
 					removedMembers.map(
 						async (member) =>
-							await this._subscriptionService.delete({
+							await this._entitySubscriptionService.delete({
 								entity: BaseEntityEnum.OrganizationProject,
 								entityId: organizationProjectId,
-								userId: member.employee.userId,
-								type: SubscriptionTypeEnum.ASSIGNMENT
+								employeeId: member.employee.id,
+								type: EntitySubscriptionTypeEnum.ASSIGNMENT,
+								organizationId,
+								tenantId
 							})
 					)
 				);
@@ -341,13 +343,13 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			// Subscribe new assignees to the project
 			try {
 				await Promise.all(
-					newMembers.map(({ userId }) =>
+					newMembers.map((member: IEmployee) =>
 						this._eventBus.publish(
-							new CreateSubscriptionEvent({
+							new CreateEntitySubscriptionEvent({
 								entity: BaseEntityEnum.OrganizationProject,
 								entityId: organizationProjectId,
-								userId,
-								type: SubscriptionTypeEnum.ASSIGNMENT,
+								employeeId: member.id,
+								type: EntitySubscriptionTypeEnum.ASSIGNMENT,
 								organizationId,
 								tenantId
 							})

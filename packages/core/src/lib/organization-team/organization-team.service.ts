@@ -21,7 +21,8 @@ import {
 	ITimerStatus,
 	BaseEntityEnum,
 	ID,
-	SubscriptionTypeEnum
+	IEmployee,
+	EntitySubscriptionTypeEnum
 } from '@gauzy/contracts';
 import { isNotEmpty, parseToBoolean } from '@gauzy/utils';
 import { FavoriteService } from '../core/decorators';
@@ -38,7 +39,7 @@ import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-emplo
 import { EmployeeService } from './../employee/employee.service';
 import { TimerService } from '../time-tracking/timer/timer.service';
 import { StatisticService } from '../time-tracking/statistic';
-import { CreateSubscriptionEvent } from '../subscription/events';
+import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
 import { GetOrganizationTeamStatisticQuery } from './queries';
 import { OrganizationTeam } from './organization-team.entity';
 import { TypeOrmOrganizationTeamRepository } from './repository/type-orm-organization-team.repository';
@@ -266,16 +267,16 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			// Subscribe creator and assignees to the team
 			try {
 				await Promise.all(
-					employees.map(({ id, userId }) =>
+					employees.map((employee: IEmployee) =>
 						this._eventBus.publish(
-							new CreateSubscriptionEvent({
+							new CreateEntitySubscriptionEvent({
 								entity: BaseEntityEnum.OrganizationTeam,
 								entityId: organizationTeam.id,
-								userId,
+								employeeId: employee.id,
 								type:
-									id === employeeId
-										? SubscriptionTypeEnum.CREATED_ENTITY
-										: SubscriptionTypeEnum.ASSIGNMENT,
+									employee.id === employeeId
+										? EntitySubscriptionTypeEnum.CREATED_ENTITY
+										: EntitySubscriptionTypeEnum.ASSIGNMENT,
 								organizationId,
 								tenantId
 							})
