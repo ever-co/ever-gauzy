@@ -48,6 +48,9 @@ export interface IBaseEntityModel extends IBaseEntityActionByUserModel, IBaseSof
 export interface IBaseEntityActionByUserModel {
 	createdByUser?: IUser; // User who created the record
 	createdByUserId?: ID; // ID of the user who created the record
+
+	updatedByUser?: IUser; // User who last updated the record
+	updatedByUserId?: ID; // ID of the user who last updated the record
 }
 
 // Common properties for entities associated with a tenant
