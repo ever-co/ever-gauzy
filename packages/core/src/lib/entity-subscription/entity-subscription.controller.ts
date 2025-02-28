@@ -149,7 +149,7 @@ export class EntitySubscriptionController extends CrudController<EntitySubscript
 	})
 	@ApiQuery({
 		name: 'options',
-		description: 'Optional filters to locate the subscription for unsubscription.',
+		description: 'Optional filters to locate the subscription for unsubscribe.',
 		type: EntitySubscriptionFindInputDTO
 	})
 	@ApiResponse({
