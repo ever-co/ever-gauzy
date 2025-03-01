@@ -2148,7 +2148,7 @@
 			"ORG_TASK_SETTING": "Ustawienia zadania",
 			"ORG_MEMBER_LAST_LOG_VIEW": "Zobacz ostatni dziennik",
 			"API_CALL_LOG_READ": "Odczytaj dziennik wywołań API",
-  			"API_CALL_LOG_DELETE": "Usuń dziennik wywołań API",
+			"API_CALL_LOG_DELETE": "Usuń dziennik wywołań API",
 			"TENANT_API_KEY_CREATE": "Utwórz klucz API",
 			"TENANT_API_KEY_VIEW": "Zobacz klucz API",
 			"TENANT_API_KEY_DELETE": "Usuń klucz API",
@@ -2949,6 +2949,9 @@
 		"ALREADY_PAID": "Już zapłacone",
 		"AMOUNT_DUE": "Kwota do zapłaty",
 		"INVOICED_REMAINING_AMOUNT": "Pozostała kwota do faktury",
+		"TAX_CALCULATION_TYPE": "Typ obliczania podatku",
+		"SIMPLE": "Prosty",
+		"COMPOSED": "Złożony",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Rodzaj faktury",
 			"ESTIMATE_TYPE": "Typ Szacunku",

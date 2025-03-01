@@ -2934,6 +2934,9 @@
 		"ALREADY_PAID": "تم الدفع بالفعل",
 		"AMOUNT_DUE": "المبلغ المستحق",
 		"INVOICED_REMAINING_AMOUNT": "المبلغ المتبقي في الفاتورة",
+		"TAX_CALCULATION_TYPE": "نوع حساب الضريبة",
+		"SIMPLE": "بسيط",
+		"COMPOSED": "مركب",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "نوع الفاتورة",
 			"ESTIMATE_TYPE": "نوع التقدير",

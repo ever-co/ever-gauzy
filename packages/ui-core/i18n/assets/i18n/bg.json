@@ -3007,6 +3007,9 @@
 		"ALREADY_PAID": "Вече платено",
 		"AMOUNT_DUE": "Сума дължима",
 		"INVOICED_REMAINING_AMOUNT": "Останала сума от фактури",
+		"TAX_CALCULATION_TYPE": "Тип на изчисление на данъка",
+		"SIMPLE": "Прост",
+		"COMPOSED": "Съставен",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип фактура",
 			"ESTIMATE_TYPE": "Тип оценка",
