@@ -23,7 +23,7 @@ export class KeycloakStrategy extends PassportStrategy(Strategy, 'keycloak') {
 		accessToken: string,
 		refreshToken: string,
 		profile: any,
-		done: Function
+		done: (err: unknown, user?: unknown) => void
 	): Promise<void> {
 		try {
 			// Destructure the profile to extract user details
