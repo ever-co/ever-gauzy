@@ -11,7 +11,8 @@ import {
 	NbInputModule,
 	NbRouteTabsetModule,
 	NbSelectModule,
-	NbToggleModule
+	NbToggleModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
@@ -63,7 +64,8 @@ import { PluginMarketplaceUploadComponent } from './component/plugin-marketplace
 		NbRouteTabsetModule,
 		AlertModule,
 		NbFormFieldModule,
-		NbSelectModule
+		NbSelectModule,
+		NbTooltipModule
 	],
 	exports: [PluginLayoutComponent],
 	providers: [PluginLoaderService, PluginElectronService, PluginService]
