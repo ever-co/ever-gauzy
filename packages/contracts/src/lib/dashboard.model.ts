@@ -1,12 +1,12 @@
 import { IBasePerTenantAndOrganizationEntityModel, JsonData, OmitFields } from './base-entity.model';
 import { IDashboardWidget } from './dashboard-widget.model';
 import { IEmployeeEntityInput } from './employee.model';
-import { ExcludeUserCreatorFields, IHasUserCreator } from './user.model';
+import { ExcludeUserCreatorFields } from './user.model';
 
 /**
  * Interface representing a Dashboard entity.
  */
-export interface IDashboard extends IBasePerTenantAndOrganizationEntityModel, IEmployeeEntityInput, IHasUserCreator {
+export interface IDashboard extends IBasePerTenantAndOrganizationEntityModel, IEmployeeEntityInput {
 	name: string;
 	identifier: string;
 	description?: string;

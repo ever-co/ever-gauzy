@@ -7,7 +7,6 @@ import { IOrganizationTeam } from './organization-team.model';
 import { IRelationalRole } from './role.model';
 import { ITaskView } from './task-view.model';
 import { ITask } from './task.model';
-import { IHasUserCreator } from './user.model';
 
 export enum ProjectModuleStatusEnum {
 	BACKLOG = 'backlog',
@@ -35,7 +34,7 @@ interface IBaseProjectModuleProperties extends IBasePerTenantAndOrganizationEnti
 	parentId?: ID;
 }
 
-interface IProjectModuleAssociations extends IRelationalOrganizationProject, IHasUserCreator {
+interface IProjectModuleAssociations extends IRelationalOrganizationProject {
 	children?: IOrganizationProjectModule[];
 	members?: IOrganizationProjectModuleEmployee[];
 	organizationSprints?: IOrganizationSprint[];
