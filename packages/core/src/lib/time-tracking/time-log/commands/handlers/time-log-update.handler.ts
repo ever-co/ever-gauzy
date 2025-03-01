@@ -1,4 +1,5 @@
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
+import { Logger } from '@nestjs/common';
 import * as moment from 'moment';
 import { ID, ITimeLog, ITimeSlot, ITimesheet, TimeLogSourceEnum } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/common';
@@ -14,6 +15,8 @@ import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-or
 
 @CommandHandler(TimeLogUpdateCommand)
 export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateCommand> {
+	private readonly logger = new Logger(TimeLogUpdateHandler.name);
+
 	constructor(
 		private readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
@@ -34,14 +37,18 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 	public async execute(command: TimeLogUpdateCommand): Promise<ITimeLog> {
 		// Extract input parameters from the command
 		const { id, input, manualTimeSlot, forceDelete = false } = command;
-		console.log('Executing TimeLogUpdateCommand:', { id, input, manualTimeSlot, forceDelete });
+		this.logger.verbose(`Executing TimeLogUpdateCommand: ${JSON.stringify(command)}`);
 
 		// Retrieve the tenant ID from the request context or the provided input
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
-		console.log('Tenant ID:', tenantId);
+		this.logger.verbose(`Tenant ID: ${tenantId}`);
 
 		let timeLog: ITimeLog = await this.getTimeLogByIdOrInstance(id);
-		console.log('Retrieved TimeLog:', timeLog);
+		this.logger.verbose(`Retrieved TimeLog: ${JSON.stringify(timeLog)}`);
+
+		// Calculate the previous time log duration that was already saved
+		const previousTime =  Math.abs(moment(timeLog.stoppedAt).diff(moment(timeLog.startedAt), 'seconds'));
+		this.logger.verbose(`Previous TimeLog Duration: ${previousTime}`);
 
 		const { employeeId, organizationId } = timeLog;
 
@@ -49,19 +56,19 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		let updateTimeSlots: ITimeSlot[] = [];
 
 		// Check if time slots need to be updated
-		let needToUpdateTimeSlots = Boolean(input.startedAt || input.stoppedAt);
-		console.log('Need to update time slots:', needToUpdateTimeSlots);
+		const needToUpdateTimeSlots = Boolean(input.startedAt || input.stoppedAt);
+		this.logger.verbose(`Need to update time slots: ${needToUpdateTimeSlots}`);
 
 		if (needToUpdateTimeSlots) {
 			timesheet = await this.commandBus.execute(
 				new TimesheetFirstOrCreateCommand(input.startedAt, employeeId, organizationId)
 			);
-			console.log('Generated or retrieved Timesheet:', timesheet);
+			this.logger.verbose(`Generated or retrieved Timesheet: ${JSON.stringify(timesheet)}`);
 
 			// Generate time slots based on the updated time log details
 			const { startedAt, stoppedAt } = { ...timeLog, ...input };
-			updateTimeSlots = this.timeSlotService.generateTimeSlots(startedAt, stoppedAt);
-			console.log('Generated updated TimeSlots:', updateTimeSlots);
+			updateTimeSlots = this.timeSlotService.generateTimeSlots(startedAt, stoppedAt, previousTime);
+			this.logger.verbose(`Generated updated TimeSlots: ${JSON.stringify(updateTimeSlots)}`);
 		}
 
 		// Update the time log in the repository
@@ -69,45 +76,45 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 			...input,
 			...(timesheet ? { timesheetId: timesheet.id } : {})
 		});
-		console.log('Updated TimeLog in the repository:', { id: timeLog.id, input });
+		this.logger.verbose(`Updated TimeLog in the repository: ${JSON.stringify({ id: timeLog.id, input })}`);
 
-		// Regenerate the existing time slots for the time log
+		// Regenerate the existing time slots for the time log to check if any time slots are conflicting with the updated time log
 		const timeSlots = this.timeSlotService.generateTimeSlots(timeLog.startedAt, timeLog.stoppedAt);
-		console.log('Generated existing TimeSlots for TimeLog:', timeSlots);
+		this.logger.verbose(`Regenerated existing TimeSlots for TimeLog: ${JSON.stringify(timeSlots)}`);
 
 		// Retrieve the updated time log
 		timeLog = await this.typeOrmTimeLogRepository.findOneBy({ id: timeLog.id });
-		console.log('Retrieved updated TimeLog from repository:', timeLog);
+		this.logger.verbose(`Retrieved updated TimeLog from repository: ${JSON.stringify(timeLog)}`);
 
 		// Check if time slots need to be updated
 		if (needToUpdateTimeSlots) {
 			// Identify conflicting start times
 			const startTimes = this.getConflictingStartTimes(timeSlots, updateTimeSlots);
-			console.log('Identified conflicting start times:', startTimes);
+			this.logger.verbose(`Identified conflicting start times: ${JSON.stringify(startTimes)}`);
 
 			// Remove conflicting time slots
 			if (startTimes.length > 0) {
 				await this.removeConflictingTimeSlots(tenantId, organizationId, employeeId, startTimes, forceDelete);
-				console.log('Removed conflicting TimeSlots:', startTimes);
+				this.logger.verbose(`Removed conflicting TimeSlots: ${JSON.stringify(startTimes)}`);
 			}
 			// Create new time slots if needed for Web Timer
 			if (!manualTimeSlot && timeLog.source === TimeLogSourceEnum.WEB_TIMER) {
 				await this.bulkCreateTimeSlots(updateTimeSlots, timeLog, employeeId, organizationId, tenantId);
-				console.log('Created new TimeSlots for Web Timer:', updateTimeSlots);
+				this.logger.verbose(`Created new TimeSlots for Web Timer: ${JSON.stringify(updateTimeSlots)}`);
 			}
 
 			// Update the time log in the repository
 			await this.saveUpdatedTimeLog(timeLog);
-			console.log('Saved updated TimeLog in the repository:', timeLog);
+			this.logger.verbose(`Saved updated TimeLog in the repository: ${JSON.stringify(timeLog)}`);
 
 			// Recalculate timesheets and employee hours
 			await this.recalculateTimesheetAndEmployeeHours(timeLog.timesheetId, employeeId);
-			console.log('Recalculated timesheets and employee hours:', timeLog.timesheetId, employeeId);
+			this.logger.verbose(`Recalculated timesheets and employee hours: ${timeLog.timesheetId}, ${employeeId}`);
 		}
 
 		// Return the updated time log
 		const updatedTimeLog = await this.typeOrmTimeLogRepository.findOneBy({ id: timeLog.id });
-		console.log('Final updated TimeLog:', updatedTimeLog);
+		this.logger.verbose(`Final updated TimeLog: ${JSON.stringify(updatedTimeLog)}`);
 
 		return updatedTimeLog;
 	}
@@ -178,7 +185,7 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 
 		// Get the conflicting time slots
 		const slots = await query.getMany();
-		console.log(`conflicting time slots for ${forceDelete ? 'hard' : 'soft'} deleting: %s`, slots.length);
+		this.logger.verbose(`conflicting time slots for ${forceDelete ? 'hard' : 'soft'} deleting: ${slots.length}`);
 
 		if (isEmpty(slots)) {
 			return [];
@@ -238,7 +245,7 @@ export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateComman
 		try {
 			return await this.typeOrmTimeLogRepository.save(timeLog);
 		} catch (error) {
-			console.log('Failed to update the time log at line: 217', error);
+			this.logger.error(`Failed to update the time log at line: ${JSON.stringify(error)}`);
 		}
 	}
 

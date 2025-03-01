@@ -38,18 +38,18 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	 */
 	async getTimeSlots(request: IGetTimeSlotInput) {
 		// Extract parameters from the request object with default values
-		let {
+		const {
 			organizationId,
 			startDate,
 			endDate,
 			syncSlots = false,
-			employeeIds = [],
 			projectIds = [],
 			activityLevel,
 			source,
 			logType,
 			onlyMe: isOnlyMeSelected // Indicates whether to retrieve data for the current user only
 		} = request;
+		let employeeIds = request.employeeIds || [];
 
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId; // Retrieve the tenant ID from the request context or the provided input
 		const user = RequestContext.currentUser(); // Retrieve the current user from the request context
@@ -209,8 +209,8 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	 * @param end The end time of the range
 	 * @returns An array of generated time slots
 	 */
-	generateTimeSlots(start: Date, end: Date) {
-		return generateTimeSlots(start, end);
+	generateTimeSlots(start: Date, end: Date, previousTime = 0) {
+		return generateTimeSlots(start, end, previousTime);
 	}
 
 	/*
