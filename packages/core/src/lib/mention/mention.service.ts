@@ -7,17 +7,17 @@ import {
 	IMention,
 	IMentionCreateInput,
 	NotificationActionTypeEnum,
-	SubscriptionTypeEnum,
+	EntitySubscriptionTypeEnum,
 	EmployeeNotificationTypeEnum,
 	ActorTypeEnum
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
+import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
 import { Mention } from './mention.entity';
 import { TypeOrmMentionRepository } from './repository/type-orm-mention.repository';
 import { MikroOrmMentionRepository } from './repository/mikro-orm-mention.repository';
 import { CreateMentionEvent } from './events';
-import { CreateSubscriptionEvent } from '../subscription/events';
 import { EmployeeNotificationService } from '../employee-notification/employee-notification.service';
 
 @Injectable()
@@ -68,10 +68,10 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 
 			// Create an user subscription for provided entity
 			this._eventBus.publish(
-				new CreateSubscriptionEvent({
+				new CreateEntitySubscriptionEvent({
 					entity: parentEntityType ?? entity,
 					entityId: parentEntityId ?? entityId,
-					type: SubscriptionTypeEnum.MENTION,
+					type: EntitySubscriptionTypeEnum.MENTION,
 					organizationId,
 					tenantId
 				})
