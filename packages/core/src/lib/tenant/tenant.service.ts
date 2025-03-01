@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ITenantCreateInput, RolesEnum, ITenant, IUser, FileStorageProviderEnum } from '@gauzy/contracts';
-import { ConfigService, IEnvironment } from '@gauzy/config';
+import { ConfigService } from '@gauzy/config';
 import { CrudService } from '../core/crud/crud.service';
 import { TenantFeatureOrganizationCreateCommand } from './commands';
 import { TenantRoleBulkCreateCommand } from '../role/commands';
@@ -110,8 +110,8 @@ export class TenantService extends CrudService<Tenant> {
 	 * @param tenant The tenant entity for which settings are being initialized.
 	 */
 	private async initializeTenantSettings(tenant: ITenant): Promise<void> {
-		const filesystem = this.configService.get('fileSystem') as IEnvironment['fileSystem'];
-		const fileStorageProvider = filesystem.name.toUpperCase() as FileStorageProviderEnum;
+		const fileSystem = this.configService.get('fileSystem');
+		const fileStorageProvider = fileSystem.name.toUpperCase() as FileStorageProviderEnum;
 
 		await this.commandBus.execute(new TenantSettingSaveCommand({ fileStorageProvider }, tenant.id));
 	}
