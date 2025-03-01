@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     container_name: db
     restart: always
     environment:
@@ -8,11 +8,10 @@ services:
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASS:-gauzy_password}
     healthcheck:
-      test:
-        [
-          'CMD-SHELL',
-          'psql postgres://$${POSTGRES_USER}:$${POSTGRES_PASSWORD}@localhost:5432/$${POSTGRES_DB} || exit 1'
-        ]
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes:
       - postgres_data:/var/lib/postgresql/data/
       - ./.deploy/db/init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
@@ -79,6 +78,7 @@ services:
         condition: service_healthy
       jitsu_redis_users_recognition:
         condition: service_healthy
+    user: 'root'
     volumes:
       - ./.deploy/jitsu/configurator/data/logs:/home/configurator/data/logs
       - ./.deploy/jitsu/server/data/logs:/home/eventnative/data/logs
@@ -91,51 +91,61 @@ services:
     networks:
       - overlay
 
-  elasticsearch:
-    image: 'elasticsearch:7.17.7'
-    container_name: elasticsearch
-    volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
+  opensearch:
+    image: opensearchproject/opensearch:latest
+    container_name: opensearch
     environment:
-      ES_JAVA_OPTS: -Xms512m -Xmx1024m
-      discovery.type: single-node
-      http.port: 9200
-      http.cors.enabled: 'true'
-      http.cors.allow-origin: http://localhost:3000,http://127.0.0.1:3000,http://localhost:1358,http://127.0.0.1:1358
-      http.cors.allow-headers: X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization
-      http.cors.allow-credentials: 'true'
-      bootstrap.memory_lock: 'true'
-      xpack.security.enabled: 'false'
-    ports:
-      - '9200'
-      - '9300'
+      - 'DISABLE_SECURITY_PLUGIN=true'
+      - discovery.type=single-node
+      - http.port=9200
+      - http.cors.enabled=true
+      - http.cors.allow-origin=http://localhost:1358,http://127.0.0.1:1358
+      - http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization
+      - http.cors.allow-credentials=true
+      - bootstrap.memory_lock=true
+      - 'ES_JAVA_OPTS=-Xms512m -Xmx512m'
     ulimits:
       memlock:
         soft: -1
         hard: -1
-    healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:9200/_cat/health']
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 20s
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    ports:
+      - 9200:9200
+      - 9300:9300
+      - 9600:9600
     networks:
       - overlay
 
-  # Elasticsearch Management UI
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:latest
+    container_name: opensearch-dashboards
+    ports:
+      - 5601:5601
+    expose:
+      - '5601'
+    environment:
+      OPENSEARCH_HOSTS: '["https://opensearch:9200"]'
+    networks:
+      - overlay
+
+  # Search Management UI
   dejavu:
-    image: appbaseio/dejavu:3.6.0
+    image: appbaseio/dejavu:3.8.3
     container_name: dejavu
     ports:
       - '1358:1358'
     links:
-      - elasticsearch
+      - opensearch
     networks:
       - overlay
 
   # TODO: For now used in Jitsu, but we will need to create another one dedicated for Jitsu later
   redis:
-    image: 'redis:7.0.2-alpine'
+    image: 'redis:alpine'
     container_name: redis
     restart: unless-stopped
     healthcheck:
@@ -150,7 +160,7 @@ services:
       - overlay
 
   jitsu_redis_users_recognition:
-    image: 'redis:7.0.2-alpine'
+    image: 'redis:alpine'
     container_name: jitsu_redis_users_recognition
     command: redis-server /usr/local/etc/redis/redis.conf
     restart: unless-stopped
@@ -222,11 +232,11 @@ services:
 volumes:
   postgres_data: {}
   redis_data: {}
-  elasticsearch_data: {}
   minio_data: {}
   cube_data: {}
   certificates: {}
   jitsu_workspace: {}
+  opensearch-data: {}
 
 networks:
   overlay:
