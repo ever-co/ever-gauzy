@@ -61,13 +61,13 @@ export const parseKeycloakConfig = (configService: ConfigService): Record<string
 	const keycloakConfig = configService.get('keycloakConfig');
 
 	// Validate required configurations
-	if (!keycloakConfig.clientId || !keycloakConfig.secret || !keycloakConfig.authServerUrl) {
+	if (!keycloakConfig.clientId || !keycloakConfig.secret) {
 		console.warn('⚠️ Keycloak authentication configuration is incomplete. Defaulting to "disabled".');
 	}
 
 	// Construct and return the Keycloak configuration object
 	return {
-		clientID: keycloakConfig.cookieKey || 'disabled',
+		clientID: keycloakConfig.clientId || 'disabled',
 		clientSecret: keycloakConfig.secret || 'disabled',
 		realm: keycloakConfig.realm,
 		authServerUrl: keycloakConfig.authServerUrl,
