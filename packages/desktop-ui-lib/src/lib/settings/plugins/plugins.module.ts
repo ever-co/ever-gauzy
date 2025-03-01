@@ -6,12 +6,16 @@ import {
 	NbBadgeModule,
 	NbButtonModule,
 	NbCardModule,
+	NbFormFieldModule,
 	NbIconModule,
 	NbInputModule,
+	NbRouteTabsetModule,
+	NbSelectModule,
 	NbToggleModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
+import { AlertModule } from '../../dialogs/alert/alert.module';
 import { DesktopDirectiveModule } from '../../directives/desktop-directive.module';
 import { NoDataMessageModule } from '../../time-tracker/no-data-message/no-data-message.module';
 import { PaginationModule } from '../../time-tracker/pagination/pagination.module';
@@ -20,9 +24,13 @@ import { PluginLayoutComponent } from './component/plugin-layout/plugin-layout.c
 import { PluginListComponent } from './component/plugin-list/plugin-list.component';
 import { PluginStatusComponent } from './component/plugin-list/plugin-status/plugin-status.component';
 import { PluginUpdateComponent } from './component/plugin-list/plugin-update/plugin-update.component';
+import { PluginMarketplaceDetailComponent } from './component/plugin-marketplace/plugin-marketplace-detail/plugin-marketplace-detail.component';
+import { PluginMarketplaceComponent } from './component/plugin-marketplace/plugin-marketplace.component';
 import { PluginComponent } from './component/plugin/plugin.component';
 import { PluginElectronService } from './services/plugin-electron.service';
 import { PluginLoaderService } from './services/plugin-loader.service';
+import { PluginService } from './services/plugin.service';
+import { PluginMarketplaceUploadComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-marketplace-upload.component';
 
 @NgModule({
 	declarations: [
@@ -31,7 +39,10 @@ import { PluginLoaderService } from './services/plugin-loader.service';
 		PluginComponent,
 		PluginLayoutComponent,
 		PluginStatusComponent,
-		PluginUpdateComponent
+		PluginUpdateComponent,
+		PluginMarketplaceComponent,
+		PluginMarketplaceDetailComponent,
+		PluginMarketplaceUploadComponent
 	],
 	imports: [
 		CommonModule,
@@ -48,9 +59,13 @@ import { PluginLoaderService } from './services/plugin-loader.service';
 		NbBadgeModule,
 		FormsModule,
 		NbToggleModule,
-		ReactiveFormsModule
+		ReactiveFormsModule,
+		NbRouteTabsetModule,
+		AlertModule,
+		NbFormFieldModule,
+		NbSelectModule
 	],
 	exports: [PluginLayoutComponent],
-	providers: [PluginLoaderService, PluginElectronService]
+	providers: [PluginLoaderService, PluginElectronService, PluginService]
 })
 export class PluginsModule {}

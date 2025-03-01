@@ -1,0 +1,111 @@
+<nb-card class="dialog-card" status="basic">
+	<nb-card-header class="mb-0">
+		<h5 class="title">{{ 'Upload Plugin' | translate }}</h5>
+		<span class="cancel"><i (click)="dismiss()" class="fas fa-times"></i></span>
+	</nb-card-header>
+	<nb-card-body>
+		<form [formGroup]="pluginForm" (ngSubmit)="submit()">
+			<!-- Left column fields -->
+			<nb-form-field>
+				<input nbInput fullWidth formControlName="name" placeholder="Plugin Name" required />
+			</nb-form-field>
+
+			<nb-form-field>
+				<nb-select nbInput fullWidth formControlName="type">
+					<nb-option *ngFor="let type of pluginTypes" [value]="type">{{ type | titlecase }}</nb-option>
+				</nb-select>
+			</nb-form-field>
+
+			<nb-form-field>
+				<input nbInput fullWidth formControlName="version" placeholder="Version" required />
+			</nb-form-field>
+
+			<!-- Right column fields -->
+			<nb-form-field class="full-width">
+				<textarea nbInput fullWidth formControlName="description" placeholder="Description"></textarea>
+			</nb-form-field>
+
+			<nb-form-field>
+				<nb-select nbInput fullWidth formControlName="sourceType" (selectedChange)="onSourceTypeChange($event)">
+					<nb-option *ngFor="let source of sourceTypes" [value]="source">{{ source }}</nb-option>
+				</nb-select>
+			</nb-form-field>
+
+			<nb-form-field>
+				<nb-select nbInput fullWidth formControlName="status">
+					<nb-option *ngFor="let status of pluginStatuses" [value]="status">{{
+						status | titlecase
+					}}</nb-option>
+				</nb-select>
+			</nb-form-field>
+
+			<!-- Source-specific fields (full width) -->
+			<div class="source-container">
+				<div *ngIf="pluginForm.get('sourceType').value === 'CDN'" formGroupName="source">
+					<nb-form-field>
+						<input nbInput fullWidth formControlName="url" placeholder="CDN URL" type="url" required />
+					</nb-form-field>
+					<nb-form-field>
+						<input nbInput fullWidth formControlName="integrity" placeholder="Integrity" />
+					</nb-form-field>
+					<nb-form-field>
+						<input nbInput fullWidth formControlName="crossOrigin" placeholder="Cross Origin" />
+					</nb-form-field>
+				</div>
+
+				<div *ngIf="pluginForm.get('sourceType').value === 'NPM'" formGroupName="source">
+					<nb-form-field>
+						<input nbInput fullWidth formControlName="name" placeholder="NPM Package Name" required />
+					</nb-form-field>
+					<nb-form-field>
+						<input nbInput fullWidth formControlName="registry" placeholder="NPM Registry" />
+					</nb-form-field>
+					<nb-form-field>
+						<input nbInput fullWidth formControlName="authToken" placeholder="Auth Token" type="password" />
+					</nb-form-field>
+					<nb-form-field>
+						<input nbInput fullWidth formControlName="scope" placeholder="Package Scope" />
+					</nb-form-field>
+				</div>
+			</div>
+
+			<!-- Metadata section -->
+			<div class="metadata-container full-width">
+				<h6 class="section-title">Metadata</h6>
+				<div class="metadata-fields">
+					<nb-form-field>
+						<input nbInput fullWidth formControlName="author" placeholder="Author" />
+					</nb-form-field>
+					<nb-form-field>
+						<input
+							nbInput
+							fullWidth
+							formControlName="license"
+							placeholder="License Type (e.g., MIT, GPL)"
+						/>
+					</nb-form-field>
+					<nb-form-field>
+						<input
+							nbInput
+							fullWidth
+							formControlName="homepage"
+							type="url"
+							placeholder="Documentation URL"
+						/>
+					</nb-form-field>
+					<nb-form-field>
+						<input nbInput fullWidth formControlName="repository" type="url" placeholder="Repository URL" />
+					</nb-form-field>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="text-right mt-0">
+		<button nbButton type="button" (click)="dismiss()" outline status="basic">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button nbButton type="submit" status="success" [disabled]="pluginForm.invalid" (click)="submit()">
+			{{ 'Upload' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

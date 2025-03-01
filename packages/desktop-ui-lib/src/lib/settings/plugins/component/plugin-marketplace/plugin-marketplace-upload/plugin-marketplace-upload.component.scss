@@ -1,0 +1,187 @@
+@import 'gauzy/_gauzy-dialogs';
+
+// Custom variables
+$card-border-radius: 0.75rem;
+$input-padding: 0.75rem 1rem;
+$button-spacing: 0.75rem;
+$transition-speed: 0.2s;
+
+.dialog-card {
+  border-radius: $card-border-radius;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  max-width: 600px;
+  margin: 0 auto;
+  height: 90vh;
+
+  nb-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid nb-theme(divider-color);
+
+    .title {
+      margin: 0;
+      text-wrap: nowrap;
+    }
+
+    .cancel {
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity $transition-speed ease;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+  }
+
+  nb-card-body {
+    padding: 1rem;
+
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      margin: -0.5rem;
+
+      // Two-column layout
+      nb-form-field,
+      .form-group {
+        padding: 0.5rem;
+        width: 50%;
+
+        // Full width for textarea
+        &.full-width {
+          width: 100%;
+        }
+
+        input,
+        textarea,
+        nb-select {
+          width: 100%;
+          transition: border-color $transition-speed ease;
+
+          &:focus {
+            box-shadow: 0 0 0 2px rgba(nb-theme(color-primary-500), 0.2);
+          }
+        }
+
+        input,
+        textarea {
+          padding: $input-padding;
+          border-radius: var(--border-radius);
+        }
+
+        textarea {
+          min-height: 80px;
+          resize: vertical;
+        }
+      }
+
+      // Source type containers
+      .source-container {
+        width: 100%;
+        margin-top: 0.5rem;
+
+        [formGroupName='source'] {
+          display: flex;
+          flex-wrap: wrap;
+          background-color: var(--gauzy-card-2);
+          padding: 0.5rem;
+          border-radius: 0.5rem;
+          border-left: 3px solid nb-theme(color-primary-500);
+
+          nb-form-field {
+            width: 50%;
+            padding: 0.5rem;
+            margin-bottom: 0;
+          }
+        }
+      }
+    }
+  }
+
+  nb-card-footer {
+    padding: 1rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: $button-spacing;
+    border-top: 1px solid nb-theme(divider-color);
+
+    button {
+      min-width: 100px;
+
+      &[status='success'] {
+        &:not(:disabled):hover {
+          box-shadow: 0 3px 8px rgba(nb-theme(color-success-500), 0.3);
+        }
+      }
+
+      &:disabled {
+        opacity: 0.6;
+      }
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .dialog-card {
+    form {
+      nb-form-field,
+      .form-group {
+        width: 100%;
+      }
+
+      .source-container [formGroupName='source'] nb-form-field {
+        width: 100%;
+      }
+    }
+  }
+}
+
+[nbInput].size-medium {
+  padding: unset;
+}
+
+[nbInput].size-medium:not(.input-full-width) {
+  max-width: 100% !important;
+}
+
+// Metadata section
+.metadata-container {
+  margin-top: 1rem;
+
+  .section-title {
+    margin: 0.5rem 0.5rem 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--gauzy-text-color-1);
+    display: flex;
+    align-items: center;
+
+    &::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background-color: nb-theme(divider-color);
+      margin-left: 0.75rem;
+    }
+  }
+
+  .metadata-fields {
+    display: flex;
+    flex-wrap: wrap;
+    background-color: var(--gauzy-card-2);
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    border-left: 3px solid var(--color-primary-500);
+
+    nb-form-field {
+      width: 50%;
+      padding: 0.5rem;
+      margin-bottom: 0;
+    }
+  }
+}

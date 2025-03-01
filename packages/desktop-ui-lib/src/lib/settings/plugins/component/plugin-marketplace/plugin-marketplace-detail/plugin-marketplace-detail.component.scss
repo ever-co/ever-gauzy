@@ -1,0 +1,39 @@
+.plugin-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+}
+
+.plugin-details {
+  flex-grow: 1;
+}
+
+.plugin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: bold;
+}
+
+.plugin-name {
+  font-size: 16px;
+  color: var(--text-primary-color);
+}
+
+.plugin-version {
+  font-size: 14px;
+  color: var(--nb-info-text-color);
+}
+
+.plugin-description {
+  font-size: 14px;
+  color: var(--nb-text-hint-color);
+  margin-top: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -1,5 +1,6 @@
-import { ipcMain, IpcMainEvent } from 'electron';
 import { logger } from '@gauzy/desktop-core';
+import { ipcMain, IpcMainEvent } from 'electron';
+import * as path from 'path';
 import { PluginManager } from '../data-access/plugin-manager';
 import { IPluginManager, PluginChannel, PluginHandlerChannel } from '../shared';
 import { PluginEventManager } from './plugin-event.manager';
@@ -44,6 +45,28 @@ class ElectronPluginListener {
 			try {
 				const plugin = await this.pluginManager.getOnePlugin(name);
 				return plugin;
+			} catch (error) {
+				logger.error(error);
+				return null;
+			}
+		});
+
+		ipcMain.handle(PluginHandlerChannel.LAZY_LOADER, async (_, pathname) => {
+			try {
+				// Ensure the plugin path is absolute
+				const absolutePath = path.resolve(pathname); // Ensure the path is absolute
+
+				console.log('Loading plugin from:', absolutePath);
+
+				// Dynamically import the plugin module using the absolute file URL
+				const pluginModule = await import(absolutePath);
+
+				if (!pluginModule || Object.keys(pluginModule).length === 0) {
+					throw new Error(`Loaded module from '${pathname}' is empty or undefined.`);
+				}
+
+				console.log('Plugin module loaded:', pluginModule);
+				return pluginModule;
 			} catch (error) {
 				logger.error(error);
 				return null;

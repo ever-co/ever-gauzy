@@ -1,0 +1,14 @@
+@if(plugin) {
+<div class="plugin-container">
+	<div class="plugin-details">
+		<div class="plugin-header">
+			<div class="plugin-name">{{ plugin.name }}</div>
+			<div class="plugin-version">{{ plugin.version }}</div>
+		</div>
+		<div class="plugin-description">{{ plugin.description }}</div>
+	</div>
+	<div>
+		<nb-toggle [checked]="isChecked$ | async" (checkedChange)="togglePlugin($event)"></nb-toggle>
+	</div>
+</div>
+}
