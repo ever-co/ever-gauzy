@@ -250,7 +250,6 @@ export class TaskTableComponent implements OnInit, AfterViewInit {
 					'teams.members',
 					'teams.members.employee',
 					'teams.members.employee.user',
-					'creator',
 					'organizationSprint',
 					'taskStatus',
 					'taskSize',
