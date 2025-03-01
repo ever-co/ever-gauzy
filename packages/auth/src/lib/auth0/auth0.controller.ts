@@ -22,13 +22,13 @@ export class Auth0Controller {
 	/**
 	 * Handles the callback from Auth0 after a successful login.
 	 *
-	 * @param requestCtx - The context of the incoming request, including the authenticated user information.
+	 * @param context - The context of the incoming request, including the authenticated user information.
 	 * @param res - The response object used to send a redirect or response to the client.
 	 * @returns {Promise<void>} - A promise that resolves after redirecting the user.
 	 */
 	@Get('/auth0/callback')
-	async auth0LoginCallback(@RequestCtx() requestCtx: IIncomingRequest, @Res() res: Response) {
-		const { user } = requestCtx;
+	async auth0LoginCallback(@RequestCtx() context: IIncomingRequest, @Res() res: Response): Promise<any> {
+		const { user } = context;
 		const { success, authData } = await this.service.validateOAuthLoginEmail(user.emails);
 		return this.service.routeRedirect(success, authData, res);
 	}
