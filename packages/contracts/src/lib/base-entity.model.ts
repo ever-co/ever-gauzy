@@ -51,6 +51,9 @@ export interface IBaseEntityActionByUserModel {
 
 	updatedByUser?: IUser; // User who last updated the record
 	updatedByUserId?: ID; // ID of the user who last updated the record
+
+	deletedByUser?: IUser; // User who deleted the record
+	deletedByUserId?: ID; // ID of the user who deleted the record
 }
 
 // Common properties for entities associated with a tenant
