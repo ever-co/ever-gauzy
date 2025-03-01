@@ -29,8 +29,8 @@ export class LinkedinController {
 	 * @returns The result of the LinkedIn login callback.
 	 */
 	@Get('/linkedin/callback')
-	async linkedinLoginCallback(@RequestCtx() requestCtx: IIncomingRequest, @Res() res: Response) {
-		const { user } = requestCtx;
+	async linkedinLoginCallback(@RequestCtx() context: IIncomingRequest, @Res() res: Response): Promise<any> {
+		const { user } = context;
 		const { success, authData } = await this.service.validateOAuthLoginEmail(user.emails);
 
 		return this.service.routeRedirect(success, authData, res);

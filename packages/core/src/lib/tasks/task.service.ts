@@ -28,12 +28,8 @@ import {
 	PermissionsEnum,
 	ActionTypeEnum,
 	ITaskDateFilterInput,
-<<<<<<< HEAD
-	SubscriptionTypeEnum,
 	IUser,
-=======
 	EntitySubscriptionTypeEnum,
->>>>>>> 34cd9f4ce9 (refactor: rename "Subscription" to "EntitySubscription")
 	ITaskAdvancedFilter,
 	IAdvancedTaskFiltering,
 	EmployeeNotificationTypeEnum,
