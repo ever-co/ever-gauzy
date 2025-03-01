@@ -32,8 +32,8 @@ export class GithubController {
 	 * @returns The result of the GitHub login callback.
 	 */
 	@Get('/github/callback')
-	async githubLoginCallback(@RequestCtx() _req: IIncomingRequest, @Res() _res: Response) {
-		const { user } = _req;
+	async githubLoginCallback(@RequestCtx() context: IIncomingRequest, @Res() _res: Response): Promise<any> {
+		const { user } = context;
 
 		// To-DO: Determine the frontend URL based on the request
 
