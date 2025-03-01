@@ -95,7 +95,6 @@ services:
     image: opensearchproject/opensearch:latest
     container_name: opensearch
     environment:
-      - 'DISABLE_SECURITY_PLUGIN=true'
       - discovery.type=single-node
       - http.port=9200
       - http.cors.enabled=true
@@ -104,6 +103,7 @@ services:
       - http.cors.allow-credentials=true
       - bootstrap.memory_lock=true
       - 'ES_JAVA_OPTS=-Xms512m -Xmx512m'
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD:-Gauzy_password_123}
     ulimits:
       memlock:
         soft: -1
@@ -186,6 +186,11 @@ services:
       MINIO_ROOT_USER: ever-gauzy-access-key
       MINIO_ROOT_PASSWORD: ever-gauzy-secret-key
     command: server /data --address :9000 --console-address ":9001"
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 5s
+      timeout: 5s
+      retries: 5
     ports:
       - 9000:9000
       - 9001:9001
@@ -204,10 +209,15 @@ services:
       - "until (/usr/bin/mc alias set minio http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD) do
         echo 'Waiting to start minio...' && sleep 1;
         done;
+        if /usr/bin/mc ls minio/ever-gauzy >/dev/null 2>&1; then
+        echo 'Bucket already exists, skipping creation.';
+        else
         /usr/bin/mc mb minio/ever-gauzy --region=eu-north-1;
+        fi;
         exit 0;"
     depends_on:
-      - minio
+      minio:
+        condition: service_healthy
     networks:
       - overlay
 
