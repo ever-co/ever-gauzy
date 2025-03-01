@@ -43,6 +43,7 @@ export class EntitySubscription extends BasePerEntityType implements IEntitySubs
 	@IsOptional()
 	@IsObject()
 	@MultiORMManyToOne(() => Employee, {
+		nullable: true, // Indicates if relation column value can be null.
 		onDelete: 'CASCADE' // Database cascade action on delete.
 	})
 	@JoinColumn()
@@ -51,11 +52,11 @@ export class EntitySubscription extends BasePerEntityType implements IEntitySubs
 	/**
 	 * The employee id who subscribed to the entity.
 	 */
-	@ApiProperty({ type: () => String })
-	@IsNotEmpty()
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@IsUUID()
 	@RelationId((it: EntitySubscription) => it.employee)
 	@ColumnIndex()
-	@MultiORMColumn({ relationId: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	employeeId?: ID;
 }
