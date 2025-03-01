@@ -5,55 +5,72 @@ import { Profile, Strategy } from 'passport-facebook';
 
 @Injectable()
 export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
-	constructor(protected readonly configService: ConfigService) {
-		super(config(configService));
+	constructor(readonly configService: ConfigService) {
+		super(parseFacebookConfig(configService));
 	}
 
 	/**
+	 * Validates and extracts user information from Facebook OAuth profile.
 	 *
-	 * @param accessToken
-	 * @param refreshToken
-	 * @param profile
-	 * @param done
+	 * This method is called after successful authentication with Facebook.
+	 * It processes the profile data and constructs a user object.
+	 *
+	 * @param {string} accessToken - The OAuth access token received from Facebook.
+	 * @param {string} refreshToken - The refresh token (not used in Facebook OAuth).
+	 * @param {Profile} profile - The Facebook user's profile data.
+	 * @param {(err: any, user?: any, info?: any) => void} done - Callback function to indicate authentication success or failure.
+	 *
+	 * @returns {Promise<void>} - Resolves after processing the user profile.
 	 */
 	async validate(
 		accessToken: string,
 		refreshToken: string,
 		profile: Profile,
-		done: (err: any, user: any, info?: any) => void
-	): Promise<any> {
+		done: (err: any, user?: any, info?: any) => void
+	): Promise<void> {
 		try {
+			console.log('Facebook OAuth validate:', profile);
+			// Extract relevant information from the user's profile
 			const { emails } = profile;
-			const user = { emails, accessToken };
+
+			// Construct user object
+			const user = {
+				emails,
+				accessToken,
+				refreshToken
+			};
+
+			// Pass the user object to the callback to indicate successful authentication
 			done(null, user);
-		} catch (err) {
-			done(err, false);
+		} catch (error) {
+			console.error('Error during Facebook OAuth validation:', error);
+			done(error, false);
 		}
 	}
 }
 
 /**
- * Creates a configuration object for Facebook OAuth based on the provided ConfigService.
+ * Generates the configuration object for Facebook OAuth authentication.
  *
- * @param configService - An instance of the ConfigService to retrieve configuration values.
- * @returns An object containing Facebook OAuth configuration.
+ * @param {ConfigService} configService - The configuration service instance.
+ * @returns {Record<string, any>} - The Facebook OAuth configuration object.
+ * @throws {Error} If required Facebook OAuth configuration values are missing.
  */
-export const config = (configService: ConfigService) => ({
-	// Retrieve Facebook OAuth client ID from the configuration service, default to 'disabled' if not found.
-	clientID: <string>configService.get<string>('facebook.clientId') || 'disabled',
+export const parseFacebookConfig = (configService: ConfigService): Record<string, any> => {
+	const clientID = configService.get<string>('facebook.clientId');
+	const clientSecret = configService.get<string>('facebook.clientSecret');
+	const callbackURL = configService.get<string>('facebook.callbackURL');
 
-	// Retrieve Facebook OAuth client secret from the configuration service, default to 'disabled' if not found.
-	clientSecret: <string>configService.get<string>('facebook.clientSecret') || 'disabled',
+	if (!clientID || !clientSecret || !callbackURL) {
+		console.warn('⚠️ Facebook OAuth configuration is incomplete. Defaulting to "disabled".');
+	}
 
-	// Retrieve Facebook OAuth callback URL from the configuration service.
-	callbackURL: <string>configService.get<string>('facebook.callbackURL'),
-
-	// Specify the scope for Facebook OAuth (in this case, only 'email').
-	scope: 'email',
-
-	// Specify the profile fields to request from Facebook (id, emails, name).
-	profileFields: ['id', 'emails', 'name'],
-
-	// Enable proof of authentication.
-	enableProof: true
-});
+	return {
+		clientID: clientID || 'disabled',
+		clientSecret: clientSecret || 'disabled',
+		callbackURL: callbackURL || `${process.env.API_BASE_URL ?? 'http://localhost:3000'}/api/auth/facebook/callback`,
+		scope: ['email'],
+		profileFields: ['id', 'emails', 'name'],
+		enableProof: true
+	};
+};

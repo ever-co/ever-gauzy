@@ -61,7 +61,7 @@ export class AlterSubscriptionEntityTable1740723269734 implements MigrationInter
 		await queryRunner.query(`DROP INDEX "public"."IDX_cc906b4bc892b048f1b654d2aa"`);
 		await queryRunner.query(`ALTER TABLE "subscription" DROP COLUMN "userId"`);
 		await queryRunner.query(`ALTER TABLE "subscription" ADD "actorType" integer`);
-		await queryRunner.query(`ALTER TABLE "subscription" ADD "employeeId" uuid NOT NULL`);
+		await queryRunner.query(`ALTER TABLE "subscription" ADD "employeeId" uuid`);
 		await queryRunner.query(`CREATE INDEX "IDX_008f567bd1dc056bf865ff4d71" ON "subscription" ("actorType") `);
 		await queryRunner.query(`CREATE INDEX "IDX_1aac6fc0532ebc353f9cd3615b" ON "subscription" ("employeeId") `);
 		await queryRunner.query(
@@ -148,7 +148,7 @@ export class AlterSubscriptionEntityTable1740723269734 implements MigrationInter
 		await queryRunner.query(`DROP INDEX "IDX_6eafe9ba53fdd744cd1cffede8"`);
 		await queryRunner.query(`DROP INDEX "IDX_a0ce0007cfcc8e6ee405d0272f"`);
 		await queryRunner.query(
-			`CREATE TABLE "temporary_subscription" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "entityId" varchar NOT NULL, "entity" varchar NOT NULL, "type" varchar NOT NULL, "actorType" integer, "employeeId" varchar NOT NULL, CONSTRAINT "FK_8ccdfc22892c16950b568145d53" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_c86077795cb9a3ce80d19d670a5" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
+			`CREATE TABLE "temporary_subscription" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "entityId" varchar NOT NULL, "entity" varchar NOT NULL, "type" varchar NOT NULL, "actorType" integer, "employeeId" varchar, CONSTRAINT "FK_8ccdfc22892c16950b568145d53" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_c86077795cb9a3ce80d19d670a5" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
 		);
 		await queryRunner.query(
 			`INSERT INTO "temporary_subscription"("deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "entityId", "entity", "type") SELECT "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "entityId", "entity", "type" FROM "subscription"`
@@ -174,7 +174,7 @@ export class AlterSubscriptionEntityTable1740723269734 implements MigrationInter
 		await queryRunner.query(`DROP INDEX "IDX_008f567bd1dc056bf865ff4d71"`);
 		await queryRunner.query(`DROP INDEX "IDX_1aac6fc0532ebc353f9cd3615b"`);
 		await queryRunner.query(
-			`CREATE TABLE "temporary_subscription" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "entityId" varchar NOT NULL, "entity" varchar NOT NULL, "type" varchar NOT NULL, "actorType" integer, "employeeId" varchar NOT NULL, CONSTRAINT "FK_8ccdfc22892c16950b568145d53" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_c86077795cb9a3ce80d19d670a5" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_1aac6fc0532ebc353f9cd3615be" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
+			`CREATE TABLE "temporary_subscription" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "entityId" varchar NOT NULL, "entity" varchar NOT NULL, "type" varchar NOT NULL, "actorType" integer, "employeeId" varchar, CONSTRAINT "FK_8ccdfc22892c16950b568145d53" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_c86077795cb9a3ce80d19d670a5" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_1aac6fc0532ebc353f9cd3615be" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
 		);
 		await queryRunner.query(
 			`INSERT INTO "temporary_subscription"("deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "entityId", "entity", "type", "actorType", "employeeId") SELECT "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "entityId", "entity", "type", "actorType", "employeeId" FROM "subscription"`
@@ -209,7 +209,7 @@ export class AlterSubscriptionEntityTable1740723269734 implements MigrationInter
 		await queryRunner.query(`DROP INDEX "IDX_ec9817a3b53c5dd074af96276d"`);
 		await queryRunner.query(`ALTER TABLE "subscription" RENAME TO "temporary_subscription"`);
 		await queryRunner.query(
-			`CREATE TABLE "subscription" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "entityId" varchar NOT NULL, "entity" varchar NOT NULL, "type" varchar NOT NULL, "actorType" integer, "employeeId" varchar NOT NULL, CONSTRAINT "FK_8ccdfc22892c16950b568145d53" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_c86077795cb9a3ce80d19d670a5" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
+			`CREATE TABLE "subscription" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "archivedAt" datetime, "tenantId" varchar, "organizationId" varchar, "entityId" varchar NOT NULL, "entity" varchar NOT NULL, "type" varchar NOT NULL, "actorType" integer, "employeeId" varchar, CONSTRAINT "FK_8ccdfc22892c16950b568145d53" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_c86077795cb9a3ce80d19d670a5" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
 		);
 		await queryRunner.query(
 			`INSERT INTO "subscription"("deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "entityId", "entity", "type", "actorType", "employeeId") SELECT "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "archivedAt", "tenantId", "organizationId", "entityId", "entity", "type", "actorType", "employeeId" FROM "temporary_subscription"`
@@ -307,7 +307,7 @@ export class AlterSubscriptionEntityTable1740723269734 implements MigrationInter
 		await queryRunner.query(`DROP INDEX \`IDX_cc906b4bc892b048f1b654d2aa\` ON \`subscription\``);
 		await queryRunner.query(`ALTER TABLE \`subscription\` DROP COLUMN \`userId\``);
 		await queryRunner.query(`ALTER TABLE \`subscription\` ADD \`actorType\` int NULL`);
-		await queryRunner.query(`ALTER TABLE \`subscription\` ADD \`employeeId\` varchar(255) NOT NULL`);
+		await queryRunner.query(`ALTER TABLE \`subscription\` ADD \`employeeId\` varchar(255) NULL`);
 		await queryRunner.query(`CREATE INDEX \`IDX_008f567bd1dc056bf865ff4d71\` ON \`subscription\` (\`actorType\`)`);
 		await queryRunner.query(`CREATE INDEX \`IDX_1aac6fc0532ebc353f9cd3615b\` ON \`subscription\` (\`employeeId\`)`);
 		await queryRunner.query(

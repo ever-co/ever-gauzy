@@ -14,6 +14,6 @@ export default registerAs(
 		consumerSecret: process.env.TWITTER_CLIENT_SECRET,
 
 		// Callback URL for handling the OAuth response after authentication
-		callbackURL: process.env.TWITTER_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/twitter/callback`
+		callbackURL: process.env.TWITTER_CALLBACK_URL
 	})
 );

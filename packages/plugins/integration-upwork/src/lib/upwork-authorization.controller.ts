@@ -27,7 +27,7 @@ export class UpworkAuthorizationController {
 			}
 
 			/** Upwork Config Options */
-			const upwork = this._config.get<IUpworkConfig>('upwork') as IUpworkConfig;
+			const upwork = this._config.get('upwork') as IUpworkConfig;
 
 			// Convert query params object to string
 			const queryParamsString = buildQueryString({
