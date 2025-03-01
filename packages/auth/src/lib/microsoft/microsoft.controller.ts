@@ -29,8 +29,8 @@ export class MicrosoftController {
 	 * @returns The result of the Microsoft login callback.
 	 */
 	@Get('/microsoft/callback')
-	async microsoftLoginCallback(@RequestCtx() requestCtx: IIncomingRequest, @Res() res: Response) {
-		const { user } = requestCtx;
+	async microsoftLoginCallback(@RequestCtx() context: IIncomingRequest, @Res() res: Response): Promise<any> {
+		const { user } = context;
 		const { success, authData } = await this.service.validateOAuthLoginEmail(user.emails);
 		return this.service.routeRedirect(success, authData, res);
 	}

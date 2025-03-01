@@ -17,10 +17,7 @@ export interface IIncomingRequest {
  * RequestCtx decorator to extract and structure information from the HTTP request.
  */
 export const RequestCtx = createParamDecorator(
-	async (
-		data: unknown,
-		ctx: ExecutionContext
-	): Promise<IIncomingRequest | void> => {
+	async (data: unknown, ctx: ExecutionContext): Promise<IIncomingRequest | void> => {
 		// Extract the 'req' object from the current execution context.
 		const req = ctx.switchToHttp().getRequest();
 
