@@ -3,10 +3,10 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { combineLatest, debounceTime, firstValueFrom, Subject } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
+import { combineLatest, debounceTime, filter, firstValueFrom, Subject, tap } from 'rxjs';
 import { Cell } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { NgxPermissionsService } from 'ngx-permissions';
 import {
 	IOrganization,
 	PermissionsEnum,
@@ -86,7 +86,8 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 		private readonly _toastrService: ToastrService,
 		private readonly _store: Store,
 		private readonly _dialogService: NbDialogService,
-		private readonly _organizationProjectStore: OrganizationProjectStore
+		private readonly _organizationProjectStore: OrganizationProjectStore,
+		private readonly _permissionsService: NgxPermissionsService
 	) {
 		super(translateService);
 		this.setView();
@@ -280,6 +281,19 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	}
 
 	/**
+	 * Checks if the current user is a manager of a project.
+	 * @param project - The project to check.
+	 *
+	 * @returns `true` if the current user is a manager of the project, `false` otherwise.
+	 */
+	isManagerOfProject(project: IOrganizationProject): boolean {
+		const manager = project.members.find(
+			(member) => member.isManager && member.employee.userId === this._store.user.id
+		);
+		return !!manager;
+	}
+
+	/**
 	 * Retrieves the non-manager employees from the list of members.
 	 *
 	 * @param project - The project containing members.
@@ -355,7 +369,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	 */
 	private filterProjectMembers(project: IOrganizationProject): IOrganizationProject {
 		project.members = project.members.filter(
-			(member: IOrganizationProjectEmployee) => member.employeeId === this._store.user?.employeeId
+			(member: IOrganizationProjectEmployee) => member.employeeId === this._store.user?.employee?.id
 		);
 		return project;
 	}
@@ -538,12 +552,36 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 			this.disableButton = !isSelected;
 			this.selectedProject = isSelected ? data : null;
 
+			if (isSelected && this.selectedProject) {
+				// Check if the user is manager of the selected project
+				const isManager = this.isManagerOfProject(this.selectedProject);
+
+				// Check if the user has all the required permissions
+				const hasAllPermissions = this._hasAllPermissions([
+					PermissionsEnum.ALL_ORG_EDIT,
+					PermissionsEnum.ORG_PROJECT_EDIT,
+					PermissionsEnum.ORG_PROJECT_DELETE
+				]);
+
+				// Dynamically assign or remove the CAN_MANAGE_PROJECT permissions if either condition is true
+				if (!hasAllPermissions) {
+					const permissions = [PermissionsEnum.ORG_PROJECT_EDIT, PermissionsEnum.ORG_PROJECT_DELETE];
+
+					permissions.forEach((permission: PermissionsEnum) =>
+						isManager
+							? this._permissionsService.addPermission(permission)
+							: this._permissionsService.removePermission(permission)
+					);
+				}
+			}
+
 			if (this._isGridCardLayout && this._grid) {
 				if (this._grid.customComponentInstance().constructor === ProjectOrganizationGridComponent) {
 					this.disableButton = true;
-					const projectOrganizationGrid: ProjectOrganizationGridComponent =
-						this._grid.customComponentInstance<ProjectOrganizationGridComponent>();
-					await this.updateProjectVisibility(data.id, !projectOrganizationGrid.visibility);
+
+					// Get the instance of the ProjectOrganizationGridComponent
+					const instance = this._grid.customComponentInstance<ProjectOrganizationGridComponent>();
+					await this.updateProjectVisibility(data.id, !instance.visibility);
 				}
 			}
 		} catch (error) {
@@ -585,6 +623,17 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 			console.error('Error while updating project visibility', error?.message);
 			this._errorHandlingService.handleError(error);
 		}
+	}
+
+	/**
+	 * Checks if the current user has all the specified permissions.
+	 *
+	 * @param permissions - An array of permissions to verify.
+	 * @returns true if the user has every permission in the list, otherwise false.
+	 */
+	private _hasAllPermissions(permissions: PermissionsEnum[]): boolean {
+		// Using Array.prototype.every ensures early termination on the first failure.
+		return permissions.every((permission) => this._permissionsService.getPermission(permission));
 	}
 
 	/**

@@ -31,7 +31,6 @@ startTracing(); // Start tracing if OTEL is enabled.
 import { ConflictException, INestApplication, Type } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { EventSubscriber } from '@mikro-orm/core';
 import { useContainer } from 'class-validator';
 import * as helmet from 'helmet';
@@ -51,6 +50,7 @@ import { SharedModule } from '../shared/shared.module';
 import { AppService } from '../app/app.service';
 import { AppModule } from '../app/app.module';
 import { configureRedisSession } from './redis-store';
+import { setupSwagger } from './swagger';
 
 /**
  * Bootstrap the NestJS application, configuring various settings and initializing the server.
@@ -161,10 +161,8 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	console.log(chalk.green(`Configured Port: ${port}`));
 
 	// Configure Swagger for API documentation
-	const options = new DocumentBuilder().setTitle('Gauzy API').setVersion('1.0').addBearerAuth().build();
-	const document = SwaggerModule.createDocument(app, options);
-	SwaggerModule.setup('swg', app, document);
-	console.log(chalk.green(`Swagger UI available at http://${host}:${port}/swg`));
+	const swaggerPath = await setupSwagger(app);
+	console.log(chalk.green(`Swagger documentation available at http://${host}:${port}/${swaggerPath}`));
 
 	// Configure Atlassian Connect Express
 	// const addon = ac(express());

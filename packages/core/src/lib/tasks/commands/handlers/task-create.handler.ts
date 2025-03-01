@@ -5,9 +5,11 @@ import {
 	ActorTypeEnum,
 	ITask,
 	ActionTypeEnum,
-	SubscriptionTypeEnum,
 	ID,
-	IEmployee
+	IEmployee,
+	EmployeeNotificationTypeEnum,
+	NotificationActionTypeEnum,
+	EntitySubscriptionTypeEnum
 } from '@gauzy/contracts';
 import { EventBus } from '../../../event-bus';
 import { TaskEvent } from '../../../event-bus/events';
@@ -15,13 +17,14 @@ import { BaseEntityEventTypeEnum } from '../../../event-bus/base-entity-event';
 import { Employee } from '../../../core/entities/internal';
 import { RequestContext } from './../../../core/context';
 import { OrganizationProjectService } from './../../../organization-project/organization-project.service';
-import { CreateSubscriptionEvent } from '../../../subscription/events';
+import { CreateEntitySubscriptionEvent } from '../../../entity-subscription/events';
 import { TaskCreateCommand } from './../task-create.command';
 import { TaskService } from '../../task.service';
 import { Task } from './../../task.entity';
 import { EmployeeService } from '../../../employee/employee.service';
 import { MentionService } from '../../../mention/mention.service';
 import { ActivityLogService } from '../../../activity-log/activity-log.service';
+import { EmployeeNotificationService } from '../../../employee-notification/employee-notification.service';
 
 @CommandHandler(TaskCreateCommand)
 export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
@@ -34,7 +37,8 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 		private readonly _organizationProjectService: OrganizationProjectService,
 		private readonly _employeeService: EmployeeService,
 		private readonly mentionService: MentionService,
-		private readonly activityLogService: ActivityLogService
+		private readonly activityLogService: ActivityLogService,
+		private readonly employeeNotificationService: EmployeeNotificationService
 	) {}
 
 	/**
@@ -47,10 +51,34 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 		try {
 			// Destructure input and triggered event flag from the command
 			const { input, triggeredEvent } = command;
-			const { organizationId, mentionUserIds = [], members = [], ...data } = input;
+			const { organizationId, mentionEmployeeIds = [], members = [], ...data } = input;
 
 			// Retrieve current tenant ID from request context or use input tenant ID
 			const tenantId = RequestContext.currentTenantId() ?? data.tenantId;
+
+			// Retrieve current user and employee from the request context
+			const user = RequestContext.currentUser();
+			const employeeId = RequestContext.currentEmployeeId();
+
+			if (employeeId) {
+				try {
+					const employee = await this._employeeService.findOneByIdString(employeeId);
+
+					// Automatically add the current employee to members if not already included
+					if (employee && !members.find((member) => member.id === employeeId)) {
+						members.push(employee);
+					}
+				} catch (error) {
+					this.logger.error(
+						`Unable to retrieve employee for ID: ${employeeId}. Error: ${error.message}`,
+						error.stack
+					);
+					throw new HttpException(
+						'Error while retrieving employee information',
+						HttpStatus.INTERNAL_SERVER_ERROR
+					);
+				}
+			}
 
 			// Determine the project based on the provided data
 			const project = data.projectId
@@ -89,14 +117,15 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			}
 
 			// Apply mentions if needed
-			if (mentionUserIds.length > 0) {
+			if (mentionEmployeeIds.length > 0) {
 				await Promise.all(
-					mentionUserIds.map((mentionedUserId: ID) =>
+					mentionEmployeeIds.map((mentionedEmployeeId: ID) =>
 						this.mentionService.publishMention({
 							entity: BaseEntityEnum.Task,
 							entityId: task.id,
-							mentionedUserId,
-							mentionById: task.creatorId,
+							mentionedEmployeeId,
+							entityName: task.title,
+							employeeId: user?.employeeId,
 							organizationId,
 							tenantId
 						})
@@ -106,11 +135,10 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 
 			// Subscribe creator to the task
 			this._cqrsEventBus.publish(
-				new CreateSubscriptionEvent({
+				new CreateEntitySubscriptionEvent({
 					entity: BaseEntityEnum.Task,
 					entityId: task.id,
-					userId: task.creatorId,
-					type: SubscriptionTypeEnum.CREATED_ENTITY,
+					type: EntitySubscriptionTypeEnum.CREATED_ENTITY,
 					organizationId,
 					tenantId
 				})
@@ -129,20 +157,33 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 						tenantId
 					);
 
-					// Publish subscription events for each employee
+					// Publish subscription events for each employee and send internal notification to users
 					await Promise.all(
-						employees.map(({ userId }: IEmployee) =>
+						employees.map((employee: IEmployee) => {
 							this._cqrsEventBus.publish(
-								new CreateSubscriptionEvent({
+								new CreateEntitySubscriptionEvent({
 									entity: BaseEntityEnum.Task,
 									entityId: task.id,
-									userId,
-									type: SubscriptionTypeEnum.ASSIGNMENT,
+									employeeId: employee.id,
+									type: EntitySubscriptionTypeEnum.ASSIGNMENT,
 									organizationId,
 									tenantId
 								})
-							)
-						)
+							);
+
+							this.employeeNotificationService.publishNotificationEvent(
+								{
+									entity: BaseEntityEnum.Task,
+									entityId: task.id,
+									type: EmployeeNotificationTypeEnum.ASSIGNMENT,
+									organizationId,
+									tenantId
+								},
+								NotificationActionTypeEnum.Assigned,
+								task.title,
+								user.name
+							);
+						})
 					);
 				} catch (error) {
 					this.logger.error('Error while subscribing members to task', error);

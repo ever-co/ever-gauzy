@@ -2,43 +2,42 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
-import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUrl, IsUUID } from 'class-validator';
-import { BaseEntityEnum, ID, IResourceLink, IURLMetaData, IUser } from '@gauzy/contracts';
+import { IsNotEmpty, IsOptional, IsString, IsUrl, IsUUID } from 'class-validator';
+import { ID, IEmployee, IResourceLink, IURLMetaData } from '@gauzy/contracts';
 import { isBetterSqlite3, isSqlite } from '@gauzy/config';
-import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
+import { BasePerEntityType, Employee } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
 import { MikroOrmResourceLinkRepository } from './repository/mikro-orm-resource-link.repository';
 
 @MultiORMEntity('resource_link', { mikroOrmRepository: () => MikroOrmResourceLinkRepository })
-export class ResourceLink extends TenantOrganizationBaseEntity implements IResourceLink {
+export class ResourceLink extends BasePerEntityType implements IResourceLink {
 	[EntityRepositoryType]?: MikroOrmResourceLinkRepository;
 
-	@ApiProperty({ enum: BaseEntityEnum })
-	@IsNotEmpty()
-	@IsEnum(BaseEntityEnum)
-	@ColumnIndex()
-	@MultiORMColumn()
-	entity: BaseEntityEnum;
-
-	@ApiProperty({ type: () => String })
-	@IsNotEmpty()
-	@IsUUID()
-	@ColumnIndex()
-	@MultiORMColumn()
-	entityId: ID;
-
-	@ApiProperty({ type: () => String })
+	/**
+	 * The title of the resource link.
+	 * This property holds a brief and descriptive title representing the resource.
+	 */
+	@ApiProperty({ type: String })
 	@IsNotEmpty()
 	@IsString()
 	@MultiORMColumn()
 	title: string;
 
-	@ApiProperty({ type: () => String })
+	/**
+	 * The URL of the resource.
+	 * This property stores the link to the resource associated with the entry.
+	 */
+	@ApiProperty({ type: String })
 	@IsNotEmpty()
 	@IsUrl()
 	@MultiORMColumn({ type: 'text' })
 	url: string;
 
+	/**
+	 * Metadata associated with the resource.
+	 * This property stores additional data that can vary in type depending on the database.
+	 * For SQLite, it's stored as a text string, otherwise as a JSON object.
+	 */
 	@ApiPropertyOptional({ type: () => (isSqlite() || isBetterSqlite3() ? String : Object) })
 	@IsOptional()
 	@MultiORMColumn({ nullable: true, type: isSqlite() || isBetterSqlite3() ? 'text' : 'json' })
@@ -50,9 +49,9 @@ export class ResourceLink extends TenantOrganizationBaseEntity implements IResou
 	|--------------------------------------------------------------------------
 	*/
 	/**
-	 * User Author of the Resource Link
+	 * Resource Link Author (Employee).
 	 */
-	@MultiORMManyToOne(() => User, {
+	@MultiORMManyToOne(() => Employee, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
 
@@ -60,10 +59,16 @@ export class ResourceLink extends TenantOrganizationBaseEntity implements IResou
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	creator?: IUser;
+	employee?: IEmployee;
 
-	@RelationId((it: ResourceLink) => it.creator)
+	/**
+	 * Resource Link Author ID.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: ResourceLink) => it.employee)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	creatorId?: ID;
+	employeeId?: ID;
 }

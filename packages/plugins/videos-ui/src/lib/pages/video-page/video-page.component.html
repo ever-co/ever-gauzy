@@ -7,6 +7,9 @@
 			[isTimeFormat]="true"
 			[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 			(filtersChange)="filtersChange($event)"
+			[hasLogTypeFilter]="false"
+			[hasSourceFilter]="false"
+			[hasActivityLevelFilter]="false"
 		>
 		</ngx-gauzy-filters>
 	</div>
@@ -21,11 +24,11 @@
 		<plug-video-list></plug-video-list>
 	</div>
 	}@error{
-	<ngx-no-data-message message="No video found"></ngx-no-data-message> } }@else {
+	<ngx-no-data-message [message]="'PLUGIN.VIDEO.NOT_FOUND' | translate"></ngx-no-data-message> } }@else {
 	<div class="no-data">
 		<ngx-no-data-message
 			[nbSpinner]="isLoading"
-			[message]="isLoading ? 'Loading videos...' : 'No video found'"
+			[message]="(isLoading ? 'PLUGIN.VIDEO.LOADING_VIDEOS' : 'PLUGIN.VIDEO.NOT_FOUND') | translate"
 			nbSpinnerStatus="primary"
 		></ngx-no-data-message>
 	</div>

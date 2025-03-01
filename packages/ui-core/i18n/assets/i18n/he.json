@@ -165,7 +165,10 @@
 		"ADD_PLUGIN": "הוסף תוסף",
 		"LOAD_PLUGIN": "טען תוסף",
 		"FROM_CDN": "מ-CDN",
-		"ADD_MODULE": "הוסף מודול"
+		"ADD_MODULE": "הוסף מודול",
+		"SHARE": "שיתוף",
+		"GET_INFO": "קבל מידע",
+		"RETRY": "נסה שוב"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -720,7 +723,8 @@
 		"ERROR": {
 			"PROJECT_NAME": "נדרש שם הפרויקט.",
 			"PROJECT_URL": "כתובת האתר של הפרויקט אינה חוקית.",
-			"OPEN_SOURCE_PROJECT_URL": "כתובת האתר של פרוייקט קוד פתוח אינה חוקית."
+			"OPEN_SOURCE_PROJECT_URL": "כתובת האתר של פרוייקט קוד פתוח אינה חוקית.",
+			"INVALID_IMAGE_URL": "כתובת URL של התמונה אינה תקינה."
 		}
 	},
 	"POP_UPS": {
@@ -2057,6 +2061,10 @@
 			"ORG_TAGS_VIEW": "View Tags",
 			"ORG_TAGS_EDIT": "Edit Tags",
 			"ORG_TAGS_DELETE": "Delete Tags",
+			"ORG_TAG_TYPES_ADD": "הוסף סוג תג",
+			"ORG_TAG_TYPES_VIEW": "צפה בסוגי תגיות",
+			"ORG_TAG_TYPES_EDIT": "ערוך סוג תג",
+			"ORG_TAG_TYPES_DELETE": "מחק סוג תג",
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "Create/Edit/Delete Candidate Feedback",
 			"ALL_ORG_VIEW": "View All Organizations",
 			"ALL_ORG_EDIT": "Create/Edit/Delete All Organizations",
@@ -2164,9 +2172,15 @@
 			"DELETE_SCREENSHOTS": "Allow Delete Screenshot",
 			"ORG_TASK_SETTING": "Task Settings",
 			"ORG_MEMBER_LAST_LOG_VIEW": "צפה ביומן האחרון",
+			"API_CALL_LOG_READ": "קרא יומן קריאות API",
+			"API_CALL_LOG_DELETE": "מחק יומן קריאות API",
 			"TENANT_API_KEY_CREATE": "יצירת מפתח API",
 			"TENANT_API_KEY_VIEW": "הצגת מפתח API",
-			"TENANT_API_KEY_DELETE": "מחיקת מפתח API"
+			"TENANT_API_KEY_DELETE": "מחיקת מפתח API",
+			"EMPLOYEE_AVAILABILITY_CREATE": "יצירת זמינות לעובד",
+			"EMPLOYEE_AVAILABILITY_READ": "צפה בזמינות העובד",
+			"EMPLOYEE_AVAILABILITY_UPDATE": "עדכן זמינות לעובד",
+			"EMPLOYEE_AVAILABILITY_DELETE": "מחק זמינות לעובד"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
@@ -2387,7 +2401,6 @@
 		"TENANT_LEVEL": "Tenant level",
 		"TAGS_TYPE": "Tags type",
 		"TAGS_SELECT_TYPE": "בחר סוג תג"
-
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Skills"
@@ -2959,6 +2972,9 @@
 		"ALREADY_PAID": "Already Paid",
 		"AMOUNT_DUE": "Amount Due",
 		"INVOICED_REMAINING_AMOUNT": "Invoiced Remaining Amount",
+		"TAX_CALCULATION_TYPE": "סוג חישוב מס",
+		"SIMPLE": "פשוט",
+		"COMPOSED": "מורכב",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
@@ -3632,7 +3648,8 @@
 			"AUTHORIZED_TO_WORK": "{{ name }} is authorized to work",
 			"MODULE_CREATED": "המודול נוצר בהצלחה!",
 			"MODULE_UPDATED": "המודול עודכן בהצלחה!",
-			"MODULE_SAVE_ERROR": "שמירת המודול נכשלה. אנא נסה שוב."
+			"MODULE_SAVE_ERROR": "שמירת המודול נכשלה. אנא נסה שוב.",
+			"PASSWORD_REQUIRED": "נדרשת סיסמה."
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -3898,7 +3915,6 @@
 			"TITLE_SERVER_API": "אשף התקנת שרת API של Ever Gauzy",
 			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App מספקת את הפונקציונליות המלאה של פלטפורמת Gauzy הזמינה ישירות במחשב השולחני או במחשב הנייד שלך. בנוסף, הוא מאפשר מעקב אחר זמן עבודה, רישום פעילות ויכולת לקבל תזכורות/הודעות מעקב.",
 			"UNABLE_TO_CONNECT": "Unable to connect to the server. Please check your API host or internet connection."
-
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "לכידת מסך",
@@ -4695,5 +4711,49 @@
 	},
 	"SERVER_API": "API Server",
 	"SERVER_API_LOG": "API Server Log",
-	"COMING_SOON": "דף זה יגיע בקרוב!"
+	"COMING_SOON": "דף זה יגיע בקרוב!",
+	"PLUGIN": {
+		"VIDEO": {
+			"SINGLE": "וידאו",
+			"PLURAL": "סרטונים",
+			"DOWNLOAD": "הורדה",
+			"NOT_FOUND": "הווידאו לא נמצא",
+			"NO_VIDEO": "אין וידאו",
+			"DOWNLOADS": "הורדות",
+			"NO_VIDEO_DOWNLOAD": "אין הורדת וידאו",
+			"LOADING_VIDEOS": "טוען סרטונים...",
+			"EDIT_METADATA": "עריכת מטא-נתונים של וידאו",
+			"STARTING_DOWNLOAD_FOR": "מתחיל הורדה עבור: {{ url }}",
+			"DOWNLOAD_FAILED_FOR": "הורדה נכשלה עבור: {{ url }}, נסה שוב",
+			"DOWNLOAD_COMPLETED_FOR": "ההורדה הושלמה עבור: {{ url }}",
+			"SHARED_SUCCESSFULLY": "הווידאו שותף בהצלחה",
+			"COPIED_SUCCESSFULLY": "הווידאו הועתק בהצלחה",
+			"CORE_INFO": "מידע ליבה",
+			"RECORDED": "הוקלט",
+			"DURATION": "משך",
+			"SIZE": "גודל",
+			"VIEW_FULL": "צפה בסרטון המלא",
+			"TECHNICAL_DETAILS": "פרטים טכניים",
+			"RESOLUTION": "רזולוציה",
+			"CODEC": "קודק",
+			"FRAME_RATE": "קצב פריימים",
+			"UPLOADED_BY": "הועלה על ידי",
+			"NO_VIDEO_AVAILABLE": "אין וידאו זמין",
+			"RETRIED": "ניסיון חוזר של וידאו",
+			"REMOVED_FROM_QUEUE": "הווידאו הוסר מהתור",
+			"ADDED_TO_QUEUE": "הווידאו נוסף לתור",
+			"DELETE_SUCCESSFULLY": "הווידאו נמחק בהצלחה",
+			"UPDATE_SUCCESSFULLY": "הווידאו עודכן בהצלחה",
+			"ERROR": {
+				"REQUIRED": "הכותרת נדרשת.",
+				"AT_LEAST_3": "הכותרת חייבת להכיל לפחות 3 תווים.",
+				"AT_MOST_255": "הכותרת לא יכולה להכיל יותר מ-255 תווים.",
+				"AT_MOST_1000": "התיאור לא יכול להכיל יותר מ-1000 תווים.",
+				"SHARE_CANCELED": "השיתוף בוטל",
+				"INVALID_SHARE_DATA": "נתוני שיתוף לא תקינים",
+				"SHARE_NOT_ALLOWED": "השיתוף אינו מותר",
+				"UNEXPECTED_SHARING_ERROR": "שגיאה בלתי צפויה בשיתוף"
+			}
+		}
+	}
 }

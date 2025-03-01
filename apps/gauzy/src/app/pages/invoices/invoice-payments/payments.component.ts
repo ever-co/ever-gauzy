@@ -9,7 +9,14 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { saveAs } from 'file-saver';
-import { IInvoice, IPayment, InvoiceStatusTypesEnum, IOrganization, IUser } from '@gauzy/contracts';
+import {
+	IInvoice,
+	IPayment,
+	InvoiceStatusTypesEnum,
+	IOrganization,
+	IUser,
+	IPaymentCreateInput
+} from '@gauzy/contracts';
 import {
 	InvoiceEstimateHistoryService,
 	InvoicesService,
@@ -118,7 +125,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 				'toContact',
 				'payments',
 				'payments.invoice',
-				'payments.recordedBy'
+				'payments.createdByUser'
 			];
 
 			// Fetch invoice details
@@ -154,12 +161,8 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 
 		this.barWidth = +((this.totalPaid / this.invoice.totalValue) * 100).toFixed(2);
 
-		if (this.barWidth > 100) {
-			this.barWidth = 100;
-		}
-
 		const progressBar = document.getElementById('progress-bar-inner');
-		progressBar.style.width = `${this.barWidth}%`;
+		progressBar.style.width = this.barWidth > 100 ? '100%' : `${this.barWidth}%`;
 
 		if (this.totalPaid >= this.invoice.totalValue) {
 			if (!this.invoice.paid) {
@@ -316,12 +319,10 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 						instance.value = cell.getValue();
 					}
 				},
-				recordedBy: {
+				createdByUser: {
 					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.RECORDED_BY'),
 					type: 'text',
-					valuePrepareFunction: (value: IUser) => {
-						return value && value.name ? `${value.name}` : '';
-					}
+					valuePrepareFunction: (value: IUser) => value?.name ?? ''
 				},
 				note: {
 					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.NOTE'),
@@ -357,7 +358,14 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 		};
 	}
 
-	async updateInvoiceStatus(totalValue: number, totalPaid: number) {
+	/**
+	 * Updates the status of an invoice based on the total invoice value and the total amount paid.
+	 *
+	 * @param totalValue - The total amount due for the invoice.
+	 * @param totalPaid - The total amount that has been paid towards the invoice.
+	 * @returns A Promise that resolves when the invoice status has been updated.
+	 */
+	async updateInvoiceStatus(totalValue: number, totalPaid: number): Promise<void> {
 		if (totalPaid <= 0) {
 			await this.invoicesService.updateAction(this.invoice.id, {
 				status: InvoiceStatusTypesEnum.VIEWED
@@ -381,9 +389,11 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 		if (!this.invoice) {
 			return;
 		}
+		// Destructure organization properties
+		const { tenantId } = this.organization;
 
-		const { tenantId } = this.store.user;
-		const payment = {
+		// Create a payment object
+		const payment: IPaymentCreateInput = {
 			amount: this.leftToPay,
 			paymentDate: new Date(),
 			currency: this.invoice.currency,
@@ -391,19 +401,13 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 			invoiceId: this.invoice.id,
 			organization: this.invoice.fromOrganization,
 			organizationId: this.invoice.fromOrganization.id,
-			tenantId,
-			recordedBy: this.store.user,
-			userId: this.store.userId
+			tenantId
 		};
-
-		if (this.invoice.dueDate >= new Date()) {
-			payment['overdue'] = true;
-		} else {
-			payment['overdue'] = false;
-		}
+		payment.overdue = this.invoice.dueDate >= new Date();
 
 		await this.paymentService.add(payment);
 		const { amount, currency, invoice } = payment;
+
 		if (payment.invoice) {
 			const action = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_AMOUNT_ADDED', { amount, currency });
 			await this.createInvoiceHistory(action, invoice);
@@ -445,7 +449,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 				contact: this.invoice.toContact ? this.invoice.toContact.name : '',
 				paymentDate: payment.paymentDate.toString().slice(0, 10),
 				amount: `${payment.currency + ' ' + payment.amount}`,
-				recordedBy: payment.recordedBy.firstName + payment.recordedBy.lastName,
+				createdByUser: payment.createdByUser.name,
 				note: payment.note || '',
 				paymentMethod: payment.paymentMethod
 					? this.getTranslation(`INVOICES_PAGE.PAYMENTS.${payment.paymentMethod}`)

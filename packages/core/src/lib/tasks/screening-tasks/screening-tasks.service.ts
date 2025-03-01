@@ -4,12 +4,12 @@ import {
 	ActionTypeEnum,
 	ActorTypeEnum,
 	BaseEntityEnum,
+	EntitySubscriptionTypeEnum,
 	ID,
 	IScreeningTask,
 	IScreeningTaskCreateInput,
 	IScreeningTaskUpdateInput,
 	ScreeningTaskStatusEnum,
-	SubscriptionTypeEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
@@ -18,7 +18,7 @@ import { TaskService } from '../task.service';
 import { OrganizationProjectService } from '../../organization-project';
 import { ActivityLogService } from '../../activity-log/activity-log.service';
 import { MentionService } from '../../mention/mention.service';
-import { CreateSubscriptionEvent } from '../../subscription/events';
+import { CreateEntitySubscriptionEvent } from '../../entity-subscription/events';
 import { Task } from '../task.entity';
 import { ScreeningTask } from './screening-task.entity';
 import { TypeOrmScreeningTaskRepository } from './repository/type-orm-screening-task.repository';
@@ -27,9 +27,9 @@ import { MikroOrmScreeningTaskRepository } from './repository/mikro-orm-screenin
 @Injectable()
 export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask> {
 	constructor(
-		private readonly eventBus: EventBus,
 		readonly typeOrmScreeningTaskRepository: TypeOrmScreeningTaskRepository,
 		readonly mikroOrmScreeningTaskRepository: MikroOrmScreeningTaskRepository,
+		private readonly eventBus: EventBus,
 		private readonly taskService: TaskService,
 		private readonly organizationProjectService: OrganizationProjectService,
 		private readonly mentionService: MentionService,
@@ -47,15 +47,18 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 	 */
 	async create(input: IScreeningTaskCreateInput): Promise<IScreeningTask> {
 		try {
-			const userId = RequestContext.currentUserId();
-			const tenantId = RequestContext.currentTenantId() || input.tenantId;
-			const { organizationId, mentionUserIds = [] } = input;
+			// Extract the current user from the request context
+			const user = RequestContext.currentUser();
+			// Extract the current tenant ID from the request context or use the provided tenant ID
+			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+			// Extract the organization ID from the input or use the current organization ID
+			const { organizationId, mentionEmployeeIds = [], ...data } = input;
 
 			// Check if projectId is provided, if not use the provided project object from the input.
 			// If neither is provided, set project to null.
-			const project = input.task.projectId
-				? await this.organizationProjectService.findOneByIdString(input.task.projectId)
-				: input.task.project || null;
+			const project = data.task.projectId
+				? await this.organizationProjectService.findOneByIdString(data.task.projectId)
+				: data.task.project || null;
 
 			// Check if the project exists and extract the project prefix
 			const prefix = project?.name?.substring(0, 3) ?? null;
@@ -74,45 +77,45 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 
 			// Create task
 			const task = await this.taskService.create({
-				...input.task,
-				number: maxNumber + 1, // Increment the task number
+				...data.task,
 				prefix,
+				number: maxNumber + 1, // Increment the task number
 				isScreeningTask: true,
-				creatorId: userId,
 				tenantId,
 				organizationId
 			});
 
 			// Create the screening task
 			const screeningTask = await super.create({
-				...input,
-				taskId: task.id,
-				task,
+				...data,
 				status: ScreeningTaskStatusEnum.PENDING,
-				creatorId: userId,
+				taskId: task.id,
+				organizationId,
 				tenantId
 			});
 
 			// Apply mentions if needed
-			const mentionPromises = mentionUserIds.map((mentionedUserId) =>
+			const mentionPromises = mentionEmployeeIds.map((mentionedEmployeeId: ID) =>
 				this.mentionService.publishMention({
 					entity: BaseEntityEnum.Task,
 					entityId: task.id,
-					mentionedUserId,
-					mentionById: userId
+					entityName: task.title,
+					mentionedEmployeeId,
+					employeeId: user?.employeeId
 				})
 			);
 
 			// Subscribe creator to the task
-			const subscriptionEvent = new CreateSubscriptionEvent({
-				entity: BaseEntityEnum.Task,
-				entityId: task.id,
-				userId: userId,
-				type: SubscriptionTypeEnum.CREATED_ENTITY,
-				organizationId,
-				tenantId
-			});
-			this.eventBus.publish(subscriptionEvent);
+			this.eventBus.publish(
+				new CreateEntitySubscriptionEvent({
+					entity: BaseEntityEnum.Task,
+					entityId: task.id,
+					employeeId: user?.employeeId,
+					type: EntitySubscriptionTypeEnum.CREATED_ENTITY,
+					organizationId,
+					tenantId
+				})
+			);
 
 			// Generate the activity logs
 			const activityLogPromises = [
@@ -157,11 +160,15 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 	 */
 	async update(id: ID, input: IScreeningTaskUpdateInput): Promise<IScreeningTask> {
 		try {
-			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 
+			// Find the screening task by ID
 			const screeningTask = await this.findOneByIdString(id, { relations: { task: true } });
+
+			// Extract the task from the screening task
 			const task = screeningTask.task;
 
+			// Create a new screening task with the updated input
 			const updatedScreeningTask = await super.create({ ...input, id });
 
 			// Update the task accordingly to the screening status

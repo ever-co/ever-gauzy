@@ -1,8 +1,16 @@
 import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
-import { UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IEmployee, IOrganization, IImageAsset, IOrganizationProject, IOrganizationTeam, ITag } from '@gauzy/contracts';
+import {
+	IEmployee,
+	IOrganization,
+	IImageAsset,
+	IOrganizationProject,
+	IOrganizationTeam,
+	ITag,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import { DUMMY_PROFILE_IMAGE, distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 
@@ -25,8 +33,8 @@ export class TeamsMutationComponent implements OnInit {
 	/*
 	 * Team Mutation Form
 	 */
-	public form: UntypedFormGroup = TeamsMutationComponent.buildForm(this.fb);
-	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
+	public form: FormGroup = TeamsMutationComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		const form = fb.group({
 			name: [null, Validators.required],
 			memberIds: [[], Validators.required],
@@ -69,6 +77,34 @@ export class TeamsMutationComponent implements OnInit {
 			}
 			members.updateValueAndValidity();
 		});
+
+		// Set the default manager if the user is an employee and does not have the CHANGE_SELECTED_EMPLOYEE permission
+		this.setDefaultManagerIfEmployee();
+	}
+
+	/**
+	 * Automatically sets the current user as a manager if they are an employee
+	 * and do NOT have the CHANGE_SELECTED_EMPLOYEE permission.
+	 */
+	setDefaultManagerIfEmployee(): void {
+		// Exit early if the user can change the selected employee
+		if (this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return;
+		}
+
+		this.store.user$
+			.pipe(
+				filter((user) => !!user?.employee),
+				tap(({ employee }) => {
+					const managers = <FormControl>this.form.get('managerIds');
+					if (managers) {
+						managers.patchValue([employee.id]);
+						managers.updateValueAndValidity();
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**

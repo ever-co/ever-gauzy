@@ -51,6 +51,13 @@
 							(uploadedImgUrl)="updateImageUrl($event)"
 						></ngx-file-uploader-input>
 					</div>
+					<ng-container *ngIf="form.get('imageUrl')?.value !== null && FormHelpers.isInvalidControl(form, 'imageUrl')"
+					>
+						<p class="caption status-danger mt-1">
+							{{ 'FORM.ERROR.INVALID_IMAGE_URL' | translate }}
+						</p>
+					</ng-container>
+
 				</div>
 			</div>
 		</div>
@@ -70,6 +77,11 @@
 					formControlName="firstName"
 					[status]="FormHelpers.isInvalidControl(form, 'firstName') ? 'danger' : 'basic'"
 				/>
+				<ng-container *ngIf="FormHelpers.isInvalidControl(form, 'firstName')">
+					<p class="caption status-danger mt-1">
+						{{ 'TOASTR.MESSAGE.NAME_REQUIRED' | translate }}
+					</p>
+				</ng-container>
 			</div>
 		</div>
 		<div class="col">
@@ -101,11 +113,20 @@
 					[status]="FormHelpers.isInvalidControl(form, 'username') ? 'danger' : 'basic'"
 				/>
 			</div>
+			<ng-container *ngIf="FormHelpers.isInvalidControl(form, 'username')">
+				<p class="caption status-danger mt-1">
+					{{ 'TOASTR.MESSAGE.NAME_REQUIRED' | translate }}
+				</p>
+			</ng-container>
 		</div>
 		<div class="col-8">
 			<div class="form-group">
 				<label for="email" class="label">{{ 'FORM.EMAIL' | translate }}</label>
 				<input
+					autofocus
+					pattern=".+@.+\..+"
+					type="email"
+					#email
 					nbInput
 					type="email"
 					id="email"
@@ -114,6 +135,11 @@
 					formControlName="email"
 					[status]="FormHelpers.isInvalidControl(form, 'email') ? 'danger' : 'basic'"
 				/>
+				<ng-container *ngIf="FormHelpers.isInvalidControl(form, 'email')">
+					<p class="caption status-danger mt-1" *ngIf="form.controls.email.errors?.pattern">
+						{{ 'TOASTR.MESSAGE.EMAIL_SHOULD_BE_REAL' | translate }}
+					</p>
+				</ng-container>
 			</div>
 		</div>
 	</div>
@@ -126,6 +152,11 @@
 				[ctrl]="form.controls.password"
 				formControlName="password"
 			></ngx-password-form-field>
+			<ng-container *ngIf="FormHelpers.isInvalidControl(form, 'password')">
+				<p class="caption status-danger mt-1">
+					{{ 'TOASTR.MESSAGE.PASSWORD_REQUIRED' | translate }}
+				</p>
+			</ng-container>
 		</div>
 	</div>
 	<div class="row">

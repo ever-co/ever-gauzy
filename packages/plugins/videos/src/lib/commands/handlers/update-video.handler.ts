@@ -18,17 +18,15 @@ export class UpdateVideoHandler implements ICommandHandler<UpdateVideoCommand> {
 	 */
 	public async execute(command: UpdateVideoCommand): Promise<IVideo> {
 		// Extract input data from the command
-		const { input } = command;
+		const { input, id } = command;
 
 		// Destructure the input fields for clarity
-		const { id, title, size, file, duration } = input;
+		const { title, description } = input;
 
 		// Update the video entity in the database using the provided ID and input fields
 		await this.videosService.update(id, {
 			title,
-			size,
-			duration,
-			file: file?.key // Extract the file key if a file object is provided
+			description
 		});
 
 		// Fetch and return the updated video entity by its ID
