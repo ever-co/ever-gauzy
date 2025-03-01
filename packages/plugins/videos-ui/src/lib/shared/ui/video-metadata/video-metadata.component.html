@@ -25,25 +25,25 @@
 			<!-- Core Details -->
 			<div class="details-section core-details">
 				<div class="section-header">
-					<h3>Core Information</h3>
+					<h3>{{ 'PLUGIN.VIDEO.CORE_INFO' | translate }}</h3>
 				</div>
 				<div class="section-content">
 					<div class="detail-item">
-						<span class="label">Recorded</span>
+						<span class="label">{{ 'PLUGIN.VIDEO.RECORDED' | translate }}</span>
 						<span class="value">{{ video.recordedAt | date : 'medium' }}</span>
 					</div>
 					<div class="detail-item">
-						<span class="label">Duration</span>
+						<span class="label">{{ 'PLUGIN.VIDEO.DURATION' | translate }}</span>
 						<span class="value">{{ video.duration | durationFormat }}</span>
 					</div>
 					<div class="detail-item">
-						<span class="label">Size</span>
+						<span class="label">{{ 'PLUGIN.VIDEO.SIZE' | translate }}</span>
 						<span class="value">{{ video.size | fileSize }}</span>
 					</div>
 					@if(video.fullUrl) {
 					<div class="detail-item full-url">
 						<a [href]="video.fullUrl" target="_blank" rel="noopener noreferrer" class="url-link">
-							View Full Video
+							{{ 'PLUGIN.VIDEO.VIEW_FULL' | translate }}
 							<i class="fas fa-external-link-alt"></i>
 						</a>
 					</div>
@@ -54,19 +54,19 @@
 			<!-- Metadata Section -->
 			<div class="details-section metadata-details">
 				<div class="section-header">
-					<h3>Technical Details</h3>
+					<h3>{{ 'PLUGIN.VIDEO.TECHNICAL_DETAILS' | translate }}</h3>
 				</div>
 				<div class="section-content">
 					<div class="detail-item">
-						<span class="label">Resolution</span>
+						<span class="label">{{ 'PLUGIN.VIDEO.RESOLUTION' | translate }}</span>
 						<span class="value">{{ video.resolution }}</span>
 					</div>
 					<div class="detail-item">
-						<span class="label">Codec</span>
+						<span class="label">{{ 'PLUGIN.VIDEO.CODEC' | translate }}</span>
 						<span class="value">{{ video.codec }}</span>
 					</div>
 					<div class="detail-item">
-						<span class="label">Frame Rate</span>
+						<span class="label">{{ 'PLUGIN.VIDEO.FRAME_RATE' | translate }}</span>
 						<span class="value">{{ video.frameRate }} FPS</span>
 					</div>
 				</div>
@@ -76,7 +76,7 @@
 			@if(video.uploadedBy) {
 			<div class="details-section uploader-details">
 				<div class="section-header">
-					<h3>Uploaded By</h3>
+					<h3>{{ 'PLUGIN.VIDEO.UPLOADED_BY' | translate }}</h3>
 				</div>
 				<div class="section-content uploader-profile">
 					<ngx-avatar
@@ -93,10 +93,10 @@
 
 		<!-- Action Footer -->
 		<nb-card-footer class="text-right p-0">
-			<button nbButton type="button" (click)="close()" outline status="basic">Close</button>
+			<button nbButton type="button" (click)="close()" outline status="basic">{{ 'BUTTONS.CLOSE' | translate }}</button>
 		</nb-card-footer>
 	</div>
 	} @else {
-	<ngx-no-data-message message="No Video Available"></ngx-no-data-message>
+	<ngx-no-data-message [message]="'PLUGIN.VIDEO.NO_VIDEO_AVAILABLE' | translate"></ngx-no-data-message>
 	}
 </div>

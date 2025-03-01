@@ -7,5 +7,8 @@ import { Dashboard } from '../dashboard.entity';
  * Create Dashboard validation request DTO
  */
 export class CreateDashboardDTO
-	extends IntersectionType(TenantOrganizationBaseDTO, OmitType(Dashboard, ['creator', 'creatorId', 'isDefault']))
+	extends IntersectionType(
+		TenantOrganizationBaseDTO,
+		OmitType(Dashboard, ['isDefault', 'createdByUser', 'createdByUserId'] as const)
+	)
 	implements IDashboardCreateInput {}

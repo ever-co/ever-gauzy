@@ -166,7 +166,10 @@
 		"ADD_PLUGIN": "Ajouter",
 		"LOAD_PLUGIN": "Charger Plugin",
 		"FROM_CDN": "Depuis CDN",
-		"ADD_MODULE": "Ajouter un module"
+		"ADD_MODULE": "Ajouter un module",
+		"SHARE": "Partager",
+		"GET_INFO": "Obtenir des infos",
+		"RETRY": "Réessayer"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -716,7 +719,8 @@
 		"ERROR": {
 			"PROJECT_NAME": "Le nom du projet est requis.",
 			"PROJECT_URL": "L'URL du projet est invalide.",
-			"OPEN_SOURCE_PROJECT_URL": "L'URL du projet open source est invalide."
+			"OPEN_SOURCE_PROJECT_URL": "L'URL du projet open source est invalide.",
+			"INVALID_IMAGE_URL": "URL de l'image invalide."
 		}
 	},
 	"POP_UPS": {
@@ -2142,7 +2146,11 @@
 			"ORG_MEMBER_LAST_LOG_VIEW": "Voir le dernier journal",
 			"TENANT_API_KEY_CREATE": "Créer une clé API",
 			"TENANT_API_KEY_VIEW": "Afficher la clé API",
-			"TENANT_API_KEY_DELETE": "Supprimer la clé API"
+			"TENANT_API_KEY_DELETE": "Supprimer la clé API",
+			"EMPLOYEE_AVAILABILITY_CREATE": "Créer une disponibilité d'employé",
+			"EMPLOYEE_AVAILABILITY_READ": "Voir la disponibilité de l'employé",
+			"EMPLOYEE_AVAILABILITY_UPDATE": "Mettre à jour la disponibilité de l'employé",
+			"EMPLOYEE_AVAILABILITY_DELETE": "Supprimer la disponibilité de l'employé"
 		},
 		"BILLING": "Facturation",
 		"BUDGET": "Budget",
@@ -2936,6 +2944,9 @@
 		"ALREADY_PAID": "Déjà payé",
 		"AMOUNT_DUE": "Montant dû",
 		"INVOICED_REMAINING_AMOUNT": "Montant restant à payer sur facture",
+		"TAX_CALCULATION_TYPE": "Type de calcul de la taxe",
+		"SIMPLE": "Simple",
+		"COMPOSED": "Composé",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Type de facture",
 			"ESTIMATE_TYPE": "Type d'estimation",
@@ -3619,7 +3630,8 @@
 			"SCREEN_CAPTURE_CHANGED": "Statut de capture d'écran modifié pour {{ name }}.",
 			"MODULE_CREATED": "Module créé avec succès !",
 			"MODULE_UPDATED": "Module mis à jour avec succès !",
-			"MODULE_SAVE_ERROR": "Échec de l'enregistrement du module. Veuillez réessayer."
+			"MODULE_SAVE_ERROR": "Échec de l'enregistrement du module. Veuillez réessayer.",
+			"PASSWORD_REQUIRED": "Le mot de passe est requis."
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -4703,5 +4715,49 @@
 	},
 	"SERVER_API": "Serveur API",
 	"SERVER_API_LOG": "Journal du serveur API",
-	"COMING_SOON": "This page is coming soon!"
+	"COMING_SOON": "This page is coming soon!",
+	"PLUGIN": {
+		"VIDEO": {
+			"SINGLE": "Vidéo",
+			"PLURAL": "Vidéos",
+			"DOWNLOAD": "Télécharger",
+			"NOT_FOUND": "Vidéo non trouvée",
+			"NO_VIDEO": "Aucune vidéo",
+			"DOWNLOADS": "Téléchargements",
+			"NO_VIDEO_DOWNLOAD": "Aucun téléchargement de vidéo",
+			"LOADING_VIDEOS": "Chargement des vidéos...",
+			"EDIT_METADATA": "Modifier les métadonnées de la vidéo",
+			"STARTING_DOWNLOAD_FOR": "Démarrage du téléchargement pour : {{ url }}",
+			"DOWNLOAD_FAILED_FOR": "Échec du téléchargement pour : {{ url }}, réessayer",
+			"DOWNLOAD_COMPLETED_FOR": "Téléchargement terminé pour : {{ url }}",
+			"SHARED_SUCCESSFULLY": "Vidéo partagée avec succès",
+			"COPIED_SUCCESSFULLY": "Vidéo copiée avec succès",
+			"CORE_INFO": "Informations de base",
+			"RECORDED": "Enregistré",
+			"DURATION": "Durée",
+			"SIZE": "Taille",
+			"VIEW_FULL": "Voir la vidéo complète",
+			"TECHNICAL_DETAILS": "Détails techniques",
+			"RESOLUTION": "Résolution",
+			"CODEC": "Codec",
+			"FRAME_RATE": "Taux de rafraîchissement",
+			"UPLOADED_BY": "Téléchargé par",
+			"NO_VIDEO_AVAILABLE": "Aucune vidéo disponible",
+			"RETRIED": "Vidéo réessayée",
+			"REMOVED_FROM_QUEUE": "Vidéo retirée de la file d'attente",
+			"ADDED_TO_QUEUE": "Vidéo ajoutée à la file d'attente",
+			"DELETE_SUCCESSFULLY": "Vidéo supprimée avec succès",
+			"UPDATE_SUCCESSFULLY": "Vidéo mise à jour avec succès",
+			"ERROR": {
+				"REQUIRED": "Le titre est requis.",
+				"AT_LEAST_3": "Le titre doit contenir au moins 3 caractères.",
+				"AT_MOST_255": "Le titre ne peut pas dépasser 255 caractères.",
+				"AT_MOST_1000": "La description ne peut pas dépasser 1000 caractères.",
+				"SHARE_CANCELED": "Le partage a été annulé",
+				"INVALID_SHARE_DATA": "Données de partage invalides",
+				"SHARE_NOT_ALLOWED": "Le partage n'est pas autorisé",
+				"UNEXPECTED_SHARING_ERROR": "Erreur inattendue lors du partage"
+			}
+		}
+	}
 }

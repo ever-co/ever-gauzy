@@ -33,6 +33,21 @@ export class OrganizationProjectsService {
 	}
 
 	/**
+	 * Checks if a specific employee is a manager of a given project.
+	 *
+	 * This method makes a GET request to the backend to verify if the employee is part of the project
+	 * and if they hold the 'manager' role within the project team.
+	 *
+	 * @param projectId - The ID of the project to check.
+	 * @param employeeId - The ID of the employee to verify.
+	 * @returns An observable that resolves to a boolean indicating if the employee is a manager of the project.
+	 *          Returns `true` if the employee is a manager, otherwise `false`.
+	 */
+	isManagerOfProject(projectId: ID, employeeId: ID): Observable<boolean> {
+		return this._http.get<boolean>(`${this.API_URL}/${projectId}/is-manager/${employeeId}`);
+	}
+
+	/**
 	 * Edits an existing organization project.
 	 *
 	 * @param input The input data for updating the project. Partial data is accepted.

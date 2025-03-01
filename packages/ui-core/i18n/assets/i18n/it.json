@@ -166,7 +166,10 @@
 		"ADD_PLUGIN": "Aggiungi plugin",
 		"LOAD_PLUGIN": "Carica Plugin",
 		"FROM_CDN": "Da CDN",
-		"ADD_MODULE": "Aggiungi modulo"
+		"ADD_MODULE": "Aggiungi modulo",
+		"SHARE": "Condividi",
+		"GET_INFO": "Ottieni informazioni",
+		"RETRY": "Riprova"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -715,7 +718,8 @@
 		"ERROR": {
 			"PROJECT_NAME": "Il nome del progetto è obbligatorio",
 			"PROJECT_URL": "L'URL del progetto non è valido",
-			"OPEN_SOURCE_PROJECT_URL": "L'URL del progetto open source non è valido"
+			"OPEN_SOURCE_PROJECT_URL": "L'URL del progetto open source non è valido",
+			"INVALID_IMAGE_URL": "URL immagine non valido."
 		}
 	},
 	"POP_UPS": {
@@ -2027,6 +2031,10 @@
 			"ORG_TAGS_VIEW": "Visualizza i tag",
 			"ORG_TAGS_EDIT": "Modifica Etichette",
 			"ORG_TAGS_DELETE": "Elimina i tag",
+			"ORG_TAG_TYPES_ADD": "Aggiungi tipo di tag",
+			"ORG_TAG_TYPES_VIEW": "Visualizza tipi di tag",
+			"ORG_TAG_TYPES_EDIT": "Modifica tipo di tag",
+			"ORG_TAG_TYPES_DELETE": "Elimina tipo di tag",
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "Creare/Modificare/Eliminare Feedback del Candidato",
 			"ALL_ORG_VIEW": "Visualizza tutte le organizzazioni",
 			"ALL_ORG_EDIT": "Crea/Modifica/Elimina tutte le organizzazioni",
@@ -2139,9 +2147,15 @@
 			"ORG_TASK_DELETE": "Elimina compiti",
 			"ORG_TASK_SETTING": "Impostazioni attività",
 			"ORG_MEMBER_LAST_LOG_VIEW": "Visualizza l'ultimo registro",
+			"API_CALL_LOG_READ": "Leggi il registro delle chiamate API",
+			"API_CALL_LOG_DELETE": "Elimina il registro delle chiamate API",
 			"TENANT_API_KEY_CREATE": "Crea chiave API",
 			"TENANT_API_KEY_VIEW": "Visualizza chiave API",
-			"TENANT_API_KEY_DELETE": "Elimina chiave API"
+			"TENANT_API_KEY_DELETE": "Elimina chiave API",
+			"EMPLOYEE_AVAILABILITY_CREATE": "Creare disponibilità del dipendente",
+			"EMPLOYEE_AVAILABILITY_READ": "Visualizza disponibilità del dipendente",
+			"EMPLOYEE_AVAILABILITY_UPDATE": "Aggiorna disponibilità del dipendente",
+			"EMPLOYEE_AVAILABILITY_DELETE": "Elimina disponibilità del dipendente"
 		},
 		"BILLING": "Fatturazione",
 		"BUDGET": "Bilancio",
@@ -2935,6 +2949,9 @@
 		"ALREADY_PAID": "Già pagato",
 		"AMOUNT_DUE": "Importo dovuto",
 		"INVOICED_REMAINING_AMOUNT": "Importo rimanente da fatturare",
+		"TAX_CALCULATION_TYPE": "Tipo di calcolo dell'imposta",
+		"SIMPLE": "Semplice",
+		"COMPOSED": "Composto",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Tipo di fattura",
 			"ESTIMATE_TYPE": "Tipo di stima",
@@ -3618,7 +3635,8 @@
 			"SCREEN_CAPTURE_CHANGED": "Stato cattura schermo modificato per {{ name }}",
 			"MODULE_CREATED": "Modulo creato con successo!",
 			"MODULE_UPDATED": "Modulo aggiornato con successo!",
-			"MODULE_SAVE_ERROR": "Salvataggio del modulo non riuscito. Riprova."
+			"MODULE_SAVE_ERROR": "Salvataggio del modulo non riuscito. Riprova.",
+			"PASSWORD_REQUIRED": "La password è obbligatoria."
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -4703,5 +4721,49 @@
 	},
 	"SERVER_API": "API Server",
 	"SERVER_API_LOG": "Registro del server API",
-	"COMING_SOON": "This page is coming soon!"
+	"COMING_SOON": "This page is coming soon!",
+	"PLUGIN": {
+		"VIDEO": {
+			"SINGLE": "Video",
+			"PLURAL": "Video",
+			"DOWNLOAD": "Scarica",
+			"NOT_FOUND": "Video non trovato",
+			"NO_VIDEO": "Nessun video",
+			"DOWNLOADS": "Download",
+			"NO_VIDEO_DOWNLOAD": "Nessun download video",
+			"LOADING_VIDEOS": "Caricamento video...",
+			"EDIT_METADATA": "Modifica metadati video",
+			"STARTING_DOWNLOAD_FOR": "Avvio del download per: {{ url }}",
+			"DOWNLOAD_FAILED_FOR": "Download fallito per: {{ url }}, riprova",
+			"DOWNLOAD_COMPLETED_FOR": "Download completato per: {{ url }}",
+			"SHARED_SUCCESSFULLY": "Video condiviso con successo",
+			"COPIED_SUCCESSFULLY": "Video copiato con successo",
+			"CORE_INFO": "Informazioni di base",
+			"RECORDED": "Registrato",
+			"DURATION": "Durata",
+			"SIZE": "Dimensione",
+			"VIEW_FULL": "Guarda il video completo",
+			"TECHNICAL_DETAILS": "Dettagli tecnici",
+			"RESOLUTION": "Risoluzione",
+			"CODEC": "Codec",
+			"FRAME_RATE": "Frequenza dei fotogrammi",
+			"UPLOADED_BY": "Caricato da",
+			"NO_VIDEO_AVAILABLE": "Nessun video disponibile",
+			"RETRIED": "Video riprovato",
+			"REMOVED_FROM_QUEUE": "Video rimosso dalla coda",
+			"ADDED_TO_QUEUE": "Video aggiunto alla coda",
+			"DELETE_SUCCESSFULLY": "Video eliminato con successo",
+			"UPDATE_SUCCESSFULLY": "Video aggiornato con successo",
+			"ERROR": {
+				"REQUIRED": "Il titolo è obbligatorio.",
+				"AT_LEAST_3": "Il titolo deve contenere almeno 3 caratteri.",
+				"AT_MOST_255": "Il titolo non può superare i 255 caratteri.",
+				"AT_MOST_1000": "La descrizione non può superare i 1000 caratteri.",
+				"SHARE_CANCELED": "Condivisione annullata",
+				"INVALID_SHARE_DATA": "Dati di condivisione non validi",
+				"SHARE_NOT_ALLOWED": "Condivisione non consentita",
+				"UNEXPECTED_SHARING_ERROR": "Errore inaspettato nella condivisione"
+			}
+		}
+	}
 }

@@ -3,12 +3,9 @@ import { IDeal } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ga-pipeline-deal-created-by',
-	template: `{{ rowData?.createdBy?.name }}`
+	template: `{{ rowData?.createdByUser?.name }}`
 })
 export class PipelineDealCreatedByComponent {
-	@Input()
-	value: string | number;
-
-	@Input()
-	rowData: IDeal;
+	@Input() value: string | number;
+	@Input() rowData: IDeal;
 }

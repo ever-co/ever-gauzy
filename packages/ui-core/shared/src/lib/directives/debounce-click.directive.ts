@@ -1,6 +1,5 @@
 import { Directive, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { Subject, Subscription, tap } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, Subject, Subscription, tap } from 'rxjs';
 
 @Directive({
 	selector: '[debounceClick]'
@@ -35,6 +34,8 @@ export class DebounceClickDirective implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
-		this.subscription.unsubscribe();
+		if (this.subscription) {
+			this.subscription.unsubscribe();
+		}
 	}
 }

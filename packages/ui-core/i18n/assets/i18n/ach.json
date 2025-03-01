@@ -1435,7 +1435,8 @@
 				"KPI_NAME": "crwdns7362:0crwdne7362:0"
 			},
 			"ERROR": {
-				"START_DATE_GREATER": "crwdns5026:0crwdne5026:0"
+				"START_DATE_GREATER": "crwdns5026:0crwdne5026:0",
+				"INVALID_IMAGE_URL": "URL ma nyono ti picha en nongo ma aloka."
 			}
 		},
 		"BUTTONS": {
@@ -2683,6 +2684,9 @@
 		"ALREADY_PAID": "crwdns10038:0crwdne10038:0",
 		"AMOUNT_DUE": "crwdns10040:0crwdne10040:0",
 		"INVOICED_REMAINING_AMOUNT": "crwdns10042:0crwdne10042:0",
+		"TAX_CALCULATION_TYPE": "Lonyo ki kiwero wa kodo",
+		"SIMPLE": "Pe woko",
+		"COMPOSED": "Pe lworo",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "crwdns3650:0crwdne3650:0",
 			"ESTIMATE_TYPE": "crwdns4444:0crwdne4444:0",
@@ -3353,7 +3357,8 @@
 			"AUTHORIZED_TO_WORK": "crwdns11529:0{{ name }}crwdne11529:0",
 			"MODULE_CREATED": "Module neno kibalo niber.",
 			"MODULE_UPDATED": "Module neno me kicari maber.",
-			"MODULE_SAVE_ERROR": "Kwero module ma neno opire."
+			"MODULE_SAVE_ERROR": "Kwero module ma neno opire.",
+			"PASSWORD_REQUIRED": "Iye nyig mato bedo muko."
 		}
 	},
 	"ACCEPT_INVITE": {

@@ -11,16 +11,17 @@ import {
 	ITask,
 	ITaskCreateInput,
 	ITaskUpdateInput,
-	SubscriptionTypeEnum
+	EntitySubscriptionTypeEnum,
+	IEmployee
 } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
 import { IntegrationMap, TaskStatus } from '../../../core/entities/internal';
-import { CreateSubscriptionEvent } from '../../../subscription/events';
+import { CreateEntitySubscriptionEvent } from '../../../entity-subscription/events';
+import { EntitySubscriptionService } from '../../../entity-subscription/entity-subscription.service';
 import { AutomationTaskSyncCommand } from './../automation-task.sync.command';
 import { EmployeeService } from '../../../employee/employee.service';
-import { SubscriptionService } from '../../../subscription/subscription.service';
-import { TaskService } from './../../task.service';
 import { ActivityLogService } from '../../../activity-log/activity-log.service';
+import { TaskService } from './../../task.service';
 import { Task } from './../../task.entity';
 import { TypeOrmIntegrationMapRepository } from '../../../integration-map/repository/type-orm-integration-map.repository';
 import { TypeOrmTaskStatusRepository } from '../../statuses/repository/type-orm-task-status.repository';
@@ -29,21 +30,14 @@ import { TypeOrmTaskRepository } from '../../repository/type-orm-task.repository
 @CommandHandler(AutomationTaskSyncCommand)
 export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTaskSyncCommand> {
 	constructor(
+		@InjectRepository(Task) readonly typeOrmTaskRepository: TypeOrmTaskRepository,
+		@InjectRepository(TaskStatus) readonly typeOrmTaskStatusRepository: TypeOrmTaskStatusRepository,
+		@InjectRepository(IntegrationMap) readonly typeOrmIntegrationMapRepository: TypeOrmIntegrationMapRepository,
 		private readonly _eventBus: EventBus,
-
-		@InjectRepository(Task)
-		private readonly typeOrmTaskRepository: TypeOrmTaskRepository,
-
-		@InjectRepository(TaskStatus)
-		private readonly typeOrmTaskStatusRepository: TypeOrmTaskStatusRepository,
-
-		@InjectRepository(IntegrationMap)
-		private readonly typeOrmIntegrationMapRepository: TypeOrmIntegrationMapRepository,
-
 		private readonly _taskService: TaskService,
 		private readonly activityLogService: ActivityLogService,
 		private readonly _employeeService: EmployeeService,
-		private readonly _subscriptionService: SubscriptionService
+		private readonly _entitySubscriptionService: EntitySubscriptionService
 	) {}
 
 	/**
@@ -57,7 +51,7 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 			const { input } = command;
 			const { sourceId, integrationId, organizationId, entity } = input;
 			const { projectId } = entity;
-			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 
 			try {
 				const taskStatus = await this.typeOrmTaskStatusRepository.findOneBy({
@@ -155,12 +149,12 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 
 			// Subscribe creator to the task
 			const { organizationId, tenantId } = createdTask;
+
 			this._eventBus.publish(
-				new CreateSubscriptionEvent({
+				new CreateEntitySubscriptionEvent({
 					entity: BaseEntityEnum.Task,
 					entityId: createdTask.id,
-					userId: createdTask.creatorId,
-					type: SubscriptionTypeEnum.CREATED_ENTITY,
+					type: EntitySubscriptionTypeEnum.CREATED_ENTITY,
 					organizationId,
 					tenantId
 				})
@@ -176,13 +170,13 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 						tenantId
 					);
 					await Promise.all(
-						employees.map(({ userId }) =>
+						employees.map((employee: IEmployee) =>
 							this._eventBus.publish(
-								new CreateSubscriptionEvent({
+								new CreateEntitySubscriptionEvent({
 									entity: BaseEntityEnum.Task,
 									entityId: createdTask.id,
-									userId,
-									type: SubscriptionTypeEnum.ASSIGNMENT,
+									employeeId: employee.id,
+									type: EntitySubscriptionTypeEnum.ASSIGNMENT,
 									organizationId,
 									tenantId
 								})
@@ -267,11 +261,13 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 					await Promise.all(
 						removedMembers.map(
 							async (member) =>
-								await this._subscriptionService.delete({
+								await this._entitySubscriptionService.delete({
 									entity: BaseEntityEnum.Task,
 									entityId: updatedTask.id,
-									userId: member.userId,
-									type: SubscriptionTypeEnum.ASSIGNMENT
+									employeeId: member.id,
+									type: EntitySubscriptionTypeEnum.ASSIGNMENT,
+									organizationId,
+									tenantId
 								})
 						)
 					);
@@ -284,13 +280,13 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 			if (newMembers.length) {
 				try {
 					await Promise.all(
-						newMembers.map(({ userId }) =>
+						newMembers.map((employee: IEmployee) =>
 							this._eventBus.publish(
-								new CreateSubscriptionEvent({
+								new CreateEntitySubscriptionEvent({
 									entity: BaseEntityEnum.Task,
 									entityId: updatedTask.id,
-									userId,
-									type: SubscriptionTypeEnum.ASSIGNMENT,
+									employeeId: employee.id,
+									type: EntitySubscriptionTypeEnum.ASSIGNMENT,
 									organizationId,
 									tenantId
 								})
