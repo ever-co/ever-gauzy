@@ -30,7 +30,7 @@ export class LinkedinStrategy extends PassportStrategy(Strategy, 'linkedin') {
 		accessToken: string,
 		refreshToken: string,
 		profile: any,
-		done: Function
+		done: (err: unknown, user?: unknown) => void
 	): Promise<void> {
 		try {
 			// Extract emails from the OAuth profile.
