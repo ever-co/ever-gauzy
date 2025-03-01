@@ -64,7 +64,7 @@ services:
       redis:
         condition: service_started
       minio:
-        condition: service_started
+        condition: service_healthy
       minio_create_buckets:
         condition: service_started
       opensearch:
@@ -161,7 +161,7 @@ services:
       redis:
         condition: service_started
       minio:
-        condition: service_started
+        condition: service_healthy
       minio_create_buckets:
         condition: service_started
       opensearch:
