@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
-import { ConfigService } from '@gauzy/config';
 import { Strategy } from 'passport-google-oauth20';
 
 @Injectable()
@@ -57,20 +57,32 @@ export class KeycloakStrategy extends PassportStrategy(Strategy, 'keycloak') {
  * @returns A Keycloak configuration object.
  */
 export const parseKeycloakConfig = (configService: ConfigService): Record<string, any> => {
-	// Retrieve Auth0 configuration from the environment
-	const keycloakConfig = configService.get('keycloakConfig');
+	// Retrieve the client ID from the configuration
+	const clientID = configService.get<string>('keycloak.clientId');
+
+	// Retrieve the client secret from the configuration
+	const clientSecret = configService.get<string>('keycloak.clientSecret');
+
+	// Retrieve the realm from the configuration
+	const realm = configService.get<string>('keycloak.realm');
+
+	// Retrieve the auth server URL from the configuration
+	const authServerUrl = configService.get<string>('keycloak.authServerUrl');
+
+	// Retrieve the cookie key from the configuration
+	const cookieKey = configService.get<string>('keycloak.cookieKey');
 
 	// Validate required configurations
-	if (!keycloakConfig.clientId || !keycloakConfig.secret) {
+	if (!clientID || !clientSecret) {
 		console.warn('⚠️ Keycloak authentication configuration is incomplete. Defaulting to "disabled".');
 	}
 
 	// Construct and return the Keycloak configuration object
 	return {
-		clientID: keycloakConfig.clientId || 'disabled',
-		clientSecret: keycloakConfig.secret || 'disabled',
-		realm: keycloakConfig.realm,
-		authServerUrl: keycloakConfig.authServerUrl,
-		cookieKey: keycloakConfig.cookieKey
+		clientID: clientID || 'disabled',
+		clientSecret: clientSecret || 'disabled',
+		realm: realm,
+		authServerUrl: authServerUrl,
+		cookieKey: cookieKey
 	};
 };

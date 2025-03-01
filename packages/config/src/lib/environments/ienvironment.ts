@@ -11,7 +11,6 @@ import {
 	IGithubIntegrationConfig,
 	IHubstaffConfig,
 	IJitsuConfig,
-	IKeycloakConfig,
 	ISMTPConfig,
 	IUnleashConfig,
 	IUpworkConfig,
@@ -106,7 +105,6 @@ export interface IEnvironment {
 	github: IGithubIntegrationConfig /** Github Configuration */;
 	jira: IJiraIntegrationConfig /** Jira Configuration */;
 	fiverrConfig: IFiverrConfig;
-	keycloakConfig: IKeycloakConfig;
 	auth0Config: IAuth0Config;
 
 	sentry?: {

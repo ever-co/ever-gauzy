@@ -291,8 +291,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					value: ''
 				},
 				{
-					name: 'KEYCLOAK_SECRET',
-					field: 'KEYCLOAK_SECRET',
+					name: 'KEYCLOAK_CLIENT_SECRET',
+					field: 'KEYCLOAK_CLIENT_SECRET',
 					value: ''
 				},
 				{

@@ -1,7 +1,7 @@
 export interface IKeycloakConfig {
-	readonly realm: string;
 	readonly clientId: string;
-	readonly secret: string;
+	readonly clientSecret: string;
+	readonly realm: string;
 	readonly authServerUrl: string;
 	readonly cookieKey: string;
 }
