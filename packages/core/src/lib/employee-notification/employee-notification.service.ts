@@ -41,9 +41,9 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 	async create(input: IEmployeeNotificationCreateInput): Promise<IEmployeeNotification | undefined> {
 		try {
 			// Retrieve the current tenant ID from the request context or use the provided tenantId
-			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 			const organizationId = input.organizationId;
-			const employeeId = input.receiverId;
+			const employeeId = input.receiverEmployeeId;
 
 			// Search for the receiver notification setting
 			let employeeNotificationSetting: IEmployeeNotificationSetting;
@@ -57,7 +57,6 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 			} catch (error) {
 				if (error instanceof NotFoundException) {
 					employeeNotificationSetting = await this._employeeNotificationSettingService.create({
-						employeeId,
 						assignment: true,
 						comment: true,
 						invitation: true,
@@ -65,6 +64,7 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 						message: true,
 						payment: true,
 						preferences: { email: true, inApp: true },
+						employeeId,
 						organizationId,
 						tenantId
 					});
@@ -98,12 +98,12 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 	async markAllAsRead(): Promise<IMarkAllAsReadResponse> {
 		try {
 			// Retrieve the current employee ID
-			const receiverId = RequestContext.currentEmployeeId();
+			const receiverEmployeeId = RequestContext.currentEmployeeId();
 
 			// Update all unread and un-archived notifications for the current employee
 			// Assume super.update returns an object with an "affected" property that represents the number of records updated.
 			const updateResult = (await super.update(
-				{ isRead: false, isArchived: false, receiverId },
+				{ isRead: false, isArchived: false, receiverEmployeeId },
 				{ isRead: true, readAt: new Date() }
 			)) as UpdateResult;
 

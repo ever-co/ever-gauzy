@@ -28,17 +28,9 @@ export interface IFindMeUser extends IBaseRelationsEntityModel {
 }
 
 /**
- * Utility type to exclude `creator` and `creatorId` fields.
+ * Utility type to exclude `createdByUser` and `createdByUserId` fields.
  */
-export type ExcludeCreatorFields<T> = Omit<T, 'creator' | 'creatorId'>;
-
-/**
- * Interface representing a relationship with a creator.
- */
-export interface IHasCreator {
-	creator?: IUser; // TODO : Replace these properties with `createdBy` and `createdById`
-	creatorId?: ID;
-}
+export type ExcludeUserCreatorFields<T, K extends keyof T = never> = Omit<T, 'createdByUser' | 'createdByUserId' | K>;
 
 export interface IRelationalUser {
 	user?: IUser; // User who performed the action (if applicable).

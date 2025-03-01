@@ -8,8 +8,7 @@ import {
 	IOrganizationSprintTaskHistory
 } from './organization-sprint.model';
 import { IOrganizationTeam, IRelationalOrganizationTeam } from './organization-team.model';
-import { ITag } from './tag.model';
-import { IUser } from './user.model';
+import { ITaggable } from './tag.model';
 import { ITaskStatus, TaskStatusEnum } from './task-status.model';
 import { ITaskPriority, TaskPriorityEnum } from './task-priority.model';
 import { ITaskSize, TaskSizeEnum } from './task-size.model';
@@ -17,10 +16,12 @@ import { IOrganizationProjectModule } from './organization-project-module.model'
 import { IIssueType, TaskTypeEnum } from './issue-type.model';
 import { IMentionEmployeeIds } from './mention.model';
 
-export interface ITask
-	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalOrganizationProject,
-		IRelationalOrganizationSprint {
+export enum TaskParticipantEnum {
+	EMPLOYEES = 'employees',
+	TEAMS = 'teams'
+}
+
+export interface IBaseTaskProperties extends IBasePerTenantAndOrganizationEntityModel {
 	title: string;
 	number?: number;
 	public?: boolean;
@@ -29,38 +30,38 @@ export interface ITask
 	status?: TaskStatusEnum;
 	priority?: TaskPriorityEnum;
 	size?: TaskSizeEnum;
+	issueType?: TaskTypeEnum;
 	startDate?: Date;
 	resolvedAt?: Date;
 	dueDate?: Date;
 	estimate?: number;
-	tags?: ITag[];
+	isDraft?: boolean; // Define if task is still draft (E.g : Task description not completed yet)
+	isScreeningTask?: boolean; // Defines if the task still in discussion before to be accepted
+	version?: string;
+}
+
+// Interface for task associations (related entities)
+export interface ITaskAssociations extends ITaggable, IRelationalOrganizationProject, IRelationalOrganizationSprint {
+	children?: ITask[];
 	members?: IEmployee[];
 	invoiceItems?: IInvoiceItem[];
 	teams?: IOrganizationTeam[];
 	modules?: IOrganizationProjectModule[];
 	taskSprints?: IOrganizationSprint[];
 	taskSprintHistories?: IOrganizationSprintTaskHistory[];
-	creator?: IUser;
-	creatorId?: ID;
-	isDraft?: boolean; // Define if task is still draft (E.g : Task description not completed yet)
-	isScreeningTask?: boolean; // Defines if the task still in discussion before to be accepted
+}
 
-	version?: string;
-	issueType?: TaskTypeEnum;
-
+export interface ITask extends IBaseTaskProperties, ITaskAssociations {
 	parent?: ITask;
 	parentId?: ID; // Optional field for specifying the parent task ID
-	children?: ITask[];
-
 	taskStatus?: ITaskStatus;
-	taskSize?: ITaskSize;
-	taskPriority?: ITaskPriority;
-	taskType?: IIssueType;
 	taskStatusId?: ID;
+	taskSize?: ITaskSize;
 	taskSizeId?: ID;
+	taskPriority?: ITaskPriority;
 	taskPriorityId?: ID;
+	taskType?: IIssueType;
 	taskTypeId?: ID;
-
 	rootEpic?: ITask;
 }
 
@@ -74,11 +75,6 @@ export interface IGetTaskByEmployeeOptions extends IBaseRelationsEntityModel {
 }
 
 export type IGetSprintsOptions = IGetTaskOptions;
-
-export enum TaskParticipantEnum {
-	EMPLOYEES = 'employees',
-	TEAMS = 'teams'
-}
 
 export interface ITaskCreateInput extends ITask, IMentionEmployeeIds {}
 
@@ -101,17 +97,17 @@ export interface IGetTasksByViewFilters extends IBasePerTenantAndOrganizationEnt
 
 export interface ITaskDateFilterInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-		Pick<ITask, 'isScreeningTask' | 'projectId' | 'organizationSprintId' | 'creatorId'>,
+		Pick<ITask, 'isScreeningTask' | 'projectId' | 'organizationSprintId' | 'createdByUserId'>,
 		IEmployeeEntityInput,
 		IRelationalOrganizationTeam,
-		Pick<IGetTasksByViewFilters, 'relations'> {
+		IBaseRelationsEntityModel {
 	startDateFrom?: Date;
 	startDateTo?: Date;
 	dueDateFrom?: Date;
 	dueDateTo?: Date;
 }
 
-export interface ITaskAdvancedFilter {
+export interface ITaskAdvancedFilter extends IBaseRelationsEntityModel {
 	projects?: ID[];
 	teams?: ID[];
 	modules?: ID[];
@@ -122,11 +118,8 @@ export interface ITaskAdvancedFilter {
 	priorityIds?: ID[];
 	sizeIds?: ID[];
 	parentIds?: ID[];
-	creators?: ID[];
+	createdByUserIds?: ID[];
 	dailyPlans?: ID[];
-
-	// Relations
-	relations?: string[];
 }
 
 export interface IAdvancedTaskFiltering {

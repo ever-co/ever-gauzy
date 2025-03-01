@@ -10,17 +10,27 @@ import { IOrganizationProject, IOrganizationProjectCreateInput } from './organiz
 import { IOrganizationProjectModule } from './organization-project-module.model';
 import { IComment } from './comment.model';
 
-export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset, ITaggable {
+export interface IRelationalOrganizationTeam {
+	organizationTeam?: IOrganizationTeam;
+	organizationTeamId?: ID;
+}
+
+// Base interface for common properties
+interface IBaseTeamProperties extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset, ITaggable {
 	name: string;
 	color?: string;
 	emoji?: string;
 	teamSize?: string;
 	logo?: string;
 	prefix?: string;
-	shareProfileView?: boolean; // If true, all members can view "Worked" tasks and "Daily Plan" tabs of all other employees, By default, it's true
-	requirePlanToTrack?: boolean; // If true, members can't be able to track time without have a "Daily Plan". By default, it's false
+	shareProfileView?: boolean; // Default is true
+	requirePlanToTrack?: boolean; // Default is false
 	public?: boolean;
 	profile_link?: string;
+}
+
+// Interface for team members and related entities
+interface ITeamAssociations {
 	members?: IOrganizationTeamEmployee[];
 	managers?: IOrganizationTeamEmployee[];
 	projects?: IOrganizationProject[];
@@ -29,6 +39,10 @@ export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityMo
 	tasks?: ITask[];
 }
 
+// Main Organization Team interface
+export interface IOrganizationTeam extends IBaseTeamProperties, ITeamAssociations {}
+
+// Input interface for finding an organization team
 export interface IOrganizationTeamFindInput extends IBasePerTenantAndOrganizationEntityModel, IEmployeeEntityInput {
 	name?: string;
 	prefix?: string;
@@ -37,37 +51,16 @@ export interface IOrganizationTeamFindInput extends IBasePerTenantAndOrganizatio
 	members?: IOrganizationTeamEmployee;
 }
 
-export interface IOrganizationTeamCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalImageAsset,
-		IMemberEntityBased,
-		ITaggable {
-	name: string;
-	emoji?: string;
-	teamSize?: string;
-	color?: string;
-	logo?: string;
-	prefix?: string;
-	shareProfileView?: boolean;
-	requirePlanToTrack?: boolean;
-	public?: boolean;
-	profile_link?: string;
+// Input interface for creating an organization team
+export interface IOrganizationTeamCreateInput extends IBaseTeamProperties, IMemberEntityBased {
 	projects?: IOrganizationProjectCreateInput[];
 }
 
-export interface IOrganizationTeamUpdateInput extends Partial<IOrganizationTeamCreateInput> {
-	shareProfileView?: boolean;
-	requirePlanToTrack?: boolean;
-	public?: boolean;
-}
+// Input interface for updating an organization team
+export interface IOrganizationTeamUpdateInput extends Partial<IOrganizationTeamCreateInput> {}
 
 export interface IOrganizationTeamStatisticInput extends ITimerStatusInput {
 	withLastWorkedTask: boolean;
-}
-
-export interface IRelationalOrganizationTeam {
-	organizationTeam?: IOrganizationTeam;
-	organizationTeamId?: ID;
 }
 
 export interface IOrganizationTeamStoreState {

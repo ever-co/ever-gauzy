@@ -7,16 +7,17 @@ import {
 	IMention,
 	IMentionCreateInput,
 	NotificationActionTypeEnum,
-	SubscriptionTypeEnum,
-	EmployeeNotificationTypeEnum
+	EntitySubscriptionTypeEnum,
+	EmployeeNotificationTypeEnum,
+	ActorTypeEnum
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
+import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
 import { Mention } from './mention.entity';
 import { TypeOrmMentionRepository } from './repository/type-orm-mention.repository';
 import { MikroOrmMentionRepository } from './repository/mikro-orm-mention.repository';
 import { CreateMentionEvent } from './events';
-import { CreateSubscriptionEvent } from '../subscription/events';
 import { EmployeeNotificationService } from '../employee-notification/employee-notification.service';
 
 @Injectable()
@@ -40,25 +41,37 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 	 */
 	async create(input: IMentionCreateInput): Promise<IMention> {
 		try {
-			const { entity, entityId, parentEntityId, parentEntityType, mentionedUserId, organizationId, entityName } =
-				input;
-
 			// Retrieve currently logged-in user
 			const user = RequestContext.currentUser();
 
 			// Get the tenant ID from the current request context or use the one from the entity
-			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 
-			// Create the mention entry using the provided input along with the tenantId and mentionById.
-			const mention = await super.create({ ...input, tenantId, mentionById: user.id });
+			const {
+				entity,
+				entityId,
+				parentEntityId,
+				parentEntityType,
+				mentionedEmployeeId,
+				organizationId,
+				entityName
+			} = input;
+
+			// Create the mention entry using the provided input along with the tenantId and mentionedEmployeeId.
+			const mention = await super.create({
+				...input,
+				mentionedEmployeeId,
+				organizationId,
+				tenantId,
+				employeeId: user.employeeId
+			});
 
 			// Create an user subscription for provided entity
 			this._eventBus.publish(
-				new CreateSubscriptionEvent({
+				new CreateEntitySubscriptionEvent({
 					entity: parentEntityType ?? entity,
 					entityId: parentEntityId ?? entityId,
-					userId: mentionedUserId,
-					type: SubscriptionTypeEnum.MENTION,
+					type: EntitySubscriptionTypeEnum.MENTION,
 					organizationId,
 					tenantId
 				})
@@ -70,14 +83,12 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 					entity: parentEntityType ?? entity,
 					entityId: parentEntityId ?? entityId,
 					type: EmployeeNotificationTypeEnum.MENTION,
-					sentById: user.id,
-					receiverId: mentionedUserId,
 					organizationId,
 					tenantId
 				},
 				NotificationActionTypeEnum.Mentioned,
 				entityName,
-				`${user.firstName} ${user.lastName}`
+				user.name
 			);
 
 			/**
@@ -124,49 +135,49 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 		parentEntityType?: BaseEntityEnum
 	): Promise<void> {
 		try {
-			const actorId = RequestContext.currentUserId();
+			const user = RequestContext.currentUser();
 
 			// Retrieve existing mentions for the entity
-			const existingMentions = await this.find({
+			const existingMentions = await super.find({
 				where: { entity, entityId },
-				select: ['mentionedUserId']
+				select: { mentionedEmployeeId: true }
 			});
 
 			// Extract the IDs of currently mentioned users
-			const existingMentionEmployeeIds = new Set(existingMentions.map((mention) => mention.mentionedUserId));
+			const existingMentionEmployeeIds = new Set(existingMentions.map((mention) => mention.mentionedEmployeeId));
 
 			// Determine mentions to add (not present in existing mentions)
-			const mentionsToAdd = mentionEmployeeIds.filter((id) => !existingMentionEmployeeIds.has(id));
+			const mentionsToAddEmployeeIds = mentionEmployeeIds.filter((id) => !existingMentionEmployeeIds.has(id));
 
 			// Determine mentions to remove (present in existing mentions but not in mentionsIds)
-			const mentionsToRemove = [...existingMentionEmployeeIds].filter((id) => !mentionEmployeeIds.includes(id));
+			const mentionsToRemoveIds = [...existingMentionEmployeeIds].filter(
+				(id) => !mentionEmployeeIds.includes(id)
+			);
 
 			// Add new mentions
-			if (mentionsToAdd.length > 0) {
+			if (mentionsToAddEmployeeIds.length > 0) {
 				await Promise.all(
-					mentionsToAdd.map((mentionedUserId) =>
+					mentionsToAddEmployeeIds.map((mentionedEmployeeId: ID) =>
 						this.publishMention({
 							entity: entity,
 							entityId,
-							mentionedUserId,
-							mentionById: actorId,
 							parentEntityId,
-							parentEntityType
+							parentEntityType,
+							mentionedEmployeeId,
+							actorType: ActorTypeEnum.User,
+							employeeId: user.employeeId
 						})
 					)
 				);
 			}
 
 			// Remove outdated mentions
-			if (mentionsToRemove.length > 0) {
-				await this.delete({
-					mentionedUserId: In(mentionsToRemove),
-					entity,
-					entityId
-				});
+			if (mentionsToRemoveIds.length > 0) {
+				await super.delete({ mentionedEmployeeId: In(mentionsToRemoveIds), entity, entityId });
 			}
 		} catch (error) {
-			console.log(error);
+			console.log(`Error while updating mention: ${error.message}`, error);
+			throw new BadRequestException('Error while updating mention', error);
 		}
 	}
 }

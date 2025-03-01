@@ -42,6 +42,10 @@ export const IntegrationResolver: ResolveFn<Observable<IIntegrationTenant | bool
 		// Handle errors and redirect if an error occurs
 		return integration$.pipe(
 			catchError(() => {
+				if (route.data.allowMissingIntegration) {
+					return of(false);
+				}
+
 				// Redirect to the "new integration" page if an error occurs
 				_router.navigate(['/pages/integrations/new']);
 				// Return an empty observable to prevent further actions

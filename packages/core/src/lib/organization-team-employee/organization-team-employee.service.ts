@@ -3,22 +3,22 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
 import {
 	BaseEntityEnum,
+	EntitySubscriptionTypeEnum,
 	ID,
 	IEmployee,
 	IOrganizationTeamEmployeeActiveTaskUpdateInput,
 	IOrganizationTeamEmployeeFindInput,
 	IOrganizationTeamEmployeeUpdateInput,
 	PermissionsEnum,
-	RolesEnum,
-	SubscriptionTypeEnum
+	RolesEnum
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { Role } from './../core/entities/internal';
 import { OrganizationTeamEmployee } from './organization-team-employee.entity';
 import { TaskService } from './../tasks/task.service';
-import { CreateSubscriptionEvent } from '../subscription/events';
-import { SubscriptionService } from '../subscription/subscription.service';
+import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
+import { EntitySubscriptionService } from '../entity-subscription/entity-subscription.service';
 import { TypeOrmOrganizationTeamEmployeeRepository } from './repository/type-orm-organization-team-employee.repository';
 import { MikroOrmOrganizationTeamEmployeeRepository } from './repository/mikro-orm-organization-team-employee.repository';
 
@@ -28,8 +28,8 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		readonly typeOrmOrganizationTeamEmployeeRepository: TypeOrmOrganizationTeamEmployeeRepository,
 		readonly mikroOrmOrganizationTeamEmployeeRepository: MikroOrmOrganizationTeamEmployeeRepository,
 		private readonly _eventBus: EventBus,
-		private readonly taskService: TaskService,
-		private readonly subscriptionService: SubscriptionService
+		private readonly _taskService: TaskService,
+		private readonly _entitySubscriptionService: EntitySubscriptionService
 	) {
 		super(typeOrmOrganizationTeamEmployeeRepository, mikroOrmOrganizationTeamEmployeeRepository);
 	}
@@ -78,11 +78,13 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				await Promise.all(
 					removedMembers.map(
 						async (member) =>
-							await this.subscriptionService.delete({
+							await this._entitySubscriptionService.delete({
 								entity: BaseEntityEnum.OrganizationTeam,
 								entityId: organizationTeamId,
-								userId: member.employee.userId,
-								type: SubscriptionTypeEnum.ASSIGNMENT
+								employeeId: member.employee.id,
+								type: EntitySubscriptionTypeEnum.ASSIGNMENT,
+								organizationId,
+								tenantId
 							})
 					)
 				);
@@ -125,13 +127,13 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			// Subscribe new assignees to the team
 			try {
 				await Promise.all(
-					newMembers.map(({ userId }) =>
+					newMembers.map((member: IEmployee) =>
 						this._eventBus.publish(
-							new CreateSubscriptionEvent({
+							new CreateEntitySubscriptionEvent({
 								entity: BaseEntityEnum.OrganizationTeam,
 								entityId: organizationTeamId,
-								userId,
-								type: SubscriptionTypeEnum.ASSIGNMENT,
+								employeeId: member.id,
+								type: EntitySubscriptionTypeEnum.ASSIGNMENT,
 								organizationId,
 								tenantId
 							})
@@ -306,7 +308,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				});
 
 				// Unassign employee all tasks before removing from team
-				await this.taskService.unassignEmployeeFromTeamTasks(member.employeeId, organizationTeamId);
+				await this._taskService.unassignEmployeeFromTeamTasks(member.employeeId, organizationTeamId);
 
 				// Remove the team member
 				return await this.typeOrmRepository.remove(member);
@@ -336,7 +338,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				const member = await this.typeOrmRepository.findOneByOrFail(whereClause);
 
 				// Unassign employee all tasks before removing from the team
-				await this.taskService.unassignEmployeeFromTeamTasks(member.employeeId, organizationTeamId);
+				await this._taskService.unassignEmployeeFromTeamTasks(member.employeeId, organizationTeamId);
 
 				// Remove the team member
 				return await this.typeOrmRepository.remove(member);

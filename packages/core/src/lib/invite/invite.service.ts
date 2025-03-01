@@ -10,7 +10,6 @@ import {
 	ICreateEmailInvitesInput,
 	ICreateEmailInvitesOutput,
 	InviteStatusEnum,
-	IOrganizationContact,
 	IUser,
 	ICreateOrganizationContactInviteInput,
 	RolesEnum,
@@ -25,13 +24,20 @@ import {
 	IInviteResendInput,
 	InviteActionEnum,
 	IUserRegistrationInput,
-	IPagination
+	IPagination,
+	ID
 } from '@gauzy/contracts';
 import { IAppIntegrationConfig } from '@gauzy/common';
-import { generateAlphaNumericCode, isNotEmpty } from '@gauzy/utils';
+import { generateAlphaNumericCode, isEmpty, isNotEmpty } from '@gauzy/utils';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { MultiORMEnum, freshTimestamp, getArrayIntersection, parseTypeORMFindToMikroOrm } from './../core/utils';
+import {
+	MultiORMEnum,
+	freshTimestamp,
+	getArrayIntersection,
+	parseTypeORMFindToMikroOrm,
+	retryQuery
+} from './../core/utils';
 import { EmailService } from './../email-send/email.service';
 import { UserService } from '../user/user.service';
 import { RoleService } from './../role/role.service';
@@ -41,7 +47,6 @@ import { OrganizationDepartmentService } from './../organization-department/orga
 import { OrganizationContactService } from './../organization-contact/organization-contact.service';
 import { OrganizationProjectService } from './../organization-project/organization-project.service';
 import { AuthService } from './../auth/auth.service';
-import { User } from './../user/user.entity';
 import { UserOrganizationService } from './../user-organization/user-organization.services';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
@@ -76,13 +81,64 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	}
 
 	/**
+	 * Fetches organization-related data in parallel.
+	 *
+	 * @param projectIds - An array of project IDs.
+	 * @param departmentIds - An array of department IDs.
+	 * @param organizationContactIds - An array of organization contact IDs.
+	 * @param teamIds - An array of team IDs.
+	 * @param organizationId - The current organization ID.
+	 * @param tenantId - The current tenant ID.
+	 * @returns An object containing projects, departments, organizationContacts, and organizationTeams.
+	 */
+	async fetchInvitesRelations(
+		projectIds: ID[] | undefined,
+		departmentIds: ID[] | undefined,
+		organizationContactIds: ID[] | undefined,
+		teamIds: ID[] | undefined,
+		organizationId: ID,
+		tenantId: ID
+	): Promise<{
+		projects: any[];
+		departments: any[];
+		organizationContacts: any[];
+		organizationTeams: any[];
+	}> {
+		const [projects, departments, organizationContacts, organizationTeams] = await Promise.all([
+			retryQuery(() =>
+				this.organizationProjectService.find({
+					where: { id: In(projectIds ?? []), organizationId, tenantId }
+				})
+			),
+			retryQuery(() =>
+				this.organizationDepartmentService.find({
+					where: { id: In(departmentIds ?? []), organizationId, tenantId }
+				})
+			),
+			retryQuery(() =>
+				this.organizationContactService.find({
+					where: { id: In(organizationContactIds ?? []), organizationId, tenantId }
+				})
+			),
+			retryQuery(() =>
+				this.organizationTeamService.find({
+					where: { id: In(teamIds ?? []), organizationId, tenantId }
+				})
+			)
+		]);
+
+		return { projects, departments, organizationContacts, organizationTeams };
+	}
+
+	/**
 	 * Creates all invites. If an email Id already exists, this function will first delete
 	 * the existing invite and then create a new row with the email address.
 	 * @param emailInvites Emails Ids to send invite
 	 */
 	async createBulk(input: ICreateEmailInvitesInput, languageCode: LanguagesEnum): Promise<ICreateEmailInvitesOutput> {
 		const originUrl = this.configService.get('clientBaseUrl') as string;
-		const tenantId = RequestContext.currentTenantId() || input.tenantId;
+		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+
 		const {
 			emailIds = [],
 			projectIds = [],
@@ -98,35 +154,25 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			callbackUrl
 		} = input;
 
-		const organizationProjectsPromise = this.organizationProjectService.find({
-			where: { id: In(projectIds || []), organizationId, tenantId }
-		});
-		const organizationDepartmentsPromise = this.organizationDepartmentService.find({
-			where: { id: In(departmentIds || []), organizationId, tenantId }
-		});
-		const organizationContactsPromise = this.organizationContactService.find({
-			where: { id: In(organizationContactIds || []), organizationId, tenantId }
-		});
-		const organizationTeamsPromise = this.organizationTeamService.find({
-			where: { id: In(teamIds || []), organizationId, tenantId }
-		});
+		/**
+		 * Fetch organization-related data in parallel.
+		 */
+		const { projects, departments, organizationContacts, organizationTeams } = await this.fetchInvitesRelations(
+			projectIds,
+			departmentIds,
+			organizationContactIds,
+			teamIds,
+			organizationId,
+			tenantId
+		);
 
-		const promisesAll = await Promise.all([
-			organizationProjectsPromise,
-			organizationDepartmentsPromise,
-			organizationContactsPromise,
-			organizationTeamsPromise
-		]);
-		const [organizationProjects, organizationDepartments, organizationContacts, organizationTeams] = promisesAll;
-
-		// Invited User
-		const invitedById = RequestContext.currentUserId();
-		const invitedBy: IUser = await this.userService.findOneByIdString(invitedById, {
+		/**
+		 * Retrieve the invited user and organization.
+		 */
+		const invitedByUserId = RequestContext.currentUserId();
+		const invitedByUser: IUser = await this.userService.findOneByIdString(invitedByUserId, {
 			relations: { role: true }
 		});
-
-		// Invited Organization
-		const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
 
 		// Invited Role
 		let role: IRole;
@@ -142,107 +188,104 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			// If the current role is not an 'EMPLOYEE' role, fallback to specified 'roleId'
 			role = await this.roleService.findOneByIdString(roleId);
 
-			// Handle unauthorized access if the invitedBy user is not a 'SUPER_ADMIN'
-			if (role.name === RolesEnum.SUPER_ADMIN && invitedBy.role.name !== RolesEnum.SUPER_ADMIN) {
+			// Handle unauthorized access if the invitedByUser is not a 'SUPER_ADMIN'
+			if (role.name === RolesEnum.SUPER_ADMIN && invitedByUser.role.name !== RolesEnum.SUPER_ADMIN) {
 				throw new UnauthorizedException();
 			}
 		}
 
-		let expireDate: Date | null;
-		if (invitationExpirationPeriod === InvitationExpirationEnum.NEVER) {
-			expireDate = null;
-		} else {
-			const inviteExpiryPeriod = invitationExpirationPeriod || organization.inviteExpiryPeriod;
-			expireDate = addDays(new Date(), (inviteExpiryPeriod as number) || DEFAULT_INVITE_EXPIRY_PERIOD);
-		}
+		// Invited Organization
+		const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
 
-		// already existed invites
-		const { items: existedInvites } = await this.findAll({
-			...(isNotEmpty(teamIds) ? { relations: { teams: true } } : {}),
+		// Build the "where" clause based on provided conditions.
+		const expireDate =
+			invitationExpirationPeriod === InvitationExpirationEnum.NEVER
+				? null
+				: addDays(
+						new Date(),
+						Number(invitationExpirationPeriod ?? organization.inviteExpiryPeriod) ||
+							DEFAULT_INVITE_EXPIRY_PERIOD
+				  );
+
+		// Build the overall query options.
+		const queryOptions = {
 			where: {
 				tenantId,
-				...(isNotEmpty(organizationId) ? { organizationId } : {}),
-				...(isNotEmpty(emailIds) ? { email: In(emailIds) } : {})
-			}
-		});
+				...(isNotEmpty(organizationId) && { organizationId }),
+				...(isNotEmpty(emailIds) && { email: In(emailIds) })
+			},
+			...(isNotEmpty(teamIds) && { relations: { teams: true } })
+		};
+
+		const { items: existedInvites } = await this.findAll(queryOptions);
 
 		let ignoreInvites = 0;
 		const invites: Invite[] = [];
+
 		for await (const email of emailIds) {
-			let alreadyInTeamIds: string[] = [];
 			const code = generateAlphaNumericCode();
-			const token: string = sign({ email, code }, environment.JWT_SECRET, {});
+			const token = sign({ email, code }, environment.JWT_SECRET, {});
 
-			const organizationTeamEmployees = await this.typeOrmOrganizationTeamEmployeeRepository.find({
-				where: {
-					employee: { user: { email } },
-					organizationTeamId: In(teamIds)
-				}
+			// Retrieve organization team employees for the email.
+			const organizationTeamEmployees = await this.typeOrmOrganizationTeamEmployeeRepository.findBy({
+				employee: { user: { email } },
+				organizationTeamId: In(teamIds)
 			});
-			if (organizationTeamEmployees.length > 0) {
-				alreadyInTeamIds = organizationTeamEmployees.map(
-					(organizationTeamEmployee) => organizationTeamEmployee.organizationTeamId
-				);
-			}
 
+			// Retrieve the IDs of the teams the user is already in.
+			const alreadyInTeamIds: ID[] =
+				organizationTeamEmployees.length > 0
+					? organizationTeamEmployees.map((emp) => emp.organizationTeamId)
+					: [];
+
+			// Retrieve the invites that match the email and teams.
 			const matchedInvites = existedInvites.filter(
-				(invite: IInvite) =>
-					invite.email === email &&
-					getArrayIntersection(invite.teams?.map((team: IOrganizationTeam) => team.id) || [], teamIds)
-						.length > 0
+				({ email: inviteEmail, teams }) =>
+					inviteEmail === email && getArrayIntersection(teams?.map(({ id }) => id) ?? [], teamIds).length > 0
 			);
 
+			// Determine teams to invite.
+			let teamsToInvite: IOrganizationTeam[];
+
 			if (isNotEmpty(matchedInvites)) {
-				const needsToInviteTeams = organizationTeams.filter(
-					(team: IOrganizationTeam) =>
-						!alreadyInTeamIds.includes(team.id) &&
-						matchedInvites.every((invite) => invite.status !== InviteStatusEnum.INVITED)
-				);
-				if (isNotEmpty(needsToInviteTeams)) {
-					invites.push(
-						new Invite({
-							token,
-							email,
-							roleId,
-							organizationId,
-							invitedById,
-							tenantId,
-							status: InviteStatusEnum.INVITED,
-							expireDate,
-							projects: organizationProjects,
-							teams: needsToInviteTeams,
-							departments: organizationDepartments,
-							organizationContacts,
-							actionDate: startedWorkOn || appliedDate,
-							code,
-							fullName
-						})
-					);
-				} else {
-					ignoreInvites;
+				// Check if all invites are already sent.
+				const allInvitesNotSent = matchedInvites.every((invite) => invite.status !== InviteStatusEnum.INVITED);
+
+				// Determine teams to invite.
+				teamsToInvite = allInvitesNotSent
+					? organizationTeams.filter((team) => !alreadyInTeamIds.includes(team.id))
+					: [];
+
+				if (isEmpty(teamsToInvite)) {
+					ignoreInvites++;
+					continue;
 				}
 			} else {
-				invites.push(
-					new Invite({
-						token,
-						email,
-						roleId,
-						organizationId,
-						tenantId: RequestContext.currentTenantId(),
-						invitedById: RequestContext.currentUserId(),
-						status: InviteStatusEnum.INVITED,
-						expireDate,
-						projects: organizationProjects,
-						teams: organizationTeams,
-						departments: organizationDepartments,
-						organizationContacts,
-						actionDate: startedWorkOn || appliedDate,
-						code,
-						fullName
-					})
-				);
+				teamsToInvite = organizationTeams;
 			}
+
+			// Create a new Invite instance with common properties.
+			invites.push(
+				new Invite({
+					token,
+					email,
+					roleId,
+					organizationId,
+					tenantId,
+					invitedByUserId,
+					status: InviteStatusEnum.INVITED,
+					expireDate,
+					actionDate: startedWorkOn ?? appliedDate,
+					code,
+					fullName,
+					projects,
+					teams: teamsToInvite,
+					departments,
+					organizationContacts
+				})
+			);
 		}
+
 		const items = await this.typeOrmRepository.save(invites);
 
 		items.forEach((item: IInvite) => {
@@ -262,11 +305,11 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					this.emailService.inviteUser({
 						email: item.email,
 						role: role.name,
-						organization: organization,
+						organization,
 						registerUrl: inviteLink,
 						originUrl,
 						languageCode,
-						invitedBy
+						invitedByUser
 					});
 					break;
 
@@ -276,11 +319,11 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 						email: item.email,
 						registerUrl: inviteLink,
 						organizationContacts,
-						departments: organizationDepartments,
+						departments,
 						originUrl,
-						organization: organization,
+						organization,
 						languageCode,
-						invitedBy
+						invitedByUser
 					});
 					break;
 
@@ -289,7 +332,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 						email: item.email,
 						teams: item.teams.map((team: IOrganizationTeam) => team.name).join(', '),
 						languageCode,
-						invitedBy,
+						invitedByUser,
 						organization,
 						inviteCode: item.code,
 						inviteLink,
@@ -355,9 +398,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	async resendEmail(input: IInviteResendInput, languageCode: LanguagesEnum) {
 		const originUrl = this.configService.get('clientBaseUrl') as string;
 		const { inviteId, inviteType, callbackUrl } = input;
-		/**
-		 * Invitation
-		 */
+
+		// Retrieve the invite
 		const invite: IInvite = await this.findOneByIdString(inviteId, {
 			relations: {
 				organization: true,
@@ -368,16 +410,20 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		if (!invite) {
 			throw Error('Invite does not exist');
 		}
+
 		// Invited organization
 		const organization: IOrganization = invite.organization;
 
 		const role: IRole = invite.role;
 		const email: IInvite['email'] = invite.email;
 		const teams: IOrganizationTeam[] = invite.teams;
+
 		/**
-		 * Invited by the user
+		 * Invited by the user.
 		 */
-		const invitedBy: IUser = await this.userService.findOneByIdString(RequestContext.currentUserId());
+		const invitedByUserId = RequestContext.currentUserId();
+		const invitedByUser: IUser = await this.userService.findOneByIdString(invitedByUserId);
+
 		try {
 			const { code, token } = this.generateInviteCodeAndToken(email);
 
@@ -390,7 +436,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					registerUrl,
 					originUrl,
 					languageCode,
-					invitedBy
+					invitedByUser
 				});
 			} else if (inviteType === InvitationTypeEnum.EMPLOYEE || inviteType === InvitationTypeEnum.CANDIDATE) {
 				this.emailService.inviteEmployee({
@@ -399,7 +445,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					originUrl,
 					organization,
 					languageCode,
-					invitedBy
+					invitedByUser
 				});
 			} else if (inviteType === InvitationTypeEnum.TEAM) {
 				let inviteLink: string;
@@ -413,77 +459,108 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					inviteCode: code,
 					teams: teams.map((team: IOrganizationTeam) => team.name).join(', '),
 					languageCode,
-					invitedBy,
+					invitedByUser,
 					organization,
 					inviteLink,
 					originUrl
 				});
 			}
 
-			return await this.update(inviteId, {
-				status: InviteStatusEnum.INVITED,
-				invitedById: RequestContext.currentUserId(),
-				token,
-				code
-			});
+			return await super.update(inviteId, { status: InviteStatusEnum.INVITED, invitedByUserId, token, code });
 		} catch (error) {
 			return error;
 		}
 	}
 
+	/**
+	 * Sends an acceptance invitation email to all super admin users of the given organization.
+	 *
+	 * @param organization - The organization details.
+	 * @param employee - The employee who accepted the invitation.
+	 * @param languageCode - The language code for the email.
+	 * @returns A promise that resolves when all emails have been sent.
+	 */
 	async sendAcceptInvitationEmail(
 		organization: IOrganization,
 		employee: IEmployee,
 		languageCode: LanguagesEnum
-	): Promise<any> {
-		const superAdminUsers: IUser[] = await this.userService.getAdminUsers(organization.tenantId);
-
+	): Promise<void> {
 		try {
-			for await (const superAdmin of superAdminUsers) {
-				this.emailService.sendAcceptInvitationEmail({
-					email: superAdmin.email,
-					employee,
-					organization,
-					languageCode
-				});
+			const superAdminUsers: IUser[] = await this.userService.getAdminUsers(organization.tenantId);
+
+			if (!superAdminUsers.length) {
+				console.warn(`No super admin users found for tenant ${organization.tenantId}`);
+				return;
 			}
-		} catch (e) {
-			console.log('caught', e);
+
+			// Send emails concurrently to all super admin users.
+			await Promise.all(
+				superAdminUsers.map(async (superAdmin) =>
+					this.emailService.sendAcceptInvitationEmail({
+						email: superAdmin.email,
+						employee,
+						organization,
+						languageCode,
+					})
+				)
+			);
+		} catch (error: any) {
+			console.error(`Error sending accept invitation email: ${error.message}`, error);
+			throw new Error(`Error sending accept invitation email: ${error.message}`);
 		}
 	}
 
-	async createOrganizationContactInvite(inviteInput: ICreateOrganizationContactInviteInput): Promise<Invite> {
-		const { emailId, roleId, organizationContactId, organizationId, invitedById, originalUrl, languageCode } =
-			inviteInput;
-		const organizationContact: IOrganizationContact = await this.organizationContactService.findOneByIdString(
-			organizationContactId
-		);
-		const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
-		const inviterUser: IUser = await this.userService.findOneByIdString(invitedById);
 
-		const inviteExpiryPeriod =
-			organization && organization.inviteExpiryPeriod
-				? organization.inviteExpiryPeriod
-				: DEFAULT_INVITE_EXPIRY_PERIOD;
+	/**
+	 * Creates an invite for an organization contact and sends an invitation email.
+	 *
+	 * @param input - The invitation input containing email, role, organization contact,
+	 *                organization, and inviter details.
+	 * @returns A promise that resolves with the created invite.
+	 */
+	async  createOrganizationContactInvite(
+		input: ICreateOrganizationContactInviteInput
+	): Promise<Invite> {
+		const {
+			emailId,
+			roleId,
+			organizationContactId,
+			organizationId,
+			invitedByUserId,
+			originalUrl,
+			languageCode,
+		} = input;
 
+		// Fetch organization contact, organization, and inviting user concurrently.
+		const [organizationContact, organization, invitedByUser] = await Promise.all([
+			this.organizationContactService.findOneByIdString(organizationContactId),
+			this.organizationService.findOneByIdString(organizationId),
+			this.userService.findOneByIdString(invitedByUserId),
+		]);
+
+		// Determine the invite expiry period (use default if not provided).
+		const inviteExpiryPeriod = organization?.inviteExpiryPeriod ?? DEFAULT_INVITE_EXPIRY_PERIOD;
 		const expireDate = addDays(new Date(), inviteExpiryPeriod);
 
+		// Create and populate the invite object.
 		const invite = new Invite();
 		invite.token = this.createToken(emailId);
 		invite.email = emailId;
 		invite.roleId = roleId;
 		invite.organizationId = organizationId;
 		invite.tenantId = RequestContext.currentTenantId();
-		invite.invitedById = invitedById;
+		invite.invitedByUserId = invitedByUserId;
 		invite.status = InviteStatusEnum.INVITED;
 		invite.expireDate = expireDate;
 		invite.organizationContacts = [organizationContact];
 
+		// Save the invite to the repository.
 		const createdInvite = await this.typeOrmRepository.save(invite);
 
+		// Send the invitation email (fire-and-forget).
 		this.emailService.inviteOrganizationContact(
 			organizationContact,
-			inviterUser,
+			invitedByUser,
 			organization,
 			createdInvite,
 			languageCode,
@@ -746,7 +823,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	 * @returns A promise that resolves to the updated invitation.
 	 */
 	async handleInvitationResponse(
-		id: string,
+		id: ID,
 		action: InviteActionEnum,
 		origin: string,
 		languageCode: LanguagesEnum
@@ -764,7 +841,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					email: true,
 					fullName: true,
 					organizationId: true,
-					invitedById: true,
+					invitedByUserId: true,
 					tenantId: true,
 					teams: {
 						id: true,
@@ -804,22 +881,19 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				tenantId,
 				role,
 				organizationId,
-				invitedById,
+				invitedByUserId,
 				id: inviteId,
 				token,
 				code,
 				teams
 			} = invitation;
 
-			let invitedTenantUser: User;
+			let invitedTenantUser: IUser;
 
 			if (currentTenantId !== tenantId) {
 				invitedTenantUser = await this.typeOrmUserRepository.findOne({
 					where: { email, tenantId },
-					relations: {
-						tenant: true,
-						role: true
-					}
+					relations: { tenant: true, role: true }
 				});
 			}
 
@@ -894,7 +968,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 							},
 							organizationId,
 							inviteId,
-							createdById: invitedById
+							createdById: invitedByUserId
 						},
 						team.id,
 						languageCode
@@ -936,9 +1010,9 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	 */
 	async createUser(
 		input: IUserRegistrationInput & Partial<IAppIntegrationConfig>,
-		organizationTeamId: string,
+		organizationTeamId: ID,
 		languageCode: LanguagesEnum
-	): Promise<User> {
+	): Promise<IUser> {
 		let tenant = input.user.tenant;
 
 		if (input.createdById) {

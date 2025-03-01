@@ -26,7 +26,7 @@ import {
 	PermissionsEnum,
 	ActionTypeEnum,
 	ITaskDateFilterInput,
-	SubscriptionTypeEnum,
+	EntitySubscriptionTypeEnum,
 	ITaskAdvancedFilter,
 	IAdvancedTaskFiltering,
 	EmployeeNotificationTypeEnum,
@@ -38,11 +38,11 @@ import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { addBetween } from './../core/util';
 import { RequestContext } from '../core/context';
 import { TaskViewService } from './views/view.service';
-import { SubscriptionService } from '../subscription/subscription.service';
+import { EntitySubscriptionService } from '../entity-subscription/entity-subscription.service';
 import { MentionService } from '../mention/mention.service';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { EmployeeNotificationService } from '../employee-notification/employee-notification.service';
-import { CreateSubscriptionEvent } from '../subscription/events';
+import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
 import { Task } from './task.entity';
 import { TypeOrmOrganizationSprintTaskHistoryRepository } from './../organization-sprint/repository/type-orm-organization-sprint-task-history.repository';
 import { GetTaskByIdDTO } from './dto';
@@ -58,7 +58,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		readonly typeOrmOrganizationSprintTaskHistoryRepository: TypeOrmOrganizationSprintTaskHistoryRepository,
 		private readonly _eventBus: EventBus,
 		private readonly taskViewService: TaskViewService,
-		private readonly _subscriptionService: SubscriptionService,
+		private readonly _entitySubscriptionService: EntitySubscriptionService,
 		private readonly mentionService: MentionService,
 		private readonly activityLogService: ActivityLogService,
 		private readonly employeeNotificationService: EmployeeNotificationService
@@ -75,7 +75,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 */
 	async update(id: ID, input: Partial<ITaskUpdateInput>): Promise<ITask> {
 		try {
-			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 			const userId = RequestContext.currentUserId();
 
 			const user = RequestContext.currentUser();
@@ -155,17 +155,20 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			}
 
 			const { organizationId } = updatedTask;
+
 			// Unsubscribe members who were unassigned from task
 			if (removedMembers.length > 0) {
 				try {
 					await Promise.all(
 						removedMembers.map(
 							async (member) =>
-								await this._subscriptionService.delete({
+								await this._entitySubscriptionService.delete({
 									entity: BaseEntityEnum.Task,
 									entityId: updatedTask.id,
-									userId: member.userId,
-									type: SubscriptionTypeEnum.ASSIGNMENT
+									employeeId: member.id,
+									type: EntitySubscriptionTypeEnum.ASSIGNMENT,
+									organizationId,
+									tenantId
 								})
 						)
 					);
@@ -178,13 +181,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			if (newMembers.length) {
 				try {
 					await Promise.all(
-						newMembers.map(({ userId }) => {
+						newMembers.map((member: IEmployee) => {
 							this._eventBus.publish(
-								new CreateSubscriptionEvent({
+								new CreateEntitySubscriptionEvent({
 									entity: BaseEntityEnum.Task,
 									entityId: updatedTask.id,
-									userId,
-									type: SubscriptionTypeEnum.ASSIGNMENT,
+									employeeId: member.id,
+									type: EntitySubscriptionTypeEnum.ASSIGNMENT,
 									organizationId,
 									tenantId
 								})
@@ -195,14 +198,14 @@ export class TaskService extends TenantAwareCrudService<Task> {
 									entity: BaseEntityEnum.Task,
 									entityId: task.id,
 									type: EmployeeNotificationTypeEnum.ASSIGNMENT,
-									sentById: user.id,
-									receiverId: userId,
 									organizationId,
-									tenantId
+									tenantId,
+									receiverEmployeeId: member.id,
+									sentByEmployeeId: user?.employeeId
 								},
 								NotificationActionTypeEnum.Assigned,
 								task.title,
-								`${user.firstName} ${user.lastName}`
+								user.name
 							);
 						})
 					);
@@ -1042,7 +1045,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				startDateTo,
 				dueDateFrom,
 				dueDateTo,
-				creatorId,
+				createdByUserId,
 				isScreeningTask = false,
 				organizationId,
 				employeeId,
@@ -1068,8 +1071,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Add Optional additional filters by
 			query.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
-					if (isNotEmpty(creatorId)) {
-						web.andWhere(p(`"${query.alias}"."creatorId" = :creatorId`), { creatorId });
+					if (isNotEmpty(createdByUserId)) {
+						web.andWhere(p(`"${query.alias}"."createdByUserId" = :createdByUserId`), { createdByUserId });
 					}
 
 					if (isNotEmpty(employeeId)) {
@@ -1144,7 +1147,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			priorityIds = [],
 			sizeIds = [],
 			parentIds = [],
-			creators = [],
+			createdByUserIds = [],
 			dailyPlans = []
 		} = filters;
 
@@ -1160,7 +1163,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			...(priorityIds.length && !where.taskPriorityId ? { taskPriorityId: In(priorityIds) } : {}),
 			...(sizeIds.length && !where.taskSizeId ? { taskSizeId: In(sizeIds) } : {}),
 			...(parentIds.length && !where.parentId ? { parentId: In(parentIds) } : {}),
-			...(creators.length && !where.creatorId ? { creatorId: In(creators) } : {}),
+			...(createdByUserIds.length && !where.createdByUserId ? { createdByUserId: In(createdByUserIds) } : {}),
 			...(dailyPlans.length && !where.dailyPlans ? { dailyPlans: { id: In(dailyPlans) } } : {})
 		};
 	}

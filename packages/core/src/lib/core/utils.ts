@@ -693,3 +693,24 @@ export function replacePlaceholders(query: string, dbType: DatabaseTypeEnum): st
 
 	return query;
 }
+
+/**
+ * Retries a given asynchronous query function for a specified number of times.
+ *
+ * @param query - A function returning a Promise of type T.
+ * @param retries - The number of retries allowed (default is 3).
+ * @returns A Promise that resolves with the query result if successful.
+ * @throws An error if all retries fail.
+ */
+export async function retryQuery<T>(query: () => Promise<T>, retries = 3): Promise<T> {
+	try {
+		return await query();
+	} catch (error) {
+		if (retries > 0) {
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+			return retryQuery(query, retries - 1);
+		}
+
+		throw new Error(`Failed to fetch data: ${error?.message}`, error);
+	}
+}

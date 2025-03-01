@@ -4,7 +4,6 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 import { ID, IDeal, IPagination, IPipeline, IPipelineStage } from '@gauzy/contracts';
 import { isPostgres } from '@gauzy/config';
 import { ConnectionEntityManager } from '../database/connection-entity-manager';
-import { prepareSQLQuery as p } from './../database/database.helper';
 import { Pipeline } from './pipeline.entity';
 import { PipelineStage } from './../core/entities/internal';
 import { RequestContext } from '../core/context/request-context';
@@ -41,37 +40,43 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 	 * Finds deals for a given pipeline.
 	 *
 	 * @param pipelineId - The ID of the pipeline to find deals for.
+	 * @param where - Additional conditions to filter the deals.
 	 * @returns An object containing an array of deals and the total number of deals.
 	 */
-	public async getPipelineDeals(pipelineId: ID, where?: FindOptionsWhere<Pipeline>) {
+	public async getPipelineDeals(pipelineId: ID, where?: FindOptionsWhere<Pipeline>): Promise<IPagination<IDeal>> {
 		// Retrieve the current tenant ID from the request context
-		const tenantId = RequestContext.currentTenantId();
+		const tenantId = RequestContext.currentTenantId() ?? where?.tenantId;
 		const { organizationId } = where || {};
 
-		// Fetch deals related to the pipeline, grouping by stage and deal IDs
-		const items: IDeal[] = await this.typeOrmDealRepository
-			.createQueryBuilder('deal')
-			.leftJoin('deal.stage', 'pipeline_stage')
-			.where(p('pipeline_stage.pipelineId = :pipelineId'), { pipelineId })
-			.andWhere(p('pipeline_stage.tenantId = :tenantId'), { tenantId })
-			.andWhere(p('pipeline_stage.organizationId = :organizationId'), { organizationId })
-			.groupBy(p('pipeline_stage.id'))
-			// FIX: error: column "deal.id" must appear in the GROUP BY clause or be used in an aggregate function
-			.addGroupBy(p('deal.id'))
-			// END_FIX
-			.orderBy(p('pipeline_stage.index'), 'ASC')
-			.getMany();
+		try {
+			// Fetch deals related to the specified pipeline
+			const items: IDeal[] = await this.typeOrmDealRepository.find({
+				relations: {
+					stage: true,
+					createdByUser: true
+				},
+				where: {
+					organizationId,
+					tenantId,
+					stage: {
+						pipelineId,
+						tenantId,
+						organizationId
+					}
+				},
+				order: {
+					stage: {
+						index: 'ASC'
+					}
+				}
+			});
 
-		// Get the total number of deals
-		const { length: total } = items;
-
-		// For each deal, fetch the user who created it
-		for (const deal of items) {
-			deal.createdBy = await this.typeOrmUserRepository.findOneBy({ id: deal.createdByUserId });
+			// Return the deals and their total count
+			return { items, total: items.length };
+		} catch (error) {
+			console.error('Error fetching pipeline deals:', error);
+			return { items: [], total: 0 };
 		}
-
-		// Return the deals and their total count
-		return { items, total };
 	}
 
 	/**
@@ -82,12 +87,12 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 	 * @returns The result of the update operation.
 	 */
 	public async update(id: ID, partialEntity: QueryDeepPartialEntity<Pipeline>): Promise<UpdateResult | Pipeline> {
+		// Retrieve the current tenant ID from the request context
+		const tenantId = RequestContext.currentTenantId();
+
 		const queryRunner = this.connectionEntityManager.rawConnection.createQueryRunner();
 
 		try {
-			// Retrieve the current tenant ID from the request context
-			const tenantId = RequestContext.currentTenantId();
-
 			// Connect and start transaction
 			await queryRunner.connect();
 			await queryRunner.startTransaction();
@@ -155,23 +160,35 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 	 * @param filter - The filtering options.
 	 * @returns The paginated result.
 	 */
-	public async pagination(filter: FindManyOptions): Promise<IPagination<IPipeline>> {
-		if (filter.where) {
+	public async pagination(filter: FindManyOptions<Pipeline>): Promise<IPagination<IPipeline>> {
+		const whereFilter = filter.where as FindOptionsWhere<Pipeline>;
+		const whereOptions: FindOptionsWhere<Pipeline> = {};
+
+		if (whereFilter) {
 			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
-			const { name, description, stages } = filter.where as any; // Type assertion for easier destructuring
+			const { name, description, stages } = whereFilter as FindOptionsWhere<Pipeline>;
 
 			if (name) {
-				filter.where['name'] = Raw((alias) => `${alias} ${likeOperator} '%${name}%'`);
+				whereOptions['name'] = Raw((alias) => `${alias} ${likeOperator} '%${name}%'`);
 			}
+
 			if (description) {
-				filter.where['description'] = Raw((alias) => `${alias} ${likeOperator} '%${description}%'`);
+				whereOptions['description'] = Raw((alias) => `${alias} ${likeOperator} '%${description}%'`);
 			}
+
 			if (stages) {
-				filter.where['stages'] = {
+				whereOptions['stages'] = {
 					name: Raw((alias) => `${alias} ${likeOperator} '%${stages}%'`)
 				};
 			}
+
+			// Merge existing 'where' conditions with the new 'conditions'
+			filter.where = {
+				...whereFilter,
+				...whereOptions
+			};
 		}
+
 		return await super.paginate(filter);
 	}
 }

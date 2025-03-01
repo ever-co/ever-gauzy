@@ -17,8 +17,15 @@ import {
 } from 'class-validator';
 import { JoinColumn, RelationId } from 'typeorm';
 import { FileStorageProvider, FileStorageProviderEnum, ID, IEmployee, ITimeSlot } from '@gauzy/contracts';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '@gauzy/core';
-import { Employee, TenantOrganizationBaseEntity, TimeSlot } from '@gauzy/core';
+import {
+	ColumnIndex,
+	Employee,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToOne,
+	TenantOrganizationBaseEntity,
+	TimeSlot
+} from '@gauzy/core';
 import { IVideo, VideoCodecEnum, VideoResolutionEnum } from '../video.model';
 import { MikroOrmVideoRepository } from '../repositories/mikro-orm-video.repository';
 
@@ -32,7 +39,9 @@ export class Video extends TenantOrganizationBaseEntity implements IVideo {
 	@IsNotEmpty({ message: 'Title is required' })
 	@IsString({ message: 'Title must be a string' })
 	@Length(3, 255, { message: 'Title must be between 3 and 255 characters' })
-	@Matches(/^[\p{L}\p{N}\s-]+$/u, { message: 'Title can contain letters, numbers, spaces, and hyphens from any language' })
+	@Matches(/^[\p{L}\p{N}\s-]+$/u, {
+		message: 'Title can contain letters, numbers, spaces, and hyphens from any language'
+	})
 	@MultiORMColumn()
 	title: string;
 
@@ -70,7 +79,7 @@ export class Video extends TenantOrganizationBaseEntity implements IVideo {
 	@IsNumber({}, { message: 'Duration must be a number' })
 	@Min(0, { message: 'Duration must be greater than or equal to 0' })
 	@Transform(({ value }) => parseFloat(value), { toClassOnly: true })
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, type: 'real' })
 	duration?: number;
 
 	/**
@@ -129,7 +138,10 @@ export class Video extends TenantOrganizationBaseEntity implements IVideo {
 	 * Video resolution in the format WIDTH:HEIGHT.
 	 * Optional and restricted to standard resolutions defined in VideoResolutionEnum.
 	 */
-	@ApiPropertyOptional({ type: () => String, description: 'Video resolution in format WIDTH:HEIGHT (e.g., 1920:1080, 3840:2160)' })
+	@ApiPropertyOptional({
+		type: () => String,
+		description: 'Video resolution in format WIDTH:HEIGHT (e.g., 1920:1080, 3840:2160)'
+	})
 	@IsOptional()
 	@Matches(/^\d{3,4}:\d{3,4}$/, {
 		message: 'Resolution must be in format WIDTH:HEIGHT (e.g., 1920:1080)'
@@ -141,7 +153,10 @@ export class Video extends TenantOrganizationBaseEntity implements IVideo {
 	 * Video codec used for encoding.
 	 * Optional and restricted to standard codecs defined in VideoCodecEnum.
 	 */
-	@ApiPropertyOptional({ type: () => String, description: 'Video codec used for encoding (e.g., libx264, libx265, vp9)' })
+	@ApiPropertyOptional({
+		type: () => String,
+		description: 'Video codec used for encoding (e.g., libx264, libx265, vp9)'
+	})
 	@IsOptional()
 	@IsString({ message: 'Codec must be a string' })
 	@Matches(/^[a-zA-Z0-9_-]{2,20}$/, {
