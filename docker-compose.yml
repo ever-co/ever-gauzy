@@ -57,11 +57,11 @@ services:
       redis:
         condition: service_started
       minio:
-        condition: service_started
+        condition: service_healthy
       minio_create_buckets:
         condition: service_started
-      elasticsearch:
-        condition: service_healthy
+      opensearch:
+        condition: service_started
       cube:
         condition: service_started
     links:
@@ -69,7 +69,7 @@ services:
       - cube:${CUBE_HOST:-cube}
       - redis:${REDIS_HOST:-redis}
       - minio:${MINIO_HOST:-minio}
-      - elasticsearch:${ES_HOST:-elasticsearch}
+      - opensearch:${ES_HOST:-opensearch}
     # volumes:
     # - webapp_node_modules:/srv/gauzy/node_modules
     # - api_node_modules:/srv/gauzy/apps/api/node_modules
@@ -119,18 +119,18 @@ services:
       - cube:${CUBE_HOST:-cube}
       - redis:${REDIS_HOST:-redis}
       - minio:${MINIO_HOST:-minio}
-      - elasticsearch:${ES_HOST:-elasticsearch}
+      - opensearch:${ES_HOST:-opensearch}
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_started
       minio:
-        condition: service_started
+        condition: service_healthy
       minio_create_buckets:
         condition: service_started
-      elasticsearch:
-        condition: service_healthy
+      opensearch:
+        condition: service_started
       api:
         condition: service_started
     # volumes:
