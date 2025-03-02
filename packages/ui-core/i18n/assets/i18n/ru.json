@@ -4435,7 +4435,7 @@
 		"LOW": "Низкий",
 		"MEDIUM": "Средний",
 		"HIGH": "Высокий",
-		"UNKNOWN": "Unknown",
+		"UNKNOWN": "Неизвестно",
 		"DEAL_DELETED": "Сделка '{{ name }}' удалена",
 		"DEAL_EDITED": "Сделка '{{ name }}' была изменена",
 		"DEAL_ADDED": "Сделка '{{ name }}' была добавлена"

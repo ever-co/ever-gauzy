@@ -4419,7 +4419,7 @@
 		"LOW": "Niska/niski/niskie/niską (depending on the gender/number of the noun)",
 		"MEDIUM": "Średni",
 		"HIGH": "Wysoki",
-		"UNKNOWN": "Unknown",
+		"UNKNOWN": "Nieznany",
 		"DEAL_DELETED": "Umowa '{{ name }}' została usunięta",
 		"DEAL_EDITED": "Umowa '{{ name }}' została zmieniona",
 		"DEAL_ADDED": "Transakcja '{{ name }}' została dodana"
