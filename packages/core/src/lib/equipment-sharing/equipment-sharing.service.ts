@@ -1,6 +1,13 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
-import { Brackets, WhereExpressionBuilder } from 'typeorm';
-import { IEquipmentSharing, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { Brackets, DeleteResult, WhereExpressionBuilder } from 'typeorm';
+import {
+	ID,
+	IEquipmentSharing,
+	IEquipmentSharingCreateInput,
+	IEquipmentSharingUpdateInput,
+	IPagination,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import { ConfigService, DatabaseTypeEnum } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -22,7 +29,12 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		super(typeOrmEquipmentSharingRepository, mikroOrmEquipmentSharingRepository);
 	}
 
-	async findEquipmentSharingsByOrgId(organizationId: string): Promise<any> {
+	/**
+	 *
+	 * @param organizationId
+	 * @returns
+	 */
+	async findEquipmentSharingsByOrgId(organizationId: ID): Promise<any> {
 		try {
 			const query = this.typeOrmRepository.createQueryBuilder('equipment_sharing');
 			query
@@ -69,11 +81,22 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		}
 	}
 
-	async findRequestApprovalsByEmployeeId(id: string): Promise<any> {
+	/**
+	 * Retrieves equipment sharing records based on the employee's ID.
+	 *
+	 * This function queries the repository to find all equipment sharing records where the
+	 * `createdByUserId` matches the provided employee ID. It also loads related entities:
+	 * `equipment`, `employees`, and `teams`.
+	 *
+	 * @param id - The unique identifier of the employee.
+	 * @returns A promise that resolves to an array of EquipmentSharing records.
+	 * @throws BadRequestException if an error occurs during the query.
+	 */
+	async findRequestApprovalsByEmployeeId(id: ID): Promise<EquipmentSharing[]> {
 		try {
 			return await this.typeOrmRepository.find({
 				where: {
-					createdBy: id
+					createdByUserId: id
 				},
 				relations: ['equipment', 'employees', 'teams']
 			});
@@ -82,6 +105,16 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		}
 	}
 
+	/**
+	 * Retrieves all equipment sharing records with pagination.
+	 *
+	 * This function uses `findAndCount` to fetch all equipment sharing records along with the total
+	 * count. It loads related entities (`equipment`, `employees`, and `teams`) and returns an object
+	 * containing both the items and the total count.
+	 *
+	 * @returns A promise that resolves to an object with `items` (the equipment sharing records)
+	 *          and `total` (the total number of records).
+	 */
 	async findAllEquipmentSharings(): Promise<IPagination<IEquipmentSharing>> {
 		const [items, total] = await this.typeOrmRepository.findAndCount({
 			relations: ['equipment', 'employees', 'teams']
@@ -89,49 +122,90 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		return { items, total };
 	}
 
-	async createEquipmentSharing(equipmentSharing: EquipmentSharing): Promise<EquipmentSharing> {
+	/**
+	 * Creates a new EquipmentSharing record.
+	 *
+	 * @param equipmentSharing - The EquipmentSharing entity to be created.
+	 * @returns The saved EquipmentSharing entity.
+	 */
+	async createEquipmentSharing(entity: IEquipmentSharingCreateInput): Promise<EquipmentSharing> {
 		try {
-			equipmentSharing.createdBy = RequestContext.currentUser().id;
-			equipmentSharing.createdByName = RequestContext.currentUser().name;
-			const equipmentSharingSaved = await this.typeOrmRepository.save(equipmentSharing);
-			return equipmentSharingSaved;
-		} catch (err) {
-			console.log('err', err);
-			throw new BadRequestException(err);
-		}
-	}
+			// Set the ID of the user creating this record.
+			entity.createdByUserId = RequestContext.currentUserId();
 
-	async update(id: string, equipmentSharing: EquipmentSharing): Promise<EquipmentSharing> {
-		try {
-			await this.typeOrmRepository.delete(id);
-			const equipmentSharingSaved = await this.typeOrmRepository.save(equipmentSharing);
-
-			return equipmentSharingSaved;
-		} catch (err) {
-			throw new BadRequestException(err);
-		}
-	}
-
-	async delete(id: string): Promise<any> {
-		try {
-			const [equipmentSharing] = await Promise.all([
-				await this.typeOrmRepository.delete(id),
-				await this.typeOrmRequestApprovalRepository.delete({
-					requestId: id
-				})
-			]);
-
+			// Save the equipment sharing record in the database.
+			const equipmentSharing = await this.typeOrmRepository.save(entity);
 			return equipmentSharing;
 		} catch (error) {
+			console.error('Error creating equipment sharing:', error);
 			throw new BadRequestException(error);
 		}
 	}
 
-	async updateStatusEquipmentSharingByAdmin(id: string, status: number): Promise<EquipmentSharing> {
+	/**
+	 * Updates an equipment sharing record by deleting the existing record and saving the updated input.
+	 *
+	 * @param id - The unique identifier for the equipment sharing record to update.
+	 * @param input - The new equipment sharing data.
+	 * @returns A promise that resolves to the updated EquipmentSharing record.
+	 */
+	async update(id: ID, input: IEquipmentSharingUpdateInput): Promise<EquipmentSharing> {
 		try {
-			const equipmentSharing = await this.typeOrmRepository.findOneBy({
-				id
-			});
+			// Remove the existing record with the given id
+			await this.typeOrmRepository.delete(id);
+
+			// Save the new equipment sharing data
+			const equipmentSharing = await this.typeOrmRepository.save(input);
+
+			// Return the newly saved record
+			return equipmentSharing;
+		} catch (err) {
+			// If an error occurs, throw a BadRequestException with the error details
+			throw new BadRequestException(err);
+		}
+	}
+
+	/**
+	 * Deletes an equipment sharing record and its associated request approval.
+	 *
+	 * This function concurrently deletes the equipment sharing record from the primary repository
+	 * and the corresponding request approval record from the request approval repository.
+	 *
+	 * @param id - The unique identifier for the equipment sharing record to be deleted.
+	 * @returns A promise that resolves to the result of the equipment sharing deletion operation.
+	 */
+	async delete(id: ID): Promise<DeleteResult> {
+		try {
+			// Execute both deletion operations concurrently.
+			const [equipmentSharing] = await Promise.all([
+				this.typeOrmRepository.delete(id),
+				this.typeOrmRequestApprovalRepository.delete({ requestId: id })
+			]);
+
+			// Return the result from the equipment sharing deletion.
+			return equipmentSharing;
+		} catch (error) {
+			// If an error occurs during deletion, throw a BadRequestException with error details.
+			throw new BadRequestException(error);
+		}
+	}
+
+	/**
+	 * Updates the status of an Equipment Sharing record by an admin.
+	 *
+	 * This function retrieves an Equipment Sharing record using its ID. If the record is found,
+	 * it updates the status property to the provided value and saves the updated record.
+	 * If the record is not found, it throws a NotFoundException.
+	 *
+	 * @param id - The unique identifier of the Equipment Sharing record.
+	 * @param status - The new status value to set for the Equipment Sharing record.
+	 * @returns A promise that resolves to the updated EquipmentSharing record.
+	 * @throws NotFoundException if no Equipment Sharing record is found with the provided ID.
+	 * @throws BadRequestException if an error occurs during the update process.
+	 */
+	async updateStatusEquipmentSharingByAdmin(id: ID, status: number): Promise<EquipmentSharing> {
+		try {
+			const equipmentSharing = await this.typeOrmRepository.findOneBy({ id });
 
 			if (!equipmentSharing) {
 				throw new NotFoundException('Equipment Sharing not found');
@@ -144,6 +218,11 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		}
 	}
 
+	/**
+	 *
+	 * @param filter
+	 * @returns
+	 */
 	public async pagination(filter: any): Promise<IPagination<IEquipmentSharing>> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
@@ -158,6 +237,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			query.take(filter && filter.take ? filter.take : 10);
 
 			query.innerJoinAndSelect(`${query.alias}.equipment`, 'equipment');
+			query.innerJoinAndSelect(`${query.alias}.createdByUser`, 'createdByUser');
 			query.leftJoinAndSelect(`${query.alias}.equipmentSharingPolicy`, 'equipmentSharingPolicy');
 			query.leftJoinAndSelect(`${query.alias}.employees`, 'employees');
 			query.leftJoinAndSelect(`${query.alias}.teams`, 'teams');
@@ -186,9 +266,6 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 					);
 					break;
 				default:
-					throw Error(
-						`cannot paginate equipment sharings due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
-					);
 			}
 
 			query.leftJoinAndSelect('requestApproval.approvalPolicy', 'approvalPolicy');
@@ -226,8 +303,8 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 								qb.andWhere(p(`"employees"."id" IN (:...employeeIds)`), {
 									employeeIds
 								});
-								qb.orWhere(p(`"${query.alias}"."createdBy" IN (:...employeeIds)`), {
-									employeeIds
+								qb.orWhere(p(`"${query.alias}"."createdByUserId" IN (:...createdByUserIds)`), {
+									createdByUserIds: [user?.id]
 								});
 							})
 						);

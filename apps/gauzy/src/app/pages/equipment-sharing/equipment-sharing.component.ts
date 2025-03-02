@@ -8,7 +8,8 @@ import {
 	PermissionsEnum,
 	RequestApprovalStatusTypesEnum,
 	IOrganization,
-	EquipmentSharingStatusEnum
+	EquipmentSharingStatusEnum,
+	IRequestApproval
 } from '@gauzy/contracts';
 import { Cell } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
@@ -24,6 +25,7 @@ import {
 } from '@gauzy/ui-core/core';
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
+	CreatedByUserComponent,
 	DateViewComponent,
 	DeleteConfirmationComponent,
 	EquipmentSharingMutationComponent,
@@ -190,9 +192,14 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 						instance.value = cell.getValue();
 					}
 				},
-				createdByName: {
+				createdByUser: {
 					title: this.getTranslation('EQUIPMENT_SHARING_PAGE.CREATED_BY'),
-					type: 'string'
+					type: 'custom',
+					isFilterable: false,
+					renderComponent: CreatedByUserComponent<IEquipmentSharing>,
+					componentInitFunction: (instance: CreatedByUserComponent<IRequestApproval>, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				},
 				sharingStatus: {
 					title: this.getTranslation('EQUIPMENT_SHARING_PAGE.STATUS'),

@@ -70,10 +70,10 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW)
-	@Get('employee/:id')
+	@Get('/employee/:id')
 	async findEquipmentSharingsByEmployeeId(
 		@Param('id', UUIDValidationPipe) employeeId: ID
-	): Promise<IPagination<IEquipmentSharing>> {
+	): Promise<IEquipmentSharing[]> {
 		return this.equipmentSharingService.findRequestApprovalsByEmployeeId(employeeId);
 	}
 
@@ -100,12 +100,17 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.EQUIPMENT_MAKE_REQUEST, PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT)
-	@Post('organization/:id')
+	@Post('/organization/:id')
 	async createEquipmentSharing(
 		@Param('id', UUIDValidationPipe) organizationId: ID,
 		@Body() equipmentSharing: EquipmentSharing
 	): Promise<IEquipmentSharing> {
-		return await this.commandBus.execute(new EquipmentSharingCreateCommand(organizationId, equipmentSharing));
+		return await this.commandBus.execute(
+			new EquipmentSharingCreateCommand({
+				...equipmentSharing,
+				organizationId
+			})
+		);
 	}
 
 	/**
@@ -127,7 +132,7 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.EQUIPMENT_APPROVE_REQUEST, PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT)
-	@Put('approval/:id')
+	@Put('/approval/:id')
 	async equipmentSharingsRequestApproval(@Param('id', UUIDValidationPipe) id: ID): Promise<IEquipmentSharing> {
 		return await this.commandBus.execute(
 			new EquipmentSharingStatusCommand(id, RequestApprovalStatusTypesEnum.APPROVED)
@@ -153,7 +158,7 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.EQUIPMENT_APPROVE_REQUEST, PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT)
-	@Put('refuse/:id')
+	@Put('/refuse/:id')
 	async equipmentSharingsRequestRefuse(@Param('id', UUIDValidationPipe) id: ID): Promise<IEquipmentSharing> {
 		return this.commandBus.execute(new EquipmentSharingStatusCommand(id, RequestApprovalStatusTypesEnum.REFUSED));
 	}
@@ -167,7 +172,7 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW)
 	@UseValidationPipe({ transform: true })
-	@Get('pagination')
+	@Get('/pagination')
 	async pagination(@Query() filter: PaginationParams<EquipmentSharing>): Promise<IPagination<IEquipmentSharing>> {
 		return this.equipmentSharingService.pagination(filter);
 	}
@@ -192,7 +197,7 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW)
-	@Get()
+	@Get('/')
 	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IEquipmentSharing>> {
 		const { relations = [], findInput } = data;
 		return this.equipmentSharingService.findAll({
@@ -224,7 +229,7 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.EQUIPMENT_APPROVE_REQUEST, PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT)
-	@Put(':id')
+	@Put('/:id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() equipmentSharing: EquipmentSharing
