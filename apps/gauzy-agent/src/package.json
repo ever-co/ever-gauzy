@@ -4,7 +4,7 @@
     "version": "0.1.0",
     "description": "Ever Gauzy Agent",
     "license": "AGPL-3.0",
-    "homepage": "https://ever.gauzy",
+    "homepage": "https://gauzy.co",
     "repository": {
         "type": "git",
         "url": "https://github.com/ever-co/ever-gauzy.git"
@@ -121,6 +121,6 @@
         "electron-util": "^0.18.1",
         "node-fetch": "^2.6.7",
         "node-notifier": "^8.0.0",
-		"@gauzy/desktop-lib": "file:../../dist/packages/desktop-lib"
+		"@gauzy/desktop-lib": "file:../../../dist/packages/desktop-lib"
     }
 }
