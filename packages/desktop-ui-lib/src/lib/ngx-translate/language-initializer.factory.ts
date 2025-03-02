@@ -9,9 +9,15 @@ export function LanguageInitializerFactory(
 ) {
 	return async () => {
 		const languages = Object.values(LanguagesEnum);
-		const language = await electronService.ipcRenderer.invoke(
-			'PREFERRED_LANGUAGE'
-		);
+		let language = 'en';
+		try {
+			language = await electronService.ipcRenderer.invoke(
+				'PREFERRED_LANGUAGE'
+			);
+		} catch(error) {
+			// set to default language if invoke doesn't exists
+			language = 'en';
+		}
 		translate.addLangs(languages);
 		translate.setDefaultLang(language || LanguagesEnum.ENGLISH);
 		return from(translate.use(language || LanguagesEnum.ENGLISH));

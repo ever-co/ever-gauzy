@@ -32,6 +32,11 @@ export class DesktopEnvironmentContentFactory {
 				return common
 					.generate(environment)
 					.concat(apiServer.generate(environment));
+			case 'gauzy-agent':
+				const gauzyAgent = new DesktopApiServerEnvironmentContent();
+				return common
+					.generate(environment)
+					.concat(gauzyAgent.generate(environment))
 			default:
 				break;
 		}

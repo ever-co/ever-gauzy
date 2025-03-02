@@ -1,0 +1,136 @@
+
+{
+    "name": "gauzy-agent",
+    "productName": "Ever Gauzy Agent",
+    "version": "0.1.0",
+    "description": "Ever Gauzy Agent",
+    "license": "AGPL-3.0",
+    "homepage": "https://ever.gauzy",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/ever-co/ever-gauzy.git"
+    },
+    "bugs": {
+        "url": "https://github.com/ever-co/ever-gauzy/issues"
+    },
+    "private": true,
+    "author": {
+        "name": "Ever Co. LTD",
+        "email": "ever@ever.co",
+        "url": "https://ever.co"
+    },
+    "main": "index.js",
+    "build": {
+        "appId": "com.ever.evergauzyagent",
+        "artifactName": "${name}-${version}.${ext}",
+        "productName": "Ever Gauzy Agent",
+        "copyright": "Copyright © 2019-Present. Ever Co. LTD",
+        "afterSign": "tools/notarize.js",
+        "dmg": {
+            "sign": false
+        },
+        "asar": true,
+        "npmRebuild": true,
+        "asarUnpack": [
+        ],
+        "directories": {
+            "buildResources": "icons",
+            "output": "../gauzy-agent-packages"
+        },
+        "publish": [
+            {
+                "provider": "github",
+                "repo": "ever-gauzy-agent",
+                "releaseType": "release"
+            },
+            {
+                "provider": "spaces",
+                "name": "ever",
+                "region": "sfo3",
+                "path": "/ever-gauzy-agent",
+                "acl": "public-read"
+            }
+        ],
+        "mac": {
+            "category": "public.app-category.developer-tools",
+            "icon": "icon.icns",
+            "target": [
+                "zip",
+                "dmg"
+            ],
+            "asarUnpack": "**/*.node",
+            "artifactName": "${name}-${version}.${ext}",
+            "hardenedRuntime": true,
+            "gatekeeperAssess": false,
+            "entitlements": "tools/build/entitlements.mas.plist",
+            "entitlementsInherit": "tools/build/entitlements.mas.plist",
+            "extendInfo": {
+                "NSAppleEventsUsageDescription": "Please allow access to script browser applications to detect the current URL when triggering instant lookup.",
+                "NSCameraUsageDescription": "Please allow access to Gauzy Agent"
+            }
+        },
+        "win": {
+            "publisherName": "Ever",
+            "target": [
+                {
+                    "target": "nsis",
+                    "arch": [
+                        "x64"
+                    ]
+                }
+            ],
+            "icon": "icon.ico",
+            "verifyUpdateCodeSignature": false
+        },
+        "linux": {
+            "icon": "linux",
+            "target": [
+                "AppImage",
+                "deb",
+                "tar.gz"
+            ],
+            "executableName": "ever-gauzy-agent",
+            "artifactName": "${name}-${version}.${ext}",
+            "synopsis": "Desktop",
+            "category": "Development"
+        },
+        "nsis": {
+            "oneClick": false,
+            "perMachine": true,
+            "createDesktopShortcut": true,
+            "createStartMenuShortcut": true,
+            "allowToChangeInstallationDirectory": true,
+            "allowElevation": true,
+            "installerIcon": "icon.ico",
+            "artifactName": "${name}-${version}.${ext}",
+            "deleteAppDataOnUninstall": true,
+            "menuCategory": true
+        },
+        "extraResources": [
+            "./data/**/*",
+            "databaseDir",
+            {
+                "from": "assets",
+                "to": "assets"
+            }
+        ]
+    },
+    "dependencies": {
+        "electron-log": "^4.4.8",
+        "electron-store": "^8.1.0",
+        "electron-updater": "^6.1.7",
+        "electron-util": "^0.18.1",
+        "node-fetch": "^2.6.7",
+        "node-notifier": "^8.0.0",
+		"@gauzy/desktop-lib": "file:../../dist/packages/desktop-lib"
+    },
+	"devDependencies": {
+		"@electron/rebuild": "^3.2.10",
+		"@types/moment-duration-format": "^2.2.3",
+		"electron": "^30.0.1",
+		"electron-builder": "^24.13.3",
+		"electron-installer-dmg": "^4.0.0",
+		"electron-packager": "^17.1.1",
+		"electron-reload": "~1.5.0"
+	}
+}

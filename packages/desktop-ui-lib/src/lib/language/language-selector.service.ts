@@ -15,7 +15,7 @@ export class LanguageSelectorService {
 		private readonly _directionService: NbLayoutDirectionService,
 		private readonly _electronService: ElectronService
 	) {
-		const locale = this._electronService.remote.app.getLocale();
+		let locale = this._electronService?.remote?.app?.getLocale();
 		this._osLanguage =
 			locale in LanguagesEnum ? locale : LanguagesEnum.ENGLISH;
 	}

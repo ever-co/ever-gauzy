@@ -1,0 +1,127 @@
+{
+	"name": "gauzy-agent",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"projectType": "application",
+	"prefix": "app",
+	"sourceRoot": "apps/gauzy-agent/src",
+	"tags": [],
+	"targets": {
+		"build": {
+			"executor": "@angular-builders/custom-webpack:browser",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"customWebpackConfig": {
+					"path": "apps/gauzy-agent/config/custom-webpack.config.js"
+				},
+				"outputPath": "dist/apps/gauzy-agent",
+				"index": "apps/gauzy-agent/src/index.html",
+				"main": "apps/gauzy-agent/src/main.ts",
+				"polyfills": "apps/gauzy-agent/src/polyfills.ts",
+				"tsConfig": "apps/gauzy-agent/tsconfig.app.json",
+				"aot": true,
+				"stylePreprocessorOptions": {
+					"includePaths": ["apps/gauzy-agent/src/assets/styles", "packages/ui-core/static/styles"]
+				},
+				"assets": [
+					"apps/gauzy-agent/src/favicon.ico",
+					"apps/gauzy-agent/src/assets",
+					{
+						"glob": "**/*",
+						"input": "apps/gauzy-agent/src/",
+						"ignore": ["**/*.ts"],
+						"output": ""
+					},
+					{
+						"glob": "**/*",
+						"input": "node_modules/@nebular/eva-icons/icons",
+						"output": "/assets/eva-icons/"
+					}
+				],
+				"styles": [
+					"apps/gauzy-agent/src/styles.css",
+					"node_modules/@nebular/theme/styles/prebuilt/default.css",
+					"node_modules/bootstrap/dist/css/bootstrap.css",
+					"node_modules/typeface-exo/index.css",
+					"node_modules/roboto-fontface/css/roboto/roboto-fontface.css",
+					"node_modules/ionicons/dist/scss/ionicons.scss",
+					"node_modules/@fortawesome/fontawesome-free/css/all.css",
+					"node_modules/socicon/css/socicon.css",
+					"node_modules/nebular-icons/scss/nebular-icons.scss",
+					"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
+					"node_modules/leaflet/dist/leaflet.css",
+					"apps/gauzy-agent/src/assets/styles/styles.scss",
+					"node_modules/@ng-select/ng-select/themes/default.theme.css"
+				],
+				"scripts": [],
+				"allowedCommonJsDependencies": ["localforage", "rxjs", "rxjs/operators"]
+			},
+			"configurations": {
+				"production": {
+					"fileReplacements": [
+						{
+							"replace": "apps/gauzy-agent/src/environments/environment.ts",
+							"with": "apps/gauzy-agent/src/environments/environment.prod.ts"
+						},
+						{
+							"replace": "packages/ui-config/src/lib/environments/environment.ts",
+							"with": "packages/ui-config/src/lib/environments/environment.prod.ts"
+						}
+					],
+					"optimization": true,
+					"sourceMap": true,
+					"namedChunks": false,
+					"extractLicenses": true,
+					"vendorChunk": false,
+					"buildOptimizer": true,
+					"budgets": [
+						{
+							"type": "initial",
+							"maximumWarning": "20mb",
+							"maximumError": "40mb"
+						},
+						{
+							"type": "anyComponentStyle",
+							"maximumWarning": "60kb",
+							"maximumError": "120kb"
+						}
+					],
+					"outputHashing": "all"
+				},
+				"development": {
+					"optimization": false,
+					"extractLicenses": false,
+					"sourceMap": true
+				}
+			},
+			"defaultConfiguration": "production"
+		},
+		"serve": {
+			"executor": "@angular-devkit/build-angular:dev-server",
+			"configurations": {
+				"production": {
+					"buildTarget": "gauzy-agent:build:production"
+				},
+				"development": {
+					"buildTarget": "gauzy-agent:build:development"
+				}
+			},
+			"defaultConfiguration": "development"
+		},
+		"extract-i18n": {
+			"executor": "@angular-devkit/build-angular:extract-i18n",
+			"options": {
+				"buildTarget": "gauzy-agent:build"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "apps/gauzy-agent/jest.config.ts"
+			}
+		}
+	}
+}

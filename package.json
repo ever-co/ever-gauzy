@@ -307,7 +307,7 @@
 		"pack:api-server": "yarn run pack --desktop=gauzy-api-server",
 		"download:translations": "yarn ts-node .scripts/translation/translation-util.ts",
 		"prepare:gauzy-api-server": "yarn run postinstall.electron && tsc -p apps/server-api/tsconfig.electron.json",
-		"build:gauzy-api-server": "cross-env NODE_ENV=production yarn run copy-files-i18n-api-server && yarn run postinstall.electron && yarn run config:prod && yarn run config:server-api:prod && yarn build:package:all:prod && yarn run pack:api-server && yarn run generate:icons:server-api --environment=prod && yarn ng:prod build gauzy-api-server --base-href ./ && yarn run prepare:gauzy-api-server && yarn ng:prod run api:server-api && yarn run copy-files-gauzy-api-server",
+		"build:gauzy-api-server": "cross-env NODE_ENV=production yarn run copy-files-i18n-api-server && yarn run postinstall.electron && yarn run config:prod && yarn run config:server-api:prod && yarn build:package:all:prod && yarn run pack:api-server && yarn run generate:icons:server-api --environment=prod && jyarn ng:prod build gauzy-api-server --base-href ./ && yarn run prepare:gauzy-api-server && yarn ng:prod run api:server-api && yarn run copy-files-gauzy-api-server",
 		"build:gauzy-api-server:windows": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn run build:gauzy-api-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 -c.extraMetadata.author.name=Ever build --windows --project dist/apps/gauzy-api-server",
 		"build:gauzy-api-server:windows:release": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn run build:gauzy-api-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 -c.extraMetadata.author.name=Ever build --windows --publish=always --project dist/apps/gauzy-api-server",
 		"build:gauzy-api-server:windows:release:gh": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=60000 yarn run build:gauzy-api-server && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 -c.extraMetadata.author.name=Ever build --windows --publish=always --project dist/apps/gauzy-api-server",
@@ -319,7 +319,13 @@
 		"copy-files-i18n-api-server": "yarn run download:translations --desktop=server-api",
 		"copy-files-gauzy-api-server": "copyfiles -f packages/core/src/**/*.gql dist/apps/gauzy-api-server/data/",
 		"quick:build:gauzy-api-server": "yarn electron-builder -c.electronVersion=30.0.1 -c.extraMetadata.author.name=Ever build --mac --project dist/apps/gauzy-api-server",
-		"generate:icons:server-api": "yarn run generate:icons --desktop=server-api"
+		"generate:icons:server-api": "yarn run generate:icons --desktop=server-api",
+		"prepare:gauzy-agent": "yarn run postinstall.electron && tsc -p apps/gauzy-agent/tsconfig.electron.json",
+		"start:gauzy-agent": "yarn prepare:gauzy-agent &&NODE_PATH=dist/packages yarn electron ./dist/apps/gauzy-agent/index.js",
+		"serve:gauzy-agent:ui": "yarn ng serve gauzy-agent",
+		"build:gauzy-agent": "yarn ng:prod build gauzy-agent --base-href ./",
+		"copy-files-i18n-gauzy-agent": "yarn run download:translations --desktop=gauzy-agent",
+		"config:gauzy-agent:prod": "yarn run config:electron -- --environment=prod --desktop=gauzy-agent"
 	},
 	"config": {
 		"commitizen": {

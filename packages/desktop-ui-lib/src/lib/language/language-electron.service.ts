@@ -19,10 +19,18 @@ export class LanguageElectronService {
 		private readonly ngZone: NgZone
 	) {}
 
+	private desktopPreferredLanguage() {
+		try {
+			return this.electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE');
+		} catch(error) {
+			return Promise.resolve('en');
+		}
+	}
+
 	public initialize<T>(callback?: T) {
 		this.onLanguageChange(callback);
 
-		from(this.electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
+		from(this.desktopPreferredLanguage())
 			.pipe(
 				tap((language: LanguagesEnum) => {
 					this.languageSelectorService.setLanguage(language, this.translateService);
@@ -37,7 +45,7 @@ export class LanguageElectronService {
 	}
 
 	public onLanguageChange<T>(callback?: T) {
-		this.electronService.ipcRenderer.on('preferred_language_change', (event, language: LanguagesEnum) => {
+		this.electronService?.ipcRenderer?.on('preferred_language_change', (event, language: LanguagesEnum) => {
 			this.ngZone.run(() => {
 				this.languageSelectorService.setLanguage(language, this.translateService);
 				TimeTrackerDateManager.locale(language);
