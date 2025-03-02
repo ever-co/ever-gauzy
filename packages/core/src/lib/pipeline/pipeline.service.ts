@@ -5,7 +5,7 @@ import { ID, IDeal, IPagination, IPipeline, IPipelineStage } from '@gauzy/contra
 import { isPostgres } from '@gauzy/config';
 import { ConnectionEntityManager } from '../database/connection-entity-manager';
 import { Pipeline } from './pipeline.entity';
-import { PipelineStage } from './../core/entities/internal';
+import { Deal, PipelineStage } from './../core/entities/internal';
 import { RequestContext } from '../core/context/request-context';
 import { TenantAwareCrudService } from './../core/crud/tenant-aware-crud.service';
 import { TypeOrmDealRepository } from '../deal/repository/type-orm-deal.repository';
@@ -43,38 +43,40 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 	 * @param where - Additional conditions to filter the deals.
 	 * @returns An object containing an array of deals and the total number of deals.
 	 */
-	public async getPipelineDeals(pipelineId: ID, where?: FindOptionsWhere<Pipeline>): Promise<IPagination<IDeal>> {
-		// Retrieve the current tenant ID from the request context
+	public async getPipelineDeals(
+		pipelineId: ID,
+		where?: FindOptionsWhere<Pipeline>,
+		relations: string[] = []
+	): Promise<IPagination<IDeal>> {
+		// Destructure organizationId and tenantId from where; fallback to current tenant if not provided
+		const { organizationId } = where ?? {};
 		const tenantId = RequestContext.currentTenantId() ?? where?.tenantId;
-		const { organizationId } = where || {};
+
+		// Prepare query options with ordering; add relations only if provided
+		const queryOptions: FindManyOptions<Deal> = {
+			// Build the where clause for the query
+			where: {
+				organizationId,
+				tenantId,
+				stage: {
+					pipelineId,
+					tenantId,
+					organizationId
+				}
+			},
+			order: { stage: { index: 'ASC' } }
+		};
+
+		if (relations.length) {
+			queryOptions.relations = relations;
+		}
 
 		try {
-			// Fetch deals related to the specified pipeline
-			const items: IDeal[] = await this.typeOrmDealRepository.find({
-				relations: {
-					stage: true,
-					createdByUser: true
-				},
-				where: {
-					organizationId,
-					tenantId,
-					stage: {
-						pipelineId,
-						tenantId,
-						organizationId
-					}
-				},
-				order: {
-					stage: {
-						index: 'ASC'
-					}
-				}
-			});
-
-			// Return the deals and their total count
-			return { items, total: items.length };
+			// Fetch deals and their total count
+			const [items, total] = await this.typeOrmDealRepository.findAndCount(queryOptions);
+			return { items, total };
 		} catch (error) {
-			console.error('Error fetching pipeline deals:', error);
+			console.error(`Error fetching pipeline deals: ${error.message}`, error);
 			return { items: [], total: 0 };
 		}
 	}

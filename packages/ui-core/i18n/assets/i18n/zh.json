@@ -4419,6 +4419,7 @@
 		"LOW": "低",
 		"MEDIUM": "中等难度",
 		"HIGH": "高",
+		"UNKNOWN": "Unknown",
 		"DEAL_DELETED": "交易'{{ name }}'已被删除",
 		"DEAL_EDITED": "交易“{{ name }}”已被修改",
 		"DEAL_ADDED": "交易 '{{ name }}' 已添加"

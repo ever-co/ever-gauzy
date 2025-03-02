@@ -4415,6 +4415,7 @@
 		"LOW": "Niedrig",
 		"MEDIUM": "Mittel",
 		"HIGH": "Hoch",
+		"UNKNOWN": "Unknown",
 		"DEAL_DELETED": "Der Deal '{{ name }}' wurde entfernt.",
 		"DEAL_EDITED": "Deal '{{ name }}' wurde geändert.",
 		"DEAL_ADDED": "Deal '{{ name }}' wurde hinzugefügt."

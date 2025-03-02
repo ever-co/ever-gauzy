@@ -4,7 +4,7 @@ export * from './clickable-link/clickable-link.component';
 export * from './company-logo/company-logo.component';
 export * from './contact-links/contact-links.component';
 export * from './contact-with-tags/contact-with-tags.component';
-export * from './create-by/create-by.component';
+export * from './created-by/created-by-user.component';
 export * from './created-at/created-at.component';
 export * from './date-view/date-view.component';
 export * from './document-date/document-date.component';
