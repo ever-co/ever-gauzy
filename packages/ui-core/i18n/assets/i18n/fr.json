@@ -4521,11 +4521,12 @@
 		"RECORD_TYPE": "étape \"{{ title }}\"",
 		"ALL_STAGES": "Toutes les étapes",
 		"LOW": "Faible",
-		"MEDIUM": "Moyen",
-		"HIGH": "Élevé",
-		"DEAL_DELETED": "Affaire '{{ name }}' supprimée",
-		"DEAL_EDITED": "Affaire '{{ name }}' modifiée",
-		"DEAL_ADDED": "Affaire '{{ name }}' ajoutée"
+		"MEDIUM": "Moyen.",
+		"HIGH": "Haut",
+		"UNKNOWN": "Unknown",
+		"DEAL_DELETED": "L'accord '{{ name }}' a été supprimé.",
+		"DEAL_EDITED": "L'accord '{{ name }}' a été modifié.",
+		"DEAL_ADDED": "La transaction '{{ name }}' a été ajoutée"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Modifier l'affaire | Pipeline : '{{ name }}'"

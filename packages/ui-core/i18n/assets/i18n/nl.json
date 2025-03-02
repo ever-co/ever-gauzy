@@ -4529,6 +4529,7 @@
 		"LOW": "Laag",
 		"MEDIUM": "Middel",
 		"HIGH": "Hoog",
+		"UNKNOWN": "Unknown",
 		"DEAL_DELETED": "Deal '{{ name }}' is verwijderd",
 		"DEAL_EDITED": "Deal '{{ name }}' is gewijzigd",
 		"DEAL_ADDED": "Deal '{{ name }}' is toegevoegd"

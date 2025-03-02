@@ -71,6 +71,7 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 				new CreateEntitySubscriptionEvent({
 					entity: parentEntityType ?? entity,
 					entityId: parentEntityId ?? entityId,
+					employeeId: user.employeeId,
 					type: EntitySubscriptionTypeEnum.MENTION,
 					organizationId,
 					tenantId

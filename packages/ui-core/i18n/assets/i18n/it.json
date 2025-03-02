@@ -4528,9 +4528,10 @@
 		"LOW": "Basso",
 		"MEDIUM": "Medio",
 		"HIGH": "Alto",
-		"DEAL_DELETED": "Trattativa '{{ name }}' rimossa",
-		"DEAL_EDITED": "Trattativa '{{ name }}' modificata",
-		"DEAL_ADDED": "Trattativa '{{ name }}' aggiunta"
+		"UNKNOWN": "Unknown",
+		"DEAL_DELETED": "L'accordo '{{ name }}' è stato rimosso",
+		"DEAL_EDITED": "L'accordo '{{ name }}' è stato modificato",
+		"DEAL_ADDED": "L'accordo '{{ name }}' è stato aggiunto"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Modifica trattativa | Pipeline: '{{ name }}'"

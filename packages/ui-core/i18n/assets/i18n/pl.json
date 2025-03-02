@@ -4529,9 +4529,10 @@
 		"LOW": "Niski",
 		"MEDIUM": "Średni",
 		"HIGH": "Wysoki",
-		"DEAL_DELETED": "Transakcja '{{ name }}' została usunięta",
-		"DEAL_EDITED": "Transakcja '{{ name }}' została zmieniona",
-		"DEAL_ADDED": "Transakcja '{{ name }}' została dodana"
+		"UNKNOWN": "Unknown",
+		"DEAL_DELETED": "Umowa '{{ name }}' została usunięta",
+		"DEAL_EDITED": "Umowa '{{ name }}' została zmieniona",
+		"DEAL_ADDED": "Umowa '{{ name }}' została dodana"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Edytuj transakcję | Pipeline: '{{ name }}'"

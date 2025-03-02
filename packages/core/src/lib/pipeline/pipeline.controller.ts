@@ -12,7 +12,7 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { DeleteResult, UpdateResult } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { ID, IDeal, IPagination, IPipeline, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, OptionParams, PaginationParams } from './../core/crud';
 import { Pipeline } from './pipeline.entity';
@@ -76,9 +76,10 @@ export class PipelineController extends CrudController<Pipeline> {
 	@Get('/:pipelineId/deals')
 	async getPipelineDeals(
 		@Param('pipelineId', UUIDValidationPipe) pipelineId: ID,
-		@Query() options: OptionParams<Pipeline>
+		@Query('where') where: FindOptionsWhere<Pipeline>,
+		@Query('relations') relations: string[]
 	): Promise<IPagination<IDeal>> {
-		return await this.pipelineService.getPipelineDeals(pipelineId, options.where);
+		return await this.pipelineService.getPipelineDeals(pipelineId, where, relations);
 	}
 
 	/**

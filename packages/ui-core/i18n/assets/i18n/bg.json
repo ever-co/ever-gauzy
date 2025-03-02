@@ -4529,9 +4529,10 @@
 		"LOW": "Нисък",
 		"MEDIUM": "Среден",
 		"HIGH": "Висок",
-		"DEAL_DELETED": "Сделката '{{ name }}' беше премахната",
-		"DEAL_EDITED": "Сделката '{{ name }}' беше променена",
-		"DEAL_ADDED": "Сделката '{{ name }}' беше добавена"
+		"UNKNOWN": "Unknown",
+		"DEAL_DELETED": "Сделка '{{ name }}' беше премахната",
+		"DEAL_EDITED": "Сделка '{{ name }}' беше променена",
+		"DEAL_ADDED": "Сделка '{{ name }}' беше добавена"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Редактирай сделка | Поток: '{{ name }}'"

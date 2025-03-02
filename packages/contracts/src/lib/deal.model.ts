@@ -12,7 +12,7 @@ interface IDealBase extends IBasePerTenantAndOrganizationEntityModel {
 	clientId?: ID;
 }
 
-// IDeal interface with the additional stage and user creator properties
+// IDeal interface with the additional stage and created by user fields
 export interface IDeal extends IDealBase {}
 
 // IDealCreateInput interface, omitting user-related fields from IDeal

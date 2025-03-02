@@ -4529,9 +4529,10 @@
 		"LOW": "低",
 		"MEDIUM": "中",
 		"HIGH": "高",
-		"DEAL_DELETED": "交易'{{ name }}'已移除",
-		"DEAL_EDITED": "交易'{{ name }}'已更改",
-		"DEAL_ADDED": "交易'{{ name }}'已添加"
+		"UNKNOWN": "Unknown",
+		"DEAL_DELETED": "交易'{{ name }}'已被删除",
+		"DEAL_EDITED": "交易“{{ name }}”已被修改",
+		"DEAL_ADDED": "交易 '{{ name }}' 已添加"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "编辑交易 | 销售管道：'{{ name }}'"

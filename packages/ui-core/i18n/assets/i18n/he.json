@@ -4524,6 +4524,7 @@
 		"LOW": "נמוך",
 		"MEDIUM": "בינוני",
 		"HIGH": "גבוה",
+		"UNKNOWN": "Unknown",
 		"DEAL_DELETED": "העסקה '{{ name }}' הוסרה",
 		"DEAL_EDITED": "העסקה '{{ name }}' שונתה",
 		"DEAL_ADDED": "העסקה '{{ name }}' נוספה"

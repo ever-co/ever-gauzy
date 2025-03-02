@@ -4529,9 +4529,10 @@
 		"LOW": "Baixo",
 		"MEDIUM": "Médio",
 		"HIGH": "Alto",
-		"DEAL_DELETED": "Negócio '{{ name }}' foi removido",
-		"DEAL_EDITED": "Negócio '{{ name }}' foi alterado",
-		"DEAL_ADDED": "Negócio '{{ name }}' foi adicionado"
+		"UNKNOWN": "Unknown",
+		"DEAL_DELETED": "O acordo '{{ name }}' foi removido.",
+		"DEAL_EDITED": "O acordo '{{ name }}' foi alterado.",
+		"DEAL_ADDED": "O negócio '{{ name }}' foi adicionado."
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Editar Negócio | Pipeline: '{{ name }}'"

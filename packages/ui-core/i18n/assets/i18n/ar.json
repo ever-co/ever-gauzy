@@ -4517,7 +4517,8 @@
 		"ALL_STAGES": "جميع المراحل",
 		"LOW": "منخفض",
 		"MEDIUM": "متوسط",
-		"HIGH": "مرتفع",
+		"HIGH": "عالي",
+		"UNKNOWN": "Unknown",
 		"DEAL_DELETED": "تمت إزالة الصفقة '{{ name }}'",
 		"DEAL_EDITED": "تم تغيير الصفقة '{{ name }}'",
 		"DEAL_ADDED": "تمت إضافة الصفقة '{{ name }}'"

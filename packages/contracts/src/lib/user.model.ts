@@ -30,7 +30,7 @@ export interface IFindMeUser extends IBaseRelationsEntityModel {
 /**
  * Utility type to exclude `createdByUser` and `createdByUserId` fields.
  */
-export type ExcludeUserCreatorFields<T, K extends keyof T = never> = Omit<T, 'createdByUser' | 'createdByUserId' | K>;
+export type ExcludeCreatedByUserFields<T, K extends keyof T = never> = Omit<T, 'createdByUser' | 'createdByUserId' | K>;
 
 export interface IRelationalUser {
 	user?: IUser; // User who performed the action (if applicable).
