@@ -19,7 +19,7 @@ import {
 	AddTaskDialogComponent,
 	ALL_PROJECT_SELECTED,
 	AssignedToComponent,
-	CreateByComponent,
+	CreatedByUserComponent,
 	CreatedAtComponent,
 	DateViewComponent,
 	DeleteConfirmationComponent,
@@ -211,11 +211,11 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 						instance.value = cell.getValue();
 					}
 				},
-				creator: {
+				createdByUser: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_CREATOR'),
 					type: 'custom',
-					renderComponent: CreateByComponent,
-					componentInitFunction: (instance: CreateByComponent, cell: Cell) => {
+					renderComponent: CreatedByUserComponent<ITask>,
+					componentInitFunction: (instance: CreatedByUserComponent<ITask>, cell: Cell) => {
 						instance.value = cell.getValue();
 						instance.rowData = cell.getRow().getData();
 					},
@@ -225,7 +225,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					},
 					filterFunction: (value: string) => {
 						this.setFilter({
-							field: 'creator.firstName',
+							field: 'createdByUser.firstName',
 							search: value
 						});
 					}
@@ -427,7 +427,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				'teams.members',
 				'teams.members.employee',
 				'teams.members.employee.user',
-				'creator',
+				'createdByUser',
 				'organizationSprint',
 				'taskStatus',
 				'taskSize',

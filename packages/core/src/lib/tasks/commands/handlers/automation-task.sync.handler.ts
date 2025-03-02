@@ -131,6 +131,9 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 		entity: ITaskCreateInput | ITaskUpdateInput
 	): Promise<ITask> {
 		try {
+			// Retrieve current user
+			const user = RequestContext.currentUser();
+
 			// Retrieve the maximum task number for the project
 			const maxNumber = await this._taskService.getMaxTaskNumberByProject(options);
 
@@ -154,6 +157,7 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 				new CreateEntitySubscriptionEvent({
 					entity: BaseEntityEnum.Task,
 					entityId: createdTask.id,
+					employeeId: user.employeeId,
 					type: EntitySubscriptionTypeEnum.CREATED_ENTITY,
 					organizationId,
 					tenantId

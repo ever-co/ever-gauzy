@@ -81,7 +81,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 				)
 			);
 
-			// Subscribe the comment creator to the entity.
+			// Subscribe the comment created by user to the entity.
 			this._eventBus.publish(
 				new CreateEntitySubscriptionEvent({
 					entity: input.entity,
