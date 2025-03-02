@@ -138,6 +138,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 				new CreateEntitySubscriptionEvent({
 					entity: BaseEntityEnum.Task,
 					entityId: task.id,
+					employeeId: user?.employeeId,
 					type: EntitySubscriptionTypeEnum.CREATED_ENTITY,
 					organizationId,
 					tenantId
