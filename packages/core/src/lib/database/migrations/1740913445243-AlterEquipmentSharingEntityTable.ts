@@ -57,9 +57,9 @@ export class AlterEquipmentSharingEntityTable1740913445243 implements MigrationI
 	 * @param queryRunner
 	 */
 	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		// Step 1: Copy data from "createdBy" to "createdByUserId"
-		console.log('Step 1: Copying data from createdBy to createdByUserId');
-		await queryRunner.query(`UPDATE "equipment_sharing" SET "createdByUserId" = "createdBy"`);
+		// Step 1: Copy data from "createdBy" to "createdByUserId" with proper type casting to UUID.
+		console.log('Step 1: Copying data from createdBy to createdByUserId with uuid casting');
+		await queryRunner.query(`UPDATE "equipment_sharing" SET "createdByUserId" = "createdBy"::uuid`);
 
 		// Step 2: Drop the old "createdBy" column.
 		console.log('Step 2: Dropping column createdBy');
@@ -84,9 +84,9 @@ export class AlterEquipmentSharingEntityTable1740913445243 implements MigrationI
 		console.log('Step 2: Adding column createdBy');
 		await queryRunner.query(`ALTER TABLE "equipment_sharing" ADD "createdBy" character varying`);
 
-		// Step 3: Copy data from "createdByUserId" to "createdBy"
-		console.log('Step 3: Copying data from createdByUserId to createdBy');
-		await queryRunner.query(`UPDATE "equipment_sharing" SET "createdBy" = "createdByUserId"`);
+		// Step 3: Copy data from "createdByUserId" to "createdBy", casting UUID to text.
+		console.log('Step 3: Copying data from createdByUserId to createdBy with casting to text');
+		await queryRunner.query(`UPDATE "equipment_sharing" SET "createdBy" = "createdByUserId"::text`);
 	}
 
 	/**
