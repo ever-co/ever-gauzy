@@ -42,6 +42,12 @@ export class PostgresProvider implements IClientServerProvider {
 	private _initialization() {
 		this._database = 'gauzy_timer_db';
 		const cfg = LocalStore.getApplicationConfig().config['postgres'];
+		if (!cfg) {
+			throw new AppError('POSTGRES', 'PostgreSQL configuration is missing');
+		}
+		if (!cfg.dbHost || !cfg.dbPort || !cfg.dbUsername || !cfg.dbPassword) {
+			throw new AppError('POSTGRES', 'Required PostgreSQL configuration fields are missing');
+		}
 		this._connectionConfig = {
 			host: cfg.dbHost,
 			port: cfg.dbPort,

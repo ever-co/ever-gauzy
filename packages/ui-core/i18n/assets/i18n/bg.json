@@ -175,7 +175,10 @@
 		"ADD_PLUGIN": "Добавете плъгин",
 		"LOAD_PLUGIN": "Зареди плъгин",
 		"FROM_CDN": "От CDN",
-		"ADD_MODULE": "Добавяне на модул"
+		"ADD_MODULE": "Добавяне на модул",
+		"SHARE": "Споделяне",
+		"GET_INFO": "Получаване на информация",
+		"RETRY": "Опитайте отново"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -745,7 +748,8 @@
 		"ERROR": {
 			"PROJECT_NAME": "Името на проекта е задължително.",
 			"PROJECT_URL": "URL адресът на проекта е невалиден.",
-			"OPEN_SOURCE_PROJECT_URL": "URL адресът на проекта с отворен код е невалиден."
+			"OPEN_SOURCE_PROJECT_URL": "URL адресът на проекта с отворен код е невалиден.",
+			"INVALID_IMAGE_URL": "Невалиден URL адрес на изображението."
 		}
 	},
 	"POP_UPS": {
@@ -2091,6 +2095,10 @@
 			"ORG_TAGS_VIEW": "View Tags",
 			"ORG_TAGS_EDIT": "Edit Tags",
 			"ORG_TAGS_DELETE": "Delete Tags",
+			"ORG_TAG_TYPES_ADD": "Добавяне на тип етикет",
+			"ORG_TAG_TYPES_VIEW": "Преглед на типове етикети",
+			"ORG_TAG_TYPES_EDIT": "Редактиране на тип етикет",
+			"ORG_TAG_TYPES_DELETE": "Изтриване на тип етикет",
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "Create/Edit/Delete Candidate Feedback",
 			"ALL_ORG_VIEW": "Виж всички организации",
 			"ALL_ORG_EDIT": "Създай/Редактирай/Изтрии всички организации",
@@ -2197,7 +2205,16 @@
 			"ALLOW_MANUAL_TIME": "Allow Manual Time",
 			"DELETE_SCREENSHOTS": "Allow Delete Screenshot",
 			"ORG_TASK_SETTING": "Настройки на задачите",
-			"ORG_MEMBER_LAST_LOG_VIEW": "Преглед на последния запис"
+			"ORG_MEMBER_LAST_LOG_VIEW": "Преглед на последния запис",
+			"API_CALL_LOG_READ": "Прочети дневника на обажданията към API",
+			"API_CALL_LOG_DELETE": "Изтрий дневника на обажданията към API",
+			"TENANT_API_KEY_CREATE": "Create API Key",
+			"TENANT_API_KEY_VIEW": "View API Key",
+			"TENANT_API_KEY_DELETE": "Delete API Key",
+			"EMPLOYEE_AVAILABILITY_CREATE": "Създаване на наличност на служител",
+			"EMPLOYEE_AVAILABILITY_READ": "Преглед на наличността на служител",
+			"EMPLOYEE_AVAILABILITY_UPDATE": "Актуализиране на наличността на служител",
+			"EMPLOYEE_AVAILABILITY_DELETE": "Изтриване на наличността на служител"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
@@ -2416,7 +2433,8 @@
 		"TAGS_SELECT_DESCRIPTION": "Tag description",
 		"ADD_NEW_TAG": "Add new Tag",
 		"TENANT_LEVEL": "Tenant level",
-		"TAGS_TYPE": "Tags type"
+		"TAGS_TYPE": "Tags type",
+		"TAGS_SELECT_TYPE": "Изберете тип на етикетите"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Skills"
@@ -2989,6 +3007,9 @@
 		"ALREADY_PAID": "Вече платено",
 		"AMOUNT_DUE": "Сума дължима",
 		"INVOICED_REMAINING_AMOUNT": "Останала сума от фактури",
+		"TAX_CALCULATION_TYPE": "Тип на изчисление на данъка",
+		"SIMPLE": "Прост",
+		"COMPOSED": "Съставен",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип фактура",
 			"ESTIMATE_TYPE": "Тип оценка",
@@ -3663,7 +3684,8 @@
 			"AUTHORIZED_TO_WORK": "{{ name }} има право да работи",
 			"MODULE_CREATED": "Модулът е създаден успешно!",
 			"MODULE_UPDATED": "Модулът е актуализиран успешно!",
-			"MODULE_SAVE_ERROR": "Неуспешно записване на модула. Моля, опитайте отново."
+			"MODULE_SAVE_ERROR": "Неуспешно записване на модула. Моля, опитайте отново.",
+			"PASSWORD_REQUIRED": "Изисква се парола."
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -3927,7 +3949,8 @@
 			"PASSWORD": "Парола",
 			"UI_HOSTNAME": "Име на хост на потребителския интерфейс / IP адрес",
 			"TITLE_SERVER_API": "Съветник за инсталиране на Ever Gauzy API сървър",
-			"LABEL_SERVER_API": "Приложението Ever Gauzy API Server Desktop предоставя пълната функционалност на платформата Gauzy, достъпна директно на вашия настолен компютър или лаптоп. Освен това позволява проследяване на работното време, записване на дейността и възможност за получаване на напомняния/известия за проследяване"
+			"LABEL_SERVER_API": "Приложението Ever Gauzy API Server Desktop предоставя пълната функционалност на платформата Gauzy, достъпна директно на вашия настолен компютър или лаптоп. Освен това позволява проследяване на работното време, записване на дейността и възможност за получаване на напомняния/известия за проследяване",
+			"UNABLE_TO_CONNECT": "Не може да се осъществи връзка със сървъра. Моля, проверете вашия API хост или интернет връзка."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Захващане на екран",
@@ -4121,7 +4144,8 @@
 			"OPEN_MAIN_WINDOW": "Отвори главния прозорец",
 			"DAILY_RECAP": "Дневен преглед",
 			"WEEKLY_RECAP": "Седмичен обзор",
-			"MONTHLY_RECAP": "Месечен обзор"
+			"MONTHLY_RECAP": "Месечен обзор",
+			"INSTALL_PLUGIN": "Инсталиране на плъгин"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Проследяване на времето по часове",
@@ -4441,6 +4465,7 @@
 		"LOW": "Нисък",
 		"MEDIUM": "Среден",
 		"HIGH": "Висок",
+		"UNKNOWN": "Неизвестен",
 		"DEAL_DELETED": "Сделка '{{ name }}' беше премахната",
 		"DEAL_EDITED": "Сделка '{{ name }}' беше променена",
 		"DEAL_ADDED": "Сделка '{{ name }}' беше добавена"
@@ -4724,5 +4749,49 @@
 	},
 	"SERVER_API": "API сървър",
 	"SERVER_API_LOG": "Дневник на API сървъра",
-	"COMING_SOON": "Тази страница ще бъде скоро!"
+	"COMING_SOON": "Тази страница ще бъде скоро!",
+	"PLUGIN": {
+		"VIDEO": {
+			"SINGLE": "Видео",
+			"PLURAL": "Видеа",
+			"DOWNLOAD": "Изтегляне",
+			"NOT_FOUND": "Видеото не е намерено",
+			"NO_VIDEO": "Няма видео",
+			"DOWNLOADS": "Изтегляния",
+			"NO_VIDEO_DOWNLOAD": "Няма изтегляне на видео",
+			"LOADING_VIDEOS": "Зареждане на видеа...",
+			"EDIT_METADATA": "Редактиране на метаданни на видеото",
+			"STARTING_DOWNLOAD_FOR": "Започване на изтегляне за: {{ url }}",
+			"DOWNLOAD_FAILED_FOR": "Неуспешно изтегляне за: {{ url }}, опитайте отново",
+			"DOWNLOAD_COMPLETED_FOR": "Изтеглянето завърши за: {{ url }}",
+			"SHARED_SUCCESSFULLY": "Видеото беше успешно споделено",
+			"COPIED_SUCCESSFULLY": "Видеото беше успешно копирано",
+			"CORE_INFO": "Основна информация",
+			"RECORDED": "Записано",
+			"DURATION": "Продължителност",
+			"SIZE": "Размер",
+			"VIEW_FULL": "Вижте пълното видео",
+			"TECHNICAL_DETAILS": "Технически детайли",
+			"RESOLUTION": "Резолюция",
+			"CODEC": "Кодек",
+			"FRAME_RATE": "Честота на кадрите",
+			"UPLOADED_BY": "Качено от",
+			"NO_VIDEO_AVAILABLE": "Няма налично видео",
+			"RETRIED": "Видео опитано отново",
+			"REMOVED_FROM_QUEUE": "Видеото е премахнато от опашката",
+			"ADDED_TO_QUEUE": "Видеото е добавено в опашката",
+			"DELETE_SUCCESSFULLY": "Видеото е изтрито успешно",
+			"UPDATE_SUCCESSFULLY": "Видеото е актуализирано успешно",
+			"ERROR": {
+				"REQUIRED": "Заглавието е задължително.",
+				"AT_LEAST_3": "Заглавието трябва да е поне 3 символа.",
+				"AT_MOST_255": "Заглавието не може да надвишава 255 символа.",
+				"AT_MOST_1000": "Описанието не може да надвишава 1000 символа.",
+				"SHARE_CANCELED": "Споделянето беше отменено",
+				"INVALID_SHARE_DATA": "Невалидни данни за споделяне",
+				"SHARE_NOT_ALLOWED": "Споделянето не е позволено",
+				"UNEXPECTED_SHARING_ERROR": "Неочаквана грешка при споделяне"
+			}
+		}
+	}
 }

@@ -22,11 +22,9 @@ import { CreateGoalGeneralSettingDTO, UpdateGoalGeneralSettingDTO } from './dto'
 
 @ApiTags('GoalGeneralSetting')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/goal-general-setting')
 export class GoalGeneralSettingController extends CrudController<GoalGeneralSetting> {
-	constructor(
-		private readonly goalGeneralSettingService: GoalGeneralSettingService
-	) {
+	constructor(private readonly goalGeneralSettingService: GoalGeneralSettingService) {
 		super(goalGeneralSettingService);
 	}
 
@@ -35,9 +33,7 @@ export class GoalGeneralSettingController extends CrudController<GoalGeneralSett
 		description: 'Record not found'
 	})
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IGoalGeneralSetting>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IGoalGeneralSetting>> {
 		const { findInput = null } = data;
 		return this.goalGeneralSettingService.findAll({
 			where: { ...findInput }
@@ -52,9 +48,7 @@ export class GoalGeneralSettingController extends CrudController<GoalGeneralSett
 	})
 	@Post()
 	@UseValidationPipe({ transform: true })
-	async create(
-		@Body() entity: CreateGoalGeneralSettingDTO
-	): Promise<IGoalGeneralSetting> {
+	async create(@Body() entity: CreateGoalGeneralSettingDTO): Promise<IGoalGeneralSetting> {
 		return this.goalGeneralSettingService.create(entity);
 	}
 
@@ -69,8 +63,7 @@ export class GoalGeneralSettingController extends CrudController<GoalGeneralSett
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')

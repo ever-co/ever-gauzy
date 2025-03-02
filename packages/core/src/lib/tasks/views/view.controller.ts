@@ -25,7 +25,7 @@ import { TaskViewCreateCommand, TaskViewUpdateCommand } from './commands';
 
 @ApiTags('Task views')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Controller()
+@Controller('/task-views')
 export class TaskViewController extends CrudController<TaskView> {
 	constructor(private readonly taskViewService: TaskViewService, private readonly commandBus: CommandBus) {
 		super(taskViewService);

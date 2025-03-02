@@ -15,13 +15,13 @@ import { TypeOrmScreeningTaskRepository } from './repository/type-orm-screening-
 	imports: [
 		TypeOrmModule.forFeature([ScreeningTask]),
 		MikroOrmModule.forFeature([ScreeningTask]),
+		OrganizationProjectModule,
 		RolePermissionModule,
 		TaskModule,
-		OrganizationProjectModule,
 		CqrsModule
 	],
 	providers: [ScreeningTasksService, TypeOrmScreeningTaskRepository, ...CommandHandlers],
 	controllers: [ScreeningTasksController],
-	exports: [ScreeningTasksService, TypeOrmModule, TypeOrmScreeningTaskRepository]
+	exports: []
 })
 export class ScreeningTasksModule {}

@@ -1,0 +1,7 @@
+<button nbButton class="action" [status]="button.status" [disabled]="button.disabled" (click)="triggerAction()">
+	@if(button.icon) {
+	<nb-icon [icon]="button.icon"></nb-icon>
+	} @if(button.label) {
+	{{ button.label | translate }}
+	}
+</button>

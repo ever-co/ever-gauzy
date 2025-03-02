@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { arrayToObject } from '@gauzy/core';
+import { arrayToObject } from '@gauzy/utils';
 import { OctokitService } from '../../../probot/octokit.service';
 import { GithubInstallationDeleteCommand } from '../github-installation.delete.command';
 

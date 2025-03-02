@@ -8,18 +8,8 @@ import { QueryHandlers } from './queries/handlers';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
-	imports: [
-		CqrsModule,
-		TypeOrmModule.forFeature([Employee]),
-		MikroOrmModule.forFeature([Employee]),
-	],
-	controllers: [
-		PublicEmployeeController
-	],
-	providers: [
-		PublicEmployeeService,
-		...QueryHandlers
-	],
-	exports: []
+	imports: [CqrsModule, TypeOrmModule.forFeature([Employee]), MikroOrmModule.forFeature([Employee])],
+	controllers: [PublicEmployeeController],
+	providers: [PublicEmployeeService, ...QueryHandlers]
 })
-export class PublicEmployeeModule { }
+export class PublicEmployeeModule {}

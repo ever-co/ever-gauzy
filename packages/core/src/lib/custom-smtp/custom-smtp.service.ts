@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull } from 'typeorm';
+import { ISMTPConfig } from '@gauzy/common';
 import { ICustomSmtp, ICustomSmtpFindInput, IVerifySMTPTransport } from '@gauzy/contracts';
-import { isEmpty, ISMTPConfig } from '@gauzy/common';
+import { isEmpty } from '@gauzy/utils';
 import { TenantAwareCrudService } from './../core/crud';
 import { SMTPUtils } from './../email-send/utils';
 import { CustomSmtp } from './custom-smtp.entity';
@@ -12,32 +12,28 @@ import { MikroOrmCustomSmtpRepository } from './repository/mikro-orm-custom-smtp
 @Injectable()
 export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 	constructor(
-		@InjectRepository(CustomSmtp)
-		typeOrmCustomSmtpRepository: TypeOrmCustomSmtpRepository,
-
-		mikroOrmCustomSmtpRepository: MikroOrmCustomSmtpRepository
+		readonly typeOrmCustomSmtpRepository: TypeOrmCustomSmtpRepository,
+		readonly mikroOrmCustomSmtpRepository: MikroOrmCustomSmtpRepository
 	) {
 		super(typeOrmCustomSmtpRepository, mikroOrmCustomSmtpRepository);
 	}
 
 	/**
-	 * GET SMTP settings for tenant/organization
+	 * Retrieves SMTP settings for a given tenant/organization.
 	 *
-	 * @param query
-	 * @returns
+	 * @param {ICustomSmtpFindInput} query - The query parameters containing organizationId.
+	 * @returns {Promise<ICustomSmtp | ISMTPConfig>} - The SMTP settings or default settings if an error occurs.
 	 */
 	public async getSmtpSetting(query: ICustomSmtpFindInput): Promise<ICustomSmtp | ISMTPConfig> {
+		const { organizationId } = query;
+
 		try {
-			const { organizationId } = query;
 			return await this.findOneByOptions({
-				where: {
-					organizationId: isEmpty(organizationId) ? IsNull() : organizationId
-				},
-				order: {
-					createdAt: 'DESC'
-				}
+				where: { organizationId: isEmpty(organizationId) ? IsNull() : organizationId },
+				order: { createdAt: 'DESC' }
 			});
-		} catch (error) {
+		} catch {
+			// Return default SMTP settings if an error occurs
 			return SMTPUtils.defaultSMTPTransporter(false);
 		}
 	}

@@ -8,33 +8,35 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbAccordionComponent, NbAccordionItemComponent, NbThemeService } from '@nebular/theme';
 import {
+	DEFAULT_ACTIVITY_PROOF_DURATIONS,
+	DEFAULT_DATE_FORMATS,
+	DEFAULT_INACTIVITY_TIME_LIMITS,
+	DEFAULT_REVENUE_BASED_BONUS,
+	DEFAULT_PROFIT_BASED_BONUS,
+	DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS,
+	DEFAULT_TIME_FORMATS,
+	DEFAULT_STANDARD_WORK_HOURS_PER_DAY,
+	DEFAULT_INVITE_EXPIRY_PERIOD,
+	TaskProofOfCompletionTypeEnum,
+	DEFAULT_PROOF_COMPLETION_TYPE,
+	DEFAULT_TASK_NOTIFY_PERIOD,
+	DEFAULT_AUTO_CLOSE_ISSUE_PERIOD,
+	DEFAULT_AUTO_ARCHIVE_ISSUE_PERIOD
+} from '@gauzy/constants';
+import {
 	AccountingTemplateTypeEnum,
 	AlignmentOptions,
 	BonusTypeEnum,
 	CrudActionEnum,
 	CurrenciesEnum,
 	CurrencyPosition,
-	DEFAULT_ACTIVITY_PROOF_DURATIONS,
-	DEFAULT_DATE_FORMATS,
-	DEFAULT_INACTIVITY_TIME_LIMITS,
-	DEFAULT_INVITE_EXPIRY_PERIOD,
-	DEFAULT_PROFIT_BASED_BONUS,
-	DEFAULT_REVENUE_BASED_BONUS,
-	DEFAULT_TIME_FORMATS,
-	DEFAULT_TASK_NOTIFY_PERIOD,
-	DEFAULT_PROOF_COMPLETION_TYPE,
 	DefaultValueDateTypeEnum,
 	IAccountingTemplate,
 	IKeyValuePair,
 	IOrganization,
 	RegionsEnum,
 	WeekDaysEnum,
-	IOrganizationTaskSetting,
-	TaskProofOfCompletionTypeEnum,
-	DEFAULT_AUTO_CLOSE_ISSUE_PERIOD,
-	DEFAULT_AUTO_ARCHIVE_ISSUE_PERIOD,
-	DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS,
-	DEFAULT_STANDARD_WORK_HOURS_PER_DAY
+	IOrganizationTaskSetting
 } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/ui-core/common';
 import {
@@ -83,13 +85,13 @@ export class EditOrganizationOtherSettingsComponent
 	listOfTimeFormats = DEFAULT_TIME_FORMATS;
 	listOfInactivityLimits = DEFAULT_INACTIVITY_TIME_LIMITS;
 	listOfActivityProofDuration = DEFAULT_ACTIVITY_PROOF_DURATIONS;
+	screenshotFrequencyOptions = DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS;
 	numberFormats = ['USD', 'BGN', 'ILS'];
 	numberFormat: string;
 	weekdays: WeekDaysEnum[] = Object.values(WeekDaysEnum);
 	regionCodes = Object.keys(RegionsEnum);
 	regionCode: string;
 	regions = Object.values(RegionsEnum);
-	screenshotFrequencyOptions = DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS;
 	standardWorkHoursPerDayOptions: number[] = Array.from({ length: 24 }, (_, i) => i + 1); // Creates an array from 1 to 24
 
 	/*

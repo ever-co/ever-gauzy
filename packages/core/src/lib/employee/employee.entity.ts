@@ -37,7 +37,8 @@ import {
 	ID,
 	IFavorite,
 	IComment,
-	IOrganizationSprint
+	IOrganizationSprint,
+	IEmployeeAvailability
 } from '@gauzy/contracts';
 import {
 	ColumnIndex,
@@ -55,6 +56,7 @@ import {
 	Comment,
 	Contact,
 	DailyPlan,
+	EmployeeAvailability,
 	EmployeeAward,
 	EmployeePhone,
 	EmployeeSetting,
@@ -540,6 +542,15 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 		cascade: true
 	})
 	modules?: IOrganizationProjectModule[];
+
+	/**
+	 * One-to-many relationship with EmployeeAvailability.
+	 * An employee can have multiple availability records.
+	 */
+	@MultiORMOneToMany(() => EmployeeAvailability, (availability) => availability.employee, {
+		cascade: true
+	})
+	availabilities?: IEmployeeAvailability[];
 
 	/**
 	 * Estimations

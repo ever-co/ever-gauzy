@@ -1,6 +1,9 @@
+import { BadRequestException } from '@nestjs/common';
 import { Brackets, DataSource, WhereExpressionBuilder } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { chain, chunk, omit } from 'underscore';
+import * as moment from 'moment';
+import { ApplicationPluginConfig } from '@gauzy/common';
 import {
 	TimeLogSourceEnum,
 	TimeLogType,
@@ -10,13 +13,11 @@ import {
 	ITimesheet,
 	ITimeLog
 } from '@gauzy/contracts';
-import * as moment from 'moment';
-import { ApplicationPluginConfig, isEmpty } from '@gauzy/common';
+import { getRandomElement, isEmpty } from '@gauzy/utils';
 import { createRandomScreenshot } from '../screenshot/screenshot.seed';
 import { createTimeSlots } from '../time-slot/time-slot.seed';
 import { OrganizationProject, Screenshot, TimeLog, Timesheet, TimeSlot } from './../../core/entities/internal';
 import { getDateRangeFormat } from './../../core/utils';
-import { BadRequestException } from '@nestjs/common';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 
 /**
@@ -36,7 +37,7 @@ export const createRandomTimeLogs = async (
 	config: Partial<ApplicationPluginConfig>,
 	tenant: ITenant,
 	timeSheets: ITimesheet[]
-) => {
+): Promise<ITimeSlot[]> => {
 	const query = dataSource.getRepository(OrganizationProject).createQueryBuilder('organization_project');
 	const projects: IOrganizationProject[] = await query
 		.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks')
@@ -45,24 +46,14 @@ export const createRandomTimeLogs = async (
 		.andWhere(p(`"tasks"."tenantId" =:tenantId`), { tenantId: tenant.id })
 		.getMany();
 	if (isEmpty(projects)) {
-		console.warn(
-			`Warning: projects not found for tenantId: ${tenant.id}, RandomTimesheet will not be created`
-		);
+		console.warn(`Warning: projects not found for tenantId: ${tenant.id}, RandomTimesheet will not be created`);
 		return;
 	}
 	const timeSheetChunk = chunk(timeSheets, 5) as Array<ITimesheet[]>;
 	const allTimeSlots: ITimeSlot[] = [];
-	for (
-		let timeSheetChunkIndex = 0;
-		timeSheetChunkIndex < timeSheetChunk.length;
-		timeSheetChunkIndex++
-	) {
+	for (let timeSheetChunkIndex = 0; timeSheetChunkIndex < timeSheetChunk.length; timeSheetChunkIndex++) {
 		const timeLogs: ITimeLog[] = [];
-		for (
-			let timeSheetIndex = 0;
-			timeSheetIndex < timeSheetChunk[timeSheetChunkIndex].length;
-			timeSheetIndex++
-		) {
+		for (let timeSheetIndex = 0; timeSheetIndex < timeSheetChunk[timeSheetChunkIndex].length; timeSheetIndex++) {
 			const timesheet = timeSheetChunk[timeSheetChunkIndex][timeSheetIndex];
 			const randomDays = chain([0, 1, 2, 3, 4, 5, 6])
 				.shuffle()
@@ -74,30 +65,20 @@ export const createRandomTimeLogs = async (
 				const day = randomDays[index];
 				const date = moment(timesheet.startedAt).add(day, 'day').toDate();
 
-				const range = dateRanges(
-					moment.utc(date).startOf('day').toDate(),
-					moment.utc(date).toDate()
-				);
+				const range = dateRanges(moment.utc(date).startOf('day').toDate(), moment.utc(date).toDate());
 
-				for (
-					let rangeIndex = 0;
-					rangeIndex < range.length;
-					rangeIndex++
-				) {
+				for (let rangeIndex = 0; rangeIndex < range.length; rangeIndex++) {
 					const { startedAt, stoppedAt } = range[rangeIndex];
 					if (moment.utc().isAfter(moment.utc(stoppedAt))) {
-						const project = faker.helpers.arrayElement(projects);
-						const task = faker.helpers.arrayElement(project.tasks);
+						const project = getRandomElement(projects);
+						const task = getRandomElement(project.tasks);
 
 						const source: TimeLogSourceEnum = faker.helpers.arrayElement(
 							Object.keys(TimeLogSourceEnum)
 						) as TimeLogSourceEnum;
 
 						let logType: TimeLogType = TimeLogType.TRACKED;
-						if (
-							source === TimeLogSourceEnum.WEB_TIMER ||
-							source === TimeLogSourceEnum.BROWSER_EXTENSION
-						) {
+						if (source === TimeLogSourceEnum.WEB_TIMER || source === TimeLogSourceEnum.BROWSER_EXTENSION) {
 							logType = TimeLogType.MANUAL;
 						}
 
@@ -141,8 +122,8 @@ export const createRandomTimeLogs = async (
 		}
 
 		/*
-		* Saved Tracked Time Log & Time Slots and Related Screenshots
-		*/
+		 * Saved Tracked Time Log & Time Slots and Related Screenshots
+		 */
 		const newTrackedTimeSlots: ITimeSlot[] = [];
 		for await (const timeSlot of trackedTimeSlots) {
 			const { tenantId, organizationId, startedAt, stoppedAt, employeeId } = timeSlot;
@@ -154,9 +135,7 @@ export const createRandomTimeLogs = async (
 				startedAt,
 				stoppedAt
 			);
-			const screenshots = randomScreenshots.map(
-				(item) => new Screenshot(omit(item, ['timeSlotId']))
-			);
+			const screenshots = randomScreenshots.map((item) => new Screenshot(omit(item, ['timeSlotId'])));
 			const savedScreenshots = await dataSource.getRepository(Screenshot).save(screenshots);
 			const newTimeSlot = new TimeSlot({
 				...omit(timeSlot),
@@ -184,21 +163,21 @@ export const createRandomTimeLogs = async (
  * with `startedAt` and `stoppedAt` timestamps.
  */
 function dateRanges(start: Date, stop: Date): Array<{ startedAt: Date; stoppedAt: Date }> {
-    const range = [];
+	const range = [];
 
-    // Generate a random start date within the range
-    const startedAt = faker.date.between({ from: start, to: stop });
+	// Generate a random start date within the range
+	const startedAt = faker.date.between({ from: start, to: stop });
 
-    // Generate a random stop date between startedAt and 2 hours after startedAt
-    const stoppedAt = faker.date.between({
-        from: startedAt,
-        to: moment(startedAt).add(2, 'hours').toDate()
-    });
+	// Generate a random stop date between startedAt and 2 hours after startedAt
+	const stoppedAt = faker.date.between({
+		from: startedAt,
+		to: moment(startedAt).add(2, 'hours').toDate()
+	});
 
-    // Add the range to the result array
-    range.push({ startedAt, stoppedAt });
+	// Add the range to the result array
+	range.push({ startedAt, stoppedAt });
 
-    return range;
+	return range;
 }
 
 /**
@@ -212,16 +191,10 @@ function dateRanges(start: Date, stop: Date): Array<{ startedAt: Date; stoppedAt
  * @param {ITimesheet[]} timesheets - An array of timesheet objects to process and recalculate activities for.
  * @returns {Promise<void>} - A promise that resolves when the recalculation process is complete.
  */
-export const recalculateTimesheetActivity = async (
-	dataSource: DataSource,
-	timesheets: ITimesheet[]
-) => {
+export const recalculateTimesheetActivity = async (dataSource: DataSource, timesheets: ITimesheet[]): Promise<void> => {
 	for await (const timesheet of timesheets) {
 		const { id, startedAt, stoppedAt, employeeId, organizationId, tenantId } = timesheet;
-		const { start, end } = getDateRangeFormat(
-			moment.utc(startedAt),
-			moment.utc(stoppedAt)
-		);
+		const { start, end } = getDateRangeFormat(moment.utc(startedAt), moment.utc(stoppedAt));
 		const query = dataSource.getRepository(TimeSlot).createQueryBuilder();
 		const timeSlot = await query
 			.select('SUM(duration)', 'duration')
@@ -230,19 +203,16 @@ export const recalculateTimesheetActivity = async (
 			.addSelect('AVG(overall)', 'overall')
 			.where(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), {
-						employeeId
-					});
-					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), {
-						organizationId
-					});
-					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), {
-						tenantId
-					});
-					qb.andWhere(p(`"${query.alias}"."startedAt" >= :startedAt AND "${query.alias}"."startedAt" < :stoppedAt`), {
-						startedAt: start,
-						stoppedAt: end
-					});
+					qb.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
+					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+					qb.andWhere(
+						p(`"${query.alias}"."startedAt" >= :startedAt AND "${query.alias}"."startedAt" < :stoppedAt`),
+						{
+							startedAt: start,
+							stoppedAt: end
+						}
+					);
 				})
 			)
 			.getRawOne();
@@ -254,7 +224,9 @@ export const recalculateTimesheetActivity = async (
 				overall: Math.round(timeSlot.overall)
 			});
 		} catch (error) {
-			throw new BadRequestException(`Can\'t update timesheet for employee-${employeeId} of organization-${organizationId}`);
+			throw new BadRequestException(
+				`Can\'t update timesheet for employee-${employeeId} of organization-${organizationId}`
+			);
 		}
 	}
-}
+};

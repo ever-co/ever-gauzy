@@ -29,6 +29,7 @@ import {
 	DEFAULT_EVER_ORGANIZATIONS,
 	DEFAULT_ORGANIZATIONS
 } from '../../organization';
+import { createDefaultEmployeeDashboards, createRandomEmployeeDashboards } from '../../dashboard/dashboard.seed';
 import { createDefaultIncomes, createRandomIncomes } from '../../income/income.seed';
 import { createDefaultExpenses, createRandomExpenses } from '../../expense/expense.seed';
 import {
@@ -151,6 +152,14 @@ import {
 } from '../../candidate-criterions-rating/candidate-criterion-rating.seed';
 import { createDefaultGoalKpi } from '../../goal-kpi/goal-kpi.seed';
 import { createRandomEmployeeSetting } from '../../employee-setting/employee-setting.seed';
+import {
+	createDefaultEmployeeNotificationSettings,
+	createRandomEmployeeNotificationSettings
+} from '../../employee-notification-setting/employee-notification-setting.seed';
+import {
+	createDefaultEmployeeNotifications,
+	createRandomEmployeeNotifications
+} from '../../employee-notification/employee-notification.seed';
 import { createRandomEmployeeRecurringExpense } from '../../employee-recurring-expense/employee-recurring-expense.seed';
 import {
 	createDefaultCandidateInterviewers,
@@ -210,6 +219,7 @@ import { createDefaultPriorities } from './../../tasks/priorities/priority.seed'
 import { createDefaultSizes } from './../../tasks/sizes/size.seed';
 import { createDefaultIssueTypes } from './../../tasks/issue-type/issue-type.seed';
 import { getDBType } from './../../core/utils';
+import { createRandomOrganizationTagTypes, createTagTypes } from '../../tag-type/tag-type.seed';
 
 export enum SeederTypeEnum {
 	ALL = 'all',
@@ -408,7 +418,7 @@ export class SeedDataService {
 
 			await this.tryExecute(
 				'Default Report Category & Report',
-				createDefaultReport(this.dataSource, this.configService.config, this.tenant)
+				createDefaultReport(this.dataSource, this.configService.getConfig(), this.tenant)
 			);
 
 			this.log(chalk.green(`✅ SEEDED ${env.production ? 'PRODUCTION' : ''} REPORTS DATABASE`));
@@ -472,7 +482,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Feature Toggle',
-			createDefaultFeatureToggle(this.dataSource, this.configService.config, this.tenant)
+			createDefaultFeatureToggle(this.dataSource, this.configService.getConfig(), this.tenant)
 		);
 
 		await this.tryExecute('Default Email Templates', createDefaultEmailTemplates(this.dataSource));
@@ -572,7 +582,15 @@ export class SeedDataService {
 			createDefaultEmployeeInviteSent(this.dataSource, this.tenant, this.organizations, this.superAdminUsers)
 		);
 
-		await this.tryExecute('Default Tags', createDefaultTags(this.dataSource, this.tenant, this.organizations));
+		const defaultTagTypes = await this.tryExecute(
+			'Default Tag Types',
+			createTagTypes(this.dataSource, this.tenant, this.organizations)
+		);
+
+		await this.tryExecute(
+			'Default Tags',
+			createDefaultTags(this.dataSource, this.tenant, this.organizations, defaultTagTypes || [])
+		);
 
 		// Organization level inserts which need connection, tenant, role, organizations
 		const categories = await this.tryExecute(
@@ -704,16 +722,26 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
+			'Default Employee Dashboards',
+			createDefaultEmployeeDashboards(
+				this.dataSource,
+				this.tenant,
+				this.defaultOrganization,
+				this.defaultEmployees
+			)
+		);
+
+		await this.tryExecute(
 			'Default Incomes',
-			createDefaultIncomes(this.dataSource, this.tenant, [this.defaultOrganization], this.defaultEmployees)
+			createDefaultIncomes(this.dataSource, this.tenant, this.defaultOrganization, this.defaultEmployees)
 		);
 
 		await this.tryExecute(
 			'Default Expenses',
 			createDefaultExpenses(
 				this.dataSource,
-				this.organizations,
 				this.tenant,
+				this.organizations,
 				this.defaultEmployees,
 				categories,
 				organizationVendors
@@ -723,6 +751,26 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Default Employment Types',
 			seedDefaultEmploymentTypes(this.dataSource, this.tenant, this.defaultEmployees, this.defaultOrganization)
+		);
+
+		await this.tryExecute(
+			'Default Employee Notification Settings',
+			createDefaultEmployeeNotificationSettings(
+				this.dataSource,
+				this.tenant,
+				this.defaultOrganization,
+				this.defaultEmployees
+			)
+		);
+
+		await this.tryExecute(
+			'Default Employee Notifications',
+			createDefaultEmployeeNotifications(
+				this.dataSource,
+				this.tenant,
+				this.defaultOrganization,
+				this.defaultEmployees
+			)
 		);
 
 		await this.tryExecute(
@@ -914,7 +962,7 @@ export class SeedDataService {
 			'Default TimeSheets',
 			createDefaultTimeSheet(
 				this.dataSource,
-				this.configService.config,
+				this.configService.getConfig(),
 				this.tenant,
 				this.defaultOrganization,
 				this.defaultEmployees
@@ -1000,9 +1048,19 @@ export class SeedDataService {
 			organizationUsersMap
 		);
 
+		const randomOrganizationTagTypes = await this.tryExecute(
+			'Random Organization Tag Types',
+			createRandomOrganizationTagTypes(this.dataSource, this.randomTenants, this.randomTenantOrganizationsMap)
+		);
+
 		const tags = await this.tryExecute(
 			'Random Organization Tags',
-			createRandomOrganizationTags(this.dataSource, this.randomTenants, this.randomTenantOrganizationsMap)
+			createRandomOrganizationTags(
+				this.dataSource,
+				this.randomTenants,
+				this.randomTenantOrganizationsMap,
+				randomOrganizationTagTypes || []
+			)
 		);
 
 		await this.tryExecute(
@@ -1364,6 +1422,16 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
+			'Random Employee Dashboards',
+			createRandomEmployeeDashboards(
+				this.dataSource,
+				this.randomTenants,
+				this.randomTenantOrganizationsMap,
+				this.randomOrganizationEmployeesMap
+			)
+		);
+
+		await this.tryExecute(
 			'Random Employee Recurring Expenses',
 			createRandomEmployeeRecurringExpense(
 				this.dataSource,
@@ -1376,6 +1444,26 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Random Employee Settings',
 			createRandomEmployeeSetting(
+				this.dataSource,
+				this.randomTenants,
+				this.randomTenantOrganizationsMap,
+				this.randomOrganizationEmployeesMap
+			)
+		);
+
+		await this.tryExecute(
+			'Random Employee Notification Settings',
+			createRandomEmployeeNotificationSettings(
+				this.dataSource,
+				this.randomTenants,
+				this.randomTenantOrganizationsMap,
+				this.randomOrganizationEmployeesMap
+			)
+		);
+
+		await this.tryExecute(
+			'Random Employee Notifications',
+			createRandomEmployeeNotifications(
 				this.dataSource,
 				this.randomTenants,
 				this.randomTenantOrganizationsMap,
@@ -1509,7 +1597,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Random TimeSheets',
-			createRandomTimesheet(this.dataSource, this.configService.config, this.randomTenants)
+			createRandomTimesheet(this.dataSource, this.configService.getConfig(), this.randomTenants)
 		);
 
 		// run all plugins random seed method

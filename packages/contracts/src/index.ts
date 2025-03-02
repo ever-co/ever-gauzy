@@ -10,6 +10,7 @@ export * from './lib/app.model';
 export * from './lib/appointment-employees.model';
 export * from './lib/approval-policy.model';
 export * from './lib/availability-slots.model';
+export * from './lib/auth.model';
 export * from './lib/candidate-criterions-rating.model';
 export * from './lib/candidate-document.model';
 export * from './lib/candidate-education.model';
@@ -25,6 +26,7 @@ export * from './lib/candidate.model';
 export * from './lib/changelog.model';
 export * from './lib/chart.model';
 export * from './lib/comment.model';
+export * from './lib/common.model';
 export * from './lib/contact.model';
 export * from './lib/core.model';
 export * from './lib/country.model';
@@ -39,6 +41,7 @@ export * from './lib/email-reset.model';
 export * from './lib/email-template.model';
 export * from './lib/email.model';
 export * from './lib/employee-appointment.model';
+export * from './lib/employee-availability.model';
 export * from './lib/employee-award.model';
 export * from './lib/employee-job.model';
 export * from './lib/employee-phone.model';
@@ -122,7 +125,7 @@ export * from './lib/shared-types';
 export * from './lib/skill-entity.model';
 export * from './lib/sms.model';
 export * from './lib/social-account.model';
-export * from './lib/subscription.model';
+export * from './lib/entity-subscription.model';
 export * from './lib/tag.model';
 export * from './lib/task-estimation.model';
 export * from './lib/task-linked-issue.model';
@@ -133,6 +136,7 @@ export * from './lib/task-status.model';
 export * from './lib/task-version.model';
 export * from './lib/task-view.model';
 export * from './lib/task.model';
+export * from './lib/tenant-api-key.model';
 export * from './lib/tenant.model';
 export * from './lib/time-off.model';
 export * from './lib/timesheet-statistics.model';
@@ -140,6 +144,8 @@ export * from './lib/timesheet.model';
 export * from './lib/translation.model';
 export * from './lib/tree-node.model';
 export * from './lib/upwork.model';
+export * from './lib/employee-notification.model';
+export * from './lib/employee-notification-setting.model';
 export * from './lib/user-organization.model';
 export * from './lib/user.model';
 export * from './lib/wakatime.model';
@@ -153,7 +159,8 @@ export {
 	IBaseRelationsEntityModel,
 	IBaseSoftDeleteEntityModel,
 	ID,
-	JsonData
+	JsonData,
+	IBasePerEntityType
 } from './lib/base-entity.model';
 
 export * from './lib/proxy.model';

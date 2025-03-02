@@ -6,11 +6,11 @@ import { TenantAwareCrudService } from './../core/crud';
 import { Role } from './role.entity';
 import { RequestContext } from './../core/context';
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
-import { MikroOrmRoleRepository, TypeOrmRoleRepository } from './repository';
+import { MikroOrmRoleRepository } from './repository/mikro-orm-role.repository';
+import { TypeOrmRoleRepository } from './repository/type-orm-role.repository';
 
 @Injectable()
 export class RoleService extends TenantAwareCrudService<Role> {
-
 	constructor(
 		readonly typeOrmRoleRepository: TypeOrmRoleRepository,
 		readonly mikroOrmRoleRepository: MikroOrmRoleRepository,

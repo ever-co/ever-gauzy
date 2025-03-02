@@ -4,11 +4,12 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { MentionService } from './mention.service';
-import { SubscriptionModule } from '../subscription/subscription.module';
+import { EntitySubscriptionModule } from '../entity-subscription/entity-subscription.module';
 import { MentionController } from './mention.controller';
 import { Mention } from './mention.entity';
 import { EventHandlers } from './events/handlers';
 import { TypeOrmMentionRepository } from './repository/type-orm-mention.repository';
+import { EmployeeNotificationModule } from '../employee-notification/employee-notification.module';
 
 @Global()
 @Module({
@@ -17,10 +18,11 @@ import { TypeOrmMentionRepository } from './repository/type-orm-mention.reposito
 		MikroOrmModule.forFeature([Mention]),
 		CqrsModule,
 		RolePermissionModule,
-		SubscriptionModule
+		EntitySubscriptionModule,
+		EmployeeNotificationModule
 	],
-	providers: [MentionService, TypeOrmMentionRepository, ...EventHandlers],
 	controllers: [MentionController],
-	exports: [TypeOrmModule, MikroOrmModule, MentionService, TypeOrmMentionRepository]
+	providers: [MentionService, TypeOrmMentionRepository, ...EventHandlers],
+	exports: [MentionService]
 })
 export class MentionModule {}

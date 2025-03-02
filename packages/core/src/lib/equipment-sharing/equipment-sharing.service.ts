@@ -1,33 +1,23 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, WhereExpressionBuilder } from 'typeorm';
 import { IEquipmentSharing, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { ConfigService, DatabaseTypeEnum } from '@gauzy/config';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
-import { RequestApproval } from '../request-approval/request-approval.entity';
 import { TypeOrmEquipmentSharingRepository } from './repository/type-orm-equipment-sharing.repository';
 import { MikroOrmEquipmentSharingRepository } from './repository/mikro-orm-equipment-sharing.repository';
 import { TypeOrmRequestApprovalRepository } from './../request-approval/repository/type-orm-request-approval.repository';
-import { MikroOrmRequestApprovalRepository } from './../request-approval/repository/mikro-orm-request-approval.repository';
 
 @Injectable()
 export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSharing> {
 	constructor(
-		@InjectRepository(EquipmentSharing)
 		typeOrmEquipmentSharingRepository: TypeOrmEquipmentSharingRepository,
-
 		mikroOrmEquipmentSharingRepository: MikroOrmEquipmentSharingRepository,
-
-		@InjectRepository(RequestApproval)
-		private typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository,
-
-		mikroOrmRequestApprovalRepository: MikroOrmRequestApprovalRepository,
-
-		private readonly configService: ConfigService
+		readonly typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository,
+		readonly configService: ConfigService
 	) {
 		super(typeOrmEquipmentSharingRepository, mikroOrmEquipmentSharingRepository);
 	}

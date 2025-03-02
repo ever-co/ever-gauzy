@@ -13,21 +13,21 @@ import {
 	BadRequestException
 } from '@nestjs/common';
 import { ApiResponse, ApiOperation } from '@nestjs/swagger';
-import { IMerchant, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { ID, IMerchant, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { FindOptionsWhere } from 'typeorm';
 import { CrudController, PaginationParams } from './../core/crud';
-import { Merchant } from './merchant.entity';
-import { MerchantService } from './merchant.service';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { RelationsQueryDTO } from './../shared/dto';
+import { Merchant } from './merchant.entity';
+import { MerchantService } from './merchant.service';
 import { CreateMerchantDTO, UpdateMerchantDTO } from './dto';
 
 @ApiTags('Merchants')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
-@Controller()
+@Controller('/merchants')
 export class MerchantController extends CrudController<Merchant> {
 	constructor(private readonly merchantService: MerchantService) {
 		super(merchantService);
@@ -45,7 +45,7 @@ export class MerchantController extends CrudController<Merchant> {
 		description: 'Found merchant stores count'
 	})
 	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
-	@Get('count')
+	@Get('/count')
 	async getCount(@Query() options: FindOptionsWhere<Merchant>): Promise<IPagination<Merchant>['total']> {
 		return await this.merchantService.countBy(options);
 	}
@@ -57,7 +57,7 @@ export class MerchantController extends CrudController<Merchant> {
 	 * @returns
 	 */
 	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
-	@Get('pagination')
+	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
 	async pagination(@Query() params: PaginationParams<Merchant>): Promise<IPagination<IMerchant>> {
 		return await this.merchantService.paginate(params);
@@ -82,7 +82,7 @@ export class MerchantController extends CrudController<Merchant> {
 		description: 'Record not found'
 	})
 	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
-	@Get()
+	@Get('/')
 	@UseValidationPipe()
 	async findAll(@Query() params: PaginationParams<Merchant>): Promise<IPagination<IMerchant>> {
 		try {
@@ -111,12 +111,9 @@ export class MerchantController extends CrudController<Merchant> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get(':id')
+	@Get('/:id')
 	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
-	async findById(
-		@Param('id', UUIDValidationPipe) id: IMerchant['id'],
-		@Query() query: RelationsQueryDTO
-	): Promise<IMerchant> {
+	async findById(@Param('id', UUIDValidationPipe) id: ID, @Query() query: RelationsQueryDTO): Promise<IMerchant> {
 		return await this.merchantService.findById(id, query.relations);
 	}
 
@@ -136,14 +133,10 @@ export class MerchantController extends CrudController<Merchant> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
-	@Post()
+	@Post('/')
 	@UseValidationPipe({ whitelist: true })
 	async create(@Body() entity: CreateMerchantDTO): Promise<IMerchant> {
-		try {
-			return await this.merchantService.create(entity);
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+		return await this.merchantService.create(entity);
 	}
 
 	/**
@@ -167,16 +160,9 @@ export class MerchantController extends CrudController<Merchant> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Put(':id')
+	@Put('/:id')
 	@UseValidationPipe({ whitelist: true })
-	async update(
-		@Param('id', UUIDValidationPipe) id: IMerchant['id'],
-		@Body() entity: UpdateMerchantDTO
-	): Promise<IMerchant> {
-		try {
-			return await this.merchantService.update(id, entity);
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateMerchantDTO): Promise<IMerchant> {
+		return await this.merchantService.update(id, entity);
 	}
 }

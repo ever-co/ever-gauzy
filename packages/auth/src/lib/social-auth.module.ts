@@ -5,10 +5,7 @@ import { AuthGuards, Controllers, Strategies } from './internal';
 import { SocialAuthService } from './social-auth.service';
 
 @Module({
-	imports: [
-		ConfigModule,
-		HttpModule
-	],
+	imports: [ConfigModule, HttpModule],
 	controllers: [...Controllers],
 	providers: [...Strategies, ...AuthGuards, SocialAuthService],
 	exports: [SocialAuthService]

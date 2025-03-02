@@ -6,7 +6,7 @@ import { DeepPartial } from 'typeorm';
 import { catchError, firstValueFrom, lastValueFrom, map, switchMap } from 'rxjs';
 import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
-import { isEmpty, isNotEmpty, isObject } from '@gauzy/common';
+import { isEmpty, isNotEmpty, isObject } from '@gauzy/utils';
 import {
 	IIntegrationTenant,
 	IntegrationEnum,
@@ -362,7 +362,10 @@ export class HubstaffService {
 			const tenantId = RequestContext.currentTenantId();
 			return await Promise.all(
 				projects.map(async ({ sourceId }) => {
-					const { project } = await this.fetchIntegration<IHubstaffProjectResponse>(`projects/${sourceId}`, token);
+					const { project } = await this.fetchIntegration<IHubstaffProjectResponse>(
+						`projects/${sourceId}`,
+						token
+					);
 
 					/** Third Party Organization Project Map */
 					return await this._commandBus.execute(
@@ -599,7 +602,7 @@ export class HubstaffService {
 	}): Promise<IIntegrationMap[]> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			const creatorId = RequestContext.currentUserId();
+			const createdByUserId = RequestContext.currentUserId();
 
 			return await Promise.all(
 				tasks.map(async ({ summary: title, details = null, id, status, due_at }) => {
@@ -617,7 +620,7 @@ export class HubstaffService {
 									projectId,
 									description: details,
 									status: status.charAt(0).toUpperCase() + status.slice(1),
-									creatorId,
+									createdByUserId,
 									dueDate: due_at,
 									organizationId,
 									tenantId

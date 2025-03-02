@@ -7,7 +7,7 @@ import { LanguagesEnum } from '@gauzy/contracts';
 import { DatabaseModule } from './../../database/database.module';
 import { ActivityLogModule } from '../../activity-log/activity-log.module';
 import { MentionModule } from '../../mention/mention.module';
-import { SubscriptionModule } from '../../subscription/subscription.module';
+import { EntitySubscriptionModule } from '../../entity-subscription/entity-subscription.module';
 import { SeedDataService } from './seed-data.service';
 
 /**
@@ -28,7 +28,7 @@ export class SeederModule {
 	static forPlugins(): DynamicModule {
 		const i18nLoaderOptions = {
 			path: path.resolve(__dirname, '../../i18n/'),
-			watch: !environment.production,
+			watch: !environment.production
 		};
 
 		return {
@@ -37,16 +37,14 @@ export class SeederModule {
 				I18nModule.forRoot({
 					fallbackLanguage: LanguagesEnum.ENGLISH,
 					loaderOptions: i18nLoaderOptions,
-					resolvers: [new HeaderResolver(['language'])],
+					resolvers: [new HeaderResolver(['language'])]
 				}),
 				DatabaseModule,
 				ActivityLogModule,
 				MentionModule,
-				SubscriptionModule,
-				...getDynamicPluginsModules(),
-			],
-			providers: [],
-			exports: [],
+				EntitySubscriptionModule,
+				...getDynamicPluginsModules()
+			]
 		};
 	}
 }

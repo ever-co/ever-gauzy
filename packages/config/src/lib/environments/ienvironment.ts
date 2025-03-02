@@ -2,7 +2,6 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { FileStorageProviderEnum } from '@gauzy/contracts';
 import {
 	IAppIntegrationConfig,
 	IAuth0Config,
@@ -12,7 +11,6 @@ import {
 	IGithubIntegrationConfig,
 	IHubstaffConfig,
 	IJitsuConfig,
-	IKeycloakConfig,
 	ISMTPConfig,
 	IUnleashConfig,
 	IUpworkConfig,
@@ -20,6 +18,7 @@ import {
 	IJiraIntegrationConfig,
 	IDigitalOceanConfig
 } from '@gauzy/common';
+import { FileStorageProviderEnum } from '@gauzy/contracts';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -103,7 +102,6 @@ export interface IEnvironment {
 	github: IGithubIntegrationConfig /** Github Configuration */;
 	jira: IJiraIntegrationConfig /** Jira Configuration */;
 	fiverrConfig: IFiverrConfig;
-	keycloakConfig: IKeycloakConfig;
 	auth0Config: IAuth0Config;
 
 	sentry?: {

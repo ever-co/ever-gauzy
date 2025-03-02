@@ -166,7 +166,10 @@
 		"ADD_PLUGIN": "添加插件",
 		"LOAD_PLUGIN": "加载插件",
 		"FROM_CDN": "来自CDN",
-		"ADD_MODULE": "添加模块"
+		"ADD_MODULE": "添加模块",
+		"SHARE": "分享",
+		"GET_INFO": "获取信息",
+		"RETRY": "重试"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -715,7 +718,8 @@
 		"ERROR": {
 			"PROJECT_NAME": "需要填写项目名称。",
 			"PROJECT_URL": "项目网址无效。",
-			"OPEN_SOURCE_PROJECT_URL": "开源项目网址无效。"
+			"OPEN_SOURCE_PROJECT_URL": "开源项目网址无效。",
+			"INVALID_IMAGE_URL": "无效的图片 URL。"
 		}
 	},
 	"POP_UPS": {
@@ -2027,6 +2031,10 @@
 			"ORG_TAGS_VIEW": "浏览标签",
 			"ORG_TAGS_EDIT": "编辑标签",
 			"ORG_TAGS_DELETE": "删除标签",
+			"ORG_TAG_TYPES_ADD": "添加标签类型",
+			"ORG_TAG_TYPES_VIEW": "查看标签类型",
+			"ORG_TAG_TYPES_EDIT": "编辑标签类型",
+			"ORG_TAG_TYPES_DELETE": "删除标签类型",
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "创建/编辑/删除候选人反馈",
 			"ALL_ORG_VIEW": "查看所有组织",
 			"ALL_ORG_EDIT": "创建/编辑/删除所有组织",
@@ -2138,7 +2146,16 @@
 			"ORG_TASK_EDIT": "编辑任务",
 			"ORG_TASK_DELETE": "删除任务",
 			"ORG_TASK_SETTING": "任务设置",
-			"ORG_MEMBER_LAST_LOG_VIEW": "查看最后日志"
+			"ORG_MEMBER_LAST_LOG_VIEW": "查看最后日志",
+			"API_CALL_LOG_READ": "读取 API 调用日志",
+			"API_CALL_LOG_DELETE": "删除 API 调用日志",
+			"TENANT_API_KEY_CREATE": "创建 API 密钥",
+			"TENANT_API_KEY_VIEW": "查看 API 密钥",
+			"TENANT_API_KEY_DELETE": "删除 API 密钥",
+			"EMPLOYEE_AVAILABILITY_CREATE": "创建员工可用性",
+			"EMPLOYEE_AVAILABILITY_READ": "查看员工可用性",
+			"EMPLOYEE_AVAILABILITY_UPDATE": "更新员工可用性",
+			"EMPLOYEE_AVAILABILITY_DELETE": "删除员工可用性"
 		},
 		"BILLING": "计费",
 		"BUDGET": "预算",
@@ -2357,7 +2374,8 @@
 		"TAGS_SELECT_DESCRIPTION": "标签描述",
 		"ADD_NEW_TAG": "添加新标签",
 		"TENANT_LEVEL": "租户级别",
-		"TAGS_TYPE": "标签类型"
+		"TAGS_TYPE": "标签类型",
+		"TAGS_SELECT_TYPE": "选择标签类型"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "技能 (Jìnéng)"
@@ -2931,6 +2949,9 @@
 		"ALREADY_PAID": "已付款",
 		"AMOUNT_DUE": "应付金额",
 		"INVOICED_REMAINING_AMOUNT": "已开票剩余金额",
+		"TAX_CALCULATION_TYPE": "税务计算类型",
+		"SIMPLE": "简单",
+		"COMPOSED": "复合",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "发票类型",
 			"ESTIMATE_TYPE": "估算类型",
@@ -3614,7 +3635,8 @@
 			"SCREEN_CAPTURE_CHANGED": "屏幕截图状态已更改为{{ name }}。",
 			"MODULE_CREATED": "模块创建成功！",
 			"MODULE_UPDATED": "模块更新成功！",
-			"MODULE_SAVE_ERROR": "模块保存失败。请再试一次。"
+			"MODULE_SAVE_ERROR": "模块保存失败。请再试一次。",
+			"PASSWORD_REQUIRED": "需要密码。"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -3879,7 +3901,8 @@
 			"PASSWORD": "密码",
 			"UI_HOSTNAME": "界面主机名/ IP地址",
 			"TITLE_SERVER_API": "Ever Gauzy API 服务器安装向导",
-			"LABEL_SERVER_API": "Ever Gauzy API Server 桌面应用程序提供 Gauzy 平台的全部功能，可直接在您的台式计算机或笔记本电脑上使用。此外，它还允许跟踪工作时间、活动记录以及接收跟踪提醒/通知的功能。"
+			"LABEL_SERVER_API": "Ever Gauzy API Server 桌面应用程序提供 Gauzy 平台的全部功能，可直接在您的台式计算机或笔记本电脑上使用。此外，它还允许跟踪工作时间、活动记录以及接收跟踪提醒/通知的功能。",
+			"UNABLE_TO_CONNECT": "Unable to connect to the server. Please check your API host or internet connection."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "屏幕捕获",
@@ -4073,7 +4096,8 @@
 			"OPEN_MAIN_WINDOW": "打开主窗口",
 			"DAILY_RECAP": "每日总结",
 			"WEEKLY_RECAP": "每周回顾",
-			"MONTHLY_RECAP": "每月回顾"
+			"MONTHLY_RECAP": "每月回顾",
+			"INSTALL_PLUGIN": "安装插件"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "按小时跟踪时间",
@@ -4395,6 +4419,7 @@
 		"LOW": "低",
 		"MEDIUM": "中等难度",
 		"HIGH": "高",
+		"UNKNOWN": "未知",
 		"DEAL_DELETED": "交易'{{ name }}'已被删除",
 		"DEAL_EDITED": "交易“{{ name }}”已被修改",
 		"DEAL_ADDED": "交易 '{{ name }}' 已添加"
@@ -4697,5 +4722,49 @@
 	},
 	"SERVER_API": "API服务器",
 	"SERVER_API_LOG": "API服务器日志",
-	"COMING_SOON": "This page is coming soon!"
+	"COMING_SOON": "This page is coming soon!",
+	"PLUGIN": {
+		"VIDEO": {
+			"SINGLE": "视频",
+			"PLURAL": "视频",
+			"DOWNLOAD": "下载",
+			"NOT_FOUND": "未找到视频",
+			"NO_VIDEO": "没有视频",
+			"DOWNLOADS": "下载",
+			"NO_VIDEO_DOWNLOAD": "没有视频可下载",
+			"LOADING_VIDEOS": "正在加载视频...",
+			"EDIT_METADATA": "编辑视频元数据",
+			"STARTING_DOWNLOAD_FOR": "开始下载: {{ url }}",
+			"DOWNLOAD_FAILED_FOR": "下载失败: {{ url }}，请重试",
+			"DOWNLOAD_COMPLETED_FOR": "下载完成: {{ url }}",
+			"SHARED_SUCCESSFULLY": "视频分享成功",
+			"COPIED_SUCCESSFULLY": "视频复制成功",
+			"CORE_INFO": "核心信息",
+			"RECORDED": "已录制",
+			"DURATION": "时长",
+			"SIZE": "大小",
+			"VIEW_FULL": "查看完整视频",
+			"TECHNICAL_DETAILS": "技术细节",
+			"RESOLUTION": "分辨率",
+			"CODEC": "编码格式",
+			"FRAME_RATE": "帧率",
+			"UPLOADED_BY": "上传者",
+			"NO_VIDEO_AVAILABLE": "暂无可用视频",
+			"RETRIED": "视频重试",
+			"REMOVED_FROM_QUEUE": "视频已从队列中移除",
+			"ADDED_TO_QUEUE": "视频已添加到队列",
+			"DELETE_SUCCESSFULLY": "视频删除成功",
+			"UPDATE_SUCCESSFULLY": "视频更新成功",
+			"ERROR": {
+				"REQUIRED": "标题是必填项。",
+				"AT_LEAST_3": "标题至少需要3个字符。",
+				"AT_MOST_255": "标题不能超过255个字符。",
+				"AT_MOST_1000": "描述不能超过1000个字符。",
+				"SHARE_CANCELED": "分享已取消",
+				"INVALID_SHARE_DATA": "无效的分享数据",
+				"SHARE_NOT_ALLOWED": "不允许分享",
+				"UNEXPECTED_SHARING_ERROR": "意外的分享错误"
+			}
+		}
+	}
 }

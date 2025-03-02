@@ -2,7 +2,7 @@ import { Brackets, DataSource, WhereExpressionBuilder } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { filter, uniq } from 'underscore';
 import { lastValueFrom, map } from 'rxjs';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
 import { IGetTaskOptions, IOrganization, ITag, ITenant } from '@gauzy/contracts';
@@ -69,7 +69,7 @@ export const createDefaultTask = async (dataSource: DataSource, tenant: ITenant,
 		task.project = project;
 		task.prefix = project.name.substring(0, 3);
 		task.number = maxTaskNumber + 1;
-		task.creator = faker.helpers.arrayElement(users);
+		task.createdByUser = faker.helpers.arrayElement(users);
 
 		if (count % 2 === 0) {
 			task.members = faker.helpers.arrayElements(employees, 5);
@@ -152,7 +152,7 @@ export const createRandomTask = async (dataSource: DataSource, tenants: ITenant[
 				task.prefix = project.name.substring(0, 3);
 				task.number = maxTaskNumber + 1;
 				task.teams = [faker.helpers.arrayElement(teams)];
-				task.creator = faker.helpers.arrayElement(users);
+				task.createdByUser = faker.helpers.arrayElement(users);
 				task.organization = organization;
 				task.tenant = tenant;
 

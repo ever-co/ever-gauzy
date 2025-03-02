@@ -24,7 +24,7 @@ import {
 	IOrganization,
 	ID
 } from '@gauzy/contracts';
-import { isEmpty, isNotEmpty } from '@gauzy/common';
+import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { TenantAwareCrudService } from './../../core/crud';
 import {
 	DeleteTimeSpanCommand,
@@ -45,11 +45,8 @@ import { prepareSQLQuery as p } from './../../database/database.helper';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
-import { MikroOrmEmployeeRepository } from '../../employee/repository/mikro-orm-employee.repository';
 import { TypeOrmOrganizationProjectRepository } from '../../organization-project/repository/type-orm-organization-project.repository';
-import { MikroOrmOrganizationProjectRepository } from '../../organization-project/repository/mikro-orm-organization-project.repository';
 import { TypeOrmOrganizationContactRepository } from '../../organization-contact/repository/type-orm-organization-contact.repository';
-import { MikroOrmOrganizationContactRepository } from '../../organization-contact/repository/mikro-orm-organization-contact.repository';
 import { TimeLog } from './time-log.entity';
 
 @Injectable()
@@ -58,11 +55,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
-		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 		readonly typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
-		readonly mikroOrmOrganizationProjectRepository: MikroOrmOrganizationProjectRepository,
 		readonly typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
-		readonly mikroOrmOrganizationContactRepository: MikroOrmOrganizationContactRepository,
 		private readonly commandBus: CommandBus
 	) {
 		super(typeOrmTimeLogRepository, mikroOrmTimeLogRepository);
@@ -934,7 +928,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns The modified query.
 	 */
 	getFilterTimeLogQuery(query: SelectQueryBuilder<TimeLog>, request: IGetTimeLogReportInput) {
-		const { organizationId, projectIds = [], teamIds = [] } = request;
+		const { organizationId, projectIds = [], teamIds = [], taskIds = [] } = request;
 		let { employeeIds = [] } = request;
 
 		const tenantId = RequestContext.currentTenantId();
@@ -976,6 +970,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Filter by organization employee IDs if used in the request
 		if (isNotEmpty(employeeIds)) {
 			query.andWhere(p(`"${query.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
+		}
+
+		// Filter by organization task IDs if used in the request
+		if (isNotEmpty(taskIds)) {
+			query.andWhere(p(`"${query.alias}"."taskId" IN (:...taskIds)`), { taskIds });
 		}
 
 		// Filter by organization project IDs if used in the request

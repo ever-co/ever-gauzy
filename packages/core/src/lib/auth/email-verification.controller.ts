@@ -16,12 +16,12 @@ import { FeatureFlagGuard } from './../shared/guards';
 import { UseValidationPipe } from '../shared/pipes';
 import { ConfirmEmailByCodeDTO, ConfirmEmailByTokenDTO } from './dto';
 
-@Controller('email/verify')
 @UseGuards(FeatureFlagGuard)
 @FeatureFlag(FeatureEnum.FEATURE_EMAIL_VERIFICATION)
 @UseInterceptors(ClassSerializerInterceptor)
+@Controller('/auth/email/verify')
 export class EmailVerificationController {
-	constructor(private readonly emailConfirmationService: EmailConfirmationService) { }
+	constructor(private readonly emailConfirmationService: EmailConfirmationService) {}
 
 	/**
 	 * Email verification by token

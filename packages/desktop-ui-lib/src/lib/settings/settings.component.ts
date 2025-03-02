@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, ElementRef, Inject, NgZone, OnInit, Optional, ViewChild } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS, LanguagesEnum } from '@gauzy/contracts';
+import { DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS } from '@gauzy/constants';
+import { LanguagesEnum } from '@gauzy/contracts';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -294,8 +295,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					value: ''
 				},
 				{
-					name: 'KEYCLOAK_SECRET',
-					field: 'KEYCLOAK_SECRET',
+					name: 'KEYCLOAK_CLIENT_SECRET',
+					field: 'KEYCLOAK_CLIENT_SECRET',
 					value: ''
 				},
 				{

@@ -8,18 +8,7 @@ import {
 	RequestApprovalStatusTypesEnum,
 	IPagination
 } from '@gauzy/contracts';
-import {
-	Query,
-	HttpStatus,
-	UseGuards,
-	Get,
-	Post,
-	Body,
-	HttpCode,
-	Put,
-	Param,
-	Controller
-} from '@nestjs/common';
+import { Query, HttpStatus, UseGuards, Get, Post, Body, HttpCode, Put, Param, Controller } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -29,7 +18,7 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('RequestApproval')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Controller()
+@Controller('/request-approval')
 export class RequestApprovalController extends CrudController<RequestApproval> {
 	constructor(
 		private readonly requestApprovalService: RequestApprovalService,
@@ -62,11 +51,7 @@ export class RequestApprovalController extends CrudController<RequestApproval> {
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IRequestApproval>> {
 		const { relations, findInput } = data;
-		return this.requestApprovalService.findRequestApprovalsByEmployeeId(
-			id,
-			relations,
-			findInput
-		);
+		return this.requestApprovalService.findRequestApprovalsByEmployeeId(id, relations, findInput);
 	}
 
 	/**
@@ -88,14 +73,9 @@ export class RequestApprovalController extends CrudController<RequestApproval> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
 	@Put('approval/:id')
-	async employeeApprovalRequestApproval(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<IRequestApproval> {
+	async employeeApprovalRequestApproval(@Param('id', UUIDValidationPipe) id: string): Promise<IRequestApproval> {
 		return await this.commandBus.execute(
-			new RequestApprovalStatusCommand(
-				id,
-				RequestApprovalStatusTypesEnum.APPROVED
-			)
+			new RequestApprovalStatusCommand(id, RequestApprovalStatusTypesEnum.APPROVED)
 		);
 	}
 
@@ -118,14 +98,9 @@ export class RequestApprovalController extends CrudController<RequestApproval> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
 	@Put('refuse/:id')
-	async employeeRefuseRequestApproval(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<IRequestApproval> {
+	async employeeRefuseRequestApproval(@Param('id', UUIDValidationPipe) id: string): Promise<IRequestApproval> {
 		return await this.commandBus.execute(
-			new RequestApprovalStatusCommand(
-				id,
-				RequestApprovalStatusTypesEnum.REFUSED
-			)
+			new RequestApprovalStatusCommand(id, RequestApprovalStatusTypesEnum.REFUSED)
 		);
 	}
 
@@ -147,14 +122,9 @@ export class RequestApprovalController extends CrudController<RequestApproval> {
 	})
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_VIEW)
 	@Get()
-	findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IRequestApproval>> {
+	findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IRequestApproval>> {
 		const { relations, findInput } = data;
-		return this.requestApprovalService.findAllRequestApprovals(
-			{ relations },
-			findInput
-		);
+		return this.requestApprovalService.findAllRequestApprovals({ relations }, findInput);
 	}
 
 	/**
@@ -175,9 +145,7 @@ export class RequestApprovalController extends CrudController<RequestApproval> {
 	})
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
 	@Post()
-	async create(
-		@Body() entity: IRequestApprovalCreateInput
-	): Promise<IRequestApproval> {
+	async create(@Body() entity: IRequestApprovalCreateInput): Promise<IRequestApproval> {
 		return this.requestApprovalService.createRequestApproval(entity);
 	}
 

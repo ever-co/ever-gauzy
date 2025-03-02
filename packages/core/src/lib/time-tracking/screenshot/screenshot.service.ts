@@ -1,10 +1,11 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { ID, IDeleteScreenshot, IScreenshot, PermissionsEnum } from '@gauzy/contracts';
-import { RequestContext } from './../../core/context';
-import { TenantAwareCrudService } from './../../core/crud';
+import { RequestContext } from './../../core/context/request-context';
+import { TenantAwareCrudService } from './../../core/crud/tenant-aware-crud.service';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { Screenshot } from './screenshot.entity';
-import { MikroOrmScreenshotRepository, TypeOrmScreenshotRepository } from './repository';
+import { TypeOrmScreenshotRepository } from './repository/type-orm-screenshot.repository';
+import { MikroOrmScreenshotRepository } from './repository/mikro-orm-screenshot.repository';
 
 @Injectable()
 export class ScreenshotService extends TenantAwareCrudService<Screenshot> {

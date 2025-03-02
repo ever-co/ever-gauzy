@@ -2,16 +2,24 @@ import { GqlModuleOptions, GraphQLTypesLoader } from '@nestjs/graphql';
 import { ApolloDriver } from '@nestjs/apollo';
 import { buildSchema, extendSchema, printSchema } from 'graphql';
 import * as path from 'path';
-import { GraphQLApiConfigurationOptions, isNotEmpty } from '@gauzy/common';
+import { GraphQLApiConfigurationOptions } from '@gauzy/common';
 import { ConfigService } from '@gauzy/config';
 import { getPluginExtensions } from '@gauzy/plugin';
+import { isNotEmpty } from '@gauzy/utils';
 
 /**
+ * Creates and configures the GraphQL module options for Apollo Server in a NestJS application.
  *
- * @param configService
- * @param typesLoader
- * @param options
- * @returns
+ * - Uses the `ApolloDriver` as the GraphQL driver.
+ * - Dynamically loads type definitions (`typeDefs`) using the `typesLoader`.
+ * - Configures playground and debug mode based on the provided options.
+ * - Sets up CORS policies, including allowed methods and headers.
+ * - Includes the specified resolver module.
+ *
+ * @param {ConfigService} configService - The NestJS configuration service for retrieving environment variables.
+ * @param {GraphQLTypesLoader} typesLoader - A utility to dynamically load GraphQL type definitions.
+ * @param {GraphQLApiConfigurationOptions} options - Configuration options for the GraphQL API.
+ * @returns {Promise<GqlModuleOptions>} A promise that resolves to GraphQL module options.
  */
 export async function createGraphqlModuleOptions(
 	configService: ConfigService,
@@ -27,15 +35,7 @@ export async function createGraphqlModuleOptions(
 		cors: {
 			origin: '*',
 			credentials: true,
-			methods: [
-				'GET',
-				'HEAD',
-				'PUT',
-				'PATCH',
-				'POST',
-				'DELETE',
-				'OPTIONS'
-			].join(','),
+			methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'].join(','),
 			allowedHeaders: [
 				'Authorization',
 				'Language',
@@ -56,29 +56,38 @@ export async function createGraphqlModuleOptions(
 }
 
 /**
+ * Generates and returns the GraphQL type definitions (typeDefs) by:
+ * - Normalizing file paths for cross-platform compatibility.
+ * - Merging type definitions from the provided paths.
+ * - Building the initial GraphQL schema.
+ * - Extending the schema with additional plugin extensions if available.
+ * - Printing the final schema as a string.
  *
- * @param configService
- * @param options
- * @param typesLoader
- * @returns
+ * @param {ConfigService} configService - The NestJS configuration service for accessing environment variables and plugins.
+ * @param {GraphQLApiConfigurationOptions} options - The configuration options for GraphQL API, including type paths.
+ * @param {GraphQLTypesLoader} typesLoader - The utility responsible for loading and merging GraphQL type definitions.
+ * @returns {Promise<string>} A promise resolving to the final GraphQL schema as a string.
  */
 async function createTypeDefs(
 	configService: ConfigService,
 	options: GraphQLApiConfigurationOptions,
 	typesLoader: GraphQLTypesLoader
 ): Promise<string> {
-	const normalizedPaths = options.typePaths.map((p) =>
-		p.split(path.sep).join('/')
-	);
+	// Normalize type paths to ensure compatibility across different OS file systems
+	const normalizedPaths = options.typePaths.map((p) => p.split(path.sep).join('/'));
+
+	// Load and merge type definitions from the given paths
 	const typeDefs = await typesLoader.mergeTypesByPaths(normalizedPaths);
+
+	// Build the GraphQL schema from the merged type definitions
 	let schema = buildSchema(typeDefs);
 
+	// Extend the schema using plugin extensions (if available)
 	getPluginExtensions(configService.plugins)
-		.map((e) => (typeof e.schema === 'function' ? e.schema() : e.schema))
+		.map((extension) => (typeof extension.schema === 'function' ? extension.schema() : extension.schema))
 		.filter(isNotEmpty)
-		.forEach(
-			(documentNode) => (schema = extendSchema(schema, documentNode))
-		);
+		.forEach((documentNode) => (schema = extendSchema(schema, documentNode)));
 
+	// Convert the final schema into a printable string format
 	return printSchema(schema);
 }

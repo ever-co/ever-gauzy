@@ -11,7 +11,6 @@ import { PublicInvoiceService } from './public-invoice.service';
 @Module({
 	imports: [CqrsModule, TypeOrmModule.forFeature([Invoice]), MikroOrmModule.forFeature([Invoice])],
 	controllers: [PublicInvoiceController],
-	providers: [PublicInvoiceService, ...QueryHandlers, ...CommandHandlers],
-	exports: []
+	providers: [PublicInvoiceService, ...QueryHandlers, ...CommandHandlers]
 })
 export class PublicInvoiceModule {}

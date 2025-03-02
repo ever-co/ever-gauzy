@@ -8,24 +8,55 @@ import {
 	AssetConfigurationOptions,
 	GraphqlConfigurationOptions
 } from '@gauzy/common';
-import { getConfig } from './config-manager';
+import { getConfig } from './config-loader';
 import { environment } from './environments/environment';
 import { IEnvironment } from './environments/ienvironment';
 
 @Injectable()
 export class ConfigService {
-	public readonly config: Partial<ApplicationPluginConfig>;
 	private readonly environment = environment;
 	private readonly logger = new Logger(ConfigService.name);
+	private config: Partial<ApplicationPluginConfig>;
 
 	constructor() {
+		void this.initConfig();
+	}
+
+	/**
+	 * Initializes the configuration and environment variables.
+	 * Uses an async method since constructors cannot be async.
+	 */
+	private async initConfig(): Promise<void> {
 		this.config = getConfig();
 
-		for (const [key, value] of Object.entries(environment.env)) {
-			process.env[key] = value;
-		}
+		// Assign environment variables dynamically
+		Object.entries(this.environment.env).forEach(([key, value]) => {
+			process.env[key] = value as string;
+		});
 
-		this.logger.log(`Is Production: ${environment.production}`);
+		this.logger.log(`Is Production: ${this.environment.production}`);
+	}
+
+	/**
+	 * Retrieves the entire configuration object as a read-only copy.
+	 *
+	 * @returns {Readonly<Partial<ApplicationPluginConfig>>} - The entire configuration object.
+	 */
+	public getConfig(): Readonly<Partial<ApplicationPluginConfig>> {
+		return Object.freeze({ ...this.config });
+	}
+
+	/**
+	 * Retrieves a specific configuration value from the application configuration.
+	 *
+	 * @param {keyof ApplicationPluginConfig} key - The configuration key to fetch.
+	 * @returns {Readonly<ApplicationPluginConfig[keyof ApplicationPluginConfig]>} - The requested configuration value.
+	 */
+	public getConfigValue<K extends keyof ApplicationPluginConfig>(key: K): Readonly<ApplicationPluginConfig[K]> {
+		if (!(key in this.config)) {
+			throw new Error(`Configuration key "${String(key)}" not found.`);
+		}
+		return this.config[key] as Readonly<ApplicationPluginConfig[K]>;
 	}
 
 	/**
@@ -35,31 +66,29 @@ export class ConfigService {
 		return this.config.apiConfigOptions;
 	}
 
-
 	/**
 	 * Get the GraphQL configuration options.
 	 */
 	get graphqlConfigOptions(): Readonly<GraphqlConfigurationOptions> {
-		return this.config.apiConfigOptions.graphqlConfigOptions;
+		return this.config.apiConfigOptions?.graphqlConfigOptions;
 	}
-
 
 	/**
 	 * Get the TypeORM connection options.
 	 */
 	get dbConnectionOptions(): Readonly<TypeOrmModuleOptions> {
-		return this.config.dbConnectionOptions;
+		return this.config.dbConnectionOptions ?? {};
 	}
 
 	/**
 	 * Get the MikroORM connection options.
 	 */
 	get dbMikroOrmConnectionOptions(): Readonly<MikroOrmModuleOptions> {
-		return this.config.dbMikroOrmConnectionOptions;
+		return this.config.dbMikroOrmConnectionOptions ?? {};
 	}
 
 	/**
-	 * Get the MikroORM connection options.
+	 * Get the Knex connection options.
 	 */
 	get dbKnexConnectionOptions(): Readonly<KnexModuleOptions> {
 		return this.config.dbKnexConnectionOptions;
@@ -69,7 +98,7 @@ export class ConfigService {
 	 * Get the plugins configuration.
 	 */
 	get plugins(): Array<Type<any> | DynamicModule> {
-		return this.config.plugins || [];
+		return this.config.plugins ?? [];
 	}
 
 	/**
@@ -80,19 +109,23 @@ export class ConfigService {
 	}
 
 	/**
-	 * Get the environment variable value.
+	 * Retrieves an environment variable value with proper type inference.
 	 *
-	 * @param key
-	 * @returns
+	 * @param {K} key - The environment variable key.
+	 * @returns {IEnvironment[K]} - The corresponding environment value.
+	 * @throws {Error} If the key does not exist in the environment.
 	 */
-	get<T>(key: keyof IEnvironment): IEnvironment[keyof IEnvironment] {
-		return this.environment[key] as T;
+	get<K extends keyof IEnvironment>(key: K): IEnvironment[K] {
+		if (!(key in this.environment)) {
+			throw new Error(`Environment variable "${String(key)}" is not defined.`);
+		}
+		return this.environment[key];
 	}
 
 	/**
 	 * Check if the application is running in production mode.
 	 *
-	 * @returns
+	 * @returns `true` if production mode, otherwise `false`.
 	 */
 	isProd(): boolean {
 		return this.environment.production;

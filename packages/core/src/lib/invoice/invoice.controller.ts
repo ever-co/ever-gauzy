@@ -40,7 +40,7 @@ import { CreateInvoiceDTO, UpdateEstimateInvoiceDTO, UpdateInvoiceActionDTO, Upd
 @ApiTags('Invoice')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.INVOICES_EDIT)
-@Controller()
+@Controller('/invoices')
 export class InvoiceController extends CrudController<Invoice> {
 	constructor(private readonly invoiceService: InvoiceService, private readonly commandBus: CommandBus) {
 		super(invoiceService);
@@ -66,7 +66,6 @@ export class InvoiceController extends CrudController<Invoice> {
 	 */
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get('pagination')
-	@UseValidationPipe({ transform: true })
 	async pagination(@Query() options: PaginationParams<Invoice>): Promise<IPagination<IInvoice>> {
 		return await this.invoiceService.pagination(options);
 	}

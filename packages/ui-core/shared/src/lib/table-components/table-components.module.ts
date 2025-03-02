@@ -17,7 +17,7 @@ import { ClickableLinkComponent } from './clickable-link/clickable-link.componen
 import { CompanyLogoComponent } from './company-logo/company-logo.component';
 import { ContactLinksComponent } from './contact-links/contact-links.component';
 import { ContactWithTagsComponent } from './contact-with-tags/contact-with-tags.component';
-import { CreateByComponent } from './create-by/create-by.component';
+import { CreatedByUserComponent } from './created-by/created-by-user.component';
 import { CreatedAtComponent } from './created-at/created-at.component';
 import { DateViewComponent } from './date-view/date-view.component';
 import { DocumentDateTableComponent } from './document-date/document-date.component';
@@ -75,7 +75,7 @@ import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badg
 		CompanyLogoComponent,
 		ContactLinksComponent,
 		ContactWithTagsComponent,
-		CreateByComponent,
+		CreatedByUserComponent,
 		CreatedAtComponent,
 		DateViewComponent,
 		DocumentDateTableComponent,
@@ -120,7 +120,7 @@ import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badg
 		CompanyLogoComponent,
 		ContactLinksComponent,
 		ContactWithTagsComponent,
-		CreateByComponent,
+		CreatedByUserComponent,
 		CreatedAtComponent,
 		DateViewComponent,
 		DocumentDateTableComponent,

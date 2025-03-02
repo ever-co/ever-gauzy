@@ -5,13 +5,12 @@ import { IsOptional } from 'class-validator';
 import { ILanguage, IOrganizationLanguage } from '@gauzy/contracts';
 import { BaseEntity, OrganizationLanguage } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity, MultiORMOneToMany } from './../core/decorators/entity';
-import { MikroOrmLanguageRepository } from './repository';
+import { MikroOrmLanguageRepository } from './repository/mikro-orm-language.repository';
 
 @MultiORMEntity('language', { mikroOrmRepository: () => MikroOrmLanguageRepository })
 @TypeOrmUnique(['code'])
 @MikroOrmUnique({ properties: ['code'] })
 export class Language extends BaseEntity implements ILanguage {
-
 	@ApiProperty({ type: () => String })
 	@MultiORMColumn()
 	name?: string;
@@ -42,5 +41,5 @@ export class Language extends BaseEntity implements ILanguage {
 	@MultiORMOneToMany(() => OrganizationLanguage, (it) => it.language, {
 		cascade: true
 	})
-	organizationLanguages?: IOrganizationLanguage[]
+	organizationLanguages?: IOrganizationLanguage[];
 }

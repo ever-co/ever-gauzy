@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { AvailabilitySlot } from './availability-slots.entity';
@@ -10,10 +9,10 @@ import { CommandHandlers } from './commands/handlers';
 import { EmployeeModule } from './../employee/employee.module';
 import { OrganizationModule } from './../organization/organization.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { TypeOrmAvailabilitySlotRepository } from './repository/type-orm-availability-slot.repository';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/availability-slots', module: AvailabilitySlotsModule }]),
 		TypeOrmModule.forFeature([AvailabilitySlot]),
 		MikroOrmModule.forFeature([AvailabilitySlot]),
 		CqrsModule,
@@ -22,7 +21,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		RolePermissionModule
 	],
 	controllers: [AvailabilitySlotsController],
-	providers: [AvailabilitySlotsService, ...CommandHandlers],
-	exports: [AvailabilitySlotsService]
+	providers: [AvailabilitySlotsService, TypeOrmAvailabilitySlotRepository, ...CommandHandlers]
 })
-export class AvailabilitySlotsModule { }
+export class AvailabilitySlotsModule {}

@@ -39,7 +39,7 @@ export class TaskSubscriber extends BaseEntityEventSubscriber<Task> {
 	}
 
 	/**
-	 * Called before a Task entity is inserted into the database. This method sets the creator ID
+	 * Called before a Task entity is inserted into the database. This method sets the created by user ID
 	 * of the task based on the current user context.
 	 *
 	 * @param entity The Task entity about to be created.
@@ -47,9 +47,9 @@ export class TaskSubscriber extends BaseEntityEventSubscriber<Task> {
 	 */
 	async beforeEntityCreate(entity: Task): Promise<void> {
 		try {
-			// Retrieve the current user's ID from RequestContext and assign it as the creator
+			// Retrieve the current user's ID from RequestContext and assign it as the created by user
 			if (entity) {
-				entity.creatorId = RequestContext.currentUserId();
+				entity.createdByUserId = RequestContext.currentUserId();
 			}
 		} catch (error) {
 			console.error('TaskSubscriber: An error occurred during the beforeEntityCreate process:', error);

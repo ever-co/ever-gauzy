@@ -177,7 +177,7 @@ More information about our Server & Desktop Apps:
 For Production, we recommend:
 
 -   [PostgreSQL](https://www.postgresql.org) or [MySQL](https://dev.mysql.com)
--   [Kubernetes](https://kubernetes.io), [Docker](https://www.docker.com) or [PM2](https://github.com/Unitech/pm2)
+-   [Kubernetes](https://kubernetes.io), [Docker](https://www.docker.com)
 
 Note: thanks to TypeORM / MikroORM, Gauzy will support lots of DBs: SQLite (default, for demos), PostgreSQL (development/production), MySql (development/production), MariaDb, CockroachDb, MS SQL, Oracle, MongoDb, and others (with minimal changes).
 
@@ -211,8 +211,9 @@ Together with Gauzy, Docker Compose (i.e. `docker-compose.yml` and `docker-compo
 
 -   [PostgreSQL](https://www.postgresql.org) - Primary Database.
 -   [Pgweb](https://github.com/sosedoff/pgweb) - Cross-platform client for PostgreSQL DBs, available on <http://localhost:8081>.
--   [ElasticSearch](https://github.com/elastic/elasticsearch) - Search Engine.
--   [Dejavu](https://github.com/appbaseio/dejavu) - Web UI for ElasticSearch, available on <http://localhost:1358>.
+-   [OpenSearch](https://github.com/opensearch-project) - Search Engine.
+-   [OpenSearch Dashboards](https://github.com/opensearch-project) - Search Engine Dashboards, available on <http://localhost:5601>. Default username: `admin` and password: `Gauzy_password_123`
+-   [Dejavu](https://github.com/appbaseio/dejavu) - Web UI for OpenSearch, available on <http://localhost:1358>.
 -   [MinIO](https://github.com/minio/minio) - Multi-Cloud ☁️ Object Storage (AWS S3 compatible).
 -   [Jitsu](https://github.com/jitsucom/jitsu) - Jitsu is an open-source Segment alternative (data ingestion engine).
 -   [Redis](https://github.com/redis/redis) - In-memory data store/caching (also used by Jitsu)
@@ -245,7 +246,7 @@ Notes:
 
 -   Optionally (recommended for production) install and run [PostgreSQL](https://www.postgresql.org) version 14 or later (16.x recommended for production). Note: other DB can be configured manually in TypeORM / MikroORM / Knex. The default DB is set to SQLite (recommended for testing/demo purposes only).
 -   Optionally (recommended for production) install and run [Redis](https://github.com/redis/redis). Notes: the platform will work without Redis using an in-memory caching strategy instead of a distributed one (recommended for testing/demo purposes only). Please note however that Redis is required for Jitsu.
--   Optionally (recommended for production) install and run [ElasticSearch](https://github.com/elastic/elasticsearch). Note: the platform will work without ElasticSearch using DB build-in search capabilities (recommended for testing/demo purposes only).
+-   Optionally (recommended for production) install and run [OpenSearch](https://github.com/opensearch-project). Note: the platform will work without OpenSearch using DB build-in search capabilities (recommended for testing/demo purposes only).
 -   Optionally install and run [MinIO](https://github.com/minio/minio) or [LocalStack](https://github.com/localstack/localstack). Note: the platform will work without MinIO / LocalStack or other S3-compatible storage using local filesystem-based storage (recommended for testing/demo purposes only). For production, we recommend using Wasabi or AWS S3 storage or another S3-compatible cloud storage.
 -   Optionally (recommended for production) install and run [Jitsu](https://github.com/jitsucom/jitsu). Note: the platform will work without Jitsu, however, data ingestion will be disabled for additional analyses / real-time pipelines.
 -   Optionally (recommended for production) install and run [Cube](https://github.com/cube-js/cube). Note: the platform will work without Cube, however some advanced (dynamic) reporting and data processing capabilities will be disabled.

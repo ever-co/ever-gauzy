@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ITenantCreateInput, RolesEnum, ITenant, IUser, FileStorageProviderEnum } from '@gauzy/contracts';
-import { ConfigService, IEnvironment } from '@gauzy/config';
+import { ConfigService } from '@gauzy/config';
 import { CrudService } from '../core/crud/crud.service';
 import { TenantFeatureOrganizationCreateCommand } from './commands';
 import { TenantRoleBulkCreateCommand } from '../role/commands';
@@ -11,9 +11,10 @@ import { TenantSettingSaveCommand } from './tenant-setting/commands';
 import { TenantTaskSizeBulkCreateCommand } from './../tasks/sizes/commands';
 import { TenantTaskPriorityBulkCreateCommand } from './../tasks/priorities/commands';
 import { TenantIssueTypeBulkCreateCommand } from './../tasks/issue-type/commands';
-import { MikroOrmTenantRepository, TypeOrmTenantRepository } from './repository';
-import { MikroOrmUserRepository, TypeOrmUserRepository } from '../user/repository';
-import { MikroOrmRoleRepository, TypeOrmRoleRepository } from '../role/repository';
+import { TypeOrmRoleRepository } from '../role/repository/type-orm-role.repository';
+import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
+import { TypeOrmTenantRepository } from './repository/type-orm-tenant.repository';
+import { MikroOrmTenantRepository } from './repository/mikro-orm-tenant.repository';
 import { Tenant } from './tenant.entity';
 
 @Injectable()
@@ -22,9 +23,7 @@ export class TenantService extends CrudService<Tenant> {
 		readonly typeOrmTenantRepository: TypeOrmTenantRepository,
 		readonly mikroOrmTenantRepository: MikroOrmTenantRepository,
 		readonly typeOrmRoleRepository: TypeOrmRoleRepository,
-		readonly mikroOrmRoleRepository: MikroOrmRoleRepository,
 		readonly typeOrmUserRepository: TypeOrmUserRepository,
-		readonly mikroOrmUserRepository: MikroOrmUserRepository,
 		readonly commandBus: CommandBus,
 		readonly configService: ConfigService
 	) {
@@ -111,8 +110,8 @@ export class TenantService extends CrudService<Tenant> {
 	 * @param tenant The tenant entity for which settings are being initialized.
 	 */
 	private async initializeTenantSettings(tenant: ITenant): Promise<void> {
-		const filesystem = this.configService.get('fileSystem') as IEnvironment['fileSystem'];
-		const fileStorageProvider = filesystem.name.toUpperCase() as FileStorageProviderEnum;
+		const fileSystem = this.configService.get('fileSystem');
+		const fileStorageProvider = fileSystem.name.toUpperCase() as FileStorageProviderEnum;
 
 		await this.commandBus.execute(new TenantSettingSaveCommand({ fileStorageProvider }, tenant.id));
 	}

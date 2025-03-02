@@ -165,7 +165,10 @@
 		"ADD_PLUGIN": "Добавить плагин",
 		"LOAD_PLUGIN": "Загрузить плагин",
 		"FROM_CDN": "Из CDN",
-		"ADD_MODULE": "Добавить модуль"
+		"ADD_MODULE": "Добавить модуль",
+		"SHARE": "Поделиться",
+		"GET_INFO": "Получить информацию",
+		"RETRY": "Повторить попытку"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -724,7 +727,8 @@
 		"ERROR": {
 			"PROJECT_NAME": "Необходимо название проекта.",
 			"PROJECT_URL": "Недопустимый URL проекта.",
-			"OPEN_SOURCE_PROJECT_URL": "Недопустимый URL-адрес проекта с открытым исходным кодом."
+			"OPEN_SOURCE_PROJECT_URL": "Недопустимый URL-адрес проекта с открытым исходным кодом.",
+			"INVALID_IMAGE_URL": "Недействительный URL изображения."
 		}
 	},
 	"POP_UPS": {
@@ -2064,6 +2068,10 @@
 			"ORG_TAGS_VIEW": "View Tags",
 			"ORG_TAGS_EDIT": "Edit Tags",
 			"ORG_TAGS_DELETE": "Delete Tags",
+			"ORG_TAG_TYPES_ADD": "Добавить тип тега",
+			"ORG_TAG_TYPES_VIEW": "Просмотр типов тегов",
+			"ORG_TAG_TYPES_EDIT": "Редактировать тип тега",
+			"ORG_TAG_TYPES_DELETE": "Удалить тип тега",
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "Создать/изменить/Удалить отзыв по Кандидату",
 			"ALL_ORG_VIEW": "Просмотр всех организаций",
 			"ALL_ORG_EDIT": "Создание/Изменить/Удалить все организации",
@@ -2169,7 +2177,16 @@
 			"ALLOW_MANUAL_TIME": "Разрешить ручное время",
 			"DELETE_SCREENSHOTS": "Разрешить удаление скриншота",
 			"ORG_TASK_SETTING": "Параметры задачи",
-			"ORG_MEMBER_LAST_LOG_VIEW": "Посмотреть последний журнал"
+			"ORG_MEMBER_LAST_LOG_VIEW": "Посмотреть последний журнал",
+			"API_CALL_LOG_READ": "Прочитать журнал вызовов API",
+			"API_CALL_LOG_DELETE": "Удалить журнал вызовов API",
+			"TENANT_API_KEY_CREATE": "Создать API-ключ",
+			"TENANT_API_KEY_VIEW": "Просмотр API-ключа",
+			"TENANT_API_KEY_DELETE": "Удалить API-ключ",
+			"EMPLOYEE_AVAILABILITY_CREATE": "Создать доступность сотрудника",
+			"EMPLOYEE_AVAILABILITY_READ": "Просмотреть доступность сотрудника",
+			"EMPLOYEE_AVAILABILITY_UPDATE": "Обновить доступность сотрудника",
+			"EMPLOYEE_AVAILABILITY_DELETE": "Удалить доступность сотрудника"
 		},
 		"BILLING": "Биллинг",
 		"BUDGET": "Бюджет",
@@ -2388,7 +2405,8 @@
 		"TAGS_SELECT_DESCRIPTION": "Описание метки",
 		"ADD_NEW_TAG": "Добавить новый тег",
 		"TENANT_LEVEL": "Уровень владельца",
-		"TAGS_TYPE": "Тип тегов"
+		"TAGS_TYPE": "Тип тегов",
+		"TAGS_SELECT_TYPE": "Выберите тип тега"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Навыки"
@@ -2960,6 +2978,9 @@
 		"ALREADY_PAID": "Уже оплачено",
 		"AMOUNT_DUE": "Сумма к оплате",
 		"INVOICED_REMAINING_AMOUNT": "Оставшаяся сумма",
+		"TAX_CALCULATION_TYPE": "Тип расчета налога",
+		"SIMPLE": "Простой",
+		"COMPOSED": "Составной",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"ESTIMATE_TYPE": "Тип оценки",
@@ -3633,7 +3654,8 @@
 			"AUTHORIZED_TO_WORK": "{{ name }} авторизован для работы",
 			"MODULE_CREATED": "Модуль успешно создан!",
 			"MODULE_UPDATED": "Модуль успешно обновлен!",
-			"MODULE_SAVE_ERROR": "Не удалось сохранить модуль. Попробуйте еще раз."
+			"MODULE_SAVE_ERROR": "Не удалось сохранить модуль. Попробуйте еще раз.",
+			"PASSWORD_REQUIRED": "Требуется пароль."
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -3897,7 +3919,8 @@
 			"PASSWORD": "Пароль",
 			"UI_HOSTNAME": "Имя хоста интерфейса пользователя / IP-адрес",
 			"TITLE_SERVER_API": "Мастер установки сервера API Ever Gauzy",
-			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App предоставляет полный функционал Gauzy Platform, доступный непосредственно на вашем настольном компьютере или ноутбуке. Кроме того, он позволяет отслеживать рабочее время, записывать активность и получать напоминания/уведомления об отслеживании."
+			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App предоставляет полный функционал Gauzy Platform, доступный непосредственно на вашем настольном компьютере или ноутбуке. Кроме того, он позволяет отслеживать рабочее время, записывать активность и получать напоминания/уведомления об отслеживании.",
+			"UNABLE_TO_CONNECT": "Не удается подключиться к серверу. Пожалуйста, проверьте ваш API хост или подключение к интернету."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Захват экрана",
@@ -4091,7 +4114,8 @@
 			"OPEN_MAIN_WINDOW": "Открыть главное окно",
 			"DAILY_RECAP": "Ежедневный обзор",
 			"WEEKLY_RECAP": "Еженедельный Обзор",
-			"MONTHLY_RECAP": "Ежемесячный Обзор"
+			"MONTHLY_RECAP": "Ежемесячный Обзор",
+			"INSTALL_PLUGIN": "Установить плагин"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Часовой учет времени",
@@ -4411,6 +4435,7 @@
 		"LOW": "Низкий",
 		"MEDIUM": "Средний",
 		"HIGH": "Высокий",
+		"UNKNOWN": "Неизвестно",
 		"DEAL_DELETED": "Сделка '{{ name }}' удалена",
 		"DEAL_EDITED": "Сделка '{{ name }}' была изменена",
 		"DEAL_ADDED": "Сделка '{{ name }}' была добавлена"
@@ -4694,5 +4719,49 @@
 	},
 	"SERVER_API": "API-сервер",
 	"SERVER_API_LOG": "Журнал API-сервера",
-	"COMING_SOON": "Эта страница скоро появится!"
+	"COMING_SOON": "Эта страница скоро появится!",
+	"PLUGIN": {
+		"VIDEO": {
+			"SINGLE": "Видео",
+			"PLURAL": "Видео",
+			"DOWNLOAD": "Скачать",
+			"NOT_FOUND": "Видео не найдено",
+			"NO_VIDEO": "Нет видео",
+			"DOWNLOADS": "Загрузки",
+			"NO_VIDEO_DOWNLOAD": "Нет загрузки видео",
+			"LOADING_VIDEOS": "Загрузка видео...",
+			"EDIT_METADATA": "Редактировать метаданные видео",
+			"STARTING_DOWNLOAD_FOR": "Начало загрузки для: {{ url }}",
+			"DOWNLOAD_FAILED_FOR": "Ошибка загрузки для: {{ url }}, повторите попытку",
+			"DOWNLOAD_COMPLETED_FOR": "Загрузка завершена для: {{ url }}",
+			"SHARED_SUCCESSFULLY": "Видео успешно опубликовано",
+			"COPIED_SUCCESSFULLY": "Видео успешно скопировано",
+			"CORE_INFO": "Основная информация",
+			"RECORDED": "Записано",
+			"DURATION": "Длительность",
+			"SIZE": "Размер",
+			"VIEW_FULL": "Посмотреть полное видео",
+			"TECHNICAL_DETAILS": "Технические детали",
+			"RESOLUTION": "Разрешение",
+			"CODEC": "Кодек",
+			"FRAME_RATE": "Частота кадров",
+			"UPLOADED_BY": "Загружено пользователем",
+			"NO_VIDEO_AVAILABLE": "Нет доступного видео",
+			"RETRIED": "Повторная попытка загрузки видео",
+			"REMOVED_FROM_QUEUE": "Видео удалено из очереди",
+			"ADDED_TO_QUEUE": "Видео добавлено в очередь",
+			"DELETE_SUCCESSFULLY": "Видео успешно удалено",
+			"UPDATE_SUCCESSFULLY": "Видео успешно обновлено",
+			"ERROR": {
+				"REQUIRED": "Требуется название.",
+				"AT_LEAST_3": "Название должно содержать не менее 3 символов.",
+				"AT_MOST_255": "Название не может превышать 255 символов.",
+				"AT_MOST_1000": "Описание не может превышать 1000 символов.",
+				"SHARE_CANCELED": "Общий доступ отменен",
+				"INVALID_SHARE_DATA": "Недопустимые данные для публикации",
+				"SHARE_NOT_ALLOWED": "Публикация не разрешена",
+				"UNEXPECTED_SHARING_ERROR": "Неожиданная ошибка при публикации"
+			}
+		}
+	}
 }

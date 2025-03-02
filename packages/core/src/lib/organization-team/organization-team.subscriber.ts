@@ -1,5 +1,5 @@
 import { EventSubscriber } from 'typeorm';
-import { sluggable } from '@gauzy/common';
+import { sluggable } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
 import { getDummyImage } from '../core/utils';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
@@ -45,7 +45,7 @@ export class OrganizationTeamSubscriber extends BaseEntityEventSubscriber<Organi
 	async beforeEntityCreate(entity: OrganizationTeam): Promise<void> {
 		try {
 			// Assign the current user's ID as the creator
-			entity.createdById = RequestContext.currentUserId();
+			entity.createdByUserId = RequestContext.currentUserId();
 
 			// Generate a slug for the profile link
 			if (entity.profile_link || entity.name) {

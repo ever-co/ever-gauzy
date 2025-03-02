@@ -10,8 +10,12 @@ import { DealsService, ErrorHandlingService, PipelinesService, Store, ToastrServ
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { catchError, combineLatest, firstValueFrom, map, Observable, of, Subject, switchMap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { DeleteConfirmationComponent, IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-core/shared';
-import { PipelineDealCreatedByComponent } from '../table-components/pipeline-deal-created-by/pipeline-deal-created-by';
+import {
+	CreatedByUserComponent,
+	DeleteConfirmationComponent,
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from '@gauzy/ui-core/shared';
 import { PipelineDealExcerptComponent } from '../table-components/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
 import { PipelineDealProbabilityComponent } from '../table-components/pipeline-deal-probability/pipeline-deal-probability.component';
 
@@ -96,10 +100,14 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 				const { id: pipelineId, organizationId, tenantId } = pipeline;
 
 				// Fetch pipeline deals
-				return this._pipelinesService.getPipelineDeals(pipelineId, {
-					organizationId,
-					tenantId
-				});
+				return this._pipelinesService.getPipelineDeals(
+					pipelineId,
+					{
+						organizationId,
+						tenantId
+					},
+					['stage', 'createdByUser']
+				);
 			}),
 			// Map the contacts to the clients property
 			map(({ items }: IPagination<IDeal>) => items),
@@ -240,13 +248,13 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 						instance.value = cell.getValue();
 					}
 				},
-				createdBy: {
+				createdByUser: {
 					title: this.getTranslation('SM_TABLE.CREATED_BY'),
 					type: 'custom',
 					width: '30%',
 					isFilterable: false,
-					renderComponent: PipelineDealCreatedByComponent,
-					componentInitFunction: (instance: PipelineDealCreatedByComponent, cell: Cell) => {
+					renderComponent: CreatedByUserComponent<IDeal>,
+					componentInitFunction: (instance: CreatedByUserComponent<IDeal>, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					}

@@ -1,13 +1,12 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ICandidateFeedback, ICandidateFeedbackCreateInput } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { FeedbackUpdateCommand } from '../candidate-feedbacks.update.command';
 import { CandidateFeedbacksService } from '../../candidate-feedbacks.service';
 import { CandidateInterviewService } from '../../../candidate-interview/candidate-interview.service';
 
 @CommandHandler(FeedbackUpdateCommand)
-export class FeedbackUpdateHandler
-	implements ICommandHandler<FeedbackUpdateCommand> {
+export class FeedbackUpdateHandler implements ICommandHandler<FeedbackUpdateCommand> {
 	constructor(
 		private readonly candidateFeedbackService: CandidateFeedbacksService,
 		private readonly candidateInterviewService: CandidateInterviewService
@@ -20,14 +19,10 @@ export class FeedbackUpdateHandler
 		if (feedback) {
 			const interviewId = entity.interviewer ? entity.interviewer.interviewId : null;
 			if (interviewId) {
-				const feedbacks = await this.candidateFeedbackService.getFeedbacksByInterviewId(
-					interviewId
-				);
+				const feedbacks = await this.candidateFeedbackService.getFeedbacksByInterviewId(interviewId);
 				let interviewRating: number;
 				if (isNotEmpty(feedbacks)) {
-					interviewRating = this.candidateFeedbackService.calcRating(
-						feedbacks
-					);
+					interviewRating = this.candidateFeedbackService.calcRating(feedbacks);
 					await this.candidateInterviewService.create({
 						id: interviewId,
 						rating: interviewRating
@@ -38,12 +33,9 @@ export class FeedbackUpdateHandler
 		}
 	}
 
-	public async update(
-		id: string,
-		entity: ICandidateFeedbackCreateInput
-	): Promise<ICandidateFeedback> {
-		return this.candidateFeedbackService.create({ 
-			id, 
+	public async update(id: string, entity: ICandidateFeedbackCreateInput): Promise<ICandidateFeedback> {
+		return this.candidateFeedbackService.create({
+			id,
 			...entity
 		});
 	}

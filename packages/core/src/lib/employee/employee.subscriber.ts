@@ -1,5 +1,5 @@
 import { EventSubscriber } from 'typeorm';
-import { retrieveNameFromEmail, sluggable } from '@gauzy/common';
+import { extractNameFromEmail, sluggable } from '@gauzy/utils';
 import { Employee } from './employee.entity';
 import { getUserDummyImage } from '../core/utils';
 import { Organization, UserOrganization } from '../core/entities/internal';
@@ -139,8 +139,11 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 			// Determine the slug based on the available fields in order of preference
 			const slugSource =
 				firstName?.trim() || lastName?.trim()
-					? `${(firstName || '').trim()} ${(lastName || '').trim()}`.trim()
-					: username || retrieveNameFromEmail(email);
+					? [firstName, lastName]
+							.filter(Boolean)
+							.map((name) => name.trim())
+							.join(' ')
+					: username || extractNameFromEmail(email);
 
 			entity.profile_link = sluggable(slugSource);
 		} catch (error) {

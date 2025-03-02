@@ -7,11 +7,6 @@ import * as Form from 'form-data';
 import { screen } from 'electron';
 import screenshot from 'screenshot-desktop';
 
-// Import logging for electron and override default console logging
-import log from 'electron-log';
-console.log = log.log;
-Object.assign(console, log.functions);
-
 const captureOnlyActiveWindow = async (
 	displays,
 	timeSlotId,

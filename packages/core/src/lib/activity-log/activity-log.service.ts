@@ -10,14 +10,15 @@ import {
 	ID,
 	IPagination
 } from '@gauzy/contracts';
-import { isNotNullOrUndefined } from '@gauzy/common';
+import { isNotNullOrUndefined } from '@gauzy/utils';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { activityLogUpdatedFieldsAndValues, generateActivityLogDescription } from './activity-log.helper';
 import { ActivityLogEvent } from './events/activity-log.event';
 import { GetActivityLogsDTO, allowedOrderDirections, allowedOrderFields } from './dto/get-activity-logs.dto';
 import { ActivityLog } from './activity-log.entity';
-import { MikroOrmActivityLogRepository, TypeOrmActivityLogRepository } from './repository';
+import { TypeOrmActivityLogRepository } from './repository/type-orm-activity-log.repository';
+import { MikroOrmActivityLogRepository } from './repository/mikro-orm-activity-log.repository';
 
 @Injectable()
 export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
@@ -30,7 +31,7 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 	}
 
 	/**
-	 * Creates a new activity log entry with the provided input, while associating it with the current user and tenant.
+	 * Creates a new activity log entry with the provided input, while associating it with the current employee and tenant.
 	 *
 	 * @param input - The data required to create an activity log entry.
 	 * @returns The created activity log entry.
@@ -38,14 +39,14 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 	 */
 	async create(input: IActivityLogInput): Promise<IActivityLog> {
 		try {
-			// Retrieve the current user's ID from the request context
-			const creatorId = RequestContext.currentUserId();
-
 			// Retrieve the current tenant ID from the request context or use the provided tenantId
-			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 
-			// Create the activity log entry using the provided input along with the tenantId and creatorId
-			return await super.create({ ...input, tenantId, creatorId });
+			// Retrieve the current employee's ID from the request context
+			const employeeId = RequestContext.currentEmployeeId() ?? input.employeeId;
+
+			// Create the activity log entry using the provided input along with the employeeId and tenantId
+			return await super.create({ ...input, employeeId, tenantId });
 		} catch (error) {
 			console.log('Error while creating activity log:', error);
 			throw new BadRequestException('Error while creating activity log', error);

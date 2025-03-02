@@ -1,10 +1,6 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import {
-	StatusTypesMapRequestApprovalEnum,
-	RequestApprovalStatusTypesEnum
-} from '@gauzy/contracts';
+import { StatusTypesMapRequestApprovalEnum, RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 import { TimeOffRequest } from '../../time-off-request.entity';
 import { RequestApproval } from '../../../request-approval/request-approval.entity';
 import { RequestContext } from '../../../core/context';
@@ -14,18 +10,12 @@ import { TypeOrmRequestApprovalRepository } from '../../../request-approval/repo
 
 @CommandHandler(TimeOffUpdateCommand)
 export class TimeOffUpdateHandler implements ICommandHandler<TimeOffUpdateCommand> {
-
 	constructor(
-		@InjectRepository(TimeOffRequest)
 		private readonly typeOrmTimeOffRequestRepository: TypeOrmTimeOffRequestRepository,
+		private readonly typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository
+	) {}
 
-		@InjectRepository(RequestApproval)
-		private readonly typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository,
-	) { }
-
-	public async execute(
-		command?: TimeOffUpdateCommand
-	): Promise<TimeOffRequest> {
+	public async execute(command?: TimeOffUpdateCommand): Promise<TimeOffRequest> {
 		try {
 			const { id, timeOff } = command;
 			await this.typeOrmTimeOffRequestRepository.delete(id);
@@ -36,7 +26,9 @@ export class TimeOffUpdateHandler implements ICommandHandler<TimeOffUpdateComman
 
 			const requestApproval = new RequestApproval();
 			requestApproval.requestId = timeOffRequestSaved.id;
-			requestApproval.status = timeOffRequestSaved.status ? StatusTypesMapRequestApprovalEnum[timeOffRequestSaved.status] : RequestApprovalStatusTypesEnum.REQUESTED;
+			requestApproval.status = timeOffRequestSaved.status
+				? StatusTypesMapRequestApprovalEnum[timeOffRequestSaved.status]
+				: RequestApprovalStatusTypesEnum.REQUESTED;
 			requestApproval.createdBy = RequestContext.currentUser().id;
 			requestApproval.createdByName = RequestContext.currentUser().name;
 			requestApproval.name = 'Request time off';

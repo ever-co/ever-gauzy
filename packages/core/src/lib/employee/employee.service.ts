@@ -10,13 +10,14 @@ import {
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { MultiORMEnum, getDateRangeFormat, parseTypeORMFindToMikroOrm } from './../core/utils';
-import { Employee } from './employee.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
-import { MikroOrmEmployeeRepository, TypeOrmEmployeeRepository } from './repository';
+import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
+import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
+import { Employee } from './employee.entity';
 
 @Injectable()
 export class EmployeeService extends TenantAwareCrudService<Employee> {

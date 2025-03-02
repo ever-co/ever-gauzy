@@ -1,0 +1,102 @@
+<div class="video-details-container">
+	@if(video) {
+	<div class="video-details-wrapper">
+		<!-- Header Section -->
+		<header class="video-header">
+			<div class="header-content">
+				<span class="cancel mb-3"><i (click)="close()" class="fas fa-times"></i></span>
+				<h2 class="title video-title">{{ video.title }}</h2>
+			</div>
+		</header>
+
+		<!-- Video Preview (Optional) -->
+		@if(video.fullUrl) {
+		<div class="video-preview mb-3">
+			<plug-video-player
+				[src]="video.fullUrl"
+				[alt]="video.title + 'Video Thumbnail'"
+				class="video-thumbnail"
+			></plug-video-player>
+		</div>
+		}
+
+		<!-- Details Grid -->
+		<div class="video-details-grid">
+			<!-- Core Details -->
+			<div class="details-section core-details">
+				<div class="section-header">
+					<h3>{{ 'PLUGIN.VIDEO.CORE_INFO' | translate }}</h3>
+				</div>
+				<div class="section-content">
+					<div class="detail-item">
+						<span class="label">{{ 'PLUGIN.VIDEO.RECORDED' | translate }}</span>
+						<span class="value">{{ video.recordedAt | date : 'medium' }}</span>
+					</div>
+					<div class="detail-item">
+						<span class="label">{{ 'PLUGIN.VIDEO.DURATION' | translate }}</span>
+						<span class="value">{{ video.duration | durationFormat }}</span>
+					</div>
+					<div class="detail-item">
+						<span class="label">{{ 'PLUGIN.VIDEO.SIZE' | translate }}</span>
+						<span class="value">{{ video.size | fileSize }}</span>
+					</div>
+					@if(video.fullUrl) {
+					<div class="detail-item full-url">
+						<a [href]="video.fullUrl" target="_blank" rel="noopener noreferrer" class="url-link">
+							{{ 'PLUGIN.VIDEO.VIEW_FULL' | translate }}
+							<i class="fas fa-external-link-alt"></i>
+						</a>
+					</div>
+					}
+				</div>
+			</div>
+
+			<!-- Metadata Section -->
+			<div class="details-section metadata-details">
+				<div class="section-header">
+					<h3>{{ 'PLUGIN.VIDEO.TECHNICAL_DETAILS' | translate }}</h3>
+				</div>
+				<div class="section-content">
+					<div class="detail-item">
+						<span class="label">{{ 'PLUGIN.VIDEO.RESOLUTION' | translate }}</span>
+						<span class="value">{{ video.resolution }}</span>
+					</div>
+					<div class="detail-item">
+						<span class="label">{{ 'PLUGIN.VIDEO.CODEC' | translate }}</span>
+						<span class="value">{{ video.codec }}</span>
+					</div>
+					<div class="detail-item">
+						<span class="label">{{ 'PLUGIN.VIDEO.FRAME_RATE' | translate }}</span>
+						<span class="value">{{ video.frameRate }} FPS</span>
+					</div>
+				</div>
+			</div>
+
+			<!-- Uploader Section -->
+			@if(video.uploadedBy) {
+			<div class="details-section uploader-details">
+				<div class="section-header">
+					<h3>{{ 'PLUGIN.VIDEO.UPLOADED_BY' | translate }}</h3>
+				</div>
+				<div class="section-content uploader-profile">
+					<ngx-avatar
+						[src]="video.uploadedBy?.user.imageUrl"
+						[name]="video.uploadedBy?.fullName"
+						[id]="video.uploadedBy?.id"
+						[employee]="video.uploadedBy"
+						class="uploader-avatar"
+					></ngx-avatar>
+				</div>
+			</div>
+			}
+		</div>
+
+		<!-- Action Footer -->
+		<nb-card-footer class="text-right p-0">
+			<button nbButton type="button" (click)="close()" outline status="basic">{{ 'BUTTONS.CLOSE' | translate }}</button>
+		</nb-card-footer>
+	</div>
+	} @else {
+	<ngx-no-data-message [message]="'PLUGIN.VIDEO.NO_VIDEO_AVAILABLE' | translate"></ngx-no-data-message>
+	}
+</div>

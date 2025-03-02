@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
@@ -8,7 +7,7 @@ import {
 	IPagination,
 	ITaskRelatedIssueType,
 	ITaskRelatedIssueTypeCreateInput,
-	ITaskRelatedIssueTypeFindInput,
+	ITaskRelatedIssueTypeFindInput
 } from '@gauzy/contracts';
 import { isPostgres } from '@gauzy/config';
 import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
@@ -21,13 +20,9 @@ import { MikroOrmTaskRelatedIssueTypeRepository } from './repository/mikro-orm-r
 @Injectable()
 export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<TaskRelatedIssueType> {
 	constructor(
-		@InjectRepository(TaskRelatedIssueType)
 		readonly typeOrmTaskRelatedIssueTypeRepository: TypeOrmTaskRelatedIssueTypeRepository,
-
 		readonly mikroOrmTaskRelatedIssueTypeRepository: MikroOrmTaskRelatedIssueTypeRepository,
-
-		@InjectConnection()
-		readonly knexConnection: KnexConnection
+		@InjectConnection() readonly knexConnection: KnexConnection
 	) {
 		super(typeOrmTaskRelatedIssueTypeRepository, mikroOrmTaskRelatedIssueTypeRepository, knexConnection);
 	}
@@ -47,8 +42,14 @@ export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<T
 				return await super.fetchAll(params);
 			}
 		} catch (error) {
-			console.log('Failed to retrieve related issue types for tasks. Please ensure that the provided parameters are valid and complete.', error);
-			throw new BadRequestException('Failed to retrieve related issue types for tasks. Please ensure that the provided parameters are valid and complete.', error);
+			console.log(
+				'Failed to retrieve related issue types for tasks. Please ensure that the provided parameters are valid and complete.',
+				error
+			);
+			throw new BadRequestException(
+				'Failed to retrieve related issue types for tasks. Please ensure that the provided parameters are valid and complete.',
+				error
+			);
 		}
 	}
 
@@ -62,7 +63,7 @@ export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<T
 		return await super.delete(id, {
 			where: {
 				isSystem: false
-			},
+			}
 		});
 	}
 
@@ -90,7 +91,7 @@ export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<T
 					icon,
 					color,
 					organization,
-					isSystem: false,
+					isSystem: false
 				});
 				statuses.push(status);
 			}
@@ -129,7 +130,7 @@ export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<T
 					description,
 					icon,
 					color,
-					isSystem: false,
+					isSystem: false
 				});
 				statuses.push(status);
 			}

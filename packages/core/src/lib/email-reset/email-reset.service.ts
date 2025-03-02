@@ -1,15 +1,13 @@
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, MoreThanOrEqual, SelectQueryBuilder } from 'typeorm';
 import { IEmailReset, IEmailResetFindInput, LanguagesEnum } from '@gauzy/contracts';
+import { generateAlphaNumericCode } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
 import { UserService } from '../user/user.service';
 import { TenantAwareCrudService } from '../core/crud';
 import { EmailReset } from './email-reset.entity';
 import { UserEmailDTO } from '../user/dto';
-import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
-import { generateRandomAlphaNumericCode } from './../core/utils';
 import { EmailResetCreateCommand } from './commands';
 import { EmailResetGetQuery } from './queries';
 import { VerifyEmailResetRequestDTO } from './dto/verify-email-reset-request.dto';
@@ -23,11 +21,8 @@ import { MikroOrmEmailResetRepository } from './repository/mikro-orm-email-reset
 @Injectable()
 export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 	constructor(
-		@InjectRepository(EmailReset)
-		typeOrmEmailResetRepository: TypeOrmEmailResetRepository,
-
-		mikroOrmEmailResetRepository: MikroOrmEmailResetRepository,
-
+		readonly typeOrmEmailResetRepository: TypeOrmEmailResetRepository,
+		readonly mikroOrmEmailResetRepository: MikroOrmEmailResetRepository,
 		private readonly userService: UserService,
 		private readonly commandBus: CommandBus,
 		private readonly queryBus: QueryBus,
@@ -43,9 +38,7 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 			let user = RequestContext.currentUser();
 
 			user = await this.userService.findOneByIdString(user.id, {
-				relations: {
-					role: true
-				}
+				relations: { role: true }
 			});
 
 			const token = await this.authService.getJwtAccessToken(user);
@@ -60,7 +53,7 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 				});
 			}
 
-			const verificationCode = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
+			const verificationCode = generateAlphaNumericCode();
 
 			await this.commandBus.execute(
 				new EmailResetCreateCommand({
@@ -73,9 +66,7 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 			);
 
 			const employee = await this.employeeService.findOneByIdString(user.employeeId, {
-				relations: {
-					organization: true
-				}
+				relations: { organization: true }
 			});
 
 			const { organization } = employee;

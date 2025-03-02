@@ -66,22 +66,21 @@ export class ToastrService {
 	 * @param title The title of the toast message.
 	 * @param options Additional options for the toast message.
 	 */
-	info(
-		message: any,
-		title: string,
-		options: Object = {
+	info(message: any, title: string, options?: any): void {
+		options = {
 			duration: 5000,
-			preventDuplicates: true
-		}
-	): void {
+			preventDuplicates: true,
+			translationParams: {},
+			...options
+		};
 		this._nbToastrService.info(
-			this._i18nService.translate(message),
+			this._i18nService.translate(message, options.translationParams),
 			this._i18nService.translate(title || 'TOASTR.TITLE.INFO'),
 			options
 		);
 	}
 
-	/**
+	/**``
 	 * Extracts the message from a message object or string.
 	 * @param message The message object or string.
 	 * @returns The extracted message string.

@@ -35,7 +35,7 @@ import { PaymentReportQueryDTO } from './dto/query';
 @ApiTags('Payment')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
-@Controller()
+@Controller('/payments')
 export class PaymentController extends CrudController<Payment> {
 	constructor(
 		private readonly paymentService: PaymentService,
@@ -62,7 +62,7 @@ export class PaymentController extends CrudController<Payment> {
 		description: 'Record not found'
 	})
 	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
-	@Get('report')
+	@Get('/report')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async getPaymentReport(@Query() options: PaymentReportQueryDTO): Promise<IPaymentReportData[]> {
 		const reports = await this.paymentService.getPayments(options);
@@ -93,7 +93,7 @@ export class PaymentController extends CrudController<Payment> {
 		description: 'Record not found'
 	})
 	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
-	@Get('report/charts')
+	@Get('/report/charts')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async getDailyReportCharts(@Query() options: PaymentReportQueryDTO) {
 		return this.paymentService.getDailyReportCharts(options);
@@ -107,7 +107,7 @@ export class PaymentController extends CrudController<Payment> {
 	 * @returns
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Post('receipt')
+	@Post('/receipt')
 	async sendReceipt(
 		@Body() body,
 		@I18nLang() languageCode: LanguagesEnum,
@@ -124,7 +124,7 @@ export class PaymentController extends CrudController<Payment> {
 	 * @returns
 	 */
 	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
-	@Get('pagination')
+	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
 	async pagination(@Query() params: PaginationParams<Payment>): Promise<IPagination<IPayment>> {
 		return await this.paymentService.pagination(params);
@@ -138,7 +138,7 @@ export class PaymentController extends CrudController<Payment> {
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
-	@Get()
+	@Get('/')
 	@UseValidationPipe()
 	async findAll(@Query() params: PaginationParams<Payment>): Promise<IPagination<IPayment>> {
 		return await this.paymentService.findAll(params);
@@ -151,7 +151,7 @@ export class PaymentController extends CrudController<Payment> {
 	 * @returns
 	 */
 	@HttpCode(HttpStatus.CREATED)
-	@Post()
+	@Post('/')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreatePaymentDTO): Promise<IPayment> {
 		return await this.paymentService.create(entity);
@@ -165,11 +165,10 @@ export class PaymentController extends CrudController<Payment> {
 	 * @returns
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Put(':id')
+	@Put('/:id')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: UpdatePaymentDTO): Promise<IPayment> {
 		try {
-			await this.paymentService.findOneByIdString(id);
 			return await this.paymentService.create({
 				id,
 				...entity

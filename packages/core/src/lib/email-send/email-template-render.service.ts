@@ -1,111 +1,101 @@
-import { Injectable, InternalServerErrorException } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { IsNull } from "typeorm";
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { IsNull } from 'typeorm';
 import * as Handlebars from 'handlebars';
-import { IEmailTemplate, IVerifySMTPTransport, LanguagesEnum } from "@gauzy/contracts";
-import { ISMTPConfig, isEmpty } from "@gauzy/common";
-import { CustomSmtp, EmailTemplate } from "../core/entities/internal";
-import { SMTPUtils } from "./utils";
+import { IEmailTemplate, IVerifySMTPTransport, LanguagesEnum } from '@gauzy/contracts';
+import { ISMTPConfig } from '@gauzy/common';
+import { isEmpty } from '@gauzy/utils';
+import { CustomSmtp } from '../core/entities/internal';
+import { SMTPUtils } from './utils';
 import { TypeOrmEmailTemplateRepository } from './../email-template/repository/type-orm-email-template.repository';
-import { MikroOrmEmailTemplateRepository } from './../email-template/repository/mikro-orm-email-template.repository';
 import { TypeOrmCustomSmtpRepository } from './../custom-smtp/repository/type-orm-custom-smtp.repository';
-import { MikroOrmCustomSmtpRepository } from './../custom-smtp/repository/mikro-orm-custom-smtp.repository';
 
 @Injectable()
 export class EmailTemplateRenderService {
+	constructor(
+		private typeOrmEmailTemplateRepository: TypeOrmEmailTemplateRepository,
+		private typeOrmCustomSmtpRepository: TypeOrmCustomSmtpRepository
+	) {}
 
-    constructor(
-        @InjectRepository(EmailTemplate)
-        private typeOrmEmailTemplateRepository: TypeOrmEmailTemplateRepository,
+	/**
+	 * Renders an email template based on the provided view and locals.
+	 * @param view The name of the email template to render.
+	 * @param locals Local variables to be used in the template rendering.
+	 * @returns The rendered HTML content of the email template.
+	 */
+	public render = async (view: string, locals: any) => {
+		let smtpTransporter: CustomSmtp;
+		let isValidSmtp: boolean = false;
 
-        mikroOrmEmailTemplateRepository: MikroOrmEmailTemplateRepository,
+		try {
+			smtpTransporter = await this.typeOrmCustomSmtpRepository.findOneOrFail({
+				where: {
+					organizationId: isEmpty(locals.organizationId) ? IsNull() : locals.organizationId,
+					tenantId: isEmpty(locals.tenantId) ? IsNull() : locals.tenantId
+				},
+				order: {
+					createdAt: 'DESC'
+				}
+			});
+		} catch (error) {
+			smtpTransporter = await this.typeOrmCustomSmtpRepository.findOne({
+				where: {
+					organizationId: IsNull(),
+					tenantId: isEmpty(locals.tenantId) ? IsNull() : locals.tenantId
+				},
+				order: {
+					createdAt: 'DESC'
+				}
+			});
+		}
 
-        @InjectRepository(CustomSmtp)
-        private typeOrmCustomSmtpRepository: TypeOrmCustomSmtpRepository,
+		if (smtpTransporter) {
+			/** */
+			try {
+				const smtpConfig: ISMTPConfig = smtpTransporter.getSmtpTransporter();
+				const transport: IVerifySMTPTransport = SMTPUtils.convertSmtpToTransporter(smtpConfig);
 
-        mikroOrmCustomSmtpRepository: MikroOrmCustomSmtpRepository,
-    ) { }
+				isValidSmtp = !!(await SMTPUtils.verifyTransporter(transport));
+			} catch (error) {
+				isValidSmtp = false;
+			}
+		}
 
-    /**
-     * Renders an email template based on the provided view and locals.
-     * @param view The name of the email template to render.
-     * @param locals Local variables to be used in the template rendering.
-     * @returns The rendered HTML content of the email template.
-     */
-    public render = async (view: string, locals: any) => {
-        let smtpTransporter: CustomSmtp;
-        let isValidSmtp: boolean = false;
+		try {
+			view = view.replace('\\', '/');
 
-        try {
-            smtpTransporter = await this.typeOrmCustomSmtpRepository.findOneOrFail({
-                where: {
-                    organizationId: isEmpty(locals.organizationId) ? IsNull() : locals.organizationId,
-                    tenantId: isEmpty(locals.tenantId) ? IsNull() : locals.tenantId
-                },
-                order: {
-                    createdAt: 'DESC'
-                }
-            });
-        } catch (error) {
-            smtpTransporter = await this.typeOrmCustomSmtpRepository.findOne({
-                where: {
-                    organizationId: IsNull(),
-                    tenantId: isEmpty(locals.tenantId) ? IsNull() : locals.tenantId
-                },
-                order: {
-                    createdAt: 'DESC'
-                }
-            });
-        }
+			let emailTemplate: IEmailTemplate;
 
-        if (smtpTransporter) {
-            /** */
-            try {
-                const smtpConfig: ISMTPConfig = smtpTransporter.getSmtpTransporter();
-                const transport: IVerifySMTPTransport = SMTPUtils.convertSmtpToTransporter(smtpConfig);
+			// Find email template customized for the given organization
+			const query = new Object({
+				name: view,
+				languageCode: locals.locale || LanguagesEnum.ENGLISH
+			});
 
-                isValidSmtp = !!await SMTPUtils.verifyTransporter(transport)
-            } catch (error) {
-                isValidSmtp = false;
-            }
-        }
+			if (!!isValidSmtp) {
+				query['organizationId'] = locals.organizationId;
+				query['tenantId'] = locals.tenantId;
 
-        try {
-            view = view.replace('\\', '/');
+				emailTemplate = await this.typeOrmEmailTemplateRepository.findOneBy(query);
+			}
 
-            let emailTemplate: IEmailTemplate;
+			// If no email template found for the organization, use the default template
+			if (!emailTemplate) {
+				query['organizationId'] = IsNull();
+				query['tenantId'] = IsNull();
 
-            // Find email template customized for the given organization
-            const query = new Object({
-                name: view,
-                languageCode: locals.locale || LanguagesEnum.ENGLISH
-            });
+				emailTemplate = await this.typeOrmEmailTemplateRepository.findOneBy(query);
+			}
 
-            if (!!isValidSmtp) {
-                query['organizationId'] = locals.organizationId;
-                query['tenantId'] = locals.tenantId;
+			if (!emailTemplate) {
+				return '';
+			}
 
-                emailTemplate = await this.typeOrmEmailTemplateRepository.findOneBy(query);
-            }
-
-            // If no email template found for the organization, use the default template
-            if (!emailTemplate) {
-                query['organizationId'] = IsNull();
-                query['tenantId'] = IsNull();
-
-                emailTemplate = await this.typeOrmEmailTemplateRepository.findOneBy(query);
-            }
-
-            if (!emailTemplate) {
-                return '';
-            }
-
-            const template = Handlebars.compile(emailTemplate.hbs);
-            const html = template(locals);
-            return html;
-        } catch (error) {
-            console.log('Error while rendering email template: %s', error);
-            throw new InternalServerErrorException(error);
-        }
-    }
+			const template = Handlebars.compile(emailTemplate.hbs);
+			const html = template(locals);
+			return html;
+		} catch (error) {
+			console.log('Error while rendering email template: %s', error);
+			throw new InternalServerErrorException(error);
+		}
+	};
 }

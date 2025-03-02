@@ -19,27 +19,26 @@ import { CreateDealDTO } from './dto';
 @ApiTags('Deal')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
-@Controller()
+@Controller('/deals')
 export class DealController extends CrudController<Deal> {
 	constructor(private readonly _dealService: DealService) {
 		super(_dealService);
 	}
 
 	/**
-	 * Find all sales pipelines with permissions, API documentation, and query parameter parsing.
+	 * Retrieve all deals with optional filtering and pagination.
 	 *
-	 * @param data - The query parameter data.
-	 * @returns A paginated result of sales pipelines.
+	 * @param params - Pagination and filtering parameters
+	 * @returns A paginated result of deals
 	 */
-	@ApiOperation({ summary: 'find all' })
+	@ApiOperation({ summary: 'Retrieve all deals with optional filtering and pagination' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found records'
+		description: 'Successfully retrieved deals.'
 	})
-	@Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
 	@Get('/')
-	async findAll(@Query() filter: PaginationParams<Deal>): Promise<IPagination<Deal>> {
-		return await this._dealService.findAll(filter);
+	async findAll(@Query() params: PaginationParams<Deal>): Promise<IPagination<Deal>> {
+		return await this._dealService.findAll(params);
 	}
 
 	/**
@@ -51,12 +50,12 @@ export class DealController extends CrudController<Deal> {
 	 * @param query - Query parameters for relations.
 	 * @returns A promise resolving to the found deal entity.
 	 */
-	@Get('/:id')
 	@ApiOperation({ summary: 'Find a deal by ID' })
 	@ApiResponse({ status: 200, description: 'The found deal' })
 	@ApiResponse({ status: 404, description: 'Deal not found' })
+	@Get('/:id')
 	async findById(@Param('id', UUIDValidationPipe) id: ID, @Query() options: OptionParams<Deal>): Promise<Deal> {
-		return await this._dealService.findById(id, options);
+		return await this._dealService.findOneByIdString(id, options);
 	}
 
 	/**
@@ -74,7 +73,7 @@ export class DealController extends CrudController<Deal> {
 	@ApiInternalServerErrorResponse({ description: 'Internal server error.' })
 	@Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
 	@Post('/')
-	@UseValidationPipe()
+	@UseValidationPipe({ whitelist: true })
 	async create(@Body() entity: CreateDealDTO): Promise<Deal> {
 		// Call the create method on the dealService with the provided entity data
 		return await this._dealService.create(entity);

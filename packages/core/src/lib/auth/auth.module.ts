@@ -1,12 +1,8 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from '@nestjs/core';
 import { HttpModule } from '@nestjs/axios';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { SocialAuthModule } from '@gauzy/auth';
 import { EventBusModule } from '../event-bus/event-bus.module';
-import { OrganizationTeam, UserOrganization } from '../core/entities/internal';
 import { EmailSendModule } from '../email-send/email-send.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
@@ -17,37 +13,33 @@ import { UserModule } from '../user/user.module';
 import { EmployeeModule } from '../employee/employee.module';
 import { RoleModule } from '../role/role.module';
 import { OrganizationModule } from '../organization/organization.module';
+import { OrganizationTeamModule } from '../organization-team/organization-team.module';
 import { PasswordResetModule } from '../password-reset/password-reset.module';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { EmailVerificationController } from './email-verification.controller';
 import { FeatureModule } from '../feature/feature.module';
-import { SocialAccountService } from './social-account/social-account.service';
 import { SocialAccountModule } from './social-account/social-account.module';
+import { UserOrganizationModule } from '../user-organization/user-organization.module';
 
-const providers = [AuthService, EmailConfirmationService, SocialAccountService, UserOrganizationService];
+// Core service providers for handling authentication and related functionalities
+const providers = [AuthService, EmailConfirmationService, UserOrganizationService];
 
+// Authentication strategies for token validation and management
 const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 
 @Module({
 	imports: [
-		RouterModule.register([
-			{
-				path: '/auth',
-				module: AuthModule,
-				children: [{ path: '/', module: SocialAuthModule }]
-			}
-		]),
 		SocialAuthModule.registerAsync({
 			imports: [
-				TypeOrmModule.forFeature([OrganizationTeam]),
-				MikroOrmModule.forFeature([OrganizationTeam]),
 				HttpModule,
 				AuthModule,
 				EmailSendModule,
 				UserModule,
+				forwardRef(() => UserOrganizationModule),
 				EmployeeModule,
 				RoleModule,
 				OrganizationModule,
+				OrganizationTeamModule,
 				PasswordResetModule,
 				CqrsModule,
 				SocialAccountModule,
@@ -55,16 +47,17 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 			],
 			useClass: AuthService
 		}),
-		TypeOrmModule.forFeature([UserOrganization, OrganizationTeam]),
-		MikroOrmModule.forFeature([UserOrganization, OrganizationTeam]),
 		EmailSendModule,
 		UserModule,
+		forwardRef(() => UserOrganizationModule),
 		EmployeeModule,
 		RoleModule,
 		OrganizationModule,
+		OrganizationTeamModule,
 		PasswordResetModule,
 		FeatureModule,
 		CqrsModule,
+		SocialAccountModule,
 		EventBusModule
 	],
 	controllers: [AuthController, EmailVerificationController],

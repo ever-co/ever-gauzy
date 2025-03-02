@@ -1,0 +1,40 @@
+@if(video) {
+<div id="item">
+	<div (click)="open(video)" class="video-player">
+		<plug-video-player [src]="video.fullUrl"></plug-video-player>
+		<div class="duration">
+			{{ video.duration | durationFormat }}
+		</div>
+	</div>
+
+	<div class="video-info">
+		@if(video.uploadedBy) {
+		<ngx-avatar [src]="video.uploadedBy?.user.imageUrl" [employee]="video.uploadedBy"></ngx-avatar>
+		}
+		<div class="info">
+			<div class="title">
+				{{ video.title }}
+			</div>
+			<div class="author">
+				{{ video.uploadedBy?.fullName }}
+			</div>
+			<div class="date">
+				{{ video.recordedAt | date : 'medium' }}
+			</div>
+		</div>
+		<div class="actions">
+			<nb-icon
+				nbPopoverPlacement="bottom"
+				[nbPopover]="actions"
+				icon="more-vertical-outline"
+				[options]="{ animation: { type: 'zoom' } }"
+			></nb-icon>
+		</div>
+	</div>
+	<ng-template #actions>
+		<plug-action-button-group [buttons]="buttons" [data]="video"></plug-action-button-group>
+	</ng-template>
+</div>
+}@else {
+<div>{{ 'PLUGIN.VIDEO.NO_VIDEO' | translate }}</div>
+}

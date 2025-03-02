@@ -241,15 +241,6 @@ services:
           - key: UNLEASH_API_KEY
             scope: RUN_TIME
             value: '$UNLEASH_API_KEY'
-          - key: PM2_MACHINE_NAME
-            scope: RUN_TIME
-            value: '$PM2_MACHINE_NAME'
-          - key: PM2_SECRET_KEY
-            scope: RUN_TIME
-            value: '$PM2_SECRET_KEY'
-          - key: PM2_PUBLIC_KEY
-            scope: RUN_TIME
-            value: '$PM2_PUBLIC_KEY'
           - key: JITSU_SERVER_URL
             scope: RUN_TIME
             value: '$JITSU_SERVER_URL'

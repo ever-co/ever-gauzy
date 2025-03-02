@@ -3,6 +3,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import * as moment from 'moment';
 import * as chalk from 'chalk';
 import { Request } from 'express';
+import { SyncTags } from '@gauzy/constants';
 import {
 	IGithubAutomationIssuePayload,
 	IGithubIssue,
@@ -11,8 +12,6 @@ import {
 	IGithubInstallationDeletedPayload,
 	IIntegrationEntitySetting,
 	IIntegrationEntitySettingTied,
-	IIntegrationTenant,
-	IOrganization,
 	IOrganizationProject,
 	ITag,
 	IntegrationEntity,
@@ -21,10 +20,8 @@ import {
 	IOrganizationGithubRepository,
 	IIntegrationMap,
 	GithubRepositoryStatusEnum,
-	SYNC_TAG_GAUZY,
-	SYNC_TAG_GITHUB
+	ID
 } from '@gauzy/contracts';
-import { isNotEmpty, sleep } from '@gauzy/common';
 import {
 	AutomationLabelSyncCommand,
 	AutomationTaskSyncCommand,
@@ -32,9 +29,9 @@ import {
 	IntegrationMapSyncLabelCommand,
 	IntegrationTenantService,
 	OrganizationProjectService,
-	RequestContext,
-	arrayToObject
+	RequestContext
 } from '@gauzy/core';
+import { arrayToObject, isNotEmpty, sleep } from '@gauzy/utils';
 import { OctokitService } from '../probot/octokit.service';
 import { GithubRepositoryService } from './repository/github-repository.service';
 import { IntegrationSyncGithubRepositoryIssueCommand } from './repository/issue/commands';
@@ -54,13 +51,13 @@ export class GithubSyncService {
 	/**
 	 * Automatically synchronize GitHub issues with a repository.
 	 *
-	 * @param {IIntegrationTenant['id']} integrationId - The ID of the integration tenant.
+	 * @param {ID} integrationId - The ID of the integration tenant.
 	 * @param {IGithubSyncIssuePayload} input - The payload containing GitHub repository details and issues.
 	 * @param {Request} request - The HTTP request object.
 	 * @returns {Promise<boolean>} A Promise that indicates whether the synchronization was successful.
 	 */
 	public async autoSyncGithubIssues(
-		integrationId: IIntegrationTenant['id'],
+		integrationId: ID,
 		input: IGithubSyncIssuePayload,
 		request: Request
 	): Promise<boolean> {
@@ -137,13 +134,13 @@ export class GithubSyncService {
 	/**
 	 * Manually synchronize GitHub issues with a repository.
 	 *
-	 * @param {IIntegrationTenant['id']} integrationId - The ID of the integration tenant.
+	 * @param {ID} integrationId - The ID of the integration tenant.
 	 * @param {IGithubSyncIssuePayload} input - The payload containing GitHub repository details and issues.
 	 * @param {Request} request - The HTTP request object.
 	 * @returns {Promise<boolean>} A Promise indicating whether the synchronization was successful.
 	 */
 	public async manualSyncGithubIssues(
-		integrationId: IIntegrationTenant['id'],
+		integrationId: ID,
 		input: IGithubSyncIssuePayload,
 		request: Request
 	): Promise<boolean> {
@@ -198,7 +195,7 @@ export class GithubSyncService {
 	 * @throws {HttpException} Throws an HTTP exception if synchronization fails.
 	 */
 	public async syncingGithubIssues(
-		integrationId: IIntegrationTenant['id'],
+		integrationId: ID,
 		input: IGithubSyncIssuePayload,
 		delay: number = 100,
 		successCallback?: (success: boolean) => void,
@@ -356,9 +353,9 @@ export class GithubSyncService {
 		repository,
 		issue
 	}: {
-		organizationId: IOrganization['id'];
-		tenantId: IOrganization['tenantId'];
-		integrationId: IIntegrationTenant['id'];
+		organizationId: ID;
+		tenantId: ID;
+		integrationId: ID;
 		repository: IOrganizationGithubRepository;
 		issue: IGithubIssue;
 	}): Promise<ITag[]> {
@@ -380,7 +377,7 @@ export class GithubSyncService {
 				let labels = issue.labels;
 
 				// List of labels to check and create if missing
-				const labelsToCheck = [SYNC_TAG_GITHUB, SYNC_TAG_GAUZY];
+				const labelsToCheck = [SyncTags.GITHUB, SyncTags.GAUZY];
 				const labelsToCreate = labelsToCheck.filter(
 					(name) => !labels.find((label: IGithubIssueLabel) => label.name === name)
 				);

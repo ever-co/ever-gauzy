@@ -1,0 +1,72 @@
+/* Base Button Styles */
+button {
+  width: 100%;
+  padding: 0.75rem 1.25rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* Align Content for Custom Buttons */
+[nbButton] {
+  justify-content: flex-start;
+}
+
+/* Action Button Styles */
+.action {
+  box-shadow: var(--gauzy-shadow);
+  border: none;
+
+  &[nbButton].size-medium.icon-start.icon-end {
+    padding: 0.5rem 0.425rem;
+  }
+
+  /* General Appearance for Filled Buttons */
+  &[nbButton].appearance-filled {
+    background-color: var(--gauzy-card-2);
+    color: var(--gauzy-text-color);
+  }
+
+  /* Status Styles */
+  &[nbButton].appearance-filled.status-danger {
+    background-color: var(--gauzy-card-2);
+    color: var(--color-danger-default);
+  }
+
+  &[nbButton].appearance-filled.status-basic {
+    background-color: var(--gauzy-card-2);
+    color: var(--gauzy-text-color-2);
+  }
+
+  &[nbButton].appearance-filled.status-warning {
+    background-color: var(--gauzy-card-2);
+    color: var(--color-warning-default);
+  }
+
+  &[nbButton].appearance-filled.status-success {
+    background-color: var(--gauzy-card-2);
+    color: var(--color-success-default);
+  }
+
+  &[nbButton].appearance-filled.status-info {
+    background-color: var(--gauzy-card-2);
+    color: var(--color-info-default);
+  }
+
+  &[nbButton].appearance-filled.status-primary {
+    background-color: var(--gauzy-card-2);
+    color: var(--text-primary-color);
+  }
+
+  /* Hover Effects */
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Active Effects */
+  &:active {
+    transform: translateY(0);
+    box-shadow: var(--gauzy-shadow);
+  }
+}

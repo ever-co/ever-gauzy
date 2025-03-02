@@ -2,7 +2,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
 import { In } from 'typeorm';
 import { IEmployee, IOrganizationContact, IOrganizationProject, IOrganizationProjectEmployee } from '@gauzy/contracts';
-import { isEmpty, isNotEmpty } from '@gauzy/common';
+import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../../../core/context';
 import { OrganizationContactCreateCommand } from '../organization-contact-create.command';
 import { OrganizationContactService } from '../../organization-contact.service';
