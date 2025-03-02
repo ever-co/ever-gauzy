@@ -4413,7 +4413,6 @@
 		"LOW": "Faible",
 		"MEDIUM": "Moyen.",
 		"HIGH": "Haut",
-		"UNKNOWN": "Unknown",
 		"DEAL_DELETED": "L'accord '{{ name }}' a été supprimé.",
 		"DEAL_EDITED": "L'accord '{{ name }}' a été modifié.",
 		"DEAL_ADDED": "La transaction '{{ name }}' a été ajoutée"
