@@ -21,7 +21,7 @@ import {
 	PaginationFilterBaseComponent,
 	IPaginationBase,
 	PictureNameTagsComponent,
-	CreateByComponent,
+	CreatedByUserComponent,
 	DateViewComponent,
 	EmployeeWithLinksComponent,
 	TaskTeamsComponent,
@@ -167,7 +167,8 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 						'employeeApprovals.employee.user',
 						'teamApprovals',
 						'teamApprovals.team',
-						'tags'
+						'tags',
+						'createdByUser'
 					],
 					{ organizationId, tenantId }
 				)
@@ -242,9 +243,10 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 					title: this.getTranslation('APPROVAL_REQUEST_PAGE.CREATED_BY'),
 					type: 'custom',
 					isFilterable: false,
-					renderComponent: CreateByComponent,
-					componentInitFunction: (instance: CreateByComponent, cell: Cell) => {
+					renderComponent: CreatedByUserComponent<IRequestApproval>,
+					componentInitFunction: (instance: CreatedByUserComponent<IRequestApproval>, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getRawValue();
 					}
 				},
 				createdAt: {

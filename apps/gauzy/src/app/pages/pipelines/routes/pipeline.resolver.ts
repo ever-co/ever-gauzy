@@ -29,7 +29,7 @@ export const PipelineResolver: ResolveFn<Observable<IPipeline>> = (
 	const { id: organizationId, tenantId } = store.selectedOrganization;
 
 	// Get pipeline entity from the service
-	return pipelinesService.getById(pipelineId, { organizationId, tenantId }, ['stages']).pipe(
+	return pipelinesService.getById(pipelineId, { organizationId, tenantId }, ['stages', 'createdByUser']).pipe(
 		map((pipeline: IPipeline) => {
 			if (pipeline.organizationId !== organizationId) {
 				router.navigate(['pages/sales/pipelines']);
