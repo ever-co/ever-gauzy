@@ -4419,7 +4419,7 @@
 		"LOW": "Baixo",
 		"MEDIUM": "Médio",
 		"HIGH": "Alto",
-		"UNKNOWN": "Unknown",
+		"UNKNOWN": "Desconhecido",
 		"DEAL_DELETED": "O acordo '{{ name }}' foi removido.",
 		"DEAL_EDITED": "O acordo '{{ name }}' foi alterado.",
 		"DEAL_ADDED": "O negócio '{{ name }}' foi adicionado."

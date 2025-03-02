@@ -4421,7 +4421,7 @@
 		"LOW": "Bajo.",
 		"MEDIUM": "Medio",
 		"HIGH": "Alto",
-		"UNKNOWN": "Unknown",
+		"UNKNOWN": "Desconocido",
 		"DEAL_DELETED": "El trato '{{ name }}' fue eliminado",
 		"DEAL_EDITED": "El acuerdo '{{ name }}' fue cambiado.",
 		"DEAL_ADDED": "El acuerdo '{{ name }}' fue añadido."
