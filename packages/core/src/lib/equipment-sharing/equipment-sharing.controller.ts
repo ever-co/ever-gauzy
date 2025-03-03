@@ -16,7 +16,7 @@ import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../share
 import { Permissions } from './../shared/decorators';
 
 @ApiTags('EquipmentSharing')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('/equipment-sharing')
 export class EquipmentSharingController extends CrudController<EquipmentSharing> {
 	constructor(private readonly equipmentSharingService: EquipmentSharingService, private commandBus: CommandBus) {
@@ -41,13 +41,12 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW)
 	@Get('/organization/:id')
-	async findEquipmentSharingsByOrgId(
+	async findEquipmentSharingsByorganizationId(
 		@Param('id', UUIDValidationPipe) organizationId: ID
 	): Promise<IPagination<IEquipmentSharing>> {
-		return this.equipmentSharingService.findEquipmentSharingsByOrgId(organizationId);
+		return this.equipmentSharingService.findEquipmentSharingsByOrganizationId(organizationId);
 	}
 
 	/**
@@ -73,8 +72,8 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@Get('/employee/:id')
 	async findEquipmentSharingsByEmployeeId(
 		@Param('id', UUIDValidationPipe) employeeId: ID
-	): Promise<IEquipmentSharing[]> {
-		return this.equipmentSharingService.findRequestApprovalsByEmployeeId(employeeId);
+	): Promise<IPagination<IEquipmentSharing>> {
+		return this.equipmentSharingService.findEquipmentSharingsByEmployeeId(employeeId);
 	}
 
 	/**
@@ -103,14 +102,9 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@Post('/organization/:id')
 	async createEquipmentSharing(
 		@Param('id', UUIDValidationPipe) organizationId: ID,
-		@Body() equipmentSharing: EquipmentSharing
+		@Body() entitiy: EquipmentSharing
 	): Promise<IEquipmentSharing> {
-		return await this.commandBus.execute(
-			new EquipmentSharingCreateCommand({
-				...equipmentSharing,
-				organizationId
-			})
-		);
+		return await this.commandBus.execute(new EquipmentSharingCreateCommand(organizationId, entitiy));
 	}
 
 	/**
