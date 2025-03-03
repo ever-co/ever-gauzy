@@ -235,25 +235,19 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			const user = RequestContext.currentUser();
 			const tenantId = RequestContext.currentTenantId();
 
-			// Retrieve the organization ID from the filter or the request context
-			let { employeeIds = [], organizationId } = filter.where;
+			// Retrieve the organization ID from the filter or fallback to the current request context.
+			let { employeeIds = [], organizationId } = filter?.where || {};
 
 			// Set employeeIds based on user conditions and permissions
 			if (user.employeeId && !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 				employeeIds = [user.employeeId];
 			}
 
+			const take = filter?.take ?? 10; // Default pagination limit is 10
+			const skip = filter?.skip ? take * (filter.skip - 1) : 0; // Calculate the offset based on the skip value
+
 			// Create a query builder for the EquipmentSharing entity
 			const query = this.typeOrmRepository.createQueryBuilder('equipment_sharing');
-
-			/**
-			 * Pagination
-			 * Sets number of entities to skip.
-			 * Sets maximal number of entities to take.
-			 */
-			query.skip(filter && filter.skip ? filter.take * (filter.skip - 1) : 0);
-			query.take(filter && filter.take ? filter.take : 10);
-
 			query.innerJoinAndSelect(`${query.alias}.equipment`, 'equipment');
 			query.innerJoinAndSelect(`${query.alias}.createdByUser`, 'createdByUser');
 			query.leftJoinAndSelect(`${query.alias}.equipmentSharingPolicy`, 'equipmentSharingPolicy');
@@ -309,7 +303,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 				})
 			);
 
-			const [items, total] = await query.getManyAndCount();
+			const [items, total] = await query.skip(skip).take(take).getManyAndCount();
 			return { items, total };
 		} catch (error) {
 			console.error('Error finding equipment sharings by organization ID:', error);
