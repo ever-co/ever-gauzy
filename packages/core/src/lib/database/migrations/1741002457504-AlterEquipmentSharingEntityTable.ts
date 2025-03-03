@@ -128,16 +128,16 @@ export class AlterEquipmentSharingEntityTable1741002457504 implements MigrationI
 	 * @param queryRunner
 	 */
 	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		// Step 1: Copy data from "createdByUserId" to "createdBy"
-		console.log('Step 1: Copy data from "createdByUserId" to "createdBy"');
-		await queryRunner.query(`UPDATE \`equipment_sharing\` SET \`createdBy\` = \`createdByUserId\``);
-
-		// Step 2: Re-add the "createdBy" column
-		console.log('Step 2: Adding column "createdBy"');
+		// Step 1: Adding column "createdByName"
+		console.log('Step 1: Adding column "createdByName"');
 		await queryRunner.query(`ALTER TABLE \`equipment_sharing\` ADD \`createdByName\` varchar(255) NULL`);
+
+		// Step 2: Adding column "createdBy"
+		console.log('Step 2: Adding column "createdBy"');
+		await queryRunner.query(`ALTER TABLE \`equipment_sharing\` ADD \`createdBy\` varchar(255) NULL`);
 
 		// Step 3: Copy data from "createdByUserId" to "createdBy"
 		console.log('Step 3: Copy data from "createdByUserId" to "createdBy"');
-		await queryRunner.query(`ALTER TABLE \`equipment_sharing\` ADD \`createdBy\` varchar(255) NULL`);
+		await queryRunner.query(`UPDATE \`equipment_sharing\` SET \`createdBy\` = \`createdByUserId\``);
 	}
 }
