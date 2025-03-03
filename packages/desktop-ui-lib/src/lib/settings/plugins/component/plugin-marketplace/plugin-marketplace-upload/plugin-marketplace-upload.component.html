@@ -67,6 +67,48 @@
 						<input nbInput fullWidth formControlName="scope" placeholder="Package Scope" />
 					</nb-form-field>
 				</div>
+
+				<div
+					*ngIf="pluginForm.get('sourceType').value === 'GAUZY'"
+					class="source-inputs"
+					formGroupName="source"
+				>
+					<div
+						class="file-upload-area"
+						[class.has-file]="selectedFile"
+						[class.drag-over]="isDragOver"
+						(dragenter)="onDragEnter($event)"
+						(dragleave)="onDragLeave($event)"
+						(dragover)="onDragOver($event)"
+						(drop)="onDrop($event)"
+						(click)="fileInput.click()"
+					>
+						<input #fileInput type="file" hidden (change)="onFileSelected($event)" accept=".zip" />
+
+						<div class="upload-icon">
+							<nb-icon icon="cloud-upload-outline"></nb-icon>
+						</div>
+
+						<div *ngIf="!selectedFile" class="upload-text">
+							<p>Drag and drop your ZIP file here</p>
+							<p>or</p>
+							<button type="button" nbButton status="primary" size="small">Browse Files</button>
+							<p class="hint">Only .zip files up to 1GB are allowed</p>
+						</div>
+
+						<div *ngIf="selectedFile" class="file-info">
+							<p class="file-name">{{ selectedFile.name }}</p>
+							<p class="file-size">{{ formatFileSize(selectedFile.size) }}</p>
+							<button type="button" nbButton status="danger" size="tiny" (click)="removeFile($event)">
+								<nb-icon icon="trash-outline"></nb-icon> Remove
+							</button>
+						</div>
+					</div>
+
+					<div *ngIf="errorMessage" class="error-message">
+						{{ errorMessage }}
+					</div>
+				</div>
 			</div>
 
 			<!-- Metadata section -->

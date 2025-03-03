@@ -24,18 +24,24 @@ export enum PluginType {
 	MOBILE = 'MOBILE' // Added mobile support
 }
 
+export enum PluginSourceType {
+	CDN = 'CDN',
+	NPM = 'NPM',
+	GAUZY = 'GAUZY'
+}
+
 /**
  * Common interface for all source types
  */
 export interface IPluginSource extends IBasePerTenantAndOrganizationEntityModel {
-	type: 'CDN' | 'NPM'; // Discriminator field for the source type
+	type: PluginSourceType; // Discriminator field for the source type
 }
 
 /**
  * CDN-hosted plugin source configuration
  */
 export interface ICDNSource extends IPluginSource {
-	type: 'CDN';
+	type: PluginSourceType.CDN;
 	url: string; // URL to the plugin bundle
 	integrity?: string; // SRI hash for security verification
 	crossOrigin?: string; // CORS setting ('anonymous' | 'use-credentials')
@@ -45,12 +51,30 @@ export interface ICDNSource extends IPluginSource {
  * NPM-hosted plugin source configuration
  */
 export interface INPMSource extends IPluginSource {
-	type: 'NPM';
+	type: PluginSourceType.NPM;
 	name: string; // Package name
 	version: string; // Semantic version
 	registry?: string; // Optional custom NPM registry URL
 	authToken?: string; // Optional auth token for private packages
 	scope?: string; // Optional package scope (e.g., '@organization')
+}
+
+/**
+ * Gauzy-hosted plugin source configuration
+ */
+export interface IGauzySource extends IPluginSource {
+	type: PluginSourceType.GAUZY;
+	url?: string; // URL to the plugin bundle
+	file?: File; // File to upload
+}
+
+/**
+ * Plugin version information
+ */
+export interface IVersion {
+	name: string;
+	channel: 'STABLE' | 'NIGHTLY';
+	compatibility: string[];
 }
 
 /**
@@ -62,10 +86,10 @@ export interface IPlugin extends IBasePerTenantAndOrganizationEntityModel {
 	description?: string; // Brief description of plugin functionality
 	type: PluginType; // Platform target
 	status: PluginStatus; // Current lifecycle status
-	version: string; // Semantic version (following semver)
+	versions: IVersion[]; // Semantic version (following semver)
 
 	// Source information
-	source: ICDNSource | INPMSource; // Distribution source
+	source: ICDNSource | INPMSource | IGauzySource; // Distribution source
 
 	// Security and integrity
 	checksum?: string; // Verification hash
@@ -86,3 +110,16 @@ export interface IPlugin extends IBasePerTenantAndOrganizationEntityModel {
 	// Additional configuration
 	tags?: ITag[]; // Categorization tags
 }
+
+/**
+ * Interface for creating a new plugin
+ */
+export interface ICreatePlugin
+	extends Omit<IPlugin, 'id' | 'downloadCount' | 'uploadedAt' | 'lastDownloadedAt' | 'versions'> {
+	version: IVersion;
+}
+
+/**
+ * Interface for updating an existing plugin
+ */
+export interface IUpdatePlugin extends Partial<Omit<IPlugin, 'downloadCount' | 'uploadedAt' | 'lastDownloadedAt'>> {}
