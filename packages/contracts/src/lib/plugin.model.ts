@@ -69,15 +69,6 @@ export interface IGauzySource extends IPluginSource {
 }
 
 /**
- * Plugin version information
- */
-export interface IVersion {
-	name: string;
-	channel: 'STABLE' | 'NIGHTLY';
-	compatibility: string[];
-}
-
-/**
  * Main plugin interface definition
  */
 export interface IPlugin extends IBasePerTenantAndOrganizationEntityModel {
@@ -86,7 +77,7 @@ export interface IPlugin extends IBasePerTenantAndOrganizationEntityModel {
 	description?: string; // Brief description of plugin functionality
 	type: PluginType; // Platform target
 	status: PluginStatus; // Current lifecycle status
-	versions: IVersion[]; // Semantic version (following semver)
+	versions: string[]; // Semantic version (following semver)
 
 	// Source information
 	source: ICDNSource | INPMSource | IGauzySource; // Distribution source
@@ -116,10 +107,10 @@ export interface IPlugin extends IBasePerTenantAndOrganizationEntityModel {
  */
 export interface ICreatePlugin
 	extends Omit<IPlugin, 'id' | 'downloadCount' | 'uploadedAt' | 'lastDownloadedAt' | 'versions'> {
-	version: IVersion;
+	version: string;
 }
 
 /**
  * Interface for updating an existing plugin
  */
-export interface IUpdatePlugin extends Partial<Omit<IPlugin, 'downloadCount' | 'uploadedAt' | 'lastDownloadedAt'>> {}
+export interface IUpdatePlugin extends Partial<ICreatePlugin> {}
