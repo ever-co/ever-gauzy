@@ -8,8 +8,7 @@ import {
 	PermissionsEnum,
 	RequestApprovalStatusTypesEnum,
 	IOrganization,
-	EquipmentSharingStatusEnum,
-	IRequestApproval
+	EquipmentSharingStatusEnum
 } from '@gauzy/contracts';
 import { Cell } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';

@@ -233,7 +233,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		try {
 			// Retrieve the current user and tenant ID from the request context
 			const user = RequestContext.currentUser();
-			const tenantId = RequestContext.currentTenantId() ?? filter.where?.tenantId;
+			const tenantId = RequestContext.currentTenantId();
 
 			// Retrieve the organization ID from the filter or the request context
 			let { employeeIds = [], organizationId } = filter.where;
