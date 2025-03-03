@@ -6,13 +6,15 @@ import { Permissions } from './../../shared/decorators';
 import { UseValidationPipe } from '../../shared/pipes';
 import { TimerService } from './timer.service';
 import { StartTimerDTO, StopTimerDTO, TimerStatusQueryDTO } from './dto';
+import { StopTimerCommand, GetTimerStatusQuery, StartTimerCommand } from './commands';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 
 @ApiTags('Timer Tracker')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller('/timesheet/timer')
 export class TimerController {
-	constructor(private readonly timerService: TimerService) {}
+	constructor(private readonly timerService: TimerService, private readonly _commandBus: CommandBus, private readonly _queryBus: QueryBus) {}
 
 	/**
 	 * GET timer today's status
@@ -30,7 +32,7 @@ export class TimerController {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_TRACKER)
 	@UseValidationPipe({ whitelist: true })
 	async getTimerStatus(@Query() query: TimerStatusQueryDTO): Promise<ITimerStatusWithWeeklyLimits> {
-		const status = await this.timerService.getTimerStatusPublic(query);
+		const status = await this._queryBus.execute(new GetTimerStatusQuery(query));;
 		this.timerService.checkForPeriodicSave(status.lastLog);
 		return status;
 	}
@@ -85,7 +87,7 @@ export class TimerController {
 	@Post('/start')
 	@UseValidationPipe()
 	async startTimer(@Body() entity: StartTimerDTO): Promise<ITimeLog> {
-		return await this.timerService.startTimerPublic(entity);
+		return this._commandBus.execute(new StartTimerCommand(entity));
 	}
 
 	/**
@@ -105,6 +107,6 @@ export class TimerController {
 	@Post('/stop')
 	@UseValidationPipe()
 	async stopTimer(@Body() entity: StopTimerDTO): Promise<ITimeLog | null> {
-		return await this.timerService.stopTimerPublic(entity);
+		return this._commandBus.execute(new StopTimerCommand(entity));
 	}
 }

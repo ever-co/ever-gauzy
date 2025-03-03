@@ -35,6 +35,7 @@ export class IntegrationMakeComPlugin implements IOnPluginBootstrap, IOnPluginDe
 	onPluginBootstrap(): void | Promise<void> {
 		if (this.logEnabled) {
 			console.log(chalk.green(`${IntegrationMakeComPlugin.name} is being bootstrapped...`));
+			console.log(chalk.green('================================='));
 		}
 	}
 
