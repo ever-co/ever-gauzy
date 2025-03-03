@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException, NotAcceptableException } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { CommandBus } from '@nestjs/cqrs';
 import { IsNull, Between, Not, In } from 'typeorm';
 import * as moment from 'moment';
 import * as chalk from 'chalk';
