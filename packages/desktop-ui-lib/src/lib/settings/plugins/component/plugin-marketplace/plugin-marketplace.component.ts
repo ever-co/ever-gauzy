@@ -7,6 +7,7 @@ import { ToastrNotificationService } from '../../../../services';
 import { NbDialogService } from '@nebular/theme';
 import { PluginMarketplaceUploadComponent } from './plugin-marketplace-upload/plugin-marketplace-upload.component';
 import { PluginService } from '../../services/plugin.service';
+import { ActivatedRoute } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -21,6 +22,7 @@ export class PluginMarketplaceComponent implements OnInit {
 	private readonly toastrNotificationService = inject(ToastrNotificationService);
 	private readonly dialog = inject(NbDialogService);
 	private readonly ngZone = inject(NgZone);
+	private readonly route = inject(ActivatedRoute);
 	public processing = false;
 
 	ngOnInit(): void {
@@ -73,6 +75,10 @@ export class PluginMarketplaceComponent implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	public get isUploadAvailable(): boolean {
+		return !!this.route.snapshot.data['isUploadAvailable'];
 	}
 
 	public upload(): void {

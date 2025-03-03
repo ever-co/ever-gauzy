@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { PluginUploadResolver } from './services/resolvers/plugin-upload.resolver';
 
 export const pluginRoutes: Routes = [
 	{
@@ -8,6 +9,9 @@ export const pluginRoutes: Routes = [
 	},
 	{
 		path: 'marketplace-plugins',
+		resolve: {
+			isUploadAvailable: PluginUploadResolver
+		},
 		loadComponent: () =>
 			import('./component/plugin-marketplace/plugin-marketplace.component').then(
 				(m) => m.PluginMarketplaceComponent

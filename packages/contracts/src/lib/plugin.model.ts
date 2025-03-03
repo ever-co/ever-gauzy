@@ -3,7 +3,6 @@
  */
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IEmployee } from './employee.model';
-import { ITag } from './tag.model';
 
 /**
  * Defines the possible states of a plugin
