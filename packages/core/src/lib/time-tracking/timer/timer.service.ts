@@ -38,7 +38,6 @@ import {
 	TimeLogCreateCommand,
 	TimeLogUpdateCommand
 } from '../time-log/commands';
-import { StartTimerCommand, StopTimerCommand, GetTimerStatusQuery } from './commands';
 import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
@@ -59,41 +58,7 @@ export class TimerService {
 		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 		private readonly _employeeService: EmployeeService,
 		private readonly _commandBus: CommandBus,
-		private readonly _queryBus: QueryBus
 	) {}
-
-	/**
-	 * Public API: Start timer tracking for employee
-	 *
-	 * This is the method exposed to controllers and external clients.
-	 * It uses the command bus to delegate to the handler, which will then
-	 * call the internal startTimer implementation method directly.
-	 */
-	async startTimerPublic(request: ITimerToggleInput): Promise<ITimeLog> {
-		return this._commandBus.execute(new StartTimerCommand(request));
-	}
-
-    /**
-     * Public API: Stop time tracking for the current employee
-     *
-     * This is the method exposed to controllers and external clients.
-     * It uses the command bus to delegate to the handler, which will then
-     * call the internal stopTimer implementation method directly.
-     */
-	async stopTimerPublic(request: ITimerToggleInput): Promise<ITimeLog> {
-		return this._commandBus.execute(new StopTimerCommand(request));
-	}
-
-    /**
-     * Public API: Get timer status
-     *
-     * This is the method exposed to controllers and external clients.
-     * It uses the query bus to delegate to the handler, which will then
-     * call the internal getTimerStatus implementation method directly.
-     */
-	async getTimerStatusPublic(request: ITimerStatusInput): Promise<ITimerStatus> {
-		return this._queryBus.execute(new GetTimerStatusQuery(request));
-	}
 
 	/**
 	 * Fetches an employee based on the provided query.
