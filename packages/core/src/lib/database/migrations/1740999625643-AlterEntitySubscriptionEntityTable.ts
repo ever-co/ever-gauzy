@@ -56,14 +56,22 @@ export class AlterEntitySubscriptionEntityTable1740999625643 implements Migratio
 	 *
 	 * @param queryRunner
 	 */
-	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		console.log(
+			chalk.yellow('Skipping PostgresDB Up Migration: This migration is implemented for SQLite databases only.')
+		);
+	}
 
 	/**
 	 * PostgresDB Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		console.log(
+			chalk.yellow('Skipping PostgresDB Down Migration: This migration is implemented for SQLite databases only.')
+		);
+	}
 
 	/**
 	 * SqliteDB and BetterSQlite3DB Up Migration
@@ -454,12 +462,20 @@ export class AlterEntitySubscriptionEntityTable1740999625643 implements Migratio
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		console.log(
+			chalk.yellow('Skipping MySQL Up Migration: This migration is implemented for SQLite databases only.')
+		);
+	}
 
 	/**
 	 * MySQL Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		console.log(
+			chalk.yellow('Skipping MySQL Down Migration: This migration is implemented for SQLite databases only.')
+		);
+	}
 }
