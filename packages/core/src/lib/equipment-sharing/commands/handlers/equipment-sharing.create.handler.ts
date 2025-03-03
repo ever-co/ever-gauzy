@@ -4,33 +4,44 @@ import { EquipmentSharing } from '../../equipment-sharing.entity';
 import { EquipmentSharingCreateCommand } from '../equipment-sharing.create.command';
 import { RequestApproval } from '../../../request-approval/request-approval.entity';
 import { RequestContext } from '../../../core/context';
-import { TypeOrmEquipmentSharingRepository } from '../../repository/type-orm-equipment-sharing.repository';
 import { TypeOrmRequestApprovalRepository } from '../../../request-approval/repository/type-orm-request-approval.repository';
+import { EquipmentSharingService } from '../../equipment-sharing.service';
 
 @CommandHandler(EquipmentSharingCreateCommand)
 export class EquipmentSharingCreateHandler implements ICommandHandler<EquipmentSharingCreateCommand> {
 	constructor(
-		private readonly typeOrmEquipmentSharingRepository: TypeOrmEquipmentSharingRepository,
-		private readonly typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository
+		private readonly typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository,
+		private readonly equipmentSharingService: EquipmentSharingService
 	) {}
 
-	public async execute(command?: EquipmentSharingCreateCommand): Promise<EquipmentSharing> {
-		const { orgId, equipmentSharing } = command;
-		equipmentSharing.createdBy = RequestContext.currentUser().id;
-		equipmentSharing.createdByName = RequestContext.currentUser().name;
-		equipmentSharing.organizationId = orgId;
-		const equipmentSharingSaved = await this.typeOrmEquipmentSharingRepository.save(equipmentSharing);
+	/**
+	 * Executes the creation of a new Equipment Sharing record along with its corresponding Request Approval.
+	 *
+	 * @param command - The EquipmentSharingCreateCommand containing the equipment sharing data.
+	 * @returns A promise that resolves to the newly created EquipmentSharing record.
+	 */
+	public async execute(command: EquipmentSharingCreateCommand): Promise<EquipmentSharing> {
+		// Destructure the equipment sharing data from the command.
+		const { organizationId, entity } = command;
+		// Get current user details once to avoid multiple calls.
+		const currentUser = RequestContext.currentUser();
+		// Set the creator of the equipment sharing record using the current user ID.
+		entity.createdByUserId = RequestContext.currentUserId();
+		// Create the equipment sharing record.
+		entity.organizationId = organizationId;
+		const equipmentSharingSaved = await this.equipmentSharingService.create(entity);
 
+		// Build the request approval record for the created equipment sharing.
 		const requestApproval = new RequestApproval();
 		requestApproval.requestId = equipmentSharingSaved.id;
 		requestApproval.requestType = ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING;
-		requestApproval.status = equipmentSharingSaved.status
-			? equipmentSharingSaved.status
-			: RequestApprovalStatusTypesEnum.REQUESTED;
-		requestApproval.createdBy = RequestContext.currentUser().id;
-		requestApproval.createdByName = RequestContext.currentUser().name;
-		requestApproval.name = equipmentSharing.name;
+		requestApproval.status = equipmentSharingSaved.status ?? RequestApprovalStatusTypesEnum.REQUESTED;
+		requestApproval.createdBy = currentUser.id;
+		requestApproval.createdByName = currentUser.name;
+		requestApproval.name = entity.name;
 		requestApproval.min_count = 1;
+
+		// Save the request approval record.
 		await this.typeOrmRequestApprovalRepository.save(requestApproval);
 
 		return equipmentSharingSaved;
