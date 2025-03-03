@@ -100,12 +100,16 @@ export class AlterOrganizationContactEntityTable1741013208083 implements Migrati
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE \`organization_contact\` DROP COLUMN \`createdBy\``);
+	}
 
 	/**
 	 * MySQL Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE \`organization_contact\` ADD \`createdBy\` varchar(255) NULL`);
+	}
 }
