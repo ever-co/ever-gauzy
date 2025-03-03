@@ -13,8 +13,8 @@
 .plugin-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   font-weight: bold;
+  gap: 1rem;
 }
 
 .plugin-name {
@@ -24,7 +24,7 @@
 
 .plugin-version {
   font-size: 14px;
-  color: var(--nb-info-text-color);
+  color: var(--gauzy-text-color-1);
 }
 
 .plugin-description {
@@ -36,4 +36,16 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.plugin-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+
+  .plugin-edit {
+    color: var(--gauzy-text-color-1);
+    cursor: pointer;
+  }
 }

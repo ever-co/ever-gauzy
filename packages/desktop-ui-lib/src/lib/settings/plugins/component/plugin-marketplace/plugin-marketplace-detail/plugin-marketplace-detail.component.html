@@ -7,7 +7,8 @@
 		</div>
 		<div class="plugin-description">{{ plugin.description }}</div>
 	</div>
-	<div>
+	<div class="plugin-actions">
+		<nb-icon class="plugin-edit" icon="edit-outline"></nb-icon>
 		<nb-toggle [checked]="isChecked$ | async" (checkedChange)="togglePlugin($event)"></nb-toggle>
 	</div>
 </div>
