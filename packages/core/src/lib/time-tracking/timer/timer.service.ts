@@ -1,10 +1,5 @@
-<<<<<<< HEAD
 import { Injectable, NotFoundException, ForbiddenException, NotAcceptableException, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-=======
-import { Injectable, NotFoundException, ForbiddenException, NotAcceptableException } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
->>>>>>> 9665172dd9 (fix: update code to avoid recursive command invocation)
 import { IsNull, Between, Not, In } from 'typeorm';
 import * as moment from 'moment';
 import {
@@ -276,7 +271,6 @@ export class TimerService {
 	}
 
 	/**
-<<<<<<< HEAD
 	 * Check timelogs running object for periodic time log save
 	 * The end time will be updated to allow the UI to reflect the time saved
 	 *
@@ -300,14 +294,11 @@ export class TimerService {
 	}
 
 	/**
-	 * Start time tracking for an employee.
+	 * Implementation of start timer logic
+	 * This is intended to be used directly by the command handler
 	 *
 	 * @param request The timer toggle input details.
 	 * @returns A Promise resolving to the created ITimeLog entry.
-=======
-	 * Implementation of start timer logic
-	 * This is intended to be used directly by the command handler
->>>>>>> 9665172dd9 (fix: update code to avoid recursive command invocation)
 	 */
 	async startTimer(request: ITimerToggleInput): Promise<ITimeLog> {
 		console.log(
