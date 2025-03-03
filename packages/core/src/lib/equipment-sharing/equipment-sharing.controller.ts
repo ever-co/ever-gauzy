@@ -43,7 +43,7 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	})
 	@Permissions(PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW)
 	@Get('/organization/:id')
-	async findEquipmentSharingsByorganizationId(
+	async findEquipmentSharingsByOrganizationId(
 		@Param('id', UUIDValidationPipe) organizationId: ID
 	): Promise<IPagination<IEquipmentSharing>> {
 		return this.equipmentSharingService.findEquipmentSharingsByOrganizationId(organizationId);
@@ -102,9 +102,9 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	@Post('/organization/:id')
 	async createEquipmentSharing(
 		@Param('id', UUIDValidationPipe) organizationId: ID,
-		@Body() entitiy: EquipmentSharing
+		@Body() entity: EquipmentSharing
 	): Promise<IEquipmentSharing> {
-		return await this.commandBus.execute(new EquipmentSharingCreateCommand(organizationId, entitiy));
+		return await this.commandBus.execute(new EquipmentSharingCreateCommand(organizationId, entity));
 	}
 
 	/**
