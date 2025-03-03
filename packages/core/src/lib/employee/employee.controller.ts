@@ -70,7 +70,7 @@ export class EmployeeController extends CrudController<Employee> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No working employees found'
 	})
-	@Permissions(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+	@Permissions(PermissionsEnum.SELECT_EMPLOYEE)
 	@Get('/working')
 	async findAllWorkingEmployees(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IEmployee>> {
 		const { findInput } = data;
