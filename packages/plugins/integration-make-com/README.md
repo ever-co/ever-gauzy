@@ -1,3 +1,6 @@
+<!-- codacy-disable-next-line -->
+# @gauzy/plugin-integration-make-com
+
 This library was generated with [Nx](https://nx.dev).
 
 ## Overview
