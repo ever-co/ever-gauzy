@@ -195,6 +195,7 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 -   Make sure you have the latest Docker Compose [installed locally](https://docs.docker.com/compose/install). Important: you need a minimum [v2.20](https://docs.docker.com/compose/release-notes/#2200).
 
 #### Demo
+
 -   Run `docker-compose -f docker-compose.demo.yml up`, if you want to run the platform in basic configuration (e.g. for Demo / explore functionality / quick run) using our prebuilt Docker images. Check `.env.demo.compose` file for different settings (optionally), e.g. DB type. _(Note: Docker Compose will use latest images pre-build automatically from head of `master` branch using GitHub CI/CD.)_
 -   Open <http://localhost:4200> in your browser.
 -   Login with email `admin@ever.co` and password: `admin` for Super Admin user.
@@ -202,21 +203,25 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 -   Enjoy!
 
 #### Production
--   Edit `.env.compose` if needed
--   Run `docker-compose --env-file .env.compose up -d`, if you want to run the platform in production configuration using our prebuilt Docker images. Check `.env.compose` file for different settings (optionally), e.g. DB type. _(Note: Docker Compose will use latest images pre-build automatically from head of `master` branch using GitHub CI/CD.)_
+
+-   Edit `.env.compose` (if needed) to use your custom settings, e.g. DB type.
+-   Run `docker-compose up -d`, if you want to run the platform in minimal production configuration using our prebuilt Docker images. _(Note: Docker Compose will use latest images pre-build automatically from head of `master` branch using GitHub CI/CD.)_
+
+Note: we recommend using Kubernetes for production workloads instead of Docker Compose!
 
 #### Build
--   Edit `.env.compose` if needed
--   Run `docker-compose --env-file .env.compose -f docker-compose.build.yml up -d `, if you want to build everything (code and Docker images) locally. Check `.env.compose` file for different settings (optionally), e.g. DB type. _(Note: this is extremely long process because it builds whole platform locally. Other options above are much faster!)_
--   :coffee: time... It might take some time for our API to seed fake data in the DB during the first Docker Compose run, even if you used prebuilt Docker images.
 
+-   Edit `.env.compose` (if needed) to use your custom settings, e.g. DB type.
+-   Run `docker-compose -f docker-compose.build.yml up -d `, if you want to build everything (code and Docker images) locally. _(Note: this is extremely long process because it builds whole platform locally. Other options above are much faster!)_
+-   :coffee: time... It might take some time for our API to seed fake data in the DB during the first Docker Compose run, even if you used prebuilt Docker images.
 
 Notes:
 
 -   while demo `docker-compose.demo.yml` runs a minimum amount of containers (API, Web UI, and DB), other Docker Compose files run multiple infrastructure dependencies (see full list below).
 -   you can also run ONLY infra dependencies (without our API / Web containers) with `docker-compose -f docker-compose.infra.yml up -d` command. We already doing it using `include` in our main docker compose files.
+-   you can add something like `--env-file .env.something` to the docker-compose `up` command to instruct Docker Compose to use a specific `.env.something` file with your custom settings
 
-Together with Gauzy, Docker Compose (i.e. `docker-compose.yml` and `docker-compose.build.yml`, not Demo `docker-compose.demo.yml`) will run the following:
+Together with Gauzy, the Docker Compose commands described above for Production (`docker-compose.yml`) and Build (`docker-compose.build.yml`) will run the following infrastructure components:
 
 -   [PostgreSQL](https://www.postgresql.org) - Primary Database.
 -   [Pgweb](https://github.com/sosedoff/pgweb) - Cross-platform client for PostgreSQL DBs, available on <http://localhost:8081>.
