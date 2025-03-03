@@ -1,14 +1,21 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { ID, IEquipmentSharing, IEquipmentSharingCreateInput, IEquipmentSharingUpdateInput } from '@gauzy/contracts';
+import {
+	ID,
+	IEquipmentSharing,
+	IEquipmentSharingCreateInput,
+	IEquipmentSharingUpdateInput,
+	IPagination,
+	RequestApprovalStatusTypesEnum
+} from '@gauzy/contracts';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 
 @Injectable()
 export class EquipmentSharingService {
 	EQUIPMENT_SHARING_URL = `${API_PREFIX}/equipment-sharing`;
 
-	constructor(private http: HttpClient) {}
+	constructor(private readonly http: HttpClient) {}
 
 	/**
 	 * Retrieves all equipment sharing records.
@@ -25,8 +32,10 @@ export class EquipmentSharingService {
 	 * @param id - The unique identifier of the organization.
 	 * @returns A promise that resolves to an array of equipment sharing records associated with the given organization.
 	 */
-	getByOrganizationId(id: ID): Promise<IEquipmentSharing[]> {
-		return firstValueFrom(this.http.get<IEquipmentSharing[]>(`${this.EQUIPMENT_SHARING_URL}/organization/${id}`));
+	getByOrganizationId(id: ID): Promise<IPagination<IEquipmentSharing>> {
+		return firstValueFrom(
+			this.http.get<IPagination<IEquipmentSharing>>(`${this.EQUIPMENT_SHARING_URL}/organization/${id}`)
+		);
 	}
 
 	/**
@@ -35,8 +44,10 @@ export class EquipmentSharingService {
 	 * @param id - The unique identifier of the author user.
 	 * @returns A promise that resolves to an array of equipment sharing records created by the specified user.
 	 */
-	getByAuthorUserId(id: ID): Promise<IEquipmentSharing[]> {
-		return firstValueFrom(this.http.get<IEquipmentSharing[]>(`${this.EQUIPMENT_SHARING_URL}/employee/${id}`));
+	getByEmployeeId(id: ID): Promise<IPagination<IEquipmentSharing>> {
+		return firstValueFrom(
+			this.http.get<IPagination<IEquipmentSharing>>(`${this.EQUIPMENT_SHARING_URL}/employee/${id}`)
+		);
 	}
 
 	/**
@@ -69,13 +80,11 @@ export class EquipmentSharingService {
 	 * Updates an existing equipment sharing record.
 	 *
 	 * @param id - The unique identifier of the equipment sharing record to update.
-	 * @param equipmentSharing - The updated data for the equipment sharing record.
+	 * @param input - The updated data for the equipment sharing record.
 	 * @returns A promise that resolves to the updated equipment sharing record.
 	 */
-	update(id: ID, equipmentSharing: IEquipmentSharingUpdateInput): Promise<IEquipmentSharing> {
-		return firstValueFrom(
-			this.http.put<IEquipmentSharing>(`${this.EQUIPMENT_SHARING_URL}/${id}`, equipmentSharing)
-		);
+	update(id: ID, input: IEquipmentSharingUpdateInput): Promise<IEquipmentSharing> {
+		return firstValueFrom(this.http.put<IEquipmentSharing>(`${this.EQUIPMENT_SHARING_URL}/${id}`, input));
 	}
 
 	/**
@@ -85,7 +94,11 @@ export class EquipmentSharingService {
 	 * @returns A promise that resolves to the equipment sharing record updated with the approved status.
 	 */
 	approval(id: ID): Promise<IEquipmentSharing> {
-		return firstValueFrom(this.http.put<IEquipmentSharing>(`${this.EQUIPMENT_SHARING_URL}/approval/${id}`, null));
+		return firstValueFrom(
+			this.http.put<IEquipmentSharing>(`${this.EQUIPMENT_SHARING_URL}/approval/${id}`, {
+				status: RequestApprovalStatusTypesEnum.APPROVED
+			})
+		);
 	}
 
 	/**
@@ -95,6 +108,10 @@ export class EquipmentSharingService {
 	 * @returns A promise that resolves to the equipment sharing record updated with the refused status.
 	 */
 	refuse(id: ID): Promise<IEquipmentSharing> {
-		return firstValueFrom(this.http.put<IEquipmentSharing>(`${this.EQUIPMENT_SHARING_URL}/refuse/${id}`, null));
+		return firstValueFrom(
+			this.http.put<IEquipmentSharing>(`${this.EQUIPMENT_SHARING_URL}/refuse/${id}`, {
+				status: RequestApprovalStatusTypesEnum.REFUSED
+			})
+		);
 	}
 }

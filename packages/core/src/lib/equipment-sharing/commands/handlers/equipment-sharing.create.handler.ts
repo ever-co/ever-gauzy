@@ -21,15 +21,15 @@ export class EquipmentSharingCreateHandler implements ICommandHandler<EquipmentS
 	 * @returns A promise that resolves to the newly created EquipmentSharing record.
 	 */
 	public async execute(command: EquipmentSharingCreateCommand): Promise<EquipmentSharing> {
+		// Destructure the equipment sharing data from the command.
+		const { organizationId, entity } = command;
 		// Get current user details once to avoid multiple calls.
 		const currentUser = RequestContext.currentUser();
-
-		// Destructure the equipment sharing data from the command.
-		const { equipmentSharing } = command;
 		// Set the creator of the equipment sharing record using the current user ID.
-		equipmentSharing.createdByUserId = RequestContext.currentUserId();
+		entity.createdByUserId = RequestContext.currentUserId();
 		// Create the equipment sharing record.
-		const equipmentSharingSaved = await this.equipmentSharingService.create(equipmentSharing);
+		entity.organizationId = organizationId;
+		const equipmentSharingSaved = await this.equipmentSharingService.create(entity);
 
 		// Build the request approval record for the created equipment sharing.
 		const requestApproval = new RequestApproval();
@@ -38,7 +38,7 @@ export class EquipmentSharingCreateHandler implements ICommandHandler<EquipmentS
 		requestApproval.status = equipmentSharingSaved.status ?? RequestApprovalStatusTypesEnum.REQUESTED;
 		requestApproval.createdBy = currentUser.id;
 		requestApproval.createdByName = currentUser.name;
-		requestApproval.name = equipmentSharing.name;
+		requestApproval.name = entity.name;
 		requestApproval.min_count = 1;
 
 		// Save the request approval record.

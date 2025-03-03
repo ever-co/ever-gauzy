@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, HttpStatus, HttpException } from '@nestjs/common';
 import { Brackets, DeleteResult, WhereExpressionBuilder } from 'typeorm';
 import {
 	ID,
@@ -30,77 +30,78 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	}
 
 	/**
+	 * Retrieves equipment sharing records associated with a specific organization.
 	 *
-	 * @param organizationId
-	 * @returns
+	 * @param organizationId - The unique identifier of the organization.
+	 * @returns A promise that resolves to an array of equipment sharing records.
 	 */
-	async findEquipmentSharingsByOrgId(organizationId: ID): Promise<any> {
-		try {
-			const query = this.typeOrmRepository.createQueryBuilder('equipment_sharing');
-			query
-				.leftJoinAndSelect(`${query.alias}.employees`, 'employees')
-				.leftJoinAndSelect(`${query.alias}.teams`, 'teams')
-				.innerJoinAndSelect(`${query.alias}.equipment`, 'equipment')
-				.leftJoinAndSelect(`${query.alias}.equipmentSharingPolicy`, 'equipmentSharingPolicy');
+	async findEquipmentSharingsByOrganizationId(organizationId: ID): Promise<IPagination<IEquipmentSharing>> {
+		const query = this.typeOrmRepository.createQueryBuilder('equipment_sharing');
+		query
+			.leftJoinAndSelect(`${query.alias}.employees`, 'employees')
+			.leftJoinAndSelect(`${query.alias}.teams`, 'teams')
+			.innerJoinAndSelect(`${query.alias}.equipment`, 'equipment')
+			.leftJoinAndSelect(`${query.alias}.equipmentSharingPolicy`, 'equipmentSharingPolicy');
 
-			switch (this.configService.dbConnectionOptions.type) {
-				case DatabaseTypeEnum.sqlite:
-				case DatabaseTypeEnum.betterSqlite3:
-					query.leftJoinAndSelect(
-						'request_approval',
-						'requestApproval',
-						'"equipment_sharing"."id" = "requestApproval"."requestId"'
-					);
-					break;
-				case DatabaseTypeEnum.postgres:
-				case DatabaseTypeEnum.mysql:
-					query.leftJoinAndSelect(
-						'request_approval',
-						'requestApproval',
-						'uuid(equipment_sharing.id) = uuid(requestApproval.requestId)'
-					);
-					break;
-				default:
-					throw Error(
-						`cannot create query to find equipment sharings by orgId due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
-					);
-			}
-
-			return await query
-				.leftJoinAndSelect('requestApproval.approvalPolicy', 'approvalPolicy')
-				.where(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						const tenantId = RequestContext.currentTenantId();
-						qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-						qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-					})
-				)
-				.getMany();
-		} catch (err) {
-			throw new BadRequestException(err);
+		switch (this.configService.dbConnectionOptions.type) {
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
+				query.leftJoinAndSelect(
+					'request_approval',
+					'requestApproval',
+					'"equipment_sharing"."id" = "requestApproval"."requestId"'
+				);
+				break;
+			case DatabaseTypeEnum.postgres:
+			case DatabaseTypeEnum.mysql:
+				query.leftJoinAndSelect(
+					'request_approval',
+					'requestApproval',
+					'uuid(equipment_sharing.id) = uuid(requestApproval.requestId)'
+				);
+				break;
+			default:
+				throw new Error(
+					`Cannot create query to find equipment sharings by organizationId due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
+				);
 		}
+
+		const [items, total] = await query
+			.leftJoinAndSelect('requestApproval.approvalPolicy', 'approvalPolicy')
+			.where(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					const tenantId = RequestContext.currentTenantId();
+					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+					qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+				})
+			)
+			.getManyAndCount();
+
+		return { items, total };
 	}
 
 	/**
-	 * Retrieves equipment sharing records based on the employee's ID.
-	 *
-	 * This function queries the repository to find all equipment sharing records where the
-	 * `createdByUserId` matches the provided employee ID. It also loads related entities:
-	 * `equipment`, `employees`, and `teams`.
+	 * Retrieves equipment sharing records associated with a specific employee.
 	 *
 	 * @param id - The unique identifier of the employee.
-	 * @returns A promise that resolves to an array of EquipmentSharing records.
-	 * @throws BadRequestException if an error occurs during the query.
+	 * @returns A promise that resolves to a pagination object containing an array of equipment sharing records and the total count.
+	 * @throws BadRequestException if an error occurs during the database query.
 	 */
-	async findRequestApprovalsByEmployeeId(id: ID): Promise<EquipmentSharing[]> {
+	async findEquipmentSharingsByEmployeeId(id: ID): Promise<IPagination<IEquipmentSharing>> {
 		try {
-			return await this.typeOrmRepository.find({
+			const [items, total] = await this.typeOrmRepository.findAndCount({
 				where: {
 					createdByUserId: id
 				},
-				relations: ['equipment', 'employees', 'teams']
+				relations: {
+					employees: true,
+					teams: true,
+					equipment: true
+				}
 			});
+			return { items, total };
 		} catch (error) {
+			console.error('Error finding equipment sharings by employee ID:', error);
 			throw new BadRequestException(error);
 		}
 	}
@@ -117,7 +118,11 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 */
 	async findAllEquipmentSharings(): Promise<IPagination<IEquipmentSharing>> {
 		const [items, total] = await this.typeOrmRepository.findAndCount({
-			relations: ['equipment', 'employees', 'teams']
+			relations: {
+				employees: true,
+				teams: true,
+				equipment: true
+			}
 		});
 		return { items, total };
 	}
@@ -219,13 +224,26 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	}
 
 	/**
+	 * Paginates equipment sharing records based on the provided filter.
 	 *
-	 * @param filter
-	 * @returns
+	 * @param filter - An object containing pagination and filtering options.
+	 * @returns A promise that resolves to an IPagination object containing equipment sharing records and total count.
 	 */
 	public async pagination(filter: any): Promise<IPagination<IEquipmentSharing>> {
 		try {
-			const tenantId = RequestContext.currentTenantId();
+			// Retrieve the current user and tenant ID from the request context
+			const user = RequestContext.currentUser();
+			const tenantId = RequestContext.currentTenantId() ?? filter.where?.tenantId;
+
+			// Retrieve the organization ID from the filter or the request context
+			let { employeeIds = [], organizationId } = filter.where;
+
+			// Set employeeIds based on user conditions and permissions
+			if (user.employeeId && !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+				employeeIds = [user.employeeId];
+			}
+
+			// Create a query builder for the EquipmentSharing entity
 			const query = this.typeOrmRepository.createQueryBuilder('equipment_sharing');
 
 			/**
@@ -270,18 +288,12 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 
 			query.leftJoinAndSelect('requestApproval.approvalPolicy', 'approvalPolicy');
 
-			/**
-			 * Adds new AND WHERE condition in the query builder.
-			 * Additionally you can add parameters used in where expression.
-			 */
-			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+			// Add new AND WHERE condition in the query builder.
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					if (filter.where) {
-						const { tenantId, organizationId } = filter.where;
 						qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 						qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-
 						qb.andWhere(p(`"equipment"."tenantId" = :tenantId`), { tenantId });
 						qb.andWhere(p(`"equipment"."organizationId" = :organizationId`), { organizationId });
 					}
@@ -289,34 +301,22 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			);
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					if (isNotEmpty(filter.where) && isNotEmpty(filter.where.employeeIds)) {
-						let { employeeIds = [], organizationId } = filter.where;
-						const user = RequestContext.currentUser();
-						if (
-							!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
-							user.employeeId
-						) {
-							employeeIds = [user.employeeId];
-						}
-						qb.andWhere(
-							new Brackets((qb: WhereExpressionBuilder) => {
-								qb.andWhere(p(`"employees"."id" IN (:...employeeIds)`), {
-									employeeIds
-								});
-								qb.orWhere(p(`"${query.alias}"."createdByUserId" IN (:...createdByUserIds)`), {
-									createdByUserIds: [user?.id]
-								});
-							})
-						);
+					if (isNotEmpty(filter.where) && isNotEmpty(employeeIds)) {
+						qb.andWhere(p(`"employees"."id" IN (:...employeeIds)`), { employeeIds });
 						qb.andWhere(p(`"employees"."tenantId" = :tenantId`), { tenantId });
 						qb.andWhere(p(`"employees"."organizationId" = :organizationId`), { organizationId });
 					}
 				})
 			);
+
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {
-			throw new BadRequestException(error);
+			console.error('Error finding equipment sharings by organization ID:', error);
+			throw new HttpException(
+				`Error while finding equipment sharings by pagination: ${error.message}`,
+				HttpStatus.BAD_REQUEST
+			);
 		}
 	}
 }

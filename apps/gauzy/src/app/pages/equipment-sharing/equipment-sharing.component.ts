@@ -197,7 +197,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 					type: 'custom',
 					isFilterable: false,
 					renderComponent: CreatedByUserComponent<IEquipmentSharing>,
-					componentInitFunction: (instance: CreatedByUserComponent<IRequestApproval>, cell: Cell) => {
+					componentInitFunction: (instance: CreatedByUserComponent<IEquipmentSharing>, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 					}
 				},
