@@ -97,9 +97,6 @@ export interface IPlugin extends IBasePerTenantAndOrganizationEntityModel {
 	uploadedAt?: Date; // When the plugin was uploaded
 	downloadCount: number; // Number of times downloaded/installed
 	lastDownloadedAt?: Date; // Most recent download timestamp
-
-	// Additional configuration
-	tags?: ITag[]; // Categorization tags
 }
 
 /**
