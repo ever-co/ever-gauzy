@@ -2,13 +2,13 @@
 <div class="plugin-container">
 	<div class="plugin-details">
 		<div class="plugin-header">
-			<div class="plugin-name">{{ plugin.name }}</div>
+			<div class="plugin-name" (click)="openPlugin()">{{ plugin.name }}</div>
 			<div class="plugin-version">{{ plugin.version }}</div>
 		</div>
 		<div class="plugin-description">{{ plugin.description }}</div>
 	</div>
 	<div class="plugin-actions">
-		<nb-icon class="plugin-edit" icon="edit-outline"></nb-icon>
+		<nb-icon class="plugin-edit" icon="edit-outline" (click)="editPlugin()"></nb-icon>
 		<nb-toggle [checked]="isChecked$ | async" (checkedChange)="togglePlugin($event)"></nb-toggle>
 	</div>
 </div>

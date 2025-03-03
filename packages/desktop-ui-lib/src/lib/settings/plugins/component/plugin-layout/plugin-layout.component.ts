@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { NbRouteTab } from '@nebular/theme';
 
 @Component({
 	selector: 'ngx-plugin-layout',
@@ -6,12 +7,15 @@ import { Component } from '@angular/core';
 	styleUrls: ['./plugin-layout.component.scss']
 })
 export class PluginLayoutComponent {
-	public readonly tabs = [
+	public readonly tabs: NbRouteTab[] = [
 		{
 			title: 'Discover',
 			route: '/settings/marketplace-plugins',
 			icon: 'search-outline',
-			responsive: true
+			responsive: true,
+			activeLinkOptions: {
+				exact: false
+			}
 		},
 		{
 			title: 'Installed',

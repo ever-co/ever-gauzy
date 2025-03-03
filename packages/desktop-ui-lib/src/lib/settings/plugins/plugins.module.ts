@@ -33,6 +33,7 @@ import { PluginElectronService } from './services/plugin-electron.service';
 import { PluginLoaderService } from './services/plugin-loader.service';
 import { PluginService } from './services/plugin.service';
 import { PluginMarketplaceUploadComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-marketplace-upload.component';
+import { PluginMarketplaceItemComponent } from './component/plugin-marketplace/plugin-marketplace-item/plugin-marketplace-item.component';
 
 @NgModule({
 	declarations: [
@@ -44,7 +45,8 @@ import { PluginMarketplaceUploadComponent } from './component/plugin-marketplace
 		PluginUpdateComponent,
 		PluginMarketplaceComponent,
 		PluginMarketplaceDetailComponent,
-		PluginMarketplaceUploadComponent
+		PluginMarketplaceUploadComponent,
+		PluginMarketplaceItemComponent
 	],
 	imports: [
 		CommonModule,

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
+import { INPMSource, IPlugin, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -16,6 +16,7 @@ export class PluginMarketplaceUploadComponent implements OnInit {
 	@ViewChild('fileInput') fileInput: ElementRef;
 
 	pluginForm: FormGroup;
+	plugin: IPlugin;
 	pluginTypes = Object.values(PluginType);
 	pluginStatuses = Object.values(PluginStatus);
 	sourceTypes = Object.values(PluginSourceType);
@@ -40,6 +41,7 @@ export class PluginMarketplaceUploadComponent implements OnInit {
 	ngOnInit(): void {
 		this.initForm();
 		this.setupSourceTypeListener();
+		this.patch();
 	}
 
 	ngOnDestroy(): void {
@@ -61,6 +63,50 @@ export class PluginMarketplaceUploadComponent implements OnInit {
 			homepage: ['', Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)],
 			repository: ['', Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)]
 		});
+	}
+
+	private patch(): void {
+		if (!this.plugin) return;
+
+		const { name, description, type, status, versions, source, author, license, homepage, repository } =
+			this.plugin;
+		const { type: sourceType } = source;
+
+		this.pluginForm.patchValue({
+			name,
+			description,
+			type,
+			status,
+			version: versions[0],
+			sourceType,
+			source: this.createSourceGroup(sourceType),
+			author,
+			license,
+			homepage,
+			repository
+		});
+
+		const sourcePatch: Record<string, any> = {};
+
+		if (sourceType === PluginSourceType.CDN) {
+			Object.assign(sourcePatch, {
+				url: source.url,
+				integrity: source.integrity,
+				crossOrigin: source.crossOrigin
+			});
+		} else if (sourceType === PluginSourceType.NPM) {
+			Object.assign(sourcePatch, {
+				name,
+				version: versions[0],
+				scope: source.scope
+			});
+		}
+
+		if (Object.keys(sourcePatch).length > 0) {
+			this.pluginForm.get('source')?.patchValue(sourcePatch);
+		}
+
+		this.cdr.markForCheck();
 	}
 
 	private setupSourceTypeListener(): void {

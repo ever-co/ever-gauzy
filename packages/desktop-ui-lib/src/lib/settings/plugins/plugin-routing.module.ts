@@ -23,7 +23,10 @@ export const pluginRoutes: Routes = [
 	},
 	{
 		path: 'marketplace-plugins/:id',
-		loadComponent: () => import('./component/plugin/plugin.component').then((m) => m.PluginComponent)
+		loadComponent: () =>
+			import('./component/plugin-marketplace/plugin-marketplace-item/plugin-marketplace-item.component').then(
+				(m) => m.PluginMarketplaceItemComponent
+			)
 	},
 	{
 		path: 'plugins/:name',

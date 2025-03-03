@@ -5,6 +5,8 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
 import { IPlugin } from '../../../services/plugin-loader.service';
+import { Router } from '@angular/router';
+import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
 
 @UntilDestroy()
 @Component({
@@ -18,6 +20,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	public readonly _isChecked$ = new BehaviorSubject<boolean>(false);
 	private readonly pluginElectronService = inject(PluginElectronService);
 	private readonly dialog = inject(NbDialogService);
+	private readonly router = inject(Router);
 
 	ngOnInit(): void {
 		if (this.plugin) {
@@ -36,6 +39,19 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 
 	public get isChecked$(): Observable<boolean> {
 		return this._isChecked$.asObservable();
+	}
+
+	public async openPlugin(): Promise<void> {
+		this.router.navigate([`/settings/marketplace-plugins/${this.plugin.id}`]);
+	}
+
+	public editPlugin(): void {
+		this.dialog.open(PluginMarketplaceUploadComponent, {
+			backdropClass: 'backdrop-blur',
+			context: {
+				plugin: this.plugin
+			}
+		});
 	}
 
 	private uninstallPlugin(): void {

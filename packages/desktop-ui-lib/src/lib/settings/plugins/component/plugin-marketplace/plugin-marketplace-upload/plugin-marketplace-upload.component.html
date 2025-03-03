@@ -1,6 +1,6 @@
 <nb-card class="dialog-card" status="basic">
 	<nb-card-header class="mb-0">
-		<h5 class="title">{{ 'PLUGIN.FORM.TITLE' | translate }}</h5>
+		<h5 class="title">{{ (!!plugin ? 'Edit' : 'PLUGIN.FORM.TITLE') | translate }}</h5>
 		<button nbButton ghost size="tiny" class="close-button" (click)="dismiss()" aria-label="Close">
 			<nb-icon icon="close-outline"></nb-icon>
 		</button>

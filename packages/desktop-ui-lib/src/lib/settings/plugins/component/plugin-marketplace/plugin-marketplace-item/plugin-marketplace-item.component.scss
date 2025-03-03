@@ -1,0 +1,134 @@
+:host {
+  display: block;
+  width: 100%;
+
+  nb-card {
+    margin-bottom: 0;
+  }
+
+  nb-card-header {
+    .title {
+      margin-bottom: 0;
+    }
+  }
+
+  nb-card-footer {
+    padding: 1rem 1.5rem;
+
+    button {
+      margin-left: 1rem;
+    }
+  }
+}
+
+// Section styling
+.form-section {
+  margin-bottom: 2rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .section-title {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: nb-theme(text-basic-color);
+    border-bottom: 1px solid nb-theme(border-basic-color-3);
+    padding-bottom: 0.5rem;
+  }
+}
+
+// Info rows and items
+.info-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .info-item {
+    flex: 1 1 45%;
+    margin-right: 5%;
+    margin-bottom: 0.5rem;
+
+    &:last-child {
+      margin-right: 0;
+    }
+
+    &.full-width {
+      flex: 0 0 100%;
+      margin-right: 0;
+    }
+
+    .label {
+      font-size: 0.875rem;
+      color: nb-theme(text-hint-color);
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .value {
+      font-size: 1rem;
+      word-break: break-word;
+
+      &.description {
+        white-space: pre-line;
+        margin-top: 0.25rem;
+        margin-bottom: 0.25rem;
+        color: nb-theme(text-basic-color);
+      }
+
+      a {
+        color: nb-theme(color-primary-default);
+        text-decoration: none;
+
+        &:hover {
+          text-decoration: underline;
+        }
+
+        .external-link {
+          font-size: 0.875rem;
+          margin-left: 0.25rem;
+        }
+      }
+    }
+  }
+}
+
+// Tags styling
+nb-tag-list {
+  display: inline-flex;
+  flex-wrap: wrap;
+
+  nb-tag {
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+}
+
+// Truncate long text
+.text-truncate {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Responsive adjustments
+@media (max-width: 767px) {
+  .info-row {
+    flex-direction: column;
+
+    .info-item {
+      flex: 0 0 100%;
+      margin-right: 0;
+      margin-bottom: 1rem;
+    }
+  }
+}
