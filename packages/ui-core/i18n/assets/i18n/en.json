@@ -178,7 +178,8 @@
 		"ADD_MODULE": "Add Module",
 		"SHARE": "Share",
 		"GET_INFO": "Get Info",
-		"RETRY": "Retry"
+		"RETRY": "Retry",
+		"UPLOAD": "Upload"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4918,6 +4919,79 @@
 				"SHARE_NOT_ALLOWED": "Share is not allowed",
 				"UNEXPECTED_SHARING_ERROR": "Unexpected sharing error"
 			}
+		},
+		"FORM": {
+			"TITLE": "Upload Plugin",
+			"BASIC_INFO": "Basic Information",
+			"NAME": "Plugin Name",
+			"NAME_PLACEHOLDER": "Enter plugin name",
+			"VALIDATION": {
+				"NAME_REQUIRED": "Plugin name is required",
+				"NAME_TOO_LONG": "Plugin name is too long",
+				"VERSION_REQUIRED": "Version is required",
+				"VERSION_FORMAT": "Invalid version format",
+				"DESCRIPTION_TOO_LONG": "Description is too long",
+				"URL_REQUIRED": "URL is required",
+				"INVALID_URL": "Invalid URL format",
+				"PACKAGE_NAME_REQUIRED": "Package name is required",
+				"INVALID_PACKAGE_NAME": "Invalid package name format",
+				"INVALID_SCOPE": "Invalid scope format",
+				"AUTHOR_TOO_LONG": "Author name is too long",
+				"LICENSE_TOO_LONG": "License field is too long"
+			},
+			"TYPE": "Plugin Type",
+			"TYPE_PLACEHOLDER": "Select plugin type",
+			"TYPES": {
+				"DESKTOP": "Desktop",
+				"WEB": "Web",
+				"MOBILE": "Mobile"
+			},
+			"VERSION": "Version",
+			"STATUS": "Status",
+			"STATUSES": {
+				"ACTIVE": "Active",
+				"INACTIVE": "Inactive",
+				"DEPRECATED": "Deprecated",
+				"ARCHIVED": "Archived"
+			},
+			"DESCRIPTION": "Description",
+			"DESCRIPTION_PLACEHOLDER": "Enter plugin description",
+			"SOURCE": "Source",
+			"SOURCE_TYPE": "Source Type",
+			"SOURCE_TYPES": {
+				"CDN": "CDN",
+				"NPM": "NPM",
+				"GAUZY": "Gauzy"
+			},
+			"CDN": {
+				"URL": "CDN URL",
+				"INTEGRITY": "Integrity",
+				"CROSS_ORIGIN": "Cross Origin"
+			},
+			"NPM": {
+				"PACKAGE_NAME": "NPM Package Name",
+				"REGISTRY": "NPM Registry",
+				"SCOPE": "Scope",
+				"AUTH_TOKEN": "Authentication Token"
+			},
+			"FILE_UPLOAD": {
+				"DRAG_DROP": "Drag & Drop your file here",
+				"BROWSE": "Browse",
+				"REMOVE": "Remove File",
+				"RESTRICTIONS": "Only .zip files are allowed"
+			},
+			"METADATA": {
+				"TITLE": "Metadata",
+				"AUTHOR": "Author",
+				"AUTHOR_PLACEHOLDER": "Enter author name",
+				"LICENSE": "License",
+				"LICENSE_PLACEHOLDER": "Enter license",
+				"HOMEPAGE": "Homepage",
+				"HOMEPAGE_PLACEHOLDER": "Enter homepage URL",
+				"REPOSITORY": "Repository",
+				"REPOSITORY_PLACEHOLDER": "Enter repository URL"
+			},
+			"OR": "Or"
 		}
 	}
 }

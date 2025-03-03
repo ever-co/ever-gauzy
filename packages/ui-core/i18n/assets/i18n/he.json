@@ -168,7 +168,8 @@
 		"ADD_MODULE": "הוסף מודול",
 		"SHARE": "שיתוף",
 		"GET_INFO": "קבל מידע",
-		"RETRY": "נסה שוב"
+		"RETRY": "נסה שוב",
+		"UPLOAD": "העלה"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4755,6 +4756,79 @@
 				"SHARE_NOT_ALLOWED": "השיתוף אינו מותר",
 				"UNEXPECTED_SHARING_ERROR": "שגיאה בלתי צפויה בשיתוף"
 			}
+		},
+		"FORM": {
+			"TITLE": "העלאת תוסף",
+			"BASIC_INFO": "מידע בסיסי",
+			"NAME": "שם התוסף",
+			"NAME_PLACEHOLDER": "הזן את שם התוסף",
+			"VALIDATION": {
+				"NAME_REQUIRED": "שם התוסף נדרש",
+				"NAME_TOO_LONG": "שם התוסף ארוך מדי",
+				"VERSION_REQUIRED": "גרסה נדרשת",
+				"VERSION_FORMAT": "פורמט גרסה לא תקין",
+				"DESCRIPTION_TOO_LONG": "התיאור ארוך מדי",
+				"URL_REQUIRED": "נדרש URL",
+				"INVALID_URL": "פורמט URL לא תקין",
+				"PACKAGE_NAME_REQUIRED": "נדרש שם חבילה",
+				"INVALID_PACKAGE_NAME": "פורמט שם חבילה לא תקין",
+				"INVALID_SCOPE": "פורמט היקף לא תקין",
+				"AUTHOR_TOO_LONG": "שם המחבר ארוך מדי",
+				"LICENSE_TOO_LONG": "שדה הרישיון ארוך מדי"
+			},
+			"TYPE": "סוג התוסף",
+			"TYPE_PLACEHOLDER": "בחר סוג תוסף",
+			"TYPES": {
+				"DESKTOP": "שולחן עבודה",
+				"WEB": "אינטרנט",
+				"MOBILE": "נייד"
+			},
+			"VERSION": "גרסה",
+			"STATUS": "סטטוס",
+			"STATUSES": {
+				"ACTIVE": "פעיל",
+				"INACTIVE": "לא פעיל",
+				"DEPRECATED": "מיושן",
+				"ARCHIVED": "בארכיון"
+			},
+			"DESCRIPTION": "תיאור",
+			"DESCRIPTION_PLACEHOLDER": "הזן תיאור לתוסף",
+			"SOURCE": "מקור",
+			"SOURCE_TYPE": "סוג המקור",
+			"SOURCE_TYPES": {
+				"CDN": "CDN",
+				"NPM": "NPM",
+				"GAUZY": "Gauzy"
+			},
+			"CDN": {
+				"URL": "כתובת CDN",
+				"INTEGRITY": "שלמות",
+				"CROSS_ORIGIN": "Cross Origin"
+			},
+			"NPM": {
+				"PACKAGE_NAME": "שם חבילת NPM",
+				"REGISTRY": "רישום NPM",
+				"SCOPE": "היקף",
+				"AUTH_TOKEN": "אסימון אימות"
+			},
+			"FILE_UPLOAD": {
+				"DRAG_DROP": "גרור ושחרר את הקובץ שלך כאן",
+				"BROWSE": "עיון",
+				"REMOVE": "הסר קובץ",
+				"RESTRICTIONS": "רק קבצי .zip מותרים"
+			},
+			"METADATA": {
+				"TITLE": "מטא-נתונים",
+				"AUTHOR": "מחבר",
+				"AUTHOR_PLACEHOLDER": "הזן את שם המחבר",
+				"LICENSE": "רישיון",
+				"LICENSE_PLACEHOLDER": "הזן רישיון",
+				"HOMEPAGE": "דף הבית",
+				"HOMEPAGE_PLACEHOLDER": "הזן את כתובת דף הבית",
+				"REPOSITORY": "מאגר",
+				"REPOSITORY_PLACEHOLDER": "הזן את כתובת המאגר"
+			},
+			"OR": "או"
 		}
 	}
 }

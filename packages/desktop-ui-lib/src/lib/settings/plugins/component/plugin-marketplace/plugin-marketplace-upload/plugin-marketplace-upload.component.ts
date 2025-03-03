@@ -1,7 +1,10 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
-import { NbDialogRef } from '@nebular/theme';
+import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { finalize, takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'lib-plugin-marketplace-upload',
@@ -10,6 +13,8 @@ import { NbDialogRef } from '@nebular/theme';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PluginMarketplaceUploadComponent implements OnInit {
+	@ViewChild('fileInput') fileInput: ElementRef;
+
 	pluginForm: FormGroup;
 	pluginTypes = Object.values(PluginType);
 	pluginStatuses = Object.values(PluginStatus);
@@ -17,53 +22,89 @@ export class PluginMarketplaceUploadComponent implements OnInit {
 	selectedFile: File | null = null;
 	errorMessage: string | null = null;
 	isDragOver = false;
-	private maxFileSize = 1024 * 1024 * 1024; // 1GB
+	isSubmitting = false;
+	formTouched = false;
 
-	constructor(private fb: FormBuilder, private dialogRef: NbDialogRef<PluginMarketplaceUploadComponent>) {}
+	readonly ALLOWED_EXTENSIONS = ['.zip'];
+	readonly MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1GB
+	private readonly destroy$ = new Subject<void>();
+
+	constructor(
+		private readonly fb: FormBuilder,
+		private readonly dialogRef: NbDialogRef<PluginMarketplaceUploadComponent>,
+		private readonly cdr: ChangeDetectorRef,
+		private readonly toastrService: NbToastrService,
+		private readonly translateService: TranslateService
+	) {}
 
 	ngOnInit(): void {
 		this.initForm();
+		this.setupSourceTypeListener();
+	}
+
+	ngOnDestroy(): void {
+		this.destroy$.next();
+		this.destroy$.complete();
 	}
 
 	private initForm(): void {
 		this.pluginForm = this.fb.group({
-			name: ['', Validators.required],
-			description: [''],
-			type: [this.pluginTypes[0]],
-			status: [this.pluginStatuses[0]],
-			version: ['', Validators.required],
-			sourceType: [this.sourceTypes[0]],
+			name: ['', [Validators.required, Validators.maxLength(100)]],
+			description: ['', Validators.maxLength(500)],
+			type: [this.pluginTypes[0], Validators.required],
+			status: [this.pluginStatuses[0], Validators.required],
+			version: ['', [Validators.required, Validators.pattern(/^\d+\.\d+\.\d+$/)]],
+			sourceType: [this.sourceTypes[0], Validators.required],
 			source: this.createSourceGroup(this.sourceTypes[0]),
-			author: [''],
-			license: [''],
-			homepage: [''],
-			repository: ['']
+			author: ['', Validators.maxLength(100)],
+			license: ['', Validators.maxLength(50)],
+			homepage: ['', Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)],
+			repository: ['', Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)]
 		});
+	}
+
+	private setupSourceTypeListener(): void {
+		this.pluginForm
+			.get('sourceType')
+			?.valueChanges.pipe(takeUntil(this.destroy$))
+			.subscribe((type) => this.onSourceTypeChange(type));
 	}
 
 	private createSourceGroup(type: string): FormGroup {
 		switch (type) {
 			case PluginSourceType.CDN:
 				return this.fb.group({
-					type: PluginSourceType.CDN,
-					url: ['', Validators.required],
+					type: [PluginSourceType.CDN],
+					url: [
+						'',
+						[
+							Validators.required,
+							Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)
+						]
+					],
 					integrity: [''],
-					crossOrigin: ['']
+					crossOrigin: ['', Validators.maxLength(50)]
 				});
 
 			case PluginSourceType.NPM:
 				return this.fb.group({
-					type: PluginSourceType.NPM,
-					name: ['', Validators.required],
-					registry: [''],
+					type: [PluginSourceType.NPM],
+					name: [
+						'',
+						[
+							Validators.required,
+							Validators.pattern(/^(@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/)
+						]
+					],
+					registry: ['', Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)],
 					authToken: [''],
-					scope: ['']
+					scope: ['', Validators.pattern(/^@[a-z0-9-~][a-z0-9-._~]*$/)]
 				});
 
 			case PluginSourceType.GAUZY:
 				return this.fb.group({
-					type: PluginSourceType.GAUZY,
-					file: [null]
+					type: [PluginSourceType.GAUZY],
+					file: [null, Validators.required]
 				});
 
 			default:
@@ -76,68 +117,86 @@ export class PluginMarketplaceUploadComponent implements OnInit {
 
 		if (input.files && input.files.length > 0) {
 			this.processFile(input.files[0]);
+			this.cdr.markForCheck();
 		}
 	}
+
 	public onDragEnter(event: DragEvent): void {
-		event.preventDefault();
-		event.stopPropagation();
+		this.preventDefault(event);
 		this.isDragOver = true;
+		this.cdr.markForCheck();
 	}
 
 	public onDragOver(event: DragEvent): void {
-		event.preventDefault();
-		event.stopPropagation();
+		this.preventDefault(event);
 		this.isDragOver = true;
 	}
 
 	public onDragLeave(event: DragEvent): void {
-		event.preventDefault();
-		event.stopPropagation();
+		this.preventDefault(event);
 		this.isDragOver = false;
+		this.cdr.markForCheck();
 	}
 
 	public onDrop(event: DragEvent): void {
-		event.preventDefault();
-		event.stopPropagation();
+		this.preventDefault(event);
 		this.isDragOver = false;
 
-		if (event.dataTransfer && event.dataTransfer.files.length > 0) {
+		if (event.dataTransfer?.files.length > 0) {
 			this.processFile(event.dataTransfer.files[0]);
+			this.cdr.markForCheck();
 		}
+	}
+
+	private preventDefault(event: Event): void {
+		event.preventDefault();
+		event.stopPropagation();
 	}
 
 	private processFile(file: File): void {
 		const sourceGroup = this.pluginForm.get('source') as FormGroup;
+		const fileControl = sourceGroup.get('file');
 
-		// Validate file type
-		if (!file.name.endsWith('.zip')) {
-			this.errorMessage = 'Only ZIP files are allowed.';
-			sourceGroup.get('file').setErrors({ invalidType: true });
+		// Reset previous errors
+		this.errorMessage = null;
+		fileControl?.setErrors(null);
+
+		// Validate file extension
+		const fileExtension = this.getFileExtension(file.name);
+		if (!this.ALLOWED_EXTENSIONS.includes(fileExtension)) {
+			this.errorMessage = this.translateService.instant('PLUGINS.FILE_VALIDATION.INVALID_TYPE', {
+				extensions: this.ALLOWED_EXTENSIONS.join(', ')
+			});
+			fileControl?.setErrors({ invalidType: true });
 			this.selectedFile = null;
-
 			return;
 		}
 
 		// Validate file size
-		if (file.size > this.maxFileSize) {
-			this.errorMessage = 'File size must be less than 1GB.';
-			sourceGroup.get('file').setErrors({ maxSizeExceeded: true });
+		if (file.size > this.MAX_FILE_SIZE) {
+			this.errorMessage = this.translateService.instant('PLUGINS.FILE_VALIDATION.MAX_SIZE_EXCEEDED', {
+				maxSize: this.formatFileSize(this.MAX_FILE_SIZE)
+			});
+			fileControl?.setErrors({ maxSizeExceeded: true });
 			this.selectedFile = null;
-
 			return;
 		}
 
 		this.selectedFile = file;
-		this.errorMessage = null;
-		sourceGroup.patchValue({ file });
+		fileControl?.setValue(file);
+	}
+
+	private getFileExtension(filename: string): string {
+		return filename.substring(filename.lastIndexOf('.')).toLowerCase();
 	}
 
 	public removeFile(event: Event): void {
-		event.stopPropagation();
+		this.preventDefault(event);
 		const sourceGroup = this.pluginForm.get('source') as FormGroup;
-		sourceGroup.patchValue({ file: null });
+		sourceGroup.get('file')?.setValue(null);
 		this.selectedFile = null;
 		this.errorMessage = null;
+		this.cdr.markForCheck();
 	}
 
 	public formatFileSize(bytes: number): string {
@@ -145,23 +204,113 @@ export class PluginMarketplaceUploadComponent implements OnInit {
 		const k = 1024;
 		const sizes = ['Bytes', 'KB', 'MB', 'GB'];
 		const i = Math.floor(Math.log(bytes) / Math.log(k));
-		return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+		return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 	}
 
 	public onSourceTypeChange(type: string): void {
 		this.pluginForm.setControl('source', this.createSourceGroup(type));
 		this.selectedFile = null;
 		this.errorMessage = null;
+		this.cdr.markForCheck();
+	}
+
+	public reset(): void {
+		this.initForm();
+		this.selectedFile = null;
+		this.errorMessage = null;
+		this.formTouched = false;
+		this.cdr.markForCheck();
 	}
 
 	public submit(): void {
-		if (this.pluginForm.valid) {
-			const pluginData = this.pluginForm.value;
-			this.dialogRef.close(pluginData);
+		this.formTouched = true;
+
+		if (this.pluginForm.invalid) {
+			this.markFormGroupTouched(this.pluginForm);
+			this.scrollToFirstInvalidControl();
+			this.toastrService.danger(
+				this.translateService.instant('PLUGINS.VALIDATION.FORM_INVALID'),
+				this.translateService.instant('TOASTR.TITLE.ERROR')
+			);
+			return;
 		}
+
+		try {
+			this.isSubmitting = true;
+			this.cdr.markForCheck();
+
+			const pluginData = this.pluginForm.value;
+
+			// Add success notification
+			this.toastrService.success(
+				this.translateService.instant('PLUGINS.UPLOAD.SUCCESS'),
+				this.translateService.instant('TOASTR.TITLE.SUCCESS')
+			);
+
+			this.dialogRef.close(pluginData);
+		} catch (error) {
+			this.toastrService.danger(
+				error.message || this.translateService.instant('PLUGINS.UPLOAD.ERROR'),
+				this.translateService.instant('TOASTR.TITLE.ERROR')
+			);
+		} finally {
+			this.isSubmitting = false;
+			this.cdr.markForCheck();
+		}
+	}
+
+	private scrollToFirstInvalidControl(): void {
+		const firstInvalidControl = document.querySelector('form .ng-invalid');
+		if (firstInvalidControl) {
+			firstInvalidControl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		}
+	}
+
+	private markFormGroupTouched(formGroup: FormGroup): void {
+		Object.values(formGroup.controls).forEach((control) => {
+			control.markAsTouched();
+			control.markAsDirty();
+
+			if (control instanceof FormGroup) {
+				this.markFormGroupTouched(control);
+			}
+		});
 	}
 
 	public dismiss(): void {
 		this.dialogRef.close();
+	}
+
+	public get isFormInvalid(): boolean {
+		return this.pluginForm.invalid;
+	}
+
+	public getFieldError(controlName: string, errorType?: string): boolean {
+		const control = this.pluginForm.get(controlName);
+		if (!control) return false;
+
+		if (errorType) {
+			return control.touched && control.hasError(errorType);
+		}
+
+		return control.touched && control.invalid;
+	}
+
+	public getSourceFieldError(fieldName: string, errorType?: string): boolean {
+		const sourceGroup = this.pluginForm.get('source') as FormGroup;
+		if (!sourceGroup) return false;
+
+		const control = sourceGroup.get(fieldName);
+		if (!control) return false;
+
+		if (errorType) {
+			return control.touched && control.hasError(errorType);
+		}
+
+		return control.touched && control.invalid;
+	}
+
+	public triggerFileBrowse(): void {
+		this.fileInput?.nativeElement.click();
 	}
 }

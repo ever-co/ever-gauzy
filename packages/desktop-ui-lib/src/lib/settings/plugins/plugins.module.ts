@@ -11,6 +11,7 @@ import {
 	NbInputModule,
 	NbRouteTabsetModule,
 	NbSelectModule,
+	NbSpinnerModule,
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
@@ -65,7 +66,8 @@ import { PluginMarketplaceUploadComponent } from './component/plugin-marketplace
 		AlertModule,
 		NbFormFieldModule,
 		NbSelectModule,
-		NbTooltipModule
+		NbTooltipModule,
+		NbSpinnerModule
 	],
 	exports: [PluginLayoutComponent],
 	providers: [PluginLoaderService, PluginElectronService, PluginService]

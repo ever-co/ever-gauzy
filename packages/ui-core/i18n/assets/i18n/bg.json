@@ -178,7 +178,8 @@
 		"ADD_MODULE": "Добавяне на модул",
 		"SHARE": "Споделяне",
 		"GET_INFO": "Получаване на информация",
-		"RETRY": "Опитайте отново"
+		"RETRY": "Опитайте отново",
+		"UPLOAD": "Качване"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4792,6 +4793,79 @@
 				"SHARE_NOT_ALLOWED": "Споделянето не е позволено",
 				"UNEXPECTED_SHARING_ERROR": "Неочаквана грешка при споделяне"
 			}
+		},
+		"FORM": {
+			"TITLE": "Качване на приставка",
+			"BASIC_INFO": "Основна информация",
+			"NAME": "Име на приставката",
+			"NAME_PLACEHOLDER": "Въведете име на приставката",
+			"VALIDATION": {
+				"NAME_REQUIRED": "Името на приставката е задължително",
+				"NAME_TOO_LONG": "Името на приставката е твърде дълго",
+				"VERSION_REQUIRED": "Версията е задължителна",
+				"VERSION_FORMAT": "Невалиден формат на версията",
+				"DESCRIPTION_TOO_LONG": "Описанието е твърде дълго",
+				"URL_REQUIRED": "URL адресът е задължителен",
+				"INVALID_URL": "Невалиден формат на URL адреса",
+				"PACKAGE_NAME_REQUIRED": "Името на пакета е задължително",
+				"INVALID_PACKAGE_NAME": "Невалиден формат на името на пакета",
+				"INVALID_SCOPE": "Невалиден формат на обхвата",
+				"AUTHOR_TOO_LONG": "Името на автора е твърде дълго",
+				"LICENSE_TOO_LONG": "Полето за лиценз е твърде дълго"
+			},
+			"TYPE": "Тип на приставката",
+			"TYPE_PLACEHOLDER": "Изберете тип на приставката",
+			"TYPES": {
+				"DESKTOP": "Настолен",
+				"WEB": "Уеб",
+				"MOBILE": "Мобилен"
+			},
+			"VERSION": "Версия",
+			"STATUS": "Статус",
+			"STATUSES": {
+				"ACTIVE": "Активен",
+				"INACTIVE": "Неактивен",
+				"DEPRECATED": "Остарял",
+				"ARCHIVED": "Архивиран"
+			},
+			"DESCRIPTION": "Описание",
+			"DESCRIPTION_PLACEHOLDER": "Въведете описание на приставката",
+			"SOURCE": "Източник",
+			"SOURCE_TYPE": "Тип на източника",
+			"SOURCE_TYPES": {
+				"CDN": "CDN",
+				"NPM": "NPM",
+				"GAUZY": "Gauzy"
+			},
+			"CDN": {
+				"URL": "CDN URL",
+				"INTEGRITY": "Цялост",
+				"CROSS_ORIGIN": "Cross Origin"
+			},
+			"NPM": {
+				"PACKAGE_NAME": "Име на NPM пакет",
+				"REGISTRY": "NPM регистър",
+				"SCOPE": "Обхват",
+				"AUTH_TOKEN": "Токен за удостоверяване"
+			},
+			"FILE_UPLOAD": {
+				"DRAG_DROP": "Провлачете и пуснете файла тук",
+				"BROWSE": "Преглед",
+				"REMOVE": "Премахване на файл",
+				"RESTRICTIONS": "Позволени са само .zip файлове"
+			},
+			"METADATA": {
+				"TITLE": "Метаданни",
+				"AUTHOR": "Автор",
+				"AUTHOR_PLACEHOLDER": "Въведете име на автора",
+				"LICENSE": "Лиценз",
+				"LICENSE_PLACEHOLDER": "Въведете лиценз",
+				"HOMEPAGE": "Начална страница",
+				"HOMEPAGE_PLACEHOLDER": "Въведете URL адрес на началната страница",
+				"REPOSITORY": "Хранилище",
+				"REPOSITORY_PLACEHOLDER": "Въведете URL адрес на хранилището"
+			},
+			"OR": "Или"
 		}
 	}
 }

@@ -169,7 +169,8 @@
 		"ADD_MODULE": "Module toevoegen",
 		"SHARE": "Delen",
 		"GET_INFO": "Informatie ophalen",
-		"RETRY": "Opnieuw proberen"
+		"RETRY": "Opnieuw proberen",
+		"UPLOAD": "Uploaden"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4765,6 +4766,79 @@
 				"SHARE_NOT_ALLOWED": "Delen is niet toegestaan",
 				"UNEXPECTED_SHARING_ERROR": "Onverwachte fout bij delen"
 			}
+		},
+		"FORM": {
+			"TITLE": "Plugin uploaden",
+			"BASIC_INFO": "Basisinformatie",
+			"NAME": "Pluginaam",
+			"NAME_PLACEHOLDER": "Voer de pluginaam in",
+			"VALIDATION": {
+				"NAME_REQUIRED": "Pluginaam is vereist",
+				"NAME_TOO_LONG": "Pluginaam is te lang",
+				"VERSION_REQUIRED": "Versie is vereist",
+				"VERSION_FORMAT": "Ongeldig versieformaat",
+				"DESCRIPTION_TOO_LONG": "Beschrijving is te lang",
+				"URL_REQUIRED": "URL is vereist",
+				"INVALID_URL": "Ongeldig URL-formaat",
+				"PACKAGE_NAME_REQUIRED": "Pakketnaam is vereist",
+				"INVALID_PACKAGE_NAME": "Ongeldig pakketnaamformaat",
+				"INVALID_SCOPE": "Ongeldig bereikformaat",
+				"AUTHOR_TOO_LONG": "Auteursnaam is te lang",
+				"LICENSE_TOO_LONG": "Licentieveld is te lang"
+			},
+			"TYPE": "Plugintype",
+			"TYPE_PLACEHOLDER": "Selecteer plugintype",
+			"TYPES": {
+				"DESKTOP": "Desktop",
+				"WEB": "Web",
+				"MOBILE": "Mobiel"
+			},
+			"VERSION": "Versie",
+			"STATUS": "Status",
+			"STATUSES": {
+				"ACTIVE": "Actief",
+				"INACTIVE": "Inactief",
+				"DEPRECATED": "Verouderd",
+				"ARCHIVED": "Gearchiveerd"
+			},
+			"DESCRIPTION": "Beschrijving",
+			"DESCRIPTION_PLACEHOLDER": "Voer een pluginbeschrijving in",
+			"SOURCE": "Bron",
+			"SOURCE_TYPE": "Brontype",
+			"SOURCE_TYPES": {
+				"CDN": "CDN",
+				"NPM": "NPM",
+				"GAUZY": "Gauzy"
+			},
+			"CDN": {
+				"URL": "CDN-URL",
+				"INTEGRITY": "Integriteit",
+				"CROSS_ORIGIN": "Cross Origin"
+			},
+			"NPM": {
+				"PACKAGE_NAME": "NPM-pakketnaam",
+				"REGISTRY": "NPM-register",
+				"SCOPE": "Bereik",
+				"AUTH_TOKEN": "Authenticatietoken"
+			},
+			"FILE_UPLOAD": {
+				"DRAG_DROP": "Sleep je bestand hierheen",
+				"BROWSE": "Bladeren",
+				"REMOVE": "Bestand verwijderen",
+				"RESTRICTIONS": "Alleen .zip-bestanden zijn toegestaan"
+			},
+			"METADATA": {
+				"TITLE": "Metadata",
+				"AUTHOR": "Auteur",
+				"AUTHOR_PLACEHOLDER": "Voer de auteursnaam in",
+				"LICENSE": "Licentie",
+				"LICENSE_PLACEHOLDER": "Voer de licentie in",
+				"HOMEPAGE": "Homepage",
+				"HOMEPAGE_PLACEHOLDER": "Voer de homepage-URL in",
+				"REPOSITORY": "Repository",
+				"REPOSITORY_PLACEHOLDER": "Voer de repository-URL in"
+			},
+			"OR": "Of"
 		}
 	}
 }

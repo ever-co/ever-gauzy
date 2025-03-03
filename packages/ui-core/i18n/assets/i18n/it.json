@@ -169,7 +169,8 @@
 		"ADD_MODULE": "Aggiungi modulo",
 		"SHARE": "Condividi",
 		"GET_INFO": "Ottieni informazioni",
-		"RETRY": "Riprova"
+		"RETRY": "Riprova",
+		"UPLOAD": "Carica"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4765,6 +4766,79 @@
 				"SHARE_NOT_ALLOWED": "Condivisione non consentita",
 				"UNEXPECTED_SHARING_ERROR": "Errore inaspettato nella condivisione"
 			}
+		},
+		"FORM": {
+			"TITLE": "Carica plugin",
+			"BASIC_INFO": "Informazioni di base",
+			"NAME": "Nome del plugin",
+			"NAME_PLACEHOLDER": "Inserisci il nome del plugin",
+			"VALIDATION": {
+				"NAME_REQUIRED": "Il nome del plugin è obbligatorio",
+				"NAME_TOO_LONG": "Il nome del plugin è troppo lungo",
+				"VERSION_REQUIRED": "La versione è obbligatoria",
+				"VERSION_FORMAT": "Formato della versione non valido",
+				"DESCRIPTION_TOO_LONG": "La descrizione è troppo lunga",
+				"URL_REQUIRED": "L'URL è obbligatorio",
+				"INVALID_URL": "Formato URL non valido",
+				"PACKAGE_NAME_REQUIRED": "Il nome del pacchetto è obbligatorio",
+				"INVALID_PACKAGE_NAME": "Formato del nome del pacchetto non valido",
+				"INVALID_SCOPE": "Formato dell'ambito non valido",
+				"AUTHOR_TOO_LONG": "Il nome dell'autore è troppo lungo",
+				"LICENSE_TOO_LONG": "Il campo della licenza è troppo lungo"
+			},
+			"TYPE": "Tipo di plugin",
+			"TYPE_PLACEHOLDER": "Seleziona il tipo di plugin",
+			"TYPES": {
+				"DESKTOP": "Desktop",
+				"WEB": "Web",
+				"MOBILE": "Mobile"
+			},
+			"VERSION": "Versione",
+			"STATUS": "Stato",
+			"STATUSES": {
+				"ACTIVE": "Attivo",
+				"INACTIVE": "Inattivo",
+				"DEPRECATED": "Deprecato",
+				"ARCHIVED": "Archiviato"
+			},
+			"DESCRIPTION": "Descrizione",
+			"DESCRIPTION_PLACEHOLDER": "Inserisci la descrizione del plugin",
+			"SOURCE": "Fonte",
+			"SOURCE_TYPE": "Tipo di fonte",
+			"SOURCE_TYPES": {
+				"CDN": "CDN",
+				"NPM": "NPM",
+				"GAUZY": "Gauzy"
+			},
+			"CDN": {
+				"URL": "URL CDN",
+				"INTEGRITY": "Integrità",
+				"CROSS_ORIGIN": "Cross Origin"
+			},
+			"NPM": {
+				"PACKAGE_NAME": "Nome del pacchetto NPM",
+				"REGISTRY": "Registro NPM",
+				"SCOPE": "Ambito",
+				"AUTH_TOKEN": "Token di autenticazione"
+			},
+			"FILE_UPLOAD": {
+				"DRAG_DROP": "Trascina e rilascia il tuo file qui",
+				"BROWSE": "Sfoglia",
+				"REMOVE": "Rimuovi file",
+				"RESTRICTIONS": "Sono consentiti solo file .zip"
+			},
+			"METADATA": {
+				"TITLE": "Metadati",
+				"AUTHOR": "Autore",
+				"AUTHOR_PLACEHOLDER": "Inserisci il nome dell'autore",
+				"LICENSE": "Licenza",
+				"LICENSE_PLACEHOLDER": "Inserisci la licenza",
+				"HOMEPAGE": "Homepage",
+				"HOMEPAGE_PLACEHOLDER": "Inserisci l'URL della homepage",
+				"REPOSITORY": "Repository",
+				"REPOSITORY_PLACEHOLDER": "Inserisci l'URL del repository"
+			},
+			"OR": "O"
 		}
 	}
 }
