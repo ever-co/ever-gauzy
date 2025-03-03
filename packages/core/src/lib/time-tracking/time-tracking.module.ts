@@ -6,7 +6,6 @@ import { TimeLogModule } from './time-log/time-log.module';
 import { TimerModule } from './timer/timer.module';
 import { TimesheetModule } from './timesheet/timesheet.module';
 import { TimeSlotModule } from './time-slot/time-slot.module';
-
 @Module({
 	controllers: [],
 	imports: [
@@ -16,7 +15,7 @@ import { TimeSlotModule } from './time-slot/time-slot.module';
 		TimeSlotModule,
 		ScreenshotModule,
 		StatisticModule,
-		TimesheetModule
+		TimesheetModule,
 	]
 })
 export class TimeTrackingModule {}

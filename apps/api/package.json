@@ -45,6 +45,7 @@
 		"@gauzy/plugin-integration-ai": "^0.1.0",
 		"@gauzy/plugin-integration-github": "^0.1.0",
 		"@gauzy/plugin-integration-hubstaff": "^0.1.0",
+		"@gauzy/plugin-integration-make-com": "^0.1.0",
 		"@gauzy/plugin-integration-jira": "^0.1.0",
 		"@gauzy/plugin-integration-upwork": "^0.1.0",
 		"@gauzy/plugin-jitsu-analytics": "^0.1.0",
