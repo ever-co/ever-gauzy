@@ -2,8 +2,8 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from 'chalk';
 import { DatabaseTypeEnum } from '@gauzy/config';
 
-export class AlterEquipmentSharingEntityTable1740913445243 implements MigrationInterface {
-	name = 'AlterEquipmentSharingEntityTable1740913445243';
+export class AlterEquipmentSharingEntityTable1741002457504 implements MigrationInterface {
+	name = 'AlterEquipmentSharingEntityTable1741002457504';
 
 	/**
 	 * Up Migration
@@ -108,12 +108,36 @@ export class AlterEquipmentSharingEntityTable1740913445243 implements MigrationI
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		// Step 1: Copy data from "createdBy" to "createdByUserId"
+		console.log('Step 1: Copying data from createdBy to createdByUserId');
+		await queryRunner.query(`UPDATE \`equipment_sharing\` SET \`createdByUserId\` = \`createdBy\``);
+
+		// Step 2: Drop the "createdBy" column
+		console.log('Step 2: Dropping column createdBy');
+		await queryRunner.query(`ALTER TABLE \`equipment_sharing\` DROP COLUMN \`createdBy\``);
+
+		// Step 3: Drop the "createdByName" column
+		console.log('Step 3: Dropping column createdByName');
+		await queryRunner.query(`ALTER TABLE \`equipment_sharing\` DROP COLUMN \`createdByName\``);
+	}
 
 	/**
 	 * MySQL Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		// Step 1: Copy data from "createdByUserId" to "createdBy"
+		console.log('Step 1: Copy data from "createdByUserId" to "createdBy"');
+		await queryRunner.query(`UPDATE \`equipment_sharing\` SET \`createdBy\` = \`createdByUserId\``);
+
+		// Step 2: Re-add the "createdBy" column
+		console.log('Step 2: Adding column "createdBy"');
+		await queryRunner.query(`ALTER TABLE \`equipment_sharing\` ADD \`createdByName\` varchar(255) NULL`);
+
+		// Step 3: Copy data from "createdByUserId" to "createdBy"
+		console.log('Step 3: Copy data from "createdByUserId" to "createdBy"');
+		await queryRunner.query(`ALTER TABLE \`equipment_sharing\` ADD \`createdBy\` varchar(255) NULL`);
+	}
 }
