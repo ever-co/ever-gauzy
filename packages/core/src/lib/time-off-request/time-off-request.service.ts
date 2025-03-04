@@ -55,7 +55,6 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		requestApproval.status = timeOffRequest.status
 			? StatusTypesMapRequestApprovalEnum[timeOffRequest.status]
 			: RequestApprovalStatusTypesEnum.REQUESTED;
-		requestApproval.createdByUserId = currentUserId;
 		requestApproval.name = 'Request time off';
 		requestApproval.min_count = 1;
 		requestApproval.organizationId = timeOffRequest.organizationId;
