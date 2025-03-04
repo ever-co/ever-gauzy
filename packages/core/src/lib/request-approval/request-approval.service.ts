@@ -163,7 +163,6 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 	async createRequestApproval(entity: IRequestApprovalCreateInput): Promise<RequestApproval> {
 		// Get the current tenant ID and current user ID from the request context.
 		const tenantId = RequestContext.currentTenantId();
-		const currentUserId = RequestContext.currentUserId();
 
 		const requestApproval = new RequestApproval();
 		requestApproval.status = RequestApprovalStatusTypesEnum.REQUESTED;

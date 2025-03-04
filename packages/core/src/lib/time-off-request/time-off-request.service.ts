@@ -41,9 +41,8 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		const request = new TimeOffRequest();
 		Object.assign(request, entity);
 
-		// Retrieve tenant and user context.
-		const tenantId = RequestContext.currentTenantId();
-		const currentUserId = RequestContext.currentUserId();
+		// Retrieve tenantId from RequestContext or options.
+		const tenantId = RequestContext.currentTenantId() ?? entity.tenantId;
 
 		// Save the time off request first.
 		const timeOffRequest = await this.typeOrmRepository.save(request);
