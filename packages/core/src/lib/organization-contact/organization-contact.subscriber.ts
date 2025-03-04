@@ -1,6 +1,5 @@
 import { EventSubscriber } from 'typeorm';
 import { OrganizationContact } from './organization-contact.entity';
-import { RequestContext } from '../core/context';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { getDummyImage } from './../core/utils';
 
