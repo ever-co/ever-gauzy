@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, U
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
+	ID,
 	IEditEntityByMemberInput,
 	IEmployee,
 	IOrganizationContact,
@@ -47,7 +48,7 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CONTACT_VIEW)
-	@Get('count')
+	@Get('/count')
 	async getCount(@Query() options: CountQueryDTO<OrganizationContact>): Promise<number> {
 		return await this.organizationContactService.countBy(options);
 	}
@@ -70,7 +71,7 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CONTACT_VIEW)
-	@Get('pagination')
+	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
 	async pagination(
 		@Query() filter: PaginationParams<OrganizationContact>
@@ -97,7 +98,7 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get('employee/:employeeId')
+	@Get('/employee/:employeeId')
 	async findByEmployee(
 		@Param('employeeId', UUIDValidationPipe) employeeId: IEmployee['id'],
 		@Query() options: TenantOrganizationBaseDTO
@@ -127,7 +128,7 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
-	@Put('employee')
+	@Put('/employee')
 	async updateByEmployee(@Body() entity: IEditEntityByMemberInput): Promise<any> {
 		return this.commandBus.execute(new OrganizationContactEditByEmployeeCommand(entity));
 	}
@@ -150,7 +151,7 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get()
+	@Get('/')
 	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IOrganizationContact>> {
 		return this.organizationContactService.findAllOrganizationContacts(data);
 	}
@@ -174,7 +175,7 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get(':id')
+	@Get('/:id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data: any
@@ -191,7 +192,7 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	 */
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
-	@Post()
+	@Post('/')
 	@UseValidationPipe()
 	async create(@Body() entity: CreateOrganizationContactDTO): Promise<IOrganizationContact> {
 		return await this.commandBus.execute(new OrganizationContactCreateCommand(entity));
@@ -207,10 +208,10 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
-	@Put(':id')
+	@Put('/:id')
 	@UseValidationPipe()
 	async update(
-		@Param('id', UUIDValidationPipe) id: IOrganizationContact['id'],
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: UpdateOrganizationContactDTO
 	): Promise<IOrganizationContact> {
 		return await this.commandBus.execute(new OrganizationContactUpdateCommand(id, entity));

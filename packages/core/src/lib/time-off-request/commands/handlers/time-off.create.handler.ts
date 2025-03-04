@@ -1,47 +1,51 @@
+import { HttpException, HttpStatus } from '@nestjs/common';
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
-import { BadRequestException } from '@nestjs/common';
 import {
 	StatusTypesMapRequestApprovalEnum,
 	ApprovalPolicyTypesStringEnum,
 	RequestApprovalStatusTypesEnum
 } from '@gauzy/contracts';
 import { TimeOffRequest } from '../../time-off-request.entity';
-import { RequestApproval } from '../../../request-approval/request-approval.entity';
+import { RequestApprovalService } from '../../../request-approval/request-approval.service';
 import { TimeOffCreateCommand } from '../time-off.create.command';
-import { RequestContext } from '../../../core/context';
-import { TypeOrmRequestApprovalRepository } from '../../../request-approval/repository/type-orm-request-approval.repository';
-import { TypeOrmTimeOffRequestRepository } from '../../repository/type-orm-time-off-request.repository';
+import { TimeOffRequestService } from '../../time-off-request.service';
 
 @CommandHandler(TimeOffCreateCommand)
 export class TimeOffCreateHandler implements ICommandHandler<TimeOffCreateCommand> {
 	constructor(
-		private readonly typeOrmTimeOffRequestRepository: TypeOrmTimeOffRequestRepository,
-		private readonly typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository
+		private readonly _timeOffRequestService: TimeOffRequestService,
+		private readonly _requestApprovalService: RequestApprovalService
 	) {}
 
-	public async execute(command?: TimeOffCreateCommand): Promise<TimeOffRequest> {
+	/**
+	 * Executes the time off update command.
+	 *
+	 * @param command - The command containing the time off request data.
+	 * @returns The saved TimeOffRequest entity.
+	 */
+	public async execute(command: TimeOffCreateCommand): Promise<TimeOffRequest> {
+		const { input } = command;
 		try {
-			const { timeOff } = command;
-			const request = new TimeOffRequest();
-			Object.assign(request, timeOff);
+			// Create the request approval record for the created equipment sharing.
+			const timeOffRequest = await this._timeOffRequestService.create(input);
 
-			const timeOffRequestSaved = await this.typeOrmTimeOffRequestRepository.save(request);
+			// Create the request approval record for the created equipment sharing.
+			await this._requestApprovalService.create({
+				requestId: timeOffRequest.id,
+				requestType: ApprovalPolicyTypesStringEnum.TIME_OFF,
+				status: timeOffRequest.status
+					? StatusTypesMapRequestApprovalEnum[timeOffRequest.status]
+					: RequestApprovalStatusTypesEnum.REQUESTED,
+				name: 'Request time off',
+				min_count: 1
+			});
 
-			const requestApproval = new RequestApproval();
-			requestApproval.requestId = timeOffRequestSaved.id;
-			requestApproval.requestType = ApprovalPolicyTypesStringEnum.TIME_OFF;
-			requestApproval.status = timeOffRequestSaved.status
-				? StatusTypesMapRequestApprovalEnum[timeOffRequestSaved.status]
-				: RequestApprovalStatusTypesEnum.REQUESTED;
-			requestApproval.createdBy = RequestContext.currentUser().id;
-			requestApproval.createdByName = RequestContext.currentUser().name;
-			requestApproval.name = 'Request time off';
-			requestApproval.min_count = 1;
-
-			await this.typeOrmRequestApprovalRepository.save(requestApproval);
-			return timeOffRequestSaved;
-		} catch (err) {
-			throw new BadRequestException(err);
+			return timeOffRequest;
+		} catch (error) {
+			throw new HttpException(
+				`Error while creating time off request: ${error.message}`,
+				HttpStatus.INTERNAL_SERVER_ERROR
+			);
 		}
 	}
 }
