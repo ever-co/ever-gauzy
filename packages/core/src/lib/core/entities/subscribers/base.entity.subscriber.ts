@@ -15,7 +15,7 @@ export class BaseEntitySubscriber extends BaseEntityEventSubscriber {
 	 */
 	async beforeEntityCreate(entity: any, em?: MultiOrmEntityManager): Promise<void> {
 		// Further pre-creation logic can be inserted here as needed.
-		if (entity && 'createdByUserId' in entity) {
+		if (entity) {
 			entity.createdByUserId = RequestContext.currentUserId(); // Assign the current user's ID to the createdByUserId property
 		}
 	}
@@ -30,7 +30,7 @@ export class BaseEntitySubscriber extends BaseEntityEventSubscriber {
 	 */
 	async beforeEntityUpdate(entity: any, em?: MultiOrmEntityManager): Promise<void> {
 		// Additional pre-update logic can be added here as needed.
-		if (entity && 'updatedByUserId' in entity) {
+		if (entity) {
 			entity.updatedByUserId = RequestContext.currentUserId(); // Assign the current user's ID to the updatedByUserId property
 		}
 	}
@@ -44,7 +44,7 @@ export class BaseEntitySubscriber extends BaseEntityEventSubscriber {
 	 */
 	async afterEntitySoftRemove(entity: any, em?: MultiOrmEntityManager): Promise<void> {
 		// Additional post-soft removal logic can be added here.
-		if (entity && 'deletedByUserId' in entity) {
+		if (entity) {
 			entity.deletedByUserId = RequestContext.currentUserId(); // Assign the current user's ID to the deletedByUserId property
 		}
 	}
