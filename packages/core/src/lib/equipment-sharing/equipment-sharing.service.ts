@@ -135,9 +135,6 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 */
 	async createEquipmentSharing(entity: IEquipmentSharingCreateInput): Promise<EquipmentSharing> {
 		try {
-			// Set the ID of the user creating this record.
-			entity.createdByUserId = RequestContext.currentUserId();
-
 			// Save the equipment sharing record in the database.
 			const equipmentSharing = await this.typeOrmRepository.save(entity);
 			return equipmentSharing;

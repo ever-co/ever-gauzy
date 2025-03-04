@@ -595,14 +595,14 @@ export class HubstaffService {
 		tasks,
 		organizationId
 	}: {
-		integrationId: string;
-		projectId: string;
+		integrationId: ID;
+		projectId: ID;
 		tasks: Array<any>;
 		organizationId: string;
 	}): Promise<IIntegrationMap[]> {
 		try {
+			// Get current tenant ID from the request context
 			const tenantId = RequestContext.currentTenantId();
-			const createdByUserId = RequestContext.currentUserId();
 
 			return await Promise.all(
 				tasks.map(async ({ summary: title, details = null, id, status, due_at }) => {
@@ -620,7 +620,6 @@ export class HubstaffService {
 									projectId,
 									description: details,
 									status: status.charAt(0).toUpperCase() + status.slice(1),
-									createdByUserId,
 									dueDate: due_at,
 									organizationId,
 									tenantId

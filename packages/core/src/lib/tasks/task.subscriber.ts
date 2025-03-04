@@ -1,5 +1,4 @@
 import { EventSubscriber } from 'typeorm';
-import { RequestContext } from './../core/context';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { Task } from './task.entity';
 
@@ -35,24 +34,6 @@ export class TaskSubscriber extends BaseEntityEventSubscriber<Task> {
 			}
 		} catch (error) {
 			console.error('TaskSubscriber: An error occurred during the afterEntityLoad process:', error);
-		}
-	}
-
-	/**
-	 * Called before a Task entity is inserted into the database. This method sets the created by user ID
-	 * of the task based on the current user context.
-	 *
-	 * @param entity The Task entity about to be created.
-	 * @returns {Promise<void>} A promise that resolves when the pre-creation processing is complete.
-	 */
-	async beforeEntityCreate(entity: Task): Promise<void> {
-		try {
-			// Retrieve the current user's ID from RequestContext and assign it as the created by user
-			if (entity) {
-				entity.createdByUserId = RequestContext.currentUserId();
-			}
-		} catch (error) {
-			console.error('TaskSubscriber: An error occurred during the beforeEntityCreate process:', error);
 		}
 	}
 }
