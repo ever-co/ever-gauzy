@@ -43,7 +43,7 @@ export class WebhookService {
 	private async isEnabled(): Promise<boolean> {
 		const tenantId = RequestContext.currentTenantId();
 
-		if (tenantId) {
+		if (tenantId) { 
 			try {
 				// Get settings using the settings service
 				const settings = await this.settingsService.getSettingsForTenant(tenantId);
