@@ -13,7 +13,7 @@ export class WebhookService {
 	constructor(
 		private readonly configService: ConfigService,
 		private readonly httpService: HttpService,
-		private readonly settingsService: MakeComService
+		private readonly makeComService: MakeComService
 	) {}
 
 	/**
@@ -25,7 +25,7 @@ export class WebhookService {
 
 		if (tenantId) {
 			// Get settings using the settings service
-			const settings = await this.settingsService.getSettingsForTenant(tenantId);
+			const settings = await this.makeComService.getSettingsForTenant(tenantId);
 
 			// Check if settings exist and are enabled with a webhook URL
 			if (settings.isEnabled && settings.webhookUrl) {
@@ -43,10 +43,10 @@ export class WebhookService {
 	private async isEnabled(): Promise<boolean> {
 		const tenantId = RequestContext.currentTenantId();
 
-		if (tenantId) { 
+		if (tenantId) {
 			try {
 				// Get settings using the settings service
-				const settings = await this.settingsService.getSettingsForTenant(tenantId);
+				const settings = await this.makeComService.getSettingsForTenant(tenantId);
 
 				if (settings.isEnabled) {
 					return true;

@@ -8,16 +8,16 @@ import { UpdateMakeComSettingsDTO } from './dto/update-make-com-settings.dto';
 @ApiTags('Make.com Integrations')
 @UseGuards(TenantPermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
-@Controller('integration/make-com')
+@Controller('/integration/make-com')
 export class MakeComController {
-	constructor(private readonly settingsService: MakeComService) {}
+	constructor(private readonly makeComService: MakeComService) {}
 
 	@ApiOperation({ summary: 'Get Make.com integration settings for tenant' })
 	@ApiResponse({
 		status: 200,
 		description: 'Retrieved tenant Make.com settings'
 	})
-	@Get()
+	@Get('/')
 	async getSettings() {
 		const tenantId = RequestContext.currentTenantId();
 
@@ -25,7 +25,7 @@ export class MakeComController {
 			throw new Error('Tenant ID not found in request context');
 		}
 
-		return this.settingsService.getSettingsForTenant(tenantId);
+		return this.makeComService.getSettingsForTenant(tenantId);
 	}
 
 	@ApiOperation({ summary: 'Update Make.com integration settings for tenant' })
@@ -33,7 +33,7 @@ export class MakeComController {
 		status: 200,
 		description: 'Make.com settings updated successfully'
 	})
-	@Post()
+	@Post('/')
 	async updateSettings(@Body() input: UpdateMakeComSettingsDTO) {
 		const tenantId = RequestContext.currentTenantId();
 
@@ -41,6 +41,6 @@ export class MakeComController {
 			throw new Error('Tenant ID not found in request context');
 		}
 
-		return this.settingsService.updateSettings(tenantId, input);
+		return this.makeComService.updateSettings(tenantId, input);
 	}
 }
