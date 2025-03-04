@@ -1,5 +1,5 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
-import { BadRequestException } from '@nestjs/common';
+import { HttpException, HttpStatus } from '@nestjs/common';
 import { StatusTypesMapRequestApprovalEnum, RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 import { TimeOffRequest } from '../../time-off-request.entity';
 import { TimeOffUpdateCommand } from '../time-off.update.command';
@@ -23,25 +23,32 @@ export class TimeOffUpdateHandler implements ICommandHandler<TimeOffUpdateComman
 	public async execute(command: TimeOffUpdateCommand): Promise<TimeOffRequest> {
 		const { id, input } = command;
 
-		// Delete the existing time off request and its associated request approval concurrently.
-		await Promise.all([
-			this._timeOffRequestService.delete(id),
-			this._requestApprovalService.delete({ requestId: id })
-		]);
+		try {
+			// Delete the existing time off request and its associated request approval concurrently.
+			await Promise.all([
+				this._timeOffRequestService.delete(id),
+				this._requestApprovalService.delete({ requestId: id })
+			]);
 
-		// Save the new time off request.
-		const timeOffRequest = await this._timeOffRequestService.create(input);
+			// Save the new time off request.
+			const timeOffRequest = await this._timeOffRequestService.create(input);
 
-		// Create a new request approval record for the updated time off request.
-		await this._requestApprovalService.create({
-			requestId: timeOffRequest.id,
-			status: timeOffRequest.status
-				? StatusTypesMapRequestApprovalEnum[timeOffRequest.status]
-				: RequestApprovalStatusTypesEnum.REQUESTED,
-			name: 'Request time off',
-			min_count: 1
-		});
+			// Create a new request approval record for the updated time off request.
+			await this._requestApprovalService.create({
+				requestId: timeOffRequest.id,
+				status: timeOffRequest.status
+					? StatusTypesMapRequestApprovalEnum[timeOffRequest.status]
+					: RequestApprovalStatusTypesEnum.REQUESTED,
+				name: 'Request time off',
+				min_count: 1
+			});
 
-		return timeOffRequest;
+			return timeOffRequest;
+		} catch (error) {
+			throw new HttpException(
+				`Error while updating time off request: ${error.message}`,
+				HttpStatus.INTERNAL_SERVER_ERROR
+			);
+		}
 	}
 }

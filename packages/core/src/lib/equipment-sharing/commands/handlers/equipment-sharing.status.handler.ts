@@ -37,9 +37,7 @@ export class EquipmentSharingStatusHandler implements ICommandHandler<EquipmentS
 		}
 
 		// If a corresponding request approval exists, update its status as well.
-		if (requestApproval) {
-			await this._requestApprovalService.update({ requestId: id }, { status });
-		}
+		await this._requestApprovalService.update({ requestId: id }, { status });
 
 		// Persist and return the updated equipment sharing record.
 		return await this._equipmentSharingService.update(id, { status });
