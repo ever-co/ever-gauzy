@@ -1,6 +1,7 @@
 import * as moment from 'moment';
 
-export function generateTimeSlots(start: Date, end: Date) {
+export function generateTimeSlots(start: Date, end: Date, previousTime = 0) {
+	let remainFromPreviousTime = previousTime;
 	let mStart = moment(start);
 	const mEnd = moment(end);
 
@@ -34,6 +35,17 @@ export function generateTimeSlots(start: Date, end: Date) {
 			mStart = tempStart;
 		}
 
+		// Prevent adding the same previous saved time to the time slot again
+		if (remainFromPreviousTime > 0) {
+			if (duration >= remainFromPreviousTime) {
+				duration -= remainFromPreviousTime;
+				remainFromPreviousTime = 0;
+			} else {
+				remainFromPreviousTime -= duration;
+				duration = 0;
+			}
+		}
+
 		mStart.set('second', 0);
 		mEnd.set('millisecond', 0);
 
@@ -65,7 +77,7 @@ export function getStartEndIntervals(
 	let startMinute = moment(start).utc().get('minute');
 	startMinute = startMinute - (startMinute % 10);
 
-	let startDate: any = moment(start)
+	const startDate = moment(start)
 		.utc()
 		.set('minute', startMinute)
 		.set('second', 0)
@@ -74,14 +86,14 @@ export function getStartEndIntervals(
 	let endMinute = moment(end).utc().get('minute');
 	endMinute = endMinute - (endMinute % 10);
 
-	let endDate: any = moment(end)
+	const endDate = moment(end)
 		.utc()
 		.set('minute', endMinute + 10)
 		.set('second', 0)
 		.set('millisecond', 0);
 
 	return {
-		start: startDate,
-		end: endDate
+		start: startDate.toDate(),
+		end: endDate.toDate()
 	}
 }
