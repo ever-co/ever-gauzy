@@ -500,7 +500,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 						email: superAdmin.email,
 						employee,
 						organization,
-						languageCode,
+						languageCode
 					})
 				)
 			);
@@ -510,7 +510,6 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		}
 	}
 
-
 	/**
 	 * Creates an invite for an organization contact and sends an invitation email.
 	 *
@@ -518,24 +517,15 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	 *                organization, and inviter details.
 	 * @returns A promise that resolves with the created invite.
 	 */
-	async  createOrganizationContactInvite(
-		input: ICreateOrganizationContactInviteInput
-	): Promise<Invite> {
-		const {
-			emailId,
-			roleId,
-			organizationContactId,
-			organizationId,
-			invitedByUserId,
-			originalUrl,
-			languageCode,
-		} = input;
+	async createOrganizationContactInvite(input: ICreateOrganizationContactInviteInput): Promise<Invite> {
+		const { emailId, roleId, organizationContactId, organizationId, invitedByUserId, originalUrl, languageCode } =
+			input;
 
 		// Fetch organization contact, organization, and inviting user concurrently.
 		const [organizationContact, organization, invitedByUser] = await Promise.all([
 			this.organizationContactService.findOneByIdString(organizationContactId),
 			this.organizationService.findOneByIdString(organizationId),
-			this.userService.findOneByIdString(invitedByUserId),
+			this.userService.findOneByIdString(invitedByUserId)
 		]);
 
 		// Determine the invite expiry period (use default if not provided).
@@ -968,7 +958,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 							},
 							organizationId,
 							inviteId,
-							createdById: invitedByUserId
+							createdByUserId: invitedByUserId
 						},
 						team.id,
 						languageCode
@@ -1015,9 +1005,9 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	): Promise<IUser> {
 		let tenant = input.user.tenant;
 
-		if (input.createdById) {
+		if (input.createdByUserId) {
 			const creatingUser = await this.typeOrmUserRepository.findOneOrFail({
-				where: { id: input.createdById },
+				where: { id: input.createdByUserId },
 				relations: { tenant: true }
 			});
 			tenant = creatingUser.tenant;

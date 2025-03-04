@@ -570,9 +570,9 @@ export class AuthService extends SocialAuthService {
 		let tenant = input.user.tenant;
 		const { organizationId } = input;
 
-		// 1. If createdById is provided, get the creating user and use their tenant
-		if (input.createdById) {
-			const creatingUser = await this.userService.findOneByIdString(input.createdById, {
+		// 1. If createdByUserId is provided, get the creating user and use their tenant
+		if (input.createdByUserId) {
+			const creatingUser = await this.userService.findOneByIdString(input.createdByUserId, {
 				relations: {
 					tenant: true
 				}
