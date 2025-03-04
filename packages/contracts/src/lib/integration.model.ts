@@ -120,7 +120,7 @@ export interface IIntegrationMapSyncScreenshot {
 	id: number;
 	full_url: string;
 	thumb_url: string;
-	date: string,
+	date: string;
 	time_slot: string;
 	recorded_at: string;
 	user_id: number;
@@ -140,7 +140,7 @@ export enum IntegrationEnum {
 	GAUZY_AI = 'Gauzy_AI',
 	GITHUB = 'Github',
 	JIRA = 'Jira',
-	MAKE_COM = 'Make_Com'
+	MakeCom = 'MakeCom'
 }
 
 export enum IntegrationEntity {
