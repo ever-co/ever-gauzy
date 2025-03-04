@@ -91,14 +91,15 @@ export class TimeTrackerService implements OnDestroy {
 	showTimerWindow$ = this.timerQuery.select((state) => state.showTimerWindow);
 	duration$ = this.timerQuery.select((state) => state.duration);
 	currentSessionDuration$ = this.timerQuery.select((state) => state.currentSessionDuration);
-	$running = this.timerQuery.select((state) => state.running);
-	$timerConfig = this.timerQuery.select((state) => state.timerConfig);
+	running$ = this.timerQuery.select((state) => state.running);
+	timerConfig$ = this.timerQuery.select((state) => state.timerConfig);
 	organization: IOrganization;
 
 	private _trackType$: BehaviorSubject<string> = new BehaviorSubject(this.timeType);
 	public trackType$: Observable<string> = this._trackType$.asObservable();
 	private _worker: Worker;
 	private _timerSynced: ITimerSynced;
+	private channel: BroadcastChannel;
 	public timer$: Observable<number> = timer(BACKGROUND_SYNC_INTERVAL);
 
 	constructor(
@@ -108,6 +109,16 @@ export class TimeTrackerService implements OnDestroy {
 		private readonly http: HttpClient
 	) {
 		this._runWorker();
+
+		if ('BroadcastChannel' in window) {
+			this.channel = new BroadcastChannel('timer_channel');
+			this._restoreStateFromLocalStorage();
+			this._listenForTabSync();
+			this._broadcastInitialState();
+		} else {
+			console.warn('BroadcastChannel is not supported in this browser.');
+		}
+
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
@@ -145,7 +156,9 @@ export class TimeTrackerService implements OnDestroy {
 					this.turnOnTimer();
 				}
 			})
-			.catch(() => {});
+			.catch((error) => {
+				console.error(error);
+			});
 	}
 
 	/**
@@ -218,6 +231,7 @@ export class TimeTrackerService implements OnDestroy {
 	 */
 	public set timerConfig(value: ITimerToggleInput) {
 		this.timerStore.update({ timerConfig: value });
+		this._broadcastState('SYNC_TIMER_CONFIG');
 	}
 
 	/**
@@ -291,7 +305,7 @@ export class TimeTrackerService implements OnDestroy {
 		}
 	}
 
-	toggle(): Promise<ITimeLog> {
+	async toggle(): Promise<ITimeLog> {
 		if (this.running) {
 			this.turnOffTimer();
 			delete this.timerConfig.source;
@@ -300,7 +314,12 @@ export class TimeTrackerService implements OnDestroy {
 				stoppedAt: toUTC(moment()).toDate()
 			};
 			this.currentSessionDuration = 0;
-			return firstValueFrom(this.http.post<ITimeLog>(`${API_PREFIX}/timesheet/timer/stop`, this.timerConfig));
+			const log = await firstValueFrom(
+				this.http.post<ITimeLog>(`${API_PREFIX}/timesheet/timer/stop`, this.timerConfig)
+			);
+			this._broadcastState('STOP_TIMER');
+			this._saveStateToLocalStorage();
+			return log;
 		} else {
 			this.currentSessionDuration = 0;
 			this.turnOnTimer();
@@ -309,7 +328,12 @@ export class TimeTrackerService implements OnDestroy {
 				startedAt: toUTC(moment()).toDate(),
 				source: TimeLogSourceEnum.WEB_TIMER
 			};
-			return firstValueFrom(this.http.post<ITimeLog>(`${API_PREFIX}/timesheet/timer/start`, this.timerConfig));
+			const log = await firstValueFrom(
+				this.http.post<ITimeLog>(`${API_PREFIX}/timesheet/timer/start`, this.timerConfig)
+			);
+			this._broadcastState('START_TIMER');
+			this._saveStateToLocalStorage();
+			return log;
 		}
 	}
 
@@ -321,6 +345,7 @@ export class TimeTrackerService implements OnDestroy {
 			session: this.currentSessionDuration,
 			duration: this.duration
 		});
+		this._broadcastState('SYNC_TIMER');
 	}
 
 	turnOffTimer() {
@@ -329,6 +354,7 @@ export class TimeTrackerService implements OnDestroy {
 		this._worker.postMessage({
 			isRunning: this.running
 		});
+		this._broadcastState('SYNC_TIMER');
 	}
 
 	canStartTimer() {
@@ -391,6 +417,73 @@ export class TimeTrackerService implements OnDestroy {
 		}
 	}
 
+	private _broadcastInitialState() {
+		if (this.timerQuery.getValue().running) {
+			this.channel.postMessage({
+				type: 'SYNC_TIMER',
+				data: this.timerQuery.getValue()
+			});
+		}
+	}
+
+	private _broadcastState(type: string) {
+		const currentState = this.timerQuery.getValue();
+		this._saveStateToLocalStorage();
+
+		if (type === 'SYNC_TIMER_CONFIG') {
+			this.channel.postMessage({
+				type: 'SYNC_TIMER_CONFIG',
+				data: currentState.timerConfig
+			});
+		} else {
+			this.channel.postMessage({
+				type,
+				data: currentState
+			});
+		}
+	}
+
+	private _restoreStateFromLocalStorage() {
+		const savedState = localStorage.getItem('timerState');
+		if (savedState) {
+			const state = JSON.parse(savedState);
+			this.timerStore.update(state);
+			this._broadcastState('SYNC_TIMER');
+		}
+	}
+
+	private _listenForTabSync() {
+		this.channel.onmessage = (event) => {
+			const { type, data } = event.data;
+
+			switch (type) {
+				case 'SYNC_TIMER':
+					this.timerStore.update(data);
+					break;
+
+				case 'SYNC_TIMER_CONFIG':
+					this.timerStore.update({ timerConfig: data });
+					break;
+
+				case 'STOP_TIMER':
+					this.turnOffTimer();
+					break;
+
+				case 'START_TIMER':
+					this.turnOnTimer();
+					break;
+
+				default:
+					break;
+			}
+		};
+	}
+
+	private _saveStateToLocalStorage() {
+		const state = this.timerQuery.getValue();
+		localStorage.setItem('timerState', JSON.stringify(state));
+	}
+
 	public remoteToggle(): ITimeLog {
 		if (this.running) {
 			this.turnOffTimer();
@@ -431,5 +524,6 @@ export class TimeTrackerService implements OnDestroy {
 
 	ngOnDestroy(): void {
 		this._worker.terminate();
+		this.channel.close();
 	}
 }

@@ -89,7 +89,7 @@
 						</div>
 					</ng-template>
 				</div>
-				<div *ngIf="isExpanded">
+				<div *ngIf="isExpanded && !running">
 					<div class="form-group">
 						<label>
 							{{ 'TIMER_TRACKER.SELECT_CLIENT' | translate }}

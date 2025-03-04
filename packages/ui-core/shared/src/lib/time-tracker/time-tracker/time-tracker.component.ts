@@ -4,7 +4,7 @@ import { NgxDraggableDomMoveEvent, NgxDraggablePoint } from 'ngx-draggable-dom';
 import { NbThemeService } from '@nebular/theme';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { faStopwatch, faPlay, faPause } from '@fortawesome/free-solid-svg-icons';
 import { Environment, environment } from '@gauzy/ui-config';
@@ -44,6 +44,8 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 
 	trackType$: Observable<string> = this.timeTrackerService.trackType$;
 	theme: string;
+
+	private runningSubscription: Subscription;
 
 	constructor(
 		private readonly timeTrackerService: TimeTrackerService,
@@ -254,12 +256,12 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.timeTrackerService.$running
+		this.runningSubscription = this.timeTrackerService.running$
 			.pipe(
 				tap((isRunning) => (this.running = isRunning)),
 				untilDestroyed(this)
 			)
-			.subscribe();
+			.subscribe((running) => (this.running = running));
 		this.themeService
 			.onThemeChange()
 			.pipe(
@@ -297,12 +299,17 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		}
 		try {
 			this.isDisable = true;
-			this.timeTrackerService.timerSynced &&
-			this.xor(this.running, this.timeTrackerService.timerSynced.running) &&
-			!onClick &&
-			this.timeTrackerService.timerSynced.isExternalSource
-				? this.timeTrackerService.remoteToggle()
-				: await this.timeTrackerService.toggle();
+			if (
+				this.timeTrackerService.timerSynced &&
+				this.xor(this.running, this.timeTrackerService.timerSynced.running) &&
+				!onClick &&
+				this.timeTrackerService.timerSynced.isExternalSource
+			) {
+				this.running = this.timeTrackerService.timerSynced.running;
+				this.timeTrackerService.remoteToggle();
+			} else {
+				await this.timeTrackerService.toggle();
+			}
 		} catch (error) {
 			if (this.timeTrackerService.interval) {
 				this.timeTrackerService.turnOffTimer();
@@ -331,5 +338,9 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		return (!a && b) || (a && !b);
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() {
+		if (this.runningSubscription) {
+			this.runningSubscription.unsubscribe();
+		}
+	}
 }
