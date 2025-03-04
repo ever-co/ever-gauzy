@@ -25,7 +25,11 @@ import {
 	ID,
 	BaseEntityEnum,
 	ActionTypeEnum,
-	ActorTypeEnum
+	ActorTypeEnum,
+	ITimeLogActivity,
+	IReportDayData,
+	IReportWeeklyData,
+	IReportWeeklyDate
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../../core/crud';
@@ -71,6 +75,47 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		private readonly activityLogService: ActivityLogService
 	) {
 		super(typeOrmTimeLogRepository, mikroOrmTimeLogRepository);
+	}
+
+	/**
+	 * Retrieves the time logs activity report based on the provided input parameters.
+	 * @param request - Input parameters for querying the time logs report.
+	 * @returns A map of time log id to its activity percentage.
+	 */
+	async getTimeLogReportActivity(request: IGetTimeLogReportInput): Promise<Record<string, number>> {
+		// Create a query builder for the TimeLog entity
+		const query = this.typeOrmRepository.createQueryBuilder('time_log');
+
+		query.select([
+			p(`"${query.alias}"."id" AS "id"`),
+			p(`SUM("timeSlots"."overall") AS "overall"`),
+			p(`SUM("timeSlots"."duration") AS "duration"`)
+		]);
+
+		// Inner join with related entities (timeSlots)
+		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
+
+		// Apply additional conditions to the query based on request filters
+		query.where((qb: SelectQueryBuilder<TimeLog>) => {
+			this.getFilterTimeLogQuery(qb, request);
+		});
+
+		// Add values aggregation grouping by time_log.id and sum the timeSlots overall and duration values
+		// Prevent requiring to return the whole timeslot entries in the result
+		query.groupBy(`"${query.alias}"."id"`)
+
+
+		// Execute the query and retrieve time logs
+		const logs = await query.getRawMany<ITimeLogActivity>();
+
+		// Prepare the log activity map
+		const logActivity = {}
+		logs.forEach(log => {
+			logActivity[log.id] = log.overall * 100 / log.duration || 0;
+		})
+
+		// Return the generated daily time logs report
+		return logActivity;
 	}
 
 	/**
@@ -140,10 +185,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Create a query builder for the TimeLog entity
 		const query = this.typeOrmRepository.createQueryBuilder('time_log');
 
-		// Inner join with related entities (employee, timeSlots)
-		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
-
 		// Set find options for the query
 		query.setFindOptions({
 			select: {
@@ -164,15 +205,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						imageUrl: true
 					}
 				},
-				timeSlots: {
-					id: true,
-					overall: true,
-					duration: true
-				}
 			},
 			relations: {
 				// Related entities to be included in the result
-				timeSlots: true,
 				employee: {
 					user: true
 				}
@@ -184,25 +219,28 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		});
 		// Apply additional conditions to the query based on request filters
 		query.where((qb: SelectQueryBuilder<TimeLog>) => {
-			this.getFilterTimeLogQuery(qb, request);
+			this.getFilterTimeLogQuery(qb, request, true);
 		});
 
 		// Execute the query and retrieve time logs
 		const logs = await query.getMany();
+
+		// Get the time logs activity report
+		const logActivity = await this.getTimeLogReportActivity(request)
 
 		// Gets an array of days between the given start date, end date and timezone.
 		const { startDate, endDate, timeZone } = request;
 		const days: Array<string> = getDaysBetweenDates(startDate, endDate, timeZone);
 
 		// Process weekly logs using lodash and Moment.js
-		const weeklyLogs = chain(logs)
+		const weeklyLogs: IReportWeeklyData[] = chain(logs)
 			.groupBy('employeeId')
 			.map((logs: ITimeLog[]) => {
 				// Calculate average duration for specific employee.
 				const weeklyDuration = calculateAverage(pluck(logs, 'duration'));
 
 				// Calculate average weekly activity for specific employee.
-				const weeklyActivity = calculateAverageActivity(chain(logs).pluck('timeSlots').flatten(true).value());
+				const weeklyActivity = calculateAverageActivity(logs, logActivity);
 
 				const byDate = chain(logs)
 					.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timeZone).format('YYYY-MM-DD'))
@@ -216,7 +254,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				// Retrieve employee details
 				const employee = logs.length > 0 ? logs[0].employee : null;
 
-				const dates: Record<string, any> = {};
+				const dates: Record<string, IReportWeeklyDate | number> = {};
 				days.forEach((date) => {
 					dates[date] = byDate[date] || 0;
 				});
@@ -318,10 +356,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Create a query builder for the TimeLog entity
 		const query = this.typeOrmRepository.createQueryBuilder('time_log');
 
-		// Inner join with related entities (employee, timeSlots)
-		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
-
 		// Set find options for the query
 		query.setFindOptions({
 			select: {
@@ -346,11 +380,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					}
 				},
 				task: TimeLogService.TASK_SELECT_FIELDS,
-				timeSlots: {
-					id: true,
-					overall: true,
-					duration: true
-				},
 				organizationContact: {
 					id: true,
 					name: true,
@@ -373,7 +402,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				// Related entities to be included in the result
 				project: { organizationContact: true },
 				task: { taskStatus: true },
-				timeSlots: true,
 				organizationContact: true,
 				employee: { user: true }
 			},
@@ -384,26 +412,29 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		});
 		// Apply additional conditions to the query based on request filters
 		query.where((qb: SelectQueryBuilder<TimeLog>) => {
-			this.getFilterTimeLogQuery(qb, request);
+			this.getFilterTimeLogQuery(qb, request, true);
 		});
 
 		// Execute the query and retrieve time logs
 		const logs = await query.getMany();
 
+		// Get the time logs activity report
+		const logActivity = await this.getTimeLogReportActivity(request)
+
 		// Group time logs based on the specified 'groupBy' filter
-		let dailyLogs: any;
+		let dailyLogs: IReportDayData;
 		switch (request.groupBy) {
 			case ReportGroupFilterEnum.employee:
-				dailyLogs = await this.commandBus.execute(new GetTimeLogGroupByEmployeeCommand(logs, timeZone));
+				dailyLogs = await this.commandBus.execute(new GetTimeLogGroupByEmployeeCommand(logs, logActivity, timeZone));
 				break;
 			case ReportGroupFilterEnum.project:
-				dailyLogs = await this.commandBus.execute(new GetTimeLogGroupByProjectCommand(logs, timeZone));
+				dailyLogs = await this.commandBus.execute(new GetTimeLogGroupByProjectCommand(logs, logActivity, timeZone));
 				break;
 			case ReportGroupFilterEnum.client:
-				dailyLogs = await this.commandBus.execute(new GetTimeLogGroupByClientCommand(logs, timeZone));
+				dailyLogs = await this.commandBus.execute(new GetTimeLogGroupByClientCommand(logs, logActivity, timeZone));
 				break;
 			default:
-				dailyLogs = await this.commandBus.execute(new GetTimeLogGroupByDateCommand(logs, timeZone));
+				dailyLogs = await this.commandBus.execute(new GetTimeLogGroupByDateCommand(logs, logActivity, timeZone));
 				break;
 		}
 
@@ -936,9 +967,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * Modifies the provided query to filter TimeLogs based on the given criteria.
 	 * @param query - The query to be modified.
 	 * @param request - The criteria for filtering TimeLogs.
+	 * @param ignoreSlots - Whether to ignore the time slots filter. When time slots are ignored,
+	 * 						the activity level filter is also ignored and time slots are not joined.
 	 * @returns The modified query.
 	 */
-	getFilterTimeLogQuery(query: SelectQueryBuilder<TimeLog>, request: IGetTimeLogReportInput) {
+	getFilterTimeLogQuery(query: SelectQueryBuilder<TimeLog>, request: IGetTimeLogReportInput, ignoreSlots = false) {
 		const { organizationId, projectIds = [], teamIds = [] } = request;
 		let { employeeIds = [] } = request;
 
@@ -994,7 +1027,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		}
 
 		// Filters records based on the overall column, representing the activity level.
-		if (isNotEmpty(request.activityLevel)) {
+		if (!ignoreSlots && isNotEmpty(request.activityLevel)) {
 			/**
 			 * Activity Level should be 0-100%
 			 * Convert it into a 10-minute time slot by multiplying by 6
@@ -1044,8 +1077,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 		query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-		query.andWhere(p(`"timeSlots"."tenantId" = :tenantId`), { tenantId });
-		query.andWhere(p(`"timeSlots"."organizationId" = :organizationId`), { organizationId });
+		if (!ignoreSlots) {
+			query.andWhere(p(`"timeSlots"."tenantId" = :tenantId`), { tenantId });
+			query.andWhere(p(`"timeSlots"."organizationId" = :organizationId`), { organizationId });
+		}
 
 		return query;
 	}

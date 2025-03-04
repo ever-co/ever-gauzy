@@ -394,19 +394,6 @@ export interface IBulkActivitiesInput extends IBasePerTenantAndOrganizationEntit
 	activities: IActivity[];
 }
 
-export interface IReportDayGroupByDate {
-	date: string;
-	logs: {
-		project: IOrganizationProject;
-		employeeLogs: {
-			tasks: ITask[];
-			employee: IEmployee;
-			sum: number;
-			activity: number;
-		}[];
-	}[];
-}
-
 export interface IAmountOwedReport {
 	date: string;
 	employees: {
@@ -416,43 +403,55 @@ export interface IAmountOwedReport {
 	}[];
 }
 
+export interface IReportTask {
+	task: ITask;
+	description: string;
+	duration: number;
+	client?: IOrganizationContact;
+}
+
+export interface IReportEmployeeLogs {
+	tasks: IReportTask[];
+	employee: IEmployee;
+	sum: number;
+	activity: number;
+}
+
+export interface IReportProjectLogs {
+	tasks: IReportTask[];
+	project: IOrganizationProject;
+	sum: number;
+	activity: number;
+}
+
 export interface IReportDayGroupByDate {
 	date: string;
 	logs: {
 		project: IOrganizationProject;
-		employeeLogs: {
-			tasks: ITask[];
-			employee: IEmployee;
-			sum: number;
-			activity: number;
-		}[];
+		employeeLogs: IReportEmployeeLogs[];
 	}[];
+	sum: number;
+	activity: number;
 }
 
 export interface IReportDayGroupByEmployee {
 	employee: IEmployee;
 	logs: {
 		date: string;
-		employeeLogs: {
-			sum: number;
-			activity: number;
-			project: IOrganizationProject;
-			tasks: ITask[];
-		}[];
+		projectLogs: IReportProjectLogs[];
 	}[];
+	sum: number;
+	activity: number;
 }
 
 export interface IReportDayGroupByProject {
 	project: IOrganizationProject;
 	logs: {
 		date: string;
-		employeeLogs: {
-			tasks: ITask[];
-			employee: IEmployee;
-			sum: number;
-			activity: number;
-		}[];
+		employeeLogs: IReportEmployeeLogs[];
 	}[];
+	sum: number;
+	activity: number;
 }
 
 export interface IReportDayGroupByClient {
@@ -461,14 +460,11 @@ export interface IReportDayGroupByClient {
 		project: IOrganizationProject;
 		logs: {
 			date: string;
-			employeeLogs: {
-				tasks: ITask[];
-				employee: IEmployee;
-				sum: number;
-				activity: number;
-			}[];
+			projectLogs: IReportEmployeeLogs[];
 		}[];
-	};
+	}[];
+	sum: number;
+	activity: number;
 }
 
 export type IReportDayData =
@@ -476,6 +472,18 @@ export type IReportDayData =
 	| IReportDayGroupByEmployee
 	| IReportDayGroupByProject
 	| IReportDayGroupByClient;
+
+export interface IReportWeeklyDate {
+	sum: number;
+	logs: ITimeLog[];
+}
+
+export interface IReportWeeklyData {
+	employee: IEmployee;
+	dates: Record<string, IReportWeeklyDate | number>;
+	sum: number;
+	activity: number;
+}
 
 export interface IGetTimeLimitReportInput extends IGetTimeLogReportInput {
 	duration?: 'day' | 'week' | 'month';
@@ -531,4 +539,15 @@ export interface IDeleteTimeSlot extends IDeleteEntity {
  */
 export interface IDeleteTimeLog extends IDeleteEntity {
 	logIds: ID[];
+}
+
+/**
+ * Interface for time log activity.
+ * Contains the sum of overall activity and sum of duration
+ * extracted from inner join of time log and time slot.
+ */
+export interface ITimeLogActivity {
+	id: string;
+	overall: number;
+	duration: number;
 }

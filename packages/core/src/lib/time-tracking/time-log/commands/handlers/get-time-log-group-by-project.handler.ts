@@ -1,7 +1,7 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { chain, pluck } from 'underscore';
 import * as moment from 'moment';
-import { IReportDayGroupByProject, ITimeLog } from '@gauzy/contracts';
+import { IReportDayGroupByProject, IReportEmployeeLogs, ITimeLog } from '@gauzy/contracts';
 import { GetTimeLogGroupByProjectCommand } from '../get-time-log-group-by-project.command';
 import { calculateAverage, calculateAverageActivity } from './../../time-log.utils';
 
@@ -12,20 +12,18 @@ export class GetTimeLogGroupByProjectHandler implements ICommandHandler<GetTimeL
 	 * @param command The command containing time logs and other parameters.
 	 * @returns A Promise that resolves to the generated report grouped by project.
 	 */
-	public async execute(command: GetTimeLogGroupByProjectCommand): Promise<IReportDayGroupByProject> {
-		const { timeLogs, timeZone = moment.tz.guess() } = command;
+	public async execute(command: GetTimeLogGroupByProjectCommand): Promise<IReportDayGroupByProject[]> {
+		const { timeLogs, logActivity, timeZone = moment.tz.guess() } = command;
 
 		// Group timeLogs by projectId
-		const dailyLogs: any = chain(timeLogs)
+		const dailyLogs = chain(timeLogs)
 			.groupBy((log: ITimeLog) => log.projectId)
 			.map((byProjectLogs: ITimeLog[]) => {
 				// Calculate average duration for specific project.
 				const avgDuration = calculateAverage(pluck(byProjectLogs, 'duration'));
 
 				// Calculate average activity for specific project.
-				const avgActivity = calculateAverageActivity(
-					chain(byProjectLogs).pluck('timeSlots').flatten(true).value()
-				);
+				const avgActivity = calculateAverageActivity(byProjectLogs, logActivity);
 
 				// Extract project information
 				const project = byProjectLogs.length > 0 ? byProjectLogs[0].project : null;
@@ -35,7 +33,7 @@ export class GetTimeLogGroupByProjectHandler implements ICommandHandler<GetTimeL
 					.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timeZone).format('YYYY-MM-DD'))
 					.map((byDateLogs: ITimeLog[], date) => ({
 						date,
-						employeeLogs: this.getGroupByEmployee(byDateLogs)
+						employeeLogs: this.getGroupByEmployee(byDateLogs, logActivity)
 					}))
 					.value();
 
@@ -56,7 +54,7 @@ export class GetTimeLogGroupByProjectHandler implements ICommandHandler<GetTimeL
 	 * @param logs An array of time logs.
 	 * @returns An array containing logs grouped by employee with calculated averages.
 	 */
-	getGroupByEmployee(logs: ITimeLog[]) {
+	getGroupByEmployee(logs: ITimeLog[], logActivity: Record<string, number>): IReportEmployeeLogs[] {
 		const byEmployee = chain(logs)
 			.groupBy('employeeId')
 			.map((timeLogs: ITimeLog[]) => {
@@ -64,10 +62,9 @@ export class GetTimeLogGroupByProjectHandler implements ICommandHandler<GetTimeL
 				const sum = calculateAverage(pluck(timeLogs, 'duration'));
 
 				// Calculate Average activity of the employee
-				const avgActivity = calculateAverageActivity(chain(timeLogs).pluck('timeSlots').flatten(true).value());
+				const avgActivity = calculateAverageActivity(timeLogs, logActivity);
 
 				// Retrieve employee details
-
 				const employee = timeLogs.length > 0 ? timeLogs[0].employee : null;
 
 				const tasks = timeLogs.map((log) => ({

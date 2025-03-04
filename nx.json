@@ -85,8 +85,8 @@
   },
   "defaultProject": "gauzy",
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "nxCloudAccessToken": "NWJlMDFmMTMtYzUyZS00ZGE4LTk0NzctNWIzZTkxMzNhMTFlfHJlYWQtd3JpdGU=",
-  "parallel": 1,
+  "neverConnectToCloud": true,
+  "parallel": 4,
   "targetDefaults": {
     "build": {
       "cache": false,

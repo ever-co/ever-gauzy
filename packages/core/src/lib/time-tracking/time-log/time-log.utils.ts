@@ -1,6 +1,6 @@
-import { pluck, reduce } from "underscore";
+import { reduce } from "underscore";
 import { ArraySum } from "@gauzy/common";
-import { ITimeLog, ITimeSlot, TimeLogType } from "@gauzy/contracts";
+import { ITimeLog, TimeLogType } from "@gauzy/contracts";
 
 /**
  * Calculates the average of an array of numbers.
@@ -12,14 +12,14 @@ export const calculateAverage = (values: number[]): number => {
 };
 
 /**
- * Calculates the average activity based on overall and duration values of an array of time slots.
- * @param slots An array of time slots.
+ * Calculates the average activity based on the average of activity for the involver time logs
+ * @param logs An array of time logs.
+ * @param logActivity A map of time log id to its activity.
  * @returns The calculated average activity.
  */
-export const calculateAverageActivity = (slots: ITimeSlot[]): number => {
-    const overallSum = calculateAverage(pluck(slots, 'overall'));
-    const durationSum = calculateAverage(pluck(slots, 'duration'));
-    return (overallSum * 100) / durationSum || 0;
+export const calculateAverageActivity = (logs: ITimeLog[], logActivity: Record<string, number>): number => {
+    let avgActivity = logs.reduce((total, log) => total + (logActivity[log.id] || 0), 0);
+    return logs.length ? avgActivity / logs.length : 0;
 };
 
 /**
