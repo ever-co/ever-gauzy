@@ -1,17 +1,16 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import { filter, map } from 'rxjs/operators';
-import { Observable } from 'rxjs/internal/Observable';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
+import { filter, map, Observable, tap } from 'rxjs';
 import {
 	IIntegrationTenant,
 	IOrganization,
 	IOrganizationProject,
 	IOrganizationProjectUpdateInput
 } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ErrorHandlingService, OrganizationProjectsService, Store, ToastrService } from '@gauzy/ui-core/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ProjectMutationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
@@ -54,10 +53,8 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 	private _getEditProject() {
 		this.project$ = this._activatedRoute.data.pipe(
 			filter((data: Data) => !!data && !!data.project),
-			map(({ project }) => {
-				this.project = project; // Assuming 'project' is a component property
-				return project;
-			}),
+			map(({ project }) => project),
+			tap((project) => (this.project = project)), // Assuming 'project' is a component property
 			untilDestroyed(this) // Automatically unsubscribes when the component is destroyed
 		);
 	}

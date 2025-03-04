@@ -22,7 +22,6 @@ import {
 	ITaskSize,
 	ITaskStatus,
 	ITimeLog,
-	IUser,
 	TaskPriorityEnum,
 	TaskSizeEnum,
 	TaskStatusEnum,
@@ -49,8 +48,7 @@ import {
 	TaskSize,
 	TaskStatus,
 	TenantOrganizationBaseEntity,
-	TimeLog,
-	User
+	TimeLog
 } from '../core/entities/internal';
 import {
 	ColumnIndex,
@@ -393,25 +391,6 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	taskTypeId?: ID;
-
-	/**
-	 * The creator of the task
-	 */
-	@MultiORMManyToOne(() => User, {
-		nullable: true, // Indicates if the relation column value can be nullable or not.
-		onDelete: 'CASCADE' // Defines the database cascade action on delete.
-	})
-	@JoinColumn()
-	createdByUser?: IUser;
-
-	/**
-	 * The ID of the creator of the task.
-	 */
-	@RelationId((it: Task) => it.createdByUser)
-	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, relationId: true })
-	createdByUserId?: ID;
-
 	/*
 	|--------------------------------------------------------------------------
 	| @OneToMany

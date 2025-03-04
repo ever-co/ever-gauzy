@@ -4,12 +4,12 @@ import {
 	ActionTypeEnum,
 	ActorTypeEnum,
 	BaseEntityEnum,
+	EntitySubscriptionTypeEnum,
 	ID,
 	IScreeningTask,
 	IScreeningTaskCreateInput,
 	IScreeningTaskUpdateInput,
 	ScreeningTaskStatusEnum,
-	SubscriptionTypeEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
@@ -18,7 +18,7 @@ import { TaskService } from '../task.service';
 import { OrganizationProjectService } from '../../organization-project';
 import { ActivityLogService } from '../../activity-log/activity-log.service';
 import { MentionService } from '../../mention/mention.service';
-import { CreateSubscriptionEvent } from '../../subscription/events';
+import { CreateEntitySubscriptionEvent } from '../../entity-subscription/events';
 import { Task } from '../task.entity';
 import { ScreeningTask } from './screening-task.entity';
 import { TypeOrmScreeningTaskRepository } from './repository/type-orm-screening-task.repository';
@@ -47,12 +47,10 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 	 */
 	async create(input: IScreeningTaskCreateInput): Promise<IScreeningTask> {
 		try {
-			// Extract the current user ID and tenant ID from the request context
-			const createdByUserId = RequestContext.currentUserId();
-
+			// Extract the current user from the request context
+			const user = RequestContext.currentUser();
 			// Extract the current tenant ID from the request context or use the provided tenant ID
 			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
-
 			// Extract the organization ID from the input or use the current organization ID
 			const { organizationId, mentionEmployeeIds = [], ...data } = input;
 
@@ -97,23 +95,23 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 			});
 
 			// Apply mentions if needed
-			const mentionPromises = mentionEmployeeIds.map((mentionedUserId: ID) =>
+			const mentionPromises = mentionEmployeeIds.map((mentionedEmployeeId: ID) =>
 				this.mentionService.publishMention({
 					entity: BaseEntityEnum.Task,
 					entityId: task.id,
 					entityName: task.title,
-					mentionedUserId,
-					mentionById: createdByUserId
+					mentionedEmployeeId,
+					employeeId: user?.employeeId
 				})
 			);
 
 			// Subscribe creator to the task
 			this.eventBus.publish(
-				new CreateSubscriptionEvent({
+				new CreateEntitySubscriptionEvent({
 					entity: BaseEntityEnum.Task,
 					entityId: task.id,
-					userId: createdByUserId,
-					type: SubscriptionTypeEnum.CREATED_ENTITY,
+					employeeId: user?.employeeId,
+					type: EntitySubscriptionTypeEnum.CREATED_ENTITY,
 					organizationId,
 					tenantId
 				})

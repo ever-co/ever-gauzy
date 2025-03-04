@@ -27,7 +27,7 @@ export class HubstaffAuthorizationController {
 			}
 
 			/** Hubstaff Config Options */
-			const hubstaff = this._config.get<IHubstaffConfig>('hubstaff') as IHubstaffConfig;
+			const hubstaff = this._config.get('hubstaff') as IHubstaffConfig;
 
 			// Convert query params object to string
 			const queryParamsString = buildQueryString({

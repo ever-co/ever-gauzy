@@ -46,10 +46,14 @@ export class PipelinesService extends Service<IPipeline, IPipelineFindInput, IPi
 	 * @param where Filter conditions for fetching the deals
 	 * @returns A promise of paginated deals
 	 */
-	getPipelineDeals(pipelineId: ID, where?: IPipelineFindInput): Promise<IPagination<IDeal>> {
+	getPipelineDeals(
+		pipelineId: ID,
+		where?: IPipelineFindInput,
+		relations: string[] = []
+	): Promise<IPagination<IDeal>> {
 		return firstValueFrom(
 			this.http.get<IPagination<IDeal>>(`${this.basePath}/${pipelineId}/deals`, {
-				params: toParams({ where })
+				params: toParams({ where, relations })
 			})
 		);
 	}

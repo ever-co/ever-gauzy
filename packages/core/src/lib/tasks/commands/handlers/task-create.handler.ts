@@ -5,11 +5,11 @@ import {
 	ActorTypeEnum,
 	ITask,
 	ActionTypeEnum,
-	SubscriptionTypeEnum,
 	ID,
 	IEmployee,
 	EmployeeNotificationTypeEnum,
-	NotificationActionTypeEnum
+	NotificationActionTypeEnum,
+	EntitySubscriptionTypeEnum
 } from '@gauzy/contracts';
 import { EventBus } from '../../../event-bus';
 import { TaskEvent } from '../../../event-bus/events';
@@ -17,7 +17,7 @@ import { BaseEntityEventTypeEnum } from '../../../event-bus/base-entity-event';
 import { Employee } from '../../../core/entities/internal';
 import { RequestContext } from './../../../core/context';
 import { OrganizationProjectService } from './../../../organization-project/organization-project.service';
-import { CreateSubscriptionEvent } from '../../../subscription/events';
+import { CreateEntitySubscriptionEvent } from '../../../entity-subscription/events';
 import { TaskCreateCommand } from './../task-create.command';
 import { TaskService } from '../../task.service';
 import { Task } from './../../task.entity';
@@ -38,7 +38,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 		private readonly _employeeService: EmployeeService,
 		private readonly mentionService: MentionService,
 		private readonly activityLogService: ActivityLogService,
-		private readonly EmployeeNotificationService: EmployeeNotificationService
+		private readonly employeeNotificationService: EmployeeNotificationService
 	) {}
 
 	/**
@@ -119,15 +119,15 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			// Apply mentions if needed
 			if (mentionEmployeeIds.length > 0) {
 				await Promise.all(
-					mentionEmployeeIds.map((mentionedUserId: ID) =>
+					mentionEmployeeIds.map((mentionedEmployeeId: ID) =>
 						this.mentionService.publishMention({
 							entity: BaseEntityEnum.Task,
 							entityId: task.id,
-							mentionedUserId,
-							mentionById: task.createdByUserId,
+							mentionedEmployeeId,
+							entityName: task.title,
+							employeeId: user?.employeeId,
 							organizationId,
-							tenantId,
-							entityName: task.title
+							tenantId
 						})
 					)
 				);
@@ -135,11 +135,11 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 
 			// Subscribe creator to the task
 			this._cqrsEventBus.publish(
-				new CreateSubscriptionEvent({
+				new CreateEntitySubscriptionEvent({
 					entity: BaseEntityEnum.Task,
 					entityId: task.id,
-					userId: task.createdByUserId,
-					type: SubscriptionTypeEnum.CREATED_ENTITY,
+					employeeId: user?.employeeId,
+					type: EntitySubscriptionTypeEnum.CREATED_ENTITY,
 					organizationId,
 					tenantId
 				})
@@ -160,31 +160,29 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 
 					// Publish subscription events for each employee and send internal notification to users
 					await Promise.all(
-						employees.map(({ userId }: IEmployee) => {
+						employees.map((employee: IEmployee) => {
 							this._cqrsEventBus.publish(
-								new CreateSubscriptionEvent({
+								new CreateEntitySubscriptionEvent({
 									entity: BaseEntityEnum.Task,
 									entityId: task.id,
-									userId,
-									type: SubscriptionTypeEnum.ASSIGNMENT,
+									employeeId: employee.id,
+									type: EntitySubscriptionTypeEnum.ASSIGNMENT,
 									organizationId,
 									tenantId
 								})
 							);
 
-							this.EmployeeNotificationService.publishNotificationEvent(
+							this.employeeNotificationService.publishNotificationEvent(
 								{
 									entity: BaseEntityEnum.Task,
 									entityId: task.id,
 									type: EmployeeNotificationTypeEnum.ASSIGNMENT,
-									sentById: task.createdByUserId,
-									receiverId: userId,
 									organizationId,
 									tenantId
 								},
 								NotificationActionTypeEnum.Assigned,
 								task.title,
-								`${user.firstName} ${user.lastName}`
+								user.name
 							);
 						})
 					);

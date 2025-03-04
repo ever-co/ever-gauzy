@@ -114,8 +114,7 @@ export class EmailHistoryComponent extends TranslationBaseComponent implements O
 		}
 
 		try {
-			const { tenantId } = this.store.user;
-			const { id: organizationId } = this.organization;
+			const { id: organizationId, tenantId } = this.organization;
 			this.loading = true;
 			await this.emailService
 				.getAll(
@@ -204,8 +203,7 @@ export class EmailHistoryComponent extends TranslationBaseComponent implements O
 		}
 		try {
 			const { organizationId, tenantId } = this.selectedEmail;
-			await this.emailService.resend({
-				id: this.selectedEmail.id,
+			await this.emailService.resend(this.selectedEmail.id, {
 				organizationId,
 				tenantId
 			});

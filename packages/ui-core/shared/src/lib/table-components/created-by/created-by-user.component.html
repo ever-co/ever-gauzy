@@ -1,0 +1,11 @@
+<div class="avatar-container">
+	<ng-container *ngIf="rowData?.createdByUser as createdByUser; else noUser">
+		<a class="avatar" [nbTooltip]="createdByUser.name" (click)="edit(createdByUser.id)">
+			<img class="img" type="createdByUser" [src]="createdByUser.imageUrl" />
+			<div class="names-wrapper">{{ createdByUser.name }}</div>
+		</a>
+	</ng-container>
+	<ng-template #noUser>
+	  	<div class="names-wrapper">{{ value }}</div>
+	</ng-template>
+  </div>

@@ -24,13 +24,13 @@ export class TwitterController {
 	/**
 	 * Twitter login callback endpoint.
 	 *
-	 * @param requestCtx - The context of the incoming request.
+	 * @param context - The context of the incoming request.
 	 * @param res - The response object.
 	 * @returns The result of the Twitter login callback.
 	 */
 	@Get('/twitter/callback')
-	async twitterLoginCallback(@RequestCtx() requestCtx: IIncomingRequest, @Res() res: Response) {
-		const { user } = requestCtx;
+	async twitterLoginCallback(@RequestCtx() context: IIncomingRequest, @Res() res: Response): Promise<any> {
+		const { user } = context;
 		const { success, authData } = await this.service.validateOAuthLoginEmail(user.emails);
 		return this.service.routeRedirect(success, authData, res);
 	}

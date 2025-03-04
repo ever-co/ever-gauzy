@@ -24,13 +24,13 @@ export class FacebookController {
 	/**
 	 * Facebook login callback endpoint.
 	 *
-	 * @param requestCtx - The context of the incoming request.
+	 * @param context - The context of the incoming request.
 	 * @param res - The response object.
 	 * @returns The result of the Facebook login callback.
 	 */
 	@Get('/facebook/callback')
-	async facebookLoginCallback(@RequestCtx() requestCtx: IIncomingRequest, @Res() res: Response) {
-		const { user } = requestCtx;
+	async facebookLoginCallback(@RequestCtx() context: IIncomingRequest, @Res() res: Response): Promise<any> {
+		const { user } = context;
 		const { success, authData } = await this.service.validateOAuthLoginEmail(user.emails);
 		return this.service.routeRedirect(success, authData, res);
 	}
