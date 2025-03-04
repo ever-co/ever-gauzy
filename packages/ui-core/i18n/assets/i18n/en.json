@@ -4978,7 +4978,8 @@
 				"DRAG_DROP": "Drag & Drop your file here",
 				"BROWSE": "Browse",
 				"REMOVE": "Remove File",
-				"RESTRICTIONS": "Only .zip files are allowed"
+				"RESTRICTIONS": "Only .zip files are allowed",
+				"FILE": "File"
 			},
 			"METADATA": {
 				"TITLE": "Metadata",
@@ -4992,6 +4993,16 @@
 				"REPOSITORY_PLACEHOLDER": "Enter repository URL"
 			},
 			"OR": "Or"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "Usage Statistics",
+			"DOWNLOAD_COUNT": "Download Count",
+			"LAST_DOWNLOADED": "Last Downloaded",
+			"UPLOADED_BY": "Uploaded By",
+			"UPLOADED_AT": "Uploaded At",
+			"SECURITY_INFO": "Security Information",
+			"CHECKSUM": "Checksum",
+			"SIGNATURE": "Signature"
 		}
 	}
 }

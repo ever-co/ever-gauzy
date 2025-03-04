@@ -4822,7 +4822,8 @@
 				"DRAG_DROP": "Перетащите файл сюда",
 				"BROWSE": "Обзор",
 				"REMOVE": "Удалить файл",
-				"RESTRICTIONS": "Разрешены только файлы .zip"
+				"RESTRICTIONS": "Разрешены только файлы .zip",
+				"FILE": "Файл"
 			},
 			"METADATA": {
 				"TITLE": "Метаданные",
@@ -4836,6 +4837,16 @@
 				"REPOSITORY_PLACEHOLDER": "Введите URL репозитория"
 			},
 			"OR": "Или"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "Статистика использования",
+			"DOWNLOAD_COUNT": "Количество загрузок",
+			"LAST_DOWNLOADED": "Последнее скачивание",
+			"UPLOADED_BY": "Загружено пользователем",
+			"UPLOADED_AT": "Загружено в",
+			"SECURITY_INFO": "Информация о безопасности",
+			"CHECKSUM": "Контрольная сумма",
+			"SIGNATURE": "Подпись"
 		}
 	}
 }

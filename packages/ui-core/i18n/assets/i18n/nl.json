@@ -4825,7 +4825,8 @@
 				"DRAG_DROP": "Sleep je bestand hierheen",
 				"BROWSE": "Bladeren",
 				"REMOVE": "Bestand verwijderen",
-				"RESTRICTIONS": "Alleen .zip-bestanden zijn toegestaan"
+				"RESTRICTIONS": "Alleen .zip-bestanden zijn toegestaan",
+				"FILE": "Bestand"
 			},
 			"METADATA": {
 				"TITLE": "Metadata",
@@ -4839,6 +4840,16 @@
 				"REPOSITORY_PLACEHOLDER": "Voer de repository-URL in"
 			},
 			"OR": "Of"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "Gebruiksstatistieken",
+			"DOWNLOAD_COUNT": "Aantal downloads",
+			"LAST_DOWNLOADED": "Laatst gedownload",
+			"UPLOADED_BY": "Geüpload door",
+			"UPLOADED_AT": "Geüpload op",
+			"SECURITY_INFO": "Beveiligingsinformatie",
+			"CHECKSUM": "Controlesom",
+			"SIGNATURE": "Handtekening"
 		}
 	}
 }

@@ -4825,7 +4825,8 @@
 				"DRAG_DROP": "Przeciągnij i upuść plik tutaj",
 				"BROWSE": "Przeglądaj",
 				"REMOVE": "Usuń plik",
-				"RESTRICTIONS": "Dozwolone są tylko pliki .zip"
+				"RESTRICTIONS": "Dozwolone są tylko pliki .zip",
+				"FILE": "Plik"
 			},
 			"METADATA": {
 				"TITLE": "Metadane",
@@ -4839,6 +4840,16 @@
 				"REPOSITORY_PLACEHOLDER": "Wprowadź URL repozytorium"
 			},
 			"OR": "Lub"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "Statystyki użytkowania",
+			"DOWNLOAD_COUNT": "Liczba pobrań",
+			"LAST_DOWNLOADED": "Ostatnio pobrane",
+			"UPLOADED_BY": "Przesłane przez",
+			"UPLOADED_AT": "Przesłane w",
+			"SECURITY_INFO": "Informacje o bezpieczeństwie",
+			"CHECKSUM": "Suma kontrolna",
+			"SIGNATURE": "Podpis"
 		}
 	}
 }

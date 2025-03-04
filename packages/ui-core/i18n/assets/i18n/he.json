@@ -4815,7 +4815,8 @@
 				"DRAG_DROP": "גרור ושחרר את הקובץ שלך כאן",
 				"BROWSE": "עיון",
 				"REMOVE": "הסר קובץ",
-				"RESTRICTIONS": "רק קבצי .zip מותרים"
+				"RESTRICTIONS": "רק קבצי .zip מותרים",
+				"FILE": "קובץ"
 			},
 			"METADATA": {
 				"TITLE": "מטא-נתונים",
@@ -4829,6 +4830,16 @@
 				"REPOSITORY_PLACEHOLDER": "הזן את כתובת המאגר"
 			},
 			"OR": "או"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "סטטיסטיקות שימוש",
+			"DOWNLOAD_COUNT": "מספר הורדות",
+			"LAST_DOWNLOADED": "הורדה אחרונה",
+			"UPLOADED_BY": "הועלה על ידי",
+			"UPLOADED_AT": "הועלה בתאריך",
+			"SECURITY_INFO": "מידע על אבטחה",
+			"CHECKSUM": "סכום ביקורת",
+			"SIGNATURE": "חתימה"
 		}
 	}
 }

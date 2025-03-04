@@ -4825,7 +4825,8 @@
 				"DRAG_DROP": "Arraste e solte seu arquivo aqui",
 				"BROWSE": "Procurar",
 				"REMOVE": "Remover arquivo",
-				"RESTRICTIONS": "Apenas arquivos .zip são permitidos"
+				"RESTRICTIONS": "Apenas arquivos .zip são permitidos",
+				"FILE": "Arquivo"
 			},
 			"METADATA": {
 				"TITLE": "Metadados",
@@ -4839,6 +4840,16 @@
 				"REPOSITORY_PLACEHOLDER": "Digite a URL do repositório"
 			},
 			"OR": "Ou"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "Estatísticas de uso",
+			"DOWNLOAD_COUNT": "Número de downloads",
+			"LAST_DOWNLOADED": "Último download",
+			"UPLOADED_BY": "Enviado por",
+			"UPLOADED_AT": "Enviado em",
+			"SECURITY_INFO": "Informações de segurança",
+			"CHECKSUM": "Soma de verificação",
+			"SIGNATURE": "Assinatura"
 		}
 	}
 }

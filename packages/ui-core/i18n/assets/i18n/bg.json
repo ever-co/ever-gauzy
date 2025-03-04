@@ -4852,7 +4852,8 @@
 				"DRAG_DROP": "Провлачете и пуснете файла тук",
 				"BROWSE": "Преглед",
 				"REMOVE": "Премахване на файл",
-				"RESTRICTIONS": "Позволени са само .zip файлове"
+				"RESTRICTIONS": "Позволени са само .zip файлове",
+				"FILE": "Файл"
 			},
 			"METADATA": {
 				"TITLE": "Метаданни",
@@ -4866,6 +4867,16 @@
 				"REPOSITORY_PLACEHOLDER": "Въведете URL адрес на хранилището"
 			},
 			"OR": "Или"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "Статистика на използване",
+			"DOWNLOAD_COUNT": "Брой изтегляния",
+			"LAST_DOWNLOADED": "Последно изтеглено",
+			"UPLOADED_BY": "Качено от",
+			"UPLOADED_AT": "Качено на",
+			"SECURITY_INFO": "Информация за сигурност",
+			"CHECKSUM": "Контролна сума",
+			"SIGNATURE": "Подпис"
 		}
 	}
 }

@@ -4825,7 +4825,8 @@
 				"DRAG_DROP": "拖放文件到这里",
 				"BROWSE": "浏览",
 				"REMOVE": "删除文件",
-				"RESTRICTIONS": "仅允许.zip文件"
+				"RESTRICTIONS": "仅允许.zip文件",
+				"FILE": "文件"
 			},
 			"METADATA": {
 				"TITLE": "元数据",
@@ -4839,6 +4840,16 @@
 				"REPOSITORY_PLACEHOLDER": "输入仓库URL"
 			},
 			"OR": "或"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "使用统计",
+			"DOWNLOAD_COUNT": "下载次数",
+			"LAST_DOWNLOADED": "上次下载",
+			"UPLOADED_BY": "上传者",
+			"UPLOADED_AT": "上传时间",
+			"SECURITY_INFO": "安全信息",
+			"CHECKSUM": "校验和",
+			"SIGNATURE": "签名"
 		}
 	}
 }

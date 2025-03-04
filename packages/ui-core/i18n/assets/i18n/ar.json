@@ -4810,7 +4810,8 @@
 				"DRAG_DROP": "اسحب وأفلت ملفك هنا",
 				"BROWSE": "تصفح",
 				"REMOVE": "إزالة الملف",
-				"RESTRICTIONS": "يُسمح فقط بملفات .zip"
+				"RESTRICTIONS": "يُسمح فقط بملفات .zip",
+				"FILE": "ملف"
 			},
 			"METADATA": {
 				"TITLE": "البيانات الوصفية",
@@ -4824,6 +4825,16 @@
 				"REPOSITORY_PLACEHOLDER": "أدخل رابط المستودع"
 			},
 			"OR": "أو"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "إحصائيات الاستخدام",
+			"DOWNLOAD_COUNT": "عدد التنزيلات",
+			"LAST_DOWNLOADED": "آخر تنزيل",
+			"UPLOADED_BY": "تم الرفع بواسطة",
+			"UPLOADED_AT": "تم الرفع في",
+			"SECURITY_INFO": "معلومات الأمان",
+			"CHECKSUM": "المجموع الاختباري",
+			"SIGNATURE": "التوقيع"
 		}
 	}
 }
