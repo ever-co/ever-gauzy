@@ -38,10 +38,10 @@ export function generateTimeSlots(start: Date, end: Date, previousTime = 0) {
 		// Prevent adding the same previous saved time to the time slot again
 		if (remainFromPreviousTime > 0) {
 			if (duration >= remainFromPreviousTime) {
-				duration = duration - remainFromPreviousTime;
+				duration -= remainFromPreviousTime;
 				remainFromPreviousTime = 0;
 			} else {
-				remainFromPreviousTime = remainFromPreviousTime - duration;
+				remainFromPreviousTime -= duration;
 				duration = 0;
 			}
 		}
