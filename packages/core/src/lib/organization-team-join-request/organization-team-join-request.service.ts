@@ -263,7 +263,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 
 	async acceptRequestToJoin(id: string, action: OrganizationTeamJoinRequestStatusEnum, languageCode: LanguagesEnum) {
 		const tenantId = RequestContext.currentTenantId();
-		const currentUserId = RequestContext.currentUserId();
+		const createdByUserId = RequestContext.currentUserId();
 
 		const request = await this.typeOrmRepository.findOne({
 			where: {
@@ -356,7 +356,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 							role: role
 						},
 						organizationId: request.organizationId,
-						createdById: currentUserId
+						createdByUserId
 					},
 					request.organizationTeamId,
 					languageCode

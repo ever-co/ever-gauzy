@@ -100,7 +100,7 @@ export interface IUserRegistrationInput {
 	confirmPassword?: string;
 	originalUrl?: string;
 	organizationId?: string;
-	createdById?: string;
+	createdByUserId?: string;
 	isImporting?: boolean;
 	sourceId?: string;
 	inviteId?: string;
