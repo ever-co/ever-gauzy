@@ -9,7 +9,8 @@ import {
 	IRequestApprovalEmployee,
 	IOrganizationTeam,
 	IEmployee,
-	IRequestApprovalTeam
+	IRequestApprovalTeam,
+	ID
 } from '@gauzy/contracts';
 import { isBetterSqlite3, isMySQL, isPostgres, isSqlite } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -108,7 +109,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 	}
 
 	async findRequestApprovalsByEmployeeId(
-		id: string,
+		id: ID,
 		relations: string[],
 		findInput?: IRequestApprovalFindInput
 	): Promise<IPagination<IRequestApproval>> {
@@ -167,7 +168,6 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		const requestApproval = new RequestApproval();
 		requestApproval.status = RequestApprovalStatusTypesEnum.REQUESTED;
 		requestApproval.approvalPolicyId = entity.approvalPolicyId;
-		requestApproval.createdByUserId = currentUserId;
 		requestApproval.name = entity.name;
 		requestApproval.min_count = entity.min_count;
 		requestApproval.tags = entity.tags;

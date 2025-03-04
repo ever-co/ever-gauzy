@@ -44,9 +44,6 @@ export class OrganizationTeamSubscriber extends BaseEntityEventSubscriber<Organi
 	 */
 	async beforeEntityCreate(entity: OrganizationTeam): Promise<void> {
 		try {
-			// Assign the current user's ID as the creator
-			entity.createdByUserId = RequestContext.currentUserId();
-
 			// Generate a slug for the profile link
 			if (entity.profile_link || entity.name) {
 				entity.profile_link = sluggable(`${entity.profile_link || entity.name}`);

@@ -50,6 +50,7 @@ import {
 	TimeSlotSubscriber,
 	UserSubscriber
 } from '../internal';
+import { BaseEntitySubscriber } from './base.entity.subscriber';
 import { TenantOrganizationBaseEntityEventSubscriber } from './tenant-organization-base-entity.subscriber';
 
 // Get the ORM type from the MultiORMEnum
@@ -61,6 +62,7 @@ const ormType = getORMType();
 export const coreSubscribers = [
 	// Add the subscriber only if the ORM type is MikroORM
 	...(ormType === MultiORMEnum.MikroORM ? [TenantOrganizationBaseEntityEventSubscriber] : []),
+	BaseEntitySubscriber,
 	ActivitySubscriber,
 	ActivityLogSubscriber,
 	ApiCallLogSubscriber,

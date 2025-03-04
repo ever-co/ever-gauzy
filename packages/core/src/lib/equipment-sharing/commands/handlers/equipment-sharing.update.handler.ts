@@ -1,6 +1,5 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
-import { RequestContext } from '../../../core/context';
 import { RequestApprovalService } from '../../../request-approval/request-approval.service';
 import { EquipmentSharing } from '../../equipment-sharing.entity';
 import { EquipmentSharingUpdateCommand } from '../equipment-sharing.update.command';
@@ -20,9 +19,6 @@ export class EquipmentSharingUpdateHandler implements ICommandHandler<EquipmentS
 	 * @returns A promise that resolves to the updated EquipmentSharing record.
 	 */
 	public async execute(command: EquipmentSharingUpdateCommand): Promise<EquipmentSharing> {
-		// Get the current tenant ID and current user ID from the request context.
-		const createdByUserId = RequestContext.currentUserId();
-
 		const { id, input } = command;
 
 		// Delete the existing Equipment Sharing record and its associated Request Approval concurrently.
@@ -38,7 +34,6 @@ export class EquipmentSharingUpdateHandler implements ICommandHandler<EquipmentS
 		await this._requestApprovalService.create({
 			requestId: equipmentSharing.id,
 			status: equipmentSharing.status ?? RequestApprovalStatusTypesEnum.REQUESTED,
-			createdByUserId,
 			name: equipmentSharing.name,
 			min_count: 1
 		});

@@ -66,7 +66,6 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 	 */
 	async create(entity: IOrganizationProjectModuleCreateInput): Promise<IOrganizationProjectModule> {
 		const tenantId = RequestContext.currentTenantId() ?? entity.tenantId;
-		const createdByUserId = RequestContext.currentUserId();
 		const employeeId = RequestContext.currentEmployeeId();
 		const currentRoleId = RequestContext.currentRoleId();
 
@@ -99,8 +98,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 				...data,
 				members,
 				organizationId,
-				tenantId,
-				createdByUserId
+				tenantId
 			});
 
 			await this.assignTasksToModule(existingTasks, projectModule);

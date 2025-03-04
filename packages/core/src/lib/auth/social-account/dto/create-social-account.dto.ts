@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional, IntersectionType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEnum, IsNotEmpty, IsObject, IsString, ValidateIf, ValidateNested } from 'class-validator';
-import { ISocialAccountCreateInput, IUser, ProviderEnum } from '@gauzy/contracts';
+import { ID, ISocialAccountCreateInput, ProviderEnum } from '@gauzy/contracts';
 import { TenantBaseDTO } from '../../../core/dto';
 import { CreateUserDTO } from '../../../user/dto';
 
@@ -26,13 +26,19 @@ export class CreateSocialAccountDTO extends IntersectionType(TenantBaseDTO) impl
 	@ValidateIf((it) => !it.user)
 	@IsNotEmpty()
 	@IsString()
-	readonly userId: IUser['id'];
+	readonly userId: ID;
 
+	/**
+	 * Social account provider
+	 */
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsEnum(ProviderEnum, { message: 'provider `$value` must be a valid enum value' })
 	readonly provider: ProviderEnum;
 
+	/**
+	 * Social account provider account id
+	 */
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
