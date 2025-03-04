@@ -2079,6 +2079,7 @@
 			"TIME_OFF_POLICY_VIEW": "Просмотреть политику отпуска",
 			"TIME_OFF_POLICY_EDIT": "Редактировать политику отпуска",
 			"TIME_OFF_POLICY_DELETE": "Удалить политику отпуска",
+			"SELECT_EMPLOYEE": "Выбрать сотрудника",
 			"CHANGE_SELECTED_EMPLOYEE": "Изменить выбранного сотрудника",
 			"CHANGE_SELECTED_CANDIDATE": "Изменить выбранный Кандидат",
 			"CHANGE_SELECTED_ORGANIZATION": "Изменить выбранную организацию",

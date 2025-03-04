@@ -2106,6 +2106,7 @@
 			"TIME_OFF_POLICY_VIEW": "Преглед на Политика за Отпуск",
 			"TIME_OFF_POLICY_EDIT": "Редактиране на Политика за Отпуск",
 			"TIME_OFF_POLICY_DELETE": "Изтриване на Политика за Отпуск",
+			"SELECT_EMPLOYEE": "Избор на служител",
 			"CHANGE_SELECTED_EMPLOYEE": "Промени избрания служител",
 			"CHANGE_SELECTED_CANDIDATE": "Change Selected Candidate",
 			"CHANGE_SELECTED_ORGANIZATION": "Промени избраната организация",

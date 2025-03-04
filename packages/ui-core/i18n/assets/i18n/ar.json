@@ -2036,6 +2036,7 @@
 			"TIME_OFF_POLICY_VIEW": "View Time Off Policy",
 			"TIME_OFF_POLICY_EDIT": "Edit Time Off Policy",
 			"TIME_OFF_POLICY_DELETE": "Delete Time Off Policy",
+			"SELECT_EMPLOYEE": "تحديد الموظف",
 			"CHANGE_SELECTED_EMPLOYEE": "تغيير الموظف المحدد",
 			"CHANGE_SELECTED_CANDIDATE": "تغيير المرشح المحدد",
 			"CHANGE_SELECTED_ORGANIZATION": "تغيير المنظمة المحددة",

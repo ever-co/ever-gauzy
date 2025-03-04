@@ -2151,6 +2151,7 @@
 			"TIME_OFF_POLICY_VIEW": "View Time Off Policy",
 			"TIME_OFF_POLICY_EDIT": "Edit Time Off Policy",
 			"TIME_OFF_POLICY_DELETE": "Delete Time Off Policy",
+			"SELECT_EMPLOYEE": "Select Employee",
 			"CHANGE_SELECTED_EMPLOYEE": "Change Selected Employee",
 			"CHANGE_SELECTED_CANDIDATE": "Change Selected Candidate",
 			"CHANGE_SELECTED_ORGANIZATION": "Change Selected Organization",

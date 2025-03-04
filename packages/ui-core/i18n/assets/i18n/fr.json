@@ -2039,6 +2039,7 @@
             "TIME_OFF_POLICY_VIEW": "Voir la Politique de Congé",
             "TIME_OFF_POLICY_EDIT": "Modifier la Politique de Congé",
             "TIME_OFF_POLICY_DELETE": "Supprimer la Politique de Congé",
+            "SELECT_EMPLOYEE": "Sélectionner un employé",
             "CHANGE_SELECTED_EMPLOYEE": "Changer l'employé sélectionné",
             "CHANGE_SELECTED_CANDIDATE": "Changer le candidat sélectionné",
             "CHANGE_SELECTED_ORGANIZATION": "Changer l'organisation sélectionnée",
