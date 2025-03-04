@@ -18,12 +18,8 @@ export const calculateAverage = (values: number[]): number => {
  * @returns The calculated average activity.
  */
 export const calculateAverageActivity = (logs: ITimeLog[], logActivity: Record<string, number>): number => {
-    let avgActivity = 0;
-	logs.forEach((log) => {
-		avgActivity += logActivity[log.id] || 0;
-	});
-    avgActivity /= logs.length;
-    return avgActivity || 0;
+    let avgActivity = logs.reduce((total, log) => total + (logActivity[log.id] || 0), 0);
+    return logs.length ? avgActivity / logs.length : 0;
 };
 
 /**
