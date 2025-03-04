@@ -181,6 +181,13 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		return new Date(date).toLocaleString();
 	}
 
+	public get isOwner(): boolean {
+		if (!this.store.user) {
+			return false;
+		}
+		return this.store?.user?.employee?.id === this.plugin?.uploadedBy?.id ?? false;
+	}
+
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();

@@ -8,7 +8,9 @@
 		<div class="plugin-description">{{ plugin.description }}</div>
 	</div>
 	<div class="plugin-actions">
+		@if(isOwner){
 		<nb-icon class="plugin-edit" icon="edit-outline" (click)="editPlugin()"></nb-icon>
+		}
 		<nb-toggle [checked]="isChecked$ | async" (checkedChange)="togglePlugin($event)"></nb-toggle>
 	</div>
 </div>

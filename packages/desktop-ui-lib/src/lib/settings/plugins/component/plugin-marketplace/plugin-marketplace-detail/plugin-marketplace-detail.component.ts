@@ -7,6 +7,7 @@ import { PluginElectronService } from '../../../services/plugin-electron.service
 import { IPlugin } from '../../../services/plugin-loader.service';
 import { Router } from '@angular/router';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
+import { Store } from '../../../../../services';
 
 @UntilDestroy()
 @Component({
@@ -21,6 +22,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	private readonly pluginElectronService = inject(PluginElectronService);
 	private readonly dialog = inject(NbDialogService);
 	private readonly router = inject(Router);
+	private readonly store = inject(Store);
 
 	ngOnInit(): void {
 		if (this.plugin) {
@@ -74,5 +76,12 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 					this._isChecked$.next(true);
 				}
 			});
+	}
+
+	public get isOwner(): boolean {
+		if (!this.store.user) {
+			return false;
+		}
+		return this.store?.user?.employee?.id === this.plugin?.uploadedBy?.id ?? false;
 	}
 }

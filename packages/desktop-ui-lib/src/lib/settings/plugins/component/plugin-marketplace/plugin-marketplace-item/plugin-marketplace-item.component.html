@@ -33,6 +33,7 @@
 					<div class="info-item">
 						<div class="label">{{ 'PLUGIN.FORM.STATUS' | translate }}</div>
 						<div class="value">
+							@if(isOwner) {
 							<nb-select
 								placeholder="{{ 'PLUGIN.FORM.STATUS' | translate }}"
 								[selected]="plugin.status"
@@ -55,6 +56,9 @@
 									{{ getStatusLabel(status) }}
 								</nb-option>
 							</nb-select>
+							}@else {
+							{{ 'PLUGIN.FORM.STATUSES.' + plugin.status | translate }}
+							}
 						</div>
 					</div>
 
@@ -266,9 +270,11 @@
 			<nb-icon icon="arrow-back-outline" class="mr-2"></nb-icon>
 			{{ 'BUTTONS.BACK' | translate }}
 		</button>
+		@if(isOwner){
 		<button nbButton type="button" status="primary" (click)="navigateToEdit()">
 			<nb-icon icon="edit-2-outline" class="mr-2"></nb-icon>
 			{{ 'BUTTONS.EDIT' | translate }}
 		</button>
+		}
 	</nb-card-footer>
 </nb-card>
