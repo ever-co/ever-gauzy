@@ -112,13 +112,14 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		relations: string[],
 		findInput?: IRequestApprovalFindInput
 	): Promise<IPagination<IRequestApproval>> {
+		// Get the current tenant ID and current user ID from the request context.
+		const currentUserId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();
-		const currentUser = RequestContext.currentUser();
 
 		const { organizationId } = findInput;
 		const result = await this.typeOrmRepository.find({
 			where: {
-				createdBy: currentUser.id,
+				createdByUserId: currentUserId,
 				organizationId,
 				tenantId
 			}
@@ -152,55 +153,61 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		return { items: result, total: result.length };
 	}
 
+	/**
+	 * Creates a RequestApproval record.
+	 *
+	 * @param entity - The input data to create a RequestApproval.
+	 * @returns The saved RequestApproval entity.
+	 */
 	async createRequestApproval(entity: IRequestApprovalCreateInput): Promise<RequestApproval> {
+		// Get the current tenant ID and current user ID from the request context.
 		const tenantId = RequestContext.currentTenantId();
+		const currentUserId = RequestContext.currentUserId();
+
 		const requestApproval = new RequestApproval();
 		requestApproval.status = RequestApprovalStatusTypesEnum.REQUESTED;
 		requestApproval.approvalPolicyId = entity.approvalPolicyId;
-		requestApproval.createdBy = RequestContext.currentUser().id;
-		requestApproval.createdByName = RequestContext.currentUser().name;
+		requestApproval.createdByUserId = currentUserId;
 		requestApproval.name = entity.name;
 		requestApproval.min_count = entity.min_count;
 		requestApproval.tags = entity.tags;
 		requestApproval.organizationId = entity.organizationId;
 		requestApproval.tenantId = tenantId;
-		if (entity.employeeApprovals) {
+
+		if (entity.employeeApprovals?.length) {
 			const employees: IEmployee[] = await this.typeOrmEmployeeRepository.find({
-				where: {
-					id: In(entity.employeeApprovals)
-				}
+				where: { id: In(entity.employeeApprovals) }
 			});
-			const requestApprovalEmployees: IRequestApprovalEmployee[] = [];
-			employees.forEach((employee: IEmployee) => {
-				const raEmployees = new RequestApprovalEmployee();
-				raEmployees.employeeId = employee.id;
-				raEmployees.organizationId = entity.organizationId;
-				raEmployees.tenantId = tenantId;
-				raEmployees.status = RequestApprovalStatusTypesEnum.REQUESTED;
-				requestApprovalEmployees.push(raEmployees);
+
+			requestApproval.employeeApprovals = employees.map((employee) => {
+				const requestApprovalEmployee = new RequestApprovalEmployee();
+				requestApprovalEmployee.employeeId = employee.id;
+				requestApprovalEmployee.organizationId = entity.organizationId;
+				requestApprovalEmployee.tenantId = tenantId;
+				requestApprovalEmployee.status = RequestApprovalStatusTypesEnum.REQUESTED;
+				return requestApprovalEmployee;
 			});
-			requestApproval.employeeApprovals = requestApprovalEmployees;
 		}
-		if (entity.teams) {
+
+		if (entity.teams?.length) {
 			const teams: IOrganizationTeam[] = await this.typeOrmOrganizationTeamRepository.find({
-				where: {
-					id: In(entity.teams)
-				}
+				where: { id: In(entity.teams) }
 			});
-			const requestApprovalTeams: RequestApprovalTeam[] = [];
-			teams.forEach((team) => {
-				const raTeam = new RequestApprovalTeam();
-				raTeam.teamId = team.id;
-				raTeam.team = team;
-				raTeam.status = RequestApprovalStatusTypesEnum.REQUESTED;
-				raTeam.organizationId = entity.organizationId;
-				raTeam.tenantId = tenantId;
-				requestApprovalTeams.push(raTeam);
+
+			requestApproval.teamApprovals = teams.map((team) => {
+				const requestApprovalTeam = new RequestApprovalTeam();
+				requestApprovalTeam.teamId = team.id;
+				requestApprovalTeam.team = team;
+				requestApprovalTeam.status = RequestApprovalStatusTypesEnum.REQUESTED;
+				requestApprovalTeam.organizationId = entity.organizationId;
+				requestApprovalTeam.tenantId = tenantId;
+				return requestApprovalTeam;
 			});
-			requestApproval.teamApprovals = requestApprovalTeams;
 		}
+
 		return this.typeOrmRepository.save(requestApproval);
 	}
+
 	async updateRequestApproval(id: string, entity: IRequestApprovalCreateInput): Promise<RequestApproval> {
 		const tenantId = RequestContext.currentTenantId();
 		const requestApproval = await this.typeOrmRepository.findOneBy({
@@ -265,6 +272,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			});
 			requestApproval.teamApprovals = requestApprovalTeams;
 		}
+
 		return this.typeOrmRepository.save(requestApproval);
 	}
 
