@@ -414,7 +414,7 @@
 			nbSpinnerStatus="success"
 			nbSpinnerSize="small"
 		>
-			{{ 'BUTTONS.UPLOAD' | translate }}
+			{{ (!!plugin ? 'BUTTONS.UPDATE' : 'BUTTONS.UPLOAD') | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>

@@ -24,7 +24,33 @@ import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/p
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
-	plugin: IPlugin;
+	plugin: IPlugin = {
+		id: '3',
+		tenantId: 'tenant-555',
+		organizationId: 'org-222',
+		name: 'AI Chatbot',
+		description: 'An AI-powered chatbot for customer support.',
+		type: PluginType.MOBILE,
+		status: PluginStatus.DEPRECATED,
+		versions: ['0.9.0', '1.0.0'],
+		source: {
+			id: 'source-3',
+			tenantId: 'tenant-555',
+			organizationId: 'org-222',
+			type: PluginSourceType.GAUZY,
+			url: 'https://gauzy.example.com/plugins/ai-chatbot'
+		} as IGauzySource,
+		checksum: 'sha256-ghj123',
+		signature: 'signature-111',
+		author: 'Charlie Brown',
+		license: 'Apache-2.0',
+		homepage: 'https://example.com/ai-chatbot',
+		repository: 'https://github.com/example/ai-chatbot',
+		uploadedBy: { id: 'emp-003', firstName: 'Eve', lastName: 'Davis', email: 'eve@example.com' } as any,
+		uploadedAt: new Date('2022-07-10'),
+		downloadCount: 5200,
+		lastDownloadedAt: new Date('2024-01-20')
+	};
 	pluginId: string;
 	loading = true;
 	pluginStatus = PluginStatus;
@@ -35,7 +61,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	constructor(
 		private readonly route: ActivatedRoute,
 		private readonly router: Router,
-		private readonly pluginsService: PluginService,
+		private readonly pluginService: PluginService,
 		private readonly dialogService: NbDialogService,
 		private readonly toastrService: NbToastrService,
 		private readonly store: Store,

@@ -6,14 +6,13 @@
     margin-bottom: 0;
   }
 
-  nb-card-header {
-    .title {
-      margin-bottom: 0;
-    }
+  nb-card-body {
+    padding: 0;
   }
 
   nb-card-footer {
-    padding: 1rem 1.5rem;
+    padding: 0;
+    padding-top: 1rem;
 
     button {
       margin-left: 1rem;
@@ -23,7 +22,10 @@
 
 // Section styling
 .form-section {
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
+  background-color: var(--gauzy-card-2);
+  border-radius: var(--border-radius);
+  padding: 1rem;
 
   &:last-child {
     margin-bottom: 0;
@@ -48,6 +50,16 @@
     margin-bottom: 0;
   }
 
+  .b-status {
+    right: 1rem;
+    top: 1rem;
+    border-radius: 4px;
+
+    &.left {
+      right: 4.5rem;
+    }
+  }
+
   .info-item {
     flex: 1 1 45%;
     margin-right: 5%;
@@ -64,7 +76,7 @@
 
     .label {
       font-size: 0.875rem;
-      color: nb-theme(text-hint-color);
+      color: var(--gauzy-text-color-2);
       font-weight: 600;
       margin-bottom: 0.25rem;
     }

@@ -5,7 +5,7 @@
 		</div>
 		<div *ngIf="!loading && plugin">
 			<!-- Basic Information Section -->
-			<div class="form-section mb-4">
+			<div class="form-section mb-3">
 				<h6 class="section-title">{{ 'PLUGIN.FORM.BASIC_INFO' | translate }}</h6>
 
 				<div class="info-row">
@@ -17,13 +17,13 @@
 								[status]="getStatusBadgeStatus(plugin.status)"
 								[text]="getStatusLabel(plugin.status)"
 								position="top right"
-								class="ml-2"
+								class="ml-2 b-status left"
 							></nb-badge>
 							<nb-badge
 								[status]="getPluginTypeBadgeStatus(plugin.type)"
 								[text]="getTypeLabel(plugin.type)"
 								position="top right"
-								class="ml-2"
+								class="ml-2 b-status"
 							></nb-badge>
 						</div>
 					</div>
@@ -89,7 +89,7 @@
 			</div>
 
 			<!-- Source Information Section -->
-			<div class="form-section mb-4">
+			<div class="form-section mb-3">
 				<h6 class="section-title">{{ 'PLUGIN.FORM.SOURCE' | translate }}</h6>
 
 				<div class="info-row">
@@ -169,7 +169,7 @@
 			</div>
 
 			<!-- Metadata Section -->
-			<div class="form-section mb-4">
+			<div class="form-section mb-3">
 				<h6 class="section-title">{{ 'PLUGIN.FORM.METADATA.TITLE' | translate }}</h6>
 
 				<div class="info-row">
