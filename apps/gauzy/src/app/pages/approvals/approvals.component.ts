@@ -237,14 +237,13 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 						instance.value = cell.getRawValue();
 					}
 				},
-				createdByName: {
+				createdByUser: {
 					title: this.getTranslation('APPROVAL_REQUEST_PAGE.CREATED_BY'),
 					type: 'custom',
 					isFilterable: false,
 					renderComponent: CreatedByUserComponent<IRequestApproval>,
 					componentInitFunction: (instance: CreatedByUserComponent<IRequestApproval>, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
-						instance.value = cell.getRawValue();
 					}
 				},
 				createdAt: {
