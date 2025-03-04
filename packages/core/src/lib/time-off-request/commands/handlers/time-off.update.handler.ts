@@ -2,43 +2,46 @@ import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
 import { StatusTypesMapRequestApprovalEnum, RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 import { TimeOffRequest } from '../../time-off-request.entity';
-import { RequestApproval } from '../../../request-approval/request-approval.entity';
-import { RequestContext } from '../../../core/context';
 import { TimeOffUpdateCommand } from '../time-off.update.command';
-import { TypeOrmTimeOffRequestRepository } from '../../repository/type-orm-time-off-request.repository';
-import { TypeOrmRequestApprovalRepository } from '../../../request-approval/repository/type-orm-request-approval.repository';
+import { RequestApprovalService } from '../../../request-approval/request-approval.service';
+import { TimeOffRequestService } from '../../time-off-request.service';
 
 @CommandHandler(TimeOffUpdateCommand)
 export class TimeOffUpdateHandler implements ICommandHandler<TimeOffUpdateCommand> {
 	constructor(
-		private readonly typeOrmTimeOffRequestRepository: TypeOrmTimeOffRequestRepository,
-		private readonly typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository
+		private readonly _requestApprovalService: RequestApprovalService,
+		private readonly _timeOffRequestService: TimeOffRequestService
 	) {}
 
-	public async execute(command?: TimeOffUpdateCommand): Promise<TimeOffRequest> {
-		try {
-			const { id, timeOff } = command;
-			await this.typeOrmTimeOffRequestRepository.delete(id);
+	/**
+	 * Updates an existing time off request by deleting the old record, saving a new one,
+	 * and updating its associated approval record.
+	 *
+	 * @param command - An object containing the identifier of the existing request and the new time off data.
+	 * @returns A promise that resolves to the newly saved TimeOffRequest.
+	 */
+	public async execute(command: TimeOffUpdateCommand): Promise<TimeOffRequest> {
+		const { id, input } = command;
 
-			const timeOffRequestSaved = await this.typeOrmTimeOffRequestRepository.save(timeOff);
+		// Delete the existing time off request and its associated request approval concurrently.
+		await Promise.all([
+			this._timeOffRequestService.delete(id),
+			this._requestApprovalService.delete({ requestId: id })
+		]);
 
-			await this.typeOrmRequestApprovalRepository.delete({ requestId: id });
+		// Save the new time off request.
+		const timeOffRequest = await this._timeOffRequestService.create(input);
 
-			const requestApproval = new RequestApproval();
-			requestApproval.requestId = timeOffRequestSaved.id;
-			requestApproval.status = timeOffRequestSaved.status
-				? StatusTypesMapRequestApprovalEnum[timeOffRequestSaved.status]
-				: RequestApprovalStatusTypesEnum.REQUESTED;
-			requestApproval.createdBy = RequestContext.currentUser().id;
-			requestApproval.createdByName = RequestContext.currentUser().name;
-			requestApproval.name = 'Request time off';
-			requestApproval.min_count = 1;
+		// Create a new request approval record for the updated time off request.
+		await this._requestApprovalService.create({
+			requestId: timeOffRequest.id,
+			status: timeOffRequest.status
+				? StatusTypesMapRequestApprovalEnum[timeOffRequest.status]
+				: RequestApprovalStatusTypesEnum.REQUESTED,
+			name: 'Request time off',
+			min_count: 1
+		});
 
-			await this.typeOrmRequestApprovalRepository.save(requestApproval);
-
-			return timeOffRequestSaved;
-		} catch (err) {
-			throw new BadRequestException(err);
-		}
+		return timeOffRequest;
 	}
 }

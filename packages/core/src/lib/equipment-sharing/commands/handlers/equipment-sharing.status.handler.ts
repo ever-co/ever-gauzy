@@ -1,15 +1,15 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { NotFoundException } from '@nestjs/common';
 import { IEquipmentSharing } from '@gauzy/contracts';
+import { RequestApprovalService } from '../../../request-approval/request-approval.service';
 import { EquipmentSharingStatusCommand } from '../equipment-sharing.status.command';
-import { TypeOrmRequestApprovalRepository } from '../../../request-approval/repository/type-orm-request-approval.repository';
 import { EquipmentSharingService } from '../../equipment-sharing.service';
 
 @CommandHandler(EquipmentSharingStatusCommand)
 export class EquipmentSharingStatusHandler implements ICommandHandler<EquipmentSharingStatusCommand> {
 	constructor(
-		private readonly typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository,
-		private readonly equipmentSharingService: EquipmentSharingService
+		private readonly _equipmentSharingService: EquipmentSharingService,
+		private readonly _requestApprovalService: RequestApprovalService
 	) {}
 
 	/**
@@ -23,8 +23,8 @@ export class EquipmentSharingStatusHandler implements ICommandHandler<EquipmentS
 
 		// Retrieve the equipment sharing record and its associated request approval concurrently.
 		const [equipmentSharing, requestApproval] = await Promise.all([
-			this.equipmentSharingService.findOneByIdString(id),
-			this.typeOrmRequestApprovalRepository.findOneBy({ requestId: id })
+			this._equipmentSharingService.findOneByIdString(id),
+			this._requestApprovalService.findOneByWhereOptions({ requestId: id })
 		]);
 
 		// If the equipment sharing record is not found, throw an exception.
@@ -32,16 +32,16 @@ export class EquipmentSharingStatusHandler implements ICommandHandler<EquipmentS
 			throw new NotFoundException('Equipment Sharing not found');
 		}
 
-		// Update the equipment sharing status.
-		equipmentSharing.status = status;
+		if (!requestApproval) {
+			throw new NotFoundException('Request Approval not found');
+		}
 
 		// If a corresponding request approval exists, update its status as well.
 		if (requestApproval) {
-			requestApproval.status = status;
-			await this.typeOrmRequestApprovalRepository.save(requestApproval);
+			await this._requestApprovalService.update({ requestId: id }, { status });
 		}
 
 		// Persist and return the updated equipment sharing record.
-		return await this.equipmentSharingService.update(id, equipmentSharing);
+		return await this._equipmentSharingService.update(id, { status });
 	}
 }
