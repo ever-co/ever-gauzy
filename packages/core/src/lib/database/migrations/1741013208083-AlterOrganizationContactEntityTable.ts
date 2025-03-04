@@ -138,8 +138,19 @@ export class AlterOrganizationContactEntityTable1741013208083 implements Migrati
 			)`
 		);
 
-		// Step 3: Copy data from the old table to the temporary table.
-		console.log('Step 3: Copying data from "organization_contact" to "temporary_organization_contact"');
+		// Step 3: Copy data from the old table to the temporary table and update the createdByUserId.
+		console.log('Step 3: Copying data to "temporary_organization_contact" and updating the createdByUserId');
+		await queryRunner.query(`
+			UPDATE "temporary_organization_contact"
+			SET "createdByUserId" = (
+				SELECT "createdBy"
+				FROM "organization_contact"
+				WHERE "organization_contact"."id" = "temporary_organization_contact"."id"
+			)
+		`);
+
+		// Step 4: Copy data from the old table to the temporary table.
+		console.log('Step 4: Copying data from "organization_contact" to "temporary_organization_contact"');
 		await queryRunner.query(
 			`INSERT INTO "temporary_organization_contact" (
 				"id",
@@ -193,16 +204,16 @@ export class AlterOrganizationContactEntityTable1741013208083 implements Migrati
 			FROM "organization_contact"`
 		);
 
-		// Step 4: Drop the original organization_contact table.
-		console.log('Step 4: Dropping original "organization_contact" table');
+		// Step 5: Drop the original organization_contact table.
+		console.log('Step 5: Dropping original "organization_contact" table');
 		await queryRunner.query(`DROP TABLE "organization_contact"`);
 
-		// Step 5: Rename temporary_organization_contact to organization_contact.
-		console.log('Step 5: Renaming "temporary_organization_contact" to "organization_contact"');
+		// Step 6: Rename temporary_organization_contact to organization_contact.
+		console.log('Step 6: Renaming "temporary_organization_contact" to "organization_contact"');
 		await queryRunner.query(`ALTER TABLE "temporary_organization_contact" RENAME TO "organization_contact"`);
 
-		// Step 6: Recreate indexes on the new organization_contact table.
-		console.log('Step 6: Recreating indexes on "organization_contact"');
+		// Step 7: Recreate indexes on the new organization_contact table.
+		console.log('Step 7: Recreating indexes on "organization_contact"');
 		await queryRunner.query(
 			`CREATE INDEX "IDX_f8df3dea1e42ef16ae7f411304" ON "organization_contact" ("deletedByUserId") `
 		);
@@ -293,8 +304,19 @@ export class AlterOrganizationContactEntityTable1741013208083 implements Migrati
 			)`
 		);
 
-		// Step 4: Copy data from the temporary_organization_contact table into the new organization_contact table.
-		console.log('Step 4: Copying data from "temporary_organization_contact" to new "organization_contact"');
+		// Step 4: Copy data from the old table to the temporary table and update the createdByUserId.
+		console.log('Step 4: Copying data to "temporary_organization_contact" and updating the createdByUserId');
+		await queryRunner.query(`
+			UPDATE "organization_contact"
+			SET "createdBy" = (
+				SELECT "createdByUserId"
+				FROM "temporary_organization_contact"
+				WHERE "temporary_organization_contact"."id" = "organization_contact"."id"
+			)
+		`);
+
+		// Step 5: Copy data from the temporary_organization_contact table into the new organization_contact table.
+		console.log('Step 5: Copying data from "temporary_organization_contact" to new "organization_contact"');
 		await queryRunner.query(
 			`INSERT INTO "organization_contact" (
 					"id",
@@ -348,12 +370,12 @@ export class AlterOrganizationContactEntityTable1741013208083 implements Migrati
 			  FROM "temporary_organization_contact"`
 		);
 
-		// Step 5: Drop the temporary_organization_contact table.
-		console.log('Step 5: Dropping "temporary_organization_contact" table');
+		// Step 6: Drop the temporary_organization_contact table.
+		console.log('Step 6: Dropping "temporary_organization_contact" table');
 		await queryRunner.query(`DROP TABLE "temporary_organization_contact"`);
 
-		// Step 6: Recreate indexes on the new organization_contact table.
-		console.log('Step 6: Recreating indexes on "organization_contact"');
+		// Step 7: Recreate indexes on the new organization_contact table.
+		console.log('Step 7: Recreating indexes on "organization_contact"');
 		await queryRunner.query(
 			`CREATE INDEX "IDX_b5589e035e86d23ebb54ea2728" ON "organization_contact" ("updatedByUserId") `
 		);
