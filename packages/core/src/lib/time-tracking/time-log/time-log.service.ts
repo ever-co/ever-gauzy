@@ -82,7 +82,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @param request - Input parameters for querying the time logs report.
 	 * @returns A map of time log id to its activity percentage.
 	 */
-	async getTImeLogReportActivity(request: IGetTimeLogReportInput): Promise<Record<string, number>> {
+	async getTimeLogReportActivity(request: IGetTimeLogReportInput): Promise<Record<string, number>> {
 		// Create a query builder for the TimeLog entity
 		const query = this.typeOrmRepository.createQueryBuilder('time_log');
 
@@ -94,7 +94,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		// Inner join with related entities (timeSlots)
 		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
-		
+
 		// Apply additional conditions to the query based on request filters
 		query.where((qb: SelectQueryBuilder<TimeLog>) => {
 			this.getFilterTimeLogQuery(qb, request);
@@ -226,7 +226,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const logs = await query.getMany();
 
 		// Get the time logs activity report
-		const logActivity = await this.getTImeLogReportActivity(request)
+		const logActivity = await this.getTimeLogReportActivity(request)
 
 		// Gets an array of days between the given start date, end date and timezone.
 		const { startDate, endDate, timeZone } = request;
@@ -419,7 +419,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const logs = await query.getMany();
 
 		// Get the time logs activity report
-		const logActivity = await this.getTImeLogReportActivity(request)
+		const logActivity = await this.getTimeLogReportActivity(request)
 
 		// Group time logs based on the specified 'groupBy' filter
 		let dailyLogs: IReportDayData;
@@ -967,7 +967,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * Modifies the provided query to filter TimeLogs based on the given criteria.
 	 * @param query - The query to be modified.
 	 * @param request - The criteria for filtering TimeLogs.
-	 * @param ignoreSlots - Whether to ignore the time slots filter. When time slots are ignored, 
+	 * @param ignoreSlots - Whether to ignore the time slots filter. When time slots are ignored,
 	 * 						the activity level filter is also ignored and time slots are not joined.
 	 * @returns The modified query.
 	 */
