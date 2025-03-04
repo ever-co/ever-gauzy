@@ -1,17 +1,16 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
-import { EquipmentSharing } from '../../equipment-sharing.entity';
-import { RequestApproval } from '../../../request-approval/request-approval.entity';
 import { RequestContext } from '../../../core/context';
+import { RequestApprovalService } from '../../../request-approval/request-approval.service';
+import { EquipmentSharing } from '../../equipment-sharing.entity';
 import { EquipmentSharingUpdateCommand } from '../equipment-sharing.update.command';
-import { TypeOrmRequestApprovalRepository } from '../../../request-approval/repository/type-orm-request-approval.repository';
 import { EquipmentSharingService } from '../../equipment-sharing.service';
 
 @CommandHandler(EquipmentSharingUpdateCommand)
 export class EquipmentSharingUpdateHandler implements ICommandHandler<EquipmentSharingUpdateCommand> {
 	constructor(
-		private readonly typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository,
-		private readonly equipmentSharingService: EquipmentSharingService
+		private readonly _equipmentSharingService: EquipmentSharingService,
+		private readonly _requestApprovalService: RequestApprovalService
 	) {}
 
 	/**
@@ -21,34 +20,29 @@ export class EquipmentSharingUpdateHandler implements ICommandHandler<EquipmentS
 	 * @returns A promise that resolves to the updated EquipmentSharing record.
 	 */
 	public async execute(command: EquipmentSharingUpdateCommand): Promise<EquipmentSharing> {
-		const { id, equipmentSharing } = command;
+		// Get the current tenant ID and current user ID from the request context.
+		const createdByUserId = RequestContext.currentUserId();
 
-		const currentUser = RequestContext.currentUser();
-		const tenantId = RequestContext.currentTenantId();
+		const { id, input } = command;
 
 		// Delete the existing Equipment Sharing record and its associated Request Approval concurrently.
 		await Promise.all([
-			this.equipmentSharingService.delete(id),
-			this.typeOrmRequestApprovalRepository.delete({ requestId: id })
+			this._equipmentSharingService.delete(id),
+			this._requestApprovalService.delete({ requestId: id })
 		]);
 
 		// Save the updated Equipment Sharing record.
-		equipmentSharing.tenantId = tenantId;
-		const equipmentSharingSaved = await this.equipmentSharingService.create(equipmentSharing);
+		const equipmentSharing = await this._equipmentSharingService.create(input);
 
-		// Create a new Request Approval record for the updated Equipment Sharing.
-		const requestApproval = new RequestApproval();
-		requestApproval.requestId = equipmentSharingSaved.id;
-		requestApproval.status = equipmentSharingSaved.status ?? RequestApprovalStatusTypesEnum.REQUESTED;
-		requestApproval.createdBy = currentUser.id;
-		requestApproval.createdByName = currentUser.name;
-		requestApproval.name = equipmentSharing.name;
-		requestApproval.min_count = 1;
-		requestApproval.tenantId = tenantId;
+		// Create a new request approval record for the updated equipment sharing.
+		await this._requestApprovalService.create({
+			requestId: equipmentSharing.id,
+			status: equipmentSharing.status ?? RequestApprovalStatusTypesEnum.REQUESTED,
+			createdByUserId,
+			name: equipmentSharing.name,
+			min_count: 1
+		});
 
-		// Save the new Request Approval.
-		await this.typeOrmRequestApprovalRepository.save(requestApproval);
-
-		return equipmentSharingSaved;
+		return equipmentSharing;
 	}
 }

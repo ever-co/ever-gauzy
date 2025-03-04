@@ -36,7 +36,7 @@ export interface IEquipmentSharingCreateInput extends IBaseEquipmentSharing {
 }
 
 // Update input can simply extend the create input.
-export interface IEquipmentSharingUpdateInput extends IEquipmentSharingCreateInput {}
+export interface IEquipmentSharingUpdateInput extends Partial<IEquipmentSharingCreateInput> {}
 
 export enum EquipmentSharingStatusEnum {
 	REQUESTED = 'REQUESTED',

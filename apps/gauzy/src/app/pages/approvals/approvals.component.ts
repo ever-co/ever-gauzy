@@ -10,7 +10,6 @@ import { NbDialogService } from '@nebular/theme';
 import { pluck } from 'underscore';
 import {
 	ComponentLayoutStyleEnum,
-	IApprovalsData,
 	IOrganization,
 	IRequestApproval,
 	RequestApprovalStatusTypesEnum
@@ -41,7 +40,6 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 	public settingsSmartTable: object;
 	public loading: boolean;
 	public selectedRequestApproval: IRequestApproval;
-	public listApprovals: IApprovalsData[] = [];
 	public disableButton = true;
 	public smartTableSource = new LocalDataSource();
 	public hasEditPermission = false;
