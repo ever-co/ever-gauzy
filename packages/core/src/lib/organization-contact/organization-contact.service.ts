@@ -76,6 +76,7 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 		const { relations, findInput } = data;
 		const { employeeId, organizationId, contactType } = findInput;
 
+		// Get current user ID and tenant ID from the request context
 		const createdByUserId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId() ?? findInput.tenantId;
 

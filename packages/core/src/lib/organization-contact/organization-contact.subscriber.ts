@@ -1,6 +1,5 @@
 import { EventSubscriber } from 'typeorm';
 import { OrganizationContact } from './organization-contact.entity';
-import { RequestContext } from '../core/context';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { getDummyImage } from './../core/utils';
 
@@ -47,8 +46,6 @@ export class OrganizationContactSubscriber extends BaseEntityEventSubscriber<Org
 	 */
 	async beforeEntityCreate(entity: OrganizationContact): Promise<void> {
 		try {
-			entity.createdByUserId = RequestContext.currentUserId();
-
 			// Generate a dummy image URL based on the first character of the name, if imageUrl is not provided
 			if (!entity.imageUrl && entity.name) {
 				entity.imageUrl = getDummyImage(330, 300, entity.name.charAt(0).toUpperCase());
