@@ -1,3 +1,5 @@
-export * from './timer-started.handler';
-export * from './timer-stopped.handler';
-export * from './timer-status-updated.handler';
+import { TimerStartedHandler } from './timer-started.handler';
+import { TimerStatusUpdatedHandler } from './timer-status-updated.handler';
+import { TimerStoppedHandler } from './timer-stopped.handler';
+
+export const EventHandlers = [TimerStartedHandler, TimerStoppedHandler, TimerStatusUpdatedHandler];

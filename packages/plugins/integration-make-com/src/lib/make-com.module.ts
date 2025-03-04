@@ -3,35 +3,31 @@ import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { IntegrationModule, IntegrationSetting, IntegrationSettingModule, IntegrationTenantModule, UserModule } from '@gauzy/core';
+import {
+	IntegrationModule,
+	IntegrationSetting,
+	IntegrationSettingModule,
+	IntegrationTenantModule,
+	UserModule
+} from '@gauzy/core';
 import { MakeComController } from './make-com.controller';
 import { MakeComService } from './make-com.service';
 import { WebhookService } from './webhook.service';
-import {
-  TimerStartedHandler,
-  TimerStoppedHandler,
-  TimerStatusUpdatedHandler
-} from './handlers';
+import { EventHandlers } from './handlers';
 
 @Module({
-  imports: [
-    HttpModule,
-    ConfigModule,
-    CqrsModule,
-    TypeOrmModule.forFeature([IntegrationSetting]),
-    IntegrationModule,
-    IntegrationSettingModule,
-    IntegrationTenantModule,
-    UserModule
-  ],
-  controllers: [MakeComController],
-  providers: [
-    WebhookService,
-    MakeComService,
-    TimerStartedHandler,
-    TimerStoppedHandler,
-    TimerStatusUpdatedHandler
-  ],
+	imports: [
+		HttpModule,
+		ConfigModule,
+		CqrsModule,
+		TypeOrmModule.forFeature([IntegrationSetting]),
+		IntegrationModule,
+		IntegrationSettingModule,
+		IntegrationTenantModule,
+		UserModule
+	],
+	controllers: [MakeComController],
+	providers: [WebhookService, MakeComService, ...EventHandlers],
 	exports: [WebhookService, MakeComService]
 })
 export class MakeComModule {}

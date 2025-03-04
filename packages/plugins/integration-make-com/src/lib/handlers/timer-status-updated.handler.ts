@@ -6,9 +6,15 @@ import { ITimerStatus } from '@gauzy/contracts';
 @Injectable()
 @EventsHandler(TimerStatusUpdatedEvent)
 export class TimerStatusUpdatedHandler implements IEventHandler<TimerStatusUpdatedEvent> {
-  constructor(private readonly webhookService: WebhookService) {}
+	constructor(private readonly webhookService: WebhookService) {}
 
-  async handle(event: TimerStatusUpdatedEvent) {
-    await this.webhookService.emitTimerEvent<ITimerStatus>('status', event.status);
-  }
+	/**
+	 * Handles the TimerStatusUpdatedEvent by emitting a 'status' event with the updated timer status.
+	 *
+	 * @param event - The TimerStatusUpdatedEvent containing the updated timer status.
+	 * @returns A promise that resolves once the timer status event is emitted.
+	 */
+	async handle(event: TimerStatusUpdatedEvent): Promise<void> {
+		await this.webhookService.emitTimerEvent<ITimerStatus>('status', event.status);
+	}
 }

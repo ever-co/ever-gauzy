@@ -6,9 +6,15 @@ import { ITimeLog } from '@gauzy/contracts';
 @Injectable()
 @EventsHandler(TimerStoppedEvent)
 export class TimerStoppedHandler implements IEventHandler<TimerStoppedEvent> {
-  constructor(private readonly webhookService: WebhookService) {}
+	constructor(private readonly webhookService: WebhookService) {}
 
-  async handle(event: TimerStoppedEvent) {
-    await this.webhookService.emitTimerEvent<ITimeLog>('stop', event.timeLog);
-  }
+	/**
+	 * Handles the TimerStoppedEvent by emitting a 'stop' event with the corresponding time log.
+	 *
+	 * @param event - The TimerStoppedEvent containing the time log details.
+	 * @returns A promise that resolves once the timer stop event is successfully emitted.
+	 */
+	async handle(event: TimerStoppedEvent): Promise<void> {
+		await this.webhookService.emitTimerEvent<ITimeLog>('stop', event.timeLog);
+	}
 }
