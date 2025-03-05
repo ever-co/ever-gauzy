@@ -4285,7 +4285,11 @@
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "Это поле обязательно!",
-		"ENTER_POSITIVE_NUMBER": "Пожалуйста, введите положительное число!"
+		"ENTER_POSITIVE_NUMBER": "Пожалуйста, введите положительное число!",
+		"INVALID_TIME_FORMAT": "Некорректный формат. Правильный формат: HH:mm:ss.",
+		"END_TIME_BEFORE_START_TIME": "Время окончания не может быть раньше времени начала.",
+		"END_TIME_LATER_THAN_START_TIME": "Время окончания должно быть позже времени начала.",
+		"START_TIME_EARLIER_THAN_END_TIME": "Время начала должно быть раньше времени окончания."
 	},
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Добавить Назначение",

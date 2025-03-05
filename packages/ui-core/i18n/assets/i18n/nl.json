@@ -4266,7 +4266,11 @@
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "Dit veld is verplicht!",
-		"ENTER_POSITIVE_NUMBER": "Voer alstublieft een positief getal in!"
+		"ENTER_POSITIVE_NUMBER": "Voer alstublieft een positief getal in!",
+		"INVALID_TIME_FORMAT": "Ongeldig formaat. Het juiste formaat is HH:mm:ss.",
+		"END_TIME_BEFORE_START_TIME": "Eindtijd kan niet voor begintijd zijn.",
+		"END_TIME_LATER_THAN_START_TIME": "Eindtijd moet later zijn dan begintijd.",
+		"START_TIME_EARLIER_THAN_END_TIME": "Begintijd moet eerder zijn dan eindtijd."
 	},
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Afspraak toevoegen",

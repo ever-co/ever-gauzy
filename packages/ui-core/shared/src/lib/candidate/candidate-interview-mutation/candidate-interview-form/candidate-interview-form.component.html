@@ -7,9 +7,7 @@
 			}"
 			class="name-valid-parent"
 		>
-			<label for="inputTitle" class="label">{{
-				'FORM.LABELS.TITLE' | translate
-			}}</label>
+			<label for="inputTitle" class="label">{{ 'FORM.LABELS.TITLE' | translate }}</label>
 			<input
 				nbInput
 				type="text"
@@ -19,26 +17,14 @@
 					'title-width-small': isCalendar
 				}"
 				fullWidth
-				placeholder="{{
-					'FORM.PLACEHOLDERS.ADD_INTERVIEW.TITLE' | translate
-				}}"
+				placeholder="{{ 'FORM.PLACEHOLDERS.ADD_INTERVIEW.TITLE' | translate }}"
 				formControlName="title"
 			/>
 			<div *ngIf="isTitleExisted" class="name-valid">
-				{{
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEW_TITLE_EXIST'
-						| translate
-				}}
+				{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEW_TITLE_EXIST' | translate }}
 			</div>
 		</div>
-		<button
-			*ngIf="!isCalendar"
-			status="success"
-			class="button"
-			nbButton
-			nbStepperSave
-			(click)="findTime()"
-		>
+		<button *ngIf="!isCalendar" status="success" class="button" nbButton nbStepperSave (click)="findTime()">
 			{{ 'BUTTONS.FIND_TIME' | translate }}
 		</button>
 	</div>
@@ -71,40 +57,30 @@
 			<nb-radio [value]="false" [checked]="true">{{
 				'FORM.PLACEHOLDERS.ADD_INTERVIEW.CALL' | translate
 			}}</nb-radio>
-			<nb-radio [value]="true">{{
-				'FORM.PLACEHOLDERS.ADD_INTERVIEW.MEETING' | translate
-			}}</nb-radio>
+			<nb-radio [value]="true">{{ 'FORM.PLACEHOLDERS.ADD_INTERVIEW.MEETING' | translate }}</nb-radio>
 		</nb-radio-group>
 		<div class="location" *ngIf="isMeeting">
-			<label for="location" class="label">{{
-				'FORM.LABELS.LOCATION' | translate
-			}}</label>
+			<label for="location" class="label">{{ 'FORM.LABELS.LOCATION' | translate }}</label>
 			<input
 				fullWidth
 				id="location"
 				type="text"
 				nbInput
 				formControlName="location"
-				placeholder="{{
-					'FORM.PLACEHOLDERS.ADD_INTERVIEW.LOCATION' | translate
-				}}"
+				placeholder="{{ 'FORM.PLACEHOLDERS.ADD_INTERVIEW.LOCATION' | translate }}"
 			/>
 		</div>
 	</div>
 
 	<div class="form-group">
-		<label for="note" class="label">{{
-			'FORM.LABELS.NOTE' | translate
-		}}</label>
+		<label for="note" class="label">{{ 'FORM.LABELS.NOTE' | translate }}</label>
 		<input
 			fullWidth
 			id="note"
 			type="text"
 			nbInput
 			formControlName="note"
-			placeholder="{{
-				'FORM.PLACEHOLDERS.ADD_INTERVIEW.NOTE' | translate
-			}}"
+			placeholder="{{ 'FORM.PLACEHOLDERS.ADD_INTERVIEW.NOTE' | translate }}"
 		/>
 	</div>
 </form>

@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, Input, AfterViewInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -24,7 +24,7 @@ import { Store, TimesheetService, ToastrService } from '@gauzy/ui-core/core';
 	templateUrl: './edit-time-log-modal.component.html',
 	styleUrls: ['./edit-time-log-modal.component.scss']
 })
-export class EditTimeLogModalComponent implements OnInit, AfterViewInit {
+export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestroy {
 	// Permissions and basic state initialization
 	PermissionsEnum = PermissionsEnum;
 	organization: IOrganization;
@@ -35,7 +35,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit {
 
 	// Date range and time-related properties
 	selectedRange: IDateRange = { start: null, end: null };
-	timeDiff: Date = null;
+	timeDiff: number = null;
 
 	// Employee-related properties
 	employee: ISelectedEmployee;
@@ -46,6 +46,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit {
 	reasons: string[] = ['Worked offline', 'Internet issue', 'Forgot to track', 'Usability issue', 'App issue'];
 	selectedReason = '';
 	selectedRangeSubscription: Subscription;
+	isTimeRangeValid = true;
 
 	// Time log state management
 	private _timeLog: ITimeLog | Partial<ITimeLog> = {};
@@ -82,17 +83,15 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit {
 		private readonly _store: Store,
 		private readonly _timesheetService: TimesheetService,
 		private readonly _toastrService: ToastrService
-	) {
-		const minutes = moment().get('minutes');
-		const roundTime = moment().subtract(minutes - (minutes % 10));
-
-		this.selectedRange = {
-			end: roundTime.toDate(),
-			start: roundTime.subtract(1, 'hour').toDate()
-		};
-	}
+	) {}
 
 	ngOnInit() {
+		const { startedAt, stoppedAt } = this.timeLog;
+		this.selectedRange = {
+			start: moment(startedAt).toDate(),
+			end: moment(stoppedAt).toDate()
+		};
+
 		// Subscribe to subject for overlap checks
 		this.subject$
 			.pipe(
@@ -118,6 +117,8 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit {
 		const selectedRange$ = this.form.get('selectedRange').valueChanges;
 		this.selectedRangeSubscription = selectedRange$.subscribe((selectedRange) => {
 			this.selectedRange = selectedRange;
+			const { start, end } = selectedRange;
+			this.timeDiff = start && end ? this.calculateTimeDiff(start, end) : null;
 		});
 
 		// Combine employeeId and selectedRange value changes
@@ -132,18 +133,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit {
 
 					const { start, end } = selectedRange;
 
-					if (start && end) {
-						const startMoment = moment(start);
-						const endMoment = moment(end);
-
-						if (startMoment.isValid() && endMoment.isValid()) {
-							this.timeDiff = new Date(endMoment.diff(startMoment, 'seconds'));
-						} else {
-							this.timeDiff = null;
-						}
-					} else {
-						this.timeDiff = null;
-					}
+					this.timeDiff = start && end ? this.calculateTimeDiff(start, end) : null;
 
 					// Notify subject about changes
 					this.subject$.next(true);
@@ -160,7 +150,6 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit {
 
 		// Initialize form with the time log values
 		this.populateFormWithTimeLog(this._timeLog);
-		this._cdr.detectChanges();
 	}
 
 	/**
@@ -187,6 +176,29 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit {
 
 		// Trigger manual change detection
 		this._cdr.detectChanges();
+	}
+
+	/**
+	 * Helper function to calculate time difference
+	 */
+	private calculateTimeDiff(start: Date, end: Date): number | null {
+		const startMoment = moment(start);
+		const endMoment = moment(end);
+
+		if (startMoment.isValid() && endMoment.isValid()) {
+			return endMoment.diff(startMoment, 'seconds');
+		} else {
+			return null;
+		}
+	}
+
+	onDateRangeChange(newRange: IDateRange) {
+		this.selectedRange = newRange;
+		this._cdr.detectChanges();
+	}
+
+	onValidationChange(isValid: boolean) {
+		this.isTimeRangeValid = isValid;
 	}
 
 	/**
@@ -434,7 +446,12 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit {
 	}
 
 	get isButtonDisabled(): boolean {
-		return this.form.invalid || !this.isValidSelectedRange(this.selectedRange) || this.overlaps?.length > 0;
+		return (
+			this.form.invalid ||
+			!this.isValidSelectedRange(this.selectedRange) ||
+			this.overlaps?.length > 0 ||
+			!this.isTimeRangeValid
+		);
 	}
 
 	ngOnDestroy(): void {

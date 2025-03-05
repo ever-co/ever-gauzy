@@ -45,12 +45,18 @@
 				<div class="col-6">
 					<ngx-timer-range-picker
 						name="selectedRange"
-						[maxDate]="futureDateAllowed ? null : today"
+						[date]="futureDateAllowed ? null : today"
+						[selectedRange]="selectedRange"
 						[customClass]="'required-asterisk'"
+						(selectedRangeChange)="onDateRangeChange($event)"
+						(validationStatus)="onValidationChange($event)"
 						formControlName="selectedRange"
 					>
 					</ngx-timer-range-picker>
-					<div *ngIf="!isValidSelectedRange(selectedRange)" class="invalid-feedback d-block">
+					<div
+						*ngIf="!isValidSelectedRange(selectedRange) && isTimeRangeValid"
+						class="invalid-feedback d-block"
+					>
 						{{ 'TIMESHEET.VALIDATION.DATE_START_END_TIME_REQUIRED' | translate }}
 					</div>
 				</div>

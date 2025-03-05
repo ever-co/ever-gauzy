@@ -7,10 +7,11 @@ import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../shared.module';
 import { TimerPickerComponent } from './timer-picker/timer-picker.component';
 import { TimerRangePickerComponent } from './timer-range-picker/timer-range-picker.component';
+import { ManualTimerPickerComponent } from './manual-timer-picker/manual-timer-picker.component';
 
 @NgModule({
-	declarations: [TimerPickerComponent, TimerRangePickerComponent],
-	exports: [TimerPickerComponent, TimerRangePickerComponent],
+	declarations: [TimerPickerComponent, TimerRangePickerComponent, ManualTimerPickerComponent],
+	exports: [TimerPickerComponent, TimerRangePickerComponent, ManualTimerPickerComponent],
 	imports: [
 		CommonModule,
 		FormsModule,

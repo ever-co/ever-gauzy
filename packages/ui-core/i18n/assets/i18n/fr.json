@@ -4266,7 +4266,11 @@
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "Ce champ est obligatoire !",
-		"ENTER_POSITIVE_NUMBER": "Veuillez saisir un nombre positif !"
+		"ENTER_POSITIVE_NUMBER": "Veuillez saisir un nombre positif !",
+		"INVALID_TIME_FORMAT": "Format incorrect. Le format correct est HH:mm:ss.",
+		"END_TIME_BEFORE_START_TIME": "L'heure de fin ne peut pas être avant l'heure de début.",
+		"END_TIME_LATER_THAN_START_TIME": "L'heure de fin doit être plus tard que l'heure de début.",
+		"START_TIME_EARLIER_THAN_END_TIME": "L'heure de début doit être antérieure à l'heure de fin."
 	},
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Ajouter un rendez-vous",

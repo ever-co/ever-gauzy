@@ -48,7 +48,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 	@Input() disabled: boolean;
 	@Input() appointmentId: ID;
 	@Input() allowedDuration: number;
-	@Input() hidePrivateFields: boolean = false;
+	@Input() hidePrivateFields = false;
 	@Input() timezone: string;
 
 	@Output() save = new EventEmitter<IEmployeeAppointment>();
@@ -64,7 +64,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 	emails: any;
 	start: Date;
 	end: Date;
-	editMode: Boolean;
+	editMode: boolean;
 
 	@Input() selectedRange: { start: Date; end: Date };
 
@@ -95,8 +95,8 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 		} else {
 			this._route.queryParams.subscribe((params) => {
 				this.selectedRange = {
-					start: params.dateStart,
-					end: params.dateEnd
+					start: this.convertToDate(params?.dateStart),
+					end: this.convertToDate(params?.dateEnd)
 				};
 				this.timezone = this.timezone || params.timezone || timezone.tz.guess();
 			});
@@ -249,14 +249,12 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 				}
 			});
 			const response = await firstValueFrom(dialog.onClose);
-			if (!!response) {
-				if (response === 'yes') {
-					await this._employeeAppointmentService.update(this.employeeAppointment.id, {
-						status: EmployeeAppointmentStatus.CANCELLED
-					});
-					this._toastrService.success('APPOINTMENTS_PAGE.CANCEL_SUCCESS');
-					history.back();
-				}
+			if (response === 'yes') {
+				await this._employeeAppointmentService.update(this.employeeAppointment.id, {
+					status: EmployeeAppointmentStatus.CANCELLED
+				});
+				this._toastrService.success('APPOINTMENTS_PAGE.CANCEL_SUCCESS');
+				history.back();
 			}
 		} catch (error) {
 			this._toastrService.danger(
@@ -364,9 +362,11 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 			}
 
 			this._toastrService.success('APPOINTMENTS_PAGE.SAVE_SUCCESS');
-			this.employee
-				? this._router.navigate([`/share/employee/${this.employee.id}/confirm/${this.employeeAppointment.id}`])
-				: this._router.navigate(['/pages/employees/appointments']);
+			if (this.employee) {
+				this._router.navigate([`/share/employee/${this.employee.id}/confirm/${this.employeeAppointment.id}`]);
+			} else {
+				this._router.navigate(['/pages/employees/appointments']);
+			}
 		} catch (error) {
 			this._toastrService.danger('APPOINTMENTS_PAGE.SAVE_FAILED');
 		}
@@ -406,6 +406,15 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 		}
 
 		this.selectedEmployeeIds = ev;
+	}
+
+	private convertToDate(dateString: string): Date | null {
+		const date = moment(dateString);
+		if (date.isValid()) {
+			return date.toDate();
+		} else {
+			return null;
+		}
 	}
 
 	ngOnDestroy() {}

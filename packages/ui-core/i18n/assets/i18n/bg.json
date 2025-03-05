@@ -4315,7 +4315,11 @@
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "This field is required!",
-		"ENTER_POSITIVE_NUMBER": "Please enter positive number!"
+		"ENTER_POSITIVE_NUMBER": "Please enter positive number!",
+		"INVALID_TIME_FORMAT": "Неправилен формат. Правилният формат е HH:mm:ss.",
+		"END_TIME_BEFORE_START_TIME": "Времето на приключване не може да бъде преди началното време.",
+		"END_TIME_LATER_THAN_START_TIME": "Времето на приключване трябва да бъде по-късно от началното време.",
+		"START_TIME_EARLIER_THAN_END_TIME": "Началното време трябва да бъде по-рано от времето на приключване."
 	},
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Add Appointment",

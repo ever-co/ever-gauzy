@@ -4266,7 +4266,11 @@
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "To pole jest wymagane!",
-		"ENTER_POSITIVE_NUMBER": "Proszę wprowadzić liczbę dodatnią!"
+		"ENTER_POSITIVE_NUMBER": "Proszę wprowadzić liczbę dodatnią!",
+		"INVALID_TIME_FORMAT": "Niepoprawny format. Poprawny format to HH:mm:ss.",
+		"END_TIME_BEFORE_START_TIME": "Czas zakończenia nie może być wcześniejszy niż czas rozpoczęcia.",
+		"END_TIME_LATER_THAN_START_TIME": "Czas zakończenia musi być późniejszy niż czas rozpoczęcia.",
+		"START_TIME_EARLIER_THAN_END_TIME": "Czas rozpoczęcia musi być wcześniejszy niż czas zakończenia."
 	},
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Dodaj spotkanie",

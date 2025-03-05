@@ -288,7 +288,8 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 	 */
 	openAdd(): void {
 		const defaultTimeLog = {
-			startedAt: moment(this.request.startDate).toDate(),
+			startedAt: moment().set({ hour: 8, minute: 0, second: 0 }).toDate(),
+			stoppedAt: moment().set({ hour: 9, minute: 0, second: 0 }).toDate(),
 			employeeId: this.request.employeeIds?.[0] || null,
 			projectId: this.request.projectIds?.[0] || null
 		};

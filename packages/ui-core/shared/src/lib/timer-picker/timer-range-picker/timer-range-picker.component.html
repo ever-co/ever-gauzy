@@ -12,13 +12,15 @@
 					[nbDatepicker]="datepicker"
 					placeholder="YYYY-MM-DD"
 					#dateModel="ngModel"
+					(dateChange)="updateSelectedRange()"
 				/>
 				<nb-icon class="icon ml-3" icon="calendar-outline"></nb-icon>
 				<nb-datepicker
 					[filter]="filter"
 					[max]="maxDate"
 					[min]="minDate"
-					(dateChange)="updateTimePickerLimit($event)"
+					[date]="date"
+					(dateChange)="updateSelectedRange()"
 					#datepicker
 				></nb-datepicker>
 			</div>
@@ -29,26 +31,25 @@
 	<div class="col-6">
 		<div class="form-group">
 			<label [ngClass]="customClass" class="label">{{ 'TIMER_TRACKER.START_TIME' | translate }}</label>
-			<ga-timer-picker
+			<ga-manual-timer-picker
 				name="start_time"
-				[min]="minSlotStartTime"
-				[max]="maxSlotStartTime"
 				[(ngModel)]="startTime"
 				#startTimeModel="ngModel"
-			></ga-timer-picker>
+			></ga-manual-timer-picker>
 		</div>
 	</div>
 	<div class="col-6">
 		<div class="form-group">
 			<label [ngClass]="customClass" class="label">{{ 'TIMER_TRACKER.END_TIME' | translate }}</label>
-			<ga-timer-picker
+			<ga-manual-timer-picker
 				[disabled]="disableEndPicker"
 				name="end_time"
-				[min]="minSlotEndTime"
-				[max]="maxSlotEndTime"
 				[(ngModel)]="endTime"
 				#endTimeModel="ngModel"
-			></ga-timer-picker>
+			></ga-manual-timer-picker>
 		</div>
+	</div>
+	<div *ngIf="errorMessage" class="col-12 invalid-feedback d-block">
+		{{ errorMessage | translate }}
 	</div>
 </div>

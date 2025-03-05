@@ -1,0 +1,14 @@
+<div class="manual-timer-picker-container">
+	<input
+		type="text"
+		nbInput
+		[(ngModel)]="value"
+		[placeholder]="'00:00' | timeFormat : timeFormat"
+		[disabled]="disabled"
+		(input)="value = $event.target.value"
+	/>
+
+	<div *ngIf="errorMessage" class="invalid-feedback d-block">
+		{{ errorMessage | translate }}
+	</div>
+</div>

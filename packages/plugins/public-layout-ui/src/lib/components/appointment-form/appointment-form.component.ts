@@ -12,7 +12,7 @@ import { EmployeesService } from '@gauzy/ui-core/core';
 	templateUrl: './appointment-form.component.html'
 })
 export class AppointmentFormComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	public loading: boolean = true;
+	public loading = true;
 	public selectedRange: { start: Date; end: Date };
 	public selectedEventType: IEventType;
 	public allowedDuration: number;
@@ -30,8 +30,8 @@ export class AppointmentFormComponent extends TranslationBaseComponent implement
 	ngOnInit(): void {
 		this.route.queryParams.subscribe((params) => {
 			this.selectedRange = {
-				start: params.dateStart,
-				end: params.dateEnd
+				start: params?.dateStart,
+				end: params?.dateEnd
 			};
 		});
 

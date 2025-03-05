@@ -4264,7 +4264,11 @@
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "هذا الحقل مطلوب!",
-		"ENTER_POSITIVE_NUMBER": "الرجاء إدخال رقم إيجابي!"
+		"ENTER_POSITIVE_NUMBER": "الرجاء إدخال رقم إيجابي!",
+		"INVALID_TIME_FORMAT": "تنسيق غير صحيح. التنسيق الصحيح هو HH:mm:ss.",
+		"END_TIME_BEFORE_START_TIME": "لا يمكن أن يكون وقت الانتهاء قبل وقت البدء.",
+		"END_TIME_LATER_THAN_START_TIME": "يجب أن يكون وقت الانتهاء بعد وقت البدء.",
+		"START_TIME_EARLIER_THAN_END_TIME": "يجب أن يكون وقت البدء قبل وقت الانتهاء."
 	},
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "أضِف الموعد",

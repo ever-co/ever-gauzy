@@ -1,10 +1,19 @@
 import * as moment from 'moment';
 import * as timezone from 'moment-timezone';
-import { Component, OnInit, forwardRef, Input, ViewChild, ChangeDetectorRef, AfterViewInit } from '@angular/core';
+import {
+	Component,
+	forwardRef,
+	Input,
+	ViewChild,
+	ChangeDetectorRef,
+	AfterViewInit,
+	Output,
+	EventEmitter
+} from '@angular/core';
 import { NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import { IDateRange } from '@gauzy/contracts';
-import { merge } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { merge, Subject } from 'rxjs';
+import { debounceTime, takeUntil } from 'rxjs/operators';
 
 @Component({
 	selector: 'ngx-timer-range-picker',
@@ -18,14 +27,13 @@ import { debounceTime } from 'rxjs/operators';
 		}
 	]
 })
-export class TimerRangePickerComponent implements OnInit, AfterViewInit {
+export class TimerRangePickerComponent implements AfterViewInit {
 	private _maxDate: Date = null;
 	private _minDate: Date = null;
 	private _disabledDates: number[] = [];
-	private _lastValidDate: Date;
+	private _destroy$: Subject<void> = new Subject<void>();
+	private _selectedRange: IDateRange;
 
-	@Input() slotStartTime: Date;
-	@Input() slotEndTime: Date;
 	@Input() allowedDuration: number;
 	@Input() disableEndPicker = false;
 	@Input() disableDatePicker = false;
@@ -39,9 +47,6 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	}
 	public set maxDate(value: Date) {
 		this._maxDate = value;
-		if (!this.fromEmployeeAppointment) {
-			this.updateTimePickerLimit(value);
-		}
 	}
 
 	@Input('minDate')
@@ -50,9 +55,6 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	}
 	public set minDate(value: Date) {
 		this._minDate = value;
-		if (!this.fromEmployeeAppointment) {
-			this.updateTimePickerLimit(value);
-		}
 	}
 
 	@Input('disabledDates')
@@ -63,7 +65,6 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 		this._disabledDates = value;
 	}
 
-	private _selectedRange: IDateRange;
 	public get selectedRange(): IDateRange {
 		return this._selectedRange;
 	}
@@ -75,13 +76,14 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	@ViewChild('dateModel') dateModel: NgModel;
 	@ViewChild('startTimeModel') startTimeModel: NgModel;
 	@ViewChild('endTimeModel') endTimeModel: NgModel;
+
+	@Output() selectedRangeChange = new EventEmitter<IDateRange>();
+	@Output() validationStatus = new EventEmitter<boolean>();
+
 	endTime: string;
 	startTime: string;
 	date: Date;
-	maxSlotStartTime: string;
-	minSlotStartTime: string;
-	maxSlotEndTime: string;
-	minSlotEndTime: string;
+	errorMessage: string | null = null;
 
 	constructor(private cd: ChangeDetectorRef) {}
 
@@ -89,146 +91,125 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	onTouched: any = () => {};
 	filter = (date) => !this._disabledDates.includes(date.getTime());
 
-	ngOnInit() {
-		//TODO: GZY-131 default date and start/stop values for manual time entry and time edit
-		//TODO: GZY-132 Specify start & stop time for manual time entry and time editing
-		this._lastValidDate = this.date;
-
-		if (this.fromEmployeeAppointment) {
-			const maxTime = moment(this._maxDate);
-			const minTime = moment(this._minDate);
-
-			this.minSlotStartTime = minTime.format('HH:mm');
-			this.maxSlotStartTime = moment(maxTime, 'HH:mm').subtract(5, 'minutes').format('HH:mm');
-			this.maxSlotEndTime = maxTime.format('HH:mm');
-			this.minSlotEndTime = moment(minTime, 'HH:mm').add(5, 'minutes').format('HH:mm');
-		}
-	}
-
 	ngAfterViewInit() {
 		this.timezoneOffset = this.timezoneOffset || timezone.tz(timezone.tz.guess()).format('Z');
 		merge(this.dateModel.valueChanges, this.startTimeModel.valueChanges, this.endTimeModel.valueChanges)
-			.pipe(debounceTime(10))
+			.pipe(debounceTime(10), takeUntil(this._destroy$))
 			.subscribe(() => {
-				const start = new Date(
-					moment(this.date).format('YYYY-MM-DD') + ' ' + this.startTime + this.timezoneOffset
-				);
-				const end = new Date(moment(this.date).format('YYYY-MM-DD') + ' ' + this.endTime + this.timezoneOffset);
-
-				if (this.slotStartTime && this.slotEndTime && this.allowedDuration) {
-					this.minSlotStartTime = moment(this.slotStartTime).clone().format('HH:mm');
-					this.maxSlotStartTime = moment(this.slotEndTime)
-						.clone()
-						.subtract(this.allowedDuration, 'minutes')
-						.format('HH:mm');
-					this.endTime = moment(this.startTime, 'HH:mm').add(this.allowedDuration, 'minutes').format('HH:mm');
-				}
-
-				this.selectedRange = {
-					start: isNaN(start.getTime()) ? null : start,
-					end: isNaN(start.getTime()) ? null : end
-				};
+				this.updateSelectedRange();
+				this.validateDate();
 				this.validateInputs();
 			});
 	}
 
+	updateSelectedRange() {
+		if (!this.date) return;
+
+		const selectedDate = moment(this.date).format('YYYY-MM-DD');
+
+		if (!this.startTime || !this.endTime) {
+			this.resetSelectedRange();
+			return;
+		}
+
+		const startDate = this.parseDateTime(selectedDate, this.startTime);
+		let endDate = this.parseDateTime(selectedDate, this.endTime);
+
+		if (!moment(endDate).isSame(startDate, 'day')) {
+			endDate = moment(startDate).endOf('day').toDate();
+		}
+
+		this.selectedRange = {
+			start: this.isValidDate(startDate) ? startDate : null,
+			end: this.isValidDate(endDate) ? endDate : null
+		};
+
+		this.selectedRangeChange.emit(this.selectedRange);
+	}
+
+	/**
+	 * Helper function to parse date and time
+	 */
+	private parseDateTime(date: string, time: string): Date {
+		return moment(`${date} ${time}${this.timezoneOffset}`, 'YYYY-MM-DD HH:mm:ssZ').toDate();
+	}
+
+	/**
+	 * Helper function to reset selected range to null
+	 */
+	private resetSelectedRange() {
+		this.selectedRange = { start: null, end: null };
+	}
+
+	/**
+	 * Helper function to check if a date is valid
+	 */
+	private isValidDate(date: Date): boolean {
+		return date instanceof Date && !isNaN(date.getTime());
+	}
+
+	/**
+	 * Ensures the input values are valid and within a single day
+	 */
 	validateInputs() {
-		if (!moment(this.date, 'YYYY-MM-DD', true).isValid()) {
-			this.date = this._lastValidDate instanceof Date ? this._lastValidDate : new Date();
-		} else {
-			this._lastValidDate = new Date(this.date);
+		const selectedDate = moment(this.date).format('YYYY-MM-DD');
+		const startDateTime = moment(`${selectedDate} ${this.startTime}`, 'YYYY-MM-DD HH:mm:ss');
+		const endDateTime = moment(`${selectedDate} ${this.endTime}`, 'YYYY-MM-DD HH:mm:ss');
+		this.errorMessage = null;
+		this.validationStatus.emit(true);
+
+		if (this.startTime && this.endTime) {
+			if (endDateTime.isBefore(startDateTime)) {
+				this.errorMessage = 'VALIDATION.END_TIME_BEFORE_START_TIME';
+				this.validationStatus.emit(false);
+			} else if (endDateTime.isSameOrBefore(startDateTime)) {
+				this.errorMessage = 'VALIDATION.END_TIME_LATER_THAN_START_TIME';
+				this.validationStatus.emit(false);
+			} else {
+				this.errorMessage = null;
+				this.validationStatus.emit(true);
+			}
+		}
+
+		if (this.startTime === '23:59:59' && this.endTime === '23:59:59') {
+			this.errorMessage = 'VALIDATION.START_TIME_EARLIER_THAN_END_TIME';
+			this.validationStatus.emit(false);
 		}
 
 		this.cd.detectChanges();
 	}
 
-	updateTimePickerLimit(date: Date) {
-		let mTime = moment(date);
-
-		if (mTime.isSame(new Date(), 'day')) {
-			mTime = mTime.set({
-				hour: moment().get('hour'),
-				minute: moment().get('minute') - (moment().minutes() % 10),
-				second: 0,
-				millisecond: 0
-			});
-			if (!this.date) {
-				this.date = mTime.toDate();
-			}
-			if (!this.startTime) {
-				this.startTime = mTime.clone().subtract(30, 'minutes').format('HH:mm');
-			}
-			if (!this.endTime) {
-				this.endTime = mTime.format('HH:mm');
-			}
+	/**
+	 * Ensures the calendar input is valid
+	 */
+	validateDate() {
+		if (!moment(this.date, 'YYYY-MM-DD', true).isValid()) {
+			this.date = new Date();
 		}
-
-		if (mTime.isSame(new Date(), 'day')) {
-			this.minSlotStartTime = '00:00';
-			this.maxSlotStartTime = mTime.clone().subtract(10, 'minutes').format('HH:mm');
-			this.maxSlotEndTime = mTime.format('HH:mm');
-		} else {
-			this.minSlotStartTime = '00:00';
-			this.maxSlotStartTime = '23:59';
-			this.maxSlotEndTime = '23:59';
-		}
-
-		this.updateEndTimeSlot(this.startTime);
+		this.cd.detectChanges();
 	}
 
-	changeStartTime(time: string) {
-		if (this.slotStartTime && this.allowedDuration) {
-			this.endTime = moment(time, 'HH:mm').add(this.allowedDuration, 'minutes').format('HH:mm');
-		} else if (time) {
-			this.updateEndTimeSlot(time);
-			if (!moment(time, 'HH:mm').isBefore(moment(this.endTime, 'HH:mm'))) {
-				this.endTime = moment(time, 'HH:mm')
-					.add(this.fromEmployeeAppointment ? 5 : 30, 'minutes')
-					.format('HH:mm');
-			}
-		} else {
-			this.endTime = null;
-		}
-	}
-
-	updateEndTimeSlot(time: string) {
-		this.minSlotEndTime = moment(time, 'HH:mm')
-			.add(this.allowedDuration || 10, 'minutes')
-			.format('HH:mm');
-	}
-
+	/**
+	 * Sets the initial date and time values based on incoming dateRange
+	 */
 	writeValue(value: IDateRange) {
 		if (value) {
-			if (!value.start) {
-				value.start = moment().subtract(30, 'minutes').toDate();
-			}
-			if (!value.end) {
-				value.end = moment().toDate();
-			}
-
-			const start = moment(value.start);
-			let hour = start.get('hour');
-			let minute = this.fromEmployeeAppointment
-				? start.get('minute')
-				: start.get('minute') - (start.minutes() % 10);
-			this.startTime = `${hour}:${minute}`;
-
-			const end = moment(value.end);
-			hour = end.get('hour');
-			minute = this.fromEmployeeAppointment ? end.get('minute') : end.get('minute') - (end.minutes() % 10);
-			this.endTime = `${hour}:${minute}`;
-
-			this.date = end.toDate();
+			this.date = value.start ? moment(value.start).toDate() : new Date();
+			this.startTime = value.start ? moment(value.start).format('HH:mm:ss') : null;
+			this.endTime = value.end ? moment(value.end).format('HH:mm:ss') : null;
 		}
-		this._selectedRange = value;
-		//this.updateTimePickerLimit(value.start)-
 	}
 
-	registerOnChange(fn: (rating: number) => void): void {
+	registerOnChange(fn: (value: IDateRange) => void): void {
 		this.onChange = fn;
 	}
 
 	registerOnTouched(fn: () => void): void {
 		this.onTouched = fn;
+	}
+
+	ngOnDestroy() {
+		this._destroy$.next();
+		this._destroy$.complete();
 	}
 }

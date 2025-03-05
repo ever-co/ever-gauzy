@@ -4278,7 +4278,11 @@
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "This field is required!",
-		"ENTER_POSITIVE_NUMBER": "Please enter positive number!"
+		"ENTER_POSITIVE_NUMBER": "Please enter positive number!",
+		"INVALID_TIME_FORMAT": "פורמט שגוי. הפורמט הנכון הוא HH:mm:ss.",
+		"END_TIME_BEFORE_START_TIME": "זמן סיום לא יכול להיות לפני זמן התחלה.",
+		"END_TIME_LATER_THAN_START_TIME": "זמן סיום חייב להיות מאוחר יותר מזמן התחלה.",
+		"START_TIME_EARLIER_THAN_END_TIME": "זמן התחלה חייב להיות מוקדם יותר מזמן סיום."
 	},
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Add Appointment",

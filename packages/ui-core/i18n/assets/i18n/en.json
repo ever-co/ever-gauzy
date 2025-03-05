@@ -4398,7 +4398,11 @@
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "This field is required!",
-		"ENTER_POSITIVE_NUMBER": "Please enter positive number!"
+		"ENTER_POSITIVE_NUMBER": "Please enter positive number!",
+		"INVALID_TIME_FORMAT": "Incorrect format. The correct format is HH:mm:ss.",
+		"END_TIME_BEFORE_START_TIME": "End time cannot be before start time.",
+		"END_TIME_LATER_THAN_START_TIME": "End time must be later than start time.",
+		"START_TIME_EARLIER_THAN_END_TIME": "Start time must be earlier than end time."
 	},
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Add Appointment",
