@@ -210,7 +210,7 @@ export class ProjectModuleMutationComponent extends TranslationBaseComponent imp
 					this.translateService.instant('TOASTR.TITLE.SUCCESS')
 				);
 			}
-
+			this.organizationProjectModuleService.notifyModuleUpdated();
 			// Close the dialog and return the created/updated module
 			this.dialogRef.close(module);
 		} catch (error) {

@@ -12,12 +12,12 @@ import {
 	ToggleSwitcherComponent,
 	DateViewComponent,
 	EmployeesMergedTeamsComponent,
-	EmployeeWithLinksComponent,
+	EmployeeWithLinksComponent
 } from '../../table-components';
 import { DeleteConfirmationComponent } from '../../user/forms/delete-confirmation/delete-confirmation.component';
 import { ProjectModuleMutationComponent } from '../project-module-mutation/project-module-mutation.component';
 
-@UntilDestroy({ checkProperties: true})
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-project-module-table',
 	templateUrl: './project-module-table.component.html',
@@ -57,6 +57,7 @@ export class ProjectModuleTableComponent extends TranslationBaseComponent implem
 
 	ngOnInit() {
 		this._applyTranslationOnSmartTable();
+		this._subscribeToModuleUpdates();
 		this._loadSmartTableSettings();
 	}
 
@@ -123,7 +124,7 @@ export class ProjectModuleTableComponent extends TranslationBaseComponent implem
 
 						// Update the module's isFavorite status
 						instance.onSwitched.subscribe((toggle: boolean) => {
-							this.updateModule(module.id, { ...module,isFavorite:toggle});
+							this.updateModule(module.id, { ...module, isFavorite: toggle });
 						});
 					}
 				},
@@ -213,21 +214,10 @@ export class ProjectModuleTableComponent extends TranslationBaseComponent implem
 	 * Opens the edit dialog for the selected project module.
 	 */
 	async onEditProjectModuleDialog() {
-		const dialogRef = this.dialogService.open(ProjectModuleMutationComponent, {
+		this.dialogService.open(ProjectModuleMutationComponent, {
 			context: {
 				projectModule: this.selectedItem,
 				createModule: false
-			}
-		});
-
-		dialogRef.onClose.subscribe({
-			next: (result) => {
-				if (result) {
-					this.loadModules();
-				}
-			},
-			error: (err) => {
-				console.error('Error in dialog onClose:', err);
 			}
 		});
 	}
@@ -285,5 +275,14 @@ export class ProjectModuleTableComponent extends TranslationBaseComponent implem
 				.filter((member: IOrganizationProjectModuleEmployee) => !member.isManager)
 				.map((member: IOrganizationProjectModuleEmployee) => member.employee)
 		];
+	}
+
+	/**
+	 * Subscribes to module updates and automatically reloads the table when changes occur.
+	 */
+	private _subscribeToModuleUpdates(): void {
+		this.organizationProjectModuleService.moduleUpdated$
+			.pipe(untilDestroyed(this))
+			.subscribe(() => this.loadModules());
 	}
 }
