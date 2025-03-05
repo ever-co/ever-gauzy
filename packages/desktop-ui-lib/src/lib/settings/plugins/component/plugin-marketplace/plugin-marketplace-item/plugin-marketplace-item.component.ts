@@ -16,23 +16,23 @@ import { takeUntil } from 'rxjs/operators';
 import { PluginService } from '../../../services/plugin.service';
 import { Store } from '../../../../../services';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
+import { PluginElectronService } from '../../../services/plugin-electron.service';
 
 @Component({
 	selector: 'lib-plugin-marketplace-item',
 	templateUrl: './plugin-marketplace-item.component.html',
-	styleUrl: './plugin-marketplace-item.component.scss',
-	changeDetection: ChangeDetectionStrategy.OnPush
+	styleUrl: './plugin-marketplace-item.component.scss'
 })
 export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	plugin: IPlugin = {
 		id: '3',
 		tenantId: 'tenant-555',
 		organizationId: 'org-222',
-		name: 'AI Chatbot',
+		name: 'Continues Recording',
 		description: 'An AI-powered chatbot for customer support.',
-		type: PluginType.MOBILE,
+		type: PluginType.DESKTOP,
 		status: PluginStatus.DEPRECATED,
-		versions: ['0.9.0', '1.0.0'],
+		versions: ['0.1.12', '0.9.0', '1.0.0'],
 		source: {
 			id: 'source-3',
 			tenantId: 'tenant-555',
@@ -56,12 +56,16 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	pluginStatus = PluginStatus;
 	pluginType = PluginType;
 	pluginSourceType = PluginSourceType;
+	selectedVersion: string;
+	installed = false;
+	needUpdate = false;
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
 		private readonly route: ActivatedRoute,
 		private readonly router: Router,
 		private readonly pluginService: PluginService,
+		private readonly pluginElectronService: PluginElectronService,
 		private readonly dialogService: NbDialogService,
 		private readonly toastrService: NbToastrService,
 		private readonly store: Store,
@@ -69,9 +73,9 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit() {
-		this.route.params.pipe(takeUntil(this._ngDestroy$)).subscribe((params) => {
+		this.route.params.pipe(takeUntil(this._ngDestroy$)).subscribe(async (params) => {
 			this.pluginId = params.id;
-			this.loadPlugin();
+			await this.loadPlugin();
 		});
 	}
 
@@ -82,6 +86,8 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			// const { tenantId, organizationId } = this.store.selectedOrganization;
 			//
 			// this.plugin = await this.pluginsService.getById(this.pluginId, { tenantId, organizationId });
+			this.selectedVersion = this.plugin.versions[this.plugin.versions.length - 1];
+			await this.checkInstallation();
 		} catch (error) {
 			this.toastrService.danger(error, this.translateService.instant('TOASTR.TITLE.ERROR'));
 			this.router.navigate(['/settings/marketplace-plugins']);
@@ -186,6 +192,32 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			return false;
 		}
 		return this.store?.user?.employee?.id === this.plugin?.uploadedBy?.id ?? false;
+	}
+
+	public async checkInstallation(): Promise<void> {
+		const plugin = await this.pluginElectronService.plugin(this.plugin.name);
+		this.installed = !!plugin;
+
+		if (this.installed) {
+			const latestVersion = this.plugin.versions[this.selectedVersion];
+			this.needUpdate = this.plugin.versions.includes(plugin.version) && plugin.version !== latestVersion;
+		}
+	}
+
+	public async onVersionChange(): Promise<void> {
+		await this.checkInstallation();
+	}
+
+	public updatePlugin(): void {
+		// TODO
+	}
+
+	public uninstallPlugin(): void {
+		// TODO
+	}
+
+	public installPlugin(): void {
+		// TODO
 	}
 
 	ngOnDestroy() {

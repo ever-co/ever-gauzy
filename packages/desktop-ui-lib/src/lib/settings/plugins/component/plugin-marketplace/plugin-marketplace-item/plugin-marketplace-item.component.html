@@ -72,14 +72,17 @@
 					<div class="info-item">
 						<div class="label">{{ 'PLUGIN.FORM.VERSION' | translate }}</div>
 						<div class="value">
-							<nb-tag-list>
-								<nb-tag
-									*ngFor="let version of plugin.versions"
-									[text]="version"
-									status="primary"
-									appearance="filled"
-								></nb-tag>
-							</nb-tag-list>
+							<nb-select
+								placeholder="{{ 'PLUGIN.FORM.VERSION' | translate }}"
+								status="primary"
+								aria-label="Select plugin version"
+								(selectedChange)="onVersionChange($event)"
+								[(ngModel)]="selectedVersion"
+							>
+								<nb-option *ngFor="let version of plugin.versions" [value]="version">
+									{{ version }}
+								</nb-option>
+							</nb-select>
 						</div>
 					</div>
 				</div>
@@ -271,9 +274,24 @@
 			{{ 'BUTTONS.BACK' | translate }}
 		</button>
 		@if(isOwner){
-		<button nbButton type="button" status="primary" (click)="navigateToEdit()">
+		<button nbButton type="button" status="basic" (click)="navigateToEdit()">
 			<nb-icon icon="edit-2-outline" class="mr-2"></nb-icon>
 			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		} @if(installed) { @if(needUpdate) {
+		<button nbButton type="button" status="primary" (click)="updatePlugin()">
+			<nb-icon icon="sync-outline" class="mr-2"></nb-icon>
+			{{ 'BUTTONS.UPDATE' | translate }}
+		</button>
+		}@else {
+		<button nbButton type="button" status="danger" (click)="uninstallPlugin()">
+			<nb-icon icon="trash-2-outline" class="mr-2"></nb-icon>
+			{{ 'BUTTONS.UNINSTALL' | translate }}
+		</button>
+		} }@else {
+		<button nbButton type="button" status="success" (click)="installPlugin()">
+			<nb-icon icon="download-outline" class="mr-2"></nb-icon>
+			{{ 'BUTTONS.INSTALL' | translate }}
 		</button>
 		}
 	</nb-card-footer>
