@@ -1,103 +1,120 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
+
+import { Subject } from 'rxjs';
+import { takeUntil, finalize } from 'rxjs/operators';
+
 import {
-	ICDNSource,
-	IGauzySource,
-	INPMSource,
 	IPlugin,
 	PluginSourceType,
 	PluginStatus,
-	PluginType
+	PluginType,
+	ICDNSource,
+	IGauzySource,
+	INPMSource
 } from '@gauzy/contracts';
-import { Subject } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
-import { takeUntil } from 'rxjs/operators';
+
 import { PluginService } from '../../../services/plugin.service';
+import { PluginElectronService } from '../../../services/plugin-electron.service';
 import { Store } from '../../../../../services';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
-import { PluginElectronService } from '../../../services/plugin-electron.service';
 
 @Component({
-	selector: 'lib-plugin-marketplace-item',
+	selector: 'gauzy-plugin-marketplace-item',
 	templateUrl: './plugin-marketplace-item.component.html',
-	styleUrl: './plugin-marketplace-item.component.scss'
+	styleUrls: ['./plugin-marketplace-item.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
-	plugin: IPlugin = {
-		id: '3',
-		tenantId: 'tenant-555',
-		organizationId: 'org-222',
-		name: 'Continues Recording',
-		description: 'An AI-powered chatbot for customer support.',
-		type: PluginType.DESKTOP,
-		status: PluginStatus.DEPRECATED,
-		versions: ['0.1.12', '0.9.0', '1.0.0'],
-		source: {
-			id: 'source-3',
-			tenantId: 'tenant-555',
-			organizationId: 'org-222',
-			type: PluginSourceType.GAUZY,
-			url: 'https://gauzy.example.com/plugins/ai-chatbot'
-		} as IGauzySource,
-		checksum: 'sha256-ghj123',
-		signature: 'signature-111',
-		author: 'Charlie Brown',
-		license: 'Apache-2.0',
-		homepage: 'https://example.com/ai-chatbot',
-		repository: 'https://github.com/example/ai-chatbot',
-		uploadedBy: { id: 'emp-003', firstName: 'Eve', lastName: 'Davis', email: 'eve@example.com' } as any,
-		uploadedAt: new Date('2022-07-10'),
-		downloadCount: 5200,
-		lastDownloadedAt: new Date('2024-01-20')
-	};
-	pluginId: string;
+	private readonly destroy$ = new Subject<void>();
+
+	plugin: IPlugin | null = null;
+	pluginId = '';
 	loading = true;
-	pluginStatus = PluginStatus;
-	pluginType = PluginType;
-	pluginSourceType = PluginSourceType;
-	selectedVersion: string;
+
+	selectedVersion = '';
 	installed = false;
 	needUpdate = false;
-	private _ngDestroy$ = new Subject<void>();
+
+	// Enum for template use
+	readonly pluginStatus = PluginStatus;
+	readonly pluginType = PluginType;
+	readonly pluginSourceType = PluginSourceType;
 
 	constructor(
-		private readonly route: ActivatedRoute,
-		private readonly router: Router,
-		private readonly pluginService: PluginService,
-		private readonly pluginElectronService: PluginElectronService,
-		private readonly dialogService: NbDialogService,
-		private readonly toastrService: NbToastrService,
-		private readonly store: Store,
-		readonly translateService: TranslateService
+		private route: ActivatedRoute,
+		private router: Router,
+		private pluginService: PluginService,
+		private pluginElectronService: PluginElectronService,
+		private dialogService: NbDialogService,
+		private toastrService: NbToastrService,
+		private store: Store,
+		public translateService: TranslateService
 	) {}
 
-	ngOnInit() {
-		this.route.params.pipe(takeUntil(this._ngDestroy$)).subscribe(async (params) => {
-			this.pluginId = params.id;
-			await this.loadPlugin();
+	ngOnInit(): void {
+		this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
+			this.pluginId = params['id'];
+			this.loadPlugin();
 		});
 	}
 
-	async loadPlugin() {
+	ngOnDestroy(): void {
+		this.destroy$.next();
+		this.destroy$.complete();
+	}
+
+	async loadPlugin(): Promise<void> {
 		this.loading = true;
 
 		try {
+			// TODO: Replace with actual API call when ready
 			// const { tenantId, organizationId } = this.store.selectedOrganization;
-			//
-			// this.plugin = await this.pluginsService.getById(this.pluginId, { tenantId, organizationId });
+			// this.plugin = await this.pluginService.getById(this.pluginId, { tenantId, organizationId });
+
+			// Current hardcoded plugin for demonstration
+			this.plugin = this.getMockPlugin();
+
+			// Select the latest version
 			this.selectedVersion = this.plugin.versions[this.plugin.versions.length - 1];
+
 			await this.checkInstallation();
 		} catch (error) {
-			this.toastrService.danger(error, this.translateService.instant('TOASTR.TITLE.ERROR'));
-			this.router.navigate(['/settings/marketplace-plugins']);
+			this.handleError(error);
 		} finally {
 			this.loading = false;
 		}
 	}
 
+	private handleError(error: any): void {
+		this.toastrService.danger(
+			this.translateService.instant('COMMON.ERROR_OCCURRED'),
+			this.translateService.instant('TOASTR.TITLE.ERROR')
+		);
+		this.router.navigate(['/settings/marketplace-plugins']);
+	}
+
+	async checkInstallation(): Promise<void> {
+		if (!this.plugin) return;
+
+		try {
+			const plugin = await this.pluginElectronService.plugin(this.plugin.name);
+			this.installed = !!plugin;
+
+			if (this.installed && this.plugin.versions) {
+				const latestVersion = this.plugin.versions[this.plugin.versions.length - 1];
+				this.needUpdate = plugin.version !== latestVersion;
+			}
+		} catch (error) {
+			console.error('Installation check failed', error);
+		}
+	}
+
+	// Utility methods with strong typing
 	getSourceTypeLabel(type: PluginSourceType): string {
-		const labels = {
+		const labels: Record<PluginSourceType, string> = {
 			[PluginSourceType.CDN]: this.translateService.instant('PLUGIN.FORM.SOURCE_TYPES.CDN'),
 			[PluginSourceType.NPM]: this.translateService.instant('PLUGIN.FORM.SOURCE_TYPES.NPM'),
 			[PluginSourceType.GAUZY]: this.translateService.instant('PLUGIN.FORM.SOURCE_TYPES.GAUZY')
@@ -114,7 +131,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	getStatusBadgeStatus(status: PluginStatus): string {
-		const statusMap = {
+		const statusMap: Record<PluginStatus, string> = {
 			[PluginStatus.ACTIVE]: 'success',
 			[PluginStatus.INACTIVE]: 'warning',
 			[PluginStatus.DEPRECATED]: 'info',
@@ -124,7 +141,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	getPluginTypeBadgeStatus(type: PluginType): string {
-		const typeMap = {
+		const typeMap: Record<PluginType, string> = {
 			[PluginType.DESKTOP]: 'primary',
 			[PluginType.WEB]: 'info',
 			[PluginType.MOBILE]: 'success'
@@ -135,93 +152,110 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	getSourceDetails(plugin: IPlugin): string {
 		switch (plugin.source.type) {
 			case PluginSourceType.CDN:
-				const cdnSource = plugin.source as ICDNSource;
-				return cdnSource.url;
+				return (plugin.source as ICDNSource).url;
 			case PluginSourceType.NPM:
 				const npmSource = plugin.source as INPMSource;
 				return `${npmSource.scope ? npmSource.scope + '/' : ''}${npmSource.name}@${npmSource.version}`;
 			case PluginSourceType.GAUZY:
-				const gauzySource = plugin.source as IGauzySource;
-				return gauzySource.url || this.translateService.instant('PLUGIN.DETAILS.UPLOADED_FILE');
+				return (
+					(plugin.source as IGauzySource).url || this.translateService.instant('PLUGIN.DETAILS.UPLOADED_FILE')
+				);
 			default:
 				return this.translateService.instant('PLUGIN.DETAILS.UNKNOWN_SOURCE');
 		}
 	}
 
-	async updatePluginStatus(status: PluginStatus) {
+	async updatePluginStatus(status: PluginStatus): Promise<void> {
+		if (!this.plugin || !this.isOwner) return;
+
 		try {
-			// const { tenantId, organizationId } = this.store.selectedOrganization;
-			//
-			// await this.pluginsService.update(this.pluginId, {
-			// 	status,
-			// 	tenantId,
-			// 	organizationId
-			// });
-
+			// TODO: Implement actual update logic
 			this.plugin.status = status;
-
 			this.toastrService.success(
 				this.translateService.instant('PLUGIN.MESSAGES.STATUS_UPDATED'),
 				this.translateService.instant('TOASTR.TITLE.SUCCESS')
 			);
 		} catch (error) {
-			this.toastrService.danger(error, this.translateService.instant('TOASTR.TITLE.ERROR'));
+			this.toastrService.danger(
+				this.translateService.instant('COMMON.UPDATE_FAILED'),
+				this.translateService.instant('TOASTR.TITLE.ERROR')
+			);
 		}
 	}
 
-	navigateToEdit() {
+	navigateToEdit(): void {
+		if (!this.plugin) return;
+
 		this.dialogService.open(PluginMarketplaceUploadComponent, {
 			backdropClass: 'backdrop-blur',
-			context: {
-				plugin: this.plugin
-			}
+			context: { plugin: this.plugin }
 		});
 	}
 
-	navigateBack() {
+	navigateBack(): void {
 		this.router.navigate(['/settings/marketplace-plugins']);
 	}
 
-	formatDate(date: Date): string {
+	formatDate(date: Date | string | null): string {
 		if (!date) return 'N/A';
 		return new Date(date).toLocaleString();
 	}
 
-	public get isOwner(): boolean {
-		if (!this.store.user) {
-			return false;
-		}
-		return this.store?.user?.employee?.id === this.plugin?.uploadedBy?.id ?? false;
+	get isOwner(): boolean {
+		const user = this.store.user;
+		return user?.employee?.id === this.plugin?.uploadedBy?.id ?? false;
 	}
 
-	public async checkInstallation(): Promise<void> {
-		const plugin = await this.pluginElectronService.plugin(this.plugin.name);
-		this.installed = !!plugin;
-
-		if (this.installed) {
-			const latestVersion = this.plugin.versions[this.selectedVersion];
-			this.needUpdate = this.plugin.versions.includes(plugin.version) && plugin.version !== latestVersion;
-		}
-	}
-
-	public async onVersionChange(): Promise<void> {
+	async onVersionChange(): Promise<void> {
 		await this.checkInstallation();
 	}
 
-	public updatePlugin(): void {
-		// TODO
+	// Placeholder methods - TODO: Implement actual logic
+	updatePlugin(): void {
+		console.log('Updating plugin');
 	}
 
-	public uninstallPlugin(): void {
-		// TODO
+	uninstallPlugin(): void {
+		console.log('Uninstalling plugin');
 	}
 
-	public installPlugin(): void {
-		// TODO
+	installPlugin(): void {
+		console.log('Installing plugin');
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+	// Mock data method for demonstration
+	private getMockPlugin(): IPlugin {
+		return {
+			id: '3',
+			tenantId: 'tenant-555',
+			organizationId: 'org-222',
+			name: 'Continues Recording',
+			description: 'An AI-powered chatbot for customer support.',
+			type: PluginType.DESKTOP,
+			status: PluginStatus.DEPRECATED,
+			versions: ['0.1.12', '0.9.0', '1.0.0'],
+			source: {
+				id: 'source-3',
+				tenantId: 'tenant-555',
+				organizationId: 'org-222',
+				type: PluginSourceType.GAUZY,
+				url: 'https://gauzy.example.com/plugins/ai-chatbot'
+			} as IGauzySource,
+			checksum: 'sha256-ghj123',
+			signature: 'signature-111',
+			author: 'Charlie Brown',
+			license: 'Apache-2.0',
+			homepage: 'https://example.com/ai-chatbot',
+			repository: 'https://github.com/example/ai-chatbot',
+			uploadedBy: {
+				id: 'emp-003',
+				firstName: 'Eve',
+				lastName: 'Davis',
+				email: 'eve@example.com'
+			} as any,
+			uploadedAt: new Date('2022-07-10'),
+			downloadCount: 5200,
+			lastDownloadedAt: new Date('2024-01-20')
+		};
 	}
 }
