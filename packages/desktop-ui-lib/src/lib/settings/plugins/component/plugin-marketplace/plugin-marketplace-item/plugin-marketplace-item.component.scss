@@ -12,12 +12,10 @@
   }
 
   nb-card-footer {
+    display: flex;
+    gap: 1rem;
     padding: 0;
     padding-top: 1rem;
-
-    button {
-      margin-left: 1rem;
-    }
   }
 }
 

@@ -270,27 +270,27 @@
 
 	<nb-card-footer class="text-right">
 		<button nbButton type="button" status="basic" outline (click)="navigateBack()">
-			<nb-icon icon="arrow-back-outline" class="mr-2"></nb-icon>
+			<nb-icon icon="arrow-back-outline"></nb-icon>
 			{{ 'BUTTONS.BACK' | translate }}
 		</button>
 		@if(isOwner){
 		<button nbButton type="button" status="basic" (click)="navigateToEdit()">
-			<nb-icon icon="edit-2-outline" class="mr-2"></nb-icon>
+			<nb-icon icon="edit-2-outline"></nb-icon>
 			{{ 'BUTTONS.EDIT' | translate }}
 		</button>
 		} @if(installed) { @if(needUpdate) {
 		<button nbButton type="button" status="primary" (click)="updatePlugin()">
-			<nb-icon icon="sync-outline" class="mr-2"></nb-icon>
+			<nb-icon *gauzySpinnerButton="installing" icon="sync-outline"></nb-icon>
 			{{ 'BUTTONS.UPDATE' | translate }}
 		</button>
-		}@else {
+		}
 		<button nbButton type="button" status="danger" (click)="uninstallPlugin()">
-			<nb-icon icon="trash-2-outline" class="mr-2"></nb-icon>
+			<nb-icon *gauzySpinnerButton="installing" icon="trash-2-outline"></nb-icon>
 			{{ 'BUTTONS.UNINSTALL' | translate }}
 		</button>
-		} }@else {
+		}@else {
 		<button nbButton type="button" status="success" (click)="installPlugin()">
-			<nb-icon icon="download-outline" class="mr-2"></nb-icon>
+			<nb-icon *gauzySpinnerButton="installing" icon="cloud-download-outline"></nb-icon>
 			{{ 'BUTTONS.INSTALL' | translate }}
 		</button>
 		}

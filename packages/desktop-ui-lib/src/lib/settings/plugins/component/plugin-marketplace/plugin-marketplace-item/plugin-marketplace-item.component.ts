@@ -1,24 +1,25 @@
-import { ChangeDetectionStrategy, Component, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
 
-import { Subject } from 'rxjs';
-import { takeUntil, finalize } from 'rxjs/operators';
+import { Subject, tap } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 import {
+	ICDNSource,
+	IGauzySource,
+	INPMSource,
 	IPlugin,
 	PluginSourceType,
 	PluginStatus,
-	PluginType,
-	ICDNSource,
-	IGauzySource,
-	INPMSource
+	PluginType
 } from '@gauzy/contracts';
 
-import { PluginService } from '../../../services/plugin.service';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
+import { Store, ToastrNotificationService } from '../../../../../services';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
-import { Store } from '../../../../../services';
+import { PluginService } from '../../../services/plugin.service';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
 
 @Component({
@@ -37,6 +38,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	selectedVersion = '';
 	installed = false;
 	needUpdate = false;
+	installing = false;
 
 	// Enum for template use
 	readonly pluginStatus = PluginStatus;
@@ -49,9 +51,10 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		private pluginService: PluginService,
 		private pluginElectronService: PluginElectronService,
 		private dialogService: NbDialogService,
-		private toastrService: NbToastrService,
 		private store: Store,
-		public translateService: TranslateService
+		public translateService: TranslateService,
+		private toastrService: ToastrNotificationService,
+		private ngZone: NgZone
 	) {}
 
 	ngOnInit(): void {
@@ -59,6 +62,38 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			this.pluginId = params['id'];
 			this.loadPlugin();
 		});
+		this.pluginElectronService.status
+			.pipe(
+				distinctUntilChange(),
+				tap(({ status, message }) =>
+					this.ngZone.run(() => {
+						this.handleStatus({ status, message });
+					})
+				),
+				takeUntil(this.destroy$)
+			)
+			.subscribe();
+	}
+
+	private handleStatus(notification: { status: string; message?: string }) {
+		switch (notification.status) {
+			case 'success':
+				this.installing = false;
+				this.toastrService.success(notification.message);
+				break;
+			case 'error':
+				this.installing = false;
+				this.toastrService.error(notification.message);
+				break;
+			case 'inProgress':
+				this.installing = true;
+				this.toastrService.info(notification.message);
+				break;
+			default:
+				this.installing = false;
+				this.toastrService.warn('Unexpected Status');
+				break;
+		}
 	}
 
 	ngOnDestroy(): void {
@@ -89,10 +124,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	private handleError(error: any): void {
-		this.toastrService.danger(
-			this.translateService.instant('COMMON.ERROR_OCCURRED'),
-			this.translateService.instant('TOASTR.TITLE.ERROR')
-		);
+		this.toastrService.error(error);
 		this.router.navigate(['/settings/marketplace-plugins']);
 	}
 
@@ -171,15 +203,9 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		try {
 			// TODO: Implement actual update logic
 			this.plugin.status = status;
-			this.toastrService.success(
-				this.translateService.instant('PLUGIN.MESSAGES.STATUS_UPDATED'),
-				this.translateService.instant('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success(this.translateService.instant('PLUGIN.MESSAGES.STATUS_UPDATED'));
 		} catch (error) {
-			this.toastrService.danger(
-				this.translateService.instant('COMMON.UPDATE_FAILED'),
-				this.translateService.instant('TOASTR.TITLE.ERROR')
-			);
+			this.toastrService.error(this.translateService.instant('COMMON.UPDATE_FAILED'));
 		}
 	}
 
@@ -212,15 +238,41 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	// Placeholder methods - TODO: Implement actual logic
 	updatePlugin(): void {
-		console.log('Updating plugin');
+		this.installPlugin(true);
 	}
 
-	uninstallPlugin(): void {
-		console.log('Uninstalling plugin');
+	public async uninstallPlugin(): Promise<void> {
+		this.pluginElectronService.uninstall(this.plugin as any);
+		await this.loadPlugin();
 	}
 
-	installPlugin(): void {
-		console.log('Installing plugin');
+	installPlugin(isUpdate = false): void {
+		this.installing = true;
+		switch (this.plugin.source.type) {
+			case PluginSourceType.GAUZY:
+			case PluginSourceType.CDN:
+				this.pluginElectronService.downloadAndInstall({ url: this.plugin.source.url, contextType: 'cdn' });
+				break;
+			case PluginSourceType.NPM:
+				this.pluginElectronService.downloadAndInstall({
+					...{
+						pkg: {
+							name: this.plugin.source.name,
+							version: isUpdate
+								? this.plugin.versions[this.plugin.versions.length - 1]
+								: this.selectedVersion
+						},
+						registry: {
+							privateURL: this.plugin.source.registry,
+							authToken: this.plugin.source.authToken
+						}
+					},
+					contextType: 'npm'
+				});
+			default:
+				this.installing = false;
+				break;
+		}
 	}
 
 	// Mock data method for demonstration
@@ -232,7 +284,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			name: 'Continues Recording',
 			description: 'An AI-powered chatbot for customer support.',
 			type: PluginType.DESKTOP,
-			status: PluginStatus.DEPRECATED,
+			status: PluginStatus.ACTIVE,
 			versions: ['0.1.12', '0.9.0', '1.0.0'],
 			source: {
 				id: 'source-3',
