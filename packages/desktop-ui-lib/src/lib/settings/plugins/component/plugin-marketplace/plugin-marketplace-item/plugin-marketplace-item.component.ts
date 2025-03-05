@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, NgZone, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -54,7 +54,8 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		private store: Store,
 		public translateService: TranslateService,
 		private toastrService: ToastrNotificationService,
-		private ngZone: NgZone
+		private ngZone: NgZone,
+		private cdr: ChangeDetectorRef
 	) {}
 
 	ngOnInit(): void {
@@ -94,6 +95,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 				this.toastrService.warn('Unexpected Status');
 				break;
 		}
+		this.cdr.markForCheck();
 	}
 
 	ngOnDestroy(): void {
@@ -120,6 +122,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			this.handleError(error);
 		} finally {
 			this.loading = false;
+			this.cdr.markForCheck();
 		}
 	}
 
