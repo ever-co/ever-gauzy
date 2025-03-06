@@ -39,6 +39,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	installed = false;
 	needUpdate = false;
 	installing = false;
+	uninstalling = false;
 
 	// Enum for template use
 	readonly pluginStatus = PluginStatus;
@@ -80,18 +81,21 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		switch (notification.status) {
 			case 'success':
 				this.installing = false;
+				this.uninstalling = this.installing;
 				this.toastrService.success(notification.message);
 				break;
 			case 'error':
 				this.installing = false;
+				this.uninstalling = this.installing;
 				this.toastrService.error(notification.message);
 				break;
 			case 'inProgress':
-				this.installing = true;
+				this.installing = !this.uninstalling;
 				this.toastrService.info(notification.message);
 				break;
 			default:
 				this.installing = false;
+				this.uninstalling = this.installing;
 				this.toastrService.warn('Unexpected Status');
 				break;
 		}
@@ -245,6 +249,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	public async uninstallPlugin(): Promise<void> {
+		this.uninstalling = true;
 		this.pluginElectronService.uninstall(this.plugin as any);
 		await this.loadPlugin();
 	}

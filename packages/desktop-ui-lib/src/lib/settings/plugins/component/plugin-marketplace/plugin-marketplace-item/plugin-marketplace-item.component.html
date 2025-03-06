@@ -274,23 +274,47 @@
 			{{ 'BUTTONS.BACK' | translate }}
 		</button>
 		@if(isOwner){
-		<button nbButton type="button" status="basic" (click)="navigateToEdit()">
+		<button
+			nbButton
+			type="button"
+			status="basic"
+			[disabled]="installing || uninstalling"
+			(click)="navigateToEdit()"
+		>
 			<nb-icon icon="edit-2-outline"></nb-icon>
 			{{ 'BUTTONS.EDIT' | translate }}
 		</button>
 		} @if(installed) { @if(needUpdate) {
-		<button nbButton type="button" status="primary" (click)="updatePlugin()">
+		<button
+			nbButton
+			type="button"
+			status="primary"
+			[disabled]="installing || uninstalling"
+			(click)="updatePlugin()"
+		>
 			<nb-icon *gauzySpinnerButton="installing" icon="sync-outline"></nb-icon>
 			{{ 'BUTTONS.UPDATE' | translate }}
 		</button>
 		}
-		<button nbButton type="button" status="danger" (click)="uninstallPlugin()">
+		<button
+			nbButton
+			type="button"
+			status="danger"
+			[disabled]="installing || uninstalling"
+			(click)="uninstallPlugin()"
+		>
 			<nb-icon *gauzySpinnerButton="installing" icon="trash-2-outline"></nb-icon>
 			{{ 'BUTTONS.UNINSTALL' | translate }}
 		</button>
 		}@else {
-		<button nbButton type="button" status="success" (click)="installPlugin()">
-			<nb-icon *gauzySpinnerButton="installing" icon="cloud-download-outline"></nb-icon>
+		<button
+			nbButton
+			type="button"
+			status="success"
+			[disabled]="installing || uninstalling"
+			(click)="installPlugin()"
+		>
+			<nb-icon *gauzySpinnerButton="uninstalling" icon="cloud-download-outline"></nb-icon>
 			{{ 'BUTTONS.INSTALL' | translate }}
 		</button>
 		}
