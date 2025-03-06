@@ -4850,6 +4850,10 @@
 			"SECURITY_INFO": "Beveiligingsinformatie",
 			"CHECKSUM": "Controlesom",
 			"SIGNATURE": "Handtekening"
+		},
+		"LAYOUT": {
+			"DISCOVER": "Ontdekken",
+			"INSTALLED": "Geïnstalleerd"
 		}
 	}
 }

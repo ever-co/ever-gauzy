@@ -4835,6 +4835,10 @@
 			"SECURITY_INFO": "معلومات الأمان",
 			"CHECKSUM": "المجموع الاختباري",
 			"SIGNATURE": "التوقيع"
+		},
+		"LAYOUT": {
+			"DISCOVER": "اكتشف",
+			"INSTALLED": "مثبت"
 		}
 	}
 }

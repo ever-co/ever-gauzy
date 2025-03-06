@@ -4850,6 +4850,10 @@
 			"SECURITY_INFO": "Informações de segurança",
 			"CHECKSUM": "Soma de verificação",
 			"SIGNATURE": "Assinatura"
+		},
+		"LAYOUT": {
+			"DISCOVER": "Descobrir",
+			"INSTALLED": "Instalado"
 		}
 	}
 }

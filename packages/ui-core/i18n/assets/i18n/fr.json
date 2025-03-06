@@ -4844,6 +4844,10 @@
 			"SECURITY_INFO": "Informations de sécurité",
 			"CHECKSUM": "Somme de contrôle",
 			"SIGNATURE": "Signature"
+		},
+		"LAYOUT": {
+			"DISCOVER": "Découvrir",
+			"INSTALLED": "Installé"
 		}
 	}
 }

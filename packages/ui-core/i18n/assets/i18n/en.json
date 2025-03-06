@@ -5003,6 +5003,10 @@
 			"SECURITY_INFO": "Security Information",
 			"CHECKSUM": "Checksum",
 			"SIGNATURE": "Signature"
+		},
+		"LAYOUT": {
+			"DISCOVER": "Discover",
+			"INSTALLED": "Installed"
 		}
 	}
 }

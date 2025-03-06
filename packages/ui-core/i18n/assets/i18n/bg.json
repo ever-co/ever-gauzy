@@ -4877,6 +4877,10 @@
 			"SECURITY_INFO": "Информация за сигурност",
 			"CHECKSUM": "Контролна сума",
 			"SIGNATURE": "Подпис"
+		},
+		"LAYOUT": {
+			"DISCOVER": "Открийте",
+			"INSTALLED": "Инсталирани"
 		}
 	}
 }

@@ -4840,6 +4840,10 @@
 			"SECURITY_INFO": "מידע על אבטחה",
 			"CHECKSUM": "סכום ביקורת",
 			"SIGNATURE": "חתימה"
+		},
+		"LAYOUT": {
+			"DISCOVER": "לגלות",
+			"INSTALLED": "מותקן"
 		}
 	}
 }

@@ -4851,6 +4851,10 @@
 			"SECURITY_INFO": "Información de seguridad",
 			"CHECKSUM": "Suma de verificación",
 			"SIGNATURE": "Firma"
+		},
+		"LAYOUT": {
+			"DISCOVER": "Descubrir",
+			"INSTALLED": "Instalado"
 		}
 	}
 }

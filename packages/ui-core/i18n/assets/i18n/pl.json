@@ -4850,6 +4850,10 @@
 			"SECURITY_INFO": "Informacje o bezpieczeństwie",
 			"CHECKSUM": "Suma kontrolna",
 			"SIGNATURE": "Podpis"
+		},
+		"LAYOUT": {
+			"DISCOVER": "Odkryj",
+			"INSTALLED": "Zainstalowane"
 		}
 	}
 }

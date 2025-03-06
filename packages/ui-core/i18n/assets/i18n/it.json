@@ -4850,6 +4850,10 @@
 			"SECURITY_INFO": "Informazioni sulla sicurezza",
 			"CHECKSUM": "Checksum",
 			"SIGNATURE": "Firma"
+		},
+		"LAYOUT": {
+			"DISCOVER": "Scopri",
+			"INSTALLED": "Installato"
 		}
 	}
 }

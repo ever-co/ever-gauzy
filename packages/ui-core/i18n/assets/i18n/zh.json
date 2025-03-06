@@ -4850,6 +4850,10 @@
 			"SECURITY_INFO": "安全信息",
 			"CHECKSUM": "校验和",
 			"SIGNATURE": "签名"
+		},
+		"LAYOUT": {
+			"DISCOVER": "发现",
+			"INSTALLED": "已安装"
 		}
 	}
 }
