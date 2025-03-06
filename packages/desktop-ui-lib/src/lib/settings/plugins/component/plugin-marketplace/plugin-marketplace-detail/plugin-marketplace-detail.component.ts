@@ -9,6 +9,7 @@ import { Router } from '@angular/router';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
 import { Store, ToastrNotificationService } from '../../../../../services';
 import { PluginService } from '../../../services/plugin.service';
+import { PluginSourceType } from '@gauzy/contracts';
 
 @UntilDestroy()
 @Component({
@@ -39,7 +40,29 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	private installPlugin(): void {
-		// TODO
+		switch (this.plugin.source.type) {
+			case PluginSourceType.GAUZY:
+			case PluginSourceType.CDN:
+				this.pluginElectronService.downloadAndInstall({ url: this.plugin.source.url, contextType: 'cdn' });
+				break;
+			case PluginSourceType.NPM:
+				this.pluginElectronService.downloadAndInstall({
+					...{
+						pkg: {
+							name: this.plugin.source.name,
+							version: this.plugin.versions[this.plugin.versions.length - 1]
+						},
+						registry: {
+							privateURL: this.plugin.source.registry,
+							authToken: this.plugin.source.authToken
+						}
+					},
+					contextType: 'npm'
+				});
+				break;
+			default:
+				break;
+		}
 	}
 
 	public get isChecked$(): Observable<boolean> {
