@@ -1,0 +1,41 @@
+name: Generate dependencies image
+
+on:
+  push:
+    branches: [master, dev]
+    paths:
+      - 'package.json'
+      - 'yarn.lock'
+      - './**/package.json'
+      - '.deploy/dependencies/**/*'
+      - '.github/workflows/dependencies.yml'
+  workflow_dispatch:
+
+jobs:
+  generate-dependencies:
+    name: Generate dependencies image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push API image to Amazon ECR
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }}:$IMAGE_TAG -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }}:latest -f .deploy/api/Dockerfile .
+          docker push ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }} --all-tags

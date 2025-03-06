@@ -29,6 +29,11 @@ on:
       - 'packages/plugins/videos/**/*.*'
       - '.deploy/api/**/*'
       - '.github/workflows/aws-deploy-api.yml'
+  workflow_run:
+    workflows: ['Generate dependencies image']
+    types:
+      - completed
+    branches: [master, dev]
   workflow_dispatch:
 
 jobs:

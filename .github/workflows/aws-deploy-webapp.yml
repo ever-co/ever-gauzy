@@ -10,6 +10,11 @@ on:
       - 'packages/plugins/*-ui/**/*.*'
       - '.deploy/webapp/**/*.*'
       - '.github/workflows/aws-deploy-webapp.yml'
+  workflow_run:
+    workflows: ['Generate dependencies image']
+    types:
+      - completed
+    branches: [master, dev]
   workflow_dispatch:
 
 jobs:
