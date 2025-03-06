@@ -114,7 +114,6 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			// TODO: Replace with actual API call when ready
 			// const { tenantId, organizationId } = this.store.selectedOrganization;
 			// this.plugin = await this.pluginService.getById(this.pluginId, { tenantId, organizationId });
-
 			// Current hardcoded plugin for demonstration
 			this.plugin = this.getMockPlugin();
 

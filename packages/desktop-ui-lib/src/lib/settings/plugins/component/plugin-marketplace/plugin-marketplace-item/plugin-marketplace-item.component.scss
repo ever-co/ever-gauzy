@@ -2,6 +2,11 @@
   display: block;
   width: 100%;
 
+  .no-data {
+    height: 100%;
+    width: 100%;
+  }
+
   nb-card {
     margin-bottom: 0;
   }

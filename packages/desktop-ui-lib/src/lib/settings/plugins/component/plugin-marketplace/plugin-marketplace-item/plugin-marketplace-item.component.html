@@ -1,9 +1,11 @@
 <nb-card class="content-active first" status="basic">
 	<nb-card-body>
-		<div *ngIf="loading" class="d-flex justify-content-center py-4">
+		@if(loading) {
+		<div class="d-flex justify-content-center py-4">
 			<nb-spinner status="primary"></nb-spinner>
 		</div>
-		<div *ngIf="!loading && plugin">
+		}@else if(plugin){
+		<div>
 			<!-- Basic Information Section -->
 			<div class="form-section mb-3">
 				<h6 class="section-title">{{ 'PLUGIN.FORM.BASIC_INFO' | translate }}</h6>
@@ -266,6 +268,12 @@
 				</div>
 			</div>
 		</div>
+		}@else {
+		<div class="no-data">
+			<ngx-no-data-message [message]="'This plugin is unvailable on marketplace' | translate">
+			</ngx-no-data-message>
+		</div>
+		}
 	</nb-card-body>
 
 	<nb-card-footer class="text-right">
@@ -306,7 +314,7 @@
 			<nb-icon *gauzySpinnerButton="installing" icon="trash-2-outline"></nb-icon>
 			{{ 'BUTTONS.UNINSTALL' | translate }}
 		</button>
-		}@else {
+		}@else { @if(plugin) {
 		<button
 			nbButton
 			type="button"
@@ -317,6 +325,6 @@
 			<nb-icon *gauzySpinnerButton="uninstalling" icon="cloud-download-outline"></nb-icon>
 			{{ 'BUTTONS.INSTALL' | translate }}
 		</button>
-		}
+		} }
 	</nb-card-footer>
 </nb-card>
