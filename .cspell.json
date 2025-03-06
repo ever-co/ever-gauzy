@@ -544,7 +544,12 @@
 		"Yostorono",
 		"zfgk",
 		"zipkin",
-		"Zrdm"
+		"Zrdm",
+		"ICDN",
+		"INPM",
+		"ɵcmp",
+		"ɵmod",
+		"ɵcreate"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
