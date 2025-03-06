@@ -1,9 +1,6 @@
-# Ever Gauzy Platform API (Core)
+# Gauzy dependencies image
 
 FROM node:20.11.1-alpine3.19 AS gauzy-deps
-
-LABEL maintainer="ever@ever.co"
-LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
 
 # Set Python interpreter for `node-gyp` to use
 ENV PYTHON=/usr/bin/python
@@ -25,8 +22,10 @@ COPY --chown=node:node . .
 RUN NODE_ENV=production yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production \
     && NODE_ENV=production yarn postinstall.manual \
     && rm -rf node_modules/@angular \
-    && cp -r ./node_modules ./node_modules_prod \
-    # Install project development dependencies
-    && NODE_ENV=development yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts \
+    && cp -r ./node_modules ./node_modules_prod
+
+# Install project development dependencies
+RUN NODE_ENV=development yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts \
     && NODE_ENV=development yarn postinstall.manual \
+    && rm -rf .angular \
     && yarn cache clean
