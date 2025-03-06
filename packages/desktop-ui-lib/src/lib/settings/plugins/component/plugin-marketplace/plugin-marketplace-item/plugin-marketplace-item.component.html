@@ -109,7 +109,7 @@
 				</div>
 
 				<!-- CDN Source -->
-				<ng-container *ngIf="plugin.source.type === 'CDN'">
+				<ng-container *ngIf="plugin.source.type === pluginSourceType.CDN">
 					<div class="info-row">
 						<div class="info-item full-width">
 							<div class="label">{{ 'PLUGIN.FORM.CDN.URL' | translate }}</div>
@@ -133,7 +133,7 @@
 				</ng-container>
 
 				<!-- NPM Source -->
-				<ng-container *ngIf="plugin.source.type === 'NPM'">
+				<ng-container *ngIf="plugin.source.type === pluginSourceType.NPM">
 					<div class="info-row">
 						<div class="info-item full-width">
 							<div class="label">{{ 'PLUGIN.FORM.NPM.PACKAGE_NAME' | translate }}</div>
@@ -310,7 +310,7 @@
 			[disabled]="installing || uninstalling"
 			(click)="uninstallPlugin()"
 		>
-			<nb-icon *gauzySpinnerButton="installing" icon="trash-2-outline"></nb-icon>
+			<nb-icon *gauzySpinnerButton="uninstalling" icon="trash-2-outline"></nb-icon>
 			{{ 'BUTTONS.UNINSTALL' | translate }}
 		</button>
 		}@else { @if(plugin) {
