@@ -1,5 +1,7 @@
 # Ever Gauzy Platform API (Core)
 
+ARG DEPENDENCIES_IMAGE
+
 ARG NODE_OPTIONS
 ARG NODE_ENV
 ARG API_BASE_URL
@@ -106,7 +108,7 @@ ARG DB_ORM
 ARG MIKRO_ORM_ALLOW_GLOBAL_CONTEXT
 
 
-FROM node:20.11.1-alpine3.19 AS builder
+FROM ${DEPENDENCIES_IMAGE:-"no-image"} AS builder
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -119,14 +121,6 @@ ENV CI=true \
 	NODE_ENV_ARG=${NODE_ENV} \
 	# Set Python interpreter for `node-gyp` to use
 	PYTHON=/usr/bin/python
-
-#  snappy libheif snappy-dev vips-dev vips
-RUN apk --update add bash \
-	&& apk add --no-cache build-base \
-	&& npm i -g npm@9 node-gyp@10.2.0 yarn --force \
-	&& mkdir /srv/gauzy \
-	&& chown -R node:node /srv/gauzy \
-	&& rm -rf /var/cache/apk/*
 
 COPY --chmod=755 wait .deploy/api/entrypoint.prod.sh .deploy/api/entrypoint.compose.sh /
 
@@ -143,18 +137,8 @@ ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=60000"} \
 	IS_DOCKER=true \
 	NX_NO_CLOUD=true
 
-# Install project production dependencies
-RUN yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production \
-	&& yarn postinstall.manual \
-	&& rm -rf node_modules/@angular \
-	&& cp -r ./node_modules ./node_modules_prod \
-	# Install project development dependencies
-	&& NODE_ENV=development yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts \
-	&& yarn postinstall.manual \
-	&& yarn cache clean \
-	# Build the API service for production
-	&& yarn build:api:prod:docker \
-	&& rm -rf ./node_modules
+# Build the API service for production
+RUN yarn build:api:prod:docker
 
 FROM node:20.11.1-alpine3.19 AS production
 # Prepare PM2 and dependencies
