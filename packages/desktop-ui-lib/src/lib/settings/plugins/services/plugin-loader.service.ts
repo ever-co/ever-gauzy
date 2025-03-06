@@ -160,8 +160,6 @@ export class PluginLoaderService {
 		inputs?: Record<string, any>
 	): Promise<ComponentRef<any>> {
 		console.debug(`Loading Angular Module`);
-		const moduleFactory = await this.compiler.compileModuleAsync(moduleType);
-		const moduleRef = moduleFactory.create(this.injector);
 
 		// Find the component to render
 		let componentType: Type<any> | undefined;

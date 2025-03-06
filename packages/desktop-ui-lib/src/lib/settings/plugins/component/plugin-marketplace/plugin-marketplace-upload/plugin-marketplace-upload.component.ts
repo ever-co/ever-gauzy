@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, Component, OnInit, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { INPMSource, IPlugin, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
+import { IPlugin, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
-import { finalize, takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
 	selector: 'lib-plugin-marketplace-upload',

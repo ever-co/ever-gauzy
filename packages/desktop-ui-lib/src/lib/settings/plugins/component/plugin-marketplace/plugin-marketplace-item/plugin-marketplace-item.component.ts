@@ -241,9 +241,8 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		return new Date(date).toLocaleString();
 	}
 
-	get isOwner(): boolean {
-		const user = this.store.user;
-		return user?.employee?.id === this.plugin?.uploadedBy?.id ?? false;
+	public get isOwner(): boolean {
+		return !!this.store.user && this.store.user.employee?.id === this.plugin?.uploadedBy?.id;
 	}
 
 	async onVersionChange(): Promise<void> {
@@ -283,6 +282,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 					},
 					contextType: 'npm'
 				});
+				break;
 			default:
 				this.installing = false;
 				break;
