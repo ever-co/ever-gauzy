@@ -321,7 +321,7 @@
 			[disabled]="installing || uninstalling"
 			(click)="installPlugin()"
 		>
-			<nb-icon *gauzySpinnerButton="uninstalling" icon="cloud-download-outline"></nb-icon>
+			<nb-icon *gauzySpinnerButton="installing" icon="cloud-download-outline"></nb-icon>
 			{{ 'BUTTONS.INSTALL' | translate }}
 		</button>
 		} }
