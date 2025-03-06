@@ -1,0 +1,97 @@
+# Docker-related files and directories
+docker
+**/tmp
+**/.dockerignore
+docker-compose*.yml
+
+# Git-related files and directories
+.git/
+**/.gitignore
+.github
+.gitmodules
+.gitattributes
+.gitpod.yml
+
+# Cache and other project directories
+.angular
+.cache
+.circle
+.circleci
+.do
+.fly
+.husky
+.nx
+.render
+.sonarlint
+.verdaccio
+.npmrc
+.travis.yml
+greenkeeper.json
+**/*.md
+**/*.cmd
+**/*.log
+Jenkinsfile
+.yarn
+render.yml
+export
+tools
+.env*
+.prettier*
+.snyk
+.czrc
+.*
+
+# Scripts and deployment entrypoint scripts
+.scripts
+!.scripts/postinstall.ts
+!.scripts/configure.ts
+!.scripts/env.ts
+.deploy
+!.deploy/api/entrypoint.compose.sh
+!.deploy/api/entrypoint.prod.sh
+!.deploy/webapp/entrypoint.compose.sh
+!.deploy/webapp/entrypoint.prod.sh
+!.deploy/webapp/replacements.sed
+!.deploy/webapp/nginx*
+
+.nvmrc
+**/node_modules
+**/npm-debug.log
+
+# IDEs and editors
+.idea
+.vscode
+.project
+.classpath
+*.launch
+*.code-workspace
+.settings/
+.editorconfig
+
+# e2e
+e2e/*.js
+e2e/*.map
+
+#System Files
+**/.DS_Store
+**/Thumbs.db
+
+# Build and compilation output
+**/dist
+**/build
+
+# Non-related apps and packages
+apps
+!apps/api
+!apps/gauzy
+apps/api/public
+!apps/api/public/.gitkeep
+!apps/api/public/**/.gitkeep
+!apps/api/public/ever-icons
+!apps/api/public/features
+!apps/api/public/integrations
+!apps/api/public/reports
+apps/api/data
+apps/api/report.*.json
+packages/desktop-*
+packages/plugins/integration-wakatime
