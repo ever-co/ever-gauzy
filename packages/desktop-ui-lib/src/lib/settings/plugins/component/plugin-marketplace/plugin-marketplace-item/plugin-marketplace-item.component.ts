@@ -115,12 +115,10 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			// const { tenantId, organizationId } = this.store.selectedOrganization;
 			// this.plugin = await this.pluginService.getById(this.pluginId, { tenantId, organizationId });
 			// Current hardcoded plugin for demonstration
-			this.plugin = this.getMockPlugin();
-
+			// this.plugin = this.getMockPlugin();
 			// Select the latest version
-			this.selectedVersion = this.plugin.versions[this.plugin.versions.length - 1];
-
-			await this.checkInstallation();
+			// this.selectedVersion = this.plugin.versions[this.plugin.versions.length - 1];
+			// await this.checkInstallation();
 		} catch (error) {
 			this.handleError(error);
 		} finally {
