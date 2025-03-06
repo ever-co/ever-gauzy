@@ -3,8 +3,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 
-import { Subject, tap } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { EMPTY, firstValueFrom, Subject, tap } from 'rxjs';
+import { catchError, filter, switchMap, takeUntil } from 'rxjs/operators';
 
 import {
 	ICDNSource,
@@ -111,14 +111,9 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		this.loading = true;
 
 		try {
-			// TODO: Replace with actual API call when ready
-			// const { tenantId, organizationId } = this.store.selectedOrganization;
-			// this.plugin = await this.pluginService.getById(this.pluginId, { tenantId, organizationId });
-			// Current hardcoded plugin for demonstration
-			// this.plugin = this.getMockPlugin();
-			// Select the latest version
-			// this.selectedVersion = this.plugin.versions[this.plugin.versions.length - 1];
-			// await this.checkInstallation();
+			this.plugin = await firstValueFrom(this.pluginService.getOne(this.pluginId));
+			this.selectedVersion = this.plugin.versions[this.plugin.versions.length - 1];
+			await this.checkInstallation();
 		} catch (error) {
 			this.handleError(error);
 		} finally {
@@ -205,7 +200,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		if (!this.plugin || !this.isOwner) return;
 
 		try {
-			// TODO: Implement actual update logic
+			await firstValueFrom(this.pluginService.update({ ...this.plugin, status }));
 			this.plugin.status = status;
 			this.toastrService.success(this.translateService.instant('PLUGIN.MESSAGES.STATUS_UPDATED'));
 		} catch (error) {
@@ -216,10 +211,25 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	navigateToEdit(): void {
 		if (!this.plugin) return;
 
-		this.dialogService.open(PluginMarketplaceUploadComponent, {
-			backdropClass: 'backdrop-blur',
-			context: { plugin: this.plugin }
-		});
+		this.dialogService
+			.open(PluginMarketplaceUploadComponent, {
+				backdropClass: 'backdrop-blur',
+				context: { plugin: this.plugin }
+			})
+			.onClose.pipe(
+				filter(Boolean),
+				switchMap((plugin: IPlugin) =>
+					this.pluginService.update(plugin).pipe(
+						tap(() => this.toastrService.success('Plugin updated successfully!')),
+						catchError(() => {
+							this.toastrService.error('Plugin upload failed!');
+							return EMPTY;
+						})
+					)
+				),
+				takeUntil(this.destroy$)
+			)
+			.subscribe();
 	}
 
 	navigateBack(): void {
@@ -240,7 +250,6 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		await this.checkInstallation();
 	}
 
-	// Placeholder methods - TODO: Implement actual logic
 	updatePlugin(): void {
 		this.installPlugin(true);
 	}
@@ -278,41 +287,5 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 				this.installing = false;
 				break;
 		}
-	}
-
-	// Mock data method for demonstration
-	private getMockPlugin(): IPlugin {
-		return {
-			id: '3',
-			tenantId: 'tenant-555',
-			organizationId: 'org-222',
-			name: 'Continues Recording',
-			description: 'An AI-powered chatbot for customer support.',
-			type: PluginType.DESKTOP,
-			status: PluginStatus.ACTIVE,
-			versions: ['0.1.12', '0.9.0', '1.0.0'],
-			source: {
-				id: 'source-3',
-				tenantId: 'tenant-555',
-				organizationId: 'org-222',
-				type: PluginSourceType.GAUZY,
-				url: 'https://gauzy.example.com/plugins/ai-chatbot'
-			} as IGauzySource,
-			checksum: 'sha256-ghj123',
-			signature: 'signature-111',
-			author: 'Charlie Brown',
-			license: 'Apache-2.0',
-			homepage: 'https://example.com/ai-chatbot',
-			repository: 'https://github.com/example/ai-chatbot',
-			uploadedBy: {
-				id: 'emp-003',
-				firstName: 'Eve',
-				lastName: 'Davis',
-				email: 'eve@example.com'
-			} as any,
-			uploadedAt: new Date('2022-07-10'),
-			downloadCount: 5200,
-			lastDownloadedAt: new Date('2024-01-20')
-		};
 	}
 }

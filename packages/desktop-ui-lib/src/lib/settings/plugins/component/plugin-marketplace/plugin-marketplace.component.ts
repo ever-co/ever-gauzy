@@ -1,13 +1,13 @@
 import { Component, inject, NgZone, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BehaviorSubject, catchError, concatMap, EMPTY, filter, from, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, catchError, EMPTY, filter, from, switchMap, tap } from 'rxjs';
+import { ToastrNotificationService } from '../../../../services';
 import { PluginElectronService } from '../../services/plugin-electron.service';
 import { IPlugin } from '../../services/plugin-loader.service';
-import { ToastrNotificationService } from '../../../../services';
-import { NbDialogService } from '@nebular/theme';
-import { PluginMarketplaceUploadComponent } from './plugin-marketplace-upload/plugin-marketplace-upload.component';
 import { PluginService } from '../../services/plugin.service';
-import { ActivatedRoute } from '@angular/router';
+import { PluginMarketplaceUploadComponent } from './plugin-marketplace-upload/plugin-marketplace-upload.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -89,12 +89,15 @@ export class PluginMarketplaceComponent implements OnInit {
 			})
 			.onClose.pipe(
 				filter(Boolean),
-				concatMap((plugin) => this.pluginService.upload(plugin)),
-				tap(() => this.toastrNotificationService.success('Plugin uploaded successfully!')),
-				catchError(() => {
-					this.toastrNotificationService.error('Plugin upload failed!');
-					return EMPTY;
-				}),
+				switchMap((plugin) =>
+					this.pluginService.upload(plugin).pipe(
+						tap(() => this.toastrNotificationService.success('Plugin uploaded successfully!')),
+						catchError(() => {
+							this.toastrNotificationService.error('Plugin upload failed!');
+							return EMPTY;
+						})
+					)
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();

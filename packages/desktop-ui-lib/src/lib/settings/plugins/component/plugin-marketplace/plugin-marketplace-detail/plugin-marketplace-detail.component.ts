@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, inject, Input, OnInit } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy } from '@ngneat/until-destroy';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, catchError, EMPTY, filter, Observable, switchMap, tap } from 'rxjs';
 import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
 import { IPlugin } from '../../../services/plugin-loader.service';
 import { Router } from '@angular/router';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
-import { Store } from '../../../../../services';
+import { Store, ToastrNotificationService } from '../../../../../services';
+import { PluginService } from '../../../services/plugin.service';
 
 @UntilDestroy()
 @Component({
@@ -20,7 +21,9 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	@Input() plugin!: IPlugin;
 	public readonly _isChecked$ = new BehaviorSubject<boolean>(false);
 	private readonly pluginElectronService = inject(PluginElectronService);
+	private readonly pluginService = inject(PluginService);
 	private readonly dialog = inject(NbDialogService);
+	private readonly toastrService = inject(ToastrNotificationService);
 	private readonly router = inject(Router);
 	private readonly store = inject(Store);
 
@@ -48,12 +51,26 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	public editPlugin(): void {
-		this.dialog.open(PluginMarketplaceUploadComponent, {
-			backdropClass: 'backdrop-blur',
-			context: {
-				plugin: this.plugin
-			}
-		});
+		this.dialog
+			.open(PluginMarketplaceUploadComponent, {
+				backdropClass: 'backdrop-blur',
+				context: {
+					plugin: this.plugin
+				}
+			})
+			.onClose.pipe(
+				filter(Boolean),
+				switchMap((plugin: IPlugin) =>
+					this.pluginService.update(plugin).pipe(
+						tap(() => this.toastrService.success('Plugin updated successfully!')),
+						catchError(() => {
+							this.toastrService.error('Plugin upload failed!');
+							return EMPTY;
+						})
+					)
+				)
+			)
+			.subscribe();
 	}
 
 	private uninstallPlugin(): void {
