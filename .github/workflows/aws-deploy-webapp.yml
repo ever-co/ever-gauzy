@@ -43,7 +43,7 @@ jobs:
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_WEBAPP }}:$IMAGE_TAG -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_WEBAPP }}:latest -f .deploy/webapp/Dockerfile .
+          docker build --build-arg BASE_IMAGE="${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }}:latest" -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_WEBAPP }}:$IMAGE_TAG -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_WEBAPP }}:latest -f .deploy/webapp/Dockerfile .
           docker push ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_WEBAPP }} --all-tags
           echo "webapp_image=${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_WEBAPP }}:$IMAGE_TAG" >> $GITHUB_ENV
 

@@ -1,5 +1,7 @@
 # Ever Gauzy Platform UI
 
+ARG DEPENDENCIES_IMAGE
+
 ARG NODE_OPTIONS
 ARG NODE_ENV
 ARG API_BASE_URL
@@ -57,7 +59,7 @@ ARG DESKTOP_APP_DOWNLOAD_LINK_LINUX
 ARG MOBILE_APP_DOWNLOAD_LINK
 ARG EXTENSION_DOWNLOAD_LINK
 
-FROM node:20.11.1-alpine3.19 AS builder
+FROM ${DEPENDENCIES_IMAGE:-"no-image"} AS builder
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -74,12 +76,6 @@ ENV CI=true \
 	IS_DOCKER=true \
 	NX_NO_CLOUD=true
 
-RUN apk --update add bash \
-	&& npm i -g npm@9 yarn --force \
-	&& mkdir /srv/gauzy \
-	&& chown -R node:node /srv/gauzy \
-	&& rm -rf /var/cache/apk/*
-
 COPY --chmod=755 wait .deploy/webapp/entrypoint.compose.sh .deploy/webapp/entrypoint.prod.sh .deploy/webapp/replacements.sed /
 
 USER node:node
@@ -87,15 +83,8 @@ WORKDIR /srv/gauzy
 
 COPY --chown=node:node . .
 
-# Must be without --production because we need dev deps installed
-RUN NODE_ENV=development yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts \
-	&& yarn postinstall.manual \
-	&& yarn cache clean
-
-# RUN yarn build:package:gauzy:docker
-RUN yarn build:gauzy:prod:docker \
-	&& rm -rf ./node_modules \
-	&& yarn cache clean
+# Build the Webapp for production
+RUN yarn build:gauzy:prod:docker
 
 FROM nginx:alpine AS production
 
