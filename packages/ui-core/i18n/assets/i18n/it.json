@@ -217,7 +217,8 @@
 			"EVENT_TYPE": "Non hai creato alcun tipo di evento",
 			"PRODUCT_TYPE_NO_DATA": "Non hai creato alcun tipo di prodotto",
 			"TEAM_DASHBOARD": "Non hai nessuna squadra",
-			"PLUGIN": "Non hai installato alcun plugin."
+			"PLUGIN": "Non hai installato alcun plugin.",
+			"PLUGIN_MARKETPLACE": "Questo plugin non è disponibile sul marketplace"
 		},
 		"TRANSACTION_TYPE": "Tipo",
 		"AMOUNT": "Importo",

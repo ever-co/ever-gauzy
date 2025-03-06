@@ -217,7 +217,8 @@
 			"EVENT_TYPE": "Nie utworzyłeś żadnego typu wydarzenia",
 			"PRODUCT_TYPE_NO_DATA": "Nie utworzyłeś żadnego typu produktu",
 			"TEAM_DASHBOARD": "Nie masz żadnych zespołów",
-			"PLUGIN": "Nie zainstalowano żadnych wtyczek."
+			"PLUGIN": "Nie zainstalowano żadnych wtyczek.",
+			"PLUGIN_MARKETPLACE": "Ta wtyczka nie jest dostępna na rynku"
 		},
 		"TRANSACTION_TYPE": "Rodzaj",
 		"AMOUNT": "Kwota",

@@ -217,7 +217,8 @@
 			"EVENT_TYPE": "你还没有创建任何事件类型。",
 			"PRODUCT_TYPE_NO_DATA": "你还没有创建任何产品类型。",
 			"TEAM_DASHBOARD": "你没有任何团队",
-			"PLUGIN": "您尚未安装任何插件。"
+			"PLUGIN": "您尚未安装任何插件。",
+			"PLUGIN_MARKETPLACE": "该插件在市场上不可用"
 		},
 		"TRANSACTION_TYPE": "类型 (Lèixíng)",
 		"AMOUNT": "金额",

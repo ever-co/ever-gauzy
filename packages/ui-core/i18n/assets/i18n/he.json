@@ -217,7 +217,8 @@
 			"EVENT_TYPE": "לא יצרתם סוגי אירועים.",
 			"PRODUCT_TYPE_NO_DATA": "לא יצרתם סוגי מוצרים.",
 			"TEAM_DASHBOARD": "אין לך שום צוותים.",
-			"PLUGIN": "לא התקנת שום תוסף."
+			"PLUGIN": "לא התקנת שום תוסף.",
+			"PLUGIN_MARKETPLACE": "תוסף זה אינו זמין בשוק"
 		},
 		"TRANSACTION_TYPE": "סוג",
 		"AMOUNT": "כמות",

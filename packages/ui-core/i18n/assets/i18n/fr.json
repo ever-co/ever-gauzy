@@ -217,7 +217,8 @@
 			"EVENT_TYPE": "Vous n'avez créé aucun type d'événement.",
 			"PRODUCT_TYPE_NO_DATA": "Vous n'avez créé aucun type de produit.",
 			"TEAM_DASHBOARD": "Vous n'avez aucune équipe.",
-			"PLUGIN": "Vous n'avez installé aucun plugin."
+			"PLUGIN": "Vous n'avez installé aucun plugin.",
+			"PLUGIN_MARKETPLACE": "Ce plugin n'est pas disponible sur le marché"
 		},
 		"TRANSACTION_TYPE": "Taper",
 		"AMOUNT": "Montant",

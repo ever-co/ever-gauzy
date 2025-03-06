@@ -216,7 +216,8 @@
 			"EVENT_TYPE": "No has creado ningún tipo de evento.",
 			"PRODUCT_TYPE_NO_DATA": "No has creado ningún tipo de producto.",
 			"TEAM_DASHBOARD": "No tienes ningún equipo.",
-			"PLUGIN": "No has instalado ningún complemento."
+			"PLUGIN": "No has instalado ningún complemento.",
+			"PLUGIN_MARKETPLACE": "Este complemento no está disponible en el mercado"
 		},
 		"TRANSACTION_TYPE": "Tipo",
 		"AMOUNT": "Cantidad",

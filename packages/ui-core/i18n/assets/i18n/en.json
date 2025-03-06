@@ -227,7 +227,8 @@
 			"EVENT_TYPE": "You have not created any event types.",
 			"PRODUCT_TYPE_NO_DATA": "You have not created any product types.",
 			"TEAM_DASHBOARD": "You don't have any teams.",
-			"PLUGIN": "You haven't install any plugin."
+			"PLUGIN": "You haven't install any plugin.",
+			"PLUGIN_MARKETPLACE": "This plugin is unvailable on marketplace"
 		},
 		"TRANSACTION_TYPE": "Type",
 		"AMOUNT": "Amount",
