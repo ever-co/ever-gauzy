@@ -34,7 +34,7 @@ jobs:
 
       - name: Build image with updated source code
         run: |
-          docker build --build-arg BASE_IMAGE="${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }}:latest" -t guazy-code -f .deploy/code-analysis/Dockerfile .
+          docker build --build-arg DEPENDENCIES_IMAGE="${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }}:latest" -t guazy-code -f .deploy/code-analysis/Dockerfile .
 
       - name: Run linter
         run: |
