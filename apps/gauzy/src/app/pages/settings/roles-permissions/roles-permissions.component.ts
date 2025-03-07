@@ -146,7 +146,6 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 			});
 
 			this.permissions = permissions;
-			console.log(this.permissionGroups, this.permissions);
 			this.permissions.forEach(({ permission, enabled }) => {
 				this.enabledPermissions[permission] = enabled;
 			});
@@ -364,8 +363,6 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 	/**
 	 * Sets up a search filter with debounce to improve performance.
 	 */ private _setupSearchFilter(): void {
-		console.log('yess');
-
 		this.searchControl.valueChanges
 			.pipe(
 				debounceTime(300),
