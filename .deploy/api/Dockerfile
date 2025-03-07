@@ -163,14 +163,26 @@ COPY --chown=node:node --from=builder /srv/gauzy/node_modules_prod ./node_module
 # Fix @guazy dependencies
 RUN rm -rf ./node_modules/@gauzy \
 	&& mkdir -p ./node_modules/@gauzy \
-	&& for pkg in auth common utils config contracts core plugin; do \
-	mv "./packages/$pkg" "./node_modules/@gauzy/$pkg"; \
-	done \
-	&& for plugin in changelog integration-ai integration-github integration-hubstaff integration-jira integration-upwork jitsu-analytics job-proposal job-search knowledge-base product-reviews sentry-tracing videos; do \
-	mv "./packages/plugins/$plugin" "./node_modules/@gauzy/plugin-$plugin"; \
-	done \
-	&& mv "./node_modules/@gauzy/plugin-sentry-tracing" "./node_modules/@gauzy/plugin-sentry" || true \
-	&& rm -rf /tmp/gauzy
+	&& mv "./packages/auth" "./node_modules/@gauzy/auth" \
+	&& mv "./packages/common" "./node_modules/@gauzy/common" \
+	&& mv "./packages/utils" "./node_modules/@gauzy/utils" \
+	&& mv "./packages/config" "./node_modules/@gauzy/config" \
+	&& mv "./packages/contracts" "./node_modules/@gauzy/contracts" \
+	&& mv "./packages/core" "./node_modules/@gauzy/core" \
+	&& mv "./packages/plugin" "./node_modules/@gauzy/plugin" \
+	&& mv "./packages/plugins/changelog" "./node_modules/@gauzy/plugin-changelog" \
+	&& mv "./packages/plugins/integration-ai" "./node_modules/@gauzy/plugin-integration-ai" \
+	&& mv "./packages/plugins/integration-github" "./node_modules/@gauzy/plugin-integration-github" \
+	&& mv "./packages/plugins/integration-hubstaff" "./node_modules/@gauzy/plugin-integration-hubstaff" \
+	&& mv "./packages/plugins/integration-jira" "./node_modules/@gauzy/plugin-integration-jira" \
+	&& mv "./packages/plugins/integration-upwork" "./node_modules/@gauzy/plugin-integration-upwork" \
+	&& mv "./packages/plugins/jitsu-analytics" "./node_modules/@gauzy/plugin-jitsu-analytics" \
+	&& mv "./packages/plugins/job-proposal" "./node_modules/@gauzy/plugin-job-proposal" \
+	&& mv "./packages/plugins/job-search" "./node_modules/@gauzy/plugin-job-search" \
+	&& mv "./packages/plugins/knowledge-base" "./node_modules/@gauzy/plugin-knowledge-base" \
+	&& mv "./packages/plugins/product-reviews" "./node_modules/@gauzy/plugin-product-reviews" \
+	&& mv "./packages/plugins/sentry-tracing" "./node_modules/@gauzy/plugin-sentry" \
+	&& mv "./packages/plugins/videos" "./node_modules/@gauzy/plugin-videos"
 
 # we need node_modules inside each @gauzy package
 COPY --chown=node:node --from=builder /srv/gauzy/packages/auth/node_modules ./node_modules/@gauzy/auth/node_modules

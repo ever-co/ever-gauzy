@@ -21,11 +21,10 @@ COPY --chown=node:node . .
 # Install project production dependencies
 RUN NODE_ENV=production yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production \
     && NODE_ENV=production yarn postinstall.manual \
-    && rm -rf node_modules/@angular \
-    && cp -r ./node_modules ./node_modules_prod
-
-# Install project development dependencies
-RUN NODE_ENV=development yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts \
+    && cp -r ./node_modules ./node_modules_prod \
+    && rm -rf node_modules_prod/@angular \
+    # Install project development dependencies
+    && NODE_ENV=development yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts \
     && NODE_ENV=development yarn postinstall.manual \
     && rm -rf .angular \
     && yarn cache clean

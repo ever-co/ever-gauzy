@@ -13,3 +13,5 @@ WORKDIR /srv/gauzy
 
 # Copy related project files and configuration files
 COPY --chown=node:node . .
+
+RUN yarn install
