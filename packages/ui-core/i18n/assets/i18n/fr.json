@@ -2848,6 +2848,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"SELECT_DATE_RANGE": "Sélectionnez une plage de dates",
 		"SENDER": "Expéditeur",
 		"BROWSE": "Parcourir",
 		"COMMENT": "Comme",

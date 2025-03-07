@@ -1,4 +1,6 @@
 @import '../invoice-edit/invoice-edit.component.scss';
+@import '@shared/required-asterisk';
+
 $green: rgba(37, 184, 105, 1);
 $shadow: 0 0 0 nb-theme(button-outline-width)
     rgba(
@@ -29,4 +31,13 @@ $shadow: 0 0 0 nb-theme(button-outline-width)
   border-color: nb-theme(button-outline-basic-disabled-border-color);
   color: nb-theme(button-outline-basic-disabled-text-color);
   box-shadow: unset;
+}
+
+:host {
+  ::ng-deep {
+    &.md-drppicker {
+      margin-top: -55% !important;
+      margin-left: -10% !important;
+    }
+  }
 }

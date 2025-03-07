@@ -2905,6 +2905,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"SELECT_DATE_RANGE": "Изберете период от дати",
 		"SENDER": "Изпращач",
 		"BROWSE": "Прегледай",
 		"COMMENT": "Коментар",

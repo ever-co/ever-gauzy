@@ -2603,6 +2603,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"SELECT_DATE_RANGE": "crwdnsXXXXX:0crwdneXXXXX:0",
 		"SENDER": "crwdns11020:0crwdne11020:0",
 		"BROWSE": "crwdns11010:0crwdne11010:0",
 		"COMMENT": "crwdns11004:0crwdne11004:0",

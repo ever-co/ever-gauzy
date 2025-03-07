@@ -2870,6 +2870,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"SELECT_DATE_RANGE": "בחר טווח תאריכים",
 		"SENDER": "Sender",
 		"BROWSE": "Browse",
 		"COMMENT": "Comment",

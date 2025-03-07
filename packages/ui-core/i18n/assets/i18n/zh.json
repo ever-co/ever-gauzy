@@ -2847,6 +2847,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"SELECT_DATE_RANGE": "选择日期范围",
 		"SENDER": "发件人",
 		"BROWSE": "浏览",
 		"COMMENT": "评论",

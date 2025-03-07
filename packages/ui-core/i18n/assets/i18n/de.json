@@ -2843,6 +2843,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"SELECT_DATE_RANGE": "Wählen Sie den Datumsbereich aus",
 		"SENDER": "Absender",
 		"BROWSE": "Suchen",
 		"COMMENT": "Kommentar",

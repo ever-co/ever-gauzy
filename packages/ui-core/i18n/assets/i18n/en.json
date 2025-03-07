@@ -2970,6 +2970,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"SELECT_DATE_RANGE": "Select date range",
 		"SENDER": "Sender",
 		"BROWSE": "Browse",
 		"COMMENT": "Comment",

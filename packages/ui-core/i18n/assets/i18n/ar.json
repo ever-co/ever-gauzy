@@ -2845,6 +2845,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"SELECT_DATE_RANGE": "حدد نطاق التاريخ",
 		"SENDER": "المُرسِل",
 		"BROWSE": "تصفح",
 		"COMMENT": "تعليق",

@@ -59,7 +59,8 @@ import {
 	TableComponentsModule,
 	TagsColorInputModule,
 	UserFormsModule,
-	InvoiceViewInnerModule
+	InvoiceViewInnerModule,
+	SelectorsModule
 } from '@gauzy/ui-core/shared';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
@@ -127,7 +128,8 @@ import { InvoiceViewComponent } from './invoice-view/invoice-view.component';
 		ProjectSelectModule,
 		SharedModule,
 		NbAccordionModule,
-		InvoiceViewInnerModule
+		InvoiceViewInnerModule,
+		SelectorsModule
 	],
 	providers: [
 		InvoicesService,

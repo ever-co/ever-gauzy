@@ -16,18 +16,19 @@ import {
 	InvoiceStatusTypesEnum,
 	IInvoiceItemCreateInput,
 	IProductTranslatable,
-	ExpenseStatusesEnum
+	ExpenseStatusesEnum,
+	IDateRangePicker
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { compareDate, distinctUntilChange, extractNumber, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
 import { LocalDataSource } from 'angular2-smart-table';
-import { Observable, firstValueFrom } from 'rxjs';
+import { Observable, Subject, firstValueFrom, takeUntil } from 'rxjs';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
-import { Store, ToastrService } from '@gauzy/ui-core/core';
 import {
+	DateRangePickerBuilderService,
 	ExpensesService,
 	InvoiceEstimateHistoryService,
 	InvoiceItemService,
@@ -35,7 +36,9 @@ import {
 	OrganizationProjectsService,
 	OrganizationSettingService,
 	ProductService,
+	Store,
 	TasksStoreService,
+	ToastrService,
 	TranslatableService
 } from '@gauzy/ui-core/core';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
@@ -94,6 +97,9 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 	total = 0;
 	currencyString: string;
 	selectedLanguage: string;
+	selectedDateRange: IDateRangePicker;
+
+	private readonly _destroy$ = new Subject<void>();
 
 	get currency() {
 		return this.form.get('currency');
@@ -122,7 +128,8 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 		private readonly expensesService: ExpensesService,
 		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
 		private readonly translatableService: TranslatableService,
-		private readonly organizationSettingService: OrganizationSettingService
+		private readonly organizationSettingService: OrganizationSettingService,
+		private readonly dateRangePickerService: DateRangePickerBuilderService
 	) {
 		super(translateService);
 	}
@@ -130,6 +137,11 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 	ngOnInit() {
 		this._applyTranslationOnSmartTable();
 		this.selectedLanguage = this.translateService.currentLang;
+		this.dateRangePickerService.selectedDateRange$.pipe(takeUntil(this._destroy$)).subscribe((range) => {
+			if (range) {
+				this.selectedDateRange = range;
+			}
+		});
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
@@ -1123,5 +1135,8 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 		return date;
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		this._destroy$.next();
+		this._destroy$.complete();
+	}
 }

@@ -2876,6 +2876,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"SELECT_DATE_RANGE": "Выберите диапазон дат",
 		"SENDER": "Отправитель",
 		"BROWSE": "Обзор",
 		"COMMENT": "Комментарий",

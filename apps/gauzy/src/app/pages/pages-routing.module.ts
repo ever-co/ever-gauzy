@@ -69,7 +69,7 @@ const routes: Routes = [
 								employee: false
 							},
 							datePicker: {
-								unitOfTime: 'month'
+								unitOfTime: 'week'
 							}
 						}
 					},
@@ -134,7 +134,7 @@ const routes: Routes = [
 								employee: false
 							},
 							datePicker: {
-								unitOfTime: 'month'
+								unitOfTime: 'week'
 							}
 						},
 						resolve: { dates: DateRangePickerResolver }

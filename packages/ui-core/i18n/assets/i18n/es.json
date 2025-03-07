@@ -2849,6 +2849,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"SELECT_DATE_RANGE": "Seleccione un rango de fechas",
 		"SENDER": "Remitente",
 		"BROWSE": "Buscar",
 		"COMMENT": "Comentario",
