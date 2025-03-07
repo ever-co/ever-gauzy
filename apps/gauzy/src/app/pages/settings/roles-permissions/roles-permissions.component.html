@@ -38,6 +38,15 @@
 					</nb-autocomplete>
 				</div>
 			</div>
+			<div class="col-6">
+				<input
+					type="text"
+					[formControl]="searchControl"
+					nbInput
+					fullWidth
+					placeholder="Search permissions..."
+				/>
+			</div>
 			<div class="col-6" *ngxPermissionsOnly="['CHANGE_ROLES_PERMISSIONS']">
 				<ng-container *ngIf="isWantToCreate">
 					<div class="actions create">
@@ -78,7 +87,7 @@
 					</nb-card-header>
 					<nb-card-body class="permission-items-col">
 						<nb-toggle
-							*ngFor="let permission of permissionGroups.GENERAL"
+							*ngFor="let permission of filteredGeneralPermissions"
 							[(checked)]="enabledPermissions[permission]"
 							(checkedChange)="permissionChanged(permission, $event, !isDisabledGeneralPermissions())"
 							labelPosition="start"
@@ -106,7 +115,7 @@
 					</nb-card-header>
 					<nb-card-body class="permission-items-col">
 						<nb-toggle
-							*ngFor="let permission of getAdministrationPermissions()"
+							*ngFor="let permission of filteredAdminPermissions"
 							[(checked)]="enabledPermissions[permission]"
 							(checkedChange)="
 								permissionChanged(permission, $event, !isDisabledAdministrationPermissions())
