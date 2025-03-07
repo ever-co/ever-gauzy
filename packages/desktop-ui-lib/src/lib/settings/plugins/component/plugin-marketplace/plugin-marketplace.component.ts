@@ -13,7 +13,7 @@ import { PluginMarketplaceUploadComponent } from './plugin-marketplace-upload/pl
 @Component({
 	selector: 'lib-plugin-marketplace',
 	templateUrl: './plugin-marketplace.component.html',
-	styleUrls: ['./plugin-marketplace-upload.component.scss']
+	styleUrls: ['./plugin-marketplace.component.scss']
 })
 export class PluginMarketplaceComponent implements OnInit {
 	public plugins$ = new BehaviorSubject<IPlugin[]>([]);

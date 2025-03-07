@@ -9,7 +9,7 @@ import { takeUntil } from 'rxjs/operators';
 @Component({
 	selector: 'lib-plugin-marketplace-upload',
 	templateUrl: './plugin-marketplace-upload.component.html',
-	styleUrl: './plugin-marketplace-upload.component.scss',
+	styleUrls: ['./plugin-marketplace-upload.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PluginMarketplaceUploadComponent implements OnInit {
