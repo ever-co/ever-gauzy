@@ -1,19 +1,56 @@
 name: Generate dependencies image
 
 on:
-  push:
-    # branches: [master, dev]
-    paths:
-      - 'package.json'
-      # - 'yarn.lock'
-      - './**/package.json'
-      - '.deploy/dependencies/**/*'
-      - '.github/workflows/dependencies.yml'
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'The branch, tag or SHA to checkout'
+        required: false
+        type: string
+        default: ''
 
 jobs:
+  check-changes:
+    name: Check for dependency changes
+    runs-on: ubuntu-latest
+    outputs:
+      changes_detected: ${{ steps.check-changes.outputs.changes_detected }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+          fetch-depth: 2
+
+      - name: Check for changes in dependency files
+        id: check-changes
+        run: |
+          # For manual triggers or workflow calls, check if files have changed in the last commit
+          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
+
+          if echo "$CHANGED_FILES" | grep -q -E '^package\.json$|^yarn\.lock$|^.+/package\.json$|^\.deploy/dependencies/|^\.github/workflows/dependencies\.yml$'; then
+            echo "changes_detected=true" >> $GITHUB_OUTPUT
+            echo "Dependency changes detected"
+          else
+            echo "changes_detected=false" >> $GITHUB_OUTPUT
+            echo "No dependency changes detected"
+          fi
+
+  handle-no-changes:
+    name: Handle No Changes
+    needs: check-changes
+    if: needs.check-changes.outputs.changes_detected != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: No Changes Required
+        run: |
+          echo "No dependency changes detected. No rebuild required."
+          exit 0
+
   generate-dependencies:
     name: Generate dependencies image
+    needs: check-changes
+    if: needs.check-changes.outputs.changes_detected == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -22,6 +59,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.ref || github.ref }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1

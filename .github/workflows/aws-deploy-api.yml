@@ -2,7 +2,7 @@ name: Deploy API to AWS
 
 on:
   push:
-    # branches: [master, dev]
+    branches: [master, dev, chore/gzy-134-reduce-building-time]
     paths:
       - 'apps/api/**/*.*'
       - 'packages/auth/**/*.*'
@@ -29,16 +29,19 @@ on:
       - 'packages/plugins/videos/**/*.*'
       - '.deploy/api/**/*'
       - '.github/workflows/aws-deploy-api.yml'
-  workflow_run:
-    workflows: ['Generate dependencies image']
-    types:
-      - completed
-    # branches: [master, dev]
+      - 'package.json'
+      - 'yarn.lock'
   workflow_dispatch:
 
 jobs:
+  check-dependencies:
+    name: Check and Build Dependencies
+    uses: ./.github/workflows/dependencies.yml
+    secrets: inherit
+
   deploy-api:
     name: Deploy API to AWS
+    needs: check-dependencies
     runs-on: ubuntu-latest
     permissions:
       contents: read
