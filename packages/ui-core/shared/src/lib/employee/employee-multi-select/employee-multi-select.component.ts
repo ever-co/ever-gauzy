@@ -131,7 +131,6 @@ export class EmployeeSelectComponent implements OnInit {
 	}
 
 	markAsTouchedOnInteraction(): void {
-		this.select.markAsTouched();
 		this.onTouched();
 	}
 

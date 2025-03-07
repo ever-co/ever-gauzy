@@ -206,6 +206,7 @@
 									<ga-employee-multi-select
 										[customClass]="isEstimate ? '' : 'required-asterisk'"
 										[selectedEmployeeIds]="form.get('selectedEmployeeIds')?.value"
+										[allEmployees]="employees"
 										(selectedChange)="onMembersSelected($event)"
 										(onLoadEmployees)="onLoadEmployees($event)"
 										formControlName="selectedEmployeeIds"
