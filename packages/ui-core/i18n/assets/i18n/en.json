@@ -2970,6 +2970,11 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"VALIDATION": {
+			"REQUIRED_CONTACT": "Please select contact",
+			"REQUIRED_INVOICE_NUMBER": "Invoice number is required",
+			"REQUIRED_INVOICE_TYPE": "Please select invoice type"
+		},
 		"SELECT_DATE_RANGE": "Select date range",
 		"SENDER": "Sender",
 		"BROWSE": "Browse",

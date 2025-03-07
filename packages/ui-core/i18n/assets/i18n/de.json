@@ -2843,6 +2843,11 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"VALIDATION": {
+			"REQUIRED_CONTACT": "Bitte wählen Sie einen Kontakt aus",
+			"REQUIRED_INVOICE_NUMBER": "Rechnungsnummer ist erforderlich",
+			"REQUIRED_INVOICE_TYPE": "Bitte wählen Sie den Rechnungstyp"
+		},
 		"SELECT_DATE_RANGE": "Wählen Sie den Datumsbereich aus",
 		"SENDER": "Absender",
 		"BROWSE": "Suchen",

@@ -2848,6 +2848,11 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"VALIDATION": {
+			"REQUIRED_CONTACT": "Veuillez sélectionner un contact",
+			"REQUIRED_INVOICE_NUMBER": "Le numéro de facture est requis",
+			"REQUIRED_INVOICE_TYPE": "Veuillez sélectionner le type de facture"
+		},
 		"SELECT_DATE_RANGE": "Sélectionnez une plage de dates",
 		"SENDER": "Expéditeur",
 		"BROWSE": "Parcourir",

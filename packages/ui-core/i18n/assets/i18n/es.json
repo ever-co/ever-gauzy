@@ -2849,6 +2849,11 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"VALIDATION": {
+			"REQUIRED_CONTACT": "Por favor, seleccione un contacto",
+			"REQUIRED_INVOICE_NUMBER": "El número de factura es obligatorio",
+			"REQUIRED_INVOICE_TYPE": "Por favor, seleccione el tipo de factura"
+		},
 		"SELECT_DATE_RANGE": "Seleccione un rango de fechas",
 		"SENDER": "Remitente",
 		"BROWSE": "Buscar",

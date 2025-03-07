@@ -4,8 +4,7 @@ import { combineLatest, filter, Subject, tap } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IDateRangePicker, IEmployee, IOrganization, PermissionsEnum } from '@gauzy/contracts';
-import { DateRangePickerBuilderService, EmployeesService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/core';
+import { DateRangePickerBuilderService, EmployeesService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -2847,6 +2847,11 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"VALIDATION": {
+			"REQUIRED_CONTACT": "Por favor, selecione um contato",
+			"REQUIRED_INVOICE_NUMBER": "O número da fatura é obrigatório",
+			"REQUIRED_INVOICE_TYPE": "Por favor, selecione o tipo de fatura"
+		},
 		"SELECT_DATE_RANGE": "Selecione um intervalo de datas",
 		"SENDER": "Remetente",
 		"BROWSE": "Navegar",

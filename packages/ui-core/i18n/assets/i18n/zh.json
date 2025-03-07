@@ -2847,6 +2847,11 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"VALIDATION": {
+			"REQUIRED_CONTACT": "请选择联系人",
+			"REQUIRED_INVOICE_NUMBER": "发票号是必填项",
+			"REQUIRED_INVOICE_TYPE": "请选择发票类型"
+		},
 		"SELECT_DATE_RANGE": "选择日期范围",
 		"SENDER": "发件人",
 		"BROWSE": "浏览",

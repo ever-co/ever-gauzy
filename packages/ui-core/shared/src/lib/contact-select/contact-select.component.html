@@ -1,5 +1,5 @@
 <ng-select
-	[addTag]="((hasEditEmployee$ | async) && addTag) ? addOrganizationContact : null"
+	[addTag]="(hasEditEmployee$ | async) && addTag ? addOrganizationContact : null"
 	[clearable]="clearable"
 	[disabled]="disabled"
 	[searchable]="searchable"
@@ -10,12 +10,9 @@
 	bindLabel="name"
 	[searchFn]="searchContact"
 	appendTo="body"
+	(click)="markAsTouchedOnInteraction()"
 >
-	<ng-template
-		ng-option-tmp
-		let-item="item"
-		let-index="index"
-	>
+	<ng-template ng-option-tmp let-item="item" let-index="index">
 		{{ item.name }}
 	</ng-template>
 	<ng-template ng-label-tmp let-item="item">

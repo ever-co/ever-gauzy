@@ -6,8 +6,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { ContactType, IOrganization, IOrganizationContact, PermissionsEnum } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store } from '@gauzy/ui-core/core';
-import { OrganizationContactService, ErrorHandlingService, ToastrService } from '@gauzy/ui-core/core';
+import { OrganizationContactService, ErrorHandlingService, ToastrService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -30,7 +29,7 @@ export class ContactSelectComponent extends TranslationBaseComponent implements 
 	/*
 	 * Getter & Setter for dynamic enabled/disabled element
 	 */
-	_disabled: boolean = false;
+	_disabled = false;
 	get disabled(): boolean {
 		return this._disabled;
 	}
@@ -63,7 +62,7 @@ export class ContactSelectComponent extends TranslationBaseComponent implements 
 	/*
 	 * Getter & Setter for dynamic add tag option
 	 */
-	_addTag: boolean = false;
+	_addTag = false;
 	get addTag(): boolean {
 		return this._addTag;
 	}
@@ -74,7 +73,7 @@ export class ContactSelectComponent extends TranslationBaseComponent implements 
 	/*
 	 * Getter & Setter for dynamic searchable option
 	 */
-	_searchable: boolean = true;
+	_searchable = true;
 	get searchable(): boolean {
 		return this._searchable;
 	}
@@ -95,8 +94,7 @@ export class ContactSelectComponent extends TranslationBaseComponent implements 
 		return this._organizationContact;
 	}
 
-	@Output()
-	onChanged = new EventEmitter<IOrganizationContact>();
+	@Output() onChanged = new EventEmitter<IOrganizationContact>();
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -143,6 +141,7 @@ export class ContactSelectComponent extends TranslationBaseComponent implements 
 	writeValue(value: IOrganizationContact) {
 		if (value) {
 			this._organizationContact = value;
+			this.onChange(value);
 		}
 	}
 
@@ -160,6 +159,7 @@ export class ContactSelectComponent extends TranslationBaseComponent implements 
 
 	selectContact(contact: IOrganizationContact): void {
 		this.organizationContact = contact;
+		this.onChange(contact);
 		this.onChanged.emit(contact);
 	}
 
@@ -205,6 +205,10 @@ export class ContactSelectComponent extends TranslationBaseComponent implements 
 			return null;
 		}
 	};
+
+	markAsTouchedOnInteraction(): void {
+		this.onTouched();
+	}
 
 	ngOnDestroy() {}
 }

@@ -2870,6 +2870,11 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"VALIDATION": {
+			"REQUIRED_CONTACT": "אנא בחר קשר",
+			"REQUIRED_INVOICE_NUMBER": "דרוש מספר חשבונית",
+			"REQUIRED_INVOICE_TYPE": "נא לבחור סוג חשבונית"
+		},
 		"SELECT_DATE_RANGE": "בחר טווח תאריכים",
 		"SENDER": "Sender",
 		"BROWSE": "Browse",

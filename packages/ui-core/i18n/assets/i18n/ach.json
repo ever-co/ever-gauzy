@@ -2603,6 +2603,11 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"VALIDATION": {
+			"REQUIRED_CONTACT": "crwdnsXXXXX:0crwdneXXXXX:0",
+			"REQUIRED_INVOICE_NUMBER": "crwdnsXXXXX:0crwdneXXXXX:0",
+			"REQUIRED_INVOICE_TYPE": "crwdnsXXXXX:0crwdneXXXXX:0"
+		},
 		"SELECT_DATE_RANGE": "crwdnsXXXXX:0crwdneXXXXX:0",
 		"SENDER": "crwdns11020:0crwdne11020:0",
 		"BROWSE": "crwdns11010:0crwdne11010:0",

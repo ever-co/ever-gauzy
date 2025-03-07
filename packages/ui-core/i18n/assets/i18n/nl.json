@@ -2847,6 +2847,11 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"VALIDATION": {
+			"REQUIRED_CONTACT": "Selecteer een contactpersoon",
+			"REQUIRED_INVOICE_NUMBER": "Factuurnummer is verplicht",
+			"REQUIRED_INVOICE_TYPE": "Selecteer alstublieft het factuurtype"
+		},
 		"SELECT_DATE_RANGE": "Selecteer datumbereik",
 		"SENDER": "Afzender",
 		"BROWSE": "Bladeren",

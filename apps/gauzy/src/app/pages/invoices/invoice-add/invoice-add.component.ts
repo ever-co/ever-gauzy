@@ -199,12 +199,13 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			discountType: [],
 			taxType: [],
 			tax2Type: [],
-			invoiceType: [],
+			invoiceType: [null, Validators.required],
 			project: [],
 			task: [],
 			product: [],
 			expense: [],
-			tags: []
+			tags: [],
+			selectedEmployeeIds: [[]]
 		});
 	}
 
@@ -779,6 +780,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 		switch ($event) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
 				this.isEmployeeHourTable = true;
+				this.updateEmployeeValidation();
 				break;
 			case InvoiceTypeEnum.BY_PROJECT_HOURS:
 				this.isProjectHourTable = true;
@@ -802,6 +804,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 	}
 
 	async generateTable(generateUninvoiced?: boolean) {
+		if (!this.invoiceType || this.form.invalid || !this.selectedDateRange) return;
 		this.selectedInvoiceType = this.invoiceType;
 		this.smartTableSource.refresh();
 
@@ -1133,6 +1136,17 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			date.setMonth(date.getMonth() + 1);
 		}
 		return date;
+	}
+
+	private updateEmployeeValidation() {
+		const employeeControl = this.form.get('selectedEmployeeIds');
+		if (this.isEmployeeHourTable) {
+			employeeControl.setValidators([Validators.required]);
+		} else {
+			employeeControl.clearValidators();
+		}
+
+		employeeControl.updateValueAndValidity();
 	}
 
 	ngOnDestroy(): void {

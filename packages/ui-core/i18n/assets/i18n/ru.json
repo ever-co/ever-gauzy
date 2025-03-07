@@ -2876,6 +2876,11 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"VALIDATION": {
+			"REQUIRED_CONTACT": "Пожалуйста, выберите контакт",
+			"REQUIRED_INVOICE_NUMBER": "Номер счета обязателен",
+			"REQUIRED_INVOICE_TYPE": "Пожалуйста, выберите тип счета"
+		},
 		"SELECT_DATE_RANGE": "Выберите диапазон дат",
 		"SENDER": "Отправитель",
 		"BROWSE": "Обзор",

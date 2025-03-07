@@ -2847,6 +2847,11 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"VALIDATION": {
+			"REQUIRED_CONTACT": "Proszę wybrać kontakt",
+			"REQUIRED_INVOICE_NUMBER": "Numer faktury jest wymagany",
+			"REQUIRED_INVOICE_TYPE": "Proszę wybrać typ faktury"
+		},
 		"SELECT_DATE_RANGE": "Wybierz zakres dat",
 		"SENDER": "Nadawca",
 		"BROWSE": "Przeglądaj",

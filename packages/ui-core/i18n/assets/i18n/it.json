@@ -2847,6 +2847,11 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"VALIDATION": {
+			"REQUIRED_CONTACT": "Seleziona un contatto",
+			"REQUIRED_INVOICE_NUMBER": "Il numero della fattura è obbligatorio",
+			"REQUIRED_INVOICE_TYPE": "Si prega di selezionare il tipo di fattura"
+		},
 		"SELECT_DATE_RANGE": "Seleziona un intervallo di date",
 		"SENDER": "Mittente",
 		"BROWSE": "Sfoglia",

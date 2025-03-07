@@ -2845,6 +2845,11 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"VALIDATION": {
+			"REQUIRED_CONTACT": "الرجاء اختيار جهة الاتصال",
+			"REQUIRED_INVOICE_NUMBER": "رقم الفاتورة مطلوب",
+			"REQUIRED_INVOICE_TYPE": "يرجى تحديد نوع الفاتورة"
+		},
 		"SELECT_DATE_RANGE": "حدد نطاق التاريخ",
 		"SENDER": "المُرسِل",
 		"BROWSE": "تصفح",

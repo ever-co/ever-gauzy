@@ -13,7 +13,11 @@
 					<div class="row">
 						<div class="col-sm-6">
 							<div class="form-group">
-								<label for="inputInvoiceNumber" class="label">
+								<label
+									for="inputInvoiceNumber"
+									[ngClass]="isEstimate ? '' : 'required-asterisk'"
+									class="label"
+								>
 									<span>
 										{{
 											(isEstimate
@@ -36,10 +40,23 @@
 									id="inputInvoiceNumber"
 									fullWidth
 								/>
+								<div
+									*ngIf="
+										isEstimate &&
+										form.get('invoiceNumber')?.errors?.required &&
+										form.get('invoiceNumber')?.touched
+									"
+									class="invalid-feedback d-block"
+								>
+									{{ 'INVOICES_PAGE.VALIDATION.REQUIRED_INVOICE_NUMBER' | translate }}
+								</div>
 							</div>
 						</div>
 						<div class="col-sm-6">
-							<label for="inputOrganizationContact" class="label"
+							<label
+								for="inputOrganizationContact"
+								class="label"
+								[ngClass]="isEstimate ? '' : 'required-asterisk'"
 								>{{ 'INVOICES_PAGE.CONTACT' | translate }}
 							</label>
 							<ga-contact-select
@@ -48,6 +65,16 @@
 								formControlName="organizationContact"
 								(onChanged)="selectOrganizationContact($event)"
 							></ga-contact-select>
+							<div
+								*ngIf="
+									isEstimate &&
+									form.get('organizationContact')?.errors?.required &&
+									form.get('organizationContact')?.touched
+								"
+								class="invalid-feedback d-block"
+							>
+								{{ 'INVOICES_PAGE.VALIDATION.REQUIRED_CONTACT' | translate }}
+							</div>
 						</div>
 					</div>
 					<div class="row">
@@ -131,7 +158,11 @@
 					<div class="row">
 						<div class="col-sm-6">
 							<div class="form-group">
-								<label for="invoiceType" class="label">
+								<label
+									for="invoiceType"
+									class="label"
+									[ngClass]="isEstimate ? '' : 'required-asterisk'"
+								>
 									{{
 										(isEstimate
 											? 'INVOICES_PAGE.INVOICE_TYPE.SELECT_ESTIMATE_TYPE'
@@ -150,11 +181,22 @@
 									"
 									id="invoiceType"
 									fullWidth
+									required
 								>
 									<nb-option *ngFor="let invoiceType of invoiceTypes" [value]="invoiceType">
 										{{ 'INVOICES_PAGE.INVOICE_TYPE.' + invoiceType | translate }}
 									</nb-option>
 								</nb-select>
+								<div
+									*ngIf="
+										isEstimate &&
+										form.get('invoiceType')?.errors?.required &&
+										form.get('invoiceType')?.touched
+									"
+									class="invalid-feedback d-block"
+								>
+									{{ 'INVOICES_PAGE.VALIDATION.REQUIRED_INVOICE_TYPE' | translate }}
+								</div>
 							</div>
 						</div>
 
@@ -162,14 +204,26 @@
 							<div class="col-sm-6">
 								<div class="form-group">
 									<ga-employee-multi-select
+										[customClass]="isEstimate ? '' : 'required-asterisk'"
+										[selectedEmployeeIds]="form.get('selectedEmployeeIds')?.value"
 										(selectedChange)="onMembersSelected($event)"
 										(onLoadEmployees)="onLoadEmployees($event)"
+										formControlName="selectedEmployeeIds"
 									></ga-employee-multi-select>
+									<div
+										*ngIf="
+											form.get('selectedEmployeeIds')?.errors?.required &&
+											form.get('selectedEmployeeIds')?.touched
+										"
+										class="invalid-feedback d-block"
+									>
+										{{ 'FORM.ERROR.PROJECT_EMPLOYEE' | translate }}
+									</div>
 								</div>
 							</div>
 						</ng-container>
 
-						<ng-container *ngIf="selectedEmployeeIds?.length > 0">
+						<ng-container *ngIf="isEmployeeHourTable && selectedEmployeeIds?.length > 0">
 							<div class="col-sm-6">
 								<div class="form-group">
 									<label for="selectedDateRange" class="label required-asterisk"
@@ -301,7 +355,7 @@
 										(click)="generateTable()"
 										status="basic"
 										outline
-										[disabled]="!invoiceType"
+										[disabled]="!invoiceType || form.invalid || !selectedDateRange"
 										nbButton
 									>
 										{{
