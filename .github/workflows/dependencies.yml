@@ -5,7 +5,7 @@ on:
     # branches: [master, dev]
     paths:
       - 'package.json'
-      - 'yarn.lock'
+      # - 'yarn.lock'
       - './**/package.json'
       - '.deploy/dependencies/**/*'
       - '.github/workflows/dependencies.yml'

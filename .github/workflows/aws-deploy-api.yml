@@ -33,7 +33,7 @@ on:
     workflows: ['Generate dependencies image']
     types:
       - completed
-    branches: [master, dev]
+    # branches: [master, dev]
   workflow_dispatch:
 
 jobs:
