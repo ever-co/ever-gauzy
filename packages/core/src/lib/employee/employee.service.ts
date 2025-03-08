@@ -1,6 +1,6 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { Brackets, FindManyOptions, FindOneOptions, In, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
-import * as moment from 'moment';
+import { utc } from 'moment';
 import {
 	IBasePerTenantAndOrganizationEntityModel,
 	ID,
@@ -8,7 +8,9 @@ import {
 	IEmployee,
 	IFindMembersInput,
 	IPagination,
-	PermissionsEnum
+	PermissionsEnum,
+	IEmployeeHourlyRate,
+	IUser
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { RequestContext } from '../core/context';
@@ -20,6 +22,7 @@ import { MikroOrmEmployeeRepository, TypeOrmEmployeeRepository } from './reposit
 
 @Injectable()
 export class EmployeeService extends TenantAwareCrudService<Employee> {
+	private readonly logger = new Logger(`GZY - ${EmployeeService.name}`);
 	constructor(
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository
@@ -103,11 +106,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 *
 	 * @throws {Error} - Throws an error if the retrieval process fails.
 	 */
-	async findActiveEmployeesByEmployeeIds(
-		employeeIds: ID[] = [],
-		organizationId: ID,
-		tenantId: ID
-	): Promise<IEmployee[]> {
+	async findActiveEmployeesByEmployeeIds(employeeIds: ID[], organizationId: ID, tenantId: ID): Promise<IEmployee[]> {
 		try {
 			// Filter out any invalid values from the employee IDs array
 			const filteredIds = employeeIds.filter(Boolean);
@@ -121,7 +120,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				isArchived: false
 			});
 		} catch (error) {
-			console.error('Error while retrieving employees', error);
+			this.logger.error('Error while retrieving employees', error);
 			throw new Error(`Failed to retrieve employees: ${error}`);
 		}
 	}
@@ -149,7 +148,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				case MultiORMEnum.MikroORM: {
 					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<Employee>(options);
 					const employees = await this.mikroOrmRepository.find(where, mikroOptions);
-					return employees.map((entity: Employee) => this.serialize(entity)) as Employee[];
+					return employees.map((entity: Employee) => this.serialize(entity));
 				}
 				case MultiORMEnum.TypeORM: {
 					return await this.typeOrmRepository.find(options);
@@ -158,7 +157,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
 			}
 		} catch (error) {
-			console.error(`Error finding employees by user IDs: ${error.message}`);
+			this.logger.error('Error finding employees by user IDs', error);
 			return []; // Return an empty array if an error occurs
 		}
 	}
@@ -193,7 +192,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 		} catch (error) {
-			console.error(`Error finding employee by userId: ${error.message}`);
+			this.logger.error('Error finding employee by userId', error);
 			return null;
 		}
 	}
@@ -223,19 +222,20 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			};
 
 			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
+				case MultiORMEnum.MikroORM: {
 					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<Employee>(
 						queryOptions as FindManyOptions
 					);
 					const item = await this.mikroOrmRepository.findOne(where, mikroOptions);
 					return this.serialize(item as Employee);
+				}
 				case MultiORMEnum.TypeORM:
 					return await this.typeOrmRepository.findOne(queryOptions);
 				default:
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 		} catch (error) {
-			console.error(`Error finding employee by userId: ${error.message}`);
+			this.logger.error('Error finding employee by userId', error);
 			return null;
 		}
 	}
@@ -252,7 +252,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			});
 		} catch (error) {
 			// Handle any potential errors, log, and optionally rethrow or return a default value.
-			console.error('Error occurred while fetching active employees:', error);
+			this.logger.error('Error occurred while fetching active employees', error);
 			return [];
 		}
 	}
@@ -269,8 +269,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 */
 	async findWorkingEmployees(
 		organizationId: ID,
-		forRange: IDateRangePicker | any,
-		withUser: boolean = false
+		forRange?: IDateRangePicker,
+		withUser = false
 	): Promise<IPagination<IEmployee>> {
 		try {
 			const query = this.typeOrmEmployeeRepository.createQueryBuilder(this.tableName);
@@ -317,7 +317,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {
-			console.log('Error while getting working employees: %s', error);
+			this.logger.error('Error while getting working employees', error);
 		}
 	}
 
@@ -330,10 +330,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * @param forRange
 	 * @returns
 	 */
-	async findWorkingEmployeesCount(
-		organizationId: string,
-		forRange: IDateRangePicker | any
-	): Promise<{ total: number }> {
+	async findWorkingEmployeesCount(organizationId: string, forRange?: IDateRangePicker): Promise<{ total: number }> {
 		try {
 			const query = this.typeOrmEmployeeRepository.createQueryBuilder(this.tableName);
 			query.innerJoin(`${query.alias}.user`, 'user');
@@ -347,8 +344,45 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			const total = await query.getCount();
 			return { total };
 		} catch (error) {
-			console.log('Error while getting working employee counts: %s', error);
+			this.logger.error('Error while getting working employee counts', error);
 		}
+	}
+
+	/**
+	 * Get the hourly rate for a set of employees
+	 *
+	 * @param organizationId  The organization id in which we should match the employees
+	 * @param employeesId  List of employees ids that we want to get the hourly rate
+	 * @param forRange  The time range that we should match that employees was working on the organization
+	 */
+	async getHourlyRate(
+		organizationId: string,
+		employeesId: string[],
+		forRange: IDateRangePicker
+	): Promise<IEmployeeHourlyRate[]> {
+		const query = this.typeOrmEmployeeRepository.createQueryBuilder(this.tableName);
+		query.leftJoin('employee.user', 'user');
+
+		// Select only the required fields
+		query.setFindOptions({
+			select: {
+				id: true,
+				billRateCurrency: true,
+				billRateValue: true,
+				minimumBillingRate: true
+			}
+		});
+
+		// Filter by organization id and date range
+		query.where((qb: SelectQueryBuilder<Employee>) => {
+			this.getFilterQuery(qb, organizationId, forRange);
+		});
+
+		// Filter by employee IDs
+		query.andWhere(p(`"${this.tableName}"."id" IN (:...employeesId)`), { employeesId });
+
+		const data = await query.getMany();
+		return data as IEmployeeHourlyRate[];
 	}
 
 	/**
@@ -358,7 +392,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * @param organizationId - The organization ID to filter by.
 	 * @param forRange - An object representing a date range (IDateRangePicker) or any other type.
 	 */
-	getFilterQuery(qb: SelectQueryBuilder<Employee>, organizationId: string, forRange: IDateRangePicker | any) {
+	getFilterQuery(qb: SelectQueryBuilder<Employee>, organizationId: string, forRange?: IDateRangePicker) {
 		// Retrieve the current tenant ID from the RequestContext
 		const tenantId = RequestContext.currentTenantId();
 
@@ -378,32 +412,30 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		);
 
 		// Check for date range conditions
-		if (isNotEmpty(forRange)) {
-			if (forRange.startDate && forRange.endDate) {
-				const { start: startDate, end: endDate } = getDateRangeFormat(
-					moment.utc(forRange.startDate),
-					moment.utc(forRange.endDate)
-				);
+		if (forRange) {
+			const { start: startDate, end: endDate } = getDateRangeFormat(
+				utc(forRange.startDate),
+				utc(forRange.endDate)
+			);
 
-				// Filter by startedWorkOn condition
-				qb.andWhere(
-					new Brackets((web: WhereExpressionBuilder) => {
-						web.andWhere(p(`"${qb.alias}"."startedWorkOn" <= :startedWorkOn`), {
-							startedWorkOn: endDate
-						});
-					})
-				);
+			// Filter by startedWorkOn condition
+			qb.andWhere(
+				new Brackets((web: WhereExpressionBuilder) => {
+					web.andWhere(p(`"${qb.alias}"."startedWorkOn" <= :startedWorkOn`), {
+						startedWorkOn: endDate
+					});
+				})
+			);
 
-				// Filter by endWork condition (NULL or >= startDate)
-				qb.andWhere(
-					new Brackets((web: WhereExpressionBuilder) => {
-						web.where(p(`"${qb.alias}"."endWork" IS NULL`));
-						web.orWhere(p(`"${qb.alias}"."endWork" >= :endWork`), {
-							endWork: startDate
-						});
-					})
-				);
-			}
+			// Filter by endWork condition (NULL or >= startDate)
+			qb.andWhere(
+				new Brackets((web: WhereExpressionBuilder) => {
+					web.where(p(`"${qb.alias}"."endWork" IS NULL`));
+					web.orWhere(p(`"${qb.alias}"."endWork" >= :endWork`), {
+						endWork: startDate
+					});
+				})
+			);
 		}
 
 		// Check for permission CHANGE_SELECTED_EMPLOYEE
@@ -420,7 +452,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * @param options Pagination options
 	 * @returns Promise containing paginated employees and total count
 	 */
-	public async pagination(options: PaginationParams<any>): Promise<IPagination<IEmployee>> {
+	public async pagination(options: PaginationParams<IEmployee>): Promise<IPagination<IEmployee>> {
 		try {
 			// Retrieve the current tenant ID from the RequestContext
 			const tenantId = RequestContext.currentTenantId();
@@ -434,8 +466,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 
 			// Set pagination options and selected table properties/fields
 			query.setFindOptions({
-				skip: options && options.skip ? options.take * (options.skip - 1) : 0,
-				take: options && options.take ? options.take : 10,
+				skip: options?.skip ? options.take * (options.skip - 1) : 0,
+				take: options?.take ? options.take : 10,
 				select: {
 					// Selected fields for the Employee entity
 					id: true,
@@ -457,7 +489,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					isAway: true,
 					isOnline: true
 				},
-				...(options && options.relations ? { relations: options.relations } : {}),
+				...(options?.relations ? { relations: options.relations } : {}),
 				...(options && 'withDeleted' in options ? { withDeleted: options.withDeleted } : {}) // Include soft-deleted parent entities
 			});
 
@@ -501,7 +533,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					// Apply conditions related to the user property in the 'where' object
 					qb.andWhere(
 						new Brackets((web: WhereExpressionBuilder) => {
-							const { user } = where;
+							const user = where.user as IUser;
 							if (isNotEmpty(user)) {
 								if (isNotEmpty(user.name)) {
 									const keywords: string[] = user.name.split(' ');
@@ -532,6 +564,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {
+			this.logger.error('Error while getting employees', error);
 			throw new BadRequestException(error);
 		}
 	}
@@ -557,7 +590,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				relations: { user: { organizations: true }, teams: true }
 			});
 		} catch (error) {
-			console.error('Error during soft delete for employee', error);
+			this.logger.error('Error during soft delete for employee', error);
 			throw new BadRequestException(error.message || 'Soft delete failed');
 		}
 	}
@@ -588,7 +621,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				withDeleted: true
 			});
 		} catch (error) {
-			console.error('Error during soft recovery operation for employee:', error);
+			this.logger.error('Error during soft recovery operation for employee', error);
 			// Throw a BadRequestException if any error occurs during soft recovery
 			throw new BadRequestException(error.message || 'Failed to recover soft-deleted employee');
 		}
