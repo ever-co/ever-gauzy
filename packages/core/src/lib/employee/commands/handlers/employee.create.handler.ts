@@ -1,4 +1,5 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { Logger } from '@nestjs/common'
 import { ComponentLayoutStyleEnum, IEmployee, LanguagesEnum, RolesEnum } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { isEmpty } from '@gauzy/common';
@@ -14,6 +15,7 @@ import { UserService } from './../../../user/user.service';
 
 @CommandHandler(EmployeeCreateCommand)
 export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateCommand> {
+	private readonly logger = new Logger(`GZY - ${EmployeeCreateHandler.name}`);
 	constructor(
 		private readonly _commandBus: CommandBus,
 		private readonly _employeeService: EmployeeService,
@@ -66,7 +68,7 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 			});
 
 			// 5. Assign organizations to the employee user
-			if (!!employee.organizationId) {
+			if (employee.organizationId) {
 				await this._userOrganizationService.addUserToOrganization(user, organizationId);
 			}
 
@@ -85,7 +87,7 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 					organization: { id: organizationId }
 				});
 			} catch (error) {
-				console.log('Error while creating employee for existing user', error);
+				this.logger.error('Error while creating employee for existing user', error);
 			}
 		}
 	}

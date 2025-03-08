@@ -1,7 +1,7 @@
-import { ComponentLayoutStyleEnum, LanguagesEnum } from '@gauzy/contracts';
+import { ComponentLayoutStyleEnum, LanguagesEnum, IDefaultEmployee } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 
-export const DEFAULT_EMPLOYEES: any = [
+export const DEFAULT_EMPLOYEES: IDefaultEmployee[] = [
 	{
 		email: `${environment.demoCredentialConfig.employeeEmail}`,
 		password: `${environment.demoCredentialConfig.employeePassword}`,
@@ -15,7 +15,7 @@ export const DEFAULT_EMPLOYEES: any = [
 	}
 ];
 
-export const DEFAULT_EVER_EMPLOYEES: any = [
+export const DEFAULT_EVER_EMPLOYEES: IDefaultEmployee[] = [
 	{
 		email: 'ruslan@example-ever.co',
 		password: '123456',

@@ -18,7 +18,7 @@ import { OrganizationRecurringExpenseService } from '../organization-recurring-e
 
 @Injectable()
 export class EmployeeStatisticsService {
-	private _monthNames = [
+	private readonly _monthNames = [
 		'January',
 		'February',
 		'March',
@@ -85,14 +85,11 @@ export class EmployeeStatisticsService {
 			return obj;
 		});
 
-		const sortedEmployeeExpenses: Object[] = [];
-
+		const sortedEmployeeExpenses: object[] = [];
 		mappedEmployeeExpenses.forEach((obj) => {
 			// tslint:disable-next-line: forin
 			for (const key in obj) {
-				const foundObject = sortedEmployeeExpenses.find((o) =>
-					o.hasOwnProperty(key)
-				);
+				const foundObject = sortedEmployeeExpenses.find((o) => Object.hasOwn(o, key));
 				if (foundObject) {
 					foundObject[key] += obj[key];
 				} else {
@@ -101,14 +98,11 @@ export class EmployeeStatisticsService {
 			}
 		});
 
-		const sortedEmployeeIncome: Object[] = [];
-
+		const sortedEmployeeIncome: object[] = [];
 		mappedEmployeeIncome.forEach((obj) => {
 			// tslint:disable-next-line: forin
 			for (const key in obj) {
-				const foundObject = sortedEmployeeIncome.find((o) =>
-					o.hasOwnProperty(key)
-				);
+				const foundObject = sortedEmployeeIncome.find((o) => Object.hasOwn(o, key));
 				if (foundObject) {
 					foundObject[key] += obj[key];
 				} else {
@@ -122,20 +116,14 @@ export class EmployeeStatisticsService {
 
 		this._getLast12months().forEach((month) => {
 			const incomeStatForTheMonth = sortedEmployeeIncome.find(
-				(incomeStat) => incomeStat.hasOwnProperty(month)
+				(incomeStat) => Object.hasOwn(incomeStat, month)
 			);
-
-			incomeStatForTheMonth
-				? incomeStatistics.push(incomeStatForTheMonth[month])
-				: incomeStatistics.push(0);
-
+			incomeStatistics.push(incomeStatForTheMonth ? incomeStatForTheMonth[month] : 0);
+			
 			const expenseStatForTheMonth = sortedEmployeeExpenses.find(
-				(expenseStat) => expenseStat.hasOwnProperty(month)
+				(expenseStat) => Object.hasOwn(expenseStat, month)
 			);
-
-			expenseStatForTheMonth
-				? expenseStatistics.push(expenseStatForTheMonth[month])
-				: expenseStatistics.push(0);
+			expenseStatistics.push(expenseStatForTheMonth? expenseStatForTheMonth[month]: 0);
 		});
 
 		const {
@@ -160,7 +148,7 @@ export class EmployeeStatisticsService {
 			bonusStatistics.push(bonus);
 		});
 
-		if (findInput && findInput.valueDate) {
+		if (findInput?.valueDate) {
 			expenseStatistics = expenseStatistics.filter(Number);
 			incomeStatistics = incomeStatistics.filter(Number);
 			profitStatistics = profitStatistics.filter(Number);
@@ -208,7 +196,7 @@ export class EmployeeStatisticsService {
 		income: number,
 		profit: number
 	) => {
-		bonusType = bonusType ? bonusType : BonusTypeEnum.PROFIT_BASED_BONUS;
+		bonusType = bonusType ?? BonusTypeEnum.PROFIT_BASED_BONUS;
 		switch (bonusType) {
 			case BonusTypeEnum.PROFIT_BASED_BONUS:
 				return (
@@ -397,10 +385,7 @@ export class EmployeeStatisticsService {
 				stat.expense.push(expense);
 			} else {
 				// Add a new map entry if the key(month-year) does not already exist
-				const { total: splitAmong } = await this.employeeService.findWorkingEmployees(
-					employee.organization.id,
-					expense.valueDate
-				);
+				const { total: splitAmong } = await this.employeeService.findWorkingEmployees(employee.organization.id);
 
 				const newStat = {
 					month: expense.valueDate.getMonth(),
@@ -510,7 +495,7 @@ export class EmployeeStatisticsService {
 					stat.recurringExpense.push(expense);
 					stat.valueDate = date;
 				} else {
-					const { total: splitAmong } = await this.employeeService.findWorkingEmployees(employee.organization.id, date);
+					const { total: splitAmong } = await this.employeeService.findWorkingEmployees(employee.organization.id);
 
 					// Add a new map entry if the key(month-year) does not already exist
 					const newStat: IMonthAggregatedSplitExpense = {
