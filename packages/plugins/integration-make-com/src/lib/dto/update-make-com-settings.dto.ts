@@ -1,5 +1,5 @@
-import { IsBoolean, IsOptional, IsString, IsUrl } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsBoolean, IsOptional, IsString, IsUrl } from 'class-validator';
 
 export class UpdateMakeComSettingsDTO {
 	@ApiProperty({ type: Boolean, required: true, description: 'Whether Make.com integration is enabled' })
