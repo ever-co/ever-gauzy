@@ -544,7 +544,13 @@
 		"Yostorono",
 		"zfgk",
 		"zipkin",
-		"Zrdm"
+		"Zrdm",
+		"greenkeeper",
+		"classpath",
+		"isready",
+		"openzipkin",
+		"opensearchproject",
+		"nofile"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

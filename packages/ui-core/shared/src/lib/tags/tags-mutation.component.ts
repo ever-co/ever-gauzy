@@ -75,7 +75,7 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 	 */
 	private async _loadTagTypes() {
 		const { tenantId } = this.store.user;
-		const organizationId = this.store.organizationId;
+		const { id: organizationId } = this.store.selectedOrganization;
 
 		try {
 			const { items } = await this.tagTypeService.getTagTypes({
