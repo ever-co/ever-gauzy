@@ -106,7 +106,7 @@ export class MakeComService {
 	}
 
 	/**
-	 * Upserts a Make.com integration setting for a tenant.
+	 * Upsert a Make.com integration setting for a tenant.
 	 *
 	 * If the setting exists, its value is updated. If it does not exist, a new setting is created.
 	 *
