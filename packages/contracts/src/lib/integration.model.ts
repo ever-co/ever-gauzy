@@ -34,7 +34,7 @@ export interface IIntegrationEntitySettingTied extends IBasePerTenantAndOrganiza
 
 export interface IIntegrationMap extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
 	sourceId: string;
-	gauzyId: string;
+	gauzyId: ID;
 }
 
 export interface IIntegrationViewModel {
@@ -112,15 +112,13 @@ export interface IIntegrationTenantCreateInput extends IBasePerTenantAndOrganiza
 	settings?: IIntegrationSetting[];
 }
 
-export interface IIntegrationTenantUpdateInput extends Partial<IIntegrationTenantCreateInput> {
-	id?: ID;
-}
+export interface IIntegrationTenantUpdateInput extends Partial<IIntegrationTenantCreateInput> {}
 
 export interface IIntegrationMapSyncScreenshot {
-	id: number;
+	id: ID;
 	full_url: string;
 	thumb_url: string;
-	date: string,
+	date: string;
 	time_slot: string;
 	recorded_at: string;
 	user_id: number;
@@ -130,7 +128,7 @@ export interface IIntegrationMapSyncScreenshot {
 	width: number;
 	height: number;
 	screen: number;
-	employeeId?: string;
+	employeeId?: ID;
 }
 
 export enum IntegrationEnum {
@@ -139,7 +137,8 @@ export enum IntegrationEnum {
 	HUBSTAFF = 'Hubstaff',
 	GAUZY_AI = 'Gauzy_AI',
 	GITHUB = 'Github',
-	JIRA = 'Jira'
+	JIRA = 'Jira',
+	MakeCom = 'MakeCom'
 }
 
 export enum IntegrationEntity {
