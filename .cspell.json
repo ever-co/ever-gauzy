@@ -588,7 +588,7 @@
 		"tools/build/webpack.config.js",
 		"docker-compose.demo.yml",
 		"docker-compose.yml",
-		"**/guzy-agent/src/assets/icons/**",
+		"**/gauzy-agent/src/assets/icons/**",
 		"**/gauzy-agent/src/assets/images/**"
 	]
 }
