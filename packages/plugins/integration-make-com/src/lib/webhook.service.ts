@@ -17,75 +17,62 @@ export class WebhookService {
 	) {}
 
 	/**
-	 * Get webhook URL from tenant settings or fallback to environment variable
+	 * Retrieves the Make.com webhook configuration.
+	 *
+	 * This method combines the logic of fetching the tenant-specific integration settings and checking
+	 * whether the integration is enabled. It first attempts to obtain the tenant-specific settings; if they are
+	 * enabled and contain a valid webhook URL, it returns that URL with the enabled flag set to true.
+	 * Otherwise, it falls back to the global configuration defined in the environment.
+	 *
+	 * @returns A promise that resolves to an object containing:
+	 *          - enabled: A boolean indicating if the Make.com integration is enabled.
+	 *          - webhookUrl: A string with the webhook URL, or null if not configured.
 	 */
-	private async getWebhookUrl(): Promise<string | null> {
-		// Try to get tenant-specific webhook URL from database
-		const tenantId = RequestContext.currentTenantId();
+	private async getWebhookConfig(): Promise<{ enabled: boolean; webhookUrl: string | null }> {
+		try {
+			// Retrieve integration settings for the current tenant.
+			const settings = await this.makeComService.getIntegrationSettings();
 
-		if (tenantId) {
-			// Get settings using the settings service
-			const settings = await this.makeComService.getSettingsForTenant(tenantId);
-
-			// Check if settings exist and are enabled with a webhook URL
-			if (settings.isEnabled && settings.webhookUrl) {
-				return settings.webhookUrl;
+			if (settings?.isEnabled && settings.webhookUrl) {
+				return { enabled: true, webhookUrl: settings.webhookUrl };
 			}
+		} catch (error) {
+			this.logger.error('Error retrieving integration settings for webhook URL', error);
 		}
 
-		// Fallback to environment variable if no tenant-specific setting
-		return this.configService.get<string>('MAKE_WEBHOOK_URL');
+		// Fallback to the global webhook URL from the environment variable.
+		const globalWebhookUrl = this.configService.get<string>('MAKE_WEBHOOK_URL') || null;
+		return { enabled: !!globalWebhookUrl, webhookUrl: globalWebhookUrl };
 	}
 
 	/**
-	 * Check if Make.com integration is enabled for the current tenant
-	 */
-	private async isEnabled(): Promise<boolean> {
-		const tenantId = RequestContext.currentTenantId();
-
-		if (tenantId) {
-			try {
-				// Get settings using the settings service
-				const settings = await this.makeComService.getSettingsForTenant(tenantId);
-
-				if (settings.isEnabled) {
-					return true;
-				}
-			} catch (error) {
-				this.logger.error('Error checking if Make.com integration is enabled for tenant', error);
-			}
-		}
-
-		// If no tenant settings found, check if global webhook URL exists
-		const hasGlobalUrl = !!this.configService.get<string>('MAKE_WEBHOOK_URL');
-		this.logger.debug(
-			`No tenant settings found, using global configuration: ${hasGlobalUrl ? 'enabled' : 'disabled'}`
-		);
-		return hasGlobalUrl;
-	}
-
-	/**
-	 * Emit timer event to Make.com webhook
+	 * Emits a timer event to the Make.com webhook.
+	 *
+	 * This function uses the getWebhookConfig() method to determine if the Make.com integration is enabled
+	 * and to retrieve the webhook URL. If the integration is enabled and a webhook URL is available,
+	 * it constructs the payload and sends the event via an HTTP POST request.
+	 *
+	 * @param eventType - The type of the timer event (e.g., start, stop).
+	 * @param data - The data payload associated with the timer event, extending TimerEventDataType.
+	 * @returns A promise that resolves to void when the event is emitted or if the emission is skipped due to configuration issues.
 	 */
 	async emitTimerEvent<T extends TimerEventDataType>(eventType: TimerEventType, data: T): Promise<void> {
 		try {
-			// Check if integration is enabled for the current tenant
-			const isEnabled = await this.isEnabled();
-			if (!isEnabled) {
+			// Retrieve webhook configuration which includes both the enabled flag and the webhook URL.
+			const { enabled, webhookUrl } = await this.getWebhookConfig();
+			if (!enabled) {
 				this.logger.debug('Make.com integration is not enabled for this tenant, skipping event emission');
 				return;
 			}
-
-			// Get webhook URL for the current tenant
-			const webhookUrl = await this.getWebhookUrl();
 			if (!webhookUrl) {
 				this.logger.warn('Make.com webhook URL not configured for this tenant');
 				return;
 			}
 
+			// Get the current tenant ID.
 			const tenantId = RequestContext.currentTenantId();
 
-			// Prepare payload
+			// Construct the payload for the webhook event.
 			const payload: ITimerWebhookEvent<T> = {
 				event: `timer.${eventType}`,
 				data,
@@ -93,7 +80,7 @@ export class WebhookService {
 				tenantId
 			};
 
-			// Send to webhook
+			// Send the payload to the Make.com webhook.
 			await firstValueFrom(
 				this.httpService.post(webhookUrl, payload, {
 					timeout: 10000,
