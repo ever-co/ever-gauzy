@@ -15,7 +15,7 @@ import { TimeSlotModule } from './time-slot/time-slot.module';
 		TimeSlotModule,
 		ScreenshotModule,
 		StatisticModule,
-		TimesheetModule,
+		TimesheetModule
 	]
 })
 export class TimeTrackingModule {}
