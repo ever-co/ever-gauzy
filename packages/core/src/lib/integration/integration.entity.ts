@@ -11,7 +11,6 @@ import { MikroOrmIntegrationRepository } from './repository/mikro-orm-integratio
 @MultiORMEntity('integration', { mikroOrmRepository: () => MikroOrmIntegrationRepository })
 @Unique(['name'])
 export class Integration extends BaseEntity implements IIntegration {
-
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@MultiORMColumn() // Define a unique constraint on the "name" column
@@ -94,7 +93,7 @@ export class Integration extends BaseEntity implements IIntegration {
 		owner: true,
 		pivotTable: 'integration_integration_type',
 		joinColumn: 'integrationId',
-		inverseJoinColumn: 'integrationTypeId',
+		inverseJoinColumn: 'integrationTypeId'
 	})
 	@JoinTable({
 		name: 'integration_integration_type'
@@ -110,7 +109,7 @@ export class Integration extends BaseEntity implements IIntegration {
 		owner: true,
 		pivotTable: 'tag_integration',
 		joinColumn: 'integrationId',
-		inverseJoinColumn: 'tagId',
+		inverseJoinColumn: 'tagId'
 	})
 	@JoinTable({
 		name: 'tag_integration'
