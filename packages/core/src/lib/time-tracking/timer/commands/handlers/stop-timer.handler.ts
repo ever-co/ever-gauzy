@@ -8,19 +8,26 @@ import { TimerService } from '../../timer.service';
 @Injectable()
 @CommandHandler(StopTimerCommand)
 export class StopTimerHandler implements ICommandHandler<StopTimerCommand> {
-  constructor(
-    private readonly timerService: TimerService,
-    private readonly eventBus: EventBus,
-  ) {}
+	constructor(private readonly timerService: TimerService, private readonly eventBus: EventBus) {}
 
-  async execute(command: StopTimerCommand): Promise<ITimeLog> {
-    const { input } = command;
+	/**
+	 * Executes the StopTimerCommand.
+	 *
+	 * This function stops the timer using the provided command input,
+	 * publishes a TimerStoppedEvent with the updated time log, and returns the time log.
+	 *
+	 * @param command - An instance of StopTimerCommand containing the input data for stopping the timer.
+	 * @returns A promise that resolves to an ITimeLog representing the stopped timer's log.
+	 */
+	async execute(command: StopTimerCommand): Promise<ITimeLog> {
+		const { input } = command;
 
-    // Use the existing implementation
-    const timeLog = await this.timerService.stopTimer(input);
+		// Stop the timer and retrieve the time log.
+		const timeLog = await this.timerService.stopTimer(input);
 
-    this.eventBus.publish(new TimerStoppedEvent(timeLog));
+		// Publish an event indicating that the timer has been stopped.
+		this.eventBus.publish(new TimerStoppedEvent(timeLog));
 
-    return timeLog;
-  }
+		return timeLog;
+	}
 }

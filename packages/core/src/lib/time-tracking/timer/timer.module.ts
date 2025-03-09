@@ -8,7 +8,8 @@ import { TimerService } from './timer.service';
 import { StatisticModule } from '../statistic/statistic.module';
 import { TimerWeeklyLimitService } from './timer-weekly-limit.service';
 import { TaskModule } from '../../tasks';
-import { StartTimerHandler, StopTimerHandler, GetTimerStatusHandler } from './handlers';
+import { CommandHandlers } from './commands/handlers';
+import { QueryHandlers } from './queries/handlers';
 
 @Module({
 	imports: [
@@ -21,6 +22,6 @@ import { StartTimerHandler, StopTimerHandler, GetTimerStatusHandler } from './ha
 	],
 	controllers: [TimerController],
 	exports: [TimerService, TimerWeeklyLimitService],
-	providers: [TimerService, TimerWeeklyLimitService, StartTimerHandler, StopTimerHandler, GetTimerStatusHandler]
+	providers: [TimerService, TimerWeeklyLimitService, ...CommandHandlers, ...QueryHandlers]
 })
 export class TimerModule {}
