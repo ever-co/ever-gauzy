@@ -10,7 +10,6 @@ import { NbDialogService } from '@nebular/theme';
 import { pluck } from 'underscore';
 import {
 	ComponentLayoutStyleEnum,
-	IApprovalsData,
 	IOrganization,
 	IRequestApproval,
 	RequestApprovalStatusTypesEnum
@@ -21,7 +20,7 @@ import {
 	PaginationFilterBaseComponent,
 	IPaginationBase,
 	PictureNameTagsComponent,
-	CreateByComponent,
+	CreatedByUserComponent,
 	DateViewComponent,
 	EmployeeWithLinksComponent,
 	TaskTeamsComponent,
@@ -41,7 +40,6 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 	public settingsSmartTable: object;
 	public loading: boolean;
 	public selectedRequestApproval: IRequestApproval;
-	public listApprovals: IApprovalsData[] = [];
 	public disableButton = true;
 	public smartTableSource = new LocalDataSource();
 	public hasEditPermission = false;
@@ -167,7 +165,8 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 						'employeeApprovals.employee.user',
 						'teamApprovals',
 						'teamApprovals.team',
-						'tags'
+						'tags',
+						'createdByUser'
 					],
 					{ organizationId, tenantId }
 				)
@@ -238,12 +237,12 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 						instance.value = cell.getRawValue();
 					}
 				},
-				createdByName: {
+				createdByUser: {
 					title: this.getTranslation('APPROVAL_REQUEST_PAGE.CREATED_BY'),
 					type: 'custom',
 					isFilterable: false,
-					renderComponent: CreateByComponent,
-					componentInitFunction: (instance: CreateByComponent, cell: Cell) => {
+					renderComponent: CreatedByUserComponent<IRequestApproval>,
+					componentInitFunction: (instance: CreatedByUserComponent<IRequestApproval>, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 					}
 				},

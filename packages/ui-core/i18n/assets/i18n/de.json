@@ -2144,7 +2144,7 @@
 			"ORG_TASK_SETTING": "Aufgabeeinstellungen",
 			"ORG_MEMBER_LAST_LOG_VIEW": "Letztes Protokoll anzeigen",
 			"API_CALL_LOG_READ": "API-Aufrufprotokoll lesen",
-  			"API_CALL_LOG_DELETE": "API-Aufrufprotokoll löschen",
+			"API_CALL_LOG_DELETE": "API-Aufrufprotokoll löschen",
 			"TENANT_API_KEY_CREATE": "API-Schlüssel erstellen",
 			"TENANT_API_KEY_VIEW": "API-Schlüssel anzeigen",
 			"TENANT_API_KEY_DELETE": "API-Schlüssel löschen",
@@ -2945,6 +2945,9 @@
 		"ALREADY_PAID": "Bereits bezahlt.",
 		"AMOUNT_DUE": "Betrag fällig",
 		"INVOICED_REMAINING_AMOUNT": "In Rechnung gestellter Restbetrag",
+		"TAX_CALCULATION_TYPE": "Steuerberechnungsart",
+		"SIMPLE": "Einfach",
+		"COMPOSED": "Zusammengesetzt",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Rechnungstyp",
 			"ESTIMATE_TYPE": "Schätzungstyp",
@@ -4412,6 +4415,7 @@
 		"LOW": "Niedrig",
 		"MEDIUM": "Mittel",
 		"HIGH": "Hoch",
+		"UNKNOWN": "Unbekannt",
 		"DEAL_DELETED": "Der Deal '{{ name }}' wurde entfernt.",
 		"DEAL_EDITED": "Deal '{{ name }}' wurde geändert.",
 		"DEAL_ADDED": "Deal '{{ name }}' wurde hinzugefügt."

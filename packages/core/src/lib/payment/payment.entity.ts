@@ -10,7 +10,6 @@ import {
 	ITag,
 	IOrganizationContact,
 	IOrganizationProject,
-	IUser,
 	ID
 } from '@gauzy/contracts';
 import {
@@ -19,8 +18,7 @@ import {
 	OrganizationContact,
 	OrganizationProject,
 	Tag,
-	TenantOrganizationBaseEntity,
-	User
+	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import {
 	ColumnIndex,
@@ -183,22 +181,6 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationContactId?: ID;
-
-	/**
-	 * The user associated with this payment.
-	 */
-	@MultiORMManyToOne(() => User)
-	@JoinColumn()
-	createdByUser?: IUser;
-
-	/**
-	 * The user ID associated with this payment.
-	 */
-	@RelationId((it: Payment) => it.createdByUser)
-	@ColumnIndex()
-	@MultiORMColumn({ relationId: true })
-	createdByUserId?: ID;
-
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToMany

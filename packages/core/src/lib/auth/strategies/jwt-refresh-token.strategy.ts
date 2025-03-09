@@ -24,11 +24,7 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-ref
 	 * @param payload - The JWT payload to validate.
 	 * @param done - The callback function to be called upon validation completion.
 	 */
-	async validate(
-		request: Request,
-		payload: JwtPayload,
-		done: Function
-	): Promise<void> {
+	async validate(request: Request, payload: JwtPayload, done: (err: unknown, user?: unknown) => void): Promise<void> {
 		try {
 			const { refresh_token } = request.body; // Extract the refresh token
 

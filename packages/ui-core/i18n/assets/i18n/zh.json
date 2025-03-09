@@ -2148,7 +2148,7 @@
 			"ORG_TASK_SETTING": "任务设置",
 			"ORG_MEMBER_LAST_LOG_VIEW": "查看最后日志",
 			"API_CALL_LOG_READ": "读取 API 调用日志",
-  			"API_CALL_LOG_DELETE": "删除 API 调用日志",
+			"API_CALL_LOG_DELETE": "删除 API 调用日志",
 			"TENANT_API_KEY_CREATE": "创建 API 密钥",
 			"TENANT_API_KEY_VIEW": "查看 API 密钥",
 			"TENANT_API_KEY_DELETE": "删除 API 密钥",
@@ -2949,6 +2949,9 @@
 		"ALREADY_PAID": "已付款",
 		"AMOUNT_DUE": "应付金额",
 		"INVOICED_REMAINING_AMOUNT": "已开票剩余金额",
+		"TAX_CALCULATION_TYPE": "税务计算类型",
+		"SIMPLE": "简单",
+		"COMPOSED": "复合",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "发票类型",
 			"ESTIMATE_TYPE": "估算类型",
@@ -4416,6 +4419,7 @@
 		"LOW": "低",
 		"MEDIUM": "中等难度",
 		"HIGH": "高",
+		"UNKNOWN": "未知",
 		"DEAL_DELETED": "交易'{{ name }}'已被删除",
 		"DEAL_EDITED": "交易“{{ name }}”已被修改",
 		"DEAL_ADDED": "交易 '{{ name }}' 已添加"

@@ -6,50 +6,77 @@ import { Strategy } from 'passport-twitter';
 @Injectable()
 export class TwitterStrategy extends PassportStrategy(Strategy, 'twitter') {
 	constructor(protected readonly configService: ConfigService) {
-		super(config(configService));
+		super(parseTwitterConfig(configService));
 	}
 
 	/**
+	 * Validates and extracts user information from Twitter OAuth profile.
 	 *
-	 * @param request
-	 * @param accessToken
-	 * @param refreshToken
-	 * @param profile
-	 * @param done
+	 * This method is called after successful authentication with Twitter.
+	 * It processes the profile data and constructs a user object.
+	 *
+	 * @param {string} accessToken - The OAuth access token received from Twitter.
+	 * @param {string} refreshToken - The refresh token (not used in Twitter OAuth).
+	 * @param {Profile} profile - The Twitter user's profile data.
+	 * @param {(err: any, user?: any, info?: any) => void} done - Callback function to indicate authentication success or failure.
+	 *
+	 * @returns {Promise<void>} - Resolves after processing the user profile.
 	 */
 	async validate(
 		accessToken: string,
 		refreshToken: string,
 		profile: any,
 		done: (err: any, user: any, info?: any) => void
-	) {
+	): Promise<void> {
 		try {
+			console.log('Twitter OAuth validate:', profile);
+			// Extract relevant information from the user's profile
 			const { emails } = profile;
-			const user = { emails, accessToken };
+
+			// Construct user object
+			const user = {
+				emails,
+				accessToken,
+				refreshToken
+			};
 
 			done(null, user);
-		} catch (err) {
-			done(err, false);
+		} catch (error) {
+			console.error('Error during Twitter OAuth validation:', error);
+			done(error, false);
 		}
 	}
 }
 
 /**
- * Creates a configuration object for Twitter OAuth based on the provided ConfigService.
+ * Parses the Twitter configuration using the provided ConfigService.
  *
- * @param configService - An instance of the ConfigService to retrieve configuration values.
- * @returns An object containing Twitter OAuth configuration.
+ * Retrieves the consumer key, consumer secret, and callback URL for Twitter OAuth from the configuration.
+ * If any of these values are missing, a warning is logged and default values are applied.
+ *
+ * @param configService - An instance of the ConfigService to access application configuration.
+ * @returns An object containing the Twitter OAuth configuration.
  */
-export const config = (configService: ConfigService) => ({
-	// Retrieve Twitter OAuth consumer key from the configuration service, default to 'disabled' if not found.
-	consumerKey: <string>configService.get<string>('twitter.consumerKey') || 'disabled',
+export const parseTwitterConfig = (configService: ConfigService): Record<string, any> => {
+	// Retrieve Twitter configuration values from the configuration service
+	const consumerKey = configService.get<string>('twitter.consumerKey');
+	const consumerSecret = configService.get<string>('twitter.consumerSecret');
+	const callbackURL = configService.get<string>('twitter.callbackURL');
 
-	// Retrieve Twitter OAuth consumer secret from the configuration service, default to 'disabled' if not found.
-	consumerSecret: <string>configService.get<string>('twitter.consumerSecret') || 'disabled',
+	// If any of the required configuration values are missing, log a warning.
+	if (!consumerKey || !consumerSecret || !callbackURL) {
+		console.warn('⚠️ Twitter OAuth configuration is incomplete. Defaulting to "disabled".');
+	}
 
-	// Retrieve Twitter OAuth callback URL from the configuration service.
-	callbackURL: <string>configService.get<string>('twitter.callbackURL'),
-
-	// Include email in the Twitter OAuth response.
-	includeEmail: true
-});
+	// Return the configuration object for Twitter OAuth.
+	return {
+		// Use the retrieved consumerKey, or default to 'disabled' if not present.
+		consumerKey: consumerKey || 'disabled',
+		// Use the retrieved consumerSecret, or default to 'disabled' if not present.
+		consumerSecret: consumerSecret || 'disabled',
+		// Use the retrieved callbackURL, or default to the API_BASE_URL (or localhost) plus the callback path.
+		callbackURL: callbackURL || `${process.env.API_BASE_URL ?? 'http://localhost:3000'}/api/auth/twitter/callback`,
+		// Always include the email field in the Twitter OAuth response.
+		includeEmail: true
+	};
+};

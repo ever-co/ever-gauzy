@@ -2,14 +2,15 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { PrimaryGeneratedColumn, UpdateDateColumn, CreateDateColumn, DeleteDateColumn } from 'typeorm';
+import { PrimaryGeneratedColumn, UpdateDateColumn, CreateDateColumn, DeleteDateColumn, RelationId } from 'typeorm';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsDateString, IsOptional } from 'class-validator';
 import { SoftDeletable } from 'mikro-orm-soft-delete';
-import { BaseEntityModel as IBaseEntityModel, ID } from '@gauzy/contracts';
+import { BaseEntityModel as IBaseEntityModel, ID, IUser } from '@gauzy/contracts';
 import { PrimaryKey, Property } from '@mikro-orm/core';
-import { MultiORMColumn } from '../decorators/entity';
+import { MultiORMColumn, MultiORMManyToOne } from '../decorators/entity';
 import { ColumnIndex } from '../decorators/entity/column-index.decorator';
+import { User } from './internal';
 
 /**
  * Abstract base class for dynamically assigning properties.
@@ -59,7 +60,7 @@ export abstract class AccessTimestamps extends SoftDeletableBaseEntity {
 		type: 'string',
 		format: 'date-time',
 		example: '2018-11-21T06:20:32.232Z',
-		description: 'The creation timestamp of the entity.',
+		description: 'The creation timestamp of the entity.'
 	})
 	@CreateDateColumn()
 	@Property({
@@ -76,7 +77,7 @@ export abstract class AccessTimestamps extends SoftDeletableBaseEntity {
 		type: 'string',
 		format: 'date-time',
 		example: '2018-11-21T06:20:32.232Z',
-		description: 'The last update timestamp of the entity.',
+		description: 'The last update timestamp of the entity.'
 	})
 	@UpdateDateColumn()
 	@Property({
@@ -94,14 +95,71 @@ export abstract class AccessTimestamps extends SoftDeletableBaseEntity {
 	 * @returns {Date} - The current date.
 	 */
 	static getCurrentDate(): Date {
-	  	return new Date();
+		return new Date();
 	}
+}
+
+/**
+ * BaseEntityActionByUser provides a generic template for tracking
+ * user actions (create) performed on an entity.
+ */
+export abstract class BaseEntityActionByUser extends AccessTimestamps {
+	/**
+	 * The user who created the record.
+	 */
+	@MultiORMManyToOne(() => User, {
+		nullable: true, // Indicates if relation column value can be nullable.
+		onDelete: 'CASCADE' // Database cascade action on update.
+	})
+	createdByUser?: IUser;
+
+	/**
+	 * The ID of the user who created the record.
+	 */
+	@RelationId((it: BaseEntityActionByUser) => it.createdByUser)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	createdByUserId?: ID;
+
+	/**
+	 * The user who last updated the record.
+	 */
+	@MultiORMManyToOne(() => User, {
+		nullable: true, // Allows the relation column to be null if no updater is specified.
+		onDelete: 'CASCADE' // Cascades the delete operation if the related User is removed.
+	})
+	updatedByUser?: IUser;
+
+	/**
+	 * The ID of the user who last updated the record.
+	 */
+	@RelationId((it: BaseEntityActionByUser) => it.updatedByUser)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	updatedByUserId?: ID;
+
+	/**
+	 * The user who performed the deletion.
+	 */
+	@MultiORMManyToOne(() => User, {
+		nullable: true, // Indicates if relation column value can be nullable.
+		onDelete: 'CASCADE' // Database cascade action on update.
+	})
+	deletedByUser?: IUser;
+
+	/**
+	 * The ID of the user who performed the deletion.
+	 */
+	@RelationId((it: BaseEntityActionByUser) => it.deletedByUser)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	deletedByUserId?: ID;
 }
 
 /**
  * Abstract base entity with common fields for UUID, creation, update timestamps, soft-delete, and more.
  */
-export abstract class BaseEntity extends AccessTimestamps implements IBaseEntityModel {
+export abstract class BaseEntity extends BaseEntityActionByUser implements IBaseEntityModel {
 	// Primary key of UUID type
 	@ApiPropertyOptional({ type: () => String })
 	@PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_uuid()' }) // For Mikro-ORM compatibility

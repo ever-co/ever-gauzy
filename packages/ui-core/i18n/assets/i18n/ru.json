@@ -2179,7 +2179,7 @@
 			"ORG_TASK_SETTING": "Параметры задачи",
 			"ORG_MEMBER_LAST_LOG_VIEW": "Посмотреть последний журнал",
 			"API_CALL_LOG_READ": "Прочитать журнал вызовов API",
-  			"API_CALL_LOG_DELETE": "Удалить журнал вызовов API",
+			"API_CALL_LOG_DELETE": "Удалить журнал вызовов API",
 			"TENANT_API_KEY_CREATE": "Создать API-ключ",
 			"TENANT_API_KEY_VIEW": "Просмотр API-ключа",
 			"TENANT_API_KEY_DELETE": "Удалить API-ключ",
@@ -2978,6 +2978,9 @@
 		"ALREADY_PAID": "Уже оплачено",
 		"AMOUNT_DUE": "Сумма к оплате",
 		"INVOICED_REMAINING_AMOUNT": "Оставшаяся сумма",
+		"TAX_CALCULATION_TYPE": "Тип расчета налога",
+		"SIMPLE": "Простой",
+		"COMPOSED": "Составной",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"ESTIMATE_TYPE": "Тип оценки",
@@ -4432,6 +4435,7 @@
 		"LOW": "Низкий",
 		"MEDIUM": "Средний",
 		"HIGH": "Высокий",
+		"UNKNOWN": "Неизвестно",
 		"DEAL_DELETED": "Сделка '{{ name }}' удалена",
 		"DEAL_EDITED": "Сделка '{{ name }}' была изменена",
 		"DEAL_ADDED": "Сделка '{{ name }}' была добавлена"

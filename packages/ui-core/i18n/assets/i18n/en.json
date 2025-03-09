@@ -3072,6 +3072,9 @@
 		"ALREADY_PAID": "Already Paid",
 		"AMOUNT_DUE": "Amount Due",
 		"INVOICED_REMAINING_AMOUNT": "Invoiced Remaining Amount",
+		"TAX_CALCULATION_TYPE": "Tax Calculation Type",
+		"SIMPLE": "Simple",
+		"COMPOSED": "Composed",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
@@ -4548,6 +4551,7 @@
 		"LOW": "Low",
 		"MEDIUM": "Medium",
 		"HIGH": "High",
+		"UNKNOWN": "Unknown",
 		"DEAL_DELETED": "Deal '{{ name }}' was removed",
 		"DEAL_EDITED": "Deal '{{ name }}' was changed",
 		"DEAL_ADDED": "Deal '{{ name }}' was added"

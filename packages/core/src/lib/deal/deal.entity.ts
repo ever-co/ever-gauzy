@@ -1,8 +1,8 @@
-import { IDeal, IUser, IPipelineStage, IOrganizationContact, ID } from '@gauzy/contracts';
+import { IDeal, IPipelineStage, IOrganizationContact, ID } from '@gauzy/contracts';
 import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, Min, Max, IsInt, IsOptional, IsUUID } from 'class-validator';
-import { OrganizationContact, PipelineStage, TenantOrganizationBaseEntity, User } from '../core/entities/internal';
+import { OrganizationContact, PipelineStage, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import {
 	ColumnIndex,
 	MultiORMColumn,
@@ -56,21 +56,6 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	@RelationId((it: Deal) => it.stage)
 	@MultiORMColumn({ relationId: true })
 	stageId: ID;
-
-	/**
-	 * The user who created the deal.
-	 */
-	@MultiORMManyToOne(() => User)
-	@JoinColumn()
-	createdByUser: IUser;
-
-	/**
-	 * The ID for the user who created the deal.
-	 */
-	@RelationId((deal: Deal) => deal.createdByUser)
-	@ColumnIndex()
-	@MultiORMColumn({ relationId: true })
-	createdByUserId: ID;
 
 	/*
 	|--------------------------------------------------------------------------

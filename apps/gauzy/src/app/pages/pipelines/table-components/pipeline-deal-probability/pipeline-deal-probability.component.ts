@@ -6,11 +6,9 @@ import { IDeal } from '@gauzy/contracts';
 	templateUrl: './pipeline-deal-probability.component.html'
 })
 export class PipelineDealProbabilityComponent implements OnInit {
-	@Input()
-	value: string | number;
+	@Input() value: string | number;
 
-	@Input()
-	rowData: IDeal;
+	@Input() rowData: IDeal;
 
 	probability: number;
 

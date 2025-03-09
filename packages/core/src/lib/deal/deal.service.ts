@@ -29,8 +29,7 @@ export class DealService extends TenantAwareCrudService<Deal> {
 			// Call the create method on the superclass with the modified entity data
 			return await super.create({
 				...entity,
-				tenantId: RequestContext.currentTenantId(), // Set the tenant ID
-				createdByUserId: RequestContext.currentUserId() // Set the createdByUserId
+				tenantId: RequestContext.currentTenantId() // Set the tenant ID
 			});
 		} catch (error) {
 			// Handle any errors that occur during deal creation

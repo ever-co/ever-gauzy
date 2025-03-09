@@ -1,40 +1,10 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IRequestApprovalEmployee } from './request-approval-employee.model';
 import { IEmployee } from './employee.model';
 import { IOrganizationTeam } from './organization-team.model';
 import { IRequestApprovalTeam } from './request-approval-team.model';
-import { IApprovalPolicy } from './approval-policy.model';
-import { ITag } from './tag.model';
-
-export interface IRequestApproval extends IBasePerTenantAndOrganizationEntityModel {
-	name: string;
-	status: number;
-	createdBy: string;
-	createdByName: string;
-	min_count: number;
-	requestId: string;
-	requestType: string;
-	approvalPolicy: IApprovalPolicy;
-	approvalPolicyId: string;
-	employeeApprovals?: IRequestApprovalEmployee[];
-	teamApprovals?: IRequestApprovalTeam[];
-	tags?: ITag[];
-	employees?: IEmployee[];
-	teams?: IOrganizationTeam[];
-}
-
-export interface IRequestApprovalCreateInput extends IBasePerTenantAndOrganizationEntityModel {
-	id?: string;
-	employeeApprovals?: IRequestApprovalEmployee[];
-	teamApprovals?: IRequestApprovalTeam[];
-	teams?: IOrganizationTeam[];
-	employees?: IEmployee[];
-	name?: string;
-	min_count?: number;
-	status?: number;
-	approvalPolicyId?: string;
-	tags?: ITag[];
-}
+import { ApprovalPolicyTypesStringEnum, IApprovalPolicy } from './approval-policy.model';
+import { ITaggable } from './tag.model';
 
 export enum RequestApprovalStatusTypesEnum {
 	REQUESTED = 1,
@@ -48,11 +18,28 @@ export const RequestApprovalStatus = {
 	REFUSED: 3
 };
 
-export interface IRequestApprovalFindInput extends IBasePerTenantAndOrganizationEntityModel {
-	id?: string;
+export interface IBaseRequestApprovalProperties extends IBasePerTenantAndOrganizationEntityModel {
+	name: string;
+	min_count: number;
+	approvalPolicyId?: ID;
+	approvalPolicy?: IApprovalPolicy;
 }
 
-export interface IApprovalsData {
-	icon: string;
-	title: string;
+interface IRequestApprovalAssociations extends ITaggable {
+	employeeApprovals?: IRequestApprovalEmployee[];
+	teamApprovals?: IRequestApprovalTeam[];
+	employees?: IEmployee[];
+	teams?: IOrganizationTeam[];
 }
+
+export interface IRequestApproval extends IBaseRequestApprovalProperties, IRequestApprovalAssociations {
+	status: number;
+	requestId: ID;
+	requestType: ApprovalPolicyTypesStringEnum;
+}
+
+export interface IRequestApprovalCreateInput extends IBaseRequestApprovalProperties, IRequestApprovalAssociations {
+	status?: number;
+}
+
+export interface IRequestApprovalFindInput extends IBasePerTenantAndOrganizationEntityModel {}

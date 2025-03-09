@@ -1,8 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from 'chalk';
 
-export class RenameOldSubscriptionToEntitySubscriptionEntityTable1740727466186 implements MigrationInterface {
-	name = 'RenameOldSubscriptionToEntitySubscriptionEntityTable1740727466186';
+export class RenameSubscriptionToEntitySubscriptionEntityTable1740727466186 implements MigrationInterface {
+	name = 'RenameSubscriptionToEntitySubscriptionEntityTable1740727466186';
 
 	/**
 	 * Up Migration

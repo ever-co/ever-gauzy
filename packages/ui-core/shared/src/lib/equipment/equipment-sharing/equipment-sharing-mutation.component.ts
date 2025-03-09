@@ -9,8 +9,9 @@ import {
 	IOrganizationTeam,
 	IEquipmentSharingPolicy,
 	IOrganization,
-	IEquipmentSharingRequest,
-	EquipmentSharingParticipantEnum
+	EquipmentSharingParticipantEnum,
+	IEquipmentSharingCreateInput,
+	IEquipmentSharingUpdateInput
 } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
@@ -161,8 +162,6 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent 
 		const shareRequest = {
 			equipmentId: this.form.value['equipment'],
 			equipment: this.equipmentItems.find((eq) => eq.id === this.form.value['equipment']),
-			createdBy: '',
-			createdByName: '',
 			equipmentSharingPolicyId: this.form.value['equipmentSharingPolicyId'],
 			employees: this.employees.filter((emp) => {
 				return this.selectedEmployees.includes(emp.id);
@@ -179,11 +178,9 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent 
 			tenantId: this.selectedOrganization.tenantId
 		};
 
-		let equipmentSharing: IEquipmentSharingRequest;
+		let equipmentSharing: IEquipmentSharingCreateInput | IEquipmentSharingUpdateInput;
 
 		if (this.equipmentSharing) {
-			shareRequest.createdBy = this.equipmentSharing.createdBy;
-			shareRequest.createdByName = this.equipmentSharing.createdByName;
 			equipmentSharing = await this.equipmentSharingService.update(this.equipmentSharing.id, shareRequest);
 		} else {
 			equipmentSharing = await this.equipmentSharingService.create(shareRequest, this.selectedOrganization.id);
@@ -192,7 +189,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent 
 		this.closeDialog(equipmentSharing);
 	}
 
-	async closeDialog(equipmentSharing?: IEquipmentSharingRequest) {
+	async closeDialog(equipmentSharing?: IEquipmentSharingCreateInput | IEquipmentSharingUpdateInput) {
 		this.dialogRef.close(equipmentSharing);
 	}
 
