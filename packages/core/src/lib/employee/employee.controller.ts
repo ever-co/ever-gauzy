@@ -366,8 +366,8 @@ export class EmployeeController extends CrudController<Employee> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions()
-	@Post('/rate')
-	async getRate(@Body() data: GetHourlyRateDto): Promise<IEmployeeHourlyRate[]> {
+	@Get('/rate')
+	async getRate(@Query() data: GetHourlyRateDto): Promise<IEmployeeHourlyRate[]> {
 		return await this._employeeService.getHourlyRate(data.organizationId, data.employeeIds, {
 			startDate: data.startDate,
 			endDate: data.endDate
