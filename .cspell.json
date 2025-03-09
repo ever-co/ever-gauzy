@@ -549,7 +549,10 @@
 		"forin",
 		"inversed",
 		"iquery",
-		"nodownload"
+		"nodownload",
+		"evergauzyagent",
+		"electronmon",
+		"apistage"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
@@ -583,6 +586,8 @@
 		"**/*.mjml",
 		"tools/build/webpack.config.js",
 		"docker-compose.demo.yml",
-		"docker-compose.yml"
+		"docker-compose.yml",
+		"**/guzy-agent/src/assets/icons/**",
+		"**/gauzy-agent/src/assets/images/**"
 	]
 }
