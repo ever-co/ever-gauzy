@@ -20,8 +20,7 @@ import { MakeComModule } from './make-com.module';
 	 * @param {ApplicationPluginConfig} config - The initial plugin configuration object.
 	 * @returns {ApplicationPluginConfig} - The modified plugin configuration object.
 	 */
-	configuration: (config: ApplicationPluginConfig) => {
-		// No custom fields needed for now
+	configuration: (config: ApplicationPluginConfig): ApplicationPluginConfig => {
 		return config;
 	}
 })

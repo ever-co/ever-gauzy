@@ -1,15 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IntegrationSetting } from '@gauzy/core';
-import { UpdateMakeComSettingsDTO } from './dto/update-make-com-settings.dto';
+import { IntegrationSetting, RequestContext } from '@gauzy/core';
 import { ID } from '@gauzy/contracts';
-
-// Define Make.com integration setting names
-export enum MakeSettingName {
-	IS_ENABLED = 'make_webhook_enabled',
-	WEBHOOK_URL = 'make_webhook_url'
-}
+import { UpdateMakeComSettingsDTO } from './dto/update-make-com-settings.dto';
+import { IMakeComIntegrationSettings, MakeSettingName } from './types';
 
 @Injectable()
 export class MakeComService {
@@ -21,25 +16,29 @@ export class MakeComService {
 	) {}
 
 	/**
-	 * Get Make.com integration settings for a specific tenant
+	 * Retrieves the Make.com integration settings for a specific tenant.
+	 *
+	 * @param tenantId - The unique identifier for the tenant.
+	 * @param organizationId - Optional organization identifier.
+	 * @returns A promise that resolves to an object containing the integration settings.
 	 */
-	async getSettingsForTenant(
-		tenantId: ID,
-		organizationId?: ID
-	): Promise<{
-		isEnabled: boolean;
-		webhookUrl: string;
-	}> {
-		try {
-			// Get the enabled setting
-			const enabledSetting = await this.findSetting(tenantId, organizationId, MakeSettingName.IS_ENABLED);
+	async getIntegrationSettings(organizationId?: ID): Promise<IMakeComIntegrationSettings> {
+		const tenantId = RequestContext.currentTenantId();
 
-			// Get the webhook URL setting
-			const webhookUrlSetting = await this.findSetting(tenantId, organizationId, MakeSettingName.WEBHOOK_URL);
+		if (!tenantId) {
+			throw new NotFoundException('Tenant ID not found in request context');
+		}
+
+		try {
+			// Fetch both settings concurrently
+			const [enabledSetting, webhookUrlSetting] = await Promise.all([
+				this.findSetting(tenantId, organizationId, MakeSettingName.IS_ENABLED),
+				this.findSetting(tenantId, organizationId, MakeSettingName.WEBHOOK_URL)
+			]);
 
 			return {
 				isEnabled: enabledSetting?.settingsValue === 'true',
-				webhookUrl: webhookUrlSetting?.settingsValue || null
+				webhookUrl: webhookUrlSetting?.settingsValue ?? null
 			};
 		} catch (error) {
 			this.logger.warn(`Failed to get Make.com settings: ${error.message}`);
@@ -52,40 +51,52 @@ export class MakeComService {
 	}
 
 	/**
-	 * Update Make.com integration settings for a tenant
+	 * Update Make.com integration settings for a tenant.
+	 *
+	 * @param input - The DTO containing the updated settings.
+	 * @param organizationId - Optional organization identifier.
+	 * @returns A promise that resolves to an object containing the updated settings.
 	 */
-	async updateSettings(
-		tenantId: ID,
+	async updateIntegrationSettings(
 		input: UpdateMakeComSettingsDTO,
 		organizationId?: ID
-	): Promise<{
-		isEnabled: boolean;
-		webhookUrl: string;
-	}> {
-		// Update the enabled setting
-		await this.upsertSetting(tenantId, organizationId, MakeSettingName.IS_ENABLED, input.isEnabled.toString());
+	): Promise<IMakeComIntegrationSettings> {
+		const tenantId = RequestContext.currentTenantId();
 
-		// Update the webhook URL setting
-		await this.upsertSetting(tenantId, organizationId, MakeSettingName.WEBHOOK_URL, input.webhookUrl || null);
+		if (!tenantId) {
+			throw new NotFoundException('Tenant ID not found in request context');
+		}
+
+		const webhookUrl = input.webhookUrl ?? null;
+		const isEnabled = input.isEnabled;
+
+		// Update both settings concurrently
+		await Promise.all([
+			this.upsertSetting(tenantId, organizationId, MakeSettingName.IS_ENABLED, isEnabled.toString()),
+			this.upsertSetting(tenantId, organizationId, MakeSettingName.WEBHOOK_URL, webhookUrl)
+		]);
 
 		return {
 			isEnabled: input.isEnabled,
-			webhookUrl: input.webhookUrl || null
+			webhookUrl
 		};
 	}
 
 	/**
 	 * Find a setting by tenant, organization, and name
+	 *
+	 * @param tenantId - The unique identifier for the tenant.
+	 * @param organizationId - The identifier for the organization or null.
+	 * @param settingsName - The name of the setting to find.
+	 * @returns A promise that resolves to an IntegrationSetting or null if not found.
 	 */
 	private async findSetting(
 		tenantId: ID,
 		organizationId: ID | null,
 		settingsName: MakeSettingName
 	): Promise<IntegrationSetting | null> {
-		const query: any = {
-			tenantId,
-			settingsName
-		};
+		// Construct a typed query object
+		const query: Partial<IntegrationSetting> = { tenantId, settingsName };
 
 		if (organizationId) {
 			query.organizationId = organizationId;
@@ -95,7 +106,15 @@ export class MakeComService {
 	}
 
 	/**
-	 * Create or update a setting
+	 * Upserts a Make.com integration setting for a tenant.
+	 *
+	 * If the setting exists, its value is updated. If it does not exist, a new setting is created.
+	 *
+	 * @param tenantId - The unique identifier for the tenant.
+	 * @param organizationId - The unique identifier for the organization (optional).
+	 * @param settingsName - The name of the setting to update or create.
+	 * @param settingsValue - The new value for the setting.
+	 * @returns A promise that resolves to the updated or created IntegrationSetting.
 	 */
 	private async upsertSetting(
 		tenantId: ID,
@@ -103,22 +122,21 @@ export class MakeComService {
 		settingsName: MakeSettingName,
 		settingsValue: string
 	): Promise<IntegrationSetting> {
-		// First try to find the existing setting
-		const existingSetting = await this.findSetting(tenantId, organizationId, settingsName);
+		let setting = await this.findSetting(tenantId, organizationId, settingsName);
 
-		if (existingSetting) {
-			// Update existing setting
-			existingSetting.settingsValue = settingsValue;
-			return this.integrationSettingRepository.save(existingSetting);
+		if (setting) {
+			// Update the existing setting value
+			setting.settingsValue = settingsValue;
 		} else {
-			// Create new setting
-			const newSetting = this.integrationSettingRepository.create({
+			// Create a new setting with the provided values
+			setting = this.integrationSettingRepository.create({
 				tenantId,
-				organizationId: organizationId || null,
+				organizationId: organizationId ?? null,
 				settingsName,
 				settingsValue
 			});
-			return this.integrationSettingRepository.save(newSetting);
 		}
+
+		return this.integrationSettingRepository.save(setting);
 	}
 }
