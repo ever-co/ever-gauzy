@@ -208,7 +208,6 @@ export class PluginLoaderService {
 		message: string,
 		viewContainerRef: ViewContainerRef
 	): ComponentRef<NoDataMessageComponent> {
-		console.warn(`Fallback component loaded: ${message}`);
 		const componentRef = viewContainerRef.createComponent(NoDataMessageComponent);
 		componentRef.instance.message = message;
 		return componentRef;

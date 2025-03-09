@@ -65,7 +65,6 @@ class ElectronPluginListener {
 					throw new Error(`Loaded module from '${pathname}' is empty or undefined.`);
 				}
 
-				console.log('Plugin module loaded:', pluginModule);
 				return pluginModule;
 			} catch (error) {
 				logger.error(error);
