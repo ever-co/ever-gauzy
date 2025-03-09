@@ -38,7 +38,7 @@
 		"@nestjs/cqrs": "^10.2.8",
 		"@nestjs/swagger": "^8.1.0",
 		"@nestjs/typeorm": "^10.0.2",
-		"axios": "^1.7.4",
+		"axios": "^1.8.2",
 		"chalk": "^4.1.0",
 		"class-transformer": "^0.5.1",
 		"class-validator": "^0.14.0",
