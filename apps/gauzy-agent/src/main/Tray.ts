@@ -5,7 +5,6 @@ import {
 	app,
 	Menu,
 	MenuItemConstructorOptions,
-    BrowserWindow
 } from 'electron';
 import { TranslateService } from '@gauzy/desktop-lib';
 import AppWindow from './window-manager';

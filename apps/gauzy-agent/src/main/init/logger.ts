@@ -1,5 +1,5 @@
 import { app } from 'electron';
-import { logger as log, store } from '@gauzy/desktop-core';
+import { logger as log } from '@gauzy/desktop-core';
 import * as Sentry from '@sentry/electron';
 import { initSentry } from '../../sentry';
 import * as path from 'path';

@@ -130,7 +130,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 					userId: arg.userId,
 					employeeId: jwtParsed.employeeId,
 					tenantId: jwtParsed.tenantId,
-					organizationId: user.employee ? user.employee.organizationId : null
+					organizationId: user?.employee?.organizationId
 				});
 			} else {
 				this.toastrService.show('Your account is not an employee', `Warning`, {

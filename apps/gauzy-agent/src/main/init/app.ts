@@ -1,4 +1,4 @@
-import { app, ipcMain, Tray } from 'electron';
+import { app, ipcMain } from 'electron';
 import * as path from 'path';
 import { logger as log, store } from '@gauzy/desktop-core';
 import {
@@ -13,16 +13,10 @@ import AppWindow from '../window-manager';
 import TrayMenu from '../Tray';
 import { CONSTANT } from '../../constant';
 
-let tray: Tray | null = null;
-
 const provider = ProviderFactory.instance;
 const knex = provider.connection;
 
 const exeName = path.basename(process.execPath);
-const pathWindow = {
-	timeTrackerUi: path.join(__dirname, '../../index.html'),
-	preloadPath: path.join(__dirname, '../preload.js')
-};
 
 LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png')
@@ -79,7 +73,6 @@ async function handleSetupWindow() {
 
 export async function startServer(value: any) {
 	try {
-		const project = LocalStore.getStore('project') || {};
 		// Update the setting
 		LocalStore.updateConfigSetting({
 			...value,
@@ -101,10 +94,11 @@ export async function startServer(value: any) {
 		true,
 		{ helpSiteUrl: 'https://gauzy.co' },
 	);
-	tray = trayMenu.build();
+	trayMenu.build();
 
 	TranslateService.onLanguageChange(() => {
 		console.log('Translation language change');
+		trayMenu.updateTryMenu();
 	});
 	return true;
 }
