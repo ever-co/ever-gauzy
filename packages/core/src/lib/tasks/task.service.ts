@@ -10,7 +10,8 @@ import {
 	FindOptionsWhere,
 	FindManyOptions,
 	Between,
-	FindOptionsRelations
+	FindOptionsRelations,
+	ILike
 } from 'typeorm';
 import { isBoolean, isUUID } from 'class-validator';
 import {
@@ -637,24 +638,21 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @returns A Promise that resolves to a paginated list of tasks.
 	 */
 	public async pagination(options: PaginationParams<Task> & IAdvancedTaskFiltering): Promise<IPagination<ITask>> {
-		// Define the like operator based on the database type
-		const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
-
 		const filters = options?.filters;
+		const where = options?.where;
 
 		// Check if there are any filters in the options
-		if (options?.where) {
-			const { where } = options;
+		if (where) {
 			const { isScreeningTask = false } = where;
 
 			// Apply filters for task title with like operator
 			if (where.title) {
-				options.where.title = Raw((alias) => `${alias} ${likeOperator} '%${where.title}%'`);
+				options.where.title = ILike(`%${where.title}%`);
 			}
 
 			// Apply filters for task prefix with like operator
 			if (where.prefix) {
-				options.where.prefix = Raw((alias) => `${alias} ${likeOperator} '%${where.prefix}%'`);
+				options.where.prefix = ILike(`%${where.prefix}%`);
 			}
 
 			// Apply filters for isDraft, setting null if not a boolean
@@ -681,11 +679,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		// Apply Advanced filters
 		let advancedFilters: FindOptionsWhere<Task> = {};
 		if (filters) {
-			advancedFilters = this.buildAdvancedWhereCondition(filters, options?.where);
+			advancedFilters = this.buildAdvancedWhereCondition(filters, where);
 		}
 
 		// Call the base paginate method
-		return await super.paginate({ ...options, where: { ...advancedFilters, ...options?.where } });
+		return await super.paginate({ ...options, where: { ...advancedFilters, ...where } });
 	}
 
 	/**
