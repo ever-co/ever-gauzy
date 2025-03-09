@@ -26,10 +26,13 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 	role: IRole;
 	roles: IRole[] = [];
 	permissions: IRolePermission[] = [];
+	filteredGeneralPermissions: PermissionsEnum[] = [];
+	filteredAdminPermissions: PermissionsEnum[] = [];
 	roles$: Observable<IRole[]> = observableOf([]);
 	permissions$: Subject<any> = new Subject();
 	roleSubject$: Subject<any> = new Subject();
 	formControl: FormControl = new FormControl();
+	searchControl = new FormControl('');
 	@ViewChild('input') input: ElementRef;
 
 	constructor(
@@ -58,6 +61,8 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		this._setupSearchFilter();
 	}
 
 	ngAfterViewInit() {
@@ -353,6 +358,41 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Sets up a search filter with debounce to improve performance.
+	 */ private _setupSearchFilter(): void {
+		this.searchControl.valueChanges
+			.pipe(
+				debounceTime(300),
+				startWith(''),
+				map((searchTerm) => {
+					this.filteredGeneralPermissions = this._filterPermissions('GENERAL', searchTerm);
+					this.filteredAdminPermissions = this._filterPermissions('ADMINISTRATION', searchTerm);
+				})
+			)
+			.subscribe();
+	}
+
+	/**
+	 * Filters permissions based on the search term.
+	 * @param group The group of permissions to filter ('GENERAL' or 'ADMINISTRATION')
+	 * @param searchTerm The term used for filtering permissions.
+	 * @returns The filtered list of permissions.
+	 */
+	private _filterPermissions(group: 'GENERAL' | 'ADMINISTRATION', searchTerm: string | null = ''): any[] {
+		const permissions = group === 'GENERAL' ? this.permissionGroups.GENERAL : this.getAdministrationPermissions();
+		console.log(permissions);
+
+		if (!searchTerm) return permissions;
+		return permissions.filter((permission) =>
+			this._formatPermissionForSearch(permission).includes(searchTerm.toLowerCase())
+		);
+	}
+
+	private _formatPermissionForSearch(permission: string): string {
+		return permission.replace(/_/g, ' ').toLowerCase();
 	}
 
 	ngOnDestroy() {}

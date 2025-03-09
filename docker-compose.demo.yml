@@ -61,6 +61,7 @@ services:
       APP_MAGIC_SIGN_URL: ${APP_MAGIC_SIGN_URL:-}
       COMPANY_LINK: ${COMPANY_LINK:-}
       COMPANY_NAME: ${COMPANY_NAME:-}
+      MAKE_WEBHOOK_URL: ${MAKE_WEBHOOK_URL:-}
 
     env_file:
       - .env.demo.compose
