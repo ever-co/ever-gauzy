@@ -16,7 +16,7 @@
     ],
     "include": [
         "src/index.ts",
-        "src/preload.ts"
+        "src/main/preload.ts"
     ],
     "exclude": [
         "jest.config.ts"

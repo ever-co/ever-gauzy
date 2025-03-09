@@ -14,6 +14,10 @@ export class ElectronService {
 		return !!(window && (window as any).process && (window as any).process.type);
 	}
 
+	get isContextBridge(): boolean {
+		return !!(window && (window as any).electronAPI);
+	}
+
 	constructor() {
 		// Conditional imports
 		if (this.isElectron) {
@@ -22,6 +26,18 @@ export class ElectronService {
 			this.shell = (window as any)['require']('electron').shell;
 			this.desktopCapturer = {
 				getSources: async (opts: any) => await this.ipcRenderer.invoke('DESKTOP_CAPTURER_GET_SOURCES', opts)
+			};
+		} else if (this.isContextBridge) {
+			const electronAPI = (window as any).electronAPI;
+			this.ipcRenderer = electronAPI.ipcRenderer;
+			this.remote = electronAPI.remote;
+			this.shell = electronAPI.shell;
+			this.desktopCapturer = {
+				getSources: async (opts) =>
+					await this.ipcRenderer.invoke(
+						'DESKTOP_CAPTURER_GET_SOURCES',
+						opts
+					),
 			};
 		}
 	}

@@ -1,4 +1,4 @@
-@import '../themes';
+@import 'themes';
 $default-card-height: calc(
   100vh - nb-theme(header-height) - nb-theme(footer-height) - 11.5rem
 );

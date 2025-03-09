@@ -4,6 +4,7 @@ import { DesktopEnvironmentContent } from './concrete-environment-content/deskto
 import { DesktopServerEnvironmentContent } from './concrete-environment-content/desktop-server-environment-content';
 import { DesktopApiServerEnvironmentContent } from './concrete-environment-content/desktop-api-server-environment-content';
 import { IDesktopEnvironment } from './interfaces/i-desktop-environment';
+import { GauzyAgentEnvironmentContent } from './concrete-environment-content/gauzy-agent-environment-content';
 
 export class DesktopEnvironmentContentFactory {
 	public static generate(
@@ -33,7 +34,7 @@ export class DesktopEnvironmentContentFactory {
 					.generate(environment)
 					.concat(apiServer.generate(environment));
 			case 'gauzy-agent':
-				const gauzyAgent = new DesktopApiServerEnvironmentContent();
+				const gauzyAgent = new GauzyAgentEnvironmentContent();
 				return common
 					.generate(environment)
 					.concat(gauzyAgent.generate(environment))

@@ -166,7 +166,10 @@
 		"ADD_PLUGIN": "Plugin hinzufügen",
 		"LOAD_PLUGIN": "Plugin laden",
 		"FROM_CDN": "Von CDN",
-		"ADD_MODULE": "Modul hinzufügen"
+		"ADD_MODULE": "Modul hinzufügen",
+		"SHARE": "Teilen",
+		"GET_INFO": "Informationen abrufen",
+		"RETRY": "Erneut versuchen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -715,7 +718,8 @@
 		"ERROR": {
 			"PROJECT_NAME": "Projektname ist erforderlich.",
 			"PROJECT_URL": "Die Projekt-URL ist ungültig.",
-			"OPEN_SOURCE_PROJECT_URL": "Die URL des Open-Source-Projekts ist ungültig."
+			"OPEN_SOURCE_PROJECT_URL": "Die URL des Open-Source-Projekts ist ungültig.",
+			"INVALID_IMAGE_URL": "Ungültige Bild-URL."
 		}
 	},
 	"POP_UPS": {
@@ -2023,6 +2027,10 @@
 			"ORG_TAGS_VIEW": "Ansicht von Tags",
 			"ORG_TAGS_EDIT": "Bearbeite Tags",
 			"ORG_TAGS_DELETE": "Löschen Sie Tags.",
+			"ORG_TAG_TYPES_ADD": "Tag-Typ hinzufügen",
+			"ORG_TAG_TYPES_VIEW": "Tag-Typen anzeigen",
+			"ORG_TAG_TYPES_EDIT": "Tag-Typ bearbeiten",
+			"ORG_TAG_TYPES_DELETE": "Tag-Typ löschen",
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "Kandidatenfeedback erstellen/bearbeiten/löschen.",
 			"ALL_ORG_VIEW": "Alle Organisationen anzeigen",
 			"ALL_ORG_EDIT": "Erstellen/Bearbeiten/Löschen aller Organisationen",
@@ -2135,9 +2143,15 @@
 			"ORG_TASK_DELETE": "Aufgaben löschen",
 			"ORG_TASK_SETTING": "Aufgabeeinstellungen",
 			"ORG_MEMBER_LAST_LOG_VIEW": "Letztes Protokoll anzeigen",
+			"API_CALL_LOG_READ": "API-Aufrufprotokoll lesen",
+  			"API_CALL_LOG_DELETE": "API-Aufrufprotokoll löschen",
 			"TENANT_API_KEY_CREATE": "API-Schlüssel erstellen",
 			"TENANT_API_KEY_VIEW": "API-Schlüssel anzeigen",
-			"TENANT_API_KEY_DELETE": "API-Schlüssel löschen"
+			"TENANT_API_KEY_DELETE": "API-Schlüssel löschen",
+			"EMPLOYEE_AVAILABILITY_CREATE": "Mitarbeiterverfügbarkeit erstellen",
+			"EMPLOYEE_AVAILABILITY_READ": "Mitarbeiterverfügbarkeit anzeigen",
+			"EMPLOYEE_AVAILABILITY_UPDATE": "Mitarbeiterverfügbarkeit aktualisieren",
+			"EMPLOYEE_AVAILABILITY_DELETE": "Mitarbeiterverfügbarkeit löschen"
 		},
 		"BILLING": "Rechnungsstellung",
 		"BUDGET": "Budget",
@@ -3614,7 +3628,8 @@
 			"SCREEN_CAPTURE_CHANGED": "Bildschirmaufnahme-Status geändert für {{ name }}",
 			"MODULE_CREATED": "Modul erfolgreich erstellt!",
 			"MODULE_UPDATED": "Modul erfolgreich aktualisiert!",
-			"MODULE_SAVE_ERROR": "Das Speichern des Moduls ist fehlgeschlagen. Bitte versuchen Sie es erneut."
+			"MODULE_SAVE_ERROR": "Das Speichern des Moduls ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
+			"PASSWORD_REQUIRED": "Passwort erforderlich."
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -4699,5 +4714,49 @@
 	},
 	"SERVER_API": "API Server",
 	"SERVER_API_LOG": "API Server Log",
-	"COMING_SOON": "This page is coming soon!"
+	"COMING_SOON": "This page is coming soon!",
+	"PLUGIN": {
+		"VIDEO": {
+			"SINGLE": "Video",
+			"PLURAL": "Videos",
+			"DOWNLOAD": "Herunterladen",
+			"NOT_FOUND": "Video nicht gefunden",
+			"NO_VIDEO": "Kein Video",
+			"DOWNLOADS": "Downloads",
+			"NO_VIDEO_DOWNLOAD": "Kein Video-Download",
+			"LOADING_VIDEOS": "Videos werden geladen...",
+			"EDIT_METADATA": "Videometadaten bearbeiten",
+			"STARTING_DOWNLOAD_FOR": "Download starten für: {{ url }}",
+			"DOWNLOAD_FAILED_FOR": "Download fehlgeschlagen für: {{ url }}, erneut versuchen",
+			"DOWNLOAD_COMPLETED_FOR": "Download abgeschlossen für: {{ url }}",
+			"SHARED_SUCCESSFULLY": "Video erfolgreich geteilt",
+			"COPIED_SUCCESSFULLY": "Video erfolgreich kopiert",
+			"CORE_INFO": "Kerninformationen",
+			"RECORDED": "Aufgenommen",
+			"DURATION": "Dauer",
+			"SIZE": "Größe",
+			"VIEW_FULL": "Ganzes Video ansehen",
+			"TECHNICAL_DETAILS": "Technische Details",
+			"RESOLUTION": "Auflösung",
+			"CODEC": "Codec",
+			"FRAME_RATE": "Bildrate",
+			"UPLOADED_BY": "Hochgeladen von",
+			"NO_VIDEO_AVAILABLE": "Kein Video verfügbar",
+			"RETRIED": "Video erneut versucht",
+			"REMOVED_FROM_QUEUE": "Video aus der Warteschlange entfernt",
+			"ADDED_TO_QUEUE": "Video zur Warteschlange hinzugefügt",
+			"DELETE_SUCCESSFULLY": "Video erfolgreich gelöscht",
+			"UPDATE_SUCCESSFULLY": "Video erfolgreich aktualisiert",
+			"ERROR": {
+				"REQUIRED": "Titel ist erforderlich.",
+				"AT_LEAST_3": "Titel muss mindestens 3 Zeichen lang sein.",
+				"AT_MOST_255": "Titel darf 255 Zeichen nicht überschreiten.",
+				"AT_MOST_1000": "Beschreibung darf 1000 Zeichen nicht überschreiten.",
+				"SHARE_CANCELED": "Teilen wurde abgebrochen",
+				"INVALID_SHARE_DATA": "Ungültige Teilungsdaten",
+				"SHARE_NOT_ALLOWED": "Teilen ist nicht erlaubt",
+				"UNEXPECTED_SHARING_ERROR": "Unerwarteter Fehler beim Teilen"
+			}
+		}
+	}
 }

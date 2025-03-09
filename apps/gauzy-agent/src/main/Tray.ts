@@ -8,11 +8,13 @@ import {
     BrowserWindow
 } from 'electron';
 import { TranslateService } from '@gauzy/desktop-lib';
-import { createAboutWindow } from '@gauzy/desktop-window';
+import AppWindow from './window-manager';
+import * as path from 'path';
 
 type ISiteUrl = {
 	helpSiteUrl: string
 }
+const appWindow = new AppWindow(path.join(__dirname, '..'));
 
 class TrayMenu {
 	private trayIconPath: string;
@@ -43,13 +45,6 @@ class TrayMenu {
 		return iconNativePath;
 	}
 
-	async aboutWindow() {
-		const aboutWindow: BrowserWindow = await createAboutWindow('about', null);
-		aboutWindow.show();
-		aboutWindow.on('close', () => {
-			aboutWindow.destroy();
-		})
-	}
 
 	getCommonMenu(siteUrls: ISiteUrl): MenuItemConstructorOptions[] {
 		return [
@@ -66,10 +61,11 @@ class TrayMenu {
 			{
 				id: 'tray_about',
 				label: TranslateService.instant('TIMER_TRACKER.MENU.ABOUT'),
-				click() {
-
+				async click() {
+					await appWindow.initAboutWindow();
+					appWindow.aboutWindow.show();
 				}
-			}
+			},
 			{
 				id: 'server_exit',
 				label: `${TranslateService.instant('BUTTONS.EXIT')} ${app.getName()}`,

@@ -5,7 +5,7 @@ import * as remote from '@electron/remote';
 @Injectable()
 export class ElectronService {
 	ipcRenderer: typeof ipcRenderer;
-	remote: typeof remote;
+	remote: typeof remote | any;
 	desktopCapturer: typeof desktopCapturer;
 	shell: typeof shell;
 
@@ -16,6 +16,10 @@ export class ElectronService {
 		return !!(window && (window as any).process && (window as any).process.type);
 	}
 
+	get isContextBridge():boolean {
+		return !!(window && (window as any).electronAPI);
+	}
+
 	constructor() {
 		// Conditional imports because we only want to load modules inside Electron App
 		if (this.isElectron) {
@@ -24,6 +28,18 @@ export class ElectronService {
 			this.ipcRenderer = window.require('electron').ipcRenderer;
 			this.remote = window.require('@electron/remote');
 			this.shell = window.require('electron').shell;
+			this.desktopCapturer = {
+				getSources: async (opts) =>
+					await this.ipcRenderer.invoke(
+						'DESKTOP_CAPTURER_GET_SOURCES',
+						opts
+					),
+			};
+		} else if (this.isContextBridge) {
+			const electronAPI = (window as any).electronAPI;
+			this.ipcRenderer = electronAPI.ipcRenderer;
+			this.remote = electronAPI.remote;
+			this.shell = electronAPI.shell;
 			this.desktopCapturer = {
 				getSources: async (opts) =>
 					await this.ipcRenderer.invoke(

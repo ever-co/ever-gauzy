@@ -1,7 +1,7 @@
-@import '../themes';
+@import 'themes';
 
 $default-box-shadow-inset: var(--gauzy-shadow) inset;
-$default-height: 42px;
+$default-height: 2rem;
 $default-radius: nb-theme(border-radius);
 $default-button-radius: calc(nb-theme(button-rectangle-border-radius) / 1.625);
 $default-box-shadow: var(--gauzy-shadow);
@@ -210,7 +210,7 @@ $default-box-shadow: var(--gauzy-shadow);
     padding: 12px;
     box-shadow: var(--gauzy-shadow) inset;
     background: var(--gauzy-card-1);
-    width: calc(100% - 20px) !important;
+    width: calc(100% - 24px) !important;
   }
 
   ckeditor .cke_top {

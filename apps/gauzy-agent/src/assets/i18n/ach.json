@@ -1435,7 +1435,8 @@
 				"KPI_NAME": "crwdns7362:0crwdne7362:0"
 			},
 			"ERROR": {
-				"START_DATE_GREATER": "crwdns5026:0crwdne5026:0"
+				"START_DATE_GREATER": "crwdns5026:0crwdne5026:0",
+				"INVALID_IMAGE_URL": "URL ma nyono ti picha en nongo ma aloka."
 			}
 		},
 		"BUTTONS": {
@@ -3353,7 +3354,8 @@
 			"AUTHORIZED_TO_WORK": "crwdns11529:0{{ name }}crwdne11529:0",
 			"MODULE_CREATED": "Module neno kibalo niber.",
 			"MODULE_UPDATED": "Module neno me kicari maber.",
-			"MODULE_SAVE_ERROR": "Kwero module ma neno opire."
+			"MODULE_SAVE_ERROR": "Kwero module ma neno opire.",
+			"PASSWORD_REQUIRED": "Iye nyig mato bedo muko."
 		}
 	},
 	"ACCEPT_INVITE": {

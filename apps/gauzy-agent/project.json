@@ -2,9 +2,14 @@
 	"name": "gauzy-agent",
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
 	"projectType": "application",
-	"prefix": "app",
+	"prefix": "gauzy",
 	"sourceRoot": "apps/gauzy-agent/src",
 	"tags": [],
+	"generators": {
+		"@nx/angular:component": {
+			"style": "scss"
+		}
+	},
 	"targets": {
 		"build": {
 			"executor": "@angular-builders/custom-webpack:browser",
@@ -38,7 +43,6 @@
 					}
 				],
 				"styles": [
-					"apps/gauzy-agent/src/styles.css",
 					"node_modules/@nebular/theme/styles/prebuilt/default.css",
 					"node_modules/bootstrap/dist/css/bootstrap.css",
 					"node_modules/typeface-exo/index.css",
@@ -96,7 +100,10 @@
 			"defaultConfiguration": "production"
 		},
 		"serve": {
-			"executor": "@angular-devkit/build-angular:dev-server",
+			"executor": "@angular-builders/custom-webpack:dev-server",
+			"options": {
+				"buildTarget": "gauzy-agent:build",
+			},
 			"configurations": {
 				"production": {
 					"buildTarget": "gauzy-agent:build:production"

@@ -166,7 +166,10 @@
 		"ADD_PLUGIN": "Añadir plugin",
 		"LOAD_PLUGIN": "Cargar Plugin",
 		"FROM_CDN": "Desde CDN",
-		"ADD_MODULE": "Añadir módulo"
+		"ADD_MODULE": "Añadir módulo",
+		"SHARE": "Compartir",
+		"GET_INFO": "Obtener información",
+		"RETRY": "Reintentar"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -717,7 +720,8 @@
 		"ERROR": {
 			"PROJECT_NAME": "Se requiere el nombre del proyecto.",
 			"PROJECT_URL": "La URL del proyecto es inválida.",
-			"OPEN_SOURCE_PROJECT_URL": "La URL del proyecto de código abierto es inválida."
+			"OPEN_SOURCE_PROJECT_URL": "La URL del proyecto de código abierto es inválida.",
+			"INVALID_IMAGE_URL": "URL de imagen no válida."
 		}
 	},
 	"POP_UPS": {
@@ -2029,6 +2033,10 @@
 			"ORG_TAGS_VIEW": "Ver Etiquetas",
 			"ORG_TAGS_EDIT": "Editar etiquetas",
 			"ORG_TAGS_DELETE": "Eliminar etiquetas",
+			"ORG_TAG_TYPES_ADD": "Agregar tipo de etiqueta",
+			"ORG_TAG_TYPES_VIEW": "Ver tipos de etiqueta",
+			"ORG_TAG_TYPES_EDIT": "Editar tipo de etiqueta",
+			"ORG_TAG_TYPES_DELETE": "Eliminar tipo de etiqueta",
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "Crear/Editar/Eliminar Retroalimentación del candidato.",
 			"ALL_ORG_VIEW": "Ver todas las organizaciones",
 			"ALL_ORG_EDIT": "Crear/Editar/Eliminar todas las Organizaciones",
@@ -2141,9 +2149,15 @@
 			"ORG_TASK_DELETE": "Eliminar tareas",
 			"ORG_TASK_SETTING": "Configuración de tarea",
 			"ORG_MEMBER_LAST_LOG_VIEW": "Ver último registro",
+			"API_CALL_LOG_READ": "Leer registro de llamadas de API",
+  			"API_CALL_LOG_DELETE": "Eliminar registro de llamadas de API",
 			"TENANT_API_KEY_CREATE": "Crear clave API",
 			"TENANT_API_KEY_VIEW": "Ver clave API",
-			"TENANT_API_KEY_DELETE": "Eliminar clave API"
+			"TENANT_API_KEY_DELETE": "Eliminar clave API",
+			"EMPLOYEE_AVAILABILITY_CREATE": "Crear disponibilidad del empleado",
+			"EMPLOYEE_AVAILABILITY_READ": "Ver disponibilidad del empleado",
+			"EMPLOYEE_AVAILABILITY_UPDATE": "Actualizar disponibilidad del empleado",
+			"EMPLOYEE_AVAILABILITY_DELETE": "Eliminar disponibilidad del empleado"
 		},
 		"BILLING": "Facturación",
 		"BUDGET": "Presupuesto",
@@ -3620,7 +3634,8 @@
 			"SCREEN_CAPTURE_CHANGED": "Estado del capturador de pantalla cambiado para {{ name }}",
 			"MODULE_CREATED": "¡Módulo creado con éxito!",
 			"MODULE_UPDATED": "¡Módulo actualizado con éxito!",
-			"MODULE_SAVE_ERROR": "Error al guardar el módulo. Por favor, inténtelo de nuevo."
+			"MODULE_SAVE_ERROR": "Error al guardar el módulo. Por favor, inténtelo de nuevo.",
+			"PASSWORD_REQUIRED": "La contraseña es obligatoria."
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -3887,7 +3902,6 @@
 			"TITLE_SERVER_API": "Asistente de instalación del servidor API de Ever Gauzy",
 			"LABEL_SERVER_API": "La aplicación de escritorio Ever Gauzy API Server proporciona la funcionalidad completa de la plataforma Gauzy disponible directamente en su computadora de escritorio o portátil. Además, permite realizar un seguimiento del tiempo de trabajo, registrar actividades y recibir recordatorios/notificaciones de seguimiento.",
 			"UNABLE_TO_CONNECT": "Unable to connect to the server. Please check your API host or internet connection."
-
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Captura de pantalla",
@@ -4706,5 +4720,49 @@
 	},
 	"SERVER_API": "Servidor API",
 	"SERVER_API_LOG": "Registro del servidor API",
-	"COMING_SOON": "¡Esta página estará disponible pronto!"
+	"COMING_SOON": "¡Esta página estará disponible pronto!",
+	"PLUGIN": {
+		"VIDEO": {
+			"SINGLE": "Vídeo",
+			"PLURAL": "Vídeos",
+			"DOWNLOAD": "Descargar",
+			"NOT_FOUND": "Vídeo no encontrado",
+			"NO_VIDEO": "No hay vídeo",
+			"DOWNLOADS": "Descargas",
+			"NO_VIDEO_DOWNLOAD": "No hay descarga de vídeo",
+			"LOADING_VIDEOS": "Cargando vídeos...",
+			"EDIT_METADATA": "Editar metadatos del vídeo",
+			"STARTING_DOWNLOAD_FOR": "Iniciando descarga para: {{ url }}",
+			"DOWNLOAD_FAILED_FOR": "Fallo en la descarga para: {{ url }}, reintentar",
+			"DOWNLOAD_COMPLETED_FOR": "Descarga completada para: {{ url }}",
+			"SHARED_SUCCESSFULLY": "Vídeo compartido con éxito",
+			"COPIED_SUCCESSFULLY": "Vídeo copiado con éxito",
+			"CORE_INFO": "Información básica",
+			"RECORDED": "Grabado",
+			"DURATION": "Duración",
+			"SIZE": "Tamaño",
+			"VIEW_FULL": "Ver video completo",
+			"TECHNICAL_DETAILS": "Detalles técnicos",
+			"RESOLUTION": "Resolución",
+			"CODEC": "Códec",
+			"FRAME_RATE": "Frecuencia de cuadros",
+			"UPLOADED_BY": "Subido por",
+			"NO_VIDEO_AVAILABLE": "No hay video disponible",
+			"RETRIED": "Video reintentado",
+			"REMOVED_FROM_QUEUE": "Video eliminado de la cola",
+			"ADDED_TO_QUEUE": "Video agregado a la cola",
+			"DELETE_SUCCESSFULLY": "Video eliminado con éxito",
+			"UPDATE_SUCCESSFULLY": "Video actualizado con éxito",
+			"ERROR": {
+				"REQUIRED": "El título es obligatorio.",
+				"AT_LEAST_3": "El título debe tener al menos 3 caracteres.",
+				"AT_MOST_255": "El título no puede superar los 255 caracteres.",
+				"AT_MOST_1000": "La descripción no puede superar los 1000 caracteres.",
+				"SHARE_CANCELED": "El compartido fue cancelado",
+				"INVALID_SHARE_DATA": "Datos de compartición inválidos",
+				"SHARE_NOT_ALLOWED": "No se permite compartir",
+				"UNEXPECTED_SHARING_ERROR": "Error inesperado al compartir"
+			}
+		}
+	}
 }

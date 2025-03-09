@@ -1,7 +1,7 @@
 
 {
     "name": "@gauzy/agent",
-	"version": "0.1.0",    
+	"version": "0.1.0",
     "description": "Ever Gauzy Agent",
 	"author": {
         "name": "Ever Co. LTD",
@@ -17,7 +17,7 @@
         "url": "https://github.com/ever-co/ever-gauzy/issues"
     },
 	"license": "AGPL-3.0",
-    "private": true,    
+    "private": true,
 	"scripts": {
 		"build": "yarn nx build desktop --configuration=development",
 		"build:prod": "yarn nx build desktop --configuration=production",
@@ -32,7 +32,8 @@
 		"electron-packager": "^17.1.1",
 		"electron-reload": "~1.5.0",
 		"node-polyfill-webpack-plugin": "^1.1.4",
-		"terser-webpack-plugin": "^5.3.10"
+		"terser-webpack-plugin": "^5.3.10",
+		"electronmon": "^2.0.2"
 	},
     "dependencies": {
         "@angular/animations": "18.2.12",
@@ -99,5 +100,13 @@
 		"node": ">=20.11.1",
 		"yarn": ">=1.22.19"
 	},
-	"sideEffects": false
+	"sideEffects": false,
+	"electronmon": {
+        "patterns": [
+            "!**/**",
+            "src/main/**",
+			"src/index.ts"
+        ],
+        "logLevel": "quiet"
+    }
 }
