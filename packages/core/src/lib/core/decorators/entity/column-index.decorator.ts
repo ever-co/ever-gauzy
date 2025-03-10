@@ -53,13 +53,13 @@ export function ColumnIndex<T>(
 	 * @param target The prototype of the class (in case of class decorator) or the constructor of the class (in case of property decorator).
 	 * @param propertyKey The name of the property to which the decorator is applied. This is undefined for class decorators.
 	 */
-	return (target: any, propertyKey?: string) => {
+	return (target: any, propertyKey?: any) => {
 		// Apply TypeORM index. If 'name' and 'fields' are specified it creates a named index on the specified properties.
 		// Otherwise, it uses 'options' to determine the indexing strategy.
 		applyTypeOrmIndex(target, propertyKey, name, fields, options as TypeOrmIndexOptions);
 
 		// Apply MikroORM index. It behaves similarly to the TypeORM index application, but with specifics to MikroORM.
-		applyMikroOrmIndex(target, propertyKey, name, fields, options as TypeOrmIndexOptions);
+		applyMikroOrmIndex(target, propertyKey as never, name, fields, options as TypeOrmIndexOptions);
 	};
 }
 
@@ -110,13 +110,13 @@ export function applyTypeOrmIndex(
  */
 export function applyMikroOrmIndex(
 	target: any,
-	propertyKey: string | undefined,
+	propertyKey: never,
 	name: string | undefined,
-	properties: string[] | undefined,
+	properties: any,
 	options: TypeOrmIndexOptions | undefined
 ) {
 	// Converts provided indexing parameters into MikroORM-compatible index options.
-	const mikroOptions = parseToMikroOrmIndexOptions({ name, properties });
+	const mikroOptions = parseToMikroOrmIndexOptions<Object>({ name, properties });
 
 	if (mikroOptions.name && mikroOptions.properties && Array.isArray(properties)) {
 		// Applies a named index on specified properties
