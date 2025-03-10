@@ -33,7 +33,7 @@ import {
 	NotificationActionTypeEnum
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
-import { isPostgres, isSqlite } from '@gauzy/config';
+import { isSqlite } from '@gauzy/config';
 import { TenantAwareCrudService, PaginationParams } from './../core/crud';
 import { addBetween, LIKE_OPERATOR } from './../core/util';
 import { RequestContext } from '../core/context';
@@ -330,7 +330,6 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const { where, filters } = options;
 			const { status, title, prefix, isDraft, isScreeningTask = false, organizationSprintId = null } = where;
 			const { organizationId, projectId, members } = where;
-			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.innerJoin(`${query.alias}.members`, 'members');
@@ -397,12 +396,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						});
 					}
 					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."title" ${likeOperator} :title`), {
+						qb.andWhere(p(`"${query.alias}"."title" ${LIKE_OPERATOR} :title`), {
 							title: `%${title}%`
 						});
 					}
 					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."prefix" ${likeOperator} :prefix`), {
+						qb.andWhere(p(`"${query.alias}"."prefix" ${LIKE_OPERATOR} :prefix`), {
 							prefix: `%${prefix}%`
 						});
 					}
@@ -522,7 +521,6 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				organizationSprintId = null
 			} = where;
 			const { organizationId, projectId, members } = where;
-			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.leftJoin(`${query.alias}.teams`, 'teams');
@@ -604,12 +602,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						});
 					}
 					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."title" ${likeOperator} :title`), {
+						qb.andWhere(p(`"${query.alias}"."title" ${LIKE_OPERATOR} :title`), {
 							title: `%${title}%`
 						});
 					}
 					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."prefix" ${likeOperator} :prefix`), {
+						qb.andWhere(p(`"${query.alias}"."prefix" ${LIKE_OPERATOR} :prefix`), {
 							prefix: `%${prefix}%`
 						});
 					}
@@ -843,8 +841,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				projectId,
 				members
 			} = where;
-			const tenantId = RequestContext.currentTenantId() || where.tenantId;
-			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+			const tenantId = RequestContext.currentTenantId() ?? where.tenantId;
 
 			// Initialize the query
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
@@ -915,10 +912,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						qb.andWhere(p(`"${query.alias}"."isDraft" = :isDraft`), { isDraft });
 					}
 					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."title" ${likeOperator} :title`), { title: `%${title}%` });
+						qb.andWhere(p(`"${query.alias}"."title" ${LIKE_OPERATOR} :title`), { title: `%${title}%` });
 					}
 					if (isNotEmpty(prefix)) {
-						qb.andWhere(p(`"${query.alias}"."prefix" ${likeOperator} :prefix`), { prefix: `%${prefix}%` });
+						qb.andWhere(p(`"${query.alias}"."prefix" ${LIKE_OPERATOR} :prefix`), { prefix: `%${prefix}%` });
 					}
 					if (isUUID(organizationSprintId)) {
 						qb.andWhere(p(`"${query.alias}"."organizationSprintId" = :organizationSprintId`), {

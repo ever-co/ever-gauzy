@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { FindManyOptions, Between, Raw } from 'typeorm';
 import * as moment from 'moment';
 import { IPagination } from '@gauzy/contracts';
-import { isPostgres } from '@gauzy/config';
-import { TenantAwareCrudService } from '@gauzy/core';
+import { LIKE_OPERATOR, TenantAwareCrudService } from '@gauzy/core';
 import { Proposal } from './proposal.entity';
 import { MikroOrmProposalRepository } from './repository/mikro-orm-proposal.repository';
 import { TypeOrmProposalRepository } from './repository/type-orm-proposal.repository';
@@ -42,9 +41,6 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 
 		const { where } = filter;
 
-		// Determine the appropriate like operator based on the database type
-		const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
-
 		if ('valueDate' in where) {
 			const { valueDate } = where;
 			// If 'valueDate' property exists, extract start and end dates
@@ -64,8 +60,9 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 		// Check if 'jobPostContent' property exists in the 'where' filter
 		if ('jobPostContent' in where) {
 			// If 'jobPostContent' property exists, construct a raw SQL query to perform a like search
-			const { jobPostContent } = where;
-			filter['where']['jobPostContent'] = Raw((alias) => `${alias} ${likeOperator} '%${jobPostContent}%'`);
+			filter['where']['jobPostContent'] = Raw((alias) => `${alias} ${LIKE_OPERATOR} :jobPostContent`, {
+				jobPostContent: `%${where.jobPostContent}%`
+			});
 		}
 
 		// Return the paginated data after applying any modifications

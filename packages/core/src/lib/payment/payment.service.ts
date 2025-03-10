@@ -4,11 +4,11 @@ import { chain } from 'underscore';
 import * as moment from 'moment';
 import { IDateRangePicker, IGetPaymentInput, IInvoice, IPayment, LanguagesEnum, PaymentStats } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
-import { isPostgres } from '@gauzy/config';
 import { Payment } from './payment.entity';
-import { getDateRangeFormat, getDaysBetweenDates } from '../core/utils';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
+import { LIKE_OPERATOR } from '../core/util';
+import { getDateRangeFormat, getDaysBetweenDates } from '../core/utils';
 import { EmailService } from './../email-send/email.service';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmPaymentRepository } from './repository/mikro-orm-payment.repository';
@@ -235,10 +235,9 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	public pagination(filter: any) {
 		if ('where' in filter) {
 			const { where } = filter;
-			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 			if ('note' in where) {
 				const { note } = where;
-				filter['where']['note'] = Raw((alias) => `${alias} ${likeOperator} '%${note}%'`);
+				filter['where']['note'] = Raw((alias) => `${alias} ${LIKE_OPERATOR} '%${note}%'`);
 			}
 			if ('paymentDate' in where) {
 				const { paymentDate } = where;

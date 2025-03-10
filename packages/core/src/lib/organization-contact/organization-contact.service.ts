@@ -1,10 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Brackets, In, Raw } from 'typeorm';
 import { ID, IOrganizationContact, IOrganizationContactFindInput, IPagination } from '@gauzy/contracts';
-import { isPostgres } from '@gauzy/config';
-import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
+import { isNotEmpty } from '@gauzy/utils';
+import { LIKE_OPERATOR } from '../core/util';
 import { OrganizationContact } from './organization-contact.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmOrganizationContactRepository } from './repository/type-orm-organization-contact.repository';
@@ -124,19 +124,18 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 	public async pagination(params?: PaginationParams<any>): Promise<IPagination<IOrganizationContact>> {
 		// Custom Filters
 		if ('where' in params) {
-			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 			const { where } = params;
 			if ('name' in where) {
 				const { name } = where;
-				params['where']['name'] = Raw((alias) => `${alias} ${likeOperator} '%${name}%'`);
+				params['where']['name'] = Raw((alias) => `${alias} ${LIKE_OPERATOR} '%${name}%'`);
 			}
 			if ('primaryPhone' in where) {
 				const { primaryPhone } = where;
-				params['where']['primaryPhone'] = Raw((alias) => `${alias} ${likeOperator} '%${primaryPhone}%'`);
+				params['where']['primaryPhone'] = Raw((alias) => `${alias} ${LIKE_OPERATOR} '%${primaryPhone}%'`);
 			}
 			if ('primaryEmail' in where) {
 				const { primaryEmail } = where;
-				params['where']['primaryEmail'] = Raw((alias) => `${alias} ${likeOperator} '%${primaryEmail}%'`);
+				params['where']['primaryEmail'] = Raw((alias) => `${alias} ${LIKE_OPERATOR} '%${primaryEmail}%'`);
 			}
 			if ('members' in where) {
 				const { members } = where;
