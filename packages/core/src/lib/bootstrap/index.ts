@@ -271,9 +271,10 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	const { port = 3000, host = '0.0.0.0' } = config.apiConfigOptions;
 	console.log(chalk.green(`Configured Host: ${host}`));
 	console.log(chalk.green(`Configured Port: ${port}`));
+	console.log(chalk.green(`Configured Git Hash: ${env.gitHash} ${process.env.GIT_HASH}`));
 
 	// Configure Swagger for API documentation
-	const options = new DocumentBuilder().setTitle('Gauzy API').setVersion(env.gitHash).addBearerAuth().build();
+	const options = new DocumentBuilder().setTitle(`Gauzy API ${env.gitHash}`).setVersion(env.gitHash).addBearerAuth().build();
 	const document = SwaggerModule.createDocument(app, options);
 	SwaggerModule.setup('swg', app, document);
 	console.log(chalk.green(`Swagger UI available at http://${host}:${port}/swg`));
