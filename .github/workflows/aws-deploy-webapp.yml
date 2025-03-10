@@ -18,8 +18,14 @@ on:
   workflow_dispatch:
 
 jobs:
+  check-dependencies:
+    name: Check and Build Dependencies
+    uses: ./.github/workflows/webapp-dependencies.yml
+    secrets: inherit
+
   deploy-webapp:
     name: Deploy WebApp to AWS
+    needs: check-dependencies
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -39,11 +45,14 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build, tag, and push webapp image to Amazon ECR
+      - name: Build and tag WebApp image
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build --build-arg DEPENDENCIES_IMAGE="${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }}:latest" -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_WEBAPP }}:$IMAGE_TAG -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_WEBAPP }}:latest -f .deploy/webapp/Dockerfile .
+          docker build --build-arg DEPENDENCIES_IMAGE="${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }}:latest-webapp" -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_WEBAPP }}:$IMAGE_TAG -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_WEBAPP }}:latest -f .deploy/webapp/Dockerfile .
+
+      - name: Push WebApp image to Amazon ECR
+        run: |
           docker push ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_WEBAPP }} --all-tags
           echo "webapp_image=${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_WEBAPP }}:$IMAGE_TAG" >> $GITHUB_ENV
 

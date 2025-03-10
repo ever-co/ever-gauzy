@@ -13,23 +13,25 @@ docker-compose*.yml
 .gitpod.yml
 
 # Cache and other project directories
+.angular
 .cache
 .circle
 .circleci
-.npmrc
+.do
+.fly
 .husky
+.nx
+.render
+.sonarlint
+.verdaccio
+.npmrc
 .travis.yml
 greenkeeper.json
 **/*.md
 **/*.cmd
 **/*.log
 Jenkinsfile
-.do
-.fly
-.nx
-.verdaccio
 .yarn
-.render
 render.yml
 export
 tools

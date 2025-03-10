@@ -69,19 +69,19 @@ ARG NODE_ENV
 ARG DEMO
 ARG NODE_OPTIONS
 
+WORKDIR /srv/gauzy
+USER node
+
+# Copy related project files and configuration files
+COPY --chown=node:node . .
+
+# Set the environment variables
 ENV CI=true \
 	NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=60000"} \
 	NODE_ENV=${NODE_ENV:-production} \
 	DEMO=${DEMO:-false} \
 	IS_DOCKER=true \
 	NX_NO_CLOUD=true
-
-COPY --chmod=755 wait .deploy/webapp/entrypoint.compose.sh .deploy/webapp/entrypoint.prod.sh .deploy/webapp/replacements.sed /
-
-USER node:node
-WORKDIR /srv/gauzy
-
-COPY --chown=node:node . .
 
 # Build the Webapp for production
 RUN yarn build:gauzy:prod:docker
@@ -90,10 +90,13 @@ FROM nginx:alpine AS production
 
 WORKDIR /srv/gauzy
 
-COPY --chown=nginx:nginx --from=builder /wait /entrypoint.compose.sh /entrypoint.prod.sh /replacements.sed ./
+# Copy the built API items and prepare dependencies
 COPY --chown=nginx:nginx .deploy/webapp/nginx.compose.conf /etc/nginx/conf.d/compose.conf.template
 COPY --chown=nginx:nginx .deploy/webapp/nginx.prod.conf /etc/nginx/conf.d/prod.conf.template
 COPY --chown=nginx:nginx --from=builder /srv/gauzy/dist/apps/gauzy .
+
+# Copy the entrypoint scripts
+COPY --chmod=755 wait .deploy/webapp/entrypoint.compose.sh .deploy/webapp/entrypoint.prod.sh .deploy/webapp/replacements.sed ./
 
 RUN chmod a+rw /etc/nginx/conf.d/compose.conf.template /etc/nginx/conf.d/prod.conf.template
 
@@ -157,5 +160,6 @@ ENV CI=true \
 
 EXPOSE ${WEB_PORT}
 
+USER node
 ENTRYPOINT [ "./entrypoint.prod.sh" ]
 CMD [ "nginx", "-g", "daemon off;" ]
