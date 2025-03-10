@@ -15,14 +15,14 @@ on:
   workflow_dispatch:
 
 jobs:
-  check-dependencies:
+  check-web-dependencies:
     name: Check and Build Dependencies
     uses: ./.github/workflows/webapp-dependencies.yml
     secrets: inherit
 
   deploy-webapp:
     name: Deploy WebApp to AWS
-    needs: check-dependencies
+    needs: check-web-dependencies
     runs-on: ubuntu-latest
     permissions:
       contents: read

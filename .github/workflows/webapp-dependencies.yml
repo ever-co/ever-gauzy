@@ -10,11 +10,11 @@ on:
         default: ''
 
 jobs:
-  check-changes:
+  check-web-changes:
     name: Check for dependency changes
     runs-on: ubuntu-latest
     outputs:
-      changes_detected: ${{ steps.check-changes.outputs.changes_detected }}
+      changes_detected: ${{ steps.check-web-changes.outputs.changes_detected }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -23,7 +23,7 @@ jobs:
           fetch-depth: 2
 
       - name: Check for changes in dependency files
-        id: check-changes
+        id: check-web-changes
         run: |
           # Formanual triggers or workflow calls, check if files have changed in the last commit
           CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
@@ -42,8 +42,8 @@ jobs:
 
   handle-no-changes:
     name: Handle No Changes
-    needs: check-changes
-    if: needs.check-changes.outputs.changes_detected != 'true'
+    needs: check-web-changes
+    if: needs.check-web-changes.outputs.changes_detected != 'true'
     runs-on: ubuntu-latest
     steps:
       - name: No Changes Required
@@ -53,8 +53,8 @@ jobs:
 
   generate-dependencies:
     name: Generate dependencies image
-    needs: check-changes
-    if: needs.check-changes.outputs.changes_detected == 'true'
+    needs: check-web-changes
+    if: needs.check-web-changes.outputs.changes_detected == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
