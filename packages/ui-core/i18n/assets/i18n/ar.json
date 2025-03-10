@@ -178,7 +178,8 @@
 		"ADD_MODULE": "إضافة وحدة",
 		"SHARE": "مشاركة",
 		"GET_INFO": "الحصول على المعلومات",
-		"RETRY": "إعادة المحاولة"
+		"RETRY": "إعادة المحاولة",
+		"UPLOAD": "رفع"
 	},
 	"SM_TABLE": {
 		"MEMBERS_COUNT": "عدد الأعضاء",
@@ -207,27 +208,28 @@
 			"CANDIDATE": "لم تقم بإنشاء أي مرشحين.",
 			"INTERVIEW": "لم تقم بإنشاء أي مقابلات.",
 			"EQUIPMENT": "لم تقم بإنشاء أي معدات.",
-			"EQUIPMENT_SHARING": "لم تقم بإنشاء أي سجلات مشاركة معدات.",
-			"EQUIPMENT_SHARING_POLICY": "لم تقم بإنشاء أي سياسات مشاركة معدات.",
-			"INVENTORY": "لم تقم بإنشاء أي مخزونات.",
-			"MERCHANT": "لم تقم بإنشاء أي تجار.",
-			"WAREHOUSE": "لم تقم بإنشاء أي مستودعات.",
-			"WAREHOUSE_PRODUCT": "لم تقم بإنشاء أي منتجات مستودع.",
-			"PRODUCT_CATEGORY": "لم تقم بإنشاء أي فئات منتجات.",
-			"TAGS": "لم تقم بإنشاء أي علامات.",
-			"PROJECT": "لم تقم بإنشاء أي مشاريع.",
-			"DEPARTMENT": "لم تقم بإنشاء أي أقسام.",
-			"CONTACT": "لم تقم بإنشاء أي جهات اتصال.",
-			"CLIENT": "لم تقم بإنشاء أي عملاء.",
-			"LEAD": "لم تقم بإنشاء أي عملاء محتملين.",
-			"TIME_FRAME": "لم تقم بإنشاء أي أطر زمنية.",
-			"KPI": "لم تقم بإنشاء أي مؤشرات أداء رئيسية.",
-			"INVOICE": "لم تقم بإنشاء أي فواتير.",
-			"ESTIMATE": "لم تقم بإنشاء أي تقديرات.",
-			"EVENT_TYPE": "لم تقم بإنشاء أي أنواع أحداث.",
-			"PRODUCT_TYPE_NO_DATA": "لم تقم بإنشاء أي أنواع منتجات.",
-			"TEAM_DASHBOARD": "ليس لديك أي فرق.",
-			"PLUGIN": "لم تقم بتثبيت أي إضافة."
+			"EQUIPMENT_SHARING": "لم تقم بإنشاء أي مشاركة للمعدات.",
+			"EQUIPMENT_SHARING_POLICY": "لم تقم بإنشاء أي سياسة لمشاركة المعدات.",
+			"INVENTORY": "لم تقم بإنشاء أي جرد.",
+			"MERCHANT": "لم تقم بإنشاء تاجر بعد.",
+			"WAREHOUSE": "لم تقم بإنشاء أي مستودع بعد.",
+			"WAREHOUSE_PRODUCT": "لا توجد منتجات في المستودع هنا.",
+			"PRODUCT_CATEGORY": "لم تقم بإنشاء أي فئة منتجات بعد.",
+			"TAGS": "لم تقم بإنشاء أي علامة",
+			"PROJECT": "لم تقم بإنشاء أي مشروع.",
+			"DEPARTMENT": "لم تقم بإنشاء أي قسم.",
+			"CONTACT": "لم تقم بإنشاء أي اتصال.",
+			"CLIENT": "لم تقم بإنشاء أي عميل.",
+			"LEAD": "لم تقم بإنشاء أي عميل محتمل.",
+			"TIME_FRAME": "لم تقم بإنشاء أي إطار زمني.",
+			"KPI": "لم تقم بإنشاء أي مؤشر أداء رئيسي (KPI).",
+			"INVOICE": "لم تقم بإنشاء أي فاتورة.",
+			"ESTIMATE": "لم تقم بإنشاء أي تقدير",
+			"EVENT_TYPE": "لم تقم بإنشاء أي نوع فعالية.",
+			"PRODUCT_TYPE_NO_DATA": "لم تقم بإنشاء أي نوع منتج.",
+			"TEAM_DASHBOARD": "ليس لديك أي فرق",
+			"PLUGIN": "لم تقم بتثبيت أي ملحق.",
+			"PLUGIN_MARKETPLACE": "هذا المكون الإضافي غير متوفر في السوق"
 		},
 		"TRANSACTION_TYPE": "النوع",
 		"AMOUNT": "المبلغ",
@@ -4956,6 +4958,94 @@
 				"SHARE_NOT_ALLOWED": "المشاركة غير مسموحة",
 				"UNEXPECTED_SHARING_ERROR": "خطأ غير متوقع في المشاركة"
 			}
+		},
+		"FORM": {
+			"TITLE": "تحميل الإضافة",
+			"BASIC_INFO": "المعلومات الأساسية",
+			"NAME": "اسم الإضافة",
+			"NAME_PLACEHOLDER": "أدخل اسم الإضافة",
+			"VALIDATION": {
+				"NAME_REQUIRED": "اسم الإضافة مطلوب",
+				"NAME_TOO_LONG": "اسم الإضافة طويل جدًا",
+				"VERSION_REQUIRED": "الإصدار مطلوب",
+				"VERSION_FORMAT": "تنسيق الإصدار غير صالح",
+				"DESCRIPTION_TOO_LONG": "الوصف طويل جدًا",
+				"URL_REQUIRED": "الرابط مطلوب",
+				"INVALID_URL": "تنسيق الرابط غير صالح",
+				"PACKAGE_NAME_REQUIRED": "اسم الحزمة مطلوب",
+				"INVALID_PACKAGE_NAME": "تنسيق اسم الحزمة غير صالح",
+				"INVALID_SCOPE": "تنسيق النطاق غير صالح",
+				"AUTHOR_TOO_LONG": "اسم المؤلف طويل جدًا",
+				"LICENSE_TOO_LONG": "حقل الترخيص طويل جدًا"
+			},
+			"TYPE": "نوع الإضافة",
+			"TYPE_PLACEHOLDER": "اختر نوع الإضافة",
+			"TYPES": {
+				"DESKTOP": "سطح المكتب",
+				"WEB": "ويب",
+				"MOBILE": "جوال"
+			},
+			"VERSION": "الإصدار",
+			"STATUS": "الحالة",
+			"STATUSES": {
+				"ACTIVE": "نشط",
+				"INACTIVE": "غير نشط",
+				"DEPRECATED": "مهمل",
+				"ARCHIVED": "مؤرشف"
+			},
+			"DESCRIPTION": "الوصف",
+			"DESCRIPTION_PLACEHOLDER": "أدخل وصف الإضافة",
+			"SOURCE": "المصدر",
+			"SOURCE_TYPE": "نوع المصدر",
+			"SOURCE_TYPES": {
+				"CDN": "CDN",
+				"NPM": "NPM",
+				"GAUZY": "Gauzy"
+			},
+			"CDN": {
+				"URL": "رابط CDN",
+				"INTEGRITY": "التكامل",
+				"CROSS_ORIGIN": "Cross Origin"
+			},
+			"NPM": {
+				"PACKAGE_NAME": "اسم حزمة NPM",
+				"REGISTRY": "سجل NPM",
+				"SCOPE": "النطاق",
+				"AUTH_TOKEN": "رمز المصادقة"
+			},
+			"FILE_UPLOAD": {
+				"DRAG_DROP": "اسحب وأفلت ملفك هنا",
+				"BROWSE": "تصفح",
+				"REMOVE": "إزالة الملف",
+				"RESTRICTIONS": "يُسمح فقط بملفات .zip",
+				"FILE": "ملف"
+			},
+			"METADATA": {
+				"TITLE": "البيانات الوصفية",
+				"AUTHOR": "المؤلف",
+				"AUTHOR_PLACEHOLDER": "أدخل اسم المؤلف",
+				"LICENSE": "الترخيص",
+				"LICENSE_PLACEHOLDER": "أدخل الترخيص",
+				"HOMEPAGE": "الصفحة الرئيسية",
+				"HOMEPAGE_PLACEHOLDER": "أدخل رابط الصفحة الرئيسية",
+				"REPOSITORY": "المستودع",
+				"REPOSITORY_PLACEHOLDER": "أدخل رابط المستودع"
+			},
+			"OR": "أو"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "إحصائيات الاستخدام",
+			"DOWNLOAD_COUNT": "عدد التنزيلات",
+			"LAST_DOWNLOADED": "آخر تنزيل",
+			"UPLOADED_BY": "تم الرفع بواسطة",
+			"UPLOADED_AT": "تم الرفع في",
+			"SECURITY_INFO": "معلومات الأمان",
+			"CHECKSUM": "المجموع الاختباري",
+			"SIGNATURE": "التوقيع"
+		},
+		"LAYOUT": {
+			"DISCOVER": "اكتشف",
+			"INSTALLED": "مثبت"
 		}
 	}
 }

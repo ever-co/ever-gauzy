@@ -1,0 +1,420 @@
+<nb-card class="dialog-card" status="basic">
+	<nb-card-header class="mb-0">
+		<h5 class="title">{{ (!!plugin ? 'Edit' : 'PLUGIN.FORM.TITLE') | translate }}</h5>
+		<button nbButton ghost size="tiny" class="close-button" (click)="dismiss()" aria-label="Close">
+			<nb-icon icon="close-outline"></nb-icon>
+		</button>
+	</nb-card-header>
+
+	<nb-card-body>
+		<form [formGroup]="pluginForm" (ngSubmit)="submit()">
+			<div class="form-section mb-0">
+				<h6 class="section-title">{{ 'PLUGIN.FORM.BASIC_INFO' | translate }}</h6>
+
+				<div class="form-row">
+					<!-- Left column fields -->
+					<nb-form-field class="form-group">
+						<label class="label" for="plugin-name">{{ 'PLUGIN.FORM.NAME' | translate }} *</label>
+						<input
+							nbInput
+							fullWidth
+							id="plugin-name"
+							formControlName="name"
+							placeholder="{{ 'PLUGIN.FORM.NAME_PLACEHOLDER' | translate }}"
+							[status]="getFieldError('name') ? 'danger' : 'basic'"
+						/>
+						<nb-hint *ngIf="getFieldError('name', 'required')" status="danger">
+							{{ 'PLUGIN.FORM.VALIDATION.NAME_REQUIRED' | translate }}
+						</nb-hint>
+						<nb-hint *ngIf="getFieldError('name', 'maxlength')" status="danger">
+							{{ 'PLUGIN.FORM.VALIDATION.NAME_TOO_LONG' | translate }}
+						</nb-hint>
+					</nb-form-field>
+
+					<nb-form-field class="form-group">
+						<label class="label" for="plugin-type">{{ 'PLUGIN.FORM.TYPE' | translate }} *</label>
+						<nb-select
+							fullWidth
+							id="plugin-type"
+							formControlName="type"
+							placeholder="{{ 'PLUGIN.FORM.TYPE_PLACEHOLDER' | translate }}"
+							[status]="getFieldError('type') ? 'danger' : 'basic'"
+						>
+							<nb-option *ngFor="let type of pluginTypes" [value]="type">
+								{{ 'PLUGIN.FORM.TYPES.' + type | translate }}
+							</nb-option>
+						</nb-select>
+					</nb-form-field>
+				</div>
+
+				<div class="form-row">
+					<nb-form-field class="form-group">
+						<label class="label" for="plugin-version">{{ 'PLUGIN.FORM.VERSION' | translate }} *</label>
+						<input
+							nbInput
+							fullWidth
+							id="plugin-version"
+							formControlName="version"
+							placeholder="1.0.0"
+							[status]="getFieldError('version') ? 'danger' : 'basic'"
+						/>
+						<nb-hint *ngIf="getFieldError('version', 'required')" status="danger">
+							{{ 'PLUGIN.FORM.VALIDATION.VERSION_REQUIRED' | translate }}
+						</nb-hint>
+						<nb-hint *ngIf="getFieldError('version', 'pattern')" status="danger">
+							{{ 'PLUGIN.FORM.VALIDATION.VERSION_FORMAT' | translate }}
+						</nb-hint>
+					</nb-form-field>
+
+					<nb-form-field class="form-group">
+						<label class="label" for="plugin-status">{{ 'PLUGIN.FORM.STATUS' | translate }} *</label>
+						<nb-select
+							fullWidth
+							id="plugin-status"
+							formControlName="status"
+							[status]="getFieldError('status') ? 'danger' : 'basic'"
+						>
+							<nb-option *ngFor="let status of pluginStatuses" [value]="status">
+								{{ 'PLUGIN.FORM.STATUSES.' + status | translate }}
+							</nb-option>
+						</nb-select>
+					</nb-form-field>
+				</div>
+
+				<div class="form-row">
+					<nb-form-field class="form-group full-width">
+						<label class="label" for="plugin-description">{{
+							'PLUGIN.FORM.DESCRIPTION' | translate
+						}}</label>
+						<textarea
+							nbInput
+							fullWidth
+							id="plugin-description"
+							formControlName="description"
+							placeholder="{{ 'PLUGIN.FORM.DESCRIPTION_PLACEHOLDER' | translate }}"
+							[status]="getFieldError('description') ? 'danger' : 'basic'"
+						></textarea>
+						<nb-hint *ngIf="getFieldError('description', 'maxlength')" status="danger">
+							{{ 'PLUGIN.FORM.VALIDATION.DESCRIPTION_TOO_LONG' | translate }}
+						</nb-hint>
+					</nb-form-field>
+				</div>
+			</div>
+
+			<!-- Source Section -->
+			<div class="form-section">
+				<h6 class="section-title">{{ 'PLUGIN.FORM.SOURCE' | translate }}</h6>
+
+				<div class="form-row">
+					<nb-form-field class="form-group full-width">
+						<label class="label" for="source-type">{{ 'PLUGIN.FORM.SOURCE_TYPE' | translate }} *</label>
+						<nb-select
+							fullWidth
+							id="source-type"
+							formControlName="sourceType"
+							(selectedChange)="onSourceTypeChange($event)"
+							[status]="getFieldError('sourceType') ? 'danger' : 'basic'"
+						>
+							<nb-option *ngFor="let source of sourceTypes" [value]="source">
+								{{ 'PLUGIN.FORM.SOURCE_TYPES.' + source | translate }}
+							</nb-option>
+						</nb-select>
+					</nb-form-field>
+				</div>
+
+				<!-- Source-specific fields -->
+				<div class="source-container">
+					<!-- CDN Source -->
+					<div
+						*ngIf="pluginForm.get('sourceType')?.value === 'CDN'"
+						formGroupName="source"
+						class="source-content"
+					>
+						<div class="form-row">
+							<nb-form-field class="form-group full-width">
+								<label class="label" for="cdn-url">{{ 'PLUGIN.FORM.CDN.URL' | translate }} *</label>
+								<input
+									nbInput
+									fullWidth
+									id="cdn-url"
+									formControlName="url"
+									placeholder="https://cdn.example.com/plugin.js"
+									type="url"
+									[status]="getSourceFieldError('url') ? 'danger' : 'basic'"
+								/>
+								<nb-hint *ngIf="getSourceFieldError('url', 'required')" status="danger">
+									{{ 'PLUGIN.FORM.VALIDATION.URL_REQUIRED' | translate }}
+								</nb-hint>
+								<nb-hint *ngIf="getSourceFieldError('url', 'pattern')" status="danger">
+									{{ 'PLUGIN.FORM.VALIDATION.INVALID_URL' | translate }}
+								</nb-hint>
+							</nb-form-field>
+						</div>
+
+						<div class="form-row">
+							<nb-form-field class="form-group">
+								<label class="label" for="cdn-integrity">{{
+									'PLUGIN.FORM.CDN.INTEGRITY' | translate
+								}}</label>
+								<input
+									nbInput
+									fullWidth
+									id="cdn-integrity"
+									formControlName="integrity"
+									placeholder="sha384-..."
+								/>
+							</nb-form-field>
+
+							<nb-form-field class="form-group">
+								<label class="label" for="cdn-crossorigin">{{
+									'PLUGIN.FORM.CDN.CROSS_ORIGIN' | translate
+								}}</label>
+								<input
+									nbInput
+									fullWidth
+									id="cdn-crossorigin"
+									formControlName="crossOrigin"
+									placeholder="anonymous"
+								/>
+							</nb-form-field>
+						</div>
+					</div>
+
+					<!-- NPM Source -->
+					<div
+						*ngIf="pluginForm.get('sourceType')?.value === 'NPM'"
+						formGroupName="source"
+						class="source-content"
+					>
+						<div class="form-row">
+							<nb-form-field class="form-group full-width">
+								<label class="label" for="npm-name"
+									>{{ 'PLUGIN.FORM.NPM.PACKAGE_NAME' | translate }} *</label
+								>
+								<input
+									nbInput
+									fullWidth
+									id="npm-name"
+									formControlName="name"
+									placeholder="@scope/package-name"
+									[status]="getSourceFieldError('name') ? 'danger' : 'basic'"
+								/>
+								<nb-hint *ngIf="getSourceFieldError('name', 'required')" status="danger">
+									{{ 'PLUGIN.FORM.VALIDATION.PACKAGE_NAME_REQUIRED' | translate }}
+								</nb-hint>
+								<nb-hint *ngIf="getSourceFieldError('name', 'pattern')" status="danger">
+									{{ 'PLUGIN.FORM.VALIDATION.INVALID_PACKAGE_NAME' | translate }}
+								</nb-hint>
+							</nb-form-field>
+						</div>
+
+						<div class="form-row">
+							<nb-form-field class="form-group">
+								<label class="label" for="npm-registry">{{
+									'PLUGIN.FORM.NPM.REGISTRY' | translate
+								}}</label>
+								<input
+									nbInput
+									fullWidth
+									id="npm-registry"
+									formControlName="registry"
+									placeholder="https://registry.npmjs.org"
+									[status]="getSourceFieldError('registry') ? 'danger' : 'basic'"
+								/>
+								<nb-hint *ngIf="getSourceFieldError('registry', 'pattern')" status="danger">
+									{{ 'PLUGIN.FORM.VALIDATION.INVALID_URL' | translate }}
+								</nb-hint>
+							</nb-form-field>
+
+							<nb-form-field class="form-group">
+								<label class="label" for="npm-scope">{{ 'PLUGIN.FORM.NPM.SCOPE' | translate }}</label>
+								<input
+									nbInput
+									fullWidth
+									id="npm-scope"
+									formControlName="scope"
+									placeholder="@organization"
+									[status]="getSourceFieldError('scope') ? 'danger' : 'basic'"
+								/>
+								<nb-hint *ngIf="getSourceFieldError('scope', 'pattern')" status="danger">
+									{{ 'PLUGIN.FORM.VALIDATION.INVALID_SCOPE' | translate }}
+								</nb-hint>
+							</nb-form-field>
+						</div>
+
+						<div class="form-row">
+							<nb-form-field class="form-group full-width">
+								<label class="label" for="npm-auth-token">{{
+									'PLUGIN.FORM.NPM.AUTH_TOKEN' | translate
+								}}</label>
+								<input
+									nbInput
+									fullWidth
+									id="npm-auth-token"
+									formControlName="authToken"
+									placeholder="npm_xxxxxxxx"
+									type="password"
+								/>
+							</nb-form-field>
+						</div>
+					</div>
+
+					<!-- GAUZY Source -->
+					<div
+						*ngIf="pluginForm.get('sourceType')?.value === 'GAUZY'"
+						class="source-inputs"
+						formGroupName="source"
+					>
+						<div
+							class="file-upload-area"
+							[class.has-file]="selectedFile"
+							[class.drag-over]="isDragOver"
+							[class.error]="errorMessage"
+							(dragenter)="onDragEnter($event)"
+							(dragleave)="onDragLeave($event)"
+							(dragover)="onDragOver($event)"
+							(drop)="onDrop($event)"
+							(click)="triggerFileBrowse()"
+						>
+							<input #fileInput type="file" hidden (change)="onFileSelected($event)" accept=".zip" />
+
+							<div class="upload-icon">
+								<nb-icon
+									[icon]="selectedFile ? 'checkmark-circle-outline' : 'cloud-upload-outline'"
+									[status]="selectedFile ? 'success' : 'basic'"
+								>
+								</nb-icon>
+							</div>
+
+							<div *ngIf="!selectedFile" class="upload-text">
+								<p>{{ 'PLUGIN.FORM.FILE_UPLOAD.DRAG_DROP' | translate }}</p>
+								<p>{{ 'PLUGIN.FORM.OR' | translate }}</p>
+								<button type="button" nbButton status="primary" size="small">
+									{{ 'PLUGIN.FORM.FILE_UPLOAD.BROWSE' | translate }}
+								</button>
+								<p class="hint">{{ 'PLUGIN.FORM.FILE_UPLOAD.RESTRICTIONS' | translate }}</p>
+							</div>
+
+							<div *ngIf="selectedFile" class="file-info">
+								<p class="file-name">{{ selectedFile.name }}</p>
+								<p class="file-size">{{ formatFileSize(selectedFile.size) }}</p>
+								<button
+									type="button"
+									nbButton
+									status="danger"
+									size="small"
+									(click)="removeFile($event)"
+								>
+									<nb-icon icon="trash-outline"></nb-icon>
+									{{ 'PLUGIN.FORM.FILE_UPLOAD.REMOVE' | translate }}
+								</button>
+							</div>
+						</div>
+
+						<div *ngIf="errorMessage" class="error-message">
+							<nb-icon icon="alert-circle-outline"></nb-icon>
+							{{ errorMessage }}
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Metadata section -->
+			<div class="form-section">
+				<h6 class="section-title">{{ 'PLUGIN.FORM.METADATA.TITLE' | translate }}</h6>
+
+				<div class="form-row">
+					<nb-form-field class="form-group">
+						<label class="label" for="metadata-author">{{
+							'PLUGIN.FORM.METADATA.AUTHOR' | translate
+						}}</label>
+						<input
+							nbInput
+							fullWidth
+							id="metadata-author"
+							formControlName="author"
+							placeholder="{{ 'PLUGIN.FORM.METADATA.AUTHOR_PLACEHOLDER' | translate }}"
+							[status]="getFieldError('author') ? 'danger' : 'basic'"
+						/>
+						<nb-hint *ngIf="getFieldError('author', 'maxlength')" status="danger">
+							{{ 'PLUGIN.FORM.VALIDATION.AUTHOR_TOO_LONG' | translate }}
+						</nb-hint>
+					</nb-form-field>
+
+					<nb-form-field class="form-group">
+						<label class="label" for="metadata-license">{{
+							'PLUGIN.FORM.METADATA.LICENSE' | translate
+						}}</label>
+						<input
+							nbInput
+							fullWidth
+							id="metadata-license"
+							formControlName="license"
+							placeholder="{{ 'PLUGIN.FORM.METADATA.LICENSE_PLACEHOLDER' | translate }}"
+							[status]="getFieldError('license') ? 'danger' : 'basic'"
+						/>
+						<nb-hint *ngIf="getFieldError('license', 'maxlength')" status="danger">
+							{{ 'PLUGIN.FORM.VALIDATION.LICENSE_TOO_LONG' | translate }}
+						</nb-hint>
+					</nb-form-field>
+				</div>
+
+				<div class="form-row">
+					<nb-form-field class="form-group">
+						<label class="label" for="metadata-homepage">{{
+							'PLUGIN.FORM.METADATA.HOMEPAGE' | translate
+						}}</label>
+						<input
+							nbInput
+							fullWidth
+							id="metadata-homepage"
+							formControlName="homepage"
+							type="url"
+							placeholder="{{ 'PLUGIN.FORM.METADATA.HOMEPAGE_PLACEHOLDER' | translate }}"
+							[status]="getFieldError('homepage') ? 'danger' : 'basic'"
+						/>
+						<nb-hint *ngIf="getFieldError('homepage', 'pattern')" status="danger">
+							{{ 'PLUGIN.FORM.VALIDATION.INVALID_URL' | translate }}
+						</nb-hint>
+					</nb-form-field>
+
+					<nb-form-field class="form-group">
+						<label class="label" for="metadata-repository">{{
+							'PLUGIN.FORM.METADATA.REPOSITORY' | translate
+						}}</label>
+						<input
+							nbInput
+							fullWidth
+							id="metadata-repository"
+							formControlName="repository"
+							type="url"
+							placeholder="{{ 'PLUGIN.FORM.METADATA.REPOSITORY_PLACEHOLDER' | translate }}"
+							[status]="getFieldError('repository') ? 'danger' : 'basic'"
+						/>
+						<nb-hint *ngIf="getFieldError('repository', 'pattern')" status="danger">
+							{{ 'PLUGIN.FORM.VALIDATION.INVALID_URL' | translate }}
+						</nb-hint>
+					</nb-form-field>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+
+	<nb-card-footer class="text-right mt-0">
+		<button nbButton type="button" (click)="dismiss()" outline status="basic">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			nbButton
+			type="submit"
+			status="success"
+			[disabled]="isFormInvalid || isSubmitting"
+			(click)="submit()"
+			[nbSpinner]="isSubmitting"
+			nbSpinnerStatus="success"
+			nbSpinnerSize="small"
+		>
+			{{ (!!plugin ? 'BUTTONS.UPDATE' : 'BUTTONS.UPLOAD') | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

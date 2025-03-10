@@ -41,6 +41,10 @@ export class PluginElectronService {
 		this.electronService.ipcRenderer.send('plugin::uninstall', plugin.name);
 	}
 
+	public lazyLoader(pluginPath: string) {
+		return this.electronService.ipcRenderer.invoke('plugins::lazy-loader', pluginPath);
+	}
+
 	public get status(): Observable<{ status: string; message?: string }> {
 		return new Observable((observer) => {
 			const channel = 'plugin::status';

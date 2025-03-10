@@ -40,6 +40,17 @@
 				>
 					<i class="fab fa-npm"></i>
 				</button>
+				<button
+					nbButton
+					[disabled]="installing"
+					class="full-width button"
+					status="warning"
+					type="submit"
+					(click)="redirectToStore()"
+				>
+					<nb-icon icon="grid-outline"></nb-icon>
+					{{ 'Marketplace' | translate }}
+				</button>
 			</div>
 		</ng-container>
 	</nb-card-body>

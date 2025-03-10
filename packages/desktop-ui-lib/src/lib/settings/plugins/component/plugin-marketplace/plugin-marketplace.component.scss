@@ -1,0 +1,23 @@
+.no-data {
+  height: 650px;
+  width: 100%;
+}
+
+.plugin {
+  border-bottom: 0.5px solid rgba(143, 155, 179, 0.48);
+
+  &.none {
+    border-bottom: unset;
+  }
+}
+
+.content-active {
+  position: relative;
+
+  .button-upload {
+    cursor: pointer;
+    position: absolute;
+    bottom: 2rem;
+    right: 2rem;
+  }
+}

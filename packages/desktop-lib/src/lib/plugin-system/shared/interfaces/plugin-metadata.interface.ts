@@ -4,6 +4,7 @@ export interface IPluginMetadata {
 	main: string;
 	renderer?: string;
 	description?: string;
+	logo?: string;
 	author?: string;
 }
 
@@ -13,7 +14,7 @@ export type IPluginMetadataCreate = IPluginMetadata & {
 };
 
 export type IPluginMetadataUpdate = Partial<
-	Pick<IPluginMetadataCreate, 'isActivate' | 'name' | 'version'> & { id?: string }
+	Pick<IPluginMetadataCreate, 'isActivate' | 'name' | 'version' | 'description' | 'logo'> & { id?: string }
 >;
 
 export type IPluginMetadataPersistance = IPluginMetadataCreate & IPluginMetadataUpdate;

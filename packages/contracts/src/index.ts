@@ -150,6 +150,7 @@ export * from './lib/employee-notification-setting.model';
 export * from './lib/user-organization.model';
 export * from './lib/user.model';
 export * from './lib/wakatime.model';
+export * from './lib/plugin.model';
 
 export {
 	ActorTypeEnum,
