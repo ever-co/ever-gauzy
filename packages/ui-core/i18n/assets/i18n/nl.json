@@ -169,7 +169,8 @@
 		"ADD_MODULE": "Module toevoegen",
 		"SHARE": "Delen",
 		"GET_INFO": "Informatie ophalen",
-		"RETRY": "Opnieuw proberen"
+		"RETRY": "Opnieuw proberen",
+		"UPLOAD": "Uploaden"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -216,7 +217,8 @@
 			"EVENT_TYPE": "U heeft geen evenementtype aangemaakt.",
 			"PRODUCT_TYPE_NO_DATA": "U heeft geen producttype gemaakt.",
 			"TEAM_DASHBOARD": "Je hebt geen teams.",
-			"PLUGIN": "Je hebt geen enkele plugin geïnstalleerd."
+			"PLUGIN": "Je hebt geen enkele plugin geïnstalleerd.",
+			"PLUGIN_MARKETPLACE": "Deze plugin is niet beschikbaar op de marktplaats"
 		},
 		"TRANSACTION_TYPE": "Type",
 		"AMOUNT": "Bedrag",
@@ -4765,6 +4767,94 @@
 				"SHARE_NOT_ALLOWED": "Delen is niet toegestaan",
 				"UNEXPECTED_SHARING_ERROR": "Onverwachte fout bij delen"
 			}
+		},
+		"FORM": {
+			"TITLE": "Plugin uploaden",
+			"BASIC_INFO": "Basisinformatie",
+			"NAME": "Pluginaam",
+			"NAME_PLACEHOLDER": "Voer de pluginaam in",
+			"VALIDATION": {
+				"NAME_REQUIRED": "Pluginaam is vereist",
+				"NAME_TOO_LONG": "Pluginaam is te lang",
+				"VERSION_REQUIRED": "Versie is vereist",
+				"VERSION_FORMAT": "Ongeldig versieformaat",
+				"DESCRIPTION_TOO_LONG": "Beschrijving is te lang",
+				"URL_REQUIRED": "URL is vereist",
+				"INVALID_URL": "Ongeldig URL-formaat",
+				"PACKAGE_NAME_REQUIRED": "Pakketnaam is vereist",
+				"INVALID_PACKAGE_NAME": "Ongeldig pakketnaamformaat",
+				"INVALID_SCOPE": "Ongeldig bereikformaat",
+				"AUTHOR_TOO_LONG": "Auteursnaam is te lang",
+				"LICENSE_TOO_LONG": "Licentieveld is te lang"
+			},
+			"TYPE": "Plugintype",
+			"TYPE_PLACEHOLDER": "Selecteer plugintype",
+			"TYPES": {
+				"DESKTOP": "Desktop",
+				"WEB": "Web",
+				"MOBILE": "Mobiel"
+			},
+			"VERSION": "Versie",
+			"STATUS": "Status",
+			"STATUSES": {
+				"ACTIVE": "Actief",
+				"INACTIVE": "Inactief",
+				"DEPRECATED": "Verouderd",
+				"ARCHIVED": "Gearchiveerd"
+			},
+			"DESCRIPTION": "Beschrijving",
+			"DESCRIPTION_PLACEHOLDER": "Voer een pluginbeschrijving in",
+			"SOURCE": "Bron",
+			"SOURCE_TYPE": "Brontype",
+			"SOURCE_TYPES": {
+				"CDN": "CDN",
+				"NPM": "NPM",
+				"GAUZY": "Gauzy"
+			},
+			"CDN": {
+				"URL": "CDN-URL",
+				"INTEGRITY": "Integriteit",
+				"CROSS_ORIGIN": "Cross Origin"
+			},
+			"NPM": {
+				"PACKAGE_NAME": "NPM-pakketnaam",
+				"REGISTRY": "NPM-register",
+				"SCOPE": "Bereik",
+				"AUTH_TOKEN": "Authenticatietoken"
+			},
+			"FILE_UPLOAD": {
+				"DRAG_DROP": "Sleep je bestand hierheen",
+				"BROWSE": "Bladeren",
+				"REMOVE": "Bestand verwijderen",
+				"RESTRICTIONS": "Alleen .zip-bestanden zijn toegestaan",
+				"FILE": "Bestand"
+			},
+			"METADATA": {
+				"TITLE": "Metadata",
+				"AUTHOR": "Auteur",
+				"AUTHOR_PLACEHOLDER": "Voer de auteursnaam in",
+				"LICENSE": "Licentie",
+				"LICENSE_PLACEHOLDER": "Voer de licentie in",
+				"HOMEPAGE": "Homepage",
+				"HOMEPAGE_PLACEHOLDER": "Voer de homepage-URL in",
+				"REPOSITORY": "Repository",
+				"REPOSITORY_PLACEHOLDER": "Voer de repository-URL in"
+			},
+			"OR": "Of"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "Gebruiksstatistieken",
+			"DOWNLOAD_COUNT": "Aantal downloads",
+			"LAST_DOWNLOADED": "Laatst gedownload",
+			"UPLOADED_BY": "Geüpload door",
+			"UPLOADED_AT": "Geüpload op",
+			"SECURITY_INFO": "Beveiligingsinformatie",
+			"CHECKSUM": "Controlesom",
+			"SIGNATURE": "Handtekening"
+		},
+		"LAYOUT": {
+			"DISCOVER": "Ontdekken",
+			"INSTALLED": "Geïnstalleerd"
 		}
 	}
 }

@@ -550,7 +550,12 @@
 		"isready",
 		"openzipkin",
 		"opensearchproject",
-		"nofile"
+		"nofile",
+		"ICDN",
+		"INPM",
+		"ɵcmp",
+		"ɵmod",
+		"ɵcreate"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

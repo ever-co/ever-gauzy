@@ -18,7 +18,7 @@ export class PluginMetadataService {
 
 	public async update(input: IPluginMetadataUpdate): Promise<void> {
 		const query = this.buildQuery(input);
-		await query.update({ isActivate: input.isActivate, version: input.version });
+		await query.update({ isActivate: input.isActivate, version: input.version, description: input.description });
 	}
 
 	public async delete(input: IPluginMetadataDelete): Promise<void> {
@@ -50,7 +50,7 @@ export class PluginMetadataService {
 		}
 		if (input.name) {
 			if (input.id) {
-				query.orWhere('name', input.name);
+				query.orWhere('id', input.id);
 			} else {
 				query.where('name', input.name);
 			}

@@ -4,13 +4,14 @@ import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Angular2SmartTableComponent, Cell, LocalDataSource } from 'angular2-smart-table';
-import { BehaviorSubject, concatMap, filter, from, Observable, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, concatMap, filter, from, Observable, switchMap, take, tap } from 'rxjs';
 import { ToastrNotificationService } from '../../../../services';
 import { PluginElectronService } from '../../services/plugin-electron.service';
 import { IPlugin } from '../../services/plugin-loader.service';
 import { AddPluginComponent } from '../add-plugin/add-plugin.component';
 import { PluginStatusComponent } from './plugin-status/plugin-status.component';
 import { PluginUpdateComponent } from './plugin-update/plugin-update.component';
+import { AlertComponent } from '../../../../dialogs/alert/alert.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -148,12 +149,38 @@ export class PluginListComponent implements OnInit {
 	}
 
 	public changeStatus() {
-		this.processing = true;
-		if (this.plugin.isActivate) {
-			this.pluginElectronService.deactivate(this.plugin);
+		if (!this.plugin) return;
+
+		const { isActivate } = this.plugin;
+
+		if (isActivate) {
+			this.dialog
+				.open(AlertComponent, {
+					backdropClass: 'backdrop-blur',
+					context: {
+						data: {
+							title: 'Deactivate',
+							message: 'Would you like to deactivate this plugin?',
+							status: 'basic'
+						}
+					}
+				})
+				.onClose.pipe(
+					take(1),
+					filter(Boolean),
+					tap(() => this.handlePluginAction(false))
+				)
+				.subscribe();
 		} else {
-			this.pluginElectronService.activate(this.plugin);
+			this.handlePluginAction(true);
 		}
+	}
+
+	private handlePluginAction(activate: boolean) {
+		this.processing = true;
+		activate
+			? this.pluginElectronService.activate(this.plugin)
+			: this.pluginElectronService.deactivate(this.plugin);
 		this.plugin = null;
 	}
 
@@ -169,9 +196,27 @@ export class PluginListComponent implements OnInit {
 	}
 
 	public uninstall() {
-		this.processing = true;
-		this.pluginElectronService.uninstall(this.plugin);
-		this.plugin = null;
+		this.dialog
+			.open(AlertComponent, {
+				backdropClass: 'backdrop-blur',
+				context: {
+					data: {
+						title: 'Uninstall',
+						message: 'Would you like to uninstall this plugin?',
+						status: 'basic'
+					}
+				}
+			})
+			.onClose.pipe(
+				take(1),
+				filter(Boolean),
+				tap(() => {
+					this.processing = true;
+					this.pluginElectronService.uninstall(this.plugin);
+					this.plugin = null;
+				})
+			)
+			.subscribe();
 	}
 
 	private clearItem(): void {

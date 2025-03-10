@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 
 export interface AlertDialogOptions {
@@ -9,16 +9,18 @@ export interface AlertDialogOptions {
 @Component({
 	selector: 'ngx-alert',
 	templateUrl: './alert.component.html',
-	styleUrls: ['./alert.component.scss'],
+	styleUrls: ['./alert.component.scss']
 })
-export class AlertComponent implements OnInit {
+export class AlertComponent {
 	@Input() data: AlertDialogOptions;
 
 	constructor(private dialogRef: NbDialogRef<AlertComponent>) {}
 
-	ngOnInit() {}
+	public confirm() {
+		this.dialogRef.close(true);
+	}
 
-	dismiss() {
-		this.dialogRef.close();
+	public dismiss() {
+		this.dialogRef.close(false);
 	}
 }

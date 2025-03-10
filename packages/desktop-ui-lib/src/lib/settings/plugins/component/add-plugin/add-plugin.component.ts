@@ -4,6 +4,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap } from 'rxjs';
 import { PluginElectronService } from '../../services/plugin-electron.service';
+import { Router } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -15,6 +16,7 @@ export class AddPluginComponent implements OnInit {
 	private readonly pluginElectronService = inject(PluginElectronService);
 	private readonly dialogRef = inject(NbDialogRef<AddPluginComponent>);
 	private readonly ngZone = inject(NgZone);
+	private readonly router = inject(Router);
 	public installing = false;
 	public error = null;
 	public context = 'local';
@@ -101,5 +103,10 @@ export class AddPluginComponent implements OnInit {
 
 	public toggleRegistry(enabled: boolean) {
 		this.showRegistry = enabled;
+	}
+
+	public async redirectToStore(): Promise<void> {
+		await this.router.navigate(['settings', 'marketplace-plugins']);
+		this.close();
 	}
 }
