@@ -11,5 +11,6 @@ export enum PluginChannel {
 
 export enum PluginHandlerChannel {
 	GET_ALL = 'plugins::getAll',
-	GET_ONE = 'plugins::getOne'
+	GET_ONE = 'plugins::getOne',
+	LAZY_LOADER = 'plugins::lazy-loader'
 }

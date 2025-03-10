@@ -1,0 +1,329 @@
+<nb-card class="content-active first" status="basic">
+	<nb-card-body>
+		@if(loading) {
+		<div class="d-flex justify-content-center py-4">
+			<nb-spinner status="primary"></nb-spinner>
+		</div>
+		}@else if(plugin){
+		<div>
+			<!-- Basic Information Section -->
+			<div class="form-section mb-3">
+				<h6 class="section-title">{{ 'PLUGIN.FORM.BASIC_INFO' | translate }}</h6>
+
+				<div class="info-row">
+					<div class="info-item">
+						<div class="label">{{ 'PLUGIN.FORM.NAME' | translate }}</div>
+						<div class="value">
+							{{ plugin.name }}
+							<nb-badge
+								[status]="getStatusBadgeStatus(plugin.status)"
+								[text]="getStatusLabel(plugin.status)"
+								position="top right"
+								class="ml-2 b-status left"
+							></nb-badge>
+							<nb-badge
+								[status]="getPluginTypeBadgeStatus(plugin.type)"
+								[text]="getTypeLabel(plugin.type)"
+								position="top right"
+								class="ml-2 b-status"
+							></nb-badge>
+						</div>
+					</div>
+				</div>
+
+				<div class="info-row">
+					<div class="info-item">
+						<div class="label">{{ 'PLUGIN.FORM.STATUS' | translate }}</div>
+						<div class="value">
+							@if(isOwner) {
+							<nb-select
+								placeholder="{{ 'PLUGIN.FORM.STATUS' | translate }}"
+								[selected]="plugin.status"
+								(selectedChange)="updatePluginStatus($event)"
+								status="primary"
+								size="small"
+							>
+								<nb-option
+									*ngFor="
+										let status of [
+											pluginStatus.ACTIVE,
+											pluginStatus.INACTIVE,
+											pluginStatus.DEPRECATED,
+											pluginStatus.ARCHIVED
+										]
+									"
+									[value]="status"
+									[disabled]="status === plugin.status"
+								>
+									{{ getStatusLabel(status) }}
+								</nb-option>
+							</nb-select>
+							}@else {
+							{{ 'PLUGIN.FORM.STATUSES.' + plugin.status | translate }}
+							}
+						</div>
+					</div>
+
+					<div class="info-item">
+						<div class="label">{{ 'PLUGIN.FORM.TYPE' | translate }}</div>
+						<div class="value">{{ getTypeLabel(plugin.type) }}</div>
+					</div>
+				</div>
+
+				<div class="info-row">
+					<div class="info-item">
+						<div class="label">{{ 'PLUGIN.FORM.VERSION' | translate }}</div>
+						<div class="value">
+							<nb-select
+								placeholder="{{ 'PLUGIN.FORM.VERSION' | translate }}"
+								status="primary"
+								aria-label="Select plugin version"
+								(selectedChange)="onVersionChange($event)"
+								[(ngModel)]="selectedVersion"
+							>
+								<nb-option *ngFor="let version of plugin.versions" [value]="version">
+									{{ version }}
+								</nb-option>
+							</nb-select>
+						</div>
+					</div>
+				</div>
+
+				<div class="info-row" *ngIf="plugin.description">
+					<div class="info-item full-width">
+						<div class="label">{{ 'PLUGIN.FORM.DESCRIPTION' | translate }}</div>
+						<div class="value description">{{ plugin.description }}</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Source Information Section -->
+			<div class="form-section mb-3">
+				<h6 class="section-title">{{ 'PLUGIN.FORM.SOURCE' | translate }}</h6>
+
+				<div class="info-row">
+					<div class="info-item full-width">
+						<div class="label">{{ 'PLUGIN.FORM.SOURCE_TYPE' | translate }}</div>
+						<div class="value">{{ getSourceTypeLabel(plugin.source.type) }}</div>
+					</div>
+				</div>
+
+				<!-- CDN Source -->
+				<ng-container *ngIf="plugin.source.type === pluginSourceType.CDN">
+					<div class="info-row">
+						<div class="info-item full-width">
+							<div class="label">{{ 'PLUGIN.FORM.CDN.URL' | translate }}</div>
+							<div class="value">{{ plugin.source.url }}</div>
+						</div>
+					</div>
+
+					<div class="info-row" *ngIf="plugin.source.integrity || plugin.source.crossOrigin">
+						<div class="info-item" *ngIf="plugin.source.integrity">
+							<div class="label">{{ 'PLUGIN.FORM.CDN.INTEGRITY' | translate }}</div>
+							<div class="value text-truncate" [nbTooltip]="plugin.source.integrity">
+								{{ plugin.source.integrity }}
+							</div>
+						</div>
+
+						<div class="info-item" *ngIf="plugin.source.crossOrigin">
+							<div class="label">{{ 'PLUGIN.FORM.CDN.CROSS_ORIGIN' | translate }}</div>
+							<div class="value">{{ plugin.source.crossOrigin }}</div>
+						</div>
+					</div>
+				</ng-container>
+
+				<!-- NPM Source -->
+				<ng-container *ngIf="plugin.source.type === pluginSourceType.NPM">
+					<div class="info-row">
+						<div class="info-item full-width">
+							<div class="label">{{ 'PLUGIN.FORM.NPM.PACKAGE_NAME' | translate }}</div>
+							<div class="value">{{ plugin.source.name }}</div>
+						</div>
+					</div>
+
+					<div class="info-row">
+						<div class="info-item" *ngIf="plugin.source.scope">
+							<div class="label">{{ 'PLUGIN.FORM.NPM.SCOPE' | translate }}</div>
+							<div class="value">{{ plugin.source.scope }}</div>
+						</div>
+
+						<div class="info-item" *ngIf="plugin.source.registry">
+							<div class="label">{{ 'PLUGIN.FORM.NPM.REGISTRY' | translate }}</div>
+							<div class="value">{{ plugin.source.registry }}</div>
+						</div>
+					</div>
+
+					<div class="info-row" *ngIf="plugin.source.authToken">
+						<div class="info-item">
+							<div class="label">{{ 'PLUGIN.FORM.NPM.AUTH_TOKEN' | translate }}</div>
+							<div class="value">
+								<span class="text-muted">{{ 'PLUGIN.DETAILS.HIDDEN_FOR_SECURITY' | translate }}</span>
+							</div>
+						</div>
+					</div>
+				</ng-container>
+
+				<!-- GAUZY Source -->
+				<ng-container *ngIf="plugin.source.type === pluginSourceType.GAUZY">
+					<div class="info-row">
+						<div class="info-item">
+							<div class="label">{{ 'PLUGIN.FORM.FILE_UPLOAD.FILE' | translate }}</div>
+							<div class="value">
+								<span *ngIf="plugin.source.url">{{ plugin.source.url }}</span>
+								<span *ngIf="!plugin.source.url">{{ 'PLUGIN.DETAILS.UPLOADED_FILE' | translate }}</span>
+							</div>
+						</div>
+					</div>
+				</ng-container>
+			</div>
+
+			<!-- Metadata Section -->
+			<div class="form-section mb-3">
+				<h6 class="section-title">{{ 'PLUGIN.FORM.METADATA.TITLE' | translate }}</h6>
+
+				<div class="info-row">
+					<div class="info-item">
+						<div class="label">{{ 'PLUGIN.FORM.METADATA.AUTHOR' | translate }}</div>
+						<div class="value">{{ plugin.author || 'N/A' }}</div>
+					</div>
+
+					<div class="info-item">
+						<div class="label">{{ 'PLUGIN.FORM.METADATA.LICENSE' | translate }}</div>
+						<div class="value">{{ plugin.license || 'N/A' }}</div>
+					</div>
+				</div>
+
+				<div class="info-row">
+					<div class="info-item" *ngIf="plugin.homepage">
+						<div class="label">{{ 'PLUGIN.FORM.METADATA.HOMEPAGE' | translate }}</div>
+						<div class="value">
+							<a [href]="plugin.homepage" target="_blank" rel="noopener noreferrer">
+								{{ plugin.homepage }}
+								<nb-icon icon="external-link-outline" class="external-link"></nb-icon>
+							</a>
+						</div>
+					</div>
+
+					<div class="info-item" *ngIf="plugin.repository">
+						<div class="label">{{ 'PLUGIN.FORM.METADATA.REPOSITORY' | translate }}</div>
+						<div class="value">
+							<a [href]="plugin.repository" target="_blank" rel="noopener noreferrer">
+								{{ plugin.repository }}
+								<nb-icon icon="external-link-outline" class="external-link"></nb-icon>
+							</a>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Usage Statistics Section -->
+			<div class="form-section">
+				<h6 class="section-title">{{ 'PLUGIN.DETAILS.USAGE_STATS' | translate }}</h6>
+
+				<div class="info-row">
+					<div class="info-item">
+						<div class="label">{{ 'PLUGIN.DETAILS.DOWNLOAD_COUNT' | translate }}</div>
+						<div class="value">{{ plugin.downloadCount }}</div>
+					</div>
+
+					<div class="info-item" *ngIf="plugin.lastDownloadedAt">
+						<div class="label">{{ 'PLUGIN.DETAILS.LAST_DOWNLOADED' | translate }}</div>
+						<div class="value">{{ formatDate(plugin.lastDownloadedAt) }}</div>
+					</div>
+				</div>
+
+				<div class="info-row">
+					<div class="info-item" *ngIf="plugin.uploadedBy">
+						<div class="label">{{ 'PLUGIN.DETAILS.UPLOADED_BY' | translate }}</div>
+						<div class="value">{{ plugin.uploadedBy.firstName }} {{ plugin.uploadedBy.lastName }}</div>
+					</div>
+
+					<div class="info-item" *ngIf="plugin.uploadedAt">
+						<div class="label">{{ 'PLUGIN.DETAILS.UPLOADED_AT' | translate }}</div>
+						<div class="value">{{ formatDate(plugin.uploadedAt) }}</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Security Info -->
+			<div class="form-section" *ngIf="plugin.checksum || plugin.signature">
+				<h6 class="section-title">{{ 'PLUGIN.DETAILS.SECURITY_INFO' | translate }}</h6>
+
+				<div class="info-row" *ngIf="plugin.checksum">
+					<div class="info-item full-width">
+						<div class="label">{{ 'PLUGIN.DETAILS.CHECKSUM' | translate }}</div>
+						<div class="value text-truncate" [nbTooltip]="plugin.checksum">
+							{{ plugin.checksum }}
+						</div>
+					</div>
+				</div>
+
+				<div class="info-row" *ngIf="plugin.signature">
+					<div class="info-item full-width">
+						<div class="label">{{ 'PLUGIN.DETAILS.SIGNATURE' | translate }}</div>
+						<div class="value text-truncate" [nbTooltip]="plugin.signature">
+							{{ plugin.signature }}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		}@else {
+		<div class="no-data">
+			<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.PLUGIN_MARKETPLACE' | translate"> </ngx-no-data-message>
+		</div>
+		}
+	</nb-card-body>
+
+	<nb-card-footer class="text-right">
+		<button nbButton type="button" status="basic" outline (click)="navigateBack()">
+			<nb-icon icon="arrow-back-outline"></nb-icon>
+			{{ 'BUTTONS.BACK' | translate }}
+		</button>
+		@if(isOwner){
+		<button
+			nbButton
+			type="button"
+			status="basic"
+			[disabled]="installing || uninstalling"
+			(click)="navigateToEdit()"
+		>
+			<nb-icon icon="edit-2-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		} @if(installed) { @if(needUpdate) {
+		<button
+			nbButton
+			type="button"
+			status="primary"
+			[disabled]="installing || uninstalling"
+			(click)="updatePlugin()"
+		>
+			<nb-icon *gauzySpinnerButton="installing" icon="sync-outline"></nb-icon>
+			{{ 'BUTTONS.UPDATE' | translate }}
+		</button>
+		}
+		<button
+			nbButton
+			type="button"
+			status="danger"
+			[disabled]="installing || uninstalling"
+			(click)="uninstallPlugin()"
+		>
+			<nb-icon *gauzySpinnerButton="uninstalling" icon="trash-2-outline"></nb-icon>
+			{{ 'BUTTONS.UNINSTALL' | translate }}
+		</button>
+		}@else { @if(plugin) {
+		<button
+			nbButton
+			type="button"
+			status="success"
+			[disabled]="installing || uninstalling"
+			(click)="installPlugin()"
+		>
+			<nb-icon *gauzySpinnerButton="installing" icon="cloud-download-outline"></nb-icon>
+			{{ 'BUTTONS.INSTALL' | translate }}
+		</button>
+		} }
+	</nb-card-footer>
+</nb-card>

@@ -551,6 +551,11 @@
 		"openzipkin",
 		"opensearchproject",
 		"nofile",
+		"ICDN",
+		"INPM",
+		"ɵcmp",
+		"ɵmod",
+		"ɵcreate",
 		"notarytool"
 	],
 	"useGitignore": true,

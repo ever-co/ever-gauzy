@@ -1,0 +1,21 @@
+@let plugins = plugins$ | async; @let available = (plugins$ | async)?.length > 0;
+
+<nb-card class="content-active first">
+	@if(available) { @for(plugin of plugins; track plugin.id; let isLast = $last) {
+	<lib-plugin-marketplace-detail
+		class="plugin"
+		[ngClass]="{ none: isLast }"
+		[plugin]="plugin"
+	></lib-plugin-marketplace-detail>
+	} } @else {
+	<div class="no-data">
+		<ngx-no-data-message message="There are no available plugins"></ngx-no-data-message>
+	</div>
+	} @if(isUploadAvailable){
+	<div class="button-upload">
+		<button (click)="upload()" nbTooltip="Upload new plugin" status="primary" nbButton>
+			<nb-icon icon="cloud-upload-outline"></nb-icon>
+		</button>
+	</div>
+	}
+</nb-card>

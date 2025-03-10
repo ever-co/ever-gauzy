@@ -18,8 +18,6 @@ export class PluginManager implements IPluginManager {
 	private eventManager = PluginEventManager.getInstance();
 	private static instance: IPluginManager;
 
-	private constructor() { }
-
 	public static getInstance(): IPluginManager {
 		if (!this.instance) {
 			this.instance = new PluginManager();
@@ -69,6 +67,7 @@ export class PluginManager implements IPluginManager {
 
 		await this.pluginMetadataService.update({
 			name: pluginMetadata.name,
+			description: pluginMetadata.description,
 			version: pluginMetadata.version
 		});
 
@@ -91,8 +90,9 @@ export class PluginManager implements IPluginManager {
 			await this.pluginMetadataService.create({
 				name: pluginMetadata.name,
 				version: pluginMetadata.version,
+				description: pluginMetadata.description,
 				main: pluginMetadata.main,
-				renderer: pluginMetadata.renderer,
+				renderer: pluginMetadata.renderer ? path.join(pluginDir, pluginMetadata.renderer) : null,
 				pathname: pluginDir
 			});
 
