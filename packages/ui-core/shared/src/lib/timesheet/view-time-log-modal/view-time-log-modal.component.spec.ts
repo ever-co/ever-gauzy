@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { ViewTimeLogModalComponent } from './view-time-log-modal.component';
 
@@ -6,7 +6,7 @@ describe('ViewTimeLogModalComponent', () => {
 	let component: ViewTimeLogModalComponent;
 	let fixture: ComponentFixture<ViewTimeLogModalComponent>;
 
-	beforeEach(async(() => {
+	beforeEach(waitForAsync(() => {
 		TestBed.configureTestingModule({
 			declarations: [ViewTimeLogModalComponent],
 			teardown: { destroyAfterEach: false }

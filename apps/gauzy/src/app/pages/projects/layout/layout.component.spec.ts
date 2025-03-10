@@ -1,5 +1,4 @@
 import { waitForAsync, ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { ProjectLayoutComponent } from './layout.component';
 
 describe('ProjectLayoutComponent', () => {

@@ -1,12 +1,11 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { EditTimeLogModalComponent } from './edit-time-log-modal.component';
 
 describe('EditTimeLogModalComponent', () => {
 	let component: EditTimeLogModalComponent;
 	let fixture: ComponentFixture<EditTimeLogModalComponent>;
 
-	beforeEach(async(() => {
+	beforeEach(waitForAsync(() => {
 		TestBed.configureTestingModule({
 			declarations: [EditTimeLogModalComponent],
 			teardown: { destroyAfterEach: false }

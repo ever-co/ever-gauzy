@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { TimeActivitiesComponent } from './time-activities.component';
 
 describe('TimeActivitiesComponent', () => {

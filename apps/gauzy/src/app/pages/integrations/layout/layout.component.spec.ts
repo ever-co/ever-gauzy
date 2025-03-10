@@ -1,5 +1,4 @@
 import { waitForAsync, ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { IntegrationLayoutComponent } from './layout.component';
 
 describe('IntegrationLayoutComponent', () => {

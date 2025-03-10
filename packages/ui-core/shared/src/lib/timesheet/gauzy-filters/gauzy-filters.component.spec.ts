@@ -1,19 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { GauzyFiltersComponent } from './gauzy-filters.component';
 
-import { GauzyRangePickerComponent } from './gauzy-filters.component';
-
-describe('GauzyRangePickerComponent', () => {
-	let component: GauzyRangePickerComponent;
-	let fixture: ComponentFixture<GauzyRangePickerComponent>;
+describe('GauzyFiltersComponent', () => {
+	let component: GauzyFiltersComponent;
+	let fixture: ComponentFixture<GauzyFiltersComponent>;
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [GauzyRangePickerComponent]
+			declarations: [GauzyFiltersComponent]
 		}).compileComponents();
 	});
 
 	beforeEach(() => {
-		fixture = TestBed.createComponent(GauzyRangePickerComponent);
+		fixture = TestBed.createComponent(GauzyFiltersComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();
 	});
