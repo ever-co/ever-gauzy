@@ -10,7 +10,7 @@ import {
 	FindManyOptions,
 	Between,
 	FindOptionsRelations,
-	ILike
+	Raw
 } from 'typeorm';
 import { isBoolean, isUUID } from 'class-validator';
 import {
@@ -34,8 +34,8 @@ import {
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { isPostgres, isSqlite } from '@gauzy/config';
-import { PaginationParams, TenantAwareCrudService } from './../core/crud';
-import { addBetween } from './../core/util';
+import { TenantAwareCrudService, PaginationParams } from './../core/crud';
+import { addBetween, LIKE_OPERATOR } from './../core/util';
 import { RequestContext } from '../core/context';
 import { TaskViewService } from './views/view.service';
 import { EntitySubscriptionService } from '../entity-subscription/entity-subscription.service';
@@ -57,11 +57,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		readonly mikroOrmTaskRepository: MikroOrmTaskRepository,
 		readonly typeOrmOrganizationSprintTaskHistoryRepository: TypeOrmOrganizationSprintTaskHistoryRepository,
 		private readonly _eventBus: EventBus,
-		private readonly taskViewService: TaskViewService,
+		private readonly _taskViewService: TaskViewService,
 		private readonly _entitySubscriptionService: EntitySubscriptionService,
-		private readonly mentionService: MentionService,
-		private readonly activityLogService: ActivityLogService,
-		private readonly employeeNotificationService: EmployeeNotificationService
+		private readonly _mentionService: MentionService,
+		private readonly _activityLogService: ActivityLogService,
+		private readonly _employeeNotificationService: EmployeeNotificationService
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
 	}
@@ -148,7 +148,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Synchronize mentions
 			if (data.description) {
 				try {
-					await this.mentionService.updateEntityMentions(BaseEntityEnum.Task, id, mentionEmployeeIds);
+					await this._mentionService.updateEntityMentions(BaseEntityEnum.Task, id, mentionEmployeeIds);
 				} catch (error) {
 					console.error('Error synchronizing mentions:', error);
 				}
@@ -193,7 +193,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 								})
 							);
 
-							this.employeeNotificationService.publishNotificationEvent(
+							this._employeeNotificationService.publishNotificationEvent(
 								{
 									entity: BaseEntityEnum.Task,
 									entityId: task.id,
@@ -215,7 +215,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			}
 
 			// Generate the activity log
-			this.activityLogService.logActivity<Task>(
+			this._activityLogService.logActivity<Task>(
 				BaseEntityEnum.Task,
 				ActionTypeEnum.Updated,
 				ActorTypeEnum.User, // TODO : Since we have Github Integration, make sure we can also store "System" for actor
@@ -646,12 +646,14 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 			// Apply filters for task title with like operator
 			if (where.title) {
-				options.where.title = ILike(`%${where.title}%`);
+				options.where.title = Raw((alias) => `${alias} ${LIKE_OPERATOR} :title`, { title: `%${where.title}%` });
 			}
 
 			// Apply filters for task prefix with like operator
 			if (where.prefix) {
-				options.where.prefix = ILike(`%${where.prefix}%`);
+				options.where.prefix = Raw((alias) => `${alias} ${LIKE_OPERATOR} :prefix`, {
+					prefix: `%${where.prefix}%`
+				});
 			}
 
 			// Apply filters for isDraft, setting null if not a boolean
@@ -667,7 +669,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Apply filters for teams, ensuring it uses In for array comparison
 			if (where.teams) {
 				options.where.teams = {
-					id: In(where.teams as string[])
+					id: In(where.teams as ID[])
 				};
 			}
 
@@ -945,7 +947,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		const tenantId = RequestContext.currentTenantId();
 		try {
 			// Retrieve Task View by ID for getting their pre-defined query params
-			const taskView = await this.taskViewService.findOneByWhereOptions({ id: viewId, tenantId });
+			const taskView = await this._taskViewService.findOneByWhereOptions({ id: viewId, tenantId });
 			if (!taskView) {
 				throw new HttpException('View not found', HttpStatus.NOT_FOUND);
 			}
