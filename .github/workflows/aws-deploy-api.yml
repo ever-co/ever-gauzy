@@ -61,11 +61,17 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build, tag, and push API image to Amazon ECR
+      - name: Build and tag API image
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build --build-arg DEPENDENCIES_IMAGE="${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }}" -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }}:$IMAGE_TAG -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }}:latest -f .deploy/api/Dockerfile .
+          docker images
+
+      - name: Push API image to Amazon ECR
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
           docker push ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }} --all-tags
           echo "api_image=${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }}:$IMAGE_TAG" >> $GITHUB_ENV
 
