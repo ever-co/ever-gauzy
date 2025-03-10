@@ -17,7 +17,7 @@ exports.default = async (context) => {
 	const appPath = `${appOutDir}/${appName}.app`;
 
 	if (
-		electronPlatformName !== 'darwin' ||
+		electronPlatformName !== 'darwin' &&
 		// If `CSC_LINK` is not defined, the app hasn't been signed before by electron-builder.
 		!CSC_LINK
 	) {

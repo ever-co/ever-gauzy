@@ -30,7 +30,7 @@
 		]
 	},
 	"build": {
-		"appId": "com.ever.gauzydesktoptimer",
+		"appId": "co.ever.gauzy.desktop-timer",
 		"artifactName": "${name}-${version}.${ext}",
 		"productName": "Gauzy Desktop Timer",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",

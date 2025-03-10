@@ -19,7 +19,6 @@
 	},
 	"scripts": {},
 	"devDependencies": {
-		"@electron/notarize": "^2.1.0",
 		"@electron/rebuild": "^3.2.10",
 		"@types/moment-duration-format": "^2.2.3",
 		"electron": "^30.0.1",
