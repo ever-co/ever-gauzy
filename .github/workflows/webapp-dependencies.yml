@@ -25,7 +25,7 @@ jobs:
       - name: Check for changes in dependency files
         id: check-changes
         run: |
-          # For manual triggers or workflow calls, check if files have changed in the last commit
+          # Formanual triggers or workflow calls, check if files have changed in the last commit
           CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
           # Define the pattern for dependency-related files
           DEPENDENCY_PATTERN="^package\.json$|^yarn\.lock$|^apps\/gauzy\/package\.json$"
