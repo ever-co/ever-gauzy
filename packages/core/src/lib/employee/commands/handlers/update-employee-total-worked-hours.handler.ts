@@ -1,5 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Logger } from '@nestjs/common';
 import { ConfigService, DatabaseTypeEnum } from '@gauzy/config';
 import { ID } from '@gauzy/contracts';
 import { prepareSQLQuery as p } from './../../../database/database.helper';
@@ -12,6 +13,7 @@ import { TypeOrmTimeSlotRepository } from '../../../time-tracking/time-slot/repo
 
 @CommandHandler(UpdateEmployeeTotalWorkedHoursCommand)
 export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<UpdateEmployeeTotalWorkedHoursCommand> {
+	private readonly logger = new Logger(`GZY - ${UpdateEmployeeTotalWorkedHoursHandler.name}`);
 	constructor(
 		@InjectRepository(TimeLog) readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		@InjectRepository(TimeSlot) readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
@@ -30,7 +32,7 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 
 		// Determine total work hours, calculate if not provided
 		const totalWorkHours = (await this.calculateTotalWorkHours(employeeId, tenantId)) || hours;
-		console.log('Updated Employee Total Worked Hours: %s', Math.floor(totalWorkHours));
+		this.logger.verbose(`Updated Employee Total Worked Hours: ${Math.floor(totalWorkHours)}`);
 
 		// Update employee's total worked hours
 		await this._employeeService.update(employeeId, {
@@ -51,7 +53,7 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 
 		// Get the sum of durations between startedAt and stoppedAt
 		const sumQuery = this.getSumQuery(query.alias);
-		console.log('sum of durations between startedAt and stoppedAt', sumQuery);
+		this.logger.verbose(`Sum of durations between startedAt and stoppedAt: ${sumQuery}`);
 
 		// Execute the query and get the duration
 		const result = await query
@@ -62,7 +64,7 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 			})
 			.getRawOne();
 
-		console.log(`get sum duration for specific employee: ${employeeId}`, +result.duration);
+		this.logger.verbose(`Get sum duration for specific employee: ${employeeId}, ${result.duration}`);
 
 		// Convert duration from seconds to hours
 		return Number(+result.duration || 0) / 3600;
@@ -120,6 +122,7 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 				`);
 				break;
 			default:
+				this.logger.error(`Unsupported database type: ${dbConnectionOptions.type}`);
 				throw new Error(`Unsupported database type: ${dbConnectionOptions.type}`);
 		}
 

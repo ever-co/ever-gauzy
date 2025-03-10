@@ -1,11 +1,12 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, Logger } from '@nestjs/common';
 import { IEmployee } from '@gauzy/contracts';
 import { EmployeeBulkCreateCommand } from '../employee.bulk.create.command';
 import { EmployeeCreateCommand } from '../employee.create.command';
 
 @CommandHandler(EmployeeBulkCreateCommand)
 export class EmployeeBulkCreateHandler implements ICommandHandler<EmployeeBulkCreateCommand> {
+	private readonly logger = new Logger(`GZY - ${EmployeeBulkCreateHandler.name}`);
 	constructor(private readonly commandBus: CommandBus) {}
 
 	/**
@@ -33,6 +34,7 @@ export class EmployeeBulkCreateHandler implements ICommandHandler<EmployeeBulkCr
 			return results;
 		} catch (error) {
 			// Return a more descriptive error message for bulk create failure
+			this.logger.error('Failed to create multiple employees', error);
 			throw new BadRequestException(error.message || 'Failed to create multiple employees');
 		}
 	}

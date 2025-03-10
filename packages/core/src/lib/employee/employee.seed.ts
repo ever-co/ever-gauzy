@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { CurrenciesEnum, IEmployee, IOrganization, ITenant, IUser, PayPeriodEnum } from '@gauzy/contracts';
+import { CurrenciesEnum, IEmployee, IOrganization, ITenant, IUser, PayPeriodEnum, IDefaultEmployee } from '@gauzy/contracts';
 import { faker } from '@faker-js/faker';
 import { environment as env } from '@gauzy/config';
 import { Employee } from './../core/entities/internal';
@@ -20,7 +20,7 @@ export const createDefaultEmployees = async (
 	tenant: ITenant,
 	organization: IOrganization,
 	users: IUser[],
-	defaultEmployees: any
+	defaultEmployees: IDefaultEmployee[]
 ): Promise<IEmployee[]> => {
 	// Precompute the organization's currency or use the default currency
 	const currency = organization.currency || env.defaultCurrency;

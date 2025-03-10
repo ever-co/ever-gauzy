@@ -17,7 +17,15 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
 import { I18nLang } from 'nestjs-i18n';
-import { PermissionsEnum, LanguagesEnum, IPagination, IEmployee, ID } from '@gauzy/contracts';
+import {
+	PermissionsEnum,
+	LanguagesEnum,
+	IPagination,
+	IEmployee,
+	ID,
+	IEmployeeFindInputQuery,
+	IEmployeeHourlyRate
+} from '@gauzy/contracts';
 import { CrudController, OptionParams, PaginationParams } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { TenantOrganizationBaseDTO } from './../core/dto';
@@ -39,7 +47,8 @@ import {
 	CreateEmployeeDTO,
 	UpdateEmployeeDTO,
 	UpdateProfileDTO,
-	FindMembersInputDTO
+	FindMembersInputDTO,
+	GetHourlyRateDto
 } from './dto';
 
 @ApiTags('Employee')
@@ -72,7 +81,9 @@ export class EmployeeController extends CrudController<Employee> {
 	})
 	@Permissions(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
 	@Get('/working')
-	async findAllWorkingEmployees(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IEmployee>> {
+	async findAllWorkingEmployees(
+		@Query('data', ParseJsonPipe) data: IEmployeeFindInputQuery
+	): Promise<IPagination<IEmployee>> {
 		const { findInput } = data;
 		return await this._commandBus.execute(new WorkingEmployeeGetCommand(findInput));
 	}
@@ -98,7 +109,9 @@ export class EmployeeController extends CrudController<Employee> {
 	})
 	@Permissions(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
 	@Get('/working/count')
-	async findAllWorkingEmployeesCount(@Query('data', ParseJsonPipe) data: any): Promise<{ total: number }> {
+	async findAllWorkingEmployeesCount(
+		@Query('data', ParseJsonPipe) data: IEmployeeFindInputQuery
+	): Promise<{ total: number }> {
 		const { findInput } = data;
 		const { organizationId, forRange } = findInput;
 		return await this._employeeService.findWorkingEmployeesCount(organizationId, forRange);
@@ -331,6 +344,34 @@ export class EmployeeController extends CrudController<Employee> {
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IEmployee> {
 		return await this._commandBus.execute(new EmployeeCreateCommand(entity, languageCode, origin));
+	}
+
+	/**
+	 * Get the employees hourly rate.
+	 *
+	 * Allows to get the hourly rate of a set of employee.
+	 *
+	 * @param employeeId - The UUID of the employee to be restored.
+	 * @param params - Parameters for tenant/organization identification.
+	 * @returns A promise resolving to the restored employee entity.
+	 */
+	@ApiOperation({ summary: 'Get the employees hourly rate' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Return the hourly rate'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Employee record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions()
+	@Get('/rate')
+	async getRate(@Query() data: GetHourlyRateDto): Promise<IEmployeeHourlyRate[]> {
+		return await this._employeeService.getHourlyRate(data.organizationId, data.employeeIds, {
+			startDate: data.startDate,
+			endDate: data.endDate
+		});
 	}
 
 	/**

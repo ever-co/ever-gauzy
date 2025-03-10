@@ -1,4 +1,5 @@
 import { EventSubscriber } from 'typeorm';
+import { Logger } from '@nestjs/common';
 import { retrieveNameFromEmail, sluggable } from '@gauzy/common';
 import { Employee } from './employee.entity';
 import { getUserDummyImage } from '../core/utils';
@@ -12,6 +13,7 @@ import {
 
 @EventSubscriber()
 export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
+	private readonly logger = new Logger(`GZY - ${EmployeeSubscriber.name}`);
 	/**
 	 * Indicates that this subscriber only listen to Employee events.
 	 */
@@ -28,22 +30,22 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	async afterEntityLoad(entity: Employee): Promise<void> {
 		try {
 			// Set fullName from the associated user's name, if available
-			if (Object.prototype.hasOwnProperty.call(entity, 'user')) {
+			if (Object.hasOwn(entity, 'user')) {
 				await this.setFullName(entity);
 			}
 
 			// Set isDeleted to true if the deletedAt property is present and not null
-			if (Object.prototype.hasOwnProperty.call(entity, 'deletedAt')) {
+			if (Object.hasOwn(entity, 'deletedAt')) {
 				entity.isDeleted = !!entity.deletedAt;
 			}
 
 			// Default billRateValue to 0 if it's not set or falsy
-			if (Object.prototype.hasOwnProperty.call(entity, 'billRateValue')) {
+			if (Object.hasOwn(entity, 'billRateValue')) {
 				entity.billRateValue = entity.billRateValue || 0;
 			}
 		} catch (error) {
 			// Handle or log the error as needed
-			console.error('EmployeeSubscriber: An error occurred during the afterEntityLoad process:', error.message);
+			this.logger.error('EmployeeSubscriber: An error occurred during the afterEntityLoad process:', error);
 		}
 	}
 
@@ -55,7 +57,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	async beforeEntityCreate(entity: Employee, em?: MultiOrmEntityManager): Promise<void> {
 		try {
 			// Set fullName from the associated user's name, if available
-			if (Object.prototype.hasOwnProperty.call(entity, 'user')) {
+			if (Object.hasOwn(entity, 'user')) {
 				await this.createSlug(entity);
 			}
 
@@ -65,10 +67,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 			// Updates the employee's status based on the start and end work dates.
 			this.updateEmployeeStatus(entity, em);
 		} catch (error) {
-			console.error(
-				'EmployeeSubscriber: An error occurred during the beforeEntityCreate process:',
-				error.message
-			);
+			this.logger.error('EmployeeSubscriber: An error occurred during the beforeEntityCreate process:', error);
 		}
 	}
 
@@ -82,10 +81,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 			// Updates the employee's status based on the start and end work dates.
 			this.updateEmployeeStatus(entity, em);
 		} catch (error) {
-			console.error(
-				'EmployeeSubscriber: An error occurred during the beforeEntityUpdate process:',
-				error.message
-			);
+			this.logger.error('EmployeeSubscriber: An error occurred during the beforeEntityUpdate process:', error);
 		}
 	}
 	/**
@@ -100,7 +96,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 				await this.calculateTotalEmployees(entity, em); // Calculate and update the total number of employees for the organization
 			}
 		} catch (error) {
-			console.error('EmployeeSubscriber: An error occurred during the afterEntityCreate process:', error.message);
+			this.logger.error('EmployeeSubscriber: An error occurred during the afterEntityCreate process:', error);
 		}
 	}
 
@@ -116,7 +112,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 				await this.calculateTotalEmployees(entity, em); // Calculate and update the total number of employees for the organization
 			}
 		} catch (error) {
-			console.error('EmployeeSubscriber: An error occurred during the afterEntityDelete process:', error);
+			this.logger.error('EmployeeSubscriber: An error occurred during the afterEntityDelete process:', error);
 		}
 	}
 
@@ -130,7 +126,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	async createSlug(entity: Employee): Promise<void> {
 		try {
 			if (!entity?.user) {
-				console.error('Entity or User object is not defined.');
+				this.logger.error('Entity or User object is not defined.');
 				return;
 			}
 
@@ -144,7 +140,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 
 			entity.profile_link = sluggable(slugSource);
 		} catch (error) {
-			console.error(`EmployeeSubscriber: Error creating slug for entity with id ${entity.id}: `, error);
+			this.logger.error(`EmployeeSubscriber: Error creating slug for entity with id ${entity.id}: `, error);
 		}
 	}
 
@@ -177,7 +173,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 				await em.nativeUpdate(Organization, criteria, partialEntity);
 			}
 		} catch (error) {
-			console.error('EmployeeSubscriber: Error while updating total employee count of the organization:', error);
+			this.logger.error('EmployeeSubscriber: Error while updating total employee count of the organization:', error);
 		}
 	}
 
@@ -260,7 +256,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 					: await em.findOne(Employee, { id, organizationId, tenantId });
 
 			if (!employee) {
-				console.warn('Employee or associated user not found.');
+				this.logger.warn('Employee or associated user not found.');
 				return;
 			}
 
@@ -275,7 +271,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 			}
 		} catch (error) {
 			// Log the error if an exception occurs during the update process
-			console.error('EmployeeSubscriber: Error while updating user organization as active/inactive:', error);
+			this.logger.error('EmployeeSubscriber: Error while updating user organization as active/inactive:', error);
 		}
 	}
 }

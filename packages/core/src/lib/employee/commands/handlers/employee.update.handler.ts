@@ -1,12 +1,13 @@
 import { IEmployee, PermissionsEnum } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
 import { EmployeeUpdateCommand } from './../employee.update.command';
 import { EmployeeService } from './../../employee.service';
 import { RequestContext } from './../../../core/context';
 
 @CommandHandler(EmployeeUpdateCommand)
 export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateCommand> {
+	private readonly logger = new Logger(`GZY - ${EmployeeUpdateHandler.name}`);
 	constructor(private readonly _employeeService: EmployeeService) {}
 
 	public async execute(command: EmployeeUpdateCommand): Promise<IEmployee> {
@@ -34,6 +35,7 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 				id
 			});
 		} catch (error) {
+			this.logger.error('Error while updating employee', error);
 			throw new BadRequestException(error);
 		}
 	}
