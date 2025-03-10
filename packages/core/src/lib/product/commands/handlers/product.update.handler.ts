@@ -10,8 +10,12 @@ import { ProductOptionService } from '../../../product-option/product-option.ser
 import { Product } from '../../product.entity';
 import { ProductUpdateCommand } from '../product.update.command';
 import { ProductOptionGroupService } from '../../../product-option/product-option-group.service';
-import { ProductOption, ProductOptionGroup, ProductOptionTranslation, ProductOptionGroupTranslation } from '../../../core/entities/internal';
-
+import {
+	ProductOption,
+	ProductOptionGroup,
+	ProductOptionTranslation,
+	ProductOptionGroupTranslation
+} from '../../../core/entities/internal';
 
 @CommandHandler(ProductUpdateCommand)
 export class ProductUpdateHandler implements ICommandHandler<ProductUpdateCommand> {
@@ -55,21 +59,27 @@ export class ProductUpdateHandler implements ICommandHandler<ProductUpdateComman
 			optionGroupCreateInputs.map(async (group: IProductOptionGroupTranslatable) => {
 				let newGroup = new ProductOptionGroup();
 				newGroup.name = group.name;
+				newGroup.productId = product.id;
 				newGroup.translations = [];
 				newGroup.options = [];
+
+				const savedGroup = await this.productOptionsGroupService.save(newGroup);
 
 				/**
 				 * save group options with their translations
 				 */
 				for await (const optionInput of group.options) {
 					const option = Object.assign(new ProductOption(), {
-						...optionInput
+						...optionInput,
+						groupId: savedGroup.id
 					});
+					const savedOption = await this.productOptionService.save(option); // Enregistre l'option d'abord
 
 					const optionsTranslationEntities = await Promise.all(
 						option.translations.map((optionTranslation) => {
 							let optionTranslationEntity = Object.assign(new ProductOptionTranslation(), {
-								...optionTranslation
+								...optionTranslation,
+								referenceId: savedOption.id // S'assurer que referenceId est bien défini
 							});
 							return this.productOptionService.saveProductOptionTranslation(optionTranslationEntity);
 						})
@@ -86,10 +96,11 @@ export class ProductUpdateHandler implements ICommandHandler<ProductUpdateComman
 				/**
 				 * save group translations.
 				 */
-				const groupTranslationsEntities = Promise.all(
+				const groupTranslationsEntities = await Promise.all(
 					group.translations.map((groupTranslation) => {
 						let groupTranslationObj = Object.assign(new ProductOptionGroupTranslation(), {
-							...groupTranslation
+							...groupTranslation,
+							referenceId: savedGroup.id
 						});
 						return this.productOptionsGroupService.createTranslation(groupTranslationObj);
 					})
@@ -118,6 +129,7 @@ export class ProductUpdateHandler implements ICommandHandler<ProductUpdateComman
 					let existingOption = isNewOption
 						? null
 						: await this.productOptionService.findOneByIdString(option.id);
+					console.log('ime pita option');
 
 					const optionsTranslationEntities = await Promise.all(
 						option.translations.map(async (optionTranslation: IProductOptionTranslation) => {
@@ -126,7 +138,7 @@ export class ProductUpdateHandler implements ICommandHandler<ProductUpdateComman
 								!optionTranslation.id
 							) {
 								return this.productOptionService.saveProductOptionTranslation({
-									reference: option.id || null,
+									referenceId: option.id || null,
 									...optionTranslation
 								} as any);
 							}
@@ -146,13 +158,14 @@ export class ProductUpdateHandler implements ICommandHandler<ProductUpdateComman
 				/**
 				 * save group translations.
 				 */
+
 				let existingGroup = await this.productOptionsGroupService.findOneByIdString(group.id);
 
 				const groupTranslationsEntities = Promise.all(
 					group.translations.map((groupTranslation) => {
 						if (this.productOptionGroupTranslationUpdated(existingGroup, groupTranslation)) {
 							return this.productOptionsGroupService.createTranslation({
-								reference: group.id || null,
+								referenceId: group.id || null,
 								...groupTranslation
 							} as any);
 						}
