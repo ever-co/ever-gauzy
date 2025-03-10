@@ -35,6 +35,8 @@ Jenkinsfile
 render.yml
 export
 tools
+!tools/web
+!tools/tsconfig.tools.json
 .env*
 .prettier*
 .snyk

@@ -160,6 +160,6 @@ ENV CI=true \
 
 EXPOSE ${WEB_PORT}
 
-USER node
+USER nginx
 ENTRYPOINT [ "./entrypoint.prod.sh" ]
 CMD [ "nginx", "-g", "daemon off;" ]
