@@ -1,7 +1,7 @@
 # Ever Gauzy Platform API (Core)
 
 ARG DEPENDENCIES_IMAGE
-
+ARG GIT_HASH
 ARG NODE_OPTIONS
 ARG NODE_ENV
 ARG API_BASE_URL
@@ -164,7 +164,8 @@ RUN rm -rf ./node_modules/@gauzy \
 # Copy the entrypoint scripts
 COPY --chmod=755 wait .deploy/api/entrypoint.prod.sh .deploy/api/entrypoint.compose.sh ./
 
-ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=12288"} \
+ENV GIT_HASH=${GIT_HASH:-""} \
+	NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=12288"} \
 	NODE_ENV=${NODE_ENV:-production} \
 	API_HOST=${API_HOST:-localhost} \
 	API_PORT=${API_PORT:-3000} \
@@ -278,5 +279,6 @@ ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=12288"} \
 EXPOSE ${API_PORT}
 
 USER node
+
 ENTRYPOINT [ "./entrypoint.prod.sh" ]
 CMD [ "node", "main.js" ]

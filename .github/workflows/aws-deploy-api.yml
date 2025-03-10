@@ -65,7 +65,7 @@ jobs:
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build --build-arg DEPENDENCIES_IMAGE="${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }}" -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }}:$IMAGE_TAG -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }}:latest -f .deploy/api/Dockerfile .
+          docker build --build-arg GIT_HASH="$IMAGE_TAG" --build-arg DEPENDENCIES_IMAGE="${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }}" -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }}:$IMAGE_TAG -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }}:latest -f .deploy/api/Dockerfile .
           docker images
 
       - name: Push API image to Amazon ECR

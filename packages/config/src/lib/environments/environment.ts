@@ -22,6 +22,7 @@ export const environment: IEnvironment = {
 	clientBaseUrl: process.env.CLIENT_BASE_URL || 'http://localhost:4200',
 	production: false,
 	envName: 'dev',
+	gitHash: (process.env.GIT_HASH || '').substring(0, 7),
 
 	env: {
 		LOG_LEVEL: 'debug'
@@ -122,7 +123,7 @@ export const environment: IEnvironment = {
 		cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
 		api_key: process.env.CLOUDINARY_API_KEY,
 		api_secret: process.env.CLOUDINARY_API_SECRET,
-		secure: process.env.CLOUDINARY_API_SECURE === 'false' ? false : true,
+		secure: process.env.CLOUDINARY_API_SECURE !== 'false' ? false : true,
 		delivery_url: process.env.CLOUDINARY_CDN_URL || `https://res.cloudinary.com`
 	},
 

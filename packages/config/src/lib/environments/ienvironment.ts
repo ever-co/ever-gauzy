@@ -59,6 +59,7 @@ export interface IEnvironment {
 
 	production: boolean;
 	envName: string;
+	gitHash: string;
 
 	env?: Env;
 
