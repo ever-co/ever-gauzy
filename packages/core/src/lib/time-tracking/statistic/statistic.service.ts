@@ -989,7 +989,7 @@ export class StatisticService {
 			start = range.start;
 			end = range.end;
 		} else if (defaultRange) {
-			const unit = unitOfTime || 'week';
+			const unit = (unitOfTime || 'week') as moment.unitOfTime.StartOf;
 			const range = getDateRangeFormat(moment().startOf(unit).utc(), moment().endOf(unit).utc());
 			start = range.start;
 			end = range.end;
@@ -1018,7 +1018,7 @@ export class StatisticService {
 			todayStart = range.start;
 			todayEnd = range.end;
 		} else if (defaultRange) {
-			const unit = unitOfTime || 'day';
+			const unit = (unitOfTime || 'day') as moment.unitOfTime.StartOf;
 			const range = getDateRangeFormat(moment().startOf(unit).utc(), moment().endOf(unit).utc());
 			todayStart = range.start;
 			todayEnd = range.end;

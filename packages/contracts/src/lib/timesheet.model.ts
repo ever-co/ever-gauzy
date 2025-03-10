@@ -1,3 +1,4 @@
+import { unitOfTime } from 'moment';
 import { IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel, ID } from './base-entity.model';
 import { IOrganizationContact, OrganizationContactBudgetTypeEnum } from './organization-contact.model';
 import {
@@ -189,7 +190,7 @@ export interface ITimeLogFilters extends IBasePerTenantAndOrganizationEntityMode
 		end: number;
 	};
 	defaultRange?: boolean;
-	unitOfTime?: any;
+	unitOfTime?: unitOfTime.StartOf | string;
 	categoryId?: ID;
 	timeZone?: string;
 	timeFormat?: TimeFormatEnum;
@@ -202,6 +203,7 @@ export interface ITimeLogTodayFilters extends IBasePerTenantAndOrganizationEntit
 }
 
 export interface ITimeSlot extends IBasePerTenantAndOrganizationEntityModel {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[x: string]: any;
 	employeeId: ID;
 	employee?: IEmployee;
@@ -261,6 +263,7 @@ export interface IActivity extends IBasePerTenantAndOrganizationEntityModel {
 }
 
 export interface IDailyActivity {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[x: string]: any;
 	sessions?: number;
 	duration?: number;
@@ -296,6 +299,7 @@ export interface IURLMetaData {
 	title?: string;
 	description?: string;
 	image?: string;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[x: string]: any;
 }
 
@@ -379,6 +383,7 @@ export interface IGetTimeLogConflictInput extends IBasePerTenantAndOrganizationE
 }
 
 export interface IGetTimeSlotInput extends ITimeLogFilters, IBaseRelationsEntityModel {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[x: string]: any;
 }
 
@@ -401,6 +406,11 @@ export interface IAmountOwedReport {
 		duration: number;
 		amount: number;
 	}[];
+}
+
+export interface IAmountOwedReportChart {
+	date: string;
+	value: number;
 }
 
 export interface IReportTask {
@@ -473,6 +483,16 @@ export type IReportDayData =
 	| IReportDayGroupByProject
 	| IReportDayGroupByClient;
 
+export interface IDailyReportChart {
+	date: string;
+	value: {
+		TRACKED: number;
+		MANUAL: number;
+		IDLE: number;
+		RESUMED: number;
+	};
+}
+
 export interface IReportWeeklyDate {
 	sum: number;
 	logs: ITimeLog[];
@@ -491,7 +511,7 @@ export interface IGetTimeLimitReportInput extends IGetTimeLogReportInput {
 
 export interface ITimeLimitReport {
 	date: string;
-	employeeLogs: {
+	employees: {
 		employee: IEmployee;
 		duration: number;
 		durationPercentage: number;

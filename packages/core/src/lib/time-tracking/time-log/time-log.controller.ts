@@ -14,7 +14,7 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
-import { ITimeLog, PermissionsEnum, IGetTimeLogConflictInput, ID } from '@gauzy/contracts';
+import { ITimeLog, PermissionsEnum, IGetTimeLogConflictInput, ID, IReportDayData, ITimeLimitReport, IReportWeeklyData, IAmountOwedReport, IAmountOwedReportChart, IDailyReportChart } from '@gauzy/contracts';
 import { TimeLogService } from './time-log.service';
 import { Permissions } from './../../shared/decorators';
 import { OrganizationPermissionGuard, PermissionGuard, TenantBaseGuard } from './../../shared/guards';
@@ -67,7 +67,7 @@ export class TimeLogController {
 	})
 	@Get('report/daily')
 	@UseValidationPipe({ whitelist: true, transform: true })
-	async getDailyReport(@Query() options: TimeLogQueryDTO): Promise<any | null> {
+	async getDailyReport(@Query() options: TimeLogQueryDTO): Promise<IReportDayData> {
 		return await this._timeLogService.getDailyReport(options);
 	}
 
@@ -87,7 +87,7 @@ export class TimeLogController {
 	})
 	@Get('report/daily-chart')
 	@UseValidationPipe({ whitelist: true })
-	async getDailyReportChartData(@Query() options: TimeLogQueryDTO): Promise<any | null> {
+	async getDailyReportChartData(@Query() options: TimeLogQueryDTO): Promise<IDailyReportChart[]> {
 		return await this._timeLogService.getDailyReportCharts(options);
 	}
 
@@ -107,7 +107,7 @@ export class TimeLogController {
 	})
 	@Get('report/owed-report')
 	@UseValidationPipe({ whitelist: true, transform: true })
-	async getOwedAmountReport(@Query() options: TimeLogQueryDTO): Promise<any | null> {
+	async getOwedAmountReport(@Query() options: TimeLogQueryDTO): Promise<IAmountOwedReport[]> {
 		return await this._timeLogService.getOwedAmountReport(options);
 	}
 
@@ -127,7 +127,7 @@ export class TimeLogController {
 	})
 	@Get('report/owed-charts')
 	@UseValidationPipe({ whitelist: true, transform: true })
-	async getOwedAmountReportChartData(@Query() options: TimeLogQueryDTO): Promise<any | null> {
+	async getOwedAmountReportChartData(@Query() options: TimeLogQueryDTO): Promise<IAmountOwedReportChart[]> {
 		return await this._timeLogService.getOwedAmountReportCharts(options);
 	}
 
@@ -147,7 +147,7 @@ export class TimeLogController {
 	})
 	@Get('report/weekly')
 	@UseValidationPipe({ whitelist: true, transform: true })
-	async getWeeklyReport(@Query() options: TimeLogQueryDTO): Promise<any | null> {
+	async getWeeklyReport(@Query() options: TimeLogQueryDTO): Promise<IReportWeeklyData[]> {
 		return await this._timeLogService.getWeeklyReport(options);
 	}
 
@@ -167,7 +167,7 @@ export class TimeLogController {
 	})
 	@Get('time-limit')
 	@UseValidationPipe({ whitelist: true, transform: true })
-	async getTimeLimitReport(@Query() options: TimeLogLimitQueryDTO): Promise<any | null> {
+	async getTimeLimitReport(@Query() options: TimeLogLimitQueryDTO): Promise<ITimeLimitReport[]> {
 		return await this._timeLogService.getTimeLimit(options);
 	}
 
@@ -209,6 +209,27 @@ export class TimeLogController {
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async clientBudgetLimit(@Query() options: TimeLogQueryDTO) {
 		return await this._timeLogService.getClientBudgetLimit(options);
+	}
+
+	/**
+	 * Get timer logs for invoice based on provided options.
+	 * @param options The options for querying timer logs.
+	 * @returns An array of timer logs entries.
+	 */
+	@ApiOperation({ summary: 'Get Invoice Timer Logs' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Successfully retrieved timer logs',
+		isArray: true
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input. The response body may contain clues as to what went wrong.'
+	})
+	@Get('invoice')
+	@UseValidationPipe({ whitelist: true, transform: true })
+	async getINvoiceLogs(@Query() options: TimeLogQueryDTO): Promise<IReportDayData> {
+		return await this._timeLogService.getInvoiceLogs(options);
 	}
 
 	/**
