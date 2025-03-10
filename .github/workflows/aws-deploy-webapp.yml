@@ -2,7 +2,7 @@ name: Deploy WebApp to AWS
 
 on:
   push:
-    branches: [master, dev]
+    branches: [master, dev, chore/gzy-134-reduce-building-time]
     paths:
       - 'apps/gauzy/**/*.*'
       - 'packages/contracts/**/*.*'
