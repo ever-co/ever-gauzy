@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { FindManyOptions, FindOneOptions, FindOptionsWhere, Raw, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID, IDeal, IPagination, IPipeline, IPipelineStage } from '@gauzy/contracts';
-import { isPostgres } from '@gauzy/config';
 import { ConnectionEntityManager } from '../database/connection-entity-manager';
 import { Pipeline } from './pipeline.entity';
 import { Deal, PipelineStage } from './../core/entities/internal';
 import { RequestContext } from '../core/context/request-context';
+import { LIKE_OPERATOR } from '../core/util';
 import { TenantAwareCrudService } from './../core/crud/tenant-aware-crud.service';
 import { TypeOrmDealRepository } from '../deal/repository/type-orm-deal.repository';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
@@ -167,20 +167,19 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 		const whereOptions: FindOptionsWhere<Pipeline> = {};
 
 		if (whereFilter) {
-			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 			const { name, description, stages } = whereFilter as FindOptionsWhere<Pipeline>;
 
 			if (name) {
-				whereOptions['name'] = Raw((alias) => `${alias} ${likeOperator} '%${name}%'`);
+				whereOptions['name'] = Raw((alias) => `${alias} ${LIKE_OPERATOR} '%${name}%'`);
 			}
 
 			if (description) {
-				whereOptions['description'] = Raw((alias) => `${alias} ${likeOperator} '%${description}%'`);
+				whereOptions['description'] = Raw((alias) => `${alias} ${LIKE_OPERATOR} '%${description}%'`);
 			}
 
 			if (stages) {
 				whereOptions['stages'] = {
-					name: Raw((alias) => `${alias} ${likeOperator} '%${stages}%'`)
+					name: Raw((alias) => `${alias} ${LIKE_OPERATOR} '%${stages}%'`)
 				};
 			}
 

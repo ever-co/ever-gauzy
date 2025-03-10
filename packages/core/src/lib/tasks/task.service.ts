@@ -35,8 +35,8 @@ import {
 	EmployeeNotificationTypeEnum,
 	NotificationActionTypeEnum
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/utils';
-import { isPostgres, isSqlite } from '@gauzy/config';
+import { isEmpty, isNotEmpty } from '@gauzy/utils';
+import { isSqlite } from '@gauzy/config';
 import { TenantAwareCrudService, PaginationParams } from './../core/crud';
 import { addBetween, LIKE_OPERATOR } from './../core/util';
 import { RequestContext } from '../core/context';
@@ -339,7 +339,6 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			isScreeningTask = false,
 			organizationSprintId = null
 		} = where;
-		const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
 		// Join with the creator if it is user for filtering
 		if (isNotEmpty((creator as IUser)?.firstName)) {
@@ -377,7 +376,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 				// Filter by task title
 				if (isNotEmpty(title)) {
-					qb.andWhere(p(`"${query.alias}"."title" ${likeOperator} :title`), {
+					qb.andWhere(p(`"${query.alias}"."title" ${LIKE_OPERATOR} :title`), {
 						title: `%${title as string}%`
 					});
 				}
@@ -385,7 +384,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				// Filter by task prefix and number
 				if (isNotEmpty(prefix)) {
 					qb.andWhere(
-						p(`CONCAT("${query.alias}"."prefix", '-', "${query.alias}"."number") ${likeOperator} :prefix`),
+						p(`CONCAT("${query.alias}"."prefix", '-', "${query.alias}"."number") ${LIKE_OPERATOR} :prefix`),
 						{
 							prefix: `%${prefix as string}%`
 						}
@@ -403,7 +402,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				// Filter by creator name
 				if (isNotEmpty((creator as IUser)?.firstName)) {
 					qb.andWhere(
-						p(`CONCAT("creator"."firstName", ' ', "creator"."lastName") ${likeOperator} :creatorName`),
+						p(`CONCAT("creator"."firstName", ' ', "creator"."lastName") ${LIKE_OPERATOR} :creatorName`),
 						{
 							creatorName: `%${(creator as IUser).firstName}%`
 						}

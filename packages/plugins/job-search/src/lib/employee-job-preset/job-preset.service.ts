@@ -12,8 +12,7 @@ import {
 	IMatchingCriterions,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { isPostgres } from '@gauzy/config';
-import { RequestContext, TenantAwareCrudService, TypeOrmEmployeeRepository } from '@gauzy/core';
+import { LIKE_OPERATOR, RequestContext, TenantAwareCrudService, TypeOrmEmployeeRepository } from '@gauzy/core';
 import { prepareSQLQuery as p } from '@gauzy/core';
 import { JobPreset } from './job-preset.entity';
 import {
@@ -57,9 +56,6 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 			employeeId = RequestContext.currentEmployeeId();
 		}
 
-		// Determine the appropriate LIKE operator based on the database type
-		const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
-
 		// Create a query builder for the JobPreset entity
 		const query = this.typeOrmRepository.createQueryBuilder('job_preset');
 
@@ -87,7 +83,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 
 			// Filter by search string if provided
 			if (isNotEmpty(search)) {
-				qb.andWhere(p(`"${query.alias}"."name" ${likeOperator} :search`), { search: `%${search}%` });
+				qb.andWhere(p(`"${query.alias}"."name" ${LIKE_OPERATOR} :search`), { search: `%${search}%` });
 			}
 
 			// Filter by employee ID if provided

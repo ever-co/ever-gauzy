@@ -2,9 +2,10 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { Brackets, FindOptionsRelations, SelectQueryBuilder } from 'typeorm';
 import { isNotEmpty } from '@gauzy/utils';
 import { FileStorageProviderEnum, IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
-import { getConfig, isPostgres } from '@gauzy/config';
+import { getConfig } from '@gauzy/config';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
+import { LIKE_OPERATOR } from '../core/util';
 import { Tag } from './tag.entity';
 import { FileStorage } from './../core/file-storage';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -181,8 +182,6 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, organizationTeamId, name, color, description } = request;
 
-		const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
-
 		// Mandatory tenant filter
 		query.andWhere(`${query.alias}.tenantId = :tenantId`, { tenantId });
 
@@ -208,7 +207,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		const dynamicFilters = { name, color, description };
 		Object.entries(dynamicFilters).forEach(([key, value]) => {
 			if (isNotEmpty(value)) {
-				query.andWhere(`${query.alias}.${key} ${likeOperator} :${key}`, { [key]: `%${value}%` });
+				query.andWhere(`${query.alias}.${key} ${LIKE_OPERATOR} :${key}`, { [key]: `%${value}%` });
 			}
 		});
 

@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { FindManyOptions, Between, In, Raw } from 'typeorm';
 import * as moment from 'moment';
 import { IDateRangePicker, IPagination } from '@gauzy/contracts';
-import { isPostgres } from '@gauzy/config';
-import { Income } from './income.entity';
 import { TenantAwareCrudService } from './../core/crud';
+import { LIKE_OPERATOR } from '../core/util';
+import { Income } from './income.entity';
 import { MikroOrmIncomeRepository } from './repository/mikro-orm-income.repository';
 import { TypeOrmIncomeRepository } from './repository/type-orm-income.repository';
 
@@ -47,9 +47,8 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 	public pagination(filter: FindManyOptions) {
 		if ('where' in filter) {
 			const { where } = filter;
-			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 			if ('notes' in where) {
-				filter['where']['notes'] = Raw((alias) => `${alias} ${likeOperator} '%${where.notes}%'`);
+				filter['where']['notes'] = Raw((alias) => `${alias} ${LIKE_OPERATOR} '%${where.notes}%'`);
 			}
 			if ('valueDate' in where) {
 				const { valueDate } = where;
