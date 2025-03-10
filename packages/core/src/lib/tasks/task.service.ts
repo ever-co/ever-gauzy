@@ -10,6 +10,7 @@ import {
 	FindManyOptions,
 	Between,
 	FindOptionsRelations,
+	Raw,
 	ILike
 } from 'typeorm';
 import { isBoolean, isUUID } from 'class-validator';
@@ -36,8 +37,8 @@ import {
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { isPostgres, isSqlite } from '@gauzy/config';
-import { PaginationParams, TenantAwareCrudService } from './../core/crud';
-import { addBetween } from './../core/util';
+import { TenantAwareCrudService, PaginationParams } from './../core/crud';
+import { addBetween, LIKE_OPERATOR } from './../core/util';
 import { RequestContext } from '../core/context';
 import { TaskViewService } from './views/view.service';
 import { EntitySubscriptionService } from '../entity-subscription/entity-subscription.service';
@@ -62,12 +63,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		readonly mikroOrmTaskRepository: MikroOrmTaskRepository,
 		readonly typeOrmOrganizationSprintTaskHistoryRepository: TypeOrmOrganizationSprintTaskHistoryRepository,
 		private readonly _eventBus: EventBus,
-		private readonly taskViewService: TaskViewService,
+		private readonly _taskViewService: TaskViewService,
 		private readonly _entitySubscriptionService: EntitySubscriptionService,
-		private readonly mentionService: MentionService,
-		private readonly activityLogService: ActivityLogService,
 		private readonly taskProjectSequenceService: TaskProjectSequenceService,
-		private readonly employeeNotificationService: EmployeeNotificationService
+		private readonly _mentionService: MentionService,
+		private readonly _activityLogService: ActivityLogService,
+		private readonly _employeeNotificationService: EmployeeNotificationService
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
 	}
@@ -150,7 +151,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Synchronize mentions
 			if (data.description) {
 				try {
-					await this.mentionService.updateEntityMentions(BaseEntityEnum.Task, id, mentionEmployeeIds);
+					await this._mentionService.updateEntityMentions(BaseEntityEnum.Task, id, mentionEmployeeIds);
 				} catch (error) {
 					this.logger.error(`Error synchronizing mentions: ${error}`);
 				}
@@ -195,7 +196,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 								})
 							);
 
-							this.employeeNotificationService.publishNotificationEvent(
+							this._employeeNotificationService.publishNotificationEvent(
 								{
 									entity: BaseEntityEnum.Task,
 									entityId: task.id,
@@ -217,7 +218,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			}
 
 			// Generate the activity log
-			this.activityLogService.logActivity<Task>(
+			this._activityLogService.logActivity<Task>(
 				BaseEntityEnum.Task,
 				ActionTypeEnum.Updated,
 				ActorTypeEnum.User, // TODO : Since we have Github Integration, make sure we can also store "System" for actor
@@ -649,7 +650,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Filter by task prefix and number
 			if (isNotEmpty(prefix)) {
 				options.where.prefix = Raw(
-					(alias) => `CONCAT(${alias}, '-', "task"."number") ${likeOperator} '%${prefix as string}%'`
+					(alias) => `CONCAT(${alias}, '-', "task"."number") ${LIKE_OPERATOR} '%${prefix as string}%'`
 				);
 			}
 
@@ -665,7 +666,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			if (isNotEmpty((creator as IUser)?.firstName)) {
 				const name = (creator as IUser).firstName;
 				(options.where.creator as any).firstName = Raw(
-					(alias) => `CONCAT(${alias}, ' ', "task__task_creator"."lastName") ${likeOperator} '%${name}%'`
+					(alias) => `CONCAT(${alias}, ' ', "task__task_creator"."lastName") ${LIKE_OPERATOR} '%${name}%'`
 				);
 			}
 
@@ -682,7 +683,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Apply filters for teams, ensuring it uses In for array comparison
 			if (where.teams) {
 				options.where.teams = {
-					id: In(where.teams as string[])
+					id: In(where.teams as ID[])
 				};
 			}
 
@@ -898,7 +899,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		const tenantId = RequestContext.currentTenantId();
 		try {
 			// Retrieve Task View by ID for getting their pre-defined query params
-			const taskView = await this.taskViewService.findOneByWhereOptions({ id: viewId, tenantId });
+			const taskView = await this._taskViewService.findOneByWhereOptions({ id: viewId, tenantId });
 			if (!taskView) {
 				throw new HttpException('View not found', HttpStatus.NOT_FOUND);
 			}
