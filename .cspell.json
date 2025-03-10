@@ -550,7 +550,8 @@
 		"isready",
 		"openzipkin",
 		"opensearchproject",
-		"nofile"
+		"nofile",
+		"notarytool"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
