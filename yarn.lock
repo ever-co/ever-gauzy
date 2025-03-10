@@ -3613,9 +3613,9 @@
   optionalDependencies:
     global-agent "^3.0.0"
 
-"@electron/node-gyp@git+https://github.com/electron/node-gyp.git#06b29aafb7708acef8b3669835c8a7857ebc92d2":
+"@electron/node-gyp@https://github.com/electron/node-gyp#06b29aafb7708acef8b3669835c8a7857ebc92d2":
   version "10.2.0-electron.1"
-  resolved "git+https://github.com/electron/node-gyp.git#06b29aafb7708acef8b3669835c8a7857ebc92d2"
+  resolved "https://github.com/electron/node-gyp#06b29aafb7708acef8b3669835c8a7857ebc92d2"
   dependencies:
     env-paths "^2.2.0"
     exponential-backoff "^3.1.1"
@@ -3645,7 +3645,7 @@
     debug "^4.1.1"
     fs-extra "^9.0.1"
 
-"@electron/notarize@^2.1.0", "@electron/notarize@^2.5.0":
+"@electron/notarize@^2.5.0":
   version "2.5.0"
   resolved "https://registry.yarnpkg.com/@electron/notarize/-/notarize-2.5.0.tgz#d4d25356adfa29df4a76bd64a8bd347237cd251e"
   integrity sha512-jNT8nwH1f9X5GEITXaQ8IF/KdskvIkOFfB2CvwumsveVidzpSc+mvhhTMdAGSYF3O+Nq49lJ7y+ssODRXu06+A==

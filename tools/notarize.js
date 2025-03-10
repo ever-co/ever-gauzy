@@ -2,9 +2,6 @@ const { notarize } = require('@electron/notarize');
 require('dotenv').config();
 
 exports.default = async (context) => {
-	if (process.env.CI) {
-		return;
-	}
 	const {
 		electronPlatformName,
 		appOutDir,
