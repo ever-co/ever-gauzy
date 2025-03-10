@@ -135,6 +135,7 @@ RUN yarn build:api:prod:docker
 
 FROM ${DEPENDENCIES_IMAGE:-"no-image"}:latest-api-prod AS production
 
+ARG GIT_HASH
 WORKDIR /srv/gauzy
 
 # Copy the built API items and prepare dependencies
