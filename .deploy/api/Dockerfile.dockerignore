@@ -75,10 +75,13 @@ e2e/*.map
 # Non-related apps and packages
 apps
 !apps/api
-apps/api/public/**/*.*
+apps/api/public
 !apps/api/public/.gitkeep
 !apps/api/public/**/.gitkeep
-apps/api/data/*
+!apps/api/public/ever-icons
+!apps/api/public/features
+!apps/api/public/integrations
+!apps/api/public/reports
 apps/api/report.*.json
 packages/desktop-*
 packages/ui-*

@@ -36,7 +36,7 @@ on:
 jobs:
   check-dependencies:
     name: Check and Build Dependencies
-    uses: ./.github/workflows/dependencies.yml
+    uses: ./.github/workflows/api-dependencies.yml
     secrets: inherit
 
   deploy-api:
@@ -65,7 +65,7 @@ jobs:
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build --build-arg DEPENDENCIES_IMAGE="${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }}:latest" -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }}:$IMAGE_TAG -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }}:latest -f .deploy/api/Dockerfile .
+          docker build --build-arg DEPENDENCIES_IMAGE="${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }}" -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }}:$IMAGE_TAG -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }}:latest -f .deploy/api/Dockerfile .
           docker push ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }} --all-tags
           echo "api_image=${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }}:$IMAGE_TAG" >> $GITHUB_ENV
 

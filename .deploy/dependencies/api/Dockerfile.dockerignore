@@ -44,15 +44,9 @@ tools
 # Scripts and deployment entrypoint scripts
 .scripts
 !.scripts/postinstall.ts
-!.scripts/configure.ts
-!.scripts/env.ts
 .deploy
 !.deploy/api/entrypoint.compose.sh
 !.deploy/api/entrypoint.prod.sh
-!.deploy/webapp/entrypoint.compose.sh
-!.deploy/webapp/entrypoint.prod.sh
-!.deploy/webapp/replacements.sed
-!.deploy/webapp/nginx*
 
 .nvmrc
 **/node_modules
@@ -83,7 +77,6 @@ e2e/*.map
 # Non-related apps and packages
 apps
 !apps/api
-!apps/gauzy
 apps/api/public
 !apps/api/public/.gitkeep
 !apps/api/public/**/.gitkeep
@@ -91,7 +84,8 @@ apps/api/public
 !apps/api/public/features
 !apps/api/public/integrations
 !apps/api/public/reports
-apps/api/data
 apps/api/report.*.json
 packages/desktop-*
+packages/ui-*
+packages/plugins/*-ui
 packages/plugins/integration-wakatime

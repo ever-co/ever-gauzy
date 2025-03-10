@@ -108,7 +108,7 @@ ARG DB_ORM
 ARG MIKRO_ORM_ALLOW_GLOBAL_CONTEXT
 
 
-FROM ${DEPENDENCIES_IMAGE:-"no-image"} AS builder
+FROM ${DEPENDENCIES_IMAGE:-"no-image"}:latest-api-dev AS builder
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
@@ -137,17 +137,14 @@ ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=60000"} \
 	IS_DOCKER=true \
 	NX_NO_CLOUD=true
 
-# Build the API service for production
+# Build the API service for production and install production dependencies
 RUN yarn build:api:prod:docker
 
-FROM node:20.11.1-alpine3.19 AS production
+FROM ${DEPENDENCIES_IMAGE:-"no-image"}:latest-api-prod AS production
+
 # Prepare PM2 and dependencies
-RUN npm install pm2@4.5.1 -g \
-	&& mkdir /import \
-	&& chown node:node /import \
-	&& touch ormlogs.log \
-	&& chown node:node ormlogs.log \
-	&& yarn cache clean
+RUN touch ormlogs.log \
+	&& chown node:node ormlogs.log
 
 USER node:node
 WORKDIR /srv/gauzy
@@ -158,7 +155,6 @@ COPY --from=builder --chmod=755 /wait /entrypoint.prod.sh /entrypoint.compose.sh
 # Copy the built API items and prepare dependencies
 COPY --chown=node:node --from=builder /srv/gauzy/dist/apps/api/assets /srv/gauzy/dist/apps/api/public /srv/gauzy/dist/apps/api/main.* ./
 COPY --chown=node:node --from=builder /srv/gauzy/dist/packages/ ./packages/
-COPY --chown=node:node --from=builder /srv/gauzy/node_modules_prod ./node_modules
 
 # Fix @guazy dependencies
 RUN rm -rf ./node_modules/@gauzy \
