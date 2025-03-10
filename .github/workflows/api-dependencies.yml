@@ -76,8 +76,11 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build dependency images and push to Amazon ECR
+      - name: Build dependency images
         run: |
           docker build -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }}:latest-api-dev -f .deploy/dependencies/api/Dockerfile .
           docker build --build-arg ENVIRONMENT=production -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }}:latest-api-prod -f .deploy/dependencies/api/Dockerfile .
+
+      - name: Push images to Amazon ECR
+        run: |
           docker push ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }} --all-tags
