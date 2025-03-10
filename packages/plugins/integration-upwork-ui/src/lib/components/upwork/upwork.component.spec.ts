@@ -1,12 +1,11 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { UpworkComponent } from './upwork.component';
 
 describe('UpworkComponent', () => {
 	let component: UpworkComponent;
 	let fixture: ComponentFixture<UpworkComponent>;
 
-	beforeEach(async(() => {
+	beforeEach(waitForAsync(() => {
 		TestBed.configureTestingModule({
 			declarations: [UpworkComponent],
 			teardown: { destroyAfterEach: false }

@@ -1,12 +1,11 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ActivityLayoutComponent } from './layout.component';
 
 describe('ActivityLayoutComponent', () => {
 	let component: ActivityLayoutComponent;
 	let fixture: ComponentFixture<ActivityLayoutComponent>;
 
-	beforeEach(async(() => {
+	beforeEach(waitForAsync(() => {
 		TestBed.configureTestingModule({
 			declarations: [ActivityLayoutComponent],
 			teardown: { destroyAfterEach: false }

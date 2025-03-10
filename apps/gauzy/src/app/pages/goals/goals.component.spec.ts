@@ -1,12 +1,11 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { GoalsComponent } from './goals.component';
 
 describe('GoalsComponent', () => {
 	let component: GoalsComponent;
 	let fixture: ComponentFixture<GoalsComponent>;
 
-	beforeEach(async(() => {
+	beforeEach(waitForAsync(() => {
 		TestBed.configureTestingModule({
 			declarations: [GoalsComponent],
 			teardown: { destroyAfterEach: false }

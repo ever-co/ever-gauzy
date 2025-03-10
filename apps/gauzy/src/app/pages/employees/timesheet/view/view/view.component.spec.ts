@@ -1,20 +1,19 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { TimesheetViewComponent } from './view.component';
 
-import { ViewComponent } from './view.component';
+describe('TimesheetViewComponent', () => {
+	let component: TimesheetViewComponent;
+	let fixture: ComponentFixture<TimesheetViewComponent>;
 
-describe('ViewComponent', () => {
-	let component: ViewComponent;
-	let fixture: ComponentFixture<ViewComponent>;
-
-	beforeEach(async(() => {
+	beforeEach(waitForAsync(() => {
 		TestBed.configureTestingModule({
-			declarations: [ViewComponent],
+			declarations: [TimesheetViewComponent],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 
 	beforeEach(() => {
-		fixture = TestBed.createComponent(ViewComponent);
+		fixture = TestBed.createComponent(TimesheetViewComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();
 	});

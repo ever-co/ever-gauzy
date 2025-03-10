@@ -1,12 +1,11 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { SyncDataSelectionComponent } from './sync-data-selection.component';
 
 describe('SyncDataSelectionComponent', () => {
 	let component: SyncDataSelectionComponent;
 	let fixture: ComponentFixture<SyncDataSelectionComponent>;
 
-	beforeEach(async(() => {
+	beforeEach(waitForAsync(() => {
 		TestBed.configureTestingModule({
 			declarations: [SyncDataSelectionComponent],
 			teardown: { destroyAfterEach: false }

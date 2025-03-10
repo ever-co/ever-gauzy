@@ -42,7 +42,7 @@
 								/>
 								<div
 									*ngIf="
-										isEstimate &&
+										!isEstimate &&
 										form.get('invoiceNumber')?.errors?.required &&
 										form.get('invoiceNumber')?.touched
 									"
@@ -67,7 +67,7 @@
 							></ga-contact-select>
 							<div
 								*ngIf="
-									isEstimate &&
+									!isEstimate &&
 									form.get('organizationContact')?.errors?.required &&
 									form.get('organizationContact')?.touched
 								"
@@ -189,7 +189,7 @@
 								</nb-select>
 								<div
 									*ngIf="
-										isEstimate &&
+										!isEstimate &&
 										form.get('invoiceType')?.errors?.required &&
 										form.get('invoiceType')?.touched
 									"
@@ -204,6 +204,7 @@
 							<div class="col-sm-6">
 								<div class="form-group">
 									<ga-employee-multi-select
+										[multiple]="true"
 										[customClass]="isEstimate ? '' : 'required-asterisk'"
 										[selectedEmployeeIds]="form.get('selectedEmployeeIds')?.value"
 										[allEmployees]="employees"
@@ -213,6 +214,7 @@
 									></ga-employee-multi-select>
 									<div
 										*ngIf="
+											!isEstimate &&
 											form.get('selectedEmployeeIds')?.errors?.required &&
 											form.get('selectedEmployeeIds')?.touched
 										"

@@ -1,12 +1,11 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { SettingsDialogComponent } from './settings-dialog.component';
 
 describe('SettingsDialogComponent', () => {
 	let component: SettingsDialogComponent;
 	let fixture: ComponentFixture<SettingsDialogComponent>;
 
-	beforeEach(async(() => {
+	beforeEach(waitForAsync(() => {
 		TestBed.configureTestingModule({
 			declarations: [SettingsDialogComponent],
 			teardown: { destroyAfterEach: false }
