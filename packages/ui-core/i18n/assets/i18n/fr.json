@@ -169,7 +169,8 @@
         "ADD_MODULE": "Ajouter un module",
         "SHARE": "Partager",
         "GET_INFO": "Obtenir des infos",
-        "RETRY": "Réessayer"
+        "RETRY": "Réessayer",
+        "UPLOAD": "Téléverser"
     },
     "SM_TABLE": {
         "NO_DATA": {
@@ -216,7 +217,8 @@
             "EVENT_TYPE": "Vous n'avez créé aucun type d'événement.",
             "PRODUCT_TYPE_NO_DATA": "Vous n'avez créé aucun type de produit.",
             "TEAM_DASHBOARD": "Vous n'avez aucune équipe.",
-            "PLUGIN": "Vous n'avez installé aucun plugin."
+            "PLUGIN": "Vous n'avez installé aucun plugin.",
+            "PLUGIN_MARKETPLACE": "Ce plugin n'est pas disponible sur le marché"
         },
         "TRANSACTION_TYPE": "Taper",
         "AMOUNT": "Montant",
@@ -4760,6 +4762,94 @@
                 "SHARE_NOT_ALLOWED": "Le partage n'est pas autorisé",
                 "UNEXPECTED_SHARING_ERROR": "Erreur inattendue lors du partage"
             }
+        },
+        "FORM": {
+            "TITLE": "Télécharger un plugin",
+            "BASIC_INFO": "Informations de base",
+            "NAME": "Nom du plugin",
+            "NAME_PLACEHOLDER": "Entrez le nom du plugin",
+            "VALIDATION": {
+                "NAME_REQUIRED": "Le nom du plugin est requis",
+                "NAME_TOO_LONG": "Le nom du plugin est trop long",
+                "VERSION_REQUIRED": "La version est requise",
+                "VERSION_FORMAT": "Format de version invalide",
+                "DESCRIPTION_TOO_LONG": "La description est trop longue",
+                "URL_REQUIRED": "L'URL est requise",
+                "INVALID_URL": "Format d'URL invalide",
+                "PACKAGE_NAME_REQUIRED": "Le nom du package est requis",
+                "INVALID_PACKAGE_NAME": "Format de nom de package invalide",
+                "INVALID_SCOPE": "Format de portée invalide",
+                "AUTHOR_TOO_LONG": "Le nom de l'auteur est trop long",
+                "LICENSE_TOO_LONG": "Le champ de la licence est trop long"
+            },
+            "TYPE": "Type de plugin",
+            "TYPE_PLACEHOLDER": "Sélectionnez le type de plugin",
+            "TYPES": {
+                "DESKTOP": "Bureau",
+                "WEB": "Web",
+                "MOBILE": "Mobile"
+            },
+            "VERSION": "Version",
+            "STATUS": "Statut",
+            "STATUSES": {
+                "ACTIVE": "Actif",
+                "INACTIVE": "Inactif",
+                "DEPRECATED": "Obsolète",
+                "ARCHIVED": "Archivé"
+            },
+            "DESCRIPTION": "Description",
+            "DESCRIPTION_PLACEHOLDER": "Entrez la description du plugin",
+            "SOURCE": "Source",
+            "SOURCE_TYPE": "Type de source",
+            "SOURCE_TYPES": {
+                "CDN": "CDN",
+                "NPM": "NPM",
+                "GAUZY": "Gauzy"
+            },
+            "CDN": {
+                "URL": "URL CDN",
+                "INTEGRITY": "Intégrité",
+                "CROSS_ORIGIN": "Cross Origin"
+            },
+            "NPM": {
+                "PACKAGE_NAME": "Nom du package NPM",
+                "REGISTRY": "Registre NPM",
+                "SCOPE": "Portée",
+                "AUTH_TOKEN": "Jeton d'authentification"
+            },
+            "FILE_UPLOAD": {
+                "DRAG_DROP": "Glissez et déposez votre fichier ici",
+                "BROWSE": "Parcourir",
+                "REMOVE": "Supprimer le fichier",
+                "RESTRICTIONS": "Seuls les fichiers .zip sont autorisés",
+                "FILE": "Fichier"
+            },
+            "METADATA": {
+                "TITLE": "Métadonnées",
+                "AUTHOR": "Auteur",
+                "AUTHOR_PLACEHOLDER": "Entrez le nom de l'auteur",
+                "LICENSE": "Licence",
+                "LICENSE_PLACEHOLDER": "Entrez la licence",
+                "HOMEPAGE": "Page d'accueil",
+                "HOMEPAGE_PLACEHOLDER": "Entrez l'URL de la page d'accueil",
+                "REPOSITORY": "Dépôt",
+                "REPOSITORY_PLACEHOLDER": "Entrez l'URL du dépôt"
+            },
+            "OR": "Ou"
+        },
+        "DETAILS": {
+            "USAGE_STATS": "Statistiques d'utilisation",
+            "DOWNLOAD_COUNT": "Nombre de téléchargements",
+            "LAST_DOWNLOADED": "Dernier téléchargement",
+            "UPLOADED_BY": "Téléversé par",
+            "UPLOADED_AT": "Téléversé le",
+            "SECURITY_INFO": "Informations de sécurité",
+            "CHECKSUM": "Somme de contrôle",
+            "SIGNATURE": "Signature"
+        },
+        "LAYOUT": {
+            "DISCOVER": "Découvrir",
+            "INSTALLED": "Installé"
         }
     }
 }

@@ -169,7 +169,8 @@
 		"ADD_MODULE": "添加模块",
 		"SHARE": "分享",
 		"GET_INFO": "获取信息",
-		"RETRY": "重试"
+		"RETRY": "重试",
+		"UPLOAD": "上传"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -216,7 +217,8 @@
 			"EVENT_TYPE": "你还没有创建任何事件类型。",
 			"PRODUCT_TYPE_NO_DATA": "你还没有创建任何产品类型。",
 			"TEAM_DASHBOARD": "你没有任何团队",
-			"PLUGIN": "您尚未安装任何插件。"
+			"PLUGIN": "您尚未安装任何插件。",
+			"PLUGIN_MARKETPLACE": "该插件在市场上不可用"
 		},
 		"TRANSACTION_TYPE": "类型 (Lèixíng)",
 		"AMOUNT": "金额",
@@ -4766,6 +4768,94 @@
 				"SHARE_NOT_ALLOWED": "不允许分享",
 				"UNEXPECTED_SHARING_ERROR": "意外的分享错误"
 			}
+		},
+		"FORM": {
+			"TITLE": "上传插件",
+			"BASIC_INFO": "基本信息",
+			"NAME": "插件名称",
+			"NAME_PLACEHOLDER": "输入插件名称",
+			"VALIDATION": {
+				"NAME_REQUIRED": "插件名称必填",
+				"NAME_TOO_LONG": "插件名称过长",
+				"VERSION_REQUIRED": "版本必填",
+				"VERSION_FORMAT": "版本格式无效",
+				"DESCRIPTION_TOO_LONG": "描述过长",
+				"URL_REQUIRED": "URL必填",
+				"INVALID_URL": "URL格式无效",
+				"PACKAGE_NAME_REQUIRED": "包名称必填",
+				"INVALID_PACKAGE_NAME": "包名称格式无效",
+				"INVALID_SCOPE": "作用域格式无效",
+				"AUTHOR_TOO_LONG": "作者名称过长",
+				"LICENSE_TOO_LONG": "许可证字段过长"
+			},
+			"TYPE": "插件类型",
+			"TYPE_PLACEHOLDER": "选择插件类型",
+			"TYPES": {
+				"DESKTOP": "桌面",
+				"WEB": "网页",
+				"MOBILE": "移动"
+			},
+			"VERSION": "版本",
+			"STATUS": "状态",
+			"STATUSES": {
+				"ACTIVE": "活跃",
+				"INACTIVE": "不活跃",
+				"DEPRECATED": "已弃用",
+				"ARCHIVED": "已归档"
+			},
+			"DESCRIPTION": "描述",
+			"DESCRIPTION_PLACEHOLDER": "输入插件描述",
+			"SOURCE": "来源",
+			"SOURCE_TYPE": "来源类型",
+			"SOURCE_TYPES": {
+				"CDN": "CDN",
+				"NPM": "NPM",
+				"GAUZY": "Gauzy"
+			},
+			"CDN": {
+				"URL": "CDN URL",
+				"INTEGRITY": "完整性",
+				"CROSS_ORIGIN": "跨域"
+			},
+			"NPM": {
+				"PACKAGE_NAME": "NPM包名称",
+				"REGISTRY": "NPM注册表",
+				"SCOPE": "作用域",
+				"AUTH_TOKEN": "认证令牌"
+			},
+			"FILE_UPLOAD": {
+				"DRAG_DROP": "拖放文件到这里",
+				"BROWSE": "浏览",
+				"REMOVE": "删除文件",
+				"RESTRICTIONS": "仅允许.zip文件",
+				"FILE": "文件"
+			},
+			"METADATA": {
+				"TITLE": "元数据",
+				"AUTHOR": "作者",
+				"AUTHOR_PLACEHOLDER": "输入作者名称",
+				"LICENSE": "许可证",
+				"LICENSE_PLACEHOLDER": "输入许可证",
+				"HOMEPAGE": "主页",
+				"HOMEPAGE_PLACEHOLDER": "输入主页URL",
+				"REPOSITORY": "仓库",
+				"REPOSITORY_PLACEHOLDER": "输入仓库URL"
+			},
+			"OR": "或"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "使用统计",
+			"DOWNLOAD_COUNT": "下载次数",
+			"LAST_DOWNLOADED": "上次下载",
+			"UPLOADED_BY": "上传者",
+			"UPLOADED_AT": "上传时间",
+			"SECURITY_INFO": "安全信息",
+			"CHECKSUM": "校验和",
+			"SIGNATURE": "签名"
+		},
+		"LAYOUT": {
+			"DISCOVER": "发现",
+			"INSTALLED": "已安装"
 		}
 	}
 }

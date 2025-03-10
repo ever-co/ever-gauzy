@@ -168,7 +168,8 @@
 		"ADD_MODULE": "Добавить модуль",
 		"SHARE": "Поделиться",
 		"GET_INFO": "Получить информацию",
-		"RETRY": "Повторить попытку"
+		"RETRY": "Повторить попытку",
+		"UPLOAD": "Загрузить"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -216,7 +217,8 @@
 			"EVENT_TYPE": "Вы не создали ни одного типа события.",
 			"PRODUCT_TYPE_NO_DATA": "Вы не создали ни одного типа продукта.",
 			"TEAM_DASHBOARD": "У вас нет ни одной команды.",
-			"PLUGIN": "Вы не установили ни одного плагина."
+			"PLUGIN": "Вы не установили ни одного плагина.",
+			"PLUGIN_MARKETPLACE": "Этот плагин недоступен на рынке"
 		},
 		"TRANSACTION_TYPE": "Тип",
 		"AMOUNT": "Количество",
@@ -4763,6 +4765,94 @@
 				"SHARE_NOT_ALLOWED": "Публикация не разрешена",
 				"UNEXPECTED_SHARING_ERROR": "Неожиданная ошибка при публикации"
 			}
+		},
+		"FORM": {
+			"TITLE": "Загрузить плагин",
+			"BASIC_INFO": "Основная информация",
+			"NAME": "Название плагина",
+			"NAME_PLACEHOLDER": "Введите название плагина",
+			"VALIDATION": {
+				"NAME_REQUIRED": "Название плагина обязательно",
+				"NAME_TOO_LONG": "Название плагина слишком длинное",
+				"VERSION_REQUIRED": "Версия обязательна",
+				"VERSION_FORMAT": "Неверный формат версии",
+				"DESCRIPTION_TOO_LONG": "Описание слишком длинное",
+				"URL_REQUIRED": "URL обязателен",
+				"INVALID_URL": "Неверный формат URL",
+				"PACKAGE_NAME_REQUIRED": "Имя пакета обязательно",
+				"INVALID_PACKAGE_NAME": "Неверный формат имени пакета",
+				"INVALID_SCOPE": "Неверный формат области",
+				"AUTHOR_TOO_LONG": "Имя автора слишком длинное",
+				"LICENSE_TOO_LONG": "Поле лицензии слишком длинное"
+			},
+			"TYPE": "Тип плагина",
+			"TYPE_PLACEHOLDER": "Выберите тип плагина",
+			"TYPES": {
+				"DESKTOP": "Десктоп",
+				"WEB": "Веб",
+				"MOBILE": "Мобильный"
+			},
+			"VERSION": "Версия",
+			"STATUS": "Статус",
+			"STATUSES": {
+				"ACTIVE": "Активный",
+				"INACTIVE": "Неактивный",
+				"DEPRECATED": "Устаревший",
+				"ARCHIVED": "Архивированный"
+			},
+			"DESCRIPTION": "Описание",
+			"DESCRIPTION_PLACEHOLDER": "Введите описание плагина",
+			"SOURCE": "Источник",
+			"SOURCE_TYPE": "Тип источника",
+			"SOURCE_TYPES": {
+				"CDN": "CDN",
+				"NPM": "NPM",
+				"GAUZY": "Gauzy"
+			},
+			"CDN": {
+				"URL": "URL CDN",
+				"INTEGRITY": "Целостность",
+				"CROSS_ORIGIN": "Cross Origin"
+			},
+			"NPM": {
+				"PACKAGE_NAME": "Имя пакета NPM",
+				"REGISTRY": "Реестр NPM",
+				"SCOPE": "Область",
+				"AUTH_TOKEN": "Токен аутентификации"
+			},
+			"FILE_UPLOAD": {
+				"DRAG_DROP": "Перетащите файл сюда",
+				"BROWSE": "Обзор",
+				"REMOVE": "Удалить файл",
+				"RESTRICTIONS": "Разрешены только файлы .zip",
+				"FILE": "Файл"
+			},
+			"METADATA": {
+				"TITLE": "Метаданные",
+				"AUTHOR": "Автор",
+				"AUTHOR_PLACEHOLDER": "Введите имя автора",
+				"LICENSE": "Лицензия",
+				"LICENSE_PLACEHOLDER": "Введите лицензию",
+				"HOMEPAGE": "Домашняя страница",
+				"HOMEPAGE_PLACEHOLDER": "Введите URL домашней страницы",
+				"REPOSITORY": "Репозиторий",
+				"REPOSITORY_PLACEHOLDER": "Введите URL репозитория"
+			},
+			"OR": "Или"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "Статистика использования",
+			"DOWNLOAD_COUNT": "Количество загрузок",
+			"LAST_DOWNLOADED": "Последнее скачивание",
+			"UPLOADED_BY": "Загружено пользователем",
+			"UPLOADED_AT": "Загружено в",
+			"SECURITY_INFO": "Информация о безопасности",
+			"CHECKSUM": "Контрольная сумма",
+			"SIGNATURE": "Подпись"
+		},
+		"LAYOUT": {
+			"DISCOVER": "Открыть",
+			"INSTALLED": "Установлено"
 		}
 	}
 }

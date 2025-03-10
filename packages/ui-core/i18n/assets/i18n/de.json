@@ -169,7 +169,8 @@
 		"ADD_MODULE": "Modul hinzufügen",
 		"SHARE": "Teilen",
 		"GET_INFO": "Informationen abrufen",
-		"RETRY": "Erneut versuchen"
+		"RETRY": "Erneut versuchen",
+		"UPLOAD": "Hochladen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -216,7 +217,8 @@
 			"EVENT_TYPE": "Sie haben keine Veranstaltungsart erstellt.",
 			"PRODUCT_TYPE_NO_DATA": "Sie haben keine Produktart erstellt.",
 			"TEAM_DASHBOARD": "Du hast keine Teams.",
-			"PLUGIN": "Sie haben kein Plugin installiert."
+			"PLUGIN": "Sie haben kein Plugin installiert.",
+			"PLUGIN_MARKETPLACE": "Dieses Plugin ist im Marktplatz nicht verfügbar"
 		},
 		"TRANSACTION_TYPE": "Art\n",
 		"AMOUNT": "Menge",
@@ -4762,6 +4764,94 @@
 				"SHARE_NOT_ALLOWED": "Teilen ist nicht erlaubt",
 				"UNEXPECTED_SHARING_ERROR": "Unerwarteter Fehler beim Teilen"
 			}
+		},
+		"FORM": {
+			"TITLE": "Plugin hochladen",
+			"BASIC_INFO": "Grundlegende Informationen",
+			"NAME": "Plugin-Name",
+			"NAME_PLACEHOLDER": "Geben Sie den Plugin-Namen ein",
+			"VALIDATION": {
+				"NAME_REQUIRED": "Plugin-Name ist erforderlich",
+				"NAME_TOO_LONG": "Plugin-Name ist zu lang",
+				"VERSION_REQUIRED": "Version ist erforderlich",
+				"VERSION_FORMAT": "Ungültiges Versionsformat",
+				"DESCRIPTION_TOO_LONG": "Beschreibung ist zu lang",
+				"URL_REQUIRED": "URL ist erforderlich",
+				"INVALID_URL": "Ungültiges URL-Format",
+				"PACKAGE_NAME_REQUIRED": "Paketname ist erforderlich",
+				"INVALID_PACKAGE_NAME": "Ungültiges Paketnamenformat",
+				"INVALID_SCOPE": "Ungültiges Scope-Format",
+				"AUTHOR_TOO_LONG": "Autorenname ist zu lang",
+				"LICENSE_TOO_LONG": "Lizenzfeld ist zu lang"
+			},
+			"TYPE": "Plugin-Typ",
+			"TYPE_PLACEHOLDER": "Wählen Sie den Plugin-Typ",
+			"TYPES": {
+				"DESKTOP": "Desktop",
+				"WEB": "Web",
+				"MOBILE": "Mobil"
+			},
+			"VERSION": "Version",
+			"STATUS": "Status",
+			"STATUSES": {
+				"ACTIVE": "Aktiv",
+				"INACTIVE": "Inaktiv",
+				"DEPRECATED": "Veraltet",
+				"ARCHIVED": "Archiviert"
+			},
+			"DESCRIPTION": "Beschreibung",
+			"DESCRIPTION_PLACEHOLDER": "Geben Sie eine Plugin-Beschreibung ein",
+			"SOURCE": "Quelle",
+			"SOURCE_TYPE": "Quellentyp",
+			"SOURCE_TYPES": {
+				"CDN": "CDN",
+				"NPM": "NPM",
+				"GAUZY": "Gauzy"
+			},
+			"CDN": {
+				"URL": "CDN-URL",
+				"INTEGRITY": "Integrität",
+				"CROSS_ORIGIN": "Cross Origin"
+			},
+			"NPM": {
+				"PACKAGE_NAME": "NPM-Paketname",
+				"REGISTRY": "NPM-Registry",
+				"SCOPE": "Scope",
+				"AUTH_TOKEN": "Authentifizierungs-Token"
+			},
+			"FILE_UPLOAD": {
+				"DRAG_DROP": "Ziehen Sie Ihre Datei hierher",
+				"BROWSE": "Durchsuchen",
+				"REMOVE": "Datei entfernen",
+				"RESTRICTIONS": "Nur .zip-Dateien sind erlaubt",
+				"FILE": "Datei"
+			},
+			"METADATA": {
+				"TITLE": "Metadaten",
+				"AUTHOR": "Autor",
+				"AUTHOR_PLACEHOLDER": "Geben Sie den Autorennamen ein",
+				"LICENSE": "Lizenz",
+				"LICENSE_PLACEHOLDER": "Geben Sie die Lizenz ein",
+				"HOMEPAGE": "Homepage",
+				"HOMEPAGE_PLACEHOLDER": "Geben Sie die Homepage-URL ein",
+				"REPOSITORY": "Repository",
+				"REPOSITORY_PLACEHOLDER": "Geben Sie die Repository-URL ein"
+			},
+			"OR": "Oder"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "Nutzungsstatistiken",
+			"DOWNLOAD_COUNT": "Anzahl der Downloads",
+			"LAST_DOWNLOADED": "Zuletzt heruntergeladen",
+			"UPLOADED_BY": "Hochgeladen von",
+			"UPLOADED_AT": "Hochgeladen am",
+			"SECURITY_INFO": "Sicherheitsinformationen",
+			"CHECKSUM": "Prüfsumme",
+			"SIGNATURE": "Signatur"
+		},
+		"LAYOUT": {
+			"DISCOVER": "Entdecken",
+			"INSTALLED": "Installiert"
 		}
 	}
 }

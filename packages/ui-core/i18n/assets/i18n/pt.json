@@ -169,7 +169,8 @@
 		"ADD_MODULE": "Adicionar módulo",
 		"SHARE": "Compartilhar",
 		"GET_INFO": "Obter informações",
-		"RETRY": "Tentar novamente"
+		"RETRY": "Tentar novamente",
+		"UPLOAD": "Carregar"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -216,7 +217,8 @@
 			"EVENT_TYPE": "Você não criou nenhum tipo de evento.",
 			"PRODUCT_TYPE_NO_DATA": "Você não criou nenhum tipo de produto.",
 			"TEAM_DASHBOARD": "Você não tem nenhum time.",
-			"PLUGIN": "Você não instalou nenhum plugin."
+			"PLUGIN": "Você não instalou nenhum plugin.",
+			"PLUGIN_MARKETPLACE": "Este plugin não está disponível no marketplace"
 		},
 		"TRANSACTION_TYPE": "Digite",
 		"AMOUNT": "Quantia.",
@@ -4766,6 +4768,94 @@
 				"SHARE_NOT_ALLOWED": "Compartilhamento não permitido",
 				"UNEXPECTED_SHARING_ERROR": "Erro inesperado ao compartilhar"
 			}
+		},
+		"FORM": {
+			"TITLE": "Carregar plugin",
+			"BASIC_INFO": "Informações básicas",
+			"NAME": "Nome do plugin",
+			"NAME_PLACEHOLDER": "Digite o nome do plugin",
+			"VALIDATION": {
+				"NAME_REQUIRED": "O nome do plugin é obrigatório",
+				"NAME_TOO_LONG": "O nome do plugin é muito longo",
+				"VERSION_REQUIRED": "A versão é obrigatória",
+				"VERSION_FORMAT": "Formato de versão inválido",
+				"DESCRIPTION_TOO_LONG": "A descrição é muito longa",
+				"URL_REQUIRED": "A URL é obrigatória",
+				"INVALID_URL": "Formato de URL inválido",
+				"PACKAGE_NAME_REQUIRED": "O nome do pacote é obrigatório",
+				"INVALID_PACKAGE_NAME": "Formato de nome de pacote inválido",
+				"INVALID_SCOPE": "Formato de escopo inválido",
+				"AUTHOR_TOO_LONG": "O nome do autor é muito longo",
+				"LICENSE_TOO_LONG": "O campo da licença é muito longo"
+			},
+			"TYPE": "Tipo de plugin",
+			"TYPE_PLACEHOLDER": "Selecione o tipo de plugin",
+			"TYPES": {
+				"DESKTOP": "Desktop",
+				"WEB": "Web",
+				"MOBILE": "Móvel"
+			},
+			"VERSION": "Versão",
+			"STATUS": "Status",
+			"STATUSES": {
+				"ACTIVE": "Ativo",
+				"INACTIVE": "Inativo",
+				"DEPRECATED": "Descontinuado",
+				"ARCHIVED": "Arquivado"
+			},
+			"DESCRIPTION": "Descrição",
+			"DESCRIPTION_PLACEHOLDER": "Digite a descrição do plugin",
+			"SOURCE": "Fonte",
+			"SOURCE_TYPE": "Tipo de fonte",
+			"SOURCE_TYPES": {
+				"CDN": "CDN",
+				"NPM": "NPM",
+				"GAUZY": "Gauzy"
+			},
+			"CDN": {
+				"URL": "URL do CDN",
+				"INTEGRITY": "Integridade",
+				"CROSS_ORIGIN": "Cross Origin"
+			},
+			"NPM": {
+				"PACKAGE_NAME": "Nome do pacote NPM",
+				"REGISTRY": "Registro NPM",
+				"SCOPE": "Escopo",
+				"AUTH_TOKEN": "Token de autenticação"
+			},
+			"FILE_UPLOAD": {
+				"DRAG_DROP": "Arraste e solte seu arquivo aqui",
+				"BROWSE": "Procurar",
+				"REMOVE": "Remover arquivo",
+				"RESTRICTIONS": "Apenas arquivos .zip são permitidos",
+				"FILE": "Arquivo"
+			},
+			"METADATA": {
+				"TITLE": "Metadados",
+				"AUTHOR": "Autor",
+				"AUTHOR_PLACEHOLDER": "Digite o nome do autor",
+				"LICENSE": "Licença",
+				"LICENSE_PLACEHOLDER": "Digite a licença",
+				"HOMEPAGE": "Página inicial",
+				"HOMEPAGE_PLACEHOLDER": "Digite a URL da página inicial",
+				"REPOSITORY": "Repositório",
+				"REPOSITORY_PLACEHOLDER": "Digite a URL do repositório"
+			},
+			"OR": "Ou"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "Estatísticas de uso",
+			"DOWNLOAD_COUNT": "Número de downloads",
+			"LAST_DOWNLOADED": "Último download",
+			"UPLOADED_BY": "Enviado por",
+			"UPLOADED_AT": "Enviado em",
+			"SECURITY_INFO": "Informações de segurança",
+			"CHECKSUM": "Soma de verificação",
+			"SIGNATURE": "Assinatura"
+		},
+		"LAYOUT": {
+			"DISCOVER": "Descobrir",
+			"INSTALLED": "Instalado"
 		}
 	}
 }
