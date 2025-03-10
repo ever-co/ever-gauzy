@@ -555,7 +555,8 @@
 		"INPM",
 		"ɵcmp",
 		"ɵmod",
-		"ɵcreate"
+		"ɵcreate",
+		"notarytool"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
