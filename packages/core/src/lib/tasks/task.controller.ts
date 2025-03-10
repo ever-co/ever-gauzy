@@ -26,9 +26,9 @@ import { TaskCreateCommand, TaskUpdateCommand } from './commands';
 import {
 	CreateTaskDTO,
 	GetTaskByIdDTO,
-	TaskAdvancedFilterDTO,
 	TaskDateFilterInputDTO,
 	TaskMaxNumberQueryDTO,
+	TaskQueryDTO,
 	UpdateTaskDTO
 } from './dto';
 
@@ -69,9 +69,7 @@ export class TaskController extends CrudController<Task> {
 	@ApiOperation({ summary: 'Get tasks by pagination.' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Tasks retrieved successfully.' })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input.' })
-	async pagination(
-		@Query() params: PaginationParams<Task> & { filters?: TaskAdvancedFilterDTO }
-	): Promise<IPagination<ITask>> {
+	async pagination(@Query() params: TaskQueryDTO): Promise<IPagination<ITask>> {
 		return this.taskService.pagination(params);
 	}
 
@@ -119,9 +117,7 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('/employee')
 	@UseValidationPipe({ transform: true })
-	async findEmployeeTask(
-		@Query() params: PaginationParams<Task> & { filters?: TaskAdvancedFilterDTO }
-	): Promise<IPagination<ITask>> {
+	async findEmployeeTask(@Query() params: TaskQueryDTO): Promise<IPagination<ITask>> {
 		return this.taskService.getEmployeeTasks(params);
 	}
 
@@ -137,9 +133,7 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('/team')
 	@UseValidationPipe({ transform: true })
-	async findTeamTasks(
-		@Query() params: PaginationParams<Task> & { filters?: TaskAdvancedFilterDTO }
-	): Promise<IPagination<ITask>> {
+	async findTeamTasks(@Query() params: TaskQueryDTO): Promise<IPagination<ITask>> {
 		return this.taskService.findTeamTasks(params);
 	}
 
@@ -155,9 +149,7 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('/module')
 	@UseValidationPipe({ transform: true })
-	async findModuleTasks(
-		@Query() params: PaginationParams<Task> & { filters?: TaskAdvancedFilterDTO }
-	): Promise<IPagination<ITask>> {
+	async findModuleTasks(@Query() params: TaskQueryDTO): Promise<IPagination<ITask>> {
 		return this.taskService.findModuleTasks(params);
 	}
 
@@ -222,10 +214,7 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('/employee/:id')
 	@UseValidationPipe()
-	async getAllTasksByEmployee(
-		@Param('id') employeeId: ID,
-		@Query() params: PaginationParams<Task> & { filters?: TaskAdvancedFilterDTO }
-	): Promise<ITask[]> {
+	async getAllTasksByEmployee(@Param('id') employeeId: ID, @Query() params: TaskQueryDTO): Promise<ITask[]> {
 		return this.taskService.getAllTasksByEmployee(employeeId, params);
 	}
 
@@ -241,9 +230,7 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('/')
 	@UseValidationPipe()
-	async findAll(
-		@Query() params: PaginationParams<Task> & { filters?: TaskAdvancedFilterDTO }
-	): Promise<IPagination<ITask>> {
+	async findAll(@Query() params: TaskQueryDTO): Promise<IPagination<ITask>> {
 		return this.taskService.findAll(params);
 	}
 
