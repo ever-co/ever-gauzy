@@ -110,7 +110,7 @@ export function applyTypeOrmIndex(
  */
 export function applyMikroOrmIndex(
 	target: any,
-	propertyKey: never,
+	propertyKey: string | symbol | undefined,
 	name: string | undefined,
 	properties: any,
 	options: TypeOrmIndexOptions | undefined
