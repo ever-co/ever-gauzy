@@ -1,0 +1,43 @@
+{
+	"name": "plugin-registry",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/plugin-registry/src",
+	"projectType": "library",
+	"release": {
+		"version": {
+			"generatorOptions": {
+				"packageRoot": "dist/{projectRoot}",
+				"currentVersionResolver": "git-tag"
+			}
+		}
+	},
+	"tags": [],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "dist/packages/plugins/plugin-registry",
+				"tsConfig": "packages/plugins/plugin-registry/tsconfig.lib.json",
+				"packageJson": "packages/plugins/plugin-registry/package.json",
+				"main": "packages/plugins/plugin-registry/src/index.ts",
+				"assets": ["packages/plugins/plugin-registry/*.md"]
+			}
+		},
+		"nx-release-publish": {
+			"options": {
+				"packageRoot": "dist/{projectRoot}"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/plugins/plugin-registry/jest.config.ts"
+			}
+		}
+	}
+}
