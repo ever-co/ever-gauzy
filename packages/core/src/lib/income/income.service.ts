@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { FindManyOptions, Between, In, Raw } from 'typeorm';
 import * as moment from 'moment';
-import { IPagination } from '@gauzy/contracts';
+import { ID, IDateRangePicker, IIncome, IPagination } from '@gauzy/contracts';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { LIKE_OPERATOR } from '../core/util';
 import { Income } from './income.entity';
@@ -60,24 +60,25 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 	}
 
 	/**
-	 * Paginates organization contacts with custom filtering.
+	 * Paginates records for SomeEntity based on provided filters.
 	 *
-	 * @param filter - The filter options (including where conditions) for the query.
-	 * @returns A promise that resolves to a paginated result of organization contacts.
+	 * @param filter - Pagination parameters including custom filters.
+	 * @returns A promise resolving to paginated results.
 	 */
-	public pagination(filter: PaginationParams) {
+	public pagination(filter?: PaginationParams<any>): Promise<IPagination<IIncome>> {
 		if (filter?.where) {
 			const { where } = filter;
 
 			// Apply like filter for notes field
 			if (where.notes) {
-				const operator = Raw((alias) => `${alias} ${LIKE_OPERATOR} :notes`, { notes: `%${where.notes}%` });
-				filter['where']['notes'] = operator;
+				filter['where']['notes'] = Raw((alias) => `${alias} ${LIKE_OPERATOR} :notes`, {
+					notes: `%${where.notes}%`
+				});
 			}
 
 			// Apply date range filter for valueDate field
 			if (where.valueDate) {
-				const { startDate, endDate } = where.valueDate;
+				const { startDate, endDate } = where.valueDate as IDateRangePicker;
 
 				const start = startDate ? moment.utc(startDate) : moment().startOf('month').utc();
 				const end = endDate ? moment.utc(endDate) : moment().endOf('month').utc();
@@ -93,7 +94,7 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 				const { tags } = where;
 
 				filter['where']['tags'] = {
-					id: In(tags)
+					id: In(tags as Array<ID>)
 				};
 			}
 		}

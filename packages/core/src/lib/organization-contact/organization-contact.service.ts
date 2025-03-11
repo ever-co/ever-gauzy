@@ -111,6 +111,13 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 		return { items, total };
 	}
 
+	/**
+	 * Finds an organization contact by its ID and includes the specified relations.
+	 *
+	 * @param id - The unique identifier for the organization contact.
+	 * @param relations - An array of relation names to include in the result.
+	 * @returns A promise that resolves to an IOrganizationContact.
+	 */
 	async findById(id: ID, relations: string[]): Promise<IOrganizationContact> {
 		return await this.findOneByIdString(id, { relations });
 	}
@@ -118,32 +125,45 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 	/**
 	 * Organization contact by pagination
 	 *
-	 * @param params
-	 * @returns
+	 * @param filter - The pagination parameters, including custom filters.
+	 * @returns A promise that resolves with paginated organization contacts.
 	 */
-	public async pagination(params?: PaginationParams<any>): Promise<IPagination<IOrganizationContact>> {
-		// Custom Filters
-		if ('where' in params) {
-			const { where } = params;
-			if ('name' in where) {
-				const { name } = where;
-				params['where']['name'] = Raw((alias) => `${alias} ${LIKE_OPERATOR} '%${name}%'`);
+	public async pagination(
+		filter?: PaginationParams<OrganizationContact>
+	): Promise<IPagination<IOrganizationContact>> {
+		if (filter?.where) {
+			const { where } = filter;
+
+			// Apply like filter for the name field.
+			if (where.name) {
+				filter.where['name'] = Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :name`, {
+					name: `%${where.name}%`
+				});
 			}
-			if ('primaryPhone' in where) {
-				const { primaryPhone } = where;
-				params['where']['primaryPhone'] = Raw((alias) => `${alias} ${LIKE_OPERATOR} '%${primaryPhone}%'`);
+
+			// Apply like filter for the primaryPhone field.
+			if (where.primaryPhone) {
+				filter.where['primaryPhone'] = Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :primaryPhone`, {
+					primaryPhone: `%${where.primaryPhone}%`
+				});
 			}
-			if ('primaryEmail' in where) {
-				const { primaryEmail } = where;
-				params['where']['primaryEmail'] = Raw((alias) => `${alias} ${LIKE_OPERATOR} '%${primaryEmail}%'`);
+
+			// Apply like filter for the primaryEmail field.
+			if (where.primaryEmail) {
+				filter.where['primaryEmail'] = Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :primaryEmail`, {
+					primaryEmail: `%${where.primaryEmail}%`
+				});
 			}
-			if ('members' in where) {
+
+			// Apply filter for the members field.
+			if (where.members) {
 				const { members } = where;
-				params['where']['members'] = {
-					id: In(members)
+				filter.where['members'] = {
+					id: In(members as Array<ID>)
 				};
 			}
 		}
-		return await super.paginate(params);
+
+		return super.paginate(filter ?? {});
 	}
 }

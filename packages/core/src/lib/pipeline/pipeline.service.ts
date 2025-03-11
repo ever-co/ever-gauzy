@@ -170,16 +170,20 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 			const { name, description, stages } = whereFilter as FindOptionsWhere<Pipeline>;
 
 			if (name) {
-				whereOptions['name'] = Raw((alias) => `${alias} ${LIKE_OPERATOR} '%${name}%'`);
+				whereOptions['name'] = Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :name`, {
+					name: `%${name}%`
+				});
 			}
 
 			if (description) {
-				whereOptions['description'] = Raw((alias) => `${alias} ${LIKE_OPERATOR} '%${description}%'`);
+				whereOptions['description'] = Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :description`, {
+					description: `%${description}%`
+				});
 			}
 
 			if (stages) {
 				whereOptions['stages'] = {
-					name: Raw((alias) => `${alias} ${LIKE_OPERATOR} '%${stages}%'`)
+					name: Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :stages`, { stages: `%${stages}%` })
 				};
 			}
 
@@ -190,6 +194,6 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 			};
 		}
 
-		return await super.paginate(filter);
+		return super.paginate(filter ?? {});
 	}
 }
