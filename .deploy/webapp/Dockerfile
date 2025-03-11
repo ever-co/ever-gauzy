@@ -88,30 +88,13 @@ WORKDIR /srv/gauzy
 
 COPY --chown=node:node apps/gauzy/package.json ./apps/gauzy/
 
-COPY --chown=node:node packages/common/package.json ./packages/common/
 COPY --chown=node:node packages/utils/package.json ./packages/utils/
-COPY --chown=node:node packages/config/package.json ./packages/config/
 COPY --chown=node:node packages/constants/package.json ./packages/constants/
 COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
-COPY --chown=node:node packages/auth/package.json ./packages/auth/
-COPY --chown=node:node packages/core/package.json ./packages/core/
-COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
 COPY --chown=node:node packages/plugins/integration-ai-ui/package.json ./packages/plugins/integration-ai-ui/
-COPY --chown=node:node packages/plugins/integration-ai/package.json ./packages/plugins/integration-ai/
 COPY --chown=node:node packages/plugins/integration-hubstaff-ui/package.json ./packages/plugins/integration-hubstaff-ui/
-COPY --chown=node:node packages/plugins/integration-hubstaff/package.json ./packages/plugins/integration-hubstaff/
 COPY --chown=node:node packages/plugins/integration-upwork-ui/package.json ./packages/plugins/integration-upwork-ui/
-COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
-COPY --chown=node:node packages/plugins/integration-github/package.json ./packages/plugins/integration-github/
 COPY --chown=node:node packages/plugins/integration-github-ui/package.json ./packages/plugins/integration-github-ui/
-COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
-COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
-COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
-COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
-COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
-COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
-COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
-COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plugins/job-proposal/
 COPY --chown=node:node packages/plugins/job-employee-ui/package.json ./packages/plugins/job-employee-ui/
 COPY --chown=node:node packages/plugins/job-matching-ui/package.json ./packages/plugins/job-matching-ui/
 COPY --chown=node:node packages/plugins/job-proposal-ui/package.json ./packages/plugins/job-proposal-ui/
