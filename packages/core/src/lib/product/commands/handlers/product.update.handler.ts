@@ -56,9 +56,6 @@ export class ProductUpdateHandler implements ICommandHandler<ProductUpdateComman
 		 * create new option group
 		 */
 
-		console.log('----------------------------------------------------------------------------------------');
-
-		console.log('\u{1F53A} le PROBLEME NI APPAAA', optionGroupCreateInputs);
 		const optionsGroupsCreate: IProductOptionGroupTranslatable[] = await Promise.all(
 			optionGroupCreateInputs.map(async (group: IProductOptionGroupTranslatable) => {
 				let newGroup = new ProductOptionGroup();
