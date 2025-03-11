@@ -96,7 +96,7 @@ COPY --chown=nginx:nginx .deploy/webapp/nginx.prod.conf /etc/nginx/conf.d/prod.c
 COPY --chown=nginx:nginx --from=builder /srv/gauzy/dist/apps/gauzy .
 
 # Copy the entrypoint scripts
-COPY --chmod=755 wait .deploy/webapp/entrypoint.compose.sh .deploy/webapp/entrypoint.prod.sh .deploy/webapp/replacements.sed ./
+COPY  --chown=nginx:nginx --chmod=755 wait .deploy/webapp/entrypoint.compose.sh .deploy/webapp/entrypoint.prod.sh .deploy/webapp/replacements.sed ./
 
 RUN chmod a+rw /etc/nginx/conf.d/compose.conf.template /etc/nginx/conf.d/prod.conf.template
 
