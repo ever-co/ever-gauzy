@@ -1138,6 +1138,13 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 		return date;
 	}
 
+	onTouched() {
+		const control = this.form?.get('selectedEmployeeIds');
+		if (control) {
+			control.markAsTouched();
+		}
+	}
+
 	private updateEmployeeValidation() {
 		const employeeControl = this.form.get('selectedEmployeeIds');
 		if (this.isEmployeeHourTable) {

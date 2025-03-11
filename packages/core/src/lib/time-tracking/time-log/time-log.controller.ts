@@ -14,7 +14,18 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
-import { ITimeLog, PermissionsEnum, IGetTimeLogConflictInput, ID, IReportDayData, ITimeLimitReport, IReportWeeklyData, IAmountOwedReport, IAmountOwedReportChart, IDailyReportChart } from '@gauzy/contracts';
+import {
+	ITimeLog,
+	PermissionsEnum,
+	IGetTimeLogConflictInput,
+	ID,
+	IReportDayData,
+	ITimeLimitReport,
+	IReportWeeklyData,
+	IAmountOwedReport,
+	IAmountOwedReportChart,
+	IDailyReportChart
+} from '@gauzy/contracts';
 import { TimeLogService } from './time-log.service';
 import { Permissions } from './../../shared/decorators';
 import { OrganizationPermissionGuard, PermissionGuard, TenantBaseGuard } from './../../shared/guards';
@@ -228,7 +239,7 @@ export class TimeLogController {
 	})
 	@Get('invoice')
 	@UseValidationPipe({ whitelist: true, transform: true })
-	async getINvoiceLogs(@Query() options: TimeLogQueryDTO): Promise<IReportDayData> {
+	async getInvoiceLogs(@Query() options: TimeLogQueryDTO): Promise<IReportDayData> {
 		return await this._timeLogService.getInvoiceLogs(options);
 	}
 

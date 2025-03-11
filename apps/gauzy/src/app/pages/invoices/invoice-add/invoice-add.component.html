@@ -210,6 +210,7 @@
 										[allEmployees]="employees"
 										(selectedChange)="onMembersSelected($event)"
 										(onLoadEmployees)="onLoadEmployees($event)"
+										(click)="onTouched()"
 										formControlName="selectedEmployeeIds"
 									></ga-employee-multi-select>
 									<div
