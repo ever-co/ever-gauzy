@@ -27,9 +27,9 @@ import {
 	ITask
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
-import { isPostgres } from '@gauzy/config';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
+import { LIKE_OPERATOR } from '../core/util';
 import { OrganizationProjectModule } from './organization-project-module.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { ActivityLogService } from '../activity-log/activity-log.service';
@@ -554,8 +554,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		}
 
 		if (isNotEmpty(name)) {
-			const like = isPostgres() ? 'ILIKE' : 'LIKE';
-			qb.andWhere(p(`"${query.alias}"."name" ${like} :name`), { name: `%${name}%` });
+			qb.andWhere(p(`"${query.alias}"."name" ${LIKE_OPERATOR} :name`), { name: `%${name}%` });
 		}
 
 		if (isNotEmpty(organizationSprintId)) {

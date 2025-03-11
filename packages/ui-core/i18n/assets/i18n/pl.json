@@ -169,7 +169,8 @@
 		"ADD_MODULE": "Dodaj moduł",
 		"SHARE": "Udostępnij",
 		"GET_INFO": "Pobierz informacje",
-		"RETRY": "Spróbuj ponownie"
+		"RETRY": "Spróbuj ponownie",
+		"UPLOAD": "Prześlij"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -216,7 +217,8 @@
 			"EVENT_TYPE": "Nie utworzyłeś żadnego typu wydarzenia",
 			"PRODUCT_TYPE_NO_DATA": "Nie utworzyłeś żadnego typu produktu",
 			"TEAM_DASHBOARD": "Nie masz żadnych zespołów",
-			"PLUGIN": "Nie zainstalowano żadnych wtyczek."
+			"PLUGIN": "Nie zainstalowano żadnych wtyczek.",
+			"PLUGIN_MARKETPLACE": "Ta wtyczka nie jest dostępna na rynku"
 		},
 		"TRANSACTION_TYPE": "Rodzaj",
 		"AMOUNT": "Kwota",
@@ -4765,6 +4767,94 @@
 				"SHARE_NOT_ALLOWED": "Udostępnianie nie jest dozwolone",
 				"UNEXPECTED_SHARING_ERROR": "Nieoczekiwany błąd udostępniania"
 			}
+		},
+		"FORM": {
+			"TITLE": "Prześlij wtyczkę",
+			"BASIC_INFO": "Podstawowe informacje",
+			"NAME": "Nazwa wtyczki",
+			"NAME_PLACEHOLDER": "Wprowadź nazwę wtyczki",
+			"VALIDATION": {
+				"NAME_REQUIRED": "Nazwa wtyczki jest wymagana",
+				"NAME_TOO_LONG": "Nazwa wtyczki jest zbyt długa",
+				"VERSION_REQUIRED": "Wersja jest wymagana",
+				"VERSION_FORMAT": "Nieprawidłowy format wersji",
+				"DESCRIPTION_TOO_LONG": "Opis jest zbyt długi",
+				"URL_REQUIRED": "URL jest wymagany",
+				"INVALID_URL": "Nieprawidłowy format URL",
+				"PACKAGE_NAME_REQUIRED": "Nazwa pakietu jest wymagana",
+				"INVALID_PACKAGE_NAME": "Nieprawidłowy format nazwy pakietu",
+				"INVALID_SCOPE": "Nieprawidłowy format zakresu",
+				"AUTHOR_TOO_LONG": "Nazwa autora jest zbyt długa",
+				"LICENSE_TOO_LONG": "Pole licencji jest zbyt długie"
+			},
+			"TYPE": "Typ wtyczki",
+			"TYPE_PLACEHOLDER": "Wybierz typ wtyczki",
+			"TYPES": {
+				"DESKTOP": "Pulpit",
+				"WEB": "Internet",
+				"MOBILE": "Mobilny"
+			},
+			"VERSION": "Wersja",
+			"STATUS": "Status",
+			"STATUSES": {
+				"ACTIVE": "Aktywny",
+				"INACTIVE": "Nieaktywny",
+				"DEPRECATED": "Przestarzały",
+				"ARCHIVED": "Zarchiwizowany"
+			},
+			"DESCRIPTION": "Opis",
+			"DESCRIPTION_PLACEHOLDER": "Wprowadź opis wtyczki",
+			"SOURCE": "Źródło",
+			"SOURCE_TYPE": "Typ źródła",
+			"SOURCE_TYPES": {
+				"CDN": "CDN",
+				"NPM": "NPM",
+				"GAUZY": "Gauzy"
+			},
+			"CDN": {
+				"URL": "URL CDN",
+				"INTEGRITY": "Integralność",
+				"CROSS_ORIGIN": "Cross Origin"
+			},
+			"NPM": {
+				"PACKAGE_NAME": "Nazwa pakietu NPM",
+				"REGISTRY": "Rejestr NPM",
+				"SCOPE": "Zakres",
+				"AUTH_TOKEN": "Token uwierzytelniający"
+			},
+			"FILE_UPLOAD": {
+				"DRAG_DROP": "Przeciągnij i upuść plik tutaj",
+				"BROWSE": "Przeglądaj",
+				"REMOVE": "Usuń plik",
+				"RESTRICTIONS": "Dozwolone są tylko pliki .zip",
+				"FILE": "Plik"
+			},
+			"METADATA": {
+				"TITLE": "Metadane",
+				"AUTHOR": "Autor",
+				"AUTHOR_PLACEHOLDER": "Wprowadź nazwę autora",
+				"LICENSE": "Licencja",
+				"LICENSE_PLACEHOLDER": "Wprowadź licencję",
+				"HOMEPAGE": "Strona główna",
+				"HOMEPAGE_PLACEHOLDER": "Wprowadź URL strony głównej",
+				"REPOSITORY": "Repozytorium",
+				"REPOSITORY_PLACEHOLDER": "Wprowadź URL repozytorium"
+			},
+			"OR": "Lub"
+		},
+		"DETAILS": {
+			"USAGE_STATS": "Statystyki użytkowania",
+			"DOWNLOAD_COUNT": "Liczba pobrań",
+			"LAST_DOWNLOADED": "Ostatnio pobrane",
+			"UPLOADED_BY": "Przesłane przez",
+			"UPLOADED_AT": "Przesłane w",
+			"SECURITY_INFO": "Informacje o bezpieczeństwie",
+			"CHECKSUM": "Suma kontrolna",
+			"SIGNATURE": "Podpis"
+		},
+		"LAYOUT": {
+			"DISCOVER": "Odkryj",
+			"INSTALLED": "Zainstalowane"
 		}
 	}
 }
