@@ -239,6 +239,36 @@ export class EmployeeController extends CrudController<Employee> {
 	}
 
 	/**
+	 * Get the employees hourly rate.
+	 *
+	 * Allows to get the hourly rate of a set of employee.
+	 *
+	 * @param employeeId - The UUID of the employee to be restored.
+	 * @param params - Parameters for tenant/organization identification.
+	 * @returns A promise resolving to the restored employee entity.
+	 */
+	@ApiOperation({ summary: 'Get the employees hourly rate' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Return the hourly rate'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Employee record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions()
+	@Get('/rate')
+	async getRate(@Query() data: GetHourlyRateDto): Promise<IEmployeeHourlyRate[]> {
+		console.log('AAAAAAAAAAAAAAAAA');
+		console.log('getRate', data);
+		return await this._employeeService.getHourlyRate(data.organizationId, data.employeeIds, {
+			startDate: data.startDate,
+			endDate: data.endDate
+		});
+	}
+
+	/**
 	 * GET all employees in the same tenant.
 	 *
 	 * This endpoint retrieves all employees within a specific tenant with pagination and filtering options.
@@ -344,34 +374,6 @@ export class EmployeeController extends CrudController<Employee> {
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IEmployee> {
 		return await this._commandBus.execute(new EmployeeCreateCommand(entity, languageCode, origin));
-	}
-
-	/**
-	 * Get the employees hourly rate.
-	 *
-	 * Allows to get the hourly rate of a set of employee.
-	 *
-	 * @param employeeId - The UUID of the employee to be restored.
-	 * @param params - Parameters for tenant/organization identification.
-	 * @returns A promise resolving to the restored employee entity.
-	 */
-	@ApiOperation({ summary: 'Get the employees hourly rate' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Return the hourly rate'
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Employee record not found'
-	})
-	@HttpCode(HttpStatus.ACCEPTED)
-	@Permissions()
-	@Get('/rate')
-	async getRate(@Query() data: GetHourlyRateDto): Promise<IEmployeeHourlyRate[]> {
-		return await this._employeeService.getHourlyRate(data.organizationId, data.employeeIds, {
-			startDate: data.startDate,
-			endDate: data.endDate
-		});
 	}
 
 	/**
