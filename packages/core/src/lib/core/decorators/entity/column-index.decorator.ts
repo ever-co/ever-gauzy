@@ -112,7 +112,7 @@ export function applyMikroOrmIndex(
 	target: any,
 	propertyKey: string | symbol | undefined,
 	name: string | undefined,
-	properties: any,
+	properties: string[] | undefined,
 	options: TypeOrmIndexOptions | undefined
 ) {
 	// Converts provided indexing parameters into MikroORM-compatible index options.
