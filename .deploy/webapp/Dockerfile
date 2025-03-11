@@ -98,8 +98,7 @@ COPY --chown=nginx:nginx --from=builder /srv/gauzy/dist/apps/gauzy .
 # Copy the entrypoint scripts
 COPY  --chown=nginx:nginx --chmod=755 wait .deploy/webapp/entrypoint.compose.sh .deploy/webapp/entrypoint.prod.sh .deploy/webapp/replacements.sed ./
 
-RUN chmod a+rw /etc/nginx/conf.d/compose.conf.template /etc/nginx/conf.d/prod.conf.template \
-	&& chown -R nginx:nginx /srv/gauzy
+RUN chmod a+rw /etc/nginx/conf.d/compose.conf.template /etc/nginx/conf.d/prod.conf.template
 
 ENV CI=true \
 	NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=12288"} \
@@ -161,6 +160,5 @@ ENV CI=true \
 
 EXPOSE ${WEB_PORT}
 
-USER nginx
 ENTRYPOINT [ "./entrypoint.prod.sh" ]
 CMD [ "nginx", "-g", "daemon off;" ]
