@@ -400,7 +400,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 							title: `%${title}%`
 						});
 					}
-					if (isNotEmpty(title)) {
+					if (isNotEmpty(prefix)) {
 						qb.andWhere(p(`"${query.alias}"."prefix" ${LIKE_OPERATOR} :prefix`), {
 							prefix: `%${prefix}%`
 						});
@@ -606,7 +606,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 							title: `%${title}%`
 						});
 					}
-					if (isNotEmpty(title)) {
+					if (isNotEmpty(prefix)) {
 						qb.andWhere(p(`"${query.alias}"."prefix" ${LIKE_OPERATOR} :prefix`), {
 							prefix: `%${prefix}%`
 						});

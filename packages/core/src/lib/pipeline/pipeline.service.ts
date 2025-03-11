@@ -167,28 +167,28 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 
 		if (whereOptions) {
 			const { name, description, stages } = whereOptions as FindOptionsWhere<Pipeline>;
-			const addtionalFilters: FindOptionsWhere<Pipeline> = {};
+			const additonalFilters: FindOptionsWhere<Pipeline> = {};
 
 			if (name) {
-				addtionalFilters['name'] = Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :name`, {
+				additonalFilters['name'] = Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :name`, {
 					name: `%${name}%`
 				});
 			}
 
 			if (description) {
-				addtionalFilters['description'] = Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :description`, {
+				additonalFilters['description'] = Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :description`, {
 					description: `%${description}%`
 				});
 			}
 
 			if (stages) {
-				addtionalFilters['stages'] = {
+				additonalFilters['stages'] = {
 					name: Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :stages`, { stages: `%${stages}%` })
 				};
 			}
 
 			// Merge existing 'where' conditions with the new 'conditions'
-			filters.where = { ...whereOptions, ...addtionalFilters };
+			filters.where = { ...whereOptions, ...additonalFilters };
 		}
 
 		return super.paginate(filters ?? {});
