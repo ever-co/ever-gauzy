@@ -19,45 +19,53 @@ export class ProductVariantCreateHandler implements ICommandHandler<ProductVaria
 	public async execute(command?: ProductVariantCreateCommand): Promise<ProductVariant[]> {
 		const variantCreateInput: IVariantCreateInput = command.productInput;
 
+		// Fetch the product with all necessary relations, ensuring options and translations are loaded
 		const product = await this.productService.findById(variantCreateInput.product.id, {
-			relations: ['optionGroups']
+			relations: ['optionGroups', 'optionGroups.options', 'optionGroups.options.translations']
 		});
 
-		let productOptions = [];
-
-		product.optionGroups.forEach((optionGroup) => {
-			productOptions = productOptions.concat(optionGroup.options);
-		});
+		// Extract all product options from optionGroups
+		let productOptions = product.optionGroups.flatMap((optionGroup) => optionGroup.options);
 
 		const optionCombinations = variantCreateInput.optionCombinations;
 		const { organizationId, tenantId } = variantCreateInput.product;
 
-		const arrVariants = [];
-
-		for await (const optionCombination of optionCombinations) {
+		const arrVariants: ProductVariant[] = [];
+		console.log(productOptions, optionCombinations);
+		// Iterate over each option combination
+		for (const optionCombination of optionCombinations) {
 			const newProductVariant = new ProductVariant();
-
 			let variantOptions = [];
 
-			await productOptions.forEach((dbOption, i) => {
-				return optionCombination.options.forEach((option) => {
-					if (!!dbOption.translations.find((translation) => translation.name == option)) {
+			for (const dbOption of productOptions) {
+				for (const option of optionCombination.options) {
+					if (dbOption.translations?.some((translation) => translation.name === option)) {
 						variantOptions.push(dbOption);
 					}
-				});
-			});
+				}
+			}
 
+			// Set product variant properties
 			newProductVariant.options = variantOptions;
 			newProductVariant.internalReference = variantOptions.map((option) => option.name).join('-');
-
 			newProductVariant.organizationId = organizationId;
 			newProductVariant.tenantId = tenantId;
 
-			newProductVariant.setting = await this.productVariantSettingsService.createDefaultVariantSettings();
-			newProductVariant.price = await this.productVariantPriceService.createDefaultProductVariantPrice();
-			newProductVariant.product = await this.productService.findOneByIdString(variantCreateInput.product.id);
+			// Execute multiple async calls in parallel using `Promise.all` for better performance
+			const [setting, price, productEntity] = await Promise.all([
+				this.productVariantSettingsService.createDefaultVariantSettings(),
+				this.productVariantPriceService.createDefaultProductVariantPrice(),
+				this.productService.findOneByIdString(variantCreateInput.product.id)
+			]);
 
-			arrVariants.push(await this.productVariantService.createVariant(newProductVariant));
+			// Assign fetched values to the product variant
+			newProductVariant.setting = setting;
+			newProductVariant.price = price;
+			newProductVariant.product = productEntity;
+
+			// Create and store the new product variant
+			const createdVariant = await this.productVariantService.createVariant(newProductVariant);
+			arrVariants.push(createdVariant);
 		}
 
 		return arrVariants;

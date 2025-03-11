@@ -38,7 +38,7 @@ export class ProductUpdateHandler implements ICommandHandler<ProductUpdateComman
 		/**
 		 * delete options
 		 */
-		for await (const option of optionDeleteInputs) {
+		for await (const option of optionDeleteInputs || []) {
 			await this.productOptionService.deleteOptionTranslationsBulk(option.translations);
 		}
 		await this.productOptionService.deleteBulk(optionDeleteInputs);
@@ -46,7 +46,7 @@ export class ProductUpdateHandler implements ICommandHandler<ProductUpdateComman
 		/**
 		 * delete option groups
 		 */
-		for await (const group of optionGroupDeleteInputs) {
+		for await (const group of optionGroupDeleteInputs || []) {
 			await this.productOptionsGroupService.deleteGroupTranslationsBulk(group.translations);
 		}
 
@@ -55,20 +55,24 @@ export class ProductUpdateHandler implements ICommandHandler<ProductUpdateComman
 		/**
 		 * create new option group
 		 */
+
+		console.log('----------------------------------------------------------------------------------------');
+
+		console.log('\u{1F53A} le PROBLEME NI APPAAA', optionGroupCreateInputs);
 		const optionsGroupsCreate: IProductOptionGroupTranslatable[] = await Promise.all(
 			optionGroupCreateInputs.map(async (group: IProductOptionGroupTranslatable) => {
 				let newGroup = new ProductOptionGroup();
 				newGroup.name = group.name;
-				newGroup.productId = product.id;
+				newGroup.productId = productUpdateRequest.id;
 				newGroup.translations = [];
 				newGroup.options = [];
 
 				const savedGroup = await this.productOptionsGroupService.save(newGroup);
-
+				console.log('SAVED GROUP', savedGroup);
 				/**
 				 * save group options with their translations
 				 */
-				for await (const optionInput of group.options) {
+				for await (const optionInput of group.options || []) {
 					const option = Object.assign(new ProductOption(), {
 						...optionInput,
 						groupId: savedGroup.id
@@ -76,20 +80,21 @@ export class ProductUpdateHandler implements ICommandHandler<ProductUpdateComman
 					const savedOption = await this.productOptionService.save(option); // Enregistre l'option d'abord
 
 					const optionsTranslationEntities = await Promise.all(
-						option.translations.map((optionTranslation) => {
-							let optionTranslationEntity = Object.assign(new ProductOptionTranslation(), {
-								...optionTranslation,
-								referenceId: savedOption.id // S'assurer que referenceId est bien défini
-							});
-							return this.productOptionService.saveProductOptionTranslation(optionTranslationEntity);
-						})
+						option.translations ||
+							[].map((optionTranslation) => {
+								let optionTranslationEntity = Object.assign(new ProductOptionTranslation(), {
+									...optionTranslation,
+									referenceId: savedOption.id // S'assurer que referenceId est bien défini
+								});
+								return this.productOptionService.saveProductOptionTranslation(optionTranslationEntity);
+							})
 					);
 
-					option.translations = optionsTranslationEntities;
-					const optionEntity = await this.productOptionService.save(option);
+					savedOption.translations = optionsTranslationEntities;
+					const optionEntity = await this.productOptionService.save(savedOption);
 
 					if (optionEntity) {
-						newGroup.options.push(optionEntity);
+						savedGroup.options.push(optionEntity);
 					}
 				}
 
@@ -97,101 +102,113 @@ export class ProductUpdateHandler implements ICommandHandler<ProductUpdateComman
 				 * save group translations.
 				 */
 				const groupTranslationsEntities = await Promise.all(
-					group.translations.map((groupTranslation) => {
-						let groupTranslationObj = Object.assign(new ProductOptionGroupTranslation(), {
-							...groupTranslation,
-							referenceId: savedGroup.id
-						});
-						return this.productOptionsGroupService.createTranslation(groupTranslationObj);
-					})
+					group.translations ||
+						[].map((groupTranslation) => {
+							let groupTranslationObj = Object.assign(new ProductOptionGroupTranslation(), {
+								...groupTranslation,
+								referenceId: savedGroup.id
+							});
+							return this.productOptionsGroupService.createTranslation(groupTranslationObj);
+						})
 				);
 
-				newGroup.translations = (await groupTranslationsEntities) as any;
-				return newGroup;
+				savedGroup.translations = (await groupTranslationsEntities) as any;
+
+				return savedGroup;
 			})
 		);
 
 		/**
 		 * update product option groups
 		 */
+
 		const optionGroupsUpdate: IProductOptionGroupTranslatable[] | any = await Promise.all(
-			optionGroupUpdateInputs.map(async (group: IProductOptionGroupTranslatable) => {
-				for await (let option of group.options) {
-					let isNewOption = false;
+			optionGroupUpdateInputs ||
+				[].map(async (group: IProductOptionGroupTranslatable) => {
+					for await (let option of group.options) {
+						let isNewOption = false;
 
-					if (!option.id) {
-						option = Object.assign(new ProductOption(), {
-							...option
-						});
-						isNewOption = true;
-					}
-
-					let existingOption = isNewOption
-						? null
-						: await this.productOptionService.findOneByIdString(option.id);
-					console.log('ime pita option');
-
-					const optionsTranslationEntities = await Promise.all(
-						option.translations.map(async (optionTranslation: IProductOptionTranslation) => {
-							if (
-								this.productOptionTranslationUpdated(existingOption, optionTranslation) ||
-								!optionTranslation.id
-							) {
-								return this.productOptionService.saveProductOptionTranslation({
-									referenceId: option.id || null,
-									...optionTranslation
-								} as any);
-							}
-						})
-					);
-
-					option.translations = option.translations.concat(
-						(await optionsTranslationEntities).filter((tr) => !!tr)
-					);
-					const optionEntity = await this.productOptionService.save(option);
-
-					if (optionEntity && isNewOption) {
-						group.options.push(optionEntity);
-					}
-				}
-
-				/**
-				 * save group translations.
-				 */
-
-				let existingGroup = await this.productOptionsGroupService.findOneByIdString(group.id);
-
-				const groupTranslationsEntities = Promise.all(
-					group.translations.map((groupTranslation) => {
-						if (this.productOptionGroupTranslationUpdated(existingGroup, groupTranslation)) {
-							return this.productOptionsGroupService.createTranslation({
-								referenceId: group.id || null,
-								...groupTranslation
-							} as any);
+						if (!option.id) {
+							option = Object.assign(new ProductOption(), {
+								...option
+							});
+							isNewOption = true;
 						}
-					})
-				);
 
-				group.translations = existingGroup.translations.concat(
-					(await groupTranslationsEntities).filter((tr) => !!tr) as any
-				);
+						let existingOption = isNewOption
+							? null
+							: await this.productOptionService.findOneByIdString(option.id);
 
-				return group;
-			})
+						const optionsTranslationEntities = await Promise.all(
+							option.translations ||
+								[].map(async (optionTranslation: IProductOptionTranslation) => {
+									if (
+										this.productOptionTranslationUpdated(existingOption, optionTranslation) ||
+										!optionTranslation.id
+									) {
+										return this.productOptionService.saveProductOptionTranslation({
+											referenceId: option.id || null,
+											...optionTranslation
+										} as any);
+									}
+								})
+						);
+
+						option.translations =
+							option.translations ||
+							[].concat((await optionsTranslationEntities) || [].filter((tr) => !!tr));
+						const optionEntity = await this.productOptionService.save(option);
+
+						if (optionEntity && isNewOption) {
+							group.options.push(optionEntity);
+						}
+					}
+
+					/**
+					 * save group translations.
+					 */
+					console.log(
+						'----------------------------------------------------------------------------------------'
+					);
+
+					console.log('\u{1F53A} le PROBLEME NI UPDATE');
+					let existingGroup = await this.productOptionsGroupService.findOneByIdString(group.id);
+
+					const groupTranslationsEntities = Promise.all(
+						group.translations ||
+							[].map((groupTranslation) => {
+								if (this.productOptionGroupTranslationUpdated(existingGroup, groupTranslation)) {
+									return this.productOptionsGroupService.createTranslation({
+										referenceId: group.id || null,
+										...groupTranslation
+									} as any);
+								}
+							})
+					);
+
+					group.translations =
+						existingGroup.translations ||
+						[].concat((await groupTranslationsEntities) || ([].filter((tr) => !!tr) as any));
+
+					return group;
+				})
 		);
+		console.log('----------------------------------------------------------------------------------------');
 
+		console.log('\u{1F53A} le PROBLEME NI UPDATE', optionsGroupsCreate, optionGroupsUpdate);
 		let newProductOptions = await this.productOptionsGroupService.saveBulk(optionsGroupsCreate as any);
 		await this.productOptionsGroupService.saveBulk(optionGroupsUpdate as any);
 
-		product.optionGroups = product.optionGroups.concat(newProductOptions);
+		product.optionGroups = product.optionGroups?.concat(newProductOptions);
 		product.productCategory = <any>productUpdateRequest.category;
-		product.productTypeId = <any>productUpdateRequest.type;
+		product.productType = <any>productUpdateRequest.type;
 		product.tags = productUpdateRequest.tags;
 
 		const productTranslations = <any>await Promise.all(
-			productUpdateRequest.translations.map((optionTranslation) => {
-				return this.productService.saveProductTranslation(<any>optionTranslation);
-			})
+			productUpdateRequest.translations ||
+				[].map((optionTranslation) => {
+					return this.productService.saveProductTranslation(<any>optionTranslation);
+				})
 		);
 
 		product.translations = productTranslations;

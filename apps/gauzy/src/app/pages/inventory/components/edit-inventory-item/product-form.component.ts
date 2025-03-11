@@ -88,9 +88,9 @@ export class ProductFormComponent extends TranslationBaseComponent implements On
 			name: [this.activeTranslation ? this.activeTranslation.name : '', this.validateTranslationProperty('name')],
 			code: [this.inventoryItem ? this.inventoryItem.code : '', Validators.required],
 			productTypeId: [this.inventoryItem ? this.inventoryItem.productTypeId : null, Validators.required],
-			productType: [],
+			productType: [this.inventoryItem ? this.inventoryItem.productType : null],
 			productCategoryId: [this.inventoryItem ? this.inventoryItem.productCategoryId : null, Validators.required],
-			productCategory: [],
+			productCategory: [this.inventoryItem ? this.inventoryItem.productCategory : null],
 			enabled: [this.inventoryItem ? this.inventoryItem.enabled : true],
 			description: [this.activeTranslation ? this.activeTranslation.description : ''],
 			languageCode: [this.translateService.currentLang, Validators.required]
@@ -123,6 +123,11 @@ export class ProductFormComponent extends TranslationBaseComponent implements On
 
 		this.setTranslationSettings();
 		this._initializeForm();
+
+		this.form.patchValue({
+			productCategory: this.inventoryItem ? this.inventoryItem.productCategory : null,
+			productType: this.inventoryItem ? this.inventoryItem.productType : null
+		});
 
 		this.inventoryStore.initVariantCreateInputs();
 
