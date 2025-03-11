@@ -1,6 +1,7 @@
 {
 	"name": "ever-gauzy",
 	"version": "0.1.0",
+	"type": "module",
 	"description": "Ever Gauzy - Business Management Platform (ERP/CRM/HRM)",
 	"license": "AGPL-3.0",
 	"homepage": "https://gauzy.co",
