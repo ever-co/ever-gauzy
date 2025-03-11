@@ -8,7 +8,7 @@ on:
       - 'packages/contracts/**/*.*'
       - 'packages/ui-*/**/*.*'
       - 'packages/plugins/*-ui/**/*.*'
-      - '.deploy/webapp/**/*.*'
+      - '.deploy/webapp/**/*'
       - '.github/workflows/aws-deploy-webapp.yml'
       - 'package.json'
       - 'yarn.lock'
