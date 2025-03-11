@@ -13,26 +13,30 @@ docker-compose*.yml
 .gitpod.yml
 
 # Cache and other project directories
+.angular
 .cache
 .circle
 .circleci
-.npmrc
+.do
+.fly
 .husky
+.nx
+.render
+.sonarlint
+.verdaccio
+.npmrc
 .travis.yml
 greenkeeper.json
 **/*.md
 **/*.cmd
 **/*.log
 Jenkinsfile
-.do
-.fly
-.nx
-.verdaccio
 .yarn
-.render
 render.yml
 export
 tools
+!tools/web
+!tools/tsconfig.tools.json
 .env*
 .prettier*
 .snyk
@@ -42,9 +46,13 @@ tools
 # Scripts and deployment entrypoint scripts
 .scripts
 !.scripts/postinstall.ts
+!.scripts/configure.ts
+!.scripts/env.ts
 .deploy
-!.deploy/api/entrypoint.compose.sh
-!.deploy/api/entrypoint.prod.sh
+!.deploy/webapp/entrypoint.compose.sh
+!.deploy/webapp/entrypoint.prod.sh
+!.deploy/webapp/replacements.sed
+!.deploy/webapp/nginx*
 
 .nvmrc
 **/node_modules
@@ -74,16 +82,8 @@ e2e/*.map
 
 # Non-related apps and packages
 apps
-!apps/api
-apps/api/public
-!apps/api/public/.gitkeep
-!apps/api/public/**/.gitkeep
-!apps/api/public/ever-icons
-!apps/api/public/features
-!apps/api/public/integrations
-!apps/api/public/reports
-apps/api/report.*.json
-packages/desktop-*
-packages/ui-*
-packages/plugins/*-ui
-packages/plugins/integration-wakatime
+!apps/gauzy
+packages
+!packages/contracts
+!packages/ui-*
+!packages/plugins/*-ui

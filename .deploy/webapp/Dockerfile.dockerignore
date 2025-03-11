@@ -33,6 +33,8 @@ Jenkinsfile
 render.yml
 export
 tools
+!tools/web
+!tools/tsconfig.tools.json
 .env*
 .prettier*
 .snyk
@@ -79,5 +81,7 @@ e2e/*.map
 # Non-related apps and packages
 apps
 !apps/gauzy
-packages/desktop-*
-packages/plugins/integration-wakatime
+packages
+!packages/contracts
+!packages/ui-*
+!packages/plugins/*-ui

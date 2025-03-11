@@ -273,7 +273,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	console.log(chalk.green(`Configured Port: ${port}`));
 
 	// Configure Swagger for API documentation
-	const options = new DocumentBuilder().setTitle('Gauzy API').setVersion('1.0').addBearerAuth().build();
+	const options = new DocumentBuilder().setTitle('Gauzy API').setVersion(env.gitHash).addBearerAuth().build();
 	const document = SwaggerModule.createDocument(app, options);
 	SwaggerModule.setup('swg', app, document);
 	console.log(chalk.green(`Swagger UI available at http://${host}:${port}/swg`));
@@ -516,7 +516,7 @@ export function getMigrationsConfig() {
 		chalk.red(console.log(`Migrations directory not found: ${migrationsDir}`));
 	}
 
-    // CLI Migrations directory path
+	// CLI Migrations directory path
 	const cliMigrationsDir = path.resolve(__dirname, './../database/migrations'); // Adjusted for src structure
 	console.log('Migration cliMigrationsDir: ->', cliMigrationsDir);
 
@@ -524,11 +524,11 @@ export function getMigrationsConfig() {
 		chalk.red(console.log(`CLI migrations directory not found: ${cliMigrationsDir}`));
 	}
 
-    // Return the migration paths
-    return {
-        migrations: [migrationsDir],
-        cli: {
-            migrationsDir: cliMigrationsDir
-        }
-    };
+	// Return the migration paths
+	return {
+		migrations: [migrationsDir],
+		cli: {
+			migrationsDir: cliMigrationsDir
+		}
+	};
 }

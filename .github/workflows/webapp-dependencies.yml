@@ -1,0 +1,85 @@
+name: Generate WebApp dependencies image
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'The branch, tag or SHA to checkout'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  check-web-changes:
+    name: Check for dependency changes
+    runs-on: ubuntu-latest
+    outputs:
+      changes_detected: ${{ steps.check-web-changes.outputs.changes_detected }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+          fetch-depth: 2
+
+      - name: Check for changes in dependency files
+        id: check-web-changes
+        run: |
+          # Formanual triggers or workflow calls, check if files have changed in the last commit
+          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
+          # Define the pattern for dependency-related files
+          DEPENDENCY_PATTERN="^package\.json$|^yarn\.lock$|^apps\/gauzy\/package\.json$"
+          DEPENDENCY_PATTERN="$DEPENDENCY_PATTERN|^packages\/(contracts|ui-auth|ui-config|ui-core)\/.*package\.json$"
+          DEPENDENCY_PATTERN="$DEPENDENCY_PATTERN|^packages\/plugins\/[a-z\-]+(-ui)\/.*package\.json$"
+          DEPENDENCY_PATTERN="$DEPENDENCY_PATTERN|^\.deploy\/dependencies\/webapp\/|^\.github\/workflows\/webapp-dependencies\.yml$"
+          if echo "$CHANGED_FILES" | grep -q -E "$DEPENDENCY_PATTERN"; then
+            echo "changes_detected=true" >> $GITHUB_OUTPUT
+            echo "Dependency changes detected"
+          else
+            echo "changes_detected=false" >> $GITHUB_OUTPUT
+            echo "No dependency changes detected"
+          fi
+
+  handle-no-changes:
+    name: Handle No Changes
+    needs: check-web-changes
+    if: needs.check-web-changes.outputs.changes_detected != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: No Changes Required
+        run: |
+          echo "No dependency changes detected. No rebuild required."
+          exit 0
+
+  generate-dependencies:
+    name: Generate dependencies image
+    needs: check-web-changes
+    if: needs.check-web-changes.outputs.changes_detected == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build dependency images
+        run: |
+          docker build -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }}:latest-webapp -f .deploy/dependencies/webapp/Dockerfile .
+
+      - name: Push images to Amazon ECR
+        run: |
+          docker push ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }} --all-tags

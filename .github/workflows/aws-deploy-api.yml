@@ -29,11 +29,19 @@ on:
       - 'packages/plugins/videos/**/*.*'
       - '.deploy/api/**/*'
       - '.github/workflows/aws-deploy-api.yml'
+      - 'package.json'
+      - 'yarn.lock'
   workflow_dispatch:
 
 jobs:
+  check-dependencies:
+    name: Check and Build Dependencies
+    uses: ./.github/workflows/api-dependencies.yml
+    secrets: inherit
+
   deploy-api:
     name: Deploy API to AWS
+    needs: check-dependencies
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -53,11 +61,16 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build, tag, and push API image to Amazon ECR
+      - name: Build and tag API image
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }}:$IMAGE_TAG -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }}:latest -f .deploy/api/Dockerfile .
+          docker build --build-arg GIT_HASH="${{ github.sha }}" --build-arg DEPENDENCIES_IMAGE="${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }}" -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }}:$IMAGE_TAG -t ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }}:latest -f .deploy/api/Dockerfile .
+
+      - name: Push API image to Amazon ECR
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
           docker push ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }} --all-tags
           echo "api_image=${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_API }}:$IMAGE_TAG" >> $GITHUB_ENV
 
@@ -67,7 +80,3 @@ jobs:
             --cluster ${{ vars.ECS_CLUSTER }} \
             --service ${{ vars.ECS_SERVICE_API }} \
             --force-new-deployment
-
-          aws ecs wait services-stable \
-            --cluster ${{ vars.ECS_CLUSTER }} \
-            --services ${{ vars.ECS_SERVICE_API }}

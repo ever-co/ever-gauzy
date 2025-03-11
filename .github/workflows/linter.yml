@@ -1,0 +1,41 @@
+name: Run linter code analysis
+
+on:
+  push:
+    branches: [no-branch]
+  workflow_run:
+    workflows: ['Generate dependencies image']
+    types:
+      - completed
+    branches: [master, dev]
+  workflow_dispatch:
+
+jobs:
+  deploy-api:
+    name: Run linter code analysis
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build image with updated source code
+        run: |
+          docker build --build-arg DEPENDENCIES_IMAGE="${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY_DEPENDENCIES }}:latest" -t guazy-code -f .deploy/code-analysis/Dockerfile .
+
+      - name: Run linter
+        run: |
+          docker run --rm --name linter guazy-code yarn nx run-many -t lint

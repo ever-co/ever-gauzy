@@ -22,6 +22,7 @@ export const environment: IEnvironment = {
 	clientBaseUrl: process.env.CLIENT_BASE_URL || 'https://app.gauzy.co',
 	production: true,
 	envName: 'prod',
+	gitHash: (process.env.GIT_HASH || '').substring(0, 7),
 
 	env: {
 		LOG_LEVEL: 'debug'
