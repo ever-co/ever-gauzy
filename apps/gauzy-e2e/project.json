@@ -7,8 +7,8 @@
 		"e2e": {
 			"executor": "@nx/cypress:cypress",
 			"options": {
-				"cypressConfig": "apps/gauzy-e2e/cypress.json",
-				"tsConfig": "apps/gauzy-e2e/tsconfig.e2e.json",
+				"cypressConfig": "apps/gauzy-e2e/cypress.config.js",
+				"tsConfig": "apps/gauzy-e2e/tsconfig.json",
 				"devServerTarget": "gauzy:serve"
 			},
 			"configurations": {

@@ -4,19 +4,12 @@
 	"description": "Gauzy e2e tests",
 	"license": "GPL-3.0",
 	"homepage": "https://gauzy.co",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/ever-co/ever-gauzy.git"
-	},
+	"repository": "https://github.com/ever-co/ever-gauzy.git",
 	"bugs": {
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"private": true,
-	"author": {
-		"name": "Ever Co. LTD",
-		"email": "ever@ever.co",
-		"url": "https://ever.co"
-	},
+	"author": "Ever Co. LTD <ever@ever.co> (https://ever.co)",
 	"dependencies": {
 		"@faker-js/faker": "8.0.0-alpha.0",
 		"dayjs": "^1.11.4",
@@ -74,5 +67,6 @@
 	"cypress-cucumber-preprocessor": {
 		"nonGlobalStepDefinitions": true,
 		"step_definitions": "src/support/step_definitions/"
-	}
+	},
+	"main": "index.js"
 }
