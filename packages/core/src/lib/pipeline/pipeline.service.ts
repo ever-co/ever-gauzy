@@ -162,38 +162,35 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 	 * @param filter - The filtering options.
 	 * @returns The paginated result.
 	 */
-	public async pagination(filter: FindManyOptions<Pipeline>): Promise<IPagination<IPipeline>> {
-		const whereFilter = filter.where as FindOptionsWhere<Pipeline>;
-		const whereOptions: FindOptionsWhere<Pipeline> = {};
+	public async pagination(filters?: FindManyOptions<Pipeline>): Promise<IPagination<IPipeline>> {
+		const whereOptions = filters?.where as FindOptionsWhere<Pipeline>;
 
-		if (whereFilter) {
-			const { name, description, stages } = whereFilter as FindOptionsWhere<Pipeline>;
+		if (whereOptions) {
+			const { name, description, stages } = whereOptions as FindOptionsWhere<Pipeline>;
+			const addtionalFilters: FindOptionsWhere<Pipeline> = {};
 
 			if (name) {
-				whereOptions['name'] = Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :name`, {
+				addtionalFilters['name'] = Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :name`, {
 					name: `%${name}%`
 				});
 			}
 
 			if (description) {
-				whereOptions['description'] = Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :description`, {
+				addtionalFilters['description'] = Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :description`, {
 					description: `%${description}%`
 				});
 			}
 
 			if (stages) {
-				whereOptions['stages'] = {
+				addtionalFilters['stages'] = {
 					name: Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :stages`, { stages: `%${stages}%` })
 				};
 			}
 
 			// Merge existing 'where' conditions with the new 'conditions'
-			filter.where = {
-				...whereFilter,
-				...whereOptions
-			};
+			filters.where = { ...whereOptions, ...addtionalFilters };
 		}
 
-		return super.paginate(filter ?? {});
+		return super.paginate(filters ?? {});
 	}
 }
