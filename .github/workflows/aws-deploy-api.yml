@@ -2,7 +2,7 @@ name: Deploy API to AWS
 
 on:
   push:
-    branches: [master, dev, chore/gzy-134-reduce-building-time]
+    branches: [master, dev]
     paths:
       - 'apps/api/**/*.*'
       - 'packages/auth/**/*.*'
