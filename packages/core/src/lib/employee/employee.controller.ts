@@ -260,8 +260,6 @@ export class EmployeeController extends CrudController<Employee> {
 	@Permissions()
 	@Get('/rate')
 	async getRate(@Query() data: GetHourlyRateDto): Promise<IEmployeeHourlyRate[]> {
-		console.log('AAAAAAAAAAAAAAAAA');
-		console.log('getRate', data);
 		return await this._employeeService.getHourlyRate(data.organizationId, data.employeeIds, {
 			startDate: data.startDate,
 			endDate: data.endDate
