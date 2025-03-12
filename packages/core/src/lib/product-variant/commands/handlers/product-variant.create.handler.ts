@@ -31,7 +31,7 @@ export class ProductVariantCreateHandler implements ICommandHandler<ProductVaria
 		const { organizationId, tenantId } = variantCreateInput.product;
 
 		const arrVariants: ProductVariant[] = [];
-		console.log(productOptions, optionCombinations);
+
 		// Iterate over each option combination
 		for (const optionCombination of optionCombinations) {
 			const newProductVariant = new ProductVariant();
@@ -53,8 +53,8 @@ export class ProductVariantCreateHandler implements ICommandHandler<ProductVaria
 
 			// Execute multiple async calls in parallel using `Promise.all` for better performance
 			const [setting, price, productEntity] = await Promise.all([
-				this.productVariantSettingsService.createDefaultVariantSettings(),
-				this.productVariantPriceService.createDefaultProductVariantPrice(),
+				this.productVariantSettingsService.create({ tenantId, organizationId }),
+				this.productVariantPriceService.create({ tenantId, organizationId }),
 				this.productService.findOneByIdString(variantCreateInput.product.id)
 			]);
 

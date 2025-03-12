@@ -112,7 +112,16 @@ export class ProductFormComponent extends TranslationBaseComponent implements On
 			const { id: organizationId, tenantId } = this.organization;
 			this.inventoryItem = await this.productService.getById(
 				id,
-				['productCategory', 'productType', 'optionGroups', 'variants', 'tags', 'gallery', 'featuredImage'],
+				[
+					'productCategory',
+					'productType',
+					'optionGroups',
+					'optionGroups.options.translations',
+					'variants',
+					'tags',
+					'gallery',
+					'featuredImage'
+				],
 				{ organizationId, tenantId }
 			);
 
