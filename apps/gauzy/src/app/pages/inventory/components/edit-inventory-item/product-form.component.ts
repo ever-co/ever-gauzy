@@ -133,11 +133,6 @@ export class ProductFormComponent extends TranslationBaseComponent implements On
 		this.setTranslationSettings();
 		this._initializeForm();
 
-		this.form.patchValue({
-			productCategory: this.inventoryItem ? this.inventoryItem.productCategory : null,
-			productType: this.inventoryItem ? this.inventoryItem.productType : null
-		});
-
 		this.inventoryStore.initVariantCreateInputs();
 
 		this.form.valueChanges.pipe(untilDestroyed(this)).subscribe(() => {

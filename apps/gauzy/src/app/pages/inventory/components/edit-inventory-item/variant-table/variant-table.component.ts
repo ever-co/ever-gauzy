@@ -55,7 +55,6 @@ export class VariantTableComponent extends TranslationBaseComponent implements O
 
 				this.variants = res.items;
 			}
-			console.log(this.variants);
 
 			this.loading = false;
 			this.smartTableSource.load(this.variants);
