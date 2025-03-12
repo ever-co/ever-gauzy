@@ -1,10 +1,16 @@
-import {
-	JoinColumn,
-	JoinTable,
-	RelationId
-} from 'typeorm';
+import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsUUID } from 'class-validator';
+import {
+	IsArray,
+	IsEmail,
+	IsEnum,
+	IsNotEmpty,
+	IsNumber,
+	IsOptional,
+	IsString,
+	IsUUID,
+	MaxLength
+} from 'class-validator';
 import {
 	IOrganizationContact,
 	ContactOrganizationInviteStatus,
@@ -19,7 +25,8 @@ import {
 	IExpense,
 	ITimeLog,
 	IIncome,
-	IImageAsset
+	IImageAsset,
+	ID
 } from '@gauzy/contracts';
 import {
 	Contact,
@@ -44,113 +51,149 @@ import {
 	MultiORMOneToOne
 } from './../core/decorators/entity';
 import { MikroOrmOrganizationContactRepository } from './repository/mikro-orm-organization-contact.repository';
+import { Trimmed } from '../shared/decorators';
 
 @MultiORMEntity('organization_contact', { mikroOrmRepository: () => MikroOrmOrganizationContactRepository })
 export class OrganizationContact extends TenantOrganizationBaseEntity implements IOrganizationContact {
-
+	/**
+	 * Represents the name of the organization contact.
+	 */
 	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsString()
 	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
 
-	@ApiProperty({ type: () => String })
+	/**
+	 * Represents the primary email of the organization contact.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsEmail()
+	@Trimmed()
 	@MultiORMColumn({ nullable: true })
 	primaryEmail: string;
 
-	@ApiProperty({ type: () => String })
+	/**
+	 * Represents the primary phone of the organization contact.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@MultiORMColumn({ nullable: true })
 	primaryPhone: string;
 
-	@ApiProperty({ type: () => String, enum: ContactOrganizationInviteStatus })
+	/**
+	 * Represents the invite status of the organization contact.
+	 */
+	@ApiPropertyOptional({ type: () => String, enum: ContactOrganizationInviteStatus })
+	@IsOptional()
+	@IsEnum(ContactOrganizationInviteStatus)
 	@MultiORMColumn({ type: 'simple-enum', nullable: true, enum: ContactOrganizationInviteStatus })
 	inviteStatus?: ContactOrganizationInviteStatus;
 
+	/**
+	 * Represents the notes of the organization contact.
+	 */
 	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@MultiORMColumn({ nullable: true })
 	notes?: string;
 
-	@ApiProperty({ type: () => String, enum: ContactType })
+	/**
+	 * Represents the contact type of the organization contact.
+	 */
+	@ApiPropertyOptional({ type: () => String, enum: ContactType })
+	@IsOptional()
+	@IsEnum(ContactType)
 	@MultiORMColumn({ type: 'simple-enum', enum: ContactType, default: ContactType.CLIENT })
 	contactType: ContactType;
 
+	/**
+	 * Represents the image URL of the organization contact.
+	 */
 	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
-	@MultiORMColumn({ length: 500, nullable: true })
+	@IsOptional()
+	@IsString()
+	@MaxLength(500)
+	@MultiORMColumn({ nullable: true, length: 500 })
 	imageUrl?: string;
 
+	/**
+	 * Represents the budget of the organization contact.
+	 */
 	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
 	@MultiORMColumn({ nullable: true })
 	budget?: number;
 
+	/**
+	 * Represents the budget type of the organization contact.
+	 */
 	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsEnum(OrganizationContactBudgetTypeEnum)
 	@MultiORMColumn({
-		type: 'simple-enum',
 		nullable: true,
+		type: 'simple-enum',
 		enum: OrganizationContactBudgetTypeEnum,
 		default: OrganizationContactBudgetTypeEnum.COST
 	})
 	budgetType?: OrganizationContactBudgetTypeEnum;
-
-	@ApiProperty({ type: () => String })
-	@MultiORMColumn({ nullable: true })
-	createdBy?: string;
 
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
-
 	/**
-	 * Contact
+	 * Represents the contact of the organization contact.
 	 */
 	@ApiProperty({ type: () => Contact })
 	@MultiORMOneToOne(() => Contact, (contact) => contact.organizationContact, {
-		/** Indicates if relation column value can be nullable or not. */
-		nullable: true,
-
-		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
-		cascade: true,
-
-		/** Database cascade action on delete. */
-		onDelete: 'SET NULL',
-
-		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
-		owner: true
+		nullable: true, // Indicates if relation column value can be nullable or not.
+		cascade: true, // If set to true then it means that related object can be allowed to be inserted or updated in the database.
+		onDelete: 'SET NULL', // Database cascade action on delete.
+		owner: true // This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.
 	})
 	@JoinColumn()
 	contact?: IContact;
 
+	/**
+	 * Represents the ID of the contact of the organization contact.
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: OrganizationContact) => it.contact)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	contactId?: IContact['id'];
+	contactId?: ID;
 
 	/**
-	 * ImageAsset
+	 * Represents the image of the organization contact.
 	 */
 	@MultiORMManyToOne(() => ImageAsset, {
-		/** Indicates if relation column value can be nullable or not. */
-		nullable: true,
-
-		/** Database cascade action on delete. */
-		onDelete: 'SET NULL',
-
-		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
-		eager: true
+		nullable: true, // Indicates if relation column value can be nullable or not.
+		onDelete: 'SET NULL', // Database cascade action on delete.
+		eager: true // Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods.
 	})
 	@JoinColumn()
 	image?: IImageAsset;
 
+	/**
+	 * Represents the ID of the image of the organization contact.
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: OrganizationContact) => it.image)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	imageId?: IImageAsset['id'];
+	imageId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -161,80 +204,86 @@ export class OrganizationContact extends TenantOrganizationBaseEntity implements
 	 * Organization Projects Relationship
 	 */
 	@ApiPropertyOptional({ type: () => OrganizationProject, isArray: true })
-	@MultiORMOneToMany(() => OrganizationProject, (it) => it.organizationContact, {
-		cascade: true
-	})
+	@IsOptional()
+	@IsArray()
+	@MultiORMOneToMany(() => OrganizationProject, (it) => it.organizationContact, { cascade: true })
 	projects?: IOrganizationProject[];
 
-	// Organization Invoices
+	/**
+	 *  Invoices Relationship
+	 */
 	@ApiPropertyOptional({ type: () => Invoice, isArray: true })
+	@IsOptional()
+	@IsArray()
 	@MultiORMOneToMany(() => Invoice, (it) => it.toContact)
 	@JoinColumn()
 	invoices?: IInvoice[];
 
-	// Organization Payments
+	/**
+	 * Organization Payments Relationship
+	 */
 	@ApiPropertyOptional({ type: () => Payment, isArray: true })
-	@MultiORMOneToMany(() => Payment, (it) => it.organizationContact, {
-		onDelete: 'SET NULL'
-	})
+	@IsOptional()
+	@IsArray()
+	@MultiORMOneToMany(() => Payment, (it) => it.organizationContact, { onDelete: 'SET NULL' })
 	@JoinColumn()
 	payments?: IPayment[];
 
 	/**
-	 * Expense
+	 * Organization Expenses Relationship
 	 */
 	@ApiPropertyOptional({ type: () => Expense, isArray: true })
-	@MultiORMOneToMany(() => Expense, (it) => it.organizationContact, {
-		onDelete: 'SET NULL'
-	})
+	@IsOptional()
+	@IsArray()
+	@MultiORMOneToMany(() => Expense, (it) => it.organizationContact, { onDelete: 'SET NULL' })
 	expenses?: IExpense[];
 
 	/**
-	 * Income
+	 * Organization Incomes Relationship
 	 */
 	@ApiPropertyOptional({ type: () => Income, isArray: true })
-	@MultiORMOneToMany(() => Income, (it) => it.client, {
-		onDelete: 'SET NULL'
-	})
+	@IsOptional()
+	@IsArray()
+	@MultiORMOneToMany(() => Income, (it) => it.client, { onDelete: 'SET NULL' })
 	incomes?: IIncome[];
 
 	/**
-	 * TimeLog
+	 * Time Logs Relationship
 	 */
 	@ApiPropertyOptional({ type: () => TimeLog, isArray: true })
 	@MultiORMOneToMany(() => TimeLog, (it) => it.organizationContact)
 	timeLogs?: ITimeLog[];
 
 	/*
-	|--------------------------------------------------------------------------
+	|--------------------------	------------------------------------------------
 	| @ManyToMany
 	|--------------------------------------------------------------------------
 	*/
-	// Organization Contact Tags
+	/**
+	 * Organization Contact Tags
+	 */
 	@MultiORMManyToMany(() => Tag, (tag) => tag.organizationContacts, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_organization_contact',
 		joinColumn: 'organizationContactId',
-		inverseJoinColumn: 'tagId',
+		inverseJoinColumn: 'tagId'
 	})
-	@JoinTable({
-		name: 'tag_organization_contact'
-	})
-	tags: ITag[];
+	@JoinTable({ name: 'tag_organization_contact' })
+	tags?: ITag[];
 
-	// Organization Contact Employees
+	/**
+	 * Organization Contact Employees
+	 */
 	@MultiORMManyToMany(() => Employee, (it) => it.organizationContacts, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'organization_contact_employee',
 		joinColumn: 'organizationContactId',
-		inverseJoinColumn: 'employeeId',
+		inverseJoinColumn: 'employeeId'
 	})
-	@JoinTable({
-		name: 'organization_contact_employee'
-	})
+	@JoinTable({ name: 'organization_contact_employee' })
 	members?: IEmployee[];
 }

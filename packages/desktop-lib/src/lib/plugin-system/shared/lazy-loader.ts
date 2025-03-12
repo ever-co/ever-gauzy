@@ -8,7 +8,7 @@
 export async function lazyLoader(pathModule: string): Promise<any> {
 	try {
 		const module = require(pathModule);
-		return module.default;
+		return module.default || module;
 	} catch (error) {
 		console.error(`Failed to load module at path: ${pathModule}`, error);
 		throw error;

@@ -1,7 +1,4 @@
-import {
-	JoinColumn,
-	RelationId
-} from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import {
 	IEmployee,
 	ITimeOff as ITimeOffRequest,
@@ -10,26 +7,19 @@ import {
 	IImageAsset as IDocumentAsset
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsEnum, IsOptional, IsDate, IsBoolean, IsUUID } from 'class-validator';
+import { Employee, ImageAsset, TenantOrganizationBaseEntity, TimeOffPolicy } from '../core/entities/internal';
 import {
-	IsString,
-	IsEnum,
-	IsOptional,
-	IsDate,
-	IsBoolean,
-	IsUUID
-} from 'class-validator';
-import {
-	Employee,
-	ImageAsset,
-	TenantOrganizationBaseEntity,
-	TimeOffPolicy
-} from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne } from './../core/decorators/entity';
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne
+} from './../core/decorators/entity';
 import { MikroOrmTimeOffRequestRepository } from './repository/mikro-orm-time-off-request.repository';
 
 @MultiORMEntity('time_off_request', { mikroOrmRepository: () => MikroOrmTimeOffRequestRepository })
 export class TimeOffRequest extends TenantOrganizationBaseEntity implements ITimeOffRequest {
-
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
@@ -67,7 +57,6 @@ export class TimeOffRequest extends TenantOrganizationBaseEntity implements ITim
 	@IsBoolean()
 	@MultiORMColumn({ nullable: true, default: false })
 	isHoliday?: boolean;
-
 
 	/*
 	|--------------------------------------------------------------------------

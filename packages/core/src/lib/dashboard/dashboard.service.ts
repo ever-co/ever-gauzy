@@ -33,8 +33,6 @@ export class DashboardService extends TenantAwareCrudService<Dashboard> {
 	 */
 	async create(input: IDashboardCreateInput): Promise<Dashboard> {
 		try {
-			// Retrieve the current user ID from the request context
-			const createdByUserId = RequestContext.currentUserId();
 			// Retrieve the tenant ID from the request context or fallback to the input tenantId
 			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 			// Destructure organizationId and the rest of the input data
@@ -44,8 +42,7 @@ export class DashboardService extends TenantAwareCrudService<Dashboard> {
 			const dashboard = await super.create({
 				...data,
 				organizationId,
-				tenantId,
-				createdByUserId
+				tenantId
 			});
 
 			// Log the creation activity

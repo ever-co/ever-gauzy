@@ -12,7 +12,8 @@ import {
 	ICandidateCreateInput,
 	ICandidate,
 	IImageAsset,
-	IEmployee
+	IEmployee,
+	ID
 } from '@gauzy/contracts';
 import { filter, firstValueFrom, tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -168,10 +169,10 @@ export class BasicInfoFormComponent extends TranslationBaseComponent implements 
 	 *
 	 * @param defaultRoleName - Default role to assign if none is specified
 	 * @param organizationId - ID of the organization
-	 * @param createdById - ID of the user who created this user
+	 * @param createdByUserId - ID of the user who created this user
 	 * @returns A promise of the created user or employee
 	 */
-	async registerUser(defaultRoleName: RolesEnum, organizationId?: string, createdById?: string) {
+	async registerUser(defaultRoleName: RolesEnum, organizationId?: ID, createdByUserId?: ID) {
 		if (this.form.invalid) {
 			return;
 		}
@@ -213,7 +214,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent implements 
 		} else if (role.name === RolesEnum.CANDIDATE) {
 			return await this.createCandidate(user);
 		} else {
-			return await this.createUser(user, password, organizationId, createdById, featureAsEmployee);
+			return await this.createUser(user, password, organizationId, createdByUserId, featureAsEmployee);
 		}
 	}
 
@@ -223,15 +224,15 @@ export class BasicInfoFormComponent extends TranslationBaseComponent implements 
 	 * @param user - The user details.
 	 * @param password - The password for the user.
 	 * @param organizationId - (Optional) The ID of the organization.
-	 * @param createdById - (Optional) The ID of the user who created this user.
+	 * @param createdByUserId - (Optional) The ID of the user who created this user.
 	 * @param featureAsEmployee - (Optional) Whether to create the user as an employee.
 	 * @returns A promise resolving to the created user or employee.
 	 */
 	private async createUser(
 		user: IUser,
 		password: string,
-		organizationId?: string,
-		createdById?: string,
+		organizationId?: ID,
+		createdByUserId?: ID,
 		featureAsEmployee?: boolean
 	): Promise<any> {
 		return await firstValueFrom(
@@ -240,7 +241,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent implements 
 				password,
 				confirmPassword: password,
 				organizationId,
-				createdById,
+				createdByUserId,
 				featureAsEmployee
 			})
 		);

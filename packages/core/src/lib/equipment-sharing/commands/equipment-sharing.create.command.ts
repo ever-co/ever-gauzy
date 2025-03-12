@@ -1,11 +1,8 @@
 import { ICommand } from '@nestjs/cqrs';
-import { EquipmentSharing } from '../equipment-sharing.entity';
+import { ID, IEquipmentSharingCreateInput } from '@gauzy/contracts';
 
 export class EquipmentSharingCreateCommand implements ICommand {
 	static readonly type = '[EquipmentSharing] Create';
 
-	constructor(
-		public readonly orgId: string,
-		public readonly equipmentSharing: EquipmentSharing
-	) {}
+	constructor(public readonly organizationId: ID, public readonly input: IEquipmentSharingCreateInput) {}
 }

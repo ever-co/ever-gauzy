@@ -5,21 +5,18 @@
   - Request Approval table has the one to many relationships to RequestApprovalEmployee table
   - Request Approval table has the many to many relationships to the Employee table through the RequestApprovalEmployee table.
 */
-import {
-	RelationId,
-	JoinColumn,
-	JoinTable
-} from 'typeorm';
+import { RelationId, JoinColumn, JoinTable } from 'typeorm';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsNotEmpty, IsNumber, IsEnum, IsOptional, IsUUID, IsObject } from 'class-validator';
 import {
 	IRequestApproval,
 	ApprovalPolicyTypesStringEnum,
 	IApprovalPolicy,
 	IRequestApprovalEmployee,
 	IRequestApprovalTeam,
-	ITag
+	ITag,
+	ID
 } from '@gauzy/contracts';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsNumber, IsEnum } from 'class-validator';
 import {
 	ApprovalPolicy,
 	RequestApprovalEmployee,
@@ -27,94 +24,92 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne,
+	MultiORMOneToMany
+} from './../core/decorators/entity';
 import { MikroOrmRequestApprovalRepository } from './repository/mikro-orm-request-approval.repository';
 
 @MultiORMEntity('request_approval', { mikroOrmRepository: () => MikroOrmRequestApprovalRepository })
 export class RequestApproval extends TenantOrganizationBaseEntity implements IRequestApproval {
 	@ApiProperty({ type: () => String })
-	@IsString()
 	@IsNotEmpty()
+	@IsString()
 	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
 
-	@ApiProperty({ type: () => Number })
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
 	@IsNumber()
 	@MultiORMColumn({ nullable: true })
 	status: number;
 
-	@ApiProperty({ type: () => String, readOnly: true })
-	@IsString()
-	@MultiORMColumn({ nullable: true })
-	createdBy: string;
-
-	@ApiProperty({ type: () => String })
-	@IsString()
-	@MultiORMColumn({ nullable: true })
-	createdByName: string;
-
-	@ApiProperty({ type: () => Number })
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
 	@IsNumber()
 	@MultiORMColumn({ nullable: true })
 	min_count: number;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@MultiORMColumn({ nullable: true })
-	requestId: string;
+	requestId: ID;
 
-	@ApiProperty({ type: () => String, enum: ApprovalPolicyTypesStringEnum })
+	@ApiPropertyOptional({ type: () => String, enum: ApprovalPolicyTypesStringEnum })
+	@IsOptional()
 	@IsEnum(ApprovalPolicyTypesStringEnum)
 	@MultiORMColumn({ nullable: true })
-	requestType: string;
+	requestType: ApprovalPolicyTypesStringEnum;
 
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
-
 	/**
-	*  ApprovalPolicy
-	*/
-	@ApiProperty({ type: () => ApprovalPolicy })
+	 * The approval policy associated with this request approval.
+	 */
+	@ApiPropertyOptional({ type: () => ApprovalPolicy })
+	@IsOptional()
+	@IsObject()
 	@MultiORMManyToOne(() => ApprovalPolicy, {
-		nullable: true,
-		onDelete: 'CASCADE'
+		nullable: true, // Indicates if relation column value can be nullable or not.
+		onDelete: 'CASCADE' // Database cascade action on delete.
 	})
 	@JoinColumn()
-	approvalPolicy: IApprovalPolicy;
+	approvalPolicy?: IApprovalPolicy;
 
-	@ApiProperty({ type: () => String })
+	/**
+	 * The ID for the associated approval policy.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((it: RequestApproval) => it.approvalPolicy)
-	@IsString()
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	approvalPolicyId: string;
+	approvalPolicyId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
 	| @OneToMany
 	|--------------------------------------------------------------------------
 	*/
-
 	/**
-	 * RequestApprovalEmployee
+	 * The employees associated with this request approval.
 	 */
-	@ApiPropertyOptional({ type: () => RequestApprovalEmployee, isArray: true })
-	@MultiORMOneToMany(() => RequestApprovalEmployee, (employeeApprovals) => employeeApprovals.requestApproval, {
-		cascade: true
-	})
+	@MultiORMOneToMany(() => RequestApprovalEmployee, (it) => it.requestApproval, { cascade: true })
 	employeeApprovals?: IRequestApprovalEmployee[];
 
 	/**
-	 * RequestApprovalTeam
+	 * The teams associated with this request approval.
 	 */
-	@ApiPropertyOptional({ type: () => RequestApprovalTeam, isArray: true })
-	@MultiORMOneToMany(() => RequestApprovalTeam, (teamApprovals) => teamApprovals.requestApproval, {
-		cascade: true
-	})
+	@MultiORMOneToMany(() => RequestApprovalTeam, (it) => it.requestApproval, { cascade: true })
 	teamApprovals?: IRequestApprovalTeam[];
 
 	/*
@@ -122,17 +117,17 @@ export class RequestApproval extends TenantOrganizationBaseEntity implements IRe
 	| @ManyToMany
 	|--------------------------------------------------------------------------
 	*/
-	@ApiPropertyOptional({ type: () => RequestApprovalTeam, isArray: true })
-	@MultiORMManyToMany(() => Tag, (tag) => tag.requestApprovals, {
+	/**
+	 * The tags associated with this request approval.
+	 */
+	@MultiORMManyToMany(() => Tag, (it) => it.requestApprovals, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_request_approval',
 		joinColumn: 'requestApprovalId',
-		inverseJoinColumn: 'tagId',
+		inverseJoinColumn: 'tagId'
 	})
-	@JoinTable({
-		name: 'tag_request_approval'
-	})
+	@JoinTable({ name: 'tag_request_approval' })
 	tags?: ITag[];
 }

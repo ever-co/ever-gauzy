@@ -1,10 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Brackets, In, Raw, WhereExpressionBuilder } from 'typeorm';
-import { IEmployee, IOrganizationContact, IOrganizationContactFindInput, IPagination } from '@gauzy/contracts';
-import { isPostgres } from '@gauzy/config';
-import { isNotEmpty } from '@gauzy/utils';
+import { Brackets, In, Raw } from 'typeorm';
+import { ID, IOrganizationContact, IOrganizationContactFindInput, IPagination } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
+import { isNotEmpty } from '@gauzy/utils';
+import { LIKE_OPERATOR } from '../core/util';
 import { OrganizationContact } from './organization-contact.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmOrganizationContactRepository } from './repository/type-orm-organization-contact.repository';
@@ -26,11 +26,11 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 	 * @param options
 	 * @returns
 	 */
-	async findByEmployee(
-		employeeId: IEmployee['id'],
-		options: IOrganizationContactFindInput
-	): Promise<IOrganizationContact[]> {
+	async findByEmployee(employeeId: ID, options: IOrganizationContactFindInput): Promise<IOrganizationContact[]> {
 		try {
+			const tenantId = RequestContext.currentTenantId() ?? options.tenantId;
+			const { organizationId, contactType } = options;
+
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.setFindOptions({
 				select: {
@@ -40,20 +40,14 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 				}
 			});
 			query.innerJoin(`${query.alias}.members`, 'member');
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					const tenantId = RequestContext.currentTenantId();
-					const { organizationId, contactType } = options;
+			query.andWhere(p('member.id = :employeeId'), { employeeId });
+			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 
-					qb.andWhere(p('member.id = :employeeId'), { employeeId });
-					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+			if (isNotEmpty(contactType)) {
+				query.andWhere(p(`${query.alias}.contactType = :contactType`), { contactType });
+			}
 
-					if (isNotEmpty(contactType)) {
-						qb.andWhere(p(`${query.alias}.contactType = :contactType`), { contactType });
-					}
-				})
-			);
 			return await query.getMany();
 		} catch (error) {
 			throw new BadRequestException(error);
@@ -81,7 +75,10 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 	async getOrganizationContactByEmployee(data: any) {
 		const { relations, findInput } = data;
 		const { employeeId, organizationId, contactType } = findInput;
-		const { tenantId, id: createdBy } = RequestContext.currentUser();
+
+		// Get current user ID and tenant ID from the request context
+		const createdByUserId = RequestContext.currentUserId();
+		const tenantId = RequestContext.currentTenantId() ?? findInput.tenantId;
 
 		const query = this.typeOrmRepository.createQueryBuilder('organization_contact');
 		if (relations.length > 0) {
@@ -99,61 +96,74 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 			new Brackets((subQuery) => {
 				subQuery
 					.where('members.id =:employeeId', { employeeId })
-					.orWhere(`${query.alias}.createdBy = :createdBy`, {
-						createdBy
-					});
+					.orWhere(`${query.alias}.createdByUserId = :createdByUserId`, { createdByUserId });
 			})
 		);
-		query.andWhere(`${query.alias}.contactType = :contactType`, {
-			contactType
-		});
+
+		query.andWhere(`${query.alias}.contactType = :contactType`, { contactType });
+		query.andWhere(`${query.alias}.tenantId = :tenantId`, { tenantId });
+
 		if (organizationId) {
-			query.andWhere(`${query.alias}.organizationId = :organizationId`, {
-				organizationId
-			});
+			query.andWhere(`${query.alias}.organizationId = :organizationId`, { organizationId });
 		}
-		query.andWhere(`${query.alias}.tenantId = :tenantId`, {
-			tenantId
-		});
 
 		const [items, total] = await query.getManyAndCount();
 		return { items, total };
 	}
 
-	async findById(id: string, relations: string[]): Promise<IOrganizationContact> {
+	/**
+	 * Finds an organization contact by its ID and includes the specified relations.
+	 *
+	 * @param id - The unique identifier for the organization contact.
+	 * @param relations - An array of relation names to include in the result.
+	 * @returns A promise that resolves to an IOrganizationContact.
+	 */
+	async findById(id: ID, relations: string[]): Promise<IOrganizationContact> {
 		return await this.findOneByIdString(id, { relations });
 	}
 
 	/**
 	 * Organization contact by pagination
 	 *
-	 * @param params
-	 * @returns
+	 * @param filter - The pagination parameters, including custom filters.
+	 * @returns A promise that resolves with paginated organization contacts.
 	 */
-	public async pagination(params?: PaginationParams<any>): Promise<IPagination<IOrganizationContact>> {
-		// Custom Filters
-		if ('where' in params) {
-			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
-			const { where } = params;
-			if ('name' in where) {
-				const { name } = where;
-				params['where']['name'] = Raw((alias) => `${alias} ${likeOperator} '%${name}%'`);
+	public async pagination(
+		filter?: PaginationParams<OrganizationContact>
+	): Promise<IPagination<IOrganizationContact>> {
+		if (filter?.where) {
+			const { where } = filter;
+
+			// Apply like filter for the name field.
+			if (where.name) {
+				filter.where['name'] = Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :name`, {
+					name: `%${where.name}%`
+				});
 			}
-			if ('primaryPhone' in where) {
-				const { primaryPhone } = where;
-				params['where']['primaryPhone'] = Raw((alias) => `${alias} ${likeOperator} '%${primaryPhone}%'`);
+
+			// Apply like filter for the primaryPhone field.
+			if (where.primaryPhone) {
+				filter.where['primaryPhone'] = Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :primaryPhone`, {
+					primaryPhone: `%${where.primaryPhone}%`
+				});
 			}
-			if ('primaryEmail' in where) {
-				const { primaryEmail } = where;
-				params['where']['primaryEmail'] = Raw((alias) => `${alias} ${likeOperator} '%${primaryEmail}%'`);
+
+			// Apply like filter for the primaryEmail field.
+			if (where.primaryEmail) {
+				filter.where['primaryEmail'] = Raw((alias: string) => `${alias} ${LIKE_OPERATOR} :primaryEmail`, {
+					primaryEmail: `%${where.primaryEmail}%`
+				});
 			}
-			if ('members' in where) {
+
+			// Apply filter for the members field.
+			if (where.members) {
 				const { members } = where;
-				params['where']['members'] = {
-					id: In(members)
+				filter.where['members'] = {
+					id: In(members as Array<ID>)
 				};
 			}
 		}
-		return await super.paginate(params);
+
+		return super.paginate(filter ?? {});
 	}
 }

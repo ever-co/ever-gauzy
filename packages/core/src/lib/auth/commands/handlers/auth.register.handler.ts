@@ -20,14 +20,14 @@ export class AuthRegisterHandler implements ICommandHandler<AuthRegisterCommand>
 	public async execute(command: AuthRegisterCommand): Promise<IUser> {
 		const { input, languageCode } = command;
 
-		// Check if the user role is SUPER_ADMIN and require 'createdById' for verification
+		// Check if the user role is SUPER_ADMIN and require 'createdByUserId' for verification
 		if (input.user && input.user.role && input.user.role.name === RolesEnum.SUPER_ADMIN) {
-			if (!input.createdById) {
-				throw new BadRequestException('Missing createdById for SUPER_ADMIN registration.');
+			if (!input.createdByUserId) {
+				throw new BadRequestException('Missing createdByUserId for SUPER_ADMIN registration.');
 			}
 
 			// Fetch role details of the creator
-			const { role } = await this.userService.findOneByIdString(input.createdById, {
+			const { role } = await this.userService.findOneByIdString(input.createdByUserId, {
 				relations: { role: true }
 			});
 
