@@ -1,5 +1,6 @@
-import { PluginStatus, PluginType } from '@gauzy/contracts';
+import { ID, PluginStatus, PluginType } from '@gauzy/contracts';
 import {
+	ColumnIndex,
 	Employee,
 	MultiORMColumn,
 	MultiORMEntity,
@@ -10,7 +11,7 @@ import {
 } from '@gauzy/core';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { JoinColumn } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { MikroOrmPluginRepository } from '../repositories/mikro-orm-plugin-repository';
 import { PluginVersion } from './plugin-version.entity';
 import { PluginSource } from './plugin-source.entity';
@@ -72,16 +73,26 @@ export class Plugin extends TenantOrganizationBaseEntity {
 	@JoinColumn()
 	uploadedBy?: Employee;
 
-	@ApiProperty({ type: () => PluginSource, description: 'Employee who uploaded the plugin', required: false })
-	@MultiORMOneToOne(() => PluginSource, { nullable: true })
-	@JoinColumn()
-	source?: PluginSource;
+	@RelationId((plugin: Plugin) => plugin.uploadedBy)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	uploadedById?: ID;
 
 	@ApiProperty({ type: Date, description: 'Upload date', required: false })
 	@IsOptional()
 	@IsDate({ message: 'UploadedAt must be a valid date' })
 	@MultiORMColumn({ nullable: true })
 	uploadedAt?: Date;
+
+	@ApiProperty({ type: () => PluginSource, description: 'Source of plugin', required: false })
+	@MultiORMOneToOne(() => PluginSource, { nullable: true })
+	@JoinColumn()
+	source?: PluginSource;
+
+	@RelationId((plugin: Plugin) => plugin.source)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	sourceId?: ID;
 
 	@ApiProperty({ type: Number, description: 'Download count' })
 	@IsNumber({}, { message: 'Download count must be a number' })
