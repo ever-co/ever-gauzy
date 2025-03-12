@@ -1,0 +1,376 @@
+@import 'gauzy/_gauzy-dialogs';
+
+// Custom variables
+$card-border-radius: 0.75rem;
+$input-padding: 0.75rem 1rem;
+$button-spacing: 0.75rem;
+$transition-speed: 0.2s;
+
+:host {
+  display: block;
+}
+
+.dialog-card {
+  border-radius: $card-border-radius;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  width: 550px;
+  margin: 0 auto;
+  height: 90vh;
+
+  nb-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid nb-theme(divider-color);
+
+    .title {
+      margin: 0;
+      font-weight: 600;
+      font-size: 1.25rem;
+      text-wrap: nowrap;
+    }
+
+    .close-button {
+      padding: 0.25rem;
+      height: 2rem;
+      width: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all $transition-speed ease;
+      border-radius: 50%;
+      cursor: pointer;
+      opacity: 0.8;
+
+      &:hover {
+        opacity: 1;
+        background-color: var(--background-basic-color-3);
+      }
+    }
+  }
+
+  nb-card-body {
+    padding: 1.5rem;
+    max-height: calc(90vh - 120px);
+    overflow-y: auto;
+
+    form {
+      .form-section {
+        margin-bottom: 2rem;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        .section-title {
+          margin: 0 0 1rem;
+          font-weight: 600;
+          color: var(--gauzy-text-color-1);
+          font-size: 1rem;
+          padding-bottom: 0.5rem;
+          border-bottom: 1px solid nb-theme(divider-color);
+          display: flex;
+          align-items: center;
+
+          &::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background-color: nb-theme(divider-color);
+            margin-left: 0.75rem;
+          }
+        }
+      }
+
+      .form-row {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+
+        .form-group {
+          flex: 1;
+          min-width: 0; // Prevent flex items from overflowing
+
+          &.full-width {
+            flex-basis: 100%;
+            width: 100%;
+          }
+        }
+
+        nb-form-field {
+          flex: 1;
+          min-width: 0;
+
+          &.full-width {
+            flex-basis: 100%;
+            width: 100%;
+          }
+        }
+
+        label.label {
+          margin-bottom: 0.5rem;
+          display: block;
+          font-weight: 500;
+          font-size: 0.9rem;
+        }
+
+        nb-select {
+          width: 100%;
+        }
+
+        input,
+        textarea,
+        nb-select {
+          width: 100%;
+          transition: border-color $transition-speed ease, box-shadow $transition-speed ease;
+
+          &:focus {
+            box-shadow: 0 0 0 2px rgba(nb-theme(color-primary-500), 0.2);
+          }
+        }
+
+        input,
+        textarea {
+          padding: $input-padding;
+          border-radius: var(--border-radius);
+        }
+
+        textarea {
+          min-height: 100px;
+          resize: vertical;
+        }
+      }
+    }
+  }
+
+  nb-card-footer {
+    padding: 1rem 1.25rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: $button-spacing;
+    border-top: 1px solid nb-theme(divider-color);
+
+    button {
+      min-width: 100px;
+
+      &[status='success'] {
+        &:not(:disabled):hover {
+          box-shadow: 0 3px 8px rgba(nb-theme(color-success-500), 0.3);
+        }
+      }
+
+      &:disabled {
+        opacity: 0.6;
+      }
+    }
+  }
+}
+
+.source-container {
+  margin-top: 0.5rem;
+  width: 100%;
+
+  .source-content {
+    background-color: var(--gauzy-card-2);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border-left: 3px solid nb-theme(color-primary-500);
+    animation: fadeIn 0.3s ease;
+    padding-bottom: 1px;
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  }
+}
+
+.source-inputs {
+  padding: 16px;
+  background-color: var(--gauzy-card-2);
+  border-radius: var(--border-radius);
+  margin-bottom: 16px;
+}
+
+.file-upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  border: 2px dashed var(--gauzy-border-default-color);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: var(--background-basic-color-1);
+  min-height: 200px;
+  border-radius: var(--border-radius);
+  width: 100%;
+  position: relative;
+
+  &:hover {
+    border-color: var(--color-primary-hover);
+    background-color: var(--background-basic-color-2);
+  }
+
+  &.drag-over {
+    border-color: var(--color-primary-active);
+    background-color: var(--background-basic-color-2);
+    transform: scale(1.01);
+  }
+
+  &.has-file {
+    border-color: var(--color-success-default);
+    background-color: rgba(nb-theme(color-success-500), 0.05);
+  }
+
+  &.error {
+    border-color: var(--color-danger-default);
+    background-color: rgba(nb-theme(color-danger-500), 0.05);
+  }
+
+  .upload-icon {
+    font-size: 48px;
+    color: var(--text-hint-color);
+    margin-bottom: 16px;
+
+    nb-icon {
+      width: 2rem;
+      height: 2rem;
+
+      &[status='success'] {
+        color: var(--color-success-default);
+      }
+    }
+  }
+
+  .upload-text {
+    text-align: center;
+    color: var(--text-basic-color);
+
+    p {
+      margin: 8px 0;
+      font-weight: 500;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: var(--text-hint-color);
+      margin-top: 16px;
+    }
+
+    button {
+      margin: 0.75rem 0;
+    }
+  }
+
+  .file-info {
+    text-align: center;
+
+    .file-name {
+      font-weight: 600;
+      margin-bottom: 8px;
+      word-break: break-all;
+    }
+
+    .file-size {
+      color: var(--text-hint-color);
+      margin-bottom: 16px;
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+
+      nb-icon {
+        margin-right: 0.5rem;
+      }
+    }
+  }
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  color: var(--color-danger-default);
+  background-color: rgba(nb-theme(color-danger-500), 0.1);
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+
+  nb-icon {
+    margin-right: 0.5rem;
+    font-size: 1.25rem;
+  }
+}
+
+// Form validation styling
+input.ng-touched.ng-invalid,
+select.ng-touched.ng-invalid,
+textarea.ng-touched.ng-invalid {
+  border-color: var(--color-danger-default);
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .dialog-card {
+    form {
+      .form-row {
+        flex-direction: column;
+        gap: 0.5rem;
+
+        nb-form-field,
+        .form-group {
+          width: 100%;
+        }
+      }
+
+      .source-container [formGroupName='source'] nb-form-field {
+        width: 100%;
+      }
+    }
+  }
+}
+
+[nbInput].size-medium {
+  padding: unset;
+}
+
+[nbInput].size-medium:not(.input-full-width) {
+  max-width: 100% !important;
+}
+
+::ng-deep {
+  .nb-theme-default nb-card.dialog-card {
+    border: none;
+  }
+
+  .nb-theme-dark {
+    .file-upload-area {
+      &.has-file {
+        background-color: rgba(nb-theme(color-success-500), 0.1);
+      }
+
+      &.error {
+        background-color: rgba(nb-theme(color-danger-500), 0.1);
+      }
+    }
+  }
+
+  nb-hint {
+    font-size: 0.8rem;
+    color: var(--color-danger-default);
+  }
+
+  nb-spinner {
+    background: transparent;
+  }
+}
