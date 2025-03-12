@@ -1,8 +1,7 @@
-import { Injectable, NotFoundException, ForbiddenException, NotAcceptableException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, NotAcceptableException, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { IsNull, Between, Not, In } from 'typeorm';
 import * as moment from 'moment';
-import * as chalk from 'chalk';
 import {
 	TimeLogType,
 	ITimerStatus,
@@ -42,12 +41,14 @@ import {
 import { MikroOrmTimeLogRepository, TypeOrmTimeLogRepository } from '../time-log/repository';
 import { TypeOrmEmployeeRepository, MikroOrmEmployeeRepository } from '../../employee/repository';
 import { addRelationsToQuery, buildCommonQueryParameters, buildLogQueryParameters } from './timer.helper';
+import { StatisticService } from '../statistic/statistic.service';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
 
 @Injectable()
 export class TimerService {
+	private readonly logger = new Logger(`GZY - ${TimerService.name}`);
 	protected ormType: MultiORM = ormType;
 
 	constructor(
@@ -56,8 +57,9 @@ export class TimerService {
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 		private readonly _employeeService: EmployeeService,
+		private readonly _statisticService: StatisticService,
 		private readonly _commandBus: CommandBus
-	) {}
+	) { }
 
 	/**
 	 * Fetches an employee based on the provided query.
@@ -127,50 +129,64 @@ export class TimerService {
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				/**
-				 * Get today's completed timelogs
-				 */
-				const parseQueryParams = parseTypeORMFindToMikroOrm<TimeLog>(buildLogQueryParameters(queryParams));
-				const items = await this.mikroOrmTimeLogRepository.findAll(parseQueryParams);
-				// Optionally wrapSerialize is a function that serializes the entity
-				logs = items.map((entity: TimeLog) => wrapSerialize(entity)) as TimeLog[];
+				{
+					/**
+					 * Get today's completed timelogs
+					 */
+					const parseQueryParams = parseTypeORMFindToMikroOrm<TimeLog>(buildLogQueryParameters(queryParams));
+					const items = await this.mikroOrmTimeLogRepository.findAll(parseQueryParams);
+					// Optionally wrapSerialize is a function that serializes the entity
+					logs = items.map((entity: TimeLog) => wrapSerialize(entity));
 
-				/**
-				 * Get today's last log (running or completed)
-				 */
-				// Common query parameters for time log operations.
-				const lastLogQueryParamsMikroOrm = buildCommonQueryParameters(queryParams);
-				// Adds relations from the request to the query parameters.
-				addRelationsToQuery(lastLogQueryParamsMikroOrm, request);
-				// Converts TypeORM-style query parameters to a format compatible with MikroORM.
-				const parseMikroOrmOptions = parseTypeORMFindToMikroOrm<TimeLog>(lastLogQueryParamsMikroOrm);
+					/**
+					 * Get today's last log (running or completed)
+					 */
+					// Common query parameters for time log operations.
+					const lastLogQueryParamsMikroOrm = buildCommonQueryParameters(queryParams);
+					// Adds relations from the request to the query parameters.
+					addRelationsToQuery(lastLogQueryParamsMikroOrm, request);
+					// Converts TypeORM-style query parameters to a format compatible with MikroORM.
+					const parseMikroOrmOptions = parseTypeORMFindToMikroOrm<TimeLog>(lastLogQueryParamsMikroOrm);
 
-				// Get today's last log (running or completed)
-				lastLog = (await this.mikroOrmTimeLogRepository.findOne(
-					parseMikroOrmOptions.where,
-					parseMikroOrmOptions.mikroOptions
-				)) as TimeLog;
+					// Get today's last log (running or completed)
+					lastLog = (await this.mikroOrmTimeLogRepository.findOne(
+						parseMikroOrmOptions.where,
+						parseMikroOrmOptions.mikroOptions
+					)) as TimeLog;
+				}
 				break;
 
 			case MultiORMEnum.TypeORM:
-				// Get today's completed timelogs
-				logs = await this.typeOrmTimeLogRepository.find(buildLogQueryParameters(queryParams));
+				{
+					// Get today's completed timelogs
+					logs = await this.typeOrmTimeLogRepository.find(buildLogQueryParameters(queryParams));
 
-				const lastLogQueryParamsTypeOrm = buildCommonQueryParameters(queryParams); // Common query parameters for time log operations.
-				addRelationsToQuery(lastLogQueryParamsTypeOrm, request); // Adds relations from the request to the query parameters.
+					const lastLogQueryParamsTypeOrm = buildCommonQueryParameters(queryParams); // Common query parameters for time log operations.
+					addRelationsToQuery(lastLogQueryParamsTypeOrm, request); // Adds relations from the request to the query parameters.
 
-				// Get today's last log (running or completed)
-				lastLog = await this.typeOrmTimeLogRepository.findOne(lastLogQueryParamsTypeOrm);
+					// Get today's last log (running or completed)
+					lastLog = await this.typeOrmTimeLogRepository.findOne(lastLogQueryParamsTypeOrm);
+				}
 				break;
 
 			default:
 				throw new Error(`Not implemented for ${ormType}`);
 		}
 
+		const statistics = await this._statisticService.getWeeklyStatisticsActivities({
+			employeeId,
+			organizationId,
+			tenantId,
+			startedAt: start,
+			endedAt: end
+		});
+
 		const status: ITimerStatus = {
 			duration: 0,
 			running: false,
-			lastLog: null
+			lastLog: null,
+			reWeeklyLimit: employee.reWeeklyLimit,
+			workedThisWeek: 0
 		};
 
 		// Calculate completed timelogs duration
@@ -198,11 +214,11 @@ export class TimerService {
 	 */
 	async checkForPeriodicSave(lastLog: TimeLog) {
 		// Check if periodic time save is enabled and the timer is valid and running for the source WEB_TIMER
-		if(!env.periodicTimeSave || !lastLog || !lastLog.isRunning || lastLog.source !== TimeLogSourceEnum.WEB_TIMER) return;
+		if (!env.periodicTimeSave || !lastLog || !lastLog.isRunning || lastLog.source !== TimeLogSourceEnum.WEB_TIMER) return;
 
 		const now = moment();
 		const durationSinceLastEndTime = Math.abs(now.diff(moment(lastLog.stoppedAt), 'seconds'));
-		if(durationSinceLastEndTime > env.periodicTimeSaveTimeframe) {
+		if (durationSinceLastEndTime > env.periodicTimeSaveTimeframe) {
 			const newStoppedAt = now.toDate();
 			const partialTimeLog: Partial<ITimeLog> = {
 				stoppedAt: newStoppedAt,
@@ -220,10 +236,7 @@ export class TimerService {
 	 * @returns A Promise resolving to the created ITimeLog entry.
 	 */
 	async startTimer(request: ITimerToggleInput): Promise<ITimeLog> {
-		console.log(
-			`-------------Start Timer Request (${moment.utc(request.startedAt).toDate()})-------------`,
-			JSON.stringify(request)
-		);
+		this.logger.verbose(`-------------Start Timer Request-------------`, JSON.stringify(request));
 
 		// Destructure the necessary parameters from the request
 		const {
@@ -243,7 +256,7 @@ export class TimerService {
 
 		// Determine the start date and time in UTC
 		const startedAt = moment.utc(request.startedAt ?? moment.utc()).toDate();
-		console.log(chalk.green('new timer started at:'), startedAt);
+		this.logger.verbose(`New timer started at: ${startedAt}`);
 
 		// Retrieve the employee information
 		const employee = await this.findEmployee();
@@ -287,7 +300,7 @@ export class TimerService {
 			isTrackingTime: true
 		});
 
-		console.log(chalk.green(`last created time log: ${JSON.stringify(timeLog)}`));
+		this.logger.verbose(`Last created time log: ${JSON.stringify(timeLog)}`);
 
 		// Return the newly created time log entry
 		return timeLog;
@@ -300,10 +313,7 @@ export class TimerService {
 	 * @returns A Promise resolving to the updated ITimeLog entry.
 	 */
 	async stopTimer(request: ITimerToggleInput): Promise<ITimeLog> {
-		console.log(
-			`-------------Stop Timer Request (${moment.utc(request.stoppedAt).toDate()})-------------`,
-			JSON.stringify(request)
-		);
+		this.logger.verbose(`-------------Stop Timer Request-------------`, JSON.stringify(request));
 
 		// Validate the date range and check if the timer is running
 		validateDateRange(request.startedAt, request.stoppedAt);
@@ -326,21 +336,17 @@ export class TimerService {
 
 		// If no running log is found, throw a NotAcceptableException
 		if (!lastLog) {
-			console.log(chalk.yellow(`No running log found. Can't stop timer because it was already stopped.`));
+			this.logger.warn(`No running log found. Can't stop timer because it was already stopped.`);
 			throw new NotAcceptableException(`No running log found. Can't stop timer because it was already stopped.`);
 		}
 
 		// Calculate stoppedAt date or use current date if not provided
 		const stoppedAt = await this.calculateStoppedAt(request, lastLog);
-		console.log(chalk.blue(`last stopped at: ${stoppedAt}`));
+		this.logger.verbose(`Last stopped at: ${stoppedAt}`);
 
 		// Log the case where stoppedAt is less than startedAt
 		if (stoppedAt < lastLog.startedAt) {
-			console.log(
-				chalk.yellow(
-					`stoppedAt (${stoppedAt}) is less than startedAt (${lastLog.startedAt}), skipping stoppedAt update.`
-				)
-			);
+			this.logger.warn(`stoppedAt (${stoppedAt}) is less than startedAt (${lastLog.startedAt}), skipping stoppedAt update.`);
 		}
 
 		// Construct the update payload, conditionally excluding stoppedAt if it shouldn't be updated
@@ -349,7 +355,7 @@ export class TimerService {
 			...(stoppedAt >= lastLog.startedAt && { stoppedAt }) // Only include stoppedAt if it's valid
 		};
 
-		console.log(chalk.blue(`partial time log: ${JSON.stringify(partialTimeLog)}`));
+		this.logger.verbose(`Partial time log: ${JSON.stringify(partialTimeLog)}`);
 
 		// Execute the command to update the time log entry
 		lastLog = await this._commandBus.execute(
@@ -402,7 +408,7 @@ export class TimerService {
 				})
 			);
 
-			console.log('Conflicting Time Logs:', conflicts, {
+			this.logger.verbose('Conflicting Time Logs:', conflicts, {
 				ignoreId: lastLog.id,
 				startDate: lastLog.startedAt,
 				endDate: lastLog.stoppedAt,
@@ -430,7 +436,7 @@ export class TimerService {
 				}
 			}
 		} catch (error) {
-			console.warn('Error while handling conflicts in time logs:', error?.message);
+			this.logger.error('Error while handling conflicts in time logs', error);
 		}
 	}
 
@@ -454,9 +460,10 @@ export class TimerService {
 		// Handle the DESKTOP source case
 		if (request.source === TimeLogSourceEnum.DESKTOP) {
 			// Retrieve the most recent time slot from the last log
-			const lastTimeSlot: ITimeSlot | undefined = lastLog.timeSlots?.sort((a: ITimeSlot, b: ITimeSlot) =>
+			lastLog.timeSlots?.sort((a: ITimeSlot, b: ITimeSlot) =>
 				moment(b.startedAt).diff(a.startedAt)
-			)[0];
+			);
+			const lastTimeSlot: ITimeSlot | undefined = lastLog.timeSlots?.[0];
 			// Example:
 			// If lastLog.timeSlots = [{ startedAt: "2024-09-24 19:50:00", duration: 600 }, { startedAt: "2024-09-24 19:40:00", duration: 600 }]
 			// The sorted result will be [{ startedAt: "2024-09-24 19:50:00", duration: 600 }, { startedAt: "2024-09-24 19:40:00", duration: 600 }]
@@ -499,7 +506,7 @@ export class TimerService {
 			}
 		}
 
-		console.log('Last calculated stoppedAt: %s', stoppedAt);
+		this.logger.verbose(`Last calculated stoppedAt: ${stoppedAt}`);
 		// Example log output: "Last calculated stoppedAt: 2024-09-24 20:00:00"
 		return stoppedAt;
 	}
@@ -515,14 +522,15 @@ export class TimerService {
 	async calculateStoppedAt2(request: ITimerToggleInput, lastLog: ITimeLog): Promise<Date> {
 		// Retrieve stoppedAt date or default to the current date if not provided
 		let stoppedAt = moment.utc(request.stoppedAt ?? moment.utc()).toDate();
-		console.log('last stop request was at', stoppedAt);
+		this.logger.verbose(`Last stop request was at: ${stoppedAt}`);
 
 		// Handle the DESKTOP source case
 		if (request.source === TimeLogSourceEnum.DESKTOP) {
 			// Retrieve the most recent time slot from the last log
-			const lastTimeSlot: ITimeSlot | undefined = lastLog.timeSlots?.sort((a: ITimeSlot, b: ITimeSlot) =>
+			lastLog.timeSlots?.sort((a: ITimeSlot, b: ITimeSlot) =>
 				moment(b.startedAt).diff(a.startedAt)
-			)[0];
+			);
+			const lastTimeSlot: ITimeSlot | undefined = lastLog.timeSlots?.[0];
 
 			// Example:
 			// If lastLog.timeSlots = [{ startedAt: "2024-09-24 19:50:00", duration: 600 }, { startedAt: "2024-09-24 19:40:00", duration: 600 }]
@@ -539,7 +547,7 @@ export class TimerService {
 				// and the current time is "2024-09-24 20:10:00", the difference is 20 minutes, which is more than 10 minutes.
 
 				const difference = moment.utc(stoppedAt).diff(startedAt, 'minutes');
-				console.log(`Last time slot (${duration}) created ${difference} mins ago at ${startedAt}`);
+				this.logger.verbose(`Last time slot (${duration}) created ${difference} mins ago at ${startedAt.toISOString()}`);
 
 				// Check if the last time slot was created more than 10 minutes ago
 				if (difference > 10) {
@@ -554,7 +562,7 @@ export class TimerService {
 				// and the current time is "2024-09-24 20:00:00", the difference is 30 minutes.
 
 				const difference = moment.utc(stoppedAt).diff(startedAt, 'minutes');
-				console.log(`last log was created more than ${difference} minutes ago at ${startedAt}`);
+				this.logger.verbose(`Last log was created more than ${difference} minutes ago at ${startedAt.toISOString()}`);
 
 				// If no time slots exist and the difference is more than 10 minutes, adjust the stoppedAt
 				if (difference > 10) {
@@ -564,7 +572,7 @@ export class TimerService {
 			}
 		}
 
-		console.log('Final last calculated stoppedAt: %s', stoppedAt);
+		this.logger.verbose(`Final last calculated stoppedAt: ${stoppedAt}`);
 		// Example log output: "Last calculated stoppedAt: 2024-09-24 20:00:00"
 		return stoppedAt;
 	}
@@ -596,20 +604,20 @@ export class TimerService {
 	 */
 	async stopPreviousRunningTimers(employeeId: ID, organizationId: ID, tenantId: ID): Promise<void> {
 		try {
-			console.log(chalk.green('Start previous running timers...'));
+			this.logger.verbose('Stopping previous running timers...');
 			// Retrieve any existing running logs for the employee
 			const logs = await this.getLastRunningLogs();
-			console.log(chalk.blue('Last Running Logs Count:'), logs.length);
+			this.logger.verbose(`Last Running Logs Count: ${logs.length}`);
 
 			// If there are existing running logs, stop them before starting a new one
 			if (logs.length > 0) {
 				// Execute the ScheduleTimeLogEntriesCommand to stop all previous running timers
 				await this._commandBus.execute(new ScheduleTimeLogEntriesCommand(employeeId, organizationId, tenantId));
 			}
-			console.log(chalk.green('Stop previous running timers...'));
+			this.logger.verbose('Stopped previous running timers...');
 		} catch (error) {
 			// Log the error or handle it appropriately
-			console.log(chalk.red('Failed to stop previous running timers:'), error?.message);
+			this.logger.error('Failed to stop previous running timers', error);
 		}
 	}
 
@@ -661,15 +669,15 @@ export class TimerService {
 		// Determine whether to fetch a single log or multiple logs
 		return fetchAll
 			? await this.typeOrmTimeLogRepository.find({
-					where: whereClause,
-					order: { startedAt: 'DESC', createdAt: 'DESC' }
-			  })
+				where: whereClause,
+				order: { startedAt: 'DESC', createdAt: 'DESC' }
+			})
 			: await this.typeOrmTimeLogRepository.findOne({
-					where: whereClause,
-					order: { startedAt: 'DESC', createdAt: 'DESC' },
-					// Determine relations if includeTimeSlots is true
-					...(includeTimeSlots && { relations: { timeSlots: true } })
-			  });
+				where: whereClause,
+				order: { startedAt: 'DESC', createdAt: 'DESC' },
+				// Determine relations if includeTimeSlots is true
+				...(includeTimeSlots && { relations: { timeSlots: true } })
+			});
 	}
 
 	/**
@@ -726,76 +734,79 @@ export class TimerService {
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				const knex = this.mikroOrmTimeLogRepository.getKnex();
+				{
+					const knex = this.mikroOrmTimeLogRepository.getKnex();
 
-				// Construct your SQL query using knex
-				let sqlQuery = knex('time_log').select(knex.raw('DISTINCT ON ("time_log"."employeeId") *'));
+					// Construct your SQL query using knex
+					let sqlQuery = knex('time_log').select(knex.raw('DISTINCT ON ("time_log"."employeeId") *'));
 
-				// Builds an SQL query with specific where clauses.
-				sqlQuery.whereNotNull('startedAt');
-				sqlQuery.whereNotNull('stoppedAt');
-				sqlQuery.whereIn('employeeId', employeeIds);
-				sqlQuery.andWhere({
-					tenantId,
-					organizationId,
-					isActive: true,
-					isArchived: false
-				});
+					// Builds an SQL query with specific where clauses.
+					sqlQuery.whereNotNull('startedAt');
+					sqlQuery.whereNotNull('stoppedAt');
+					sqlQuery.whereIn('employeeId', employeeIds);
+					sqlQuery.andWhere({
+						tenantId,
+						organizationId,
+						isActive: true,
+						isArchived: false
+					});
 
-				if (source) {
-					sqlQuery = sqlQuery.andWhere({ source });
+					if (source) {
+						sqlQuery = sqlQuery.andWhere({ source });
+					}
+					if (organizationTeamId) {
+						sqlQuery = sqlQuery.andWhere({ organizationTeamId });
+					}
+
+					// Adds ordering to the SQL query.
+					sqlQuery = sqlQuery.orderBy([
+						{ column: 'employeeId', order: 'ASC' },
+						{ column: 'startedAt', order: 'DESC' },
+						{ column: 'createdAt', order: 'DESC' }
+					]);
+
+					// Execute the raw SQL query and get the results
+					const rawResults: TimeLog[] = (await knex.raw(sqlQuery)).rows || [];
+					const timeLogIds = rawResults.map((entry: TimeLog) => entry.id);
+
+					// Converts TypeORM find options to a format compatible with MikroORM for a given entity.
+					const { mikroOptions } = parseTypeORMFindToMikroOrm<TimeLog>({
+						...(request.relations ? { relations: request.relations } : {})
+					});
+
+					// Get last logs group by employees (running or completed);
+					lastLogs = (await this.mikroOrmTimeLogRepository.find({ id: { $in: timeLogIds } }, mikroOptions)).map(
+						(item: TimeLog) => wrapSerialize(item)
+					);
 				}
-				if (organizationTeamId) {
-					sqlQuery = sqlQuery.andWhere({ organizationTeamId });
-				}
-
-				// Adds ordering to the SQL query.
-				sqlQuery = sqlQuery.orderBy([
-					{ column: 'employeeId', order: 'ASC' },
-					{ column: 'startedAt', order: 'DESC' },
-					{ column: 'createdAt', order: 'DESC' }
-				]);
-
-				// Execute the raw SQL query and get the results
-				const rawResults: TimeLog[] = (await knex.raw(sqlQuery.toString())).rows || [];
-				const timeLogIds = rawResults.map((entry: TimeLog) => entry.id);
-
-				// Converts TypeORM find options to a format compatible with MikroORM for a given entity.
-				const { mikroOptions } = parseTypeORMFindToMikroOrm<TimeLog>({
-					...(request.relations ? { relations: request.relations } : {})
-				});
-
-				// Get last logs group by employees (running or completed);
-				lastLogs = (await this.mikroOrmTimeLogRepository.find({ id: { $in: timeLogIds } }, mikroOptions)).map(
-					(item: TimeLog) => wrapSerialize(item)
-				);
 				break;
 			case MultiORMEnum.TypeORM:
-				/**
-				 * Get last logs (running or completed)
-				 */
-				const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
-				// query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
-				query.setFindOptions({
-					...(request['relations'] ? { relations: request['relations'] } : {})
-				});
-				query.where({
-					startedAt: Not(IsNull()),
-					stoppedAt: Not(IsNull()),
-					employeeId: In(employeeIds),
-					tenantId,
-					organizationId,
-					isActive: true,
-					isArchived: false,
-					...(isNotEmpty(source) ? { source } : {}),
-					...(isNotEmpty(organizationTeamId) ? { organizationTeamId } : {})
-				});
-				query.orderBy(p(`"${query.alias}"."employeeId"`), 'ASC'); // Adjust ORDER BY to match the SELECT list
-				query.addOrderBy(p(`"${query.alias}"."startedAt"`), 'DESC');
-				query.addOrderBy(p(`"${query.alias}"."createdAt"`), 'DESC');
+				{
+					/**
+					 * Get last logs (running or completed)
+					 */
+					const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
+					query.setFindOptions({
+						...(request['relations'] ? { relations: request['relations'] } : {})
+					});
+					query.where({
+						startedAt: Not(IsNull()),
+						stoppedAt: Not(IsNull()),
+						employeeId: In(employeeIds),
+						tenantId,
+						organizationId,
+						isActive: true,
+						isArchived: false,
+						...(isNotEmpty(source) ? { source } : {}),
+						...(isNotEmpty(organizationTeamId) ? { organizationTeamId } : {})
+					});
+					query.orderBy(p(`"${query.alias}"."employeeId"`), 'ASC'); // Adjust ORDER BY to match the SELECT list
+					query.addOrderBy(p(`"${query.alias}"."startedAt"`), 'DESC');
+					query.addOrderBy(p(`"${query.alias}"."createdAt"`), 'DESC');
 
-				// Get last logs group by employees (running or completed)
-				lastLogs = await query.distinctOn([p(`"${query.alias}"."employeeId"`)]).getMany();
+					// Get last logs group by employees (running or completed)
+					lastLogs = await query.distinctOn([p(`"${query.alias}"."employeeId"`)]).getMany();
+				}
 				break;
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
@@ -808,13 +819,16 @@ export class TimerService {
 			const stoppedAt = lastLog?.stoppedAt ? moment(lastLog.stoppedAt) : moment().subtract(1, 'day'); // Default to 1 day ago if stoppedAt is not present
 
 			// Calculate the timer status
-			const timerStatus = running ? 'running' : moment().diff(stoppedAt, 'days') > 0 ? 'idle' : 'pause';
+			const statusByStoppedAt = moment().diff(stoppedAt, 'days') > 0 ? 'idle' : 'pause';
+			const timerStatus = running ? 'running' : statusByStoppedAt;
 
 			return {
 				duration,
 				running,
 				lastLog: lastLog ?? null,
-				timerStatus
+				timerStatus,
+				reWeeklyLimit: lastLog?.employee?.reWeeklyLimit ?? 0,
+				workedThisWeek: 0
 			};
 		});
 
