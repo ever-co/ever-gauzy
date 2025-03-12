@@ -22,7 +22,6 @@ import {
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { CloudinaryModule } from '@cloudinary/ng';
 import { FileUploadModule } from 'ng2-file-upload';
 import { CookieService } from 'ngx-cookie-service';
 import { FeatureToggleModule } from 'ngx-feature-toggle';
@@ -92,7 +91,6 @@ const NB_MODULES = [
 // Third Party Modules
 const THIRD_PARTY_MODULES = [
 	isProd ? [] : AkitaNgDevtools,
-	CloudinaryModule,
 	FeatureToggleModule,
 	FileUploadModule,
 	NgxPermissionsModule.forRoot(),
@@ -118,91 +116,91 @@ const FEATURE_MODULES = [
 
 @NgModule({
 	declarations: [AppComponent],
-    bootstrap: [AppComponent],
+	bootstrap: [AppComponent],
 	imports: [
 		BrowserModule,
-        BrowserAnimationsModule,
-        RouterModule.forRoot(appRoutes, config),
-        ...NB_MODULES,
-        ...FEATURE_MODULES,
-        ...THIRD_PARTY_MODULES
+		BrowserAnimationsModule,
+		RouterModule.forRoot(appRoutes, config),
+		...NB_MODULES,
+		...FEATURE_MODULES,
+		...THIRD_PARTY_MODULES
 	],
 	providers: [
-        {
-            provide: Sentry.TraceService,
-            deps: [Router]
-        },
-        { provide: APP_BASE_HREF, useValue: '/' },
-        {
-            provide: ErrorHandler,
-            useClass: SentryErrorHandler
-        },
-        {
-            provide: HTTP_INTERCEPTORS,
-            useClass: APIInterceptor,
-            multi: true
-        },
-        {
-            provide: HTTP_INTERCEPTORS,
-            useClass: HubstaffTokenInterceptor,
-            multi: true
-        },
-        {
-            provide: HTTP_INTERCEPTORS,
-            useClass: TokenInterceptor,
-            multi: true
-        },
-        {
-            provide: HTTP_INTERCEPTORS,
-            useClass: LanguageInterceptor,
-            multi: true
-        },
-        {
-            provide: HTTP_INTERCEPTORS,
-            useClass: TenantInterceptor,
-            multi: true
-        },
-        ServerConnectionService,
-        {
-            provide: APP_INITIALIZER,
-            useFactory: serverConnectionFactory,
-            deps: [ServerConnectionService, Store, Router],
-            multi: true
-        },
-        GoogleMapsLoaderService,
-        {
-            provide: APP_INITIALIZER,
-            useFactory: googleMapsLoaderFactory,
-            deps: [GoogleMapsLoaderService],
-            multi: true
-        },
-        FeatureService,
-        {
-            provide: APP_INITIALIZER,
-            useFactory: featureToggleLoaderFactory,
-            deps: [FeatureService, Store],
-            multi: true
-        },
-        AppInitService,
-        {
-            provide: APP_INITIALIZER,
-            useFactory: initializeApp,
-            deps: [AppInitService],
-            multi: true
-        },
-        {
-            provide: ErrorHandler,
-            useClass: SentryErrorHandler
-        },
-        AppModuleGuard,
-        ColorPickerService,
-        CookieService,
-        {
-            provide: GAUZY_ENV,
-            useValue: environment
-        },
-        provideHttpClient(withInterceptorsFromDi())
-    ]
+		{
+			provide: Sentry.TraceService,
+			deps: [Router]
+		},
+		{ provide: APP_BASE_HREF, useValue: '/' },
+		{
+			provide: ErrorHandler,
+			useClass: SentryErrorHandler
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: APIInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: HubstaffTokenInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: TokenInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: LanguageInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: TenantInterceptor,
+			multi: true
+		},
+		ServerConnectionService,
+		{
+			provide: APP_INITIALIZER,
+			useFactory: serverConnectionFactory,
+			deps: [ServerConnectionService, Store, Router],
+			multi: true
+		},
+		GoogleMapsLoaderService,
+		{
+			provide: APP_INITIALIZER,
+			useFactory: googleMapsLoaderFactory,
+			deps: [GoogleMapsLoaderService],
+			multi: true
+		},
+		FeatureService,
+		{
+			provide: APP_INITIALIZER,
+			useFactory: featureToggleLoaderFactory,
+			deps: [FeatureService, Store],
+			multi: true
+		},
+		AppInitService,
+		{
+			provide: APP_INITIALIZER,
+			useFactory: initializeApp,
+			deps: [AppInitService],
+			multi: true
+		},
+		{
+			provide: ErrorHandler,
+			useClass: SentryErrorHandler
+		},
+		AppModuleGuard,
+		ColorPickerService,
+		CookieService,
+		{
+			provide: GAUZY_ENV,
+			useValue: environment
+		},
+		provideHttpClient(withInterceptorsFromDi())
+	]
 })
 export class AppModule {
 	/**
