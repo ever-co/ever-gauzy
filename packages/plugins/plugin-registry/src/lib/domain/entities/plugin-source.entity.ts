@@ -1,9 +1,17 @@
-import { PluginSourceType } from '@gauzy/contracts';
-import { MultiORMColumn, MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
+import { ID, PluginSourceType } from '@gauzy/contracts';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMOneToOne,
+	TenantOrganizationBaseEntity
+} from '@gauzy/core';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min, Matches } from 'class-validator';
-import { MikroOrmPluginSourceRepository } from '../repositories/mikro-orm-plugin-source-repository';
+import { MikroOrmPluginSourceRepository } from '../repositories/mikro-orm-plugin-source.repository';
+import { JoinColumn, RelationId } from 'typeorm';
+import { Plugin } from './plugin.entity';
 
 @MultiORMEntity('plugin_source', { mikroOrmRepository: () => MikroOrmPluginSourceRepository })
 export class PluginSource extends TenantOrganizationBaseEntity {
@@ -89,4 +97,14 @@ export class PluginSource extends TenantOrganizationBaseEntity {
 	@Matches(/^application\/zip$/, { message: 'MIME type must be application/zip' })
 	@MultiORMColumn({ nullable: true })
 	mimeType?: string;
+
+	@ApiProperty({ type: () => Plugin, description: 'Plugin associated with the source', required: true })
+	@MultiORMOneToOne(() => Plugin, (plugin: Plugin) => plugin.source, { nullable: true })
+	@JoinColumn()
+	plugin?: Plugin;
+
+	@RelationId((source: PluginSource) => source.plugin)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	pluginId?: ID;
 }

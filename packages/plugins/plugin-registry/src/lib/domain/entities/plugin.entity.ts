@@ -12,7 +12,7 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { JoinColumn, RelationId } from 'typeorm';
-import { MikroOrmPluginRepository } from '../repositories/mikro-orm-plugin-repository';
+import { MikroOrmPluginRepository } from '../repositories/mikro-orm-plugin.repository';
 import { PluginVersion } from './plugin-version.entity';
 import { PluginSource } from './plugin-source.entity';
 
@@ -85,7 +85,7 @@ export class Plugin extends TenantOrganizationBaseEntity {
 	uploadedAt?: Date;
 
 	@ApiProperty({ type: () => PluginSource, description: 'Source of plugin', required: false })
-	@MultiORMOneToOne(() => PluginSource, { nullable: true })
+	@MultiORMOneToOne(() => PluginSource, (source) => source.plugin, { nullable: true })
 	@JoinColumn()
 	source?: PluginSource;
 

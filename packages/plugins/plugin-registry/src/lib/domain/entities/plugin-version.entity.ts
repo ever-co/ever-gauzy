@@ -8,9 +8,10 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, Min, ValidateIf } from 'class-validator';
-import { MikroOrmPluginVersionRepository } from '../repositories/mikro-orm-plugin-version-repository';
+import { MikroOrmPluginVersionRepository } from '../repositories/mikro-orm-plugin-version.repository';
 import { Plugin } from './plugin.entity';
-import { JoinColumn } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
+import { ID } from '@gauzy/contracts';
 
 @MultiORMEntity('plugin_version', { mikroOrmRepository: () => MikroOrmPluginVersionRepository })
 export class PluginVersion extends TenantOrganizationBaseEntity {
@@ -52,4 +53,9 @@ export class PluginVersion extends TenantOrganizationBaseEntity {
 	@MultiORMManyToOne(() => Plugin, (plugin) => plugin.versions, { nullable: true })
 	@JoinColumn()
 	plugin?: Plugin;
+
+	@RelationId((version: PluginVersion) => version.plugin)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	pluginId?: ID;
 }
