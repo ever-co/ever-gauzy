@@ -36,7 +36,7 @@
 		"@nestjs/common": "^10.4.15",
 		"@nestjs/cqrs": "^10.2.8",
 		"@nestjs/swagger": "^8.1.0",
-		"axios": "^1.7.4",
+		"axios": "^1.8.2",
 		"express": "^4.21.2",
 		"moment": "^2.30.1",
 		"rxjs": "^7.8.0",

@@ -38,8 +38,6 @@
 		"@angular/router": "18.2.12",
 		"@angular/service-worker": "18.2.12",
 		"@asymmetrik/ngx-leaflet": "^18.0.1",
-		"@cloudinary/ng": "^2.0.0",
-		"@cloudinary/url-gen": "^1.14.0",
 		"@datorama/akita": "^8.0.1",
 		"@datorama/akita-ngdevtools": "^7.0.0",
 		"@electron/remote": "^2.0.8",

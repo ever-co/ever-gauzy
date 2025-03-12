@@ -1,39 +1,38 @@
 @import 'gauzy/_gauzy-table';
 
 .custom-table {
-	background-color: var(--gauzy-card-2);
-	margin: 0;
-	display: flex;
-	flex-direction: column;
-	padding: 8px 4px 0px;
-	border-radius: var(--border-radius);
-	height: calc(100vh - 11.4rem);
-	width: auto;
+  background-color: var(--gauzy-card-2);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 4px 0px;
+  border-radius: var(--border-radius);
+  height: calc(100vh - 15.5rem);
+  width: auto;
 
-	.table-scroll-container {
-		flex-grow: 10;
-		max-height: unset;
-		padding: 0 4px 0;
-		margin-bottom: 8px;
-		overflow-x: hidden;
-	}
+  .table-scroll-container {
+    flex-grow: 10;
+    max-height: unset;
+    padding: 0 4px 0;
+    margin-bottom: 8px;
+    overflow-x: hidden;
+  }
 }
 
 .button-container,
 .button-hide {
-	display: flex;
-	justify-content: flex-end;
-	align-items: center;
-	gap: 0.5rem;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .no-data {
-	height: 550px;
-	width: 100%;
-	padding: 0 10px;
+  height: 552px;
+  width: 100%;
 }
 
 .danger {
-	color: var(--icon-danger-color) !important;
-	background-color: #ff00002b !important;
+  color: var(--icon-danger-color) !important;
+  background-color: #ff00002b !important;
 }

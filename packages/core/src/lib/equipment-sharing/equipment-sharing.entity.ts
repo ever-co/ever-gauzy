@@ -1,6 +1,14 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import { RelationId, JoinTable, JoinColumn } from 'typeorm';
-import { IEmployee, IEquipment, IEquipmentSharing, IEquipmentSharingPolicy, IOrganizationTeam } from '@gauzy/contracts';
-import { ApiProperty } from '@nestjs/swagger';
+import {
+	ID,
+	IEmployee,
+	IEquipment,
+	IEquipmentSharing,
+	IEquipmentSharingPolicy,
+	IOrganizationTeam
+} from '@gauzy/contracts';
 import {
 	Employee,
 	Equipment,
@@ -19,79 +27,112 @@ import { MikroOrmEquipmentSharingRepository } from './repository/mikro-orm-equip
 
 @MultiORMEntity('equipment_sharing', { mikroOrmRepository: () => MikroOrmEquipmentSharingRepository })
 export class EquipmentSharing extends TenantOrganizationBaseEntity implements IEquipmentSharing {
-	@ApiProperty({ type: () => String })
+	/**
+	 * Represents the name of the equipment sharing record.
+	 * This optional string field may be used to label or identify the sharing entry.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@MultiORMColumn({ nullable: true })
 	name: string;
 
-	@ApiProperty({ type: () => Date })
+	/**
+	 * Represents the date when the share request was initiated.
+	 * This optional field captures the moment a sharing request was made.
+	 */
+	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
 	@MultiORMColumn({ nullable: true })
 	shareRequestDay: Date;
 
-	@ApiProperty({ type: () => Date })
+	/**
+	 * Represents the starting date of the equipment sharing period.
+	 * This optional field indicates when the sharing period begins.
+	 */
+	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
 	@MultiORMColumn({ nullable: true })
 	shareStartDay: Date;
 
-	@ApiProperty({ type: () => Date })
+	/**
+	 * Represents the ending date of the equipment sharing period.
+	 * This optional field indicates when the sharing period ends.
+	 */
+	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
 	@MultiORMColumn({ nullable: true })
 	shareEndDay: Date;
 
+	/**
+	 * Represents the status of the equipment sharing record.
+	 * This mandatory numeric field is used to reflect the current state or phase of the sharing process.
+	 */
+	@ApiProperty({ type: () => Number })
+	@IsNumber()
 	@MultiORMColumn()
 	status: number;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@MultiORMColumn({ nullable: true })
-	createdBy: string;
-
-	@ApiProperty({ type: () => String })
-	@MultiORMColumn({ nullable: true })
-	createdByName: string;
 
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
-
 	/**
-	 * Equipment
+	 * The equipment for which this sharing is created.
 	 */
-	@ApiProperty({ type: () => Equipment })
+	@ApiPropertyOptional({ type: () => Equipment })
+	@IsOptional()
+	@IsObject()
 	@MultiORMManyToOne(() => Equipment, (equipment) => equipment.equipmentSharings, {
-		onDelete: 'CASCADE'
+		nullable: true, // Indicates if relation column value can be nullable or not.
+		onDelete: 'CASCADE' // Database cascade action on delete.
 	})
 	@JoinColumn()
 	equipment: IEquipment;
 
-	@ApiProperty({ type: () => String })
+	/**
+	 * The ID unique identifier of the equipment.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((it: EquipmentSharing) => it.equipment)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	equipmentId: IEquipment['id'];
+	equipmentId: ID;
 
 	/**
 	 * Equipment
 	 */
-	@ApiProperty({ type: () => EquipmentSharingPolicy })
+	@ApiPropertyOptional({ type: () => EquipmentSharingPolicy })
+	@IsOptional()
+	@IsObject()
 	@MultiORMManyToOne(() => EquipmentSharingPolicy, (it) => it.equipmentSharings, {
-		onDelete: 'CASCADE'
+		nullable: true, // Indicates if relation column value can be nullable or not.
+		onDelete: 'CASCADE' // Database cascade action on delete.
 	})
 	@JoinColumn()
 	equipmentSharingPolicy: IEquipmentSharingPolicy;
 
-	@ApiProperty({ type: () => String })
+	/**
+	 * The ID unique identifier of the equipment sharing policy.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
 	@RelationId((it: EquipmentSharing) => it.equipmentSharingPolicy)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	equipmentSharingPolicyId: IEquipmentSharingPolicy['id'];
+	equipmentSharingPolicyId: ID;
 
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToMany
 	|--------------------------------------------------------------------------
 	*/
-
 	/**
-	 * Employee
+	 * The employees who are sharing the equipment.
 	 */
 	@MultiORMManyToMany(() => Employee, (it) => it.equipmentSharings, {
 		onUpdate: 'CASCADE',
@@ -107,7 +148,7 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity implements IE
 	employees?: IEmployee[];
 
 	/**
-	 * OrganizationTeam
+	 * The organization teams who are sharing the equipment.
 	 */
 	@MultiORMManyToMany(() => OrganizationTeam, (it) => it.equipmentSharings, {
 		onUpdate: 'CASCADE',

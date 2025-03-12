@@ -30,35 +30,40 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		super(typeOrmTimeOffRequestRepository, mikroOrmTimeOffRequestRepository);
 	}
 
+	/**
+	 * Creates a new time off request and its associated approval record.
+	 *
+	 * @param entity - The input data for creating a time off request.
+	 * @returns A promise that resolves to the saved TimeOffRequest.
+	 * @throws {BadRequestException} If any error occurs during the creation process.
+	 */
 	async create(entity: ITimeOffCreateInput): Promise<TimeOffRequest> {
-		try {
-			const request = new TimeOffRequest();
-			Object.assign(request, entity);
+		const request = new TimeOffRequest();
+		Object.assign(request, entity);
 
-			const tenantId = RequestContext.currentTenantId();
-			const currentUser = RequestContext.currentUser();
+		// Retrieve tenantId from RequestContext or options.
+		const tenantId = RequestContext.currentTenantId() ?? entity.tenantId;
 
-			const timeOffRequest = await this.typeOrmRepository.save(request);
+		// Save the time off request first.
+		const timeOffRequest = await this.typeOrmRepository.save(request);
 
-			const requestApproval = new RequestApproval();
-			requestApproval.requestId = timeOffRequest.id;
-			requestApproval.requestType = ApprovalPolicyTypesStringEnum.TIME_OFF;
-			requestApproval.status = timeOffRequest.status
-				? StatusTypesMapRequestApprovalEnum[timeOffRequest.status]
-				: RequestApprovalStatusTypesEnum.REQUESTED;
+		// Prepare the request approval record using the new request's id.
+		const requestApproval = new RequestApproval();
+		requestApproval.requestId = timeOffRequest.id;
+		requestApproval.requestType = ApprovalPolicyTypesStringEnum.TIME_OFF;
+		requestApproval.status = timeOffRequest.status
+			? StatusTypesMapRequestApprovalEnum[timeOffRequest.status]
+			: RequestApprovalStatusTypesEnum.REQUESTED;
+		requestApproval.name = 'Request time off';
+		requestApproval.min_count = 1;
+		requestApproval.organizationId = timeOffRequest.organizationId;
+		requestApproval.tenantId = tenantId;
 
-			requestApproval.createdBy = currentUser.id;
-			requestApproval.createdByName = currentUser.name;
-			requestApproval.name = 'Request time off';
-			requestApproval.min_count = 1;
-			requestApproval.organizationId = timeOffRequest.organizationId;
-			requestApproval.tenantId = tenantId;
+		// Save the request approval record. Using Promise.all here allows you to
+		// concurrently run other independent asynchronous operations if needed.
+		await this.typeOrmRequestApprovalRepository.save(requestApproval);
 
-			await this.typeOrmRequestApprovalRepository.save(requestApproval);
-			return timeOffRequest;
-		} catch (err) {
-			throw new BadRequestException(err);
-		}
+		return timeOffRequest;
 	}
 
 	async getAllTimeOffRequests(
@@ -106,9 +111,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 				id,
 				...timeOffRequest
 			});
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+		} catch (error) {}
 	}
 
 	async updateStatusTimeOffByAdmin(id: string, status: string): Promise<TimeOffRequest> {

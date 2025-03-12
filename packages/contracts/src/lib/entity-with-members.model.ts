@@ -1,16 +1,14 @@
 import { IEmployee } from './employee.model';
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { ITag } from './tag.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
+import { ITaggable } from './tag.model';
 
-export interface IBaseEntityWithMembers
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IBaseEntityWithMembers extends IBasePerTenantAndOrganizationEntityModel, ITaggable {
 	members?: IEmployee[];
 	name?: string;
-	tags?: ITag[];
 }
 
 export interface IEditEntityByMemberInput extends IBasePerTenantAndOrganizationEntityModel {
-	addedEntityIds?: string[];
-	removedEntityIds?: string[];
+	addedEntityIds?: ID[];
+	removedEntityIds?: ID[];
 	member: IEmployee;
 }
