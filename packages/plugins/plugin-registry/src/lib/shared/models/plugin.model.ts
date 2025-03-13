@@ -1,1 +1,22 @@
-export interface IPlugin {}
+import { IBasePerTenantAndOrganizationEntityModel, ID, IEmployee } from '@gauzy/contracts';
+import { IPluginSource } from './plugin-source.model';
+import { IPluginVersion } from './plugin-version.model';
+
+export interface IPlugin extends IBasePerTenantAndOrganizationEntityModel {
+	versions: IPluginVersion[]; // List of plugin versions
+
+	author?: string; // Optional author information
+	license?: string; // Optional license information
+	homepage?: string; // Optional homepage URL
+	repository?: string; // Optional repository URL
+
+	uploadedBy?: IEmployee; // Employee who uploaded the plugin
+	uploadedById?: ID; // ID reference for the employee who uploaded the plugin
+	uploadedAt?: Date; // Optional date when the plugin was uploaded
+
+	source?: IPluginSource; // Optional reference to the plugin's source
+	sourceId?: ID; // ID reference for the plugin's source
+
+	downloadCount: number; // Number of times the plugin has been downloaded
+	lastDownloadedAt?: Date; // Optional date when the plugin was last downloaded
+}
