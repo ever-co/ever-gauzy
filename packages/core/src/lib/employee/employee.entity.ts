@@ -155,8 +155,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
-	@Transform((params: TransformFnParams) => parseInt(params.value || 0, 10))
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, type: 'numeric', transformer: new ColumnNumericTransformerPipe() })
 	reWeeklyLimit?: number; // Recurring Weekly Limit (hours)
 
 	@ApiPropertyOptional({ type: () => Date })
