@@ -149,7 +149,7 @@ export class ProductUpdateHandler implements ICommandHandler<ProductUpdateComman
 						optionsTranslationEntities.filter((tr) => !!tr)
 					);
 
-					if (optionEntity && isNewOption) {
+					if (isNewOption) {
 						group.options.push(optionEntity);
 					}
 				}
