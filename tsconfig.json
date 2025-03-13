@@ -27,6 +27,7 @@
 			"@gauzy/plugin-integration-hubstaff-ui": ["./packages/plugins/integration-hubstaff-ui/src/index.ts"],
 			"@gauzy/plugin-integration-jira": ["./packages/plugins/integration-jira/src/index.ts"],
 			"@gauzy/plugin-integration-make-com": ["./packages/plugins/integration-make-com/src/index.ts"],
+			"@gauzy/plugin-integration-zapier": ["packages/plugins/integration-zapier/src/index.ts"],
 			"@gauzy/plugin-integration-upwork": ["./packages/plugins/integration-upwork/src/index.ts"],
 			"@gauzy/plugin-integration-upwork-ui": ["./packages/plugins/integration-upwork-ui/src/index.ts"],
 			"@gauzy/plugin-integration-wakatime": ["./packages/plugins/integration-wakatime/src/index.ts"],
