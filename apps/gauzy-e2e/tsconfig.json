@@ -1,12 +1,17 @@
 {
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
+		"outDir": "../../dist/out-tsc/apps/gauzy-e2e",
+		"module": "commonjs",
+		"target": "es5",
+		"sourceMap": false,
+		"inlineSourceMap": true,
 		"types": [
-			"cypress",
-			"cypress-file-upload",
-			"@4tw/cypress-drag-drop",
-			"node"
+			"node",
+			"cypress"
 		]
 	},
-	"include": ["**/*.ts"]
+	"include": [
+		"src/**/*.ts"
+	]
 }
