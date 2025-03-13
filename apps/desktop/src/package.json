@@ -55,6 +55,7 @@
 		"artifactName": "${name}-${version}.${ext}",
 		"productName": "Ever Gauzy Desktop",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
+		"afterSign": "tools/notarize.js",
 		"dmg": {
 			"sign": false
 		},
