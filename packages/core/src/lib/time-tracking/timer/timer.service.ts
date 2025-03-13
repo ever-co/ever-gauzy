@@ -14,7 +14,8 @@ import {
 	ITimeSlot,
 	IEmployee,
 	IEmployeeFindInput,
-	ID
+	ID,
+	ITimerStatusWithWeeklyLimits
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { environment as env } from '@gauzy/config';
@@ -59,7 +60,7 @@ export class TimerService {
 		private readonly _employeeService: EmployeeService,
 		private readonly _statisticService: StatisticService,
 		private readonly _commandBus: CommandBus
-	) { }
+	) {}
 
 	/**
 	 * Fetches an employee based on the provided query.
@@ -85,7 +86,7 @@ export class TimerService {
 	 * @param request
 	 * @returns
 	 */
-	async getTimerStatus(request: ITimerStatusInput): Promise<ITimerStatus> {
+	async getTimerStatus(request: ITimerStatusInput): Promise<ITimerStatusWithWeeklyLimits> {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, source, todayStart, todayEnd } = request;
 
@@ -173,20 +174,21 @@ export class TimerService {
 				throw new Error(`Not implemented for ${ormType}`);
 		}
 
+		// Get weekly statistics
 		const statistics = await this._statisticService.getWeeklyStatisticsActivities({
-			employeeId,
 			organizationId,
 			tenantId,
-			startedAt: start,
-			endedAt: end
+			employeeId: employee.id,
+			startDate: moment(start).startOf('week').toDate(),
+			endDate: moment(end).endOf('week').toDate()
 		});
 
-		const status: ITimerStatus = {
+		const status: ITimerStatusWithWeeklyLimits = {
 			duration: 0,
 			running: false,
 			lastLog: null,
 			reWeeklyLimit: employee.reWeeklyLimit,
-			workedThisWeek: 0
+			workedThisWeek: statistics.duration
 		};
 
 		// Calculate completed timelogs duration
@@ -214,18 +216,17 @@ export class TimerService {
 	 */
 	async checkForPeriodicSave(lastLog: TimeLog) {
 		// Check if periodic time save is enabled and the timer is valid and running for the source WEB_TIMER
-		if (!env.periodicTimeSave || !lastLog || !lastLog.isRunning || lastLog.source !== TimeLogSourceEnum.WEB_TIMER) return;
+		if (!env.periodicTimeSave || !lastLog || !lastLog.isRunning || lastLog.source !== TimeLogSourceEnum.WEB_TIMER)
+			return;
 
 		const now = moment();
 		const durationSinceLastEndTime = Math.abs(now.diff(moment(lastLog.stoppedAt), 'seconds'));
 		if (durationSinceLastEndTime > env.periodicTimeSaveTimeframe) {
 			const newStoppedAt = now.toDate();
 			const partialTimeLog: Partial<ITimeLog> = {
-				stoppedAt: newStoppedAt,
+				stoppedAt: newStoppedAt
 			};
-			await this._commandBus.execute(
-				new TimeLogUpdateCommand(partialTimeLog, lastLog.id)
-			);
+			await this._commandBus.execute(new TimeLogUpdateCommand(partialTimeLog, lastLog.id));
 		}
 	}
 
@@ -346,7 +347,9 @@ export class TimerService {
 
 		// Log the case where stoppedAt is less than startedAt
 		if (stoppedAt < lastLog.startedAt) {
-			this.logger.warn(`stoppedAt (${stoppedAt}) is less than startedAt (${lastLog.startedAt}), skipping stoppedAt update.`);
+			this.logger.warn(
+				`stoppedAt (${stoppedAt}) is less than startedAt (${lastLog.startedAt}), skipping stoppedAt update.`
+			);
 		}
 
 		// Construct the update payload, conditionally excluding stoppedAt if it shouldn't be updated
@@ -460,9 +463,7 @@ export class TimerService {
 		// Handle the DESKTOP source case
 		if (request.source === TimeLogSourceEnum.DESKTOP) {
 			// Retrieve the most recent time slot from the last log
-			lastLog.timeSlots?.sort((a: ITimeSlot, b: ITimeSlot) =>
-				moment(b.startedAt).diff(a.startedAt)
-			);
+			lastLog.timeSlots?.sort((a: ITimeSlot, b: ITimeSlot) => moment(b.startedAt).diff(a.startedAt));
 			const lastTimeSlot: ITimeSlot | undefined = lastLog.timeSlots?.[0];
 			// Example:
 			// If lastLog.timeSlots = [{ startedAt: "2024-09-24 19:50:00", duration: 600 }, { startedAt: "2024-09-24 19:40:00", duration: 600 }]
@@ -527,9 +528,7 @@ export class TimerService {
 		// Handle the DESKTOP source case
 		if (request.source === TimeLogSourceEnum.DESKTOP) {
 			// Retrieve the most recent time slot from the last log
-			lastLog.timeSlots?.sort((a: ITimeSlot, b: ITimeSlot) =>
-				moment(b.startedAt).diff(a.startedAt)
-			);
+			lastLog.timeSlots?.sort((a: ITimeSlot, b: ITimeSlot) => moment(b.startedAt).diff(a.startedAt));
 			const lastTimeSlot: ITimeSlot | undefined = lastLog.timeSlots?.[0];
 
 			// Example:
@@ -547,7 +546,9 @@ export class TimerService {
 				// and the current time is "2024-09-24 20:10:00", the difference is 20 minutes, which is more than 10 minutes.
 
 				const difference = moment.utc(stoppedAt).diff(startedAt, 'minutes');
-				this.logger.verbose(`Last time slot (${duration}) created ${difference} mins ago at ${startedAt.toISOString()}`);
+				this.logger.verbose(
+					`Last time slot (${duration}) created ${difference} mins ago at ${startedAt.toISOString()}`
+				);
 
 				// Check if the last time slot was created more than 10 minutes ago
 				if (difference > 10) {
@@ -562,7 +563,9 @@ export class TimerService {
 				// and the current time is "2024-09-24 20:00:00", the difference is 30 minutes.
 
 				const difference = moment.utc(stoppedAt).diff(startedAt, 'minutes');
-				this.logger.verbose(`Last log was created more than ${difference} minutes ago at ${startedAt.toISOString()}`);
+				this.logger.verbose(
+					`Last log was created more than ${difference} minutes ago at ${startedAt.toISOString()}`
+				);
 
 				// If no time slots exist and the difference is more than 10 minutes, adjust the stoppedAt
 				if (difference > 10) {
@@ -648,10 +651,7 @@ export class TimerService {
 	 * @param includeTimeSlots - Set to `true` to include the associated time slots in the result
 	 * @returns A single time log if `fetchAll` is `false`, or an array of time logs if `fetchAll` is `true`
 	 */
-	private async getRunningLogs(
-		fetchAll = false,
-		includeTimeSlots = false
-	): Promise<ITimeLog | ITimeLog[]> {
+	private async getRunningLogs(fetchAll = false, includeTimeSlots = false): Promise<ITimeLog | ITimeLog[]> {
 		const tenantId = RequestContext.currentTenantId(); // Retrieve the tenant ID from the current context
 
 		// Extract employeeId and organizationId
@@ -669,15 +669,15 @@ export class TimerService {
 		// Determine whether to fetch a single log or multiple logs
 		return fetchAll
 			? await this.typeOrmTimeLogRepository.find({
-				where: whereClause,
-				order: { startedAt: 'DESC', createdAt: 'DESC' }
-			})
+					where: whereClause,
+					order: { startedAt: 'DESC', createdAt: 'DESC' }
+			  })
 			: await this.typeOrmTimeLogRepository.findOne({
-				where: whereClause,
-				order: { startedAt: 'DESC', createdAt: 'DESC' },
-				// Determine relations if includeTimeSlots is true
-				...(includeTimeSlots && { relations: { timeSlots: true } })
-			});
+					where: whereClause,
+					order: { startedAt: 'DESC', createdAt: 'DESC' },
+					// Determine relations if includeTimeSlots is true
+					...(includeTimeSlots && { relations: { timeSlots: true } })
+			  });
 	}
 
 	/**
@@ -775,9 +775,9 @@ export class TimerService {
 					});
 
 					// Get last logs group by employees (running or completed);
-					lastLogs = (await this.mikroOrmTimeLogRepository.find({ id: { $in: timeLogIds } }, mikroOptions)).map(
-						(item: TimeLog) => wrapSerialize(item)
-					);
+					lastLogs = (
+						await this.mikroOrmTimeLogRepository.find({ id: { $in: timeLogIds } }, mikroOptions)
+					).map((item: TimeLog) => wrapSerialize(item));
 				}
 				break;
 			case MultiORMEnum.TypeORM:
