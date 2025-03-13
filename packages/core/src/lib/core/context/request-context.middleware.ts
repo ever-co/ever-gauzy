@@ -26,6 +26,7 @@ export class RequestContextMiddleware implements NestMiddleware {
 	use(req: Request, res: Response, next: NextFunction) {
 		// Start a new context using the ClsService
 		this.clsService.run(() => {
+			const reqStartTime = process.hrtime();
 			const correlationId = req.headers['x-correlation-id'] as ID; // Retrieve the correlation ID from the request headers
 			const id = correlationId ?? uuidv4(); // If no correlation ID is provided, generate a new one
 
@@ -45,11 +46,14 @@ export class RequestContextMiddleware implements NestMiddleware {
 			const originalEnd = res.end.bind(res);
 
 			// Override the res.end function to log when the response finishes
-			res.end = (...args: any[]): Response => {
+			res.end = (...args: unknown[]): Response => {
 				if (this.loggingEnabled) {
 					const contextId = RequestContext.getContextId();
+					const reqEndTime = process.hrtime(reqStartTime);
+					// Convert duration to integer value (milliseconds)
+					const duration = Math.floor(reqEndTime[0] * 1000 + reqEndTime[1] / 1000000);
 					this.logger.log(
-						`Context ${contextId}: ${req.method} request to ${fullUrl} completed with status ${res.statusCode}.`
+						`Context ${contextId}: ${req.method} request to ${fullUrl} completed with: Status ${res.statusCode}, Duration: ${duration}ms`
 					);
 				}
 
