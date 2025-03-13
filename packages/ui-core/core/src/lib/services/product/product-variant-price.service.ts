@@ -6,7 +6,7 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 
 @Injectable()
 export class ProductVariantPriceService {
-	PRODUCT_VARIANT_PRICE_URL = `${API_PREFIX}/product-variant-prices`;
+	PRODUCT_VARIANT_PRICE_URL = `${API_PREFIX}/product-variant-price`;
 
 	constructor(private http: HttpClient) {}
 

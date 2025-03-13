@@ -171,6 +171,9 @@ export class OptionsFormComponent implements OnInit {
 	}
 
 	onCreateOptionClick() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization;
+
 		if (!this.activeOptionGroup) return;
 
 		let formValue = this.form.value;
@@ -181,6 +184,8 @@ export class OptionsFormComponent implements OnInit {
 			formOptionId: this.generateUniqueId(),
 			name: formValue['activeOptionName'],
 			code: formValue['activeOptionCode'],
+			organizationId,
+			tenantId,
 			translations: [
 				{
 					name: formValue['activeOptionName'],
