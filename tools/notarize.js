@@ -22,7 +22,8 @@ exports.default = async (context) => {
 	}
 
 	if (!APPLE_ID || !APPLE_ID_APP_PASSWORD) {
-		throw new Error('`APPLE_ID` or `APPLE_ID_APP_PASSWORD` is missing');
+		console.warn('WARN: `APPLE_ID` or `APPLE_ID_APP_PASSWORD` is missing');
+		return;
 	}
 
 	try {

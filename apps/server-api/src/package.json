@@ -53,6 +53,7 @@
 		"artifactName": "${name}-${version}.${ext}",
 		"productName": "DSpot ERP API Server",
 		"copyright": "Copyright © 2025-Present. DSpot sp. z o.o.",
+		"afterSign": "tools/notarize.js",
 		"dmg": {
 			"sign": false
 		},
