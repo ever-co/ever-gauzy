@@ -1,0 +1,43 @@
+{
+	"name": "plugin-integration-zapier",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/integration-zapier/src",
+	"projectType": "library",
+	"release": {
+		"version": {
+			"generatorOptions": {
+				"packageRoot": "dist/{projectRoot}",
+				"currentVersionResolver": "git-tag"
+			}
+		}
+	},
+	"tags": [],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "dist/packages/plugins/integration-zapier",
+				"tsConfig": "packages/plugins/integration-zapier/tsconfig.lib.json",
+				"packageJson": "packages/plugins/integration-zapier/package.json",
+				"main": "packages/plugins/integration-zapier/src/index.ts",
+				"assets": ["packages/plugins/integration-zapier/*.md"]
+			}
+		},
+		"nx-release-publish": {
+			"options": {
+				"packageRoot": "dist/{projectRoot}"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/plugins/integration-zapier/jest.config.ts"
+			}
+		}
+	}
+}
