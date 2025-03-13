@@ -46,6 +46,7 @@
 		"artifactName": "${name}-${version}.${ext}",
 		"productName": "Gauzy Server",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
+		"afterSign": "tools/notarize.js",
 		"dmg": {
 			"sign": false
 		},
