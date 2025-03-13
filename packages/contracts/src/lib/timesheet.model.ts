@@ -190,7 +190,7 @@ export interface ITimeLogFilters extends IBasePerTenantAndOrganizationEntityMode
 		end: number;
 	};
 	defaultRange?: boolean;
-	unitOfTime?: unitOfTime.StartOf | string;
+	unitOfTime?: string;
 	categoryId?: ID;
 	timeZone?: string;
 	timeFormat?: TimeFormatEnum;
@@ -318,9 +318,13 @@ export interface ITimerStatus {
 	lastLog?: ITimeLog;
 	lastWorkedTask?: ITask;
 	timerStatus?: 'running' | 'pause' | 'idle';
+}
+
+export interface ITimerStatusWithWeeklyLimits extends ITimerStatus {
 	reWeeklyLimit: number;
 	workedThisWeek: number;
 }
+
 export interface TimerState {
 	showTimerWindow: boolean;
 	duration: number;

@@ -1,8 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { reduce, pluck, pick, mapObject, groupBy, chain } from 'underscore';
 import * as moment from 'moment';
-import * as chalk from 'chalk';
 import {
 	PermissionsEnum,
 	IGetActivitiesStatistics,
@@ -21,7 +20,7 @@ import {
 	TimeLogType,
 	ITimeLog,
 	IWeeklyStatisticsActivities,
-	ITodayStatisticsActivities
+	ITodayStatisticsActivities,
 } from '@gauzy/contracts';
 import { ArraySum, isNotEmpty } from '@gauzy/common';
 import {
@@ -53,6 +52,7 @@ const ormType: MultiORM = getORMType();
 
 @Injectable()
 export class StatisticService {
+	private readonly logger = new Logger(`GZY - ${StatisticService.name}`);
 	protected ormType: MultiORM = ormType;
 
 	constructor(
@@ -90,11 +90,11 @@ export class StatisticService {
 
 		// Extract the overall duration in seconds
 		const overallDurationInSeconds = overallDuration?.overall_duration ?? 0;
-		console.log('Overall Tracked Time Duration (seconds):', overallDurationInSeconds);
+		this.logger.verbose(`Overall Tracked Time Duration (seconds): ${overallDurationInSeconds}`);
 
 		// Convert the overall duration in seconds to hours
 		const overallDurationInHours = overallDurationInSeconds / 3600;
-		console.log('Overall Tracked Time Duration (hours):', overallDurationInHours);
+		this.logger.verbose(`Overall Tracked Time Duration (hours): ${overallDurationInHours}`);
 
 		return overallDurationInHours;
 	}
@@ -139,11 +139,10 @@ export class StatisticService {
 	 * @returns {Promise<IStatisticsActivities>} - The weekly activity statistics
 	 */
 	async getWeeklyStatisticsActivities(request: IGetCountsStatistics): Promise<IWeeklyStatisticsActivities> {
-		let {
+		const {
 			organizationId,
 			startDate,
 			endDate,
-			employeeIds = [],
 			projectIds = [],
 			teamIds = [],
 			activityLevel,
@@ -151,6 +150,7 @@ export class StatisticService {
 			source,
 			onlyMe: isOnlyMeSelected // Determine if the request specifies to retrieve data for the current user only
 		} = request;
+		let employeeIds = request.employeeIds || [];
 
 		// Retrieves the database type from the configuration service.
 		const dbType = this.configService.dbConnectionOptions.type;
@@ -167,7 +167,7 @@ export class StatisticService {
 			employeeIds = [user.employeeId];
 		}
 
-		let weekActivities = {
+		const weekActivities = {
 			overall: 0,
 			duration: 0
 		};
@@ -243,7 +243,7 @@ export class StatisticService {
 
 		// Group by time_log.id to get the total duration and overall for each time slot
 		const weekTimeStatistics = await query.groupBy(p(`"time_log"."id"`)).getRawMany();
-		console.log('weekly time statistics activity', JSON.stringify(weekTimeStatistics));
+		this.logger.verbose(`Weekly Time Statistics Activity: ${JSON.stringify(weekTimeStatistics)}`);
 
 		// Initialize variables to accumulate values
 		let totalWeekDuration = 0;
@@ -275,11 +275,10 @@ export class StatisticService {
 	 */
 	async getTodayStatisticsActivities(request: IGetCountsStatistics): Promise<ITodayStatisticsActivities> {
 		// Destructure the necessary properties from the request with default values
-		let {
+		const {
 			organizationId,
 			todayStart,
 			todayEnd,
-			employeeIds = [],
 			projectIds = [],
 			teamIds = [],
 			activityLevel,
@@ -287,6 +286,7 @@ export class StatisticService {
 			logType,
 			source
 		} = request || {};
+		let employeeIds = request.employeeIds || [];
 
 		// Retrieves the database type from the configuration service.
 		const dbType = this.configService.dbConnectionOptions.type;
@@ -306,7 +306,7 @@ export class StatisticService {
 		}
 
 		// Get average activity and total duration of the work for today.
-		let todayActivities = {
+		const todayActivities = {
 			overall: 0,
 			duration: 0
 		};
@@ -386,7 +386,7 @@ export class StatisticService {
 		}
 
 		const todayTimeStatistics = await query.groupBy(p(`"time_log"."id"`)).getRawMany();
-		console.log('today time statistics activity', JSON.stringify(todayTimeStatistics));
+		this.logger.verbose(`Today Time Statistics Activity: ${JSON.stringify(todayTimeStatistics)}`);
 
 		// Initialize variables to accumulate values
 		let totalTodayDuration = 0;
@@ -418,16 +418,16 @@ export class StatisticService {
 	 */
 	async getMembers(request: IGetMembersStatistics): Promise<IMembersStatistics[]> {
 		// Destructure properties from the request with default values where necessary
-		let {
+		const {
 			organizationId,
 			startDate,
 			endDate,
 			todayStart,
 			todayEnd,
-			employeeIds = [],
 			projectIds = [],
 			teamIds = []
 		} = request || {};
+		let employeeIds = request.employeeIds || [];
 
 		// Retrieves the database type from the configuration service.
 		const dbType = this.configService.dbConnectionOptions.type;
@@ -453,7 +453,7 @@ export class StatisticService {
 		// Create a query builder for the Employee entity
 		const query = this.typeOrmEmployeeRepository.createQueryBuilder();
 
-		let employees: IMembersStatistics[] = await query
+		const employees: IMembersStatistics[] = await query
 			.select(p(`"${query.alias}".id`))
 			// Builds a SELECT statement for the "user_name" column based on the database type.
 			.addSelect(p(`${concateUserNameExpression(dbType)}`), 'user_name')
@@ -578,7 +578,6 @@ export class StatisticService {
 				.addGroupBy(`${weekTimeQuery.alias}.employeeId`);
 
 			let weekTimeSlots: any = await weekTimeQuery.getRawMany();
-
 			weekTimeSlots = mapObject(groupBy(weekTimeSlots, 'employeeId'), (values, employeeId) => {
 				const weekDuration = reduce(pluck(values, 'week_duration'), ArraySum, 0);
 				const weekPercentage =
@@ -591,8 +590,8 @@ export class StatisticService {
 				};
 			});
 			weekTimeSlots = chain(weekTimeSlots)
-				.map((weekTimeSlot: any) => {
-					if (weekTimeSlot && weekTimeSlot.overall) {
+				.map((weekTimeSlot) => {
+					if (weekTimeSlot?.overall) {
 						weekTimeSlot.overall = parseFloat(weekTimeSlot.overall as string).toFixed(1);
 					}
 					return weekTimeSlot;
@@ -603,7 +602,7 @@ export class StatisticService {
 			/**
 			 * Daily Member Activity
 			 */
-			let dayTimeQuery = this.typeOrmTimeSlotRepository.createQueryBuilder('time_slot');
+			const dayTimeQuery = this.typeOrmTimeSlotRepository.createQueryBuilder('time_slot');
 			dayTimeQuery
 				.select(getDurationQueryString(dbType, 'timeLogs', dayTimeQuery.alias), `today_duration`)
 				.addSelect(p(`COALESCE(SUM("${dayTimeQuery.alias}"."overall"), 0)`), `overall`)
@@ -673,8 +672,8 @@ export class StatisticService {
 				};
 			});
 			dayTimeSlots = chain(dayTimeSlots)
-				.map((dayTimeSlot: any) => {
-					if (dayTimeSlot && dayTimeSlot.overall) {
+				.map((dayTimeSlot) => {
+					if (dayTimeSlot?.overall) {
 						dayTimeSlot.overall = parseFloat(dayTimeSlot.overall as string).toFixed(1);
 					}
 					return dayTimeSlot;
@@ -682,8 +681,8 @@ export class StatisticService {
 				.indexBy('employeeId')
 				.value();
 
-			for (let index = 0; index < employees.length; index++) {
-				const member = employees[index];
+			for (const element of employees) {
+				const member = element;
 
 				member.weekTime = weekTimeSlots[member.id];
 				member.todayTime = dayTimeSlots[member.id];
@@ -697,6 +696,8 @@ export class StatisticService {
 				delete member.user_image_url;
 
 				const weekHoursQuery = this.typeOrmEmployeeRepository.createQueryBuilder();
+				const mysqlDayOfWeek = isMySQL() ? p('DayOfWeek("timeLogs"."startedAt") - 1') : '0';
+				const postgresDayOfWeek = isPostgres() ? 'EXTRACT(DOW FROM "timeLogs"."startedAt")' : mysqlDayOfWeek;
 				weekHoursQuery
 					.innerJoin(`${weekHoursQuery.alias}.timeLogs`, 'timeLogs')
 					.innerJoin(`timeLogs.timeSlots`, 'time_slot')
@@ -704,13 +705,7 @@ export class StatisticService {
 					.addSelect(
 						// -- why we minus 1 if MySQL is selected, Sunday DOW in postgres is 0, in MySQL is 1
 						// -- in case no database type is selected we return "0" as the DOW
-						isSqlite() || isBetterSqlite3()
-							? `(strftime('%w', timeLogs.startedAt))`
-							: isPostgres()
-							? 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
-							: isMySQL()
-							? p('DayOfWeek("timeLogs"."startedAt") - 1')
-							: '0',
+						isSqlite() || isBetterSqlite3() ? `(strftime('%w', timeLogs.startedAt))` : postgresDayOfWeek,
 						'day'
 					)
 					.andWhere(p(`"${weekHoursQuery.alias}"."id" = :memberId`), { memberId: member.id })
@@ -754,13 +749,7 @@ export class StatisticService {
 						})
 					)
 					.addGroupBy(
-						isSqlite() || isBetterSqlite3()
-							? `(strftime('%w', timeLogs.startedAt))`
-							: isPostgres()
-							? 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
-							: isMySQL()
-							? p('DayOfWeek("timeLogs"."startedAt") - 1')
-							: '0'
+						isSqlite() || isBetterSqlite3() ? `(strftime('%w', timeLogs.startedAt))` : postgresDayOfWeek
 					);
 
 				member.weekHours = await weekHoursQuery.getRawMany();
@@ -777,7 +766,8 @@ export class StatisticService {
 	 */
 	async getProjects(request: IGetProjectsStatistics): Promise<IProjectsStatistics[]> {
 		const { organizationId, startDate, endDate } = request;
-		let { employeeIds = [], projectIds = [], teamIds = [] } = request;
+		const { projectIds = [], teamIds = [] } = request;
+		let employeeIds = request.employeeIds || [];
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
@@ -882,7 +872,7 @@ export class StatisticService {
 			.addGroupBy(p(`"project"."id"`))
 			.orderBy('duration', 'DESC');
 
-		let statistics: IProjectsStatistics[] = await query.getRawMany();
+		const statistics: IProjectsStatistics[] = await query.getRawMany();
 		let projects: IProjectsStatistics[] = chain(statistics)
 			.groupBy('projectId')
 			.map((projects: IProjectsStatistics[], projectId) => {
@@ -998,11 +988,7 @@ export class StatisticService {
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
-		if (
-			user &&
-			user.employeeId &&
-			(onlyMe || !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE))
-		) {
+		if (user?.employeeId && (onlyMe || !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE))) {
 			if (
 				isNotEmpty(organizationTeamId) ||
 				RequestContext.hasPermission(PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW)
@@ -1043,7 +1029,7 @@ export class StatisticService {
 					const raw = getDurationQueryString(dbType, qb.alias, 'time_slot');
 
 					// Constructs SQL query to fetch task title, ID, last updated timestamp, and today's duration.
-					let sq = knex(qb.alias).select([
+					const sq = knex(qb.alias).select([
 						`task.title AS title`,
 						`task.id AS taskId`,
 						`${qb.alias}.updatedAt AS updatedAt`,
@@ -1089,9 +1075,9 @@ export class StatisticService {
 					}
 					sq.groupBy([`${qb.alias}.id`, 'task.id']); // Apply multiple group by clauses in a single statement
 					sq.orderBy(`${qb.alias}.updatedAt`, 'desc'); // Apply order by clause
-					console.log(chalk.green(sq.toString() + ' || Get Today Statistics Query MikroORM!'));
+					this.logger.verbose(`Get Today Statistics Query MikroORM: ${sq.toQuery()}`);
 					// Execute the raw SQL query and get the results
-					todayStatistics = (await knex.raw(sq.toString())).rows || [];
+					todayStatistics = (await knex.raw(sq.toQuery())).rows || [];
 				}
 				break;
 
@@ -1156,7 +1142,7 @@ export class StatisticService {
 					qb.groupBy(p(`"${qb.alias}"."id"`));
 					qb.addGroupBy(p(`"task"."id"`));
 					qb.orderBy(p(`"${qb.alias}"."updatedAt"`), 'DESC');
-					console.log(qb.getQuery(), ' || Get Today Statistics Query TypeORM');
+					this.logger.verbose(`Get Today Statistics Query TypeORM: ${qb.getQuery()}`);
 					// Execute the SQL query and get the results
 					todayStatistics = await qb.getRawMany();
 				}
@@ -1181,7 +1167,7 @@ export class StatisticService {
 					const raw = getDurationQueryString(dbType, qb.alias, 'time_slot');
 
 					// Constructs SQL query to fetch task title, ID, last updated timestamp, and today's duration.
-					let sq = knex(qb.alias).select([
+					const sq = knex(qb.alias).select([
 						`task.title AS title`,
 						`task.id AS taskId`,
 						`${qb.alias}.updatedAt AS updatedAt`,
@@ -1227,9 +1213,9 @@ export class StatisticService {
 					}
 					sq.groupBy([`${qb.alias}.id`, 'task.id']); // Apply multiple group by clauses in a single statement
 					sq.orderBy(`${qb.alias}.updatedAt`, 'desc'); // Apply order by clause
-					console.log(chalk.green(sq.toString() + ' || Get Statistics Query MikroORM!'));
+					this.logger.verbose(`Get Statistics Query MikroORM: ${sq.toQuery()}`);
 					// Execute the raw SQL query and get the results
-					statistics = (await knex.raw(sq.toString())).rows || [];
+					statistics = (await knex.raw(sq.toQuery())).rows || [];
 				}
 				break;
 
@@ -1297,7 +1283,7 @@ export class StatisticService {
 					qb.groupBy(p(`"${qb.alias}"."id"`));
 					qb.addGroupBy(p(`"task"."id"`));
 					qb.orderBy(p(`"${qb.alias}"."updatedAt"`), 'DESC');
-					console.log(qb.getQueryAndParameters(), 'Get Statistics Query TypeORM');
+					this.logger.verbose(`Get Statistics Query TypeORM: ${qb.getQueryAndParameters()}`);
 					// Execute the raw SQL query and get the results
 					statistics = await qb.getRawMany();
 				}
@@ -1320,7 +1306,7 @@ export class StatisticService {
 					// Add the raw SQL snippet to the select
 					const raw = getTotalDurationQueryString(dbType, qb.alias);
 					// Construct your SQL query using knex
-					let sq = knex(qb.alias).select([knex.raw(`${raw} AS duration`)]);
+					const sq = knex(qb.alias).select([knex.raw(`${raw} AS duration`)]);
 
 					// Add join clauses
 					sq.innerJoin('task', `${qb.alias}.taskId`, 'task.id');
@@ -1352,9 +1338,9 @@ export class StatisticService {
 							}
 						});
 					}
-					console.log(chalk.green(sq.toString() + ' || Get Total Duration Query MikroORM!'));
+					this.logger.verbose(`Get Total Duration Query MikroORM: ${sq.toQuery()}`);
 					// Execute the raw SQL query and get the results
-					[totalDuration] = (await knex.raw(sq.toString())).rows || [];
+					[totalDuration] = (await knex.raw(sq.toQuery())).rows || [];
 				}
 
 				break;
@@ -1394,7 +1380,7 @@ export class StatisticService {
 							})
 						);
 					}
-					console.log(qb.getQuery(), 'Get Total Duration Query TypeORM!');
+					this.logger.verbose(`Get Total Duration Query TypeORM: ${qb.getQuery()}`);
 					// Execute the raw SQL query and get the results
 					totalDuration = await qb.getRawOne();
 				}
@@ -1406,9 +1392,9 @@ export class StatisticService {
 
 		// ------------------------------------------------
 
-		console.log('Find Statistics length: ', statistics.length);
-		console.log('Find Today Statistics length: ', todayStatistics.length);
-		console.log('Find Total Duration: ', totalDuration?.duration);
+		this.logger.verbose(`Find Statistics length: ${statistics.length}`);
+		this.logger.verbose(`Find Today Statistics length: ${todayStatistics.length}`);
+		this.logger.verbose(`Find Total Duration: ${totalDuration?.duration}`);
 
 		/* Code that cause issues... We try to optimize it using "hashing" approach etc
 
@@ -1462,7 +1448,7 @@ export class StatisticService {
 
 		const totalDurationValue = statistics.reduce((total, stat) => total + (parseInt(stat.duration, 10) || 0), 0);
 
-		console.log('Total Duration Value: ', totalDurationValue);
+		this.logger.verbose(`Total Duration Value: ${totalDurationValue}`);
 
 		const todayStatsLookup = todayStatistics.reduce((acc, stat) => {
 			const taskId = stat.taskId;
@@ -1522,7 +1508,7 @@ export class StatisticService {
 			tasks = tasks.splice(0, take);
 		}
 
-		console.log('Task Aggregates: ', tasks);
+		this.logger.verbose(`Task Aggregates: ${tasks}`);
 
 		return tasks;
 	}
@@ -1534,10 +1520,9 @@ export class StatisticService {
 	 * @returns
 	 */
 	async manualTimes(request: IGetManualTimesStatistics): Promise<IManualTimesStatistics[]> {
-		console.time('Get Manual Time Log');
-
 		const { organizationId, startDate, endDate } = request;
-		let { employeeIds = [], projectIds = [], teamIds = [] } = request;
+		const { projectIds = [], teamIds = [] } = request;
+		let employeeIds = request.employeeIds || [];
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
@@ -1637,7 +1622,6 @@ export class StatisticService {
 			})
 		);
 
-		console.timeEnd('Get Manual Time Log');
 		return mappedTimeLogs || [];
 	}
 
@@ -1649,7 +1633,8 @@ export class StatisticService {
 	 */
 	async getActivities(request: IGetActivitiesStatistics): Promise<IActivitiesStatistics[]> {
 		const { organizationId, startDate, endDate } = request;
-		let { employeeIds = [], projectIds = [], teamIds = [] } = request;
+		const { projectIds = [], teamIds = [] } = request;
+		let employeeIds = request.employeeIds || [];
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
@@ -1798,10 +1783,9 @@ export class StatisticService {
 	 * @returns
 	 */
 	async getEmployeeTimeSlots(request: IGetTimeSlotStatistics): Promise<ITimeSlotStatistics[]> {
-		console.time('Get Employee TimeSlots');
-
 		const { organizationId, startDate, endDate } = request;
-		let { employeeIds = [], projectIds = [], teamIds = [] } = request;
+		const { projectIds = [], teamIds = [] } = request;
+		let employeeIds = request.employeeIds || [];
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
@@ -1920,7 +1904,6 @@ export class StatisticService {
 			employee.timeSlots = await query.getMany();
 		}
 
-		console.timeEnd('Get Employee TimeSlots');
 		return employees;
 	}
 
@@ -1982,11 +1965,10 @@ export class StatisticService {
 		qb: WhereExpressionBuilder,
 		request: IGetCountsStatistics
 	): WhereExpressionBuilder {
-		let {
+		const {
 			organizationId,
 			startDate,
 			endDate,
-			employeeIds = [],
 			projectIds = [],
 			teamIds = [],
 			activityLevel,
@@ -1994,6 +1976,7 @@ export class StatisticService {
 			source,
 			onlyMe: isOnlyMeSelected // Determine if the request specifies to retrieve data for the current user only
 		} = request;
+		let employeeIds = request.employeeIds || [];
 
 		const user = RequestContext.currentUser(); // Retrieve the current user
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId; // Retrieve the current tenant ID
