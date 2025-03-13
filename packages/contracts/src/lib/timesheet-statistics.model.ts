@@ -119,7 +119,7 @@ export interface IWeeklyStatisticsActivities {
 /**
  * Today Statistics Activities
  */
-export interface ITodayStatisticsActivities extends IWeeklyStatisticsActivities {}
+export type ITodayStatisticsActivities = IWeeklyStatisticsActivities
 
 export interface ISelectedDateRange {
 	startDate: Date;

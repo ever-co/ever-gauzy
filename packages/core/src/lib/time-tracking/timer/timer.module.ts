@@ -5,11 +5,12 @@ import { EmployeeModule } from './../../employee/employee.module';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { TimerController } from './timer.controller';
 import { TimerService } from './timer.service';
+import { StatisticModule } from '../statistic/statistic.module';
 
 @Module({
-	imports: [RolePermissionModule, TimeLogModule, EmployeeModule, CqrsModule],
+	imports: [RolePermissionModule, TimeLogModule, EmployeeModule, StatisticModule, CqrsModule],
 	controllers: [TimerController],
 	exports: [TimerService],
 	providers: [TimerService]
 })
-export class TimerModule {}
+export class TimerModule { }

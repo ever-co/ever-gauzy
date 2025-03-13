@@ -1,6 +1,6 @@
 import { Controller, UseGuards, HttpStatus, Post, Body, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { ITimeLog, ITimerStatus, PermissionsEnum } from '@gauzy/contracts';
+import { ITimeLog, ITimerStatus, ITimerStatusWithWeeklyLimits, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { Permissions } from './../../shared/decorators';
 import { UseValidationPipe } from '../../shared/pipes';
@@ -20,10 +20,16 @@ export class TimerController {
 	 * @param query
 	 * @returns
 	 */
+
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Timer status details',
+		type: Object
+	})
 	@Get('/status')
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_TRACKER)
 	@UseValidationPipe({ whitelist: true })
-	async getTimerStatus(@Query() query: TimerStatusQueryDTO): Promise<ITimerStatus> {
+	async getTimerStatus(@Query() query: TimerStatusQueryDTO): Promise<ITimerStatusWithWeeklyLimits> {
 		const status = await this.timerService.getTimerStatus(query);
 		this.timerService.checkForPeriodicSave(status.lastLog);
 		return status;
