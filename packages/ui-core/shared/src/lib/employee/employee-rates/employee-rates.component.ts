@@ -3,8 +3,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { IEmployee, PayPeriodEnum, ICandidate, ICurrency } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs';
-import { Store } from '@gauzy/ui-core/core';
-import { CandidateStore, EmployeeStore } from '@gauzy/ui-core/core';
+import { CandidateStore, EmployeeStore, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -29,7 +28,7 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 			payPeriod: [],
 			billRateValue: ['', Validators.min(0)],
 			billRateCurrency: [],
-			reWeeklyLimit: ['', Validators.compose([Validators.min(0), Validators.max(168)])],
+			reWeeklyLimit: [0, [Validators.required, Validators.min(0), Validators.max(168)]],
 			minimumBillingRate: ['', Validators.min(0)]
 		});
 	}
@@ -108,6 +107,14 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 
 	public get minimumBillingRate() {
 		return this.form.get('minimumBillingRate');
+	}
+
+	public limitDecimalPlaces(event: InputEvent) {
+		const value = (event.target as HTMLInputElement).value;
+		const regex = /^\d*(\.\d{0,4})?$/;
+		if (!regex.test(value)) {
+			(event.target as HTMLInputElement).value = value.slice(0, -1);
+		}
 	}
 
 	ngOnDestroy() {}
