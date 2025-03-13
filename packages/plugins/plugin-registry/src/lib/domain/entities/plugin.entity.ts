@@ -1,4 +1,4 @@
-import { ID, PluginStatus, PluginType } from '@gauzy/contracts';
+import { ID, IEmployee, PluginStatus, PluginType } from '@gauzy/contracts';
 import {
 	ColumnIndex,
 	Employee,
@@ -15,9 +15,12 @@ import { JoinColumn, RelationId } from 'typeorm';
 import { MikroOrmPluginRepository } from '../repositories/mikro-orm-plugin.repository';
 import { PluginVersion } from './plugin-version.entity';
 import { PluginSource } from './plugin-source.entity';
+import { IPlugin } from '../../shared/models/plugin.model';
+import { IPluginVersion } from '../../shared/models/plugin-version.model';
+import { IPluginSource } from '../../shared/models/plugin-source.model';
 
 @MultiORMEntity('plugin', { mikroOrmRepository: () => MikroOrmPluginRepository })
-export class Plugin extends TenantOrganizationBaseEntity {
+export class Plugin extends TenantOrganizationBaseEntity implements IPlugin {
 	@ApiProperty({ type: String, description: 'Plugin name' })
 	@IsNotEmpty({ message: 'Plugin name is required' })
 	@IsString({ message: 'Plugin name must be a string' })
@@ -42,7 +45,7 @@ export class Plugin extends TenantOrganizationBaseEntity {
 
 	@ApiProperty({ type: () => [PluginVersion], description: 'Versions of the plugin' })
 	@MultiORMOneToMany(() => PluginVersion, (version) => version.plugin, { eager: true })
-	versions: PluginVersion[];
+	versions: IPluginVersion[];
 
 	@ApiProperty({ type: String, description: 'Plugin author', required: false })
 	@IsOptional()
@@ -71,7 +74,7 @@ export class Plugin extends TenantOrganizationBaseEntity {
 	@ApiProperty({ type: () => Employee, description: 'Employee who uploaded the plugin', required: false })
 	@MultiORMManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()
-	uploadedBy?: Employee;
+	uploadedBy?: IEmployee;
 
 	@RelationId((plugin: Plugin) => plugin.uploadedBy)
 	@ColumnIndex()
@@ -87,7 +90,7 @@ export class Plugin extends TenantOrganizationBaseEntity {
 	@ApiProperty({ type: () => PluginSource, description: 'Source of plugin', required: false })
 	@MultiORMOneToOne(() => PluginSource, (source) => source.plugin, { nullable: true })
 	@JoinColumn()
-	source?: PluginSource;
+	source?: IPluginSource;
 
 	@RelationId((plugin: Plugin) => plugin.source)
 	@ColumnIndex()

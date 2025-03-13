@@ -12,9 +12,11 @@ import { IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min, Matches } from 'c
 import { MikroOrmPluginSourceRepository } from '../repositories/mikro-orm-plugin-source.repository';
 import { JoinColumn, RelationId } from 'typeorm';
 import { Plugin } from './plugin.entity';
+import { IPluginSource } from '../../shared/models/plugin-source.model';
+import { IPlugin } from '../../shared/models/plugin.model';
 
 @MultiORMEntity('plugin_source', { mikroOrmRepository: () => MikroOrmPluginSourceRepository })
-export class PluginSource extends TenantOrganizationBaseEntity {
+export class PluginSource extends TenantOrganizationBaseEntity implements IPluginSource {
 	@MultiORMColumn({
 		type: 'enum',
 		enum: PluginSourceType
@@ -101,7 +103,7 @@ export class PluginSource extends TenantOrganizationBaseEntity {
 	@ApiProperty({ type: () => Plugin, description: 'Plugin associated with the source', required: true })
 	@MultiORMOneToOne(() => Plugin, (plugin: Plugin) => plugin.source, { nullable: true })
 	@JoinColumn()
-	plugin?: Plugin;
+	plugin?: IPlugin;
 
 	@RelationId((source: PluginSource) => source.plugin)
 	@ColumnIndex()

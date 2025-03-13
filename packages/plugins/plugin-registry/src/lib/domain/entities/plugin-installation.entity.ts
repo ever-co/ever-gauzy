@@ -10,7 +10,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDateString, IsNotEmpty, IsOptional, ValidateIf } from 'class-validator';
 import { JoinColumn, RelationId } from 'typeorm';
-import { PluginInstallationStatus } from '../../shared/models/plugin-installation.model';
+import { IPluginInstallation, PluginInstallationStatus } from '../../shared/models/plugin-installation.model';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
 import { IPlugin } from '../../shared/models/plugin.model';
 import { MikroOrmPluginInstallationRepository } from '../repositories/mikro-orm-plugin-installation.repository';
@@ -18,7 +18,7 @@ import { PluginVersion } from './plugin-version.entity';
 import { Plugin } from './plugin.entity';
 
 @MultiORMEntity('plugin_installation', { mikroOrmRepository: () => MikroOrmPluginInstallationRepository })
-export class PluginInstallation extends TenantOrganizationBaseEntity {
+export class PluginInstallation extends TenantOrganizationBaseEntity implements IPluginInstallation {
 	@ApiProperty({ type: () => Plugin, description: 'Installed the plugin' })
 	@MultiORMManyToOne(() => Plugin)
 	plugin: IPlugin;

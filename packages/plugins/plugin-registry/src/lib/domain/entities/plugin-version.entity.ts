@@ -12,9 +12,11 @@ import { MikroOrmPluginVersionRepository } from '../repositories/mikro-orm-plugi
 import { Plugin } from './plugin.entity';
 import { JoinColumn, RelationId } from 'typeorm';
 import { ID } from '@gauzy/contracts';
+import { IPluginVersion } from '../../shared/models/plugin-version.model';
+import { IPlugin } from '../../shared/models/plugin.model';
 
 @MultiORMEntity('plugin_version', { mikroOrmRepository: () => MikroOrmPluginVersionRepository })
-export class PluginVersion extends TenantOrganizationBaseEntity {
+export class PluginVersion extends TenantOrganizationBaseEntity implements IPluginVersion {
 	@ApiProperty({
 		type: () => String,
 		description: 'Version following SemVer (MAJOR.MINOR.PATCH[-prerelease][+build])'
@@ -25,7 +27,7 @@ export class PluginVersion extends TenantOrganizationBaseEntity {
 		message: 'Version must follow SemVer format: MAJOR.MINOR.PATCH[-PRERELEASE][+BUILD]'
 	})
 	@MultiORMColumn()
-	version: string;
+	number: string;
 
 	@ApiProperty({ type: () => String, description: 'Change Log of the plugin version' })
 	@IsNotEmpty({ message: 'Change Log is required' })
@@ -52,7 +54,7 @@ export class PluginVersion extends TenantOrganizationBaseEntity {
 	@ApiProperty({ type: () => Plugin, description: 'Plugin associated with the version', required: true })
 	@MultiORMManyToOne(() => Plugin, (plugin) => plugin.versions, { nullable: true })
 	@JoinColumn()
-	plugin?: Plugin;
+	plugin?: IPlugin;
 
 	@RelationId((version: PluginVersion) => version.plugin)
 	@ColumnIndex()
