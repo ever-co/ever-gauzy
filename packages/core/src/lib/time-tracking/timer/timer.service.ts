@@ -126,8 +126,7 @@ export class TimerService {
 			stoppedAt: Not(IsNull()),
 			employeeId,
 			tenantId,
-			organizationId,
-			isRunning: false
+			organizationId
 		};
 
 		switch (this.ormType) {
@@ -161,8 +160,10 @@ export class TimerService {
 
 			case MultiORMEnum.TypeORM:
 				{
-					// Get today's completed timelogs
-					logs = await this.typeOrmTimeLogRepository.find(buildLogQueryParameters(queryParams));
+					// Get today's completed timelogs (not running timers)
+					const previousLogsParams = buildLogQueryParameters(queryParams);
+					previousLogsParams.where.isRunning = false;
+					logs = await this.typeOrmTimeLogRepository.find(previousLogsParams);
 
 					const lastLogQueryParamsTypeOrm = buildCommonQueryParameters(queryParams); // Common query parameters for time log operations.
 					addRelationsToQuery(lastLogQueryParamsTypeOrm, request); // Adds relations from the request to the query parameters.
@@ -212,6 +213,11 @@ export class TimerService {
 			// Include the last log into duration if it's running or was stopped
 			if (status.running || lastLogStopped) {
 				status.duration += Math.abs(moment(lastLogStopped ? lastLog.stoppedAt : undefined).diff(moment(lastLog.startedAt), 'seconds'));
+			}
+
+			// If timer is running, then add the non saved duration to the workedThisWeek
+			if (lastLog.isRunning) {
+				status.workedThisWeek += moment.utc().diff(moment(lastLog.stoppedAt), 'seconds');
 			}
 		}
 
