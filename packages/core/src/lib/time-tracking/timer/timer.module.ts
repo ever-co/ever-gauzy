@@ -6,11 +6,11 @@ import { RolePermissionModule } from '../../role-permission/role-permission.modu
 import { TimerController } from './timer.controller';
 import { TimerService } from './timer.service';
 import { StatisticModule } from '../statistic/statistic.module';
-
+import { TimerWeeklyLimitService } from './timer-weekly-limit.service';
 @Module({
 	imports: [RolePermissionModule, TimeLogModule, EmployeeModule, StatisticModule, CqrsModule],
 	controllers: [TimerController],
-	exports: [TimerService],
-	providers: [TimerService]
+	exports: [TimerService, TimerWeeklyLimitService],
+	providers: [TimerService, TimerWeeklyLimitService]
 })
 export class TimerModule { }
