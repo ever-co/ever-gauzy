@@ -32,12 +32,3 @@ $shadow: 0 0 0 nb-theme(button-outline-width)
   color: nb-theme(button-outline-basic-disabled-text-color);
   box-shadow: unset;
 }
-
-:host {
-  ::ng-deep {
-    &.md-drppicker {
-      margin-top: -55% !important;
-      margin-left: -10% !important;
-    }
-  }
-}

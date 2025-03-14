@@ -16,30 +16,28 @@ import {
 	InvoiceStatusTypesEnum,
 	IInvoiceItemCreateInput,
 	IProductTranslatable,
-	ExpenseStatusesEnum,
-	IDateRangePicker
+	ExpenseStatusesEnum
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { compareDate, distinctUntilChange, extractNumber, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
 import { LocalDataSource } from 'angular2-smart-table';
-import { Observable, Subject, firstValueFrom, takeUntil } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
 import {
-	DateRangePickerBuilderService,
-	ExpensesService,
+	Store,
+	ToastrService,
 	InvoiceEstimateHistoryService,
 	InvoiceItemService,
 	InvoicesService,
 	OrganizationProjectsService,
 	OrganizationSettingService,
 	ProductService,
-	Store,
 	TasksStoreService,
-	ToastrService,
-	TranslatableService
+	TranslatableService,
+	ExpensesService
 } from '@gauzy/ui-core/core';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
 import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-expense-selector.component';
@@ -97,9 +95,6 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 	total = 0;
 	currencyString: string;
 	selectedLanguage: string;
-	selectedDateRange: IDateRangePicker;
-
-	private readonly _destroy$ = new Subject<void>();
 
 	get currency() {
 		return this.form.get('currency');
@@ -128,8 +123,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 		private readonly expensesService: ExpensesService,
 		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
 		private readonly translatableService: TranslatableService,
-		private readonly organizationSettingService: OrganizationSettingService,
-		private readonly dateRangePickerService: DateRangePickerBuilderService
+		private readonly organizationSettingService: OrganizationSettingService
 	) {
 		super(translateService);
 	}
@@ -137,11 +131,6 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 	ngOnInit() {
 		this._applyTranslationOnSmartTable();
 		this.selectedLanguage = this.translateService.currentLang;
-		this.dateRangePickerService.selectedDateRange$.pipe(takeUntil(this._destroy$)).subscribe((range) => {
-			if (range) {
-				this.selectedDateRange = range;
-			}
-		});
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
@@ -199,13 +188,12 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			discountType: [],
 			taxType: [],
 			tax2Type: [],
-			invoiceType: [null, Validators.required],
+			invoiceType: [],
 			project: [],
 			task: [],
 			product: [],
 			expense: [],
-			tags: [],
-			selectedEmployeeIds: [[]]
+			tags: []
 		});
 	}
 
@@ -780,7 +768,6 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 		switch ($event) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
 				this.isEmployeeHourTable = true;
-				this.updateEmployeeValidation();
 				break;
 			case InvoiceTypeEnum.BY_PROJECT_HOURS:
 				this.isProjectHourTable = true;
@@ -804,7 +791,6 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 	}
 
 	async generateTable(generateUninvoiced?: boolean) {
-		if (!this.invoiceType || this.form.invalid || !this.selectedDateRange) return;
 		this.selectedInvoiceType = this.invoiceType;
 		this.smartTableSource.refresh();
 
@@ -970,12 +956,9 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			this.form.value.discountValue && this.form.value.discountValue > 0 ? this.form.value.discountValue : 0;
 		const tax = this.form.value.tax && this.form.value.tax > 0 ? this.form.value.tax : 0;
 		const tax2 = this.form.value.tax2 && this.form.value.tax2 > 0 ? this.form.value.tax2 : 0;
-
 		let totalDiscount = 0;
 		let totalTax = 0;
-
 		const tableData = await this.smartTableSource.getAll();
-
 		for (const item of tableData) {
 			if (item.applyTax) {
 				switch (this.form.value.taxType) {
@@ -1001,7 +984,6 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 						break;
 				}
 			}
-
 			if (item.applyDiscount) {
 				switch (this.form.value.discountType) {
 					case DiscountTaxTypeEnum.PERCENT:
@@ -1018,13 +1000,10 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				}
 			}
 		}
-
 		if (this.discountAfterTax && this.form.value.discountType === DiscountTaxTypeEnum.PERCENT) {
 			totalDiscount = (this.subtotal + totalTax) * (+discountValue / 100);
 		}
-
 		this.total = this.subtotal - totalDiscount + totalTax;
-
 		if (this.total < 0) {
 			this.total = 0;
 		}
@@ -1138,26 +1117,5 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 		return date;
 	}
 
-	onTouched() {
-		const control = this.form?.get('selectedEmployeeIds');
-		if (control) {
-			control.markAsTouched();
-		}
-	}
-
-	private updateEmployeeValidation() {
-		const employeeControl = this.form.get('selectedEmployeeIds');
-		if (this.isEmployeeHourTable) {
-			employeeControl.setValidators([Validators.required]);
-		} else {
-			employeeControl.clearValidators();
-		}
-
-		employeeControl.updateValueAndValidity();
-	}
-
-	ngOnDestroy(): void {
-		this._destroy$.next();
-		this._destroy$.complete();
-	}
+	ngOnDestroy(): void {}
 }
