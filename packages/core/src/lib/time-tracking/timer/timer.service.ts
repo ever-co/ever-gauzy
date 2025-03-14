@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, NotAcceptableException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, NotAcceptableException, ConflictException, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { IsNull, Between, Not, In } from 'typeorm';
 import * as moment from 'moment';
@@ -60,7 +60,7 @@ export class TimerService {
 		private readonly _employeeService: EmployeeService,
 		private readonly _statisticService: StatisticService,
 		private readonly _commandBus: CommandBus
-	) {}
+	) { }
 
 	/**
 	 * Fetches an employee based on the provided query.
@@ -231,6 +231,50 @@ export class TimerService {
 	}
 
 	/**
+	 * Check if the employee has reached the weekly limit
+	 *
+	 * @param employee
+	 * @param refDate
+	 * @returns
+	 */
+	async checkWeeklyLimit(employee: IEmployee, refDate?: Date, ignoreException = false): Promise<number> {
+		const statistics = await this._statisticService.getWeeklyStatisticsActivities({
+			organizationId: employee.organizationId,
+			tenantId: employee.tenantId,
+			employeeId: employee.id,
+			startDate: moment(refDate).startOf('week').toDate(),
+			endDate: moment(refDate).endOf('week').toDate()
+		});
+		const remainWeeklyLimit = (employee.reWeeklyLimit * 3600) - statistics.duration;
+
+		// Check if the employee has reached the weekly limit
+		if (remainWeeklyLimit <= 0 && !ignoreException) {
+			throw new ConflictException('weekly-limit-reached');
+		}
+		return remainWeeklyLimit;
+	}
+
+	/**
+	 * Adjusts the stoppedAt time based on the remaining weekly limit.
+	 * Comparison is done against the last stoppedAt time because previous time blocks before this value
+	 * are already accounted for in the duration calculation
+	 *
+	 * @param stoppedAt - The stoppedAt time to adjust.
+	 * @param lastLog - The last time log entry.
+	 * @param remainWeeklyLimit - The remaining weekly limit.
+	 * @returns The adjusted stoppedAt time.
+	 */
+	adjustStoppedAtBasedOnWeeklyLimit(stoppedAt: Date, lastLog: ITimeLog, remainWeeklyLimit: number): Date {
+		// Check if the stoppedAt time exceeds the remaining weekly limit
+		let duration = moment(stoppedAt).diff(moment.utc(lastLog.stoppedAt), 'seconds');
+		if (duration > remainWeeklyLimit) {
+			// Adjust the stoppedAt time to the remaining weekly limit
+			return moment.utc(lastLog.stoppedAt).add(remainWeeklyLimit, 'seconds').toDate();
+		}
+		return stoppedAt;
+	}
+
+	/**
 	 * Start time tracking for an employee.
 	 *
 	 * @param request The timer toggle input details.
@@ -272,6 +316,9 @@ export class TimerService {
 
 		// Stop any previous running timers
 		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId);
+
+		// Check if the employee has reached the weekly limit
+		await this.checkWeeklyLimit(employee, startedAt);
 
 		// Create a new time log entry using the command bus
 		const timeLog = await this._commandBus.execute(
@@ -341,8 +388,13 @@ export class TimerService {
 			throw new NotAcceptableException(`No running log found. Can't stop timer because it was already stopped.`);
 		}
 
+		// Check if the employee has reached the weekly limit
+		const remainWeeklyLimit = await this.checkWeeklyLimit(employee, lastLog.startedAt, true);
+		this.logger.verbose(`Remaining weekly limit: ${remainWeeklyLimit}`);
+
 		// Calculate stoppedAt date or use current date if not provided
-		const stoppedAt = await this.calculateStoppedAt(request, lastLog);
+		let stoppedAt = await this.calculateStoppedAt(request, lastLog);
+		stoppedAt = this.adjustStoppedAtBasedOnWeeklyLimit(stoppedAt, lastLog, remainWeeklyLimit);
 		this.logger.verbose(`Last stopped at: ${stoppedAt}`);
 
 		// Log the case where stoppedAt is less than startedAt
@@ -513,74 +565,6 @@ export class TimerService {
 	}
 
 	/**
-	 * Calculates the stoppedAt time based on the last log and request parameters.
-	 * It handles the case for DESKTOP source, considering time slots' durations.
-	 *
-	 * @param request - The input request containing timer toggle information
-	 * @param lastLog - The last running time log for the employee
-	 * @returns The calculated stoppedAt date
-	 */
-	async calculateStoppedAt2(request: ITimerToggleInput, lastLog: ITimeLog): Promise<Date> {
-		// Retrieve stoppedAt date or default to the current date if not provided
-		let stoppedAt = moment.utc(request.stoppedAt ?? moment.utc()).toDate();
-		this.logger.verbose(`Last stop request was at: ${stoppedAt}`);
-
-		// Handle the DESKTOP source case
-		if (request.source === TimeLogSourceEnum.DESKTOP) {
-			// Retrieve the most recent time slot from the last log
-			lastLog.timeSlots?.sort((a: ITimeSlot, b: ITimeSlot) => moment(b.startedAt).diff(a.startedAt));
-			const lastTimeSlot: ITimeSlot | undefined = lastLog.timeSlots?.[0];
-
-			// Example:
-			// If lastLog.timeSlots = [{ startedAt: "2024-09-24 19:50:00", duration: 600 }, { startedAt: "2024-09-24 19:40:00", duration: 600 }]
-			// The sorted result will be [{ startedAt: "2024-09-24 19:50:00", duration: 600 }, { startedAt: "2024-09-24 19:40:00", duration: 600 }]
-			// Hence, lastTimeSlot will be the one with startedAt = "2024-09-24 19:50:00".
-
-			// Check if the last time slot was created more than 10 minutes ago
-			if (lastTimeSlot) {
-				const duration = lastTimeSlot.duration; // Retrieve the last time slot's duration
-				const startedAt = moment.utc(lastTimeSlot.startedAt); // Retrieve the last time slot's startedAt date
-
-				// Example:
-				// If lastTimeSlotStartedAt = "2024-09-24 19:50:00" and duration = 600 (10 minutes)
-				// and the current time is "2024-09-24 20:10:00", the difference is 20 minutes, which is more than 10 minutes.
-
-				const difference = moment.utc(stoppedAt).diff(startedAt, 'minutes');
-				this.logger.verbose(
-					`Last time slot (${duration}) created ${difference} mins ago at ${startedAt.toISOString()}`
-				);
-
-				// Check if the last time slot was created more than 10 minutes ago
-				if (difference > 10) {
-					stoppedAt = startedAt.add(duration, 'seconds').toDate(); // Calculate the potential stoppedAt time using the total duration
-					// Example: stoppedAt = "2024-09-24 20:00:00"
-				}
-			} else {
-				// Retrieve the last log's startedAt date
-				const startedAt = moment.utc(lastLog.startedAt);
-				// Example:
-				// If lastLog.startedAt = "2024-09-24 19:30:00" and there are no time slots,
-				// and the current time is "2024-09-24 20:00:00", the difference is 30 minutes.
-
-				const difference = moment.utc(stoppedAt).diff(startedAt, 'minutes');
-				this.logger.verbose(
-					`Last log was created more than ${difference} minutes ago at ${startedAt.toISOString()}`
-				);
-
-				// If no time slots exist and the difference is more than 10 minutes, adjust the stoppedAt
-				if (difference > 10) {
-					stoppedAt = startedAt.add(10, 'seconds').toDate();
-					// Example: stoppedAt will be "2024-09-24 19:30:10"
-				}
-			}
-		}
-
-		this.logger.verbose(`Final last calculated stoppedAt: ${stoppedAt}`);
-		// Example log output: "Last calculated stoppedAt: 2024-09-24 20:00:00"
-		return stoppedAt;
-	}
-
-	/**
 	 * Toggle time tracking start/stop
 	 *
 	 * @param request The timer toggle request input
@@ -669,15 +653,15 @@ export class TimerService {
 		// Determine whether to fetch a single log or multiple logs
 		return fetchAll
 			? await this.typeOrmTimeLogRepository.find({
-					where: whereClause,
-					order: { startedAt: 'DESC', createdAt: 'DESC' }
-			  })
+				where: whereClause,
+				order: { startedAt: 'DESC', createdAt: 'DESC' }
+			})
 			: await this.typeOrmTimeLogRepository.findOne({
-					where: whereClause,
-					order: { startedAt: 'DESC', createdAt: 'DESC' },
-					// Determine relations if includeTimeSlots is true
-					...(includeTimeSlots && { relations: { timeSlots: true } })
-			  });
+				where: whereClause,
+				order: { startedAt: 'DESC', createdAt: 'DESC' },
+				// Determine relations if includeTimeSlots is true
+				...(includeTimeSlots && { relations: { timeSlots: true } })
+			});
 	}
 
 	/**
