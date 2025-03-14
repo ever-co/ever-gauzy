@@ -1,8 +1,8 @@
 {
-    "name": "agent",
-    "productName": "Ever Gauzy Agent",
+    "name": "Agent",
+    "productName": "Ever Agent App",
     "version": "0.1.0",
-    "description": "Ever Gauzy Agent",
+    "description": "Ever Agent App",
     "license": "AGPL-3.0",
     "homepage": "https://gauzy.co",
     "repository": {
@@ -19,10 +19,18 @@
         "url": "https://ever.co"
     },
     "main": "index.js",
+    "packages": [
+        "../../../dist/packages/constants",
+        "../../../dist/packages/contracts",
+        "../../../dist/packages/desktop-core",
+        "../../../dist/packages/desktop-lib",
+        "../../../dist/packages/desktop-window",
+        "../../../dist/packages/ui-config"
+    ],
     "build": {
-        "appId": "com.ever.evergauzyagent",
+        "appId": "com.ever.agentapp",
         "artifactName": "${name}-${version}.${ext}",
-        "productName": "Ever Gauzy Agent",
+        "productName": "Ever Agent App",
         "copyright": "Copyright © 2019-Present. Ever Co. LTD",
         "afterSign": "tools/notarize.js",
         "dmg": {
@@ -30,8 +38,7 @@
         },
         "asar": true,
         "npmRebuild": true,
-        "asarUnpack": [
-        ],
+        "asarUnpack": [],
         "directories": {
             "buildResources": "icons",
             "output": "../agent-packages"
@@ -88,7 +95,7 @@
                 "deb",
                 "tar.gz"
             ],
-            "executableName": "ever-agent",
+            "executableName": "Agent",
             "artifactName": "${name}-${version}.${ext}",
             "synopsis": "Desktop",
             "category": "Development"
@@ -121,6 +128,12 @@
         "electron-util": "^0.18.1",
         "node-fetch": "^2.6.7",
         "node-notifier": "^8.0.0",
-		"@gauzy/desktop-lib": "file:../../../dist/packages/desktop-lib"
+        "@gauzy/constants": "file:../../../dist/packages/constants",
+        "@gauzy/contracts": "file:../../../dist/packages/contracts",
+        "@gauzy/desktop-core": "file:../../../dist/packages/desktop-core",
+        "@gauzy/desktop-lib": "file:../../../dist/packages/desktop-lib",
+        "@gauzy/desktop-window": "file:../../../dist/packages/desktop-window",
+        "@gauzy/ui-config": "file:../../../dist/packages/ui-config",
+        "@electron/remote": "^2.0.8"
     }
 }

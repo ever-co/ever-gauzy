@@ -33,7 +33,7 @@ export class DesktopEnvironmentContentFactory {
 				return common
 					.generate(environment)
 					.concat(apiServer.generate(environment));
-			case 'gauzy-agent':
+			case 'agent':
 				const agent = new AgentEnvironmentContent();
 				return common
 					.generate(environment)

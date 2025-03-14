@@ -13,7 +13,7 @@ export class AgentEnvironmentContent implements IContentGenerator {
 	 *
 	 * @example
 	 * const environment = {
-	 *     DESKTOP_TIMER_APP_NAME: 'Timer App',
+	 *     AGENT_APP_NAME: 'Timer App',
 	 *     NAME: 'Default App',
 	 * };
 	 * const result = generate(environment);
@@ -21,14 +21,14 @@ export class AgentEnvironmentContent implements IContentGenerator {
 	 */
 	public generate(variable: Partial<IDesktopEnvironment>): string {
 		return `
-			NAME: '${variable.DESKTOP_TIMER_APP_NAME || variable.NAME}',
-			DESCRIPTION: '${variable.DESKTOP_TIMER_APP_DESCRIPTION || variable.DESCRIPTION}',
-			APP_ID: '${variable.DESKTOP_TIMER_APP_ID || variable.APP_ID}',
-			REPO_NAME: '${variable.DESKTOP_TIMER_APP_REPO_NAME || variable.REPO_NAME}',
-			REPO_OWNER: '${variable.DESKTOP_TIMER_APP_REPO_OWNER || variable.REPO_OWNER}',
-			WELCOME_TITLE: '${variable.DESKTOP_TIMER_APP_WELCOME_TITLE || variable.WELCOME_TITLE || ''}',
-			WELCOME_CONTENT: '${variable.DESKTOP_TIMER_APP_WELCOME_CONTENT || variable.WELCOME_CONTENT || ''}',
-			IS_DESKTOP_TIMER: ${true},
+			NAME: '${variable.AGENT_APP_NAME || variable.NAME}',
+			DESCRIPTION: '${variable.AGENT_APP_DESCRIPTION || variable.DESCRIPTION}',
+			APP_ID: '${variable.AGENT_APP_ID || variable.APP_ID}',
+			REPO_NAME: '${variable.AGENT_APP_REPO_NAME || variable.REPO_NAME}',
+			REPO_OWNER: '${variable.AGENT_APP_REPO_OWNER || variable.REPO_OWNER}',
+			WELCOME_TITLE: '${variable.AGENT_APP_WELCOME_TITLE || variable.WELCOME_TITLE || ''}',
+			WELCOME_CONTENT: '${variable.AGENT_APP_WELCOME_CONTENT || variable.WELCOME_CONTENT || ''}',
+			IS_AGENT: ${true},
 			IS_DESKTOP: ${false},
 			IS_SERVER: ${false},
 			IS_SERVER_API: ${false}
