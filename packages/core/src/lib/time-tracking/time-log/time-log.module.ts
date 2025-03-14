@@ -12,6 +12,7 @@ import { TimeLogController } from './time-log.controller';
 import { TimeLogService } from './time-log.service';
 import { TimeSlotModule } from './../time-slot/time-slot.module';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
+import { TimerModule } from '../timer/timer.module';
 
 @Module({
 	controllers: [
@@ -25,6 +26,7 @@ import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.reposit
 		forwardRef(() => OrganizationProjectModule),
 		forwardRef(() => OrganizationContactModule),
 		forwardRef(() => TimeSlotModule),
+		forwardRef(() => TimerModule),
 		CqrsModule
 	],
 	providers: [TimeLogService, TypeOrmTimeLogRepository, ...CommandHandlers],
