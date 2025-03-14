@@ -11,7 +11,6 @@ import { IPluginSource } from '../../../shared/models/plugin-source.model';
 import { IPluginVersion } from '../../../shared/models/plugin-version.model';
 import { UpdatePluginCommand } from '../../commands/update-plugin.command';
 
-@Injectable()
 @CommandHandler(UpdatePluginCommand)
 export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginCommand> {
 	constructor(
