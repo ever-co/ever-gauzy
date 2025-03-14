@@ -1,4 +1,5 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
+import { Logger } from '@nestjs/common';
 import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { isEmpty } from '@gauzy/common';
@@ -10,7 +11,8 @@ import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.rep
 
 @CommandHandler(ScheduleTimeLogEntriesCommand)
 export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTimeLogEntriesCommand> {
-	constructor(readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository) {}
+	private readonly logger = new Logger(`GZY - ${ScheduleTimeLogEntriesHandler.name}`);
+	constructor(readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository) { }
 
 	/**
 	 * Executes the scheduling of TimeLog entries based on the given command parameters.
@@ -83,7 +85,7 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 			);
 		});
 
-		console.log(
+		this.logger.verbose(
 			`Schedule Time Log Query For ${employeeId ? 'Tenant Organization' : 'All'} Entries`,
 			query.getQueryAndParameters()
 		);
@@ -113,7 +115,7 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 			// If the current time is "2024-09-24 20:15:00", the difference is 15 minutes, which is greater than 10
 
 			const difference = moment.utc().diff(startedAt, 'minutes');
-			console.log(`This log was created more than ${difference} minutes ago at ${startedAt}`);
+			this.logger.verbose(`This log was created more than ${difference} minutes ago at ${startedAt.toISOString()}`);
 
 			if (difference > 10) {
 				await this.updateStoppedAtUsingStartedAt(timeLog);
@@ -147,7 +149,7 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 			stoppedAt
 		});
 
-		console.log('Schedule Time Log Entry Updated StoppedAt Using StartedAt', timeLog.startedAt);
+		this.logger.verbose(`Schedule Time Log Entry Updated StoppedAt Using StartedAt ${timeLog.startedAt}`);
 		// Example log output: "Schedule Time Log Entry Updated StoppedAt Using StartedAt 2024-09-24 21:00:00"
 	}
 
@@ -173,9 +175,10 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 		// then stoppedAt = "2024-09-24 10:15:00"
 
 		// Retrieve the most recent time slot from the last log
-		const lastTimeSlot: ITimeSlot | undefined = timeSlots.sort((a: ITimeSlot, b: ITimeSlot) =>
+		timeSlots.sort((a: ITimeSlot, b: ITimeSlot) =>
 			moment(b.startedAt).diff(a.startedAt)
-		)[0];
+		)
+		const lastTimeSlot: ITimeSlot | undefined = timeSlots[0];
 		// Example:
 		// If timeSlots = [{ startedAt: "2024-09-24 10:05:00" }, { startedAt: "2024-09-24 10:10:00" }]
 		// The sorted result will be [{ startedAt: "2024-09-24 10:10:00" }, { startedAt: "2024-09-24 10:05:00" }]
@@ -219,7 +222,7 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 			});
 
 			// Example log output: "Schedule Time Log Entry Updated StoppedAt Using StoppedAt 2024-09-24 21:15:00"
-			console.log('Schedule Time Log Entry Updated StoppedAt Using StoppedAt', stoppedAt);
+			this.logger.verbose(`Schedule Time Log Entry Updated StoppedAt Using StoppedAt ${stoppedAt.toISOString()}`);
 		}
 	}
 
@@ -234,9 +237,10 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 		let stoppedAt = moment.utc(timeLog.stoppedAt).toDate();
 
 		// Retrieve the most recent time slot from the last log
-		const lastTimeSlot: ITimeSlot | undefined = timeSlots.sort((a: ITimeSlot, b: ITimeSlot) =>
+		timeSlots.sort((a: ITimeSlot, b: ITimeSlot) =>
 			moment(b.startedAt).diff(a.startedAt)
-		)[0];
+		)
+		const lastTimeSlot: ITimeSlot | undefined = timeSlots[0];
 
 		// Example:
 		// If timeSlots = [{ startedAt: "2024-09-24 10:05:00" }, { startedAt: "2024-09-24 10:10:00" }]
@@ -255,7 +259,7 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 
 			// Calculate the potential stoppedAt time using the total duration
 			const difference = moment.utc().diff(stoppedAt, 'minutes');
-			console.log(`Last time slot (${duration}) created ${difference} mins ago at ${startedAt}`);
+			this.logger.verbose(`Last time slot (${duration}) created ${difference} mins ago at ${startedAt.toISOString()}`);
 
 			// Check if the last time slot was created more than 10 minutes ago
 			if (difference > 10) {
@@ -271,7 +275,7 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 			}
 		}
 
-		console.log('Time log entry stoppedAt updated to', stoppedAt);
+		this.logger.verbose(`Time log entry stoppedAt updated to ${stoppedAt.toISOString()}`);
 	}
 
 	/**
