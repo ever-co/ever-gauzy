@@ -48,12 +48,22 @@ export class InstallPluginCommandHandler implements ICommandHandler<InstallPlugi
 			throw new NotFoundException(`Plugin with ID ${input.pluginId} and version ID ${input.versionId} not found`);
 		}
 
+		// Find the plugin installation by plugin ID and the current employee ID
+		const installationExists = await this.installationService.findOneByOptions({
+			where: {
+				pluginId: input.pluginId,
+				installedById: RequestContext.currentEmployeeId(),
+				versionId: input.versionId
+			}
+		});
+
 		// Create a new PluginInstallation entity
-		const installation = new PluginInstallation();
+		const installation = installationExists ? installationExists : new PluginInstallation();
 		installation.installedById = RequestContext.currentEmployeeId();
 		installation.pluginId = input.pluginId;
 		installation.status = PluginInstallationStatus.INSTALLED;
 		installation.installedAt = new Date();
+		installation.uninstalledAt = null;
 		installation.versionId = input.versionId;
 
 		// Save the installation record
