@@ -33,9 +33,10 @@
 			"../../../dist/packages/plugin",
 			"../../../dist/packages/plugins/changelog",
 			"../../../dist/packages/plugins/integration-ai",
-			"../../../dist/packages/plugins/integration-github",
 			"../../../dist/packages/plugins/integration-hubstaff",
+			"../../../dist/packages/plugins/integration-github",
 			"../../../dist/packages/plugins/integration-jira",
+			"../../../dist/packages/plugins/integration-make-com",
 			"../../../dist/packages/plugins/integration-upwork",
 			"../../../dist/packages/plugins/integration-wakatime",
 			"../../../dist/packages/plugins/jitsu-analytics",
@@ -54,6 +55,7 @@
 		"artifactName": "${name}-${version}.${ext}",
 		"productName": "Ever Gauzy Desktop",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
+		"afterSign": "tools/notarize.js",
 		"dmg": {
 			"sign": false
 		},
@@ -159,6 +161,7 @@
 		"@gauzy/plugin-integration-github": "file:../../../dist/packages/plugins/integration-github",
 		"@gauzy/plugin-integration-hubstaff": "file:../../../dist/packages/plugins/integration-hubstaff",
 		"@gauzy/plugin-integration-jira": "file:../../../dist/packages/plugins/integration-jira",
+		"@gauzy/plugin-integration-make-com": "file:../../../dist/packages/plugins/integration-make-com",
 		"@gauzy/plugin-integration-upwork": "file:../../../dist/packages/plugins/integration-upwork",
 		"@gauzy/plugin-integration-wakatime": "file:../../../dist/packages/plugins/integration-wakatime",
 		"@gauzy/plugin-jitsu-analytics": "file:../../../dist/packages/plugins/jitsu-analytics",

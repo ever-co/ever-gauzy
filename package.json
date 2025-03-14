@@ -473,6 +473,7 @@
 		"@commitlint/travis-cli": "^19.6.1",
 		"@compodoc/compodoc": "^1.1.19",
 		"@cypress/browserify-preprocessor": "^3.0.2",
+		"@electron/notarize": "^2.5.0",
 		"@electron/remote": "^2.0.8",
 		"@nestjs/schematics": "^10.2.3",
 		"@nestjs/testing": "^10.4.15",
