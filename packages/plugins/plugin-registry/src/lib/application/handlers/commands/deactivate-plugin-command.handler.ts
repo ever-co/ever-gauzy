@@ -60,7 +60,7 @@ export class DeactivatePluginCommandHandler implements ICommandHandler<Deactivat
 			throw new NotFoundException(`Plugin with ID ${pluginId} not found`);
 		}
 
-		if (plugin.updatedByUserId !== employeeId) {
+		if (plugin.uploadedById !== employeeId) {
 			throw new ForbiddenException("You don't have permission to deactivate this plugin");
 		}
 

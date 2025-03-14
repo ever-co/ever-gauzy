@@ -61,7 +61,7 @@ export class ActivatePluginCommandHandler implements ICommandHandler<ActivatePlu
 			throw new NotFoundException(`Plugin with ID ${pluginId} not found`);
 		}
 
-		if (plugin.updatedByUserId !== employeeId) {
+		if (plugin.uploadedById !== employeeId) {
 			throw new ForbiddenException("You don't have permission to activate this plugin");
 		}
 
