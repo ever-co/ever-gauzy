@@ -14,7 +14,7 @@ import { IPlugin } from '../../../shared/models/plugin.model';
 import { CreatePluginCommand } from '../../commands/create-plugin.command';
 
 @CommandHandler(CreatePluginCommand)
-export class CreatePluginHandler implements ICommandHandler<CreatePluginCommand> {
+export class CreatePluginCommandHandler implements ICommandHandler<CreatePluginCommand> {
 	constructor(
 		private readonly versionService: PluginVersionService,
 		private readonly sourceService: PluginSourceService,
