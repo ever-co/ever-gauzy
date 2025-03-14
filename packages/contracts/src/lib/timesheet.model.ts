@@ -1,4 +1,3 @@
-import { unitOfTime } from 'moment';
 import { IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel, ID } from './base-entity.model';
 import { IOrganizationContact, OrganizationContactBudgetTypeEnum } from './organization-contact.model';
 import {
@@ -576,4 +575,13 @@ export interface ITimeLogActivity {
 	id: string;
 	overall: number;
 	duration: number;
+}
+
+/**
+ * Interface for weekly limit status.
+ * Contains the remaining weekly time and the worked time this week.
+ */
+export interface IWeeklyLimitStatus {
+	remainWeeklyTime: number;
+	workedThisWeek: number;
 }

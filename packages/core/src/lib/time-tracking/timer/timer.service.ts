@@ -15,7 +15,8 @@ import {
 	IEmployee,
 	IEmployeeFindInput,
 	ID,
-	ITimerStatusWithWeeklyLimits
+	ITimerStatusWithWeeklyLimits,
+	IWeeklyLimitStatus
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { environment as env } from '@gauzy/config';
@@ -125,7 +126,8 @@ export class TimerService {
 			stoppedAt: Not(IsNull()),
 			employeeId,
 			tenantId,
-			organizationId
+			organizationId,
+			isRunning: false
 		};
 
 		switch (this.ormType) {
@@ -175,20 +177,28 @@ export class TimerService {
 		}
 
 		// Get weekly statistics
-		const statistics = await this._statisticService.getWeeklyStatisticsActivities({
-			organizationId,
-			tenantId,
-			employeeId: employee.id,
-			startDate: moment(start).startOf('week').toDate(),
-			endDate: moment(end).endOf('week').toDate()
-		});
+		let weeklyLimitStatus = await this.checkWeeklyLimit(employee, start as Date, true);
+
+		// If the user reached the weekly limit, then stop the current timer
+		let lastLogStopped = false;
+		if (lastLog?.isRunning && weeklyLimitStatus.remainWeeklyTime <= 0) {
+			lastLogStopped = true;
+			lastLog = await this.stopTimer({
+				tenantId,
+				organizationId,
+				startedAt: lastLog.startedAt,
+				stoppedAt: moment.utc().toDate()
+			});
+			// Recalculate the weekly limit status
+			weeklyLimitStatus = await this.checkWeeklyLimit(employee, start as Date, true);
+		}
 
 		const status: ITimerStatusWithWeeklyLimits = {
 			duration: 0,
 			running: false,
 			lastLog: null,
 			reWeeklyLimit: employee.reWeeklyLimit,
-			workedThisWeek: statistics.duration
+			workedThisWeek: weeklyLimitStatus.workedThisWeek
 		};
 
 		// Calculate completed timelogs duration
@@ -199,8 +209,9 @@ export class TimerService {
 			status.lastLog = lastLog;
 			status.running = lastLog.isRunning;
 
-			if (status.running) {
-				status.duration += Math.abs(moment().diff(moment(lastLog.startedAt), 'seconds'));
+			// Include the last log into duration if it's running or was stopped
+			if (status.running || lastLogStopped) {
+				status.duration += Math.abs(moment(lastLogStopped ? lastLog.stoppedAt : undefined).diff(moment(lastLog.startedAt), 'seconds'));
 			}
 		}
 
@@ -237,7 +248,7 @@ export class TimerService {
 	 * @param refDate
 	 * @returns
 	 */
-	async checkWeeklyLimit(employee: IEmployee, refDate?: Date, ignoreException = false): Promise<number> {
+	async checkWeeklyLimit(employee: IEmployee, refDate?: Date, ignoreException = false): Promise<IWeeklyLimitStatus> {
 		const statistics = await this._statisticService.getWeeklyStatisticsActivities({
 			organizationId: employee.organizationId,
 			tenantId: employee.tenantId,
@@ -245,13 +256,13 @@ export class TimerService {
 			startDate: moment(refDate).startOf('week').toDate(),
 			endDate: moment(refDate).endOf('week').toDate()
 		});
-		const remainWeeklyLimit = (employee.reWeeklyLimit * 3600) - statistics.duration;
+		const remainWeeklyTime = (employee.reWeeklyLimit * 3600) - statistics.duration;
 
 		// Check if the employee has reached the weekly limit
-		if (remainWeeklyLimit <= 0 && !ignoreException) {
+		if (remainWeeklyTime <= 0 && !ignoreException) {
 			throw new ConflictException('weekly-limit-reached');
 		}
-		return remainWeeklyLimit;
+		return { remainWeeklyTime, workedThisWeek: statistics.duration };
 	}
 
 	/**
@@ -266,7 +277,7 @@ export class TimerService {
 	 */
 	adjustStoppedAtBasedOnWeeklyLimit(stoppedAt: Date, lastLog: ITimeLog, remainWeeklyLimit: number): Date {
 		// Check if the stoppedAt time exceeds the remaining weekly limit
-		let duration = moment(stoppedAt).diff(moment.utc(lastLog.stoppedAt), 'seconds');
+		const duration = moment(stoppedAt).diff(moment.utc(lastLog.stoppedAt), 'seconds');
 		if (duration > remainWeeklyLimit) {
 			// Adjust the stoppedAt time to the remaining weekly limit
 			return moment.utc(lastLog.stoppedAt).add(remainWeeklyLimit, 'seconds').toDate();
@@ -389,12 +400,12 @@ export class TimerService {
 		}
 
 		// Check if the employee has reached the weekly limit
-		const remainWeeklyLimit = await this.checkWeeklyLimit(employee, lastLog.startedAt, true);
-		this.logger.verbose(`Remaining weekly limit: ${remainWeeklyLimit}`);
+		const weeklyLimitStatus = await this.checkWeeklyLimit(employee, lastLog.startedAt, true);
+		this.logger.verbose(`Remaining weekly limit: ${weeklyLimitStatus.remainWeeklyTime}`);
 
 		// Calculate stoppedAt date or use current date if not provided
 		let stoppedAt = await this.calculateStoppedAt(request, lastLog);
-		stoppedAt = this.adjustStoppedAtBasedOnWeeklyLimit(stoppedAt, lastLog, remainWeeklyLimit);
+		stoppedAt = this.adjustStoppedAtBasedOnWeeklyLimit(stoppedAt, lastLog, weeklyLimitStatus.remainWeeklyTime);
 		this.logger.verbose(`Last stopped at: ${stoppedAt}`);
 
 		// Log the case where stoppedAt is less than startedAt
