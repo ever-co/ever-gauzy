@@ -2,7 +2,8 @@
 import { IContentGenerator } from '../interfaces/i-content-generator';
 import { IDesktopEnvironment } from '../interfaces/i-desktop-environment';
 
-export class GauzyAgentEnvironmentContent implements IContentGenerator {
+export class AgentEnvironmentContent implements IContentGenerator {
+	l
 	/**
 	 * Generates a string template based on the provided desktop environment variables.
 	 * If a specific desktop variable is not available, it falls back to a generic one.

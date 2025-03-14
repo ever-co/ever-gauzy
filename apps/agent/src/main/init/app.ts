@@ -159,7 +159,7 @@ async function appReady() {
 export async function InitApp() {
 	require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 
-	app.setName(process.env.NAME);
+	app.setName(process.env.NAME || 'Agent App');
 
 	// Add node modules path
 	log.info('Gauzy Agent Node Modules Path', path.join(__dirname, 'node_modules'));

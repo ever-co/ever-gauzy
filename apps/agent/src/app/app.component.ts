@@ -15,7 +15,7 @@ import { AppService } from './app.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-agent-root',
+	selector: 'agent-root',
 	template: '<router-outlet></router-outlet>',
 	styleUrls: ['./app.component.scss']
 })

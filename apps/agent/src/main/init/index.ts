@@ -5,11 +5,11 @@ import AppIpcMain from './ipcMain';
 import InitAppTranslation from './translate';
 import ApplicationError from './error';
 
-export function InitApplication() {
+export async function InitApplication() {
 	InitLogger();
-	InitApp();
 	InitAppTranslation();
 	SetupTitleBar();
 	AppIpcMain();
 	ApplicationError();
+	await InitApp();
 }

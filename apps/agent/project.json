@@ -1,9 +1,9 @@
 {
-	"name": "gauzy-agent",
+	"name": "agent",
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
 	"projectType": "application",
 	"prefix": "gauzy",
-	"sourceRoot": "apps/gauzy-agent/src",
+	"sourceRoot": "apps/agent/src",
 	"tags": [],
 	"generators": {
 		"@nx/angular:component": {
@@ -16,23 +16,23 @@
 			"outputs": ["{options.outputPath}"],
 			"options": {
 				"customWebpackConfig": {
-					"path": "apps/gauzy-agent/config/custom-webpack.config.js"
+					"path": "apps/agent/config/custom-webpack.config.js"
 				},
-				"outputPath": "dist/apps/gauzy-agent",
-				"index": "apps/gauzy-agent/src/index.html",
-				"main": "apps/gauzy-agent/src/main.ts",
-				"polyfills": "apps/gauzy-agent/src/polyfills.ts",
-				"tsConfig": "apps/gauzy-agent/tsconfig.app.json",
+				"outputPath": "dist/apps/agent",
+				"index": "apps/agent/src/index.html",
+				"main": "apps/agent/src/main.ts",
+				"polyfills": "apps/agent/src/polyfills.ts",
+				"tsConfig": "apps/agent/tsconfig.app.json",
 				"aot": true,
 				"stylePreprocessorOptions": {
-					"includePaths": ["apps/gauzy-agent/src/assets/styles", "packages/ui-core/static/styles"]
+					"includePaths": ["apps/agent/src/assets/styles", "packages/ui-core/static/styles"]
 				},
 				"assets": [
-					"apps/gauzy-agent/src/favicon.ico",
-					"apps/gauzy-agent/src/assets",
+					"apps/agent/src/favicon.ico",
+					"apps/agent/src/assets",
 					{
 						"glob": "**/*",
-						"input": "apps/gauzy-agent/src/",
+						"input": "apps/agent/src/",
 						"ignore": ["**/*.ts"],
 						"output": ""
 					},
@@ -53,7 +53,7 @@
 					"node_modules/nebular-icons/scss/nebular-icons.scss",
 					"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 					"node_modules/leaflet/dist/leaflet.css",
-					"apps/gauzy-agent/src/assets/styles/styles.scss",
+					"apps/agent/src/assets/styles/styles.scss",
 					"node_modules/@ng-select/ng-select/themes/default.theme.css"
 				],
 				"scripts": [],
@@ -63,8 +63,8 @@
 				"production": {
 					"fileReplacements": [
 						{
-							"replace": "apps/gauzy-agent/src/environments/environment.ts",
-							"with": "apps/gauzy-agent/src/environments/environment.prod.ts"
+							"replace": "apps/agent/src/environments/environment.ts",
+							"with": "apps/agent/src/environments/environment.prod.ts"
 						},
 						{
 							"replace": "packages/ui-config/src/lib/environments/environment.ts",
@@ -102,14 +102,14 @@
 		"serve": {
 			"executor": "@angular-builders/custom-webpack:dev-server",
 			"options": {
-				"buildTarget": "gauzy-agent:build",
+				"buildTarget": "agent:build"
 			},
 			"configurations": {
 				"production": {
-					"buildTarget": "gauzy-agent:build:production"
+					"buildTarget": "agent:build:production"
 				},
 				"development": {
-					"buildTarget": "gauzy-agent:build:development"
+					"buildTarget": "agent:build:development"
 				}
 			},
 			"defaultConfiguration": "development"
@@ -117,7 +117,7 @@
 		"extract-i18n": {
 			"executor": "@angular-devkit/build-angular:extract-i18n",
 			"options": {
-				"buildTarget": "gauzy-agent:build"
+				"buildTarget": "agent:build"
 			}
 		},
 		"lint": {
@@ -127,7 +127,7 @@
 			"executor": "@nx/jest:jest",
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
-				"jestConfig": "apps/gauzy-agent/jest.config.ts"
+				"jestConfig": "apps/agent/jest.config.ts"
 			}
 		}
 	}

@@ -89,6 +89,7 @@ class TrayMenu {
 	}
 
 	public updateTryMenu() {
+		this.setMenuList([]);
 	}
 
 	build() {

@@ -1,8 +1,8 @@
 export default {
-	displayName: 'gauzy-agent',
+	displayName: 'agent',
 	preset: '../../jest.preset.js',
 	setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
-	coverageDirectory: '../../coverage/apps/gauzy-agent',
+	coverageDirectory: '../../coverage/apps/agent',
 	transform: {
 		'^.+\\.(ts|mjs|js|html)$': [
 			'jest-preset-angular',

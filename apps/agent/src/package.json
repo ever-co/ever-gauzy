@@ -1,5 +1,5 @@
 {
-    "name": "gauzy-agent",
+    "name": "agent",
     "productName": "Ever Gauzy Agent",
     "version": "0.1.0",
     "description": "Ever Gauzy Agent",
@@ -34,19 +34,19 @@
         ],
         "directories": {
             "buildResources": "icons",
-            "output": "../gauzy-agent-packages"
+            "output": "../agent-packages"
         },
         "publish": [
             {
                 "provider": "github",
-                "repo": "ever-gauzy-agent",
+                "repo": "ever-agent",
                 "releaseType": "release"
             },
             {
                 "provider": "spaces",
                 "name": "ever",
                 "region": "sfo3",
-                "path": "/ever-gauzy-agent",
+                "path": "/ever-agent",
                 "acl": "public-read"
             }
         ],
@@ -88,7 +88,7 @@
                 "deb",
                 "tar.gz"
             ],
-            "executableName": "ever-gauzy-agent",
+            "executableName": "ever-agent",
             "artifactName": "${name}-${version}.${ext}",
             "synopsis": "Desktop",
             "category": "Development"

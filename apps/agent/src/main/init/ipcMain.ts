@@ -61,7 +61,7 @@ export default function AppIpcMain() {
 		const configs = LocalStore.getStore('configs');
 		return {
 			API_BASE_URL: getApiBaseUrl(configs),
-			IS_INTEGRATED_DESKTOP: false
+			IS_INTEGRATED_DESKTOP: configs?.IS_INTEGRATED_DESKTOP || false
 		};
 	});
 

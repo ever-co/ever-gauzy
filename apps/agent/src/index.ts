@@ -4,8 +4,6 @@ import { logger as log } from '@gauzy/desktop-core';
 import { BrowserWindow, shell, app, ipcMain } from 'electron';
 import * as path from 'path';
 import { InitApplication } from './main/init';
-
-InitApplication();
 import {
 	AppError,
 	DesktopDialog,
@@ -38,6 +36,9 @@ LocalStore.setFilePath({
 if (process.platform === 'win32') {
 	app.setAppUserModelId(process.env.APP_ID);
 }
+
+// init application
+InitApplication();
 
 app.on('window-all-closed', () => {
 	// On OS X it is common for applications and their menu bar

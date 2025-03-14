@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "outDir": "../../dist/apps/gauzy-agent",
+        "outDir": "../../dist/apps/agent",
         "sourceMap": true,
         "declaration": false,
         "moduleResolution": "node",
