@@ -14,11 +14,18 @@ class AppWindow {
 	rootPath: string;
 	private static instance: AppWindow;
 	constructor(rootPath: string) {
-		if (AppWindow.instance) {
+		if (AppWindow.getInstance(rootPath)) {
 			return AppWindow.instance;
 		}
 		AppWindow.instance= this;
 		this.rootPath = rootPath;
+	}
+
+	static getInstance(rootPath: string) {
+		if (!AppWindow.instance) {
+			AppWindow.instance = new AppWindow(rootPath);
+		}
+		return AppWindow.instance;
 	}
 
 	getUiPath(hashPath: string) {
@@ -30,43 +37,58 @@ class AppWindow {
 	}
 
 	async initAboutWindow() {
-		if (!this.aboutWindow) {
-			this.aboutWindow = await createAboutWindow(this.getUiPath('about'), this.getPreloadPath());
-			this.aboutWindow.once('close', () => {
-				console.log('on close about window');
-				this.aboutWindow.destroy();
-				this.aboutWindow = null;
-			});
-			this.aboutWindow.once('ready-to-show', () => {
-				this.aboutWindow.show();
-			})
+		try {
+			if (!this.aboutWindow) {
+				this.aboutWindow = await createAboutWindow(this.getUiPath('about'), this.getPreloadPath());
+				this.aboutWindow.once('close', () => {
+					this.aboutWindow.destroy();
+					this.aboutWindow = null;
+				});
+				this.aboutWindow.once('ready-to-show', () => {
+					this.aboutWindow.show();
+				})
+			}
+		} catch (error) {
+			console.log('Failed to initialize about window', error)
+			throw Error('About window initialization failed: ', error.message);
 		}
 	}
 
 	async initSplashScreenWindow() {
-		if (!this.splashScreenWindow) {
-			this.splashScreenWindow = new SplashScreen(this.getUiPath('splash-screen'), this.getPreloadPath(), true);
-			this.splashScreenWindow.browserWindow.on('close', () => {
-				this.splashScreenWindow.browserWindow.destroy();
-			});
+		try {
+			if (!this.splashScreenWindow) {
+				this.splashScreenWindow = new SplashScreen(this.getUiPath('splash-screen'), this.getPreloadPath(), true);
+				this.splashScreenWindow.browserWindow.on('close', () => {
+					this.splashScreenWindow.browserWindow.destroy();
+					this.splashScreenWindow = null;
+				});
+			}
+		} catch (error) {
+			console.log('Failed to initialize splash screen window', error);
+			throw Error('SplashScreen window initialization failed: ', error.message);
 		}
 	}
 
 	async initSetupWindow() {
-		if (!this.setupWindow) {
-			this.setupWindow =  await createSetupWindow(
-				this.setupWindow,
-				true,
-				this.getUiPath('setup'),
-				this.getPreloadPath(),
-				true
-			);
+		try {
+			if (!this.setupWindow) {
+				this.setupWindow =  await createSetupWindow(
+					this.setupWindow,
+					true,
+					this.getUiPath('setup'),
+					this.getPreloadPath(),
+					true
+				);
 
-			this.setupWindow.on('close', () => {
-				console.log('on change setup window');
-				this.setupWindow.destroy();
-				this.setupWindow = null;
-			});
+				this.setupWindow.on('close', () => {
+					console.log('on change setup window');
+					this.setupWindow.destroy();
+					this.setupWindow = null;
+				});
+			}
+		} catch (error) {
+			console.log('Failed to initialize setup window', error);
+			throw Error('Setup window initialization failed: ', error.message);
 		}
 	}
 }
