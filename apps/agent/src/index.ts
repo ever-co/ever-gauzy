@@ -6,11 +6,8 @@ import * as path from 'path';
 import { InitApplication } from './main/init';
 import {
 	AppError,
-	DesktopDialog,
 	DesktopUpdater,
-	DialogStopTimerExitConfirmation,
 	LocalStore,
-	TranslateService,
 } from '@gauzy/desktop-lib';
 
 let popupWin: BrowserWindow | null = null;
@@ -144,9 +141,5 @@ const showPopup = async (url: string, options: Electron.BrowserWindowConstructor
 	// Show the popup window
 	popupWin.show();
 };
-
-app.on('browser-window-created', (_, window) => {
-	require('@electron/remote/main').enable(window.webContents);
-});
 
 ipcMain.handle('get-app-path', () => app.getAppPath());

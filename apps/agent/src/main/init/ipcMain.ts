@@ -49,10 +49,7 @@ export default function AppIpcMain() {
 
 	ipcMain.handle('START_SERVER', async (_, arg) => {
 		log.info('Handle Start Server');
-		const configs = LocalStore.getStore('configs');
 		try {
-			const baseUrl = getApiBaseUrl(configs);
-
 			global.variableGlobal = getGlobalVariable();
 
 			return await startServer(arg);

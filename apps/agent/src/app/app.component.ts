@@ -84,7 +84,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 			})
 		);
 
-		this.electronService.ipcRenderer.on('__logout__', (event, arg) =>
+		this.electronService.ipcRenderer.on('__logout__', (_, arg) =>
 			this._ngZone.run(async () => {
 				try {
 					await firstValueFrom(this.authStrategy.logout());
@@ -96,7 +96,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 			})
 		);
 
-		this.electronService.ipcRenderer.on('social_auth_success', (event, arg) =>
+		this.electronService.ipcRenderer.on('social_auth_success', (_, arg) =>
 			this._ngZone.run(async () => {
 				try {
 					this.store.userId = arg.userId;

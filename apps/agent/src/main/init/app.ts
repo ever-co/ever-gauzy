@@ -10,7 +10,7 @@ import {
 } from '@gauzy/desktop-lib';
 import { delaySync, getApiBaseUrl } from '../util';
 import AppWindow from '../window-manager';
-import TrayMenu from '../Tray';
+import TrayMenu from '../tray';
 import { CONSTANT } from '../../constant';
 
 const provider = ProviderFactory.instance;

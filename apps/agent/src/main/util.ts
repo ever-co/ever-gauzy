@@ -12,7 +12,7 @@ export function resolveHtmlPath(htmlFileName: string, hash: string) {
 }
 
 export function getApiBaseUrl(configs: any) {
-	if (configs.serverUrl) return configs.serverUrl;
+	if (configs?.serverUrl) return configs.serverUrl;
 	else {
 		return configs.port
 				? `http://localhost:${configs.port}`

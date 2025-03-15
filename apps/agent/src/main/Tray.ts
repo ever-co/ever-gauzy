@@ -62,7 +62,6 @@ class TrayMenu {
 				label: TranslateService.instant('TIMER_TRACKER.MENU.ABOUT'),
 				async click() {
 					await appWindow.initAboutWindow();
-					appWindow.aboutWindow.show();
 				}
 			},
 			{
