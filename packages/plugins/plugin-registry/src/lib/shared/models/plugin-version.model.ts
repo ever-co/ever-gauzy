@@ -8,4 +8,8 @@ export interface IPluginVersion extends IBasePerTenantAndOrganizationEntityModel
 	downloadCount?: number; // Optional, defaults to 0
 	plugin?: IPlugin; // Associated plugin entity
 	pluginId?: ID; // Optional ID of the associated plugin
+
+	// Security and integrity
+	checksum?: string; // Verification hash
+	signature?: string; // Digital signature for verification
 }

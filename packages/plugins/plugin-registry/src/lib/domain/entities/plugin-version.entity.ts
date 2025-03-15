@@ -35,6 +35,18 @@ export class PluginVersion extends TenantOrganizationBaseEntity implements IPlug
 	@MultiORMColumn()
 	changelog: string;
 
+	@ApiProperty({ type: () => String, description: 'Verification hash of the plugin version' })
+	@IsOptional()
+	@IsString({ message: 'Checksum must be a string' })
+	@MultiORMColumn({ nullable: true })
+	checksum?: string;
+
+	@ApiProperty({ type: () => String, description: 'Digital signature for authenticity verification' })
+	@IsOptional()
+	@IsString({ message: 'Signature must be a string' })
+	@MultiORMColumn({ nullable: true })
+	signature?: string;
+
 	@ApiPropertyOptional({ type: () => String, description: 'Date when the release was recorded' })
 	@IsOptional()
 	@IsDateString({}, { message: 'Release date must be a valid ISO 8601 date string' })
