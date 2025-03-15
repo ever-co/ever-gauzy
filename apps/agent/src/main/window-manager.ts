@@ -47,7 +47,6 @@ class AppWindow {
 			this.getPreloadPath(),
 			true
 		);
-		this.setupWindow.webContents.toggleDevTools();
 		this.setupWindow.on('close', () => {
 			this.setupWindow.destroy();
 		})

@@ -84,7 +84,7 @@ export async function startServer(value: any) {
 
 	/* create main window */
 	if (value.serverConfigConnected || !value.isLocalServer) {
-		appWindow?.setupWindow?.close();
+		appWindow?.setupWindow?.destroy();
 		appWindow?.splashScreenWindow?.close();
 		// timeTrackerWindow.webContents.toggleDevTools();
 	}
