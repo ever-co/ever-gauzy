@@ -559,7 +559,8 @@
 		"notarytool",
 		"evergauzyagent",
 		"electronmon",
-		"apistage"
+		"apistage",
+		"agentapp"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

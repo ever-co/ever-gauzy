@@ -15,7 +15,7 @@ export function LanguageInitializerFactory(
 				'PREFERRED_LANGUAGE'
 			);
 		} catch(error) {
-			// this catch to handleif channel not define in electron index
+			// this catch to handle if channel not define in electron index
 		}
 		translate.addLangs(languages);
 		translate.setDefaultLang(language || LanguagesEnum.ENGLISH);
