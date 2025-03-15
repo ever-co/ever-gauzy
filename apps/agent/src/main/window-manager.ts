@@ -50,7 +50,7 @@ class AppWindow {
 			}
 		} catch (error) {
 			console.log('Failed to initialize about window', error)
-			throw Error('About window initialization failed: ', error.message);
+			throw Error(`About window initialization failed: ${error.message}`);
 		}
 	}
 
@@ -65,7 +65,7 @@ class AppWindow {
 			}
 		} catch (error) {
 			console.log('Failed to initialize splash screen window', error);
-			throw Error('SplashScreen window initialization failed: ', error.message);
+			throw Error(`SplashScreen window initialization failed: ${error.message}`);
 		}
 	}
 
@@ -88,7 +88,7 @@ class AppWindow {
 			}
 		} catch (error) {
 			console.log('Failed to initialize setup window', error);
-			throw Error('Setup window initialization failed: ', error.message);
+			throw Error(`Setup window initialization failed: ${error.message}`);
 		}
 	}
 }

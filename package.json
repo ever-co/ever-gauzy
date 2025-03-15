@@ -329,7 +329,7 @@
 		"serve:agent:main": "cross-env NODE_ENV=development yarn config:agent:prod && yarn copy-files-i18n-agent && yarn prepare:agent && NODE_ENV=development NODE_PATH=dist/packages yarn electronmon ./dist/apps/agent/index.js",
 		"serve:agent:ui": "yarn config:dev && yarn ng serve agent --configuration development",
 		"serve:agent": "concurrently \"yarn serve:agent:ui\" \"wait-on http://localhost:4200 && yarn serve:agent:main\"",
-		"build:agent": "cross-env NODE_ENV=production yarn copy-files-i18n-agent && yarn run postinstall.electron && yarn run config:agent:prod && yarn run generate:icons:agent --environment=prod && yarn config:prod && yarn pack:agent:all && yarn build:package:all && yarn ng:prod build agent --base-href=./ && yarn run prepare:agent",
+		"build:agent": "cross-env NODE_ENV=production yarn copy-files-i18n-agent && yarn run postinstall.electron && yarn run config:agent:prod && yarn run generate:icons:agent --environment=prod && yarn config:prod && yarn pack:agent && yarn build:package:all && yarn ng:prod build agent --base-href=./ && yarn run prepare:agent",
 		"copy-files-i18n-agent": "yarn run download:translations --desktop=agent",
 		"config:agent:prod": "yarn run config:electron -- --environment=prod --desktop=agent",
 		"dev:agent": "electronmon --exec ts-node ./apps/agent/src/index.ts",
