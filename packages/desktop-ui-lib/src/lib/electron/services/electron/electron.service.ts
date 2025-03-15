@@ -36,7 +36,7 @@ export class ElectronService {
 		}
 		this.desktopCapturer = {
 			getSources: async (opts) =>
-				await this.ipcRenderer.invoke(
+				await this.ipcRenderer?.invoke(
 					'DESKTOP_CAPTURER_GET_SOURCES',
 					opts
 				),
