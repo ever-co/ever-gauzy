@@ -60,6 +60,7 @@ app.on('before-quit', async (e) => {
 		console.error('ERROR: Occurred while cancel update:' + e);
 		throw new AppError('MAINUPDTABORT', e);
 	}
+	app.exit(0);
 });
 
 // On OS X it is common for applications and their menu bar
