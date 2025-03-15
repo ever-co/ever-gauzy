@@ -54,34 +54,7 @@ ipcMain.on('quit', quit);
 
 app.on('before-quit', async (e) => {
 	e.preventDefault();
-
-	const appSetting = LocalStore.getStore('appSetting');
-
-	if (appSetting && appSetting.timerStarted) {
-		e.preventDefault();
-
-		const exitConfirmationDialog = new DialogStopTimerExitConfirmation(
-			new DesktopDialog(
-				process.env.DESCRIPTION,
-				TranslateService.instant('TIMER_TRACKER.DIALOG.EXIT'),
-			)
-		);
-
-		const button = await exitConfirmationDialog.show();
-
-		if (button.response === 0) {
-		}
-	} else {
-		// soft download cancellation
-		try {
-			updater.cancel();
-		} catch (e) {
-			console.error('ERROR: Occurred while cancel update:' + e);
-			throw new AppError('MAINUPDTABORT', e);
-		}
-
-		app.exit(0);
-	}
+	app.exit(0);
 });
 
 // On OS X it is common for applications and their menu bar

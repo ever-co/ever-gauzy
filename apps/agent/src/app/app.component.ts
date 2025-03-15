@@ -84,12 +84,6 @@ export class AppComponent implements OnInit, AfterViewInit {
 			})
 		);
 
-		this.electronService.ipcRenderer.on('logout_timer', (event, arg) =>
-			this._ngZone.run(() => {
-				console.log(event, arg);
-			})
-		);
-
 		this.electronService.ipcRenderer.on('__logout__', (event, arg) =>
 			this._ngZone.run(async () => {
 				try {
