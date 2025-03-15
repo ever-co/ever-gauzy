@@ -1,8 +1,8 @@
 {
-    "name": "Agent",
-    "productName": "Ever Agent App",
+    "name": "gauzy-agent",
+    "productName": "Ever Gauzy Agent",
     "version": "0.1.0",
-    "description": "Ever Agent App",
+    "description": "Ever Gauzy Agent",
     "license": "AGPL-3.0",
     "homepage": "https://gauzy.co",
     "repository": {
