@@ -47,12 +47,12 @@ export class AboutComponent implements OnInit {
 
 	public get application() {
 		this._application = {
-			name: this._electronService.remote.app
+			name: this._electronService?.remote?.app
 				.getName()
 				.split('-')
 				.join(' ')
 				.replace(/(^\w{1})|(\s+\w{1})/g, (letter) => letter.toUpperCase()),
-			version: this._electronService.remote.app.getVersion(),
+			version: this._electronService?.remote?.app?.getVersion(),
 			iconPath: this._domSanitizer.bypassSecurityTrustResourceUrl(this._environment.GAUZY_DESKTOP_LOGO_512X512),
 			companyName: this._environment.COMPANY_NAME
 		};

@@ -65,7 +65,7 @@ export class LanguageSelectorComponent implements OnInit, AfterViewInit {
 				tap((preferredLanguage: LanguagesEnum) => (this._preferredLanguage = preferredLanguage)),
 				tap(() => this.setLanguage()),
 				tap((preferredLanguage: LanguagesEnum) =>
-					this._electronService.ipcRenderer.send('preferred_language_change', preferredLanguage)
+					this._electronService?.ipcRenderer?.send('preferred_language_change', preferredLanguage)
 				),
 				filter(() => !this.isSetup || !this._store.isOffline),
 				tap((preferredLanguage: LanguagesEnum) => (this._store.preferredLanguage = preferredLanguage)),
@@ -79,17 +79,26 @@ export class LanguageSelectorComponent implements OnInit, AfterViewInit {
 			.subscribe();
 	}
 
+	desktopPreferredLanguage() {
+		try {
+			return this._electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE');
+		} catch(err) {
+			return Promise.resolve('en');
+		}
+	}
+
 	ngAfterViewInit() {
 		const systemLanguages = this._store.systemLanguages;
 		if (!systemLanguages) {
 			from(this._loadLanguages()).subscribe();
 		}
-		this._electronService.ipcRenderer.on('preferred_language_change', (event, language: LanguagesEnum) => {
+		this._electronService?.ipcRenderer?.on('preferred_language_change', (event, language: LanguagesEnum) => {
 			this._ngZone.run(async () => {
 				this.updatePreferredLanguage = language;
 			});
 		});
-		from(this._electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
+		from(
+			this.desktopPreferredLanguage())
 			.pipe(
 				tap((language: LanguagesEnum) => {
 					this.updatePreferredLanguage = language;

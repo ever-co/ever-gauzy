@@ -1,4 +1,5 @@
-import ElectronLog, { log, functions as logFunctions } from 'electron-log';
+import * as ElectronLog from 'electron-log';
+import { log, functions as logFunctions } from 'electron-log';
 import { ILogger } from './types';
 
 export class Logger implements ILogger {
