@@ -15,8 +15,7 @@ export function LanguageInitializerFactory(
 				'PREFERRED_LANGUAGE'
 			);
 		} catch(error) {
-			// set to default language if invoke doesn't exists
-			language = 'en';
+			// this catch to handleif channel not define in electron index
 		}
 		translate.addLangs(languages);
 		translate.setDefaultLang(language || LanguagesEnum.ENGLISH);

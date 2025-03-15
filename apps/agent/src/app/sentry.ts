@@ -32,12 +32,12 @@ export function initializeSentry(): void {
         release: 'gauzy@' + version,
         // Capture Replay for 10% of all sessions,
         // plus for 100% of sessions with an error
-        replaysSessionSampleRate: environment.SENTRY_TRACES_SAMPLE_RATE ? parseInt(environment.SENTRY_TRACES_SAMPLE_RATE) : 0.01,
+        replaysSessionSampleRate: environment.SENTRY_TRACES_SAMPLE_RATE ? parseFloat(environment.SENTRY_TRACES_SAMPLE_RATE) : 0.01,
         replaysOnErrorSampleRate: 1.0,
 
         // Set tracesSampleRate to 1.0 to capture 100%
         // of transactions for performance monitoring.
         // We recommend adjusting this value in production
-        tracesSampleRate: environment.SENTRY_TRACES_SAMPLE_RATE ? parseInt(environment.SENTRY_TRACES_SAMPLE_RATE) : 0.01
+        tracesSampleRate: environment.SENTRY_TRACES_SAMPLE_RATE ? parseFloat(environment.SENTRY_TRACES_SAMPLE_RATE) : 0.01
     });
 }
