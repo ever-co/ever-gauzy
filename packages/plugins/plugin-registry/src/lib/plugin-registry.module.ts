@@ -7,10 +7,11 @@ import { entities } from './domain/entities';
 import { services } from './domain/services';
 import { PluginController } from './infrastructure/controllers/plugin.controller';
 import { repositories } from './domain/repositories';
+import { subscribers } from './infrastructure/subscribers';
 
 @Module({
 	controllers: [PluginController],
 	imports: [TypeOrmModule.forFeature([...entities]), MikroOrmModule.forFeature([...entities]), CqrsModule],
-	providers: [...services, ...handlers, ...repositories]
+	providers: [...services, ...handlers, ...repositories, ...subscribers]
 })
 export class PluginRegistryModule {}
