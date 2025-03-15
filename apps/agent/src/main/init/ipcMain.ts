@@ -13,6 +13,14 @@ import {
 import { getApiBaseUrl } from '../util';
 import { startServer } from './app';
 
+function getGlobalVariable() {
+	const configs = LocalStore.getStore('configs');
+	return {
+		API_BASE_URL: getApiBaseUrl(configs),
+		IS_INTEGRATED_DESKTOP: configs?.IS_INTEGRATED_DESKTOP || false
+	};
+}
+
 export default function AppIpcMain() {
 	remoteMain.initialize();
 
@@ -45,10 +53,7 @@ export default function AppIpcMain() {
 		try {
 			const baseUrl = getApiBaseUrl(configs);
 
-			global.variableGlobal = {
-				API_BASE_URL: baseUrl,
-				IS_INTEGRATED_DESKTOP: arg.isLocalServer
-			};
+			global.variableGlobal = getGlobalVariable();
 
 			return await startServer(arg);
 		} catch (error) {
@@ -58,11 +63,7 @@ export default function AppIpcMain() {
 	});
 
 	ipcMain.handle('getGlobalVariable', () => {
-		const configs = LocalStore.getStore('configs');
-		return {
-			API_BASE_URL: getApiBaseUrl(configs),
-			IS_INTEGRATED_DESKTOP: configs?.IS_INTEGRATED_DESKTOP || false
-		};
+		return getGlobalVariable();
 	});
 
 	ipcMain.on('save_additional_setting', (_, arg) => {

@@ -29,7 +29,7 @@ export function InitLogger() {
 			dialog.show().then((result) => {
 				if (result.response === 1) {
 					submitIssue(`https://github.com/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/issues/new`, {
-						title: `Automatic error report for Desktop Timer App ${versions.app}`,
+						title: `Automatic error report for Agent App ${versions.app}`,
 						body: 'Error:\n```' + error.stack + '\n```\n' + `OS: ${versions.os}`
 					});
 					return;

@@ -78,7 +78,7 @@ app.on('web-contents-created', (_, contents) => {
 				javascript: true,
 				webSecurity: false,
 				webviewTag: false,
-				nodeIntegration: true
+				nodeIntegration: false
 			}
 		};
 
