@@ -1,4 +1,4 @@
-import { IBasePerTenantAndOrganizationEntityModel, ID, PluginSourceType } from '@gauzy/contracts';
+import { FileStorageProvider, IBasePerTenantAndOrganizationEntityModel, ID, PluginSourceType } from '@gauzy/contracts';
 import { IPlugin } from './plugin.model';
 
 export interface IPluginSource extends IBasePerTenantAndOrganizationEntityModel {
@@ -20,6 +20,10 @@ export interface IPluginSource extends IBasePerTenantAndOrganizationEntityModel 
 	fileName?: string; // Name of the uploaded plugin file (must end with `.zip`)
 	fileSize?: number; // File size in bytes (max 1GB)
 	mimeType?: string; // Must be `application/zip`
+	fileKey?: string; // Unique key for the uploaded file
+
+	// Storage
+	storageProvider?: FileStorageProvider;
 
 	// Associated Plugin
 	plugin?: IPlugin; // Associated plugin entity
