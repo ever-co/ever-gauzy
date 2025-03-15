@@ -41,12 +41,16 @@ export class DefaultWindow implements IBaseWindow {
 
 		try {
 			// Construct the URL based on the configuration
-			const launchPath = url.format({
+			let launchPath = url.format({
 				pathname: this.config.path,
 				protocol: 'file:',
 				slashes: true,
 				hash: this.config.hash
 			});
+
+			if (process.env.NODE_ENV === 'development') {
+				launchPath = this.config.path;
+			}
 
 			// Load the URL into the BrowserWindow
 			await this.browserWindow.loadURL(launchPath);
