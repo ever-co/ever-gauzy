@@ -1,4 +1,4 @@
-import { ID, PluginSourceType } from '@gauzy/contracts';
+import { FileStorageProvider, FileStorageProviderEnum, ID, PluginSourceType } from '@gauzy/contracts';
 import {
 	ColumnIndex,
 	MultiORMColumn,
@@ -6,14 +6,14 @@ import {
 	MultiORMOneToOne,
 	TenantOrganizationBaseEntity
 } from '@gauzy/core';
-import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min, Matches } from 'class-validator';
-import { MikroOrmPluginSourceRepository } from '../repositories/mikro-orm-plugin-source.repository';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Exclude, Transform } from 'class-transformer';
+import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, Max, Min } from 'class-validator';
 import { JoinColumn, RelationId } from 'typeorm';
-import { Plugin } from './plugin.entity';
 import { IPluginSource } from '../../shared/models/plugin-source.model';
 import { IPlugin } from '../../shared/models/plugin.model';
+import { MikroOrmPluginSourceRepository } from '../repositories/mikro-orm-plugin-source.repository';
+import { Plugin } from './plugin.entity';
 
 @MultiORMEntity('plugin_source', { mikroOrmRepository: () => MikroOrmPluginSourceRepository })
 export class PluginSource extends TenantOrganizationBaseEntity implements IPluginSource {
@@ -100,6 +100,15 @@ export class PluginSource extends TenantOrganizationBaseEntity implements IPlugi
 	@MultiORMColumn({ nullable: true })
 	mimeType?: string;
 
+	@ApiProperty({ type: () => String, description: 'Plugin file identifier' })
+	@IsOptional()
+	@IsString({ message: 'File key must be a string' })
+	@Matches(/^[\w-]+\.(zip)$/i, {
+		message: 'File must be a valid ZIP format and contain only letters, numbers, and hyphens'
+	})
+	@MultiORMColumn({ nullable: true })
+	fileKey?: string;
+
 	@ApiProperty({ type: () => Plugin, description: 'Plugin associated with the source', required: true })
 	@MultiORMOneToOne(() => Plugin, (plugin: Plugin) => plugin.source, { nullable: true })
 	@JoinColumn()
@@ -109,4 +118,12 @@ export class PluginSource extends TenantOrganizationBaseEntity implements IPlugi
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	pluginId?: ID;
+
+	@ApiPropertyOptional({ type: () => String, enum: FileStorageProviderEnum })
+	@IsOptional()
+	@IsEnum(FileStorageProviderEnum)
+	@Exclude({ toPlainOnly: true })
+	@ColumnIndex()
+	@MultiORMColumn({ type: 'simple-enum', nullable: true, enum: FileStorageProviderEnum })
+	storageProvider?: FileStorageProvider;
 }
