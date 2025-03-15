@@ -1,12 +1,10 @@
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DataSource } from 'typeorm';
 
 import { PluginService } from '../../../domain/services/plugin.service';
 import { DeactivatePluginCommand } from '../../commands/deactivate-plugin.command';
 import { DeletePluginCommand } from '../../commands/delete-plugin.command';
-import { RequestContext } from '@gauzy/core';
-import { IPlugin } from '../../../shared/models/plugin.model';
 
 @CommandHandler(DeletePluginCommand)
 export class DeletePluginCommandHandler implements ICommandHandler<DeletePluginCommand> {
@@ -38,7 +36,7 @@ export class DeletePluginCommandHandler implements ICommandHandler<DeletePluginC
 
 		try {
 			// Verify that the plugin exists
-			const plugin = await this.findPluginWithPermissionCheck(pluginId, RequestContext.currentEmployeeId());
+			const plugin = await this.pluginService.findOneByIdString(pluginId);
 			if (!plugin) {
 				throw new NotFoundException(`Plugin with ID ${pluginId} not found`);
 			}
@@ -66,24 +64,5 @@ export class DeletePluginCommandHandler implements ICommandHandler<DeletePluginC
 			// Release resources
 			await queryRunner.release();
 		}
-	}
-
-	/**
-	 * Helper method to find plugin and verify permissions
-	 */
-	private async findPluginWithPermissionCheck(pluginId: string, employeeId: string): Promise<IPlugin> {
-		const plugin = await this.pluginService.findOneByWhereOptions({
-			id: pluginId
-		});
-
-		if (!plugin) {
-			throw new NotFoundException(`Plugin with ID ${pluginId} not found`);
-		}
-
-		if (plugin.uploadedById !== employeeId) {
-			throw new ForbiddenException("You don't have permission to delete this plugin");
-		}
-
-		return plugin;
 	}
 }
