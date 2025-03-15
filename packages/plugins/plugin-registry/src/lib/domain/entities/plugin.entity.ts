@@ -97,9 +97,7 @@ export class Plugin extends TenantOrganizationBaseEntity implements IPlugin {
 	@MultiORMColumn({ nullable: true, relationId: true })
 	sourceId?: ID;
 
-	@ApiProperty({ type: Number, description: 'Download count' })
-	@IsNumber({}, { message: 'Download count must be a number' })
-	@MultiORMColumn({ default: 0 })
+	// Computed field
 	downloadCount: number;
 
 	@ApiProperty({ type: Date, description: 'Last downloaded date', required: false })
