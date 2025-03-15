@@ -334,7 +334,7 @@
 		"config:agent:prod": "yarn run config:electron -- --environment=prod --desktop=agent",
 		"dev:agent": "electronmon --exec ts-node ./apps/agent/src/index.ts",
 		"generate:icons:agent": "yarn run generate:icons --desktop=agent",
-		"build:agent:windows": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 -c.extraMetadata.author.name=Ever build --windows --project dist/apps/gauzy-api-server",
+		"build:agent:windows": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 -c.extraMetadata.author.name=Ever build --windows --project dist/apps/agent",
 		"build:agent:windows:release": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 -c.extraMetadata.author.name=Ever build --windows --publish=always --project dist/apps/agent",
 		"build:agent:windows:release:gh": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=60000 yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 -c.extraMetadata.author.name=Ever build --windows --publish=always --project dist/apps/agent",
 		"build:agent:linux": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 build --linux --project dist/apps/agent",
