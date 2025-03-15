@@ -14,18 +14,11 @@ class AppWindow {
 	rootPath: string;
 	private static instance: AppWindow;
 	constructor(rootPath: string) {
-		if (AppWindow.getInstance(rootPath)) {
+		if (AppWindow.instance) {
 			return AppWindow.instance;
 		}
 		AppWindow.instance= this;
 		this.rootPath = rootPath;
-	}
-
-	static getInstance(rootPath: string) {
-		if (!AppWindow.instance) {
-			AppWindow.instance = new AppWindow(rootPath);
-		}
-		return AppWindow.instance;
 	}
 
 	getUiPath(hashPath: string) {
@@ -49,8 +42,8 @@ class AppWindow {
 				})
 			}
 		} catch (error) {
-			console.log('Failed to initialize about window', error)
-			throw Error(`About window initialization failed: ${error.message}`);
+			console.error('Failed to initialize about window', error)
+			throw new Error(`About window initialization failed: ${error.message}`);
 		}
 	}
 
@@ -64,8 +57,8 @@ class AppWindow {
 				});
 			}
 		} catch (error) {
-			console.log('Failed to initialize splash screen window', error);
-			throw Error(`SplashScreen window initialization failed: ${error.message}`);
+			console.error('Failed to initialize splash screen window', error);
+			throw new Error(`SplashScreen window initialization failed: ${error.message}`);
 		}
 	}
 
@@ -87,8 +80,8 @@ class AppWindow {
 				});
 			}
 		} catch (error) {
-			console.log('Failed to initialize setup window', error);
-			throw Error(`Setup window initialization failed: ${error.message}`);
+			console.error('Failed to initialize setup window', error);
+			throw new Error(`Setup window initialization failed: ${error.message}`);
 		}
 	}
 }
