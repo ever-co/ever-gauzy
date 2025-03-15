@@ -1,3 +1,4 @@
+import { FileStorageProviderEnum, HttpStatus, ID, IPagination, PluginSourceType } from '@gauzy/contracts';
 import {
 	FileStorage,
 	FileStorageFactory,
@@ -5,28 +6,69 @@ import {
 	PaginationParams,
 	RequestContext,
 	UploadedFileStorage,
-	UseValidationPipe
+	UseValidationPipe,
+	UUIDValidationPipe
 } from '@gauzy/core';
-import { BadRequestException, Body, Controller, Get, Post, Query, UseInterceptors } from '@nestjs/common';
+import {
+	BadRequestException,
+	Body,
+	Controller,
+	Delete,
+	Get,
+	Param,
+	Patch,
+	Post,
+	Put,
+	Query,
+	UseGuards,
+	UseInterceptors
+} from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IPlugin } from '../../shared/models/plugin.model';
-import { FileStorageProviderEnum, HttpStatus, IPagination, PluginSourceType } from '@gauzy/contracts';
-import { Plugin } from '../../domain/entities/plugin.entity';
-import { ListPluginsQuery } from '../../application/queries/list-plugins.query';
-import { CreatePluginDTO } from '../../shared/dto/create-plugin.dto';
-import { CreatePluginCommand } from '../../application/commands/create-plugin.command';
-import { FileDTO } from '../../shared/dto/file.dto';
+import {
+	ApiBearerAuth,
+	ApiBody,
+	ApiConsumes,
+	ApiOperation,
+	ApiParam,
+	ApiQuery,
+	ApiResponse,
+	ApiSecurity,
+	ApiTags
+} from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
+import { FindOneOptions } from 'typeorm';
+import { ActivatePluginCommand } from '../../application/commands/activate-plugin.command';
+import { CreatePluginCommand } from '../../application/commands/create-plugin.command';
+import { DeactivatePluginCommand } from '../../application/commands/deactivate-plugin.command';
+import { DeletePluginCommand } from '../../application/commands/delete-plugin.command';
+import { UpdatePluginCommand } from '../../application/commands/update-plugin.command';
+import { GetPluginQuery } from '../../application/queries/get-plugin.query';
+import { ListPluginsQuery } from '../../application/queries/list-plugins.query';
+import { PluginOwnerGuard } from '../../core/guards/plugin-owner.guard';
+import { Plugin } from '../../domain/entities/plugin.entity';
+import { CreatePluginDTO } from '../../shared/dto/create-plugin.dto';
+import { FileDTO } from '../../shared/dto/file.dto';
+import { UpdatePluginDTO } from '../../shared/dto/update-plugin.dto';
+import { IPlugin } from '../../shared/models/plugin.model';
 
+/**
+ * Controller responsible for managing plugin operations in the system.
+ * Provides endpoints for CRUD operations and plugin activation/deactivation.
+ */
 @ApiTags('Plugin Registry')
+@ApiBearerAuth('Bearer')
+@ApiSecurity('api_key')
 @Controller('/plugins')
 export class PluginController {
 	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
 
+	/**
+	 * Retrieves a paginated list of plugins with optional filtering.
+	 */
 	@ApiOperation({
-		summary: 'Retrieve a list of plugins with optional pagination and filtering.'
+		summary: 'List all plugins',
+		description: 'Retrieve a paginated list of plugins with optional filtering capabilities.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -38,39 +80,52 @@ export class PluginController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No plugins found matching the provided criteria.'
 	})
+	@ApiResponse({
+		status: HttpStatus.UNAUTHORIZED,
+		description: 'Unauthorized access.'
+	})
 	@Get()
 	public async findAll(@Query() params: PaginationParams<IPlugin>): Promise<IPagination<IPlugin>> {
 		return this.queryBus.execute(new ListPluginsQuery(params));
 	}
 
+	/**
+	 * Creates a new plugin in the system.
+	 */
 	@ApiOperation({
-		summary: 'Create plugin',
-		description: 'This API Endpoint allows uploading the plugin file along with related metadata.'
+		summary: 'Create new plugin',
+		description: 'Uploads a plugin file along with metadata to register a new plugin in the system.'
+	})
+	@ApiConsumes('multipart/form-data')
+	@ApiBody({
+		type: CreatePluginDTO,
+		description: 'Plugin metadata and file'
 	})
 	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Plugin successfully.',
+		status: HttpStatus.CREATED,
+		description: 'Plugin created successfully.',
 		type: Plugin
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input provided. Check the response body for error details.'
 	})
-	@ApiConsumes('multipart/form-data')
+	@ApiResponse({
+		status: HttpStatus.UNAUTHORIZED,
+		description: 'Unauthorized access.'
+	})
 	@UseValidationPipe({
 		whitelist: true,
 		transform: true,
 		forbidNonWhitelisted: true
 	})
 	@UseInterceptors(
-		// Use LazyFileInterceptor for handling file uploads with custom storage settings
 		LazyFileInterceptor('file', {
-			// Define storage settings for uploaded files
 			storage: () => FileStorageFactory.create('plugins')
 		})
 	)
 	@Post()
-	public async create(@Body() input: CreatePluginDTO, @UploadedFileStorage() file: FileDTO) {
+	public async create(@Body() input: CreatePluginDTO, @UploadedFileStorage() file: FileDTO): Promise<IPlugin> {
 		if (!file.key && input.source.type === PluginSourceType.GAUZY) {
 			console.warn('Plugin file key is empty');
 			return;
@@ -133,5 +188,214 @@ export class PluginController {
 			// Throw a bad request exception with the validation errors
 			throw new BadRequestException(error);
 		}
+	}
+
+	/**
+	 * Updates an existing plugin by ID.
+	 */
+	@ApiOperation({
+		summary: 'Update plugin',
+		description: 'Updates an existing plugin record based on the provided ID and metadata.'
+	})
+	@ApiParam({
+		name: 'id',
+		type: String,
+		format: 'uuid',
+		description: 'UUID of the plugin to update',
+		required: true
+	})
+	@ApiBody({
+		type: UpdatePluginDTO,
+		description: 'Updated plugin metadata'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Plugin updated successfully.',
+		type: Plugin
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Plugin record not found.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input provided. Check the response body for error details.'
+	})
+	@ApiResponse({
+		status: HttpStatus.UNAUTHORIZED,
+		description: 'Unauthorized access.'
+	})
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
+	@UseGuards(PluginOwnerGuard)
+	@Put(':id')
+	public async update(@Param('id', UUIDValidationPipe) id: ID, @Body() input: UpdatePluginDTO): Promise<IPlugin> {
+		return this.commandBus.execute(new UpdatePluginCommand(id, input));
+	}
+
+	/**
+	 * Activates a plugin by ID.
+	 */
+	@ApiOperation({
+		summary: 'Activate plugin',
+		description: 'Activates a plugin in the system based on the provided ID.'
+	})
+	@ApiParam({
+		name: 'id',
+		type: String,
+		format: 'uuid',
+		description: 'UUID of the plugin to activate',
+		required: true
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Plugin activated successfully.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Plugin record not found.'
+	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'User does not have permission to activate this plugin.'
+	})
+	@ApiResponse({
+		status: HttpStatus.UNAUTHORIZED,
+		description: 'Unauthorized access.'
+	})
+	@UseGuards(PluginOwnerGuard)
+	@Patch(':id/activate')
+	public async activate(@Param('id', UUIDValidationPipe) id: ID): Promise<void> {
+		return this.commandBus.execute(new ActivatePluginCommand(id));
+	}
+
+	/**
+	 * Deactivates a plugin by ID.
+	 */
+	@ApiOperation({
+		summary: 'Deactivate plugin',
+		description: 'Deactivates a plugin in the system based on the provided ID.'
+	})
+	@ApiParam({
+		name: 'id',
+		type: String,
+		format: 'uuid',
+		description: 'UUID of the plugin to deactivate',
+		required: true
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Plugin deactivated successfully.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Plugin record not found.'
+	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'User does not have permission to deactivate this plugin.'
+	})
+	@ApiResponse({
+		status: HttpStatus.UNAUTHORIZED,
+		description: 'Unauthorized access.'
+	})
+	@UseGuards(PluginOwnerGuard)
+	@Patch(':id/deactivate')
+	public async deactivate(@Param('id', UUIDValidationPipe) id: ID): Promise<void> {
+		return this.commandBus.execute(new DeactivatePluginCommand(id));
+	}
+
+	/**
+	 * Retrieves a plugin by ID.
+	 */
+	@ApiOperation({
+		summary: 'Get plugin by ID',
+		description: 'Retrieves detailed information about a specific plugin by its UUID.'
+	})
+	@ApiParam({
+		name: 'id',
+		type: String,
+		format: 'uuid',
+		description: 'UUID of the plugin to retrieve',
+		required: true
+	})
+	@ApiQuery({
+		name: 'relations',
+		required: false,
+		isArray: true,
+		description: 'Entity relations to include in the response'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Plugin retrieved successfully.',
+		type: Plugin
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Plugin record not found.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input provided. Check the response body for error details.'
+	})
+	@ApiResponse({
+		status: HttpStatus.UNAUTHORIZED,
+		description: 'Unauthorized access.'
+	})
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
+	@Get(':id')
+	public async findById(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Query() options: FindOneOptions<IPlugin>
+	): Promise<IPlugin> {
+		return this.queryBus.execute(new GetPluginQuery(id, options));
+	}
+
+	/**
+	 * Deletes a plugin by ID.
+	 */
+	@ApiOperation({
+		summary: 'Delete plugin',
+		description: 'Permanently removes a plugin from the system based on the provided ID.'
+	})
+	@ApiParam({
+		name: 'id',
+		type: String,
+		format: 'uuid',
+		description: 'UUID of the plugin to delete',
+		required: true
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Plugin deleted successfully.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Plugin record not found.'
+	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'User does not have permission to delete this plugin.'
+	})
+	@ApiResponse({
+		status: HttpStatus.UNAUTHORIZED,
+		description: 'Unauthorized access.'
+	})
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
+	@UseGuards(PluginOwnerGuard)
+	@Delete(':id')
+	public async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<void> {
+		return this.commandBus.execute(new DeletePluginCommand(id));
 	}
 }
