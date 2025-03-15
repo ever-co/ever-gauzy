@@ -1,0 +1,45 @@
+//override ng-select colors
+.ng-select.ng-select-opened > .ng-select-container {
+  background: var(--background-basic-color-2);
+  border-color: var(--border-basic-color-1);
+}
+
+.ng-select .ng-clear-wrapper {
+  color: var(--text-basic-color);
+}
+
+.ng-select .ng-clear-wrapper:hover .ng-clear {
+  color: var(--text-basic-color);
+}
+
+.ng-dropdown-panel .ng-dropdown-panel-items .ng-optgroup {
+  color: var(--text-basic-color);
+}
+
+.ng-select .ng-select-container {
+  height: 2.625rem !important;
+  background-color: var(--background-basic-color-2);
+  color: var(--text-basic-color);
+  transition-duration: 0.15s;
+  transition-property: border, background-color, color, box-shadow;
+  transition-timing-function: ease-in;
+  border-radius: var(--border-radius) !important;
+}
+
+.ng-select.ng-select-focused .ng-select-container {
+  border-color: var(--text-primary-focus-color);
+  box-shadow: 0 0 0 0.375rem var(--outline-color) !important;
+}
+
+.ng-select.ng-select-disabled > .ng-select-container {
+  background: var(--background-basic-color-1);
+  color: var(--text-basic-color);
+}
+
+.ng-select .ng-select-container .ng-value-container .ng-placeholder {
+  color: var(--text-hint-color);
+}
+
+.ng-select .ng-select-container:hover {
+  box-shadow: 0 1px 1px 0 var(--color-primary-transparent-default) inset !important;
+}

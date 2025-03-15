@@ -1,0 +1,48 @@
+@import 'themes';
+$default-card-height: calc(
+  100vh - nb-theme(header-height) - nb-theme(footer-height) - 11.5rem
+);
+$default-radius: nb-theme(border-radius);
+@mixin nb-card_overrides($overflow, $height, $radius) {
+  nb-card {
+    display: flex;
+    flex-flow: column;
+    height: 100%;
+    border-radius: $radius;
+    nb-card-header {
+      flex: 0 1 auto;
+    }
+    nb-card-body {
+      flex: 1 1 auto;
+      overflow: $overflow;
+      height: $height;
+    }
+    nb-card-footer {
+      flex: 0 1 auto;
+    }
+  }
+}
+
+@mixin card_overrides($overflow, $height, $radius) {
+  .card {
+    display: flex;
+    flex-flow: column;
+    height: 100%;
+    border-radius: $radius;
+    border: unset;
+    .card-header {
+      flex: 0 1 auto;
+      border-bottom:unset
+    }
+    .card-body {
+      flex: 1 1 auto;
+      overflow: $overflow;
+      height: $height;
+      background-color: var(--gauzy-card-2);;
+    }
+    .card-footer {
+      border: unset;
+      flex: 0 1 auto;
+    }
+  }
+}

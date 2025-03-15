@@ -47,7 +47,7 @@ export class AboutComponent implements OnInit {
 
 	public get application() {
 		this._application = {
-			name: this._electronService.remote.app
+			name: this._electronService?.remote?.app
 				.getName()
 				.split('-')
 				.join(' ')

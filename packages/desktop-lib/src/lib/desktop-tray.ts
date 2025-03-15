@@ -24,9 +24,9 @@ export class TrayIcon {
 		const userService = new UserService();
 		const manager = WindowManager.getInstance();
 
-		let timeTrackerWindow = manager.getOne(RegisteredWindow.TIMER) as BrowserWindow;
-		let settingsWindow = manager.getOne(RegisteredWindow.SETTINGS) as BrowserWindow;
-		let mainWindow = manager.getOne(RegisteredWindow.MAIN) as BrowserWindow;
+		let timeTrackerWindow = (manager.getOne(RegisteredWindow.TIMER) || {}) as BrowserWindow;
+		let settingsWindow = (manager.getOne(RegisteredWindow.SETTINGS) || {}) as BrowserWindow;
+		let mainWindow = (manager.getOne(RegisteredWindow.MAIN) || {}) as BrowserWindow;
 
 		this.contextMenu = [
 			{
@@ -230,8 +230,8 @@ export class TrayIcon {
 			unAuthMenu.unshift(openGauzyMenu);
 		}
 
-		const menuWindowTime = Menu.getApplicationMenu().getMenuItemById('window-time-track');
-		const menuWindowSetting = Menu.getApplicationMenu().getMenuItemById('window-setting');
+		const menuWindowTime = Menu.getApplicationMenu()?.getMenuItemById('window-time-track') ?? { enabled: false, visible: false };
+		const menuWindowSetting = Menu.getApplicationMenu()?.getMenuItemById('window-setting') ?? { enabled: false, visible: false };
 
 		const openWindow = async () => {
 			if (process.env.IS_DESKTOP_TIMER) {
