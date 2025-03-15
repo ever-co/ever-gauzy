@@ -556,7 +556,11 @@
 		"ɵcmp",
 		"ɵmod",
 		"ɵcreate",
-		"notarytool"
+		"notarytool",
+		"evergauzyagent",
+		"electronmon",
+		"apistage",
+		"agentapp"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
@@ -590,6 +594,8 @@
 		"**/*.mjml",
 		"tools/build/webpack.config.js",
 		"docker-compose.demo.yml",
-		"docker-compose.yml"
+		"docker-compose.yml",
+		"**/agent/src/assets/icons/**",
+		"**/agent/src/assets/images/**"
 	]
 }

@@ -18,10 +18,12 @@ import { handleCloseEvent, setLaunchPathAndLoad } from './utils/desktop-window-u
 export async function createSetupWindow(
 	setupWindow: Electron.BrowserWindow | null,
 	value: boolean,
-	filePath: string
+	filePath: string,
+	preloadPath?: string,
+	contextIsolation?: boolean
 ): Promise<Electron.BrowserWindow> {
 	// Retrieve the window configuration settings
-	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
+	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting(preloadPath, contextIsolation);
 
 	// Get the WindowManager instance for managing application windows
 	const manager = WindowManager.getInstance();
@@ -73,7 +75,7 @@ export async function createSetupWindow(
  * const settings = windowSetting();
  * const mainWindow = new BrowserWindow(settings);
  */
-const windowSetting = (): Electron.BrowserWindowConstructorOptions => {
+const windowSetting = (preloadPath?: string, contextIsolation?: boolean): Electron.BrowserWindowConstructorOptions => {
 	// Default settings for the main application window
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 		frame: true,
@@ -93,6 +95,12 @@ const windowSetting = (): Electron.BrowserWindowConstructorOptions => {
 		maximizable: false,
 		show: false
 	};
+
+	if (contextIsolation) {
+		mainWindowSettings.webPreferences.contextIsolation = true;
+		mainWindowSettings.webPreferences.nodeIntegration = false;
+		mainWindowSettings.webPreferences.preload = preloadPath;
+	}
 
 	// Fetch the icon path from the application's store
 	const filesPath = store.get('filePath');

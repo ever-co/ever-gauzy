@@ -14,7 +14,7 @@ import { setLaunchPathAndLoad } from './utils/desktop-window-utils';
  * @param {string | undefined} [preloadPath] - Optional path to the preload script for the 'About' window.
  * @returns {Promise<Electron.BrowserWindow>} - The created or shown BrowserWindow instance.
  */
-export async function createAboutWindow(filePath: string, preloadPath?: string): Promise<Electron.BrowserWindow> {
+export async function createAboutWindow(filePath: string, preloadPath?: string, contextIsolation?: boolean): Promise<Electron.BrowserWindow> {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting(preloadPath);
 	const manager = WindowManager.getInstance();
 
@@ -39,7 +39,6 @@ export async function createAboutWindow(filePath: string, preloadPath?: string):
 
 	// Load the URL with the specified file path and hash
 	await setLaunchPathAndLoad(window, filePath, '/about');
-
 	window.setMenu(null);
 
 	// Set up event listeners for the window
@@ -100,7 +99,7 @@ function handleCloseEvent(window: Electron.BrowserWindow): void {
  * @param {string | undefined} preloadPath - Optional path to the preload script for the BrowserWindow.
  * @returns {Electron.BrowserWindowConstructorOptions} - The configured settings for the BrowserWindow.
  */
-const windowSetting = (preloadPath?: string): Electron.BrowserWindowConstructorOptions => {
+const windowSetting = (preloadPath?: string, contextIsolation?: boolean): Electron.BrowserWindowConstructorOptions => {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 		frame: true,
 		resizable: false,
@@ -120,6 +119,11 @@ const windowSetting = (preloadPath?: string): Electron.BrowserWindowConstructorO
 		maximizable: false,
 		show: false
 	};
+
+	if (contextIsolation) {
+		mainWindowSettings.webPreferences.nodeIntegration = false;
+		mainWindowSettings.webPreferences.contextIsolation = true;
+	}
 
 	if (preloadPath) {
 		mainWindowSettings.webPreferences.preload = preloadPath;

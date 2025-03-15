@@ -19,7 +19,7 @@ export class SplashScreen extends BaseWindow implements IBaseWindow {
      *
      * @param {string} path - The file path to load in the splash screen.
      */
-    constructor(public path: string) {
+    constructor(public path: string, public preloadPath?: string, public contextIsolation?: boolean) {
         // Configure the splash screen with default properties
         super(
             new DefaultWindow(
@@ -34,6 +34,11 @@ export class SplashScreen extends BaseWindow implements IBaseWindow {
 
         // Disable the menu bar for the splash screen
         this.initializeWindowSettings();
+		if (contextIsolation) {
+			this.config.options.webPreferences.contextIsolation = true;
+			this.config.options.webPreferences.preload = preloadPath;
+			this.config.options.webPreferences.nodeIntegration = false;
+		}
 
         // Register the splash screen with the WindowManager
         this.registerWindow();
