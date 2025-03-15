@@ -19,14 +19,16 @@
         "url": "https://ever.co"
     },
     "main": "index.js",
-    "packages": [
-        "../../../dist/packages/constants",
-        "../../../dist/packages/contracts",
-        "../../../dist/packages/desktop-core",
-        "../../../dist/packages/desktop-lib",
-        "../../../dist/packages/desktop-window",
-        "../../../dist/packages/ui-config"
-    ],
+    "workspaces": {
+        "packages": [
+            "../../../dist/packages/contracts",
+            "../../../dist/packages/desktop-core",
+            "../../../dist/packages/desktop-lib",
+            "../../../dist/packages/desktop-window",
+            "../../../dist/packages/ui-config",
+            "../../../dist/packages/constants"
+        ]
+    },
     "build": {
         "appId": "com.ever.agentapp",
         "artifactName": "${name}-${version}.${ext}",
@@ -128,12 +130,20 @@
         "electron-util": "^0.18.1",
         "node-fetch": "^2.6.7",
         "node-notifier": "^8.0.0",
-        "@gauzy/constants": "file:../../../dist/packages/constants",
         "@gauzy/contracts": "file:../../../dist/packages/contracts",
         "@gauzy/desktop-core": "file:../../../dist/packages/desktop-core",
         "@gauzy/desktop-lib": "file:../../../dist/packages/desktop-lib",
         "@gauzy/desktop-window": "file:../../../dist/packages/desktop-window",
         "@gauzy/ui-config": "file:../../../dist/packages/ui-config",
-        "@electron/remote": "^2.0.8"
+        "@gauzy/constants": "file:../../../dist/packages/constants",
+        "@electron/remote": "^2.0.8",
+        "@sentry/electron": "^4.18.0",
+        "@sentry/profiling-node": "^7.101.1",
+        "@sentry/replay": "^7.101.1",
+        "@sentry/node": "^7.101.1",
+        "@sentry/tracing": "^7.101.1",
+        "@sentry/types": "^7.101.1",
+        "auto-launch": "5.0.5",
+        "custom-electron-titlebar": "^4.2.8"
     }
 }
