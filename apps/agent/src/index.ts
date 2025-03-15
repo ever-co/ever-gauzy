@@ -54,7 +54,12 @@ ipcMain.on('quit', quit);
 
 app.on('before-quit', async (e) => {
 	e.preventDefault();
-	app.exit(0);
+	try {
+		updater.cancel();
+	} catch (e) {
+		console.error('ERROR: Occurred while cancel update:' + e);
+		throw new AppError('MAINUPDTABORT', e);
+	}
 });
 
 // On OS X it is common for applications and their menu bar
@@ -78,7 +83,7 @@ app.on('web-contents-created', (_, contents) => {
 				javascript: true,
 				webSecurity: false,
 				webviewTag: false,
-				nodeIntegration: false
+				nodeIntegration: true
 			}
 		};
 
