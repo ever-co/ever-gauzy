@@ -13,6 +13,7 @@ import { JobSearchPlugin } from '@gauzy/plugin-job-search';
 import { KnowledgeBasePlugin } from '@gauzy/plugin-knowledge-base';
 import { ProductReviewsPlugin } from '@gauzy/plugin-product-reviews';
 import { VideosPlugin } from '@gauzy/plugin-videos';
+import { RegistryPlugin } from '@gauzy/plugin-registry';
 
 import { SentryTracing as SentryPlugin } from './sentry';
 
@@ -56,5 +57,7 @@ export const plugins = [
 	// Indicates the inclusion or intention to use the ProductReviewsPlugin in the codebase.
 	ProductReviewsPlugin,
 	// Indicates the inclusion or intention to use the VideosPlugin in the codebase.
-	VideosPlugin
+	VideosPlugin,
+	// Indicates the inclusion or intention to use the RegistryPlugin in the codebase.
+	RegistryPlugin
 ];

@@ -1,1 +1,1 @@
-export * from './lib/plugin-registry.module';
+export * from './lib/registry.plugin';
