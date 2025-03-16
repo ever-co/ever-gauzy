@@ -1,8 +1,8 @@
-import { verifyElementIsVisible, clickButton, verifyElementIfVisible } from '../utils/util';
+import { verifyElementIsVisible, clickButton, verifyElementIfVisible, verifyText } from '../utils/util';
 import { DashboardPage } from '../pageobjects/DashboardPageObject';
 
 export const verifyCreateButton = () => {
-	verifyElementIsVisible(DashboardPage.createButtonCss);
+	verifyElementIsVisible(DashboardPage.createButton);
 };
 
 export const clickUserName = () => {
