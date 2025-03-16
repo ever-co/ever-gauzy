@@ -58,10 +58,10 @@ jobs:
             console.log(script.agent(false))
         env:
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          AGENT_APP_NAME: 'ever-agent'
+          AGENT_APP_NAME: 'ever-gauzy-agent'
           COMPANY_SITE_LINK: 'https://gauzy.co'
-          AGENT_APP_DESCRIPTION: 'Ever Agent'
-          AGENT_APP_ID: 'com.ever.agent'
+          AGENT_APP_DESCRIPTION: 'Ever Gauzy Agent'
+          AGENT_APP_ID: 'com.ever.gauzyagent'
 
       - name: Build Agent
         run: 'yarn build:agent:linux:release:gh'
@@ -119,10 +119,10 @@ jobs:
             console.log(script.agent(false))
         env:
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          AGENT_APP_NAME: 'ever-agent'
+          AGENT_APP_NAME: 'ever-gauzy-agent'
           COMPANY_SITE_LINK: 'https://gauzy.co'
-          AGENT_APP_DESCRIPTION: 'Ever Agent'
-          AGENT_APP_ID: 'com.ever.agent'
+          AGENT_APP_DESCRIPTION: 'Ever Gauzy Agent'
+          AGENT_APP_ID: 'com.ever.gauzyagent'
 
       - name: Build Agent
         run: 'yarn build:agent:mac:release'
@@ -183,10 +183,10 @@ jobs:
             console.log(script.agent(false))
         env:
           PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          AGENT_APP_NAME: 'ever-agent'
+          AGENT_APP_NAME: 'ever-gauzy-agent'
           COMPANY_SITE_LINK: 'https://gauzy.co'
-          AGENT_APP_DESCRIPTION: 'Ever Agent'
-          AGENT_APP_ID: 'com.ever.agent'
+          AGENT_APP_DESCRIPTION: 'Ever Gauzy Agent'
+          AGENT_APP_ID: 'com.ever.gauzyagent'
 
       - name: Build Agent
         run: |
