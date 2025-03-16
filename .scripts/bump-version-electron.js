@@ -393,8 +393,8 @@ module.exports.agent = async (isProd) => {
 		package.build.productName = process.env.AGENT_APP_DESCRIPTION;
 		package.build.linux.executableName = appName;
 
-		const appRepoName = process.env.AGENT_REPO_NAME || appName;
-		const appRepoOwner = process.env.AGENT_REPO_OWNER || 'ever-co';
+		const appRepoName = process.env.AGENT_APP_REPO_NAME || appName;
+		const appRepoOwner = process.env.AGENT_APP_REPO_OWNER || 'ever-co';
 
 		// For GitHub options see https://www.electron.build/configuration/publish.html
 
