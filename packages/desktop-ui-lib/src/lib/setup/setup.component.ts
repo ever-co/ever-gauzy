@@ -503,18 +503,15 @@ export class SetupComponent implements OnInit {
 		this.open(hasBackdrop);
 	}
 
-	ngOnInit(): void {
-		this.languageElectronService.initialize<void>();
-		this.welcomeText();
-		this.electronService.ipcRenderer.on('database_status', (event, arg) => {
-			// this.open(true);
-			if (arg.status) {
-				this._notifier.success(arg.message);
+	handleIpcEvent(_: any, arg: { type: string, data: any }) {
+		if (arg.type === 'database_status') {
+			if (arg.data.status) {
+				this._notifier.success(arg.data.message);
 			} else {
-				this._notifier.warn(arg.message)
+				this._notifier.warn(arg.data.message)
 			}
 
-			if (arg.status && this.runApp) {
+			if (arg.data.status && this.runApp) {
 				this.saveAndRun();
 			} else {
 				const elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
@@ -523,7 +520,13 @@ export class SetupComponent implements OnInit {
 			this.isSaving = false;
 			this.isCheckConnection = false;
 			this._cdr.detectChanges();
-		});
+		}
+	}
+
+	ngOnInit(): void {
+		this.languageElectronService.initialize<void>();
+		this.welcomeText();
+		this.electronService.ipcRenderer.on('setting_page_ipc', this.handleIpcEvent);
 		this.validation();
 	}
 

@@ -11,7 +11,9 @@ import {
 	NbDialogService,
 	NbLayoutModule,
 	NbThemeModule,
-	NbToastrModule
+	NbToastrModule,
+	NbSidebarModule,
+	NbSidebarService
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -88,6 +90,7 @@ if (environment.SENTRY_DSN) {
         BrowserAnimationsModule,
         AppRoutingModule,
         NbThemeModule,
+		NbSidebarModule,
         NgxDesktopThemeModule,
         NgxLoginModule,
         SetupModule,
@@ -111,6 +114,7 @@ if (environment.SENTRY_DSN) {
 	], providers: [
         AppService,
         NbDialogService,
+		NbSidebarService,
         AuthGuard,
         NoAuthGuard,
         AppModuleGuard,

@@ -112,14 +112,16 @@ class AppWindow {
 			if (!this.settingWindow) {
 				this.settingWindow = await createSettingsWindow(
 					null,
-					this.getUiPath('setting'),
+					this.getUiPath('settings'),
 					this.getPreloadPath(),
 					true
 				);
+				this.settingWindow.webContents.toggleDevTools();
 				this.settingWindow.removeAllListeners('close'); // remove the close default handle
 				// override the close event
 				this.settingWindow.on('close', () => {
 					this.settingWindow.destroy();
+					this.settingWindow = null;
 				});
 			};
 		} catch (error) {

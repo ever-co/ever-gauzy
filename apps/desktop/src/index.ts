@@ -745,15 +745,21 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 	console.log('Check database connection event received');
 	try {
 		const driver = await provider.check(arg);
-		event.sender.send('database_status', {
-			status: true,
-			message: TranslateService.instant('TIMER_TRACKER.DIALOG.CONNECTION_DRIVER', { driver })
+		event.sender.send('setting_page_ipc', {
+			type: 'database_status',
+			data: {
+				status: true,
+				message: TranslateService.instant('TIMER_TRACKER.DIALOG.CONNECTION_DRIVER', { driver })
+			}
 		});
 	} catch (error) {
 		console.error('ERROR: Occurred while check database connection:' + error);
-		event.sender.send('database_status', {
-			status: false,
-			message: error.message
+		event.sender.send('setting_page_ipc', {
+			type: 'database_status',
+			data: {
+				status: false,
+				message: error.message
+			}
 		});
 	}
 });

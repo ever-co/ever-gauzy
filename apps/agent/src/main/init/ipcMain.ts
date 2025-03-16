@@ -1,7 +1,8 @@
 import {
 	ipcMain,
 	nativeTheme,
-	shell
+	shell,
+	app
 } from 'electron';
 import * as remoteMain from '@electron/remote/main';
 import { logger as log, store } from '@gauzy/desktop-core';
@@ -74,4 +75,7 @@ export default function AppIpcMain() {
 			throw new AppError('MAINOPENEXT', error);
 		}
 	});
+
+	ipcMain.on('get-app-path', () => app.getAppPath());
+	ipcMain.handle('app_setting', () => LocalStore.getApplicationConfig());
 }

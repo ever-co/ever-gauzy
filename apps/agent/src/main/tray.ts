@@ -44,7 +44,6 @@ class TrayMenu {
 		return iconNativePath;
 	}
 
-
 	getCommonMenu(siteUrls: ISiteUrl): MenuItemConstructorOptions[] {
 		return [
 			{
@@ -93,7 +92,20 @@ class TrayMenu {
 
 	build() {
 		this.initTray();
-		this.setMenuList();
+		this.setMenuList([
+			{
+				id: 'tray_setting',
+				label: TranslateService.instant('TIMER_TRACKER.MENU.SETTING'),
+				async click() {
+					await appWindow.initSettingWindow();
+					appWindow.settingWindow.show();
+					appWindow.settingWindow.webContents.send('setting_page_ipc', {
+						type: 'goto_top_menu'
+					});
+					appWindow.settingWindow.webContents.send('refresh_menu');
+				}
+			}
+		]);
 		return this.tray;
 	}
 }

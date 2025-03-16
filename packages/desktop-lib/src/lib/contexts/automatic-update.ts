@@ -38,7 +38,10 @@ export class AutomaticUpdate {
 			try {
 				await this._context.checkUpdate();
 			} catch (e) {
-				this._window.webContents.send('error_update', e);
+				this._window.webContents.send('setting_page_ipc', {
+					type: 'error_update',
+					data: e
+				});
 				console.log('Error on checking update:', e);
 			}
 		}, this.delay);

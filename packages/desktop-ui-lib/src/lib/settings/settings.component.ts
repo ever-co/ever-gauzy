@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Inject, NgZone, OnInit, Optional, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Inject, NgZone, OnInit, Optional, ViewChild, OnDestroy } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS } from '@gauzy/constants';
 import { LanguagesEnum } from '@gauzy/contracts';
@@ -29,7 +29,7 @@ import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 		`
 	]
 })
-export class SettingsComponent implements OnInit, AfterViewInit {
+export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	@ViewChild('selectRef') selectProjectElement: ElementRef;
 	@ViewChild('logBox', { read: ElementRef })
 	set logBox(content: ElementRef) {
@@ -489,7 +489,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	ngOnInit(): void {
-		this.electronService.ipcRenderer.send('request_permission');
+		// this.electronService.ipcRenderer.send('request_permission');
+		console.log('application on init newk');
 		this.version = this.electronService.remote.app.getVersion();
 		this.isConnectedDatabase$
 			.pipe(
@@ -515,10 +516,15 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			.subscribe();
 	}
 
-	ngAfterViewInit(): void {
-		this.electronService.ipcRenderer.on('app_setting', (event, arg) =>
-			this._ngZone.run(async () => {
-				const { setting, config, auth, additionalSetting } = arg;
+	ngOnDestroy(): void {
+	    this.electronService.ipcRenderer.removeListener('setting_page_ipc', this.handleIpcEvent);
+	}
+
+	async getAppSetting() {
+		const appSetting = await this.electronService.ipcRenderer.invoke('app_setting');
+		console.log('appseetting data', appSetting);
+		this._ngZone.run(async () => {
+			const { setting, config, auth, additionalSetting } = appSetting;
 				this.appSetting = {
 					...this.appSetting,
 					...setting
@@ -578,154 +584,237 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				const lastMenu =
 					this._selectedMenu && this.menus.includes(this._selectedMenu) ? this._selectedMenu : this.menus[0];
 				this._selectedMenu$.next(lastMenu);
-			})
-		);
+		})
+	}
 
-		this.electronService.ipcRenderer.on('app_setting_update', (event, arg) =>
-			this._ngZone.run(() => {
-				const { setting } = arg;
-				this.appSetting = setting;
-			})
-		);
 
-		this.electronService.ipcRenderer.on('update_not_available', () =>
-			this._ngZone.run(() => {
-				this._available$.next(false);
-				this.message = {
-					text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_NOT_AVAILABLE',
-					status: 'basic'
-				};
-				this.logContents = this._translateService.instant(this.message.text);
-				this.scrollToBottom();
-				this._loading$.next(false);
-			})
-		);
+	handleIpcEvent(_: any, arg: { type: string, data: any }) {
+		console.log('ipc arg', arg);
+		switch (arg.type) {
+			case 'app_setting_update':
+				this._ngZone.run(() => {
+					const { setting } = arg.data;
+					this.appSetting = setting;
+				});
+				break;
+			case 'update_not_available': {
+				this._ngZone.run(() => {
+					this._available$.next(false);
+					this.message = {
+						text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_NOT_AVAILABLE',
+						status: 'basic'
+					};
+					this.logContents = this._translateService.instant(this.message.text);
+					this.scrollToBottom();
+					this._loading$.next(false);
+				});
+				break;
+			}
+			case 'error_update': {
+				this._ngZone.run(() => {
+					this._available$.next(false);
+					this.message = {
+						text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_ERROR',
+						status: 'danger'
+					};
+					this.logContents = this._translateService.instant(this.message.text);
+					this.logContents = `error message: ${arg.data}`;
+					this.scrollToBottom();
+					this._loading$.next(false);
+				});
+				break;
+			}
+			case 'update_available': {
+				this._ngZone.run(() => {
+					this._available$.next(true);
+					this._loading$.next(false);
+					this.message = {
+						text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_AVAILABLE',
+						status: 'primary'
+					};
+					this.logContents = this._translateService.instant(this.message.text);
+					this.scrollToBottom();
+				});
+				break;
+			}
+			case 'update_downloaded': {
+				this._ngZone.run(() => {
+					this._available$.next(true);
+					this.message = {
+						text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_DOWNLOAD_COMPLETED',
+						status: 'success'
+					};
+					this.logContents = this._translateService.instant(this.message.text);
+					this.scrollToBottom();
+					this.showProgressBar = false;
+					this.downloadFinish = true;
+					this._loading$.next(false);
+				});
+				break;
+			}
+			case 'download_on_progress': {
+				this._ngZone.run(() => {
+					this._loading$.next(true);
+					this._available$.next(true);
+					this.showProgressBar = true;
+					this.message = {
+						text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_DOWNLOADING',
+						status: 'warning'
+					};
+					this.progressDownload = Math.floor(Number(arg.data));
+					this.logContents = this._translateService.instant(
+						'TIMER_TRACKER.SETTINGS.MESSAGES.DOWNLOADING_UPDATE',
+						{
+							current: Math.floor(arg.data.transferred / 1000000),
+							total: Math.floor(arg.data.total / 1000000),
+							bandwidth: Math.floor(arg.data.bytesPerSecond / 1000)
+						}
+					);
+					this.scrollToBottom();
+				});
+				break;
+			}
+			case 'goto_update': {
+				this._ngZone.run(() => {
+					this.selectMenu('TIMER_TRACKER.SETTINGS.UPDATE');
+				});
+				break;
+			}
+			case 'goto_top_menu': {
+				this._ngZone.run(() => {
+					const lastMenu =
+						this._selectedMenu && this.menus.includes(this._selectedMenu) ? this._selectedMenu : this.menus[0];
+					this.selectMenu(lastMenu);
+				});
+				break;
+			}
+			case 'goto_advanced_setting': {
+				this.selectMenu('TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS');
+				break;
+			}
+			case 'logout_success': {
+				this._ngZone.run(() => {
+					this.currentUser$.next(null);
+				});
+				break;
+			}
+			// please check this resp_msg letter
+			case 'resp_msg': {
+				this._ngZone.run(() => {
+					this.showAlert(arg);
+				});
+				break;
+			}
+			case 'server_status': {
+				this._ngZone.run(() => {
+					this.serverIsRunning = arg.data;
+				});
+				break;
+			}
+			case 'update_files_directory': {
+				this._ngZone.run(() => {
+					this._file$.next(arg);
+				});
+				break;
+			}
+			case 'show_about': {
+				this._ngZone.run(() => {
+					this._dialogService.open(AboutComponent);
+				});
+				break;
+			}
+			case 'database_status': {
+				this._ngZone.run(() => {
+					this._isCheckDatabase$.next(false);
+					this._isConnectedDatabase$.next(arg.data);
+					this._isHidden$.next(false);
+				});
+				break;
+			}
+			case '_logout_quit_install_': {
+				this._ngZone.run(async () => {
+					await this.restartAndUpdate();
+				});
+				break;
+			}
+			default:
+				break;
+		}
+	}
 
-		this.electronService.ipcRenderer.on('error_update', (event, arg) =>
-			this._ngZone.run(() => {
-				this._available$.next(false);
-				this.message = {
-					text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_ERROR',
-					status: 'danger'
-				};
-				this.logContents = this._translateService.instant(this.message.text);
-				this.logContents = `error message: ${arg}`;
-				this.scrollToBottom();
-				this._loading$.next(false);
-			})
-		);
-
-		this.electronService.ipcRenderer.on('update_available', () =>
-			this._ngZone.run(() => {
-				this._available$.next(true);
-				this._loading$.next(false);
-				this.message = {
-					text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_AVAILABLE',
-					status: 'primary'
-				};
-				this.logContents = this._translateService.instant(this.message.text);
-				this.scrollToBottom();
-			})
-		);
-
-		this.electronService.ipcRenderer.on('update_downloaded', () =>
-			this._ngZone.run(() => {
-				this._available$.next(true);
-				this.message = {
-					text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_DOWNLOAD_COMPLETED',
-					status: 'success'
-				};
-				this.logContents = this._translateService.instant(this.message.text);
-				this.scrollToBottom();
-				this.showProgressBar = false;
-				this.downloadFinish = true;
-				this._loading$.next(false);
-			})
-		);
-
-		this.electronService.ipcRenderer.on('download_on_progress', (event, arg) =>
-			this._ngZone.run(() => {
-				this._loading$.next(true);
-				this._available$.next(true);
-				this.showProgressBar = true;
-				this.message = {
-					text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_DOWNLOADING',
-					status: 'warning'
-				};
-				this.progressDownload = Math.floor(Number(arg.percent));
-				this.logContents = this._translateService.instant(
-					'TIMER_TRACKER.SETTINGS.MESSAGES.DOWNLOADING_UPDATE',
-					{
-						current: Math.floor(arg.transferred / 1000000),
-						total: Math.floor(arg.total / 1000000),
-						bandwidth: Math.floor(arg.bytesPerSecond / 1000)
-					}
-				);
-				this.scrollToBottom();
-			})
-		);
-
-		this.electronService.ipcRenderer.on('goto_update', () =>
-			this._ngZone.run(() => {
-				this.selectMenu('TIMER_TRACKER.SETTINGS.UPDATE');
-			})
-		);
-
-		this.electronService.ipcRenderer.on('goto_top_menu', () =>
-			this._ngZone.run(() => {
-				const lastMenu =
-					this._selectedMenu && this.menus.includes(this._selectedMenu) ? this._selectedMenu : this.menus[0];
-				this.selectMenu(lastMenu);
-			})
-		);
-
-		this.electronService.ipcRenderer.on('goto_advanced_setting', () => {
-			this.selectMenu('TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS');
-		});
-
-		this.electronService.ipcRenderer.on('logout_success', () =>
-			this._ngZone.run(() => {
-				this.currentUser$.next(null);
-			})
-		);
-
-		this.electronService.ipcRenderer.on('resp_msg', (event, arg) =>
-			this._ngZone.run(() => {
-				this.showAlert(arg);
-			})
-		);
-
-		this.electronService.ipcRenderer.on('server_status', (event, arg) =>
-			this._ngZone.run(() => {
-				this.serverIsRunning = arg;
-			})
-		);
-
-		this.electronService.ipcRenderer.on('update_files_directory', (event, arg) => {
-			this._ngZone.run(() => {
-				this._file$.next(arg);
-			});
-		});
-
-		this.electronService.ipcRenderer.on('show_about', () => {
-			this._ngZone.run(() => {
-				this._dialogService.open(AboutComponent);
-			});
-		});
-
-		this.electronService.ipcRenderer.on('database_status', (event, arg) => {
-			this._ngZone.run(() => {
-				this._isCheckDatabase$.next(false);
-				this._isConnectedDatabase$.next(arg);
-				this._isHidden$.next(false);
-			});
-		});
-
-		this.electronService.ipcRenderer.on('_logout_quit_install_', (event, arg) => {
-			this._ngZone.run(async () => {
-				await this.restartAndUpdate();
-			});
-		});
+	ngAfterViewInit(): void {
+		this.getAppSetting();
+		this.electronService.ipcRenderer.on('setting_page_ipc', this.handleIpcEvent);
+		// // this.electronService.ipcRenderer.on('app_setting', (event, arg) =>
+		// // 	this._ngZone.run(async () => {
+		// //
+		// // 	})
+		// // );
+		//
+		// // copressed ipc setting to single event with multiple type
+		// // this.electronService.ipcRenderer.on('app_setting_update', (event, arg) =>
+		// //
+		// // );
+		//
+		// //
+		// // this.electronService.ipcRenderer.on('update_not_available', () =>
+		// // );
+		// //
+		// // this.electronService.ipcRenderer.on('error_update', (event, arg) =>
+		// //
+		// // );
+		//
+		// this.electronService.ipcRenderer.on('update_available', () =>
+		//
+		// );
+		//
+		// this.electronService.ipcRenderer.on('update_downloaded', () =>
+		//
+		// );
+		//
+		// this.electronService.ipcRenderer.on('download_on_progress', (event, arg) =>
+		//
+		// );
+		//
+		// this.electronService.ipcRenderer.on('goto_update', () =>
+		//
+		// );
+		//
+		// this.electronService.ipcRenderer.on('goto_top_menu', () =>
+		//
+		// );
+		//
+		// this.electronService.ipcRenderer.on('goto_advanced_setting', () => {
+		//
+		// });
+		//
+		// this.electronService.ipcRenderer.on('logout_success', () =>
+		//
+		// );
+		//
+		// this.electronService.ipcRenderer.on('resp_msg', (event, arg) =>
+		//
+		// );
+		//
+		// this.electronService.ipcRenderer.on('server_status', (event, arg) =>
+		//
+		// );
+		//
+		// this.electronService.ipcRenderer.on('update_files_directory', (event, arg) => {
+		//
+		// });
+		//
+		// this.electronService.ipcRenderer.on('show_about', () => {
+		//
+		// });
+		//
+		// this.electronService.ipcRenderer.on('database_status', (event, arg) => {
+		//
+		// });
+		//
+		// this.electronService.ipcRenderer.on('_logout_quit_install_', (event, arg) => {
+		//
+		// });
 
 		this._languageElectronService.initialize<void>();
 	}

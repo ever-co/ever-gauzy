@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer, shell } from 'electron';
 import * as remote from '@electron/remote';
 import ElectronLog from 'electron-log';
+import { EventEmitter } from 'events';
 
 contextBridge.exposeInMainWorld('electronAPI', {
 	ipcRenderer: {
@@ -20,6 +21,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
 			getVersion: () => remote.app.getVersion()
 		}
 	},
-	log: ElectronLog
+	log: ElectronLog,
 });
+
+if (process.env.NODE_ENV === 'development') {
+	contextBridge.exposeInMainWorld('require', () => EventEmitter);
+}
 

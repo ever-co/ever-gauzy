@@ -367,7 +367,9 @@ const contextMenu = () => {
 			label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 			click() {
 				settingsWindow.show();
-				settingsWindow.webContents.send('goto_update');
+				settingsWindow.webContents.send('setting_page_ipc', {
+					type: 'goto_update'
+				});
 				settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 			}
 		},
@@ -530,17 +532,23 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 
 		await dbConn.raw('select 1+1 as result');
 
-		event.sender.send('database_status', {
-			status: true,
-			message: TranslateService.instant('TIMER_TRACKER.DIALOG.CONNECTION_DRIVER', {
-				driver: provider === 'postgres' ? 'PostgresSQL' : 'SQLite'
-			})
+		event.sender.send('setting_page_ipc', {
+			type: 'database_status',
+			data: {
+				status: true,
+				message: TranslateService.instant('TIMER_TRACKER.DIALOG.CONNECTION_DRIVER', {
+					driver: provider === 'postgres' ? 'PostgresSQL' : 'SQLite'
+				})
+			}
 		});
 	} catch (error) {
 		console.error('Error in check_database_connection', error);
-		event.sender.send('database_status', {
-			status: false,
-			message: error.message
+		event.sender.send('setting_page_ipc', {
+			type: 'database_status',
+			data: {
+				message: error.message,
+				status: false,
+			}
 		});
 	}
 });
@@ -553,7 +561,10 @@ ipcMain.on('resp_msg_server', (event, arg) => {
 ipcMain.on('running_state', (event, arg) => {
 	console.log('running_state');
 
-	settingsWindow.webContents.send('server_status', arg);
+	settingsWindow.webContents.send('setting_page_ipc', {
+		type: 'server_status',
+		data: arg
+	});
 
 	const trayContextMenu = contextMenu();
 
