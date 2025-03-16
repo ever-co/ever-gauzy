@@ -344,13 +344,13 @@ export const env: Env = cleanEnv(
 			default: 'agent'
 		}),
 		AGENT_APP_ID: str({
-			default: 'com.ever.agentapp'
+			default: 'com.ever.gauzyagent'
 		}),
 		AGENT_APP_DESCRIPTION: str({
-			default: 'Ever Agent App'
+			default: 'Ever Gauzy Agent'
 		}),
 		AGENT_APP_REPO_NAME: str({
-			default: 'ever-agent'
+			default: 'ever-gauzy-agent'
 		}),
 		AGENT_APP_REPO_OWNER: str({
 			default: 'ever-co'
