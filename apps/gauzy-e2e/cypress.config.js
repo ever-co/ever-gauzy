@@ -11,12 +11,12 @@ module.exports = defineConfig({
     chromeWebSecurity: false,
     viewportWidth: 1920,
     viewportHeight: 1080,
-    defaultCommandTimeout: 60000,
-    pageLoadTimeout: 60000,
-    taskTimeout: 60000,
-    requestTimeout: 60000,
-    execTimeout: 60000,
-    responseTimeout: 60000,
+    defaultCommandTimeout: 10000,
+    pageLoadTimeout: 10000,
+    taskTimeout: 10000,
+    requestTimeout: 10000,
+    execTimeout: 5000,
+    responseTimeout: 20000,
     retries: {
         runMode: 1,
         openMode: 0
