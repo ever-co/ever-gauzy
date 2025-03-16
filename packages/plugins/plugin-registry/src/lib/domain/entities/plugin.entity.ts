@@ -10,14 +10,14 @@ import {
 	TenantOrganizationBaseEntity
 } from '@gauzy/core';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsDate, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { JoinColumn, RelationId } from 'typeorm';
-import { MikroOrmPluginRepository } from '../repositories/mikro-orm-plugin.repository';
-import { PluginVersion } from './plugin-version.entity';
-import { PluginSource } from './plugin-source.entity';
-import { IPlugin } from '../../shared/models/plugin.model';
-import { IPluginVersion } from '../../shared/models/plugin-version.model';
 import { IPluginSource } from '../../shared/models/plugin-source.model';
+import { IPluginVersion } from '../../shared/models/plugin-version.model';
+import { IPlugin } from '../../shared/models/plugin.model';
+import { MikroOrmPluginRepository } from '../repositories/mikro-orm-plugin.repository';
+import { PluginSource } from './plugin-source.entity';
+import { PluginVersion } from './plugin-version.entity';
 
 @MultiORMEntity('plugin', { mikroOrmRepository: () => MikroOrmPluginRepository })
 export class Plugin extends TenantOrganizationBaseEntity implements IPlugin {
