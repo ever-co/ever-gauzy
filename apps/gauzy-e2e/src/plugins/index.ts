@@ -23,7 +23,7 @@ module.exports = (on, config) => {
 	const options = {
 		...browserify.defaultOptions,
 		typescript: resolve.sync('typescript', { baseDir: config.projectRoot })
-	  };
-	
-	  on('file:preprocessor', cucumber(options));
+	};
+
+	on('file:preprocessor', cucumber(options));
 };
