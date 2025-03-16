@@ -341,7 +341,7 @@ export const env: Env = cleanEnv(
 		REGISTER_URL: str({ default: 'https://app.gauzy.co/#/auth/register' }),
 		FORGOT_PASSWORD_URL: str({ default: 'https://app.gauzy.co/#/auth/request-password' }),
 		AGENT_APP_NAME: str({
-			default: 'agent'
+			default: 'ever-gauzy-agent'
 		}),
 		AGENT_APP_ID: str({
 			default: 'com.ever.gauzyagent'
