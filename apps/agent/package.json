@@ -1,23 +1,22 @@
-
 {
-    "name": "@gauzy/agent",
+	"name": "@gauzy/agent",
 	"version": "0.1.0",
-    "description": "Ever Gauzy Agent",
+	"description": "Ever Gauzy Agent",
 	"author": {
-        "name": "Ever Co. LTD",
-        "email": "ever@ever.co",
-        "url": "https://ever.co"
-    },
-    "homepage": "https://gauzy.co",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/ever-co/ever-gauzy.git"
-    },
-    "bugs": {
-        "url": "https://github.com/ever-co/ever-gauzy/issues"
-    },
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"homepage": "https://gauzy.co",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy.git"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
 	"license": "AGPL-3.0",
-    "private": true,
+	"private": true,
 	"scripts": {
 		"build": "yarn nx build desktop --configuration=development",
 		"build:prod": "yarn nx build desktop --configuration=production",
@@ -35,8 +34,8 @@
 		"terser-webpack-plugin": "^5.3.10",
 		"electronmon": "^2.0.2"
 	},
-    "dependencies": {
-        "@angular/animations": "18.2.12",
+	"dependencies": {
+		"@angular/animations": "18.2.12",
 		"@angular/cdk": "18.2.14",
 		"@angular/common": "18.2.12",
 		"@angular/core": "18.2.12",
@@ -68,7 +67,7 @@
 		"consolidate": "^0.16.0",
 		"custom-electron-titlebar": "^4.2.8",
 		"electron-log": "^4.4.8",
-		"electron-notarize": "^1.2.2",
+		"@electron/notarize": "^2.5.0",
 		"electron-store": "^8.1.0",
 		"electron-updater": "^6.1.7",
 		"electron-util": "^0.18.1",
@@ -102,11 +101,11 @@
 	},
 	"sideEffects": false,
 	"electronmon": {
-        "patterns": [
-            "!**/**",
-            "src/main/**",
+		"patterns": [
+			"!**/**",
+			"src/main/**",
 			"src/index.ts"
-        ],
-        "logLevel": "quiet"
-    }
+		],
+		"logLevel": "quiet"
+	}
 }
