@@ -1,0 +1,206 @@
+name: Agent Build Stage
+
+on:
+  workflow_run:
+    workflows: ['Release Apps Stage']
+    branches: [stage-apps, temp]
+    types:
+      - completed
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  release-linux:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [buildjet-16vcpu-ubuntu-2204]
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js, NPM and Yarn
+        uses: buildjet/setup-node@v4
+        with:
+          node-version: 20.11.1
+          cache: 'yarn'
+
+      - name: Change permissions
+        run: 'sudo chown -R $(whoami) ./*'
+
+      - name: Install system dependencies
+        run: 'sudo apt-get update && sudo apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick'
+
+      - name: Fix node-gyp and Python
+        run: python3 -m pip install packaging setuptools
+
+      - name: Install latest version of NPM
+        run: 'sudo npm install -g npm@9'
+
+      - name: Install node-gyp package
+        run: 'sudo npm install --quiet -g node-gyp@10.2.0'
+
+      - name: Install Yarn dependencies
+        run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
+
+      - name: Run Postinstall Manually
+        run: 'yarn postinstall.manual'
+
+      - name: Bump Agent version
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const script = require('./.scripts/bump-version-electron.js')
+            console.log(script.agent(false))
+        env:
+          PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
+          AGENT_APP_NAME: 'ever-agent'
+          COMPANY_SITE_LINK: 'https://gauzy.co'
+          AGENT_APP_DESCRIPTION: 'Ever Agent'
+          AGENT_APP_ID: 'com.ever.agent'
+
+      - name: Build Agent
+        run: 'yarn build:agent:linux:release:gh'
+        env:
+          USE_HARD_LINKS: false
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_NO_CLOUD: true
+
+  release-mac:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [macos-latest]
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.11.1
+          cache: 'yarn'
+
+      - name: Fix node-gyp and Python
+        run: python3 -m pip install --break-system-packages packaging setuptools
+
+      - name: Install latest version of NPM
+        run: 'sudo npm install -g npm@9'
+
+      - name: Install node-gyp package
+        run: 'sudo npm install --quiet -g node-gyp@10.2.0'
+
+      - name: Install Yarn dependencies
+        run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
+
+      - name: Run Postinstall Manually
+        run: 'yarn postinstall.manual'
+
+      - name: Bump Agent version
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const script = require('./.scripts/bump-version-electron.js')
+            console.log(script.agent(false))
+        env:
+          PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
+          AGENT_APP_NAME: 'ever-agent'
+          COMPANY_SITE_LINK: 'https://gauzy.co'
+          AGENT_APP_DESCRIPTION: 'Ever Agent'
+          AGENT_APP_ID: 'com.ever.agent'
+
+      - name: Build Agent
+        run: 'yarn build:agent:mac:release'
+        env:
+          USE_HARD_LINKS: false
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_NO_CLOUD: true
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_APP_PASSWORD: ${{ secrets.APPLE_ID_APP_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+  release-windows:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [windows-latest]
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.11.1
+          cache: 'yarn'
+
+      - name: Fix node-gyp and Python
+        run: python3 -m pip install packaging setuptools
+
+      - name: Install latest version of NPM
+        run: 'npm install -g npm@9'
+
+      - name: Install node-gyp package
+        run: 'npm install --quiet -g node-gyp@10.2.0'
+
+      - name: Install Yarn dependencies
+        run: 'yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts'
+
+      - name: Run Postinstall Manually
+        run: 'yarn postinstall.manual'
+
+      - name: Bump Agent version
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const script = require('./.scripts/bump-version-electron.js')
+            console.log(script.agent(false))
+        env:
+          PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
+          AGENT_APP_NAME: 'ever-agent'
+          COMPANY_SITE_LINK: 'https://gauzy.co'
+          AGENT_APP_DESCRIPTION: 'Ever Agent'
+          AGENT_APP_ID: 'com.ever.agent'
+
+      - name: Build Agent
+        run: |
+          yarn build:agent:windows:release:gh
+        env:
+          USE_HARD_LINKS: false
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_GH_IGNORE_TIME: true
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_PROFILE_SAMPLE_RATE: '${{ secrets.SENTRY_PROFILE_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          SENTRY_PROFILING_ENABLED: '${{ secrets.SENTRY_PROFILING_ENABLED }}'
+          DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
+          DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
+          NX_NO_CLOUD: true
