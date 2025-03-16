@@ -31,7 +31,7 @@
 		"@gauzy/common": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
-		"@mikro-orm/better-sqlite": "^6.4.2",
+		"@mikro-orm/better-sqlite": "6.4.5",
 		"@mikro-orm/core": "6.4.5",
 		"@mikro-orm/mysql": "6.4.5",
 		"@mikro-orm/nestjs": "^6.0.2",
