@@ -43,6 +43,7 @@ import { CreatePluginCommand } from '../../application/commands/create-plugin.co
 import { DeactivatePluginCommand } from '../../application/commands/deactivate-plugin.command';
 import { DeletePluginCommand } from '../../application/commands/delete-plugin.command';
 import { UpdatePluginCommand } from '../../application/commands/update-plugin.command';
+import { VerifyPluginCommand } from '../../application/commands/verify-plugin.command';
 import { GetPluginQuery } from '../../application/queries/get-plugin.query';
 import { ListPluginsQuery } from '../../application/queries/list-plugins.query';
 import { PluginOwnerGuard } from '../../core/guards/plugin-owner.guard';
@@ -50,6 +51,7 @@ import { Plugin } from '../../domain/entities/plugin.entity';
 import { CreatePluginDTO } from '../../shared/dto/create-plugin.dto';
 import { FileDTO } from '../../shared/dto/file.dto';
 import { UpdatePluginDTO } from '../../shared/dto/update-plugin.dto';
+import { VerifyPluginDTO } from '../../shared/dto/verify-plugin.dto';
 import { IPlugin } from '../../shared/models/plugin.model';
 
 /**
@@ -306,6 +308,35 @@ export class PluginController {
 	@Patch(':id/deactivate')
 	public async deactivate(@Param('id', UUIDValidationPipe) id: ID): Promise<void> {
 		return this.commandBus.execute(new DeactivatePluginCommand(id));
+	}
+
+	/**
+	 * Verifies a plugin using its ID and verification input.
+	 *
+	 * @param {string} id - The UUID of the plugin to be verified.
+	 * @param {VerifyPluginDTO} input - The verification data required to verify the plugin.
+	 * @returns {Promise<void>} A promise that resolves when the verification is complete.
+	 *
+	 * @throws {BadRequestException} If the input data is invalid.
+	 * @throws {NotFoundException} If the plugin is not found.
+	 */
+	@ApiOperation({
+		summary: 'Verify a plugin',
+		description: 'Verifies a plugin using its ID and the verification input.'
+	})
+	@ApiParam({ name: 'id', type: 'string', format: 'uuid', description: 'Plugin ID in UUID format' })
+	@ApiBody({ type: VerifyPluginDTO, description: 'Verification data for the plugin' })
+	@ApiResponse({ status: 200, description: 'Plugin verification successful' })
+	@ApiResponse({ status: 400, description: 'Bad request - validation failed' })
+	@ApiResponse({ status: 404, description: 'Plugin not found' })
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
+	@Post(':id/verify')
+	public async verify(@Param('id', UUIDValidationPipe) id: ID, @Body() input: VerifyPluginDTO): Promise<boolean> {
+		return this.commandBus.execute(new VerifyPluginCommand(id, input));
 	}
 
 	/**

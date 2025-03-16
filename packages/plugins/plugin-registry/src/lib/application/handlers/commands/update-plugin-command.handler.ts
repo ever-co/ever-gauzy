@@ -1,14 +1,14 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { ID } from '@gauzy/contracts';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DataSource } from 'typeorm';
-import { ID } from '@gauzy/contracts';
 
 import { PluginSourceService } from '../../../domain/services/plugin-source.service';
 import { PluginVersionService } from '../../../domain/services/plugin-version.service';
 import { PluginService } from '../../../domain/services/plugin.service';
-import { IPlugin } from '../../../shared/models/plugin.model';
 import { IPluginSource } from '../../../shared/models/plugin-source.model';
 import { IPluginVersion } from '../../../shared/models/plugin-version.model';
+import { IPlugin } from '../../../shared/models/plugin.model';
 import { UpdatePluginCommand } from '../../commands/update-plugin.command';
 
 @CommandHandler(UpdatePluginCommand)
