@@ -49,10 +49,7 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 	private async computeDownloadCount(pluginId: string): Promise<number> {
 		try {
 			// Create a query builder to sum the downloadCount from all versions
-			const total = await this.pluginVersionService.count({
-				where: { pluginId },
-				select: ['downloadCount']
-			});
+			const total = await this.pluginVersionService.getTotalDownloadCount(pluginId);
 			// Return the total, or 0 if no results
 			return total || 0;
 		} catch (error) {
