@@ -10,3 +10,4 @@ export * from './lib/desktop-window-timer';
 export * from './lib/desktop-window-updater';
 export * from './lib/screen-capture-notification';
 export * from './lib/utils/desktop-window-utils';
+export * from './lib/desktop-window-auth';

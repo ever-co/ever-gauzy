@@ -12,6 +12,7 @@ import { delaySync, getApiBaseUrl } from '../util';
 import AppWindow from '../window-manager';
 import TrayMenu from '../tray';
 import { CONSTANT } from '../../constant';
+import { checkUserAuthentication } from '../auth';
 
 const provider = ProviderFactory.instance;
 const knex = provider.connection;
@@ -21,8 +22,8 @@ const exeName = path.basename(process.execPath);
 LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png')
 });
-
-const appWindow = new AppWindow(path.join(__dirname, '../..'));
+const appRootPath: string = path.join(__dirname, '../..');
+const appWindow = new AppWindow(appRootPath);
 
 function launchAtStartup(autoLaunch:boolean, hidden: boolean) {
 	switch (process.platform) {
@@ -100,6 +101,8 @@ export async function startServer(value: any) {
 		console.log('Translation language change');
 		trayMenu.updateTryMenu();
 	});
+
+	await checkUserAuthentication(appRootPath);
 	return true;
 }
 
