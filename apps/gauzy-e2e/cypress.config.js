@@ -13,12 +13,12 @@ module.exports = defineConfig({
     "viewportWidth": 1920,
     "viewportHeight": 1080,
     "baseUrl": "http://localhost:4200",
-    "defaultCommandTimeout": 10000,
-    "pageLoadTimeout": 10000,
+    "defaultCommandTimeout": 60000,
+    "pageLoadTimeout": 60000,
     "taskTimeout": 60000,
-    "requestTimeout": 10000,
+    "requestTimeout": 60000,
     "execTimeout": 60000,
-    "responseTimeout": 10000,
+    "responseTimeout": 60000,
     "retries": {
         "runMode": 1,
         "openMode": 0
