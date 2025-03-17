@@ -1,0 +1,111 @@
+{
+	"name": "@gauzy/agent",
+	"version": "0.1.0",
+	"description": "Ever Gauzy Agent",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"homepage": "https://gauzy.co",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy.git"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"license": "AGPL-3.0",
+	"private": true,
+	"scripts": {
+		"build": "yarn nx build desktop --configuration=development",
+		"build:prod": "yarn nx build desktop --configuration=production",
+		"start": "yarn nx serve desktop"
+	},
+	"devDependencies": {
+		"@electron/rebuild": "^3.2.10",
+		"@types/moment-duration-format": "^2.2.3",
+		"electron": "^30.0.1",
+		"electron-builder": "^24.13.3",
+		"electron-installer-dmg": "^4.0.0",
+		"electron-packager": "^17.1.1",
+		"electron-reload": "~1.5.0",
+		"node-polyfill-webpack-plugin": "^1.1.4",
+		"terser-webpack-plugin": "^5.3.10",
+		"electronmon": "^2.0.2"
+	},
+	"dependencies": {
+		"@angular/animations": "18.2.12",
+		"@angular/cdk": "18.2.14",
+		"@angular/common": "18.2.12",
+		"@angular/core": "18.2.12",
+		"@angular/forms": "18.2.12",
+		"@angular/material": "18.2.14",
+		"@angular/router": "18.2.12",
+		"@datorama/akita": "^8.0.1",
+		"@datorama/akita-ngdevtools": "^7.0.0",
+		"@electron/remote": "^2.0.8",
+		"@grpc/grpc-js": "^1.6.7",
+		"@nebular/auth": "^14.0.2",
+		"@nebular/bootstrap": "^9.1.0-rc.6",
+		"@nebular/eva-icons": "^14.0.2",
+		"@nebular/security": "^14.0.2",
+		"@nebular/theme": "^14.0.2",
+		"@ng-select/ng-select": "^13.9.0",
+		"@ngneat/until-destroy": "^10.0.0",
+		"@ngx-translate/core": "^16.0.3",
+		"@ngx-translate/http-loader": "^16.0.0",
+		"@sentry/angular-ivy": "^7.101.1",
+		"@sentry/electron": "^4.18.0",
+		"@sentry/node": "^7.101.1",
+		"@sentry/profiling-node": "^7.101.1",
+		"@sentry/replay": "^7.101.1",
+		"@sentry/tracing": "^7.101.1",
+		"@sentry/types": "^7.101.1",
+		"app-root-path": "^3.0.0",
+		"auto-launch": "5.0.5",
+		"consolidate": "^0.16.0",
+		"custom-electron-titlebar": "^4.2.8",
+		"electron-log": "^4.4.8",
+		"@electron/notarize": "^2.5.0",
+		"electron-store": "^8.1.0",
+		"electron-updater": "^6.1.7",
+		"electron-util": "^0.18.1",
+		"express": "^4.21.2",
+		"locutus": "^2.0.30",
+		"moment": "^2.30.1",
+		"moment-duration-format": "^2.3.2",
+		"moment-range": "^4.0.2",
+		"moment-timezone": "^0.5.45",
+		"mysql2": "^3.12.0",
+		"node-fetch": "^2.6.7",
+		"node-notifier": "^8.0.0",
+		"pg": "^8.13.1",
+		"pg-query-stream": "^4.7.1",
+		"rxjs": "^7.8.0",
+		"screenshot-desktop": "^1.15.0",
+		"sound-play": "1.1.0",
+		"squirrelly": "^8.0.8",
+		"twing": "^5.0.2",
+		"underscore": "^1.13.3",
+		"undici": "^6.10.2"
+	},
+	"optionalDependencies": {
+		"node-linux": "^0.1.12",
+		"node-mac": "^1.0.1",
+		"node-windows": "^1.0.0-beta.8"
+	},
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false,
+	"electronmon": {
+		"patterns": [
+			"!**/**",
+			"src/main/**",
+			"src/index.ts"
+		],
+		"logLevel": "quiet"
+	}
+}

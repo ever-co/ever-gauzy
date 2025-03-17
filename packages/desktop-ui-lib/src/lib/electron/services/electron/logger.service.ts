@@ -16,6 +16,10 @@ export class LoggerService {
 			this._log = window.require('electron-log');
 			console.log = this._log.log;
 			Object.assign(console, this._log.functions);
+		} else if (this._electronService.isContextBridge) {
+			this._log = (window as any).electronAPI.log;
+			console.log = this._log.log;
+			Object.assign(console, this._log.functions);
 		}
 	}
 
