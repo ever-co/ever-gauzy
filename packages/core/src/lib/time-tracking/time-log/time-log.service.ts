@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotAcceptableException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, NotAcceptableException, Logger, ConflictException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult } from 'typeorm';
 import { chain, pluck } from 'underscore';
@@ -61,6 +61,7 @@ import { TypeOrmOrganizationContactRepository } from '../../organization-contact
 import { MikroOrmOrganizationContactRepository } from '../../organization-contact/repository/mikro-orm-organization-contact.repository';
 import { TimeLog } from './time-log.entity';
 import { ActivityLogService } from '../../activity-log/activity-log.service';
+import { TimerWeeklyLimitService } from '../timer/timer-weekly-limit.service';
 
 @Injectable()
 export class TimeLogService extends TenantAwareCrudService<TimeLog> {
@@ -74,6 +75,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		readonly mikroOrmOrganizationProjectRepository: MikroOrmOrganizationProjectRepository,
 		readonly typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
 		readonly mikroOrmOrganizationContactRepository: MikroOrmOrganizationContactRepository,
+		private readonly _timerWeeklyLimitService: TimerWeeklyLimitService,
 		private readonly commandBus: CommandBus,
 		private readonly activityLogService: ActivityLogService
 	) {
@@ -1131,6 +1133,46 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
+	 * Checks if the time log will fit the weekly limit taking into account the items that will be removed by conflicts
+	 * 
+	 * @param employee - The employee to check the weekly limit for
+	 * @param startedAt - The start date of the time log
+	 * @param stoppedAt - The end date of the time log
+	 * @param conflicts - The conflicts that will be removed from the weekly limit
+	 * @param previousTime - The time that will be removed from the weekly limit by previous time logs
+	 */
+	async checkWeeklyLimitWithConflicts(employee: IEmployee, startedAt: Date, stoppedAt: Date, conflicts: ITimeLog[], previousTime = 0) {
+		// Calculate the amount of time that will be removed by conflicts
+		let timeToRemove = 0;
+		if (conflicts?.length) {
+			// Loop through each conflicting time log
+			for await (const timeLog of conflicts) {
+				// Entire time log is overlapped
+				if (timeLog.startedAt >= startedAt && timeLog.stoppedAt <= stoppedAt) {
+					timeToRemove += timeLog.duration;
+				} else if (timeLog.startedAt < startedAt && timeLog.stoppedAt > startedAt && timeLog.stoppedAt <= stoppedAt) {
+					// Partial time log is overlapped by the left side
+					timeToRemove += moment(timeLog.stoppedAt).diff(startedAt, 'seconds');
+				} else if (timeLog.startedAt >= startedAt && timeLog.startedAt < stoppedAt && timeLog.stoppedAt > stoppedAt) {
+					// Partial time log is overlapped by the right side
+					timeToRemove += moment(stoppedAt).diff(timeLog.startedAt, 'seconds');
+				} else {
+					// Time log isn't overlapped
+					this.logger.warn(`Time log ${timeLog.id} isn't overlapped with range [${timeLog.startedAt}, ${timeLog.stoppedAt}]`);
+				}
+			}
+			this.logger.log(`Time to remove from weekly limit due to conflicts: ${timeToRemove} seconds`);
+		}
+
+		// Check if the time log will fit the weekly limit taking into account the items that will be removed by conflicts
+		const weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(employee, startedAt, true);
+		const newTimeToAdd = moment(stoppedAt).diff(startedAt, 'seconds') - timeToRemove - previousTime;
+		if (newTimeToAdd > weeklyLimitStatus.remainWeeklyTime) {
+			throw new ConflictException('weekly-limit-reached');
+		}
+	}
+
+	/**
 	 * Adds a manual time log entry.
 	 *
 	 * @param request The input data for the manual time log.
@@ -1172,6 +1214,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					...(request.id && { ignoreId: request.id }) // Simplified ternary check
 				})
 			);
+
+			// Check if the time log will fit the weekly limit
+			await this.checkWeeklyLimitWithConflicts(employee, startedAt, stoppedAt, conflicts);
 
 			// Resolve conflicts by deleting conflicting time slots
 			if (conflicts?.length) {
@@ -1258,6 +1303,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					...(id && { ignoreId: id }) // Simplified check for id
 				})
 			);
+
+			// Check if the time log will fit the weekly limit
+			await this.checkWeeklyLimitWithConflicts(employee, startedAt, stoppedAt, conflicts, timeLog.duration);
 
 			// Resolve conflicts by deleting conflicting time slots
 			if (conflicts?.length) {

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, NotAcceptableException, ConflictException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, NotAcceptableException, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { IsNull, Between, Not, In } from 'typeorm';
 import * as moment from 'moment';
@@ -15,7 +15,7 @@ import {
 	IEmployee,
 	IEmployeeFindInput,
 	ID,
-	ITimerStatusWithWeeklyLimits
+	ITimerStatusWithWeeklyLimits,
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { environment as env } from '@gauzy/config';
@@ -42,8 +42,7 @@ import {
 import { MikroOrmTimeLogRepository, TypeOrmTimeLogRepository } from '../time-log/repository';
 import { TypeOrmEmployeeRepository, MikroOrmEmployeeRepository } from '../../employee/repository';
 import { addRelationsToQuery, buildCommonQueryParameters, buildLogQueryParameters } from './timer.helper';
-import { StatisticService } from '../statistic/statistic.service';
-
+import { TimerWeeklyLimitService } from './timer-weekly-limit.service';
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
 
@@ -58,7 +57,7 @@ export class TimerService {
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 		private readonly _employeeService: EmployeeService,
-		private readonly _statisticService: StatisticService,
+		private readonly _timerWeeklyLimitService: TimerWeeklyLimitService,
 		private readonly _commandBus: CommandBus
 	) { }
 
@@ -159,8 +158,10 @@ export class TimerService {
 
 			case MultiORMEnum.TypeORM:
 				{
-					// Get today's completed timelogs
-					logs = await this.typeOrmTimeLogRepository.find(buildLogQueryParameters(queryParams));
+					// Get today's completed timelogs (not running timers)
+					const previousLogsParams = buildLogQueryParameters(queryParams);
+					previousLogsParams.where.isRunning = false;
+					logs = await this.typeOrmTimeLogRepository.find(previousLogsParams);
 
 					const lastLogQueryParamsTypeOrm = buildCommonQueryParameters(queryParams); // Common query parameters for time log operations.
 					addRelationsToQuery(lastLogQueryParamsTypeOrm, request); // Adds relations from the request to the query parameters.
@@ -175,20 +176,28 @@ export class TimerService {
 		}
 
 		// Get weekly statistics
-		const statistics = await this._statisticService.getWeeklyStatisticsActivities({
-			organizationId,
-			tenantId,
-			employeeId: employee.id,
-			startDate: moment(start).startOf('week').toDate(),
-			endDate: moment(end).endOf('week').toDate()
-		});
+		let weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(employee, start as Date, true);
+
+		// If the user reached the weekly limit, then stop the current timer
+		let lastLogStopped = false;
+		if (lastLog?.isRunning && weeklyLimitStatus.remainWeeklyTime <= 0) {
+			lastLogStopped = true;
+			lastLog = await this.stopTimer({
+				tenantId,
+				organizationId,
+				startedAt: lastLog.startedAt,
+				stoppedAt: moment.utc().toDate()
+			});
+			// Recalculate the weekly limit status
+			weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(employee, start as Date, true);
+		}
 
 		const status: ITimerStatusWithWeeklyLimits = {
 			duration: 0,
 			running: false,
 			lastLog: null,
 			reWeeklyLimit: employee.reWeeklyLimit,
-			workedThisWeek: statistics.duration
+			workedThisWeek: weeklyLimitStatus.workedThisWeek
 		};
 
 		// Calculate completed timelogs duration
@@ -199,8 +208,14 @@ export class TimerService {
 			status.lastLog = lastLog;
 			status.running = lastLog.isRunning;
 
-			if (status.running) {
-				status.duration += Math.abs(moment().diff(moment(lastLog.startedAt), 'seconds'));
+			// Include the last log into duration if it's running or was stopped
+			if (status.running || lastLogStopped) {
+				status.duration += Math.abs(moment(lastLogStopped ? lastLog.stoppedAt : undefined).diff(moment(lastLog.startedAt), 'seconds'));
+			}
+
+			// If timer is running, then add the non saved duration to the workedThisWeek
+			if (lastLog.isRunning) {
+				status.workedThisWeek += moment.utc().diff(moment(lastLog.stoppedAt), 'seconds');
 			}
 		}
 
@@ -228,50 +243,6 @@ export class TimerService {
 			};
 			await this._commandBus.execute(new TimeLogUpdateCommand(partialTimeLog, lastLog.id));
 		}
-	}
-
-	/**
-	 * Check if the employee has reached the weekly limit
-	 *
-	 * @param employee
-	 * @param refDate
-	 * @returns
-	 */
-	async checkWeeklyLimit(employee: IEmployee, refDate?: Date, ignoreException = false): Promise<number> {
-		const statistics = await this._statisticService.getWeeklyStatisticsActivities({
-			organizationId: employee.organizationId,
-			tenantId: employee.tenantId,
-			employeeId: employee.id,
-			startDate: moment(refDate).startOf('week').toDate(),
-			endDate: moment(refDate).endOf('week').toDate()
-		});
-		const remainWeeklyLimit = (employee.reWeeklyLimit * 3600) - statistics.duration;
-
-		// Check if the employee has reached the weekly limit
-		if (remainWeeklyLimit <= 0 && !ignoreException) {
-			throw new ConflictException('weekly-limit-reached');
-		}
-		return remainWeeklyLimit;
-	}
-
-	/**
-	 * Adjusts the stoppedAt time based on the remaining weekly limit.
-	 * Comparison is done against the last stoppedAt time because previous time blocks before this value
-	 * are already accounted for in the duration calculation
-	 *
-	 * @param stoppedAt - The stoppedAt time to adjust.
-	 * @param lastLog - The last time log entry.
-	 * @param remainWeeklyLimit - The remaining weekly limit.
-	 * @returns The adjusted stoppedAt time.
-	 */
-	adjustStoppedAtBasedOnWeeklyLimit(stoppedAt: Date, lastLog: ITimeLog, remainWeeklyLimit: number): Date {
-		// Check if the stoppedAt time exceeds the remaining weekly limit
-		let duration = moment(stoppedAt).diff(moment.utc(lastLog.stoppedAt), 'seconds');
-		if (duration > remainWeeklyLimit) {
-			// Adjust the stoppedAt time to the remaining weekly limit
-			return moment.utc(lastLog.stoppedAt).add(remainWeeklyLimit, 'seconds').toDate();
-		}
-		return stoppedAt;
 	}
 
 	/**
@@ -318,7 +289,7 @@ export class TimerService {
 		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId);
 
 		// Check if the employee has reached the weekly limit
-		await this.checkWeeklyLimit(employee, startedAt);
+		await this._timerWeeklyLimitService.checkWeeklyLimit(employee, startedAt);
 
 		// Create a new time log entry using the command bus
 		const timeLog = await this._commandBus.execute(
@@ -389,12 +360,12 @@ export class TimerService {
 		}
 
 		// Check if the employee has reached the weekly limit
-		const remainWeeklyLimit = await this.checkWeeklyLimit(employee, lastLog.startedAt, true);
-		this.logger.verbose(`Remaining weekly limit: ${remainWeeklyLimit}`);
+		const weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(employee, lastLog.startedAt, true);
+		this.logger.verbose(`Remaining weekly limit: ${weeklyLimitStatus.remainWeeklyTime}`);
 
 		// Calculate stoppedAt date or use current date if not provided
 		let stoppedAt = await this.calculateStoppedAt(request, lastLog);
-		stoppedAt = this.adjustStoppedAtBasedOnWeeklyLimit(stoppedAt, lastLog, remainWeeklyLimit);
+		stoppedAt = this._timerWeeklyLimitService.adjustStoppedAtBasedOnWeeklyLimit(stoppedAt, lastLog, weeklyLimitStatus.remainWeeklyTime);
 		this.logger.verbose(`Last stopped at: ${stoppedAt}`);
 
 		// Log the case where stoppedAt is less than startedAt
