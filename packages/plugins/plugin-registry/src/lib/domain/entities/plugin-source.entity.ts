@@ -1,4 +1,4 @@
-import { FileStorageProvider, FileStorageProviderEnum, ID, PluginSourceType } from '@gauzy/contracts';
+import { FileStorageProviderEnum, ID, PluginSourceType } from '@gauzy/contracts';
 import {
 	ColumnIndex,
 	MultiORMColumn,
@@ -119,11 +119,11 @@ export class PluginSource extends TenantOrganizationBaseEntity implements IPlugi
 	@MultiORMColumn({ nullable: true, relationId: true })
 	pluginId?: ID;
 
-	@ApiPropertyOptional({ type: () => String, enum: FileStorageProviderEnum })
+	@ApiPropertyOptional({ enum: FileStorageProviderEnum })
 	@IsOptional()
-	@IsEnum(FileStorageProviderEnum)
+	@IsEnum(FileStorageProviderEnum, { message: 'Invalid storage provider' })
 	@Exclude({ toPlainOnly: true })
 	@ColumnIndex()
-	@MultiORMColumn({ type: 'simple-enum', nullable: true, enum: FileStorageProviderEnum })
-	storageProvider?: FileStorageProvider;
+	@MultiORMColumn({ type: 'enum', nullable: true, enum: FileStorageProviderEnum })
+	storageProvider?: FileStorageProviderEnum;
 }

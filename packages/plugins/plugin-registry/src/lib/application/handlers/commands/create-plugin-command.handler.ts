@@ -46,14 +46,12 @@ export class CreatePluginCommandHandler implements ICommandHandler<CreatePluginC
 			// Create the plugin
 			const plugin = new Plugin();
 			Object.assign(plugin, input);
-			await this.pluginService.save(plugin);
 
 			// Process source and version if provided
 			if (input.source) {
-				const source = await this.createPluginSource(input.source);
-				plugin.source = source;
-				await this.pluginService.save(plugin);
-				await this.createPluginVersion(input.version, plugin);
+				const saved = await this.pluginService.save(plugin);
+				await this.createPluginSource(input.source, saved);
+				await this.createPluginVersion(input.version, saved);
 			}
 
 			await queryRunner.commitTransaction();
@@ -93,14 +91,16 @@ export class CreatePluginCommandHandler implements ICommandHandler<CreatePluginC
 	 * Creates a plugin source
 	 *
 	 * @param sourceData - Source data to create
+	 * @param plugin - Associated plugin
 	 * @returns The created plugin source
 	 */
-	private async createPluginSource(sourceData: IPluginSource): Promise<IPluginSource> {
+	private async createPluginSource(sourceData: IPluginSource, plugin: IPlugin): Promise<IPluginSource> {
 		if (!sourceData) {
 			throw new BadRequestException('Source data is required');
 		}
 
 		const source = new PluginSource();
+		source.plugin = plugin;
 		Object.assign(source, sourceData);
 		return this.sourceService.save(source);
 	}

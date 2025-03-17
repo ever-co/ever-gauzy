@@ -1,19 +1,21 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { EntitySubscriberInterface, EventSubscriber, InsertEvent } from 'typeorm';
+import { Logger } from '@nestjs/common';
+import { DataSource, EntitySubscriberInterface, EventSubscriber, InsertEvent } from 'typeorm';
 import { PluginInstallation } from '../../domain/entities/plugin-installation.entity';
 import { PluginVersionService } from '../../domain/services/plugin-version.service';
-import { PluginInstallationStatus } from '../../shared/models/plugin-installation.model';
 import { PluginService } from '../../domain/services/plugin.service';
+import { PluginInstallationStatus } from '../../shared/models/plugin-installation.model';
 
-@Injectable()
 @EventSubscriber()
 export class PluginInstallationSubscriber implements EntitySubscriberInterface<PluginInstallation> {
 	private readonly logger = new Logger(PluginInstallationSubscriber.name);
 
 	constructor(
 		private readonly pluginVersionService: PluginVersionService,
-		private readonly pluginService: PluginService
-	) {}
+		private readonly pluginService: PluginService,
+		readonly dataSource: DataSource
+	) {
+		dataSource.subscribers.push(this);
+	}
 
 	/**
 	 * Indicates that this subscriber only listens to PluginInstallation events

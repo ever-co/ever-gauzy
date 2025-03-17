@@ -1,4 +1,4 @@
-import { GetPluginQuery } from '../../queries/get-plugin.query';
-import { ListPluginsQuery } from '../../queries/list-plugins.query';
+import { GetPluginQueryHandler } from './get-plugin-query.handler';
+import { ListPluginsQueryHandler } from './list-plugins-query.handler';
 
-export const queries = [GetPluginQuery, ListPluginsQuery];
+export const queries = [GetPluginQueryHandler, ListPluginsQueryHandler];

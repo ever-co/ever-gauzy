@@ -1,13 +1,17 @@
-import { BaseEntityEventSubscriber, FileStorage } from '@gauzy/core';
-import { Injectable, Logger } from '@nestjs/common';
-import { EventSubscriber, InsertEvent, RemoveEvent } from 'typeorm';
-import { PluginSource } from '../../domain/entities/plugin-source.entity';
 import { FileStorageProviderEnum, PluginSourceType } from '@gauzy/contracts';
+import { BaseEntityEventSubscriber, FileStorage } from '@gauzy/core';
+import { Logger } from '@nestjs/common';
+import { DataSource, EventSubscriber, InsertEvent, RemoveEvent } from 'typeorm';
+import { PluginSource } from '../../domain/entities/plugin-source.entity';
 
-@Injectable()
 @EventSubscriber()
 export class PluginSourceSubscriber extends BaseEntityEventSubscriber<PluginSource> {
 	private readonly logger = new Logger(PluginSourceSubscriber.name);
+
+	constructor(readonly dataSource: DataSource) {
+		super();
+		dataSource.subscribers.push(this);
+	}
 
 	listenTo() {
 		return PluginSource;

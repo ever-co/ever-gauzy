@@ -1,6 +1,6 @@
 import { BaseEntityEventSubscriber } from '@gauzy/core';
-import { Injectable, Logger } from '@nestjs/common';
-import { EventSubscriber, InsertEvent, UpdateEvent } from 'typeorm';
+import { Logger } from '@nestjs/common';
+import { DataSource, EventSubscriber, InsertEvent, UpdateEvent } from 'typeorm';
 import { PluginVersion } from '../../domain/entities/plugin-version.entity';
 import { PluginSecurityService } from '../../domain/services/plugin-security.service';
 
@@ -8,13 +8,13 @@ import { PluginSecurityService } from '../../domain/services/plugin-security.ser
  * Subscriber that handles security-related operations for PluginVersion entities.
  * Automatically generates checksums and signatures for newly created plugin versions.
  */
-@Injectable()
 @EventSubscriber()
 export class PluginVersionSubscriber extends BaseEntityEventSubscriber<PluginVersion> {
 	private readonly logger = new Logger(PluginVersionSubscriber.name);
 
-	constructor(private readonly pluginSecurityService: PluginSecurityService) {
+	constructor(private readonly pluginSecurityService: PluginSecurityService, readonly dataSource: DataSource) {
 		super();
+		dataSource.subscribers.push(this);
 	}
 
 	/**
@@ -57,8 +57,6 @@ export class PluginVersionSubscriber extends BaseEntityEventSubscriber<PluginVer
 				`Failed to generate security credentials for plugin version: ${error.message}`,
 				error.stack
 			);
-			// Re-throw the error to ensure it's properly handled by the caller
-			throw error;
 		}
 	}
 

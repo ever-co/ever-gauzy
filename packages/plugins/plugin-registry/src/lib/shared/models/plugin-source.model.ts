@@ -1,4 +1,9 @@
-import { FileStorageProvider, IBasePerTenantAndOrganizationEntityModel, ID, PluginSourceType } from '@gauzy/contracts';
+import {
+	FileStorageProviderEnum,
+	IBasePerTenantAndOrganizationEntityModel,
+	ID,
+	PluginSourceType
+} from '@gauzy/contracts';
 import { IPlugin } from './plugin.model';
 
 export interface IPluginSource extends IBasePerTenantAndOrganizationEntityModel {
@@ -23,7 +28,7 @@ export interface IPluginSource extends IBasePerTenantAndOrganizationEntityModel 
 	fileKey?: string; // Unique key for the uploaded file
 
 	// Storage
-	storageProvider?: FileStorageProvider;
+	storageProvider?: FileStorageProviderEnum;
 
 	// Associated Plugin
 	plugin?: IPlugin; // Associated plugin entity

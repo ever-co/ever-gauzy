@@ -5,7 +5,6 @@ import {
 	LazyFileInterceptor,
 	PaginationParams,
 	RequestContext,
-	UploadedFileStorage,
 	UseValidationPipe,
 	UUIDValidationPipe
 } from '@gauzy/core';
@@ -53,6 +52,7 @@ import { FileDTO } from '../../shared/dto/file.dto';
 import { UpdatePluginDTO } from '../../shared/dto/update-plugin.dto';
 import { VerifyPluginDTO } from '../../shared/dto/verify-plugin.dto';
 import { IPlugin } from '../../shared/models/plugin.model';
+import { UploadedPluginStorage } from '../storage/uploaded-plugin.storage';
 
 /**
  * Controller responsible for managing plugin operations in the system.
@@ -127,17 +127,32 @@ export class PluginController {
 		})
 	)
 	@Post()
-	public async create(@Body() input: CreatePluginDTO, @UploadedFileStorage() file: FileDTO): Promise<IPlugin> {
-		if (!file.key && input.source.type === PluginSourceType.GAUZY) {
+	public async create(@Body() input: CreatePluginDTO, @UploadedPluginStorage() file: FileDTO): Promise<IPlugin> {
+		if (input.source.type === PluginSourceType.GAUZY && !file?.key) {
 			console.warn('Plugin file key is empty');
 			return;
 		}
 
 		try {
 			// Extract necessary properties from the request body
-			const tenantId = input.tenantId || RequestContext.currentTenantId();
-			const organizationId = input.organizationId;
+			const common = {
+				tenantId: input.tenantId || RequestContext.currentTenantId(),
+				organizationId: input.organizationId
+			};
 			const uploadedById = input.uploadedById || RequestContext.currentEmployeeId();
+			const dto = {
+				...input,
+				...common,
+				uploadedById,
+				version: {
+					...input.version,
+					...common
+				},
+				source: {
+					...input.source,
+					...common
+				}
+			};
 
 			if (input.source.type === PluginSourceType.GAUZY) {
 				const provider = new FileStorage().getProvider();
@@ -158,28 +173,19 @@ export class PluginController {
 				// Create a new plugin record
 				return this.commandBus.execute(
 					new CreatePluginCommand({
-						...input,
-						tenantId,
-						organizationId,
-						uploadedById,
+						...dto,
 						source: {
-							...input.source,
+							...dto.source,
 							fileName: file.originalname,
 							fileSize: file.size,
 							filePath: file.path,
+							fileKey: file.key,
 							storageProvider
 						}
 					})
 				);
 			} else {
-				return this.commandBus.execute(
-					new CreatePluginCommand({
-						...input,
-						tenantId,
-						organizationId,
-						uploadedById
-					})
-				);
+				return this.commandBus.execute(new CreatePluginCommand(dto));
 			}
 		} catch (error) {
 			// Ensure cleanup of uploaded file
