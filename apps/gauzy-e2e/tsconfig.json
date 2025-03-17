@@ -1,17 +1,14 @@
 {
-	"extends": "../../tsconfig.json",
 	"compilerOptions": {
-		"outDir": "../../dist/out-tsc/apps/gauzy-e2e",
-		"module": "commonjs",
-		"target": "es5",
-		"sourceMap": false,
 		"inlineSourceMap": true,
-		"types": [
-			"node",
-			"cypress"
-		]
+		"lib": ["es5", "dom"],
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"outDir": "../../dist/out-tsc/apps/gauzy-e2e",
+		"sourceMap": false,
+		"target": "es5",
+		"types": ["node", "cypress"]
 	},
-	"include": [
-		"src/**/*.ts"
-	]
+	"extends": "../../tsconfig.json",
+	"include": ["src/**/*.ts"]
 }

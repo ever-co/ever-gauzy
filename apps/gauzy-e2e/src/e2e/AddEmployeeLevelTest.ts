@@ -8,9 +8,12 @@ import * as dashboardPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 
 describe('Add employee level test', () => {
-	before(() => {
-		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	beforeEach(() => {
+		cy.session('login', () => {
+			CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+		});
 	});
+
 	it('Should be able to add new employee level', () => {
 		CustomCommands.addTag(
 			organizationTagsUserPage,
@@ -30,6 +33,7 @@ describe('Add employee level test', () => {
 		addEmployeeLevelPage.saveNewLevelButtonVisible();
 		addEmployeeLevelPage.clickSaveNewLevelButton();
 		addEmployeeLevelPage.waitMessageToHide();
+		addEmployeeLevelPage.clickRowEmployeeLevel();
 		addEmployeeLevelPage.editEmployeeLevelButtonVisible();
 		addEmployeeLevelPage.clickEditEmployeeLevelButton();
 		addEmployeeLevelPage.verifyTitleExists(AddEmployeeLevelPageData.levelE);
@@ -37,6 +41,8 @@ describe('Add employee level test', () => {
 		addEmployeeLevelPage.clickCancelButton();
 	});
 	it('Should be able to edit employee level', () => {
+		cy.visit('/#/pages/employees/employee-level');
+		addEmployeeLevelPage.clickRowEmployeeLevel();
 		addEmployeeLevelPage.editEmployeeLevelButtonVisible();
 		addEmployeeLevelPage.clickEditEmployeeLevelButton();
 		addEmployeeLevelPage.editEmployeeLevelInpuVisible();
@@ -50,6 +56,7 @@ describe('Add employee level test', () => {
 		addEmployeeLevelPage.saveNewLevelButtonVisible();
 		addEmployeeLevelPage.clickSaveNewLevelButton();
 		addEmployeeLevelPage.waitMessageToHide();
+		addEmployeeLevelPage.clickRowEmployeeLevel();
 		addEmployeeLevelPage.editEmployeeLevelButtonVisible();
 		addEmployeeLevelPage.clickEditEmployeeLevelButton();
 		addEmployeeLevelPage.verifyTitleExists(AddEmployeeLevelPageData.levelF);
@@ -57,6 +64,7 @@ describe('Add employee level test', () => {
 		addEmployeeLevelPage.clickCancelButton();
 	});
 	it('Should be able to delete employee level', () => {
+		cy.visit('/#/pages/employees/employee-level');
 		addEmployeeLevelPage.addNewLevelButtonVisible();
 		addEmployeeLevelPage.clickAddNewLevelButton();
 		addEmployeeLevelPage.newLevelInputVisible();
@@ -68,6 +76,7 @@ describe('Add employee level test', () => {
 		addEmployeeLevelPage.saveNewLevelButtonVisible();
 		addEmployeeLevelPage.clickSaveNewLevelButton();
 		addEmployeeLevelPage.waitMessageToHide();
+		addEmployeeLevelPage.clickRowEmployeeLevel();
 		addEmployeeLevelPage.deleteLevelButtonVisible();
 		addEmployeeLevelPage.clickDeleteLevelButton();
 		addEmployeeLevelPage.confirmDeleteButtonVisible();
@@ -76,6 +85,7 @@ describe('Add employee level test', () => {
 			AddEmployeeLevelPageData.levelE
 		);
 		addEmployeeLevelPage.waitMessageToHide();
+		addEmployeeLevelPage.clickRowEmployeeLevel();
 		addEmployeeLevelPage.deleteLevelButtonVisible();
 		addEmployeeLevelPage.clickDeleteLevelButton();
 		addEmployeeLevelPage.confirmDeleteButtonVisible();
