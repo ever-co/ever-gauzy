@@ -6,6 +6,7 @@ import {
 	NbBadgeModule,
 	NbButtonModule,
 	NbCardModule,
+	NbDatepickerModule,
 	NbFormFieldModule,
 	NbIconModule,
 	NbInputModule,
@@ -69,7 +70,8 @@ import { PluginService } from './services/plugin.service';
 		NbFormFieldModule,
 		NbSelectModule,
 		NbTooltipModule,
-		NbSpinnerModule
+		NbSpinnerModule,
+		NbDatepickerModule
 	],
 	exports: [PluginLayoutComponent],
 	providers: [PluginLoaderService, PluginElectronService, PluginService]

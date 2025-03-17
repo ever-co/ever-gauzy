@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { IPlugin, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { IPlugin, IPluginVersion, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
@@ -25,6 +25,7 @@ export class PluginMarketplaceUploadComponent implements OnInit {
 	isDragOver = false;
 	isSubmitting = false;
 	formTouched = false;
+	today = new Date();
 
 	readonly ALLOWED_EXTENSIONS = ['.zip'];
 	readonly MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1GB
@@ -55,7 +56,7 @@ export class PluginMarketplaceUploadComponent implements OnInit {
 			description: ['', Validators.maxLength(500)],
 			type: [this.pluginTypes[0], Validators.required],
 			status: [this.pluginStatuses[0], Validators.required],
-			version: ['', [Validators.required, Validators.pattern(/^\d+\.\d+\.\d+$/)]],
+			version: this.createVersionGroup(null),
 			sourceType: [this.sourceTypes[0], Validators.required],
 			source: this.createSourceGroup(this.sourceTypes[0]),
 			author: ['', Validators.maxLength(100)],
@@ -68,7 +69,7 @@ export class PluginMarketplaceUploadComponent implements OnInit {
 	private patch(): void {
 		if (!this.plugin) return;
 
-		const { name, description, type, status, versions, source, author, license, homepage, repository } =
+		const { name, description, type, status, versions, version, source, author, license, homepage, repository } =
 			this.plugin;
 		const { type: sourceType } = source;
 
@@ -77,7 +78,7 @@ export class PluginMarketplaceUploadComponent implements OnInit {
 			description,
 			type,
 			status,
-			version: versions[0],
+			version: this.createVersionGroup(version),
 			sourceType,
 			source: this.createSourceGroup(sourceType),
 			author,
@@ -114,6 +115,29 @@ export class PluginMarketplaceUploadComponent implements OnInit {
 			.get('sourceType')
 			?.valueChanges.pipe(takeUntil(this.destroy$))
 			.subscribe((type) => this.onSourceTypeChange(type));
+	}
+
+	private createVersionGroup(version: IPluginVersion): FormGroup {
+		return this.fb.group({
+			number: [
+				version?.number,
+				[Validators.required, Validators.pattern(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/)]
+			],
+			changelog: [version?.changelog, [Validators.required, Validators.minLength(10)]],
+			releaseDate: [version?.releaseDate, [Validators.required, this.pastDateValidator()]]
+		});
+	}
+
+	/**
+	 * Custom validator to ensure the release date is not in the future.
+	 */
+	private pastDateValidator(): ValidatorFn {
+		return (control: AbstractControl): ValidationErrors | null => {
+			if (!control.value) return null;
+			const inputDate = new Date(control.value);
+			const today = new Date();
+			return inputDate > today ? { futureDate: true } : null;
+		};
 	}
 
 	private createSourceGroup(type: string): FormGroup {
@@ -344,6 +368,20 @@ export class PluginMarketplaceUploadComponent implements OnInit {
 
 	public getSourceFieldError(fieldName: string, errorType?: string): boolean {
 		const sourceGroup = this.pluginForm.get('source') as FormGroup;
+		if (!sourceGroup) return false;
+
+		const control = sourceGroup.get(fieldName);
+		if (!control) return false;
+
+		if (errorType) {
+			return control.touched && control.hasError(errorType);
+		}
+
+		return control.touched && control.invalid;
+	}
+
+	public getVersionFieldError(fieldName: string, errorType?: string): boolean {
+		const sourceGroup = this.pluginForm.get('version') as FormGroup;
 		if (!sourceGroup) return false;
 
 		const control = sourceGroup.get(fieldName);

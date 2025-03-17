@@ -1,8 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { IPlugin } from '@gauzy/contracts';
+import { ICDNSource, IGauzySource, INPMSource, IPlugin, PluginSourceType } from '@gauzy/contracts';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 import { Observable } from 'rxjs';
+import { Store } from '../../../services';
 
 @Injectable({
 	providedIn: 'root'
@@ -10,7 +11,7 @@ import { Observable } from 'rxjs';
 export class PluginService {
 	private readonly endPoint = `${API_PREFIX}/plugins`;
 
-	constructor(private readonly http: HttpClient) {}
+	constructor(private readonly http: HttpClient, private readonly store: Store) {}
 
 	public getAll(): Observable<IPlugin[]> {
 		return this.http.get<IPlugin[]>(this.endPoint);
@@ -20,12 +21,88 @@ export class PluginService {
 		return this.http.get<IPlugin>(`${this.endPoint}/${id}`);
 	}
 
+	private createFormData(data: IPlugin): FormData {
+		let formData = new FormData();
+		const common = { organizationId: this.store.organizationId, tenantId: this.store.tenantId };
+
+		// Strictly map all properties of ICreatePlugin and IUpdatePlugin
+		const plugin: Partial<IPlugin> = {
+			name: data.name,
+			description: data.description,
+			type: data.type,
+			status: data.status,
+			author: data.author,
+			license: data.license,
+			homepage: data.homepage,
+			repository: data.repository,
+			...common,
+			version: data.version
+				? {
+						number: data.version.number,
+						changelog: data.version.changelog,
+						releaseDate: data.version.releaseDate,
+						...common
+				  }
+				: undefined, // Current version
+			source: data.source
+				? {
+						type: data.source.type,
+						...(data.source.type === PluginSourceType.CDN && {
+							url: data.source.url,
+							integrity: data.source.integrity,
+							crossOrigin: data.source.crossOrigin
+						}),
+						...(data.source.type === PluginSourceType.NPM && {
+							name: data.source.name,
+							registry: data.source.registry,
+							authToken: data.source.authToken,
+							scope: data.source.scope
+						}),
+						...common
+				  }
+				: undefined // Source details
+		};
+
+		// Remove undefined values to avoid sending empty fields
+		const filtered = Object.fromEntries(Object.entries(plugin).filter(([_, value]) => value !== undefined));
+
+		// Append plugin data as JSON
+		formData = this.jsonToFormData(filtered);
+
+		// Extract and append the file from `source.file` (if available)
+		const file = data.source && 'file' in data.source ? data.source.file : undefined;
+		if (file instanceof File) {
+			formData.append('file', file, file.name);
+		}
+
+		return formData;
+	}
+
+	public buildFormData(formData: FormData, data, parentKey?: string) {
+		if (data && typeof data === 'object' && !(data instanceof Date) && !(data instanceof File)) {
+			Object.keys(data).forEach((key) => {
+				this.buildFormData(formData, data[key], parentKey ? `${parentKey}[${key}]` : key);
+			});
+		} else {
+			const value = data == null ? '' : data;
+			formData.append(parentKey, value);
+		}
+	}
+
+	public jsonToFormData(data) {
+		const formData = new FormData();
+		this.buildFormData(formData, data);
+		return formData;
+	}
+
 	public upload(plugin: IPlugin): Observable<IPlugin> {
-		return this.http.post<IPlugin>(this.endPoint, plugin);
+		const formData = this.createFormData(plugin);
+		return this.http.post<IPlugin>(this.endPoint, formData);
 	}
 
 	public update(plugin: IPlugin): Observable<IPlugin> {
-		return this.http.put<IPlugin>(`${this.endPoint}/${plugin.id}`, plugin);
+		const formData = this.createFormData(plugin);
+		return this.http.put<IPlugin>(`${this.endPoint}/${plugin.id}`, formData);
 	}
 
 	public delete(id: string): Observable<IPlugin> {

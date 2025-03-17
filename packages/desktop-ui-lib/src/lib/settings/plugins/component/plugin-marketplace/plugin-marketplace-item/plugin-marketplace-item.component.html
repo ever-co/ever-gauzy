@@ -82,7 +82,7 @@
 								[(ngModel)]="selectedVersion"
 							>
 								<nb-option *ngFor="let version of plugin.versions" [value]="version">
-									{{ version }}
+									{{ version.number }}
 								</nb-option>
 							</nb-select>
 						</div>

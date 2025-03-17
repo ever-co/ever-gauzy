@@ -4,12 +4,11 @@ import { UntilDestroy } from '@ngneat/until-destroy';
 import { BehaviorSubject, catchError, EMPTY, filter, Observable, switchMap, tap } from 'rxjs';
 import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
-import { IPlugin } from '../../../services/plugin-loader.service';
 import { Router } from '@angular/router';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
 import { Store, ToastrNotificationService } from '../../../../../services';
 import { PluginService } from '../../../services/plugin.service';
-import { PluginSourceType } from '@gauzy/contracts';
+import { PluginSourceType, IPlugin } from '@gauzy/contracts';
 
 @UntilDestroy()
 @Component({
@@ -30,7 +29,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 
 	ngOnInit(): void {
 		if (this.plugin) {
-			this._isChecked$.next(this.plugin.installed);
+			this._isChecked$.next(!!this.plugin.version);
 		}
 	}
 
@@ -110,7 +109,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 			})
 			.onClose.subscribe((isUninstall: boolean) => {
 				if (isUninstall) {
-					this.pluginElectronService.uninstall(this.plugin);
+					this.pluginElectronService.uninstall(this.plugin as any);
 					this._isChecked$.next(false);
 				} else {
 					this._isChecked$.next(true);

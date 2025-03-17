@@ -8,11 +8,10 @@ import {
 	ɵcreateInjector as createInjector,
 	isStandalone
 } from '@angular/core';
-import { IPlugin as IPluginBase } from '@gauzy/contracts';
 import { NoDataMessageComponent } from '../../../time-tracker/no-data-message/no-data-message.component';
 import { PluginElectronService } from './plugin-electron.service';
 
-export interface IPlugin extends IPluginBase {
+export interface IPlugin {
 	id?: string;
 	renderer?: string;
 	pathname?: string;

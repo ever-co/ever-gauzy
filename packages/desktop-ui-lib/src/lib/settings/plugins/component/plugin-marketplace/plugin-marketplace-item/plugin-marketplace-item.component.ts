@@ -11,6 +11,7 @@ import {
 	IGauzySource,
 	INPMSource,
 	IPlugin,
+	IPluginVersion,
 	PluginSourceType,
 	PluginStatus,
 	PluginType
@@ -35,7 +36,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	pluginId = '';
 	loading = true;
 
-	selectedVersion = '';
+	selectedVersion: IPluginVersion = null;
 	installed = false;
 	needUpdate = false;
 	installing = false;
@@ -135,8 +136,8 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			this.installed = !!plugin;
 
 			if (this.installed && this.plugin.versions) {
-				const latestVersion = this.plugin.versions[this.plugin.versions.length - 1];
-				this.needUpdate = plugin.version !== latestVersion;
+				const latestVersion = this.plugin.version;
+				this.needUpdate = plugin.version !== latestVersion.number;
 			}
 		} catch (error) {
 			console.error('Installation check failed', error);
