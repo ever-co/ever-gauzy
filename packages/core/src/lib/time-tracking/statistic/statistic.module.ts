@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { EmployeeModule } from './../../employee/employee.module';
 import { OrganizationProjectModule } from './../../organization-project/organization-project.module';
 import { StatisticController } from './statistic.controller';
@@ -18,9 +18,9 @@ import { RolePermissionModule } from '../../role-permission/role-permission.modu
 		TimeSlotModule,
 		EmployeeModule,
 		ActivityModule,
-		TimeLogModule,
+		forwardRef(() => TimeLogModule)
 	],
 	providers: [StatisticService],
 	exports: [StatisticService]
 })
-export class StatisticModule { }
+export class StatisticModule {}
