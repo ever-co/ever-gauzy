@@ -10,7 +10,7 @@
 			<div class="image-overlay" [ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"></div>
 			<img
 				[src]="form.get('imageUrl').value"
-				alt="Organization Photo"
+				alt="Organization logo"
 				(mouseenter)="hoverState = true"
 				(mouseleave)="hoverState = false"
 			/>
@@ -43,7 +43,6 @@
 					<ga-currency
 						formControlName="currency"
 						[formControl]="form.get('currency')"
-						(optionChange)="currencyChanged($event)"
 					></ga-currency>
 					</span>
 				</div>
@@ -108,6 +107,36 @@
 			</div>
 			<div class="row">
 				<div class="col-6">
+					<div class="form-group">
+						<label class="label" for="website">
+							{{ 'FORM.LABELS.WEBSITE' | translate }}
+						</label>
+						<input
+							nbInput
+							fullWidth
+							id="website"
+							[placeholder]="'FORM.PLACEHOLDERS.WEBSITE' | translate"
+							formControlName="website"
+						/>
+					</div>
+				</div>
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label" for="emailDomain">
+							{{ 'FORM.LABELS.EMAIL_DOMAIN' | translate }}
+						</label>
+						<input
+							nbInput
+							fullWidth
+							id="emailDomain"
+							[placeholder]="'FORM.PLACEHOLDERS.EMAIL_DOMAIN' | translate"
+							formControlName="emailDomain"
+						/>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-6">
 					<div class="form-group registration-form-group">
 						<label class="label" for="registrationDate">
 							{{ 'FORM.LABELS.REGISTRATION_DATE' | translate }}
@@ -121,20 +150,6 @@
 							formControlName="registrationDate"
 						/>
 						<nb-datepicker #registrationDate></nb-datepicker>
-					</div>
-				</div>
-				<div class="col-6">
-					<div class="form-group">
-						<label class="label" for="website">
-							{{ 'FORM.LABELS.WEBSITE' | translate }}
-						</label>
-						<input
-							nbInput
-							fullWidth
-							id="website"
-							[placeholder]="'FORM.PLACEHOLDERS.WEBSITE' | translate"
-							formControlName="website"
-						/>
 					</div>
 				</div>
 			</div>

@@ -1,7 +1,7 @@
-import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import { ICurrency, IOrganization, ITag, CrudActionEnum, IImageAsset } from '@gauzy/contracts';
+import { IOrganization, ITag, CrudActionEnum, IImageAsset } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime } from 'rxjs';
@@ -24,7 +24,7 @@ import {
 })
 export class EditOrganizationMainComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy, AfterViewInit
+	implements OnInit, AfterViewInit
 {
 	hoverState: boolean;
 	employeesCount: number;
@@ -45,6 +45,7 @@ export class EditOrganizationMainComponent
 			taxId: [null],
 			registrationDate: [null],
 			website: [null],
+			emailDomain: [null],
 			imageUrl: [{ value: null, disabled: true }],
 			imageId: []
 		});
@@ -80,8 +81,6 @@ export class EditOrganizationMainComponent
 			.subscribe();
 	}
 
-	ngOnDestroy(): void {}
-
 	ngAfterViewInit() {
 		this.cdr.detectChanges();
 	}
@@ -93,7 +92,7 @@ export class EditOrganizationMainComponent
 	 */
 	async updateImageAsset(image: IImageAsset) {
 		try {
-			if (image && image.id) {
+			if (image?.id) {
 				this.form.get('imageId').setValue(image.id);
 				this.form.get('imageUrl').setValue(image.fullUrl);
 			} else {
@@ -107,7 +106,7 @@ export class EditOrganizationMainComponent
 		}
 	}
 
-	handleImageUploadError(error: any) {
+	handleImageUploadError(error: unknown) { 
 		// Delegate error handling to the _errorHandlingService
 		this.errorHandler.handleError(error);
 	}
@@ -164,7 +163,8 @@ export class EditOrganizationMainComponent
 			profile_link: this.organization.profile_link || null,
 			taxId: this.organization.taxId || null,
 			website: this.organization.website || null,
-			registrationDate: this.organization.registrationDate ? new Date(this.organization.registrationDate) : null
+			registrationDate: this.organization.registrationDate ? new Date(this.organization.registrationDate) : null,
+			emailDomain: this.organization.emailDomain || null,
 		});
 		const { id: organizationId, tenantId } = this.organization;
 		const values = {
@@ -185,9 +185,4 @@ export class EditOrganizationMainComponent
 		this.form.get('tags').setValue(tags);
 		this.form.get('tags').updateValueAndValidity();
 	}
-
-	/*
-	 * On Changed Currency Event Emitter
-	 */
-	currencyChanged($event: ICurrency) {}
 }
