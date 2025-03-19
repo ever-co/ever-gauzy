@@ -1,0 +1,7 @@
+# dependencies
+node_modules/
+
+# misc
+npm-debug.log
+dist
+.cache
