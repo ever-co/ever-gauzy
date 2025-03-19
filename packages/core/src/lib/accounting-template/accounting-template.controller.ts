@@ -155,8 +155,6 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 		try {
 			return await this.accountingTemplateService.findOneByIdString(id);
 		} catch (error) {
-			console.log(error);
-
 			throw new BadRequestException();
 		}
 	}
