@@ -123,7 +123,7 @@ export const environment: IEnvironment = {
 		cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
 		api_key: process.env.CLOUDINARY_API_KEY,
 		api_secret: process.env.CLOUDINARY_API_SECRET,
-		secure: process.env.CLOUDINARY_API_SECURE !== 'false' ? false : true,
+		secure: process.env.CLOUDINARY_API_SECURE === 'false',
 		delivery_url: process.env.CLOUDINARY_CDN_URL || `https://res.cloudinary.com`
 	},
 
@@ -199,11 +199,10 @@ export const environment: IEnvironment = {
 			process.env.HUBSTAFF_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/hubstaff`
 	},
 
-	isElectron: process.env.IS_ELECTRON === 'true' ? true : false,
+	isElectron: process.env.IS_ELECTRON === 'true',
 	gauzyUserPath: process.env.GAUZY_USER_PATH,
 	gauzySeedPath: process.env.GAUZY_SEED_PATH,
-	allowSuperAdminRole: process.env.ALLOW_SUPER_ADMIN_ROLE === 'false' ? false : true,
-
+	allowSuperAdminRole: process.env.ALLOW_SUPER_ADMIN_ROLE !== 'false',
 
 	/**
 	 * Gauzy AI Configuration
@@ -213,7 +212,9 @@ export const environment: IEnvironment = {
 		apiSecret: process.env.GAUZY_AI_API_SECRET,
 		graphQLEndpoint: process.env.GAUZY_AI_GRAPHQL_ENDPOINT,
 		restEndpoint: process.env.GAUZY_AI_REST_ENDPOINT,
-		requestTimeout: process.env.GAUZY_AI_REQUEST_TIMEOUT ? parseInt(process.env.GAUZY_AI_REQUEST_TIMEOUT,10) : undefined
+		requestTimeout: process.env.GAUZY_AI_REQUEST_TIMEOUT
+			? parseInt(process.env.GAUZY_AI_REQUEST_TIMEOUT, 10)
+			: undefined
 	},
 
 	gauzyCloudEndpoint: process.env.GAUZY_CLOUD_ENDPOINT,
@@ -221,7 +222,7 @@ export const environment: IEnvironment = {
 	smtpConfig: {
 		host: process.env.MAIL_HOST,
 		port: parseInt(process.env.MAIL_PORT, 10),
-		secure: process.env.MAIL_PORT === '465' ? true : false, // true for 465, false for other ports
+		secure: process.env.MAIL_PORT === '465', // true for 465, false for other ports
 		auth: {
 			user: process.env.MAIL_USERNAME,
 			pass: process.env.MAIL_PASSWORD
@@ -257,7 +258,7 @@ export const environment: IEnvironment = {
 		companyName: process.env.COMPANY_NAME || 'Ever Co. LTD'
 	},
 
-	demo: process.env.DEMO === 'true' ? true : false,
+	demo: process.env.DEMO === 'true',
 
 	demoCredentialConfig: {
 		superAdminEmail: process.env.DEMO_SUPER_ADMIN_EMAIL || `admin@ever.co`,
@@ -272,7 +273,7 @@ export const environment: IEnvironment = {
 	 * Periodic Time Save
 	 */
 	periodicTimeSave: process.env.PERIODIC_TIME_SAVE === 'true',
-	periodicTimeSaveTimeframe: parseInt(process.env.PERIODIC_TIME_SAVE_TIMEFRAME) || 600,  // 10 minutes
+	periodicTimeSaveTimeframe: parseInt(process.env.PERIODIC_TIME_SAVE_TIMEFRAME) || 600, // 10 minutes
 
 	/**
 	 * Gauzy Additional Plugins Configuration
