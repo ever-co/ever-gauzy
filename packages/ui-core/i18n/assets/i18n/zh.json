@@ -4844,7 +4844,10 @@
 				"REPOSITORY": "仓库",
 				"REPOSITORY_PLACEHOLDER": "输入仓库URL"
 			},
-			"OR": "或"
+			"OR": "或",
+			"RELEASE_DATE": "发布日期",
+			"CHANGELOG": "更新日志",
+			"CHANGELOG_PLACEHOLDER": "输入更新日志"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "使用统计",

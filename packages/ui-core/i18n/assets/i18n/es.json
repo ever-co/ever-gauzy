@@ -4845,7 +4845,10 @@
 				"REPOSITORY": "Repositorio",
 				"REPOSITORY_PLACEHOLDER": "Ingrese la URL del repositorio"
 			},
-			"OR": "O"
+			"OR": "O",
+			"RELEASE_DATE": "Fecha de lanzamiento",
+			"CHANGELOG": "Changelog",
+			"CHANGELOG_PLACEHOLDER": "Ingrese el changelog"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Estadísticas de uso",

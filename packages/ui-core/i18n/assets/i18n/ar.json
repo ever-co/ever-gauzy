@@ -4829,7 +4829,10 @@
 				"REPOSITORY": "المستودع",
 				"REPOSITORY_PLACEHOLDER": "أدخل رابط المستودع"
 			},
-			"OR": "أو"
+			"OR": "أو",
+			"RELEASE_DATE": "تاريخ الاصدار",
+			"CHANGELOG": "تغييرات",
+			"CHANGELOG_PLACEHOLDER": "ادخل التغييرات"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "إحصائيات الاستخدام",

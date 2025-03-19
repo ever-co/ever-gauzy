@@ -4998,7 +4998,10 @@
 				"REPOSITORY": "Repository",
 				"REPOSITORY_PLACEHOLDER": "Enter repository URL"
 			},
-			"OR": "Or"
+			"OR": "Or",
+			"RELEASE_DATE": "Release Date",
+			"CHANGELOG": "Changelog",
+			"CHANGELOG_PLACEHOLDER": "Enter changelog"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Usage Statistics",

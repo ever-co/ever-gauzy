@@ -4840,7 +4840,10 @@
 				"REPOSITORY": "Repository",
 				"REPOSITORY_PLACEHOLDER": "Geben Sie die Repository-URL ein"
 			},
-			"OR": "Oder"
+			"OR": "Oder",
+			"RELEASE_DATE": "Erscheinungsdatum",
+			"CHANGELOG": "Änderungsprotokoll",
+			"CHANGELOG_PLACEHOLDER": "Geben Sie den Änderungsprotokoll ein"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Nutzungsstatistiken",

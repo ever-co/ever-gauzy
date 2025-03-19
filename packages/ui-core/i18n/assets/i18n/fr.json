@@ -2607,7 +2607,6 @@
 		"TASKS_STATUS": "Statut",
 		"TASK_PRIORITY": "Priorité",
 		"TASK_SIZE": "Taille",
-		"PARENT_TASK": "Tâche parente",
 		"TODO": "Tout",
 		"OPEN": "Ouvrir",
 		"READY_FOR_REVIEW": "Prêt pour l'examen.",
@@ -3573,7 +3572,6 @@
 			"APPROVAL_POLICY_CREATED": "La politique d'approbation '{{ name }}' a été ajoutée.",
 			"APPROVAL_POLICY_UPDATED": "La politique d'approbation '{{ name }}' a été modifiée.",
 			"APPROVAL_POLICY_DELETED": "La politique d'approbation '{{ name }}' a été supprimée.",
-			"APPROVAL_POLICY_ALREADY_EXISTS": "La politique d'approbation '{{ name }}' existe déjà",
 			"CANDIDATE_CREATED": "Le candidat '{{ name }}' a été ajouté à '{{ organization }}'.",
 			"CANDIDATE_ARCHIVED": "Candidat '{{ name }}' archivé.",
 			"CANDIDATE_REJECTED": "Candidat '{{ name }}' déclaré comme rejeté.",
@@ -3691,8 +3689,7 @@
 			"EDIT_POLICY": "La politique de congé \"{{ name }}\" a été modifiée",
 			"DELETE_POLICY": "La politique de congés '{{ name }}' a été supprimée.",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "Impossible de créer un enregistrement de politique.",
-			"POLICY_EXISTS": "La politique de congé '{{ name }}' existe déjà"
+			"SAVE_ERROR": "Impossible de créer un enregistrement de politique."
 		},
 		"USER": {
 			"EDIT_PROFILE": "Votre profil a été mis à jour avec succès."
@@ -4838,7 +4835,10 @@
 				"REPOSITORY": "Dépôt",
 				"REPOSITORY_PLACEHOLDER": "Entrez l'URL du dépôt"
 			},
-			"OR": "Ou"
+			"OR": "Ou",
+			"RELEASE_DATE": "Date de sortie",
+			"CHANGELOG": "Journal des modifications",
+			"CHANGELOG_PLACEHOLDER": "Entrez les modifications"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Statistiques d'utilisation",

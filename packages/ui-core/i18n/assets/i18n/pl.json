@@ -4844,7 +4844,10 @@
 				"REPOSITORY": "Repozytorium",
 				"REPOSITORY_PLACEHOLDER": "Wprowadź URL repozytorium"
 			},
-			"OR": "Lub"
+			"OR": "Lub",
+			"RELEASE_DATE": "Data wydania",
+			"CHANGELOG": "Przepraszam",
+			"CHANGELOG_PLACEHOLDER": "Wprowadź przepraszam"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Statystyki użytkowania",

@@ -4844,7 +4844,10 @@
 				"REPOSITORY": "Repository",
 				"REPOSITORY_PLACEHOLDER": "Voer de repository-URL in"
 			},
-			"OR": "Of"
+			"OR": "Of",
+			"RELEASE_DATE": "Uitgaandatum",
+			"CHANGELOG": "Wijzigingslogboek",
+			"CHANGELOG_PLACEHOLDER": "Voer de wijzigingslogboek in"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Gebruiksstatistieken",

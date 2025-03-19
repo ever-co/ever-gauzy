@@ -4844,7 +4844,10 @@
 				"REPOSITORY": "Repositório",
 				"REPOSITORY_PLACEHOLDER": "Digite a URL do repositório"
 			},
-			"OR": "Ou"
+			"OR": "Ou",
+			"RELEASE_DATE": "Data de lançamento",
+			"CHANGELOG": "Historico de alterações",
+			"CHANGELOG_PLACEHOLDER": "Digite o histórico de alterações"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Estatísticas de uso",

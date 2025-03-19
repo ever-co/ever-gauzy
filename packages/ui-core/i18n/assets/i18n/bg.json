@@ -4871,7 +4871,10 @@
 				"REPOSITORY": "Хранилище",
 				"REPOSITORY_PLACEHOLDER": "Въведете URL адрес на хранилището"
 			},
-			"OR": "Или"
+			"OR": "Или",
+			"RELEASE_DATE": "Дата на издаване",
+			"CHANGELOG": "Промени",
+			"CHANGELOG_PLACEHOLDER": "Въведете промени"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Статистика на използване",
