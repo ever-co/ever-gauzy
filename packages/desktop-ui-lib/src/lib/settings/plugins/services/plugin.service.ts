@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { ICDNSource, IGauzySource, INPMSource, IPlugin, PluginSourceType } from '@gauzy/contracts';
+import { IPlugin, PluginSourceType } from '@gauzy/contracts';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 import { Observable } from 'rxjs';
 import { Store } from '../../../services';
@@ -41,26 +41,26 @@ export class PluginService {
 						number: data.version.number,
 						changelog: data.version.changelog,
 						releaseDate: data.version.releaseDate,
-						...common
+						...common,
+						source: data.source
+							? {
+									type: data.source.type,
+									...(data.source.type === PluginSourceType.CDN && {
+										url: data.source.url,
+										integrity: data.source.integrity,
+										crossOrigin: data.source.crossOrigin
+									}),
+									...(data.source.type === PluginSourceType.NPM && {
+										name: data.source.name,
+										registry: data.source.registry,
+										authToken: data.source.authToken,
+										scope: data.source.scope
+									}),
+									...common
+							  }
+							: undefined // Source details
 				  }
-				: undefined, // Current version
-			source: data.source
-				? {
-						type: data.source.type,
-						...(data.source.type === PluginSourceType.CDN && {
-							url: data.source.url,
-							integrity: data.source.integrity,
-							crossOrigin: data.source.crossOrigin
-						}),
-						...(data.source.type === PluginSourceType.NPM && {
-							name: data.source.name,
-							registry: data.source.registry,
-							authToken: data.source.authToken,
-							scope: data.source.scope
-						}),
-						...common
-				  }
-				: undefined // Source details
+				: undefined // Current version
 		};
 
 		// Remove undefined values to avoid sending empty fields
@@ -78,18 +78,18 @@ export class PluginService {
 		return formData;
 	}
 
-	public buildFormData(formData: FormData, data, parentKey?: string) {
+	public buildFormData<T>(formData: FormData, data: T, parentKey?: string) {
 		if (data && typeof data === 'object' && !(data instanceof Date) && !(data instanceof File)) {
 			Object.keys(data).forEach((key) => {
 				this.buildFormData(formData, data[key], parentKey ? `${parentKey}[${key}]` : key);
 			});
 		} else {
 			const value = data == null ? '' : data;
-			formData.append(parentKey, value);
+			formData.append(parentKey, value as any);
 		}
 	}
 
-	public jsonToFormData(data) {
+	public jsonToFormData<T>(data: T) {
 		const formData = new FormData();
 		this.buildFormData(formData, data);
 		return formData;

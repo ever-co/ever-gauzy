@@ -124,7 +124,7 @@ export class PluginMarketplaceUploadComponent implements OnInit {
 				[Validators.required, Validators.pattern(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/)]
 			],
 			changelog: [version?.changelog, [Validators.required, Validators.minLength(10)]],
-			releaseDate: [version?.releaseDate, [Validators.required, this.pastDateValidator()]]
+			releaseDate: [version?.releaseDate || this.today, [Validators.required, this.pastDateValidator()]]
 		});
 	}
 
@@ -367,31 +367,11 @@ export class PluginMarketplaceUploadComponent implements OnInit {
 	}
 
 	public getSourceFieldError(fieldName: string, errorType?: string): boolean {
-		const sourceGroup = this.pluginForm.get('source') as FormGroup;
-		if (!sourceGroup) return false;
-
-		const control = sourceGroup.get(fieldName);
-		if (!control) return false;
-
-		if (errorType) {
-			return control.touched && control.hasError(errorType);
-		}
-
-		return control.touched && control.invalid;
+		return this.getFieldError(`source.${fieldName}`, errorType);
 	}
 
 	public getVersionFieldError(fieldName: string, errorType?: string): boolean {
-		const sourceGroup = this.pluginForm.get('version') as FormGroup;
-		if (!sourceGroup) return false;
-
-		const control = sourceGroup.get(fieldName);
-		if (!control) return false;
-
-		if (errorType) {
-			return control.touched && control.hasError(errorType);
-		}
-
-		return control.touched && control.invalid;
+		return this.getFieldError(`version.${fieldName}`, errorType);
 	}
 
 	public triggerFileBrowse(): void {
