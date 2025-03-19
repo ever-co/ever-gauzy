@@ -30,6 +30,9 @@ node_modules/
 !.vscode/launch.json
 !.vscode/extensions.json
 .windsurfrules
+.cursor
+.scannerwork
+.sonarlint
 
 # misc
 /.angular/cache
