@@ -15,13 +15,7 @@
         "lib:build": "yarn nx build core",
         "lib:build:prod": "yarn nx build core",
         "lib:watch": "yarn nx build core --watch",
-        "start:api": "nodemon",
-        "start:api:debug": "nodemon --config nodemon-debug.json",
-        "typeorm": "ts-node -r tsconfig-paths/register ./../../node_modules/typeorm/cli.js",
-        "migration:run": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn ts-node -r tsconfig-paths/register ./src/lib/database/migration.ts migration:run",
-        "migration:generate": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn ts-node -r tsconfig-paths/register ./src/lib/database/migration.ts migration:generate",
-        "migration:revert": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn ts-node -r tsconfig-paths/register ./src/lib/database/migration.ts migration:revert",
-        "migration:create": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn ts-node -r tsconfig-paths/register ./src/lib/database/migration.ts migration:create"
+        "typeorm": "ts-node -r tsconfig-paths/register ./../../node_modules/typeorm/cli.js"
     },
     "dependencies": {
         "@apollo/client": "^3.6.2",

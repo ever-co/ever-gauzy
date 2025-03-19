@@ -1,6 +1,0 @@
-{
-	"watch": ["src"],
-	"ext": "ts",
-	"ignore": ["src/**/*.spec.ts"],
-	"exec": "yarn ts-node --inspect-brk -r ts-node/register -r tsconfig-paths/register src/lib/main.ts"
-}
