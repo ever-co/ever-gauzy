@@ -1,14 +1,19 @@
 import { ID, IPluginVersion } from '@gauzy/contracts';
 import { Logger } from '@nestjs/common';
-import { DataSource, EntitySubscriberInterface, EventSubscriber } from 'typeorm';
+import { DataSource, EntitySubscriberInterface, EventSubscriber, InsertEvent } from 'typeorm';
 import { Plugin } from '../../domain/entities/plugin.entity';
 import { PluginVersionService } from '../../domain/services/plugin-version.service';
+import { PluginSourceService } from '../../domain/services/plugin-source.service';
 
 @EventSubscriber()
 export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 	private readonly logger = new Logger(PluginSubscriber.name);
 
-	constructor(private readonly pluginVersionService: PluginVersionService, readonly dataSource: DataSource) {
+	constructor(
+		private readonly pluginVersionService: PluginVersionService,
+		private readonly pluginSourceService: PluginSourceService,
+		readonly dataSource: DataSource
+	) {
 		dataSource.subscribers.push(this);
 	}
 
@@ -17,6 +22,24 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 	 */
 	listenTo() {
 		return Plugin;
+	}
+
+	/**
+	 * Lifecycle hook executed before inserting a new `Plugin` entity.
+	 * Automatically sets the `uploadedAt` timestamp to the current date.
+	 *
+	 * @param {InsertEvent<Plugin>} event - The event object containing entity details.
+	 * @returns {Promise<void>} A promise that resolves when the operation is complete.
+	 */
+	public async beforeInsert(event: InsertEvent<Plugin>): Promise<void> {
+		if (!event.entity) return;
+
+		const entity = event.entity;
+		entity.uploadedAt = new Date();
+		// Normalize string fields
+		if (entity.name) entity.name = entity.name.trim();
+		if (entity.author) entity.author = entity.author.trim();
+		if (entity.license) entity.license = entity.license.trim();
 	}
 
 	/**
@@ -37,11 +60,21 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 			// Compute latest version
 			const version = await this.computeLatestVersion(entity.id);
 
+			// Compute latest source associated to version
+			const source = await this.pluginSourceService.findOneOrFailByWhereOptions({
+				versions: {
+					id: version.id
+				}
+			});
+
 			// Add the computed property to the entity
 			entity.downloadCount = downloadCount;
 
 			// Add the version
 			entity.version = version;
+
+			// Add the source
+			entity.source = source.success ? source.record : null;
 
 			this.logger.debug(`Total downloads for plugin ${entity.id}: ${downloadCount}`);
 		} catch (error) {
@@ -50,6 +83,8 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 			entity.downloadCount = 0;
 			// Add default version
 			entity.version = null;
+			// Add default source
+			entity.source = null;
 		}
 	}
 

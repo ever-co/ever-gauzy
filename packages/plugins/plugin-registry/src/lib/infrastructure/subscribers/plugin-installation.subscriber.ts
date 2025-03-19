@@ -39,7 +39,7 @@ export class PluginInstallationSubscriber implements EntitySubscriberInterface<P
 		// Early return if versionId is missing
 		const { versionId, pluginId } = installation;
 		if (!versionId || !pluginId) {
-			this.logger.warn(`Plugin installation missing ${!versionId ? 'versionId' : 'pluginId'}, cannot process`);
+			this.logger.debug(`Plugin installation missing ${!versionId ? 'versionId' : 'pluginId'}, cannot process`);
 			return;
 		}
 

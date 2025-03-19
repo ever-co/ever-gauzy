@@ -6,7 +6,6 @@ import {
 	MultiORMEntity,
 	MultiORMManyToOne,
 	MultiORMOneToMany,
-	MultiORMOneToOne,
 	TenantOrganizationBaseEntity
 } from '@gauzy/core';
 import { ApiProperty } from '@nestjs/swagger';
@@ -16,7 +15,6 @@ import { IPluginSource } from '../../shared/models/plugin-source.model';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
 import { IPlugin } from '../../shared/models/plugin.model';
 import { MikroOrmPluginRepository } from '../repositories/mikro-orm-plugin.repository';
-import { PluginSource } from './plugin-source.entity';
 import { PluginVersion } from './plugin-version.entity';
 
 @MultiORMEntity('plugin', { mikroOrmRepository: () => MikroOrmPluginRepository })
@@ -44,7 +42,7 @@ export class Plugin extends TenantOrganizationBaseEntity implements IPlugin {
 	status: PluginStatus;
 
 	@ApiProperty({ type: () => [PluginVersion], description: 'Versions of the plugin' })
-	@MultiORMOneToMany(() => PluginVersion, (version) => version.plugin, { eager: true })
+	@MultiORMOneToMany(() => PluginVersion, (version) => version.plugin, { onDelete: 'SET NULL' })
 	versions: IPluginVersion[];
 
 	@ApiProperty({ type: String, description: 'Plugin author', required: false })
@@ -87,15 +85,8 @@ export class Plugin extends TenantOrganizationBaseEntity implements IPlugin {
 	@MultiORMColumn({ nullable: true })
 	uploadedAt?: Date;
 
-	@ApiProperty({ type: () => PluginSource, description: 'Source of plugin', required: false })
-	@MultiORMOneToOne(() => PluginSource, (source) => source.plugin, { nullable: true })
-	@JoinColumn()
-	source?: IPluginSource;
-
-	@RelationId((plugin: Plugin) => plugin.source)
-	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, relationId: true })
-	sourceId?: ID;
+	// Computed source
+	source: IPluginSource;
 
 	// Computed field
 	downloadCount: number;

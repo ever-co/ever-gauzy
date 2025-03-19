@@ -1,10 +1,5 @@
-import {
-	FileStorageProviderEnum,
-	IBasePerTenantAndOrganizationEntityModel,
-	ID,
-	PluginSourceType
-} from '@gauzy/contracts';
-import { IPlugin } from './plugin.model';
+import { FileStorageProviderEnum, IBasePerTenantAndOrganizationEntityModel, PluginSourceType } from '@gauzy/contracts';
+import { IPluginVersion } from './plugin-version.model';
 
 export interface IPluginSource extends IBasePerTenantAndOrganizationEntityModel {
 	type: PluginSourceType; // Type of the plugin source (CDN, NPM, File Upload)
@@ -30,7 +25,6 @@ export interface IPluginSource extends IBasePerTenantAndOrganizationEntityModel 
 	// Storage
 	storageProvider?: FileStorageProviderEnum;
 
-	// Associated Plugin
-	plugin?: IPlugin; // Associated plugin entity
-	pluginId?: ID; // ID of the associated plugin
+	// Associated versions
+	versions?: IPluginVersion[]; // List of plugin versions
 }

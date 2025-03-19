@@ -19,9 +19,6 @@ export class PluginSourceSubscriber extends BaseEntityEventSubscriber<PluginSour
 
 	public override async beforeInsert(event: InsertEvent<PluginSource>): Promise<void> {
 		const entity = event.entity;
-		if (!(entity instanceof PluginSource)) {
-			return;
-		}
 
 		if (entity.type !== PluginSourceType.GAUZY) {
 			return;

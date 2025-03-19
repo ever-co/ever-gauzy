@@ -28,23 +28,23 @@ export class UninstallPluginCommandHandler implements ICommandHandler<UninstallP
 		const { pluginId } = command;
 
 		// Find the plugin installation by plugin ID and the current employee ID
-		const installation = await this.installationService.findOneByOptions({
-			where: {
-				pluginId,
-				installedById: RequestContext.currentEmployeeId()
-			}
+		const found = await this.installationService.findOneOrFailByWhereOptions({
+			pluginId,
+			installedById: RequestContext.currentEmployeeId()
 		});
 
 		// If the installation is not found, throw a NotFoundException
-		if (!installation) {
+		if (!found.success) {
 			throw new NotFoundException(`Installation of the plugin with ID ${pluginId} not found`);
 		}
 
-		// Update the installation status and uninstalled date
-		installation.status = PluginInstallationStatus.UNINSTALLED;
-		installation.uninstalledAt = new Date();
+		// Assign found installation
+		const { id } = found.record;
 
-		// Save the updated installation record
-		await this.installationService.save(installation);
+		// Update the installation status and uninstalled date
+		await this.installationService.update(id, {
+			status: PluginInstallationStatus.UNINSTALLED,
+			uninstalledAt: new Date()
+		});
 	}
 }

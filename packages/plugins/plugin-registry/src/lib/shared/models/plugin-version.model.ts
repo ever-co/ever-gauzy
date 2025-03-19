@@ -1,5 +1,6 @@
 import { IBasePerTenantAndOrganizationEntityModel, ID } from '@gauzy/contracts';
 import { IPlugin } from './plugin.model';
+import { IPluginSource } from './plugin-source.model';
 
 export interface IPluginVersion extends IBasePerTenantAndOrganizationEntityModel {
 	number: string; // SemVer formatted string
@@ -8,6 +9,9 @@ export interface IPluginVersion extends IBasePerTenantAndOrganizationEntityModel
 	downloadCount?: number; // Optional, defaults to 0
 	plugin?: IPlugin; // Associated plugin entity
 	pluginId?: ID; // Optional ID of the associated plugin
+
+	source?: IPluginSource; // Associated plugin entity
+	sourceId?: ID; // Optional ID of the associated plugin
 
 	// Security and integrity
 	checksum?: string; // Verification hash

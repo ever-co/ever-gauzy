@@ -20,7 +20,9 @@ import {
 	Put,
 	Query,
 	UseGuards,
-	UseInterceptors
+	UseInterceptors,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
@@ -53,6 +55,9 @@ import { UpdatePluginDTO } from '../../shared/dto/update-plugin.dto';
 import { VerifyPluginDTO } from '../../shared/dto/verify-plugin.dto';
 import { IPlugin } from '../../shared/models/plugin.model';
 import { UploadedPluginStorage } from '../storage/uploaded-plugin.storage';
+import { UninstallPluginCommand } from '../../application/commands/uninstall-plugin.command';
+import { InstallPluginDTO } from '../../shared/dto/install-plugin.dto';
+import { InstallPluginCommand } from '../../application/commands/install-plugin.command';
 
 /**
  * Controller responsible for managing plugin operations in the system.
@@ -128,7 +133,7 @@ export class PluginController {
 	)
 	@Post()
 	public async create(@Body() input: CreatePluginDTO, @UploadedPluginStorage() file: FileDTO): Promise<IPlugin> {
-		if (input.source.type === PluginSourceType.GAUZY && !file?.key) {
+		if (input.version.source.type === PluginSourceType.GAUZY && !file?.key) {
 			console.warn('Plugin file key is empty');
 			return;
 		}
@@ -146,15 +151,15 @@ export class PluginController {
 				uploadedById,
 				version: {
 					...input.version,
-					...common
-				},
-				source: {
-					...input.source,
-					...common
+					...common,
+					source: {
+						...input.version.source,
+						...common
+					}
 				}
 			};
 
-			if (input.source.type === PluginSourceType.GAUZY) {
+			if (input.version.source.type === PluginSourceType.GAUZY) {
 				const provider = new FileStorage().getProvider();
 				// Convert the plain object to a class instance
 				const fileInstance = plainToInstance(FileDTO, file);
@@ -174,13 +179,16 @@ export class PluginController {
 				return this.commandBus.execute(
 					new CreatePluginCommand({
 						...dto,
-						source: {
-							...dto.source,
-							fileName: file.originalname,
-							fileSize: file.size,
-							filePath: file.path,
-							fileKey: file.key,
-							storageProvider
+						version: {
+							...dto.version,
+							source: {
+								...dto.version.source,
+								fileName: file.originalname,
+								fileSize: file.size,
+								filePath: file.path,
+								fileKey: file.key,
+								storageProvider: storageProvider ?? FileStorageProviderEnum.LOCAL
+							}
 						}
 					})
 				);
@@ -314,6 +322,37 @@ export class PluginController {
 	@Patch(':id/deactivate')
 	public async deactivate(@Param('id', UUIDValidationPipe) id: ID): Promise<void> {
 		return this.commandBus.execute(new DeactivatePluginCommand(id));
+	}
+
+	@Patch(':id/uninstall')
+	@ApiOperation({ summary: 'Uninstall a plugin' })
+	@ApiParam({
+		name: 'id',
+		description: 'Unique identifier of the plugin',
+		type: String,
+		example: '550e8400-e29b-41d4-a716-446655440000'
+	})
+	public async uninstall(@Param('id', UUIDValidationPipe) id: ID): Promise<void> {
+		await this.commandBus.execute(new UninstallPluginCommand(id));
+	}
+
+	@Patch(':id/install')
+	@ApiOperation({ summary: 'Install a plugin with a specific version' })
+	@ApiParam({
+		name: 'id',
+		description: 'Unique identifier of the plugin',
+		type: String,
+		example: '550e8400-e29b-41d4-a716-446655440000'
+	})
+	@ApiQuery({
+		name: 'versionId',
+		description: 'Unique identifier of the version to install',
+		type: String,
+		example: '550e8400-e29b-41d4-a716-446655440000'
+	})
+	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	public async install(@Param('id', UUIDValidationPipe) id: ID, @Query() query: InstallPluginDTO): Promise<void> {
+		await this.commandBus.execute(new InstallPluginCommand(id, query));
 	}
 
 	/**

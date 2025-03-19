@@ -33,8 +33,8 @@ export class PluginVersionSubscriber extends BaseEntityEventSubscriber<PluginVer
 			const entity = event.entity;
 
 			// Type guard to ensure we're working with the correct entity
-			if (!(entity instanceof PluginVersion)) {
-				this.logger.warn(`Expected PluginVersion entity but received different type`);
+			if (!entity) {
+				this.logger.warn(`Expected Plugin Version entity`);
 				return;
 			}
 

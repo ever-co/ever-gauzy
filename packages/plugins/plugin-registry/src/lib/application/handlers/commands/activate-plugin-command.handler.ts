@@ -28,10 +28,10 @@ export class ActivatePluginCommandHandler implements ICommandHandler<ActivatePlu
 
 		try {
 			// Find the plugin
-			const plugin = await this.pluginService.findOneByIdString(pluginId);
+			const plugin = await this.pluginService.findOneOrFailByIdString(pluginId);
 
 			// Only update if plugin is not already active
-			if (!plugin.isActive) {
+			if (plugin.success && !plugin.record.isActive) {
 				await this.commandBus.execute(new UpdatePluginCommand(pluginId, { isActive: true }));
 			}
 		} catch (error) {

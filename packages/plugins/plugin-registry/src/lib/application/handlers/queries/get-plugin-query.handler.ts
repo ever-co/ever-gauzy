@@ -13,14 +13,14 @@ export class GetPluginQueryHandler implements IQueryHandler<GetPluginQuery> {
 		const { id, options = {} } = query;
 
 		// Step 1: Fetch the plugin entity from the database
-		const plugin = await this.pluginService.findOneByIdString(id, options);
+		const plugin = await this.pluginService.findOneOrFailByIdString(id, options);
 
 		// Step 2: Throw a NotFoundException if the plugin does not exist
-		if (!plugin) {
+		if (!plugin.success) {
 			throw new NotFoundException(`Plugin with ID ${id} not found.`);
 		}
 
 		// Step 3: Return the plugin entity
-		return plugin;
+		return plugin.record;
 	}
 }

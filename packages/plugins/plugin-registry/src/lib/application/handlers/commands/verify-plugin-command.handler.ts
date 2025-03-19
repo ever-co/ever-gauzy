@@ -39,8 +39,8 @@ export class VerifyPluginCommandHandler implements ICommandHandler<VerifyPluginC
 		const { input, pluginId } = command;
 
 		// Verify plugin ID
-		const plugin = await this.pluginService.findOneByIdString(pluginId);
-		if (!plugin) {
+		const plugin = await this.pluginService.findOneOrFailByIdString(pluginId);
+		if (!plugin.success) {
 			throw new NotFoundException(`Plugin with ID ${pluginId} not found`);
 		}
 

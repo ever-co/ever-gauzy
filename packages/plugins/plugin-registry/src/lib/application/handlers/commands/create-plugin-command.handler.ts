@@ -33,7 +33,7 @@ export class CreatePluginCommandHandler implements ICommandHandler<CreatePluginC
 		const { input } = command;
 
 		// Validate input
-		if (!input || (input.source && !input.version)) {
+		if (!input || (input.version.source && !input.version)) {
 			throw new BadRequestException('Invalid plugin data: Source requires version information');
 		}
 
@@ -44,21 +44,20 @@ export class CreatePluginCommandHandler implements ICommandHandler<CreatePluginC
 
 		try {
 			// Create the plugin
-			const plugin = new Plugin();
-			Object.assign(plugin, input);
+			const plugin = Object.assign(new Plugin(), input);
+			const savedPlugin = await this.pluginService.save(plugin);
 
 			// Process source and version if provided
-			if (input.source) {
-				const saved = await this.pluginService.save(plugin);
-				await this.createPluginSource(input.source, saved);
-				await this.createPluginVersion(input.version, saved);
+			if (input.version.source) {
+				const savedSource = await this.createPluginSource(input.version.source);
+				await this.createPluginVersion(input.version, savedPlugin, savedSource);
 			}
 
 			await queryRunner.commitTransaction();
 
 			// Return the complete plugin with all relations
-			return this.pluginService.findOneByIdString(plugin.id, {
-				relations: ['source', 'versions']
+			return this.pluginService.findOneByIdString(savedPlugin.id, {
+				relations: ['versions', 'versions.source']
 			});
 		} catch (error) {
 			// Rollback transaction on error
@@ -76,14 +75,15 @@ export class CreatePluginCommandHandler implements ICommandHandler<CreatePluginC
 	 * @param versionData - Version data to create
 	 * @param plugin - Associated plugin
 	 */
-	private async createPluginVersion(versionData: IPluginVersion, plugin: IPlugin): Promise<void> {
+	private async createPluginVersion(
+		versionData: IPluginVersion,
+		plugin: IPlugin,
+		source: IPluginSource
+	): Promise<void> {
 		if (!versionData) {
 			throw new BadRequestException('Version data is required');
 		}
-
-		const version = new PluginVersion();
-		version.plugin = plugin;
-		Object.assign(version, versionData);
+		const version = Object.assign(new PluginVersion(), { ...versionData, plugin, source });
 		await this.versionService.save(version);
 	}
 
@@ -94,14 +94,11 @@ export class CreatePluginCommandHandler implements ICommandHandler<CreatePluginC
 	 * @param plugin - Associated plugin
 	 * @returns The created plugin source
 	 */
-	private async createPluginSource(sourceData: IPluginSource, plugin: IPlugin): Promise<IPluginSource> {
+	private async createPluginSource(sourceData: IPluginSource): Promise<IPluginSource> {
 		if (!sourceData) {
 			throw new BadRequestException('Source data is required');
 		}
-
-		const source = new PluginSource();
-		source.plugin = plugin;
-		Object.assign(source, sourceData);
+		const source = Object.assign(new PluginSource(), sourceData);
 		return this.sourceService.save(source);
 	}
 }

@@ -14,6 +14,8 @@ import { JoinColumn, RelationId } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
 import { IPlugin } from '../../shared/models/plugin.model';
+import { PluginSource } from './plugin-source.entity';
+import { IPluginSource } from '../../shared/models/plugin-source.model';
 
 @MultiORMEntity('plugin_version', { mikroOrmRepository: () => MikroOrmPluginVersionRepository })
 export class PluginVersion extends TenantOrganizationBaseEntity implements IPluginVersion {
@@ -64,7 +66,7 @@ export class PluginVersion extends TenantOrganizationBaseEntity implements IPlug
 	downloadCount: number;
 
 	@ApiProperty({ type: () => Plugin, description: 'Plugin associated with the version', required: true })
-	@MultiORMManyToOne(() => Plugin, (plugin) => plugin.versions, { nullable: true })
+	@MultiORMManyToOne(() => Plugin, (plugin) => plugin.versions, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	plugin?: IPlugin;
 
@@ -72,4 +74,14 @@ export class PluginVersion extends TenantOrganizationBaseEntity implements IPlug
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	pluginId?: ID;
+
+	@ApiProperty({ type: () => PluginSource, description: 'Source of the plugin version', required: false })
+	@MultiORMManyToOne(() => PluginSource, { nullable: true, onDelete: 'CASCADE' })
+	@JoinColumn()
+	source?: IPluginSource;
+
+	@RelationId((version: PluginVersion) => version.source)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	sourceId?: ID;
 }

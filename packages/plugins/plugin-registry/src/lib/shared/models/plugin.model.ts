@@ -20,7 +20,6 @@ export interface IPlugin extends IBasePerTenantAndOrganizationEntityModel {
 	uploadedAt?: Date; // Optional date when the plugin was uploaded
 
 	source?: IPluginSource; // Optional reference to the plugin's source
-	sourceId?: ID; // ID reference for the plugin's source
 
 	downloadCount: number; // Number of times the plugin has been downloaded
 	lastDownloadedAt?: Date; // Optional date when the plugin was last downloaded

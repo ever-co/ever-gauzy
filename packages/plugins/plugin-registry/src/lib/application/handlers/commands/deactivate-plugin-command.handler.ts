@@ -28,10 +28,10 @@ export class DeactivatePluginCommandHandler implements ICommandHandler<Deactivat
 
 		try {
 			// Find the plugin
-			const plugin = await this.pluginService.findOneByIdString(pluginId);
+			const plugin = await this.pluginService.findOneOrFailByIdString(pluginId);
 
 			// Only update if plugin is currently active
-			if (plugin.isActive) {
+			if (plugin.success && plugin.record.isActive) {
 				await this.commandBus.execute(new UpdatePluginCommand(pluginId, { isActive: false }));
 			}
 		} catch (error) {

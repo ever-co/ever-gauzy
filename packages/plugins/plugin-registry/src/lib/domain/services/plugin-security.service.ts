@@ -104,28 +104,28 @@ export class PluginSecurityService {
 	 */
 	private async getPluginContentForVerification(versionId: IPluginVersion['id']): Promise<string> {
 		try {
-			const version = await this.pluginVersionService.findOneByOptions({
+			const version = await this.pluginVersionService.findOneOrFailByOptions({
 				where: { id: versionId },
-				relations: ['plugin', 'plugin.source']
+				relations: ['plugin', 'source']
 			});
 
-			if (!version) {
+			if (!version.success) {
 				throw new NotFoundException(`Plugin version with ID ${versionId} not found.`);
 			}
 
-			if (!version.plugin) {
+			if (!version.record.plugin) {
 				throw new NotFoundException(`Plugin not found for version ID ${versionId}.`);
 			}
 
-			if (!version.plugin.source) {
-				throw new NotFoundException(`Plugin source not found for plugin ID ${version.plugin.id}.`);
+			if (!version.record.source) {
+				throw new NotFoundException(`Plugin source not found for plugin ID ${version.record.plugin.id}.`);
 			}
 
-			const plugin = version.plugin;
-			const source = plugin.source;
+			const plugin = version.record.plugin;
+			const source = version.record.source;
 
 			const contentObj = {
-				version: version.number,
+				version: version.record.number,
 				name: plugin.name || '',
 				type: plugin.type || '',
 				source: this.getSourceData(source)

@@ -36,8 +36,8 @@ export class DeletePluginCommandHandler implements ICommandHandler<DeletePluginC
 
 		try {
 			// Verify that the plugin exists
-			const plugin = await this.pluginService.findOneByIdString(pluginId);
-			if (!plugin) {
+			const plugin = await this.pluginService.findOneOrFailByIdString(pluginId);
+			if (!plugin.success) {
 				throw new NotFoundException(`Plugin with ID ${pluginId} not found`);
 			}
 

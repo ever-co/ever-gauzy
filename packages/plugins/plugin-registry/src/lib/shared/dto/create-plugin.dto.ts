@@ -3,7 +3,6 @@ import { Type } from 'class-transformer';
 import { ValidateNested } from 'class-validator';
 import { Plugin } from '../../domain/entities/plugin.entity';
 import { PluginVersionDTO } from './plugin-version.dto';
-import { PluginSourceDTO } from './plugin-source.dto';
 
 export class CreatePluginDTO extends OmitType(Plugin, [
 	'id',
@@ -16,8 +15,4 @@ export class CreatePluginDTO extends OmitType(Plugin, [
 	@ValidateNested()
 	@Type(() => PluginVersionDTO)
 	version: PluginVersionDTO;
-
-	@ValidateNested()
-	@Type(() => PluginSourceDTO)
-	source: PluginSourceDTO;
 }
