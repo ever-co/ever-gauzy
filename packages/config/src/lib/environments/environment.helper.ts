@@ -10,5 +10,5 @@ dotenv.config();
  * @returns
  */
 export const isFeatureEnabled = (featureKey: string): boolean => {
-	return process.env[featureKey] === 'false' ? false : true;
+	return process.env[featureKey] !== 'false';
 };

@@ -22,3 +22,5 @@ export * from './IDigitalOceanConfig';
 export * from './IHubstaffConfig';
 export * from './IJitsuConfig';
 export * from './IJiraIntegrationConfig';
+export * from './IGauzyAI';
+export * from './IPlugins';

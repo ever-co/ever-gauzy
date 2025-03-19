@@ -11,3 +11,4 @@ export * from './lib/config.service';
 
 export { environment, gauzyToggleFeatures } from './lib/environments/environment';
 export * from './lib/environments/ienvironment';
+export * from './lib/load-env';

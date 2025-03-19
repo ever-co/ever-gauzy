@@ -205,15 +205,16 @@ export const environment: IEnvironment = {
 	allowSuperAdminRole: process.env.ALLOW_SUPER_ADMIN_ROLE === 'false' ? false : true,
 
 	/**
-	 * Endpoint for Gauzy AI API (optional), e.g.: http://localhost:3005/graphql
+	 * Gauzy AI Configuration
 	 */
-	gauzyAIGraphQLEndpoint: process.env.GAUZY_AI_GRAPHQL_ENDPOINT,
-
-	/**
-	 * Endpoint for Gauzy AI REST API (optional), e.g.: http://localhost:3005/api
-	 */
-	gauzyAIRESTEndpoint: process.env.GAUZY_AI_REST_ENDPOINT,
-
+	gauzyAI: {
+		apiKey: process.env.GAUZY_AI_API_KEY,
+		apiSecret: process.env.GAUZY_AI_API_SECRET,
+		graphQLEndpoint: process.env.GAUZY_AI_GRAPHQL_ENDPOINT,
+		restEndpoint: process.env.GAUZY_AI_REST_ENDPOINT,
+		requestTimeout: process.env.GAUZY_AI_REQUEST_TIMEOUT ? parseInt(process.env.GAUZY_AI_REQUEST_TIMEOUT,10) : undefined
+	},
+	
 	gauzyCloudEndpoint: process.env.GAUZY_CLOUD_ENDPOINT,
 
 	smtpConfig: {
@@ -270,7 +271,19 @@ export const environment: IEnvironment = {
 	 * Periodic Time Save
 	 */
 	periodicTimeSave: process.env.PERIODIC_TIME_SAVE === 'true',
-	periodicTimeSaveTimeframe: parseInt(process.env.PERIODIC_TIME_SAVE_TIMEFRAME) || 600 // 10 minutes
+	periodicTimeSaveTimeframe: parseInt(process.env.PERIODIC_TIME_SAVE_TIMEFRAME) || 600, // 10 minutes
+
+	/**
+	 * Gauzy Additional Plugins Configuration
+	 */
+	plugins: {
+		useChangelog: process.env.USE_PLUGIN_CHANGELOG !== 'false',
+		useJobProposal: process.env.USE_PLUGIN_JOB_PROPOSAL !== 'false',
+		useJobSearch: process.env.USE_PLUGIN_JOB_SEARCH !== 'false',
+		useKnowledgeBase: process.env.USE_PLUGIN_KNOWLEDGE_BASE !== 'false',
+		useProductReviews: process.env.USE_PLUGIN_PRODUCT_REVIEWS !== 'false',
+		useVideos: process.env.USE_PLUGIN_VIDEOS !== 'false'
+	}
 };
 
 /**
