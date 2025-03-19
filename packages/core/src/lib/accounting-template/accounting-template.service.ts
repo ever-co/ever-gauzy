@@ -277,10 +277,10 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 				new Brackets((bck: WhereExpressionBuilder) => {
 					const { languageCode } = params.where;
 					if (isNotEmpty(languageCode)) {
-						bck.andWhere(`${qb.alias}."languageCode" = :languageCode`, { languageCode });
+						bck.andWhere(p(`"${qb.alias}"."languageCode" = :languageCode`), { languageCode });
 					}
-					bck.andWhere(`${qb.alias}."organizationId" IS NULL`);
-					bck.andWhere(`${qb.alias}."tenantId" IS NULL`);
+					bck.andWhere(p(`"${qb.alias}"."organizationId" IS NULL`));
+					bck.andWhere(p(`"${qb.alias}"."tenantId" IS NULL`));
 				})
 			);
 		});
@@ -290,7 +290,15 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 
 	/**
 	 * Finds a single accounting template by its ID while considering tenant
-	 * scope. If no specific tenant or organization is set,
+	 * and organization scope. If no specific tenant or organization is set,
+	 * it retrieves global templates.
+	 *
+	 * @param id - The ID of the accounting template to retrieve.
+	 * @returns The matching accounting template or null if not found.
+	 */
+	/**
+	 * Finds a single accounting template by its ID while considering tenant
+	 * and organization scope. If no specific tenant or organization is set,
 	 * it retrieves global templates.
 	 *
 	 * @param id - The ID of the accounting template to retrieve.
@@ -299,14 +307,24 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 	async findOneByIdString(id: string): Promise<AccountingTemplate> {
 		const tenantId = RequestContext.currentTenantId();
 
-		return await this.typeOrmRepository
-			.createQueryBuilder('template')
-			.where('template.id = :id', { id })
-			.andWhere(
-				new Brackets((qb) => {
-					qb.where('template.tenantId = :tenantId', { tenantId }).orWhere('template.tenantId IS NULL'); // Allows global templates
+		const query = this.typeOrmRepository.createQueryBuilder('template');
+
+		query.where((qb: SelectQueryBuilder<AccountingTemplate>) => {
+			qb.andWhere(
+				new Brackets((bck: WhereExpressionBuilder) => {
+					bck.andWhere(p(`"${qb.alias}"."id" = :id`), { id });
+					bck.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
 				})
-			)
-			.getOne();
+			);
+
+			qb.orWhere(
+				new Brackets((bck: WhereExpressionBuilder) => {
+					bck.andWhere(p(`"${qb.alias}"."id" = :id`), { id });
+					bck.andWhere(p(`"${qb.alias}"."tenantId" IS NULL`));
+				})
+			);
+		});
+
+		return await query.getOne();
 	}
 }
