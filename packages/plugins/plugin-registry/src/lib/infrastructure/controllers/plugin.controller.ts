@@ -58,6 +58,8 @@ import { UploadedPluginStorage } from '../storage/uploaded-plugin.storage';
 import { UninstallPluginCommand } from '../../application/commands/uninstall-plugin.command';
 import { InstallPluginDTO } from '../../shared/dto/install-plugin.dto';
 import { InstallPluginCommand } from '../../application/commands/install-plugin.command';
+import { IPluginVersion } from '../../shared/models/plugin-version.model';
+import { ListPluginVersionsQuery } from '../../application/queries/list-plugin-versions.query';
 
 /**
  * Controller responsible for managing plugin operations in the system.
@@ -432,6 +434,35 @@ export class PluginController {
 		@Query() options: FindOneOptions<IPlugin>
 	): Promise<IPlugin> {
 		return this.queryBus.execute(new GetPluginQuery(id, options));
+	}
+
+	/**
+	 * Retrieves a paginated list of plugin versions with optional filtering.
+	 */
+	@ApiOperation({
+		summary: 'List all plugin versions',
+		description: 'Retrieve a paginated list of plugin versions with optional filtering capabilities.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'List of plugin versions retrieved successfully.',
+		type: Plugin,
+		isArray: true
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'No plugin versions found matching the provided criteria.'
+	})
+	@ApiResponse({
+		status: HttpStatus.UNAUTHORIZED,
+		description: 'Unauthorized access.'
+	})
+	@Get(':id/versions')
+	public async findAllVersions(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Query() params: PaginationParams<IPluginVersion>
+	): Promise<IPagination<IPluginVersion>> {
+		return this.queryBus.execute(new ListPluginVersionsQuery(id, params));
 	}
 
 	/**
