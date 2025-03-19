@@ -1,5 +1,5 @@
+import { Logger } from '@nestjs/common';
 import * as path from 'path';
-import * as chalk from 'chalk';
 import {
 	ApplicationPluginConfig,
 	DEFAULT_API_PORT,
@@ -20,45 +20,18 @@ import { plugins } from './plugins';
 
 const { sentry } = environment;
 
-console.log(chalk.magenta(`API Version %s`), version);
-console.log('Plugin Config -> __dirname: ' + __dirname);
-console.log('Plugin Config -> process.cwd: ' + process.cwd());
+const logger = new Logger('GZY - Plugin Config');
 
-// TODO: maybe better to use process.cwd() instead of __dirname?
+logger.log(`API Version ${version}`);
+logger.verbose(`Working directory: ${process.cwd()}`);
 
-let assetPath: any;
-let assetPublicPath: any;
+const assetPath = path.join(process.cwd(), 'apps', 'api', 'src', 'assets');
+const assetPublicPath = path.join(process.cwd(), 'apps', 'api', 'public');
 
-// For Docker environment
-if (__dirname.startsWith('/srv/gauzy')) {
-	assetPath = '/srv/gauzy/apps/api/src/assets';
-	assetPublicPath = '/srv/gauzy/apps/api/public';
-} else {
-	// Determine if running in production (dist) or development (src)
-	const isDist = __dirname.includes(path.join('dist'));
-	console.log('Plugin Config -> isDist: ' + isDist);
-
-	// Adjust the base path based on the environment
-	const basePath = isDist
-		? path.resolve(process.cwd(), 'dist/apps/api') // For production
-		: path.resolve(process.cwd(), 'apps/api'); // For development
-
-	console.log('Plugin Config -> basePath: ' + basePath);
-
-	// Set the asset paths relative to basePath
-	assetPath = isDist
-		? path.join(basePath, 'assets') // In dist, assets are directly under 'assets'
-		: path.join(basePath, 'src', 'assets'); // In dev, assets are under 'src/assets'
-
-	// Default public directory for assets
-	assetPublicPath = isDist
-		? path.resolve(process.cwd(), 'apps/api/public') // Adjusted for dist structure
-		: path.resolve(__dirname, '../../../apps/api/public');
-}
-
-console.log('Plugin Config -> assetPath: ' + assetPath);
-console.log('Plugin Config -> assetPublicPath: ' + assetPublicPath);
-console.log('DB Synchronize: ' + process.env.DB_SYNCHRONIZE);
+logger.verbose(`AssetPath: ${assetPath}`);
+logger.verbose(`AssetPublicPath: ${assetPublicPath}`);
+logger.verbose('DB Synchronize: ' + process.env.DB_SYNCHRONIZE);
+logger.verbose('Plugins loaded: ' + plugins.length);
 
 /**
  * Application plugin configuration
@@ -80,7 +53,7 @@ export const pluginConfig: ApplicationPluginConfig = {
 		retryAttempts: 100,
 		retryDelay: 3000,
 		migrationsTransactionMode: 'each', // Run migrations automatically in each transaction. i.e."all" | "none" | "each"
-		migrationsRun: process.env.DB_SYNCHRONIZE === 'true' ? false : true, // Run migrations automatically if we don't do DB_SYNCHRONIZE
+		migrationsRun: process.env.DB_SYNCHRONIZE !== 'true', // Run migrations automatically if we don't do DB_SYNCHRONIZE
 		...dbTypeOrmConnectionConfig
 	},
 	dbMikroOrmConnectionOptions: {

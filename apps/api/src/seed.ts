@@ -1,7 +1,10 @@
+import { Logger } from '@nestjs/common';
 import { seedDefault } from '@gauzy/core';
 import { pluginConfig } from './plugin-config';
 
-seedDefault(pluginConfig).catch((error: any) => {
-	console.log(error);
+const logger = new Logger('GZY - SeedDefault');
+
+seedDefault(pluginConfig).catch((error) => {
+	logger.error(`Error seeding default data: ${error}`);
 	process.exit(1);
 });

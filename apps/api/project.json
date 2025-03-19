@@ -77,7 +77,7 @@
 				"plugin:build",
 				"auth:build",
 				"core:build",
-				"desktop-lib:build",
+				"metrics:build",
 				"plugin-sentry:build",
 				"plugin-changelog:build",
 				"plugin-integration-ai:build",

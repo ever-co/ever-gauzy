@@ -1,36 +1,31 @@
-import * as chalk from 'chalk';
-import { loadEnv } from './load-env';
-
 // Load environment variables
-console.log('Loading Environment Variables...');
+import { loadEnv } from '@gauzy/config/src/lib/load-env';
 loadEnv();
-console.log('Environment Variables Loaded');
+
+import { Logger } from '@nestjs/common';
+import { TimeMetric } from '@gauzy/metrics';
+const logger = new Logger('GZY - API');
 
 // Start measuring the overall API startup time
-console.time(chalk.green(`✔ Total API Startup Time`));
+const timer = new TimeMetric();
+timer.start('api.startup');
 
-console.log(chalk.green(`✔ API Starting...`));
-console.time(chalk.green(`✔ API Running`));
-
-console.log('Bootstrap Loading...');
-console.time('Bootstrap Time');
+// Bootstrap the API
+timer.start('api.bootstrap');
 import { bootstrap } from '@gauzy/core';
-console.timeEnd('Bootstrap Time');
-console.log('Bootstrap Loaded');
+logger.log(`API bootstrapping took: ${timer.end('api.bootstrap')}`);
 
-console.log('Plugin Config Loading...');
-console.time('Plugin Config Time');
+// Load plugin configuration
+timer.start('api.pluginConfig');
 import { pluginConfig } from './plugin-config';
-console.timeEnd('Plugin Config Time');
-console.log('Plugin Config Loaded');
+logger.log(`Plugin Configuration took: ${timer.end('api.pluginConfig')}`);
 
+// Start the API
 bootstrap(pluginConfig)
 	.then(() => {
-		console.timeEnd(chalk.green(`✔ API Running`));
-		console.timeEnd(chalk.green(`✔ Total API Startup Time`));
+		logger.log(`✅ API started successfully: ${timer.end('api.startup')}`);
 	})
 	.catch(async (error) => {
-		console.log(error);
-		console.timeEnd(chalk.green(`✔ Total API Startup Time`));
+		logger.error(`❌ API failed to start: ${timer.end('api.startup')}, Error: ${error}`);
 		process.exit(1);
 	});

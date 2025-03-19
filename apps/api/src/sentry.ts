@@ -1,7 +1,9 @@
+import { Logger } from '@nestjs/common';
 import { environment } from '@gauzy/config';
 import { SentryPlugin, DefaultSentryIntegrations } from '@gauzy/plugin-sentry';
 import { version } from '../version';
 
+const logger = new Logger('GZY - Sentry');
 /**
  * Initializes and configures the Sentry module for error tracking and performance monitoring.
  *
@@ -13,11 +15,11 @@ import { version } from '../version';
  */
 export function initializeSentry(): typeof SentryPlugin | null {
 	if (!environment.sentry.dsn) {
-		console.log('Sentry not initialized: DSN not provided');
+		logger.warn('Sentry not initialized: DSN not provided');
 		return null;
 	}
 
-	console.log('Initializing Sentry with DSN:', environment.sentry.dsn);
+	logger.verbose('Initializing Sentry with DSN:', environment.sentry.dsn);
 
 	// Configure Sentry
 	return SentryPlugin.init({
