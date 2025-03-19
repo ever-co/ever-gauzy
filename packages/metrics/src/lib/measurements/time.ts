@@ -9,7 +9,7 @@ export class TimeMetric {
 	constructor() {
 		this.logger = new Logger('TimeMetric');
 		this.timers = new Map();
-		this.logger.debug('TimeMetric initialized');
+		this.logger.verbose('TimeMetric initialized');
 		TimeMetric.instance = this;
 	}
 

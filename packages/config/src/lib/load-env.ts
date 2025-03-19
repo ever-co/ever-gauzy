@@ -14,7 +14,7 @@ const logger: Logger = new Logger('GZY - Environment Variables');
  */
 function loadEnvFile(envPath: string, options: { override?: boolean } = {}): void {
 	dotenv.config({ path: envPath, ...options });
-	logger.debug(`Values loaded from: ${envPath}`);
+	logger.verbose(`Values loaded from: ${envPath}`);
 }
 
 /**
