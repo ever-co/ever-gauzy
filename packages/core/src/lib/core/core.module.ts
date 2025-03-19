@@ -4,7 +4,7 @@
 // Originally MIT Licensed
 // - see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // - original code `Copyright (c) 2018 Sumanth Chinthagunta`;
-import { DynamicModule, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, Logger } from '@nestjs/common';
 import * as path from 'path';
 import { ConfigService, environment } from '@gauzy/config';
 import { RequestContextMiddleware } from './context';
@@ -12,10 +12,13 @@ import { FileStorageModule } from './file-storage';
 import { GraphqlModule } from '../graphql/graphql.module';
 import { GraphqlApiModule } from '../graphql/graphql-api.module';
 import { DatabaseModule } from '../database/database.module';
+import { MeasurementsModule } from '@gauzy/metrics';
 
-console.log(path.join(path.resolve(__dirname, '../**/', 'schema'), '*.gql'));
-console.log(path.join(path.resolve(__dirname, '../../../../../../../data/'), '*.gql'));
-console.log(environment.isElectron, 'Environment Is Electron');
+const logger = new Logger('GZY - CoreModule');
+
+logger.verbose(path.join(path.resolve(__dirname, '../**/', 'schema'), '*.gql'));
+logger.verbose(path.join(path.resolve(__dirname, '../../../../../../../data/'), '*.gql'));
+logger.verbose(environment.isElectron, 'Environment Is Electron');
 
 @Module({
 	imports: [
@@ -28,15 +31,7 @@ console.log(environment.isElectron, 'Environment Is Electron');
 			cors: {
 				origin: '*',
 				credentials: true,
-				methods: [
-					'GET',
-					'HEAD',
-					'PUT',
-					'PATCH',
-					'POST',
-					'DELETE',
-					'OPTIONS'
-				].join(','),
+				methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'].join(','),
 				allowedHeaders: [
 					'Authorization',
 					'Language',
@@ -58,8 +53,9 @@ console.log(environment.isElectron, 'Environment Is Electron');
 					: path.join(path.resolve(__dirname, '../**/', 'schema'), '*.gql')
 			],
 			resolverModule: GraphqlApiModule
-		})) as DynamicModule,
-		FileStorageModule
+		})),
+		FileStorageModule,
+		MeasurementsModule
 	],
 	controllers: [],
 	providers: []
