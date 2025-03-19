@@ -3,7 +3,7 @@
  */
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IEmployee } from './employee.model';
-import { FileStorageProvider, FileStorageProviderEnum } from './file-provider';
+import { FileStorageProviderEnum } from './file-provider';
 
 /**
  * Defines the possible states of a plugin
@@ -89,7 +89,6 @@ export interface IPlugin extends IBasePerTenantAndOrganizationEntityModel {
 	uploadedAt?: Date; // Optional date when the plugin was uploaded
 
 	source?: IPluginSource; // Optional reference to the plugin's source
-	sourceId?: ID; // ID reference for the plugin's source
 
 	downloadCount: number; // Number of times the plugin has been downloaded
 	lastDownloadedAt?: Date; // Optional date when the plugin was last downloaded
@@ -111,8 +110,8 @@ export interface IPluginVersion extends IBasePerTenantAndOrganizationEntityModel
 	changelog: string; // Description of changes in the version
 	releaseDate?: Date; // Optional ISO 8601 formatted date
 	downloadCount?: number; // Optional, defaults to 0
-	plugin?: IPlugin; // Associated plugin entity
-	pluginId?: ID; // Optional ID of the associated plugin
+	source?: IPluginSource; // Optional reference to the plugin's source
+	sourceId?: ID; // ID reference for the plugin's source
 
 	// Security and integrity
 	checksum?: string; // Verification hash
