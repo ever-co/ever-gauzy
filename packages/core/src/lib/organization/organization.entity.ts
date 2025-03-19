@@ -466,6 +466,20 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@MultiORMColumn({ nullable: true, default: DEFAULT_STANDARD_WORK_HOURS_PER_DAY })
 	standardWorkHoursPerDay?: number;
 
+	/**
+	 * Set the organization email domain
+	 * This domain will be used to restrict user registration only to this domain and
+	 * users registered with this domain or using Google OAuth will be automatically added to the organization.
+	 */
+	@ApiPropertyOptional({ 
+		type: () => String, 
+		description: 'Organization email domain for automatic user registration and organization assignment'
+	})
+	@IsOptional()
+	@IsString()
+	@MultiORMColumn({ length: 1024, nullable: true })
+	emailDomain?: string;
+
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne
