@@ -1,6 +1,6 @@
 {
 	"name": "@gauzy/plugin-integration-zapier",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"description": "Integration Zapier Plugin for Gauzy",
 	"author": {
 		"name": "Ever Co. LTD",
@@ -44,12 +44,14 @@
 		"class-validator": "^0.14.0",
 		"rxjs": "^7.8.0",
 		"tslib": "^2.6.2",
-		"typeorm": "^0.3.20"
+		"typeorm": "^0.3.20",
+		"zapier-platform-core": "16.3.1"
 	},
 	"devDependencies": {
 		"@types/jest": "29.5.14",
 		"@types/node": "^20.14.9",
-		"typescript": "5.5.4"
+		"typescript": "5.5.4",
+		"zapier-platform-cli": "16.3.1"
 	},
 	"keywords": [
 		"zapier",
