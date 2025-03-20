@@ -116,6 +116,10 @@ export class AuthController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, the response body may contain clues as to what went wrong'
 	})
+	@ApiResponse({
+		status: HttpStatus.NOT_ACCEPTABLE,
+		description: "User can't be registered. The email domain is not registered in any organization"
+	})
 	@Post('/register')
 	@Public()
 	@UseValidationPipe({ transform: true })
