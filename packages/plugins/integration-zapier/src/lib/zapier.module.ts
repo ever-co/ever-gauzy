@@ -1,30 +1,36 @@
-import { Module } from '@nestjs/common';
+// zapier.module.ts
 import { HttpModule } from '@nestjs/axios';
-import { ConfigModule } from '@nestjs/config';
+import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
+import { ConfigModule } from '@gauzy/config';
 import {
-	IntegrationModule,
-	IntegrationSettingModule,
-	IntegrationTenantModule,
-	RolePermissionModule,
-	UserModule
+    IntegrationEntitySettingModule,
+    IntegrationMapModule,
+    IntegrationModule,
+    IntegrationSettingModule,
+    IntegrationTenantModule,
+    UserModule
 } from '@gauzy/core';
-import { ZapierController } from './zapier.controller';
+import { ZAPIER_API_URL } from './zapier.config';
 import { ZapierService } from './zapier.service';
+import { ZapierController } from './zapier.controller';
+import { ZapierAuthorizationController } from './zapier-authorization.controller';
+import { CommandHandlers } from './handlers';
 
 @Module({
-	imports: [
-		HttpModule,
-		ConfigModule,
-		CqrsModule,
-		RolePermissionModule,
-		IntegrationModule,
-		IntegrationSettingModule,
-		IntegrationTenantModule,
-		UserModule
-	],
-	controllers: [ZapierController],
-	providers: [ZapierService],
-	exports: []
+    imports: [
+        HttpModule.register({ baseURL: ZAPIER_API_URL }),
+        CqrsModule,
+        ConfigModule,
+        IntegrationEntitySettingModule,
+        IntegrationMapModule,
+        IntegrationModule,
+        IntegrationSettingModule,
+        IntegrationTenantModule,
+        UserModule
+    ],
+    controllers: [ZapierAuthorizationController, ZapierController],
+    providers: [ZapierService, ...CommandHandlers ],
+    exports: [ZapierService]
 })
 export class ZapierModule {}
