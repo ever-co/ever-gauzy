@@ -859,9 +859,6 @@ export class AuthService extends SocialAuthService {
 			for (const { value, verified } of emails) {
 				const organization = await this.organizationService.findByEmailDomain(value.split("@")[1]);
 				if (organization) {
-					// Get the employee role
-					const role: IRole = await this.roleService.findOneByWhereOptions({ name: RolesEnum.EMPLOYEE });
-
 					// Set the register data with the organization details and flag to create an employee record
 					const fullName = userInfo.firstName + " " + userInfo.lastName;
 					const input = {
@@ -873,8 +870,7 @@ export class AuthService extends SocialAuthService {
 							username: value,
 							imageUrl: userInfo.picture,
 							tenantId: organization.tenantId,
-							tenant: { id: organization.tenantId },
-							roleId: role.id,
+							tenant: { id: organization.tenantId }
 						},
 						organizationId: organization.id,
 						featureAsEmployee: true,
