@@ -40,7 +40,9 @@ import {
 	ISocialAccount,
 	ILastTeam,
 	ILastOrganization,
-	ID
+	ID,
+	IRole,
+	RolesEnum
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
@@ -592,7 +594,14 @@ export class AuthService extends SocialAuthService {
 			tenant = creatingUser.tenant;
 		}
 
-		// 2. Register new user
+		// 2. Ensure the user has assigned a role, if not, assign the employee role
+		if (!input.user.roleId || !input.user.role) {
+			// Get the employee role
+			const role: IRole = await this.roleService.findOneByOptions({ where: { name: RolesEnum.EMPLOYEE, tenantId: tenant.id } });
+			input.user.roleId = role.id;
+		}
+
+		// 3. Register new user
 		const entity = this.typeOrmUserRepository.create({
 			...input.user,
 			tenant,
@@ -600,7 +609,7 @@ export class AuthService extends SocialAuthService {
 		});
 		let user = await this.typeOrmUserRepository.save(entity);
 
-		// 3. Create employee for specific user
+		// 4. Create employee for specific user
 		if (input.featureAsEmployee) {
 			await this.typeOrmEmployeeRepository.save(
 				this.typeOrmEmployeeRepository.create({
@@ -614,25 +623,25 @@ export class AuthService extends SocialAuthService {
 			);
 		}
 
-		// 4. Email is automatically verified after accepting an invitation
+		// 5. Email is automatically verified after accepting an invitation
 		if (input.inviteId) {
 			await this.typeOrmUserRepository.update(user.id, {
 				emailVerifiedAt: freshTimestamp()
 			});
 		}
 
-		// 5. Find the latest registered user with role
+		// 6. Find the latest registered user with role
 		user = await this.typeOrmUserRepository.findOne({
 			where: { id: user.id },
 			relations: { role: true }
 		});
 
-		// 6. If organizationId is provided, add the user to the organization
+		// 7. If organizationId is provided, add the user to the organization
 		if (isNotEmpty(input.organizationId)) {
 			await this.userOrganizationService.addUserToOrganization(user, input.organizationId);
 		}
 
-		// 7. Create Import Records while migrating for a relative user
+		// 8. Create Import Records while migrating for a relative user
 		if (input.isImporting && input.sourceId) {
 			this.commandBus.execute(
 				new ImportRecordUpdateOrCreateCommand({
@@ -654,7 +663,7 @@ export class AuthService extends SocialAuthService {
 			'companyName'
 		]);
 
-		// 8. If the user's email is not verified, send an email verification
+		// 9. If the user's email is not verified, send an email verification
 		if (!user.emailVerifiedAt) {
 			this.emailConfirmationService.sendEmailVerification(user, integration);
 		}
@@ -664,7 +673,7 @@ export class AuthService extends SocialAuthService {
 		const event = new AccountRegistrationEvent(ctx, user);
 		await this.eventBus.publish(event);
 
-		// 9. Send a welcome email to the user
+		// 10. Send a welcome email to the user
 		this.emailService.welcomeUser(input.user, languageCode, input.organizationId, input.originalUrl, integration);
 		return user;
 	}
@@ -1367,10 +1376,10 @@ export class AuthService extends SocialAuthService {
 			lastLoginAt: user.lastLoginAt || null, // Sets last logout timestamp to null if it's undefined
 			tenant: user.tenant
 				? new Tenant({
-						id: user.tenant.id, // Assuming tenantId is a direct property of tenant
-						name: user.tenant.name || '', // Defaulting to an empty string if name is undefined
-						logo: user.tenant.logo || '' // Defaulting to an empty string if logo is undefined
-				  })
+					id: user.tenant.id, // Assuming tenantId is a direct property of tenant
+					name: user.tenant.name || '', // Defaulting to an empty string if name is undefined
+					logo: user.tenant.logo || '' // Defaulting to an empty string if logo is undefined
+				})
 				: null // Sets tenant to null if user.tenant is undefined
 		});
 	}
