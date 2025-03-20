@@ -296,14 +296,6 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 	 * @param id - The ID of the accounting template to retrieve.
 	 * @returns The matching accounting template or null if not found.
 	 */
-	/**
-	 * Finds a single accounting template by its ID while considering tenant
-	 * and organization scope. If no specific tenant or organization is set,
-	 * it retrieves global templates.
-	 *
-	 * @param id - The ID of the accounting template to retrieve.
-	 * @returns The matching accounting template or null if not found.
-	 */
 	async findOneByIdString(id: string): Promise<AccountingTemplate> {
 		const tenantId = RequestContext.currentTenantId();
 
