@@ -18,7 +18,8 @@ import {
 	IJiraIntegrationConfig,
 	IDigitalOceanConfig,
 	IGauzyAIConfig,
-	IPluginsConfig
+	IPluginsConfig,
+	IZapierConfig
 } from '@gauzy/common';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 
@@ -119,6 +120,7 @@ export interface IEnvironment {
 	/** Third Party Integrations */
 	upwork?: IUpworkConfig;
 	hubstaff?: IHubstaffConfig;
+	zapier?: IZapierConfig;
 
 	isElectron?: boolean;
 	gauzyUserPath?: string;

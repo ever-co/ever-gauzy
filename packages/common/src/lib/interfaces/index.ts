@@ -25,3 +25,4 @@ export * from './IJiraIntegrationConfig';
 export * from './IGauzyAI';
 export * from './IPlugins';
 export * from './IOAuth';
+export * from './IZapierConfig';
