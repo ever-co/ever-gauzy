@@ -275,6 +275,10 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 			);
 			qb.orWhere(
 				new Brackets((bck: WhereExpressionBuilder) => {
+					const { languageCode } = params.where;
+					if (isNotEmpty(languageCode)) {
+						bck.andWhere(p(`"${qb.alias}"."languageCode" = :languageCode`), { languageCode });
+					}
 					bck.andWhere(p(`"${qb.alias}"."organizationId" IS NULL`));
 					bck.andWhere(p(`"${qb.alias}"."tenantId" IS NULL`));
 				})
@@ -282,5 +286,37 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 		});
 		const [items, total] = await query.getManyAndCount();
 		return { items, total };
+	}
+
+	/**
+	 * Finds a single accounting template by its ID while considering tenant
+	 * and organization scope. If no specific tenant or organization is set,
+	 * it retrieves global templates.
+	 *
+	 * @param id - The ID of the accounting template to retrieve.
+	 * @returns The matching accounting template or null if not found.
+	 */
+	async findOneByIdString(id: string): Promise<AccountingTemplate> {
+		const tenantId = RequestContext.currentTenantId();
+
+		const query = this.typeOrmRepository.createQueryBuilder('template');
+
+		query.where((qb: SelectQueryBuilder<AccountingTemplate>) => {
+			qb.andWhere(
+				new Brackets((bck: WhereExpressionBuilder) => {
+					bck.andWhere(p(`"${qb.alias}"."id" = :id`), { id });
+					bck.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+				})
+			);
+
+			qb.orWhere(
+				new Brackets((bck: WhereExpressionBuilder) => {
+					bck.andWhere(p(`"${qb.alias}"."id" = :id`), { id });
+					bck.andWhere(p(`"${qb.alias}"."tenantId" IS NULL`));
+				})
+			);
+		});
+
+		return await query.getOne();
 	}
 }
