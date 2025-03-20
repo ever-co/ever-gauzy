@@ -30,7 +30,7 @@ export class TimerWeeklyLimitService {
 			startDate: moment(refDate).startOf('week').toDate(),
 			endDate: moment(refDate).endOf('week').toDate()
 		});
-		const remainWeeklyTime = (employee.reWeeklyLimit * 3600) - statistics.duration;
+		const remainWeeklyTime = Math.trunc(employee.reWeeklyLimit * 3600) - statistics.duration;
 
 		// Check if the employee has reached the weekly limit
 		if (remainWeeklyTime <= 0 && !ignoreException) {

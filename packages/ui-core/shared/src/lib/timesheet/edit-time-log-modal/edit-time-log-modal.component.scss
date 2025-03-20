@@ -50,3 +50,7 @@
     color: var(--text-primary-color);
   }
 }
+
+::ng-deep .custom-toast {
+  width: 27rem !important;
+}

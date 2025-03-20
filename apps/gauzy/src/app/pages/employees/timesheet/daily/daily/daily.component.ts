@@ -4,7 +4,19 @@ import { ActivatedRoute, ParamMap } from '@angular/router';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { filter, map, debounceTime, tap } from 'rxjs/operators';
-import { BehaviorSubject, Observable, catchError, finalize, firstValueFrom, from, of, switchMap } from 'rxjs';
+import {
+	BehaviorSubject,
+	Observable,
+	Subject,
+	catchError,
+	combineLatest,
+	finalize,
+	firstValueFrom,
+	from,
+	of,
+	switchMap,
+	takeUntil
+} from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pick } from 'underscore';
@@ -13,6 +25,7 @@ import { IGetTimeLogInput, ITimeLog, PermissionsEnum, ITimeLogFilters, TimeLogSo
 import {
 	DateRangePickerBuilderService,
 	ErrorHandlingService,
+	IDatePickerConfig,
 	Store,
 	TimeTrackerService,
 	TimesheetFilterService,
@@ -42,19 +55,23 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 	public disableButton = true; // Flag to indicate if button is disabled.
 	public allChecked = false; // All checked flag.
 	public filters: ITimeLogFilters = this.request; // Time log filters. Assuming request is defined somewhere.
-	public contextMenus: NbMenuItem[] = []; // C
+	public contextMenus: NbMenuItem[] = [];
+	public limitReached = false;
 
 	//Reference to the GauzyFiltersComponent using @ViewChild.
-	@ViewChild(GauzyFiltersComponent) private gauzyFiltersComponent: GauzyFiltersComponent;
+	@ViewChild(GauzyFiltersComponent) private readonly gauzyFiltersComponent: GauzyFiltersComponent;
 
 	// Observable containing the date picker configuration.
-	public datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
+	public datePickerConfig$: Observable<IDatePickerConfig> = this.dateRangePickerBuilderService.datePickerConfig$;
 
 	// BehaviorSubject holding the time log filters as payloads.
-	private payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
+	private readonly payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	// Declare a subject to trigger refresh
-	private refreshTrigger$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+	private readonly refreshTrigger$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+	private readonly workedThisWeek$: Observable<number> = this._timeTrackerService.workedThisWeek$;
+	private readonly reWeeklyLimit$: Observable<number> = this._timeTrackerService.reWeeklyLimit$;
+	private readonly destroy$ = new Subject<void>();
 
 	// Represents the selected log along with its selection status.
 	public selectedLog: {
@@ -87,6 +104,11 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 		this._handleUpdateLogSubscriber();
 		this._handleRefreshDailyLogs();
 		this._getDailyTimesheetLogs();
+		combineLatest([this.workedThisWeek$, this.reWeeklyLimit$])
+			.pipe(takeUntil(this.destroy$))
+			.subscribe(() => {
+				this.limitReached = this._timeTrackerService.hasReachedWeeklyLimit();
+			});
 	}
 
 	/**
@@ -287,6 +309,7 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 	 * Opens the Add Time Log modal and handles the result.
 	 */
 	openAdd(): void {
+		if (this.limitReached) return;
 		const defaultTimeLog = {
 			startedAt: moment().set({ hour: 8, minute: 0, second: 0 }).toDate(),
 			stoppedAt: moment().set({ hour: 9, minute: 0, second: 0 }).toDate(),
@@ -547,9 +570,9 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 	/**
 	 * Handles the selection of a time log.
 	 * @param {boolean} isSelected - Indicates whether the time log is selected.
-	 * @param {any} data - The data associated with the time log.
+	 * @param {ITimeLog} data - The data associated with the time log.
 	 */
-	selectTimeLog({ isSelected, data }: { isSelected: boolean; data: any }): void {
+	selectTimeLog({ isSelected, data }: { isSelected: boolean; data: ITimeLog }): void {
 		this.disableButton = !isSelected;
 		this.selectedLog = {
 			isSelected,
@@ -602,5 +625,8 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 		return !!this.logs.find((log: ITimeLog) => log['checked']);
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		this.destroy$.next();
+		this.destroy$.complete();
+	}
 }

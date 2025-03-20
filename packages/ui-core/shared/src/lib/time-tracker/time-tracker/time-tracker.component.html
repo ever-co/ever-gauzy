@@ -60,6 +60,9 @@
 												{{ 'TIMER_TRACKER.TODAY' | translate }}
 												{{ todaySessionTime }}
 											</span>
+											<span *ngIf="limitReached" class="today-time mt-2 invalid-feedback d-block">
+												{{ 'TOASTR.TITLE.MAX_LIMIT_REACHED' | translate }}
+											</span>
 											<ga-time-tracker-status class="status"></ga-time-tracker-status>
 										</div>
 										<div class="actions">
@@ -77,7 +80,7 @@
 														) | translate
 													"
 													(click)="toggleTimer(true)"
-													[disabled]="isDisable"
+													[disabled]="isDisable || limitReached"
 												>
 													<fa-icon [icon]="!running ? play : pause"></fa-icon>
 												</button>
@@ -91,7 +94,7 @@
 				</div>
 				<div *ngIf="isExpanded && !running">
 					<div class="form-group">
-						<label>
+						<label for="organizationContactId">
 							{{ 'TIMER_TRACKER.SELECT_CLIENT' | translate }}
 						</label>
 						<ga-contact-selector
@@ -109,7 +112,7 @@
 						</div>
 					</div>
 					<div class="form-group">
-						<label>
+						<label for="projectId">
 							{{ 'TIMER_TRACKER.SELECT_PROJECT' | translate }}
 						</label>
 						<ga-project-selector
@@ -134,7 +137,7 @@
 
 					<!-- Team Selector Start -->
 					<div class="form-group">
-						<label>
+						<label for="organizationTeamId">
 							{{ 'TIMER_TRACKER.SELECT_TEAM' | translate }}
 						</label>
 						<ga-team-selector
@@ -152,7 +155,7 @@
 					<!-- Team Selector Emd -->
 
 					<div class="form-group">
-						<label>
+						<label for="taskId">
 							{{ 'TIMER_TRACKER.SELECT_TASK' | translate }}
 						</label>
 						<ga-task-selector
@@ -171,7 +174,7 @@
 						</div>
 					</div>
 					<div class="form-group custom">
-						<label>
+						<label for="description">
 							{{ 'TIMER_TRACKER.DESCRIPTION' | translate }}
 						</label>
 						<textarea
@@ -198,7 +201,7 @@
 								status="success"
 								[ngClass]="running ? 'button disabled' : 'button success start'"
 								size="medium"
-								[disabled]="running"
+								[disabled]="running || isDisable || limitReached"
 								(click)="toggleTimer(true)"
 							>
 								{{ 'TIMER_TRACKER.START_TIMER' | translate }}

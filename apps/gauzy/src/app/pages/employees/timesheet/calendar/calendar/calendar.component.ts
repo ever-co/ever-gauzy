@@ -19,9 +19,16 @@ import { NgxPermissionsService } from 'ngx-permissions';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { pick } from 'underscore';
-import { Observable } from 'rxjs';
+import { combineLatest, Observable, Subject, takeUntil } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { DateRangePickerBuilderService, Store, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
+import {
+	DateRangePickerBuilderService,
+	IDatePickerConfig,
+	Store,
+	TimesheetFilterService,
+	TimesheetService,
+	TimeTrackerService
+} from '@gauzy/ui-core/core';
 import { isEmpty, toTimezone } from '@gauzy/ui-core/common';
 import { IGetTimeLogInput, ITimeLog, ITimeLogFilters, PermissionsEnum, TimeFormatEnum } from '@gauzy/contracts';
 import {
@@ -44,14 +51,18 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 	@ViewChild('viewLogTemplate', { static: true }) viewLogTemplate: TemplateRef<any>;
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 
-	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
+	datePickerConfig$: Observable<IDatePickerConfig> = this.dateRangePickerBuilderService.datePickerConfig$;
+	private readonly workedThisWeek$: Observable<number> = this.timeTrackerService.workedThisWeek$;
+	private readonly reWeeklyLimit$: Observable<number> = this.timeTrackerService.reWeeklyLimit$;
+	private readonly destroy$ = new Subject<void>();
 
 	PermissionsEnum = PermissionsEnum;
 	calendarComponent: FullCalendarComponent; // the #calendar in the template
 	calendarOptions: CalendarOptions;
 	filters: ITimeLogFilters;
-	loading: boolean = false;
+	loading = false;
 	futureDateAllowed: boolean;
+	limitReached = false;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -60,6 +71,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 		private readonly timesheetService: TimesheetService,
 		private readonly timesheetFilterService: TimesheetFilterService,
 		private readonly ngxPermissionsService: NgxPermissionsService,
+		private readonly timeTrackerService: TimeTrackerService,
 		protected readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		protected readonly timeZoneService: TimeZoneService
@@ -101,6 +113,12 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		combineLatest([this.workedThisWeek$, this.reWeeklyLimit$])
+			.pipe(takeUntil(this.destroy$))
+			.subscribe(() => {
+				this.limitReached = this.timeTrackerService.hasReachedWeeklyLimit();
+			});
 	}
 
 	ngAfterViewInit() {
@@ -370,6 +388,8 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 	 * @param timeLog An optional parameter representing the time log to be edited.  It can be a complete ITimeLog object or a partial one.
 	 */
 	openDialog(timeLog?: ITimeLog | Partial<ITimeLog>) {
+		if (this.limitReached) return;
+
 		const dialog$ = this.nbDialogService.open(EditTimeLogModalComponent, { context: { timeLog } });
 		dialog$.onClose
 			.pipe(
@@ -410,5 +430,8 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 		return moment(endDate).diff(moment(startDate), unitOfTime) > 0;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() {
+		this.destroy$.next();
+		this.destroy$.complete();
+	}
 }

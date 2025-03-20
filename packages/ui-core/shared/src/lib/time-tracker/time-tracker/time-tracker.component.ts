@@ -4,8 +4,8 @@ import { NgxDraggableDomMoveEvent, NgxDraggablePoint } from 'ngx-draggable-dom';
 import { NbThemeService } from '@nebular/theme';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Observable, Subscription } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
+import { combineLatest, Observable, Subject, Subscription } from 'rxjs';
+import { filter, takeUntil, tap } from 'rxjs/operators';
 import { faStopwatch, faPlay, faPause } from '@fortawesome/free-solid-svg-icons';
 import { Environment, environment } from '@gauzy/ui-config';
 import { IOrganization, IUser, TimeLogType, IEmployee, ITimerToggleInput } from '@gauzy/contracts';
@@ -38,14 +38,16 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	employee: IEmployee;
 	organization: IOrganization;
 	timeLogType = TimeLogType;
-	hideAlert = false;
+	limitReached = false;
+	theme: string;
 
 	@ViewChild(NgForm) form: NgForm;
 
 	trackType$: Observable<string> = this.timeTrackerService.trackType$;
-	theme: string;
-
 	private runningSubscription: Subscription;
+	private readonly workedThisWeek$: Observable<number> = this.timeTrackerService.workedThisWeek$;
+	private readonly reWeeklyLimit$: Observable<number> = this.timeTrackerService.reWeeklyLimit$;
+	private readonly destroy$ = new Subject<void>();
 
 	constructor(
 		private readonly timeTrackerService: TimeTrackerService,
@@ -62,7 +64,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 						toLocal(timerSynced.startedAt),
 						'seconds'
 					);
-					await this.toggleTimer(false);
+					if (!this.limitReached) await this.toggleTimer(false);
 				}),
 				untilDestroyed(this)
 			)
@@ -269,6 +271,15 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		combineLatest([this.workedThisWeek$, this.reWeeklyLimit$])
+			.pipe(takeUntil(this.destroy$))
+			.subscribe(async () => {
+				this.limitReached = this.timeTrackerService.hasReachedWeeklyLimit();
+				if (this.limitReached) {
+					await this.toggleTimer(true);
+				}
+			});
 	}
 
 	toggleWindow() {
@@ -288,6 +299,9 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	}
 
 	async toggleTimer(onClick?: boolean) {
+		if (this.limitReached) {
+			return this.timeTrackerService.turnOffTimer();
+		}
 		try {
 			if (!this.running && this.form.invalid) {
 				this.form.resetForm();
@@ -308,6 +322,8 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 				this.running = this.timeTrackerService.timerSynced.running;
 				this.timeTrackerService.remoteToggle();
 			} else {
+				await this._timeTrackerStatusService.status();
+				if (this.limitReached) return;
 				await this.timeTrackerService.toggle();
 			}
 		} catch (error) {
@@ -342,5 +358,8 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		if (this.runningSubscription) {
 			this.runningSubscription.unsubscribe();
 		}
+
+		this.destroy$.next();
+		this.destroy$.complete();
 	}
 }

@@ -180,16 +180,20 @@ export class TimerService {
 
 		// If the user reached the weekly limit, then stop the current timer
 		let lastLogStopped = false;
-		if (lastLog?.isRunning && weeklyLimitStatus.remainWeeklyTime <= 0) {
-			lastLogStopped = true;
-			lastLog = await this.stopTimer({
-				tenantId,
-				organizationId,
-				startedAt: lastLog.startedAt,
-				stoppedAt: moment.utc().toDate()
-			});
-			// Recalculate the weekly limit status
-			weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(employee, start as Date, true);
+		if (lastLog?.isRunning) {
+			const now = moment.utc();
+			const remainingWeeklyLimit = weeklyLimitStatus.remainWeeklyTime - now.diff(moment(lastLog.stoppedAt), 'seconds');
+			if (lastLog?.isRunning && remainingWeeklyLimit <= 0) {
+				lastLogStopped = true;
+				lastLog = await this.stopTimer({
+					tenantId,
+					organizationId,
+					startedAt: lastLog.startedAt,
+					stoppedAt: now.toDate()
+				});
+				// Recalculate the weekly limit status
+				weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(employee, start as Date, true);
+			}
 		}
 
 		const status: ITimerStatusWithWeeklyLimits = {

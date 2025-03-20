@@ -3458,6 +3458,8 @@
 			"MAX_LIMIT_REACHED": "Limite maximale atteinte"
 		},
 		"MESSAGE": {
+			"WORKED_THIS_WEEK": "Travail effectué cette semaine",
+			"WEEKLY_LIMIT": "Limite hebdomadaire",
 			"ERRORS": "Veuillez vérifier le formulaire pour les erreurs.",
 			"PROJECT_LOAD": "Impossible de charger les projets.",
 			"COPIED": "Lien copié dans le presse-papiers",

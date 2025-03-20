@@ -3474,6 +3474,8 @@
 			"MAX_LIMIT_REACHED": "Max limit reached"
 		},
 		"MESSAGE": {
+			"WORKED_THIS_WEEK": "עבודה השבוע",
+			"WEEKLY_LIMIT": "מגבלה שבועית",
 			"ERRORS": "Please check the form for errors",
 			"PROJECT_LOAD": "Could Not Load Projects",
 			"COPIED": "Link copied to clipboard",

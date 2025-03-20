@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { NbToastrService } from '@nebular/theme';
+import { NbToastrConfig, NbToastrService } from '@nebular/theme';
 import { I18nService } from '@gauzy/ui-core/i18n';
 
 @Injectable({
@@ -14,7 +14,7 @@ export class ToastrService {
 	 * @param translationParams Optional translation parameters.
 	 * @param title The title of the toast message.
 	 */
-	success(message: any, translationParams: Object = {}, title?: string): void {
+	success(message: any, translationParams: any = {}, title?: string): void {
 		const displayMessage = this.extractMessage(message);
 		this._nbToastrService.primary(
 			this._i18nService.translate(displayMessage, translationParams),
@@ -28,7 +28,7 @@ export class ToastrService {
 	 * @param translationParams Optional translation parameters.
 	 * @param title The title of the toast message.
 	 */
-	warning(message: any, translationParams: Object = {}, title?: string): void {
+	warning(message: any, translationParams: any = {}, title?: string): void {
 		const displayMessage = this.extractMessage(message);
 		this._nbToastrService.warning(
 			this._i18nService.translate(displayMessage, translationParams),
@@ -42,11 +42,17 @@ export class ToastrService {
 	 * @param title The title of the toast message.
 	 * @param translationParams Optional translation parameters.
 	 */
-	danger(error: any, title: string = 'TOASTR.TITLE.ERROR', translationParams: Object = {}): void {
+	danger(
+		error: any,
+		title = 'TOASTR.TITLE.ERROR',
+		translationParams: any = {},
+		config?: Partial<NbToastrConfig>
+	): void {
 		const displayMessage = this.extractErrorMessage(error);
 		this._nbToastrService.danger(
 			this._i18nService.translate(displayMessage, translationParams),
-			this._i18nService.translate(title || 'TOASTR.TITLE.ERROR')
+			this._i18nService.translate(title || 'TOASTR.TITLE.ERROR'),
+			config
 		);
 	}
 
@@ -56,7 +62,7 @@ export class ToastrService {
 	 * @param title The title of the toast message.
 	 * @param translationParams Optional translation parameters.
 	 */
-	error(message: any, title: string = 'TOASTR.TITLE.ERROR', translationParams: Object = {}): void {
+	error(message: any, title = 'TOASTR.TITLE.ERROR', translationParams: any = {}): void {
 		this.danger(message, title, translationParams);
 	}
 
@@ -69,7 +75,7 @@ export class ToastrService {
 	info(
 		message: any,
 		title: string,
-		options: Object = {
+		options: Partial<NbToastrConfig> = {
 			duration: 5000,
 			preventDuplicates: true
 		}
@@ -87,7 +93,7 @@ export class ToastrService {
 	 * @returns The extracted message string.
 	 */
 	private extractMessage(message: any): string {
-		if (message && message.message && typeof message.message === 'string') {
+		if (message?.message && typeof message?.message === 'string') {
 			return message.message;
 		}
 		return message;
@@ -99,7 +105,7 @@ export class ToastrService {
 	 * @returns The extracted error message string.
 	 */
 	private extractErrorMessage(error: any): string {
-		if (error.error && error.error.message && typeof error.error.message === 'string') {
+		if (error?.error?.message && typeof error?.error?.message === 'string') {
 			return error.error.message;
 		} else if (error.message && typeof error.message === 'string') {
 			return error.message;

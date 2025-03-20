@@ -3204,6 +3204,8 @@
 			"MAX_LIMIT_REACHED": "crwdns7528:0crwdne7528:0"
 		},
 		"MESSAGE": {
+			"WORKED_THIS_WEEK": "crwdnsXXXXX:0crwdneXXXXX:0",
+			"WEEKLY_LIMIT": "crwdnsXXXXX:0crwdneXXXXX:0",
 			"ERRORS": "crwdns7430:0crwdne7430:0",
 			"PROJECT_LOAD": "crwdns2395:0crwdne2395:0",
 			"COPIED": "crwdns2397:0crwdne2397:0",

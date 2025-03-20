@@ -7,10 +7,12 @@ import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { chain, pick } from 'underscore';
 import {
 	DateRangePickerBuilderService,
+	IDatePickerConfig,
 	moment,
 	Store,
 	TimesheetFilterService,
-	TimesheetService
+	TimesheetService,
+	TimeTrackerService
 } from '@gauzy/ui-core/core';
 import { IGetTimeLogInput, ITimeLog, IOrganizationProject, ITimeLogFilters, PermissionsEnum } from '@gauzy/contracts';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
@@ -22,6 +24,7 @@ import {
 	TimeZoneService,
 	EditTimeLogModalComponent
 } from '@gauzy/ui-core/shared';
+import { combineLatest, Subject, takeUntil } from 'rxjs';
 
 interface WeeklyDayData {
 	project?: IOrganizationProject;
@@ -37,25 +40,29 @@ interface WeeklyDayData {
 export class WeeklyComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {
 	PermissionsEnum = PermissionsEnum;
 	filters: ITimeLogFilters = this.request;
-
 	weekData: WeeklyDayData[] = [];
 	weekDayList: string[] = [];
 	loading: boolean;
-	viewTimeLogComponent = ViewTimeLogComponent;
-
+	limitReached = false;
 	futureDateAllowed: boolean;
 
-	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
-	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
-
+	datePickerConfig$: Observable<IDatePickerConfig> = this.dateRangePickerBuilderService.datePickerConfig$;
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
+
+	viewTimeLogComponent = ViewTimeLogComponent;
+	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	@ViewChild(NbPopoverDirective) popover: NbPopoverDirective;
+
+	private readonly workedThisWeek$: Observable<number> = this.timeTrackerService.workedThisWeek$;
+	private readonly reWeeklyLimit$: Observable<number> = this.timeTrackerService.reWeeklyLimit$;
+	private readonly destroy$ = new Subject<void>();
 
 	constructor(
 		public readonly translateService: TranslateService,
 		private readonly timesheetService: TimesheetService,
 		private readonly nbDialogService: NbDialogService,
 		private readonly timesheetFilterService: TimesheetFilterService,
+		private readonly timeTrackerService: TimeTrackerService,
 		protected readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		protected readonly timeZoneService: TimeZoneService
@@ -87,6 +94,12 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		combineLatest([this.workedThisWeek$, this.reWeeklyLimit$])
+			.pipe(takeUntil(this.destroy$))
+			.subscribe(() => {
+				this.limitReached = this.timeTrackerService.hasReachedWeeklyLimit();
+			});
 	}
 
 	/**
@@ -111,7 +124,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 
 		// Get an array of dates within the range, inclusive
 		const dayRange = [];
-		let current = start;
+		const current = start;
 
 		while (!current.isAfter(end)) {
 			// Include end date in the range
@@ -209,6 +222,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 	 * @param timeLog
 	 */
 	openAddEdit(timeLog?: ITimeLog) {
+		if (this.limitReached) return;
 		if (!this.nbDialogService) {
 			throw new Error('NbDialogService is not available.');
 		}
@@ -308,5 +322,8 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 		return futureDateAllowed || moment(date).isSameOrBefore(currentMoment);
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		this.destroy$.next();
+		this.destroy$.complete();
+	}
 }

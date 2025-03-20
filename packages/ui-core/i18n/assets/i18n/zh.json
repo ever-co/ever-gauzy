@@ -3457,6 +3457,8 @@
 			"MAX_LIMIT_REACHED": "已达最大限制"
 		},
 		"MESSAGE": {
+			"WORKED_THIS_WEEK": "本周工作时间",
+			"WEEKLY_LIMIT": "每周限制",
 			"ERRORS": "请检查表格中是否有错误。",
 			"PROJECT_LOAD": "无法加载项目",
 			"COPIED": "链接已复制到剪贴板",

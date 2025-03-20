@@ -11,12 +11,12 @@ import {
 	ITimeLog,
 	ITimerToggleInput,
 	TimeLogType,
-	ITimerStatus,
 	IOrganization,
 	TimerState,
 	TimeLogSourceEnum,
 	ITimerStatusInput,
-	ITimerPosition
+	ITimerPosition,
+	ITimerStatusWithWeeklyLimits
 } from '@gauzy/contracts';
 import { API_PREFIX, BACKGROUND_SYNC_INTERVAL, toLocal, toParams, toUTC } from '@gauzy/ui-core/common';
 import { Store as AppStore } from '../store/store.service';
@@ -63,6 +63,8 @@ export function createInitialTimerState(): TimerState {
 		currentSessionDuration: 0,
 		running: false,
 		position: { x: 0, y: 0 },
+		reWeeklyLimit: 0,
+		workedThisWeek: 0,
 		timerConfig
 	} as TimerState;
 }
@@ -87,20 +89,23 @@ export class TimerQuery extends Query<TimerState> {
 	providedIn: 'root'
 })
 export class TimeTrackerService implements OnDestroy {
-	interval: any;
+	interval: number;
 	showTimerWindow$ = this.timerQuery.select((state) => state.showTimerWindow);
 	duration$ = this.timerQuery.select((state) => state.duration);
 	currentSessionDuration$ = this.timerQuery.select((state) => state.currentSessionDuration);
 	running$ = this.timerQuery.select((state) => state.running);
 	timerConfig$ = this.timerQuery.select((state) => state.timerConfig);
+	reWeeklyLimit$ = this.timerQuery.select((state) => state.reWeeklyLimit);
+	workedThisWeek$ = this.timerQuery.select((state) => state.workedThisWeek);
 	organization: IOrganization;
 
-	private _trackType$: BehaviorSubject<string> = new BehaviorSubject(this.timeType);
-	public trackType$: Observable<string> = this._trackType$.asObservable();
+	private readonly _trackType$: BehaviorSubject<string> = new BehaviorSubject(this.timeType);
 	private _worker: Worker;
 	private _timerSynced: ITimerSynced;
-	private channel: BroadcastChannel;
+	private readonly channel: BroadcastChannel;
+	private readonly timerStoreSubject = new BehaviorSubject(this.timerStore.getValue());
 	public timer$: Observable<number> = timer(BACKGROUND_SYNC_INTERVAL);
+	public trackType$: Observable<string> = this._trackType$.asObservable();
 
 	constructor(
 		protected readonly timerStore: TimerStore,
@@ -139,13 +144,19 @@ export class TimeTrackerService implements OnDestroy {
 	/*
 	 * Check current timer status for employee only
 	 */
-	public async checkTimerStatus(payload: ITimerStatusInput) {
+	public async checkTimerStatus(payload: ITimerStatusInput): Promise<ITimerStatusWithWeeklyLimits> {
 		delete payload.source;
-		await this.getTimerStatus(payload)
-			.then((status: ITimerStatus) => {
+		return this.getTimerStatus(payload)
+			.then((status: ITimerStatusWithWeeklyLimits) => {
+				if (!status?.reWeeklyLimit && !status?.workedThisWeek) {
+					status.reWeeklyLimit = 0;
+					status.workedThisWeek = 0;
+				}
+				const newValues = { workedThisWeek: status?.workedThisWeek, reWeeklyLimit: status?.reWeeklyLimit };
+				this.updateTimerStore(newValues);
 				this.duration = status.duration;
-				if (status.lastLog && status.lastLog.isRunning) {
-					this.currentSessionDuration = moment().diff(toLocal(status.lastLog.startedAt), 'seconds');
+				if (status?.lastLog?.isRunning) {
+					this.currentSessionDuration = moment().diff(toLocal(status?.lastLog?.startedAt), 'seconds');
 				} else {
 					this.currentSessionDuration = 0;
 				}
@@ -155,9 +166,12 @@ export class TimeTrackerService implements OnDestroy {
 				if (status.running) {
 					this.turnOnTimer();
 				}
+
+				return status;
 			})
 			.catch((error) => {
 				console.error(error);
+				throw error;
 			});
 	}
 
@@ -275,11 +289,11 @@ export class TimeTrackerService implements OnDestroy {
 	 * @param params The input parameters for retrieving timer status.
 	 * @returns A promise that resolves to the timer status.
 	 */
-	getTimerStatus(params: ITimerStatusInput): Promise<ITimerStatus> {
+	getTimerStatus(params: ITimerStatusInput): Promise<ITimerStatusWithWeeklyLimits> {
 		const todayStart = toUTC(moment().startOf('day')).format('YYYY-MM-DD HH:mm:ss');
 		const todayEnd = toUTC(moment().endOf('day')).format('YYYY-MM-DD HH:mm:ss');
 		return firstValueFrom(
-			this.http.get<ITimerStatus>(`${API_PREFIX}/timesheet/timer/status`, {
+			this.http.get<ITimerStatusWithWeeklyLimits>(`${API_PREFIX}/timesheet/timer/status`, {
 				params: toParams({
 					...params,
 					todayStart,
@@ -288,12 +302,6 @@ export class TimeTrackerService implements OnDestroy {
 			})
 		);
 	}
-
-	// toggleTimer(request: ITimerToggleInput): Promise<ITimeLog> {
-	// 	return firstValueFrom(
-	// 		this.http.post<ITimeLog>(`${API_PREFIX}/timesheet/timer/toggle`, request)
-	// 	);
-	// }
 
 	openAndStartTimer() {
 		this.showTimerWindow = true;
@@ -305,7 +313,15 @@ export class TimeTrackerService implements OnDestroy {
 		}
 	}
 
+	hasReachedWeeklyLimit(): boolean {
+		const { workedThisWeek, reWeeklyLimit } = this.timerStore.getValue();
+		const reWeeklyLimitInSeconds = Math.trunc(reWeeklyLimit * 3600);
+		return workedThisWeek >= reWeeklyLimitInSeconds || reWeeklyLimit === 0;
+	}
+
 	async toggle(): Promise<ITimeLog> {
+		if (this.hasReachedWeeklyLimit()) return;
+
 		if (this.running) {
 			this.turnOffTimer();
 			delete this.timerConfig.source;
@@ -338,12 +354,16 @@ export class TimeTrackerService implements OnDestroy {
 	}
 
 	turnOnTimer() {
+		if (this.hasReachedWeeklyLimit()) return;
+
 		this.running = true;
 		// post state of timer to worker on start timer
 		this._worker.postMessage({
 			isRunning: this.running,
 			session: this.currentSessionDuration,
-			duration: this.duration
+			duration: this.duration,
+			workedThisWeek: this.timerQuery.getValue().workedThisWeek,
+			reWeeklyLimit: this.timerQuery.getValue().reWeeklyLimit
 		});
 		this._broadcastState('SYNC_TIMER');
 	}
@@ -408,6 +428,9 @@ export class TimeTrackerService implements OnDestroy {
 				this._worker.onmessage = ({ data }) => {
 					this.currentSessionDuration = data.session;
 					this.duration = data.todayWorked;
+					this.timerStore.update({
+						workedThisWeek: data.workedThisWeek
+					});
 				};
 			} catch (error: any) {
 				console.log('Invalid Time Tracker worker configuration', error?.message);
@@ -485,6 +508,8 @@ export class TimeTrackerService implements OnDestroy {
 	}
 
 	public remoteToggle(): ITimeLog {
+		if (this.hasReachedWeeklyLimit()) return;
+
 		if (this.running) {
 			this.turnOffTimer();
 			this.timerConfig = {
@@ -512,6 +537,11 @@ export class TimeTrackerService implements OnDestroy {
 			this.turnOnTimer();
 			return this.timerSynced.lastLog;
 		}
+	}
+
+	private updateTimerStore(newValues: { workedThisWeek: number; reWeeklyLimit: number }) {
+		this.timerStore.update(newValues);
+		this.timerStoreSubject.next(this.timerStore.getValue());
 	}
 
 	public get timerSynced(): ITimerSynced {

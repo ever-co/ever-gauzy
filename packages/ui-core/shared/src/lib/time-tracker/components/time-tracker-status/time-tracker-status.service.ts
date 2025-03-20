@@ -14,7 +14,7 @@ import {
 	switchMap,
 	tap
 } from 'rxjs';
-import { IEmployee, ITimerStatus, IUser } from '@gauzy/contracts';
+import { IEmployee, ITimerStatusWithWeeklyLimits, IUser } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { ITimerIcon, ITimerSynced, Store, TimeTrackerService } from '@gauzy/ui-core/core';
 import { TimerIconFactory } from './factory';
@@ -25,9 +25,9 @@ import { TimerSynced } from './concretes';
 	providedIn: 'root'
 })
 export class TimeTrackerStatusService {
-	private _icon$: BehaviorSubject<ITimerIcon> = new BehaviorSubject<ITimerIcon>(null);
-	private _external$: Subject<ITimerSynced> = new Subject<ITimerSynced>();
-	private _userUpdate$: Subject<IUser> = new Subject();
+	private readonly _icon$: BehaviorSubject<ITimerIcon> = new BehaviorSubject<ITimerIcon>(null);
+	private readonly _external$: Subject<ITimerSynced> = new Subject<ITimerSynced>();
+	private readonly _userUpdate$: Subject<IUser> = new Subject();
 
 	constructor(private readonly _timeTrackerService: TimeTrackerService, private readonly _store: Store) {
 		defer(() =>
@@ -44,7 +44,7 @@ export class TimeTrackerStatusService {
 			)
 		)
 			.pipe(
-				tap((status: ITimerStatus) => {
+				tap((status: ITimerStatusWithWeeklyLimits) => {
 					const remoteTimer = new TimerSynced({
 						...status.lastLog,
 						duration: status.duration
@@ -84,17 +84,17 @@ export class TimeTrackerStatusService {
 			.subscribe();
 	}
 
-	public get icon$(): Observable<any> {
+	public get icon$(): Observable<ITimerIcon> {
 		return this._icon$.asObservable();
 	}
 
-	public get external$(): Observable<any> {
+	public get external$(): Observable<ITimerSynced> {
 		return this._external$.asObservable();
 	}
 
-	public status(): Promise<ITimerStatus> {
+	public status(): Promise<ITimerStatusWithWeeklyLimits> {
 		const { tenantId, organizationId } = this._timeTrackerService.timerConfig;
-		return this._timeTrackerService.getTimerStatus({
+		return this._timeTrackerService.checkTimerStatus({
 			tenantId,
 			organizationId,
 			relations: ['employee']

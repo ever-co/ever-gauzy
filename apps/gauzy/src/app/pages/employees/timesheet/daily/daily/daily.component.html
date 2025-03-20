@@ -253,7 +253,7 @@
 <ng-template #visibleButtons>
 	<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MANUAL_TIME">
 		<ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_MANUAL_TIME">
-			<button class="action" size="small" nbButton status="success" (click)="openAdd()">
+			<button class="action" size="small" nbButton status="success" (click)="openAdd()" [disabled]="limitReached">
 				<nb-icon icon="plus-outline"></nb-icon>
 				{{ 'TIMESHEET.ADD_TIME' | translate }}
 			</button>

@@ -99,9 +99,9 @@ export interface IDateRange {
 }
 export interface ITimeLog
 	extends IBasePerTenantAndOrganizationEntityModel,
-	IRelationalOrganizationProject,
-	IRelationalOrganizationTeam,
-	ITaggable {
+		IRelationalOrganizationProject,
+		IRelationalOrganizationTeam,
+		ITaggable {
 	employee: IEmployee;
 	employeeId: ID;
 	timesheet?: ITimesheet;
@@ -304,9 +304,9 @@ export interface IURLMetaData {
 
 export interface ITimerStatusInput
 	extends ITimeLogTodayFilters,
-	IBaseRelationsEntityModel,
-	IEmployeeEntityInput,
-	IRelationalOrganizationTeam {
+		IBaseRelationsEntityModel,
+		IEmployeeEntityInput,
+		IRelationalOrganizationTeam {
 	source?: TimeLogSourceEnum;
 	employeeIds?: ID[];
 }
@@ -331,6 +331,8 @@ export interface TimerState {
 	running: boolean;
 	position: ITimerPosition;
 	timerConfig: ITimerToggleInput;
+	reWeeklyLimit: number;
+	workedThisWeek: number;
 }
 
 export interface ITimerPosition {
@@ -340,7 +342,7 @@ export interface ITimerPosition {
 
 export interface ITimerToggleInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-	Pick<IRelationalOrganizationTeam, 'organizationTeamId'> {
+		Pick<IRelationalOrganizationTeam, 'organizationTeamId'> {
 	projectId?: ID;
 	taskId?: ID;
 	organizationContactId?: ID;

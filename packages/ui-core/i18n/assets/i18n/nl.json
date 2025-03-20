@@ -3457,6 +3457,8 @@
 			"MAX_LIMIT_REACHED": "Maximale limiet bereikt"
 		},
 		"MESSAGE": {
+			"WORKED_THIS_WEEK": "Deze week gewerkt",
+			"WEEKLY_LIMIT": "Wekelijks limiet",
 			"ERRORS": "Controleer alstublieft het formulier op fouten.",
 			"PROJECT_LOAD": "Kon projecten niet laden",
 			"COPIED": "Link gekopieerd naar klembord",

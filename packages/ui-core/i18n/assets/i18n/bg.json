@@ -3509,6 +3509,8 @@
 			"MAX_LIMIT_REACHED": "Max limit reached"
 		},
 		"MESSAGE": {
+			"WORKED_THIS_WEEK": "Работено тази седмица",
+			"WEEKLY_LIMIT": "Седмичен лимит",
 			"ERRORS": "Моля, проверете формуляра за грешки",
 			"PROJECT_LOAD": "Не може да се заредят проектите",
 			"COPIED": "Линкът е копиран в клипборда",

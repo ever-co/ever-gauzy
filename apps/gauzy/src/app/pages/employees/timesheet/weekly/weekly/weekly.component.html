@@ -2,18 +2,14 @@
 	<nb-card-header class="p-0">
 		<div class="filters">
 			<div class="add-button">
-				<ng-template
-					[ngxPermissionsOnly]="PermissionsEnum.ALLOW_MANUAL_TIME"
-				>
-					<ng-template
-						ngxTimeTrackingAuthorized
-						[permission]="PermissionsEnum.ALLOW_MANUAL_TIME"
-					>
+				<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MANUAL_TIME">
+					<ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_MANUAL_TIME">
 						<button
 							nbButton
 							status="success"
 							size="small"
 							(click)="openAddEdit()"
+							[disabled]="limitReached"
 						>
 							<nb-icon icon="plus-outline"></nb-icon>
 							{{ 'TIMESHEET.ADD_TIME' | translate }}
@@ -34,21 +30,13 @@
 					{{ 'TIMESHEET.PROJECT' | translate }} /
 					{{ 'TIMESHEET.TODO' | translate }}
 				</div>
-				<div
-					class="col text-center day-col"
-					*ngFor="let date of weekDayList"
-				>
+				<div class="col text-center day-col" *ngFor="let date of weekDayList">
 					{{ date | dateFormat }}
 				</div>
 			</div>
 		</div>
 
-		<div
-			[nbSpinner]="loading"
-			nbSpinnerSize="giant"
-			nbSpinnerStatus="primary"
-			class="custom-body"
-		>
+		<div [nbSpinner]="loading" nbSpinnerSize="giant" nbSpinnerStatus="primary" class="custom-body">
 			<ng-template [ngIf]="weekData?.length > 0" [ngIfElse]="notFound">
 				<div class="content">
 					<div
@@ -60,20 +48,14 @@
 						*ngFor="let day of weekData"
 					>
 						<div class="col-sm-3 project-name">
-							<ngx-project
-								*ngIf="day?.project; else noProject"
-								[rowData]="day"
-							></ngx-project>
+							<ngx-project *ngIf="day?.project; else noProject" [rowData]="day"></ngx-project>
 							<ng-template #noProject>
 								<span>
 									{{ 'TIMESHEET.NO_PROJECT' | translate }}
 								</span>
 							</ng-template>
 						</div>
-						<div
-							class="col text-center day-col"
-							*ngFor="let date of weekDayList"
-						>
+						<div class="col text-center day-col" *ngFor="let date of weekDayList">
 							<button
 								*ngIf="day.dates[date]?.sum > 0; else noLogsCol"
 								nbButton
@@ -91,18 +73,12 @@
 							</button>
 							<ng-template #noLogsCol>
 								<ng-template
-									[ngxPermissionsOnly]="
-										PermissionsEnum.ALLOW_MANUAL_TIME
-									"
-									[ngxPermissionsOnlyElse]="
-										notAllowAddTimeBlock
-									"
+									[ngxPermissionsOnly]="PermissionsEnum.ALLOW_MANUAL_TIME"
+									[ngxPermissionsOnlyElse]="notAllowAddTimeBlock"
 								>
 									<ng-template
 										ngxTimeTrackingAuthorized
-										[permission]="
-											PermissionsEnum.ALLOW_MANUAL_TIME
-										"
+										[permission]="PermissionsEnum.ALLOW_MANUAL_TIME"
 										[permissionElse]="notAllowAddTimeBlock"
 									>
 										<button
@@ -110,26 +86,14 @@
 											outline
 											size="small"
 											status="primary"
-											(click)="
-												openAddByDateProject(
-													date,
-													day?.project
-												)
-											"
-											*ngIf="
-												allowAdd(date);
-												else notAllowAddTimeBlock
-											"
+											(click)="openAddByDateProject(date, day?.project)"
+											*ngIf="allowAdd(date); else notAllowAddTimeBlock"
 										>
-											<nb-icon
-												icon="plus-outline"
-											></nb-icon>
+											<nb-icon icon="plus-outline"></nb-icon>
 										</button>
 									</ng-template>
 								</ng-template>
-								<ng-template #notAllowAddTimeBlock>
-									-
-								</ng-template>
+								<ng-template #notAllowAddTimeBlock> - </ng-template>
 							</ng-template>
 						</div>
 					</div>
@@ -137,9 +101,7 @@
 			</ng-template>
 		</div>
 		<ng-template #notFound>
-			<ngx-no-data-message
-				[message]="'TIMESHEET.NO_DATA.WEEKLY_TIMESHEET' | translate"
-			></ngx-no-data-message>
+			<ngx-no-data-message [message]="'TIMESHEET.NO_DATA.WEEKLY_TIMESHEET' | translate"></ngx-no-data-message>
 		</ng-template>
 	</nb-card-body>
 </nb-card>

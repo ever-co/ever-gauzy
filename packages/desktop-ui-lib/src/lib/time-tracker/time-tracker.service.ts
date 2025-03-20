@@ -18,6 +18,7 @@ import {
 	ITaskStatusFindInput,
 	ITaskUpdateInput,
 	ITimeLog,
+	ITimerStatusWithWeeklyLimits,
 	ITimeSlot,
 	TimeLogSourceEnum,
 	TimeLogType
@@ -570,9 +571,9 @@ export class TimeTrackerService {
 		);
 	}
 
-	getTimerStatus(values) {
+	getTimerStatus(values): Promise<ITimerStatusWithWeeklyLimits> {
 		return firstValueFrom(
-			this.http.get(`${API_PREFIX}/timesheet/timer/status`, {
+			this.http.get<ITimerStatusWithWeeklyLimits>(`${API_PREFIX}/timesheet/timer/status`, {
 				params: {
 					tenantId: values.tenantId,
 					organizationId: values.organizationId,

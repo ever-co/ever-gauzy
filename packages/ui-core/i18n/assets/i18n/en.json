@@ -3584,6 +3584,8 @@
 			"MAX_LIMIT_REACHED": "Max limit reached"
 		},
 		"MESSAGE": {
+			"WORKED_THIS_WEEK": "Worked this week",
+			"WEEKLY_LIMIT": "Weekly limit",
 			"ERRORS": "Please check the form for errors",
 			"PROJECT_LOAD": "Could Not Load Projects",
 			"COPIED": "Link copied to clipboard",

@@ -10,13 +10,12 @@ addEventListener('message', ({ data }) => {
 			// Pre-increment session and duration values each 1 sec and send to time tracker service
 			postMessage({
 				session: ++data.session,
-				todayWorked: ++data.duration
+				todayWorked: ++data.duration,
+				workedThisWeek: ++data.workedThisWeek
 			});
 		}, 1000);
-	} else {
+	} else if (interval) {
 		// if timer stopped clear interval
-		if (interval) {
-			clearInterval(interval);
-		}
+		clearInterval(interval);
 	}
 });

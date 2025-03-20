@@ -2,7 +2,7 @@ import { Component, OnInit, Input, AfterViewInit, ChangeDetectorRef, OnDestroy }
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { combineLatest, debounceTime, filter, Subject, Subscription, tap } from 'rxjs';
+import { combineLatest, debounceTime, filter, Observable, Subject, Subscription, takeUntil, tap } from 'rxjs';
 import * as moment from 'moment';
 import { omit } from 'underscore';
 import {
@@ -13,10 +13,13 @@ import {
 	IGetTimeLogConflictInput,
 	ISelectedEmployee,
 	TimeLogType,
-	TimeLogSourceEnum
+	TimeLogSourceEnum,
+	ITimerStatusWithWeeklyLimits
 } from '@gauzy/contracts';
 import { toUTC, toLocal, distinctUntilChange } from '@gauzy/ui-core/common';
-import { Store, TimesheetService, ToastrService } from '@gauzy/ui-core/core';
+import { Store, TimesheetService, TimeTrackerService, ToastrService } from '@gauzy/ui-core/core';
+import { DurationFormatPipe } from '../../pipes';
+import { TranslateService } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -36,20 +39,29 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 	// Date range and time-related properties
 	selectedRange: IDateRange = { start: null, end: null };
 	timeDiff: number = null;
+	originalTimeDiff: number = null;
 
 	// Employee-related properties
 	employee: ISelectedEmployee;
 	futureDateAllowed = false;
 	subject$: Subject<boolean> = new Subject();
 
+	private readonly workedThisWeek$: Observable<number> = this._timeTrackerService.workedThisWeek$;
+	private readonly reWeeklyLimit$: Observable<number> = this._timeTrackerService.reWeeklyLimit$;
+	private readonly destroy$ = new Subject<void>();
+
 	// Additional properties
 	reasons: string[] = ['Worked offline', 'Internet issue', 'Forgot to track', 'Usability issue', 'App issue'];
 	selectedReason = '';
 	selectedRangeSubscription: Subscription;
 	isTimeRangeValid = true;
+	limitReached = false;
 
 	// Time log state management
 	private _timeLog: ITimeLog | Partial<ITimeLog> = {};
+	private workedThisWeek: string;
+	private reWeeklyLimit: string;
+	private timerStatusWithWeeklyLimits: ITimerStatusWithWeeklyLimits;
 	@Input() set timeLog(value: ITimeLog | Partial<ITimeLog>) {
 		this._timeLog = { ...value }; // Shallow copy to avoid mutation
 		this.mode = this._timeLog?.id ? 'update' : 'create';
@@ -82,7 +94,10 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 		private readonly _dialogRef: NbDialogRef<EditTimeLogModalComponent>,
 		private readonly _store: Store,
 		private readonly _timesheetService: TimesheetService,
-		private readonly _toastrService: ToastrService
+		private readonly _toastrService: ToastrService,
+		private readonly _timeTrackerService: TimeTrackerService,
+		private readonly _durationFormatPipe: DurationFormatPipe,
+		public readonly _translateService: TranslateService
 	) {}
 
 	ngOnInit() {
@@ -119,6 +134,9 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 			this.selectedRange = selectedRange;
 			const { start, end } = selectedRange;
 			this.timeDiff = start && end ? this.calculateTimeDiff(start, end) : null;
+			if (this.originalTimeDiff == null) {
+				this.originalTimeDiff = this.timeDiff;
+			}
 		});
 
 		// Combine employeeId and selectedRange value changes
@@ -141,6 +159,15 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		combineLatest([this.workedThisWeek$, this.reWeeklyLimit$])
+			.pipe(takeUntil(this.destroy$))
+			.subscribe(([workedThisWeek, reWeeklyLimit]) => {
+				this.limitReached = this._timeTrackerService.hasReachedWeeklyLimit();
+				this.workedThisWeek = this._durationFormatPipe.transform(workedThisWeek);
+				this.reWeeklyLimit = this._durationFormatPipe.transform(Math.trunc(reWeeklyLimit * 3600));
+				this.timerStatusWithWeeklyLimits = { workedThisWeek, reWeeklyLimit };
+			});
 	}
 
 	ngAfterViewInit(): void {
@@ -321,6 +348,16 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 		}
 	}
 
+	private showMaxLimitReachedToast(): void {
+		this._toastrService.danger(
+			`${this._translateService.instant('TOASTR.MESSAGE.WORKED_THIS_WEEK')}: ${this.workedThisWeek}
+			\n ${this._translateService.instant('TOASTR.MESSAGE.WEEKLY_LIMIT')}: ${this.reWeeklyLimit}`,
+			'TOASTR.TITLE.MAX_LIMIT_REACHED',
+			null,
+			{ duration: 2500, preventDuplicates: true, toastClass: 'custom-toast' }
+		);
+	}
+
 	/**
 	 * Adds or updates a time log based on the current mode ('create' or 'update').
 	 *
@@ -331,7 +368,26 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 	 * @returns {Promise<void>} - Resolves after the time log is added or updated.
 	 */
 	async addTime(): Promise<void> {
+		const newWorkedTime = this.timerStatusWithWeeklyLimits.workedThisWeek - this.originalTimeDiff + this.timeDiff;
+		const isEditing = !!this.timeLog?.id;
 		if (this.loading || this.isButtonDisabled) return;
+		if (
+			isEditing &&
+			this.timeDiff > this.originalTimeDiff &&
+			newWorkedTime > Math.trunc(this.timerStatusWithWeeklyLimits.reWeeklyLimit * 3600)
+		) {
+			this.showMaxLimitReachedToast();
+			return;
+		}
+
+		if (
+			!isEditing &&
+			this.timeDiff + this.timerStatusWithWeeklyLimits.workedThisWeek >
+				Math.trunc(this.timerStatusWithWeeklyLimits.reWeeklyLimit * 3600)
+		) {
+			this.showMaxLimitReachedToast();
+			return;
+		}
 
 		try {
 			this.loading = true;
@@ -458,5 +514,8 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 		if (this.selectedRangeSubscription) {
 			this.selectedRangeSubscription.unsubscribe();
 		}
+
+		this.destroy$.next();
+		this.destroy$.complete();
 	}
 }
