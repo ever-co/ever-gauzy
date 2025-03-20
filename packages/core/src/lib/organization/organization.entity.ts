@@ -1,4 +1,4 @@
-import { JoinColumn, JoinTable, RelationId } from 'typeorm';
+import { JoinColumn, JoinTable, RelationId, Index } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, TransformFnParams } from 'class-transformer';
 import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
@@ -477,7 +477,8 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	})
 	@IsOptional()
 	@IsString()
-	@MultiORMColumn({ length: 1024, nullable: true })
+	@Index({ unique: true, where: "emailDomain IS NOT NULL" })
+	@MultiORMColumn({ length: 1024, nullable: true, default: null })
 	emailDomain?: string;
 
 	/*
