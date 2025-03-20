@@ -11,13 +11,13 @@ import { DeactivatePluginCommand } from '../../application/commands/deactivate-p
 @ApiBearerAuth('Bearer')
 @ApiSecurity('api_key')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Controller('/plugins/:id')
+@Controller('/plugins/:pluginId')
 export class PluginActivationController {
 	constructor(private readonly commandBus: CommandBus) {}
 
 	@ApiOperation({ summary: 'Activate plugin' })
 	@ApiParam({
-		name: 'id',
+		name: 'pluginId',
 		type: String,
 		format: 'uuid',
 		description: 'UUID of the plugin to activate',
@@ -32,13 +32,13 @@ export class PluginActivationController {
 	@ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized access.' })
 	@UseGuards(PluginOwnerGuard)
 	@Patch('activate')
-	public async activate(@Param('id', UUIDValidationPipe) id: ID): Promise<void> {
+	public async activate(@Param('pluginId', UUIDValidationPipe) id: ID): Promise<void> {
 		return this.commandBus.execute(new ActivatePluginCommand(id));
 	}
 
 	@ApiOperation({ summary: 'Deactivate plugin' })
 	@ApiParam({
-		name: 'id',
+		name: 'pluginId',
 		type: String,
 		format: 'uuid',
 		description: 'UUID of the plugin to deactivate',
@@ -53,7 +53,7 @@ export class PluginActivationController {
 	@ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized access.' })
 	@UseGuards(PluginOwnerGuard)
 	@Patch('deactivate')
-	public async deactivate(@Param('id', UUIDValidationPipe) id: ID): Promise<void> {
+	public async deactivate(@Param('pluginId', UUIDValidationPipe) id: ID): Promise<void> {
 		return this.commandBus.execute(new DeactivatePluginCommand(id));
 	}
 }

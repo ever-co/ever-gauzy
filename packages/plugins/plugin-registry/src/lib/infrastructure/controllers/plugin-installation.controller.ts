@@ -13,13 +13,13 @@ import { InstallPluginDTO } from '../../shared/dto/install-plugin.dto';
 @ApiBearerAuth('Bearer')
 @ApiSecurity('api_key')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Controller('/plugins/:id')
+@Controller('/plugins/:pluginId')
 export class PluginInstallationController {
 	constructor(private readonly commandBus: CommandBus) {}
 
 	@ApiOperation({ summary: 'Install a plugin with a specific version' })
 	@ApiParam({
-		name: 'id',
+		name: 'pluginId',
 		description: 'Unique identifier of the plugin',
 		type: String,
 		example: '550e8400-e29b-41d4-a716-446655440000'
@@ -32,19 +32,22 @@ export class PluginInstallationController {
 	})
 	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 	@Patch('install')
-	public async install(@Param('id', UUIDValidationPipe) id: ID, @Query() query: InstallPluginDTO): Promise<void> {
+	public async install(
+		@Param('pluginId', UUIDValidationPipe) id: ID,
+		@Query() query: InstallPluginDTO
+	): Promise<void> {
 		await this.commandBus.execute(new InstallPluginCommand(id, query));
 	}
 
 	@ApiOperation({ summary: 'Uninstall a plugin' })
 	@ApiParam({
-		name: 'id',
+		name: 'pluginId',
 		description: 'Unique identifier of the plugin',
 		type: String,
 		example: '550e8400-e29b-41d4-a716-446655440000'
 	})
 	@Patch('uninstall')
-	public async uninstall(@Param('id', UUIDValidationPipe) id: ID): Promise<void> {
+	public async uninstall(@Param('pluginId', UUIDValidationPipe) id: ID): Promise<void> {
 		await this.commandBus.execute(new UninstallPluginCommand(id));
 	}
 }

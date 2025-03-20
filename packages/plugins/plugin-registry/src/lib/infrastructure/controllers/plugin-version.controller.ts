@@ -1,17 +1,25 @@
 import { HttpStatus, ID, IPagination } from '@gauzy/contracts';
-import { PaginationParams, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+	PaginationParams,
+	PermissionGuard,
+	TenantPermissionGuard,
+	UseValidationPipe,
+	UUIDValidationPipe
+} from '@gauzy/core';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { ListPluginVersionsQuery } from '../../application/queries/list-plugin-versions.query';
-import { PluginVersionDTO } from '../../shared/dto/plugin-version.dto';
 import { CreatePluginVersionCommand } from '../../application/commands/create-plugin-version.command';
+import { ListPluginVersionsQuery } from '../../application/queries/list-plugin-versions.query';
+import { PluginOwnerGuard } from '../../core/guards/plugin-owner.guard';
+import { PluginVersionDTO } from '../../shared/dto/plugin-version.dto';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
 
 @ApiTags('Plugin Versions')
 @ApiBearerAuth('Bearer')
 @ApiSecurity('api_key')
-@Controller('/plugins/:id/versions')
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Controller('/plugins/:pluginId/versions')
 export class PluginVersionController {
 	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
 
@@ -29,7 +37,7 @@ export class PluginVersionController {
 	@ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized access.' })
 	@Get()
 	public async findAllVersions(
-		@Param('id', UUIDValidationPipe) id: ID,
+		@Param('pluginId', UUIDValidationPipe) id: ID,
 		@Query() params: PaginationParams<IPluginVersion>
 	): Promise<IPagination<IPluginVersion>> {
 		return this.queryBus.execute(new ListPluginVersionsQuery(id, params));
@@ -37,7 +45,7 @@ export class PluginVersionController {
 
 	@ApiOperation({ summary: 'Create a new plugin version' })
 	@ApiParam({
-		name: 'id',
+		name: 'pluginId',
 		type: 'string',
 		format: 'uuid',
 		description: 'The UUID of the plugin for which a new version is being created.'
@@ -47,9 +55,10 @@ export class PluginVersionController {
 	@ApiResponse({ status: 400, description: 'Bad request - Validation failed.' })
 	@ApiResponse({ status: 404, description: 'Plugin not found.' })
 	@UseValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true })
+	@UseGuards(PluginOwnerGuard)
 	@Post()
 	public async createVersion(
-		@Param('id', UUIDValidationPipe) id: ID,
+		@Param('pluginId', UUIDValidationPipe) id: ID,
 		@Body() input: PluginVersionDTO
 	): Promise<IPluginVersion> {
 		return this.commandBus.execute(new CreatePluginVersionCommand(id, input));

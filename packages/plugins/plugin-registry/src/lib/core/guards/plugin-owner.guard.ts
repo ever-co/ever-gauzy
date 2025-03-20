@@ -1,7 +1,6 @@
 import { RequestContext } from '@gauzy/core';
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PluginService } from '../../domain/services/plugin.service';
-import { IPlugin } from '../../shared/models/plugin.model';
 
 @Injectable()
 export class PluginOwnerGuard implements CanActivate {
@@ -9,32 +8,32 @@ export class PluginOwnerGuard implements CanActivate {
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		const request = context.switchToHttp().getRequest();
-		const pluginId = request.params.id || request.body.id;
+		const pluginId = this.getPluginIdFromRequest(request);
 		const employeeId = RequestContext.currentEmployeeId();
 
-		if (!pluginId || !employeeId) {
-			throw new ForbiddenException('Plugin ID and employee ID are required');
+		if (!pluginId) {
+			throw new ForbiddenException('Plugin ID is required.');
+		}
+		if (!employeeId) {
+			throw new ForbiddenException('Employee ID is required.');
 		}
 
-		await this.findPluginWithPermissionCheck(pluginId, employeeId);
-
-		// If no exception is thrown, the user has permission
+		await this.validatePluginOwnership(pluginId, employeeId);
 		return true;
 	}
 
-	private async findPluginWithPermissionCheck(pluginId: string, employeeId: string): Promise<IPlugin> {
-		const plugin = await this.pluginService.findOneByWhereOptions({
-			id: pluginId
-		});
+	private getPluginIdFromRequest(request: any): string | undefined {
+		return request.params?.id || request.body?.id || request.params?.pluginId || request.body?.pluginId;
+	}
 
-		if (!plugin) {
-			throw new NotFoundException(`Plugin with ID ${pluginId} not found`);
+	private async validatePluginOwnership(pluginId: string, employeeId: string): Promise<void> {
+		const plugin = await this.pluginService.findOneOrFailByWhereOptions({ id: pluginId });
+
+		if (!plugin.success) {
+			throw new NotFoundException(`Plugin with ID "${pluginId}" not found.`);
 		}
-
-		if (plugin.uploadedById !== employeeId) {
-			throw new ForbiddenException("You don't have permission to activate this plugin");
+		if (plugin.record.uploadedById !== employeeId) {
+			throw new ForbiddenException('You do not have permission to access this plugin.');
 		}
-
-		return plugin;
 	}
 }
