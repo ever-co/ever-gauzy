@@ -4542,6 +4542,10 @@
 			"receipt": "收据"
 		}
 	},
+	"BANNERS": {
+		"ERROR_TITLE": "哎呀！",
+		"SUCCESS_TITLE": "太好了！"
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "注册",
 		"HAVE_AN_ACCOUNT": "已经有账户？",
@@ -4573,6 +4577,13 @@
 				"AND": " 和 ",
 				"PRIVACY_POLICY": "隐私政策"
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "出现错误，请重试。",
+			"INVALID_EMAIL_DOMAIN": "不支持使用此电子邮件地址注册账户。"
+		},
+		"MESSAGES": {
+			"DEFAULT": "您已成功注册。"
 		}
 	},
 	"LOGIN_PAGE": {
@@ -4623,6 +4634,12 @@
 				"EMAIL": "电子邮件：",
 				"PASSWORD": "密码："
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "登录/电子邮件组合不正确，请重试。"
+		},
+		"MESSAGES": {
+			"DEFAULT": "您已成功登录。"
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4643,6 +4660,12 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "电子邮件是必需的！",
 			"EMAIL_REAL_REQUIRED": "电子邮件应该是真实的！"
+		},
+		"ERRORS": {
+			"DEFAULT": "出了些问题，请重试。"
+		},
+		"MESSAGES": {
+			"DEFAULT": "重置密码的说明已发送到您的电子邮件。"
 		}
 	},
 	"RESET_PASSWORD_PAGE": {
@@ -4662,6 +4685,20 @@
 			"CONFIRM_PASSWORD_REQUIRED": "需要密码确认！",
 			"PASSWORDS_NOT_MATCH": "密码与确认密码不匹配！",
 			"PASSWORD_SHOULD_CONTAIN": "新密码应包含{{ minLength }}到{{ maxLength }}个字符。"
+		},
+		"ERRORS": {
+			"DEFAULT": "密码重置失败。"
+		},
+		"MESSAGES": {
+			"DEFAULT": "您的密码已成功更改。"
+		}
+	},
+	"LOGOUT": {
+		"ERRORS": {
+			"DEFAULT": "出了些问题，请重试。"
+		},
+		"MESSAGES": {
+			"DEFAULT": "您已成功登出。"
 		}
 	},
 	"PAGINATION": {

@@ -4542,6 +4542,10 @@
 			"receipt": "Recibo"
 		}
 	},
+	"BANNERS": {
+		"ERROR_TITLE": "Ah não!",
+		"SUCCESS_TITLE": "Oba!"
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "Registrar",
 		"HAVE_AN_ACCOUNT": "Já tem uma conta?",
@@ -4573,6 +4577,13 @@
 				"AND": " e ",
 				"PRIVACY_POLICY": "Política de Privacidade"
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "Algo deu errado, por favor tente novamente.",
+			"INVALID_EMAIL_DOMAIN": "Endereço de e-mail não é suportado para registrar uma conta."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Você foi registrado com sucesso."
 		}
 	},
 	"LOGIN_PAGE": {
@@ -4623,6 +4634,12 @@
 				"EMAIL": "E-mail: ",
 				"PASSWORD": "Senha: "
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "A combinação de login/e-mail não está correta, por favor tente novamente."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Você foi conectado com sucesso."
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4643,6 +4660,12 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "O email é necessário!",
 			"EMAIL_REAL_REQUIRED": "O email deve ser o verdadeiro!"
+		},
+		"ERRORS": {
+			"DEFAULT": "Algo deu errado, por favor tente novamente."
+		},
+		"MESSAGES": {
+			"DEFAULT": "As instruções para redefinição de senha foram enviadas para o seu email."
 		}
 	},
 	"RESET_PASSWORD_PAGE": {
@@ -4662,6 +4685,20 @@
 			"CONFIRM_PASSWORD_REQUIRED": "Confirmação de senha é obrigatória!",
 			"PASSWORDS_NOT_MATCH": "A senha não coincide com a confirmação de senha!",
 			"PASSWORD_SHOULD_CONTAIN": "A nova senha deve conter de {{ minLength }} a {{ maxLength }} caracteres."
+		},
+		"ERRORS": {
+			"DEFAULT": "Falha na redefinição de senha."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Sua senha foi alterada com sucesso."
+		}
+	},
+	"LOGOUT": {
+		"ERRORS": {
+			"DEFAULT": "Algo deu errado, por favor tente novamente."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Você saiu com sucesso."
 		}
 	},
 	"PAGINATION": {

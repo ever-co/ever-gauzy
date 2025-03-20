@@ -4570,6 +4570,10 @@
 			"receipt": "Касова бележка"
 		}
 	},
+	"BANNERS": {
+		"ERROR_TITLE": "О, не!",
+		"SUCCESS_TITLE": "Ура!"
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "Регистрация",
 		"HAVE_AN_ACCOUNT": "Вече имате акаунт?",
@@ -4601,6 +4605,13 @@
 				"AND": " и ",
 				"PRIVACY_POLICY": "Политика за поверителност"
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "Нещо се обърка, моля, опитайте отново.",
+			"INVALID_EMAIL_DOMAIN": "Този имейл адрес не се поддържа за регистрация на акаунт."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Вие се регистрирахте успешно."
 		}
 	},
 	"LOGIN_PAGE": {
@@ -4651,6 +4662,12 @@
 				"EMAIL": "Имейл: ",
 				"PASSWORD": "Парола: "
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "Комбинацията за вход/имейл не е правилна, моля, опитайте отново."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Вие успешно влязохте в системата."
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4671,6 +4688,12 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_REAL_REQUIRED": "Email should be the real one!"
+		},
+		"ERRORS": {
+			"DEFAULT": "Нещо се обърка, моля, опитайте отново."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Инструкциите за възстановяване на паролата бяха изпратени на вашия имейл."
 		}
 	},
 	"RESET_PASSWORD_PAGE": {
@@ -4690,6 +4713,21 @@
 			"CONFIRM_PASSWORD_REQUIRED": "Изисква се потвърждение на паролата!",
 			"PASSWORDS_NOT_MATCH": "Паролата не съвпада с потвърдената парола!",
 			"PASSWORD_SHOULD_CONTAIN": "Новата парола трябва да съдържа от {{ minLength }} до {{ maxLength }} знака!"
+		},
+		"PASSWORD_NO_SPACE_EDGES": "Паролите не трябва да започват или завършват с интервал!",
+		"ERRORS": {
+			"DEFAULT": "Нулирането на паролата не бе успешно."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Вашата парола беше успешно променена."
+		}
+	},
+	"LOGOUT": {
+		"ERRORS": {
+			"DEFAULT": "Нещо се обърка, моля, опитайте отново."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Вие успешно излязохте от системата."
 		}
 	},
 	"PAGINATION": {
