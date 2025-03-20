@@ -60,6 +60,8 @@ import { InstallPluginDTO } from '../../shared/dto/install-plugin.dto';
 import { InstallPluginCommand } from '../../application/commands/install-plugin.command';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
 import { ListPluginVersionsQuery } from '../../application/queries/list-plugin-versions.query';
+import { PluginVersionDTO } from '../../shared/dto/plugin-version.dto';
+import { CreatePluginVersionCommand } from '../../application/commands/create-plugin-version.command';
 
 /**
  * Controller responsible for managing plugin operations in the system.
@@ -384,6 +386,56 @@ export class PluginController {
 	@Post(':id/verify')
 	public async verify(@Param('id', UUIDValidationPipe) id: ID, @Body() input: VerifyPluginDTO): Promise<boolean> {
 		return this.commandBus.execute(new VerifyPluginCommand(id, input));
+	}
+
+	/**
+	 * Creates a new version for a plugin using its ID and version data.
+	 *
+	 * @param {string} id - The UUID of the plugin for which the version will be created.
+	 * @param {PluginVersionDTO} input - The data for the new plugin version.
+	 * @returns {Promise<IPluginVersion>} - A promise resolving to the created plugin version.
+	 *
+	 * @throws {BadRequestException} - If the input data is invalid.
+	 * @throws {NotFoundException} - If the specified plugin does not exist.
+	 */
+	@ApiOperation({
+		summary: 'Create a new plugin version',
+		description: 'Creates a new version for an existing plugin using the provided version data.'
+	})
+	@ApiParam({
+		name: 'id',
+		type: 'string',
+		format: 'uuid',
+		description: 'The UUID of the plugin for which a new version is being created.'
+	})
+	@ApiBody({
+		type: PluginVersionDTO,
+		description: 'The data required to create a new plugin version.'
+	})
+	@ApiResponse({
+		status: 201,
+		description: 'Plugin version successfully created.',
+		type: PluginVersionDTO
+	})
+	@ApiResponse({
+		status: 400,
+		description: 'Bad request - Validation failed.'
+	})
+	@ApiResponse({
+		status: 404,
+		description: 'Plugin not found.'
+	})
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
+	@Post(':id/versions')
+	public async createVersion(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() input: PluginVersionDTO
+	): Promise<IPluginVersion> {
+		return this.commandBus.execute(new CreatePluginVersionCommand(id, input));
 	}
 
 	/**
