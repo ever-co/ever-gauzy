@@ -91,7 +91,9 @@ export {
 } from './lib/time-tracking/time-slot';
 export { TimeLogModule, TimeLogService, TimeLogCreateCommand } from './lib/time-tracking/time-log';
 export { ScreenshotModule, ScreenshotService, ScreenshotCreateCommand } from './lib/time-tracking/screenshot';
-export { TimerStartedEvent, TimerStoppedEvent, TimerStatusUpdatedEvent } from './lib/time-tracking/timer'
+export { TimerStartedEvent, TimerStoppedEvent, TimerStatusUpdatedEvent } from './lib/time-tracking/timer';
+export { TimerService } from './lib/time-tracking/timer/timer.service';
+export { GetTimerStatusQuery, StartTimerCommand, StopTimerCommand } from './lib/time-tracking/timer';
 
 export { IncomeModule, IncomeService, IncomeCreateCommand } from './lib/income';
 export { ExpenseModule, ExpenseService, ExpenseCreateCommand } from './lib/expense';
