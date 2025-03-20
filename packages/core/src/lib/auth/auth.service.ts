@@ -41,12 +41,13 @@ import {
 	ILastTeam,
 	ILastOrganization,
 	ID,
+	PayPeriodEnum,
 	IRole,
 	RolesEnum
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
-import { IAppIntegrationConfig, createQueryParamsString, deepMerge, isNotEmpty } from '@gauzy/common';
+import { IAppIntegrationConfig, IOAuthCreateUser, IOAuthEmail, IOAuthValidateResponse, createQueryParamsString, deepMerge, isNotEmpty } from '@gauzy/common';
 import { AccountRegistrationEvent } from '../event-bus/events';
 import { EventBus } from '../event-bus/event-bus';
 import { ALPHA_NUMERIC_CODE_LENGTH, DEMO_PASSWORD_LESS_MAGIC_CODE } from './../constants';
@@ -73,6 +74,19 @@ import {
 } from './social-account/token-verification/verify-oauth-tokens';
 import { SocialAccountService } from './social-account/social-account.service';
 import { OrganizationService } from '../organization/organization.service';
+
+/**
+ * Default employee settings
+ */
+const DEFAULT_EMPLOYEE_SETTINGS = {
+	isTrackingEnabled: true,
+	allowScreenshotCapture: true,
+	allowManualTime: true,
+	allowModifyTime: true,
+	allowDeleteTime: true,
+	reWeeklyLimit: 40,
+	payPeriod: PayPeriodEnum.MONTHLY,
+}
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -616,9 +630,9 @@ export class AuthService extends SocialAuthService {
 					...input,
 					user,
 					tenantId: tenant.id,
-					tenant: { id: tenant.id },
 					organizationId,
-					organization: { id: organizationId }
+					// Set employee default settings
+					...DEFAULT_EMPLOYEE_SETTINGS
 				})
 			);
 		}
@@ -802,14 +816,11 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 *
+	 * Validate OAuth emails to check if there is an email that can be used to login
 	 * @param emails
 	 * @returns
 	 */
-	async validateOAuthLoginEmail(emails: Array<{ value: string; verified: boolean }>): Promise<{
-		success: boolean;
-		authData: { jwt: string; userId: string };
-	}> {
+	async validateOAuthLoginEmail(emails: IOAuthEmail[]): Promise<IOAuthValidateResponse> {
 		let response = {
 			success: false,
 			authData: { jwt: null, userId: null }
@@ -833,6 +844,61 @@ export class AuthService extends SocialAuthService {
 			return response;
 		} catch (err) {
 			throw new InternalServerErrorException('validateOAuthLoginEmail', err.message);
+		}
+	}
+
+	/**
+	 * Register a new user with OAuth data
+	 * @param userInfo
+	 * @returns
+	 */
+	async registerOAuth(userInfo: IOAuthCreateUser): Promise<IOAuthValidateResponse> {
+		const emails = userInfo.emails;
+		try {
+			// Iterate all emails to get the first that match with an organization
+			for (const { value, verified } of emails) {
+				const organization = await this.organizationService.findByEmailDomain(value.split("@")[1]);
+				if (organization) {
+					// Get the employee role
+					const role: IRole = await this.roleService.findOneByWhereOptions({ name: RolesEnum.EMPLOYEE });
+
+					// Set the register data with the organization details and flag to create an employee record
+					const fullName = userInfo.firstName + " " + userInfo.lastName;
+					const input = {
+						user: {
+							name: fullName,
+							firstName: userInfo.firstName,
+							lastName: userInfo.lastName,
+							email: value,
+							username: value,
+							imageUrl: userInfo.picture,
+							tenantId: organization.tenantId,
+							tenant: { id: organization.tenantId },
+							roleId: role.id,
+						},
+						organizationId: organization.id,
+						featureAsEmployee: true,
+						inviteId: verified ? "non-required-id" : null // Used to mark the email as verified
+					};
+					// Call to register the new user
+					const createdUser = await this.register(input, LanguagesEnum.ENGLISH);
+					// Generate a JWT access token for the new user
+					const token = await this.getJwtAccessToken(createdUser);
+
+					// Break the loop and return the response
+					return {
+						success: true,
+						authData: { jwt: token, userId: createdUser.id }
+					};
+				}
+			}
+			return {
+				success: false,
+				authData: { jwt: null, userId: null }
+			};
+		} catch (error) {
+			this.logger.error(`Error while registering user with OAuth: ${error}`);
+			throw new InternalServerErrorException('registerOAuth', error.message);
 		}
 	}
 

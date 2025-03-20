@@ -1,4 +1,4 @@
-import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Logger, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FeatureFlagEnabledGuard, FeatureFlag, Public } from '@gauzy/common';
 import { SocialAuthService } from './../social-auth.service';
@@ -10,6 +10,7 @@ import { FeatureEnum } from '@gauzy/contracts';
 @FeatureFlag(FeatureEnum.FEATURE_GOOGLE_LOGIN)
 @Public()
 export class GoogleController {
+	private readonly logger = new Logger(`GZY - ${GoogleController.name}`);
 	constructor(public readonly service: SocialAuthService) { }
 
 	/**
@@ -18,7 +19,10 @@ export class GoogleController {
 	 * @param req
 	 */
 	@Get('google')
-	googleLogin(@Req() req: any) { }
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	googleLogin(@Req() req) {
+		// Initiate Google login
+	}
 
 	/**
 	 * Google login callback endpoint.
@@ -33,7 +37,19 @@ export class GoogleController {
 		@Res() res
 	) {
 		const { user } = requestCtx;
-		const { success, authData } = await this.service.validateOAuthLoginEmail(user.emails);
-		return this.service.routeRedirect(success, authData, res);
+		let response = await this.service.validateOAuthLoginEmail(user.emails);
+
+		// User doesn't exist in the database, new account will be created
+		if (!response.success) {
+			this.logger.verbose(`User doesn't exist in the database, new account will be created: ${JSON.stringify(user)}`);
+			response = await this.service.registerOAuth({
+				emails: user.emails,
+				firstName: user.firstName,
+				lastName: user.lastName,
+				provider: 'google',
+				picture: user.picture?.value
+			});
+		}
+		return this.service.routeRedirect(response.success, response.authData, res);
 	}
 }
