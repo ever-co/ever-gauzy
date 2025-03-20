@@ -22,3 +22,4 @@ export * from './IDigitalOceanConfig';
 export * from './IHubstaffConfig';
 export * from './IJitsuConfig';
 export * from './IJiraIntegrationConfig';
+export * from './IZapierConfig';
