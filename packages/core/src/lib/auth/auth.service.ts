@@ -7,7 +7,8 @@ import {
 	NotAcceptableException,
 	NotFoundException,
 	UnauthorizedException,
-	Logger
+	Logger,
+	ConflictException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
@@ -43,7 +44,8 @@ import {
 	ID,
 	PayPeriodEnum,
 	IRole,
-	RolesEnum
+	RolesEnum,
+	AuthError
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
@@ -598,6 +600,12 @@ export class AuthService extends SocialAuthService {
 		let tenant = input.user.tenant;
 		const { organizationId } = input;
 
+		// Check if the user already exists
+		let user = await this.userService.findOneByOptions({ where: { email: input.user.email } });
+		if (user) {
+			throw new ConflictException(AuthError.ALREADY_REGISTERED);
+		}
+
 		// 1. If createdById is provided, get the creating user and use their tenant
 		if (input.createdById) {
 			const creatingUser = await this.userService.findOneByIdString(input.createdById, {
@@ -621,7 +629,7 @@ export class AuthService extends SocialAuthService {
 			tenant,
 			...(input.password ? { hash: await this.getPasswordHash(input.password) } : {})
 		});
-		let user = await this.typeOrmUserRepository.save(entity);
+		user = await this.typeOrmUserRepository.save(entity);
 
 		// 4. Create employee for specific user
 		if (input.featureAsEmployee) {
@@ -709,7 +717,7 @@ export class AuthService extends SocialAuthService {
 		// Check that email domain is registered in at least one organization
 		const organization = await this.organizationService.findByEmailDomain(input.user.email.split('@')[1]);
 		if (!organization) {
-			throw new NotAcceptableException('invalid-email-domain');
+			throw new NotAcceptableException(AuthError.INVALID_EMAIL_DOMAIN);
 		}
 
 		// Update the register data with the organization details and flag to create an employee record
