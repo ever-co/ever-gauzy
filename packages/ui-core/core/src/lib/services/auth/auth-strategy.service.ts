@@ -4,7 +4,7 @@ import { Observable, from, of, tap, Subject, EMPTY } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { NbAuthResult, NbAuthStrategy, NbAuthStrategyClass } from '@nebular/auth';
 import { CookieService } from 'ngx-cookie-service';
-import { IUser, IAuthResponse, IUserLoginInput, LanguagesEnum } from '@gauzy/contracts';
+import { IUser, IAuthResponse, IUserLoginInput, LanguagesEnum, AuthError } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { ElectronService } from './electron.service';
 import { AuthService } from './auth.service';
@@ -29,6 +29,7 @@ export class AuthStrategy extends NbAuthStrategy {
 				success: '/',
 				failure: null
 			},
+			alreadyRegisteredErrors: ['REGISTER_PAGE.ERRORS.ALREADY_REGISTERED'],
 			invalidEmailDomainErrors: ['REGISTER_PAGE.ERRORS.INVALID_EMAIL_DOMAIN'],
 			defaultErrors: ['REGISTER_PAGE.ERRORS.DEFAULT'],
 			defaultMessages: ['REGISTER_PAGE.MESSAGES.DEFAULT']
@@ -153,8 +154,16 @@ export class AuthStrategy extends NbAuthStrategy {
 				}
 			}),
 			catchError((err) => {
+				// Check for user already registered error
+				if (err?.error?.message === AuthError.ALREADY_REGISTERED) {
+					return of(
+						new NbAuthResult(false, err, false, AuthStrategy.config.register.alreadyRegisteredErrors, [
+							AuthStrategy.config.register.alreadyRegisteredErrors
+						])
+					);
+				}
 				// Check for invalid email domain error
-				if (err?.status === 406 && err?.error?.message === 'invalid-email-domain') {
+				if (err?.error?.message === AuthError.INVALID_EMAIL_DOMAIN) {
 					return of(
 						new NbAuthResult(false, err, false, AuthStrategy.config.register.invalidEmailDomainErrors, [
 							AuthStrategy.config.register.invalidEmailDomainErrors

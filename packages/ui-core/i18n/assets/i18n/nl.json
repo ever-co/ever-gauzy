@@ -4580,6 +4580,7 @@
 		},
 		"ERRORS": {
 			"DEFAULT": "Er is iets misgegaan, probeer het opnieuw.",
+			"ALREADY_REGISTERED": "E-mailadres is al geregistreerd.",
 			"INVALID_EMAIL_DOMAIN": "E-mailadres wordt niet ondersteund om een account te registreren."
 		},
 		"MESSAGES": {

@@ -4582,6 +4582,7 @@
 		},
 		"ERRORS": {
 			"DEFAULT": "Algo salió mal, por favor intenta de nuevo.",
+			"ALREADY_REGISTERED": "La dirección de correo electrónico ya está registrada.",
 			"INVALID_EMAIL_DOMAIN": "Esta dirección de correo electrónico no es válida para registrar una cuenta de usuario."
 		},
 		"MESSAGES": {

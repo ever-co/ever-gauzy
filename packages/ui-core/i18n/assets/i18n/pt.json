@@ -4580,6 +4580,7 @@
 		},
 		"ERRORS": {
 			"DEFAULT": "Algo deu errado, por favor tente novamente.",
+			"ALREADY_REGISTERED": "Endereço de e-mail já registrado.",
 			"INVALID_EMAIL_DOMAIN": "Endereço de e-mail não é suportado para registrar uma conta."
 		},
 		"MESSAGES": {
