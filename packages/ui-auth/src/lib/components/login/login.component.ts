@@ -26,6 +26,7 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	isDemo: boolean = environment.DEMO;
 	showPassword = false;
 	passwordNoSpaceEdges = patterns.passwordNoSpaceEdges;
+	public queryParams$: Observable<Params>; // Observable for the query params
 	public allowEmailPasswordLogin$: Observable<boolean>;
 	public allowEmailPasswordLogin: boolean;
 
@@ -54,36 +55,40 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 
 		// Load the configuration to check if the email/password login is enabled.
 		this.allowEmailPasswordLogin$ = this.appService.getAppConfigs().pipe(
-			map((configs: IAppConfig) => {
-				this.allowEmailPasswordLogin = configs.email_password_login;
-				return configs.email_password_login;
-			}),
+			map((configs: IAppConfig) => configs.email_password_login),
 			untilDestroyed(this)
 		);
+		this.handleEmailPasswordLogin();
 
 		// Create an observable to listen to query parameter changes in the current route.
-		this.activatedRoute.queryParams.pipe(
+		this.queryParams$ = this.activatedRoute.queryParams.pipe(
 			// Filter and ensure that query parameters are present.
 			filter((params: Params) => !!params),
 			// Use 'untilDestroyed' to handle component lifecycle and avoid memory leaks.
 			untilDestroyed(this)
-		).subscribe((queryParams: Params) => {
-			// Check if there is an error in the query params.
-			this.checkErrors(queryParams);
+		);
+		this.checkErrors();
+	}
+
+	private handleEmailPasswordLogin(): void {
+		this.allowEmailPasswordLogin$.pipe().subscribe((allowEmailPasswordLogin: boolean) => {
+			this.allowEmailPasswordLogin = allowEmailPasswordLogin;
 		});
 	}
 
-	checkErrors(params: Params) {
-		if (params.error === AuthError.INVALID_EMAIL_DOMAIN) {
-			this.toastrService.danger(
-				this.translate.instant('REGISTER_PAGE.ERRORS.INVALID_EMAIL_DOMAIN'),
-				this.translate.instant('BANNERS.ERROR_TITLE'),
-				{
-					duration: 8000,
-					destroyByClick: true,
-				}
-			);
-		}
+	private checkErrors() {
+		this.queryParams$.pipe().subscribe((params: Params) => {
+			if (params.error === AuthError.INVALID_EMAIL_DOMAIN) {
+				this.toastrService.danger(
+					this.translate.instant('REGISTER_PAGE.ERRORS.INVALID_EMAIL_DOMAIN'),
+					this.translate.instant('BANNERS.ERROR_TITLE'),
+					{
+						duration: 8000,
+						destroyByClick: true,
+					}
+				);
+			}
+		});
 	}
 
 	/**
