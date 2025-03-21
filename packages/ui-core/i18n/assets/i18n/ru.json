@@ -4590,6 +4590,7 @@
 	"LOGIN_PAGE": {
 		"TITLE": "Логин",
 		"SUB_TITLE": "Привет! Войдите с помощью электронной почты.",
+		"SUB_TITLE_ACCOUNT": "Привет! Войдите с помощью своего аккаунта.",
 		"REMEMBER_ME_TITLE": "Запомнить меня",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "У вас нет учетной записи?",
 		"FORGOT_PASSWORD_TITLE": "Забыли пароль?",

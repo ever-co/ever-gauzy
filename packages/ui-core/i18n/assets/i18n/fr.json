@@ -4592,6 +4592,7 @@
 	"LOGIN_PAGE": {
 		"TITLE": "Connexion",
 		"SUB_TITLE": "Salut ! Connectez-vous avec votre adresse e-mail.",
+		"SUB_TITLE_ACCOUNT": "Salut ! Connectez-vous avec votre compte.",
 		"REMEMBER_ME_TITLE": "Se souvenir de moi",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Vous n'avez pas de compte ?",
 		"FORGOT_PASSWORD_TITLE": "Mot de passe oublié ?",

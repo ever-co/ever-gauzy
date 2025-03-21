@@ -4620,6 +4620,7 @@
 	"LOGIN_PAGE": {
 		"TITLE": "Вход",
 		"SUB_TITLE": "Здравейте! Влезте с имейла си.",
+		"SUB_TITLE_ACCOUNT": "Здравейте! Влезте с вашият акаунт.",
 		"REMEMBER_ME_TITLE": "Запомни ме",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Нямате акаунт?",
 		"FORGOT_PASSWORD_TITLE": "Забравена парола?",

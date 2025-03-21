@@ -4592,6 +4592,7 @@
 	"LOGIN_PAGE": {
 		"TITLE": "Inloggen",
 		"SUB_TITLE": "Hallo! Log in met je e-mail.",
+		"SUB_TITLE_ACCOUNT": "Hallo! Log in met je account.",
 		"REMEMBER_ME_TITLE": "Onthoud mij",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Heeft u geen account?",
 		"FORGOT_PASSWORD_TITLE": "Wachtwoord vergeten?",

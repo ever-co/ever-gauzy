@@ -4592,6 +4592,7 @@
 	"LOGIN_PAGE": {
 		"TITLE": "Acessar",
 		"SUB_TITLE": "Olá! Faça login com seu e-mail.",
+		"SUB_TITLE_ACCOUNT": "Olá! Faça login com seu conta.",
 		"REMEMBER_ME_TITLE": "Lembre-se de mim.",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Não tem uma conta?",
 		"FORGOT_PASSWORD_TITLE": "Esqueceu a senha?",

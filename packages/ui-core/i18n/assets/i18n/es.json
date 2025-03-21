@@ -4594,6 +4594,7 @@
 	"LOGIN_PAGE": {
 		"TITLE": "Acceso",
 		"SUB_TITLE": "¡Hola! Inicia sesión con tu correo electrónico.",
+		"SUB_TITLE_ACCOUNT": "¡Hola! Inicia sesión con tu cuenta.",
 		"REMEMBER_ME_TITLE": "Recuérdame",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "¿No tienes una cuenta?",
 		"FORGOT_PASSWORD_TITLE": "¿Olvidaste tu contraseña?",

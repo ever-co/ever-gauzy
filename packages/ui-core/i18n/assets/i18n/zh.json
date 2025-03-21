@@ -4592,6 +4592,7 @@
 	"LOGIN_PAGE": {
 		"TITLE": "登录",
 		"SUB_TITLE": "你好！使用你的邮箱登录。",
+		"SUB_TITLE_ACCOUNT": "你好！使用你的账号登录。",
 		"REMEMBER_ME_TITLE": "记住我",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "没有账号吗？",
 		"FORGOT_PASSWORD_TITLE": "忘记密码？",

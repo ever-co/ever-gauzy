@@ -4583,6 +4583,7 @@
 	"LOGIN_PAGE": {
 		"TITLE": "Login",
 		"SUB_TITLE": "Hello! Log in with your email.",
+		"SUB_TITLE_ACCOUNT": "Hello! Log in with your account.",
 		"REMEMBER_ME_TITLE": "Remember me",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Don't have an account?",
 		"FORGOT_PASSWORD_TITLE": "Forgot Password?",

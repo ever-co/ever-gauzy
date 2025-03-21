@@ -4590,6 +4590,7 @@
 	"LOGIN_PAGE": {
 		"TITLE": "تسجيل الدخول",
 		"SUB_TITLE": "مرحبًا! قم بتسجيل الدخول باستخدام بريدك الإلكتروني.",
+		"SUB_TITLE_ACCOUNT": "مرحبًا! قم بتسجيل الدخول باستخدام حسابك.",
 		"REMEMBER_ME_TITLE": "تذكرني",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "ليس لديك حساب؟",
 		"FORGOT_PASSWORD_TITLE": "هل نسيت كلمة المرور؟",
