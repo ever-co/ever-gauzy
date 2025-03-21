@@ -146,7 +146,7 @@ COPY --chown=node:node --from=builder /srv/gauzy/packages/ /srv/gauzy/packages/
 # Fix @guazy dependencies
 RUN rm -rf ./node_modules/@gauzy \
 	&& mkdir -p ./node_modules/@gauzy \
-	&& for pkg in auth common utils config contracts core plugin; do \
+	&& for pkg in auth common utils config contracts core metrics plugin; do \
 	mv "./dist/packages/$pkg" "./node_modules/@gauzy/$pkg" \
 	&& if [ -d "./packages/$pkg/node_modules" ]; then \
 	mv  "./packages/$pkg/node_modules" "./node_modules/@gauzy/$pkg/node_modules"; \
