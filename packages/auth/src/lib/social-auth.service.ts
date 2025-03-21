@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService, IEnvironment } from '@gauzy/config';
 import * as bcrypt from 'bcrypt';
 import { IOAuthCreateUser, IOAuthEmail, IOAuthValidateResponse } from '@gauzy/common';
-import { AuthError } from '@gauzy/contracts';
 
 /**
  * Base class for social authentication.
@@ -72,10 +71,10 @@ export class SocialAuthService extends BaseSocialAuth {
 	 * @param res - Express response object.
 	 * @returns The redirect response.
 	 */
-	async routeRedirect(success: boolean, auth: { jwt: string; userId: string }, res: any) {
+	async routeRedirect(success: boolean, auth: { jwt: string; userId: string }, res: any, error?: string) {
 		const { userId, jwt } = auth;
 
-		const redirectPath = success ? `#/sign-in/success?jwt=${jwt}&userId=${userId}` : `#/auth/register?error=${AuthError.INVALID_EMAIL_DOMAIN}`;
+		const redirectPath = success ? `#/sign-in/success?jwt=${jwt}&userId=${userId}` : `#/auth/login?error=${error}`
 		const redirectUrl = `${this.clientBaseUrl}/${redirectPath}`;
 
 		return res.redirect(redirectUrl);
