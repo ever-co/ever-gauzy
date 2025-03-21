@@ -24,7 +24,8 @@ import {
 	InviteService,
 	NoAuthGuard,
 	PageRouteRegistryService,
-	RoleService
+	RoleService,
+	NoEmailPasswordGuard
 } from '@gauzy/ui-core/core';
 import { ThemeModule, ThemeSelectorModule } from '@gauzy/ui-core/theme';
 import { NgxFaqModule, PasswordFormFieldModule, SharedModule, getBrowserLanguage } from '@gauzy/ui-core/shared';
@@ -157,7 +158,7 @@ export class NgxAuthModule {
 				// Register the component to load component: NgxLoginWorkspaceComponent,
 				component: NgxLoginWorkspaceComponent,
 				// Register the data object
-				canActivate: [NoAuthGuard]
+				canActivate: [NoAuthGuard, NoEmailPasswordGuard]
 			},
 			{
 				// Register the location 'auth'
@@ -167,7 +168,7 @@ export class NgxAuthModule {
 				// Register the component to load component: NgxLoginMagicComponent,
 				component: NgxLoginMagicComponent,
 				// Register the data object
-				canActivate: [NoAuthGuard]
+				canActivate: [NoAuthGuard, NoEmailPasswordGuard]
 			},
 			{
 				// Register the location 'auth'
@@ -177,7 +178,7 @@ export class NgxAuthModule {
 				// Register the component to load component: NgxMagicSignInWorkspaceComponent,
 				component: NgxMagicSignInWorkspaceComponent,
 				// Register the data object
-				canActivate: [NoAuthGuard]
+				canActivate: [NoAuthGuard, NoEmailPasswordGuard]
 			}
 		]);
 
