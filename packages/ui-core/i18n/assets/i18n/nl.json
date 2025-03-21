@@ -4542,6 +4542,10 @@
 			"receipt": "Ontvangstbewijs"
 		}
 	},
+	"BANNERS": {
+		"ERROR_TITLE": "Oh nee!",
+		"SUCCESS_TITLE": "Hoera!"
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "Registreren",
 		"HAVE_AN_ACCOUNT": "Heb je al een account?",
@@ -4573,6 +4577,13 @@
 				"AND": " en ",
 				"PRIVACY_POLICY": "Privacybeleid"
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "Er is iets misgegaan, probeer het opnieuw.",
+			"INVALID_EMAIL_DOMAIN": "E-mailadres wordt niet ondersteund om een account te registreren."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Je bent succesvol geregistreerd."
 		}
 	},
 	"LOGIN_PAGE": {
@@ -4623,6 +4634,12 @@
 				"EMAIL": "E-mail: ",
 				"PASSWORD": "Wachtwoord: "
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "Login/E-mail combinatie is niet correct, probeer het opnieuw."
+		},
+		"MESSAGES": {
+			"DEFAULT": "U bent succesvol ingelogd."
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4643,6 +4660,12 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "E-mail is verplicht!",
 			"EMAIL_REAL_REQUIRED": "De e-mail moet de juiste zijn!"
+		},
+		"ERRORS": {
+			"DEFAULT": "Er is iets misgegaan, probeer het opnieuw."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Instructies voor het opnieuw instellen van het wachtwoord zijn naar uw e-mail verzonden."
 		}
 	},
 	"RESET_PASSWORD_PAGE": {
@@ -4662,6 +4685,20 @@
 			"CONFIRM_PASSWORD_REQUIRED": "Bevestiging van het wachtwoord is verplicht!",
 			"PASSWORDS_NOT_MATCH": "Het wachtwoord komt niet overeen met de bevestiging van het wachtwoord!",
 			"PASSWORD_SHOULD_CONTAIN": "Het nieuwe wachtwoord moet tussen de {{ minLength }} en {{ maxLength }} tekens bevatten."
+		},
+		"ERRORS": {
+			"DEFAULT": "Wachtwoord opnieuw instellen is mislukt."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Uw wachtwoord is succesvol gewijzigd."
+		}
+	},
+	"LOGOUT": {
+		"ERRORS": {
+			"DEFAULT": "Er is iets misgegaan, probeer het opnieuw."
+		},
+		"MESSAGES": {
+			"DEFAULT": "U bent succesvol uitgelogd."
 		}
 	},
 	"PAGINATION": {

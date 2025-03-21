@@ -4544,6 +4544,10 @@
 			"receipt": "Recibo"
 		}
 	},
+	"BANNERS": {
+		"ERROR_TITLE": "¡Oh, vaya!",
+		"SUCCESS_TITLE": "¡Hurra!"
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "Registrarse",
 		"HAVE_AN_ACCOUNT": "¿Ya tienes una cuenta?",
@@ -4575,6 +4579,13 @@
 				"AND": " y ",
 				"PRIVACY_POLICY": "Política de privacidad"
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "Algo salió mal, por favor intenta de nuevo.",
+			"INVALID_EMAIL_DOMAIN": "Esta dirección de correo electrónico no es válida para registrar una cuenta de usuario."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Te has registrado exitosamente."
 		}
 	},
 	"LOGIN_PAGE": {
@@ -4625,6 +4636,12 @@
 				"EMAIL": "Correo electrónico: ",
 				"PASSWORD": "Contraseña: "
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "La combinación de inicio de correo electrónico/contraseña no es correcta, por favor intente de nuevo."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Has iniciado sesión correctamente."
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4645,6 +4662,12 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "¡Se requiere correo electrónico!",
 			"EMAIL_REAL_REQUIRED": "¡El correo electrónico debe ser el real!"
+		},
+		"ERRORS": {
+			"DEFAULT": "Algo salió mal, por favor intente de nuevo."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Las instrucciones para restablecer la contraseña han sido enviadas a su correo electrónico."
 		}
 	},
 	"RESET_PASSWORD_PAGE": {
@@ -4664,6 +4687,20 @@
 			"CONFIRM_PASSWORD_REQUIRED": "Se requiere la confirmación de la contraseña.",
 			"PASSWORDS_NOT_MATCH": "La contraseña no coincide con la confirmación de la contraseña.",
 			"PASSWORD_SHOULD_CONTAIN": "La nueva contraseña debe contener entre {{ minLength }} y {{ maxLength }} caracteres."
+		},
+		"ERRORS": {
+			"DEFAULT": "Error al restablecer la contraseña."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Tu contraseña ha sido cambiada exitosamente."
+		}
+	},
+	"LOGOUT": {
+		"ERRORS": {
+			"DEFAULT": "Algo salió mal, por favor intente de nuevo."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Has cerrado sesión exitosamente."
 		}
 	},
 	"PAGINATION": {

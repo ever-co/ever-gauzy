@@ -4542,6 +4542,10 @@
 			"receipt": "Paragon"
 		}
 	},
+	"BANNERS": {
+		"ERROR_TITLE": "O nie!",
+		"SUCCESS_TITLE": "Hurra!"
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "Zarejestruj się",
 		"HAVE_AN_ACCOUNT": "Masz już konto?",
@@ -4573,6 +4577,13 @@
 				"AND": " oraz ",
 				"PRIVACY_POLICY": "Polityka prywatności"
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "Coś poszło nie tak, spróbuj ponownie.",
+			"INVALID_EMAIL_DOMAIN": "Adres e-mail nie jest obsługiwany do rejestracji konta."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Zostałeś pomyślnie zarejestrowany."
 		}
 	},
 	"LOGIN_PAGE": {
@@ -4623,6 +4634,12 @@
 				"EMAIL": "E-mail: ",
 				"PASSWORD": "Hasło: "
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "Kombinacja loginu/emaila jest nieprawidłowa, spróbuj ponownie."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Zostałeś pomyślnie zalogowany."
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4643,6 +4660,12 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Wymagany jest adres e-mail!",
 			"EMAIL_REAL_REQUIRED": "Adres e-mail powinien być prawdziwy!"
+		},
+		"ERRORS": {
+			"DEFAULT": "Coś poszło nie tak, spróbuj ponownie."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Instrukcje resetowania hasła zostały wysłane na Twój adres e-mail."
 		}
 	},
 	"RESET_PASSWORD_PAGE": {
@@ -4662,6 +4685,20 @@
 			"CONFIRM_PASSWORD_REQUIRED": "Potwierdzenie hasła jest wymagane!",
 			"PASSWORDS_NOT_MATCH": "Hasło nie pasuje do potwierdzenia hasła!",
 			"PASSWORD_SHOULD_CONTAIN": "Nowe hasło powinno zawierać od {{ minLength }} do {{ maxLength }} znaków."
+		},
+		"ERRORS": {
+			"DEFAULT": "Resetowanie hasła nie powiodło się."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Twoje hasło zostało pomyślnie zmienione."
+		}
+	},
+	"LOGOUT": {
+		"ERRORS": {
+			"DEFAULT": "Coś poszło nie tak, spróbuj ponownie."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Zostałeś pomyślnie wylogowany."
 		}
 	},
 	"PAGINATION": {

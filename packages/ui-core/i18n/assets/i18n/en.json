@@ -4695,6 +4695,10 @@
 			"receipt": "Receipt"
 		}
 	},
+	"BANNERS": {
+		"ERROR_TITLE": "Oh snap!",
+		"SUCCESS_TITLE": "Hooray!"
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "Register",
 		"HAVE_AN_ACCOUNT": "Already have an account?",
@@ -4726,6 +4730,13 @@
 				"AND": " and ",
 				"PRIVACY_POLICY": "Privacy Policy"
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "Something went wrong, please try again.",
+			"INVALID_EMAIL_DOMAIN": "Email address is not supported to register an account."
+		},
+		"MESSAGES": {
+			"DEFAULT": "You have been successfully registered."
 		}
 	},
 	"LOGIN_PAGE": {
@@ -4776,6 +4787,12 @@
 				"EMAIL": "Email: ",
 				"PASSWORD": "Password: "
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "Login/Email combination is not correct, please try again."
+		},
+		"MESSAGES": {
+			"DEFAULT": "You have been successfully logged in."
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4796,6 +4813,12 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_REAL_REQUIRED": "Email should be the real one!"
+		},
+		"ERRORS": {
+			"DEFAULT": "Something went wrong, please try again."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Reset password instructions have been sent to your email."
 		}
 	},
 	"RESET_PASSWORD_PAGE": {
@@ -4815,6 +4838,20 @@
 			"CONFIRM_PASSWORD_REQUIRED": "Password confirmation is required!",
 			"PASSWORDS_NOT_MATCH": "Password does not match with the confirm password!",
 			"PASSWORD_SHOULD_CONTAIN": "New password should contain from {{ minLength }} to {{ maxLength }} characters!"
+		},
+		"ERRORS": {
+			"DEFAULT": "Password Reset Failed."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Your password has been successfully changed."
+		}
+	},
+	"LOGOUT": {
+		"ERRORS": {
+			"DEFAULT": "Something went wrong, please try again."
+		},
+		"MESSAGES": {
+			"DEFAULT": "You have been successfully logged out."
 		}
 	},
 	"PAGINATION": {
