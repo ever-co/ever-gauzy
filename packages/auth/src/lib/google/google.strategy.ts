@@ -42,13 +42,13 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
  */
 export const config = (configService: ConfigService) => ({
 	// Retrieve Google OAuth client ID from the configuration service, default to 'disabled' if not found.
-	clientID: <string>configService.get<string>('google.clientId') || 'disabled',
+	clientID: configService.get<string>('google.clientId') || 'disabled',
 
 	// Retrieve Google OAuth client secret from the configuration service, default to 'disabled' if not found.
-	clientSecret: <string>configService.get<string>('google.clientSecret') || 'disabled',
+	clientSecret: configService.get<string>('google.clientSecret') || 'disabled',
 
 	// Retrieve Google OAuth callback URL from the configuration service.
-	callbackURL: <string>configService.get<string>('google.callbackURL'),
+	callbackURL: configService.get<string>('google.callbackURL'),
 
 	// Pass the request object to the callback.
 	passReqToCallback: true,

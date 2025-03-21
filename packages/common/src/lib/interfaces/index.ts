@@ -24,3 +24,4 @@ export * from './IJitsuConfig';
 export * from './IJiraIntegrationConfig';
 export * from './IGauzyAI';
 export * from './IPlugins';
+export * from './IOAuth';
