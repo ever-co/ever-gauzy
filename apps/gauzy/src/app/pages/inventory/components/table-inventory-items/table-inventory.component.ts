@@ -163,13 +163,7 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent imple
 					componentInitFunction: (instance: NameWithDescriptionComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 					},
-					filter: {
-						type: 'custom',
-						component: InputFilterComponent
-					},
-					filterFunction: (value: string) => {
-						this.setFilter({ field: 'name', search: value || null });
-					},
+					isFilterable: false,
 					isSortable: false
 				},
 				code: {
