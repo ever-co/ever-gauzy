@@ -1,0 +1,54 @@
+{
+    "name": "@gauzy/metrics",
+    "version": "0.1.0",
+    "description": "Gauzy Platform Metrics module",
+    "author": {
+        "email": "reinier.millo@dspot.com.pl",
+        "name": "DSpot",
+        "url": "https://dspot.com"
+    },
+    "license": "AGPL-3.0",
+    "type": "commonjs",
+    "main": "./src/index.js",
+    "typings": "./src/index.d.ts",
+    "bugs": {
+        "url": "https://github.com/DSpotDevelopers/gauzy/issues"
+    },
+    "homepage": "https://dspot.com",
+    "keywords": [
+        "api",
+        "metrics",
+        "nest",
+        "nestjs",
+        "gauzy",
+        "platform",
+        "module"
+    ],
+    
+    "private": true,
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/DSpotDevelopers/gauzy"
+    },
+    "sideEffects": false,
+    "scripts": {
+        "lib:build": "yarn nx build metrics",
+        "lib:build:prod": "cross-env NODE_ENV=production yarn nx build metrics",
+        "lib:watch": "yarn nx build metrics --watch"
+    },
+    "dependencies": {
+        "@nestjs/common": "^10.4.15",
+        "tslib": "^2.6.2"
+    },
+    "devDependencies": {
+        "@nestjs/testing": "^10.4.15",
+        "@types/jest": "29.5.14",
+        "@types/node": "^20.14.9",
+        "cross-env": "^7.0.3",
+        "typescript": "5.5.4"
+    },
+    "engines": {
+        "node": ">=20.11.1",
+        "yarn": ">=1.22.19"
+    }
+}

@@ -18,7 +18,9 @@ import {
 	IUpworkConfig,
 	IWasabiConfig,
 	IJiraIntegrationConfig,
-	IDigitalOceanConfig
+	IDigitalOceanConfig,
+	IGauzyAIConfig,
+	IPluginsConfig
 } from '@gauzy/common';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -126,14 +128,9 @@ export interface IEnvironment {
 	gauzySeedPath?: string;
 
 	/**
-	 * Endpoint for Gauzy AI API (optional), e.g.: http://localhost:3005/graphql
+	 * Gauzy AI Configuration
 	 */
-	gauzyAIGraphQLEndpoint?: string;
-
-	/**
-	 * Endpoint for Gauzy AI REST API (optional), e.g.: http://localhost:3005/api
-	 */
-	gauzyAIRESTEndpoint?: string;
+	gauzyAI?: IGauzyAIConfig;
 
 	gauzyCloudEndpoint?: string;
 
@@ -165,4 +162,9 @@ export interface IEnvironment {
 	 */
 	periodicTimeSave: boolean;
 	periodicTimeSaveTimeframe: number;
+
+	/**
+	 * Gauzy Additional Plugins Configuration
+	 */
+	plugins: IPluginsConfig;
 }

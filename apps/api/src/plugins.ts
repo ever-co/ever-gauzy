@@ -1,5 +1,4 @@
 import { environment } from '@gauzy/config';
-
 import { ChangelogPlugin } from '@gauzy/plugin-changelog';
 import { IntegrationAIPlugin } from '@gauzy/plugin-integration-ai';
 import { IntegrationGithubPlugin } from '@gauzy/plugin-integration-github';
@@ -15,43 +14,47 @@ import { VideosPlugin } from '@gauzy/plugin-videos';
 
 import { SentryTracing as SentryPlugin } from './sentry';
 
-const { jitsu, sentry } = environment;
+const { jitsu, sentry, github, hubstaff, jira, upwork, gauzyAI, plugins: gauzyPlugins } = environment;
 
 /**
  * An array of plugins to be included or used in the codebase.
  */
 export const plugins = [
 	// Includes the SentryPlugin based on the presence of Sentry configuration.
-	...(sentry && sentry.dsn ? [SentryPlugin] : []),
+	...(sentry?.dsn ? [SentryPlugin] : []),
 	// Initializes the Jitsu Analytics Plugin by providing a configuration object.
-	JitsuAnalyticsPlugin.init({
-		config: {
-			host: jitsu.serverHost,
-			writeKey: jitsu.serverWriteKey,
-			debug: jitsu.debug,
-			echoEvents: jitsu.echoEvents
-		}
-	}),
+	...(jitsu?.serverHost && jitsu?.serverWriteKey
+		? [
+				JitsuAnalyticsPlugin.init({
+					config: {
+						host: jitsu.serverHost,
+						writeKey: jitsu.serverWriteKey,
+						debug: jitsu.debug,
+						echoEvents: jitsu.echoEvents
+					}
+				})
+		  ]
+		: []),
 	// Indicates the inclusion or intention to use the ChangelogPlugin in the codebase.
-	ChangelogPlugin,
+	...(gauzyPlugins.useChangelog ? [ChangelogPlugin] : []),
 	// Indicates the inclusion or intention to use the IntegrationAIPlugin in the codebase.
-	IntegrationAIPlugin,
+	...(gauzyAI?.apiKey && gauzyAI?.apiSecret ? [IntegrationAIPlugin] : []),
 	// Indicates the inclusion or intention to use the IntegrationGithubPlugin in the codebase.
-	IntegrationGithubPlugin,
+	...(github?.clientId && github?.clientSecret ? [IntegrationGithubPlugin] : []),
 	// Indicates the inclusion or intention to use the IntegrationHubstaffPlugin in the codebase.
-	IntegrationHubstaffPlugin,
+	...(hubstaff?.clientId && hubstaff?.clientSecret ? [IntegrationHubstaffPlugin] : []),
 	// Indicates the inclusion or intention to use the IntegrationJiraPlugin in the codebase.
-	IntegrationJiraPlugin,
+	...(jira?.appKey && jira?.baseUrl ? [IntegrationJiraPlugin] : []),
 	// Indicates the inclusion or intention to use the IntegrationUpworkPlugin in the codebase.
-	IntegrationUpworkPlugin,
+	...(upwork?.apiKey && upwork?.apiSecret ? [IntegrationUpworkPlugin] : []),
 	// Indicates the inclusion or intention to use the JobProposalPlugin in the codebase.
-	JobProposalPlugin,
+	...(gauzyPlugins.useJobProposal ? [JobProposalPlugin] : []),
 	// Indicates the inclusion or intention to use the JobSearchPlugin in the codebase.
-	JobSearchPlugin,
+	...(gauzyPlugins.useJobSearch ? [JobSearchPlugin] : []),
 	// Indicates the inclusion or intention to use the KnowledgeBasePlugin in the codebase.
-	KnowledgeBasePlugin,
+	...(gauzyPlugins.useKnowledgeBase ? [KnowledgeBasePlugin] : []),
 	// Indicates the inclusion or intention to use the ProductReviewsPlugin in the codebase.
-	ProductReviewsPlugin,
+	...(gauzyPlugins.useProductReviews ? [ProductReviewsPlugin] : []),
 	// Indicates the inclusion or intention to use the VideosPlugin in the codebase.
-	VideosPlugin
+	...(gauzyPlugins.useVideos ? [VideosPlugin] : [])
 ];

@@ -84,7 +84,7 @@ export class EmployeeJobPostService {
 		let jobs: IPagination<IEmployeeJobPost>;
 
 		try {
-			if (env.gauzyAIGraphQLEndpoint) {
+			if (env.gauzyAI?.graphQLEndpoint) {
 				const filters: IGetEmployeeJobPostFilters = data.filters;
 
 				const { organizationId } = data.filters;

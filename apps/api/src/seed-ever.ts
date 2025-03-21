@@ -1,7 +1,10 @@
+import { Logger } from '@nestjs/common';
 import { seedEver } from '@gauzy/core';
 import { pluginConfig } from './plugin-config';
 
-seedEver(pluginConfig).catch((error: any) => {
-	console.log(error);
+const logger = new Logger('GZY - SeedEver');
+
+seedEver(pluginConfig).catch((error) => {
+	logger.error(`Error seeding ever data: ${error}`);
 	process.exit(1);
 });
