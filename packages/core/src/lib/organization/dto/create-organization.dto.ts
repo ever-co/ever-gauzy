@@ -14,7 +14,7 @@ export class CreateOrganizationDTO
 	extends IntersectionType(
 		OrganizationBonusesDTO,
 		OrganizationSettingDTO,
-		PickType(Organization, ['name', 'imageId', 'standardWorkHoursPerDay'] as const),
+		PickType(Organization, ['name', 'imageId', 'standardWorkHoursPerDay', 'emailDomain'] as const),
 		PickType(Organization, ['upworkOrganizationId', 'upworkOrganizationName'] as const),
 		RelationalTagDTO
 	)
