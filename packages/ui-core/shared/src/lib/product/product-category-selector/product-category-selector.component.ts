@@ -65,6 +65,15 @@ export class ProductCategorySelectorComponent implements OnInit, OnDestroy {
 		this._addTag = value;
 	}
 
+	private _label: string;
+	get label(): string {
+		return this._label;
+	}
+
+	@Input() set label(value: string) {
+		this._label = value;
+	}
+
 	private _productCategoryId: IProductCategoryTranslated['id'];
 	set productCategoryId(val: IProductCategoryTranslated['id']) {
 		this._productCategoryId = val;

@@ -21,6 +21,9 @@ import { ContactSelectModule } from '../contact-select/contact-select.module';
 import { TaskStatusSelectModule } from '../tasks/task-status-select/task-status-select.module';
 import { DateFilterComponent } from './date-filter.component';
 import { RangeFilterComponent } from './range-filter.component';
+import { ProductCategorySelectorModule, ProductTypeSelectorModule } from '../product';
+import { ProductCategoryFilterComponent } from './product-category-filter.component';
+import { ProductTypeFilterComponent } from './product-type-filter.component';
 
 @NgModule({
 	imports: [
@@ -32,6 +35,8 @@ import { RangeFilterComponent } from './range-filter.component';
 		TagsColorInputModule,
 		VendorSelectModule,
 		ExpenseCategorySelectModule,
+		ProductCategorySelectorModule,
+		ProductTypeSelectorModule,
 		ContactSelectModule,
 		TaskStatusSelectModule,
 		NbToggleModule,
@@ -44,6 +49,8 @@ import { RangeFilterComponent } from './range-filter.component';
 		TagsColorFilterComponent,
 		VendorFilterComponent,
 		ExpenseCategoryFilterComponent,
+		ProductCategoryFilterComponent,
+		ProductTypeFilterComponent,
 		InputFilterComponent,
 		RangeFilterComponent,
 		OrganizationTeamFilterComponent,

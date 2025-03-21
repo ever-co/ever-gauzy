@@ -13,12 +13,17 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	IProductTranslated,
-	PermissionsEnum
+	PermissionsEnum,
+	IProductCategoryTranslated,
+	IProductTypeTranslated
 } from '@gauzy/contracts';
 import {
 	DeleteConfirmationComponent,
+	InputFilterComponent,
 	IPaginationBase,
 	PaginationFilterBaseComponent,
+	ProductCategoryFilterComponent,
+	ProductTypeFilterComponent,
 	TagsOnlyComponent
 } from '@gauzy/ui-core/shared';
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
@@ -157,21 +162,47 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent imple
 					renderComponent: NameWithDescriptionComponent,
 					componentInitFunction: (instance: NameWithDescriptionComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
-					}
+					},
+					isFilterable: false,
+					isSortable: false
 				},
 				code: {
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),
-					type: 'string'
+					type: 'string',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (value: string) => {
+						this.setFilter({ field: 'code', search: value || null });
+					},
+					isSortable: false
 				},
 				productType: {
 					title: this.getTranslation('INVENTORY_PAGE.PRODUCT_TYPE'),
 					type: 'string',
-					valuePrepareFunction: (value: string) => value || '-'
+					valuePrepareFunction: (value: string) => value || '-',
+					filter: {
+						type: 'custom',
+						component: ProductTypeFilterComponent
+					},
+					filterFunction: (value: IProductTypeTranslated) => {
+						this.setFilter({ field: 'productTypeId', search: value?.id || null });
+					},
+					isSortable: false
 				},
 				productCategory: {
 					title: this.getTranslation('INVENTORY_PAGE.PRODUCT_CATEGORY'),
 					type: 'string',
-					valuePrepareFunction: (value: string) => value || '-'
+					valuePrepareFunction: (value: string) => value || '-',
+					filter: {
+						type: 'custom',
+						component: ProductCategoryFilterComponent
+					},
+					filterFunction: (value: IProductCategoryTranslated) => {
+						this.setFilter({ field: 'productCategoryId', search: value?.id || null });
+					},
+					isSortable: false
 				},
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.TAGS'),
