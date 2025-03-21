@@ -10,7 +10,7 @@
 		<form [formGroup]="pluginForm" (ngSubmit)="submit()">
 			<nb-stepper orientation="horizontal" #stepper>
 				<!-- Step 1: Basic Info -->
-				<nb-step [label]="'PLUGIN.FORM.BASIC_INFO' | translate">
+				<nb-step [stepControl]="pluginForm?.get('name')" [label]="'PLUGIN.FORM.BASIC_INFO' | translate">
 					<lib-plugin-basic-information
 						[form]="pluginForm"
 						[pluginTypes]="pluginTypes"
