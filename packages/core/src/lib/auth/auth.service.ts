@@ -860,7 +860,7 @@ export class AuthService extends SocialAuthService {
 				const organization = await this.organizationService.findByEmailDomain(value.split("@")[1]);
 				if (organization) {
 					// Set the register data with the organization details and flag to create an employee record
-					const fullName = userInfo.firstName + " " + userInfo.lastName;
+					const fullName = `${userInfo.firstName} ${userInfo.lastName}`;
 					const input = {
 						user: {
 							name: fullName,
