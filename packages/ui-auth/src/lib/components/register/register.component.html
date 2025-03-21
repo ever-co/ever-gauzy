@@ -25,7 +25,7 @@
 		<form (ngSubmit)="register()" #form="ngForm" aria-labelledby="title" class="form">
 			<div class="form-control-group">
 				<label class="label" for="input-name">
-					{{ "REGISTER_PAGE.LABELS.FULL_NAME" | translate }}
+					{{ "REGISTER_PAGE.LABELS.FULL_NAME" | translate }} {{allowEmailPasswordLogin$}}
 				</label>
 				<input nbInput [(ngModel)]="user.fullName" #fullName="ngModel" id="input-name" name="fullName"
 					[placeholder]=" 'REGISTER_PAGE.PLACEHOLDERS.FULL_NAME' | translate " autofocus fullWidth
