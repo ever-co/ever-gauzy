@@ -71,7 +71,7 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	}
 
 	private handleEmailPasswordLogin(): void {
-		this.allowEmailPasswordLogin$.pipe().subscribe((allowEmailPasswordLogin: boolean) => {
+		this.allowEmailPasswordLogin$.subscribe((allowEmailPasswordLogin: boolean) => {
 			this.allowEmailPasswordLogin = allowEmailPasswordLogin;
 		});
 	}
