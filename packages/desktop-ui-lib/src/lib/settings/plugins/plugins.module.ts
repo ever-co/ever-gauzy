@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import {
+	NbAlertModule,
 	NbBadgeModule,
 	NbButtonModule,
 	NbCardModule,
@@ -13,6 +14,7 @@ import {
 	NbRouteTabsetModule,
 	NbSelectModule,
 	NbSpinnerModule,
+	NbStepperModule,
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
@@ -29,7 +31,14 @@ import { PluginStatusComponent } from './component/plugin-list/plugin-status/plu
 import { PluginUpdateComponent } from './component/plugin-list/plugin-update/plugin-update.component';
 import { PluginMarketplaceDetailComponent } from './component/plugin-marketplace/plugin-marketplace-detail/plugin-marketplace-detail.component';
 import { PluginMarketplaceItemComponent } from './component/plugin-marketplace/plugin-marketplace-item/plugin-marketplace-item.component';
+import { FileUploadComponent } from './component/plugin-marketplace/plugin-marketplace-upload/file-upload/file-upload.component';
+import { FormRowComponent } from './component/plugin-marketplace/plugin-marketplace-upload/form-row/form-row.component';
+import { FormSectionComponent } from './component/plugin-marketplace/plugin-marketplace-upload/form-section/form-section.component';
+import { PluginBasicInformationComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-basic-information/plugin-basic-information.component';
 import { PluginMarketplaceUploadComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-marketplace-upload.component';
+import { PluginMetadataComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-metadata/plugin-metadata.component';
+import { PluginSourceComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-source/plugin-source.component';
+import { PluginVersionComponent } from './component/plugin-marketplace/plugin-marketplace-upload/plugin-version/plugin-version.component';
 import { PluginMarketplaceComponent } from './component/plugin-marketplace/plugin-marketplace.component';
 import { PluginComponent } from './component/plugin/plugin.component';
 import { PluginElectronService } from './services/plugin-electron.service';
@@ -47,7 +56,14 @@ import { PluginService } from './services/plugin.service';
 		PluginMarketplaceComponent,
 		PluginMarketplaceDetailComponent,
 		PluginMarketplaceUploadComponent,
-		PluginMarketplaceItemComponent
+		PluginMarketplaceItemComponent,
+		PluginVersionComponent,
+		PluginSourceComponent,
+		PluginMetadataComponent,
+		PluginBasicInformationComponent,
+		FormSectionComponent,
+		FormRowComponent,
+		FileUploadComponent
 	],
 	imports: [
 		CommonModule,
@@ -71,7 +87,9 @@ import { PluginService } from './services/plugin.service';
 		NbSelectModule,
 		NbTooltipModule,
 		NbSpinnerModule,
-		NbDatepickerModule
+		NbDatepickerModule,
+		NbStepperModule,
+		NbAlertModule
 	],
 	exports: [PluginLayoutComponent],
 	providers: [PluginLoaderService, PluginElectronService, PluginService]
