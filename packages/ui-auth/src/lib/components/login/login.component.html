@@ -60,23 +60,12 @@
 				<label class="label" for="input-email">
 					{{ 'LOGIN_PAGE.LABELS.EMAIL' | translate }}
 				</label>
-				<input
-					nbInput
-					fullWidth
-					[(ngModel)]="user.email"
-					#email="ngModel"
-					name="email"
-					noSpaceEdges
-					id="input-email"
-					pattern=".+@.+\..+"
-					[placeholder]="'LOGIN_PAGE.PLACEHOLDERS.EMAIL' | translate"
-					fieldSize="large"
-					autofocus
+				<input nbInput fullWidth [(ngModel)]="user.email" #email="ngModel" name="email" noSpaceEdges
+					id="input-email" pattern=".+@.+\..+" [placeholder]="'LOGIN_PAGE.PLACEHOLDERS.EMAIL' | translate"
+					fieldSize="large" autofocus
 					[status]="email.dirty ? (email.invalid ? 'danger' : 'success') : 'basic'"
 					[required]="getConfigValue('forms.validation.email.required')"
-					[attr.aria-invalid]="email.invalid && email.touched ? true : null"
-					autocomplete="off"
-				/>
+					[attr.aria-invalid]="email.invalid && email.touched ? true : null" autocomplete="off" />
 				<ng-container *ngIf="email.invalid && email.touched">
 					<p class="caption status-danger" *ngIf="email.errors?.required">
 						{{ 'LOGIN_PAGE.VALIDATION.EMAIL_REQUIRED' | translate }}
@@ -93,37 +82,19 @@
 					</label>
 				</span>
 				<nb-form-field>
-					<input
-						nbInput
-						fullWidth
-						[(ngModel)]="user.password"
-						#password="ngModel"
-						[pattern]="passwordNoSpaceEdges"
-						name="password"
-						[type]="showPassword ? 'text' : 'password'"
-						id="input-password"
-						[placeholder]="'LOGIN_PAGE.PLACEHOLDERS.PASSWORD' | translate"
+					<input nbInput fullWidth [(ngModel)]="user.password" #password="ngModel"
+						[pattern]="passwordNoSpaceEdges" name="password" [type]="showPassword ? 'text' : 'password'"
+						id="input-password" [placeholder]="'LOGIN_PAGE.PLACEHOLDERS.PASSWORD' | translate"
 						fieldSize="large"
 						[status]="password.dirty ? (password.invalid ? 'danger' : 'success') : 'basic'"
 						[required]="getConfigValue('forms.validation.password.required')"
 						[minlength]="getConfigValue('forms.validation.password.minLength')"
 						[maxlength]="getConfigValue('forms.validation.password.maxLength')"
-						[attr.aria-invalid]="password.invalid && password.touched ? true : null"
-						autocomplete="off"
-					/>
-					<a
-						nbSuffix
-						nbButton
-						size="small"
-						ghost
-						(click)="showPassword = !showPassword"
-						class="show-password-icon"
-					>
-						<nb-icon
-							[icon]="showPassword ? 'eye-outline' : 'eye-off-outline'"
-							pack="eva"
-							[attr.aria-label]="showPassword ? 'hide password' : 'show password'"
-						></nb-icon>
+						[attr.aria-invalid]="password.invalid && password.touched ? true : null" autocomplete="off" />
+					<a nbSuffix nbButton size="small" ghost (click)="showPassword = !showPassword"
+						class="show-password-icon">
+						<nb-icon [icon]="showPassword ? 'eye-outline' : 'eye-off-outline'" pack="eva"
+							[attr.aria-label]="showPassword ? 'hide password' : 'show password'"></nb-icon>
 					</a>
 				</nb-form-field>
 				<ng-container *ngIf="password.invalid && password.touched">
@@ -134,13 +105,10 @@
 						{{ 'LOGIN_PAGE.VALIDATION.PASSWORD_REQUIRED' | translate }}
 					</p>
 					<p class="caption status-danger" *ngIf="password.errors?.minlength || password.errors?.maxlength">
-						{{
-							'LOGIN_PAGE.VALIDATION.PASSWORD_SHOULD_CONTAIN'
-								| translate
-									: {
-											minLength: getConfigValue('forms.validation.password.minLength'),
-											maxLength: getConfigValue('forms.validation.password.maxLength')
-									  }
+						{{ 'LOGIN_PAGE.VALIDATION.PASSWORD_SHOULD_CONTAIN' | translate : {
+						minLength: getConfigValue('forms.validation.password.minLength'),
+						maxLength: getConfigValue('forms.validation.password.maxLength')
+						}
 						}}
 					</p>
 				</ng-container>
@@ -148,7 +116,7 @@
 			<div class="form-control-group accept-group">
 				<nb-checkbox name="rememberMe" [(ngModel)]="user.rememberMe" class="remember-me" *ngIf="rememberMe">{{
 					'LOGIN_PAGE.REMEMBER_ME_TITLE' | translate
-				}}</nb-checkbox>
+					}}</nb-checkbox>
 			</div>
 			<div class="submit-btn-wrapper">
 				<a class="forgot-password caption-2 forgot-password-big" routerLink="/auth/request-password">
@@ -158,14 +126,8 @@
 					<a class="forgot-password caption-2 forgot-password-small" routerLink="/auth/request-password">
 						{{ 'LOGIN_PAGE.FORGOT_PASSWORD_TITLE' | translate }}
 					</a>
-					<button
-						type="submit"
-						nbButton
-						size="small"
-						class="submit-btn"
-						[disabled]="submitted || !form.valid"
-						[class.btn-pulse]="submitted"
-					>
+					<button type="submit" nbButton size="small" class="submit-btn" [disabled]="submitted || !form.valid"
+						[class.btn-pulse]="submitted">
 						{{ 'BUTTONS.LOGIN' | translate }}
 					</button>
 				</div>
@@ -188,7 +150,7 @@
 			</a>
 		</section>
 
-		<section class="another-action" aria-label="Register">
+		<section *ngIf="allowEmailPasswordLogin$ | async" class="another-action" aria-label="Register">
 			{{ 'LOGIN_PAGE.DO_NOT_HAVE_ACCOUNT_TITLE' | translate }}
 			<a class="text-link" routerLink="/auth/register">
 				{{ 'BUTTONS.REGISTER' | translate }}
@@ -202,34 +164,19 @@
 					<nb-card-body class="card-body">
 						<h6 class="title">{{ 'LOGIN_PAGE.DEMO.TITLE' | translate }}</h6>
 						<p class="sub-title">{{ 'LOGIN_PAGE.DEMO.SUB_TITLE' | translate }}</p>
-						<button
-							nbButton
-							fullWidth
-							size="small"
-							class="mt-3 custom-btn"
-							(click)="autoLogin(RolesEnum.SUPER_ADMIN)"
-						>
+						<button nbButton fullWidth size="small" class="mt-3 custom-btn"
+							(click)="autoLogin(RolesEnum.SUPER_ADMIN)">
 							<nb-icon icon="star"></nb-icon>
 							{{ 'BUTTONS.SUPER_ADMIN_DEMO' | translate }}
 						</button>
 						<br />
-						<button
-							nbButton
-							fullWidth
-							size="small"
-							class="mt-3 custom-btn"
-							(click)="autoLogin(RolesEnum.ADMIN)"
-						>
+						<button nbButton fullWidth size="small" class="mt-3 custom-btn"
+							(click)="autoLogin(RolesEnum.ADMIN)">
 							{{ 'BUTTONS.ADMIN_DEMO' | translate }}
 						</button>
 						<br />
-						<button
-							nbButton
-							fullWidth
-							size="small"
-							class="mt-3 custom-btn"
-							(click)="autoLogin(RolesEnum.EMPLOYEE)"
-						>
+						<button nbButton fullWidth size="small" class="mt-3 custom-btn"
+							(click)="autoLogin(RolesEnum.EMPLOYEE)">
 							{{ 'BUTTONS.EMPLOYEE_DEMO' | translate }}
 						</button>
 					</nb-card-body>

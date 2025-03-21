@@ -3,11 +3,15 @@ import { Router } from '@angular/router';
 import { FormGroupDirective } from '@angular/forms';
 import { NbAuthService, NbLoginComponent, NB_AUTH_OPTIONS } from '@nebular/auth';
 import { CookieService } from 'ngx-cookie-service';
+import { Observable, map } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { RolesEnum } from '@gauzy/contracts';
 import { environment } from '@gauzy/ui-config';
-import { ElectronService } from '@gauzy/ui-core/core';
+import { ElectronService, AppService } from '@gauzy/ui-core/core';
 import { patterns } from '@gauzy/ui-core/shared';
+import { IAppConfig } from '@gauzy/contracts';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-login',
 	templateUrl: './login.component.html',
@@ -21,6 +25,8 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	isDemo: boolean = environment.DEMO;
 	showPassword = false;
 	passwordNoSpaceEdges = patterns.passwordNoSpaceEdges;
+	public allowEmailPasswordLogin$: Observable<boolean>;
+
 
 	constructor(
 		private readonly cookieService: CookieService,
@@ -29,6 +35,7 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		public readonly router: Router,
 		public readonly electronService: ElectronService,
 		private readonly el: ElementRef,
+		private readonly appService: AppService,
 		@Inject(NB_AUTH_OPTIONS) options
 	) {
 		super(nbAuthService, options, cdr, router);
@@ -40,6 +47,18 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		body.removeAttribute('style');
 		this.checkRememberdMe();
 		this.autoFillCredential();
+
+		// Load the configuration to check if the email/password login is enabled.
+		this.allowEmailPasswordLogin$ = this.appService.getAppConfigs().pipe(
+			/**
+			 * Map the application configurations to social links.
+			 */
+			map((configs: IAppConfig) => configs.email_password_login),
+			/**
+			 * Handle component lifecycle to avoid memory leaks.
+			 */
+			untilDestroyed(this)
+		);
 	}
 
 	/**
