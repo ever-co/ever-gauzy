@@ -1999,6 +1999,10 @@
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
 				"MEMBERS": "Membres"
+			},
+			"ERRORS": {
+				"EMAIL_DOMAIN_INVALID_LENGTH": "La longueur du domaine de l'e-mail doit être comprise entre {{ min }} et {{ max }} caractères",
+				"EMAIL_DOMAIN_INVALID_PATTERN": "Le domaine de l'e-mail doit être un nom de domaine valide (par exemple, entreprise.com)"
 			}
 		},
 		"PERMISSIONS": {

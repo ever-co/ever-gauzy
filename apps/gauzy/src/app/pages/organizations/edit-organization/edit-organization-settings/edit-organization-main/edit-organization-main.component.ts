@@ -24,8 +24,7 @@ import {
 })
 export class EditOrganizationMainComponent
 	extends TranslationBaseComponent
-	implements OnInit, AfterViewInit
-{
+	implements OnInit, AfterViewInit {
 	hoverState: boolean;
 	employeesCount: number;
 
@@ -45,7 +44,11 @@ export class EditOrganizationMainComponent
 			taxId: [null],
 			registrationDate: [null],
 			website: [null],
-			emailDomain: [null],
+			emailDomain: [null, [
+				Validators.minLength(4),
+				Validators.maxLength(255),
+				Validators.pattern(/^(?!:\/\/)(?!.+\/$)(?!.*[A-Z])[a-z0-9-]+(?:\.[a-z0-9-]+)*(?:\.[a-z]{2,})$/)]
+			],
 			imageUrl: [{ value: null, disabled: true }],
 			imageId: []
 		});
@@ -106,7 +109,7 @@ export class EditOrganizationMainComponent
 		}
 	}
 
-	handleImageUploadError(error: unknown) { 
+	handleImageUploadError(error: unknown) {
 		// Delegate error handling to the _errorHandlingService
 		this.errorHandler.handleError(error);
 	}

@@ -1998,6 +1998,10 @@
 			"TEAMS_PAGE": {
 				"MANAGERS": "Menedżerowie",
 				"MEMBERS": "Członkowie"
+			},
+			"ERRORS": {
+				"EMAIL_DOMAIN_INVALID_LENGTH": "Długość domeny e-mail musi zawierać się między {{ min }} a {{ max }} znakami",
+				"EMAIL_DOMAIN_INVALID_PATTERN": "Domena e-mail musi być prawidłową nazwą domeny (np. firma.com)"
 			}
 		},
 		"PERMISSIONS": {

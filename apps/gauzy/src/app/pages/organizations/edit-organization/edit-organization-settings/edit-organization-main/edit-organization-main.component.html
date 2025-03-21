@@ -132,6 +132,14 @@
 							[placeholder]="'FORM.PLACEHOLDERS.EMAIL_DOMAIN' | translate"
 							formControlName="emailDomain"
 						/>
+						<ng-container *ngIf="form.get('emailDomain').invalid && form.get('emailDomain').touched">
+							<p class="caption status-danger" *ngIf="form.get('emailDomain').errors?.minlength || form.get('emailDomain').errors?.maxlength">
+								{{ 'ORGANIZATIONS_PAGE.EDIT.ERRORS.EMAIL_DOMAIN_INVALID_LENGTH' | translate : { min: 4, max: 255 } }}
+							</p>
+							<p class="caption status-danger" *ngIf="form.get('emailDomain').errors?.pattern">
+								{{ 'ORGANIZATIONS_PAGE.EDIT.ERRORS.EMAIL_DOMAIN_INVALID_PATTERN' | translate }}
+							</p>
+						</ng-container>
 					</div>
 				</div>
 			</div>

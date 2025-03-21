@@ -2105,6 +2105,10 @@
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
 				"MEMBERS": "Members"
+			},
+			"ERRORS": {
+				"EMAIL_DOMAIN_INVALID_LENGTH": "Email domain length must be between {{ min }} and {{ max }} characters",
+				"EMAIL_DOMAIN_INVALID_PATTERN": "Email domain must be a valid domain name (e.g., company.com)"
 			}
 		},
 		"PERMISSIONS": {

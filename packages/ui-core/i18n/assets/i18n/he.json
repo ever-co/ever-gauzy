@@ -2026,6 +2026,10 @@
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
 				"MEMBERS": "Members"
+			},
+			"ERRORS": {
+				"EMAIL_DOMAIN_INVALID_LENGTH": "אורך דומיין האימייל חייב להיות בין {{ min }} ל-{{ max }} תווים",
+				"EMAIL_DOMAIN_INVALID_PATTERN": "דומיין האימייל חייב להיות שם דומיין חוקי (לדוגמה: company.com)"
 			}
 		},
 		"PERMISSIONS": {

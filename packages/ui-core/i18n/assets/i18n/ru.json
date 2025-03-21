@@ -2033,6 +2033,10 @@
 			"TEAMS_PAGE": {
 				"MANAGERS": "Менеджеры",
 				"MEMBERS": "Члены Комитета"
+			},
+			"ERRORS": {
+				"EMAIL_DOMAIN_INVALID_LENGTH": "Длина домена электронной почты должна быть от {{ min }} до {{ max }} символов",
+				"EMAIL_DOMAIN_INVALID_PATTERN": "Домен электронной почты должен быть действительным доменным именем (например, company.com)"
 			}
 		},
 		"PERMISSIONS": {

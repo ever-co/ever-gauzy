@@ -1994,6 +1994,10 @@
 			"TEAMS_PAGE": {
 				"MANAGERS": "Manager",
 				"MEMBERS": "Mitglieder"
+			},
+			"ERRORS": {
+				"EMAIL_DOMAIN_INVALID_LENGTH": "Die E-Mail-Domain muss zwischen {{ min }} und {{ max }} Zeichen lang sein",
+				"EMAIL_DOMAIN_INVALID_PATTERN": "Die E-Mail-Domain muss ein gültiger Domainname sein (z.B. firma.de)"
 			}
 		},
 		"PERMISSIONS": {

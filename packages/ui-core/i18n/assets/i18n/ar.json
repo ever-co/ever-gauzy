@@ -1996,6 +1996,10 @@
 			"TEAMS_PAGE": {
 				"MANAGERS": "المديرين",
 				"MEMBERS": "أعضاء"
+			},
+			"ERRORS": {
+				"EMAIL_DOMAIN_INVALID_LENGTH": "طول البريد الإلكتروني يجب أن يكون بين {{ min }} و {{ max }} حرف",
+				"EMAIL_DOMAIN_INVALID_PATTERN": "البريد الإلكتروني يجب أن يكون اسم مجال صالح (مثل company.com)"
 			}
 		},
 		"PERMISSIONS": {

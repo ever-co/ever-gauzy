@@ -2060,6 +2060,10 @@
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
 				"MEMBERS": "Members"
+			},
+			"ERRORS": {
+				"EMAIL_DOMAIN_INVALID_LENGTH": "Дължината на домейна на имейла трябва да бъде между {{ min }} и {{ max }} знака",
+				"EMAIL_DOMAIN_INVALID_PATTERN": "Домейнът на имейла трябва да бъде валидно име на домейн (напр. company.com)"
 			}
 		},
 		"PERMISSIONS": {

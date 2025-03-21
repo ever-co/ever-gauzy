@@ -1998,6 +1998,10 @@
 			"TEAMS_PAGE": {
 				"MANAGERS": "经理们",
 				"MEMBERS": "成员"
+			},
+			"ERRORS": {
+				"EMAIL_DOMAIN_INVALID_LENGTH": "电子邮件域名长度必须在 {{ min }} 到 {{ max }} 个字符之间",
+				"EMAIL_DOMAIN_INVALID_PATTERN": "电子邮件域名必须是有效的域名（例如：company.com）"
 			}
 		},
 		"PERMISSIONS": {
