@@ -46,13 +46,7 @@ export class NgxRegisterComponent extends NbRegisterComponent implements OnInit 
 
 		// Load the configuration to check if the email/password login is enabled.
 		this.allowEmailPasswordLogin$ = this.appService.getAppConfigs().pipe(
-			/**
-			 * Map the application configurations to social links.
-			 */
 			map((configs: IAppConfig) => configs.email_password_login),
-			/**
-			 * Handle component lifecycle to avoid memory leaks.
-			 */
 			untilDestroyed(this)
 		);
 
