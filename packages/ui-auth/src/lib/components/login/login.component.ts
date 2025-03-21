@@ -3,7 +3,7 @@ import { ActivatedRoute, Params, Router } from '@angular/router';
 import { FormGroupDirective } from '@angular/forms';
 import { NbAuthService, NbLoginComponent, NB_AUTH_OPTIONS } from '@nebular/auth';
 import { CookieService } from 'ngx-cookie-service';
-import { Observable, filter, map } from 'rxjs';
+import { Observable, filter, firstValueFrom, map } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { RolesEnum, IAppConfig, AuthError } from '@gauzy/contracts';
 import { environment } from '@gauzy/ui-config';
@@ -76,12 +76,12 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		});
 	}
 
-	private checkErrors() {
-		this.queryParams$.pipe().subscribe((params: Params) => {
+	private async checkErrors() {
+		this.queryParams$.subscribe(async (params: Params) => {
 			if (params.error === AuthError.INVALID_EMAIL_DOMAIN) {
 				this.toastrService.danger(
-					this.translate.instant('REGISTER_PAGE.ERRORS.INVALID_EMAIL_DOMAIN'),
-					this.translate.instant('BANNERS.ERROR_TITLE'),
+					await firstValueFrom(this.translate.get('REGISTER_PAGE.ERRORS.INVALID_EMAIL_DOMAIN')),
+					await firstValueFrom(this.translate.get('BANNERS.ERROR_TITLE')),
 					{
 						duration: 8000,
 						destroyByClick: true,
