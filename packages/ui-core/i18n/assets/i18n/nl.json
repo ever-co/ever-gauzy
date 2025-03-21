@@ -4548,6 +4548,11 @@
 		"ERROR_TITLE": "Oh nee!",
 		"SUCCESS_TITLE": "Hoera!"
 	},
+	"AUTH_ERRORS": {
+		"INVALID_EMAIL_DOMAIN": "E-mailadres wordt niet ondersteund om een account te registreren.",
+		"USER_CANCELLED_REQUEST": "Account authenticatie is geannuleerd.",
+		"UNKNOWN_ERROR": "Er is iets misgegaan tijdens de authenticatie, probeer het opnieuw."
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "Registreren",
 		"HAVE_AN_ACCOUNT": "Heb je al een account?",
@@ -4582,8 +4587,7 @@
 		},
 		"ERRORS": {
 			"DEFAULT": "Er is iets misgegaan, probeer het opnieuw.",
-			"ALREADY_REGISTERED": "E-mailadres is al geregistreerd.",
-			"INVALID_EMAIL_DOMAIN": "E-mailadres wordt niet ondersteund om een account te registreren."
+			"ALREADY_REGISTERED": "E-mailadres is al geregistreerd."
 		},
 		"MESSAGES": {
 			"DEFAULT": "Je bent succesvol geregistreerd."

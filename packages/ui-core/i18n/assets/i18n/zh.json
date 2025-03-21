@@ -4548,6 +4548,11 @@
 		"ERROR_TITLE": "哎呀！",
 		"SUCCESS_TITLE": "太好了！"
 	},
+	"AUTH_ERRORS": {
+		"INVALID_EMAIL_DOMAIN": "不支持使用此电子邮件地址注册账户。",
+		"USER_CANCELLED_REQUEST": "账户认证已取消。",
+		"UNKNOWN_ERROR": "认证过程中出现错误，请重试。"
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "注册",
 		"HAVE_AN_ACCOUNT": "已经有账户？",
@@ -4582,8 +4587,7 @@
 		},
 		"ERRORS": {
 			"DEFAULT": "出现错误，请重试。",
-			"ALREADY_REGISTERED": "电子邮件地址已注册。",
-			"INVALID_EMAIL_DOMAIN": "不支持使用此电子邮件地址注册账户。"
+			"ALREADY_REGISTERED": "电子邮件地址已注册。"
 		},
 		"MESSAGES": {
 			"DEFAULT": "您已成功注册。"

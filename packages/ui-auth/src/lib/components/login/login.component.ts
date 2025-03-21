@@ -78,15 +78,33 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 
 	private async checkErrors() {
 		this.queryParams$.subscribe(async (params: Params) => {
-			if (params.error === AuthError.INVALID_EMAIL_DOMAIN) {
+			if (params.error) {
+				let errorMessage = 'AUTH_ERRORS.UNKNOWN_ERROR';
+				switch (params.error) {
+					case AuthError.INVALID_EMAIL_DOMAIN:
+						errorMessage = 'AUTH_ERRORS.INVALID_EMAIL_DOMAIN';
+						break;
+					case AuthError.ACCESS_DENIED:
+						errorMessage = 'AUTH_ERRORS.USER_CANCELLED_REQUEST';
+						break;
+				}
 				this.toastrService.danger(
-					await firstValueFrom(this.translate.get('REGISTER_PAGE.ERRORS.INVALID_EMAIL_DOMAIN')),
+					await firstValueFrom(this.translate.get(errorMessage)),
 					await firstValueFrom(this.translate.get('BANNERS.ERROR_TITLE')),
 					{
 						duration: 8000,
 						destroyByClick: true,
 					}
 				);
+
+				// Remove the error query parameter from the URL without reloading the page
+				this.router.navigate([], {
+					queryParams: {
+						'error': null,
+					},
+					queryParamsHandling: 'merge',
+					replaceUrl: true
+				})
 			}
 		});
 	}

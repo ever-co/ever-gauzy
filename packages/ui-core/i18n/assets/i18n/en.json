@@ -4701,6 +4701,11 @@
 		"ERROR_TITLE": "Oh snap!",
 		"SUCCESS_TITLE": "Hooray!"
 	},
+	"AUTH_ERRORS": {
+		"INVALID_EMAIL_DOMAIN": "Email address is not supported to register an account.",
+		"USER_CANCELLED_REQUEST": "Account authentication was cancelled.",
+		"UNKNOWN_ERROR": "Something went wrong during authentication, please try again."
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "Register",
 		"HAVE_AN_ACCOUNT": "Already have an account?",
@@ -4735,8 +4740,7 @@
 		},
 		"ERRORS": {
 			"DEFAULT": "Something went wrong, please try again.",
-			"ALREADY_REGISTERED": "Email address is already registered.",
-			"INVALID_EMAIL_DOMAIN": "Email address is not supported to register an account."
+			"ALREADY_REGISTERED": "Email address is already registered."
 		},
 		"MESSAGES": {
 			"DEFAULT": "You have been successfully registered."

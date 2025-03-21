@@ -4548,6 +4548,11 @@
 		"ERROR_TITLE": "Ah não!",
 		"SUCCESS_TITLE": "Oba!"
 	},
+	"AUTH_ERRORS": {
+		"INVALID_EMAIL_DOMAIN": "O endereço de e-mail não é suportado para registrar uma conta.",
+		"USER_CANCELLED_REQUEST": "A autenticação da conta foi cancelada.",
+		"UNKNOWN_ERROR": "Algo deu errado durante a autenticação, tente novamente."
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "Registrar",
 		"HAVE_AN_ACCOUNT": "Já tem uma conta?",
@@ -4582,8 +4587,7 @@
 		},
 		"ERRORS": {
 			"DEFAULT": "Algo deu errado, por favor tente novamente.",
-			"ALREADY_REGISTERED": "Endereço de e-mail já registrado.",
-			"INVALID_EMAIL_DOMAIN": "Endereço de e-mail não é suportado para registrar uma conta."
+			"ALREADY_REGISTERED": "Endereço de e-mail já registrado."
 		},
 		"MESSAGES": {
 			"DEFAULT": "Você foi registrado com sucesso."

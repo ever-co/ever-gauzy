@@ -4539,6 +4539,11 @@
 		"ERROR_TITLE": "אוי לא!",
 		"SUCCESS_TITLE": "הידד!"
 	},
+	"AUTH_ERRORS": {
+		"INVALID_EMAIL_DOMAIN": "כתובת הדוא\"ל אינה נתמכת לרישום חשבון.",
+		"USER_CANCELLED_REQUEST": "אימות החשבון בוטל.",
+		"UNKNOWN_ERROR": "משהו השתבש במהלך האימות, אנא נסה שוב."
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "הרשמה",
 		"HAVE_AN_ACCOUNT": "כבר יש לך חשבון?",
@@ -4573,8 +4578,7 @@
 		},
 		"ERRORS": {
 			"DEFAULT": "משהו השתבש, אנא נסה שוב.",
-			"ALREADY_REGISTERED": "כתובת הדוא\"ל כבר רשומה.",
-			"INVALID_EMAIL_DOMAIN": "כתובת הדוא\"ל אינה נתמכת לרישום חשבון."
+			"ALREADY_REGISTERED": "כתובת הדוא\"ל כבר רשומה."
 		},
 		"MESSAGES": {
 			"DEFAULT": "נרשמת בהצלחה."
