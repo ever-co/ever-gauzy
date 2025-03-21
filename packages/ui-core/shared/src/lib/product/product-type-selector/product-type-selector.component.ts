@@ -12,6 +12,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { ErrorHandlingService, ProductTypeService, Store } from '@gauzy/ui-core/core';
+import { TranslateService } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -55,6 +56,15 @@ export class ProductTypeSelectorComponent implements OnInit, OnDestroy {
 		this._placeholder = value;
 	}
 
+	private _label: string;
+
+	get label(): string {
+		return this._label;
+	}
+
+	@Input() set label(value: string) {
+		this._label = value;
+	}
 	/*
 	 * Getter & Setter for dynamic add tag option
 	 */

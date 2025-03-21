@@ -1,6 +1,6 @@
 
-<label class="label">
-	{{ 'INVENTORY_PAGE.PRODUCT_TYPE' | translate }}
+<label class="label" *ngIf="label !== ''">
+	{{ label || 'INVENTORY_PAGE.PRODUCT_TYPE' | translate }}
 </label>
 <ng-select
 	[addTag]="((hasEditProductType$ | async) && addTag) ? addProductType : null"

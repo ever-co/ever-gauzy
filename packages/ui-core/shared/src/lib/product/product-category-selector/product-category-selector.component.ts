@@ -11,6 +11,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { ProductCategoryService, Store } from '@gauzy/ui-core/core';
+import { TranslateService } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -63,6 +64,15 @@ export class ProductCategorySelectorComponent implements OnInit, OnDestroy {
 	}
 	@Input() set addTag(value: boolean) {
 		this._addTag = value;
+	}
+
+	private _label: string;
+	get label(): string {
+		return this._label;
+	}
+
+	@Input() set label(value: string) {
+		this._label = value;
 	}
 
 	private _productCategoryId: IProductCategoryTranslated['id'];
