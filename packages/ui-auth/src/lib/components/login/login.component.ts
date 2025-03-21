@@ -53,7 +53,7 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		this.checkRememberdMe();
 		this.autoFillCredential();
 
-		// Load the configuration to check if the email/password login is enabled.
+		// Load the configuration to check if email/password login is enabled
 		this.allowEmailPasswordLogin$ = this.appService.getAppConfigs().pipe(
 			map((configs: IAppConfig) => configs.email_password_login),
 			untilDestroyed(this)
