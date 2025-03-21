@@ -12,12 +12,10 @@
 }
 
 .content-active {
-  position: relative;
-
   .button-upload {
     cursor: pointer;
     position: absolute;
-    bottom: 2rem;
-    right: 2rem;
+    bottom: 3.5rem;
+    right: 3rem;
   }
 }

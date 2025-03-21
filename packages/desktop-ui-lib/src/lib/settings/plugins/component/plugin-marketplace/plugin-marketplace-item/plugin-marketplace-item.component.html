@@ -235,7 +235,9 @@
 				<div class="info-row">
 					<div class="info-item" *ngIf="plugin.uploadedBy">
 						<div class="label">{{ 'PLUGIN.DETAILS.UPLOADED_BY' | translate }}</div>
-						<div class="value">{{ plugin.uploadedBy.firstName }} {{ plugin.uploadedBy.lastName }}</div>
+						<div class="value">
+							{{ plugin.uploadedBy.user.firstName }} {{ plugin.uploadedBy.user.lastName }}
+						</div>
 					</div>
 
 					<div class="info-item" *ngIf="plugin.uploadedAt">

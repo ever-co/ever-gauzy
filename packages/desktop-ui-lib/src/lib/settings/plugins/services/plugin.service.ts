@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { IPlugin, PluginSourceType } from '@gauzy/contracts';
-import { API_PREFIX } from '@gauzy/ui-core/common';
-import { Observable } from 'rxjs';
+import { IPagination, IPlugin, PluginSourceType } from '@gauzy/contracts';
+import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
+import { map, Observable } from 'rxjs';
 import { Store } from '../../../services';
 
 @Injectable({
@@ -13,12 +13,16 @@ export class PluginService {
 
 	constructor(private readonly http: HttpClient, private readonly store: Store) {}
 
-	public getAll(): Observable<IPlugin[]> {
-		return this.http.get<IPlugin[]>(this.endPoint);
+	public getAll<T>(params = {} as T): Observable<IPlugin[]> {
+		return this.http
+			.get<IPagination<IPlugin>>(this.endPoint, {
+				params: toParams(params)
+			})
+			.pipe(map((data) => data.items));
 	}
 
-	public getOne(id: string): Observable<IPlugin> {
-		return this.http.get<IPlugin>(`${this.endPoint}/${id}`);
+	public getOne<T>(id: string, params = {} as T): Observable<IPlugin> {
+		return this.http.get<IPlugin>(`${this.endPoint}/${id}`, { params: toParams(params) });
 	}
 
 	private createFormData(data: IPlugin): FormData {

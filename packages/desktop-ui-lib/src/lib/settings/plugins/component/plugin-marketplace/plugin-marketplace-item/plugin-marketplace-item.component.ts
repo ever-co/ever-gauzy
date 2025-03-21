@@ -8,6 +8,7 @@ import { catchError, filter, switchMap, takeUntil } from 'rxjs/operators';
 
 import {
 	ICDNSource,
+	ID,
 	IGauzySource,
 	INPMSource,
 	IPlugin,
@@ -61,9 +62,9 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit(): void {
-		this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
+		this.route.params.pipe(takeUntil(this.destroy$)).subscribe(async (params) => {
 			this.pluginId = params['id'];
-			this.loadPlugin();
+			await this.loadPlugin();
 		});
 		this.pluginElectronService.status
 			.pipe(
@@ -112,8 +113,12 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		this.loading = true;
 
 		try {
-			this.plugin = await firstValueFrom(this.pluginService.getOne(this.pluginId));
-			this.selectedVersion = this.plugin.versions[this.plugin.versions.length - 1];
+			this.plugin = await firstValueFrom(
+				this.pluginService.getOne(this.pluginId, {
+					relations: ['versions', 'versions.source', 'uploadedBy', 'uploadedBy.user']
+				})
+			);
+			this.selectedVersion = this.plugin.version;
 			await this.checkInstallation();
 		} catch (error) {
 			this.handleError(error);
@@ -272,9 +277,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 					...{
 						pkg: {
 							name: this.plugin.source.name,
-							version: isUpdate
-								? this.plugin.versions[this.plugin.versions.length - 1]
-								: this.selectedVersion
+							version: isUpdate ? this.plugin.version.number : this.selectedVersionId
 						},
 						registry: {
 							privateURL: this.plugin.source.registry,
@@ -288,5 +291,9 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 				this.installing = false;
 				break;
 		}
+	}
+
+	public get selectedVersionId(): ID {
+		return this.selectedVersion.id;
 	}
 }

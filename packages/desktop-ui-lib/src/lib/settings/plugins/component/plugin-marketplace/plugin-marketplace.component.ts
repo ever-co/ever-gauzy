@@ -2,7 +2,7 @@ import { Component, inject, NgZone, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BehaviorSubject, catchError, EMPTY, filter, from, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, catchError, EMPTY, filter, from, lastValueFrom, switchMap, tap } from 'rxjs';
 import { ToastrNotificationService } from '../../../../services';
 import { PluginElectronService } from '../../services/plugin-electron.service';
 import { IPlugin } from '../../services/plugin-loader.service';
@@ -67,9 +67,14 @@ export class PluginMarketplaceComponent implements OnInit {
 		from(this.pluginElectronService.plugins)
 			.pipe(
 				tap((plugins: IPlugin[]) =>
-					this.ngZone.run(() => {
+					this.ngZone.run(async () => {
 						const installed = plugins.map((plugin) => ({ ...plugin, installed: true }));
-						this.plugins$.next(installed);
+						const marketPlace = await lastValueFrom(
+							this.pluginService.getAll({
+								relations: ['versions']
+							})
+						);
+						this.plugins$.next(installed.concat(marketPlace as any));
 					})
 				),
 				untilDestroyed(this)
