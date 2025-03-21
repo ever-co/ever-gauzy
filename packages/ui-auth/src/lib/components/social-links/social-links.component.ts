@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { environment } from '@gauzy/ui-config';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { map } from 'rxjs/operators';
@@ -31,6 +31,9 @@ export interface ISocialLink {
 	styleUrls: ['./social-links.component.scss']
 })
 export class SocialLinksComponent implements OnInit {
+	/** Whether to show titles for social links */
+	@Input() showTitle = true;
+
 	/** */
 	public socialLinks$: Observable<ISocialLink[]>; // Observable for an array of social links
 	public configs: IAppConfig;
