@@ -150,7 +150,7 @@
 			</a>
 		</section>
 
-		<section *ngIf="allowEmailPasswordLogin$ | async" class="another-action" aria-label="Register">
+		<section *ngIf="allowEmailPasswordLogin" class="another-action" aria-label="Register">
 			{{ 'LOGIN_PAGE.DO_NOT_HAVE_ACCOUNT_TITLE' | translate }}
 			<a class="text-link" routerLink="/auth/register">
 				{{ 'BUTTONS.REGISTER' | translate }}
