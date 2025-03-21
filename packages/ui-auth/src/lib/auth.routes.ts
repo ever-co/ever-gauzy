@@ -1,6 +1,6 @@
 import { Route } from '@angular/router';
 import { NbLogoutComponent } from '@nebular/auth';
-import { NoAuthGuard, PageRouteRegistryService } from '@gauzy/ui-core/core';
+import { NoAuthGuard, PageRouteRegistryService, NoEmailPasswordGuard } from '@gauzy/ui-core/core';
 import { NgxAuthComponent } from './components/auth/auth.component';
 import { NgxLoginComponent } from './components/login/login.component';
 import { NgxForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
@@ -37,7 +37,7 @@ export const createAuthRoutes = (_pageRouteRegistryService: PageRouteRegistrySer
 			{
 				path: 'register',
 				component: NgxRegisterComponent,
-				canActivate: [NoAuthGuard]
+				canActivate: [NoAuthGuard, NoEmailPasswordGuard]
 			},
 			{
 				path: 'request-password',
