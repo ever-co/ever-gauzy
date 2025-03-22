@@ -1,0 +1,21 @@
+{
+  "name": "gauzy-zapier",
+  "version": "1.0.0",
+  "description": "Zapier integration for Gauzy",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "zapier test",
+    "push": "zapier push",
+    "validate": "zapier validate"
+  },
+  "dependencies": {
+    "zapier-platform-core": "16.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.9",
+    "typescript": "^5.8.2",
+    "zapier-platform-cli": "16.3.1"
+  },
+  "private": true
+}
