@@ -30,6 +30,7 @@ import { PluginListComponent } from './component/plugin-list/plugin-list.compone
 import { PluginStatusComponent } from './component/plugin-list/plugin-status/plugin-status.component';
 import { PluginUpdateComponent } from './component/plugin-list/plugin-update/plugin-update.component';
 import { PluginMarketplaceDetailComponent } from './component/plugin-marketplace/plugin-marketplace-detail/plugin-marketplace-detail.component';
+import { DialogCreateVersionComponent } from './component/plugin-marketplace/plugin-marketplace-item/dialog-create-version/dialog-create-version.component';
 import { PluginMarketplaceItemComponent } from './component/plugin-marketplace/plugin-marketplace-item/plugin-marketplace-item.component';
 import { FileUploadComponent } from './component/plugin-marketplace/plugin-marketplace-upload/file-upload/file-upload.component';
 import { FormRowComponent } from './component/plugin-marketplace/plugin-marketplace-upload/form-row/form-row.component';
@@ -63,7 +64,8 @@ import { PluginService } from './services/plugin.service';
 		PluginBasicInformationComponent,
 		FormSectionComponent,
 		FormRowComponent,
-		FileUploadComponent
+		FileUploadComponent,
+		DialogCreateVersionComponent
 	],
 	imports: [
 		CommonModule,

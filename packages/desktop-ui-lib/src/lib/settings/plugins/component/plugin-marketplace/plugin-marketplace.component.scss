@@ -12,6 +12,8 @@
 }
 
 .content-active {
+  overflow: auto;
+
   .button-upload {
     cursor: pointer;
     position: absolute;

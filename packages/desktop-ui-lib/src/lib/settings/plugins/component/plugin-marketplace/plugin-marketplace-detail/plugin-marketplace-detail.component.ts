@@ -29,7 +29,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 
 	ngOnInit(): void {
 		if (this.plugin) {
-			this._isChecked$.next(!!this.plugin.version);
+			this._isChecked$.next(this.plugin.installed);
 		}
 	}
 
@@ -62,6 +62,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 			default:
 				break;
 		}
+		this.pluginService.install({ pluginId: this.plugin.id, versionId: this.plugin.version.id }).subscribe();
 	}
 
 	public get isChecked$(): Observable<boolean> {
@@ -110,6 +111,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 			.onClose.subscribe((isUninstall: boolean) => {
 				if (isUninstall) {
 					this.pluginElectronService.uninstall(this.plugin as any);
+					this.pluginService.uninstall(this.plugin.id).subscribe();
 					this._isChecked$.next(false);
 				} else {
 					this._isChecked$.next(true);

@@ -20,7 +20,7 @@ import { Plugin } from './plugin.entity';
 @MultiORMEntity('plugin_installation', { mikroOrmRepository: () => MikroOrmPluginInstallationRepository })
 export class PluginInstallation extends TenantOrganizationBaseEntity implements IPluginInstallation {
 	@ApiProperty({ type: () => Plugin, description: 'Installed the plugin' })
-	@MultiORMManyToOne(() => Plugin)
+	@MultiORMManyToOne(() => Plugin, { onDelete: 'CASCADE' })
 	plugin: IPlugin;
 
 	@RelationId((installation: PluginInstallation) => installation.plugin)
@@ -29,7 +29,7 @@ export class PluginInstallation extends TenantOrganizationBaseEntity implements 
 	pluginId?: ID;
 
 	@ApiProperty({ type: () => PluginVersion, description: 'Installed version of the plugin' })
-	@MultiORMManyToOne(() => PluginVersion)
+	@MultiORMManyToOne(() => PluginVersion, { onDelete: 'SET NULL' })
 	version: IPluginVersion;
 
 	@RelationId((installation: PluginInstallation) => installation.version)
@@ -38,7 +38,7 @@ export class PluginInstallation extends TenantOrganizationBaseEntity implements 
 	versionId?: ID;
 
 	@ApiProperty({ type: () => Employee, description: 'Employee who installed the plugin', required: false })
-	@MultiORMManyToOne(() => Employee, { nullable: true })
+	@MultiORMManyToOne(() => Employee, { nullable: true, onDelete: 'SET NULL' })
 	@JoinColumn()
 	installedBy: IEmployee;
 

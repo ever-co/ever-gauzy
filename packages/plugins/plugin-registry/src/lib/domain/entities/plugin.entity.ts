@@ -94,6 +94,9 @@ export class Plugin extends TenantOrganizationBaseEntity implements IPlugin {
 	// Computed version
 	version: IPluginVersion;
 
+	// Computed state
+	installed: boolean;
+
 	@ApiProperty({ type: Date, description: 'Last downloaded date', required: false })
 	@IsOptional()
 	@IsDate({ message: 'LastDownloadedAt must be a valid date' })

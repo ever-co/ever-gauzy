@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { IPagination, IPlugin, PluginSourceType } from '@gauzy/contracts';
+import { IPagination, IPlugin, IPluginVersion, PluginSourceType } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 import { map, Observable } from 'rxjs';
 import { Store } from '../../../services';
@@ -113,7 +113,82 @@ export class PluginService {
 		return this.http.delete<IPlugin>(`${this.endPoint}/${id}`);
 	}
 
-	public verify(plugin: IPlugin): Observable<IPlugin> {
-		return this.http.post<IPlugin>(`${this.endPoint}/verify`, plugin);
+	public verify({
+		pluginId,
+		versionId,
+		signature
+	}: {
+		pluginId: string;
+		versionId: string;
+		signature: string;
+	}): Observable<IPlugin> {
+		return this.http.post<IPlugin>(`${this.endPoint}/${pluginId}/verify`, { versionId, signature });
+	}
+
+	public install({ pluginId, versionId }: { pluginId: string; versionId: string }): Observable<void> {
+		return this.http.patch<void>(`${this.endPoint}/${pluginId}/install`, null, { params: toParams({ versionId }) });
+	}
+
+	public uninstall(pluginId: string): Observable<void> {
+		return this.http.patch<void>(`${this.endPoint}/${pluginId}/uninstall`, null);
+	}
+
+	public activate(pluginId: string): Observable<void> {
+		return this.http.patch<void>(`${this.endPoint}/${pluginId}/activate`, null);
+	}
+
+	public deactivate(pluginId: string): Observable<void> {
+		return this.http.patch<void>(`${this.endPoint}/${pluginId}/deactivate`, null);
+	}
+
+	private createVersionFormData(data: IPluginVersion): FormData {
+		let formData = new FormData();
+		const common = { organizationId: this.store.organizationId, tenantId: this.store.tenantId };
+
+		// Strictly map all properties of ICreatePlugin and IUpdatePlugin
+		const version: Partial<IPluginVersion> = {
+			number: data.number,
+			changelog: data.changelog,
+			releaseDate: data.releaseDate,
+			...common,
+			source: data.source
+				? {
+						type: data.source.type,
+						...(data.source.type === PluginSourceType.CDN && {
+							url: data.source.url,
+							integrity: data.source.integrity,
+							crossOrigin: data.source.crossOrigin
+						}),
+						...(data.source.type === PluginSourceType.NPM && {
+							name: data.source.name,
+							registry: data.source.registry,
+							authToken: data.source.authToken,
+							scope: data.source.scope
+						}),
+						...common
+				  }
+				: undefined // Source details
+		};
+
+		// Remove undefined values to avoid sending empty fields
+		const filtered = Object.fromEntries(Object.entries(version).filter(([_, value]) => value !== undefined));
+
+		// Append plugin data as JSON
+		formData = this.jsonToFormData(filtered);
+
+		// Extract and append the file from `source.file` (if available)
+		const file = data.source && 'file' in data.source ? data.source.file : undefined;
+		if (file instanceof File) {
+			formData.append('file', file, file.name);
+		}
+
+		return formData;
+	}
+
+	public addVersion(pluginId: string, version: IPluginVersion): Observable<IPluginVersion> {
+		return this.http.post<IPluginVersion>(
+			`${this.endPoint}/${pluginId}/versions`,
+			this.createVersionFormData(version)
+		);
 	}
 }

@@ -4,7 +4,7 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 
 import { EMPTY, firstValueFrom, Subject, tap } from 'rxjs';
-import { catchError, filter, switchMap, takeUntil } from 'rxjs/operators';
+import { catchError, filter, switchMap, take, takeUntil } from 'rxjs/operators';
 
 import {
 	ICDNSource,
@@ -23,6 +23,8 @@ import { Store, ToastrNotificationService } from '../../../../../services';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
 import { PluginService } from '../../../services/plugin.service';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
+import { DialogCreateVersionComponent } from './dialog-create-version/dialog-create-version.component';
+import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 
 @Component({
 	selector: 'gauzy-plugin-marketplace-item',
@@ -82,8 +84,14 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	private handleStatus(notification: { status: string; message?: string }) {
 		switch (notification.status) {
 			case 'success':
-				this.installing = false;
-				this.uninstalling = this.installing;
+				if (this.installing) {
+					this.pluginService
+						.install({ pluginId: this.plugin.id, versionId: this.selectedVersion.id })
+						.subscribe(() => (this.installing = false));
+				}
+				if (this.uninstalling) {
+					this.pluginService.uninstall(this.plugin.id).subscribe(() => (this.uninstalling = false));
+				}
 				this.toastrService.success(notification.message);
 				break;
 			case 'error':
@@ -118,7 +126,8 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 					relations: ['versions', 'versions.source', 'uploadedBy', 'uploadedBy.user']
 				})
 			);
-			this.selectedVersion = this.plugin.version;
+			this.selectedVersion =
+				this.plugin.versions.find((v) => v.id === this.plugin.version.id) || this.plugin.version;
 			await this.checkInstallation();
 		} catch (error) {
 			this.handleError(error);
@@ -192,7 +201,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 				return (plugin.source as ICDNSource).url;
 			case PluginSourceType.NPM:
 				const npmSource = plugin.source as INPMSource;
-				return `${npmSource.scope ? npmSource.scope + '/' : ''}${npmSource.name}@${npmSource.version}`;
+				return `${npmSource.scope ? npmSource.scope + '/' : ''}${npmSource.name}@${plugin.version.number}`;
 			case PluginSourceType.GAUZY:
 				return (
 					(plugin.source as IGauzySource).url || this.translateService.instant('PLUGIN.DETAILS.UPLOADED_FILE')
@@ -267,21 +276,26 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	installPlugin(isUpdate = false): void {
 		this.installing = true;
-		switch (this.plugin.source.type) {
+		const source = isUpdate ? this.plugin.source : this.selectedVersion.source;
+
+		switch (source.type) {
 			case PluginSourceType.GAUZY:
 			case PluginSourceType.CDN:
-				this.pluginElectronService.downloadAndInstall({ url: this.plugin.source.url, contextType: 'cdn' });
+				this.pluginElectronService.downloadAndInstall({
+					url: source.url,
+					contextType: 'cdn'
+				});
 				break;
 			case PluginSourceType.NPM:
 				this.pluginElectronService.downloadAndInstall({
 					...{
 						pkg: {
-							name: this.plugin.source.name,
-							version: isUpdate ? this.plugin.version.number : this.selectedVersionId
+							name: source.name,
+							version: isUpdate ? this.plugin.version.number : this.selectedVersionNumber
 						},
 						registry: {
-							privateURL: this.plugin.source.registry,
-							authToken: this.plugin.source.authToken
+							privateURL: source.registry,
+							authToken: source.authToken
 						}
 					},
 					contextType: 'npm'
@@ -293,7 +307,58 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	public get selectedVersionId(): ID {
-		return this.selectedVersion.id;
+	public get selectedVersionNumber(): ID {
+		return this.selectedVersion.number;
+	}
+
+	public addVersion(): void {
+		if (!this.plugin || !this.isOwner) return;
+
+		this.dialogService
+			.open(DialogCreateVersionComponent, {
+				backdropClass: 'backdrop-blur',
+				context: { plugin: this.plugin }
+			})
+			.onClose.pipe(
+				filter(Boolean),
+				switchMap((version: IPluginVersion) =>
+					this.pluginService.addVersion(this.plugin.id, version).pipe(
+						tap(() => this.toastrService.success('New version created successfully!')),
+						catchError((error) => {
+							this.toastrService.error(error);
+							return EMPTY;
+						})
+					)
+				),
+				takeUntil(this.destroy$)
+			)
+			.subscribe();
+	}
+
+	public delete(): void {
+		this.dialogService
+			.open(AlertComponent, {
+				context: {
+					data: {
+						message: 'Would you like to delete this plugin?',
+						title: 'Delete plugin',
+						status: 'Danger'
+					}
+				}
+			})
+			.onClose.pipe(
+				take(1),
+				filter(Boolean),
+				switchMap(() =>
+					this.pluginService.delete(this.plugin.id).pipe(
+						tap(() => this.toastrService.success('Plugin deleted successfully!')),
+						catchError((error) => {
+							this.toastrService.error(error);
+							return EMPTY;
+						})
+					)
+				)
+			)
+			.subscribe();
 	}
 }

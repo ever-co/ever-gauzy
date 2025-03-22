@@ -53,7 +53,6 @@ export interface ICDNSource extends IPluginSource {
 export interface INPMSource extends IPluginSource {
 	type: PluginSourceType.NPM;
 	name: string; // Package name
-	version: string; // Semantic version
 	registry?: string; // Optional custom NPM registry URL
 	authToken?: string; // Optional auth token for private packages
 	scope?: string; // Optional package scope (e.g., '@organization')
@@ -78,6 +77,8 @@ export interface IPlugin extends IBasePerTenantAndOrganizationEntityModel {
 	status: PluginStatus; // Status of the plugin
 	versions: IPluginVersion[]; // List of plugin versions
 	version?: IPluginVersion; // Current version
+
+	installed: boolean; // Semantic version
 
 	author?: string; // Optional author information
 	license?: string; // Optional license information

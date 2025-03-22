@@ -179,7 +179,8 @@
 		"SHARE": "Share",
 		"GET_INFO": "Get Info",
 		"RETRY": "Retry",
-		"UPLOAD": "Upload"
+		"UPLOAD": "Upload",
+		"ADD_VERSION": "Add Version"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

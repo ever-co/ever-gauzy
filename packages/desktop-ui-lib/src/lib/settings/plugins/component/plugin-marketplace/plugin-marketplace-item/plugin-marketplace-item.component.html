@@ -98,62 +98,63 @@
 			</div>
 
 			<!-- Source Information Section -->
+			@if(selectedVersion.source; as source){
 			<div class="form-section mb-3">
 				<h6 class="section-title">{{ 'PLUGIN.FORM.SOURCE' | translate }}</h6>
 
 				<div class="info-row">
 					<div class="info-item full-width">
 						<div class="label">{{ 'PLUGIN.FORM.SOURCE_TYPE' | translate }}</div>
-						<div class="value">{{ getSourceTypeLabel(plugin.source.type) }}</div>
+						<div class="value">{{ getSourceTypeLabel(source.type) }}</div>
 					</div>
 				</div>
 
 				<!-- CDN Source -->
-				<ng-container *ngIf="plugin.source.type === pluginSourceType.CDN">
+				<ng-container *ngIf="source.type === pluginSourceType.CDN">
 					<div class="info-row">
 						<div class="info-item full-width">
 							<div class="label">{{ 'PLUGIN.FORM.CDN.URL' | translate }}</div>
-							<div class="value">{{ plugin.source.url }}</div>
+							<div class="value">{{ source.url }}</div>
 						</div>
 					</div>
 
-					<div class="info-row" *ngIf="plugin.source.integrity || plugin.source.crossOrigin">
-						<div class="info-item" *ngIf="plugin.source.integrity">
+					<div class="info-row" *ngIf="source.integrity || source.crossOrigin">
+						<div class="info-item" *ngIf="source.integrity">
 							<div class="label">{{ 'PLUGIN.FORM.CDN.INTEGRITY' | translate }}</div>
-							<div class="value text-truncate" [nbTooltip]="plugin.source.integrity">
-								{{ plugin.source.integrity }}
+							<div class="value text-truncate" [nbTooltip]="source.integrity">
+								{{ source.integrity }}
 							</div>
 						</div>
 
-						<div class="info-item" *ngIf="plugin.source.crossOrigin">
+						<div class="info-item" *ngIf="source.crossOrigin">
 							<div class="label">{{ 'PLUGIN.FORM.CDN.CROSS_ORIGIN' | translate }}</div>
-							<div class="value">{{ plugin.source.crossOrigin }}</div>
+							<div class="value">{{ source.crossOrigin }}</div>
 						</div>
 					</div>
 				</ng-container>
 
 				<!-- NPM Source -->
-				<ng-container *ngIf="plugin.source.type === pluginSourceType.NPM">
+				<ng-container *ngIf="source.type === pluginSourceType.NPM">
 					<div class="info-row">
 						<div class="info-item full-width">
 							<div class="label">{{ 'PLUGIN.FORM.NPM.PACKAGE_NAME' | translate }}</div>
-							<div class="value">{{ plugin.source.name }}</div>
+							<div class="value">{{ source.name }}</div>
 						</div>
 					</div>
 
 					<div class="info-row">
-						<div class="info-item" *ngIf="plugin.source.scope">
+						<div class="info-item" *ngIf="source.scope">
 							<div class="label">{{ 'PLUGIN.FORM.NPM.SCOPE' | translate }}</div>
-							<div class="value">{{ plugin.source.scope }}</div>
+							<div class="value">{{ source.scope }}</div>
 						</div>
 
-						<div class="info-item" *ngIf="plugin.source.registry">
+						<div class="info-item" *ngIf="source.registry">
 							<div class="label">{{ 'PLUGIN.FORM.NPM.REGISTRY' | translate }}</div>
-							<div class="value">{{ plugin.source.registry }}</div>
+							<div class="value">{{ source.registry }}</div>
 						</div>
 					</div>
 
-					<div class="info-row" *ngIf="plugin.source.authToken">
+					<div class="info-row" *ngIf="source.authToken">
 						<div class="info-item">
 							<div class="label">{{ 'PLUGIN.FORM.NPM.AUTH_TOKEN' | translate }}</div>
 							<div class="value">
@@ -164,19 +165,24 @@
 				</ng-container>
 
 				<!-- GAUZY Source -->
-				<ng-container *ngIf="plugin.source.type === pluginSourceType.GAUZY">
+				<ng-container *ngIf="source.type === pluginSourceType.GAUZY">
 					<div class="info-row">
 						<div class="info-item">
 							<div class="label">{{ 'PLUGIN.FORM.FILE_UPLOAD.FILE' | translate }}</div>
 							<div class="value">
-								<span *ngIf="plugin.source.url">{{ plugin.source.url }}</span>
-								<span *ngIf="!plugin.source.url">{{ 'PLUGIN.DETAILS.UPLOADED_FILE' | translate }}</span>
+								<span *ngIf="source.url">
+									<a [href]="source.url" target="_blank" rel="noopener noreferrer">
+										{{ source.url }}
+										<nb-icon icon="external-link-outline" class="external-link"></nb-icon>
+									</a>
+								</span>
+								<span *ngIf="!source.url">{{ 'PLUGIN.DETAILS.UPLOADED_FILE' | translate }}</span>
 							</div>
 						</div>
 					</div>
 				</ng-container>
 			</div>
-
+			}
 			<!-- Metadata Section -->
 			<div class="form-section mb-3">
 				<h6 class="section-title">{{ 'PLUGIN.FORM.METADATA.TITLE' | translate }}</h6>
@@ -286,12 +292,27 @@
 		<button
 			nbButton
 			type="button"
+			hero
+			status="success"
+			[disabled]="installing || uninstalling"
+			(click)="addVersion()"
+		>
+			<nb-icon icon="plus-outline"></nb-icon>
+			{{ 'BUTTONS.ADD_VERSION' | translate }}
+		</button>
+		<button
+			nbButton
+			type="button"
 			status="basic"
 			[disabled]="installing || uninstalling"
 			(click)="navigateToEdit()"
 		>
 			<nb-icon icon="edit-2-outline"></nb-icon>
 			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button nbButton type="button" hero status="danger" [disabled]="installing || uninstalling" (click)="delete()">
+			<nb-icon icon="trash-2-outline"></nb-icon>
+			{{ 'BUTTONS.DELETE' | translate }}
 		</button>
 		} @if(installed) { @if(needUpdate) {
 		<button

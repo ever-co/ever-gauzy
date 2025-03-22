@@ -4,6 +4,9 @@ import { DataSource, EntitySubscriberInterface, EventSubscriber, InsertEvent } f
 import { Plugin } from '../../domain/entities/plugin.entity';
 import { PluginVersionService } from '../../domain/services/plugin-version.service';
 import { PluginSourceService } from '../../domain/services/plugin-source.service';
+import { PluginInstallationService } from '../../domain/services/plugin-installation.service';
+import { RequestContext } from '@gauzy/core';
+import { PluginInstallationStatus } from '../../shared/models/plugin-installation.model';
 
 @EventSubscriber()
 export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
@@ -12,6 +15,7 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 	constructor(
 		private readonly pluginVersionService: PluginVersionService,
 		private readonly pluginSourceService: PluginSourceService,
+		private readonly pluginInstallationService: PluginInstallationService,
 		readonly dataSource: DataSource
 	) {
 		dataSource.subscribers.push(this);
@@ -67,6 +71,13 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 				}
 			});
 
+			// compute installation
+			const installation = await this.pluginInstallationService.findOneOrFailByWhereOptions({
+				pluginId: entity.id,
+				versionId: version.id,
+				installedById: RequestContext.currentEmployeeId()
+			});
+
 			// Add the computed property to the entity
 			entity.downloadCount = downloadCount;
 
@@ -75,6 +86,9 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 
 			// Add the source
 			entity.source = source.success ? source.record : null;
+
+			entity.installed =
+				installation.success && installation.record.status === PluginInstallationStatus.INSTALLED;
 
 			this.logger.debug(`Total downloads for plugin ${entity.id}: ${downloadCount}`);
 		} catch (error) {
@@ -85,6 +99,8 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 			entity.version = null;
 			// Add default source
 			entity.source = null;
+			// Add default installed
+			entity.installed = false;
 		}
 	}
 

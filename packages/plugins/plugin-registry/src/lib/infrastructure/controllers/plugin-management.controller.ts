@@ -1,10 +1,9 @@
-import { FileStorageProviderEnum, HttpStatus, ID, PluginSourceType } from '@gauzy/contracts';
+import { HttpStatus, ID, PluginSourceType } from '@gauzy/contracts';
 import {
 	FileStorage,
 	FileStorageFactory,
 	LazyFileInterceptor,
 	PermissionGuard,
-	RequestContext,
 	TenantPermissionGuard,
 	UseValidationPipe,
 	UUIDValidationPipe
@@ -31,8 +30,6 @@ import {
 	ApiSecurity,
 	ApiTags
 } from '@nestjs/swagger';
-import { plainToInstance } from 'class-transformer';
-import { validate } from 'class-validator';
 import { CreatePluginCommand } from '../../application/commands/create-plugin.command';
 import { DeletePluginCommand } from '../../application/commands/delete-plugin.command';
 import { UpdatePluginCommand } from '../../application/commands/update-plugin.command';
@@ -42,6 +39,8 @@ import { CreatePluginDTO } from '../../shared/dto/create-plugin.dto';
 import { FileDTO } from '../../shared/dto/file.dto';
 import { UpdatePluginDTO } from '../../shared/dto/update-plugin.dto';
 import { IPlugin } from '../../shared/models/plugin.model';
+import { PluginFactory } from '../../shared/utils/plugin-factory.util';
+import { GauzyStorageProvider } from '../storage/providers/gauzy-storage.provider';
 import { UploadedPluginStorage } from '../storage/uploaded-plugin.storage';
 
 @ApiTags('Plugin Management')
@@ -95,41 +94,14 @@ export class PluginManagementController {
 		}
 
 		try {
-			// Extract necessary properties from the request body
-			const common = {
-				tenantId: input.tenantId || RequestContext.currentTenantId(),
-				organizationId: input.organizationId
-			};
-			const uploadedById = input.uploadedById || RequestContext.currentEmployeeId();
-			const dto = {
-				...input,
-				...common,
-				uploadedById,
-				version: {
-					...input.version,
-					...common,
-					source: {
-						...input.version.source,
-						...common
-					}
-				}
-			};
+			const dto = PluginFactory.create(input);
 
 			if (input.version.source.type === PluginSourceType.GAUZY) {
-				const provider = new FileStorage().getProvider();
+				const gauzyStorageProvider = new GauzyStorageProvider(new FileStorage());
 				// Convert the plain object to a class instance
-				const fileInstance = plainToInstance(FileDTO, file);
-				// Validate the file DTO
-				const errors = await validate(fileInstance);
-
-				// Check for validation errors
-				if (errors.length > 0) {
-					// Delete the uploaded file if validation fails
-					await provider.deleteFile(file.key);
-					// Throw a bad request exception with the validation errors
-					throw new BadRequestException(errors);
-				}
-				const storageProvider = provider.name.toUpperCase() as FileStorageProviderEnum;
+				await gauzyStorageProvider.validate(file);
+				// Get metadata
+				const metadata = gauzyStorageProvider.extractMetadata(file);
 
 				// Create a new plugin record
 				return this.commandBus.execute(
@@ -139,11 +111,7 @@ export class PluginManagementController {
 							...dto.version,
 							source: {
 								...dto.version.source,
-								fileName: file.originalname,
-								fileSize: file.size,
-								filePath: file.path,
-								fileKey: file.key,
-								storageProvider: storageProvider ?? FileStorageProviderEnum.LOCAL
+								...metadata
 							}
 						}
 					})
@@ -154,7 +122,8 @@ export class PluginManagementController {
 		} catch (error) {
 			// Ensure cleanup of uploaded file
 			if (file?.key) {
-				await new FileStorage().getProvider().deleteFile(file.key);
+				const gauzyStorageProvider = new GauzyStorageProvider(new FileStorage());
+				await gauzyStorageProvider.delete(file.key);
 			}
 
 			// Throw a bad request exception with the validation errors
