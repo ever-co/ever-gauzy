@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { IPagination, IPlugin, IPluginVersion, PluginSourceType } from '@gauzy/contracts';
+import { ID, IPagination, IPlugin, IPluginVersion, PluginSourceType } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 import { map, Observable } from 'rxjs';
 import { Store } from '../../../services';
@@ -25,7 +25,7 @@ export class PluginService {
 		return this.http.get<IPlugin>(`${this.endPoint}/${id}`, { params: toParams(params) });
 	}
 
-	private createFormData(data: IPlugin): FormData {
+	private createFormData(data: Partial<IPlugin>): FormData {
 		let formData = new FormData();
 		const common = { organizationId: this.store.organizationId, tenantId: this.store.tenantId };
 
@@ -104,9 +104,9 @@ export class PluginService {
 		return this.http.post<IPlugin>(this.endPoint, formData);
 	}
 
-	public update(plugin: IPlugin): Observable<IPlugin> {
+	public update(pluginId: ID, plugin: Partial<IPlugin>): Observable<IPlugin> {
 		const formData = this.createFormData(plugin);
-		return this.http.put<IPlugin>(`${this.endPoint}/${plugin.id}`, formData);
+		return this.http.put<IPlugin>(`${this.endPoint}/${pluginId}`, formData);
 	}
 
 	public delete(id: string): Observable<IPlugin> {

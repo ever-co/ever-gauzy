@@ -215,7 +215,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		if (!this.plugin || !this.isOwner) return;
 
 		try {
-			await firstValueFrom(this.pluginService.update({ ...this.plugin, status }));
+			await firstValueFrom(this.pluginService.update(this.plugin.id, { status }));
 			this.plugin.status = status;
 			this.toastrService.success(this.translateService.instant('PLUGIN.MESSAGES.STATUS_UPDATED'));
 		} catch (error) {
@@ -234,7 +234,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			.onClose.pipe(
 				filter(Boolean),
 				switchMap((plugin: IPlugin) =>
-					this.pluginService.update(plugin).pipe(
+					this.pluginService.update(this.plugin.id, plugin).pipe(
 						tap(() => this.toastrService.success('Plugin updated successfully!')),
 						catchError(() => {
 							this.toastrService.error('Plugin upload failed!');

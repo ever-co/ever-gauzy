@@ -84,7 +84,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 			.onClose.pipe(
 				filter(Boolean),
 				switchMap((plugin: IPlugin) =>
-					this.pluginService.update(plugin).pipe(
+					this.pluginService.update(this.plugin.id, plugin).pipe(
 						tap(() => this.toastrService.success('Plugin updated successfully!')),
 						catchError(() => {
 							this.toastrService.error('Plugin upload failed!');
