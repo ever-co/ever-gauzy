@@ -55,6 +55,15 @@ export class ProductTypeSelectorComponent implements OnInit, OnDestroy {
 		this._placeholder = value;
 	}
 
+	private _label: string;
+
+	get label(): string {
+		return this._label;
+	}
+
+	@Input() set label(value: string) {
+		this._label = value;
+	}
 	/*
 	 * Getter & Setter for dynamic add tag option
 	 */

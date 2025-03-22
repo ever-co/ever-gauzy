@@ -2044,6 +2044,7 @@
 			"TIME_OFF_POLICY_VIEW": "查看休假政策",
 			"TIME_OFF_POLICY_EDIT": "编辑休假政策",
 			"TIME_OFF_POLICY_DELETE": "删除休假政策",
+			"SELECT_EMPLOYEE": "选择员工",
 			"CHANGE_SELECTED_EMPLOYEE": "更改选定的员工",
 			"CHANGE_SELECTED_CANDIDATE": "改变选定的候选人",
 			"CHANGE_SELECTED_ORGANIZATION": "更改所选组织",

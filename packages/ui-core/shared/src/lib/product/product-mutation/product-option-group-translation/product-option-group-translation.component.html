@@ -20,14 +20,16 @@
 						<span class="language-span">{{ ln.value }}</span
 						>{{ getGroupTitleTranslation(ln.value) || '' }}
 					</div>
-					<input
-						*ngIf="isOptionGroupValueActive(ln.value)"
-						fullWidth
-						id="nameInput"
-						type="text"
-						nbInput
-						[formControlName]="ln.value"
-					/>
+					<div class="input-container" *ngIf="isOptionGroupValueActive(ln.value)">
+						<span class="language-label">{{ ln.value }}</span>
+						<input
+							fullWidth
+							id="groupNameInput_{{ln.value}}"
+							type="text"
+							nbInput
+							[formControlName]="ln.value"
+						/>
+					</div>
 				</div>
 			</div>
 			<div
@@ -43,14 +45,16 @@
 						<span class="language-span">{{ ln.value }}</span
 						>{{ getOptionNameTranslation(option, ln.value) || '' }}
 					</div>
-					<input
-						*ngIf="isOptionActive(option, ln.value)"
-						fullWidth
-						id="nameInput"
-						type="text"
-						nbInput
-						[formControlName]="ln.value"
-					/>
+					<div class="input-container" *ngIf="isOptionActive(option, ln.value)">
+						<span class="language-label">{{ ln.value }}</span>
+						<input
+							fullWidth
+							id="groupNameInput_{{ln.value}}"
+							type="text"
+							nbInput
+							[formControlName]="ln.value"
+						/>
+					</div>
 				</div>
 			</div>
 		</form>
