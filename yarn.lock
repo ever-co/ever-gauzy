@@ -5838,16 +5838,6 @@
     fs-extra "11.3.0"
     sqlstring-sqlite "0.1.1"
 
-"@mikro-orm/better-sqlite@^6.4.2":
-  version "6.4.9"
-  resolved "https://registry.yarnpkg.com/@mikro-orm/better-sqlite/-/better-sqlite-6.4.9.tgz#45c5805aba94e156891f011378058209898fe523"
-  integrity sha512-picl9mlUm5i8ujv+NqLagG+s1uXeOVYpB0MDntgnM0432lxDgArQrccC6VhZQ6QwYW/+/0i5+iHi172M8hZoCQ==
-  dependencies:
-    "@mikro-orm/knex" "6.4.9"
-    better-sqlite3 "11.8.1"
-    fs-extra "11.3.0"
-    sqlstring-sqlite "0.1.1"
-
 "@mikro-orm/core@6.4.5":
   version "6.4.5"
   resolved "https://registry.yarnpkg.com/@mikro-orm/core/-/core-6.4.5.tgz#9f1e6feeb49ccfdcb01d66f4d2659361a21040c5"
@@ -5865,15 +5855,6 @@
   version "6.4.5"
   resolved "https://registry.yarnpkg.com/@mikro-orm/knex/-/knex-6.4.5.tgz#2d0bca97404b1fc5b1471eb2dd29f6a43dade3df"
   integrity sha512-5D4NGD9bxmROUf8MVhR4mmZjzQtuM/Sg+eOnfOPzVaIkvuQItE4zR0Bg7gRr1XSgZ/OcJ/6q2ZoXH1HxSjykkw==
-  dependencies:
-    fs-extra "11.3.0"
-    knex "3.1.0"
-    sqlstring "2.3.3"
-
-"@mikro-orm/knex@6.4.9":
-  version "6.4.9"
-  resolved "https://registry.yarnpkg.com/@mikro-orm/knex/-/knex-6.4.9.tgz#bbdfe397397437ada39f8cb728483f53b3763b28"
-  integrity sha512-iGXJfe/TziVOQsWuxMIqkOpurysWzQA6kj3+FDtOkHJAijZhqhjSBnfUVHHY/JzU9o0M0rgLrDVJFry/uEaJEA==
   dependencies:
     fs-extra "11.3.0"
     knex "3.1.0"
@@ -18731,14 +18712,6 @@ electron-log@^4.4.8:
   resolved "https://registry.yarnpkg.com/electron-log/-/electron-log-4.4.8.tgz#fcb9f714dbcaefb6ac7984c4683912c74730248a"
   integrity sha512-QQ4GvrXO+HkgqqEOYbi+DHL7hj5JM+nHi/j+qrN9zeeXVKy8ZABgbu4CnG+BBqDZ2+tbeq9tUC4DZfIWFU5AZA==
 
-electron-notarize@^1.2.2:
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/electron-notarize/-/electron-notarize-1.2.2.tgz#ebf2b258e8e08c1c9f8ff61dc53d5b16b439daf4"
-  integrity sha512-ZStVWYcWI7g87/PgjPJSIIhwQXOaw4/XeXU+pWqMMktSLHaGMLHdyPPN7Cmao7+Cr7fYufA16npdtMndYciHNw==
-  dependencies:
-    debug "^4.1.1"
-    fs-extra "^9.0.1"
-
 electron-packager@^17.1.1:
   version "17.1.2"
   resolved "https://registry.yarnpkg.com/electron-packager/-/electron-packager-17.1.2.tgz#18030b28024d242b706d0a8a67ed4cd1a57311aa"
@@ -27327,7 +27300,7 @@ moment-range@^4.0.2:
   dependencies:
     es6-symbol "^3.1.0"
 
-moment-timezone@^0.5.31, moment-timezone@^0.5.32, moment-timezone@^0.5.40, moment-timezone@^0.5.43, moment-timezone@^0.5.45:
+moment-timezone@^0.5.31, moment-timezone@^0.5.32, moment-timezone@^0.5.43, moment-timezone@^0.5.45:
   version "0.5.47"
   resolved "https://registry.yarnpkg.com/moment-timezone/-/moment-timezone-0.5.47.tgz#d4d1a21b78372d914d6d69ae285454732a429749"
   integrity sha512-UbNt/JAWS0m/NJOebR0QMRHBk0hu03r5dx9GK8Cs0AS3I81yDcOc9k+DytPItgVvBP7J6Mf6U2n3BPAacAV9oA==
@@ -27610,7 +27583,7 @@ mysql2@3.12.0:
     seq-queue "^0.0.5"
     sqlstring "^2.3.2"
 
-mysql2@^3.12.0, mysql2@^3.9.7:
+mysql2@^3.12.0:
   version "3.13.0"
   resolved "https://registry.yarnpkg.com/mysql2/-/mysql2-3.13.0.tgz#97c83f65548d436fc2544536f03e4b1292de7869"
   integrity sha512-M6DIQjTqKeqXH5HLbLMxwcK5XfXHw30u5ap6EZmu7QVmcF/gnh2wS/EOiQ4MTbXz/vQeoXrmycPlVRM00WSslg==
