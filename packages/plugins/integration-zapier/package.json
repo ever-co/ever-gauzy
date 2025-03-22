@@ -1,6 +1,6 @@
 {
 	"name": "@gauzy/plugin-integration-zapier",
-	"version": "1.0.0",
+	"version": "0.1.0",
 	"description": "Integration Zapier Plugin for Gauzy",
 	"author": {
 		"name": "Ever Co. LTD",
