@@ -79,7 +79,7 @@ export class EmployeeController extends CrudController<Employee> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No working employees found'
 	})
-	@Permissions(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+	@Permissions(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE, PermissionsEnum.SELECT_EMPLOYEE)
 	@Get('/working')
 	async findAllWorkingEmployees(
 		@Query('data', ParseJsonPipe) data: IEmployeeFindInputQuery
@@ -107,7 +107,7 @@ export class EmployeeController extends CrudController<Employee> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Working employees count not found'
 	})
-	@Permissions(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+	@Permissions(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE, PermissionsEnum.SELECT_EMPLOYEE)
 	@Get('/working/count')
 	async findAllWorkingEmployeesCount(
 		@Query('data', ParseJsonPipe) data: IEmployeeFindInputQuery

@@ -2167,6 +2167,7 @@
 			"TIME_OFF_POLICY_VIEW": "Виж политика за отпуск",
 			"TIME_OFF_POLICY_EDIT": "Редактирай политика за отпуск",
 			"TIME_OFF_POLICY_DELETE": "Изтрий политика за отпуск",
+			"SELECT_EMPLOYEE": "Избор на служител",
 			"CHANGE_SELECTED_EMPLOYEE": "Смени избрания служител",
 			"CHANGE_SELECTED_CANDIDATE": "Смени избрания кандидат",
 			"CHANGE_SELECTED_ORGANIZATION": "Смени избраната организация",

@@ -26,6 +26,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_TASK_VIEW,
 			PermissionsEnum.ORG_TASK_EDIT,
 			PermissionsEnum.ORG_TASK_DELETE,
+			PermissionsEnum.SELECT_EMPLOYEE,
 			/** Organization Task Setting Permissions Start */
 			PermissionsEnum.ORG_TASK_SETTING,
 			/** Organization Task Setting Permissions End */
@@ -229,6 +230,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_TASK_VIEW,
 			PermissionsEnum.ORG_TASK_EDIT,
 			PermissionsEnum.ORG_TASK_DELETE,
+			PermissionsEnum.SELECT_EMPLOYEE,
 			/** Organization Task Setting */
 			PermissionsEnum.ORG_TASK_SETTING,
 			/** Employee CRUD Permissions Start */
@@ -445,7 +447,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_VIEW,
 			PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT,
 			PermissionsEnum.ORG_HELP_CENTER_EDIT,
-			PermissionsEnum.PROFILE_EDIT
+			PermissionsEnum.PROFILE_EDIT,
+			PermissionsEnum.SELECT_EMPLOYEE,
 		]
 	},
 	{
@@ -459,6 +462,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PROPOSALS_EDIT,
 			PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW,
 			PermissionsEnum.ORG_PROPOSAL_TEMPLATES_EDIT,
+			PermissionsEnum.SELECT_EMPLOYEE,
 			/** Time Off Permissions Start */
 			PermissionsEnum.TIME_OFF_VIEW,
 			/** Time Off Permissions End */
