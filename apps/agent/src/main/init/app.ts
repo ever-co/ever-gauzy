@@ -1,4 +1,4 @@
-import { app, ipcMain } from 'electron';
+import { app, ipcMain,  } from 'electron';
 import * as path from 'path';
 import { logger as log, store } from '@gauzy/desktop-core';
 import {
@@ -23,7 +23,8 @@ LocalStore.setFilePath({
 	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png')
 });
 const appRootPath: string = path.join(__dirname, '../..');
-const appWindow = new AppWindow(appRootPath);
+const appWindow = AppWindow.getInstance(appRootPath);
+let trayMenu: TrayMenu;
 
 function launchAtStartup(autoLaunch:boolean, hidden: boolean) {
 	switch (process.platform) {
@@ -90,7 +91,7 @@ export async function startServer(value: any) {
 		// timeTrackerWindow.webContents.toggleDevTools();
 	}
 	//const auth = store.get('auth');
-	const trayMenu = new TrayMenu(
+	trayMenu = TrayMenu.getInstance(
 		path.join(__dirname,'../..', CONSTANT.TRAY_ICON_PATH),
 		true,
 		{ helpSiteUrl: 'https://gauzy.co' },
@@ -123,6 +124,15 @@ async function initiationLocalDatabase() {
 	}
 }
 
+app.on('window-all-closed', (event: Event) => {
+	// On OS X it is common for applications and their menu bar
+	// to stay active until the user quits explicitly with Cmd + Q
+	event.preventDefault();
+	if (process.platform === 'darwin') {
+		app.dock.hide();
+	}
+});
+
 async function appReady() {
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
@@ -135,20 +145,14 @@ async function appReady() {
 	new DesktopThemeListener();
 
 	// set global variable
-	global.variableGlobal = {
-		API_BASE_URL: getApiBaseUrl(configs || {}),
-		IS_INTEGRATED_DESKTOP: configs?.isLocalServer
-	};
 
+
+	setVariableGlobal(configs);
 	// initiation splashScreen
 	await handleSplashScreen();
 
 	try {
 		if (configs && configs.isSetup) {
-			global.variableGlobal = {
-				API_BASE_URL: getApiBaseUrl(configs),
-				IS_INTEGRATED_DESKTOP: configs.isLocalServer
-			};
 			await startServer(configs);
 		} else {
 			await handleSetupWindow();
@@ -157,6 +161,21 @@ async function appReady() {
 	} catch (error) {
 		throw new AppError('MAINWININIT', error);
 	}
+}
+
+
+function setVariableGlobal(configs: {
+	serverUrl?: string,
+	port?: number,
+	isLocalServer?: boolean
+}) {
+	global.variableGlobal = {
+		API_BASE_URL: getApiBaseUrl({
+			serverUrl: configs?.serverUrl,
+			port: configs?.port
+		}),
+		IS_INTEGRATED_DESKTOP: configs?.isLocalServer
+	};
 }
 
 export async function InitApp() {

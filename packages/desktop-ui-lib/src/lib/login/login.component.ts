@@ -112,4 +112,8 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	get registerUrl(): string {
 		return this.environment.REGISTER_URL || 'https://app.gauzy.co/#/auth/register';
 	}
+
+	get isAgent(): boolean {
+		return true;
+	}
 }

@@ -1,37 +1,35 @@
-import { app, BrowserWindow } from 'electron';
+import { app } from 'electron';
 import {
 	LocalStore,
 	DialogErrorHandler
 } from '@gauzy/desktop-lib';
 import AppWindow from './window-manager';
 function getAuthConfig() {
-	const configs: {
-		auth: {
-			userId: string;
-			employeeId: string;
-			organizationId: string;
-			token: string;
-		}
-	} = LocalStore.getStore('configs');
-	return configs?.auth;
+	const authConfig: {
+		userId: string;
+		employeeId: string;
+		organizationId: string;
+		token: string;
+	} = LocalStore.getStore('auth');
+	return authConfig;
 }
 
-export  async function checkUserAuthentication(rootPath: string) {
+export async function checkUserAuthentication(rootPath: string) {
 	const authConfig = getAuthConfig();
 	if (!authConfig?.token) {
-		const appWindow = new AppWindow(rootPath);
+		const appWindow = AppWindow.getInstance(rootPath);
 		await appWindow.initAuthWindow();
 		appWindow.authWindow.browserWindow.removeAllListeners('close');
 		appWindow.authWindow.browserWindow.on('close', async (event) => {
 			event.preventDefault();
-			await handleCloseAuthWindow(appWindow.authWindow.browserWindow);
+			await handleCloseAuthWindow();
 		})
 		await appWindow.authWindow.loadURL();
 		appWindow.authWindow.show();
 	}
 }
 
-async function handleCloseAuthWindow(authWindow: BrowserWindow) {
+async function handleCloseAuthWindow() {
 	const authConfig = getAuthConfig();
 	if (!authConfig?.token) {
 		const dialog = new DialogErrorHandler('Please login first to use the app');

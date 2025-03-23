@@ -18,11 +18,18 @@ class AppWindow {
 	settingWindow: BrowserWindow;
 	private static instance: AppWindow;
 	constructor(rootPath: string) {
-		if (AppWindow.instance) {
+		if (!AppWindow.instance) {
+			AppWindow.instance= this;
+			this.rootPath = rootPath;
+		}
+	}
+
+	static getInstance(rootPath: string): AppWindow {
+		if (!AppWindow.instance) {
+			AppWindow.instance = new AppWindow(rootPath);
 			return AppWindow.instance;
 		}
-		AppWindow.instance= this;
-		this.rootPath = rootPath;
+		return AppWindow.instance;
 	}
 
 	getUiPath(hashPath: string) {

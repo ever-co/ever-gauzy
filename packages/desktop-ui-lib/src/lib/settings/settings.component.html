@@ -1160,7 +1160,7 @@
 			</div>
 		</ng-container>
 	</nb-layout-column>
-	<nb-layout-footer fixed *ngIf="isDesktopTimer && (currentUser$ | async)">
+	<nb-layout-footer fixed *ngIf="(isDesktopTimer || isAgent) && (currentUser$ | async)">
 		<span>
 			<p class="m-0">
 				{{

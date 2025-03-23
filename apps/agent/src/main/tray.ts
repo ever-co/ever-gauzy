@@ -13,7 +13,7 @@ import * as path from 'path';
 type ISiteUrl = {
 	helpSiteUrl: string
 }
-const appWindow = new AppWindow(path.join(__dirname, '..'));
+const appWindow = AppWindow.getInstance(path.join(__dirname, '..'));
 
 class TrayMenu {
 	private trayIconPath: string;
@@ -28,14 +28,26 @@ class TrayMenu {
 	private tray: Tray | null = null;
 	private useCommonMenu: boolean;
 	private siteUrls: ISiteUrl;
+	static instance: TrayMenu;
 	constructor(
 		trayIconPath: string,
 		useCommonMenu: boolean,
 		siteUrls: ISiteUrl,
 	) {
-		this.trayIconPath = trayIconPath;
-		this.useCommonMenu = useCommonMenu;
-		this.siteUrls = siteUrls;
+		if (!TrayMenu.instance) {
+			TrayMenu.instance = this;
+			this.trayIconPath = trayIconPath;
+			this.useCommonMenu = useCommonMenu;
+			this.siteUrls = siteUrls;
+		}
+	}
+
+	static getInstance(trayIconPath: string, useCommonMenu: boolean, siteUrls: ISiteUrl): TrayMenu {
+		if (!TrayMenu.instance) {
+			TrayMenu.instance = new TrayMenu(trayIconPath, useCommonMenu, siteUrls);
+			return TrayMenu.instance;
+		}
+		return TrayMenu.instance;
 	}
 
 	nativeIconPath() {
@@ -46,6 +58,18 @@ class TrayMenu {
 
 	getCommonMenu(siteUrls: ISiteUrl): MenuItemConstructorOptions[] {
 		return [
+			{
+				id: 'tray_setting',
+				label: TranslateService.instant('MENU.SETTINGS'),
+				async click() {
+					await appWindow.initSettingWindow();
+					appWindow.settingWindow.show();
+					appWindow.settingWindow.webContents.send('setting_page_ipc', {
+						type: 'goto_top_menu'
+					});
+					appWindow.settingWindow.webContents.send('refresh_menu');
+				}
+			},
 			{
 				type: 'separator'
 			},
@@ -58,7 +82,7 @@ class TrayMenu {
 			},
 			{
 				id: 'tray_about',
-				label: TranslateService.instant('TIMER_TRACKER.MENU.ABOUT'),
+				label: TranslateService.instant('MENU.ABOUT'),
 				async click() {
 					await appWindow.initAboutWindow();
 				}
@@ -92,20 +116,7 @@ class TrayMenu {
 
 	build() {
 		this.initTray();
-		this.setMenuList([
-			{
-				id: 'tray_setting',
-				label: TranslateService.instant('TIMER_TRACKER.MENU.SETTING'),
-				async click() {
-					await appWindow.initSettingWindow();
-					appWindow.settingWindow.show();
-					appWindow.settingWindow.webContents.send('setting_page_ipc', {
-						type: 'goto_top_menu'
-					});
-					appWindow.settingWindow.webContents.send('refresh_menu');
-				}
-			}
-		]);
+		this.setMenuList([]);
 		return this.tray;
 	}
 }

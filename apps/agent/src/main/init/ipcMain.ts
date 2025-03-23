@@ -9,17 +9,35 @@ import { logger as log, store } from '@gauzy/desktop-core';
 import {
 	LocalStore,
 	TranslateService,
-	AppError
+	AppError,
+	User,
+	UserService
 } from '@gauzy/desktop-lib';
-import { getApiBaseUrl } from '../util';
+import { getApiBaseUrl, delaySync } from '../util';
 import { startServer } from './app';
+import AppWindow from '../window-manager';
 
-function getGlobalVariable() {
-	const configs = LocalStore.getStore('configs');
+const userService = new UserService();
+
+function getGlobalVariable(configs?: {
+	serverUrl?: string,
+	port?: number,
+	isLocalServer?: boolean
+}) {
+	let appConfig = { ...configs };
+	if (!configs) {
+		appConfig = LocalStore.getStore('configs');
+	}
 	return {
-		API_BASE_URL: getApiBaseUrl(configs),
-		IS_INTEGRATED_DESKTOP: configs?.IS_INTEGRATED_DESKTOP || false
+		API_BASE_URL: getApiBaseUrl(appConfig),
+		IS_INTEGRATED_DESKTOP: appConfig?.isLocalServer || false
 	};
+}
+
+async function closeLoginWindow() {
+	const appWindow = AppWindow.getInstance('');
+	await delaySync(2000); // delay 2s before destroy login window
+	appWindow.authWindow.browserWindow.destroy();
 }
 
 export default function AppIpcMain() {
@@ -51,7 +69,7 @@ export default function AppIpcMain() {
 	ipcMain.handle('START_SERVER', async (_, arg) => {
 		log.info('Handle Start Server');
 		try {
-			global.variableGlobal = getGlobalVariable();
+			global.variableGlobal = getGlobalVariable(arg);
 
 			return await startServer(arg);
 		} catch (error) {
@@ -77,5 +95,23 @@ export default function AppIpcMain() {
 	});
 
 	ipcMain.on('get-app-path', () => app.getAppPath());
+
 	ipcMain.handle('app_setting', () => LocalStore.getApplicationConfig());
+
+	ipcMain.handle('AUTH_SUCCESS', async (_, arg) => {
+		try {
+			const user = new User({ ...arg, ...arg.user });
+			user.remoteId = arg.userId;
+			user.organizationId = arg.organizationId;
+			if (user.employee) {
+				await userService.save(user.toObject());
+			}
+		} catch (error) {
+			console.log('Error on save user', error);
+		}
+		store.set({
+			auth: { ...arg, isLogout: false }
+		});
+		await closeLoginWindow();
+	});
 }

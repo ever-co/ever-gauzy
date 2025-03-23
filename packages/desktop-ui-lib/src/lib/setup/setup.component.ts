@@ -546,6 +546,10 @@ export class SetupComponent implements OnInit {
 		return this._environment.IS_SERVER_API;
 	}
 
+	public get isAgent(): boolean {
+		return this._environment.IS_AGENT;
+	}
+
 	private scrollToBottom() {
 		this.logBox.nativeElement.scrollTop = this.logBox.nativeElement.scrollHeight;
 	}

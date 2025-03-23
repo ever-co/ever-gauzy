@@ -54,7 +54,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	appName: string = this.electronService.remote.app.getName();
 	menus = [];
 	gauzyIcon: SafeResourceUrl =
-		this.isDesktopTimer || this.isServer
+		this.isDesktopTimer || this.isServer || this.isAgent
 			? './assets/images/logos/logo_Gauzy.svg'
 			: '../assets/images/logos/logo_Gauzy.svg';
 
@@ -402,11 +402,11 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	waitRestart = false;
 	serverIsRunning = false;
 
-	serverOptions = this.isDesktopTimer
+	serverOptions = this.isDesktopTimer || this.isAgent
 		? [this.serverTypes.custom, this.serverTypes.live]
 		: [this.serverTypes.integrated, this.serverTypes.custom, this.serverTypes.live];
 
-	driverOptions = ['better-sqlite', 'sqlite', 'postgres', ...(this.isDesktopTimer ? ['mysql'] : [])];
+	driverOptions = ['better-sqlite', 'sqlite', 'postgres', ...(this.isDesktopTimer || this.isAgent ? ['mysql'] : [])];
 	muted: boolean;
 
 	delayOptions: number[] = [0.5, 1, 3, 24];
@@ -490,7 +490,6 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
 	ngOnInit(): void {
 		// this.electronService.ipcRenderer.send('request_permission');
-		console.log('application on init newk');
 		this.version = this.electronService.remote.app.getVersion();
 		this.isConnectedDatabase$
 			.pipe(
@@ -563,7 +562,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 				});
 				this._simpleScreenshotNotification$.next(setting?.simpleScreenshotNotification);
 				this.selectedPeriod = setting?.timer?.updatePeriod;
-				if (this.isDesktopTimer) {
+				if (this.isDesktopTimer || this.isAgent) {
 					await this.getUserDetails();
 				}
 				this.menus = this.isServer
@@ -744,7 +743,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
 	ngAfterViewInit(): void {
 		this.getAppSetting();
-		this.electronService.ipcRenderer.on('setting_page_ipc', this.handleIpcEvent);
+		this.electronService.ipcRenderer.on('setting_page_ipc', (event, arg) => this.handleIpcEvent(event, arg));
 		// // this.electronService.ipcRenderer.on('app_setting', (event, arg) =>
 		// // 	this._ngZone.run(async () => {
 		// //
@@ -1235,6 +1234,10 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
 	public get isServerApi(): boolean {
 		return this._environment.IS_SERVER_API;
+	}
+
+	public get isAgent(): boolean {
+		return this._environment.IS_AGENT;
 	}
 
 	public get selectedMenu$(): Observable<string> {

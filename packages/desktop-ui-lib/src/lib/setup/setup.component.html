@@ -48,7 +48,8 @@
 						[label]="labelTwo"
 						*ngIf="
 							!isDesktopTimer &&
-							!isServer
+							!isServer &&
+							!isAgent
 						"
 					>
 						<ng-template #labelTwo>{{
@@ -208,7 +209,7 @@
 									<!-- <nb-radio-group> -->
 									<div
 										class="col-4 pb-1 col-center"
-										*ngIf="!isDesktopTimer"
+										*ngIf="!isDesktopTimer && !isAgent"
 									>
 										<nb-card class="card-small-item">
 											<nb-card-body>

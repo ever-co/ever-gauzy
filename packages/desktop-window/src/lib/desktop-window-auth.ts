@@ -28,7 +28,7 @@ export class AuthWindow extends BaseWindow implements IBaseWindow {
                 new WindowConfig('auth/login', path, {
                     frame: true,
                     resizable: false,
-                    width: 360,
+                    width: 1000,
                     height: 768
                 })
             )
