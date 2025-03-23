@@ -195,6 +195,15 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		return typeMap[type] || 'basic';
 	}
 
+	getPluginSourceTypeBadgeStatus(type: PluginSourceType): string {
+		const typeMap: Record<PluginSourceType, string> = {
+			[PluginSourceType.GAUZY]: 'primary',
+			[PluginSourceType.CDN]: 'info',
+			[PluginSourceType.NPM]: 'danger'
+		};
+		return typeMap[type] || 'basic';
+	}
+
 	getSourceDetails(plugin: IPlugin): string {
 		switch (plugin.source.type) {
 			case PluginSourceType.CDN:

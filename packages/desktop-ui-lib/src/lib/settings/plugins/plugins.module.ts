@@ -45,6 +45,7 @@ import { PluginComponent } from './component/plugin/plugin.component';
 import { PluginElectronService } from './services/plugin-electron.service';
 import { PluginLoaderService } from './services/plugin-loader.service';
 import { PluginService } from './services/plugin.service';
+import { PipeModule } from '../../time-tracker/pipes/pipe.module';
 
 @NgModule({
 	declarations: [
@@ -91,7 +92,8 @@ import { PluginService } from './services/plugin.service';
 		NbSpinnerModule,
 		NbDatepickerModule,
 		NbStepperModule,
-		NbAlertModule
+		NbAlertModule,
+		PipeModule
 	],
 	exports: [PluginLayoutComponent],
 	providers: [PluginLoaderService, PluginElectronService, PluginService]
