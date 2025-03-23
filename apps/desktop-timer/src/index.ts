@@ -794,3 +794,4 @@ app.on('browser-window-created', (_, window) => {
 });
 
 ipcMain.handle('get-app-path', () => app.getAppPath());
+ipcMain.handle('app_setting', () => LocalStore.getApplicationConfig());

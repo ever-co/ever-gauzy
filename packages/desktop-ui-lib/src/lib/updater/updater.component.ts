@@ -20,7 +20,9 @@ export class UpdaterComponent implements OnInit {
 	constructor(
 		private electronService: ElectronService,
 		private _ngZone: NgZone
-	) {}
+	) {
+		this.handleIpcEvent = this.handleIpcEvent.bind(this);
+	}
 	version = '0.0.0';
 	loading = false;
 	notAvailable = false;

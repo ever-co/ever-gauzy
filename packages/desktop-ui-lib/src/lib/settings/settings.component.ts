@@ -486,6 +486,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 		this.companySite = this._environment.COMPANY_SITE_NAME;
 		this.companyLink = this._environment.COMPANY_LINK;
 		this.gauzyIcon = this._domSanitizer.bypassSecurityTrustResourceUrl(this._environment.PLATFORM_LOGO);
+		this.handleIpcEvent = this.handleIpcEvent.bind(this);
 	}
 
 	ngOnInit(): void {
@@ -521,7 +522,6 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
 	async getAppSetting() {
 		const appSetting = await this.electronService.ipcRenderer.invoke('app_setting');
-		console.log('appseetting data', appSetting);
 		this._ngZone.run(async () => {
 			const { setting, config, auth, additionalSetting } = appSetting;
 				this.appSetting = {
@@ -743,7 +743,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
 	ngAfterViewInit(): void {
 		this.getAppSetting();
-		this.electronService.ipcRenderer.on('setting_page_ipc', (event, arg) => this.handleIpcEvent(event, arg));
+		this.electronService.ipcRenderer.on('setting_page_ipc', this.handleIpcEvent);
 		// // this.electronService.ipcRenderer.on('app_setting', (event, arg) =>
 		// // 	this._ngZone.run(async () => {
 		// //
