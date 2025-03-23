@@ -327,9 +327,9 @@
 		"prepare:agent": "yarn run postinstall.electron && tsc -p apps/agent/tsconfig.electron.json",
 		"prepare:agent:watch": "yarn run postinstall.electron && tsc --watch -p apps/agent/tsconfig.electron.json",
 		"serve:agent:main": "cross-env NODE_ENV=development yarn config:agent:prod && yarn copy-files-i18n-agent && yarn prepare:agent && NODE_ENV=development NODE_PATH=dist/packages yarn electronmon ./dist/apps/agent/index.js",
-		"serve:agent:ui": "yarn config:dev && yarn ng serve agent --configuration development",
+		"serve:agent:ui": "yarn config:prod && yarn config:agent:prod && yarn ng serve agent --configuration production",
 		"serve:agent": "concurrently \"yarn serve:agent:ui\" \"wait-on http://localhost:4200 && yarn serve:agent:main\"",
-		"build:agent": "cross-env NODE_ENV=production yarn copy-files-i18n-agent && yarn run postinstall.electron && yarn run config:agent:prod && yarn run generate:icons:agent --environment=prod && yarn config:prod && yarn pack:agent && yarn build:package:all && yarn ng:prod build agent --base-href=./ && yarn run prepare:agent",
+		"build:agent": "cross-env NODE_ENV=production yarn copy-files-i18n-agent && yarn run postinstall.electron && yarn run config:agent:prod && yarn run generate:icons:agent --environment=prod && yarn config:prod && yarn pack:agent && yarn ng:prod build agent --base-href=./ && yarn run prepare:agent && yarn build:io-hook:native:prod",
 		"copy-files-i18n-agent": "yarn run download:translations --desktop=agent",
 		"config:agent:prod": "yarn run config:electron -- --environment=prod --desktop=agent",
 		"dev:agent": "electronmon --exec ts-node ./apps/agent/src/index.ts",
@@ -341,7 +341,9 @@
 		"build:agent:linux:release": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 build --linux --publish=always --project dist/apps/agent",
 		"build:agent:linux:release:gh": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=60000 yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 build --linux --publish=always --project dist/apps/agent",
 		"build:agent:mac": "yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 build --mac --project dist/apps/agent",
-		"build:agent:mac:release": "yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 build --mac --publish=always --project dist/apps/agent"
+		"build:agent:mac:release": "yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 build --mac --publish=always --project dist/apps/agent",
+		"build:io-hook:native:dev": "cd apps/agent && npx node-gyp rebuild --target=30.0.1 --arch=arm64 --dist-url=https://electronjs.org/headers && cd ../.. && mkdir -p dist/apps/agent/native && mv apps/agent/build/Release/iohook.node dist/apps/agent/native/",
+		"build:io-hook:native:prod": "cd apps/agent && npx node-gyp rebuild && cd ../.. && mkdir -p dist/apps/agent/native && mv apps/agent/build/Release/iohook.node dist/apps/agent/native/"
 	},
 	"config": {
 		"commitizen": {

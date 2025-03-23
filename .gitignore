@@ -136,3 +136,6 @@ apps/server/src/assets/icons/menu
 apps/server-api/src/assets/icons/menu
 
 .angular
+
+# Generated build folder from noe-gyp iohook native
+apps/agent/build

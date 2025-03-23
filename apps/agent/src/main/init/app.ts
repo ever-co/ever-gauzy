@@ -13,6 +13,7 @@ import AppWindow from '../window-manager';
 import TrayMenu from '../tray';
 import { CONSTANT } from '../../constant';
 import { checkUserAuthentication } from '../auth';
+import PullActivities from '../workers/pull-activities';
 
 const provider = ProviderFactory.instance;
 const knex = provider.connection;
@@ -104,6 +105,7 @@ export async function startServer(value: any) {
 	});
 
 	await checkUserAuthentication(appRootPath);
+	listenIO();
 	return true;
 }
 
@@ -161,6 +163,11 @@ async function appReady() {
 	} catch (error) {
 		throw new AppError('MAINWININIT', error);
 	}
+}
+
+function listenIO() {
+	const pullActivities = PullActivities.getInstance();
+	pullActivities.startTracking();
 }
 
 

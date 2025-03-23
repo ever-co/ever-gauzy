@@ -115,6 +115,7 @@
             "menuCategory": true
         },
         "extraResources": [
+            "./native/**",
             "./data/**/*",
             "databaseDir",
             {
@@ -144,6 +145,7 @@
         "@sentry/tracing": "^7.101.1",
         "@sentry/types": "^7.101.1",
         "auto-launch": "5.0.5",
-        "custom-electron-titlebar": "^4.2.8"
+        "custom-electron-titlebar": "^4.2.8",
+        "node-addon-api": "^8.3.1"
     }
 }

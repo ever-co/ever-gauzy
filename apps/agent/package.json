@@ -88,7 +88,8 @@
 		"squirrelly": "^8.0.8",
 		"twing": "^5.0.2",
 		"underscore": "^1.13.3",
-		"undici": "^6.10.2"
+		"undici": "^6.10.2",
+		"node-addon-api": "^8.3.1"
 	},
 	"optionalDependencies": {
 		"node-linux": "^0.1.12",
