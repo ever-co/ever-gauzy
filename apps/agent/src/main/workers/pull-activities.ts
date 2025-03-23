@@ -2,9 +2,13 @@ import * as path from 'path';
 
 class PullActivities {
 	static instance: PullActivities;
+	private nativeModule: any;
+	private isStarted: boolean;
 	constructor() {
 		if (!PullActivities.instance) {
 			PullActivities.instance = this;
+			this.nativeModule = null;
+			this.isStarted = false;
 		}
 	}
 
@@ -16,19 +20,44 @@ class PullActivities {
 		return PullActivities.instance;
 	}
 
-	startTracking() {
+	getNativeModule() {
 		try {
 			let libFile = path.join(process.resourcesPath, 'native', 'iohook.node');
 			if (process.env.NODE_ENV === 'development') {
 				libFile = path.join(__dirname, '../..', 'native', 'iohook.node');
 			}
-			console.log('libFile', libFile);
 			const IoHook = require(libFile);
-			IoHook.startTracking((eventType, keyCode) => {
-				console.log(`Event: ${eventType}, Keycode: ${keyCode} `);
-			})
+			this.nativeModule = IoHook;
 		} catch (error) {
-			console.log('error run iohook', error);
+			console.log('error on get native module');
+		}
+	}
+
+	startTracking() {
+		if (!this.nativeModule) {
+			this.getNativeModule();
+		}
+		try {
+			if (!this.isStarted) {
+				this.nativeModule.startTracking((eventType: unknown, keyCode: unknown) => {
+					console.log(`Event: ${eventType}, Keycode: ${keyCode} `);
+				});
+				this.isStarted = true;
+			}
+		} catch (error) {
+			console.log('error start trackingk', error);
+		}
+	}
+
+	stopTracking() {
+		if (!this.nativeModule) {
+			this.getNativeModule();
+		}
+		try {
+			this.nativeModule.stopTracking();
+			this.isStarted = false;
+		} catch (error) {
+			console.log('error to stop tracking');
 		}
 	}
 }
