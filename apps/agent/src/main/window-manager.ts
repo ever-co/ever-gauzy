@@ -106,7 +106,7 @@ class AppWindow {
 				this.authWindow.browserWindow.on('close', () => {
 					this.authWindow.browserWindow.destroy();
 				});
-				this.authWindow.browserWindow.webContents.toggleDevTools();
+				// this.authWindow.browserWindow.webContents.toggleDevTools();
 			}
 		} catch (error) {
 			console.error('Failed to initialize auth window', error);
@@ -123,7 +123,7 @@ class AppWindow {
 					this.getPreloadPath(),
 					true
 				);
-				this.settingWindow.webContents.toggleDevTools();
+				// this.settingWindow.webContents.toggleDevTools();
 				this.settingWindow.removeAllListeners('close'); // remove the close default handle
 				// override the close event
 				this.settingWindow.on('close', () => {

@@ -16,6 +16,7 @@ import {
 import { getApiBaseUrl, delaySync } from '../util';
 import { startServer } from './app';
 import AppWindow from '../window-manager';
+import moment from 'moment';
 
 const userService = new UserService();
 
@@ -113,5 +114,10 @@ export default function AppIpcMain() {
 			auth: { ...arg, isLogout: false }
 		});
 		await closeLoginWindow();
+	});
+
+	ipcMain.on('update_app_setting', (event, arg) => {
+		log.info(`Update App Setting: ${moment().format()}`);
+		LocalStore.updateApplicationSetting(arg.values);
 	});
 }
