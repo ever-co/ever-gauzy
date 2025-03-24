@@ -1,29 +1,33 @@
 import { ZObject, Bundle } from 'zapier-platform-core';
 
 const perform = async (z: ZObject, bundle: Bundle) => {
-  const response = await z.request({
-    url: `${process.env.API_BASE_URL}/api/timesheet/timer/stop`,
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${bundle.authData['access_token']}`,
-    },
-    body: {
-      startedAt: bundle.inputData['startedAt'],
-      tenantId: bundle.inputData['tenantId'],
-      organizationId: bundle.inputData['organizationId'],
-      sentTo: bundle.inputData['sentTo'],
-      logType: bundle.inputData['logType'],
-      source: bundle.inputData['source'],
-      description: bundle.inputData['description'],
-      isBillable: bundle.inputData['isBillable'],
-      version: bundle.inputData['version'],
-      projectId: bundle.inputData['projectId'],
-      taskId: bundle.inputData['taskId'],
-      organizationContactId: bundle.inputData['organizationContactId'],
-      organizationTeamId: bundle.inputData['organizationTeamId'],
-    },
-  });
-  return response.data;
+  try {
+    const response = await z.request({
+      url: `${process.env.API_BASE_URL}/api/timesheet/timer/stop`,
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${bundle.authData['access_token']}`,
+      },
+      body: {
+        startedAt: bundle.inputData['startedAt'],
+        tenantId: bundle.inputData['tenantId'],
+        organizationId: bundle.inputData['organizationId'],
+        sentTo: bundle.inputData['sentTo'],
+        logType: bundle.inputData['logType'],
+        source: bundle.inputData['source'],
+        description: bundle.inputData['description'],
+        isBillable: bundle.inputData['isBillable'],
+        version: bundle.inputData['version'],
+        projectId: bundle.inputData['projectId'],
+        taskId: bundle.inputData['taskId'],
+        organizationContactId: bundle.inputData['organizationContactId'],
+        organizationTeamId: bundle.inputData['organizationTeamId'],
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error('Failed to stop timer');
+  }
 };
 
 export const stopTimerKey = 'stop_timer';

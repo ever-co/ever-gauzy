@@ -92,7 +92,7 @@ export class ZapierService {
 			}
 		);
 		if (!client_id || !client_secret || !refresh_token) {
-			throw new BadRequestException('Missing required zapieier integration settings')
+			throw new BadRequestException('Missing required zapier integration settings')
 		}
 
 		urlParams.append('grant_type', 'refresh_token');
