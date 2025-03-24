@@ -2608,6 +2608,7 @@
 		"TASKS_STATUS": "Status",
 		"TASK_PRIORITY": "Priorität",
 		"TASK_SIZE": "Größe",
+		"PARENT_TASK": "Übergeordnete Aufgabe",
 		"TODO": "Alles/Aufgabe/Alles",
 		"OPEN": "Öffnen",
 		"READY_FOR_REVIEW": "Bereit zur Überprüfung",

@@ -2643,6 +2643,7 @@
 		"TASKS_STATUS": "Статус",
 		"TASK_PRIORITY": "приоритет",
 		"TASK_SIZE": "Размер",
+		"PARENT_TASK": "Родительская задача",
 		"TODO": "Todo",
 		"IN_PROGRESS": "В процессе",
 		"FOR_TESTING": "Для тестирования",

@@ -2612,6 +2612,7 @@
 		"TASKS_STATUS": "Status",
 		"TASK_PRIORITY": "Priorytet",
 		"TASK_SIZE": "Rozmiar",
+		"PARENT_TASK": "Zadanie nadrzędne",
 		"TODO": "Zrobić",
 		"OPEN": "Otwarte",
 		"READY_FOR_REVIEW": "Gotowe do recenzji",

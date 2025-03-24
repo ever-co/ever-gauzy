@@ -15,7 +15,7 @@
 						<ngx-task-number-field
 							formControlName="number"
 							[formControl]="form.get('number')"
-							[projectId]="form.get('projectId').value"
+							[projectId]="getControlValue('projectId')"
 							[placeholder]="'TASKS_PAGE.TASK_NUMBER' | translate"
 						></ngx-task-number-field>
 					</div>
@@ -41,7 +41,7 @@
 							{{ 'TASKS_PAGE.TASKS_STATUS' | translate }}
 						</label>
 						<ga-task-status-select
-							[projectId]="form.get('projectId').value"
+							[projectId]="getControlValue('projectId')"
 							formControlName="taskStatus"
 							[placeholder]="'TASKS_PAGE.TASKS_STATUS' | translate"
 						></ga-task-status-select>
@@ -67,7 +67,19 @@
 					</div>
 				</div>
 			</div>
-
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="form-group">
+						<label class="label">{{ 'TASKS_PAGE.PARENT_TASK' | translate }}</label>
+						<ga-task-selector
+							name="taskId"
+							[projectId]="getControlValue('projectId')"
+							formControlName="parentId"
+							[required]="organization?.requireTask"
+						></ga-task-selector>
+					</div>
+				</div>
+			</div>
 			<div class="row">
 				<div class="col-sm-12">
 					<nb-radio-group (valueChange)="onParticipantsChange($event)" [value]="participants">

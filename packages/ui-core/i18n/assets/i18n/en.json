@@ -2735,6 +2735,7 @@
 		"TASKS_STATUS": "Status",
 		"TASK_PRIORITY": "Priority",
 		"TASK_SIZE": "Size",
+		"PARENT_TASK":"Parent Task",
 		"TODO": "Todo",
 		"OPEN": "Open",
 		"READY_FOR_REVIEW": "Ready for review",

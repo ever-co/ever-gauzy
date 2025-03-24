@@ -2671,6 +2671,7 @@
 		"TASKS_STATUS": "Статус",
 		"TASK_PRIORITY": "Приоритет",
 		"TASK_SIZE": "Размер",
+		"PARENT_TASK": "Основна задача",
 		"TODO": "За изпълнение",
 		"IN_PROGRESS": "В процес",
 		"FOR_TESTING": "За тестване",
