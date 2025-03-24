@@ -601,9 +601,14 @@ export class AuthService extends SocialAuthService {
 		const { organizationId } = input;
 
 		// Check if the user already exists
-		let user = await this.userService.findOneByOptions({ where: { email: input.user.email } });
-		if (user) {
-			throw new ConflictException(AuthError.ALREADY_REGISTERED);
+		let user;
+		try {
+			user = await this.userService.findOneByOptions({ where: { email: input.user.email } });
+			if (user) {
+				throw new ConflictException(AuthError.ALREADY_REGISTERED);
+			}
+		} catch (error) {
+			this.logger.error(`Error looking for user: ${error}`);
 		}
 
 		// 1. If createdById is provided, get the creating user and use their tenant
