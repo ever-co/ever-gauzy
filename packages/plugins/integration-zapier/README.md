@@ -2,7 +2,7 @@
 
 This library was generated with [Nx](https://nx.dev). It contains the Zapier Integration plugin for Gauzy platform.
 
-## OverView
+## Overview
 
 This plugin provides integration with Zapier, enabling seamless automation between Gauzy and thousands of other apps. It allows you to create custom workflows, automate tasks, and synchronize data across multiple platforms.
 

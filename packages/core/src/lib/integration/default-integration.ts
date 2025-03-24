@@ -31,6 +31,24 @@ export const DEFAULT_SYSTEM_INTEGRATIONS = [
 		order: 6,
 		redirectUrl: sluggable(IntegrationEnum.IMPORT_EXPORT),
 		provider: IntegrationEnum.IMPORT_EXPORT
+	},
+	{
+		name: IntegrationEnum.MAKECOM,
+		imgSrc: 'make-com.svg',
+		isComingSoon: true,
+		integrationTypesMap: <string[]>[IntegrationTypeEnum.ALL_INTEGRATIONS, IntegrationTypeEnum.AUTOMATION_TOOLS],
+		order: 7,
+		redirectUrl: sluggable(IntegrationEnum.MAKECOM),
+		provider: IntegrationEnum.MAKECOM
+	},
+	{
+		name: IntegrationEnum.ZAPIER,
+		imgSrc: 'zapier.svg',
+		isComingSoon: true,
+		integrationTypesMap: <string[]>[IntegrationTypeEnum.ALL_INTEGRATIONS, IntegrationTypeEnum.AUTOMATION_TOOLS],
+		order: 8,
+		redirectUrl: sluggable(IntegrationEnum.ZAPIER),
+		provider: IntegrationEnum.ZAPIER
 	}
 ];
 

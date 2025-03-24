@@ -7,14 +7,14 @@ export const authentication = {
 	type: 'oauth2',
 	/** Configuration for testing the authentication */
 	test: {
-		url: '{{process.env.API_BASE_URL}}/api/auth/authenticated'
+		url: `${process.env.API_BASE_URL}/api/auth/authenticated`
 	},
 	/** OAuth2 specific configuration */
 	oauth2Config: {
 		/** Configuration for the authorization URL */
 		authorizeUrl: {
 			method: 'GET',
-			url: '{{process.env.API_BASE_URL}}/api/integration/zapier/oauth/authorize',
+			url: `${process.env.API_BASE_URL}/api/integration/zapier/oauth/authorize`,
 			params: {
 				client_id: '{{process.env.CLIENT_ID}}',
 				state: '{{bundle.inputData.state}}',
@@ -25,7 +25,7 @@ export const authentication = {
 		/** Configuration for obtaining access token */
 		getAccessToken: {
 			method: 'POST',
-			url: '{{process.env.API_BASE_URL}}/api/integration/zapier/token/:integrationId',
+			url: `${process.env.API_BASE_URL}/api/integration/zapier/token/:integrationId`,
 			body: {
 				code: '{{bundle.inputData.code}}',
 				client_id: '{{process.env.CLIENT_ID}}',
@@ -40,7 +40,7 @@ export const authentication = {
 		/** Configuration for refreshing access token */
 		refreshAccessToken: {
 			method: 'POST',
-			url: '{{process.env.API_BASE_URL}}/api/integration/zapier/refresh-token/:integrationId',
+			url: `${process.env.API_BASE_URL}/api/integration/zapier/refresh-token/:integrationId`,
 			body: {
 				refresh_token: '{{bundle.authData.refresh_token}}',
 				client_id: '{{process.env.CLIENT_ID}}',

@@ -2,13 +2,12 @@ import { ZObject, Bundle } from 'zapier-platform-core';
 
 const perform = async (z: ZObject, bundle: Bundle) => {
   const response = await z.request({
-    url: '{{process.env.API_BASE_URL}}/api/timesheet/timer/stop',
+    url: `${process.env.API_BASE_URL}/api/timesheet/timer/stop`,
     method: 'POST',
     headers: {
       Authorization: `Bearer ${bundle.authData['access_token']}`,
     },
     body: {
-      employeeId: bundle.inputData['employeeId'],
       startedAt: bundle.inputData['startedAt'],
       tenantId: bundle.inputData['tenantId'],
       organizationId: bundle.inputData['organizationId'],
@@ -80,7 +79,7 @@ export default {
       { key: 'organizationContactId', type: 'string', required: false, label: 'Organization Contact ID' },
       { key: 'organizationTeamId', type: 'string', required: false, label: 'Organization Team ID' },
     ],
-    type: 'hook',
+    type: 'create',
     perform,
     sample: {
       id: 1,

@@ -12,8 +12,7 @@ import {
 	IIntegrationEntitySetting,
 	ID,
 	ICreateZapierIntegrationInput,
-	IZapierTrigger,
-	IZapierAction
+	IZapierEndpoint,
 } from '@gauzy/contracts';
 import {
 	IntegrationSettingService,
@@ -49,7 +48,6 @@ export class ZapierService {
 			this._httpService.get(url, { headers }).pipe(
 				catchError((error: AxiosError<any>) => {
 					const response = error.response || { status: HttpStatus.INTERNAL_SERVER_ERROR };
-					console.log('Error while Zapier API: %s', response);
 
 					throw new HttpException({ message: error.message, error }, response.status);
 				}),
@@ -93,6 +91,10 @@ export class ZapierService {
 				refresh_token: ''
 			}
 		);
+		if (!client_id || !client_secret || !refresh_token) {
+			throw new BadRequestException('Missing required zapieier integration settings')
+		}
+
 		urlParams.append('grant_type', 'refresh_token');
 		urlParams.append('refresh_token', refresh_token);
 		urlParams.append('client_id', client_id);
@@ -245,15 +247,15 @@ export class ZapierService {
 	 * Fetches and returns a list of triggers from Zapier.
 	 *
 	 * @param {string} token - The access token for authentication with the Zapier API.
-	 * @returns {Promise<IZapierTrigger[]>} - A promise that resolves to an array of Zapier triggers.
+	 * @returns {Promise<IZapierEndpoint[]>} - A promise that resolves to an array of Zapier triggers.
 	 * @throws {Error} - Throws an error if the fetch operation fails.
 	 */
-	async fetchTriggers(token: string): Promise<IZapierTrigger[]> {
+	async fetchTriggers(token: string): Promise<IZapierEndpoint[]> {
 		try {
-			const response = await this.fetchIntegration<{ triggers: IZapierTrigger[] }>('triggers', token);
+			const response = await this.fetchIntegration<{ triggers: IZapierEndpoint[] }>('triggers', token);
 			return response.triggers;
 		} catch (error) {
-			console.error('Failed to fetch Zapier triggers:', error);
+			console.error('Failed to fetch Zapier triggers');
 			throw new Error('Unable to fetch triggers from Zapier');
 		}
 	}
@@ -262,12 +264,12 @@ export class ZapierService {
 	 * Fetches and returns a list of actions from Zapier.
 	 *
 	 * @param {string} token - The access token for authentication with the Zapier API.
-	 * @returns {Promise<IZapierAction[]>} - A promise that resolves to an array of Zapier actions.
+	 * @returns {Promise<IZapierEndpoint[]>} - A promise that resolves to an array of Zapier actions.
 	 * @throws {Error} - Throws an error if the fetch operation fails.
 	 */
-	async fetchActions(token: string): Promise<IZapierAction[]> {
+	async fetchActions(token: string): Promise<IZapierEndpoint[]> {
 		try {
-			const response = await this.fetchIntegration<{ actions: IZapierAction[] }>('actions', token);
+			const response = await this.fetchIntegration<{ actions: IZapierEndpoint[] }>('actions', token);
 			return response.actions;
 		} catch (error) {
 			console.error('Failed to fetch Zapier actions:', error);

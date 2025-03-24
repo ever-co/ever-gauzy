@@ -21,3 +21,4 @@ dist
 
 # Ignore environment configuration files
 .env
+.env.*

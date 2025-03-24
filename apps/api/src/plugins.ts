@@ -47,12 +47,12 @@ export const plugins = [
 	...(hubstaff?.clientId && hubstaff?.clientSecret ? [IntegrationHubstaffPlugin] : []),
 	// Indicates the inclusion or intention to use the IntegrationMakeComPlugin in the codebase.
 	IntegrationMakeComPlugin,
-	// Indicates the inclusion or intention to use the IntegrationZapierPlugin in the codebase.
-	IntegrationZapierPlugin,
 	// Indicates the inclusion or intention to use the IntegrationJiraPlugin in the codebase.
 	...(jira?.appKey && jira?.baseUrl ? [IntegrationJiraPlugin] : []),
 	// Indicates the inclusion or intention to use the IntegrationUpworkPlugin in the codebase.
 	...(upwork?.apiKey && upwork?.apiSecret ? [IntegrationUpworkPlugin] : []),
+	// Indicates the inclusion or intention to use the IntegrationZapierPlugin in the codebase.
+	IntegrationZapierPlugin,
 	// Indicates the inclusion or intention to use the JobProposalPlugin in the codebase.
 	...(gauzyPlugins.useJobProposal ? [JobProposalPlugin] : []),
 	// Indicates the inclusion or intention to use the JobSearchPlugin in the codebase.

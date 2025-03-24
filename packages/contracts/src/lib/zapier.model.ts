@@ -7,21 +7,17 @@ export interface IZapierAccessTokens {
     expires_in: number;
 }
 
+export type ZapierGrantType = 'authorization_code' | 'refresh_token';
+
 export interface ICreateZapierIntegrationInput extends IBasePerTenantAndOrganizationEntityModel {
     client_id: string;
     code: string;
-    grant_type: string;
+    grant_type: ZapierGrantType;
     redirect_uri: string;
     client_secret: string;
 }
 
-export interface IZapierTrigger {
-    id: string;
-    name: string;
-    description: string;
-}
-
-export interface IZapierAction {
+export interface IZapierEndpoint {
     id: string;
     name: string;
     description: string;

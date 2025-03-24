@@ -138,7 +138,7 @@ export enum IntegrationEnum {
 	GAUZY_AI = 'Gauzy_AI',
 	GITHUB = 'Github',
 	JIRA = 'Jira',
-	MakeCom = 'MakeCom',
+	MAKECOM = 'MakeCom',
 	ZAPIER = 'Zapier'
 }
 
@@ -178,7 +178,8 @@ export enum IntegrationTypeEnum {
 	SCHEDULING = 'Scheduling',
 	TOOLS = 'Tools',
 	PROJECT_MANAGEMENT = 'Project Management',
-	COMMUNICATION = 'Communication'
+	COMMUNICATION = 'Communication',
+	AUTOMATION_TOOLS = 'Automation Tools'
 }
 
 export enum IntegrationFilterEnum {

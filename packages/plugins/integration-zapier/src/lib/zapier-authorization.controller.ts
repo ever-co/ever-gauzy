@@ -30,11 +30,11 @@ export class ZapierAuthorizationController {
 			if (!clientId) {
 				throw new HttpException('Zapier client ID is not configured', HttpStatus.INTERNAL_SERVER_ERROR);
 			}
-			const authUrl = `${ZAPIER_AUTHORIZATION_URL}?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code`;
+			const authUrl = `${ZAPIER_AUTHORIZATION_URL}?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`;
 			res.redirect(authUrl);
 		} catch (error) {
 			throw new HttpException(
-				`Failed to initiate 0Auth2 authorization: ${error}`,
+				'Failed to initiate 0Auth2 authorization',
 				HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}

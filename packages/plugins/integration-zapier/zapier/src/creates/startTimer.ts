@@ -1,30 +1,33 @@
 import { ZObject, Bundle } from 'zapier-platform-core';
 
 const perform = async (z: ZObject, bundle: Bundle) => {
-  const response = await z.request({
-    url: '{{process.env.API_BASE_URL}}/api/timesheet/timer/start',
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${bundle.authData['access_token']}`,
-    },
-    body: {
-      employeeId: bundle.inputData['employeeId'],
-      startedAt: bundle.inputData['startedAt'],
-      tenantId: bundle.inputData['tenantId'],
-      organizationId: bundle.inputData['organizationId'],
-      sentTo: bundle.inputData['sentTo'],
-      logType: bundle.inputData['logType'],
-      source: bundle.inputData['source'],
-      description: bundle.inputData['description'],
-      isBillable: bundle.inputData['isBillable'],
-      version: bundle.inputData['version'],
-      projectId: bundle.inputData['projectId'],
-      taskId: bundle.inputData['taskId'],
-      organizationContactId: bundle.inputData['organizationContactId'],
-      organizationTeamId: bundle.inputData['organizationTeamId'],
-    },
-  });
-  return response.data;
+  try {
+    const response = await z.request({
+      url: `${process.env.API_BASE_URL}/api/timesheet/timer/start`,
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${bundle.authData['access_token']}`,
+      },
+      body: {
+        startedAt: bundle.inputData['startedAt'],
+        tenantId: bundle.inputData['tenantId'],
+        organizationId: bundle.inputData['organizationId'],
+        sentTo: bundle.inputData['sentTo'],
+        logType: bundle.inputData['logType'],
+        source: bundle.inputData['source'],
+        description: bundle.inputData['description'],
+        isBillable: bundle.inputData['isBillable'],
+        version: bundle.inputData['version'],
+        projectId: bundle.inputData['projectId'],
+        taskId: bundle.inputData['taskId'],
+        organizationContactId: bundle.inputData['organizationContactId'],
+        organizationTeamId: bundle.inputData['organizationTeamId'],
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error('Failed to start timer');
+  }
 };
 
 export const startTimerKey = 'start_timer';
@@ -81,7 +84,7 @@ export default {
       { key: 'organizationContactId', type: 'string', required: false, label: 'Organization Contact ID' },
       { key: 'organizationTeamId', type: 'string', required: false, label: 'Organization Team ID' },
     ],
-    type: 'hook',
+    type: 'create',
     perform,
     sample: {
       id: 1,

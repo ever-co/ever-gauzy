@@ -32,7 +32,7 @@ bower_components
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/
 dist/
-/lib
+/lib/
 
 # Dependency directories
 node_modules/
@@ -58,6 +58,7 @@ typings/
 
 # environment variables file
 .env
+.env*
 .environment
 
 # next.js build output
