@@ -320,6 +320,7 @@
 			"NAME": "שם",
 			"PHONE_NUMBER": "מספר טלפון",
 			"WEBSITE": "Website",
+			"EMAIL_DOMAIN": "דומיין אימייל",
 			"FIRST_NAME": "שם פרטי",
 			"LAST_NAME": "שם משפחה",
 			"FROM": "From",
@@ -499,6 +500,7 @@
 			"CODE": "Code",
 			"COLOR": "Color",
 			"WEBSITE": "Website",
+			"EMAIL_DOMAIN": "דומיין אימייל להתאמת משתמשים חדשים שנרשמו",
 			"CURRENCY_POSITION": "Currency Position",
 			"FISCAL_INFORMATION": "Fiscal Information",
 			"IMAGE_URL": "תמונה",
@@ -2024,6 +2026,10 @@
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
 				"MEMBERS": "Members"
+			},
+			"ERRORS": {
+				"EMAIL_DOMAIN_INVALID_LENGTH": "אורך דומיין האימייל חייב להיות בין {{ min }} ל-{{ max }} תווים",
+				"EMAIL_DOMAIN_INVALID_PATTERN": "דומיין האימייל חייב להיות שם דומיין חוקי (לדוגמה: company.com)"
 			}
 		},
 		"PERMISSIONS": {
@@ -4529,6 +4535,10 @@
 			"receipt": "Receipt"
 		}
 	},
+	"BANNERS": {
+		"ERROR_TITLE": "אוי לא!",
+		"SUCCESS_TITLE": "הידד!"
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "הרשמה",
 		"HAVE_AN_ACCOUNT": "כבר יש לך חשבון?",
@@ -4560,6 +4570,14 @@
 				"AND": " וגם ",
 				"PRIVACY_POLICY": "מדיניות פרטיות"
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "משהו השתבש, אנא נסה שוב.",
+			"ALREADY_REGISTERED": "כתובת הדוא\"ל כבר רשומה.",
+			"INVALID_EMAIL_DOMAIN": "כתובת הדוא\"ל אינה נתמכת לרישום חשבון."
+		},
+		"MESSAGES": {
+			"DEFAULT": "נרשמת בהצלחה."
 		}
 	},
 	"LOGIN_PAGE": {
@@ -4610,6 +4628,12 @@
 				"EMAIL": "אימייל: ",
 				"PASSWORD": "סיסמה: "
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "שילוב התחברות/אימייל אינו נכון, אנא נסה שוב."
+		},
+		"MESSAGES": {
+			"DEFAULT": "התחברת בהצלחה."
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4630,6 +4654,12 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_REAL_REQUIRED": "Email should be the real one!"
+		},
+		"ERRORS": {
+			"DEFAULT": "משהו השתבש, אנא נסה שוב."
+		},
+		"MESSAGES": {
+			"DEFAULT": "הוראות לאיפוס סיסמה נשלחו לדוא\"ל שלך."
 		}
 	},
 	"RESET_PASSWORD_PAGE": {
@@ -4649,6 +4679,20 @@
 			"CONFIRM_PASSWORD_REQUIRED": "אימות סיסמה נדרש!",
 			"PASSWORDS_NOT_MATCH": "הסיסמה אינה תואמת לאימות הסיסמה!",
 			"PASSWORD_SHOULD_CONTAIN": "הסיסמה החדשה צריכה לכלול בין {{ minLength }} ל-{{ maxLength }} תווים."
+		},
+		"ERRORS": {
+			"DEFAULT": "איפוס הסיסמה נכשל."
+		},
+		"MESSAGES": {
+			"DEFAULT": "הסיסמה שלך שונתה בהצלחה."
+		}
+	},
+	"LOGOUT": {
+		"ERRORS": {
+			"DEFAULT": "משהו השתבש, אנא נסה שוב."
+		},
+		"MESSAGES": {
+			"DEFAULT": "התנתקת בהצלחה."
 		}
 	},
 	"PAGINATION": {

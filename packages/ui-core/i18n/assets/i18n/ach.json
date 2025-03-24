@@ -271,6 +271,7 @@
 		"LABELS": {
 			"NAME": "crwdns76:0crwdne76:0",
 			"WEBSITE": "crwdns7958:0crwdne7958:0",
+			"EMAIL_DOMAIN": "crwdns7960:0crwdne7960:0",
 			"FIRST_NAME": "crwdns78:0crwdne78:0",
 			"LAST_NAME": "crwdns80:0crwdne80:0",
 			"FROM": "crwdns7296:0crwdne7296:0",
@@ -433,6 +434,7 @@
 			"CODE": "crwdns7962:0crwdne7962:0",
 			"COLOR": "crwdns7964:0crwdne7964:0",
 			"WEBSITE": "crwdns7966:0crwdne7966:0",
+			"EMAIL_DOMAIN": "crwdns7968:0crwdne7967:0",
 			"CURRENCY_POSITION": "crwdns7968:0crwdne7968:0",
 			"FISCAL_INFORMATION": "crwdns7970:0crwdne7970:0",
 			"IMAGE_URL": "crwdns116:0crwdne116:0",

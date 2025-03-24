@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService, IEnvironment } from '@gauzy/config';
 import * as bcrypt from 'bcrypt';
+import { IOAuthCreateUser, IOAuthEmail, IOAuthValidateResponse } from '@gauzy/common';
+import { AuthError } from '@gauzy/contracts';
 
 /**
  * Base class for social authentication.
@@ -12,7 +14,16 @@ export abstract class BaseSocialAuth {
 	 * @param args - Arguments for validating OAuth login email.
 	 * @returns The result of the validation.
 	 */
-	public abstract validateOAuthLoginEmail(args: []): any;
+	public abstract validateOAuthLoginEmail(emails: IOAuthEmail[]): Promise<IOAuthValidateResponse>;
+
+	/**
+	 * Register a new user with OAuth data
+	 * 
+	 * @param userInfo - The user information to register.
+	 * @returns The result of the registration.
+	 */
+	public abstract registerOAuth(userInfo: IOAuthCreateUser): Promise<IOAuthValidateResponse>;
+
 }
 
 @Injectable()
@@ -28,8 +39,15 @@ export class SocialAuthService extends BaseSocialAuth {
 		this.clientBaseUrl = this.configService.get('clientBaseUrl') as Extract<keyof IEnvironment, string>;
 	}
 
-	public validateOAuthLoginEmail(args: []): any { }
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	public validateOAuthLoginEmail(emails: IOAuthEmail[]): Promise<IOAuthValidateResponse> {
+		return Promise.resolve({ success: false, authData: { jwt: null, userId: null } });
+	}
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	public registerOAuth(userInfo: IOAuthCreateUser): Promise<IOAuthValidateResponse> {
+		return Promise.resolve({ success: false, authData: { jwt: null, userId: null } });
+	}
 	/**
 	 * Generate a hash for the provided password.
 	 *
@@ -57,7 +75,7 @@ export class SocialAuthService extends BaseSocialAuth {
 	async routeRedirect(success: boolean, auth: { jwt: string; userId: string }, res: any) {
 		const { userId, jwt } = auth;
 
-		const redirectPath = success ? `#/sign-in/success?jwt=${jwt}&userId=${userId}` : `#/auth/register`;
+		const redirectPath = success ? `#/sign-in/success?jwt=${jwt}&userId=${userId}` : `#/auth/register?error=${AuthError.INVALID_EMAIL_DOMAIN}`;
 		const redirectUrl = `${this.clientBaseUrl}/${redirectPath}`;
 
 		return res.redirect(redirectUrl);

@@ -2,10 +2,9 @@ import { Injectable } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, from, of, tap, Subject, EMPTY } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
-import { NbAuthResult, NbAuthStrategy } from '@nebular/auth';
-import { NbAuthStrategyClass } from '@nebular/auth';
+import { NbAuthResult, NbAuthStrategy, NbAuthStrategyClass } from '@nebular/auth';
 import { CookieService } from 'ngx-cookie-service';
-import { IUser, IAuthResponse, IUserLoginInput, LanguagesEnum } from '@gauzy/contracts';
+import { IUser, IAuthResponse, IUserLoginInput, LanguagesEnum, AuthError } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { ElectronService } from './electron.service';
 import { AuthService } from './auth.service';
@@ -16,38 +15,40 @@ import { deleteCookie } from '../../auth/cookie-helper';
 
 @Injectable()
 export class AuthStrategy extends NbAuthStrategy {
-	private static config = {
+	private static readonly config = {
 		login: {
 			redirect: {
 				success: '/',
 				failure: null
 			},
-			defaultErrors: ['Login/Email combination is not correct, please try again.'],
-			defaultMessages: ['You have been successfully logged in.']
+			defaultErrors: ['LOGIN_PAGE.ERRORS.DEFAULT'],
+			defaultMessages: ['LOGIN_PAGE.MESSAGES.DEFAULT']
 		},
 		register: {
 			redirect: {
 				success: '/',
 				failure: null
 			},
-			defaultErrors: ['Something went wrong, please try again.'],
-			defaultMessages: ['You have been successfully registered.']
+			alreadyRegisteredErrors: ['REGISTER_PAGE.ERRORS.ALREADY_REGISTERED'],
+			invalidEmailDomainErrors: ['REGISTER_PAGE.ERRORS.INVALID_EMAIL_DOMAIN'],
+			defaultErrors: ['REGISTER_PAGE.ERRORS.DEFAULT'],
+			defaultMessages: ['REGISTER_PAGE.MESSAGES.DEFAULT']
 		},
 		logout: {
 			redirect: {
 				success: '/',
 				failure: null
 			},
-			defaultErrors: ['Something went wrong, please try again.'],
-			defaultMessages: ['You have been successfully logged out.']
+			defaultErrors: ['LOGOUT.ERRORS.DEFAULT'],
+			defaultMessages: ['LOGOUT.MESSAGES.DEFAULT']
 		},
 		requestPass: {
 			redirect: {
 				success: '/',
 				failure: null
 			},
-			defaultErrors: ['Something went wrong, please try again.'],
-			defaultMessages: ['Reset password instructions have been sent to your email.']
+			defaultErrors: ['FORGOT_PASSWORD_PAGE.ERRORS.DEFAULT'],
+			defaultMessages: ['FORGOT_PASSWORD_PAGE.MESSAGES.DEFAULT']
 		},
 		resetPass: {
 			redirect: {
@@ -55,8 +56,8 @@ export class AuthStrategy extends NbAuthStrategy {
 				failure: null
 			},
 			resetPasswordTokenKey: 'reset_password_token',
-			defaultErrors: ['Password Reset Failed.'],
-			defaultMessages: ['Your password has been successfully changed.']
+			defaultErrors: ['RESET_PASSWORD_PAGE.ERRORS.DEFAULT'],
+			defaultMessages: ['RESET_PASSWORD_PAGE.MESSAGES.DEFAULT']
 		}
 	};
 
@@ -153,6 +154,22 @@ export class AuthStrategy extends NbAuthStrategy {
 				}
 			}),
 			catchError((err) => {
+				// Check for user already registered error
+				if (err?.error?.message === AuthError.ALREADY_REGISTERED) {
+					return of(
+						new NbAuthResult(false, err, false, AuthStrategy.config.register.alreadyRegisteredErrors, [
+							AuthStrategy.config.register.alreadyRegisteredErrors
+						])
+					);
+				}
+				// Check for invalid email domain error
+				if (err?.error?.message === AuthError.INVALID_EMAIL_DOMAIN) {
+					return of(
+						new NbAuthResult(false, err, false, AuthStrategy.config.register.invalidEmailDomainErrors, [
+							AuthStrategy.config.register.invalidEmailDomainErrors
+						])
+					);
+				}
 				return of(
 					new NbAuthResult(false, err, false, AuthStrategy.config.register.defaultErrors, [
 						AuthStrategy.config.register.defaultErrors
@@ -278,7 +295,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		}
 
 		//remove time tracking/timesheet filter just before logout
-		if (this.store.user && this.store.user.employee) {
+		if (this.store.user?.employee) {
 			if (this.timeTrackerService.running) {
 				if (this.timeTrackerService.timerSynced.isExternalSource) {
 					this.timeTrackerService.remoteToggle();

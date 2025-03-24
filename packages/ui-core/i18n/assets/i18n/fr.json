@@ -320,6 +320,7 @@
 			"NAME": "Nom",
 			"PHONE_NUMBER": "Numéro de téléphone",
 			"WEBSITE": "Site Web",
+			"EMAIL_DOMAIN": "Domaine email",
 			"FIRST_NAME": "Prénom",
 			"LAST_NAME": "Nom de famille (facultatif)",
 			"FROM": "À partir de",
@@ -493,6 +494,7 @@
 			"CODE": "Code",
 			"COLOR": "Couleur",
 			"WEBSITE": "Site web",
+			"EMAIL_DOMAIN": "Domaine de messagerie pour correspondre aux nouveaux utilisateurs enregistrés",
 			"CURRENCY_POSITION": "Position de devise",
 			"FISCAL_INFORMATION": "Informations fiscales",
 			"IMAGE_URL": "Image",
@@ -1997,6 +1999,10 @@
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
 				"MEMBERS": "Membres"
+			},
+			"ERRORS": {
+				"EMAIL_DOMAIN_INVALID_LENGTH": "La longueur du domaine de l'e-mail doit être comprise entre {{ min }} et {{ max }} caractères",
+				"EMAIL_DOMAIN_INVALID_PATTERN": "Le domaine de l'e-mail doit être un nom de domaine valide (par exemple, entreprise.com)"
 			}
 		},
 		"PERMISSIONS": {
@@ -4538,6 +4544,10 @@
 			"receipt": "Reçu"
 		}
 	},
+	"BANNERS": {
+		"ERROR_TITLE": "Oh zut !",
+		"SUCCESS_TITLE": "Hourra !"
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "S'inscrire",
 		"HAVE_AN_ACCOUNT": "Vous avez déjà un compte ?",
@@ -4569,6 +4579,14 @@
 				"AND": " et ",
 				"PRIVACY_POLICY": "Politique de confidentialité"
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "Une erreur s'est produite, veuillez réessayer.",
+			"ALREADY_REGISTERED": "L'adresse e-mail est déjà enregistrée.",
+			"INVALID_EMAIL_DOMAIN": "Cette adresse e-mail n'est pas prise en charge pour l'inscription d'un compte."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Vous avez été inscrit avec succès."
 		}
 	},
 	"LOGIN_PAGE": {
@@ -4619,6 +4637,12 @@
 				"EMAIL": "E-mail : ",
 				"PASSWORD": "Mot de passe : "
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "La combinaison identifiant/e-mail n'est pas correcte, veuillez réessayer."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Vous vous êtes connecté avec succès."
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4639,6 +4663,12 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "L'email est requis !",
 			"EMAIL_REAL_REQUIRED": "L'email doit être le véritable !"
+		},
+		"ERRORS": {
+			"DEFAULT": "Une erreur s'est produite, veuillez réessayer."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Les instructions de réinitialisation du mot de passe ont été envoyées à votre adresse e-mail."
 		}
 	},
 	"RESET_PASSWORD_PAGE": {
@@ -4658,6 +4688,20 @@
 			"CONFIRM_PASSWORD_REQUIRED": "La confirmation du mot de passe est requise !",
 			"PASSWORDS_NOT_MATCH": "Le mot de passe ne correspond pas à la confirmation du mot de passe !",
 			"PASSWORD_SHOULD_CONTAIN": "Le nouveau mot de passe doit contenir entre {{ minLength }} et {{ maxLength }} caractères."
+		},
+		"ERRORS": {
+			"DEFAULT": "Échec de la réinitialisation du mot de passe."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Votre mot de passe a été modifié avec succès."
+		}
+	},
+	"LOGOUT": {
+		"ERRORS": {
+			"DEFAULT": "Une erreur s'est produite, veuillez réessayer."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Vous avez été déconnecté avec succès."
 		}
 	},
 	"PAGINATION": {

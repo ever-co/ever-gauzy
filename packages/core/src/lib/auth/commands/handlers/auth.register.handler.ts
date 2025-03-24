@@ -21,7 +21,7 @@ export class AuthRegisterHandler implements ICommandHandler<AuthRegisterCommand>
 		const { input, languageCode } = command;
 
 		// Check if the user role is SUPER_ADMIN and require 'createdById' for verification
-		if (input.user && input.user.role && input.user.role.name === RolesEnum.SUPER_ADMIN) {
+		if (input.user?.role?.name === RolesEnum.SUPER_ADMIN) {
 			if (!input.createdById) {
 				throw new BadRequestException('Missing createdById for SUPER_ADMIN registration.');
 			}
@@ -38,6 +38,6 @@ export class AuthRegisterHandler implements ICommandHandler<AuthRegisterCommand>
 		}
 
 		// Register the user using the AuthService
-		return await this.authService.register(input, languageCode);
+		return await this.authService.autoRegister(input, languageCode);
 	}
 }

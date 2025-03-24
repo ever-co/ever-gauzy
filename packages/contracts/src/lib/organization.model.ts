@@ -110,6 +110,7 @@ export interface IOrganization
 	/** Upwork Organization For Gauzy AI*/
 	upworkOrganizationId?: string;
 	upworkOrganizationName?: string;
+	emailDomain?: string;
 }
 
 export interface IOrganizationFindInput extends IBasePerTenantEntityModel {

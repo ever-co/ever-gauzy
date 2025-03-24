@@ -320,6 +320,7 @@
 			"NAME": "Name",
 			"PHONE_NUMBER": "Telefonnummer",
 			"WEBSITE": "Website",
+			"EMAIL_DOMAIN": "E-Mail-Domain",
 			"FIRST_NAME": "Vorname",
 			"LAST_NAME": "Nachname (optional)",
 			"FROM": "Von",
@@ -493,6 +494,7 @@
 			"CODE": "Code",
 			"COLOR": "Farbe",
 			"WEBSITE": "Website",
+			"EMAIL_DOMAIN": "E-Mail-Domain, die mit neu registrierten Benutzern übereinstimmt",
 			"CURRENCY_POSITION": "Währung Position",
 			"FISCAL_INFORMATION": "Fiskalinformation",
 			"IMAGE_URL": "Bild",
@@ -1992,6 +1994,10 @@
 			"TEAMS_PAGE": {
 				"MANAGERS": "Manager",
 				"MEMBERS": "Mitglieder"
+			},
+			"ERRORS": {
+				"EMAIL_DOMAIN_INVALID_LENGTH": "Die E-Mail-Domain muss zwischen {{ min }} und {{ max }} Zeichen lang sein",
+				"EMAIL_DOMAIN_INVALID_PATTERN": "Die E-Mail-Domain muss ein gültiger Domainname sein (z.B. firma.de)"
 			}
 		},
 		"PERMISSIONS": {
@@ -4534,6 +4540,10 @@
 			"receipt": "Quittung"
 		}
 	},
+	"BANNERS": {
+		"ERROR_TITLE": "Oh Mist!",
+		"SUCCESS_TITLE": "Hurra!"
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "Registrieren",
 		"HAVE_AN_ACCOUNT": "Haben Sie bereits ein Konto?",
@@ -4565,6 +4575,14 @@
 				"AND": " und ",
 				"PRIVACY_POLICY": "Datenschutzbestimmungen"
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "Etwas ist schiefgelaufen, bitte versuchen Sie es erneut.",
+			"ALREADY_REGISTERED": "Die E-Mail-Adresse ist bereits registriert.",
+			"INVALID_EMAIL_DOMAIN": "Diese E-Mail-Adresse wird für die Registrierung eines Kontos nicht unterstützt."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Sie haben sich erfolgreich registriert."
 		}
 	},
 	"LOGIN_PAGE": {
@@ -4615,6 +4633,12 @@
 				"EMAIL": "E-Mail: ",
 				"PASSWORD": "Passwort: "
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "Login/E-Mail-Kombination ist nicht korrekt, bitte versuchen Sie es erneut."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Sie haben sich erfolgreich angemeldet."
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4635,6 +4659,12 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "E-Mail ist erforderlich!",
 			"EMAIL_REAL_REQUIRED": "Die E-Mail sollte die echte sein!"
+		},
+		"ERRORS": {
+			"DEFAULT": "Etwas ist schiefgelaufen, bitte versuchen Sie es erneut."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Die Anweisungen zum Zurücksetzen des Passworts wurden an Ihre E-Mail gesendet."
 		}
 	},
 	"RESET_PASSWORD_PAGE": {
@@ -4654,6 +4684,20 @@
 			"CONFIRM_PASSWORD_REQUIRED": "Passwortbestätigung ist erforderlich!",
 			"PASSWORDS_NOT_MATCH": "Passwort stimmt nicht mit der Passwortbestätigung überein!",
 			"PASSWORD_SHOULD_CONTAIN": "Das neue Passwort sollte aus {{ minLength }} bis {{ maxLength }} Zeichen bestehen!"
+		},
+		"ERRORS": {
+			"DEFAULT": "Passwort zurücksetzen fehlgeschlagen."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Ihr Passwort wurde erfolgreich geändert."
+		}
+	},
+	"LOGOUT": {
+		"ERRORS": {
+			"DEFAULT": "Etwas ist schiefgelaufen, bitte versuchen Sie es erneut."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Sie wurden erfolgreich abgemeldet."
 		}
 	},
 	"PAGINATION": {

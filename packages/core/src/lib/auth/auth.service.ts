@@ -4,8 +4,11 @@ import {
 	BadRequestException,
 	Injectable,
 	InternalServerErrorException,
+	NotAcceptableException,
 	NotFoundException,
-	UnauthorizedException
+	UnauthorizedException,
+	Logger,
+	ConflictException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
@@ -38,11 +41,15 @@ import {
 	ISocialAccount,
 	ILastTeam,
 	ILastOrganization,
-	ID
+	ID,
+	PayPeriodEnum,
+	IRole,
+	RolesEnum,
+	AuthError
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
-import { IAppIntegrationConfig, createQueryParamsString, deepMerge, isNotEmpty } from '@gauzy/common';
+import { IAppIntegrationConfig, IOAuthCreateUser, IOAuthEmail, IOAuthValidateResponse, createQueryParamsString, deepMerge, isNotEmpty } from '@gauzy/common';
 import { AccountRegistrationEvent } from '../event-bus/events';
 import { EventBus } from '../event-bus/event-bus';
 import { ALPHA_NUMERIC_CODE_LENGTH, DEMO_PASSWORD_LESS_MAGIC_CODE } from './../constants';
@@ -68,9 +75,24 @@ import {
 	verifyTwitterToken
 } from './social-account/token-verification/verify-oauth-tokens';
 import { SocialAccountService } from './social-account/social-account.service';
+import { OrganizationService } from '../organization/organization.service';
+
+/**
+ * Default employee settings
+ */
+const DEFAULT_EMPLOYEE_SETTINGS = {
+	isTrackingEnabled: true,
+	allowScreenshotCapture: true,
+	allowManualTime: true,
+	allowModifyTime: true,
+	allowDeleteTime: true,
+	reWeeklyLimit: 40,
+	payPeriod: PayPeriodEnum.MONTHLY,
+}
 
 @Injectable()
 export class AuthService extends SocialAuthService {
+	private readonly logger = new Logger(`GZY - ${AuthService.name}`);
 	constructor(
 		@InjectRepository(User)
 		private readonly typeOrmUserRepository: TypeOrmUserRepository,
@@ -78,6 +100,7 @@ export class AuthService extends SocialAuthService {
 		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		@InjectRepository(OrganizationTeam)
 		private readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
+		private readonly organizationService: OrganizationService,
 		private readonly emailConfirmationService: EmailConfirmationService,
 		private readonly userService: UserService,
 		private readonly employeeService: EmployeeService,
@@ -144,7 +167,7 @@ export class AuthService extends SocialAuthService {
 			};
 		} catch (error) {
 			// Log the error with a timestamp and the error message for debugging.
-			console.error(`Login failed at ${new Date().toISOString()}: ${error.message}.`);
+			this.logger.error(`Login failed at ${new Date().toISOString()}: ${error}.`);
 			throw new UnauthorizedException(); // Throw a generic error to avoid exposing specific failure reasons.
 		}
 	}
@@ -214,7 +237,7 @@ export class AuthService extends SocialAuthService {
 		if (response.total_workspaces > 0) {
 			return response;
 		} else {
-			console.log('Error while signin workspace: %s');
+			this.logger.error('Error while signin workspace');
 			throw new UnauthorizedException();
 		}
 	}
@@ -278,7 +301,7 @@ export class AuthService extends SocialAuthService {
 		const socialAccount = await this.socialAccountService.findAccountByProvider({ provider, providerAccountId });
 
 		/** Fetching users matching the query */
-		let users = await this.userService.find({
+		const users = await this.userService.find({
 			where: [
 				{
 					email,
@@ -339,7 +362,7 @@ export class AuthService extends SocialAuthService {
 		if (response.total_workspaces > 0) {
 			return response;
 		} else {
-			console.log('Error while signin workspace: %s');
+			this.logger.error('Error while signin workspace');
 			throw new UnauthorizedException();
 		}
 	}
@@ -371,6 +394,7 @@ export class AuthService extends SocialAuthService {
 				tenant: user.tenant
 			});
 		} catch (error) {
+			this.logger.error(`Error while linking user to social account: ${error}`);
 			throw new BadRequestException('User for these credentials could not be found');
 		}
 	}
@@ -439,7 +463,7 @@ export class AuthService extends SocialAuthService {
 						);
 
 						// Initialize Base URL
-						let baseURL = `${environment.clientBaseUrl}/#/auth/reset-password`;
+						const baseURL = `${environment.clientBaseUrl}/#/auth/reset-password`;
 
 						// Generate the reset link using the helper function
 						const resetLink = this.generateResetLink(baseURL, token, email, tenantId);
@@ -447,6 +471,7 @@ export class AuthService extends SocialAuthService {
 						// Add the reset link, tenant, and user to the tenantUsersMap array
 						tenantUsersMap.push({ resetLink, tenant: user.tenant ?? undefined, user });
 					} catch (error) {
+						this.logger.error(`Error while generating reset link: ${error}`);
 						throw new BadRequestException('Forgot password request failed!');
 					}
 				}
@@ -470,6 +495,7 @@ export class AuthService extends SocialAuthService {
 			return true;
 		} catch (error) {
 			// Throw a BadRequestException in case of failure
+			this.logger.error(`Error while requesting password reset: ${error}`);
 			throw new BadRequestException('Forgot password request failed!');
 		}
 	}
@@ -552,6 +578,7 @@ export class AuthService extends SocialAuthService {
 
 			return true;
 		} catch (error) {
+			this.logger.error(`Error while resetting password: ${error}`);
 			throw new BadRequestException('Password Reset Failed.');
 		}
 	}
@@ -573,6 +600,17 @@ export class AuthService extends SocialAuthService {
 		let tenant = input.user.tenant;
 		const { organizationId } = input;
 
+		// Check if the user already exists
+		let user;
+		try {
+			user = await this.userService.findOneByOptions({ where: { email: input.user.email } });
+		} catch (error) {
+			this.logger.error(`Error looking for user: ${error}`);
+		}
+		if (user) {
+			throw new ConflictException(AuthError.ALREADY_REGISTERED);
+		}
+
 		// 1. If createdById is provided, get the creating user and use their tenant
 		if (input.createdById) {
 			const creatingUser = await this.userService.findOneByIdString(input.createdById, {
@@ -583,47 +621,54 @@ export class AuthService extends SocialAuthService {
 			tenant = creatingUser.tenant;
 		}
 
-		// 2. Register new user
+		// 2. Ensure the user has assigned a role, if not, assign the employee role
+		if (!input.user.roleId || !input.user.role) {
+			// Get the employee role
+			const role: IRole = await this.roleService.findOneByOptions({ where: { name: RolesEnum.EMPLOYEE, tenantId: tenant.id } });
+			input.user.roleId = role.id;
+		}
+
+		// 3. Register new user
 		const entity = this.typeOrmUserRepository.create({
 			...input.user,
 			tenant,
 			...(input.password ? { hash: await this.getPasswordHash(input.password) } : {})
 		});
-		let user = await this.typeOrmUserRepository.save(entity);
+		user = await this.typeOrmUserRepository.save(entity);
 
-		// 3. Create employee for specific user
+		// 4. Create employee for specific user
 		if (input.featureAsEmployee) {
 			await this.typeOrmEmployeeRepository.save(
 				this.typeOrmEmployeeRepository.create({
 					...input,
 					user,
 					tenantId: tenant.id,
-					tenant: { id: tenant.id },
 					organizationId,
-					organization: { id: organizationId }
+					// Set employee default settings
+					...DEFAULT_EMPLOYEE_SETTINGS
 				})
 			);
 		}
 
-		// 4. Email is automatically verified after accepting an invitation
+		// 5. Email is automatically verified after accepting an invitation
 		if (input.inviteId) {
 			await this.typeOrmUserRepository.update(user.id, {
 				emailVerifiedAt: freshTimestamp()
 			});
 		}
 
-		// 5. Find the latest registered user with role
+		// 6. Find the latest registered user with role
 		user = await this.typeOrmUserRepository.findOne({
 			where: { id: user.id },
 			relations: { role: true }
 		});
 
-		// 6. If organizationId is provided, add the user to the organization
+		// 7. If organizationId is provided, add the user to the organization
 		if (isNotEmpty(input.organizationId)) {
 			await this.userOrganizationService.addUserToOrganization(user, input.organizationId);
 		}
 
-		// 7. Create Import Records while migrating for a relative user
+		// 8. Create Import Records while migrating for a relative user
 		if (input.isImporting && input.sourceId) {
 			this.commandBus.execute(
 				new ImportRecordUpdateOrCreateCommand({
@@ -635,7 +680,7 @@ export class AuthService extends SocialAuthService {
 		}
 
 		// Extract integration information
-		let integration = pick(input, [
+		const integration = pick(input, [
 			'appName',
 			'appLogo',
 			'appSignature',
@@ -645,19 +690,49 @@ export class AuthService extends SocialAuthService {
 			'companyName'
 		]);
 
-		// 8. If the user's email is not verified, send an email verification
+		// 9. If the user's email is not verified, send an email verification
 		if (!user.emailVerifiedAt) {
 			this.emailConfirmationService.sendEmailVerification(user, integration);
 		}
 
 		// Publish the account registration event
 		const ctx = RequestContext.currentRequestContext();
-		const event = new AccountRegistrationEvent(ctx, user); // ToDo: Send a welcome email to user from events
+		const event = new AccountRegistrationEvent(ctx, user);
 		await this.eventBus.publish(event);
 
-		// 9. Send a welcome email to the user
+		// 10. Send a welcome email to the user
 		this.emailService.welcomeUser(input.user, languageCode, input.organizationId, input.originalUrl, integration);
 		return user;
+	}
+
+	/**
+	 * Called when user triggers a direct register
+	 * 1. User directly sign up
+	 * 2. User sign up through OAuth
+	 *
+	 * @param input
+	 * @param languageCode
+	 * @returns
+	 */
+	async autoRegister(
+		input: IUserRegistrationInput & Partial<IAppIntegrationConfig>,
+		languageCode: LanguagesEnum,
+		isOAuth = false
+	): Promise<User> {
+		// Check that email domain is registered in at least one organization
+		const organization = await this.organizationService.findByEmailDomain(input.user.email.split('@')[1]);
+		if (!organization) {
+			throw new NotAcceptableException(AuthError.INVALID_EMAIL_DOMAIN);
+		}
+
+		// Update the register data with the organization details and flag to create an employee record
+		input.organizationId = organization.id;
+		input.user.tenant = { id: organization.tenantId };
+		input.featureAsEmployee = true;
+		input.inviteId = isOAuth ? null : 'non-required-value';
+
+		// Call to register the new user
+		return await this.register(input, languageCode);
 	}
 
 	/**
@@ -748,19 +823,17 @@ export class AuthService extends SocialAuthService {
 			});
 			return count > 0;
 		} catch (error) {
+			this.logger.error(`Error while checking permissions: ${error}`);
 			return false;
 		}
 	}
 
 	/**
-	 *
+	 * Validate OAuth emails to check if there is an email that can be used to login
 	 * @param emails
 	 * @returns
 	 */
-	async validateOAuthLoginEmail(emails: Array<{ value: string; verified: boolean }>): Promise<{
-		success: boolean;
-		authData: { jwt: string; userId: string };
-	}> {
+	async validateOAuthLoginEmail(emails: IOAuthEmail[]): Promise<IOAuthValidateResponse> {
 		let response = {
 			success: false,
 			authData: { jwt: null, userId: null }
@@ -788,6 +861,57 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
+	 * Register a new user with OAuth data
+	 * @param userInfo
+	 * @returns
+	 */
+	async registerOAuth(userInfo: IOAuthCreateUser): Promise<IOAuthValidateResponse> {
+		const emails = userInfo.emails;
+		try {
+			// Iterate all emails to get the first that match with an organization
+			for (const { value, verified } of emails) {
+				const organization = await this.organizationService.findByEmailDomain(value.split("@")[1]);
+				if (organization) {
+					// Set the register data with the organization details and flag to create an employee record
+					const fullName = `${userInfo.firstName} ${userInfo.lastName}`;
+					const input = {
+						user: {
+							name: fullName,
+							firstName: userInfo.firstName,
+							lastName: userInfo.lastName,
+							email: value,
+							username: value,
+							imageUrl: userInfo.picture,
+							tenantId: organization.tenantId,
+							tenant: { id: organization.tenantId }
+						},
+						organizationId: organization.id,
+						featureAsEmployee: true,
+						inviteId: verified ? "non-required-id" : null // Used to mark the email as verified
+					};
+					// Call to register the new user
+					const createdUser = await this.register(input, LanguagesEnum.ENGLISH);
+					// Generate a JWT access token for the new user
+					const token = await this.getJwtAccessToken(createdUser);
+
+					// Break the loop and return the response
+					return {
+						success: true,
+						authData: { jwt: token, userId: createdUser.id }
+					};
+				}
+			}
+			return {
+				success: false,
+				authData: { jwt: null, userId: null }
+			};
+		} catch (error) {
+			this.logger.error(`Error while registering user with OAuth: ${error}`);
+			throw new InternalServerErrorException('registerOAuth', error.message);
+		}
+	}
+
+	/**
 	 * Generates a JWT access token for a given user.
 	 *
 	 * This function takes a partial user object, primarily the user's ID,
@@ -806,7 +930,7 @@ export class AuthService extends SocialAuthService {
 				throw new Error('User ID is missing in the request.');
 			}
 
-			console.log('Request getJwtAccessToken with Id: ', request.id);
+			this.logger.verbose('Request getJwtAccessToken with Id: ', request.id);
 
 			// Extract the user ID from the request
 			const userId = request.id;
@@ -819,7 +943,7 @@ export class AuthService extends SocialAuthService {
 
 			// Throw an error if the user is not found
 			if (!user) {
-				console.error(`User not found: ${request.id}`);
+				this.logger.warn(`User not found: ${request.id}`);
 				throw new UnauthorizedException();
 			}
 
@@ -839,7 +963,7 @@ export class AuthService extends SocialAuthService {
 			return sign(payload, environment.JWT_SECRET, {});
 		} catch (error) {
 			// Log and rethrow any errors encountered during the process
-			console.log('Error while generating JWT access token:', error);
+			this.logger.error(`Error while generating JWT access token: ${error}`);
 			throw new UnauthorizedException();
 		}
 	}
@@ -874,7 +998,7 @@ export class AuthService extends SocialAuthService {
 				expiresIn: `${environment.JWT_REFRESH_TOKEN_EXPIRATION_TIME}s`
 			});
 		} catch (error) {
-			console.log('Error while generating JWT refresh token:', error);
+			this.logger.error(`Error while generating JWT refresh token: ${error}`);
 		}
 	}
 
@@ -895,8 +1019,7 @@ export class AuthService extends SocialAuthService {
 			const token = await this.getJwtAccessToken(user);
 			return { token };
 		} catch (error) {
-			// Use console.error for error logging with more descriptive context
-			console.error('Error while retrieving JWT access token from refresh token:', error);
+			this.logger.error(`Error while retrieving JWT access token from refresh token: ${error}`);
 			return null;
 		}
 	}
@@ -916,7 +1039,7 @@ export class AuthService extends SocialAuthService {
 
 		// Check if the email is provided
 		if (!email) {
-			console.log('Error while sending workspace magic login code: Email is required');
+			this.logger.warn('Error while sending workspace magic login code: Email is required');
 			return;
 		}
 
@@ -928,7 +1051,9 @@ export class AuthService extends SocialAuthService {
 
 			// If no user found with the email, return
 			if (count === 0) {
-				console.log(`Error while sending workspace magic login code: No user found with the email ${email}`);
+				this.logger.warn(
+					`Error while sending workspace magic login code: No user found with the email ${email}`
+				);
 				return;
 			}
 
@@ -940,15 +1065,15 @@ export class AuthService extends SocialAuthService {
 			// Check if the environment variable 'DEMO' is set to 'true' and the Node.js environment is set to 'development'
 			const IS_DEMO = process.env.DEMO === 'true' && process.env.NODE_ENV === 'development';
 
-			console.log('Auth Is Demo: ', IS_DEMO);
+			this.logger.verbose('Auth Is Demo: ', IS_DEMO);
 
 			// If it's a demo environment, handle special cases
 			if (IS_DEMO) {
 				const demoEmployeeEmail = environment.demoCredentialConfig?.employeeEmail || 'employee@ever.co';
 				const demoAdminEmail = environment.demoCredentialConfig?.adminEmail || 'local.admin@ever.co';
 
-				console.log('Demo Employee Email: ', demoEmployeeEmail);
-				console.log('Demo Admin Email: ', demoAdminEmail);
+				this.logger.verbose('Demo Employee Email: ', demoEmployeeEmail);
+				this.logger.verbose('Demo Admin Email: ', demoAdminEmail);
 
 				// Check the value of the 'email' variable against certain demo email addresses
 				if (email === demoEmployeeEmail || email === demoAdminEmail) {
@@ -969,12 +1094,12 @@ export class AuthService extends SocialAuthService {
 			// Update the user record with the generated code and expiration time
 			await this.typeOrmUserRepository.update({ email }, { code: magicCode, codeExpireAt });
 
-			console.log(`Email: '${email}' magic code: '${magicCode}' expires at: '${codeExpireAt}'`);
+			this.logger.verbose(`Email: '${email}' magic code: '${magicCode}' expires at: '${codeExpireAt}'`);
 
 			// If it's not a demo code, send the magic code to the user's email
 			if (!isDemoCode) {
 				// Extract integration information
-				let appIntegration = pick(input, [
+				const appIntegration = pick(input, [
 					'appName',
 					'appLogo',
 					'appSignature',
@@ -993,7 +1118,7 @@ export class AuthService extends SocialAuthService {
 					magicLink = `${integration.appMagicSignUrl}?email=${email}&code=${magicCode}`;
 				}
 
-				console.log('Magic Link: ', magicLink);
+				this.logger.verbose('Magic Link: ', magicLink);
 
 				// Send the magic code to the user's email
 				this.emailService.sendMagicLoginCode({
@@ -1005,7 +1130,7 @@ export class AuthService extends SocialAuthService {
 				});
 			}
 		} catch (error) {
-			console.log(`Error while sending workspace magic login code for email: ${email}`, error?.message);
+			this.logger.error(`Error while sending workspace magic login code for email: ${email}, Error: ${error}`);
 		}
 	}
 
@@ -1027,7 +1152,7 @@ export class AuthService extends SocialAuthService {
 			}
 
 			// Find users matching the criteria
-			let users = await this.typeOrmUserRepository.find({
+			const users = await this.typeOrmUserRepository.find({
 				where: {
 					email,
 					code,
@@ -1052,6 +1177,7 @@ export class AuthService extends SocialAuthService {
 			}
 			throw new UnauthorizedException();
 		} catch (error) {
+			this.logger.error(`Error while confirming workspace signin by code: ${error}`);
 			throw new UnauthorizedException();
 		}
 	}
@@ -1073,7 +1199,7 @@ export class AuthService extends SocialAuthService {
 				throw new UnauthorizedException();
 			}
 
-			let payload: JwtPayload | string = this.verifyToken(token);
+			const payload: JwtPayload | string = this.verifyToken(token);
 			if (typeof payload === 'object') {
 				const { userId, tenantId, code } = payload;
 
@@ -1144,7 +1270,7 @@ export class AuthService extends SocialAuthService {
 			if (error?.name === 'TokenExpiredError') {
 				throw new BadRequestException('JWT token has been expired.');
 			}
-			console.log('Error while signin workspace for specific tenant: %s', error?.message);
+			this.logger.error(`Error while signin workspace for specific tenant: ${error}`);
 			throw new UnauthorizedException(error?.message);
 		}
 	}
@@ -1161,7 +1287,7 @@ export class AuthService extends SocialAuthService {
 			if (error?.name === 'TokenExpiredError') {
 				throw new BadRequestException('JWT token has expired.');
 			}
-			console.log('Error while verifying JWT token: %s', error?.message);
+			this.logger.error(`Error while verifying JWT token: ${error}`);
 			throw new UnauthorizedException(error?.message);
 		}
 	}
@@ -1298,14 +1424,10 @@ export class AuthService extends SocialAuthService {
 
 		if (includeTeams) {
 			try {
-				console.time('Get teams for a user within a specific tenant');
-
 				const teams = await this.getTeamsForUser(tenantId, user.id, employeeId);
 				workspace['current_teams'] = teams;
-
-				console.timeEnd('Get teams for a user within a specific tenant');
 			} catch (error) {
-				console.error('Error while getting specific teams for specific tenant:', error?.message);
+				this.logger.error(`Error while getting specific teams for specific tenant: ${error}`);
 				// Optionally, you might want to handle the error more explicitly here.
 			}
 		}
@@ -1329,10 +1451,10 @@ export class AuthService extends SocialAuthService {
 			lastLoginAt: user.lastLoginAt || null, // Sets last logout timestamp to null if it's undefined
 			tenant: user.tenant
 				? new Tenant({
-						id: user.tenant.id, // Assuming tenantId is a direct property of tenant
-						name: user.tenant.name || '', // Defaulting to an empty string if name is undefined
-						logo: user.tenant.logo || '' // Defaulting to an empty string if logo is undefined
-				  })
+					id: user.tenant.id, // Assuming tenantId is a direct property of tenant
+					name: user.tenant.name || '', // Defaulting to an empty string if name is undefined
+					logo: user.tenant.logo || '' // Defaulting to an empty string if logo is undefined
+				})
 				: null // Sets tenant to null if user.tenant is undefined
 		});
 	}

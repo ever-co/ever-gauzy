@@ -138,7 +138,7 @@ export interface IUserCodeInput {
 	code: string;
 }
 
-export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput {}
+export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput { }
 
 export interface IDefaultTeam {
 	defaultTeamId?: ID;
@@ -248,4 +248,9 @@ export interface IUserViewModel extends IBasePerTenantEntityModel {
 	role?: string;
 	tags?: ITag[];
 	userOrganizationId?: string;
+}
+
+export enum AuthError {
+	ALREADY_REGISTERED = 'user-already-registered',
+	INVALID_EMAIL_DOMAIN = 'invalid-email-domain'
 }

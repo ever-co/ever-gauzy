@@ -320,6 +320,7 @@
 			"NAME": "Imię",
 			"PHONE_NUMBER": "Numer telefonu",
 			"WEBSITE": "Strona internetowa",
+			"EMAIL_DOMAIN": "Domena e-mail",
 			"FIRST_NAME": "Imię",
 			"LAST_NAME": "Nazwisko (opcjonalnie)",
 			"FROM": "Od",
@@ -493,6 +494,7 @@
 			"CODE": "Kod",
 			"COLOR": "Kolor",
 			"WEBSITE": "Strona internetowa",
+			"EMAIL_DOMAIN": "Domena e-mail do dopasowania nowo zarejestrowanych użytkowników",
 			"CURRENCY_POSITION": "Pozycja waluty",
 			"FISCAL_INFORMATION": "Informacje finansowe",
 			"IMAGE_URL": "Obraz",
@@ -1996,6 +1998,10 @@
 			"TEAMS_PAGE": {
 				"MANAGERS": "Menedżerowie",
 				"MEMBERS": "Członkowie"
+			},
+			"ERRORS": {
+				"EMAIL_DOMAIN_INVALID_LENGTH": "Długość domeny e-mail musi zawierać się między {{ min }} a {{ max }} znakami",
+				"EMAIL_DOMAIN_INVALID_PATTERN": "Domena e-mail musi być prawidłową nazwą domeny (np. firma.com)"
 			}
 		},
 		"PERMISSIONS": {
@@ -4538,6 +4544,10 @@
 			"receipt": "Paragon"
 		}
 	},
+	"BANNERS": {
+		"ERROR_TITLE": "O nie!",
+		"SUCCESS_TITLE": "Hurra!"
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "Zarejestruj się",
 		"HAVE_AN_ACCOUNT": "Masz już konto?",
@@ -4569,6 +4579,14 @@
 				"AND": " oraz ",
 				"PRIVACY_POLICY": "Polityka prywatności"
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "Coś poszło nie tak, spróbuj ponownie.",
+			"ALREADY_REGISTERED": "Adres e-mail jest już zarejestrowany.",
+			"INVALID_EMAIL_DOMAIN": "Adres e-mail nie jest obsługiwany do rejestracji konta."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Zostałeś pomyślnie zarejestrowany."
 		}
 	},
 	"LOGIN_PAGE": {
@@ -4619,6 +4637,12 @@
 				"EMAIL": "E-mail: ",
 				"PASSWORD": "Hasło: "
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "Kombinacja loginu/emaila jest nieprawidłowa, spróbuj ponownie."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Zostałeś pomyślnie zalogowany."
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4639,6 +4663,12 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Wymagany jest adres e-mail!",
 			"EMAIL_REAL_REQUIRED": "Adres e-mail powinien być prawdziwy!"
+		},
+		"ERRORS": {
+			"DEFAULT": "Coś poszło nie tak, spróbuj ponownie."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Instrukcje resetowania hasła zostały wysłane na Twój adres e-mail."
 		}
 	},
 	"RESET_PASSWORD_PAGE": {
@@ -4658,6 +4688,20 @@
 			"CONFIRM_PASSWORD_REQUIRED": "Potwierdzenie hasła jest wymagane!",
 			"PASSWORDS_NOT_MATCH": "Hasło nie pasuje do potwierdzenia hasła!",
 			"PASSWORD_SHOULD_CONTAIN": "Nowe hasło powinno zawierać od {{ minLength }} do {{ maxLength }} znaków."
+		},
+		"ERRORS": {
+			"DEFAULT": "Resetowanie hasła nie powiodło się."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Twoje hasło zostało pomyślnie zmienione."
+		}
+	},
+	"LOGOUT": {
+		"ERRORS": {
+			"DEFAULT": "Coś poszło nie tak, spróbuj ponownie."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Zostałeś pomyślnie wylogowany."
 		}
 	},
 	"PAGINATION": {

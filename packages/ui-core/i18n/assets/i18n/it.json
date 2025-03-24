@@ -320,6 +320,7 @@
 			"NAME": "Nome",
 			"PHONE_NUMBER": "Numero di telefono",
 			"WEBSITE": "Sito web",
+			"EMAIL_DOMAIN": "Dominio email",
 			"FIRST_NAME": "Nome di battesimo",
 			"LAST_NAME": "Cognome (opzionale)",
 			"FROM": "Da",
@@ -493,6 +494,7 @@
 			"CODE": "Codice",
 			"COLOR": "Colore",
 			"WEBSITE": "Sito web",
+			"EMAIL_DOMAIN": "Dominio email per abbinare i nuovi utenti registrati",
 			"CURRENCY_POSITION": "Posizione della valuta",
 			"FISCAL_INFORMATION": "Informazioni Fiscali",
 			"IMAGE_URL": "Immagine",
@@ -1996,6 +1998,10 @@
 			"TEAMS_PAGE": {
 				"MANAGERS": "Manager",
 				"MEMBERS": "Membri"
+			},
+			"ERRORS": {
+				"EMAIL_DOMAIN_INVALID_LENGTH": "La lunghezza del dominio email deve essere compresa tra {{ min }} e {{ max }} caratteri",
+				"EMAIL_DOMAIN_INVALID_PATTERN": "Il dominio email deve essere un nome di dominio valido (es. azienda.com)"
 			}
 		},
 		"PERMISSIONS": {
@@ -4538,6 +4544,10 @@
 			"receipt": "Ricevuta"
 		}
 	},
+	"BANNERS": {
+		"ERROR_TITLE": "Oh no!",
+		"SUCCESS_TITLE": "Evviva!"
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "Registra",
 		"HAVE_AN_ACCOUNT": "Hai già un account?",
@@ -4569,6 +4579,14 @@
 				"AND": " e ",
 				"PRIVACY_POLICY": "Informativa sulla privacy"
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "Qualcosa è andato storto, per favore riprova.",
+			"ALREADY_REGISTERED": "L'indirizzo email è già registrato.",
+			"INVALID_EMAIL_DOMAIN": "L'indirizzo email non è supportato per registrare un account."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Ti sei registrato con successo."
 		}
 	},
 	"LOGIN_PAGE": {
@@ -4619,6 +4637,12 @@
 				"EMAIL": "Email: ",
 				"PASSWORD": "Password: "
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "La combinazione Login/Email non è corretta, per favore riprova."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Hai effettuato l'accesso con successo."
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4639,6 +4663,12 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "L'email è obbligatoria!",
 			"EMAIL_REAL_REQUIRED": "L'email deve essere quella vera!"
+		},
+		"ERRORS": {
+			"DEFAULT": "Qualcosa è andato storto, per favore riprova."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Le istruzioni per reimpostare la password sono state inviate alla tua email."
 		}
 	},
 	"RESET_PASSWORD_PAGE": {
@@ -4658,6 +4688,20 @@
 			"CONFIRM_PASSWORD_REQUIRED": "È richiesta la conferma della password!",
 			"PASSWORDS_NOT_MATCH": "La password non corrisponde alla conferma della password!",
 			"PASSWORD_SHOULD_CONTAIN": "La nuova password dovrebbe contenere tra {{ minLength }} e {{ maxLength }} caratteri."
+		},
+		"ERRORS": {
+			"DEFAULT": "Reimpostazione della password fallita."
+		},
+		"MESSAGES": {
+			"DEFAULT": "La tua password è stata cambiata con successo."
+		}
+	},
+	"LOGOUT": {
+		"ERRORS": {
+			"DEFAULT": "Qualcosa è andato storto, per favore riprova."
+		},
+		"MESSAGES": {
+			"DEFAULT": "Hai effettuato il logout con successo."
 		}
 	},
 	"PAGINATION": {

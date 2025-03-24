@@ -319,6 +319,7 @@
 			"NAME": "الاسم",
 			"PHONE_NUMBER": "رقم الهاتف",
 			"WEBSITE": "موقع الكتروني",
+			"EMAIL_DOMAIN": "البريد الإلكتروني",
 			"FIRST_NAME": "الاسم الأول (اختياري)",
 			"LAST_NAME": "الاسم الأخير (اختياري)",
 			"FROM": "من",
@@ -492,6 +493,7 @@
 			"CODE": "الكود",
 			"COLOR": "لون",
 			"WEBSITE": "موقع الكتروني",
+			"EMAIL_DOMAIN": "مجال البريد الإلكتروني لمطابقة المستخدمين المسجلين حديثًا",
 			"CURRENCY_POSITION": "موضع العملة",
 			"FISCAL_INFORMATION": "معلومات مالية",
 			"IMAGE_URL": "صورة",
@@ -1994,6 +1996,10 @@
 			"TEAMS_PAGE": {
 				"MANAGERS": "المديرين",
 				"MEMBERS": "أعضاء"
+			},
+			"ERRORS": {
+				"EMAIL_DOMAIN_INVALID_LENGTH": "طول البريد الإلكتروني يجب أن يكون بين {{ min }} و {{ max }} حرف",
+				"EMAIL_DOMAIN_INVALID_PATTERN": "البريد الإلكتروني يجب أن يكون اسم مجال صالح (مثل company.com)"
 			}
 		},
 		"PERMISSIONS": {
@@ -4536,6 +4542,10 @@
 			"receipt": "إيصال"
 		}
 	},
+	"BANNERS": {
+		"ERROR_TITLE": "يا للمفاجأة!",
+		"SUCCESS_TITLE": "مرحى!"
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "تسجيل",
 		"HAVE_AN_ACCOUNT": "هل لديك حساب بالفعل؟",
@@ -4567,6 +4577,14 @@
 				"AND": " و ",
 				"PRIVACY_POLICY": "سياسة الخصوصية"
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "حدث خطأ ما، يرجى المحاولة مرة أخرى.",
+			"ALREADY_REGISTERED": "عنوان البريد الإلكتروني مسجل بالفعل.",
+			"INVALID_EMAIL_DOMAIN": "عنوان البريد الإلكتروني غير مدعوم لتسجيل حساب."
+		},
+		"MESSAGES": {
+			"DEFAULT": "لقد تم تسجيلك بنجاح."
 		}
 	},
 	"LOGIN_PAGE": {
@@ -4617,6 +4635,12 @@
 				"EMAIL": " :البريد الإلكتروني",
 				"PASSWORD": " :كلمة المرور"
 			}
+		},
+		"ERRORS": {
+			"DEFAULT": "مجموعة تسجيل الدخول/البريد الإلكتروني غير صحيحة، يرجى المحاولة مرة أخرى."
+		},
+		"MESSAGES": {
+			"DEFAULT": "لقد تم تسجيل دخولك بنجاح."
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4637,6 +4661,12 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "البريد الإلكتروني مطلوب!",
 			"EMAIL_REAL_REQUIRED": "يجب أن يكون البريد الإلكتروني الحقيقي!"
+		},
+		"ERRORS": {
+			"DEFAULT": "حدث خطأ ما، يرجى المحاولة مرة أخرى."
+		},
+		"MESSAGES": {
+			"DEFAULT": "تم إرسال تعليمات إعادة تعيين كلمة المرور إلى بريدك الإلكتروني."
 		}
 	},
 	"RESET_PASSWORD_PAGE": {
@@ -4656,6 +4686,21 @@
 			"CONFIRM_PASSWORD_REQUIRED": "تأكيد كلمة المرور مطلوب!",
 			"PASSWORDS_NOT_MATCH": "كلمة المرور غير متطابقة مع تأكيد كلمة المرور!",
 			"PASSWORD_SHOULD_CONTAIN": "يجب أن تحتوي كلمة المرور الجديدة على عدد من {{ minLength }} إلى {{ maxLength }} أحرف!"
+		},
+		"PASSWORD_NO_SPACE_EDGES": "يجب ألا تبدأ كلمات المرور أو تنتهي بمسافات!",
+		"ERRORS": {
+			"DEFAULT": "فشلت إعادة تعيين كلمة المرور."
+		},
+		"MESSAGES": {
+			"DEFAULT": "تم تغيير كلمة المرور الخاصة بك بنجاح."
+		}
+	},
+	"LOGOUT": {
+		"ERRORS": {
+			"DEFAULT": "حدث خطأ ما، يرجى المحاولة مرة أخرى."
+		},
+		"MESSAGES": {
+			"DEFAULT": "لقد تم تسجيل خروجك بنجاح."
 		}
 	},
 	"PAGINATION": {

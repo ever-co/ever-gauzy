@@ -1,7 +1,7 @@
-import { JoinColumn, JoinTable, RelationId } from 'typeorm';
+import { JoinColumn, JoinTable, RelationId, Index } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, TransformFnParams } from 'class-transformer';
-import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
+import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Length, Matches, Max, Min, ValidateIf } from 'class-validator';
 import {
 	DefaultValueDateTypeEnum,
 	IOrganization,
@@ -465,6 +465,26 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@Min(1, { message: 'Standard work hours per day must be at least 1 hour' })
 	@MultiORMColumn({ nullable: true, default: DEFAULT_STANDARD_WORK_HOURS_PER_DAY })
 	standardWorkHoursPerDay?: number;
+
+	/**
+	 * Set the organization email domain
+	 * This domain will be used to restrict user registration only to this domain and
+	 * users registered with this domain or using Google OAuth will be automatically added to the organization.
+	 */
+	@ApiPropertyOptional({
+		type: () => String,
+		description: 'Organization email domain for automatic user registration and organization assignment'
+	})
+	@IsOptional()
+	@IsString()
+	@Index({ unique: true, where: "emailDomain IS NOT NULL" })
+	@MultiORMColumn({ length: 255, nullable: true, default: null })
+	@ValidateIf((data) => data.emailDomain !== null && data.emailDomain !== undefined && data.emailDomain !== '')
+	@Length(4, 255, { message: 'Email domain length must be between 4 and 255 characters' })
+	@Matches(/^(?!:\/\/)(?!.+\/$)(?!.*[A-Z])[a-z0-9-]+(?:\.[a-z0-9-]+)*(?:\.[a-z]{2,})$/, {
+		message: 'Email domain must be a valid domain name (e.g., company.com)'
+	})
+	emailDomain?: string;
 
 	/*
 	|--------------------------------------------------------------------------
