@@ -24,7 +24,7 @@ import {
 } from '@gauzy/contracts';
 import { compareDate, distinctUntilChange, extractNumber } from '@gauzy/ui-core/common';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
-import * as moment from 'moment';
+import moment from 'moment';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
 import {
 	InvoiceEstimateHistoryService,

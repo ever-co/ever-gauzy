@@ -4,7 +4,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
+import moment from 'moment';
 import { firstValueFrom } from 'rxjs';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { richTextCKEditorConfig } from '@gauzy/ui-core/shared';

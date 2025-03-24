@@ -13,7 +13,7 @@ import { Observable, Subject, catchError, firstValueFrom, of } from 'rxjs';
 import { pluck } from 'underscore';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IEmployee, IDateRange, ICandidateInterview, IOrganization, IPagination } from '@gauzy/contracts';
-import * as moment from 'moment';
+import moment from 'moment';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
 	CandidateInterviewService,
@@ -196,7 +196,7 @@ export class InterviewCalendarComponent extends TranslationBaseComponent impleme
 	 * Filters calendar events based on the selected candidates and employees.
 	 */
 	async mappedCalendarEvents() {
-		let events: EventInput[] = [];
+		const events: EventInput[] = [];
 
 		const isCandidateSelected = this.selectedCandidates.length;
 		const isEmployeeSelected = this.selectedEmployees.length;

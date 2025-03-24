@@ -34,7 +34,7 @@ import { distinctUntilChange, isNotEmpty, toUTC } from '@gauzy/ui-core/common';
 import { Router } from '@angular/router';
 import { first, map, filter, tap, debounceTime } from 'rxjs/operators';
 import { Subject, firstValueFrom, combineLatest, BehaviorSubject } from 'rxjs';
-import * as moment from 'moment';
+import moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-core/common';
 import {

@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IGetTimeLogInput, ITimeLog, ITimesheet, TimesheetStatus, PermissionsEnum } from '@gauzy/contracts';
 import { chain } from 'underscore';
-import * as moment from 'moment';
+import moment from 'moment';
 import { filter, Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';

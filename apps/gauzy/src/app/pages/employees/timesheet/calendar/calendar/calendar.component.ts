@@ -17,7 +17,7 @@ import bootstrapPlugin from '@fullcalendar/bootstrap';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
+import moment from 'moment';
 import { pick } from 'underscore';
 import { combineLatest, Observable, Subject, takeUntil } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';

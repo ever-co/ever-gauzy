@@ -29,7 +29,7 @@ import { FeatureToggleModule } from 'ngx-feature-toggle';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { ColorPickerService } from 'ngx-color-picker';
 import * as Sentry from '@sentry/angular-ivy';
-import * as moment from 'moment';
+import moment from 'moment';
 import { IFeatureToggle, LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
 import { UiCoreModule } from '@gauzy/ui-core';
 import { GAUZY_ENV, environment } from '@gauzy/ui-config';

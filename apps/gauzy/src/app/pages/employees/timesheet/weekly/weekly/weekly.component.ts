@@ -249,6 +249,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 	 * @param project
 	 */
 	openAddByDateProject(date: string, project: IOrganizationProject): void {
+		if (this.limitReached) return;
 		// Calculate the nearest previous 10-minute mark for stoppedAt
 		const currentMoment = moment();
 		const minutes = moment().minutes();

@@ -5,7 +5,7 @@ import { BehaviorSubject, filter } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { chain, reduce } from 'underscore';
-import * as moment from 'moment';
+import moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	ITimeLogFilters,

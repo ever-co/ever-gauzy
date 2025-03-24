@@ -7,7 +7,7 @@ import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, Subject } from 'rxjs';
-import * as moment from 'moment';
+import moment from 'moment';
 import {
 	DateRangePickerBuilderService,
 	ErrorHandlingService,
@@ -59,8 +59,8 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	public organization: IOrganization;
-	public disableButton: boolean = true;
-	public loading: boolean = false;
+	public disableButton = true;
+	public loading = false;
 	public currency: string;
 	public projectId: string | null;
 	public selectedDateRange: IDateRangePicker;
@@ -462,7 +462,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 	 */
 	private statusMapper = (value: string | boolean) => {
 		// Initialize badgeClass with a default value
-		let badgeClass: string = 'success';
+		let badgeClass = 'success';
 
 		// Check if the value is truthy (overdue)
 		if (value) {

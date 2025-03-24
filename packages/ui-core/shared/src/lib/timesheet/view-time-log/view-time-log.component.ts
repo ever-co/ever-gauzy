@@ -7,6 +7,7 @@ import { filter, tap } from 'rxjs/operators';
 import { Store, TimeTrackerService, TimesheetService } from '@gauzy/ui-core/core';
 import { EditTimeLogModalComponent } from './../edit-time-log-modal';
 import { ViewTimeLogModalComponent } from './../view-time-log-modal';
+import { combineLatest, Observable, Subject, takeUntil } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -17,9 +18,14 @@ import { ViewTimeLogModalComponent } from './../view-time-log-modal';
 export class ViewTimeLogComponent implements OnInit, OnDestroy {
 	organization: IOrganization;
 	PermissionsEnum = PermissionsEnum;
+	limitReached = false;
 	@Input() timeLogs: ITimeLog[] = [];
 	@Input() callback: CallableFunction;
 	@Output() close: CallableFunction;
+
+	private readonly workedThisWeek$: Observable<number> = this.timeTrackerService.workedThisWeek$;
+	private readonly reWeeklyLimit$: Observable<number> = this.timeTrackerService.reWeeklyLimit$;
+	private readonly destroy$ = new Subject<void>();
 
 	constructor(
 		private readonly nbDialogService: NbDialogService,
@@ -36,9 +42,16 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		combineLatest([this.workedThisWeek$, this.reWeeklyLimit$])
+			.pipe(takeUntil(this.destroy$))
+			.subscribe(() => {
+				this.limitReached = this.timeTrackerService.hasReachedWeeklyLimit();
+			});
 	}
 
 	openAddByDateProject($event: MouseEvent) {
+		if (this.limitReached) return;
 		const [timeLog] = this.timeLogs;
 		const minutes = moment().minutes();
 		const stoppedAt = new Date(
@@ -127,5 +140,8 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 		this.close(true);
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		this.destroy$.next();
+		this.destroy$.complete();
+	}
 }

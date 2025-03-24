@@ -5,7 +5,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
-import * as moment from 'moment';
+import moment from 'moment';
 import {
 	IAvailabilitySlotsCreateInput,
 	ITimeOff,
@@ -58,7 +58,7 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent impleme
 
 	removedEvents: EventInput[] = [];
 	timeOffs: ITimeOff[] = [];
-	public loading: boolean = true;
+	public loading = true;
 
 	selectedEmployee: ISelectedEmployee;
 	organization: IOrganization;
@@ -441,7 +441,7 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent impleme
 		const find = this.calendarEvents.find(
 			(event) => moment(event.start).format() === moment(slot.startTime).format()
 		);
-		if (!!find) return;
+		if (find) return;
 
 		this.calendarEvents.push({
 			start: eventStartTime,

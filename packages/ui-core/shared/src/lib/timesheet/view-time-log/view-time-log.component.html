@@ -77,7 +77,13 @@
 	<div class="text-center">
 		<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MANUAL_TIME">
 			<ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_MANUAL_TIME">
-				<button nbButton class="mx-auto mt-3" status="primary" (click)="openAddByDateProject($event)">
+				<button
+					nbButton
+					class="mx-auto mt-3"
+					status="primary"
+					(click)="openAddByDateProject($event)"
+					[disabled]="limitReached"
+				>
 					<nb-icon icon="plus-outline"></nb-icon>
 					{{ 'TIMESHEET.ADD_TIME' | translate }}
 				</button>

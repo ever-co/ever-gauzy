@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import * as moment from 'moment';
+import moment from 'moment';
 import {
 	IIncome,
 	ComponentLayoutStyleEnum,
@@ -54,8 +54,8 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 	public selectedEmployeeId: string;
 	public selectedDateRange: IDateRangePicker;
 	public smartTableSource: ServerDataSource;
-	public disableButton: boolean = true;
-	public loading: boolean = false;
+	public disableButton = true;
+	public loading = false;
 	public viewComponentName: ComponentEnum;
 	public incomes: IIncome[] = [];
 	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;

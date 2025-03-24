@@ -7,7 +7,7 @@ import { combineLatest, Subject } from 'rxjs';
 import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import * as moment from 'moment';
+import moment from 'moment';
 import {
 	DateRangePickerBuilderService,
 	ErrorHandlingService,
@@ -61,11 +61,11 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	public timeOffStatuses = Object.keys(StatusTypesEnum);
 	public loading: boolean;
-	public disableButton: boolean = true;
-	public displayHolidays: boolean = true;
-	public showActions: boolean = false;
-	public includeArchived: boolean = false;
-	public showFilter: boolean = false;
+	public disableButton = true;
+	public displayHolidays = true;
+	public showActions = false;
+	public includeArchived = false;
+	public showFilter = false;
 	public organization: IOrganization;
 	public timeOff$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
@@ -607,8 +607,8 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 
 	private async _loadGridLayoutData() {
 		if (this._isGridLayout) {
-			this.timeOffs = await this.sourceSmartTable.getElements()
-		};
+			this.timeOffs = await this.sourceSmartTable.getElements();
+		}
 	}
 
 	private _createRecord() {

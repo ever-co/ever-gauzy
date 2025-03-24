@@ -86,6 +86,7 @@
 											outline
 											size="small"
 											status="primary"
+											[disabled]="limitReached"
 											(click)="openAddByDateProject(date, day?.project)"
 											*ngIf="allowAdd(date); else notAllowAddTimeBlock"
 										>
