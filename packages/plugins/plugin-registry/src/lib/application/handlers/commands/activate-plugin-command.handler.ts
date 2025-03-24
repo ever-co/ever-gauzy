@@ -3,6 +3,7 @@ import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PluginService } from '../../../domain/services/plugin.service';
 import { ActivatePluginCommand } from '../../commands/activate-plugin.command';
 import { UpdatePluginCommand } from '../../commands/update-plugin.command';
+import { PluginStatus } from '@gauzy/contracts';
 
 /**
  * Command handler for activating plugins
@@ -32,7 +33,9 @@ export class ActivatePluginCommandHandler implements ICommandHandler<ActivatePlu
 
 			// Only update if plugin is not already active
 			if (plugin.success && !plugin.record.isActive) {
-				await this.commandBus.execute(new UpdatePluginCommand(pluginId, { isActive: true }));
+				await this.commandBus.execute(
+					new UpdatePluginCommand(pluginId, { id: pluginId, isActive: true, status: PluginStatus.INACTIVE })
+				);
 			}
 		} catch (error) {
 			throw error;

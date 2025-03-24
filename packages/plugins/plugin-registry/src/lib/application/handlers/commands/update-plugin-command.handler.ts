@@ -10,6 +10,7 @@ import { IPluginSource } from '../../../shared/models/plugin-source.model';
 import { IPluginVersion } from '../../../shared/models/plugin-version.model';
 import { IPlugin } from '../../../shared/models/plugin.model';
 import { UpdatePluginCommand } from '../../commands/update-plugin.command';
+import { UpdatePluginVersionDTO } from '../../../shared/dto/update-plugin-version.dto';
 
 @CommandHandler(UpdatePluginCommand)
 export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginCommand> {
@@ -46,17 +47,18 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 				throw new NotFoundException(`Plugin with ID ${id} not found`);
 			}
 
-			// Update plugin
-			const plugin = Object.assign(found.record, input);
-			await this.pluginService.save(plugin);
-
 			// Update source and version
 			if (input.version) {
-				if (input.version.source) {
-					await this.updateSource(input.version.source, input.version);
-				}
 				await this.updateVersion(input.version, id);
+
+				if (input.version.source) {
+					await this.updateSource(input.version.source, input.version.id);
+				}
 			}
+
+			// Update plugin
+			const plugin = Object.assign(found.record, input);
+			await this.pluginService.update(found.record.id, plugin);
 
 			await queryRunner.commitTransaction();
 
@@ -86,24 +88,24 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 	 * @param pluginId - ID of the plugin
 	 * @throws NotFoundException if source is not found
 	 */
-	private async updateSource(data: IPluginSource, version: IPluginVersion): Promise<void> {
+	private async updateSource(data: Partial<IPluginSource>, versionId: IPluginVersion['id']): Promise<void> {
 		if (!data || !data.id) {
 			throw new BadRequestException('Source data and ID are required');
 		}
 
 		const found = await this.sourceService.findOneOrFailByWhereOptions({
 			versions: {
-				id: version.id
+				id: versionId
 			},
 			id: data.id
 		});
 
 		if (!found.success) {
-			throw new NotFoundException(`Source with ID ${data.id} not found for version ${version.id}`);
+			throw new NotFoundException(`Source with ID ${data.id} not found for version ${versionId}`);
 		}
 
 		const source = Object.assign(found.record, data);
-		await this.sourceService.save(source);
+		await this.sourceService.update(source.id, data);
 	}
 
 	/**
@@ -113,7 +115,7 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 	 * @param pluginId - ID of the plugin
 	 * @throws NotFoundException if version is not found
 	 */
-	private async updateVersion(data: IPluginVersion, pluginId: ID): Promise<void> {
+	private async updateVersion(data: UpdatePluginVersionDTO, pluginId: ID): Promise<void> {
 		if (!data || !data.id) {
 			throw new BadRequestException('Version data and ID are required');
 		}
@@ -128,6 +130,6 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 		}
 
 		const version = Object.assign(found.record, data);
-		await this.versionService.save(version);
+		await this.versionService.update(version.id, version);
 	}
 }

@@ -3,6 +3,7 @@ import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PluginService } from '../../../domain/services/plugin.service';
 import { DeactivatePluginCommand } from '../../commands/deactivate-plugin.command';
 import { UpdatePluginCommand } from '../../commands/update-plugin.command';
+import { PluginStatus } from '@gauzy/contracts';
 
 /**
  * Command handler for deactivating plugins
@@ -32,7 +33,9 @@ export class DeactivatePluginCommandHandler implements ICommandHandler<Deactivat
 
 			// Only update if plugin is currently active
 			if (plugin.success && plugin.record.isActive) {
-				await this.commandBus.execute(new UpdatePluginCommand(pluginId, { isActive: false }));
+				await this.commandBus.execute(
+					new UpdatePluginCommand(pluginId, { id: pluginId, isActive: false, status: PluginStatus.ACTIVE })
+				);
 			}
 		} catch (error) {
 			throw error;
