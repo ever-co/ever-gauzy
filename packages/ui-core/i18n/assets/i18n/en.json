@@ -4733,6 +4733,7 @@
 		},
 		"ERRORS": {
 			"DEFAULT": "Something went wrong, please try again.",
+			"ALREADY_REGISTERED": "Email address is already registered.",
 			"INVALID_EMAIL_DOMAIN": "Email address is not supported to register an account."
 		},
 		"MESSAGES": {

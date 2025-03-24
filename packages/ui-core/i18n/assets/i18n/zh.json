@@ -4580,6 +4580,7 @@
 		},
 		"ERRORS": {
 			"DEFAULT": "出现错误，请重试。",
+			"ALREADY_REGISTERED": "电子邮件地址已注册。",
 			"INVALID_EMAIL_DOMAIN": "不支持使用此电子邮件地址注册账户。"
 		},
 		"MESSAGES": {

@@ -14,8 +14,8 @@ import { patterns } from '@gauzy/ui-core/shared';
 	styleUrls: ['./register.component.scss']
 })
 export class NgxRegisterComponent extends NbRegisterComponent implements OnInit {
-	public showPassword: boolean = false;
-	public showConfirmPassword: boolean = false;
+	public showPassword = false;
+	public showConfirmPassword = false;
 	public passwordNoSpaceEdges = patterns.passwordNoSpaceEdges;
 	public queryParams$: Observable<Params>; // Observable for the query params
 

@@ -4576,6 +4576,7 @@
 		},
 		"ERRORS": {
 			"DEFAULT": "Etwas ist schiefgelaufen, bitte versuchen Sie es erneut.",
+			"ALREADY_REGISTERED": "Die E-Mail-Adresse ist bereits registriert.",
 			"INVALID_EMAIL_DOMAIN": "Diese E-Mail-Adresse wird für die Registrierung eines Kontos nicht unterstützt."
 		},
 		"MESSAGES": {

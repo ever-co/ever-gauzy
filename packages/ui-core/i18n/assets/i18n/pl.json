@@ -4580,6 +4580,7 @@
 		},
 		"ERRORS": {
 			"DEFAULT": "Coś poszło nie tak, spróbuj ponownie.",
+			"ALREADY_REGISTERED": "Adres e-mail jest już zarejestrowany.",
 			"INVALID_EMAIL_DOMAIN": "Adres e-mail nie jest obsługiwany do rejestracji konta."
 		},
 		"MESSAGES": {

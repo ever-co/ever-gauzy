@@ -4571,6 +4571,7 @@
 		},
 		"ERRORS": {
 			"DEFAULT": "משהו השתבש, אנא נסה שוב.",
+			"ALREADY_REGISTERED": "כתובת הדוא\"ל כבר רשומה.",
 			"INVALID_EMAIL_DOMAIN": "כתובת הדוא\"ל אינה נתמכת לרישום חשבון."
 		},
 		"MESSAGES": {
