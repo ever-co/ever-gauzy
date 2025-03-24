@@ -1,13 +1,18 @@
 import { ChangeDetectorRef, Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { FormGroupDirective } from '@angular/forms';
 import { NbAuthService, NbLoginComponent, NB_AUTH_OPTIONS } from '@nebular/auth';
 import { CookieService } from 'ngx-cookie-service';
-import { RolesEnum } from '@gauzy/contracts';
+import { Observable, filter, firstValueFrom, map } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { RolesEnum, IAppConfig, AuthError } from '@gauzy/contracts';
 import { environment } from '@gauzy/ui-config';
-import { ElectronService } from '@gauzy/ui-core/core';
+import { ElectronService, AppService } from '@gauzy/ui-core/core';
 import { patterns } from '@gauzy/ui-core/shared';
+import { NbToastrService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-login',
 	templateUrl: './login.component.html',
@@ -21,14 +26,21 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	isDemo: boolean = environment.DEMO;
 	showPassword = false;
 	passwordNoSpaceEdges = patterns.passwordNoSpaceEdges;
+	public queryParams$: Observable<Params>; // Observable for the query params
+	public allowEmailPasswordLogin$: Observable<boolean>;
+	public allowEmailPasswordLogin: boolean;
 
 	constructor(
 		private readonly cookieService: CookieService,
 		public readonly nbAuthService: NbAuthService,
 		public readonly cdr: ChangeDetectorRef,
 		public readonly router: Router,
+		private readonly activatedRoute: ActivatedRoute,
 		public readonly electronService: ElectronService,
 		private readonly el: ElementRef,
+		private readonly appService: AppService,
+		private readonly toastrService: NbToastrService,
+		private readonly translate: TranslateService,
 		@Inject(NB_AUTH_OPTIONS) options
 	) {
 		super(nbAuthService, options, cdr, router);
@@ -40,6 +52,43 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 		body.removeAttribute('style');
 		this.checkRememberdMe();
 		this.autoFillCredential();
+
+		// Load the configuration to check if the email/password login is enabled.
+		this.allowEmailPasswordLogin$ = this.appService.getAppConfigs().pipe(
+			map((configs: IAppConfig) => configs.email_password_login),
+			untilDestroyed(this)
+		);
+		this.handleEmailPasswordLogin();
+
+		// Create an observable to listen to query parameter changes in the current route.
+		this.queryParams$ = this.activatedRoute.queryParams.pipe(
+			// Filter and ensure that query parameters are present.
+			filter((params: Params) => !!params),
+			// Use 'untilDestroyed' to handle component lifecycle and avoid memory leaks.
+			untilDestroyed(this)
+		);
+		this.checkErrors();
+	}
+
+	private handleEmailPasswordLogin(): void {
+		this.allowEmailPasswordLogin$.pipe().subscribe((allowEmailPasswordLogin: boolean) => {
+			this.allowEmailPasswordLogin = allowEmailPasswordLogin;
+		});
+	}
+
+	private async checkErrors() {
+		this.queryParams$.subscribe(async (params: Params) => {
+			if (params.error === AuthError.INVALID_EMAIL_DOMAIN) {
+				this.toastrService.danger(
+					await firstValueFrom(this.translate.get('REGISTER_PAGE.ERRORS.INVALID_EMAIL_DOMAIN')),
+					await firstValueFrom(this.translate.get('BANNERS.ERROR_TITLE')),
+					{
+						duration: 8000,
+						destroyByClick: true,
+					}
+				);
+			}
+		});
 	}
 
 	/**

@@ -601,7 +601,12 @@ export class AuthService extends SocialAuthService {
 		const { organizationId } = input;
 
 		// Check if the user already exists
-		let user = await this.userService.findOneByOptions({ where: { email: input.user.email } });
+		let user;
+		try {
+			user = await this.userService.findOneByOptions({ where: { email: input.user.email } });
+		} catch (error) {
+			this.logger.error(`Error looking for user: ${error}`);
+		}
 		if (user) {
 			throw new ConflictException(AuthError.ALREADY_REGISTERED);
 		}
