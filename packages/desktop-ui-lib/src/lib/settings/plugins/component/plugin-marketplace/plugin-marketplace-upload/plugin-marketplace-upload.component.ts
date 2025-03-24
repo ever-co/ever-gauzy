@@ -4,7 +4,7 @@ import { IPlugin, PluginSourceType, PluginStatus, PluginType } from '@gauzy/cont
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { NbDialogRef, NbStepperComponent, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { debounceTime, filter, Subject, takeUntil } from 'rxjs';
+import { debounceTime, filter, Subject, takeUntil, tap } from 'rxjs';
 
 @Component({
 	selector: 'lib-plugin-marketplace-upload',
@@ -35,18 +35,18 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 
 	ngOnInit(): void {
 		this.initForm();
-		this.setupSourceTypeListener();
 		this.patch();
+		this.setupSourceTypeListener();
 	}
 
 	private initForm(): void {
 		this.pluginForm = this.fb.group({
+			...(this.plugin && this.plugin.id && { id: [this.plugin.id] }),
 			name: ['', [Validators.required, Validators.maxLength(100)]],
 			description: ['', Validators.maxLength(500)],
 			type: [PluginType.DESKTOP, Validators.required],
 			status: [PluginStatus.ACTIVE, Validators.required],
 			version: this.createVersionGroup(),
-			source: this.createSourceGroup(PluginSourceType.CDN),
 			author: ['', Validators.maxLength(100)],
 			license: ['', Validators.maxLength(50)],
 			homepage: ['', Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)],
@@ -57,10 +57,9 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	private patch(): void {
 		if (!this.plugin) return;
 
-		const { name, description, type, status, versions, version, source, author, license, homepage, repository } =
-			this.plugin;
+		const { name, description, type, status, version, source, author, license, homepage, repository } = this.plugin;
 
-		this.pluginForm.patchValue({
+		const data: Partial<IPlugin> = {
 			name,
 			description,
 			type,
@@ -69,24 +68,26 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 			license,
 			homepage,
 			repository
-		});
+		};
 
-		if (source) {
-			this.pluginForm.get('source')?.patchValue(source);
+		if (version) {
+			data.version = { ...version };
+			if (source) {
+				data.version.source = { ...source };
+			}
 		}
 
-		if (versions && version) {
-			this.pluginForm.get('version')?.patchValue(version);
-		}
-
-		this.cdr.detectChanges();
+		this.pluginForm.patchValue(data);
+		this.cdr.markForCheck();
 	}
 
 	private createVersionGroup(): FormGroup {
 		return this.fb.group({
+			...(this.plugin && this.plugin.version.id && { id: [this.plugin.version.id] }),
 			number: ['', [Validators.required, Validators.pattern(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/)]],
 			changelog: ['', [Validators.required, Validators.minLength(10)]],
-			releaseDate: [this.today, [Validators.required, this.pastDateValidator()]]
+			releaseDate: [this.today, [Validators.required, this.pastDateValidator()]],
+			source: this.createSourceGroup(PluginSourceType.CDN)
 		});
 	}
 
@@ -101,10 +102,12 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 		};
 	}
 
-	private createSourceGroup(type: string): FormGroup {
+	private createSourceGroup(type: PluginSourceType): FormGroup {
+		const sourceId = this.plugin && this.plugin.source.id ? { id: [this.plugin.source.id] } : {};
 		switch (type) {
 			case PluginSourceType.CDN:
 				return this.fb.group({
+					...sourceId,
 					type: [PluginSourceType.CDN],
 					url: [
 						'',
@@ -119,6 +122,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 
 			case PluginSourceType.NPM:
 				return this.fb.group({
+					...sourceId,
 					type: [PluginSourceType.NPM],
 					name: [
 						'',
@@ -135,6 +139,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 			case PluginSourceType.GAUZY:
 			default:
 				return this.fb.group({
+					...sourceId,
 					type: [PluginSourceType.GAUZY],
 					file: [null, Validators.required]
 				});
@@ -177,23 +182,33 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 			);
 		} finally {
 			this.isSubmitting = false;
-			this.cdr.detectChanges();
+			this.cdr.markForCheck();
 		}
 	}
 
 	private setupSourceTypeListener(): void {
 		this.pluginForm
-			?.get('source.type')
-			?.valueChanges.pipe(distinctUntilChange(), filter(Boolean), debounceTime(300), takeUntil(this.destroy$))
-			.subscribe((type: PluginType) => this.onSourceTypeChange(type));
+			?.get('version.source.type')
+			?.valueChanges.pipe(
+				distinctUntilChange(),
+				filter(Boolean),
+				debounceTime(300),
+				tap((type: PluginSourceType) => this.onSourceTypeChange(type)),
+				takeUntil(this.destroy$)
+			)
+			.subscribe();
 	}
 
-	public onSourceTypeChange(type: PluginType): void {
+	public onSourceTypeChange(type: PluginSourceType): void {
 		if (!this.pluginForm) return;
 		const source = this.createSourceGroup(type);
-		if (!source) return;
-		this.pluginForm.setControl('source', source);
-		this.cdr.markForCheck();
+		const versionControl = this.pluginForm.get('version') as FormGroup;
+		if (versionControl) {
+			if (versionControl.get('source')) {
+				versionControl.removeControl('source');
+			}
+			versionControl.addControl('source', source);
+		}
 	}
 
 	private scrollToFirstInvalidControl(): void {

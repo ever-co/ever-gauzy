@@ -21,7 +21,7 @@
 				</nb-step>
 
 				<!-- Step 2: Version -->
-				<nb-step [stepControl]="pluginForm?.get('version')" [label]="'PLUGIN.FORM.VERSION' | translate">
+				<nb-step [stepControl]="pluginForm?.get('version.number')" [label]="'PLUGIN.FORM.VERSION' | translate">
 					<lib-plugin-version class="grow" [form]="pluginForm?.get('version')"></lib-plugin-version>
 					<div class="stepper-buttons">
 						<button nbButton outline status="basic" nbStepperPrevious>
@@ -32,10 +32,10 @@
 				</nb-step>
 
 				<!-- Step 3: Source -->
-				<nb-step [stepControl]="pluginForm?.get('source')" [label]="'PLUGIN.FORM.SOURCE' | translate">
+				<nb-step [stepControl]="pluginForm?.get('version')" [label]="'PLUGIN.FORM.SOURCE' | translate">
 					<lib-plugin-source
 						class="grow"
-						[form]="pluginForm?.get('source')"
+						[form]="pluginForm?.get('version.source')"
 						[sourceTypes]="sourceTypes"
 					></lib-plugin-source>
 					<div class="stepper-buttons">

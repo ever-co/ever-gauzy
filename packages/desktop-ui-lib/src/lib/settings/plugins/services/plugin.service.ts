@@ -31,6 +31,7 @@ export class PluginService {
 
 		// Strictly map all properties of ICreatePlugin and IUpdatePlugin
 		const plugin: Partial<IPlugin> = {
+			...(data.id && { id: data.id }),
 			name: data.name,
 			description: data.description,
 			type: data.type,
@@ -42,23 +43,26 @@ export class PluginService {
 			...common,
 			version: data.version
 				? {
+						...(data.version.id && { id: data.version.id }),
+
 						number: data.version.number,
 						changelog: data.version.changelog,
 						releaseDate: data.version.releaseDate,
 						...common,
-						source: data.source
+						source: data.version.source
 							? {
-									type: data.source.type,
-									...(data.source.type === PluginSourceType.CDN && {
-										url: data.source.url,
-										integrity: data.source.integrity,
-										crossOrigin: data.source.crossOrigin
+									...(data.version.source.id && { id: data.version.source.id }),
+									type: data.version.source.type,
+									...(data.version.source.type === PluginSourceType.CDN && {
+										url: data.version.source.url,
+										integrity: data.version.source.integrity,
+										crossOrigin: data.version.source.crossOrigin
 									}),
-									...(data.source.type === PluginSourceType.NPM && {
-										name: data.source.name,
-										registry: data.source.registry,
-										authToken: data.source.authToken,
-										scope: data.source.scope
+									...(data.version.source.type === PluginSourceType.NPM && {
+										name: data.version.source.name,
+										registry: data.version.source.registry,
+										authToken: data.version.source.authToken,
+										scope: data.version.source.scope
 									}),
 									...common
 							  }
