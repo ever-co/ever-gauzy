@@ -5,7 +5,8 @@ import {
 	IIntegrationSetting,
 	PermissionsEnum,
 	ID,
-	ICreateZapierIntegrationInput
+	ICreateZapierIntegrationInput,
+	IZapierEndpoint
 } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
 import { ZapierService } from './zapier.service';
@@ -37,12 +38,12 @@ export class ZapierController {
 	}
 
 	@Get('/triggers')
-	async getTriggers(@Query('token') token: string): Promise<any[]> {
+	async getTriggers(@Query('token') token: string): Promise<IZapierEndpoint[]> {
 		return await this._zapierService.fetchTriggers(token);
 	}
 
 	@Get('/actions')
-	async getActions(@Query('token') token: string): Promise<any[]> {
+	async getActions(@Query('token') token: string): Promise<IZapierEndpoint[]> {
 		return await this._zapierService.fetchActions(token);
 	}
 }

@@ -9,7 +9,7 @@ import timerStatus, { timerStatusKey } from './triggers/timerStatus';
 export default {
   version,
   platformVersion,
-  authentication: authentication,
+  authentication,
   triggers: {
     [timerStatusKey]: timerStatus,
   },

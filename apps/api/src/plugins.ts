@@ -44,12 +44,12 @@ export const plugins = [
 	IntegrationHubstaffPlugin,
 	// Indicates the inclusion or intention to use the IntegrationMakeComPlugin in the codebase.
 	IntegrationMakeComPlugin,
-	// Indicates the inclusion or intention to use the IntegrationZapierPlugin in the codebase.
-	IntegrationZapierPlugin,
 	// Indicates the inclusion or intention to use the IntegrationJiraPlugin in the codebase.
 	IntegrationJiraPlugin,
 	// Indicates the inclusion or intention to use the IntegrationUpworkPlugin in the codebase.
 	IntegrationUpworkPlugin,
+	// Indicates the inclusion or intention to use the IntegrationZapierPlugin in the codebase.
+	IntegrationZapierPlugin,
 	// Indicates the inclusion or intention to use the JobProposalPlugin in the codebase.
 	JobProposalPlugin,
 	// Indicates the inclusion or intention to use the JobSearchPlugin in the codebase.

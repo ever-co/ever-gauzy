@@ -9,7 +9,7 @@ import { ZapierModule } from './zapier.module';
 	 */
 	imports: [ZapierModule],
 	/**
-	 * No entities needed for Make.com integration since we're using existing
+	 * No entities needed for Zapier integration since we're using existing
 	 * IntegrationSetting entity
 	 */
 	entities: [],
@@ -25,7 +25,7 @@ import { ZapierModule } from './zapier.module';
 	}
 })
 export class IntegrationZapierPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
-	// We disable by default additional logging for each event to avoid cluttering the logs
+	// We enable by default additional logging for each event to avoid cluttering the logs
 	private logEnabled = true;
 
 	/**
