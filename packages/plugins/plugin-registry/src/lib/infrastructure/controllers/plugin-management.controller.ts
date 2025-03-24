@@ -166,15 +166,58 @@ export class PluginManagementController {
 		status: HttpStatus.UNAUTHORIZED,
 		description: 'Unauthorized access.'
 	})
+	@ApiConsumes('multipart/form-data')
 	@UseValidationPipe({
 		whitelist: true,
 		transform: true,
 		forbidNonWhitelisted: true
 	})
+	@UseInterceptors(
+		LazyFileInterceptor('file', {
+			storage: () => FileStorageFactory.create('plugins')
+		})
+	)
 	@UseGuards(PluginOwnerGuard)
 	@Put(':id')
-	public async update(@Param('id', UUIDValidationPipe) id: ID, @Body() input: UpdatePluginDTO): Promise<IPlugin> {
-		return this.commandBus.execute(new UpdatePluginCommand(id, input));
+	public async update(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() input: UpdatePluginDTO,
+		@UploadedPluginStorage() file: FileDTO
+	): Promise<IPlugin> {
+		try {
+			if (input.version.source.type === PluginSourceType.GAUZY) {
+				const gauzyStorageProvider = new GauzyStorageProvider(new FileStorage());
+				// Convert the plain object to a class instance
+				await gauzyStorageProvider.validate(file);
+				// Get metadata
+				const metadata = gauzyStorageProvider.extractMetadata(file);
+
+				// Create a new plugin record
+				return this.commandBus.execute(
+					new UpdatePluginCommand(id, {
+						...input,
+						version: {
+							...input.version,
+							source: {
+								...input.version.source,
+								...metadata
+							}
+						}
+					})
+				);
+			} else {
+				return this.commandBus.execute(new UpdatePluginCommand(id, input));
+			}
+		} catch (error) {
+			// Ensure cleanup of uploaded file
+			if (file?.key) {
+				const gauzyStorageProvider = new GauzyStorageProvider(new FileStorage());
+				await gauzyStorageProvider.delete(file.key);
+			}
+
+			// Throw a bad request exception with the validation errors
+			throw new BadRequestException(error);
+		}
 	}
 
 	/**
