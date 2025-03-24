@@ -80,7 +80,7 @@
 														) | translate
 													"
 													(click)="toggleTimer(true)"
-													[disabled]="isDisable || limitReached"
+													[disabled]="isDisable || limitReached || form.invalid"
 												>
 													<fa-icon [icon]="!running ? play : pause"></fa-icon>
 												</button>
@@ -94,27 +94,11 @@
 				</div>
 				<div *ngIf="isExpanded && !running">
 					<div class="form-group">
-						<label for="organizationContactId">
-							{{ 'TIMER_TRACKER.SELECT_CLIENT' | translate }}
-						</label>
-						<ga-contact-selector
-							name="organizationContactId"
-							[employeeId]="employee?.id"
-							[disabled]="running"
-							[(ngModel)]="organizationContactId"
-							#clientInput="ngModel"
-							[required]="organization?.requireClient"
-						></ga-contact-selector>
-						<div *ngIf="clientInput.invalid && form.submitted" class="invalid-feedback d-block">
-							<div *ngIf="clientInput.errors.required">
-								{{ 'TIMER_TRACKER.VALIDATION.CLIENT_REQUIRED' | translate }}
-							</div>
-						</div>
-					</div>
-					<div class="form-group">
-						<label for="projectId">
-							{{ 'TIMER_TRACKER.SELECT_PROJECT' | translate }}
-						</label>
+						<label
+							for="projectId"
+							[ngClass]="projectInput?.errors?.required ? 'required-asterisk' : null"
+							>{{ 'TIMER_TRACKER.SELECT_PROJECT' | translate }}</label
+						>
 						<ga-project-selector
 							name="projectId"
 							[skipGlobalChange]="true"
@@ -128,34 +112,16 @@
 							#projectInput="ngModel"
 							[required]="organization?.requireProject"
 						></ga-project-selector>
-						<div *ngIf="projectInput.invalid && form.submitted" class="invalid-feedback d-block">
-							<div *ngIf="projectInput.errors.required">
-								{{ 'TIMER_TRACKER.VALIDATION.PROJECT_REQUIRED' | translate }}
-							</div>
+						<div
+							*ngIf="projectInput?.errors?.required && projectInput?.touched"
+							class="invalid-feedback d-block"
+						>
+							{{ 'TIMER_TRACKER.VALIDATION.PROJECT_REQUIRED' | translate }}
 						</div>
 					</div>
 
-					<!-- Team Selector Start -->
 					<div class="form-group">
-						<label for="organizationTeamId">
-							{{ 'TIMER_TRACKER.SELECT_TEAM' | translate }}
-						</label>
-						<ga-team-selector
-							name="organizationTeamId"
-							[skipGlobalChange]="true"
-							[showAllOption]="false"
-							[defaultSelected]="false"
-							[placeholder]="'TIMER_TRACKER.SELECT_TEAM' | translate"
-							[employeeId]="employee?.id"
-							[projectId]="projectId"
-							[(ngModel)]="organizationTeamId"
-							[required]="false"
-						></ga-team-selector>
-					</div>
-					<!-- Team Selector Emd -->
-
-					<div class="form-group">
-						<label for="taskId">
+						<label for="taskId" [ngClass]="taskInput?.errors?.required ? 'required-asterisk' : null">
 							{{ 'TIMER_TRACKER.SELECT_TASK' | translate }}
 						</label>
 						<ga-task-selector
@@ -167,14 +133,15 @@
 							#taskInput="ngModel"
 							[required]="organization?.requireTask"
 						></ga-task-selector>
-						<div *ngIf="taskInput.invalid && form.submitted" class="invalid-feedback d-block">
-							<div *ngIf="taskInput.errors.required">
-								{{ 'TIMER_TRACKER.VALIDATION.TASK_REQUIRED' | translate }}
-							</div>
+						<div *ngIf="taskInput?.errors?.required && taskInput?.touched" class="invalid-feedback d-block">
+							{{ 'TIMER_TRACKER.VALIDATION.TASK_REQUIRED' | translate }}
 						</div>
 					</div>
 					<div class="form-group custom">
-						<label for="description">
+						<label
+							for="description"
+							[ngClass]="descriptionInput?.errors?.required ? 'required-asterisk' : null"
+						>
 							{{ 'TIMER_TRACKER.DESCRIPTION' | translate }}
 						</label>
 						<textarea
@@ -188,10 +155,11 @@
 							#descriptionInput="ngModel"
 							[required]="organization?.requireDescription"
 						></textarea>
-						<div *ngIf="descriptionInput.invalid && form.submitted" class="invalid-feedback d-block">
-							<div *ngIf="descriptionInput.errors.required">
-								{{ 'TIMER_TRACKER.VALIDATION.DESCRIPTION_REQUIRED' | translate }}
-							</div>
+						<div
+							*ngIf="descriptionInput?.errors?.required && descriptionInput?.touched"
+							class="invalid-feedback d-block"
+						>
+							{{ 'TIMER_TRACKER.VALIDATION.DESCRIPTION_REQUIRED' | translate }}
 						</div>
 					</div>
 					<div class="view-log-button mt-2" *ngIf="user?.employee?.id">
@@ -201,7 +169,7 @@
 								status="success"
 								[ngClass]="running ? 'button disabled' : 'button success start'"
 								size="medium"
-								[disabled]="running || isDisable || limitReached"
+								[disabled]="running || isDisable || limitReached || form.invalid"
 								(click)="toggleTimer(true)"
 							>
 								{{ 'TIMER_TRACKER.START_TIMER' | translate }}

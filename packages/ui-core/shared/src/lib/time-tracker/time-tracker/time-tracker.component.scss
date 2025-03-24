@@ -1,5 +1,8 @@
 @import 'gauzy/_gauzy-overrides';
+@import '@shared/required-asterisk';
+
 :host {
+  @include dialog(var(--gauzy-card-1), var(--gauzy-sidebar-background-4));
   position: fixed;
   height: 0;
   z-index: 999;
@@ -149,7 +152,6 @@
     width: 282.79px;
     height: 84px;
     border-radius: var(--border-radius);
-    margin-bottom: 30px;
     &:hover {
       border-color: nb-theme(color-primary-hover);
       color: nb-theme(text-basic-color);
@@ -209,9 +211,11 @@
     &.add {
       height: 36px;
       font-size: 14px;
-      height: 36px;
       padding: 9px 20px 18px 20px;
       width: 120px;
+    }
+    &.btn-disabled {
+      box-shadow: none;
     }
   }
   &.switch {
@@ -226,10 +230,6 @@ h6 {
   &:first-letter {
     text-transform: uppercase;
   }
-}
-
-:host {
-  @include dialog(var(--gauzy-card-1), var(--gauzy-sidebar-background-4));
 }
 
 nb-card-footer {

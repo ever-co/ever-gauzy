@@ -108,24 +108,6 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * Gets the organization contact ID from the timer configuration.
-	 *
-	 * @returns The organization contact ID if it exists and is a string; otherwise, null.
-	 */
-	public get organizationContactId(): string | null {
-		return this.getStringConfigValue('organizationContactId');
-	}
-
-	/**
-	 * Sets the organization contact ID for the timer configuration.
-	 *
-	 * @param value - The organization contact ID to set.
-	 */
-	public set organizationContactId(value: string) {
-		this.updateTimerConfig({ organizationContactId: value });
-	}
-
-	/**
 	 * Gets the project ID associated with the timer configuration.
 	 *
 	 * @returns The project ID if it exists and is a string; otherwise, null.
@@ -141,24 +123,6 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	 */
 	public set projectId(value: string) {
 		this.updateTimerConfig({ projectId: value });
-	}
-
-	/**
-	 * Gets the organization team ID associated with the timer configuration.
-	 *
-	 * @returns The organization team ID if it exists and is a string; otherwise, null.
-	 */
-	public get organizationTeamId(): string | null {
-		return this.getStringConfigValue('organizationTeamId');
-	}
-
-	/**
-	 * Sets the organization team ID for the timer configuration.
-	 *
-	 * @param value - The organization team ID to set.
-	 */
-	public set organizationTeamId(value: string) {
-		this.updateTimerConfig({ organizationTeamId: value });
 	}
 
 	/**
@@ -299,9 +263,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	}
 
 	async toggleTimer(onClick?: boolean) {
-		if (this.limitReached) {
-			return this.timeTrackerService.turnOffTimer();
-		}
+		if (this.limitReached) return this.timeTrackerService.turnOffTimer();
 		try {
 			if (!this.running && this.form.invalid) {
 				this.form.resetForm();
@@ -347,7 +309,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	 * @param event
 	 */
 	draggablePosition(event: NgxDraggableDomMoveEvent) {
-		this.position = event.position as NgxDraggablePoint;
+		this.position = event.position;
 	}
 
 	public xor(a: boolean, b: boolean): boolean {
