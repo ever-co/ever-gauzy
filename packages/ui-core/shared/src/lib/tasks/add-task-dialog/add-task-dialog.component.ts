@@ -75,6 +75,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 			title: [null, Validators.required],
 			project: [],
 			projectId: [null, Validators.required],
+			parentId: [],
 			status: [TaskStatusEnum.OPEN, Validators.required],
 			priority: [],
 			size: [],
@@ -166,6 +167,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 				estimate,
 				members,
 				project,
+				parent,
 				status,
 				tags,
 				teams,
@@ -191,6 +193,7 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 				title,
 				project,
 				projectId: project ? project.id : null,
+				parentId: parent ? parent.id : null,
 				status,
 				priority,
 				size,
@@ -316,5 +319,19 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 		);
 
 		this.availableModules = modules?.items || [];
+	}
+
+	/**
+	 * Retrieves the value of a form control by its name.
+	 *
+	 * @param control - The name of the form control whose value is to be retrieved.
+	 * @returns string - The value of the form control. If the control is not found or the value is null, an empty string is returned.
+	 */
+	getControlValue(control: string): string {
+		// Retrieve the form control using the given control name.
+		const formControl = this.form.get(control);
+
+		// If the control exists, return its value. Otherwise, return an empty string.
+		return formControl ? formControl.value : '';
 	}
 }

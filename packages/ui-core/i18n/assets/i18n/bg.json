@@ -2751,6 +2751,7 @@
 		"TODO": "Задача",
 		"OPEN": "Отворено",
 		"READY_FOR_REVIEW": "Готово за преглед",
+		"PARENT_TASK": "Основна задача",
 		"IN_PROGRESS": "В процес",
 		"IN_REVIEW": "В преглед",
 		"FOR_TESTING": "За тестване",
