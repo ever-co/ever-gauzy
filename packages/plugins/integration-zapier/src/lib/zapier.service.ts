@@ -255,7 +255,7 @@ export class ZapierService {
 			const response = await this.fetchIntegration<{ triggers: IZapierEndpoint[] }>('triggers', token);
 			return response.triggers;
 		} catch (error) {
-			console.error('Failed to fetch Zapier triggers');
+			console.error('Failed to fetch Zapier triggers:', error);
 			throw new Error('Unable to fetch triggers from Zapier');
 		}
 	}
