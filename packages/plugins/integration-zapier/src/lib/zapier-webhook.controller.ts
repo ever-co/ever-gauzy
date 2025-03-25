@@ -6,10 +6,11 @@ import { ZapierWebhookSubscription } from './repository/zapier-repository.entity
 
 @Controller('/integration/zapier')
 export class ZapierWebhookController {
+
+    private readonly logger = new Logger(ZapierWebhookController.name);
     constructor(
         private readonly zapierWebhookService: ZapierWebhookService,
         private readonly zapierService: ZapierService,
-        private readonly logger = new Logger(ZapierWebhookController.name)
     ) {}
 
     @Post('/webhooks')
