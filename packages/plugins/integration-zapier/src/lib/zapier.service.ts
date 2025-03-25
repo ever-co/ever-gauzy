@@ -13,8 +13,6 @@ import {
 	ID,
 	ICreateZapierIntegrationInput,
 	IZapierEndpoint,
-	IIntegration,
-	IZapierAccessTokens,
 } from '@gauzy/contracts';
 import {
 	IntegrationSettingService,
