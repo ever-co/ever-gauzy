@@ -149,7 +149,12 @@
 					<!-- What's new -->
 					@if(selectedVersion; as version) {
 					<div class="info-card mb-4">
-						<h6 class="section-title mb-3">What's New</h6>
+						<div class="d-flex align-items-center mb-3">
+							<h6 class="section-title m-0">What's New</h6>
+							<button nbButton ghost status="basic" class="ml-2 mr-2" (click)="navigateToHistory()">
+								<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
+							</button>
+						</div>
 						<div class="info-version full-width d-flex justify-content-between">
 							<div class="label">Version {{ version.number }}</div>
 							<div class="value">{{ version.createdAt | humanize }}</div>

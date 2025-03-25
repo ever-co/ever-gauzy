@@ -123,7 +123,8 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		try {
 			this.plugin = await firstValueFrom(
 				this.pluginService.getOne(this.pluginId, {
-					relations: ['versions', 'versions.source', 'uploadedBy', 'uploadedBy.user']
+					relations: ['versions', 'versions.source', 'uploadedBy', 'uploadedBy.user'],
+					order: { versions: { createdAt: 'DESC' } }
 				})
 			);
 			this.selectedVersion =
@@ -258,6 +259,10 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	navigateBack(): void {
 		this.router.navigate(['/settings/marketplace-plugins']);
+	}
+
+	navigateToHistory(): void {
+		this.router.navigate(['settings', 'marketplace-plugins', this.pluginId, 'versions']);
 	}
 
 	formatDate(date: Date | string | null): string {

@@ -29,6 +29,13 @@ export const pluginRoutes: Routes = [
 			)
 	},
 	{
+		path: 'marketplace-plugins/:id/versions',
+		loadComponent: () =>
+			import(
+				'./component/plugin-marketplace/plugin-marketplace-item/version-history/version-history.component'
+			).then((m) => m.VersionHistoryComponent)
+	},
+	{
 		path: 'plugins/:name',
 		loadComponent: () => import('./component/plugin/plugin.component').then((m) => m.PluginComponent)
 	},

@@ -1,0 +1,60 @@
+@let versions = versions$ | async; @let isLoading = isLoading$ | async; @let isAvailable = versions?.length > 0;
+
+<nb-card class="content-active first">
+	<nb-card-header class="d-flex justify-content-between header">
+		<h5 class="title">Version History</h5>
+		<button nbButton ghost size="small" (click)="navigateBack()">
+			<nb-icon icon="close-outline"></nb-icon>
+		</button>
+	</nb-card-header>
+
+	@if (isLoading) {
+	<ngx-no-data-message message="Loading changelogs..."></ngx-no-data-message>
+	} @else if (isAvailable) {
+	<nb-card-body class="version-container">
+		@for (version of versions; track version.id) {
+		<nb-card class="version">
+			<nb-card-header>
+				<h6 class="title">
+					<time [dateTime]="version.createdAt">
+						{{ version.createdAt | date : 'MMMM d, y' }}
+					</time>
+					&middot; {{ version.number }}
+				</h6>
+			</nb-card-header>
+			<nb-card-body class="changelog">
+				{{ version.changelog }}
+			</nb-card-body>
+			@if(isOwner(version)){
+			<nb-card-footer class="version-actions">
+				@if(version.deletedAt) {
+				<button nbButton type="button" status="warn" (click)="navigateBack()">
+					<nb-icon icon="refresh-outline" class="mr-1"></nb-icon>
+					{{ 'Restore' | translate }}
+				</button>
+				}@else{
+				<button nbButton type="button" status="primary" (click)="edit()">
+					<nb-icon icon="edit-2-outline"></nb-icon>
+					{{ 'BUTTONS.EDIT' | translate }}
+				</button>
+				<button nbButton type="button" status="danger" (click)="remove()">
+					<nb-icon icon="trash-2-outline"></nb-icon>
+					{{ 'BUTTONS.REMOVE' | translate }}
+				</button>
+				}
+			</nb-card-footer>
+			}
+		</nb-card>
+		}
+	</nb-card-body>
+	} @else {
+	<ngx-no-data-message message="No history"></ngx-no-data-message>
+	}
+
+	<nb-card-footer class="d-flex justify-content-between footer">
+		<button nbButton type="button" status="basic" (click)="navigateBack()">
+			<nb-icon icon="arrow-back-outline" class="mr-1"></nb-icon>
+			{{ 'BUTTONS.BACK' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

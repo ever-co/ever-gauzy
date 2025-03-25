@@ -114,6 +114,9 @@ export interface IPluginVersion extends IBasePerTenantAndOrganizationEntityModel
 	source?: IPluginSource; // Optional reference to the plugin's source
 	sourceId?: ID; // ID reference for the plugin's source
 
+	plugin?: IPlugin; // Optional reference to plugin
+	pluginId?: ID; // ID reference for plugin
+
 	// Security and integrity
 	checksum?: string; // Verification hash
 	signature?: string; // Digital signature for verification

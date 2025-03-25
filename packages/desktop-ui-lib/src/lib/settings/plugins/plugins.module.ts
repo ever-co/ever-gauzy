@@ -46,6 +46,7 @@ import { PluginElectronService } from './services/plugin-electron.service';
 import { PluginLoaderService } from './services/plugin-loader.service';
 import { PluginService } from './services/plugin.service';
 import { PipeModule } from '../../time-tracker/pipes/pipe.module';
+import { VersionHistoryComponent } from './component/plugin-marketplace/plugin-marketplace-item/version-history/version-history.component';
 
 @NgModule({
 	declarations: [
@@ -66,7 +67,8 @@ import { PipeModule } from '../../time-tracker/pipes/pipe.module';
 		FormSectionComponent,
 		FormRowComponent,
 		FileUploadComponent,
-		DialogCreateVersionComponent
+		DialogCreateVersionComponent,
+		VersionHistoryComponent
 	],
 	imports: [
 		CommonModule,

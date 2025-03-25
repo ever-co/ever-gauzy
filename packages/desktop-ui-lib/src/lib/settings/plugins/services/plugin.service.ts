@@ -195,4 +195,12 @@ export class PluginService {
 			this.createVersionFormData(version)
 		);
 	}
+
+	public getVersions<T>(pluginId: ID, params: T): Observable<IPluginVersion[]> {
+		return this.http
+			.get<IPagination<IPluginVersion>>(`${this.endPoint}/${pluginId}/versions`, {
+				params: toParams(params)
+			})
+			.pipe(map((data) => data.items));
+	}
 }
