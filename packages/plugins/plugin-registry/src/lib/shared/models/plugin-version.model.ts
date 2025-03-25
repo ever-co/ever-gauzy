@@ -1,6 +1,11 @@
 import { IBasePerTenantAndOrganizationEntityModel, ID } from '@gauzy/contracts';
 import { IPlugin } from './plugin.model';
-import { IPluginSource } from './plugin-source.model';
+import { IPluginSource, IPluginSourceUpdate } from './plugin-source.model';
+
+export interface IPluginVersionUpdate extends Partial<Pick<IPluginVersion, 'number' | 'changelog' | 'releaseDate'>> {
+	id: ID;
+	source?: IPluginSourceUpdate;
+}
 
 export interface IPluginVersion extends IBasePerTenantAndOrganizationEntityModel {
 	number: string; // SemVer formatted string

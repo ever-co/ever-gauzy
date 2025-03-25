@@ -10,7 +10,10 @@ export class CreatePluginDTO extends OmitType(Plugin, [
 	'updatedAt',
 	'deletedAt',
 	'versions',
-	'source'
+	'version',
+	'source',
+	'downloadCount',
+	'installed'
 ] as const) {
 	@ValidateNested()
 	@Type(() => PluginVersionDTO)

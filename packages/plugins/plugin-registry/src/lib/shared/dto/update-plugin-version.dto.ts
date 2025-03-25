@@ -4,10 +4,13 @@ import { Type } from 'class-transformer';
 import { IsNotEmpty, IsUUID, ValidateNested } from 'class-validator';
 import { PluginVersionDTO } from './plugin-version.dto';
 import { UpdatePluginSourceDTO } from './update-plugin-source.dto';
+import { IPluginVersionUpdate } from '../models/plugin-version.model';
+import { IPluginSourceUpdate } from '../models/plugin-source.model';
 
-export class UpdatePluginVersionDTO extends PartialType(
-	OmitType(PluginVersionDTO, ['source', 'sourceId', 'pluginId', 'plugin'] as const)
-) {
+export class UpdatePluginVersionDTO
+	extends PartialType(OmitType(PluginVersionDTO, ['source', 'sourceId', 'pluginId', 'plugin'] as const))
+	implements IPluginVersionUpdate
+{
 	@ApiProperty({
 		description: 'Unique identifier for the plugin version',
 		example: '123e4567-e89b-12d3-a456-426614174000'
@@ -23,5 +26,5 @@ export class UpdatePluginVersionDTO extends PartialType(
 	})
 	@ValidateNested()
 	@Type(() => UpdatePluginSourceDTO)
-	readonly source?: UpdatePluginSourceDTO;
+	readonly source?: IPluginSourceUpdate;
 }

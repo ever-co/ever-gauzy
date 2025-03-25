@@ -10,7 +10,7 @@ import { Transform } from 'class-transformer';
 import { IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, Min, ValidateIf } from 'class-validator';
 import { MikroOrmPluginVersionRepository } from '../repositories/mikro-orm-plugin-version.repository';
 import { Plugin } from './plugin.entity';
-import { JoinColumn, RelationId } from 'typeorm';
+import { Index, JoinColumn, RelationId } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
 import { IPlugin } from '../../shared/models/plugin.model';
@@ -28,6 +28,7 @@ export class PluginVersion extends TenantOrganizationBaseEntity implements IPlug
 	@Matches(/^(\d+\.\d+\.\d+)(-[0-9A-Za-z-.]+)?(\+[0-9A-Za-z-.]+)?$/, {
 		message: 'Version must follow SemVer format: MAJOR.MINOR.PATCH[-PRERELEASE][+BUILD]'
 	})
+	@Index('version_number_unique', ['plugin.name', 'tenantId', 'organizationId'], { unique: true })
 	@MultiORMColumn()
 	number: string;
 

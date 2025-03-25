@@ -1,4 +1,4 @@
-import { ID } from '@gauzy/contracts';
+import { ID, PluginSourceType } from '@gauzy/contracts';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DataSource } from 'typeorm';
@@ -6,11 +6,11 @@ import { DataSource } from 'typeorm';
 import { PluginSourceService } from '../../../domain/services/plugin-source.service';
 import { PluginVersionService } from '../../../domain/services/plugin-version.service';
 import { PluginService } from '../../../domain/services/plugin.service';
+import { UpdatePluginVersionDTO } from '../../../shared/dto/update-plugin-version.dto';
 import { IPluginSource } from '../../../shared/models/plugin-source.model';
 import { IPluginVersion } from '../../../shared/models/plugin-version.model';
 import { IPlugin } from '../../../shared/models/plugin.model';
 import { UpdatePluginCommand } from '../../commands/update-plugin.command';
-import { UpdatePluginVersionDTO } from '../../../shared/dto/update-plugin-version.dto';
 
 @CommandHandler(UpdatePluginCommand)
 export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginCommand> {
@@ -57,7 +57,17 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 			}
 
 			// Update plugin
-			const plugin = Object.assign(found.record, input);
+			const plugin: Partial<IPlugin> = {
+				name: input.name,
+				type: input.type,
+				status: input.status,
+				description: input.description,
+				isActive: input.isActive,
+				repository: input.repository,
+				author: input.author,
+				license: input.license,
+				homepage: input.homepage
+			};
 			await this.pluginService.update(found.record.id, plugin);
 
 			await queryRunner.commitTransaction();
@@ -104,8 +114,23 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 			throw new NotFoundException(`Source with ID ${data.id} not found for version ${versionId}`);
 		}
 
-		const source = Object.assign(found.record, data);
-		await this.sourceService.update(source.id, data);
+		const source: Partial<IPluginSource> = {
+			type: data.type,
+			...(data.type === PluginSourceType.CDN && {
+				url: data.url,
+				integrity: data.integrity,
+				crossOrigin: data.crossOrigin
+			}),
+			...(data.type === PluginSourceType.NPM && {
+				registry: data.registry,
+				name: data.name,
+				scope: data.scope,
+				authToken: data.authToken
+			}),
+			...(data.type === PluginSourceType.GAUZY && data)
+		};
+
+		await this.sourceService.update(data.id, source);
 	}
 
 	/**
@@ -129,7 +154,12 @@ export class UpdatePluginCommandHandler implements ICommandHandler<UpdatePluginC
 			throw new NotFoundException(`Version with ID ${data.id} not found for plugin ${pluginId}`);
 		}
 
-		const version = Object.assign(found.record, data);
-		await this.versionService.update(version.id, version);
+		const version: Partial<IPluginVersion> = {
+			changelog: data.changelog,
+			number: data.number,
+			releaseDate: data.releaseDate
+		};
+
+		await this.versionService.update(data.id, version);
 	}
 }
