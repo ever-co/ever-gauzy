@@ -13,9 +13,8 @@ const perform = async (z: ZObject, bundle: Bundle) => {
 
 // Subscribe function - creates a webhook subscription
 const subscribe = async (z: ZObject, bundle: Bundle) => {
-  // This would typically make a request to your API to create a webhook
   const response = await z.request({
-    url: `${process.env.API_BASE_URL}/api/timesheet/timer/webhooks`,
+    url: `${process.env.API_BASE_URL}/api/integration/zapier/webhooks`,
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -24,19 +23,15 @@ const subscribe = async (z: ZObject, bundle: Bundle) => {
     body: {
       target_url: bundle.targetUrl, // Zapier provides this
       event: 'timer.status.changed', // Your event type
-      // Include any other necessary data for your webhook
     },
   });
-
-  // Return the webhook ID or data that can be used to unsubscribe later
   return response.data;
 };
 
 // Unsubscribe function - removes the webhook subscription
 const unsubscribe = async (z: ZObject, bundle: Bundle) => {
-  // Use the webhook ID stored in bundle.subscribeData to unsubscribe
   const response = await z.request({
-    url: `${process.env.API_BASE_URL}/api/timesheet/timer/webhooks/${bundle.subscribeData?.id}`,
+    url: `${process.env.API_BASE_URL}//api/integration/zapier/webhooks/${bundle.subscribeData?.id}`,
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${bundle.authData['access_token']}`,
@@ -73,7 +68,7 @@ export default {
       projectId: '3e44becd-ccc0-4e86-90fd-16d2347d90d9',
       taskId: '1ccb7c08-e381-4802-a005-96af0f9ad214',
       organizationContactId: '2db881af-ecf8-4a8a-93a7-9655a3e6da7b',
-      organizationTeamId: '4d69775a-86c5-4d2c-a095-5b095a2d7f15'
-    }
+      organizationTeamId: '4d69775a-86c5-4d2c-a095-5b095a2d7f15',
+    },
   },
 };
