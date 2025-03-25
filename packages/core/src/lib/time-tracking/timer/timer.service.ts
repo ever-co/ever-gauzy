@@ -175,13 +175,14 @@ export class TimerService {
 				throw new Error(`Not implemented for ${ormType}`);
 		}
 
+		const now = moment();
+
 		// Get weekly statistics
 		let weeklyLimitStatus = await this._timerWeeklyLimitService.checkWeeklyLimit(employee, start as Date, true);
 
 		// If the user reached the weekly limit, then stop the current timer
 		let lastLogStopped = false;
 		if (lastLog?.isRunning) {
-			const now = moment.utc();
 			const remainingWeeklyLimit = weeklyLimitStatus.remainWeeklyTime - now.diff(moment(lastLog.stoppedAt), 'seconds');
 			if (lastLog?.isRunning && remainingWeeklyLimit <= 0) {
 				lastLogStopped = true;
@@ -214,12 +215,12 @@ export class TimerService {
 
 			// Include the last log into duration if it's running or was stopped
 			if (status.running || lastLogStopped) {
-				status.duration += Math.abs(moment(lastLogStopped ? lastLog.stoppedAt : undefined).diff(moment(lastLog.startedAt), 'seconds'));
+				status.duration += Math.abs((lastLogStopped ? moment(lastLog.stoppedAt) : now).diff(moment(lastLog.startedAt), 'seconds'));
 			}
 
 			// If timer is running, then add the non saved duration to the workedThisWeek
 			if (lastLog.isRunning) {
-				status.workedThisWeek += moment.utc().diff(moment(lastLog.stoppedAt), 'seconds');
+				status.workedThisWeek += now.diff(moment(lastLog.stoppedAt), 'seconds');
 			}
 		}
 

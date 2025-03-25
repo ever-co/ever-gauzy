@@ -56,8 +56,8 @@ export const getDurationQueryString = (dbType: string, logQueryAlias: string, sl
 				ROUND(
 					SUM(
 						CASE
-							WHEN extract(epoch from (COALESCE("${logQueryAlias}"."stoppedAt", NOW()) - "${logQueryAlias}"."startedAt")) >= 0
-							THEN extract(epoch from (COALESCE("${logQueryAlias}"."stoppedAt", NOW()) - "${logQueryAlias}"."startedAt"))
+							WHEN TRUNC(extract(epoch from (COALESCE("${logQueryAlias}"."stoppedAt", NOW()) - "${logQueryAlias}"."startedAt"))) >= 0
+							THEN TRUNC(extract(epoch from (COALESCE("${logQueryAlias}"."stoppedAt", NOW()) - "${logQueryAlias}"."startedAt")))
 							ELSE 0
 						END
 					) / COUNT("${slotQueryAlias}"."id")
@@ -110,8 +110,8 @@ export const getTotalDurationQueryString = (dbType: string, queryAlias: string):
 				ROUND(
 					SUM(
 						CASE
-							WHEN extract(epoch from (COALESCE("${queryAlias}"."stoppedAt", NOW()) - "${queryAlias}"."startedAt")) >= 0
-							THEN extract(epoch from (COALESCE("${queryAlias}"."stoppedAt", NOW()) - "${queryAlias}"."startedAt"))
+							WHEN TRUNC(extract(epoch from (COALESCE("${queryAlias}"."stoppedAt", NOW()) - "${queryAlias}"."startedAt"))) >= 0
+							THEN TRUNC(extract(epoch from (COALESCE("${queryAlias}"."stoppedAt", NOW()) - "${queryAlias}"."startedAt")))
 							ELSE 0
 						END
 					)
