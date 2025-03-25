@@ -51,13 +51,12 @@ export default {
         required: false,
         label: 'Log Type',
         choices: {
-          'TRACKED': 'Tracked',
-          'MANUAL': 'Manual',
-          'IDLE': 'Idle',
-          'RESUMED': 'Resumed'
+          TRACKED: 'Tracked',
+          MANUAL: 'Manual',
+          IDLE: 'Idle',
+          RESUMED: 'Resumed',
         },
-
-        default: 'TRACKED'
+        default: 'TRACKED',
       },
       {
         key: 'source',
@@ -65,26 +64,25 @@ export default {
         required: false,
         label: 'Source',
         choices: {
-          'BROWSER': 'Browser',
-          'DESKTOP': 'Desktop',
-          'MOBILE': 'Mobile',
-          'BROWSER_EXTENSION': 'Browser Extension',
-          'HUBSTAFF': 'Hubstaff',
-          'UPWORK': 'Upwork',
-          'TEAMS': 'Teams',
-          'CLOC': 'Cloc'
+          BROWSER: 'Browser',
+          DESKTOP: 'Desktop',
+          MOBILE: 'Mobile',
+          BROWSER_EXTENSION: 'Browser Extension',
+          HUBSTAFF: 'Hubstaff',
+          UPWORK: 'Upwork',
+          TEAMS: 'Teams',
+          CLOC: 'Cloc',
         },
-        default: 'BROWSER'
+        default: 'BROWSER',
       },
       { key: 'description', type: 'text', required: false, label: 'Description' },
-      { key: 'isBillable', type: 'boolean', required: false, label: 'Is Billable', default: false },
+      { key: 'isBillable', type: 'boolean', required: false, label: 'Is Billable', default: 'false' },
       { key: 'version', type: 'string', required: false, label: 'Version', default: '1.0.1' },
       { key: 'projectId', type: 'string', required: false, label: 'Project ID' },
       { key: 'taskId', type: 'string', required: false, label: 'Task ID' },
       { key: 'organizationContactId', type: 'string', required: false, label: 'Organization Contact ID' },
       { key: 'organizationTeamId', type: 'string', required: false, label: 'Organization Team ID' },
     ],
-    type: 'create',
     perform,
     sample: {
       id: 1,
@@ -100,7 +98,7 @@ export default {
       projectId: '3e44becd-ccc0-4e86-90fd-16d2347d90d9',
       taskId: '1ccb7c08-e381-4802-a005-96af0f9ad214',
       organizationContactId: '2db881af-ecf8-4a8a-93a7-9655a3e6da7b',
-      organizationTeamId: '4d69775a-86c5-4d2c-a095-5b095a2d7f15'
+      organizationTeamId: '4d69775a-86c5-4d2c-a095-5b095a2d7f15',
     },
   },
 };

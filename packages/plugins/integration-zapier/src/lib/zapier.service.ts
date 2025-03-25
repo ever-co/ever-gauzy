@@ -13,6 +13,8 @@ import {
 	ID,
 	ICreateZapierIntegrationInput,
 	IZapierEndpoint,
+	IIntegration,
+	IZapierAccessTokens,
 } from '@gauzy/contracts';
 import {
 	IntegrationSettingService,
@@ -275,5 +277,47 @@ export class ZapierService {
 			console.error('Failed to fetch Zapier actions:', error);
 			throw new Error('Unable to fetch actions from Zapier');
 		}
+	}
+	/**
+	 * Finds an integration tenant by verifying the provided access token.
+	 * @param token The access token to verify
+	 * @returns A promise resolving to IIIntegrationTenant if found or undefined if not found
+	 * @throws NotFoundException if no integration is found for the given token
+	*/
+	async findIntegrationByToken(token: string): Promise<IIntegrationTenant | undefined> {
+		// Find the integration setting with the given access token
+		const settings = await this._integrationSettingService.find({
+		  where: {
+			settingsName: 'access_token',
+			settingsValue: token
+		  },
+		  relations: ['integration'] // Ensure the integration relation is loaded
+		});
+
+		if (!settings || settings.length === 0) {
+		  throw new NotFoundException(`No integration found for token ${token}`);
+		}
+
+		// Get the first matching setting (assuming unique tokens per integration)
+		const setting = settings[0];
+
+		if (!setting.integrationId) {
+			throw new NotFoundException('Integration ID is undefined');
+		}
+		const integrationTenant = await this._integrationService.findOneByIdString(setting.integrationId, {
+		  where: {
+			name: IntegrationEnum.ZAPIER
+		  },
+		  relations: ['settings'] // Load settings to include all related data
+		});
+
+		if (!integrationTenant) {
+		  throw new NotFoundException(`No Zapier integration tenant found for token ${token}`);
+		}
+
+		return {
+			...integrationTenant,
+			name: integrationTenant.name as IntegrationEnum
+		};
 	}
 }

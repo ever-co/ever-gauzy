@@ -22,3 +22,8 @@ export interface IZapierEndpoint {
     name: string;
     description: string;
 }
+
+export interface IZapierCreateWebhookInput {
+    target_url: string;
+    event: string;
+}

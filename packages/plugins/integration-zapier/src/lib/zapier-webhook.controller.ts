@@ -1,0 +1,38 @@
+import { Controller, Post, Body, Headers, Param, Delete, ForbiddenException } from '@nestjs/common';
+import { ZapierWebhookService } from './zapier-webhook.service';
+import { ZapierService } from './zapier.service';
+import { IZapierCreateWebhookInput } from '@gauzy/contracts';
+import { ZapierWebhookSubscription } from './repository/zapier-repository.entity';
+
+@Controller('/integration/zapier')
+export class ZapierWebhookController {
+    constructor(
+        private readonly zapierWebhookService: ZapierWebhookService,
+        private readonly zapierService: ZapierService
+    ) {}
+
+    @Post('/webhooks')
+    async createWebhook(@Body() body: IZapierCreateWebhookInput, @Headers('Authorization') authorization: string): Promise<ZapierWebhookSubscription> {
+        const token = authorization.replace('Bearer ', '');
+        const integration = await this.zapierService.findIntegrationByToken(token);
+
+        if (!integration) {
+            throw new ForbiddenException('Invalid token');
+        }
+
+        const subscription = await this.zapierWebhookService.createSubscription({
+            targetUrl: body.target_url,
+            event: body.event,
+            integrationId: integration.id,
+            tenantId: integration.tenantId,
+            organizationId: integration.organizationId
+        });
+
+        return subscription;
+    }
+
+    @Delete('/webhooks/:id')
+  async deleteWebhook(@Param('id') id: string): Promise<void> {
+    await this.zapierWebhookService.deleteSubscription(id);
+  }
+}
