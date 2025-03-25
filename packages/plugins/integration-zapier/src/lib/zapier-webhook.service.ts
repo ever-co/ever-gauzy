@@ -41,7 +41,12 @@ export class ZapierWebhookService {
     }
 
     async findSubscriptions(options: { event?: string; integrationId?: string }): Promise<ZapierWebhookSubscription[]> {
-        return await this.subscriptionRepository.find({ where: options });
+        try {
+            return await this.subscriptionRepository.find({ where: options });
+        } catch (error) {
+            this.logger.error('Failed to find webhook subscriptions', error);
+            throw new Error('Failed to find webhook subscriptions');
+        }
     }
 
     async deleteSubscription(id: string): Promise<void> {
