@@ -18,7 +18,6 @@ export class NgxRegisterComponent extends NbRegisterComponent implements OnInit 
 	public showConfirmPassword = false;
 	public passwordNoSpaceEdges = patterns.passwordNoSpaceEdges;
 	public queryParams$: Observable<Params>; // Observable for the query params
-	public allowEmailPasswordLogin$: Observable<boolean>;
 
 	constructor(
 		public readonly translate: TranslateService,
