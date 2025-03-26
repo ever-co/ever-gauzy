@@ -28,18 +28,32 @@
 			@if(isOwner(version)){
 			<nb-card-footer class="version-actions">
 				@if(version.deletedAt) {
-				<button nbButton type="button" status="warn" (click)="navigateBack()">
+				<button
+					nbButton
+					size="small"
+					type="button"
+					class="action warning"
+					status="basic"
+					(click)="navigateBack()"
+				>
 					<nb-icon icon="refresh-outline" class="mr-1"></nb-icon>
 					{{ 'Restore' | translate }}
 				</button>
 				}@else{
-				<button nbButton type="button" status="primary" (click)="edit()">
+				<button nbButton size="small" type="button" class="action secondary" status="basic" (click)="edit()">
 					<nb-icon icon="edit-2-outline"></nb-icon>
 					{{ 'BUTTONS.EDIT' | translate }}
 				</button>
-				<button nbButton type="button" status="danger" (click)="remove()">
-					<nb-icon icon="trash-2-outline"></nb-icon>
-					{{ 'BUTTONS.REMOVE' | translate }}
+				<button
+					nbButton
+					[nbTooltip]="'BUTTONS.DELETE' | translate"
+					size="small"
+					type="button"
+					status="basic"
+					class="action"
+					(click)="remove()"
+				>
+					<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 				</button>
 				}
 			</nb-card-footer>
@@ -52,9 +66,9 @@
 	}
 
 	<nb-card-footer class="d-flex justify-content-between footer">
-		<button nbButton type="button" status="basic" (click)="navigateBack()">
+		<button nbButton type="button" status="basic" size="small" class="action secondary" (click)="navigateBack()">
 			<nb-icon icon="arrow-back-outline" class="mr-1"></nb-icon>
-			{{ 'BUTTONS.BACK' | translate }}
+			{{ 'BUTTONS.BACK' | translate | titlecase }}
 		</button>
 	</nb-card-footer>
 </nb-card>

@@ -34,7 +34,7 @@
 		}@else {
 		<div class="plugin-content">
 			<!-- Quick Actions -->
-			<div class="quick-actions mb-4">
+			<div class="quick-actions">
 				@if(installed) {
 				<div class="d-flex align-items-center">
 					<nb-icon icon="checkmark-circle-2-outline" status="success" class="mr-2"></nb-icon>
@@ -43,11 +43,11 @@
 				@if(needUpdate) {
 				<button
 					nbButton
-					status="primary"
+					status="basic"
 					size="small"
 					[disabled]="installing || uninstalling"
 					(click)="updatePlugin()"
-					class="ml-3"
+					class="ml-3 action primary"
 				>
 					<nb-icon *gauzySpinnerButton="installing" icon="sync-outline" class="mr-1"></nb-icon>
 					{{ 'BUTTONS.UPDATE' | translate }}
@@ -55,18 +55,24 @@
 				}
 				<button
 					nbButton
-					outline
-					status="danger"
+					status="basic"
 					size="small"
 					[disabled]="installing || uninstalling"
 					(click)="uninstallPlugin()"
-					class="ml-2"
+					class="ml-2 action danger"
 				>
-					<nb-icon *gauzySpinnerButton="uninstalling" icon="trash-2-outline" class="mr-1"></nb-icon>
+					<nb-icon *gauzySpinnerButton="uninstalling" status="danger" icon="slash-outline"></nb-icon>
 					{{ 'BUTTONS.UNINSTALL' | translate }}
 				</button>
 				}@else {
-				<button nbButton status="success" [disabled]="installing || uninstalling" (click)="installPlugin()">
+				<button
+					nbButton
+					status="basic"
+					size="small"
+					class="action success"
+					[disabled]="installing || uninstalling"
+					(click)="installPlugin()"
+				>
 					<nb-icon *gauzySpinnerButton="installing" icon="cloud-download-outline" class="mr-1"></nb-icon>
 					{{ 'BUTTONS.INSTALL' | translate }}
 				</button>
@@ -367,9 +373,9 @@
 	</nb-card-body>
 
 	<nb-card-footer class="d-flex justify-content-between">
-		<button nbButton type="button" status="basic" (click)="navigateBack()">
+		<button nbButton type="button" size="small" class="action secondary" status="basic" (click)="navigateBack()">
 			<nb-icon icon="arrow-back-outline" class="mr-1"></nb-icon>
-			{{ 'BUTTONS.BACK' | translate }}
+			{{ 'BUTTONS.BACK' | translate | titlecase }}
 		</button>
 
 		<div class="action-buttons">
@@ -377,10 +383,11 @@
 			<button
 				nbButton
 				type="button"
-				status="primary"
+				size="small"
+				status="basic"
 				[disabled]="installing || uninstalling"
 				(click)="addVersion()"
-				class="mr-2"
+				class="mr-2 action primary soft"
 			>
 				<nb-icon icon="plus-outline" class="mr-1"></nb-icon>
 				{{ 'BUTTONS.ADD_VERSION' | translate }}
@@ -389,18 +396,27 @@
 			<button
 				nbButton
 				type="button"
-				status="info"
+				status="basic"
 				[disabled]="installing || uninstalling"
+				size="small"
 				(click)="navigateToEdit()"
-				class="mr-2"
+				class="mr-2 action secondary"
 			>
 				<nb-icon icon="edit-2-outline" class="mr-1"></nb-icon>
 				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
 
-			<button nbButton type="button" status="danger" [disabled]="installing || uninstalling" (click)="delete()">
-				<nb-icon icon="trash-2-outline" class="mr-1"></nb-icon>
-				{{ 'BUTTONS.DELETE' | translate }}
+			<button
+				nbButton
+				type="button"
+				status="basic"
+				class="action"
+				[disabled]="installing || uninstalling"
+				size="small"
+				(click)="delete()"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon icon="trash-2-outline" status="danger"></nb-icon>
 			</button>
 			}
 		</div>

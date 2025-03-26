@@ -1,3 +1,5 @@
+@import 'gauzy/_gauzy-table';
+
 :host {
   display: block;
   width: 100%;
@@ -305,5 +307,9 @@ nb-tag-list {
     .value {
       color: var(--gauzy-text-color-1);
     }
+  }
+
+  .action.danger {
+    color: var(--color-danger-default);
   }
 }

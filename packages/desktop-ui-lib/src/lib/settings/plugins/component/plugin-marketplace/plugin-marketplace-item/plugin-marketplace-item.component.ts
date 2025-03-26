@@ -4,7 +4,7 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 
 import { EMPTY, firstValueFrom, Subject, tap } from 'rxjs';
-import { catchError, filter, switchMap, take, takeUntil } from 'rxjs/operators';
+import { catchError, concatMap, filter, switchMap, take, takeUntil } from 'rxjs/operators';
 
 import {
 	ICDNSource,
@@ -87,10 +87,20 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 				if (this.installing) {
 					this.pluginService
 						.install({ pluginId: this.plugin.id, versionId: this.selectedVersion.id })
-						.subscribe(() => (this.installing = false));
+						.pipe(concatMap(() => this.loadPlugin()))
+						.subscribe(() => {
+							this.installing = false;
+							this.cdr.markForCheck();
+						});
 				}
 				if (this.uninstalling) {
-					this.pluginService.uninstall(this.plugin.id).subscribe(() => (this.uninstalling = false));
+					this.pluginService
+						.uninstall(this.plugin.id)
+						.pipe(concatMap(() => this.loadPlugin()))
+						.subscribe(() => {
+							this.uninstalling = false;
+							this.cdr.markForCheck();
+						});
 				}
 				this.toastrService.success(notification.message);
 				break;
@@ -283,9 +293,26 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	}
 
 	public async uninstallPlugin(): Promise<void> {
-		this.uninstalling = true;
-		this.pluginElectronService.uninstall(this.plugin as any);
-		await this.loadPlugin();
+		this.dialogService
+			.open(AlertComponent, {
+				backdropClass: 'backdrop-blur',
+				context: {
+					data: {
+						title: 'Uninstall',
+						message: 'Would you like to uninstall this plugin?',
+						status: 'basic'
+					}
+				}
+			})
+			.onClose.pipe(
+				take(1),
+				filter(Boolean),
+				tap(async () => {
+					this.uninstalling = true;
+					this.pluginElectronService.uninstall(this.plugin as any);
+				})
+			)
+			.subscribe();
 	}
 
 	installPlugin(isUpdate = false): void {
