@@ -4,6 +4,7 @@ import { NbAuthModule } from '@nebular/auth';
 import { environment } from '@gauzy/ui-config';
 import { AuthGuard } from './auth.guard';
 import { NoAuthGuard } from './no-auth.guard';
+import { NoEmailPasswordGuard } from './no-email-password.guard';
 import { AuthService, AuthStrategy, ElectronService, Store } from '../services';
 
 /**
@@ -52,6 +53,7 @@ const socialLinks = [
 		}).providers,
 		AuthGuard,
 		NoAuthGuard,
+		NoEmailPasswordGuard,
 		AuthStrategy,
 		AuthService,
 		Store,

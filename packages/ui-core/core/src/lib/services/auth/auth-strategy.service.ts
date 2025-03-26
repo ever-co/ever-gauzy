@@ -30,7 +30,7 @@ export class AuthStrategy extends NbAuthStrategy {
 				failure: null
 			},
 			alreadyRegisteredErrors: ['REGISTER_PAGE.ERRORS.ALREADY_REGISTERED'],
-			invalidEmailDomainErrors: ['REGISTER_PAGE.ERRORS.INVALID_EMAIL_DOMAIN'],
+			invalidEmailDomainErrors: ['AUTH_ERRORS.INVALID_EMAIL_DOMAIN'],
 			defaultErrors: ['REGISTER_PAGE.ERRORS.DEFAULT'],
 			defaultMessages: ['REGISTER_PAGE.MESSAGES.DEFAULT']
 		},

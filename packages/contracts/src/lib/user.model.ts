@@ -252,5 +252,6 @@ export interface IUserViewModel extends IBasePerTenantEntityModel {
 
 export enum AuthError {
 	ALREADY_REGISTERED = 'user-already-registered',
-	INVALID_EMAIL_DOMAIN = 'invalid-email-domain'
+	INVALID_EMAIL_DOMAIN = 'invalid-email-domain',
+	ACCESS_DENIED = 'access_denied'
 }

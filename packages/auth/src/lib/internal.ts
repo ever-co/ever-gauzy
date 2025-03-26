@@ -2,7 +2,7 @@ import { Auth0Strategy, Auth0Controller } from './auth0';
 import { FacebookStrategy, FacebookController } from './facebook';
 import { FiverrStrategy } from './fiverr';
 import { GithubStrategy, GithubController } from './github';
-import { GoogleStrategy, GoogleController } from './google';
+import { GoogleStrategy, GoogleController, GoogleAuthGuard } from './google';
 import { KeycloakStrategy, KeycloakAuthGuard } from './keycloak';
 import { LinkedinStrategy, LinkedinController } from './linkedin';
 import {
@@ -34,4 +34,4 @@ export const Controllers = [
 	MicrosoftController
 ];
 
-export const AuthGuards = [MicrosoftAuthGuard, KeycloakAuthGuard];
+export const AuthGuards = [MicrosoftAuthGuard, KeycloakAuthGuard, GoogleAuthGuard];

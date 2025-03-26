@@ -42,12 +42,12 @@ export const createAuthRoutes = (_pageRouteRegistryService: PageRouteRegistrySer
 			{
 				path: 'request-password',
 				component: NgxForgotPasswordComponent,
-				canActivate: [NoAuthGuard]
+				canActivate: [NoAuthGuard, NoEmailPasswordGuard]
 			},
 			{
 				path: 'reset-password',
 				component: NgxResetPasswordComponent,
-				canActivate: [NoAuthGuard]
+				canActivate: [NoAuthGuard, NoEmailPasswordGuard]
 			},
 			{
 				path: 'confirm-email',

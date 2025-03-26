@@ -4544,6 +4544,11 @@
 		"ERROR_TITLE": "Oh Mist!",
 		"SUCCESS_TITLE": "Hurra!"
 	},
+	"AUTH_ERRORS": {
+		"INVALID_EMAIL_DOMAIN": "Diese E-Mail-Adresse wird für die Registrierung eines Kontos nicht unterstützt.",
+		"USER_CANCELLED_REQUEST": "Die Kontenauthentifizierung wurde abgebrochen.",
+		"UNKNOWN_ERROR": "Bei der Authentifizierung ist etwas schief gelaufen, bitte versuchen Sie es erneut."
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "Registrieren",
 		"HAVE_AN_ACCOUNT": "Haben Sie bereits ein Konto?",
@@ -4578,8 +4583,7 @@
 		},
 		"ERRORS": {
 			"DEFAULT": "Etwas ist schiefgelaufen, bitte versuchen Sie es erneut.",
-			"ALREADY_REGISTERED": "Die E-Mail-Adresse ist bereits registriert.",
-			"INVALID_EMAIL_DOMAIN": "Diese E-Mail-Adresse wird für die Registrierung eines Kontos nicht unterstützt."
+			"ALREADY_REGISTERED": "Die E-Mail-Adresse ist bereits registriert."
 		},
 		"MESSAGES": {
 			"DEFAULT": "Sie haben sich erfolgreich registriert."
@@ -4588,6 +4592,7 @@
 	"LOGIN_PAGE": {
 		"TITLE": "Anmeldung",
 		"SUB_TITLE": "Hallo! Melde dich mit deiner E-Mail an.",
+		"SUB_TITLE_ACCOUNT": "Hallo! Melde dich mit deinem Konto an.",
 		"REMEMBER_ME_TITLE": "Erinnere dich an mich.",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Hast du kein Konto?",
 		"FORGOT_PASSWORD_TITLE": "Passwort vergessen?",

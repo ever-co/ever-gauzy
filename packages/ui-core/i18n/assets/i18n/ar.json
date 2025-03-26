@@ -4546,6 +4546,11 @@
 		"ERROR_TITLE": "يا للمفاجأة!",
 		"SUCCESS_TITLE": "مرحى!"
 	},
+	"AUTH_ERRORS": {
+		"INVALID_EMAIL_DOMAIN": "عنوان البريد الإلكتروني غير مدعوم لتسجيل حساب.",
+		"USER_CANCELLED_REQUEST": "تم إلغاء مصادقة الحساب.",
+		"UNKNOWN_ERROR": "حدث خطأ ما أثناء المصادقة، يرجى المحاولة مرة أخرى."
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "تسجيل",
 		"HAVE_AN_ACCOUNT": "هل لديك حساب بالفعل؟",
@@ -4580,8 +4585,7 @@
 		},
 		"ERRORS": {
 			"DEFAULT": "حدث خطأ ما، يرجى المحاولة مرة أخرى.",
-			"ALREADY_REGISTERED": "عنوان البريد الإلكتروني مسجل بالفعل.",
-			"INVALID_EMAIL_DOMAIN": "عنوان البريد الإلكتروني غير مدعوم لتسجيل حساب."
+			"ALREADY_REGISTERED": "عنوان البريد الإلكتروني مسجل بالفعل."
 		},
 		"MESSAGES": {
 			"DEFAULT": "لقد تم تسجيلك بنجاح."
@@ -4590,6 +4594,7 @@
 	"LOGIN_PAGE": {
 		"TITLE": "تسجيل الدخول",
 		"SUB_TITLE": "مرحبًا! قم بتسجيل الدخول باستخدام بريدك الإلكتروني.",
+		"SUB_TITLE_ACCOUNT": "مرحبًا! قم بتسجيل الدخول باستخدام حسابك.",
 		"REMEMBER_ME_TITLE": "تذكرني",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "ليس لديك حساب؟",
 		"FORGOT_PASSWORD_TITLE": "هل نسيت كلمة المرور؟",

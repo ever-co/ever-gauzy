@@ -4548,6 +4548,11 @@
 		"ERROR_TITLE": "Oh zut !",
 		"SUCCESS_TITLE": "Hourra !"
 	},
+	"AUTH_ERRORS": {
+		"INVALID_EMAIL_DOMAIN": "L'adresse e-mail n'est pas prise en charge pour créer un compte.",
+		"USER_CANCELLED_REQUEST": "L'authentification du compte a été annulée.",
+		"UNKNOWN_ERROR": "Une erreur s'est produite lors de l'authentification, veuillez réessayer."
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "S'inscrire",
 		"HAVE_AN_ACCOUNT": "Vous avez déjà un compte ?",
@@ -4582,8 +4587,7 @@
 		},
 		"ERRORS": {
 			"DEFAULT": "Une erreur s'est produite, veuillez réessayer.",
-			"ALREADY_REGISTERED": "L'adresse e-mail est déjà enregistrée.",
-			"INVALID_EMAIL_DOMAIN": "Cette adresse e-mail n'est pas prise en charge pour l'inscription d'un compte."
+			"ALREADY_REGISTERED": "L'adresse e-mail est déjà enregistrée."
 		},
 		"MESSAGES": {
 			"DEFAULT": "Vous avez été inscrit avec succès."
@@ -4592,6 +4596,7 @@
 	"LOGIN_PAGE": {
 		"TITLE": "Connexion",
 		"SUB_TITLE": "Salut ! Connectez-vous avec votre adresse e-mail.",
+		"SUB_TITLE_ACCOUNT": "Salut ! Connectez-vous avec votre compte.",
 		"REMEMBER_ME_TITLE": "Se souvenir de moi",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Vous n'avez pas de compte ?",
 		"FORGOT_PASSWORD_TITLE": "Mot de passe oublié ?",

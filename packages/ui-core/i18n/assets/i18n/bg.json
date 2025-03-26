@@ -4576,6 +4576,11 @@
 		"ERROR_TITLE": "О, не!",
 		"SUCCESS_TITLE": "Ура!"
 	},
+	"AUTH_ERRORS": {
+		"INVALID_EMAIL_DOMAIN": "Имейл адресът не се поддържа за регистрация на акаунт.",
+		"USER_CANCELLED_REQUEST": "Удостоверяването на акаунта беше отменено.",
+		"UNKNOWN_ERROR": "Нещо се обърка по време на удостоверяването, моля опитайте отново."
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "Регистрация",
 		"HAVE_AN_ACCOUNT": "Вече имате акаунт?",
@@ -4610,8 +4615,7 @@
 		},
 		"ERRORS": {
 			"DEFAULT": "Нещо се обърка, моля, опитайте отново.",
-			"ALREADY_REGISTERED": "Имейлът е регистриран.",
-			"INVALID_EMAIL_DOMAIN": "Този имейл адрес не се поддържа за регистрация на акаунт."
+			"ALREADY_REGISTERED": "Имейлът е регистриран."
 		},
 		"MESSAGES": {
 			"DEFAULT": "Вие се регистрирахте успешно."
@@ -4620,6 +4624,7 @@
 	"LOGIN_PAGE": {
 		"TITLE": "Вход",
 		"SUB_TITLE": "Здравейте! Влезте с имейла си.",
+		"SUB_TITLE_ACCOUNT": "Здравейте! Влезте с вашият акаунт.",
 		"REMEMBER_ME_TITLE": "Запомни ме",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Нямате акаунт?",
 		"FORGOT_PASSWORD_TITLE": "Забравена парола?",

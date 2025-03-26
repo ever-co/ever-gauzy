@@ -6,4 +6,4 @@ import { NbRequestPasswordComponent } from '@nebular/auth';
 	templateUrl: './forgot-password.component.html',
 	styleUrls: ['./forgot-password.component.scss']
 })
-export class NgxForgotPasswordComponent extends NbRequestPasswordComponent {}
+export class NgxForgotPasswordComponent extends NbRequestPasswordComponent { }

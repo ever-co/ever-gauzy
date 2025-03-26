@@ -4548,6 +4548,11 @@
 		"ERROR_TITLE": "Oh no!",
 		"SUCCESS_TITLE": "Evviva!"
 	},
+	"AUTH_ERRORS": {
+		"INVALID_EMAIL_DOMAIN": "L'indirizzo email non è supportato per registrare un account.",
+		"USER_CANCELLED_REQUEST": "L'autenticazione dell'account è stata annullata.",
+		"UNKNOWN_ERROR": "Qualcosa è andato storto durante l'autenticazione, per favore riprova."
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "Registra",
 		"HAVE_AN_ACCOUNT": "Hai già un account?",
@@ -4582,8 +4587,7 @@
 		},
 		"ERRORS": {
 			"DEFAULT": "Qualcosa è andato storto, per favore riprova.",
-			"ALREADY_REGISTERED": "L'indirizzo email è già registrato.",
-			"INVALID_EMAIL_DOMAIN": "L'indirizzo email non è supportato per registrare un account."
+			"ALREADY_REGISTERED": "L'indirizzo email è già registrato."
 		},
 		"MESSAGES": {
 			"DEFAULT": "Ti sei registrato con successo."
@@ -4592,6 +4596,7 @@
 	"LOGIN_PAGE": {
 		"TITLE": "Accesso",
 		"SUB_TITLE": "Ciao! Accedi con la tua email",
+		"SUB_TITLE_ACCOUNT": "Ciao! Accedi con il tuo account",
 		"REMEMBER_ME_TITLE": "Ricordami",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Non hai un account?",
 		"FORGOT_PASSWORD_TITLE": "Password dimenticata?",

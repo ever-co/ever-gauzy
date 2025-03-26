@@ -7,9 +7,7 @@ import { firstValueFrom, map } from 'rxjs';
 /**
  * Use for routes which can't be accessed if email/password authentication is disabled
  */
-@Injectable({
-	providedIn: 'root'
-})
+@Injectable()
 export class NoEmailPasswordGuard {
 	constructor(
 		private readonly _router: Router,

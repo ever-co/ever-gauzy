@@ -4550,6 +4550,11 @@
 		"ERROR_TITLE": "¡Oh, vaya!",
 		"SUCCESS_TITLE": "¡Hurra!"
 	},
+	"AUTH_ERRORS": {
+		"INVALID_EMAIL_DOMAIN": "Esta dirección de correo electrónico no es válida para registrar una cuenta de usuario.",
+		"USER_CANCELLED_REQUEST": "La autenticación de la cuenta fue cancelada.",
+		"UNKNOWN_ERROR": "Algo salió mal durante la autenticación, por favor intenta de nuevo."
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "Registrarse",
 		"HAVE_AN_ACCOUNT": "¿Ya tienes una cuenta?",
@@ -4584,8 +4589,7 @@
 		},
 		"ERRORS": {
 			"DEFAULT": "Algo salió mal, por favor intenta de nuevo.",
-			"ALREADY_REGISTERED": "La dirección de correo electrónico ya está registrada.",
-			"INVALID_EMAIL_DOMAIN": "Esta dirección de correo electrónico no es válida para registrar una cuenta de usuario."
+			"ALREADY_REGISTERED": "La dirección de correo electrónico ya está registrada."
 		},
 		"MESSAGES": {
 			"DEFAULT": "Te has registrado exitosamente."
@@ -4594,6 +4598,7 @@
 	"LOGIN_PAGE": {
 		"TITLE": "Acceso",
 		"SUB_TITLE": "¡Hola! Inicia sesión con tu correo electrónico.",
+		"SUB_TITLE_ACCOUNT": "¡Hola! Inicia sesión con tu cuenta.",
 		"REMEMBER_ME_TITLE": "Recuérdame",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "¿No tienes una cuenta?",
 		"FORGOT_PASSWORD_TITLE": "¿Olvidaste tu contraseña?",

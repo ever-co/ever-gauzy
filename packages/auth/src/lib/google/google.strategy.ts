@@ -9,13 +9,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
 		super(config(configService));
 	}
 
-	async validate(
-		request: any,
-		accessToken: string,
-		refreshToken: string,
-		profile: any,
-		done: VerifyCallback
-	) {
+	async validate(request: any, accessToken: string, refreshToken: string, profile: any, done: VerifyCallback) {
 		try {
 			const { name, emails, photos } = profile;
 			const [picture] = photos;
@@ -52,6 +46,9 @@ export const config = (configService: ConfigService) => ({
 
 	// Pass the request object to the callback.
 	passReqToCallback: true,
+
+	// Rewrite the authorization URL to show the Google account selector dialog
+	authorizationURL: configService.get<string>('google.authorizationURL'),
 
 	// Specify the scope for Google OAuth (read user data and user email).
 	scope: ['email', 'profile']

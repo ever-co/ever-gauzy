@@ -4548,6 +4548,11 @@
 		"ERROR_TITLE": "O nie!",
 		"SUCCESS_TITLE": "Hurra!"
 	},
+	"AUTH_ERRORS": {
+		"INVALID_EMAIL_DOMAIN": "Ten adres e-mail nie jest obsługiwany do rejestracji konta.",
+		"USER_CANCELLED_REQUEST": "Uwierzytelnianie konta zostało anulowane.", 
+		"UNKNOWN_ERROR": "Coś poszło nie tak podczas uwierzytelniania, spróbuj ponownie."
+	},
 	"REGISTER_PAGE": {
 		"TITLE": "Zarejestruj się",
 		"HAVE_AN_ACCOUNT": "Masz już konto?",
@@ -4582,8 +4587,7 @@
 		},
 		"ERRORS": {
 			"DEFAULT": "Coś poszło nie tak, spróbuj ponownie.",
-			"ALREADY_REGISTERED": "Adres e-mail jest już zarejestrowany.",
-			"INVALID_EMAIL_DOMAIN": "Adres e-mail nie jest obsługiwany do rejestracji konta."
+			"ALREADY_REGISTERED": "Adres e-mail jest już zarejestrowany."
 		},
 		"MESSAGES": {
 			"DEFAULT": "Zostałeś pomyślnie zarejestrowany."
@@ -4592,6 +4596,7 @@
 	"LOGIN_PAGE": {
 		"TITLE": "Logowanie",
 		"SUB_TITLE": "Cześć! Zaloguj się za pomocą swojego adresu e-mail",
+		"SUB_TITLE_ACCOUNT": "Cześć! Zaloguj się za pomocą swojego konta",
 		"REMEMBER_ME_TITLE": "Zapamiętaj mnie",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Nie masz konta?",
 		"FORGOT_PASSWORD_TITLE": "Zapomniałeś hasła?",

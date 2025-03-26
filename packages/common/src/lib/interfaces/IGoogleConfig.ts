@@ -8,6 +8,9 @@ export interface IGoogleConfig {
 	/** The Google OAuth App Client Secret. */
 	readonly clientSecret: string;
 
+	/** The URL for Google OAuth authorization. */
+	authorizationURL: string;
+
 	/** The callback URL for Google OAuth authentication. */
 	readonly callbackURL: string;
 }

@@ -1,12 +1,12 @@
 import { Controller, Get, Logger, Req, Res, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { FeatureFlagEnabledGuard, FeatureFlag, Public } from '@gauzy/common';
 import { SocialAuthService } from './../social-auth.service';
 import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
-import { FeatureEnum } from '@gauzy/contracts';
+import { AuthError, FeatureEnum } from '@gauzy/contracts';
+import { GoogleAuthGuard } from './google-auth-guard';
 
 @Controller()
-@UseGuards(FeatureFlagEnabledGuard, AuthGuard('google'))
+@UseGuards(FeatureFlagEnabledGuard, GoogleAuthGuard)
 @FeatureFlag(FeatureEnum.FEATURE_GOOGLE_LOGIN)
 @Public()
 export class GoogleController {
@@ -50,6 +50,6 @@ export class GoogleController {
 				picture: user.picture?.value
 			});
 		}
-		return this.service.routeRedirect(response.success, response.authData, res);
+		return this.service.routeRedirect(response.success, response.authData, res, AuthError.INVALID_EMAIL_DOMAIN);
 	}
 }
