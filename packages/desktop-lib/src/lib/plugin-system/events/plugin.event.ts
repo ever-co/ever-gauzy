@@ -4,6 +4,7 @@ import * as path from 'path';
 import { PluginManager } from '../data-access/plugin-manager';
 import { IPluginManager, PluginChannel, PluginHandlerChannel } from '../shared';
 import { PluginEventManager } from './plugin-event.manager';
+import { ID } from '@gauzy/contracts';
 
 class ElectronPluginListener {
 	private pluginManager: IPluginManager;
@@ -45,6 +46,15 @@ class ElectronPluginListener {
 			try {
 				const plugin = await this.pluginManager.getOnePlugin(name);
 				return plugin;
+			} catch (error) {
+				logger.error(error);
+				return null;
+			}
+		});
+
+		ipcMain.handle(PluginHandlerChannel.CHECK, async (_, marketplaceId: ID) => {
+			try {
+				return this.pluginManager.checkInstallation(marketplaceId);
 			} catch (error) {
 				logger.error(error);
 				return null;

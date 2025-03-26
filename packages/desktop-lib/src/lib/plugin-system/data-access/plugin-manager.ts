@@ -8,6 +8,7 @@ import { PluginEventManager } from '../events/plugin-event.manager';
 import { IPlugin, IPluginManager, IPluginMetadata, PluginDownloadContextType } from '../shared';
 import { lazyLoader } from '../shared/lazy-loader';
 import { DownloadContextFactory } from './download-context.factory';
+import { ID } from '@gauzy/contracts';
 
 export class PluginManager implements IPluginManager {
 	private plugins: Map<string, IPlugin> = new Map();
@@ -25,7 +26,9 @@ export class PluginManager implements IPluginManager {
 		return this.instance;
 	}
 
-	public async downloadPlugin<U extends { contextType: PluginDownloadContextType }>(config: U): Promise<void> {
+	public async downloadPlugin<U extends { contextType: PluginDownloadContextType; marketplaceId: ID }>(
+		config: U
+	): Promise<void> {
 		logger.info(`Downloading plugin...`);
 		process.noAsar = true;
 		const context = this.factory.getContext(config.contextType);
@@ -35,7 +38,7 @@ export class PluginManager implements IPluginManager {
 			await this.updatePlugin(metadata);
 		} else {
 			/* Install plugin */
-			await this.installPlugin(metadata, pathDirname);
+			await this.installPlugin({ ...metadata, marketplaceId: config?.marketplaceId }, pathDirname);
 			/* Activate plugin */
 			await this.activatePlugin(metadata.name);
 		}
@@ -92,6 +95,7 @@ export class PluginManager implements IPluginManager {
 				version: pluginMetadata.version,
 				description: pluginMetadata.description,
 				main: pluginMetadata.main,
+				marketplaceId: pluginMetadata.marketplaceId ? pluginMetadata.marketplaceId : null,
 				renderer: pluginMetadata.renderer ? path.join(pluginDir, pluginMetadata.renderer) : null,
 				pathname: pluginDir
 			});
@@ -157,6 +161,10 @@ export class PluginManager implements IPluginManager {
 
 	public getOnePlugin(name: string): Promise<IPluginMetadata> {
 		return this.pluginMetadataService.findOne({ name });
+	}
+
+	public checkInstallation(marketplaceId: ID): Promise<IPluginMetadata> {
+		return this.pluginMetadataService.findOne({ marketplaceId });
 	}
 
 	public initializePlugins(): void {
