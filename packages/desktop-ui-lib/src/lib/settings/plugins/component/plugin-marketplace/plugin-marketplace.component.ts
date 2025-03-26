@@ -78,7 +78,12 @@ export class PluginMarketplaceComponent implements OnInit {
 							.pipe(
 								tap((marketPlace) => {
 									const data = this.plugins$.getValue();
-									this.plugins$.next(data.concat(marketPlace as any));
+									// Create a map with plugin names as keys, prioritizing marketplace plugins
+									const mergedPlugins = new Map<string, any>(
+										[...data, ...marketPlace].map((plugin) => [plugin.name, plugin])
+									);
+									// Update the observable with the merged array
+									this.plugins$.next(Array.from(mergedPlugins.values()));
 								}),
 								catchError((error) => {
 									this.toastrNotificationService.error(error);
