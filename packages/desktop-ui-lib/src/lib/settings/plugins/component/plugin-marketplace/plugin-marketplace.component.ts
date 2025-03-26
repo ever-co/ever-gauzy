@@ -1,11 +1,11 @@
 import { Component, inject, NgZone, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { IPlugin } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BehaviorSubject, catchError, EMPTY, filter, from, switchMap, take, tap } from 'rxjs';
+import { BehaviorSubject, catchError, EMPTY, filter, switchMap, tap } from 'rxjs';
 import { ToastrNotificationService } from '../../../../services';
 import { PluginElectronService } from '../../services/plugin-electron.service';
-import { IPlugin } from '../../services/plugin-loader.service';
 import { PluginService } from '../../services/plugin.service';
 import { PluginMarketplaceUploadComponent } from './plugin-marketplace-upload/plugin-marketplace-upload.component';
 
@@ -35,8 +35,7 @@ export class PluginMarketplaceComponent implements OnInit {
 			.pipe(
 				tap((response) => this.ngZone.run(() => this.handleStatus(response))),
 				filter((response) => response.status === 'success'),
-				switchMap(() => from(this.pluginElectronService.plugins)),
-				tap((plugins) => this.ngZone.run(() => this.plugins$.next(plugins))),
+				tap(() => this.ngZone.run(() => this.load())),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -64,36 +63,17 @@ export class PluginMarketplaceComponent implements OnInit {
 	}
 
 	public load(): void {
-		from(this.pluginElectronService.plugins)
+		this.pluginService
+			.getAll({
+				relations: ['versions'],
+				order: { createdAt: 'DESC', versions: { createdAt: 'DESC' } }
+			})
 			.pipe(
-				tap((plugins: IPlugin[]) =>
-					this.ngZone.run(async () => {
-						const installed = plugins.map((plugin) => ({ ...plugin, installed: true }));
-						this.plugins$.next(installed || []);
-						this.pluginService
-							.getAll({
-								relations: ['versions'],
-								order: { createdAt: 'DESC', versions: { createdAt: 'DESC' } }
-							})
-							.pipe(
-								tap((marketPlace) => {
-									const data = this.plugins$.getValue();
-									// Create a map with plugin names as keys, prioritizing marketplace plugins
-									const mergedPlugins = new Map<string, any>(
-										[...data, ...marketPlace].map((plugin) => [plugin.name, plugin])
-									);
-									// Update the observable with the merged array
-									this.plugins$.next(Array.from(mergedPlugins.values()));
-								}),
-								catchError((error) => {
-									this.toastrNotificationService.error(error);
-									return EMPTY;
-								}),
-								take(1)
-							)
-							.subscribe();
-					})
-				),
+				tap((marketPlace) => this.plugins$.next(marketPlace)),
+				catchError((error) => {
+					this.toastrNotificationService.error(error);
+					return EMPTY;
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();

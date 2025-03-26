@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import { IPlugin, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
+import { IPlugin, IPluginVersion, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,6 +15,7 @@ import { debounceTime, filter, Subject, takeUntil } from 'rxjs';
 export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 	versionForm: FormGroup;
 	plugin: IPlugin;
+	version: IPluginVersion;
 	pluginTypes = Object.values(PluginType);
 	pluginStatuses = Object.values(PluginStatus);
 	sourceTypes = Object.values(PluginSourceType);
@@ -25,7 +26,6 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private readonly fb: FormBuilder,
-
 		private readonly dialogRef: NbDialogRef<DialogCreateVersionComponent>,
 		private readonly cdr: ChangeDetectorRef,
 		private readonly toastrService: NbToastrService,
@@ -35,6 +35,7 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 	ngOnInit(): void {
 		this.initForm();
 		this.setupSourceTypeListener();
+		this.patch();
 	}
 
 	private initForm(): void {
@@ -48,6 +49,12 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 			releaseDate: [this.today, [Validators.required, this.pastDateValidator()]],
 			source: this.createSourceGroup(PluginSourceType.CDN)
 		});
+	}
+
+	private patch(): void {
+		if (!this.version) return;
+		this.versionForm.patchValue(this.version);
+		this.cdr.markForCheck();
 	}
 
 	/**
@@ -145,10 +152,10 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 		this.versionForm
 			?.get('source.type')
 			?.valueChanges.pipe(distinctUntilChange(), filter(Boolean), debounceTime(300), takeUntil(this.destroy$))
-			.subscribe((type: PluginType) => this.onSourceTypeChange(type));
+			.subscribe((type: PluginSourceType) => this.onSourceTypeChange(type));
 	}
 
-	public onSourceTypeChange(type: PluginType): void {
+	public onSourceTypeChange(type: PluginSourceType): void {
 		if (!this.versionForm) return;
 		const source = this.createSourceGroup(type);
 		if (!source) return;

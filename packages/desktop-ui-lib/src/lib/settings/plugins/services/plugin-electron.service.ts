@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
 import { IPlugin } from './plugin-loader.service';
+import { ID } from '@gauzy/contracts';
 
 @Injectable({
 	providedIn: 'root'
@@ -15,6 +16,10 @@ export class PluginElectronService {
 
 	public plugin(name: string): Promise<IPlugin> {
 		return this.electronService.ipcRenderer.invoke('plugins::getOne', name);
+	}
+
+	public checkInstallation(marketplaceId: ID): Promise<IPlugin> {
+		return this.electronService.ipcRenderer.invoke('plugins::check', marketplaceId);
 	}
 
 	public activate(plugin: IPlugin) {

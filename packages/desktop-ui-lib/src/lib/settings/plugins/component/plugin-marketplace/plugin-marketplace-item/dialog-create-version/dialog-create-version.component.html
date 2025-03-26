@@ -1,7 +1,9 @@
 <form [formGroup]="versionForm" (ngSubmit)="submit()">
 	<nb-card class="dialog-card" status="basic">
 		<nb-card-header class="mb-0">
-			<h5 class="title">{{ 'Create new version for ' + plugin?.name }}</h5>
+			<h5 class="title">
+				{{ version ? 'Update version v' + version.number : 'Create new version for ' + plugin?.name }}
+			</h5>
 			<span class="cancel"><i (click)="dismiss()" class="fas fa-times"></i></span>
 		</nb-card-header>
 		<nb-card-body>
@@ -27,7 +29,11 @@
 				nbSpinnerStatus="success"
 				nbSpinnerSize="small"
 			>
-				{{ ('BUTTONS.CREATE' | translate) + (versionNumber ? ' v' + versionNumber : '') }}
+				{{
+					version
+						? ('BUTTONS.UPDATE' | translate)
+						: ('BUTTONS.CREATE' | translate) + (versionNumber ? ' v' + versionNumber : '')
+				}}
 			</button>
 		</nb-card-footer>
 	</nb-card>

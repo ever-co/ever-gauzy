@@ -34,13 +34,20 @@
 					type="button"
 					class="action warning"
 					status="basic"
-					(click)="navigateBack()"
+					(click)="restore(version)"
 				>
-					<nb-icon icon="refresh-outline" class="mr-1"></nb-icon>
+					<nb-icon icon="refresh-outline" class="action primary"></nb-icon>
 					{{ 'Restore' | translate }}
 				</button>
 				}@else{
-				<button nbButton size="small" type="button" class="action secondary" status="basic" (click)="edit()">
+				<button
+					nbButton
+					size="small"
+					type="button"
+					class="action secondary"
+					status="basic"
+					(click)="edit(version)"
+				>
 					<nb-icon icon="edit-2-outline"></nb-icon>
 					{{ 'BUTTONS.EDIT' | translate }}
 				</button>
@@ -51,7 +58,7 @@
 					type="button"
 					status="basic"
 					class="action"
-					(click)="remove()"
+					(click)="remove(version)"
 				>
 					<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 				</button>

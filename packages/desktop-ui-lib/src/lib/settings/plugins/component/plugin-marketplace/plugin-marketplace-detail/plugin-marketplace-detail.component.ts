@@ -42,7 +42,11 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 		switch (this.plugin.source.type) {
 			case PluginSourceType.GAUZY:
 			case PluginSourceType.CDN:
-				this.pluginElectronService.downloadAndInstall({ url: this.plugin.source.url, contextType: 'cdn' });
+				this.pluginElectronService.downloadAndInstall({
+					url: this.plugin.source.url,
+					contextType: 'cdn',
+					marketplaceId: this.plugin.id
+				});
 				break;
 			case PluginSourceType.NPM:
 				this.pluginElectronService.downloadAndInstall({
@@ -56,7 +60,8 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 							authToken: this.plugin.source.authToken
 						}
 					},
-					contextType: 'npm'
+					contextType: 'npm',
+					marketplaceId: this.plugin.id
 				});
 				break;
 			default:
@@ -70,7 +75,22 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	public async openPlugin(): Promise<void> {
-		this.router.navigate([`/settings/marketplace-plugins/${this.plugin.id}`]);
+		if ('markeplaceId' in this.plugin) {
+			if (!this.plugin.markeplaceId) {
+				this.dialog.open(AlertComponent, {
+					context: {
+						data: {
+							message: 'This plugin is not published yet',
+							title: 'Plugin not published',
+							status: 'basic'
+						}
+					},
+					backdropClass: 'backdrop-blur'
+				});
+				return;
+			}
+		}
+		await this.router.navigate([`/settings/marketplace-plugins/${this.plugin.id}`]);
 	}
 
 	public editPlugin(): void {
@@ -120,6 +140,6 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	public get isOwner(): boolean {
-		return !!this.store.user && this.store.user.employee?.id === this.plugin?.uploadedBy?.id;
+		return !!this.store.user && this.store.user.employee?.id === this.plugin?.uploadedById;
 	}
 }

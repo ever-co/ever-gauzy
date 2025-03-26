@@ -157,7 +157,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		if (!this.plugin) return;
 
 		try {
-			const plugin = await this.pluginElectronService.plugin(this.plugin.name);
+			const plugin = await this.pluginElectronService.checkInstallation(this.plugin.id);
 			this.installed = !!plugin;
 
 			if (this.installed && this.plugin.versions) {
@@ -324,7 +324,8 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			case PluginSourceType.CDN:
 				this.pluginElectronService.downloadAndInstall({
 					url: source.url,
-					contextType: 'cdn'
+					contextType: 'cdn',
+					marketplaceId: this.pluginId
 				});
 				break;
 			case PluginSourceType.NPM:
@@ -339,7 +340,8 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 							authToken: source.authToken
 						}
 					},
-					contextType: 'npm'
+					contextType: 'npm',
+					marketplaceId: this.pluginId
 				});
 				break;
 			default:

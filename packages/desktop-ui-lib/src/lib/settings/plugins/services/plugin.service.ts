@@ -151,12 +151,14 @@ export class PluginService {
 
 		// Strictly map all properties of ICreatePlugin and IUpdatePlugin
 		const version: Partial<IPluginVersion> = {
+			...(data.id && { id: data.id }),
 			number: data.number,
 			changelog: data.changelog,
 			releaseDate: data.releaseDate,
 			...common,
 			source: data.source
 				? {
+						...(data.source.id && { id: data.source.id }),
 						type: data.source.type,
 						...(data.source.type === PluginSourceType.CDN && {
 							url: data.source.url,
@@ -202,5 +204,19 @@ export class PluginService {
 				params: toParams(params)
 			})
 			.pipe(map((data) => data.items));
+	}
+	public updateVersion(pluginId: string, versionId: string, version: IPluginVersion): Observable<IPluginVersion> {
+		return this.http.put<IPluginVersion>(
+			`${this.endPoint}/${pluginId}/versions/${versionId}`,
+			this.createVersionFormData(version)
+		);
+	}
+
+	public deleteVersion(pluginId: ID, versionId: ID): Observable<void> {
+		return this.http.delete<void>(`${this.endPoint}/${pluginId}/versions/${versionId}`);
+	}
+
+	public restoreVersion(pluginId: ID, versionId: ID): Observable<void> {
+		return this.http.post<void>(`${this.endPoint}/${pluginId}/versions/${versionId}`, {});
 	}
 }

@@ -13,6 +13,7 @@ import { PluginElectronService } from './plugin-electron.service';
 
 export interface IPlugin {
 	id?: string;
+	marketplaceId?: string;
 	renderer?: string;
 	pathname?: string;
 	logo?: string;
