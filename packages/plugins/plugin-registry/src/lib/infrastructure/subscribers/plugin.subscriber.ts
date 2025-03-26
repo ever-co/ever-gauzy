@@ -74,7 +74,6 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 			// compute installation
 			const installation = await this.pluginInstallationService.findOneOrFailByWhereOptions({
 				pluginId: entity.id,
-				versionId: version.id,
 				installedById: RequestContext.currentEmployeeId()
 			});
 
