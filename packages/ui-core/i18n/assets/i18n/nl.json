@@ -2612,6 +2612,7 @@
 		"TASKS_STATUS": "Status",
 		"TASK_PRIORITY": "Prioriteit",
 		"TASK_SIZE": "Grootte",
+		"PARENT_TASK": "Hoofdtaak",
 		"TODO": "Todo",
 		"OPEN": "Open",
 		"READY_FOR_REVIEW": "Klaar voor beoordeling",

@@ -2637,6 +2637,7 @@
 		"TASKS_STATUS": "עבודה",
 		"TASK_PRIORITY": "עדיפות",
 		"TASK_SIZE": "גודל",
+		"PARENT_TASK": "משימה ראשית",
 		"TODO": "Todo",
 		"IN_PROGRESS": "In Progress",
 		"FOR_TESTING": "For Testing",

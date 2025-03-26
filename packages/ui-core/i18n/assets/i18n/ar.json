@@ -2597,6 +2597,7 @@
 		"TASKS_STATUS": "الحالة",
 		"TASK_PRIORITY": "الأولوية",
 		"TASK_SIZE": "حجم",
+		"PARENT_TASK": "المهمة الرئيسية",
 		"TODO": "الكل",
 		"OPEN": "فتح",
 		"READY_FOR_REVIEW": "جاهز للمراجعة",

@@ -2612,6 +2612,7 @@
 		"TASKS_STATUS": "状态",
 		"TASK_PRIORITY": "优先",
 		"TASK_SIZE": "大小",
+		"PARENT_TASK": "父任务",
 		"TODO": "完成",
 		"OPEN": "开放",
 		"READY_FOR_REVIEW": "准备好检查了",
