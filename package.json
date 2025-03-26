@@ -1,7 +1,7 @@
 {
 	"name": "ever-gauzy",
 	"version": "0.1.0",
-	"description": "Ever Gauzy - Business Management Platform (ERP/CRM/HRM)",
+	"description": "Ever Gauzy - Business Management Platform (ERP/CRM/HRM/ATS/PM)",
 	"license": "AGPL-3.0",
 	"homepage": "https://gauzy.co",
 	"repository": {
@@ -325,7 +325,26 @@
 		"copy-files-i18n-api-server": "yarn run download:translations --desktop=server-api",
 		"copy-files-gauzy-api-server": "copyfiles -f packages/core/src/**/*.gql dist/apps/gauzy-api-server/data/",
 		"quick:build:gauzy-api-server": "yarn electron-builder -c.electronVersion=30.0.1 -c.extraMetadata.author.name=Ever build --mac --project dist/apps/gauzy-api-server",
-		"generate:icons:server-api": "yarn run generate:icons --desktop=server-api"
+		"generate:icons:server-api": "yarn run generate:icons --desktop=server-api",
+		"pack:agent": "yarn run pack --desktop=agent",
+		"prepare:agent": "yarn run postinstall.electron && tsc -p apps/agent/tsconfig.electron.json",
+		"prepare:agent:watch": "yarn run postinstall.electron && tsc --watch -p apps/agent/tsconfig.electron.json",
+		"serve:agent:main": "cross-env NODE_ENV=development yarn config:agent:prod && yarn copy-files-i18n-agent && yarn prepare:agent && NODE_ENV=development NODE_PATH=dist/packages yarn electronmon ./dist/apps/agent/index.js",
+		"serve:agent:ui": "yarn config:dev && yarn ng serve agent --configuration development",
+		"serve:agent": "concurrently \"yarn serve:agent:ui\" \"wait-on http://localhost:4200 && yarn serve:agent:main\"",
+		"build:agent": "cross-env NODE_ENV=production yarn copy-files-i18n-agent && yarn run postinstall.electron && yarn run config:agent:prod && yarn run generate:icons:agent --environment=prod && yarn config:prod && yarn pack:agent && yarn build:package:all && yarn ng:prod build agent --base-href=./ && yarn run prepare:agent",
+		"copy-files-i18n-agent": "yarn run download:translations --desktop=agent",
+		"config:agent:prod": "yarn run config:electron -- --environment=prod --desktop=agent",
+		"dev:agent": "electronmon --exec ts-node ./apps/agent/src/index.ts",
+		"generate:icons:agent": "yarn run generate:icons --desktop=agent",
+		"build:agent:windows": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 -c.extraMetadata.author.name=Ever build --windows --project dist/apps/agent",
+		"build:agent:windows:release": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 -c.extraMetadata.author.name=Ever build --windows --publish=always --project dist/apps/agent",
+		"build:agent:windows:release:gh": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=60000 yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 -c.extraMetadata.author.name=Ever build --windows --publish=always --project dist/apps/agent",
+		"build:agent:linux": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 build --linux --project dist/apps/agent",
+		"build:agent:linux:release": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 build --linux --publish=always --project dist/apps/agent",
+		"build:agent:linux:release:gh": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=60000 yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 build --linux --publish=always --project dist/apps/agent",
+		"build:agent:mac": "yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 build --mac --project dist/apps/agent",
+		"build:agent:mac:release": "yarn run build:agent && npm config set cache .cache && yarn electron-builder -c.electronVersion=30.0.1 build --mac --publish=always --project dist/apps/agent"
 	},
 	"config": {
 		"commitizen": {

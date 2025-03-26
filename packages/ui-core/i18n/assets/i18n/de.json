@@ -2040,6 +2040,7 @@
 			"TIME_OFF_POLICY_VIEW": "Urlaubsrichtlinie Anzeigen",
 			"TIME_OFF_POLICY_EDIT": "Urlaubsrichtlinie Bearbeiten",
 			"TIME_OFF_POLICY_DELETE": "Urlaubsrichtlinie Löschen",
+			"SELECT_EMPLOYEE": "Mitarbeiter auswählen",
 			"CHANGE_SELECTED_EMPLOYEE": "Ausgewählten Mitarbeiter ändern",
 			"CHANGE_SELECTED_CANDIDATE": "Ändern Sie ausgewählten Kandidaten",
 			"CHANGE_SELECTED_ORGANIZATION": "Ändere die ausgewählte Organisation.",

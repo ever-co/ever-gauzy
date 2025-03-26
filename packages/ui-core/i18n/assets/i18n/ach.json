@@ -1869,6 +1869,7 @@
 			"ORG_CANDIDATES_FEEDBACK_EDIT": "crwdns4082:0crwdne4082:0",
 			"ALL_ORG_VIEW": "crwdns2675:0crwdne2675:0",
 			"ALL_ORG_EDIT": "crwdns2677:0crwdne2677:0",
+			"SELECT_EMPLOYEE": "Yer Employee",
 			"CHANGE_SELECTED_EMPLOYEE": "crwdns2739:0crwdne2739:0",
 			"CHANGE_SELECTED_CANDIDATE": "crwdns3384:0crwdne3384:0",
 			"CHANGE_SELECTED_ORGANIZATION": "crwdns2741:0crwdne2741:0",

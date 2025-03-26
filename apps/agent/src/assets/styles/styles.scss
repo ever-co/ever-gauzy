@@ -1,0 +1,98 @@
+@font-face {
+	font-family: 'Inter';
+	src: url('../fonts/inter/Inter-VariableFont_slnt\,wght.ttf');
+}
+
+@font-face {
+	font-family: 'Open Sans';
+	src: url('../fonts/open-sans/OpenSans-Italic-VariableFont_wdth\,wght.ttf');
+	src: url('../fonts/open-sans/OpenSans-VariableFont_wdth\,wght.ttf');
+}
+
+@font-face {
+	font-family: 'Roboto';
+	src: url('../fonts/roboto/Roboto-Black.ttf');
+	src: url('../fonts/roboto/Roboto-BlackItalic.ttf');
+	src: url('../fonts/roboto/Roboto-Bold.ttf');
+	src: url('../fonts/roboto/Roboto-BoldItalic.ttf');
+	src: url('../fonts/roboto/Roboto-Italic.ttf');
+	src: url('../fonts/roboto/Roboto-Light.ttf');
+	src: url('../fonts/roboto/Roboto-LightItalic.ttf');
+	src: url('../fonts/roboto/Roboto-Medium.ttf');
+	src: url('../fonts/roboto/Roboto-MediumItalic.ttf');
+	src: url('../fonts/roboto/Roboto-Regular.ttf');
+	src: url('../fonts/roboto/Roboto-Thin.ttf');
+	src: url('../fonts/roboto/Roboto-ThinItalic.ttf');
+}
+
+@font-face {
+	font-family: 'Crismon Text';
+	src: url('../fonts/crimson-text/CrimsonText-Bold.ttf');
+	src: url('../fonts/crimson-text/CrimsonText-BoldItalic.ttf');
+	src: url('../fonts/crimson-text/CrimsonText-Italic.ttf');
+	src: url('../fonts/crimson-text/CrimsonText-Regular.ttf');
+	src: url('../fonts/crimson-text/CrimsonText-SemiBold.ttf');
+	src: url('../fonts/crimson-text/CrimsonText-SemiBoldItalic.ttf');
+}
+
+// themes - our custom or/and out of the box themes
+@import 'themes';
+
+// framework component themes (styles tied to theme variables)
+@import '@nebular/theme/styles/globals';
+@import '@nebular/auth/styles/globals';
+
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/mixins';
+@import 'bootstrap/scss/grid';
+
+@import './material/angular-material';
+
+// loading progress bar theme
+@import './pace.theme';
+
+@import './layout';
+@import './overrides';
+@import './material/material-overrides';
+@import './gauzy/gauzy-overrides';
+
+@import './site-menu.scss';
+
+// install ng-select default theme
+@import './includes/fullcalendar';
+@import './includes/tabset';
+@import './includes/ng-select';
+@import './includes/ng5-slider';
+@import './includes/dialog';
+@import './includes/scroll';
+
+// install swiper.js
+@import 'swiper/css';
+@import 'swiper/css/pagination';
+@import 'swiper/css/navigation';
+
+// install the framework and custom global styles
+@include nb-install() {
+	@include angular-material();
+
+	// framework global styles
+	@include nb-theme-global();
+	@include nb-auth-global();
+
+	@include ngx-layout();
+	// loading progress bar
+	@include ngx-pace-theme();
+
+	@include nb-overrides();
+	@include material-overrides();
+	@include gauzy-overrides();
+}
+
+.toast-top-custom-title-bar {
+	margin-top: 35px !important;
+}
+
+::-webkit-scrollbar {
+	display: none;
+}

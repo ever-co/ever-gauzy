@@ -161,7 +161,10 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	 * Get working employees of the selected month
 	 */
 	private async getWorkingEmployees(): Promise<void> {
-		if (!this.store.hasAnyPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+		if (
+			!this.store.hasAnyPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
+			!this.store.hasAnyPermission(PermissionsEnum.SELECT_EMPLOYEE)
+		) {
 			return;
 		}
 		const { tenantId } = this.store.user;
