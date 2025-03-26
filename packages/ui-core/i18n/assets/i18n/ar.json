@@ -4842,7 +4842,9 @@
 			"UPLOADED_AT": "تم الرفع في",
 			"SECURITY_INFO": "معلومات الأمان",
 			"CHECKSUM": "المجموع الاختباري",
-			"SIGNATURE": "التوقيع"
+			"SIGNATURE": "التوقيع",
+			"INSTALLED": "مثبت",
+			"HIDDEN_FOR_SECURITY": "مخفية لسببات امنية"
 		},
 		"LAYOUT": {
 			"DISCOVER": "اكتشف",

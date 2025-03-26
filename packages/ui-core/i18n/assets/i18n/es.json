@@ -4858,7 +4858,9 @@
 			"UPLOADED_AT": "Subido en",
 			"SECURITY_INFO": "Información de seguridad",
 			"CHECKSUM": "Suma de verificación",
-			"SIGNATURE": "Firma"
+			"SIGNATURE": "Firma",
+			"INSTALLED": "Instalado",
+			"HIDDEN_FOR_SECURITY": "Ocultado por motivos de seguridad"
 		},
 		"LAYOUT": {
 			"DISCOVER": "Descubrir",

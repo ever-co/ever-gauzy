@@ -4857,7 +4857,9 @@
 			"UPLOADED_AT": "Przesłane w",
 			"SECURITY_INFO": "Informacje o bezpieczeństwie",
 			"CHECKSUM": "Suma kontrolna",
-			"SIGNATURE": "Podpis"
+			"SIGNATURE": "Podpis",
+			"INSTALLED": "Zainstalowane",
+			"HIDDEN_FOR_SECURITY": "Ukryta w celach bezpieczeństwa"
 		},
 		"LAYOUT": {
 			"DISCOVER": "Odkryj",

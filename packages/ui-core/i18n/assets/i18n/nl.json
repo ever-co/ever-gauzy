@@ -4857,7 +4857,9 @@
 			"UPLOADED_AT": "Geüpload op",
 			"SECURITY_INFO": "Beveiligingsinformatie",
 			"CHECKSUM": "Controlesom",
-			"SIGNATURE": "Handtekening"
+			"SIGNATURE": "Handtekening",
+			"INSTALLED": "Geïnstalleerd",
+			"HIDDEN_FOR_SECURITY": "Verborgen voor beveiligingsredenen"
 		},
 		"LAYOUT": {
 			"DISCOVER": "Ontdekken",

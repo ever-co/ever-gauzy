@@ -4848,7 +4848,9 @@
 			"UPLOADED_AT": "Téléversé le",
 			"SECURITY_INFO": "Informations de sécurité",
 			"CHECKSUM": "Somme de contrôle",
-			"SIGNATURE": "Signature"
+			"SIGNATURE": "Signature",
+			"INSTALLED": "Installé",
+			"HIDDEN_FOR_SECURITY": "Masqué pour des raisons de sécurité"
 		},
 		"LAYOUT": {
 			"DISCOVER": "Découvrir",

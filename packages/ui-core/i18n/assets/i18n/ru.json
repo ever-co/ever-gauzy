@@ -4854,7 +4854,9 @@
 			"UPLOADED_AT": "Загружено в",
 			"SECURITY_INFO": "Информация о безопасности",
 			"CHECKSUM": "Контрольная сумма",
-			"SIGNATURE": "Подпись"
+			"SIGNATURE": "Подпись",
+			"INSTALLED": "Установлено",
+			"HIDDEN_FOR_SECURITY": "Скрыто для целей безопасности"
 		},
 		"LAYOUT": {
 			"DISCOVER": "Открыть",

@@ -4857,7 +4857,9 @@
 			"UPLOADED_AT": "上传时间",
 			"SECURITY_INFO": "安全信息",
 			"CHECKSUM": "校验和",
-			"SIGNATURE": "签名"
+			"SIGNATURE": "签名",
+			"INSTALLED": "已安",
+			"HIDDEN_FOR_SECURITY": "安全原因隐藏"
 		},
 		"LAYOUT": {
 			"DISCOVER": "发现",

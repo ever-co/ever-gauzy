@@ -5012,7 +5012,9 @@
 			"UPLOADED_AT": "Uploaded At",
 			"SECURITY_INFO": "Security Information",
 			"CHECKSUM": "Checksum",
-			"SIGNATURE": "Signature"
+			"SIGNATURE": "Signature",
+			"INSTALLED": "Installed",
+			"HIDDEN_FOR_SECURITY": "Hidden for security reasons"
 		},
 		"LAYOUT": {
 			"DISCOVER": "Discover",

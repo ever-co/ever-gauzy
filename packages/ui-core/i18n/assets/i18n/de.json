@@ -4853,7 +4853,9 @@
 			"UPLOADED_AT": "Hochgeladen am",
 			"SECURITY_INFO": "Sicherheitsinformationen",
 			"CHECKSUM": "Prüfsumme",
-			"SIGNATURE": "Signatur"
+			"SIGNATURE": "Signatur",
+			"INSTALLED": "Installiert",
+			"HIDDEN_FOR_SECURITY": "Zur Sicherheit versteckt"
 		},
 		"LAYOUT": {
 			"DISCOVER": "Entdecken",

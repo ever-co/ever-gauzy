@@ -4847,7 +4847,9 @@
 			"UPLOADED_AT": "הועלה בתאריך",
 			"SECURITY_INFO": "מידע על אבטחה",
 			"CHECKSUM": "סכום ביקורת",
-			"SIGNATURE": "חתימה"
+			"SIGNATURE": "חתימה",
+			"INSTALLED": "התקנה",
+			"HIDDEN_FOR_SECURITY": "הוסרה מהספרייה לכרטיסי אבטחה"
 		},
 		"LAYOUT": {
 			"DISCOVER": "לגלות",

@@ -4884,7 +4884,9 @@
 			"UPLOADED_AT": "Качено на",
 			"SECURITY_INFO": "Информация за сигурност",
 			"CHECKSUM": "Контролна сума",
-			"SIGNATURE": "Подпис"
+			"SIGNATURE": "Подпис",
+			"INSTALLED": "Инсталирани",
+			"HIDDEN_FOR_SECURITY": "Скрита за сигурностни причини"
 		},
 		"LAYOUT": {
 			"DISCOVER": "Открийте",
