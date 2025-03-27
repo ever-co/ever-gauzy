@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
@@ -25,7 +25,7 @@ import {
 import { compareDate, distinctUntilChange, extractNumber } from '@gauzy/ui-core/common';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import moment from 'moment';
-import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
+import { InvoiceEmailMutationComponent } from '../../invoice-email/invoice-email-mutation.component';
 import {
 	InvoiceEstimateHistoryService,
 	InvoiceItemService,
@@ -40,17 +40,17 @@ import {
 	InvoiceProductsSelectorComponent,
 	InvoiceProjectsSelectorComponent,
 	InvoiceTasksSelectorComponent
-} from '../table-components';
+} from '../../table-components';
 import { any } from 'underscore';
 import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-invoice-edit',
-	templateUrl: './invoice-edit.component.html',
-	styleUrls: ['./invoice-edit.component.scss']
+	selector: 'ga-invoice-edit-by-organization',
+	templateUrl: './invoice-edit-by-organization.component.html',
+	styleUrls: ['./invoice-edit-by-organization.component.scss']
 })
-export class InvoiceEditComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+export class InvoiceEditByOrganizationComponent extends PaginationFilterBaseComponent implements OnInit {
 	shouldLoadTable = false;
 	invoiceId: string;
 	settingsSmartTable: object;
@@ -931,6 +931,4 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	selectItem(item: any) {
 		this.selectedItem = item;
 	}
-
-	ngOnDestroy() {}
 }

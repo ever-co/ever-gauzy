@@ -1,13 +1,11 @@
-import { Component, OnInit, OnDestroy, Input } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
 	IInvoice,
-	IOrganizationContact,
 	IOrganization,
 	IOrganizationProject,
 	ITask,
-	IEmployee,
 	InvoiceTypeEnum,
 	DiscountTaxTypeEnum,
 	ITag,
@@ -16,7 +14,9 @@ import {
 	InvoiceStatusTypesEnum,
 	IInvoiceItemCreateInput,
 	IProductTranslatable,
-	ExpenseStatusesEnum
+	ExpenseStatusesEnum,
+	IDateRangePicker,
+	IUser
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { compareDate, distinctUntilChange, extractNumber, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
@@ -37,26 +37,27 @@ import {
 	ProductService,
 	TasksStoreService,
 	TranslatableService,
-	ExpensesService
+	ExpensesService,
+	DateRangePickerBuilderService
 } from '@gauzy/ui-core/core';
-import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
-import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-expense-selector.component';
+import { InvoiceEmailMutationComponent } from '../../invoice-email/invoice-email-mutation.component';
+import { InvoiceExpensesSelectorComponent } from '../../table-components/invoice-expense-selector.component';
 import {
 	InvoiceApplyTaxDiscountComponent,
 	InvoiceEmployeesSelectorComponent,
 	InvoiceProductsSelectorComponent,
 	InvoiceProjectsSelectorComponent,
 	InvoiceTasksSelectorComponent
-} from '../table-components';
+} from '../../table-components';
 import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-invoice-add',
-	templateUrl: './invoice-add.component.html',
-	styleUrls: ['./invoice-add.component.scss']
+	selector: 'ga-invoice-add-by-role',
+	templateUrl: './invoice-add-by-role.component.html',
+	styleUrls: ['./invoice-add-by-role.component.scss']
 })
-export class InvoiceAddComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent implements OnInit {
 	settingsSmartTable: object;
 	loading: boolean;
 	form: UntypedFormGroup;
@@ -71,11 +72,9 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 	selectedTasks: ITask[];
 	observableTasks: Observable<ITask[]> = this.tasksStore.tasks$;
 	tasks: ITask[];
-	organizationContact: IOrganizationContact;
 	selectedProjects: IOrganizationProject[];
 	projects: IOrganizationProject[];
-	employees: IEmployee[];
-	selectedEmployeeIds: string[];
+	selectedEmployee: IUser;
 	products: IProductTranslatable[];
 	selectedProducts: IProductTranslatable[];
 	expenses: IExpense[];
@@ -93,12 +92,9 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 	discountAfterTax: boolean;
 	subtotal = 0;
 	total = 0;
-	currencyString: string;
+	currency: string;
 	selectedLanguage: string;
-
-	get currency() {
-		return this.form.get('currency');
-	}
+	selectedDateRange: IDateRangePicker;
 
 	private _isEstimate = false;
 	@Input() set isEstimate(val: boolean) {
@@ -123,7 +119,8 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 		private readonly expensesService: ExpensesService,
 		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
 		private readonly translatableService: TranslatableService,
-		private readonly organizationSettingService: OrganizationSettingService
+		private readonly organizationSettingService: OrganizationSettingService,
+		private readonly dateRangePickerService: DateRangePickerBuilderService
 	) {
 		super(translateService);
 	}
@@ -131,21 +128,31 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 	ngOnInit() {
 		this._applyTranslationOnSmartTable();
 		this.selectedLanguage = this.translateService.currentLang;
+		this.dateRangePickerService.selectedDateRange$.pipe(untilDestroyed(this)).subscribe((range) => {
+			if (range) {
+				this.selectedDateRange = range;
+			}
+		});
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
 				tap((organization) => (this.organization = organization)),
-				tap(({ currency }) => (this.currencyString = currency)),
+				tap(({ currency }) => (this.currency = currency)),
 				tap((organization) => (this.discountAfterTax = organization.discountAfterTax)),
 				tap(() => {
 					this.initializeForm();
 					this._initializeMethods();
 				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.store.user$
+			.pipe(
+				filter((user) => !!user),
+				tap((user) => (this.selectedEmployee = user)),
 				tap(() => {
-					if (this.currencyString) {
-						this.currency.setValue(this.currencyString);
-						this.currency.updateValueAndValidity();
-					}
+					this.initializeForm();
+					this._initializeMethods();
 				}),
 				untilDestroyed(this)
 			)
@@ -172,6 +179,8 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		console.log(this.selectedEmployee);
 	}
 
 	initializeForm() {
@@ -179,20 +188,20 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			invoiceDate: [this.organizationSettingService.getDateFromOrganizationSettings(), Validators.required],
 			invoiceNumber: [this.formInvoiceNumber, Validators.compose([Validators.required, Validators.min(1)])],
 			dueDate: [this.getNextMonth(), Validators.required],
-			currency: ['', Validators.required],
 			discountValue: [0, Validators.compose([Validators.required, Validators.min(0)])],
 			tax: [0, Validators.compose([Validators.required, Validators.min(0)])],
 			tax2: [0, Validators.compose([Validators.required, Validators.min(0)])],
-			terms: [this.organization ? this.organization.defaultInvoiceEstimateTerms || '' : ''],
-			organizationContact: ['', Validators.required],
+			notes: [''],
+			organization: [{ value: this.organization.name, disabled: true }, Validators.required],
 			discountType: [],
 			taxType: [],
 			tax2Type: [],
-			invoiceType: [],
+			invoiceType: [null, Validators.required],
 			project: [],
 			task: [],
 			product: [],
 			expense: [],
+			selectedEmployee: [{ value: this.selectedEmployee?.name, disabled: true }],
 			tags: []
 		});
 	}
@@ -309,8 +318,8 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				type: 'text',
 				isFilterable: false,
 				width: '13%',
-				valuePrepareFunction: (cell, row) => {
-					return `${this.currency.value} ${cell}`;
+				valuePrepareFunction: (cell) => {
+					return `${this.currency} ${cell}`;
 				}
 			};
 			quantity = {
@@ -330,7 +339,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				isFilterable: false,
 				width: '13%',
 				valuePrepareFunction: (cell) => {
-					return `${this.currency.value} ${cell}`;
+					return `${this.currency} ${cell}`;
 				}
 			};
 			quantity = {
@@ -340,11 +349,6 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				isFilterable: false
 			};
 		}
-		this.settingsSmartTable['columns']['description'] = {
-			title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'),
-			type: 'text',
-			width: '13%'
-		};
 		this.settingsSmartTable['columns']['price'] = price;
 		this.settingsSmartTable['columns']['quantity'] = quantity;
 		this.settingsSmartTable['columns']['totalValue'] = {
@@ -353,7 +357,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			addable: false,
 			editable: false,
 			valuePrepareFunction: (cell) => {
-				return `${this.currency.value} ${cell}`;
+				return `${this.currency} ${cell}`;
 			},
 			isFilterable: false,
 			width: '13%'
@@ -400,7 +404,6 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 		}
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
-		const { value: currency } = this.currency;
 		const {
 			invoiceNumber,
 			invoiceDate,
@@ -411,8 +414,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			tax2,
 			taxType,
 			tax2Type,
-			terms,
-			organizationContact,
+			notes,
 			tags
 		} = this.form.value;
 
@@ -421,19 +423,18 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				invoiceNumber,
 				invoiceDate: moment(invoiceDate).startOf('day').toDate(),
 				dueDate: moment(dueDate).endOf('day').toDate(),
-				currency,
+				currency: this.currency,
 				discountValue,
 				discountType,
 				tax,
 				tax2,
 				taxType,
 				tax2Type,
-				terms,
+				terms: notes,
 				paid: false,
 				totalValue: +this.total.toFixed(2),
-				toContact: organizationContact,
-				organizationContactId: organizationContact.id,
-				fromOrganization: this.organization,
+				toContact: this.organization,
+				fromOrganization: this.selectedEmployee,
 				organizationId,
 				tenantId,
 				invoiceType: this.selectedInvoiceType,
@@ -712,15 +713,6 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 		this._getInvoiceNumber();
 	}
 
-	/**
-	 * Load employees from multiple selected employees
-	 *
-	 * @param employees
-	 */
-	public onLoadEmployees(employees: IEmployee[]) {
-		this.employees = employees;
-	}
-
 	private getAllProjects() {
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
@@ -791,6 +783,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 	}
 
 	async generateTable(generateUninvoiced?: boolean) {
+		if (this.form.invalid) return;
 		this.selectedInvoiceType = this.invoiceType;
 		this.smartTableSource.refresh();
 
@@ -812,29 +805,23 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 
 		switch (this.selectedInvoiceType) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
-				if (isNotEmpty(this.selectedEmployeeIds)) {
-					for (const employeeId of this.selectedEmployeeIds) {
-						const employee = this.employees.find((employee) => employee.id === employeeId);
-						const data = {
-							description: 'Desc',
-							price: fakePrice,
-							quantity: fakeQuantity,
-							selectedItem: employee,
-							totalValue: fakePrice * fakeQuantity,
-							applyTax: true,
-							applyDiscount: true
-						};
-						fakeData.push(data);
-						fakePrice++;
-						fakeQuantity++;
-					}
+				if (isNotEmpty(this.selectedEmployee)) {
+					const data = {
+						price: fakePrice,
+						quantity: fakeQuantity,
+						selectedItem: this.selectedEmployee?.name,
+						totalValue: fakePrice * fakeQuantity,
+						applyTax: true,
+						applyDiscount: true
+					};
+					fakeData.push(data);
+					fakePrice++;
 				}
 				break;
 			case InvoiceTypeEnum.BY_PROJECT_HOURS:
 				if (isNotEmpty(this.selectedProjects)) {
 					for (const project of this.selectedProjects) {
 						const data = {
-							description: 'Desc',
 							price: fakePrice,
 							quantity: fakeQuantity,
 							selectedItem: project,
@@ -852,7 +839,6 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				if (isNotEmpty(this.selectedTasks)) {
 					for (const task of this.selectedTasks) {
 						const data = {
-							description: 'Desc',
 							price: fakePrice,
 							quantity: fakeQuantity,
 							selectedItem: task,
@@ -870,7 +856,6 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				if (isNotEmpty(this.selectedProducts)) {
 					for (const product of this.selectedProducts) {
 						const data = {
-							description: 'Desc',
 							price: fakePrice,
 							quantity: fakeQuantity,
 							selectedItem: product,
@@ -888,7 +873,6 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				if (isNotEmpty(this.selectedExpenses)) {
 					for (const expense of this.selectedExpenses) {
 						const data = {
-							description: 'Desc',
 							price: fakePrice,
 							quantity: fakeQuantity,
 							selectedItem: expense,
@@ -931,9 +915,9 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 		this.selectedTasks = $event;
 	}
 
-	selectOrganizationContact($event) {
+	/*selectOrganizationContact($event) {
 		this.organizationContact = $event;
-	}
+	}*/
 
 	selectProject($event) {
 		this.selectedProjects = $event;
@@ -945,10 +929,6 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 
 	selectExpense($event) {
 		this.selectedExpenses = $event;
-	}
-
-	onMembersSelected(event) {
-		this.selectedEmployeeIds = event;
 	}
 
 	async calculateTotal() {
@@ -1019,18 +999,12 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 		this.calculateTotal();
 	}
 
-	async onCurrencyChange($event) {
-		const tableData = await this.smartTableSource.getAll();
-		this.smartTableSource.load(tableData);
-	}
-
 	async onCreateConfirm(event) {
 		if (
 			!isNaN(event.newData.quantity) &&
 			!isNaN(extractNumber(event.newData.price)) &&
 			event.newData.quantity &&
 			event.newData.price &&
-			event.newData.description &&
 			(event.newData.selectedItem || this.selectedInvoiceType === InvoiceTypeEnum.DETAILED_ITEMS)
 		) {
 			const newData = { ...event.newData, price: extractNumber(event.newData.price) };
@@ -1054,7 +1028,6 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			!isNaN(extractNumber(event.newData.price)) &&
 			event.newData.quantity &&
 			event.newData.price &&
-			event.newData.description &&
 			(event.newData.selectedItem || this.selectedInvoiceType === InvoiceTypeEnum.DETAILED_ITEMS)
 		) {
 			const newData = { ...event.newData, price: extractNumber(event.newData.price) };
@@ -1116,6 +1089,4 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 		}
 		return date;
 	}
-
-	ngOnDestroy(): void {}
 }

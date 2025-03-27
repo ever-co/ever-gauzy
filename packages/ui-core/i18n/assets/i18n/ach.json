@@ -976,6 +976,7 @@
 		"TASKS": "crwdns3027:0crwdne3027:0",
 		"TASKS_SETTINGS": "crwdns7244:0crwdne7244:0",
 		"INVOICES": "crwdns3272:0crwdne3272:0",
+		"ORG_INVOICES": "crwdnsXXXXX:0crwdneXXXXX:0",
 		"ORGANIZATION": "crwdns3394:0crwdne3394:0",
 		"TENANT": "crwdns8718:0crwdne8718:0",
 		"RECURRING_INVOICES": "crwdns4768:0crwdne4768:0",
@@ -1889,7 +1890,8 @@
 			"ACCESS_PRIVATE_PROJECTS": "crwdns2959:0crwdne2959:0",
 			"TIMESHEET_EDIT_TIME": "crwdns3450:0crwdne3450:0",
 			"INVOICES_VIEW": "crwdns3898:0crwdne3898:0",
-			"INVOICES_EDIT": "crwdns7166:0crwdne7166:0",
+			"INVOICES_EDIT": "crwdnsXXXXX:0crwdneXXXXX:0",
+			"ORG_INVOICES_EDIT": "crwdnsXXXXX:0crwdneXXXXX:0",
 			"ESTIMATES_VIEW": "crwdns8728:0crwdne8728:0",
 			"ESTIMATES_EDIT": "crwdns8730:0crwdne8730:0",
 			"EDIT_SALES_PIPELINES": "crwdns4820:0crwdne4820:0",
@@ -2560,6 +2562,9 @@
 		"FAQ": "crwdns2096:0crwdne2096:0",
 		"HELP": "crwdns2098:0crwdne2098:0"
 	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_ORG_INVOICE": "crwdnsXXXXX:0crwdneXXXXX:0"
+	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "crwdns2235:0crwdne2235:0",
 		"LAST_NAME": "crwdns2237:0crwdne2237:0",
@@ -2646,6 +2651,7 @@
 		"INVOICES_SELECT_PAID": "crwdns3296:0crwdne3296:0",
 		"INVOICES_TAXES": "crwdns7776:0crwdne7776:0",
 		"INVOICES_SELECT_TERMS": "crwdns3300:0crwdne3300:0",
+		"NOTES": "crwdnsXXXXX:0crwdneXXXXX:0",
 		"ADD_INVOICE": "crwdns3304:0crwdne3304:0",
 		"ADD_ESTIMATE": "crwdns4432:0crwdne4432:0",
 		"EDIT_INVOICE": "crwdns3306:0crwdne3306:0",

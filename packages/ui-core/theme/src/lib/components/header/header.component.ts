@@ -65,7 +65,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	showOrganizationsSelector: boolean;
 	showProjectsSelector: boolean;
 	showTeamsSelector: boolean;
-	showDateSelector: boolean = true;
+	showDateSelector = true;
 	theme: string;
 	createQuickActionsMenu: NbMenuItem[];
 	supportContextMenu: NbMenuItem[];
@@ -81,10 +81,10 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	subject$: Subject<any> = new Subject();
 	selectorsVisibility: ISelectorVisibility;
 
-	isCollapse: boolean = true;
-	@Input() expanded: boolean = true;
+	isCollapse = true;
+	@Input() expanded = true;
 
-	private shortcutsMap = new Map<string, () => void>();
+	private readonly shortcutsMap = new Map<string, () => void>();
 
 	quickActionsRef: NbDialogRef<QuickActionsComponent> | null;
 
@@ -307,14 +307,16 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 				// -- prevent triggering shortcuts when typing in NbOptions (searchable inputs)
 				if ((event.target as Element).localName === 'nb-option') return;
 				if (this.shortcutsMap.has(pressedKeys)) {
-					// -- close dialog if open when using shortcuts and prevent closing dialog by pressing unregistered keys
-					this.quickActionsRef &&
-					pressedKeys !== this.defaultShortcuts.quickActions.toLowerCase() &&
-					this.shortcutsMap.has(pressedKeys)
-						? this.quickActionsRef.close()
-						: null;
-					if (handler.scope === 'defaultShortcuts' && this.shortcutsMap.has(pressedKeys)) {
-						this.shortcutsMap.get(pressedKeys)();
+					// Close the dialog if open when using shortcuts, but prevent closing for unregistered keys
+					const shouldCloseQuickActions =
+						this.quickActionsRef && pressedKeys !== this.defaultShortcuts.quickActions.toLowerCase();
+
+					if (shouldCloseQuickActions) {
+						this.quickActionsRef.close();
+					}
+
+					if (handler.scope === 'defaultShortcuts') {
+						this.shortcutsMap.get(pressedKeys)?.();
 					}
 				}
 			}
@@ -429,7 +431,9 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	 */
 	private navigateTo(action: string) {
 		const itemMenu = this.createQuickActionsMenu.find((item: NbMenuItem) => item?.data?.action === action);
-		itemMenu ? this.router.navigate([itemMenu.link], { queryParams: { ...itemMenu.queryParams } }) : null;
+		if (itemMenu?.link) {
+			this.router.navigate([itemMenu.link], { queryParams: { ...itemMenu.queryParams } });
+		}
 	}
 
 	/**
@@ -709,12 +713,12 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		];
 		this.createQuickActionsMenu = [
 			// Divider (Accounting)
-			...(this.store.hasAnyPermission(PermissionsEnum.INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+			...(this.store.hasAllPermissions(PermissionsEnum.INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 				? [
 						{
 							title: this.getTranslation('QUICK_ACTIONS_MENU.CREATE_INVOICE'),
 							icon: 'file-text-outline',
-							link: 'pages/accounting/invoices/add',
+							link: 'pages/accounting/invoices/add-by-role',
 							data: {
 								action: 'createInvoice'
 							},
@@ -725,7 +729,23 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 						}
 				  ]
 				: []),
-			...(!!this.user.employee
+			...(this.store.hasAllPermissions(PermissionsEnum.ORG_INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+				? [
+						{
+							title: this.getTranslation('QUICK_ACTIONS_MENU.CREATE_ORG_INVOICE'),
+							icon: 'file-text-outline',
+							link: 'pages/accounting/invoices/add-by-organization',
+							data: {
+								action: 'createInvoice'
+							},
+							badge: {
+								text: this.formatShortcut(this.defaultShortcuts.createInvoice),
+								status: 'control'
+							}
+						}
+				  ]
+				: []),
+			...(this.user.employee
 				? [
 						{
 							title: this.getTranslation('QUICK_ACTIONS_MENU.RECEIVED_INVOICES'),
@@ -799,7 +819,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 						}
 				  ]
 				: []),
-			...(!!this.user.employee
+			...(this.user.employee
 				? [
 						{
 							title: this.getTranslation('QUICK_ACTIONS_MENU.RECEIVED_ESTIMATES'),
@@ -1130,7 +1150,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 						}
 				  ]
 				: []),
-			...(!!this.user.employee
+			...(this.user.employee
 				? [
 						{
 							title: this.getTranslation('QUICK_ACTIONS_MENU.VIEW_CLIENTS'),
@@ -1195,7 +1215,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 						}
 				  ]
 				: []),
-			...(!!this.user.employee
+			...(this.user.employee
 				? [
 						{
 							title: this.getTranslation('QUICK_ACTIONS_MENU.START_TIMER'),

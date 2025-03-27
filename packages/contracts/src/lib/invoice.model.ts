@@ -5,6 +5,7 @@ import { IInvoiceItem } from './invoice-item.model';
 import { ITag } from './tag.model';
 import { IPayment } from './payment.model';
 import { IInvoiceEstimateHistory } from './invoice-estimate-history.model';
+import { IUser } from './user.model';
 
 /**
  * Interface representing invoice statistics.
@@ -18,7 +19,7 @@ export interface IInvoice extends IBasePerTenantAndOrganizationEntityModel {
 	invoiceDate: Date;
 	invoiceNumber: number;
 	dueDate: Date;
-	currency: string;
+	currency?: string;
 	discountValue: number;
 	discountType: DiscountTaxTypeEnum;
 	paid: boolean;
@@ -30,6 +31,8 @@ export interface IInvoice extends IBasePerTenantAndOrganizationEntityModel {
 	totalValue?: number;
 	organizationContactId?: string;
 	organizationContactName?: string;
+	fromUser?: IUser;
+	toOrganization?: IOrganization;
 	fromOrganization?: IOrganization;
 	toContact?: IOrganizationContact;
 	invoiceItems?: IInvoiceItem[];
@@ -64,8 +67,9 @@ export interface IInvoiceCreateInput extends IBasePerTenantAndOrganizationEntity
 	totalValue?: number;
 	organizationContactId?: string;
 	organizationContactName?: string;
-	fromOrganization?: IOrganization;
-	toContact?: IOrganizationContact;
+	//TODO: GZY-161 - Temporary. Wait for BE changes
+	fromOrganization?: IOrganization | IUser;
+	toContact?: IOrganizationContact | IOrganization;
 	invoiceType?: string;
 	sentTo?: string;
 	tags?: ITag[];

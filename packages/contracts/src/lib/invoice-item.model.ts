@@ -31,12 +31,11 @@ export interface IInvoiceItemFindInput {
 	invoiceId?: string;
 }
 
-export interface IInvoiceItemCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
-	description: string;
+export interface IInvoiceItemCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	price: number;
 	quantity: number;
 	totalValue: number;
+	description?: string;
 	invoiceId?: string;
 	taskId?: string;
 	employeeId?: string;
