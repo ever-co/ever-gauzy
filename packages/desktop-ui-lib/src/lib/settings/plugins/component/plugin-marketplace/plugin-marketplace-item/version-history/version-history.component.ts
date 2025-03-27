@@ -42,8 +42,7 @@ export class VersionHistoryComponent implements OnInit {
 				return this.pluginService
 					.getVersions(this.pluginId, {
 						relations: ['plugin', 'source'],
-						order: { createdAt: 'DESC' },
-						withDeleted: true
+						order: { createdAt: 'DESC' }
 					})
 					.pipe(
 						finalize(() => this.isLoading$.next(false)),
@@ -100,7 +99,7 @@ export class VersionHistoryComponent implements OnInit {
 				take(1),
 				filter(Boolean),
 				switchMap(() =>
-					this.pluginService.restoreVersion(this.pluginId, version.id).pipe(
+					this.pluginService.deleteVersion(this.pluginId, version.id).pipe(
 						tap(() => this.toastrService.success(`Plugin version ${version.number} removed successfully!`)),
 						catchError((error) => {
 							this.toastrService.error(error);
@@ -127,7 +126,7 @@ export class VersionHistoryComponent implements OnInit {
 				take(1),
 				filter(Boolean),
 				switchMap(() =>
-					this.pluginService.deleteVersion(this.pluginId, version.id).pipe(
+					this.pluginService.restoreVersion(this.pluginId, version.id).pipe(
 						tap(() => this.toastrService.success('Plugin version restored successfully!')),
 						catchError((error) => {
 							this.toastrService.error(error);
