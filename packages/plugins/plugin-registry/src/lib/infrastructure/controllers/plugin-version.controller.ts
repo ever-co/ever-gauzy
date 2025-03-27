@@ -13,6 +13,7 @@ import {
 	BadRequestException,
 	Body,
 	Controller,
+	Delete,
 	Get,
 	Param,
 	Post,
@@ -31,6 +32,7 @@ import { IPluginVersion } from '../../shared/models/plugin-version.model';
 import { PluginFactory } from '../../shared/utils/plugin-factory.util';
 import { GauzyStorageProvider } from '../storage/providers/gauzy-storage.provider';
 import { UploadedPluginStorage } from '../storage/uploaded-plugin.storage';
+import { DeletePluginVersionCommand } from '../../application/commands/delete-plugin-version.command';
 
 @ApiTags('Plugin Versions')
 @ApiBearerAuth('Bearer')
@@ -120,5 +122,49 @@ export class PluginVersionController {
 			// Throw a bad request exception with the validation errors
 			throw new BadRequestException(error);
 		}
+	}
+
+	/**
+	 * Deletes a plugin by ID.
+	 */
+	@ApiOperation({
+		summary: 'Delete plugin',
+		description: 'Soft removes a plugin version from the system based on the provided ID.'
+	})
+	@ApiParam({
+		name: 'id',
+		type: String,
+		format: 'uuid',
+		description: 'UUID of the plugin version to delete',
+		required: true
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Plugin version deleted successfully.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Plugin version record not found.'
+	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'User does not have permission to delete this plugin version.'
+	})
+	@ApiResponse({
+		status: HttpStatus.UNAUTHORIZED,
+		description: 'Unauthorized access.'
+	})
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
+	@UseGuards(PluginOwnerGuard)
+	@Delete(':versionId')
+	public async delete(
+		@Param('versionId', UUIDValidationPipe) versionId: ID,
+		@Param('pluginId', UUIDValidationPipe) pluginId: ID
+	): Promise<void> {
+		return this.commandBus.execute(new DeletePluginVersionCommand(versionId, pluginId));
 	}
 }
