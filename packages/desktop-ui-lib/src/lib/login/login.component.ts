@@ -114,6 +114,6 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	}
 
 	get isAgent(): boolean {
-		return true;
+		return this.environment.IS_AGENT;
 	}
 }

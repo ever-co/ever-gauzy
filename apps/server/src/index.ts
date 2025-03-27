@@ -576,7 +576,7 @@ ipcMain.on('resp_msg_server', (event, arg) => {
 ipcMain.on('running_state', (event, arg) => {
 	console.log('running_state');
 
-	settingsWindow.webContents.send('seting_page_ipc', {
+	settingsWindow.webContents.send('setting_page_ipc', {
 		type: 'server_status',
 		data: arg
 	});

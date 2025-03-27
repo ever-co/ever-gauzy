@@ -588,7 +588,6 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
 
 	handleIpcEvent(_: any, arg: { type: string, data: any }) {
-		console.log('ipc arg', arg);
 		switch (arg.type) {
 			case 'app_setting_update':
 				this._ngZone.run(() => {
@@ -660,7 +659,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 						text: 'TIMER_TRACKER.SETTINGS.MESSAGES.UPDATE_DOWNLOADING',
 						status: 'warning'
 					};
-					this.progressDownload = Math.floor(Number(arg.data));
+					this.progressDownload = arg.data.percent ? Math.floor(Number(arg.data.percent)) : 0;
 					this.logContents = this._translateService.instant(
 						'TIMER_TRACKER.SETTINGS.MESSAGES.DOWNLOADING_UPDATE',
 						{

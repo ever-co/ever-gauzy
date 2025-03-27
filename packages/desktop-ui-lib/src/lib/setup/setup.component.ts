@@ -5,7 +5,8 @@ import {
 	ElementRef,
 	Inject,
 	OnInit,
-	ViewChild
+	ViewChild,
+	OnDestroy
 } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { IProxyConfig } from '@gauzy/contracts';
@@ -25,7 +26,7 @@ import { SetupService } from './setup.service';
 	styleUrls: ['./setup.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SetupComponent implements OnInit {
+export class SetupComponent implements OnInit, OnDestroy {
 	@ViewChild('dialogOpenBtn') btnDialogOpen: ElementRef<HTMLElement>;
 	@ViewChild('selector') languageSelector: LanguageSelectorComponent;
 	@ViewChild('logBox') logBox: ElementRef;
@@ -529,6 +530,10 @@ export class SetupComponent implements OnInit {
 		this.welcomeText();
 		this.electronService.ipcRenderer.on('setting_page_ipc', this.handleIpcEvent);
 		this.validation();
+	}
+
+	ngOnDestroy(): void {
+	    this.electronService.ipcRenderer.removeListener('setting_page_ipc', this.handleIpcEvent);
 	}
 
 	public get isDesktopTimer(): boolean {

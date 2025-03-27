@@ -16,7 +16,8 @@ import {
 import { getApiBaseUrl, delaySync } from '../util';
 import { startServer } from './app';
 import AppWindow from '../window-manager';
-import moment from 'moment';
+import * as moment from 'moment';
+import * as path from 'path';
 
 const userService = new UserService();
 
@@ -36,7 +37,8 @@ function getGlobalVariable(configs?: {
 }
 
 async function closeLoginWindow() {
-	const appWindow = AppWindow.getInstance('');
+	const rootPath = path.join(__dirname, '../..')
+	const appWindow = AppWindow.getInstance(rootPath);
 	await delaySync(2000); // delay 2s before destroy login window
 	appWindow.authWindow.browserWindow.destroy();
 }
@@ -108,7 +110,7 @@ export default function AppIpcMain() {
 				await userService.save(user.toObject());
 			}
 		} catch (error) {
-			console.log('Error on save user', error);
+			throw new AppError('AUTH_ERROR', error);
 		}
 		store.set({
 			auth: { ...arg, isLogout: false }

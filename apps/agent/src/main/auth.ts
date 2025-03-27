@@ -1,7 +1,8 @@
-import { app } from 'electron';
+import { app, BrowserWindow } from 'electron';
 import {
 	LocalStore,
-	DialogErrorHandler
+	DialogErrorHandler,
+	DesktopDialog
 } from '@gauzy/desktop-lib';
 import AppWindow from './window-manager';
 function getAuthConfig() {
@@ -22,25 +23,32 @@ export async function checkUserAuthentication(rootPath: string) {
 		appWindow.authWindow.browserWindow.removeAllListeners('close');
 		appWindow.authWindow.browserWindow.on('close', async (event) => {
 			event.preventDefault();
-			await handleCloseAuthWindow();
+			await handleCloseAuthWindow(appWindow.authWindow.browserWindow);
 		})
 		await appWindow.authWindow.loadURL();
 		appWindow.authWindow.show();
 	}
 }
 
-async function handleCloseAuthWindow() {
+async function handleCloseAuthWindow(authWindow: BrowserWindow) {
 	const authConfig = getAuthConfig();
 	if (!authConfig?.token) {
-		const dialog = new DialogErrorHandler('Please login first to use the app');
-		dialog.options.buttons.splice(1, 1);
+		const DIALOG_TITLE = 'TIMER_TRACKER.DIALOG.WARNING';
+		const DIALOG_MESSAGE = 'Application need to login f FWirst to use';
+
+		const dialog = new DesktopDialog(DIALOG_TITLE, DIALOG_MESSAGE, authWindow);
+		dialog.options.buttons = [
+			'BUTTON.CANCEL',
+			'BUTTON.EXIT'
+		];
 		const button = await dialog.show();
 		switch (button.response) {
-			case 1:
+			case 1: // exit button
+				authWindow.destroy();
 				app.exit(0);
 				break;
 			default:
-				// 👀
+				// Do nothing when other than exit button choosed
 				break;
 		}
 	}
