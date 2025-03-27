@@ -33,6 +33,7 @@ import { PluginFactory } from '../../shared/utils/plugin-factory.util';
 import { GauzyStorageProvider } from '../storage/providers/gauzy-storage.provider';
 import { UploadedPluginStorage } from '../storage/uploaded-plugin.storage';
 import { DeletePluginVersionCommand } from '../../application/commands/delete-plugin-version.command';
+import { RecoverPluginVersionCommand } from '../../application/commands/recover-plugin-version.command';
 
 @ApiTags('Plugin Versions')
 @ApiBearerAuth('Bearer')
@@ -122,6 +123,57 @@ export class PluginVersionController {
 			// Throw a bad request exception with the validation errors
 			throw new BadRequestException(error);
 		}
+	}
+
+	/**
+	 * Recover a soft-deleted plugin version.
+	 */
+	@ApiOperation({
+		summary: 'Recover a deleted plugin version',
+		description: 'Soft-recovers a previously deleted plugin version using its UUID and the plugin ID.'
+	})
+	@ApiParam({
+		name: 'pluginId',
+		type: String,
+		format: 'uuid',
+		description: 'UUID of the plugin to which the version belongs',
+		required: true
+	})
+	@ApiParam({
+		name: 'versionId',
+		type: String,
+		format: 'uuid',
+		description: 'UUID of the plugin version to recover',
+		required: true
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Plugin version recovered successfully.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Plugin version record not found.'
+	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'User does not have permission to recover this plugin version.'
+	})
+	@ApiResponse({
+		status: HttpStatus.UNAUTHORIZED,
+		description: 'Unauthorized access.'
+	})
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
+	@UseGuards(PluginOwnerGuard)
+	@Post(':versionId')
+	public async recover(
+		@Param('versionId', UUIDValidationPipe) versionId: ID,
+		@Param('pluginId', UUIDValidationPipe) pluginId: ID
+	): Promise<void> {
+		return this.commandBus.execute(new RecoverPluginVersionCommand(versionId, pluginId));
 	}
 
 	/**

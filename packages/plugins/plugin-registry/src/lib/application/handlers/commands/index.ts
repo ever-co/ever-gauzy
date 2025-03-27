@@ -5,6 +5,7 @@ import { DeactivatePluginCommandHandler } from './deactivate-plugin-command.hand
 import { DeletePluginCommandHandler } from './delete-plugin-command.handler';
 import { DeletePluginVersionCommandHandler } from './delete-plugin-version-command.handler';
 import { InstallPluginCommandHandler } from './install-plugin-command.handler';
+import { RecoverPluginVersionCommandHandler } from './recover-plugin-version-command.handler';
 import { UninstallPluginCommandHandler } from './uninstall-plugin-command.handler';
 import { UpdatePluginCommandHandler } from './update-plugin-command.handler';
 import { VerifyPluginCommandHandler } from './verify-plugin-command.handler';
@@ -19,5 +20,6 @@ export const commands = [
 	DeletePluginCommandHandler,
 	VerifyPluginCommandHandler,
 	CreatePluginVersionCommandHandler,
-	DeletePluginVersionCommandHandler
+	DeletePluginVersionCommandHandler,
+	RecoverPluginVersionCommandHandler
 ];
