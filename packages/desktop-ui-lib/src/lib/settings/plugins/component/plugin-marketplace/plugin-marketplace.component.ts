@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { IPlugin } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BehaviorSubject, catchError, EMPTY, filter, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, catchError, EMPTY, filter, finalize, switchMap, tap } from 'rxjs';
 import { ToastrNotificationService } from '../../../../services';
 import { PluginElectronService } from '../../services/plugin-electron.service';
 import { PluginService } from '../../services/plugin.service';
@@ -24,6 +24,7 @@ export class PluginMarketplaceComponent implements OnInit {
 	private readonly ngZone = inject(NgZone);
 	private readonly route = inject(ActivatedRoute);
 	public processing = false;
+	public isLoading$ = new BehaviorSubject<boolean>(false);
 
 	ngOnInit(): void {
 		this.observePlugins();
@@ -63,12 +64,14 @@ export class PluginMarketplaceComponent implements OnInit {
 	}
 
 	public load(): void {
+		this.isLoading$.next(true);
 		this.pluginService
 			.getAll({
 				relations: ['versions'],
 				order: { createdAt: 'DESC', versions: { createdAt: 'DESC' } }
 			})
 			.pipe(
+				finalize(() => this.isLoading$.next(false)),
 				tap((marketPlace) => this.plugins$.next(marketPlace)),
 				catchError((error) => {
 					this.toastrNotificationService.error(error);

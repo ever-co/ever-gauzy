@@ -1,7 +1,11 @@
-@let plugins = plugins$ | async; @let available = (plugins$ | async)?.length > 0;
+@let plugins = plugins$ | async; @let available = (plugins$ | async)?.length > 0; @let isLoading = isLoading$ | async;
 
 <nb-card class="content-active first">
-	@if(available) { @for(plugin of plugins; track plugin.id; let isLast = $last) {
+	@if(isLoading) {
+	<div class="no-data">
+		<ngx-no-data-message message="Marketplace is loading plugins..."></ngx-no-data-message>
+	</div>
+	} @else if(available) { @for(plugin of plugins; track plugin.id; let isLast = $last) {
 	<lib-plugin-marketplace-detail
 		class="plugin"
 		[ngClass]="{ none: isLast }"
