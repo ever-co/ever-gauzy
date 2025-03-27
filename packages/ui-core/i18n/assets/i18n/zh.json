@@ -3578,6 +3578,7 @@
 			"APPROVAL_POLICY_CREATED": "添加了认可政策'{{name}}'",
 			"APPROVAL_POLICY_UPDATED": "批准政策'{{ name }}'已更改",
 			"APPROVAL_POLICY_DELETED": "批准政策'{{ name }}'已被移除",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "审批政策 '{{ name }}' 已经存在",
 			"CANDIDATE_CREATED": "候选人'{{ name }}'已被添加到'{{ organization }}'中。",
 			"CANDIDATE_ARCHIVED": "候选人 '{{ name }}' 已被设置为已归档。",
 			"CANDIDATE_REJECTED": "候选人 '{{ name }}' 被设定为被拒绝。",
@@ -3695,7 +3696,8 @@
 			"EDIT_POLICY": "{{ name }}的休假政策已更改。",
 			"DELETE_POLICY": "请假政策“{{ name }}”已被删除。",
 			"ERROR": "{{错误}}",
-			"SAVE_ERROR": "无法创建策略记录"
+			"SAVE_ERROR": "无法创建策略记录",
+			"POLICY_EXISTS": "请假政策 '{{ name }}' 已存在"
 		},
 		"USER": {
 			"EDIT_PROFILE": "您的个人资料已经成功更新。"

@@ -8,7 +8,7 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ErrorHandlingService, ServerDataSource, Store, TimeOffService, ToastrService } from '@gauzy/ui-core/core';
-import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
+import { API_PREFIX, ComponentEnum, distinctUntilChange, validateUniqueString } from '@gauzy/ui-core/common';
 import {
 	DeleteConfirmationComponent,
 	EmployeeWithLinksComponent,
@@ -200,6 +200,13 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent impl
 	addPolicy(policy: ITimeOffPolicy): void {
 		// Check if a valid policy is provided
 		if (policy) {
+			const existingNames = this.timeOffPolicies.map((policy) => policy.name);
+
+			if (validateUniqueString(existingNames, policy.name)) {
+				this._toastrService.danger(this.getTranslation('NOTES.POLICY.POLICY_EXISTS', { name: policy.name }));
+				return;
+			}
+
 			// Add the policy using timeOffService
 			this._timeOffService
 				.createPolicy(policy)
@@ -266,6 +273,15 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent impl
 	editPolicy(policy: ITimeOffPolicy): void {
 		// Extract the ID of the selected policy
 		const selectedPolicyId = this.selectedPolicy.id;
+
+		const existingNames = this.timeOffPolicies
+			.filter((p) => p.id !== selectedPolicyId) // Exclure la policy en cours d'édition
+			.map((p) => p.name);
+
+		if (!validateUniqueString(existingNames, policy.name)) {
+			this._toastrService.danger(this.getTranslation('NOTES.POLICY.POLICY_EXISTS', { name: policy.name }));
+			return;
+		}
 
 		// Update the policy using timeOffService
 		this._timeOffService
@@ -394,10 +410,7 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent impl
 					...(this.filters.where ? this.filters.where : {})
 				},
 				finalize: () => {
-					// Add data to timeOffPolicies array if in grid layout
-					if (this._isGridLayout) {
-						this.timeOffPolicies.push(...this.smartTableSource.getData());
-					}
+					this.timeOffPolicies.push(...this.smartTableSource.getData());
 
 					// Update pagination based on the count of items in the source
 					this.setPagination({

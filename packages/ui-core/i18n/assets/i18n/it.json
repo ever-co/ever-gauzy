@@ -3578,6 +3578,7 @@
 			"APPROVAL_POLICY_CREATED": "La politica di approvazione '{{ name }}' è stata aggiunta",
 			"APPROVAL_POLICY_UPDATED": "La politica di approvazione '{{ name }}' è stata cambiata",
 			"APPROVAL_POLICY_DELETED": "La politica di approvazione '{{ name }}' è stata rimossa",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "La politica di approvazione '{{ name }}' esiste già",
 			"CANDIDATE_CREATED": "Il candidato '{{ name }}' è stato aggiunto a '{{ organization }}'",
 			"CANDIDATE_ARCHIVED": "Candidato '{{ name }}' impostato come archiviato",
 			"CANDIDATE_REJECTED": "Candidato '{{ name }}' impostato come rifiutato",
@@ -3695,7 +3696,8 @@
 			"EDIT_POLICY": "La politica di ferie '{{ name }}' è stata modificata",
 			"DELETE_POLICY": "La politica di permesso '{{ name }}' è stata rimossa",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "Impossibile creare il record della polizza"
+			"SAVE_ERROR": "Impossibile creare il record della polizza",
+			"POLICY_EXISTS": "La politica di ferie '{{ name }}' esiste già"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Il tuo profilo è stato aggiornato con successo"

@@ -2735,7 +2735,7 @@
 		"TASKS_STATUS": "Status",
 		"TASK_PRIORITY": "Priority",
 		"TASK_SIZE": "Size",
-		"PARENT_TASK":"Parent Task",
+		"PARENT_TASK": "Parent Task",
 		"TODO": "Todo",
 		"OPEN": "Open",
 		"READY_FOR_REVIEW": "Ready for review",
@@ -3705,6 +3705,7 @@
 			"APPROVAL_POLICY_CREATED": "Approval policy '{{ name }}' was added",
 			"APPROVAL_POLICY_UPDATED": "Approval policy '{{ name }}' was changed",
 			"APPROVAL_POLICY_DELETED": "Approval policy '{{ name }}' was removed",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "Approval policy '{{ name }}' already exists",
 			"CANDIDATE_CREATED": "Candidate '{{ name }}' was added to '{{ organization }}'",
 			"CANDIDATE_ARCHIVED": "Candidate '{{ name }}' set as archived.",
 			"CANDIDATE_REJECTED": "Candidate '{{ name }}' set as rejected.",
@@ -3822,7 +3823,8 @@
 			"EDIT_POLICY": "Time off policy '{{ name }}' was changed",
 			"DELETE_POLICY": "Time off policy '{{ name }}' was removed",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "Unable to create Policy record"
+			"SAVE_ERROR": "Unable to create Policy record",
+			"POLICY_EXISTS": "Time off policy '{{ name }}' already exists"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Your profile has been updated successfully."

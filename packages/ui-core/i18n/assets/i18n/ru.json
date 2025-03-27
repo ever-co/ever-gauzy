@@ -3601,6 +3601,7 @@
 			"APPROVAL_POLICY_CREATED": "Утвержденная политика '{{ name }}' добавлена",
 			"APPROVAL_POLICY_UPDATED": "Утвержденная политика '{{ name }}' была изменена",
 			"APPROVAL_POLICY_DELETED": "Утвержденная политика '{{ name }}' удалена",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "Политика утверждения '{{ name }}' уже существует",
 			"CANDIDATE_CREATED": "Кандидат '{{ name }}' ' ' был добавлен в '{{ organization }}'",
 			"CANDIDATE_ARCHIVED": "Кандидат '{{ name }}' ' ' ' установлен в архиве.",
 			"CANDIDATE_REJECTED": "Кандидат '{{ name }}' ' ' ' был отклонён.",
@@ -3714,7 +3715,8 @@
 			"EDIT_POLICY": "Политика отключения '{{ name }}' была изменена",
 			"DELETE_POLICY": "Политика отключения '{{ name }}' была удалена",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "Не удалось создать запись политики политики"
+			"SAVE_ERROR": "Не удалось создать запись политики политики",
+			"POLICY_EXISTS": "Политика отпусков '{{ name }}' уже существует"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Ваш профиль был успешно обновлен."

@@ -3630,6 +3630,7 @@
 			"APPROVAL_POLICY_CREATED": "Политиката за одобрение '{{ name }}' беше добавена",
 			"APPROVAL_POLICY_UPDATED": "Политиката за одобрение '{{ name }}' беше променена",
 			"APPROVAL_POLICY_DELETED": "Политиката за одобрение '{{ name }}' беше премахната",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "Политиката за одобрение '{{ name }}' вече съществува",
 			"CANDIDATE_CREATED": "Кандидатът '{{ name }}' беше добавен в '{{ organization }}'",
 			"CANDIDATE_ARCHIVED": "Кандидатът '{{ name }}' беше маркиран като архивиран.",
 			"CANDIDATE_REJECTED": "Кандидатът '{{ name }}' беше маркиран като отхвърлен.",
@@ -3744,7 +3745,8 @@
 			"EDIT_POLICY": "Time off policy '{{ name }}' was changed",
 			"DELETE_POLICY": "Time off policy '{{ name }}' was removed",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "Unable to create Policy record"
+			"SAVE_ERROR": "Unable to create Policy record",
+			"POLICY_EXISTS": "Политиката за отпуск '{{ name }}' вече съществува"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Your profile has been updated successfully."

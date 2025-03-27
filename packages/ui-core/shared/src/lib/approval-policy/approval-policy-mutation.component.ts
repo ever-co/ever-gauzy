@@ -84,6 +84,23 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent im
 		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
+		const { name } = this.form.getRawValue();
+
+		const { items: existingPolicies } = await this.approvalPolicyService.getAll([], {
+			name,
+			organizationId,
+			tenantId
+		});
+
+		const isDuplicate = existingPolicies.some(
+			(policy) => !this.approvalPolicy || policy.id !== this.approvalPolicy.id
+		);
+
+		if (isDuplicate) {
+			this.toastrService.danger(this.getTranslation('TOASTR.MESSAGE.APPROVAL_POLICY_ALREADY_EXISTS', name));
+			this.closeDialog();
+			return;
+		}
 
 		const approvalPolicy: IApprovalPolicyCreateInput = {
 			tenantId,

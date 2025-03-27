@@ -3579,6 +3579,7 @@
 			"APPROVAL_POLICY_CREATED": "Se agregó la política de aprobación '{{ name }}'.",
 			"APPROVAL_POLICY_UPDATED": "La política de aprobación '{{ name }}' ha sido modificada.",
 			"APPROVAL_POLICY_DELETED": "La política de aprobación '{{name}}' ha sido eliminada.",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "La política de aprobación '{{ name }}' ya existe",
 			"CANDIDATE_CREATED": "El candidato '{{ name }}' fue añadido a '{{ organization }}'.",
 			"CANDIDATE_ARCHIVED": "Candidato '{{ name }}' establecido como archivado.",
 			"CANDIDATE_REJECTED": "Candidato '{{ name }}' establecido como rechazado.",
@@ -3696,7 +3697,8 @@
 			"EDIT_POLICY": "La política de tiempo libre '{{ name }}' fue cambiada",
 			"DELETE_POLICY": "La política de tiempo libre '{{ name }}' fue eliminada.",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "No se puede crear el registro de la política."
+			"SAVE_ERROR": "No se puede crear el registro de la política.",
+			"POLICY_EXISTS": "La política de tiempo libre '{{ name }}' ya existe"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Tu perfil ha sido actualizado con éxito."

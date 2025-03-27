@@ -3563,6 +3563,7 @@
 			"APPROVAL_POLICY_CREATED": "تمت إضافة سياسة الموافقة '{{ name }}'",
 			"APPROVAL_POLICY_UPDATED": "تم تغيير سياسة الموافقة \"{{ name }}\"",
 			"APPROVAL_POLICY_DELETED": "تم إزالة سياسة الموافقة '{{ name }}'",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "سياسة الموافقة '{{ name }}' موجودة بالفعل",
 			"CANDIDATE_CREATED": "تمت إضافة المرشح '{{ name }}' إلى '{{ organization }}'",
 			"CANDIDATE_ARCHIVED": "تم تعيين المرشح '{{ name }}' كمؤرشف.",
 			"CANDIDATE_REJECTED": "تم تعيين المرشح '{{ name }}' كمرفوض.",
@@ -3680,7 +3681,8 @@
 			"EDIT_POLICY": "تم تغيير سياسة الاستراحة '{{ name }}'",
 			"DELETE_POLICY": "سياسة إجازة '{{ name }}' تمت إزالتها",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "غير قادر على إنشاء سجل سياسة"
+			"SAVE_ERROR": "غير قادر على إنشاء سجل سياسة",
+			"POLICY_EXISTS": "سياسة الإجازة '{{ name }}' موجودة بالفعل"
 		},
 		"USER": {
 			"EDIT_PROFILE": "تم تحديث ملفك الشخصي بنجاح."

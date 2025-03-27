@@ -3595,6 +3595,7 @@
 			"APPROVAL_POLICY_CREATED": "Approval policy '{{ name }}' was added",
 			"APPROVAL_POLICY_UPDATED": "Approval policy '{{ name }}' was changed",
 			"APPROVAL_POLICY_DELETED": "Approval policy '{{ name }}' was removed",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "מדיניות האישור '{{ name }}' כבר קיימת",
 			"CANDIDATE_CREATED": "Candidate '{{ name }}' was added to '{{ organization }}'",
 			"CANDIDATE_ARCHIVED": "Candidate '{{ name }}' set as archived.",
 			"CANDIDATE_REJECTED": "Candidate '{{ name }}' set as rejected.",
@@ -3708,7 +3709,8 @@
 			"EDIT_POLICY": "Time off policy '{{ name }}' was changed",
 			"DELETE_POLICY": "Time off policy '{{ name }}' was removed",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "Unable to create Policy record"
+			"SAVE_ERROR": "Unable to create Policy record",
+			"POLICY_EXISTS": "מדיניות חופשה '{{ name }}' כבר קיימת"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Your profile has been updated successfully."

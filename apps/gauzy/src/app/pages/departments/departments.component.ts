@@ -248,8 +248,7 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent implemen
 
 			if (validateUniqueString(existingNames, input.name)) {
 				this.toastrService.danger(
-					this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_DEPARTMENTS.ALREADY_EXISTS'),
-					input.name
+					this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_DEPARTMENTS.ALREADY_EXISTS', input.name)
 				);
 				return;
 			}

@@ -174,10 +174,9 @@ export class EmployeeLevelComponent extends PaginationFilterBaseComponent implem
 			const { id: organizationId } = this.organization;
 			const existingNames = this.employeeLevels.map((employeeLevel) => employeeLevel.level);
 
-			if (validateUniqueString(existingNames,level)) {
+			if (validateUniqueString(existingNames, level)) {
 				this.toastrService.danger(
-					this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.ALREADY_EXISTS'),
-					level
+					this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.ALREADY_EXISTS', level)
 				);
 				return;
 			}
@@ -207,10 +206,12 @@ export class EmployeeLevelComponent extends PaginationFilterBaseComponent implem
 		const { id: organizationId } = this.organization;
 		const existingNames = this.employeeLevels.map((employeeLevel) => employeeLevel.level);
 
-		if (validateUniqueString(existingNames,employeeLevelName)) {
+		if (validateUniqueString(existingNames, employeeLevelName)) {
 			this.toastrService.danger(
-				this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.ALREADY_EXISTS'),
-				employeeLevelName
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.ALREADY_EXISTS',
+					employeeLevelName
+				)
 			);
 			return;
 		}

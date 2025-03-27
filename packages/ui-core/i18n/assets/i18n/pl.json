@@ -3578,6 +3578,7 @@
 			"APPROVAL_POLICY_CREATED": "Polityka zatwierdzania \"{{ name }}\" została dodana",
 			"APPROVAL_POLICY_UPDATED": "Polityka zatwierdzania '{{ name }}' została zmieniona",
 			"APPROVAL_POLICY_DELETED": "Polityka zatwierdzania '{{ name }}' została usunięta",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "Polityka zatwierdzania '{{ name }}' już istnieje",
 			"CANDIDATE_CREATED": "Kandydat '{{ name }}' został dodany do '{{ organization }}'",
 			"CANDIDATE_ARCHIVED": "Kandydat '{{ name }}' został archiwizowany",
 			"CANDIDATE_REJECTED": "Kandydat '{{ name }}' został odrzucony",
@@ -3695,7 +3696,8 @@
 			"EDIT_POLICY": "Polityka urlopu '{{ name }}' została zmieniona",
 			"DELETE_POLICY": "Polityka urlopu '{{ name }}' została usunięta",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "Nie można utworzyć rekordu Polisy"
+			"SAVE_ERROR": "Nie można utworzyć rekordu Polisy",
+			"POLICY_EXISTS": "Polityka urlopowa '{{ name }}' już istnieje"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Twój profil został zaktualizowany pomyślnie"
