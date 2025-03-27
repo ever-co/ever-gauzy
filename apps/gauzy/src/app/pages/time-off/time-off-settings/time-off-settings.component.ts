@@ -274,9 +274,7 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent impl
 		// Extract the ID of the selected policy
 		const selectedPolicyId = this.selectedPolicy.id;
 
-		const existingNames = this.timeOffPolicies
-			.filter((p) => p.id !== selectedPolicyId) // Exclure la policy en cours d'édition
-			.map((p) => p.name);
+		const existingNames = this.timeOffPolicies.filter((p) => p.id !== selectedPolicyId).map((p) => p.name);
 
 		if (!validateUniqueString(existingNames, policy.name)) {
 			this._toastrService.danger(this.getTranslation('NOTES.POLICY.POLICY_EXISTS', { name: policy.name }));

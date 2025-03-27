@@ -176,7 +176,9 @@ export class EmployeeLevelComponent extends PaginationFilterBaseComponent implem
 
 			if (validateUniqueString(existingNames, level)) {
 				this.toastrService.danger(
-					this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.ALREADY_EXISTS', level)
+					this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.ALREADY_EXISTS', {
+						name: level
+					})
 				);
 				return;
 			}
@@ -208,10 +210,9 @@ export class EmployeeLevelComponent extends PaginationFilterBaseComponent implem
 
 		if (validateUniqueString(existingNames, employeeLevelName)) {
 			this.toastrService.danger(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.ALREADY_EXISTS',
-					employeeLevelName
-				)
+				this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.ALREADY_EXISTS', {
+					name: employeeLevelName
+				})
 			);
 			return;
 		}

@@ -97,7 +97,7 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent im
 		);
 
 		if (isDuplicate) {
-			this.toastrService.danger(this.getTranslation('TOASTR.MESSAGE.APPROVAL_POLICY_ALREADY_EXISTS', name));
+			this.toastrService.danger(this.getTranslation('TOASTR.MESSAGE.APPROVAL_POLICY_ALREADY_EXISTS', { name }));
 			this.closeDialog();
 			return;
 		}
