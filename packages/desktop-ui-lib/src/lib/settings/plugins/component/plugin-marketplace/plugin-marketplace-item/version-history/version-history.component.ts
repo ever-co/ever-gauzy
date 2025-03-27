@@ -3,7 +3,19 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { IPluginVersion } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BehaviorSubject, catchError, EMPTY, filter, finalize, Observable, switchMap, take, tap } from 'rxjs';
+import {
+	BehaviorSubject,
+	catchError,
+	concatMap,
+	EMPTY,
+	filter,
+	finalize,
+	Observable,
+	Subject,
+	switchMap,
+	take,
+	tap
+} from 'rxjs';
 import { AlertComponent } from '../../../../../../dialogs/alert/alert.component';
 import { Store, ToastrNotificationService } from '../../../../../../services';
 import { PluginService } from '../../../../services/plugin.service';
@@ -17,9 +29,12 @@ import { DialogCreateVersionComponent } from '../dialog-create-version/dialog-cr
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VersionHistoryComponent implements OnInit {
-	public versions$!: Observable<IPluginVersion[]>;
 	public pluginId: string;
+	public versions$ = new BehaviorSubject<IPluginVersion[]>([]);
 	public isLoading$ = new BehaviorSubject<boolean>(false);
+	public isRemoving$ = new BehaviorSubject<boolean>(false);
+	public isRecovering$ = new BehaviorSubject<boolean>(false);
+	public reload$ = new Subject<void>();
 
 	constructor(
 		private readonly toastrService: ToastrNotificationService,
@@ -31,33 +46,48 @@ export class VersionHistoryComponent implements OnInit {
 	) {}
 
 	ngOnInit(): void {
-		this.isLoading$.next(true);
-		this.versions$ = this.route.params.pipe(
-			switchMap((params) => {
-				this.pluginId = params['id'];
-				if (!this.pluginId) {
-					this.isLoading$.next(false);
-					return EMPTY;
-				}
-				return this.pluginService
-					.getVersions(this.pluginId, {
-						relations: ['plugin', 'source'],
-						order: { createdAt: 'DESC' }
-					})
-					.pipe(
-						finalize(() => this.isLoading$.next(false)),
-						catchError((error) => {
-							this.toastrService.error('Error fetching plugin versions');
-							return EMPTY;
-						})
-					);
-			}),
-			untilDestroyed(this)
-		);
+		this.reload$
+			.pipe(
+				concatMap(() => this.load()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		this.route.params
+			.pipe(
+				switchMap((params) => {
+					this.pluginId = params['id'];
+					if (!this.pluginId) {
+						this.isLoading$.next(false);
+						return EMPTY;
+					}
+					return this.load();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	public navigateBack(): void {
-		this.router.navigate(['settings', 'marketplace-plugins', this.pluginId]);
+	public load(): Observable<IPluginVersion[]> {
+		this.isLoading$.next(true);
+		return this.pluginService
+			.getVersions(this.pluginId, {
+				relations: ['plugin', 'source'],
+				order: { createdAt: 'DESC' }
+			})
+			.pipe(
+				tap((versions) => this.versions$.next(versions)),
+				catchError((error) => {
+					this.toastrService.error(`Error fetching plugin versions: ${error.message}`);
+					return EMPTY;
+				}),
+				finalize(() => this.isLoading$.next(false)),
+				untilDestroyed(this)
+			);
+	}
+
+	public async navigateBack(): Promise<void> {
+		await this.router.navigate(['settings', 'marketplace-plugins', this.pluginId]);
 	}
 
 	public edit(version: IPluginVersion): void {
@@ -72,7 +102,10 @@ export class VersionHistoryComponent implements OnInit {
 				filter(Boolean),
 				switchMap((version: IPluginVersion) =>
 					this.pluginService.updateVersion(this.pluginId, version.id, version).pipe(
-						tap(() => this.toastrService.success('Update version successfully!')),
+						tap(() => {
+							this.toastrService.success('Update version successfully!');
+							this.reload$.next();
+						}),
 						catchError((error) => {
 							this.toastrService.error(error);
 							return EMPTY;
@@ -98,15 +131,22 @@ export class VersionHistoryComponent implements OnInit {
 			.onClose.pipe(
 				take(1),
 				filter(Boolean),
+				tap(() => this.isRemoving$.next(true)),
 				switchMap(() =>
 					this.pluginService.deleteVersion(this.pluginId, version.id).pipe(
-						tap(() => this.toastrService.success(`Plugin version ${version.number} removed successfully!`)),
+						tap(() => {
+							this.toastrService.success(`Plugin version ${version.number} removed successfully!`);
+							this.reload$.next();
+						}),
 						catchError((error) => {
 							this.toastrService.error(error);
 							return EMPTY;
 						})
 					)
-				)
+				),
+				finalize(() => {
+					this.isRemoving$.next(false);
+				})
 			)
 			.subscribe();
 	}
@@ -125,15 +165,22 @@ export class VersionHistoryComponent implements OnInit {
 			.onClose.pipe(
 				take(1),
 				filter(Boolean),
+				tap(() => this.isRecovering$.next(true)),
 				switchMap(() =>
 					this.pluginService.restoreVersion(this.pluginId, version.id).pipe(
-						tap(() => this.toastrService.success('Plugin version restored successfully!')),
+						tap(() => {
+							this.toastrService.success('Plugin version restored successfully!');
+							this.reload$.next();
+						}),
 						catchError((error) => {
 							this.toastrService.error(error);
 							return EMPTY;
 						})
 					)
-				)
+				),
+				finalize(() => {
+					this.isRecovering$.next(false);
+				})
 			)
 			.subscribe();
 	}

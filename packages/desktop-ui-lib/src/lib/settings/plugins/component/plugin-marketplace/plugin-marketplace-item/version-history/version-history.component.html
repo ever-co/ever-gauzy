@@ -1,4 +1,5 @@
-@let versions = versions$ | async; @let isLoading = isLoading$ | async; @let isAvailable = versions?.length > 0;
+@let versions = versions$ | async; @let isAvailable = versions?.length > 0; @let isRemoving = isRemoving$ | async; @let
+isRecovering = isRecovering$ | async; @let isLoading = isLoading$ | async;
 
 <nb-card class="content-active first">
 	<nb-card-header class="d-flex justify-content-between header">
@@ -36,8 +37,8 @@
 					status="basic"
 					(click)="restore(version)"
 				>
-					<nb-icon icon="refresh-outline"></nb-icon>
-					{{ 'Restore' | translate }}
+					<nb-icon *gauzySpinnerButton="isRecovering" icon="refresh-outline"></nb-icon>
+					{{ 'Recover' | translate }}
 				</button>
 				}@else{
 				<button
@@ -46,6 +47,7 @@
 					type="button"
 					class="action secondary"
 					status="basic"
+					[disabled]="isRemoving"
 					(click)="edit(version)"
 				>
 					<nb-icon icon="edit-2-outline"></nb-icon>
@@ -60,7 +62,7 @@
 					class="action"
 					(click)="remove(version)"
 				>
-					<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+					<nb-icon *gauzySpinnerButton="isRemoving" status="danger" icon="trash-2-outline"></nb-icon>
 				</button>
 				}
 			</nb-card-footer>
