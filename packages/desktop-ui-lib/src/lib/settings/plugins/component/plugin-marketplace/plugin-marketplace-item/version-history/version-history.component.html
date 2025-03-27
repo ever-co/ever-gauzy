@@ -36,8 +36,12 @@ isRecovering = isRecovering$ | async; @let isLoading = isLoading$ | async;
 					class="action warning"
 					status="basic"
 					(click)="restore(version)"
+					[disabled]="isRecovering"
 				>
-					<nb-icon *gauzySpinnerButton="isRecovering" icon="refresh-outline"></nb-icon>
+					<nb-icon
+						*gauzySpinnerButton="selectedVersionId === version.id && isRecovering"
+						icon="refresh-outline"
+					></nb-icon>
 					{{ 'Recover' | translate }}
 				</button>
 				}@else{
@@ -61,8 +65,13 @@ isRecovering = isRecovering$ | async; @let isLoading = isLoading$ | async;
 					status="basic"
 					class="action"
 					(click)="remove(version)"
+					[disabled]="isRemoving"
 				>
-					<nb-icon *gauzySpinnerButton="isRemoving" status="danger" icon="trash-2-outline"></nb-icon>
+					<nb-icon
+						*gauzySpinnerButton="selectedVersionId === version.id && isRemoving"
+						status="danger"
+						icon="trash-2-outline"
+					></nb-icon>
 				</button>
 				}
 			</nb-card-footer>

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IPluginVersion } from '@gauzy/contracts';
+import { ID, IPluginVersion } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -30,6 +30,7 @@ import { DialogCreateVersionComponent } from '../dialog-create-version/dialog-cr
 })
 export class VersionHistoryComponent implements OnInit {
 	public pluginId: string;
+	public selectedVersionId: ID;
 	public versions$ = new BehaviorSubject<IPluginVersion[]>([]);
 	public isLoading$ = new BehaviorSubject<boolean>(false);
 	public isRemoving$ = new BehaviorSubject<boolean>(false);
@@ -93,6 +94,8 @@ export class VersionHistoryComponent implements OnInit {
 	public edit(version: IPluginVersion): void {
 		if (!version || !this.isOwner) return;
 
+		this.selectedVersionId = version.id;
+
 		this.dialogService
 			.open(DialogCreateVersionComponent, {
 				backdropClass: 'backdrop-blur',
@@ -118,6 +121,10 @@ export class VersionHistoryComponent implements OnInit {
 	}
 
 	public remove(version: IPluginVersion): void {
+		if (!version || !this.isOwner) return;
+
+		this.selectedVersionId = version.id;
+
 		this.dialogService
 			.open(AlertComponent, {
 				context: {
@@ -152,6 +159,10 @@ export class VersionHistoryComponent implements OnInit {
 	}
 
 	public restore(version: IPluginVersion): void {
+		if (!version || !this.isOwner) return;
+
+		this.selectedVersionId = version.id;
+
 		this.dialogService
 			.open(AlertComponent, {
 				context: {
