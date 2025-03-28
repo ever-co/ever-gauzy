@@ -25,7 +25,7 @@ isDisabled= isRemoving || isRecovering || isEditing;
 				</h6>
 			</nb-card-header>
 			<nb-card-body class="changelog">
-				{{ version.changelog }}
+				<p [readMore]="256">{{ version.changelog }}</p>
 			</nb-card-body>
 			@if(isOwner(version)){
 			<nb-card-footer class="version-actions">

@@ -90,7 +90,7 @@ uninstalling || deleting || adding;
 					<!-- Description -->
 					@if(plugin.description) {
 					<div class="description-container mb-4">
-						<p class="plugin-description">{{ plugin.description }}</p>
+						<p [readMore]="256" class="plugin-description">{{ plugin.description }}</p>
 					</div>
 					}
 
@@ -170,7 +170,7 @@ uninstalling || deleting || adding;
 							<div class="label">Version {{ version.number }}</div>
 							<div class="value">{{ version.createdAt | humanize }}</div>
 						</div>
-						<p class="plugin-description">{{ version.changelog }}</p>
+						<p [readMore]="128" class="plugin-description">{{ version.changelog }}</p>
 					</div>
 					}
 
