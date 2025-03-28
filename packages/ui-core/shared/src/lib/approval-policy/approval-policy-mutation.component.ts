@@ -92,13 +92,14 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent im
 			tenantId
 		});
 
-		const isDuplicate = existingPolicies.some(
-			(policy) => !this.approvalPolicy || policy.id !== this.approvalPolicy.id
-		);
+		// For a new policy, any existing policy with the same name is a duplicate
+		// For an existing policy, only other policies with different IDs are duplicates
+		const isDuplicate = this.approvalPolicy
+			? existingPolicies.some((policy) => policy.id !== this.approvalPolicy.id)
+			: existingPolicies.length > 0;
 
 		if (isDuplicate) {
 			this.toastrService.danger(this.getTranslation('TOASTR.MESSAGE.APPROVAL_POLICY_ALREADY_EXISTS', { name }));
-			this.closeDialog();
 			return;
 		}
 

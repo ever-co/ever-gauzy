@@ -276,7 +276,7 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent impl
 
 		const existingNames = this.timeOffPolicies.filter((p) => p.id !== selectedPolicyId).map((p) => p.name);
 
-		if (!validateUniqueString(existingNames, policy.name)) {
+		if (validateUniqueString(existingNames, policy.name)) {
 			this._toastrService.danger(this.getTranslation('NOTES.POLICY.POLICY_EXISTS', { name: policy.name }));
 			return;
 		}

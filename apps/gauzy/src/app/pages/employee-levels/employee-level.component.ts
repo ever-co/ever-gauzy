@@ -206,7 +206,9 @@ export class EmployeeLevelComponent extends PaginationFilterBaseComponent implem
 	async editEmployeeLevel(id: string, employeeLevelName: string) {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const existingNames = this.employeeLevels.map((employeeLevel) => employeeLevel.level);
+		const existingNames = this.employeeLevels
+			.filter((e) => e.id !== id)
+			.map((employeeLevel) => employeeLevel.level);
 
 		if (validateUniqueString(existingNames, employeeLevelName)) {
 			this.toastrService.danger(

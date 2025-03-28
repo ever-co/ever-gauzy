@@ -181,7 +181,7 @@ export class PositionsComponent extends PaginationFilterBaseComponent implements
 
 		if (validateUniqueString(existingNames, name)) {
 			this.toastrService.danger(
-				this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.ALREADY_EXISTS', name)
+				this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.ALREADY_EXISTS', { name })
 			);
 			return;
 		}
@@ -210,7 +210,7 @@ export class PositionsComponent extends PaginationFilterBaseComponent implements
 
 			if (validateUniqueString(existingNames, name)) {
 				this.toastrService.danger(
-					this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.ALREADY_EXISTS', name)
+					this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.ALREADY_EXISTS', { name })
 				);
 				return;
 			}
