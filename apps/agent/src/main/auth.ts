@@ -38,8 +38,8 @@ async function handleCloseAuthWindow(authWindow: BrowserWindow) {
 
 		const dialog = new DesktopDialog(DIALOG_TITLE, DIALOG_MESSAGE, authWindow);
 		dialog.options.buttons = [
-			TranslateService.instant('BUTTON.CANCEL'),
-			TranslateService.instant('BUTTON.EXIT')
+			TranslateService.instant('BUTTONS.CANCEL'),
+			TranslateService.instant('BUTTONS.EXIT')
 		];
 		const button = await dialog.show();
 		switch (button.response) {
