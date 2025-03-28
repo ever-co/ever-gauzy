@@ -17,12 +17,22 @@ import {
 	Get,
 	Param,
 	Post,
+	Put,
 	Query,
 	UseGuards,
 	UseInterceptors
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import {
+	ApiBearerAuth,
+	ApiBody,
+	ApiConsumes,
+	ApiOperation,
+	ApiParam,
+	ApiResponse,
+	ApiSecurity,
+	ApiTags
+} from '@nestjs/swagger';
 import { CreatePluginVersionCommand } from '../../application/commands/create-plugin-version.command';
 import { ListPluginVersionsQuery } from '../../application/queries/list-plugin-versions.query';
 import { PluginOwnerGuard } from '../../core/guards/plugin-owner.guard';
@@ -34,6 +44,9 @@ import { GauzyStorageProvider } from '../storage/providers/gauzy-storage.provide
 import { UploadedPluginStorage } from '../storage/uploaded-plugin.storage';
 import { DeletePluginVersionCommand } from '../../application/commands/delete-plugin-version.command';
 import { RecoverPluginVersionCommand } from '../../application/commands/recover-plugin-version.command';
+import { UpdatePluginVersionDTO } from '../../shared/dto/update-plugin-version.dto';
+import { UpdatePluginVersionCommand } from '../../application/commands/update-plugin-version.command';
+import { PluginVersion } from '../../domain/entities/plugin-version.entity';
 
 @ApiTags('Plugin Versions')
 @ApiBearerAuth('Bearer')
@@ -74,6 +87,7 @@ export class PluginVersionController {
 	@ApiResponse({ status: 201, description: 'Plugin version successfully created.', type: PluginVersionDTO })
 	@ApiResponse({ status: 400, description: 'Bad request - Validation failed.' })
 	@ApiResponse({ status: 404, description: 'Plugin not found.' })
+	@ApiConsumes('multipart/form-data')
 	@UseValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true })
 	@UseInterceptors(
 		LazyFileInterceptor('file', {
@@ -120,6 +134,93 @@ export class PluginVersionController {
 				const gauzyStorageProvider = new GauzyStorageProvider(new FileStorage());
 				await gauzyStorageProvider.delete(file.key);
 			}
+			// Throw a bad request exception with the validation errors
+			throw new BadRequestException(error);
+		}
+	}
+
+	/**
+	 * Updates an existing plugin version by IDs.
+	 */
+	@ApiOperation({
+		summary: 'Update plugin version',
+		description: 'Updates an existing plugin version record based on the provided ID and metadata.'
+	})
+	@ApiParam({
+		name: 'versionId',
+		type: String,
+		format: 'uuid',
+		description: 'UUID of the plugin version to update',
+		required: true
+	})
+	@ApiBody({
+		type: UpdatePluginVersionDTO,
+		description: 'Updated plugin version data transfert object'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Plugin version updated successfully.',
+		type: PluginVersion
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Plugin version record not found.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input provided. Check the response body for error details.'
+	})
+	@ApiResponse({
+		status: HttpStatus.UNAUTHORIZED,
+		description: 'Unauthorized access.'
+	})
+	@ApiConsumes('multipart/form-data')
+	@UseValidationPipe({
+		whitelist: true,
+		transform: true,
+		forbidNonWhitelisted: true
+	})
+	@UseInterceptors(
+		LazyFileInterceptor('file', {
+			storage: () => FileStorageFactory.create('plugins')
+		})
+	)
+	@UseGuards(PluginOwnerGuard)
+	@Put(':versionId')
+	public async update(
+		@Param('versionId', UUIDValidationPipe) versionId: ID,
+		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
+		@Body() input: UpdatePluginVersionDTO,
+		@UploadedPluginStorage() file: FileDTO
+	): Promise<IPluginVersion> {
+		try {
+			if (input.source.type === PluginSourceType.GAUZY) {
+				const gauzyStorageProvider = new GauzyStorageProvider(new FileStorage());
+				// Convert the plain object to a class instance
+				await gauzyStorageProvider.validate(file);
+				// Get metadata
+				const metadata = gauzyStorageProvider.extractMetadata(file);
+
+				// Create a new plugin record
+				return this.commandBus.execute(
+					new UpdatePluginVersionCommand(pluginId, versionId, {
+						...input,
+						source: {
+							...input.source,
+							...metadata
+						}
+					})
+				);
+			} else {
+				return this.commandBus.execute(new UpdatePluginVersionCommand(pluginId, versionId, input));
+			}
+		} catch (error) {
+			// Ensure cleanup of uploaded file
+			if (file?.key) {
+				const gauzyStorageProvider = new GauzyStorageProvider(new FileStorage());
+				await gauzyStorageProvider.delete(file.key);
+			}
+
 			// Throw a bad request exception with the validation errors
 			throw new BadRequestException(error);
 		}
