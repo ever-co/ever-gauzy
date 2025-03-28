@@ -75,7 +75,7 @@ export class VersionHistoryComponent implements OnInit {
 		return this.pluginService
 			.getVersions(this.pluginId, {
 				relations: ['plugin', 'source'],
-				order: { createdAt: 'DESC' }
+				order: { releaseDate: 'DESC' }
 			})
 			.pipe(
 				tap((versions) => this.versions$.next(versions)),

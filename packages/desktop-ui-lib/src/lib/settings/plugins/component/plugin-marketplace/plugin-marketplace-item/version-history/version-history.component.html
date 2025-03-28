@@ -19,7 +19,7 @@ isDisabled= isRemoving || isRecovering || isEditing;
 			<nb-card-header>
 				<h6 class="title">
 					<time [dateTime]="version.createdAt">
-						{{ version.createdAt | date : 'MMMM d, y' }}
+						{{ version.releaseDate | date : 'MMMM d, y' }}
 					</time>
 					&middot; {{ version.number }}
 				</h6>

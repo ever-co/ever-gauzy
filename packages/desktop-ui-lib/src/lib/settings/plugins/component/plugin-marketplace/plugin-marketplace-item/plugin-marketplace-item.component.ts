@@ -134,7 +134,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			this.plugin = await firstValueFrom(
 				this.pluginService.getOne(this.pluginId, {
 					relations: ['versions', 'versions.source', 'uploadedBy', 'uploadedBy.user'],
-					order: { versions: { createdAt: 'DESC' } }
+					order: { versions: { releaseDate: 'DESC' } }
 				})
 			);
 			this.selectedVersion =

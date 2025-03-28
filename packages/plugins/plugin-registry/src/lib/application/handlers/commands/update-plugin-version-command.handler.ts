@@ -19,11 +19,11 @@ export class UpdatePluginVersionCommandHandler implements ICommandHandler<Update
 	) {}
 
 	/**
-	 * Updates a plugin and its associated source and version
+	 * Updates a plugin version and its associated source
 	 *
-	 * @param command - The update plugin command with input data and plugin ID
+	 * @param command - The update plugin version command with input data and plugin ID
 	 * @returns The updated plugin
-	 * @throws NotFoundException if plugin, source, or version is not found
+	 * @throws NotFoundException if source, or version is not found
 	 */
 	public async execute(command: UpdatePluginVersionCommand): Promise<IPluginVersion> {
 		const { input, pluginId, versionId } = command;
@@ -32,18 +32,19 @@ export class UpdatePluginVersionCommandHandler implements ICommandHandler<Update
 			throw new BadRequestException('Plugin version ID is required');
 		}
 
-		// Start a transaction for updating the plugin and related entities
+		// Start a transaction for updating the plugin version and related entities
 		const queryRunner = this.dataSource.createQueryRunner();
 		await queryRunner.connect();
 		await queryRunner.startTransaction();
 
 		try {
-			// Check if plugin exists
+			// Check if plugin version exists
 			const found = await this.versionService.findOneOrFailByIdString(versionId, {
 				where: {
 					pluginId
 				}
 			});
+
 			if (!found.success) {
 				throw new NotFoundException(`Plugin version with ID ${versionId} not found`);
 			}
