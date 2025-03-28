@@ -14,8 +14,8 @@ class AppWindow {
 	splashScreenWindow: SplashScreen;
 	setupWindow: BrowserWindow;
 	rootPath: string;
-	authWindow: AuthWindow;
-	settingWindow: BrowserWindow;
+	authWindow: AuthWindow | null = null;
+	settingWindow: BrowserWindow | null = null;
 	private static instance: AppWindow;
 	constructor(rootPath: string) {
 		if (!AppWindow.instance) {

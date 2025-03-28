@@ -1,8 +1,8 @@
 import { app, BrowserWindow } from 'electron';
 import {
 	LocalStore,
-	DialogErrorHandler,
-	DesktopDialog
+	DesktopDialog,
+	TranslateService
 } from '@gauzy/desktop-lib';
 import AppWindow from './window-manager';
 function getAuthConfig() {
@@ -33,13 +33,13 @@ export async function checkUserAuthentication(rootPath: string) {
 async function handleCloseAuthWindow(authWindow: BrowserWindow) {
 	const authConfig = getAuthConfig();
 	if (!authConfig?.token) {
-		const DIALOG_TITLE = 'TIMER_TRACKER.DIALOG.WARNING';
-		const DIALOG_MESSAGE = 'Application need to login f FWirst to use';
+		const DIALOG_TITLE = TranslateService.instant('TIMER_TRACKER.DIALOG.WARNING');
+		const DIALOG_MESSAGE = TranslateService.instant('TIMER_TRACKER.DIALOG.EXIT_AGENT_CONFIRM');
 
 		const dialog = new DesktopDialog(DIALOG_TITLE, DIALOG_MESSAGE, authWindow);
 		dialog.options.buttons = [
-			'BUTTON.CANCEL',
-			'BUTTON.EXIT'
+			TranslateService.instant('BUTTON.CANCEL'),
+			TranslateService.instant('BUTTON.EXIT')
 		];
 		const button = await dialog.show();
 		switch (button.response) {

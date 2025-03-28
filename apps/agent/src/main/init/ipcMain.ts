@@ -11,7 +11,8 @@ import {
 	TranslateService,
 	AppError,
 	User,
-	UserService
+	UserService,
+	pluginListeners
 } from '@gauzy/desktop-lib';
 import { getApiBaseUrl, delaySync } from '../util';
 import { startServer } from './app';
@@ -122,4 +123,6 @@ export default function AppIpcMain() {
 		log.info(`Update App Setting: ${moment().format()}`);
 		LocalStore.updateApplicationSetting(arg.values);
 	});
+
+	pluginListeners();
 }
