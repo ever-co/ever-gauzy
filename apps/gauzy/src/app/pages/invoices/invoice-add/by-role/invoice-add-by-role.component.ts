@@ -200,7 +200,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 			tax: [0, Validators.compose([Validators.required, Validators.min(0)])],
 			tax2: [0, Validators.compose([Validators.required, Validators.min(0)])],
 			notes: [''],
-			organization: [{ value: this.organization?.name, disabled: true }],
+			organization: [{ value: this.organization?.name, disabled: true }, Validators.required],
 			discountType: [],
 			taxType: [],
 			tax2Type: [],
