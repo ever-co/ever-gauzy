@@ -123,7 +123,7 @@ class AppWindow {
 					this.getPreloadPath(),
 					true
 				);
-				this.settingWindow.webContents.toggleDevTools();
+				// this.settingWindow.webContents.toggleDevTools();
 				this.settingWindow.removeAllListeners('close'); // remove the close default handle
 				// override the close event
 				this.settingWindow.on('close', () => {
