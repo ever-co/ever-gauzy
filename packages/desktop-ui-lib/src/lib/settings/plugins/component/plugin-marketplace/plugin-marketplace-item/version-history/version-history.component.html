@@ -1,5 +1,6 @@
 @let versions = versions$ | async; @let isAvailable = versions?.length > 0; @let isRemoving = isRemoving$ | async; @let
-isRecovering = isRecovering$ | async; @let isLoading = isLoading$ | async;
+isRecovering = isRecovering$ | async; @let isLoading = isLoading$ | async; @let isEditing = isEditing$ | async; @let
+isDisabled= isRemoving || isRecovering || isEditing;
 
 <nb-card class="content-active first">
 	<nb-card-header class="d-flex justify-content-between header">
@@ -36,7 +37,7 @@ isRecovering = isRecovering$ | async; @let isLoading = isLoading$ | async;
 					class="action warning"
 					status="basic"
 					(click)="restore(version)"
-					[disabled]="isRecovering"
+					[disabled]="isDisabled"
 				>
 					<nb-icon
 						*gauzySpinnerButton="selectedVersionId === version.id && isRecovering"
@@ -51,10 +52,13 @@ isRecovering = isRecovering$ | async; @let isLoading = isLoading$ | async;
 					type="button"
 					class="action secondary"
 					status="basic"
-					[disabled]="isRemoving"
+					[disabled]="isDisabled"
 					(click)="edit(version)"
 				>
-					<nb-icon icon="edit-2-outline"></nb-icon>
+					<nb-icon
+						*gauzySpinnerButton="selectedVersionId === version.id && isEditing"
+						icon="edit-2-outline"
+					></nb-icon>
 					{{ 'BUTTONS.EDIT' | translate }}
 				</button>
 				<button
@@ -65,7 +69,7 @@ isRecovering = isRecovering$ | async; @let isLoading = isLoading$ | async;
 					status="basic"
 					class="action"
 					(click)="remove(version)"
-					[disabled]="isRemoving"
+					[disabled]="isDisabled"
 				>
 					<nb-icon
 						*gauzySpinnerButton="selectedVersionId === version.id && isRemoving"

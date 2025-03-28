@@ -44,6 +44,7 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 
 	private createVersionGroup(): FormGroup {
 		return this.fb.group({
+			...(this.version?.id && { id: this.version.id }),
 			number: ['', [Validators.required, Validators.pattern(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/)]],
 			changelog: ['', [Validators.required, Validators.minLength(10)]],
 			releaseDate: [this.today, [Validators.required, this.pastDateValidator()]],
@@ -69,9 +70,11 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 	}
 
 	private createSourceGroup(type: string): FormGroup {
+		const sourceId = this.version?.sourceId ? { id: this.version.sourceId } : {};
 		switch (type) {
 			case PluginSourceType.CDN:
 				return this.fb.group({
+					...sourceId,
 					type: [PluginSourceType.CDN],
 					url: [
 						'',
@@ -86,6 +89,7 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 
 			case PluginSourceType.NPM:
 				return this.fb.group({
+					...sourceId,
 					type: [PluginSourceType.NPM],
 					name: [
 						'',
@@ -102,6 +106,7 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 			case PluginSourceType.GAUZY:
 			default:
 				return this.fb.group({
+					...sourceId,
 					type: [PluginSourceType.GAUZY],
 					file: [null, Validators.required]
 				});

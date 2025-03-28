@@ -35,6 +35,7 @@ export class VersionHistoryComponent implements OnInit {
 	public isLoading$ = new BehaviorSubject<boolean>(false);
 	public isRemoving$ = new BehaviorSubject<boolean>(false);
 	public isRecovering$ = new BehaviorSubject<boolean>(false);
+	public isEditing$ = new BehaviorSubject<boolean>(false);
 	public reload$ = new Subject<void>();
 
 	constructor(
@@ -57,12 +58,13 @@ export class VersionHistoryComponent implements OnInit {
 		this.route.params
 			.pipe(
 				switchMap((params) => {
+					this.isLoading$.next(true);
 					this.pluginId = params['id'];
 					if (!this.pluginId) {
 						this.isLoading$.next(false);
 						return EMPTY;
 					}
-					return this.load();
+					return this.load().pipe(finalize(() => this.isLoading$.next(false)));
 				}),
 				untilDestroyed(this)
 			)
@@ -70,7 +72,6 @@ export class VersionHistoryComponent implements OnInit {
 	}
 
 	public load(): Observable<IPluginVersion[]> {
-		this.isLoading$.next(true);
 		return this.pluginService
 			.getVersions(this.pluginId, {
 				relations: ['plugin', 'source'],
@@ -82,7 +83,6 @@ export class VersionHistoryComponent implements OnInit {
 					this.toastrService.error(`Error fetching plugin versions: ${error.message}`);
 					return EMPTY;
 				}),
-				finalize(() => this.isLoading$.next(false)),
 				untilDestroyed(this)
 			);
 	}
@@ -92,7 +92,7 @@ export class VersionHistoryComponent implements OnInit {
 	}
 
 	public edit(version: IPluginVersion): void {
-		if (!version || !this.isOwner) return;
+		if (!version || !this.pluginId || !this.isOwner) return;
 
 		this.selectedVersionId = version.id;
 
@@ -103,6 +103,7 @@ export class VersionHistoryComponent implements OnInit {
 			})
 			.onClose.pipe(
 				filter(Boolean),
+				tap(() => this.isEditing$.next(true)),
 				switchMap((version: IPluginVersion) =>
 					this.pluginService.updateVersion(this.pluginId, version.id, version).pipe(
 						tap(() => {
@@ -115,6 +116,7 @@ export class VersionHistoryComponent implements OnInit {
 						})
 					)
 				),
+				finalize(() => this.isEditing$.next(false)),
 				untilDestroyed(this)
 			)
 			.subscribe();
