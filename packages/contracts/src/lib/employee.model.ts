@@ -27,7 +27,7 @@ import { CurrenciesEnum } from './currency.model';
 import { IFavorite } from './favorite.model';
 import { IComment } from './comment.model';
 import { IOrganizationSprint } from './organization-sprint.model';
-import {IDateRangePicker} from './date-picker.model';
+import { IDateRangePicker } from './date-picker.model';
 
 export interface IFindMembersInput extends IBasePerTenantAndOrganizationEntityModel {
 	organizationTeamId: ID;
@@ -299,7 +299,7 @@ export interface IMemberEntityBased {
 
 export interface IFindInputQuery extends IEmployeeLevelFindInput {
 	forRange?: IDateRangePicker;
-	withUser?:boolean;
+	withUser?: boolean;
 }
 
 export interface IEmployeeFindInputQuery {
@@ -311,4 +311,11 @@ export interface IEmployeeHourlyRate {
 	billRateCurrency: string;
 	billRateValue: number;
 	minimumBillingRate: number;
+}
+
+export interface IGetEmployeeHourlyRateInput {
+	organizationId: string;
+	employeeIds: string[];
+	startDate: string;
+	endDate: string;
 }

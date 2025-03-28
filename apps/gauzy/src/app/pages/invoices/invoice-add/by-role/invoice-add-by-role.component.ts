@@ -16,12 +16,17 @@ import {
 	IProductTranslatable,
 	ExpenseStatusesEnum,
 	IDateRangePicker,
-	IUser
+	IUser,
+	IGetInvoiceTimeLogs,
+	IReportDayData,
+	IReportDayGroupByEmployee,
+	IGetEmployeeHourlyRateInput,
+	IEmployeeHourlyRate
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { compareDate, distinctUntilChange, extractNumber, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
 import { LocalDataSource } from 'angular2-smart-table';
-import { Observable, firstValueFrom } from 'rxjs';
+import { Observable, firstValueFrom, forkJoin, map } from 'rxjs';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -38,7 +43,9 @@ import {
 	TasksStoreService,
 	TranslatableService,
 	ExpensesService,
-	DateRangePickerBuilderService
+	DateRangePickerBuilderService,
+	InvoiceTimeLogsService,
+	EmployeeRateService
 } from '@gauzy/ui-core/core';
 import { InvoiceEmailMutationComponent } from '../../invoice-email/invoice-email-mutation.component';
 import { InvoiceExpensesSelectorComponent } from '../../table-components/invoice-expense-selector.component';
@@ -49,7 +56,7 @@ import {
 	InvoiceProjectsSelectorComponent,
 	InvoiceTasksSelectorComponent
 } from '../../table-components';
-import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-core/shared';
+import { HoursDurationFormatPipe, IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -120,7 +127,10 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
 		private readonly translatableService: TranslatableService,
 		private readonly organizationSettingService: OrganizationSettingService,
-		private readonly dateRangePickerService: DateRangePickerBuilderService
+		private readonly dateRangePickerService: DateRangePickerBuilderService,
+		private readonly invoiceTimeLogsService: InvoiceTimeLogsService,
+		private readonly employeeRateService: EmployeeRateService,
+		private readonly hoursDurationFormatPipe: HoursDurationFormatPipe
 	) {
 		super(translateService);
 	}
@@ -136,10 +146,10 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
-				tap((organization) => (this.organization = organization)),
-				tap(({ currency }) => (this.currency = currency)),
-				tap((organization) => (this.discountAfterTax = organization.discountAfterTax)),
-				tap(() => {
+				tap((organization) => {
+					this.organization = organization;
+					this.currency = organization.currency;
+					this.discountAfterTax = organization.discountAfterTax;
 					this.initializeForm();
 					this._initializeMethods();
 				}),
@@ -149,8 +159,8 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 		this.store.user$
 			.pipe(
 				filter((user) => !!user),
-				tap((user) => (this.selectedEmployee = user)),
-				tap(() => {
+				tap((user) => {
+					this.selectedEmployee = user;
 					this.initializeForm();
 					this._initializeMethods();
 				}),
@@ -179,8 +189,6 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 				untilDestroyed(this)
 			)
 			.subscribe();
-
-		console.log(this.selectedEmployee);
 	}
 
 	initializeForm() {
@@ -192,7 +200,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 			tax: [0, Validators.compose([Validators.required, Validators.min(0)])],
 			tax2: [0, Validators.compose([Validators.required, Validators.min(0)])],
 			notes: [''],
-			organization: [{ value: this.organization.name, disabled: true }, Validators.required],
+			organization: [{ value: this.organization?.name, disabled: true }],
 			discountType: [],
 			taxType: [],
 			tax2Type: [],
@@ -244,7 +252,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 					},
 					valuePrepareFunction: (cell) => {
 						const employee = cell;
-						return `${employee.user.name}`;
+						return `${employee}`;
 					}
 				};
 				break;
@@ -459,9 +467,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 		const createdInvoice = this.createdInvoice;
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
-
 		const tableSources = await this.smartTableSource.getAll();
-
 		const invoiceItems: IInvoiceItemCreateInput[] = [];
 
 		for (const invoiceItem of tableSources) {
@@ -690,6 +696,53 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 		}
 	}
 
+	private loadInvoiceTimeLogsData(): Observable<number> {
+		const request: IGetInvoiceTimeLogs = {
+			organization: this.organization,
+			organizationId: this.organization?.id,
+			tenantId: this.store.user.tenantId,
+			startDate: this.selectedDateRange.startDate.toISOString(),
+			endDate: this.selectedDateRange.endDate.toISOString(),
+			employeeIds: [this.selectedEmployee.employee.id],
+			groupBy: 'employee',
+			relations: ['employee']
+		};
+
+		return this.invoiceTimeLogsService.getInvoiceTimeLogs(request).pipe(
+			map((data: IReportDayData[]) => {
+				const isEmployeeValid = data.some(
+					(item: IReportDayGroupByEmployee) => item?.employee?.id === this.selectedEmployee?.employee?.id
+				);
+
+				return isEmployeeValid
+					? this.hoursDurationFormatPipe.transform(data.reduce((acc, item) => acc + item.sum, 0))
+					: 0;
+			}),
+			untilDestroyed(this)
+		);
+	}
+
+	private loadInvoiceEmployeeRateData(): Observable<number> {
+		const request: IGetEmployeeHourlyRateInput = {
+			organizationId: this.organization.id,
+			startDate: this.selectedDateRange.startDate.toISOString(),
+			endDate: this.selectedDateRange.endDate.toISOString(),
+			employeeIds: [this.selectedEmployee.employee.id]
+		};
+
+		return this.employeeRateService.getEmployeeHourlyRate(request).pipe(
+			map((data: IEmployeeHourlyRate[]) => {
+				if (data && data.length > 0) {
+					const rate = data[0];
+					return rate.billRateValue;
+				} else {
+					return 0;
+				}
+			}),
+			untilDestroyed(this)
+		);
+	}
+
 	private async _getInvoiceNumber() {
 		const { tenantId } = this.store.user;
 		const invoiceNumber = await this.invoicesService.getHighestInvoiceNumber(tenantId);
@@ -784,10 +837,11 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 
 	async generateTable(generateUninvoiced?: boolean) {
 		if (this.form.invalid) return;
+
 		this.selectedInvoiceType = this.invoiceType;
 		this.smartTableSource.refresh();
 
-		const fakeData = [];
+		const invoiceData = [];
 		let fakePrice = 10;
 		let fakeQuantity = 5;
 
@@ -803,100 +857,67 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 			this.selectedExpenses = expenses.items;
 		}
 
-		switch (this.selectedInvoiceType) {
-			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
-				if (isNotEmpty(this.selectedEmployee)) {
-					const data = {
-						price: fakePrice,
-						quantity: fakeQuantity,
-						selectedItem: this.selectedEmployee?.name,
-						totalValue: fakePrice * fakeQuantity,
-						applyTax: true,
-						applyDiscount: true
-					};
-					fakeData.push(data);
-					fakePrice++;
-				}
-				break;
-			case InvoiceTypeEnum.BY_PROJECT_HOURS:
-				if (isNotEmpty(this.selectedProjects)) {
-					for (const project of this.selectedProjects) {
-						const data = {
-							price: fakePrice,
-							quantity: fakeQuantity,
-							selectedItem: project,
-							totalValue: fakePrice * fakeQuantity,
-							applyTax: true,
-							applyDiscount: true
-						};
-						fakeData.push(data);
-						fakePrice++;
-						fakeQuantity++;
+		const generateData = async () => {
+			switch (this.selectedInvoiceType) {
+				case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
+					if (isNotEmpty(this.selectedEmployee)) {
+						const { time, rate } = await this.getEmployeeData();
+						const data = this.createInvoiceData(this.selectedEmployee?.name, rate, time);
+						invoiceData.push(data);
 					}
-				}
-				break;
-			case InvoiceTypeEnum.BY_TASK_HOURS:
-				if (isNotEmpty(this.selectedTasks)) {
-					for (const task of this.selectedTasks) {
-						const data = {
-							price: fakePrice,
-							quantity: fakeQuantity,
-							selectedItem: task,
-							totalValue: fakePrice * fakeQuantity,
-							applyTax: true,
-							applyDiscount: true
-						};
-						fakeData.push(data);
-						fakePrice++;
-						fakeQuantity++;
+					break;
+				case InvoiceTypeEnum.BY_PROJECT_HOURS:
+					if (isNotEmpty(this.selectedProjects)) {
+						for (const project of this.selectedProjects) {
+							const data = this.createInvoiceData(project, fakePrice, fakeQuantity);
+							invoiceData.push(data);
+							fakePrice++;
+							fakeQuantity++;
+						}
 					}
-				}
-				break;
-			case InvoiceTypeEnum.BY_PRODUCTS:
-				if (isNotEmpty(this.selectedProducts)) {
-					for (const product of this.selectedProducts) {
-						const data = {
-							price: fakePrice,
-							quantity: fakeQuantity,
-							selectedItem: product,
-							totalValue: fakePrice * fakeQuantity,
-							applyTax: true,
-							applyDiscount: true
-						};
-						fakeData.push(data);
-						fakePrice++;
-						fakeQuantity++;
+					break;
+				case InvoiceTypeEnum.BY_TASK_HOURS:
+					if (isNotEmpty(this.selectedTasks)) {
+						for (const task of this.selectedTasks) {
+							const data = this.createInvoiceData(task, fakePrice, fakeQuantity);
+							invoiceData.push(data);
+							fakePrice++;
+							fakeQuantity++;
+						}
 					}
-				}
-				break;
-			case InvoiceTypeEnum.BY_EXPENSES:
-				if (isNotEmpty(this.selectedExpenses)) {
-					for (const expense of this.selectedExpenses) {
-						const data = {
-							price: fakePrice,
-							quantity: fakeQuantity,
-							selectedItem: expense,
-							totalValue: fakePrice * fakeQuantity,
-							applyTax: true,
-							applyDiscount: true
-						};
-						fakeData.push(data);
-						fakePrice++;
-						fakeQuantity++;
+					break;
+				case InvoiceTypeEnum.BY_PRODUCTS:
+					if (isNotEmpty(this.selectedProducts)) {
+						for (const product of this.selectedProducts) {
+							const data = this.createInvoiceData(product, fakePrice, fakeQuantity);
+							invoiceData.push(data);
+							fakePrice++;
+							fakeQuantity++;
+						}
 					}
-				}
-				break;
-			default:
-				break;
-		}
-
-		if (isNotEmpty(fakeData)) {
-			let subtotal = 0;
-			for (const data of fakeData) {
-				let itemTotal = 0;
-				itemTotal += +data.price * +data.quantity;
-				subtotal += itemTotal;
+					break;
+				case InvoiceTypeEnum.BY_EXPENSES:
+					if (isNotEmpty(this.selectedExpenses)) {
+						for (const expense of this.selectedExpenses) {
+							const data = this.createInvoiceData(expense, fakePrice, fakeQuantity);
+							invoiceData.push(data);
+							fakePrice++;
+							fakeQuantity++;
+						}
+					}
+					break;
+				default:
+					break;
 			}
+		};
+
+		await generateData();
+
+		if (isNotEmpty(invoiceData)) {
+			let subtotal = 0;
+			invoiceData.forEach((data) => {
+				subtotal += +data.price * +data.quantity;
+			});
 			this.subtotal = subtotal;
 		} else {
 			this.subtotal = 0;
@@ -904,20 +925,45 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 
 		this.shouldLoadTable = true;
 		this.disableSaveButton = false;
-
 		this.loadSmartTable();
-		this.smartTableSource.load(JSON.parse(JSON.stringify(fakeData)));
-
+		this.smartTableSource.load(JSON.parse(JSON.stringify(invoiceData)));
 		this.calculateTotal();
+	}
+
+	private getEmployeeData() {
+		return new Promise<{ time: number; rate: number }>((resolve, reject) => {
+			forkJoin({
+				time: this.loadInvoiceTimeLogsData(),
+				rate: this.loadInvoiceEmployeeRateData()
+			})
+				.pipe(untilDestroyed(this))
+				.subscribe({
+					next: ({ time, rate }) => {
+						resolve({ time, rate });
+					},
+					error: (err) => {
+						this.toastrService.error(err?.message || 'An unknown error occurred');
+						reject(new Error(`Error: ${err?.message || 'An unknown error occurred'}`));
+					}
+				});
+		});
+	}
+
+	// Helper function to create invoice data objects
+	private createInvoiceData(selectedItem, price: number, quantity: number) {
+		return {
+			price: price,
+			quantity: quantity,
+			selectedItem: selectedItem,
+			totalValue: (Math.round((price * quantity + Number.EPSILON) * 100) / 100).toFixed(2),
+			applyTax: true,
+			applyDiscount: true
+		};
 	}
 
 	selectTask($event) {
 		this.selectedTasks = $event;
 	}
-
-	/*selectOrganizationContact($event) {
-		this.organizationContact = $event;
-	}*/
 
 	selectProject($event) {
 		this.selectedProjects = $event;
