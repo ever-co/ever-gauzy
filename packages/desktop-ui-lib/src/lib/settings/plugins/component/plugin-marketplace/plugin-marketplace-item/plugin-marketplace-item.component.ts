@@ -101,18 +101,20 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 				if (this.installing$.value) {
 					this.pluginService
 						.install({ pluginId: this.pluginId, versionId: this.selectedVersion.id })
-						.pipe(concatMap(() => this.loadPlugin()))
-						.subscribe(() => {
-							this.installing$.next(false);
-						});
+						.pipe(
+							concatMap(() => this.loadPlugin()),
+							finalize(() => this.installing$.next(false))
+						)
+						.subscribe();
 				}
 				if (this.uninstalling$.value) {
 					this.pluginService
 						.uninstall(this.pluginId)
-						.pipe(concatMap(() => this.loadPlugin()))
-						.subscribe(() => {
-							this.uninstalling$.next(false);
-						});
+						.pipe(
+							concatMap(() => this.loadPlugin()),
+							finalize(() => this.uninstalling$.next(false))
+						)
+						.subscribe();
 				}
 				this.toastrService.success(notification.message);
 				break;
@@ -170,7 +172,8 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 				this.needUpdate$.next(installed.version !== plugin.version.number);
 			}
 		} catch (error) {
-			console.error('Installation check failed', error);
+			console.warn('No local installation found');
+			this.installed$.next(false);
 		}
 	}
 
