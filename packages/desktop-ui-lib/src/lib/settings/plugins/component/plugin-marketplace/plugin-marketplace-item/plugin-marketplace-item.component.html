@@ -1,3 +1,8 @@
+@let plugin = plugin$ | async; @let editing = editing$ | async; @let installing = installing$ |async; @let uninstalling
+= uninstalling$ |async; @let deleting = deleting$ | async; @let adding = adding$ | async; @let needUpdate = needUpdate$
+| async; @let installed = installed$ | async; @let loading = loading$ | async; @let disabled = editing || installing ||
+uninstalling || deleting || adding;
+
 <nb-card class="content-active first plugin-details-card">
 	<nb-card-header class="d-flex align-items-center justify-content-between">
 		<div class="d-flex align-items-center">
@@ -45,7 +50,7 @@
 					nbButton
 					status="basic"
 					size="small"
-					[disabled]="installing || uninstalling"
+					[disabled]="disabled"
 					(click)="updatePlugin()"
 					class="ml-3 action primary"
 				>
@@ -57,7 +62,7 @@
 					nbButton
 					status="basic"
 					size="small"
-					[disabled]="installing || uninstalling"
+					[disabled]="disabled"
 					(click)="uninstallPlugin()"
 					class="ml-2 action danger"
 				>
@@ -70,7 +75,7 @@
 					status="basic"
 					size="small"
 					class="action success"
-					[disabled]="installing || uninstalling"
+					[disabled]="disabled"
 					(click)="installPlugin()"
 				>
 					<nb-icon *gauzySpinnerButton="installing" icon="cloud-download-outline" class="mr-1"></nb-icon>
@@ -385,11 +390,11 @@
 				type="button"
 				size="small"
 				status="basic"
-				[disabled]="installing || uninstalling"
+				[disabled]="disabled"
 				(click)="addVersion()"
 				class="mr-2 action primary soft"
 			>
-				<nb-icon icon="plus-outline" class="mr-1"></nb-icon>
+				<nb-icon *gauzySpinnerButton="adding" icon="plus-outline" class="mr-1"></nb-icon>
 				{{ 'BUTTONS.ADD_VERSION' | translate }}
 			</button>
 
@@ -397,12 +402,12 @@
 				nbButton
 				type="button"
 				status="basic"
-				[disabled]="installing || uninstalling"
+				[disabled]="disabled"
 				size="small"
 				(click)="navigateToEdit()"
 				class="mr-2 action secondary"
 			>
-				<nb-icon icon="edit-2-outline" class="mr-1"></nb-icon>
+				<nb-icon *gauzySpinnerButton="editing" icon="edit-2-outline" class="mr-1"></nb-icon>
 				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
 
@@ -411,12 +416,12 @@
 				type="button"
 				status="basic"
 				class="action"
-				[disabled]="installing || uninstalling"
+				[disabled]="disabled"
 				size="small"
 				(click)="delete()"
 				[nbTooltip]="'BUTTONS.DELETE' | translate"
 			>
-				<nb-icon icon="trash-2-outline" status="danger"></nb-icon>
+				<nb-icon *gauzySpinnerButton="deleting" icon="trash-2-outline" status="danger"></nb-icon>
 			</button>
 			}
 		</div>

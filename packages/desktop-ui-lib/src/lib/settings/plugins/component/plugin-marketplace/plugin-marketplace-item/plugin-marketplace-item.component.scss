@@ -312,4 +312,8 @@ nb-tag-list {
   .action.danger {
     color: var(--color-danger-default);
   }
+
+  .action-buttons {
+    display: flex;
+  }
 }
