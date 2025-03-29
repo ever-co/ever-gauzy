@@ -17,12 +17,12 @@ import { IPlugin } from '../../shared/models/plugin.model';
 import { MikroOrmPluginRepository } from '../repositories/mikro-orm-plugin.repository';
 import { PluginVersion } from './plugin-version.entity';
 
+@Index('plugin_name_unique', ['name', 'tenantId', 'organizationId'], { unique: true })
 @MultiORMEntity('plugin', { mikroOrmRepository: () => MikroOrmPluginRepository })
 export class Plugin extends TenantOrganizationBaseEntity implements IPlugin {
 	@ApiProperty({ type: String, description: 'Plugin name' })
 	@IsNotEmpty({ message: 'Plugin name is required' })
 	@IsString({ message: 'Plugin name must be a string' })
-	@Index('plugin_name_unique', ['tenantId', 'organizationId'], { unique: true })
 	@MultiORMColumn()
 	name: string;
 

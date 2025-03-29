@@ -17,6 +17,7 @@ import { IPlugin } from '../../shared/models/plugin.model';
 import { PluginSource } from './plugin-source.entity';
 import { IPluginSource } from '../../shared/models/plugin-source.model';
 
+@Index('version_number_unique', ['number', 'pluginId', 'tenantId', 'organizationId'], { unique: true })
 @MultiORMEntity('plugin_version', { mikroOrmRepository: () => MikroOrmPluginVersionRepository })
 export class PluginVersion extends TenantOrganizationBaseEntity implements IPluginVersion {
 	@ApiProperty({
@@ -28,7 +29,6 @@ export class PluginVersion extends TenantOrganizationBaseEntity implements IPlug
 	@Matches(/^(\d+\.\d+\.\d+)(-[0-9A-Za-z-.]+)?(\+[0-9A-Za-z-.]+)?$/, {
 		message: 'Version must follow SemVer format: MAJOR.MINOR.PATCH[-PRERELEASE][+BUILD]'
 	})
-	@Index('version_number_unique', ['plugin.name', 'tenantId', 'organizationId'], { unique: true })
 	@MultiORMColumn()
 	number: string;
 
