@@ -64,6 +64,8 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 							}),
 							finalize(() => this.installing$.next(false)),
 							catchError((error) => {
+								console.warn('Installation failed, rollback');
+								this.pluginElectronService.uninstall(this.plugin as any);
 								this.toastrService.error(error);
 								this._isChecked$.next(false);
 								return EMPTY;

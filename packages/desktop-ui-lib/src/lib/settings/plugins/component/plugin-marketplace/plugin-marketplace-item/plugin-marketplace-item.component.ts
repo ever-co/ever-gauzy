@@ -103,7 +103,13 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 						.install({ pluginId: this.pluginId, versionId: this.selectedVersion.id })
 						.pipe(
 							concatMap(() => this.loadPlugin()),
-							finalize(() => this.installing$.next(false))
+							finalize(() => this.installing$.next(false)),
+							catchError((error) => {
+								console.warn('Installation failed, rollback');
+								this.pluginElectronService.uninstall(this.plugin$.value as any);
+								this.toastrService.error(error);
+								return EMPTY;
+							})
 						)
 						.subscribe();
 				}
@@ -112,7 +118,11 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 						.uninstall(this.pluginId)
 						.pipe(
 							concatMap(() => this.loadPlugin()),
-							finalize(() => this.uninstalling$.next(false))
+							finalize(() => this.uninstalling$.next(false)),
+							catchError((error) => {
+								this.toastrService.error(error);
+								return EMPTY;
+							})
 						)
 						.subscribe();
 				}
