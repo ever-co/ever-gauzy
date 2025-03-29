@@ -4,11 +4,12 @@ import { IPlugin, PluginSourceType } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BehaviorSubject, catchError, EMPTY, filter, finalize, Observable, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, catchError, EMPTY, filter, finalize, from, Observable, switchMap, tap } from 'rxjs';
 import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { Store, ToastrNotificationService } from '../../../../../services';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
 import { PluginService } from '../../../services/plugin.service';
+import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
 
 @UntilDestroy()
@@ -35,7 +36,15 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 
 	ngOnInit(): void {
 		if (this.plugin) {
+			// Set selector position
 			this._isChecked$.next(this.plugin.installed);
+			// Check if plugin is installed locally
+			from(this.checkInstallation(this.plugin))
+				.pipe(
+					tap((installed) => this._isChecked$.next(!!installed)),
+					untilDestroyed(this)
+				)
+				.subscribe();
 		}
 
 		this.pluginElectronService.status
@@ -49,6 +58,15 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	async checkInstallation(plugin: IPlugin): Promise<IPluginInstalled> {
+		if (!plugin) return;
+		try {
+			return this.pluginElectronService.checkInstallation(plugin.id);
+		} catch (error) {
+			return null;
+		}
 	}
 
 	private handleStatus(notification: { status: string; message?: string }) {
@@ -208,10 +226,11 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 					}
 				}
 			})
-			.onClose.subscribe((isUninstall: boolean) => {
-				if (isUninstall) {
+			.onClose.subscribe(async (isUninstall: boolean) => {
+				const plugin = await this.checkInstallation(this.plugin);
+				if (isUninstall && !!plugin) {
 					this.uninstalling$.next(true);
-					this.pluginElectronService.uninstall(this.plugin as any);
+					this.pluginElectronService.uninstall(plugin);
 				} else {
 					this._isChecked$.next(true);
 				}

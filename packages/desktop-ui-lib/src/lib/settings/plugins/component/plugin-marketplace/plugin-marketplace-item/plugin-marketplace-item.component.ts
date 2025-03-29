@@ -4,7 +4,7 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 
 import { BehaviorSubject, EMPTY, firstValueFrom, Subject, tap } from 'rxjs';
-import { catchError, concatMap, filter, finalize, switchMap, take, takeUntil } from 'rxjs/operators';
+import { catchError, concatMap, filter, finalize, map, switchMap, take, takeUntil } from 'rxjs/operators';
 
 import {
 	ICDNSource,
@@ -25,6 +25,7 @@ import { PluginElectronService } from '../../../services/plugin-electron.service
 import { PluginService } from '../../../services/plugin.service';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
 import { DialogCreateVersionComponent } from './dialog-create-version/dialog-create-version.component';
+import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
 
 @Component({
 	selector: 'gauzy-plugin-marketplace-item',
@@ -175,7 +176,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		if (!plugin) return;
 
 		try {
-			const installed = await this.pluginElectronService.checkInstallation(plugin.id);
+			const installed = await this.checkPlugin(plugin);
 			this.installed$.next(!!installed);
 
 			if (installed && plugin.versions) {
@@ -184,6 +185,15 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		} catch (error) {
 			console.warn('No local installation found');
 			this.installed$.next(false);
+		}
+	}
+
+	async checkPlugin(plugin: IPlugin): Promise<IPluginInstalled> {
+		if (!plugin) return;
+		try {
+			return this.pluginElectronService.checkInstallation(plugin.id);
+		} catch (error) {
+			return null;
 		}
 	}
 
@@ -326,9 +336,11 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			.onClose.pipe(
 				take(1),
 				filter(Boolean),
-				tap(async () => {
+				concatMap(() => this.checkPlugin(this.plugin$.value)),
+				filter(Boolean),
+				tap((plugin) => {
 					this.uninstalling$.next(true);
-					this.pluginElectronService.uninstall(this.plugin$.value as any);
+					this.pluginElectronService.uninstall(plugin);
 				})
 			)
 			.subscribe();
