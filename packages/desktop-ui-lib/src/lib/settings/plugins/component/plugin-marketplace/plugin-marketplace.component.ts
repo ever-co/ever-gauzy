@@ -61,7 +61,10 @@ export class PluginMarketplaceComponent implements OnInit {
 				tap(() => this.isUploading$.next(true)),
 				switchMap((plugin) =>
 					this.pluginService.upload(plugin).pipe(
-						tap(() => this.toastrNotificationService.success('Plugin uploaded successfully!')),
+						tap(() => {
+							this.load();
+							this.toastrNotificationService.success('Plugin uploaded successfully!');
+						}),
 						finalize(() => this.isUploading$.next(false)),
 						catchError(() => {
 							this.toastrNotificationService.error('Plugin upload failed!');
