@@ -42,6 +42,10 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 			from(this.checkInstallation(this.plugin))
 				.pipe(
 					tap((installed) => this._isChecked$.next(!!installed)),
+					catchError(() => {
+						this._isChecked$.next(false);
+						return EMPTY;
+					}),
 					untilDestroyed(this)
 				)
 				.subscribe();
