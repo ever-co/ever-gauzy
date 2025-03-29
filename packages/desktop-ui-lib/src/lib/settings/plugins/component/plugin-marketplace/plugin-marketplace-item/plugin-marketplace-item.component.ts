@@ -4,7 +4,7 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 
 import { BehaviorSubject, EMPTY, firstValueFrom, Subject, tap } from 'rxjs';
-import { catchError, concatMap, filter, finalize, map, switchMap, take, takeUntil } from 'rxjs/operators';
+import { catchError, concatMap, filter, finalize, switchMap, take, takeUntil } from 'rxjs/operators';
 
 import {
 	ICDNSource,
@@ -22,10 +22,10 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { Store, ToastrNotificationService } from '../../../../../services';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
+import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
 import { PluginService } from '../../../services/plugin.service';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
 import { DialogCreateVersionComponent } from './dialog-create-version/dialog-create-version.component';
-import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
 
 @Component({
 	selector: 'gauzy-plugin-marketplace-item',
