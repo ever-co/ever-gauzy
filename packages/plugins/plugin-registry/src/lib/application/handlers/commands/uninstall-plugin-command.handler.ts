@@ -30,7 +30,8 @@ export class UninstallPluginCommandHandler implements ICommandHandler<UninstallP
 		// Find the plugin installation by plugin ID and the current employee ID
 		const found = await this.installationService.findOneOrFailByWhereOptions({
 			pluginId,
-			installedById: RequestContext.currentEmployeeId()
+			installedById: RequestContext.currentEmployeeId(),
+			status: PluginInstallationStatus.INSTALLED
 		});
 
 		// If the installation is not found, throw a NotFoundException

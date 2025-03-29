@@ -74,7 +74,8 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 			// compute installation
 			const installation = await this.pluginInstallationService.findOneOrFailByWhereOptions({
 				pluginId: entity.id,
-				installedById: RequestContext.currentEmployeeId()
+				installedById: RequestContext.currentEmployeeId(),
+				status: PluginInstallationStatus.INSTALLED
 			});
 
 			// Add the computed property to the entity
@@ -86,8 +87,7 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 			// Add the source
 			entity.source = source.success ? source.record : null;
 
-			entity.installed =
-				installation.success && installation.record.status === PluginInstallationStatus.INSTALLED;
+			entity.installed = installation.success;
 
 			this.logger.debug(`Total downloads for plugin ${entity.id}: ${downloadCount}`);
 		} catch (error) {

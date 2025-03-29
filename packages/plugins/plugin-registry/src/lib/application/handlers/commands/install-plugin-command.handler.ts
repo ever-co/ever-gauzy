@@ -35,16 +35,17 @@ export class InstallPluginCommandHandler implements ICommandHandler<InstallPlugi
 		const found = await this.installationService.findOneOrFailByWhereOptions({
 			pluginId,
 			versionId,
-			installedById
+			installedById,
+			status: PluginInstallationStatus.INSTALLED
 		});
 
-		if (found.success && found.record.status === PluginInstallationStatus.INSTALLED) {
+		if (found.success) {
 			// Plugin is already installed, no further action needed
 			return;
 		}
 
 		// Create or update the PluginInstallation entity
-		const installation = Object.assign(found.success ? found.record : new PluginInstallation(), {
+		const installation = Object.assign(new PluginInstallation(), {
 			installedById,
 			pluginId,
 			versionId,
