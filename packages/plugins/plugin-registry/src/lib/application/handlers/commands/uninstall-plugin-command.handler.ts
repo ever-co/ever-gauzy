@@ -36,7 +36,8 @@ export class UninstallPluginCommandHandler implements ICommandHandler<UninstallP
 
 		// If the installation is not found, throw a NotFoundException
 		if (!found.success) {
-			throw new NotFoundException(`Installation of the plugin with ID ${pluginId} not found`);
+			// No further action needed
+			return;
 		}
 
 		// Assign found installation
