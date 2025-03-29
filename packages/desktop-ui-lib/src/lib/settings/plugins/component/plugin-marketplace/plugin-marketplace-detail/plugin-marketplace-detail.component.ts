@@ -1,14 +1,15 @@
-import { ChangeDetectionStrategy, Component, inject, Input, OnInit } from '@angular/core';
-import { NbDialogService } from '@nebular/theme';
-import { UntilDestroy } from '@ngneat/until-destroy';
-import { BehaviorSubject, catchError, EMPTY, filter, Observable, switchMap, tap } from 'rxjs';
-import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
-import { PluginElectronService } from '../../../services/plugin-electron.service';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, NgZone, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
-import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
+import { IPlugin, PluginSourceType } from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
+import { NbDialogService } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { BehaviorSubject, catchError, EMPTY, filter, finalize, Observable, switchMap, tap } from 'rxjs';
+import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
 import { Store, ToastrNotificationService } from '../../../../../services';
+import { PluginElectronService } from '../../../services/plugin-electron.service';
 import { PluginService } from '../../../services/plugin.service';
-import { PluginSourceType, IPlugin } from '@gauzy/contracts';
+import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
 
 @UntilDestroy()
 @Component({
@@ -26,10 +27,86 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	private readonly toastrService = inject(ToastrNotificationService);
 	private readonly router = inject(Router);
 	private readonly store = inject(Store);
+	private readonly ngZone = inject(NgZone);
+	public installing$ = new BehaviorSubject<boolean>(false);
+	public uninstalling$ = new BehaviorSubject<boolean>(false);
+	public editing$ = new BehaviorSubject<boolean>(false);
+	@Output() finish = new EventEmitter<void>();
 
 	ngOnInit(): void {
 		if (this.plugin) {
 			this._isChecked$.next(this.plugin.installed);
+		}
+
+		this.pluginElectronService.status
+			.pipe(
+				distinctUntilChange(),
+				tap(({ status, message }) =>
+					this.ngZone.run(() => {
+						this.handleStatus({ status, message });
+					})
+				),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	private handleStatus(notification: { status: string; message?: string }) {
+		switch (notification.status) {
+			case 'success':
+				if (this.installing$.value) {
+					this.pluginService
+						.install({ pluginId: this.plugin.id, versionId: this.plugin.version.id })
+						.pipe(
+							tap(() => {
+								this.finish.emit();
+								this._isChecked$.next(true);
+							}),
+							finalize(() => this.installing$.next(false)),
+							catchError((error) => {
+								this.toastrService.error(error);
+								this._isChecked$.next(false);
+								return EMPTY;
+							}),
+							untilDestroyed(this)
+						)
+						.subscribe();
+				}
+				if (this.uninstalling$.value) {
+					this.pluginService
+						.uninstall(this.plugin.id)
+						.pipe(
+							tap(() => {
+								this.finish.emit();
+								this._isChecked$.next(false);
+							}),
+							finalize(() => this.uninstalling$.next(false)),
+							catchError((error) => {
+								this.toastrService.error(error);
+								this._isChecked$.next(true);
+								return EMPTY;
+							}),
+							untilDestroyed(this)
+						)
+						.subscribe();
+				}
+				this.toastrService.success(notification.message);
+				break;
+			case 'error':
+				this.installing$.next(false);
+				this.uninstalling$.next(this.installing$.value);
+				this._isChecked$.next(!this._isChecked$.value);
+				this.toastrService.error(notification.message);
+				break;
+			case 'inProgress':
+				this.installing$.next(!this.uninstalling$.value);
+				this.toastrService.info(notification.message);
+				break;
+			default:
+				this.installing$.next(false);
+				this.uninstalling$.next(this.installing$.value);
+				this.toastrService.warn('Unexpected Status');
+				break;
 		}
 	}
 
@@ -53,7 +130,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 					...{
 						pkg: {
 							name: this.plugin.source.name,
-							version: this.plugin.versions[this.plugin.versions.length - 1]
+							version: this.plugin.version.number
 						},
 						registry: {
 							privateURL: this.plugin.source.registry,
@@ -67,7 +144,6 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 			default:
 				break;
 		}
-		this.pluginService.install({ pluginId: this.plugin.id, versionId: this.plugin.version.id }).subscribe();
 	}
 
 	public get isChecked$(): Observable<boolean> {
@@ -103,9 +179,11 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 			})
 			.onClose.pipe(
 				filter(Boolean),
+				tap(() => this.editing$.next(true)),
 				switchMap((plugin: IPlugin) =>
 					this.pluginService.update(this.plugin.id, plugin).pipe(
 						tap(() => this.toastrService.success('Plugin updated successfully!')),
+						finalize(() => this.editing$.next(false)),
 						catchError(() => {
 							this.toastrService.error('Plugin upload failed!');
 							return EMPTY;
@@ -130,9 +208,8 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 			})
 			.onClose.subscribe((isUninstall: boolean) => {
 				if (isUninstall) {
+					this.uninstalling$.next(true);
 					this.pluginElectronService.uninstall(this.plugin as any);
-					this.pluginService.uninstall(this.plugin.id).subscribe();
-					this._isChecked$.next(false);
 				} else {
 					this._isChecked$.next(true);
 				}

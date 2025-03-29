@@ -1,4 +1,5 @@
-@if(plugin) {
+@let installing = installing$ |async; @let uninstalling = uninstalling$ |async; @let showProgress = installing ||
+uninstalling; @if(plugin) {
 <div class="plugin-container">
 	<div class="plugin-details">
 		<div class="plugin-header">
@@ -9,9 +10,17 @@
 	</div>
 	<div class="plugin-actions">
 		@if(isOwner){
-		<nb-icon class="plugin-edit" icon="edit-outline" (click)="editPlugin()"></nb-icon>
-		}
+		<nb-icon
+			*gauzySpinnerButton="editing$ | async"
+			class="plugin-edit"
+			icon="edit-outline"
+			(click)="editPlugin()"
+		></nb-icon>
+		} @if(showProgess){
+		<nb-icon *gauzySpinnerButton="true" icon="swap-outline"></nb-icon>
+		}@else {
 		<nb-toggle [checked]="isChecked$ | async" (checkedChange)="togglePlugin($event)"></nb-toggle>
+		}
 	</div>
 </div>
 }
