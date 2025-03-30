@@ -3678,10 +3678,11 @@
 			"APPROVAL_POLICY_CREATED": "Goedkeuringsbeleid '{{ name }}' is toegevoegd",
 			"APPROVAL_POLICY_UPDATED": "Goedkeuringsbeleid '{{ name }}' is gewijzigd",
 			"APPROVAL_POLICY_DELETED": "Goedkeuringsbeleid '{{ name }}' is verwijderd",
-			"CANDIDATE_CREATED": "Kandidaat '{{ name }}' is toegevoegd aan '{{ organization }}'",
-			"CANDIDATE_ARCHIVED": "Kandidaat '{{ name }}' is gearchiveerd.",
-			"CANDIDATE_REJECTED": "Kandidaat '{{ name }}' is afgewezen.",
-			"CANDIDATE_HIRED": "Kandidaat '{{ name }}' is aangenomen.",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "Goedkeuringsbeleid '{{ name }}' bestaat al",
+			"CANDIDATE_CREATED": "Kandidaat '{{ name }}' is toegevoegd aan '{{ organization }}'.",
+			"CANDIDATE_ARCHIVED": "Kandidaat '{{ name }}' ingesteld als gearchiveerd.",
+			"CANDIDATE_REJECTED": "Kandidaat '{{ name }}' is ingesteld als afgewezen.",
+			"CANDIDATE_HIRED": "Kandidaat '{{ name }}' is aangesteld.",
 			"CANDIDATE_DELETED": "Kandidaat '{{ name }}' is verwijderd",
 			"PRESET_SAVED": "Voorinstelling succesvol opgeslagen",
 			"JOB_APPLIED": "Sollicitatie succesvol ingediend",
@@ -3795,7 +3796,8 @@
 			"EDIT_POLICY": "Verlofbeleid '{{ name }}' is gewijzigd",
 			"DELETE_POLICY": "Verlofbeleid '{{ name }}' is verwijderd",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "Kan beleidsrecord niet aanmaken"
+			"SAVE_ERROR": "Kan geen beleidsrecord maken",
+			"POLICY_EXISTS": "Het verlofbeleid '{{ name }}' bestaat al"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Uw profiel is succesvol bijgewerkt."

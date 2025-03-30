@@ -3665,8 +3665,9 @@
 			"JOB_MATCHING_ERROR": "حدث خطأ أثناء حفظ المعيار، يرجى المحاولة مرة أخرى",
 			"JOB_MATCHING_DELETED": "تمت إزالة المعيار",
 			"APPROVAL_POLICY_CREATED": "تمت إضافة سياسة الموافقة '{{ name }}'",
-			"APPROVAL_POLICY_UPDATED": "تم تغيير سياسة الموافقة '{{ name }}'",
-			"APPROVAL_POLICY_DELETED": "تمت إزالة سياسة الموافقة '{{ name }}'",
+			"APPROVAL_POLICY_UPDATED": "تم تغيير سياسة الموافقة \"{{ name }}\"",
+			"APPROVAL_POLICY_DELETED": "تم إزالة سياسة الموافقة '{{ name }}'",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "سياسة الموافقة '{{ name }}' موجودة بالفعل",
 			"CANDIDATE_CREATED": "تمت إضافة المرشح '{{ name }}' إلى '{{ organization }}'",
 			"CANDIDATE_ARCHIVED": "تم تعيين المرشح '{{ name }}' كمؤرشف.",
 			"CANDIDATE_REJECTED": "تم تعيين المرشح '{{ name }}' كمرفوض.",
@@ -3784,7 +3785,8 @@
 			"EDIT_POLICY": "تم تغيير سياسة الإجازة '{{ name }}'",
 			"DELETE_POLICY": "تمت إزالة سياسة الإجازة '{{ name }}'",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "غير قادر على إنشاء سجل السياسة"
+			"SAVE_ERROR": "غير قادر على إنشاء سجل سياسة",
+			"POLICY_EXISTS": "سياسة الإجازة '{{ name }}' موجودة بالفعل"
 		},
 		"USER": {
 			"EDIT_PROFILE": "تم تحديث ملفك الشخصي بنجاح."

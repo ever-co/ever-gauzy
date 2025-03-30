@@ -3673,6 +3673,7 @@
 			"APPROVAL_POLICY_CREATED": "מדיניות אישור '{{ name }}' נוספה",
 			"APPROVAL_POLICY_UPDATED": "מדיניות אישור '{{ name }}' שונתה",
 			"APPROVAL_POLICY_DELETED": "מדיניות אישור '{{ name }}' הוסרה",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "מדיניות האישור '{{ name }}' כבר קיימת",
 			"CANDIDATE_CREATED": "מועמד '{{ name }}' נוסף ל- '{{ organization }}'",
 			"CANDIDATE_ARCHIVED": "מועמד '{{ name }}' הועבר לארכיון.",
 			"CANDIDATE_REJECTED": "מועמד '{{ name }}' הוגדר כנדחה.",
@@ -3734,7 +3735,8 @@
 			"SCREEN_CAPTURE_CHANGED": "סטטוס צילום מסך שונה עבור {{ name }}",
 			"MODULE_CREATED": "מודול נוצר בהצלחה!",
 			"MODULE_UPDATED": "מודול עודכן בהצלחה!",
-			"MODULE_SAVE_ERROR": "נכשל בשמירת המודול. אנא נסה שוב."
+			"MODULE_SAVE_ERROR": "נכשל בשמירת המודול. אנא נסה שוב.",
+			"PASSWORD_REQUIRED": "נדרשת סיסמה."
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -3789,7 +3791,8 @@
 			"EDIT_POLICY": "מדיניות חופשה '{{ name }}' שונתה",
 			"DELETE_POLICY": "מדיניות חופשה '{{ name }}' הוסרה",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "לא ניתן ליצור רשומת מדיניות"
+			"SAVE_ERROR": "לא ניתן ליצור רשומת מדיניות",
+			"POLICY_EXISTS": "מדיניות חופשה '{{ name }}' כבר קיימת"
 		},
 		"USER": {
 			"EDIT_PROFILE": "הפרופיל שלך עודכן בהצלחה."
