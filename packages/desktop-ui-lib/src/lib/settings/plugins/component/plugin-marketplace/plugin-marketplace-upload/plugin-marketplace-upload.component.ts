@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { IPlugin, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { NbDialogRef, NbStepperComponent, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { debounceTime, filter, Subject, takeUntil, tap } from 'rxjs';
+import { filter, Subject, takeUntil, tap } from 'rxjs';
 
 @Component({
 	selector: 'lib-plugin-marketplace-upload',
@@ -28,15 +28,14 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly dialogRef: NbDialogRef<PluginMarketplaceUploadComponent>,
-		private readonly cdr: ChangeDetectorRef,
 		private readonly toastrService: NbToastrService,
 		private readonly translateService: TranslateService
 	) {}
 
 	ngOnInit(): void {
 		this.initForm();
-		this.patch();
 		this.setupSourceTypeListener();
+		this.patch();
 	}
 
 	private initForm(): void {
@@ -74,11 +73,11 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 			data.version = { ...version };
 			if (source) {
 				data.version.source = { ...source };
+				this.onSourceTypeChange(source.type);
 			}
 		}
 
 		this.pluginForm.patchValue(data);
-		this.cdr.markForCheck();
 	}
 
 	private createVersionGroup(): FormGroup {
@@ -149,7 +148,6 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 	public reset(): void {
 		this.initForm();
 		this.formTouched = false;
-		this.cdr.markForCheck();
 	}
 
 	public submit(): void {
@@ -166,7 +164,6 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 		}
 
 		this.isSubmitting = true;
-		this.cdr.markForCheck();
 
 		try {
 			const pluginData = this.pluginForm.value;
@@ -182,7 +179,6 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 			);
 		} finally {
 			this.isSubmitting = false;
-			this.cdr.markForCheck();
 		}
 	}
 
@@ -192,7 +188,6 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 			?.valueChanges.pipe(
 				distinctUntilChange(),
 				filter(Boolean),
-				debounceTime(300),
 				tap((type: PluginSourceType) => this.onSourceTypeChange(type)),
 				takeUntil(this.destroy$)
 			)
@@ -203,7 +198,8 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 		if (!this.pluginForm) return;
 		const source = this.createSourceGroup(type);
 		const versionControl = this.pluginForm.get('version') as FormGroup;
-		if (versionControl) {
+
+		if (versionControl && source) {
 			if (versionControl.get('source')) {
 				versionControl.removeControl('source');
 			}

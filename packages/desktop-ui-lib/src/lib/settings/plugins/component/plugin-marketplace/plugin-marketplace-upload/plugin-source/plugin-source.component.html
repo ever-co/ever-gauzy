@@ -1,6 +1,6 @@
 <lib-form-section [formGroup]="form" title="{{ 'PLUGIN.FORM.SOURCE' | translate }}">
 	<lib-form-row>
-		<nb-form-field class="form-group full-width">
+		<nb-form-field *ngIf="form.get('type')" class="form-group full-width">
 			<label class="label" for="source-type">{{ 'PLUGIN.FORM.SOURCE_TYPE' | translate }} *</label>
 			<nb-select
 				fullWidth
@@ -21,7 +21,7 @@
 		<div *ngIf="form.get('type')?.value === 'CDN'" class="source-content">
 			<!-- CDN fields here -->
 			<lib-form-row>
-				<nb-form-field class="form-group full-width">
+				<nb-form-field *ngIf="form.get('url')" class="form-group full-width">
 					<label class="label" for="cdn-url">{{ 'PLUGIN.FORM.CDN.URL' | translate }} *</label>
 					<input
 						nbInput
@@ -42,12 +42,12 @@
 			</lib-form-row>
 
 			<lib-form-row>
-				<nb-form-field class="form-group">
+				<nb-form-field *ngIf="form.get('integrity')" class="form-group">
 					<label class="label" for="cdn-integrity">{{ 'PLUGIN.FORM.CDN.INTEGRITY' | translate }}</label>
 					<input nbInput fullWidth id="cdn-integrity" formControlName="integrity" placeholder="sha384-..." />
 				</nb-form-field>
 
-				<nb-form-field class="form-group">
+				<nb-form-field *ngIf="form.get('crossOrigin')" class="form-group">
 					<label class="label" for="cdn-crossorigin">{{ 'PLUGIN.FORM.CDN.CROSS_ORIGIN' | translate }}</label>
 					<input
 						nbInput
@@ -64,7 +64,7 @@
 		<div *ngIf="form.get('type')?.value === 'NPM'" class="source-content">
 			<!-- NPM fields here -->
 			<lib-form-row>
-				<nb-form-field class="form-group full-width">
+				<nb-form-field *ngIf="form.get('name')" class="form-group full-width">
 					<label class="label" for="npm-name">{{ 'PLUGIN.FORM.NPM.PACKAGE_NAME' | translate }} *</label>
 					<input
 						nbInput
@@ -84,7 +84,7 @@
 			</lib-form-row>
 
 			<lib-form-row>
-				<nb-form-field class="form-group">
+				<nb-form-field *ngIf="form.get('registry')" class="form-group">
 					<label class="label" for="npm-registry">{{ 'PLUGIN.FORM.NPM.REGISTRY' | translate }}</label>
 					<input
 						nbInput
@@ -99,7 +99,7 @@
 					</nb-hint>
 				</nb-form-field>
 
-				<nb-form-field class="form-group">
+				<nb-form-field *ngIf="form.get('scope')" class="form-group">
 					<label class="label" for="npm-scope">{{ 'PLUGIN.FORM.NPM.SCOPE' | translate }}</label>
 					<input
 						nbInput
@@ -115,7 +115,7 @@
 				</nb-form-field>
 			</lib-form-row>
 			<lib-form-row>
-				<nb-form-field class="form-group full-width">
+				<nb-form-field *ngIf="form.get('authToken')" class="form-group full-width">
 					<label class="label" for="npm-auth-token">{{ 'PLUGIN.FORM.NPM.AUTH_TOKEN' | translate }}</label>
 					<input
 						nbInput

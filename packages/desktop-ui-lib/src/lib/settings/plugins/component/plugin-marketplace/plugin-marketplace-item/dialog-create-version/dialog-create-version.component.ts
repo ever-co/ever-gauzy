@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { IPlugin, IPluginVersion, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { debounceTime, filter, Subject, takeUntil } from 'rxjs';
+import { filter, Subject, takeUntil, tap } from 'rxjs';
 
 @Component({
 	selector: 'lib-dialog-create-version',
@@ -27,7 +27,6 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly dialogRef: NbDialogRef<DialogCreateVersionComponent>,
-		private readonly cdr: ChangeDetectorRef,
 		private readonly toastrService: NbToastrService,
 		private readonly translateService: TranslateService
 	) {}
@@ -54,8 +53,16 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 
 	private patch(): void {
 		if (!this.version) return;
-		this.versionForm.patchValue(this.version);
-		this.cdr.markForCheck();
+		const version: Partial<IPluginVersion> = {
+			...this.version,
+			...(this.version.source && { source: { ...this.version.source } })
+		}; //create a copy of the version>
+
+		if (version?.source?.type) {
+			this.onSourceTypeChange(version.source.type);
+		}
+
+		this.versionForm.patchValue(version);
 	}
 
 	/**
@@ -116,7 +123,6 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 	public reset(): void {
 		this.initForm();
 		this.formTouched = false;
-		this.cdr.markForCheck();
 	}
 
 	public submit(): void {
@@ -133,7 +139,6 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 		}
 
 		this.isSubmitting = true;
-		this.cdr.markForCheck();
 
 		try {
 			const data = this.versionForm.value;
@@ -149,23 +154,30 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 			);
 		} finally {
 			this.isSubmitting = false;
-			this.cdr.detectChanges();
 		}
 	}
 
 	private setupSourceTypeListener(): void {
 		this.versionForm
 			?.get('source.type')
-			?.valueChanges.pipe(distinctUntilChange(), filter(Boolean), debounceTime(300), takeUntil(this.destroy$))
-			.subscribe((type: PluginSourceType) => this.onSourceTypeChange(type));
+			?.valueChanges.pipe(
+				distinctUntilChange(),
+				filter(Boolean),
+				tap((type: PluginSourceType) => this.onSourceTypeChange(type)),
+				takeUntil(this.destroy$)
+			)
+			.subscribe();
 	}
 
 	public onSourceTypeChange(type: PluginSourceType): void {
 		if (!this.versionForm) return;
 		const source = this.createSourceGroup(type);
-		if (!source) return;
-		this.versionForm.setControl('source', source);
-		this.cdr.markForCheck();
+		if (source) {
+			if (this.versionForm.get('source')) {
+				this.versionForm.removeControl('source');
+			}
+			this.versionForm.addControl('source', source);
+		}
 	}
 
 	private scrollToFirstInvalidControl(): void {
