@@ -5,7 +5,8 @@ import {
 	ElementRef,
 	Inject,
 	OnInit,
-	ViewChild
+	ViewChild,
+	OnDestroy
 } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { IProxyConfig } from '@gauzy/contracts';
@@ -25,7 +26,7 @@ import { SetupService } from './setup.service';
 	styleUrls: ['./setup.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SetupComponent implements OnInit {
+export class SetupComponent implements OnInit, OnDestroy {
 	@ViewChild('dialogOpenBtn') btnDialogOpen: ElementRef<HTMLElement>;
 	@ViewChild('selector') languageSelector: LanguageSelectorComponent;
 	@ViewChild('logBox') logBox: ElementRef;
@@ -99,6 +100,7 @@ export class SetupComponent implements OnInit {
 		});
 
 		electronService.ipcRenderer.send('reset_permissions');
+		this.handleIpcEvent = this.handleIpcEvent.bind(this);
 	}
 	appName: string = this.electronService.remote.app.getName();
 	loading = false;
@@ -499,18 +501,15 @@ export class SetupComponent implements OnInit {
 		this.open(hasBackdrop);
 	}
 
-	ngOnInit(): void {
-		this.languageElectronService.initialize<void>();
-		this.welcomeText();
-		this.electronService.ipcRenderer.on('database_status', (event, arg) => {
-			// this.open(true);
-			if (arg.status) {
-				this._notifier.success(arg.message);
+	handleIpcEvent(_: any, arg: { type: string, data: any }) {
+		if (arg.type === 'database_status') {
+			if (arg.data.status) {
+				this._notifier.success(arg.data.message);
 			} else {
-				this._notifier.warn(arg.message);
+				this._notifier.warn(arg.data.message)
 			}
 
-			if (arg.status && this.runApp) {
+			if (arg.data.status && this.runApp) {
 				this.saveAndRun();
 			} else {
 				const elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
@@ -519,8 +518,18 @@ export class SetupComponent implements OnInit {
 			this.isSaving = false;
 			this.isCheckConnection = false;
 			this._cdr.detectChanges();
-		});
+		}
+	}
+
+	ngOnInit(): void {
+		this.languageElectronService.initialize<void>();
+		this.welcomeText();
+		this.electronService.ipcRenderer.on('setting_page_ipc', this.handleIpcEvent);
 		this.validation();
+	}
+
+	ngOnDestroy(): void {
+	    this.electronService.ipcRenderer.removeListener('setting_page_ipc', this.handleIpcEvent);
 	}
 
 	public get isDesktopTimer(): boolean {
@@ -537,6 +546,10 @@ export class SetupComponent implements OnInit {
 
 	public get isServerApi(): boolean {
 		return this._environment.IS_SERVER_API;
+	}
+
+	public get isAgent(): boolean {
+		return this._environment.IS_AGENT;
 	}
 
 	private scrollToBottom() {

@@ -35,7 +35,14 @@
 							</div>
 						</div>
 					</nb-step>
-					<nb-step [label]="labelTwo" *ngIf="!isDesktopTimer && !isServer">
+					<nb-step
+						[label]="labelTwo"
+						*ngIf="
+							!isDesktopTimer &&
+							!isServer &&
+							!isAgent
+						"
+					>
 						<ng-template #labelTwo>{{
 							'TIMER_TRACKER.SETUP.FUNCTIONALITIES' | translate | uppercase
 						}}</ng-template>
@@ -128,7 +135,10 @@
 							<div class="col-12 text-center margin-content col-center">
 								<div class="row">
 									<!-- <nb-radio-group> -->
-									<div class="col-4 pb-1 col-center" *ngIf="!isDesktopTimer">
+									<div
+										class="col-4 pb-1 col-center"
+										*ngIf="!isDesktopTimer && !isAgent"
+									>
 										<nb-card class="card-small-item">
 											<nb-card-body>
 												<div class="row">
