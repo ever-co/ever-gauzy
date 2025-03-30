@@ -3578,6 +3578,7 @@
 			"APPROVAL_POLICY_CREATED": "Goedkeuringsbeleid '{{ name }}' is toegevoegd",
 			"APPROVAL_POLICY_UPDATED": "Goedkeuringsbeleid '{{ name }}' is gewijzigd",
 			"APPROVAL_POLICY_DELETED": "Goedkeuringsbeleid '{{ name }}' is verwijderd",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "Goedkeuringsbeleid '{{ name }}' bestaat al",
 			"CANDIDATE_CREATED": "Kandidaat '{{ name }}' is toegevoegd aan '{{ organization }}'.",
 			"CANDIDATE_ARCHIVED": "Kandidaat '{{ name }}' ingesteld als gearchiveerd.",
 			"CANDIDATE_REJECTED": "Kandidaat '{{ name }}' is ingesteld als afgewezen.",
@@ -3695,7 +3696,8 @@
 			"EDIT_POLICY": "Het beleid voor verlof '{{ name }}' is gewijzigd.",
 			"DELETE_POLICY": "Het verlofbeleid '{{ name }}' is verwijderd.",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "Kan geen beleidsrecord maken"
+			"SAVE_ERROR": "Kan geen beleidsrecord maken",
+			"POLICY_EXISTS": "Het verlofbeleid '{{ name }}' bestaat al"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Uw profiel is succesvol bijgewerkt."

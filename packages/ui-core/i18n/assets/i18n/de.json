@@ -3574,6 +3574,7 @@
 			"APPROVAL_POLICY_CREATED": "Die Genehmigungsrichtlinie '{{ name }}' wurde hinzugefügt.",
 			"APPROVAL_POLICY_UPDATED": "Die Genehmigungspolitik '{{ name }}' wurde geändert.",
 			"APPROVAL_POLICY_DELETED": "Die Genehmigungsrichtlinie '{{ name }}' wurde entfernt.",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "Genehmigungsrichtlinie '{{ name }}' existiert bereits",
 			"CANDIDATE_CREATED": "Kandidat '{{ name }}' wurde zu '{{ organization }}' hinzugefügt.",
 			"CANDIDATE_ARCHIVED": "Kandidat '{{ name }}' als archiviert festgelegt.",
 			"CANDIDATE_REJECTED": "Kandidat '{{ name }}' als abgelehnt festgelegt.",
@@ -3691,7 +3692,8 @@
 			"EDIT_POLICY": "Die Richtlinie für Freizeit '{{ name }}' wurde geändert.",
 			"DELETE_POLICY": "Die Freizeitpolitik \"{{ name }}\" wurde entfernt.",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "Unfähig, einen Policy-Eintrag zu erstellen"
+			"SAVE_ERROR": "Unfähig, einen Policy-Eintrag zu erstellen",
+			"POLICY_EXISTS": "Die Urlaubsrichtlinie '{{ name }}' existiert bereits"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Ihr Profil wurde erfolgreich aktualisiert."

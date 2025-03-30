@@ -3578,6 +3578,7 @@
 			"APPROVAL_POLICY_CREATED": "A política de aprovação '{{ name }}' foi adicionada.",
 			"APPROVAL_POLICY_UPDATED": "A política de aprovação '{{ name }}' foi alterada.",
 			"APPROVAL_POLICY_DELETED": "A política de aprovação '{{ name }}' foi removida.",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "A política de aprovação '{{ name }}' já existe",
 			"CANDIDATE_CREATED": "O candidato '{{ name }}' foi adicionado à '{{ organization }}'.",
 			"CANDIDATE_ARCHIVED": "Candidato '{{ name }}' definido como arquivado.",
 			"CANDIDATE_REJECTED": "Candidato '{{ name }}' definido como rejeitado.",
@@ -3695,7 +3696,8 @@
 			"EDIT_POLICY": "A política de folgas \"{{ name }}\" foi alterada.",
 			"DELETE_POLICY": "A política de afastamento '{{ name }}' foi removida.",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "Não é possível criar o registro de política."
+			"SAVE_ERROR": "Não é possível criar o registro de política.",
+			"POLICY_EXISTS": "A política de folga '{{ name }}' já existe"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Seu perfil foi atualizado com sucesso."

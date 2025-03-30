@@ -3302,6 +3302,7 @@
 			"APPROVAL_POLICY_CREATED": "crwdns8916:0{{ name }}crwdne8916:0",
 			"APPROVAL_POLICY_UPDATED": "crwdns8918:0{{ name }}crwdne8918:0",
 			"APPROVAL_POLICY_DELETED": "crwdns8920:0{{ name }}crwdne8920:0",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "Approval policy '{{ name }}' tye kany",
 			"CANDIDATE_CREATED": "crwdns8922:0{{ name }}crwdnd8922:0{{ organization }}crwdne8922:0",
 			"CANDIDATE_ARCHIVED": "crwdns8924:0{{ name }}crwdne8924:0",
 			"CANDIDATE_REJECTED": "crwdns8926:0{{ name }}crwdne8926:0",
@@ -3415,7 +3416,8 @@
 			"EDIT_POLICY": "crwdns8934:0{{ name }}crwdne8934:0",
 			"DELETE_POLICY": "crwdns8936:0{{ name }}crwdne8936:0",
 			"ERROR": "crwdns2789:0{{ error }}crwdne2789:0",
-			"SAVE_ERROR": "crwdns8938:0crwdne8938:0"
+			"SAVE_ERROR": "crwdns8938:0crwdne8938:0",
+			"POLICY_EXISTS": "Time off policy '{{ name }}' kiti dong matek"
 		},
 		"USER": {
 			"EDIT_PROFILE": "crwdns2737:0crwdne2737:0"
