@@ -36,7 +36,9 @@ export class TrayIcon {
 				async click() {
 					manager.show(RegisteredWindow.SETTINGS);
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
-					manager.webContents(settingsWindow).send('goto_top_menu');
+					manager.webContents(settingsWindow).send('setting_page_ipc', {
+						type: 'goto_top_menu'
+					});
 					manager.webContents(settingsWindow).send('refresh_menu');
 				}
 			},
@@ -46,7 +48,9 @@ export class TrayIcon {
 				accelerator: 'CmdOrCtrl+U',
 				async click() {
 					manager.show(RegisteredWindow.SETTINGS);
-					manager.webContents(settingsWindow).send('goto_update');
+					manager.webContents(settingsWindow).send('setting_page_ipc', {
+						type: 'goto_update'
+					});
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('refresh_menu');
 				}
@@ -81,7 +85,9 @@ export class TrayIcon {
 				async click() {
 					manager.show(RegisteredWindow.SETTINGS);
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
-					manager.webContents(settingsWindow).send('goto_top_menu');
+					manager.webContents(settingsWindow).send('setting_page_ipc', {
+						type: 'goto_top_menu'
+					});
 					manager.webContents(settingsWindow).send('refresh_menu');
 				}
 			},
@@ -91,7 +97,9 @@ export class TrayIcon {
 				accelerator: 'CmdOrCtrl+U',
 				async click() {
 					manager.show(RegisteredWindow.SETTINGS);
-					manager.webContents(settingsWindow).send('goto_update');
+					manager.webContents(settingsWindow).send('setting_page_ipc', {
+						type: 'goto_update'
+					});
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('refresh_menu');
 				}
@@ -168,7 +176,9 @@ export class TrayIcon {
 				accelerator: 'CmdOrCtrl+U',
 				async click() {
 					manager.show(RegisteredWindow.SETTINGS);
-					manager.webContents(settingsWindow).send('goto_update');
+					manager.webContents(settingsWindow).send('setting_page_ipc', {
+						type: 'goto_update'
+					});
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('refresh_menu');
 				}
@@ -180,7 +190,9 @@ export class TrayIcon {
 				async click() {
 					manager.show(RegisteredWindow.SETTINGS);
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
-					manager.webContents(settingsWindow).send('goto_top_menu');
+					manager.webContents(settingsWindow).send('setting_page_ipc', {
+						type: 'goto_top_menu'
+					});
 					manager.webContents(settingsWindow).send('refresh_menu');
 				}
 			},

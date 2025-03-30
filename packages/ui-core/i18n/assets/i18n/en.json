@@ -4193,7 +4193,8 @@
 			"WANT_LOGOUT": "Are you sure you want to logout?",
 			"ERROR_HANDLER": "Error Handler",
 			"ERROR_OCCURRED": "Error Occurred",
-			"SELECT_FILE": "Select file"
+			"SELECT_FILE": "Select file",
+			"EXIT_AGENT_CONFIRM": "Oops! You need to log in before you can use the app."
 		},
 		"NO_LIMIT": "∞ No Limit",
 		"TASK": "Task",
