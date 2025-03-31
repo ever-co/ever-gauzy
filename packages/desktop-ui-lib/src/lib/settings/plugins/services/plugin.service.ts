@@ -26,7 +26,6 @@ export class PluginService {
 	}
 
 	private createFormData(data: Partial<IPlugin>): FormData {
-		let formData = new FormData();
 		const common = { organizationId: this.store.organizationId, tenantId: this.store.tenantId };
 
 		// Strictly map all properties of ICreatePlugin and IUpdatePlugin
@@ -75,7 +74,7 @@ export class PluginService {
 		const filtered = Object.fromEntries(Object.entries(plugin).filter(([_, value]) => value !== undefined));
 
 		// Append plugin data as JSON
-		formData = this.jsonToFormData(filtered);
+		const formData = this.jsonToFormData(filtered);
 
 		// Extract and append the file from `source.file` (if available)
 		const file = data.source && 'file' in data.source ? data.source.file : undefined;
@@ -146,7 +145,6 @@ export class PluginService {
 	}
 
 	private createVersionFormData(data: IPluginVersion): FormData {
-		let formData = new FormData();
 		const common = { organizationId: this.store.organizationId, tenantId: this.store.tenantId };
 
 		// Strictly map all properties of ICreatePlugin and IUpdatePlugin
@@ -180,7 +178,7 @@ export class PluginService {
 		const filtered = Object.fromEntries(Object.entries(version).filter(([_, value]) => value !== undefined));
 
 		// Append plugin data as JSON
-		formData = this.jsonToFormData(filtered);
+		const formData = this.jsonToFormData(filtered);
 
 		// Extract and append the file from `source.file` (if available)
 		const file = data.source && 'file' in data.source ? data.source.file : undefined;
