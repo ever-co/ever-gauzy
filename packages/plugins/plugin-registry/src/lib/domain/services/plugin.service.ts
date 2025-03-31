@@ -1,5 +1,5 @@
 import { TenantAwareCrudService } from '@gauzy/core';
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Plugin } from '../entities/plugin.entity';
 import { MikroOrmPluginRepository } from '../repositories/mikro-orm-plugin.repository';
 import { TypeOrmPluginRepository } from '../repositories/type-orm-plugin.repository';

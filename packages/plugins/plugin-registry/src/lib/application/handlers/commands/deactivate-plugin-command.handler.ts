@@ -27,18 +27,14 @@ export class DeactivatePluginCommandHandler implements ICommandHandler<Deactivat
 			throw new BadRequestException('Plugin ID is required');
 		}
 
-		try {
-			// Find the plugin
-			const plugin = await this.pluginService.findOneOrFailByIdString(pluginId);
+		// Find the plugin
+		const plugin = await this.pluginService.findOneOrFailByIdString(pluginId);
 
-			// Only update if plugin is currently active
-			if (plugin.success && plugin.record.isActive) {
-				await this.commandBus.execute(
-					new UpdatePluginCommand(pluginId, { id: pluginId, isActive: false, status: PluginStatus.ACTIVE })
-				);
-			}
-		} catch (error) {
-			throw error;
+		// Only update if plugin is currently active
+		if (plugin.success && plugin.record.isActive) {
+			await this.commandBus.execute(
+				new UpdatePluginCommand(pluginId, { id: pluginId, isActive: false, status: PluginStatus.INACTIVE })
+			);
 		}
 	}
 }

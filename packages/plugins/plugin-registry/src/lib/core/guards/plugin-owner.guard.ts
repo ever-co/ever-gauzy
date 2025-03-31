@@ -1,5 +1,5 @@
 import { RequestContext } from '@gauzy/core';
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { PluginService } from '../../domain/services/plugin.service';
 
 @Injectable()

@@ -38,7 +38,7 @@ export class PluginManager implements IPluginManager {
 			await this.updatePlugin(metadata);
 		} else {
 			/* Install plugin */
-			await this.installPlugin({ ...metadata, marketplaceId: config?.marketplaceId }, pathDirname);
+			await this.installPlugin({ ...metadata, marketplaceId: config.marketplaceId }, pathDirname);
 			/* Activate plugin */
 			await this.activatePlugin(metadata.name);
 		}

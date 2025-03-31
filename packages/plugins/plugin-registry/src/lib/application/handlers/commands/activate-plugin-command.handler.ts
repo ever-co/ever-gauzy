@@ -27,18 +27,14 @@ export class ActivatePluginCommandHandler implements ICommandHandler<ActivatePlu
 			throw new BadRequestException('Plugin ID is required');
 		}
 
-		try {
-			// Find the plugin
-			const plugin = await this.pluginService.findOneOrFailByIdString(pluginId);
+		// Find the plugin
+		const plugin = await this.pluginService.findOneOrFailByIdString(pluginId);
 
-			// Only update if plugin is not already active
-			if (plugin.success && !plugin.record.isActive) {
-				await this.commandBus.execute(
-					new UpdatePluginCommand(pluginId, { id: pluginId, isActive: true, status: PluginStatus.INACTIVE })
-				);
-			}
-		} catch (error) {
-			throw error;
+		// Only update if plugin is not already active
+		if (plugin.success && !plugin.record.isActive) {
+			await this.commandBus.execute(
+				new UpdatePluginCommand(pluginId, { id: pluginId, isActive: true, status: PluginStatus.ACTIVE })
+			);
 		}
 	}
 }
