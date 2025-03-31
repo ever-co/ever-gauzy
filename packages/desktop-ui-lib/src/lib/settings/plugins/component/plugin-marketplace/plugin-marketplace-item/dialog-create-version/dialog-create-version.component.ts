@@ -87,7 +87,7 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 						'',
 						[
 							Validators.required,
-							Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)
+							Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})(\/[\w.-]*)*\/?$/)
 						]
 					],
 					integrity: [''],
@@ -105,7 +105,7 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 							Validators.pattern(/^(@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/)
 						]
 					],
-					registry: ['', Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)],
+					registry: ['', Validators.pattern(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})(\/[\w.-]*)*\/?$/)],
 					authToken: [''],
 					scope: ['', Validators.pattern(/^@[a-z0-9-~][a-z0-9-._~]*$/)]
 				});
