@@ -104,7 +104,10 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 						.install({ pluginId: this.pluginId, versionId: this.selectedVersion.id })
 						.pipe(
 							concatMap(() => this.loadPlugin()),
-							finalize(() => this.installing$.next(false)),
+							finalize(() => {
+								this.installing$.next(false);
+								this.toastrService.success(notification.message);
+							}),
 							catchError((error) => {
 								console.warn('Installation failed, rollback');
 								this.pluginElectronService.uninstall(this.plugin$.value as any);
@@ -119,7 +122,10 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 						.uninstall(this.pluginId)
 						.pipe(
 							concatMap(() => this.loadPlugin()),
-							finalize(() => this.uninstalling$.next(false)),
+							finalize(() => {
+								this.uninstalling$.next(false);
+								this.toastrService.success(notification.message);
+							}),
 							catchError((error) => {
 								this.toastrService.error(error);
 								return EMPTY;
@@ -127,15 +133,20 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 						)
 						.subscribe();
 				}
-				this.toastrService.success(notification.message);
 				break;
 			case 'error':
+				if (this.installing$.value || this.uninstalling$.value) {
+					this.toastrService.error(notification.message);
+				}
 				this.installing$.next(false);
 				this.uninstalling$.next(false);
-				this.toastrService.error(notification.message);
+
 				break;
 			case 'inProgress':
-				this.toastrService.info(notification.message);
+				if (this.installing$.value || this.uninstalling$.value) {
+					this.toastrService.info(notification.message);
+				}
+
 				break;
 			default:
 				this.installing$.next(false);

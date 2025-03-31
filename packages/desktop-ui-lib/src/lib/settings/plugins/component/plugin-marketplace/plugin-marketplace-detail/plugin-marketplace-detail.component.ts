@@ -84,7 +84,10 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 								this.finish.emit();
 								this._isChecked$.next(true);
 							}),
-							finalize(() => this.installing$.next(false)),
+							finalize(() => {
+								this.installing$.next(false);
+								this.toastrService.success(notification.message);
+							}),
 							catchError((error) => {
 								console.warn('Installation failed, rollback');
 								this.pluginElectronService.uninstall(this.plugin as any);
@@ -104,7 +107,10 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 								this.finish.emit();
 								this._isChecked$.next(false);
 							}),
-							finalize(() => this.uninstalling$.next(false)),
+							finalize(() => {
+								this.uninstalling$.next(false);
+								this.toastrService.success(notification.message);
+							}),
 							catchError((error) => {
 								this.toastrService.error(error);
 								this._isChecked$.next(true);
@@ -114,18 +120,20 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 						)
 						.subscribe();
 				}
-				this.toastrService.success(notification.message);
 				break;
 			case 'error':
 				if (this.installing$.value || this.uninstalling$.value) {
 					this._isChecked$.next(!this._isChecked$.value);
+					this.toastrService.error(notification.message);
 				}
 				this.installing$.next(false);
 				this.uninstalling$.next(false);
-				this.toastrService.error(notification.message);
+
 				break;
 			case 'inProgress':
-				this.toastrService.info(notification.message);
+				if (this.installing$.value || this.uninstalling$.value) {
+					this.toastrService.info(notification.message);
+				}
 				break;
 			default:
 				this.installing$.next(false);
@@ -141,6 +149,9 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	private installPlugin(): void {
+		if (this.installing$.value) {
+			return;
+		}
 		this.installing$.next(true);
 		switch (this.plugin.source.type) {
 			case PluginSourceType.GAUZY:
@@ -168,6 +179,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 				});
 				break;
 			default:
+				this.installing$.next(false);
 				break;
 		}
 	}
@@ -221,6 +233,9 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	private uninstallPlugin(): void {
+		if (this.uninstalling$.value) {
+			return;
+		}
 		this.dialog
 			.open(AlertComponent, {
 				backdropClass: 'backdrop-blur',
