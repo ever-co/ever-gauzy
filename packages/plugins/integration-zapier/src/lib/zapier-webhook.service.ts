@@ -1,14 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ZapierWebhookSubscription } from './repository/zapier-repository.entity';
+import { ZapierWebhookSubscriptionRepository } from './repository/zapier-repository.entity';
 
 @Injectable()
 export class ZapierWebhookService {
+
+    private readonly logger = new Logger(ZapierWebhookService.name)
     constructor(
-        @InjectRepository(ZapierWebhookSubscription)
-        private readonly subscriptionRepository: Repository<ZapierWebhookSubscription>,
-        private readonly logger = new Logger(ZapierWebhookService.name)
+        @InjectRepository(ZapierWebhookSubscriptionRepository)
+        private readonly subscriptionRepository: Repository<ZapierWebhookSubscriptionRepository>,
     ) {}
 
     async createSubscription(input: {
@@ -17,14 +18,16 @@ export class ZapierWebhookService {
         integrationId?: string;
         tenantId?: string;
         organizationId?: string
-    }): Promise<ZapierWebhookSubscription> {
+    }): Promise<ZapierWebhookSubscriptionRepository> {
         try {
             // Check if subscription already exists to avoid duplicates
             const existing = await this.subscriptionRepository.findOne({
                 where: {
                     targetUrl: input.targetUrl,
                     event: input.event,
-                    integrationId: input.integrationId
+                    integrationId: input.integrationId,
+                    tenantId: input.tenantId,
+                    organizationId: input.organizationId
                 }
             });
 
@@ -40,7 +43,7 @@ export class ZapierWebhookService {
         }
     }
 
-    async findSubscriptions(options: { event?: string; integrationId?: string }): Promise<ZapierWebhookSubscription[]> {
+    async findSubscriptions(options: { event?: string; integrationId?: string }): Promise<ZapierWebhookSubscriptionRepository[]> {
         try {
             return await this.subscriptionRepository.find({ where: options });
         } catch (error) {
