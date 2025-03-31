@@ -93,7 +93,10 @@ export { TimeLogModule, TimeLogService, TimeLogCreateCommand } from './lib/time-
 export { ScreenshotModule, ScreenshotService, ScreenshotCreateCommand } from './lib/time-tracking/screenshot';
 export { TimerStartedEvent, TimerStoppedEvent, TimerStatusUpdatedEvent } from './lib/time-tracking/timer';
 export { TimerService } from './lib/time-tracking/timer/timer.service';
+export { TimerModule } from './lib/time-tracking/timer/timer.module';
 export { GetTimerStatusQuery, StartTimerCommand, StopTimerCommand } from './lib/time-tracking/timer';
+export { QueryHandlers } from './lib/time-tracking/timer/queries/handlers';
+export { CommandHandlers } from './lib/time-tracking/timer/commands/handlers';
 
 export { IncomeModule, IncomeService, IncomeCreateCommand } from './lib/income';
 export { ExpenseModule, ExpenseService, ExpenseCreateCommand } from './lib/expense';
