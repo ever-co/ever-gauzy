@@ -1,9 +1,10 @@
 import { ZObject, Bundle } from 'zapier-platform-core';
+import { environment } from '@gauzy/config';
 
 const perform = async (z: ZObject, bundle: Bundle) => {
   try {
     const response = await z.request({
-      url: `${process.env.API_BASE_URL}/api/timesheet/timer/stop`,
+      url: `${environment.baseUrl}/api/timesheet/timer/stop`,
       method: 'POST',
       headers: {
         Authorization: `Bearer ${bundle.authData['access_token']}`,
