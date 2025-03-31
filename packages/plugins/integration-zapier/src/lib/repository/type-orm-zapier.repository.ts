@@ -1,12 +1,12 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ZapierWebhookSubscription } from './zapier-repository.entity';
+import { ZapierWebhookSubscriptionRepository } from './zapier-repository.entity';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class TypeOrmZapierWebhookSubscriptionRepository extends Repository<ZapierWebhookSubscription> {
+export class TypeOrmZapierWebhookSubscriptionRepository extends Repository<ZapierWebhookSubscriptionRepository> {
 	constructor(
-		@InjectRepository(ZapierWebhookSubscription) readonly repository: Repository<ZapierWebhookSubscription>
+		@InjectRepository(ZapierWebhookSubscriptionRepository) readonly repository: Repository<ZapierWebhookSubscriptionRepository>
 	) {
 		super(repository.target, repository.manager, repository.queryRunner);
 	}

@@ -2,6 +2,7 @@ import * as chalk from 'chalk';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { ZapierModule } from './zapier.module';
+import { ZapierWebhookSubscriptionRepository } from './repository/zapier-repository.entity';
 
 @Plugin({
 	/**
@@ -12,7 +13,7 @@ import { ZapierModule } from './zapier.module';
 	 * No entities needed for Zapier integration since we're using existing
 	 * IntegrationSetting entity
 	 */
-	entities: [],
+	entities: [ZapierWebhookSubscriptionRepository],
 	/**
 	 * A callback that receives the main plugin configuration object and allows
 	 * custom modifications before returning the final configuration.
