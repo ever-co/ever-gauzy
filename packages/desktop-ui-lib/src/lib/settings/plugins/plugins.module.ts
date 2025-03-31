@@ -47,6 +47,10 @@ import { PluginLoaderService } from './services/plugin-loader.service';
 import { PluginService } from './services/plugin.service';
 import { PipeModule } from '../../time-tracker/pipes/pipe.module';
 import { VersionHistoryComponent } from './component/plugin-marketplace/plugin-marketplace-item/version-history/version-history.component';
+import { provideEffects, provideEffectsManager } from '@ngneat/effects-ng';
+import { PluginEffects } from './component/+state/plugin.effect';
+import { PluginQuery } from './component/+state/plugin.query';
+import { PluginStore } from './component/+state/plugin.store';
 
 @NgModule({
 	declarations: [
@@ -98,7 +102,15 @@ import { VersionHistoryComponent } from './component/plugin-marketplace/plugin-m
 		PipeModule
 	],
 	exports: [PluginLayoutComponent],
-	providers: [PluginLoaderService, PluginElectronService, PluginService],
+	providers: [
+		PluginLoaderService,
+		PluginElectronService,
+		PluginService,
+		provideEffectsManager(),
+		provideEffects(PluginEffects),
+		PluginQuery,
+		PluginStore
+	],
 	schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class PluginsModule {}
