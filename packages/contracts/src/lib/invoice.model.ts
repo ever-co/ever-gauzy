@@ -19,7 +19,7 @@ export interface IInvoice extends IBasePerTenantAndOrganizationEntityModel {
 	invoiceDate: Date;
 	invoiceNumber: number;
 	dueDate: Date;
-	currency?: string;
+	currency: string;
 	discountValue: number;
 	discountType: DiscountTaxTypeEnum;
 	paid: boolean;

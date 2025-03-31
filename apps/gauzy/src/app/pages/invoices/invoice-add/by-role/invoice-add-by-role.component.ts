@@ -179,8 +179,6 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 				untilDestroyed(this)
 			)
 			.subscribe();
-
-		console.log(this.selectedEmployee);
 	}
 
 	initializeForm() {
@@ -244,7 +242,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 					},
 					valuePrepareFunction: (cell) => {
 						const employee = cell;
-						return `${employee.user.name}`;
+						return `${employee}`;
 					}
 				};
 				break;
@@ -914,10 +912,6 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 	selectTask($event) {
 		this.selectedTasks = $event;
 	}
-
-	/*selectOrganizationContact($event) {
-		this.organizationContact = $event;
-	}*/
 
 	selectProject($event) {
 		this.selectedProjects = $event;

@@ -627,6 +627,7 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 				id: invoiceData.id,
 				invoiceNumber: invoiceData.invoiceNumber,
 				invoiceDate: invoiceData.invoiceDate,
+				currency: this.organization.currency,
 				dueDate: invoiceData.dueDate,
 				discountValue: invoiceData.discountValue,
 				discountType: invoiceData.discountType,
