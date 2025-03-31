@@ -53,7 +53,7 @@ export class PluginVersion extends TenantOrganizationBaseEntity implements IPlug
 	@ApiPropertyOptional({ type: () => String, description: 'Date when the release was recorded' })
 	@IsOptional()
 	@IsDateString({}, { message: 'Release date must be a valid ISO 8601 date string' })
-	@ValidateIf((o) => o.releaseDate && o.releaseDate <= new Date())
+	@ValidateIf((o) => o.releaseDate !== null && o.releaseDate !== undefined)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	releaseDate: Date;
