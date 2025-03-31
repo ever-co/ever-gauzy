@@ -38,7 +38,7 @@ export class MakeComController {
 	 * @param input - The DTO containing the updated Make.com settings.
 	 * @returns {Promise<IMakeComIntegrationSettings>} A promise that resolves to the updated integration settings.
 	 */
-	@ApiOperation({ summary: 'Update Make.com integration settings for tenant' })
+	@ApiOperation({ summary: 'Set Make.com integration settings for tenant' })
 	@ApiResponse({
 		status: 200,
 		description: 'Make.com settings updated successfully'
