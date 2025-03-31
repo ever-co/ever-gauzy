@@ -78,7 +78,7 @@ export interface IPlugin extends IBasePerTenantAndOrganizationEntityModel {
 	versions: IPluginVersion[]; // List of plugin versions
 	version?: IPluginVersion; // Current version
 
-	installed: boolean; // Semantic version
+	installed: boolean; // Whether the plugin is currently installed
 
 	author?: string; // Optional author information
 	license?: string; // Optional license information
