@@ -1,42 +1,51 @@
+@let installing = query.installing$ |async; @let uninstalling = query.uninstalling$ |async; @let activating =
+query.activating$ |async; @let deactivating = query.deactivating$ |async; @let disabled = installing || uninstalling ||
+activating || deactivating; @let selected = query.plugin$ | async; @let loading = query.isLoading$ | async; @let source
+= sourceData$ | async;
+
 <div class="content-active">
 	<div class="button-container mb-3">
 		<div class="button-add">
-			<button (click)="addPlugin()" status="success" size="small" nbButton>
-				<nb-icon icon="plus-outline"></nb-icon>
+			<button (click)="addPlugin()" [disabled]="disabled" status="success" size="small" nbButton>
+				<nb-icon *gauzySpinnerButton="installing" icon="plus-outline"></nb-icon>
 				{{ 'BUTTONS.ADD_PLUGIN' | translate }}
 			</button>
 		</div>
-		<div *ngIf="plugin" class="button-hide">
+		<div *ngIf="selected" class="button-hide">
 			<button
-				*ngIf="plugin.renderer"
+				*ngIf="selected.renderer"
 				class="action secondary"
 				status="basic"
 				size="small"
 				(click)="view()"
+				[disabled]="disabled"
 				nbButton
 			>
 				<nb-icon icon="eye-outline"></nb-icon>{{ 'BUTTONS.VIEW' | translate }}
 			</button>
 			<button
-				*gauzySpinnerButton="processing"
 				size="small"
-				[status]="plugin?.isActivate ? 'warning' : 'primary'"
+				[status]="selected.isActivate ? 'warning' : 'primary'"
 				class="button-install"
 				(click)="changeStatus()"
+				[disabled]="disabled"
 				nbButton
 			>
-				<nb-icon [icon]="plugin?.isActivate ? 'close-circle-outline' : 'checkmark-circle-outline'"></nb-icon
-				>{{ (plugin?.isActivate ? 'BUTTONS.DEACTIVATE' : 'BUTTONS.ACTIVATE') | translate }}
+				<nb-icon
+					*gauzySpinnerButton="activating || deactivating"
+					[icon]="selected.isActivate ? 'close-circle-outline' : 'checkmark-circle-outline'"
+				></nb-icon
+				>{{ (selected.isActivate ? 'BUTTONS.DEACTIVATE' : 'BUTTONS.ACTIVATE') | translate }}
 			</button>
 			<button
-				*gauzySpinnerButton="processing"
 				size="small"
 				class="action danger"
 				status="basic"
 				(click)="uninstall()"
+				[disabled]="disabled"
 				nbButton
 			>
-				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+				<nb-icon *gauzySpinnerButton="uninstalling" status="danger" icon="trash-2-outline"></nb-icon>
 				{{ 'BUTTONS.UNINSTALL' | translate }}
 			</button>
 		</div>
@@ -47,18 +56,19 @@
 				#pluginTable
 				(userRowSelect)="handleRowSelection($event)"
 				[settings]="smartTableSettings"
-				[source]="sourceData$ | async"
+				[source]="source"
 				style="cursor: pointer"
 			>
 			</angular2-smart-table>
 		</div>
 		<div class="pagination-container">
-			<ga-pagination [source]="sourceData$ | async"></ga-pagination>
+			<ga-pagination [source]="source"></ga-pagination>
 		</div>
 	</div>
 </div>
 <ng-template #noPlugin>
 	<div class="no-data">
-		<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.PLUGIN' | translate"> </ngx-no-data-message>
+		<ngx-no-data-message [message]="(loading ? 'Plugins loading...' : 'SM_TABLE.NO_DATA.PLUGIN') | translate">
+		</ngx-no-data-message>
 	</div>
 </ng-template>
