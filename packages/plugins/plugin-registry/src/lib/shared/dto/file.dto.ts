@@ -21,8 +21,7 @@ export class FileDTO implements UploadedFile {
 	@IsString({ message: 'File key must be a string' })
 	@MaxLength(255, { message: 'File key must not exceed 255 characters' })
 	@Matches(/\.(zip)$/, {
-		message:
-			'File must be a valid video format zip and contain only letters, numbers, spaces, hyphens, or underscores'
+		message: 'File must be a valid ZIP format and contain only letters, numbers, spaces, hyphens, or underscores'
 	})
 	key: string;
 
@@ -62,7 +61,7 @@ export class FileDTO implements UploadedFile {
 	@IsString({ message: 'MIME type must be a string' })
 	@MaxLength(50, { message: 'MIME type must not exceed 50 characters' })
 	@Matches(/^application\/(zip)$/, {
-		message: 'MIME type must be a valid video MIME type video/mp4'
+		message: 'MIME type must be application/zip'
 	})
 	mimetype?: string;
 
