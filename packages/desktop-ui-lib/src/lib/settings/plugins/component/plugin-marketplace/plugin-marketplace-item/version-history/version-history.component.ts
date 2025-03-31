@@ -25,7 +25,7 @@ import { DialogCreateVersionComponent } from '../dialog-create-version/dialog-cr
 @Component({
 	selector: 'lib-version-history',
 	templateUrl: './version-history.component.html',
-	styleUrl: './version-history.component.scss',
+	styleUrls: ['./version-history.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VersionHistoryComponent implements OnInit {
@@ -92,7 +92,7 @@ export class VersionHistoryComponent implements OnInit {
 	}
 
 	public edit(version: IPluginVersion): void {
-		if (!version || !this.pluginId || !this.isOwner) return;
+		if (!version || !this.pluginId || !this.isOwner(version)) return;
 
 		this.selectedVersionId = version.id;
 
@@ -123,7 +123,7 @@ export class VersionHistoryComponent implements OnInit {
 	}
 
 	public remove(version: IPluginVersion): void {
-		if (!version || !this.isOwner) return;
+		if (!version || !this.pluginId || !this.isOwner(version)) return;
 
 		this.selectedVersionId = version.id;
 
@@ -161,7 +161,7 @@ export class VersionHistoryComponent implements OnInit {
 	}
 
 	public restore(version: IPluginVersion): void {
-		if (!version || !this.isOwner) return;
+		if (!version || !this.isOwner(version)) return;
 
 		this.selectedVersionId = version.id;
 

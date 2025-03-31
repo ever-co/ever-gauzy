@@ -13,5 +13,5 @@ export interface IPluginManager {
 	getAllPlugins(): Promise<IPluginMetadata[]>;
 	getOnePlugin(name: string): Promise<IPluginMetadata>;
 	getMenuPlugins(): MenuItemConstructorOptions[];
-	checkInstallation(maketplaceId: ID): Promise<IPluginMetadata>;
+	checkInstallation(marketplaceId: ID): Promise<IPluginMetadata>;
 }

@@ -65,12 +65,13 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 			const version = await this.computeLatestVersion(entity.id);
 
 			// Compute latest source associated to version
-			const source = await this.pluginSourceService.findOneOrFailByWhereOptions({
-				versions: {
-					id: version.id
-				}
-			});
-
+			const source = version
+				? await this.pluginSourceService.findOneOrFailByWhereOptions({
+						versions: {
+							id: version.id
+						}
+				  })
+				: { success: false, record: null };
 			// compute installation
 			const installation = await this.pluginInstallationService.findOneOrFailByWhereOptions({
 				pluginId: entity.id,
@@ -123,7 +124,7 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 	 * @param pluginId The ID of the plugin
 	 * @returns The latest version entity or undefined if none exists
 	 */
-	private async computeLatestVersion(pluginId: ID): Promise<IPluginVersion | undefined> {
+	private async computeLatestVersion(pluginId: ID): Promise<IPluginVersion> {
 		try {
 			this.logger.debug(`Finding latest version for plugin: ${pluginId}`);
 

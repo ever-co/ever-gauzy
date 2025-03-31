@@ -82,7 +82,7 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 
 	private createVersionGroup(): FormGroup {
 		return this.fb.group({
-			...(this.plugin && this.plugin.version.id && { id: [this.plugin.version.id] }),
+			...(this.plugin?.version?.id && { id: [this.plugin.version.id] }),
 			number: ['', [Validators.required, Validators.pattern(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/)]],
 			changelog: ['', [Validators.required, Validators.minLength(10)]],
 			releaseDate: [this.today, [Validators.required, this.pastDateValidator()]],

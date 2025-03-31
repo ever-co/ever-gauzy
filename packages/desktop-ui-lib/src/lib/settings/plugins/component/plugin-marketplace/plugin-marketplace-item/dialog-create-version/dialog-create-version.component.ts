@@ -56,7 +56,7 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 		const version: Partial<IPluginVersion> = {
 			...this.version,
 			...(this.version.source && { source: { ...this.version.source } })
-		}; //create a copy of the version>
+		}; //create a copy of the version
 
 		if (version?.source?.type) {
 			this.onSourceTypeChange(version.source.type);
@@ -206,7 +206,7 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 		return this.versionForm.invalid;
 	}
 
-	public get versionNumber(): number {
+	public get versionNumber(): string {
 		return this.versionForm?.get('number')?.value;
 	}
 

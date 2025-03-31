@@ -18,7 +18,7 @@ export class PluginOwnerGuard implements CanActivate {
 			throw new ForbiddenException('Employee ID is required.');
 		}
 
-		const isOwner = this.pluginService.validatePluginOwnership(pluginId, employeeId);
+		const isOwner = await this.pluginService.validatePluginOwnership(pluginId, employeeId);
 
 		if (!isOwner) {
 			throw new ForbiddenException('You do not have permission to access this plugin.');

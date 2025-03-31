@@ -84,7 +84,6 @@ export class PluginSource extends TenantOrganizationBaseEntity implements IPlugi
 
 	@ApiProperty({ type: Number, description: 'File size of the uploaded plugin (in bytes)' })
 	@IsOptional()
-	@IsNumber({}, { message: 'Size must be a number' })
 	@Min(0, { message: 'Size must be greater than or equal to 0' })
 	@Max(1073741824, { message: 'Size cannot exceed 1GB (1073741824 bytes)' })
 	@Transform(({ value }) => parseFloat(value), { toClassOnly: true })

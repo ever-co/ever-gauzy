@@ -175,8 +175,8 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	public async openPlugin(): Promise<void> {
-		if ('markeplaceId' in this.plugin) {
-			if (!this.plugin.markeplaceId) {
+		if ('marketplaceId' in this.plugin) {
+			if (!this.plugin.marketplaceId) {
 				this.dialog.open(AlertComponent, {
 					context: {
 						data: {

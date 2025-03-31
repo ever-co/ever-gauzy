@@ -29,6 +29,9 @@ export class DeletePluginVersionCommandHandler implements ICommandHandler<Delete
 				throw new NotFoundException(`Plugin version with ID ${versionId} and plugin ID ${pluginId} not found.`);
 			}
 		} catch (error) {
+			if (error instanceof NotFoundException) {
+				throw error;
+			}
 			throw new BadRequestException(`Failed to delete plugin version with ID ${versionId}.`);
 		}
 	}

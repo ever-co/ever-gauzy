@@ -16,7 +16,7 @@ uninstalling; @if(plugin) {
 			icon="edit-outline"
 			(click)="editPlugin()"
 		></nb-icon>
-		} @if(showProgess){
+		} @if(showProgress){
 		<nb-icon *gauzySpinnerButton="true" icon="swap-outline"></nb-icon>
 		}@else {
 		<nb-toggle [checked]="isChecked$ | async" (checkedChange)="togglePlugin($event)"></nb-toggle>

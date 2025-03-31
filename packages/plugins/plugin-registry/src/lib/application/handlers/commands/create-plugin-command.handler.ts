@@ -33,7 +33,7 @@ export class CreatePluginCommandHandler implements ICommandHandler<CreatePluginC
 		const { input } = command;
 
 		// Validate input
-		if (!input || (input.version.source && !input.version)) {
+		if (!input || !input.version || (input.version.source && !input.version)) {
 			throw new BadRequestException('Invalid plugin data: Source requires version information');
 		}
 
