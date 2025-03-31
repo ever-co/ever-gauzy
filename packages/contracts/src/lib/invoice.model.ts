@@ -19,7 +19,7 @@ export interface IInvoice extends IBasePerTenantAndOrganizationEntityModel {
 	invoiceDate: Date;
 	invoiceNumber: number;
 	dueDate: Date;
-	currency?: string;
+	currency: string;
 	discountValue: number;
 	discountType: DiscountTaxTypeEnum;
 	paid: boolean;
@@ -68,8 +68,10 @@ export interface IInvoiceCreateInput extends IBasePerTenantAndOrganizationEntity
 	organizationContactId?: string;
 	organizationContactName?: string;
 	//TODO: GZY-161 - Temporary. Wait for BE changes
-	fromOrganization?: IOrganization | IUser;
-	toContact?: IOrganizationContact | IOrganization;
+	fromOrganization?: IOrganization;
+	toContact?: IOrganizationContact;
+	fromUser?: IUser;
+	toOrganization?: IOrganization;
 	invoiceType?: string;
 	sentTo?: string;
 	tags?: ITag[];
