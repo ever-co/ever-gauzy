@@ -713,7 +713,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		];
 		this.createQuickActionsMenu = [
 			// Divider (Accounting)
-			...(this.store.hasAllPermissions(PermissionsEnum.INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+			...(this.store.hasAnyPermission(PermissionsEnum.INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 				? [
 						{
 							title: this.getTranslation('QUICK_ACTIONS_MENU.CREATE_INVOICE'),
@@ -729,7 +729,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 						}
 				  ]
 				: []),
-			...(this.store.hasAllPermissions(PermissionsEnum.ORG_INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 				? [
 						{
 							title: this.getTranslation('QUICK_ACTIONS_MENU.CREATE_ORG_INVOICE'),
