@@ -29,9 +29,9 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	private readonly router = inject(Router);
 	private readonly store = inject(Store);
 	private readonly ngZone = inject(NgZone);
-	public installing$ = new BehaviorSubject<boolean>(false);
-	public uninstalling$ = new BehaviorSubject<boolean>(false);
-	public editing$ = new BehaviorSubject<boolean>(false);
+	public readonly installing$ = new BehaviorSubject<boolean>(false);
+	public readonly uninstalling$ = new BehaviorSubject<boolean>(false);
+	public readonly editing$ = new BehaviorSubject<boolean>(false);
 	@Output() finish = new EventEmitter<void>();
 
 	ngOnInit(): void {
@@ -117,13 +117,14 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 				this.toastrService.success(notification.message);
 				break;
 			case 'error':
+				if (this.installing$.value || this.uninstalling$.value) {
+					this._isChecked$.next(!this._isChecked$.value);
+				}
 				this.installing$.next(false);
-				this.uninstalling$.next(this.installing$.value);
-				this._isChecked$.next(!this._isChecked$.value);
+				this.uninstalling$.next(false);
 				this.toastrService.error(notification.message);
 				break;
 			case 'inProgress':
-				this.installing$.next(!this.uninstalling$.value);
 				this.toastrService.info(notification.message);
 				break;
 			default:
@@ -140,6 +141,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	private installPlugin(): void {
+		this.installing$.next(true);
 		switch (this.plugin.source.type) {
 			case PluginSourceType.GAUZY:
 			case PluginSourceType.CDN:

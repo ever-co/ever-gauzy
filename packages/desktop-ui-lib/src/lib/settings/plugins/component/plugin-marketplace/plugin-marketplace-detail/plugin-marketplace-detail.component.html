@@ -1,5 +1,5 @@
-@let installing = installing$ |async; @let uninstalling = uninstalling$ |async; @let showProgress = installing ||
-uninstalling; @if(plugin) {
+@let installing = installing$ |async; @let uninstalling = uninstalling$ |async; @let checked = isChecked$ | async; @let
+showProgress = installing || uninstalling; @if(plugin) {
 <div class="plugin-container">
 	<div class="plugin-details">
 		<div class="plugin-header">
@@ -19,7 +19,7 @@ uninstalling; @if(plugin) {
 		} @if(showProgress){
 		<nb-icon *gauzySpinnerButton="true" icon="swap-outline"></nb-icon>
 		}@else {
-		<nb-toggle [checked]="isChecked$ | async" (checkedChange)="togglePlugin($event)"></nb-toggle>
+		<nb-toggle [disabled]="showProgress" [checked]="checked" (checkedChange)="togglePlugin($event)"></nb-toggle>
 		}
 	</div>
 </div>

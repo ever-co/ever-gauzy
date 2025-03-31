@@ -131,11 +131,10 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 				break;
 			case 'error':
 				this.installing$.next(false);
-				this.uninstalling$.next(this.installing$.value);
+				this.uninstalling$.next(false);
 				this.toastrService.error(notification.message);
 				break;
 			case 'inProgress':
-				this.installing$.next(!this.uninstalling$.value);
 				this.toastrService.info(notification.message);
 				break;
 			default:
