@@ -50,6 +50,38 @@ export class PluginElectronService {
 		return this.electronService.ipcRenderer.invoke('plugins::lazy-loader', pluginPath);
 	}
 
+	public progress<T>(callBack?: (message?: string) => T): Observable<{ message?: string }> {
+		return new Observable<{ status: string; message?: string }>((observer) => {
+			const channel = 'plugin::status';
+
+			const listener = (_: any, arg: { status: string; message?: string }) => {
+				try {
+					switch (arg.status) {
+						case 'success':
+							observer.next(arg);
+							observer.complete();
+							break;
+						case 'inProgress':
+							callBack?.(arg.message);
+							break;
+						case 'error':
+						default:
+							observer.error(arg.message);
+							break;
+					}
+				} catch (error) {
+					observer.error(error);
+				}
+			};
+
+			this.electronService.ipcRenderer.on(channel, listener);
+
+			return () => {
+				this.electronService.ipcRenderer.removeListener(channel, listener);
+			};
+		});
+	}
+
 	public get status(): Observable<{ status: string; message?: string }> {
 		return new Observable((observer) => {
 			const channel = 'plugin::status';
