@@ -28,4 +28,5 @@ export class PluginVersionActions {
 	}));
 	public static setCurrentPluginId = createAction('[Plugin] Set current plugin ID', (pluginId: ID) => ({ pluginId }));
 	public static selectVersion = createAction('[Plugin] Select Version', (version: IPluginVersion) => ({ version }));
+	public static reset = createAction('[Plugin] Reset Version');
 }

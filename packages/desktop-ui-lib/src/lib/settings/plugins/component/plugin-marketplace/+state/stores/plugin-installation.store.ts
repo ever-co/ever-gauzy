@@ -1,11 +1,16 @@
 import { Injectable } from '@angular/core';
 import { Store, StoreConfig } from '@datorama/akita';
+import { IPlugin } from '@gauzy/contracts';
 
 export interface IPluginInstallationState {
 	installing: boolean;
 	uninstalling: boolean;
 	activating: boolean;
 	deactivating: boolean;
+	toggle: {
+		isChecked: boolean;
+		plugin: IPlugin;
+	};
 }
 
 export function createInitialInstallationState(): IPluginInstallationState {
@@ -13,7 +18,11 @@ export function createInitialInstallationState(): IPluginInstallationState {
 		installing: false,
 		uninstalling: false,
 		activating: false,
-		deactivating: false
+		deactivating: false,
+		toggle: {
+			isChecked: false,
+			plugin: null
+		}
 	};
 }
 
@@ -22,5 +31,13 @@ export function createInitialInstallationState(): IPluginInstallationState {
 export class PluginInsatallationStore extends Store<IPluginInstallationState> {
 	constructor() {
 		super(createInitialInstallationState());
+	}
+
+	public setToggle(state: Partial<IPluginInstallationState['toggle']>): void {
+		this.update({ toggle: { ...this.getToggle(), ...state } });
+	}
+
+	public getToggle(): IPluginInstallationState['toggle'] {
+		return this.getValue().toggle;
 	}
 }

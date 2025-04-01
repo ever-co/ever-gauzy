@@ -1,5 +1,6 @@
 @let installing = installationQuery.installing$ |async; @let uninstalling = installationQuery.unistalling$|async; @let
-checked = isChecked$ | async; @let showProgress = installing || uninstalling; @let editing = marketplaceQuery.updating$
+checked = isChecked$ | async; @let toggle = installationQuery.toggle$ | async ; @let disabled = installing ||
+uninstalling; @let showProgress = disabled && plugin.id === toggle.plugin.id; @let editing = marketplaceQuery.updating$
 | async; @if(plugin) {
 <div class="plugin-container">
 	<div class="plugin-details">
@@ -15,7 +16,7 @@ checked = isChecked$ | async; @let showProgress = installing || uninstalling; @l
 		} @if(showProgress){
 		<nb-icon *gauzySpinnerButton="true" icon="swap-outline"></nb-icon>
 		}@else {
-		<nb-toggle [disabled]="showProgress" [checked]="checked" (checkedChange)="togglePlugin($event)"></nb-toggle>
+		<nb-toggle [disabled]="disabled" [checked]="checked" (checkedChange)="togglePlugin($event)"></nb-toggle>
 		}
 	</div>
 </div>

@@ -10,6 +10,7 @@ export class PluginInstallationQuery extends Query<IPluginInstallationState> {
 	public readonly unistalling$: Observable<boolean> = this.select((state) => state.uninstalling);
 	public readonly activating$: Observable<boolean> = this.select((state) => state.activating);
 	public readonly deactivating$: Observable<boolean> = this.select((state) => state.deactivating);
+	public readonly toggle$: Observable<IPluginInstallationState['toggle']> = this.select((state) => state.toggle);
 
 	constructor(readonly pluginInstallationStore: PluginInsatallationStore) {
 		super(pluginInstallationStore);

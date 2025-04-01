@@ -4,19 +4,7 @@ import { IPlugin, PluginSourceType } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	BehaviorSubject,
-	catchError,
-	distinctUntilChanged,
-	filter,
-	from,
-	map,
-	Observable,
-	of,
-	switchMap,
-	take,
-	tap
-} from 'rxjs';
+import { BehaviorSubject, catchError, filter, from, map, Observable, of, take, tap } from 'rxjs';
 import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
 import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
 import { PluginInstallationQuery } from '../+state/queries/plugin-installation.query';
@@ -52,17 +40,14 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	ngOnInit(): void {
 		// Set selector position
 		this._isChecked$.next(this.plugin.installed);
-		// Listern to plugin change
-		this.marketplaceQuery.plugin$
+		// Set selector on installation
+		this.installationQuery.toggle$
 			.pipe(
-				distinctUntilChanged(),
-				filter(Boolean), // Ensures we only process non-null values
-				filter((plugin) => plugin.id === this.plugin.id), // Filter in a separate step for clarity
-				switchMap((plugin) => this.check(plugin)),
+				filter(({ plugin }) => !!plugin && this.plugin.id === plugin.id),
+				tap(({ isChecked }) => this._isChecked$.next(isChecked)),
 				untilDestroyed(this)
 			)
-			.subscribe((isChecked) => this._isChecked$.next(isChecked));
-
+			.subscribe();
 		// Check local installation
 		this.check(this.plugin).subscribe((isChecked) => this._isChecked$.next(isChecked));
 	}
@@ -85,7 +70,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	public togglePlugin(checked: boolean): void {
-		this._isChecked$.next(checked);
+		this.action.dispatch(PluginInstallationActions.toggle({ isChecked: checked, plugin: this.plugin }));
 		checked ? this.installPlugin() : this.uninstallPlugin();
 	}
 
@@ -97,7 +82,8 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 					PluginInstallationActions.install({
 						url: this.plugin.source.url,
 						contextType: 'cdn',
-						marketplaceId: this.plugin.id
+						marketplaceId: this.plugin.id,
+						versionId: this.plugin.version.id
 					})
 				);
 				break;
@@ -115,7 +101,8 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 							}
 						},
 						contextType: 'npm',
-						marketplaceId: this.plugin.id
+						marketplaceId: this.plugin.id,
+						versionId: this.plugin.version.id
 					})
 				);
 				break;

@@ -7,7 +7,6 @@ import { catchError, concatMap, filter, take, takeUntil } from 'rxjs/operators';
 
 import {
 	ICDNSource,
-	ID,
 	IGauzySource,
 	INPMSource,
 	IPlugin,
@@ -259,6 +258,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	installPlugin(isUpdate = false): void {
 		const source = isUpdate ? this.plugin.source : this.selectedVersion.source;
+		const versionId = isUpdate ? this.plugin.version.id : this.selectedVersion.id;
 
 		switch (source.type) {
 			case PluginSourceType.GAUZY:
@@ -267,7 +267,8 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 					PluginInstallationActions.install({
 						url: source.url,
 						contextType: 'cdn',
-						marketplaceId: this.pluginId
+						marketplaceId: this.pluginId,
+						versionId
 					})
 				);
 				break;
@@ -285,7 +286,8 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 							}
 						},
 						contextType: 'npm',
-						marketplaceId: this.pluginId
+						marketplaceId: this.pluginId,
+						versionId
 					})
 				);
 				break;
@@ -294,7 +296,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	public get selectedVersionNumber(): ID {
+	public get selectedVersionNumber(): string {
 		return this.selectedVersion.number;
 	}
 

@@ -105,9 +105,12 @@ export class PluginVersionEffects {
 				this.pluginService.deleteVersion(pluginId, versionId).pipe(
 					tap(() => {
 						this.pluginVersionStore.update((state) => ({
-							versions: state.versions.map((version) =>
-								version.id === pluginId ? { ...version, deletedAt: new Date() } : version
-							)
+							version: state.version && { ...state.version, deletedAt: new Date() },
+							versions: [
+								...state.versions.map((version) =>
+									version.id === pluginId ? { ...version, deletedAt: new Date() } : version
+								)
+							]
 						}));
 						this.toastrService.success('Delete plugin version successfully!');
 					}),
@@ -132,13 +135,16 @@ export class PluginVersionEffects {
 				this.pluginService.restoreVersion(pluginId, versionId).pipe(
 					tap(() => {
 						this.pluginVersionStore.update((state) => ({
-							versions: state.versions.map((version) =>
-								version.id === pluginId ? { ...version, deletedAt: null } : version
-							)
+							version: state.version && { ...state.version, deletedAt: null },
+							versions: [
+								...state.versions.map((version) =>
+									version.id === pluginId ? { ...version, deletedAt: null } : version
+								)
+							]
 						}));
-						this.toastrService.success('Delete plugin version successfully!');
+						this.toastrService.success('Restore plugin version successfully!');
 					}),
-					finalize(() => this.pluginVersionStore.update({ deleting: false })),
+					finalize(() => this.pluginVersionStore.update({ restoring: false })),
 					catchError((error) => {
 						this.toastrService.error(error.message || error);
 						return EMPTY;
@@ -163,6 +169,17 @@ export class PluginVersionEffects {
 			tap(({ version }) => {
 				this.pluginVersionStore.update({ version });
 			})
+		)
+	);
+
+	reset$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginVersionActions.reset),
+			tap(() =>
+				this.pluginVersionStore.update({
+					versions: []
+				})
+			)
 		)
 	);
 }

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
-import { catchError, EMPTY, filter, finalize, switchMap, tap } from 'rxjs';
+import { catchError, EMPTY, filter, finalize, from, switchMap, tap } from 'rxjs';
 import { ToastrNotificationService } from '../../../../services';
 import { PluginElectronService } from '../../services/plugin-electron.service';
 import { PluginActions } from './plugin.action';
@@ -20,13 +20,16 @@ export class PluginEffects {
 		this.action$.pipe(
 			ofType(PluginActions.getPlugins),
 			tap(() => this.pluginStore.setLoading(true)), // Start loading state
-			switchMap(() => this.pluginService.plugins),
-			tap((plugins) => this.pluginStore.update({ plugins })),
-			finalize(() => this.pluginStore.setLoading(false)), // Always stop loading
-			catchError((error) => {
-				this.toastrService.error(error); // Handle error properly
-				return EMPTY; // Return a fallback observable
-			})
+			switchMap(() =>
+				from(this.pluginService.plugins).pipe(
+					tap((plugins) => this.pluginStore.update({ plugins })),
+					finalize(() => this.pluginStore.setLoading(false)), // Always stop loading
+					catchError((error) => {
+						this.toastrService.error(error); // Handle error properly
+						return EMPTY; // Return a fallback observable
+					})
+				)
+			)
 		)
 	);
 
@@ -34,14 +37,17 @@ export class PluginEffects {
 		this.action$.pipe(
 			ofType(PluginActions.getPlugin),
 			tap(() => this.pluginStore.setLoading(true)), // Start loading state
-			switchMap(({ name }) => this.pluginService.plugin(name)),
-			filter(Boolean), // Filter out null or undefined responses
-			tap((plugin) => this.pluginStore.update({ plugin })),
-			finalize(() => this.pluginStore.setLoading(false)), // Always stop loading
-			catchError((error) => {
-				this.toastrService.error(error); // Handle the error
-				return EMPTY; // Return a fallback value to keep the stream alive
-			})
+			switchMap(({ name }) =>
+				from(this.pluginService.plugin(name)).pipe(
+					filter(Boolean), // Filter out null or undefined responses
+					tap((plugin) => this.pluginStore.update({ plugin })),
+					finalize(() => this.pluginStore.setLoading(false)), // Always stop loading
+					catchError((error) => {
+						this.toastrService.error(error); // Handle the error
+						return EMPTY; // Return a fallback value to keep the stream alive
+					})
+				)
+			)
 		)
 	);
 

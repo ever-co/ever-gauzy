@@ -50,12 +50,12 @@ export class PluginMarketplaceEffects {
 			tap(() => this.pluginMarketplaceStore.setLoading(true)), // Start loading state
 			switchMap(({ params = {} }) =>
 				this.pluginService.getAll(params).pipe(
-					tap(({ items, total }) => {
+					tap(({ items, total }) =>
 						this.pluginMarketplaceStore.update((state) => ({
 							plugins: [...new Map([...state.plugins, ...items].map((item) => [item.id, item])).values()],
 							count: total
-						}));
-					}),
+						}))
+					),
 					finalize(() => this.pluginMarketplaceStore.setLoading(false)), // Always stop loading
 					catchError((error) => {
 						this.toastrService.error(error.message || error); // Handle error properly
@@ -125,7 +125,7 @@ export class PluginMarketplaceEffects {
 				this.pluginService.delete(id).pipe(
 					tap(() => {
 						this.pluginMarketplaceStore.update((state) => ({
-							plugins: state.plugins.filter((plugin) => plugin.id !== id)
+							plugins: [...state.plugins.filter((plugin) => plugin.id !== id)]
 						}));
 						this.toastrService.success('Delete plugin successfully!');
 					}),

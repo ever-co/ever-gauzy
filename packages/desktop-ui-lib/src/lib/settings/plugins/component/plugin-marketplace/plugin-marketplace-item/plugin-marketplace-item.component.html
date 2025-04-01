@@ -1,4 +1,5 @@
-@let plugin = plugin$ | async; @let editing = marketplaceQuery.updating$ | async; @let installing =
+@let plugin = plugin$ | async; @let editing = marketplaceQuery.updating$ | async; @let toggle =
+installationQuery.toggle$ | async; @let isSelected = toggle.plugin.id === plugin.id; @let installing =
 installationQuery.installing$ |async; @let uninstalling = installationQuery.unistalling$ |async; @let deleting =
 marketplaceQuery.deleting$ | async; @let adding = versionQuery.creating$ | async; @let needUpdate = needUpdate$ | async;
 @let installed = installed$ | async; @let loading = marketplaceQuery.isLoading$ | async; @let disabled = editing ||
@@ -67,7 +68,11 @@ installing || uninstalling || deleting || adding;
 					(click)="uninstallPlugin()"
 					class="ml-2 action danger"
 				>
-					<nb-icon *gauzySpinnerButton="uninstalling" status="danger" icon="slash-outline"></nb-icon>
+					<nb-icon
+						*gauzySpinnerButton="uninstalling && isSelected"
+						status="danger"
+						icon="slash-outline"
+					></nb-icon>
 					{{ 'BUTTONS.UNINSTALL' | translate }}
 				</button>
 				}@else {
@@ -79,7 +84,11 @@ installing || uninstalling || deleting || adding;
 					[disabled]="disabled"
 					(click)="installPlugin()"
 				>
-					<nb-icon *gauzySpinnerButton="installing" icon="cloud-download-outline" class="mr-1"></nb-icon>
+					<nb-icon
+						*gauzySpinnerButton="installing && isSelected"
+						icon="cloud-download-outline"
+						class="mr-1"
+					></nb-icon>
 					{{ 'BUTTONS.INSTALL' | translate }}
 				</button>
 				}
@@ -395,7 +404,7 @@ installing || uninstalling || deleting || adding;
 				(click)="addVersion()"
 				class="mr-2 action primary soft"
 			>
-				<nb-icon *gauzySpinnerButton="adding" icon="plus-outline" class="mr-1"></nb-icon>
+				<nb-icon *gauzySpinnerButton="adding && isSelected" icon="plus-outline" class="mr-1"></nb-icon>
 				{{ 'BUTTONS.ADD_VERSION' | translate }}
 			</button>
 
@@ -408,7 +417,7 @@ installing || uninstalling || deleting || adding;
 				(click)="navigateToEdit()"
 				class="mr-2 action secondary"
 			>
-				<nb-icon *gauzySpinnerButton="editing" icon="edit-2-outline" class="mr-1"></nb-icon>
+				<nb-icon *gauzySpinnerButton="editing && isSelected" icon="edit-2-outline" class="mr-1"></nb-icon>
 				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
 
@@ -422,7 +431,7 @@ installing || uninstalling || deleting || adding;
 				(click)="delete()"
 				[nbTooltip]="'BUTTONS.DELETE' | translate"
 			>
-				<nb-icon *gauzySpinnerButton="deleting" icon="trash-2-outline" status="danger"></nb-icon>
+				<nb-icon *gauzySpinnerButton="deleting && isSelected" icon="trash-2-outline" status="danger"></nb-icon>
 			</button>
 			}
 		</div>

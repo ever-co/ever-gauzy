@@ -20,6 +20,7 @@ export interface IPlugin {
 	installed?: boolean;
 	name: string;
 	version: string;
+	versionId?: string;
 	isActivate: boolean;
 	initialize(): void;
 	dispose(): void;

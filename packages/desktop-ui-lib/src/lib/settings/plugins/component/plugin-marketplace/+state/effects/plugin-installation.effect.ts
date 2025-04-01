@@ -39,7 +39,7 @@ export class PluginInstallationEffects {
 
 							return pluginId ? this.handleUninstallation(pluginId) : of(this.handleProgress(message));
 						}),
-						finalize(() => this.pluginInstallationStore.update({ installing: false })),
+						finalize(() => this.pluginInstallationStore.update({ uninstalling: false })),
 						catchError((error) => this.handleError(error))
 					);
 			})
@@ -57,7 +57,7 @@ export class PluginInstallationEffects {
 					.progress<void, IPlugin>((message) => this.toastrService.info(message))
 					.pipe(
 						switchMap(({ message, data }) => {
-							const { marketplaceId: pluginId, version: versionId } = data || {};
+							const { marketplaceId: pluginId, versionId } = data || {};
 
 							return pluginId && versionId
 								? this.handlePluginInstallation(pluginId, versionId)
@@ -66,6 +66,15 @@ export class PluginInstallationEffects {
 						finalize(() => this.pluginInstallationStore.update({ installing: false })),
 						catchError((error) => this.handleError(error))
 					);
+			})
+		)
+	);
+
+	toggle$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginInstallationActions.toggle),
+			tap(({ isChecked, plugin }) => {
+				this.pluginInstallationStore.setToggle({ isChecked, plugin });
 			})
 		)
 	);
@@ -86,9 +95,12 @@ export class PluginInstallationEffects {
 					};
 				});
 
+				this.pluginInstallationStore.setToggle({ isChecked: true });
+
 				this.toastrService.success('Install plugin successfully!');
 			}),
 			catchError(async (error) => {
+				this.pluginInstallationStore.setToggle({ isChecked: false });
 				await this.revertFailedInstallation(pluginId);
 				throw error;
 			})
@@ -132,9 +144,11 @@ export class PluginInstallationEffects {
 					plugins: [...updatedPlugins],
 					plugin: updatedPlugin
 				});
+				this.pluginInstallationStore.setToggle({ isChecked: false });
 				this.toastrService.success(`Uninstall plugin successfully!`);
 			}),
 			catchError((error) => {
+				this.pluginInstallationStore.setToggle({ isChecked: true });
 				throw error;
 			})
 		);

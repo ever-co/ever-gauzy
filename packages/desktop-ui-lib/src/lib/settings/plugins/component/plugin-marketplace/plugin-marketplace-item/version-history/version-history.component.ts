@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ID, IPluginVersion } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
@@ -18,7 +18,7 @@ import { DialogCreateVersionComponent } from '../dialog-create-version/dialog-cr
 	styleUrls: ['./version-history.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class VersionHistoryComponent implements OnInit {
+export class VersionHistoryComponent implements OnInit, OnDestroy {
 	constructor(
 		private readonly dialogService: NbDialogService,
 		private readonly route: ActivatedRoute,
@@ -125,5 +125,9 @@ export class VersionHistoryComponent implements OnInit {
 
 	public get pluginId(): ID {
 		return this.query.pluginId;
+	}
+
+	ngOnDestroy(): void {
+		this.action.dispatch(PluginVersionActions.reset());
 	}
 }

@@ -19,7 +19,7 @@ query.updating$ | async; @let isDisabled= isRemoving || isRecovering || isEditin
 		<nb-card class="version">
 			<nb-card-header>
 				<h6 class="title">
-					<time [dateTime]="version.createdAt">
+					<time [dateTime]="version.releaseDate">
 						{{ version.releaseDate | date : 'MMMM d, y' }}
 					</time>
 					&middot; {{ version.number }}
