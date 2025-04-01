@@ -7,6 +7,7 @@ export interface IPluginMetadata {
 	logo?: string;
 	author?: string;
 	marketplaceId?: string;
+	versionId?: string;
 }
 
 export type IPluginMetadataCreate = IPluginMetadata & {
@@ -15,7 +16,10 @@ export type IPluginMetadataCreate = IPluginMetadata & {
 };
 
 export type IPluginMetadataUpdate = Partial<
-	Pick<IPluginMetadataCreate, 'isActivate' | 'name' | 'version' | 'description' | 'logo' | 'marketplaceId'> & {
+	Pick<
+		IPluginMetadataCreate,
+		'isActivate' | 'name' | 'version' | 'description' | 'logo' | 'marketplaceId' | 'versionId'
+	> & {
 		id?: string;
 	}
 >;

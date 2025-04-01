@@ -26,7 +26,7 @@ export class PluginManager implements IPluginManager {
 		return this.instance;
 	}
 
-	public async downloadPlugin<U extends { contextType: PluginDownloadContextType; marketplaceId: ID }>(
+	public async downloadPlugin<U extends { contextType: PluginDownloadContextType; marketplaceId: ID; versionId: ID }>(
 		config: U
 	): Promise<IPluginMetadata> {
 		logger.info(`Downloading plugin...`);
@@ -35,10 +35,13 @@ export class PluginManager implements IPluginManager {
 		const { metadata, pathDirname } = await context.execute({ ...config, pluginPath: this.pluginPath });
 		const plugin = this.plugins.get(metadata.name);
 		if (plugin) {
-			await this.updatePlugin(metadata);
+			await this.updatePlugin({ ...metadata, versionId: config.versionId });
 		} else {
 			/* Install plugin */
-			await this.installPlugin({ ...metadata, marketplaceId: config.marketplaceId }, pathDirname);
+			await this.installPlugin(
+				{ ...metadata, marketplaceId: config.marketplaceId, versionId: config.versionId },
+				pathDirname
+			);
 			/* Activate plugin */
 			await this.activatePlugin(metadata.name);
 		}
@@ -72,7 +75,8 @@ export class PluginManager implements IPluginManager {
 		await this.pluginMetadataService.update({
 			name: pluginMetadata.name,
 			description: pluginMetadata.description,
-			version: pluginMetadata.version
+			version: pluginMetadata.version,
+			versionId: pluginMetadata.versionId ? pluginMetadata.versionId : null
 		});
 
 		if (persistance.isActivate) {
@@ -97,6 +101,7 @@ export class PluginManager implements IPluginManager {
 				description: pluginMetadata.description,
 				main: pluginMetadata.main,
 				marketplaceId: pluginMetadata.marketplaceId ? pluginMetadata.marketplaceId : null,
+				versionId: pluginMetadata.versionId ? pluginMetadata.versionId : null,
 				renderer: pluginMetadata.renderer ? path.join(pluginDir, pluginMetadata.renderer) : null,
 				pathname: pluginDir
 			});
