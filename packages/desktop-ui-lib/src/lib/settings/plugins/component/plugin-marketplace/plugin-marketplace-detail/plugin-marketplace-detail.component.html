@@ -1,5 +1,6 @@
-@let installing = installing$ |async; @let uninstalling = uninstalling$ |async; @let checked = isChecked$ | async; @let
-showProgress = installing || uninstalling; @if(plugin) {
+@let installing = installationQuery.installing$ |async; @let uninstalling = installationQuery.unistalling$|async; @let
+checked = isChecked$ | async; @let showProgress = installing || uninstalling; @let editing = marketplaceQuery.updating$
+| async; @if(plugin) {
 <div class="plugin-container">
 	<div class="plugin-details">
 		<div class="plugin-header">
@@ -10,12 +11,7 @@ showProgress = installing || uninstalling; @if(plugin) {
 	</div>
 	<div class="plugin-actions">
 		@if(isOwner){
-		<nb-icon
-			*gauzySpinnerButton="editing$ | async"
-			class="plugin-edit"
-			icon="edit-outline"
-			(click)="editPlugin()"
-		></nb-icon>
+		<nb-icon *gauzySpinnerButton="editing" class="plugin-edit" icon="edit-outline" (click)="editPlugin()"></nb-icon>
 		} @if(showProgress){
 		<nb-icon *gauzySpinnerButton="true" icon="swap-outline"></nb-icon>
 		}@else {

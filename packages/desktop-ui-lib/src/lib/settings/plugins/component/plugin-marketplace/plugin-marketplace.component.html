@@ -1,5 +1,5 @@
-@let plugins = plugins$ | async; @let available = (plugins$ | async)?.length > 0; @let isLoading = isLoading$ | async;
-@let uploading = isUploading$ | async;
+@let plugins = query.plugins$ | async; @let available = (query.count$ | async) > 0; @let isLoading = query.isLoading$ |
+async; @let uploading = query.uploading$ | async;
 
 <nb-card class="content-active first">
 	@if(isLoading) {
@@ -11,7 +11,6 @@
 		class="plugin"
 		[ngClass]="{ none: isLast }"
 		[plugin]="plugin"
-		(finish)="load()"
 	></lib-plugin-marketplace-detail>
 	} } @else {
 	<div class="no-data">

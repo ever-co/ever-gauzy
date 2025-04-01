@@ -1,14 +1,29 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, NgZone, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { IPlugin, PluginSourceType } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { NbDialogService } from '@nebular/theme';
+import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BehaviorSubject, catchError, EMPTY, filter, finalize, from, Observable, switchMap, tap } from 'rxjs';
+import {
+	BehaviorSubject,
+	catchError,
+	distinctUntilChanged,
+	filter,
+	from,
+	map,
+	Observable,
+	of,
+	switchMap,
+	take,
+	tap
+} from 'rxjs';
+import { PluginInstallationActions } from '../+state/actions/plugin-installation.action';
+import { PluginMarketplaceActions } from '../+state/actions/plugin-marketplace.action';
+import { PluginInstallationQuery } from '../+state/queries/plugin-installation.query';
+import { PluginMarketplaceQuery } from '../+state/queries/plugin-marketplace.query';
 import { AlertComponent } from '../../../../../dialogs/alert/alert.component';
-import { Store, ToastrNotificationService } from '../../../../../services';
+import { Store } from '../../../../../services';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
-import { PluginService } from '../../../services/plugin.service';
 import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
 
@@ -20,126 +35,52 @@ import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/p
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PluginMarketplaceDetailComponent implements OnInit {
-	@Input() plugin!: IPlugin;
-	public readonly _isChecked$ = new BehaviorSubject<boolean>(false);
-	private readonly pluginElectronService = inject(PluginElectronService);
-	private readonly pluginService = inject(PluginService);
-	private readonly dialog = inject(NbDialogService);
-	private readonly toastrService = inject(ToastrNotificationService);
-	private readonly router = inject(Router);
-	private readonly store = inject(Store);
-	private readonly ngZone = inject(NgZone);
-	public readonly installing$ = new BehaviorSubject<boolean>(false);
-	public readonly uninstalling$ = new BehaviorSubject<boolean>(false);
-	public readonly editing$ = new BehaviorSubject<boolean>(false);
-	@Output() finish = new EventEmitter<void>();
+	@Input()
+	public plugin: IPlugin;
+	private readonly _isChecked$ = new BehaviorSubject<boolean>(false);
+
+	constructor(
+		private readonly dialog: NbDialogService,
+		private readonly router: Router,
+		private readonly store: Store,
+		private readonly action: Actions,
+		private readonly pluginService: PluginElectronService,
+		public readonly marketplaceQuery: PluginMarketplaceQuery,
+		public readonly installationQuery: PluginInstallationQuery
+	) {}
 
 	ngOnInit(): void {
-		if (this.plugin) {
-			// Set selector position
-			this._isChecked$.next(this.plugin.installed);
-			// Check if plugin is installed locally
-			from(this.checkInstallation(this.plugin))
-				.pipe(
-					tap((installed) => this._isChecked$.next(!!installed)),
-					catchError(() => {
-						this._isChecked$.next(false);
-						return EMPTY;
-					}),
-					untilDestroyed(this)
-				)
-				.subscribe();
-		}
-
-		this.pluginElectronService.status
+		// Set selector position
+		this._isChecked$.next(this.plugin.installed);
+		// Listern to plugin change
+		this.marketplaceQuery.plugin$
 			.pipe(
-				distinctUntilChange(),
-				tap(({ status, message }) =>
-					this.ngZone.run(() => {
-						this.handleStatus({ status, message });
-					})
-				),
+				distinctUntilChanged(),
+				filter(Boolean), // Ensures we only process non-null values
+				filter((plugin) => plugin.id === this.plugin.id), // Filter in a separate step for clarity
+				switchMap((plugin) => this.check(plugin)),
 				untilDestroyed(this)
 			)
-			.subscribe();
+			.subscribe((isChecked) => this._isChecked$.next(isChecked));
+
+		// Check local installation
+		this.check(this.plugin).subscribe((isChecked) => this._isChecked$.next(isChecked));
 	}
 
-	async checkInstallation(plugin: IPlugin): Promise<IPluginInstalled> {
+	public check(plugin: IPlugin): Observable<boolean> {
+		return from(this.checkInstallation(plugin)).pipe(
+			map((installed) => !!installed), // Convert the result to a boolean directly
+			catchError(() => of(false)), // Ensure the stream continues even on error
+			untilDestroyed(this)
+		);
+	}
+
+	public async checkInstallation(plugin: IPlugin): Promise<IPluginInstalled> {
 		if (!plugin) return;
 		try {
-			return this.pluginElectronService.checkInstallation(plugin.id);
+			return this.pluginService.checkInstallation(plugin.id);
 		} catch (error) {
 			return null;
-		}
-	}
-
-	private handleStatus(notification: { status: string; message?: string }) {
-		switch (notification.status) {
-			case 'success':
-				if (this.installing$.value) {
-					this.pluginService
-						.install({ pluginId: this.plugin.id, versionId: this.plugin.version.id })
-						.pipe(
-							tap(() => {
-								this.finish.emit();
-								this._isChecked$.next(true);
-							}),
-							finalize(() => {
-								this.installing$.next(false);
-								this.toastrService.success(notification.message);
-							}),
-							catchError((error) => {
-								console.warn('Installation failed, rollback');
-								this.pluginElectronService.uninstall(this.plugin as any);
-								this.toastrService.error(error);
-								this._isChecked$.next(false);
-								return EMPTY;
-							}),
-							untilDestroyed(this)
-						)
-						.subscribe();
-				}
-				if (this.uninstalling$.value) {
-					this.pluginService
-						.uninstall(this.plugin.id)
-						.pipe(
-							tap(() => {
-								this.finish.emit();
-								this._isChecked$.next(false);
-							}),
-							finalize(() => {
-								this.uninstalling$.next(false);
-								this.toastrService.success(notification.message);
-							}),
-							catchError((error) => {
-								this.toastrService.error(error);
-								this._isChecked$.next(true);
-								return EMPTY;
-							}),
-							untilDestroyed(this)
-						)
-						.subscribe();
-				}
-				break;
-			case 'error':
-				if (this.installing$.value || this.uninstalling$.value) {
-					this._isChecked$.next(!this._isChecked$.value);
-					this.toastrService.error(notification.message);
-				}
-				this.installing$.next(false);
-				this.uninstalling$.next(false);
-
-				break;
-			case 'inProgress':
-				if (this.installing$.value || this.uninstalling$.value) {
-					this.toastrService.info(notification.message);
-				}
-				break;
-			default:
-				this.installing$.next(false);
-				this.uninstalling$.next(this.installing$.value);
-				this.toastrService.warn('Unexpected Status');
-				break;
 		}
 	}
 
@@ -149,37 +90,36 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	private installPlugin(): void {
-		if (this.installing$.value) {
-			return;
-		}
-		this.installing$.next(true);
 		switch (this.plugin.source.type) {
 			case PluginSourceType.GAUZY:
 			case PluginSourceType.CDN:
-				this.pluginElectronService.downloadAndInstall({
-					url: this.plugin.source.url,
-					contextType: 'cdn',
-					marketplaceId: this.plugin.id
-				});
+				this.action.dispatch(
+					PluginInstallationActions.install({
+						url: this.plugin.source.url,
+						contextType: 'cdn',
+						marketplaceId: this.plugin.id
+					})
+				);
 				break;
 			case PluginSourceType.NPM:
-				this.pluginElectronService.downloadAndInstall({
-					...{
-						pkg: {
-							name: this.plugin.source.name,
-							version: this.plugin.version.number
+				this.action.dispatch(
+					PluginInstallationActions.install({
+						...{
+							pkg: {
+								name: this.plugin.source.name,
+								version: this.plugin.version.number
+							},
+							registry: {
+								privateURL: this.plugin.source.registry,
+								authToken: this.plugin.source.authToken
+							}
 						},
-						registry: {
-							privateURL: this.plugin.source.registry,
-							authToken: this.plugin.source.authToken
-						}
-					},
-					contextType: 'npm',
-					marketplaceId: this.plugin.id
-				});
+						contextType: 'npm',
+						marketplaceId: this.plugin.id
+					})
+				);
 				break;
 			default:
-				this.installing$.next(false);
 				break;
 		}
 	}
@@ -189,21 +129,6 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	public async openPlugin(): Promise<void> {
-		if ('marketplaceId' in this.plugin) {
-			if (!this.plugin.marketplaceId) {
-				this.dialog.open(AlertComponent, {
-					context: {
-						data: {
-							message: 'This plugin is not published yet',
-							title: 'Plugin not published',
-							status: 'basic'
-						}
-					},
-					backdropClass: 'backdrop-blur'
-				});
-				return;
-			}
-		}
 		await this.router.navigate([`/settings/marketplace-plugins/${this.plugin.id}`]);
 	}
 
@@ -216,26 +141,14 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 				}
 			})
 			.onClose.pipe(
+				take(1),
 				filter(Boolean),
-				tap(() => this.editing$.next(true)),
-				switchMap((plugin: IPlugin) =>
-					this.pluginService.update(this.plugin.id, plugin).pipe(
-						tap(() => this.toastrService.success('Plugin updated successfully!')),
-						finalize(() => this.editing$.next(false)),
-						catchError(() => {
-							this.toastrService.error('Plugin upload failed!');
-							return EMPTY;
-						})
-					)
-				)
+				tap((plugin: IPlugin) => this.action.dispatch(PluginMarketplaceActions.update(this.plugin.id, plugin)))
 			)
 			.subscribe();
 	}
 
 	private uninstallPlugin(): void {
-		if (this.uninstalling$.value) {
-			return;
-		}
 		this.dialog
 			.open(AlertComponent, {
 				backdropClass: 'backdrop-blur',
@@ -250,8 +163,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 			.onClose.subscribe(async (isUninstall: boolean) => {
 				const plugin = await this.checkInstallation(this.plugin);
 				if (isUninstall && !!plugin) {
-					this.uninstalling$.next(true);
-					this.pluginElectronService.uninstall(plugin);
+					this.action.dispatch(PluginInstallationActions.uninstall(plugin));
 				} else {
 					this._isChecked$.next(true);
 				}

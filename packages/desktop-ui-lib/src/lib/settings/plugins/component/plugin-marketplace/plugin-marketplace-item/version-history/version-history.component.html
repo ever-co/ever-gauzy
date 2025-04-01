@@ -1,6 +1,7 @@
-@let versions = versions$ | async; @let isAvailable = versions?.length > 0; @let isRemoving = isRemoving$ | async; @let
-isRecovering = isRecovering$ | async; @let isLoading = isLoading$ | async; @let isEditing = isEditing$ | async; @let
-isDisabled= isRemoving || isRecovering || isEditing;
+@let versions = query.versions$| async; @let isAvailable = versions?.length > 0; @let isRemoving = query.deleting$ |
+async; @let isRecovering = query.restoring$ | async; @let isLoading = query.isLoading$ | async; @let isEditing =
+query.updating$ | async; @let isDisabled= isRemoving || isRecovering || isEditing; @let selectedVersionId =
+(query.version$ | async)?.id;
 
 <nb-card class="content-active first">
 	<nb-card-header class="d-flex justify-content-between header">

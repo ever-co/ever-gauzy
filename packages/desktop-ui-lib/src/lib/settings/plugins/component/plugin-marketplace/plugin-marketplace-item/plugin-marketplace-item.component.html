@@ -1,7 +1,8 @@
-@let plugin = plugin$ | async; @let editing = editing$ | async; @let installing = installing$ |async; @let uninstalling
-= uninstalling$ |async; @let deleting = deleting$ | async; @let adding = adding$ | async; @let needUpdate = needUpdate$
-| async; @let installed = installed$ | async; @let loading = loading$ | async; @let disabled = editing || installing ||
-uninstalling || deleting || adding;
+@let plugin = plugin$ | async; @let editing = marketplaceQuery.updating$ | async; @let installing =
+installationQuery.installing$ |async; @let uninstalling = installationQuery.unistalling$ |async; @let deleting =
+marketplaceQuery.deleting$ | async; @let adding = versionQuery.creating$ | async; @let needUpdate = needUpdate$ | async;
+@let installed = installed$ | async; @let loading = marketplaceQuery.isLoading$ | async; @let disabled = editing ||
+installing || uninstalling || deleting || adding;
 
 <nb-card class="content-active first plugin-details-card">
 	<nb-card-header class="d-flex align-items-center justify-content-between">
