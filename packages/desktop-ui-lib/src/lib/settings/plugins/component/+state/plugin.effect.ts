@@ -150,7 +150,7 @@ export class PluginEffects {
 		)
 	);
 
-	private handleProgress({ message }: { message?: string }) {
+	private handleProgress(message?: string): void {
 		this.toastrService.success(message);
 		this.action$.dispatch(PluginActions.selectPlugin(null));
 		this.action$.dispatch(PluginActions.refresh());
