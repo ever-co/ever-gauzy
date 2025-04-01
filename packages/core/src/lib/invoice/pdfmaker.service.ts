@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import * as PdfPrinter from 'pdfmake';
 import * as fs from 'fs';
@@ -7,10 +7,12 @@ import { ConfigService } from '@gauzy/config';
 
 @Injectable()
 export class PdfmakerService {
+	private readonly logger = new Logger(`GZY - ${PdfmakerService.name}`);
+
 	private readonly public_path: string;
-	private _dirname: string;
-	private _basename = '/invoices/pdf/';
-	private fonts: any = {
+	private readonly _dirname: string;
+	private readonly _basename = '/invoices/pdf/';
+	private readonly fonts = {
 		Helvetica: {
 			normal: 'Helvetica',
 			bold: 'Helvetica-Bold',
@@ -19,7 +21,7 @@ export class PdfmakerService {
 		}
 	};
 
-	private _fileName: string = `document-${uuidv4()}`;
+	private _fileName = `document-${uuidv4()}`;
 	setFilename(filename: string) {
 		this._fileName = filename;
 		return this;
@@ -41,7 +43,7 @@ export class PdfmakerService {
 		try {
 			const printer = new PdfPrinter(this.fonts);
 			const pdfDefinition = {
-        		watermark: docDefinition['watermark'],
+				watermark: docDefinition['watermark'],
 				content: docDefinition['content'],
 				defaultStyle: {
 					font: 'Helvetica'
@@ -52,7 +54,7 @@ export class PdfmakerService {
 				fs.mkdirSync(this._dirname, { recursive: true });
 			}
 
-			let filename = `${this.filename}.pdf`;
+			const filename = `${this.filename}.pdf`;
 			const filePath = path.join(this._dirname, filename);
 
 			return await new Promise<Buffer>((resolve, reject) => {
@@ -68,36 +70,28 @@ export class PdfmakerService {
 				});
 
 				pdfDoc.on('end', async () => {
-					Buffer.concat(chunks);
-					if (!Buffer?.length) return reject(new Error('PDF generation failed'));
+					const pdfBuffer = Buffer.concat(chunks);
+					if (!pdfBuffer?.length) {
+						this.logger.error('PDF generation failed. Generated buffer is empty.');
+						return reject(new Error('PDF generation failed'));
+					}
+					resolve(pdfBuffer);
+
 					try {
-						//convert pdf to Buffer
-						const pdf = await new Promise<Buffer>((resolve, reject) => {
-							try {
-								fs.readFile(filePath, {}, (err, data) => {
-									if (err) {
-										reject(err);
-									} else {
-										//unlink after read pdf into Buffer form
-										if (fs.existsSync(filePath)) {
-											fs.unlinkSync(filePath);
-										}
-										resolve(data);
-									}
-								});
-							} catch (err) {
-								reject(err);
-							}
-						});
-						resolve(pdf);
-					} catch (err) {
-						reject(err);
+						//unlink after read pdf into Buffer form
+						if (fs.existsSync(filePath)) {
+							fs.unlinkSync(filePath);
+						}
+					} catch (error) {
+						this.logger.error(`Error unlinking file ${filePath}: ${error}`);
 					}
 				});
+
 				pdfDoc.end();
 			});
-		} catch (e) {
-			console.log(e);
+		} catch (error) {
+			this.logger.error(`Error generating PDF: ${error}`);
+			throw error;
 		}
 	}
 }
