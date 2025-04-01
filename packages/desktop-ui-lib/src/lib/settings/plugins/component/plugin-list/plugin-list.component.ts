@@ -13,6 +13,7 @@ import { IPlugin } from '../../services/plugin-loader.service';
 import { AddPluginComponent } from '../add-plugin/add-plugin.component';
 import { PluginStatusComponent } from './plugin-status/plugin-status.component';
 import { PluginUpdateComponent } from './plugin-update/plugin-update.component';
+import { PluginInstallationActions } from '../plugin-marketplace/+state/actions/plugin-installation.action';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -178,7 +179,7 @@ export class PluginListComponent implements OnInit, OnDestroy {
 			.onClose.pipe(
 				take(1),
 				filter(Boolean),
-				tap(() => this.action.dispatch(PluginActions.uninstall(this.plugin)))
+				tap(() => this.action.dispatch(PluginInstallationActions.uninstall(this.plugin)))
 			)
 			.subscribe();
 	}

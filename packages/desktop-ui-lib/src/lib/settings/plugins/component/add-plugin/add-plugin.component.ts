@@ -4,8 +4,8 @@ import { NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { Observable } from 'rxjs';
-import { PluginActions } from '../+state/plugin.action';
 import { PluginQuery } from '../+state/plugin.query';
+import { PluginInstallationActions } from '../plugin-marketplace/+state/actions/plugin-installation.action';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -38,12 +38,12 @@ export class AddPluginComponent {
 			return;
 		}
 		this.context = 'cdn';
-		this.action.dispatch(PluginActions.install({ url: value.trim(), contextType: 'cdn' }));
+		this.action.dispatch(PluginInstallationActions.install({ url: value.trim(), contextType: 'cdn' }));
 	}
 
 	public localPluginInstall() {
 		this.context = 'local';
-		this.action.dispatch(PluginActions.install({ contextType: 'local' }));
+		this.action.dispatch(PluginInstallationActions.install({ contextType: 'local' }));
 	}
 
 	public handleUnmaskedValueChange(authToken: string) {
@@ -52,7 +52,7 @@ export class AddPluginComponent {
 
 	public installPluginFromNPM() {
 		this.context = 'npm';
-		this.action.dispatch(PluginActions.install({ ...this.npmModel, contextType: 'npm' }));
+		this.action.dispatch(PluginInstallationActions.install({ ...this.npmModel, contextType: 'npm' }));
 	}
 
 	public close() {
