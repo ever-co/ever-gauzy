@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
-import { catchError, concatMap, EMPTY, filter, finalize, switchMap, tap } from 'rxjs';
+import { catchError, EMPTY, filter, finalize, switchMap, tap } from 'rxjs';
 import { ToastrNotificationService } from '../../../../services';
 import { PluginElectronService } from '../../services/plugin-electron.service';
 import { PluginActions } from './plugin.action';
@@ -41,46 +41,6 @@ export class PluginEffects {
 			catchError((error) => {
 				this.toastrService.error(error); // Handle the error
 				return EMPTY; // Return a fallback value to keep the stream alive
-			})
-		)
-	);
-
-	uninstall$ = createEffect(() =>
-		this.action$.pipe(
-			ofType(PluginActions.uninstall),
-			tap(() => this.pluginStore.update({ uninstalling: true })),
-			concatMap(({ plugin }) => {
-				this.pluginService.uninstall(plugin);
-				return this.pluginService
-					.progress((message) => this.toastrService.info(message))
-					.pipe(
-						tap((res) => this.handleProgress(res)),
-						finalize(() => this.pluginStore.update({ uninstalling: false })),
-						catchError((error) => {
-							this.toastrService.error(error);
-							return EMPTY;
-						})
-					);
-			})
-		)
-	);
-
-	install$ = createEffect(() =>
-		this.action$.pipe(
-			ofType(PluginActions.install),
-			tap(() => this.pluginStore.update({ installing: true })),
-			concatMap(({ config }) => {
-				this.pluginService.downloadAndInstall(config);
-				return this.pluginService
-					.progress((message) => this.toastrService.info(message))
-					.pipe(
-						tap((res) => this.handleProgress(res)),
-						finalize(() => this.pluginStore.update({ installing: false })),
-						catchError((error) => {
-							this.toastrService.error(error);
-							return EMPTY;
-						})
-					);
 			})
 		)
 	);
@@ -150,8 +110,8 @@ export class PluginEffects {
 		)
 	);
 
-	private handleProgress(message?: string): void {
-		this.toastrService.success(message);
+	private handleProgress(arg: { message?: string }): void {
+		this.toastrService.success(arg?.message);
 		this.action$.dispatch(PluginActions.selectPlugin(null));
 		this.action$.dispatch(PluginActions.refresh());
 	}

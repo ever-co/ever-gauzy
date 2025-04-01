@@ -7,7 +7,5 @@ export class PluginActions {
 	public static selectPlugin = createAction('[Plugin] Select', (plugin: IPlugin) => ({ plugin }));
 	public static activate = createAction('[Plugin] Activate', (plugin: IPlugin) => ({ plugin }));
 	public static deactivate = createAction('[Plugin] Deactivate', (plugin: IPlugin) => ({ plugin }));
-	public static install = createAction('[Plugin] Install', <T>(config: T) => ({ config }));
-	public static uninstall = createAction('[Plugin] Uninstall', (plugin: IPlugin) => ({ plugin }));
 	public static refresh = createAction('[Plugin] Refresh');
 }
