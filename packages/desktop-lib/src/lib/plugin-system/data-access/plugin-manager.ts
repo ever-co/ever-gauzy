@@ -28,7 +28,7 @@ export class PluginManager implements IPluginManager {
 
 	public async downloadPlugin<U extends { contextType: PluginDownloadContextType; marketplaceId: ID }>(
 		config: U
-	): Promise<void> {
+	): Promise<IPluginMetadata> {
 		logger.info(`Downloading plugin...`);
 		process.noAsar = true;
 		const context = this.factory.getContext(config.contextType);
@@ -43,6 +43,7 @@ export class PluginManager implements IPluginManager {
 			await this.activatePlugin(metadata.name);
 		}
 		process.noAsar = false;
+		return this.pluginMetadataService.findOne({ name: metadata.name });
 	}
 
 	public async updatePlugin(pluginMetadata: IPluginMetadata): Promise<void> {

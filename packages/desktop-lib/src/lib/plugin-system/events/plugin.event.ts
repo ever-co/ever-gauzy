@@ -123,8 +123,8 @@ class ElectronPluginListener {
 
 	private async downloadPlugin(event: IpcMainEvent, config: any): Promise<void> {
 		event.reply(PluginChannel.STATUS, { status: 'inProgress', message: 'Plugin Downloading...' });
-		await this.pluginManager.downloadPlugin(config);
-		event.reply(PluginChannel.STATUS, { status: 'success', message: 'Plugin Downloaded' });
+		const data = await this.pluginManager.downloadPlugin(config);
+		event.reply(PluginChannel.STATUS, { status: 'success', message: 'Plugin Downloaded', data });
 	}
 
 	private async activatePlugin(event: IpcMainEvent, name: string): Promise<void> {

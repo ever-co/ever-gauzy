@@ -6,7 +6,7 @@ export interface IPluginManager {
 	loadPlugins(): Promise<void>;
 	initializePlugins(): void;
 	disposePlugins(): void;
-	downloadPlugin(config: any): Promise<void>;
+	downloadPlugin(config: any): Promise<IPluginMetadata>;
 	activatePlugin(name: string): Promise<void>;
 	deactivatePlugin(name: string): Promise<void>;
 	uninstallPlugin(name: string): Promise<void>;
