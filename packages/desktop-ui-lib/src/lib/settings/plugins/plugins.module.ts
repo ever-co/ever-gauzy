@@ -51,6 +51,9 @@ import { provideEffects, provideEffectsManager } from '@ngneat/effects-ng';
 import { PluginEffects } from './component/+state/plugin.effect';
 import { PluginQuery } from './component/+state/plugin.query';
 import { PluginStore } from './component/+state/plugin.store';
+import { PluginInstallationEffects } from './component/plugin-marketplace/+state/effects/plugin-installation.effect';
+import { PluginVersionEffects } from './component/plugin-marketplace/+state/effects/plugin-version.effect';
+import { PluginMarketplaceEffects } from './component/plugin-marketplace/+state/effects/plugin-marketplace.effect';
 
 @NgModule({
 	declarations: [
@@ -107,7 +110,7 @@ import { PluginStore } from './component/+state/plugin.store';
 		PluginElectronService,
 		PluginService,
 		provideEffectsManager(),
-		provideEffects(PluginEffects),
+		provideEffects(PluginEffects, PluginInstallationEffects, PluginMarketplaceEffects, PluginVersionEffects),
 		PluginQuery,
 		PluginStore
 	],

@@ -50,15 +50,15 @@ export class PluginElectronService {
 		return this.electronService.ipcRenderer.invoke('plugins::lazy-loader', pluginPath);
 	}
 
-	public progress<T>(callBack?: (message?: string) => T): Observable<string> {
-		return new Observable<string>((observer) => {
+	public progress<T, U>(callBack?: (message?: string) => T): Observable<{ message?: string; data: U }> {
+		return new Observable<{ message?: string; data: U }>((observer) => {
 			const channel = 'plugin::status';
 
-			const listener = (_: any, arg: { status: string; message?: string }) => {
+			const listener = (_: any, arg: { status: string; message?: string; data?: U }) => {
 				try {
 					switch (arg.status) {
 						case 'success':
-							observer.next(arg?.message);
+							observer.next({ message: arg?.message, data: arg?.data });
 							observer.complete();
 							break;
 						case 'inProgress':

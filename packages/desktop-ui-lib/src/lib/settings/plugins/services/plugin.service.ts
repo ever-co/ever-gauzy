@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpEvent, HttpEventType } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ID, IPagination, IPlugin, IPluginVersion, PluginSourceType } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
@@ -13,12 +13,10 @@ export class PluginService {
 
 	constructor(private readonly http: HttpClient, private readonly store: Store) {}
 
-	public getAll<T>(params = {} as T): Observable<IPlugin[]> {
-		return this.http
-			.get<IPagination<IPlugin>>(this.endPoint, {
-				params: toParams(params)
-			})
-			.pipe(map((data) => data.items));
+	public getAll<T>(params = {} as T): Observable<IPagination<IPlugin>> {
+		return this.http.get<IPagination<IPlugin>>(this.endPoint, {
+			params: toParams(params)
+		});
 	}
 
 	public getOne<T>(id: string, params = {} as T): Observable<IPlugin> {
@@ -102,9 +100,26 @@ export class PluginService {
 		return formData;
 	}
 
-	public upload(plugin: IPlugin): Observable<IPlugin> {
+	public upload(plugin: IPlugin): Observable<{ plugin?: IPlugin; progress?: number }> {
 		const formData = this.createFormData(plugin);
-		return this.http.post<IPlugin>(this.endPoint, formData);
+
+		return this.http
+			.post<IPlugin>(this.endPoint, formData, {
+				reportProgress: true,
+				observe: 'events'
+			})
+			.pipe(
+				map((event: HttpEvent<IPlugin>) => {
+					switch (event.type) {
+						case HttpEventType.UploadProgress:
+							return { progress: Math.round((event.loaded / (event.total ?? event.loaded)) * 100) };
+						case HttpEventType.Response:
+							return { plugin: event.body };
+						default:
+							return {};
+					}
+				})
+			);
 	}
 
 	public update(pluginId: ID, plugin: Partial<IPlugin>): Observable<IPlugin> {
@@ -196,12 +211,10 @@ export class PluginService {
 		);
 	}
 
-	public getVersions<T>(pluginId: ID, params: T): Observable<IPluginVersion[]> {
-		return this.http
-			.get<IPagination<IPluginVersion>>(`${this.endPoint}/${pluginId}/versions`, {
-				params: toParams(params)
-			})
-			.pipe(map((data) => data.items));
+	public getVersions<T>(pluginId: ID, params: T): Observable<IPagination<IPluginVersion>> {
+		return this.http.get<IPagination<IPluginVersion>>(`${this.endPoint}/${pluginId}/versions`, {
+			params: toParams(params)
+		});
 	}
 	public updateVersion(pluginId: string, versionId: string, version: IPluginVersion): Observable<IPluginVersion> {
 		return this.http.put<IPluginVersion>(
