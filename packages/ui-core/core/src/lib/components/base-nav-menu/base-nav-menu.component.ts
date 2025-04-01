@@ -146,7 +146,26 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.INVOICES_EDIT
 							) && {
-								add: '/pages/accounting/invoices/add'
+								add: '/pages/accounting/invoices/add-by-role'
+							})
+						}
+					},
+					{
+						id: 'accounting-organization-invoices',
+						title: 'Organization Invoices',
+						icon: 'far fa-file-alt',
+						link: '/pages/accounting/organization-invoices',
+						pathMatch: 'full',
+						data: {
+							translationKey: 'MENU.ORG_INVOICES',
+							//TODO: GZY-161 - Refactor after clarifying requirements
+							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_INVOICES_VIEW],
+							featureKey: FeatureEnum.FEATURE_ORG_INVOICE,
+							...(this._store.hasAnyPermission(
+								PermissionsEnum.ALL_ORG_EDIT,
+								PermissionsEnum.ORG_INVOICES_EDIT
+							) && {
+								add: '/pages/accounting/invoices/add-by-organization'
 							})
 						}
 					},

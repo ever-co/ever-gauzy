@@ -72,6 +72,7 @@ import { PublicLinkComponent } from './public-link/public-link.component';
 	templateUrl: './invoices.component.html',
 	styleUrls: ['invoices.component.scss']
 })
+//TODO: GZY-161 - Refactor after clarifying requirements
 export class InvoicesComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
 	settingsSmartTable: object;
 	smartTableSource: ServerDataSource;
@@ -93,8 +94,9 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	perPage = 10;
 	histories: IInvoiceEstimateHistory[] = [];
 	includeArchived = false;
-	invoices$: Subject<any> = this.subject$;
 	invoiceTabsEnum = InvoiceTabsEnum;
+	permissionsEnum = PermissionsEnum;
+	invoices$: Subject<any> = this.subject$;
 	nbTab$: Subject<string> = new BehaviorSubject(InvoiceTabsEnum.ACTIONS);
 	private _refresh$: Subject<any> = new Subject();
 
@@ -335,15 +337,11 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 		if (action === this.getTranslation('INVOICES_PAGE.ACTION.NOTE')) this.addInternalNote();
 	}
 
-	add() {
-		if (this.isEstimate) {
-			this.router.navigate(['/pages/accounting/invoices/estimates/add']);
-		} else {
-			this.router.navigate(['/pages/accounting/invoices/add']);
-		}
+	async add() {
+		await this.navigateBasedOnPermissions(this.isEstimate, 'add');
 	}
 
-	edit(selectedItem?: IInvoice) {
+	async edit(selectedItem?: IInvoice) {
 		this.invoicesService.changeValue(false);
 		if (selectedItem) {
 			this.selectInvoice({
@@ -353,11 +351,9 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 		}
 
 		const { id } = this.selectedInvoice;
-		if (this.isEstimate) {
-			this.router.navigate([`/pages/accounting/invoices/estimates/edit`, id]);
-		} else {
-			this.router.navigate([`/pages/accounting/invoices/edit`, id]);
-		}
+		//TODO: GZY-161 - was commented because we have not generated invoices per user
+		//await this.navigateBasedOnPermissions(this.isEstimate, 'edit', id);
+		this.router.navigate([`/pages/accounting/invoices/edit-by-organization`, id]);
 	}
 
 	async duplicated(selectedItem?: IInvoice) {
@@ -450,6 +446,30 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 			this.toastrService.success('INVOICES_PAGE.INVOICES_DUPLICATE_INVOICE');
 			this.router.navigate([`/pages/accounting/invoices/edit`, id]);
 		}
+	}
+
+	private async navigateBasedOnPermissions(isEstimate: boolean, baseRoute: string, id?: string) {
+		let route = '';
+
+		switch (true) {
+			case isEstimate:
+				route = `/pages/accounting/invoices/estimates/${baseRoute}`;
+				break;
+
+			case await this.ngxPermissionsService.hasPermission(PermissionsEnum.INVOICES_EDIT):
+				route = `/pages/accounting/invoices/${baseRoute}-by-role`;
+				break;
+
+			case await this.ngxPermissionsService.hasPermission(PermissionsEnum.ORG_INVOICES_EDIT):
+				route = `/pages/accounting/invoices/${baseRoute}-by-organization`;
+				break;
+
+			default:
+				route = '/pages/dashboard';
+				break;
+		}
+
+		this.router.navigate(id ? [route, id] : [route]);
 	}
 
 	download(selectedItem?: IInvoice) {

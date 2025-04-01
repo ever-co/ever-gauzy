@@ -1054,6 +1054,7 @@
 		"TASKS": "Zadania",
 		"TASKS_SETTINGS": "Ustawienia",
 		"INVOICES": "Faktury",
+		"ORG_INVOICES": "Faktury organizacji",
 		"ORGANIZATION": "Organizacja",
 		"TENANT": "Najemca",
 		"RECURRING_INVOICES": "Faktury cykliczne",
@@ -2054,7 +2055,8 @@
 			"ACCESS_PRIVATE_PROJECTS": "Dostęp do prywatnych projektów",
 			"TIMESHEET_EDIT_TIME": "Edytuj czas w arkuszu czasu pracy",
 			"INVOICES_VIEW": "Wyświetl faktury",
-			"INVOICES_EDIT": "Edytuj faktury Dodaj",
+			"INVOICES_EDIT": "Dodaj i edytuj faktury",
+			"ORG_INVOICES_EDIT": "Dodaj i edytuj faktury organizacji",
 			"ESTIMATES_VIEW": "Zobacz szacunki",
 			"ESTIMATES_EDIT": "Edytuj Szacunki Dodaj",
 			"EDIT_SALES_PIPELINES": "Edytuj procesy sprzedażowe",
@@ -2776,6 +2778,7 @@
 	},
 	"QUICK_ACTIONS_MENU": {
 		"CREATE_INVOICE": "Utwórz fakturę",
+		"CREATE_ORG_INVOICE": "Utwórz fakturę organizacji",
 		"RECEIVED_INVOICES": "Otrzymane faktury",
 		"CREATE_INCOME": "Utwórz przychód",
 		"CREATE_EXPENSE": "Utwórz wydatek",
@@ -2894,6 +2897,7 @@
 		"INVOICES_SELECT_PAID": "Opłacone",
 		"INVOICES_TAXES": "Podatki",
 		"INVOICES_SELECT_TERMS": "Warunki",
+		"NOTES": "Notatki",
 		"ADD_INVOICE": "Dodaj fakturę",
 		"ADD_ESTIMATE": "Dodaj Wycenę",
 		"EDIT_INVOICE": "Edytuj fakturę",
@@ -4550,7 +4554,7 @@
 	},
 	"AUTH_ERRORS": {
 		"INVALID_EMAIL_DOMAIN": "Ten adres e-mail nie jest obsługiwany do rejestracji konta.",
-		"USER_CANCELLED_REQUEST": "Uwierzytelnianie konta zostało anulowane.", 
+		"USER_CANCELLED_REQUEST": "Uwierzytelnianie konta zostało anulowane.",
 		"UNKNOWN_ERROR": "Coś poszło nie tak podczas uwierzytelniania, spróbuj ponownie."
 	},
 	"REGISTER_PAGE": {

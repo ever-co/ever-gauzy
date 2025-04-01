@@ -39,24 +39,24 @@ import {
 	TranslatableService,
 	ExpensesService
 } from '@gauzy/ui-core/core';
-import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
-import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-expense-selector.component';
+import { InvoiceEmailMutationComponent } from '../../invoice-email/invoice-email-mutation.component';
+import { InvoiceExpensesSelectorComponent } from '../../table-components/invoice-expense-selector.component';
 import {
 	InvoiceApplyTaxDiscountComponent,
 	InvoiceEmployeesSelectorComponent,
 	InvoiceProductsSelectorComponent,
 	InvoiceProjectsSelectorComponent,
 	InvoiceTasksSelectorComponent
-} from '../table-components';
+} from '../../table-components';
 import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-invoice-add',
-	templateUrl: './invoice-add.component.html',
-	styleUrls: ['./invoice-add.component.scss']
+	selector: 'ga-invoice-add-by-organization',
+	templateUrl: './invoice-add-by-organization.component.html',
+	styleUrls: ['./invoice-add-by-organization.component.scss']
 })
-export class InvoiceAddComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+export class InvoiceAddByOrganizationComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	loading: boolean;
 	form: UntypedFormGroup;

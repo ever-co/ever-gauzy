@@ -1,0 +1,540 @@
+<nb-card class="main card-scroll" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header class="d-flex">
+		<ngx-back-navigation></ngx-back-navigation>
+		<h4>
+			{{ (isEstimate ? 'INVOICES_PAGE.ADD_ESTIMATE' : 'INVOICES_PAGE.ADD_INVOICE') | translate }}
+		</h4>
+	</nb-card-header>
+
+	<nb-card-body class="body content">
+		<form [formGroup]="form" class="form">
+			<div class="block-wrap">
+				<div class="block mt-2">
+					<div class="row">
+						<div class="col-sm-6">
+							<div class="form-group">
+								<label for="inputInvoiceNumber" class="label">
+									<span>
+										{{
+											(isEstimate
+												? 'INVOICES_PAGE.ESTIMATE_NUMBER'
+												: 'INVOICES_PAGE.INVOICE_NUMBER'
+											) | translate
+										}}
+									</span>
+								</label>
+								<input
+									type="number"
+									[min]="0"
+									nbInput
+									[placeholder]="
+										(isEstimate ? 'INVOICES_PAGE.ESTIMATE_NUMBER' : 'INVOICES_PAGE.INVOICE_NUMBER')
+											| translate
+									"
+									formControlName="invoiceNumber"
+									[(ngModel)]="formInvoiceNumber"
+									id="inputInvoiceNumber"
+									fullWidth
+								/>
+							</div>
+						</div>
+						<div class="col-sm-6">
+							<label for="inputOrganizationContact" class="label"
+								>{{ 'INVOICES_PAGE.CONTACT' | translate }}
+							</label>
+							<ga-contact-select
+								[addTag]="true"
+								[placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
+								formControlName="organizationContact"
+								(onChanged)="selectOrganizationContact($event)"
+							></ga-contact-select>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-6">
+							<div class="form-group">
+								<label for="inputInvoiceEstimateDate" class="label">
+									<span>
+										{{
+											(isEstimate ? 'INVOICES_PAGE.ESTIMATE_DATE' : 'INVOICES_PAGE.INVOICE_DATE')
+												| translate
+										}}</span
+									>
+								</label>
+								<input
+									formControlName="invoiceDate"
+									type="text"
+									nbInput
+									[placeholder]="
+										(isEstimate ? 'INVOICES_PAGE.ESTIMATE_DATE' : 'INVOICES_PAGE.INVOICE_DATE')
+											| translate
+									"
+									[nbDatepicker]="invoiceEstimateDatePicker"
+									id="inputInvoiceEstimateDate"
+									fullWidth
+									required
+								/>
+								<nb-datepicker #invoiceEstimateDatePicker></nb-datepicker>
+							</div>
+						</div>
+						<div class="col-sm-6">
+							<div class="form-group">
+								<label for="inputDueDate" class="label">{{
+									'INVOICES_PAGE.DUE_DATE' | translate
+								}}</label>
+								<input
+									nbInput
+									[placeholder]="'INVOICES_PAGE.DUE_DATE' | translate"
+									[nbDatepicker]="dueDatePicker"
+									formControlName="dueDate"
+									id="inputDueDate"
+									fullWidth
+								/>
+								<nb-datepicker #dueDatePicker></nb-datepicker>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-6">
+							<ga-currency
+								[formControl]="form.get('currency')"
+								(optionChange)="onCurrencyChange($event)"
+							></ga-currency>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-12">
+							<div class="form-group">
+								<label for="inputTerms" class="label">{{
+									'INVOICES_PAGE.INVOICES_SELECT_TERMS' | translate
+								}}</label>
+								<textarea
+									nbInput
+									placeholder="{{ 'INVOICES_PAGE.INVOICES_SELECT_TERMS' | translate }}"
+									formControlName="terms"
+									id="inputTerms"
+									fullWidth
+								></textarea>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-12 mb-4">
+							<ga-tags-color-input
+								[selectedTags]="form.get('tags').value"
+								(selectedTagsEvent)="selectedTagsEvent($event)"
+								[isOrgLevel]="true"
+							>
+							</ga-tags-color-input>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-6">
+							<div class="form-group">
+								<label for="invoiceType" class="label">
+									{{
+										(isEstimate
+											? 'INVOICES_PAGE.INVOICE_TYPE.SELECT_ESTIMATE_TYPE'
+											: 'INVOICES_PAGE.INVOICE_TYPE.SELECT_INVOICE_TYPE'
+										) | translate
+									}}
+								</label>
+								<nb-select
+									(selectedChange)="onTypeChange($event)"
+									formControlName="invoiceType"
+									[placeholder]="
+										(isEstimate
+											? 'INVOICES_PAGE.INVOICE_TYPE.ESTIMATE_TYPE'
+											: 'INVOICES_PAGE.INVOICE_TYPE.INVOICE_TYPE'
+										) | translate
+									"
+									id="invoiceType"
+									fullWidth
+								>
+									<nb-option *ngFor="let invoiceType of invoiceTypes" [value]="invoiceType">
+										{{ 'INVOICES_PAGE.INVOICE_TYPE.' + invoiceType | translate }}
+									</nb-option>
+								</nb-select>
+							</div>
+						</div>
+
+						<ng-container *ngIf="isEmployeeHourTable">
+							<div class="col-sm-6">
+								<div class="form-group">
+									<ga-employee-multi-select
+										(selectedChange)="onMembersSelected($event)"
+										(onLoadEmployees)="onLoadEmployees($event)"
+									></ga-employee-multi-select>
+								</div>
+							</div>
+						</ng-container>
+
+						<div class="col-sm-6" *ngIf="isProjectHourTable">
+							<div class="form-group">
+								<label for="inputProject" class="label">
+									{{ 'INVOICES_PAGE.INVOICE_TYPE.SELECT_PROJECTS' | translate }}
+								</label>
+								<ng-select
+									[(items)]="projects"
+									bindName="name"
+									placeholder="{{ 'INVOICES_PAGE.INVOICE_TYPE.SELECT_PROJECTS' | translate }}"
+									formControlName="project"
+									id="inputProject"
+									(change)="selectProject($event)"
+									[multiple]="true"
+									appendTo="body"
+								>
+									<ng-template ng-option-tmp let-item="item" let-index="index">
+										{{ item.name }}
+									</ng-template>
+									<ng-template ng-label-tmp let-item="item">
+										<div class="selector-template">
+											<span>{{ item.name }}</span>
+										</div>
+									</ng-template>
+								</ng-select>
+							</div>
+						</div>
+						<div class="col-sm-6" *ngIf="isTaskHourTable">
+							<div class="form-group">
+								<label for="inputTask" class="label">
+									{{ 'INVOICES_PAGE.INVOICE_TYPE.SELECT_TASKS' | translate }}
+								</label>
+								<ng-select
+									[(items)]="tasks"
+									bindName="title"
+									placeholder="{{ 'INVOICES_PAGE.INVOICE_TYPE.SELECT_TASKS' | translate }}"
+									formControlName="task"
+									id="inputTask"
+									(change)="selectTask($event)"
+									[multiple]="true"
+									appendTo="body"
+								>
+									<ng-template ng-option-tmp let-item="item" let-index="index">
+										{{ item.title }}
+									</ng-template>
+									<ng-template ng-label-tmp let-item="item">
+										<div class="selector-template">
+											<span>{{ item.title }}</span>
+										</div>
+									</ng-template>
+								</ng-select>
+							</div>
+						</div>
+						<div class="col-sm-6" *ngIf="isProductTable">
+							<div class="form-group">
+								<label for="inputProduct" class="label">
+									{{ 'INVOICES_PAGE.INVOICE_TYPE.SELECT_PRODUCTS' | translate }}
+								</label>
+								<ng-select
+									[(items)]="products"
+									bindName="name"
+									placeholder="{{ 'INVOICES_PAGE.INVOICE_TYPE.SELECT_PRODUCTS' | translate }}"
+									formControlName="product"
+									id="inputProduct"
+									(change)="selectProduct($event)"
+									[multiple]="true"
+									appendTo="body"
+								>
+									<ng-template ng-option-tmp let-item="item" let-index="index">
+										{{ item.name }}
+									</ng-template>
+									<ng-template ng-label-tmp let-item="item">
+										<div class="selector-template">
+											<span>{{ item.name }}</span>
+										</div>
+									</ng-template>
+								</ng-select>
+							</div>
+						</div>
+						<div class="col-sm-6" *ngIf="isExpenseTable">
+							<div class="form-group">
+								<label for="inputExpense" class="label">
+									{{ 'INVOICES_PAGE.INVOICE_TYPE.SELECT_EXPENSES' | translate }}
+								</label>
+								<ng-select
+									[(items)]="expenses"
+									bindName="purpose"
+									placeholder="{{ 'INVOICES_PAGE.INVOICE_TYPE.SELECT_EXPENSES' | translate }}"
+									formControlName="expense"
+									id="inputExpense"
+									(change)="selectExpense($event)"
+									[multiple]="true"
+									appendTo="body"
+								>
+									<ng-template ng-option-tmp let-item="item" let-index="index">
+										{{ item.purpose }}
+									</ng-template>
+									<ng-template ng-label-tmp let-item="item">
+										<div class="selector-template">
+											<span>{{ item.purpose }}</span>
+										</div>
+									</ng-template>
+								</ng-select>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-12">
+							<div class="form-group">
+								<div class="buttons">
+									<button
+										class="gen"
+										(click)="generateTable()"
+										status="basic"
+										outline
+										[disabled]="!invoiceType"
+										nbButton
+									>
+										{{
+											(isEstimate
+												? 'INVOICES_PAGE.INVOICE_TYPE.GENERATE_ESTIMATE_ITEMS'
+												: 'INVOICES_PAGE.INVOICE_TYPE.GENERATE_INVOICE_ITEMS'
+											) | translate
+										}}
+									</button>
+									<button
+										(click)="generateTable(true)"
+										status="success"
+										[disabled]="!invoiceType"
+										nbButton
+										class="ml-3"
+										*ngIf="isExpenseTable"
+									>
+										{{ 'INVOICES_PAGE.INVOICE_TYPE.GENERATE_FOR_UNINVOICED_EXPENSES' | translate }}
+									</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="block">
+					<div class="row group d-flex flex-column">
+						<div class="label label-group">{{ 'INVOICES_PAGE.DISCOUNT' | translate }}</div>
+						<div class="col-sm-6">
+							<div class="form-group">
+								<label for="inputDiscountValue" class="label">{{
+									'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE' | translate
+								}}</label>
+								<input
+									nbInput
+									placeholder="{{ 'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE' | translate }}"
+									type="number"
+									[min]="0"
+									formControlName="discountValue"
+									id="inputDiscountValue"
+									(ngModelChange)="calculateTotal()"
+									fullWidth
+								/>
+							</div>
+						</div>
+						<div class="col-sm-6">
+							<div class="form-group">
+								<label for="inputDiscountType" class="label">{{
+									'INVOICES_PAGE.DISCOUNT_TYPE' | translate
+								}}</label>
+								<nb-select
+									formControlName="discountType"
+									placeholder="{{ 'INVOICES_PAGE.DISCOUNT_TYPE' | translate }}"
+									(ngModelChange)="calculateTotal()"
+									id="inputDiscountType"
+									fullWidth
+								>
+									<nb-option
+										*ngFor="let discountTaxType of discountTaxTypes"
+										value="{{ discountTaxType }}"
+									>
+										{{ 'INVOICES_PAGE.' + discountTaxType | translate }}
+									</nb-option>
+								</nb-select>
+							</div>
+						</div>
+					</div>
+
+					<div class="row group d-flex flex-column">
+						<div class="label label-group">{{ 'INVOICES_PAGE.INVOICES_TAXES' | translate }}</div>
+						<div class="row">
+							<div class="col-sm-6">
+								<div class="form-group">
+									<label for="inputTax" class="label">{{ 'INVOICES_PAGE.TAX' | translate }}</label>
+									<input
+										nbInput
+										placeholder="{{ 'INVOICES_PAGE.TAX' | translate }}"
+										type="number"
+										[min]="0"
+										formControlName="tax"
+										id="inputTax"
+										(ngModelChange)="calculateTotal()"
+										fullWidth
+									/>
+								</div>
+							</div>
+							<div class="col-sm-6">
+								<div class="form-group">
+									<label for="inputTax2" class="label">
+										{{ 'INVOICES_PAGE.TAX_2' | translate }}
+									</label>
+									<input
+										nbInput
+										placeholder="{{ 'INVOICES_PAGE.TAX_2' | translate }}"
+										type="number"
+										[min]="0"
+										formControlName="tax2"
+										id="inputTax2"
+										(ngModelChange)="calculateTotal()"
+										fullWidth
+									/>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-sm-6">
+								<div class="form-group">
+									<label for="inputDiscountTaxType" class="label">{{
+										'INVOICES_PAGE.TAX_TYPE' | translate
+									}}</label>
+									<nb-select
+										formControlName="taxType"
+										placeholder="{{ 'INVOICES_PAGE.TAX_TYPE' | translate }}"
+										(ngModelChange)="calculateTotal()"
+										id="inputDiscountTaxType"
+										fullWidth
+									>
+										<nb-option
+											*ngFor="let discountTaxType of discountTaxTypes"
+											value="{{ discountTaxType }}"
+										>
+											{{ 'INVOICES_PAGE.' + discountTaxType | translate }}
+										</nb-option>
+									</nb-select>
+								</div>
+							</div>
+							<div class="col-sm-6">
+								<div class="form-group">
+									<label for="inputDiscountTaxType2" class="label">{{
+										'INVOICES_PAGE.TAX_TYPE' | translate
+									}}</label>
+									<nb-select
+										formControlName="tax2Type"
+										placeholder="{{ 'INVOICES_PAGE.TAX_TYPE' | translate }}"
+										(ngModelChange)="calculateTotal()"
+										id="inputDiscountTaxType2"
+										fullWidth
+									>
+										<nb-option
+											*ngFor="let discountTaxType of discountTaxTypes"
+											value="{{ discountTaxType }}"
+										>
+											{{ 'INVOICES_PAGE.' + discountTaxType | translate }}
+										</nb-option>
+									</nb-select>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="discountCheckbox">
+						<nb-checkbox (checkedChange)="applyDiscountAfterTax($event)" [checked]="discountAfterTax">
+							{{ 'INVOICES_PAGE.APPLY_DISCOUNT_AFTER_TAX' | translate }}
+						</nb-checkbox>
+					</div>
+				</div>
+			</div>
+		</form>
+		<div *ngIf="shouldLoadTable">
+			<div class="table-scroll-container custom-table">
+				<angular2-smart-table
+					style="cursor: pointer"
+					[settings]="settingsSmartTable"
+					[source]="smartTableSource"
+					(createConfirm)="onCreateConfirm($event)"
+					(editConfirm)="onEditConfirm($event)"
+					(deleteConfirm)="onDeleteConfirm($event)"
+				></angular2-smart-table>
+			</div>
+			<div class="pagination-container">
+				<ng-container *ngIf="smartTableSource">
+					<ngx-pagination [source]="smartTableSource"></ngx-pagination>
+				</ng-container>
+			</div>
+
+			<div class="total d-flex">
+				<div class="total-item">
+					{{ 'INVOICES_PAGE.SUBTOTAL' | translate }}: {{ currency.value }} {{ subtotal.toFixed(2) }}
+				</div>
+				<div class="total-item">
+					{{ 'INVOICES_PAGE.TOTAL' | translate }}: {{ currency.value }} {{ total.toFixed(2) }}
+				</div>
+			</div>
+		</div>
+	</nb-card-body>
+	<nb-card-footer class="text-left">
+		<button size="small" status="basic" size="small" outline nbButton (click)="cancel()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			class="mr-3"
+			(click)="addInvoice('DRAFT')"
+			size="small"
+			status="primary"
+			class="gray"
+			[disabled]="disableSaveButton || form.invalid"
+			nbButton
+		>
+			{{ 'BUTTONS.SAVE_AS_DRAFT' | translate }}
+		</button>
+		<button
+			class="mr-3"
+			(click)="sendToContact()"
+			status="success"
+			size="small"
+			[disabled]="disableSaveButton || form.invalid"
+			nbButton
+		>
+			{{ 'BUTTONS.SAVE_AND_SEND_CONTACT' | translate }}
+		</button>
+		<button
+			class="mr-3"
+			(click)="sendViaEmail()"
+			status="success"
+			size="small"
+			[disabled]="disableSaveButton || form.invalid"
+			nbButton
+		>
+			{{ 'BUTTONS.SAVE_AND_SEND_EMAIL' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>
+<ng-template #actionButtons>
+	<ng-template ngxPermissionsOnly="">
+		<div class="button-action mr-3 ml-3">
+			<button nbButton status="success" size="small">
+				<nb-icon icon="plus-outline"> </nb-icon>
+				{{ 'BUTTONS.ADD' | translate }}
+			</button>
+		</div>
+	</ng-template>
+	<div class="button-action">
+		<ng-template ngxPermissionsOnly="">
+			<button
+				nbButton
+				status="basic"
+				class="action primary"
+				[disabled]="!selectedItem && disableButton"
+				size="small"
+			>
+				<nb-icon icon="edit-outline"></nb-icon>{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				nbButton
+				status="basic"
+				class="action"
+				[disabled]="!selectedItem && disableButton"
+				(click)="deleteIncome(selectedItem)"
+				size="small"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+			</button>
+		</ng-template>
+	</div>
+</ng-template>

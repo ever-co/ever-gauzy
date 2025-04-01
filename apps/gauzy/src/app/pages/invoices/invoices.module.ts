@@ -41,10 +41,11 @@ import {
 	TranslatableService
 } from '@gauzy/ui-core/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { InvoiceAddComponent } from './invoice-add/invoice-add.component';
+import { InvoiceAddByOrganizationComponent } from './invoice-add/by-organization/invoice-add-by-organization.component';
+import { InvoiceAddByRoleComponent } from './invoice-add/by-role/invoice-add-by-role.component';
 import { InvoicesComponent } from './invoices.component';
 import { InvoicesRoutingModule } from './invoices-routing.module';
-import { InvoiceEditComponent } from './invoice-edit/invoice-edit.component';
+import { InvoiceEditByOrganizationComponent } from './invoice-edit/by-organization/invoice-edit-by-organization.component';
 import { InvoicesReceivedComponent } from './invoices-received/invoices-received.component';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import {
@@ -59,7 +60,8 @@ import {
 	TableComponentsModule,
 	TagsColorInputModule,
 	UserFormsModule,
-	InvoiceViewInnerModule
+	InvoiceViewInnerModule,
+	SelectorsModule
 } from '@gauzy/ui-core/shared';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
@@ -88,6 +90,7 @@ import {
 	PaymentMutationComponent
 } from './invoice-payments';
 import { InvoiceViewComponent } from './invoice-view/invoice-view.component';
+import { InvoiceEditByRoleComponent } from './invoice-edit/by-role/invoice-edit-by-role.component';
 
 @NgModule({
 	imports: [
@@ -127,7 +130,8 @@ import { InvoiceViewComponent } from './invoice-view/invoice-view.component';
 		ProjectSelectModule,
 		SharedModule,
 		NbAccordionModule,
-		InvoiceViewInnerModule
+		InvoiceViewInnerModule,
+		SelectorsModule
 	],
 	providers: [
 		InvoicesService,
@@ -147,11 +151,13 @@ import { InvoiceViewComponent } from './invoice-view/invoice-view.component';
 	],
 	declarations: [
 		InvoicesComponent,
-		InvoiceAddComponent,
+		InvoiceAddByOrganizationComponent,
+		InvoiceAddByRoleComponent,
 		InvoiceTasksSelectorComponent,
 		InvoiceProjectsSelectorComponent,
 		InvoiceEmployeesSelectorComponent,
-		InvoiceEditComponent,
+		InvoiceEditByOrganizationComponent,
+		InvoiceEditByRoleComponent,
 		InvoicesReceivedComponent,
 		InvoiceSendMutationComponent,
 		InvoiceViewComponent,

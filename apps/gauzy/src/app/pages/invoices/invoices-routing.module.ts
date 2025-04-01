@@ -4,8 +4,8 @@ import { PermissionsGuard } from '@gauzy/ui-core/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { DateRangePickerResolver } from '@gauzy/ui-core/shared';
 import { InvoicesComponent } from './invoices.component';
-import { InvoiceAddComponent } from './invoice-add/invoice-add.component';
-import { InvoiceEditComponent } from './invoice-edit/invoice-edit.component';
+import { InvoiceAddByOrganizationComponent } from './invoice-add/by-organization/invoice-add-by-organization.component';
+import { InvoiceEditByOrganizationComponent } from './invoice-edit/by-organization/invoice-edit-by-organization.component';
 import { InvoicesReceivedComponent } from './invoices-received/invoices-received.component';
 import { InvoiceViewComponent } from './invoice-view/invoice-view.component';
 import { EstimatesComponent } from './invoice-estimates/invoice-estimates.component';
@@ -14,6 +14,8 @@ import { EstimateEditComponent } from './invoice-estimates/estimate-edit/estimat
 import { EstimatesReceivedComponent } from './invoice-estimates/estimates-received/estimates-received.component';
 import { EstimateViewComponent } from './invoice-estimates/estimate-view/estimate-view.component';
 import { InvoicePaymentsComponent } from './invoice-payments/payments.component';
+import { InvoiceAddByRoleComponent } from './invoice-add/by-role/invoice-add-by-role.component';
+import { InvoiceEditByRoleComponent } from './invoice-edit/by-role/invoice-edit-by-role.component';
 
 export function redirectTo() {
 	return '/pages/dashboard';
@@ -35,8 +37,19 @@ const routes: Routes = [
 		}
 	},
 	{
-		path: 'add',
-		component: InvoiceAddComponent,
+		path: 'add-by-organization',
+		component: InvoiceAddByOrganizationComponent,
+		canActivate: [PermissionsGuard],
+		data: {
+			permissions: {
+				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_INVOICES_EDIT],
+				redirectTo
+			}
+		}
+	},
+	{
+		path: 'add-by-role',
+		component: InvoiceAddByRoleComponent,
 		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
@@ -46,8 +59,20 @@ const routes: Routes = [
 		}
 	},
 	{
-		path: 'edit/:id',
-		component: InvoiceEditComponent,
+		path: 'edit-by-organization/:id',
+		component: InvoiceEditByOrganizationComponent,
+		canActivate: [PermissionsGuard],
+		data: {
+			//TODO: GZY-161 - change to ORG_INVOICES_EDIT
+			permissions: {
+				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_EDIT],
+				redirectTo
+			}
+		}
+	},
+	{
+		path: 'edit-by-role/:id',
+		component: InvoiceEditByRoleComponent,
 		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {

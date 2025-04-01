@@ -1,9 +1,7 @@
 <nb-card class="main card-scroll" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="d-flex">
 		<ngx-back-navigation></ngx-back-navigation>
-		<h4>
-			{{ (isEstimate ? 'INVOICES_PAGE.ADD_ESTIMATE' : 'INVOICES_PAGE.ADD_INVOICE') | translate }}
-		</h4>
+		<h4>{{ (isEstimate ? 'INVOICES_PAGE.ADD_ESTIMATE' : 'INVOICES_PAGE.ADD_INVOICE') | translate }}</h4>
 	</nb-card-header>
 
 	<nb-card-body class="body content">
@@ -13,7 +11,7 @@
 					<div class="row">
 						<div class="col-sm-6">
 							<div class="form-group">
-								<label for="inputInvoiceNumber" class="label">
+								<label for="inputInvoiceNumber" class="label required-asterisk">
 									<span>
 										{{
 											(isEstimate
@@ -36,18 +34,35 @@
 									id="inputInvoiceNumber"
 									fullWidth
 								/>
+								<div
+									*ngIf="
+										form.get('invoiceNumber')?.errors?.required &&
+										form.get('invoiceNumber')?.touched
+									"
+									class="invalid-feedback d-block"
+								>
+									{{ 'INVOICES_PAGE.VALIDATION.REQUIRED_INVOICE_NUMBER' | translate }}
+								</div>
 							</div>
 						</div>
 						<div class="col-sm-6">
-							<label for="inputOrganizationContact" class="label"
+							<label for="inputOrganization" class="label required-asterisk"
 								>{{ 'INVOICES_PAGE.CONTACT' | translate }}
 							</label>
-							<ga-contact-select
-								[addTag]="true"
-								[placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
-								formControlName="organizationContact"
-								(onChanged)="selectOrganizationContact($event)"
-							></ga-contact-select>
+							<input
+								type="text"
+								nbInput
+								[placeholder]="'INVOICES_PAGE.CONTACT' | translate"
+								formControlName="organization"
+								id="inputOrganization"
+								fullWidth
+							/>
+							<div
+								*ngIf="form.get('organization')?.errors?.required && form.get('organization')?.touched"
+								class="invalid-feedback d-block"
+							>
+								{{ 'INVOICES_PAGE.VALIDATION.REQUIRED_CONTACT' | translate }}
+							</div>
 						</div>
 					</div>
 					<div class="row">
@@ -95,24 +110,14 @@
 						</div>
 					</div>
 					<div class="row">
-						<div class="col-sm-6">
-							<ga-currency
-								[formControl]="form.get('currency')"
-								(optionChange)="onCurrencyChange($event)"
-							></ga-currency>
-						</div>
-					</div>
-					<div class="row">
 						<div class="col-sm-12">
 							<div class="form-group">
-								<label for="inputTerms" class="label">{{
-									'INVOICES_PAGE.INVOICES_SELECT_TERMS' | translate
-								}}</label>
+								<label for="inputNotes" class="label">{{ 'INVOICES_PAGE.NOTES' | translate }}</label>
 								<textarea
 									nbInput
-									placeholder="{{ 'INVOICES_PAGE.INVOICES_SELECT_TERMS' | translate }}"
-									formControlName="terms"
-									id="inputTerms"
+									placeholder="{{ 'INVOICES_PAGE.NOTES' | translate }}"
+									formControlName="notes"
+									id="inputNotes"
 									fullWidth
 								></textarea>
 							</div>
@@ -131,7 +136,7 @@
 					<div class="row">
 						<div class="col-sm-6">
 							<div class="form-group">
-								<label for="invoiceType" class="label">
+								<label for="invoiceType" class="label required-asterisk">
 									{{
 										(isEstimate
 											? 'INVOICES_PAGE.INVOICE_TYPE.SELECT_ESTIMATE_TYPE'
@@ -155,16 +160,46 @@
 										{{ 'INVOICES_PAGE.INVOICE_TYPE.' + invoiceType | translate }}
 									</nb-option>
 								</nb-select>
+								<div
+									*ngIf="
+										form.get('invoiceType')?.errors?.required && form.get('invoiceType')?.touched
+									"
+									class="invalid-feedback d-block"
+								>
+									{{ 'INVOICES_PAGE.VALIDATION.REQUIRED_INVOICE_TYPE' | translate }}
+								</div>
 							</div>
 						</div>
 
 						<ng-container *ngIf="isEmployeeHourTable">
 							<div class="col-sm-6">
 								<div class="form-group">
-									<ga-employee-multi-select
-										(selectedChange)="onMembersSelected($event)"
-										(onLoadEmployees)="onLoadEmployees($event)"
-									></ga-employee-multi-select>
+									<label for="inputSelectedEmployee" class="label">
+										{{ 'FORM.LABELS.ADD_OR_REMOVE_EMPLOYEES' | translate }}
+									</label>
+									<input
+										type="text"
+										nbInput
+										formControlName="selectedEmployee"
+										[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES' | translate"
+										id="inputSelectedEmployee"
+										fullWidth
+									/>
+								</div>
+							</div>
+						</ng-container>
+
+						<ng-container *ngIf="isEmployeeHourTable && selectedEmployee">
+							<div class="col-sm-6">
+								<div class="form-group">
+									<label for="selectedDateRange" class="label"
+										>{{ 'INVOICES_PAGE.SELECT_DATE_RANGE' | translate }}
+									</label>
+									<ngx-date-range-picker
+										[arrows]="false"
+										[firstDayOfWeek]="organization.startWeekOn"
+										class="date-range-selector"
+									></ngx-date-range-picker>
 								</div>
 							</div>
 						</ng-container>
@@ -283,7 +318,7 @@
 										(click)="generateTable()"
 										status="basic"
 										outline
-										[disabled]="!invoiceType"
+										[disabled]="this.form.invalid"
 										nbButton
 									>
 										{{
@@ -296,7 +331,7 @@
 									<button
 										(click)="generateTable(true)"
 										status="success"
-										[disabled]="!invoiceType"
+										[disabled]="this.form.invalid"
 										nbButton
 										class="ml-3"
 										*ngIf="isExpenseTable"
@@ -310,7 +345,7 @@
 				</div>
 				<div class="block">
 					<div class="row group d-flex flex-column">
-						<label class="label label-group">{{ 'INVOICES_PAGE.DISCOUNT' | translate }}</label>
+						<div class="label label-group">{{ 'INVOICES_PAGE.DISCOUNT' | translate }}</div>
 						<div class="col-sm-6">
 							<div class="form-group">
 								<label for="inputDiscountValue" class="label">{{
@@ -352,7 +387,7 @@
 					</div>
 
 					<div class="row group d-flex flex-column">
-						<label class="label label-group">{{ 'INVOICES_PAGE.INVOICES_TAXES' | translate }}</label>
+						<div class="label label-group">{{ 'INVOICES_PAGE.INVOICES_TAXES' | translate }}</div>
 						<div class="row">
 							<div class="col-sm-6">
 								<div class="form-group">
@@ -459,10 +494,10 @@
 
 			<div class="total d-flex">
 				<div class="total-item">
-					{{ 'INVOICES_PAGE.SUBTOTAL' | translate }}: {{ currency.value }} {{ subtotal.toFixed(2) }}
+					{{ 'INVOICES_PAGE.SUBTOTAL' | translate }}: {{ currency }} {{ subtotal.toFixed(2) }}
 				</div>
 				<div class="total-item">
-					{{ 'INVOICES_PAGE.TOTAL' | translate }}: {{ currency.value }} {{ total.toFixed(2) }}
+					{{ 'INVOICES_PAGE.TOTAL' | translate }}: {{ currency }} {{ total.toFixed(2) }}
 				</div>
 			</div>
 		</div>
