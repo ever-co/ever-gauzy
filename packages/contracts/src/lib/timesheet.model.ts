@@ -13,7 +13,7 @@ import { ReportGroupByFilter } from './report.model';
 import { IUser } from './user.model';
 import { IRelationalOrganizationTeam } from './organization-team.model';
 import { IScreenshot } from './screenshot.model';
-import { IOrganization, TimeFormatEnum } from './organization.model';
+import { TimeFormatEnum } from './organization.model';
 
 export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
 	employee: IEmployee;
@@ -589,7 +589,6 @@ export interface IWeeklyLimitStatus {
 }
 
 export interface IGetInvoiceTimeLogs {
-	organization: IOrganization;
 	organizationId: string;
 	tenantId?: string;
 	startDate?: string;

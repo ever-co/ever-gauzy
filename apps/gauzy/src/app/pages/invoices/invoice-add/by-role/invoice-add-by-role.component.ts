@@ -698,7 +698,6 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 
 	private loadInvoiceTimeLogsData(): Observable<number> {
 		const request: IGetInvoiceTimeLogs = {
-			organization: this.organization,
 			organizationId: this.organization?.id,
 			tenantId: this.store.user.tenantId,
 			startDate: this.selectedDateRange.startDate.toISOString(),
