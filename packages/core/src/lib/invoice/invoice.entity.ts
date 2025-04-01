@@ -1,18 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	JoinColumn,
-	Unique,
-	RelationId,
-	JoinTable
-} from 'typeorm';
-import {
-	IsString,
-	IsNumber,
-	IsBoolean,
-	IsDate,
-	IsOptional,
-	IsEnum
-} from 'class-validator';
+import { JoinColumn, Unique, RelationId, JoinTable } from 'typeorm';
+import { IsString, IsNumber, IsBoolean, IsDate, IsOptional, IsEnum, IsUUID } from 'class-validator';
 import {
 	IInvoice,
 	CurrenciesEnum,
@@ -23,7 +11,9 @@ import {
 	IInvoiceItem,
 	IOrganizationContact,
 	IOrganization,
-	ITag
+	ITag,
+	IUser,
+	ID
 } from '@gauzy/contracts';
 import { isMySQL } from '@gauzy/config';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
@@ -34,15 +24,22 @@ import {
 	OrganizationContact,
 	Payment,
 	Tag,
-	TenantOrganizationBaseEntity
+	TenantOrganizationBaseEntity,
+	User
 } from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne,
+	MultiORMOneToMany
+} from './../core/decorators/entity';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
 
 @MultiORMEntity('invoice', { mikroOrmRepository: () => MikroOrmInvoiceRepository })
 @Unique(['invoiceNumber'])
 export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
-
 	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@MultiORMColumn({ nullable: true })
@@ -199,16 +196,42 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@IsOptional()
 	@MultiORMColumn({
 		nullable: true,
-		...(isMySQL() ? { type: "text" } : {})
+		...(isMySQL() ? { type: 'text' } : {})
 	})
 	token?: string;
-
 
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
+	// Field to track if the invoice is from user to the company
+	@ApiPropertyOptional({ type: () => () => User })
+	@MultiORMManyToOne(() => User, { onDelete: 'SET NULL', onUpdate: 'CASCADE', nullable: true })
+	@JoinColumn()
+	fromUser?: IUser;
+
+	@ApiPropertyOptional({ type: () => String })
+	@RelationId((it: Invoice) => it.fromUser)
+	@IsString()
+	@IsOptional()
+	@ColumnIndex()
+	@MultiORMColumn({ relationId: true })
+	fromUserId?: string;
+
+	// Field to track how is the user that created the invoice
+	@ApiProperty({ type: () => () => User })
+	@MultiORMManyToOne(() => User, { onDelete: 'RESTRICT', onUpdate: 'CASCADE', nullable: false })
+	@JoinColumn()
+	createdBy?: IUser;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: Invoice) => it.createdBy)
+	@IsString()
+	@ColumnIndex()
+	@MultiORMColumn({ relationId: true })
+	createdById?: string;
+
 	// From Organization
 	@ApiPropertyOptional({ type: () => () => Organization })
 	@MultiORMManyToOne(() => Organization)
@@ -276,7 +299,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 		owner: true,
 		pivotTable: 'tag_invoice',
 		joinColumn: 'invoiceId',
-		inverseJoinColumn: 'tagId',
+		inverseJoinColumn: 'tagId'
 	})
 	@JoinTable({
 		name: 'tag_invoice'

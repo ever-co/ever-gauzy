@@ -427,7 +427,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 		} = this.form.value;
 
 		try {
-			const createdInvoice = await this.invoicesService.add({
+			const createdInvoice = await this.invoicesService.addOwn({
 				invoiceNumber,
 				invoiceDate: moment(invoiceDate).startOf('day').toDate(),
 				dueDate: moment(dueDate).endOf('day').toDate(),
@@ -441,8 +441,8 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 				terms: notes,
 				paid: false,
 				totalValue: +this.total.toFixed(2),
-				toOrganization: this.organization,
-				fromUser: this.selectedEmployee,
+				fromUserId: this.selectedEmployee.id,
+				fromOrganizationId: organizationId,
 				organizationId,
 				tenantId,
 				invoiceType: this.selectedInvoiceType,
@@ -476,7 +476,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 				description: invoiceItem.description,
 				price: Number(invoiceItem.price),
 				quantity: Number(invoiceItem.quantity),
-				totalValue: invoiceItem.totalValue,
+				totalValue: Number(invoiceItem.totalValue),
 				invoiceId: createdInvoice.id,
 				applyTax: invoiceItem.applyTax,
 				applyDiscount: invoiceItem.applyDiscount,
@@ -486,7 +486,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 
 			switch (this.selectedInvoiceType) {
 				case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
-					itemToAdd['employeeId'] = id;
+					itemToAdd['employeeId'] = this.selectedEmployee?.employee?.id;
 					break;
 				case InvoiceTypeEnum.BY_PROJECT_HOURS:
 					itemToAdd['projectId'] = id;
@@ -598,18 +598,15 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 		}
 
 		const { tenantId } = this.store.user;
-		const { organizationContact } = this.form.value;
-
-		if (organizationContact.id) {
-			await this.addInvoice(InvoiceStatusTypesEnum.SENT, organizationContact.id);
+			await this.addInvoice(InvoiceStatusTypesEnum.SENT, this.organization.id);
 			try {
 				await this.invoiceEstimateHistoryService.add({
 					action: this.isEstimate
 						? this.getTranslation('INVOICES_PAGE.ESTIMATE_SENT_TO', {
-								name: organizationContact.name
+								name: this.organization.name
 						  })
 						: this.getTranslation('INVOICES_PAGE.INVOICE_SENT_TO', {
-								name: organizationContact.name
+								name: this.organization.name
 						  }),
 					invoice: this.createdInvoice,
 					invoiceId: this.createdInvoice.id,
@@ -622,12 +619,6 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 			} catch (error) {
 				console.log(error, 'error');
 			}
-		} else {
-			this.toastrService.danger(
-				this.getTranslation('INVOICES_PAGE.SEND.NOT_LINKED'),
-				this.getTranslation('TOASTR.TITLE.WARNING')
-			);
-		}
 	}
 
 	async sendViaEmail() {

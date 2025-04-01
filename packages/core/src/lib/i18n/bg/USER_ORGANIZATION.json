@@ -12,7 +12,7 @@
 		"FROM": "FROM",
 		"INVOICE": "Фактура",
 		"INVOICES_SELECT_DISCOUNT_VALUE": "Discount Value",
-		"INVOICES_SELECT_TERMS": "Terms",
+		"INVOICES_SELECT_NOTES": "Бележки",
 		"NO": "No",
 		"NUMBER": "Number",
 		"PAID": "Paid",

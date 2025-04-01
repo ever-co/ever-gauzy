@@ -9,6 +9,7 @@ import { InvoiceItemService } from './invoice-item.service';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
 import { TaskModule } from '../tasks/task.module';
+import { InvoiceModule } from '../invoice/invoice.module';
 
 @Module({
 	imports: [
@@ -17,10 +18,11 @@ import { TaskModule } from '../tasks/task.module';
 		MikroOrmModule.forFeature([InvoiceItem]),
 		RolePermissionModule,
 		TaskModule,
+		InvoiceModule,
 		CqrsModule
 	],
 	controllers: [InvoiceItemController],
 	providers: [InvoiceItemService, ...CommandHandlers],
 	exports: [InvoiceItemService]
 })
-export class InvoiceItemModule { }
+export class InvoiceItemModule {}

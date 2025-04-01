@@ -1,9 +1,4 @@
-import {
-	IInvoice,
-	IOrganization,
-	IOrganizationContact,
-	InvoiceTypeEnum
-} from '@gauzy/contracts';
+import { IInvoice, IOrganization, IOrganizationContact, InvoiceTypeEnum } from '@gauzy/contracts';
 
 export async function generateInvoicePdfDefinition(
 	invoice: IInvoice,
@@ -21,47 +16,40 @@ export async function generateInvoicePdfDefinition(
 			`${invoice.currency} ${item.totalValue}`
 		];
 		switch (invoice.invoiceType) {
-			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
+			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS: {
 				const employee = item.employee;
-				currentItem.unshift(`${employee.user.name}`);
+				currentItem[0] = `${employee.user.name}`;
 				break;
-			case InvoiceTypeEnum.BY_PROJECT_HOURS:
+			}
+			case InvoiceTypeEnum.BY_PROJECT_HOURS: {
 				const project = item.project;
-				currentItem.unshift(`${project.name}`);
+				currentItem[0] = `${project.name}`;
 				break;
-			case InvoiceTypeEnum.BY_TASK_HOURS:
+			}
+			case InvoiceTypeEnum.BY_TASK_HOURS: {
 				const task = item.task;
-				currentItem.unshift(`${task.title}`);
+				currentItem[0] = `${task.title}`;
 				break;
-			case InvoiceTypeEnum.BY_PRODUCTS:
+			}
+			case InvoiceTypeEnum.BY_PRODUCTS: {
 				let product: any = item.product;
 				product = product.translate(language);
-				currentItem.unshift(`${product.name}`);
+				currentItem[0] = `${product.name}`;
 				break;
-			case InvoiceTypeEnum.BY_EXPENSES:
+			}
+			case InvoiceTypeEnum.BY_EXPENSES: {
 				const expense = item.expense;
-				currentItem.unshift(`${expense.purpose}`);
+				currentItem[0] = `${expense.purpose}`;
 				break;
+			}
 			default:
 				break;
 		}
 		body.push(currentItem);
 	}
 
-	let widths;
-	const tableHeader = [
-		translatedText.description,
-		translatedText.quantity,
-		translatedText.price,
-		translatedText.totalValue
-	];
-
-	if (invoice.invoiceType === InvoiceTypeEnum.DETAILED_ITEMS) {
-		widths = ['25%', '25%', '25%', '25%'];
-	} else {
-		widths = ['20%', '20%', '20%', '20%', '20%'];
-		tableHeader.unshift(`${translatedText.item}`);
-	}
+	const widths = ['25%', '25%', '25%', '25%'];
+	const tableHeader = [translatedText.item, translatedText.quantity, translatedText.price, translatedText.totalValue];
 
 	const docDefinition = {
 		watermark: {
@@ -82,7 +70,7 @@ export async function generateInvoicePdfDefinition(
 								bold: true,
 								text: `${translatedText.from}:\n`
 							},
-							`${organization.name}`
+							`${invoice.fromUser?.name ?? organization.name}`
 						]
 					},
 					{
@@ -90,10 +78,9 @@ export async function generateInvoicePdfDefinition(
 						bold: true,
 						width: '50%',
 						alignment: 'right',
-						text: `${invoice.isEstimate
-								? translatedText.estimate
-								: translatedText.invoice
-							} ${translatedText.number}: ${invoice.invoiceNumber}`
+						text: `${invoice.isEstimate ? translatedText.estimate : translatedText.invoice} ${
+							translatedText.number
+						}: ${invoice.invoiceNumber}`
 					}
 				]
 			},
@@ -105,10 +92,9 @@ export async function generateInvoicePdfDefinition(
 						text: [
 							{
 								bold: true,
-								text: `${invoice.isEstimate
-										? translatedText.estimate
-										: translatedText.invoice
-									} ${translatedText.date}: `
+								text: `${invoice.isEstimate ? translatedText.estimate : translatedText.invoice} ${
+									translatedText.date
+								}: `
 							},
 							`${invoice.invoiceDate.toString().slice(0, 10)}`
 						]
@@ -150,7 +136,7 @@ export async function generateInvoicePdfDefinition(
 						bold: true,
 						text: `${translatedText.to}:\n`
 					},
-					`${organizationContact.name}`
+					`${organizationContact?.name ?? organization.name}`
 				]
 			},
 			' ',
@@ -185,9 +171,9 @@ export async function generateInvoicePdfDefinition(
 					{
 						alignment: 'right',
 						width: '10%',
-						text: `${invoice.taxType === 'FLAT' ? invoice.currency : ''
-							} ${invoice.tax}${invoice.taxType === 'PERCENT' ? '%' : ''
-							}`
+						text: `${invoice.taxType === 'FLAT' ? invoice.currency : ''} ${invoice.tax}${
+							invoice.taxType === 'PERCENT' ? '%' : ''
+						}`
 					}
 				]
 			},
@@ -207,9 +193,9 @@ export async function generateInvoicePdfDefinition(
 					{
 						alignment: 'right',
 						width: '10%',
-						text: `${invoice.tax2Type === 'FLAT' ? invoice.currency : ''
-							} ${invoice.tax2}${invoice.tax2Type === 'PERCENT' ? '%' : ''
-							}`
+						text: `${invoice.tax2Type === 'FLAT' ? invoice.currency : ''} ${invoice.tax2}${
+							invoice.tax2Type === 'PERCENT' ? '%' : ''
+						}`
 					}
 				]
 			},
@@ -229,11 +215,9 @@ export async function generateInvoicePdfDefinition(
 					{
 						alignment: 'right',
 						width: '10%',
-						text: `${invoice.discountType === 'FLAT'
-								? invoice.currency
-								: ''
-							} ${invoice.discountValue}${invoice.discountType === 'PERCENT' ? '%' : ''
-							}`
+						text: `${invoice.discountType === 'FLAT' ? invoice.currency : ''} ${invoice.discountValue}${
+							invoice.discountType === 'PERCENT' ? '%' : ''
+						}`
 					}
 				]
 			},
@@ -253,16 +237,16 @@ export async function generateInvoicePdfDefinition(
 			{
 				columns: invoice.hasRemainingAmountInvoiced
 					? [
-						{
-							width: '50%',
-							text: `${translatedText.alreadyPaid}: ${invoice.currency} ${invoice.alreadyPaid}`
-						},
-						{
-							alignment: 'right',
-							width: '50%',
-							text: `${translatedText.amountDue}: ${invoice.currency} ${invoice.amountDue}`
-						}
-					]
+							{
+								width: '50%',
+								text: `${translatedText.alreadyPaid}: ${invoice.currency} ${invoice.alreadyPaid}`
+							},
+							{
+								alignment: 'right',
+								width: '50%',
+								text: `${translatedText.amountDue}: ${invoice.currency} ${invoice.amountDue}`
+							}
+					  ]
 					: []
 			},
 			' ',
@@ -274,7 +258,7 @@ export async function generateInvoicePdfDefinition(
 						text: [
 							{
 								bold: true,
-								text: `${translatedText.terms}\n\n`
+								text: `${translatedText.notes}\n\n`
 							},
 							`${invoice.terms}`
 						]

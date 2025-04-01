@@ -31,7 +31,6 @@ export interface IInvoice extends IBasePerTenantAndOrganizationEntityModel {
 	totalValue?: number;
 	organizationContactId?: string;
 	organizationContactName?: string;
-	fromUser?: IUser;
 	toOrganization?: IOrganization;
 	fromOrganization?: IOrganization;
 	toContact?: IOrganizationContact;
@@ -49,6 +48,7 @@ export interface IInvoice extends IBasePerTenantAndOrganizationEntityModel {
 	amountDue?: number;
 	hasRemainingAmountInvoiced?: boolean;
 	token?: string;
+	fromUser?: IUser;
 }
 
 export interface IInvoiceCreateInput extends IBasePerTenantAndOrganizationEntityModel {
@@ -67,11 +67,8 @@ export interface IInvoiceCreateInput extends IBasePerTenantAndOrganizationEntity
 	totalValue?: number;
 	organizationContactId?: string;
 	organizationContactName?: string;
-	//TODO: GZY-161 - Temporary. Wait for BE changes
-	fromOrganization?: IOrganization;
-	toContact?: IOrganizationContact;
-	fromUser?: IUser;
-	toOrganization?: IOrganization;
+	fromOrganizationId?: string;
+	toContactId?: string;
 	invoiceType?: string;
 	sentTo?: string;
 	tags?: ITag[];
@@ -79,6 +76,8 @@ export interface IInvoiceCreateInput extends IBasePerTenantAndOrganizationEntity
 	isAccepted?: boolean;
 	isEstimate?: boolean;
 	isArchived?: boolean;
+	createdById?: string;
+	fromUserId?: string;
 }
 
 export interface IInvoiceUpdateInput extends IInvoiceCreateInput {
@@ -97,6 +96,11 @@ export interface IInvoiceFindInput extends IBasePerTenantAndOrganizationEntityMo
 	tags?: ITag[];
 	isEstimate?: boolean | number;
 	isArchived?: boolean;
+}
+
+export interface IInvoiceAccessCheck {
+	invoice: IInvoice;
+	isOwnInvoice: boolean;
 }
 
 export enum InvoiceTypeEnum {
@@ -164,3 +168,8 @@ export enum InvoiceTabsEnum {
 	SEARCH = 'SEARCH',
 	HISTORY = 'HISTORY'
 }
+
+export enum InvoiceErrors {
+	INVALID_INVOICE = 'invalid-invoice'
+}
+export const EMPLOYEE_INVOICE_STATUSES: string[] = [InvoiceStatusTypesEnum.DRAFT, InvoiceStatusTypesEnum.SENT];

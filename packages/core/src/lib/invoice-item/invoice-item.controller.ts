@@ -1,14 +1,4 @@
-import {
-	Controller,
-	UseGuards,
-	Get,
-	Query,
-	HttpStatus,
-	Post,
-	Body,
-	Param,
-	ValidationPipe
-} from '@nestjs/common';
+import { Controller, UseGuards, Get, Query, HttpStatus, Post, Body, Param, ValidationPipe } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { IInvoiceItem, IPagination, PermissionsEnum } from '@gauzy/contracts';
@@ -20,23 +10,23 @@ import { BulkBodyLoadTransformPipe, ParseJsonPipe, UUIDValidationPipe } from './
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { InvoiceItemBulkInputDTO } from './dto';
-
+import { InvoiceService } from '../invoice/invoice.service';
 @ApiTags('InvoiceItem')
 @UseGuards(TenantPermissionGuard)
 @Controller()
 export class InvoiceItemController extends CrudController<InvoiceItem> {
 	constructor(
 		private readonly invoiceItemService: InvoiceItemService,
+		private readonly invoiceService: InvoiceService,
 		private readonly commandBus: CommandBus
 	) {
 		super(invoiceItemService);
 	}
 
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IInvoiceItem>> {
-		const { relations = [], findInput = null } = data;
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IInvoiceItem>> {
+		const { relations = [], findInput = null, invoiceId = null } = data;
+		await this.invoiceService.checkIfUserCanAccessInvoiceById(invoiceId);
 		return this.invoiceItemService.findAll({
 			where: findInput,
 			relations
@@ -50,18 +40,16 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Post('/bulk/:invoiceId')
 	async createBulk(
 		@Param('invoiceId', UUIDValidationPipe) invoiceId: string,
-		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform : true })) input: InvoiceItemBulkInputDTO
+		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform: true })) input: InvoiceItemBulkInputDTO
 	): Promise<any> {
-		return this.commandBus.execute(
-			new InvoiceItemBulkCreateCommand(invoiceId, input.list)
-		);
+		await this.invoiceService.checkIfUserCanAccessInvoiceById(invoiceId, true);
+		return this.commandBus.execute(new InvoiceItemBulkCreateCommand(invoiceId, input.list));
 	}
 }

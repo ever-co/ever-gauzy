@@ -56,6 +56,10 @@ export class InvoicesService {
 		return firstValueFrom(this.http.post<IInvoice>(`${API_PREFIX}/invoices`, invoice));
 	}
 
+	addOwn(invoice: IInvoiceCreateInput): Promise<IInvoice> {
+		return firstValueFrom(this.http.post<IInvoice>(`${API_PREFIX}/invoices/own`, invoice));
+	}
+
 	update(id: ID, updateInput: IInvoiceUpdateInput): Promise<IInvoice> {
 		return firstValueFrom(this.http.put<IInvoice>(`${API_PREFIX}/invoices/${id}`, updateInput));
 	}

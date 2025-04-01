@@ -12,7 +12,7 @@
 		"FROM": "ИЗ",
 		"INVOICE": "Счет",
 		"INVOICES_SELECT_DISCOUNT_VALUE": "Значение скидки",
-		"INVOICES_SELECT_TERMS": "Условия",
+		"INVOICES_SELECT_NOTES": "Примечания",
 		"NO": "Нет",
 		"NUMBER": "Номер",
 		"PAID": "Оплачено",

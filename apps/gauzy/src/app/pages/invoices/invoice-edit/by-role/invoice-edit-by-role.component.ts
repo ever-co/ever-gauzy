@@ -477,15 +477,12 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 				terms: invoiceData.terms,
 				totalValue: +this.total.toFixed(2),
 				invoiceType: this.invoice.invoiceType,
-				organizationContactId: invoiceData.organizationContact.id,
-				toContact: invoiceData.toOrganization,
 				organizationId,
 				tenantId,
 				tags: invoiceData.tags,
 				status: status,
 				sentTo: sendTo,
-				hasRemainingAmountInvoiced:
-					this.isRemainingAmount || this.invoice.hasRemainingAmountInvoiced ? true : false,
+				hasRemainingAmountInvoiced: !!this.isRemainingAmount || this.invoice.hasRemainingAmountInvoiced,
 				alreadyPaid: this.invoice.alreadyPaid,
 				amountDue: this.invoice.amountDue
 			});
