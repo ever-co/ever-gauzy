@@ -356,9 +356,6 @@ export async function preBootstrapApplicationConfig(applicationConfig: Partial<A
 		}
 	});
 
-	// Log the current database configuration (for debugging or informational purposes)
-	console.log(chalk.green(`DB Config: ${JSON.stringify(getConfig().dbConnectionOptions)}`));
-
 	// Register core and plugin entities and subscribers
 	const entities = await preBootstrapRegisterEntities(applicationConfig);
 	const subscribers = await preBootstrapRegisterSubscribers(applicationConfig);
