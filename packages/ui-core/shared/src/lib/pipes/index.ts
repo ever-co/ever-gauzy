@@ -12,6 +12,7 @@ import { TimeFormatPipe } from './time-format.pipe';
 import { UtcToLocalPipe } from './utc-to-local.pipe';
 import { HashNumberPipe } from './hash-number.pipe';
 import { UtcToTimezone } from './utc-to-timezone.pipe';
+import { HoursDurationFormatPipe } from './duration-to-hours-format.pipe';
 
 export { CurrencyPositionPipe } from './currency-position.pipe';
 export { DateFormatPipe } from './date-format.pipe';
@@ -27,6 +28,7 @@ export { TimeFormatPipe } from './time-format.pipe';
 export { UtcToLocalPipe } from './utc-to-local.pipe';
 export { HashNumberPipe } from './hash-number.pipe';
 export { UtcToTimezone } from './utc-to-timezone.pipe';
+export { HoursDurationFormatPipe } from './duration-to-hours-format.pipe';
 
 export const Pipes = [
 	CurrencyPositionPipe,
@@ -44,5 +46,6 @@ export const Pipes = [
 	TruncatePipe,
 	UtcToLocalPipe,
 	UtcToTimezone,
-	HashNumberPipe
+	HashNumberPipe,
+	HoursDurationFormatPipe
 ];
