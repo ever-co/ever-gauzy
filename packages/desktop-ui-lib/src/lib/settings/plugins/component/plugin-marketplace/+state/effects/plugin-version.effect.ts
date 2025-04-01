@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
-import { EMPTY, catchError, filter, finalize, switchMap, tap } from 'rxjs';
+import { EMPTY, catchError, filter, finalize, mergeMap, switchMap, tap } from 'rxjs';
 import { ToastrNotificationService } from '../../../../../../services';
 import { PluginService } from '../../../../services/plugin.service';
 import { PluginVersionActions } from '../actions/plugin-version.action';
@@ -101,14 +101,14 @@ export class PluginVersionEffects {
 				this.pluginVersionStore.update({ deleting: true });
 				this.toastrService.info('Deleting plugin version...');
 			}),
-			switchMap(({ pluginId, versionId }) =>
+			mergeMap(({ pluginId, versionId }) =>
 				this.pluginService.deleteVersion(pluginId, versionId).pipe(
 					tap(() => {
 						this.pluginVersionStore.update((state) => ({
 							version: state.version && { ...state.version, deletedAt: new Date() },
 							versions: [
 								...state.versions.map((version) =>
-									version.id === pluginId ? { ...version, deletedAt: new Date() } : version
+									version.id === versionId ? { ...version, deletedAt: new Date() } : version
 								)
 							]
 						}));
@@ -131,24 +131,24 @@ export class PluginVersionEffects {
 				this.pluginVersionStore.update({ restoring: true });
 				this.toastrService.info('Restoring plugin version...');
 			}),
-			switchMap(({ pluginId, versionId }) =>
+			mergeMap(({ pluginId, versionId }) =>
 				this.pluginService.restoreVersion(pluginId, versionId).pipe(
 					tap(() => {
 						this.pluginVersionStore.update((state) => ({
-							version: state.version && { ...state.version, deletedAt: null },
-							versions: [
-								...state.versions.map((version) =>
-									version.id === pluginId ? { ...version, deletedAt: null } : version
-								)
-							]
+							version:
+								state.version?.id === versionId ? { ...state.version, deletedAt: null } : state.version,
+							versions: state.versions.map((version) =>
+								version.id === versionId ? { ...version, deletedAt: null } : version
+							)
 						}));
-						this.toastrService.success('Restore plugin version successfully!');
+						this.toastrService.success('Plugin version restored successfully!');
 					}),
-					finalize(() => this.pluginVersionStore.update({ restoring: false })),
 					catchError((error) => {
-						this.toastrService.error(error.message || error);
+						console.error('Restore failed:', error);
+						this.toastrService.error('Failed to restore plugin version. Please try again.');
 						return EMPTY;
-					})
+					}),
+					finalize(() => this.pluginVersionStore.update({ restoring: false }))
 				)
 			)
 		)

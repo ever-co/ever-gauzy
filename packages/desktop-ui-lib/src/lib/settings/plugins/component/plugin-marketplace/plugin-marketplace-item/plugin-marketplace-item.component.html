@@ -1,5 +1,5 @@
 @let plugin = plugin$ | async; @let editing = marketplaceQuery.updating$ | async; @let toggle =
-installationQuery.toggle$ | async; @let isSelected = toggle.plugin.id === plugin.id; @let installing =
+installationQuery.toggle$ | async; @let isSelected = toggle.plugin?.id === plugin?.id; @let installing =
 installationQuery.installing$ |async; @let uninstalling = installationQuery.unistalling$ |async; @let deleting =
 marketplaceQuery.deleting$ | async; @let adding = versionQuery.creating$ | async; @let needUpdate = needUpdate$ | async;
 @let installed = installed$ | async; @let loading = marketplaceQuery.isLoading$ | async; @let disabled = editing ||
