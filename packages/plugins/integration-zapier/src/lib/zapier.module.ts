@@ -1,7 +1,7 @@
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { ConfigModule } from '@gauzy/config';
+import { ConfigModule, environment } from '@gauzy/config';
 import {
     IntegrationEntitySettingModule,
     IntegrationMapModule,
@@ -28,7 +28,7 @@ import { TimerModule } from '@gauzy/core';
 
 @Module({
     imports: [
-        HttpModule.register({ baseURL: ZAPIER_API_URL }),
+        HttpModule.register({ baseURL: environment.baseUrl }),
         CqrsModule,
         ConfigModule,
         IntegrationEntitySettingModule,

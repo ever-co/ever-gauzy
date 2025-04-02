@@ -4,7 +4,7 @@ import { environment } from '@gauzy/config';
 const perform = async (z: ZObject, bundle: Bundle) => {
   try {
     const response = await z.request({
-      url: `${environment.baseUrl}/api/timesheet/timer/stop`,
+      url: `${process.env.API_BASE_URL}/api/timesheet/timer/stop`,
       method: 'POST',
       headers: {
         Authorization: `Bearer ${bundle.authData['access_token']}`,
@@ -77,7 +77,7 @@ export default {
         default: 'BROWSER',
       },
       { key: 'description', type: 'text', required: false, label: 'Description' },
-      { key: 'isBillable', type: 'boolean', required: false, label: 'Is Billable', default: 'false' }, // Changed to string
+      { key: 'isBillable', type: 'boolean', required: false, label: 'Is Billable', default: 'false' },
       { key: 'version', type: 'string', required: false, label: 'Version', default: '1.0.1' },
       { key: 'projectId', type: 'string', required: false, label: 'Project ID' },
       { key: 'taskId', type: 'string', required: false, label: 'Task ID' },
