@@ -4,7 +4,7 @@ import { environment } from '@gauzy/config';
 const perform = async (z: ZObject, bundle: Bundle) => {
   try {
     const response = await z.request({
-      url: `${environment.baseUrl}/api/timesheet/timer/start`,
+      url: `${process.env.API_BASE_URL}/api/timesheet/timer/start`,
       method: 'POST',
       headers: {
         Authorization: `Bearer ${bundle.authData['access_token']}`,

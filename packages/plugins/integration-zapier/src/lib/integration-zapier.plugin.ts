@@ -1,8 +1,14 @@
 import * as chalk from 'chalk';
-import { ApplicationPluginConfig } from '@gauzy/common';
+import { ApplicationPluginConfig, CustomEmbeddedFieldConfig, CustomEmbeddedFields } from '@gauzy/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { ZapierModule } from './zapier.module';
 import { ZapierWebhookSubscriptionRepository } from './repository/zapier-repository.entity';
+
+// Extend the CustomEmbeddedFields interface to include our custom entities
+interface ZapierCustomFields extends CustomEmbeddedFields {
+	IntegrationSetting?: CustomEmbeddedFieldConfig[];
+	ZapierWebhookSubscription?: CustomEmbeddedFieldConfig[];
+}
 
 @Plugin({
 	/**
@@ -10,8 +16,8 @@ import { ZapierWebhookSubscriptionRepository } from './repository/zapier-reposit
 	 */
 	imports: [ZapierModule],
 	/**
-	 * No entities needed for Zapier integration since we're using existing
-	 * IntegrationSetting entity
+	 * Entity needed for Zapier integration that extends the existing
+	 * IntegrationSetting entity to store webhook subscription data
 	 */
 	entities: [ZapierWebhookSubscriptionRepository],
 	/**
@@ -22,6 +28,51 @@ import { ZapierWebhookSubscriptionRepository } from './repository/zapier-reposit
 	 * @returns {ApplicationPluginConfig} - The modified plugin configuration object.
 	 */
 	configuration: (config: ApplicationPluginConfig): ApplicationPluginConfig => {
+		// Initialize customFields if it doesn't exist
+		if (!config.customFields) {
+			config.customFields = {};
+		}
+
+		// Add custom fields for Zapier webhook subscriptions
+		const integrationSettingFields: CustomEmbeddedFieldConfig[] = [
+			{
+				name: 'webhookSubscriptions',
+				type: 'relation',
+				relationType: 'one-to-many',
+				entity: ZapierWebhookSubscriptionRepository,
+				nullable: true,
+				onDelete: 'CASCADE'
+			}
+		];
+
+		// Add custom fields for Zapier webhook subscription details
+		const webhookSubscriptionFields: CustomEmbeddedFieldConfig[] = [
+			{
+				name: 'targetUrl',
+				type: 'string',
+				nullable: false,
+				index: true
+			},
+			{
+				name: 'event',
+				type: 'string',
+				nullable: false,
+				index: true
+			},
+			{
+				name: 'isActive',
+				type: 'boolean',
+				nullable: false,
+				default: true
+			}
+		];
+
+		// Update the customFields object properties instead of reassignment
+		Object.assign(config.customFields, {
+			IntegrationSetting: integrationSettingFields,
+			ZapierWebhookSubscription: webhookSubscriptionFields
+		});
+
 		return config;
 	}
 })

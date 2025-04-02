@@ -15,6 +15,7 @@ import { ZapierWebhookService } from './zapier-webhook.service';
 import { ZapierService } from './zapier.service';
 import { IZapierCreateWebhookInput } from '@gauzy/contracts';
 import { ZapierWebhookSubscriptionRepository } from './repository/zapier-repository.entity';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @Controller('/integration/zapier')
 export class ZapierWebhookController {
@@ -25,6 +26,15 @@ export class ZapierWebhookController {
 		private readonly zapierService: ZapierService
 	) {}
 
+	@ApiOperation({ summary: 'Create a new Zapier webhook subscription' })
+	@ApiResponse({
+		status: 200,
+		description: 'Webhook subscription created successfully'
+	})
+	@ApiResponse({
+		status: 401,
+		description: 'Unauthorized - Invalid or missing authorization token'
+	})
 	@Post('/webhooks')
 	async createWebhook(
 		@Body() body: IZapierCreateWebhookInput,
@@ -63,11 +73,41 @@ export class ZapierWebhookController {
 		}
 	}
 
+	@ApiOperation({ summary: 'Delete an existing Zapier webhook subscription' })
+	@ApiResponse({
+		status: 200,
+		description: 'Webhook subscription deleted successfully'
+	})
+	@ApiResponse({
+		status: 401,
+		description: 'Unauthorized - Invalid or missing authorization token'
+	})
 	@Delete('/webhooks/:id')
-	async deleteWebhook(@Param('id') id: string): Promise<void> {
+	async deleteWebhook(
+		@Param('id') id: string,
+		@Headers('Authorization') authorization: string
+	): Promise<void> {
+		if (!authorization) {
+			throw new UnauthorizedException('Authorization header is required');
+		}
+		const token = authorization.replace('Bearer ', '');
+
 		try {
-			await this.zapierWebhookService.deleteSubscription(id);
+			const integration = await this.zapierService.findIntegrationByToken(token);
+
+			if (!integration) {
+				throw new ForbiddenException('Invalid token');
+			}
+
+			if (!integration.tenantId) {
+				throw new BadRequestException('Integration tenant ID is required');
+			}
+
+			await this.zapierWebhookService.deleteSubscription(id, integration.tenantId);
 		} catch (error) {
+			if (error instanceof ForbiddenException || error instanceof UnauthorizedException || error instanceof BadRequestException) {
+				throw error;
+			}
 			this.logger.error(`Failed to delete webhook subscription with id ${id}`, error);
 			throw new InternalServerErrorException('Failed to delete webhook subscription');
 		}

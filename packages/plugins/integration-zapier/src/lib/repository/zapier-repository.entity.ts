@@ -1,18 +1,23 @@
+// External imports
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsUUID } from 'class-validator';
+import { JoinColumn, RelationId } from 'typeorm';
+
+// Gauzy contracts
 import { ID, IIntegrationTenant } from '@gauzy/contracts';
+
+// Gauzy core imports
 import {
     ColumnIndex,
     IntegrationTenant,
+    MultiORMColumn,
+    MultiORMEntity,
     MultiORMManyToOne,
     TenantOrganizationBaseEntity
 } from '@gauzy/core';
-import {
-    MultiORMEntity,
-    MultiORMColumn
-} from '@gauzy/core';
+
+// Local imports
 import { MikroOrmZapierWebhookSubscriptionRepository } from './mikro-orm-zapier.repository';
-import { JoinColumn, RelationId } from 'typeorm';
 
 @MultiORMEntity('zapier_webhook_subscriptions', {
     mikroOrmRepository: () => MikroOrmZapierWebhookSubscriptionRepository

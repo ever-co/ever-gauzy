@@ -13,7 +13,7 @@ export class CreateIntegrationZapierWebhookRepositoryTable1743449844752 implemen
      * @param queryRunner
      */
     public async up(queryRunner: QueryRunner): Promise<void> {
-        console.log(chalk.yellow(this.name + ' start running!'));
+        console.log(chalk.yellow(`${this.name} start running!`));
 
         switch (queryRunner.connection.options.type) {
             case DatabaseTypeEnum.sqlite:

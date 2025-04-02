@@ -15,7 +15,7 @@ const perform = async (z: ZObject, bundle: Bundle) => {
 // Subscribe function - creates a webhook subscription
 const subscribe = async (z: ZObject, bundle: Bundle) => {
   const response = await z.request({
-    url: `${environment.baseUrl}/api/integration/zapier/webhooks`,
+    url: `${process.env.API_BASE_URL}/api/integration/zapier/webhooks`,
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -32,7 +32,7 @@ const subscribe = async (z: ZObject, bundle: Bundle) => {
 // Unsubscribe function - removes the webhook subscription
 const unsubscribe = async (z: ZObject, bundle: Bundle) => {
   const response = await z.request({
-    url: `${environment.baseUrl}/api/integration/zapier/webhooks/${bundle.subscribeData?.id}`,
+    url: `${process.env.API_BASE_URL}/api/integration/zapier/webhooks/${bundle.subscribeData?.id}`,
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${bundle.authData['access_token']}`,
