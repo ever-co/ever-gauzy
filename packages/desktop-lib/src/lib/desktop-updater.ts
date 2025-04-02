@@ -61,13 +61,19 @@ export class DesktopUpdater {
 			console.log('Url update', localUpdate.url);
 			console.log('Server started', this._updateServer.running);
 			this._updateContext.strategy = localUpdate;
-			this._settingWindow.webContents.send('update_files_directory', {
-				uri: files
+			this._settingWindow.webContents.send('setting_page_ipc', {
+				type: 'update_files_directory',
+				data: {
+					uri: files
+				}
 			});
 			try {
 				await this._updateContext.checkUpdate();
 			} catch (e) {
-				this._settingWindow.webContents.send('error_update', e);
+				this._settingWindow.webContents.send('setting_page_ipc', {
+					type: 'error_update',
+					data: e
+				});
 				console.log('Error on checking update:', e);
 			}
 		});
@@ -83,7 +89,10 @@ export class DesktopUpdater {
 				try {
 					await this._updateContext.checkUpdate();
 				} catch (e) {
-					this._settingWindow.webContents.send('error_update', e);
+					this._settingWindow.webContents.send('setting_page_ipc', {
+						type: 'error_update',
+						data: e
+					});
 					console.log('Error on checking update:', e);
 				}
 			}
@@ -93,7 +102,10 @@ export class DesktopUpdater {
 			try {
 				await this._updateContext.checkUpdate();
 			} catch (e) {
-				this._settingWindow.webContents.send('error_update', e);
+				this._settingWindow.webContents.send('setting_page_ipc', {
+					type: 'error_update',
+					data: e
+				});
 				console.log('Error on checking update:', e);
 			}
 		});
@@ -134,7 +146,9 @@ export class DesktopUpdater {
 
 		autoUpdater.on('update-downloaded', async (event: UpdateDownloadedEvent) => {
 			const setting = LocalStore.getStore('appSetting');
-			this._settingWindow.webContents.send('update_downloaded');
+			this._settingWindow.webContents.send('setting_page_ipc', {
+				type: 'update_downloaded'
+			});
 			if (setting && !setting.automaticUpdate) return;
 			const dialog = new DialogConfirmInstallDownload(
 				new DesktopDialog(
@@ -148,13 +162,17 @@ export class DesktopUpdater {
 			});
 			const button = await dialog.show();
 			if (button?.response === 0) {
-				this._settingWindow.webContents.send('_logout_quit_install_');
+				this._settingWindow.webContents.send('setting_page_ipc', {
+					type: '_logout_quit_install_'
+				});
 			}
 			this._updateServer.stop();
 		});
 
 		autoUpdater.on('update-available', (info: UpdateInfo) => {
-			this._settingWindow.webContents.send('update_available');
+			this._settingWindow.webContents.send('setting_page_ipc', {
+				type: 'update_available'
+			});
 			this._updateContext.notify(info);
 		});
 
@@ -163,19 +181,27 @@ export class DesktopUpdater {
 		};
 
 		autoUpdater.on('update-not-available', () => {
-			this._settingWindow.webContents.send('update_not_available');
+			this._settingWindow.webContents.send('setting_page_ipc', {
+				type: 'update_not_available'
+			});
 			this._updateServer.stop();
 		});
 
 		autoUpdater.on('download-progress', (event) => {
 			console.log('update log', event);
 			if (this._settingWindow) {
-				this._settingWindow.webContents.send('download_on_progress', event);
+				this._settingWindow.webContents.send('setting_page_ipc', {
+					type: 'download_on_progress',
+					data: event
+				});
 			}
 		});
 
 		autoUpdater.on('error', (e) => {
-			this._settingWindow.webContents.send('error_update', e);
+			this._settingWindow.webContents.send('setting_page_ipc', {
+				type: 'error_update',
+				data: e
+			});
 			console.log('error');
 			this._updateServer.stop();
 		});
@@ -204,7 +230,10 @@ export class DesktopUpdater {
 			try {
 				await this._updateContext.checkUpdate();
 			} catch (e) {
-				this._settingWindow.webContents.send('error_update', e);
+				this._settingWindow.webContents.send('setting_page_ipc', {
+					type: 'error_update',
+					data: e
+				});
 				console.log('Error on checking update:', e);
 			}
 		}, 5000);
