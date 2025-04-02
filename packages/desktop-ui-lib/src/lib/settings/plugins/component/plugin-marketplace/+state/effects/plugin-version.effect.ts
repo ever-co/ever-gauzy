@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
 import { createEffect, ofType } from '@ngneat/effects';
 import { Actions } from '@ngneat/effects-ng';
-import { EMPTY, catchError, filter, finalize, mergeMap, switchMap, tap } from 'rxjs';
+import { EMPTY, catchError, filter, finalize, map, mergeMap, switchMap, tap } from 'rxjs';
 import { ToastrNotificationService } from '../../../../../../services';
 import { PluginService } from '../../../../services/plugin.service';
 import { PluginVersionActions } from '../actions/plugin-version.action';
+import { PluginMarketplaceStore } from '../stores/plugin-market.store';
 import { PluginVersionStore } from '../stores/plugin-version.store';
+import { coalesceValue } from '../../../../../../utils';
 
 @Injectable({ providedIn: 'root' })
 export class PluginVersionEffects {
@@ -13,7 +15,8 @@ export class PluginVersionEffects {
 		private readonly action$: Actions,
 		private readonly pluginVersionStore: PluginVersionStore,
 		private readonly pluginService: PluginService,
-		private readonly toastrService: ToastrNotificationService
+		private readonly toastrService: ToastrNotificationService,
+		private readonly pluginMarketplaceStore: PluginMarketplaceStore
 	) {}
 
 	getAll$ = createEffect(() =>
@@ -45,18 +48,24 @@ export class PluginVersionEffects {
 			ofType(PluginVersionActions.add),
 			tap(() => {
 				this.pluginVersionStore.update({ creating: true });
+				this.pluginMarketplaceStore.setUpload({ uploading: true });
 				this.toastrService.info('Adding new plugin version...');
 			}),
 			switchMap(({ pluginId, version }) =>
 				this.pluginService.addVersion(pluginId, version).pipe(
-					filter(Boolean), // Filter out null or undefined responses
-					tap((version) => {
+					tap((res) => this.pluginMarketplaceStore.setUpload({ progress: coalesceValue(res?.progress, 0) })),
+					filter((res) => Boolean(res?.version)), // Filter out null or undefined responses
+					map((res) => res.version),
+					tap((created) => {
 						this.pluginVersionStore.update({
-							version
+							version: created
 						});
-						this.toastrService.success(`Create plugin version v${version.number} successfully!`);
+						this.toastrService.success(`Create plugin version v${created.number} successfully!`);
 					}),
-					finalize(() => this.pluginVersionStore.update({ creating: false })), // Always stop loading
+					finalize(() => {
+						this.pluginMarketplaceStore.setUpload({ uploading: false });
+						this.pluginVersionStore.update({ creating: false });
+					}), // Always stop loading
 					catchError((error) => {
 						this.toastrService.error(error.message || error); // Handle error properly
 						return EMPTY; // Return a fallback value to keep the stream alive

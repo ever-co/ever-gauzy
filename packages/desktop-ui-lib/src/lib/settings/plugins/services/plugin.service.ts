@@ -1,9 +1,10 @@
-import { HttpClient, HttpEvent, HttpEventType } from '@angular/common/http';
+import { HttpClient, HttpEvent, HttpEventType, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ID, IPagination, IPlugin, IPluginVersion, PluginSourceType } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 import { map, Observable } from 'rxjs';
 import { Store } from '../../../services';
+import { Http2ServerResponse } from 'http2';
 
 @Injectable({
 	providedIn: 'root'
@@ -110,13 +111,10 @@ export class PluginService {
 			})
 			.pipe(
 				map((event: HttpEvent<IPlugin>) => {
-					switch (event.type) {
-						case HttpEventType.UploadProgress:
-							return { progress: Math.round((event.loaded / (event.total ?? event.loaded)) * 100) };
-						case HttpEventType.Response:
-							return { plugin: event.body };
-						default:
-							return {};
+					if (event.type === HttpEventType.UploadProgress) {
+						return { plugin: null, progress: event.loaded / (event.total ?? event.loaded) };
+					} else if (event instanceof HttpResponse) {
+						return { plugin: event.body, progress: 1 };
 					}
 				})
 			);
@@ -204,11 +202,24 @@ export class PluginService {
 		return formData;
 	}
 
-	public addVersion(pluginId: string, version: IPluginVersion): Observable<IPluginVersion> {
-		return this.http.post<IPluginVersion>(
-			`${this.endPoint}/${pluginId}/versions`,
-			this.createVersionFormData(version)
-		);
+	public addVersion(
+		pluginId: string,
+		version: IPluginVersion
+	): Observable<{ version?: IPluginVersion; progress?: number }> {
+		return this.http
+			.post<IPluginVersion>(`${this.endPoint}/${pluginId}/versions`, this.createVersionFormData(version), {
+				reportProgress: true,
+				observe: 'events'
+			})
+			.pipe(
+				map((event: HttpEvent<IPluginVersion>) => {
+					if (event.type === HttpEventType.UploadProgress) {
+						return { version: null, progress: event.loaded / (event.total ?? event.loaded) };
+					} else if (event instanceof HttpResponse) {
+						return { version: event.body, progress: 1 };
+					}
+				})
+			);
 	}
 
 	public getVersions<T>(pluginId: ID, params: T): Observable<IPagination<IPluginVersion>> {

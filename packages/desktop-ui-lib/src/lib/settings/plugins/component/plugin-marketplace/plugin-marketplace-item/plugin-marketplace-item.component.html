@@ -3,7 +3,8 @@ installationQuery.toggle$ | async; @let isSelected = toggle.plugin?.id === plugi
 installationQuery.installing$ |async; @let uninstalling = installationQuery.unistalling$ |async; @let deleting =
 marketplaceQuery.deleting$ | async; @let adding = versionQuery.creating$ | async; @let needUpdate = needUpdate$ | async;
 @let installed = installed$ | async; @let loading = marketplaceQuery.isLoading$ | async; @let disabled = editing ||
-installing || uninstalling || deleting || adding; @let selectedVersion = versionQuery.version$ | async;
+installing || uninstalling || deleting || adding; @let selectedVersion = versionQuery.version$ | async; @let uploading =
+marketplaceQuery.uploading$ | async; @let progress = marketplaceQuery.progress$ | async;
 
 <nb-card class="content-active first plugin-details-card">
 	<nb-card-header class="d-flex align-items-center justify-content-between">
@@ -404,8 +405,15 @@ installing || uninstalling || deleting || adding; @let selectedVersion = version
 				(click)="addVersion()"
 				class="mr-2 action primary soft"
 			>
-				<nb-icon *gauzySpinnerButton="adding && isSelected" icon="plus-outline" class="mr-1"></nb-icon>
+				<nb-icon
+					*gauzySpinnerButton="(adding || uploading) && isSelected"
+					icon="plus-outline"
+					class="mr-1"
+				></nb-icon>
 				{{ 'BUTTONS.ADD_VERSION' | translate }}
+				@if(progress){
+				<span class="ml-2"> {{ progress | percent : '1.2-2' }} </span>
+				}
 			</button>
 
 			<button

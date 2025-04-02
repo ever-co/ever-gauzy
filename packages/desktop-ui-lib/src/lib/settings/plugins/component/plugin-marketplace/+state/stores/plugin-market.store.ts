@@ -35,11 +35,13 @@ export class PluginMarketplaceStore extends Store<IPluginMarketplaceState> {
 		super(createInitialMarketplaceState());
 	}
 
-	public setUpload(data: Partial<IPluginMarketplaceState['upload']>): void {
-		this.update({ upload: { ...this.getUpload(), ...data } });
-	}
-
-	public getUpload(): IPluginMarketplaceState['upload'] {
-		return this.getValue().upload;
+	public setUpload(action: Partial<IPluginMarketplaceState['upload']>): void {
+		this.update((state) => ({
+			...state,
+			upload: {
+				...state.upload,
+				...action
+			}
+		}));
 	}
 }

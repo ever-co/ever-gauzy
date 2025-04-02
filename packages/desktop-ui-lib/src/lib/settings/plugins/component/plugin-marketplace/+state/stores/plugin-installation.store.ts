@@ -33,11 +33,14 @@ export class PluginInsatallationStore extends Store<IPluginInstallationState> {
 		super(createInitialInstallationState());
 	}
 
-	public setToggle(state: Partial<IPluginInstallationState['toggle']>): void {
-		this.update({ toggle: { ...this.getToggle(), ...state } });
-	}
-
-	public getToggle(): IPluginInstallationState['toggle'] {
-		return this.getValue().toggle;
+	public setToggle({ isChecked, plugin }: Partial<IPluginInstallationState['toggle']>): void {
+		this.update((state) => ({
+			...state,
+			toggle: {
+				...state.toggle,
+				isChecked: isChecked ?? state.toggle.isChecked,
+				plugin: plugin ?? state.toggle.plugin
+			}
+		}));
 	}
 }

@@ -7,6 +7,7 @@ import { PluginService } from '../../../../services/plugin.service';
 import { PluginMarketplaceActions } from '../actions/plugin-marketplace.action';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
 import { Router } from '@angular/router';
+import { coalesceValue } from '../../../../../../utils';
 
 @Injectable({ providedIn: 'root' })
 export class PluginMarketplaceEffects {
@@ -22,17 +23,17 @@ export class PluginMarketplaceEffects {
 		this.action$.pipe(
 			ofType(PluginMarketplaceActions.upload),
 			tap(() => {
-				this.pluginMarketplaceStore.setUpload({ uploading: true, progress: 0 });
-				this.toastrService.info('Adding new plugin version...');
+				this.pluginMarketplaceStore.setUpload({ uploading: true });
+				this.toastrService.info('Uploading...');
 			}),
 			switchMap(({ plugin }) =>
 				this.pluginService.upload(plugin).pipe(
-					tap(({ progress }) => this.pluginMarketplaceStore.setUpload({ progress })),
-					filter(({ plugin }) => !!plugin), // Ensure plugin is not null/undefined
-					map(({ plugin }) => plugin),
-					tap((plugin) => {
+					tap((res) => this.pluginMarketplaceStore.setUpload({ progress: coalesceValue(res?.progress, 0) })),
+					filter((res) => Boolean(res?.plugin)), // Ensure plugin is not null/undefined
+					map((res) => res.plugin),
+					tap((uploaded) => {
 						this.pluginMarketplaceStore.update((state) => ({
-							plugins: [plugin, ...state.plugins] // Immutable update
+							plugins: [uploaded, ...state.plugins] // Immutable update
 						}));
 						this.toastrService.success('Upload plugin successfully!');
 					}),
