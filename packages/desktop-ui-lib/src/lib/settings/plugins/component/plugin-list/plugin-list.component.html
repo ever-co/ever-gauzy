@@ -1,7 +1,7 @@
-@let installing = query.installing$ |async; @let uninstalling = query.uninstalling$ |async; @let activating =
-query.activating$ |async; @let deactivating = query.deactivating$ |async; @let disabled = installing || uninstalling ||
-activating || deactivating; @let selected = query.plugin$ | async; @let loading = query.isLoading$ | async; @let source
-= sourceData$ | async;
+@let installing = installationQuery.installing$ |async; @let uninstalling = installationQuery.unistalling$|async; @let
+activating = query.activating$ |async; @let deactivating = query.deactivating$ |async; @let disabled = installing ||
+uninstalling || activating || deactivating; @let selected = query.plugin$ | async; @let loading = query.isLoading$ |
+async; @let source = sourceData$ | async;
 
 <div class="content-active">
 	<div class="button-container mb-3">

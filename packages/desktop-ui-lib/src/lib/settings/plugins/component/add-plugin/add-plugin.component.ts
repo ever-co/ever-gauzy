@@ -4,8 +4,8 @@ import { NbDialogRef } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { Observable } from 'rxjs';
-import { PluginQuery } from '../+state/plugin.query';
 import { PluginInstallationActions } from '../plugin-marketplace/+state/actions/plugin-installation.action';
+import { PluginInstallationQuery } from '../plugin-marketplace/+state/queries/plugin-installation.query';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -17,7 +17,7 @@ export class AddPluginComponent {
 	private readonly dialogRef = inject(NbDialogRef<AddPluginComponent>);
 	private readonly router = inject(Router);
 	private readonly action = inject(Actions);
-	private readonly query = inject(PluginQuery);
+	private readonly query = inject(PluginInstallationQuery);
 	public error = null;
 	public context = 'local';
 	public showRegistry = false;

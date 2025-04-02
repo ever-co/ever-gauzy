@@ -14,6 +14,7 @@ import { AddPluginComponent } from '../add-plugin/add-plugin.component';
 import { PluginStatusComponent } from './plugin-status/plugin-status.component';
 import { PluginUpdateComponent } from './plugin-update/plugin-update.component';
 import { PluginInstallationActions } from '../plugin-marketplace/+state/actions/plugin-installation.action';
+import { PluginInstallationQuery } from '../plugin-marketplace/+state/queries/plugin-installation.query';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -25,6 +26,7 @@ export class PluginListComponent implements OnInit, OnDestroy {
 	private readonly translateService = inject(TranslateService);
 	private readonly action = inject(Actions);
 	public readonly query = inject(PluginQuery);
+	public readonly installationQuery = inject(PluginInstallationQuery);
 	private readonly dialog = inject(NbDialogService);
 	private readonly router = inject(Router);
 
