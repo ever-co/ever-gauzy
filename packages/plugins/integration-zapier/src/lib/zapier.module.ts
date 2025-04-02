@@ -11,7 +11,6 @@ import {
     UserModule,
     RolePermissionModule
 } from '@gauzy/core';
-import { ZAPIER_API_URL } from './zapier.config';
 import { ZapierService } from './zapier.service';
 import { ZapierController } from './zapier.controller';
 import { ZapierAuthorizationController } from './zapier-authorization.controller';

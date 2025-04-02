@@ -1,5 +1,4 @@
 import { ZObject, Bundle } from 'zapier-platform-core';
-import { environment } from '@gauzy/config';
 
 const perform = async (z: ZObject, bundle: Bundle) => {
   try {

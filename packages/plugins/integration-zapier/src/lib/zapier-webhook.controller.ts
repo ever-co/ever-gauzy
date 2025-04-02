@@ -43,7 +43,10 @@ export class ZapierWebhookController {
 		if (!authorization) {
 			throw new UnauthorizedException('Authorization header is required');
 		}
-		const token = authorization.replace('Bearer ', '');
+		if(!authorization.startsWith('Bearer')) {
+			throw new UnauthorizedException('Authorization header must start with Bearer');
+		}
+		const token = authorization.split(' ')[1];
 
 		try {
 			const integration = await this.zapierService.findIntegrationByToken(token);
@@ -54,6 +57,14 @@ export class ZapierWebhookController {
 
 			if (!body.target_url || !body.event) {
 				throw new BadRequestException('target_url and event are required');
+			}
+
+			if (!integration.tenantId) {
+				throw new BadRequestException('Integration tenant ID is required');
+			}
+
+			if (!integration.organizationId) {
+				throw new BadRequestException('Integration organization ID is required');
 			}
 
 			const subscription = await this.zapierWebhookService.createSubscription({
