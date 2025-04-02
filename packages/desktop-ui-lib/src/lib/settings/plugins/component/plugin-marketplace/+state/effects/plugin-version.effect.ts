@@ -167,7 +167,7 @@ export class PluginVersionEffects {
 		this.action$.pipe(
 			ofType(PluginVersionActions.selectVersion),
 			tap(({ version }) => {
-				this.pluginVersionStore.update({ version });
+				this.pluginVersionStore.update({ version, pluginId: version.pluginId });
 			})
 		)
 	);

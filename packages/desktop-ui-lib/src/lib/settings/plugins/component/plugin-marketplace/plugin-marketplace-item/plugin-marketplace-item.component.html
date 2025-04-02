@@ -3,7 +3,7 @@ installationQuery.toggle$ | async; @let isSelected = toggle.plugin?.id === plugi
 installationQuery.installing$ |async; @let uninstalling = installationQuery.unistalling$ |async; @let deleting =
 marketplaceQuery.deleting$ | async; @let adding = versionQuery.creating$ | async; @let needUpdate = needUpdate$ | async;
 @let installed = installed$ | async; @let loading = marketplaceQuery.isLoading$ | async; @let disabled = editing ||
-installing || uninstalling || deleting || adding;
+installing || uninstalling || deleting || adding; @let selectedVersion = versionQuery.version$ | async;
 
 <nb-card class="content-active first plugin-details-card">
 	<nb-card-header class="d-flex align-items-center justify-content-between">
@@ -116,8 +116,8 @@ installing || uninstalling || deleting || adding;
 										placeholder="{{ 'PLUGIN.FORM.VERSION' | translate }}"
 										status="primary"
 										aria-label="Select plugin version"
+										[selected]="selectedVersion"
 										(selectedChange)="onVersionChange($event)"
-										[(ngModel)]="selectedVersion"
 										size="small"
 										class="version-select"
 									>

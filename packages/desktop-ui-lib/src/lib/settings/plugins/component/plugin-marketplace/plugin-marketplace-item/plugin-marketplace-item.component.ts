@@ -40,7 +40,6 @@ import { DialogCreateVersionComponent } from './dialog-create-version/dialog-cre
 export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	private readonly destroy$ = new Subject<void>();
 	pluginId = '';
-	selectedVersion: IPluginVersion = null;
 	installed$ = new BehaviorSubject<boolean>(false);
 	needUpdate$ = new BehaviorSubject<boolean>(false);
 
@@ -69,7 +68,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 				filter(Boolean),
 				distinctUntilChange(),
 				concatMap((plugin) => {
-					this.selectedVersion = plugin.versions.find((v) => v.id === plugin.version.id) || plugin.version;
+					this.action.dispatch(PluginVersionActions.selectVersion(plugin.versions[0]));
 					return this.checkInstallation(plugin);
 				}),
 				catchError((error) => this.handleError(error)),
@@ -231,8 +230,8 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		return !!this.store.user && this.store.user.employee?.id === this.plugin?.uploadedBy?.id;
 	}
 
-	async onVersionChange(): Promise<void> {
-		await this.checkInstallation(this.plugin);
+	async onVersionChange(version: IPluginVersion): Promise<void> {
+		this.action.dispatch(PluginVersionActions.selectVersion(version));
 	}
 
 	updatePlugin(): void {
@@ -363,5 +362,9 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	private get isInstalled(): boolean {
 		return this.installed$.value;
+	}
+
+	private get selectedVersion(): IPluginVersion {
+		return this.versionQuery.version;
 	}
 }
