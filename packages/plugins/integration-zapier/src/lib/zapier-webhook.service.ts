@@ -52,7 +52,7 @@ export class ZapierWebhookService {
 
             if (!subscription) {
                 this.logger.warn(`No webhook subscription found with id ${id}`);
-                return;
+                throw new NotFoundException(`No webhook subscription found with id ${id}`);
             }
 
             // Verify tenant ownership

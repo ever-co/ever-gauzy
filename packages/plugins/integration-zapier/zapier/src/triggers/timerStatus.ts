@@ -1,32 +1,41 @@
 import { ZObject, Bundle } from 'zapier-platform-core';
-import { environment } from '@gauzy/config';
 
 const perform = async (z: ZObject, bundle: Bundle) => {
-  const response = await z.request({
-    url: `${process.env.API_BASE_URL}/api/timesheet/timer/status`,
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${bundle.authData['access_token']}`,
-    },
-  });
-  return response.data;
+  try {
+    const response = await z.request({
+      url: `${process.env.API_BASE_URL}/api/timesheet/timer/status`,
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${bundle.authData['access_token']}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    z.console.error('Error fetching timer status:', error);
+    throw new Error('Failed to fetch timer status');
+  }
 };
 
 // Subscribe function - creates a webhook subscription
 const subscribe = async (z: ZObject, bundle: Bundle) => {
-  const response = await z.request({
-    url: `${process.env.API_BASE_URL}/api/integration/zapier/webhooks`,
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${bundle.authData['access_token']}`,
-    },
-    body: {
-      target_url: bundle.targetUrl, // Zapier provides this
-      event: 'timer.status.changed', // Your event type
-    },
-  });
-  return response.data;
+  try {
+    const response = await z.request({
+      url: `${process.env.API_BASE_URL}/api/integration/zapier/webhooks`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${bundle.authData['access_token']}`,
+      },
+      body: {
+        target_url: bundle.targetUrl, // Zapier provides this
+        event: 'timer.status.changed', // Your event type
+      },
+    });
+    return response.data;
+  } catch (error) {
+    z.console.error('Error creating webhook subscription:', error);
+    throw new Error('Failed to create webhook subscription');
+  }
 };
 
 // Unsubscribe function - removes the webhook subscription

@@ -1,7 +1,6 @@
 /**
  * Zapier authentication configuration for OAuth2 integration with Gauzy
  */
-import { environment } from '@gauzy/config';
 
 export const authentication = {
 	/** Specifies OAuth2 as the authentication type */

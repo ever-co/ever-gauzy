@@ -3,6 +3,7 @@ import { ApplicationPluginConfig, CustomEmbeddedFieldConfig, CustomEmbeddedField
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { ZapierModule } from './zapier.module';
 import { ZapierWebhookSubscriptionRepository } from './repository/zapier-repository.entity';
+import { Logger } from '@nestjs/common';
 
 // Extend the CustomEmbeddedFields interface to include our custom entities
 interface ZapierCustomFields extends CustomEmbeddedFields {
@@ -94,7 +95,8 @@ export class IntegrationZapierPlugin implements IOnPluginBootstrap, IOnPluginDes
 	 */
 	onPluginDestroy(): void | Promise<void> {
 		if (this.logEnabled) {
-			console.log(chalk.green(`${IntegrationZapierPlugin.name} is being destroyed...`));
+			const logger = new Logger(IntegrationZapierPlugin.name);
+			logger.log(`${IntegrationZapierPlugin.name} is being bootstrapped...`)
 		}
 	}
 }

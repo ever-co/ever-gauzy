@@ -1,5 +1,5 @@
 import { Controller, Get, HttpException, HttpStatus, Query, Res } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
 import { ZAPIER_AUTHORIZATION_URL, ZAPIER_REDIRECT_URI } from './zapier.config';
 import { Public } from '@gauzy/common';
@@ -20,6 +20,17 @@ export class ZapierAuthorizationController {
 	 */
 	@Public()
 	@Get('oauth/authorize')
+	@ApiOperation({
+		summary: 'Initiate OAuth2 authorization with Zapier'
+	})
+	@ApiResponse({
+		status: 200,
+		description: 'Successfully redirected to Zapier authorization URL'
+	})
+	@ApiResponse({
+		status: 400,
+		description: 'Bad Request - Missing redirect URI'
+	})
 	async authorize(@Query('redirect_uri') redirectUri: string, @Res() res: Response) {
 		try {
 			if (!redirectUri) {
@@ -49,6 +60,17 @@ export class ZapierAuthorizationController {
 	 */
 	@Public()
 	@Get('oauth/callback')
+	@ApiOperation({
+		summary: 'Handle OAuth2 callback from Zapier authorization'
+	})
+	@ApiResponse({
+		status: 200,
+		description: 'Successfully processed callback and redirected'
+	})
+	@ApiResponse({
+		status: 400,
+		description: 'Bad Request - Invalid or missing query parameters'
+	})
 	async callback(@Query() query: any, @Res() res: Response) {
 		try {
 			// Validate the input data

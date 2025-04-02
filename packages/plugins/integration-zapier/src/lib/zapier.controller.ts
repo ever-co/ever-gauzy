@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, UseGuards, Query } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, UseGuards, Query, NotFoundException, InternalServerErrorException, Logger, UnauthorizedException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
 	IIntegrationTenant,
@@ -16,6 +16,7 @@ import { ZapierService } from './zapier.service';
 @Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
 @Controller('/integration/zapier')
 export class ZapierController {
+	private readonly logger = new Logger(ZapierController.name);
 	constructor(private readonly _zapierService: ZapierService) {}
 
 	@ApiOperation({ summary: 'Get Zapier integration token by integration ID' })
@@ -31,7 +32,19 @@ export class ZapierController {
 	async getZapierTokenByIntegration(
 		@Param('integrationId', UUIDValidationPipe) integrationId: ID
 	): Promise<IIntegrationSetting> {
-		return await this._zapierService.getZapierToken(integrationId);
+		try {
+			const token = await this._zapierService.getZapierToken(integrationId);
+			if (!token) {
+				throw new NotFoundException(`No Zapier token found for integration ID ${integrationId}`);
+			}
+			return token;
+		} catch (error) {
+			this.logger.error(`Failed to get Zapier token for integration ${integrationId}`, error);
+			if (error instanceof NotFoundException) {
+				throw error;
+			}
+			throw new InternalServerErrorException('Failed to retrieve Zapier integration token');
+		}
 	}
 
 	@ApiOperation({ summary: 'Refresh Zapier integration token by integration ID' })
@@ -47,7 +60,19 @@ export class ZapierController {
 	async refreshZapierTokenByIntegration(
 		@Param('integrationId', UUIDValidationPipe) integrationId: ID
 	): Promise<string> {
-		return await this._zapierService.refreshToken(integrationId);
+		try {
+			const token = await this._zapierService.refreshToken(integrationId);
+			if (!token) {
+				throw new NotFoundException(`Failed to refresh token for integration ID ${integrationId}`);
+			}
+			return token;
+		} catch (error) {
+			this.logger.error(`Failed to refresh Zapier token for integration ${integrationId}`, error);
+			if (error instanceof NotFoundException) {
+				throw error;
+			}
+			throw new InternalServerErrorException('Failed to refresh Zapier integration token');
+		}
 	}
 
 	@ApiOperation({ summary: 'Create new Zapier integration' })
@@ -75,7 +100,20 @@ export class ZapierController {
 	})
 	@Get('/triggers')
 	async getTriggers(@Query('token') token: string): Promise<IZapierEndpoint[]> {
-		return await this._zapierService.fetchTriggers(token);
+		if (!token) {
+			throw new UnauthorizedException('Token is required');
+		}
+
+		if (!token.trim()) {
+			throw new UnauthorizedException('Token cannot be empty');
+		}
+
+		try {
+			return await this._zapierService.fetchTriggers(token);
+		} catch (error) {
+			this.logger.error('Failed to fetch Zapier triggers', error);
+			throw new InternalServerErrorException('Failed to fetch Zapier triggers');
+		}
 	}
 
 	@ApiOperation({ summary: 'Get available Zapier actions' })
@@ -89,6 +127,19 @@ export class ZapierController {
 	})
 	@Get('/actions')
 	async getActions(@Query('token') token: string): Promise<IZapierEndpoint[]> {
-		return await this._zapierService.fetchActions(token);
+		if (!token) {
+			throw new UnauthorizedException('Token is required');
+		}
+
+		if (!token.trim()) {
+			throw new UnauthorizedException('Token cannot be empty');
+		}
+
+		try {
+			return await this._zapierService.fetchActions(token);
+		} catch (error) {
+			this.logger.error('Failed to fetch Zapier actions', error);
+			throw new InternalServerErrorException('Failed to fetch Zapier actions');
+		}
 	}
 }

@@ -7,13 +7,17 @@
     "build": "tsc",
     "test": "zapier test",
     "push": "zapier push",
-    "validate": "zapier validate"
+    "validate": "zapier validate",
+    "watch": "tsc --watch",
+    "dev": "zapier test --watch",
+    "clean": "rimraf lib dist"
   },
   "dependencies": {
     "zapier-platform-core": "16.3.1"
   },
   "devDependencies": {
     "@types/node": "^20.14.9",
+    "rimraf": "^3.0.2",
     "typescript": "^5.8.2",
     "zapier-platform-cli": "16.3.1"
   },
