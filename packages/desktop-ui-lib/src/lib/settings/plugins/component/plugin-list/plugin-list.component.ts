@@ -89,6 +89,7 @@ export class PluginListComponent implements OnInit, OnDestroy {
 	};
 
 	ngOnInit(): void {
+		this.reset();
 		this.observePlugins();
 		this.loadPlugins();
 		this.onLanguageChange();
@@ -224,7 +225,11 @@ export class PluginListComponent implements OnInit, OnDestroy {
 		return this.query.plugin;
 	}
 
-	public ngOnDestroy(): void {
+	public reset() {
 		this.action.dispatch(PluginActions.selectPlugin(null));
+	}
+
+	public ngOnDestroy(): void {
+		this.reset();
 	}
 }

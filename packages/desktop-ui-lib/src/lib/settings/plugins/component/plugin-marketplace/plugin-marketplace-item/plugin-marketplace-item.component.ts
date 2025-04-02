@@ -203,7 +203,12 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			})
 			.onClose.pipe(
 				filter(Boolean),
-				tap((plugin: IPlugin) => this.action.dispatch(PluginMarketplaceActions.update(this.pluginId, plugin))),
+				tap((plugin: IPlugin) => {
+					this.action.dispatch(
+						PluginInstallationActions.toggle({ isChecked: this.isInstalled, plugin: this.plugin })
+					);
+					this.action.dispatch(PluginMarketplaceActions.update(this.pluginId, plugin));
+				}),
 				takeUntil(this.destroy$)
 			)
 			.subscribe();
@@ -251,7 +256,10 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 				filter(Boolean),
 				concatMap(() => this.checkPlugin(this.plugin)),
 				filter(Boolean),
-				tap((plugin) => this.action.dispatch(PluginInstallationActions.uninstall(plugin)))
+				tap((plugin) => {
+					this.action.dispatch(PluginInstallationActions.toggle({ isChecked: false, plugin: this.plugin }));
+					this.action.dispatch(PluginInstallationActions.uninstall(plugin));
+				})
 			)
 			.subscribe();
 	}
@@ -259,7 +267,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	installPlugin(isUpdate = false): void {
 		const source = isUpdate ? this.plugin.source : this.selectedVersion.source;
 		const versionId = isUpdate ? this.plugin.version.id : this.selectedVersion.id;
-
+		this.action.dispatch(PluginInstallationActions.toggle({ isChecked: true, plugin: this.plugin }));
 		switch (source.type) {
 			case PluginSourceType.GAUZY:
 			case PluginSourceType.CDN:
@@ -310,9 +318,12 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			})
 			.onClose.pipe(
 				filter(Boolean),
-				tap((version: IPluginVersion) =>
-					this.action.dispatch(PluginVersionActions.add(this.pluginId, version))
-				),
+				tap((version: IPluginVersion) => {
+					this.action.dispatch(
+						PluginInstallationActions.toggle({ isChecked: this.isInstalled, plugin: this.plugin })
+					);
+					this.action.dispatch(PluginVersionActions.add(this.pluginId, version));
+				}),
 				takeUntil(this.destroy$)
 			)
 			.subscribe();
@@ -332,7 +343,12 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			.onClose.pipe(
 				take(1),
 				filter(Boolean),
-				tap(() => this.action.dispatch(PluginMarketplaceActions.delete(this.pluginId)))
+				tap(() => {
+					this.action.dispatch(
+						PluginInstallationActions.toggle({ isChecked: this.isInstalled, plugin: this.plugin })
+					);
+					this.action.dispatch(PluginMarketplaceActions.delete(this.pluginId));
+				})
 			)
 			.subscribe();
 	}
@@ -343,5 +359,9 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	public get plugin(): IPlugin {
 		return this.marketplaceQuery.plugin;
+	}
+
+	private get isInstalled(): boolean {
+		return this.installed$.value;
 	}
 }

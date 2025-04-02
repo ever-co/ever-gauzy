@@ -6,6 +6,7 @@ import { ToastrNotificationService } from '../../../../../../services';
 import { PluginService } from '../../../../services/plugin.service';
 import { PluginMarketplaceActions } from '../actions/plugin-marketplace.action';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
+import { Router } from '@angular/router';
 
 @Injectable({ providedIn: 'root' })
 export class PluginMarketplaceEffects {
@@ -13,7 +14,8 @@ export class PluginMarketplaceEffects {
 		private readonly action$: Actions,
 		private readonly pluginMarketplaceStore: PluginMarketplaceStore,
 		private readonly pluginService: PluginService,
-		private readonly toastrService: ToastrNotificationService
+		private readonly toastrService: ToastrNotificationService,
+		private readonly router: Router
 	) {}
 
 	upload$ = createEffect(() =>
@@ -100,7 +102,7 @@ export class PluginMarketplaceEffects {
 					tap((plugin) => {
 						this.pluginMarketplaceStore.update((state) => ({
 							plugins: [...new Map([...state.plugins, plugin].map((item) => [item.id, item])).values()],
-							plugin
+							plugin: { ...state.plugin, ...plugin }
 						}));
 						this.toastrService.success('Update plugin successfully!');
 					}),
@@ -124,8 +126,10 @@ export class PluginMarketplaceEffects {
 			switchMap(({ id }) =>
 				this.pluginService.delete(id).pipe(
 					tap(() => {
+						this.router.navigate(['settings', 'marketplace-plugins']);
 						this.pluginMarketplaceStore.update((state) => ({
-							plugins: [...state.plugins.filter((plugin) => plugin.id !== id)]
+							plugins: [...state.plugins.filter((plugin) => plugin.id !== id)],
+							plugin: null
 						}));
 						this.toastrService.success('Delete plugin successfully!');
 					}),
