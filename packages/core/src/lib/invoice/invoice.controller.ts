@@ -381,7 +381,7 @@ export class InvoiceController extends CrudController<Invoice> {
 		await this.invoiceService.checkIfUserCanAccessInvoiceById(uuid);
 		const buffer: Buffer = await this.commandBus.execute(new InvoiceGeneratePdfCommand(uuid, locale));
 		if (!buffer) {
-			return;
+			throw new BadRequestException(InvoiceErrors.PDF_GENERATION_FAILED);
 		}
 		const stream = this.invoiceService.getReadableStream(buffer);
 		res.set({
@@ -419,7 +419,7 @@ export class InvoiceController extends CrudController<Invoice> {
 		await this.invoiceService.checkIfUserCanAccessInvoiceById(uuid);
 		const buffer = await this.commandBus.execute(new InvoicePaymentGeneratePdfCommand(uuid, locale));
 		if (!buffer) {
-			return;
+			throw new BadRequestException(InvoiceErrors.PDF_GENERATION_FAILED);
 		}
 		const stream = this.invoiceService.getReadableStream(buffer);
 		res.set({

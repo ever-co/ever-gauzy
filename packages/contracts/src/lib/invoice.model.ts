@@ -170,6 +170,7 @@ export enum InvoiceTabsEnum {
 }
 
 export enum InvoiceErrors {
-	INVALID_INVOICE = 'invalid-invoice'
+	INVALID_INVOICE = 'invalid-invoice',
+	PDF_GENERATION_FAILED = 'pdf-generation-failed'
 }
 export const EMPLOYEE_INVOICE_STATUSES: string[] = [InvoiceStatusTypesEnum.DRAFT, InvoiceStatusTypesEnum.SENT];

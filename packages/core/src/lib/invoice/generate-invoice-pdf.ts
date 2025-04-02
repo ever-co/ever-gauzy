@@ -49,7 +49,12 @@ export async function generateInvoicePdfDefinition(
 	}
 
 	const widths = ['25%', '25%', '25%', '25%'];
-	const tableHeader = [translatedText.item, translatedText.quantity, translatedText.price, translatedText.totalValue];
+	const tableHeader = [
+		{ text: translatedText.item, bold: true },
+		{ text: translatedText.quantity, bold: true },
+		{ text: translatedText.price, bold: true },
+		{ text: translatedText.totalValue, bold: true }
+	];
 
 	const docDefinition = {
 		watermark: {
@@ -78,9 +83,7 @@ export async function generateInvoicePdfDefinition(
 						bold: true,
 						width: '50%',
 						alignment: 'right',
-						text: `${invoice.isEstimate ? translatedText.estimate : translatedText.invoice} ${
-							translatedText.number
-						}: ${invoice.invoiceNumber}`
+						text: `${invoice.isEstimate ? translatedText.estimate : translatedText.invoice} ${translatedText.number}: ${invoice.invoiceNumber}`
 					}
 				]
 			},
@@ -92,9 +95,7 @@ export async function generateInvoicePdfDefinition(
 						text: [
 							{
 								bold: true,
-								text: `${invoice.isEstimate ? translatedText.estimate : translatedText.invoice} ${
-									translatedText.date
-								}: `
+								text: `${invoice.isEstimate ? translatedText.estimate : translatedText.invoice} ${translatedText.date}: `
 							},
 							`${invoice.invoiceDate.toString().slice(0, 10)}`
 						]
@@ -148,7 +149,7 @@ export async function generateInvoicePdfDefinition(
 				},
 				layout: {
 					fillColor: function (rowIndex, node, columnIndex) {
-						return rowIndex % 2 === 0 ? '#E6E6E6' : null;
+						return rowIndex === 0 ? '#E6E6E6' : null;
 					},
 					defaultBorder: false,
 					border: [false, false, false, false]
@@ -157,113 +158,113 @@ export async function generateInvoicePdfDefinition(
 			' ',
 			' ',
 			{
-				columns: [
-					{
-						width: '65%',
-						text: ``
-					},
-					{
-						bold: true,
-						alignment: 'right',
-						width: '25%',
-						text: `${translatedText.taxValue}:`
-					},
-					{
-						alignment: 'right',
-						width: '10%',
-						text: `${invoice.taxType === 'FLAT' ? invoice.currency : ''} ${invoice.tax}${
-							invoice.taxType === 'PERCENT' ? '%' : ''
-						}`
-					}
-				]
-			},
-			' ',
-			{
-				columns: [
-					{
-						width: '65%',
-						text: ``
-					},
-					{
-						bold: true,
-						alignment: 'right',
-						width: '25%',
-						text: `${translatedText.taxValue} 2:`
-					},
-					{
-						alignment: 'right',
-						width: '10%',
-						text: `${invoice.tax2Type === 'FLAT' ? invoice.currency : ''} ${invoice.tax2}${
-							invoice.tax2Type === 'PERCENT' ? '%' : ''
-						}`
-					}
-				]
-			},
-			' ',
-			{
-				columns: [
-					{
-						width: '65%',
-						text: ``
-					},
-					{
-						bold: true,
-						alignment: 'right',
-						width: '25%',
-						text: `${translatedText.discountValue}:`
-					},
-					{
-						alignment: 'right',
-						width: '10%',
-						text: `${invoice.discountType === 'FLAT' ? invoice.currency : ''} ${invoice.discountValue}${
-							invoice.discountType === 'PERCENT' ? '%' : ''
-						}`
-					}
-				]
-			},
-			' ',
-			' ',
-			{
-				columns: [
-					{
-						bold: true,
-						alignment: 'right',
-						text: `${translatedText.totalValue}: ${invoice.currency} ${invoice.totalValue}`
-					}
-				]
-			},
-			invoice.hasRemainingAmountInvoiced ? ' ' : '',
-			invoice.hasRemainingAmountInvoiced ? ' ' : '',
-			{
-				columns: invoice.hasRemainingAmountInvoiced
-					? [
+				table: {
+					widths: ['60%', '20%', "20%"],
+					body: [
+						[
+							invoice.terms?.length > 0 ? {
+								rowSpan: 7,
+								alignment: 'top',
+								columns: [
+									{
+										width: '*',
+										text: [
+											{
+												bold: true,
+												text: `${translatedText.notes}\n\n`
+											},
+											`${invoice.terms}`
+										]
+									}
+								]
+							} : '',
 							{
-								width: '50%',
-								text: `${translatedText.alreadyPaid}: ${invoice.currency} ${invoice.alreadyPaid}`
+								bold: true,
+								alignment: 'right',
+								text: `${translatedText.taxValue}:`
 							},
 							{
 								alignment: 'right',
-								width: '50%',
-								text: `${translatedText.amountDue}: ${invoice.currency} ${invoice.amountDue}`
+								text: `${invoice.taxType === 'FLAT' ? invoice.currency : ''} ${invoice.tax}${invoice.taxType === 'PERCENT' ? '%' : ''}`
 							}
-					  ]
-					: []
-			},
-			' ',
-			' ',
-			{
-				columns: [
-					{
-						width: '*',
-						text: [
+						],
+						[
+							'',
 							{
 								bold: true,
-								text: `${translatedText.notes}\n\n`
+								alignment: 'right',
+								text: `${translatedText.taxValue} 2:`
 							},
-							`${invoice.terms}`
+							{
+								alignment: 'right',
+								text: `${invoice.tax2Type === 'FLAT' ? invoice.currency : ''} ${invoice.tax2}${invoice.tax2Type === 'PERCENT' ? '%' : ''}`
+							}
+						],
+						[
+							'',
+							{
+								bold: true,
+								alignment: 'right',
+								text: `${translatedText.discountValue}:`
+							},
+							{
+								alignment: 'right',
+								text: `${invoice.discountType === 'FLAT' ? invoice.currency : ''} ${invoice.discountValue}${invoice.discountType === 'PERCENT' ? '%' : ''}`
+							}
+						],
+						[
+							'',
+							{
+								bold: true,
+								alignment: 'right',
+								text: `${translatedText.totalValue.toUpperCase()}:`
+							},
+							{
+								bold: true,
+								alignment: 'right',
+								text: `${invoice.currency} ${invoice.totalValue}`
+							}
+						],
+						...(invoice.hasRemainingAmountInvoiced ? [
+							[
+								'',
+								{
+									bold: true,
+									alignment: 'right',
+									text: `${translatedText.alreadyPaid}:`
+								},
+								{
+									alignment: 'right',
+									text: `${invoice.currency} ${invoice.alreadyPaid}`
+								}
+							],
+							[
+								'',
+								{
+									bold: true,
+									alignment: 'right',
+									text: `${translatedText.amountDue}:`
+								},
+								{
+									alignment: 'right',
+									text: `${invoice.currency} ${invoice.amountDue}`
+								}
+							]
+						] : [['', '', ''], ['', '', '']]),
+						[
+							'',
+							'',
+							''
 						]
-					}
-				]
+					]
+				},
+				layout: {
+					defaultBorder: false,
+					border: [false, false, false, false],
+					fillColor: function (rowIndex, node, columnIndex) {
+						return rowIndex === 3 && columnIndex > 0 ? '#E6E6E6' : null;
+					},
+				}
 			}
 		]
 	};
