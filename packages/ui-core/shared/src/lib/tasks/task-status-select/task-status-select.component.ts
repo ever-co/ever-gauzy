@@ -253,6 +253,7 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent implemen
 				tenantId,
 				organizationId,
 				name,
+				value:name,
 				...(this.projectId ? { projectId: this.projectId } : {})
 			};
 
