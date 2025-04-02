@@ -21,7 +21,7 @@ async; @let uploading = query.uploading$ | async; @let progress = query.progress
 		<button (click)="upload()" nbTooltip="Upload new plugin" status="primary" nbButton>
 			<nb-icon *gauzySpinnerButton="uploading" icon="cloud-upload-outline"></nb-icon>
 			@if(uploading){
-			<span class="ml-2"> {{ progress | percent : '1.2-2' }} </span>
+			<span> {{ progress | percent : '1.2-2' }} </span>
 			}
 		</button>
 	</div>

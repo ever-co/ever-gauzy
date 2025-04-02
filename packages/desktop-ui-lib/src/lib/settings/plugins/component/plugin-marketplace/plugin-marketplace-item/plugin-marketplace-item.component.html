@@ -411,8 +411,8 @@ marketplaceQuery.uploading$ | async; @let progress = marketplaceQuery.progress$ 
 					class="mr-1"
 				></nb-icon>
 				{{ 'BUTTONS.ADD_VERSION' | translate }}
-				@if(progress){
-				<span class="ml-2"> {{ progress | percent : '1.2-2' }} </span>
+				@if(uploading){
+				<span> {{ progress | percent : '1.2-2' }} </span>
 				}
 			</button>
 
