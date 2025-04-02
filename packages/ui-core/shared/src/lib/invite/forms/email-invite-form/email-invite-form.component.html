@@ -1,4 +1,4 @@
-<form [formGroup]="form" autocomplete-off>
+<form [formGroup]="form" autocomplete="off">
 	<div class="row">
 		<div class="col-sm-12">
 			<div class="form-group">
@@ -63,12 +63,14 @@
 					<ng-select
 						id="projectSelection"
 						class="adjust-height"
-						[hideSelected]="true"
+						[hideSelected]="false"
 						[multiple]="true"
 						bindLabel="name"
+						bindValue="id"
 						appendTo="body"
 						formControlName="projects"
 						[placeholder]="'FORM.PLACEHOLDERS.PROJECTS' | translate"
+						(change)="detectChanges()"
 					>
 						<ng-option *ngFor="let project of organizationProjects" [value]="project.id">
 							{{ project.name }}
@@ -87,11 +89,14 @@
 					<ng-select
 						id="contactSelection"
 						class="adjust-height"
+						[hideSelected]="false"
 						[multiple]="true"
 						bindLabel="name"
+						bindValue="id"
 						appendTo="body"
 						formControlName="organizationContacts"
 						[placeholder]="'FORM.PLACEHOLDERS.CONTACTS' | translate"
+						(change)="detectChanges()"
 					>
 						<ng-option *ngFor="let contact of organizationContacts" [value]="contact.id">
 							{{ contact.name }}
@@ -117,12 +122,14 @@
 						<ng-select
 							id="teamSelection"
 							class="adjust-height"
-							[hideSelected]="true"
+							[hideSelected]="false"
 							[multiple]="true"
 							bindLabel="name"
+							bindValue="id"
 							appendTo="body"
 							formControlName="teams"
 							[placeholder]="'FORM.PLACEHOLDERS.TEAMS' | translate"
+							(change)="detectChanges()"
 						>
 							<ng-option *ngFor="let team of organizationTeams" [value]="team.id">
 								{{ team.name }}
@@ -142,12 +149,14 @@
 					<ng-select
 						id="departmentSelection"
 						class="adjust-height"
-						[hideSelected]="true"
+						[hideSelected]="false"
 						[multiple]="true"
 						bindLabel="name"
+						bindValue="id"
 						appendTo="body"
 						formControlName="departments"
 						[placeholder]="'FORM.PLACEHOLDERS.DEPARTMENTS' | translate"
+						(change)="detectChanges()"
 					>
 						<ng-option *ngFor="let department of organizationDepartments" [value]="department.id">
 							{{ department.name }}
