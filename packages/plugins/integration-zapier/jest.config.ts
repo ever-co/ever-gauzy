@@ -1,5 +1,5 @@
 export default {
-	displayName: 'pligin-integration-zapier',
+	displayName: 'plugin-integration-zapier',
 	preset: '../../../jest.preset.js',
 	testEnvironment: 'node',
 	transform: {
