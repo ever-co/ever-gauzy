@@ -53,12 +53,8 @@ export class ZapierController {
 		description: 'Successfully refreshed Zapier integration token'
 	})
 	@ApiResponse({
-		status: 404,
-		description: 'Integration not found'
-	})
-	@ApiResponse({
-		status: 422,
-		description: 'Token refresh failed due to invalid credentials or other validation errors'
+		status: 401,
+		description: 'Token refresh failed due to invalid credentials'
 	})
 	@Get('/refresh-token/:integrationId')
 	async refreshZapierTokenByIntegration(
@@ -67,15 +63,15 @@ export class ZapierController {
 		try {
 			const token = await this.zapierService.refreshToken(integrationId);
 			if (!token) {
-				// If service returns null/undefined, assume validation/credential error
-				throw new UnprocessableEntityException(`Failed to refresh token - invalid credentials or validation error`);
+				// If service returns null/undefined, assume invalid credentials
+				throw new UnauthorizedException(`Failed to refresh token - invalid credentials`);
 			}
 			return token;
 		} catch (error) {
 			this.logger.error(`Failed to refresh Zapier token for integration ${integrationId}`, error);
 
 			// Re-throw specific errors
-			if (error instanceof NotFoundException || error instanceof UnprocessableEntityException) {
+			if (error instanceof NotFoundException || error instanceof UnauthorizedException) {
 				throw error;
 			}
 
