@@ -113,11 +113,12 @@ export class PluginVersionEffects {
 			mergeMap(({ pluginId, versionId }) =>
 				this.pluginService.deleteVersion(pluginId, versionId).pipe(
 					tap(() => {
+						const deletedAt = new Date();
 						this.pluginVersionStore.update((state) => ({
-							version: state.version && { ...state.version, deletedAt: new Date() },
+							version: state.version && { ...state.version, deletedAt },
 							versions: [
 								...state.versions.map((version) =>
-									version.id === versionId ? { ...version, deletedAt: new Date() } : version
+									version.id === versionId ? { ...version, deletedAt } : version
 								)
 							]
 						}));
