@@ -96,7 +96,7 @@ export class IntegrationZapierPlugin implements IOnPluginBootstrap, IOnPluginDes
 	onPluginDestroy(): void | Promise<void> {
 		if (this.logEnabled) {
 			const logger = new Logger(IntegrationZapierPlugin.name);
-			logger.log(`${IntegrationZapierPlugin.name} is being bootstrapped...`)
+			logger.log(`${IntegrationZapierPlugin.name} is being destroyed...`)
 		}
 	}
 }

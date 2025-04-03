@@ -40,6 +40,7 @@ export default {
     description: 'Starts a timer in Gauzy.',
   },
   operation: {
+    type: 'create',
     inputFields: [
       { key: 'startedAt', type: 'datetime', required: true, label: 'Started At' },
       { key: 'tenantId', type: 'string', required: true, label: 'Tenant ID' },
