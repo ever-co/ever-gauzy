@@ -23,7 +23,12 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 		super(invoiceItemService);
 	}
 
-	@Permissions(PermissionsEnum.INVOICES_VIEW, PermissionsEnum.ORG_INVOICES_VIEW, PermissionsEnum.ALL_ORG_VIEW)
+	@Permissions(
+		PermissionsEnum.INVOICES_VIEW,
+		PermissionsEnum.ORG_INVOICES_VIEW,
+		PermissionsEnum.INVOICES_HANDLE,
+		PermissionsEnum.ALL_ORG_VIEW
+	)
 	@Get()
 	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IInvoiceItem>> {
 		const { relations = [], findInput = null, invoiceId = null } = data;
@@ -43,7 +48,12 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Permissions(PermissionsEnum.INVOICES_EDIT, PermissionsEnum.ORG_INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+	@Permissions(
+		PermissionsEnum.INVOICES_EDIT,
+		PermissionsEnum.ORG_INVOICES_EDIT,
+		PermissionsEnum.INVOICES_HANDLE,
+		PermissionsEnum.ALL_ORG_EDIT
+	)
 	@Post('/bulk/:invoiceId')
 	async createBulk(
 		@Param('invoiceId', UUIDValidationPipe) invoiceId: string,

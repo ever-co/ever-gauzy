@@ -60,7 +60,12 @@ export class InvoiceController extends CrudController<Invoice> {
 	 * @param options
 	 * @returns
 	 */
-	@Permissions(PermissionsEnum.INVOICES_VIEW, PermissionsEnum.ORG_INVOICES_VIEW, PermissionsEnum.ALL_ORG_VIEW)
+	@Permissions(
+		PermissionsEnum.INVOICES_VIEW,
+		PermissionsEnum.ORG_INVOICES_VIEW,
+		PermissionsEnum.INVOICES_HANDLE,
+		PermissionsEnum.ALL_ORG_VIEW
+	)
 	@Get('count')
 	async getCount(@Query() options: FindOptionsWhere<Invoice>): Promise<number> {
 		this.invoiceService.checkIfUserCanAccessInvoiceForRead(options);
@@ -73,7 +78,12 @@ export class InvoiceController extends CrudController<Invoice> {
 	 * @param options
 	 * @returns
 	 */
-	@Permissions(PermissionsEnum.INVOICES_VIEW, PermissionsEnum.ORG_INVOICES_VIEW, PermissionsEnum.ALL_ORG_VIEW)
+	@Permissions(
+		PermissionsEnum.INVOICES_VIEW,
+		PermissionsEnum.ORG_INVOICES_VIEW,
+		PermissionsEnum.INVOICES_HANDLE,
+		PermissionsEnum.ALL_ORG_VIEW
+	)
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
 	async pagination(@Query() options: PaginationParams<Invoice>): Promise<IPagination<IInvoice>> {
@@ -86,7 +96,12 @@ export class InvoiceController extends CrudController<Invoice> {
 	 *
 	 * @returns
 	 */
-	@Permissions(PermissionsEnum.INVOICES_VIEW, PermissionsEnum.ORG_INVOICES_VIEW, PermissionsEnum.ALL_ORG_VIEW)
+	@Permissions(
+		PermissionsEnum.INVOICES_VIEW,
+		PermissionsEnum.ORG_INVOICES_VIEW,
+		PermissionsEnum.INVOICES_HANDLE,
+		PermissionsEnum.ALL_ORG_VIEW
+	)
 	@Get('highest')
 	async findHighestInvoiceNumber(): Promise<Invoice> {
 		return await this.invoiceService.getHighestInvoiceNumber();
@@ -98,7 +113,12 @@ export class InvoiceController extends CrudController<Invoice> {
 	 * @param options
 	 * @returns
 	 */
-	@Permissions(PermissionsEnum.INVOICES_VIEW, PermissionsEnum.ORG_INVOICES_VIEW, PermissionsEnum.ALL_ORG_VIEW)
+	@Permissions(
+		PermissionsEnum.INVOICES_VIEW,
+		PermissionsEnum.ORG_INVOICES_VIEW,
+		PermissionsEnum.INVOICES_HANDLE,
+		PermissionsEnum.ALL_ORG_VIEW
+	)
 	@Get()
 	async findAll(@Query() options: OptionParams<IInvoice>): Promise<IPagination<IInvoice>> {
 		try {
@@ -116,7 +136,12 @@ export class InvoiceController extends CrudController<Invoice> {
 	 * @param data
 	 * @returns
 	 */
-	@Permissions(PermissionsEnum.INVOICES_VIEW, PermissionsEnum.ORG_INVOICES_VIEW, PermissionsEnum.ALL_ORG_VIEW)
+	@Permissions(
+		PermissionsEnum.INVOICES_VIEW,
+		PermissionsEnum.ORG_INVOICES_VIEW,
+		PermissionsEnum.INVOICES_HANDLE,
+		PermissionsEnum.ALL_ORG_VIEW
+	)
 	@Get(':id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: IInvoice['id'],
@@ -223,7 +248,12 @@ export class InvoiceController extends CrudController<Invoice> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Permissions(PermissionsEnum.INVOICES_EDIT, PermissionsEnum.ORG_INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+	@Permissions(
+		PermissionsEnum.INVOICES_EDIT,
+		PermissionsEnum.ORG_INVOICES_EDIT,
+		PermissionsEnum.INVOICES_HANDLE,
+		PermissionsEnum.ALL_ORG_EDIT
+	)
 	@Put(':id')
 	@UseValidationPipe({ transform: true })
 	async update(
@@ -255,7 +285,12 @@ export class InvoiceController extends CrudController<Invoice> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Permissions(PermissionsEnum.INVOICES_EDIT, PermissionsEnum.ORG_INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+	@Permissions(
+		PermissionsEnum.INVOICES_EDIT,
+		PermissionsEnum.ORG_INVOICES_EDIT,
+		PermissionsEnum.INVOICES_HANDLE,
+		PermissionsEnum.ALL_ORG_EDIT
+	)
 	@Put('/:id/estimate')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async updateEstimate(
@@ -287,6 +322,12 @@ export class InvoiceController extends CrudController<Invoice> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(
+		PermissionsEnum.INVOICES_EDIT,
+		PermissionsEnum.ORG_INVOICES_EDIT,
+		PermissionsEnum.INVOICES_HANDLE,
+		PermissionsEnum.ALL_ORG_EDIT
+	)
 	@Put('/:id/action')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async updateAction(@Param('id', UUIDValidationPipe) id: IInvoice['id'], @Body() entity: UpdateInvoiceActionDTO) {
@@ -309,6 +350,12 @@ export class InvoiceController extends CrudController<Invoice> {
 	 * @returns
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(
+		PermissionsEnum.INVOICES_VIEW,
+		PermissionsEnum.ORG_INVOICES_VIEW,
+		PermissionsEnum.INVOICES_HANDLE,
+		PermissionsEnum.ALL_ORG_VIEW
+	)
 	@Put('email/:email')
 	async emailInvoice(
 		@Param('email') email: string,
@@ -327,6 +374,12 @@ export class InvoiceController extends CrudController<Invoice> {
 	 * @returns
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(
+		PermissionsEnum.INVOICES_VIEW,
+		PermissionsEnum.ORG_INVOICES_VIEW,
+		PermissionsEnum.INVOICES_HANDLE,
+		PermissionsEnum.ALL_ORG_VIEW
+	)
 	@Put('generate/:uuid')
 	async generateLink(@Param('uuid', UUIDValidationPipe) uuid: IInvoice['id']): Promise<IInvoice> {
 		await this.invoiceService.checkIfUserCanAccessInvoiceForReadById(uuid);
@@ -367,7 +420,12 @@ export class InvoiceController extends CrudController<Invoice> {
 		description: 'Invoice not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Permissions(PermissionsEnum.INVOICES_VIEW, PermissionsEnum.ORG_INVOICES_VIEW, PermissionsEnum.ALL_ORG_VIEW)
+	@Permissions(
+		PermissionsEnum.INVOICES_VIEW,
+		PermissionsEnum.ORG_INVOICES_VIEW,
+		PermissionsEnum.INVOICES_HANDLE,
+		PermissionsEnum.ALL_ORG_VIEW
+	)
 	@Get('download/:uuid')
 	async downloadInvoicePdf(
 		@Param('uuid', UUIDValidationPipe) uuid: IInvoice['id'],
@@ -405,7 +463,12 @@ export class InvoiceController extends CrudController<Invoice> {
 		description: 'Invoice not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Permissions(PermissionsEnum.INVOICES_VIEW, PermissionsEnum.ORG_INVOICES_VIEW, PermissionsEnum.ALL_ORG_VIEW)
+	@Permissions(
+		PermissionsEnum.INVOICES_VIEW,
+		PermissionsEnum.ORG_INVOICES_VIEW,
+		PermissionsEnum.INVOICES_HANDLE,
+		PermissionsEnum.ALL_ORG_VIEW
+	)
 	@Get('payment/download/:uuid')
 	async downloadInvoicePaymentPdf(
 		@Param('uuid', UUIDValidationPipe) uuid: IInvoice['id'],

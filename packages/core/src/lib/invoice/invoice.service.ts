@@ -41,11 +41,11 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 
 	/**
 	 * Check if the current user has the permission to access invoices for reading the data
-	 * 
+	 *
 	 * - If user is admin or can handle invoices, then has access to all invoices
 	 * - If user has INVOICES_VIEW permission, then has access to own invoices
 	 * - If user has ORG_INVOICES_VIEW permission, then has access to B2B invoices
-	 * 
+	 *
 	 * @param filter
 	 */
 	checkIfUserCanAccessInvoiceForRead(filter: any) {
@@ -71,13 +71,11 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	/**
 	 * Check if the current user has the permission to access an invoice by its ID
 	 * Check the permissions based on checkIfUserCanAccessInvoiceForRead
-	 * 
+	 *
 	 * @param uuid
 	 */
 	async checkIfUserCanAccessInvoiceForReadById(uuid: string): Promise<IInvoice> {
-		const filterOptions = {
-			id: uuid,
-		}
+		const filterOptions = { id: uuid };
 		this.checkIfUserCanAccessInvoiceForRead(filterOptions);
 		const invoice = await this.findOneByWhereOptions(filterOptions);
 		if (!invoice) {
@@ -91,16 +89,14 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	 * - If user is admin or can handle invoices, then has access to all invoices
 	 * - If user has INVOICES_EDIT permission, then has access to own invoices
 	 * - If user has ORG_INVOICES_EDIT permission, then has access to B2B invoices
-	 * 
+	 *
 	 * When checkStatus is true, for regular users the invoice should be in DRAFT or SENT status
 	 *
 	 * @param invoiceId
 	 * @param checkStatus
 	 */
 	async checkIfUserCanAccessInvoiceForWrite(invoiceId: string, checkStatus = false): Promise<boolean> {
-		const invoiceFilter = {
-			id: invoiceId,
-		};
+		const invoiceFilter = { id: invoiceId };
 
 		// Check if the user is an admin or can handle invoices, then has access to all invoices
 		const isAdmin = RequestContext.hasPermission(PermissionsEnum.ALL_ORG_EDIT);
@@ -117,7 +113,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 			if (hasB2BInvoicePermission) fromUserIdFilter.push(null);
 
 			invoiceFilter['fromUserId'] = In(fromUserIdFilter);
-		};
+		}
 
 		const query = this.typeOrmInvoiceRepository
 			.createQueryBuilder('invoice')
