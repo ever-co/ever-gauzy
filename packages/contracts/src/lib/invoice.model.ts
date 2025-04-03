@@ -98,11 +98,6 @@ export interface IInvoiceFindInput extends IBasePerTenantAndOrganizationEntityMo
 	isArchived?: boolean;
 }
 
-export interface IInvoiceAccessCheck {
-	invoice: IInvoice;
-	isOwnInvoice: boolean;
-}
-
 export enum InvoiceTypeEnum {
 	BY_EMPLOYEE_HOURS = 'BY_EMPLOYEE_HOURS',
 	BY_PROJECT_HOURS = 'BY_PROJECT_HOURS',

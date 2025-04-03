@@ -1,11 +1,10 @@
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { Invoice } from './invoice.entity';
-import { Between, Brackets, In } from 'typeorm';
+import { Between, In } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { EmailService } from './../email-send/email.service';
 import {
 	IInvoice,
-	IInvoiceAccessCheck,
 	IOrganization,
 	InvoiceErrors,
 	InvoiceStats,
@@ -41,52 +40,91 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	}
 
 	/**
-	 * Check if the current user has the permission to access invoices from multiple users
-	 * If the user does not have the permission, the invoices will be filtered by the current user
+	 * Check if the current user has the permission to access invoices for reading the data
+	 *
+	 * - If user is admin or can handle invoices, then has access to all invoices
+	 * - If user has INVOICES_VIEW permission, then has access to own invoices
+	 * - If user has ORG_INVOICES_VIEW permission, then has access to B2B invoices
 	 *
 	 * @param filter
 	 */
-	checkIfUserCanAccessInvoice(filter: any) {
-		// Check if the current user has the permission to edit invoices
-		const hasInvoiceEditPermission = RequestContext.hasPermission(PermissionsEnum.INVOICES_EDIT);
-		if (hasInvoiceEditPermission) {
-			filter.fromUserId = RequestContext.currentUserId();
-		}
+	checkIfUserCanAccessInvoiceForRead(filter: any) {
+		// Check if the user is an admin or can handle invoices, then has access to all invoices
+		const isAdmin = RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW);
+		const canHandleInvoices = RequestContext.hasPermission(PermissionsEnum.INVOICES_HANDLE);
+		if (isAdmin || canHandleInvoices) return;
+
+		const userIdValidation = [];
+
+		// Check if the current user has the permission to see own invoices
+		const hasOwnInvoicePermission = RequestContext.hasPermission(PermissionsEnum.INVOICES_VIEW);
+		if (hasOwnInvoicePermission) userIdValidation.push(RequestContext.currentUserId());
+
+		// If if the current user has the permission to see B2B invoices
+		const hasB2BInvoicePermission = RequestContext.hasPermission(PermissionsEnum.ORG_INVOICES_VIEW);
+		if (hasB2BInvoicePermission) userIdValidation.push(null);
+
+		// Set the filter to get invoices from the current user or B2B invoices
+		filter.fromUserId = In(userIdValidation);
 	}
 
 	/**
 	 * Check if the current user has the permission to access an invoice by its ID
-	 * If the user does not have the permission, the invoice will be filtered by the current user
+	 * Check the permissions based on checkIfUserCanAccessInvoiceForRead
+	 *
+	 * @param uuid
+	 */
+	async checkIfUserCanAccessInvoiceForReadById(uuid: string): Promise<IInvoice> {
+		const filterOptions = { id: uuid };
+		this.checkIfUserCanAccessInvoiceForRead(filterOptions);
+		const invoice = await this.findOneByWhereOptions(filterOptions);
+		if (!invoice) {
+			throw new BadRequestException(InvoiceErrors.INVALID_INVOICE);
+		}
+		return invoice;
+	}
+
+	/**
+	 * Check if the current user has the permission to write or update an invoice by its ID
+	 * - If user is admin or can handle invoices, then has access to all invoices
+	 * - If user has INVOICES_EDIT permission, then has access to own invoices
+	 * - If user has ORG_INVOICES_EDIT permission, then has access to B2B invoices
+	 *
+	 * When checkStatus is true, for regular users the invoice should be in DRAFT or SENT status
 	 *
 	 * @param invoiceId
 	 * @param checkStatus
 	 */
-	async checkIfUserCanAccessInvoiceById(invoiceId: string, checkStatus = false): Promise<IInvoiceAccessCheck> {
-		const hasInvoiceEditPermission = RequestContext.hasPermission(PermissionsEnum.INVOICES_EDIT);
+	async checkIfUserCanAccessInvoiceForWrite(invoiceId: string, checkStatus = false): Promise<boolean> {
+		const invoiceFilter = { id: invoiceId };
+
+		// Check if the user is an admin or can handle invoices, then has access to all invoices
+		const isAdmin = RequestContext.hasPermission(PermissionsEnum.ALL_ORG_EDIT);
+		const canHandleInvoices = RequestContext.hasPermission(PermissionsEnum.INVOICES_HANDLE);
+		if (!isAdmin && !canHandleInvoices) {
+			const fromUserIdFilter = [];
+
+			// Check if the current user has the permission to see own invoices
+			const hasOwnInvoicePermission = RequestContext.hasPermission(PermissionsEnum.INVOICES_EDIT);
+			if (hasOwnInvoicePermission) fromUserIdFilter.push(RequestContext.currentUserId());
+
+			// If if the current user has the permission to see B2B invoices
+			const hasB2BInvoicePermission = RequestContext.hasPermission(PermissionsEnum.ORG_INVOICES_EDIT);
+			if (hasB2BInvoicePermission) fromUserIdFilter.push(null);
+
+			invoiceFilter['fromUserId'] = In(fromUserIdFilter);
+		}
+
 		const query = this.typeOrmInvoiceRepository
 			.createQueryBuilder('invoice')
 			.select('invoice.id', 'id')
-			.where('invoice.id = :invoiceId', { invoiceId });
+			.where(invoiceFilter);
 
-		// Check if we need to check the status of the invoice to allow only operation in draft or sent status
-		if (checkStatus) {
+		// If checkStatus is true, we need to check if the invoice is in draft or sent status to be able to edit it
+		if (!isAdmin && !canHandleInvoices && checkStatus) {
 			query.andWhere('invoice.status IN (:...invoiceStatuses)', {
 				invoiceStatuses: [InvoiceStatusTypesEnum.DRAFT, InvoiceStatusTypesEnum.SENT]
 			});
-		}
-
-		// Check if the user has the permission to edit invoices to validate if the invoice is from the current user
-		if (hasInvoiceEditPermission) {
-			// Add parentheses around the OR conditions to properly group them
-			const userId = RequestContext.currentUserId();
-			query.andWhere(
-				new Brackets((qb) => {
-					qb.where('invoice.fromUserId = :fromUserId', { fromUserId: userId }).orWhere(
-						'invoice.createdById = :createdById',
-						{ createdById: userId }
-					);
-				})
-			);
 		}
 
 		const invoice = await query.getRawOne();
@@ -94,7 +132,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 			throw new BadRequestException(InvoiceErrors.INVALID_INVOICE);
 		}
 
-		return { invoice, isOwnInvoice: hasInvoiceEditPermission };
+		return isAdmin || canHandleInvoices;
 	}
 
 	/**

@@ -12,7 +12,7 @@ import { Permissions } from './../shared/decorators';
 import { InvoiceItemBulkInputDTO } from './dto';
 import { InvoiceService } from '../invoice/invoice.service';
 @ApiTags('InvoiceItem')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class InvoiceItemController extends CrudController<InvoiceItem> {
 	constructor(
@@ -23,10 +23,16 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 		super(invoiceItemService);
 	}
 
+	@Permissions(
+		PermissionsEnum.INVOICES_VIEW,
+		PermissionsEnum.ORG_INVOICES_VIEW,
+		PermissionsEnum.INVOICES_HANDLE,
+		PermissionsEnum.ALL_ORG_VIEW
+	)
 	@Get()
 	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IInvoiceItem>> {
 		const { relations = [], findInput = null, invoiceId = null } = data;
-		await this.invoiceService.checkIfUserCanAccessInvoiceById(invoiceId);
+		await this.invoiceService.checkIfUserCanAccessInvoiceForReadById(invoiceId);
 		return this.invoiceItemService.findAll({
 			where: findInput,
 			relations
@@ -42,14 +48,18 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.INVOICES_EDIT)
+	@Permissions(
+		PermissionsEnum.INVOICES_EDIT,
+		PermissionsEnum.ORG_INVOICES_EDIT,
+		PermissionsEnum.INVOICES_HANDLE,
+		PermissionsEnum.ALL_ORG_EDIT
+	)
 	@Post('/bulk/:invoiceId')
 	async createBulk(
 		@Param('invoiceId', UUIDValidationPipe) invoiceId: string,
 		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform: true })) input: InvoiceItemBulkInputDTO
 	): Promise<any> {
-		await this.invoiceService.checkIfUserCanAccessInvoiceById(invoiceId, true);
+		await this.invoiceService.checkIfUserCanAccessInvoiceForWrite(invoiceId, true);
 		return this.commandBus.execute(new InvoiceItemBulkCreateCommand(invoiceId, input.list));
 	}
 }
