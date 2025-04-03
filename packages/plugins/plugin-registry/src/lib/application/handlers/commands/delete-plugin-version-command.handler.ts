@@ -1,7 +1,7 @@
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PluginVersionService } from '../../../domain/services/plugin-version.service';
 import { DeletePluginVersionCommand } from '../../commands/delete-plugin-version.command';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 @CommandHandler(DeletePluginVersionCommand)
 export class DeletePluginVersionCommandHandler implements ICommandHandler<DeletePluginVersionCommand> {
@@ -18,21 +18,20 @@ export class DeletePluginVersionCommandHandler implements ICommandHandler<Delete
 	public async execute(command: DeletePluginVersionCommand): Promise<void> {
 		const { versionId, pluginId } = command;
 
-		try {
-			const result = await this.pluginVersionService.softDelete(versionId, {
-				where: {
-					pluginId
-				}
-			});
+		const count = await this.pluginVersionService.count({ where: { pluginId } });
 
-			if (!result) {
-				throw new NotFoundException(`Plugin version with ID ${versionId} and plugin ID ${pluginId} not found.`);
+		if (count <= 1) {
+			throw new ForbiddenException('Cannot delete last version of plugin');
+		}
+
+		const result = await this.pluginVersionService.softDelete(versionId, {
+			where: {
+				pluginId
 			}
-		} catch (error) {
-			if (error instanceof NotFoundException) {
-				throw error;
-			}
-			throw new BadRequestException(`Failed to delete plugin version with ID ${versionId}.`);
+		});
+
+		if (!result) {
+			throw new NotFoundException(`Plugin version with ID ${versionId} and plugin ID ${pluginId} not found.`);
 		}
 	}
 }
