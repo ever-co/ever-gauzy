@@ -2,11 +2,11 @@ import { ID, IPluginVersion } from '@gauzy/contracts';
 import { createAction } from '@ngneat/effects';
 
 export class PluginVersionActions {
-	public static getAll = createAction('[Plugin] Get Version', <T>(pluginId: ID, params?: T) => ({
+	public static getAll = createAction('[Plugin Version] Get All', <T>(pluginId: ID, params?: T) => ({
 		params,
 		pluginId
 	}));
-	public static add = createAction('[Plugin] Add Versions', (pluginId: ID, version: IPluginVersion) => ({
+	public static add = createAction('[Plugin Version] Add', (pluginId: ID, version: IPluginVersion) => ({
 		pluginId,
 		version
 	}));
@@ -18,15 +18,17 @@ export class PluginVersionActions {
 			version
 		})
 	);
-	public static delete = createAction('[Plugin] Delete Version', (pluginId: ID, versionId: ID) => ({
+	public static delete = createAction('[Plugin Version] Delete', (pluginId: ID, versionId: ID) => ({
 		pluginId,
 		versionId
 	}));
-	public static restore = createAction('[Plugin] Restore Version', (pluginId: ID, versionId: ID) => ({
+	public static restore = createAction('[Plugin Version] Restore', (pluginId: ID, versionId: ID) => ({
 		pluginId,
 		versionId
 	}));
-	public static setCurrentPluginId = createAction('[Plugin] Set current plugin ID', (pluginId: ID) => ({ pluginId }));
-	public static selectVersion = createAction('[Plugin] Select Version', (version: IPluginVersion) => ({ version }));
-	public static reset = createAction('[Plugin] Reset Version');
+	public static setCurrentPluginId = createAction('[Plugin Version] Set current plugin ID', (pluginId: ID) => ({
+		pluginId
+	}));
+	public static selectVersion = createAction('[Plugin Version] Select', (version: IPluginVersion) => ({ version }));
+	public static reset = createAction('[Plugin Version] Reset');
 }
