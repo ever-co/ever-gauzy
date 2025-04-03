@@ -26,7 +26,8 @@ const perform = async (z: ZObject, bundle: Bundle) => {
     });
     return response.data;
   } catch (error) {
-    throw new Error('Failed to start timer');
+    z.console.error('Error starting timer', error);
+    throw new Error('Failed to start timer')
   }
 };
 
@@ -40,7 +41,6 @@ export default {
     description: 'Starts a timer in Gauzy.',
   },
   operation: {
-    type: 'create',
     inputFields: [
       { key: 'startedAt', type: 'datetime', required: true, label: 'Started At' },
       { key: 'tenantId', type: 'string', required: true, label: 'Tenant ID' },
