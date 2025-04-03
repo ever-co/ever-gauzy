@@ -16,7 +16,7 @@ import { PluginMarketplaceUploadComponent } from './plugin-marketplace-upload/pl
 	styleUrls: ['./plugin-marketplace.component.scss']
 })
 export class PluginMarketplaceComponent implements OnInit, OnDestroy {
-	private skip = 0;
+	private skip = 1;
 	private hasNext = false;
 	private readonly take = 10;
 
@@ -76,7 +76,8 @@ export class PluginMarketplaceComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy(): void {
-		this.skip = 0;
+		this.skip = 1;
 		this.hasNext = false;
+		this.action.dispatch(PluginMarketplaceActions.reset());
 	}
 }

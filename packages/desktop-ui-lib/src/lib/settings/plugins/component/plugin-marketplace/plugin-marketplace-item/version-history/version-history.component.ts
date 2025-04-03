@@ -151,7 +151,7 @@ export class VersionHistoryComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy(): void {
-		this.skip = 0;
+		this.skip = 1;
 		this.hasNext = false;
 		this.action.dispatch(PluginVersionActions.reset());
 	}

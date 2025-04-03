@@ -9,35 +9,15 @@ export const pluginRoutes: Routes = [
 	},
 	{
 		path: 'marketplace-plugins',
-		resolve: {
-			isUploadAvailable: PluginUploadResolver
-		},
-		loadComponent: () =>
-			import('./component/plugin-marketplace/plugin-marketplace.component').then(
-				(m) => m.PluginMarketplaceComponent
-			)
+		loadChildren: () =>
+			import('./component/plugin-marketplace/plugin-marketplace-routing.module').then(
+				(m) => m.pluginMarketplaceRoutes
+			),
+		resolve: { isUploadAvailable: PluginUploadResolver }
 	},
 	{
 		path: 'plugins',
-		loadComponent: () => import('./component/plugin-list/plugin-list.component').then((m) => m.PluginListComponent)
-	},
-	{
-		path: 'marketplace-plugins/:id',
-		loadComponent: () =>
-			import('./component/plugin-marketplace/plugin-marketplace-item/plugin-marketplace-item.component').then(
-				(m) => m.PluginMarketplaceItemComponent
-			)
-	},
-	{
-		path: 'marketplace-plugins/:id/versions',
-		loadComponent: () =>
-			import(
-				'./component/plugin-marketplace/plugin-marketplace-item/version-history/version-history.component'
-			).then((m) => m.VersionHistoryComponent)
-	},
-	{
-		path: 'plugins/:name',
-		loadComponent: () => import('./component/plugin/plugin.component').then((m) => m.PluginComponent)
+		loadChildren: () => import('./component/plugin-installed-routing.module').then((m) => m.pluginInstalledRoutes)
 	},
 	{
 		path: '**',
