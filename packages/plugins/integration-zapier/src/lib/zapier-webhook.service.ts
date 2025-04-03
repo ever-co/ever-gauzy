@@ -71,7 +71,7 @@ export class ZapierWebhookService {
                 throw error;
             }
             this.logger.error(`Failed to delete webhook subscription with id ${id}`, error);
-            throw new Error('Failed to delete webhook subscription');
+            throw new InternalServerErrorException('Failed to delete webhook subscription');
         }
     }
 }

@@ -12,7 +12,7 @@ import { buildQueryString } from '@gauzy/utils';
 export class ZapierAuthorizationController {
 	constructor(private readonly _config: ConfigService) {}
 	/**
-	 * Handles the 0Auth2 authorization request
+	 * Handles the OAuth2 authorization request
 	 * Redirects the user to the zapier authorization URL
 	 *
 	 * @param redirectUri - The redirect URI provided by Zapier
@@ -45,16 +45,16 @@ export class ZapierAuthorizationController {
 			res.redirect(authUrl);
 		} catch (error) {
 			throw new HttpException(
-				'Failed to initiate 0Auth2 authorization',
+				'Failed to initiate OAuth2 authorization',
 				HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}
 	}
 	/**
-	 * Handles 0Auth2 callback after the user authorizes the integration
+	 * Handles OAuth2 callback after the user authorizes the integration
 	 * Redirects the user back to Zapier's redirect_uri with authorization code.
 	 *
-	 * @param code - The authorization code returned by the 0Auth2 provider
+	 * @param code - The authorization code returned by the OAuth2 provider
 	 * @param state - The state parameter for CSRF protection.
 	 * @param res - Express response object for redirection.
 	 */
