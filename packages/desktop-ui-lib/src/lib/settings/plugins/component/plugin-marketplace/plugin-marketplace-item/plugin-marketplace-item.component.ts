@@ -39,7 +39,6 @@ import { DialogCreateVersionComponent } from './dialog-create-version/dialog-cre
 })
 export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	private readonly destroy$ = new Subject<void>();
-	pluginId = '';
 	installed$ = new BehaviorSubject<boolean>(false);
 	needUpdate$ = new BehaviorSubject<boolean>(false);
 
@@ -76,7 +75,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 			)
 			.subscribe();
 		this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
-			this.pluginId = params['id'];
+			this.action.dispatch(PluginVersionActions.setCurrentPluginId(params['id']));
 			this.loadPlugin();
 		});
 	}
@@ -358,6 +357,10 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 
 	public get plugin(): IPlugin {
 		return this.marketplaceQuery.plugin;
+	}
+
+	public get pluginId(): string {
+		return this.versionQuery.pluginId;
 	}
 
 	private get isInstalled(): boolean {

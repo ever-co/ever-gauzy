@@ -4,7 +4,7 @@ import { ID, IPluginVersion } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { filter, take, tap } from 'rxjs';
+import { distinctUntilChanged, filter, take, tap } from 'rxjs';
 import { PluginVersionActions } from '../../+state/actions/plugin-version.action';
 import { PluginVersionQuery } from '../../+state/queries/plugin-version.query';
 import { AlertComponent } from '../../../../../../dialogs/alert/alert.component';
@@ -19,6 +19,10 @@ import { DialogCreateVersionComponent } from '../dialog-create-version/dialog-cr
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VersionHistoryComponent implements OnInit, OnDestroy {
+	private skip = 1;
+	private hasNext = false;
+	private readonly take = 10;
+
 	constructor(
 		private readonly dialogService: NbDialogService,
 		private readonly route: ActivatedRoute,
@@ -29,6 +33,16 @@ export class VersionHistoryComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit(): void {
+		this.query.count$
+			.pipe(
+				distinctUntilChanged(),
+				tap((count) => {
+					this.hasNext = count > this.skip * this.take;
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
 		this.route.params
 			.pipe(
 				tap((params) => {
@@ -43,10 +57,19 @@ export class VersionHistoryComponent implements OnInit, OnDestroy {
 	public load(): void {
 		this.action.dispatch(
 			PluginVersionActions.getAll(this.pluginId, {
+				skip: this.skip,
+				take: this.take,
 				relations: ['plugin', 'source'],
 				order: { releaseDate: 'DESC' }
 			})
 		);
+	}
+
+	public loadMore(): void {
+		if (this.hasNext && !!this.pluginId) {
+			this.skip++;
+			this.load();
+		}
 	}
 
 	public async navigateBack(): Promise<void> {
@@ -128,6 +151,8 @@ export class VersionHistoryComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy(): void {
+		this.skip = 0;
+		this.hasNext = false;
 		this.action.dispatch(PluginVersionActions.reset());
 	}
 }

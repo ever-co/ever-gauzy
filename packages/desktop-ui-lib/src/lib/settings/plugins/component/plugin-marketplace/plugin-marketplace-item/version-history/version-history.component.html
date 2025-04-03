@@ -14,7 +14,13 @@ query.updating$ | async; @let isDisabled= isRemoving || isRecovering || isEditin
 	@if (isLoading) {
 	<ngx-no-data-message message="Loading changelogs..."></ngx-no-data-message>
 	} @else if (isAvailable) {
-	<nb-card-body class="version-container">
+	<nb-card-body
+		nbInfiniteList
+		[threshold]="500"
+		[throttleTime]="300"
+		(bottomThreshold)="loadMore()"
+		class="version-container"
+	>
 		@for (version of versions; track version.id) {
 		<nb-card class="version">
 			<nb-card-header>
