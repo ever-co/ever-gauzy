@@ -106,7 +106,7 @@ export class ZapierController {
 	/**
 	 * Helper method to validate Zapier token
 	 */
-	private validateToken(token: string, isAction: boolean = false): void {
+	private validateToken(token: string, isAction: boolean = false) {
 		const exception = isAction ? UnauthorizedException : BadRequestException;
 		if (!token) {
 			throw new exception('Token parameter is required');
