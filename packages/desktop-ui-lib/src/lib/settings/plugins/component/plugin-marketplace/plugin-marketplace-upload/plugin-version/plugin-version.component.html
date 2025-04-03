@@ -29,7 +29,7 @@
 				placeholder="YYYY-MM-DD"
 				[status]="getFieldError('releaseDate') ? 'danger' : 'basic'"
 			/>
-			<nb-datepicker #datepicker [max]="today"></nb-datepicker>
+			<nb-datepicker #datepicker [max]="max"></nb-datepicker>
 			<nb-hint *ngIf="getFieldError('releaseDate', 'required')" status="danger">
 				{{ 'PLUGIN.FORM.VALIDATION.RELEASE_DATE_REQUIRED' | translate }}
 			</nb-hint>

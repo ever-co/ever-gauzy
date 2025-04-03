@@ -1,8 +1,8 @@
-import { HttpClient, HttpEvent, HttpEventType, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpEvent, HttpEventType, HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ID, IPagination, IPlugin, IPluginVersion, PluginSourceType } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
-import { map, Observable } from 'rxjs';
+import { catchError, map, Observable, throwError } from 'rxjs';
 import { Store } from '../../../services';
 import { Http2ServerResponse } from 'http2';
 
@@ -28,7 +28,7 @@ export class PluginService {
 		const common = { organizationId: this.store.organizationId, tenantId: this.store.tenantId };
 
 		// Strictly map all properties of ICreatePlugin and IUpdatePlugin
-		const plugin: Partial<IPlugin> = {
+		const plugin = {
 			...(data.id && { id: data.id }),
 			name: data.name,
 			description: data.description,
@@ -45,7 +45,7 @@ export class PluginService {
 
 						number: data.version.number,
 						changelog: data.version.changelog,
-						releaseDate: data.version.releaseDate,
+						releaseDate: this.toISOString(data.version.releaseDate),
 						...common,
 						source: data.version.source
 							? {
@@ -76,12 +76,16 @@ export class PluginService {
 		const formData = this.jsonToFormData(filtered);
 
 		// Extract and append the file from `source.file` (if available)
-		const file = data.source && 'file' in data.source ? data.source.file : undefined;
+		const file = data.version.source && 'file' in data.version.source ? data.version.source.file : undefined;
 		if (file instanceof File) {
 			formData.append('file', file, file.name);
 		}
 
 		return formData;
+	}
+
+	private toISOString(value: Date | string) {
+		return new Date(value).toISOString();
 	}
 
 	public buildFormData<T>(formData: FormData, data: T, parentKey?: string) {
@@ -102,10 +106,8 @@ export class PluginService {
 	}
 
 	public upload(plugin: IPlugin): Observable<{ plugin?: IPlugin; progress?: number }> {
-		const formData = this.createFormData(plugin);
-
 		return this.http
-			.post<IPlugin>(this.endPoint, formData, {
+			.post<IPlugin>(this.endPoint, this.createFormData(plugin), {
 				reportProgress: true,
 				observe: 'events'
 			})
@@ -116,6 +118,9 @@ export class PluginService {
 					} else if (event instanceof HttpResponse) {
 						return { plugin: event.body, progress: 1 };
 					}
+				}),
+				catchError((error) => {
+					throw error;
 				})
 			);
 	}
@@ -161,11 +166,11 @@ export class PluginService {
 		const common = { organizationId: this.store.organizationId, tenantId: this.store.tenantId };
 
 		// Strictly map all properties of ICreatePlugin and IUpdatePlugin
-		const version: Partial<IPluginVersion> = {
+		const version = {
 			...(data.id && { id: data.id }),
 			number: data.number,
 			changelog: data.changelog,
-			releaseDate: data.releaseDate,
+			releaseDate: this.toISOString(data.releaseDate),
 			...common,
 			source: data.source
 				? {
@@ -218,6 +223,9 @@ export class PluginService {
 					} else if (event instanceof HttpResponse) {
 						return { version: event.body, progress: 1 };
 					}
+				}),
+				catchError((error) => {
+					throw error;
 				})
 			);
 	}

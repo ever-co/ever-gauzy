@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { IPlugin, IPluginVersion, PluginSourceType, PluginStatus, PluginType } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDateService, NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, Subject, takeUntil, tap } from 'rxjs';
 
@@ -21,15 +21,18 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 	sourceTypes = Object.values(PluginSourceType);
 	isSubmitting = false;
 	formTouched = false;
-	today = new Date(new Date().setHours(0, 0, 0, 0)); // Ensures a proper date comparison
+	today: Date;
 	destroy$ = new Subject<void>();
 
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly dialogRef: NbDialogRef<DialogCreateVersionComponent>,
 		private readonly toastrService: NbToastrService,
-		private readonly translateService: TranslateService
-	) {}
+		private readonly translateService: TranslateService,
+		protected readonly dateService: NbDateService<Date>
+	) {
+		this.today = dateService.today();
+	}
 
 	ngOnInit(): void {
 		this.initForm();

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { FormGroup } from '@angular/forms';
+import { NbDateService } from '@nebular/theme';
 
 @Component({
 	selector: 'lib-plugin-version',
@@ -9,7 +10,11 @@ import { FormGroup } from '@angular/forms';
 })
 export class PluginVersionComponent {
 	@Input() form: FormGroup;
-	public today = new Date();
+	public max: Date;
+
+	constructor(protected dateService: NbDateService<Date>) {
+		this.max = dateService.today();
+	}
 
 	public getFieldError(controlName: string, errorType?: string): boolean {
 		const control = this.form.get(controlName);
