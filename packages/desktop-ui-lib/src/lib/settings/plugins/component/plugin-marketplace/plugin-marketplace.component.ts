@@ -37,6 +37,7 @@ export class PluginMarketplaceComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.load();
 	}
 
 	public load(): void {
@@ -44,8 +45,7 @@ export class PluginMarketplaceComponent implements OnInit, OnDestroy {
 			PluginMarketplaceActions.getAll({
 				skip: this.skip,
 				take: this.take,
-				relations: ['versions'],
-				order: { createdAt: 'DESC', versions: { createdAt: 'DESC' } }
+				order: { createdAt: 'DESC' }
 			})
 		);
 	}
