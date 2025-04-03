@@ -78,6 +78,5 @@ export class PluginMarketplaceComponent implements OnInit, OnDestroy {
 	ngOnDestroy(): void {
 		this.skip = 0;
 		this.hasNext = false;
-		this.action.dispatch(PluginMarketplaceActions.reset());
 	}
 }
