@@ -45,6 +45,7 @@ export class PluginMarketplaceComponent implements OnInit, OnDestroy {
 			PluginMarketplaceActions.getAll({
 				skip: this.skip,
 				take: this.take,
+				relations: ['versions', 'versions.source', 'uploadedBy', 'uploadedBy.user'],
 				order: { createdAt: 'DESC' }
 			})
 		);
