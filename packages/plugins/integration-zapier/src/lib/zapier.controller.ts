@@ -1,5 +1,5 @@
-import { Controller, Post, Body, Get, Param, UseGuards, Query, NotFoundException, InternalServerErrorException, Logger, UnauthorizedException, UnprocessableEntityException, BadRequestException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Post, Body, Get, Param, UseGuards, Query, NotFoundException, InternalServerErrorException, Logger, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import {
 	IIntegrationTenant,
 	IIntegrationSetting,
@@ -10,6 +10,7 @@ import {
 } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
 import { ZapierService } from './zapier.service';
+import { CreateZapierIntegrationDto } from './dto';
 
 @ApiTags('Zapier Integrations')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -56,7 +57,7 @@ export class ZapierController {
 		status: 401,
 		description: 'Token refresh failed due to invalid credentials'
 	})
-	@Get('/refresh-token/:integrationId')
+	@Post('/refresh-token/:integrationId')
 	async refreshZapierTokenByIntegration(
 		@Param('integrationId', UUIDValidationPipe) integrationId: ID
 	): Promise<string> {
@@ -90,7 +91,7 @@ export class ZapierController {
 		description: 'Unauthorized - Invalid or missing authorization token'
 	})
 	@Post('/integration')
-	async create(@Body() body: ICreateZapierIntegrationInput): Promise<IIntegrationTenant> {
+	async create(@Body() body: CreateZapierIntegrationDto): Promise<IIntegrationTenant> {
 		try {
 			return await this.zapierService.addIntegration(body);
 		} catch (error) {
@@ -102,7 +103,7 @@ export class ZapierController {
 	/**
 	 * Helper method to validate Zapier token
 	 */
-	private validateToken(token: string, isAction: boolean = false) {
+	private validateToken(token: string, isAction = false) {
 		const exception = isAction ? UnauthorizedException : BadRequestException;
 		if (!token) {
 			throw new exception('Token parameter is required');
