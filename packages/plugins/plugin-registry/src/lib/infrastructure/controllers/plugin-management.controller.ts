@@ -89,8 +89,7 @@ export class PluginManagementController {
 	@Post()
 	public async create(@Body() input: CreatePluginDTO, @UploadedPluginStorage() file: FileDTO): Promise<IPlugin> {
 		if (input.version.source.type === PluginSourceType.GAUZY && !file?.key) {
-			console.warn('Plugin file key is empty');
-			return;
+			throw new BadRequestException('Plugin file key is empty');
 		}
 
 		try {
