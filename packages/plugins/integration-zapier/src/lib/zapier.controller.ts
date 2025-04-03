@@ -17,7 +17,7 @@ import { ZapierService } from './zapier.service';
 @Controller('/integration/zapier')
 export class ZapierController {
 	private readonly logger = new Logger(ZapierController.name);
-	constructor(private readonly _zapierService: ZapierService) {}
+	constructor(private readonly zapierService: ZapierService) {}
 
 	@ApiOperation({ summary: 'Get Zapier integration token by integration ID' })
 	@ApiResponse({
@@ -33,7 +33,7 @@ export class ZapierController {
 		@Param('integrationId', UUIDValidationPipe) integrationId: ID
 	): Promise<IIntegrationSetting> {
 		try {
-			const zapierSetting = await this._zapierService.getZapierToken(integrationId);
+			const zapierSetting = await this.zapierService.getZapierToken(integrationId);
 			if (!zapierSetting) {
 				throw new NotFoundException(`No Zapier token found for integration ID ${integrationId}`);
 			}
@@ -65,7 +65,7 @@ export class ZapierController {
 		@Param('integrationId', UUIDValidationPipe) integrationId: ID
 	): Promise<string> {
 		try {
-			const token = await this._zapierService.refreshToken(integrationId);
+			const token = await this.zapierService.refreshToken(integrationId);
 			if (!token) {
 				// If service returns null/undefined, assume validation/credential error
 				throw new UnprocessableEntityException(`Failed to refresh token - invalid credentials or validation error`);
@@ -96,7 +96,7 @@ export class ZapierController {
 	@Post('/integration')
 	async create(@Body() body: ICreateZapierIntegrationInput): Promise<IIntegrationTenant> {
 		try {
-			return await this._zapierService.addIntegration(body);
+			return await this.zapierService.addIntegration(body);
 		} catch (error) {
 			this.logger.error('Failed to create Zapier integration', error);
 			throw new InternalServerErrorException('Failed to create Zapier integration');
@@ -121,7 +121,22 @@ export class ZapierController {
 	 */
 	private handleZapierError(error: any, endpointType: string): never {
 		this.logger.error(`Failed to fetch Zapier ${endpointType}`, error);
-		throw new InternalServerErrorException(`Failed to fetch Zapier ${endpointType}`);
+
+		// Re-throw specific known errors
+		if (error instanceof UnauthorizedException) {
+			throw error;
+		}
+		if (error instanceof BadRequestException) {
+			throw error;
+		}
+		if (error instanceof NotFoundException) {
+			throw error;
+		}
+
+		// For unexpected errors, include original error message
+		throw new InternalServerErrorException(
+			`Failed to fetch Zapier ${endpointType}: ${error instanceof Error ? error.message : 'Unknown error'}`
+		);
 	}
 
 	@ApiOperation({ summary: 'Get available Zapier triggers' })
@@ -137,7 +152,7 @@ export class ZapierController {
 	async getTriggers(@Query('token') token: string): Promise<IZapierEndpoint[]> {
 		this.validateToken(token);
 		try {
-			return await this._zapierService.fetchTriggers(token);
+			return await this.zapierService.fetchTriggers(token);
 		} catch (error) {
 			this.handleZapierError(error, 'triggers');
 		}
@@ -156,7 +171,7 @@ export class ZapierController {
 	async getActions(@Query('token') token: string): Promise<IZapierEndpoint[]> {
 		this.validateToken(token, true);
 		try {
-			return await this._zapierService.fetchActions(token);
+			return await this.zapierService.fetchActions(token);
 		} catch (error) {
 			this.handleZapierError(error, 'actions');
 		}
