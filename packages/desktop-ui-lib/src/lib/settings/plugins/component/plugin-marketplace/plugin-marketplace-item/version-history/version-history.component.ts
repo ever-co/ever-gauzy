@@ -4,7 +4,7 @@ import { ID, IPluginVersion } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChanged, filter, take, tap } from 'rxjs';
+import { distinctUntilChanged, filter, map, take, tap } from 'rxjs';
 import { PluginVersionActions } from '../../+state/actions/plugin-version.action';
 import { PluginVersionQuery } from '../../+state/queries/plugin-version.query';
 import { AlertComponent } from '../../../../../../dialogs/alert/alert.component';
@@ -33,12 +33,12 @@ export class VersionHistoryComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit(): void {
-		this.query.count$
+		this.query
+			.select()
 			.pipe(
+				map(({ count }) => count > this.skip * this.take),
 				distinctUntilChanged(),
-				tap((count) => {
-					this.hasNext = count > this.skip * this.take;
-				}),
+				tap((hasNext) => (this.hasNext = hasNext)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -66,7 +66,7 @@ export class VersionHistoryComponent implements OnInit, OnDestroy {
 	}
 
 	public loadMore(): void {
-		if (this.hasNext && !!this.pluginId) {
+		if (this.hasNext && this.unlockInfiniteList) {
 			this.skip++;
 			this.load();
 		}
@@ -148,6 +148,10 @@ export class VersionHistoryComponent implements OnInit, OnDestroy {
 
 	public get pluginId(): ID {
 		return this.query.pluginId;
+	}
+
+	public get unlockInfiniteList(): boolean {
+		return this.pluginId && this.query.versions.length > 0;
 	}
 
 	ngOnDestroy(): void {

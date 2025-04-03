@@ -4,7 +4,7 @@ import { IPlugin } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { Actions } from '@ngneat/effects-ng';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChanged, filter, tap } from 'rxjs';
+import { distinctUntilChanged, filter, map, tap } from 'rxjs';
 import { PluginMarketplaceActions } from './+state/actions/plugin-marketplace.action';
 import { PluginMarketplaceQuery } from './+state/queries/plugin-marketplace.query';
 import { PluginMarketplaceUploadComponent } from './plugin-marketplace-upload/plugin-marketplace-upload.component';
@@ -28,12 +28,12 @@ export class PluginMarketplaceComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit(): void {
-		this.query.count$
+		this.query
+			.select()
 			.pipe(
+				map(({ count }) => count > this.skip * this.take),
 				distinctUntilChanged(),
-				tap((count) => {
-					this.hasNext = count > this.skip * this.take;
-				}),
+				tap((hasNext) => (this.hasNext = hasNext)),
 				untilDestroyed(this)
 			)
 			.subscribe();

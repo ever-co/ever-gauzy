@@ -12,6 +12,7 @@ import {
 	NbIconModule,
 	NbInfiniteListDirective,
 	NbInputModule,
+	NbListModule,
 	NbRouteTabsetModule,
 	NbSelectModule,
 	NbSpinnerModule,
@@ -103,7 +104,8 @@ import { PluginMarketplaceEffects } from './component/plugin-marketplace/+state/
 		NbDatepickerModule,
 		NbStepperModule,
 		NbAlertModule,
-		PipeModule
+		PipeModule,
+		NbListModule
 	],
 	exports: [PluginLayoutComponent],
 	providers: [

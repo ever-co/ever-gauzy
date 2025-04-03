@@ -1,5 +1,5 @@
-@let versions = query.versions$| async; @let isAvailable = versions?.length > 0; @let isRemoving = query.deleting$ |
-async; @let isRecovering = query.restoring$ | async; @let isLoading = query.isLoading$ | async; @let isEditing =
+@let versions = query.versions$| async; @let isAvailable = (query.count$ | async) > 0; @let isRemoving = query.deleting$
+| async; @let isRecovering = query.restoring$ | async; @let isLoading = query.isLoading$ | async; @let isEditing =
 query.updating$ | async; @let isDisabled= isRemoving || isRecovering || isEditing; @let selectedVersionId =
 (query.version$ | async)?.id;
 
@@ -11,9 +11,7 @@ query.updating$ | async; @let isDisabled= isRemoving || isRecovering || isEditin
 		</button>
 	</nb-card-header>
 
-	@if (isLoading) {
-	<ngx-no-data-message message="Loading changelogs..."></ngx-no-data-message>
-	} @else if (isAvailable) {
+	@if (isAvailable) {
 	<nb-card-body
 		nbInfiniteList
 		[threshold]="500"
@@ -90,6 +88,8 @@ query.updating$ | async; @let isDisabled= isRemoving || isRecovering || isEditin
 		</nb-card>
 		}
 	</nb-card-body>
+	}@else if (isLoading) {
+	<ngx-no-data-message message="Loading changelogs..."></ngx-no-data-message>
 	} @else {
 	<ngx-no-data-message message="No history"></ngx-no-data-message>
 	}
