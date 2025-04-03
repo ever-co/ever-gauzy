@@ -3,6 +3,7 @@ import { Query } from '@datorama/akita';
 import { Observable } from 'rxjs';
 
 import { IPluginInstallationState, PluginInsatallationStore } from '../stores/plugin-installation.store';
+import { IPlugin } from '@gauzy/contracts';
 
 @Injectable({ providedIn: 'root' })
 export class PluginInstallationQuery extends Query<IPluginInstallationState> {
@@ -14,5 +15,9 @@ export class PluginInstallationQuery extends Query<IPluginInstallationState> {
 
 	constructor(readonly pluginInstallationStore: PluginInsatallationStore) {
 		super(pluginInstallationStore);
+	}
+
+	public get plugin(): IPlugin {
+		return this.getValue().toggle.plugin;
 	}
 }

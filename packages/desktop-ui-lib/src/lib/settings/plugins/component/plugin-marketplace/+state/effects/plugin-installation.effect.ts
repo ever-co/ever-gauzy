@@ -12,6 +12,7 @@ import { PluginInstallationActions } from '../actions/plugin-installation.action
 import { PluginMarketplaceQuery } from '../queries/plugin-marketplace.query';
 import { PluginInsatallationStore } from '../stores/plugin-installation.store';
 import { PluginMarketplaceStore } from '../stores/plugin-market.store';
+import { PluginInstallationQuery } from '../queries/plugin-installation.query';
 
 @Injectable({ providedIn: 'root' })
 export class PluginInstallationEffects {
@@ -20,6 +21,7 @@ export class PluginInstallationEffects {
 		private readonly pluginMarketplaceStore: PluginMarketplaceStore,
 		private readonly pluginMarketplaceQuery: PluginMarketplaceQuery,
 		private readonly pluginInstallationStore: PluginInsatallationStore,
+		private readonly pluginInstallationQuery: PluginInstallationQuery,
 		private readonly pluginService: PluginService,
 		private readonly pluginElectronService: PluginElectronService,
 		private readonly toastrService: ToastrNotificationService
@@ -83,15 +85,29 @@ export class PluginInstallationEffects {
 		return this.pluginService.install({ pluginId, versionId }).pipe(
 			tap(() => {
 				this.pluginMarketplaceStore.update((state) => {
-					const plugin = state.plugins.find((p) => p.id === pluginId);
+					const existingPluginIndex = state.plugins.findIndex((p) => p.id === pluginId);
+					let updatedPlugins = [...state.plugins];
+
+					let plugin = state.plugins[existingPluginIndex] || this.pluginInstallationQuery.plugin;
 
 					if (!plugin) {
 						throw new Error(`Plugin with ID ${pluginId} not found`);
 					}
 
+					// Ensure the plugin is marked as installed
+					plugin = { ...plugin, installed: true };
+
+					// Update the plugins list if the plugin was already in state
+					if (existingPluginIndex !== -1) {
+						updatedPlugins[existingPluginIndex] = plugin;
+					} else {
+						updatedPlugins.push(plugin);
+					}
+
 					return {
-						plugins: state.plugins.map((p) => (p.id === pluginId ? { ...p, installed: true } : p)),
-						plugin: { ...plugin, installed: true }
+						...state,
+						plugins: updatedPlugins,
+						plugin
 					};
 				});
 
@@ -131,17 +147,25 @@ export class PluginInstallationEffects {
 		return this.pluginService.uninstall(pluginId).pipe(
 			tap(() => {
 				const plugins = this.pluginMarketplaceQuery.plugins;
-				const plugin = plugins.find((p) => p.id === pluginId);
+				const existingPluginIndex = plugins.findIndex((p) => p.id === pluginId);
+
+				let plugin = plugins[existingPluginIndex] || this.pluginInstallationQuery.plugin;
 
 				if (!plugin) {
 					throw new Error(`Plugin with ID ${pluginId} not found`);
 				}
 
+				// Ensure plugin is marked as uninstalled
 				const updatedPlugin = { ...plugin, installed: false };
-				const updatedPlugins = plugins.map((p) => (p.id === pluginId ? updatedPlugin : p));
+
+				// Create a new plugins array with the updated plugin
+				const updatedPlugins = [...plugins];
+				if (existingPluginIndex !== -1) {
+					updatedPlugins[existingPluginIndex] = updatedPlugin;
+				}
 
 				this.pluginMarketplaceStore.update({
-					plugins: [...updatedPlugins],
+					plugins: updatedPlugins,
 					plugin: updatedPlugin
 				});
 				this.pluginInstallationStore.setToggle({ isChecked: false });
