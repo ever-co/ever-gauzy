@@ -1,7 +1,13 @@
 @let plugins = query.plugins$ | async; @let available = (query.count$ | async) > 0; @let isLoading = query.isLoading$ |
 async; @let uploading = query.uploading$ | async; @let progress = query.progress$ | async;
 
-<nb-card class="content-active first">
+<nb-card
+	nbInfiniteList
+	[threshold]="500"
+	[throttleTime]="300"
+	(bottomThreshold)="loadMore()"
+	class="content-active first"
+>
 	@if(isLoading) {
 	<div class="no-data">
 		<ngx-no-data-message message="Marketplace is loading plugins..."></ngx-no-data-message>

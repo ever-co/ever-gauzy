@@ -143,4 +143,11 @@ export class PluginMarketplaceEffects {
 			)
 		)
 	);
+
+	reset$ = createEffect(() =>
+		this.action$.pipe(
+			ofType(PluginMarketplaceActions.reset),
+			tap(() => this.pluginMarketplaceStore.update({ plugins: [] }))
+		)
+	);
 }

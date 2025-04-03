@@ -10,6 +10,7 @@ import {
 	NbDatepickerModule,
 	NbFormFieldModule,
 	NbIconModule,
+	NbInfiniteListDirective,
 	NbInputModule,
 	NbRouteTabsetModule,
 	NbSelectModule,
@@ -112,7 +113,8 @@ import { PluginMarketplaceEffects } from './component/plugin-marketplace/+state/
 		provideEffectsManager(),
 		provideEffects(PluginEffects, PluginInstallationEffects, PluginMarketplaceEffects, PluginVersionEffects),
 		PluginQuery,
-		PluginStore
+		PluginStore,
+		NbInfiniteListDirective
 	],
 	schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

@@ -10,4 +10,5 @@ export class PluginMarketplaceActions {
 		plugin
 	}));
 	public static delete = createAction('[Plugin] Delete', (id: ID) => ({ id }));
+	public static reset = createAction('[Plugin] Reset');
 }
