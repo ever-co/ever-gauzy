@@ -60,10 +60,10 @@ export class InvoiceController extends CrudController<Invoice> {
 	 * @param options
 	 * @returns
 	 */
-	@Permissions(PermissionsEnum.INVOICES_VIEW)
+	@Permissions(PermissionsEnum.INVOICES_VIEW, PermissionsEnum.ORG_INVOICES_VIEW, PermissionsEnum.ALL_ORG_VIEW)
 	@Get('count')
 	async getCount(@Query() options: FindOptionsWhere<Invoice>): Promise<number> {
-		this.invoiceService.checkIfUserCanAccessInvoice(options);
+		this.invoiceService.checkIfUserCanAccessInvoiceForRead(options);
 		return await this.invoiceService.countBy(options);
 	}
 
@@ -73,11 +73,11 @@ export class InvoiceController extends CrudController<Invoice> {
 	 * @param options
 	 * @returns
 	 */
-	@Permissions(PermissionsEnum.INVOICES_VIEW)
+	@Permissions(PermissionsEnum.INVOICES_VIEW, PermissionsEnum.ORG_INVOICES_VIEW, PermissionsEnum.ALL_ORG_VIEW)
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
 	async pagination(@Query() options: PaginationParams<Invoice>): Promise<IPagination<IInvoice>> {
-		this.invoiceService.checkIfUserCanAccessInvoice(options.where);
+		this.invoiceService.checkIfUserCanAccessInvoiceForRead(options.where);
 		return await this.invoiceService.pagination(options);
 	}
 
@@ -86,7 +86,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	 *
 	 * @returns
 	 */
-	@Permissions(PermissionsEnum.INVOICES_VIEW)
+	@Permissions(PermissionsEnum.INVOICES_VIEW, PermissionsEnum.ORG_INVOICES_VIEW, PermissionsEnum.ALL_ORG_VIEW)
 	@Get('highest')
 	async findHighestInvoiceNumber(): Promise<Invoice> {
 		return await this.invoiceService.getHighestInvoiceNumber();
@@ -98,11 +98,11 @@ export class InvoiceController extends CrudController<Invoice> {
 	 * @param options
 	 * @returns
 	 */
-	@Permissions(PermissionsEnum.INVOICES_VIEW)
+	@Permissions(PermissionsEnum.INVOICES_VIEW, PermissionsEnum.ORG_INVOICES_VIEW, PermissionsEnum.ALL_ORG_VIEW)
 	@Get()
 	async findAll(@Query() options: OptionParams<IInvoice>): Promise<IPagination<IInvoice>> {
 		try {
-			this.invoiceService.checkIfUserCanAccessInvoice(options.where);
+			this.invoiceService.checkIfUserCanAccessInvoiceForRead(options.where);
 			return await this.invoiceService.findAll(options);
 		} catch (error) {
 			throw new BadRequestException(error);
@@ -116,14 +116,14 @@ export class InvoiceController extends CrudController<Invoice> {
 	 * @param data
 	 * @returns
 	 */
-	@Permissions(PermissionsEnum.INVOICES_VIEW)
+	@Permissions(PermissionsEnum.INVOICES_VIEW, PermissionsEnum.ORG_INVOICES_VIEW, PermissionsEnum.ALL_ORG_VIEW)
 	@Get(':id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: IInvoice['id'],
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IInvoice> {
 		const { relations = [], findInput = {} } = data;
-		await this.invoiceService.checkIfUserCanAccessInvoiceById(id);
+		this.invoiceService.checkIfUserCanAccessInvoiceForRead(findInput);
 		return this.invoiceService.findOneByIdString(id, {
 			where: findInput,
 			relations
@@ -147,7 +147,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@Permissions(PermissionsEnum.ORG_INVOICES_EDIT)
+	@Permissions(PermissionsEnum.ORG_INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 	@UseValidationPipe({ transform: true })
 	async create(@Body() entity: CreateInvoiceDTO): Promise<Invoice> {
 		const userId = RequestContext.currentUserId();
@@ -189,7 +189,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post('own')
-	@Permissions(PermissionsEnum.INVOICES_EDIT)
+	@Permissions(PermissionsEnum.INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 	@UseValidationPipe({ transform: true })
 	async createOwn(@Body() entity: CreateInvoiceDTO): Promise<Invoice> {
 		const userId = RequestContext.currentUserId();
@@ -223,13 +223,14 @@ export class InvoiceController extends CrudController<Invoice> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.INVOICES_EDIT, PermissionsEnum.ORG_INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 	@Put(':id')
 	@UseValidationPipe({ transform: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: IInvoice['id'],
 		@Body() entity: UpdateInvoiceDTO
 	): Promise<Invoice> {
-		await this.invoiceService.checkIfUserCanAccessInvoiceById(id, true);
+		await this.invoiceService.checkIfUserCanAccessInvoiceForWrite(id, true);
 		return await this.commandBus.execute(new InvoiceUpdateCommand({ id, ...entity }));
 	}
 
@@ -254,13 +255,14 @@ export class InvoiceController extends CrudController<Invoice> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.INVOICES_EDIT, PermissionsEnum.ORG_INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 	@Put('/:id/estimate')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async updateEstimate(
 		@Param('id', UUIDValidationPipe) id: IInvoice['id'],
 		@Body() entity: UpdateEstimateInvoiceDTO
 	) {
-		await this.invoiceService.checkIfUserCanAccessInvoiceById(id, true);
+		await this.invoiceService.checkIfUserCanAccessInvoiceForWrite(id, true);
 		return await this.commandBus.execute(new InvoiceUpdateCommand({ id, ...entity }));
 	}
 
@@ -288,16 +290,10 @@ export class InvoiceController extends CrudController<Invoice> {
 	@Put('/:id/action')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async updateAction(@Param('id', UUIDValidationPipe) id: IInvoice['id'], @Body() entity: UpdateInvoiceActionDTO) {
-		const invoiceAccess = await this.invoiceService.checkIfUserCanAccessInvoiceById(id);
+		const canHandleInvoices = await this.invoiceService.checkIfUserCanAccessInvoiceForWrite(id, true);
 
-		// If the user can handle only own invoices then ensure on can change from/to draft or sent
-		if (
-			(invoiceAccess.isOwnInvoice &&
-				(!EMPLOYEE_INVOICE_STATUSES.includes(invoiceAccess.invoice.status) ||
-					!EMPLOYEE_INVOICE_STATUSES.includes(entity.status))) ||
-			// Check that user has the permission to handle invoices
-			(!invoiceAccess.isOwnInvoice && !RequestContext.hasPermission(PermissionsEnum.INVOICES_HANDLE))
-		) {
+		// If the user can't handle all invoices and the status is different from DRAFT or SENT then fails
+		if (!canHandleInvoices && !EMPLOYEE_INVOICE_STATUSES.includes(entity.status)) {
 			throw new BadRequestException(InvoiceErrors.INVALID_INVOICE);
 		}
 		return await this.commandBus.execute(new InvoiceUpdateCommand({ id, ...entity }));
@@ -320,7 +316,7 @@ export class InvoiceController extends CrudController<Invoice> {
 		@I18nLang() languageCode: LanguagesEnum,
 		@Headers('origin') origin: string
 	): Promise<any> {
-		await this.invoiceService.checkIfUserCanAccessInvoiceById(body.params.invoiceId);
+		await this.invoiceService.checkIfUserCanAccessInvoiceForReadById(body.params.invoiceId);
 		return this.commandBus.execute(new InvoiceSendEmailCommand(languageCode, email, body.params, origin));
 	}
 
@@ -333,7 +329,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put('generate/:uuid')
 	async generateLink(@Param('uuid', UUIDValidationPipe) uuid: IInvoice['id']): Promise<IInvoice> {
-		await this.invoiceService.checkIfUserCanAccessInvoiceById(uuid);
+		await this.invoiceService.checkIfUserCanAccessInvoiceForReadById(uuid);
 		return await this.commandBus.execute(new InvoiceGenerateLinkCommand(uuid));
 	}
 
@@ -349,7 +345,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: IInvoice['id']): Promise<DeleteResult> {
-		await this.invoiceService.checkIfUserCanAccessInvoiceById(id, true);
+		await this.invoiceService.checkIfUserCanAccessInvoiceForWrite(id, true);
 		return await this.commandBus.execute(new InvoiceDeleteCommand(id));
 	}
 
@@ -371,14 +367,14 @@ export class InvoiceController extends CrudController<Invoice> {
 		description: 'Invoice not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Permissions(PermissionsEnum.INVOICES_VIEW)
+	@Permissions(PermissionsEnum.INVOICES_VIEW, PermissionsEnum.ORG_INVOICES_VIEW, PermissionsEnum.ALL_ORG_VIEW)
 	@Get('download/:uuid')
 	async downloadInvoicePdf(
 		@Param('uuid', UUIDValidationPipe) uuid: IInvoice['id'],
 		@I18nLang() locale: LanguagesEnum,
 		@Res() res: Response
-	): Promise<any> {
-		await this.invoiceService.checkIfUserCanAccessInvoiceById(uuid);
+	) {
+		await this.invoiceService.checkIfUserCanAccessInvoiceForReadById(uuid);
 		const buffer: Buffer = await this.commandBus.execute(new InvoiceGeneratePdfCommand(uuid, locale));
 		if (!buffer) {
 			throw new BadRequestException(InvoiceErrors.PDF_GENERATION_FAILED);
@@ -409,14 +405,14 @@ export class InvoiceController extends CrudController<Invoice> {
 		description: 'Invoice not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Permissions(PermissionsEnum.INVOICES_VIEW)
+	@Permissions(PermissionsEnum.INVOICES_VIEW, PermissionsEnum.ORG_INVOICES_VIEW, PermissionsEnum.ALL_ORG_VIEW)
 	@Get('payment/download/:uuid')
 	async downloadInvoicePaymentPdf(
 		@Param('uuid', UUIDValidationPipe) uuid: IInvoice['id'],
 		@I18nLang() locale: LanguagesEnum,
 		@Res() res: Response
-	): Promise<any> {
-		await this.invoiceService.checkIfUserCanAccessInvoiceById(uuid);
+	) {
+		await this.invoiceService.checkIfUserCanAccessInvoiceForReadById(uuid);
 		const buffer = await this.commandBus.execute(new InvoicePaymentGeneratePdfCommand(uuid, locale));
 		if (!buffer) {
 			throw new BadRequestException(InvoiceErrors.PDF_GENERATION_FAILED);
