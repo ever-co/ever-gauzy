@@ -12,8 +12,8 @@ export class EmployeeWithLinksComponent implements OnInit {
 	@Input() rowData: any;
 	@Input() value: any;
 
-	employees: ISelectedEmployee[] = [];
-	maxVisible: number = 5;
+	displayedEmployees: any[] = [];
+	maxDisplay: number = 3;
 	remainingCount: number = 0;
 
 	constructor(private readonly store: Store, private readonly router: Router) {}
@@ -23,7 +23,8 @@ export class EmployeeWithLinksComponent implements OnInit {
 	}
 
 	/**
-	 * Initializes the employees array with visible employees and calculates remaining count
+	 * Initializes the employees array with a single group of visible employees (max 3)
+	 * and calculates remaining count.
 	 *
 	 * @return {void} This function does not return anything.
 	 */
@@ -32,12 +33,11 @@ export class EmployeeWithLinksComponent implements OnInit {
 			return;
 		}
 
-		// Calculate how many items should be shown vs hidden
-		if (this.value.length > this.maxVisible) {
-			this.employees = this.value.slice(0, this.maxVisible);
-			this.remainingCount = this.value.length - this.maxVisible;
+		if (this.value.length > this.maxDisplay) {
+			this.displayedEmployees = this.value.slice(0, this.maxDisplay);
+			this.remainingCount = this.value.length - this.maxDisplay;
 		} else {
-			this.employees = [...this.value];
+			this.displayedEmployees = [...this.value];
 			this.remainingCount = 0;
 		}
 	}
