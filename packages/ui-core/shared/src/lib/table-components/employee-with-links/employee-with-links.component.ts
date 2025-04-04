@@ -13,7 +13,7 @@ export class EmployeeWithLinksComponent implements OnInit {
 	@Input() value: any;
 
 	displayedEmployees: any[] = [];
-	maxDisplay: number = 3;
+	maxDisplay: number = 5;
 	remainingCount: number = 0;
 
 	constructor(private readonly store: Store, private readonly router: Router) {}
