@@ -102,8 +102,7 @@ export class PluginVersionController {
 		@UploadedPluginStorage() file: FileDTO
 	): Promise<IPluginVersion> {
 		if (input.source.type === PluginSourceType.GAUZY && !file?.key) {
-			console.warn('Plugin file key is empty');
-			return;
+			throw new BadRequestException('Plugin file key is empty');
 		}
 
 		try {

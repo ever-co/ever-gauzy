@@ -26,6 +26,8 @@ export class PluginSourceComponent {
 		this.form.patchValue({
 			file
 		});
+		this.form.markAsTouched();
+		this.form.markAsDirty();
 	}
 
 	public removeFile(): void {
