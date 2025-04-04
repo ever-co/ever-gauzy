@@ -1,68 +1,60 @@
 @import 'themes';
 
-$radius: var(--button-rectangle-border-radius);
+:host {
+  display: block;
+}
 
-:host .avatar-container {
+.employee-avatar-wrapper {
   position: relative;
+  width: 100%;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  min-height: 40px;
+}
+
+.avatar-stack {
+  display: flex;
+  align-items: center;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--gauzy-card-1);
+  border: 2px solid var(--background-basic-color-1);
+  display: flex;
+  align-items: center;
   justify-content: center;
-  flex-direction: column;
-  height: 2.5rem;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  position: relative;
 
-  .avatar-group {
-    position: absolute;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  &:not(:first-child) {
+    margin-left: -10px;
+  }
 
-    .avatar {
-      background-color: var(--gauzy-primary-background);
-      object-fit: cover;
-      color: nb-theme(text-primary-color);
-      @include nb-ltr(padding, 5px 14px 5px 7px);
-      @include nb-rtl(padding, 5px 7px 5px 14px);
-      border-radius: $radius;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      width: 5rem;
-      display: inline-block;
-      cursor: pointer;
+  &:hover {
+    transform: translateY(-3px);
+    z-index: 10 !important;
+  }
 
-      img {
-        width: 18px;
-        height: 18px;
-        border-radius: var(--border-radius);
-        @include nb-ltr(margin-right, 8px);
-        @include nb-rtl(margin-left, 8px);
-      }
+  .avatar-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 
-      &:hover {
-        text-overflow: clip;
-        width: fit-content;
-      }
+  &.count-badge {
+    background-color: var(--gauzy-primary-background);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+
+    span {
+      text-align: center;
+      color: var(--text-primary-color);
     }
   }
-}
-
-.avatar-group .avatar {
-  position: relative;
-  z-index: 2;
-  border: 2px solid #ffffff;
-}
-
-.avatar-group .avatar:hover {
-  z-index: 3;
-}
-
-:host {
-  .avatar-group .avatar+.avatar {
-    @include nb-ltr(margin-left, -4rem);
-    @include nb-rtl(margin-right, -4rem);
-  }
-}
-
-.main {
-  width: 7rem;
 }

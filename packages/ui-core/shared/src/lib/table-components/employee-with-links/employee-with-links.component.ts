@@ -12,45 +12,33 @@ export class EmployeeWithLinksComponent implements OnInit {
 	@Input() rowData: any;
 	@Input() value: any;
 
-	employees: any[] = [];
+	employees: ISelectedEmployee[] = [];
+	maxVisible: number = 5;
+	remainingCount: number = 0;
 
 	constructor(private readonly store: Store, private readonly router: Router) {}
 
 	ngOnInit(): void {
-		this.initializeGrouping();
+		this.initializeEmployees();
 	}
 
 	/**
-	 * Initializes the grouping of employees into groups of size 3.
-	 *
-	 * This function takes no parameters and modifies the `employees` property of the class.
-	 * It iterates over the `value` property of the class and groups employees into arrays of size 3.
-	 * The resulting groups are stored in the `employees` property.
+	 * Initializes the employees array with visible employees and calculates remaining count
 	 *
 	 * @return {void} This function does not return anything.
 	 */
-	initializeGrouping(): void {
-		if (!this.value) {
+	initializeEmployees(): void {
+		if (!this.value || !Array.isArray(this.value)) {
 			return;
 		}
 
-		const GROUP = 3;
-		const SIZE = this.value.length;
-		let count = 0;
-		let group: any[] = [];
-
-		for (let employee of this.value) {
-			if ((2 * count - 1) % GROUP === 0) {
-				group.push(employee);
-				this.employees.push(group);
-				group = [];
-			} else {
-				group.push(employee);
-				if (SIZE - count < GROUP - 1 && SIZE - count > 0) {
-					this.employees.push(group);
-				}
-			}
-			count++;
+		// Calculate how many items should be shown vs hidden
+		if (this.value.length > this.maxVisible) {
+			this.employees = this.value.slice(0, this.maxVisible);
+			this.remainingCount = this.value.length - this.maxVisible;
+		} else {
+			this.employees = [...this.value];
+			this.remainingCount = 0;
 		}
 	}
 
@@ -69,7 +57,6 @@ export class EmployeeWithLinksComponent implements OnInit {
 		this.store.selectedEmployee.lastName = lastName;
 		this.store.selectedEmployee.imageUrl = imageUrl;
 
-		//
 		this.navigateToEmployeeStatistics(employee.id);
 	}
 
