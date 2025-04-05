@@ -1,5 +1,6 @@
 @let plugins = query.plugins$ | async; @let available = (query.count$ | async) > 0; @let isLoading = query.isLoading$ |
-async; @let uploading = query.uploading$ | async; @let progress = query.progress$ | async;
+async; @let uploading = query.uploading$ | async; @let progress = query.progress$ | async; @let isOffline =
+store.isOffline$ | async;
 
 <nb-card
 	nbInfiniteList
@@ -20,7 +21,9 @@ async; @let uploading = query.uploading$ | async; @let progress = query.progress
 	</div>
 	} @else {
 	<div class="no-data">
-		<ngx-no-data-message message="There are no available plugins"></ngx-no-data-message>
+		<ngx-no-data-message
+			[message]="isOffline ? 'You are currently logout/disconnected ⛓️‍' : 'There are no available plugins'"
+		></ngx-no-data-message>
 	</div>
 	} @if(isUploadAvailable){
 	<div class="button-upload">
