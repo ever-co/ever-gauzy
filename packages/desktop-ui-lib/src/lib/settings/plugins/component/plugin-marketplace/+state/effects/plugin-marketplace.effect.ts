@@ -39,7 +39,7 @@ export class PluginMarketplaceEffects {
 					}),
 					finalize(() => this.pluginMarketplaceStore.setUpload({ uploading: false })), // Always stop loading
 					catchError((error) => {
-						this.toastrService.error(error.message || error || 'Upload failed');
+						this.toastrService.error(error.message || 'Upload failed');
 						return EMPTY; // Ensure the stream continues
 					})
 				)

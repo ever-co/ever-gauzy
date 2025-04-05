@@ -1,8 +1,8 @@
 import { inject, Injectable } from '@angular/core';
+import { ID } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
 import { IPlugin } from './plugin-loader.service';
-import { ID } from '@gauzy/contracts';
 
 @Injectable({
 	providedIn: 'root'
@@ -58,11 +58,11 @@ export class PluginElectronService {
 				try {
 					switch (arg.status) {
 						case 'success':
-							observer.next({ message: arg?.message, data: arg?.data });
+							observer.next({ message: arg.message, data: arg.data });
 							observer.complete();
 							break;
 						case 'inProgress':
-							callBack?.(arg?.message);
+							callBack?.(arg.message);
 							break;
 						case 'error':
 						default:
