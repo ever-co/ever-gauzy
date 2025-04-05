@@ -4861,5 +4861,11 @@
 			"DISCOVER": "Entdecken",
 			"INSTALLED": "Installiert"
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "Server nicht verfügbar",
+		"DESCRIPTION": "Der {{companySite}}-Server ist derzeit nicht erreichbar. Dies könnte an geplanter Wartung oder unerwarteten Ausfallzeiten liegen.",
+		"CONNECTING": "Verbindung wird automatisch wiederhergestellt...",
+		"HINT": "Status: Versuch, eine Verbindung zu {{companySite}}-Servern herzustellen. Fehlercode: 503."
 	}
 }

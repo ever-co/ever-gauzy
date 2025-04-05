@@ -4865,5 +4865,11 @@
 			"DISCOVER": "Odkryj",
 			"INSTALLED": "Zainstalowane"
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "Serwer niedostępny",
+		"DESCRIPTION": "Serwer {{companySite}} jest obecnie niedostępny. Może to być spowodowane planowaną konserwacją lub nieoczekiwanym przestojem.",
+		"CONNECTING": "Automatyczne ponowne łączenie...",
+		"HINT": "Status: Próba nawiązania połączenia z serwerami {{companySite}}. Kod błędu: 503."
 	}
 }

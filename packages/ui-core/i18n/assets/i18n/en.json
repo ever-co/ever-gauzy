@@ -5020,5 +5020,11 @@
 			"DISCOVER": "Discover",
 			"INSTALLED": "Installed"
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "Server Unavailable",
+		"DESCRIPTION": "The {{companySite}} server is currently unreachable. This may be due to scheduled maintenance or unexpected downtime.",
+		"CONNECTING": "Automatically retrying connection...",
+		"HINT": "Status: Attempting to establish connection to {{companySite}} servers. Error code: 503."
 	}
 }

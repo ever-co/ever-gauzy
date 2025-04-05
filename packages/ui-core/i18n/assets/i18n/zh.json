@@ -4865,5 +4865,11 @@
 			"DISCOVER": "发现",
 			"INSTALLED": "已安装"
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "服务器不可用",
+		"DESCRIPTION": "当前无法访问{{companySite}}服务器。这可能是由于计划维护或意外停机。",
+		"CONNECTING": "正在自动重试连接...",
+		"HINT": "状态：正在尝试连接到{{companySite}}服务器。错误代码：503。"
 	}
 }

@@ -4865,5 +4865,11 @@
 			"DISCOVER": "Ontdekken",
 			"INSTALLED": "Geïnstalleerd"
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "Server niet beschikbaar",
+		"DESCRIPTION": "De {{companySite}}-server is momenteel niet bereikbaar. Dit kan komen door gepland onderhoud of onverwachte uitval.",
+		"CONNECTING": "Automatisch verbinding opnieuw proberen...",
+		"HINT": "Status: Poging om verbinding te maken met {{companySite}}-servers. Foutcode: 503."
 	}
 }

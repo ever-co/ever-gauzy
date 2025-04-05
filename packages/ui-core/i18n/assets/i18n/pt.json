@@ -4865,5 +4865,11 @@
 			"DISCOVER": "Descobrir",
 			"INSTALLED": "Instalado"
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "Servidor indisponível",
+		"DESCRIPTION": "O servidor {{companySite}} está atualmente inacessível. Isso pode ser devido a manutenção programada ou tempo de inatividade inesperado.",
+		"CONNECTING": "Tentando reconexão automaticamente...",
+		"HINT": "Status: Tentando estabelecer conexão com os servidores {{companySite}}. Código de erro: 503."
 	}
 }
