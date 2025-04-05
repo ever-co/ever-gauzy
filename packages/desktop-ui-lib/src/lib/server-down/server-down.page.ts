@@ -2,7 +2,7 @@ import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { interval, Subject, EMPTY, from } from 'rxjs';
-import { switchMap, takeUntil, tap, filter, catchError } from 'rxjs/operators';
+import { switchMap, takeUntil, tap, filter, catchError, distinctUntilChanged, take } from 'rxjs/operators';
 import { GAUZY_ENV } from '../constants';
 import { LanguageElectronService } from '../language/language-electron.service';
 import { ServerConnectionService, Store } from '../services';
@@ -40,17 +40,16 @@ export class ServerDownPage implements OnInit, OnDestroy {
 				tap(() => console.log('Checking server connection to URL:', url)),
 				switchMap(() =>
 					from(this.serverConnectionService.checkServerConnection(url)).pipe(
+						distinctUntilChanged(),
 						tap(() => console.log('Server connection status:', this.store.serverConnection)),
 						filter(() => Number(this.store.serverConnection) === 200 || !!this.store.userId),
-						takeUntil(this.destroy$),
+						tap(() => this.router.navigate(['/'])),
 						catchError(() => EMPTY) // Silently handle errors to keep the stream alive
 					)
-				)
+				),
+				takeUntil(this.destroy$)
 			)
 			.subscribe({
-				next: async () => {
-					await this.router.navigate(['']);
-				},
 				complete: () => console.log('Connection monitoring completed')
 			});
 	}
