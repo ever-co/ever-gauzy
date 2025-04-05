@@ -82,7 +82,8 @@ export class AuthConnectionGuard implements CanActivate {
 				} else {
 					// If not allowed, redirect to the configured server down route
 					console.warn(
-						`AuthConnectionGuard: Access DENIED to ${state.url}. Redirecting. State:`,
+						'AuthConnectionGuard: Access DENIED to %s. Redirecting. State:',
+						state.url,
 						connectionState
 					);
 					return this.createRedirectUrlTree(state.url, connectionState, 'access_denied');
@@ -90,7 +91,7 @@ export class AuthConnectionGuard implements CanActivate {
 			}),
 			catchError((error) => {
 				// Handle potential errors during the state retrieval itself
-				console.error(`AuthConnectionGuard: Error during state check for ${state.url}. Redirecting.`, error);
+				console.error('AuthConnectionGuard: Error during state check for %s. Redirecting.', state.url, error);
 				// Redirect with a generic error indicator
 				return of(this.createErrorRedirectUrlTree(state.url)); // Use 'of' to return Observable<UrlTree>
 			})
