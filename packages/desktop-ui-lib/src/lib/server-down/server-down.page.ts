@@ -1,8 +1,8 @@
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { UntilDestroy } from '@ngneat/until-destroy';
-import { interval, Subject, EMPTY, from } from 'rxjs';
-import { switchMap, takeUntil, tap, filter, catchError, distinctUntilChanged, take } from 'rxjs/operators';
+import { EMPTY, from, interval, Subject } from 'rxjs';
+import { catchError, distinctUntilChanged, filter, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { GAUZY_ENV } from '../constants';
 import { LanguageElectronService } from '../language/language-electron.service';
 import { ServerConnectionService, Store } from '../services';
