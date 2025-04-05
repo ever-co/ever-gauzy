@@ -8,6 +8,7 @@ import { distinctUntilChanged, filter, map, tap } from 'rxjs';
 import { PluginMarketplaceActions } from './+state/actions/plugin-marketplace.action';
 import { PluginMarketplaceQuery } from './+state/queries/plugin-marketplace.query';
 import { PluginMarketplaceUploadComponent } from './plugin-marketplace-upload/plugin-marketplace-upload.component';
+import { Store } from '../../../../services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -24,7 +25,8 @@ export class PluginMarketplaceComponent implements OnInit, OnDestroy {
 		private readonly dialog: NbDialogService,
 		private readonly route: ActivatedRoute,
 		private readonly action: Actions,
-		public readonly query: PluginMarketplaceQuery
+		public readonly query: PluginMarketplaceQuery,
+		public readonly store: Store
 	) {}
 
 	ngOnInit(): void {
