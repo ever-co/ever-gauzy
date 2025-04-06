@@ -233,6 +233,10 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		this.action.dispatch(PluginVersionActions.selectVersion(version));
 	}
 
+	compareVersions = (v1: IPluginVersion, v2: IPluginVersion): boolean => {
+		return v1 && v2 ? v1.id === v2.id : v1 === v2;
+	};
+
 	updatePlugin(): void {
 		this.installPlugin(true);
 	}

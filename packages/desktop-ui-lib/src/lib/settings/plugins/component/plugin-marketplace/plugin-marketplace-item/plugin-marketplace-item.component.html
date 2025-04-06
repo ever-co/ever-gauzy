@@ -118,6 +118,7 @@ marketplaceQuery.uploading$ | async; @let progress = marketplaceQuery.progress$ 
 										status="primary"
 										aria-label="Select plugin version"
 										[selected]="selectedVersion"
+										[compareWith]="compareVersions"
 										(selectedChange)="onVersionChange($event)"
 										size="small"
 										class="version-select"
