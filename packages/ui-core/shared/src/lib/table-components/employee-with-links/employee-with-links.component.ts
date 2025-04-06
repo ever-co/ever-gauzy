@@ -12,7 +12,7 @@ export class EmployeeWithLinksComponent implements OnInit {
 	@Input() rowData: any;
 	@Input() value: any;
 
-	displayedEmployees: any[] = [];
+	displayedEmployees: IEmployee[] = [];
 	maxDisplay = 5;
 	remainingCount = 0;
 
@@ -23,7 +23,7 @@ export class EmployeeWithLinksComponent implements OnInit {
 	}
 
 	/**
-	 * Initializes the employees array with a single group of visible employees (max 3)
+	 * Initializes the employees array with a single group of visible employees (max 5)
 	 * and calculates remaining count.
 	 *
 	 * @return {void} This function does not return anything.
