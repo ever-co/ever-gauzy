@@ -205,6 +205,8 @@
 						[projectId]="getControlValue('projectId')"
 						formControlName="taskId"
 						[required]="organization?.requireTask"
+						requiresProject="true"
+						requiresUser="true"
 					></ga-task-selector>
 					<div
 						*ngIf="form.get('taskId')?.errors?.required && form.get('taskId')?.touched"
