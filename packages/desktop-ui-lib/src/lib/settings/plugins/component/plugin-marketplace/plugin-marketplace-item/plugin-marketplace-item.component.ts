@@ -67,7 +67,9 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 				filter(Boolean),
 				distinctUntilChange(),
 				concatMap((plugin) => {
-					this.action.dispatch(PluginVersionActions.selectVersion(plugin.versions[0]));
+					if (!this.selectedVersion) {
+						this.action.dispatch(PluginVersionActions.selectVersion(plugin.versions[0]));
+					}
 					return this.checkInstallation(plugin);
 				}),
 				catchError((error) => this.handleError(error)),

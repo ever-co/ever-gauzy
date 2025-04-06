@@ -57,6 +57,13 @@ export class PluginVersionEffects {
 					filter((res) => Boolean(res?.version)), // Filter out null or undefined responses
 					map((res) => res.version),
 					tap((created) => {
+						this.pluginMarketplaceStore.update((state) => ({
+							plugin: {
+								...state.plugin,
+								version: created,
+								versions: [created, ...state.plugin.versions]
+							}
+						}));
 						this.pluginVersionStore.update({
 							version: created
 						});
