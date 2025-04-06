@@ -38,6 +38,14 @@ import { ALL_PROJECT_SELECTED } from './default-project';
 	]
 })
 export class ProjectSelectorComponent implements OnInit, AfterViewInit {
+	private _requiresEmployee = false;
+	public get requiresEmployee(): boolean {
+		return this._requiresEmployee;
+	}
+	@Input() public set requiresEmployee(value: boolean) {
+		this._requiresEmployee = value;
+	}
+
 	public projects: IOrganizationProject[] = [];
 	public selectedProject: IOrganizationProject;
 	public hasAddProject$: Observable<boolean>;
@@ -315,6 +323,11 @@ export class ProjectSelectorComponent implements OnInit, AfterViewInit {
 		// Return early if the organization is not defined
 		if (!this.organization) {
 			console.warn('Organization is not defined.');
+			return;
+		}
+
+		// Check if Employee is required and not provided, return if so
+		if (this.requiresEmployee && !this.employeeId) {
 			return;
 		}
 
