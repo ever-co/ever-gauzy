@@ -1,7 +1,7 @@
-@let versions = query.versions$| async; @let isAvailable = (query.count$ | async) > 0; @let isRemoving = query.deleting$
-| async; @let isRecovering = query.restoring$ | async; @let isLoading = query.isLoading$ | async; @let isEditing =
-query.updating$ | async; @let isDisabled= isRemoving || isRecovering || isEditing; @let selectedVersionId =
-(query.version$ | async)?.id;
+@let versions = query.versions$ | async; @let isAvailable = (query.count$ | async) > 0; @let isRemoving =
+query.deleting$ | async; @let isRecovering = query.restoring$ | async; @let isLoading = (query.isLoading$ | async) &&
+versions.length === 0; @let isEditing = query.updating$ | async; @let isDisabled = isRemoving || isRecovering ||
+isEditing; @let selectedVersionId = (query.version$ | async)?.id;
 
 <nb-card class="content-active first">
 	<nb-card-header class="d-flex justify-content-between header">
@@ -19,7 +19,7 @@ query.updating$ | async; @let isDisabled= isRemoving || isRecovering || isEditin
 		(bottomThreshold)="loadMore()"
 		class="version-container"
 	>
-		@for (version of versions; track version.id) {
+		@for (version of versions; track version.id) { @defer (on viewport; when isLoading) {
 		<nb-card class="version">
 			<nb-card-header>
 				<h6 class="title">
@@ -50,7 +50,7 @@ query.updating$ | async; @let isDisabled= isRemoving || isRecovering || isEditin
 					></nb-icon>
 					{{ 'Recover' | translate }}
 				</button>
-				}@else{
+				} @else {
 				<button
 					nbButton
 					size="small"
@@ -86,9 +86,29 @@ query.updating$ | async; @let isDisabled= isRemoving || isRecovering || isEditin
 			</nb-card-footer>
 			}
 		</nb-card>
-		}
+		} @placeholder(minimum 500ms) {
+		<nb-card class="version skeleton-loader">
+			<nb-card-header>
+				<h6 class="title">
+					<div class="skeleton-line date" style="width: 120px"></div>
+					<div class="skeleton-line version-number" style="width: 60px"></div>
+				</h6>
+			</nb-card-header>
+
+			<nb-card-body class="changelog">
+				<div class="skeleton-line" style="width: 100%; height: 16px; margin-bottom: 8px"></div>
+				<div class="skeleton-line" style="width: 90%; height: 16px; margin-bottom: 8px"></div>
+				<div class="skeleton-line" style="width: 80%; height: 16px"></div>
+			</nb-card-body>
+
+			<nb-card-footer class="version-actions">
+				<div class="skeleton-button" style="width: 80px; height: 32px"></div>
+				<div class="skeleton-button" style="width: 32px; height: 32px; margin-left: 8px"></div>
+			</nb-card-footer>
+		</nb-card>
+		} }
 	</nb-card-body>
-	}@else if (isLoading) {
+	} @else if (isLoading) {
 	<ngx-no-data-message message="Loading changelogs..."></ngx-no-data-message>
 	} @else {
 	<ngx-no-data-message message="No history"></ngx-no-data-message>
