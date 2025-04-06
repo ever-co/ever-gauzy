@@ -139,6 +139,8 @@ export class PluginInstallationEffects {
 	}
 
 	private handleError(error: any) {
+		const isChecked = !this.pluginInstallationQuery.checked;
+		this.pluginInstallationStore.setToggle({ isChecked });
 		this.toastrService.error(error?.message || 'Installation failed');
 		return EMPTY; // Ensure the stream does not break
 	}

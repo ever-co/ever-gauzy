@@ -20,4 +20,8 @@ export class PluginInstallationQuery extends Query<IPluginInstallationState> {
 	public get plugin(): IPlugin {
 		return this.getValue().toggle.plugin;
 	}
+
+	public get checked(): boolean {
+		return this.getValue().toggle.isChecked;
+	}
 }
