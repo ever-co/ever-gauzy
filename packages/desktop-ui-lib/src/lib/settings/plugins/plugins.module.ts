@@ -56,6 +56,8 @@ import { PluginStore } from './component/+state/plugin.store';
 import { PluginInstallationEffects } from './component/plugin-marketplace/+state/effects/plugin-installation.effect';
 import { PluginVersionEffects } from './component/plugin-marketplace/+state/effects/plugin-version.effect';
 import { PluginMarketplaceEffects } from './component/plugin-marketplace/+state/effects/plugin-marketplace.effect';
+import { VersionSelectorComponent } from './component/plugin-marketplace/plugin-marketplace-item/version-selector/version-selector.component';
+import { SelectModule } from '../../shared/components/ui/select/select.module';
 
 @NgModule({
 	declarations: [
@@ -77,7 +79,8 @@ import { PluginMarketplaceEffects } from './component/plugin-marketplace/+state/
 		FormRowComponent,
 		FileUploadComponent,
 		DialogCreateVersionComponent,
-		VersionHistoryComponent
+		VersionHistoryComponent,
+		VersionSelectorComponent
 	],
 	imports: [
 		CommonModule,
@@ -105,7 +108,8 @@ import { PluginMarketplaceEffects } from './component/plugin-marketplace/+state/
 		NbStepperModule,
 		NbAlertModule,
 		PipeModule,
-		NbListModule
+		NbListModule,
+		SelectModule
 	],
 	exports: [PluginLayoutComponent],
 	providers: [

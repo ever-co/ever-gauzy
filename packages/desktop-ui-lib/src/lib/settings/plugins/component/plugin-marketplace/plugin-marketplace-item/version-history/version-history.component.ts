@@ -60,7 +60,8 @@ export class VersionHistoryComponent implements OnInit, OnDestroy {
 				skip: this.skip,
 				take: this.take,
 				relations: ['plugin', 'source'],
-				order: { releaseDate: 'DESC' }
+				order: { releaseDate: 'DESC' },
+				withDeleted: true
 			})
 		);
 	}

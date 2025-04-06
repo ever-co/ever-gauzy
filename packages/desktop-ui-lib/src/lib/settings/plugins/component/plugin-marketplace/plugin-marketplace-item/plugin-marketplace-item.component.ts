@@ -67,9 +67,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 				filter(Boolean),
 				distinctUntilChange(),
 				concatMap((plugin) => {
-					if (!this.selectedVersion) {
-						this.action.dispatch(PluginVersionActions.selectVersion(plugin.versions[0]));
-					}
+					this.action.dispatch(PluginVersionActions.selectVersion(plugin.version));
 					return this.checkInstallation(plugin);
 				}),
 				catchError((error) => this.handleError(error)),
@@ -230,14 +228,6 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 	public get isOwner(): boolean {
 		return !!this.store.user && this.store.user.employee?.id === this.plugin?.uploadedBy?.id;
 	}
-
-	async onVersionChange(version: IPluginVersion): Promise<void> {
-		this.action.dispatch(PluginVersionActions.selectVersion(version));
-	}
-
-	compareVersions = (v1: IPluginVersion, v2: IPluginVersion): boolean => {
-		return v1 && v2 ? v1.id === v2.id : v1 === v2;
-	};
 
 	updatePlugin(): void {
 		this.installPlugin(true);

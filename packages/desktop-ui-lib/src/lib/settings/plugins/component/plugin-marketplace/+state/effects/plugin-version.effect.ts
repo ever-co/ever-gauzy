@@ -57,16 +57,10 @@ export class PluginVersionEffects {
 					filter((res) => Boolean(res?.version)), // Filter out null or undefined responses
 					map((res) => res.version),
 					tap((created) => {
-						this.pluginMarketplaceStore.update((state) => ({
-							plugin: {
-								...state.plugin,
-								version: created,
-								versions: [created, ...state.plugin.versions]
-							}
+						this.pluginVersionStore.update((state) => ({
+							version: created,
+							versions: [created, ...state.versions]
 						}));
-						this.pluginVersionStore.update({
-							version: created
-						});
 						this.toastrService.success(`Create plugin version v${created.number} successfully!`);
 					}),
 					finalize(() => {
@@ -92,12 +86,18 @@ export class PluginVersionEffects {
 			switchMap(({ pluginId, versionId, version }) =>
 				this.pluginService.updateVersion(pluginId, versionId, version).pipe(
 					tap((version) => {
-						this.pluginVersionStore.update((state) => ({
-							versions: [
-								...new Map([...state.versions, version].map((item) => [item.id, item])).values()
-							],
-							version
-						}));
+						this.pluginVersionStore.update((state) => {
+							const index = state.versions.findIndex((v) => v.id === version.id);
+							const versions = [...state.versions]; // Shallow copy
+
+							if (index >= 0) {
+								versions[index] = version; // In-place update
+							} else {
+								versions.unshift(version); // Append if new
+							}
+
+							return { versions, version };
+						});
 						this.toastrService.success('Update plugin version successfully!');
 					}),
 					finalize(() => this.pluginVersionStore.update({ updating: false })),

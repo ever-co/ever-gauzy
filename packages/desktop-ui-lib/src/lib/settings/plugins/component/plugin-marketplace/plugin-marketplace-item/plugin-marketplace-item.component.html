@@ -113,20 +113,7 @@ marketplaceQuery.uploading$ | async; @let progress = marketplaceQuery.progress$ 
 							<div class="info-item">
 								<div class="label">{{ 'PLUGIN.FORM.VERSION' | translate }}</div>
 								<div class="value">
-									<nb-select
-										placeholder="{{ 'PLUGIN.FORM.VERSION' | translate }}"
-										status="primary"
-										aria-label="Select plugin version"
-										[selected]="selectedVersion"
-										[compareWith]="compareVersions"
-										(selectedChange)="onVersionChange($event)"
-										size="small"
-										class="version-select"
-									>
-										<nb-option *ngFor="let version of plugin.versions" [value]="version">
-											{{ version.number }}
-										</nb-option>
-									</nb-select>
+									<gauzy-version-selector [pluginId]="plugin.id"></gauzy-version-selector>
 								</div>
 							</div>
 
