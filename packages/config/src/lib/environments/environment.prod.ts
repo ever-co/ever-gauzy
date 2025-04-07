@@ -196,7 +196,7 @@ export const environment: IEnvironment = {
 		redirectUri:
 			process.env.GAUZY_ZAPIER_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integrations/zapier/callback`,
 		postInstallUrl:
-			process.env.ZAPIER_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/zapier`
+			process.env.GAUZY_ZAPIER_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/zapier`
 	},
 
 	isElectron: process.env.IS_ELECTRON === 'true' ? true : false,
