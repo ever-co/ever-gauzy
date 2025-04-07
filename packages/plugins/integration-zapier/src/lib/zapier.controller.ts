@@ -1,13 +1,19 @@
-import { Controller, Post, Body, Get, Param, UseGuards, Query, NotFoundException, InternalServerErrorException, Logger, UnauthorizedException, BadRequestException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import {
-	IIntegrationTenant,
-	IIntegrationSetting,
-	PermissionsEnum,
-	ID,
-	ICreateZapierIntegrationInput,
-	IZapierEndpoint
-} from '@gauzy/contracts';
+	Controller,
+	Post,
+	Body,
+	Get,
+	Param,
+	UseGuards,
+	Query,
+	NotFoundException,
+	InternalServerErrorException,
+	Logger,
+	UnauthorizedException,
+	BadRequestException
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { IIntegrationTenant, IIntegrationSetting, PermissionsEnum, ID, IZapierEndpoint } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
 import { ZapierService } from './zapier.service';
 import { CreateZapierIntegrationDto } from './dto';
