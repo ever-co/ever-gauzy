@@ -1,10 +1,10 @@
-import { isClassInstance, isObject } from "@gauzy/common";
+import { isClassInstance, isObject } from '@gauzy/common';
 
 /**
  * Interface of the simple literal object with any string keys.
  */
 export interface SimpleObjectLiteral {
-    [key: string]: any;
+	[key: string]: any;
 }
 
 /**
@@ -22,24 +22,38 @@ export const parseBool = (value: any): boolean => Boolean(JSON.parse(value));
  * @returns {any} - The converted parameters based on the database connection type.
  */
 export const convertNativeParameters = (parameters: any): any => {
-    try {
-        // Mapping boolean values to their numeric representation
-        if (Array.isArray(parameters)) {
-            // If it's an array, process each element
-            return parameters.map((item: any) => convertNativeParameters(item));
-            // Mapping boolean values to their numeric representation
-        } else if (typeof parameters === "object" && parameters !== null) {
-            // Recursively convert nested objects
-            return Object.keys(parameters).reduce((acc, key) => {
-                acc[key] = convertNativeParameters(parameters[key]);
-                return acc;
-            }, {} as SimpleObjectLiteral);
-        } else {
-            return parseBool(parameters);
-        }
-    } catch (error) {
-        return parameters;
-    }
+	try {
+		// Mapping boolean values to their numeric representation
+		if (Array.isArray(parameters)) {
+			// If it's an array, process each element
+			return parameters.map((item: any) => convertNativeParameters(item));
+			// Mapping boolean values to their numeric representation
+		} else if (typeof parameters === 'object' && parameters !== null) {
+			// Recursively convert nested objects
+			return Object.keys(parameters).reduce((acc, key) => {
+				acc[key] = convertNativeParameters(parameters[key]);
+				return acc;
+			}, {} as SimpleObjectLiteral);
+		} else {
+			// Check if the parameter is a number
+			const numValue = Number(parameters);
+			if (!isNaN(numValue)) {
+				return numValue;
+			}
+
+			// Check if the value is a date
+			const dateValue = new Date(parameters);
+			if (!isNaN(dateValue.getTime())) {
+				return dateValue;
+			}
+
+			// Try to convert string param to boolean
+			return parseBool(parameters);
+		}
+	} catch {
+		// On conversion error, return the original value
+		return parameters;
+	}
 };
 
 /**
@@ -48,17 +62,17 @@ export const convertNativeParameters = (parameters: any): any => {
  * @param source
  * @returns
  */
-export function parseObject(source: Object, callback: Function) {
-    if (isObject(source)) {
-        for (const key in source) {
-            if (isObject(source[key])) {
-                if (!isClassInstance(source[key])) {
-                    parseObject(source[key], callback);
-                }
-            } else {
-                Object.assign(source, { [key]: callback(source[key]) })
-            }
-        }
-    }
-    return source;
+export function parseObject(source: object, callback: Function) {
+	if (isObject(source)) {
+		for (const key in source) {
+			if (isObject(source[key])) {
+				if (!isClassInstance(source[key])) {
+					parseObject(source[key], callback);
+				}
+			} else {
+				Object.assign(source, { [key]: callback(source[key]) });
+			}
+		}
+	}
+	return source;
 }

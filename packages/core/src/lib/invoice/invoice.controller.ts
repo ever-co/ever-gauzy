@@ -1,4 +1,4 @@
-import { ApiOperation, ApiResponse, ApiTags, ApiBody } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags, ApiBody, ApiQuery, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	Controller,
 	UseGuards,
@@ -44,6 +44,19 @@ import {
 } from './commands';
 import { CreateInvoiceDTO, UpdateEstimateInvoiceDTO, UpdateInvoiceActionDTO, UpdateInvoiceDTO } from './dto';
 import { RequestContext } from '../core/context';
+import { IsBoolean, IsOptional } from 'class-validator';
+import { Transform, TransformFnParams } from 'class-transformer';
+
+class InvoicePaginationParams<T> extends PaginationParams<T> {
+	/**
+	 * Flag to filter invoices by B2B or own invoices
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@Transform((params: TransformFnParams) => params.value.toLowerCase() === 'true')
+	readonly isB2B: boolean;
+}
 
 @ApiTags('Invoice')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -86,8 +99,8 @@ export class InvoiceController extends CrudController<Invoice> {
 	)
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() options: PaginationParams<Invoice>): Promise<IPagination<IInvoice>> {
-		this.invoiceService.checkIfUserCanAccessInvoiceForRead(options.where);
+	async pagination(@Query() options: InvoicePaginationParams<Invoice>): Promise<IPagination<IInvoice>> {
+		this.invoiceService.checkIfUserCanAccessInvoiceForReadByType(options.where, options.isB2B);
 		return await this.invoiceService.pagination(options);
 	}
 

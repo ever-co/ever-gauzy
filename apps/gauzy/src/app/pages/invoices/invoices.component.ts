@@ -66,6 +66,16 @@ import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-dow
 import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
 import { PublicLinkComponent } from './public-link/public-link.component';
 
+/**
+ * Convert date to UTC string format to be used in filter
+ * 
+ * @param date
+ * @returns {string}
+ */
+function toInvoiceDateFilter(date: string | Date | moment.Moment): string {
+	return toUTC(date).format('YYYY-MM-DD HH:mm:ss');
+}
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-invoices',
@@ -715,8 +725,8 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				isEstimate: this.isEstimate,
 				isArchived: this.includeArchived,
 				invoiceDate: {
-					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
-					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
+					startDate: toInvoiceDateFilter(startDate),
+					endDate: toInvoiceDateFilter(endDate)
 				},
 				...(this.filters.where ? this.filters.where : {})
 			},
@@ -1067,46 +1077,53 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 			tags = []
 		} = this.searchForm.value;
 
-		if (invoiceNumber) {
-			this.setFilter({ field: 'invoiceNumber', search: invoiceNumber }, false);
-		}
-		if (invoiceDate) {
-			this.setFilter(
-				{
-					field: 'invoiceDate',
-					search: moment(invoiceDate).format('YYYY-MM-DD')
-				},
-				false
-			);
-		}
-		if (dueDate) {
-			this.setFilter(
-				{
-					field: 'dueDate',
-					search: moment(dueDate).format('YYYY-MM-DD')
-				},
-				false
-			);
-		}
-		if (totalValue) {
-			this.setFilter({ field: 'totalValue', search: totalValue }, false);
-		}
-		if (currency) {
-			this.setFilter({ field: 'currency', search: currency }, false);
-		}
-		if (status) {
-			this.setFilter({ field: 'status', search: status }, false);
-		}
-		if (organizationContact) {
-			this.setFilter({ field: 'toContact', search: [organizationContact.id] }, false);
-		}
-		if (isNotEmpty(tags)) {
-			const tagIds = [];
-			for (const tag of tags) {
-				tagIds.push(tag.id);
-			}
-			this.setFilter({ field: 'tags', search: tagIds });
-		}
+		// Filter by invoice number
+		this.setFilter({ field: 'invoiceNumber', search: invoiceNumber }, false);
+
+		// Filter by invoice date
+		this.setFilter(
+			{
+				field: 'invoiceDate',
+				search: invoiceDate
+					? {
+							startDate: toInvoiceDateFilter(moment(invoiceDate).startOf('day')),
+							endDate: toInvoiceDateFilter(moment(invoiceDate).endOf('day'))
+					  }
+					: null
+			},
+			false
+		);
+
+		// Filter by invoice due date
+		this.setFilter(
+			{
+				field: 'dueDate',
+				search: dueDate
+					? {
+							startDate: toInvoiceDateFilter(moment(dueDate).startOf('day')),
+							endDate: toInvoiceDateFilter(moment(dueDate).endOf('day'))
+					  }
+					: null
+			},
+			false
+		);
+
+		// Filter by invoice total value
+		this.setFilter({ field: 'totalValue', search: totalValue }, false);
+
+		// Filter by invoice currency
+		this.setFilter({ field: 'currency', search: currency }, false);
+
+		// Filter by invoice status
+		this.setFilter({ field: 'status', search: status }, false);
+
+		// Filter by organization contact
+		this.setFilter({ field: 'toContact', search: organizationContact ? [organizationContact.id] : null }, false);
+
+		// Filter by tags
+		this.setFilter({ field: 'tags', search: isNotEmpty(tags) ? tags.map((tag) => tag.id) : null });
+
+		// Refresh pagination
 		if (isNotEmpty(this.filters)) {
 			this.refreshPagination();
 			this._refresh$.next(true);

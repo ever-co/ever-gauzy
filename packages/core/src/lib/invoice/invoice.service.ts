@@ -1,6 +1,6 @@
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { Invoice } from './invoice.entity';
-import { Between, In } from 'typeorm';
+import { Between, In, Not, IsNull } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { EmailService } from './../email-send/email.service';
 import {
@@ -47,12 +47,13 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	 * - If user has ORG_INVOICES_VIEW permission, then has access to B2B invoices
 	 *
 	 * @param filter
+	 * @returns null | (string | null)[]
 	 */
-	checkIfUserCanAccessInvoiceForRead(filter: any) {
+	checkIfUserCanAccessInvoiceForRead(filter: any): null | (string | null)[] {
 		// Check if the user is an admin or can handle invoices, then has access to all invoices
 		const isAdmin = RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW);
 		const canHandleInvoices = RequestContext.hasPermission(PermissionsEnum.INVOICES_HANDLE);
-		if (isAdmin || canHandleInvoices) return;
+		if (isAdmin || canHandleInvoices) return null;
 
 		const userIdValidation = [];
 
@@ -66,6 +67,29 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 
 		// Set the filter to get invoices from the current user or B2B invoices
 		filter.fromUserId = In(userIdValidation);
+		return userIdValidation;
+	}
+
+	/**
+	 * Check if the current user has the permission to access own or B2B invoices for reading the data
+	 * Enforce filter only for the specific type of invoice
+	 *
+	 * @param filter
+	 * @param isB2B
+	 */
+	checkIfUserCanAccessInvoiceForReadByType(filter: any, isB2B = false) {
+		const restrictions = this.checkIfUserCanAccessInvoiceForRead(filter);
+
+		// If the user has no restriction, user is an admin or can handle invoice, then set the filter to get all invoices by type
+		if (!restrictions) {
+			filter.fromUserId = isB2B ? IsNull() : Not(IsNull());
+		} else if (!isB2B && restrictions.includes(RequestContext.currentUserId())) {
+			// If the user has own invoice permission, then set the filter to get own invoices
+			filter.fromUserId = RequestContext.currentUserId();
+		} else if (isB2B && restrictions.includes(null)) {
+			// If the user has B2B invoice permission, then set the filter to get B2B invoices
+			filter.fromUserId = IsNull();
+		}
 	}
 
 	/**
