@@ -21,7 +21,7 @@ export const authentication = {
 			const response = await z.request({
 				url: `${process.env.API_BASE_URL}/api/user/me`,
 				headers: {
-					Authorization: `Bearer ${bundle.authData.acces_token}`
+					Authorization: `Bearer ${bundle.authData.access_token}`
 				}
 			});
 			// Format the connection label with user information

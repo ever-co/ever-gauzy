@@ -51,7 +51,7 @@ const performList = async (z: ZObject, bundle:Bundle) => {
 
     // Format response to match Zapier's expected format
     return response.data.map((item: any) => ({
-      id: item.lastlog?.id || new Date().toISOString(),
+      id: item.lastLog?.id || new Date().toISOString(),
       ...item
     }));
   } catch (error) {
