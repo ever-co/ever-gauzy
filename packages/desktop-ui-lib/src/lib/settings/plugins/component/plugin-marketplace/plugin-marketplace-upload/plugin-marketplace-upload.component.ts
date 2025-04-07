@@ -170,10 +170,6 @@ export class PluginMarketplaceUploadComponent implements OnInit, OnDestroy {
 
 		try {
 			const pluginData = this.pluginForm.value;
-			this.toastrService.success(
-				this.translateService.instant('PLUGINS.UPLOAD.SUCCESS'),
-				this.translateService.instant('TOASTR.TITLE.SUCCESS')
-			);
 			this.dialogRef.close(pluginData);
 		} catch (error) {
 			this.toastrService.danger(

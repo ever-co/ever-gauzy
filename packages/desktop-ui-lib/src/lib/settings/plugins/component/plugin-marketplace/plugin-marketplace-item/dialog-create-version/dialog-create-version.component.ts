@@ -145,10 +145,6 @@ export class DialogCreateVersionComponent implements OnInit, OnDestroy {
 
 		try {
 			const data = this.versionForm.value;
-			this.toastrService.success(
-				this.translateService.instant('PLUGINS.UPLOAD.SUCCESS'),
-				this.translateService.instant('TOASTR.TITLE.SUCCESS')
-			);
 			this.dialogRef.close(data);
 		} catch (error) {
 			this.toastrService.danger(
