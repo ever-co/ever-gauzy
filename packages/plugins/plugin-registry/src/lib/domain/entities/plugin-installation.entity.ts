@@ -64,8 +64,9 @@ export class PluginInstallation extends TenantOrganizationBaseEntity implements 
 	uninstalledAt?: Date;
 
 	@MultiORMColumn({
-		type: 'enum',
-		enum: PluginInstallationStatus
+		type: 'simple-enum',
+		enum: PluginInstallationStatus,
+		default: PluginInstallationStatus.IN_PROGRESS
 	})
 	@ApiProperty({ enum: PluginInstallationStatus, description: 'Plugin installation status' })
 	@IsNotEmpty({ message: 'Plugin installation status is required' })

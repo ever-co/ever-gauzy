@@ -34,12 +34,12 @@ export class Plugin extends TenantOrganizationBaseEntity implements IPlugin {
 
 	@ApiProperty({ enum: PluginType, description: 'Type of the plugin' })
 	@IsEnum(PluginType, { message: 'Invalid plugin type' })
-	@MultiORMColumn({ type: 'enum', enum: PluginType, default: PluginType.DESKTOP })
+	@MultiORMColumn({ type: 'simple-enum', enum: PluginType, default: PluginType.DESKTOP })
 	type: PluginType;
 
 	@ApiProperty({ enum: PluginStatus, description: 'Status of the plugin' })
 	@IsEnum(PluginStatus, { message: 'Invalid plugin status' })
-	@MultiORMColumn({ type: 'enum', enum: PluginStatus, default: PluginStatus.ACTIVE })
+	@MultiORMColumn({ type: 'simple-enum', enum: PluginStatus, default: PluginStatus.ACTIVE })
 	status: PluginStatus;
 
 	@ApiProperty({ type: () => [PluginVersion], description: 'Versions of the plugin' })

@@ -16,8 +16,13 @@ import { IPluginVersion } from '../../shared/models/plugin-version.model';
 import { IPlugin } from '../../shared/models/plugin.model';
 import { PluginSource } from './plugin-source.entity';
 import { IPluginSource } from '../../shared/models/plugin-source.model';
+import { isMySQL } from '@gauzy/config';
 
-@Index('version_number_unique', ['number', 'pluginId', 'tenantId', 'organizationId'], { unique: true })
+@Index(
+	'version_number_unique',
+	isMySQL ? ['number', 'pluginId', 'organizationId'] : ['number', 'pluginId', 'tenantId', 'organizationId'],
+	{ unique: true }
+)
 @MultiORMEntity('plugin_version', { mikroOrmRepository: () => MikroOrmPluginVersionRepository })
 export class PluginVersion extends TenantOrganizationBaseEntity implements IPluginVersion {
 	@ApiProperty({

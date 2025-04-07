@@ -17,8 +17,9 @@ import { PluginVersion } from './plugin-version.entity';
 @MultiORMEntity('plugin_source', { mikroOrmRepository: () => MikroOrmPluginSourceRepository })
 export class PluginSource extends TenantOrganizationBaseEntity implements IPluginSource {
 	@MultiORMColumn({
-		type: 'enum',
-		enum: PluginSourceType
+		type: 'simple-enum',
+		enum: PluginSourceType,
+		default: PluginSourceType.GAUZY
 	})
 	@ApiProperty({ enum: PluginSourceType, description: 'Type of the plugin source' })
 	@IsNotEmpty({ message: 'Plugin source type is required' })
@@ -116,6 +117,6 @@ export class PluginSource extends TenantOrganizationBaseEntity implements IPlugi
 	@IsEnum(FileStorageProviderEnum, { message: 'Invalid storage provider' })
 	@Exclude({ toPlainOnly: true })
 	@ColumnIndex()
-	@MultiORMColumn({ type: 'enum', nullable: true, enum: FileStorageProviderEnum })
+	@MultiORMColumn({ type: 'simple-enum', nullable: true, enum: FileStorageProviderEnum })
 	storageProvider?: FileStorageProviderEnum;
 }
