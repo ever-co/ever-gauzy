@@ -110,7 +110,6 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 				this.needUpdate$.next(installed.version !== plugin.version.number);
 			}
 		} catch (error) {
-			console.warn('No local installation found');
 			this.installed$.next(false);
 		}
 	}
