@@ -1,6 +1,6 @@
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
-import { CqrsModule } from '@nestjs/cqrs';
+import { CqrsModule, EventsHandler } from '@nestjs/cqrs';
 import { ConfigModule, environment } from '@gauzy/config';
 import {
     IntegrationEntitySettingModule,
@@ -14,8 +14,6 @@ import {
 import { ZapierService } from './zapier.service';
 import { ZapierController } from './zapier.controller';
 import { ZapierAuthorizationController } from './zapier-authorization.controller';
-import { CommandHandlers } from '@gauzy/core';
-import { QueryHandlers } from '@gauzy/core';
 import { ZapierWebhookService } from './zapier-webhook.service';
 import { ZapierWebhookController } from './zapier-webhook.controller';
 import { MikroOrmZapierWebhookSubscriptionRepository } from './repository/mikro-orm-zapier.repository';
@@ -24,6 +22,7 @@ import { ZapierWebhookSubscriptionRepository } from './repository/zapier-reposit
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TimerModule } from '@gauzy/core';
+import { EventHandlers } from './handlers';
 
 @Module({
     imports: [
@@ -47,9 +46,8 @@ import { TimerModule } from '@gauzy/core';
                 ZapierWebhookService,
                 MikroOrmZapierWebhookSubscriptionRepository,
                 TypeOrmZapierWebhookSubscriptionRepository,
-                ...CommandHandlers,
-                ...QueryHandlers
+                ...EventHandlers
                 ],
-    exports: [ZapierService, ZapierWebhookService, TimerModule]
+    exports: [ZapierService, ZapierWebhookService]
 })
 export class ZapierModule {}

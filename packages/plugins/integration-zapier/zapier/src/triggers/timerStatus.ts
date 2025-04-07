@@ -9,10 +9,54 @@ const perform = async (z: ZObject, bundle: Bundle) => {
         Authorization: `Bearer ${bundle.authData['access_token']}`,
       },
     });
-    return response.data;
+    const data = response.data;
+
+    //Convert single object to array if needed
+    if(!Array.isArray(data)) {
+      return [
+        {
+          id: new Date().toISOString(), // Use timestamp as ID for webhook mode
+          ...data
+        }
+      ];
+    }
+
+    return data.map((item: any) => ({
+      id: item.id || new Date().toString(),
+      ...item
+    }));
   } catch (error) {
     z.console.error('Error fetching timer status:', error);
     throw new Error('Failed to fetch timer status');
+  }
+};
+
+/**
+ * Performs the polling action for the trigger
+ * This is used as a fallback when webhooks aren't available
+ */
+
+const performList = async (z: ZObject, bundle:Bundle) => {
+  try {
+    const response = await z.request({
+      url: `${process.env.API_BASE_URL}/api/timesheet/timer/status/worked`,
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${bundle.authData['access_token']}`,
+      },
+      params: {
+        limit: 10
+      }
+    });
+
+    // Format response to match Zapier's expected format
+    return response.data.map((item: any) => ({
+      id: item.lastlog?.id || new Date().toISOString(),
+      ...item
+    }));
+  } catch (error) {
+    z.console.error('Error polling timer status:', error);
+    throw new Error('Failed to poll timer status');
   }
 };
 
@@ -62,23 +106,44 @@ export default {
   operation: {
     type: 'hook',
     perform,
+    performList,
     performSubscribe: subscribe,
     performUnsubscribe: unsubscribe,
     sample: {
-      id: 1,
-      startedAt: '2023-10-01T12:00:00Z',
-      tenantId: 'c0e9945f-6a44-4848-8bd4-d8b852fcade0',
-      organizationId: '9564edd7-7d36-47be-a89a-3142f5d53ce8',
-      sentTo: 'da2117d6-e6f6-45ec-86cb-80cc20470ba4',
-      logType: 'TRACKED',
-      source: 'BROWSER',
-      description: 'connect timer stopper to the Make.com custom app',
-      isBillable: false,
-      version: '1.0.1',
-      projectId: '3e44becd-ccc0-4e86-90fd-16d2347d90d9',
-      taskId: '1ccb7c08-e381-4802-a005-96af0f9ad214',
-      organizationContactId: '2db881af-ecf8-4a8a-93a7-9655a3e6da7b',
-      organizationTeamId: '4d69775a-86c5-4d2c-a095-5b095a2d7f15',
+      duration: 91,
+      running: false,
+      lastLog: {
+        deletedAt: null,
+        createdAt: "2025-04-04T10:08:15.264Z",
+        updatedAt: "2025-04-04T10:09:46.595Z",
+        createdByUserId: "488ad51e-667f-4cac-98cb-7ee343227d1b",
+        updatedByUserId: "488ad51e-667f-4cac-98cb-7ee343227d1b",
+        deletedByUserId: null,
+        id: "55a664ca-7266-4e71-b37a-dfc1fe824478",
+        isActive: true,
+        isArchived: false,
+        archivedAt: null,
+        tenantId: "88507509-f7cb-44f4-ae60-894f950477a9",
+        organizationId: "b894c374-7374-43cb-a1a2-afe46b9f5e28",
+        startedAt: "2025-04-04T10:08:15.145Z",
+        stoppedAt: "2025-04-04T10:09:46.571Z",
+        editedAt: null,
+        logType: "TRACKED",
+        source: "BROWSER",
+        description: "connect timer starter to the Zapier plugin for automation",
+        reason: null,
+        isBillable: false,
+        isRunning: false,
+        version: "1.0.1",
+        employeeId: "82f0fb75-6206-43da-93df-6a7ce6d4fcef",
+        timesheetId: "c752adf7-5999-42e9-9f11-f95a0a00e75d",
+        projectId: "29bd6ac8-1408-4933-a8db-f50740a994b8",
+        taskId: "0e6ac2e7-0094-4166-852e-62bf1731ecfb",
+        organizationContactId: "5e1f12b4-ee2d-40a4-ad1d-593e868da57b",
+        organizationTeamId: "4d0a52f1-4fdd-4a64-9706-51b6182a48cf",
+        duration: 91,
+        isEdited: false
+      }
     },
   },
 };

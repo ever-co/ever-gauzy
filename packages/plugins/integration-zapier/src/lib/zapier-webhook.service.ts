@@ -2,6 +2,8 @@ import { Injectable, Logger, ForbiddenException, NotFoundException, InternalServ
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ZapierWebhookSubscriptionRepository } from './repository/zapier-repository.entity';
+import { HttpService } from '@nestjs/axios';
+import { catchError, of } from 'rxjs';
 
 @Injectable()
 export class ZapierWebhookService {
@@ -10,6 +12,7 @@ export class ZapierWebhookService {
     constructor(
         @InjectRepository(ZapierWebhookSubscriptionRepository)
         private readonly subscriptionRepository: Repository<ZapierWebhookSubscriptionRepository>,
+        private readonly _httpService: HttpService,
     ) {}
 
     async createSubscription(input: {
@@ -74,4 +77,49 @@ export class ZapierWebhookService {
             throw new InternalServerErrorException('Failed to delete webhook subscription');
         }
     }
+
+    /**
+     * Notify subscribers about timer status change
+     *
+     * @param payload The data to send to webhooks
+     */
+    async notifyTimerStatusChanged(timerData: any): Promise<void> {
+        try {
+          // Find all webhook subscriptions for timer status events
+          const subscriptions = await this.subscriptionRepository.find({
+            where: {
+              event: 'timer.status.changed',
+              tenantId: timerData.tenantId,
+              organizationId: timerData.organizationId
+            }
+          });
+
+          if (!subscriptions || subscriptions.length === 0) {
+            return;
+          }
+
+          // Notify each subscriber
+          for (const subscription of subscriptions) {
+            try {
+              await this._httpService.post(subscription.targetUrl, {
+                event: 'timer.status.changed',
+                data: timerData
+              }).pipe(
+                catchError(error => {
+                  this.logger.error(
+                    `Failed to notify webhook ${subscription.id} at ${subscription.targetUrl}`,
+                    error
+                  );
+                  return of(null);
+                })
+              ).toPromise();
+            } catch (error) {
+              this.logger.error(`Error notifying webhook ${subscription.id}`, error);
+              // Continue with other webhooks even if this one fails
+            }
+          }
+        } catch (error) {
+          this.logger.error('Failed to process timer status change webhooks', error);
+        }
+      }
 }
