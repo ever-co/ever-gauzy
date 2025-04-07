@@ -3105,6 +3105,13 @@
 			"GENERATE": "Wygeneruj link do {{ text }}, który będzie można przeglądać przez każdą osobę posiadającą link",
 			"ACCESS": "Każda osoba mająca dostęp do tego linku może zobaczyć {{ text }}",
 			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
+		},
+		"ERRORS": {
+			"DELETE": "Wystąpił błąd podczas usuwania faktury",
+			"DOWNLOAD": "Wystąpił błąd podczas pobierania faktury",
+			"INVALID_INVOICE": "Żądana faktura jest nieprawidłowa",
+			"PDF_GENERATION_FAILED": "Wystąpił błąd podczas generowania pliku PDF faktury",
+			"PRINT": "Wystąpił błąd podczas drukowania faktury"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -4770,5 +4777,33 @@
 	},
 	"SERVER_API": "Serwer API",
 	"SERVER_API_LOG": "Dziennik serwera API",
-	"COMING_SOON": "This page is coming soon!"
+	"COMING_SOON": "This page is coming soon!",
+	"DEFAULT_ERRORS": {
+		"TITLE": {
+			"BAD_REQUEST": "Nieprawidłowe żądanie",
+			"UNAUTHORIZED": "Brak autoryzacji",
+			"FORBIDDEN": "Dostęp zabroniony",
+			"NOT_FOUND": "Nie znaleziono",
+			"CONFLICT": "Konflikt",
+			"INTERNAL_SERVER_ERROR": "Błąd serwera",
+			"GATEWAY_TIMEOUT": "Przekroczono limit czasu bramy",
+			"SERVICE_UNAVAILABLE": "Usługa niedostępna",
+			"NETWORK_ERROR": "Błąd sieci",
+			"DEFAULT": "Błąd",
+			"CONNECTION_ERROR": "Błąd połączenia"
+		},
+		"MESSAGES": {
+			"BAD_REQUEST": "Żądanie nie mogło zostać zrozumiane lub brakuje wymaganych parametrów",
+			"UNAUTHORIZED": "Wymagane jest uwierzytelnienie, które nie powiodło się lub nie zostało jeszcze dostarczone",
+			"FORBIDDEN": "Nie masz uprawnień dostępu do żądanego zasobu",
+			"NOT_FOUND": "Nie można znaleźć żądanego zasobu",
+			"CONFLICT": "Wystąpił konflikt z obecnym stanem zasobu",
+			"INTERNAL_SERVER_ERROR": "Wystąpił błąd na serwerze",
+			"GATEWAY_TIMEOUT": "Serwer zbyt długo nie odpowiadał",
+			"SERVICE_UNAVAILABLE": "Usługa jest tymczasowo niedostępna. Spróbuj ponownie później",
+			"NETWORK_ERROR": "Nie można połączyć się z serwerem. Sprawdź połączenie sieciowe",
+			"DEFAULT": "Wystąpił nieoczekiwany błąd",
+			"CONNECTION_ERROR": "Utracono połączenie z serwerem. Spróbuj ponownie później"
+		}
+	}
 }

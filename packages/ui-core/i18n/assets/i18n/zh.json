@@ -3105,6 +3105,13 @@
 			"GENERATE": "生成一个链接，任何具有链接的人都可以查看{{ text }}。",
 			"ACCESS": "任何有权访问此链接的人都可以查看{{ text }}。",
 			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
+		},
+		"ERRORS": {
+			"DELETE": "删除发票时出错",
+			"DOWNLOAD": "下载发票时出错",
+			"INVALID_INVOICE": "请求的发票无效",
+			"PDF_GENERATION_FAILED": "生成发票PDF时出错",
+			"PRINT": "打印发票时出错"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -4770,5 +4777,33 @@
 	},
 	"SERVER_API": "API服务器",
 	"SERVER_API_LOG": "API服务器日志",
-	"COMING_SOON": "This page is coming soon!"
+	"COMING_SOON": "This page is coming soon!",
+	"DEFAULT_ERRORS": {
+		"TITLE": {
+			"BAD_REQUEST": "错误请求",
+			"UNAUTHORIZED": "未经授权",
+			"FORBIDDEN": "禁止访问",
+			"NOT_FOUND": "未找到",
+			"CONFLICT": "冲突",
+			"INTERNAL_SERVER_ERROR": "服务器错误",
+			"GATEWAY_TIMEOUT": "网关超时",
+			"SERVICE_UNAVAILABLE": "服务不可用",
+			"NETWORK_ERROR": "网络错误",
+			"DEFAULT": "错误",
+			"CONNECTION_ERROR": "连接错误"
+		},
+		"MESSAGES": {
+			"BAD_REQUEST": "无法理解请求或缺少必需的参数",
+			"UNAUTHORIZED": "需要身份验证，但验证失败或尚未提供",
+			"FORBIDDEN": "您没有权限访问所请求的资源",
+			"NOT_FOUND": "找不到所请求的资源",
+			"CONFLICT": "与资源的当前状态存在冲突",
+			"INTERNAL_SERVER_ERROR": "服务器发生错误",
+			"GATEWAY_TIMEOUT": "服务器响应时间过长",
+			"SERVICE_UNAVAILABLE": "服务暂时不可用。请稍后再试",
+			"NETWORK_ERROR": "无法连接到服务器。请检查您的网络连接",
+			"DEFAULT": "发生意外错误",
+			"CONNECTION_ERROR": "与服务器的连接已断开。请稍后再试"
+		}
+	}
 }

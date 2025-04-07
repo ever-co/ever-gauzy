@@ -3105,6 +3105,13 @@
 			"GENERATE": "Genera un collegamento al {{ text }} che chiunque con il collegamento può visualizzare",
 			"ACCESS": "Chiunque abbia accesso a questo link può visualizzare il {{ text }}",
 			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
+		},
+		"ERRORS": {
+			"DELETE": "Si è verificato un errore durante l'eliminazione della fattura",
+			"DOWNLOAD": "Si è verificato un errore durante il download della fattura",
+			"INVALID_INVOICE": "La fattura richiesta non è valida",
+			"PDF_GENERATION_FAILED": "Si è verificato un errore durante la generazione del PDF della fattura",
+			"PRINT": "Si è verificato un errore durante la stampa della fattura"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -4770,5 +4777,33 @@
 	},
 	"SERVER_API": "API Server",
 	"SERVER_API_LOG": "Registro del server API",
-	"COMING_SOON": "This page is coming soon!"
+	"COMING_SOON": "This page is coming soon!",
+	"DEFAULT_ERRORS": {
+		"TITLE": {
+			"BAD_REQUEST": "Richiesta non valida",
+			"UNAUTHORIZED": "Non autorizzato",
+			"FORBIDDEN": "Accesso negato",
+			"NOT_FOUND": "Non trovato",
+			"CONFLICT": "Conflitto",
+			"INTERNAL_SERVER_ERROR": "Errore del server",
+			"GATEWAY_TIMEOUT": "Timeout del gateway",
+			"SERVICE_UNAVAILABLE": "Servizio non disponibile",
+			"NETWORK_ERROR": "Errore di rete",
+			"DEFAULT": "Errore",
+			"CONNECTION_ERROR": "Errore di connessione"
+		},
+		"MESSAGES": {
+			"BAD_REQUEST": "La richiesta non può essere compresa o mancano parametri obbligatori",
+			"UNAUTHORIZED": "L'autenticazione è necessaria ed è fallita o non è stata ancora fornita",
+			"FORBIDDEN": "Non hai il permesso di accedere alla risorsa richiesta",
+			"NOT_FOUND": "La risorsa richiesta non è stata trovata",
+			"CONFLICT": "Si è verificato un conflitto con lo stato attuale della risorsa",
+			"INTERNAL_SERVER_ERROR": "Si è verificato un errore sul server",
+			"GATEWAY_TIMEOUT": "Il server ha impiegato troppo tempo per rispondere",
+			"SERVICE_UNAVAILABLE": "Il servizio è temporaneamente non disponibile. Riprova più tardi",
+			"NETWORK_ERROR": "Impossibile connettersi al server. Controlla la tua connessione di rete",
+			"DEFAULT": "Si è verificato un errore imprevisto",
+			"CONNECTION_ERROR": "Persa la connessione con il server. Riprova più tardi"
+		}
+	}
 }

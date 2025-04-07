@@ -3128,6 +3128,13 @@
 			"GENERATE": "Generate a link to the {{ text }} that anyone with the link can view.",
 			"ACCESS": "Anyone with access to this link can view the {{ text }}.",
 			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
+		},
+		"ERRORS": {
+			"DELETE": "אירעה שגיאה בעת מחיקת החשבונית",
+			"DOWNLOAD": "אירעה שגיאה בעת הורדת החשבונית",
+			"INVALID_INVOICE": "החשבונית המבוקשת אינה תקינה",
+			"PDF_GENERATION_FAILED": "אירעה שגיאה בעת יצירת קובץ PDF של החשבונית",
+			"PRINT": "אירעה שגיאה בעת הדפסת החשבונית"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -4760,5 +4767,33 @@
 	},
 	"SERVER_API": "API Server",
 	"SERVER_API_LOG": "API Server Log",
-	"COMING_SOON": "דף זה יגיע בקרוב!"
+	"COMING_SOON": "דף זה יגיע בקרוב!",
+	"DEFAULT_ERRORS": {
+		"TITLE": {
+			"BAD_REQUEST": "בקשה שגויה",
+			"UNAUTHORIZED": "לא מורשה",
+			"FORBIDDEN": "אסור",
+			"NOT_FOUND": "לא נמצא",
+			"CONFLICT": "התנגשות",
+			"INTERNAL_SERVER_ERROR": "שגיאת שרת",
+			"GATEWAY_TIMEOUT": "זמן השער פג",
+			"SERVICE_UNAVAILABLE": "השירות אינו זמין",
+			"NETWORK_ERROR": "שגיאת רשת",
+			"DEFAULT": "שגיאה",
+			"CONNECTION_ERROR": "שגיאת חיבור"
+		},
+		"MESSAGES": {
+			"BAD_REQUEST": "לא ניתן היה להבין את הבקשה או שחסרים פרמטרים נדרשים",
+			"UNAUTHORIZED": "נדרש אימות והוא נכשל או שטרם סופק",
+			"FORBIDDEN": "אין לך הרשאה לגשת למשאב המבוקש",
+			"NOT_FOUND": "המשאב המבוקש לא נמצא",
+			"CONFLICT": "הייתה התנגשות עם המצב הנוכחי של המשאב",
+			"INTERNAL_SERVER_ERROR": "אירעה שגיאה בשרת",
+			"GATEWAY_TIMEOUT": "לקח לשרת יותר מדי זמן להגיב",
+			"SERVICE_UNAVAILABLE": "השירות אינו זמין זמנית. אנא נסה שוב מאוחר יותר",
+			"NETWORK_ERROR": "לא ניתן להתחבר לשרת. אנא בדוק את חיבור הרשת שלך",
+			"DEFAULT": "אירעה שגיאה בלתי צפויה",
+			"CONNECTION_ERROR": "החיבור לשרת אבד. אנא נסה שוב מאוחר יותר"
+		}
+	}
 }

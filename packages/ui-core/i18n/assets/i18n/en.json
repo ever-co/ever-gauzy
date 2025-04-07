@@ -3228,6 +3228,13 @@
 			"GENERATE": "Generate a link to the {{ text }} that anyone with the link can view.",
 			"ACCESS": "Anyone with access to this link can view the {{ text }}.",
 			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
+		},
+		"ERRORS": {
+			"DELETE": "Error occurred while deleting the invoice",
+			"DOWNLOAD": "Error occurred while downloading the invoice",
+			"INVALID_INVOICE": "The requested invoice is not valid",
+			"PDF_GENERATION_FAILED": "Error occurred while generating the invoice PDF",
+			"PRINT": "Error ocurred while printing the invoice"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -4923,5 +4930,33 @@
 	},
 	"SERVER_API": "API Server",
 	"SERVER_API_LOG": "API Server Log",
-	"COMING_SOON": "This page is coming soon!"
+	"COMING_SOON": "This page is coming soon!",
+	"DEFAULT_ERRORS": {
+		"TITLE": {
+			"BAD_REQUEST": "Bad Request",
+			"UNAUTHORIZED": "Unauthorized",
+			"FORBIDDEN": "Forbidden",
+			"NOT_FOUND": "Not Found",
+			"CONFLICT": "Conflict",
+			"INTERNAL_SERVER_ERROR": "Server Error",
+			"GATEWAY_TIMEOUT": "Gateway Timeout",
+			"SERVICE_UNAVAILABLE": "Service Unavailable",
+			"NETWORK_ERROR": "Network Error",
+			"DEFAULT": "Error",
+			"CONNECTION_ERROR": "Connection Error"
+		},
+		"MESSAGES": {
+			"BAD_REQUEST": "The request could not be understood or was missing required parameters",
+			"UNAUTHORIZED": "Authentication is required and has failed or has not yet been provided",
+			"FORBIDDEN": "You do not have permission to access the requested resource",
+			"NOT_FOUND": "The requested resource could not be found",
+			"CONFLICT": "There was a conflict with the current state of the resource",
+			"INTERNAL_SERVER_ERROR": "An error occurred on the server",
+			"GATEWAY_TIMEOUT": "The server took too long to respond",
+			"SERVICE_UNAVAILABLE": "The service is temporarily unavailable. Please try again later",
+			"NETWORK_ERROR": "Unable to connect to the server. Please check your network connection",
+			"DEFAULT": "An unexpected error occurred",
+			"CONNECTION_ERROR": "Lost connection with the server. Please try again later"
+		}
+	}
 }

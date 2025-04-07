@@ -285,7 +285,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		};
 		const docDefinition = await generateInvoicePdfDefinition(
 			invoice,
-			invoice.fromOrganization,
+			invoice.toOrganization ?? invoice.fromOrganization,
 			invoice.toContact,
 			translatedText,
 			language

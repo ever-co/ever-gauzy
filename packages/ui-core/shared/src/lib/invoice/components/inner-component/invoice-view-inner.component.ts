@@ -1,11 +1,11 @@
-import { Component, OnInit, OnDestroy, Input, TemplateRef, ElementRef } from '@angular/core';
+import { Component, OnInit, Input, TemplateRef, ElementRef } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { tap } from 'rxjs/operators';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DiscountTaxTypeEnum, IInvoice, IInvoiceItem, InvoiceTypeEnum } from '@gauzy/contracts';
-import { ErrorHandlingService, Store, TranslatableService } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, TranslatableService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { CurrencyPositionPipe } from '../../../pipes/currency-position.pipe';
 
@@ -16,20 +16,18 @@ import { CurrencyPositionPipe } from '../../../pipes/currency-position.pipe';
 	styleUrls: ['./invoice-view-inner.component.scss'],
 	providers: [TranslatableService, CurrencyPipe, CurrencyPositionPipe]
 })
-export class InvoiceViewInnerComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+export class InvoiceViewInnerComponent extends TranslationBaseComponent implements OnInit {
 	public settingsSmartTable: object;
 	public smartTableSource = new LocalDataSource();
-	public loading: boolean = true;
+	public loading = true;
 	public discountTaxTypes = DiscountTaxTypeEnum;
-	public showInternalNote: boolean = !!this._store.user?.tenantId;
 
 	@Input() invoice: IInvoice;
-	@Input() isEstimate: boolean = false;
+	@Input() isEstimate = false;
 	@Input() buttonsOutlet: TemplateRef<ElementRef>;
 
 	constructor(
 		readonly translateService: TranslateService,
-		private readonly _store: Store,
 		private readonly _translatableService: TranslatableService,
 		private readonly _currencyPipe: CurrencyPipe,
 		private readonly _currencyPipePosition: CurrencyPositionPipe,
@@ -61,15 +59,11 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent implemen
 					type: 'text',
 					isFilterable: false
 				},
-				description: {
-					title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'),
-					type: 'text',
-					isFilterable: false
-				},
 				quantity: {
 					title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.QUANTITY'),
 					type: 'text',
-					isFilterable: false
+					isFilterable: false,
+					width: '20%'
 				},
 				price: {
 					title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.PRICE'),
@@ -81,11 +75,12 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent implemen
 
 						// Get price transformed
 						return this.getPipesTransform(
-							row.price * row.quantity,
+							row.price,
 							row.currency,
-							this.invoice.fromOrganization.currencyPosition
+							(this.invoice?.toOrganization ?? this.invoice?.fromOrganization)?.currencyPosition
 						);
-					}
+					},
+					width: '20%'
 				},
 				totalValue: {
 					title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE'),
@@ -95,13 +90,14 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent implemen
 						// Get row data
 						const row = cell.getRow().getData();
 
-						// Get price transformed
+						// Get total value transformed
 						return this.getPipesTransform(
-							row.price * row.quantity,
+							row.totalValue,
 							row.currency,
-							this.invoice.fromOrganization.currencyPosition
+							(this.invoice?.toOrganization ?? this.invoice?.fromOrganization)?.currencyPosition
 						);
-					}
+					},
+					width: '20%'
 				}
 			}
 		};
@@ -130,10 +126,9 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent implemen
 			const data = this.invoice.invoiceItems?.map((item) => {
 				// Default inclusion
 				const row = {
-					description: item.description,
 					quantity: item.quantity,
 					price: item.price,
-					totalValue: +item.totalValue,
+					totalValue: item.totalValue,
 					currency: this.invoice.currency,
 					id: item.id // Default inclusion
 				};
@@ -190,9 +185,7 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent implemen
 	 * @returns should be a string
 	 */
 	getPipesTransform(value: number, currencyCode: string, position: string): string {
-		const transform = this._currencyPipe.transform(value, currencyCode);
+		const transform = this._currencyPipe.transform(value, currencyCode, 'code');
 		return this._currencyPipePosition.transform(transform, position);
 	}
-
-	ngOnDestroy() {}
 }

@@ -3106,6 +3106,13 @@
 			"GENERATE": "Générer un lien vers le {{ text }} que n'importe qui ayant le lien peut visualiser.",
 			"ACCESS": "Toute personne ayant accès à ce lien peut voir le {{ text }}.",
 			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
+		},
+		"ERRORS": {
+			"DELETE": "Une erreur s'est produite lors de la suppression de la facture",
+			"DOWNLOAD": "Une erreur s'est produite lors du téléchargement de la facture",
+			"INVALID_INVOICE": "La facture demandée n'est pas valide",
+			"PDF_GENERATION_FAILED": "Une erreur s'est produite lors de la génération du PDF de la facture",
+			"PRINT": "Une erreur s'est produite lors de l'impression de la facture"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -4770,5 +4777,33 @@
 	},
 	"SERVER_API": "Serveur API",
 	"SERVER_API_LOG": "Journal du serveur API",
-	"COMING_SOON": "This page is coming soon!"
+	"COMING_SOON": "This page is coming soon!",
+	"DEFAULT_ERRORS": {
+		"TITLE": {
+			"BAD_REQUEST": "Requête invalide",
+			"UNAUTHORIZED": "Non autorisé",
+			"FORBIDDEN": "Accès interdit",
+			"NOT_FOUND": "Non trouvé",
+			"CONFLICT": "Conflit",
+			"INTERNAL_SERVER_ERROR": "Erreur serveur",
+			"GATEWAY_TIMEOUT": "Délai d'attente dépassé",
+			"SERVICE_UNAVAILABLE": "Service indisponible",
+			"NETWORK_ERROR": "Erreur réseau",
+			"DEFAULT": "Erreur",
+			"CONNECTION_ERROR": "Erreur de connexion"
+		},
+		"MESSAGES": {
+			"BAD_REQUEST": "La requête n'a pas pu être comprise ou il manque des paramètres requis",
+			"UNAUTHORIZED": "L'authentification est requise et a échoué ou n'a pas encore été fournie",
+			"FORBIDDEN": "Vous n'avez pas la permission d'accéder à la ressource demandée",
+			"NOT_FOUND": "La ressource demandée n'a pas pu être trouvée",
+			"CONFLICT": "Il y a eu un conflit avec l'état actuel de la ressource",
+			"INTERNAL_SERVER_ERROR": "Une erreur s'est produite sur le serveur",
+			"GATEWAY_TIMEOUT": "Le serveur a mis trop de temps à répondre",
+			"SERVICE_UNAVAILABLE": "Le service est temporairement indisponible. Veuillez réessayer plus tard",
+			"NETWORK_ERROR": "Impossible de se connecter au serveur. Veuillez vérifier votre connexion réseau",
+			"DEFAULT": "Une erreur inattendue s'est produite",
+			"CONNECTION_ERROR": "Connexion perdue avec le serveur. Veuillez réessayer plus tard"
+		}
+	}
 }

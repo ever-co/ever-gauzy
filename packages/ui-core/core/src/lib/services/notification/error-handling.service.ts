@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { HttpStatus } from '@gauzy/contracts';
 import { ToastrService } from './toastr.service';
+import { ERROR_MESSAGES } from './constants';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class ErrorHandlingService {
-	constructor(private _toastrService: ToastrService) {}
+	constructor(private readonly _toastrService: ToastrService) {}
 
 	/**
 	 * Handles HTTP errors and displays an appropriate message.
@@ -25,8 +26,8 @@ export class ErrorHandlingService {
 	 * @returns An object containing the error title and content.
 	 */
 	private getErrorDetails(err: HttpErrorResponse): { title: string; message: string } {
-		let title = 'Error';
-		let message = 'An unexpected error occurred';
+		let title = 'DEFAULT_ERRORS.TITLE.DEFAULT';
+		let message = 'DEFAULT_ERRORS.MESSAGES.DEFAULT';
 
 		// Extracting the error message from response body if available
 		if (err.error) {
@@ -41,51 +42,50 @@ export class ErrorHandlingService {
 		// Switch based on the HTTP status code using HttpStatus constants
 		switch (err.status) {
 			case HttpStatus.BAD_REQUEST:
-				title = 'Bad Request';
-				message = message || 'The request could not be understood or was missing required parameters.';
+				title = 'DEFAULT_ERRORS.TITLE.BAD_REQUEST';
+				message = ERROR_MESSAGES[message] || message || 'DEFAULT_ERRORS.MESSAGES.BAD_REQUEST';
 				break;
 			case HttpStatus.UNAUTHORIZED:
-				title = 'Unauthorized';
-				message = message || 'Authentication is required and has failed or has not yet been provided.';
+				title = 'DEFAULT_ERRORS.TITLE.UNAUTHORIZED';
+				message = ERROR_MESSAGES[message] || message || 'DEFAULT_ERRORS.MESSAGES.UNAUTHORIZED';
 				break;
 			case HttpStatus.FORBIDDEN:
-				title = 'Forbidden';
-				message = message || 'You do not have permission to access the requested resource.';
+				title = 'DEFAULT_ERRORS.TITLE.FORBIDDEN';
+				message = ERROR_MESSAGES[message] || message || 'DEFAULT_ERRORS.MESSAGES.FORBIDDEN';
 				break;
 			case HttpStatus.NOT_FOUND:
-				title = 'Not Found';
-				message = message || 'The requested resource could not be found.';
+				title = 'DEFAULT_ERRORS.TITLE.NOT_FOUND';
+				message = ERROR_MESSAGES[message] || message || 'DEFAULT_ERRORS.MESSAGES.NOT_FOUND';
 				break;
 			case HttpStatus.CONFLICT:
-				title = 'Conflict';
-				message = message || 'There was a conflict with the current state of the resource.';
+				title = 'DEFAULT_ERRORS.TITLE.CONFLICT';
+				message = ERROR_MESSAGES[message] || message || 'DEFAULT_ERRORS.MESSAGES.CONFLICT';
 				break;
 			case HttpStatus.INTERNAL_SERVER_ERROR:
-				title = 'Server Error';
-				message = message || 'An error occurred on the server.';
+				title = 'DEFAULT_ERRORS.TITLE.INTERNAL_SERVER_ERROR';
+				message = ERROR_MESSAGES[message] || message || 'DEFAULT_ERRORS.MESSAGES.INTERNAL_SERVER_ERROR';
 				break;
 			case HttpStatus.GATEWAY_TIMEOUT:
-				title = 'Gateway Timeout';
-				message = message || 'The server took too long to respond.';
+				title = 'DEFAULT_ERRORS.TITLE.GATEWAY_TIMEOUT';
+				message = ERROR_MESSAGES[message] || message || 'DEFAULT_ERRORS.MESSAGES.GATEWAY_TIMEOUT';
 				break;
 			case HttpStatus.SERVICE_UNAVAILABLE:
-				title = 'Service Unavailable';
-				message = message || 'The service is temporarily unavailable. Please try again later.';
+				title = 'DEFAULT_ERRORS.TITLE.SERVICE_UNAVAILABLE';
+				message = ERROR_MESSAGES[message] || message || 'DEFAULT_ERRORS.MESSAGES.SERVICE_UNAVAILABLE';
 				break;
 			case 0:
-				title = 'Network Error';
-				message = 'Unable to connect to the server. Please check your network connection.';
+				title = 'DEFAULT_ERRORS.TITLE.NETWORK_ERROR';
+				message = 'DEFAULT_ERRORS.MESSAGES.NETWORK_ERROR';
 				break;
 			default:
-				title = 'Error';
-				message = message || 'An unexpected error occurred.';
+				message = 'DEFAULT_ERRORS.MESSAGES.DEFAULT';
 				break;
 		}
 
 		// Special handling for HTTP failure responses
 		if (message.includes('Http failure response')) {
-			title = 'Connection Error';
-			message = 'Lost connection with the server. Please try again later.';
+			title = 'DEFAULT_ERRORS.TITLE.CONNECTION_ERROR';
+			message = 'DEFAULT_ERRORS.MESSAGES.CONNECTION_ERROR';
 		}
 
 		return { title, message };

@@ -3163,6 +3163,13 @@
 			"GENERATE": "Generate a link to the {{ text }} that anyone with the link can view.",
 			"ACCESS": "Anyone with access to this link can view the {{ text }}.",
 			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
+		},
+		"ERRORS": {
+			"DELETE": "Възникна грешка при изтриването на фактурата",
+			"DOWNLOAD": "Възникна грешка при изтеглянето на фактурата",
+			"INVALID_INVOICE": "Заявената фактура е невалидна",
+			"PDF_GENERATION_FAILED": "Възникна грешка при генерирането на PDF файла на фактурата",
+			"PRINT": "Възникна грешка при отпечатването на фактурата"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -4798,5 +4805,33 @@
 	},
 	"SERVER_API": "API сървър",
 	"SERVER_API_LOG": "Дневник на API сървъра",
-	"COMING_SOON": "Тази страница ще бъде скоро!"
+	"COMING_SOON": "Тази страница ще бъде скоро!",
+	"DEFAULT_ERRORS": {
+		"TITLE": {
+			"BAD_REQUEST": "Невалидна заявка",
+			"UNAUTHORIZED": "Неоторизиран",
+			"FORBIDDEN": "Забранен достъп",
+			"NOT_FOUND": "Не е намерено",
+			"CONFLICT": "Конфликт",
+			"INTERNAL_SERVER_ERROR": "Грешка в сървъра",
+			"GATEWAY_TIMEOUT": "Изтекло време на шлюза",
+			"SERVICE_UNAVAILABLE": "Услугата не е налична",
+			"NETWORK_ERROR": "Мрежова грешка",
+			"DEFAULT": "Грешка",
+			"CONNECTION_ERROR": "Грешка при свързване"
+		},
+		"MESSAGES": {
+			"BAD_REQUEST": "Заявката не може да бъде разбрана или липсват задължителни параметри",
+			"UNAUTHORIZED": "Изисква се удостоверяване и е неуспешно или все още не е предоставено",
+			"FORBIDDEN": "Нямате разрешение за достъп до заявения ресурс",
+			"NOT_FOUND": "Заявеният ресурс не може да бъде намерен",
+			"CONFLICT": "Възникна конфликт с текущото състояние на ресурса",
+			"INTERNAL_SERVER_ERROR": "Възникна грешка в сървъра",
+			"GATEWAY_TIMEOUT": "Сървърът отне твърде дълго време за отговор",
+			"SERVICE_UNAVAILABLE": "Услугата временно не е налична. Моля, опитайте отново по-късно",
+			"NETWORK_ERROR": "Не може да се свърже със сървъра. Моля, проверете вашата мрежова връзка",
+			"DEFAULT": "Възникна неочаквана грешка",
+			"CONNECTION_ERROR": "Изгубена връзка със сървъра. Моля, опитайте отново по-късно"
+		}
+	}
 }

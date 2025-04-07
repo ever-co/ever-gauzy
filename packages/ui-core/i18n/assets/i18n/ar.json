@@ -3103,6 +3103,13 @@
 			"GENERATE": "أنشئ رابطًا لـ {{ text }} يمكن لأي شخص يمتلك الرابط رؤيته.",
 			"ACCESS": "أي شخص لديه وصول إلى هذا الرابط يمكنه عرض {{ text }}.",
 			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
+		},
+		"ERRORS": {
+			"DELETE": "حدث خطأ أثناء حذف الفاتورة",
+			"DOWNLOAD": "حدث خطأ أثناء تنزيل الفاتورة",
+			"INVALID_INVOICE": "الفاتورة المطلوبة غير صالحة",
+			"PDF_GENERATION_FAILED": "حدث خطأ أثناء إنشاء ملف PDF للفاتورة",
+			"PRINT": "حدث خطأ أثناء طباعة الفاتورة"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -4769,5 +4776,33 @@
 	},
 	"SERVER_API": "خادم واجهة برمجة التطبيقات",
 	"SERVER_API_LOG": "سجل خادم API",
-	"COMING_SOON": "This page is coming soon!"
+	"COMING_SOON": "This page is coming soon!",
+	"DEFAULT_ERRORS": {
+		"TITLE": {
+			"BAD_REQUEST": "طلب غير صالح",
+			"UNAUTHORIZED": "غير مصرح به",
+			"FORBIDDEN": "ممنوع",
+			"NOT_FOUND": "غير موجود",
+			"CONFLICT": "تعارض",
+			"INTERNAL_SERVER_ERROR": "خطأ في الخادم",
+			"GATEWAY_TIMEOUT": "انتهت مهلة البوابة",
+			"SERVICE_UNAVAILABLE": "الخدمة غير متوفرة",
+			"NETWORK_ERROR": "خطأ في الشبكة",
+			"DEFAULT": "خطأ",
+			"CONNECTION_ERROR": "خطأ في الاتصال"
+		},
+		"MESSAGES": {
+			"BAD_REQUEST": "تعذر فهم الطلب أو كان يفتقد إلى معلمات مطلوبة",
+			"UNAUTHORIZED": "المصادقة مطلوبة وقد فشلت أو لم يتم تقديمها بعد",
+			"FORBIDDEN": "ليس لديك إذن للوصول إلى المورد المطلوب",
+			"NOT_FOUND": "تعذر العثور على المورد المطلوب",
+			"CONFLICT": "كان هناك تعارض مع الحالة الحالية للمورد",
+			"INTERNAL_SERVER_ERROR": "حدث خطأ في الخادم",
+			"GATEWAY_TIMEOUT": "استغرق الخادم وقتاً طويلاً للرد",
+			"SERVICE_UNAVAILABLE": "الخدمة غير متوفرة مؤقتاً. يرجى المحاولة مرة أخرى لاحقاً",
+			"NETWORK_ERROR": "غير قادر على الاتصال بالخادم. يرجى التحقق من اتصال الشبكة",
+			"DEFAULT": "حدث خطأ غير متوقع",
+			"CONNECTION_ERROR": "فقد الاتصال مع الخادم. يرجى المحاولة مرة أخرى لاحقاً"
+		}
+	}
 }

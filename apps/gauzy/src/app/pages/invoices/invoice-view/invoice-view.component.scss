@@ -24,7 +24,7 @@
   min-height: 47.5rem;
 }
 
-.button-container{
+.button-container {
   background: var(--gauzy-card-2);
   border-radius: nb-theme(button-rectangle-border-radius);
   padding: 6px 8px;
@@ -42,8 +42,6 @@
   }
 }
 :host {
-  $height: calc(
-    100vh - 18rem
-  );
-  @include nb-card_overrides(unset, $height, $default-radius);
+  $height: calc(100vh - 18rem);
+  @include nb-card_overrides(auto, $height, $default-radius);
 }

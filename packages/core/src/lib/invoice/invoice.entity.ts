@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, Unique, RelationId, JoinTable } from 'typeorm';
-import { IsString, IsNumber, IsBoolean, IsDate, IsOptional, IsEnum, IsUUID } from 'class-validator';
+import { IsString, IsNumber, IsBoolean, IsDate, IsOptional, IsEnum } from 'class-validator';
 import {
 	IInvoice,
 	CurrenciesEnum,
@@ -12,8 +12,7 @@ import {
 	IOrganizationContact,
 	IOrganization,
 	ITag,
-	IUser,
-	ID
+	IUser
 } from '@gauzy/contracts';
 import { isMySQL } from '@gauzy/config';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
@@ -33,7 +32,8 @@ import {
 	MultiORMEntity,
 	MultiORMManyToMany,
 	MultiORMManyToOne,
-	MultiORMOneToMany
+	MultiORMOneToMany,
+	VirtualMultiOrmColumn
 } from './../core/decorators/entity';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
 
@@ -305,4 +305,8 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 		name: 'tag_invoice'
 	})
 	tags?: ITag[];
+
+	/** Additional virtual columns */
+	@VirtualMultiOrmColumn()
+	toOrganization?: IOrganization;
 }

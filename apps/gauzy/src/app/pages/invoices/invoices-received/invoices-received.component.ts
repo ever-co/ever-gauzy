@@ -181,7 +181,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/invoices/pagination`,
-			relations: ['payments', 'tags', 'toContact'],
+			relations: ['payments', 'tags', 'toContact', 'fromUser'],
 			join: {
 				alias: 'invoice',
 				leftJoin: {

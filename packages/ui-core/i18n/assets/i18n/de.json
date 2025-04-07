@@ -3101,6 +3101,13 @@
 			"GENERATE": "Erstellen Sie einen Link zu dem {{Text}}, den jeder mit dem Link sehen kann.",
 			"ACCESS": "Jeder, der Zugriff auf diesen Link hat, kann den {{ Text }} anzeigen.",
 			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
+		},
+		"ERRORS": {
+			"DELETE": "Beim Löschen der Rechnung ist ein Fehler aufgetreten",
+			"DOWNLOAD": "Beim Herunterladen der Rechnung ist ein Fehler aufgetreten",
+			"INVALID_INVOICE": "Die angeforderte Rechnung ist ungültig",
+			"PDF_GENERATION_FAILED": "Beim Generieren der Rechnungs-PDF ist ein Fehler aufgetreten",
+			"PRINT": "Beim Drucken der Rechnung ist ein Fehler aufgetreten"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -4766,5 +4773,33 @@
 	},
 	"SERVER_API": "API Server",
 	"SERVER_API_LOG": "API Server Log",
-	"COMING_SOON": "This page is coming soon!"
+	"COMING_SOON": "This page is coming soon!",
+	"DEFAULT_ERRORS": {
+		"TITLE": {
+			"BAD_REQUEST": "Ungültige Anfrage",
+			"UNAUTHORIZED": "Nicht autorisiert",
+			"FORBIDDEN": "Zugriff verweigert",
+			"NOT_FOUND": "Nicht gefunden",
+			"CONFLICT": "Konflikt",
+			"INTERNAL_SERVER_ERROR": "Serverfehler",
+			"GATEWAY_TIMEOUT": "Gateway-Zeitüberschreitung",
+			"SERVICE_UNAVAILABLE": "Dienst nicht verfügbar",
+			"NETWORK_ERROR": "Netzwerkfehler",
+			"DEFAULT": "Fehler",
+			"CONNECTION_ERROR": "Verbindungsfehler"
+		},
+		"MESSAGES": {
+			"BAD_REQUEST": "Die Anfrage konnte nicht verstanden werden oder es fehlten erforderliche Parameter",
+			"UNAUTHORIZED": "Eine Authentifizierung ist erforderlich und ist fehlgeschlagen oder wurde noch nicht bereitgestellt",
+			"FORBIDDEN": "Sie haben keine Berechtigung, auf die angeforderte Ressource zuzugreifen",
+			"NOT_FOUND": "Die angeforderte Ressource konnte nicht gefunden werden",
+			"CONFLICT": "Es gab einen Konflikt mit dem aktuellen Zustand der Ressource",
+			"INTERNAL_SERVER_ERROR": "Auf dem Server ist ein Fehler aufgetreten",
+			"GATEWAY_TIMEOUT": "Der Server hat zu lange für eine Antwort gebraucht",
+			"SERVICE_UNAVAILABLE": "Der Dienst ist vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut",
+			"NETWORK_ERROR": "Keine Verbindung zum Server möglich. Bitte überprüfen Sie Ihre Netzwerkverbindung",
+			"DEFAULT": "Ein unerwarteter Fehler ist aufgetreten",
+			"CONNECTION_ERROR": "Verbindung zum Server verloren. Bitte versuchen Sie es später erneut"
+		}
+	}
 }

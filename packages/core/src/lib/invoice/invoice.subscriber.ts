@@ -1,4 +1,5 @@
 import { EventSubscriber } from 'typeorm';
+import { Logger } from '@nestjs/common';
 import { sign } from 'jsonwebtoken';
 import { environment } from '@gauzy/config';
 import { Invoice } from './invoice.entity';
@@ -11,11 +12,27 @@ import {
 
 @EventSubscriber()
 export class InvoiceSubscriber extends BaseEntityEventSubscriber<Invoice> {
+	private readonly logger = new Logger(`GZY - ${InvoiceSubscriber.name}`);
+
 	/**
 	 * Indicates that this subscriber only listen to Invoice events.
 	 */
 	listenTo() {
 		return Invoice;
+	}
+
+	/**
+	 * Sets the virtual field toOrganization on user own invoices
+	 *
+	 * @param {Invoice} invoice - The Invoice entity whose toOrganization needs to be set.
+	 * @returns {Promise<void>} - Returns a promise indicating the completion of the operation.
+	 */
+	private async setFromOrganization(entity: Invoice): Promise<void> {
+		if (entity?.fromUser) {
+			entity.toOrganization = entity.fromOrganization;
+			if (entity.fromOrganization) delete entity.fromOrganization;
+			if (entity.fromOrganizationId) delete entity.fromOrganizationId;
+		}
 	}
 
 	/**
@@ -43,6 +60,24 @@ export class InvoiceSubscriber extends BaseEntityEventSubscriber<Invoice> {
 			}
 		} catch (error) {
 			console.error('InvoiceSubscriber: Error during the afterEntityCreate process:', error);
+		}
+	}
+
+	/**
+	 * Called after an Invoice entity is loaded from the database.
+	 *
+	 * @param entity - The loaded Invoice entity.
+	 * @param event - The LoadEvent associated with the entity loading.
+	 */
+	async afterEntityLoad(entity: Invoice): Promise<void> {
+		try {
+			// Set user own invoice the toOrganization virtual field
+			if (Object.hasOwn(entity, 'fromUser')) {
+				await this.setFromOrganization(entity);
+			}
+		} catch (error) {
+			// Handle or log the error as needed
+			this.logger.error('An error occurred during the afterEntityLoad process:', error);
 		}
 	}
 

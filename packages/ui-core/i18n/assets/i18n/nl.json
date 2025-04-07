@@ -3105,6 +3105,13 @@
 			"GENERATE": "Genereer een link naar de {{ text }} waar iedereen met de link het kan bekijken.",
 			"ACCESS": "Iedereen met toegang tot deze link kan de {{ text }} bekijken.",
 			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
+		},
+		"ERRORS": {
+			"DELETE": "Er is een fout opgetreden tijdens het verwijderen van de factuur",
+			"DOWNLOAD": "Er is een fout opgetreden tijdens het downloaden van de factuur",
+			"INVALID_INVOICE": "De gevraagde factuur is niet geldig",
+			"PDF_GENERATION_FAILED": "Er is een fout opgetreden tijdens het genereren van de factuur PDF",
+			"PRINT": "Er is een fout opgetreden tijdens het afdrukken van de factuur"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -4770,5 +4777,33 @@
 	},
 	"SERVER_API": "API Server",
 	"SERVER_API_LOG": "API Server Log",
-	"COMING_SOON": "This page is coming soon!"
+	"COMING_SOON": "This page is coming soon!",
+	"DEFAULT_ERRORS": {
+		"TITLE": {
+			"BAD_REQUEST": "Ongeldig Verzoek",
+			"UNAUTHORIZED": "Niet Geautoriseerd",
+			"FORBIDDEN": "Verboden",
+			"NOT_FOUND": "Niet Gevonden",
+			"CONFLICT": "Conflict",
+			"INTERNAL_SERVER_ERROR": "Server Fout",
+			"GATEWAY_TIMEOUT": "Gateway Timeout",
+			"SERVICE_UNAVAILABLE": "Service Niet Beschikbaar",
+			"NETWORK_ERROR": "Netwerkfout",
+			"DEFAULT": "Fout",
+			"CONNECTION_ERROR": "Verbindingsfout"
+		},
+		"MESSAGES": {
+			"BAD_REQUEST": "Het verzoek kon niet worden begrepen of miste verplichte parameters",
+			"UNAUTHORIZED": "Authenticatie is vereist en is mislukt of is nog niet verstrekt",
+			"FORBIDDEN": "Je hebt geen toestemming om toegang te krijgen tot de gevraagde bron",
+			"NOT_FOUND": "De gevraagde bron kon niet worden gevonden",
+			"CONFLICT": "Er was een conflict met de huidige staat van de bron",
+			"INTERNAL_SERVER_ERROR": "Er is een fout opgetreden op de server",
+			"GATEWAY_TIMEOUT": "De server deed er te lang over om te reageren",
+			"SERVICE_UNAVAILABLE": "De service is tijdelijk niet beschikbaar. Probeer het later opnieuw",
+			"NETWORK_ERROR": "Kan geen verbinding maken met de server. Controleer je netwerkverbinding",
+			"DEFAULT": "Er is een onverwachte fout opgetreden",
+			"CONNECTION_ERROR": "Verbinding met de server verloren. Probeer het later opnieuw"
+		}
+	}
 }

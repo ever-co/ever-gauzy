@@ -47,7 +47,8 @@ export class InvoiceViewComponent extends TranslationBaseComponent implements On
 			'invoiceItems.expense',
 			'invoiceItems.task',
 			'fromOrganization',
-			'toContact'
+			'toContact',
+			'fromUser'
 		];
 
 		this.invoice$ = this._activatedRoute.paramMap.pipe(
@@ -67,6 +68,8 @@ export class InvoiceViewComponent extends TranslationBaseComponent implements On
 			catchError((error) => {
 				console.log('Error while getting public invoice', error);
 				this._errorHandlingService.handleError(error);
+				// Navigate back to invoices page
+				this._router.navigate(['../../'], { relativeTo: this._activatedRoute });
 				return of(null);
 			}),
 			// Automatically unsubscribe when the component is destroyed
@@ -92,7 +95,7 @@ export class InvoiceViewComponent extends TranslationBaseComponent implements On
 			this._toastrService.success(translationKey);
 		} catch (error) {
 			console.log('Error downloading invoice PDF:', error);
-			this._toastrService.error('INVOICES_PAGE.DOWNLOAD.ERROR');
+			this._toastrService.error('INVOICES_PAGE.ERRORS.DOWNLOAD');
 		}
 	}
 
@@ -160,7 +163,7 @@ export class InvoiceViewComponent extends TranslationBaseComponent implements On
 				this._router.navigate([navigatePath]);
 			} catch (error) {
 				console.error('Error deleting invoice:', error);
-				this._toastrService.danger('Error occurred while deleting the invoice.');
+				this._toastrService.danger('INVOICES_PAGE.ERRORS.DELETE');
 			}
 		}
 	}
@@ -171,7 +174,7 @@ export class InvoiceViewComponent extends TranslationBaseComponent implements On
 	public async print(): Promise<void> {
 		try {
 			if (!this.invoice) {
-				return;
+				throw new Error('invalid-invoice');
 			}
 
 			const { id: invoiceId } = this.invoice;
@@ -182,14 +185,18 @@ export class InvoiceViewComponent extends TranslationBaseComponent implements On
 
 			// Create an iframe to display the PDF
 			const iframe = document.createElement('iframe');
+
+			// Print the PDF when the iframe is loaded
+			iframe.onload = () => iframe.contentWindow.print();
+
+			// Set the iframe source to the file URL
 			iframe.src = fileURL;
 
 			// Append the iframe to the document body
 			document.body.appendChild(iframe);
-			// Print the PDF when the iframe is loaded
-			iframe.onload = () => iframe.contentWindow.print();
 		} catch (error) {
 			console.error('Failed to print the invoice:', error);
+			this._toastrService.danger('INVOICES_PAGE.ERRORS.PRINT');
 		}
 	}
 }

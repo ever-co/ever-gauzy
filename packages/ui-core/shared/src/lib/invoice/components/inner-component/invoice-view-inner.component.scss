@@ -17,3 +17,24 @@
   padding: 0 100px;
   padding-top: 25px;
 }
+
+.w-60 {
+  width: 60%;
+}
+
+.w-40 {
+  width: 40%;
+}
+
+.invoice-notes {
+  white-space: pre-wrap;
+}
+
+.invoice-subtotal {
+  display: flex;
+  width: 100%;
+  div {
+    width: 50%;
+    text-align: right;
+  }
+}

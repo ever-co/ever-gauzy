@@ -3105,6 +3105,13 @@
 			"GENERATE": "Gerar um link para o {{ text }} que qualquer pessoa com o link possa visualizar.",
 			"ACCESS": "Qualquer pessoa com acesso a este link pode visualizar o {{ text }}.",
 			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
+		},
+		"ERRORS": {
+			"DELETE": "Ocorreu um erro ao excluir a fatura",
+			"DOWNLOAD": "Ocorreu um erro ao baixar a fatura",
+			"INVALID_INVOICE": "A fatura solicitada não é válida",
+			"PDF_GENERATION_FAILED": "Ocorreu um erro ao gerar o PDF da fatura",
+			"PRINT": "Ocorreu um erro ao imprimir a fatura"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -4770,5 +4777,33 @@
 	},
 	"SERVER_API": "Servidor API",
 	"SERVER_API_LOG": "Log do servidor API",
-	"COMING_SOON": "This page is coming soon!"
+	"COMING_SOON": "This page is coming soon!",
+	"DEFAULT_ERRORS": {
+		"TITLE": {
+			"BAD_REQUEST": "Requisição Inválida",
+			"UNAUTHORIZED": "Não Autorizado",
+			"FORBIDDEN": "Acesso Negado",
+			"NOT_FOUND": "Não Encontrado",
+			"CONFLICT": "Conflito",
+			"INTERNAL_SERVER_ERROR": "Erro no Servidor",
+			"GATEWAY_TIMEOUT": "Tempo Limite do Gateway",
+			"SERVICE_UNAVAILABLE": "Serviço Indisponível",
+			"NETWORK_ERROR": "Erro de Rede",
+			"DEFAULT": "Erro",
+			"CONNECTION_ERROR": "Erro de Conexão"
+		},
+		"MESSAGES": {
+			"BAD_REQUEST": "A solicitação não pôde ser compreendida ou estava faltando parâmetros obrigatórios",
+			"UNAUTHORIZED": "A autenticação é necessária e falhou ou ainda não foi fornecida",
+			"FORBIDDEN": "Você não tem permissão para acessar o recurso solicitado",
+			"NOT_FOUND": "O recurso solicitado não foi encontrado",
+			"CONFLICT": "Houve um conflito com o estado atual do recurso",
+			"INTERNAL_SERVER_ERROR": "Ocorreu um erro no servidor",
+			"GATEWAY_TIMEOUT": "O servidor demorou muito para responder",
+			"SERVICE_UNAVAILABLE": "O serviço está temporariamente indisponível. Por favor, tente novamente mais tarde",
+			"NETWORK_ERROR": "Não foi possível conectar ao servidor. Verifique sua conexão de rede",
+			"DEFAULT": "Ocorreu um erro inesperado",
+			"CONNECTION_ERROR": "Conexão perdida com o servidor. Por favor, tente novamente mais tarde"
+		}
+	}
 }
