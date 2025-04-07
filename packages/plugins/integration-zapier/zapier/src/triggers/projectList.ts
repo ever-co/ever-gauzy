@@ -1,0 +1,57 @@
+import { ZObject, Bundle } from 'zapier-platform-core';
+
+const perform = async (z: ZObject, bundle: Bundle) => {
+  const organizationId = bundle.inputData.organizationId;
+
+  if (!organizationId) {
+    throw new Error('Organization ID is required');
+  }
+
+  try {
+    const response = await z.request({
+      url: `${process.env.API_BASE_URL}/api/organization-projects`,
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${bundle.authData['access_token']}`,
+      },
+      params: {
+        organizationId: organizationId
+      }
+    });
+
+    return response.data.items.map((project: any) => ({
+      id: project.id,
+      name: project.name
+    }));
+  } catch (error) {
+    z.console.error('Error fetching projects:', error);
+    throw new Error('Failed to fetch projects');
+  }
+};
+
+export default {
+  key: 'project_list',
+  noun: 'Project',
+  display: {
+    label: 'Project List',
+    description: 'Gets a list of projects.',
+    hidden: true, // Hidden from the UI as it's just for dynamic dropdowns
+  },
+  operation: {
+    inputFields: [
+      {
+        key: 'organizationId',
+        type: 'string',
+        label: 'Organization',
+        required: true,
+        dynamic: 'organization_list.id.name',
+        helpText: 'Select the organization to get projects for'
+      }
+    ],
+    perform,
+    sample: {
+      id: '29bd6ac8-1408-4933-a8db-f50740a994b8',
+      name: 'Sample Project'
+    }
+  }
+};
