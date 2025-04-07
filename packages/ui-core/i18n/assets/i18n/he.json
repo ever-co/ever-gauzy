@@ -5041,7 +5041,10 @@
 				"REPOSITORY": "מאגר",
 				"REPOSITORY_PLACEHOLDER": "הזן את כתובת המאגר"
 			},
-			"OR": "או"
+			"OR": "או",
+			"RELEASE_DATE": "תאריך הרישיון",
+			"CHANGELOG": "יומן השינויים",
+			"CHANGELOG_PLACEHOLDER": "הזן יומן השינויים"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "סטטיסטיקות שימוש",
@@ -5051,11 +5054,19 @@
 			"UPLOADED_AT": "הועלה בתאריך",
 			"SECURITY_INFO": "מידע על אבטחה",
 			"CHECKSUM": "סכום ביקורת",
-			"SIGNATURE": "חתימה"
+			"SIGNATURE": "חתימה",
+			"INSTALLED": "התקנה",
+			"HIDDEN_FOR_SECURITY": "הוסרה מהספרייה לכרטיסי אבטחה"
 		},
 		"LAYOUT": {
 			"DISCOVER": "לגלות",
 			"INSTALLED": "מותקן"
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "השרת לא זמין",
+		"DESCRIPTION": "שרת {{companySite}} אינו נגיש כרגע. ייתכן שהסיבה לכך היא תחזוקה מתוכננת או השבתה בלתי צפויה.",
+		"CONNECTING": "מנסה להתחבר מחדש אוטומטית...",
+		"HINT": "סטטוס: מנסה ליצור חיבור לשרתי {{companySite}}. קוד שגיאה: 503."
 	}
 }

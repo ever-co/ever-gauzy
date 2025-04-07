@@ -5,11 +5,17 @@ import { DebounceClickDirective } from './debounce-click.directive';
 import { DynamicDirective } from './dynamic.directive';
 import { SpinnerButtonDirective } from './spinner-button.directive';
 import { TextMaskDirective } from './text-mask.directive';
-import { ImgDirective } from './img.directive';
+import { ReadMoreDirective } from './read-more.directive';
 
 @NgModule({
-	declarations: [SpinnerButtonDirective, DynamicDirective, TextMaskDirective, DebounceClickDirective, ImgDirective],
-	exports: [SpinnerButtonDirective, DynamicDirective, TextMaskDirective, DebounceClickDirective, ImgDirective],
+	declarations: [
+		SpinnerButtonDirective,
+		DynamicDirective,
+		TextMaskDirective,
+		DebounceClickDirective,
+		ReadMoreDirective
+	],
+	exports: [SpinnerButtonDirective, DynamicDirective, TextMaskDirective, DebounceClickDirective, ReadMoreDirective],
 	imports: [CommonModule, NbSpinnerModule]
 })
 export class DesktopDirectiveModule {}

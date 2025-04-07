@@ -179,7 +179,8 @@
 		"SHARE": "Share",
 		"GET_INFO": "Get Info",
 		"RETRY": "Retry",
-		"UPLOAD": "Upload"
+		"UPLOAD": "Upload",
+		"ADD_VERSION": "Add Version"
 	},
 	"SM_TABLE": {
 		"MEMBERS_COUNT": "Members count",
@@ -5049,7 +5050,10 @@
 				"REPOSITORY": "Repository",
 				"REPOSITORY_PLACEHOLDER": "Enter repository URL"
 			},
-			"OR": "Or"
+			"OR": "Or",
+			"RELEASE_DATE": "Release Date",
+			"CHANGELOG": "Changelog",
+			"CHANGELOG_PLACEHOLDER": "Enter changelog"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Usage Statistics",
@@ -5059,11 +5063,19 @@
 			"UPLOADED_AT": "Uploaded At",
 			"SECURITY_INFO": "Security Information",
 			"CHECKSUM": "Checksum",
-			"SIGNATURE": "Signature"
+			"SIGNATURE": "Signature",
+			"INSTALLED": "Installed",
+			"HIDDEN_FOR_SECURITY": "Hidden for security reasons"
 		},
 		"LAYOUT": {
 			"DISCOVER": "Discover",
 			"INSTALLED": "Installed"
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "Server Unavailable",
+		"DESCRIPTION": "The {{companySite}} server is currently unreachable. This may be due to scheduled maintenance or unexpected downtime.",
+		"CONNECTING": "Automatically retrying connection...",
+		"HINT": "Status: Attempting to establish connection to {{companySite}} servers. Error code: 503."
 	}
 }

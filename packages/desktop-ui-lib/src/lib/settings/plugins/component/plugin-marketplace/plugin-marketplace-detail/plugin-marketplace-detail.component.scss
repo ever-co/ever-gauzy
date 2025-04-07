@@ -1,6 +1,6 @@
 .plugin-container {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
   padding: 16px;
@@ -32,18 +32,13 @@
   font-size: 14px;
   color: var(--nb-text-hint-color);
   margin-top: 4px;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .plugin-actions {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem !important;
 
   .plugin-edit {
     color: var(--gauzy-text-color-1);

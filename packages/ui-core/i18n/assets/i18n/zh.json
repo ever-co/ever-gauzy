@@ -5046,7 +5046,10 @@
 				"REPOSITORY": "仓库",
 				"REPOSITORY_PLACEHOLDER": "输入仓库URL"
 			},
-			"OR": "或"
+			"OR": "或",
+			"RELEASE_DATE": "发布日期",
+			"CHANGELOG": "更新日志",
+			"CHANGELOG_PLACEHOLDER": "输入更新日志"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "使用统计",
@@ -5056,11 +5059,19 @@
 			"UPLOADED_AT": "上传时间",
 			"SECURITY_INFO": "安全信息",
 			"CHECKSUM": "校验和",
-			"SIGNATURE": "签名"
+			"SIGNATURE": "签名",
+			"INSTALLED": "已安",
+			"HIDDEN_FOR_SECURITY": "安全原因隐藏"
 		},
 		"LAYOUT": {
 			"DISCOVER": "发现",
 			"INSTALLED": "已安装"
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "服务器不可用",
+		"DESCRIPTION": "当前无法访问{{companySite}}服务器。这可能是由于计划维护或意外停机。",
+		"CONNECTING": "正在自动重试连接...",
+		"HINT": "状态：正在尝试连接到{{companySite}}服务器。错误代码：503。"
 	}
 }
