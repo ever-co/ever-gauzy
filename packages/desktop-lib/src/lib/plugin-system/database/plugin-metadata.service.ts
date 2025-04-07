@@ -43,18 +43,21 @@ export class PluginMetadataService {
 		return this.db.connection<IPluginMetadataPersistance>(TABLE_PLUGINS).select('*').where('isActivate', true);
 	}
 
-	private buildQuery(input: { id?: string; name?: string }) {
+	private buildQuery(input: { id?: string; name?: string; marketplaceId?: string }) {
 		const query = this.db.connection<IPluginMetadataPersistance>(TABLE_PLUGINS).select('*');
+
 		if (input.id) {
 			query.where('id', input.id);
 		}
+
 		if (input.name) {
-			if (input.id) {
-				query.orWhere('id', input.id);
-			} else {
-				query.where('name', input.name);
-			}
+			query.where('name', input.name);
 		}
+
+		if (input.marketplaceId) {
+			query.where('marketplaceId', input.marketplaceId);
+		}
+
 		return query;
 	}
 }

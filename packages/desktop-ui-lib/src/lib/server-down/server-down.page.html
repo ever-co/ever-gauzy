@@ -1,12 +1,22 @@
 <nb-layout>
-	<nb-layout-column class="login-view info-page" scroll="false">
-		<div class="server-down-content">
-			<div class="logo app-hide-on-keyboard-open">
-				<img [src]="noInternetLogo" />
+	<nb-layout-column class="maintenance-view">
+		<div class="maintenance-container">
+			<div class="illustration">
+				<img [src]="noInternetLogo" alt="Server Maintenance Illustration" class="logo" />
+				<div class="pulse-dot"></div>
 			</div>
 
-			<div class="info-massage">
-				<h3 class="mt-4">{{ 'GAUZY_MAINTENANCE' | translate: { companySite }  }}</h3>
+			<div class="content">
+				<h1 class="title">{{ 'SERVER_DOWN.TITLE' | translate }}</h1>
+				<p class="description">{{ 'SERVER_DOWN.DESCRIPTION' | translate: { companySite } }}</p>
+
+				<div class="status-container">
+					<div class="status-indicator">
+						<div class="spinner"></div>
+						<span>{{ 'SERVER_DOWN.CONNECTING' | translate }}</span>
+					</div>
+					<p class="hint">{{ 'SERVER_DOWN.HINT' | translate : { companySite } }}</p>
+				</div>
 			</div>
 		</div>
 	</nb-layout-column>
