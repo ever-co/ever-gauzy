@@ -350,7 +350,7 @@ export class PluginMarketplaceItemComponent implements OnInit, OnDestroy {
 		return this.marketplaceQuery.plugin$;
 	}
 
-	public get plugin(): IPlugin {
+	private get plugin(): IPlugin {
 		return this.marketplaceQuery.plugin;
 	}
 

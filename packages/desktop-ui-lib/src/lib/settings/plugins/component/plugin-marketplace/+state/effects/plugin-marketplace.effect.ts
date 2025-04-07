@@ -33,7 +33,8 @@ export class PluginMarketplaceEffects {
 					map((res) => res.plugin),
 					tap((uploaded) => {
 						this.pluginMarketplaceStore.update((state) => ({
-							plugins: [uploaded, ...state.plugins] // Immutable update
+							plugins: [uploaded, ...state.plugins], // Immutable update
+							count: state.count + 1
 						}));
 						this.toastrService.success('Upload plugin successfully!');
 					}),

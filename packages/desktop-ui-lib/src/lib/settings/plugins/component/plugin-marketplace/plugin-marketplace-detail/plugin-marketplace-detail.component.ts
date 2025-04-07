@@ -14,6 +14,7 @@ import { Store } from '../../../../../services';
 import { PluginElectronService } from '../../../services/plugin-electron.service';
 import { IPlugin as IPluginInstalled } from '../../../services/plugin-loader.service';
 import { PluginMarketplaceUploadComponent } from '../plugin-marketplace-upload/plugin-marketplace-upload.component';
+import { PluginVersionActions } from '../+state/actions/plugin-version.action';
 
 @UntilDestroy()
 @Component({
@@ -116,6 +117,7 @@ export class PluginMarketplaceDetailComponent implements OnInit {
 	}
 
 	public async openPlugin(): Promise<void> {
+		this.action.dispatch(PluginVersionActions.selectVersion(this.plugin.version));
 		await this.router.navigate([`/settings/marketplace-plugins/${this.plugin.id}`]);
 	}
 
