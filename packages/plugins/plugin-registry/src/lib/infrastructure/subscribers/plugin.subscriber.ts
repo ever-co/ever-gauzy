@@ -148,6 +148,7 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 			// This is needed because SQL doesn't natively support semantic version sorting
 			const allVersions = await this.pluginVersionService.typeOrmPluginVersionRepository
 				.createQueryBuilder('version')
+				.leftJoinAndSelect('version.source', 'source')
 				.where('version.pluginId = :pluginId', { pluginId })
 				.getMany();
 
