@@ -1,7 +1,7 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsIn } from 'class-validator';
 import { ICreateZapierIntegrationInput, ZapierGrantType } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
-import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateZapierIntegrationDto extends TenantOrganizationBaseDTO implements ICreateZapierIntegrationInput {
 	@ApiProperty({ type: () => String })
