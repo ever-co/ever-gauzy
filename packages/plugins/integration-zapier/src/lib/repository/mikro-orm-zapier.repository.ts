@@ -1,4 +1,4 @@
 import { MikroOrmBaseEntityRepository } from '@gauzy/core';
-import { ZapierWebhookSubscriptionRepository } from './zapier-repository.entity';
+import { ZapierWebhookSubscription } from '../zapier-webhook-subscription.entity';
 
-export class MikroOrmZapierWebhookSubscriptionRepository extends MikroOrmBaseEntityRepository<ZapierWebhookSubscriptionRepository> {}
+export class MikroOrmZapierWebhookSubscriptionRepository extends MikroOrmBaseEntityRepository<ZapierWebhookSubscription> { }

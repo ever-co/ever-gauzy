@@ -11,11 +11,11 @@ import {
 	BadRequestException,
 	InternalServerErrorException
 } from '@nestjs/common';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { IZapierCreateWebhookInput } from '@gauzy/contracts';
 import { ZapierWebhookService } from './zapier-webhook.service';
 import { ZapierService } from './zapier.service';
-import { IZapierCreateWebhookInput } from '@gauzy/contracts';
-import { ZapierWebhookSubscriptionRepository } from './repository/zapier-repository.entity';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ZapierWebhookSubscription } from './zapier-webhook-subscription.entity';
 
 @Controller('/integration/zapier')
 export class ZapierWebhookController {
@@ -24,7 +24,7 @@ export class ZapierWebhookController {
 	constructor(
 		private readonly zapierWebhookService: ZapierWebhookService,
 		private readonly zapierService: ZapierService
-	) {}
+	) { }
 
 	@ApiOperation({ summary: 'Create a new Zapier webhook subscription' })
 	@ApiResponse({
@@ -39,11 +39,11 @@ export class ZapierWebhookController {
 	async createWebhook(
 		@Body() body: IZapierCreateWebhookInput,
 		@Headers('Authorization') authorization: string
-	): Promise<ZapierWebhookSubscriptionRepository> {
+	): Promise<ZapierWebhookSubscription> {
 		if (!authorization) {
 			throw new UnauthorizedException('Authorization header is required');
 		}
-		if(!authorization.startsWith('Bearer')) {
+		if (!authorization.startsWith('Bearer')) {
 			throw new UnauthorizedException('Authorization header must start with Bearer');
 		}
 		const token = authorization.split(' ')[1];

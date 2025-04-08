@@ -1,27 +1,23 @@
 import { Injectable, Logger, ForbiddenException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ZapierWebhookSubscriptionRepository } from './repository/zapier-repository.entity';
-import { HttpService } from '@nestjs/axios';
-import { catchError, of } from 'rxjs';
+import { ID } from '@gauzy/contracts';
+import { ZapierWebhookSubscription } from './zapier-webhook-subscription.entity';
+import { TypeOrmZapierWebhookSubscriptionRepository } from './repository/type-orm-zapier.repository';
 
 @Injectable()
 export class ZapierWebhookService {
+    private readonly logger = new Logger(ZapierWebhookService.name);
 
-    private readonly logger = new Logger(ZapierWebhookService.name)
     constructor(
-        @InjectRepository(ZapierWebhookSubscriptionRepository)
-        private readonly subscriptionRepository: Repository<ZapierWebhookSubscriptionRepository>,
-        private readonly _httpService: HttpService,
-    ) {}
+        private readonly subscriptionRepository: TypeOrmZapierWebhookSubscriptionRepository,
+    ) { }
 
     async createSubscription(input: {
         targetUrl: string;
         event: string;
-        integrationId?: string;
-        tenantId?: string;
-        organizationId?: string
-    }): Promise<ZapierWebhookSubscriptionRepository> {
+        integrationId?: ID;
+        tenantId?: ID;
+        organizationId?: ID
+    }): Promise<ZapierWebhookSubscription> {
         try {
             // Check if subscription already exists to avoid duplicates
             const existing = await this.subscriptionRepository.findOne({
