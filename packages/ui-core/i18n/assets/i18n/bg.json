@@ -179,7 +179,9 @@
 		"SHARE": "Споделяне",
 		"GET_INFO": "Получаване на информация",
 		"RETRY": "Опитайте отново",
-		"UPLOAD": "Качване"
+		"UPLOAD": "Качване",
+		"ADD_VERSION": "Добавяне на версия",
+		"MARKETPLACE": "Маркетплейс"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4065,7 +4067,14 @@
 				"SSL_CERT_FILE_INFO": "Път към файла с клиентски сертификат за SSL.",
 				"SECURE": "Сигурно",
 				"SECURE_INFO": "Вярно, ако искате да проверите SSL сертификатите."
-			}
+			},
+			"ADD_PLUGIN_NPM_DESCRIPTION": "Инсталацията чрез NPM позволява достъп до публично достъпни и частни приставки.",
+			"PACKAGE_NAME": "Име на NPM пакет",
+			"PACKAGE_VERSION": "Версия на NPM пакет",
+			"REGISTRY": "NPM регистър",
+			"AUTH_TOKEN": "Удостоверителен токен",
+			"PRIVATE_REGISTRY_URL": "URL на частен регистър",
+			"PLUGIN_INSTALL_CDN_ERROR": "URL адресът на сървъра не трябва да е празен."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Седмичната лимита е превишена",
 		"OF_HRS": "От {{ limit }} часа",

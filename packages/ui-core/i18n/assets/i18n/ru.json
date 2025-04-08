@@ -169,7 +169,9 @@
 		"SHARE": "Поделиться",
 		"GET_INFO": "Получить информацию",
 		"RETRY": "Повторить попытку",
-		"UPLOAD": "Загрузить"
+		"UPLOAD": "Загрузить",
+		"MARKETPLACE": "Рынок",
+		"ADD_VERSION": "Добавить версию"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4035,7 +4037,14 @@
 				"SSL_CERT_FILE_INFO": "Путь к файлу сертификата клиента для SSL.",
 				"SECURE": "Безопасно",
 				"SECURE_INFO": "True, если вы хотите проверить SSL-сертификаты."
-			}
+			},
+			"ADD_PLUGIN_NPM_DESCRIPTION": "Установка через NPM позволяет получить доступ к общедоступным и частным плагинам.",
+			"PACKAGE_NAME": "Имя пакета NPM",
+			"PACKAGE_VERSION": "Версия пакета NPM",
+			"REGISTRY": "Реестр NPM",
+			"AUTH_TOKEN": "Токен аутентификации",
+			"PRIVATE_REGISTRY_URL": "URL частного реестра",
+			"PLUGIN_INSTALL_CDN_ERROR": "URL сервера не должен быть пустым."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Еженедельный лимит превышен",
 		"OF_HRS": "Из {{ limit }} часов",

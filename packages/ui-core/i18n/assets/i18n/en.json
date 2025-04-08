@@ -180,7 +180,8 @@
 		"GET_INFO": "Get Info",
 		"RETRY": "Retry",
 		"UPLOAD": "Upload",
-		"ADD_VERSION": "Add Version"
+		"ADD_VERSION": "Add Version",
+		"MARKETPLACE": "Marketplace"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4148,7 +4149,13 @@
 			"VERSION": "Version",
 			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "Install plugins from local files or CDN. Local for custom/private plugins, CDN for public ones. Choose based on your needs.",
 			"ADD_PLUGIN_CDN_DESCRIPTION": "CDN installation allows for easy access to publicly available plugins.",
-			"ADD_PLUGIN_NPM_DESCRIPTION": "NPM installation allows for access to publicly and private available plugins."
+			"ADD_PLUGIN_NPM_DESCRIPTION": "NPM installation allows for access to publicly and private available plugins.",
+			"PACKAGE_NAME": "NPM Package Name",
+			"PACKAGE_VERSION": "NPM Package Version",
+			"REGISTRY": "NPM Registry",
+			"AUTH_TOKEN": "Authentication Token",
+			"PRIVATE_REGISTRY_URL": "Private Registry URL",
+			"PLUGIN_INSTALL_CDN_ERROR": "The server URL mustn't be empty."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weekly limit exceeded",
 		"OF_HRS": "Of {{ limit }} hrs",

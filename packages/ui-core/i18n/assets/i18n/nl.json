@@ -170,7 +170,9 @@
 		"SHARE": "Delen",
 		"GET_INFO": "Informatie ophalen",
 		"RETRY": "Opnieuw proberen",
-		"UPLOAD": "Uploaden"
+		"UPLOAD": "Uploaden",
+		"MARKETPLACE": "Marktplaats",
+		"ADD_VERSION": "Versie toevoegen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4017,7 +4019,14 @@
 				"SSL_CERT_FILE_INFO": "Pad naar het client-certificaatbestand voor SSL.",
 				"SECURE": "Veilig",
 				"SECURE_INFO": "True, als je de SSL-certificaten wilt verifiëren."
-			}
+			},
+			"ADD_PLUGIN_NPM_DESCRIPTION": "NPM-installatie biedt toegang tot openbaar en privé beschikbare plug-ins.",
+			"PACKAGE_NAME": "NPM-pakketnaam",
+			"PACKAGE_VERSION": "NPM-pakketversie",
+			"REGISTRY": "NPM-register",
+			"AUTH_TOKEN": "Authenticatietoken",
+			"PRIVATE_REGISTRY_URL": "URL van privéregister",
+			"PLUGIN_INSTALL_CDN_ERROR": "De server-URL mag niet leeg zijn."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weeklimiet overschreden",
 		"OF_HRS": "Van {{ limit }} uur",

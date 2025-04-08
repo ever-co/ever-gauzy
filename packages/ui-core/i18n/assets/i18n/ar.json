@@ -170,7 +170,9 @@
 		"SHARE": "مشاركة",
 		"GET_INFO": "الحصول على المعلومات",
 		"RETRY": "إعادة المحاولة",
-		"UPLOAD": "رفع"
+		"UPLOAD": "رفع",
+		"MARKETPLACE": "السوق",
+		"ADD_VERSION": "اضافة نسخة"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4002,7 +4004,14 @@
 			},
 			"VERSION": "الإصدار",
 			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "قم بتثبيت المكونات الإضافية من الملفات المحلية أو CDN. محلي للمكونات الإضافية المخصصة/الخاصة، وCDN للمكونات العامة. اختر بناءً على احتياجاتك.",
-			"ADD_PLUGIN_CDN_DESCRIPTION": "تتيح لك التثبيت من CDN الوصول بسهولة إلى المكونات الإضافية المتاحة علنًا."
+			"ADD_PLUGIN_CDN_DESCRIPTION": "تتيح لك التثبيت من CDN الوصول بسهولة إلى المكونات الإضافية المتاحة علنًا.",
+			"ADD_PLUGIN_NPM_DESCRIPTION": "يتيح تثبيت NPM الوصول إلى الإضافات المتاحة للعموم والخاصة.",
+			"PACKAGE_NAME": "اسم حزمة NPM",
+			"PACKAGE_VERSION": "إصدار حزمة NPM",
+			"REGISTRY": "سجل NPM",
+			"AUTH_TOKEN": "رمز المصادقة",
+			"PRIVATE_REGISTRY_URL": "رابط السجل الخاص",
+			"PLUGIN_INSTALL_CDN_ERROR": "يجب ألا يكون عنوان URL للخادم فارغًا."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "تجاوز الحد الأسبوعي",
 		"OF_HRS": "من {{ limit }} ساعة",

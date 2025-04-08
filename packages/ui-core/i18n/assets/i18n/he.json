@@ -169,7 +169,9 @@
 		"SHARE": "שיתוף",
 		"GET_INFO": "קבל מידע",
 		"RETRY": "נסה שוב",
-		"UPLOAD": "העלה"
+		"UPLOAD": "העלה",
+		"MARKEPLACE": "מרקט",
+		"ADD_VERSION": "הוסף גרסה"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4028,7 +4030,14 @@
 				"SSL_CERT_FILE_INFO": "נתיב לקובץ תעודת הלקוח עבור SSL.",
 				"SECURE": "מאובטח",
 				"SECURE_INFO": "נכון, אם ברצונך לאמת את תעודות ה-SSL."
-			}
+			},
+			"ADD_PLUGIN_NPM_DESCRIPTION": "התקנת NPM מאפשרת גישה לתוספים זמינים לציבור ופרטיים.",
+			"PACKAGE_NAME": "שם חבילת NPM",
+			"PACKAGE_VERSION": "גרסת חבילת NPM",
+			"REGISTRY": "מרשם NPM",
+			"AUTH_TOKEN": "אסימון אימות",
+			"PRIVATE_REGISTRY_URL": "כתובת URL של מרשם פרטי",
+			"PLUGIN_INSTALL_CDN_ERROR": "כתובת ה-URL של השרת לא יכולה להיות ריקה."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "הגעת למגבלת השבוע",
 		"OF_HRS": "מתוך {{ limit }} שעות",

@@ -170,7 +170,9 @@
 		"SHARE": "Partager",
 		"GET_INFO": "Obtenir des infos",
 		"RETRY": "Réessayer",
-		"UPLOAD": "Téléverser"
+		"UPLOAD": "Téléverser",
+		"MARKETPLACE": "Marketplace",
+		"ADD_VERSION": "Ajouter une version"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4008,7 +4010,14 @@
 				"SSL_CERT_FILE_INFO": "Chemin du fichier de certificat client pour SSL.",
 				"SECURE": "Sécurisé",
 				"SECURE_INFO": "Vrai, si vous souhaitez vérifier les certificats SSL."
-			}
+			},
+			"ADD_PLUGIN_NPM_DESCRIPTION": "L'installation NPM permet d'accéder à des plugins disponibles publiquement et en privé.",
+			"PACKAGE_NAME": "Nom du package NPM",
+			"PACKAGE_VERSION": "Version du package NPM",
+			"REGISTRY": "Registre NPM",
+			"AUTH_TOKEN": "Jeton d'authentification",
+			"PRIVATE_REGISTRY_URL": "URL du registre privé",
+			"PLUGIN_INSTALL_CDN_ERROR": "L'URL du serveur ne doit pas être null."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "La limite hebdomadaire est dépassée.",
 		"OF_HRS": "De {{ limit }} heures",

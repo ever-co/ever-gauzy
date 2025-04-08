@@ -170,7 +170,9 @@
 		"SHARE": "Compartilhar",
 		"GET_INFO": "Obter informações",
 		"RETRY": "Tentar novamente",
-		"UPLOAD": "Carregar"
+		"UPLOAD": "Carregar",
+		"MARKETPLACE": "Mercado",
+		"ADD_VERSION": "Adicionar versão"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -4017,7 +4019,14 @@
 				"SSL_CERT_FILE_INFO": "Caminho para o arquivo de certificado do cliente para SSL.",
 				"SECURE": "Seguro",
 				"SECURE_INFO": "True, se desejar verificar os certificados SSL."
-			}
+			},
+			"ADD_PLUGIN_NPM_DESCRIPTION": "A instalação do NPM permite o acesso a plug-ins disponíveis publicamente e privados.",
+			"PACKAGE_NAME": "Nome do pacote NPM",
+			"PACKAGE_VERSION": "Versão do pacote NPM",
+			"REGISTRY": "Registro NPM",
+			"AUTH_TOKEN": "Token de autenticação",
+			"PRIVATE_REGISTRY_URL": "URL do registro privado",
+			"PLUGIN_INSTALL_CDN_ERROR": "O URL do servidor não deve estar vazio."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Limite semanal excedido",
 		"OF_HRS": "De {{ limit }} horas.",
