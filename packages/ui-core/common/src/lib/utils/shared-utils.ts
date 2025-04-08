@@ -75,7 +75,7 @@ export function isEmpty(item: any): boolean {
 		item = item.filter((val) => !isEmpty(val));
 		return item.length === 0;
 	} else if (item && typeof item === 'object') {
-		for (var key in item) {
+		for (const key in item) {
 			if (item[key] === null || item[key] === undefined || item[key] === '') {
 				delete item[key];
 			}
@@ -161,7 +161,7 @@ export function getContrastColor(hex: string): string {
  * The precision for a decimal (exact numeric applies only for decimal column), which is the maximum
  * number of digits that are stored.
  */
-export function convertPrecisionFloatDigit(val: number, digit: number = 6) {
+export function convertPrecisionFloatDigit(val: number, digit = 6) {
 	return parseFloat(parseFloat(val.toString()).toFixed(digit));
 }
 
@@ -201,7 +201,7 @@ export function ucFirst(str: string, force: boolean): string {
  * @param timezone The timezone identifier (e.g., 'Europe/Paris').
  * @returns The UTC offset in minutes.
  */
-export function getUTCOffsetForTimezone(timezone: string = 'UTC'): number {
+export function getUTCOffsetForTimezone(timezone = 'UTC'): number {
 	return moment.tz(timezone).utcOffset();
 }
 
@@ -560,4 +560,14 @@ export function extractNumber(value: string): number {
 export function validateUniqueString(existingStrings: string[], value: string): boolean {
 	const normalizedStrings = existingStrings.map((str) => str.toLowerCase());
 	return normalizedStrings.includes(value.toLowerCase());
+}
+
+/**
+ * Convert date to UTC string format to be used in filter
+ *
+ * @param date
+ * @returns {string}
+ */
+export function toInvoiceDateFilter(date: string | Date | moment.Moment): string {
+	return toUTC(date).format('YYYY-MM-DD HH:mm:ss');
 }

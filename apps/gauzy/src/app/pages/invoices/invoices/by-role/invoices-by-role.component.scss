@@ -1,0 +1,465 @@
+@import 'report';
+@import 'gauzy/_gauzy-overrides';
+@import 'gauzy/_gauzy-cards';
+
+.popover-container {
+  display: flex;
+  flex-direction: column;
+  justify-items: flex-start;
+  align-items: flex-start;
+  padding: 12.5px 14px 12.5px 18px;
+  border-radius: $default-radius;
+  width: 411px;
+
+  .title {
+    color: nb-theme(text-primary-color);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 16px;
+    letter-spacing: 0em;
+  }
+
+  i {
+    cursor: pointer;
+  }
+  @include dialog(var(--gauzy-card-1), var(--gauzy-sidebar-background-4));
+}
+
+.popover-container-action {
+  padding: 0.5rem;
+  border-radius: $default-radius;
+}
+
+::ng-deep nb-popover {
+  border-radius: 10px !important;
+}
+
+.per-page {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.per-page-input {
+  width: 138px;
+}
+
+.per-page-label {
+  align-self: flex-start;
+}
+
+.per-page-container {
+  margin: 10px 0;
+}
+
+.show-columns {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-top: 2rem;
+
+  .show-columns-select.size-medium:not(.full-width) {
+    max-width: unset;
+    margin-right: 9px;
+  }
+}
+
+.show-columns-label {
+  text-align: left;
+  width: 100%;
+}
+
+:host .actions-container {
+  display: flex;
+  flex-wrap: nowrap;
+  position: absolute;
+  align-items: center;
+  @include nb-rtl(left, 1rem);
+  @include nb-ltr(right, 1rem);
+}
+
+.show-columns-select {
+  margin-bottom: 20px;
+}
+
+.history-list {
+  margin: 20px 0;
+}
+
+.history-list-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.history-list-select {
+  font-weight: bold;
+  width: 50%;
+}
+
+.history-action {
+  font-weight: bold;
+}
+
+.history-date {
+  font-size: 12px;
+}
+
+.history-item {
+  align-self: flex-start;
+}
+
+.btn-group {
+  display: flex;
+  align-items: center;
+}
+
+button {
+  margin: 5px;
+}
+
+.content-active {
+  padding-left: 0;
+}
+
+::ng-deep .arrow {
+  display: none;
+}
+
+.icon-text {
+  margin-right: 0.5rem;
+}
+
+.actions {
+  background: var(--gauzy-card-2);
+  border-radius: nb-theme(button-rectangle-border-radius);
+  padding: 0px 1px 0px 1px;
+  margin-right: 20px;
+}
+
+.transition-container {
+  overflow-x: hidden;
+  border-radius: nb-theme(button-rectangle-border-radius);
+
+  span {
+    background: var(--gauzy-card-2);
+    border-radius: nb-theme(button-rectangle-border-radius);
+    padding: 0px 1px 0px 1px;
+    margin-right: 10px;
+  }
+}
+
+:host .transition {
+  display: flex;
+
+  &.hide {
+    @include nb-rtl(transform, translateX(-100%));
+    @include nb-ltr(transform, translateX(100%));
+    transition: all 0.15s ease-in;
+  }
+
+  &.show {
+    opacity: 1;
+    transform: translateX(0%);
+    transition: all 0.25s ease-out;
+  }
+
+  &.show-button {
+    @include nb-rtl(transform, translateX(110%));
+    @include nb-ltr(transform, translateX(-110%));
+  }
+}
+
+.nb-accordion-item-header {
+  position: relative;
+
+  & .accordion-header-hint {
+    position: absolute;
+    bottom: 0;
+    font-size: 10px;
+    color: var(--text-primary-disabled-color);
+  }
+}
+
+nb-accordion-item-header ::ng-deep nb-icon {
+  border: 1px solid nb-theme(border-basic-color-4);
+  border-radius: nb-theme(input-rectangle-border-radius);
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+nb-accordion-item {
+  background-color: var(--gauzy-card-3);
+}
+
+ga-currency::ng-deep nb-select {
+  .select-button {
+    border-radius: nb-theme(input-rectangle-border-radius);
+  }
+}
+
+#inputStatus::ng-deep {
+  .select-button {
+    border-radius: nb-theme(input-rectangle-border-radius);
+    height: 42px;
+  }
+}
+
+:host ::ng-deep ngx-avatar {
+  .inner-wrapper {
+    background-color: nb-theme(color-primary-transparent-100);
+    border-radius: nb-theme(button-rectangle-border-radius);
+    padding: 3px 9px 3px 3px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: fit-content;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 15px;
+    letter-spacing: 0em;
+    gap: 8px;
+
+    .image-container {
+      height: 20px;
+      width: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      img[type='user'] {
+        height: 18px;
+        width: 18px;
+      }
+    }
+
+    .link-text {
+      color: nb-theme(text-primary-color);
+      font-weight: normal;
+    }
+  }
+}
+
+ga-pagination {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.comments {
+  overflow-y: scroll;
+  height: 15rem;
+}
+
+textarea {
+  height: 85px;
+  resize: none;
+}
+
+.action {
+  box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+
+  &[nbButton].appearance-filled.status-basic {
+    background-color: #ffffff;
+  }
+
+  &.info {
+    background-color: #0088fe;
+  }
+
+  &.danger {
+    color: nb-theme(color-danger-default);
+  }
+
+  &.secondary {
+    color: #7e7e8f;
+  }
+
+  &.primary {
+    &[nbButton].appearance-filled.status-basic,
+    .appearance-filled.status-basic[nbButtonToggle] {
+      color: nb-theme(text-primary-color);
+    }
+  }
+
+  &.select-nb ::ng-deep {
+    box-shadow: none;
+
+    .select-button {
+      box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+      background: rgba(245, 245, 245);
+      height: 2rem;
+      border-radius: nb-theme(button-rectangle-border-radius);
+    }
+  }
+}
+
+:host nb-select ::ng-deep {
+  .select-button {
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 1px 0px inset;
+  }
+}
+
+:host .input-icon,
+:host .input-date {
+  display: flex;
+  align-items: center;
+  color: nb-theme(text-basic-color);
+  border-radius: 0.5rem;
+  height: 42px;
+  position: relative;
+
+  &:hover {
+    border-color: nb-theme(color-primary-hover);
+    color: nb-theme(text-basic-color);
+
+    &:focus {
+      background: rgba(126, 126, 143, 0.05);
+    }
+  }
+
+  &:active {
+    background: rgba(126, 126, 143, 0.05);
+  }
+
+  .icon {
+    position: absolute;
+    @include nb-ltr(right, 14px);
+    @include nb-rtl(left, 0);
+  }
+}
+
+input {
+  background: transparent;
+  width: 100%;
+}
+
+:host nb-card-body {
+  overflow: unset;
+  padding: 0;
+  background-color: unset;
+}
+
+nb-tab {
+  background-color: var(--gauzy-card-2);
+  border: 0 0 $default-radius $default-radius;
+}
+
+:host {
+  nb-card {
+    margin: 0;
+  }
+
+  .remove-scroll {
+    overflow: unset;
+    width: 100%;
+    border: 0 0 $default-radius $default-radius;
+    @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
+    @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
+    nb-accordion {
+      @include nb-ltr(margin-right, 0.625rem);
+      @include nb-rtl(margin-left, 0.625rem);
+    }
+
+    .custom-content-body {
+      height: calc(100vh - 19.5rem);
+      display: flex;
+      flex-direction: column;
+
+      .table-scroll-container {
+        flex-grow: 10;
+        max-height: unset;
+      }
+
+      .grid {
+        overflow: auto;
+        height: 100%;
+      }
+
+      ga-card-grid {
+        ::ng-deep .grid-scroll-container {
+          max-height: 100%;
+        }
+      }
+    }
+
+    padding: 1rem;
+  }
+
+  ::ng-deep {
+    @include card_overrides(auto, $default-card-height, $default-radius);
+    @include ng-select-overrides($default-height, $default-radius, $default-box-shadow-inset);
+
+    nb-tabset .tab.active .tab-link {
+      background-color: var(--gauzy-card-2);
+      border: unset;
+      text-decoration: none;
+    }
+
+    [nbInput].status-basic,
+    nb-select.appearance-outline.status-basic .select-button,
+    .ng-select .ng-select-container {
+      background-color: var(--background-basic-color-1);
+    }
+  }
+}
+
+:host nb-accordion {
+  @include dialog(var(--gauzy-card-1), var(--gauzy-card-1));
+}
+
+.comments-container {
+  margin-inline: 0;
+
+  & nb-list {
+    margin: 0;
+  }
+
+  & .col-6:nth-child(1) {
+    padding-top: 15px;
+    color: var(--gauzy-text-color-2);
+
+    & textarea {
+      font-weight: 400;
+    }
+  }
+
+  & .col-6:nth-child(2) {
+    background: var(--gauzy-card-1);
+    border-radius: var(--border-radius);
+    padding: 15px 6px 0 15px;
+    color: var(--gauzy-text-color-2);
+
+    & nb-list-item {
+      padding-left: 0;
+      position: relative;
+
+      & .history-item.history-date {
+        color: var(--text-hint-color);
+        margin-top: 3px;
+      }
+
+      & .history-item.history-title {
+        margin-top: 10px;
+        text-transform: capitalize;
+        font-weight: bold;
+      }
+      & .history-item.history-comment {
+        margin-top: 6px;
+        font-size: 0.85rem;
+        &.history-comment::first-letter {
+          text-transform: capitalize;
+        }
+      }
+    }
+
+    // border bottom
+    & nb-list-item::after {
+      content: '';
+      display: block;
+      width: 100%;
+      border-bottom: thin solid var(--accordion-header-border-color);
+      position: absolute;
+      bottom: 0;
+    }
+  }
+}

@@ -14,7 +14,7 @@ import { Router } from '@angular/router';
 						<img [src]="value?.imageUrl" />
 					</div>
 					<div class="names-wrapper">
-						<a class="link-text">{{ value.name }}</a>
+						<a class="link-text" [ngClass]="{ 'disabled-link': !useNavigate }">{{ value.name }}</a>
 					</div>
 				</div>
 			</ng-container>
@@ -25,6 +25,7 @@ import { Router } from '@angular/router';
 export class ContactLinksComponent {
 	@Input() rowData: any;
 	@Input() value: any;
+	@Input() useNavigate = true;
 
 	constructor(private readonly _router: Router) {}
 
@@ -34,7 +35,7 @@ export class ContactLinksComponent {
 	 * @return {void} This function does not return anything.
 	 */
 	navigateToContact(): void {
-		if (!this.value) {
+		if (!this.value || !this.useNavigate) {
 			return;
 		}
 		this._router.navigate([`/pages/contacts/view`, this.value.id]);

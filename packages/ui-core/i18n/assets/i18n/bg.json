@@ -2914,6 +2914,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"STATUS_WARNING": "Нямате права да промените този статус",
 		"VALIDATION": {
 			"REQUIRED_CONTACT": "Моля, изберете контакт",
 			"REQUIRED_INVOICE_NUMBER": "Номер на фактурата е задължителен",

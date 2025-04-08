@@ -1,1 +1,9 @@
 @import '@shared/_contact-links';
+
+.link-text {
+  &.disabled-link {
+    text-decoration: underline;
+    cursor: default;
+    pointer-events: none;
+  }
+}

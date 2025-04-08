@@ -2856,6 +2856,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"STATUS_WARNING": "您没有权限更改此状态",
 		"VALIDATION": {
 			"REQUIRED_CONTACT": "请选择联系人",
 			"REQUIRED_INVOICE_NUMBER": "发票号是必填项",

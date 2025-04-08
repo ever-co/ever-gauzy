@@ -158,7 +158,6 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						pathMatch: 'full',
 						data: {
 							translationKey: 'MENU.ORG_INVOICES',
-							//TODO: GZY-161 - Refactor after clarifying requirements
 							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_INVOICES_VIEW],
 							featureKey: FeatureEnum.FEATURE_ORG_INVOICE,
 							...(this._store.hasAnyPermission(

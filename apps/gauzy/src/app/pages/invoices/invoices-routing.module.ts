@@ -3,7 +3,6 @@ import { Routes, RouterModule } from '@angular/router';
 import { PermissionsGuard } from '@gauzy/ui-core/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { DateRangePickerResolver } from '@gauzy/ui-core/shared';
-import { InvoicesComponent } from './invoices.component';
 import { InvoiceAddByOrganizationComponent } from './invoice-add/by-organization/invoice-add-by-organization.component';
 import { InvoiceEditByOrganizationComponent } from './invoice-edit/by-organization/invoice-edit-by-organization.component';
 import { InvoicesReceivedComponent } from './invoices-received/invoices-received.component';
@@ -16,6 +15,8 @@ import { EstimateViewComponent } from './invoice-estimates/estimate-view/estimat
 import { InvoicePaymentsComponent } from './invoice-payments/payments.component';
 import { InvoiceAddByRoleComponent } from './invoice-add/by-role/invoice-add-by-role.component';
 import { InvoiceEditByRoleComponent } from './invoice-edit/by-role/invoice-edit-by-role.component';
+import { InvoicesByRoleComponent } from './invoices/by-role/invoices-by-role.component';
+import { InvoicesByOrganizationComponent } from './invoices/by-organization/invoices-by-organization.component';
 
 export function redirectTo() {
 	return '/pages/dashboard';
@@ -24,11 +25,25 @@ export function redirectTo() {
 const routes: Routes = [
 	{
 		path: '',
-		component: InvoicesComponent,
+		component: InvoicesByRoleComponent,
 		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW],
+				redirectTo
+			}
+		},
+		resolve: {
+			dates: DateRangePickerResolver
+		}
+	},
+	{
+		path: '',
+		component: InvoicesByOrganizationComponent,
+		canActivate: [PermissionsGuard],
+		data: {
+			permissions: {
+				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_INVOICES_VIEW],
 				redirectTo
 			}
 		},
@@ -63,9 +78,8 @@ const routes: Routes = [
 		component: InvoiceEditByOrganizationComponent,
 		canActivate: [PermissionsGuard],
 		data: {
-			//TODO: GZY-161 - change to ORG_INVOICES_EDIT
 			permissions: {
-				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_EDIT],
+				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_INVOICES_EDIT],
 				redirectTo
 			}
 		}

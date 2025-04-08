@@ -2610,6 +2610,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"STATUS_WARNING": "crwdnsXXXXX:0crwdneXXXXX:0",
 		"VALIDATION": {
 			"REQUIRED_CONTACT": "crwdnsXXXXX:0crwdneXXXXX:0",
 			"REQUIRED_INVOICE_NUMBER": "crwdnsXXXXX:0crwdneXXXXX:0",

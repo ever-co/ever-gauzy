@@ -9,7 +9,7 @@ import { Store } from '@gauzy/ui-core/core';
 	selector: 'ga-invoice-total-amount',
 	template: `
 		<span>
-			{{ value | currency : rowData?.currency | position : organization?.currencyPosition }}
+			{{ value | currency : rowData?.currency : 'code' | position : organization?.currencyPosition }}
 		</span>
 	`
 })

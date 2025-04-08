@@ -2854,6 +2854,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"STATUS_WARNING": "ليس لديك الصلاحيات لتغيير هذه الحالة",
 		"VALIDATION": {
 			"REQUIRED_CONTACT": "الرجاء اختيار جهة الاتصال",
 			"REQUIRED_INVOICE_NUMBER": "رقم الفاتورة مطلوب",

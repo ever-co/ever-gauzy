@@ -43,7 +43,6 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import { InvoiceAddByOrganizationComponent } from './invoice-add/by-organization/invoice-add-by-organization.component';
 import { InvoiceAddByRoleComponent } from './invoice-add/by-role/invoice-add-by-role.component';
-import { InvoicesComponent } from './invoices.component';
 import { InvoicesRoutingModule } from './invoices-routing.module';
 import { InvoiceEditByOrganizationComponent } from './invoice-edit/by-organization/invoice-edit-by-organization.component';
 import { InvoicesReceivedComponent } from './invoices-received/invoices-received.component';
@@ -91,6 +90,8 @@ import {
 } from './invoice-payments';
 import { InvoiceViewComponent } from './invoice-view/invoice-view.component';
 import { InvoiceEditByRoleComponent } from './invoice-edit/by-role/invoice-edit-by-role.component';
+import { InvoicesByOrganizationComponent } from './invoices/by-organization/invoices-by-organization.component';
+import { InvoicesByRoleComponent } from './invoices/by-role/invoices-by-role.component';
 
 @NgModule({
 	imports: [
@@ -150,7 +151,6 @@ import { InvoiceEditByRoleComponent } from './invoice-edit/by-role/invoice-edit-
 		CurrencyPositionPipe
 	],
 	declarations: [
-		InvoicesComponent,
 		InvoiceAddByOrganizationComponent,
 		InvoiceAddByRoleComponent,
 		InvoiceTasksSelectorComponent,
@@ -177,7 +177,9 @@ import { InvoiceEditByRoleComponent } from './invoice-edit/by-role/invoice-edit-
 		InvoicePdfComponent,
 		AddInternalNoteComponent,
 		PublicLinkComponent,
-		InvoicePaymentReceiptMutationComponent
+		InvoicePaymentReceiptMutationComponent,
+		InvoicesByOrganizationComponent,
+		InvoicesByRoleComponent
 	],
 	exports: []
 })

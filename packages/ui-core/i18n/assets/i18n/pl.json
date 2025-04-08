@@ -2856,6 +2856,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"STATUS_WARNING": "Nie masz uprawnień do zmiany tego statusu",
 		"VALIDATION": {
 			"REQUIRED_CONTACT": "Proszę wybrać kontakt",
 			"REQUIRED_INVOICE_NUMBER": "Numer faktury jest wymagany",

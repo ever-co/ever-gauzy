@@ -441,7 +441,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 				terms: notes,
 				paid: false,
 				totalValue: +this.total.toFixed(2),
-				fromUserId: this.selectedEmployee.id,
+				fromUserId: this.selectedEmployee?.id,
 				fromOrganizationId: organizationId,
 				organizationId,
 				tenantId,
@@ -598,27 +598,27 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 		}
 
 		const { tenantId } = this.store.user;
-			await this.addInvoice(InvoiceStatusTypesEnum.SENT, this.organization.id);
-			try {
-				await this.invoiceEstimateHistoryService.add({
-					action: this.isEstimate
-						? this.getTranslation('INVOICES_PAGE.ESTIMATE_SENT_TO', {
-								name: this.organization.name
-						  })
-						: this.getTranslation('INVOICES_PAGE.INVOICE_SENT_TO', {
-								name: this.organization.name
-						  }),
-					invoice: this.createdInvoice,
-					invoiceId: this.createdInvoice.id,
-					user: this.store.user,
-					userId: this.store.userId,
-					organization: this.organization,
-					organizationId: this.organization.id,
-					tenantId
-				});
-			} catch (error) {
-				console.log(error, 'error');
-			}
+		await this.addInvoice(InvoiceStatusTypesEnum.SENT, this.organization.id);
+		try {
+			await this.invoiceEstimateHistoryService.add({
+				action: this.isEstimate
+					? this.getTranslation('INVOICES_PAGE.ESTIMATE_SENT_TO', {
+							name: this.organization.name
+					  })
+					: this.getTranslation('INVOICES_PAGE.INVOICE_SENT_TO', {
+							name: this.organization.name
+					  }),
+				invoice: this.createdInvoice,
+				invoiceId: this.createdInvoice.id,
+				user: this.store.user,
+				userId: this.store.userId,
+				organization: this.organization,
+				organizationId: this.organization.id,
+				tenantId
+			});
+		} catch (error) {
+			console.log(error, 'error');
+		}
 	}
 
 	async sendViaEmail() {
@@ -693,7 +693,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 			tenantId: this.store.user.tenantId,
 			startDate: this.selectedDateRange.startDate.toISOString(),
 			endDate: this.selectedDateRange.endDate.toISOString(),
-			employeeIds: [this.selectedEmployee.employee.id],
+			employeeIds: [this.selectedEmployee?.employee?.id],
 			groupBy: 'employee',
 			relations: ['employee']
 		};
@@ -717,7 +717,7 @@ export class InvoiceAddByRoleComponent extends PaginationFilterBaseComponent imp
 			organizationId: this.organization.id,
 			startDate: this.selectedDateRange.startDate.toISOString(),
 			endDate: this.selectedDateRange.endDate.toISOString(),
-			employeeIds: [this.selectedEmployee.employee.id]
+			employeeIds: [this.selectedEmployee?.employee?.id]
 		};
 
 		return this.employeeRateService.getEmployeeHourlyRate(request).pipe(

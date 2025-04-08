@@ -2852,6 +2852,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"STATUS_WARNING": "Sie haben keine Berechtigung, diesen Status zu ändern",
 		"VALIDATION": {
 			"REQUIRED_CONTACT": "Bitte wählen Sie einen Kontakt aus",
 			"REQUIRED_INVOICE_NUMBER": "Rechnungsnummer ist erforderlich",

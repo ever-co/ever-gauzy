@@ -179,8 +179,10 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 			.then(async (invoice: IInvoice) => {
 				this.invoice = invoice;
 				this.invoiceItems = invoice.invoiceItems;
+				//TODO: fix that - problem is that because toContact is null
 				this.selectedContact = invoice.toOrganization;
-				this.discountAfterTax = invoice.organization.discountAfterTax;
+				//TODO: fix that - problem is that because toContact is null
+				this.discountAfterTax = invoice.fromOrganization.discountAfterTax;
 
 				await this._loadOrganizationData();
 				this.updateValueAndValidity(invoice);
@@ -474,15 +476,18 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 				tax2: invoiceData.tax2,
 				taxType: invoiceData.taxType,
 				tax2Type: invoiceData.tax2Type,
-				terms: invoiceData.terms,
+				terms: invoiceData.notes,
 				totalValue: +this.total.toFixed(2),
 				invoiceType: this.invoice.invoiceType,
+				organizationContactId: invoiceData.organizationContact.id,
+				toContactId: invoiceData?.organizationContact?.id,
 				organizationId,
 				tenantId,
 				tags: invoiceData.tags,
 				status: status,
 				sentTo: sendTo,
-				hasRemainingAmountInvoiced: !!this.isRemainingAmount || this.invoice.hasRemainingAmountInvoiced,
+				hasRemainingAmountInvoiced:
+					this.isRemainingAmount || this.invoice.hasRemainingAmountInvoiced ? true : false,
 				alreadyPaid: this.invoice.alreadyPaid,
 				amountDue: this.invoice.amountDue
 			});
@@ -632,12 +637,12 @@ export class InvoiceEditByRoleComponent extends PaginationFilterBaseComponent im
 				tax2: invoiceData.tax2,
 				taxType: invoiceData.taxType,
 				tax2Type: invoiceData.tax2Type,
-				terms: invoiceData.terms,
+				terms: invoiceData.notes,
 				paid: false,
 				totalValue: +this.total.toFixed(2),
-				toContact: invoiceData.organizationContact,
+				toContactId: invoiceData.organizationContact.id,
 				organizationContactId: invoiceData.organizationContact.id,
-				fromOrganization: this.organization,
+				fromOrganizationId: this.organization.id,
 				organizationId,
 				tenantId,
 				invoiceType: this.invoice.invoiceType,

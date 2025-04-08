@@ -17,7 +17,7 @@ import { ICurrency, IOrganization } from '@gauzy/contracts';
 import { environment as ENV } from '@gauzy/ui-config';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { CurrencyService, Store } from '@gauzy/ui-core/core';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -37,7 +37,7 @@ export class CurrencyComponent extends TranslationBaseComponent implements OnIni
 	@Output() optionChange = new EventEmitter<ICurrency>();
 
 	public organization: IOrganization;
-	loading: boolean = true;
+	loading = true;
 	currencies$: Observable<ICurrency[]> = this.currencyService.currencies$;
 	private _currencies: ICurrency[] = [];
 
@@ -52,7 +52,7 @@ export class CurrencyComponent extends TranslationBaseComponent implements OnIni
 		return this._currency;
 	}
 	@Input() set currency(val: string) {
-		if (isNotEmpty(val)) {
+		if (val != null) {
 			this._currency = val;
 			this.onChange(val);
 			this.onTouched();
@@ -75,7 +75,7 @@ export class CurrencyComponent extends TranslationBaseComponent implements OnIni
 	/*
 	 * Getter & Setter for dynamic label display
 	 */
-	private _label: boolean = true;
+	private _label = true;
 	get label() {
 		return this._label;
 	}
@@ -126,7 +126,7 @@ export class CurrencyComponent extends TranslationBaseComponent implements OnIni
 	onSelectChange(value: string) {
 		if (this._currencies.length > 0) {
 			const currency = this._currencies.find((currency: ICurrency) => currency.isoCode === value);
-			this.currency = !!currency ? currency.isoCode : null;
+			this.currency = currency ? currency.isoCode : null;
 			this.onOptionChange(currency);
 		}
 	}

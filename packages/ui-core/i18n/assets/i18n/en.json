@@ -2979,6 +2979,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"STATUS_WARNING": "You do not have permission to change this status",
 		"VALIDATION": {
 			"REQUIRED_CONTACT": "Please select contact",
 			"REQUIRED_INVOICE_NUMBER": "Invoice number is required",

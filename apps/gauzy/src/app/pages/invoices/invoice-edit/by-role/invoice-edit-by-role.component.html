@@ -11,8 +11,7 @@
 				<div class="card-header-title">
 					<ngx-back-navigation></ngx-back-navigation>
 					<h4>
-						{{ (isEstimate ? 'INVOICES_PAGE.EDIT_ESTIMATE' : 'INVOICES_PAGE.EDIT_INVOICE') | translate }} by
-						role
+						{{ (isEstimate ? 'INVOICES_PAGE.EDIT_ESTIMATE' : 'INVOICES_PAGE.EDIT_INVOICE') | translate }}
 					</h4>
 				</div>
 				<ng-container *ngIf="!isEstimate">
@@ -315,19 +314,19 @@
 			<div class="total d-flex">
 				<div class="d-flex">
 					<div class="total-item">
-						{{ 'INVOICES_PAGE.SUBTOTAL' | translate }}: {{ currency.value }} {{ subtotal.toFixed(2) }}
+						{{ 'INVOICES_PAGE.SUBTOTAL' | translate }}: {{ invoice?.currency }} {{ subtotal.toFixed(2) }}
 					</div>
 					<div class="total-item">
-						{{ 'INVOICES_PAGE.TOTAL' | translate }}: {{ currency.value }} {{ total.toFixed(2) }}
+						{{ 'INVOICES_PAGE.TOTAL' | translate }}: {{ invoice?.currency }} {{ total.toFixed(2) }}
 					</div>
 				</div>
 				<div class="d-flex" *ngIf="isRemainingAmount || invoice.hasRemainingAmountInvoiced">
 					<div class="total-item">
-						{{ 'INVOICES_PAGE.ALREADY_PAID' | translate }}: {{ currency.value }}
+						{{ 'INVOICES_PAGE.ALREADY_PAID' | translate }}: {{ invoice?.currency }}
 						{{ alreadyPaid.toFixed(2) }}
 					</div>
 					<div class="total-item">
-						{{ 'INVOICES_PAGE.AMOUNT_DUE' | translate }}: {{ currency.value }} {{ amountDue.toFixed(2) }}
+						{{ 'INVOICES_PAGE.AMOUNT_DUE' | translate }}: {{ invoice?.currency }} {{ amountDue.toFixed(2) }}
 					</div>
 				</div>
 			</div>

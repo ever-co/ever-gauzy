@@ -2879,6 +2879,7 @@
 		}
 	},
 	"INVOICES_PAGE": {
+		"STATUS_WARNING": "אין לך הרשאה לשנות את הסטטוס הזה",
 		"VALIDATION": {
 			"REQUIRED_CONTACT": "אנא בחר קשר",
 			"REQUIRED_INVOICE_NUMBER": "דרוש מספר חשבונית",
