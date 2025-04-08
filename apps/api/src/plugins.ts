@@ -6,6 +6,7 @@ import { IntegrationGithubPlugin } from '@gauzy/plugin-integration-github';
 import { IntegrationJiraPlugin } from '@gauzy/plugin-integration-jira';
 import { IntegrationHubstaffPlugin } from '@gauzy/plugin-integration-hubstaff';
 import { IntegrationMakeComPlugin } from '@gauzy/plugin-integration-make-com';
+import { IntegrationZapierPlugin } from '@gauzy/plugin-integration-zapier';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork';
 import { JitsuAnalyticsPlugin } from '@gauzy/plugin-jitsu-analytics';
 import { JobProposalPlugin } from '@gauzy/plugin-job-proposal';
@@ -13,6 +14,7 @@ import { JobSearchPlugin } from '@gauzy/plugin-job-search';
 import { KnowledgeBasePlugin } from '@gauzy/plugin-knowledge-base';
 import { ProductReviewsPlugin } from '@gauzy/plugin-product-reviews';
 import { VideosPlugin } from '@gauzy/plugin-videos';
+import { RegistryPlugin } from '@gauzy/plugin-registry';
 
 import { SentryTracing as SentryPlugin } from './sentry';
 
@@ -47,6 +49,8 @@ export const plugins = [
 	IntegrationJiraPlugin,
 	// Indicates the inclusion or intention to use the IntegrationUpworkPlugin in the codebase.
 	IntegrationUpworkPlugin,
+	// Indicates the inclusion or intention to use the IntegrationZapierPlugin in the codebase.
+	IntegrationZapierPlugin,
 	// Indicates the inclusion or intention to use the JobProposalPlugin in the codebase.
 	JobProposalPlugin,
 	// Indicates the inclusion or intention to use the JobSearchPlugin in the codebase.
@@ -56,5 +60,7 @@ export const plugins = [
 	// Indicates the inclusion or intention to use the ProductReviewsPlugin in the codebase.
 	ProductReviewsPlugin,
 	// Indicates the inclusion or intention to use the VideosPlugin in the codebase.
-	VideosPlugin
+	VideosPlugin,
+	// Indicates the inclusion or intention to use the RegistryPlugin in the codebase.
+	RegistryPlugin
 ];

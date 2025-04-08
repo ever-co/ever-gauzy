@@ -7,76 +7,139 @@ import { ILocalDownloadConfig, IPluginDownloadResponse, IPluginDownloadStrategy 
 import { LoadPluginDialog } from '../dialog/load-plugin.dialog';
 
 export class LocalDownloadStrategy implements IPluginDownloadStrategy {
+	private static readonly MAX_RETRIES = 3;
+	private static readonly RETRY_DELAY_MS = 1000;
+
 	/**
-	 * Downloads a plugin from a local zip file and installs it in the
-	 * user's data directory.
-	 *
-	 * @param config The configuration object for the download.
-	 * @returns A promise that resolves to an object containing the path to
-	 * the installed plugin and its metadata.
+	 * Downloads and installs a plugin from a local zip file
+	 * @param config Configuration for the download
+	 * @returns Promise resolving to plugin location and metadata
+	 * @throws Error if any step in the process fails
 	 */
 	async execute<T>(config: T): Promise<IPluginDownloadResponse> {
 		const { pluginPath } = config as ILocalDownloadConfig;
+		let zipFilePath: string | null = null;
 
 		try {
-			// Open a file dialog for the user to select a zip file
-			const dialog = new LoadPluginDialog();
-
-			// Save temporary zip and return path
-			const zipFilePath = dialog.save();
-
-			if (!zipFilePath) {
-				throw new Error('No file selected');
-			}
+			zipFilePath = await this.getZipFilePathFromUser();
+			await this.validateZipFile(zipFilePath);
 
 			const fileName = path.basename(zipFilePath);
-
-			// Unzip the file to a temporary directory
-			logger.info(`Unzipping file: ${zipFilePath}`);
 			const tempDirPath = await this.unzip(zipFilePath, pluginPath);
+			const pluginDir = path.join(tempDirPath, fileName.replace(/\.zip$/i, ''));
 
-			// Set Path Dirname
-			const pluginDir = path.join(tempDirPath, fileName.replace(/\.zip$/, ''));
+			const metadata = await this.readAndValidateManifest(pluginDir);
+			const pathDirname = await this.createUniquePluginDirectory(pluginPath, pluginDir, metadata.name);
 
-			// Read and parse the metadata
-			logger.info('Reading manifest.json');
-			const metadata = JSON.parse(
-				await fs.readFile(path.join(pluginDir, 'manifest.json'), {
-					encoding: 'utf8'
-				})
-			);
-			logger.info(`✔ Manifest.json has been read and parsed: ${JSON.stringify(metadata)}`);
-
-			// Rename the plugin directory to something unique
-			const pathDirname = path.join(pluginPath, `${Date.now()}-${metadata.name}`);
-
-			logger.info(`Renaming plugin directory to: ${pathDirname}`);
-			await fs.rename(pluginDir, pathDirname);
-
-			// Remove the downloaded zip file
-			logger.info(`Removing downloaded .zip file: ${zipFilePath}`);
-			await fs.rm(zipFilePath, { recursive: true, force: true, retryDelay: 1000, maxRetries: 3 });
+			await this.cleanupZipFile(zipFilePath);
 
 			return { pathDirname, metadata };
 		} catch (error) {
-			logger.error(`✖ Error during download and extraction: ${error.message}`);
+			logger.error(`Plugin installation failed: ${error.message}`);
+
+			// Cleanup any partially created files
+			await this.cleanupOnError(zipFilePath);
 			throw error;
+		}
+	}
+
+	private async getZipFilePathFromUser(): Promise<string> {
+		const dialog = new LoadPluginDialog();
+		const zipFilePath = dialog.save();
+
+		if (!zipFilePath) {
+			throw new Error('No plugin zip file selected');
+		}
+
+		return zipFilePath;
+	}
+
+	private async validateZipFile(filePath: string): Promise<void> {
+		try {
+			await fs.access(filePath, fs.constants.R_OK);
+		} catch (error) {
+			throw new Error(`Zip file not accessible: ${filePath}`);
+		}
+
+		if (!filePath.toLowerCase().endsWith('.zip')) {
+			throw new Error('Selected file is not a zip file');
 		}
 	}
 
 	private async unzip(filePath: string, extractDir: string): Promise<string> {
 		try {
+			await fs.mkdir(extractDir, { recursive: true });
+
 			await new Promise<void>((resolve, reject) => {
 				createReadStream(filePath)
 					.pipe(unzipper.Extract({ path: extractDir }))
 					.on('close', resolve)
 					.on('error', reject);
 			});
-			logger.info('✔ File unzipped successfully');
+
+			logger.info('File unzipped successfully');
 			return extractDir;
 		} catch (error) {
-			logger.error(`✖ Error during unzip: ${error.message}`);
-			throw error;
+			throw new Error(`Failed to unzip file: ${error.message}`);
+		}
+	}
+
+	private async readAndValidateManifest(pluginDir: string): Promise<any> {
+		const manifestPath = path.join(pluginDir, 'manifest.json');
+
+		try {
+			const manifestContent = await fs.readFile(manifestPath, { encoding: 'utf8' });
+			const metadata = JSON.parse(manifestContent);
+
+			if (!metadata.name) {
+				throw new Error('Manifest is missing required "name" field');
+			}
+
+			logger.info(`Manifest parsed successfully: ${metadata.name}`);
+			return metadata;
+		} catch (error) {
+			throw new Error(`Invalid manifest file: ${error.message}`);
+		}
+	}
+
+	private async createUniquePluginDirectory(
+		basePath: string,
+		sourceDir: string,
+		pluginName: string
+	): Promise<string> {
+		const pathDirname = path.join(basePath, `${Date.now()}-${pluginName}`);
+
+		try {
+			await fs.rename(sourceDir, pathDirname);
+			logger.info(`Plugin directory created: ${pathDirname}`);
+			return pathDirname;
+		} catch (error) {
+			throw new Error(`Failed to create plugin directory: ${error.message}`);
+		}
+	}
+
+	private async cleanupZipFile(zipFilePath: string): Promise<void> {
+		try {
+			await fs.rm(zipFilePath, {
+				recursive: true,
+				force: true,
+				retryDelay: LocalDownloadStrategy.RETRY_DELAY_MS,
+				maxRetries: LocalDownloadStrategy.MAX_RETRIES
+			});
+			logger.info(`Removed zip file: ${zipFilePath}`);
+		} catch (error) {
+			logger.warn(`Failed to remove zip file: ${zipFilePath}`);
+			// Non-critical error, continue
+		}
+	}
+
+	private async cleanupOnError(zipFilePath: string | null): Promise<void> {
+		try {
+			if (zipFilePath) {
+				await this.cleanupZipFile(zipFilePath);
+			}
+		} catch (cleanupError) {
+			logger.warn(`Cleanup failed: ${cleanupError.message}`);
 		}
 	}
 }

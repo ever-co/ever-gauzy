@@ -1,0 +1,47 @@
+<div
+	class="file-upload-area"
+	[class.has-file]="selectedFile"
+	[class.drag-over]="isDragOver"
+	[class.error]="errorMessage"
+	(dragenter)="onDragEnter($event)"
+	(dragleave)="onDragLeave($event)"
+	(dragover)="onDragOver($event)"
+	(drop)="onDrop($event)"
+	(click)="triggerFileBrowse()"
+>
+	<input #fileInput type="file" hidden (change)="onFileSelected($event)" [accept]="allowedExtensions" />
+
+	<div class="upload-icon">
+		<nb-icon
+			[icon]="selectedFile ? 'checkmark-circle-outline' : 'cloud-upload-outline'"
+			[status]="selectedFile ? 'success' : 'basic'"
+		>
+		</nb-icon>
+	</div>
+
+	@if(selectedFile){
+	<div class="file-info">
+		<p class="file-name">{{ selectedFile.name }}</p>
+		<p class="file-size">{{ formatFileSize(selectedFile.size) }}</p>
+		<button type="button" nbButton status="danger" size="small" (click)="removeFile($event)">
+			<nb-icon icon="trash-outline"></nb-icon>
+			{{ removeText }}
+		</button>
+	</div>
+	}@else {
+	<div class="upload-text">
+		<p>{{ dragDropText }}</p>
+		<p>{{ orText }}</p>
+		<button type="button" nbButton status="primary" size="small">
+			{{ browseText }}
+		</button>
+		<p class="hint">{{ restrictionsText }}</p>
+	</div>
+	}
+</div>
+@if(errorMessage){
+<div class="error-message">
+	<nb-icon icon="alert-circle-outline"></nb-icon>
+	{{ errorMessage }}
+</div>
+}

@@ -21,13 +21,7 @@ import { BaseEntity, SoftDeletableBaseEntity } from '../entities/internal';
 import { multiORMCreateQueryBuilder } from '../../core/orm/query-builder/query-builder.factory';
 import { IQueryBuilder } from '../../core/orm/query-builder/iquery-builder';
 import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
-import {
-	MultiORM,
-	MultiORMEnum,
-	concatIdToWhere,
-	getORMType,
-	parseTypeORMFindToMikroOrm
-} from './../../core/utils';
+import { MultiORM, MultiORMEnum, concatIdToWhere, getORMType, parseTypeORMFindToMikroOrm } from './../../core/utils';
 import { parseTypeORMFindCountOptions } from './utils';
 import {
 	ICountByOptions,
@@ -48,7 +42,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	constructor(
 		protected readonly typeOrmRepository: Repository<T>,
 		protected readonly mikroOrmRepository: MikroOrmBaseEntityRepository<T>
-	) { }
+	) {}
 
 	/**
 	 * Get the table name from the repository metadata.
@@ -76,7 +70,11 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	public createQueryBuilder(alias?: string): IQueryBuilder<T> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				return multiORMCreateQueryBuilder<T>(this.mikroOrmRepository as any, this.ormType as MultiORMEnum, alias);
+				return multiORMCreateQueryBuilder<T>(
+					this.mikroOrmRepository as any,
+					this.ormType as MultiORMEnum,
+					alias
+				);
 
 			case MultiORMEnum.TypeORM:
 				return multiORMCreateQueryBuilder<T>(this.typeOrmRepository, this.ormType as MultiORMEnum, alias);
@@ -140,7 +138,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
-				[items, total] = await this.mikroOrmRepository.findAndCount(where, mikroOptions) as any;
+				[items, total] = (await this.mikroOrmRepository.findAndCount(where, mikroOptions)) as any;
 				items = items.map((entity: T) => this.serialize(entity)) as T[];
 				break;
 			case MultiORMEnum.TypeORM:
@@ -188,7 +186,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
-					[items, total] = await this.mikroOrmRepository.findAndCount(where, mikroOptions) as any;
+					[items, total] = (await this.mikroOrmRepository.findAndCount(where, mikroOptions)) as any;
 					items = items.map((entity) => this.serialize(entity)) as T[];
 					break;
 				case MultiORMEnum.TypeORM:
@@ -204,7 +202,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 						...(options && options.select ? { select: options.select } : {}),
 						...(options && options.relations ? { relations: options.relations } : {}),
 						...(options && options.where ? { where: options.where } : {}),
-						...(options && options.order ? { order: options.order } : {})
+						...(options && options.order ? { order: options.order } : {}),
+						...(options && options.withDeleted ? { withDeleted: options.withDeleted } : {})
 					});
 					break;
 				default:
@@ -238,7 +237,10 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
-					record = await this.mikroOrmRepository.findOneOrFail(concatIdToWhere(id, where), mikroOptions) as any;
+					record = (await this.mikroOrmRepository.findOneOrFail(
+						concatIdToWhere(id, where),
+						mikroOptions
+					)) as any;
 					break;
 				case MultiORMEnum.TypeORM:
 					options = options as FindOneOptions<T>;
@@ -280,7 +282,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
-					record = await this.mikroOrmRepository.findOneOrFail(where, mikroOptions) as any;
+					record = (await this.mikroOrmRepository.findOneOrFail(where, mikroOptions)) as any;
 					break;
 				case MultiORMEnum.TypeORM:
 					record = await this.typeOrmRepository.findOneOrFail(options as FindOneOptions<T>);
@@ -313,7 +315,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
-					record = await this.mikroOrmRepository.findOneOrFail(where, mikroOptions) as any;
+					record = (await this.mikroOrmRepository.findOneOrFail(where, mikroOptions)) as any;
 					break;
 				case MultiORMEnum.TypeORM:
 					record = await this.typeOrmRepository.findOneByOrFail(options as FindOptionsWhere<T>);
@@ -352,7 +354,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
-				record = await this.mikroOrmRepository.findOne(concatIdToWhere<T>(id, where), mikroOptions) as any;
+				record = (await this.mikroOrmRepository.findOne(concatIdToWhere<T>(id, where), mikroOptions)) as any;
 				break;
 			case MultiORMEnum.TypeORM:
 				options = options as FindOneOptions<T>;
@@ -364,7 +366,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					...(options && options.select ? { select: options.select } : {}),
 					...(options && options.relations ? { relations: options.relations } : []),
 					...(options && options.order ? { order: options.order } : {}),
-					...(options && options.withDeleted ? { withDeleted: options.withDeleted } : {}),
+					...(options && options.withDeleted ? { withDeleted: options.withDeleted } : {})
 				} as FindOneOptions<T>);
 				break;
 			default:
@@ -390,7 +392,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
-				record = await this.mikroOrmRepository.findOne(where, mikroOptions) as any;
+				record = (await this.mikroOrmRepository.findOne(where, mikroOptions)) as any;
 				break;
 			case MultiORMEnum.TypeORM:
 				record = await this.typeOrmRepository.findOne(options as FindOneOptions<T>);
@@ -418,7 +420,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>({ where: options } as FindManyOptions);
-				record = await this.mikroOrmRepository.findOne(where, mikroOptions) as any;
+				record = (await this.mikroOrmRepository.findOne(where, mikroOptions)) as any;
 				break;
 			case MultiORMEnum.TypeORM:
 				record = await this.typeOrmRepository.findOneBy(options as FindOptionsWhere<T>);
@@ -471,7 +473,10 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 						}
 						// If the entity doesn't have an ID, it's new and should be persisted
 						// Create a new entity using MikroORM
-						const newEntity = this.mikroOrmRepository.create(partialEntity as RequiredEntityData<T>, createOptions);
+						const newEntity = this.mikroOrmRepository.create(
+							partialEntity as RequiredEntityData<T>,
+							createOptions
+						);
 
 						// Persist new entity and flush
 						await this.mikroOrmRepository.persistAndFlush(newEntity); // This will also persist the relations
@@ -558,9 +563,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @param criteria - Identifier or condition to delete specific record(s).
 	 * @returns {Promise<DeleteResult>} - Result indicating the number of affected records.
 	 */
-	public async delete(
-		criteria: string | number | FindOptionsWhere<T>
-	): Promise<DeleteResult> {
+	public async delete(criteria: string | number | FindOptionsWhere<T>): Promise<DeleteResult> {
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
@@ -597,9 +600,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @param options - Additional options for the operation.
 	 * @returns {Promise<UpdateResult | DeleteResult>} - Result indicating success or failure.
 	 */
-	public async softDelete(
-		criteria: string | number | FindOptionsWhere<T>
-	): Promise<UpdateResult | T> {
+	public async softDelete(criteria: string | number | FindOptionsWhere<T>): Promise<UpdateResult | T> {
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
@@ -615,7 +616,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					let { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>({ where: filter } as FindManyOptions);
 
 					// Find the entity and perform soft delete
-					const entity = await this.mikroOrmRepository.findOne(where, mikroOptions) as any;
+					const entity = (await this.mikroOrmRepository.findOne(where, mikroOptions)) as any;
 					await this.mikroOrmRepository.removeAndFlush(entity);
 
 					// Return the serialized version of the soft-deleted entity
@@ -650,7 +651,10 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 				case MultiORMEnum.MikroORM: {
 					// Convert the filter to MikroORM-specific where and options
 					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
-					const entity = await this.mikroOrmRepository.findOne(concatIdToWhere<T>(id, where), mikroOptions) as any;
+					const entity = (await this.mikroOrmRepository.findOne(
+						concatIdToWhere<T>(id, where),
+						mikroOptions
+					)) as any;
 					// Use "em.remove" for MikroORM with a transactional approach to ensure changes are persisted properly
 					await this.mikroOrmRepository.removeAndFlush(entity);
 					// Return the serialized version of the soft-deleted entity
@@ -687,7 +691,10 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					// Convert the filter to MikroORM-specific where and options
 					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
 					// Find the soft-deleted entity with relations
-					const entity = await this.mikroOrmRepository.findOne(concatIdToWhere<T>(id, where), mikroOptions) as T;
+					const entity = (await this.mikroOrmRepository.findOne(
+						concatIdToWhere<T>(id, where),
+						mikroOptions
+					)) as T;
 
 					// Reset the soft-delete flag to "recover" the entity
 					wrap(entity as BaseEntity).assign({ deletedAt: null });

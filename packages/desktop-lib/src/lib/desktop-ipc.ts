@@ -476,8 +476,11 @@ export function ipcTimer(
 			// Start Timer
 			const timerResponse = await timerHandler.startTimer(setupWindow, knex, timeTrackerWindow, arg?.timeLog);
 
-			settingWindow.webContents.send('app_setting_update', {
-				setting: LocalStore.getStore('appSetting')
+			settingWindow.webContents.send('setting_page_ipc', {
+				type: 'app_setting_update',
+				data: {
+					setting: LocalStore.getStore('appSetting')
+				}
 			});
 
 			if (setting && setting.preventDisplaySleep) {
@@ -729,8 +732,11 @@ export function ipcTimer(
 
 			console.log('Timer Stopped ...');
 
-			settingWindow.webContents.send('app_setting_update', {
-				setting: LocalStore.getStore('appSetting')
+			settingWindow.webContents.send('setting_page_ipc', {
+				type: 'app_setting_update',
+				data: {
+					setting: LocalStore.getStore('appSetting')
+				}
 			});
 
 			if (powerManagerPreventSleep) {
@@ -865,7 +871,9 @@ export function ipcTimer(
 			additionalSetting: addSetting
 		});
 
-		settingWindow.webContents.send('goto_top_menu');
+		settingWindow.webContents.send('setting_page_ipc', {
+			type: 'goto_top_menu'
+		});
 	});
 
 	ipcMain.on('switch_aw_option', (event, arg) => {
@@ -893,7 +901,9 @@ export function ipcTimer(
 			LocalStore.updateAuthSetting({ isLogout: true });
 
 			if (settingWindow) {
-				settingWindow.webContents.send('logout_success');
+				settingWindow.webContents.send('setting_page_ipc', {
+					type: 'logout_success'
+				});
 			}
 		} catch (error) {
 			log.error('IPCQNVGLOGIN', error);

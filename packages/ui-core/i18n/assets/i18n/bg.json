@@ -2671,6 +2671,7 @@
 		"TASKS_STATUS": "Статус",
 		"TASK_PRIORITY": "Приоритет",
 		"TASK_SIZE": "Размер",
+		"PARENT_TASK": "Основна задача",
 		"TODO": "За изпълнение",
 		"IN_PROGRESS": "В процес",
 		"FOR_TESTING": "За тестване",
@@ -3629,6 +3630,7 @@
 			"APPROVAL_POLICY_CREATED": "Политиката за одобрение '{{ name }}' беше добавена",
 			"APPROVAL_POLICY_UPDATED": "Политиката за одобрение '{{ name }}' беше променена",
 			"APPROVAL_POLICY_DELETED": "Политиката за одобрение '{{ name }}' беше премахната",
+			"APPROVAL_POLICY_ALREADY_EXISTS": "Политиката за одобрение '{{ name }}' вече съществува",
 			"CANDIDATE_CREATED": "Кандидатът '{{ name }}' беше добавен в '{{ organization }}'",
 			"CANDIDATE_ARCHIVED": "Кандидатът '{{ name }}' беше маркиран като архивиран.",
 			"CANDIDATE_REJECTED": "Кандидатът '{{ name }}' беше маркиран като отхвърлен.",
@@ -3743,7 +3745,8 @@
 			"EDIT_POLICY": "Time off policy '{{ name }}' was changed",
 			"DELETE_POLICY": "Time off policy '{{ name }}' was removed",
 			"ERROR": "{{ error }}",
-			"SAVE_ERROR": "Unable to create Policy record"
+			"SAVE_ERROR": "Unable to create Policy record",
+			"POLICY_EXISTS": "Политиката за отпуск '{{ name }}' вече съществува"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Your profile has been updated successfully."
@@ -4868,7 +4871,10 @@
 				"REPOSITORY": "Хранилище",
 				"REPOSITORY_PLACEHOLDER": "Въведете URL адрес на хранилището"
 			},
-			"OR": "Или"
+			"OR": "Или",
+			"RELEASE_DATE": "Дата на издаване",
+			"CHANGELOG": "Промени",
+			"CHANGELOG_PLACEHOLDER": "Въведете промени"
 		},
 		"DETAILS": {
 			"USAGE_STATS": "Статистика на използване",
@@ -4878,11 +4884,19 @@
 			"UPLOADED_AT": "Качено на",
 			"SECURITY_INFO": "Информация за сигурност",
 			"CHECKSUM": "Контролна сума",
-			"SIGNATURE": "Подпис"
+			"SIGNATURE": "Подпис",
+			"INSTALLED": "Инсталирани",
+			"HIDDEN_FOR_SECURITY": "Скрита за сигурностни причини"
 		},
 		"LAYOUT": {
 			"DISCOVER": "Открийте",
 			"INSTALLED": "Инсталирани"
 		}
+	},
+	"SERVER_DOWN": {
+		"TITLE": "Сървърът е недостъпен",
+		"DESCRIPTION": "Сървърът на {{companySite}} в момента е недостъпен. Това може да се дължи на планирана поддръжка или неочакван престой.",
+		"CONNECTING": "Автоматично опит за повторно свързване...",
+		"HINT": "Статус: Опит за установяване на връзка със сървърите на {{companySite}}. Код на грешката: 503."
 	}
 }

@@ -46,6 +46,7 @@
 		"@gauzy/plugin-integration-github": "^0.1.0",
 		"@gauzy/plugin-integration-hubstaff": "^0.1.0",
 		"@gauzy/plugin-integration-make-com": "^0.1.0",
+		"@gauzy/plugin-integration-zapier": "^0.1.0",
 		"@gauzy/plugin-integration-jira": "^0.1.0",
 		"@gauzy/plugin-integration-upwork": "^0.1.0",
 		"@gauzy/plugin-jitsu-analytics": "^0.1.0",
@@ -55,6 +56,7 @@
 		"@gauzy/plugin-product-reviews": "^0.1.0",
 		"@gauzy/plugin-sentry": "^0.1.0",
 		"@gauzy/plugin-videos": "^0.1.0",
+		"@gauzy/plugin-registry": "^0.1.0",
 		"dotenv": "^16.0.3",
 		"yargs": "^17.5.0"
 	},

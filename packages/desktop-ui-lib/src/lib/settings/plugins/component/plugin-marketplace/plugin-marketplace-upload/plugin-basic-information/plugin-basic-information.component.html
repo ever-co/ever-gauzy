@@ -1,0 +1,69 @@
+<lib-form-section [formGroup]="form" title="{{ 'PLUGIN.FORM.BASIC_INFO' | translate }}">
+	<lib-form-row>
+		<nb-form-field class="form-group">
+			<label class="label" for="plugin-name">{{ 'PLUGIN.FORM.NAME' | translate }} *</label>
+			<input
+				nbInput
+				fullWidth
+				id="plugin-name"
+				formControlName="name"
+				placeholder="{{ 'PLUGIN.FORM.NAME_PLACEHOLDER' | translate }}"
+				[status]="getFieldError('name') ? 'danger' : 'basic'"
+			/>
+			<nb-hint *ngIf="getFieldError('name', 'required')" status="danger">
+				{{ 'PLUGIN.FORM.VALIDATION.NAME_REQUIRED' | translate }}
+			</nb-hint>
+			<nb-hint *ngIf="getFieldError('name', 'maxlength')" status="danger">
+				{{ 'PLUGIN.FORM.VALIDATION.NAME_TOO_LONG' | translate }}
+			</nb-hint>
+		</nb-form-field>
+
+		<nb-form-field class="form-group">
+			<label class="label" for="plugin-type">{{ 'PLUGIN.FORM.TYPE' | translate }} *</label>
+			<nb-select
+				fullWidth
+				id="plugin-type"
+				formControlName="type"
+				placeholder="{{ 'PLUGIN.FORM.TYPE_PLACEHOLDER' | translate }}"
+				[status]="getFieldError('type') ? 'danger' : 'basic'"
+			>
+				<nb-option *ngFor="let type of pluginTypes" [value]="type">
+					{{ 'PLUGIN.FORM.TYPES.' + type | translate }}
+				</nb-option>
+			</nb-select>
+		</nb-form-field>
+	</lib-form-row>
+
+	<lib-form-row>
+		<nb-form-field class="form-group">
+			<label class="label" for="plugin-status">{{ 'PLUGIN.FORM.STATUS' | translate }} *</label>
+			<nb-select
+				fullWidth
+				id="plugin-status"
+				formControlName="status"
+				[status]="getFieldError('status') ? 'danger' : 'basic'"
+			>
+				<nb-option *ngFor="let status of pluginStatuses" [value]="status">
+					{{ 'PLUGIN.FORM.STATUSES.' + status | translate }}
+				</nb-option>
+			</nb-select>
+		</nb-form-field>
+	</lib-form-row>
+
+	<lib-form-row>
+		<nb-form-field class="form-group full-width">
+			<label class="label" for="plugin-description">{{ 'PLUGIN.FORM.DESCRIPTION' | translate }}</label>
+			<textarea
+				nbInput
+				fullWidth
+				id="plugin-description"
+				formControlName="description"
+				placeholder="{{ 'PLUGIN.FORM.DESCRIPTION_PLACEHOLDER' | translate }}"
+				[status]="getFieldError('description') ? 'danger' : 'basic'"
+			></textarea>
+			<nb-hint *ngIf="getFieldError('description', 'maxlength')" status="danger">
+				{{ 'PLUGIN.FORM.VALIDATION.DESCRIPTION_TOO_LONG' | translate }}
+			</nb-hint>
+		</nb-form-field>
+	</lib-form-row>
+</lib-form-section>

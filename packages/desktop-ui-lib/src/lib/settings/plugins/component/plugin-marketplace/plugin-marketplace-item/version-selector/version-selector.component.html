@@ -1,0 +1,15 @@
+@let versions = query.versions$| async; @let isAvailable = (query.count$ | async) > 0; @let isLoading = query.isLoading$
+| async; @let selected = query.version$| async;
+
+<gauzy-select
+	class="w-100"
+	[selectedItem]="selected?.id"
+	[items]="versions"
+	bindLabel="number"
+	bindValue="id"
+	placeholder="PLUGIN.FORM.VERSION"
+	[canAddTag]="false"
+	(modelChange)="onVersionChange($event)"
+	[isLoading]="isLoading || !isAvailable"
+	(scrollToEnd)="loadMore()"
+></gauzy-select>

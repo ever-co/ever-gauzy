@@ -37,14 +37,6 @@ if (process.platform === 'win32') {
 // init application
 InitApplication();
 
-app.on('window-all-closed', () => {
-	// On OS X it is common for applications and their menu bar
-	// to stay active until the user quits explicitly with Cmd + Q
-	if (process.platform !== 'darwin') {
-		app.quit();
-	}
-});
-
 app.commandLine.appendSwitch('disable-http2');
 
 ipcMain.on('quit', quit);
