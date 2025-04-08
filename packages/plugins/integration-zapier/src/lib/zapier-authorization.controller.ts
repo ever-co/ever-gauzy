@@ -1,16 +1,16 @@
 import { Controller, Get, HttpException, HttpStatus, Query, Res } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
-import { ZAPIER_AUTHORIZATION_URL, ZAPIER_REDIRECT_URI } from './zapier.config';
 import { Public } from '@gauzy/common';
-import { ConfigService } from '@nestjs/config';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { buildQueryString } from '@gauzy/utils';
+import { ZAPIER_AUTHORIZATION_URL, ZAPIER_REDIRECT_URI } from './zapier.config';
 
 @ApiTags('Zapier Integrations')
 @Controller('/integration/zapier')
 export class ZapierAuthorizationController {
-	constructor(private readonly _config: ConfigService) {}
+	constructor(private readonly _config: ConfigService) { }
 	/**
 	 * Handles the OAuth2 authorization request
 	 * Redirects the user to the zapier authorization URL

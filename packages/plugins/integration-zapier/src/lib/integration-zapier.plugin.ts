@@ -1,9 +1,9 @@
+import { Logger } from '@nestjs/common';
 import * as chalk from 'chalk';
 import { ApplicationPluginConfig, CustomEmbeddedFieldConfig, CustomEmbeddedFields } from '@gauzy/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { ZapierModule } from './zapier.module';
-import { ZapierWebhookSubscriptionRepository } from './repository/zapier-repository.entity';
-import { Logger } from '@nestjs/common';
+import { ZapierWebhookSubscription } from './zapier-webhook-subscription.entity';
 
 // Extend the CustomEmbeddedFields interface to include our custom entities
 interface ZapierCustomFields extends CustomEmbeddedFields {
@@ -20,7 +20,7 @@ interface ZapierCustomFields extends CustomEmbeddedFields {
 	 * Entity needed for Zapier integration that extends the existing
 	 * IntegrationSetting entity to store webhook subscription data
 	 */
-	entities: [ZapierWebhookSubscriptionRepository],
+	entities: [ZapierWebhookSubscription],
 	/**
 	 * A callback that receives the main plugin configuration object and allows
 	 * custom modifications before returning the final configuration.
@@ -40,7 +40,7 @@ interface ZapierCustomFields extends CustomEmbeddedFields {
 				name: 'webhookSubscriptions',
 				type: 'relation',
 				relationType: 'one-to-many',
-				entity: ZapierWebhookSubscriptionRepository,
+				entity: ZapierWebhookSubscription,
 				nullable: true,
 				onDelete: 'CASCADE'
 			}
