@@ -4864,6 +4864,18 @@
 		"LAYOUT": {
 			"DISCOVER": "Découvrir",
 			"INSTALLED": "Installé"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "Désactiver l'extension",
+				"DESCRIPTION": "Êtes-vous sûr de vouloir désactiver cette extension ?",
+				"CONFIRM": "Désactiver"
+			},
+			"UNINSTALL": {
+				"TITLE": "Désinstaller l'extension",
+				"DESCRIPTION": "Êtes-vous sûr de vouloir désinstaller cette extension ?",
+				"CONFIRM": "Désinstaller"
+			}
 		}
 	},
 	"SERVER_DOWN": {

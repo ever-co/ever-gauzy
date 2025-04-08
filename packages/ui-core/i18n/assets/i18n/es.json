@@ -4875,6 +4875,18 @@
 		"LAYOUT": {
 			"DISCOVER": "Descubrir",
 			"INSTALLED": "Instalado"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "Desactivar complemento",
+				"DESCRIPTION": "¿Estás seguro de que quieres desactivar este complemento?",
+				"CONFIRM": "Desactivar"
+			},
+			"UNINSTALL": {
+				"TITLE": "Desinstalar complemento",
+				"DESCRIPTION": "¿Estás seguro de que quieres desinstalar este complemento?",
+				"CONFIRM": "Desinstalar"
+			}
 		}
 	},
 	"SERVER_DOWN": {

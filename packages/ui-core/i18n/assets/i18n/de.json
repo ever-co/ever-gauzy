@@ -4869,6 +4869,18 @@
 		"LAYOUT": {
 			"DISCOVER": "Entdecken",
 			"INSTALLED": "Installiert"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "Plugin deaktivieren",
+				"DESCRIPTION": "Möchten Sie dieses Plugin wirklich deaktivieren?",
+				"CONFIRM": "Deaktivieren"
+			},
+			"UNINSTALL": {
+				"TITLE": "Plugin deinstallieren",
+				"DESCRIPTION": "Möchten Sie dieses Plugin wirklich deinstallieren?",
+				"CONFIRM": "Deinstallieren"
+			}
 		}
 	},
 	"SERVER_DOWN": {

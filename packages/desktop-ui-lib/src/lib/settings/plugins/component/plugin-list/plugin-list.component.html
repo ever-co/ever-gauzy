@@ -68,7 +68,7 @@ async; @let source = sourceData$ | async;
 </div>
 <ng-template #noPlugin>
 	<div class="no-data">
-		<ngx-no-data-message [message]="(loading ? 'Plugins loading...' : 'SM_TABLE.NO_DATA.PLUGIN') | translate">
+		<ngx-no-data-message [message]="(loading ? 'SM_TABLE.NO_DATA.LOADING' : 'SM_TABLE.NO_DATA.PLUGIN') | translate">
 		</ngx-no-data-message>
 	</div>
 </ng-template>

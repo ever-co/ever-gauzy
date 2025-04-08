@@ -4873,6 +4873,18 @@
 		"LAYOUT": {
 			"DISCOVER": "Ontdekken",
 			"INSTALLED": "Geïnstalleerd"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "Plugin deactiveren",
+				"DESCRIPTION": "Weet u zeker dat u deze plugin wilt deactiveren?",
+				"CONFIRM": "Deactiveren"
+			},
+			"UNINSTALL": {
+				"TITLE": "Plugin verwijderen",
+				"DESCRIPTION": "Weet u zeker dat u deze plugin wilt verwijderen?",
+				"CONFIRM": "Verwijderen"
+			}
 		}
 	},
 	"SERVER_DOWN": {

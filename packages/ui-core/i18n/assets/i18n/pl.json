@@ -4873,6 +4873,18 @@
 		"LAYOUT": {
 			"DISCOVER": "Odkryj",
 			"INSTALLED": "Zainstalowane"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "Dezaktywuj wtyczkę",
+				"DESCRIPTION": "Czy na pewno chcesz dezaktywować tę wtyczkę?",
+				"CONFIRM": "Dezaktywuj"
+			},
+			"UNINSTALL": {
+				"TITLE": "Odinstaluj wtyczkę",
+				"DESCRIPTION": "Czy na pewno chcesz odinstalować tę wtyczkę?",
+				"CONFIRM": "Odinstaluj"
+			}
 		}
 	},
 	"SERVER_DOWN": {

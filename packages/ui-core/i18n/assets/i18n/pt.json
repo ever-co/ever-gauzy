@@ -4873,6 +4873,18 @@
 		"LAYOUT": {
 			"DISCOVER": "Descobrir",
 			"INSTALLED": "Instalado"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "Desativar plugin",
+				"DESCRIPTION": "Tem certeza de que deseja desativar este plugin?",
+				"CONFIRM": "Desativar"
+			},
+			"UNINSTALL": {
+				"TITLE": "Desinstalar plugin",
+				"DESCRIPTION": "Tem certeza de que deseja desinstalar este plugin?",
+				"CONFIRM": "Desinstalar"
+			}
 		}
 	},
 	"SERVER_DOWN": {

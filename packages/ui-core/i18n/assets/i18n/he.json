@@ -4863,6 +4863,18 @@
 		"LAYOUT": {
 			"DISCOVER": "לגלות",
 			"INSTALLED": "מותקן"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "לבטל את ההפעלה של התוסף",
+				"DESCRIPTION": "האם אתה בטוח שברצונך לבטל את ההפעלה של התוסף הזה?",
+				"CONFIRM": "בטל הפעלה"
+			},
+			"UNINSTALL": {
+				"TITLE": "הסר את התוסף",
+				"DESCRIPTION": "האם אתה בטוח שברצונך להסיר את התוסף הזה?",
+				"CONFIRM": "הסר התקנה"
+			}
 		}
 	},
 	"SERVER_DOWN": {

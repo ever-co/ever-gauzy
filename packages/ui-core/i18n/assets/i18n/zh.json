@@ -4873,6 +4873,18 @@
 		"LAYOUT": {
 			"DISCOVER": "发现",
 			"INSTALLED": "已安装"
+		},
+		"DIALOG": {
+			"DEACTIVATE": {
+				"TITLE": "停用插件",
+				"DESCRIPTION": "确定要停用此插件吗？",
+				"CONFIRM": "停用"
+			},
+			"UNINSTALL": {
+				"TITLE": "卸载插件",
+				"DESCRIPTION": "确定要卸载此插件吗？",
+				"CONFIRM": "卸载"
+			}
 		}
 	},
 	"SERVER_DOWN": {
