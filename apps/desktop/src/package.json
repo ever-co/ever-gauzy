@@ -46,7 +46,7 @@
 			"../../../dist/packages/plugins/product-reviews",
 			"../../../dist/packages/plugins/sentry-tracing",
 			"../../../dist/packages/plugins/videos",
-			"../../../dist/packages/plugins/plugin-registry",
+			"../../../dist/packages/plugins/registry",
 			"../../../dist/packages/ui-config",
 			"../../../dist/packages/utils"
 		]
@@ -172,7 +172,7 @@
 		"@gauzy/plugin-product-reviews": "file:../../../dist/packages/plugins/product-reviews",
 		"@gauzy/plugin-sentry": "file:../../../dist/packages/plugins/sentry-tracing",
 		"@gauzy/plugin-videos": "file:../../../dist/packages/plugins/videos",
-		"@gauzy/plugin-registry": "file:../../../dist/packages/plugins/plugin-registry",
+		"@gauzy/plugin-registry": "file:../../../dist/packages/plugins/registry",
 		"@gauzy/ui-config": "file:../../../dist/packages/ui-config",
 		"@gauzy/utils": "file:../../../dist/packages/utils",
 		"@nestjs/platform-express": "^10.4.15",
